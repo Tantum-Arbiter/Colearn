@@ -4,8 +4,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 
-@SpringBootApplication
 @ComponentScan(basePackages = {"com.app"})
+@SpringBootApplication
 public class GatewayServiceApplication {
 
 	public static void main(String[] args) {
