@@ -29,15 +29,15 @@ services:
     networks:
       - default-network
   
-  alertmanager:
-    image: prom/alertmanager
-    ports:
-      - '9093:9093'
-    volumes:
-      - ./alertmanager:/etc/alertmanager
-    command:
-      - '--config.file=/etc/alertmanager/alertmanager.yml'
-    restart: always
+  # alertmanager: # Note to sell, will do this later once deployed to cloud / can sensible store email to send messages to.
+  #   image: prom/alertmanager
+  #   ports:
+  #     - '9093:9093'
+  #   volumes:
+  #     - ./alertmanager:/etc/alertmanager
+  #   command:
+  #     - '--config.file=/etc/alertmanager/alertmanager.yml'
+  #   restart: always
   
   grafana:
     image: grafana/grafana-enterprise
