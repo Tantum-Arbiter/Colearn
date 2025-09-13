@@ -10,7 +10,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
+@SpringBootTest(classes = com.app.service.GatewayServiceApplication.class)
 @AutoConfigureMockMvc
 public class PrivateEndpointsControllerTest {
 
@@ -22,7 +22,7 @@ public class PrivateEndpointsControllerTest {
         this.mockMvc.perform(get("/private/info"))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.app.name").value("Channel Metadata Store"));
+                .andExpect(jsonPath("$.app.name").value("Gateway Service"));
     }
 
     @Test
@@ -34,7 +34,7 @@ public class PrivateEndpointsControllerTest {
     }
 
     @Test
-    public void getMetricsEndpointCalled_ShouldReturnMetrics() throws Exception {
+    public void getMetricsEndpointCalled_ShouldReturnMetricDefinitions() throws Exception {
         this.mockMvc.perform(get("/private/metrics"))
                 .andDo(print())
                 .andExpect(status().isOk())
