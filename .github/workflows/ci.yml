@@ -13,32 +13,35 @@ env:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.set-version.outputs.version }}
+  runs-on: ubuntu-latest
+  outputs:
+    version: ${{ steps.set-version.outputs.version }}
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
 
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'corretto'
-          java-version: '21'
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'corretto'
+        java-version: '21'
 
-      - name: Set version
-        id: set-version
-        run: echo "version=$(git rev-list --count HEAD)" >> $GITHUB_OUTPUT
+    - name: Set version
+      id: set-version
+      run: echo "version=$(git rev-list --count HEAD)" >> $GITHUB_OUTPUT
 
-      - name: Build Docker image (App)
-        run: docker build -t ${{ env.IMAGE_NAME }}:${{ steps.set-version.outputs.version }} ./gateway-service
+    - name: Build JAR
+      working-directory: ./gateway-service
+      run: ./gradlew clean bootJar
 
-      - name: Run Functional Tests
-        run: |
-          docker build -t func-tests ./func-tests
-          docker run --rm -e TARGET_URL=http://localhost func-tests
+    - name: Build Docker image (App)
+      run: docker build -t ${{ env.IMAGE_NAME }}:${{ steps.set-version.outputs.version }} ./gateway-service
 
+    - name: Run Functional Tests
+      run: |
+        docker build -t func-tests ./func-tests
+        docker run --rm -e TARGET_URL=http://localhost func-tests
       # - name: Run Smoke Tests
       #   run: |
       #     docker build -t smoke-tests ./smoke-tests
