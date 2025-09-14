@@ -9,8 +9,10 @@ COPY src ./src
 
 RUN chmod +x gradlew
 
-RUN ./gradlew clean test
-
+RUN ./gradlew clean test --info --no-daemon \
+  -Dtest.logger=plain \
+  -Dorg.gradle.logging.level=info
+  
 RUN ./gradlew bootJar
 
 CMD ["java", "-jar", "build/libs/*.jar"]
