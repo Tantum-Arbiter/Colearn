@@ -11,6 +11,16 @@ services:
       replicas: 4
     restart: always
 
+  func-tests:
+    build:
+      context: ./func-tests
+    image: func-tests:latest
+    depends_on:
+      gateway-service:
+        condition: service_healthy
+    environment:
+      GATEWAY_BASE_URL: http://gateway-service:8080
+
   prometheus:
     image: prom/prometheus
     ports:
