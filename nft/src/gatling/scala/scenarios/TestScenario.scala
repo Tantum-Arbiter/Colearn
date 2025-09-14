@@ -12,7 +12,7 @@ object TestScenario {
   def peak_load(requestName: String, requestEndpoint: String) = scenario("peak load test for " + requestName + " endpoint")
     .exec(http(requestName)
       .get(requestEndpoint)
-      .header("Authorization", "Basic Y21zOmNtc3Bhc3M=")
+//      .header("Authorization", "Basic Y21zOmNtc3Bhc3M=")
       .check(status.is(200)))
     .inject(constantUsersPerSec(10) during (5 minutes))
     .throttle(reachRps(10) in (30 seconds),

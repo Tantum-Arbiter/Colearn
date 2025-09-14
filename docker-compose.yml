@@ -8,6 +8,11 @@ services:
     labels:
       prometheus-scrape: "true"
     restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/private/healthcheck"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   func-tests:
     build:
@@ -31,7 +36,8 @@ services:
       - nft
     image: nft:latest
     depends_on:
-      - gateway-service
+      gateway-service:
+        condition: service_healthy
     environment:
       GATEWAY_BASE_URL: http://gateway-service:8080
     networks:
