@@ -61,17 +61,11 @@ tasks.register('cucumberTest', JavaExec) {
 
     args = [
             '--plugin', 'pretty',
-            '--plugin', 'json:build/reports/tests/cucumber.html',
+            '--plugin', 'html:build/reports/tests/cucumber.html',
+            '--plugin', 'json:build/reports/tests/cucumber.json',
             '--glue', 'stepdefs',
             'src/test/resources/features'
     ]
-
-    doLast {
-        println "Check reports in: build/reports/tests/test"
-        file("build/reports/tests/test").listFiles()?.each {
-            println it.name
-        }
-    }
 }
 
 
