@@ -18,5 +18,5 @@ import static io.cucumber.junit.platform.engine.Constants.GLUE_PROPERTY_NAME;
     features = "src/test/resources/features",
     glue = "com.app.func.steps"
 )
-public class FuncTestsRunner {
+public class FuncRunnerTest {
 }
