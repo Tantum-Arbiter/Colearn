@@ -34,7 +34,7 @@ services:
     extra_hosts:
       - 'host.docker.internal:host-gateway' 
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--config.file=/etc/prometheus/prometheus-dev.yml'
     restart: always
     networks:
       - default-network
