@@ -32,8 +32,8 @@ private final String baseUrl = System.getenv().getOrDefault("GATEWAY_BASE_URL", 
     }
 
     @Then("the response body should contain {string}")
-    public void the_response_body_should_contain(String expected) {
-        assertTrue("Expected value not found in body", response.body().contains(expected));
+    public void the_response_body_should_contain(String expectedValue) {
+        assertTrue("Expected value not found in body", response.body().contains(expectedValue));
 
     }
 
