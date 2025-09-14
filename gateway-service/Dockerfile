@@ -1,18 +1,13 @@
 FROM amazoncorretto:21
-
 WORKDIR /app
 
-COPY gradlew gradlew
-COPY gradle gradle
-COPY build.gradle settings.gradle ./
-COPY src ./src
+COPY . .
 
 RUN chmod +x gradlew
 
-RUN ./gradlew clean test --info --no-daemon \
-  -Dtest.logger=plain \
-  -Dorg.gradle.logging.level=info
-  
-RUN ./gradlew bootJar
+RUN ./gradlew clean bootJar --no-daemon
 
-CMD ["java", "-jar", "build/libs/*.jar"]
+RUN cp build/libs/*.jar app.jar
+
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
