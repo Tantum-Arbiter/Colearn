@@ -1,9 +1,9 @@
 FROM gradle:8.4.0-jdk21
 
 WORKDIR /app
-
 COPY . .
 
-RUN gradle build
+# Force rebuild without caches
+RUN ./gradlew clean build --no-daemon --refresh-dependencies
 
-CMD ["gradle", "gatlingRun"]
+CMD ["./gradlew", "gatlingRun"]

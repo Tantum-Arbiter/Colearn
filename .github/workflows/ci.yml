@@ -45,7 +45,7 @@ jobs:
         run: docker-compose build
 
       - name: Run Functional Tests
-        run: docker-compose up --abort-on-container-exit --exit-code-from func-tests
+        run: docker-compose up --build --abort-on-container-exit --exit-code-from func-tests func-tests gateway-service
 
       - name: Upload Cucumber HTML Report
         uses: actions/upload-artifact@v4
