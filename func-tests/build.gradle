@@ -61,6 +61,10 @@ tasks.register('cucumberTest', Test) {
 
     testClassesDirs = sourceSets.test.output.classesDirs
     classpath = sourceSets.test.runtimeClasspath
+
+    reports {
+        html.required.set(true)
+    }
 }
 
 
