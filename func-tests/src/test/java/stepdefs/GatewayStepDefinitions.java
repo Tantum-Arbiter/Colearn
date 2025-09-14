@@ -27,7 +27,7 @@ private final String baseUrl = System.getenv().getOrDefault("GATEWAY_BASE_URL", 
 
     @Then("the response status should be {int}")
     public void the_response_status_should_be(Integer statusCode) {
-        assertTrue("Unexpected status code", response.body().contains(statusCode.toString()));
+        assertTrue("Unexpected status code", response.statusCode() == statusCode);
 
     }
 
