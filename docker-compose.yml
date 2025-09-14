@@ -66,6 +66,6 @@ services:
     networks:
       - default-network
   
-  networks:
-    default-network:
-      driver: bridge
+networks:
+  default-network:
+    driver: bridge
