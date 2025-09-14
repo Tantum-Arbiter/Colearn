@@ -1,9 +1,10 @@
 FROM amazoncorretto:21
 
-# Make port 8080 available to the world outside this container
-
-CMD ["./gradlew", "clean", "bootJar"]
+# Copy the built JAR into the image
 COPY build/libs/*.jar app.jar
 
-EXPOSE 8081:8080
+# Expose internal port used by the app
+EXPOSE 8080
+
+# Run the JAR file
 ENTRYPOINT ["java", "-jar", "app.jar"]
