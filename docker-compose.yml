@@ -22,6 +22,15 @@ services:
     volumes:
       - ./func-tests/build/reports:/app/build/reports
 
+  nft:
+    build:
+      context: ./nft
+    image: nft:latest
+    depends_on:
+      - gateway-service
+    networks:
+      - default-network
+
   prometheus:
     image: prom/prometheus
     ports:
