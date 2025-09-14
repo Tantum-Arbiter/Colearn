@@ -14,7 +14,7 @@ import static io.cucumber.junit.platform.engine.Constants.GLUE_PROPERTY_NAME;
 @ConfigurationParameter(key = GLUE_PROPERTY_NAME, value = "stepdefs")
 @RunWith(Cucumber.class)
 @CucumberOptions(
-    plugin = {"pretty", "html:build/reports/cucumber.html"},
+    plugin = {"pretty", "html:build/reports/cucumber"},
     features = "src/test/resources/features",
     glue = "com.app.func.steps"
 )
