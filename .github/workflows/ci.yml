@@ -5,11 +5,11 @@ on:
     branches:
       - main
 
-env:
-  SERVICE_NAME: gateway-service
-  REGION: us-central1
-  PROJECT_ID: your-gcp-project-id
-  IMAGE_NAME: gateway-service
+# env:
+#   SERVICE_NAME: gateway-service
+#   REGION: us-central1
+#   PROJECT_ID: your-gcp-project-id
+#   IMAGE_NAME: gateway-service
 
 jobs:
   build-and-test:
@@ -41,20 +41,29 @@ jobs:
         working-directory: ./gateway-service
         run: ./gradlew clean bootJar
 
-      - name: Build Docker image (App)
-        run: docker build -t ${{ env.IMAGE_NAME }}:${{ steps.set-version.outputs.version }} ./gateway-service
+      - name: Build Docker images
+        run: docker-compose build
 
       - name: Run Functional Tests
-        run: |
-          docker-compose build
-          docker-compose up --abort-on-container-exit --exit-code-from func-tests
-      
+        run: docker-compose up --abort-on-container-exit --exit-code-from func-tests
+
       - name: Upload Cucumber HTML Report
         uses: actions/upload-artifact@v4
         with:
           name: cucumber-report
           path: func-tests/build/reports/tests
           if-no-files-found: warn
+
+      - name: Run NFT Tests
+        run: docker-compose up --abort-on-container-exit --exit-code-from nft-tests
+
+      - name: Upload Gatling HTML Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: gatling-report
+          path: nft-tests/build/reports/gatling
+          if-no-files-found: warn
+
 
 
 
