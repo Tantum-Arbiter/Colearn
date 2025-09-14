@@ -54,17 +54,19 @@ configurations {
     }
 }
 
-tasks.register('cucumberTest', Test) {
-    useJUnit()
+tasks.register('cucumberTest', JavaExec) {
+    group = "verification"
+    description = "Runs Cucumber functional tests"
 
-    include '**/FuncRunnerTest.class'
-
-    testClassesDirs = sourceSets.test.output.classesDirs
     classpath = sourceSets.test.runtimeClasspath
+    mainClass.set("io.cucumber.core.cli.Main")
 
-    reports {
-        html.required.set(true)
-    }
+    args = [
+            '--plugin', 'pretty',
+            '--plugin', 'html:build/reports/tests/cucumber',
+            '--glue', 'stepdefs',
+            'src/test/resources/features'
+    ]
 }
 
 
