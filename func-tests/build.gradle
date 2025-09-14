@@ -62,7 +62,7 @@ tasks.register('cucumberTest', JavaExec) {
     args = [
             '--plugin', 'pretty',
             '--plugin', 'html:build/reports/tests/test',
-            '--plugin', 'json:build/reports/tests/cucumber.json',
+            '--plugin', 'json:build/reports/tests/cucumber.html',
             '--glue', 'stepdefs',
             'src/test/resources/features'
     ]
