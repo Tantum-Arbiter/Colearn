@@ -13,6 +13,8 @@ services:
     build:
       context: ./func-tests
     image: func-tests:latest
+    networks:
+      - default-network
     depends_on:
       - gateway-service
     environment:
