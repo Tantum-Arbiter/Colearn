@@ -26,8 +26,8 @@ services:
     ports:
       - '9090:9090'
     user: root
-    links:
-      - alertmanager
+    # links:
+    #   - alertmanager
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock  # For service discovery
       - ./prometheus:/etc/prometheus
@@ -49,22 +49,22 @@ services:
   #     - '--config.file=/etc/alertmanager/alertmanager.yml'
   #   restart: always
   
-  grafana:
-    image: grafana/grafana-enterprise
-    ports:
-      - '3000:3000'
-    depends_on:
-      - prometheus
-    environment:
-      #      - GF_SERVER_ROOT_URL=http://my.grafana.server/
-      #      - GF_INSTALL_PLUGINS=grafana-clock-panel
-      - GF_INSTALL_PLUGINS=grafana-piechart-panel
-    volumes:
-      - './grafana/datasources:/etc/grafana/provisioning/datasources'
-      - './grafana/dashboards/dashboards.yml:/etc/grafana/provisioning/dashboards/main.yml'
-      - './grafana/dashboard-backup/:/var/lib/grafana/dashboards'
-    networks:
-      - default-network
+  # grafana:
+  #   image: grafana/grafana-enterprise
+  #   ports:
+  #     - '3000:3000'
+  #   depends_on:
+  #     - prometheus
+  #   environment:
+  #     #      - GF_SERVER_ROOT_URL=http://my.grafana.server/
+  #     #      - GF_INSTALL_PLUGINS=grafana-clock-panel
+  #     - GF_INSTALL_PLUGINS=grafana-piechart-panel
+  #   volumes:
+  #     - './grafana/datasources:/etc/grafana/provisioning/datasources'
+  #     - './grafana/dashboards/dashboards.yml:/etc/grafana/provisioning/dashboards/main.yml'
+  #     - './grafana/dashboard-backup/:/var/lib/grafana/dashboards'
+  #   networks:
+  #     - default-network
   
 networks:
   default-network:
