@@ -46,8 +46,8 @@ jobs:
 
       - name: Run Functional Tests
         run: |
+          docker-compose --profile func build
           docker-compose --profile func up --abort-on-container-exit --exit-code-from func-tests
-
 
       - name: Upload Cucumber HTML Report
         uses: actions/upload-artifact@v4
@@ -56,10 +56,10 @@ jobs:
           path: func-tests/build/reports/tests
           if-no-files-found: warn
 
-      - name: Run Non-Functional Tests
+      - name: Run NFT/Gatling Tests
         run: |
+          docker-compose --profile nft build
           docker-compose --profile nft up --abort-on-container-exit --exit-code-from nft
-
 
       - name: Upload Gatling HTML Report
         uses: actions/upload-artifact@v4
