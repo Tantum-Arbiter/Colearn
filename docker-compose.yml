@@ -7,8 +7,6 @@ services:
       - default-network
     labels:
       prometheus-scrape: "true"
-    deploy:
-      replicas: 4
     restart: always
 
   func-tests:
