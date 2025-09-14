@@ -27,6 +27,11 @@ jobs:
           distribution: 'corretto'
           java-version: '21'
 
+      - name: Run Functional Tests
+        run: |
+          docker-compose build
+          docker-compose up --abort-on-container-exit --exit-code-from func-tests
+
       - name: Set version
         id: set-version
         run: echo "version=$(git rev-list --count HEAD)" >> $GITHUB_OUTPUT
