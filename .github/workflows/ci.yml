@@ -32,11 +32,6 @@ jobs:
           sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.6/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
           docker-compose version
-          
-      - name: Run Functional Tests
-        run: |
-          docker-compose build
-          docker-compose up --abort-on-container-exit --exit-code-from func-tests
 
       - name: Set version
         id: set-version
@@ -51,8 +46,9 @@ jobs:
 
       - name: Run Functional Tests
         run: |
-          docker build -t func-tests ./func-tests
-          docker run --rm -e TARGET_URL=http://localhost func-tests
+          docker-compose build
+          docker-compose up --abort-on-container-exit --exit-code-from func-tests
+
       # - name: Run Smoke Tests
       #   run: |
       #     docker build -t smoke-tests ./smoke-tests
