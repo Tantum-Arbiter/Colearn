@@ -16,8 +16,7 @@ services:
       context: ./func-tests
     image: func-tests:latest
     depends_on:
-      gateway-service:
-        condition: service_healthy
+      - gateway-service
     environment:
       GATEWAY_BASE_URL: http://gateway-service:8080
 
