@@ -1,0 +1,6 @@
+rootProject.name = 'nft'
+include 'src:main:gatling'
+findProject(':src:main:gatling')?.name = 'gatling'
+include 'src:main:gatling:scala'
+findProject(':src:main:gatling:scala')?.name = 'scala'
+

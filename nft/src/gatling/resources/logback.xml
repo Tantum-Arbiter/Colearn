@@ -1,0 +1,18 @@
+<configuration>
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Set the default log level to WARN -->
+    <root level="WARN">
+        <appender-ref ref="CONSOLE" />
+    </root>
+
+    <!-- Set specific log levels for Gatling components -->
+    <logger name="io.gatling" level="WARN" />
+    <logger name="io.netty" level="WARN" />
+    <logger name="org.asynchttpclient" level="WARN" />
+
+</configuration>

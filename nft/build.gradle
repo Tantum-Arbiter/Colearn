@@ -1,0 +1,40 @@
+plugins {
+    id 'io.gatling.gradle' version '3.6.1'
+    id 'scala'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+    implementation 'org.apache.httpcomponents:httpclient:4.5.8'
+    gatling 'com.softwaremill.sttp.client3:core_2.13:3.5.2'
+}
+
+gatling {
+    logLevel = 'WARN'
+    logHttp = 'NONE'
+    simulations = {
+        include "**/*.scala"
+    }
+}
+
+
+// task gatlingRunWithSingleServiceDown(type: JavaExec) {
+//     classpath = sourceSets.gatling.runtimeClasspath
+//     main = "io.gatling.app.Gatling"
+//     args = [
+//             '--simulation', 'simulationDowntime.PeakLoadWithSingleServiceDown'
+//     ]
+// }
+
+// task prodSimulation(type: JavaExec) {
+//     classpath = sourceSets.gatling.runtimeClasspath
+//     main = "io.gatling.app.Gatling"
+//     args = [
+//             '--simulation', 'simulation.ProductionTrafficExtendedPeakLoad'
+//     ]
+// }
