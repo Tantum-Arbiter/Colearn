@@ -2,12 +2,12 @@ FROM amazoncorretto:21
 
 WORKDIR /app
 
-COPY func-tests/gradlew func-tests/gradlew
-COPY func-tests/gradle func-tests/gradle
-COPY func-tests/build.gradle func-tests/settings.gradle ./
+COPY gradlew gradlew
+COPY gradle gradle
+COPY build.gradle settings.gradle ./
+COPY src ./src
 
-RUN ./gradlew build -x test || return 0
-
-COPY func-tests/src ./src
+RUN chmod +x gradlew
+RUN ./gradlew build -x test || true
 
 CMD ["./gradlew", "test"]
