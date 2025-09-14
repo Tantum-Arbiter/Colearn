@@ -49,12 +49,12 @@ jobs:
           docker-compose build
           docker-compose up --abort-on-container-exit --exit-code-from func-tests
       
-      - name: Archive Cucumber Test Reports
-        if: always()
+      - name: Upload Cucumber HTML Report
         uses: actions/upload-artifact@v4
         with:
-          name: cucumber-reports
-          path: func-tests/build/reports/tests/test/
+          name: cucumber-report
+          path: func-tests/build/reports/cucumber.html
+
 
 
       # - name: Run Smoke Tests
