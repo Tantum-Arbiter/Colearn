@@ -10,4 +10,4 @@ COPY src ./src
 RUN chmod +x gradlew
 RUN ./gradlew build -x test || true
 
-CMD ["./gradlew", "test"]
+CMD ["./gradlew", "cucumberTest"]

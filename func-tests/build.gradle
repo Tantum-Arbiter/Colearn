@@ -57,6 +57,19 @@ configurations {
     }
 }
 
+tasks.register('cucumberTest', JavaExec) {
+    group = "verification"
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set("io.cucumber.core.cli.Main")
+
+    args = [
+            '--plugin', 'pretty',
+            '--plugin', 'html:build/reports/tests/test',
+            '--glue', 'com.app.func.steps',
+            'src/test/resources/features'
+    ]
+}
+
 test {
     useJUnitPlatform()
     include '**/*Test.class', '**/*Tests.class', '**/stepdefs/*.class'
