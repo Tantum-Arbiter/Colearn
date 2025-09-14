@@ -62,10 +62,19 @@ tasks.register('cucumberTest', JavaExec) {
     args = [
             '--plugin', 'pretty',
             '--plugin', 'html:build/reports/tests/test',
+            '--plugin', 'json:build/reports/tests/cucumber.json',
             '--glue', 'stepdefs',
             'src/test/resources/features'
     ]
+
+    doLast {
+        println "Check reports in: build/reports/tests/test"
+        file("build/reports/tests/test").listFiles()?.each {
+            println it.name
+        }
+    }
 }
+
 
 bootJar {
     enabled = false
