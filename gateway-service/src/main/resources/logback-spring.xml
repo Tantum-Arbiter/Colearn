@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <root level="INFO">
-        <appender-ref ref="STDOUT"/>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            <charset>utf8</charset>
+        </encoder>
+    </appender>
+    <root level="DEBUG">
+        <appender-ref ref="CONSOLE" />
     </root>
+    <!--  if HTTP wire level debug log (or similar detailed ones needed  -->
+
 </configuration>
