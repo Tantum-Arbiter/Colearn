@@ -4,6 +4,8 @@ WORKDIR /app
 
 COPY . .
 
-RUN gradle clean gatlingRun --no-daemon
+RUN chmod +x ./gradlew
 
-CMD ["gradle", "gatlingRun"]
+RUN ./gradlew clean gatlingRun --no-daemon
+
+CMD ["./gradlew", "gatlingRun", "--no-daemon"]
