@@ -28,6 +28,8 @@ services:
     image: nft:latest
     depends_on:
       - gateway-service
+    environment:
+      GATEWAY_BASE_URL: http://gateway-service:8080
     networks:
       - default-network
 
