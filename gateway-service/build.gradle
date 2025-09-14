@@ -11,7 +11,7 @@ description = ''
 jar {
 	manifest {
 		attributes(
-				'Main-Class': 'app.ChannelMetadataStoreApplication'
+				'Main-Class': 'com.app.service.GatewayServiceApplication'
 		)
 	}
 }

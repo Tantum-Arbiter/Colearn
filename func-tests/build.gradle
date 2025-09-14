@@ -1,0 +1,69 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.2.5'
+    id 'io.spring.dependency-management' version '1.1.4'
+}
+
+group = 'com.app'
+version = '1.0.0'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:2023.0.2"
+    }
+}
+
+dependencies {
+    testImplementation 'io.cucumber:cucumber-java:7.14.0'
+    testImplementation 'io.cucumber:cucumber-junit-platform-engine:7.14.0'
+    testImplementation 'io.cucumber:cucumber-spring:7.14.0'
+    testImplementation 'org.junit.platform:junit-platform-suite-api:1.9.1'
+    testImplementation 'org.mockito:mockito-core:5.5.0'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'io.rest-assured:rest-assured:5.3.0'
+    testImplementation 'org.awaitility:awaitility:4.2.0'
+    testImplementation 'com.jayway.jsonpath:json-path:2.9.0'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+}
+
+sourceSets {
+    test {
+        java {
+            srcDirs = ['src/test/java']
+        }
+        resources {
+            srcDirs = ['src/test/resources']
+        }
+    }
+}
+
+configurations {
+    cucumberRuntime {
+        extendsFrom testImplementation
+    }
+}
+
+test {
+    useJUnitPlatform()
+    include '**/*Test.class', '**/*Tests.class', '**/stepdefs/*.class'
+}
+
+
+bootJar {
+    enabled = false
+}
+
+jar {
+    enabled = true
+}

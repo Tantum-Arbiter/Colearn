@@ -1,0 +1,4 @@
+rootProject.name = 'colearn'
+
+include 'gateway-service'
+include 'func-tests'
