@@ -9,7 +9,7 @@ import scala.language.postfixOps
 import scala.util.Properties
 
 class PeakLoad extends Simulation {
-  val host = Properties.envOrElse("GATEWAY_BASE_URL", "http://localhost:8080")
+  val host = sys.env.getOrElse("GATEWAY_BASE_URL", "http://localhost:8080")
 
   val httpProtocol = http.baseUrl(host)
   val scenarios: List[PopulationBuilder] = List(TestScenario.status_scenario)

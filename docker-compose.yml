@@ -9,7 +9,7 @@ services:
       prometheus-scrape: "true"
     restart: always
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/private/healthcheck"]
+      test: ["CMD", "curl", "-f", "http://gateway-service:8080/private/healthcheck"]
       interval: 5s
       timeout: 3s
       retries: 20
