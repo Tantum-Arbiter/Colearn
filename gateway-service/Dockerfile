@@ -1,10 +1,16 @@
 FROM amazoncorretto:21
 
-# Copy the built JAR into the image
-COPY build/libs/*.jar app.jar
+WORKDIR /app
 
-# Expose internal port used by the app
-EXPOSE 8080
+COPY gradlew gradlew
+COPY gradle gradle
+COPY build.gradle settings.gradle ./
+COPY src ./src
 
-# Run the JAR file
-ENTRYPOINT ["java", "-jar", "app.jar"]
+RUN chmod +x gradlew
+
+RUN ./gradlew clean test
+
+RUN ./gradlew bootJar
+
+CMD ["java", "-jar", "build/libs/*.jar"]
