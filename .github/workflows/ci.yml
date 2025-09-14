@@ -46,8 +46,8 @@ jobs:
 
       - name: Run Functional Tests
         run: |
-          docker-compose --profile func build
-          docker-compose --profile func up --abort-on-container-exit --exit-code-from func-tests
+          docker-compose --profile func-tests build
+          docker-compose --profile func-tests up --abort-on-container-exit --exit-code-from func-tests
 
       - name: Upload Cucumber HTML Report
         uses: actions/upload-artifact@v4
