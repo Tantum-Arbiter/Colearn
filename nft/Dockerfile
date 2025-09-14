@@ -1,9 +1,9 @@
-FROM gradle:8.4.0-jdk21
+FROM gradle:8.4.0-jdk17
 
 WORKDIR /app
 
 COPY . .
 
-RUN gradle build
+RUN gradle clean gatlingRun --no-daemon
 
 CMD ["gradle", "gatlingRun"]
