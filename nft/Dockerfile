@@ -6,6 +6,6 @@ COPY . .
 
 RUN chmod +x ./gradlew
 
-RUN ./gradlew clean gatlingRun --no-daemon
+RUN ./gradlew clean assemble --no-daemon
 
 CMD ["./gradlew", "gatlingRun", "--no-daemon"]

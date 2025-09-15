@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - 'nft/**'
-      - '.github/workflows/nft-tests-ci.yml'
+      - '.github/workflows/nft-tests-build.yml'
 
 env:
   DOCKER_REPO: ${{ secrets.DOCKER_REPO }}
@@ -21,6 +21,9 @@ jobs:
       - name: Build and Push NFT Test Image
         working-directory: nft
         run: |
-          docker build -t nft:latest .
+          VERSION=$(git rev-list --count HEAD)
+          docker build -t nft:$VERSION -t nft:latest .
+          docker tag nft:$VERSION $DOCKER_REPO/nft:$VERSION
           docker tag nft:latest $DOCKER_REPO/nft:latest
+          docker push $DOCKER_REPO/nft:$VERSION
           docker push $DOCKER_REPO/nft:latest

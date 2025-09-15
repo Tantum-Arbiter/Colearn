@@ -1,10 +1,10 @@
-name: Func Tests CI
+name: Func Tests build and push
 
 on:
   push:
     paths:
       - 'func-tests/**'
-      - '.github/workflows/func-tests-ci.yml'
+      - '.github/workflows/func-tests-build.yml'
 
 env:
   DOCKER_REPO: ${{ secrets.DOCKER_REPO }}
@@ -21,6 +21,9 @@ jobs:
       - name: Build and Push Func Test Image
         working-directory: func-tests
         run: |
-          docker build -t func-tests:latest .
+          VERSION=$(git rev-list --count HEAD)
+          docker build -t func-tests:$VERSION -t func-tests:latest .
+          docker tag func-tests:$VERSION $DOCKER_REPO/func-tests:$VERSION
           docker tag func-tests:latest $DOCKER_REPO/func-tests:latest
+          docker push $DOCKER_REPO/func-tests:$VERSION
           docker push $DOCKER_REPO/func-tests:latest
