@@ -31,21 +31,37 @@ jobs:
       - name: Log in to GHCR
         run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
 
+      - name: Determine semantic version (bump minor)
+        id: semver
+        run: |
+          latest_tag=$(git describe --tags --abbrev=0 2>/dev/null)
+
+          IFS='.' read -r major minor patch <<<"${latest_tag//v/}"
+
+          minor=$((minor + 1))
+          patch=0
+
+          new_tag="${major}.${minor}.${patch}"
+          echo "New version: $new_tag"
+          echo "tag=$new_tag" >> $GITHUB_OUTPUT
+
       - name: Build and Push Gateway Image
         working-directory: gateway-service
         run: |
-          VERSION=$(git rev-list --count HEAD)
+          VERSION=${{ steps.semver.outputs.tag }}
           docker build -t $GHCR_REPO:$VERSION -t $GHCR_REPO:latest .
           docker push $GHCR_REPO:$VERSION
           docker push $GHCR_REPO:latest
 
       - name: Output Version
         run: |
-          echo "Pushed image: $GHCR_REPO/:$(git rev-list --count HEAD)"
+          echo "Pushed image: $GHCR_REPO: ${{ steps.semver.outputs.tag }}"
 
       - name: Create Git tag
         run: |
-          VERSION=$(git rev-list --count HEAD)
           git config --global user.name "github-actions"
+          git config --global user.email "github-actions@users.noreply.github.com"
+
+          VERSION=${{ steps.semver.outputs.tag }}
           git tag "$VERSION"
           git push origin "$VERSION"
