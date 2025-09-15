@@ -14,7 +14,10 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout full repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -36,3 +39,9 @@ jobs:
       - name: Output Version
         run: |
           echo "Pushed image: $GHCR_REPO/:$(git rev-list --count HEAD)"
+
+      - name: Create Git tag
+        run: |
+          git config --global user.name "github-actions"
+          git tag v$VERSION
+          git push origin v$VERSION
