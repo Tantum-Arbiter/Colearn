@@ -1,31 +1,32 @@
-name: Run Functional Tests
+name: Functional Tests
 
 on:
-  push:
-    paths:
-      - 'func-tests/**'
-      - '.github/workflows/func-tests.yml'
-
-env:
-  DOCKER_REPO: ${{ secrets.DOCKER_REPO }}
+  workflow_run:
+    workflows: ["Gateway Service CI"]
+    types:
+      - completed
 
 jobs:
   functional-tests:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
+  env:
+    DOCKER_REPO: ${{ secrets.DOCKER_REPO }}
 
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '21'
+  steps:
+    - uses: actions/checkout@v4
 
-      - name: Pull latest app image
-        run: docker pull $DOCKER_REPO:latest
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '21'
 
-      - name: Build and Run Functional Tests
-        run: |
-          docker-compose --profile func-tests build
-          docker-compose --profile func-tests up --abort-on-container-exit --exit-code-from func-tests
+    - name: Pull latest gateway image
+      run: docker pull $DOCKER_REPO:latest
+
+    - name: Build and Run Functional Tests
+      run: |
+        docker-compose --profile test build
+        docker-compose --profile test up --abort-on-container-exit --exit-code-from func-tests
