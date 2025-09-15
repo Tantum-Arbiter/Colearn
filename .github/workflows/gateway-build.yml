@@ -35,4 +35,4 @@ jobs:
 
       - name: Output Version
         run: |
-          echo "Pushed image: $GHCR_REPO/gateway-service:$(git rev-list --count HEAD)"
+          echo "Pushed image: $GHCR_REPO/:$(git rev-list --count HEAD)"
