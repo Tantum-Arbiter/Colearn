@@ -1,0 +1,31 @@
+name: Run NFT Tests
+
+on:
+  push:
+    paths:
+      - 'nft/**'
+      - '.github/workflows/nft-tests.yml'
+
+env:
+  DOCKER_REPO: ${{ secrets.DOCKER_REPO }}
+
+jobs:
+  nft-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Pull latest app image
+        run: docker pull $DOCKER_REPO:latest
+
+      - name: Build and Run NFT Tests
+        run: |
+          docker-compose --profile nft build
+          docker-compose --profile nft up --abort-on-container-exit --exit-code-from nft

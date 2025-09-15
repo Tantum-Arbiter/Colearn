@@ -1,0 +1,31 @@
+name: Run Functional Tests
+
+on:
+  push:
+    paths:
+      - 'func-tests/**'
+      - '.github/workflows/func-tests.yml'
+
+env:
+  DOCKER_REPO: ${{ secrets.DOCKER_REPO }}
+
+jobs:
+  functional-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Pull latest app image
+        run: docker pull $DOCKER_REPO:latest
+
+      - name: Build and Run Functional Tests
+        run: |
+          docker-compose --profile func-tests build
+          docker-compose --profile func-tests up --abort-on-container-exit --exit-code-from func-tests
