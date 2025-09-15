@@ -1,4 +1,4 @@
-name: NFT Tests CI
+name: NFT Tests build and push
 
 on:
   push:

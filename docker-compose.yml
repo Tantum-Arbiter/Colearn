@@ -1,6 +1,6 @@
 services:
   gateway-service:
-    image: ${DOCKER_REPO}:latest
+    build: gateway-service
     ports:
       - "8080:8080"
     networks:
