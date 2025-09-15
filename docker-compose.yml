@@ -23,7 +23,8 @@ services:
     networks:
       - default-network
     depends_on:
-      - gateway-service
+      gateway-service:
+        condition: service_healthy
     environment:
       GATEWAY_BASE_URL: http://gateway-service:8080
     volumes:

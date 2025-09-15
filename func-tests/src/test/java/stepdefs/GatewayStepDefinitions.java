@@ -14,8 +14,7 @@ public class GatewayStepDefinitions {
     private HttpResponse<String> response;
     private final HttpClient client = HttpClient.newHttpClient();
 
-//private final String baseUrl = System.getenv().getOrDefault("GATEWAY_BASE_URL", "http://gateway-service:8080");
-private final String baseUrl = System.getenv().getOrDefault("GATEWAY_BASE_URL", "http://localhost:8080");
+private final String baseUrl = System.getenv().getOrDefault("GATEWAY_BASE_URL", "http://gateway-service:8080");
 
     @When("I GET {string}")
     public void i_get(String path) throws IOException, InterruptedException {
