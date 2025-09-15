@@ -7,7 +7,7 @@ on:
       - '.github/workflows/func-tests-build.yml'
 
 env:
-  DOCKER_REPO: ghcr.io/${{secrets.GHCR_USERNAME}}
+  GHCR_REPO: ghcr.io/${{secrets.GHCR_USERNAME}}
 
 jobs:
   build-func-tests:
