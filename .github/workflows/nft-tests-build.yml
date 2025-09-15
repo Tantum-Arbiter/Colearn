@@ -7,7 +7,7 @@ on:
       - '.github/workflows/nft-tests-build.yml'
 
 env:
-  DOCKER_REPO: ${{ secrets.DOCKER_REPO }}
+  DOCKER_REPO: ghcr.io/${{ secrets.GHCR_USERNAME }}
 
 jobs:
   build-nft-tests:
@@ -15,15 +15,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Log in to Docker Hub
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login docker.io -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
 
-      - name: Build and Push NFT Test Image
+      - name: Build and Push NFT Image
         working-directory: nft
         run: |
-          VERSION=$(git rev-list --count HEAD)
-          docker build -t nft:$VERSION -t nft:latest .
-          docker tag nft:$VERSION $DOCKER_REPO/nft:$VERSION
-          docker tag nft:latest $DOCKER_REPO/nft:latest
-          docker push $DOCKER_REPO/nft:$VERSION
-          docker push $DOCKER_REPO/nft:latest
+          docker build -t nft:latest .
+          docker tag nft:latest $GHCR_REPO/nft:latest
+          docker push $GHCR_REPO/nft:latest
+
+      - name: Output Version
+        run: |
+          echo "Pushed image: $GHCR_REPO/nft:$(git rev-list --count HEAD)"
