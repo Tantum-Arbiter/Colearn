@@ -6,6 +6,9 @@ on:
       - 'gateway-service/**'
       - '.github/workflows/gateway-build.yml'
 
+permissions:
+  contents: write
+
 env:
   IMAGE_NAME: gateway-service
   GHCR_REPO: ghcr.io/${{secrets.GHCR_USERNAME}}/gateway-service
