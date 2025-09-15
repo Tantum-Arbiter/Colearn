@@ -34,18 +34,26 @@ jobs:
       - name: Build and Push Gateway Image
         working-directory: gateway-service
         run: |
-          VERSION=$(git rev-list --count HEAD)
+          PATCH=$(git rev-list --count HEAD)
+          VERSION="0.0.$PATCH"
+
           docker build -t $GHCR_REPO:$VERSION -t $GHCR_REPO:latest .
-          docker push $GHCR_REPO:v.0.0.$VERSION
+          docker push $GHCR_REPO:$VERSION
           docker push $GHCR_REPO:latest
 
       - name: Output Version
         run: |
-          echo "Pushed image: $GHCR_REPO/:$(git rev-list --count HEAD)"
+          PATCH=$(git rev-list --count HEAD)
+          VERSION="0.0.$PATCH"
+          echo "Pushed image: $GHCR_REPO:$VERSION"
 
       - name: Create Git tag
         run: |
-          VERSION=$(git rev-list --count HEAD)
+          PATCH=$(git rev-list --count HEAD)
+          VERSION="0.0.$PATCH"
+
           git config --global user.name "github-actions"
-          git tag "v0.0.$VERSION"
-          git push origin "v0.0.$VERSION"
+          git config --global user.email "github-actions@github.com"
+          
+          git tag "$VERSION"
+          git push origin "$VERSION"
