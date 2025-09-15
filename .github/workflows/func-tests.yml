@@ -6,13 +6,13 @@ on:
     types:
       - completed
 
+env:
+  DOCKER_REPO: ${{ secrets.DOCKER_REPO }}
+
 jobs:
   functional-tests:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-
-  env:
-    DOCKER_REPO: ${{ secrets.DOCKER_REPO }}
 
   steps:
     - uses: actions/checkout@v4
