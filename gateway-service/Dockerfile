@@ -5,6 +5,8 @@ COPY . .
 
 RUN chmod +x gradlew
 
+RUN ./gradlew test --no-daemon
+
 RUN ./gradlew clean bootJar --no-daemon
 
 RUN cp build/libs/*.jar app.jar
