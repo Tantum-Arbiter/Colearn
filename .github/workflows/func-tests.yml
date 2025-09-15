@@ -14,19 +14,19 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
-  steps:
-    - uses: actions/checkout@v4
+    steps:
+      - uses: actions/checkout@v4
 
-    - name: Set up Java
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: '21'
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
 
-    - name: Pull latest gateway image
-      run: docker pull $DOCKER_REPO:latest
+      - name: Pull latest gateway image
+        run: docker pull $DOCKER_REPO:latest
 
-    - name: Build and Run Functional Tests
-      run: |
-        docker-compose --profile test build
-        docker-compose --profile test up --abort-on-container-exit --exit-code-from func-tests
+      - name: Build and Run Functional Tests
+        run: |
+          docker-compose --profile test build
+          docker-compose --profile test up --abort-on-container-exit --exit-code-from func-tests
