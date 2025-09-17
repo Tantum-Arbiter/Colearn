@@ -19,7 +19,7 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     outputs:
-      image_tag: ${{ steps.set-output.outputs.image_tag }}
+      image_tag: ${{ steps.build.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -47,15 +47,12 @@ jobs:
           GAR_IMAGE="$GAR_REPO:$VERSION"
           GAR_LATEST="$GAR_REPO:latest"
           
-          # Authenticate Docker with GAR
           gcloud auth configure-docker europe-west1-docker.pkg.dev --quiet
           
-          # Build and push
           docker build -t $GAR_IMAGE -t $GAR_LATEST .
           docker push $GAR_IMAGE
           docker push $GAR_LATEST
           
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "DEBUG: Built and pushed $GAR_IMAGE and $GAR_LATEST"
 
   deploy-functional:
