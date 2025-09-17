@@ -21,29 +21,27 @@ jobs:
     outputs:
       image_tag: ${{ steps.build.outputs.version }}
     steps:
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '21'
-
-      - name: Authenticate with GCP
-        id: auth
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-          create_credentials_file: true
-          export_environment_variables: false
-
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Authenticate Docker with Artifact Registry
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Authenticate with GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Docker login to Artifact Registry
         run: |
-          ACCESS_TOKEN=$(gcloud --credential-file-override=${{ steps.auth.outputs.credentials_file_path }} auth print-access-token)
-          echo $ACCESS_TOKEN | docker login -u oauth2accesstoken --password-stdin europe-west1-docker.pkg.dev
+          echo "${{ secrets.GCP_SA_KEY }}" | \
+            docker login -u _json_key --password-stdin \
+            https://europe-west1-docker.pkg.dev
 
       - id: build
         working-directory: gateway-service
@@ -54,15 +52,12 @@ jobs:
           GAR_IMAGE="$GAR_REPO:$VERSION"
           GAR_LATEST="$GAR_REPO:latest"
 
-          gcloud --credential-file-override=${{ steps.auth.outputs.credentials_file_path }} auth list
-
           docker build -t $GAR_IMAGE -t $GAR_LATEST .
           docker push $GAR_IMAGE
           docker push $GAR_LATEST
 
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "DEBUG: Built and pushed $GAR_IMAGE and $GAR_LATEST"
-
 
   deploy-functional:
     needs: build-and-push
