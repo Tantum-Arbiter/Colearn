@@ -48,7 +48,7 @@ jobs:
         run: |
           PATCH=$(git rev-list --count HEAD)
           VERSION="0.0.$PATCH"
-          GAR_REPO="europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/artifact-repo/${{ env.IMAGE_NAME }}"
+          GAR_REPO="europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/artifact-repo/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.image_tag }}"
           GAR_IMAGE="$GAR_REPO:$VERSION"
           GAR_LATEST="$GAR_REPO:latest"
 
@@ -58,8 +58,6 @@ jobs:
 
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "DEBUG: Built and pushed $GAR_IMAGE and $GAR_LATEST"
-  outputs:
-    version: ${{ steps.build.outputs.version }}
 
 
   deploy-functional:
