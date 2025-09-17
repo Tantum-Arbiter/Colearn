@@ -37,8 +37,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Configure Docker for GAR
-        run: gcloud auth configure-docker europe-west1-docker.pkg.dev --quiet
+      - name: Authenticate Docker with Artifact Registry
+        run: |
+          gcloud auth print-access-token | \
+          docker login -u oauth2accesstoken --password-stdin europe-west1-docker.pkg.dev
 
       - id: build
         working-directory: gateway-service
