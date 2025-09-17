@@ -39,15 +39,13 @@ jobs:
           PATCH=$(git rev-list --count HEAD)
           VERSION="0.0.$PATCH"
 
-          docker build -t $GHCR_REPO:$VERSION -t $GHCR_REPO:latest .
-          docker push $GHCR_REPO:$VERSION
+          IMAGE_TAG=$GHCR_REPO:$VERSION
+
+          docker build -t $IMAGE_TAG -t $GHCR_REPO:latest .
+          docker push $IMAGE_TAG
           docker push $GHCR_REPO:latest
 
-      - name: Output Version
-        run: |
-          PATCH=$(git rev-list --count HEAD)
-          VERSION="0.0.$PATCH"
-          echo "Pushed image: $GHCR_REPO:$VERSION"
+          echo "image_tag=$GHCR_REPO:latest" >> $GITHUB_OUTPUT
 
       - name: Create Git tag
         run: |
