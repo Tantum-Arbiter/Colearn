@@ -68,15 +68,16 @@ jobs:
         with:
           project_id: ${{ env.PROJECT_ID }}
 
-      - name: Debug image tag
+      - name: Debug GAR image url
         run: |
-          echo "DEBUG: Deploying image=$(echo "${{ needs.build-and-push.outputs.image_tag }}" | base64 --decode)"
+          echo "DEBUG: Pushing image=\
+          echo "DEBUG: Deploying image=europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/ghcr-remote-repo/gateway-service:0.0.$(git rev-list --count HEAD)"
 
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy $SERVICE \
-          --image "europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/ghcr-remote-repo/gateway-service:latest" \
+          --image "europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/ghcr-remote-repo/gateway-service:$VERSION" \
           --region ${{ env.REGION }} \
           --project ${{ env.PROJECT_ID }} \
           --service-account svc-deploy-functional@${{ env.PROJECT_ID }}.iam.gserviceaccount.com \
-          --allow-unauthenticated
+          --no-allow-unauthenticated
