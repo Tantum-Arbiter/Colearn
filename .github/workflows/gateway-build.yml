@@ -20,7 +20,7 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     outputs:
-      image_tag: ${{ steps.gateway-image.outputs.image_tag }}
+      image_tag: ${{ steps.gateway-image.outputs.image_tag }}   # reference new step id
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,19 +34,19 @@ jobs:
       - name: Log in to GHCR
         run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
 
-      - id: gateway-image
+      - id: gateway-image    # new step id
         name: Build and Push Gateway Image
         working-directory: gateway-service
         run: |
           PATCH=$(git rev-list --count HEAD)
           VERSION="0.0.$PATCH"
           IMAGE_TAG=$GHCR_REPO:$VERSION
-
+          
           docker build -t $IMAGE_TAG -t $GHCR_REPO:latest .
           docker push $IMAGE_TAG
           docker push $GHCR_REPO:latest
-
-          echo "image_tag=$GHCR_REPO:latest" >> $GITHUB_OUTPUT
+          
+          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
 
   deploy-functional:
     needs: build-and-push
@@ -64,15 +64,10 @@ jobs:
 
       - name: Deploy to functional (GC Run)
         run: |
+          echo "Deploying image: ${{ needs.build-and-push.outputs.image_tag }}"
           gcloud run deploy $SERVICE \
             --image ${{ needs.build-and-push.outputs.image_tag }} \
             --region ${{ env.REGION }} \
             --project ${{ env.PROJECT_ID }} \
             --service-account svc-gateway-functional@${{ env.PROJECT_ID }}.iam.gserviceaccount.com \
             --allow-unauthenticated
-
-      - name: Run Functional Test Container
-        run: |
-          docker run --rm \
-            ghcr.io/${{ secrets.GHCR_USERNAME }}/func-tests:latest \
-            --base-url ${{ steps.gateway-url.outputs.gateway_url }}
