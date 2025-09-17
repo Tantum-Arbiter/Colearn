@@ -103,22 +103,12 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Re-deploy Cloud Run Job with latest test image
+      - name: Update functional test job image
         run: |
-          gcloud run jobs replace --region=${{ env.REGION }} --project=${{ env.PROJECT_ID }} --file=- <<EOF
-          apiVersion: run.googleapis.com/v1
-          kind: Job
-          metadata:
-            name: gateway-functional-test-job
-          spec:
-            template:
-              spec:
-                containers:
-                  - image: europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/artifact-repo/gateway-functional-test:${{ needs.build-and-push.outputs.image_tag }}
-                serviceAccountName: svc-deploy-functional@${{ env.PROJECT_ID }}.iam.gserviceaccount.com
-                maxRetries: 0
-                timeoutSeconds: 600
-          EOF
+          gcloud run jobs update gateway-functional-test-job \
+            --image="europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/artifact-repo/gateway-functional-test:${{ needs.build-and-push.outputs.image_tag }}" \
+            --region=${{ env.REGION }} \
+            --project=${{ env.PROJECT_ID }}
 
       - name: Execute Cloud Run Job
         id: execute-tests
@@ -129,8 +119,9 @@ jobs:
             --project ${{ env.PROJECT_ID }} \
             --wait \
             --format="value(metadata.name)")
-  
+            --timeout=300s
           echo "JOB_NAME=$JOB_NAME" >> $GITHUB_ENV
+          echo "JOB_NAME=$JOB_NAME"
 
       - name: Get Exit Code
         id: check-exit-code
