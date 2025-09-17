@@ -58,6 +58,9 @@ jobs:
 
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "DEBUG: Built and pushed $GAR_IMAGE and $GAR_LATEST"
+  outputs:
+    version: ${{ steps.build.outputs.version }}
+
 
   deploy-functional:
     needs: build-and-push
@@ -76,6 +79,10 @@ jobs:
       - name: Debug GAR image url
         run: |
           echo "DEBUG: Deploying image=europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/artifact-repo/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.version }}"
+
+      - name: Check if version is available
+        run: |
+          echo "VERSION=${{ needs.build-and-push.outputs.version }}"
 
       - name: Deploy to Cloud Run
         run: |
