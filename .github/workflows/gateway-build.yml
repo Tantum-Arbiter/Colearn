@@ -60,9 +60,8 @@ jobs:
         with:
           project_id: ${{ env.PROJECT_ID }}
 
-      - name: Deploy to functional (GC Run)
+      - name: Deploy to Cloud Run
         run: |
-          echo "Deploying image: ${{ needs.build-and-push.outputs.image_tag }}"
           gcloud run deploy $SERVICE \
             --image ${{ needs.build-and-push.outputs.image_tag }} \
             --region ${{ env.REGION }} \
