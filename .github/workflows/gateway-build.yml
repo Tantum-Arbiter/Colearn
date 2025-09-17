@@ -20,7 +20,7 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     outputs:
-      image_tag: ${{ steps.gateway-image.outputs.image_tag }}   # reference new step id
+      image_tag: ${{ steps.gateway-image.outputs.image_tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,19 +34,17 @@ jobs:
       - name: Log in to GHCR
         run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
 
-      - id: gateway-image    # new step id
+      - id: gateway-image
         name: Build and Push Gateway Image
         working-directory: gateway-service
         run: |
-          PATCH=$(git rev-list --count HEAD)
-          VERSION="0.0.$PATCH"
-          IMAGE_TAG=$GHCR_REPO:$VERSION
+          IMAGE_TAG=$GHCR_REPO:${{ github.sha }}
           
           docker build -t $IMAGE_TAG -t $GHCR_REPO:latest .
           docker push $IMAGE_TAG
           docker push $GHCR_REPO:latest
-          
-          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPU
 
   deploy-functional:
     needs: build-and-push
