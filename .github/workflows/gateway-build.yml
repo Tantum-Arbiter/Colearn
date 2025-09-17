@@ -33,6 +33,7 @@ jobs:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
           create_credentials_file: true
           export_environment_variables: true
+          cleanup_credentials: false
 
       - name: Checkout
         uses: actions/checkout@v4
