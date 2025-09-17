@@ -63,7 +63,6 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "DEBUG: Built and pushed $GAR_IMAGE and $GAR_LATEST"
 
-
   deploy-functional:
     needs: build-and-push
     runs-on: ubuntu-latest
@@ -94,3 +93,20 @@ jobs:
           --project ${{ env.PROJECT_ID }} \
           --service-account svc-deploy-functional@${{ env.PROJECT_ID }}.iam.gserviceaccount.com \
           --no-allow-unauthenticated
+
+      - name: Cleanup previous instance
+        run: |
+          gcloud run revisions list \
+            --service=$SERVICE \
+            --region=$REGION \
+            --format="value(metadata.name,status.traffic[0].percent)" \
+            --project=$PROJECT_ID | \
+          while read revision traffic; do
+            if [[ "$traffic" == "0" ]]; then
+              echo "Deleting previous instance: $revision"
+              gcloud run revisions delete "$revision" \
+                --region=$REGION \
+                --project=$PROJECT_ID \
+                --quiet
+            fi
+          done
