@@ -33,8 +33,7 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
           create_credentials_file: true
-          export_environment_variables: true
-          cleanup_credentials: false
+          export_environment_variables: false
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -42,29 +41,28 @@ jobs:
           fetch-depth: 0
 
       - name: Authenticate Docker with Artifact Registry
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
         run: |
-          ACCESS_TOKEN=$(gcloud auth print-access-token)
+          ACCESS_TOKEN=$(gcloud --credential-file-override=${{ steps.auth.outputs.credentials_file_path }} auth print-access-token)
           echo $ACCESS_TOKEN | docker login -u oauth2accesstoken --password-stdin europe-west1-docker.pkg.dev
 
       - id: build
         working-directory: gateway-service
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
         run: |
           PATCH=$(git rev-list --count HEAD)
           VERSION="0.0.$PATCH"
           GAR_REPO="europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/artifact-repo/${{ env.IMAGE_NAME }}"
           GAR_IMAGE="$GAR_REPO:$VERSION"
           GAR_LATEST="$GAR_REPO:latest"
-                            
+
+          gcloud --credential-file-override=${{ steps.auth.outputs.credentials_file_path }} auth list
+
           docker build -t $GAR_IMAGE -t $GAR_LATEST .
           docker push $GAR_IMAGE
           docker push $GAR_LATEST
-          
+
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "DEBUG: Built and pushed $GAR_IMAGE and $GAR_LATEST"
+
 
   deploy-functional:
     needs: build-and-push
