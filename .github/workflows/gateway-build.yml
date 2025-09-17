@@ -31,6 +31,10 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
+      - name: Configure Docker for GAR
+        run: gcloud auth configure-docker europe-west1-docker.pkg.dev --quiet
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -45,9 +49,7 @@ jobs:
           GAR_REPO="europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/artifact-repo/${{ env.IMAGE_NAME }}"
           GAR_IMAGE="$GAR_REPO:$VERSION"
           GAR_LATEST="$GAR_REPO:latest"
-          
-          gcloud auth configure-docker europe-west1-docker.pkg.dev --quiet
-                    
+                            
           docker build -t $GAR_IMAGE -t $GAR_LATEST .
           docker push $GAR_IMAGE
           docker push $GAR_LATEST
