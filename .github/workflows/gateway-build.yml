@@ -25,7 +25,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Java   # <-- keep this for Gradle
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -62,6 +62,10 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ env.PROJECT_ID }}
+
+      - name: Debug image tag
+        run: |
+          echo "DEBUG: Deploying image=${{ needs.build-and-push.outputs.image_tag }}"
 
       - name: Deploy to Cloud Run
         run: |
