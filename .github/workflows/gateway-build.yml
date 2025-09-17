@@ -31,8 +31,13 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Log in to GHCR
-        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
+      - name: Authenticate with GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Configure Docker for GAR
+        run: gcloud auth configure-docker europe-west1-docker.pkg.dev --quiet
 
       - id: build
         working-directory: gateway-service
