@@ -39,22 +39,20 @@ jobs:
         run: |
           PATCH=$(git rev-list --count HEAD)
           VERSION="0.0.$PATCH"
-          GAR_IMAGE="europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/ghcr-remote-repo/${{ env.IMAGE_NAME }}:$VERSION"
-      
+          GAR_REPO="europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/ghcr-remote-repo/${{ env.IMAGE_NAME }}"
+          GAR_IMAGE="$GAR_REPO:$VERSION"
+          GAR_LATEST="$GAR_REPO:latest"
+          
+          # Authenticate Docker with GAR
           gcloud auth configure-docker europe-west1-docker.pkg.dev --quiet
-      
-          docker build -t $GAR_IMAGE -t $GAR_IMAGE:latest .
+          
+          # Build and push
+          docker build -t $GAR_IMAGE -t $GAR_LATEST .
           docker push $GAR_IMAGE
-          docker push $GAR_IMAGE:latest
-      
+          docker push $GAR_LATEST
+          
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "DEBUG: Built and pushed $GAR_IMAGE"
-
-      - id: set-output
-        run: |
-          source $GITHUB_WORKSPACE/image_tag.env
-          ENCODED=$(echo -n "$IMAGE_TAG" | base64)
-          echo "image_tag=$ENCODED" >> $GITHUB_OUTPUT
+          echo "DEBUG: Built and pushed $GAR_IMAGE and $GAR_LATEST"
 
   deploy-functional:
     needs: build-and-push
