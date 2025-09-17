@@ -114,6 +114,7 @@ jobs:
             --memory=2Gi \
             --cpu=2 \
             --max-retries=0
+            --timeout=300s
 
       - name: Execute Cloud Run Job
         id: execute-tests
@@ -123,7 +124,6 @@ jobs:
             --region ${{ env.REGION }} \
             --project ${{ env.PROJECT_ID }} \
             --wait \
-            --timeout=300s \
             --format="value(metadata.name)")
   
           echo "JOB_NAME=$JOB_NAME" >> $GITHUB_ENV
