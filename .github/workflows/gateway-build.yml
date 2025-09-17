@@ -70,7 +70,6 @@ jobs:
 
       - name: Debug GAR image url
         run: |
-          echo "DEBUG: Pushing image=\
           echo "DEBUG: Deploying image=europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/ghcr-remote-repo/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.version }}"
 
       - name: Deploy to Cloud Run
