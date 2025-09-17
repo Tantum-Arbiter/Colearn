@@ -40,7 +40,9 @@ jobs:
           fetch-depth: 0
 
       - name: Authenticate Docker with Artifact Registry
-        run: gcloud auth configure-docker europe-west1-docker.pkg.dev --quiet
+        run: |
+          ACCESS_TOKEN=$(gcloud auth print-access-token)
+          echo $ACCESS_TOKEN | docker login -u oauth2accesstoken --password-stdin europe-west1-docker.pkg.dev
 
       - id: build
         working-directory: gateway-service
