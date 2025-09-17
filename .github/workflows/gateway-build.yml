@@ -50,6 +50,8 @@ jobs:
 
       - id: build
         working-directory: gateway-service
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
         run: |
           PATCH=$(git rev-list --count HEAD)
           VERSION="0.0.$PATCH"
