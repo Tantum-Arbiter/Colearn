@@ -115,11 +115,12 @@ jobs:
         run: |
           echo "Executing Cloud Run Job: gateway-functional-test-job"
           JOB_NAME=$(gcloud run jobs execute gateway-functional-test-job \
-            --region ${{ env.REGION }} \
-            --project ${{ env.PROJECT_ID }} \
-            --wait \
-            --format="value(metadata.name)")
-            --timeout=300s
+          --region ${{ env.REGION }} \
+          --project ${{ env.PROJECT_ID }} \
+          --wait \
+          --timeout=300s \
+          --format="value(metadata.name)")
+          
           echo "JOB_NAME=$JOB_NAME" >> $GITHUB_ENV
           echo "JOB_NAME=$JOB_NAME"
 
