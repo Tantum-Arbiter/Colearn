@@ -43,6 +43,7 @@ jobs:
           docker push $GHCR_REPO:latest
 
           echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "DEBUG: Wrote image_tag=$IMAGE_TAG to GITHUB_OUTPUT"
 
   deploy-functional:
     needs: build-and-push
