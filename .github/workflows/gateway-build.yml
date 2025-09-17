@@ -105,7 +105,7 @@ jobs:
 
       - name: Re-deploy Cloud Run Job with latest test image
         run: |
-          gcloud run jobs replace <<EOF
+          gcloud run jobs replace --region=${{ env.REGION }} --project=${{ env.PROJECT_ID }} --file=- <<EOF
           apiVersion: run.googleapis.com/v1
           kind: Job
           metadata:
@@ -115,9 +115,9 @@ jobs:
               spec:
                 containers:
                   - image: europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/artifact-repo/gateway-functional-test:${{ needs.build-and-push.outputs.image_tag }}
-                    command: ["./gradlew", "cucumberTest", "--no-daemon"]
                 serviceAccountName: svc-deploy-functional@${{ env.PROJECT_ID }}.iam.gserviceaccount.com
-                restartPolicy: Never
+                maxRetries: 0
+                timeoutSeconds: 600
           EOF
 
       - name: Execute Cloud Run Job
