@@ -48,9 +48,13 @@ jobs:
         run: |
           PATCH=$(git rev-list --count HEAD)
           VERSION="0.0.$PATCH"
-          GAR_REPO="europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/artifact-repo/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.image_tag }}"
+          GAR_REPO="europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/artifact-repo/${{ env.IMAGE_NAME }}"
           GAR_IMAGE="$GAR_REPO:$VERSION"
           GAR_LATEST="$GAR_REPO:latest"
+          
+          echo "DEBUG: VERSION=$VERSION"
+          echo "DEBUG: GAR_IMAGE=$GAR_IMAGE"
+          echo "DEBUG: GAR_LATEST=$GAR_LATEST"
 
           docker build -t $GAR_IMAGE -t $GAR_LATEST .
           docker push $GAR_IMAGE
@@ -76,16 +80,16 @@ jobs:
 
       - name: Debug GAR image url
         run: |
-          echo "DEBUG: Deploying image=europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/artifact-repo/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.version }}"
+          echo "DEBUG: Deploying image=europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/artifact-repo/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.image_tag }}"
 
       - name: Check if version is available
         run: |
-          echo "VERSION=${{ needs.build-and-push.outputs.version }}"
+          echo "VERSION=${{ needs.build-and-push.outputs.image_tag }}"
 
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy $SERVICE \
-          --image "europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/artifact-repo/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.version }}" \
+          --image "europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/artifact-repo/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.image_tag }}" \
           --region ${{ env.REGION }} \
           --project ${{ env.PROJECT_ID }} \
           --service-account svc-deploy-functional@${{ env.PROJECT_ID }}.iam.gserviceaccount.com \
