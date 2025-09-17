@@ -37,7 +37,10 @@ jobs:
       - id: image
         working-directory: gateway-service
         run: |
-          IMAGE_TAG=$GHCR_REPO:${{ github.sha }}
+          PATCH=$(git rev-list --count HEAD)
+          VERSION="0.0.$PATCH"
+          IMAGE_TAG=$GHCR_REPO:$VERSION
+
           docker build -t $IMAGE_TAG -t $GHCR_REPO:latest .
           docker push $IMAGE_TAG
           docker push $GHCR_REPO:latest
