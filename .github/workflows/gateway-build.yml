@@ -41,6 +41,8 @@ jobs:
 
       - name: Configure Docker for GAR
         run: gcloud auth configure-docker europe-west1-docker.pkg.dev --quiet
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
 
       - id: build
         working-directory: gateway-service
