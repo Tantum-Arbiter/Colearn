@@ -20,7 +20,7 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     outputs:
-      image_tag: ${{ steps.image.outputs.image_tag }}
+      image_tag: ${{ steps.set-output.outputs.image_tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,7 +34,7 @@ jobs:
       - name: Log in to GHCR
         run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
 
-      - id: image
+      - id: build
         working-directory: gateway-service
         run: |
           PATCH=$(git rev-list --count HEAD)
@@ -45,11 +45,14 @@ jobs:
           docker push $IMAGE_TAG
           docker push $GHCR_REPO:latest
 
+          echo "DEBUG: Built and pushed $IMAGE_TAG"
+
+          echo "IMAGE_TAG=$IMAGE_TAG" >> image_tag.env
+
+      - id: set-output
+        run: |
+          source image_tag.env
           echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
-          echo "DEBUG: Wrote image_tag=$IMAGE_TAG to GITHUB_OUTPUT"
-        shell: bash
-        outputs:
-          image_tag: ${{ steps.image.outputs.image_tag }}
 
   deploy-functional:
     needs: build-and-push
