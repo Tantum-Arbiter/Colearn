@@ -39,7 +39,12 @@ jobs:
         run: |
           gcloud auth print-access-token | docker login \
           -u oauth2accesstoken \
-          --password-stdin europe-west1-docker.pkg.dev
+          --password-stdin https://europe-west1-docker.pkg.dev
+
+      - name: Verify Docker auth
+        run: |
+          cat ~/.docker/config.json
+
 
       - id: build
         working-directory: gateway-service
