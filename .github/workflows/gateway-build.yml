@@ -47,17 +47,6 @@ jobs:
 
           echo "image_tag=$GHCR_REPO:latest" >> $GITHUB_OUTPUT
 
-      - name: Create Git tag
-        run: |
-          PATCH=$(git rev-list --count HEAD)
-          VERSION="0.0.$PATCH"
-
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
-          
-          git tag "$VERSION"
-          git push origin "$VERSION"
-
   deploy-functional:
     needs: build-and-push
     runs-on: ubuntu-latest
