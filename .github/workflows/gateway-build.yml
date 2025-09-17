@@ -27,6 +27,7 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
+      - ID: auth
       - name: Authenticate with GCP
         uses: google-github-actions/auth@v2
         with:
@@ -46,6 +47,8 @@ jobs:
 
       - id: build
         working-directory: gateway-service
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
         run: |
           PATCH=$(git rev-list --count HEAD)
           VERSION="0.0.$PATCH"
