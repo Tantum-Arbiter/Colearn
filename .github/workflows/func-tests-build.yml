@@ -1,4 +1,4 @@
-name: Func Tests build and push
+name: Func Tests Build and Deploy
 
 on:
   push:
@@ -7,23 +7,55 @@ on:
       - '.github/workflows/func-tests-build.yml'
 
 env:
-  GHCR_REPO: ghcr.io/${{secrets.GHCR_USERNAME}}
+  IMAGE_NAME: gateway-functional-test
+  REGION: europe-west1
+  PROJECT_ID: apt-icon-472307-b7
+  SERVICE: gateway-functional-test
 
 jobs:
-  build-func-tests:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout full repo
+      - name: Checkout repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Log in to GHCR
-        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
+      - name: Authenticate with GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Build and Push Func Test Image
+      - name: Docker login to Artifact Registry
+        run: |
+          echo '${{ secrets.GCP_SA_KEY }}' | \
+            docker login -u _json_key --password-stdin \
+            https://europe-west1-docker.pkg.dev
+
+      - id: build
         working-directory: func-tests
         run: |
-          docker build -t func-tests:latest .
-          docker tag func-tests:latest $GHCR_REPO/func-tests:latest
-          docker push $GHCR_REPO/func-tests:latest
+          PATCH=$(git rev-list --count HEAD)
+          VERSION="0.0.$PATCH"
+          GAR_REPO="europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/artifact-repo/${{ env.IMAGE_NAME }}"
+          GAR_IMAGE="$GAR_REPO:$VERSION"
+          GAR_LATEST="$GAR_REPO:latest"
+
+          echo "DEBUG: VERSION=$VERSION"
+          echo "DEBUG: GAR_IMAGE=$GAR_IMAGE"
+          echo "DEBUG: GAR_LATEST=$GAR_LATEST"
+
+          docker build -t $GAR_IMAGE -t $GAR_LATEST .
+          docker push $GAR_IMAGE
+          docker push $GAR_LATEST
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+#      - name: Deploy to Cloud Run
+#        run: |
+#          gcloud run deploy $SERVICE \
+#            --image "europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/artifact-repo/${{ env.IMAGE_NAME }}:${{ steps.build.outputs.version }}" \
+#            --region ${{ env.REGION }} \
+#            --project ${{ env.PROJECT_ID }} \
+#            --service-account svc-deploy-functional@${{ env.PROJECT_ID }}.iam.gserviceaccount.com \
+#            --no-allow-unauthenticated

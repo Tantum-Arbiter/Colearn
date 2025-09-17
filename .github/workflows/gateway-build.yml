@@ -94,19 +94,57 @@ jobs:
           --service-account svc-deploy-functional@${{ env.PROJECT_ID }}.iam.gserviceaccount.com \
           --no-allow-unauthenticated
 
-      - name: Cleanup previous instance
+      - name: Deploy functional test container
         run: |
-          gcloud run revisions list \
-            --service=$SERVICE \
-            --region=$REGION \
-            --format="value(metadata.name,status.traffic[0].percent)" \
-            --project=$PROJECT_ID | \
-          while read revision traffic; do
-            if [[ "$traffic" == "0" ]]; then
-              echo "Deleting previous instance: $revision"
-              gcloud run revisions delete "$revision" \
-                --region=$REGION \
-                --project=$PROJECT_ID \
-                --quiet
-            fi
-          done
+          gcloud run deploy gateway-functional-test \
+            --image "europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/artifact-repo/gateway-functional-test:${{ needs.build-and-push.outputs.image_tag }}" \
+            --region ${{ env.REGION }} \
+            --project ${{ env.PROJECT_ID }} \
+            --service-account svc-deploy-functional@${{ env.PROJECT_ID }}.iam.gserviceaccount.com \
+            --no-allow-unauthenticated
+
+  run-functional-tests:
+    needs: deploy-functional
+    runs-on: ubuntu-latest
+    steps:
+      - name: Authenticate with GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Execute Cloud Run Job for functional tests
+        run: |
+          echo "Executing functional test job: gateway-functional-test-job"
+          gcloud run jobs execute gateway-functional-test-job \
+            --region europe-west1 \
+            --project apt-icon-472307-b7 \
+            --wait \
+            --format='value(status.runStatus.exitCode)' > exit_code.txt
+          
+          EXIT_CODE=$(cat exit_code.txt)
+          echo "Exit code: $EXIT_CODE"
+          
+          if [[ "$EXIT_CODE" != "0" ]]; then
+            echo "Functional tests failed"
+            exit 1
+          else
+            echo "Functional tests passed"
+          fi
+
+
+#      - name: Cleanup previous instance
+#        run: |
+#          gcloud run revisions list \
+#            --service=$SERVICE \
+#            --region=$REGION \
+#            --format="value(metadata.name,status.traffic[0].percent)" \
+#            --project=$PROJECT_ID | \
+#          while read revision traffic; do
+#            if [[ "$traffic" == "0" ]]; then
+#              echo "Deleting previous instance: $revision"
+#              gcloud run revisions delete "$revision" \
+#                --region=$REGION \
+#                --project=$PROJECT_ID \
+#                --quiet
+#            fi
+#          done
