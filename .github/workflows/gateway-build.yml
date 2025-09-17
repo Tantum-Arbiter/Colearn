@@ -12,6 +12,9 @@ permissions:
 env:
   IMAGE_NAME: gateway-service
   GHCR_REPO: ghcr.io/${{secrets.GHCR_USERNAME}}/gateway-service
+  REGION: europe-west1
+  PROJECT_ID: colearn-functional
+  SERVICE: gateway-service
 
 jobs:
   build-and-push:
@@ -29,7 +32,8 @@ jobs:
       - name: Log in to GHCR
         run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
 
-      - name: Build and Push Gateway Image
+      - id: meta
+        name: Build and Push Gateway Image
         working-directory: gateway-service
         run: |
           PATCH=$(git rev-list --count HEAD)
@@ -55,3 +59,32 @@ jobs:
           
           git tag "$VERSION"
           git push origin "$VERSION"
+
+  deploy-functional:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Authenticate with GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up gcloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Deploy to functional (GC Run)
+        run: |
+          gcloud run deploy $SERVICE \
+            --image ${{ needs.build-and-push.outputs.image_tag }} \
+            --region ${{ env.REGION }} \
+            --project ${{ env.PROJECT_ID }} \
+            --service-account svc-gateway-functional@${{ env.PROJECT_ID }}.iam.gserviceaccount.com \
+            --allow-unauthenticated
+
+      - name: Run Functional Test Container
+        run: |
+          docker run --rm \
+            ghcr.io/${{ secrets.GHCR_USERNAME }}/func-tests:latest \
+            --base-url ${{ steps.gateway-url.outputs.gateway_url }}
