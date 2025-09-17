@@ -40,11 +40,11 @@ jobs:
           PATCH=$(git rev-list --count HEAD)
           VERSION="0.0.$PATCH"
           IMAGE_TAG=$GHCR_REPO:$VERSION
-      
+          
           docker build -t $IMAGE_TAG -t $GHCR_REPO:latest .
           docker push $IMAGE_TAG
           docker push $GHCR_REPO:latest
-      
+          
           echo "DEBUG: Built and pushed $IMAGE_TAG"
           echo "IMAGE_TAG=$IMAGE_TAG" > $GITHUB_WORKSPACE/image_tag.env
 
@@ -71,12 +71,12 @@ jobs:
       - name: Debug GAR image url
         run: |
           echo "DEBUG: Pushing image=\
-          echo "DEBUG: Deploying image=europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/ghcr-remote-repo/gateway-service:0.0.$(git rev-list --count HEAD)"
+          echo "DEBUG: Deploying image=europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/ghcr-remote-repo/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.version }}"
 
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy $SERVICE \
-          --image "europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/ghcr-remote-repo/gateway-service:$VERSION" \
+          --image "europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/ghcr-remote-repo/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.version }}" \
           --region ${{ env.REGION }} \
           --project ${{ env.PROJECT_ID }} \
           --service-account svc-deploy-functional@${{ env.PROJECT_ID }}.iam.gserviceaccount.com \
