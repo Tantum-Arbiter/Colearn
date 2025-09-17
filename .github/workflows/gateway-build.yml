@@ -20,12 +20,12 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     outputs:
-      image_tag: ${{ steps.gateway-image.outputs.image_tag }}
+      image_tag: ${{ steps.image.outputs.image_tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Java
+      - name: Set up Java   # <-- keep this for Gradle
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -34,12 +34,10 @@ jobs:
       - name: Log in to GHCR
         run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
 
-      - id: gateway-image
-        name: Build and Push Gateway Image
+      - id: image
         working-directory: gateway-service
         run: |
           IMAGE_TAG=$GHCR_REPO:${{ github.sha }}
-          
           docker build -t $IMAGE_TAG -t $GHCR_REPO:latest .
           docker push $IMAGE_TAG
           docker push $GHCR_REPO:latest
