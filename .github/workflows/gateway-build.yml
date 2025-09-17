@@ -94,15 +94,6 @@ jobs:
           --service-account svc-deploy-functional@${{ env.PROJECT_ID }}.iam.gserviceaccount.com \
           --no-allow-unauthenticated
 
-      - name: Deploy functional test container
-        run: |
-          gcloud run deploy gateway-functional-test \
-            --image "europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/artifact-repo/gateway-functional-test:${{ needs.build-and-push.outputs.image_tag }}" \
-            --region ${{ env.REGION }} \
-            --project ${{ env.PROJECT_ID }} \
-            --service-account svc-deploy-functional@${{ env.PROJECT_ID }}.iam.gserviceaccount.com \
-            --no-allow-unauthenticated
-
   run-functional-tests:
     needs: deploy-functional
     runs-on: ubuntu-latest
@@ -112,18 +103,40 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Execute Cloud Run Job for functional tests
+      - name: Re-deploy Cloud Run Job with latest test image
         run: |
-          echo "Executing functional test job: gateway-functional-test-job"
-          gcloud run jobs execute gateway-functional-test-job \
-            --region europe-west1 \
-            --project apt-icon-472307-b7 \
+          echo "Redeploying job: gateway-functional-test-job"
+          gcloud run jobs deploy gateway-functional-test-job \
+            --image "europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/artifact-repo/gateway-functional-test:latest" \
+            --region ${{ env.REGION }} \
+            --project ${{ env.PROJECT_ID }} \
+            --service-account svc-deploy-functional@${{ env.PROJECT_ID }}.iam.gserviceaccount.com \
+            --memory=512Mi \
+            --cpu=1 \
+            --max-retries=0
+
+      - name: Execute Cloud Run Job
+        id: execute-tests
+        run: |
+          echo "Executing Cloud Run Job: gateway-functional-test-job"
+          JOB_NAME=$(gcloud run jobs execute gateway-functional-test-job \
+            --region ${{ env.REGION }} \
+            --project ${{ env.PROJECT_ID }} \
             --wait \
-            --format='value(status.runStatus.exitCode)' > exit_code.txt
+            --format="value(metadata.name)")
+  
+          echo "JOB_NAME=$JOB_NAME" >> $GITHUB_ENV
+
+      - name: Get Exit Code
+        id: check-exit-code
+        run: |
+          EXIT_CODE=$(gcloud run jobs executions describe $JOB_NAME \
+            --region ${{ env.REGION }} \
+            --project ${{ env.PROJECT_ID }} \
+            --format='value(status.runStatus.exitCode)')
           
-          EXIT_CODE=$(cat exit_code.txt)
-          echo "Exit code: $EXIT_CODE"
-          
+          echo "Exit Code: $EXIT_CODE"
+  
           if [[ "$EXIT_CODE" != "0" ]]; then
             echo "Functional tests failed"
             exit 1
@@ -131,6 +144,16 @@ jobs:
             echo "Functional tests passed"
           fi
 
+      - name: Print Logs from Cloud Run Job
+        run: |
+          echo "Fetching logs from execution: $JOB_NAME"
+  
+          gcloud logging read "resource.type=cloud_run_job AND resource.labels.execution_name=$JOB_NAME" \
+            --project=${{ env.PROJECT_ID }} \
+            --region=${{ env.REGION }} \
+            --limit=1000 \
+            --format="value(textPayload)"
+  
 
 #      - name: Cleanup previous instance
 #        run: |
