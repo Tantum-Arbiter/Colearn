@@ -93,6 +93,7 @@ jobs:
           --project ${{ env.PROJECT_ID }} \
           --service-account svc-deploy-functional@${{ env.PROJECT_ID }}.iam.gserviceaccount.com \
           --no-allow-unauthenticated
+          --set-env-vars SPRING_PROFILES_ACTIVE=dev,GATEWAY_API_URL=${{ secrets.GATEWAY_API_URL }}
 
   run-functional-tests:
     needs: deploy-functional
