@@ -26,7 +26,7 @@ services:
       gateway-service:
         condition: service_healthy
     environment:
-      GATEWAY_BASE_URL: http://gateway-service:8080
+      GATEWAY_HOST: http://gateway-service:8080
     volumes:
       - ./func-tests/build/reports:/app/build/reports
 
@@ -40,7 +40,7 @@ services:
       gateway-service:
         condition: service_healthy
     environment:
-      GATEWAY_BASE_URL: http://gateway-service:8080
+      GATEWAY_HOST: http://gateway-service:8080
     networks:
       - default-network
 
