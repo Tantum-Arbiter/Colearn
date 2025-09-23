@@ -18,6 +18,7 @@ private final String baseUrl = System.getenv().getOrDefault("GATEWAY_API_URL", "
 
     @When("I GET {string}")
     public void i_get(String path) throws IOException, InterruptedException {
+        System.out.println("*** >> URL is: " + baseUrl + path);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + path))
                 .GET()
