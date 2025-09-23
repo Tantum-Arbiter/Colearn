@@ -28,18 +28,21 @@ private final String baseUrl = System.getenv().getOrDefault("GATEWAY_HOST", "htt
 
     @Then("the response status should be {int}")
     public void the_response_status_should_be(Integer statusCode) {
+        System.out.println("*** [DEBUG] Status code: " + response.statusCode());
         assertTrue("Unexpected status code", response.statusCode() == statusCode);
 
     }
 
     @Then("the response body should contain {string}")
     public void the_response_body_should_contain(String expectedValue) {
+        System.out.println("*** [DEBUG] Response body: " + response.body());
         assertTrue("Expected value not found in body", response.body().contains(expectedValue));
 
     }
 
     @Then("the response JSON should contain value {string}")
     public void the_response_json_should_contain(String expectedValue) {
+        System.out.println("*** [DEBUG] Response body: " + response.body());
         assertTrue("Expected value not found in body", response.body().contains(expectedValue));
     }
 }
