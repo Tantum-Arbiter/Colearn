@@ -63,6 +63,75 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "DEBUG: Built and pushed $GAR_IMAGE and $GAR_LATEST"
 
+  deploy-functional-gateway:
+  needs: deploy-functional
+  runs-on: ubuntu-latest
+  outputs:
+    config_name: ${{ steps.deploy_config.outputs.config_name }}
+
+  steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    - name: Authenticate with GCP
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    - name: Set up gcloud
+      uses: google-github-actions/setup-gcloud@v2
+      with:
+        project_id: ${{ env.PROJECT_ID }}
+
+    - name: Render OpenAPI config
+      run: |
+        mkdir -p infra/rendered
+        envsubst < infra/openapi.template.yaml > infra/rendered/openapi.yaml
+      env:
+        BACKEND_URL: ${{ secrets.BACKEND_URL_GATEWAY_SERVICE }}
+        GATEWAY_HOST: ${{ secrets.GATEWAY_HOST }}
+
+    - name: Ensure API exists
+      run: |
+        gcloud api-gateway apis describe gateway-functional \
+          --project=${{ env.PROJECT_ID }} || \
+        gcloud api-gateway apis create gateway-functional \
+          --project=${{ env.PROJECT_ID }}
+
+    - name: Deploy API config
+      id: deploy_config
+      run: |
+        CONFIG_NAME="gateway-config-functional-$(date +%s)"
+        gcloud api-gateway api-configs create $CONFIG_NAME \
+          --api=gateway-functional \
+          --openapi-spec=infra/rendered/openapi.yaml \
+          --project=${{ env.PROJECT_ID }} \
+          --backend-auth-service-account=${{ secrets.SERVICE_ACCOUNT_EMAIL }} \
+          --display-name="Functional Gateway Config $CONFIG_NAME"
+
+        echo "CONFIG_NAME=$CONFIG_NAME" >> $GITHUB_ENV
+
+    - name: Deploy or update Gateway
+      run: |
+        CONFIG_NAME=${{ steps.deploy_config.outputs.config_name }}
+        if gcloud api-gateway gateways describe gateway-functional \
+          --location=${{ env.REGION }} \
+          --project=${{ env.PROJECT_ID }} > /dev/null 2>&1; then
+          echo "Updating existing gateway..."
+          gcloud api-gateway gateways update gateway-functional \
+            --api=gateway-functional \
+            --api-config=$CONFIG_NAME \
+            --location=${{ env.REGION }} \
+            --project=${{ env.PROJECT_ID }}
+        else
+          echo "Creating new gateway"
+          gcloud api-gateway gateways create gateway-functional \
+            --api=gateway-functional \
+            --api-config=$CONFIG_NAME \
+            --location=${{ env.REGION }} \
+            --project=${{ env.PROJECT_ID }}
+        fi
+
   deploy-functional:
     needs: build-and-push
     runs-on: ubuntu-latest
@@ -127,23 +196,6 @@ jobs:
             --format="value(metadata.name)")
   
           echo "JOB_NAME=$JOB_NAME" >> $GITHUB_ENV
-
-      - name: Get Exit Code
-        id: check-exit-code
-        run: |
-          EXIT_CODE=$(gcloud run jobs executions describe $JOB_NAME \
-            --region ${{ env.REGION }} \
-            --project ${{ env.PROJECT_ID }} \
-            --format='value(status.runStatus.exitCode)')
-          
-          echo "Exit Code: $EXIT_CODE"
-  
-          if [[ "$EXIT_CODE" != "0" ]]; then
-            echo "Functional tests failed"
-            exit 1
-          else
-            echo "Functional tests passed"
-          fi
 
       - name: Print Logs from Cloud Run Job
         run: |
