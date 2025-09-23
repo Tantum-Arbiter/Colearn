@@ -115,7 +115,7 @@ jobs:
             --memory=2Gi \
             --cpu=2 \
             --max-retries=0 \
-            --task-timeout=300s
+            --task-timeout=300s \
             --set-env-vars GATEWAY_API_URL=${{ secrets.GATEWAY_API_URL }}
 
       - name: Execute Cloud Run Job
