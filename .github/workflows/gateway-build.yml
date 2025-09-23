@@ -107,7 +107,6 @@ jobs:
             --api=gateway-functional \
             --openapi-spec=infra/rendered/openapi.yaml \
             --project=${{ env.PROJECT_ID }} \
-            --backend-auth-service-account=${{ secrets.SERVICE_ACCOUNT_EMAIL }} \
             --display-name="Functional Gateway Config $CONFIG_NAME"
   
           echo "CONFIG_NAME=$CONFIG_NAME" >> $GITHUB_OUTPUT
