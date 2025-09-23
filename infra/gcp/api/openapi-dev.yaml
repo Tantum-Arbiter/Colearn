@@ -14,15 +14,25 @@ paths:
     get:
       summary: Proxy GET
       operationId: proxyGet
+      parameters:
+        - name: proxy+
+          in: path
+          required: true
+          type: string
       responses:
         '200':
-          description: Successful response
+          description: Successful GET proxy
     post:
       summary: Proxy POST
       operationId: proxyPost
+      parameters:
+        - name: proxy+
+          in: path
+          required: true
+          type: string
       responses:
         '200':
-          description: Successful response
+          description: Successful POST proxy
     x-google-quota:
       limits:
         - name: global-limit
