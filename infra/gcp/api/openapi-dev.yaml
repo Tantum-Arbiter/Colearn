@@ -16,11 +16,3 @@ paths:
           unit: 1/min/{project}
           values:
             STANDARD: 100
-
-quota:
-  limits:
-    - name: per-minute-limit
-      metric: gateway.googleapis.com/requests
-      unit: "1/min/{project}"
-      values:
-        STANDARD: 60
