@@ -86,7 +86,7 @@ jobs:
       - name: Render OpenAPI config
         run: |
           mkdir -p infra/rendered
-          envsubst < infra/openapi.template.yaml > infra/rendered/openapi.yaml
+          envsubst < infra/gcp/api/openapi-dev.yaml > infra/rendered/openapi.yaml
         env:
           BACKEND_URL: ${{ secrets.BACKEND_URL_GATEWAY_SERVICE }}
           GATEWAY_HOST: ${{ secrets.GATEWAY_HOST }}
