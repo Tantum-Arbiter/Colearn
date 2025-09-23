@@ -84,54 +84,6 @@ jobs:
         with:
           project_id: ${{ env.PROJECT_ID }}
 
-      - name: Render OpenAPI config
-        run: |
-          mkdir -p infra/rendered
-          envsubst < infra/gcp/api/openapi-dev.yaml > infra/rendered/openapi.yaml
-        env:
-          BACKEND_URL: ${{ secrets.BACKEND_URL_GATEWAY_SERVICE }}
-          GATEWAY_HOST: ${{ secrets.GATEWAY_HOST }}
-
-      - name: Ensure API exists
-        run: |
-          gcloud api-gateway apis describe gateway-functional \
-            --project=${{ env.PROJECT_ID }} || \
-          gcloud api-gateway apis create gateway-functional \
-            --project=${{ env.PROJECT_ID }}
-
-      - name: Deploy API config
-        id: deploy_config
-        run: |
-          CONFIG_NAME="gateway-config-functional-$(date +%s)"
-          gcloud api-gateway api-configs create $CONFIG_NAME \
-            --api=gateway-functional \
-            --openapi-spec=infra/rendered/openapi.yaml \
-            --project=${{ env.PROJECT_ID }} \
-            --display-name="Functional Gateway Config $CONFIG_NAME"
-  
-          echo "CONFIG_NAME=$CONFIG_NAME" >> $GITHUB_OUTPUT
-
-      - name: Deploy or update Gateway
-        run: |
-          CONFIG_NAME=${{ steps.deploy_config.outputs.config_name }}
-          if gcloud api-gateway gateways describe gateway-functional \
-            --location=${{ env.REGION }} \
-            --project=${{ env.PROJECT_ID }} > /dev/null 2>&1; then
-            echo "Updating existing gateway..."
-            gcloud api-gateway gateways update gateway-functional \
-              --api=gateway-functional \
-              --api-config=$CONFIG_NAME \
-              --location=${{ env.REGION }} \
-              --project=${{ env.PROJECT_ID }}
-          else
-            echo "Creating new gateway"
-            gcloud api-gateway gateways create gateway-functional \
-              --api=gateway-functional \
-              --api-config=$CONFIG_NAME \
-              --location=${{ env.REGION }} \
-              --project=${{ env.PROJECT_ID }}
-          fi
-
   deploy-functional:
     needs: build-and-push
     runs-on: ubuntu-latest
