@@ -1,0 +1,20 @@
+swagger: '2.0'
+info:
+  title: gateway-service
+  description: Gateway API
+  version: 1.0.0
+host: gateway host url tbd
+x-google-backend:
+  address: gatewayy service url tbd
+
+paths:
+  /{proxy+}:
+    x-google-backend:
+      address: https://
+    x-google-quota:
+      limits:
+        - name: global-limit
+          metric: all-api-requests
+          unit: 1/min/{project}
+          values:
+            STANDARD: 100
