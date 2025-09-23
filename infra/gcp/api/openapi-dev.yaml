@@ -9,8 +9,6 @@ x-google-backend:
 
 paths:
   /{proxy+}:
-    x-google-backend:
-      address: ${BACKEND_URL}
     x-google-quota:
       limits:
         - name: global-limit
