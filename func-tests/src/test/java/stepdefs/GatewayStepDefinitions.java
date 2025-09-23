@@ -20,7 +20,7 @@ private final String baseUrl = System.getenv().getOrDefault("GATEWAY_HOST", "htt
     public void i_get(String path) throws IOException, InterruptedException {
         System.out.println("*** >> URL is: " + baseUrl + path);
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + path))
+                .uri(URI.create("https://" + baseUrl + path))
                 .GET()
                 .build();
         response = client.send(request, HttpResponse.BodyHandlers.ofString());
