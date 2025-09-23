@@ -9,6 +9,15 @@ host: ${GATEWAY_HOST}
 x-google-backend:
   address: ${BACKEND_URL}
 
+securityDefinitions:
+  api_key:
+    type: "apiKey"
+    name: "x-api-key"
+    in: "header"
+
+security:
+  - api_key: []
+
 paths:
   /{proxy+}:
     get:
@@ -22,14 +31,6 @@ paths:
       responses:
         '200':
           description: Successful GET proxy
-      x-google-quota:
-        limits:
-          - name: get-limit
-            metric: gateway.googleapis.com/requests
-            unit: 1/min/{project}
-            values:
-              STANDARD: 100
-
     post:
       summary: Proxy POST
       operationId: proxyPost
@@ -41,10 +42,3 @@ paths:
       responses:
         '200':
           description: Successful POST proxy
-      x-google-quota:
-        limits:
-          - name: post-limit
-            metric: gateway.googleapis.com/requests
-            unit: 1/min/{project}
-            values:
-              STANDARD: 100
