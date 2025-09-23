@@ -3,12 +3,26 @@ info:
   title: gateway-service
   description: Gateway API
   version: 1.0.0
+
 host: ${GATEWAY_HOST}
+
 x-google-backend:
-  address:  ${BACKEND_URL}
+  address: ${BACKEND_URL}
 
 paths:
   /{proxy+}:
+    get:
+      summary: Proxy GET
+      operationId: proxyGet
+      responses:
+        '200':
+          description: Successful response
+    post:
+      summary: Proxy POST
+      operationId: proxyPost
+      responses:
+        '200':
+          description: Successful response
     x-google-quota:
       limits:
         - name: global-limit
