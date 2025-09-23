@@ -5,12 +5,12 @@ info:
   version: 1.0.0
 host: ${GATEWAY_HOST}
 x-google-backend:
-  address:  ${BACKEND_URL_GATEWAY_SERVICE}
+  address:  ${BACKEND_URL}
 
 paths:
   /{proxy+}:
     x-google-backend:
-      address: ${BACKEND_URL_GATEWAY_SERVICE}
+      address: ${BACKEND_URL}
     x-google-quota:
       limits:
         - name: global-limit
