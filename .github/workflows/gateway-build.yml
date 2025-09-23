@@ -5,6 +5,7 @@ on:
     paths:
       - 'gateway-service/**'
       - '.github/workflows/gateway-build.yml'
+      - 'infra/**'
 
 permissions:
   contents: write
