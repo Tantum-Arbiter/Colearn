@@ -110,7 +110,7 @@ jobs:
             --backend-auth-service-account=${{ secrets.SERVICE_ACCOUNT_EMAIL }} \
             --display-name="Functional Gateway Config $CONFIG_NAME"
   
-          echo "CONFIG_NAME=$CONFIG_NAME" >> $GITHUB_ENV
+          echo "CONFIG_NAME=$CONFIG_NAME" >> $GITHUB_OUTPUT
 
       - name: Deploy or update Gateway
         run: |
