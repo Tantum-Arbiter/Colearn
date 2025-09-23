@@ -116,7 +116,7 @@ jobs:
             --cpu=2 \
             --max-retries=0 \
             --task-timeout=300s \
-            --set-env-vars GATEWAY_API_URL=${{ secrets.GATEWAY_API_URL }}
+            --update-env-vars GATEWAY_API_URL=${{ secrets.GATEWAY_API_URL }}
 
       - name: Execute Cloud Run Job
         id: execute-tests
