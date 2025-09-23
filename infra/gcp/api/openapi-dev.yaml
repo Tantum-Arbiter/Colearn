@@ -36,7 +36,7 @@ paths:
     x-google-quota:
       limits:
         - name: global-limit
-          metric: all-api-requests
+          metric: serviceruntime.googleapis.com/api/request_count
           unit: 1/min/{project}
           values:
             STANDARD: 100
