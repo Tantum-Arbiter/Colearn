@@ -3,14 +3,14 @@ info:
   title: gateway-service
   description: Gateway API
   version: 1.0.0
-host: gateway host url tbd
+host: ${GATEWAY_HOST}
 x-google-backend:
-  address: gatewayy service url tbd
+  address:  ${BACKEND_URL_GATEWAY_SERVICE}
 
 paths:
   /{proxy+}:
     x-google-backend:
-      address: https://
+      address: ${BACKEND_URL_GATEWAY_SERVICE}
     x-google-quota:
       limits:
         - name: global-limit
