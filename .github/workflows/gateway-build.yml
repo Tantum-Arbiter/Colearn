@@ -104,6 +104,10 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
+      - name: Debug Gateway API URL
+        run: |
+          echo "GATEWAY_API_URL = ${{ secrets.GATEWAY_API_URL }}"
+
       - name: Re-deploy Cloud Run Job with latest test image
         run: |
           echo "Redeploying job: gateway-functional-test-job"
