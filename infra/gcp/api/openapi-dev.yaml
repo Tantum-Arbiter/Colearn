@@ -22,6 +22,14 @@ paths:
       responses:
         '200':
           description: Successful GET proxy
+      x-google-quota:
+        limits:
+          - name: get-limit
+            metric: gateway.googleapis.com/requests
+            unit: 1/min/{project}
+            values:
+              STANDARD: 100
+
     post:
       summary: Proxy POST
       operationId: proxyPost
@@ -33,10 +41,10 @@ paths:
       responses:
         '200':
           description: Successful POST proxy
-    x-google-quota:
-      limits:
-        - name: global-limit
-          metric: serviceruntime.googleapis.com/api/request_count
-          unit: 1/min/{project}
-          values:
-            STANDARD: 100
+      x-google-quota:
+        limits:
+          - name: post-limit
+            metric: gateway.googleapis.com/requests
+            unit: 1/min/{project}
+            values:
+              STANDARD: 100
