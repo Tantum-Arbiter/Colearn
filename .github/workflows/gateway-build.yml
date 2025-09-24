@@ -138,24 +138,41 @@ jobs:
       - name: Get Exit Code
         id: check-exit-code
         run: |
-          EXIT_CODE=$(gcloud run jobs executions describe $JOB_NAME \
-            --region ${{ env.REGION }} \
-            --project ${{ env.PROJECT_ID }} \
+          MAX_RETRIES=10
+          RETRY_DELAY=5
+          COUNT=0
+          EXIT_CODE=""
+      
+          while [[ -z "$EXIT_CODE" && "$COUNT" -lt "$MAX_RETRIES" ]]; do
+            echo "Attempt $((COUNT+1)) to fetch exit code..."
+            EXIT_CODE=$(gcloud run jobs executions describe "$JOB_NAME" \
+            --region "${{ env.REGION }}" \
+            --project "${{ env.PROJECT_ID }}" \
             --format='value(status.runStatus.exitCode)')
-            
-          echo "Exit Code: $EXIT_CODE"
           
+            if [[ -z "$EXIT_CODE" ]]; then
+              echo "Exit code not yet available. Retrying in ${RETRY_DELAY}s..."
+              sleep "$RETRY_DELAY"
+              COUNT=$((COUNT+1))
+            fi
+          done
+      
+          echo "Final Exit Code: $EXIT_CODE"
+      
           if [[ -z "$EXIT_CODE" ]]; then
-            echo "ERROR: Exit code could not be determined"
+            echo "ERROR: Exit code could not be determined after $MAX_RETRIES attempts."
+            gcloud run jobs executions describe "$JOB_NAME" \
+            --region "${{ env.REGION }}" \
+            --project "${{ env.PROJECT_ID }}"
             exit 1
-          fi
-          
-          if [[ "$EXIT_CODE" != "0" ]]; then
-            echo "Functional tests failed"
+          elif [[ "$EXIT_CODE" != "0" ]]; then
+            echo "Functional tests failed with exit code $EXIT_CODE"
             exit 1
-          else
+            else
             echo "Functional tests passed"
           fi
+          
+          
 
       - name: Print Logs from Cloud Run Job
         run: |
