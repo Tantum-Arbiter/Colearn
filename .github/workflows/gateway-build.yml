@@ -148,7 +148,7 @@ jobs:
             EXIT_CODE=$(gcloud run jobs executions describe "$JOB_NAME" \
             --region "${{ env.REGION }}" \
             --project "${{ env.PROJECT_ID }}" \
-            --format='value(status.runStatus.exitCode)')
+            --format="value(taskStatus[0].status.exitCode)")
           
             if [[ -z "$EXIT_CODE" ]]; then
               echo "Exit code not yet available. Retrying in ${RETRY_DELAY}s..."
