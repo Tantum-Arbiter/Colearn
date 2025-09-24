@@ -142,9 +142,14 @@ jobs:
             --region ${{ env.REGION }} \
             --project ${{ env.PROJECT_ID }} \
             --format='value(status.runStatus.exitCode)')
-          
+            
           echo "Exit Code: $EXIT_CODE"
-  
+          
+          if [[ -z "$EXIT_CODE" ]]; then
+            echo "ERROR: Exit code could not be determined"
+            exit 1
+          fi
+          
           if [[ "$EXIT_CODE" != "0" ]]; then
             echo "Functional tests failed"
             exit 1
