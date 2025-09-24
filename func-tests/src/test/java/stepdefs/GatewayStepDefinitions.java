@@ -15,6 +15,7 @@ public class GatewayStepDefinitions {
     private final HttpClient client = HttpClient.newHttpClient();
 
 private final String baseUrl = System.getenv().getOrDefault("GATEWAY_HOST", "http://gateway-service:8080");
+private final String gatewayAudience = System.getenv().getOrDefault("GATEWAY_AUDIENCE", null);
 
 
 
@@ -32,28 +33,41 @@ private final String baseUrl = System.getenv().getOrDefault("GATEWAY_HOST", "htt
     // push to master, run in GCP
     @When("I GET {string}")
     public void i_get(String path) throws IOException, InterruptedException {
-        System.out.println("*** >> Base URL is: " + baseUrl);
+        System.out.println("*** >> GatewayAudience URL is: " + gatewayAudience);
         System.out.println("*** >> Full URL is: " + baseUrl + path);
 
         HttpRequest tokenRequest = HttpRequest.newBuilder()
-                .uri(URI.create("http://metadata/computeMetadata/v1/instance/service-accounts/default/identity?audience=" + baseUrl))
+                .uri(URI.create("http://metadata/computeMetadata/v1/instance/service-accounts/default/identity?audience=" + gatewayAudience)) //aud is the host used to get token from, need to auth
                 .header("Metadata-Flavor", "Google")
                 .GET()
                 .build();
 
-        HttpResponse<String> tokenResponse = client.send(tokenRequest, HttpResponse.BodyHandlers.ofString());
-        String token = tokenResponse.body();
+        if (gatewayAudience != null) {
+            try {
+                HttpResponse<String> tokenResponse = client.send(tokenRequest, HttpResponse.BodyHandlers.ofString());
+                String token = tokenResponse.body();
 
-        System.out.println("*** >> Acquired Identity Token: " + (token != null && !token.isEmpty() ? "TOKEN RECEIVED" : "NO TOKEN"));
-        System.out.println("*** >> Token value: " + token);
+                System.out.println("*** >> REMOTE RUN: Acquired Identity Token: " + (token != null && !token.isEmpty() ? "TOKEN RECEIVED" : "NO TOKEN"));
+                System.out.println("*** >> REMOTE RUN: Token value: " + token);
 
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + path))
-                .header("Authorization", "Bearer " + token)
-                .GET()
-                .build();
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(baseUrl + path))
+                        .header("Authorization", "Bearer " + token)
+                        .GET()
+                        .build();
 
-        response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println("*** >> LOCAL RUN: URL is: " + baseUrl + path);
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + path))
+                    .GET()
+                    .build();
+            response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        }
     }
 
     @Then("the response status should be {int}")

@@ -93,7 +93,7 @@ jobs:
           --project ${{ env.PROJECT_ID }} \
           --service-account svc-deploy-functional@${{ env.PROJECT_ID }}.iam.gserviceaccount.com \
           --no-allow-unauthenticated \
-          --set-env-vars SPRING_PROFILES_ACTIVE=dev,GATEWAY_HOST=${{ secrets.GATEWAY_HOST }}
+          --set-env-vars SPRING_PROFILES_ACTIVE=dev,GATEWAY_HOST=${{ secrets.GATEWAY_HOST }},GATEWAY_AUDIENCE=${{ secrets.GATEWAY_AUDIENCE }}
 
   run-functional-tests:
     needs: deploy-functional
@@ -107,6 +107,7 @@ jobs:
       - name: Debug Gateway API URL
         run: |
           echo "GATEWAY_HOST = ${{ secrets.GATEWAY_HOST }}"
+          echo "GATEWAY_AUDIENCE = ${{ secrets.GATEWAY_AUDIENCE }}"
 
       - name: Re-deploy Cloud Run Job with latest test image
         run: |
@@ -120,7 +121,7 @@ jobs:
             --cpu=2 \
             --max-retries=0 \
             --task-timeout=300s \
-            --set-env-vars GATEWAY_HOST=${{ secrets.GATEWAY_HOST }}
+            --set-env-vars GATEWAY_HOST=${{ secrets.GATEWAY_HOST }},GATEWAY_AUDIENCE=${{ secrets.GATEWAY_AUDIENCE }}
 
       - name: Execute Cloud Run Job
         id: execute-tests
