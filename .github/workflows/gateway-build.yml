@@ -135,16 +135,6 @@ jobs:
   
           echo "JOB_NAME=$JOB_NAME" >> $GITHUB_ENV          
 
-      - name: Print Logs from Cloud Run Job
-        run: |
-          echo "Fetching logs from execution: $JOB_NAME"
-  
-          gcloud logging read "resource.type=cloud_run_job AND resource.labels.execution_name=$JOB_NAME" \
-            --project=${{ env.PROJECT_ID }} \
-            --region=${{ env.REGION }} \
-            --limit=1000 \
-            --format="value(textPayload)"
-
 #      - name: Cleanup previous instance
 #        run: |
 #          gcloud run revisions list \
