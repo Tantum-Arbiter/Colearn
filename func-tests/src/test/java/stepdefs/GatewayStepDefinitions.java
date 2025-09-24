@@ -23,7 +23,7 @@ private final String baseUrl = System.getenv().getOrDefault("GATEWAY_HOST", "htt
 //    public void i_get(String path) throws IOException, InterruptedException {
 //        System.out.println("*** >> URL is: " + baseUrl + path);
 //        HttpRequest request = HttpRequest.newBuilder()
-//                .uri(URI.create("https://" + baseUrl + path))
+//                .uri(URI.create(baseUrl + path))
 //                .GET()
 //                .build();
 //        response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -54,7 +54,6 @@ private final String baseUrl = System.getenv().getOrDefault("GATEWAY_HOST", "htt
 
         response = client.send(request, HttpResponse.BodyHandlers.ofString());
     }
-
 
     @Then("the response status should be {int}")
     public void the_response_status_should_be(Integer statusCode) {

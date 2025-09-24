@@ -120,7 +120,7 @@ jobs:
             --cpu=2 \
             --max-retries=0 \
             --task-timeout=300s \
-            --update-env-vars GATEWAY_HOST=${{ secrets.GATEWAY_HOST }}
+            --set-env-vars GATEWAY_HOST=${{ secrets.GATEWAY_HOST }}
 
       - name: Execute Cloud Run Job
         id: execute-tests
