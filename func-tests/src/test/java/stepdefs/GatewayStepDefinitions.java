@@ -45,6 +45,7 @@ private final String baseUrl = System.getenv().getOrDefault("GATEWAY_HOST", "htt
         String token = tokenResponse.body();
 
         System.out.println("*** >> Acquired Identity Token: " + (token != null && !token.isEmpty() ? "TOKEN RECEIVED" : "NO TOKEN"));
+        System.out.println("*** >> Token value: " + token);
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + path))
