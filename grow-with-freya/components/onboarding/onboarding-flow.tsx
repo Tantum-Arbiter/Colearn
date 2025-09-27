@@ -1,0 +1,86 @@
+import React, { useState } from 'react';
+import { OnboardingScreen } from './onboarding-screen';
+import { useAppStore } from '@/store/app-store';
+
+interface OnboardingFlowProps {
+  onComplete: () => void;
+}
+
+export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const { setOnboardingComplete } = useAppStore();
+
+  const onboardingScreens = [
+    {
+      title: "Welcome!",
+      body: "Help your child's early development with our stories and activities",
+      illustration: "family reading together",
+      buttonLabel: "Next",
+    },
+    {
+      title: "Why we limit screen time",
+      body: "We encourage parents to use this app together with their child.",
+      illustration: "parent hugging two children",
+      buttonLabel: "Next",
+    },
+    {
+      title: "Lets make it about them!",
+      body: "What's your name? Personalize the experience by entering your name and creating an avatar!",
+      illustration: "two children avatars (Tina and Bruno)",
+      buttonLabel: "Next",
+    },
+    {
+      title: "Record your voice!",
+      body: "Narrate your stories with your voice. Comfort your child whilst you're not there.",
+      illustration: "adult holding phone speaking",
+      buttonLabel: "Next",
+    },
+    {
+      title: "Backed by Research!",
+      body: "Our product and content is created with input from children development experts and researchers. Every child deserves the best start to their life, that's why we're entirely free.",
+      illustration: "parent hugging child",
+      buttonLabel: "Let's begin…",
+    },
+  ];
+
+  const handleNext = () => {
+    setIsTransitioning(true);
+
+    setTimeout(() => {
+      if (currentStep < onboardingScreens.length - 1) {
+        setCurrentStep(currentStep + 1);
+      } else {
+        setOnboardingComplete(true);
+        onComplete();
+      }
+      setIsTransitioning(false);
+    }, 300);
+  };
+
+  const handlePrevious = () => {
+    if (currentStep > 0) {
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setCurrentStep(currentStep - 1);
+        setIsTransitioning(false);
+      }, 300);
+    }
+  };
+
+  const currentScreen = onboardingScreens[currentStep];
+
+  return (
+    <OnboardingScreen
+      title={currentScreen.title}
+      body={currentScreen.body}
+      illustration={currentScreen.illustration}
+      buttonLabel={currentScreen.buttonLabel}
+      onNext={handleNext}
+      onPrevious={handlePrevious}
+      currentStep={currentStep + 1}
+      totalSteps={onboardingScreens.length}
+      isTransitioning={isTransitioning}
+    />
+  );
+}

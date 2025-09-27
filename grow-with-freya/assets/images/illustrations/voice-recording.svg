@@ -1,0 +1,23 @@
+<svg width="300" height="200" viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Woman character -->
+  <g transform="translate(100, 30)">
+    <!-- Body -->
+    <ellipse cx="50" cy="120" rx="30" ry="40" fill="#F39C12"/>
+    <!-- Head -->
+    <circle cx="50" cy="60" r="30" fill="#D2691E"/>
+    <!-- Hair -->
+    <path d="M 25 45 Q 50 20 75 45 Q 70 35 50 35 Q 30 35 25 45" fill="#8B4513"/>
+    <!-- Eyes -->
+    <circle cx="42" cy="55" r="3" fill="#333"/>
+    <circle cx="58" cy="55" r="3" fill="#333"/>
+    <!-- Smile -->
+    <path d="M 40 70 Q 50 75 60 70" stroke="#333" stroke-width="2" fill="none"/>
+    <!-- Phone in hand -->
+    <rect x="80" y="80" width="15" height="25" rx="3" fill="#333"/>
+    <rect x="82" y="82" width="11" height="21" rx="2" fill="#4A90E2"/>
+    <!-- Sound waves -->
+    <path d="M 100 85 Q 110 85 110 95 Q 110 105 100 105" stroke="#FF6B6B" stroke-width="2" fill="none"/>
+    <path d="M 105 80 Q 120 80 120 95 Q 120 110 105 110" stroke="#FF6B6B" stroke-width="2" fill="none"/>
+    <path d="M 110 75 Q 130 75 130 95 Q 130 115 110 115" stroke="#FF6B6B" stroke-width="2" fill="none"/>
+  </g>
+</svg>
