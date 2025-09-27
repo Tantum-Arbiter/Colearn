@@ -1,0 +1,44 @@
+<svg width="300" height="200" viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Tina Character -->
+  <g transform="translate(50, 50)">
+    <!-- Tina's body -->
+    <ellipse cx="30" cy="80" rx="25" ry="35" fill="#FFB6C1"/>
+    <!-- Tina's head -->
+    <circle cx="30" cy="35" r="25" fill="#FDBCB4"/>
+    <!-- Tina's hair -->
+    <path d="M 10 25 Q 30 5 50 25 Q 45 15 30 15 Q 15 15 10 25" fill="#F4D03F"/>
+    <!-- Tina's eyes -->
+    <circle cx="25" cy="30" r="3" fill="#333"/>
+    <circle cx="35" cy="30" r="3" fill="#333"/>
+    <!-- Tina's smile -->
+    <path d="M 22 40 Q 30 45 38 40" stroke="#333" stroke-width="2" fill="none"/>
+    <!-- Magic wand -->
+    <line x1="60" y1="30" x2="75" y2="15" stroke="#8B4513" stroke-width="3"/>
+    <polygon points="75,15 78,12 81,15 78,18" fill="#FFD700"/>
+    <!-- Sparkles -->
+    <text x="80" y="20" font-family="Arial" font-size="12" fill="#FFD700">✨</text>
+  </g>
+  
+  <!-- Bruno Character -->
+  <g transform="translate(180, 50)">
+    <!-- Bruno's body -->
+    <ellipse cx="30" cy="80" rx="25" ry="35" fill="#4A90E2"/>
+    <!-- Bruno's head -->
+    <circle cx="30" cy="35" r="25" fill="#8B4513"/>
+    <!-- Bruno's hair -->
+    <circle cx="30" cy="25" r="20" fill="#2F4F4F"/>
+    <!-- Bruno's eyes -->
+    <circle cx="25" cy="30" r="3" fill="#333"/>
+    <circle cx="35" cy="30" r="3" fill="#333"/>
+    <!-- Bruno's smile -->
+    <path d="M 22 40 Q 30 45 38 40" stroke="#333" stroke-width="2" fill="none"/>
+    <!-- Rocket toy -->
+    <ellipse cx="65" cy="70" rx="8" ry="20" fill="#FF6B6B"/>
+    <polygon points="65,50 60,45 70,45" fill="#FFD700"/>
+    <circle cx="65" cy="65" r="3" fill="#FFF"/>
+  </g>
+  
+  <!-- Names -->
+  <text x="65" y="180" font-family="Comic Sans MS, cursive" font-size="16" fill="#333" text-anchor="middle">Tina</text>
+  <text x="195" y="180" font-family="Comic Sans MS, cursive" font-size="16" fill="#333" text-anchor="middle">Bruno</text>
+</svg>
