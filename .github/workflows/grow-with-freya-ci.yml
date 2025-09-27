@@ -1,0 +1,227 @@
+name: Grow with Freya - CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop, Grow-with-Freya-app ]
+    paths:
+      - 'grow-with-freya/**'
+      - '.github/workflows/grow-with-freya-ci.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'grow-with-freya/**'
+      - '.github/workflows/grow-with-freya-ci.yml'
+
+env:
+  WORKING_DIRECTORY: grow-with-freya
+  NODE_VERSION: '20'
+  EXPO_CLI_VERSION: 'latest'
+
+jobs:
+  # Job 1: Code Quality & Testing
+  test-and-lint:
+    name: 🧪 Test & Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+    
+    steps:
+      - name: 📚 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔍 Run ESLint
+        run: npm run lint || echo "Linting completed with warnings"
+
+      - name: 🧪 Run tests
+        run: npm test -- --coverage --watchAll=false --passWithNoTests=false
+
+      - name: 📊 Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          directory: ${{ env.WORKING_DIRECTORY }}/coverage
+          flags: unittests
+          name: grow-with-freya-coverage
+          fail_ci_if_error: false
+
+      - name: 💾 Cache test results
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.WORKING_DIRECTORY }}/coverage
+          key: test-results-${{ github.sha }}
+          restore-keys: |
+            test-results-
+
+  # Job 2: TypeScript Type Checking
+  type-check:
+    name: 🔧 TypeScript Check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+    
+    steps:
+      - name: 📚 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔧 TypeScript type check
+        run: npx tsc --noEmit
+
+  # Job 3: Expo Development Build
+  expo-development-build:
+    name: 📱 Expo Development Build
+    runs-on: ubuntu-latest
+    needs: [test-and-lint, type-check]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/Grow-with-Freya-app')
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+    
+    steps:
+      - name: 📚 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+
+      - name: 🏗 Setup Expo CLI
+        run: npm install -g @expo/cli@${{ env.EXPO_CLI_VERSION }}
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔧 Expo doctor check
+        run: npx expo doctor
+
+      - name: 🌐 Export for web
+        run: npx expo export --platform web
+
+      - name: 📦 Archive web build
+        uses: actions/upload-artifact@v3
+        with:
+          name: expo-web-build-${{ github.sha }}
+          path: ${{ env.WORKING_DIRECTORY }}/dist
+          retention-days: 7
+
+  # Job 4: EAS Build (for native apps - requires EAS setup)
+  eas-build:
+    name: 📱 EAS Build (Preview)
+    runs-on: ubuntu-latest
+    needs: [test-and-lint, type-check]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+    
+    steps:
+      - name: 📚 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+
+      - name: 🏗 Setup Expo and EAS
+        run: |
+          npm install -g @expo/cli@${{ env.EXPO_CLI_VERSION }}
+          npm install -g eas-cli
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      # Note: This step requires EXPO_TOKEN secret to be set in GitHub repository settings
+      - name: 🔐 Authenticate with Expo
+        run: echo "EAS build requires EXPO_TOKEN secret - skipping for now"
+        # Uncomment when ready to use EAS:
+        # run: eas login --non-interactive
+        # env:
+        #   EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      # Uncomment when ready to use EAS builds:
+      # - name: 📱 Build preview (Android)
+      #   run: eas build --platform android --profile preview --non-interactive
+      #   env:
+      #     EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      # - name: 📱 Build preview (iOS)
+      #   run: eas build --platform ios --profile preview --non-interactive
+      #   env:
+      #     EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+  # Job 5: Security & Dependency Audit
+  security-audit:
+    name: 🔒 Security Audit
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+    
+    steps:
+      - name: 📚 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+
+      - name: 🔒 Run npm audit
+        run: npm audit --audit-level=moderate || echo "Audit completed with warnings"
+
+      - name: 📦 Check for outdated packages
+        run: npm outdated || echo "Package check completed"
+
+  # Job 6: Deployment Summary
+  deployment-summary:
+    name: 📋 Deployment Summary
+    runs-on: ubuntu-latest
+    needs: [test-and-lint, type-check, expo-development-build, security-audit]
+    if: always()
+    
+    steps:
+      - name: 📋 Create deployment summary
+        run: |
+          echo "## 🚀 Grow with Freya - Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Build Status:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tests & Lint**: ${{ needs.test-and-lint.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **TypeScript Check**: ${{ needs.type-check.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Expo Build**: ${{ needs.expo-development-build.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Security Audit**: ${{ needs.security-audit.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📱 Available Artifacts:" >> $GITHUB_STEP_SUMMARY
+          echo "- Web build available for download (7 days retention)" >> $GITHUB_STEP_SUMMARY
+          echo "- Test coverage reports uploaded to Codecov" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔗 Quick Links:" >> $GITHUB_STEP_SUMMARY
+          echo "- [Repository](https://github.com/${{ github.repository }})" >> $GITHUB_STEP_SUMMARY
+          echo "- [Commit](https://github.com/${{ github.repository }}/commit/${{ github.sha }})" >> $GITHUB_STEP_SUMMARY
