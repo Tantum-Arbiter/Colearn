@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
-import { View, StyleSheet, Dimensions, Pressable, PanResponder } from 'react-native';
+import { View, StyleSheet, Dimensions, Pressable, PanResponder, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -40,6 +41,26 @@ export function OnboardingScreen({
   totalSteps,
   isTransitioning = false,
 }: OnboardingScreenProps) {
+  const insets = useSafeAreaInsets();
+
+  // Device-specific adjustments for Dynamic Island and notches
+  const getProgressTopMargin = () => {
+    // Base margin for progress indicator
+    const baseMargin = 10;
+
+    // Add extra space for devices with Dynamic Island or notch
+    // insets.top will be larger on devices with Dynamic Island/notch
+    if (insets.top > 44) {
+      // Devices with Dynamic Island (iPhone 14 Pro+) or larger notches
+      return insets.top + baseMargin + 5;
+    } else if (insets.top > 20) {
+      // Devices with standard notch (iPhone X series)
+      return insets.top + baseMargin;
+    } else {
+      // Older devices without notch (iPhone 8, SE, etc.)
+      return insets.top + baseMargin + 20;
+    }
+  };
 
   const buttonScale = useSharedValue(1);
   const textOpacity = useSharedValue(0);
@@ -277,7 +298,7 @@ export function OnboardingScreen({
       >
 
 
-      <View style={styles.progressContainer}>
+      <View style={[styles.progressContainer, { marginTop: getProgressTopMargin() }]}>
         <View style={styles.progressWrapper}>
           {[...Array(totalSteps)].map((_, index) => (
             <View
@@ -366,7 +387,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 16,
-    paddingTop: 50,
+    paddingTop: 20, // Reduced since we're using safe area insets
     paddingBottom: 30,
   },
 

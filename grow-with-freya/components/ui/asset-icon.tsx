@@ -2,7 +2,7 @@ import React from 'react';
 import { View, StyleSheet, Image } from 'react-native';
 
 interface AssetIconProps {
-  source: any; // The require() path to your asset
+  source: any;
   size?: number;
   color?: string;
   style?: any;
@@ -30,6 +30,4 @@ const styles = StyleSheet.create({
   },
 });
 
-// Usage examples:
-// <AssetIcon source={require('@/assets/images/menu-icons/stories.png')} size={32} />
-// <AssetIcon source={require('@/assets/images/menu-icons/stories.svg')} size={32} color="#4A90E2" />
+
