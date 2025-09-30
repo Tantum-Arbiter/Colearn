@@ -1,0 +1,111 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`MenuIcon Icon Rendering Tests MenuIcon Component Rendering should render bedtime icon without errors 1`] = `
+<div
+  className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+  dir={null}
+  ref={[Function]}
+>
+  <div
+    className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt"
+    dir={null}
+    onBlur={[Function]}
+    onClick={[Function]}
+    onContextMenu={[Function]}
+    onFocus={[Function]}
+    onKeyDown={[Function]}
+    ref={[Function]}
+    tabIndex={0}
+  >
+    MockBedtimeSvg-48x48-1
+  </div>
+</div>
+`;
+
+exports[`MenuIcon Icon Rendering Tests MenuIcon Component Rendering should render emotions icon without errors 1`] = `
+<div
+  className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+  dir={null}
+  ref={[Function]}
+>
+  <div
+    className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt"
+    dir={null}
+    onBlur={[Function]}
+    onClick={[Function]}
+    onContextMenu={[Function]}
+    onFocus={[Function]}
+    onKeyDown={[Function]}
+    ref={[Function]}
+    tabIndex={0}
+  >
+    MockEmotionsSvg-48x48-1
+  </div>
+</div>
+`;
+
+exports[`MenuIcon Icon Rendering Tests MenuIcon Component Rendering should render screentime icon without errors 1`] = `
+<div
+  className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+  dir={null}
+  ref={[Function]}
+>
+  <div
+    className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt"
+    dir={null}
+    onBlur={[Function]}
+    onClick={[Function]}
+    onContextMenu={[Function]}
+    onFocus={[Function]}
+    onKeyDown={[Function]}
+    ref={[Function]}
+    tabIndex={0}
+  >
+    MockScreentimeSvg-48x48-1
+  </div>
+</div>
+`;
+
+exports[`MenuIcon Icon Rendering Tests MenuIcon Component Rendering should render sensory icon without errors 1`] = `
+<div
+  className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+  dir={null}
+  ref={[Function]}
+>
+  <div
+    className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt"
+    dir={null}
+    onBlur={[Function]}
+    onClick={[Function]}
+    onContextMenu={[Function]}
+    onFocus={[Function]}
+    onKeyDown={[Function]}
+    ref={[Function]}
+    tabIndex={0}
+  >
+    MockSensorySvg-48x48-1
+  </div>
+</div>
+`;
+
+exports[`MenuIcon Icon Rendering Tests MenuIcon Component Rendering should render stories icon without errors 1`] = `
+<div
+  className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+  dir={null}
+  ref={[Function]}
+>
+  <div
+    className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt"
+    dir={null}
+    onBlur={[Function]}
+    onClick={[Function]}
+    onContextMenu={[Function]}
+    onFocus={[Function]}
+    onKeyDown={[Function]}
+    ref={[Function]}
+    tabIndex={0}
+  >
+    MockStoriesSvg-48x48-1
+  </div>
+</div>
+`;
