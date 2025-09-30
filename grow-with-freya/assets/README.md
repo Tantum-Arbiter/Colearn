@@ -98,8 +98,8 @@ The `PngIllustration` component automatically handles:
 
 ### 3. Optimization Tips
 - **PNG files**: Use high resolution (2x-3x) for crisp display
-- **SVG files**: Preferred for icons and simple graphics
-- **File sizes**: Optimize for mobile (aim for <500KB per illustration)
+- **SVG files**: Preferred for icons and simple graphics, but keep under 500KB to avoid Babel limits
+- **File sizes**: Optimize for mobile (aim for <500KB per file)
 - **Naming**: Use kebab-case (e.g., `voice-recording.png`)
 
 ## Quality Standards
