@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
@@ -9,7 +9,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from './themed-text';
 import { DefaultPage } from './default-page';
-import { useAppStore } from '../store/app-store';
+import { ErrorBoundary } from './error-boundary';
+import {
+  useDebounce,
+  useThrottle,
+  useSafeAnimation,
+  useMemoryMonitor,
+  performanceLogger,
+  useSafeState
+} from './main-menu/performance-utils';
 
 import {
   MenuIcon,
@@ -35,92 +43,122 @@ import {
 } from './main-menu/index';
 import type { MenuItemData, IconStatus } from './main-menu/index';
 
-// Legacy code removed - now using refactored modules
-
-// Old component definitions removed - now using refactored modules
-
-// Interfaces moved to refactored modules
-
 interface MainMenuProps {
   onNavigate: (destination: string) => void;
 }
 
-// Old MenuIcon component removed - now using refactored module
-
-function MainMenuComponent({}: MainMenuProps) {
+function MainMenuComponent({ onNavigate }: MainMenuProps) {
   const insets = useSafeAreaInsets();
-  const [selectedIcon, setSelectedIcon] = useState('stories-icon');
-  const [menuItems, setMenuItems] = useState(DEFAULT_MENU_ITEMS);
-  const [triggerSelectionAnimation, setTriggerSelectionAnimation] = useState(false);
 
-  // Animation values using refactored constants
+  // Performance monitoring
+  useMemoryMonitor('MainMenu');
+
+  // Safe state management to prevent updates on unmounted components
+  const [selectedIcon, setSelectedIcon] = useSafeState('stories-icon');
+  const [menuItems, setMenuItems] = useSafeState(DEFAULT_MENU_ITEMS);
+  const [triggerSelectionAnimation, setTriggerSelectionAnimation] = useSafeState(false);
+
+  // Animation values with cleanup
   const starRotation = useSharedValue(0);
   const balloonFloat1 = useSharedValue(-200);
   const balloonFloat2 = useSharedValue(-400);
   const rocketFloat1 = useSharedValue(SCREEN_WIDTH + 100);
   const rocketFloat2 = useSharedValue(-200);
 
+  // Safe menu state management
+  const [menuOrder, setMenuOrder] = useSafeState<MenuItemData[]>(menuItems);
+  const [currentPage, setCurrentPage] = useSafeState<MenuItemData | null>(null);
+  const [lastSwapTime, setLastSwapTime] = useSafeState<number>(0);
+  const [newlySelectedItem, setNewlySelectedItem] = useSafeState<string | null>(null);
 
+  // Performance optimizations
+  const { startAnimation: startMenuAnimation, endAnimation: endMenuAnimation } = useSafeAnimation('menu-interaction');
 
+  // Component cleanup on unmount
+  useEffect(() => {
+    return () => {
+      // Clean up all animations when component unmounts
+      endMenuAnimation();
 
+      // Reset animation values to prevent memory leaks
+      starRotation.value = 0;
+      balloonFloat1.value = -200;
+      balloonFloat2.value = -400;
+      rocketFloat1.value = SCREEN_WIDTH + 100;
+      rocketFloat2.value = -200;
 
-
-
-  // State for tracking current arrangement and page
-  const [menuOrder, setMenuOrder] = useState<MenuItemData[]>(menuItems);
-  const [currentPage, setCurrentPage] = useState<MenuItemData | null>(null);
-  const [lastSwapTime, setLastSwapTime] = useState<number>(0);
-  const [newlySelectedItem, setNewlySelectedItem] = useState<string | null>(null);
-
-
-
-  // Handle icon selection with smooth swapping animation
-  const handleIconPress = (selectedItem: MenuItemData) => {
-    const centerItem = menuOrder[0]; // First item is always center
-    const currentTime = Date.now();
-
-    console.log('=== ICON PRESS DEBUG ===');
-    console.log('Selected item:', selectedItem.label, selectedItem.destination);
-    console.log('Center item:', centerItem.label, centerItem.destination);
-    console.log('Are destinations equal?', selectedItem.destination === centerItem.destination);
-    console.log('Current menu order:', menuOrder.map(item => `${item.label}(${item.destination})`));
-    console.log('Time since last swap:', currentTime - lastSwapTime);
-
-    if (selectedItem.destination === centerItem.destination) {
-      // If clicking the center item, navigate to its page
-      console.log('Navigating to page:', selectedItem.label);
-      setCurrentPage(selectedItem);
-    } else {
-      // Allow rapid swapping - no delay restrictions
-      const clickedIndex = menuOrder.findIndex(item => item.destination === selectedItem.destination);
-
-      console.log('Clicked index:', clickedIndex);
-
-      if (clickedIndex > 0) {
-        console.log('Performing swap...');
-        setLastSwapTime(currentTime);
-
-        // Perform the swap immediately for instant visual feedback
-        const newOrder = [...menuOrder];
-
-        // Swap the clicked item with the center item
-        [newOrder[0], newOrder[clickedIndex]] = [newOrder[clickedIndex], newOrder[0]];
-
-        console.log('New menu order:', newOrder.map(item => `${item.label}(${item.destination})`));
-        setMenuOrder(newOrder);
-
-        // Trigger selection animation for the newly selected item
-        setNewlySelectedItem(selectedItem.destination);
-
-        // Clear the animation trigger after a short delay
-        setTimeout(() => setNewlySelectedItem(null), 1000);
-      } else {
-        console.log('Clicked index not found or is 0');
+      const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development';
+      if (isDev) {
+        console.log('MainMenu component unmounted - cleaned up animations');
       }
-    }
-  };
+    };
+  }, [endMenuAnimation, starRotation, balloonFloat1, balloonFloat2, rocketFloat1, rocketFloat2]);
 
-  // Handle back navigation from page
+  // Performance-optimized icon press handler with debouncing and error handling
+  const handleIconPressInternal = useCallback((selectedItem: MenuItemData) => {
+    const endTimer = performanceLogger.startTimer('icon-press');
+
+    try {
+      if (!startMenuAnimation()) {
+        // Too many animations running, skip this interaction
+        return;
+      }
+
+      const centerItem = menuOrder[0];
+      const currentTime = Date.now();
+
+      // Remove debug logging in production
+      const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development';
+      if (isDev) {
+        console.log('Icon press:', selectedItem.label);
+      }
+
+      if (selectedItem.destination === centerItem.destination) {
+        // For stories, use external navigation to prevent state conflicts
+        if (selectedItem.destination === 'stories') {
+          // Clean up animations before navigation
+          endMenuAnimation();
+          onNavigate(selectedItem.destination);
+        } else {
+          // For other pages, use internal navigation
+          setCurrentPage(selectedItem);
+        }
+      } else {
+        // Prevent rapid swapping that could cause crashes
+        if (currentTime - lastSwapTime < 100) {
+          return; // Ignore rapid taps
+        }
+
+        const clickedIndex = menuOrder.findIndex(item => item.destination === selectedItem.destination);
+
+        if (clickedIndex > 0) {
+          setLastSwapTime(currentTime);
+
+          // Perform swap with error boundary
+          const newOrder = [...menuOrder];
+          [newOrder[0], newOrder[clickedIndex]] = [newOrder[clickedIndex], newOrder[0]];
+
+          setMenuOrder(newOrder);
+          setNewlySelectedItem(selectedItem.destination);
+
+          // Clear animation trigger safely
+          setTimeout(() => {
+            setNewlySelectedItem(null);
+            endMenuAnimation();
+          }, 1000);
+        }
+      }
+    } catch (error) {
+      console.error('Error in handleIconPress:', error);
+      endMenuAnimation();
+    } finally {
+      endTimer();
+    }
+  }, [menuOrder, lastSwapTime, startMenuAnimation, endMenuAnimation, onNavigate]);
+
+  // Debounced version to prevent rapid-fire calls
+  const handleIconPress = useDebounce(handleIconPressInternal, 50);
+
   const handleBackToMenu = () => {
     setCurrentPage(null);
   };
@@ -132,7 +170,6 @@ function MainMenuComponent({}: MainMenuProps) {
     balloonFloat2.value = createCloudAnimation(balloonFloat2, ANIMATION_TIMINGS.CLOUD_STAGGER_DELAY, -400);
   }, [balloonFloat1, balloonFloat2]);
 
-  // Initialize rocket animations using refactored functions
   useEffect(() => {
     rocketFloat1.value = createRocketAnimation(rocketFloat1, 'right-to-left', 0);
     rocketFloat2.value = createRocketAnimation(rocketFloat2, 'left-to-right',
@@ -151,7 +188,6 @@ function MainMenuComponent({}: MainMenuProps) {
     transform: [{ translateX: balloonFloat2.value }],
   }));
 
-  // Rocket animated styles
   const rocketAnimatedStyle1 = useAnimatedStyle(() => ({
     transform: [{ translateX: rocketFloat1.value }],
   }));
@@ -160,13 +196,6 @@ function MainMenuComponent({}: MainMenuProps) {
     transform: [{ translateX: rocketFloat2.value }],
   }));
 
-
-
-
-
-  // Skip loading screen - render immediately with hidden image caching
-
-  // Show default page if one is selected
   if (currentPage) {
     return (
       <DefaultPage
@@ -177,13 +206,13 @@ function MainMenuComponent({}: MainMenuProps) {
     );
   }
 
-  // Generate stars using utility function
   const stars = generateStarPositions();
 
   return (
     <LinearGradient
       colors={VISUAL_EFFECTS.GRADIENT_COLORS}
       style={mainMenuStyles.container}
+      testID="main-menu-container"
     >
 
       <View style={mainMenuStyles.backgroundGradient}>
@@ -202,8 +231,6 @@ function MainMenuComponent({}: MainMenuProps) {
             ]}
           />
         ))}
-
-
 
         <Animated.View style={[mainMenuStyles.balloonContainer, balloonAnimatedStyle1, {
           top: SCREEN_HEIGHT * LAYOUT.CLOUD_TOP_POSITION_1,
@@ -232,9 +259,7 @@ function MainMenuComponent({}: MainMenuProps) {
         }]}>
           <FreyaRocketRight width={ASSET_DIMENSIONS.rocket.width} height={ASSET_DIMENSIONS.rocket.height} />
         </Animated.View>
-
       </View>
-
 
       <View style={mainMenuStyles.bearContainer} pointerEvents="none">
         <BearImage />
@@ -254,7 +279,6 @@ function MainMenuComponent({}: MainMenuProps) {
 
 
       <View style={legacyStyles.menuContainer}>
-
         <View style={mainMenuStyles.centerIcon}>
           <MenuIcon
             key={`center-${menuOrder[0].destination}`}
@@ -264,9 +288,9 @@ function MainMenuComponent({}: MainMenuProps) {
             onPress={() => handleIconPress(menuOrder[0])}
             isLarge={true}
             triggerSelectionAnimation={newlySelectedItem === menuOrder[0].destination}
+            testID="menu-icon-0"
           />
         </View>
-
 
         <View style={mainMenuStyles.menuContainer}>
 
@@ -277,6 +301,7 @@ function MainMenuComponent({}: MainMenuProps) {
               label={menuOrder[1].label}
               status="inactive"
               onPress={() => handleIconPress(menuOrder[1])}
+              testID="menu-icon-1"
             />
             <MenuIcon
               key={`top-right-${menuOrder[2].destination}`}
@@ -284,6 +309,7 @@ function MainMenuComponent({}: MainMenuProps) {
               label={menuOrder[2].label}
               status="inactive"
               onPress={() => handleIconPress(menuOrder[2])}
+              testID="menu-icon-2"
             />
           </View>
 
@@ -295,6 +321,7 @@ function MainMenuComponent({}: MainMenuProps) {
               label={menuOrder[3].label}
               status="inactive"
               onPress={() => handleIconPress(menuOrder[3])}
+              testID="menu-icon-3"
             />
             <MenuIcon
               key={`bottom-right-${menuOrder[4].destination}`}
@@ -302,20 +329,16 @@ function MainMenuComponent({}: MainMenuProps) {
               label={menuOrder[4].label}
               status="inactive"
               onPress={() => handleIconPress(menuOrder[4])}
+              testID="menu-icon-4"
             />
           </View>
         </View>
       </View>
-
-
-
     </LinearGradient>
   );
 }
 
-// Old styles removed - now using refactored mainMenuStyles
 const legacyStyles = StyleSheet.create({
-  // Temporary styles for elements not yet refactored
   topButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -343,5 +366,18 @@ const legacyStyles = StyleSheet.create({
   },
 });
 
-// Export memoized component for performance
-export const MainMenu = React.memo(MainMenuComponent);
+// Wrap with error boundary for crash protection
+const MainMenuWithErrorBoundary = React.memo(function MainMenuWithErrorBoundary(props: MainMenuProps) {
+  return (
+    <ErrorBoundary
+      onError={(error, errorInfo) => {
+        console.error('MainMenu crashed:', error, errorInfo);
+        // In production, send to crash reporting service
+      }}
+    >
+      <MainMenuComponent {...props} />
+    </ErrorBoundary>
+  );
+});
+
+export const MainMenu = MainMenuWithErrorBoundary;

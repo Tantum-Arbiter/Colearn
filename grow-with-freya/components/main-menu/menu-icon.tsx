@@ -2,13 +2,15 @@
  * MenuIcon component - Individual menu icon with animations and interactions
  */
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Pressable } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+
+import { useThrottle, useSafeAnimation } from './performance-utils';
 
 import { ThemedText } from '../themed-text';
 import { getIconSvgType, getSvgComponentFromSvg } from './assets';
@@ -31,15 +33,17 @@ export interface MenuIconProps {
   onLongPress?: () => void;
   isLarge?: boolean;
   triggerSelectionAnimation?: boolean;
+  testID?: string;
 }
 
-export const MenuIcon = React.memo(function MenuIcon({ 
-  icon, 
-  label, 
-  status, 
-  onPress, 
-  isLarge = false, 
-  triggerSelectionAnimation = false 
+export const MenuIcon = React.memo(function MenuIcon({
+  icon,
+  label,
+  status,
+  onPress,
+  isLarge = false,
+  triggerSelectionAnimation = false,
+  testID
 }: MenuIconProps) {
   // Animation values
   const scale = useSharedValue(1);
@@ -48,6 +52,9 @@ export const MenuIcon = React.memo(function MenuIcon({
   const shimmer = useSharedValue(0);
   const selectionScale = useSharedValue(1);
   const selectionGlow = useSharedValue(0);
+
+  // Performance optimizations
+  const { startAnimation, endAnimation } = useSafeAnimation(`menu-icon-${icon}`);
 
   // Selection celebration animation effect
   React.useEffect(() => {
@@ -122,28 +129,48 @@ export const MenuIcon = React.memo(function MenuIcon({
       : 0,
   }));
 
-  // Handle press interactions
-  const handlePress = () => {
-    console.log('MenuIcon handlePress called for:', label, 'status:', status);
+  // Performance-optimized press handler
+  const handlePressInternal = useCallback(() => {
+    try {
+      if (!startAnimation()) {
+        // Skip if too many animations are running
+        return;
+      }
 
-    // Press animation feedback
-    scale.value = createPressAnimation(scale, isLarge);
+      // Remove debug logging in production
+      const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development';
+      if (isDev) {
+        console.log('MenuIcon press:', label);
+      }
 
-    // Glow burst for inactive icons
-    if (status === 'inactive') {
-      const originalGlow = glow.value;
-      glow.value = createGlowBurstAnimation(glow, originalGlow);
+      // Press animation feedback
+      scale.value = createPressAnimation(scale, isLarge);
+
+      // Glow burst for inactive icons
+      if (status === 'inactive') {
+        const originalGlow = glow.value;
+        glow.value = createGlowBurstAnimation(glow, originalGlow);
+      }
+
+      // Haptic feedback (throttled to prevent excessive vibration)
+      if (status === 'animated_interactive') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      } else {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+
+      onPress();
+
+      // End animation after a delay
+      setTimeout(() => endAnimation(), 300);
+    } catch (error) {
+      console.error('Error in MenuIcon handlePress:', error);
+      endAnimation();
     }
+  }, [label, status, isLarge, scale, glow, onPress, startAnimation, endAnimation]);
 
-    // Haptic feedback
-    if (status === 'animated_interactive') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } else {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-
-    onPress();
-  };
+  // Throttled version to prevent rapid-fire presses
+  const handlePress = useThrottle(handlePressInternal, 100);
 
   // Calculate icon size based on state
   const iconSize = isLarge 
@@ -160,6 +187,7 @@ export const MenuIcon = React.memo(function MenuIcon({
           pressed && menuIconStyles.iconPressed,
         ]}
         onPress={handlePress}
+        testID={testID}
       >
         {/* Shining star overlay for active icon */}
         {status === 'animated_interactive' && (

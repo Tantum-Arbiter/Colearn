@@ -15,6 +15,7 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   const { isAppReady, hasCompletedOnboarding, setCurrentScreen } = useAppStore();
   const [currentView, setCurrentView] = useState<'splash' | 'onboarding' | 'main' | 'tabs'>('splash');
+  const [mainMenuKey, setMainMenuKey] = useState(0); // Force remount when returning from tabs
 
   useEffect(() => {
     if (!isAppReady) {
@@ -38,6 +39,12 @@ export default function RootLayout() {
     // Handle other destinations as needed
   };
 
+  const handleBackToMainMenu = () => {
+    // Force remount of MainMenu to ensure clean state
+    setMainMenuKey(prev => prev + 1);
+    setCurrentView('main');
+  };
+
   // Show splash screen while app is loading
   if (currentView === 'splash') {
     return <AppSplashScreen />;
@@ -50,14 +57,21 @@ export default function RootLayout() {
 
   // Show main menu
   if (currentView === 'main') {
-    return <MainMenu onNavigate={handleMainMenuNavigate} />;
+    return <MainMenu key={mainMenuKey} onNavigate={handleMainMenuNavigate} />;
   }
 
   // Show tab navigation for specific features
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="(tabs)"
+          options={{
+            headerShown: false,
+            // Add back button functionality
+            gestureEnabled: true,
+          }}
+        />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
