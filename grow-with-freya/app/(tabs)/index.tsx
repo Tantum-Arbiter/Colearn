@@ -1,15 +1,12 @@
-import { router } from 'expo-router';
 import { DefaultPage } from '@/components/default-page';
+import { useAppStore } from '@/store/app-store';
 
 export default function StoriesScreen() {
+  const { requestReturnToMainMenu } = useAppStore();
+
   const handleBackToMenu = () => {
-    // Navigate back to main menu
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      // Fallback: navigate to root
-      router.replace('/');
-    }
+    // Request return to main menu via global state
+    requestReturnToMainMenu();
   };
 
   return (

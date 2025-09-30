@@ -6,20 +6,25 @@ export interface AppState {
   // App initialization
   isAppReady: boolean;
   hasCompletedOnboarding: boolean;
-  
+
   // Current user/child profile
   currentChildId: string | null;
-  
+
   // UI state
   currentScreen: string;
   isLoading: boolean;
-  
+
+  // Navigation state
+  shouldReturnToMainMenu: boolean;
+
   // Actions
   setAppReady: (ready: boolean) => void;
   setOnboardingComplete: (complete: boolean) => void;
   setCurrentChild: (childId: string | null) => void;
   setCurrentScreen: (screen: string) => void;
   setLoading: (loading: boolean) => void;
+  requestReturnToMainMenu: () => void;
+  clearReturnToMainMenu: () => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -31,6 +36,7 @@ export const useAppStore = create<AppState>()(
       currentChildId: null,
       currentScreen: 'splash',
       isLoading: false,
+      shouldReturnToMainMenu: false,
 
       // Actions
       setAppReady: (ready) => set({ isAppReady: ready }),
@@ -42,6 +48,8 @@ export const useAppStore = create<AppState>()(
       setCurrentChild: (childId) => set({ currentChildId: childId }),
       setCurrentScreen: (screen) => set({ currentScreen: screen }),
       setLoading: (loading) => set({ isLoading: loading }),
+      requestReturnToMainMenu: () => set({ shouldReturnToMainMenu: true }),
+      clearReturnToMainMenu: () => set({ shouldReturnToMainMenu: false }),
     }),
     {
       name: 'app-storage',

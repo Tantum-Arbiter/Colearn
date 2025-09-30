@@ -13,7 +13,13 @@ import { MainMenu } from '@/components/main-menu';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const { isAppReady, hasCompletedOnboarding, setCurrentScreen } = useAppStore();
+  const {
+    isAppReady,
+    hasCompletedOnboarding,
+    setCurrentScreen,
+    shouldReturnToMainMenu,
+    clearReturnToMainMenu
+  } = useAppStore();
   const [currentView, setCurrentView] = useState<'splash' | 'onboarding' | 'main' | 'tabs'>('splash');
   const [mainMenuKey, setMainMenuKey] = useState(0); // Force remount when returning from tabs
 
@@ -26,6 +32,14 @@ export default function RootLayout() {
       setCurrentView('main');
     }
   }, [isAppReady, hasCompletedOnboarding]);
+
+  // Listen for return to main menu requests
+  useEffect(() => {
+    if (shouldReturnToMainMenu) {
+      handleBackToMainMenu();
+      clearReturnToMainMenu();
+    }
+  }, [shouldReturnToMainMenu, clearReturnToMainMenu]);
 
   const handleOnboardingComplete = () => {
     setCurrentView('main');
