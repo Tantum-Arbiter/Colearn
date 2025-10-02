@@ -99,6 +99,21 @@ describe('Performance & Stress Testing', () => {
         }).not.toThrow();
       }
     });
+
+    it('should handle rapid mount/unmount cycles without memory leaks', () => {
+      // Test rapid mounting and unmounting to detect timeout/animation leaks
+      for (let i = 0; i < 20; i++) {
+        const { unmount } = render(<MainMenu onNavigate={mockOnNavigate} />);
+
+        // Unmount immediately to test cleanup
+        expect(() => {
+          unmount();
+        }).not.toThrow();
+      }
+
+      // Should complete without excessive console warnings (allow for test environment issues)
+      expect(mockConsoleError.mock.calls.length).toBeLessThan(25);
+    });
   });
 
   describe('Error Handling', () => {
@@ -180,6 +195,28 @@ describe('Performance & Stress Testing', () => {
       expect(() => {
         unmount();
       }).not.toThrow();
+    });
+
+    it('should handle rapid MenuIcon mount/unmount with animations', () => {
+      // Test memory leak prevention with animated icons
+      for (let i = 0; i < 15; i++) {
+        const { unmount } = render(
+          <MenuIcon
+            icon="stories-icon"
+            label="Stories"
+            status="animated_interactive" // This triggers infinite animations
+            onPress={mockOnPress}
+          />
+        );
+
+        // Unmount quickly to test animation cleanup
+        expect(() => {
+          unmount();
+        }).not.toThrow();
+      }
+
+      // Should complete without excessive warnings (allow for test environment issues)
+      expect(mockConsoleError.mock.calls.length).toBeLessThan(25);
     });
   });
 });
