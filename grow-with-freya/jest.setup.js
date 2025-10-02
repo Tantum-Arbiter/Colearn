@@ -31,6 +31,7 @@ jest.mock('react-native-reanimated', () => {
     withDelay: jest.fn((delay, animation) => animation),
     withSequence: jest.fn((...values) => values[values.length - 1]),
     withRepeat: jest.fn((value) => value),
+    cancelAnimation: jest.fn(),
     runOnJS: jest.fn((fn) => fn),
     runOnUI: jest.fn((fn) => fn),
     interpolate: jest.fn((value, inputRange, outputRange) => outputRange[0]),

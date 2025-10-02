@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { 
@@ -27,6 +27,10 @@ export function AppSplashScreen() {
   const textOpacity = useSharedValue(0);
   const starRotation = useSharedValue(0);
 
+  // Timeout cleanup refs
+  const textTimeoutRef = useRef<NodeJS.Timeout>();
+  const delayTimeoutRef = useRef<NodeJS.Timeout>();
+
   useEffect(() => {
     async function prepare() {
       try {
@@ -38,7 +42,7 @@ export function AppSplashScreen() {
           easing: Easing.out(Easing.back(1.5))
         });
 
-        setTimeout(() => {
+        textTimeoutRef.current = setTimeout(() => {
           textOpacity.value = withTiming(1, { duration: 800 });
         }, 500);
 
@@ -47,7 +51,9 @@ export function AppSplashScreen() {
           -1
         );
 
-        await new Promise(resolve => setTimeout(resolve, 2500));
+        await new Promise(resolve => {
+          delayTimeoutRef.current = setTimeout(resolve, 2500);
+        });
 
         await SplashScreen.hideAsync();
         setAppReady(true);
@@ -60,6 +66,16 @@ export function AppSplashScreen() {
     }
 
     prepare();
+
+    // Cleanup timeouts on unmount
+    return () => {
+      if (textTimeoutRef.current) {
+        clearTimeout(textTimeoutRef.current);
+      }
+      if (delayTimeoutRef.current) {
+        clearTimeout(delayTimeoutRef.current);
+      }
+    };
   }, []);
 
   const logoAnimatedStyle = useAnimatedStyle(() => ({

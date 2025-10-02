@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { OnboardingScreen } from './onboarding-screen';
 import { useAppStore } from '@/store/app-store';
 
@@ -10,6 +10,10 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const { setOnboardingComplete } = useAppStore();
+
+  // Timeout cleanup refs
+  const nextTimeoutRef = useRef<NodeJS.Timeout>();
+  const prevTimeoutRef = useRef<NodeJS.Timeout>();
 
   const onboardingScreens = [
     {
@@ -47,7 +51,10 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const handleNext = () => {
     setIsTransitioning(true);
 
-    setTimeout(() => {
+    if (nextTimeoutRef.current) {
+      clearTimeout(nextTimeoutRef.current);
+    }
+    nextTimeoutRef.current = setTimeout(() => {
       if (currentStep < onboardingScreens.length - 1) {
         setCurrentStep(currentStep + 1);
       } else {
@@ -61,12 +68,27 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const handlePrevious = () => {
     if (currentStep > 0) {
       setIsTransitioning(true);
-      setTimeout(() => {
+      if (prevTimeoutRef.current) {
+        clearTimeout(prevTimeoutRef.current);
+      }
+      prevTimeoutRef.current = setTimeout(() => {
         setCurrentStep(currentStep - 1);
         setIsTransitioning(false);
       }, 300);
     }
   };
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (nextTimeoutRef.current) {
+        clearTimeout(nextTimeoutRef.current);
+      }
+      if (prevTimeoutRef.current) {
+        clearTimeout(prevTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const currentScreen = onboardingScreens[currentStep];
 

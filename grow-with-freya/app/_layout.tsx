@@ -39,7 +39,7 @@ export default function RootLayout() {
       handleBackToMainMenu();
       clearReturnToMainMenu();
     }
-  }, [shouldReturnToMainMenu, clearReturnToMainMenu]);
+  }, [shouldReturnToMainMenu]);
 
   const handleOnboardingComplete = () => {
     setCurrentView('main');
@@ -54,8 +54,7 @@ export default function RootLayout() {
   };
 
   const handleBackToMainMenu = () => {
-    // Force remount of MainMenu to ensure clean state
-    setMainMenuKey(prev => prev + 1);
+    // Return to main menu without forcing remount to preserve animations
     setCurrentView('main');
   };
 
@@ -75,19 +74,24 @@ export default function RootLayout() {
   }
 
   // Show tab navigation for specific features
-  return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen
-          name="(tabs)"
-          options={{
-            headerShown: false,
-            // Add back button functionality
-            gestureEnabled: true,
-          }}
-        />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
-  );
+  if (currentView === 'tabs') {
+    return (
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Stack>
+          <Stack.Screen
+            name="(tabs)"
+            options={{
+              headerShown: false,
+              // Add back button functionality
+              gestureEnabled: true,
+            }}
+          />
+        </Stack>
+        <StatusBar style="auto" />
+      </ThemeProvider>
+    );
+  }
+
+  // Fallback
+  return <MainMenu key={mainMenuKey} onNavigate={handleMainMenuNavigate} />;
 }
