@@ -70,14 +70,14 @@ export const mainMenuStyles = StyleSheet.create({
   },
   
   // Animated background elements
-  balloonContainer: {
+  cloudContainer: {
     position: 'absolute',
-    zIndex: LAYOUT.Z_INDEX.BALLOONS_BEHIND,
+    zIndex: LAYOUT.Z_INDEX.CLOUDS_BEHIND,
   },
-  
-  balloonContainerFront: {
+
+  cloudContainerFront: {
     position: 'absolute',
-    zIndex: LAYOUT.Z_INDEX.BALLOONS_FRONT,
+    zIndex: LAYOUT.Z_INDEX.CLOUDS_FRONT,
   },
   
   rocketContainer: {

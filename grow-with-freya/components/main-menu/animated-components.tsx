@@ -1,7 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Image, View } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withDelay,
+  Easing,
+} from 'react-native-reanimated';
 import { ASSET_DIMENSIONS } from './assets';
 import { CloudSvg, FreyaRocketSvg, FreyaRocketRightSvg } from './svg-components';
+import { CachedBearImage } from '../ui/cached-image';
 
 export const Cloud1 = React.memo(function Cloud1({
   width = ASSET_DIMENSIONS.cloud1.width,
@@ -75,17 +83,7 @@ export const BearImage = React.memo(function BearImage() {
       justifyContent: 'flex-end',
       alignItems: 'center',
     }}>
-      <Image
-        source={require('../../assets/images/ui-elements/bear-bottom-screen.png')}
-        style={{
-          width: 286, // 10% bigger than 260 (260 * 1.1 = 286)
-          height: 286, // 10% bigger than 260 (260 * 1.1 = 286)
-          opacity: 0.8,
-        }}
-        resizeMode="contain"
-        fadeDuration={200}
-        resizeMethod="resize"
-      />
+      <CachedBearImage />
     </View>
   );
 });

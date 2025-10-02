@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
@@ -22,18 +22,16 @@ import {
   MenuIcon,
   Cloud1,
   Cloud2,
-  FreyaRocket,
-  FreyaRocketRight,
+
   BearImage,
   ANIMATION_TIMINGS,
   LAYOUT,
   VISUAL_EFFECTS,
   DEFAULT_MENU_ITEMS,
-  SCREEN_WIDTH,
   SCREEN_HEIGHT,
   ASSET_DIMENSIONS,
   createCloudAnimation,
-  createRocketAnimation,
+
   generateStarPositions,
   swapArrayItems,
   findMenuItemIndex,
@@ -62,10 +60,9 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
 
   // Animation values with cleanup - initialize from persistent state
   const starRotation = useSharedValue(0);
-  const balloonFloat1 = useSharedValue(backgroundAnimationState.balloonFloat1);
-  const balloonFloat2 = useSharedValue(backgroundAnimationState.balloonFloat2);
-  const rocketFloat1 = useSharedValue(backgroundAnimationState.rocketFloat1);
-  const rocketFloat2 = useSharedValue(backgroundAnimationState.rocketFloat2);
+  const cloudFloat1 = useSharedValue(backgroundAnimationState.cloudFloat1);
+  const cloudFloat2 = useSharedValue(backgroundAnimationState.cloudFloat2);
+
 
   // Animation cancellation flag
   const animationsCancelled = useRef(false);
@@ -76,20 +73,18 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
   const [lastSwapTime, setLastSwapTime] = useSafeState<number>(0);
   const [newlySelectedItem, setNewlySelectedItem] = useSafeState<string | null>(null);
 
-  // Removed useSafeAnimation - was blocking core functionality
-
-  // Timeout cleanup ref
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const animationWatchdogRef = useRef<NodeJS.Timeout | null>(null);
 
   // Component cleanup on unmount
   useEffect(() => {
     return () => {
       // Save current animation state before unmounting
       updateBackgroundAnimationState({
-        balloonFloat1: balloonFloat1.value,
-        balloonFloat2: balloonFloat2.value,
-        rocketFloat1: rocketFloat1.value,
-        rocketFloat2: rocketFloat2.value,
+        cloudFloat1: cloudFloat1.value,
+        cloudFloat2: cloudFloat2.value,
+        rocketFloat1: 1000, // Static value - rockets removed
+        rocketFloat2: -200, // Static value - rockets removed
       });
 
       // Cancel all animations to prevent memory leaks
@@ -100,16 +95,17 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
+      if (animationWatchdogRef.current) {
+        clearTimeout(animationWatchdogRef.current);
+      }
 
       // Animation limiter removed - no longer needed
 
       // Cancel all infinite background animations (safe for test environment)
       try {
         cancelAnimation(starRotation);
-        cancelAnimation(balloonFloat1);
-        cancelAnimation(balloonFloat2);
-        cancelAnimation(rocketFloat1);
-        cancelAnimation(rocketFloat2);
+        cancelAnimation(cloudFloat1);
+        cancelAnimation(cloudFloat2);
       } catch (error) {
         // cancelAnimation might not be available in test environment
         console.warn('Could not cancel background animations:', error);
@@ -185,26 +181,71 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
 
 
   useEffect(() => {
-    if (!animationsCancelled.current) {
-      balloonFloat1.value = createCloudAnimation(balloonFloat1, 0, -200, true); // Resume from current
-      balloonFloat2.value = createCloudAnimation(balloonFloat2, ANIMATION_TIMINGS.CLOUD_STAGGER_DELAY, -400, true); // Resume from current
+    // Small delay to ensure component is fully mounted before starting animations
+    const startAnimations = () => {
+      if (!animationsCancelled.current) {
+        const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development';
 
-      // Check if rockets are at initial positions (fresh start) or mid-animation (resume)
-      const rocket1AtStart = Math.abs(rocketFloat1.value - (SCREEN_WIDTH + 100)) < 50; // Within 50px of start
-      const rocket2AtStart = Math.abs(rocketFloat2.value - (-200)) < 50; // Within 50px of start
+        if (isDev) {
+          console.log('MainMenu: Starting animations resume');
+          console.log('Cloud1 current position:', cloudFloat1.value);
+          console.log('Cloud2 current position:', cloudFloat2.value);
+        }
 
-      if (rocket1AtStart && rocket2AtStart) {
-        // Fresh start - use original staggered timing
-        rocketFloat1.value = createRocketAnimation(rocketFloat1, 'right-to-left', 0, false); // Start fresh
-        rocketFloat2.value = createRocketAnimation(rocketFloat2, 'left-to-right',
-          ANIMATION_TIMINGS.ROCKET_DURATION + ANIMATION_TIMINGS.ROCKET_WAIT_TIME, false); // Start fresh with delay
-      } else {
-        // Resume from current positions
-        rocketFloat1.value = createRocketAnimation(rocketFloat1, 'right-to-left', 0, true); // Resume from current
-        rocketFloat2.value = createRocketAnimation(rocketFloat2, 'left-to-right',
-          ANIMATION_TIMINGS.ROCKET_DURATION + ANIMATION_TIMINGS.ROCKET_WAIT_TIME, true); // Resume from current
+        const cloud1Pos = cloudFloat1.value;
+        const cloud2Pos = cloudFloat2.value;
+
+        // Check if positions are valid for resuming
+        const cloud1CanResume = isFinite(cloud1Pos) && !isNaN(cloud1Pos) && cloud1Pos > -500 && cloud1Pos < 2000;
+        const cloud2CanResume = isFinite(cloud2Pos) && !isNaN(cloud2Pos) && cloud2Pos > -500 && cloud2Pos < 2000;
+
+        if (isDev) {
+          console.log('Resume check - Cloud1:', cloud1CanResume, 'Cloud2:', cloud2CanResume);
+        }
+
+        cloudFloat1.value = createCloudAnimation(cloudFloat1, 0, -200, cloud1CanResume);
+        cloudFloat2.value = createCloudAnimation(cloudFloat2, ANIMATION_TIMINGS.CLOUD_STAGGER_DELAY, -400, cloud2CanResume);
+
+        // Rockets removed entirely
+
+        // Set up animation watchdog to detect stuck animations
+        if (animationWatchdogRef.current) {
+          clearTimeout(animationWatchdogRef.current);
+        }
+
+        animationWatchdogRef.current = setTimeout(() => {
+          const cloud1Pos = cloudFloat1.value;
+          const cloud2Pos = cloudFloat2.value;
+
+          if (isDev) {
+            console.log('Animation watchdog check - Cloud1:', cloud1Pos, 'Cloud2:', cloud2Pos);
+          }
+
+          // If either cloud hasn't moved significantly, restart animations
+          const cloud1Stuck = !isFinite(cloud1Pos) || isNaN(cloud1Pos);
+          const cloud2Stuck = !isFinite(cloud2Pos) || isNaN(cloud2Pos);
+
+          if (cloud1Stuck || cloud2Stuck) {
+            if (isDev) {
+              console.log('Detected stuck animations, restarting...');
+            }
+            // Force restart with fresh positions
+            cloudFloat1.value = createCloudAnimation(cloudFloat1, 0, -200, false);
+            cloudFloat2.value = createCloudAnimation(cloudFloat2, ANIMATION_TIMINGS.CLOUD_STAGGER_DELAY, -400, false);
+          }
+        }, 10000); // Check after 10 seconds
       }
-    }
+    };
+
+    // Start animations immediately, but allow for component mounting
+    const timeoutId = setTimeout(startAnimations, 50);
+
+    return () => {
+      clearTimeout(timeoutId);
+      if (animationWatchdogRef.current) {
+        clearTimeout(animationWatchdogRef.current);
+      }
+    };
   }, []); // Run once on mount
 
 
@@ -213,21 +254,19 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
     transform: [{ rotate: `${starRotation.value}deg` }],
   }));
 
-  const balloonAnimatedStyle1 = useAnimatedStyle(() => ({
-    transform: [{ translateX: balloonFloat1.value }],
+  const cloudAnimatedStyle1 = useAnimatedStyle(() => ({
+    transform: [{ translateX: cloudFloat1.value }],
   }));
 
-  const balloonAnimatedStyle2 = useAnimatedStyle(() => ({
-    transform: [{ translateX: balloonFloat2.value }],
+  const cloudAnimatedStyle2 = useAnimatedStyle(() => ({
+    transform: [{ translateX: cloudFloat2.value }],
   }));
 
-  const rocketAnimatedStyle1 = useAnimatedStyle(() => ({
-    transform: [{ translateX: rocketFloat1.value }],
-  }));
+  // Rocket animations removed entirely
 
-  const rocketAnimatedStyle2 = useAnimatedStyle(() => ({
-    transform: [{ translateX: rocketFloat2.value }],
-  }));
+  // Generate star positions only once and keep them consistent
+  // IMPORTANT: This must be called before any conditional returns to follow Rules of Hooks
+  const stars = useMemo(() => generateStarPositions(), []);
 
   if (currentPage) {
     return (
@@ -238,8 +277,6 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
       />
     );
   }
-
-  const stars = generateStarPositions();
 
   return (
     <LinearGradient
@@ -265,13 +302,13 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
           />
         ))}
 
-        <Animated.View style={[mainMenuStyles.balloonContainer, balloonAnimatedStyle1, {
+        <Animated.View style={[mainMenuStyles.cloudContainer, cloudAnimatedStyle1, {
           top: SCREEN_HEIGHT * LAYOUT.CLOUD_TOP_POSITION_1,
           zIndex: LAYOUT.Z_INDEX.CLOUDS_BEHIND
         }]}>
           <Cloud1 width={ASSET_DIMENSIONS.cloud1.width} height={ASSET_DIMENSIONS.cloud1.height} />
         </Animated.View>
-        <Animated.View style={[mainMenuStyles.balloonContainerFront, balloonAnimatedStyle2, {
+        <Animated.View style={[mainMenuStyles.cloudContainerFront, cloudAnimatedStyle2, {
           top: SCREEN_HEIGHT * LAYOUT.CLOUD_TOP_POSITION_2,
           zIndex: LAYOUT.Z_INDEX.CLOUDS_FRONT
         }]}>
@@ -279,19 +316,7 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
         </Animated.View>
 
 
-        <Animated.View style={[mainMenuStyles.rocketContainer, rocketAnimatedStyle1, {
-          top: SCREEN_HEIGHT * LAYOUT.ROCKET_TOP_POSITION,
-          zIndex: LAYOUT.Z_INDEX.ROCKETS
-        }]}>
-          <FreyaRocket width={ASSET_DIMENSIONS.rocket.width} height={ASSET_DIMENSIONS.rocket.height} />
-        </Animated.View>
-
-        <Animated.View style={[mainMenuStyles.rocketContainer, rocketAnimatedStyle2, {
-          top: SCREEN_HEIGHT * LAYOUT.ROCKET_RIGHT_TOP_POSITION,
-          zIndex: LAYOUT.Z_INDEX.ROCKETS
-        }]}>
-          <FreyaRocketRight width={ASSET_DIMENSIONS.rocket.width} height={ASSET_DIMENSIONS.rocket.height} />
-        </Animated.View>
+        {/* Rockets removed entirely */}
       </View>
 
       <View style={mainMenuStyles.bearContainer} pointerEvents="none">

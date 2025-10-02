@@ -5,7 +5,6 @@ export const PNG_ASSETS = {
 } as const;
 
 export const SVG_PATHS = {
-  balloon: 'ui-elements/background-cloud-1.svg',
   cloud: 'ui-elements/background-cloud-1.svg',
   stories: 'menu-icons/stories-icon.svg',
   sensory: 'menu-icons/sensory-icon.svg',
@@ -52,7 +51,7 @@ export const ASSET_DIMENSIONS = {
 export const getSvgAsset = (svgType: string) => {
   switch (svgType) {
     case 'cloud': return SVG_PATHS.cloud;
-    case 'balloon': return SVG_PATHS.balloon;
+    case 'balloon': return SVG_PATHS.cloud; // Backward compatibility - balloon maps to cloud
     case 'stories': return SVG_PATHS.stories;
     case 'sensory': return SVG_PATHS.sensory;
     case 'emotions': return SVG_PATHS.emotions;
@@ -78,7 +77,7 @@ export const getSvgComponentFromSvg = (svgType: keyof typeof SVG_PATHS) => {
 
   switch (svgType) {
     case 'cloud':
-    case 'balloon':
+    case 'balloon': // Backward compatibility - balloon maps to cloud
       return CloudSvg;
     case 'stories':
       return StoriesSvg;

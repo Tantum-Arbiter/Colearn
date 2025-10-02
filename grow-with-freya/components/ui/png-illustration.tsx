@@ -88,7 +88,7 @@ export function PngIllustration({ name, style, maxWidth, maxHeight }: PngIllustr
           style={styles.image}
           resizeMode="contain"
           // Enable high-quality rendering for all devices
-          fadeDuration={200}
+          fadeDuration={0}
           // Optimize for high-DPI displays
           resizeMethod="resize"
           // Ensure smooth scaling

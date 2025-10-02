@@ -285,6 +285,7 @@ export function OnboardingScreen({
 
     return (
       <PngIllustration
+        key={pngName}
         name={pngName}
       />
     );
