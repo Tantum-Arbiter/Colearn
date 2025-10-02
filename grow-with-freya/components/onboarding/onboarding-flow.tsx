@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { OnboardingScreen } from './onboarding-screen';
 import { useAppStore } from '@/store/app-store';
+import { preloadOnboardingImages } from '@/services/image-preloader';
 
 interface OnboardingFlowProps {
   onComplete: () => void;
@@ -77,6 +78,20 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
       }, 300);
     }
   };
+
+  // Preload onboarding images when component mounts
+  useEffect(() => {
+    const loadOnboardingImages = async () => {
+      try {
+        const result = await preloadOnboardingImages();
+        console.log('Onboarding images preloaded:', result);
+      } catch (error) {
+        console.warn('Failed to preload onboarding images:', error);
+      }
+    };
+
+    loadOnboardingImages();
+  }, []);
 
   // Cleanup timeouts on unmount
   useEffect(() => {

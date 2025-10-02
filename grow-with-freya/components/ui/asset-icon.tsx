@@ -11,13 +11,14 @@ interface AssetIconProps {
 export function AssetIcon({ source, size = 24, color, style }: AssetIconProps) {
   return (
     <View style={[styles.container, style]}>
-      <Image 
-        source={source} 
+      <Image
+        source={source}
         style={[
           { width: size, height: size },
           color && { tintColor: color }
-        ]} 
+        ]}
         resizeMode="contain"
+        fadeDuration={0}
       />
     </View>
   );

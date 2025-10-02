@@ -58,10 +58,12 @@ describe('MenuIcon Icon Rendering Tests', () => {
       expect(typeof SvgComponent).toBe('function');
     });
 
-    it('should resolve balloon icon to CloudSvg component (alias)', () => {
+    it('should resolve balloon icon to CloudSvg component (backward compatibility)', () => {
       const SvgComponent = getSvgComponentFromSvg('balloon');
       expect(SvgComponent).toBeDefined();
       expect(typeof SvgComponent).toBe('function');
+      // Should be the same as cloud component for backward compatibility
+      expect(SvgComponent).toBe(getSvgComponentFromSvg('cloud'));
     });
 
     it('should fallback to StoriesSvg for unknown icon types', () => {

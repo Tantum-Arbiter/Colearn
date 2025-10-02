@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
 import 'react-native-reanimated';
@@ -10,6 +9,12 @@ import { useAppStore } from '@/store/app-store';
 import { AppSplashScreen } from '@/components/splash-screen';
 import { OnboardingFlow } from '@/components/onboarding/onboarding-flow';
 import { MainMenu } from '@/components/main-menu';
+import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
+import { Story } from '@/types/story';
+import { preloadCriticalImages, preloadSecondaryImages } from '@/services/image-preloader';
+import { VerticalPageTransition } from '@/components/ui/coordinated-scroll-transition';
+
+
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -20,8 +25,31 @@ export default function RootLayout() {
     shouldReturnToMainMenu,
     clearReturnToMainMenu
   } = useAppStore();
-  const [currentView, setCurrentView] = useState<'splash' | 'onboarding' | 'main' | 'tabs'>('splash');
-  const [mainMenuKey, setMainMenuKey] = useState(0); // Force remount when returning from tabs
+  const [currentView, setCurrentView] = useState<'splash' | 'onboarding' | 'main' | 'stories'>('splash');
+  const [currentPage, setCurrentPage] = useState<'main' | 'stories'>('main');
+
+
+
+  // Preload critical images immediately when app starts
+  useEffect(() => {
+    const initializeImagePreloading = async () => {
+      try {
+        // Preload critical images first (including bear image)
+        const criticalResult = await preloadCriticalImages();
+        console.log('Critical images preloaded:', criticalResult);
+
+        // Preload secondary images in background after a short delay
+        setTimeout(async () => {
+          const secondaryResult = await preloadSecondaryImages();
+          console.log('Secondary images preloaded:', secondaryResult);
+        }, 1000);
+      } catch (error) {
+        console.warn('Image preloading failed:', error);
+      }
+    };
+
+    initializeImagePreloading();
+  }, []);
 
   useEffect(() => {
     if (!isAppReady) {
@@ -30,8 +58,18 @@ export default function RootLayout() {
       setCurrentView('onboarding');
     } else {
       setCurrentView('main');
+      setCurrentPage('main');
     }
   }, [isAppReady, hasCompletedOnboarding]);
+
+  // Sync currentView with currentPage for main app navigation
+  useEffect(() => {
+    if (currentPage === 'main' && currentView !== 'main') {
+      setCurrentView('main');
+    } else if (currentPage === 'stories' && currentView !== 'stories') {
+      setCurrentView('stories');
+    }
+  }, [currentPage]);
 
   // Listen for return to main menu requests
   useEffect(() => {
@@ -47,51 +85,45 @@ export default function RootLayout() {
 
   const handleMainMenuNavigate = (destination: string) => {
     if (destination === 'stories') {
-      setCurrentView('tabs');
+      setCurrentPage('stories');
       setCurrentScreen('stories');
     }
-    // Handle other destinations as needed
   };
 
   const handleBackToMainMenu = () => {
-    // Return to main menu without forcing remount to preserve animations
-    setCurrentView('main');
+    setCurrentPage('main');
   };
 
-  // Show splash screen while app is loading
+  const handleStorySelect = (story: Story) => {
+    console.log('Selected story:', story.title);
+    // TODO: Navigate to story reader/player
+  };
+
   if (currentView === 'splash') {
     return <AppSplashScreen />;
   }
 
-  // Show onboarding flow if not completed
   if (currentView === 'onboarding') {
     return <OnboardingFlow onComplete={handleOnboardingComplete} />;
   }
 
-  // Show main menu
-  if (currentView === 'main') {
-    return <MainMenu key={mainMenuKey} onNavigate={handleMainMenuNavigate} />;
-  }
-
-  // Show tab navigation for specific features
-  if (currentView === 'tabs') {
+  // Handle main app navigation with coordinated scroll transitions
+  if (currentView === 'main' || currentView === 'stories') {
     return (
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen
-            name="(tabs)"
-            options={{
-              headerShown: false,
-              // Add back button functionality
-              gestureEnabled: true,
-            }}
-          />
-        </Stack>
+        <VerticalPageTransition
+          currentPage={currentPage}
+          pages={{
+            main: <MainMenu onNavigate={handleMainMenuNavigate} />,
+            stories: <SimpleStoryScreen onStorySelect={handleStorySelect} onBack={handleBackToMainMenu} />
+          }}
+          duration={800}
+        />
         <StatusBar style="auto" />
       </ThemeProvider>
     );
   }
 
   // Fallback
-  return <MainMenu key={mainMenuKey} onNavigate={handleMainMenuNavigate} />;
+  return <MainMenu onNavigate={handleMainMenuNavigate} />;
 }

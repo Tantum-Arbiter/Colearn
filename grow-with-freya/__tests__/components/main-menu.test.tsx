@@ -1,12 +1,56 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { MainMenu } from '../../components/main-menu';
+import { useAppStore } from '../../store/app-store';
+
+// Mock the store
+jest.mock('../../store/app-store');
+const mockUseAppStore = useAppStore as jest.MockedFunction<typeof useAppStore>;
+
+// Mock react-native-reanimated
+jest.mock('react-native-reanimated', () => {
+  const Reanimated = require('react-native-reanimated/mock');
+  Reanimated.default.call = () => {};
+  return Reanimated;
+});
+
+// Mock expo-haptics
+jest.mock('expo-haptics', () => ({
+  impactAsync: jest.fn(),
+  ImpactFeedbackStyle: {
+    Light: 'light',
+    Medium: 'medium',
+    Heavy: 'heavy',
+  },
+}));
 
 describe('MainMenu', () => {
   const mockOnNavigate = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseAppStore.mockReturnValue({
+      backgroundAnimationState: {
+        cloudFloat1: -200,
+        cloudFloat2: -400,
+        rocketFloat1: 1000, // Static - rockets removed
+        rocketFloat2: -200, // Static - rockets removed
+      },
+      updateBackgroundAnimationState: jest.fn(),
+      isAppReady: true,
+      hasCompletedOnboarding: false,
+      currentChildId: null,
+      currentScreen: 'main',
+      isLoading: false,
+      shouldReturnToMainMenu: false,
+      setAppReady: jest.fn(),
+      setOnboardingComplete: jest.fn(),
+      setCurrentChildId: jest.fn(),
+      setCurrentScreen: jest.fn(),
+      setLoading: jest.fn(),
+      requestReturnToMainMenu: jest.fn(),
+      clearReturnToMainMenu: jest.fn(),
+    });
   });
 
   it('renders main menu with center icon text', () => {
@@ -74,20 +118,19 @@ describe('MainMenu', () => {
     expect(root).toBeTruthy();
   });
 
-  it('renders rocket animations without crashing', () => {
-    // Test that rocket components are rendered
+  it('renders without rocket animations for performance', () => {
+    // Test that component renders without rocket animations
     const { root } = render(<MainMenu onNavigate={mockOnNavigate} />);
 
-    // Since rockets are animated and may not have text content,
-    // we test that the component renders without throwing
+    // Rockets have been removed for performance optimization
     expect(root).toBeTruthy();
   });
 
-  it('renders balloon animations without crashing', () => {
-    // Test that balloon components are rendered
+  it('renders cloud animations without crashing', () => {
+    // Test that cloud components are rendered
     const { root } = render(<MainMenu onNavigate={mockOnNavigate} />);
 
-    // Since balloons are animated and may not have text content,
+    // Since clouds are animated and may not have text content,
     // we test that the component renders without throwing
     expect(root).toBeTruthy();
   });

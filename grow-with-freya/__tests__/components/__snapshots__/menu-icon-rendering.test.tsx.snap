@@ -6,7 +6,8 @@ exports[`MenuIcon Icon Rendering Tests MenuIcon Component Rendering should rende
   dir={null}
   ref={[Function]}
 >
-  <div
+  <button
+    aria-label="undefined button"
     className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt"
     dir={null}
     onBlur={[Function]}
@@ -15,10 +16,12 @@ exports[`MenuIcon Icon Rendering Tests MenuIcon Component Rendering should rende
     onFocus={[Function]}
     onKeyDown={[Function]}
     ref={[Function]}
+    role="button"
     tabIndex={0}
+    type="button"
   >
     MockBedtimeSvg-48x48-1
-  </div>
+  </button>
 </div>
 `;
 
@@ -28,7 +31,8 @@ exports[`MenuIcon Icon Rendering Tests MenuIcon Component Rendering should rende
   dir={null}
   ref={[Function]}
 >
-  <div
+  <button
+    aria-label="undefined button"
     className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt"
     dir={null}
     onBlur={[Function]}
@@ -37,10 +41,12 @@ exports[`MenuIcon Icon Rendering Tests MenuIcon Component Rendering should rende
     onFocus={[Function]}
     onKeyDown={[Function]}
     ref={[Function]}
+    role="button"
     tabIndex={0}
+    type="button"
   >
     MockEmotionsSvg-48x48-1
-  </div>
+  </button>
 </div>
 `;
 
@@ -50,7 +56,8 @@ exports[`MenuIcon Icon Rendering Tests MenuIcon Component Rendering should rende
   dir={null}
   ref={[Function]}
 >
-  <div
+  <button
+    aria-label="undefined button"
     className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt"
     dir={null}
     onBlur={[Function]}
@@ -59,10 +66,12 @@ exports[`MenuIcon Icon Rendering Tests MenuIcon Component Rendering should rende
     onFocus={[Function]}
     onKeyDown={[Function]}
     ref={[Function]}
+    role="button"
     tabIndex={0}
+    type="button"
   >
     MockScreentimeSvg-48x48-1
-  </div>
+  </button>
 </div>
 `;
 
@@ -72,7 +81,8 @@ exports[`MenuIcon Icon Rendering Tests MenuIcon Component Rendering should rende
   dir={null}
   ref={[Function]}
 >
-  <div
+  <button
+    aria-label="undefined button"
     className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt"
     dir={null}
     onBlur={[Function]}
@@ -81,10 +91,12 @@ exports[`MenuIcon Icon Rendering Tests MenuIcon Component Rendering should rende
     onFocus={[Function]}
     onKeyDown={[Function]}
     ref={[Function]}
+    role="button"
     tabIndex={0}
+    type="button"
   >
     MockSensorySvg-48x48-1
-  </div>
+  </button>
 </div>
 `;
 
@@ -94,7 +106,8 @@ exports[`MenuIcon Icon Rendering Tests MenuIcon Component Rendering should rende
   dir={null}
   ref={[Function]}
 >
-  <div
+  <button
+    aria-label="undefined button"
     className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt"
     dir={null}
     onBlur={[Function]}
@@ -103,9 +116,11 @@ exports[`MenuIcon Icon Rendering Tests MenuIcon Component Rendering should rende
     onFocus={[Function]}
     onKeyDown={[Function]}
     ref={[Function]}
+    role="button"
     tabIndex={0}
+    type="button"
   >
     MockStoriesSvg-48x48-1
-  </div>
+  </button>
 </div>
 `;

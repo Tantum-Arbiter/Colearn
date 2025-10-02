@@ -2,8 +2,6 @@ export { MenuIcon } from './menu-icon';
 export {
   Cloud1,
   Cloud2,
-  FreyaRocket,
-  FreyaRocketRight,
   BearImage,
 } from './animated-components';
 
@@ -14,7 +12,6 @@ export {
   EmotionsSvg,
   BedtimeSvg,
   ScreentimeSvg,
-  getSvgComponent
 } from './svg-components';
 
 export {
@@ -32,7 +29,6 @@ export { PNG_ASSETS, getIconSvgType, getSvgPath, ASSET_DIMENSIONS } from './asse
 
 export {
   createCloudAnimation,
-  createRocketAnimation,
   createIconPulseAnimation,
   createGlowAnimation,
   createShimmerAnimation,

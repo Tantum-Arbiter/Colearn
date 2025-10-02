@@ -32,10 +32,8 @@ export const LAYOUT = {
   Z_INDEX: {
     BACKGROUND: 0,
     BEAR: 1, // Behind everything except background
-    BALLOONS_BEHIND: 2,
-    CLOUDS_BEHIND: 2, // Backward compatibility
-    BALLOONS_FRONT: 3,
-    CLOUDS_FRONT: 3, // Backward compatibility
+    CLOUDS_BEHIND: 2,
+    CLOUDS_FRONT: 3,
     ROCKETS: 4,
     UI: 10,
   },

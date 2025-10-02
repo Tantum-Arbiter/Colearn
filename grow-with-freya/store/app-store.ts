@@ -19,8 +19,8 @@ export interface AppState {
 
   // Background animation state persistence
   backgroundAnimationState: {
-    balloonFloat1: number;
-    balloonFloat2: number;
+    cloudFloat1: number;
+    cloudFloat2: number;
     rocketFloat1: number;
     rocketFloat2: number;
   };
@@ -34,8 +34,8 @@ export interface AppState {
   requestReturnToMainMenu: () => void;
   clearReturnToMainMenu: () => void;
   updateBackgroundAnimationState: (state: {
-    balloonFloat1: number;
-    balloonFloat2: number;
+    cloudFloat1: number;
+    cloudFloat2: number;
     rocketFloat1: number;
     rocketFloat2: number;
   }) => void;
@@ -52,8 +52,8 @@ export const useAppStore = create<AppState>()(
       isLoading: false,
       shouldReturnToMainMenu: false,
       backgroundAnimationState: {
-        balloonFloat1: -200,
-        balloonFloat2: -400,
+        cloudFloat1: -200,
+        cloudFloat2: -400,
         rocketFloat1: 1000, // SCREEN_WIDTH + 100
         rocketFloat2: -200,
       },
