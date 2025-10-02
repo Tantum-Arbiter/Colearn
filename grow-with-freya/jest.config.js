@@ -17,7 +17,8 @@ module.exports = {
   ],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
-    '\\.(png|jpg|jpeg|gif|svg)$': 'identity-obj-proxy',
+    '\\.(png|jpg|jpeg|gif)$': 'identity-obj-proxy',
+    '\\.(svg)$': '<rootDir>/__mocks__/svgMock.tsx',
     '^react-native$': 'react-native-web',
   },
   transform: {

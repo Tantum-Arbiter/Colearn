@@ -1,33 +1,28 @@
-import { StyleSheet } from 'react-native';
-
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { useCallback, useRef } from 'react';
+import { DefaultPage } from '@/components/default-page';
+import { useAppStore } from '@/store/app-store';
 
 export default function StoriesScreen() {
+  const { requestReturnToMainMenu } = useAppStore();
+  const lastCallRef = useRef<number>(0);
+
+  const handleBackToMenu = useCallback(() => {
+    // Debounce rapid back button presses (500ms)
+    const now = Date.now();
+    if (now - lastCallRef.current < 500) {
+      return; // Ignore rapid presses
+    }
+    lastCallRef.current = now;
+
+    // Request return to main menu via global state
+    requestReturnToMainMenu();
+  }, [requestReturnToMainMenu]);
+
   return (
-    <ThemedView style={styles.container}>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Stories</ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.content}>
-        <ThemedText>Welcome to Grow with Freya!</ThemedText>
-        <ThemedText>Your personalized storytelling experience will be built here.</ThemedText>
-      </ThemedView>
-    </ThemedView>
+    <DefaultPage
+      icon="stories-icon"
+      title="Stories"
+      onBack={handleBackToMenu}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-  },
-  titleContainer: {
-    paddingTop: 40,
-    paddingBottom: 20,
-  },
-  content: {
-    flex: 1,
-    gap: 16,
-  },
-});

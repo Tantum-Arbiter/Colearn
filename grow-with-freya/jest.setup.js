@@ -31,6 +31,7 @@ jest.mock('react-native-reanimated', () => {
     withDelay: jest.fn((delay, animation) => animation),
     withSequence: jest.fn((...values) => values[values.length - 1]),
     withRepeat: jest.fn((value) => value),
+    cancelAnimation: jest.fn(),
     runOnJS: jest.fn((fn) => fn),
     runOnUI: jest.fn((fn) => fn),
     interpolate: jest.fn((value, inputRange, outputRange) => outputRange[0]),
@@ -73,7 +74,11 @@ jest.mock('expo-haptics', () => ({
 }));
 
 jest.mock('expo-linear-gradient', () => ({
-  LinearGradient: 'LinearGradient',
+  LinearGradient: ({ children, ...props }) => {
+    const React = require('react');
+    const { View } = require('react-native');
+    return React.createElement(View, props, children);
+  },
 }));
 
 jest.mock('expo-splash-screen', () => ({
@@ -90,6 +95,28 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   setItem: jest.fn(),
   removeItem: jest.fn(),
   clear: jest.fn(),
+}));
+
+// Mock react-native-safe-area-context
+jest.mock('react-native-safe-area-context', () => ({
+  SafeAreaProvider: ({ children }) => children,
+  SafeAreaView: ({ children }) => children,
+  useSafeAreaInsets: () => ({ top: 44, bottom: 34, left: 0, right: 0 }),
+  useSafeAreaFrame: () => ({ x: 0, y: 0, width: 375, height: 812 }),
+}));
+
+// Mock custom hooks
+jest.mock('@/hooks/use-theme-color', () => ({
+  useThemeColor: () => '#000000',
+}));
+
+// Mock ThemedText component - using correct path from root
+jest.mock('./components/themed-text', () => ({
+  ThemedText: ({ children, ...props }) => {
+    const React = require('react');
+    const { Text } = require('react-native');
+    return React.createElement(Text, props, children);
+  },
 }));
 
 // Mock react-native-svg

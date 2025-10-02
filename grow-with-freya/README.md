@@ -1,4 +1,4 @@
-# Grow with Freya 📚
+# Grow with Freya 
 
 A personalized storytelling app for children with voice cloning and AI-powered narration.
 
@@ -41,17 +41,17 @@ grow-with-freya/
 
 ## Features (In Development)
 
-- 👶 **Multi-Child Profiles** - Create and manage profiles for multiple children
-- 🎨 **Avatar Creation** - Customize avatars for each child
-- 🎤 **Voice Recording** - Record voice samples for personalized narration
-- 📖 **Story Library** - Browse age-appropriate stories
-- 🔊 **Audio Playback** - Listen to stories with personalized voices
-- ⏰ **Screen Time Controls** - WHO/EU-aligned usage limits
-- 🔒 **Privacy First** - GDPR compliant with strong security measures
-- 🎮 **Sensory Games** - Support sensory development and exploration
-- 😊 **Emotional Expression** - Support emotional development
-- 👨‍👩‍👧‍👦 **Co-Engagement Tracking** - Parent-child interaction guidance
-- 🌙 **Bedtime Stories** - Calming audio for sleep and relaxation
+- **Multi-Child Profiles** - Create and manage profiles for multiple children
+- **Avatar Creation** - Customize avatars for each child
+- **Voice Recording** - Record voice samples for personalized narration
+- **Story Library** - Browse age-appropriate stories
+- **Audio Playback** - Listen to stories with personalized voices
+- **Screen Time Controls** - WHO/EU-aligned usage limits
+- **Privacy First** - GDPR compliant with strong security measures
+- **Sensory Games** - Support sensory development and exploration
+- **Emotional Expression** - Support emotional development
+- **Co-Engagement Tracking** - Parent-child interaction guidance
+- **Bedtime Stories** - Calming audio for sleep and relaxation
 
 ## Technology Stack
 

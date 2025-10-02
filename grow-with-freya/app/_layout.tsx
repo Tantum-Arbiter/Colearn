@@ -13,8 +13,15 @@ import { MainMenu } from '@/components/main-menu';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const { isAppReady, hasCompletedOnboarding, setCurrentScreen } = useAppStore();
+  const {
+    isAppReady,
+    hasCompletedOnboarding,
+    setCurrentScreen,
+    shouldReturnToMainMenu,
+    clearReturnToMainMenu
+  } = useAppStore();
   const [currentView, setCurrentView] = useState<'splash' | 'onboarding' | 'main' | 'tabs'>('splash');
+  const [mainMenuKey, setMainMenuKey] = useState(0); // Force remount when returning from tabs
 
   useEffect(() => {
     if (!isAppReady) {
@@ -26,6 +33,14 @@ export default function RootLayout() {
     }
   }, [isAppReady, hasCompletedOnboarding]);
 
+  // Listen for return to main menu requests
+  useEffect(() => {
+    if (shouldReturnToMainMenu) {
+      handleBackToMainMenu();
+      clearReturnToMainMenu();
+    }
+  }, [shouldReturnToMainMenu]);
+
   const handleOnboardingComplete = () => {
     setCurrentView('main');
   };
@@ -36,6 +51,11 @@ export default function RootLayout() {
       setCurrentScreen('stories');
     }
     // Handle other destinations as needed
+  };
+
+  const handleBackToMainMenu = () => {
+    // Return to main menu without forcing remount to preserve animations
+    setCurrentView('main');
   };
 
   // Show splash screen while app is loading
@@ -50,16 +70,28 @@ export default function RootLayout() {
 
   // Show main menu
   if (currentView === 'main') {
-    return <MainMenu onNavigate={handleMainMenuNavigate} />;
+    return <MainMenu key={mainMenuKey} onNavigate={handleMainMenuNavigate} />;
   }
 
   // Show tab navigation for specific features
-  return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
-  );
+  if (currentView === 'tabs') {
+    return (
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Stack>
+          <Stack.Screen
+            name="(tabs)"
+            options={{
+              headerShown: false,
+              // Add back button functionality
+              gestureEnabled: true,
+            }}
+          />
+        </Stack>
+        <StatusBar style="auto" />
+      </ThemeProvider>
+    );
+  }
+
+  // Fallback
+  return <MainMenu key={mainMenuKey} onNavigate={handleMainMenuNavigate} />;
 }
