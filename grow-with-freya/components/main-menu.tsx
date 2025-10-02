@@ -1,19 +1,18 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
+  cancelAnimation,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from './themed-text';
+import { useAppStore } from '@/store/app-store';
 import { DefaultPage } from './default-page';
 import { ErrorBoundary } from './error-boundary';
 import {
-  useDebounce,
-  useThrottle,
-  useSafeAnimation,
   useMemoryMonitor,
   performanceLogger,
   useSafeState
@@ -53,17 +52,23 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
   // Performance monitoring
   useMemoryMonitor('MainMenu');
 
+  // Get persistent animation state from store
+  const { backgroundAnimationState, updateBackgroundAnimationState } = useAppStore();
+
   // Safe state management to prevent updates on unmounted components
   const [selectedIcon, setSelectedIcon] = useSafeState('stories-icon');
   const [menuItems, setMenuItems] = useSafeState(DEFAULT_MENU_ITEMS);
   const [triggerSelectionAnimation, setTriggerSelectionAnimation] = useSafeState(false);
 
-  // Animation values with cleanup
+  // Animation values with cleanup - initialize from persistent state
   const starRotation = useSharedValue(0);
-  const balloonFloat1 = useSharedValue(-200);
-  const balloonFloat2 = useSharedValue(-400);
-  const rocketFloat1 = useSharedValue(SCREEN_WIDTH + 100);
-  const rocketFloat2 = useSharedValue(-200);
+  const balloonFloat1 = useSharedValue(backgroundAnimationState.balloonFloat1);
+  const balloonFloat2 = useSharedValue(backgroundAnimationState.balloonFloat2);
+  const rocketFloat1 = useSharedValue(backgroundAnimationState.rocketFloat1);
+  const rocketFloat2 = useSharedValue(backgroundAnimationState.rocketFloat2);
+
+  // Animation cancellation flag
+  const animationsCancelled = useRef(false);
 
   // Safe menu state management
   const [menuOrder, setMenuOrder] = useSafeState<MenuItemData[]>(menuItems);
@@ -71,38 +76,58 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
   const [lastSwapTime, setLastSwapTime] = useSafeState<number>(0);
   const [newlySelectedItem, setNewlySelectedItem] = useSafeState<string | null>(null);
 
-  // Performance optimizations
-  const { startAnimation: startMenuAnimation, endAnimation: endMenuAnimation } = useSafeAnimation('menu-interaction');
+  // Removed useSafeAnimation - was blocking core functionality
+
+  // Timeout cleanup ref
+  const timeoutRef = useRef<NodeJS.Timeout>();
 
   // Component cleanup on unmount
   useEffect(() => {
     return () => {
-      // Clean up all animations when component unmounts
-      endMenuAnimation();
+      // Save current animation state before unmounting
+      updateBackgroundAnimationState({
+        balloonFloat1: balloonFloat1.value,
+        balloonFloat2: balloonFloat2.value,
+        rocketFloat1: rocketFloat1.value,
+        rocketFloat2: rocketFloat2.value,
+      });
 
-      // Reset animation values to prevent memory leaks
-      starRotation.value = 0;
-      balloonFloat1.value = -200;
-      balloonFloat2.value = -400;
-      rocketFloat1.value = SCREEN_WIDTH + 100;
-      rocketFloat2.value = -200;
+      // Cancel all animations to prevent memory leaks
+      animationsCancelled.current = true;
+      // Removed cancelMenuAnimation - was blocking functionality
+
+      // Clear any pending timeouts
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      // Animation limiter removed - no longer needed
+
+      // Cancel all infinite background animations (safe for test environment)
+      try {
+        cancelAnimation(starRotation);
+        cancelAnimation(balloonFloat1);
+        cancelAnimation(balloonFloat2);
+        cancelAnimation(rocketFloat1);
+        cancelAnimation(rocketFloat2);
+      } catch (error) {
+        // cancelAnimation might not be available in test environment
+        console.warn('Could not cancel background animations:', error);
+      }
 
       const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development';
       if (isDev) {
-        console.log('MainMenu component unmounted - cleaned up animations');
+        console.log('MainMenu component unmounted - saved animation state and cleaned up');
       }
     };
-  }, [endMenuAnimation, starRotation, balloonFloat1, balloonFloat2, rocketFloat1, rocketFloat2]);
+  }, [updateBackgroundAnimationState]); // Removed useSharedValue objects from deps to prevent infinite re-renders
 
   // Performance-optimized icon press handler with debouncing and error handling
   const handleIconPressInternal = useCallback((selectedItem: MenuItemData) => {
     const endTimer = performanceLogger.startTimer('icon-press');
 
     try {
-      if (!startMenuAnimation()) {
-        // Too many animations running, skip this interaction
-        return;
-      }
+      // Removed startMenuAnimation check - was blocking core functionality
 
       const centerItem = menuOrder[0];
       const currentTime = Date.now();
@@ -116,8 +141,7 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
       if (selectedItem.destination === centerItem.destination) {
         // For stories, use external navigation to prevent state conflicts
         if (selectedItem.destination === 'stories') {
-          // Clean up animations before navigation
-          endMenuAnimation();
+          // Navigate directly - removed animation cleanup that was blocking
           onNavigate(selectedItem.destination);
         } else {
           // For other pages, use internal navigation
@@ -141,23 +165,26 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
           setMenuOrder(newOrder);
           setNewlySelectedItem(selectedItem.destination);
 
-          // Clear animation trigger safely
-          setTimeout(() => {
+          // Clear animation trigger safely (with cleanup)
+          if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+          }
+          timeoutRef.current = setTimeout(() => {
             setNewlySelectedItem(null);
-            endMenuAnimation();
+            // Removed endMenuAnimation - was blocking functionality
           }, 1000);
         }
       }
     } catch (error) {
       console.error('Error in handleIconPress:', error);
-      endMenuAnimation();
+      // Removed endMenuAnimation - was blocking functionality
     } finally {
       endTimer();
     }
-  }, [menuOrder, lastSwapTime, startMenuAnimation, endMenuAnimation, onNavigate]);
+  }, [menuOrder, lastSwapTime, onNavigate]);
 
-  // Debounced version to prevent rapid-fire calls
-  const handleIconPress = useDebounce(handleIconPressInternal, 50);
+  // Direct call - no debouncing to ensure pages open immediately
+  const handleIconPress = handleIconPressInternal;
 
   const handleBackToMenu = () => {
     setCurrentPage(null);
@@ -165,16 +192,62 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
 
 
 
+  // Start background animations on mount - always resume from persistent state
   useEffect(() => {
-    balloonFloat1.value = createCloudAnimation(balloonFloat1, 0, -200);
-    balloonFloat2.value = createCloudAnimation(balloonFloat2, ANIMATION_TIMINGS.CLOUD_STAGGER_DELAY, -400);
-  }, [balloonFloat1, balloonFloat2]);
+    if (!animationsCancelled.current) {
+      // Always resume from persistent state (works for both fresh start and returning from Stories)
+      balloonFloat1.value = createCloudAnimation(balloonFloat1, 0, -200, true); // Resume from current
+      balloonFloat2.value = createCloudAnimation(balloonFloat2, ANIMATION_TIMINGS.CLOUD_STAGGER_DELAY, -400, true); // Resume from current
 
+      // Check if rockets are at initial positions (fresh start) or mid-animation (resume)
+      const rocket1AtStart = Math.abs(rocketFloat1.value - (SCREEN_WIDTH + 100)) < 50; // Within 50px of start
+      const rocket2AtStart = Math.abs(rocketFloat2.value - (-200)) < 50; // Within 50px of start
+
+      if (rocket1AtStart && rocket2AtStart) {
+        // Fresh start - use original staggered timing
+        rocketFloat1.value = createRocketAnimation(rocketFloat1, 'right-to-left', 0, false); // Start fresh
+        rocketFloat2.value = createRocketAnimation(rocketFloat2, 'left-to-right',
+          ANIMATION_TIMINGS.ROCKET_DURATION + ANIMATION_TIMINGS.ROCKET_WAIT_TIME, false); // Start fresh with delay
+      } else {
+        // Resume from current positions
+        rocketFloat1.value = createRocketAnimation(rocketFloat1, 'right-to-left', 0, true); // Resume from current
+        rocketFloat2.value = createRocketAnimation(rocketFloat2, 'left-to-right',
+          ANIMATION_TIMINGS.ROCKET_DURATION + ANIMATION_TIMINGS.ROCKET_WAIT_TIME, true); // Resume from current
+      }
+    }
+  }, []); // Run once on mount
+
+  // Pause/Resume background animations for internal pages (Sensory, etc.)
   useEffect(() => {
-    rocketFloat1.value = createRocketAnimation(rocketFloat1, 'right-to-left', 0);
-    rocketFloat2.value = createRocketAnimation(rocketFloat2, 'left-to-right',
-      ANIMATION_TIMINGS.ROCKET_DURATION + ANIMATION_TIMINGS.ROCKET_WAIT_TIME);
-  }, [rocketFloat1, rocketFloat2]);
+    if (!animationsCancelled.current) {
+      if (currentPage !== null) {
+        // Save current positions before pausing
+        updateBackgroundAnimationState({
+          balloonFloat1: balloonFloat1.value,
+          balloonFloat2: balloonFloat2.value,
+          rocketFloat1: rocketFloat1.value,
+          rocketFloat2: rocketFloat2.value,
+        });
+
+        // Pause animations when navigating to internal pages by cancelling them
+        try {
+          cancelAnimation(balloonFloat1);
+          cancelAnimation(balloonFloat2);
+          cancelAnimation(rocketFloat1);
+          cancelAnimation(rocketFloat2);
+        } catch (error) {
+          console.warn('Could not pause background animations:', error);
+        }
+      } else {
+        // Resume animations when returning from internal pages - get fresh state
+        const currentState = useAppStore.getState().backgroundAnimationState;
+        balloonFloat1.value = createCloudAnimation(balloonFloat1, 0, currentState.balloonFloat1, true);
+        balloonFloat2.value = createCloudAnimation(balloonFloat2, ANIMATION_TIMINGS.CLOUD_STAGGER_DELAY, currentState.balloonFloat2, true);
+        rocketFloat1.value = createRocketAnimation(rocketFloat1, 'right-to-left', 0, true);
+        rocketFloat2.value = createRocketAnimation(rocketFloat2, 'left-to-right', ANIMATION_TIMINGS.ROCKET_DURATION + ANIMATION_TIMINGS.ROCKET_WAIT_TIME, true);
+      }
+    }
+  }, [currentPage, updateBackgroundAnimationState]); // Pause/Resume when navigating to/from internal pages
 
   const starAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${starRotation.value}deg` }],

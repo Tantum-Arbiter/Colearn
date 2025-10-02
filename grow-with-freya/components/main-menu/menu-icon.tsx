@@ -2,15 +2,16 @@
  * MenuIcon component - Individual menu icon with animations and interactions
  */
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef, useEffect, useMemo } from 'react';
 import { Pressable } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
+  cancelAnimation as cancelReanimatedAnimation,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
-import { useThrottle, useSafeAnimation } from './performance-utils';
+// Removed useSafeAnimation - was blocking core functionality
 
 import { ThemedText } from '../themed-text';
 import { getIconSvgType, getSvgComponentFromSvg } from './assets';
@@ -53,32 +54,113 @@ export const MenuIcon = React.memo(function MenuIcon({
   const selectionScale = useSharedValue(1);
   const selectionGlow = useSharedValue(0);
 
-  // Performance optimizations
-  const { startAnimation, endAnimation } = useSafeAnimation(`menu-icon-${icon}`);
+  // Removed useSafeAnimation - was blocking core functionality with animation limiter
+
+  // Timeout cleanup ref
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Selection celebration animation effect
   React.useEffect(() => {
     if (triggerSelectionAnimation && status === 'animated_interactive') {
       console.log('Triggering selection animation for:', label);
 
+      // Always run selection animations - no performance interference
+
+      // CRITICAL FIX: Cancel any existing selection animations first to prevent accumulation
+      try {
+        cancelReanimatedAnimation(selectionScale);
+        cancelReanimatedAnimation(selectionGlow);
+      } catch (error) {
+        console.warn('Could not cancel selection animations:', error);
+      }
+
+      // Reset to base values before starting new animation
+      selectionScale.value = 1;
+      selectionGlow.value = 0;
+
+      // Start new selection animation
       const { scaleAnimation, glowAnimation } = createSelectionAnimation(
-        selectionScale, 
+        selectionScale,
         selectionGlow
       );
-      
+
       selectionScale.value = scaleAnimation;
       selectionGlow.value = glowAnimation;
     }
-  }, [triggerSelectionAnimation, status, label, selectionScale, selectionGlow]);
+  }, [triggerSelectionAnimation, status, label]); // Removed useSharedValue objects from deps to prevent infinite re-renders
 
   // Main animation effects for active icons
   React.useEffect(() => {
     if (status === 'animated_interactive') {
+      // CRITICAL FIX: Cancel existing infinite animations before starting new ones
+      // This prevents animation accumulation during continuous button presses
+      try {
+        cancelReanimatedAnimation(scale);
+        cancelReanimatedAnimation(glow);
+        cancelReanimatedAnimation(shimmer);
+      } catch (error) {
+        console.warn('Could not cancel existing animations:', error);
+      }
+
+      // Now start fresh infinite animations
       scale.value = createIconPulseAnimation(scale, isLarge);
       glow.value = createGlowAnimation(glow);
       shimmer.value = createShimmerAnimation(shimmer);
     }
-  }, [status, isLarge, scale, glow, shimmer]);
+
+    // Cleanup: stop infinite animations when status changes or component unmounts
+    return () => {
+      if (status === 'animated_interactive') {
+        // Cancel running animations first (safe for test environment)
+        try {
+          cancelReanimatedAnimation(scale);
+          cancelReanimatedAnimation(glow);
+          cancelReanimatedAnimation(shimmer);
+        } catch (error) {
+          // cancelAnimation might not be available in test environment
+          console.warn('Could not cancel animations:', error);
+        }
+
+        // Then set to base values
+        scale.value = isLarge ? 1.05 : 1;
+        glow.value = 0;
+        shimmer.value = 0;
+      }
+    };
+  }, [status, isLarge]); // Removed useSharedValue objects from deps to prevent infinite re-renders
+
+  // Comprehensive cleanup on unmount
+  useEffect(() => {
+    return () => {
+      // Clear timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      // Cancel all running animations first (safe for test environment)
+      try {
+        cancelReanimatedAnimation(scale);
+        cancelReanimatedAnimation(glow);
+        cancelReanimatedAnimation(shimmer);
+        cancelReanimatedAnimation(selectionScale);
+        cancelReanimatedAnimation(selectionGlow);
+        cancelReanimatedAnimation(rotation);
+      } catch (error) {
+        // cancelAnimation might not be available in test environment
+        console.warn('Could not cancel animations:', error);
+      }
+
+      // Then reset to base values
+      scale.value = isLarge ? 1.05 : 1;
+      glow.value = 0;
+      shimmer.value = 0;
+      selectionScale.value = 1;
+      selectionGlow.value = 0;
+      rotation.value = 0;
+
+      // Animation cleanup no longer needed - removed animation limiter
+    };
+  }, [isLarge, scale, glow, shimmer, selectionScale, selectionGlow, rotation]);
 
   // Animated styles
   const animatedStyle = useAnimatedStyle(() => ({
@@ -129,20 +211,21 @@ export const MenuIcon = React.memo(function MenuIcon({
       : 0,
   }));
 
-  // Performance-optimized press handler
-  const handlePressInternal = useCallback(() => {
+  // Animation-only handler (throttled) - selection animations bypass limiter for responsiveness
+  const handleAnimations = useCallback(() => {
     try {
-      if (!startAnimation()) {
-        // Skip if too many animations are running
-        return;
+      // CRITICAL FIX: Cancel existing press animations before starting new ones
+      // This prevents animation accumulation during rapid button presses
+      try {
+        cancelReanimatedAnimation(scale);
+        if (status === 'inactive') {
+          cancelReanimatedAnimation(glow);
+        }
+      } catch (error) {
+        console.warn('Could not cancel press animations:', error);
       }
 
-      // Remove debug logging in production
-      const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development';
-      if (isDev) {
-        console.log('MenuIcon press:', label);
-      }
-
+      // Selection animations (scale/glow) always work - bypass animation limiter
       // Press animation feedback
       scale.value = createPressAnimation(scale, isLarge);
 
@@ -152,30 +235,64 @@ export const MenuIcon = React.memo(function MenuIcon({
         glow.value = createGlowBurstAnimation(glow, originalGlow);
       }
 
-      // Haptic feedback (throttled to prevent excessive vibration)
-      if (status === 'animated_interactive') {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      } else {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      // Only use animation limiter for background/infinite animations, not selection animations
+      // This ensures icons always respond visually to presses
+    } catch (error) {
+      console.error('Error in MenuIcon animations:', error);
+    }
+  }, [status, isLarge, scale, glow]);
+
+  // Core functionality handler (not throttled)
+  const handleCorePress = useCallback(() => {
+    try {
+      // Remove debug logging in production
+      const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development';
+      if (isDev) {
+        console.log('MenuIcon press:', label);
       }
 
-      onPress();
-
-      // End animation after a delay
-      setTimeout(() => endAnimation(), 300);
+      onPress(); // Core functionality - always execute
     } catch (error) {
-      console.error('Error in MenuIcon handlePress:', error);
-      endAnimation();
+      console.error('Error in MenuIcon core press:', error);
     }
-  }, [label, status, isLarge, scale, glow, onPress, startAnimation, endAnimation]);
+  }, [label, onPress]);
 
-  // Throttled version to prevent rapid-fire presses
-  const handlePress = useThrottle(handlePressInternal, 100);
+  // Haptic feedback is now handled directly in handlePress for better reliability
 
-  // Calculate icon size based on state
-  const iconSize = isLarge 
-    ? LAYOUT.ICON_SIZE_LARGE 
-    : (status === 'animated_interactive' ? LAYOUT.ICON_SIZE_MEDIUM : LAYOUT.ICON_SIZE_SMALL);
+  // Direct animations - no throttling to ensure immediate response
+  const handleAnimationsThrottled = handleAnimations;
+
+  // Simple, direct handler - no performance optimizations interfering with core functionality
+  const handlePress = useCallback(() => {
+    // Core functionality - always works immediately
+    handleCorePress();
+
+    // Haptic feedback - always works
+    try {
+      const hapticStyle = status === 'animated_interactive'
+        ? Haptics.ImpactFeedbackStyle.Medium
+        : Haptics.ImpactFeedbackStyle.Light;
+      Haptics.impactAsync(hapticStyle);
+    } catch (error) {
+      console.warn('Haptic feedback failed:', error);
+    }
+
+    // Visual animations - always work
+    handleAnimationsThrottled();
+  }, [handleCorePress, handleAnimationsThrottled]);
+
+  // Memoize SVG component to prevent re-creation on every render
+  const SvgComponent = useMemo(() => {
+    const svgType = getIconSvgType(icon);
+    return getSvgComponentFromSvg(svgType);
+  }, [icon]);
+
+  // Memoize icon size calculation
+  const memoizedIconSize = useMemo(() => {
+    return isLarge
+      ? LAYOUT.ICON_SIZE_LARGE
+      : (status === 'animated_interactive' ? LAYOUT.ICON_SIZE_MEDIUM : LAYOUT.ICON_SIZE_SMALL);
+  }, [isLarge, status]);
 
   return (
     <Animated.View style={[menuIconStyles.container, animatedStyle, glowStyle]}>
@@ -188,6 +305,9 @@ export const MenuIcon = React.memo(function MenuIcon({
         ]}
         onPress={handlePress}
         testID={testID}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={`${label} button`}
       >
         {/* Shining star overlay for active icon */}
         {status === 'animated_interactive' && (
@@ -196,17 +316,11 @@ export const MenuIcon = React.memo(function MenuIcon({
           </Animated.View>
         )}
 
-        {(() => {
-          const svgType = getIconSvgType(icon);
-          const SvgComponent = getSvgComponentFromSvg(svgType);
-          return (
-            <SvgComponent
-              width={iconSize}
-              height={iconSize}
-              opacity={1}
-            />
-          );
-        })()}
+        <SvgComponent
+          width={memoizedIconSize}
+          height={memoizedIconSize}
+          opacity={1}
+        />
 
       </Pressable>
 
