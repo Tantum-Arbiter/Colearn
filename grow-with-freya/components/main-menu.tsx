@@ -141,14 +141,11 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
       if (selectedItem.destination === centerItem.destination) {
         // For stories, use external navigation to prevent state conflicts
         if (selectedItem.destination === 'stories') {
-          // Navigate directly - removed animation cleanup that was blocking
           onNavigate(selectedItem.destination);
         } else {
-          // For other pages, use internal navigation
           setCurrentPage(selectedItem);
         }
       } else {
-        // Prevent rapid swapping that could cause crashes
         if (currentTime - lastSwapTime < 100) {
           return; // Ignore rapid taps
         }
@@ -158,14 +155,12 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
         if (clickedIndex > 0) {
           setLastSwapTime(currentTime);
 
-          // Perform swap with error boundary
           const newOrder = [...menuOrder];
           [newOrder[0], newOrder[clickedIndex]] = [newOrder[clickedIndex], newOrder[0]];
 
           setMenuOrder(newOrder);
           setNewlySelectedItem(selectedItem.destination);
 
-          // Clear animation trigger safely (with cleanup)
           if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
           }
@@ -177,13 +172,11 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
       }
     } catch (error) {
       console.error('Error in handleIconPress:', error);
-      // Removed endMenuAnimation - was blocking functionality
     } finally {
       endTimer();
     }
   }, [menuOrder, lastSwapTime, onNavigate]);
 
-  // Direct call - no debouncing to ensure pages open immediately
   const handleIconPress = handleIconPressInternal;
 
   const handleBackToMenu = () => {
@@ -191,11 +184,8 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
   };
 
 
-
-  // Start background animations on mount - always resume from persistent state
   useEffect(() => {
     if (!animationsCancelled.current) {
-      // Always resume from persistent state (works for both fresh start and returning from Stories)
       balloonFloat1.value = createCloudAnimation(balloonFloat1, 0, -200, true); // Resume from current
       balloonFloat2.value = createCloudAnimation(balloonFloat2, ANIMATION_TIMINGS.CLOUD_STAGGER_DELAY, -400, true); // Resume from current
 
@@ -217,37 +207,7 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
     }
   }, []); // Run once on mount
 
-  // Pause/Resume background animations for internal pages (Sensory, etc.)
-  useEffect(() => {
-    if (!animationsCancelled.current) {
-      if (currentPage !== null) {
-        // Save current positions before pausing
-        updateBackgroundAnimationState({
-          balloonFloat1: balloonFloat1.value,
-          balloonFloat2: balloonFloat2.value,
-          rocketFloat1: rocketFloat1.value,
-          rocketFloat2: rocketFloat2.value,
-        });
 
-        // Pause animations when navigating to internal pages by cancelling them
-        try {
-          cancelAnimation(balloonFloat1);
-          cancelAnimation(balloonFloat2);
-          cancelAnimation(rocketFloat1);
-          cancelAnimation(rocketFloat2);
-        } catch (error) {
-          console.warn('Could not pause background animations:', error);
-        }
-      } else {
-        // Resume animations when returning from internal pages - get fresh state
-        const currentState = useAppStore.getState().backgroundAnimationState;
-        balloonFloat1.value = createCloudAnimation(balloonFloat1, 0, currentState.balloonFloat1, true);
-        balloonFloat2.value = createCloudAnimation(balloonFloat2, ANIMATION_TIMINGS.CLOUD_STAGGER_DELAY, currentState.balloonFloat2, true);
-        rocketFloat1.value = createRocketAnimation(rocketFloat1, 'right-to-left', 0, true);
-        rocketFloat2.value = createRocketAnimation(rocketFloat2, 'left-to-right', ANIMATION_TIMINGS.ROCKET_DURATION + ANIMATION_TIMINGS.ROCKET_WAIT_TIME, true);
-      }
-    }
-  }, [currentPage, updateBackgroundAnimationState]); // Pause/Resume when navigating to/from internal pages
 
   const starAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${starRotation.value}deg` }],
