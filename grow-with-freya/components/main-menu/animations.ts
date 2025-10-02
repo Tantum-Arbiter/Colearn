@@ -11,22 +11,50 @@ import { ANIMATION_TIMINGS, LAYOUT, SCREEN_WIDTH } from './constants';
 export const createCloudAnimation = (
   cloudValue: SharedValue<number>,
   startDelay: number = 0,
-  startPosition: number = LAYOUT.OFF_SCREEN_LEFT
+  startPosition: number = LAYOUT.OFF_SCREEN_LEFT,
+  resumeFromCurrent: boolean = false
 ) => {
   const exitPosition = SCREEN_WIDTH + LAYOUT.CLOUD_EXIT_MARGIN;
 
   const createLoopAnimation = () => {
-    return withRepeat(
-      withSequence(
-        withTiming(startPosition, { duration: 0 }),
-        withTiming(exitPosition, {
-          duration: ANIMATION_TIMINGS.CLOUD_DURATION,
-          easing: Easing.linear
-        })
-      ),
-      -1,
-      false
-    );
+    if (resumeFromCurrent) {
+      // Continue from current position without resetting
+      const currentPosition = cloudValue.value;
+      const remainingDistance = exitPosition - currentPosition;
+      const totalDistance = exitPosition - startPosition;
+      const remainingDuration = (remainingDistance / totalDistance) * ANIMATION_TIMINGS.CLOUD_DURATION;
+
+      return withRepeat(
+        withSequence(
+          // Continue to exit from current position
+          withTiming(exitPosition, {
+            duration: Math.max(remainingDuration, 100), // Minimum 100ms
+            easing: Easing.linear
+          }),
+          // Reset and start new cycle
+          withTiming(startPosition, { duration: 0 }),
+          withTiming(exitPosition, {
+            duration: ANIMATION_TIMINGS.CLOUD_DURATION,
+            easing: Easing.linear
+          })
+        ),
+        -1,
+        false
+      );
+    } else {
+      // Start from beginning (original behavior)
+      return withRepeat(
+        withSequence(
+          withTiming(startPosition, { duration: 0 }),
+          withTiming(exitPosition, {
+            duration: ANIMATION_TIMINGS.CLOUD_DURATION,
+            easing: Easing.linear
+          })
+        ),
+        -1,
+        false
+      );
+    }
   };
 
   if (startDelay > 0) {
@@ -39,7 +67,8 @@ export const createCloudAnimation = (
 export const createRocketAnimation = (
   rocketValue: SharedValue<number>,
   direction: 'right-to-left' | 'left-to-right',
-  startDelay: number = 0
+  startDelay: number = 0,
+  resumeFromCurrent: boolean = false
 ) => {
   const { ROCKET_DURATION, ROCKET_WAIT_TIME } = ANIMATION_TIMINGS;
   const { OFF_SCREEN_LEFT, HIDDEN_POSITION } = LAYOUT;
@@ -49,22 +78,80 @@ export const createRocketAnimation = (
   const endPos = direction === 'right-to-left' ? OFF_SCREEN_LEFT : offScreenRight;
 
   const createRocketSequence = () => {
-    return withRepeat(
-      withSequence(
-        withTiming(startPos, { duration: 0 }),
-        withTiming(endPos, {
-          duration: ROCKET_DURATION,
-          easing: Easing.linear
-        }),
-        withTiming(HIDDEN_POSITION, { duration: 0 }),
-        withDelay(
-          ROCKET_WAIT_TIME + ROCKET_DURATION + ROCKET_WAIT_TIME,
-          withTiming(startPos, { duration: 0 })
-        )
-      ),
-      -1,
-      false
-    );
+    if (resumeFromCurrent) {
+      // Continue from current position without resetting
+      const currentPosition = rocketValue.value;
+
+      // If rocket is in hidden position, start new cycle
+      if (currentPosition === HIDDEN_POSITION) {
+        return withRepeat(
+          withSequence(
+            withTiming(startPos, { duration: 0 }),
+            withTiming(endPos, {
+              duration: ROCKET_DURATION,
+              easing: Easing.linear
+            }),
+            withTiming(HIDDEN_POSITION, { duration: 0 }),
+            withDelay(
+              ROCKET_WAIT_TIME + ROCKET_DURATION + ROCKET_WAIT_TIME,
+              withTiming(startPos, { duration: 0 })
+            )
+          ),
+          -1,
+          false
+        );
+      } else {
+        // Continue from current position
+        const totalDistance = Math.abs(endPos - startPos);
+        const remainingDistance = Math.abs(endPos - currentPosition);
+        const remainingDuration = (remainingDistance / totalDistance) * ROCKET_DURATION;
+
+        return withRepeat(
+          withSequence(
+            // Continue to end from current position
+            withTiming(endPos, {
+              duration: Math.max(remainingDuration, 100), // Minimum 100ms
+              easing: Easing.linear
+            }),
+            withTiming(HIDDEN_POSITION, { duration: 0 }),
+            withDelay(
+              ROCKET_WAIT_TIME + ROCKET_DURATION + ROCKET_WAIT_TIME,
+              withTiming(startPos, { duration: 0 })
+            ),
+            // Start new cycle
+            withTiming(endPos, {
+              duration: ROCKET_DURATION,
+              easing: Easing.linear
+            }),
+            withTiming(HIDDEN_POSITION, { duration: 0 }),
+            withDelay(
+              ROCKET_WAIT_TIME + ROCKET_DURATION + ROCKET_WAIT_TIME,
+              withTiming(startPos, { duration: 0 })
+            )
+          ),
+          -1,
+          false
+        );
+      }
+    } else {
+      // Start from beginning (original behavior)
+      return withRepeat(
+        withSequence(
+          withTiming(startPos, { duration: 0 }),
+          withTiming(endPos, {
+            duration: ROCKET_DURATION,
+            easing: Easing.linear
+          }),
+          withTiming(HIDDEN_POSITION, { duration: 0 }),
+          withDelay(
+            ROCKET_WAIT_TIME + ROCKET_DURATION + ROCKET_WAIT_TIME,
+            withTiming(startPos, { duration: 0 })
+          )
+        ),
+        -1,
+        false
+      );
+    }
   };
 
   if (startDelay > 0) {
