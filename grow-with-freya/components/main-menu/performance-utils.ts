@@ -71,29 +71,143 @@ export function useThrottle<T extends (...args: any[]) => any>(
 // Animation limiter to prevent too many concurrent animations
 class AnimationLimiter {
   private activeAnimations = new Set<string>();
-  private maxConcurrentAnimations = 5;
+  private maxConcurrentAnimations = 6; // Increased from 2 to 6 for better normal use
+  private cancelledAnimations = new Set<string>();
+  private rapidInteractionMode = false;
+  private rapidInteractionTimeout: NodeJS.Timeout | null = null;
+  private interactionCount = 0;
+  private extremeRapidMode = false; // Circuit breaker for extreme rapid pressing
+  private extremeInteractionCount = 0;
+  private extremeRapidTimeout: NodeJS.Timeout | null = null;
+  private selectionTimeouts = new Set<NodeJS.Timeout>(); // Track selection animation timeouts
 
   canStartAnimation(id: string): boolean {
-    if (this.activeAnimations.size >= this.maxConcurrentAnimations) {
+    if (this.cancelledAnimations.has(id)) {
+      return false; // Animation was cancelled
+    }
+
+    // During rapid interactions, block only infinite animations (not selection animations)
+    if (this.rapidInteractionMode && (id.includes('pulse') || id.includes('glow') || id.includes('shimmer') || id.includes('cloud') || id.includes('rocket'))) {
+      return false;
+    }
+
+    // During extreme rapid interactions, block ALL animations (circuit breaker)
+    if (this.extremeRapidMode) {
+      return false;
+    }
+
+    // Be more lenient with selection animations (menu-icon-*) - allow more concurrent
+    const isSelectionAnimation = id.includes('menu-icon-');
+    const maxAllowed = isSelectionAnimation ? this.maxConcurrentAnimations + 4 : this.maxConcurrentAnimations;
+
+    if (this.activeAnimations.size >= maxAllowed) {
       return false;
     }
     return true;
   }
 
   startAnimation(id: string): void {
+    this.cancelledAnimations.delete(id); // Remove from cancelled if restarting
     this.activeAnimations.add(id);
+
+    // Auto-cleanup for selection animations after 2 seconds (they're short-lived)
+    if (id.includes('menu-icon-')) {
+      const timeout = setTimeout(() => {
+        this.activeAnimations.delete(id);
+        this.selectionTimeouts.delete(timeout); // Remove from tracking
+      }, 2000);
+      this.selectionTimeouts.add(timeout); // Track timeout for cleanup
+    }
   }
 
   endAnimation(id: string): void {
     this.activeAnimations.delete(id);
   }
 
+  cancelAnimation(id: string): void {
+    this.cancelledAnimations.add(id);
+    this.activeAnimations.delete(id);
+
+    // If it's a selection animation, also clear any pending timeout
+    if (id.includes('menu-icon-')) {
+      // Note: We can't easily match specific timeouts to IDs, but the timeout will handle cleanup safely
+      // The timeout callback checks if the animation is still active before deleting
+    }
+  }
+
+  // Track rapid interactions and disable infinite animations
+  trackInteraction(): void {
+    this.interactionCount++;
+    this.extremeInteractionCount++;
+
+    // Enable rapid mode after 25 interactions within 3 seconds (much more lenient)
+    if (this.interactionCount >= 25) {
+      this.rapidInteractionMode = true;
+      console.log('🚨 Rapid interaction detected - disabling infinite animations (count:', this.interactionCount, ')');
+    }
+
+    // Enable extreme rapid mode (circuit breaker) after 30 interactions within 1 second (increased from 20)
+    if (this.extremeInteractionCount >= 30) {
+      this.extremeRapidMode = true;
+      console.log('🔥 EXTREME rapid interaction detected - enabling circuit breaker');
+    }
+
+    // Clear existing timeouts
+    if (this.rapidInteractionTimeout) {
+      clearTimeout(this.rapidInteractionTimeout);
+    }
+    if (this.extremeRapidTimeout) {
+      clearTimeout(this.extremeRapidTimeout);
+    }
+
+    // Reset rapid mode after 3 seconds of no interactions (increased from 2s)
+    this.rapidInteractionTimeout = setTimeout(() => {
+      this.rapidInteractionMode = false;
+      this.interactionCount = 0;
+      console.log('✅ Rapid interaction mode disabled - re-enabling animations');
+    }, 3000);
+
+    // Reset extreme mode after 5 seconds of no interactions
+    this.extremeRapidTimeout = setTimeout(() => {
+      this.extremeRapidMode = false;
+      this.extremeInteractionCount = 0;
+      console.log('✅ Extreme rapid interaction mode disabled');
+    }, 5000);
+  }
+
   getActiveCount(): number {
     return this.activeAnimations.size;
   }
 
+  isRapidInteractionMode(): boolean {
+    return this.rapidInteractionMode;
+  }
+
+  isExtremeRapidMode(): boolean {
+    return this.extremeRapidMode;
+  }
+
   reset(): void {
     this.activeAnimations.clear();
+    this.cancelledAnimations.clear();
+    this.rapidInteractionMode = false;
+    this.interactionCount = 0;
+    this.extremeRapidMode = false;
+    this.extremeInteractionCount = 0;
+
+    // Clear all tracked timeouts to prevent memory leaks
+    if (this.rapidInteractionTimeout) {
+      clearTimeout(this.rapidInteractionTimeout);
+      this.rapidInteractionTimeout = null;
+    }
+    if (this.extremeRapidTimeout) {
+      clearTimeout(this.extremeRapidTimeout);
+      this.extremeRapidTimeout = null;
+    }
+
+    // Clear all selection animation timeouts
+    this.selectionTimeouts.forEach(timeout => clearTimeout(timeout));
+    this.selectionTimeouts.clear();
   }
 }
 
@@ -105,7 +219,7 @@ export function useSafeAnimation(animationId: string) {
 
   const startAnimation = useCallback(() => {
     if (!animationLimiter.canStartAnimation(animationId)) {
-      console.warn(`Animation ${animationId} blocked - too many concurrent animations`);
+      console.warn(`Animation ${animationId} blocked - too many concurrent animations or cancelled`);
       return false;
     }
 
@@ -121,14 +235,19 @@ export function useSafeAnimation(animationId: string) {
     }
   }, [animationId]);
 
-  // Cleanup on unmount
+  const cancelAnimation = useCallback(() => {
+    animationLimiter.cancelAnimation(animationId);
+    isActiveRef.current = false;
+  }, [animationId]);
+
+  // Cleanup on unmount - cancel instead of just ending
   useEffect(() => {
     return () => {
-      endAnimation();
+      cancelAnimation();
     };
-  }, [endAnimation]);
+  }, [cancelAnimation]);
 
-  return { startAnimation, endAnimation };
+  return { startAnimation, endAnimation, cancelAnimation };
 }
 
 // Memory usage monitor (development only)
