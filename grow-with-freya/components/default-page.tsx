@@ -1,8 +1,37 @@
-import React from 'react';
-import { View, StyleSheet, Pressable } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, StyleSheet, Pressable, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { useSharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import { ThemedText } from './themed-text';
 import { getSvgComponentFromSvg } from './main-menu/assets';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// Star configuration (same as main menu)
+const STAR_COUNT = 15;
+const STAR_SIZE = 3;
+const STAR_BORDER_RADIUS = 1.5;
+const STAR_AREA_HEIGHT_RATIO = 0.6;
+
+/**
+ * Generates reversed star positions for sub-screens (bottom 60% instead of top 60%)
+ */
+const generateReversedStarPositions = (count: number = STAR_COUNT) => {
+  const stars = [];
+  const starAreaHeight = SCREEN_HEIGHT * STAR_AREA_HEIGHT_RATIO;
+  const startFromBottom = SCREEN_HEIGHT - starAreaHeight - 20; // 20px margin from bottom
+
+  for (let i = 0; i < count; i++) {
+    stars.push({
+      id: i,
+      left: Math.random() * (SCREEN_WIDTH - 20) + 10, // 10px margin from edges
+      top: startFromBottom + Math.random() * starAreaHeight, // Position in bottom 60%
+      opacity: 0.3 + Math.random() * 0.4, // Random opacity between 0.3-0.7
+    });
+  }
+
+  return stars;
+};
 
 interface DefaultPageProps {
   icon: string;
@@ -63,15 +92,44 @@ const pageContent: { [key: string]: { emoji: string; message: string; subtitle: 
 };
 
 export function DefaultPage({ icon, title, onBack }: DefaultPageProps) {
+  // Star animation
+  const starRotation = useSharedValue(0);
+
+  // Generate star positions (consistent across re-renders)
+  const stars = useMemo(() => generateReversedStarPositions(), []);
+
+  // Star animation style
+  const starAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${starRotation.value}deg` }],
+  }));
+
   const content = pageContent[title] || pageContent['Stories'];
   const svgType = mapIconNameToSvgType(icon);
   const SvgComponent = getSvgComponentFromSvg(svgType as any);
 
   return (
     <LinearGradient
-      colors={['#1E3A8A', '#3B82F6', '#4ECDC4']}
+      colors={['#4ECDC4', '#3B82F6', '#1E3A8A']}
       style={styles.container}
     >
+      {/* Star background */}
+      <View style={styles.backgroundGradient}>
+        {stars.map((star) => (
+          <Animated.View
+            key={`star-${star.id}`}
+            style={[
+              styles.star,
+              starAnimatedStyle,
+              {
+                left: star.left,
+                top: star.top,
+                opacity: star.opacity,
+              }
+            ]}
+          />
+        ))}
+      </View>
+
       {/* Back button */}
       <View style={styles.header}>
         <Pressable style={styles.backButton} onPress={onBack}>
@@ -185,5 +243,22 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  // Star background styles
+  backgroundGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    zIndex: 0,
+  },
+  star: {
+    position: 'absolute',
+    width: STAR_SIZE,
+    height: STAR_SIZE,
+    backgroundColor: '#FFFFFF',
+    borderRadius: STAR_BORDER_RADIUS,
+    opacity: 0.4,
   },
 });

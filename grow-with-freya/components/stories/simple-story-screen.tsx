@@ -1,11 +1,40 @@
-import React from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, Text, ScrollView, StyleSheet, Pressable, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { useSharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ALL_STORIES, getRandomStory } from '@/data/stories';
 import { Story } from '@/types/story';
 import { Fonts } from '@/constants/theme';
 import { useAppStore } from '@/store/app-store';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// Star configuration (same as main menu)
+const STAR_COUNT = 15;
+const STAR_SIZE = 3;
+const STAR_BORDER_RADIUS = 1.5;
+const STAR_AREA_HEIGHT_RATIO = 0.6;
+
+/**
+ * Generates reversed star positions for sub-screens (bottom 60% instead of top 60%)
+ */
+const generateReversedStarPositions = (count: number = STAR_COUNT) => {
+  const stars = [];
+  const starAreaHeight = SCREEN_HEIGHT * STAR_AREA_HEIGHT_RATIO;
+  const startFromBottom = SCREEN_HEIGHT - starAreaHeight - 20; // 20px margin from bottom
+
+  for (let i = 0; i < count; i++) {
+    stars.push({
+      id: i,
+      left: Math.random() * (SCREEN_WIDTH - 20) + 10, // 10px margin from edges
+      top: startFromBottom + Math.random() * starAreaHeight, // Position in bottom 60%
+      opacity: 0.3 + Math.random() * 0.4, // Random opacity between 0.3-0.7
+    });
+  }
+
+  return stars;
+};
 
 interface SimpleStoryScreenProps {
   onStorySelect?: (story: Story) => void;
@@ -15,6 +44,17 @@ interface SimpleStoryScreenProps {
 export function SimpleStoryScreen({ onStorySelect, onBack }: SimpleStoryScreenProps) {
   const insets = useSafeAreaInsets();
   const { requestReturnToMainMenu } = useAppStore();
+
+  // Star animation
+  const starRotation = useSharedValue(0);
+
+  // Generate star positions (consistent across re-renders)
+  const stars = useMemo(() => generateReversedStarPositions(), []);
+
+  // Star animation style
+  const starAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${starRotation.value}deg` }],
+  }));
 
   const handleStoryPress = (story: Story) => {
     if (story.isAvailable && onStorySelect) {
@@ -39,9 +79,27 @@ export function SimpleStoryScreen({ onStorySelect, onBack }: SimpleStoryScreenPr
 
   return (
     <LinearGradient
-      colors={['#FFF8F0', '#F0F8FF', '#F5F0FF']}
+      colors={['#4ECDC4', '#3B82F6', '#1E3A8A']}
       style={styles.container}
     >
+      {/* Star background */}
+      <View style={styles.backgroundGradient}>
+        {stars.map((star) => (
+          <Animated.View
+            key={`star-${star.id}`}
+            style={[
+              styles.star,
+              starAnimatedStyle,
+              {
+                left: star.left,
+                top: star.top,
+                opacity: star.opacity,
+              }
+            ]}
+          />
+        ))}
+      </View>
+
       <View style={[styles.safeArea, { paddingTop: insets.top }]}>
         {/* Back Button Area */}
         <View style={styles.backButtonArea}>
@@ -59,7 +117,7 @@ export function SimpleStoryScreen({ onStorySelect, onBack }: SimpleStoryScreenPr
         {/* Stories Grid */}
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
           <View style={styles.grid}>
-            {ALL_STORIES.map((story, index) => (
+            {ALL_STORIES.map((story) => (
               <Pressable
                 key={story.id}
                 style={[
@@ -89,7 +147,7 @@ export function SimpleStoryScreen({ onStorySelect, onBack }: SimpleStoryScreenPr
         </ScrollView>
 
         {/* Surprise Me Button */}
-        <View style={[styles.buttonContainer, { paddingBottom: insets.bottom + 20 }]}>
+        <View style={[styles.buttonContainer, { paddingBottom: insets.bottom + 4 }]}>
           <Pressable style={styles.surpriseButton} onPress={handleSurpriseMe}>
             <Text style={styles.surpriseButtonText}>✨ Surprise Me! ✨</Text>
           </Pressable>
@@ -138,14 +196,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#2C3E50',
+    color: '#FFFFFF',
     fontFamily: Fonts.rounded,
     marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: '#7F8C8D',
+    color: '#FFFFFF',
     fontFamily: Fonts.rounded,
     textAlign: 'center',
   },
@@ -215,5 +273,22 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: 'white',
     fontFamily: Fonts.rounded,
+  },
+  // Star background styles
+  backgroundGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    zIndex: 0,
+  },
+  star: {
+    position: 'absolute',
+    width: STAR_SIZE,
+    height: STAR_SIZE,
+    backgroundColor: '#FFFFFF',
+    borderRadius: STAR_BORDER_RADIUS,
+    opacity: 0.4,
   },
 });

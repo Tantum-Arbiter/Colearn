@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from './themed-text';
 import { useAppStore } from '@/store/app-store';
-import { DefaultPage } from './default-page';
+
 import { ErrorBoundary } from './error-boundary';
 import {
   useMemoryMonitor,
@@ -69,12 +69,11 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
 
   // Safe menu state management
   const [menuOrder, setMenuOrder] = useSafeState<MenuItemData[]>(menuItems);
-  const [currentPage, setCurrentPage] = useSafeState<MenuItemData | null>(null);
   const [lastSwapTime, setLastSwapTime] = useSafeState<number>(0);
   const [newlySelectedItem, setNewlySelectedItem] = useSafeState<string | null>(null);
 
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const animationWatchdogRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<number | null>(null);
+  const animationWatchdogRef = useRef<number | null>(null);
 
   // Component cleanup on unmount
   useEffect(() => {
@@ -135,12 +134,8 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
       }
 
       if (selectedItem.destination === centerItem.destination) {
-        // For stories, use external navigation to prevent state conflicts
-        if (selectedItem.destination === 'stories') {
-          onNavigate(selectedItem.destination);
-        } else {
-          setCurrentPage(selectedItem);
-        }
+        // Use external navigation for all destinations
+        onNavigate(selectedItem.destination);
       } else {
         if (currentTime - lastSwapTime < 100) {
           return; // Ignore rapid taps
@@ -175,9 +170,7 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
 
   const handleIconPress = handleIconPressInternal;
 
-  const handleBackToMenu = () => {
-    setCurrentPage(null);
-  };
+
 
 
   useEffect(() => {
@@ -268,15 +261,7 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
   // IMPORTANT: This must be called before any conditional returns to follow Rules of Hooks
   const stars = useMemo(() => generateStarPositions(), []);
 
-  if (currentPage) {
-    return (
-      <DefaultPage
-        icon={currentPage.icon}
-        title={currentPage.label}
-        onBack={handleBackToMenu}
-      />
-    );
-  }
+
 
   return (
     <LinearGradient
@@ -329,7 +314,7 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
 
         <Pressable
           style={legacyStyles.settingsButton}
-          onPress={() => setCurrentPage({ icon: 'gear', label: 'Settings', destination: 'settings' })}
+          onPress={() => onNavigate('settings')}
         >
           <ThemedText style={mainMenuStyles.settingsEmoji}>⚙️</ThemedText>
         </Pressable>

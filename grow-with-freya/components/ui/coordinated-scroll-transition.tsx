@@ -174,6 +174,18 @@ interface VerticalPageTransitionProps {
   duration?: number;
 }
 
+/**
+ * MultiPageTransition provides vertical scroll transitions between multiple pages
+ * Extends the stories transition pattern to all navigation destinations
+ */
+type PageKey = 'main' | 'stories' | 'sensory' | 'emotions' | 'bedtime' | 'screen_time' | 'settings';
+
+interface MultiPageTransitionProps {
+  currentPage: PageKey;
+  pages: Record<PageKey, React.ReactNode>;
+  duration?: number;
+}
+
 export const VerticalPageTransition: React.FC<VerticalPageTransitionProps> = ({
   currentPage,
   pages,
@@ -224,6 +236,70 @@ export const VerticalPageTransition: React.FC<VerticalPageTransitionProps> = ({
       >
         {pages.stories}
       </Animated.View>
+    </View>
+  );
+};
+
+export const MultiPageTransition: React.FC<MultiPageTransitionProps> = ({
+  currentPage,
+  pages,
+  duration = 800,
+}) => {
+  // Create shared values for all possible pages
+  const pageAnimations = {
+    main: useSharedValue(currentPage === 'main' ? 0 : -SCREEN_HEIGHT),
+    stories: useSharedValue(currentPage === 'stories' ? 0 : SCREEN_HEIGHT),
+    sensory: useSharedValue(currentPage === 'sensory' ? 0 : SCREEN_HEIGHT),
+    emotions: useSharedValue(currentPage === 'emotions' ? 0 : SCREEN_HEIGHT),
+    bedtime: useSharedValue(currentPage === 'bedtime' ? 0 : SCREEN_HEIGHT),
+    screen_time: useSharedValue(currentPage === 'screen_time' ? 0 : SCREEN_HEIGHT),
+    settings: useSharedValue(currentPage === 'settings' ? 0 : SCREEN_HEIGHT),
+  };
+
+  useEffect(() => {
+    const animationConfig = {
+      duration,
+      easing: Easing.out(Easing.cubic),
+    };
+
+    // Animate all pages to their target positions
+    Object.keys(pageAnimations).forEach((pageKey) => {
+      const key = pageKey as PageKey;
+      if (key === currentPage) {
+        // Current page slides into view (position 0)
+        pageAnimations[key].value = withTiming(0, animationConfig);
+      } else if (key === 'main') {
+        // Main menu slides up when not active
+        pageAnimations[key].value = withTiming(-SCREEN_HEIGHT, animationConfig);
+      } else {
+        // Other pages slide down when not active
+        pageAnimations[key].value = withTiming(SCREEN_HEIGHT, animationConfig);
+      }
+    });
+  }, [currentPage, duration]);
+
+  // Create animated styles for each page
+  const createAnimatedStyle = (pageKey: PageKey) => {
+    return useAnimatedStyle(() => ({
+      transform: [{ translateY: pageAnimations[pageKey].value }],
+    }));
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* Render all pages that are provided */}
+      {Object.entries(pages).map(([pageKey, pageComponent]) => {
+        const key = pageKey as PageKey;
+        return (
+          <Animated.View
+            key={key}
+            style={[styles.page, createAnimatedStyle(key)]}
+            pointerEvents={currentPage === key ? 'auto' : 'none'}
+          >
+            {pageComponent}
+          </Animated.View>
+        );
+      })}
     </View>
   );
 };

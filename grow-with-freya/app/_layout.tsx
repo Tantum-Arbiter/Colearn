@@ -12,7 +12,8 @@ import { MainMenu } from '@/components/main-menu';
 import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
 import { Story } from '@/types/story';
 import { preloadCriticalImages, preloadSecondaryImages } from '@/services/image-preloader';
-import { VerticalPageTransition } from '@/components/ui/coordinated-scroll-transition';
+import { MultiPageTransition } from '@/components/ui/coordinated-scroll-transition';
+import { DefaultPage } from '@/components/default-page';
 
 
 
@@ -25,8 +26,11 @@ export default function RootLayout() {
     shouldReturnToMainMenu,
     clearReturnToMainMenu
   } = useAppStore();
-  const [currentView, setCurrentView] = useState<'splash' | 'onboarding' | 'main' | 'stories'>('splash');
-  const [currentPage, setCurrentPage] = useState<'main' | 'stories'>('main');
+  type AppView = 'splash' | 'onboarding' | 'app';
+  type PageKey = 'main' | 'stories' | 'sensory' | 'emotions' | 'bedtime' | 'screen_time' | 'settings';
+
+  const [currentView, setCurrentView] = useState<AppView>('splash');
+  const [currentPage, setCurrentPage] = useState<PageKey>('main');
 
 
 
@@ -57,19 +61,10 @@ export default function RootLayout() {
     } else if (!hasCompletedOnboarding) {
       setCurrentView('onboarding');
     } else {
-      setCurrentView('main');
+      setCurrentView('app');
       setCurrentPage('main');
     }
   }, [isAppReady, hasCompletedOnboarding]);
-
-  // Sync currentView with currentPage for main app navigation
-  useEffect(() => {
-    if (currentPage === 'main' && currentView !== 'main') {
-      setCurrentView('main');
-    } else if (currentPage === 'stories' && currentView !== 'stories') {
-      setCurrentView('stories');
-    }
-  }, [currentPage]);
 
   // Listen for return to main menu requests
   useEffect(() => {
@@ -80,13 +75,25 @@ export default function RootLayout() {
   }, [shouldReturnToMainMenu]);
 
   const handleOnboardingComplete = () => {
-    setCurrentView('main');
+    setCurrentView('app');
+    setCurrentPage('main');
   };
 
   const handleMainMenuNavigate = (destination: string) => {
-    if (destination === 'stories') {
-      setCurrentPage('stories');
-      setCurrentScreen('stories');
+    // Map destination strings to PageKey types
+    const destinationMap: Record<string, PageKey> = {
+      'stories': 'stories',
+      'sensory': 'sensory',
+      'emotions': 'emotions',
+      'bedtime': 'bedtime',
+      'screen_time': 'screen_time',
+      'settings': 'settings'
+    };
+
+    const pageKey = destinationMap[destination];
+    if (pageKey) {
+      setCurrentPage(pageKey);
+      setCurrentScreen(destination);
     }
   };
 
@@ -108,14 +115,19 @@ export default function RootLayout() {
   }
 
   // Handle main app navigation with coordinated scroll transitions
-  if (currentView === 'main' || currentView === 'stories') {
+  if (currentView === 'app') {
     return (
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <VerticalPageTransition
+        <MultiPageTransition
           currentPage={currentPage}
           pages={{
             main: <MainMenu onNavigate={handleMainMenuNavigate} />,
-            stories: <SimpleStoryScreen onStorySelect={handleStorySelect} onBack={handleBackToMainMenu} />
+            stories: <SimpleStoryScreen onStorySelect={handleStorySelect} onBack={handleBackToMainMenu} />,
+            sensory: <DefaultPage icon="sensory-icon" title="Sensory" onBack={handleBackToMainMenu} />,
+            emotions: <DefaultPage icon="emotions-icon" title="Emotions" onBack={handleBackToMainMenu} />,
+            bedtime: <DefaultPage icon="bedtime-icon" title="Bedtime" onBack={handleBackToMainMenu} />,
+            screen_time: <DefaultPage icon="screentime-icon" title="Screen Time" onBack={handleBackToMainMenu} />,
+            settings: <DefaultPage icon="gear" title="Settings" onBack={handleBackToMainMenu} />
           }}
           duration={800}
         />
