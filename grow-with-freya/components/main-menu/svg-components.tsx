@@ -55,7 +55,6 @@ export const ActualSvgComponent = React.memo(function ActualSvgComponent({
   );
 });
 
-
 export const CloudSvg = React.memo(function CloudSvg({
   width = 120,
   height = 60,
