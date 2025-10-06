@@ -11,6 +11,7 @@ import { AppSplashScreen } from '@/components/splash-screen';
 import { OnboardingFlow } from '@/components/onboarding/onboarding-flow';
 import { MainMenu } from '@/components/main-menu';
 import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
+
 import { Story } from '@/types/story';
 import { preloadCriticalImages, preloadSecondaryImages } from '@/services/image-preloader';
 import { MultiPageTransition } from '@/components/ui/coordinated-scroll-transition';
@@ -30,6 +31,8 @@ export default function RootLayout() {
 
   // Initialize background music
   const { fadeIn, isLoaded: musicLoaded, isPlaying } = useBackgroundMusic();
+
+
 
   type AppView = 'splash' | 'onboarding' | 'app';
   type PageKey = 'main' | 'stories' | 'sensory' | 'emotions' | 'bedtime' | 'screen_time' | 'settings';
@@ -51,7 +54,7 @@ export default function RootLayout() {
         setTimeout(async () => {
           const secondaryResult = await preloadSecondaryImages();
           console.log('Secondary images preloaded:', secondaryResult);
-        }, 1000);
+        }, 3000); // PERFORMANCE: Increased delay to prevent blocking
       } catch (error) {
         console.warn('Image preloading failed:', error);
       }
@@ -156,6 +159,7 @@ export default function RootLayout() {
           duration={800}
         />
         <StatusBar style="auto" />
+
       </ThemeProvider>
     );
   }

@@ -45,10 +45,8 @@ export function useBackgroundMusic(): BackgroundMusicState & BackgroundMusicCont
   useEffect(() => {
     const handleAppStateChange = async (nextAppState: AppStateStatus) => {
       if (nextAppState === 'background' || nextAppState === 'inactive') {
-        // Pause music when app goes to background
-        if (isPlaying) {
-          await backgroundMusic.pause();
-        }
+        // Let music continue in background with staysActiveInBackground: true
+        console.log('App backgrounded - music continues');
       } else if (nextAppState === 'active') {
         // Resume music when app becomes active (if it was playing before)
         if (isPlaying && !backgroundMusic.getIsPlaying()) {
@@ -61,14 +59,17 @@ export function useBackgroundMusic(): BackgroundMusicState & BackgroundMusicCont
     return () => subscription?.remove();
   }, [isPlaying]);
 
-  // Update playing state periodically
+  // Update playing state periodically - reduced frequency to prevent memory issues
   useEffect(() => {
     const interval = setInterval(() => {
-      setIsPlaying(backgroundMusic.getIsPlaying());
-    }, 1000);
+      const currentlyPlaying = backgroundMusic.getIsPlaying();
+      if (currentlyPlaying !== isPlaying) {
+        setIsPlaying(currentlyPlaying);
+      }
+    }, 3000); // Reduced from 1 second to 3 seconds
 
     return () => clearInterval(interval);
-  }, []);
+  }, [isPlaying]);
 
   const play = useCallback(async () => {
     try {

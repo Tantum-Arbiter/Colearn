@@ -7,6 +7,7 @@ class BackgroundMusicService {
   private isLoaded: boolean = false;
   private volume: number = 0.3; // Default volume (30%)
   private isInitializing: boolean = false; // Prevent multiple initializations
+  private fadeTimer: ReturnType<typeof setTimeout> | null = null; // Track fade operations
 
   /**
    * Initialize and load the background music
@@ -21,31 +22,29 @@ class BackgroundMusicService {
     this.isInitializing = true;
 
     try {
-      // Set audio mode for background playback with seamless looping
+      // Set audio mode for iOS/iPad compatibility - prevent conflicts
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
         staysActiveInBackground: true,
         playsInSilentModeIOS: true,
-        shouldDuckAndroid: true,
+        shouldDuckAndroid: false, // Don't duck other audio to prevent conflicts
         playThroughEarpieceAndroid: false,
-        // Optimize for continuous playback
-        interruptionModeIOS: 1, // MixWithOthers - allows seamless background play
-        interruptionModeAndroid: 1, // DuckOthers - reduces other audio but continues playing
+        interruptionModeIOS: 2, // DoNotMix - prevent audio session conflicts
+        interruptionModeAndroid: 2, // DoNotMix
       });
 
-      // Load the background soundtrack
-      // Note: React Native requires static imports, so we can't dynamically try different files
+      // Load the background soundtrack with simple looping
       const audioSource = require('../assets/audio/background-soundtrack.wav');
 
       const { sound } = await Audio.Sound.createAsync(
         audioSource,
         {
           shouldPlay: false,
-          isLooping: true,
+          isLooping: true, // Simple native looping
           volume: this.volume,
           rate: 1.0,
           shouldCorrectPitch: true,
-          progressUpdateIntervalMillis: 1000,
+          progressUpdateIntervalMillis: 10000, // Reduce update frequency to prevent memory leaks
         }
       );
 
@@ -167,20 +166,38 @@ class BackgroundMusicService {
       return;
     }
 
+    // Clear any existing fade operation
+    if (this.fadeTimer) {
+      clearTimeout(this.fadeTimer);
+      this.fadeTimer = null;
+    }
+
     try {
       // Start with volume 0
       await this.sound.setVolumeAsync(0);
       await this.play();
 
-      // Gradually increase volume
-      const steps = 20;
+      // Use a single timeout instead of loop to prevent memory leaks
+      const targetVolume = this.volume;
+      const steps = 10; // Reduced steps to prevent memory issues
       const stepDuration = duration / steps;
-      const volumeStep = this.volume / steps;
+      const volumeStep = targetVolume / steps;
 
-      for (let i = 1; i <= steps; i++) {
-        await new Promise(resolve => setTimeout(resolve, stepDuration));
-        await this.sound.setVolumeAsync(volumeStep * i);
-      }
+      let currentStep = 0;
+      const fadeStep = async () => {
+        if (currentStep >= steps || !this.sound || !this.isLoaded) {
+          return;
+        }
+
+        currentStep++;
+        await this.sound.setVolumeAsync(volumeStep * currentStep);
+
+        if (currentStep < steps) {
+          this.fadeTimer = setTimeout(fadeStep, stepDuration);
+        }
+      };
+
+      fadeStep();
     } catch (error) {
       console.warn('Failed to fade in background music:', error);
     }
@@ -194,19 +211,41 @@ class BackgroundMusicService {
       return;
     }
 
+    // Clear any existing fade operation
+    if (this.fadeTimer) {
+      clearTimeout(this.fadeTimer);
+      this.fadeTimer = null;
+    }
+
     try {
       const currentVolume = this.volume;
-      const steps = 20;
+      const steps = 10; // Reduced steps to prevent memory issues
       const stepDuration = duration / steps;
       const volumeStep = currentVolume / steps;
 
-      for (let i = steps - 1; i >= 0; i--) {
-        await this.sound.setVolumeAsync(volumeStep * i);
-        await new Promise(resolve => setTimeout(resolve, stepDuration));
-      }
+      let currentStep = steps;
+      const fadeStep = async () => {
+        if (currentStep <= 0 || !this.sound || !this.isLoaded) {
+          if (this.sound && this.isLoaded) {
+            await this.pause();
+            await this.sound.setVolumeAsync(currentVolume); // Restore original volume
+          }
+          return;
+        }
 
-      await this.pause();
-      await this.sound.setVolumeAsync(currentVolume); // Restore original volume
+        currentStep--;
+        await this.sound.setVolumeAsync(volumeStep * currentStep);
+
+        if (currentStep > 0) {
+          this.fadeTimer = setTimeout(fadeStep, stepDuration);
+        } else {
+          // Final step - pause and restore volume
+          await this.pause();
+          await this.sound.setVolumeAsync(currentVolume);
+        }
+      };
+
+      fadeStep();
     } catch (error) {
       console.warn('Failed to fade out background music:', error);
     }
@@ -216,6 +255,12 @@ class BackgroundMusicService {
    * Clean up resources
    */
   async cleanup(): Promise<void> {
+    // Clear any fade operations
+    if (this.fadeTimer) {
+      clearTimeout(this.fadeTimer);
+      this.fadeTimer = null;
+    }
+
     if (this.sound) {
       try {
         await this.sound.stopAsync();
@@ -235,24 +280,26 @@ class BackgroundMusicService {
    * Handle playback status updates
    */
   private onPlaybackStatusUpdate = (status: AVPlaybackStatus) => {
-    if (status.isLoaded) {
-      this.isPlaying = status.isPlaying;
+    try {
+      if (status.isLoaded) {
+        this.isPlaying = status.isPlaying;
 
-      // Ensure seamless looping - if track finishes, immediately restart
-      if (status.didJustFinish) {
-        if (status.isLooping) {
-          // Looping is enabled, should restart automatically
-          console.log('Background music looped seamlessly');
-        } else {
-          // Fallback: manually restart if looping failed
-          console.log('Manually restarting background music for seamless loop');
-          this.play().catch(error =>
-            console.warn('Failed to restart background music:', error)
-          );
+        // Simple looping - let native looping handle it
+        if (status.didJustFinish) {
+          console.log('Background music looped');
+        }
+      } else if (status.error) {
+        console.warn('Background music playback error:', status.error);
+        this.isPlaying = false;
+
+        // Clear any fade operations on error
+        if (this.fadeTimer) {
+          clearTimeout(this.fadeTimer);
+          this.fadeTimer = null;
         }
       }
-    } else if (status.error) {
-      console.warn('Background music playback error:', status.error);
+    } catch (error) {
+      console.warn('Error in playback status update:', error);
       this.isPlaying = false;
     }
   };
