@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from './themed-text';
 import { useAppStore } from '@/store/app-store';
+import { MusicControl } from './ui/music-control';
 
 import { ErrorBoundary } from './error-boundary';
 import {
@@ -312,6 +313,11 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
       <View style={[legacyStyles.topButtons, { paddingTop: insets.top + 20 }]}>
         <View style={{ flex: 1 }} />
 
+        {/* Music Control */}
+        <View style={legacyStyles.musicControlContainer}>
+          <MusicControl size={24} color="#4A90E2" />
+        </View>
+
         <Pressable
           style={legacyStyles.settingsButton}
           onPress={() => onNavigate('settings')}
@@ -387,6 +393,9 @@ const legacyStyles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingBottom: 20,
+  },
+  musicControlContainer: {
+    marginRight: 12,
   },
   settingsButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.95)',

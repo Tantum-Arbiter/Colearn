@@ -77,7 +77,6 @@ export const CachedImage: React.FC<CachedImageProps> = ({
       fadeDuration={instantDisplay ? 0 : props.fadeDuration || 200}
       // Optimize for performance
       resizeMethod="resize"
-      cache="force-cache"
       loadingIndicatorSource={undefined}
       progressiveRenderingEnabled={false}
     />
@@ -102,7 +101,6 @@ export const CachedBearImage: React.FC<{ style?: any }> = ({ style }) => {
       resizeMode="contain"
       preload={true}
       instantDisplay={true}
-      cache="force-cache"
     />
   );
 };

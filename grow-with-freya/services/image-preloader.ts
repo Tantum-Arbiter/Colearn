@@ -13,7 +13,7 @@ const CRITICAL_IMAGES = [
  * Secondary images that can be preloaded after critical images
  * These improve performance but aren't essential for initial load
  */
-const SECONDARY_IMAGES = [
+const SECONDARY_IMAGES: any[] = [
   // Add secondary images here - avoid large images during startup
 ];
 

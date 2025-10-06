@@ -28,8 +28,8 @@ export function AppSplashScreen() {
   const starRotation = useSharedValue(0);
 
   // Timeout cleanup refs
-  const textTimeoutRef = useRef<NodeJS.Timeout>();
-  const delayTimeoutRef = useRef<NodeJS.Timeout>();
+  const textTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const delayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     async function prepare() {
@@ -51,7 +51,7 @@ export function AppSplashScreen() {
           -1
         );
 
-        await new Promise(resolve => {
+        await new Promise<void>(resolve => {
           delayTimeoutRef.current = setTimeout(resolve, 2500);
         });
 

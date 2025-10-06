@@ -19,6 +19,7 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/$1',
     '\\.(png|jpg|jpeg|gif)$': 'identity-obj-proxy',
     '\\.(svg)$': '<rootDir>/__mocks__/svgMock.tsx',
+    '\\.(wav|mp3|m4a|aac|oga)$': 'identity-obj-proxy',
     '^react-native$': 'react-native-web',
   },
   transform: {

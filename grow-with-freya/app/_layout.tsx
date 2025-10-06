@@ -6,6 +6,7 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAppStore } from '@/store/app-store';
+import { useBackgroundMusic } from '@/hooks/use-background-music';
 import { AppSplashScreen } from '@/components/splash-screen';
 import { OnboardingFlow } from '@/components/onboarding/onboarding-flow';
 import { MainMenu } from '@/components/main-menu';
@@ -26,6 +27,10 @@ export default function RootLayout() {
     shouldReturnToMainMenu,
     clearReturnToMainMenu
   } = useAppStore();
+
+  // Initialize background music
+  const { fadeIn, isLoaded: musicLoaded, isPlaying } = useBackgroundMusic();
+
   type AppView = 'splash' | 'onboarding' | 'app';
   type PageKey = 'main' | 'stories' | 'sensory' | 'emotions' | 'bedtime' | 'screen_time' | 'settings';
 
@@ -65,6 +70,25 @@ export default function RootLayout() {
       setCurrentPage('main');
     }
   }, [isAppReady, hasCompletedOnboarding]);
+
+  // Start background music once when transitioning from splash (only once!)
+  useEffect(() => {
+    const startBackgroundMusic = async () => {
+      if (musicLoaded && currentView === 'onboarding' && !isPlaying) {
+        try {
+          // Start background music with a gentle fade-in - only when first leaving splash
+          await fadeIn(3000); // 3 second fade-in
+          console.log('Background music started for the journey');
+        } catch (error) {
+          console.warn('Failed to start background music:', error);
+        }
+      }
+    };
+
+    // Add a small delay to ensure the screen has rendered
+    const timer = setTimeout(startBackgroundMusic, 500);
+    return () => clearTimeout(timer);
+  }, [currentView, musicLoaded, fadeIn, isPlaying]);
 
   // Listen for return to main menu requests
   useEffect(() => {
