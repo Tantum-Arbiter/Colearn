@@ -18,12 +18,7 @@ jest.mock('expo-linear-gradient', () => ({
   },
 }));
 
-// Mock react-native-reanimated
-jest.mock('react-native-reanimated', () => {
-  const Reanimated = require('react-native-reanimated/mock');
-  Reanimated.default.call = () => {};
-  return Reanimated;
-});
+// Reanimated is mocked globally in jest.setup.js
 
 describe('StorySelectionScreen', () => {
   // First, test the data structure itself
