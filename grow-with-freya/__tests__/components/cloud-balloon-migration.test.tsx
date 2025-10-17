@@ -8,12 +8,7 @@ import { useAppStore } from '../../store/app-store';
 jest.mock('../../store/app-store');
 const mockUseAppStore = useAppStore as jest.MockedFunction<typeof useAppStore>;
 
-// Mock react-native-reanimated
-jest.mock('react-native-reanimated', () => {
-  const Reanimated = require('react-native-reanimated/mock');
-  Reanimated.default.call = () => {};
-  return Reanimated;
-});
+// Reanimated is mocked globally in jest.setup.js
 
 describe('Cloud/Balloon Migration Tests', () => {
   const mockOnNavigate = jest.fn();
