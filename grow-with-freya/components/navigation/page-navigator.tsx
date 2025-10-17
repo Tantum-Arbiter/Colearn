@@ -9,7 +9,11 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+// Dynamic screen dimensions
+const getScreenDimensions = () => {
+  const { width, height } = Dimensions.get('window');
+  return { width, height };
+};
 
 type PageType = 'main' | 'stories' | 'settings' | 'profiles';
 type TransitionDirection = 'slide-left' | 'slide-right' | 'slide-up' | 'slide-down' | 'fade';
@@ -263,7 +267,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     left: 0,
-    width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT,
+    width: getScreenDimensions().width,
+    height: getScreenDimensions().height,
   },
 });
