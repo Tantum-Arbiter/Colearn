@@ -110,6 +110,59 @@ jest.mock('@/hooks/use-theme-color', () => ({
   useThemeColor: () => '#000000',
 }));
 
+// Mock story transition context
+jest.mock('@/contexts/story-transition-context', () => ({
+  useStoryTransition: jest.fn(() => ({
+    isTransitioning: false,
+    selectedStoryId: null,
+    selectedStory: null,
+    cardPosition: null,
+    startTransition: jest.fn(),
+    completeTransition: jest.fn(),
+    transitionScale: { value: 1 },
+    transitionX: { value: 0 },
+    transitionY: { value: 0 },
+    transitionOpacity: { value: 1 },
+    transitionAnimatedStyle: {},
+  })),
+  StoryTransitionProvider: ({ children }) => children,
+}));
+
+// Mock SafeAreaProvider
+jest.mock('react-native-safe-area-context', () => ({
+  SafeAreaProvider: ({ children }) => children,
+  useSafeAreaInsets: () => ({ top: 44, left: 0, right: 0, bottom: 34 }),
+  SafeAreaView: ({ children }) => children,
+}));
+
+// Mock app store
+jest.mock('@/store/app-store', () => ({
+  useAppStore: jest.fn(() => ({
+    isAppReady: true,
+    hasCompletedOnboarding: true,
+    currentChildId: null,
+    currentScreen: 'main-menu',
+    isLoading: false,
+    shouldReturnToMainMenu: false,
+    backgroundAnimationState: {
+      cloudFloat1: 0,
+      cloudFloat2: 0,
+      rocketFloat1: 0,
+      rocketFloat2: 0,
+    },
+    setAppReady: jest.fn(),
+    setOnboardingComplete: jest.fn(),
+    setCurrentChild: jest.fn(),
+    setCurrentScreen: jest.fn(),
+    setLoading: jest.fn(),
+    requestReturnToMainMenu: jest.fn(),
+    clearReturnToMainMenu: jest.fn(),
+    updateBackgroundAnimationState: jest.fn(),
+  })),
+}));
+
+// Image imports are handled by moduleNameMapper in jest.config.js
+
 // Mock ThemedText component - using correct path from root
 jest.mock('./components/themed-text', () => ({
   ThemedText: ({ children, ...props }) => {
