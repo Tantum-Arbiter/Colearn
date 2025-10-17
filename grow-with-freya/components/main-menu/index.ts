@@ -19,8 +19,7 @@ export {
   LAYOUT,
   VISUAL_EFFECTS,
   DEFAULT_MENU_ITEMS,
-  SCREEN_WIDTH,
-  SCREEN_HEIGHT,
+  getScreenDimensions,
   Easing,
 } from './constants';
 export type { MenuItemData, IconStatus } from './constants';

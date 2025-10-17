@@ -1,6 +1,10 @@
 import { Dimensions } from 'react-native';
 
-export const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+// Dynamic screen dimensions that update with orientation changes
+export const getScreenDimensions = () => {
+  const { width, height } = Dimensions.get('window');
+  return { width, height };
+};
 
 export const ANIMATION_TIMINGS = {
   ROCKET_DURATION: 12000,

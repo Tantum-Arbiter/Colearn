@@ -2,7 +2,7 @@
  * Utility functions for main menu component
  */
 
-import { VISUAL_EFFECTS, SCREEN_WIDTH, SCREEN_HEIGHT } from './constants';
+import { VISUAL_EFFECTS, getScreenDimensions } from './constants';
 
 /**
  * Generates random star positions for the background
@@ -10,18 +10,19 @@ import { VISUAL_EFFECTS, SCREEN_WIDTH, SCREEN_HEIGHT } from './constants';
  * @returns Array of star position objects
  */
 export const generateStarPositions = (count: number = VISUAL_EFFECTS.STAR_COUNT) => {
+  const { width: screenWidth, height: screenHeight } = getScreenDimensions();
   const stars = [];
-  const starAreaHeight = SCREEN_HEIGHT * VISUAL_EFFECTS.STAR_AREA_HEIGHT_RATIO;
-  
+  const starAreaHeight = screenHeight * VISUAL_EFFECTS.STAR_AREA_HEIGHT_RATIO;
+
   for (let i = 0; i < count; i++) {
     stars.push({
       id: i,
-      left: Math.random() * (SCREEN_WIDTH - 20) + 10, // 10px margin from edges
+      left: Math.random() * (screenWidth - 20) + 10, // 10px margin from edges
       top: Math.random() * starAreaHeight + 20, // 20px margin from top
       opacity: 0.3 + Math.random() * 0.4, // Random opacity between 0.3-0.7
     });
   }
-  
+
   return stars;
 };
 
@@ -78,7 +79,8 @@ export const isValidMenuItem = (item: any): boolean => {
  * @returns Calculated size
  */
 export const getResponsiveSize = (baseSize: number, scaleFactor: number = 1.2): number => {
-  const isTablet = SCREEN_WIDTH >= 768;
+  const { width: screenWidth } = getScreenDimensions();
+  const isTablet = screenWidth >= 768;
   return isTablet ? baseSize * scaleFactor : baseSize;
 };
 

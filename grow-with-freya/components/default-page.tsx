@@ -1,8 +1,17 @@
-import React from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ThemedText } from './themed-text';
 import { getSvgComponentFromSvg } from './main-menu/assets';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+  Easing
+} from 'react-native-reanimated';
+import { VISUAL_EFFECTS } from './main-menu/constants';
+import { generateStarPositions } from './main-menu/utils';
 
 interface DefaultPageProps {
   icon: string;
@@ -22,7 +31,16 @@ const mapIconNameToSvgType = (iconName: string): string => {
     case 'bedtime-icon':
       return 'bedtime';
     case 'screentime-icon':
+    case 'clock':
       return 'screentime';
+    case 'brain':
+      return 'sensory';
+    case 'heart':
+      return 'emotions';
+    case 'moon':
+      return 'bedtime';
+    case 'gear':
+      return 'stories'; // fallback for settings
     default:
       return 'stories'; // fallback
   }
@@ -37,7 +55,7 @@ const pageContent: { [key: string]: { emoji: string; message: string; subtitle: 
     color: '#FF6B6B'
   },
   'Sensory': {
-    emoji: '✨',
+    emoji: '🌟',
     message: 'Feel & Explore!',
     subtitle: 'Touch, see, hear, and discover the world around you through your senses.',
     color: '#4ECDC4'
@@ -67,11 +85,45 @@ export function DefaultPage({ icon, title, onBack }: DefaultPageProps) {
   const svgType = mapIconNameToSvgType(icon);
   const SvgComponent = getSvgComponentFromSvg(svgType as any);
 
+  // Star animation for background (matching main menu)
+  const starRotation = useSharedValue(0);
+
+  // Generate stars (matching main menu)
+  const stars = useMemo(() => generateStarPositions(), []);
+
+  // Start star rotation animation on mount
+  useEffect(() => {
+    starRotation.value = withRepeat(
+      withTiming(360, { duration: 20000, easing: Easing.linear }),
+      -1,
+      false
+    );
+  }, []);
+
+  const starAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${starRotation.value}deg` }],
+  }));
+
   return (
     <LinearGradient
-      colors={['#1E3A8A', '#3B82F6', '#4ECDC4']}
+      colors={['#4ECDC4', '#3B82F6', '#1E3A8A']}
       style={styles.container}
     >
+      {/* Starry background (matching main menu) */}
+      {stars.map((star) => (
+        <Animated.View
+          key={`star-${star.id}`}
+          style={[
+            styles.star,
+            starAnimatedStyle,
+            {
+              left: star.left,
+              top: star.top,
+              opacity: star.opacity,
+            }
+          ]}
+        />
+      ))}
       {/* Back button */}
       <View style={styles.header}>
         <Pressable style={styles.backButton} onPress={onBack}>
@@ -101,7 +153,7 @@ export function DefaultPage({ icon, title, onBack }: DefaultPageProps) {
 
         {/* Fun interactive element */}
         <Pressable style={[styles.actionButton, { backgroundColor: content.color }]} onPress={() => {}}>
-          <ThemedText style={styles.actionButtonText}>Coming Soon! 🚀</ThemedText>
+          <ThemedText style={styles.actionButtonText}>Coming Soon!</ThemedText>
         </Pressable>
       </View>
     </LinearGradient>
@@ -111,6 +163,14 @@ export function DefaultPage({ icon, title, onBack }: DefaultPageProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  star: {
+    position: 'absolute',
+    width: VISUAL_EFFECTS.STAR_SIZE,
+    height: VISUAL_EFFECTS.STAR_SIZE,
+    backgroundColor: '#FFFFFF',
+    borderRadius: VISUAL_EFFECTS.STAR_BORDER_RADIUS,
+    opacity: VISUAL_EFFECTS.STAR_BASE_OPACITY,
   },
   header: {
     paddingTop: 60,
