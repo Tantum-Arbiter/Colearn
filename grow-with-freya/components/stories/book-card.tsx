@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, Pressable, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Dimensions, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
@@ -159,6 +159,12 @@ export function BookCard({ story, onPress, index = 0 }: BookCardProps) {
         ]}>
           {isPlaceholder ? (
             <Text style={styles.placeholderIcon}>📚</Text>
+          ) : story.coverImage ? (
+            <Image
+              source={typeof story.coverImage === 'string' ? { uri: story.coverImage } : story.coverImage}
+              style={styles.coverImage}
+              resizeMode="cover"
+            />
           ) : (
             <Text style={styles.storyEmoji}>{story.emoji}</Text>
           )}
@@ -217,9 +223,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     height: 80,
     marginBottom: 8,
+    borderRadius: 12,
+    overflow: 'hidden',
   },
   placeholderImageContainer: {
     backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    borderRadius: 12,
+  },
+  coverImage: {
+    width: '100%',
+    height: '100%',
     borderRadius: 12,
   },
   storyEmoji: {
