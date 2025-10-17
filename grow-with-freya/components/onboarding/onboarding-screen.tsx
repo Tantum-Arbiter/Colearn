@@ -312,7 +312,7 @@ export function OnboardingScreen({
           ))}
         </View>
         <ThemedText style={styles.stepCounter}>
-          {currentStep} of {totalSteps}
+          {currentStep}/{totalSteps}
         </ThemedText>
       </View>
 
