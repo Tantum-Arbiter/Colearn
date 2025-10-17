@@ -28,7 +28,7 @@ import {
   LAYOUT,
   VISUAL_EFFECTS,
   DEFAULT_MENU_ITEMS,
-  SCREEN_HEIGHT,
+  getScreenDimensions,
   ASSET_DIMENSIONS,
   createCloudAnimation,
 
@@ -46,6 +46,9 @@ interface MainMenuProps {
 
 function MainMenuComponent({ onNavigate }: MainMenuProps) {
   const insets = useSafeAreaInsets();
+
+  // Get current screen dimensions (updates with orientation changes)
+  const { width: screenWidth, height: screenHeight } = getScreenDimensions();
 
   // Performance monitoring
   useMemoryMonitor('MainMenu');
@@ -107,7 +110,7 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
         cancelAnimation(cloudFloat1);
         cancelAnimation(cloudFloat2);
       } catch (error) {
-        // cancelAnimation might not be available in test environment
+
         console.warn('Could not cancel background animations:', error);
       }
 
@@ -135,12 +138,8 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
       }
 
       if (selectedItem.destination === centerItem.destination) {
-        // For stories, use external navigation to prevent state conflicts
-        if (selectedItem.destination === 'stories') {
-          onNavigate(selectedItem.destination);
-        } else {
-          setCurrentPage(selectedItem);
-        }
+        // Use external navigation for all center items to get scroll transition
+        onNavigate(selectedItem.destination);
       } else {
         if (currentTime - lastSwapTime < 100) {
           return; // Ignore rapid taps
@@ -264,9 +263,9 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
 
   // Rocket animations removed entirely
 
-  // Generate star positions only once and keep them consistent
+  // Generate star positions based on current screen dimensions
   // IMPORTANT: This must be called before any conditional returns to follow Rules of Hooks
-  const stars = useMemo(() => generateStarPositions(), []);
+  const stars = useMemo(() => generateStarPositions(), [screenWidth, screenHeight]);
 
   if (currentPage) {
     return (
@@ -303,13 +302,13 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
         ))}
 
         <Animated.View style={[mainMenuStyles.cloudContainer, cloudAnimatedStyle1, {
-          top: SCREEN_HEIGHT * LAYOUT.CLOUD_TOP_POSITION_1,
+          top: screenHeight * LAYOUT.CLOUD_TOP_POSITION_1,
           zIndex: LAYOUT.Z_INDEX.CLOUDS_BEHIND
         }]}>
           <Cloud1 width={ASSET_DIMENSIONS.cloud1.width} height={ASSET_DIMENSIONS.cloud1.height} />
         </Animated.View>
         <Animated.View style={[mainMenuStyles.cloudContainerFront, cloudAnimatedStyle2, {
-          top: SCREEN_HEIGHT * LAYOUT.CLOUD_TOP_POSITION_2,
+          top: screenHeight * LAYOUT.CLOUD_TOP_POSITION_2,
           zIndex: LAYOUT.Z_INDEX.CLOUDS_FRONT
         }]}>
           <Cloud2 width={ASSET_DIMENSIONS.cloud2.width} height={ASSET_DIMENSIONS.cloud2.height} />
