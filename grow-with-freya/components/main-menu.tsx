@@ -61,8 +61,8 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
 
   // Animation values with cleanup - initialize from persistent state
   const starRotation = useSharedValue(0);
-  const cloudFloat1 = useSharedValue(backgroundAnimationState.cloudFloat1);
-  const cloudFloat2 = useSharedValue(backgroundAnimationState.cloudFloat2);
+  const cloudFloat1 = useSharedValue(backgroundAnimationState?.cloudFloat1 || 0);
+  const cloudFloat2 = useSharedValue(backgroundAnimationState?.cloudFloat2 || 0);
 
 
   // Animation cancellation flag
@@ -331,7 +331,7 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
             onPress={() => handleIconPress(menuOrder[0])}
             isLarge={true}
             triggerSelectionAnimation={newlySelectedItem === menuOrder[0].destination}
-            testID="menu-icon-0"
+            testID={`menu-icon-${menuOrder[0].destination}`}
           />
         </View>
 
@@ -344,7 +344,7 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
               label={menuOrder[1].label}
               status="inactive"
               onPress={() => handleIconPress(menuOrder[1])}
-              testID="menu-icon-1"
+              testID={`menu-icon-${menuOrder[1].destination}`}
             />
             <MenuIcon
               key={`top-right-${menuOrder[2].destination}`}
@@ -352,7 +352,7 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
               label={menuOrder[2].label}
               status="inactive"
               onPress={() => handleIconPress(menuOrder[2])}
-              testID="menu-icon-2"
+              testID={`menu-icon-${menuOrder[2].destination}`}
             />
           </View>
 
@@ -364,7 +364,7 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
               label={menuOrder[3].label}
               status="inactive"
               onPress={() => handleIconPress(menuOrder[3])}
-              testID="menu-icon-3"
+              testID={`menu-icon-${menuOrder[3].destination}`}
             />
             <MenuIcon
               key={`bottom-right-${menuOrder[4].destination}`}
@@ -372,7 +372,7 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
               label={menuOrder[4].label}
               status="inactive"
               onPress={() => handleIconPress(menuOrder[4])}
-              testID="menu-icon-4"
+              testID={`menu-icon-${menuOrder[4].destination}`}
             />
           </View>
         </View>
@@ -414,6 +414,11 @@ const legacyStyles = StyleSheet.create({
 
 // Wrap with error boundary for crash protection
 const MainMenuWithErrorBoundary = React.memo(function MainMenuWithErrorBoundary(props: MainMenuProps) {
+  // Temporarily disable error boundary for debugging in tests
+  if (process.env.NODE_ENV === 'test') {
+    return <MainMenuComponent {...props} />;
+  }
+
   return (
     <ErrorBoundary
       onError={(error, errorInfo) => {

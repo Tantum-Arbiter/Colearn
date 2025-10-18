@@ -9,17 +9,30 @@ import { VISUAL_EFFECTS, getScreenDimensions } from './constants';
  * @param count - Number of stars to generate
  * @returns Array of star position objects
  */
+// Simple seeded random number generator for tests
+const seededRandom = (seed: number) => {
+  let x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+};
+
 export const generateStarPositions = (count: number = VISUAL_EFFECTS.STAR_COUNT) => {
   const { width: screenWidth, height: screenHeight } = getScreenDimensions();
   const stars = [];
   const starAreaHeight = screenHeight * VISUAL_EFFECTS.STAR_AREA_HEIGHT_RATIO;
 
+  // Use deterministic positions in test environment
+  const isTest = process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined;
+
   for (let i = 0; i < count; i++) {
+    const randomLeft = isTest ? seededRandom(i * 1.1) : Math.random();
+    const randomTop = isTest ? seededRandom(i * 2.3) : Math.random();
+    const randomOpacity = isTest ? seededRandom(i * 3.7) : Math.random();
+
     stars.push({
       id: i,
-      left: Math.random() * (screenWidth - 20) + 10, // 10px margin from edges
-      top: Math.random() * starAreaHeight + 20, // 20px margin from top
-      opacity: 0.3 + Math.random() * 0.4, // Random opacity between 0.3-0.7
+      left: randomLeft * (screenWidth - 20) + 10, // 10px margin from edges
+      top: randomTop * starAreaHeight + 20, // 20px margin from top
+      opacity: 0.3 + randomOpacity * 0.4, // Random opacity between 0.3-0.7
     });
   }
 

@@ -14,6 +14,7 @@ interface EntranceAnimationProps {
   duration?: number;
   delay?: number;
   style?: any;
+  testID?: string;
 }
 
 /**
@@ -26,6 +27,7 @@ export const EntranceAnimation: React.FC<EntranceAnimationProps> = ({
   duration = 400,
   delay = 0,
   style,
+  testID,
 }) => {
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(0);
@@ -84,7 +86,7 @@ export const EntranceAnimation: React.FC<EntranceAnimationProps> = ({
   });
 
   return (
-    <Animated.View style={[styles.container, animatedStyle, style]}>
+    <Animated.View style={[styles.container, animatedStyle, style]} testID={testID}>
       {children}
     </Animated.View>
   );
@@ -96,11 +98,13 @@ export const EntranceAnimation: React.FC<EntranceAnimationProps> = ({
 interface PageEntranceWrapperProps {
   children: React.ReactNode;
   pageType?: 'main' | 'stories' | 'settings';
+  testID?: string;
 }
 
 export const PageEntranceWrapper: React.FC<PageEntranceWrapperProps> = ({
   children,
   pageType = 'main',
+  testID,
 }) => {
   // Different animation types for different pages
   const getAnimationConfig = () => {
@@ -134,6 +138,7 @@ export const PageEntranceWrapper: React.FC<PageEntranceWrapperProps> = ({
       animationType={config.animationType}
       duration={config.duration}
       delay={config.delay}
+      testID={testID}
     >
       {children}
     </EntranceAnimation>
@@ -143,12 +148,13 @@ export const PageEntranceWrapper: React.FC<PageEntranceWrapperProps> = ({
 /**
  * StoryPageEntrance specifically for stories page with slide-up animation
  */
-export const StoryPageEntrance: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const StoryPageEntrance: React.FC<{ children: React.ReactNode; testID?: string }> = ({ children, testID }) => {
   return (
     <EntranceAnimation
       animationType="slide-up"
       duration={500}
       delay={0}
+      testID={testID}
     >
       {children}
     </EntranceAnimation>
@@ -158,12 +164,13 @@ export const StoryPageEntrance: React.FC<{ children: React.ReactNode }> = ({ chi
 /**
  * MainMenuEntrance specifically for main menu with fade animation
  */
-export const MainMenuEntrance: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const MainMenuEntrance: React.FC<{ children: React.ReactNode; testID?: string }> = ({ children, testID }) => {
   return (
     <EntranceAnimation
       animationType="fade"
       duration={400}
       delay={50} // Small delay to let bear image settle
+      testID={testID}
     >
       {children}
     </EntranceAnimation>

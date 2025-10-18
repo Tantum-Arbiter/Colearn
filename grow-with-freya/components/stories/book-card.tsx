@@ -115,18 +115,22 @@ export function BookCard({ story, onPress, index = 0 }: BookCardProps) {
   };
 
   return (
-    <Animated.View style={[
-      animatedStyle,
-      {
-        backgroundColor: isPlaceholder ? 'red' : 'blue',
-        margin: 2,
-        minHeight: 200,
-        minWidth: 150,
-        borderWidth: 3,
-        borderColor: isPlaceholder ? 'darkred' : 'darkblue'
-      }
-    ]}>
+    <Animated.View
+      testID={`book-card-${story.id}`}
+      style={[
+        animatedStyle,
+        {
+          backgroundColor: isPlaceholder ? 'red' : 'blue',
+          margin: 2,
+          minHeight: 200,
+          minWidth: 150,
+          borderWidth: 3,
+          borderColor: isPlaceholder ? 'darkred' : 'darkblue'
+        }
+      ]}
+    >
       <Pressable
+        testID={`book-card-pressable-${story.id}`}
         style={[
           styles.card,
           {
@@ -171,10 +175,13 @@ export function BookCard({ story, onPress, index = 0 }: BookCardProps) {
         </View>
 
         {/* Title */}
-        <Text style={[
-          styles.title,
-          isPlaceholder && styles.placeholderTitle
-        ]}>
+        <Text
+          testID={`book-card-title-${story.id}`}
+          style={[
+            styles.title,
+            isPlaceholder && styles.placeholderTitle
+          ]}
+        >
           {story.title}
         </Text>
 

@@ -15,7 +15,6 @@ import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
 import { StoryBookReader } from '@/components/stories/story-book-reader';
 import { Story } from '@/types/story';
 import { preloadCriticalImages, preloadSecondaryImages } from '@/services/image-preloader';
-import { MultiPageTransition } from '@/components/ui/coordinated-scroll-transition';
 import { EnhancedPageTransition } from '@/components/ui/enhanced-page-transition';
 import { DefaultPage } from '@/components/default-page';
 import { StoryTransitionProvider } from '@/contexts/story-transition-context';
@@ -50,7 +49,6 @@ function AppContent() {
 
   const [currentView, setCurrentView] = useState<AppView>('splash');
   const [currentPage, setCurrentPage] = useState<PageKey>('main');
-  const [currentScreen, setCurrentScreenState] = useState<string>('main');
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
 
   // Ensure app starts and stays in portrait mode (except for story reader)
@@ -132,12 +130,13 @@ function AppContent() {
 
   // Sync view with page changes
   useEffect(() => {
-    if (currentPage === 'main' && currentView !== 'main') {
-      setCurrentView('main');
-    } else if (currentPage === 'stories' && currentView !== 'stories') {
-      setCurrentView('stories');
-    } else if (currentPage === 'story-reader' && currentView !== 'story-reader') {
+    // For story-reader, we need a special view
+    if (currentPage === 'story-reader' && currentView !== 'story-reader') {
       setCurrentView('story-reader');
+    }
+    // For all other pages (main, stories, sensory, emotions, etc.), use 'app' view
+    else if (currentPage !== 'story-reader' && currentView !== 'app') {
+      setCurrentView('app');
     }
   }, [currentPage]);
 
@@ -170,13 +169,7 @@ function AppContent() {
     const pageKey = destinationMap[destination];
     if (pageKey) {
       setCurrentPage(pageKey);
-      setCurrentScreenState(destination);
       setCurrentScreen(destination);
-
-      // Ensure currentView is set correctly for stories
-      if (destination === 'stories') {
-        setCurrentView('stories');
-      }
     }
   };
 
@@ -195,7 +188,7 @@ function AppContent() {
   };
 
   const handleBackToStories = () => {
-    setCurrentView('stories');
+    setCurrentView('app');
     setCurrentPage('stories');
     setSelectedStory(null);
   };

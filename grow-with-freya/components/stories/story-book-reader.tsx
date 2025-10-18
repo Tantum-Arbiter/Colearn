@@ -727,6 +727,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
             ]}
             onPress={handlePreviousPage}
             disabled={currentPageIndex <= 0 || isTransitioning}
+            testID="left-touch-area"
           >
             <Text style={[
               styles.navButtonText,
@@ -758,6 +759,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
             ]}
             onPress={handleNextPage}
             disabled={isTransitioning}
+            testID="right-touch-area"
           >
             <Text style={[
               styles.navButtonText,
