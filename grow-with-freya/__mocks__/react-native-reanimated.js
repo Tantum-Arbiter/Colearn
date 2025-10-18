@@ -20,18 +20,25 @@ const mockUseAnimatedStyle = (styleFunction) => {
   }
 };
 
-// Mock timing function
-const mockWithTiming = (value, config) => {
-  if (config && config.callback) {
-    setTimeout(config.callback, config.duration || 0);
-  }
-  return value;
-};
-
-// Mock delay function
-const mockWithDelay = (delay, animation) => {
-  return animation;
-};
+// Import the shared mock functions from test utils
+let mockAnimationFunctions;
+try {
+  mockAnimationFunctions = require('../__tests__/utils/animation-test-utils').mockAnimationFunctions;
+} catch (e) {
+  // Fallback if test utils not available
+  mockAnimationFunctions = {
+    withTiming: jest.fn((value, config) => {
+      if (config && config.callback) {
+        setTimeout(config.callback, config.duration || 0);
+      }
+      return value;
+    }),
+    withDelay: jest.fn((delay, animation) => animation),
+    withRepeat: jest.fn((animation, numberOfReps) => animation),
+    withSpring: jest.fn((value, config) => value),
+    withSequence: jest.fn((...animations) => animations[animations.length - 1]),
+  };
+}
 
 // Mock easing functions
 const mockEasing = {
@@ -123,8 +130,26 @@ const mockGestureHandlerRootView = React.forwardRef((props, ref) => {
   return React.createElement(View, { ...props, ref });
 });
 
+// Create the Animated object with components
+const Animated = {
+  View: MockAnimatedView,
+  Text: MockAnimatedText,
+  ScrollView: MockAnimatedScrollView,
+  Image: React.forwardRef((props, ref) => {
+    const Image = require('react-native').Image;
+    return React.createElement(Image, { ...props, ref });
+  }),
+  FlatList: React.forwardRef((props, ref) => {
+    const FlatList = require('react-native').FlatList;
+    return React.createElement(FlatList, { ...props, ref });
+  }),
+};
+
 // Main mock export
 module.exports = {
+  // Default export (Animated object)
+  default: Animated,
+
   // Hooks
   useSharedValue: mockUseSharedValue,
   useAnimatedStyle: mockUseAnimatedStyle,
@@ -134,36 +159,16 @@ module.exports = {
   useAnimatedRef: jest.fn(() => ({ current: null })),
   useAnimatedProps: jest.fn(() => ({})),
 
-  // Animation functions
-  withTiming: mockWithTiming,
-  withSpring: jest.fn((value, config) => {
-    if (config && config.callback) {
-      setTimeout(config.callback, 300);
-    }
-    return value;
-  }),
-  withDelay: mockWithDelay,
-  withRepeat: jest.fn((animation, numberOfReps) => animation),
-  withSequence: jest.fn((...animations) => animations[animations.length - 1]),
+  // Animation functions - use shared mocks from test utils
+  withTiming: mockAnimationFunctions.withTiming,
+  withSpring: mockAnimationFunctions.withSpring,
+  withDelay: mockAnimationFunctions.withDelay,
+  withRepeat: mockAnimationFunctions.withRepeat,
+  withSequence: mockAnimationFunctions.withSequence,
   withDecay: jest.fn((config) => 0),
 
   // Easing
   Easing: mockEasing,
-
-  // Animated components
-  default: {
-    View: MockAnimatedView,
-    Text: MockAnimatedText,
-    ScrollView: MockAnimatedScrollView,
-    Image: React.forwardRef((props, ref) => {
-      const Image = require('react-native').Image;
-      return React.createElement(Image, { ...props, ref });
-    }),
-    FlatList: React.forwardRef((props, ref) => {
-      const FlatList = require('react-native').FlatList;
-      return React.createElement(FlatList, { ...props, ref });
-    }),
-  },
 
   // Entrance animations
   FadeIn: mockFadeIn,
