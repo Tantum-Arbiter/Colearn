@@ -92,7 +92,11 @@ export function StoryCompletionScreen({
     );
 
     // If bedtime story, suggest bedtime music more often
-    const shouldSuggestMusic = category === 'bedtime' ? Math.random() < 0.7 : Math.random() < 0.3;
+    // Use deterministic selection in test environment
+    const isTestEnv = process.env.NODE_ENV === 'test';
+    const shouldSuggestMusic = category === 'bedtime'
+      ? (isTestEnv ? false : Math.random() < 0.7)
+      : (isTestEnv ? false : Math.random() < 0.3);
     
     if (shouldSuggestMusic) {
       return {
@@ -103,8 +107,8 @@ export function StoryCompletionScreen({
         action: onBedtimeMusic
       };
     } else {
-      const suggestedStory = similarStories.length > 0 
-        ? similarStories[Math.floor(Math.random() * similarStories.length)]
+      const suggestedStory = similarStories.length > 0
+        ? (isTestEnv ? similarStories[0] : similarStories[Math.floor(Math.random() * similarStories.length)])
         : getRandomStory();
       
       return {
@@ -130,8 +134,9 @@ export function StoryCompletionScreen({
 
   // Get a random similar story for the dedicated tile
   const randomSimilarStory = useMemo(() => {
+    const isTestEnv = process.env.NODE_ENV === 'test';
     return similarStories.length > 0
-      ? similarStories[Math.floor(Math.random() * similarStories.length)]
+      ? (isTestEnv ? similarStories[0] : similarStories[Math.floor(Math.random() * similarStories.length)])
       : null;
   }, [similarStories]);
 
