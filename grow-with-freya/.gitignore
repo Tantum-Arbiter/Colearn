@@ -292,6 +292,8 @@ coverage/
 *.lcov
 .nyc_output/
 jest-coverage/
+**/__snapshots__/
+*.snap
 
 # Storybook build outputs
 .out
