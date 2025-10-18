@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useEffect, useCallback, useRef, useMemo } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
@@ -10,12 +10,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from './themed-text';
 import { useAppStore } from '@/store/app-store';
-import { DefaultPage } from './default-page';
+import { MusicControl } from './ui/music-control';
+
 import { ErrorBoundary } from './error-boundary';
 import {
-  useMemoryMonitor,
   performanceLogger,
-  useSafeState
+  useSafeState,
+  animationLimiter
 } from './main-menu/performance-utils';
 
 import {
@@ -50,9 +51,6 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
   // Get current screen dimensions (updates with orientation changes)
   const { width: screenWidth, height: screenHeight } = getScreenDimensions();
 
-  // Performance monitoring
-  useMemoryMonitor('MainMenu');
-
   // Get persistent animation state from store
   const { backgroundAnimationState, updateBackgroundAnimationState } = useAppStore();
 
@@ -72,37 +70,30 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
 
   // Safe menu state management
   const [menuOrder, setMenuOrder] = useSafeState<MenuItemData[]>(menuItems);
-  const [currentPage, setCurrentPage] = useSafeState<MenuItemData | null>(null);
   const [lastSwapTime, setLastSwapTime] = useSafeState<number>(0);
   const [newlySelectedItem, setNewlySelectedItem] = useSafeState<string | null>(null);
 
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const animationWatchdogRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<number | null>(null);
+  const animationWatchdogRef = useRef<number | null>(null);
 
   // Component cleanup on unmount
   useEffect(() => {
     return () => {
-      // Save current animation state before unmounting
-      updateBackgroundAnimationState({
-        cloudFloat1: cloudFloat1.value,
-        cloudFloat2: cloudFloat2.value,
-        rocketFloat1: 1000, // Static value - rockets removed
-        rocketFloat2: -200, // Static value - rockets removed
-      });
-
-      // Cancel all animations to prevent memory leaks
+      // PERFORMANCE CRITICAL: Cancel all animations immediately to prevent memory leaks
       animationsCancelled.current = true;
-      // Removed cancelMenuAnimation - was blocking functionality
 
-      // Clear any pending timeouts
+      // Clear all timeouts to prevent memory leaks - CRITICAL for performance
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
       }
       if (animationWatchdogRef.current) {
         clearTimeout(animationWatchdogRef.current);
+        animationWatchdogRef.current = null;
       }
 
-      // Animation limiter removed - no longer needed
+      // Reset animation limiter to prevent memory buildup
+      animationLimiter.reset();
 
       // Cancel all infinite background animations (safe for test environment)
       try {
@@ -114,12 +105,26 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
         console.warn('Could not cancel background animations:', error);
       }
 
+      // Save animation state in a non-blocking way to prevent render blocking
+      setTimeout(() => {
+        try {
+          updateBackgroundAnimationState({
+            cloudFloat1: cloudFloat1.value,
+            cloudFloat2: cloudFloat2.value,
+            rocketFloat1: 1000, // Static value - rockets removed
+            rocketFloat2: -200, // Static value - rockets removed
+          });
+        } catch (error) {
+          console.warn('Failed to save animation state on unmount:', error);
+        }
+      }, 0);
+
       const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development';
       if (isDev) {
-        console.log('MainMenu component unmounted - saved animation state and cleaned up');
+        console.log('MainMenu component unmounted - cleaned up animations and timers');
       }
     };
-  }, [updateBackgroundAnimationState]); // Removed useSharedValue objects from deps to prevent infinite re-renders
+  }, []); // PERFORMANCE: Empty dependency array to prevent re-renders
 
   // Performance-optimized icon press handler with debouncing and error handling
   const handleIconPressInternal = useCallback((selectedItem: MenuItemData) => {
@@ -174,65 +179,49 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
 
   const handleIconPress = handleIconPressInternal;
 
-  const handleBackToMenu = () => {
-    setCurrentPage(null);
-  };
+
 
 
   useEffect(() => {
-    // Small delay to ensure component is fully mounted before starting animations
+    // PERFORMANCE OPTIMIZED: Reduced animation initialization overhead
     const startAnimations = () => {
       if (!animationsCancelled.current) {
-        const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development';
-
-        if (isDev) {
-          console.log('MainMenu: Starting animations resume');
-          console.log('Cloud1 current position:', cloudFloat1.value);
-          console.log('Cloud2 current position:', cloudFloat2.value);
-        }
-
+        // Simplified animation initialization - no excessive logging
         const cloud1Pos = cloudFloat1.value;
         const cloud2Pos = cloudFloat2.value;
 
-        // Check if positions are valid for resuming
+        // Quick validation check
         const cloud1CanResume = isFinite(cloud1Pos) && !isNaN(cloud1Pos) && cloud1Pos > -500 && cloud1Pos < 2000;
         const cloud2CanResume = isFinite(cloud2Pos) && !isNaN(cloud2Pos) && cloud2Pos > -500 && cloud2Pos < 2000;
 
-        if (isDev) {
-          console.log('Resume check - Cloud1:', cloud1CanResume, 'Cloud2:', cloud2CanResume);
-        }
-
+        // Start animations with minimal overhead
         cloudFloat1.value = createCloudAnimation(cloudFloat1, 0, -200, cloud1CanResume);
         cloudFloat2.value = createCloudAnimation(cloudFloat2, ANIMATION_TIMINGS.CLOUD_STAGGER_DELAY, -400, cloud2CanResume);
 
         // Rockets removed entirely
 
-        // Set up animation watchdog to detect stuck animations
+        // PERFORMANCE: Simplified animation watchdog - reduced overhead
         if (animationWatchdogRef.current) {
           clearTimeout(animationWatchdogRef.current);
         }
 
+        // EMERGENCY: Reduce animation watchdog frequency to improve performance
         animationWatchdogRef.current = setTimeout(() => {
-          const cloud1Pos = cloudFloat1.value;
-          const cloud2Pos = cloudFloat2.value;
+          if (!animationsCancelled.current) {
+            const cloud1Pos = cloudFloat1.value;
+            const cloud2Pos = cloudFloat2.value;
 
-          if (isDev) {
-            console.log('Animation watchdog check - Cloud1:', cloud1Pos, 'Cloud2:', cloud2Pos);
-          }
+            // Quick check for stuck animations
+            const cloud1Stuck = !isFinite(cloud1Pos) || isNaN(cloud1Pos);
+            const cloud2Stuck = !isFinite(cloud2Pos) || isNaN(cloud2Pos);
 
-          // If either cloud hasn't moved significantly, restart animations
-          const cloud1Stuck = !isFinite(cloud1Pos) || isNaN(cloud1Pos);
-          const cloud2Stuck = !isFinite(cloud2Pos) || isNaN(cloud2Pos);
-
-          if (cloud1Stuck || cloud2Stuck) {
-            if (isDev) {
-              console.log('Detected stuck animations, restarting...');
+            if (cloud1Stuck || cloud2Stuck) {
+              // Force restart with fresh positions
+              cloudFloat1.value = createCloudAnimation(cloudFloat1, 0, -200, false);
+              cloudFloat2.value = createCloudAnimation(cloudFloat2, ANIMATION_TIMINGS.CLOUD_STAGGER_DELAY, -400, false);
             }
-            // Force restart with fresh positions
-            cloudFloat1.value = createCloudAnimation(cloudFloat1, 0, -200, false);
-            cloudFloat2.value = createCloudAnimation(cloudFloat2, ANIMATION_TIMINGS.CLOUD_STAGGER_DELAY, -400, false);
           }
-        }, 10000); // Check after 10 seconds
+        }, 30000); // EMERGENCY: Check after 30 seconds instead of 10
       }
     };
 
@@ -267,15 +256,7 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
   // IMPORTANT: This must be called before any conditional returns to follow Rules of Hooks
   const stars = useMemo(() => generateStarPositions(), [screenWidth, screenHeight]);
 
-  if (currentPage) {
-    return (
-      <DefaultPage
-        icon={currentPage.icon}
-        title={currentPage.label}
-        onBack={handleBackToMenu}
-      />
-    );
-  }
+
 
   return (
     <LinearGradient
@@ -326,9 +307,14 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
       <View style={[legacyStyles.topButtons, { paddingTop: insets.top + 20 }]}>
         <View style={{ flex: 1 }} />
 
+        {/* Music Control */}
+        <View style={legacyStyles.musicControlContainer}>
+          <MusicControl size={24} color="#4A90E2" />
+        </View>
+
         <Pressable
           style={legacyStyles.settingsButton}
-          onPress={() => setCurrentPage({ icon: 'gear', label: 'Settings', destination: 'settings' })}
+          onPress={() => onNavigate('settings')}
         >
           <ThemedText style={mainMenuStyles.settingsEmoji}>⚙️</ThemedText>
         </Pressable>
@@ -401,6 +387,9 @@ const legacyStyles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingBottom: 20,
+  },
+  musicControlContainer: {
+    marginRight: 12,
   },
   settingsButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.95)',

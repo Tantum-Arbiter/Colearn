@@ -1,8 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
-import { View, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet, Pressable, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ThemedText } from './themed-text';
-import { getSvgComponentFromSvg } from './main-menu/assets';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -10,8 +8,36 @@ import Animated, {
   withTiming,
   Easing
 } from 'react-native-reanimated';
-import { VISUAL_EFFECTS } from './main-menu/constants';
-import { generateStarPositions } from './main-menu/utils';
+import { ThemedText } from './themed-text';
+import { getSvgComponentFromSvg } from './main-menu/assets';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// Star configuration (same as main menu)
+const STAR_COUNT = 15;
+const STAR_SIZE = 3;
+const STAR_BORDER_RADIUS = 1.5;
+const STAR_AREA_HEIGHT_RATIO = 0.6;
+
+/**
+ * Generates reversed star positions for sub-screens (bottom 60% instead of top 60%)
+ */
+const generateReversedStarPositions = (count: number = STAR_COUNT) => {
+  const stars = [];
+  const starAreaHeight = SCREEN_HEIGHT * STAR_AREA_HEIGHT_RATIO;
+  const startFromBottom = SCREEN_HEIGHT - starAreaHeight - 20; // 20px margin from bottom
+
+  for (let i = 0; i < count; i++) {
+    stars.push({
+      id: i,
+      left: Math.random() * (SCREEN_WIDTH - 20) + 10, // 10px margin from edges
+      top: startFromBottom + Math.random() * starAreaHeight, // Position in bottom 60%
+      opacity: 0.3 + Math.random() * 0.4, // Random opacity between 0.3-0.7
+    });
+  }
+
+  return stars;
+};
 
 interface DefaultPageProps {
   icon: string;
@@ -81,15 +107,20 @@ const pageContent: { [key: string]: { emoji: string; message: string; subtitle: 
 };
 
 export function DefaultPage({ icon, title, onBack }: DefaultPageProps) {
+  // Star animation
+  const starRotation = useSharedValue(0);
+
+  // Generate star positions (consistent across re-renders)
+  const stars = useMemo(() => generateReversedStarPositions(), []);
+
+  // Star animation style
+  const starAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${starRotation.value}deg` }],
+  }));
+
   const content = pageContent[title] || pageContent['Stories'];
   const svgType = mapIconNameToSvgType(icon);
   const SvgComponent = getSvgComponentFromSvg(svgType as any);
-
-  // Star animation for background (matching main menu)
-  const starRotation = useSharedValue(0);
-
-  // Generate stars (matching main menu)
-  const stars = useMemo(() => generateStarPositions(), []);
 
   // Start star rotation animation on mount
   useEffect(() => {
@@ -99,10 +130,6 @@ export function DefaultPage({ icon, title, onBack }: DefaultPageProps) {
       false
     );
   }, []);
-
-  const starAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${starRotation.value}deg` }],
-  }));
 
   return (
     <LinearGradient
@@ -166,11 +193,11 @@ const styles = StyleSheet.create({
   },
   star: {
     position: 'absolute',
-    width: VISUAL_EFFECTS.STAR_SIZE,
-    height: VISUAL_EFFECTS.STAR_SIZE,
+    width: STAR_SIZE,
+    height: STAR_SIZE,
     backgroundColor: '#FFFFFF',
-    borderRadius: VISUAL_EFFECTS.STAR_BORDER_RADIUS,
-    opacity: VISUAL_EFFECTS.STAR_BASE_OPACITY,
+    borderRadius: STAR_BORDER_RADIUS,
+    opacity: 0.4,
   },
   header: {
     paddingTop: 60,
@@ -245,5 +272,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  // Star background styles
+  backgroundGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    zIndex: 0,
   },
 });

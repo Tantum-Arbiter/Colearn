@@ -25,6 +25,7 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/$1',
     '\\.(png|jpg|jpeg|gif|webp)$': '<rootDir>/__mocks__/imageMock.js',
     '\\.(svg)$': '<rootDir>/__mocks__/svgMock.tsx',
+    '\\.(wav|mp3|m4a|aac|oga)$': 'identity-obj-proxy',
     '^react-native$': 'react-native-web',
     '^expo-screen-orientation$': '<rootDir>/__mocks__/expo-screen-orientation.js',
     '^expo-haptics$': '<rootDir>/__mocks__/expo-haptics.js',

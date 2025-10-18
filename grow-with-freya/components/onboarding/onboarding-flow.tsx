@@ -13,8 +13,8 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const { setOnboardingComplete } = useAppStore();
 
   // Timeout cleanup refs
-  const nextTimeoutRef = useRef<NodeJS.Timeout>();
-  const prevTimeoutRef = useRef<NodeJS.Timeout>();
+  const nextTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prevTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const onboardingScreens = [
     {

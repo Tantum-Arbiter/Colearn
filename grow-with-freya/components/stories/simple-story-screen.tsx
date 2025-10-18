@@ -6,11 +6,12 @@ interface SimpleStoryScreenProps {
   onStorySelect?: (story: Story) => void;
   onStoryTransitionComplete?: () => void;
   selectedStory?: Story | null;
-  onBack?: () => void;
+  onBack: () => void;
 }
 
 export function SimpleStoryScreen({
   onStorySelect,
+  selectedStory,
   onStoryTransitionComplete,
   onBack,
 }: SimpleStoryScreenProps) {

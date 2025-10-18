@@ -9,7 +9,7 @@ export function useDebounce<T extends (...args: any[]) => any>(
   callback: T,
   delay: number
 ): T {
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const callbackRef = useRef(callback);
 
   // Update callback ref when callback changes
@@ -74,12 +74,12 @@ class AnimationLimiter {
   private maxConcurrentAnimations = 6; // Increased from 2 to 6 for better normal use
   private cancelledAnimations = new Set<string>();
   private rapidInteractionMode = false;
-  private rapidInteractionTimeout: NodeJS.Timeout | null = null;
+  private rapidInteractionTimeout: ReturnType<typeof setTimeout> | null = null;
   private interactionCount = 0;
   private extremeRapidMode = false; // Circuit breaker for extreme rapid pressing
   private extremeInteractionCount = 0;
-  private extremeRapidTimeout: NodeJS.Timeout | null = null;
-  private selectionTimeouts = new Set<NodeJS.Timeout>(); // Track selection animation timeouts
+  private extremeRapidTimeout: ReturnType<typeof setTimeout> | null = null;
+  private selectionTimeouts = new Set<ReturnType<typeof setTimeout>>(); // Track selection animation timeouts
 
   canStartAnimation(id: string): boolean {
     if (this.cancelledAnimations.has(id)) {

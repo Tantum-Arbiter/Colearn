@@ -7,6 +7,7 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAppStore } from '@/store/app-store';
+import { useBackgroundMusic } from '@/hooks/use-background-music';
 import { AppSplashScreen } from '@/components/splash-screen';
 import { OnboardingFlow } from '@/components/onboarding/onboarding-flow';
 import { MainMenu } from '@/components/main-menu';
@@ -14,7 +15,7 @@ import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
 import { StoryBookReader } from '@/components/stories/story-book-reader';
 import { Story } from '@/types/story';
 import { preloadCriticalImages, preloadSecondaryImages } from '@/services/image-preloader';
-import { VerticalPageTransition } from '@/components/ui/coordinated-scroll-transition';
+import { MultiPageTransition } from '@/components/ui/coordinated-scroll-transition';
 import { EnhancedPageTransition } from '@/components/ui/enhanced-page-transition';
 import { DefaultPage } from '@/components/default-page';
 import { StoryTransitionProvider } from '@/contexts/story-transition-context';
@@ -40,8 +41,15 @@ function AppContent() {
     shouldReturnToMainMenu,
     clearReturnToMainMenu
   } = useAppStore();
-  const [currentView, setCurrentView] = useState<'splash' | 'onboarding' | 'main' | 'stories' | 'story-reader'>('splash');
-  const [currentPage, setCurrentPage] = useState<'main' | 'stories' | 'story-reader'>('main');
+
+  // Initialize background music
+  const { fadeIn, isLoaded: musicLoaded, isPlaying } = useBackgroundMusic();
+
+  type AppView = 'splash' | 'onboarding' | 'app' | 'main' | 'stories' | 'story-reader';
+  type PageKey = 'main' | 'stories' | 'story-reader' | 'sensory' | 'emotions' | 'bedtime' | 'screen_time' | 'settings';
+
+  const [currentView, setCurrentView] = useState<AppView>('splash');
+  const [currentPage, setCurrentPage] = useState<PageKey>('main');
   const [currentScreen, setCurrentScreenState] = useState<string>('main');
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
 
@@ -83,7 +91,7 @@ function AppContent() {
         setTimeout(async () => {
           const secondaryResult = await preloadSecondaryImages();
           console.log('Secondary images preloaded:', secondaryResult);
-        }, 1000);
+        }, 3000); // PERFORMANCE: Increased delay to prevent blocking
       } catch (error) {
         console.warn('Image preloading failed:', error);
       }
@@ -98,12 +106,31 @@ function AppContent() {
     } else if (!hasCompletedOnboarding) {
       setCurrentView('onboarding');
     } else {
-      setCurrentView('main');
+      setCurrentView('app');
       setCurrentPage('main');
     }
   }, [isAppReady, hasCompletedOnboarding]);
 
-  // Sync currentView with currentPage for main app navigation
+  // Start background music once when transitioning from splash (only once!)
+  useEffect(() => {
+    const startBackgroundMusic = async () => {
+      if (musicLoaded && currentView === 'onboarding' && !isPlaying) {
+        try {
+          // Start background music with a gentle fade-in - only when first leaving splash
+          await fadeIn(3000); // 3 second fade-in
+          console.log('Background music started for the journey');
+        } catch (error) {
+          console.warn('Failed to start background music:', error);
+        }
+      }
+    };
+
+    // Add a small delay to ensure the screen has rendered
+    const timer = setTimeout(startBackgroundMusic, 500);
+    return () => clearTimeout(timer);
+  }, [currentView, musicLoaded, fadeIn, isPlaying]);
+
+  // Sync view with page changes
   useEffect(() => {
     if (currentPage === 'main' && currentView !== 'main') {
       setCurrentView('main');
@@ -123,18 +150,33 @@ function AppContent() {
   }, [shouldReturnToMainMenu]);
 
   const handleOnboardingComplete = () => {
-    setCurrentView('main');
+    setCurrentView('app');
+    setCurrentPage('main');
   };
 
   const handleMainMenuNavigate = (destination: string) => {
     console.log('Navigating to:', destination);
-    setCurrentPage(destination as 'main' | 'stories');
-    setCurrentScreenState(destination);
-    setCurrentScreen(destination);
 
-    // Ensure currentView is set correctly for stories
-    if (destination === 'stories') {
-      setCurrentView('stories');
+    // Map destination strings to PageKey types
+    const destinationMap: Record<string, PageKey> = {
+      'stories': 'stories',
+      'sensory': 'sensory',
+      'emotions': 'emotions',
+      'bedtime': 'bedtime',
+      'screen_time': 'screen_time',
+      'settings': 'settings'
+    };
+
+    const pageKey = destinationMap[destination];
+    if (pageKey) {
+      setCurrentPage(pageKey);
+      setCurrentScreenState(destination);
+      setCurrentScreen(destination);
+
+      // Ensure currentView is set correctly for stories
+      if (destination === 'stories') {
+        setCurrentView('stories');
+      }
     }
   };
 
@@ -210,7 +252,7 @@ function AppContent() {
   }
 
   // Handle main app navigation with coordinated scroll transitions
-  if (currentView === 'main' || currentView === 'stories') {
+  if (currentView === 'app') {
     return (
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <EnhancedPageTransition
@@ -226,13 +268,14 @@ function AppContent() {
             sensory: createDefaultPage('brain', 'Sensory'),
             emotions: createDefaultPage('heart', 'Emotions'),
             bedtime: createDefaultPage('moon', 'Bedtime Music'),
-            'screen_time': createDefaultPage('clock', 'Screen Time'),
+            screen_time: createDefaultPage('clock', 'Screen Time'),
             settings: createDefaultPage('gear', 'Settings'),
           }}
           duration={800}
         />
 
         <StatusBar style="auto" />
+
       </ThemeProvider>
     );
   }
