@@ -7,7 +7,11 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+// Dynamic screen dimensions
+const getScreenDimensions = () => {
+  const { width, height } = Dimensions.get('window');
+  return { width, height };
+};
 
 interface SimplePageTransitionProps {
   children: React.ReactNode;
@@ -73,21 +77,22 @@ export const SimplePageTransition: React.FC<SimplePageTransitionProps> = ({
   useEffect(() => {
     if (isVisible) {
       // Set initial off-screen position
+      const { width: screenWidth, height: screenHeight } = getScreenDimensions();
       switch (transitionType) {
         case 'slide-up':
-          translateY.value = SCREEN_HEIGHT;
+          translateY.value = screenHeight;
           opacity.value = 1;
           break;
         case 'slide-down':
-          translateY.value = -SCREEN_HEIGHT;
+          translateY.value = -screenHeight;
           opacity.value = 1;
           break;
         case 'slide-left':
-          translateX.value = SCREEN_WIDTH;
+          translateX.value = screenWidth;
           opacity.value = 1;
           break;
         case 'slide-right':
-          translateX.value = -SCREEN_WIDTH;
+          translateX.value = -screenWidth;
           opacity.value = 1;
           break;
         case 'fade':
@@ -199,7 +204,7 @@ const styles = StyleSheet.create({
   },
   page: {
     flex: 1,
-    width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT,
+    width: getScreenDimensions().width,
+    height: getScreenDimensions().height,
   },
 });

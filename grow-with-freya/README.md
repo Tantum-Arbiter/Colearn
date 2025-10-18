@@ -59,9 +59,9 @@ grow-with-freya/
 - **Navigation**: Expo Router (file-based routing)
 - **Language**: TypeScript
 - **Styling**: React Native StyleSheet
-- **State Management**: TBD (Zustand/Redux)
-- **Audio**: TBD (expo-av)
-- **Authentication**: TBD (Firebase Auth)
+- **State Management**: Zustand
+- **Audio**: expo-av
+- **Authentication**: Firebase Auth
 
 ## Development Status
 

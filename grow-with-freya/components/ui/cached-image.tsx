@@ -86,10 +86,13 @@ export const CachedImage: React.FC<CachedImageProps> = ({
 /**
  * Specialized component for the bear image with optimal caching
  */
+// Import the bear image at the top level - use relative path for Jest compatibility
+const bearImage = require('../../assets/images/ui-elements/bear-bottom-screen.png');
+
 export const CachedBearImage: React.FC<{ style?: any }> = ({ style }) => {
   return (
     <CachedImage
-      source={require('@/assets/images/ui-elements/bear-bottom-screen.png')}
+      source={bearImage}
       style={[
         {
           width: 286,

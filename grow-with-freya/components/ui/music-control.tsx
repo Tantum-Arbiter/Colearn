@@ -30,12 +30,14 @@ export const MusicControl: React.FC<MusicControlProps> = ({
       activeOpacity={0.7}
       accessibilityLabel={isPlaying ? 'Pause background music' : 'Play background music'}
       accessibilityRole="button"
+      testID="music-control-button"
     >
       <View style={[styles.iconContainer, { backgroundColor: `${color}20` }]}>
         <Ionicons
           name={isPlaying ? 'volume-high' : 'volume-mute'}
           size={size}
           color={color}
+          testID={`music-icon-${isPlaying ? 'playing' : 'muted'}`}
         />
       </View>
     </TouchableOpacity>

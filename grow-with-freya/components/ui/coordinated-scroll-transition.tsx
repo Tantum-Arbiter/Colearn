@@ -8,7 +8,11 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+// Dynamic screen dimensions
+const getScreenDimensions = () => {
+  const { width, height } = Dimensions.get('window');
+  return { width, height };
+};
 
 interface CoordinatedScrollTransitionProps {
   currentPage: 'main' | 'stories';
@@ -33,9 +37,12 @@ export const CoordinatedScrollTransition: React.FC<CoordinatedScrollTransitionPr
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [previousPage, setPreviousPage] = useState<'main' | 'stories'>(currentPage);
 
+  // Get screen dimensions
+  const { height: screenHeight } = getScreenDimensions();
+
   // Animation values for both pages
-  const mainMenuTranslateY = useSharedValue(currentPage === 'main' ? 0 : -SCREEN_HEIGHT);
-  const storiesTranslateY = useSharedValue(currentPage === 'stories' ? 0 : SCREEN_HEIGHT);
+  const mainMenuTranslateY = useSharedValue(currentPage === 'main' ? 0 : -screenHeight);
+  const storiesTranslateY = useSharedValue(currentPage === 'stories' ? 0 : screenHeight);
 
   useEffect(() => {
     if (previousPage !== currentPage) {
@@ -55,8 +62,8 @@ export const CoordinatedScrollTransition: React.FC<CoordinatedScrollTransitionPr
     if (toPage === 'stories') {
       // Going to stories: both pages scroll down
       // Main menu scrolls down and out of view
-      mainMenuTranslateY.value = withTiming(-SCREEN_HEIGHT, animationConfig);
-      
+      mainMenuTranslateY.value = withTiming(-screenHeight, animationConfig);
+
       // Stories page scrolls down into view (from below screen)
       storiesTranslateY.value = withTiming(0, animationConfig, (finished) => {
         if (finished) {
@@ -69,7 +76,7 @@ export const CoordinatedScrollTransition: React.FC<CoordinatedScrollTransitionPr
     } else {
       // Going back to main: stories scrolls down out, main scrolls up in
       // Stories page scrolls down and out of view
-      storiesTranslateY.value = withTiming(SCREEN_HEIGHT, animationConfig);
+      storiesTranslateY.value = withTiming(screenHeight, animationConfig);
       
       // Main menu scrolls up into view (from above screen)
       mainMenuTranslateY.value = withTiming(0, animationConfig, (finished) => {
@@ -143,7 +150,8 @@ export const ScrollTransitionContainer: React.FC<ScrollTransitionContainerProps>
       translateY.value = withTiming(0, animationConfig);
     } else {
       // Page is becoming inactive - scroll out of view
-      const exitPosition = transitionDirection === 'up' ? -SCREEN_HEIGHT : SCREEN_HEIGHT;
+      const { height: screenHeight } = getScreenDimensions();
+      const exitPosition = transitionDirection === 'up' ? -screenHeight : screenHeight;
       translateY.value = withTiming(exitPosition, animationConfig);
     }
   }, [isActive, transitionDirection, duration]);
@@ -191,8 +199,9 @@ export const VerticalPageTransition: React.FC<VerticalPageTransitionProps> = ({
   pages,
   duration = 600,
 }) => {
-  const mainTranslateY = useSharedValue(currentPage === 'main' ? 0 : -SCREEN_HEIGHT);
-  const storiesTranslateY = useSharedValue(currentPage === 'stories' ? 0 : SCREEN_HEIGHT);
+  const { height: screenHeight } = getScreenDimensions();
+  const mainTranslateY = useSharedValue(currentPage === 'main' ? 0 : -screenHeight);
+  const storiesTranslateY = useSharedValue(currentPage === 'stories' ? 0 : screenHeight);
 
   useEffect(() => {
     const animationConfig = {
@@ -203,10 +212,10 @@ export const VerticalPageTransition: React.FC<VerticalPageTransitionProps> = ({
     if (currentPage === 'main') {
       // Show main menu, hide stories
       mainTranslateY.value = withTiming(0, animationConfig);
-      storiesTranslateY.value = withTiming(SCREEN_HEIGHT, animationConfig);
+      storiesTranslateY.value = withTiming(screenHeight, animationConfig);
     } else {
       // Show stories, hide main menu
-      mainTranslateY.value = withTiming(-SCREEN_HEIGHT, animationConfig);
+      mainTranslateY.value = withTiming(-screenHeight, animationConfig);
       storiesTranslateY.value = withTiming(0, animationConfig);
     }
   }, [currentPage, duration]);
@@ -315,8 +324,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     left: 0,
-    width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT,
+    width: getScreenDimensions().width,
+    height: getScreenDimensions().height,
     backgroundColor: '#f8f9ff', // Match container background
   },
 });

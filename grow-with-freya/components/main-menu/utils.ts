@@ -2,26 +2,40 @@
  * Utility functions for main menu component
  */
 
-import { VISUAL_EFFECTS, SCREEN_WIDTH, SCREEN_HEIGHT } from './constants';
+import { VISUAL_EFFECTS, getScreenDimensions } from './constants';
 
 /**
  * Generates random star positions for the background
  * @param count - Number of stars to generate
  * @returns Array of star position objects
  */
+// Simple seeded random number generator for tests
+const seededRandom = (seed: number) => {
+  let x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+};
+
 export const generateStarPositions = (count: number = VISUAL_EFFECTS.STAR_COUNT) => {
+  const { width: screenWidth, height: screenHeight } = getScreenDimensions();
   const stars = [];
-  const starAreaHeight = SCREEN_HEIGHT * VISUAL_EFFECTS.STAR_AREA_HEIGHT_RATIO;
-  
+  const starAreaHeight = screenHeight * VISUAL_EFFECTS.STAR_AREA_HEIGHT_RATIO;
+
+  // Use deterministic positions in test environment
+  const isTest = process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined;
+
   for (let i = 0; i < count; i++) {
+    const randomLeft = isTest ? seededRandom(i * 1.1) : Math.random();
+    const randomTop = isTest ? seededRandom(i * 2.3) : Math.random();
+    const randomOpacity = isTest ? seededRandom(i * 3.7) : Math.random();
+
     stars.push({
       id: i,
-      left: Math.random() * (SCREEN_WIDTH - 20) + 10, // 10px margin from edges
-      top: Math.random() * starAreaHeight + 20, // 20px margin from top
-      opacity: 0.3 + Math.random() * 0.4, // Random opacity between 0.3-0.7
+      left: randomLeft * (screenWidth - 20) + 10, // 10px margin from edges
+      top: randomTop * starAreaHeight + 20, // 20px margin from top
+      opacity: 0.3 + randomOpacity * 0.4, // Random opacity between 0.3-0.7
     });
   }
-  
+
   return stars;
 };
 
@@ -78,7 +92,8 @@ export const isValidMenuItem = (item: any): boolean => {
  * @returns Calculated size
  */
 export const getResponsiveSize = (baseSize: number, scaleFactor: number = 1.2): number => {
-  const isTablet = SCREEN_WIDTH >= 768;
+  const { width: screenWidth } = getScreenDimensions();
+  const isTablet = screenWidth >= 768;
   return isTablet ? baseSize * scaleFactor : baseSize;
 };
 

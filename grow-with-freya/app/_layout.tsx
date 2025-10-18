@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
+import * as ScreenOrientation from 'expo-screen-orientation';
 
 import 'react-native-reanimated';
 
@@ -11,15 +12,26 @@ import { AppSplashScreen } from '@/components/splash-screen';
 import { OnboardingFlow } from '@/components/onboarding/onboarding-flow';
 import { MainMenu } from '@/components/main-menu';
 import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
-
+import { StoryBookReader } from '@/components/stories/story-book-reader';
 import { Story } from '@/types/story';
 import { preloadCriticalImages, preloadSecondaryImages } from '@/services/image-preloader';
-import { MultiPageTransition } from '@/components/ui/coordinated-scroll-transition';
+import { EnhancedPageTransition } from '@/components/ui/enhanced-page-transition';
 import { DefaultPage } from '@/components/default-page';
+import { StoryTransitionProvider } from '@/contexts/story-transition-context';
 
 
 
 export default function RootLayout() {
+  return (
+    <StoryTransitionProvider>
+      <AppContent />
+    </StoryTransitionProvider>
+  );
+}
+
+// Main app content that can access the story transition context
+function AppContent() {
+  // No longer using story transition context
   const colorScheme = useColorScheme();
   const {
     isAppReady,
@@ -32,13 +44,36 @@ export default function RootLayout() {
   // Initialize background music
   const { fadeIn, isLoaded: musicLoaded, isPlaying } = useBackgroundMusic();
 
-
-
-  type AppView = 'splash' | 'onboarding' | 'app';
-  type PageKey = 'main' | 'stories' | 'sensory' | 'emotions' | 'bedtime' | 'screen_time' | 'settings';
+  type AppView = 'splash' | 'onboarding' | 'app' | 'main' | 'stories' | 'story-reader';
+  type PageKey = 'main' | 'stories' | 'story-reader' | 'sensory' | 'emotions' | 'bedtime' | 'screen_time' | 'settings';
 
   const [currentView, setCurrentView] = useState<AppView>('splash');
   const [currentPage, setCurrentPage] = useState<PageKey>('main');
+  const [selectedStory, setSelectedStory] = useState<Story | null>(null);
+
+  // Ensure app starts and stays in portrait mode (except for story reader)
+  useEffect(() => {
+    const initializeOrientation = async () => {
+      try {
+        // Lock to portrait orientation for the main app
+        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+        console.log('App initialized in portrait mode');
+      } catch (error) {
+        console.warn('Failed to initialize portrait orientation:', error);
+      }
+    };
+
+    initializeOrientation();
+  }, []);
+
+  // Ensure portrait mode when not in story reader
+  useEffect(() => {
+    if (currentView !== 'story-reader') {
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP)
+        .then(() => console.log('Restored portrait mode for:', currentView))
+        .catch(error => console.warn('Failed to restore portrait mode:', error));
+    }
+  }, [currentView]);
 
 
 
@@ -93,6 +128,18 @@ export default function RootLayout() {
     return () => clearTimeout(timer);
   }, [currentView, musicLoaded, fadeIn, isPlaying]);
 
+  // Sync view with page changes
+  useEffect(() => {
+    // For story-reader, we need a special view
+    if (currentPage === 'story-reader' && currentView !== 'story-reader') {
+      setCurrentView('story-reader');
+    }
+    // For all other pages (main, stories, sensory, emotions, etc.), use 'app' view
+    else if (currentPage !== 'story-reader' && currentView !== 'app') {
+      setCurrentView('app');
+    }
+  }, [currentPage]);
+
   // Listen for return to main menu requests
   useEffect(() => {
     if (shouldReturnToMainMenu) {
@@ -107,6 +154,8 @@ export default function RootLayout() {
   };
 
   const handleMainMenuNavigate = (destination: string) => {
+    console.log('Navigating to:', destination);
+
     // Map destination strings to PageKey types
     const destinationMap: Record<string, PageKey> = {
       'stories': 'stories',
@@ -124,13 +173,52 @@ export default function RootLayout() {
     }
   };
 
+  // Helper function to create DefaultPage components
+  const createDefaultPage = (icon: string, title: string) => (
+    <DefaultPage
+      icon={icon}
+      title={title}
+      onBack={handleBackToMainMenu}
+    />
+  );
+
   const handleBackToMainMenu = () => {
     setCurrentPage('main');
+    setSelectedStory(null);
+  };
+
+  const handleBackToStories = () => {
+    setCurrentView('app');
+    setCurrentPage('stories');
+    setSelectedStory(null);
   };
 
   const handleStorySelect = (story: Story) => {
-    console.log('Selected story:', story.title);
-    // TODO: Navigate to story reader/player
+    console.log('Selected story with transition:', story.title);
+    setSelectedStory(story);
+
+    // Start thumbnail expansion animation first, then transition to story reader
+    // The SimpleStoryScreen will handle the expansion animation and call handleStoryTransitionComplete
+  };
+
+  const handleStoryTransitionComplete = () => {
+    console.log('Thumbnail expansion complete - transitioning to story reader');
+    setCurrentView('story-reader');
+    setCurrentPage('story-reader');
+  };
+
+  const handleReadAnother = (story: Story) => {
+    console.log('Reading another story:', story.title);
+    setSelectedStory(story);
+    // Stay in story-reader view, just change the story
+  };
+
+  const handleBedtimeMusic = () => {
+    console.log('Opening bedtime music from story completion');
+    setCurrentView('main');
+    setCurrentPage('main');
+    setSelectedStory(null);
+    // The main menu will handle navigation to bedtime
   };
 
   if (currentView === 'splash') {
@@ -141,23 +229,44 @@ export default function RootLayout() {
     return <OnboardingFlow onComplete={handleOnboardingComplete} />;
   }
 
+  // Handle story reader view
+  if (currentView === 'story-reader' && selectedStory) {
+    return (
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <StoryBookReader
+          story={selectedStory}
+          onExit={handleBackToStories}
+          onReadAnother={handleReadAnother}
+          onBedtimeMusic={handleBedtimeMusic}
+        />
+        <StatusBar style="auto" />
+      </ThemeProvider>
+    );
+  }
+
   // Handle main app navigation with coordinated scroll transitions
   if (currentView === 'app') {
     return (
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <MultiPageTransition
-          currentPage={currentPage}
+        <EnhancedPageTransition
+          currentPage={currentPage as string}
           pages={{
             main: <MainMenu onNavigate={handleMainMenuNavigate} />,
-            stories: <SimpleStoryScreen onStorySelect={handleStorySelect} onBack={handleBackToMainMenu} />,
-            sensory: <DefaultPage icon="sensory-icon" title="Sensory" onBack={handleBackToMainMenu} />,
-            emotions: <DefaultPage icon="emotions-icon" title="Emotions" onBack={handleBackToMainMenu} />,
-            bedtime: <DefaultPage icon="bedtime-icon" title="Bedtime" onBack={handleBackToMainMenu} />,
-            screen_time: <DefaultPage icon="screentime-icon" title="Screen Time" onBack={handleBackToMainMenu} />,
-            settings: <DefaultPage icon="gear" title="Settings" onBack={handleBackToMainMenu} />
+            stories: <SimpleStoryScreen
+              onStorySelect={handleStorySelect}
+              onStoryTransitionComplete={handleStoryTransitionComplete}
+              selectedStory={selectedStory}
+              onBack={handleBackToMainMenu}
+            />,
+            sensory: createDefaultPage('brain', 'Sensory'),
+            emotions: createDefaultPage('heart', 'Emotions'),
+            bedtime: createDefaultPage('moon', 'Bedtime Music'),
+            screen_time: createDefaultPage('clock', 'Screen Time'),
+            settings: createDefaultPage('gear', 'Settings'),
           }}
           duration={800}
         />
+
         <StatusBar style="auto" />
 
       </ThemeProvider>

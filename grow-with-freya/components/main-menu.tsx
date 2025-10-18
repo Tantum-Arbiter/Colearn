@@ -29,7 +29,7 @@ import {
   LAYOUT,
   VISUAL_EFFECTS,
   DEFAULT_MENU_ITEMS,
-  SCREEN_HEIGHT,
+  getScreenDimensions,
   ASSET_DIMENSIONS,
   createCloudAnimation,
 
@@ -48,7 +48,8 @@ interface MainMenuProps {
 function MainMenuComponent({ onNavigate }: MainMenuProps) {
   const insets = useSafeAreaInsets();
 
-
+  // Get current screen dimensions (updates with orientation changes)
+  const { width: screenWidth, height: screenHeight } = getScreenDimensions();
 
   // Get persistent animation state from store
   const { backgroundAnimationState, updateBackgroundAnimationState } = useAppStore();
@@ -60,8 +61,8 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
 
   // Animation values with cleanup - initialize from persistent state
   const starRotation = useSharedValue(0);
-  const cloudFloat1 = useSharedValue(backgroundAnimationState.cloudFloat1);
-  const cloudFloat2 = useSharedValue(backgroundAnimationState.cloudFloat2);
+  const cloudFloat1 = useSharedValue(backgroundAnimationState?.cloudFloat1 || 0);
+  const cloudFloat2 = useSharedValue(backgroundAnimationState?.cloudFloat2 || 0);
 
 
   // Animation cancellation flag
@@ -100,7 +101,7 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
         cancelAnimation(cloudFloat1);
         cancelAnimation(cloudFloat2);
       } catch (error) {
-        // cancelAnimation might not be available in test environment
+
         console.warn('Could not cancel background animations:', error);
       }
 
@@ -142,7 +143,7 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
       }
 
       if (selectedItem.destination === centerItem.destination) {
-        // Use external navigation for all destinations
+        // Use external navigation for all center items to get scroll transition
         onNavigate(selectedItem.destination);
       } else {
         if (currentTime - lastSwapTime < 100) {
@@ -251,9 +252,9 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
 
   // Rocket animations removed entirely
 
-  // Generate star positions only once and keep them consistent
+  // Generate star positions based on current screen dimensions
   // IMPORTANT: This must be called before any conditional returns to follow Rules of Hooks
-  const stars = useMemo(() => generateStarPositions(), []);
+  const stars = useMemo(() => generateStarPositions(), [screenWidth, screenHeight]);
 
 
 
@@ -282,13 +283,13 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
         ))}
 
         <Animated.View style={[mainMenuStyles.cloudContainer, cloudAnimatedStyle1, {
-          top: SCREEN_HEIGHT * LAYOUT.CLOUD_TOP_POSITION_1,
+          top: screenHeight * LAYOUT.CLOUD_TOP_POSITION_1,
           zIndex: LAYOUT.Z_INDEX.CLOUDS_BEHIND
         }]}>
           <Cloud1 width={ASSET_DIMENSIONS.cloud1.width} height={ASSET_DIMENSIONS.cloud1.height} />
         </Animated.View>
         <Animated.View style={[mainMenuStyles.cloudContainerFront, cloudAnimatedStyle2, {
-          top: SCREEN_HEIGHT * LAYOUT.CLOUD_TOP_POSITION_2,
+          top: screenHeight * LAYOUT.CLOUD_TOP_POSITION_2,
           zIndex: LAYOUT.Z_INDEX.CLOUDS_FRONT
         }]}>
           <Cloud2 width={ASSET_DIMENSIONS.cloud2.width} height={ASSET_DIMENSIONS.cloud2.height} />
@@ -330,7 +331,7 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
             onPress={() => handleIconPress(menuOrder[0])}
             isLarge={true}
             triggerSelectionAnimation={newlySelectedItem === menuOrder[0].destination}
-            testID="menu-icon-0"
+            testID={`menu-icon-${menuOrder[0].destination}`}
           />
         </View>
 
@@ -343,7 +344,7 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
               label={menuOrder[1].label}
               status="inactive"
               onPress={() => handleIconPress(menuOrder[1])}
-              testID="menu-icon-1"
+              testID={`menu-icon-${menuOrder[1].destination}`}
             />
             <MenuIcon
               key={`top-right-${menuOrder[2].destination}`}
@@ -351,7 +352,7 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
               label={menuOrder[2].label}
               status="inactive"
               onPress={() => handleIconPress(menuOrder[2])}
-              testID="menu-icon-2"
+              testID={`menu-icon-${menuOrder[2].destination}`}
             />
           </View>
 
@@ -363,7 +364,7 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
               label={menuOrder[3].label}
               status="inactive"
               onPress={() => handleIconPress(menuOrder[3])}
-              testID="menu-icon-3"
+              testID={`menu-icon-${menuOrder[3].destination}`}
             />
             <MenuIcon
               key={`bottom-right-${menuOrder[4].destination}`}
@@ -371,7 +372,7 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
               label={menuOrder[4].label}
               status="inactive"
               onPress={() => handleIconPress(menuOrder[4])}
-              testID="menu-icon-4"
+              testID={`menu-icon-${menuOrder[4].destination}`}
             />
           </View>
         </View>
@@ -413,6 +414,11 @@ const legacyStyles = StyleSheet.create({
 
 // Wrap with error boundary for crash protection
 const MainMenuWithErrorBoundary = React.memo(function MainMenuWithErrorBoundary(props: MainMenuProps) {
+  // Temporarily disable error boundary for debugging in tests
+  if (process.env.NODE_ENV === 'test') {
+    return <MainMenuComponent {...props} />;
+  }
+
   return (
     <ErrorBoundary
       onError={(error, errorInfo) => {

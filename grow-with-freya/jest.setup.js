@@ -90,6 +90,70 @@ jest.mock('expo-font', () => ({
   loadAsync: jest.fn(),
 }));
 
+// Mock expo-av
+jest.mock('expo-av', () => ({
+  Audio: {
+    Sound: {
+      createAsync: jest.fn(() => Promise.resolve({
+        sound: {
+          playAsync: jest.fn(),
+          pauseAsync: jest.fn(),
+          stopAsync: jest.fn(),
+          unloadAsync: jest.fn(),
+          setIsLoopingAsync: jest.fn(),
+          setVolumeAsync: jest.fn(),
+          getStatusAsync: jest.fn(() => Promise.resolve({
+            isLoaded: true,
+            isPlaying: false,
+            positionMillis: 0,
+            durationMillis: 30000,
+          })),
+        },
+        status: {
+          isLoaded: true,
+          isPlaying: false,
+          positionMillis: 0,
+          durationMillis: 30000,
+        },
+      })),
+    },
+    setAudioModeAsync: jest.fn(),
+  },
+  AVPlaybackStatus: {},
+}));
+
+// Mock @expo/vector-icons
+jest.mock('@expo/vector-icons', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+
+  const createIconComponent = (name) => {
+    const IconComponent = ({ name: iconName, size = 24, color = '#000', testID, ...props }) => {
+      return React.createElement(View, {
+        ...props,
+        testID: testID || `icon-${name}-${iconName}`,
+        children: iconName || name,
+        style: { fontSize: size, color },
+        size,
+        color
+      });
+    };
+
+    IconComponent.displayName = `${name}Icon`;
+    return IconComponent;
+  };
+
+  return {
+    Ionicons: createIconComponent('Ionicons'),
+    AntDesign: createIconComponent('AntDesign'),
+    MaterialIcons: createIconComponent('MaterialIcons'),
+    FontAwesome: createIconComponent('FontAwesome'),
+    Entypo: createIconComponent('Entypo'),
+    Feather: createIconComponent('Feather'),
+    MaterialCommunityIcons: createIconComponent('MaterialCommunityIcons'),
+  };
+});
+
 jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem: jest.fn(),
   setItem: jest.fn(),
@@ -109,6 +173,59 @@ jest.mock('react-native-safe-area-context', () => ({
 jest.mock('@/hooks/use-theme-color', () => ({
   useThemeColor: () => '#000000',
 }));
+
+// Mock story transition context
+jest.mock('@/contexts/story-transition-context', () => ({
+  useStoryTransition: jest.fn(() => ({
+    isTransitioning: false,
+    selectedStoryId: null,
+    selectedStory: null,
+    cardPosition: null,
+    startTransition: jest.fn(),
+    completeTransition: jest.fn(),
+    transitionScale: { value: 1 },
+    transitionX: { value: 0 },
+    transitionY: { value: 0 },
+    transitionOpacity: { value: 1 },
+    transitionAnimatedStyle: {},
+  })),
+  StoryTransitionProvider: ({ children }) => children,
+}));
+
+// Mock SafeAreaProvider
+jest.mock('react-native-safe-area-context', () => ({
+  SafeAreaProvider: ({ children }) => children,
+  useSafeAreaInsets: () => ({ top: 44, left: 0, right: 0, bottom: 34 }),
+  SafeAreaView: ({ children }) => children,
+}));
+
+// Mock app store
+jest.mock('@/store/app-store', () => ({
+  useAppStore: jest.fn(() => ({
+    isAppReady: true,
+    hasCompletedOnboarding: true,
+    currentChildId: null,
+    currentScreen: 'main-menu',
+    isLoading: false,
+    shouldReturnToMainMenu: false,
+    backgroundAnimationState: {
+      cloudFloat1: 0,
+      cloudFloat2: 0,
+      rocketFloat1: 0,
+      rocketFloat2: 0,
+    },
+    setAppReady: jest.fn(),
+    setOnboardingComplete: jest.fn(),
+    setCurrentChild: jest.fn(),
+    setCurrentScreen: jest.fn(),
+    setLoading: jest.fn(),
+    requestReturnToMainMenu: jest.fn(),
+    clearReturnToMainMenu: jest.fn(),
+    updateBackgroundAnimationState: jest.fn(),
+  })),
+}));
+
+// Image imports are handled by moduleNameMapper in jest.config.js
 
 // Mock ThemedText component - using correct path from root
 jest.mock('./components/themed-text', () => ({

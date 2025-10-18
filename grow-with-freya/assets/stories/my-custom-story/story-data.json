@@ -1,0 +1,62 @@
+{
+  "id": "my-custom-story",
+  "title": "My Amazing Custom Story",
+  "category": "bedtime",
+  "tag": "🌙 Bedtime",
+  "emoji": "📚",
+  "coverImage": "assets/stories/my-custom-story/cover/thumbnail.webp",
+  "isAvailable": true,
+  "ageRange": "2-5",
+  "duration": 8,
+  "description": "A wonderful story about...",
+  "pages": [
+    {
+      "id": "my-custom-story-1",
+      "pageNumber": 1,
+      "backgroundImage": "assets/stories/my-custom-story/page-1/background.webp",
+      "text": "Once upon a time..."
+    },
+    {
+      "id": "my-custom-story-2",
+      "pageNumber": 2,
+      "backgroundImage": "assets/stories/my-custom-story/page-2/background.webp",
+      "text": "Page 2 text..."
+    },
+    {
+      "id": "my-custom-story-3",
+      "pageNumber": 3,
+      "backgroundImage": "assets/stories/my-custom-story/page-3/background.webp",
+      "text": "Page 3 text..."
+    },
+    {
+      "id": "my-custom-story-4",
+      "pageNumber": 4,
+      "backgroundImage": "assets/stories/my-custom-story/page-4/background.webp",
+      "text": "Page 4 text..."
+    },
+    {
+      "id": "my-custom-story-5",
+      "pageNumber": 5,
+      "backgroundImage": "assets/stories/my-custom-story/page-5/background.webp",
+      "text": "Page 5 text..."
+    },
+    {
+      "id": "my-custom-story-6",
+      "pageNumber": 6,
+      "backgroundImage": "assets/stories/my-custom-story/page-6/background.webp",
+      "text": "Page 6 text..."
+    },
+    {
+      "id": "my-custom-story-7",
+      "pageNumber": 7,
+      "backgroundImage": "assets/stories/my-custom-story/page-7/background.webp",
+      "text": "Page 7 text..."
+    },
+    {
+      "id": "my-custom-story-8",
+      "pageNumber": 8,
+      "backgroundImage": "assets/stories/my-custom-story/page-8/background.webp",
+      "text": "The End."
+    }
+  ]
+}

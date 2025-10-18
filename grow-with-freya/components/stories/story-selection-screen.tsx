@@ -1,5 +1,5 @@
-import React, { useCallback, useRef, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable, Dimensions } from 'react-native';
+import React, { useCallback, useRef, useEffect, useMemo, useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, Pressable, Dimensions, FlatList, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -7,13 +7,16 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   withDelay,
+  withRepeat,
   Easing
 } from 'react-native-reanimated';
-import { BookCard } from './book-card';
-import { ALL_STORIES, getRandomStory, MOCK_STORIES, PLACEHOLDER_STORIES } from '@/data/stories';
-import { Story } from '@/types/story';
+import { ALL_STORIES, getStoriesByGenre, getGenresWithStories, getRandomStory } from '@/data/stories';
+import { Story, StoryCategory, STORY_TAGS } from '@/types/story';
 import { Fonts } from '@/constants/theme';
 import { useAppStore } from '@/store/app-store';
+import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
+import { generateStarPositions } from '@/components/main-menu/utils';
+import { useStoryTransition } from '@/contexts/story-transition-context';
 
 interface StorySelectionScreenProps {
   onStorySelect?: (story: Story) => void;
@@ -24,28 +27,43 @@ const { width: screenWidth } = Dimensions.get('window');
 export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProps) {
   const insets = useSafeAreaInsets();
   const { requestReturnToMainMenu } = useAppStore();
+  const { startTransition } = useStoryTransition();
   const lastCallRef = useRef<number>(0);
 
-  // Animation values
-  const fadeOpacity = useSharedValue(0);
-  const slideY = useSharedValue(30);
-  const titleScale = useSharedValue(0.8);
-  const cardsOpacity = useSharedValue(1); // Temporarily disable animation
-  const buttonOpacity = useSharedValue(0);
+  // Scroll tracking for dynamic carousel effects
+  const [scrollPositions, setScrollPositions] = useState<{ [key: string]: number }>({});
 
-  // Initialize entrance animation
+  // Generate star positions for background
+  const starPositions = useMemo(() => generateStarPositions(VISUAL_EFFECTS.STAR_COUNT), []);
+
+  // Star rotation animation
+  const starRotation = useSharedValue(0);
+
   useEffect(() => {
-    const animationConfig = {
-      duration: 600,
-      easing: Easing.out(Easing.cubic),
-    };
+    starRotation.value = withRepeat(
+      withTiming(360, {
+        duration: 20000, // 20 second rotation cycle
+        easing: Easing.linear,
+      }),
+      -1,
+      false
+    );
+  }, []);
 
-    // Staggered entrance animation
-    fadeOpacity.value = withTiming(1, animationConfig);
-    slideY.value = withTiming(0, animationConfig);
-    titleScale.value = withTiming(1, { ...animationConfig, duration: 500 });
-    cardsOpacity.value = withDelay(200, withTiming(1, animationConfig));
-    buttonOpacity.value = withDelay(400, withTiming(1, animationConfig));
+  // Animated style for star rotation
+  const starAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ rotate: `${starRotation.value}deg` }],
+    };
+  });
+
+  // Get organized story data
+  const availableGenres = useMemo(() => {
+    const genres = getGenresWithStories();
+    console.log('StorySelectionScreen: Available genres:', genres);
+    console.log('StorySelectionScreen: ALL_STORIES length:', ALL_STORIES.length);
+    console.log('StorySelectionScreen: Using CENTERED horizontal carousels with centered headings');
+    return genres;
   }, []);
 
   const handleBackToMenu = useCallback(() => {
@@ -56,18 +74,39 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     }
     lastCallRef.current = now;
 
-    // Request return to main menu via global state
+
     requestReturnToMainMenu();
   }, [requestReturnToMainMenu]);
 
-  const handleStoryPress = useCallback((story: Story) => {
-    if (onStorySelect) {
-      onStorySelect(story);
-    } else {
-      // Default behavior - could navigate to story reader
-      console.log('Selected story:', story.title);
+  const handleStoryPress = useCallback((story: Story, pressableRef?: any) => {
+    console.log('Story pressed:', story.title, 'isAvailable:', story.isAvailable);
+
+    if (!story.isAvailable) {
+      console.log('Story not available:', story.title);
+      return;
     }
-  }, [onStorySelect]);
+
+    // Get the card position for transition animation
+    if (pressableRef && pressableRef.current) {
+      pressableRef.current.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
+        console.log('Card layout for transition:', { x: pageX, y: pageY, width, height });
+
+
+        startTransition(story.id, { x: pageX, y: pageY, width, height }, story);
+
+        // Also call the onStorySelect callback for app navigation
+        if (onStorySelect) {
+          onStorySelect(story);
+        }
+      });
+    } else {
+      // Fallback without animation - still call onStorySelect
+      console.log('Using fallback story selection (no animation)');
+      if (onStorySelect) {
+        onStorySelect(story);
+      }
+    }
+  }, [onStorySelect, startTransition]);
 
   const handleSurpriseMe = useCallback(() => {
     const randomStory = getRandomStory();
@@ -76,240 +115,268 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     }
   }, [handleStoryPress]);
 
-  const availableStoriesCount = ALL_STORIES.filter(story => story.isAvailable).length;
-  const isSurpriseMeDisabled = availableStoriesCount === 0;
+  // Handle scroll events to track current position for each carousel
+  const handleScroll = useCallback((genre: string, event: any) => {
+    const scrollX = event.nativeEvent.contentOffset.x;
+    setScrollPositions(prev => ({
+      ...prev,
+      [genre]: scrollX
+    }));
+  }, []);
 
-  // Debug logging - temporary
-  console.log('=== STORY DEBUG INFO ===');
-  console.log('MOCK_STORIES length:', MOCK_STORIES.length);
-  console.log('PLACEHOLDER_STORIES length:', PLACEHOLDER_STORIES.length);
-  console.log('ALL_STORIES length:', ALL_STORIES.length);
-  console.log('Available stories count:', availableStoriesCount);
-  console.log('ALL_STORIES:', ALL_STORIES.map(s => ({ id: s.id, title: s.title, available: s.isAvailable })));
-  console.log('========================');
-
-  // Animated styles
-  const containerAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: fadeOpacity.value,
-    transform: [{ translateY: slideY.value }],
-  }));
-
-  const titleAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: fadeOpacity.value,
-    transform: [{ scale: titleScale.value }],
-  }));
-
-  const cardsAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: cardsOpacity.value,
-  }));
-
-  const buttonAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: buttonOpacity.value,
-  }));
-
+  // CENTERED CAROUSELS WITH STARRY BACKGROUND
   return (
-    <Animated.View style={[styles.fullContainer, containerAnimatedStyle]}>
-      <LinearGradient
-        colors={['#FFF8F0', '#F0F8FF', '#F5F0FF']}
-        style={styles.container}
-      >
-      {/* Header with back button */}
-      <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
-        <Pressable style={styles.backButton} onPress={handleBackToMenu}>
-          <Text style={styles.backButtonText}>← Back</Text>
-        </Pressable>
-      </View>
-
-      {/* Main content */}
-      <View style={styles.content}>
-        {/* Title and subtitle */}
-        <Animated.View style={[styles.titleContainer, titleAnimatedStyle]}>
-          <Text style={styles.title}>Choose a Story!</Text>
-          <Text style={styles.subtitle}>Tap a book to start your adventure.</Text>
-          {/* Temporary debug info */}
-          <Text style={styles.debugText}>
-            Debug: {ALL_STORIES.length} total stories ({availableStoriesCount} available, {ALL_STORIES.length - availableStoriesCount} placeholders)
-          </Text>
-        </Animated.View>
-
-        {/* Stories grid */}
-        <Animated.View style={cardsAnimatedStyle}>
-          <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={[
-              styles.scrollContent,
-              { paddingBottom: insets.bottom + 100 } // Account for bottom button
-            ]}
-            showsVerticalScrollIndicator={false}
-          >
-            <Text style={{ fontSize: 20, color: 'red', backgroundColor: 'white', padding: 10 }}>
-              DEBUG: About to render {ALL_STORIES.length} cards
-            </Text>
-            <View style={[styles.grid, { backgroundColor: 'yellow', padding: 10, minHeight: 500 }]}>
-              <Text style={{ fontSize: 16, color: 'black', backgroundColor: 'white' }}>
-                Grid container - should contain {ALL_STORIES.length} cards
-              </Text>
-              {ALL_STORIES.map((story, index) => {
-                console.log(`Rendering card ${index}: ${story.title} (${story.isAvailable ? 'available' : 'placeholder'})`);
-                return (
-                  <View key={story.id} style={{
-                    backgroundColor: story.isAvailable ? 'blue' : 'red',
-                    width: 150,
-                    height: 200,
-                    margin: 5,
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                  }}>
-                    <Text style={{ color: 'white', fontSize: 14, textAlign: 'center' }}>
-                      {index}: {story.title}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
-          </ScrollView>
-        </Animated.View>
-      </View>
-
-      {/* Surprise Me button - sticky at bottom */}
-      <Animated.View style={[styles.bottomButtonContainer, { paddingBottom: insets.bottom + 20 }, buttonAnimatedStyle]}>
-        <Pressable
+    <LinearGradient
+      colors={['#4ECDC4', '#3B82F6', '#1E3A8A']}
+      style={{ flex: 1 }}
+    >
+      {/* Animated Stars */}
+      {starPositions.map((star, index) => (
+        <Animated.View
+          key={`star-${star.id}`}
           style={[
-            styles.surpriseMeButton,
-            isSurpriseMeDisabled && styles.surpriseMeButtonDisabled
+            {
+              position: 'absolute',
+              width: VISUAL_EFFECTS.STAR_SIZE,
+              height: VISUAL_EFFECTS.STAR_SIZE,
+              backgroundColor: 'white',
+              borderRadius: VISUAL_EFFECTS.STAR_BORDER_RADIUS,
+              opacity: star.opacity,
+              left: star.left,
+              top: star.top,
+            },
+            starAnimatedStyle,
           ]}
-          onPress={handleSurpriseMe}
-          disabled={isSurpriseMeDisabled}
-          android_ripple={{ color: 'rgba(255, 255, 255, 0.3)' }}
-        >
-          <LinearGradient
-            colors={
-              isSurpriseMeDisabled
-                ? ['#BDC3C7', '#95A5A6']
-                : ['#FF6B6B', '#FF8E8E']
-            }
-            style={styles.surpriseMeGradient}
+        />
+      ))}
+      
+      <View style={{ flex: 1 }}>
+        {/* Header with consistent back button */}
+        <View style={{ paddingTop: insets.top + 20, paddingHorizontal: 20, paddingBottom: 20 }}>
+          <Pressable
+            style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+              paddingHorizontal: 16,
+              paddingVertical: 8,
+              borderRadius: 20,
+              alignSelf: 'flex-start',
+              marginBottom: 20,
+            }}
+            onPress={handleBackToMenu}
           >
-            <Text style={[
-              styles.surpriseMeText,
-              isSurpriseMeDisabled && styles.surpriseMeTextDisabled
-            ]}>
-              ✨ Surprise Me! ✨
+            <Text style={{
+              color: 'white',
+              fontSize: 16,
+              fontWeight: 'bold',
+              fontFamily: Fonts.rounded,
+            }}>← Back</Text>
+          </Pressable>
+          
+          <Text style={{ 
+            color: 'white', 
+            fontSize: 32, 
+            fontWeight: 'bold', 
+            textAlign: 'center',
+            textShadowColor: 'rgba(0, 0, 0, 0.3)',
+            textShadowOffset: { width: 0, height: 1 },
+            textShadowRadius: 2,
+          }}>
+            Choose Your Adventure
+          </Text>
+        </View>
+
+        {/* Stories Carousels */}
+        <ScrollView style={{ flex: 1 }}>
+          {availableGenres.map((genre) => {
+            const genreStories = ALL_STORIES.filter(story => story.category === genre);
+            
+            return (
+              <View key={genre} style={{ marginBottom: 40 }}>
+                {/* Centered Genre Heading */}
+                <Text style={{ 
+                  color: 'white', 
+                  fontSize: 22, 
+                  fontWeight: 'bold', 
+                  textAlign: 'center',
+                  marginBottom: 15,
+                  textShadowColor: 'rgba(0, 0, 0, 0.3)',
+                  textShadowOffset: { width: 0, height: 1 },
+                  textShadowRadius: 2,
+                }}>
+                  {genre.charAt(0).toUpperCase() + genre.slice(1)} Stories
+                </Text>
+                
+                {/* Horizontal Carousel */}
+                <View style={{ 
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '100%'
+                }}>
+                  <FlatList
+                    data={genreStories}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    pagingEnabled={false}
+                    decelerationRate="fast"
+                    snapToOffsets={genreStories.map((_, index) => index * 175)} // Exact snap positions
+                    disableIntervalMomentum={true}
+                    onScroll={(event) => handleScroll(genre, event)}
+                    scrollEventThrottle={16}
+                    getItemLayout={(data, index) => ({
+                      length: 175,
+                      offset: 175 * index,
+                      index,
+                    })}
+                    initialScrollIndex={0}
+                    style={{
+                      flexGrow: 0,
+                      alignSelf: 'center'
+                    }}
+                    contentContainerStyle={{
+                      paddingLeft: (Dimensions.get('window').width / 2) - 80, // Center the first item (half of 160px card width)
+                      paddingRight: (Dimensions.get('window').width / 2) - 80, // Center the last item
+                      justifyContent: 'flex-start',
+                      alignItems: 'center',
+                    }}
+                    keyExtractor={(story) => story.id}
+                    renderItem={({ item: story, index }) => {
+                      console.log(`CAROUSEL: Rendering ${story.title} in ${genre}`);
+
+                      // Create a ref for this specific card
+                      const cardRef = React.createRef();
+
+                      // Calculate dynamic opacity and scale based on scroll position
+                      const scrollX = scrollPositions[genre] || 0;
+                      const cardWidth = 175; // Card width (160) + margin (15)
+                      const containerWidth = Dimensions.get('window').width;
+                      const paddingLeft = (containerWidth / 2) - 80; // Our padding offset (half of card width, not including margin)
+
+                      // Calculate the position of this card relative to the center of the screen
+                      const cardPosition = (index * cardWidth) + paddingLeft - scrollX + 80; // +80 for card center (excluding margin)
+                      const screenCenter = containerWidth / 2;
+                      const distanceFromCenter = Math.abs(cardPosition - screenCenter);
+
+                      // Determine if this card is the selected (center) one
+                      const isSelected = distanceFromCenter < cardWidth / 2;
+
+                      // Calculate position relative to selected item
+                      const cardCenterX = cardPosition;
+                      const selectedItemX = screenCenter;
+                      const relativePosition = (cardCenterX - selectedItemX) / cardWidth;
+
+                      // Calculate smooth scale and opacity based on distance from center
+                      const absRelativePosition = Math.abs(relativePosition);
+
+                      let cardOpacity = 1.0;
+                      let cardScale = 1.0;
+
+                      if (absRelativePosition < 0.5) {
+                        // Selected item (center): largest and fully visible
+                        cardOpacity = 1.0;
+                        cardScale = 1.0;
+                      } else if (absRelativePosition < 1.5) {
+                        // Adjacent items: smooth transition from 1.0 to 0.9
+                        const transitionProgress = (absRelativePosition - 0.5) / 1.0; // 0 to 1
+                        cardOpacity = 1.0 - (transitionProgress * 0.2); // 1.0 to 0.8
+                        cardScale = 1.0 - (transitionProgress * 0.1); // 1.0 to 0.9
+                      } else {
+                        // Distant items: smooth transition from 0.9 to 0.8
+                        const transitionProgress = Math.min((absRelativePosition - 1.5) / 1.0, 1.0); // 0 to 1, capped
+                        cardOpacity = 0.8 - (transitionProgress * 0.2); // 0.8 to 0.6
+                        cardScale = 0.9 - (transitionProgress * 0.1); // 0.9 to 0.8
+                      }
+
+                      return (
+                        <Pressable
+                          onPress={() => {
+                            console.log('Pressable onPress triggered for:', story.title);
+                            // Temporarily use fallback without animation to test
+                            handleStoryPress(story);
+                          }}
+                        >
+                          <Animated.View
+                            style={{
+                              opacity: cardOpacity,
+                              transform: [{ scale: cardScale }],
+                              marginRight: 15, // Add spacing between items
+                              backgroundColor: 'white',
+                              borderRadius: 15,
+                              padding: 0, // No padding for full fill
+                              width: 160,
+                              height: 120, // Fixed height
+                              shadowColor: '#000',
+                              shadowOffset: { width: 0, height: 2 },
+                              shadowOpacity: 0.1,
+                              shadowRadius: 4,
+                              elevation: 3,
+                              overflow: 'hidden', // Ensure content respects border radius
+                            }}
+                          >
+
+                          {story.coverImage ? (
+                            <Image
+                              source={story.coverImage}
+                              style={{
+                                width: 160,
+                                height: 120,
+                                borderRadius: 15,
+                              }}
+                              resizeMode="cover"
+                            />
+                          ) : (
+                            <View style={{
+                              width: 160,
+                              height: 120,
+                              backgroundColor: '#f0f0f0',
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                              borderRadius: 15,
+                            }}>
+                              <Text style={{ fontSize: 48 }}>{story.emoji}</Text>
+                            </View>
+                          )}
+                          </Animated.View>
+                        </Pressable>
+                      );
+                    }}
+                  />
+                </View>
+              </View>
+            );
+          })}
+        </ScrollView>
+
+        {/* Bottom Button */}
+        <View style={{ padding: 20, paddingBottom: insets.bottom + 20, alignItems: 'center' }}>
+          <Pressable
+            style={{
+              backgroundColor: '#FF6B6B',
+              borderRadius: 25,
+              paddingHorizontal: 32,
+              paddingVertical: 15,
+              alignItems: 'center',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.2,
+              shadowRadius: 4,
+              elevation: 3,
+              maxWidth: 250,
+            }}
+            onPress={handleSurpriseMe}
+          >
+            <Text style={{
+              color: 'white',
+              fontSize: 18,
+              fontWeight: 'bold',
+              fontFamily: Fonts.rounded,
+            }}>
+Surprise Me!
             </Text>
-          </LinearGradient>
-        </Pressable>
-      </Animated.View>
-      </LinearGradient>
-    </Animated.View>
+          </Pressable>
+        </View>
+      </View>
+    </LinearGradient>
   );
 }
 
-const styles = StyleSheet.create({
-  fullContainer: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingBottom: 10,
-  },
-  backButton: {
-    alignSelf: 'flex-start',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    borderRadius: 20,
-  },
-  backButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2C3E50',
-    fontFamily: Fonts.rounded,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  titleContainer: {
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#2C3E50',
-    fontFamily: Fonts.rounded,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#7F8C8D',
-    fontFamily: Fonts.rounded,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  debugText: {
-    fontSize: 12,
-    color: '#E74C3C',
-    textAlign: 'center',
-    fontFamily: Fonts.rounded,
-    marginTop: 8,
-    backgroundColor: '#FFF',
-    padding: 4,
-    borderRadius: 4,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: 12, // Modern gap property for consistent spacing
-    minHeight: 1000, // Force minimum height to ensure all cards are visible
-  },
-  bottomButtonContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0, 0, 0, 0.1)',
-  },
-  surpriseMeButton: {
-    borderRadius: 25,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-  },
-  surpriseMeButtonDisabled: {
-    elevation: 1,
-    shadowOpacity: 0.1,
-  },
-  surpriseMeGradient: {
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 25,
-    alignItems: 'center',
-  },
-  surpriseMeText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    fontFamily: Fonts.rounded,
-  },
-  surpriseMeTextDisabled: {
-    color: '#FFFFFF',
-    opacity: 0.7,
-  },
-});
+// Removed StyleSheet to avoid caching issues - using inline styles instead
