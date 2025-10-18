@@ -14,6 +14,11 @@ dist/
 web-build/
 expo-env.d.ts
 
+# TypeScript build artifacts
+*.tsbuildinfo
+*.d.ts.map
+*.js.map
+
 # Native
 .kotlin/
 *.orig.*
@@ -233,6 +238,15 @@ out/
 /ios
 /android
 
+# Nested project directories (avoid accidental nesting)
+grow-with-freya/grow-with-freya/
+*/grow-with-freya/
+
+# Build and cache directories
+build/
+.cache/
+.tmp/
+
 # React Native
 # React Native CLI
 .react-native/
@@ -255,9 +269,29 @@ fastlane/test_output
 # Temporary files created by Metro to check the health of the file watcher
 .metro-health-check*
 
+# React Native and Expo specific
+.expo-shared/
+.expo/
+web-build/
+dist/
+*.jsbundle
+*.bundle
+*.map
+
+# TypeScript and JavaScript build artifacts
+*.tsbuildinfo
+*.d.ts.map
+*.js.map
+lib/
+esm/
+
 # Testing
 /coverage
 /.nyc_output
+coverage/
+*.lcov
+.nyc_output/
+jest-coverage/
 
 # Storybook build outputs
 .out
