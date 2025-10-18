@@ -34,3 +34,66 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# Node.js and npm
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+package-lock.json
+
+# React Native / Expo
+.expo/
+dist/
+web-build/
+*.tsbuildinfo
+*.d.ts.map
+*.js.map
+.metro-health-check*
+
+# Build artifacts
+build/
+.cache/
+.tmp/
+lib/
+esm/
+
+# Audio/Video files (large binaries)
+*.wav
+*.mp3
+*.mp4
+*.avi
+*.mov
+*.webm
+
+# Large image files
+*.psd
+*.ai
+*.sketch
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Testing
+coverage/
+.nyc_output/
+*.lcov
+
+# Logs
+logs
+*.log
+
+# Gradle
+.gradle/
+*/.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+!gradle-wrapper.properties
