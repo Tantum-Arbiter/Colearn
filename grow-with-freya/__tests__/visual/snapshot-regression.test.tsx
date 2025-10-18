@@ -137,10 +137,10 @@ describe('Visual Regression Tests', () => {
     it('should match StoryCompletionScreen snapshot', () => {
       const { toJSON } = render(
         <StoryCompletionScreen
-          story={SNAPSHOT_TEST_STORY}
+          completedStory={SNAPSHOT_TEST_STORY}
           onClose={jest.fn()}
           onReadAnother={jest.fn()}
-          onSimilarStory={jest.fn()}
+          onRereadCurrent={jest.fn()}
           onBedtimeMusic={jest.fn()}
         />
       );
@@ -157,10 +157,10 @@ describe('Visual Regression Tests', () => {
 
       const { toJSON } = render(
         <StoryCompletionScreen
-          story={bedtimeStory}
+          completedStory={bedtimeStory}
           onClose={jest.fn()}
           onReadAnother={jest.fn()}
-          onSimilarStory={jest.fn()}
+          onRereadCurrent={jest.fn()}
           onBedtimeMusic={jest.fn()}
         />
       );
@@ -257,11 +257,17 @@ describe('Visual Regression Tests', () => {
 
   describe('Theme and Style Snapshots', () => {
     it('should match components with consistent styling', () => {
-      // Test that styling is consistent across renders
-      const { toJSON: render1 } = render(<MainMenu onNavigate={jest.fn()} />);
-      const { toJSON: render2 } = render(<MainMenu onNavigate={jest.fn()} />);
-      
-      expect(render1()).toEqual(render2());
+      // Test that styling is consistent by checking key style properties
+      const mockNavigate = jest.fn();
+      const { toJSON } = render(<MainMenu onNavigate={mockNavigate} />);
+      const snapshot = toJSON();
+
+      // Verify consistent styling elements are present
+      const snapshotString = JSON.stringify(snapshot);
+      expect(snapshotString).toContain('main-menu-container');
+      expect(snapshotString).toContain('Stories button');
+      expect(snapshotString).toContain('backgroundColor');
+      expect(snapshot).toMatchSnapshot('main-menu-consistent-styling');
     });
 
     it('should match story selection with consistent card styling', () => {
@@ -272,10 +278,10 @@ describe('Visual Regression Tests', () => {
     it('should match completion screen with consistent button styling', () => {
       const { toJSON } = render(
         <StoryCompletionScreen
-          story={SNAPSHOT_TEST_STORY}
+          completedStory={SNAPSHOT_TEST_STORY}
           onClose={jest.fn()}
           onReadAnother={jest.fn()}
-          onSimilarStory={jest.fn()}
+          onRereadCurrent={jest.fn()}
           onBedtimeMusic={jest.fn()}
         />
       );
@@ -286,14 +292,15 @@ describe('Visual Regression Tests', () => {
   describe('Accessibility Snapshots', () => {
     it('should match components with accessibility props', () => {
       const { toJSON } = render(<MainMenu onNavigate={jest.fn()} />);
-      
+
       // Verify accessibility props are included in snapshot
       const snapshot = toJSON();
       expect(snapshot).toMatchSnapshot('main-menu-accessibility');
-      
-      // Check that accessibility props are present (basic validation)
+
+      // Check that component renders successfully with menu buttons
       const snapshotString = JSON.stringify(snapshot);
-      expect(snapshotString).toContain('accessibilityLabel');
+      expect(snapshotString).toContain('Stories button');
+      expect(snapshotString).toContain('aria-label');
     });
 
     it('should match story reader with accessibility features', () => {

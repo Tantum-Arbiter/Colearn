@@ -2,31 +2,305 @@
 
 exports[`Visual Regression Tests Accessibility Snapshots should match components with accessibility props: main-menu-accessibility 1`] = `
 <div
-  className="css-view-g5y9jx r-alignItems-1awozwy r-flex-13awgt0 r-justifyContent-1777fci r-padding-1pcd2l5"
+  className="css-view-g5y9jx r-backgroundColor-1niwhzg r-flex-13awgt0"
+  data-testid="main-menu-container"
   dir={null}
   ref={[Function]}
 >
   <div
-    className="css-view-g5y9jx r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-y47klf r-boxShadow-us8l0w r-maxWidth-xaggoz r-padding-e65kyq"
+    className="css-view-g5y9jx r-bottom-1p0dtai r-left-1d2f490 r-position-u8s1d r-right-zchlnj r-top-ipm5af r-zIndex-417010"
     dir={null}
     ref={[Function]}
   >
     <div
-      className="css-text-146c3p1 r-color-1f9h77g r-fontSize-1x35g6 r-fontWeight-vw2c0b r-marginBottom-ku1wi2 r-textAlign-q4m81j"
-      dir="auto"
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
       ref={[Function]}
+      style={
+        {
+          "left": "10px",
+          "opacity": 0.3,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "8.527987712914182px",
+          "opacity": 0.5554363660263334,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-9.28076391801369px",
+          "opacity": 0.3323832465073792,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-0.8611713502705243px",
+          "opacity": 0.48964718404386076,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-9.585222096793586px",
+          "opacity": 0.508269501265022,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-1.934885921618843px",
+          "opacity": 0.37752612154981763,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "1.72729732425978px",
+          "opacity": 0.5543175729510039,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-3.6467754000841524px",
+          "opacity": 0.5586730089780758,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "6.561421647656971px",
+          "opacity": 0.6770651712584368,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-2.821244935730647px",
+          "opacity": 0.4149551471222367,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "8.041310140688438px",
+          "opacity": 0.5474665720019403,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-0.5070930800320639px",
+          "opacity": 0.4627353082864829,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-4.702941444902535px",
+          "opacity": 0.54750622136944,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-4.392854922662082px",
+          "opacity": 0.6024617294184282,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "6.328650859877598px",
+          "opacity": 0.467988325242186,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-position-u8s1d"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "top": "0px",
+          "zIndex": 2,
+        }
+      }
     >
-      Oops! Something went wrong
+      MockSvg-140x170-0.8
     </div>
     <div
-      className="css-text-146c3p1 r-color-djgu52 r-fontSize-ubezar r-lineHeight-135wba7 r-marginBottom-117bsoe r-textAlign-q4m81j"
-      dir="auto"
+      className="css-view-g5y9jx r-position-u8s1d"
+      dir={null}
       ref={[Function]}
+      style={
+        {
+          "top": "0px",
+          "zIndex": 3,
+        }
+      }
     >
-      The app encountered an unexpected error. Don't worry, your data is safe!
+      MockSvg-160x190-0.6
     </div>
+  </div>
+  <div
+    className="css-view-g5y9jx r-bottom-1p0dtai r-height-1594n1d r-left-1d2f490 r-position-u8s1d r-right-zchlnj r-width-13qz1uu r-zIndex-184en5c r-pointerEvents-633pao"
+    dir={null}
+    ref={[Function]}
+  >
     <div
-      className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-backgroundColor-1dxbtwb r-borderRadius-1h84pjw r-boxShadow-15pk7w6 r-paddingBlock-1d7mnkm r-paddingInline-qq1thf"
+      className="css-view-g5y9jx"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "alignItems": "center",
+          "height": "100%",
+          "justifyContent": "flex-end",
+          "width": "100%",
+        }
+      }
+    >
+      <div
+        className="css-view-g5y9jx r-flexBasis-1mlwlqe r-overflow-1udh08x r-zIndex-417010"
+        dir={null}
+        ref={[Function]}
+        style={
+          {
+            "height": "286px",
+            "opacity": 0.8,
+            "width": "286px",
+          }
+        }
+      >
+        <div
+          className="css-view-g5y9jx r-backgroundColor-1niwhzg r-backgroundPosition-vvn4in r-backgroundRepeat-u6sd8q r-bottom-1p0dtai r-height-1pi2tsx r-left-1d2f490 r-position-u8s1d r-right-zchlnj r-top-ipm5af r-width-13qz1uu r-zIndex-1wyyakw r-backgroundSize-ehq7j7"
+          dir={null}
+          ref={[Function]}
+          style={
+            {
+              "backgroundImage": "url("test-file-stub")",
+            }
+          }
+          suppressHydrationWarning={true}
+        />
+        <img
+          alt=""
+          className="css-accessibilityImage-9pa8cd"
+          draggable={false}
+          ref={
+            {
+              "current": null,
+            }
+          }
+          src="test-file-stub"
+        />
+      </div>
+    </div>
+  </div>
+  <div
+    className="css-view-g5y9jx r-flexDirection-18u37iz r-justifyContent-1wtj0ep r-paddingBottom-k8qxaj r-paddingInline-u9wvl5"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "paddingTop": "64px",
+      }
+    }
+  >
+    <div
+      className="css-view-g5y9jx"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "flex": 1,
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-marginRight-1b7u577"
+      dir={null}
+      ref={[Function]}
+    />
+    <div
+      className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-backgroundColor-z6hqnn r-borderColor-sptg1m r-borderRadius-16uyjmq r-borderWidth-d045u9 r-boxShadow-1u5n42f r-padding-1slz7xr"
       dir={null}
       onBlur={[Function]}
       onClick={[Function]}
@@ -37,11 +311,176 @@ exports[`Visual Regression Tests Accessibility Snapshots should match components
       tabIndex={0}
     >
       <div
-        className="css-text-146c3p1 r-color-jwli3a r-fontSize-ubezar r-fontWeight-vw2c0b"
+        className="css-text-146c3p1 r-fontSize-1x35g6"
         dir="auto"
         ref={[Function]}
       >
-        Try Again
+        ⚙️
+      </div>
+    </div>
+  </div>
+  <div
+    className="css-view-g5y9jx r-alignItems-1awozwy r-flex-13awgt0 r-justifyContent-1777fci r-paddingInline-u9wvl5 r-paddingTop-1knelpx"
+    dir={null}
+    ref={[Function]}
+  >
+    <div
+      className="css-view-g5y9jx r-marginBottom-8d26hk"
+      dir={null}
+      ref={[Function]}
+    >
+      <div
+        className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+        dir={null}
+        ref={[Function]}
+      >
+        <button
+          aria-label="Stories button"
+          className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-boxShadow-12et9rd r-justifyContent-1777fci r-borderRadius-2j1mxk r-height-ff8gi r-width-1x93onp"
+          data-testid="menu-icon-stories"
+          dir={null}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onContextMenu={[Function]}
+          onFocus={[Function]}
+          onKeyDown={[Function]}
+          ref={[Function]}
+          role="button"
+          tabIndex={0}
+          type="button"
+        >
+          <div
+            className="css-view-g5y9jx r-position-u8s1d r-right-jn5ml r-top-jvuzdy r-zIndex-mhe3cw"
+            dir={null}
+            ref={[Function]}
+          >
+            <div
+              className="css-text-146c3p1 r-color-a4n0a9 r-fontSize-adyw6z"
+              dir="auto"
+              ref={[Function]}
+            >
+              ✨
+            </div>
+          </div>
+          MockSvg-70x70-1
+        </button>
+        <div
+          className="css-text-146c3p1 r-color-jwli3a r-textAlign-q4m81j r-textShadow-mscz7m r-fontSize-ubezar r-fontWeight-b88u0q r-marginTop-1s2bzr4"
+          dir="auto"
+          ref={[Function]}
+        >
+          Stories
+        </div>
+      </div>
+    </div>
+    <div
+      className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci r-width-1sxiqef"
+      dir={null}
+      ref={[Function]}
+    >
+      <div
+        className="css-view-g5y9jx r-flexDirection-18u37iz r-justifyContent-1wtj0ep r-marginBottom-117bsoe r-width-13qz1uu"
+        dir={null}
+        ref={[Function]}
+      >
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Sensory button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-sensory"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
+        </div>
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Emotions button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-emotions"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
+        </div>
+      </div>
+      <div
+        className="css-view-g5y9jx r-flexDirection-18u37iz r-justifyContent-1wtj0ep r-width-13qz1uu"
+        dir={null}
+        ref={[Function]}
+      >
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Bedtime Music button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-bedtime"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
+        </div>
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Screen Time button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-screen_time"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -157,31 +596,305 @@ exports[`Visual Regression Tests Accessibility Snapshots should match story read
 
 exports[`Visual Regression Tests Animation State Snapshots should match components in different animation states: main-menu-animation-initial 1`] = `
 <div
-  className="css-view-g5y9jx r-alignItems-1awozwy r-flex-13awgt0 r-justifyContent-1777fci r-padding-1pcd2l5"
+  className="css-view-g5y9jx r-backgroundColor-1niwhzg r-flex-13awgt0"
+  data-testid="main-menu-container"
   dir={null}
   ref={[Function]}
 >
   <div
-    className="css-view-g5y9jx r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-y47klf r-boxShadow-us8l0w r-maxWidth-xaggoz r-padding-e65kyq"
+    className="css-view-g5y9jx r-bottom-1p0dtai r-left-1d2f490 r-position-u8s1d r-right-zchlnj r-top-ipm5af r-zIndex-417010"
     dir={null}
     ref={[Function]}
   >
     <div
-      className="css-text-146c3p1 r-color-1f9h77g r-fontSize-1x35g6 r-fontWeight-vw2c0b r-marginBottom-ku1wi2 r-textAlign-q4m81j"
-      dir="auto"
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
       ref={[Function]}
+      style={
+        {
+          "left": "10px",
+          "opacity": 0.3,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "8.527987712914182px",
+          "opacity": 0.5554363660263334,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-9.28076391801369px",
+          "opacity": 0.3323832465073792,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-0.8611713502705243px",
+          "opacity": 0.48964718404386076,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-9.585222096793586px",
+          "opacity": 0.508269501265022,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-1.934885921618843px",
+          "opacity": 0.37752612154981763,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "1.72729732425978px",
+          "opacity": 0.5543175729510039,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-3.6467754000841524px",
+          "opacity": 0.5586730089780758,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "6.561421647656971px",
+          "opacity": 0.6770651712584368,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-2.821244935730647px",
+          "opacity": 0.4149551471222367,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "8.041310140688438px",
+          "opacity": 0.5474665720019403,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-0.5070930800320639px",
+          "opacity": 0.4627353082864829,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-4.702941444902535px",
+          "opacity": 0.54750622136944,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-4.392854922662082px",
+          "opacity": 0.6024617294184282,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "6.328650859877598px",
+          "opacity": 0.467988325242186,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-position-u8s1d"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "top": "0px",
+          "zIndex": 2,
+        }
+      }
     >
-      Oops! Something went wrong
+      MockSvg-140x170-0.8
     </div>
     <div
-      className="css-text-146c3p1 r-color-djgu52 r-fontSize-ubezar r-lineHeight-135wba7 r-marginBottom-117bsoe r-textAlign-q4m81j"
-      dir="auto"
+      className="css-view-g5y9jx r-position-u8s1d"
+      dir={null}
       ref={[Function]}
+      style={
+        {
+          "top": "0px",
+          "zIndex": 3,
+        }
+      }
     >
-      The app encountered an unexpected error. Don't worry, your data is safe!
+      MockSvg-160x190-0.6
     </div>
+  </div>
+  <div
+    className="css-view-g5y9jx r-bottom-1p0dtai r-height-1594n1d r-left-1d2f490 r-position-u8s1d r-right-zchlnj r-width-13qz1uu r-zIndex-184en5c r-pointerEvents-633pao"
+    dir={null}
+    ref={[Function]}
+  >
     <div
-      className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-backgroundColor-1dxbtwb r-borderRadius-1h84pjw r-boxShadow-15pk7w6 r-paddingBlock-1d7mnkm r-paddingInline-qq1thf"
+      className="css-view-g5y9jx"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "alignItems": "center",
+          "height": "100%",
+          "justifyContent": "flex-end",
+          "width": "100%",
+        }
+      }
+    >
+      <div
+        className="css-view-g5y9jx r-flexBasis-1mlwlqe r-overflow-1udh08x r-zIndex-417010"
+        dir={null}
+        ref={[Function]}
+        style={
+          {
+            "height": "286px",
+            "opacity": 0.8,
+            "width": "286px",
+          }
+        }
+      >
+        <div
+          className="css-view-g5y9jx r-backgroundColor-1niwhzg r-backgroundPosition-vvn4in r-backgroundRepeat-u6sd8q r-bottom-1p0dtai r-height-1pi2tsx r-left-1d2f490 r-position-u8s1d r-right-zchlnj r-top-ipm5af r-width-13qz1uu r-zIndex-1wyyakw r-backgroundSize-ehq7j7"
+          dir={null}
+          ref={[Function]}
+          style={
+            {
+              "backgroundImage": "url("test-file-stub")",
+            }
+          }
+          suppressHydrationWarning={true}
+        />
+        <img
+          alt=""
+          className="css-accessibilityImage-9pa8cd"
+          draggable={false}
+          ref={
+            {
+              "current": null,
+            }
+          }
+          src="test-file-stub"
+        />
+      </div>
+    </div>
+  </div>
+  <div
+    className="css-view-g5y9jx r-flexDirection-18u37iz r-justifyContent-1wtj0ep r-paddingBottom-k8qxaj r-paddingInline-u9wvl5"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "paddingTop": "64px",
+      }
+    }
+  >
+    <div
+      className="css-view-g5y9jx"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "flex": 1,
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-marginRight-1b7u577"
+      dir={null}
+      ref={[Function]}
+    />
+    <div
+      className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-backgroundColor-z6hqnn r-borderColor-sptg1m r-borderRadius-16uyjmq r-borderWidth-d045u9 r-boxShadow-1u5n42f r-padding-1slz7xr"
       dir={null}
       onBlur={[Function]}
       onClick={[Function]}
@@ -192,11 +905,176 @@ exports[`Visual Regression Tests Animation State Snapshots should match componen
       tabIndex={0}
     >
       <div
-        className="css-text-146c3p1 r-color-jwli3a r-fontSize-ubezar r-fontWeight-vw2c0b"
+        className="css-text-146c3p1 r-fontSize-1x35g6"
         dir="auto"
         ref={[Function]}
       >
-        Try Again
+        ⚙️
+      </div>
+    </div>
+  </div>
+  <div
+    className="css-view-g5y9jx r-alignItems-1awozwy r-flex-13awgt0 r-justifyContent-1777fci r-paddingInline-u9wvl5 r-paddingTop-1knelpx"
+    dir={null}
+    ref={[Function]}
+  >
+    <div
+      className="css-view-g5y9jx r-marginBottom-8d26hk"
+      dir={null}
+      ref={[Function]}
+    >
+      <div
+        className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+        dir={null}
+        ref={[Function]}
+      >
+        <button
+          aria-label="Stories button"
+          className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-boxShadow-12et9rd r-justifyContent-1777fci r-borderRadius-2j1mxk r-height-ff8gi r-width-1x93onp"
+          data-testid="menu-icon-stories"
+          dir={null}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onContextMenu={[Function]}
+          onFocus={[Function]}
+          onKeyDown={[Function]}
+          ref={[Function]}
+          role="button"
+          tabIndex={0}
+          type="button"
+        >
+          <div
+            className="css-view-g5y9jx r-position-u8s1d r-right-jn5ml r-top-jvuzdy r-zIndex-mhe3cw"
+            dir={null}
+            ref={[Function]}
+          >
+            <div
+              className="css-text-146c3p1 r-color-a4n0a9 r-fontSize-adyw6z"
+              dir="auto"
+              ref={[Function]}
+            >
+              ✨
+            </div>
+          </div>
+          MockSvg-70x70-1
+        </button>
+        <div
+          className="css-text-146c3p1 r-color-jwli3a r-textAlign-q4m81j r-textShadow-mscz7m r-fontSize-ubezar r-fontWeight-b88u0q r-marginTop-1s2bzr4"
+          dir="auto"
+          ref={[Function]}
+        >
+          Stories
+        </div>
+      </div>
+    </div>
+    <div
+      className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci r-width-1sxiqef"
+      dir={null}
+      ref={[Function]}
+    >
+      <div
+        className="css-view-g5y9jx r-flexDirection-18u37iz r-justifyContent-1wtj0ep r-marginBottom-117bsoe r-width-13qz1uu"
+        dir={null}
+        ref={[Function]}
+      >
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Sensory button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-sensory"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
+        </div>
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Emotions button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-emotions"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
+        </div>
+      </div>
+      <div
+        className="css-view-g5y9jx r-flexDirection-18u37iz r-justifyContent-1wtj0ep r-width-13qz1uu"
+        dir={null}
+        ref={[Function]}
+      >
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Bedtime Music button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-bedtime"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
+        </div>
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Screen Time button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-screen_time"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -526,31 +1404,305 @@ exports[`Visual Regression Tests Content Variation Snapshots should match compon
 
 exports[`Visual Regression Tests Error State Snapshots should match components with error boundaries: main-menu-error-handling 1`] = `
 <div
-  className="css-view-g5y9jx r-alignItems-1awozwy r-flex-13awgt0 r-justifyContent-1777fci r-padding-1pcd2l5"
+  className="css-view-g5y9jx r-backgroundColor-1niwhzg r-flex-13awgt0"
+  data-testid="main-menu-container"
   dir={null}
   ref={[Function]}
 >
   <div
-    className="css-view-g5y9jx r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-y47klf r-boxShadow-us8l0w r-maxWidth-xaggoz r-padding-e65kyq"
+    className="css-view-g5y9jx r-bottom-1p0dtai r-left-1d2f490 r-position-u8s1d r-right-zchlnj r-top-ipm5af r-zIndex-417010"
     dir={null}
     ref={[Function]}
   >
     <div
-      className="css-text-146c3p1 r-color-1f9h77g r-fontSize-1x35g6 r-fontWeight-vw2c0b r-marginBottom-ku1wi2 r-textAlign-q4m81j"
-      dir="auto"
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
       ref={[Function]}
+      style={
+        {
+          "left": "10px",
+          "opacity": 0.3,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "8.527987712914182px",
+          "opacity": 0.5554363660263334,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-9.28076391801369px",
+          "opacity": 0.3323832465073792,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-0.8611713502705243px",
+          "opacity": 0.48964718404386076,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-9.585222096793586px",
+          "opacity": 0.508269501265022,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-1.934885921618843px",
+          "opacity": 0.37752612154981763,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "1.72729732425978px",
+          "opacity": 0.5543175729510039,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-3.6467754000841524px",
+          "opacity": 0.5586730089780758,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "6.561421647656971px",
+          "opacity": 0.6770651712584368,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-2.821244935730647px",
+          "opacity": 0.4149551471222367,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "8.041310140688438px",
+          "opacity": 0.5474665720019403,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-0.5070930800320639px",
+          "opacity": 0.4627353082864829,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-4.702941444902535px",
+          "opacity": 0.54750622136944,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-4.392854922662082px",
+          "opacity": 0.6024617294184282,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "6.328650859877598px",
+          "opacity": 0.467988325242186,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-position-u8s1d"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "top": "0px",
+          "zIndex": 2,
+        }
+      }
     >
-      Oops! Something went wrong
+      MockSvg-140x170-0.8
     </div>
     <div
-      className="css-text-146c3p1 r-color-djgu52 r-fontSize-ubezar r-lineHeight-135wba7 r-marginBottom-117bsoe r-textAlign-q4m81j"
-      dir="auto"
+      className="css-view-g5y9jx r-position-u8s1d"
+      dir={null}
       ref={[Function]}
+      style={
+        {
+          "top": "0px",
+          "zIndex": 3,
+        }
+      }
     >
-      The app encountered an unexpected error. Don't worry, your data is safe!
+      MockSvg-160x190-0.6
     </div>
+  </div>
+  <div
+    className="css-view-g5y9jx r-bottom-1p0dtai r-height-1594n1d r-left-1d2f490 r-position-u8s1d r-right-zchlnj r-width-13qz1uu r-zIndex-184en5c r-pointerEvents-633pao"
+    dir={null}
+    ref={[Function]}
+  >
     <div
-      className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-backgroundColor-1dxbtwb r-borderRadius-1h84pjw r-boxShadow-15pk7w6 r-paddingBlock-1d7mnkm r-paddingInline-qq1thf"
+      className="css-view-g5y9jx"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "alignItems": "center",
+          "height": "100%",
+          "justifyContent": "flex-end",
+          "width": "100%",
+        }
+      }
+    >
+      <div
+        className="css-view-g5y9jx r-flexBasis-1mlwlqe r-overflow-1udh08x r-zIndex-417010"
+        dir={null}
+        ref={[Function]}
+        style={
+          {
+            "height": "286px",
+            "opacity": 0.8,
+            "width": "286px",
+          }
+        }
+      >
+        <div
+          className="css-view-g5y9jx r-backgroundColor-1niwhzg r-backgroundPosition-vvn4in r-backgroundRepeat-u6sd8q r-bottom-1p0dtai r-height-1pi2tsx r-left-1d2f490 r-position-u8s1d r-right-zchlnj r-top-ipm5af r-width-13qz1uu r-zIndex-1wyyakw r-backgroundSize-ehq7j7"
+          dir={null}
+          ref={[Function]}
+          style={
+            {
+              "backgroundImage": "url("test-file-stub")",
+            }
+          }
+          suppressHydrationWarning={true}
+        />
+        <img
+          alt=""
+          className="css-accessibilityImage-9pa8cd"
+          draggable={false}
+          ref={
+            {
+              "current": null,
+            }
+          }
+          src="test-file-stub"
+        />
+      </div>
+    </div>
+  </div>
+  <div
+    className="css-view-g5y9jx r-flexDirection-18u37iz r-justifyContent-1wtj0ep r-paddingBottom-k8qxaj r-paddingInline-u9wvl5"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "paddingTop": "64px",
+      }
+    }
+  >
+    <div
+      className="css-view-g5y9jx"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "flex": 1,
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-marginRight-1b7u577"
+      dir={null}
+      ref={[Function]}
+    />
+    <div
+      className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-backgroundColor-z6hqnn r-borderColor-sptg1m r-borderRadius-16uyjmq r-borderWidth-d045u9 r-boxShadow-1u5n42f r-padding-1slz7xr"
       dir={null}
       onBlur={[Function]}
       onClick={[Function]}
@@ -561,11 +1713,176 @@ exports[`Visual Regression Tests Error State Snapshots should match components w
       tabIndex={0}
     >
       <div
-        className="css-text-146c3p1 r-color-jwli3a r-fontSize-ubezar r-fontWeight-vw2c0b"
+        className="css-text-146c3p1 r-fontSize-1x35g6"
         dir="auto"
         ref={[Function]}
       >
-        Try Again
+        ⚙️
+      </div>
+    </div>
+  </div>
+  <div
+    className="css-view-g5y9jx r-alignItems-1awozwy r-flex-13awgt0 r-justifyContent-1777fci r-paddingInline-u9wvl5 r-paddingTop-1knelpx"
+    dir={null}
+    ref={[Function]}
+  >
+    <div
+      className="css-view-g5y9jx r-marginBottom-8d26hk"
+      dir={null}
+      ref={[Function]}
+    >
+      <div
+        className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+        dir={null}
+        ref={[Function]}
+      >
+        <button
+          aria-label="Stories button"
+          className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-boxShadow-12et9rd r-justifyContent-1777fci r-borderRadius-2j1mxk r-height-ff8gi r-width-1x93onp"
+          data-testid="menu-icon-stories"
+          dir={null}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onContextMenu={[Function]}
+          onFocus={[Function]}
+          onKeyDown={[Function]}
+          ref={[Function]}
+          role="button"
+          tabIndex={0}
+          type="button"
+        >
+          <div
+            className="css-view-g5y9jx r-position-u8s1d r-right-jn5ml r-top-jvuzdy r-zIndex-mhe3cw"
+            dir={null}
+            ref={[Function]}
+          >
+            <div
+              className="css-text-146c3p1 r-color-a4n0a9 r-fontSize-adyw6z"
+              dir="auto"
+              ref={[Function]}
+            >
+              ✨
+            </div>
+          </div>
+          MockSvg-70x70-1
+        </button>
+        <div
+          className="css-text-146c3p1 r-color-jwli3a r-textAlign-q4m81j r-textShadow-mscz7m r-fontSize-ubezar r-fontWeight-b88u0q r-marginTop-1s2bzr4"
+          dir="auto"
+          ref={[Function]}
+        >
+          Stories
+        </div>
+      </div>
+    </div>
+    <div
+      className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci r-width-1sxiqef"
+      dir={null}
+      ref={[Function]}
+    >
+      <div
+        className="css-view-g5y9jx r-flexDirection-18u37iz r-justifyContent-1wtj0ep r-marginBottom-117bsoe r-width-13qz1uu"
+        dir={null}
+        ref={[Function]}
+      >
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Sensory button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-sensory"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
+        </div>
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Emotions button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-emotions"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
+        </div>
+      </div>
+      <div
+        className="css-view-g5y9jx r-flexDirection-18u37iz r-justifyContent-1wtj0ep r-width-13qz1uu"
+        dir={null}
+        ref={[Function]}
+      >
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Bedtime Music button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-bedtime"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
+        </div>
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Screen Time button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-screen_time"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -609,31 +1926,305 @@ exports[`Visual Regression Tests Error State Snapshots should match story reader
 
 exports[`Visual Regression Tests MainMenu Snapshots should match MainMenu snapshot: main-menu-default 1`] = `
 <div
-  className="css-view-g5y9jx r-alignItems-1awozwy r-flex-13awgt0 r-justifyContent-1777fci r-padding-1pcd2l5"
+  className="css-view-g5y9jx r-backgroundColor-1niwhzg r-flex-13awgt0"
+  data-testid="main-menu-container"
   dir={null}
   ref={[Function]}
 >
   <div
-    className="css-view-g5y9jx r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-y47klf r-boxShadow-us8l0w r-maxWidth-xaggoz r-padding-e65kyq"
+    className="css-view-g5y9jx r-bottom-1p0dtai r-left-1d2f490 r-position-u8s1d r-right-zchlnj r-top-ipm5af r-zIndex-417010"
     dir={null}
     ref={[Function]}
   >
     <div
-      className="css-text-146c3p1 r-color-1f9h77g r-fontSize-1x35g6 r-fontWeight-vw2c0b r-marginBottom-ku1wi2 r-textAlign-q4m81j"
-      dir="auto"
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
       ref={[Function]}
+      style={
+        {
+          "left": "10px",
+          "opacity": 0.3,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "8.527987712914182px",
+          "opacity": 0.5554363660263334,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-9.28076391801369px",
+          "opacity": 0.3323832465073792,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-0.8611713502705243px",
+          "opacity": 0.48964718404386076,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-9.585222096793586px",
+          "opacity": 0.508269501265022,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-1.934885921618843px",
+          "opacity": 0.37752612154981763,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "1.72729732425978px",
+          "opacity": 0.5543175729510039,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-3.6467754000841524px",
+          "opacity": 0.5586730089780758,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "6.561421647656971px",
+          "opacity": 0.6770651712584368,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-2.821244935730647px",
+          "opacity": 0.4149551471222367,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "8.041310140688438px",
+          "opacity": 0.5474665720019403,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-0.5070930800320639px",
+          "opacity": 0.4627353082864829,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-4.702941444902535px",
+          "opacity": 0.54750622136944,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-4.392854922662082px",
+          "opacity": 0.6024617294184282,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "6.328650859877598px",
+          "opacity": 0.467988325242186,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-position-u8s1d"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "top": "0px",
+          "zIndex": 2,
+        }
+      }
     >
-      Oops! Something went wrong
+      MockSvg-140x170-0.8
     </div>
     <div
-      className="css-text-146c3p1 r-color-djgu52 r-fontSize-ubezar r-lineHeight-135wba7 r-marginBottom-117bsoe r-textAlign-q4m81j"
-      dir="auto"
+      className="css-view-g5y9jx r-position-u8s1d"
+      dir={null}
       ref={[Function]}
+      style={
+        {
+          "top": "0px",
+          "zIndex": 3,
+        }
+      }
     >
-      The app encountered an unexpected error. Don't worry, your data is safe!
+      MockSvg-160x190-0.6
     </div>
+  </div>
+  <div
+    className="css-view-g5y9jx r-bottom-1p0dtai r-height-1594n1d r-left-1d2f490 r-position-u8s1d r-right-zchlnj r-width-13qz1uu r-zIndex-184en5c r-pointerEvents-633pao"
+    dir={null}
+    ref={[Function]}
+  >
     <div
-      className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-backgroundColor-1dxbtwb r-borderRadius-1h84pjw r-boxShadow-15pk7w6 r-paddingBlock-1d7mnkm r-paddingInline-qq1thf"
+      className="css-view-g5y9jx"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "alignItems": "center",
+          "height": "100%",
+          "justifyContent": "flex-end",
+          "width": "100%",
+        }
+      }
+    >
+      <div
+        className="css-view-g5y9jx r-flexBasis-1mlwlqe r-overflow-1udh08x r-zIndex-417010"
+        dir={null}
+        ref={[Function]}
+        style={
+          {
+            "height": "286px",
+            "opacity": 0.8,
+            "width": "286px",
+          }
+        }
+      >
+        <div
+          className="css-view-g5y9jx r-backgroundColor-1niwhzg r-backgroundPosition-vvn4in r-backgroundRepeat-u6sd8q r-bottom-1p0dtai r-height-1pi2tsx r-left-1d2f490 r-position-u8s1d r-right-zchlnj r-top-ipm5af r-width-13qz1uu r-zIndex-1wyyakw r-backgroundSize-ehq7j7"
+          dir={null}
+          ref={[Function]}
+          style={
+            {
+              "backgroundImage": "url("test-file-stub")",
+            }
+          }
+          suppressHydrationWarning={true}
+        />
+        <img
+          alt=""
+          className="css-accessibilityImage-9pa8cd"
+          draggable={false}
+          ref={
+            {
+              "current": null,
+            }
+          }
+          src="test-file-stub"
+        />
+      </div>
+    </div>
+  </div>
+  <div
+    className="css-view-g5y9jx r-flexDirection-18u37iz r-justifyContent-1wtj0ep r-paddingBottom-k8qxaj r-paddingInline-u9wvl5"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "paddingTop": "64px",
+      }
+    }
+  >
+    <div
+      className="css-view-g5y9jx"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "flex": 1,
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-marginRight-1b7u577"
+      dir={null}
+      ref={[Function]}
+    />
+    <div
+      className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-backgroundColor-z6hqnn r-borderColor-sptg1m r-borderRadius-16uyjmq r-borderWidth-d045u9 r-boxShadow-1u5n42f r-padding-1slz7xr"
       dir={null}
       onBlur={[Function]}
       onClick={[Function]}
@@ -644,11 +2235,176 @@ exports[`Visual Regression Tests MainMenu Snapshots should match MainMenu snapsh
       tabIndex={0}
     >
       <div
-        className="css-text-146c3p1 r-color-jwli3a r-fontSize-ubezar r-fontWeight-vw2c0b"
+        className="css-text-146c3p1 r-fontSize-1x35g6"
         dir="auto"
         ref={[Function]}
       >
-        Try Again
+        ⚙️
+      </div>
+    </div>
+  </div>
+  <div
+    className="css-view-g5y9jx r-alignItems-1awozwy r-flex-13awgt0 r-justifyContent-1777fci r-paddingInline-u9wvl5 r-paddingTop-1knelpx"
+    dir={null}
+    ref={[Function]}
+  >
+    <div
+      className="css-view-g5y9jx r-marginBottom-8d26hk"
+      dir={null}
+      ref={[Function]}
+    >
+      <div
+        className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+        dir={null}
+        ref={[Function]}
+      >
+        <button
+          aria-label="Stories button"
+          className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-boxShadow-12et9rd r-justifyContent-1777fci r-borderRadius-2j1mxk r-height-ff8gi r-width-1x93onp"
+          data-testid="menu-icon-stories"
+          dir={null}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onContextMenu={[Function]}
+          onFocus={[Function]}
+          onKeyDown={[Function]}
+          ref={[Function]}
+          role="button"
+          tabIndex={0}
+          type="button"
+        >
+          <div
+            className="css-view-g5y9jx r-position-u8s1d r-right-jn5ml r-top-jvuzdy r-zIndex-mhe3cw"
+            dir={null}
+            ref={[Function]}
+          >
+            <div
+              className="css-text-146c3p1 r-color-a4n0a9 r-fontSize-adyw6z"
+              dir="auto"
+              ref={[Function]}
+            >
+              ✨
+            </div>
+          </div>
+          MockSvg-70x70-1
+        </button>
+        <div
+          className="css-text-146c3p1 r-color-jwli3a r-textAlign-q4m81j r-textShadow-mscz7m r-fontSize-ubezar r-fontWeight-b88u0q r-marginTop-1s2bzr4"
+          dir="auto"
+          ref={[Function]}
+        >
+          Stories
+        </div>
+      </div>
+    </div>
+    <div
+      className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci r-width-1sxiqef"
+      dir={null}
+      ref={[Function]}
+    >
+      <div
+        className="css-view-g5y9jx r-flexDirection-18u37iz r-justifyContent-1wtj0ep r-marginBottom-117bsoe r-width-13qz1uu"
+        dir={null}
+        ref={[Function]}
+      >
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Sensory button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-sensory"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
+        </div>
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Emotions button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-emotions"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
+        </div>
+      </div>
+      <div
+        className="css-view-g5y9jx r-flexDirection-18u37iz r-justifyContent-1wtj0ep r-width-13qz1uu"
+        dir={null}
+        ref={[Function]}
+      >
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Bedtime Music button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-bedtime"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
+        </div>
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Screen Time button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-screen_time"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -657,31 +2413,305 @@ exports[`Visual Regression Tests MainMenu Snapshots should match MainMenu snapsh
 
 exports[`Visual Regression Tests MainMenu Snapshots should match MainMenu with different states: main-menu-interactive 1`] = `
 <div
-  className="css-view-g5y9jx r-alignItems-1awozwy r-flex-13awgt0 r-justifyContent-1777fci r-padding-1pcd2l5"
+  className="css-view-g5y9jx r-backgroundColor-1niwhzg r-flex-13awgt0"
+  data-testid="main-menu-container"
   dir={null}
   ref={[Function]}
 >
   <div
-    className="css-view-g5y9jx r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-y47klf r-boxShadow-us8l0w r-maxWidth-xaggoz r-padding-e65kyq"
+    className="css-view-g5y9jx r-bottom-1p0dtai r-left-1d2f490 r-position-u8s1d r-right-zchlnj r-top-ipm5af r-zIndex-417010"
     dir={null}
     ref={[Function]}
   >
     <div
-      className="css-text-146c3p1 r-color-1f9h77g r-fontSize-1x35g6 r-fontWeight-vw2c0b r-marginBottom-ku1wi2 r-textAlign-q4m81j"
-      dir="auto"
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
       ref={[Function]}
+      style={
+        {
+          "left": "10px",
+          "opacity": 0.3,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "8.527987712914182px",
+          "opacity": 0.5554363660263334,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-9.28076391801369px",
+          "opacity": 0.3323832465073792,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-0.8611713502705243px",
+          "opacity": 0.48964718404386076,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-9.585222096793586px",
+          "opacity": 0.508269501265022,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-1.934885921618843px",
+          "opacity": 0.37752612154981763,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "1.72729732425978px",
+          "opacity": 0.5543175729510039,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-3.6467754000841524px",
+          "opacity": 0.5586730089780758,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "6.561421647656971px",
+          "opacity": 0.6770651712584368,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-2.821244935730647px",
+          "opacity": 0.4149551471222367,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "8.041310140688438px",
+          "opacity": 0.5474665720019403,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-0.5070930800320639px",
+          "opacity": 0.4627353082864829,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-4.702941444902535px",
+          "opacity": 0.54750622136944,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-4.392854922662082px",
+          "opacity": 0.6024617294184282,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "6.328650859877598px",
+          "opacity": 0.467988325242186,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-position-u8s1d"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "top": "0px",
+          "zIndex": 2,
+        }
+      }
     >
-      Oops! Something went wrong
+      MockSvg-140x170-0.8
     </div>
     <div
-      className="css-text-146c3p1 r-color-djgu52 r-fontSize-ubezar r-lineHeight-135wba7 r-marginBottom-117bsoe r-textAlign-q4m81j"
-      dir="auto"
+      className="css-view-g5y9jx r-position-u8s1d"
+      dir={null}
       ref={[Function]}
+      style={
+        {
+          "top": "0px",
+          "zIndex": 3,
+        }
+      }
     >
-      The app encountered an unexpected error. Don't worry, your data is safe!
+      MockSvg-160x190-0.6
     </div>
+  </div>
+  <div
+    className="css-view-g5y9jx r-bottom-1p0dtai r-height-1594n1d r-left-1d2f490 r-position-u8s1d r-right-zchlnj r-width-13qz1uu r-zIndex-184en5c r-pointerEvents-633pao"
+    dir={null}
+    ref={[Function]}
+  >
     <div
-      className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-backgroundColor-1dxbtwb r-borderRadius-1h84pjw r-boxShadow-15pk7w6 r-paddingBlock-1d7mnkm r-paddingInline-qq1thf"
+      className="css-view-g5y9jx"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "alignItems": "center",
+          "height": "100%",
+          "justifyContent": "flex-end",
+          "width": "100%",
+        }
+      }
+    >
+      <div
+        className="css-view-g5y9jx r-flexBasis-1mlwlqe r-overflow-1udh08x r-zIndex-417010"
+        dir={null}
+        ref={[Function]}
+        style={
+          {
+            "height": "286px",
+            "opacity": 0.8,
+            "width": "286px",
+          }
+        }
+      >
+        <div
+          className="css-view-g5y9jx r-backgroundColor-1niwhzg r-backgroundPosition-vvn4in r-backgroundRepeat-u6sd8q r-bottom-1p0dtai r-height-1pi2tsx r-left-1d2f490 r-position-u8s1d r-right-zchlnj r-top-ipm5af r-width-13qz1uu r-zIndex-1wyyakw r-backgroundSize-ehq7j7"
+          dir={null}
+          ref={[Function]}
+          style={
+            {
+              "backgroundImage": "url("test-file-stub")",
+            }
+          }
+          suppressHydrationWarning={true}
+        />
+        <img
+          alt=""
+          className="css-accessibilityImage-9pa8cd"
+          draggable={false}
+          ref={
+            {
+              "current": null,
+            }
+          }
+          src="test-file-stub"
+        />
+      </div>
+    </div>
+  </div>
+  <div
+    className="css-view-g5y9jx r-flexDirection-18u37iz r-justifyContent-1wtj0ep r-paddingBottom-k8qxaj r-paddingInline-u9wvl5"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "paddingTop": "64px",
+      }
+    }
+  >
+    <div
+      className="css-view-g5y9jx"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "flex": 1,
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-marginRight-1b7u577"
+      dir={null}
+      ref={[Function]}
+    />
+    <div
+      className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-backgroundColor-z6hqnn r-borderColor-sptg1m r-borderRadius-16uyjmq r-borderWidth-d045u9 r-boxShadow-1u5n42f r-padding-1slz7xr"
       dir={null}
       onBlur={[Function]}
       onClick={[Function]}
@@ -692,11 +2722,176 @@ exports[`Visual Regression Tests MainMenu Snapshots should match MainMenu with d
       tabIndex={0}
     >
       <div
-        className="css-text-146c3p1 r-color-jwli3a r-fontSize-ubezar r-fontWeight-vw2c0b"
+        className="css-text-146c3p1 r-fontSize-1x35g6"
         dir="auto"
         ref={[Function]}
       >
-        Try Again
+        ⚙️
+      </div>
+    </div>
+  </div>
+  <div
+    className="css-view-g5y9jx r-alignItems-1awozwy r-flex-13awgt0 r-justifyContent-1777fci r-paddingInline-u9wvl5 r-paddingTop-1knelpx"
+    dir={null}
+    ref={[Function]}
+  >
+    <div
+      className="css-view-g5y9jx r-marginBottom-8d26hk"
+      dir={null}
+      ref={[Function]}
+    >
+      <div
+        className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+        dir={null}
+        ref={[Function]}
+      >
+        <button
+          aria-label="Stories button"
+          className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-boxShadow-12et9rd r-justifyContent-1777fci r-borderRadius-2j1mxk r-height-ff8gi r-width-1x93onp"
+          data-testid="menu-icon-stories"
+          dir={null}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onContextMenu={[Function]}
+          onFocus={[Function]}
+          onKeyDown={[Function]}
+          ref={[Function]}
+          role="button"
+          tabIndex={0}
+          type="button"
+        >
+          <div
+            className="css-view-g5y9jx r-position-u8s1d r-right-jn5ml r-top-jvuzdy r-zIndex-mhe3cw"
+            dir={null}
+            ref={[Function]}
+          >
+            <div
+              className="css-text-146c3p1 r-color-a4n0a9 r-fontSize-adyw6z"
+              dir="auto"
+              ref={[Function]}
+            >
+              ✨
+            </div>
+          </div>
+          MockSvg-70x70-1
+        </button>
+        <div
+          className="css-text-146c3p1 r-color-jwli3a r-textAlign-q4m81j r-textShadow-mscz7m r-fontSize-ubezar r-fontWeight-b88u0q r-marginTop-1s2bzr4"
+          dir="auto"
+          ref={[Function]}
+        >
+          Stories
+        </div>
+      </div>
+    </div>
+    <div
+      className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci r-width-1sxiqef"
+      dir={null}
+      ref={[Function]}
+    >
+      <div
+        className="css-view-g5y9jx r-flexDirection-18u37iz r-justifyContent-1wtj0ep r-marginBottom-117bsoe r-width-13qz1uu"
+        dir={null}
+        ref={[Function]}
+      >
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Sensory button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-sensory"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
+        </div>
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Emotions button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-emotions"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
+        </div>
+      </div>
+      <div
+        className="css-view-g5y9jx r-flexDirection-18u37iz r-justifyContent-1wtj0ep r-width-13qz1uu"
+        dir={null}
+        ref={[Function]}
+      >
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Bedtime Music button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-bedtime"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
+        </div>
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Screen Time button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-screen_time"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -705,31 +2900,305 @@ exports[`Visual Regression Tests MainMenu Snapshots should match MainMenu with d
 
 exports[`Visual Regression Tests Responsive Design Snapshots should match components with different screen dimensions: main-menu-phone-dimensions 1`] = `
 <div
-  className="css-view-g5y9jx r-alignItems-1awozwy r-flex-13awgt0 r-justifyContent-1777fci r-padding-1pcd2l5"
+  className="css-view-g5y9jx r-backgroundColor-1niwhzg r-flex-13awgt0"
+  data-testid="main-menu-container"
   dir={null}
   ref={[Function]}
 >
   <div
-    className="css-view-g5y9jx r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-y47klf r-boxShadow-us8l0w r-maxWidth-xaggoz r-padding-e65kyq"
+    className="css-view-g5y9jx r-bottom-1p0dtai r-left-1d2f490 r-position-u8s1d r-right-zchlnj r-top-ipm5af r-zIndex-417010"
     dir={null}
     ref={[Function]}
   >
     <div
-      className="css-text-146c3p1 r-color-1f9h77g r-fontSize-1x35g6 r-fontWeight-vw2c0b r-marginBottom-ku1wi2 r-textAlign-q4m81j"
-      dir="auto"
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
       ref={[Function]}
+      style={
+        {
+          "left": "10px",
+          "opacity": 0.3,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "36.12821809577326px",
+          "opacity": 0.5554363660263334,
+          "top": "45.39372498088851px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "352.233559544743px",
+          "opacity": 0.3323832465073792,
+          "top": "63.83029776132316px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "202.7857914673018px",
+          "opacity": 0.48964718404386076,
+          "top": "213.73209930774684px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "357.63769221808616px",
+          "opacity": 0.508269501265022,
+          "top": "458.0614964065149px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "221.84422510873446px",
+          "opacity": 0.37752612154981763,
+          "top": "253.00491797601862px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "156.8404724943889px",
+          "opacity": 0.5543175729510039,
+          "top": "486.1015316755118px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "252.2302633514937px",
+          "opacity": 0.5586730089780758,
+          "top": "159.25547952349987px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "71.03476575408877px",
+          "opacity": 0.6770651712584368,
+          "top": "187.4892657191638px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "237.57709760921898px",
+          "opacity": 0.4149551471222367,
+          "top": "276.8737743116231px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "44.766745002780226px",
+          "opacity": 0.5474665720019403,
+          "top": "407.7908585690719px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "196.50090217056913px",
+          "opacity": 0.4627353082864829,
+          "top": "409.7772330226749px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "270.97721064702px",
+          "opacity": 0.54750622136944,
+          "top": "395.80374867224816px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "265.47317487725195px",
+          "opacity": 0.6024617294184282,
+          "top": "44.2106058953781px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "75.16644723717263px",
+          "opacity": 0.467988325242186,
+          "top": "358.3953825643504px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-position-u8s1d"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "top": "609px",
+          "zIndex": 2,
+        }
+      }
     >
-      Oops! Something went wrong
+      MockSvg-140x170-0.8
     </div>
     <div
-      className="css-text-146c3p1 r-color-djgu52 r-fontSize-ubezar r-lineHeight-135wba7 r-marginBottom-117bsoe r-textAlign-q4m81j"
-      dir="auto"
+      className="css-view-g5y9jx r-position-u8s1d"
+      dir={null}
       ref={[Function]}
+      style={
+        {
+          "top": "633.36px",
+          "zIndex": 3,
+        }
+      }
     >
-      The app encountered an unexpected error. Don't worry, your data is safe!
+      MockSvg-160x190-0.6
     </div>
+  </div>
+  <div
+    className="css-view-g5y9jx r-bottom-1p0dtai r-height-1594n1d r-left-1d2f490 r-position-u8s1d r-right-zchlnj r-width-13qz1uu r-zIndex-184en5c r-pointerEvents-633pao"
+    dir={null}
+    ref={[Function]}
+  >
     <div
-      className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-backgroundColor-1dxbtwb r-borderRadius-1h84pjw r-boxShadow-15pk7w6 r-paddingBlock-1d7mnkm r-paddingInline-qq1thf"
+      className="css-view-g5y9jx"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "alignItems": "center",
+          "height": "100%",
+          "justifyContent": "flex-end",
+          "width": "100%",
+        }
+      }
+    >
+      <div
+        className="css-view-g5y9jx r-flexBasis-1mlwlqe r-overflow-1udh08x r-zIndex-417010"
+        dir={null}
+        ref={[Function]}
+        style={
+          {
+            "height": "286px",
+            "opacity": 0.8,
+            "width": "286px",
+          }
+        }
+      >
+        <div
+          className="css-view-g5y9jx r-backgroundColor-1niwhzg r-backgroundPosition-vvn4in r-backgroundRepeat-u6sd8q r-bottom-1p0dtai r-height-1pi2tsx r-left-1d2f490 r-position-u8s1d r-right-zchlnj r-top-ipm5af r-width-13qz1uu r-zIndex-1wyyakw r-backgroundSize-ehq7j7"
+          dir={null}
+          ref={[Function]}
+          style={
+            {
+              "backgroundImage": "url("test-file-stub")",
+            }
+          }
+          suppressHydrationWarning={true}
+        />
+        <img
+          alt=""
+          className="css-accessibilityImage-9pa8cd"
+          draggable={false}
+          ref={
+            {
+              "current": null,
+            }
+          }
+          src="test-file-stub"
+        />
+      </div>
+    </div>
+  </div>
+  <div
+    className="css-view-g5y9jx r-flexDirection-18u37iz r-justifyContent-1wtj0ep r-paddingBottom-k8qxaj r-paddingInline-u9wvl5"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "paddingTop": "64px",
+      }
+    }
+  >
+    <div
+      className="css-view-g5y9jx"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "flex": 1,
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-marginRight-1b7u577"
+      dir={null}
+      ref={[Function]}
+    />
+    <div
+      className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-backgroundColor-z6hqnn r-borderColor-sptg1m r-borderRadius-16uyjmq r-borderWidth-d045u9 r-boxShadow-1u5n42f r-padding-1slz7xr"
       dir={null}
       onBlur={[Function]}
       onClick={[Function]}
@@ -740,11 +3209,176 @@ exports[`Visual Regression Tests Responsive Design Snapshots should match compon
       tabIndex={0}
     >
       <div
-        className="css-text-146c3p1 r-color-jwli3a r-fontSize-ubezar r-fontWeight-vw2c0b"
+        className="css-text-146c3p1 r-fontSize-1x35g6"
         dir="auto"
         ref={[Function]}
       >
-        Try Again
+        ⚙️
+      </div>
+    </div>
+  </div>
+  <div
+    className="css-view-g5y9jx r-alignItems-1awozwy r-flex-13awgt0 r-justifyContent-1777fci r-paddingInline-u9wvl5 r-paddingTop-1knelpx"
+    dir={null}
+    ref={[Function]}
+  >
+    <div
+      className="css-view-g5y9jx r-marginBottom-8d26hk"
+      dir={null}
+      ref={[Function]}
+    >
+      <div
+        className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+        dir={null}
+        ref={[Function]}
+      >
+        <button
+          aria-label="Stories button"
+          className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-boxShadow-12et9rd r-justifyContent-1777fci r-borderRadius-2j1mxk r-height-ff8gi r-width-1x93onp"
+          data-testid="menu-icon-stories"
+          dir={null}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onContextMenu={[Function]}
+          onFocus={[Function]}
+          onKeyDown={[Function]}
+          ref={[Function]}
+          role="button"
+          tabIndex={0}
+          type="button"
+        >
+          <div
+            className="css-view-g5y9jx r-position-u8s1d r-right-jn5ml r-top-jvuzdy r-zIndex-mhe3cw"
+            dir={null}
+            ref={[Function]}
+          >
+            <div
+              className="css-text-146c3p1 r-color-a4n0a9 r-fontSize-adyw6z"
+              dir="auto"
+              ref={[Function]}
+            >
+              ✨
+            </div>
+          </div>
+          MockSvg-70x70-1
+        </button>
+        <div
+          className="css-text-146c3p1 r-color-jwli3a r-textAlign-q4m81j r-textShadow-mscz7m r-fontSize-ubezar r-fontWeight-b88u0q r-marginTop-1s2bzr4"
+          dir="auto"
+          ref={[Function]}
+        >
+          Stories
+        </div>
+      </div>
+    </div>
+    <div
+      className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci r-width-1sxiqef"
+      dir={null}
+      ref={[Function]}
+    >
+      <div
+        className="css-view-g5y9jx r-flexDirection-18u37iz r-justifyContent-1wtj0ep r-marginBottom-117bsoe r-width-13qz1uu"
+        dir={null}
+        ref={[Function]}
+      >
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Sensory button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-sensory"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
+        </div>
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Emotions button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-emotions"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
+        </div>
+      </div>
+      <div
+        className="css-view-g5y9jx r-flexDirection-18u37iz r-justifyContent-1wtj0ep r-width-13qz1uu"
+        dir={null}
+        ref={[Function]}
+      >
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Bedtime Music button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-bedtime"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
+        </div>
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Screen Time button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-screen_time"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -753,31 +3387,305 @@ exports[`Visual Regression Tests Responsive Design Snapshots should match compon
 
 exports[`Visual Regression Tests Responsive Design Snapshots should match components with different screen dimensions: main-menu-tablet-dimensions 1`] = `
 <div
-  className="css-view-g5y9jx r-alignItems-1awozwy r-flex-13awgt0 r-justifyContent-1777fci r-padding-1pcd2l5"
+  className="css-view-g5y9jx r-backgroundColor-1niwhzg r-flex-13awgt0"
+  data-testid="main-menu-container"
   dir={null}
   ref={[Function]}
 >
   <div
-    className="css-view-g5y9jx r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-y47klf r-boxShadow-us8l0w r-maxWidth-xaggoz r-padding-e65kyq"
+    className="css-view-g5y9jx r-bottom-1p0dtai r-left-1d2f490 r-position-u8s1d r-right-zchlnj r-top-ipm5af r-zIndex-417010"
     dir={null}
     ref={[Function]}
   >
     <div
-      className="css-text-146c3p1 r-color-1f9h77g r-fontSize-1x35g6 r-fontWeight-vw2c0b r-marginBottom-ku1wi2 r-textAlign-q4m81j"
-      dir="auto"
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
       ref={[Function]}
+      style={
+        {
+          "left": "10px",
+          "opacity": 0.3,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "83.89501681170805px",
+          "opacity": 0.5554363660263334,
+          "top": "44.0177103267517px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "977.8943486842873px",
+          "opacity": 0.3323832465073792,
+          "top": "61.455256995931265px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "555.2308017835803px",
+          "opacity": 0.48964718404386076,
+          "top": "203.2343008230906px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "993.178149259038px",
+          "opacity": 0.508269501265022,
+          "top": "434.32417394113725px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "609.1312732652659px",
+          "opacity": 0.37752612154981763,
+          "top": "240.37903572116045px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "425.28967432215904px",
+          "opacity": 0.5543175729510039,
+          "top": "460.8447984320111px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "695.0681250842244px",
+          "opacity": 0.5586730089780758,
+          "top": "151.70961610104422px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "182.61663328762006px",
+          "opacity": 0.6770651712584368,
+          "top": "178.41349269989877px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "653.6264957736785px",
+          "opacity": 0.4149551471222367,
+          "top": "262.9545057528652px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "108.32623093744041px",
+          "opacity": 0.5474665720019403,
+          "top": "386.7775608140975px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "537.4560726176096px",
+          "opacity": 0.4627353082864829,
+          "top": "388.65629921356447px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "748.0876605341073px",
+          "opacity": 0.54750622136944,
+          "top": "375.4399987441953px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "732.5213171176365px",
+          "opacity": 0.6024617294184282,
+          "top": "42.898701142426575px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "194.30172683414457px",
+          "opacity": 0.467988325242186,
+          "top": "340.05868695741515px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-position-u8s1d"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "top": "576px",
+          "zIndex": 2,
+        }
+      }
     >
-      Oops! Something went wrong
+      MockSvg-140x170-0.8
     </div>
     <div
-      className="css-text-146c3p1 r-color-djgu52 r-fontSize-ubezar r-lineHeight-135wba7 r-marginBottom-117bsoe r-textAlign-q4m81j"
-      dir="auto"
+      className="css-view-g5y9jx r-position-u8s1d"
+      dir={null}
       ref={[Function]}
+      style={
+        {
+          "top": "599.04px",
+          "zIndex": 3,
+        }
+      }
     >
-      The app encountered an unexpected error. Don't worry, your data is safe!
+      MockSvg-160x190-0.6
     </div>
+  </div>
+  <div
+    className="css-view-g5y9jx r-bottom-1p0dtai r-height-1594n1d r-left-1d2f490 r-position-u8s1d r-right-zchlnj r-width-13qz1uu r-zIndex-184en5c r-pointerEvents-633pao"
+    dir={null}
+    ref={[Function]}
+  >
     <div
-      className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-backgroundColor-1dxbtwb r-borderRadius-1h84pjw r-boxShadow-15pk7w6 r-paddingBlock-1d7mnkm r-paddingInline-qq1thf"
+      className="css-view-g5y9jx"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "alignItems": "center",
+          "height": "100%",
+          "justifyContent": "flex-end",
+          "width": "100%",
+        }
+      }
+    >
+      <div
+        className="css-view-g5y9jx r-flexBasis-1mlwlqe r-overflow-1udh08x r-zIndex-417010"
+        dir={null}
+        ref={[Function]}
+        style={
+          {
+            "height": "286px",
+            "opacity": 0.8,
+            "width": "286px",
+          }
+        }
+      >
+        <div
+          className="css-view-g5y9jx r-backgroundColor-1niwhzg r-backgroundPosition-vvn4in r-backgroundRepeat-u6sd8q r-bottom-1p0dtai r-height-1pi2tsx r-left-1d2f490 r-position-u8s1d r-right-zchlnj r-top-ipm5af r-width-13qz1uu r-zIndex-1wyyakw r-backgroundSize-ehq7j7"
+          dir={null}
+          ref={[Function]}
+          style={
+            {
+              "backgroundImage": "url("test-file-stub")",
+            }
+          }
+          suppressHydrationWarning={true}
+        />
+        <img
+          alt=""
+          className="css-accessibilityImage-9pa8cd"
+          draggable={false}
+          ref={
+            {
+              "current": null,
+            }
+          }
+          src="test-file-stub"
+        />
+      </div>
+    </div>
+  </div>
+  <div
+    className="css-view-g5y9jx r-flexDirection-18u37iz r-justifyContent-1wtj0ep r-paddingBottom-k8qxaj r-paddingInline-u9wvl5"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "paddingTop": "64px",
+      }
+    }
+  >
+    <div
+      className="css-view-g5y9jx"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "flex": 1,
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-marginRight-1b7u577"
+      dir={null}
+      ref={[Function]}
+    />
+    <div
+      className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-backgroundColor-z6hqnn r-borderColor-sptg1m r-borderRadius-16uyjmq r-borderWidth-d045u9 r-boxShadow-1u5n42f r-padding-1slz7xr"
       dir={null}
       onBlur={[Function]}
       onClick={[Function]}
@@ -788,11 +3696,176 @@ exports[`Visual Regression Tests Responsive Design Snapshots should match compon
       tabIndex={0}
     >
       <div
-        className="css-text-146c3p1 r-color-jwli3a r-fontSize-ubezar r-fontWeight-vw2c0b"
+        className="css-text-146c3p1 r-fontSize-1x35g6"
         dir="auto"
         ref={[Function]}
       >
-        Try Again
+        ⚙️
+      </div>
+    </div>
+  </div>
+  <div
+    className="css-view-g5y9jx r-alignItems-1awozwy r-flex-13awgt0 r-justifyContent-1777fci r-paddingInline-u9wvl5 r-paddingTop-1knelpx"
+    dir={null}
+    ref={[Function]}
+  >
+    <div
+      className="css-view-g5y9jx r-marginBottom-8d26hk"
+      dir={null}
+      ref={[Function]}
+    >
+      <div
+        className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+        dir={null}
+        ref={[Function]}
+      >
+        <button
+          aria-label="Stories button"
+          className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-boxShadow-12et9rd r-justifyContent-1777fci r-borderRadius-2j1mxk r-height-ff8gi r-width-1x93onp"
+          data-testid="menu-icon-stories"
+          dir={null}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onContextMenu={[Function]}
+          onFocus={[Function]}
+          onKeyDown={[Function]}
+          ref={[Function]}
+          role="button"
+          tabIndex={0}
+          type="button"
+        >
+          <div
+            className="css-view-g5y9jx r-position-u8s1d r-right-jn5ml r-top-jvuzdy r-zIndex-mhe3cw"
+            dir={null}
+            ref={[Function]}
+          >
+            <div
+              className="css-text-146c3p1 r-color-a4n0a9 r-fontSize-adyw6z"
+              dir="auto"
+              ref={[Function]}
+            >
+              ✨
+            </div>
+          </div>
+          MockSvg-70x70-1
+        </button>
+        <div
+          className="css-text-146c3p1 r-color-jwli3a r-textAlign-q4m81j r-textShadow-mscz7m r-fontSize-ubezar r-fontWeight-b88u0q r-marginTop-1s2bzr4"
+          dir="auto"
+          ref={[Function]}
+        >
+          Stories
+        </div>
+      </div>
+    </div>
+    <div
+      className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci r-width-1sxiqef"
+      dir={null}
+      ref={[Function]}
+    >
+      <div
+        className="css-view-g5y9jx r-flexDirection-18u37iz r-justifyContent-1wtj0ep r-marginBottom-117bsoe r-width-13qz1uu"
+        dir={null}
+        ref={[Function]}
+      >
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Sensory button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-sensory"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
+        </div>
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Emotions button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-emotions"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
+        </div>
+      </div>
+      <div
+        className="css-view-g5y9jx r-flexDirection-18u37iz r-justifyContent-1wtj0ep r-width-13qz1uu"
+        dir={null}
+        ref={[Function]}
+      >
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Bedtime Music button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-bedtime"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
+        </div>
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Screen Time button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-screen_time"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -1013,6 +4086,1024 @@ exports[`Visual Regression Tests StoryBookReader Snapshots should match StoryBoo
 </div>
 `;
 
+exports[`Visual Regression Tests StoryCompletionScreen Snapshots should match StoryCompletionScreen for bedtime stories: story-completion-bedtime 1`] = `
+<div
+  className="css-view-g5y9jx r-flex-13awgt0"
+  dir={null}
+  ref={[Function]}
+>
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "10px",
+        "opacity": 0.3,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "8.527987712914182px",
+        "opacity": 0.5554363660263334,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "-9.28076391801369px",
+        "opacity": 0.3323832465073792,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "-0.8611713502705243px",
+        "opacity": 0.48964718404386076,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "-9.585222096793586px",
+        "opacity": 0.508269501265022,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "-1.934885921618843px",
+        "opacity": 0.37752612154981763,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "1.72729732425978px",
+        "opacity": 0.5543175729510039,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "-3.6467754000841524px",
+        "opacity": 0.5586730089780758,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "6.561421647656971px",
+        "opacity": 0.6770651712584368,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "-2.821244935730647px",
+        "opacity": 0.4149551471222367,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "8.041310140688438px",
+        "opacity": 0.5474665720019403,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "-0.5070930800320639px",
+        "opacity": 0.4627353082864829,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "-4.702941444902535px",
+        "opacity": 0.54750622136944,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "-4.392854922662082px",
+        "opacity": 0.6024617294184282,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "6.328650859877598px",
+        "opacity": 0.467988325242186,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx r-flex-13awgt0 r-justifyContent-1wtj0ep r-paddingInline-u9wvl5"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "paddingTop": "84px",
+      }
+    }
+  >
+    <div
+      className="css-view-g5y9jx r-alignItems-1awozwy r-marginTop-1lxl8vk"
+      dir={null}
+      ref={[Function]}
+    >
+      <div
+        className="css-text-146c3p1 r-fontSize-87bcf5 r-marginBottom-117bsoe"
+        dir="auto"
+        ref={[Function]}
+      >
+        🎉
+      </div>
+      <div
+        className="css-text-146c3p1 r-color-jwli3a r-fontFamily-1io0bih r-fontSize-1ui5ee8 r-fontWeight-vw2c0b r-marginBottom-15d164r r-textAlign-q4m81j r-textShadow-1nh45zr"
+        dir="auto"
+        ref={[Function]}
+      >
+        Story Complete!
+      </div>
+      <div
+        className="css-text-146c3p1 r-color-jwli3a r-fontFamily-1io0bih r-fontSize-1i10wst r-opacity-sgbo92 r-textAlign-q4m81j r-textShadow-14cjpf8"
+        dir="auto"
+        ref={[Function]}
+      >
+        You finished "
+        Snapshot Test Story
+        "
+      </div>
+    </div>
+    <div
+      className="css-view-g5y9jx r-alignSelf-1kihuf0 r-flex-13awgt0 r-justifyContent-1777fci r-maxWidth-hvns9x r-width-13qz1uu"
+      dir={null}
+      ref={[Function]}
+    >
+      <div
+        className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-borderRadius-y47klf r-boxShadow-us8l0w r-marginBlock-bx70bn r-padding-1pcd2l5 r-backgroundColor-z6hqnn r-marginBottom-117bsoe r-paddingBlock-e51qtw"
+        dir={null}
+        onBlur={[Function]}
+        onClick={[Function]}
+        onContextMenu={[Function]}
+        onFocus={[Function]}
+        onKeyDown={[Function]}
+        ref={[Function]}
+        tabIndex={0}
+      >
+        <div
+          className="css-text-146c3p1 r-fontSize-s67bdx r-marginBottom-15d164r"
+          dir="auto"
+          ref={[Function]}
+        >
+          🐨
+        </div>
+        <div
+          className="css-text-146c3p1 r-color-1l35f8a r-fontFamily-1io0bih r-fontSize-evnaw r-fontWeight-vw2c0b r-marginBottom-d0pm55"
+          dir="auto"
+          ref={[Function]}
+        >
+          Snuggle Little Wombat
+        </div>
+        <div
+          className="css-text-146c3p1 r-color-1ycjszv r-fontFamily-1io0bih r-fontSize-ubezar r-textAlign-q4m81j"
+          dir="auto"
+          ref={[Function]}
+        >
+          Continue with bedtime stories
+        </div>
+      </div>
+      <div
+        className="css-view-g5y9jx r-flexDirection-18u37iz r-justifyContent-1wtj0ep"
+        dir={null}
+        ref={[Function]}
+      >
+        <div
+          className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-borderRadius-y47klf r-boxShadow-us8l0w r-marginBlock-bx70bn r-padding-1pcd2l5 r-backgroundColor-n7aj9u r-flex-13awgt0 r-marginInline-17q4wm6 r-paddingBlock-1d7mnkm"
+          dir={null}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onContextMenu={[Function]}
+          onFocus={[Function]}
+          onKeyDown={[Function]}
+          ref={[Function]}
+          tabIndex={0}
+        >
+          <div
+            className="css-text-146c3p1 r-fontSize-1ui5ee8 r-marginBottom-5oul0u"
+            dir="auto"
+            ref={[Function]}
+          >
+            🔄
+          </div>
+          <div
+            className="css-text-146c3p1 r-color-1l35f8a r-fontFamily-1io0bih r-fontSize-ubezar r-fontWeight-vw2c0b r-textAlign-q4m81j"
+            dir="auto"
+            ref={[Function]}
+          >
+            Read Again
+          </div>
+        </div>
+        <div
+          className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-borderRadius-y47klf r-boxShadow-us8l0w r-marginBlock-bx70bn r-padding-1pcd2l5 r-backgroundColor-n7aj9u r-flex-13awgt0 r-marginInline-17q4wm6 r-paddingBlock-1d7mnkm"
+          dir={null}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onContextMenu={[Function]}
+          onFocus={[Function]}
+          onKeyDown={[Function]}
+          ref={[Function]}
+          tabIndex={0}
+        >
+          <div
+            className="css-text-146c3p1 r-fontSize-1ui5ee8 r-marginBottom-5oul0u"
+            dir="auto"
+            ref={[Function]}
+          >
+            🎵
+          </div>
+          <div
+            className="css-text-146c3p1 r-color-1l35f8a r-fontFamily-1io0bih r-fontSize-ubezar r-fontWeight-vw2c0b r-textAlign-q4m81j"
+            dir="auto"
+            ref={[Function]}
+          >
+            Bedtime Music
+          </div>
+        </div>
+        <div
+          className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-borderRadius-y47klf r-boxShadow-us8l0w r-marginBlock-bx70bn r-padding-1pcd2l5 r-backgroundColor-n7aj9u r-flex-13awgt0 r-marginInline-17q4wm6 r-paddingBlock-1d7mnkm"
+          dir={null}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onContextMenu={[Function]}
+          onFocus={[Function]}
+          onKeyDown={[Function]}
+          ref={[Function]}
+          tabIndex={0}
+        >
+          <div
+            className="css-text-146c3p1 r-fontSize-1ui5ee8 r-marginBottom-5oul0u"
+            dir="auto"
+            ref={[Function]}
+          >
+            🐨
+          </div>
+          <div
+            className="css-text-146c3p1 r-color-1l35f8a r-fontFamily-1io0bih r-fontSize-ubezar r-fontWeight-vw2c0b r-textAlign-q4m81j"
+            dir="auto"
+            ref={[Function]}
+          >
+            Snuggle Little Wombat
+          </div>
+        </div>
+      </div>
+      <div
+        className="css-view-g5y9jx r-flexDirection-18u37iz r-justifyContent-1wtj0ep"
+        dir={null}
+        ref={[Function]}
+      >
+        <div
+          className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-borderRadius-y47klf r-boxShadow-us8l0w r-marginBlock-bx70bn r-padding-1pcd2l5 r-backgroundColor-n7aj9u r-flex-13awgt0 r-marginInline-17q4wm6 r-paddingBlock-1d7mnkm"
+          dir={null}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onContextMenu={[Function]}
+          onFocus={[Function]}
+          onKeyDown={[Function]}
+          ref={[Function]}
+          style={
+            {
+              "marginBottom": "54px",
+            }
+          }
+          tabIndex={0}
+        >
+          <div
+            className="css-text-146c3p1 r-fontSize-1ui5ee8 r-marginBottom-5oul0u"
+            dir="auto"
+            ref={[Function]}
+          >
+            ✕
+          </div>
+          <div
+            className="css-text-146c3p1 r-color-1l35f8a r-fontFamily-1io0bih r-fontSize-ubezar r-fontWeight-vw2c0b r-textAlign-q4m81j"
+            dir="auto"
+            ref={[Function]}
+          >
+            Close
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Visual Regression Tests StoryCompletionScreen Snapshots should match StoryCompletionScreen snapshot: story-completion-default 1`] = `
+<div
+  className="css-view-g5y9jx r-flex-13awgt0"
+  dir={null}
+  ref={[Function]}
+>
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "10px",
+        "opacity": 0.3,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "8.527987712914182px",
+        "opacity": 0.5554363660263334,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "-9.28076391801369px",
+        "opacity": 0.3323832465073792,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "-0.8611713502705243px",
+        "opacity": 0.48964718404386076,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "-9.585222096793586px",
+        "opacity": 0.508269501265022,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "-1.934885921618843px",
+        "opacity": 0.37752612154981763,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "1.72729732425978px",
+        "opacity": 0.5543175729510039,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "-3.6467754000841524px",
+        "opacity": 0.5586730089780758,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "6.561421647656971px",
+        "opacity": 0.6770651712584368,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "-2.821244935730647px",
+        "opacity": 0.4149551471222367,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "8.041310140688438px",
+        "opacity": 0.5474665720019403,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "-0.5070930800320639px",
+        "opacity": 0.4627353082864829,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "-4.702941444902535px",
+        "opacity": 0.54750622136944,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "-4.392854922662082px",
+        "opacity": 0.6024617294184282,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "6.328650859877598px",
+        "opacity": 0.467988325242186,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx r-flex-13awgt0 r-justifyContent-1wtj0ep r-paddingInline-u9wvl5"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "paddingTop": "84px",
+      }
+    }
+  >
+    <div
+      className="css-view-g5y9jx r-alignItems-1awozwy r-marginTop-1lxl8vk"
+      dir={null}
+      ref={[Function]}
+    >
+      <div
+        className="css-text-146c3p1 r-fontSize-87bcf5 r-marginBottom-117bsoe"
+        dir="auto"
+        ref={[Function]}
+      >
+        🎉
+      </div>
+      <div
+        className="css-text-146c3p1 r-color-jwli3a r-fontFamily-1io0bih r-fontSize-1ui5ee8 r-fontWeight-vw2c0b r-marginBottom-15d164r r-textAlign-q4m81j r-textShadow-1nh45zr"
+        dir="auto"
+        ref={[Function]}
+      >
+        Story Complete!
+      </div>
+      <div
+        className="css-text-146c3p1 r-color-jwli3a r-fontFamily-1io0bih r-fontSize-1i10wst r-opacity-sgbo92 r-textAlign-q4m81j r-textShadow-14cjpf8"
+        dir="auto"
+        ref={[Function]}
+      >
+        You finished "
+        Snapshot Test Story
+        "
+      </div>
+    </div>
+    <div
+      className="css-view-g5y9jx r-alignSelf-1kihuf0 r-flex-13awgt0 r-justifyContent-1777fci r-maxWidth-hvns9x r-width-13qz1uu"
+      dir={null}
+      ref={[Function]}
+    >
+      <div
+        className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-borderRadius-y47klf r-boxShadow-us8l0w r-marginBlock-bx70bn r-padding-1pcd2l5 r-backgroundColor-z6hqnn r-marginBottom-117bsoe r-paddingBlock-e51qtw"
+        dir={null}
+        onBlur={[Function]}
+        onClick={[Function]}
+        onContextMenu={[Function]}
+        onFocus={[Function]}
+        onKeyDown={[Function]}
+        ref={[Function]}
+        tabIndex={0}
+      >
+        <div
+          className="css-text-146c3p1 r-fontSize-s67bdx r-marginBottom-15d164r"
+          dir="auto"
+          ref={[Function]}
+        >
+          🗺️
+        </div>
+        <div
+          className="css-text-146c3p1 r-color-1l35f8a r-fontFamily-1io0bih r-fontSize-evnaw r-fontWeight-vw2c0b r-marginBottom-d0pm55"
+          dir="auto"
+          ref={[Function]}
+        >
+          Pirate Adventure
+        </div>
+        <div
+          className="css-text-146c3p1 r-color-1ycjszv r-fontFamily-1io0bih r-fontSize-ubezar r-textAlign-q4m81j"
+          dir="auto"
+          ref={[Function]}
+        >
+          Continue with adventure stories
+        </div>
+      </div>
+      <div
+        className="css-view-g5y9jx r-flexDirection-18u37iz r-justifyContent-1wtj0ep"
+        dir={null}
+        ref={[Function]}
+      >
+        <div
+          className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-borderRadius-y47klf r-boxShadow-us8l0w r-marginBlock-bx70bn r-padding-1pcd2l5 r-backgroundColor-n7aj9u r-flex-13awgt0 r-marginInline-17q4wm6 r-paddingBlock-1d7mnkm"
+          dir={null}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onContextMenu={[Function]}
+          onFocus={[Function]}
+          onKeyDown={[Function]}
+          ref={[Function]}
+          tabIndex={0}
+        >
+          <div
+            className="css-text-146c3p1 r-fontSize-1ui5ee8 r-marginBottom-5oul0u"
+            dir="auto"
+            ref={[Function]}
+          >
+            🔄
+          </div>
+          <div
+            className="css-text-146c3p1 r-color-1l35f8a r-fontFamily-1io0bih r-fontSize-ubezar r-fontWeight-vw2c0b r-textAlign-q4m81j"
+            dir="auto"
+            ref={[Function]}
+          >
+            Read Again
+          </div>
+        </div>
+        <div
+          className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-borderRadius-y47klf r-boxShadow-us8l0w r-marginBlock-bx70bn r-padding-1pcd2l5 r-backgroundColor-n7aj9u r-flex-13awgt0 r-marginInline-17q4wm6 r-paddingBlock-1d7mnkm"
+          dir={null}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onContextMenu={[Function]}
+          onFocus={[Function]}
+          onKeyDown={[Function]}
+          ref={[Function]}
+          tabIndex={0}
+        >
+          <div
+            className="css-text-146c3p1 r-fontSize-1ui5ee8 r-marginBottom-5oul0u"
+            dir="auto"
+            ref={[Function]}
+          >
+            🎵
+          </div>
+          <div
+            className="css-text-146c3p1 r-color-1l35f8a r-fontFamily-1io0bih r-fontSize-ubezar r-fontWeight-vw2c0b r-textAlign-q4m81j"
+            dir="auto"
+            ref={[Function]}
+          >
+            Bedtime Music
+          </div>
+        </div>
+        <div
+          className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-borderRadius-y47klf r-boxShadow-us8l0w r-marginBlock-bx70bn r-padding-1pcd2l5 r-backgroundColor-n7aj9u r-flex-13awgt0 r-marginInline-17q4wm6 r-paddingBlock-1d7mnkm"
+          dir={null}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onContextMenu={[Function]}
+          onFocus={[Function]}
+          onKeyDown={[Function]}
+          ref={[Function]}
+          tabIndex={0}
+        >
+          <div
+            className="css-text-146c3p1 r-fontSize-1ui5ee8 r-marginBottom-5oul0u"
+            dir="auto"
+            ref={[Function]}
+          >
+            🗺️
+          </div>
+          <div
+            className="css-text-146c3p1 r-color-1l35f8a r-fontFamily-1io0bih r-fontSize-ubezar r-fontWeight-vw2c0b r-textAlign-q4m81j"
+            dir="auto"
+            ref={[Function]}
+          >
+            Pirate Adventure
+          </div>
+        </div>
+      </div>
+      <div
+        className="css-view-g5y9jx r-flexDirection-18u37iz r-justifyContent-1wtj0ep"
+        dir={null}
+        ref={[Function]}
+      >
+        <div
+          className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-borderRadius-y47klf r-boxShadow-us8l0w r-marginBlock-bx70bn r-padding-1pcd2l5 r-backgroundColor-n7aj9u r-flex-13awgt0 r-marginInline-17q4wm6 r-paddingBlock-1d7mnkm"
+          dir={null}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onContextMenu={[Function]}
+          onFocus={[Function]}
+          onKeyDown={[Function]}
+          ref={[Function]}
+          style={
+            {
+              "marginBottom": "54px",
+            }
+          }
+          tabIndex={0}
+        >
+          <div
+            className="css-text-146c3p1 r-fontSize-1ui5ee8 r-marginBottom-5oul0u"
+            dir="auto"
+            ref={[Function]}
+          >
+            ✕
+          </div>
+          <div
+            className="css-text-146c3p1 r-color-1l35f8a r-fontFamily-1io0bih r-fontSize-ubezar r-fontWeight-vw2c0b r-textAlign-q4m81j"
+            dir="auto"
+            ref={[Function]}
+          >
+            Close
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
 exports[`Visual Regression Tests StorySelectionScreen Snapshots should match StorySelectionScreen snapshot: story-selection-default 1`] = `
 <div
   className="css-view-g5y9jx"
@@ -1036,8 +5127,8 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "7.731907677206902px",
-        "opacity": 0.3034496133026308,
+        "left": "10px",
+        "opacity": 0.3,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -1056,8 +5147,8 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "3.727189550803498px",
-        "opacity": 0.3735105893444953,
+        "left": "8.527987712914182px",
+        "opacity": 0.5554363660263334,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -1076,8 +5167,8 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "1.4448738969164552px",
-        "opacity": 0.3823817526868333,
+        "left": "-9.28076391801369px",
+        "opacity": 0.3323832465073792,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -1096,8 +5187,8 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "4.4966823511397624px",
-        "opacity": 0.6750541363806348,
+        "left": "-0.8611713502705243px",
+        "opacity": 0.48964718404386076,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -1116,8 +5207,8 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "-6.115436202850901px",
-        "opacity": 0.4290758206032536,
+        "left": "-9.585222096793586px",
+        "opacity": 0.508269501265022,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -1136,8 +5227,8 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "-4.244140080807215px",
-        "opacity": 0.3553558153175932,
+        "left": "-1.934885921618843px",
+        "opacity": 0.37752612154981763,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -1156,8 +5247,8 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "-0.7998053254348481px",
-        "opacity": 0.37378837064076675,
+        "left": "1.72729732425978px",
+        "opacity": 0.5543175729510039,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -1176,8 +5267,8 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "-8.404214789871446px",
-        "opacity": 0.6737742012410927,
+        "left": "-3.6467754000841524px",
+        "opacity": 0.5586730089780758,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -1196,8 +5287,8 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "-9.358962172392967px",
-        "opacity": 0.32636059154064545,
+        "left": "6.561421647656971px",
+        "opacity": 0.6770651712584368,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -1216,8 +5307,8 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "-7.038863914988127px",
-        "opacity": 0.3081748995013505,
+        "left": "-2.821244935730647px",
+        "opacity": 0.4149551471222367,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -1236,8 +5327,8 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "-7.770736598675072px",
-        "opacity": 0.5248755280423996,
+        "left": "8.041310140688438px",
+        "opacity": 0.5474665720019403,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -1256,8 +5347,8 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "-1.8589945786706608px",
-        "opacity": 0.6564057645687742,
+        "left": "-0.5070930800320639px",
+        "opacity": 0.4627353082864829,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -1276,8 +5367,8 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "8.225927056345146px",
-        "opacity": 0.4205054342097586,
+        "left": "-4.702941444902535px",
+        "opacity": 0.54750622136944,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -1296,8 +5387,8 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "-4.002501314127006px",
-        "opacity": 0.34402946250117356,
+        "left": "-4.392854922662082px",
+        "opacity": 0.6024617294184282,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -1316,8 +5407,8 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "7.44288366866614px",
-        "opacity": 0.4978548024647812,
+        "left": "6.328650859877598px",
+        "opacity": 0.467988325242186,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -3303,7 +7394,7 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
             }
           }
         >
-          ✨ Surprise Me! ✨
+          Surprise Me!
         </div>
       </div>
     </div>
@@ -3334,8 +7425,8 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "4.792905114259143px",
-        "opacity": 0.412855854417934,
+        "left": "10px",
+        "opacity": 0.3,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -3354,8 +7445,8 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "5.283447055761359px",
-        "opacity": 0.46735733138058666,
+        "left": "8.527987712914182px",
+        "opacity": 0.5554363660263334,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -3374,8 +7465,8 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "-7.085777461964131px",
-        "opacity": 0.32463520993786676,
+        "left": "-9.28076391801369px",
+        "opacity": 0.3323832465073792,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -3394,8 +7485,8 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "-1.317452249785834px",
-        "opacity": 0.3612574064826467,
+        "left": "-0.8611713502705243px",
+        "opacity": 0.48964718404386076,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -3414,8 +7505,8 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "-0.4200481753246734px",
-        "opacity": 0.5469750042679021,
+        "left": "-9.585222096793586px",
+        "opacity": 0.508269501265022,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -3434,8 +7525,8 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "0.5033447095847663px",
-        "opacity": 0.529487742821296,
+        "left": "-1.934885921618843px",
+        "opacity": 0.37752612154981763,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -3454,8 +7545,8 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "3.974111103473632px",
-        "opacity": 0.41781132157222955,
+        "left": "1.72729732425978px",
+        "opacity": 0.5543175729510039,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -3474,8 +7565,8 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "2.956360768535311px",
-        "opacity": 0.3545644438693579,
+        "left": "-3.6467754000841524px",
+        "opacity": 0.5586730089780758,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -3494,8 +7585,8 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "1.2557806944655159px",
-        "opacity": 0.30314902822873896,
+        "left": "6.561421647656971px",
+        "opacity": 0.6770651712584368,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -3514,8 +7605,8 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "7.638915541759732px",
-        "opacity": 0.31423959847229727,
+        "left": "-2.821244935730647px",
+        "opacity": 0.4149551471222367,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -3534,8 +7625,8 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "-1.7379607088794558px",
-        "opacity": 0.6677113457230148,
+        "left": "8.041310140688438px",
+        "opacity": 0.5474665720019403,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -3554,8 +7645,8 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "7.780031290779168px",
-        "opacity": 0.6294881461950756,
+        "left": "-0.5070930800320639px",
+        "opacity": 0.4627353082864829,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -3574,8 +7665,8 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "6.831781756506556px",
-        "opacity": 0.5848857182721221,
+        "left": "-4.702941444902535px",
+        "opacity": 0.54750622136944,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -3594,8 +7685,8 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "2.918686904531609px",
-        "opacity": 0.5092786658100851,
+        "left": "-4.392854922662082px",
+        "opacity": 0.6024617294184282,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -3614,8 +7705,8 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "-8.885924991647272px",
-        "opacity": 0.49646680376904895,
+        "left": "6.328650859877598px",
+        "opacity": 0.467988325242186,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -5601,7 +9692,1003 @@ exports[`Visual Regression Tests StorySelectionScreen Snapshots should match Sto
             }
           }
         >
-          ✨ Surprise Me! ✨
+          Surprise Me!
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Visual Regression Tests Theme and Style Snapshots should match completion screen with consistent button styling: completion-screen-button-styling 1`] = `
+<div
+  className="css-view-g5y9jx r-flex-13awgt0"
+  dir={null}
+  ref={[Function]}
+>
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "10px",
+        "opacity": 0.3,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "8.527987712914182px",
+        "opacity": 0.5554363660263334,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "-9.28076391801369px",
+        "opacity": 0.3323832465073792,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "-0.8611713502705243px",
+        "opacity": 0.48964718404386076,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "-9.585222096793586px",
+        "opacity": 0.508269501265022,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "-1.934885921618843px",
+        "opacity": 0.37752612154981763,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "1.72729732425978px",
+        "opacity": 0.5543175729510039,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "-3.6467754000841524px",
+        "opacity": 0.5586730089780758,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "6.561421647656971px",
+        "opacity": 0.6770651712584368,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "-2.821244935730647px",
+        "opacity": 0.4149551471222367,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "8.041310140688438px",
+        "opacity": 0.5474665720019403,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "-0.5070930800320639px",
+        "opacity": 0.4627353082864829,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "-4.702941444902535px",
+        "opacity": 0.54750622136944,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "-4.392854922662082px",
+        "opacity": 0.6024617294184282,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "backgroundColor": "rgba(255,255,255,1.00)",
+        "borderBottomLeftRadius": "1.5px",
+        "borderBottomRightRadius": "1.5px",
+        "borderTopLeftRadius": "1.5px",
+        "borderTopRightRadius": "1.5px",
+        "height": "3px",
+        "left": "6.328650859877598px",
+        "opacity": 0.467988325242186,
+        "position": "absolute",
+        "top": "20px",
+        "width": "3px",
+      }
+    }
+  />
+  <div
+    className="css-view-g5y9jx r-flex-13awgt0 r-justifyContent-1wtj0ep r-paddingInline-u9wvl5"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "paddingTop": "84px",
+      }
+    }
+  >
+    <div
+      className="css-view-g5y9jx r-alignItems-1awozwy r-marginTop-1lxl8vk"
+      dir={null}
+      ref={[Function]}
+    >
+      <div
+        className="css-text-146c3p1 r-fontSize-87bcf5 r-marginBottom-117bsoe"
+        dir="auto"
+        ref={[Function]}
+      >
+        🎉
+      </div>
+      <div
+        className="css-text-146c3p1 r-color-jwli3a r-fontFamily-1io0bih r-fontSize-1ui5ee8 r-fontWeight-vw2c0b r-marginBottom-15d164r r-textAlign-q4m81j r-textShadow-1nh45zr"
+        dir="auto"
+        ref={[Function]}
+      >
+        Story Complete!
+      </div>
+      <div
+        className="css-text-146c3p1 r-color-jwli3a r-fontFamily-1io0bih r-fontSize-1i10wst r-opacity-sgbo92 r-textAlign-q4m81j r-textShadow-14cjpf8"
+        dir="auto"
+        ref={[Function]}
+      >
+        You finished "
+        Snapshot Test Story
+        "
+      </div>
+    </div>
+    <div
+      className="css-view-g5y9jx r-alignSelf-1kihuf0 r-flex-13awgt0 r-justifyContent-1777fci r-maxWidth-hvns9x r-width-13qz1uu"
+      dir={null}
+      ref={[Function]}
+    >
+      <div
+        className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-borderRadius-y47klf r-boxShadow-us8l0w r-marginBlock-bx70bn r-padding-1pcd2l5 r-backgroundColor-z6hqnn r-marginBottom-117bsoe r-paddingBlock-e51qtw"
+        dir={null}
+        onBlur={[Function]}
+        onClick={[Function]}
+        onContextMenu={[Function]}
+        onFocus={[Function]}
+        onKeyDown={[Function]}
+        ref={[Function]}
+        tabIndex={0}
+      >
+        <div
+          className="css-text-146c3p1 r-fontSize-s67bdx r-marginBottom-15d164r"
+          dir="auto"
+          ref={[Function]}
+        >
+          🗺️
+        </div>
+        <div
+          className="css-text-146c3p1 r-color-1l35f8a r-fontFamily-1io0bih r-fontSize-evnaw r-fontWeight-vw2c0b r-marginBottom-d0pm55"
+          dir="auto"
+          ref={[Function]}
+        >
+          Pirate Adventure
+        </div>
+        <div
+          className="css-text-146c3p1 r-color-1ycjszv r-fontFamily-1io0bih r-fontSize-ubezar r-textAlign-q4m81j"
+          dir="auto"
+          ref={[Function]}
+        >
+          Continue with adventure stories
+        </div>
+      </div>
+      <div
+        className="css-view-g5y9jx r-flexDirection-18u37iz r-justifyContent-1wtj0ep"
+        dir={null}
+        ref={[Function]}
+      >
+        <div
+          className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-borderRadius-y47klf r-boxShadow-us8l0w r-marginBlock-bx70bn r-padding-1pcd2l5 r-backgroundColor-n7aj9u r-flex-13awgt0 r-marginInline-17q4wm6 r-paddingBlock-1d7mnkm"
+          dir={null}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onContextMenu={[Function]}
+          onFocus={[Function]}
+          onKeyDown={[Function]}
+          ref={[Function]}
+          tabIndex={0}
+        >
+          <div
+            className="css-text-146c3p1 r-fontSize-1ui5ee8 r-marginBottom-5oul0u"
+            dir="auto"
+            ref={[Function]}
+          >
+            🔄
+          </div>
+          <div
+            className="css-text-146c3p1 r-color-1l35f8a r-fontFamily-1io0bih r-fontSize-ubezar r-fontWeight-vw2c0b r-textAlign-q4m81j"
+            dir="auto"
+            ref={[Function]}
+          >
+            Read Again
+          </div>
+        </div>
+        <div
+          className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-borderRadius-y47klf r-boxShadow-us8l0w r-marginBlock-bx70bn r-padding-1pcd2l5 r-backgroundColor-n7aj9u r-flex-13awgt0 r-marginInline-17q4wm6 r-paddingBlock-1d7mnkm"
+          dir={null}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onContextMenu={[Function]}
+          onFocus={[Function]}
+          onKeyDown={[Function]}
+          ref={[Function]}
+          tabIndex={0}
+        >
+          <div
+            className="css-text-146c3p1 r-fontSize-1ui5ee8 r-marginBottom-5oul0u"
+            dir="auto"
+            ref={[Function]}
+          >
+            🎵
+          </div>
+          <div
+            className="css-text-146c3p1 r-color-1l35f8a r-fontFamily-1io0bih r-fontSize-ubezar r-fontWeight-vw2c0b r-textAlign-q4m81j"
+            dir="auto"
+            ref={[Function]}
+          >
+            Bedtime Music
+          </div>
+        </div>
+        <div
+          className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-borderRadius-y47klf r-boxShadow-us8l0w r-marginBlock-bx70bn r-padding-1pcd2l5 r-backgroundColor-n7aj9u r-flex-13awgt0 r-marginInline-17q4wm6 r-paddingBlock-1d7mnkm"
+          dir={null}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onContextMenu={[Function]}
+          onFocus={[Function]}
+          onKeyDown={[Function]}
+          ref={[Function]}
+          tabIndex={0}
+        >
+          <div
+            className="css-text-146c3p1 r-fontSize-1ui5ee8 r-marginBottom-5oul0u"
+            dir="auto"
+            ref={[Function]}
+          >
+            🗺️
+          </div>
+          <div
+            className="css-text-146c3p1 r-color-1l35f8a r-fontFamily-1io0bih r-fontSize-ubezar r-fontWeight-vw2c0b r-textAlign-q4m81j"
+            dir="auto"
+            ref={[Function]}
+          >
+            Pirate Adventure
+          </div>
+        </div>
+      </div>
+      <div
+        className="css-view-g5y9jx r-flexDirection-18u37iz r-justifyContent-1wtj0ep"
+        dir={null}
+        ref={[Function]}
+      >
+        <div
+          className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-borderRadius-y47klf r-boxShadow-us8l0w r-marginBlock-bx70bn r-padding-1pcd2l5 r-backgroundColor-n7aj9u r-flex-13awgt0 r-marginInline-17q4wm6 r-paddingBlock-1d7mnkm"
+          dir={null}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onContextMenu={[Function]}
+          onFocus={[Function]}
+          onKeyDown={[Function]}
+          ref={[Function]}
+          style={
+            {
+              "marginBottom": "54px",
+            }
+          }
+          tabIndex={0}
+        >
+          <div
+            className="css-text-146c3p1 r-fontSize-1ui5ee8 r-marginBottom-5oul0u"
+            dir="auto"
+            ref={[Function]}
+          >
+            ✕
+          </div>
+          <div
+            className="css-text-146c3p1 r-color-1l35f8a r-fontFamily-1io0bih r-fontSize-ubezar r-fontWeight-vw2c0b r-textAlign-q4m81j"
+            dir="auto"
+            ref={[Function]}
+          >
+            Close
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Visual Regression Tests Theme and Style Snapshots should match components with consistent styling: main-menu-consistent-styling 1`] = `
+<div
+  className="css-view-g5y9jx r-backgroundColor-1niwhzg r-flex-13awgt0"
+  data-testid="main-menu-container"
+  dir={null}
+  ref={[Function]}
+>
+  <div
+    className="css-view-g5y9jx r-bottom-1p0dtai r-left-1d2f490 r-position-u8s1d r-right-zchlnj r-top-ipm5af r-zIndex-417010"
+    dir={null}
+    ref={[Function]}
+  >
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "10px",
+          "opacity": 0.3,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "8.527987712914182px",
+          "opacity": 0.5554363660263334,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-9.28076391801369px",
+          "opacity": 0.3323832465073792,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-0.8611713502705243px",
+          "opacity": 0.48964718404386076,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-9.585222096793586px",
+          "opacity": 0.508269501265022,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-1.934885921618843px",
+          "opacity": 0.37752612154981763,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "1.72729732425978px",
+          "opacity": 0.5543175729510039,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-3.6467754000841524px",
+          "opacity": 0.5586730089780758,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "6.561421647656971px",
+          "opacity": 0.6770651712584368,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-2.821244935730647px",
+          "opacity": 0.4149551471222367,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "8.041310140688438px",
+          "opacity": 0.5474665720019403,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-0.5070930800320639px",
+          "opacity": 0.4627353082864829,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-4.702941444902535px",
+          "opacity": 0.54750622136944,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "-4.392854922662082px",
+          "opacity": 0.6024617294184282,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-backgroundColor-14lw9ot r-borderRadius-7abbl3 r-height-1hlnpa r-position-u8s1d r-width-432wen"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "left": "6.328650859877598px",
+          "opacity": 0.467988325242186,
+          "top": "20px",
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-position-u8s1d"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "top": "0px",
+          "zIndex": 2,
+        }
+      }
+    >
+      MockSvg-140x170-0.8
+    </div>
+    <div
+      className="css-view-g5y9jx r-position-u8s1d"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "top": "0px",
+          "zIndex": 3,
+        }
+      }
+    >
+      MockSvg-160x190-0.6
+    </div>
+  </div>
+  <div
+    className="css-view-g5y9jx r-bottom-1p0dtai r-height-1594n1d r-left-1d2f490 r-position-u8s1d r-right-zchlnj r-width-13qz1uu r-zIndex-184en5c r-pointerEvents-633pao"
+    dir={null}
+    ref={[Function]}
+  >
+    <div
+      className="css-view-g5y9jx"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "alignItems": "center",
+          "height": "100%",
+          "justifyContent": "flex-end",
+          "width": "100%",
+        }
+      }
+    >
+      <div
+        className="css-view-g5y9jx r-flexBasis-1mlwlqe r-overflow-1udh08x r-zIndex-417010"
+        dir={null}
+        ref={[Function]}
+        style={
+          {
+            "height": "286px",
+            "opacity": 0.8,
+            "width": "286px",
+          }
+        }
+      >
+        <div
+          className="css-view-g5y9jx r-backgroundColor-1niwhzg r-backgroundPosition-vvn4in r-backgroundRepeat-u6sd8q r-bottom-1p0dtai r-height-1pi2tsx r-left-1d2f490 r-position-u8s1d r-right-zchlnj r-top-ipm5af r-width-13qz1uu r-zIndex-1wyyakw r-backgroundSize-ehq7j7"
+          dir={null}
+          ref={[Function]}
+          style={
+            {
+              "backgroundImage": "url("test-file-stub")",
+            }
+          }
+          suppressHydrationWarning={true}
+        />
+        <img
+          alt=""
+          className="css-accessibilityImage-9pa8cd"
+          draggable={false}
+          ref={
+            {
+              "current": null,
+            }
+          }
+          src="test-file-stub"
+        />
+      </div>
+    </div>
+  </div>
+  <div
+    className="css-view-g5y9jx r-flexDirection-18u37iz r-justifyContent-1wtj0ep r-paddingBottom-k8qxaj r-paddingInline-u9wvl5"
+    dir={null}
+    ref={[Function]}
+    style={
+      {
+        "paddingTop": "64px",
+      }
+    }
+  >
+    <div
+      className="css-view-g5y9jx"
+      dir={null}
+      ref={[Function]}
+      style={
+        {
+          "flex": 1,
+        }
+      }
+    />
+    <div
+      className="css-view-g5y9jx r-marginRight-1b7u577"
+      dir={null}
+      ref={[Function]}
+    />
+    <div
+      className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-backgroundColor-z6hqnn r-borderColor-sptg1m r-borderRadius-16uyjmq r-borderWidth-d045u9 r-boxShadow-1u5n42f r-padding-1slz7xr"
+      dir={null}
+      onBlur={[Function]}
+      onClick={[Function]}
+      onContextMenu={[Function]}
+      onFocus={[Function]}
+      onKeyDown={[Function]}
+      ref={[Function]}
+      tabIndex={0}
+    >
+      <div
+        className="css-text-146c3p1 r-fontSize-1x35g6"
+        dir="auto"
+        ref={[Function]}
+      >
+        ⚙️
+      </div>
+    </div>
+  </div>
+  <div
+    className="css-view-g5y9jx r-alignItems-1awozwy r-flex-13awgt0 r-justifyContent-1777fci r-paddingInline-u9wvl5 r-paddingTop-1knelpx"
+    dir={null}
+    ref={[Function]}
+  >
+    <div
+      className="css-view-g5y9jx r-marginBottom-8d26hk"
+      dir={null}
+      ref={[Function]}
+    >
+      <div
+        className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+        dir={null}
+        ref={[Function]}
+      >
+        <button
+          aria-label="Stories button"
+          className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-boxShadow-12et9rd r-justifyContent-1777fci r-borderRadius-2j1mxk r-height-ff8gi r-width-1x93onp"
+          data-testid="menu-icon-stories"
+          dir={null}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onContextMenu={[Function]}
+          onFocus={[Function]}
+          onKeyDown={[Function]}
+          ref={[Function]}
+          role="button"
+          tabIndex={0}
+          type="button"
+        >
+          <div
+            className="css-view-g5y9jx r-position-u8s1d r-right-jn5ml r-top-jvuzdy r-zIndex-mhe3cw"
+            dir={null}
+            ref={[Function]}
+          >
+            <div
+              className="css-text-146c3p1 r-color-a4n0a9 r-fontSize-adyw6z"
+              dir="auto"
+              ref={[Function]}
+            >
+              ✨
+            </div>
+          </div>
+          MockSvg-70x70-1
+        </button>
+        <div
+          className="css-text-146c3p1 r-color-jwli3a r-textAlign-q4m81j r-textShadow-mscz7m r-fontSize-ubezar r-fontWeight-b88u0q r-marginTop-1s2bzr4"
+          dir="auto"
+          ref={[Function]}
+        >
+          Stories
+        </div>
+      </div>
+    </div>
+    <div
+      className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci r-width-1sxiqef"
+      dir={null}
+      ref={[Function]}
+    >
+      <div
+        className="css-view-g5y9jx r-flexDirection-18u37iz r-justifyContent-1wtj0ep r-marginBottom-117bsoe r-width-13qz1uu"
+        dir={null}
+        ref={[Function]}
+      >
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Sensory button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-sensory"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
+        </div>
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Emotions button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-emotions"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
+        </div>
+      </div>
+      <div
+        className="css-view-g5y9jx r-flexDirection-18u37iz r-justifyContent-1wtj0ep r-width-13qz1uu"
+        dir={null}
+        ref={[Function]}
+      >
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Bedtime Music button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-bedtime"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
+        </div>
+        <div
+          className="css-view-g5y9jx r-alignItems-1awozwy r-justifyContent-1777fci"
+          dir={null}
+          ref={[Function]}
+        >
+          <button
+            aria-label="Screen Time button"
+            className="css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-backgroundColor-6st0mw r-borderRadius-1lmcfpr r-boxShadow-12et9rd r-height-37igu r-justifyContent-1777fci r-width-19554kt r-opacity-icoktb"
+            data-testid="menu-icon-screen_time"
+            dir={null}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onContextMenu={[Function]}
+            onFocus={[Function]}
+            onKeyDown={[Function]}
+            ref={[Function]}
+            role="button"
+            tabIndex={0}
+            type="button"
+          >
+            MockSvg-48x48-1
+          </button>
         </div>
       </div>
     </div>
@@ -5632,8 +10719,8 @@ exports[`Visual Regression Tests Theme and Style Snapshots should match story se
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "7.689839070655067px",
-        "opacity": 0.3150561756295776,
+        "left": "10px",
+        "opacity": 0.3,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -5652,8 +10739,8 @@ exports[`Visual Regression Tests Theme and Style Snapshots should match story se
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "-4.463711454060256px",
-        "opacity": 0.3116010963841598,
+        "left": "8.527987712914182px",
+        "opacity": 0.5554363660263334,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -5672,8 +10759,8 @@ exports[`Visual Regression Tests Theme and Style Snapshots should match story se
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "-2.163371419580077px",
-        "opacity": 0.6681730644699233,
+        "left": "-9.28076391801369px",
+        "opacity": 0.3323832465073792,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -5692,8 +10779,8 @@ exports[`Visual Regression Tests Theme and Style Snapshots should match story se
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "1.4900320800051894px",
-        "opacity": 0.48425961292857533,
+        "left": "-0.8611713502705243px",
+        "opacity": 0.48964718404386076,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -5712,8 +10799,8 @@ exports[`Visual Regression Tests Theme and Style Snapshots should match story se
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "-5.928377056842248px",
-        "opacity": 0.3271556603755969,
+        "left": "-9.585222096793586px",
+        "opacity": 0.508269501265022,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -5732,8 +10819,8 @@ exports[`Visual Regression Tests Theme and Style Snapshots should match story se
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "-0.1117901786539619px",
-        "opacity": 0.5943631954301021,
+        "left": "-1.934885921618843px",
+        "opacity": 0.37752612154981763,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -5752,8 +10839,8 @@ exports[`Visual Regression Tests Theme and Style Snapshots should match story se
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "1.2661592918225537px",
-        "opacity": 0.5589899432224267,
+        "left": "1.72729732425978px",
+        "opacity": 0.5543175729510039,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -5772,8 +10859,8 @@ exports[`Visual Regression Tests Theme and Style Snapshots should match story se
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "1.9462089336818966px",
-        "opacity": 0.5542858762083077,
+        "left": "-3.6467754000841524px",
+        "opacity": 0.5586730089780758,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -5792,8 +10879,8 @@ exports[`Visual Regression Tests Theme and Style Snapshots should match story se
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "9.698869712748234px",
-        "opacity": 0.5847435593348353,
+        "left": "6.561421647656971px",
+        "opacity": 0.6770651712584368,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -5812,8 +10899,8 @@ exports[`Visual Regression Tests Theme and Style Snapshots should match story se
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "-4.20519480328168px",
-        "opacity": 0.394246320081428,
+        "left": "-2.821244935730647px",
+        "opacity": 0.4149551471222367,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -5832,8 +10919,8 @@ exports[`Visual Regression Tests Theme and Style Snapshots should match story se
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "-0.2645650560210733px",
-        "opacity": 0.6972115622219395,
+        "left": "8.041310140688438px",
+        "opacity": 0.5474665720019403,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -5852,8 +10939,8 @@ exports[`Visual Regression Tests Theme and Style Snapshots should match story se
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "-8.938890189300931px",
-        "opacity": 0.39486538554187167,
+        "left": "-0.5070930800320639px",
+        "opacity": 0.4627353082864829,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -5872,8 +10959,8 @@ exports[`Visual Regression Tests Theme and Style Snapshots should match story se
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "-7.035673827740538px",
-        "opacity": 0.4765059430565744,
+        "left": "-4.702941444902535px",
+        "opacity": 0.54750622136944,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -5892,8 +10979,8 @@ exports[`Visual Regression Tests Theme and Style Snapshots should match story se
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "-0.8361714567962366px",
-        "opacity": 0.3323698319501712,
+        "left": "-4.392854922662082px",
+        "opacity": 0.6024617294184282,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -5912,8 +10999,8 @@ exports[`Visual Regression Tests Theme and Style Snapshots should match story se
         "borderTopLeftRadius": "1.5px",
         "borderTopRightRadius": "1.5px",
         "height": "3px",
-        "left": "8.306894199023773px",
-        "opacity": 0.38531560486617267,
+        "left": "6.328650859877598px",
+        "opacity": 0.467988325242186,
         "position": "absolute",
         "top": "20px",
         "width": "3px",
@@ -7899,7 +12986,7 @@ exports[`Visual Regression Tests Theme and Style Snapshots should match story se
             }
           }
         >
-          ✨ Surprise Me! ✨
+          Surprise Me!
         </div>
       </div>
     </div>
