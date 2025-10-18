@@ -90,6 +90,70 @@ jest.mock('expo-font', () => ({
   loadAsync: jest.fn(),
 }));
 
+// Mock expo-av
+jest.mock('expo-av', () => ({
+  Audio: {
+    Sound: {
+      createAsync: jest.fn(() => Promise.resolve({
+        sound: {
+          playAsync: jest.fn(),
+          pauseAsync: jest.fn(),
+          stopAsync: jest.fn(),
+          unloadAsync: jest.fn(),
+          setIsLoopingAsync: jest.fn(),
+          setVolumeAsync: jest.fn(),
+          getStatusAsync: jest.fn(() => Promise.resolve({
+            isLoaded: true,
+            isPlaying: false,
+            positionMillis: 0,
+            durationMillis: 30000,
+          })),
+        },
+        status: {
+          isLoaded: true,
+          isPlaying: false,
+          positionMillis: 0,
+          durationMillis: 30000,
+        },
+      })),
+    },
+    setAudioModeAsync: jest.fn(),
+  },
+  AVPlaybackStatus: {},
+}));
+
+// Mock @expo/vector-icons
+jest.mock('@expo/vector-icons', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+
+  const createIconComponent = (name) => {
+    const IconComponent = ({ name: iconName, size = 24, color = '#000', testID, ...props }) => {
+      return React.createElement(View, {
+        ...props,
+        testID: testID || `icon-${name}-${iconName}`,
+        children: iconName || name,
+        style: { fontSize: size, color },
+        size,
+        color
+      });
+    };
+
+    IconComponent.displayName = `${name}Icon`;
+    return IconComponent;
+  };
+
+  return {
+    Ionicons: createIconComponent('Ionicons'),
+    AntDesign: createIconComponent('AntDesign'),
+    MaterialIcons: createIconComponent('MaterialIcons'),
+    FontAwesome: createIconComponent('FontAwesome'),
+    Entypo: createIconComponent('Entypo'),
+    Feather: createIconComponent('Feather'),
+    MaterialCommunityIcons: createIconComponent('MaterialCommunityIcons'),
+  };
+});
+
 jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem: jest.fn(),
   setItem: jest.fn(),

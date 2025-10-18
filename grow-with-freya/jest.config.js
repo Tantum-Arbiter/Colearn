@@ -30,6 +30,7 @@ module.exports = {
     '^expo-screen-orientation$': '<rootDir>/__mocks__/expo-screen-orientation.js',
     '^expo-haptics$': '<rootDir>/__mocks__/expo-haptics.js',
     '^expo-linear-gradient$': '<rootDir>/__mocks__/expo-linear-gradient.js',
+    '^@expo/vector-icons$': '<rootDir>/__mocks__/@expo/vector-icons.js',
   },
   transform: {
     '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', {
@@ -41,7 +42,7 @@ module.exports = {
     }],
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(react-native|@react-native|expo|@expo|react-native-reanimated|react-native-svg|@react-navigation|zustand|react-native-worklets|react-native-safe-area-context)/)',
+    'node_modules/(?!(react-native|@react-native|expo|@expo|expo-av|react-native-reanimated|react-native-svg|@react-navigation|zustand|react-native-worklets|react-native-safe-area-context)/)',
   ],
   testEnvironment: 'jsdom',
   coverageThreshold: {
