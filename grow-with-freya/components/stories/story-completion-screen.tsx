@@ -1,7 +1,8 @@
 import React, { useMemo, useEffect } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as ScreenOrientation from 'expo-screen-orientation';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -31,6 +32,30 @@ export function StoryCompletionScreen({
   onClose
 }: StoryCompletionScreenProps) {
   const insets = useSafeAreaInsets();
+
+  // Force portrait orientation on phones, allow landscape/portrait on tablets
+  useEffect(() => {
+    const handleOrientation = async () => {
+      try {
+        const { width, height } = Dimensions.get('window');
+        const isTablet = Math.min(width, height) >= 768; // iPad and larger
+
+        if (!isTablet) {
+          // Force portrait on phones
+          await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+          console.log('Story completion: Forced portrait orientation on phone');
+        } else {
+          // Allow both orientations on tablets
+          await ScreenOrientation.unlockAsync();
+          console.log('Story completion: Unlocked orientation for tablet');
+        }
+      } catch (error) {
+        console.warn('Failed to set orientation in story completion:', error);
+      }
+    };
+
+    handleOrientation();
+  }, []);
 
   // Generate star positions for background
   const starPositions = useMemo(() => generateStarPositions(VISUAL_EFFECTS.STAR_COUNT), []);
