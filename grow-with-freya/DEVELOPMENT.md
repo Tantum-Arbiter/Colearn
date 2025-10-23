@@ -3,9 +3,10 @@
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 20+ 
+- Node.js 20+
 - npm or yarn
 - Expo CLI (`npm install -g @expo/cli`)
+- EAS CLI (`npm install -g eas-cli`)
 - For iOS development: Xcode (macOS only)
 - For Android development: Android Studio
 
@@ -13,6 +14,13 @@
 ```bash
 cd grow-with-freya
 npm install
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your configuration
+
+# Set up EAS (first time only)
+./scripts/setup-eas.sh
 ```
 
 ### Development Commands
@@ -129,25 +137,49 @@ npm run eas:build:dev
 
 ## 🔄 CI/CD Pipeline
 
-### GitHub Actions Workflow
-The CI/CD pipeline runs automatically on:
-- Push to `main`, `develop`, or `Grow-with-Freya-app` branches
-- Pull requests to `main` or `develop`
+### Automated Workflows
 
-### Pipeline Stages
+The CI/CD pipeline includes multiple automated workflows:
 
-1. **🧪 Test & Lint**
-   - Runs all Jest tests
-   - ESLint code quality checks
-   - Uploads coverage to Codecov
+#### 1. **Main CI/CD Pipeline** (`grow-with-freya-ci-cd.yml`)
+Runs on push to `main`, `develop`, or `set-up-pipeline-frontend` branches:
 
-2. **🔧 TypeScript Check**
-   - Validates TypeScript types
-   - Ensures no type errors
+- **🧪 Test & Lint**: Jest tests, ESLint, coverage reporting
+- **🔧 TypeScript Check**: Type validation
+- **🔒 Security Audit**: Dependency scanning, vulnerability checks
+- **🏷️ Semantic Versioning**: Automated version bumping based on conventional commits
+- **🌐 Web Build**: Expo web export with artifacts
+- **📱 EAS Build**: Native app builds (when enabled)
+- **⚡ Performance Tests**: Lighthouse CI performance monitoring
 
-3. **📱 Expo Development Build**
-   - Exports web version
-   - Creates downloadable artifacts
+#### 2. **Security Scanning** (`security-scan.yml`)
+Daily security scans and on code changes:
+
+- **🔍 Dependency Scan**: npm audit for vulnerabilities
+- **📄 License Scan**: License compliance checking
+- **📊 Code Quality**: ESLint analysis and metrics
+
+#### 3. **EAS Deployment** (`deploy-eas.yml`)
+Manual deployment workflow and automatic on tags:
+
+- **📱 iOS/Android Builds**: EAS build for all platforms
+- **🚀 Environment Management**: Development, preview, production
+- **📋 Deployment Summary**: Build status and links
+
+### Semantic Versioning
+
+The pipeline automatically handles versioning using conventional commits:
+
+- `feat:` → Minor version bump (1.0.0 → 1.1.0)
+- `fix:` → Patch version bump (1.0.0 → 1.0.1)
+- `feat!:` or `BREAKING CHANGE` → Major version bump (1.0.0 → 2.0.0)
+- Other commits → No version change
+
+### Branch Strategy
+
+- **`main`**: Production-ready code, triggers production builds
+- **`develop`**: Development branch, triggers preview builds
+- **Feature branches**: Create PRs to `develop`
 
 4. **🔒 Security Audit**
    - npm audit for vulnerabilities
