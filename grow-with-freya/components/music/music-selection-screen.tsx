@@ -112,7 +112,7 @@ export function MusicSelectionScreen({
 
   return (
     <LinearGradient
-      colors={VISUAL_EFFECTS.GRADIENT_COLORS}
+      colors={['#4ECDC4', '#3B82F6', '#1E3A8A']}
       style={styles.container}
     >
       {/* Animated Stars Background (same as story pages) */}

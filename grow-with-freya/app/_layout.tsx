@@ -14,6 +14,7 @@ import { MainMenu } from '@/components/main-menu';
 import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
 import { StoryBookReader } from '@/components/stories/story-book-reader';
 import { MusicScreen } from '@/components/music';
+import { EmotionsScreen } from '@/components/emotions';
 import { Story } from '@/types/story';
 import { preloadCriticalImages, preloadSecondaryImages } from '@/services/image-preloader';
 import { EnhancedPageTransition } from '@/components/ui/enhanced-page-transition';
@@ -264,7 +265,7 @@ function AppContent() {
               onBack={handleBackToMainMenu}
             />,
             sensory: createDefaultPage('brain', 'Sensory'),
-            emotions: createDefaultPage('heart', 'Emotions'),
+            emotions: <EmotionsScreen onBack={handleBackToMainMenu} />,
             bedtime: <MusicScreen onBack={handleBackToMainMenu} />,
             screen_time: createDefaultPage('clock', 'Screen Time'),
             settings: createDefaultPage('gear', 'Settings'),
