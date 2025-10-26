@@ -10,6 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ThemedText } from './themed-text';
 import { getSvgComponentFromSvg } from './main-menu/assets';
+import { MusicControl } from '@/components/ui/music-control';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -151,11 +152,16 @@ export function DefaultPage({ icon, title, onBack }: DefaultPageProps) {
           ]}
         />
       ))}
-      {/* Back button */}
+      {/* Header with back button and audio button */}
       <View style={styles.header}>
         <Pressable style={styles.backButton} onPress={onBack}>
           <ThemedText style={styles.backButtonText}>← Back</ThemedText>
         </Pressable>
+        <MusicControl
+          size={24}
+          color="#FFFFFF"
+          style={styles.musicControl}
+        />
       </View>
 
       {/* Main content */}
@@ -200,6 +206,9 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingTop: 60,
     paddingHorizontal: 20,
     paddingBottom: 20,
@@ -209,12 +218,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    alignSelf: 'flex-start',
   },
   backButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  musicControl: {
+    // MusicControl component handles its own styling
   },
   content: {
     flex: 1,
