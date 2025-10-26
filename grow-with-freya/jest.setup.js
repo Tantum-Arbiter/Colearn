@@ -74,10 +74,14 @@ jest.mock('expo-haptics', () => ({
 }));
 
 jest.mock('expo-linear-gradient', () => ({
-  LinearGradient: ({ children, ...props }) => {
+  LinearGradient: ({ children, colors, ...props }) => {
     const React = require('react');
     const { View } = require('react-native');
-    return React.createElement(View, props, children);
+    return React.createElement(View, {
+      ...props,
+      testID: props.testID || 'linear-gradient',
+      colors: colors
+    }, children);
   },
 }));
 

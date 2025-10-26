@@ -60,24 +60,25 @@ export function MusicMainMenu({
 
   return (
     <LinearGradient
-      colors={VISUAL_EFFECTS.GRADIENT_COLORS}
+      colors={['#4ECDC4', '#3B82F6', '#1E3A8A']}
       style={styles.container}
     >
       {/* Animated stars background */}
       {starPositions.map((star) => (
         <Animated.View
           key={`star-${star.id}`}
+          testID={`star-${star.id}`}
           style={[
             getStarAnimatedStyle(star),
             {
               position: 'absolute',
-              width: star.size,
-              height: star.size,
+              width: VISUAL_EFFECTS.STAR_SIZE,
+              height: VISUAL_EFFECTS.STAR_SIZE,
               backgroundColor: 'white',
-              borderRadius: star.size / 2,
+              borderRadius: VISUAL_EFFECTS.STAR_BORDER_RADIUS,
               opacity: star.opacity,
-              left: star.x,
-              top: star.y,
+              left: star.left,
+              top: star.top,
             },
           ]}
         />
