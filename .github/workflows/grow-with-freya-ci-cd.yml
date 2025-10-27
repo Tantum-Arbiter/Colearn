@@ -156,9 +156,9 @@ jobs:
       - name: Check for outdated packages
         run: npm outdated || echo "Package check completed"
 
-  # Job 4: Semantic Versioning & Release
+  # Job 4: Simple Versioning (like Gateway API)
   semantic-version:
-    name: Semantic Versioning
+    name: Simple Versioning
     runs-on: ubuntu-latest
     needs: [test-and-lint, type-check, security-audit]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -167,65 +167,35 @@ jobs:
         working-directory: ${{ env.WORKING_DIRECTORY }}
     outputs:
       new-version: ${{ steps.version.outputs.new-version }}
-      version-changed: ${{ steps.version.outputs.version-changed }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
-
-      - name: Determine version bump
+      - name: Generate version from commit count
         id: version
         run: |
-          # Get the latest commit message
-          COMMIT_MSG=$(git log -1 --pretty=%B)
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          # Simple versioning like Gateway API - just count commits
+          PATCH=$(git rev-list --count HEAD)
+          VERSION="1.0.$PATCH"
 
-          echo "Current version: $CURRENT_VERSION"
-          echo "Commit message: $COMMIT_MSG"
+          echo "Generated version: $VERSION"
+          echo "new-version=$VERSION" >> $GITHUB_OUTPUT
 
-          # Determine version bump based on conventional commits
-          if [[ $COMMIT_MSG =~ ^feat(\(.+\))?!: ]] || [[ $COMMIT_MSG =~ BREAKING\ CHANGE ]]; then
-            echo "Major version bump detected"
-            npm run version:major
-          elif [[ $COMMIT_MSG =~ ^feat(\(.+\))?: ]]; then
-            echo "Minor version bump detected"
-            npm run version:minor
-          elif [[ $COMMIT_MSG =~ ^fix(\(.+\))?: ]] || [[ $COMMIT_MSG =~ ^perf(\(.+\))?: ]]; then
-            echo "Patch version bump detected"
-            npm run version:patch
-          else
-            echo "No version bump needed"
-            echo "version-changed=false" >> $GITHUB_OUTPUT
-            echo "new-version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-            exit 0
-          fi
+          # Update package.json version (no git operations)
+          echo "Updating package.json to version $VERSION"
+          sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" package.json
 
-          NEW_VERSION=$(node -p "require('./package.json').version")
-          echo "New version: $NEW_VERSION"
-          echo "version-changed=true" >> $GITHUB_OUTPUT
-          echo "new-version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          # Update app.json version
+          echo "Updating app.json to version $VERSION"
+          sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" app.json
 
-      - name: Commit version changes
-        if: steps.version.outputs.version-changed == 'true'
+      - name: Create release tag
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add package.json app.json
-          git commit -m "chore: bump version to ${{ steps.version.outputs.new-version }}"
-          git tag "v${{ steps.version.outputs.new-version }}"
-          git push origin main
-          git push origin "v${{ steps.version.outputs.new-version }}"
+          echo "Creating tag v${{ steps.version.outputs.new-version }}"
+          git tag "v${{ steps.version.outputs.new-version }}" || echo "Tag already exists"
 
   # Job 5: Build Web Application
   build-web:
@@ -263,7 +233,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: expo-web-build-${{ github.sha }}
-          path: ${{ env.WORKING_DIRECTORY }}/dis
+          path: ${{ env.WORKING_DIRECTORY }}/dist
           retention-days: 30
 
   # Job 6: EAS Build (Native Apps)
@@ -333,7 +303,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: expo-web-build-${{ github.sha }}
-          path: ${{ env.WORKING_DIRECTORY }}/dis
+          path: ${{ env.WORKING_DIRECTORY }}/dist
 
       - name: Setup Lighthouse CI
         run: npm install -g @lhci/cli@0.12.x
@@ -368,12 +338,10 @@ jobs:
           echo "- **Semantic Version**: ${{ needs.semantic-version.result }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          if [[ "${{ needs.semantic-version.outputs.version-changed }}" == "true" ]]; then
-            echo "###  Version Information:" >> $GITHUB_STEP_SUMMARY
-            echo "- **New Version**: ${{ needs.semantic-version.outputs.new-version }}" >> $GITHUB_STEP_SUMMARY
-            echo "- **Tag Created**: v${{ needs.semantic-version.outputs.new-version }}" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-          fi
+          echo "###  Version Information:" >> $GITHUB_STEP_SUMMARY
+          echo "- **New Version**: ${{ needs.semantic-version.outputs.new-version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag Created**: v${{ needs.semantic-version.outputs.new-version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
 
           echo "###  Available Artifacts:" >> $GITHUB_STEP_SUMMARY
           echo "- Web build available for download (30 days retention)" >> $GITHUB_STEP_SUMMARY
