@@ -41,7 +41,7 @@ export const EMOTIONS: Emotion[] = [
     expressionPrompts: [
       'Show me an angry face',
       'Can you scrunch up your face like you\'re mad?',
-      'Show me how you look when someone takes your toy',
+      'Show me how you look when someone mean throws your favourite toy',
       'Make a grumpy face with crossed arms!'
     ],
     difficulty: 'easy',
