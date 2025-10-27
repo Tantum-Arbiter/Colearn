@@ -1,0 +1,140 @@
+name: Deploy to EAS
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'preview'
+        type: choice
+        options:
+          - developmen
+          - preview
+          - production
+      platform:
+        description: 'Platform to build'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - ios
+          - android
+          - all
+      skip_tests:
+        description: 'Skip tests (not recommended for production)'
+        required: false
+        default: false
+        type: boolean
+
+  push:
+    tags:
+      - 'v*'
+
+env:
+  WORKING_DIRECTORY: grow-with-freya
+  NODE_VERSION: '20'
+
+jobs:
+  deploy:
+    name: Deploy to EAS
+    runs-on: ubuntu-lates
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+
+      - name: Setup Expo and EAS
+        run: |
+          npm install -g @expo/cli@lates
+          npm install -g eas-cli@lates
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Authenticate with Expo
+        run: eas login --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Run tests
+        if: ${{ !inputs.skip_tests }}
+        run: npm run test:ci
+
+      - name: Run type check
+        if: ${{ !inputs.skip_tests }}
+        run: npm run type-check
+
+      - name: Run linter
+        if: ${{ !inputs.skip_tests }}
+        run: npm run lin
+
+      - name: Determine deployment environmen
+        id: env
+        run: |
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+            echo "platform=all" >> $GITHUB_OUTPUT
+          else
+            echo "environment=${{ inputs.environment || 'preview' }}" >> $GITHUB_OUTPUT
+            echo "platform=${{ inputs.platform || 'all' }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build for iOS
+        if: steps.env.outputs.platform == 'ios' || steps.env.outputs.platform == 'all'
+        run: eas build --platform ios --profile ${{ steps.env.outputs.environment }} --non-interactive --wai
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build for Android
+        if: steps.env.outputs.platform == 'android' || steps.env.outputs.platform == 'all'
+        run: eas build --platform android --profile ${{ steps.env.outputs.environment }} --non-interactive --wai
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Create deployment summary
+        run: |
+          echo "## EAS Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Deployment Details:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: ${{ steps.env.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Platform**: ${{ steps.env.outputs.platform }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Build Links:" >> $GITHUB_STEP_SUMMARY
+          echo "Check your builds at: [EAS Dashboard](https://expo.dev/accounts/[your-account]/projects/grow-with-freya/builds)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ steps.env.outputs.environment }}" == "production" ]]; then
+            echo "### App Store Submission:" >> $GITHUB_STEP_SUMMARY
+            echo "Production builds are ready for app store submission." >> $GITHUB_STEP_SUMMARY
+            echo "Use \`eas submit\` to submit to app stores when ready." >> $GITHUB_STEP_SUMMARY
+          fi
+
+  notify:
+    name: Notify Deploymen
+    runs-on: ubuntu-lates
+    needs: deploy
+    if: always()
+
+    steps:
+      - name: Deployment notification
+        run: |
+          if [[ "${{ needs.deploy.result }}" == "success" ]]; then
+            echo "Deployment completed successfully!"
+          else
+            echo "Deployment failed!"
+            exit 1
+          fi

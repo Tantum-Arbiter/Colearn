@@ -2,13 +2,13 @@
 
 ## Image Specifications for 2732x2048px Story Backgrounds
 
-### 📐 **Canvas Setup**
+###  **Canvas Setup**
 - **Dimensions**: 2732 × 2048 pixels
 - **Resolution**: 72 DPI (for digital use)
 - **Color Mode**: RGB Color
 - **Bit Depth**: 8 Bits/Channel
 
-### 🎨 **Design Guidelines**
+###  **Design Guidelines**
 
 #### Safe Areas for Responsive Design (Landscape Mode)
 ```
@@ -21,7 +21,7 @@
 │     (Always visible on all         │   (Safe area for all devices)
 │         devices)                    │
 │                                     │
-│  🐨 Characters & Key Elements       │
+│   Characters & Key Elements       │
 │     should be in this area          │
 │                                     │
 │                                     │
@@ -34,12 +34,12 @@
    - May be cropped on phones in landscape mode
    - Use for atmospheric elements only
 
-2. **Bottom 75% (512-2048px)**: Main story content
+2. **Bottom 75% (512-2048px)**: Main story conten
    - Always visible on all devices (tablets and phones in landscape)
    - Place characters, important props, and story elements here
-   - This is the "safe zone" for all content
+   - This is the "safe zone" for all conten
 
-### 📱 **Device Cropping Preview**
+###  **Device Cropping Preview**
 
 #### Large Tablets (iPad Pro 12.9")
 - **Display**: Full 2732x2048px image
@@ -58,7 +58,7 @@
 - **Strategy**: Shows bottom 75% of image where characters are placed
 - **Layout**: Image on left 70% of screen, text/controls on right 30%
 
-### 🔧 **WebP Export Settings**
+###  **WebP Export Settings**
 
 #### Method 1: Photoshop WebP Plugin
 1. **Install**: Download Google's WebP plugin for Photoshop
@@ -67,7 +67,7 @@
    - Method: 6 (best compression)
    - Target file size: 250-350KB
 
-#### Method 2: Export as PNG then Convert
+#### Method 2: Export as PNG then Conver
 1. **Export PNG**: File → Export → Export As → PNG
 2. **Convert to WebP**: Use online tool or command line
    ```bash
@@ -80,7 +80,7 @@
 3. **Quality**: Maximum
 4. **Convert**: Use external WebP converter
 
-### 📋 **Export Checklist**
+###  **Export Checklist**
 
 #### Before Export:
 - [ ] Characters and key elements are in bottom 75% of canvas
@@ -100,7 +100,7 @@
 - [ ] Transparency: Preserved for character/prop overlays
 - [ ] Dimensions: Exactly 2732x2048px
 
-### 🎯 **Optimization Tips**
+###  **Optimization Tips**
 
 #### For Complex Scenes:
 - **Quality**: 85-88%
@@ -118,7 +118,7 @@
 - **Quality**: 90-95% if using lossy
 - **Expected size**: 50-150KB
 
-### 📊 **Batch Processing**
+###  **Batch Processing**
 
 #### For Multiple Stories:
 1. **Create Action**: Record export settings in Photoshop
@@ -133,18 +133,18 @@
 4. Export character overlays separately (if used)
 5. Test one complete story before processing others
 
-### 🔍 **Testing Your Exports**
+###  **Testing Your Exports**
 
 #### Device Testing:
 1. **Large tablet**: Check full image display
-2. **Phone landscape**: Verify bottom-crop shows key content
+2. **Phone landscape**: Verify bottom-crop shows key conten
 3. **Loading speed**: Ensure files load quickly
 4. **Memory usage**: Monitor app performance with multiple images
 
 #### Quality Verification:
 - Zoom to 100% to check for compression artifacts
 - Test on actual devices, not just simulators
-- Verify colors match your design intent
+- Verify colors match your design inten
 - Check file sizes meet target ranges
 
 This guide ensures your 2732x2048px images work perfectly across all devices while maintaining optimal file sizes and visual quality!

@@ -9,17 +9,17 @@ It handles:
 - Error handling and logging
 - Rate limiting and throttling
 
-# Local Development
+# Local Developmen
 ### Reaching GCP via Postman requires a bearer token
 Run:
 ```
-gcloud auth print-identity-token \
---audiences=https://gateway-service-jludng4t5a-ew.a.run.app \
+gcloud auth print-identity-token
+--audiences=https://gateway-service-jludng4t5a-ew.a.run.app
 --impersonate-service-account=svc-deploy-functional@apt-icon-472307-b7.iam.gserviceaccount.com
 ```
 
 # APIs
-The Gateway Service exposes the following APIs: 
+The Gateway Service exposes the following APIs:
 
 ## Private APIs
 - `GET /private/healthcheck`: Health check endpoint to verify the service is running.

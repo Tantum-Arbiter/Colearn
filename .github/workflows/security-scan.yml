@@ -1,0 +1,207 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ main, develop, set-up-pipeline-frontend ]
+    paths:
+      - 'grow-with-freya/**'
+      - '.github/workflows/security-scan.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'grow-with-freya/**'
+      - '.github/workflows/security-scan.yml'
+  schedule:
+    # Run security scan daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+env:
+  WORKING_DIRECTORY: grow-with-freya
+  NODE_VERSION: '20'
+
+jobs:
+  dependency-scan:
+    name: Dependency Scan
+    runs-on: ubuntu-lates
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audi
+        run: |
+          npm audit --audit-level=moderate --json > audit-results.json || true
+          npm audit --audit-level=moderate
+
+      - name: Upload audit results
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-audit-results
+          path: ${{ env.WORKING_DIRECTORY }}/audit-results.json
+          retention-days: 30
+
+      - name: Check for known vulnerabilities
+        run: |
+          # Check if there are any high or critical vulnerabilities
+          HIGH_VULNS=$(npm audit --audit-level=high --json | jq '.metadata.vulnerabilities.high // 0')
+          CRITICAL_VULNS=$(npm audit --audit-level=critical --json | jq '.metadata.vulnerabilities.critical // 0')
+
+          echo "High vulnerabilities: $HIGH_VULNS"
+          echo "Critical vulnerabilities: $CRITICAL_VULNS"
+
+          if [ "$CRITICAL_VULNS" -gt 0 ]; then
+            echo " Critical vulnerabilities found! Please fix before proceeding."
+            exit 1
+          fi
+
+          if [ "$HIGH_VULNS" -gt 5 ]; then
+            echo " Too many high vulnerabilities found! Please review and fix."
+            exit 1
+          fi
+
+  license-scan:
+    name: License Scan
+    runs-on: ubuntu-lates
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install license checker
+        run: npm install -g license-checker
+
+      - name: Check licenses
+        run: |
+          license-checker --json --out licenses.json
+          license-checker --summary
+
+      - name: Upload license results
+        uses: actions/upload-artifact@v4
+        with:
+          name: license-scan-results
+          path: ${{ env.WORKING_DIRECTORY }}/licenses.json
+          retention-days: 30
+
+      - name: Check for problematic licenses
+        run: |
+          # Check for licenses that might be problematic
+          PROBLEMATIC_LICENSES="GPL-2.0,GPL-3.0,AGPL-1.0,AGPL-3.0"
+
+          if license-checker --excludePrivatePackages --onlyAllow "MIT;ISC;BSD;Apache-2.0;Unlicense;WTFPL" --summary; then
+            echo " All licenses are acceptable"
+          else
+            echo " Some packages have licenses that need review"
+            license-checker --excludePrivatePackages --failOn "$PROBLEMATIC_LICENSES" || echo "Found potentially problematic licenses"
+          fi
+
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-lates
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint with detailed outpu
+        run: |
+          npx eslint . --ext .ts,.tsx,.js,.jsx --format json --output-file eslint-results.json || true
+          npx eslint . --ext .ts,.tsx,.js,.jsx
+
+      - name: Upload ESLint results
+        uses: actions/upload-artifact@v4
+        with:
+          name: eslint-results
+          path: ${{ env.WORKING_DIRECTORY }}/eslint-results.json
+          retention-days: 30
+
+      - name: Run TypeScript compiler
+        run: npx tsc --noEmit --pretty
+
+      - name: Generate code metrics
+        run: |
+          # Count lines of code
+          find . -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" | grep -v node_modules | xargs wc -l > code-metrics.tx
+
+          # Count test files
+          find . -name "*.test.*" -o -name "*.spec.*" | grep -v node_modules | wc -l > test-count.tx
+
+          echo " Code Metrics:"
+          cat code-metrics.txt | tail -1
+          echo " Test Files:"
+          cat test-count.tx
+
+      - name: Upload code metrics
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-metrics
+          path: |
+            ${{ env.WORKING_DIRECTORY }}/code-metrics.tx
+            ${{ env.WORKING_DIRECTORY }}/test-count.tx
+          retention-days: 30
+
+  security-summary:
+    name: Security Summary
+    runs-on: ubuntu-lates
+    needs: [dependency-scan, license-scan, code-quality]
+    if: always()
+
+    steps:
+      - name: Create security summary
+        run: |
+          echo "##  Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "###  Scan Results:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Dependency Scan**: ${{ needs.dependency-scan.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **License Scan**: ${{ needs.license-scan.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Code Quality**: ${{ needs.code-quality.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "###  Artifacts:" >> $GITHUB_STEP_SUMMARY
+          echo "- Security audit results" >> $GITHUB_STEP_SUMMARY
+          echo "- License scan results" >> $GITHUB_STEP_SUMMARY
+          echo "- ESLint results" >> $GITHUB_STEP_SUMMARY
+          echo "- Code metrics" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "###  Quick Links:" >> $GITHUB_STEP_SUMMARY
+          echo "- [Repository](https://github.com/${{ github.repository }})" >> $GITHUB_STEP_SUMMARY
+          echo "- [Commit](https://github.com/${{ github.repository }}/commit/${{ github.sha }})" >> $GITHUB_STEP_SUMMARY

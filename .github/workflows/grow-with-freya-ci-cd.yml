@@ -1,0 +1,366 @@
+name: Grow with Freya - CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop, set-up-pipeline-frontend ]
+    paths:
+      - 'grow-with-freya/**'
+      - '.github/workflows/grow-with-freya-ci-cd.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'grow-with-freya/**'
+      - '.github/workflows/grow-with-freya-ci-cd.yml'
+
+env:
+  WORKING_DIRECTORY: grow-with-freya
+  NODE_VERSION: '20'
+  EXPO_CLI_VERSION: 'latest'
+
+jobs:
+  # Job 1: Code Quality & Testing
+  test-and-lint:
+    name: Test & Lin
+    runs-on: ubuntu-lates
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+    outputs:
+      coverage-threshold: ${{ steps.coverage-check.outputs.threshold-met }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLin
+        run: npm run lin
+
+      - name: Run tests with coverage
+        run: npm run test:ci
+
+      - name: Check coverage thresholds
+        id: coverage-check
+        run: |
+          # Check if coverage meets minimum thresholds
+          if npm run test:coverage -- --passWithNoTests=false; then
+            echo "threshold-met=true" >> $GITHUB_OUTPUT
+          else
+            echo "threshold-met=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          directory: ${{ env.WORKING_DIRECTORY }}/coverage
+          flags: unittests
+          name: grow-with-freya-coverage
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Cache test results
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.WORKING_DIRECTORY }}/coverage
+          key: test-results-${{ github.sha }}
+          restore-keys: |
+            test-results-
+
+  # Job 2: TypeScript Type Checking
+  type-check:
+    name: TypeScript Check
+    runs-on: ubuntu-lates
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript type check
+        run: npm run type-check
+
+  # Job 3: Security & Dependency Audi
+  security-audit:
+    name: Security Audi
+    runs-on: ubuntu-lates
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audi
+        run: npm audit --audit-level=moderate
+
+      - name: Check for outdated packages
+        run: npm outdated || echo "Package check completed"
+
+  # Job 4: Semantic Versioning & Release
+  semantic-version:
+    name: Semantic Versioning
+    runs-on: ubuntu-lates
+    needs: [test-and-lint, type-check, security-audit]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+    outputs:
+      new-version: ${{ steps.version.outputs.new-version }}
+      version-changed: ${{ steps.version.outputs.version-changed }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Determine version bump
+        id: version
+        run: |
+          # Get the latest commit message
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+
+          echo "Current version: $CURRENT_VERSION"
+          echo "Commit message: $COMMIT_MSG"
+
+          # Determine version bump based on conventional commits
+          if [[ $COMMIT_MSG =~ ^feat(\(.+\))?!: ]] || [[ $COMMIT_MSG =~ BREAKING\ CHANGE ]]; then
+            echo "Major version bump detected"
+            npm run version:major
+          elif [[ $COMMIT_MSG =~ ^feat(\(.+\))?: ]]; then
+            echo "Minor version bump detected"
+            npm run version:minor
+          elif [[ $COMMIT_MSG =~ ^fix(\(.+\))?: ]] || [[ $COMMIT_MSG =~ ^perf(\(.+\))?: ]]; then
+            echo "Patch version bump detected"
+            npm run version:patch
+          else
+            echo "No version bump needed"
+            echo "version-changed=false" >> $GITHUB_OUTPUT
+            echo "new-version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          echo "New version: $NEW_VERSION"
+          echo "version-changed=true" >> $GITHUB_OUTPUT
+          echo "new-version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Commit version changes
+        if: steps.version.outputs.version-changed == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add package.json app.json
+          git commit -m "chore: bump version to ${{ steps.version.outputs.new-version }}"
+          git tag "v${{ steps.version.outputs.new-version }}"
+          git push origin main
+          git push origin "v${{ steps.version.outputs.new-version }}"
+
+  # Job 5: Build Web Application
+  build-web:
+    name: Build Web App
+    runs-on: ubuntu-lates
+    needs: [test-and-lint, type-check, security-audit]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/set-up-pipeline-frontend')
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+
+      - name: Setup Expo CLI
+        run: npm install -g @expo/cli@${{ env.EXPO_CLI_VERSION }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Expo doctor check
+        run: npx expo doctor
+
+      - name: Export for web
+        run: npx expo export --platform web
+
+      - name: Archive web build
+        uses: actions/upload-artifact@v4
+        with:
+          name: expo-web-build-${{ github.sha }}
+          path: ${{ env.WORKING_DIRECTORY }}/dis
+          retention-days: 30
+
+  # Job 6: EAS Build (Native Apps)
+  eas-build:
+    name: EAS Build
+    runs-on: ubuntu-lates
+    needs: [test-and-lint, type-check, security-audit]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.EAS_BUILDS_ENABLED == 'true'
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+    strategy:
+      matrix:
+        platform: [android, ios]
+        profile: [preview]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+
+      - name: Setup Expo and EAS
+        run: |
+          npm install -g @expo/cli@${{ env.EXPO_CLI_VERSION }}
+          npm install -g eas-cli
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Authenticate with Expo
+        run: eas login --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build ${{ matrix.platform }} (${{ matrix.profile }})
+        run: eas build --platform ${{ matrix.platform }} --profile ${{ matrix.profile }} --non-interactive --wai
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+  # Job 7: Performance Testing
+  performance-test:
+    name: Performance Tests
+    runs-on: ubuntu-lates
+    needs: [build-web]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download web build
+        uses: actions/download-artifact@v4
+        with:
+          name: expo-web-build-${{ github.sha }}
+          path: ${{ env.WORKING_DIRECTORY }}/dis
+
+      - name: Setup Lighthouse CI
+        run: npm install -g @lhci/cli@0.12.x
+
+      - name: Serve web app
+        run: |
+          npx serve -s dist -l 3000 &
+          sleep 5
+
+      - name: Run Lighthouse CI
+        run: lhci autorun
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+  # Job 8: Deployment Summary
+  deployment-summary:
+    name: Deployment Summary
+    runs-on: ubuntu-lates
+    needs: [test-and-lint, type-check, security-audit, build-web, semantic-version]
+    if: always()
+
+    steps:
+      - name: Create deployment summary
+        run: |
+          echo "##  Grow with Freya - Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "###  Build Status:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tests & Lint**: ${{ needs.test-and-lint.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **TypeScript Check**: ${{ needs.type-check.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Security Audit**: ${{ needs.security-audit.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Web Build**: ${{ needs.build-web.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Semantic Version**: ${{ needs.semantic-version.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ needs.semantic-version.outputs.version-changed }}" == "true" ]]; then
+            echo "###  Version Information:" >> $GITHUB_STEP_SUMMARY
+            echo "- **New Version**: ${{ needs.semantic-version.outputs.new-version }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Tag Created**: v${{ needs.semantic-version.outputs.new-version }}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "###  Available Artifacts:" >> $GITHUB_STEP_SUMMARY
+          echo "- Web build available for download (30 days retention)" >> $GITHUB_STEP_SUMMARY
+          echo "- Test coverage reports uploaded to Codecov" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "###  Quick Links:" >> $GITHUB_STEP_SUMMARY
+          echo "- [Repository](https://github.com/${{ github.repository }})" >> $GITHUB_STEP_SUMMARY
+          echo "- [Commit](https://github.com/${{ github.repository }}/commit/${{ github.sha }})" >> $GITHUB_STEP_SUMMARY

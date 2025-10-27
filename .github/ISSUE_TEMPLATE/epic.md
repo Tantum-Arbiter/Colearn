@@ -18,4 +18,4 @@ assignees: ''
 - []
 
 # Initial Estimates
-0.5 Sprint
+0.5 Sprin

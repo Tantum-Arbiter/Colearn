@@ -1,21 +1,21 @@
 #!/bin/bash
 
-# Grow with Freya - Local Testing Script
+# Grow with Freya - Local Testing Scrip
 # This script runs the same checks as CI/CD pipeline locally
 
 set -e  # Exit on any error
 
-echo "🚀 Starting Grow with Freya Local Testing Pipeline..."
+echo "Starting Grow with Freya Local Testing Pipeline..."
 echo "=================================================="
 
-# Colors for output
+# Colors for outpu
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Function to print colored output
+# Function to print colored outpu
 print_status() {
     echo -e "${BLUE}[INFO]${NC} $1"
 }
@@ -39,7 +39,7 @@ if [ ! -f "package.json" ]; then
 fi
 
 # Step 1: Install dependencies
-print_status "📦 Installing dependencies..."
+print_status " Installing dependencies..."
 if npm ci; then
     print_success "Dependencies installed successfully"
 else
@@ -48,7 +48,7 @@ else
 fi
 
 # Step 2: TypeScript type checking
-print_status "🔧 Running TypeScript type check..."
+print_status " Running TypeScript type check..."
 if npm run type-check; then
     print_success "TypeScript check passed"
 else
@@ -57,7 +57,7 @@ else
 fi
 
 # Step 3: Linting
-print_status "🔍 Running ESLint..."
+print_status " Running ESLint..."
 if npm run lint; then
     print_success "Linting passed"
 else
@@ -65,7 +65,7 @@ else
 fi
 
 # Step 4: Run tests with coverage
-print_status "🧪 Running tests with coverage..."
+print_status " Running tests with coverage..."
 if npm run test:ci; then
     print_success "All tests passed"
 else
@@ -73,8 +73,8 @@ else
     exit 1
 fi
 
-# Step 5: Security audit
-print_status "🔒 Running security audit..."
+# Step 5: Security audi
+print_status " Running security audit..."
 if npm audit --audit-level=moderate; then
     print_success "Security audit passed"
 else
@@ -82,7 +82,7 @@ else
 fi
 
 # Step 6: Build for web
-print_status "🌐 Building for web..."
+print_status " Building for web..."
 if npm run build:web; then
     print_success "Web build completed successfully"
 else
@@ -91,7 +91,7 @@ else
 fi
 
 # Step 7: Check project health
-print_status "🏥 Running Expo doctor..."
+print_status " Running Expo doctor..."
 if npm run doctor; then
     print_success "Expo doctor check passed"
 else
@@ -100,22 +100,22 @@ fi
 
 echo ""
 echo "=================================================="
-print_success "🎉 All local tests completed successfully!"
+print_success " All local tests completed successfully!"
 echo ""
-echo "📊 Summary:"
-echo "  ✅ Dependencies installed"
-echo "  ✅ TypeScript check passed"
-echo "  ✅ Linting completed"
-echo "  ✅ Tests passed with coverage"
-echo "  ✅ Security audit completed"
-echo "  ✅ Web build successful"
-echo "  ✅ Project health check completed"
+echo "Summary:"
+echo " Dependencies installed"
+echo " TypeScript check passed"
+echo " Linting completed"
+echo " Tests passed with coverage"
+echo " Security audit completed"
+echo " Web build successful"
+echo " Project health check completed"
 echo ""
-echo "🚀 Your app is ready for deployment!"
+echo "Your app is ready for deployment!"
 echo ""
-echo "📱 Next steps:"
-echo "  • Test on physical device: npm start (scan QR code)"
-echo "  • Test on simulator: npm run ios / npm run android"
-echo "  • View coverage report: open coverage/lcov-report/index.html"
-echo "  • Deploy web build: serve dist/ directory"
+echo "Next steps:"
+echo "• Test on physical device: npm start (scan QR code)"
+echo "• Test on simulator: npm run ios / npm run android"
+echo "• View coverage report: open coverage/lcov-report/index.html"
+echo "• Deploy web build: serve dist/ directory"
 echo ""
