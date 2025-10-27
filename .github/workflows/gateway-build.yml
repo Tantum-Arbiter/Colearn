@@ -3,11 +3,7 @@ name: Gateway Build and Push
 
 
 on:
-  push:
-    paths:
-      - 'gateway-service/**'
-      - '.github/workflows/gateway-build.yml'
-      - 'infra/**'
+  workflow_dispatch:
 
 permissions:
   contents: write

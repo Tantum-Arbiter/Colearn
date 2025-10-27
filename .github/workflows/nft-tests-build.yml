@@ -3,10 +3,7 @@ name: NFT Tests build and push
 
 
 on:
-  push:
-    paths:
-      - 'nft/**'
-      - '.github/workflows/nft-tests-build.yml'
+  workflow_dispatch:
 
 env:
   GHCR_REPO: ghcr.io/${{ secrets.GHCR_USERNAME }}
