@@ -3,15 +3,15 @@ name: Grow with Freya - CI/CD Pipeline
 on:
   workflow_dispatch:
   push:
-    branches: [ set-up-pipeline-frontend ]  # STAGE 2: Test on feature branch first
+    branches: [ main, develop, set-up-pipeline-frontend ]  # Enable on main and develop branches
     paths:
       - 'grow-with-freya/**'
       - '.github/workflows/grow-with-freya-ci-cd.yml'
-  # pull_request:
-  #   branches: [ main, develop ]
-  #   paths:
-  #     - 'grow-with-freya/**'
-  #     - '.github/workflows/grow-with-freya-ci-cd.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'grow-with-freya/**'
+      - '.github/workflows/grow-with-freya-ci-cd.yml'
 
 # CRITICAL: Prevent multiple simultaneous runs
 concurrency:
