@@ -152,7 +152,7 @@ describe('MusicPlayerScreen', () => {
     it('should render player interface when track is loaded', () => {
       const { getByText } = render(<MusicPlayerScreen onBack={mockOnBack} />);
 
-      expect(getByText('Now Playing')).toBeTruthy();
+      // Header removed - check for track info instead
       expect(getByText('Test Track')).toBeTruthy();
       expect(getByText('Test Artist')).toBeTruthy();
       expect(getByText('from Test Playlist')).toBeTruthy();

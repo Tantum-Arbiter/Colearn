@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  Pressable, 
-  Dimensions 
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Pressable,
+  Dimensions
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -30,6 +30,9 @@ const { width: screenWidth } = Dimensions.get('window');
 
 export function TantrumInfoScreen({ onContinue, onBack }: TantrumInfoScreenProps) {
   const insets = useSafeAreaInsets();
+  const [showHowItHelps, setShowHowItHelps] = useState(false);
+  const [showSafetyGuidelines, setShowSafetyGuidelines] = useState(false);
+  const [showBestPractices, setShowBestPractices] = useState(false);
 
   // Generate star positions for background
   const starPositions = useMemo(() => generateStarPositions(VISUAL_EFFECTS.STAR_COUNT), []);
@@ -84,7 +87,7 @@ export function TantrumInfoScreen({ onContinue, onBack }: TantrumInfoScreenProps
         <Pressable style={styles.backButton} onPress={onBack}>
           <Text style={styles.backButtonText}>← Back</Text>
         </Pressable>
-        <Text style={styles.headerTitle}>Tantrum Calming</Text>
+        <View style={{ width: 24 }} />
         <MusicControl
           size={24}
           color="#FFFFFF"
@@ -99,37 +102,74 @@ export function TantrumInfoScreen({ onContinue, onBack }: TantrumInfoScreenProps
       >
         <View style={styles.content}>
           <Text style={styles.emoji}>🌊</Text>
-          
-          <Text style={styles.title}>Binaural Beats for Tantrums</Text>
-          
+
+          {/* How It Helps Section - Collapsible */}
           <View style={styles.infoSection}>
-            <Text style={styles.sectionTitle}>How It Helps</Text>
-            <Text style={styles.description}>
-              Our 10Hz alpha wave binaural beats help calm the nervous system during emotional overwhelm. 
-              These gentle frequencies encourage relaxation and can help reduce the intensity of tantrum episodes.
-            </Text>
+            <Pressable
+              style={styles.sectionHeader}
+              onPress={() => setShowHowItHelps(!showHowItHelps)}
+            >
+              <Text style={styles.sectionTitle}>
+                How It Helps {showHowItHelps ? '▼' : '▶'}
+              </Text>
+            </Pressable>
+
+            {showHowItHelps && (
+              <View style={styles.sectionContent}>
+                <Text style={styles.description}>
+                  Our 10Hz alpha wave binaural beats help calm the nervous system during emotional overwhelm.
+                  These gentle frequencies encourage relaxation and can help reduce the intensity of tantrum episodes.
+                </Text>
+              </View>
+            )}
           </View>
 
+          {/* Safe Usage Guidelines Section - Collapsible */}
           <View style={styles.infoSection}>
-            <Text style={styles.sectionTitle}>Safe Usage Guidelines</Text>
-            <View style={styles.guidelinesList}>
-              <Text style={styles.guideline}>🎧 Always use stereo headphones or earbuds</Text>
-              <Text style={styles.guideline}>🔊 Keep volume at a comfortable, low level</Text>
-              <Text style={styles.guideline}>⏰ Use for 10-15 minutes maximum per session</Text>
-              <Text style={styles.guideline}>👶 Suitable for ages 3 and up</Text>
-              <Text style={styles.guideline}>👨‍⚕️ Consult your pediatrician if you have concerns</Text>
-            </View>
+            <Pressable
+              style={styles.sectionHeader}
+              onPress={() => setShowSafetyGuidelines(!showSafetyGuidelines)}
+            >
+              <Text style={styles.sectionTitle}>
+                Safe Usage Guidelines {showSafetyGuidelines ? '▼' : '▶'}
+              </Text>
+            </Pressable>
+
+            {showSafetyGuidelines && (
+              <View style={styles.sectionContent}>
+                <View style={styles.guidelinesList}>
+                  <Text style={styles.guideline}>🎧 Always use stereo headphones or earbuds</Text>
+                  <Text style={styles.guideline}>🔊 Keep volume at a comfortable, low level</Text>
+                  <Text style={styles.guideline}>⏰ Use for 10-15 minutes maximum per session</Text>
+                  <Text style={styles.guideline}>👶 Suitable for ages 3 and up</Text>
+                  <Text style={styles.guideline}>👨‍⚕️ Consult your pediatrician if you have concerns</Text>
+                </View>
+              </View>
+            )}
           </View>
 
+          {/* Best Practices Section - Collapsible */}
           <View style={styles.infoSection}>
-            <Text style={styles.sectionTitle}>Best Practices</Text>
-            <Text style={styles.description}>
-              • Create a calm environment before starting{'\n'}
-              • Sit or lie down comfortably{'\n'}
-              • Breathe slowly and deeply{'\n'}
-              • Stay with your child during the session{'\n'}
-              • Stop if any discomfort occurs
-            </Text>
+            <Pressable
+              style={styles.sectionHeader}
+              onPress={() => setShowBestPractices(!showBestPractices)}
+            >
+              <Text style={styles.sectionTitle}>
+                Best Practices {showBestPractices ? '▼' : '▶'}
+              </Text>
+            </Pressable>
+
+            {showBestPractices && (
+              <View style={styles.sectionContent}>
+                <Text style={styles.description}>
+                  • Create a calm environment before starting{'\n'}
+                  • Sit or lie down comfortably{'\n'}
+                  • Breathe slowly and deeply{'\n'}
+                  • Stay with your child during the session{'\n'}
+                  • Stop if any discomfort occurs
+                </Text>
+              </View>
+            )}
           </View>
 
           <View style={styles.warningBox}>
@@ -221,12 +261,18 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     padding: 20,
   },
+  sectionHeader: {
+    alignItems: 'center',
+  },
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: 'white',
-    marginBottom: 12,
     fontFamily: Fonts.primary,
+    textAlign: 'center',
+  },
+  sectionContent: {
+    marginTop: 12,
   },
   description: {
     fontSize: 16,

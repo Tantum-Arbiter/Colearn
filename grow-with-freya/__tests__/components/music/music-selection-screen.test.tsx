@@ -118,7 +118,7 @@ describe('MusicSelectionScreen', () => {
       />
     );
 
-    expect(getByText('Music')).toBeTruthy();
+    // Header removed - check for category content instead
     expect(getByText('Tantrum Calming')).toBeTruthy();
     expect(getByText('Bedtime Music')).toBeTruthy();
   });
@@ -279,8 +279,9 @@ describe('MusicSelectionScreen', () => {
     );
 
     // Check that important elements are present for screen readers
-    expect(getByText('Music')).toBeTruthy();
+    // Header removed - check for back button and content
     expect(getByText('← Back')).toBeTruthy();
+    expect(getByText('Tantrum Calming')).toBeTruthy();
   });
 
   it('should format duration correctly', () => {

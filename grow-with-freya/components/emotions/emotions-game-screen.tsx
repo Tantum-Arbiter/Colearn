@@ -16,6 +16,7 @@ import { EmotionCard } from './emotion-card';
 import { EMOTIONS, getRandomEmotion, getRandomPrompt, EMOTION_GAME_CONFIG } from '@/data/emotions';
 import { Emotion, EmotionGameState, EmotionTheme } from '@/types/emotion';
 import { Fonts } from '@/constants/theme';
+import { MusicControl } from '@/components/ui/music-control';
 import * as Haptics from 'expo-haptics';
 
 interface EmotionsGameScreenProps {
@@ -39,8 +40,9 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
     selectedTheme: selectedTheme
   });
 
-  const [timeLeft, setTimeLeft] = useState(10);
+  const [timeLeft, setTimeLeft] = useState(15);
   const [isTimerActive, setIsTimerActive] = useState(false);
+  const [isCardAnimating, setIsCardAnimating] = useState(false);
 
   // Animation values
   const cardScale = useSharedValue(1);
@@ -83,8 +85,9 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
       isGameActive: true
     }));
 
-    setTimeLeft(EMOTION_GAME_CONFIG.timePerEmotion);
+    setTimeLeft(EMOTION_GAME_CONFIG.timePerEmotion || 15);
     setIsTimerActive(true);
+    setIsCardAnimating(true); // Disable button presses during animation
 
     // Animate card and prompt appearance with initial spin-in
     cardRotation.value = 360; // Start from 360 degrees
@@ -105,10 +108,15 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
     setTimeout(() => {
       promptOpacity.value = withTiming(1, { duration: 400 });
     }, 300);
+
+    // Enable button presses after animation completes (600ms spin + 200ms scale)
+    setTimeout(() => {
+      setIsCardAnimating(false);
+    }, 800);
   };
 
   const handleEmotionPress = (selectedEmotion: Emotion) => {
-    if (!gameState.isGameActive || !gameState.currentEmotion) return;
+    if (!gameState.isGameActive || !gameState.currentEmotion || isCardAnimating) return;
 
     setIsTimerActive(false);
 
@@ -126,7 +134,7 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
     } else {
       // For incorrect answers, just try again with same emotion
       setGameState(prev => ({ ...prev, isGameActive: true }));
-      setTimeLeft(EMOTION_GAME_CONFIG.timePerEmotion);
+      setTimeLeft(EMOTION_GAME_CONFIG.timePerEmotion || 15);
       setIsTimerActive(true);
     }
   };
@@ -138,6 +146,8 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
   };
 
   const startSpinTransition = (correctEmotionId?: string) => {
+    setIsCardAnimating(true); // Disable button presses during transition
+
     // First, fade out the prompt text
     promptOpacity.value = withTiming(0, { duration: 200 });
 
@@ -189,8 +199,9 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
     }));
 
     // Reset timer
-    setTimeLeft(EMOTION_GAME_CONFIG.timePerEmotion);
+    setTimeLeft(EMOTION_GAME_CONFIG.timePerEmotion || 15);
     setIsTimerActive(true);
+    setIsCardAnimating(true); // Disable button presses during animation
 
     // Spin in the new card - continue from current rotation + 360 degrees
     const currentRotation = cardRotation.value;
@@ -211,10 +222,15 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
     setTimeout(() => {
       promptOpacity.value = withTiming(1, { duration: 400 });
     }, 300);
+
+    // Enable button presses after animation completes (600ms spin + 200ms scale)
+    setTimeout(() => {
+      setIsCardAnimating(false);
+    }, 800);
   };
 
   const handleExpressionComplete = () => {
-    if (!gameState.currentEmotion) return;
+    if (!gameState.currentEmotion || isCardAnimating) return;
 
     // Simulate successful expression
     handleEmotionPress(gameState.currentEmotion);
@@ -246,7 +262,7 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
 
   return (
     <LinearGradient
-      colors={['#45B7D1', '#96CEB4', '#FFEAA7']}
+      colors={['#FFEAA7', '#96CEB4', '#45B7D1']}
       style={styles.container}
     >
       {/* Header */}
@@ -255,12 +271,11 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
           <ThemedText style={styles.backButtonText}>← Back</ThemedText>
         </Pressable>
 
-        <View style={styles.timerContainer}>
-          <ThemedText style={styles.timerText}>⏱️ {timeLeft}s</ThemedText>
-        </View>
-
-        {/* Music header removed as requested */}
         <View style={{ width: 24 }} />
+        <MusicControl
+          size={24}
+          color="#FFFFFF"
+        />
       </View>
 
       {/* Game content */}
@@ -285,12 +300,21 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
 
         {/* Action button */}
         <Pressable
-          style={[styles.expressionButton, { backgroundColor: gameState.currentEmotion.color }]}
+          style={[
+            styles.expressionButton,
+            {
+              backgroundColor: gameState.currentEmotion.color,
+              opacity: (!gameState.isGameActive || isCardAnimating) ? 0.5 : 1
+            }
+          ]}
           onPress={handleExpressionComplete}
-          disabled={!gameState.isGameActive}
+          disabled={!gameState.isGameActive || isCardAnimating}
         >
           <ThemedText style={styles.expressionButtonText}>
-            I'm expressing {gameState.currentEmotion.name}! ✨
+            {isCardAnimating
+              ? "Loading..."
+              : `I'm expressing ${gameState.currentEmotion.name}!`
+            }
           </ThemedText>
         </Pressable>
 
@@ -309,6 +333,16 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
               ]}
             />
           </View>
+        </View>
+
+        {/* Timer countdown */}
+        <View style={styles.timerContainer}>
+          <ThemedText style={styles.timerLabel}>
+            {isTimerActive ? 'Time remaining:' : 'Ready to start!'}
+          </ThemedText>
+          <ThemedText style={styles.timerText}>
+            {isTimerActive ? `${timeLeft}s` : ''}
+          </ThemedText>
         </View>
       </View>
 
@@ -352,11 +386,20 @@ const styles = StyleSheet.create({
   },
   timerContainer: {
     alignItems: 'center',
+    marginTop: 20,
+  },
+  timerLabel: {
+    fontSize: 18,
+    color: 'rgba(255, 255, 255, 0.95)',
+    fontFamily: Fonts.primary,
+    fontWeight: 'bold',
+    marginBottom: 4,
   },
   timerText: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: 18,
+    color: 'rgba(255, 255, 255, 0.95)',
     fontFamily: Fonts.primary,
+    fontWeight: 'bold',
   },
   gameContent: {
     flex: 1,
