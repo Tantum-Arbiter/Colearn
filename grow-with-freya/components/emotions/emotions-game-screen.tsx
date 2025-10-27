@@ -16,6 +16,7 @@ import { EmotionCard } from './emotion-card';
 import { EMOTIONS, getRandomEmotion, getRandomPrompt, EMOTION_GAME_CONFIG } from '@/data/emotions';
 import { Emotion, EmotionGameState, EmotionTheme } from '@/types/emotion';
 import { Fonts } from '@/constants/theme';
+import { MusicControl } from '@/components/ui/music-control';
 import * as Haptics from 'expo-haptics';
 
 interface EmotionsGameScreenProps {
@@ -84,7 +85,7 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
       isGameActive: true
     }));
 
-    setTimeLeft(EMOTION_GAME_CONFIG.timePerEmotion);
+    setTimeLeft(EMOTION_GAME_CONFIG.timePerEmotion || 15);
     setIsTimerActive(true);
     setIsCardAnimating(true); // Disable button presses during animation
 
@@ -133,7 +134,7 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
     } else {
       // For incorrect answers, just try again with same emotion
       setGameState(prev => ({ ...prev, isGameActive: true }));
-      setTimeLeft(EMOTION_GAME_CONFIG.timePerEmotion);
+      setTimeLeft(EMOTION_GAME_CONFIG.timePerEmotion || 15);
       setIsTimerActive(true);
     }
   };
@@ -198,7 +199,7 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
     }));
 
     // Reset timer
-    setTimeLeft(EMOTION_GAME_CONFIG.timePerEmotion);
+    setTimeLeft(EMOTION_GAME_CONFIG.timePerEmotion || 15);
     setIsTimerActive(true);
     setIsCardAnimating(true); // Disable button presses during animation
 
@@ -270,8 +271,11 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
           <ThemedText style={styles.backButtonText}>← Back</ThemedText>
         </Pressable>
 
-        {/* Music header removed as requested */}
         <View style={{ width: 24 }} />
+        <MusicControl
+          size={24}
+          color="#FFFFFF"
+        />
       </View>
 
       {/* Game content */}
