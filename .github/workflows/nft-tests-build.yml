@@ -1,5 +1,10 @@
 name: NFT Tests build and push
 
+# Prevent multiple simultaneous runs to avoid queue buildup
+concurrency:
+  group: nft-tests-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     paths:

@@ -2,20 +2,20 @@ name: Grow with Freya - CI/CD Pipeline
 
 on:
   workflow_dispatch:
-  # Temporarily disabled due to GitHub Actions queue issues
-  # push:
-  #   branches: [ main, develop, set-up-pipeline-frontend ]
-  #   paths:
-  #     - 'grow-with-freya/**'
-  #     - '.github/workflows/grow-with-freya-ci-cd.yml'
-  # pull_request:
-  #   branches: [ main, develop ]
-  #   paths:
-  #     - 'grow-with-freya/**'
-  #     - '.github/workflows/grow-with-freya-ci-cd.yml'
+  push:
+    branches: [ main, develop, set-up-pipeline-frontend ]
+    paths:
+      - 'grow-with-freya/**'
+      - '.github/workflows/grow-with-freya-ci-cd.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'grow-with-freya/**'
+      - '.github/workflows/grow-with-freya-ci-cd.yml'
 
+# Enhanced concurrency control to prevent queue buildup
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: grow-with-freya-cicd-${{ github.ref }}
   cancel-in-progress: true
 
 env:

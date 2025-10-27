@@ -1,5 +1,10 @@
 name: Func Tests Build and Deploy
 
+# Prevent multiple simultaneous runs to avoid queue buildup
+concurrency:
+  group: func-tests-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     paths:
