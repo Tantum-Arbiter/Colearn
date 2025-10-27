@@ -2,6 +2,15 @@ name: Security Scan
 
 on:
   workflow_dispatch:
+  push:
+    branches: [ set-up-pipeline-frontend ]
+    paths:
+      - 'grow-with-freya/**'
+      - '.github/workflows/security-scan.yml'
+
+concurrency:
+  group: security-scan-${{ github.ref }}
+  cancel-in-progress: true
 
 
 
