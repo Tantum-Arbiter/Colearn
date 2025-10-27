@@ -86,10 +86,10 @@ export function MusicMainMenu({
 
       {/* Header */}
       <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50) }]}>
-        <Pressable style={styles.backButton} onPress={onBack}>
+        <Pressable style={styles.backButton} onPress={onBack} testID="back-button">
           <Text style={styles.backButtonText}>← Back</Text>
         </Pressable>
-        <Text style={styles.headerTitle}>Music</Text>
+        <View style={{ width: 24 }} />
         <MusicControl
           size={24}
           color="#FFFFFF"
@@ -107,7 +107,6 @@ export function MusicMainMenu({
               colors={['#FF6B6B', '#FF8E8E']}
               style={styles.optionGradient}
             >
-              <Text style={styles.optionEmoji}>🌊</Text>
               <Text style={styles.optionTitle}>Tantrums</Text>
               <Text style={styles.optionDescription}>
                 Calming binaural beats to help soothe during difficult moments
@@ -121,7 +120,6 @@ export function MusicMainMenu({
               colors={['#6B73FF', '#8E95FF']}
               style={styles.optionGradient}
             >
-              <Text style={styles.optionEmoji}>🌙</Text>
               <Text style={styles.optionTitle}>Sleep</Text>
               <Text style={styles.optionDescription}>
                 Progressive binaural beats sequence for peaceful sleep

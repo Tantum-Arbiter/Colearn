@@ -202,9 +202,9 @@ export function MusicPlayerScreen({ onBack }: MusicPlayerScreenProps) {
         <Pressable style={styles.backButton} onPress={onBack}>
           <Text style={styles.backButtonText}>← Back</Text>
         </Pressable>
-        <Text style={styles.headerTitle}>Now Playing</Text>
-        <Pressable 
-          style={styles.volumeButton} 
+        <View style={{ width: 24 }} />
+        <Pressable
+          style={styles.volumeButton}
           onPress={() => setIsVolumeVisible(!isVolumeVisible)}
         >
           <Text style={styles.volumeButtonText}>{isMuted ? '🔇' : '🔊'}</Text>
@@ -316,7 +316,7 @@ export function MusicPlayerScreen({ onBack }: MusicPlayerScreenProps) {
             <Animated.View style={playButtonAnimatedStyle}>
               <Pressable style={styles.playButton} onPress={togglePlayPause}>
                 <Text style={styles.playButtonText}>
-                  {playbackState === 'playing' ? '⏸️' : '▶️'}
+                  {playbackState === 'playing' ? 'Pause' : 'Play'}
                 </Text>
               </Pressable>
             </Animated.View>

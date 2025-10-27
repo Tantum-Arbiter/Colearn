@@ -140,7 +140,7 @@ export function MusicSelectionScreen({
         <Pressable style={styles.backButton} onPress={onBack}>
           <Text style={styles.backButtonText}>← Back</Text>
         </Pressable>
-        <Text style={styles.headerTitle}>Music</Text>
+        <View style={{ width: 24 }} />
         <MusicControl
           size={24}
           color="#FFFFFF"
@@ -160,7 +160,6 @@ export function MusicSelectionScreen({
             <View key={category.id} style={styles.categorySection}>
               {/* Category Header */}
               <View style={styles.categoryHeader}>
-                <Text style={styles.categoryEmoji}>{category.emoji}</Text>
                 <View style={styles.categoryTitleContainer}>
                   <Text style={styles.categoryTitle}>{category.title}</Text>
                   <Text style={styles.categoryDescription}>{category.description}</Text>
