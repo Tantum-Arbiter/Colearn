@@ -9,7 +9,7 @@ on:
         default: 'preview'
         type: choice
         options:
-          - developmen
+          - development
           - preview
           - production
       platform:
@@ -39,7 +39,7 @@ env:
 jobs:
   deploy:
     name: Deploy to EAS
-    runs-on: ubuntu-lates
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ${{ env.WORKING_DIRECTORY }}
@@ -59,8 +59,8 @@ jobs:
 
       - name: Setup Expo and EAS
         run: |
-          npm install -g @expo/cli@lates
-          npm install -g eas-cli@lates
+          npm install -g @expo/cli@latest
+          npm install -g eas-cli@latest
 
       - name: Install dependencies
         run: npm ci
@@ -80,7 +80,7 @@ jobs:
 
       - name: Run linter
         if: ${{ !inputs.skip_tests }}
-        run: npm run lin
+        run: npm run lint
 
       - name: Determine deployment environmen
         id: env
@@ -95,13 +95,13 @@ jobs:
 
       - name: Build for iOS
         if: steps.env.outputs.platform == 'ios' || steps.env.outputs.platform == 'all'
-        run: eas build --platform ios --profile ${{ steps.env.outputs.environment }} --non-interactive --wai
+        run: eas build --platform ios --profile ${{ steps.env.outputs.environment }} --non-interactive --wait
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
       - name: Build for Android
         if: steps.env.outputs.platform == 'android' || steps.env.outputs.platform == 'all'
-        run: eas build --platform android --profile ${{ steps.env.outputs.environment }} --non-interactive --wai
+        run: eas build --platform android --profile ${{ steps.env.outputs.environment }} --non-interactive --wait
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
@@ -126,7 +126,7 @@ jobs:
 
   notify:
     name: Notify Deploymen
-    runs-on: ubuntu-lates
+    runs-on: ubuntu-latest
     needs: deploy
     if: always()
 

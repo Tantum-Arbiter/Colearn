@@ -273,7 +273,7 @@ jobs:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
       - name: Build ${{ matrix.platform }} (${{ matrix.profile }})
-        run: eas build --platform ${{ matrix.platform }} --profile ${{ matrix.profile }} --non-interactive --wai
+        run: eas build --platform ${{ matrix.platform }} --profile ${{ matrix.profile }} --non-interactive --wait
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
