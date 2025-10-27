@@ -13,6 +13,8 @@ import { OnboardingFlow } from '@/components/onboarding/onboarding-flow';
 import { MainMenu } from '@/components/main-menu';
 import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
 import { StoryBookReader } from '@/components/stories/story-book-reader';
+import { MusicScreen } from '@/components/music';
+import { EmotionsScreen } from '@/components/emotions';
 import { Story } from '@/types/story';
 import { preloadCriticalImages, preloadSecondaryImages } from '@/services/image-preloader';
 import { EnhancedPageTransition } from '@/components/ui/enhanced-page-transition';
@@ -43,6 +45,9 @@ function AppContent() {
 
   // Initialize background music
   const { fadeIn, isLoaded: musicLoaded, isPlaying } = useBackgroundMusic();
+
+  // Track if we've already started background music to prevent auto-restart after manual pause
+  const [hasStartedBackgroundMusic, setHasStartedBackgroundMusic] = useState(false);
 
   type AppView = 'splash' | 'onboarding' | 'app' | 'main' | 'stories' | 'story-reader';
   type PageKey = 'main' | 'stories' | 'story-reader' | 'sensory' | 'emotions' | 'bedtime' | 'screen_time' | 'settings';
@@ -112,10 +117,11 @@ function AppContent() {
   // Start background music once when transitioning from splash (only once!)
   useEffect(() => {
     const startBackgroundMusic = async () => {
-      if (musicLoaded && currentView === 'onboarding' && !isPlaying) {
+      if (musicLoaded && (currentView === 'onboarding' || currentView === 'app') && !isPlaying && !hasStartedBackgroundMusic) {
         try {
           // Start background music with a gentle fade-in - only when first leaving splash
           await fadeIn(3000); // 3 second fade-in
+          setHasStartedBackgroundMusic(true); // Mark that we've started music
           console.log('Background music started for the journey');
         } catch (error) {
           console.warn('Failed to start background music:', error);
@@ -126,7 +132,7 @@ function AppContent() {
     // Add a small delay to ensure the screen has rendered
     const timer = setTimeout(startBackgroundMusic, 500);
     return () => clearTimeout(timer);
-  }, [currentView, musicLoaded, fadeIn, isPlaying]);
+  }, [currentView, musicLoaded, fadeIn, isPlaying, hasStartedBackgroundMusic]);
 
   // Sync view with page changes
   useEffect(() => {
@@ -259,8 +265,8 @@ function AppContent() {
               onBack={handleBackToMainMenu}
             />,
             sensory: createDefaultPage('brain', 'Sensory'),
-            emotions: createDefaultPage('heart', 'Emotions'),
-            bedtime: createDefaultPage('moon', 'Bedtime Music'),
+            emotions: <EmotionsScreen onBack={handleBackToMainMenu} />,
+            bedtime: <MusicScreen onBack={handleBackToMainMenu} />,
             screen_time: createDefaultPage('clock', 'Screen Time'),
             settings: createDefaultPage('gear', 'Settings'),
           }}

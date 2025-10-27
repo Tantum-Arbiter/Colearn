@@ -1,9 +1,12 @@
 name: NFT Tests build and push
 
-
-
 on:
   workflow_dispatch:
+  # DISABLED: Will re-enable after Security Scan workflow is verified
+  # push:
+  #   paths:
+  #     - 'nft/**'
+  #     - '.github/workflows/nft-tests-build.yml'
 
 env:
   GHCR_REPO: ghcr.io/${{ secrets.GHCR_USERNAME }}

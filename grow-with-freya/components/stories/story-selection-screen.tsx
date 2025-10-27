@@ -17,6 +17,7 @@ import { useAppStore } from '@/store/app-store';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
 import { useStoryTransition } from '@/contexts/story-transition-context';
+import { MusicControl } from '@/components/ui/music-control';
 
 interface StorySelectionScreenProps {
   onStorySelect?: (story: Story) => void;
@@ -151,15 +152,21 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       ))}
       
       <View style={{ flex: 1 }}>
-        {/* Header with consistent back button */}
-        <View style={{ paddingTop: insets.top + 20, paddingHorizontal: 20, paddingBottom: 20 }}>
+        {/* Header with back button and audio button */}
+        <View style={{
+          paddingTop: insets.top + 20,
+          paddingHorizontal: 20,
+          paddingBottom: 20,
+          flexDirection: 'row',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between'
+        }}>
           <Pressable
             style={{
               backgroundColor: 'rgba(255, 255, 255, 0.2)',
               paddingHorizontal: 16,
               paddingVertical: 8,
               borderRadius: 20,
-              alignSelf: 'flex-start',
               marginBottom: 20,
             }}
             onPress={handleBackToMenu}
@@ -171,6 +178,15 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
               fontFamily: Fonts.rounded,
             }}>← Back</Text>
           </Pressable>
+
+          <MusicControl
+            size={24}
+            color="#FFFFFF"
+            style={{ marginBottom: 20 }}
+          />
+        </View>
+
+        <View style={{ paddingHorizontal: 20, marginTop: -20 }}>
           
           <Text style={{ 
             color: 'white', 
