@@ -8,6 +8,7 @@ const mockUseMusicPlayer = {
   currentTrack: null,
   loadTrack: jest.fn(),
   loadPlaylist: jest.fn(),
+  clearTrack: jest.fn(),
 };
 
 jest.mock('@/hooks/use-music-player', () => ({

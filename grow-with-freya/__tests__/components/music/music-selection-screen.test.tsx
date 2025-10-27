@@ -43,12 +43,7 @@ jest.mock('@/components/main-menu/utils', () => ({
   ]),
 }));
 
-// Mock react-native-reanimated
-jest.mock('react-native-reanimated', () => {
-  const Reanimated = require('react-native-reanimated/mock');
-  Reanimated.default.call = () => {};
-  return Reanimated;
-});
+// react-native-reanimated is mocked in jest.setup.js
 
 // Mock safe area context
 jest.mock('react-native-safe-area-context', () => ({
