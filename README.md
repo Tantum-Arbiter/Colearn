@@ -1,5 +1,5 @@
 # Colearn
-A project for a final year project. 
+A project for a final year project.
 
 **Paper**: **Bridging the Gap Between Screen Time Risks & Development Potential:** Designing a WHO & EAP Aligned, Research-Driven App for Toddlers, addressing Passive Screen Use in Early Childhood through supporting Co-Engagement, Sensory, Emotional & Language Development.
 
@@ -12,4 +12,4 @@ Objectives
 3.	Assess the application’s potential to mitigate detrimental impacts associated with passive screen usage and promote parent-child interaction through co-engaged experiences, utilising qualitative user feedback and observational methods to ensure confidence in a safe product.
 4.	Design and implement a cloud-based, highly available, reliable and resilient headless architecture within a distributed systems/microservice context.
 5.	Establish a thorough Continuous Integration/Continuous Delivery (CI/CD) pipeline with a well-tested path-to-production process for front-end and back-end services with clear deployment/rollback strategies.
-6.	Establish service reliability and meet end-user expectations by defining Service Level Indicators (SLIs), Service Level Agreements (SLAs), Service Level Objectives (SLOs), observability and monitoring, alerting and recovery strategies.  
+6.	Establish service reliability and meet end-user expectations by defining Service Level Indicators (SLIs), Service Level Agreements (SLAs), Service Level Objectives (SLOs), observability and monitoring, alerting and recovery strategies.

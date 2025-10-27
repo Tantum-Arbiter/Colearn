@@ -8,22 +8,22 @@ assignees: Tantum-Arbiter
 ---
 
 # Background
-As a , 
-I want to , 
+As a ,
+I want to ,
 So I can .
 
-This requirement 
+This requiremen
 
 # Pre-reqs
 
 # Tasks
 - [ ]
-- [ ] 
+- [ ]
 
 # Definition of done (if applicable)
 - [ ] Unit/int tests
 - [ ] Monitoring
-- [ ] Security Checks 
+- [ ] Security Checks
 - [ ] FT
 - [ ] NFT
 

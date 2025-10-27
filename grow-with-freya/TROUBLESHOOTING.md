@@ -37,7 +37,7 @@ npm run build:web
 **Symptoms**: Coverage below required thresholds
 **Solutions**:
 ```bash
-# Generate coverage report
+# Generate coverage repor
 npm run test:coverage
 
 # Check specific file coverage
@@ -86,17 +86,17 @@ eas credentials:configure -p ios
 eas credentials:configure -p android
 
 # List existing credentials
-eas credentials:list
+eas credentials:lis
 ```
 
 ### Security Scan Failures
 
-#### High Vulnerability Count
+#### High Vulnerability Coun
 **Symptoms**: Security scan fails due to vulnerabilities
 **Solutions**:
 ```bash
 # Check specific vulnerabilities
-npm audit
+npm audi
 
 # Fix automatically fixable issues
 npm audit fix
@@ -145,7 +145,7 @@ npm --version
 **Solutions**:
 ```bash
 # Update Expo CLI
-npm install -g @expo/cli@latest
+npm install -g @expo/cli@lates
 
 # Clear Expo cache
 npx expo install --fix
@@ -160,7 +160,7 @@ npx expo doctor
 **Symptoms**: Tests fail due to missing or incorrect mocks
 **Solutions**:
 ```bash
-# Check mock files exist
+# Check mock files exis
 ls __mocks__/
 
 # Verify mock implementations
@@ -197,14 +197,14 @@ npx expo start --clear
 npm cache clean --force
 
 # Use faster build profile
-eas build --profile development
+eas build --profile developmen
 ```
 
 #### Memory Issues
 **Symptoms**: Out of memory errors during build
 **Solutions**:
 ```bash
-# Increase Node memory limit
+# Increase Node memory limi
 export NODE_OPTIONS="--max-old-space-size=4096"
 
 # Use single worker for tests
@@ -216,7 +216,7 @@ npm run test:performance
 
 ## Deployment Issues
 
-### EAS Deployment
+### EAS Deploymen
 
 #### Build Queue Issues
 **Symptoms**: Builds stuck in queue
@@ -230,13 +230,13 @@ npm run test:performance
 **Solutions**:
 ```bash
 # Check build status
-eas build:list
+eas build:lis
 
 # Verify distribution settings
 cat eas.json
 
 # Check device registration (iOS)
-eas device:list
+eas device:lis
 ```
 
 ### App Store Issues
@@ -246,7 +246,7 @@ eas device:list
 **Solutions**:
 ```bash
 # Check submission status
-eas submit:list
+eas submit:lis
 
 # Verify app store configuration
 cat eas.json
@@ -285,7 +285,7 @@ cat lighthouserc.js
 
 # Verify web build
 npm run build:web
-npx serve -s dist
+npx serve -s dis
 ```
 
 ### Common Error Messages
@@ -315,7 +315,7 @@ npx serve -s dist
 - Expo Discord for EAS and Expo-related issues
 - Stack Overflow for general React Native questions
 
-### Debug Information to Collect
+### Debug Information to Collec
 When reporting issues, include:
 - Error messages and stack traces
 - Environment information (Node, npm, Expo versions)

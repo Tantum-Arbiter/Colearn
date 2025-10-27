@@ -18,11 +18,11 @@ env:
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-lates
     outputs:
       image_tag: ${{ steps.build.outputs.version }}
     steps:
-      - name: Checkout
+      - name: Checkou
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -40,8 +40,8 @@ jobs:
 
       - name: Docker login to Artifact Registry
         run: |
-          echo '${{ secrets.GCP_SA_KEY }}' | \
-            docker login -u _json_key --password-stdin \
+          echo '${{ secrets.GCP_SA_KEY }}' |
+            docker login -u _json_key --password-stdin
             https://europe-west1-docker.pkg.dev
 
       - id: build
@@ -52,7 +52,7 @@ jobs:
           GAR_REPO="europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/artifact-repo/${{ env.IMAGE_NAME }}"
           GAR_IMAGE="$GAR_REPO:$VERSION"
           GAR_LATEST="$GAR_REPO:latest"
-          
+
           echo "DEBUG: VERSION=$VERSION"
           echo "DEBUG: GAR_IMAGE=$GAR_IMAGE"
           echo "DEBUG: GAR_LATEST=$GAR_LATEST"
@@ -66,7 +66,7 @@ jobs:
 
   deploy-functional-gateway:
     needs: deploy-functional
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-lates
     outputs:
       config_name: ${{ steps.deploy_config.outputs.config_name }}
 
@@ -86,7 +86,7 @@ jobs:
 
   deploy-functional:
     needs: build-and-push
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-lates
     steps:
       - name: Authenticate with GCP
         uses: google-github-actions/auth@v2
@@ -108,16 +108,16 @@ jobs:
 
       - name: Deploy to Cloud Run
         run: |
-          gcloud run deploy $SERVICE \
-          --image "europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/artifact-repo/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.image_tag }}" \
-          --region ${{ env.REGION }} \
-          --project ${{ env.PROJECT_ID }} \
-          --service-account svc-deploy-functional@${{ env.PROJECT_ID }}.iam.gserviceaccount.com \
+          gcloud run deploy $SERVICE
+          --image "europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/artifact-repo/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.image_tag }}"
+          --region ${{ env.REGION }}
+          --project ${{ env.PROJECT_ID }}
+          --service-account svc-deploy-functional@${{ env.PROJECT_ID }}.iam.gserviceaccount.com
           --no-allow-unauthenticated
 
   run-functional-tests:
     needs: deploy-functional
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-lates
     steps:
       - name: Authenticate with GCP
         uses: google-github-actions/auth@v2
@@ -127,52 +127,52 @@ jobs:
       - name: Re-deploy Cloud Run Job with latest test image
         run: |
           echo "Redeploying job: gateway-functional-test-job"
-          gcloud run jobs deploy gateway-functional-test-job \
-            --image "europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/artifact-repo/gateway-functional-test:latest" \
-            --region ${{ env.REGION }} \
-            --project ${{ env.PROJECT_ID }} \
-            --service-account svc-deploy-functional@${{ env.PROJECT_ID }}.iam.gserviceaccount.com \
-            --memory=2Gi \
-            --cpu=2 \
-            --max-retries=0 \
+          gcloud run jobs deploy gateway-functional-test-job
+            --image "europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/artifact-repo/gateway-functional-test:latest"
+            --region ${{ env.REGION }}
+            --project ${{ env.PROJECT_ID }}
+            --service-account svc-deploy-functional@${{ env.PROJECT_ID }}.iam.gserviceaccount.com
+            --memory=2Gi
+            --cpu=2
+            --max-retries=0
             --task-timeout=300s
 
       - name: Execute Cloud Run Job
         id: execute-tests
         run: |
           echo "Executing Cloud Run Job: gateway-functional-test-job"
-          JOB_NAME=$(gcloud run jobs execute gateway-functional-test-job \
-            --region ${{ env.REGION }} \
-            --project ${{ env.PROJECT_ID }} \
-            --wait \
+          JOB_NAME=$(gcloud run jobs execute gateway-functional-test-job
+            --region ${{ env.REGION }}
+            --project ${{ env.PROJECT_ID }}
+            --wai
             --format="value(metadata.name)")
-  
+
           echo "JOB_NAME=$JOB_NAME" >> $GITHUB_ENV
 
       - name: Print Logs from Cloud Run Job
         run: |
           echo "Fetching logs from execution: $JOB_NAME"
-  
-          gcloud logging read "resource.type=cloud_run_job AND resource.labels.execution_name=$JOB_NAME" \
-            --project=${{ env.PROJECT_ID }} \
-            --region=${{ env.REGION }} \
-            --limit=1000 \
+
+          gcloud logging read "resource.type=cloud_run_job AND resource.labels.execution_name=$JOB_NAME"
+            --project=${{ env.PROJECT_ID }}
+            --region=${{ env.REGION }}
+            --limit=1000
             --format="value(textPayload)"
-  
+
 
 #      - name: Cleanup previous instance
 #        run: |
-#          gcloud run revisions list \
-#            --service=$SERVICE \
-#            --region=$REGION \
-#            --format="value(metadata.name,status.traffic[0].percent)" \
-#            --project=$PROJECT_ID | \
+#          gcloud run revisions lis
+#            --service=$SERVICE
+#            --region=$REGION
+#            --format="value(metadata.name,status.traffic[0].percent)"
+#            --project=$PROJECT_ID |
 #          while read revision traffic; do
 #            if [[ "$traffic" == "0" ]]; then
 #              echo "Deleting previous instance: $revision"
-#              gcloud run revisions delete "$revision" \
-#                --region=$REGION \
-#                --project=$PROJECT_ID \
-#                --quiet
+#              gcloud run revisions delete "$revision"
+#                --region=$REGION
+#                --project=$PROJECT_ID
+#                --quie
 #            fi
 #          done

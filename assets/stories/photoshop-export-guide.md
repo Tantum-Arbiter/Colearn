@@ -34,10 +34,10 @@
    - May be cropped on phones in landscape mode
    - Use for atmospheric elements only
 
-2. **Bottom 75% (512-2048px)**: Main story content
+2. **Bottom 75% (512-2048px)**: Main story conten
    - Always visible on all devices (tablets and phones in landscape)
    - Place characters, important props, and story elements here
-   - This is the "safe zone" for all content
+   - This is the "safe zone" for all conten
 
 ###  **Device Cropping Preview**
 
@@ -67,7 +67,7 @@
    - Method: 6 (best compression)
    - Target file size: 250-350KB
 
-#### Method 2: Export as PNG then Convert
+#### Method 2: Export as PNG then Conver
 1. **Export PNG**: File → Export → Export As → PNG
 2. **Convert to WebP**: Use online tool or command line
    ```bash
@@ -137,14 +137,14 @@
 
 #### Device Testing:
 1. **Large tablet**: Check full image display
-2. **Phone landscape**: Verify bottom-crop shows key content
+2. **Phone landscape**: Verify bottom-crop shows key conten
 3. **Loading speed**: Ensure files load quickly
 4. **Memory usage**: Monitor app performance with multiple images
 
 #### Quality Verification:
 - Zoom to 100% to check for compression artifacts
 - Test on actual devices, not just simulators
-- Verify colors match your design intent
+- Verify colors match your design inten
 - Check file sizes meet target ranges
 
 This guide ensures your 2732x2048px images work perfectly across all devices while maintaining optimal file sizes and visual quality!

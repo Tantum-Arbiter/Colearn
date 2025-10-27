@@ -7,14 +7,14 @@ on:
       - '.github/workflows/func-tests-build.yml'
 
 env:
-  IMAGE_NAME: gateway-functional-test
+  IMAGE_NAME: gateway-functional-tes
   REGION: europe-west1
   PROJECT_ID: apt-icon-472307-b7
-  SERVICE: gateway-functional-test
+  SERVICE: gateway-functional-tes
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-lates
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -28,8 +28,8 @@ jobs:
 
       - name: Docker login to Artifact Registry
         run: |
-          echo '${{ secrets.GCP_SA_KEY }}' | \
-            docker login -u _json_key --password-stdin \
+          echo '${{ secrets.GCP_SA_KEY }}' |
+            docker login -u _json_key --password-stdin
             https://europe-west1-docker.pkg.dev
 
       - id: build
@@ -53,9 +53,9 @@ jobs:
 
 #      - name: Deploy to Cloud Run
 #        run: |
-#          gcloud run deploy $SERVICE \
-#            --image "europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/artifact-repo/${{ env.IMAGE_NAME }}:${{ steps.build.outputs.version }}" \
-#            --region ${{ env.REGION }} \
-#            --project ${{ env.PROJECT_ID }} \
-#            --service-account svc-deploy-functional@${{ env.PROJECT_ID }}.iam.gserviceaccount.com \
+#          gcloud run deploy $SERVICE
+#            --image "europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/artifact-repo/${{ env.IMAGE_NAME }}:${{ steps.build.outputs.version }}"
+#            --region ${{ env.REGION }}
+#            --project ${{ env.PROJECT_ID }}
+#            --service-account svc-deploy-functional@${{ env.PROJECT_ID }}.iam.gserviceaccount.com
 #            --no-allow-unauthenticated

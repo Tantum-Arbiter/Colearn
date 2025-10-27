@@ -17,7 +17,7 @@ This directory contains audio files used throughout the Grow with Freya app.
    ```bash
    # Remove the placeholder
    rm assets/audio/background-soundtrack.wav
-   
+
    # Add your actual audio file
    cp /path/to/your/background-soundtrack.wav assets/audio/background-soundtrack.wav
    ```
@@ -55,7 +55,7 @@ The app supports the following audio formats:
 
 ### Background Music Service
 - **Auto-play**: Starts when first screen appears
-- **Fade Effects**: 3-second fade-in on start
+- **Fade Effects**: 3-second fade-in on star
 - **App State Handling**: Pauses when app goes to background
 - **Volume Control**: User-adjustable volume
 - **Loop**: Continuous playback
@@ -64,7 +64,7 @@ The app supports the following audio formats:
 ### User Controls
 - **Music Toggle**: Available in top-right of main menu
 - **Visual Feedback**: Icon changes based on play state
-- **Accessibility**: Full screen reader support
+- **Accessibility**: Full screen reader suppor
 
 ## Testing
 
@@ -74,7 +74,7 @@ Run the audio tests to ensure everything works:
 # Test background music service
 npm test -- __tests__/services/background-music.test.ts
 
-# Test music control component
+# Test music control componen
 npm test -- __tests__/components/ui/music-control.test.tsx
 ```
 
@@ -106,7 +106,7 @@ npm test -- __tests__/components/ui/music-control.test.tsx
 
 For best results, edit your audio file to:
 - Have a seamless loop (ending flows into beginning)
-- Consistent volume throughout
+- Consistent volume throughou
 - No silence at start/end
 - Appropriate length (2-5 minutes)
 
@@ -116,5 +116,5 @@ Potential future features:
 - Multiple background tracks
 - Dynamic music based on app section
 - Sound effects for interactions
-- Voice narration support
+- Voice narration suppor
 - Playlist functionality

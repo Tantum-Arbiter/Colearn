@@ -1,4 +1,4 @@
-#  Entrance Animation Test Coverage Report
+#  Entrance Animation Test Coverage Repor
 
 ## Overview
 
@@ -67,9 +67,9 @@ I've created comprehensive test coverage for the `entrance-animation.tsx` compon
 -  Complex nested structures
 -  Rapid prop changes
 
-#### Memory Management
+#### Memory Managemen
 -  No memory leaks with multiple instances
--  Proper cleanup on unmount
+-  Proper cleanup on unmoun
 -  Timer cleanup verification
 
 #### Animation Initialization
@@ -108,19 +108,19 @@ I've created comprehensive test coverage for the `entrance-animation.tsx` compon
 
 ### **Test Utilities**
 - **Animation Test Utils**: Helper functions for animation testing
-- **Performance Benchmarks**: Automated performance measurement
+- **Performance Benchmarks**: Automated performance measuremen
 - **Test Data Generators**: Dynamic test scenario creation
 
 ### **Configuration**
 - **Jest Config**: Optimized for animation testing
 - **Setup Files**: Comprehensive test environment setup
-- **Test Runner**: Automated test execution script
+- **Test Runner**: Automated test execution scrip
 
 ##  Performance Benchmarks
 
 ### **Target Metrics**
 - **Render Time**: < 50ms for basic components
-- **Memory Usage**: < 1MB increase per component
+- **Memory Usage**: < 1MB increase per componen
 - **Animation Init**: < 100ms initialization time
 
 ### **Stress Test Limits**
@@ -138,7 +138,7 @@ I've created comprehensive test coverage for the `entrance-animation.tsx` compon
 ### **Run Specific Categories**
 ```bash
 # Unit tests only
-./scripts/test-entrance-animations.sh unit
+./scripts/test-entrance-animations.sh uni
 
 # Performance tests only
 ./scripts/test-entrance-animations.sh performance
@@ -193,7 +193,7 @@ npm test -- __tests__/integration/entrance-animation-integration.test.tsx
 
 ### **Planned Additions**
 - [ ] Visual regression tests
-- [ ] Reduced motion preference support
+- [ ] Reduced motion preference suppor
 - [ ] Animation interruption handling
 - [ ] Cross-platform performance testing
 

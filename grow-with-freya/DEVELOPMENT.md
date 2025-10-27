@@ -1,6 +1,6 @@
 # Grow with Freya - Development Guide
 
-##  Quick Start
+##  Quick Star
 
 ### Prerequisites
 - Node.js 20+
@@ -25,15 +25,15 @@ cp .env.example .env
 
 ### Development Commands
 
-#### Basic Development
+#### Basic Developmen
 ```bash
 # Start development server
-npm start
+npm star
 
 # Start with cache cleared
 npm run start:clear
 
-# Platform-specific development
+# Platform-specific developmen
 npm run ios      # iOS simulator
 npm run android  # Android emulator
 npm run web      # Web browser
@@ -42,7 +42,7 @@ npm run web      # Web browser
 #### Testing & Quality
 ```bash
 # Run all tests
-npm test
+npm tes
 
 # Run tests with coverage
 npm run test:coverage
@@ -57,7 +57,7 @@ npm run test:onboarding
 npm run type-check
 
 # Linting
-npm run lint
+npm run lin
 npm run lint:fix
 ```
 
@@ -84,7 +84,7 @@ The fastest way to test your app during development:
 
 ```bash
 # Start the development server
-npm start
+npm star
 
 # Then scan QR code with:
 # - Expo Go app (iOS/Android)
@@ -195,7 +195,7 @@ npm run ci:setup
 # Or step by step:
 npm run type-check
 npm run test:ci
-npm run lint
+npm run lin
 npm run build:web
 ```
 
@@ -234,7 +234,7 @@ npm run eas:build:prod
 - Test navigation between screens
 - Test data persistence (AsyncStorage)
 
-### Manual Testing Checklist
+### Manual Testing Checklis
 - [ ] App loads without crashes
 - [ ] Onboarding flow works correctly
 - [ ] Navigation functions properly
@@ -269,10 +269,10 @@ npm install
 cd ios && pod install && cd ..
 ```
 
-### Development Reset
+### Development Rese
 If you encounter persistent issues:
 ```bash
-npm run dev:reset
+npm run dev:rese
 ```
 
 ##  Monitoring & Analytics
@@ -295,7 +295,7 @@ Consider integrating error tracking services:
 
 ##  Deployment Preparation
 
-### Pre-deployment Checklist
+### Pre-deployment Checklis
 - [ ] All tests passing
 - [ ] TypeScript checks pass
 - [ ] No ESLint errors
@@ -304,11 +304,11 @@ Consider integrating error tracking services:
 - [ ] App icons and splash screens configured
 - [ ] App store metadata prepared
 
-### Next Steps for Store Deployment
+### Next Steps for Store Deploymen
 1. Set up EAS Build profiles for production
 2. Configure app signing certificates
 3. Set up app store connect/play console
-4. Configure automated deployment with EAS Submit
+4. Configure automated deployment with EAS Submi
 5. Set up crash reporting and analytics
 
 ##  Additional Resources

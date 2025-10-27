@@ -11,7 +11,7 @@ env:
 
 jobs:
   build-nft-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-lates
     steps:
       - name: Checkout full repo
         uses: actions/checkout@v4
@@ -22,11 +22,11 @@ jobs:
         run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
 
       - name: Build and Push NFT Image
-        working-directory: nft
+        working-directory: nf
         run: |
           docker build -t nft:latest .
-          docker tag nft:latest $GHCR_REPO/nft:latest
-          docker push $GHCR_REPO/nft:latest
+          docker tag nft:latest $GHCR_REPO/nft:lates
+          docker push $GHCR_REPO/nft:lates
 
       - name: Output Version
         run: |

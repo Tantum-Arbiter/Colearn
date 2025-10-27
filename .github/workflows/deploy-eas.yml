@@ -9,7 +9,7 @@ on:
         default: 'preview'
         type: choice
         options:
-          - development
+          - developmen
           - preview
           - production
       platform:
@@ -38,11 +38,11 @@ env:
 jobs:
   deploy:
     name: Deploy to EAS
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-lates
     defaults:
       run:
         working-directory: ${{ env.WORKING_DIRECTORY }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -58,8 +58,8 @@ jobs:
 
       - name: Setup Expo and EAS
         run: |
-          npm install -g @expo/cli@latest
-          npm install -g eas-cli@latest
+          npm install -g @expo/cli@lates
+          npm install -g eas-cli@lates
 
       - name: Install dependencies
         run: npm ci
@@ -79,9 +79,9 @@ jobs:
 
       - name: Run linter
         if: ${{ !inputs.skip_tests }}
-        run: npm run lint
+        run: npm run lin
 
-      - name: Determine deployment environment
+      - name: Determine deployment environmen
         id: env
         run: |
           if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == refs/tags/* ]]; then
@@ -94,13 +94,13 @@ jobs:
 
       - name: Build for iOS
         if: steps.env.outputs.platform == 'ios' || steps.env.outputs.platform == 'all'
-        run: eas build --platform ios --profile ${{ steps.env.outputs.environment }} --non-interactive --wait
+        run: eas build --platform ios --profile ${{ steps.env.outputs.environment }} --non-interactive --wai
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
       - name: Build for Android
         if: steps.env.outputs.platform == 'android' || steps.env.outputs.platform == 'all'
-        run: eas build --platform android --profile ${{ steps.env.outputs.environment }} --non-interactive --wait
+        run: eas build --platform android --profile ${{ steps.env.outputs.environment }} --non-interactive --wai
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
@@ -124,8 +124,8 @@ jobs:
           fi
 
   notify:
-    name: Notify Deployment
-    runs-on: ubuntu-latest
+    name: Notify Deploymen
+    runs-on: ubuntu-lates
     needs: deploy
     if: always()
 

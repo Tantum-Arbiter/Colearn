@@ -16,7 +16,7 @@ This guide covers the comprehensive CI/CD pipeline setup for the Grow with Freya
 
 - **Push to main/develop**: Full CI/CD pipeline
 - **Pull Requests**: Testing and validation
-- **Tags (v*)**: Production deployment
+- **Tags (v*)**: Production deploymen
 - **Manual**: EAS deployment workflow
 - **Schedule**: Daily security scans
 
@@ -49,14 +49,14 @@ Run the setup script:
 
 This will:
 - Install EAS CLI
-- Configure EAS project
+- Configure EAS projec
 - Set up build profiles
 - Configure credentials
 
 ##  Build Profiles
 
-### Development
-- **Purpose**: Internal testing with development client
+### Developmen
+- **Purpose**: Internal testing with development clien
 - **Distribution**: Internal
 - **Bundle ID**: `com.growwithfreya.app.dev`
 - **Features**: Debug mode, development tools
@@ -75,13 +75,13 @@ This will:
 
 ##  Deployment Process
 
-### Automatic Deployment
+### Automatic Deploymen
 
 1. **Development Builds**: Triggered on push to `develop` branch
 2. **Preview Builds**: Triggered on push to `main` branch
 3. **Production Builds**: Triggered on version tags (`v1.0.0`)
 
-### Manual Deployment
+### Manual Deploymen
 
 Use the GitHub Actions workflow dispatch:
 
@@ -90,7 +90,7 @@ Use the GitHub Actions workflow dispatch:
 3. Select environment and platform
 4. Run the workflow
 
-### Command Line Deployment
+### Command Line Deploymen
 
 ```bash
 # Deploy preview build for all platforms
@@ -116,10 +116,10 @@ Use the GitHub Actions workflow dispatch:
 
 ```bash
 # Run all tests
-npm test
+npm tes
 
 # Run specific test types
-npm run test:unit
+npm run test:uni
 npm run test:integration
 npm run test:performance
 npm run test:e2e
@@ -156,7 +156,7 @@ npm run test:ci
 ### Quality Gates
 
 - All tests must pass
-- Coverage thresholds must be met
+- Coverage thresholds must be me
 - No critical security vulnerabilities
 - TypeScript compilation must succeed
 - ESLint checks must pass
@@ -184,7 +184,7 @@ npm run test:ci
 Use conventional commit format for automatic versioning:
 
 ```
-feat: add new story carousel component
+feat: add new story carousel componen
 fix: resolve animation performance issue
 feat!: redesign navigation structure (BREAKING CHANGE)
 ```
@@ -198,7 +198,7 @@ feat!: redesign navigation structure (BREAKING CHANGE)
 ### Release Process
 
 1. Merge features to `develop`
-2. Test in preview environment
+2. Test in preview environmen
 3. Merge `develop` to `main`
 4. Automatic version bump and tag creation
 5. Production build triggered
@@ -209,12 +209,12 @@ feat!: redesign navigation structure (BREAKING CHANGE)
 ### Common Issues
 
 #### EAS Build Failures
-- Check EXPO_TOKEN secret
+- Check EXPO_TOKEN secre
 - Verify EAS credentials
 - Review build logs in EAS dashboard
 
 #### Test Failures
-- Run tests locally first
+- Run tests locally firs
 - Check coverage thresholds
 - Review test environment setup
 
@@ -233,13 +233,13 @@ feat!: redesign navigation structure (BREAKING CHANGE)
 ```bash
 # Check EAS status
 eas whoami
-eas build:list
+eas build:lis
 
 # Run local CI simulation
 npm run ci:setup
 
 # Check dependencies
-npm audit
+npm audi
 npm outdated
 
 # Validate configuration
@@ -256,8 +256,8 @@ npx expo doctor
 
 ##  Contributing
 
-1. Follow conventional commit format
+1. Follow conventional commit forma
 2. Ensure all tests pass locally
 3. Update documentation for new features
-4. Review security and performance impact
-5. Test deployment process in preview environment
+4. Review security and performance impac
+5. Test deployment process in preview environmen

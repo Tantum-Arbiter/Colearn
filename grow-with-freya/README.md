@@ -1,4 +1,4 @@
-# Grow with Freya 
+# Grow with Freya
 
 A personalized storytelling app for children with voice cloning and AI-powered narration.
 
@@ -15,7 +15,7 @@ Grow with Freya is a Co-Engagement App that creates personalized storytelling ex
 
 2. Start the development server:
    ```bash
-   npm start
+   npm star
    ```
 
 3. Open the app:
@@ -32,7 +32,7 @@ grow-with-freya/
     (tabs)/            # Tab navigation screens
        index.tsx      # Stories screen
        profiles.tsx   # Profiles screen
-    _layout.tsx        # Root layout
+    _layout.tsx        # Root layou
  components/            # Reusable UI components
  constants/             # App constants and themes
  hooks/                 # Custom React hooks
@@ -49,7 +49,7 @@ grow-with-freya/
 - **Screen Time Controls** - WHO/EU-aligned usage limits
 - **Privacy First** - GDPR compliant with strong security measures
 - **Sensory Games** - Support sensory development and exploration
-- **Emotional Expression** - Support emotional development
+- **Emotional Expression** - Support emotional developmen
 - **Co-Engagement Tracking** - Parent-child interaction guidance
 - **Bedtime Stories** - Calming audio for sleep and relaxation
 
@@ -57,8 +57,8 @@ grow-with-freya/
 
 - **Framework**: Expo with React Native
 - **Navigation**: Expo Router (file-based routing)
-- **Language**: TypeScript
-- **Styling**: React Native StyleSheet
+- **Language**: TypeScrip
+- **Styling**: React Native StyleShee
 - **State Management**: Zustand
 - **Audio**: expo-av
 - **Authentication**: Firebase Auth

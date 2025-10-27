@@ -58,8 +58,8 @@ assets/stories/
 - **App navigation**: Portrait mode maintained throughout app
 - **Story reader**: Automatic transition to landscape mode with smooth orientation change
 - **Large tablets (iPad Pro)**: Full 2732x2048px image displayed (70% width), text panel (30% width)
-- **Standard tablets**: Scaled down proportionally, same landscape layout
-- **Phones**: Landscape mode, bottom-crop of 2732x2048px image, same layout
+- **Standard tablets**: Scaled down proportionally, same landscape layou
+- **Phones**: Landscape mode, bottom-crop of 2732x2048px image, same layou
 - **Important content**: Keep characters and key elements in the bottom 75% of the image for phone compatibility
 
 ## CMS Integration
