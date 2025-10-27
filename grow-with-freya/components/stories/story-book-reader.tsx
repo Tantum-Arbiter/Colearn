@@ -860,8 +860,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 6,
-    // Glass morphism effect
-    backdropFilter: 'blur(10px)', // For web
+    // Glass morphism effect (backdropFilter not supported in React Native)
     overflow: 'hidden',
   },
   exitButtonText: {
@@ -968,8 +967,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 6,
-    // Glass morphism effect
-    backdropFilter: 'blur(10px)', // For web
+    // Glass morphism effect (backdropFilter not supported in React Native)
     overflow: 'hidden',
     zIndex: 3,
   },
@@ -1097,8 +1095,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 6,
-    // Glass morphism effect
-    backdropFilter: 'blur(10px)', // For web
+    // Glass morphism effect (backdropFilter not supported in React Native)
     overflow: 'hidden',
   },
   soundButton: {
@@ -1115,8 +1112,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 6,
-    // Glass morphism effect
-    backdropFilter: 'blur(10px)', // For web
+    // Glass morphism effect (backdropFilter not supported in React Native)
     overflow: 'hidden',
   },
   soundButtonText: {
@@ -1201,7 +1197,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 25,
-    backdropFilter: 'blur(10px)',
+    // backdropFilter not supported in React Native
   },
   coverTapText: {
     fontSize: 16,
