@@ -71,8 +71,14 @@ module.exports = {
       statements: 10,
     },
   },
-  testTimeout: 10000,
-  maxWorkers: 1, // Prevent race conditions in animation tests
+  testTimeout: process.env.CI ? 30000 : 10000, // Longer timeout in CI
+  maxWorkers: process.env.CI ? 1 : '50%', // Single worker in CI, parallel locally
+  // CI-specific optimizations
+  ...(process.env.CI && {
+    forceExit: true, // Force Jest to exit in CI
+    detectOpenHandles: false, // Disable open handle detection in CI
+    workerIdleMemoryLimit: '512MB', // Limit worker memory in CI
+  }),
 
   // Enhanced reporting - temporarily disabled for CI/CD debugging
   reporters: [

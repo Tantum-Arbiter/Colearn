@@ -60,13 +60,17 @@ describe('SleepSequencePlayer', () => {
     jest.clearAllMocks();
     // Clear any existing timers
     jest.clearAllTimers();
-    // Fake timers disabled globally for CI/CD stability
-    // jest.useFakeTimers();
+    // Use fake timers only in local development
+    if (process.env.CI !== 'true') {
+      jest.useFakeTimers();
+    }
   });
 
   afterEach(() => {
     sleepPlayer.cleanup();
-    // jest.useRealTimers();
+    if (process.env.CI !== 'true') {
+      jest.useRealTimers();
+    }
   });
 
   describe('Singleton Pattern', () => {

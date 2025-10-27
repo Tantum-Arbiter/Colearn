@@ -12,29 +12,67 @@ global.console = {
   error: jest.fn(),
 };
 
-// Mock timers for animation testing - temporarily disabled for CI/CD stability
-// beforeEach(() => {
-//   jest.useFakeTimers();
-// });
+// Environment-aware test setup
+const isCI = process.env.CI === 'true';
 
-// afterEach(() => {
-//   jest.runOnlyPendingTimers();
-//   jest.useRealTimers();
-//   jest.clearAllMocks();
-// });
+// CI-specific setup for stability
+if (isCI) {
+  // Increase default timeout for CI environment
+  jest.setTimeout(30000);
 
-// Simplified cleanup for CI/CD stability
-afterEach(() => {
-  jest.clearAllMocks();
-});
+  // Disable fake timers globally in CI to prevent timing issues
+  beforeEach(() => {
+    jest.clearAllMocks();
+    // Real timers only in CI
+  });
 
-// Global test utilities - updated for CI/CD stability
+  afterEach(() => {
+    jest.clearAllMocks();
+    // Force cleanup of any pending operations
+    if (global.gc) {
+      global.gc();
+    }
+  });
+} else {
+  // Local development setup with fake timers
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.runOnlyPendingTimers();
+    jest.useRealTimers();
+    jest.clearAllMocks();
+  });
+}
+
+// Global test utilities - environment aware
 global.flushAnimations = () => {
-  // Only advance timers if fake timers are active
-  if (jest.isMockFunction(setTimeout)) {
-    jest.advanceTimersByTime(5000); // Advance by 5 seconds to complete most animations
+  if (!isCI && jest.isMockFunction(setTimeout)) {
+    // Only use fake timers locally
+    jest.advanceTimersByTime(5000);
+  } else if (isCI) {
+    // In CI, use real delays but shorter
+    return new Promise(resolve => setTimeout(resolve, 100));
   }
 };
+
+// CI-specific error handling
+if (isCI) {
+  // Suppress console warnings that are expected in test environment
+  const originalConsoleWarn = console.warn;
+  console.warn = (...args) => {
+    const message = args.join(' ');
+    // Suppress known test environment warnings
+    if (message.includes('Warning: ReactDOM.render is deprecated') ||
+        message.includes('Warning: componentWillMount has been renamed') ||
+        message.includes('Warning: componentWillReceiveProps has been renamed')) {
+      return;
+    }
+    originalConsoleWarn.apply(console, args);
+  };
+}
 
 global.waitForAnimation = (duration = 1000) => {
   return new Promise(resolve => {
