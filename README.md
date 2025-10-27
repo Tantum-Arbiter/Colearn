@@ -1,6 +1,4 @@
 # Colearn
-
-<!-- Test commit to verify workflow concurrency controls -->
 A project for a final year project.
 
 **Paper**: **Bridging the Gap Between Screen Time Risks & Development Potential:** Designing a WHO & EAP Aligned, Research-Driven App for Toddlers, addressing Passive Screen Use in Early Childhood through supporting Co-Engagement, Sensory, Emotional & Language Development.

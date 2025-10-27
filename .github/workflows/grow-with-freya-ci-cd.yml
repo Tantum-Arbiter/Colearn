@@ -13,10 +13,7 @@ on:
       - 'grow-with-freya/**'
       - '.github/workflows/grow-with-freya-ci-cd.yml'
 
-# Enhanced concurrency control to prevent queue buildup
-concurrency:
-  group: grow-with-freya-cicd-${{ github.ref }}
-  cancel-in-progress: true
+
 
 env:
   WORKING_DIRECTORY: grow-with-freya

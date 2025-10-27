@@ -1,9 +1,6 @@
 name: Gateway Build and Push
 
-# Prevent multiple simultaneous runs to avoid queue buildup
-concurrency:
-  group: gateway-build-${{ github.ref }}
-  cancel-in-progress: true
+
 
 on:
   push:
