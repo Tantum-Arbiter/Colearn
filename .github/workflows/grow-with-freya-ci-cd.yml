@@ -45,7 +45,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+          cache-dependency-path: grow-with-freya/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -101,7 +101,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+          cache-dependency-path: grow-with-freya/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -126,7 +126,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+          cache-dependency-path: grow-with-freya/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -162,7 +162,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+          cache-dependency-path: grow-with-freya/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -229,7 +229,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+          cache-dependency-path: grow-with-freya/package-lock.json
 
       - name: Setup Expo CLI
         run: npm install -g @expo/cli@${{ env.EXPO_CLI_VERSION }}
@@ -273,7 +273,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+          cache-dependency-path: grow-with-freya/package-lock.json
 
       - name: Setup Expo and EAS
         run: |
@@ -312,7 +312,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+          cache-dependency-path: grow-with-freya/package-lock.json
 
       - name: Install dependencies
         run: npm ci
