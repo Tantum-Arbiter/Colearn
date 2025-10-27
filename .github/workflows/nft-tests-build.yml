@@ -8,12 +8,17 @@ on:
   #     - 'nft/**'
   #     - '.github/workflows/nft-tests-build.yml'
 
+# Add concurrency control to prevent queuing issues
+concurrency:
+  group: nft-tests-build-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   GHCR_REPO: ghcr.io/${{ secrets.GHCR_USERNAME }}
 
 jobs:
   build-nft-tests:
-    runs-on: ubuntu-lates
+    runs-on: ubuntu-latest  # Fixed typo: ubuntu-lates -> ubuntu-latest
     steps:
       - name: Checkout full repo
         uses: actions/checkout@v4
@@ -24,11 +29,11 @@ jobs:
         run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
 
       - name: Build and Push NFT Image
-        working-directory: nf
+        working-directory: nft  # Fixed typo: nf -> nft
         run: |
           docker build -t nft:latest .
-          docker tag nft:latest $GHCR_REPO/nft:lates
-          docker push $GHCR_REPO/nft:lates
+          docker tag nft:latest $GHCR_REPO/nft:latest  # Fixed typo: lates -> latest
+          docker push $GHCR_REPO/nft:latest  # Fixed typo: lates -> latest
 
       - name: Output Version
         run: |

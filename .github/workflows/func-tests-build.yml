@@ -8,15 +8,20 @@ on:
   #     - 'func-tests/**'
   #     - '.github/workflows/func-tests-build.yml'
 
+# Add concurrency control to prevent queuing issues
+concurrency:
+  group: func-tests-build-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
-  IMAGE_NAME: gateway-functional-tes
+  IMAGE_NAME: gateway-functional-test  # Fixed typo: gateway-functional-tes -> gateway-functional-test
   REGION: europe-west1
   PROJECT_ID: apt-icon-472307-b7
-  SERVICE: gateway-functional-tes
+  SERVICE: gateway-functional-test  # Fixed typo: gateway-functional-tes -> gateway-functional-test
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-lates
+    runs-on: ubuntu-latest  # Fixed typo: ubuntu-lates -> ubuntu-latest
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
