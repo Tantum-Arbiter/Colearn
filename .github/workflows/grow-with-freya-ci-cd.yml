@@ -12,6 +12,10 @@ on:
       - 'grow-with-freya/**'
       - '.github/workflows/grow-with-freya-ci-cd.yml'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   WORKING_DIRECTORY: grow-with-freya
   NODE_VERSION: '20'
