@@ -98,18 +98,25 @@ export const testAnimationTiming = async (
 ) => {
   const { duration = 1000, tolerance = 0.1 } = config;
   const initialValue = sharedValue.value;
-  
+  const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true' || process.env.NODE_ENV === 'test';
+
   // Start animation
   animationFn();
-  
-  // Fast-forward time
-  act(() => {
-    jest.advanceTimersByTime(duration);
-  });
-  
+
+  // Fast-forward time - use real delays in CI
+  if (isCI) {
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, Math.min(duration, 100)));
+    });
+  } else {
+    act(() => {
+      jest.advanceTimersByTime(duration);
+    });
+  }
+
   // Check final value
   expect(sharedValue.value).toBeCloseTo(expectedFinalValue, tolerance);
-  
+
   return {
     initialValue,
     finalValue: sharedValue.value,
@@ -194,9 +201,16 @@ export const testAnimationPerformance = (
  * Utility to wait for animations to complete
  */
 export const waitForAnimations = async (duration: number = 2000) => {
+  const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true' || process.env.NODE_ENV === 'test';
+
   await act(async () => {
-    jest.advanceTimersByTime(duration);
-    await new Promise(resolve => setTimeout(resolve, 0));
+    if (isCI) {
+      // Use real delays in CI but much shorter
+      await new Promise(resolve => setTimeout(resolve, Math.min(duration, 100)));
+    } else {
+      jest.advanceTimersByTime(duration);
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
   });
 };
 

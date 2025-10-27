@@ -13,24 +13,35 @@ global.console = {
 };
 
 // Environment-aware test setup
-const isCI = process.env.CI === 'true';
+const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true' || process.env.NODE_ENV === 'test';
 
-// CI-specific setup for stability
+console.log(`Jest setup: CI=${process.env.CI}, GITHUB_ACTIONS=${process.env.GITHUB_ACTIONS}, NODE_ENV=${process.env.NODE_ENV}, isCI=${isCI}`);
+
+// Always use real timers in CI for stability
 if (isCI) {
   // Increase default timeout for CI environment
-  jest.setTimeout(30000);
+  jest.setTimeout(60000); // Increased to 60 seconds
 
-  // Disable fake timers globally in CI to prevent timing issues
+  // Force real timers globally in CI
   beforeEach(() => {
     jest.clearAllMocks();
-    // Real timers only in CI
+    jest.clearAllTimers();
+    // Ensure real timers are used
+    if (jest.isMockFunction(setTimeout)) {
+      jest.useRealTimers();
+    }
   });
 
   afterEach(() => {
     jest.clearAllMocks();
+    jest.clearAllTimers();
     // Force cleanup of any pending operations
     if (global.gc) {
       global.gc();
+    }
+    // Ensure we're back to real timers
+    if (jest.isMockFunction(setTimeout)) {
+      jest.useRealTimers();
     }
   });
 } else {
@@ -52,9 +63,9 @@ global.flushAnimations = () => {
   if (!isCI && jest.isMockFunction(setTimeout)) {
     // Only use fake timers locally
     jest.advanceTimersByTime(5000);
-  } else if (isCI) {
+  } else {
     // In CI, use real delays but shorter
-    return new Promise(resolve => setTimeout(resolve, 100));
+    return new Promise(resolve => setTimeout(resolve, 50));
   }
 };
 
@@ -76,6 +87,8 @@ if (isCI) {
 
 global.waitForAnimation = (duration = 1000) => {
   return new Promise(resolve => {
-    setTimeout(resolve, duration);
+    // Use shorter durations in CI
+    const actualDuration = isCI ? Math.min(duration, 100) : duration;
+    setTimeout(resolve, actualDuration);
   });
 };

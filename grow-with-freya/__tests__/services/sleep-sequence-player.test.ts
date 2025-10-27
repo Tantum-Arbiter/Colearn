@@ -60,17 +60,22 @@ describe('SleepSequencePlayer', () => {
     jest.clearAllMocks();
     // Clear any existing timers
     jest.clearAllTimers();
-    // Use fake timers only in local development
-    if (process.env.CI !== 'true') {
+    // Force real timers in CI environments
+    const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true' || process.env.NODE_ENV === 'test';
+    if (isCI) {
+      jest.useRealTimers();
+    } else {
       jest.useFakeTimers();
     }
   });
 
   afterEach(() => {
     sleepPlayer.cleanup();
-    if (process.env.CI !== 'true') {
+    const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true' || process.env.NODE_ENV === 'test';
+    if (!isCI) {
       jest.useRealTimers();
     }
+    jest.clearAllTimers();
   });
 
   describe('Singleton Pattern', () => {

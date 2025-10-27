@@ -45,16 +45,22 @@ describe('EmotionsGameScreen', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // Use fake timers only in local development
-    if (process.env.CI !== 'true') {
+    jest.clearAllTimers();
+    // Force real timers in CI environments
+    const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true' || process.env.NODE_ENV === 'test';
+    if (isCI) {
+      jest.useRealTimers();
+    } else {
       jest.useFakeTimers();
     }
   });
 
   afterEach(() => {
-    if (process.env.CI !== 'true') {
+    const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true' || process.env.NODE_ENV === 'test';
+    if (!isCI) {
       jest.useRealTimers();
     }
+    jest.clearAllTimers();
   });
 
   describe('Animation State Management', () => {

@@ -64,13 +64,23 @@ describe('StoryBookReader', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.clearAllTimers();
     resetAnimationMocks();
-    // Fake timers disabled globally for CI/CD stability
-    // jest.useFakeTimers();
+    // Force real timers in CI environments
+    const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true' || process.env.NODE_ENV === 'test';
+    if (isCI) {
+      jest.useRealTimers();
+    } else {
+      jest.useFakeTimers();
+    }
   });
 
   afterEach(() => {
-    // jest.useRealTimers();
+    const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true' || process.env.NODE_ENV === 'test';
+    if (!isCI) {
+      jest.useRealTimers();
+    }
+    jest.clearAllTimers();
   });
 
   it('renders without crashing', () => {
