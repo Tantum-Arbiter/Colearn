@@ -46,7 +46,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --legacy-peer-deps
 
       - name: Run ESLint
         run: npm run lint
@@ -110,7 +110,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --legacy-peer-deps
 
       - name: TypeScript type check
         run: npm run type-check
@@ -133,7 +133,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --legacy-peer-deps
 
       - name: Run npm audit
         run: npm audit --audit-level=moderate
@@ -167,7 +167,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --legacy-peer-deps
 
       - name: Determine version bump
         id: version
@@ -235,7 +235,7 @@ jobs:
         run: npm install -g @expo/cli@${{ env.EXPO_CLI_VERSION }}
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --legacy-peer-deps
 
       - name: Expo doctor check
         run: npx expo-doctor || echo "Expo doctor found issues but continuing build..."
@@ -280,7 +280,7 @@ jobs:
           npm install -g eas-cli
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --legacy-peer-deps
 
       - name: Authenticate with Expo
         run: eas login --non-interactive
@@ -312,7 +312,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --legacy-peer-deps
 
       - name: Download web build
         uses: actions/download-artifact@v4
