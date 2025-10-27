@@ -1,19 +1,21 @@
 name: Security Scan
 
 on:
-  push:
-    branches: [ main, develop, set-up-pipeline-frontend ]
-    paths:
-      - 'grow-with-freya/**'
-      - '.github/workflows/security-scan.yml'
-  pull_request:
-    branches: [ main, develop ]
-    paths:
-      - 'grow-with-freya/**'
-      - '.github/workflows/security-scan.yml'
-  schedule:
-    # Run security scan daily at 2 AM UTC
-    - cron: '0 2 * * *'
+  workflow_dispatch:
+  # Temporarily disabled due to GitHub Actions queue issues
+  # push:
+  #   branches: [ main, develop, set-up-pipeline-frontend ]
+  #   paths:
+  #     - 'grow-with-freya/**'
+  #     - '.github/workflows/security-scan.yml'
+  # pull_request:
+  #   branches: [ main, develop ]
+  #   paths:
+  #     - 'grow-with-freya/**'
+  #     - '.github/workflows/security-scan.yml'
+  # schedule:
+  #   # Run security scan daily at 2 AM UTC
+  #   - cron: '0 2 * * *'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
