@@ -73,8 +73,8 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
   const [lastSwapTime, setLastSwapTime] = useSafeState<number>(0);
   const [newlySelectedItem, setNewlySelectedItem] = useSafeState<string | null>(null);
 
-  const timeoutRef = useRef<number | null>(null);
-  const animationWatchdogRef = useRef<number | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const animationWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Component cleanup on unmount
   useEffect(() => {
