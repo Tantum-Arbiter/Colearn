@@ -1,4 +1,5 @@
 {
+  "_comment": "Test concurrency controls",
   "name": "grow-with-freya",
   "main": "expo-router/entry",
   "version": "1.0.0",
