@@ -629,8 +629,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
     return (
       <View style={styles.transitionContainer}>
         <View
-          style={{ backgroundColor: '#4ECDC4' }}
-          style={styles.transitionBackground}
+          style={[styles.transitionBackground, { backgroundColor: '#4ECDC4' }]}
         >
           <View style={styles.transitionContent}>
             <Text style={styles.transitionTitle}>{story.title}</Text>
@@ -1210,5 +1209,15 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#2C3E50',
     textAlign: 'center',
+  },
+  pageIndicatorText: {
+    fontSize: 14,
+    fontFamily: Fonts.sans,
+    fontWeight: '600',
+    color: 'white',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
 });

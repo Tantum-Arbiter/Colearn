@@ -13,6 +13,9 @@ const getScreenDimensions = () => {
   return { width, height };
 };
 
+// Static screen dimensions for animations
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
 interface SimplePageTransitionProps {
   children: React.ReactNode;
   isVisible: boolean;

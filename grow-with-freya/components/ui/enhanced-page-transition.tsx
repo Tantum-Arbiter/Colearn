@@ -1,10 +1,11 @@
 import React, { useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Text } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
   Easing,
+  SharedValue,
 } from 'react-native-reanimated';
 import { getScreenDimensions } from '@/components/main-menu/constants';
 
@@ -13,6 +14,33 @@ interface EnhancedPageTransitionProps {
   pages: Record<string, React.ReactNode>;
   duration?: number;
 }
+
+interface AnimatedPageProps {
+  pageKey: string;
+  pageComponent: React.ReactNode;
+  isActive: boolean;
+  animationValue: SharedValue<number>;
+}
+
+const AnimatedPage: React.FC<AnimatedPageProps> = ({ pageKey, pageComponent, isActive, animationValue }) => {
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: animationValue.value }],
+  }));
+
+  return (
+    <Animated.View
+      key={pageKey}
+      style={[styles.page, animatedStyle]}
+      pointerEvents={isActive ? 'auto' : 'none'}
+    >
+      {pageComponent || (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'red' }}>
+          <Text style={{ color: 'white', fontSize: 18 }}>Missing component for {pageKey}</Text>
+        </View>
+      )}
+    </Animated.View>
+  );
+};
 
 /**
  * EnhancedPageTransition provides vertical scroll transitions between any pages
@@ -101,25 +129,17 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
           return null;
         }
 
-        const animatedStyle = useAnimatedStyle(() => ({
-          transform: [{ translateY: pageAnimations[pageKey].value }],
-        }));
-
         const isActive = currentPage === pageKey;
         console.log(`Rendering page ${pageKey}, active: ${isActive}, component:`, !!pageComponent);
 
         return (
-          <Animated.View
+          <AnimatedPage
             key={pageKey}
-            style={[styles.page, animatedStyle]}
-            pointerEvents={isActive ? 'auto' : 'none'}
-          >
-            {pageComponent || (
-              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'red' }}>
-                <Text style={{ color: 'white', fontSize: 18 }}>Missing component for {pageKey}</Text>
-              </View>
-            )}
-          </Animated.View>
+            pageKey={pageKey}
+            pageComponent={pageComponent}
+            isActive={isActive}
+            animationValue={pageAnimations[pageKey]}
+          />
         );
       })}
     </View>

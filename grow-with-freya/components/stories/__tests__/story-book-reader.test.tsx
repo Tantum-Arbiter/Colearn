@@ -1,6 +1,7 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
 import { StoryBookReader } from '../story-book-reader';
+import { Story } from '@/types/story';
 
 // Mock all dependencies
 jest.mock('react-native-safe-area-context', () => ({
@@ -32,7 +33,7 @@ jest.mock('../../../contexts/story-transition-context', () => ({
 }));
 
 // Mock story data
-const mockStory = {
+const mockStory: Story = {
   id: 'test-story',
   title: 'Test Story',
   category: 'bedtime',

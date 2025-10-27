@@ -75,8 +75,8 @@ export function SleepSelectionScreen({ onTrackSelect, onBack }: SleepSelectionSc
         const sleepPlayer = SleepSequencePlayer.getInstance();
         await sleepPlayer.startSleepSequence(
           sequenceTracks,
-          (phase, track) => {
-            console.log(`Sleep phase ${phase} started: ${track.title}`);
+          (track, phaseNumber) => {
+            console.log(`Sleep phase ${phaseNumber} started: ${track.title}`);
           },
           () => {
             console.log('Sleep sequence completed');

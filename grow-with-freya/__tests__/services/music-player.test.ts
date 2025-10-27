@@ -1,29 +1,30 @@
 import { musicPlayer } from '@/services/music-player';
 import { MusicTrack, MusicPlaylist } from '@/types/music';
 
-// Mock expo-av
-jest.mock('expo-av', () => {
-  const mockSound = {
-    playAsync: jest.fn(),
-    pauseAsync: jest.fn(),
-    stopAsync: jest.fn(),
-    unloadAsync: jest.fn(),
-    setVolumeAsync: jest.fn(),
-    setPositionAsync: jest.fn(),
-    setOnPlaybackStatusUpdate: jest.fn(),
-  };
+// Create mock objects outside the jest.mock callback
+const mockSound = {
+  playAsync: jest.fn(),
+  pauseAsync: jest.fn(),
+  stopAsync: jest.fn(),
+  unloadAsync: jest.fn(),
+  setVolumeAsync: jest.fn(),
+  setPositionAsync: jest.fn(),
+  setOnPlaybackStatusUpdate: jest.fn(),
+};
 
-  return {
-    Audio: {
-      setAudioModeAsync: jest.fn(),
-      Sound: {
-        createAsync: jest.fn().mockResolvedValue({ sound: mockSound }),
-      },
-      INTERRUPTION_MODE_IOS_DO_NOT_MIX: 'DO_NOT_MIX',
-      INTERRUPTION_MODE_ANDROID_DO_NOT_MIX: 'DO_NOT_MIX',
-    },
-  };
-});
+const mockAudio = {
+  setAudioModeAsync: jest.fn(),
+  Sound: {
+    createAsync: jest.fn().mockResolvedValue({ sound: mockSound }),
+  },
+  INTERRUPTION_MODE_IOS_DO_NOT_MIX: 'DO_NOT_MIX',
+  INTERRUPTION_MODE_ANDROID_DO_NOT_MIX: 'DO_NOT_MIX',
+};
+
+// Mock expo-av
+jest.mock('expo-av', () => ({
+  Audio: mockAudio,
+}));
 
 // Mock track data
 const mockTrack: MusicTrack = {

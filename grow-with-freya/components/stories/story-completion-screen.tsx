@@ -171,7 +171,7 @@ export function StoryCompletionScreen({
           <Text style={styles.completionEmoji}>🎉</Text>
           <Text style={styles.completionTitle}>Story Complete!</Text>
           <Text style={styles.completionSubtitle}>
-            You finished "{completedStory.title}"
+            You finished &quot;{completedStory.title}&quot;
           </Text>
         </View>
 
@@ -207,10 +207,10 @@ export function StoryCompletionScreen({
               </Pressable>
             )}
 
-            {recommendation.type === 'music' && recommendation.story && (
+            {recommendation.type === 'music' && randomSimilarStory && (
               <Pressable
                 style={[styles.actionButton, styles.secondaryButton]}
-                onPress={() => recommendation.story && onReadAnother(recommendation.story)}
+                onPress={() => onReadAnother(randomSimilarStory)}
               >
                 <Text style={styles.secondaryEmoji}>📚</Text>
                 <Text style={styles.secondaryTitle}>Another Story</Text>

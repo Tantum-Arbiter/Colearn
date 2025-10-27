@@ -99,6 +99,7 @@ describe('MusicPlayerService Error Handling', () => {
           isAvailable: true,
         }],
         category: 'binaural-beats',
+        isAvailable: true,
       };
 
       // Mock Audio.Sound.createAsync to throw an error
@@ -126,6 +127,7 @@ describe('MusicPlayerService Error Handling', () => {
         title: 'Empty Playlist',
         tracks: [],
         category: 'binaural-beats',
+        isAvailable: true,
       };
 
       // Try to load empty playlist

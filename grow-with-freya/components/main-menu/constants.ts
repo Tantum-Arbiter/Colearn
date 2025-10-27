@@ -6,6 +6,10 @@ export const getScreenDimensions = () => {
   return { width, height };
 };
 
+// Static screen dimensions for components that need them
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+export { SCREEN_WIDTH, SCREEN_HEIGHT };
+
 export const ANIMATION_TIMINGS = {
   ROCKET_DURATION: 12000,
   ROCKET_WAIT_TIME: 4000,

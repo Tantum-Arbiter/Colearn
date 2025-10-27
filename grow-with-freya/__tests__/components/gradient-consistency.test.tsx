@@ -92,9 +92,7 @@ describe('Gradient Consistency Across Submenus', () => {
 
     it('story selection screen uses correct gradient direction', () => {
       const { getByTestId } = render(
-        <StorySelectionScreen 
-          onBackToMenu={mockProps.onBackToMenu}
-        />
+        <StorySelectionScreen />
       );
 
       const gradient = getByTestId('linear-gradient');
@@ -108,7 +106,7 @@ describe('Gradient Consistency Across Submenus', () => {
         <EmotionsUnifiedScreen onStartGame={mockProps.onStartGame} onBack={mockProps.onBack} />,
         <MusicMainMenu onTantrumsSelect={mockProps.onTantrumsSelect} onSleepSelect={mockProps.onSleepSelect} onBack={mockProps.onBack} />,
         <MusicSelectionScreen onPlaylistSelect={mockProps.onPlaylistSelect} onTrackSelect={mockProps.onTrackSelect} onBack={mockProps.onBack} />,
-        <StorySelectionScreen onBackToMenu={mockProps.onBackToMenu} />,
+        <StorySelectionScreen />,
       ];
 
       screens.forEach((screen) => {
@@ -123,7 +121,7 @@ describe('Gradient Consistency Across Submenus', () => {
         <EmotionsUnifiedScreen onStartGame={mockProps.onStartGame} onBack={mockProps.onBack} />,
         <MusicMainMenu onTantrumsSelect={mockProps.onTantrumsSelect} onSleepSelect={mockProps.onSleepSelect} onBack={mockProps.onBack} />,
         <MusicSelectionScreen onPlaylistSelect={mockProps.onPlaylistSelect} onTrackSelect={mockProps.onTrackSelect} onBack={mockProps.onBack} />,
-        <StorySelectionScreen onBackToMenu={mockProps.onBackToMenu} />,
+        <StorySelectionScreen />,
       ];
 
       screens.forEach((screen) => {
@@ -139,7 +137,7 @@ describe('Gradient Consistency Across Submenus', () => {
         <EmotionsUnifiedScreen onStartGame={mockProps.onStartGame} onBack={mockProps.onBack} />,
         <MusicMainMenu onTantrumsSelect={mockProps.onTantrumsSelect} onSleepSelect={mockProps.onSleepSelect} onBack={mockProps.onBack} />,
         <MusicSelectionScreen onPlaylistSelect={mockProps.onPlaylistSelect} onTrackSelect={mockProps.onTrackSelect} onBack={mockProps.onBack} />,
-        <StorySelectionScreen onBackToMenu={mockProps.onBackToMenu} />,
+        <StorySelectionScreen />,
       ];
 
       screens.forEach((screen) => {
@@ -156,7 +154,7 @@ describe('Gradient Consistency Across Submenus', () => {
       const screens = [
         { component: <EmotionsUnifiedScreen onStartGame={mockProps.onStartGame} onBack={mockProps.onBack} />, title: 'Express Yourself!' },
         { component: <MusicMainMenu onTantrumsSelect={mockProps.onTantrumsSelect} onSleepSelect={mockProps.onSleepSelect} onBack={mockProps.onBack} />, title: 'Music' },
-        { component: <StorySelectionScreen onBackToMenu={mockProps.onBackToMenu} />, title: 'Choose Your Adventure' },
+        { component: <StorySelectionScreen />, title: 'Choose Your Adventure' },
       ];
 
       screens.forEach(({ component, title }) => {
@@ -176,7 +174,7 @@ describe('Gradient Consistency Across Submenus', () => {
         <EmotionsUnifiedScreen onStartGame={mockProps.onStartGame} onBack={mockProps.onBack} />,
         <MusicMainMenu onTantrumsSelect={mockProps.onTantrumsSelect} onSleepSelect={mockProps.onSleepSelect} onBack={mockProps.onBack} />,
         <MusicSelectionScreen onPlaylistSelect={mockProps.onPlaylistSelect} onTrackSelect={mockProps.onTrackSelect} onBack={mockProps.onBack} />,
-        <StorySelectionScreen onBackToMenu={mockProps.onBackToMenu} />,
+        <StorySelectionScreen />,
       ];
 
       screens.forEach((screen) => {
@@ -196,7 +194,7 @@ describe('Gradient Consistency Across Submenus', () => {
         <EmotionsUnifiedScreen onStartGame={mockProps.onStartGame} onBack={mockProps.onBack} />,
         <MusicMainMenu onTantrumsSelect={mockProps.onTantrumsSelect} onSleepSelect={mockProps.onSleepSelect} onBack={mockProps.onBack} />,
         <MusicSelectionScreen onPlaylistSelect={mockProps.onPlaylistSelect} onTrackSelect={mockProps.onTrackSelect} onBack={mockProps.onBack} />,
-        <StorySelectionScreen onBackToMenu={mockProps.onBackToMenu} />,
+        <StorySelectionScreen />,
       ];
 
       // All screens should use identical gradient
@@ -216,7 +214,7 @@ describe('Gradient Consistency Across Submenus', () => {
       const screens = [
         <EmotionsUnifiedScreen onStartGame={mockProps.onStartGame} onBack={mockProps.onBack} />,
         <MusicMainMenu onTantrumsSelect={mockProps.onTantrumsSelect} onSleepSelect={mockProps.onSleepSelect} onBack={mockProps.onBack} />,
-        <StorySelectionScreen onBackToMenu={mockProps.onBackToMenu} />,
+        <StorySelectionScreen />,
       ];
 
       screens.forEach((screen) => {

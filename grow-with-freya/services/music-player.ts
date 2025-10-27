@@ -19,8 +19,8 @@ export class MusicPlayerService implements MusicService {
   private state: MusicPlayerState;
   private stateChangeCallbacks: ((state: MusicPlayerState) => void)[] = [];
   private isInitialized = false;
-  private positionUpdateTimer: NodeJS.Timeout | null = null;
-  private seekTimeout: NodeJS.Timeout | null = null;
+  private positionUpdateTimer: ReturnType<typeof setTimeout> | null = null;
+  private seekTimeout: ReturnType<typeof setTimeout> | null = null;
   private hasBackgroundMusicFaded = false;
 
   private constructor() {
@@ -631,4 +631,4 @@ export class MusicPlayerService implements MusicService {
 }
 
 // Export singleton instance
-export const musicPlayer = new MusicPlayerService();
+export const musicPlayer = MusicPlayerService.getInstance();

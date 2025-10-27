@@ -74,7 +74,7 @@ describe('Star Background Consistency', () => {
         <EmotionsUnifiedScreen onStartGame={mockProps.onStartGame} onBack={mockProps.onBack} />,
         <MusicMainMenu onTantrumsSelect={mockProps.onTantrumsSelect} onSleepSelect={mockProps.onSleepSelect} onBack={mockProps.onBack} />,
         <MusicSelectionScreen onPlaylistSelect={mockProps.onPlaylistSelect} onTrackSelect={mockProps.onTrackSelect} onBack={mockProps.onBack} />,
-        <StorySelectionScreen onBackToMenu={mockProps.onBackToMenu} />,
+        <StorySelectionScreen />,
       ];
 
       screens.forEach((screen) => {
@@ -111,7 +111,7 @@ describe('Star Background Consistency', () => {
         <EmotionsUnifiedScreen onStartGame={mockProps.onStartGame} onBack={mockProps.onBack} />,
         <MusicMainMenu onTantrumsSelect={mockProps.onTantrumsSelect} onSleepSelect={mockProps.onSleepSelect} onBack={mockProps.onBack} />,
         <MusicSelectionScreen onPlaylistSelect={mockProps.onPlaylistSelect} onTrackSelect={mockProps.onTrackSelect} onBack={mockProps.onBack} />,
-        <StorySelectionScreen onBackToMenu={mockProps.onBackToMenu} />,
+        <StorySelectionScreen />,
       ];
 
       screens.forEach((screen) => {
@@ -132,7 +132,7 @@ describe('Star Background Consistency', () => {
         <EmotionsUnifiedScreen onStartGame={mockProps.onStartGame} onBack={mockProps.onBack} />,
         <MusicMainMenu onTantrumsSelect={mockProps.onTantrumsSelect} onSleepSelect={mockProps.onSleepSelect} onBack={mockProps.onBack} />,
         <MusicSelectionScreen onPlaylistSelect={mockProps.onPlaylistSelect} onTrackSelect={mockProps.onTrackSelect} onBack={mockProps.onBack} />,
-        <StorySelectionScreen onBackToMenu={mockProps.onBackToMenu} />,
+        <StorySelectionScreen />,
       ];
 
       screens.forEach((screen) => {
@@ -271,7 +271,7 @@ describe('Star Background Consistency', () => {
         { component: <EmotionsUnifiedScreen onStartGame={mockProps.onStartGame} onBack={mockProps.onBack} />, name: 'Emotions' },
         { component: <MusicMainMenu onTantrumsSelect={mockProps.onTantrumsSelect} onSleepSelect={mockProps.onSleepSelect} onBack={mockProps.onBack} />, name: 'Music Main' },
         { component: <MusicSelectionScreen onPlaylistSelect={mockProps.onPlaylistSelect} onTrackSelect={mockProps.onTrackSelect} onBack={mockProps.onBack} />, name: 'Music Selection' },
-        { component: <StorySelectionScreen onBackToMenu={mockProps.onBackToMenu} />, name: 'Stories' },
+        { component: <StorySelectionScreen />, name: 'Stories' },
       ];
 
       screens.forEach(({ component, name }) => {

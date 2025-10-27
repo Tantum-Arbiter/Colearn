@@ -298,7 +298,7 @@ export function useSafeState<T>(initialState: T): [T, (newState: T | ((prev: T) 
 // Performance logger for debugging
 export class PerformanceLogger {
   private static instance: PerformanceLogger;
-  private logs: Array<{ timestamp: number; event: string; duration?: number }> = [];
+  private logs: { timestamp: number; event: string; duration?: number }[] = [];
 
   static getInstance(): PerformanceLogger {
     if (!PerformanceLogger.instance) {

@@ -51,11 +51,13 @@ export function TantrumInfoScreen({ onContinue, onBack }: TantrumInfoScreenProps
     );
   }, []);
 
-  const getStarAnimatedStyle = (star: any) => {
+  const useStarAnimatedStyle = () => {
     return useAnimatedStyle(() => ({
       transform: [{ rotate: `${starRotation.value}deg` }],
     }));
   };
+
+  const starAnimatedStyle = useStarAnimatedStyle();
 
   return (
     <LinearGradient
@@ -67,7 +69,7 @@ export function TantrumInfoScreen({ onContinue, onBack }: TantrumInfoScreenProps
         <Animated.View
           key={`star-${star.id}`}
           style={[
-            getStarAnimatedStyle(star),
+            starAnimatedStyle,
             {
               position: 'absolute',
               width: star.size,
@@ -75,8 +77,8 @@ export function TantrumInfoScreen({ onContinue, onBack }: TantrumInfoScreenProps
               backgroundColor: 'white',
               borderRadius: star.size / 2,
               opacity: star.opacity * 0.7, // Slightly dimmed for readability
-              left: star.x,
-              top: star.y,
+              left: star.left,
+              top: star.top,
             },
           ]}
         />
@@ -176,7 +178,7 @@ export function TantrumInfoScreen({ onContinue, onBack }: TantrumInfoScreenProps
             <Text style={styles.warningTitle}>⚠️ Important</Text>
             <Text style={styles.warningText}>
               Binaural beats are not a substitute for professional medical advice. 
-              If tantrums are frequent or severe, please consult your child's healthcare provider.
+              If tantrums are frequent or severe, please consult your child&apos;s healthcare provider.
             </Text>
           </View>
         </View>

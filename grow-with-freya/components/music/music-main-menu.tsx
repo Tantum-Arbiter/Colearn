@@ -52,11 +52,13 @@ export function MusicMainMenu({
     );
   }, []);
 
-  const getStarAnimatedStyle = (star: any) => {
+  const useStarAnimatedStyle = () => {
     return useAnimatedStyle(() => ({
       transform: [{ rotate: `${starRotation.value}deg` }],
     }));
   };
+
+  const starAnimatedStyle = useStarAnimatedStyle();
 
   return (
     <LinearGradient
@@ -69,7 +71,7 @@ export function MusicMainMenu({
           key={`star-${star.id}`}
           testID={`star-${star.id}`}
           style={[
-            getStarAnimatedStyle(star),
+            starAnimatedStyle,
             {
               position: 'absolute',
               width: VISUAL_EFFECTS.STAR_SIZE,

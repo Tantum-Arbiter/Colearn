@@ -70,27 +70,27 @@ describe('OnboardingScreen', () => {
       expect(typeof mockOnNext).toBe('function');
     });
 
-    it('renders with back button when enabled', () => {
-      const mockOnBack = jest.fn();
+    it('renders with previous button when onPrevious is provided', () => {
+      const mockOnPrevious = jest.fn();
       const component = render(
-        <OnboardingScreen {...defaultProps} showBackButton={true} onBack={mockOnBack} />
+        <OnboardingScreen {...defaultProps} onPrevious={mockOnPrevious} />
       );
 
       // Test that the component renders without crashing
       expect(component).toBeTruthy();
-      expect(mockOnBack).toBeDefined();
+      expect(mockOnPrevious).toBeDefined();
     });
 
-    it('handles back button press', () => {
-      const mockOnBack = jest.fn();
+    it('handles previous button press', () => {
+      const mockOnPrevious = jest.fn();
       const component = render(
-        <OnboardingScreen {...defaultProps} showBackButton={true} onBack={mockOnBack} />
+        <OnboardingScreen {...defaultProps} onPrevious={mockOnPrevious} />
       );
 
       // Test that the component renders without crashing and handles props
       expect(component).toBeTruthy();
-      expect(mockOnBack).toBeDefined();
-      expect(typeof mockOnBack).toBe('function');
+      expect(mockOnPrevious).toBeDefined();
+      expect(typeof mockOnPrevious).toBe('function');
     });
 
     it('handles different props without crashing', () => {

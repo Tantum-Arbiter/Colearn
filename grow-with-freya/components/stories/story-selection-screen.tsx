@@ -331,7 +331,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
 
                           {story.coverImage ? (
                             <Image
-                              source={story.coverImage}
+                              source={typeof story.coverImage === 'string' ? { uri: story.coverImage } : story.coverImage}
                               style={{
                                 width: 160,
                                 height: 120,

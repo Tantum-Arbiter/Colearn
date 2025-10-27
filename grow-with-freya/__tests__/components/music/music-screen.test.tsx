@@ -5,7 +5,7 @@ import { MusicTrack, MusicPlaylist } from '@/types/music';
 
 // Mock the music player hook
 const mockUseMusicPlayer = {
-  currentTrack: null,
+  currentTrack: null as any, // Allow both null and MusicTrack
   loadTrack: jest.fn(),
   loadPlaylist: jest.fn(),
   clearTrack: jest.fn(),
@@ -43,11 +43,11 @@ jest.mock('@/components/music/music-selection-screen', () => ({
 
     return (
       <>
-        <button testID="back-button" onPress={onBack}>Back</button>
-        <button testID="track-button" onPress={() => onTrackSelect(mockTrack)}>
+        <button data-testid="back-button" onClick={onBack}>Back</button>
+        <button data-testid="track-button" onClick={() => onTrackSelect(mockTrack)}>
           Select Track
         </button>
-        <button testID="playlist-button" onPress={() => onPlaylistSelect('bedtime')}>
+        <button data-testid="playlist-button" onClick={() => onPlaylistSelect('bedtime')}>
           Select Playlist
         </button>
       </>
@@ -59,7 +59,7 @@ jest.mock('@/components/music/music-player-screen', () => ({
   MusicPlayerScreen: ({ onBack }: any) => (
     <>
       <div>Music Player Screen</div>
-      <button testID="player-back-button" onPress={onBack}>Back from Player</button>
+      <button data-testid="player-back-button" onClick={onBack}>Back from Player</button>
     </>
   ),
 }));

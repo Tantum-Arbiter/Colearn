@@ -65,7 +65,7 @@ export const getSvgAssetFromPath = (svgType: keyof typeof SVG_PATHS) => {
   return getSvgAsset(svgType);
 };
 
-export const getSvgComponentFromSvg = (svgType: keyof typeof SVG_PATHS) => {
+export const getSvgComponentFromSvg = (svgType: keyof typeof SVG_PATHS | 'balloon') => {
   const {
     CloudSvg,
     StoriesSvg,

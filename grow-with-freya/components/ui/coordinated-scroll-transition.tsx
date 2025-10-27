@@ -14,6 +14,9 @@ const getScreenDimensions = () => {
   return { width, height };
 };
 
+// Static screen dimensions for animations
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
 interface CoordinatedScrollTransitionProps {
   currentPage: 'main' | 'stories';
   mainMenuComponent: React.ReactNode;
@@ -287,11 +290,28 @@ export const MultiPageTransition: React.FC<MultiPageTransitionProps> = ({
     });
   }, [currentPage, duration]);
 
-  // Create animated styles for each page
-  const createAnimatedStyle = (pageKey: PageKey) => {
-    return useAnimatedStyle(() => ({
+  // Component for individual animated page
+  interface AnimatedPageProps {
+    pageKey: PageKey;
+    pageComponent: React.ReactNode;
+    isCurrentPage: boolean;
+    pageAnimations: any;
+  }
+
+  const AnimatedPage: React.FC<AnimatedPageProps> = ({ pageKey, pageComponent, isCurrentPage, pageAnimations }) => {
+    const animatedStyle = useAnimatedStyle(() => ({
       transform: [{ translateY: pageAnimations[pageKey].value }],
     }));
+
+    return (
+      <Animated.View
+        key={pageKey}
+        style={[styles.page, animatedStyle]}
+        pointerEvents={isCurrentPage ? 'auto' : 'none'}
+      >
+        {pageComponent}
+      </Animated.View>
+    );
   };
 
   return (
@@ -300,13 +320,13 @@ export const MultiPageTransition: React.FC<MultiPageTransitionProps> = ({
       {Object.entries(pages).map(([pageKey, pageComponent]) => {
         const key = pageKey as PageKey;
         return (
-          <Animated.View
+          <AnimatedPage
             key={key}
-            style={[styles.page, createAnimatedStyle(key)]}
-            pointerEvents={currentPage === key ? 'auto' : 'none'}
-          >
-            {pageComponent}
-          </Animated.View>
+            pageKey={key}
+            pageComponent={pageComponent}
+            isCurrentPage={currentPage === key}
+            pageAnimations={pageAnimations}
+          />
         );
       })}
     </View>

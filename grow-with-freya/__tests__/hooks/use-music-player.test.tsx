@@ -1,6 +1,7 @@
 import React from 'react';
 import { renderHook, act } from '@testing-library/react-native';
 import { useMusicPlayer } from '@/hooks/use-music-player';
+import { MusicPlayerState } from '@/types/music';
 import { musicPlayer } from '@/services/music-player';
 import { MusicTrack } from '@/types/music';
 
@@ -48,6 +49,7 @@ const mockInitialState = {
   currentTrackIndex: 0,
   isLoading: false,
   error: null,
+  repeatCount: 0,
 };
 
 const mockTrack: MusicTrack = {
@@ -90,9 +92,9 @@ describe('useMusicPlayer', () => {
   });
 
   it('should update state when music player state changes', async () => {
-    let stateChangeCallback: (state: any) => void = () => {};
+    let stateChangeCallback: (state: MusicPlayerState) => void = () => {};
     
-    mockMusicPlayer.onStateChange.mockImplementation((callback) => {
+    mockMusicPlayer.onStateChange.mockImplementation((callback: (state: MusicPlayerState) => void) => {
       stateChangeCallback = callback;
     });
 

@@ -43,20 +43,17 @@ const SNAPSHOT_TEST_STORY: Story = {
   pages: [
     {
       id: 'cover',
+      pageNumber: 0,
       type: 'cover',
-      content: {
-        title: 'Snapshot Test Story',
-        subtitle: 'Testing visual consistency',
-        backgroundImage: 'test-bg.jpg',
-      },
+      text: 'Snapshot Test Story',
+      backgroundImage: 'test-bg.jpg',
     },
     {
       id: 'page1',
+      pageNumber: 1,
       type: 'story',
-      content: {
-        text: 'This is a test page for visual regression testing.',
-        backgroundImage: 'test-page1.jpg',
-      },
+      text: 'This is a test page for visual regression testing.',
+      backgroundImage: 'test-page1.jpg',
     },
   ],
 };
@@ -324,12 +321,10 @@ describe('Visual Regression Tests', () => {
         pages: [
           {
             id: 'cover',
+            pageNumber: 0,
             type: 'cover',
-            content: {
-              title: 'This is a Very Long Story Title That Should Test Text Wrapping and Layout',
-              subtitle: 'This is also a very long subtitle that should test how the component handles longer text content and whether it wraps properly or truncates as expected',
-              backgroundImage: 'test-bg.jpg',
-            },
+            text: 'This is a Very Long Story Title That Should Test Text Wrapping and Layout',
+            backgroundImage: 'test-bg.jpg',
           },
         ],
       };
@@ -352,12 +347,10 @@ describe('Visual Regression Tests', () => {
         pages: [
           {
             id: 'cover',
+            pageNumber: 0,
             type: 'cover',
-            content: {
-              title: 'Short',
-              subtitle: 'Brief',
-              backgroundImage: 'test-bg.jpg',
-            },
+            text: 'Short',
+            backgroundImage: 'test-bg.jpg',
           },
         ],
       };

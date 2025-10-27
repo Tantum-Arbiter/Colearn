@@ -44,7 +44,7 @@ describe('TantrumInfoScreen', () => {
 
   const defaultProps = {
     onBack: mockOnBack,
-    onStartSession: mockOnStartSession,
+    onContinue: mockOnStartSession,
   };
 
   beforeEach(() => {

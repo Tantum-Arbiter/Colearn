@@ -80,7 +80,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <View style={styles.errorContainer}>
             <Text style={styles.errorTitle}>Oops! Something went wrong</Text>
             <Text style={styles.errorMessage}>
-              The app encountered an unexpected error. Don't worry, your data is safe!
+              The app encountered an unexpected error. Don&apos;t worry, your data is safe!
             </Text>
             
             {(typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development') && this.state.error && (

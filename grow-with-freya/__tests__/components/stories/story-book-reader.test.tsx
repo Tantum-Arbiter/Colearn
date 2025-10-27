@@ -35,28 +35,24 @@ const mockStory: Story = {
   pages: [
     {
       id: 'cover',
+      pageNumber: 0,
       type: 'cover',
-      content: {
-        title: 'Test Story',
-        subtitle: 'A test adventure',
-        backgroundImage: 'test-bg.jpg',
-      },
+      text: 'Test Story',
+      backgroundImage: 'test-bg.jpg',
     },
     {
       id: 'page1',
+      pageNumber: 1,
       type: 'story',
-      content: {
-        text: 'Once upon a time...',
-        backgroundImage: 'test-page1.jpg',
-      },
+      text: 'Once upon a time...',
+      backgroundImage: 'test-page1.jpg',
     },
     {
       id: 'page2',
+      pageNumber: 2,
       type: 'story',
-      content: {
-        text: 'The end.',
-        backgroundImage: 'test-page2.jpg',
-      },
+      text: 'The end.',
+      backgroundImage: 'test-page2.jpg',
     },
   ],
 };

@@ -44,11 +44,13 @@ export function EmotionsUnifiedScreen({ onStartGame, onBack }: EmotionsUnifiedSc
     );
   }, []);
 
-  const getStarAnimatedStyle = (star: any) => {
+  const useStarAnimatedStyle = () => {
     return useAnimatedStyle(() => ({
       transform: [{ rotate: `${starRotation.value}deg` }],
     }));
   };
+
+  const starAnimatedStyle = useStarAnimatedStyle();
 
   const handleThemePress = (theme: EmotionTheme) => {
     setSelectedTheme(theme);
@@ -71,7 +73,7 @@ export function EmotionsUnifiedScreen({ onStartGame, onBack }: EmotionsUnifiedSc
           key={`star-${star.id}`}
           testID={`star-${star.id}`}
           style={[
-            getStarAnimatedStyle(star),
+            starAnimatedStyle,
             {
               position: 'absolute',
               width: VISUAL_EFFECTS.STAR_SIZE,
@@ -191,7 +193,7 @@ export function EmotionsUnifiedScreen({ onStartGame, onBack }: EmotionsUnifiedSc
                   • Look at the picture{'\n'}
                   • Make the same face!{'\n'}
                   • Show me happy, sad, or silly{'\n'}
-                  • Let's learn about feelings together!
+                  • Let&apos;s learn about feelings together!
                 </ThemedText>
               </View>
             )}

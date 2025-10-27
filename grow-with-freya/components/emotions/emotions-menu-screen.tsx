@@ -54,11 +54,13 @@ export function EmotionsMenuScreen({
     );
   }, []);
 
-  const getStarAnimatedStyle = (star: any) => {
+  const useStarAnimatedStyle = () => {
     return useAnimatedStyle(() => ({
       transform: [{ rotate: `${starRotation.value}deg` }],
     }));
   };
+
+  const starAnimatedStyle = useStarAnimatedStyle();
 
   const handleEmotionPress = (emotion: any) => {
     // For menu, just start the game when any emotion is pressed
@@ -75,7 +77,7 @@ export function EmotionsMenuScreen({
         <Animated.View
           key={`star-${star.id}`}
           style={[
-            getStarAnimatedStyle(star),
+            starAnimatedStyle,
             {
               position: 'absolute',
               width: star.size,
@@ -83,8 +85,8 @@ export function EmotionsMenuScreen({
               backgroundColor: 'white',
               borderRadius: star.size / 2,
               opacity: star.opacity,
-              left: star.x,
-              top: star.y,
+              left: star.left,
+              top: star.top,
             },
           ]}
         />

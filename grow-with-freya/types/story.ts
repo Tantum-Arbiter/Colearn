@@ -3,6 +3,7 @@ import { ImageSourcePropType } from 'react-native';
 export interface StoryPage {
   id: string;
   pageNumber: number;
+  type?: string; // Page type (e.g., 'cover', 'story')
   backgroundImage?: string; // Background image for the page
   characterImage?: string; // Character/foreground image
   text: string; // Story text for this page
@@ -14,7 +15,7 @@ export interface Story {
   category: StoryCategory;
   tag: string;
   emoji: string;
-  coverImage?: ImageSourcePropType; // Optional - will use placeholder if not provided
+  coverImage?: ImageSourcePropType | string; // Optional - will use placeholder if not provided
   isAvailable: boolean;
   ageRange?: string;
   duration?: number; // in minutes

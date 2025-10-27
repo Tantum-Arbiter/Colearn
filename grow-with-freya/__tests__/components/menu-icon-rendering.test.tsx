@@ -78,10 +78,9 @@ describe('MenuIcon Icon Rendering Tests', () => {
       const { toJSON } = render(
         <MenuIcon
           icon="stories-icon"
-          text="Stories"
+          label="Stories"
+          status="inactive"
           onPress={mockOnPress}
-          isSelected={false}
-          animationDelay={0}
         />
       );
 
@@ -93,10 +92,9 @@ describe('MenuIcon Icon Rendering Tests', () => {
       const { toJSON } = render(
         <MenuIcon
           icon="sensory-icon"
-          text="Sensory"
+          label="Sensory"
+          status="inactive"
           onPress={mockOnPress}
-          isSelected={false}
-          animationDelay={0}
         />
       );
 
@@ -108,10 +106,9 @@ describe('MenuIcon Icon Rendering Tests', () => {
       const { toJSON } = render(
         <MenuIcon
           icon="emotions-icon"
-          text="Emotions"
+          label="Emotions"
+          status="inactive"
           onPress={mockOnPress}
-          isSelected={false}
-          animationDelay={0}
         />
       );
 
@@ -123,10 +120,9 @@ describe('MenuIcon Icon Rendering Tests', () => {
       const { toJSON } = render(
         <MenuIcon
           icon="bedtime-icon"
-          text="Bedtime"
+          label="Bedtime"
+          status="inactive"
           onPress={mockOnPress}
-          isSelected={false}
-          animationDelay={0}
         />
       );
 
@@ -138,10 +134,9 @@ describe('MenuIcon Icon Rendering Tests', () => {
       const { toJSON } = render(
         <MenuIcon
           icon="screentime-icon"
-          text="Screen Time"
+          label="Screen Time"
+          status="inactive"
           onPress={mockOnPress}
-          isSelected={false}
-          animationDelay={0}
         />
       );
 
@@ -155,10 +150,9 @@ describe('MenuIcon Icon Rendering Tests', () => {
       const { toJSON } = render(
         <MenuIcon
           icon="stories-icon"
-          text="Stories"
+          label="Stories"
+          status="animated_interactive"
           onPress={mockOnPress}
-          isSelected={true}
-          animationDelay={0}
         />
       );
       
@@ -172,10 +166,9 @@ describe('MenuIcon Icon Rendering Tests', () => {
       const { toJSON } = render(
         <MenuIcon
           icon="stories-icon"
-          text="Stories"
+          label="Stories"
+          status="inactive"
           onPress={mockOnPress}
-          isSelected={false}
-          animationDelay={0}
         />
       );
       
@@ -189,11 +182,10 @@ describe('MenuIcon Icon Rendering Tests', () => {
       expect(() => {
         render(
           <MenuIcon
-            icon="unknown-icon" as any
-            text="Unknown"
+            icon="unknown-icon"
+            label="Unknown"
+            status="inactive"
             onPress={mockOnPress}
-            isSelected={false}
-            animationDelay={0}
           />
         );
       }).not.toThrow();

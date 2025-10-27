@@ -5,16 +5,16 @@ import { MusicTrack, MusicPlaylist } from '@/types/music';
 
 // Mock the music player hook
 const mockUseMusicPlayer = {
-  currentTrack: null,
-  currentPlaylist: null,
-  playbackState: 'stopped' as const,
+  currentTrack: null as MusicTrack | null,
+  currentPlaylist: null as MusicPlaylist | null,
+  playbackState: 'stopped' as 'playing' | 'paused' | 'stopped' | 'loading' | 'error',
   currentTime: 0,
   duration: 180,
   volume: 0.7,
   isMuted: false,
-  repeatMode: 'none' as const,
+  repeatMode: 'none' as 'none' | 'one' | 'all',
   isShuffled: false,
-  error: null,
+  error: null as string | null,
   play: jest.fn(),
   pause: jest.fn(),
   stop: jest.fn(),
@@ -26,6 +26,7 @@ const mockUseMusicPlayer = {
   setRepeatMode: jest.fn(),
   toggleShuffle: jest.fn(),
   togglePlayPause: jest.fn(),
+  clearTrack: jest.fn(),
 };
 
 jest.mock('@/hooks/use-music-player', () => ({

@@ -15,6 +15,9 @@ const getScreenDimensions = () => {
   return { width, height };
 };
 
+// Static screen dimensions for animations
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
 type PageType = 'main' | 'stories' | 'settings' | 'profiles';
 type TransitionDirection = 'slide-left' | 'slide-right' | 'slide-up' | 'slide-down' | 'fade';
 
@@ -163,14 +166,33 @@ export const PageNavigator: React.FC<PageNavigatorProps> = ({
     });
   };
 
-  const createAnimatedStyle = (page: PageType) => {
-    return useAnimatedStyle(() => ({
+  // Component for individual animated page
+  interface AnimatedPageProps {
+    page: PageType;
+    pageConfig: any;
+    isCurrentPage: boolean;
+    isTransitioning: boolean;
+    pageAnimations: any;
+  }
+
+  const AnimatedPage: React.FC<AnimatedPageProps> = ({ page, pageConfig, isCurrentPage, isTransitioning, pageAnimations }) => {
+    const animatedStyle = useAnimatedStyle(() => ({
       opacity: pageAnimations[page].opacity.value,
       transform: [
         { translateX: pageAnimations[page].translateX.value },
         { translateY: pageAnimations[page].translateY.value },
       ],
     }));
+
+    return (
+      <Animated.View
+        key={page}
+        style={[styles.page, animatedStyle]}
+        pointerEvents={isCurrentPage && !isTransitioning ? 'auto' : 'none'}
+      >
+        {pageConfig.component}
+      </Animated.View>
+    );
   };
 
   return (
@@ -180,13 +202,14 @@ export const PageNavigator: React.FC<PageNavigatorProps> = ({
         if (!pageConfig) return null;
 
         return (
-          <Animated.View
+          <AnimatedPage
             key={page}
-            style={[styles.page, createAnimatedStyle(page)]}
-            pointerEvents={page === currentPage && !isTransitioning ? 'auto' : 'none'}
-          >
-            {pageConfig.component}
-          </Animated.View>
+            page={page}
+            pageConfig={pageConfig}
+            isCurrentPage={page === currentPage}
+            isTransitioning={isTransitioning}
+            pageAnimations={pageAnimations}
+          />
         );
       })}
     </View>

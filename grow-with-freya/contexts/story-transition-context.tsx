@@ -5,7 +5,8 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   Easing,
-  runOnJS
+  runOnJS,
+  SharedValue
 } from 'react-native-reanimated';
 import { Story } from '@/types/story';
 
@@ -23,10 +24,10 @@ interface StoryTransitionContextType {
   completeTransition: () => void;
 
   // Animation values
-  transitionScale: Animated.SharedValue<number>;
-  transitionX: Animated.SharedValue<number>;
-  transitionY: Animated.SharedValue<number>;
-  transitionOpacity: Animated.SharedValue<number>;
+  transitionScale: SharedValue<number>;
+  transitionX: SharedValue<number>;
+  transitionY: SharedValue<number>;
+  transitionOpacity: SharedValue<number>;
 
   // Animated style for the transitioning card
   transitionAnimatedStyle: any;
@@ -75,7 +76,11 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
             const source = typeof page.backgroundImage === 'string'
               ? { uri: page.backgroundImage }
               : page.backgroundImage;
-            Image.prefetch(source.uri || '').then(resolve).catch(resolve);
+            if (source && source.uri) {
+              Image.prefetch(source.uri).then(resolve).catch(resolve);
+            } else {
+              resolve(undefined);
+            }
           })
         );
       }
@@ -87,7 +92,11 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
             const source = typeof page.characterImage === 'string'
               ? { uri: page.characterImage }
               : page.characterImage;
-            Image.prefetch(source.uri || '').then(resolve).catch(resolve);
+            if (source && source.uri) {
+              Image.prefetch(source.uri).then(resolve).catch(resolve);
+            } else {
+              resolve(undefined);
+            }
           })
         );
       }
