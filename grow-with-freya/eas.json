@@ -1,6 +1,6 @@
 {
   "cli": {
-    "version": ">= 5.9.0"
+    "version": ">= 16.0.0"
   },
   "build": {
     "development": {
@@ -11,13 +11,11 @@
         "NODE_ENV": "development"
       },
       "ios": {
-        "resourceClass": "m-medium",
-        "bundleIdentifier": "com.growwithfreya.app.dev"
+        "resourceClass": "m-medium"
       },
       "android": {
         "buildType": "apk",
-        "gradleCommand": ":app:assembleDebug",
-        "applicationId": "com.growwithfreya.app.dev"
+        "gradleCommand": ":app:assembleDebug"
       }
     },
     "preview": {
@@ -28,12 +26,10 @@
       },
       "ios": {
         "resourceClass": "m-medium",
-        "simulator": true,
-        "bundleIdentifier": "com.growwithfreya.app.preview"
+        "simulator": true
       },
       "android": {
-        "buildType": "apk",
-        "applicationId": "com.growwithfreya.app.preview"
+        "buildType": "apk"
       }
     },
     "production": {
@@ -42,12 +38,10 @@
         "NODE_ENV": "production"
       },
       "ios": {
-        "resourceClass": "m-medium",
-        "bundleIdentifier": "com.growwithfreya.app"
+        "resourceClass": "m-medium"
       },
       "android": {
-        "buildType": "aab",
-        "applicationId": "com.growwithfreya.app"
+        "buildType": "app-bundle"
       }
     }
   },

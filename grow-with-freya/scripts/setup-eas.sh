@@ -7,11 +7,9 @@ set -e
 
 echo "Setting up EAS for Grow with Freya..."
 
-# Check if EAS CLI is installed
-if ! command -v eas &> /dev/null; then
-    echo "Installing EAS CLI..."
-    npm install -g eas-cli
-fi
+# Check if EAS CLI is installed and update to latest
+echo "Installing/updating EAS CLI to latest version..."
+npm install -g eas-cli@latest
 
 # Check if user is logged in to Expo
 echo "Checking Expo authentication..."
