@@ -1,16 +1,18 @@
 name: Grow with Freya - CI/CD Pipeline
 
 on:
-  push:
-    branches: [ main, develop, set-up-pipeline-frontend ]
-    paths:
-      - 'grow-with-freya/**'
-      - '.github/workflows/grow-with-freya-ci-cd.yml'
-  pull_request:
-    branches: [ main, develop ]
-    paths:
-      - 'grow-with-freya/**'
-      - '.github/workflows/grow-with-freya-ci-cd.yml'
+  workflow_dispatch:
+  # DISABLED: Will re-enable after Security Scan workflow is verified
+  # push:
+  #   branches: [ main, develop, set-up-pipeline-frontend ]
+  #   paths:
+  #     - 'grow-with-freya/**'
+  #     - '.github/workflows/grow-with-freya-ci-cd.yml'
+  # pull_request:
+  #   branches: [ main, develop ]
+  #   paths:
+  #     - 'grow-with-freya/**'
+  #     - '.github/workflows/grow-with-freya-ci-cd.yml'
 
 env:
   WORKING_DIRECTORY: grow-with-freya

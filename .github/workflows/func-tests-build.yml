@@ -1,10 +1,12 @@
 name: Func Tests Build and Deploy
 
 on:
-  push:
-    paths:
-      - 'func-tests/**'
-      - '.github/workflows/func-tests-build.yml'
+  workflow_dispatch:
+  # DISABLED: Will re-enable after Security Scan workflow is verified
+  # push:
+  #   paths:
+  #     - 'func-tests/**'
+  #     - '.github/workflows/func-tests-build.yml'
 
 env:
   IMAGE_NAME: gateway-functional-tes

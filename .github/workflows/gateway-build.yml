@@ -1,11 +1,13 @@
 name: Gateway Build and Push
 
 on:
-  push:
-    paths:
-      - 'gateway-service/**'
-      - '.github/workflows/gateway-build.yml'
-      - 'infra/**'
+  workflow_dispatch:
+  # DISABLED: Will re-enable after Security Scan workflow is verified
+  # push:
+  #   paths:
+  #     - 'gateway-service/**'
+  #     - '.github/workflows/gateway-build.yml'
+  #     - 'infra/**'
 
 permissions:
   contents: write

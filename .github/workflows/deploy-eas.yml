@@ -27,9 +27,10 @@ on:
         default: false
         type: boolean
 
-  push:
-    tags:
-      - 'v*'
+  # DISABLED: Will re-enable after Security Scan workflow is verified
+  # push:
+  #   tags:
+  #     - 'v*'
 
 env:
   WORKING_DIRECTORY: grow-with-freya
