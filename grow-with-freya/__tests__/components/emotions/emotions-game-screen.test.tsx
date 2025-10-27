@@ -45,11 +45,12 @@ describe('EmotionsGameScreen', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.useFakeTimers();
+    // Fake timers disabled globally for CI/CD stability
+    // jest.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    // jest.useRealTimers();
   });
 
   describe('Animation State Management', () => {

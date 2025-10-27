@@ -65,11 +65,12 @@ describe('StoryBookReader', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     resetAnimationMocks();
-    jest.useFakeTimers();
+    // Fake timers disabled globally for CI/CD stability
+    // jest.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    // jest.useRealTimers();
   });
 
   it('renders without crashing', () => {

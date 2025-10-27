@@ -61,11 +61,12 @@ const SNAPSHOT_TEST_STORY: Story = {
 describe('Visual Regression Tests', () => {
   beforeEach(() => {
     resetAnimationMocks();
-    jest.useFakeTimers();
+    // Fake timers disabled globally for CI/CD stability
+    // jest.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    // jest.useRealTimers();
   });
 
   describe('MainMenu Snapshots', () => {
