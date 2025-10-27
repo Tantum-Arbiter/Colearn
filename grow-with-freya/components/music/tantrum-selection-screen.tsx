@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  Pressable, 
-  Dimensions 
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Pressable,
+  Dimensions
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -32,6 +32,7 @@ const { width: screenWidth } = Dimensions.get('window');
 
 export function TantrumSelectionScreen({ onTrackSelect, onBack }: TantrumSelectionScreenProps) {
   const insets = useSafeAreaInsets();
+  const [showTips, setShowTips] = useState(false);
 
   // Get tantrum-related tracks
   const tantrumTracks = useMemo(() => {
@@ -118,7 +119,7 @@ export function TantrumSelectionScreen({ onTrackSelect, onBack }: TantrumSelecti
         <Pressable style={styles.backButton} onPress={onBack}>
           <Text style={styles.backButtonText}>← Back</Text>
         </Pressable>
-        <Text style={styles.headerTitle}>Tantrum Calming</Text>
+        <View style={{ width: 24 }} />
         <MusicControl
           size={24}
           color="#FFFFFF"
@@ -176,15 +177,28 @@ export function TantrumSelectionScreen({ onTrackSelect, onBack }: TantrumSelecti
             })}
           </View>
 
-          <View style={styles.tipBox}>
-            <Text style={styles.tipTitle}>💡 Tips for Best Results</Text>
-            <Text style={styles.tipText}>
-              • Use during the early stages of a tantrum{'\n'}
-              • Create a calm, comfortable environment{'\n'}
-              • Stay with your child and breathe together{'\n'}
-              • For binaural beats, use stereo headphones{'\n'}
-              • Keep volume low and comfortable
-            </Text>
+          {/* Tips Section - Collapsible */}
+          <View style={styles.tipsSection}>
+            <Pressable
+              style={styles.tipsHeader}
+              onPress={() => setShowTips(!showTips)}
+            >
+              <Text style={styles.tipTitle}>
+                Tips for Best Results {showTips ? '▼' : '▶'}
+              </Text>
+            </Pressable>
+
+            {showTips && (
+              <View style={styles.tipBox}>
+                <Text style={styles.tipText}>
+                  • Use during the early stages of a tantrum{'\n'}
+                  • Create a calm, comfortable environment{'\n'}
+                  • Stay with your child and breathe together{'\n'}
+                  • For binaural beats, use stereo headphones{'\n'}
+                  • Keep volume low and comfortable
+                </Text>
+              </View>
+            )}
           </View>
         </View>
       </ScrollView>
@@ -316,10 +330,17 @@ const styles = StyleSheet.create({
   playIconText: {
     fontSize: 16,
   },
+  tipsSection: {
+    marginTop: 20,
+  },
+  tipsHeader: {
+    alignItems: 'center',
+  },
   tipBox: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 15,
     padding: 20,
+    marginTop: 10,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
   },
@@ -327,8 +348,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: 'white',
-    marginBottom: 10,
     fontFamily: Fonts.primary,
+    textAlign: 'center',
   },
   tipText: {
     fontSize: 14,

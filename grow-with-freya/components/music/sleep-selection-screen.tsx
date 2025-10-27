@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -33,6 +33,7 @@ const { width: screenWidth } = Dimensions.get('window');
 
 export function SleepSelectionScreen({ onTrackSelect, onBack }: SleepSelectionScreenProps) {
   const insets = useSafeAreaInsets();
+  const [showSleepInfo, setShowSleepInfo] = useState(false);
 
   // Get sleep-related tracks
   const sleepTracks = useMemo(() => {
@@ -123,7 +124,7 @@ export function SleepSelectionScreen({ onTrackSelect, onBack }: SleepSelectionSc
         <Pressable style={styles.backButton} onPress={onBack}>
           <Text style={styles.backButtonText}>← Back</Text>
         </Pressable>
-        <Text style={styles.headerTitle}>Sleep Music</Text>
+        <View style={{ width: 24 }} />
         <MusicControl
           size={24}
           color="#FFFFFF"
@@ -181,15 +182,28 @@ export function SleepSelectionScreen({ onTrackSelect, onBack }: SleepSelectionSc
             ))}
           </View>
 
-          <View style={styles.infoBox}>
-            <Text style={styles.infoTitle}>💤 Sleep Progression</Text>
-            <Text style={styles.infoText}>
-              The Complete Sleep Sequence automatically transitions through two phases:{'\n\n'}
-              • Alpha (15 min) - Initial relaxation{'\n'}
-              • Theta (45 min) - Deep sleep state{'\n\n'}
-              Currently only Theta phase is available. Alpha phase coming soon for full 60-minute experience.{'\n\n'}
-              Use stereo headphones for best results.
-            </Text>
+          {/* Sleep Progression Info - Collapsible */}
+          <View style={styles.infoSection}>
+            <Pressable
+              style={styles.infoHeader}
+              onPress={() => setShowSleepInfo(!showSleepInfo)}
+            >
+              <Text style={styles.infoTitle}>
+                Sleep Progression {showSleepInfo ? '▼' : '▶'}
+              </Text>
+            </Pressable>
+
+            {showSleepInfo && (
+              <View style={styles.infoBox}>
+                <Text style={styles.infoText}>
+                  The Complete Sleep Sequence automatically transitions through two phases:{'\n\n'}
+                  • Alpha (15 min) - Initial relaxation{'\n'}
+                  • Theta (45 min) - Deep sleep state{'\n\n'}
+                  Currently only Theta phase is available. Alpha phase coming soon for full 60-minute experience.{'\n\n'}
+                  Use stereo headphones for best results.
+                </Text>
+              </View>
+            )}
           </View>
         </View>
       </ScrollView>
@@ -315,10 +329,17 @@ const styles = StyleSheet.create({
     color: 'white',
     fontFamily: Fonts.primary,
   },
+  infoSection: {
+    marginTop: 20,
+  },
+  infoHeader: {
+    alignItems: 'center',
+  },
   infoBox: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 15,
     padding: 20,
+    marginTop: 10,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
   },
@@ -326,8 +347,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: 'white',
-    marginBottom: 10,
     fontFamily: Fonts.primary,
+    textAlign: 'center',
   },
   infoText: {
     fontSize: 14,
