@@ -2,6 +2,7 @@
   "name": "grow-with-freya",
   "main": "expo-router/entry",
   "version": "1.0.0",
+  "_comment": "CI/CD pipeline test - all fixes applied",
   "scripts": {
     "start": "expo start",
     "start:clear": "expo start --clear",
