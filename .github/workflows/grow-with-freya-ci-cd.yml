@@ -53,11 +53,10 @@ jobs:
 
       - name: Run tests with coverage
         run: npm run test:ci
-        continue-on-error: true
         id: test_run
 
       - name: Update snapshots if tests failed due to snapshot mismatches
-        if: steps.test_run.outcome == 'failure'
+        if: failure() && steps.test_run.outcome == 'failure'
         run: |
           echo "Tests failed, checking if it's due to snapshot mismatches..."
           npm run test:ci -- --updateSnapshot
