@@ -44,8 +44,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: grow-with-freya/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -100,8 +98,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: grow-with-freya/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -125,8 +121,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: grow-with-freya/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -161,8 +155,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: grow-with-freya/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -228,8 +220,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: grow-with-freya/package-lock.json
 
       - name: Setup Expo CLI
         run: npm install -g @expo/cli@${{ env.EXPO_CLI_VERSION }}
@@ -272,8 +262,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: grow-with-freya/package-lock.json
 
       - name: Setup Expo and EAS
         run: |
@@ -311,8 +299,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: grow-with-freya/package-lock.json
 
       - name: Install dependencies
         run: npm ci
