@@ -17,7 +17,7 @@ TEST_DIR="__tests__"
 RESULTS_DIR="__tests__/results"
 COVERAGE_DIR="coverage/entrance-animations"
 
-echo -e "${BLUE}🎬 Starting Entrance Animation Test Suite${NC}"
+echo -e "${BLUE} Starting Entrance Animation Test Suite${NC}"
 echo "=================================================="
 
 # Create results directory
@@ -30,36 +30,36 @@ run_test_category() {
     local description=$2
     local test_pattern=$3
     
-    echo -e "\n${YELLOW}📋 Running $description${NC}"
+    echo -e "\n${YELLOW} Running $description${NC}"
     echo "----------------------------------------"
     
     if npm test -- --testPathPattern="$test_pattern" --verbose --coverage --coverageDirectory="$COVERAGE_DIR/$category"; then
-        echo -e "${GREEN}✅ $description completed successfully${NC}"
+        echo -e "${GREEN} $description completed successfully${NC}"
         return 0
     else
-        echo -e "${RED}❌ $description failed${NC}"
+        echo -e "${RED} $description failed${NC}"
         return 1
     fi
 }
 
 # Function to run performance benchmarks
 run_performance_benchmarks() {
-    echo -e "\n${YELLOW}⚡ Running Performance Benchmarks${NC}"
+    echo -e "\n${YELLOW} Running Performance Benchmarks${NC}"
     echo "----------------------------------------"
     
     # Run performance tests with specific configuration
     if npm test -- --testPathPattern="entrance-animation-performance" --verbose --maxWorkers=1; then
-        echo -e "${GREEN}✅ Performance benchmarks completed${NC}"
+        echo -e "${GREEN} Performance benchmarks completed${NC}"
         return 0
     else
-        echo -e "${RED}❌ Performance benchmarks failed${NC}"
+        echo -e "${RED} Performance benchmarks failed${NC}"
         return 1
     fi
 }
 
 # Function to generate test report
 generate_report() {
-    echo -e "\n${BLUE}📊 Generating Test Report${NC}"
+    echo -e "\n${BLUE} Generating Test Report${NC}"
     echo "----------------------------------------"
     
     local report_file="$RESULTS_DIR/entrance-animation-summary.md"
@@ -74,17 +74,17 @@ Generated on: $(date)
 ### Unit Tests
 - **Location**: \`__tests__/components/ui/entrance-animation.test.tsx\`
 - **Coverage**: Basic component functionality, props handling, edge cases
-- **Status**: $([ -f "$RESULTS_DIR/unit-tests.xml" ] && echo "✅ Passed" || echo "❌ Failed")
+- **Status**: $([ -f "$RESULTS_DIR/unit-tests.xml" ] && echo " Passed" || echo " Failed")
 
 ### Performance Tests
 - **Location**: \`__tests__/performance/entrance-animation-performance.test.tsx\`
 - **Coverage**: Render performance, memory usage, animation initialization
-- **Status**: $([ -f "$RESULTS_DIR/performance-tests.xml" ] && echo "✅ Passed" || echo "❌ Failed")
+- **Status**: $([ -f "$RESULTS_DIR/performance-tests.xml" ] && echo " Passed" || echo " Failed")
 
 ### Integration Tests
 - **Location**: \`__tests__/integration/entrance-animation-integration.test.tsx\`
 - **Coverage**: Real-world scenarios, navigation, conditional rendering
-- **Status**: $([ -f "$RESULTS_DIR/integration-tests.xml" ] && echo "✅ Passed" || echo "❌ Failed")
+- **Status**: $([ -f "$RESULTS_DIR/integration-tests.xml" ] && echo " Passed" || echo " Failed")
 
 ## Coverage Summary
 
@@ -112,7 +112,7 @@ $([ -d "$COVERAGE_DIR" ] && find "$COVERAGE_DIR" -name "lcov-report" -type d | h
 
 EOF
 
-    echo -e "${GREEN}📄 Test report generated: $report_file${NC}"
+    echo -e "${GREEN} Test report generated: $report_file${NC}"
 }
 
 # Main test execution
@@ -137,7 +137,7 @@ main() {
     fi
     
     # Generate coverage report
-    echo -e "\n${YELLOW}📈 Generating Coverage Report${NC}"
+    echo -e "\n${YELLOW} Generating Coverage Report${NC}"
     echo "----------------------------------------"
     if command -v npx >/dev/null 2>&1; then
         npx nyc report --reporter=html --report-dir="$COVERAGE_DIR/html"
@@ -148,15 +148,15 @@ main() {
     generate_report
     
     # Final summary
-    echo -e "\n${BLUE}🏁 Test Suite Summary${NC}"
+    echo -e "\n${BLUE} Test Suite Summary${NC}"
     echo "=================================================="
     
     if [ $exit_code -eq 0 ]; then
-        echo -e "${GREEN}✅ All entrance animation tests passed!${NC}"
-        echo -e "📊 Results available in: $RESULTS_DIR"
-        echo -e "📈 Coverage reports in: $COVERAGE_DIR"
+        echo -e "${GREEN} All entrance animation tests passed!${NC}"
+        echo -e " Results available in: $RESULTS_DIR"
+        echo -e " Coverage reports in: $COVERAGE_DIR"
     else
-        echo -e "${RED}❌ Some tests failed. Check the output above for details.${NC}"
+        echo -e "${RED} Some tests failed. Check the output above for details.${NC}"
     fi
     
     return $exit_code

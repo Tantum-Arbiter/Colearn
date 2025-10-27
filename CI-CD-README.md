@@ -1,36 +1,36 @@
-# 🚀 CI/CD Pipeline for Grow with Freya
+#  CI/CD Pipeline for Grow with Freya
 
 ## Overview
 
 This repository contains a comprehensive CI/CD pipeline for the Grow with Freya React Native application, featuring automated testing, building, deployment, and monitoring.
 
-## ✨ Features
+##  Features
 
-### 🔄 Automated Workflows
+###  Automated Workflows
 - **Continuous Integration**: Automated testing, linting, and type checking
 - **Semantic Versioning**: Automatic version bumping based on conventional commits
 - **Security Scanning**: Daily vulnerability and license compliance checks
 - **Performance Monitoring**: Lighthouse CI for web performance tracking
 - **EAS Deployment**: Automated native app builds and distribution
 
-### 🧪 Comprehensive Testing
+###  Comprehensive Testing
 - **Unit Tests**: Component and utility testing with Jest
 - **Integration Tests**: Feature workflow validation
 - **Performance Tests**: Render performance and memory usage monitoring
 - **Coverage Reporting**: Automated coverage tracking with thresholds
 
-### 🔒 Security & Quality
+###  Security & Quality
 - **Dependency Auditing**: Automated vulnerability scanning
 - **License Compliance**: License compatibility checking
 - **Code Quality**: ESLint with comprehensive rules
 - **Type Safety**: Strict TypeScript configuration
 
-### 📱 Multi-Platform Builds
+###  Multi-Platform Builds
 - **Development**: Internal testing with development client
 - **Preview**: Staging environment for QA
 - **Production**: App store ready builds
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### Prerequisites
 - Node.js 20+
@@ -67,7 +67,7 @@ This repository contains a comprehensive CI/CD pipeline for the Grow with Freya 
 5. **Configure GitHub Variables**
    - `EAS_BUILDS_ENABLED`: Set to `true` to enable EAS builds
 
-## 📋 Workflows
+##  Workflows
 
 ### Main CI/CD Pipeline
 **File**: `.github/workflows/grow-with-freya-ci-cd.yml`
@@ -98,7 +98,7 @@ This repository contains a comprehensive CI/CD pipeline for the Grow with Freya 
 - Environment-specific deployments
 - Build status reporting
 
-## 🏗️ Build Profiles
+##  Build Profiles
 
 | Profile | Purpose | Distribution | Bundle ID |
 |---------|---------|--------------|-----------|
@@ -106,7 +106,7 @@ This repository contains a comprehensive CI/CD pipeline for the Grow with Freya 
 | Preview | QA and staging | Internal | `com.growwithfreya.app.preview` |
 | Production | App store | Store | `com.growwithfreya.app` |
 
-## 📊 Quality Gates
+##  Quality Gates
 
 ### Test Coverage
 - **Minimum**: 80% for branches, functions, lines, statements
@@ -125,7 +125,7 @@ This repository contains a comprehensive CI/CD pipeline for the Grow with Freya 
 - **Performance**: Lighthouse CI monitoring
 - **Conventional Commits**: Required for versioning
 
-## 🚀 Deployment Process
+##  Deployment Process
 
 ### Automatic Deployment
 1. **Development**: Push to `develop` branch
@@ -146,13 +146,13 @@ This repository contains a comprehensive CI/CD pipeline for the Grow with Freya 
 ./scripts/deploy.sh production ios
 ```
 
-## 📚 Documentation
+##  Documentation
 
 - **[Development Guide](grow-with-freya/DEVELOPMENT.md)**: Complete development setup and workflows
 - **[CI/CD Guide](grow-with-freya/CI-CD-GUIDE.md)**: Detailed CI/CD pipeline documentation
 - **[Troubleshooting](grow-with-freya/TROUBLESHOOTING.md)**: Common issues and solutions
 
-## 🔧 Scripts
+##  Scripts
 
 | Script | Purpose |
 |--------|---------|
@@ -160,7 +160,7 @@ This repository contains a comprehensive CI/CD pipeline for the Grow with Freya 
 | `deploy.sh` | Manual deployment script |
 | `update-app-version.js` | Sync package.json and app.json versions |
 
-## 📈 Monitoring
+##  Monitoring
 
 ### Artifacts
 - Test results and coverage reports
@@ -173,7 +173,7 @@ This repository contains a comprehensive CI/CD pipeline for the Grow with Freya 
 - Build status summaries
 - Security alerts
 
-## 🤝 Contributing
+##  Contributing
 
 1. **Follow Conventional Commits**:
    ```
@@ -195,16 +195,16 @@ This repository contains a comprehensive CI/CD pipeline for the Grow with Freya 
    npm run build:web
    ```
 
-## 🆘 Support
+##  Support
 
 - **Issues**: Use GitHub Issues for bugs and feature requests
 - **Documentation**: Check the guides in the `grow-with-freya` directory
 - **Troubleshooting**: See `TROUBLESHOOTING.md` for common solutions
 
-## 📄 License
+##  License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 ---
 
-**Built with ❤️ for the Grow with Freya project**
+**Built with  for the Grow with Freya project**

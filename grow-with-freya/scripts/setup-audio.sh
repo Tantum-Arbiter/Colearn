@@ -3,7 +3,7 @@
 # Setup Audio Script for Grow with Freya
 # This script helps you add background music to your app
 
-echo "🎵 Grow with Freya - Audio Setup"
+echo " Grow with Freya - Audio Setup"
 echo "================================"
 
 AUDIO_DIR="assets/audio"
@@ -19,18 +19,18 @@ fi
 if [ -f "$TARGET_FILE" ]; then
     FILE_SIZE=$(stat -f%z "$TARGET_FILE" 2>/dev/null || stat -c%s "$TARGET_FILE" 2>/dev/null)
     if [ "$FILE_SIZE" -eq 0 ]; then
-        echo "❌ Current audio file is empty (0 bytes)"
+        echo " Current audio file is empty (0 bytes)"
         echo "   This is why you're seeing 'Background music not loaded'"
     else
-        echo "✅ Audio file exists (${FILE_SIZE} bytes)"
+        echo " Audio file exists (${FILE_SIZE} bytes)"
         echo "   If you're still seeing errors, the file might be corrupted"
     fi
 else
-    echo "❌ No audio file found at $TARGET_FILE"
+    echo " No audio file found at $TARGET_FILE"
 fi
 
 echo ""
-echo "📋 To fix the background music issue:"
+echo " To fix the background music issue:"
 echo ""
 echo "1. Find or create a suitable audio file:"
 echo "   - Format: WAV, MP3, or M4A"
@@ -60,7 +60,7 @@ echo ""
 if [ -f "$TARGET_FILE" ]; then
     FILE_SIZE=$(stat -f%z "$TARGET_FILE" 2>/dev/null || stat -c%s "$TARGET_FILE" 2>/dev/null)
     if [ "$FILE_SIZE" -eq 0 ]; then
-        echo "🗑️  Remove empty placeholder file? (y/n)"
+        echo "  Remove empty placeholder file? (y/n)"
         read -r response
         if [ "$response" = "y" ] || [ "$response" = "Y" ]; then
             rm "$TARGET_FILE"
@@ -71,21 +71,21 @@ if [ -f "$TARGET_FILE" ]; then
 fi
 
 echo ""
-echo "💡 Tips for finding background music:"
+echo " Tips for finding background music:"
 echo "   - Freesound.org (creative commons)"
 echo "   - YouTube Audio Library (royalty-free)"
 echo "   - Incompetech.com (Kevin MacLeod music)"
 echo "   - Zapsplat.com (with account)"
 echo ""
-echo "🔧 After adding your audio file:"
+echo " After adding your audio file:"
 echo "   1. Restart your development server"
 echo "   2. The background music should start automatically"
 echo "   3. Use the music control button in the app to toggle"
 echo ""
-echo "📱 The music will:"
-echo "   ✅ Start automatically after splash screen"
-echo "   ✅ Loop continuously"
-echo "   ✅ Fade in gently (3 seconds)"
-echo "   ✅ Pause when app goes to background"
-echo "   ✅ Resume when app becomes active"
+echo " The music will:"
+echo "    Start automatically after splash screen"
+echo "    Loop continuously"
+echo "    Fade in gently (3 seconds)"
+echo "    Pause when app goes to background"
+echo "    Resume when app becomes active"
 echo ""

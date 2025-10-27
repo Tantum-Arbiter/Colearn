@@ -28,15 +28,15 @@ Grow with Freya is a Co-Engagement App that creates personalized storytelling ex
 
 ```
 grow-with-freya/
-├── app/                    # App screens (file-based routing)
-│   ├── (tabs)/            # Tab navigation screens
-│   │   ├── index.tsx      # Stories screen
-│   │   └── profiles.tsx   # Profiles screen
-│   └── _layout.tsx        # Root layout
-├── components/            # Reusable UI components
-├── constants/             # App constants and themes
-├── hooks/                 # Custom React hooks
-└── assets/               # Images, fonts, and other assets
+ app/                    # App screens (file-based routing)
+    (tabs)/            # Tab navigation screens
+       index.tsx      # Stories screen
+       profiles.tsx   # Profiles screen
+    _layout.tsx        # Root layout
+ components/            # Reusable UI components
+ constants/             # App constants and themes
+ hooks/                 # Custom React hooks
+ assets/               # Images, fonts, and other assets
 ```
 
 ## Features (In Development)

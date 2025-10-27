@@ -25,8 +25,8 @@ try {
   // Write updated app.json
   fs.writeFileSync(appJsonPath, JSON.stringify(appJson, null, 2) + '\n');
 
-  console.log(`✅ Updated app.json version to ${version}`);
+  console.log(` Updated app.json version to ${version}`);
 } catch (error) {
-  console.error('❌ Error updating app.json version:', error.message);
+  console.error(' Error updating app.json version:', error.message);
   process.exit(1);
 }

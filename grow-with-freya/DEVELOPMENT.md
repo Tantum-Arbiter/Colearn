@@ -1,6 +1,6 @@
 # Grow with Freya - Development Guide
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### Prerequisites
 - Node.js 20+
@@ -77,7 +77,7 @@ npm run prebuild
 npm run prebuild:clean
 ```
 
-## 📱 Local Testing Strategies
+##  Local Testing Strategies
 
 ### 1. Development Server Testing
 The fastest way to test your app during development:
@@ -135,7 +135,7 @@ npm run eas:build:dev
 # Install on device when build completes
 ```
 
-## 🔄 CI/CD Pipeline
+##  CI/CD Pipeline
 
 ### Automated Workflows
 
@@ -144,27 +144,27 @@ The CI/CD pipeline includes multiple automated workflows:
 #### 1. **Main CI/CD Pipeline** (`grow-with-freya-ci-cd.yml`)
 Runs on push to `main`, `develop`, or `set-up-pipeline-frontend` branches:
 
-- **🧪 Test & Lint**: Jest tests, ESLint, coverage reporting
-- **🔧 TypeScript Check**: Type validation
-- **🔒 Security Audit**: Dependency scanning, vulnerability checks
-- **🏷️ Semantic Versioning**: Automated version bumping based on conventional commits
-- **🌐 Web Build**: Expo web export with artifacts
-- **📱 EAS Build**: Native app builds (when enabled)
-- **⚡ Performance Tests**: Lighthouse CI performance monitoring
+- ** Test & Lint**: Jest tests, ESLint, coverage reporting
+- ** TypeScript Check**: Type validation
+- ** Security Audit**: Dependency scanning, vulnerability checks
+- ** Semantic Versioning**: Automated version bumping based on conventional commits
+- ** Web Build**: Expo web export with artifacts
+- ** EAS Build**: Native app builds (when enabled)
+- ** Performance Tests**: Lighthouse CI performance monitoring
 
 #### 2. **Security Scanning** (`security-scan.yml`)
 Daily security scans and on code changes:
 
-- **🔍 Dependency Scan**: npm audit for vulnerabilities
-- **📄 License Scan**: License compliance checking
-- **📊 Code Quality**: ESLint analysis and metrics
+- ** Dependency Scan**: npm audit for vulnerabilities
+- ** License Scan**: License compliance checking
+- ** Code Quality**: ESLint analysis and metrics
 
 #### 3. **EAS Deployment** (`deploy-eas.yml`)
 Manual deployment workflow and automatic on tags:
 
-- **📱 iOS/Android Builds**: EAS build for all platforms
-- **🚀 Environment Management**: Development, preview, production
-- **📋 Deployment Summary**: Build status and links
+- ** iOS/Android Builds**: EAS build for all platforms
+- ** Environment Management**: Development, preview, production
+- ** Deployment Summary**: Build status and links
 
 ### Semantic Versioning
 
@@ -181,7 +181,7 @@ The pipeline automatically handles versioning using conventional commits:
 - **`develop`**: Development branch, triggers preview builds
 - **Feature branches**: Create PRs to `develop`
 
-4. **🔒 Security Audit**
+4. ** Security Audit**
    - npm audit for vulnerabilities
    - Dependency version checks
 
@@ -199,7 +199,7 @@ npm run lint
 npm run build:web
 ```
 
-## 📦 Build Artifacts
+##  Build Artifacts
 
 ### Web Builds
 Web builds are automatically created and available as GitHub Actions artifacts:
@@ -221,7 +221,7 @@ npm run eas:build:dev
 npm run eas:build:prod
 ```
 
-## 🧪 Testing Best Practices
+##  Testing Best Practices
 
 ### Unit Testing
 - All components should have basic render tests
@@ -242,7 +242,7 @@ npm run eas:build:prod
 - [ ] Performance is acceptable
 - [ ] Offline functionality (if applicable)
 
-## 🔧 Troubleshooting
+##  Troubleshooting
 
 ### Common Issues
 
@@ -275,7 +275,7 @@ If you encounter persistent issues:
 npm run dev:reset
 ```
 
-## 📊 Monitoring & Analytics
+##  Monitoring & Analytics
 
 ### Test Coverage
 - View coverage reports in `coverage/` directory
@@ -293,7 +293,7 @@ Consider integrating error tracking services:
 - Flipper for debugging
 - React Native Debugger
 
-## 🚀 Deployment Preparation
+##  Deployment Preparation
 
 ### Pre-deployment Checklist
 - [ ] All tests passing
@@ -311,7 +311,7 @@ Consider integrating error tracking services:
 4. Configure automated deployment with EAS Submit
 5. Set up crash reporting and analytics
 
-## 📚 Additional Resources
+##  Additional Resources
 
 - [Expo Documentation](https://docs.expo.dev/)
 - [React Native Documentation](https://reactnative.dev/)

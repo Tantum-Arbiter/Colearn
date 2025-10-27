@@ -2,13 +2,13 @@
 
 ## Image Specifications for 2732x2048px Story Backgrounds
 
-### 📐 **Canvas Setup**
+###  **Canvas Setup**
 - **Dimensions**: 2732 × 2048 pixels
 - **Resolution**: 72 DPI (for digital use)
 - **Color Mode**: RGB Color
 - **Bit Depth**: 8 Bits/Channel
 
-### 🎨 **Design Guidelines**
+###  **Design Guidelines**
 
 #### Safe Areas for Responsive Design (Landscape Mode)
 ```
@@ -21,7 +21,7 @@
 │     (Always visible on all         │   (Safe area for all devices)
 │         devices)                    │
 │                                     │
-│  🐨 Characters & Key Elements       │
+│   Characters & Key Elements       │
 │     should be in this area          │
 │                                     │
 │                                     │
@@ -39,7 +39,7 @@
    - Place characters, important props, and story elements here
    - This is the "safe zone" for all content
 
-### 📱 **Device Cropping Preview**
+###  **Device Cropping Preview**
 
 #### Large Tablets (iPad Pro 12.9")
 - **Display**: Full 2732x2048px image
@@ -58,7 +58,7 @@
 - **Strategy**: Shows bottom 75% of image where characters are placed
 - **Layout**: Image on left 70% of screen, text/controls on right 30%
 
-### 🔧 **WebP Export Settings**
+###  **WebP Export Settings**
 
 #### Method 1: Photoshop WebP Plugin
 1. **Install**: Download Google's WebP plugin for Photoshop
@@ -80,7 +80,7 @@
 3. **Quality**: Maximum
 4. **Convert**: Use external WebP converter
 
-### 📋 **Export Checklist**
+###  **Export Checklist**
 
 #### Before Export:
 - [ ] Characters and key elements are in bottom 75% of canvas
@@ -100,7 +100,7 @@
 - [ ] Transparency: Preserved for character/prop overlays
 - [ ] Dimensions: Exactly 2732x2048px
 
-### 🎯 **Optimization Tips**
+###  **Optimization Tips**
 
 #### For Complex Scenes:
 - **Quality**: 85-88%
@@ -118,7 +118,7 @@
 - **Quality**: 90-95% if using lossy
 - **Expected size**: 50-150KB
 
-### 📊 **Batch Processing**
+###  **Batch Processing**
 
 #### For Multiple Stories:
 1. **Create Action**: Record export settings in Photoshop
@@ -133,7 +133,7 @@
 4. Export character overlays separately (if used)
 5. Test one complete story before processing others
 
-### 🔍 **Testing Your Exports**
+###  **Testing Your Exports**
 
 #### Device Testing:
 1. **Large tablet**: Check full image display

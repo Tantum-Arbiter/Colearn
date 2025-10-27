@@ -1,10 +1,10 @@
-# 🚀 CI/CD Guide for Grow with Freya
+#  CI/CD Guide for Grow with Freya
 
 ## Overview
 
 This guide covers the comprehensive CI/CD pipeline setup for the Grow with Freya React Native application, including automated testing, building, deployment, and monitoring.
 
-## 🏗️ Pipeline Architecture
+##  Pipeline Architecture
 
 ### Workflows
 
@@ -20,7 +20,7 @@ This guide covers the comprehensive CI/CD pipeline setup for the Grow with Freya
 - **Manual**: EAS deployment workflow
 - **Schedule**: Daily security scans
 
-## 🔧 Setup Instructions
+##  Setup Instructions
 
 ### 1. Repository Secrets
 
@@ -53,7 +53,7 @@ This will:
 - Set up build profiles
 - Configure credentials
 
-## 📱 Build Profiles
+##  Build Profiles
 
 ### Development
 - **Purpose**: Internal testing with development client
@@ -73,7 +73,7 @@ This will:
 - **Bundle ID**: `com.growwithfreya.app`
 - **Features**: Optimized, analytics enabled
 
-## 🚀 Deployment Process
+##  Deployment Process
 
 ### Automatic Deployment
 
@@ -103,7 +103,7 @@ Use the GitHub Actions workflow dispatch:
 ./scripts/deploy.sh development android
 ```
 
-## 🧪 Testing Strategy
+##  Testing Strategy
 
 ### Test Types
 
@@ -138,7 +138,7 @@ npm run test:ci
 - **Lines**: 80%
 - **Statements**: 80%
 
-## 🔒 Security & Quality
+##  Security & Quality
 
 ### Security Scanning
 
@@ -161,7 +161,7 @@ npm run test:ci
 - TypeScript compilation must succeed
 - ESLint checks must pass
 
-## 📊 Monitoring & Reporting
+##  Monitoring & Reporting
 
 ### Artifacts
 
@@ -177,7 +177,7 @@ npm run test:ci
 - **Codecov**: Coverage reporting and trends
 - **EAS**: Build status and download links
 
-## 🔄 Versioning Strategy
+##  Versioning Strategy
 
 ### Conventional Commits
 
@@ -204,7 +204,7 @@ feat!: redesign navigation structure (BREAKING CHANGE)
 5. Production build triggered
 6. Manual app store submission
 
-## 🛠️ Troubleshooting
+##  Troubleshooting
 
 ### Common Issues
 
@@ -246,7 +246,7 @@ npm outdated
 npx expo doctor
 ```
 
-## 📚 Additional Resources
+##  Additional Resources
 
 - [Expo EAS Documentation](https://docs.expo.dev/eas/)
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
@@ -254,7 +254,7 @@ npx expo doctor
 - [Lighthouse CI](https://github.com/GoogleChrome/lighthouse-ci)
 - [Conventional Commits](https://www.conventionalcommits.org/)
 
-## 🤝 Contributing
+##  Contributing
 
 1. Follow conventional commit format
 2. Ensure all tests pass locally
