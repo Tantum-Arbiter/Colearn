@@ -7,14 +7,18 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAppStore } from '@/store/app-store';
+
 import { useBackgroundMusic } from '@/hooks/use-background-music';
 import { AppSplashScreen } from '@/components/splash-screen';
 import { OnboardingFlow } from '@/components/onboarding/onboarding-flow';
+import { LoginScreen } from '@/components/auth';
 import { MainMenu } from '@/components/main-menu';
 import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
 import { StoryBookReader } from '@/components/stories/story-book-reader';
 import { MusicScreen } from '@/components/music';
 import { EmotionsScreen } from '@/components/emotions';
+import { SettingsScreen } from '@/components/settings';
+
 import { Story } from '@/types/story';
 import { preloadCriticalImages, preloadSecondaryImages } from '@/services/image-preloader';
 import { EnhancedPageTransition } from '@/components/ui/enhanced-page-transition';
@@ -38,10 +42,14 @@ function AppContent() {
   const {
     isAppReady,
     hasCompletedOnboarding,
+    setOnboardingComplete,
+    resetAppForTesting,
     setCurrentScreen,
     shouldReturnToMainMenu,
     clearReturnToMainMenu
   } = useAppStore();
+
+
 
   // Initialize background music
   const { fadeIn, isLoaded: musicLoaded, isPlaying } = useBackgroundMusic();
@@ -49,12 +57,24 @@ function AppContent() {
   // Track if we've already started background music to prevent auto-restart after manual pause
   const [hasStartedBackgroundMusic, setHasStartedBackgroundMusic] = useState(false);
 
-  type AppView = 'splash' | 'onboarding' | 'app' | 'main' | 'stories' | 'story-reader';
+  type AppView = 'splash' | 'onboarding' | 'login' | 'app' | 'main' | 'stories' | 'story-reader';
   type PageKey = 'main' | 'stories' | 'story-reader' | 'sensory' | 'emotions' | 'bedtime' | 'screen_time' | 'settings';
 
   const [currentView, setCurrentView] = useState<AppView>('splash');
   const [currentPage, setCurrentPage] = useState<PageKey>('main');
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
+  const [showLoginAfterOnboarding, setShowLoginAfterOnboarding] = useState(false);
+
+  // Temporary: Reset app state for testing - remove this in production
+  useEffect(() => {
+    console.log('TEMPORARY: Resetting app state for testing');
+    resetAppForTesting();
+    setShowLoginAfterOnboarding(false);
+  }, []);
+
+
+
+
 
   // Ensure app starts and stays in portrait mode (except for story reader)
   useEffect(() => {
@@ -103,16 +123,33 @@ function AppContent() {
     initializeImagePreloading();
   }, []);
 
+  // Initialize app state
   useEffect(() => {
+    console.log('App initializing...');
+    // App should start with splash screen
     if (!isAppReady) {
+      console.log('App not ready, showing splash');
+    }
+  }, []);
+
+  useEffect(() => {
+    console.log('App state check:', { isAppReady, hasCompletedOnboarding, showLoginAfterOnboarding });
+
+    if (!isAppReady) {
+      console.log('Setting view to splash - app not ready');
       setCurrentView('splash');
+    } else if (showLoginAfterOnboarding) {
+      console.log('Setting view to login - show login after onboarding');
+      setCurrentView('login');
     } else if (!hasCompletedOnboarding) {
+      console.log('Setting view to onboarding - not completed');
       setCurrentView('onboarding');
     } else {
+      console.log('Setting view to app - all conditions met');
       setCurrentView('app');
       setCurrentPage('main');
     }
-  }, [isAppReady, hasCompletedOnboarding]);
+  }, [isAppReady, hasCompletedOnboarding, showLoginAfterOnboarding]);
 
   // Start background music once when transitioning from splash (only once!)
   useEffect(() => {
@@ -154,7 +191,25 @@ function AppContent() {
     }
   }, [shouldReturnToMainMenu]);
 
+
+
   const handleOnboardingComplete = () => {
+    console.log('Onboarding completed - showing login screen');
+    // Set both states to ensure proper flow
+    setOnboardingComplete(true);
+    setShowLoginAfterOnboarding(true);
+  };
+
+  const handleLoginComplete = () => {
+    console.log('Login completed - going to app');
+    setShowLoginAfterOnboarding(false);
+    setCurrentView('app');
+    setCurrentPage('main');
+  };
+
+  const handleSkipLogin = () => {
+    console.log('Login skipped - going to app');
+    setShowLoginAfterOnboarding(false);
     setCurrentView('app');
     setCurrentPage('main');
   };
@@ -235,6 +290,10 @@ function AppContent() {
     return <OnboardingFlow onComplete={handleOnboardingComplete} />;
   }
 
+  if (currentView === 'login') {
+    return <LoginScreen onSuccess={handleLoginComplete} onSkip={handleSkipLogin} />;
+  }
+
   // Handle story reader view
   if (currentView === 'story-reader' && selectedStory) {
     return (
@@ -257,7 +316,7 @@ function AppContent() {
         <EnhancedPageTransition
           currentPage={currentPage as string}
           pages={{
-            main: <MainMenu onNavigate={handleMainMenuNavigate} />,
+            main: <MainMenu onNavigate={handleMainMenuNavigate} isActive={currentPage === 'main'} />,
             stories: <SimpleStoryScreen
               onStorySelect={handleStorySelect}
               onStoryTransitionComplete={handleStoryTransitionComplete}
@@ -268,7 +327,7 @@ function AppContent() {
             emotions: <EmotionsScreen onBack={handleBackToMainMenu} />,
             bedtime: <MusicScreen onBack={handleBackToMainMenu} />,
             screen_time: createDefaultPage('clock', 'Screen Time'),
-            settings: createDefaultPage('gear', 'Settings'),
+            settings: <SettingsScreen onBack={handleBackToMainMenu} />,
           }}
           duration={800}
         />

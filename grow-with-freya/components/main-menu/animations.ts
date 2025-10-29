@@ -5,8 +5,9 @@ import {
   withDelay,
   SharedValue,
   Easing,
+  cancelAnimation,
 } from 'react-native-reanimated';
-import { ANIMATION_TIMINGS, LAYOUT, SCREEN_WIDTH } from './constants';
+import { ANIMATION_TIMINGS, LAYOUT, getScreenDimensions } from './constants';
 
 export const createCloudAnimation = (
   cloudValue: SharedValue<number>,
@@ -14,7 +15,12 @@ export const createCloudAnimation = (
   startPosition: number = LAYOUT.OFF_SCREEN_LEFT,
   resumeFromCurrent: boolean = false
 ) => {
-  const exitPosition = SCREEN_WIDTH + LAYOUT.CLOUD_EXIT_MARGIN;
+  // Use dynamic screen width to handle device differences and orientation changes
+  const { width: screenWidth } = getScreenDimensions();
+  const exitPosition = screenWidth + LAYOUT.CLOUD_EXIT_MARGIN;
+
+  // CRITICAL: Cancel any existing animation to prevent conflicts
+  cancelAnimation(cloudValue);
 
   // Safety check: if resumeFromCurrent is true but we have invalid values, force fresh start
   if (resumeFromCurrent) {
@@ -40,16 +46,40 @@ export const createCloudAnimation = (
         const remainingDistance = exitPosition - currentPosition;
         const totalDistance = exitPosition - startPosition;
         const progressRatio = remainingDistance / totalDistance;
-        const remainingDuration = Math.max(progressRatio * ANIMATION_TIMINGS.CLOUD_DURATION, 500); // Minimum 500ms
+
+        // If cloud is very close to exit (within 20% of total distance), start fresh cycle
+        // This prevents extremely slow animations when cloud is almost at the exit
+        if (progressRatio < 0.2) {
+          if (isDev) {
+            console.log('Cloud very close to exit - starting fresh cycle to prevent slow animation');
+          }
+          return withRepeat(
+            withSequence(
+              withTiming(startPosition, { duration: 0 }),
+              withTiming(exitPosition, {
+                duration: ANIMATION_TIMINGS.CLOUD_DURATION,
+                easing: Easing.linear
+              })
+            ),
+            -1,
+            false
+          );
+        }
+
+        // Use a fixed reasonable duration instead of proportional calculation
+        // This prevents extremely long durations when cloud is close to exit
+        const fixedDuration = Math.min(ANIMATION_TIMINGS.CLOUD_DURATION * 0.3, 8000); // Max 8 seconds
 
         if (isDev) {
-          console.log(`Cloud continuing smoothly: remaining=${remainingDistance}, duration=${remainingDuration}`);
+          console.log(`Cloud continuing smoothly: remaining=${remainingDistance}, duration=${fixedDuration} (fixed duration to prevent freezing) - CACHE_BUSTER_v2`);
         }
+
+        // Force cache refresh
 
         return withRepeat(
           withSequence(
             withTiming(exitPosition, {
-              duration: remainingDuration,
+              duration: fixedDuration,
               easing: Easing.linear
             }),
             withTiming(startPosition, { duration: 0 }),

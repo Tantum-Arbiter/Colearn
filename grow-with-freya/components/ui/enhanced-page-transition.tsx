@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { View, StyleSheet, Text } from 'react-native';
+import { View, StyleSheet, Text, Dimensions } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -52,7 +53,21 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   pages,
   duration = 600,
 }) => {
-  const { height: screenHeight } = getScreenDimensions();
+  // Get initial screen height and track changes
+  const [screenHeight, setScreenHeight] = React.useState(() => getScreenDimensions().height);
+
+  // Update screen height when dimensions change (orientation changes)
+  useEffect(() => {
+    const updateDimensions = () => {
+      const { height } = getScreenDimensions();
+      setScreenHeight(height);
+    };
+
+    // Listen for dimension changes
+    const subscription = Dimensions.addEventListener('change', updateDimensions);
+
+    return () => subscription?.remove();
+  }, []);
 
   // Create animation values for specific pages we know about
   const mainTranslateY = useSharedValue(currentPage === 'main' ? 0 : -screenHeight);
@@ -73,6 +88,32 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
     'screen_time': screenTimeTranslateY,
     settings: settingsTranslateY,
   };
+
+  // Update animation values when screen height changes (orientation change)
+  useEffect(() => {
+    // Update positions for inactive pages when screen height changes
+    if (currentPage !== 'main') {
+      mainTranslateY.value = -screenHeight;
+    }
+    if (currentPage !== 'stories') {
+      storiesTranslateY.value = screenHeight;
+    }
+    if (currentPage !== 'sensory') {
+      sensoryTranslateY.value = screenHeight;
+    }
+    if (currentPage !== 'emotions') {
+      emotionsTranslateY.value = screenHeight;
+    }
+    if (currentPage !== 'bedtime') {
+      bedtimeTranslateY.value = screenHeight;
+    }
+    if (currentPage !== 'screen_time') {
+      screenTimeTranslateY.value = screenHeight;
+    }
+    if (currentPage !== 'settings') {
+      settingsTranslateY.value = screenHeight;
+    }
+  }, [screenHeight]);
 
   useEffect(() => {
     const animationConfig = {
@@ -121,7 +162,10 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   }, [currentPage, duration]);
 
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={['#1E3A8A', '#3B82F6', '#4ECDC4']}
+      style={styles.container}
+    >
       {Object.entries(pages).map(([pageKey, pageComponent]) => {
         // Only render pages that have animation values
         if (!pageAnimations[pageKey]) {
@@ -142,7 +186,7 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
           />
         );
       })}
-    </View>
+    </LinearGradient>
   );
 };
 

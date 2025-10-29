@@ -3,7 +3,14 @@
  */
 
 import { StyleSheet } from 'react-native';
-import { LAYOUT, VISUAL_EFFECTS } from './constants';
+import { LAYOUT, VISUAL_EFFECTS, getScreenDimensions } from './constants';
+
+// Helper function to get responsive size for iPad (20% bigger)
+const getResponsiveSize = (baseSize: number): number => {
+  const { width: screenWidth } = getScreenDimensions();
+  const isTablet = screenWidth >= 768;
+  return isTablet ? Math.round(baseSize * 1.2) : baseSize;
+};
 
 export const mainMenuStyles = StyleSheet.create({
   container: {
@@ -24,8 +31,8 @@ export const mainMenuStyles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 60,
-    paddingBottom: 120,
+    paddingTop: getResponsiveSize(60),
+    paddingBottom: getResponsiveSize(120),
     zIndex: LAYOUT.Z_INDEX.UI,
   },
   
@@ -54,19 +61,19 @@ export const mainMenuStyles = StyleSheet.create({
   
   settingsButton: {
     position: 'absolute',
-    top: 60,
-    right: 30,
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    top: getResponsiveSize(60),
+    right: getResponsiveSize(30),
+    width: getResponsiveSize(50),
+    height: getResponsiveSize(50),
+    borderRadius: getResponsiveSize(25),
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: LAYOUT.Z_INDEX.UI + 1,
   },
-  
+
   settingsEmoji: {
-    fontSize: 24,
+    fontSize: getResponsiveSize(24),
   },
   
   // Animated background elements
@@ -120,9 +127,9 @@ export const menuIconStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: getResponsiveSize(2) },
     shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowRadius: getResponsiveSize(3.84),
     elevation: 5,
   },
   
@@ -141,31 +148,31 @@ export const menuIconStyles = StyleSheet.create({
   },
   
   label: {
-    marginTop: 8,
-    fontSize: 14,
+    marginTop: getResponsiveSize(8),
+    fontSize: getResponsiveSize(14),
     fontWeight: '600',
     color: '#FFFFFF',
     textAlign: 'center',
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
+    textShadowRadius: getResponsiveSize(2),
   },
-  
+
   largeLabel: {
-    fontSize: 16,
+    fontSize: getResponsiveSize(16),
     fontWeight: '700',
-    marginTop: 12,
+    marginTop: getResponsiveSize(12),
   },
   
   shimmerOverlay: {
     position: 'absolute',
-    top: -5,
-    right: -5,
+    top: getResponsiveSize(-5),
+    right: getResponsiveSize(-5),
     zIndex: 10,
   },
-  
+
   starEmoji: {
-    fontSize: 20,
+    fontSize: getResponsiveSize(20),
     color: '#FFD700',
   },
 });

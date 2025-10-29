@@ -163,6 +163,6 @@ export const calculateSafePadding = (
 export const logPerformance = (label: string, startTime: number): void => {
   if (__DEV__) {
     const endTime = performance.now();
-    console.log(`⚡ ${label}: ${(endTime - startTime).toFixed(2)}ms`);
+    console.log(`${label}: ${(endTime - startTime).toFixed(2)}ms`);
   }
 };

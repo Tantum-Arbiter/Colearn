@@ -27,16 +27,23 @@ export const ANIMATION_TIMINGS = {
   GLOW_BURST_DURATION: 100,
 } as const;
 
+// Helper function to get responsive size for iPad (20% bigger)
+const getResponsiveLayoutSize = (baseSize: number): number => {
+  const { width: screenWidth } = getScreenDimensions();
+  const isTablet = screenWidth >= 768;
+  return isTablet ? Math.round(baseSize * 1.2) : baseSize;
+};
+
 export const LAYOUT = {
-  ICON_CONTAINER_WIDTH: 280,
-  ICON_SPACING: 30,
-  CENTER_MARGIN_BOTTOM: 40,
-  TOP_ROW_MARGIN_BOTTOM: 20,
-  ICON_SIZE_SMALL: 48,
-  ICON_SIZE_MEDIUM: 58,
-  ICON_SIZE_LARGE: 70,
-  MENU_ICON_SIZE: 90,
-  LARGE_MENU_ICON_SIZE: 110,
+  get ICON_CONTAINER_WIDTH() { return getResponsiveLayoutSize(280); },
+  get ICON_SPACING() { return getResponsiveLayoutSize(30); },
+  get CENTER_MARGIN_BOTTOM() { return getResponsiveLayoutSize(40); },
+  get TOP_ROW_MARGIN_BOTTOM() { return getResponsiveLayoutSize(20); },
+  get ICON_SIZE_SMALL() { return getResponsiveLayoutSize(48); },
+  get ICON_SIZE_MEDIUM() { return getResponsiveLayoutSize(58); },
+  get ICON_SIZE_LARGE() { return getResponsiveLayoutSize(70); },
+  get MENU_ICON_SIZE() { return getResponsiveLayoutSize(90); },
+  get LARGE_MENU_ICON_SIZE() { return getResponsiveLayoutSize(110); },
   Z_INDEX: {
     BACKGROUND: 0,
     BEAR: 1, // Behind everything except background
@@ -69,19 +76,19 @@ export const VISUAL_EFFECTS = {
   GLOW_INACTIVE_OPACITY: 0.3,
   GLOW_MULTIPLIER: 0.9,
   GLOW_INACTIVE_MULTIPLIER: 0.6,
-  GLOW_BASE_RADIUS: 16,
-  GLOW_INACTIVE_RADIUS: 8,
-  GLOW_RADIUS_MULTIPLIER: 8,
-  GLOW_RADIUS_INACTIVE_MULTIPLIER: 6,
+  get GLOW_BASE_RADIUS() { return getResponsiveLayoutSize(16); },
+  get GLOW_INACTIVE_RADIUS() { return getResponsiveLayoutSize(8); },
+  get GLOW_RADIUS_MULTIPLIER() { return getResponsiveLayoutSize(8); },
+  get GLOW_RADIUS_INACTIVE_MULTIPLIER() { return getResponsiveLayoutSize(6); },
   SELECTION_GLOW_OPACITY: 1.8,
-  SELECTION_GLOW_RADIUS: 8,
+  get SELECTION_GLOW_RADIUS() { return getResponsiveLayoutSize(8); },
   SHIMMER_BASE_OPACITY: 0.3,
   SHIMMER_MULTIPLIER: 0.7,
   GLOW_COLOR: '#FFFF00',
   GRADIENT_COLORS: ['#1E3A8A', '#3B82F6', '#4ECDC4'],
   STAR_COUNT: 15,
-  STAR_SIZE: 3,
-  STAR_BORDER_RADIUS: 1.5,
+  get STAR_SIZE() { return getResponsiveLayoutSize(3); },
+  get STAR_BORDER_RADIUS() { return getResponsiveLayoutSize(1.5); },
   STAR_AREA_HEIGHT_RATIO: 0.6,
 } as const;
 

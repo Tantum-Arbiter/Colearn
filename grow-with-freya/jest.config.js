@@ -46,6 +46,7 @@ module.exports = {
     'contexts/**/*.{ts,tsx}',
     'data/**/*.{ts,tsx}',
     'utils/**/*.{ts,tsx}',
+    'services/**/*.{ts,tsx}',
     '!**/*.d.ts',
     '!**/node_modules/**',
     '!**/*.test.{ts,tsx}',
@@ -63,15 +64,15 @@ module.exports = {
     '^expo-haptics$': '<rootDir>/__mocks__/expo-haptics.js',
     '^expo-linear-gradient$': '<rootDir>/__mocks__/expo-linear-gradient.js',
     '^@expo/vector-icons$': '<rootDir>/__mocks__/@expo/vector-icons.js',
+    '^expo-auth-session$': '<rootDir>/__mocks__/expo-auth-session.js',
+    '^expo-apple-authentication$': '<rootDir>/__mocks__/expo-apple-authentication.js',
+    '^expo-secure-store$': '<rootDir>/__mocks__/expo-secure-store.js',
+    '^expo-crypto$': '<rootDir>/__mocks__/expo-crypto.js',
+    '^expo-web-browser$': '<rootDir>/__mocks__/expo-web-browser.js',
   },
+  preset: 'jest-expo',
   transform: {
-    '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', {
-      presets: [
-        ['@babel/preset-env', { targets: { node: 'current' } }],
-        '@babel/preset-typescript',
-        ['@babel/preset-react', { runtime: 'automatic' }],
-      ],
-    }],
+    '^.+\\.(ts|tsx)$': 'ts-jest',
   },
   transformIgnorePatterns: [
     'node_modules/(?!(react-native|@react-native|expo|@expo|expo-av|react-native-reanimated|react-native-svg|@react-navigation|zustand|react-native-worklets|react-native-safe-area-context)/)',
