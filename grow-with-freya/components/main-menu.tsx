@@ -350,10 +350,10 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
               cloudFloat1.value = createCloudAnimationNew(cloudFloat1, 0, -200, false);
               cloudFloat2.value = createCloudAnimationNew(cloudFloat2, ANIMATION_TIMINGS.CLOUD_STAGGER_DELAY, -400, false);
             } else if (cloud1Stuck && cloud2Stuck) {
-              console.log('Animation watchdog: Both clouds stuck, gentle restart');
-              // Gentle restart with position resume
-              cloudFloat1.value = createCloudAnimationNew(cloudFloat1, 0, -200, true);
-              cloudFloat2.value = createCloudAnimationNew(cloudFloat2, ANIMATION_TIMINGS.CLOUD_STAGGER_DELAY, -400, true);
+              console.log('Animation watchdog: Both clouds stuck, fresh restart to prevent issues');
+              // Use fresh restart instead of resume to prevent position issues
+              cloudFloat1.value = createCloudAnimationNew(cloudFloat1, 0, -200, false);
+              cloudFloat2.value = createCloudAnimationNew(cloudFloat2, ANIMATION_TIMINGS.CLOUD_STAGGER_DELAY, -400, false);
             }
           }
         }, 45000); // Check every 45 seconds (reduced frequency)
@@ -361,10 +361,10 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
         // PREVENTIVE: Periodic animation restart to prevent long-term drift (less frequent)
         animationRestartRef.current = setTimeout(() => {
           if (!animationsCancelled.current) {
-            console.log('Periodic animation restart: Refreshing cloud animations');
-            // Restart animations to prevent any accumulated drift or pausing
-            cloudFloat1.value = createCloudAnimationNew(cloudFloat1, 0, -200, true);
-            cloudFloat2.value = createCloudAnimationNew(cloudFloat2, ANIMATION_TIMINGS.CLOUD_STAGGER_DELAY, -400, true);
+            console.log('Periodic animation restart: Refreshing cloud animations with fresh start');
+            // Use fresh restart to prevent any position-related issues
+            cloudFloat1.value = createCloudAnimationNew(cloudFloat1, 0, -200, false);
+            cloudFloat2.value = createCloudAnimationNew(cloudFloat2, ANIMATION_TIMINGS.CLOUD_STAGGER_DELAY, -400, false);
           }
         }, 600000); // Restart every 10 minutes (much less frequent)
 
