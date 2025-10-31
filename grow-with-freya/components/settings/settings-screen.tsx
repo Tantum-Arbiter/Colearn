@@ -164,7 +164,7 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
       {/* Title - ABOVE moon image */}
       <View style={{
         position: 'absolute',
-        top: insets.top + 110, // Increased from 100 to 110 to prevent title cutoff on all devices
+        top: insets.top + 130, // Increased significantly to clear any potential header interference
         left: 0,
         right: 0,
         paddingHorizontal: 20,
