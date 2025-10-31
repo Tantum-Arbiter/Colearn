@@ -1,5 +1,7 @@
 export const PNG_ASSETS = {
   bear: require('../../assets/images/ui-elements/bear-bottom-screen.png'),
+  bearTop: require('../../assets/images/ui-elements/bear-top-screen.png'),
+  moon: require('../../assets/images/ui-elements/moon-top-screen.png'),
   freyaRocket: require('../../assets/images/ui-elements/freya-rocket.svg'),
   freyaRocketRight: require('../../assets/images/ui-elements/freya-rocket-right.svg'),
 } as const;
@@ -34,17 +36,84 @@ export const getSvgPath = (svgType: keyof typeof SVG_PATHS) => {
   return SVG_PATHS[svgType];
 };
 
+// Import getScreenDimensions for responsive sizing
+import { getScreenDimensions } from './constants';
+
+// Helper function to get responsive size for iPad (20% bigger)
+const getResponsiveAssetSize = (baseSize: number): number => {
+  const { width: screenWidth } = getScreenDimensions();
+  const isTablet = screenWidth >= 768;
+  return isTablet ? Math.round(baseSize * 1.2) : baseSize;
+};
+
 export const ASSET_DIMENSIONS = {
-  cloud1: { width: 140, height: 170 },
-  cloud2: { width: 160, height: 190 },
-  balloon1: { width: 140, height: 170 },
-  balloon2: { width: 160, height: 190 },
-  rocket: { width: 80, height: 60 },
-  bear: { width: 286, height: 286 },
+  get cloud1() {
+    return {
+      width: getResponsiveAssetSize(140),
+      height: getResponsiveAssetSize(170)
+    };
+  },
+  get cloud2() {
+    return {
+      width: getResponsiveAssetSize(160),
+      height: getResponsiveAssetSize(190)
+    };
+  },
+  get balloon1() {
+    return {
+      width: getResponsiveAssetSize(140),
+      height: getResponsiveAssetSize(170)
+    };
+  },
+  get balloon2() {
+    return {
+      width: getResponsiveAssetSize(160),
+      height: getResponsiveAssetSize(190)
+    };
+  },
+  get rocket() {
+    return {
+      width: getResponsiveAssetSize(80),
+      height: getResponsiveAssetSize(60)
+    };
+  },
+  get bear() {
+    return {
+      width: getResponsiveAssetSize(286),
+      height: getResponsiveAssetSize(286)
+    };
+  },
+  get bearTop() {
+    return {
+      width: getResponsiveAssetSize(286),
+      height: getResponsiveAssetSize(286)
+    };
+  },
+  get moon() {
+    return {
+      width: getResponsiveAssetSize(286),
+      height: getResponsiveAssetSize(286)
+    };
+  },
   icon: {
-    small: { width: 48, height: 48 },
-    medium: { width: 58, height: 58 },
-    large: { width: 70, height: 70 },
+    get small() {
+      return {
+        width: getResponsiveAssetSize(48),
+        height: getResponsiveAssetSize(48)
+      };
+    },
+    get medium() {
+      return {
+        width: getResponsiveAssetSize(58),
+        height: getResponsiveAssetSize(58)
+      };
+    },
+    get large() {
+      return {
+        width: getResponsiveAssetSize(70),
+        height: getResponsiveAssetSize(70)
+      };
+    },
   },
 } as const;
 

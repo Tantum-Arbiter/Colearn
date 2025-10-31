@@ -11,10 +11,12 @@ export default {
     scheme: 'growwithfreya',
     userInterfaceStyle: 'automatic',
     newArchEnabled: true,
+    schemes: ['growwithfreya'],
     extra: {
       eas: {
         projectId: '439b6b2f-be5f-4d59-98eb-73befbd1973e'
-      }
+      },
+
     },
     updates: {
       url: 'https://u.expo.dev/439b6b2f-be5f-4d59-98eb-73befbd1973e'
@@ -24,11 +26,13 @@ export default {
     },
     ios: {
       supportsTablet: true,
-      bundleIdentifier: IS_DEV 
-        ? 'com.growwithfreya.app.dev' 
-        : IS_PREVIEW 
-        ? 'com.growwithfreya.app.preview' 
-        : 'com.growwithfreya.app'
+      bundleIdentifier: IS_DEV
+        ? 'com.growwithfreya.app.dev'
+        : IS_PREVIEW
+        ? 'com.growwithfreya.app.preview'
+        : 'com.growwithfreya.app',
+      associatedDomains: ['applinks:growwithfreya.com'],
+
     },
     android: {
       package: IS_DEV 
@@ -51,6 +55,7 @@ export default {
     },
     plugins: [
       'expo-router',
+
       [
         'expo-splash-screen',
         {

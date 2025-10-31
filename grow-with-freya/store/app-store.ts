@@ -28,6 +28,7 @@ export interface AppState {
   // Actions
   setAppReady: (ready: boolean) => void;
   setOnboardingComplete: (complete: boolean) => void;
+  resetAppForTesting: () => void; // Temporary function to reset app state
   setCurrentChild: (childId: string | null) => void;
   setCurrentScreen: (screen: string) => void;
   setLoading: (loading: boolean) => void;
@@ -46,7 +47,7 @@ export const useAppStore = create<AppState>()(
     (set) => ({
       // Initial state
       isAppReady: false,
-      hasCompletedOnboarding: false, // Always false for testing
+      hasCompletedOnboarding: false, // This will be overridden by persisted state if it exists
       currentChildId: null,
       currentScreen: 'splash',
       isLoading: false,
@@ -60,11 +61,8 @@ export const useAppStore = create<AppState>()(
 
       // Actions
       setAppReady: (ready) => set({ isAppReady: ready }),
-      setOnboardingComplete: (complete) => {
-        // For testing purposes, don't actually complete onboarding
-        // set({ hasCompletedOnboarding: complete });
-        console.log('Onboarding completed (but not persisted for testing)');
-      },
+      setOnboardingComplete: (complete) => set({ hasCompletedOnboarding: complete }),
+      resetAppForTesting: () => set({ hasCompletedOnboarding: false, isAppReady: false }),
       setCurrentChild: (childId) => set({ currentChildId: childId }),
       setCurrentScreen: (screen) => set({ currentScreen: screen }),
       setLoading: (loading) => set({ isLoading: loading }),
@@ -81,10 +79,12 @@ export const useAppStore = create<AppState>()(
     {
       name: 'app-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      // Only persist certain fields - excluding onboarding for testing
+      // Persist important app state including background animation positions
       partialize: (state) => ({
-        // hasCompletedOnboarding: state.hasCompletedOnboarding, // Commented out for testing
+        isAppReady: state.isAppReady,
+        hasCompletedOnboarding: state.hasCompletedOnboarding,
         currentChildId: state.currentChildId,
+        backgroundAnimationState: state.backgroundAnimationState,
       }),
     }
   )

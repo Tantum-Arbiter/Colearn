@@ -16,6 +16,7 @@
     "test:coverage": "jest --coverage --watchAll=false",
     "test:ci": "jest --coverage --watchAll=false --passWithNoTests=false",
     "test:onboarding": "jest __tests__/components/onboarding",
+    "test:auth": "jest __tests__/auth",
     "test:unit": "jest --testPathPattern=__tests__/unit",
     "test:integration": "jest --testPathPattern=__tests__/integration",
     "test:e2e": "jest --testPathPattern=__tests__/e2e",
@@ -51,9 +52,11 @@
     "@react-navigation/elements": "^2.6.3",
     "@react-navigation/native": "^7.1.8",
     "expo": "~54.0.10",
+
     "expo-av": "^16.0.7",
     "expo-blur": "^15.0.7",
     "expo-constants": "~18.0.9",
+
     "expo-font": "~14.0.8",
     "expo-haptics": "~15.0.7",
     "expo-image": "~3.0.8",
@@ -61,6 +64,7 @@
     "expo-linking": "~8.0.8",
     "expo-router": "~6.0.8",
     "expo-screen-orientation": "^9.0.7",
+
     "expo-splash-screen": "~31.0.10",
     "expo-status-bar": "~3.0.8",
     "expo-symbols": "~1.0.7",

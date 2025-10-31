@@ -16,6 +16,7 @@ import { getThemeById, EMOTION_THEMES } from '@/data/emotion-themes';
 import { Fonts } from '@/constants/theme';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
+import { BearTopImage, mainMenuStyles } from '@/components/main-menu';
 
 interface EmotionsUnifiedScreenProps {
   onStartGame: (theme: EmotionTheme) => void;
@@ -87,6 +88,11 @@ export function EmotionsUnifiedScreen({ onStartGame, onBack }: EmotionsUnifiedSc
           ]}
         />
       ))}
+
+      {/* Bear at top */}
+      <View style={mainMenuStyles.bearTopContainer} pointerEvents="none">
+        <BearTopImage />
+      </View>
 
       <View style={{ flex: 1 }}>
         {/* Header with back button and audio button - EXACT COPY FROM STORIES */}

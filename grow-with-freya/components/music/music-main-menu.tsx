@@ -17,6 +17,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
+import { BearTopImage, mainMenuStyles } from '@/components/main-menu';
 import { Fonts } from '@/constants/theme';
 import { MusicControl } from '@/components/ui/music-control';
 
@@ -85,6 +86,11 @@ export function MusicMainMenu({
           ]}
         />
       ))}
+
+      {/* Bear at top */}
+      <View style={mainMenuStyles.bearTopContainer} pointerEvents="none">
+        <BearTopImage />
+      </View>
 
       {/* Header */}
       <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50) }]}>
