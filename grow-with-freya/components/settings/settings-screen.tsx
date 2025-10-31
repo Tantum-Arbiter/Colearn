@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { View, StyleSheet, Pressable, ScrollView, Dimensions } from 'react-native';
+import { View, StyleSheet, Pressable, ScrollView, Dimensions, Text } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -164,13 +164,13 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
       {/* Title - ABOVE moon image */}
       <View style={{
         position: 'absolute',
-        top: insets.top + 130, // Increased significantly to clear any potential header interference
+        top: insets.top + 90, // Same as emotions page that works correctly
         left: 0,
         right: 0,
         paddingHorizontal: 20,
         zIndex: 30,
       }}>
-        <ThemedText style={{
+        <Text style={{
           color: 'white',
           fontSize: 32,
           fontWeight: 'bold',
@@ -184,7 +184,7 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
           shadowRadius: 8,
         }}>
           Account
-        </ThemedText>
+        </Text>
       </View>
 
       {/* Moon at bottom */}
