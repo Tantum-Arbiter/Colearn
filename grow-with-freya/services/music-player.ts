@@ -472,22 +472,22 @@ export class MusicPlayerService implements MusicService {
   // Helper method to restore background music
   private async restoreBackgroundMusic(): Promise<void> {
     try {
-      // Only restore background music when there's no current track OR when explicitly paused/stopped
-      // Don't restore if we have a track loaded (even if stopped) - user might want to play it
       if (!this.state.currentTrack || this.state.playbackState === 'paused') {
         console.log('Restoring background music (reinitialize if needed)');
 
-        // If background music was unloaded, reinitialize it first
         if (!backgroundMusic.getIsLoaded()) {
           console.log('Background music was unloaded, reinitializing...');
           await backgroundMusic.initialize();
         }
 
-        // Start playing
-        await backgroundMusic.play();
+        // Only start playing if background music was actually playing before
+        if (backgroundMusic.getIsPlaying()) {
+          console.log('Background music was already playing, ensuring it continues');
+          await backgroundMusic.play();
+        } else {
+          console.log('Background music was not playing, respecting user\'s pause/mute state');
+        }
 
-        // Only reset the fade flag if we're clearing the track completely
-        // If we're just pausing, keep the flag so we don't re-stop background music on resume
         if (!this.state.currentTrack) {
           console.log('Resetting background music fade flag (track cleared)');
           this.hasBackgroundMusicFaded = false;

@@ -9,6 +9,7 @@ class BackgroundMusicService {
   private isInitializing: boolean = false; // Prevent multiple initializations
   private fadeTimer: ReturnType<typeof setTimeout> | null = null; // Track fade operations
   private stateChangeCallbacks: (() => void)[] = []; // Callbacks for state changes
+  private hasVolumeBeenSetByUser: boolean = false; // Track if user has explicitly set volume
 
   /**
    * Initialize and load the background music
@@ -86,9 +87,15 @@ class BackgroundMusicService {
       }
 
       if (!this.isPlaying) {
+        // Only set volume if user hasn't explicitly set it (e.g., during initial app startup)
+        if (!this.hasVolumeBeenSetByUser) {
+          await this.sound.setVolumeAsync(this.volume);
+          console.log(`Background music started with default volume: ${this.volume}`);
+        } else {
+          console.log('Background music started (preserving user-set volume)');
+        }
         await this.sound.playAsync();
         this.isPlaying = true;
-        console.log('Background music started');
         this.notifyStateChange(); // Notify state change
       } else {
         console.log('Background music already playing (by flag)');
@@ -161,12 +168,14 @@ class BackgroundMusicService {
    * Set volume (0.0 to 1.0)
    */
   async setVolume(volume: number): Promise<void> {
-    this.volume = Math.max(0, Math.min(1, volume));
-    
+    const newVolume = Math.max(0, Math.min(1, volume));
+    this.volume = newVolume;
+    this.hasVolumeBeenSetByUser = true; // Mark that user has explicitly set volume
+
     if (this.isLoaded && this.sound) {
       try {
-        await this.sound.setVolumeAsync(this.volume);
-        console.log(`Background music volume set to ${this.volume}`);
+        await this.sound.setVolumeAsync(newVolume);
+        console.log(`Background music volume set to ${newVolume} (user-controlled)`);
       } catch (error) {
         console.warn('Failed to set background music volume:', error);
       }
