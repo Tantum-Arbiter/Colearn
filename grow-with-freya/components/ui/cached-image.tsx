@@ -107,3 +107,28 @@ export const CachedBearImage: React.FC<{ style?: any }> = ({ style }) => {
     />
   );
 };
+
+/**
+ * Specialized component for the moon image with optimal caching
+ */
+// Import the moon image at the top level - use relative path for Jest compatibility
+const moonImage = require('../../assets/images/ui-elements/moon-top-screen.png');
+
+export const CachedMoonImage: React.FC<{ style?: any }> = ({ style }) => {
+  return (
+    <CachedImage
+      source={moonImage}
+      style={[
+        {
+          width: 286,
+          height: 286,
+          opacity: 0.8,
+        },
+        style,
+      ]}
+      resizeMode="contain"
+      preload={true}
+      instantDisplay={true}
+    />
+  );
+};

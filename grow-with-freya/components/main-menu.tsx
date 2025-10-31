@@ -25,6 +25,7 @@ import {
   Cloud2,
 
   BearImage,
+  MoonImage,
   ANIMATION_TIMINGS,
   LAYOUT,
   VISUAL_EFFECTS,
@@ -481,6 +482,10 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
 
       <View style={mainMenuStyles.bearContainer} pointerEvents="none">
         <BearImage />
+      </View>
+
+      <View style={mainMenuStyles.moonContainer} pointerEvents="none">
+        <MoonImage />
       </View>
 
 

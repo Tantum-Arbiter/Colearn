@@ -101,6 +101,16 @@ export const mainMenuStyles = StyleSheet.create({
     height: '15%',
     zIndex: LAYOUT.Z_INDEX.BEAR,
   },
+
+  moonContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    width: '100%',
+    height: '15%',
+    zIndex: LAYOUT.Z_INDEX.BEAR,
+  },
   
   // Stars
   star: {
