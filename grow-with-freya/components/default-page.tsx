@@ -10,6 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ThemedText } from './themed-text';
 import { getSvgComponentFromSvg } from './main-menu/assets';
+import { BearTopImage, mainMenuStyles } from './main-menu';
 import { MusicControl } from '@/components/ui/music-control';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -152,6 +153,12 @@ export function DefaultPage({ icon, title, onBack }: DefaultPageProps) {
           ]}
         />
       ))}
+
+      {/* Bear at top */}
+      <View style={mainMenuStyles.bearTopContainer} pointerEvents="none">
+        <BearTopImage />
+      </View>
+
       {/* Header with back button and audio button */}
       <View style={styles.header}>
         <Pressable style={styles.backButton} onPress={onBack}>

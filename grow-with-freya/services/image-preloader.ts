@@ -6,6 +6,7 @@ import { Image } from 'react-native';
  */
 const CRITICAL_IMAGES = [
   require('../assets/images/ui-elements/bear-bottom-screen.png'),
+  require('../assets/images/ui-elements/bear-top-screen.png'),
   require('../assets/images/ui-elements/moon-top-screen.png'),
   // Add other critical images here as needed
 ];

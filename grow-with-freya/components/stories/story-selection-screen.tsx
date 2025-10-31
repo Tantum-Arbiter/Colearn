@@ -16,6 +16,7 @@ import { Fonts } from '@/constants/theme';
 import { useAppStore } from '@/store/app-store';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
+import { BearTopImage, mainMenuStyles } from '@/components/main-menu';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 import { MusicControl } from '@/components/ui/music-control';
 
@@ -150,7 +151,12 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
           ]}
         />
       ))}
-      
+
+      {/* Bear at top */}
+      <View style={mainMenuStyles.bearTopContainer} pointerEvents="none">
+        <BearTopImage />
+      </View>
+
       <View style={{ flex: 1 }}>
         {/* Header with back button and audio button */}
         <View style={{

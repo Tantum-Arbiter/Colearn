@@ -1,5 +1,6 @@
 export const PNG_ASSETS = {
   bear: require('../../assets/images/ui-elements/bear-bottom-screen.png'),
+  bearTop: require('../../assets/images/ui-elements/bear-top-screen.png'),
   moon: require('../../assets/images/ui-elements/moon-top-screen.png'),
   freyaRocket: require('../../assets/images/ui-elements/freya-rocket.svg'),
   freyaRocketRight: require('../../assets/images/ui-elements/freya-rocket-right.svg'),
@@ -77,6 +78,12 @@ export const ASSET_DIMENSIONS = {
     };
   },
   get bear() {
+    return {
+      width: getResponsiveAssetSize(286),
+      height: getResponsiveAssetSize(286)
+    };
+  },
+  get bearTop() {
     return {
       width: getResponsiveAssetSize(286),
       height: getResponsiveAssetSize(286)

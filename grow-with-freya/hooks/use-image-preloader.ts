@@ -85,6 +85,7 @@ export function useImagePreloader(
 export function useCriticalImagePreloader(): PreloadResult {
   const criticalImages = [
     require('../assets/images/ui-elements/bear-bottom-screen.png'),
+    require('../assets/images/ui-elements/bear-top-screen.png'),
     require('../assets/images/ui-elements/moon-top-screen.png'),
     // Add other critical images here
   ];
@@ -99,6 +100,7 @@ export function useCriticalImagePreloader(): PreloadResult {
 export async function preloadCriticalImages(): Promise<void> {
   const criticalImages = [
     require('../assets/images/ui-elements/bear-bottom-screen.png'),
+    require('../assets/images/ui-elements/bear-top-screen.png'),
     require('../assets/images/ui-elements/moon-top-screen.png'),
   ];
 
