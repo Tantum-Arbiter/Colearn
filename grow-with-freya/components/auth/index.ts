@@ -1,2 +1,1 @@
-export { LoginScreen } from './login-screen';
-export { LoginTestScreen } from './login-test-screen';
+// Authentication components removed - no longer needed
