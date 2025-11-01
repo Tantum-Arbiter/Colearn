@@ -1,7 +1,8 @@
-export const PNG_ASSETS = {
-  bear: require('../../assets/images/ui-elements/bear-bottom-screen.png'),
-  bearTop: require('../../assets/images/ui-elements/bear-top-screen.png'),
-  moon: require('../../assets/images/ui-elements/moon-top-screen.png'),
+export const WEBP_ASSETS = {
+  bear: require('../../assets/images/ui-elements/bear-bottom-screen.webp'),
+  bearTop: require('../../assets/images/ui-elements/bear-top-screen.webp'),
+  moon: require('../../assets/images/ui-elements/moon-top-screen.webp'),
+  moonBottom: require('../../assets/images/ui-elements/moon-bottom-screen.webp'),
   freyaRocket: require('../../assets/images/ui-elements/freya-rocket.svg'),
   freyaRocketRight: require('../../assets/images/ui-elements/freya-rocket-right.svg'),
 } as const;

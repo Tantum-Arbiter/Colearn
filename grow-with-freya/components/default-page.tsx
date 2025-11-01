@@ -10,7 +10,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ThemedText } from './themed-text';
 import { getSvgComponentFromSvg } from './main-menu/assets';
-import { BearTopImage, mainMenuStyles } from './main-menu';
+import { BearTopImage } from './main-menu/animated-components';
+import { mainMenuStyles } from './main-menu/styles';
+
 import { MusicControl } from '@/components/ui/music-control';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -138,6 +140,11 @@ export function DefaultPage({ icon, title, onBack }: DefaultPageProps) {
       colors={['#4ECDC4', '#3B82F6', '#1E3A8A']}
       style={styles.container}
     >
+      {/* Bear top background image */}
+      <View style={mainMenuStyles.moonContainer} pointerEvents="none">
+        <BearTopImage />
+      </View>
+
       {/* Starry background (matching main menu) */}
       {stars.map((star) => (
         <Animated.View
@@ -149,18 +156,23 @@ export function DefaultPage({ icon, title, onBack }: DefaultPageProps) {
               left: star.left,
               top: star.top,
               opacity: star.opacity,
+              zIndex: 2,
             }
           ]}
         />
       ))}
 
-      {/* Bear at top */}
-      <View style={mainMenuStyles.bearTopContainer} pointerEvents="none">
-        <BearTopImage />
-      </View>
-
-      {/* Header with back button and audio button */}
-      <View style={styles.header}>
+      {/* Header with back button and audio button - ABSOLUTE POSITIONING */}
+      <View style={{
+        position: 'absolute',
+        top: 60, // Fixed top position for default pages
+        left: 20,
+        right: 20,
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+        zIndex: 30,
+      }}>
         <Pressable style={styles.backButton} onPress={onBack}>
           <ThemedText style={styles.backButtonText}>← Back</ThemedText>
         </Pressable>
@@ -171,8 +183,9 @@ export function DefaultPage({ icon, title, onBack }: DefaultPageProps) {
         />
       </View>
 
-      {/* Main content */}
-      <View style={styles.content}>
+      {/* Content container with flex: 1 for proper layout */}
+      <View style={{ flex: 1, paddingTop: 140, zIndex: 10 }}>
+        <View style={styles.content}>
         <ThemedText style={styles.title}>{title}</ThemedText>
 
         {/* SVG Icon */}
@@ -195,6 +208,7 @@ export function DefaultPage({ icon, title, onBack }: DefaultPageProps) {
         <Pressable style={[styles.actionButton, { backgroundColor: content.color }]} onPress={() => {}}>
           <ThemedText style={styles.actionButtonText}>Coming Soon!</ThemedText>
         </Pressable>
+        </View>
       </View>
     </LinearGradient>
   );

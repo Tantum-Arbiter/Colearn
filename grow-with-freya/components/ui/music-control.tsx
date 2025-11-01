@@ -9,38 +9,44 @@ interface MusicControlProps {
   style?: any;
 }
 
-/**
- * Music control component that allows users to toggle background music
- */
 export const MusicControl: React.FC<MusicControlProps> = ({
   size = 32,
   color = '#4A90E2',
   style
 }) => {
-  const { isPlaying, toggle, isLoaded } = useBackgroundMusic();
+  const { isPlaying, toggle, isLoaded, volume, setVolume } = useBackgroundMusic();
 
-  if (!isLoaded) {
-    return null; // Don't show control until music is loaded
-  }
+  const handlePress = () => {
+    // Handle mute/unmute toggle
+    if (volume === 0) {
+      // Unmute: restore to default volume (18%)
+      setVolume(0.18);
+    } else {
+      // Mute: set volume to 0
+      setVolume(0);
+    }
+  };
 
   return (
-    <TouchableOpacity
-      style={[styles.container, style]}
-      onPress={toggle}
-      activeOpacity={0.7}
-      accessibilityLabel={isPlaying ? 'Pause background music' : 'Play background music'}
-      accessibilityRole="button"
-      testID="music-control-button"
-    >
-      <View style={[styles.iconContainer, { backgroundColor: `${color}20` }]}>
-        <Ionicons
-          name={isPlaying ? 'volume-high' : 'volume-mute'}
-          size={size}
-          color={color}
-          testID={`music-icon-${isPlaying ? 'playing' : 'muted'}`}
-        />
-      </View>
-    </TouchableOpacity>
+    <View style={[styles.container, style]}>
+      <TouchableOpacity
+        style={styles.iconContainer}
+        onPress={handlePress}
+        activeOpacity={0.7}
+        accessibilityLabel={volume === 0 ? 'Unmute background music' : 'Mute background music'}
+        accessibilityRole="button"
+        testID="music-control-button"
+      >
+        <View style={[styles.iconBackground, { backgroundColor: `${color}20` }]}>
+          <Ionicons
+            name={volume === 0 ? 'volume-mute' : 'volume-high'}
+            size={size}
+            color={color}
+            testID={`music-icon-${volume === 0 ? 'muted' : 'playing'}`}
+          />
+        </View>
+      </TouchableOpacity>
+    </View>
   );
 };
 
@@ -50,15 +56,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconBackground: {
     width: 48,
     height: 48,
     borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
   },
 });

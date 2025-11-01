@@ -18,6 +18,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
+import { BearTopImage } from '@/components/main-menu/animated-components';
+import { mainMenuStyles } from '@/components/main-menu/styles';
 import { Fonts } from '@/constants/theme';
 import { MusicControl } from '@/components/ui/music-control';
 
@@ -64,6 +66,11 @@ export function TantrumInfoScreen({ onContinue, onBack }: TantrumInfoScreenProps
       colors={['#FF6B6B', '#FF8E8E', '#FFB3B3']}
       style={styles.container}
     >
+      {/* Bear top background image */}
+      <View style={mainMenuStyles.moonContainer} pointerEvents="none">
+        <BearTopImage />
+      </View>
+
       {/* Animated stars background */}
       {starPositions.map((star) => (
         <Animated.View
@@ -79,13 +86,23 @@ export function TantrumInfoScreen({ onContinue, onBack }: TantrumInfoScreenProps
               opacity: star.opacity * 0.7, // Slightly dimmed for readability
               left: star.left,
               top: star.top,
+              zIndex: 2,
             },
           ]}
         />
       ))}
 
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50) }]}>
+      {/* Header with back button and audio button - ABSOLUTE POSITIONING */}
+      <View style={{
+        position: 'absolute',
+        top: insets.top + 20,
+        left: 20,
+        right: 20,
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+        zIndex: 30,
+      }}>
         <Pressable style={styles.backButton} onPress={onBack}>
           <Text style={styles.backButtonText}>← Back</Text>
         </Pressable>
@@ -93,15 +110,17 @@ export function TantrumInfoScreen({ onContinue, onBack }: TantrumInfoScreenProps
         <MusicControl
           size={24}
           color="#FFFFFF"
+          style={{ marginBottom: 20 }}
         />
       </View>
 
-      {/* Content */}
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      {/* Content container with flex: 1 for proper layout */}
+      <View style={{ flex: 1, paddingTop: insets.top + 80, zIndex: 10 }}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
         <View style={styles.content}>
           <Text style={styles.emoji}>🌊</Text>
 
@@ -182,17 +201,15 @@ export function TantrumInfoScreen({ onContinue, onBack }: TantrumInfoScreenProps
             </Text>
           </View>
         </View>
-      </ScrollView>
+        </ScrollView>
 
-      {/* Continue Button */}
-      <View style={styles.buttonContainer}>
-        <Pressable style={styles.continueButton} onPress={onContinue}>
-          <Text style={styles.continueButtonText}>Continue to Music</Text>
-        </Pressable>
+        {/* Continue Button */}
+        <View style={styles.buttonContainer}>
+          <Pressable style={styles.continueButton} onPress={onContinue}>
+            <Text style={styles.continueButtonText}>Continue to Music</Text>
+          </Pressable>
+        </View>
       </View>
-
-      {/* Bottom spacing */}
-      <View style={{ height: Math.max(insets.bottom + 20, 40) }} />
     </LinearGradient>
   );
 }

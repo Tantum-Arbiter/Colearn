@@ -16,7 +16,9 @@ import { getThemeById, EMOTION_THEMES } from '@/data/emotion-themes';
 import { Fonts } from '@/constants/theme';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
-import { BearTopImage, mainMenuStyles } from '@/components/main-menu';
+import { BearTopImage } from '@/components/main-menu/animated-components';
+
+import { mainMenuStyles } from '@/components/main-menu/styles';
 
 interface EmotionsUnifiedScreenProps {
   onStartGame: (theme: EmotionTheme) => void;
@@ -68,6 +70,11 @@ export function EmotionsUnifiedScreen({ onStartGame, onBack }: EmotionsUnifiedSc
       colors={['#4ECDC4', '#3B82F6', '#1E3A8A']}
       style={styles.container}
     >
+      {/* Bear top background image */}
+      <View style={mainMenuStyles.moonContainer} pointerEvents="none">
+        <BearTopImage />
+      </View>
+
       {/* Animated stars background (matching stories pattern) */}
       {starPositions.map((star) => (
         <Animated.View
@@ -84,26 +91,24 @@ export function EmotionsUnifiedScreen({ onStartGame, onBack }: EmotionsUnifiedSc
               opacity: star.opacity,
               left: star.left,
               top: star.top,
+              zIndex: 2,
             },
           ]}
         />
       ))}
 
-      {/* Bear at top */}
-      <View style={mainMenuStyles.bearTopContainer} pointerEvents="none">
-        <BearTopImage />
-      </View>
-
-      <View style={{ flex: 1 }}>
-        {/* Header with back button and audio button - EXACT COPY FROM STORIES */}
-        <View style={{
-          paddingTop: insets.top + 20,
-          paddingHorizontal: 20,
-          paddingBottom: 20,
-          flexDirection: 'row',
-          alignItems: 'flex-start',
-          justifyContent: 'space-between'
-        }}>
+      {/* Content container with flex: 1 for proper layout */}
+      {/* Header with back button and audio button - ABSOLUTE POSITIONING */}
+      <View style={{
+        position: 'absolute',
+        top: insets.top + 20,
+        left: 20,
+        right: 20,
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+        zIndex: 30,
+      }}>
           <Pressable
             style={{
               backgroundColor: 'rgba(255, 255, 255, 0.2)',
@@ -129,6 +134,8 @@ export function EmotionsUnifiedScreen({ onStartGame, onBack }: EmotionsUnifiedSc
           />
         </View>
 
+      {/* Content container with flex: 1 for proper layout */}
+      <View style={{ flex: 1, paddingTop: insets.top + 80, zIndex: 10 }}>
         {/* Title - EXACT COPY FROM STORIES PATTERN */}
         <View style={{ paddingHorizontal: 20, marginTop: -20 }}>
           <Text style={{
