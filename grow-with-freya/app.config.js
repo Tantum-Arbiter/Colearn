@@ -35,10 +35,10 @@ export default {
 
     },
     android: {
-      package: IS_DEV 
-        ? 'com.growwithfreya.app.dev' 
-        : IS_PREVIEW 
-        ? 'com.growwithfreya.app.preview' 
+      package: IS_DEV
+        ? 'com.growwithfreya.app.dev'
+        : IS_PREVIEW
+        ? 'com.growwithfreya.app.preview'
         : 'com.growwithfreya.app',
       adaptiveIcon: {
         backgroundColor: '#E6F4FE',
@@ -47,7 +47,11 @@ export default {
         monochromeImage: './assets/images/android-icon-monochrome.png'
       },
       edgeToEdgeEnabled: true,
-      predictiveBackGestureEnabled: false
+      predictiveBackGestureEnabled: false,
+      permissions: [
+        'MODIFY_AUDIO_SETTINGS',
+        'WAKE_LOCK'
+      ]
     },
     web: {
       output: 'static',

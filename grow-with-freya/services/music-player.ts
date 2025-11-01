@@ -346,7 +346,7 @@ export class MusicPlayerService implements MusicService {
           shouldDuckAndroid: false,
           playThroughEarpieceAndroid: false,
           interruptionModeIOS: 1, // DO_NOT_MIX
-          interruptionModeAndroid: 1, // DO_NOT_MIX
+          interruptionModeAndroid: 2, // DUCK_OTHERS - more compatible on Android
         });
 
         // Wait for audio session to be fully configured

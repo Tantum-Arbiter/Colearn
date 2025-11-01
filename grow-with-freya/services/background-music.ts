@@ -34,9 +34,9 @@ class BackgroundMusicService {
         shouldDuckAndroid: false, // Don't duck - we want exclusive control
         playThroughEarpieceAndroid: false,
         interruptionModeIOS: 1, // DO_NOT_MIX - prevents multiple audio sources
-        interruptionModeAndroid: 1, // DO_NOT_MIX - prevents multiple audio sources
+        interruptionModeAndroid: 2, // DUCK_OTHERS - more compatible on Android
       });
-      console.log('Audio mode configured: DO_NOT_MIX for exclusive audio control');
+      console.log('Audio mode configured: DO_NOT_MIX (iOS) / DUCK_OTHERS (Android) for audio control');
 
       // Load the background soundtrack with simple looping
       const audioSource = require('../assets/audio/background-soundtrack.wav');
@@ -62,8 +62,10 @@ class BackgroundMusicService {
 
       console.log('Background music initialized successfully');
     } catch (error) {
-      console.warn('Failed to initialize background music:', error);
+      console.error('Failed to initialize background music:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
       console.warn('To fix this: Add a valid audio file to assets/audio/background-soundtrack.wav');
+      console.warn('On Android: Check that MODIFY_AUDIO_SETTINGS permission is granted');
       this.isInitializing = false;
       // Don't throw - allow app to continue without music
     }
@@ -102,8 +104,13 @@ class BackgroundMusicService {
         console.log('Background music already playing (by flag)');
       }
     } catch (error) {
-      console.warn('Failed to play background music:', error);
-      console.warn('This might be due to an invalid or corrupted audio file');
+      console.error('Failed to play background music:', error);
+      console.error('Play error details:', JSON.stringify(error, null, 2));
+      console.warn('This might be due to:');
+      console.warn('1. Invalid or corrupted audio file');
+      console.warn('2. Android audio permissions not granted');
+      console.warn('3. Device audio system issues');
+      console.warn('4. Audio format not supported on this device');
     }
   }
 
