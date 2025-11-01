@@ -10,6 +10,7 @@ class BackgroundMusicService {
   private fadeTimer: ReturnType<typeof setTimeout> | null = null; // Track fade operations
   private stateChangeCallbacks: (() => void)[] = []; // Callbacks for state changes
   private hasVolumeBeenSetByUser: boolean = false; // Track if user has explicitly set volume
+  private volumeChangeCallbacks: ((volume: number) => void)[] = []; // Callbacks for volume changes
 
   /**
    * Initialize and load the background music
@@ -180,6 +181,9 @@ class BackgroundMusicService {
         console.warn('Failed to set background music volume:', error);
       }
     }
+
+    // Notify all volume change callbacks
+    this.notifyVolumeChange(newVolume);
   }
 
   /**
@@ -204,6 +208,20 @@ class BackgroundMusicService {
   }
 
   /**
+   * Register a callback for volume changes
+   */
+  onVolumeChange(callback: (volume: number) => void): () => void {
+    this.volumeChangeCallbacks.push(callback);
+    // Return unsubscribe function
+    return () => {
+      const index = this.volumeChangeCallbacks.indexOf(callback);
+      if (index > -1) {
+        this.volumeChangeCallbacks.splice(index, 1);
+      }
+    };
+  }
+
+  /**
    * Notify all registered callbacks of state changes
    */
   private notifyStateChange(): void {
@@ -212,6 +230,19 @@ class BackgroundMusicService {
         callback();
       } catch (error) {
         console.warn('Error in background music state change callback:', error);
+      }
+    });
+  }
+
+  /**
+   * Notify all registered callbacks of volume changes
+   */
+  private notifyVolumeChange(volume: number): void {
+    this.volumeChangeCallbacks.forEach(callback => {
+      try {
+        callback(volume);
+      } catch (error) {
+        console.warn('Error in background music volume change callback:', error);
       }
     });
   }

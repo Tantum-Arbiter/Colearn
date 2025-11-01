@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useBackgroundMusic } from '@/hooks/use-background-music';
+import { useGlobalSound } from '@/contexts/global-sound-context';
 
 interface MusicControlProps {
   size?: number;
@@ -14,17 +14,10 @@ export const MusicControl: React.FC<MusicControlProps> = ({
   color = '#4A90E2',
   style
 }) => {
-  const { isPlaying, toggle, isLoaded, volume, setVolume } = useBackgroundMusic();
+  const { isMuted, volume, isLoaded, toggleMute } = useGlobalSound();
 
   const handlePress = () => {
-    // Handle mute/unmute toggle
-    if (volume === 0) {
-      // Unmute: restore to default volume (18%)
-      setVolume(0.18);
-    } else {
-      // Mute: set volume to 0
-      setVolume(0);
-    }
+    toggleMute();
   };
 
   return (
@@ -33,16 +26,16 @@ export const MusicControl: React.FC<MusicControlProps> = ({
         style={styles.iconContainer}
         onPress={handlePress}
         activeOpacity={0.7}
-        accessibilityLabel={volume === 0 ? 'Unmute background music' : 'Mute background music'}
+        accessibilityLabel={isMuted ? 'Unmute background music' : 'Mute background music'}
         accessibilityRole="button"
         testID="music-control-button"
       >
         <View style={[styles.iconBackground, { backgroundColor: `${color}20` }]}>
           <Ionicons
-            name={volume === 0 ? 'volume-mute' : 'volume-high'}
+            name={isMuted ? 'volume-mute' : 'volume-high'}
             size={size}
             color={color}
-            testID={`music-icon-${volume === 0 ? 'muted' : 'playing'}`}
+            testID={`music-icon-${isMuted ? 'muted' : 'playing'}`}
           />
         </View>
       </TouchableOpacity>

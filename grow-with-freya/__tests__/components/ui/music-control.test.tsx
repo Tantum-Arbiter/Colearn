@@ -2,23 +2,22 @@ import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { MusicControl } from '@/components/ui/music-control';
 
-// Mock the background music hook
-const mockToggle = jest.fn();
-const mockUseBackgroundMusic = {
+// Mock the global sound context
+const mockToggleMute = jest.fn();
+const mockUseGlobalSound = {
+  isMuted: false,
+  volume: 0.18,
   isPlaying: false,
   isLoaded: true,
-  volume: 0.3,
+  toggleMute: mockToggleMute,
+  setVolume: jest.fn(),
   play: jest.fn(),
   pause: jest.fn(),
   stop: jest.fn(),
-  setVolume: jest.fn(),
-  fadeIn: jest.fn(),
-  fadeOut: jest.fn(),
-  toggle: mockToggle,
 };
 
-jest.mock('@/hooks/use-background-music', () => ({
-  useBackgroundMusic: () => mockUseBackgroundMusic,
+jest.mock('@/contexts/global-sound-context', () => ({
+  useGlobalSound: () => mockUseGlobalSound,
 }));
 
 // Mock Ionicons
@@ -36,49 +35,37 @@ describe('MusicControl', () => {
 
   it('should render when music is loaded', () => {
     const { getByLabelText } = render(<MusicControl />);
-    expect(getByLabelText('Play background music')).toBeTruthy();
+    expect(getByLabelText('Unmute background music')).toBeTruthy();
   });
 
-  it('should not render when music is not loaded', () => {
-    mockUseBackgroundMusic.isLoaded = false;
-    const { queryByLabelText } = render(<MusicControl />);
-    expect(queryByLabelText('Play background music')).toBeNull();
-
-    // Reset for other tests
-    mockUseBackgroundMusic.isLoaded = true;
-  });
-
-  it('should show mute icon when music is not playing', () => {
-    mockUseBackgroundMusic.isPlaying = false;
+  it('should show mute icon when music is muted', () => {
+    mockUseGlobalSound.isMuted = true;
     const rendered = render(<MusicControl />);
     expect(rendered.toJSON()).toMatchSnapshot();
   });
 
-  it('should show volume icon when music is playing', () => {
-    mockUseBackgroundMusic.isPlaying = true;
+  it('should show volume icon when music is not muted', () => {
+    mockUseGlobalSound.isMuted = false;
     const rendered = render(<MusicControl />);
     expect(rendered.toJSON()).toMatchSnapshot();
-
-    // Reset for other tests
-    mockUseBackgroundMusic.isPlaying = false;
   });
 
-  it('should call toggle when pressed', () => {
+  it('should call toggleMute when pressed', () => {
     const { getByLabelText } = render(<MusicControl />);
     const button = getByLabelText(/background music/i);
     fireEvent.press(button);
-    expect(mockToggle).toHaveBeenCalledTimes(1);
+    expect(mockToggleMute).toHaveBeenCalledTimes(1);
   });
 
   it('should have correct accessibility labels', () => {
-    mockUseBackgroundMusic.isPlaying = false;
+    mockUseGlobalSound.isMuted = false;
     const { getByLabelText } = render(<MusicControl />);
-    expect(getByLabelText('Play background music')).toBeTruthy();
+    expect(getByLabelText('Mute background music')).toBeTruthy();
 
-    mockUseBackgroundMusic.isPlaying = true;
+    mockUseGlobalSound.isMuted = true;
     const { rerender, getByLabelText: getByLabelTextAfterRerender } = render(<MusicControl />);
     rerender(<MusicControl />);
-    expect(getByLabelTextAfterRerender('Pause background music')).toBeTruthy();
+    expect(getByLabelTextAfterRerender('Unmute background music')).toBeTruthy();
   });
 
   it('should accept custom props', () => {

@@ -25,14 +25,17 @@ import { preloadCriticalImages, preloadSecondaryImages } from '@/services/image-
 import { EnhancedPageTransition } from '@/components/ui/enhanced-page-transition';
 import { DefaultPage } from '@/components/default-page';
 import { StoryTransitionProvider } from '@/contexts/story-transition-context';
+import { GlobalSoundProvider } from '@/contexts/global-sound-context';
 
 
 
 export default function RootLayout() {
   return (
-    <StoryTransitionProvider>
-      <AppContent />
-    </StoryTransitionProvider>
+    <GlobalSoundProvider>
+      <StoryTransitionProvider>
+        <AppContent />
+      </StoryTransitionProvider>
+    </GlobalSoundProvider>
   );
 }
 

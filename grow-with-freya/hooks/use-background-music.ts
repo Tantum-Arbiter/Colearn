@@ -21,7 +21,7 @@ interface BackgroundMusicControls {
 export function useBackgroundMusic(): BackgroundMusicState & BackgroundMusicControls {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [volume, setVolumeState] = useState(0.3);
+  const [volume, setVolumeState] = useState(0.18); // Match service default
 
   // Initialize background music on mount (only once globally)
   useEffect(() => {
@@ -46,7 +46,7 @@ export function useBackgroundMusic(): BackgroundMusicState & BackgroundMusicCont
 
   // Register for state change notifications
   useEffect(() => {
-    const unsubscribe = backgroundMusic.onStateChange(() => {
+    const unsubscribeState = backgroundMusic.onStateChange(() => {
       const currentlyPlaying = backgroundMusic.getIsPlaying();
       if (currentlyPlaying !== isPlaying) {
         console.log(`Background music state change notification: ${isPlaying} -> ${currentlyPlaying}`);
@@ -54,11 +54,17 @@ export function useBackgroundMusic(): BackgroundMusicState & BackgroundMusicCont
       }
     });
 
-    // Cleanup subscription on unmount
+    const unsubscribeVolume = backgroundMusic.onVolumeChange((newVolume) => {
+      console.log(`Background music volume change notification: ${volume} -> ${newVolume}`);
+      setVolumeState(newVolume);
+    });
+
+    // Cleanup subscriptions on unmount
     return () => {
-      unsubscribe();
+      unsubscribeState();
+      unsubscribeVolume();
     };
-  }, [isPlaying]);
+  }, [isPlaying, volume]);
 
   // Handle app state changes (pause music when app goes to background)
   useEffect(() => {
@@ -132,7 +138,7 @@ export function useBackgroundMusic(): BackgroundMusicState & BackgroundMusicCont
   const setVolume = useCallback(async (newVolume: number) => {
     try {
       await backgroundMusic.setVolume(newVolume);
-      setVolumeState(newVolume);
+      // Volume state will be updated via the volume change callback
     } catch (error) {
       console.warn('Failed to set background music volume:', error);
     }
