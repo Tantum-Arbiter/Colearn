@@ -15,6 +15,8 @@ import * as Haptics from 'expo-haptics';
 import { AntDesign, FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 
 import { ThemedText } from '../themed-text';
+import { TermsConditionsScreen } from '../account/terms-conditions-screen';
+import { PrivacyPolicyScreen } from '../account/privacy-policy-screen';
 
 const { width, height } = Dimensions.get('window');
 
@@ -28,6 +30,7 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isAppleLoading, setIsAppleLoading] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [currentView, setCurrentView] = useState<'main' | 'terms' | 'privacy'>('main');
 
   // Animation values
   const titleOpacity = useSharedValue(0);
@@ -111,24 +114,12 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
 
   const handleTermsPress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    Alert.alert(
-      'Terms & Conditions',
-      'Our Terms & Conditions outline the rules and guidelines for using Grow with Freya. This includes age requirements, parental consent, acceptable use, and our commitment to child safety.',
-      [
-        { text: 'OK', style: 'default' }
-      ]
-    );
+    setCurrentView('terms');
   };
 
   const handlePrivacyPress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    Alert.alert(
-      'Privacy Policy',
-      'We are committed to protecting your child\'s privacy. We comply with COPPA and collect only minimal data necessary for the app to function. We do not share children\'s information with third parties.',
-      [
-        { text: 'OK', style: 'default' }
-      ]
-    );
+    setCurrentView('privacy');
   };
 
   const titleAnimatedStyle = useAnimatedStyle(() => ({
@@ -150,6 +141,15 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
     opacity: containerOpacity.value,
     transform: [{ scale: containerScale.value }],
   }));
+
+  // Handle navigation between views
+  if (currentView === 'terms') {
+    return <TermsConditionsScreen onBack={() => setCurrentView('main')} />;
+  }
+
+  if (currentView === 'privacy') {
+    return <PrivacyPolicyScreen onBack={() => setCurrentView('main')} />;
+  }
 
   return (
     <Animated.View style={[styles.container, containerAnimatedStyle]}>
@@ -235,16 +235,16 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
 
         {/* Footer */}
         <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
-          <ThemedText style={styles.footerText}>
-            By continuing, you agree to our{' '}
-            <ThemedText style={styles.legalLink} onPress={handleTermsPress}>
-              Terms & Conditions
-            </ThemedText>
-            {' '}and{' '}
-            <ThemedText style={styles.legalLink} onPress={handlePrivacyPress}>
-              Privacy Policy
-            </ThemedText>
-          </ThemedText>
+          <View style={styles.footerTextContainer}>
+            <ThemedText style={styles.footerText}>By continuing, you agree to our </ThemedText>
+            <Pressable onPress={handleTermsPress} style={styles.linkPressable}>
+              <ThemedText style={styles.legalLink}>Terms & Conditions</ThemedText>
+            </Pressable>
+            <ThemedText style={styles.footerText}> and </ThemedText>
+            <Pressable onPress={handlePrivacyPress} style={styles.linkPressable}>
+              <ThemedText style={styles.legalLink}>Privacy Policy</ThemedText>
+            </Pressable>
+          </View>
         </View>
       </LinearGradient>
     </Animated.View>
@@ -373,11 +373,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     alignItems: 'center',
   },
+  footerTextContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   footerText: {
     fontSize: 12,
     color: '#7A7A7A',
-    textAlign: 'center',
     lineHeight: 16,
+  },
+  linkPressable: {
+    // No additional styling needed - just wraps the text
   },
   legalLink: {
     fontSize: 12,

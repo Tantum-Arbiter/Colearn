@@ -136,38 +136,27 @@ export function EmotionsUnifiedScreen({ onStartGame, onBack }: EmotionsUnifiedSc
 
       {/* Content container with flex: 1 for proper layout */}
       <View style={{ flex: 1, paddingTop: insets.top + 80, zIndex: 10 }}>
-        {/* Title - Enhanced with better contrast */}
-        <View style={{ paddingHorizontal: 20, marginTop: -20, alignItems: 'center' }}>
-          <View style={{
-            backgroundColor: 'rgba(0, 0, 0, 0.4)',
-            paddingHorizontal: 20,
-            paddingVertical: 12,
-            borderRadius: 16,
-            marginBottom: 8,
+        {/* Title - Enhanced with shadow only */}
+        <View style={{ paddingHorizontal: 20, marginTop: -20 }}>
+          <Text style={{
+            color: 'white',
+            fontSize: 34,
+            fontWeight: 'bold',
+            textAlign: 'center',
+            textShadowColor: 'rgba(0, 0, 0, 0.9)',
+            textShadowOffset: { width: 0, height: 3 },
+            textShadowRadius: 8,
           }}>
-            <Text style={{
-              color: 'white',
-              fontSize: 34,
-              fontWeight: 'bold',
-              textAlign: 'center',
-              textShadowColor: 'rgba(0, 0, 0, 0.8)',
-              textShadowOffset: { width: 0, height: 2 },
-              textShadowRadius: 4,
-            }}>
-              Express Yourself!
-            </Text>
-          </View>
+            Express Yourself!
+          </Text>
           <Text style={{
             color: 'rgba(255, 255, 255, 0.95)',
             fontSize: 16,
             textAlign: 'center',
-            textShadowColor: 'rgba(0, 0, 0, 0.6)',
-            textShadowOffset: { width: 0, height: 1 },
-            textShadowRadius: 2,
-            backgroundColor: 'rgba(0, 0, 0, 0.2)',
-            paddingHorizontal: 12,
-            paddingVertical: 4,
-            borderRadius: 8,
+            marginTop: 8,
+            textShadowColor: 'rgba(0, 0, 0, 0.8)',
+            textShadowOffset: { width: 0, height: 2 },
+            textShadowRadius: 4,
           }}>
             Choose your style and learn about emotions
           </Text>
@@ -264,14 +253,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 15,
-    textShadowColor: 'rgba(0, 0, 0, 0.8)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 12,
-    alignSelf: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.9)',
+    textShadowOffset: { width: 0, height: 3 },
+    textShadowRadius: 6,
     fontFamily: Fonts.primary,
   },
   themesContainer: {

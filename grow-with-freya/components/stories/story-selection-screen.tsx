@@ -198,26 +198,19 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
 
       {/* Content container with flex: 1 for proper layout */}
       <View style={{ flex: 1, paddingTop: insets.top + 80, zIndex: 10 }}>
-        {/* Title - Enhanced with better contrast */}
-        <View style={{ paddingHorizontal: 20, marginTop: -20, alignItems: 'center' }}>
-          <View style={{
-            backgroundColor: 'rgba(0, 0, 0, 0.4)',
-            paddingHorizontal: 20,
-            paddingVertical: 12,
-            borderRadius: 16,
+        {/* Title - Enhanced with shadow only */}
+        <View style={{ paddingHorizontal: 20, marginTop: -20 }}>
+          <Text style={{
+            color: 'white',
+            fontSize: 34,
+            fontWeight: 'bold',
+            textAlign: 'center',
+            textShadowColor: 'rgba(0, 0, 0, 0.9)',
+            textShadowOffset: { width: 0, height: 3 },
+            textShadowRadius: 8,
           }}>
-            <Text style={{
-              color: 'white',
-              fontSize: 34,
-              fontWeight: 'bold',
-              textAlign: 'center',
-              textShadowColor: 'rgba(0, 0, 0, 0.8)',
-              textShadowOffset: { width: 0, height: 2 },
-              textShadowRadius: 4,
-            }}>
-              Choose Your Adventure
-            </Text>
-          </View>
+            Choose Your Adventure
+          </Text>
         </View>
 
         {/* Stories Carousels */}
@@ -227,27 +220,19 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
             
             return (
               <View key={genre} style={{ marginBottom: 40 }}>
-                {/* Centered Genre Heading - Enhanced */}
-                <View style={{ alignItems: 'center', marginBottom: 15 }}>
-                  <View style={{
-                    backgroundColor: 'rgba(0, 0, 0, 0.35)',
-                    paddingHorizontal: 16,
-                    paddingVertical: 8,
-                    borderRadius: 12,
-                  }}>
-                    <Text style={{
-                      color: 'white',
-                      fontSize: 24,
-                      fontWeight: 'bold',
-                      textAlign: 'center',
-                      textShadowColor: 'rgba(0, 0, 0, 0.8)',
-                      textShadowOffset: { width: 0, height: 2 },
-                      textShadowRadius: 3,
-                    }}>
-                      {genre.charAt(0).toUpperCase() + genre.slice(1)} Stories
-                    </Text>
-                  </View>
-                </View>
+                {/* Centered Genre Heading - Shadow only */}
+                <Text style={{
+                  color: 'white',
+                  fontSize: 24,
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                  marginBottom: 15,
+                  textShadowColor: 'rgba(0, 0, 0, 0.9)',
+                  textShadowOffset: { width: 0, height: 3 },
+                  textShadowRadius: 6,
+                }}>
+                  {genre.charAt(0).toUpperCase() + genre.slice(1)} Stories
+                </Text>
                 
                 {/* Horizontal Carousel */}
                 <View style={{ 

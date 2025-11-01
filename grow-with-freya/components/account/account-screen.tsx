@@ -170,14 +170,6 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
             >
               <Text style={styles.buttonText}>Privacy Policy</Text>
             </Pressable>
-
-            <Pressable style={styles.button}>
-              <Text style={styles.buttonText}>Request Data Export (Coming Soon)</Text>
-            </Pressable>
-
-            <Pressable style={[styles.button, styles.resetButton]}>
-              <Text style={[styles.buttonText, styles.resetButtonText]}>Delete My Data (Coming Soon)</Text>
-            </Pressable>
           </View>
 
           {/* Developer Options */}
@@ -232,12 +224,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     textShadowColor: 'rgba(0, 0, 0, 0.9)',
     textShadowOffset: { width: 0, height: 3 },
-    textShadowRadius: 6,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 12,
-    overflow: 'hidden',
+    textShadowRadius: 8,
   },
   scrollView: {
     flex: 1,
@@ -256,12 +243,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     textShadowColor: 'rgba(0, 0, 0, 0.9)',
     textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 5,
-    backgroundColor: 'rgba(0, 0, 0, 0.25)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    alignSelf: 'flex-start',
+    textShadowRadius: 6,
   },
   settingItem: {
     flexDirection: 'row',

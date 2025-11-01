@@ -3,8 +3,6 @@ import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
-import { MoonBottomImage } from '@/components/main-menu/animated-components';
-import { mainMenuStyles } from '@/components/main-menu/styles';
 import { MusicControl } from '@/components/ui/music-control';
 
 interface TermsConditionsScreenProps {
@@ -20,11 +18,6 @@ export function TermsConditionsScreen({ onBack }: TermsConditionsScreenProps) {
         colors={VISUAL_EFFECTS.GRADIENT_COLORS}
         style={styles.gradient}
       >
-        {/* Moon bottom background image */}
-        <View style={mainMenuStyles.bearContainer} pointerEvents="none">
-          <MoonBottomImage />
-        </View>
-
         {/* Header */}
         <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50), zIndex: 50 }]}>
           <Pressable style={styles.backButton} onPress={onBack}>
@@ -205,12 +198,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     textShadowColor: 'rgba(0, 0, 0, 0.9)',
     textShadowOffset: { width: 0, height: 3 },
-    textShadowRadius: 6,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 12,
-    overflow: 'hidden',
+    textShadowRadius: 8,
   },
   scrollView: {
     flex: 1,
@@ -229,12 +217,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     textShadowColor: 'rgba(0, 0, 0, 0.9)',
     textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 5,
-    backgroundColor: 'rgba(0, 0, 0, 0.25)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    alignSelf: 'flex-start',
+    textShadowRadius: 6,
   },
   appInfo: {
     fontSize: 14,
