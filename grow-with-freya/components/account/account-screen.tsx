@@ -99,8 +99,8 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
           />
         ))}
 
-        {/* Moon bottom background image */}
-        <View style={mainMenuStyles.bearContainer} pointerEvents="none">
+        {/* Moon bottom background image - behind all other components */}
+        <View style={[mainMenuStyles.bearContainer, { zIndex: 1 }]} pointerEvents="none">
           <MoonBottomImage />
         </View>
 
@@ -109,7 +109,9 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
           <Pressable style={styles.backButton} onPress={onBack}>
             <Text style={styles.backButtonText}>← Back</Text>
           </Pressable>
-          <Text style={styles.title}>Account</Text>
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>Account</Text>
+          </View>
           <MusicControl
             size={24}
             color="#FFFFFF"
@@ -133,17 +135,22 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
             </View>
           </View>
 
-          {/* Account Section */}
+          {/* Character Section */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Account</Text>
-            
-            <View style={styles.settingItem}>
-              <Text style={styles.settingLabel}>Sign In Status</Text>
-              <Text style={styles.settingValue}>Not signed in</Text>
+            <Text style={styles.sectionTitle}>Character</Text>
+
+            <View style={styles.characterContainer}>
+              <View style={styles.avatarPlaceholder}>
+                <Text style={styles.avatarText}>👤</Text>
+              </View>
+              <View style={styles.characterInfo}>
+                <Text style={styles.characterLabel}>Name</Text>
+                <Text style={styles.characterName}>Your Child's Name</Text>
+              </View>
             </View>
-            
+
             <Pressable style={styles.button}>
-              <Text style={styles.buttonText}>Sign In (Coming Soon)</Text>
+              <Text style={styles.buttonText}>Edit Character (Coming Soon)</Text>
             </Pressable>
           </View>
 
@@ -216,6 +223,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'white',
     fontWeight: 'bold',
+  },
+  titleContainer: {
+    flex: 1,
+    alignItems: 'center',
   },
   title: {
     fontSize: 28,
@@ -294,6 +305,40 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.5)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
+  },
+  characterContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  avatarPlaceholder: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  avatarText: {
+    fontSize: 24,
+    color: '#FFFFFF',
+  },
+  characterInfo: {
+    flex: 1,
+  },
+  characterLabel: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 4,
+  },
+  characterName: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
 
 });
