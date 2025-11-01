@@ -499,9 +499,9 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
 
         <Pressable
           style={legacyStyles.settingsButton}
-          onPress={() => onNavigate('settings')}
+          onPress={() => onNavigate('account')}
         >
-          <ThemedText style={mainMenuStyles.settingsEmoji}>⚙️</ThemedText>
+          <ThemedText style={mainMenuStyles.settingsEmoji}>👤</ThemedText>
         </Pressable>
       </View>
 

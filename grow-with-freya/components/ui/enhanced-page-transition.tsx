@@ -76,7 +76,7 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   const emotionsTranslateY = useSharedValue(currentPage === 'emotions' ? 0 : screenHeight);
   const bedtimeTranslateY = useSharedValue(currentPage === 'bedtime' ? 0 : screenHeight);
   const screenTimeTranslateY = useSharedValue(currentPage === 'screen_time' ? 0 : screenHeight);
-  const settingsTranslateY = useSharedValue(currentPage === 'settings' ? 0 : screenHeight);
+  const accountTranslateY = useSharedValue(currentPage === 'account' ? 0 : screenHeight);
 
   // Map page keys to their animation values
   const pageAnimations: Record<string, any> = {
@@ -86,7 +86,7 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
     emotions: emotionsTranslateY,
     bedtime: bedtimeTranslateY,
     'screen_time': screenTimeTranslateY,
-    settings: settingsTranslateY,
+    account: accountTranslateY,
   };
 
   // Update animation values when screen height changes (orientation change)
@@ -110,8 +110,8 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
     if (currentPage !== 'screen_time') {
       screenTimeTranslateY.value = screenHeight;
     }
-    if (currentPage !== 'settings') {
-      settingsTranslateY.value = screenHeight;
+    if (currentPage !== 'account') {
+      accountTranslateY.value = screenHeight;
     }
   }, [screenHeight]);
 
@@ -155,8 +155,8 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
       animationConfig
     );
 
-    settingsTranslateY.value = withTiming(
-      currentPage === 'settings' ? 0 : screenHeight,
+    accountTranslateY.value = withTiming(
+      currentPage === 'account' ? 0 : screenHeight,
       animationConfig
     );
   }, [currentPage, duration]);

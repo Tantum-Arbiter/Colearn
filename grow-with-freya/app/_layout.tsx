@@ -17,7 +17,8 @@ import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
 import { StoryBookReader } from '@/components/stories/story-book-reader';
 import { MusicScreen } from '@/components/music';
 import { EmotionsScreen } from '@/components/emotions';
-import { SettingsScreen } from '@/components/settings';
+import { AccountScreen } from '@/components/account/account-screen';
+import { LoginScreen } from '@/components/auth/login-screen';
 
 import { Story } from '@/types/story';
 import { preloadCriticalImages, preloadSecondaryImages } from '@/services/image-preloader';
@@ -58,7 +59,7 @@ function AppContent() {
   const [hasStartedBackgroundMusic, setHasStartedBackgroundMusic] = useState(false);
 
   type AppView = 'splash' | 'onboarding' | 'login' | 'app' | 'main' | 'stories' | 'story-reader';
-  type PageKey = 'main' | 'stories' | 'story-reader' | 'sensory' | 'emotions' | 'bedtime' | 'screen_time' | 'settings';
+  type PageKey = 'main' | 'stories' | 'story-reader' | 'sensory' | 'emotions' | 'bedtime' | 'screen_time' | 'account';
 
   const [currentView, setCurrentView] = useState<AppView>('splash');
   const [currentPage, setCurrentPage] = useState<PageKey>('main');
@@ -224,7 +225,7 @@ function AppContent() {
       'emotions': 'emotions',
       'bedtime': 'bedtime',
       'screen_time': 'screen_time',
-      'settings': 'settings'
+      'account': 'account'
     };
 
     const pageKey = destinationMap[destination];
@@ -291,9 +292,12 @@ function AppContent() {
   }
 
   if (currentView === 'login') {
-    // LoginScreen removed - authentication disabled, skip to main app
-    handleLoginComplete();
-    return null;
+    return (
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <LoginScreen onLoginComplete={handleLoginComplete} />
+        <StatusBar style="auto" />
+      </ThemeProvider>
+    );
   }
 
   // Handle story reader view
@@ -329,7 +333,7 @@ function AppContent() {
             emotions: <EmotionsScreen onBack={handleBackToMainMenu} />,
             bedtime: <MusicScreen onBack={handleBackToMainMenu} />,
             screen_time: createDefaultPage('clock', 'Screen Time'),
-            settings: <SettingsScreen onBack={handleBackToMainMenu} />,
+            account: <AccountScreen onBack={handleBackToMainMenu} />,
           }}
           duration={800}
         />
