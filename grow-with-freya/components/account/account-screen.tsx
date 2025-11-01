@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,6 +8,8 @@ import { useAppStore } from '../../store/app-store';
 import { MoonBottomImage } from '../main-menu/animated-components';
 import { mainMenuStyles } from '../main-menu/styles';
 import { MusicControl } from '../ui/music-control';
+import { TermsConditionsScreen } from './terms-conditions-screen';
+import { PrivacyPolicyScreen } from './privacy-policy-screen';
 
 interface AccountScreenProps {
   onBack: () => void;
@@ -31,6 +33,7 @@ const generateStarPositions = () => {
 };
 
 export function AccountScreen({ onBack }: AccountScreenProps) {
+  const [currentView, setCurrentView] = useState<'main' | 'terms' | 'privacy'>('main');
   const insets = useSafeAreaInsets();
   const { setOnboardingComplete, setAppReady } = useAppStore();
 
@@ -59,6 +62,15 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
       setAppReady(true);
     }, 100);
   };
+
+  // Handle navigation between views
+  if (currentView === 'terms') {
+    return <TermsConditionsScreen onBack={() => setCurrentView('main')} />;
+  }
+
+  if (currentView === 'privacy') {
+    return <PrivacyPolicyScreen onBack={() => setCurrentView('main')} />;
+  }
 
   return (
     <View style={styles.container}>
@@ -135,11 +147,44 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
             </Pressable>
           </View>
 
+          {/* Privacy & Legal */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Privacy & Legal</Text>
+
+            <Pressable
+              style={styles.button}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setCurrentView('terms');
+              }}
+            >
+              <Text style={styles.buttonText}>Terms & Conditions</Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.button}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setCurrentView('privacy');
+              }}
+            >
+              <Text style={styles.buttonText}>Privacy Policy</Text>
+            </Pressable>
+
+            <Pressable style={styles.button}>
+              <Text style={styles.buttonText}>Request Data Export (Coming Soon)</Text>
+            </Pressable>
+
+            <Pressable style={[styles.button, styles.resetButton]}>
+              <Text style={[styles.buttonText, styles.resetButtonText]}>Delete My Data (Coming Soon)</Text>
+            </Pressable>
+          </View>
+
           {/* Developer Options */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Developer Options</Text>
-            
-            <Pressable 
+
+            <Pressable
               style={[styles.button, styles.resetButton]}
               onPress={handleResetApp}
             >
@@ -181,13 +226,18 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#FFFFFF',
     textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.8)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
+    textShadowColor: 'rgba(0, 0, 0, 0.9)',
+    textShadowOffset: { width: 0, height: 3 },
+    textShadowRadius: 6,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
+    overflow: 'hidden',
   },
   scrollView: {
     flex: 1,
@@ -200,13 +250,18 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 15,
-    textShadowColor: 'rgba(0, 0, 0, 0.8)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    textShadowColor: 'rgba(0, 0, 0, 0.9)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 5,
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
   },
   settingItem: {
     flexDirection: 'row',
