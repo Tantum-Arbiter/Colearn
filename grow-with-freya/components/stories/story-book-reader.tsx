@@ -17,6 +17,7 @@ import { Story, StoryPage, STORY_TAGS } from '@/types/story';
 import { Fonts } from '@/constants/theme';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 import { StoryCompletionScreen } from './story-completion-screen';
+import { MusicControl } from '../ui/music-control';
 
 
 interface StoryBookReaderProps {
@@ -33,7 +34,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isOrientationTransitioning, setIsOrientationTransitioning] = useState(false);
   const [isLandscapeReady, setIsLandscapeReady] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
+
   const [preloadedPages, setPreloadedPages] = useState<Set<number>>(new Set());
   const [showCompletionScreen, setShowCompletionScreen] = useState(false);
 
@@ -689,14 +690,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
           paddingTop: Math.max(insets.top + 5, 20),
           paddingRight: Math.max(insets.right + 5, 20)
         }]}>
-          <Pressable
-            style={styles.soundButton}
-            onPress={() => setIsMuted(!isMuted)}
-          >
-            <Text style={[styles.soundButtonText, isMuted && styles.soundButtonTextMuted]}>
-              ♪
-            </Text>
-          </Pressable>
+          <MusicControl size={24} color="white" />
           <Pressable style={styles.exitButton} onPress={handleExit}>
             <Text style={styles.exitButtonText}>✕</Text>
           </Pressable>
@@ -1098,31 +1092,7 @@ const styles = StyleSheet.create({
     // Glass morphism effect (backdropFilter not supported in React Native)
     overflow: 'hidden',
   },
-  soundButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.25)', // More transparent for glass effect
-    borderRadius: 25,
-    width: 50,
-    height: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)', // Subtle border for glass effect
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 6,
-    // Glass morphism effect (backdropFilter not supported in React Native)
-    overflow: 'hidden',
-  },
-  soundButtonText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFFFFF', // White text
-  },
-  soundButtonTextMuted: {
-    color: 'rgba(255, 255, 255, 0.4)', // Disabled/muted appearance
-  },
+
   navButtonDisabled: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)', // Very transparent for disabled state
     borderColor: 'rgba(255, 255, 255, 0.15)',

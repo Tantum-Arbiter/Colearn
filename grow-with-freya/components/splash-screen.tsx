@@ -20,7 +20,7 @@ const { width, height } = Dimensions.get('window');
 SplashScreen.preventAutoHideAsync();
 
 export function AppSplashScreen() {
-  const { setAppReady } = useAppStore();
+  const { setAppReady, hasCompletedOnboarding, hasCompletedLogin } = useAppStore();
 
   const logoScale = useSharedValue(0.8);
   const logoOpacity = useSharedValue(0);
@@ -56,11 +56,13 @@ export function AppSplashScreen() {
         });
 
         await SplashScreen.hideAsync();
+        console.log('Splash screen complete. App state:', { hasCompletedOnboarding, hasCompletedLogin });
         setAppReady(true);
 
       } catch (e) {
         console.warn(e);
         await SplashScreen.hideAsync();
+        console.log('Splash screen error. App state:', { hasCompletedOnboarding, hasCompletedLogin });
         setAppReady(true);
       }
     }

@@ -17,7 +17,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
-import { BearTopImage, mainMenuStyles } from '@/components/main-menu';
+import { BearTopImage } from '@/components/main-menu/animated-components';
+
+import { mainMenuStyles } from '@/components/main-menu/styles';
 import { Fonts } from '@/constants/theme';
 import { MusicControl } from '@/components/ui/music-control';
 
@@ -66,6 +68,11 @@ export function MusicMainMenu({
       colors={['#4ECDC4', '#3B82F6', '#1E3A8A']}
       style={styles.container}
     >
+      {/* Bear top background image */}
+      <View style={mainMenuStyles.moonContainer} pointerEvents="none">
+        <BearTopImage />
+      </View>
+
       {/* Animated stars background */}
       {starPositions.map((star) => (
         <Animated.View
@@ -82,18 +89,23 @@ export function MusicMainMenu({
               opacity: star.opacity,
               left: star.left,
               top: star.top,
+              zIndex: 2,
             },
           ]}
         />
       ))}
 
-      {/* Bear at top */}
-      <View style={mainMenuStyles.bearTopContainer} pointerEvents="none">
-        <BearTopImage />
-      </View>
-
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50) }]}>
+      {/* Header with back button and audio button - ABSOLUTE POSITIONING */}
+      <View style={{
+        position: 'absolute',
+        top: insets.top + 20,
+        left: 20,
+        right: 20,
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+        zIndex: 30,
+      }}>
         <Pressable style={styles.backButton} onPress={onBack} testID="back-button">
           <Text style={styles.backButtonText}>← Back</Text>
         </Pressable>
@@ -101,11 +113,13 @@ export function MusicMainMenu({
         <MusicControl
           size={24}
           color="#FFFFFF"
+          style={{ marginBottom: 20 }}
         />
       </View>
 
-      {/* Main Content */}
-      <View style={styles.content}>
+      {/* Content container with flex: 1 for proper layout */}
+      <View style={{ flex: 1, paddingTop: insets.top + 80, zIndex: 10 }}>
+        <View style={styles.content}>
         <Text style={styles.subtitle}>Choose your music type</Text>
         
         <View style={styles.optionsContainer}>
@@ -135,10 +149,8 @@ export function MusicMainMenu({
             </LinearGradient>
           </Pressable>
         </View>
+        </View>
       </View>
-
-      {/* Bottom spacing */}
-      <View style={{ height: Math.max(insets.bottom + 20, 40) }} />
     </LinearGradient>
   );
 }

@@ -87,7 +87,7 @@ export const CachedImage: React.FC<CachedImageProps> = ({
  * Specialized component for the bear image with optimal caching
  */
 // Import the bear image at the top level - use relative path for Jest compatibility
-const bearImage = require('../../assets/images/ui-elements/bear-bottom-screen.png');
+const bearImage = require('../../assets/images/ui-elements/bear-bottom-screen.webp');
 
 export const CachedBearImage: React.FC<{ style?: any }> = ({ style }) => {
   return (
@@ -112,7 +112,7 @@ export const CachedBearImage: React.FC<{ style?: any }> = ({ style }) => {
  * Specialized component for the moon image with optimal caching
  */
 // Import the moon image at the top level - use relative path for Jest compatibility
-const moonImage = require('../../assets/images/ui-elements/moon-top-screen.png');
+const moonImage = require('../../assets/images/ui-elements/moon-top-screen.webp');
 
 export const CachedMoonImage: React.FC<{ style?: any }> = ({ style }) => {
   return (
@@ -137,12 +137,37 @@ export const CachedMoonImage: React.FC<{ style?: any }> = ({ style }) => {
  * Specialized component for the bear-top image with optimal caching
  */
 // Import the bear-top image at the top level - use relative path for Jest compatibility
-const bearTopImage = require('../../assets/images/ui-elements/bear-top-screen.png');
+const bearTopImage = require('../../assets/images/ui-elements/bear-top-screen.webp');
 
 export const CachedBearTopImage: React.FC<{ style?: any }> = ({ style }) => {
   return (
     <CachedImage
       source={bearTopImage}
+      style={[
+        {
+          width: 286,
+          height: 286,
+          opacity: 0.8,
+        },
+        style,
+      ]}
+      resizeMode="contain"
+      preload={true}
+      instantDisplay={true}
+    />
+  );
+};
+
+/**
+ * Specialized component for the moon-bottom image with optimal caching
+ */
+// Import the moon-bottom image at the top level - use relative path for Jest compatibility
+const moonBottomImage = require('../../assets/images/ui-elements/moon-bottom-screen.webp');
+
+export const CachedMoonBottomImage: React.FC<{ style?: any }> = ({ style }) => {
+  return (
+    <CachedImage
+      source={moonBottomImage}
       style={[
         {
           width: 286,

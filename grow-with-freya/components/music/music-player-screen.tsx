@@ -20,6 +20,10 @@ import Animated, {
 import Slider from '@react-native-community/slider';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
+import { BearTopImage } from '@/components/main-menu/animated-components';
+import { mainMenuStyles } from '@/components/main-menu/styles';
+
+import { MusicControl } from '../ui/music-control';
 import { useMusicPlayer } from '@/hooks/use-music-player';
 import { getCategoryInfo } from '@/data/music';
 import { Fonts } from '@/constants/theme';
@@ -58,7 +62,7 @@ export function MusicPlayerScreen({ onBack }: MusicPlayerScreenProps) {
     togglePlayPause,
   } = useMusicPlayer();
 
-  const [isVolumeVisible, setIsVolumeVisible] = useState(false);
+
   const [sequenceStatus, setSequenceStatus] = useState<{
     isActive: boolean;
     currentPhase: number;
@@ -197,40 +201,21 @@ export function MusicPlayerScreen({ onBack }: MusicPlayerScreenProps) {
         />
       ))}
 
+      {/* Bear top background image */}
+      <View style={mainMenuStyles.moonContainer} pointerEvents="none">
+        <BearTopImage />
+      </View>
+
       {/* Header */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50) }]}>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50), zIndex: 50 }]}>
         <Pressable style={styles.backButton} onPress={onBack}>
           <Text style={styles.backButtonText}>← Back</Text>
         </Pressable>
         <View style={{ width: 24 }} />
-        <Pressable
-          style={styles.volumeButton}
-          onPress={() => setIsVolumeVisible(!isVolumeVisible)}
-        >
-          <Text style={styles.volumeButtonText}>{isMuted ? '🔇' : '🔊'}</Text>
-        </Pressable>
+        <MusicControl size={24} color="white" />
       </View>
 
-      {/* Volume Control (when visible) */}
-      {isVolumeVisible && (
-        <View style={styles.volumeContainer}>
-          <Text style={styles.volumeLabel}>Volume</Text>
-          <View style={styles.volumeSliderContainer}>
-            <Pressable onPress={toggleMute}>
-              <Text style={styles.volumeIcon}>{isMuted ? '🔇' : '🔊'}</Text>
-            </Pressable>
-            <Slider
-              style={styles.volumeSlider}
-              minimumValue={0}
-              maximumValue={1}
-              value={isMuted ? 0 : volume}
-              onValueChange={setVolume}
-              minimumTrackTintColor="white"
-              maximumTrackTintColor="rgba(255, 255, 255, 0.3)"
-            />
-          </View>
-        </View>
-      )}
+
 
       {/* Main Content */}
       <View style={styles.content}>
@@ -367,41 +352,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontFamily: Fonts.primary,
   },
-  volumeButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  volumeButtonText: {
-    fontSize: 16,
-  },
-  volumeContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    marginHorizontal: 20,
-    marginBottom: 20,
-    borderRadius: 16,
-    padding: 16,
-  },
-  volumeLabel: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  volumeSliderContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  volumeIcon: {
-    fontSize: 20,
-    marginRight: 12,
-  },
-  volumeSlider: {
-    flex: 1,
-    height: 40,
-  },
+
   content: {
     flex: 1,
     paddingHorizontal: 20,

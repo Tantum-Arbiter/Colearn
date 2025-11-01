@@ -70,15 +70,20 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   }, []);
 
   // Create animation values for specific pages we know about
-  const mainTranslateY = useSharedValue(currentPage === 'main' ? 0 : -screenHeight);
+  const mainTranslateY = useSharedValue(
+    currentPage === 'main' ? 0 :
+    currentPage === 'account' ? screenHeight :
+    -screenHeight
+  );
   const storiesTranslateY = useSharedValue(currentPage === 'stories' ? 0 : screenHeight);
   const sensoryTranslateY = useSharedValue(currentPage === 'sensory' ? 0 : screenHeight);
   const emotionsTranslateY = useSharedValue(currentPage === 'emotions' ? 0 : screenHeight);
   const bedtimeTranslateY = useSharedValue(currentPage === 'bedtime' ? 0 : screenHeight);
   const screenTimeTranslateY = useSharedValue(currentPage === 'screen_time' ? 0 : screenHeight);
-  const settingsTranslateY = useSharedValue(currentPage === 'settings' ? 0 : screenHeight);
+  const accountTranslateY = useSharedValue(currentPage === 'account' ? 0 : -screenHeight);
 
   // Map page keys to their animation values
+  // Page animations mapping - force cache refresh
   const pageAnimations: Record<string, any> = {
     main: mainTranslateY,
     stories: storiesTranslateY,
@@ -86,14 +91,14 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
     emotions: emotionsTranslateY,
     bedtime: bedtimeTranslateY,
     'screen_time': screenTimeTranslateY,
-    settings: settingsTranslateY,
+    account: accountTranslateY,
   };
 
   // Update animation values when screen height changes (orientation change)
   useEffect(() => {
     // Update positions for inactive pages when screen height changes
     if (currentPage !== 'main') {
-      mainTranslateY.value = -screenHeight;
+      mainTranslateY.value = currentPage === 'account' ? screenHeight : -screenHeight;
     }
     if (currentPage !== 'stories') {
       storiesTranslateY.value = screenHeight;
@@ -110,8 +115,9 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
     if (currentPage !== 'screen_time') {
       screenTimeTranslateY.value = screenHeight;
     }
-    if (currentPage !== 'settings') {
-      settingsTranslateY.value = screenHeight;
+    if (currentPage !== 'account') {
+      // Account page slides down from top - force cache refresh
+      accountTranslateY.value = -screenHeight;
     }
   }, [screenHeight]);
 
@@ -124,10 +130,16 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
     console.log('EnhancedPageTransition: Animating to page:', currentPage);
 
     // Animate main menu
-    mainTranslateY.value = withTiming(
-      currentPage === 'main' ? 0 : -screenHeight,
-      animationConfig
-    );
+    if (currentPage === 'account') {
+      // Account page: main menu slides down (positive translateY)
+      mainTranslateY.value = withTiming(screenHeight, animationConfig);
+    } else {
+      // Other pages: main menu slides up when not active (negative translateY)
+      mainTranslateY.value = withTiming(
+        currentPage === 'main' ? 0 : -screenHeight,
+        animationConfig
+      );
+    }
 
     // Animate all other pages
     storiesTranslateY.value = withTiming(
@@ -155,8 +167,9 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
       animationConfig
     );
 
-    settingsTranslateY.value = withTiming(
-      currentPage === 'settings' ? 0 : screenHeight,
+    // Account page slides down from top
+    accountTranslateY.value = withTiming(
+      currentPage === 'account' ? 0 : -screenHeight,
       animationConfig
     );
   }, [currentPage, duration]);

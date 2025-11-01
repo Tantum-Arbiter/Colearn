@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoImage: {
-    width: width > 768 ? 420 : 306, // 50% bigger than previous: 204 * 1.5 = 306 for iPhone, 280 * 1.5 = 420 for iPad
+    width: width > 768 ? 420 : 306,
     height: width > 768 ? 420 : 306,
     marginBottom: width > 768 ? 32 : 24,
     shadowColor: '#000',
@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
-    width: width > 768 ? 280 : 260, // Fixed width for consistent sizing
+    width: width > 768 ? 280 : 260,
     alignSelf: 'center',
   },
   googleButton: {

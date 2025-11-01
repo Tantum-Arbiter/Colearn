@@ -18,6 +18,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
+import { BearTopImage } from '@/components/main-menu/animated-components';
+import { mainMenuStyles } from '@/components/main-menu/styles';
 import { getTracksByCategory, getTrackById } from '@/data/music';
 import { MusicTrack } from '@/types/music';
 import { Fonts } from '@/constants/theme';
@@ -99,6 +101,11 @@ export function SleepSelectionScreen({ onTrackSelect, onBack }: SleepSelectionSc
       colors={['#6B73FF', '#8E95FF', '#B3B9FF']}
       style={styles.container}
     >
+      {/* Bear top background image */}
+      <View style={mainMenuStyles.moonContainer} pointerEvents="none">
+        <BearTopImage />
+      </View>
+
       {/* Animated stars background */}
       {starPositions.map((star) => (
         <Animated.View
@@ -114,13 +121,23 @@ export function SleepSelectionScreen({ onTrackSelect, onBack }: SleepSelectionSc
               opacity: star.opacity,
               left: star.left,
               top: star.top,
+              zIndex: 2,
             },
           ]}
         />
       ))}
 
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50) }]}>
+      {/* Header with back button and audio button - ABSOLUTE POSITIONING */}
+      <View style={{
+        position: 'absolute',
+        top: insets.top + 20,
+        left: 20,
+        right: 20,
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+        zIndex: 30,
+      }}>
         <Pressable style={styles.backButton} onPress={onBack}>
           <Text style={styles.backButtonText}>← Back</Text>
         </Pressable>
@@ -128,15 +145,17 @@ export function SleepSelectionScreen({ onTrackSelect, onBack }: SleepSelectionSc
         <MusicControl
           size={24}
           color="#FFFFFF"
+          style={{ marginBottom: 20 }}
         />
       </View>
 
-      {/* Content */}
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      {/* Content container with flex: 1 for proper layout */}
+      <View style={{ flex: 1, paddingTop: insets.top + 80, zIndex: 10 }}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
         <View style={styles.content}>
           <Text style={styles.subtitle}>Choose your sleep experience</Text>
           
@@ -206,10 +225,8 @@ export function SleepSelectionScreen({ onTrackSelect, onBack }: SleepSelectionSc
             )}
           </View>
         </View>
-      </ScrollView>
-
-      {/* Bottom spacing */}
-      <View style={{ height: Math.max(insets.bottom + 20, 40) }} />
+        </ScrollView>
+      </View>
     </LinearGradient>
   );
 }

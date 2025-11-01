@@ -16,7 +16,9 @@ import { Fonts } from '@/constants/theme';
 import { useAppStore } from '@/store/app-store';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
-import { BearTopImage, mainMenuStyles } from '@/components/main-menu';
+import { BearTopImage } from '@/components/main-menu/animated-components';
+
+import { mainMenuStyles } from '@/components/main-menu/styles';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 import { MusicControl } from '@/components/ui/music-control';
 
@@ -132,6 +134,11 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       colors={['#4ECDC4', '#3B82F6', '#1E3A8A']}
       style={{ flex: 1 }}
     >
+      {/* Bear top background image */}
+      <View style={mainMenuStyles.moonContainer} pointerEvents="none">
+        <BearTopImage />
+      </View>
+
       {/* Animated Stars */}
       {starPositions.map((star, index) => (
         <Animated.View
@@ -146,27 +153,24 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
               opacity: star.opacity,
               left: star.left,
               top: star.top,
+              zIndex: 2,
             },
             starAnimatedStyle,
           ]}
         />
       ))}
 
-      {/* Bear at top */}
-      <View style={mainMenuStyles.bearTopContainer} pointerEvents="none">
-        <BearTopImage />
-      </View>
-
-      <View style={{ flex: 1 }}>
-        {/* Header with back button and audio button */}
-        <View style={{
-          paddingTop: insets.top + 20,
-          paddingHorizontal: 20,
-          paddingBottom: 20,
-          flexDirection: 'row',
-          alignItems: 'flex-start',
-          justifyContent: 'space-between'
-        }}>
+      {/* Header with back button and audio button - ABSOLUTE POSITIONING */}
+      <View style={{
+        position: 'absolute',
+        top: insets.top + 20,
+        left: 20,
+        right: 20,
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+        zIndex: 30,
+      }}>
           <Pressable
             style={{
               backgroundColor: 'rgba(255, 255, 255, 0.2)',
@@ -192,12 +196,14 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
           />
         </View>
 
+      {/* Content container with flex: 1 for proper layout */}
+      <View style={{ flex: 1, paddingTop: insets.top + 80, zIndex: 10 }}>
         <View style={{ paddingHorizontal: 20, marginTop: -20 }}>
-          
-          <Text style={{ 
-            color: 'white', 
-            fontSize: 32, 
-            fontWeight: 'bold', 
+
+          <Text style={{
+            color: 'white',
+            fontSize: 32,
+            fontWeight: 'bold',
             textAlign: 'center',
             textShadowColor: 'rgba(0, 0, 0, 0.3)',
             textShadowOffset: { width: 0, height: 1 },

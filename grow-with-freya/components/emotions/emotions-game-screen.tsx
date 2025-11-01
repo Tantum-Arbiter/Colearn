@@ -16,8 +16,13 @@ import { EmotionCard } from './emotion-card';
 import { EMOTIONS, getRandomEmotion, getRandomPrompt, EMOTION_GAME_CONFIG } from '@/data/emotions';
 import { Emotion, EmotionGameState, EmotionTheme } from '@/types/emotion';
 import { Fonts } from '@/constants/theme';
-import { MusicControl } from '@/components/ui/music-control';
+
+import { MusicControl } from '../ui/music-control';
 import * as Haptics from 'expo-haptics';
+import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
+import { generateStarPositions } from '@/components/main-menu/utils';
+import { BearTopImage } from '@/components/main-menu/animated-components';
+import { mainMenuStyles } from '@/components/main-menu/styles';
 
 interface EmotionsGameScreenProps {
   onBack: () => void;
@@ -265,8 +270,14 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
       colors={['#FFEAA7', '#96CEB4', '#45B7D1']}
       style={styles.container}
     >
+
+      {/* Bear top background image */}
+      <View style={mainMenuStyles.moonContainer} pointerEvents="none">
+        <BearTopImage />
+      </View>
+
       {/* Header */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50) }]}>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50), zIndex: 50 }]}>
         <Pressable style={styles.backButton} onPress={onBack}>
           <ThemedText style={styles.backButtonText}>← Back</ThemedText>
         </Pressable>

@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from './themed-text';
 import { useAppStore } from '@/store/app-store';
 import { MusicControl } from './ui/music-control';
+import { Ionicons } from '@expo/vector-icons';
 
 import { ErrorBoundary } from './error-boundary';
 import {
@@ -490,19 +491,25 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
 
 
       <View style={[legacyStyles.topButtons, { paddingTop: insets.top + getResponsiveSize(20) }]}>
+        {/* Account Button */}
+        <View style={legacyStyles.accountButtonContainer}>
+          <Pressable
+            style={legacyStyles.accountButton}
+            onPress={() => onNavigate('account')}
+            activeOpacity={0.7}
+          >
+            <View style={[legacyStyles.accountIconBackground, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]}>
+              <Ionicons name="person-outline" size={24} color="white" />
+            </View>
+          </Pressable>
+        </View>
+
         <View style={{ flex: 1 }} />
 
         {/* Music Control */}
         <View style={legacyStyles.musicControlContainer}>
           <MusicControl size={24} color="#4A90E2" />
         </View>
-
-        <Pressable
-          style={legacyStyles.settingsButton}
-          onPress={() => onNavigate('settings')}
-        >
-          <ThemedText style={mainMenuStyles.settingsEmoji}>⚙️</ThemedText>
-        </Pressable>
       </View>
 
 
@@ -582,6 +589,20 @@ const legacyStyles = StyleSheet.create({
   },
   musicControlContainer: {
     marginRight: getResponsiveSize(12),
+  },
+  accountButtonContainer: {
+    marginLeft: getResponsiveSize(12),
+  },
+  accountButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  accountIconBackground: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   settingsButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.95)',

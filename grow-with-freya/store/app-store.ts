@@ -86,6 +86,7 @@ export const useAppStore = create<AppState>()(
         currentChildId: state.currentChildId,
         backgroundAnimationState: state.backgroundAnimationState,
       }),
+
     }
   )
 );

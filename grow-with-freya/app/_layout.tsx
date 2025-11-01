@@ -11,13 +11,14 @@ import { useAppStore } from '@/store/app-store';
 import { useBackgroundMusic } from '@/hooks/use-background-music';
 import { AppSplashScreen } from '@/components/splash-screen';
 import { OnboardingFlow } from '@/components/onboarding/onboarding-flow';
-import { LoginScreen } from '@/components/auth';
+import { LoginScreen } from '@/components/auth/login-screen';
+import { AccountScreen } from '@/components/account/account-screen';
 import { MainMenu } from '@/components/main-menu';
 import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
 import { StoryBookReader } from '@/components/stories/story-book-reader';
 import { MusicScreen } from '@/components/music';
 import { EmotionsScreen } from '@/components/emotions';
-import { SettingsScreen } from '@/components/settings';
+
 
 import { Story } from '@/types/story';
 import { preloadCriticalImages, preloadSecondaryImages } from '@/services/image-preloader';
@@ -57,20 +58,15 @@ function AppContent() {
   // Track if we've already started background music to prevent auto-restart after manual pause
   const [hasStartedBackgroundMusic, setHasStartedBackgroundMusic] = useState(false);
 
-  type AppView = 'splash' | 'onboarding' | 'login' | 'app' | 'main' | 'stories' | 'story-reader';
-  type PageKey = 'main' | 'stories' | 'story-reader' | 'sensory' | 'emotions' | 'bedtime' | 'screen_time' | 'settings';
+  type AppView = 'splash' | 'onboarding' | 'login' | 'app' | 'main' | 'stories' | 'story-reader' | 'account';
+  type PageKey = 'main' | 'stories' | 'story-reader' | 'sensory' | 'emotions' | 'bedtime' | 'screen_time' | 'account';
 
   const [currentView, setCurrentView] = useState<AppView>('splash');
   const [currentPage, setCurrentPage] = useState<PageKey>('main');
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   const [showLoginAfterOnboarding, setShowLoginAfterOnboarding] = useState(false);
 
-  // Temporary: Reset app state for testing - remove this in production
-  useEffect(() => {
-    console.log('TEMPORARY: Resetting app state for testing');
-    resetAppForTesting();
-    setShowLoginAfterOnboarding(false);
-  }, []);
+
 
 
 
@@ -121,6 +117,13 @@ function AppContent() {
     };
 
     initializeImagePreloading();
+  }, []);
+
+  // Temporary: Reset app state for testing - remove this in production
+  useEffect(() => {
+    console.log('TEMPORARY: Resetting app state for testing');
+    resetAppForTesting();
+    setShowLoginAfterOnboarding(false);
   }, []);
 
   // Initialize app state
@@ -194,25 +197,22 @@ function AppContent() {
 
 
   const handleOnboardingComplete = () => {
-    console.log('Onboarding completed - showing login screen');
-    // Set both states to ensure proper flow
+    console.log('Onboarding completed - going to login');
     setOnboardingComplete(true);
     setShowLoginAfterOnboarding(true);
   };
 
-  const handleLoginComplete = () => {
+  const handleLoginSuccess = () => {
     console.log('Login completed - going to app');
     setShowLoginAfterOnboarding(false);
-    setCurrentView('app');
-    setCurrentPage('main');
   };
 
-  const handleSkipLogin = () => {
+  const handleLoginSkip = () => {
     console.log('Login skipped - going to app');
     setShowLoginAfterOnboarding(false);
-    setCurrentView('app');
-    setCurrentPage('main');
   };
+
+
 
   const handleMainMenuNavigate = (destination: string) => {
     console.log('Navigating to:', destination);
@@ -224,7 +224,7 @@ function AppContent() {
       'emotions': 'emotions',
       'bedtime': 'bedtime',
       'screen_time': 'screen_time',
-      'settings': 'settings'
+      'account': 'account'
     };
 
     const pageKey = destinationMap[destination];
@@ -232,6 +232,10 @@ function AppContent() {
       setCurrentPage(pageKey);
       setCurrentScreen(destination);
     }
+  };
+
+  const handleAccountBack = () => {
+    setCurrentPage('main');
   };
 
   // Helper function to create DefaultPage components
@@ -291,8 +295,10 @@ function AppContent() {
   }
 
   if (currentView === 'login') {
-    return <LoginScreen onSuccess={handleLoginComplete} onSkip={handleSkipLogin} />;
+    return <LoginScreen onSuccess={handleLoginSuccess} onSkip={handleLoginSkip} />;
   }
+
+
 
   // Handle story reader view
   if (currentView === 'story-reader' && selectedStory) {
@@ -327,7 +333,7 @@ function AppContent() {
             emotions: <EmotionsScreen onBack={handleBackToMainMenu} />,
             bedtime: <MusicScreen onBack={handleBackToMainMenu} />,
             screen_time: createDefaultPage('clock', 'Screen Time'),
-            settings: <SettingsScreen onBack={handleBackToMainMenu} />,
+            account: <AccountScreen onBack={handleAccountBack} />,
           }}
           duration={800}
         />

@@ -5,6 +5,7 @@ export {
   BearImage,
   BearTopImage,
   MoonImage,
+  MoonBottomImage,
 } from './animated-components';
 
 export {
@@ -26,7 +27,7 @@ export {
 } from './constants';
 export type { MenuItemData, IconStatus } from './constants';
 
-export { PNG_ASSETS, getIconSvgType, getSvgPath, ASSET_DIMENSIONS } from './assets';
+export { WEBP_ASSETS, getIconSvgType, getSvgPath, ASSET_DIMENSIONS } from './assets';
 
 export {
   createCloudAnimation,

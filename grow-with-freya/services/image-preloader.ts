@@ -5,9 +5,10 @@ import { Image } from 'react-native';
  * These images are essential for smooth user experience
  */
 const CRITICAL_IMAGES = [
-  require('../assets/images/ui-elements/bear-bottom-screen.png'),
-  require('../assets/images/ui-elements/bear-top-screen.png'),
-  require('../assets/images/ui-elements/moon-top-screen.png'),
+  require('../assets/images/ui-elements/bear-bottom-screen.webp'),
+  require('../assets/images/ui-elements/bear-top-screen.webp'),
+  require('../assets/images/ui-elements/moon-top-screen.webp'),
+  require('../assets/images/ui-elements/moon-bottom-screen.webp'),
   // Add other critical images here as needed
 ];
 

@@ -18,6 +18,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
+import { BearTopImage } from '@/components/main-menu/animated-components';
+import { mainMenuStyles } from '@/components/main-menu/styles';
+
 import { MUSIC_CATEGORIES, getTracksByCategory, getTrackById } from '@/data/music';
 import { MusicCategory, MusicTrack } from '@/types/music';
 import { Fonts } from '@/constants/theme';
@@ -135,8 +138,13 @@ export function MusicSelectionScreen({
         />
       ))}
 
+      {/* Bear top background image */}
+      <View style={mainMenuStyles.moonContainer} pointerEvents="none">
+        <BearTopImage />
+      </View>
+
       {/* Header with back button */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50) }]}>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50), zIndex: 50 }]}>
         <Pressable style={styles.backButton} onPress={onBack}>
           <Text style={styles.backButtonText}>← Back</Text>
         </Pressable>

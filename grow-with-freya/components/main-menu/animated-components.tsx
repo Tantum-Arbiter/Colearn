@@ -9,7 +9,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ASSET_DIMENSIONS } from './assets';
 import { CloudSvg, FreyaRocketSvg, FreyaRocketRightSvg } from './svg-components';
-import { CachedBearImage, CachedBearTopImage, CachedMoonImage } from '../ui/cached-image';
+import { CachedBearImage, CachedBearTopImage, CachedMoonImage, CachedMoonBottomImage } from '../ui/cached-image';
 
 export const Cloud1 = React.memo(function Cloud1({
   width = ASSET_DIMENSIONS.cloud1.width,
@@ -110,6 +110,19 @@ export const BearTopImage = React.memo(function BearTopImage() {
       alignItems: 'center',
     }}>
       <CachedBearTopImage />
+    </View>
+  );
+});
+
+export const MoonBottomImage = React.memo(function MoonBottomImage() {
+  return (
+    <View style={{
+      width: '100%',
+      height: '100%',
+      justifyContent: 'flex-end',
+      alignItems: 'center',
+    }}>
+      <CachedMoonBottomImage />
     </View>
   );
 });
