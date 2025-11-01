@@ -3,6 +3,7 @@ import { Image } from 'react-native';
 /**
  * Critical images that should be preloaded immediately when the app starts
  * These images are essential for smooth user experience
+ * Force Metro bundler cache refresh
  */
 const CRITICAL_IMAGES = [
   require('../assets/images/ui-elements/bear-bottom-screen.webp'),
