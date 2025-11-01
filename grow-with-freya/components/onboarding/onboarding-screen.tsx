@@ -535,6 +535,8 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     borderWidth: 1,
     borderColor: 'rgba(78, 205, 196, 0.3)',
+    maxWidth: 120,
+    alignSelf: 'center',
   },
   backButtonText: {
     color: '#2E8B8B',
@@ -552,6 +554,8 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
     minWidth: 200,
+    maxWidth: 300,
+    alignSelf: 'center',
   },
   nextButtonPressed: {
     backgroundColor: '#44A08D',

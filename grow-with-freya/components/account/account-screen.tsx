@@ -100,7 +100,7 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
         ))}
 
         {/* Moon bottom background image - behind all other components */}
-        <View style={[mainMenuStyles.bearContainer, { zIndex: 1 }]} pointerEvents="none">
+        <View style={mainMenuStyles.bearContainer} pointerEvents="none">
           <MoonBottomImage />
         </View>
 
@@ -119,19 +119,34 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
         </View>
 
         {/* Content */}
-        <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+        <ScrollView style={[styles.scrollView, { zIndex: 10 }]} contentContainerStyle={styles.content}>
           {/* App Settings Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>App Settings</Text>
-            
+
             <View style={styles.settingItem}>
               <Text style={styles.settingLabel}>Version</Text>
               <Text style={styles.settingValue}>1.0.0</Text>
             </View>
-            
+
             <View style={styles.settingItem}>
-              <Text style={styles.settingLabel}>Child-Friendly Mode</Text>
-              <Text style={styles.settingValue}>Enabled</Text>
+              <Text style={styles.settingLabel}>Language</Text>
+              <Text style={styles.settingValue}>English</Text>
+            </View>
+
+            <View style={styles.settingItem}>
+              <Text style={styles.settingLabel}>Text Size</Text>
+              <Text style={styles.settingValue}>Medium</Text>
+            </View>
+
+            <View style={styles.settingItem}>
+              <Text style={styles.settingLabel}>Icon Size</Text>
+              <Text style={styles.settingValue}>Large</Text>
+            </View>
+
+            <View style={styles.settingItem}>
+              <Text style={styles.settingLabel}>Black & White Mode</Text>
+              <Text style={styles.settingValue}>Disabled</Text>
             </View>
           </View>
 
@@ -139,14 +154,9 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Character</Text>
 
-            <View style={styles.characterContainer}>
-              <View style={styles.avatarPlaceholder}>
-                <Text style={styles.avatarText}>👤</Text>
-              </View>
-              <View style={styles.characterInfo}>
-                <Text style={styles.characterLabel}>Name</Text>
-                <Text style={styles.characterName}>Your Child's Name</Text>
-              </View>
+            <View style={styles.settingItem}>
+              <Text style={styles.settingLabel}>Character Name</Text>
+              <Text style={styles.settingValue}>Your Child's Name</Text>
             </View>
 
             <Pressable style={styles.button}>
@@ -243,6 +253,9 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 20,
     paddingBottom: 40,
+    maxWidth: 400,
+    alignSelf: 'center',
+    width: '100%',
   },
   section: {
     marginBottom: 30,
@@ -305,40 +318,6 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.5)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
-  },
-  characterContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 8,
-  },
-  avatarPlaceholder: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-  },
-  avatarText: {
-    fontSize: 24,
-    color: '#FFFFFF',
-  },
-  characterInfo: {
-    flex: 1,
-  },
-  characterLabel: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: 4,
-  },
-  characterName: {
-    fontSize: 18,
-    color: '#FFFFFF',
-    fontWeight: '600',
   },
 
 });

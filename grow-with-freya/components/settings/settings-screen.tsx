@@ -337,6 +337,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 5,
+    maxWidth: 280,
+    alignSelf: 'center',
   },
   actionButtonPressed: {
     opacity: 0.8,

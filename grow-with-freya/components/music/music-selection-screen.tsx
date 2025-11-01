@@ -307,6 +307,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 4,
+    maxWidth: 120,
+    minWidth: 80,
   },
   playAllButtonText: {
     color: 'white',
@@ -317,10 +319,11 @@ const styles = StyleSheet.create({
   trackGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    gap: 16,
   },
   trackTile: {
-    width: (screenWidth - 60) / 2, // 2 columns with spacing
+    width: Math.min((screenWidth - 60) / 2, 180), // Max width 180px for tablet
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: 16,
     padding: 16,

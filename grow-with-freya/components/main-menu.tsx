@@ -508,7 +508,7 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
 
         {/* Music Control */}
         <View style={legacyStyles.musicControlContainer}>
-          <MusicControl size={24} color="#4A90E2" />
+          <MusicControl size={24} color="#FFFFFF" />
         </View>
       </View>
 
