@@ -11,7 +11,7 @@ import { useAppStore } from '@/store/app-store';
 import { useBackgroundMusic } from '@/hooks/use-background-music';
 import { AppSplashScreen } from '@/components/splash-screen';
 import { OnboardingFlow } from '@/components/onboarding/onboarding-flow';
-import { LoginScreen } from '@/components/auth';
+// import { LoginScreen } from '@/components/auth'; // Removed - authentication disabled
 import { MainMenu } from '@/components/main-menu';
 import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
 import { StoryBookReader } from '@/components/stories/story-book-reader';
@@ -207,12 +207,12 @@ function AppContent() {
     setCurrentPage('main');
   };
 
-  const handleSkipLogin = () => {
-    console.log('Login skipped - going to app');
-    setShowLoginAfterOnboarding(false);
-    setCurrentView('app');
-    setCurrentPage('main');
-  };
+  // const handleSkipLogin = () => {
+  //   console.log('Login skipped - going to app');
+  //   setShowLoginAfterOnboarding(false);
+  //   setCurrentView('app');
+  //   setCurrentPage('main');
+  // }; // Removed - authentication disabled
 
   const handleMainMenuNavigate = (destination: string) => {
     console.log('Navigating to:', destination);
@@ -291,7 +291,9 @@ function AppContent() {
   }
 
   if (currentView === 'login') {
-    return <LoginScreen onSuccess={handleLoginComplete} onSkip={handleSkipLogin} />;
+    // LoginScreen removed - authentication disabled, skip to main app
+    handleLoginComplete();
+    return null;
   }
 
   // Handle story reader view

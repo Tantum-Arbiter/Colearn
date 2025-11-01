@@ -1,5 +1,20 @@
-import { OAuthConfig } from '@/types/auth';
+// OAuth configuration removed - authentication functionality disabled
+// This file has been cleaned up to resolve CI/CD pipeline issues
+
 import Constants from 'expo-constants';
+
+// OAuth configuration types (inline since auth types removed)
+interface OAuthConfig {
+  google: {
+    clientId: string;
+    iosClientId: string;
+    androidClientId: string;
+    webClientId: string;
+  };
+  apple: {
+    clientId: string;
+  };
+}
 
 // OAuth configuration - these will be set via environment variables
 // Using development-safe defaults until production OAuth is configured
