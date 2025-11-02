@@ -18,12 +18,14 @@ import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
 import { StoryBookReader } from '@/components/stories/story-book-reader';
 import { MusicScreen } from '@/components/music';
 import { EmotionsScreen } from '@/components/emotions';
+import { ScreenTimeProvider } from '@/components/screen-time/screen-time-provider';
+
 
 
 import { Story } from '@/types/story';
 import { preloadCriticalImages, preloadSecondaryImages } from '@/services/image-preloader';
 import { EnhancedPageTransition } from '@/components/ui/enhanced-page-transition';
-import { DefaultPage } from '@/components/default-page';
+
 import { StoryTransitionProvider } from '@/contexts/story-transition-context';
 import { GlobalSoundProvider } from '@/contexts/global-sound-context';
 
@@ -32,9 +34,11 @@ import { GlobalSoundProvider } from '@/contexts/global-sound-context';
 export default function RootLayout() {
   return (
     <GlobalSoundProvider>
-      <StoryTransitionProvider>
-        <AppContent />
-      </StoryTransitionProvider>
+      <ScreenTimeProvider>
+        <StoryTransitionProvider>
+          <AppContent />
+        </StoryTransitionProvider>
+      </ScreenTimeProvider>
     </GlobalSoundProvider>
   );
 }
@@ -62,7 +66,7 @@ function AppContent() {
   const [hasStartedBackgroundMusic, setHasStartedBackgroundMusic] = useState(false);
 
   type AppView = 'splash' | 'onboarding' | 'login' | 'app' | 'main' | 'stories' | 'story-reader' | 'account';
-  type PageKey = 'main' | 'stories' | 'story-reader' | 'sensory' | 'emotions' | 'bedtime' | 'screen_time' | 'account';
+  type PageKey = 'main' | 'stories' | 'story-reader' | 'emotions' | 'bedtime' | 'account';
 
   const [currentView, setCurrentView] = useState<AppView>('splash');
   const [currentPage, setCurrentPage] = useState<PageKey>('main');
@@ -127,7 +131,7 @@ function AppContent() {
     console.log('TEMPORARY: Resetting app state for testing');
     resetAppForTesting();
     setShowLoginAfterOnboarding(false);
-  }, []);
+  }, [resetAppForTesting]);
 
   // Initialize app state
   useEffect(() => {
@@ -136,7 +140,7 @@ function AppContent() {
     if (!isAppReady) {
       console.log('App not ready, showing splash');
     }
-  }, []);
+  }, [isAppReady]);
 
   useEffect(() => {
     console.log('App state check:', { isAppReady, hasCompletedOnboarding, showLoginAfterOnboarding });
@@ -183,11 +187,11 @@ function AppContent() {
     if (currentPage === 'story-reader' && currentView !== 'story-reader') {
       setCurrentView('story-reader');
     }
-    // For all other pages (main, stories, sensory, emotions, etc.), use 'app' view
+    // For all other pages (main, stories, emotions, etc.), use 'app' view
     else if (currentPage !== 'story-reader' && currentView !== 'app') {
       setCurrentView('app');
     }
-  }, [currentPage]);
+  }, [currentPage, currentView]);
 
   // Listen for return to main menu requests
   useEffect(() => {
@@ -195,7 +199,7 @@ function AppContent() {
       handleBackToMainMenu();
       clearReturnToMainMenu();
     }
-  }, [shouldReturnToMainMenu]);
+  }, [shouldReturnToMainMenu, clearReturnToMainMenu]);
 
 
 
@@ -223,10 +227,8 @@ function AppContent() {
     // Map destination strings to PageKey types
     const destinationMap: Record<string, PageKey> = {
       'stories': 'stories',
-      'sensory': 'sensory',
       'emotions': 'emotions',
       'bedtime': 'bedtime',
-      'screen_time': 'screen_time',
       'account': 'account'
     };
 
@@ -241,14 +243,7 @@ function AppContent() {
     setCurrentPage('main');
   };
 
-  // Helper function to create DefaultPage components
-  const createDefaultPage = (icon: string, title: string) => (
-    <DefaultPage
-      icon={icon}
-      title={title}
-      onBack={handleBackToMainMenu}
-    />
-  );
+
 
   const handleBackToMainMenu = () => {
     setCurrentPage('main');
@@ -332,10 +327,10 @@ function AppContent() {
               selectedStory={selectedStory}
               onBack={handleBackToMainMenu}
             />,
-            sensory: createDefaultPage('brain', 'Sensory'),
+
             emotions: <EmotionsScreen onBack={handleBackToMainMenu} />,
             bedtime: <MusicScreen onBack={handleBackToMainMenu} />,
-            screen_time: createDefaultPage('clock', 'Screen Time'),
+
             account: <AccountScreen onBack={handleAccountBack} />,
           }}
           duration={800}

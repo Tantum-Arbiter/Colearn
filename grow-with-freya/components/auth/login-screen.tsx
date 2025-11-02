@@ -51,7 +51,7 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
 
     buttonsOpacity.value = withDelay(800, withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) }));
     buttonsTranslateY.value = withDelay(800, withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) }));
-  }, []);
+  }, [buttonsOpacity, buttonsTranslateY, illustrationOpacity, illustrationScale, titleOpacity, titleTranslateY]);
 
   // Smooth transition to main menu
   const transitionToMainMenu = (callback: () => void) => {

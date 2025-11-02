@@ -21,6 +21,7 @@ import { BearTopImage } from '@/components/main-menu/animated-components';
 import { mainMenuStyles } from '@/components/main-menu/styles';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 import { MusicControl } from '@/components/ui/music-control';
+import { useScreenTimeTracking } from '@/hooks/use-screen-time-tracking';
 
 interface StorySelectionScreenProps {
   onStorySelect?: (story: Story) => void;
@@ -33,6 +34,13 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   const { requestReturnToMainMenu } = useAppStore();
   const { startTransition } = useStoryTransition();
   const lastCallRef = useRef<number>(0);
+
+  // Track screen time for story browsing
+  useScreenTimeTracking({
+    activity: 'story',
+    autoStart: true,
+    autoEnd: true,
+  });
 
   // Scroll tracking for dynamic carousel effects
   const [scrollPositions, setScrollPositions] = useState<{ [key: string]: number }>({});

@@ -133,7 +133,7 @@ export function DefaultPage({ icon, title, onBack }: DefaultPageProps) {
       -1,
       false
     );
-  }, []);
+  }, [starRotation]);
 
   return (
     <LinearGradient

@@ -7,6 +7,7 @@ import { MusicPlayerScreen } from './music-player-screen';
 import { useMusicPlayer } from '@/hooks/use-music-player';
 import { MusicTrack, MusicCategory } from '@/types/music';
 import { getPlaylistByCategory } from '@/data/music';
+import { useScreenTimeTracking } from '@/hooks/use-screen-time-tracking';
 
 interface MusicScreenProps {
   onBack: () => void;
@@ -18,6 +19,13 @@ export function MusicScreen({ onBack }: MusicScreenProps) {
   const [currentView, setCurrentView] = useState<MusicView>('main-menu');
   const [previousView, setPreviousView] = useState<MusicView>('main-menu');
   const { loadTrack, loadPlaylist, clearTrack, currentTrack, pause } = useMusicPlayer();
+
+  // Track screen time for music activities
+  useScreenTimeTracking({
+    activity: 'music',
+    autoStart: true,
+    autoEnd: true,
+  });
 
   // Reset to main menu when component mounts
   useEffect(() => {

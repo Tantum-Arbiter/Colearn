@@ -6,14 +6,12 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withSpring,
   withSequence,
   Easing,
-  runOnJS
 } from 'react-native-reanimated';
 import { ThemedText } from '@/components/themed-text';
 import { EmotionCard } from './emotion-card';
-import { EMOTIONS, getRandomEmotion, getRandomPrompt, EMOTION_GAME_CONFIG } from '@/data/emotions';
+import { getRandomEmotion, getRandomPrompt, EMOTION_GAME_CONFIG } from '@/data/emotions';
 import { Emotion, EmotionGameState, EmotionTheme } from '@/types/emotion';
 import { Fonts } from '@/constants/theme';
 

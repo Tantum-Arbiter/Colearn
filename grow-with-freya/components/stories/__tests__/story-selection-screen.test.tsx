@@ -1,6 +1,7 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
 import { StorySelectionScreen } from '../story-selection-screen';
+import { ScreenTimeProvider } from '../../screen-time/screen-time-provider';
 
 // Mock all dependencies to prevent import errors
 jest.mock('@/data/stories', () => ({
@@ -40,14 +41,22 @@ jest.mock('react-native-safe-area-context', () => ({
 
 describe('StorySelectionScreen', () => {
   it('renders without crashing', () => {
-    const result = render(<StorySelectionScreen />);
+    const result = render(
+      <ScreenTimeProvider>
+        <StorySelectionScreen />
+      </ScreenTimeProvider>
+    );
     expect(result).toBeTruthy();
     expect(() => result.toJSON()).not.toThrow();
   });
 
   it('renders with onStorySelect prop', () => {
     const mockOnStorySelect = jest.fn();
-    const result = render(<StorySelectionScreen onStorySelect={mockOnStorySelect} />);
+    const result = render(
+      <ScreenTimeProvider>
+        <StorySelectionScreen onStorySelect={mockOnStorySelect} />
+      </ScreenTimeProvider>
+    );
     expect(result).toBeTruthy();
     expect(() => result.toJSON()).not.toThrow();
   });

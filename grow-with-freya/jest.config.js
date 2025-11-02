@@ -70,6 +70,9 @@ module.exports = {
     '^expo-secure-store$': '<rootDir>/__mocks__/expo-secure-store.js',
     '^expo-crypto$': '<rootDir>/__mocks__/expo-crypto.js',
     '^expo-web-browser$': '<rootDir>/__mocks__/expo-web-browser.js',
+    '^expo-notifications$': '<rootDir>/__mocks__/expo-notifications.js',
+    '^expo-device$': '<rootDir>/__mocks__/expo-device.js',
+    '^@react-native-community/datetimepicker$': '<rootDir>/__mocks__/@react-native-community/datetimepicker.js',
   },
   // preset: 'jest-expo', // Disabled to avoid prettier dependency issue
   transform: {
@@ -83,7 +86,7 @@ module.exports = {
     }],
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(react-native|@react-native|expo|@expo|expo-av|react-native-reanimated|react-native-svg|@react-navigation|zustand|react-native-worklets|react-native-safe-area-context)/)',
+    'node_modules/(?!(react-native|@react-native|@react-native-community|expo|@expo|expo-av|expo-notifications|expo-device|react-native-reanimated|react-native-svg|@react-navigation|zustand|react-native-worklets|react-native-safe-area-context)/)',
   ],
   // Temporarily lowered coverage thresholds for CI/CD pipeline setup
   coverageThreshold: {

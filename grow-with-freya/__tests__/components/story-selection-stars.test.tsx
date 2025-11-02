@@ -2,6 +2,7 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 import { StorySelectionScreen } from '@/components/stories/story-selection-screen';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
+import { ScreenTimeProvider } from '@/components/screen-time/screen-time-provider';
 
 // Mock expo-linear-gradient
 jest.mock('expo-linear-gradient', () => ({
@@ -123,7 +124,9 @@ describe('StorySelectionScreen Stars', () => {
 
   it('should render component successfully', () => {
     const result = render(
-      <StorySelectionScreen onStorySelect={mockOnStorySelect} />
+      <ScreenTimeProvider>
+        <StorySelectionScreen onStorySelect={mockOnStorySelect} />
+      </ScreenTimeProvider>
     );
 
     // Component should render without crashing
@@ -164,7 +167,9 @@ describe('StorySelectionScreen Stars', () => {
 
   it('should render with proper gradient background', () => {
     const { UNSAFE_root } = render(
-      <StorySelectionScreen onStorySelect={mockOnStorySelect} />
+      <ScreenTimeProvider>
+        <StorySelectionScreen onStorySelect={mockOnStorySelect} />
+      </ScreenTimeProvider>
     );
 
     // Component should render without errors
@@ -173,7 +178,9 @@ describe('StorySelectionScreen Stars', () => {
 
   it('should handle story selection callback', () => {
     render(
-      <StorySelectionScreen onStorySelect={mockOnStorySelect} />
+      <ScreenTimeProvider>
+        <StorySelectionScreen onStorySelect={mockOnStorySelect} />
+      </ScreenTimeProvider>
     );
 
     // Component should render without calling the callback initially

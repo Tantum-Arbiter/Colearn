@@ -9,14 +9,11 @@ import Animated, {
   withSequence,
   withDelay,
   Easing,
-  runOnJS
 } from 'react-native-reanimated';
 import { ThemedText } from '@/components/themed-text';
 import { EmotionCardProps } from '@/types/emotion';
 import { getThemeIcon, getThemeName } from '@/data/emotion-themes';
 import * as Haptics from 'expo-haptics';
-
-const { width: screenWidth } = Dimensions.get('window');
 
 export function EmotionCard({
   emotion,
@@ -54,7 +51,7 @@ export function EmotionCard({
     }, animationDelay);
 
     return () => clearTimeout(timer);
-  }, [animationDelay]);
+  }, [animationDelay, opacity, scale, translateY]);
 
   // Selection animation
   useEffect(() => {
@@ -73,7 +70,7 @@ export function EmotionCard({
       glowOpacity.value = withTiming(0, { duration: 300 });
       rotateZ.value = withTiming(0, { duration: 300 });
     }
-  }, [isSelected]);
+  }, [isSelected, glowOpacity, rotateZ]);
 
   const handlePress = () => {
     // Haptic feedback

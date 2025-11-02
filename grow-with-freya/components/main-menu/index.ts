@@ -11,10 +11,8 @@ export {
 export {
   CloudSvg,
   StoriesSvg,
-  SensorySvg,
   EmotionsSvg,
   BedtimeSvg,
-  ScreentimeSvg,
 } from './svg-components';
 
 export {
