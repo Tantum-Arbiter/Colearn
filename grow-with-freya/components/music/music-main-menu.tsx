@@ -22,6 +22,8 @@ import { BearTopImage } from '@/components/main-menu/animated-components';
 import { mainMenuStyles } from '@/components/main-menu/styles';
 import { Fonts } from '@/constants/theme';
 import { MusicControl } from '@/components/ui/music-control';
+import { useAppStore } from '@/store/app-store';
+
 
 interface MusicMainMenuProps {
   onTantrumsSelect: () => void;
@@ -37,6 +39,7 @@ export function MusicMainMenu({
   onBack 
 }: MusicMainMenuProps) {
   const insets = useSafeAreaInsets();
+
 
   // Generate star positions for background
   const starPositions = useMemo(() => generateStarPositions(VISUAL_EFFECTS.STAR_COUNT), []);
@@ -131,7 +134,7 @@ export function MusicMainMenu({
             >
               <Text style={styles.optionTitle}>Tantrums</Text>
               <Text style={styles.optionDescription}>
-                Calming binaural beats to help soothe during difficult moments
+                Calming music to help during difficult moments
               </Text>
             </LinearGradient>
           </Pressable>
@@ -144,7 +147,7 @@ export function MusicMainMenu({
             >
               <Text style={styles.optionTitle}>Sleep</Text>
               <Text style={styles.optionDescription}>
-                Progressive binaural beats sequence for peaceful sleep
+                Gentle sounds to help your child drift off to sleep
               </Text>
             </LinearGradient>
           </Pressable>

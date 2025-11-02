@@ -50,8 +50,9 @@ function AppContent() {
   const {
     isAppReady,
     hasCompletedOnboarding,
+    showLoginAfterOnboarding,
     setOnboardingComplete,
-    resetAppForTesting,
+    setShowLoginAfterOnboarding,
     setCurrentScreen,
     shouldReturnToMainMenu,
     clearReturnToMainMenu
@@ -71,7 +72,11 @@ function AppContent() {
   const [currentView, setCurrentView] = useState<AppView>('splash');
   const [currentPage, setCurrentPage] = useState<PageKey>('main');
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
-  const [showLoginAfterOnboarding, setShowLoginAfterOnboarding] = useState(false);
+
+  // Debug current view changes
+  useEffect(() => {
+    console.log('Current view changed to:', currentView);
+  }, [currentView]);
 
 
 
@@ -126,24 +131,26 @@ function AppContent() {
     initializeImagePreloading();
   }, []);
 
-  // Temporary: Reset app state for testing - remove this in production
-  useEffect(() => {
-    console.log('TEMPORARY: Resetting app state for testing');
-    resetAppForTesting();
-    setShowLoginAfterOnboarding(false);
-  }, [resetAppForTesting]);
+
 
   // Initialize app state
   useEffect(() => {
     console.log('App initializing...');
+    console.log('Initial app state:', {
+      isAppReady,
+      hasCompletedOnboarding,
+      showLoginAfterOnboarding,
+      currentView
+    });
     // App should start with splash screen
     if (!isAppReady) {
       console.log('App not ready, showing splash');
     }
-  }, [isAppReady]);
+  }, []);
 
   useEffect(() => {
     console.log('App state check:', { isAppReady, hasCompletedOnboarding, showLoginAfterOnboarding });
+    console.log('Current view will be set based on state...');
 
     if (!isAppReady) {
       console.log('Setting view to splash - app not ready');
@@ -181,14 +188,22 @@ function AppContent() {
     return () => clearTimeout(timer);
   }, [currentView, musicLoaded, fadeIn, isPlaying, hasStartedBackgroundMusic]);
 
-  // Sync view with page changes
+  // Sync view with page changes (but don't interfere with onboarding/login flow)
   useEffect(() => {
+    // Don't sync if we're in onboarding, login, or splash views
+    if (currentView === 'splash' || currentView === 'onboarding' || currentView === 'login') {
+      console.log('Skipping view sync - in flow view:', currentView);
+      return;
+    }
+
     // For story-reader, we need a special view
     if (currentPage === 'story-reader' && currentView !== 'story-reader') {
+      console.log('Syncing view to story-reader');
       setCurrentView('story-reader');
     }
     // For all other pages (main, stories, emotions, etc.), use 'app' view
     else if (currentPage !== 'story-reader' && currentView !== 'app') {
+      console.log('Syncing view to app');
       setCurrentView('app');
     }
   }, [currentPage, currentView]);

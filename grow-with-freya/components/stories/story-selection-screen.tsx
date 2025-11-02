@@ -23,6 +23,7 @@ import { useStoryTransition } from '@/contexts/story-transition-context';
 import { MusicControl } from '@/components/ui/music-control';
 import { useScreenTimeTracking } from '@/hooks/use-screen-time-tracking';
 
+
 interface StorySelectionScreenProps {
   onStorySelect?: (story: Story) => void;
 }
@@ -239,7 +240,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
                   textShadowOffset: { width: 0, height: 3 },
                   textShadowRadius: 6,
                 }}>
-                  {genre.charAt(0).toUpperCase() + genre.slice(1)} Stories
+                  {`${genre.charAt(0).toUpperCase() + genre.slice(1)} Stories`}
                 </Text>
                 
                 {/* Horizontal Carousel */}

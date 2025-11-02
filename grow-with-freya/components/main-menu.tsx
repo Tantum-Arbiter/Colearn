@@ -41,6 +41,7 @@ import { createCloudAnimationNew } from './main-menu/cloud-animations';
 import type { MenuItemData } from './main-menu/index';
 import { useScreenTimeTracking } from '@/hooks/use-screen-time-tracking';
 
+
 interface MainMenuProps {
   onNavigate: (destination: string) => void;
   isActive?: boolean; // Add isActive prop to control animations

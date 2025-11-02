@@ -14,6 +14,8 @@ import { BearTopImage } from './main-menu/animated-components';
 import { mainMenuStyles } from './main-menu/styles';
 
 import { MusicControl } from '@/components/ui/music-control';
+import { useAppStore } from '@/store/app-store';
+
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -111,6 +113,8 @@ const pageContent: { [key: string]: { emoji: string; message: string; subtitle: 
 };
 
 export function DefaultPage({ icon, title, onBack }: DefaultPageProps) {
+
+
   // Star animation
   const starRotation = useSharedValue(0);
 
@@ -122,7 +126,10 @@ export function DefaultPage({ icon, title, onBack }: DefaultPageProps) {
     transform: [{ rotate: `${starRotation.value}deg` }],
   }));
 
-  const content = pageContent[title] || pageContent['Stories'];
+  // Get content based on title
+  const content = useMemo(() => {
+    return pageContent[title] || pageContent['Stories'];
+  }, [title]);
   const svgType = mapIconNameToSvgType(icon);
   const SvgComponent = getSvgComponentFromSvg(svgType as any);
 

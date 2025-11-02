@@ -18,6 +18,8 @@ import { getThemeById } from '@/data/emotion-themes';
 import { Fonts } from '@/constants/theme';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
+import { useAppStore } from '@/store/app-store';
+
 
 interface EmotionsMenuScreenProps {
   onStartGame: () => void;
@@ -32,6 +34,7 @@ export function EmotionsMenuScreen({
 }: EmotionsMenuScreenProps) {
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const insets = useSafeAreaInsets();
+
 
   // Get a few sample emotions to display
   const sampleEmotions = EMOTIONS.slice(0, 6);

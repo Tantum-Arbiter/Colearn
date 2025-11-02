@@ -92,3 +92,12 @@ global.waitForAnimation = (duration = 1000) => {
     setTimeout(resolve, actualDuration);
   });
 };
+
+// Mock the app store
+jest.mock('@/store/app-store', () => ({
+  useAppStore: jest.fn(() => ({
+    backgroundAnimationState: 'idle',
+    updateBackgroundAnimationState: jest.fn(),
+    requestReturnToMainMenu: jest.fn(),
+  })),
+}));

@@ -18,6 +18,8 @@ import { Fonts } from '@/constants/theme';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 import { StoryCompletionScreen } from './story-completion-screen';
 import { MusicControl } from '../ui/music-control';
+import { useAppStore } from '@/store/app-store';
+
 
 
 interface StoryBookReaderProps {
@@ -37,6 +39,8 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
 
   const [preloadedPages, setPreloadedPages] = useState<Set<number>>(new Set());
   const [showCompletionScreen, setShowCompletionScreen] = useState(false);
+
+
 
   // Completion screen entrance animation
   const completionOpacity = useSharedValue(0);
