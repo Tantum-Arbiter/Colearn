@@ -297,7 +297,7 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
               onPress={handleResetTodayUsage}
             >
               <Text style={styles.buttonText}>
-                Reset Today's Screen Time ({formatDurationCompact(todayUsage)})
+                Reset Today&apos;s Screen Time ({formatDurationCompact(todayUsage)})
               </Text>
             </Pressable>
 
