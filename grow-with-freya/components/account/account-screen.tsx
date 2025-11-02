@@ -156,7 +156,7 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
 
             <View style={styles.settingItem}>
               <Text style={styles.settingLabel}>Character Name</Text>
-              <Text style={styles.settingValue}>Your Child's Name</Text>
+              <Text style={styles.settingValue}>Your Child&apos;s Name</Text>
             </View>
 
             <Pressable style={styles.button}>

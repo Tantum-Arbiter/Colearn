@@ -6,6 +6,7 @@ export interface AppState {
   // App initialization
   isAppReady: boolean;
   hasCompletedOnboarding: boolean;
+  hasCompletedLogin: boolean;
 
   // Current user/child profile
   currentChildId: string | null;
@@ -28,6 +29,7 @@ export interface AppState {
   // Actions
   setAppReady: (ready: boolean) => void;
   setOnboardingComplete: (complete: boolean) => void;
+  setLoginComplete: (complete: boolean) => void;
   resetAppForTesting: () => void; // Temporary function to reset app state
   setCurrentChild: (childId: string | null) => void;
   setCurrentScreen: (screen: string) => void;
@@ -48,6 +50,7 @@ export const useAppStore = create<AppState>()(
       // Initial state
       isAppReady: false,
       hasCompletedOnboarding: false, // This will be overridden by persisted state if it exists
+      hasCompletedLogin: false,
       currentChildId: null,
       currentScreen: 'splash',
       isLoading: false,
@@ -62,6 +65,7 @@ export const useAppStore = create<AppState>()(
       // Actions
       setAppReady: (ready) => set({ isAppReady: ready }),
       setOnboardingComplete: (complete) => set({ hasCompletedOnboarding: complete }),
+      setLoginComplete: (complete) => set({ hasCompletedLogin: complete }),
       resetAppForTesting: () => set({ hasCompletedOnboarding: false, isAppReady: false }),
       setCurrentChild: (childId) => set({ currentChildId: childId }),
       setCurrentScreen: (screen) => set({ currentScreen: screen }),

@@ -128,7 +128,7 @@ export function TermsConditionsScreen({ onBack }: TermsConditionsScreenProps) {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>11. Disclaimers</Text>
             <Text style={styles.bodyText}>
-              The app is provided on an "as is" and "as available" basis. We do not guarantee that the app or content will meet your needs or be error-free.
+              The app is provided on an &quot;as is&quot; and &quot;as available&quot; basis. We do not guarantee that the app or content will meet your needs or be error-free.
             </Text>
           </View>
 

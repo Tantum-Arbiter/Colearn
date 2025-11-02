@@ -1,3 +1,6 @@
+// Import getScreenDimensions for responsive sizing
+import { getScreenDimensions } from './constants';
+
 export const WEBP_ASSETS = {
   bear: require('../../assets/images/ui-elements/bear-bottom-screen.webp'),
   bearTop: require('../../assets/images/ui-elements/bear-top-screen.webp'),
@@ -36,9 +39,6 @@ export const getIconSvgType = (iconType: string): keyof typeof SVG_PATHS => {
 export const getSvgPath = (svgType: keyof typeof SVG_PATHS) => {
   return SVG_PATHS[svgType];
 };
-
-// Import getScreenDimensions for responsive sizing
-import { getScreenDimensions } from './constants';
 
 // Helper function to get responsive size for iPad (20% bigger)
 const getResponsiveAssetSize = (baseSize: number): number => {
@@ -136,6 +136,7 @@ export const getSvgAssetFromPath = (svgType: keyof typeof SVG_PATHS) => {
 };
 
 export const getSvgComponentFromSvg = (svgType: keyof typeof SVG_PATHS | 'balloon') => {
+   
   const {
     CloudSvg,
     StoriesSvg,

@@ -8,9 +8,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ThemedText } from './themed-text';
 import { useAppStore } from '@/store/app-store';
-import { MusicControl } from './ui/music-control';
+import { MusicControl } from '@/components/ui/music-control';
 import { Ionicons } from '@expo/vector-icons';
 
 import { ErrorBoundary } from './error-boundary';
@@ -35,14 +34,11 @@ import {
   ASSET_DIMENSIONS,
 
   generateStarPositions,
-  swapArrayItems,
-  findMenuItemIndex,
-  debounce,
   mainMenuStyles,
 } from './main-menu/index';
 
 import { createCloudAnimationNew } from './main-menu/cloud-animations';
-import type { MenuItemData, IconStatus } from './main-menu/index';
+import type { MenuItemData } from './main-menu/index';
 
 interface MainMenuProps {
   onNavigate: (destination: string) => void;
@@ -59,9 +55,7 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
   const { backgroundAnimationState, updateBackgroundAnimationState } = useAppStore();
 
   // Safe state management to prevent updates on unmounted components
-  const [selectedIcon, setSelectedIcon] = useSafeState('stories-icon');
-  const [menuItems, setMenuItems] = useSafeState(DEFAULT_MENU_ITEMS);
-  const [triggerSelectionAnimation, setTriggerSelectionAnimation] = useSafeState(false);
+  const [menuItems] = useSafeState(DEFAULT_MENU_ITEMS);
 
   // Animation values with cleanup - always start clouds from off-screen positions
   const starRotation = useSharedValue(0);
@@ -496,7 +490,6 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
           <Pressable
             style={legacyStyles.accountButton}
             onPress={() => onNavigate('account')}
-            activeOpacity={0.7}
           >
             <View style={[legacyStyles.accountIconBackground, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]}>
               <Ionicons name="person-outline" size={24} color="white" />

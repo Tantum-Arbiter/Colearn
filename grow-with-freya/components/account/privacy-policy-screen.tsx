@@ -101,11 +101,11 @@ export function PrivacyPolicyScreen({ onBack }: PrivacyPolicyScreenProps) {
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>5. Children's data & parental consent</Text>
+            <Text style={styles.sectionTitle}>5. Children&apos;s data &amp; parental consent</Text>
             <Text style={styles.bodyText}>
               • The app is used with a parent/guardian.{'\n'}
-              • We only process children's data (profile alias and avatar) with verifiable parental consent collected via the in-app parental gate.{'\n'}
-              • Parents can review, export, or delete children's data at any time (see Section 9).
+              • We only process children&apos;s data (profile alias and avatar) with verifiable parental consent collected via the in-app parental gate.{'\n'}
+              • Parents can review, export, or delete children&apos;s data at any time (see Section 9).
             </Text>
           </View>
 
@@ -173,7 +173,7 @@ export function PrivacyPolicyScreen({ onBack }: PrivacyPolicyScreenProps) {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>12. Third-party sign-in (Apple/Google)</Text>
             <Text style={styles.bodyText}>
-              When you choose Apple/Google to sign in, they process your data under their own privacy policies. We receive only what's necessary to authenticate you (an ID token) and do not receive your password.
+              When you choose Apple/Google to sign in, they process your data under their own privacy policies. We receive only what&apos;s necessary to authenticate you (an ID token) and do not receive your password.
             </Text>
           </View>
 
