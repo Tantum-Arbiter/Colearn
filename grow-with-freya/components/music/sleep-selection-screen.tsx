@@ -157,7 +157,11 @@ export function SleepSelectionScreen({ onTrackSelect, onBack }: SleepSelectionSc
           showsVerticalScrollIndicator={false}
         >
         <View style={styles.content}>
-          <Text style={styles.subtitle}>Choose your sleep experience</Text>
+          {/* Title - Enhanced with shadow */}
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>Bedtime Music</Text>
+            <Text style={styles.subtitle}>Choose your sleep experience</Text>
+          </View>
           
           <View style={styles.tracksContainer}>
             {sleepTracks.map((track) => (
@@ -278,13 +282,29 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 20,
   },
-  subtitle: {
-    fontSize: 18,
+  titleContainer: {
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  title: {
+    fontSize: 34,
+    fontWeight: 'bold',
     color: 'white',
     textAlign: 'center',
-    marginBottom: 30,
+    textShadowColor: 'rgba(0, 0, 0, 0.9)',
+    textShadowOffset: { width: 0, height: 3 },
+    textShadowRadius: 8,
     fontFamily: Fonts.primary,
-    opacity: 0.9,
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 18,
+    color: 'rgba(255, 255, 255, 0.95)',
+    textAlign: 'center',
+    fontFamily: Fonts.primary,
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   tracksContainer: {
     gap: 15,
