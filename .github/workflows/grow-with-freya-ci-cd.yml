@@ -3,7 +3,7 @@ name: Grow with Freya - CI/CD Pipeline
 on:
   workflow_dispatch:
   push:
-    branches: [ main, develop, set-up-pipeline-frontend ]  # Enable on main and develop branches
+    branches: [ main, develop, set-up-pipeline-frontend, fix-client-pipeline-ai ]  # Enable on main and develop branches
     paths:
       - 'grow-with-freya/**'
       - '.github/workflows/grow-with-freya-ci-cd.yml'
