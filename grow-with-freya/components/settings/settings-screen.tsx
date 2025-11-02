@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { View, StyleSheet, Pressable, ScrollView, Dimensions, Text } from 'react-native';
+import { View, StyleSheet, Pressable, ScrollView, Text } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -17,7 +17,7 @@ import {
   VISUAL_EFFECTS,
   MoonBottomImage,
   mainMenuStyles,
-  generateAccountStarPositions
+  generateStarPositions
 } from '@/components/main-menu/index';
 import { MusicControl } from '@/components/ui/music-control';
 
@@ -33,7 +33,7 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
   const starRotation = useSharedValue(0);
 
   // Generate star positions for account page (consistent across re-renders)
-  const stars = useMemo(() => generateAccountStarPositions(), []);
+  const stars = useMemo(() => generateStarPositions(), []);
 
   // Star animation style
   const starAnimatedStyle = useAnimatedStyle(() => ({
@@ -94,7 +94,7 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
       style={styles.container}
     >
       {/* Animated stars background */}
-      {stars.map((star) => (
+      {stars.map((star: any) => (
         <Animated.View
           key={`star-${star.id}`}
           style={[
@@ -188,7 +188,7 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
       </View>
 
       {/* Moon at bottom */}
-      <View style={mainMenuStyles.moonBottomContainer} pointerEvents="none">
+      <View style={mainMenuStyles.moonContainer} pointerEvents="none">
         <MoonBottomImage />
       </View>
 

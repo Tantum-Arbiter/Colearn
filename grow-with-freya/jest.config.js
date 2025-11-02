@@ -1,4 +1,5 @@
 module.exports = {
+  testEnvironment: 'jsdom',
   setupFiles: ['<rootDir>/jest.setup.js'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup-after-env.js'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
@@ -70,14 +71,20 @@ module.exports = {
     '^expo-crypto$': '<rootDir>/__mocks__/expo-crypto.js',
     '^expo-web-browser$': '<rootDir>/__mocks__/expo-web-browser.js',
   },
-  preset: 'jest-expo',
+  // preset: 'jest-expo', // Disabled to avoid prettier dependency issue
   transform: {
-    '^.+\\.(ts|tsx)$': 'ts-jest',
+    '^.+\\.(ts|tsx)$': ['babel-jest', {
+      presets: [
+        ['babel-preset-expo', { jsxRuntime: 'automatic' }]
+      ],
+      plugins: [
+        'react-native-reanimated/plugin',
+      ],
+    }],
   },
   transformIgnorePatterns: [
     'node_modules/(?!(react-native|@react-native|expo|@expo|expo-av|react-native-reanimated|react-native-svg|@react-navigation|zustand|react-native-worklets|react-native-safe-area-context)/)',
   ],
-  testEnvironment: 'jsdom',
   // Temporarily lowered coverage thresholds for CI/CD pipeline setup
   coverageThreshold: {
     global: {

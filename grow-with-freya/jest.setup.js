@@ -196,6 +196,22 @@ jest.mock('@/contexts/story-transition-context', () => ({
   StoryTransitionProvider: ({ children }) => children,
 }));
 
+// Mock global sound context
+jest.mock('@/contexts/global-sound-context', () => ({
+  useGlobalSound: jest.fn(() => ({
+    isMuted: false,
+    volume: 0.6,
+    isPlaying: true,
+    isLoaded: true,
+    toggleMute: jest.fn(),
+    setVolume: jest.fn(),
+    play: jest.fn(),
+    pause: jest.fn(),
+    stop: jest.fn(),
+  })),
+  GlobalSoundProvider: ({ children }) => children,
+}));
+
 // Mock SafeAreaProvider
 jest.mock('react-native-safe-area-context', () => ({
   SafeAreaProvider: ({ children }) => children,
@@ -269,7 +285,7 @@ jest.mock('react-native-svg', () => ({
 
 // Mock React Native's Animated API
 jest.mock('react-native', () => {
-  const RN = jest.requireActual('react-native-web');
+  const RN = jest.requireActual('react-native');
 
   RN.Animated = {
     ...RN.Animated,

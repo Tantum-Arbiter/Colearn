@@ -23,6 +23,7 @@ jest.mock('@/contexts/global-sound-context', () => ({
 // Mock Ionicons
 jest.mock('@expo/vector-icons', () => ({
   Ionicons: ({ name, ...props }: any) => {
+     
     const { Text } = require('react-native');
     return <Text {...props}>{name}</Text>;
   },
@@ -35,7 +36,7 @@ describe('MusicControl', () => {
 
   it('should render when music is loaded', () => {
     const { getByLabelText } = render(<MusicControl />);
-    expect(getByLabelText('Unmute background music')).toBeTruthy();
+    expect(getByLabelText('Mute background music')).toBeTruthy();
   });
 
   it('should show mute icon when music is muted', () => {
@@ -69,7 +70,7 @@ describe('MusicControl', () => {
   });
 
   it('should accept custom props', () => {
-    mockUseBackgroundMusic.isPlaying = false;
+    mockUseGlobalSound.isPlaying = false;
     const rendered = render(
       <MusicControl size={48} color="#FF0000" />
     );

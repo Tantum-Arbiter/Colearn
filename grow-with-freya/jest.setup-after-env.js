@@ -1,5 +1,5 @@
 // Jest setup after environment
-import '@testing-library/jest-native/extend-expect';
+require('@testing-library/jest-native/extend-expect');
 
 // Mock console methods to reduce noise in tests
 global.console = {

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Dimensions, Pressable, Alert, Image, Linking } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, Dimensions, Pressable, Alert, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -7,18 +7,17 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   withDelay,
-  withSequence,
   Easing,
   runOnJS,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { AntDesign, FontAwesome, FontAwesome5 } from '@expo/vector-icons';
+import { FontAwesome5 } from '@expo/vector-icons';
 
 import { ThemedText } from '../themed-text';
 import { TermsConditionsScreen } from '../account/terms-conditions-screen';
 import { PrivacyPolicyScreen } from '../account/privacy-policy-screen';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 interface LoginScreenProps {
   onSuccess: () => void;
@@ -164,7 +163,7 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
               Welcome to{'\n'}Grow with Freya
             </ThemedText>
             <ThemedText style={styles.subtitle}>
-              Sign in to save your child's progress and sync across devices
+              Sign in to save your child&apos;s progress and sync across devices
             </ThemedText>
           </Animated.View>
         </View>
