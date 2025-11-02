@@ -14,6 +14,7 @@ import NotificationService from '../../services/notification-service';
 import { useScreenTime } from './screen-time-provider';
 import { CustomRemindersScreen, CreateReminderScreen } from '../reminders';
 import { styles } from './styles';
+import { formatDurationCompact } from '../../utils/time-formatting';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -161,11 +162,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
 
   const formatTime = (seconds: number) => {
     if (seconds === 0) return 'No screen time recommended';
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    if (minutes === 0) return `${remainingSeconds}s`;
-    if (remainingSeconds === 0) return `${minutes}m`;
-    return `${minutes}m ${remainingSeconds}s`;
+    return formatDurationCompact(seconds);
   };
 
   const formatDayOfWeek = (day: string) => {
@@ -405,7 +402,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
                               >
                                 {usage > 60 && ( // Only show time if more than 1 minute
                                   <Text style={styles.dailyBarText}>
-                                    {Math.round(usage / 60)}m
+                                    {formatDurationCompact(usage)}
                                   </Text>
                                 )}
                               </View>

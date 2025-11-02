@@ -119,7 +119,7 @@ class ScreenTimeService {
     const today = new Date().toISOString().split('T')[0];
     const sessions = await this.getSessionsForDate(today);
     const currentDuration = this.getCurrentSessionDuration();
-    
+
     return sessions.reduce((total, session) => total + session.duration, 0) + currentDuration;
   }
 
@@ -193,6 +193,59 @@ class ScreenTimeService {
   // Reset warning date (for testing purposes)
   resetWarningDate(): void {
     this.lastWarningDate = null;
+  }
+
+  // Reset today's usage (for development purposes)
+  async resetTodayUsage(): Promise<void> {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const allSessions = await this.getAllSessions();
+
+      // Filter out today's sessions
+      const filteredSessions = allSessions.filter(session => session.date !== today);
+
+      // Save the filtered sessions back to storage
+      await AsyncStorage.setItem('screen_time_sessions', JSON.stringify(filteredSessions));
+
+      // Reset current session if active (restart it from now)
+      if (this.currentSession) {
+        const activity = this.currentSession.activity;
+        this.currentSession = null;
+        this.stopWarningMonitor();
+
+        // Restart the session from now (this resets the start time)
+        const now = Date.now();
+        this.currentSession = {
+          id: `session_${now}`,
+          startTime: now,
+          duration: 0,
+          activity,
+          date: today,
+        };
+      }
+
+      // Reset warning date for today
+      this.resetWarningDate();
+    } catch (error) {
+      console.error('Failed to reset today\'s usage:', error);
+      throw error;
+    }
+  }
+
+  // Check if it's a new day and reset daily data if needed
+  async checkAndResetDailyData(): Promise<void> {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const lastResetDate = await AsyncStorage.getItem('last_daily_reset_date');
+
+      if (lastResetDate !== today) {
+        // It's a new day, reset daily-specific data
+        this.lastWarningDate = null; // Reset warning tracking for new day
+        await AsyncStorage.setItem('last_daily_reset_date', today);
+      }
+    } catch (error) {
+      console.error('Failed to check/reset daily data:', error);
+    }
   }
 
   // Private methods

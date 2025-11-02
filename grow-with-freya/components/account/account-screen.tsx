@@ -13,6 +13,9 @@ import { PrivacyPolicyScreen } from './privacy-policy-screen';
 import { ScreenTimeScreen } from '../screen-time/screen-time-screen';
 import { NotificationDebugScreen } from '../debug/notification-debug-screen';
 import { AudioDebugScreen } from '../debug/audio-debug-screen';
+import ScreenTimeService from '../../services/screen-time-service';
+import { useScreenTime } from '../screen-time/screen-time-provider';
+import { formatDurationCompact } from '../../utils/time-formatting';
 
 
 interface AccountScreenProps {
@@ -48,6 +51,9 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
     clearPersistedStorage
   } = useAppStore();
 
+  // Screen time context for resetting today's usage
+  const { todayUsage, refreshUsage } = useScreenTime();
+
   // Star animation
   const starOpacity = useSharedValue(0.4);
   const stars = useMemo(() => generateStarPositions(), []);
@@ -81,6 +87,22 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
     setTimeout(() => {
       setAppReady(true);
     }, 500);
+  };
+
+  const handleResetTodayUsage = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    try {
+      const screenTimeService = ScreenTimeService.getInstance();
+      await screenTimeService.resetTodayUsage();
+
+      // Refresh the usage in the context to update the UI immediately
+      await refreshUsage();
+
+      console.log('Today\'s screen time usage has been reset');
+    } catch (error) {
+      console.error('Failed to reset today\'s usage:', error);
+    }
   };
 
   // Handle navigation between views
@@ -155,7 +177,10 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
         </View>
 
         {/* Content */}
-        <ScrollView style={[styles.scrollView, { zIndex: 10 }]} contentContainerStyle={styles.content}>
+        <ScrollView
+          style={[styles.scrollView, { zIndex: 10 }]}
+          contentContainerStyle={[styles.content, { paddingBottom: Dimensions.get('window').height * 0.2 }]} // Add space for moon image
+        >
           {/* App Settings Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>
@@ -264,6 +289,15 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
             >
               <Text style={styles.buttonText}>
                 Audio Debug
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.button}
+              onPress={handleResetTodayUsage}
+            >
+              <Text style={styles.buttonText}>
+                Reset Today's Screen Time ({formatDurationCompact(todayUsage)})
               </Text>
             </Pressable>
 

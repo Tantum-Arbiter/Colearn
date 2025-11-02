@@ -12,6 +12,7 @@ interface ScreenTimeContextType {
   startActivity: (activity: 'story' | 'emotions' | 'music') => Promise<void>;
   endActivity: () => Promise<void>;
   showWarning: (warning: ScreenTimeWarning) => void;
+  refreshUsage: () => Promise<void>;
 }
 
 const ScreenTimeContext = createContext<ScreenTimeContextType | null>(null);
@@ -44,17 +45,20 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
   const screenTimeService = ScreenTimeService.getInstance();
   const notificationService = NotificationService.getInstance();
 
-  // Update today's usage periodically
+  // Update today's usage periodically and check for daily reset
   useEffect(() => {
     const updateUsage = async () => {
       if (screenTimeEnabled) {
+        // Check if it's a new day and reset daily data if needed
+        await screenTimeService.checkAndResetDailyData();
+
         const usage = await screenTimeService.getTodayUsage();
         setTodayUsage(usage);
       }
     };
 
     updateUsage();
-    const interval = setInterval(updateUsage, 5000); // Update every 5 seconds for better responsiveness
+    const interval = setInterval(updateUsage, 1000); // Update every 1 second for real-time tracking
 
     return () => clearInterval(interval);
   }, [screenTimeEnabled]);
@@ -101,6 +105,10 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
       await screenTimeService.startSession(activity, childAgeInMonths);
       setIsTracking(true);
       setCurrentActivity(activity);
+
+      // Immediately update usage when starting a session
+      const usage = await screenTimeService.getTodayUsage();
+      setTodayUsage(usage);
     } catch (error) {
       console.error('Failed to start screen time session:', error);
     }
@@ -126,6 +134,17 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
     setCurrentWarning(warning);
     setShowWarningModal(true);
   }, []);
+
+  const refreshUsage = useCallback(async () => {
+    if (screenTimeEnabled) {
+      try {
+        const usage = await screenTimeService.getTodayUsage();
+        setTodayUsage(usage);
+      } catch (error) {
+        console.error('Failed to refresh usage:', error);
+      }
+    }
+  }, [screenTimeEnabled]);
 
   const handleContinue = useCallback(() => {
     setShowWarningModal(false);
@@ -157,6 +176,7 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
     startActivity,
     endActivity,
     showWarning,
+    refreshUsage,
   };
 
   return (
