@@ -6,6 +6,7 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { MainMenu } from '@/components/main-menu';
+import { ScreenTimeProvider } from '@/components/screen-time/screen-time-provider';
 
 describe('MainMenu Component', () => {
   const mockOnNavigate = jest.fn();
@@ -15,12 +16,20 @@ describe('MainMenu Component', () => {
   });
 
   it('should render without crashing', () => {
-    const result = render(<MainMenu onNavigate={mockOnNavigate} />);
+    const result = render(
+      <ScreenTimeProvider>
+        <MainMenu onNavigate={mockOnNavigate} />
+      </ScreenTimeProvider>
+    );
     expect(result).toBeTruthy();
   });
 
   it('should render all menu icons', () => {
-    const { getByLabelText } = render(<MainMenu onNavigate={mockOnNavigate} />);
+    const { getByLabelText } = render(
+      <ScreenTimeProvider>
+        <MainMenu onNavigate={mockOnNavigate} />
+      </ScreenTimeProvider>
+    );
 
     expect(getByLabelText('Stories button')).toBeTruthy();
     expect(getByLabelText('Sensory button')).toBeTruthy();
@@ -30,7 +39,11 @@ describe('MainMenu Component', () => {
   });
 
   it('should handle navigation when stories button is pressed', () => {
-    const { getByLabelText } = render(<MainMenu onNavigate={mockOnNavigate} />);
+    const { getByLabelText } = render(
+      <ScreenTimeProvider>
+        <MainMenu onNavigate={mockOnNavigate} />
+      </ScreenTimeProvider>
+    );
 
     const storiesButton = getByLabelText('Stories button');
     fireEvent.press(storiesButton);
@@ -39,7 +52,11 @@ describe('MainMenu Component', () => {
   });
 
   it('should handle menu icon swapping', () => {
-    const { getByLabelText } = render(<MainMenu onNavigate={mockOnNavigate} />);
+    const { getByLabelText } = render(
+      <ScreenTimeProvider>
+        <MainMenu onNavigate={mockOnNavigate} />
+      </ScreenTimeProvider>
+    );
 
     const emotionsButton = getByLabelText('Emotions button');
     fireEvent.press(emotionsButton);
@@ -49,7 +66,11 @@ describe('MainMenu Component', () => {
   });
 
   it('should render background elements', () => {
-    const result = render(<MainMenu onNavigate={mockOnNavigate} />);
+    const result = render(
+      <ScreenTimeProvider>
+        <MainMenu onNavigate={mockOnNavigate} />
+      </ScreenTimeProvider>
+    );
 
     // Just verify the component renders without crashing
     expect(result.toJSON()).toBeTruthy();

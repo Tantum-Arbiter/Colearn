@@ -351,7 +351,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
 
               <View style={styles.chartContainer}>
                 <Text style={styles.chartNote}>
-                  🔥 Your child&apos;s screen time patterns by hour and day
+                  🔥 Your child&apos;s screen time patterns by day
                 </Text>
 
                 {/* Heatmap */}

@@ -3,6 +3,7 @@ import { render } from '@testing-library/react-native';
 import { MainMenu } from '../../components/main-menu';
 import { getSvgComponentFromSvg } from '../../components/main-menu/assets';
 import { useAppStore } from '../../store/app-store';
+import { ScreenTimeProvider } from '../../components/screen-time/screen-time-provider';
 
 // Mock the store
 jest.mock('../../store/app-store');
@@ -59,7 +60,11 @@ describe('Cloud/Balloon Migration Tests', () => {
 
   describe('Component Rendering', () => {
     it('should render MainMenu with cloud animations without crashing', () => {
-      const { root } = render(<MainMenu onNavigate={mockOnNavigate} />);
+      const { root } = render(
+        <ScreenTimeProvider>
+          <MainMenu onNavigate={mockOnNavigate} />
+        </ScreenTimeProvider>
+      );
       expect(root).toBeTruthy();
     });
   });
@@ -89,7 +94,11 @@ describe('Cloud/Balloon Migration Tests', () => {
         updateBackgroundAnimationState: mockUpdate,
       });
 
-      render(<MainMenu onNavigate={mockOnNavigate} />);
+      render(
+        <ScreenTimeProvider>
+          <MainMenu onNavigate={mockOnNavigate} />
+        </ScreenTimeProvider>
+      );
 
       // The component should be able to call updateBackgroundAnimationState
       // with the new cloud properties structure

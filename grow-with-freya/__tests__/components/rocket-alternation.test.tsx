@@ -2,6 +2,7 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 import { MainMenu } from '../../components/main-menu';
 import { useAppStore } from '../../store/app-store';
+import { ScreenTimeProvider } from '../../components/screen-time/screen-time-provider';
 
 // Mock the store
 jest.mock('../../store/app-store');
@@ -41,7 +42,11 @@ describe('Main Menu Performance Tests', () => {
   describe('Performance Optimization', () => {
     it('should render without rocket animations for optimal performance', () => {
       // Rockets have been completely removed per user request
-      const { root } = render(<MainMenu onNavigate={mockOnNavigate} />);
+      const { root } = render(
+        <ScreenTimeProvider>
+          <MainMenu onNavigate={mockOnNavigate} />
+        </ScreenTimeProvider>
+      );
       expect(root).toBeTruthy();
 
       // The main menu should render successfully without any rocket animations
@@ -55,14 +60,22 @@ describe('Main Menu Performance Tests', () => {
       expect(store.backgroundAnimationState.rocketFloat1).toBe(1000); // Static off-screen
       expect(store.backgroundAnimationState.rocketFloat2).toBe(-200); // Static off-screen
 
-      const { root } = render(<MainMenu onNavigate={mockOnNavigate} />);
+      const { root } = render(
+        <ScreenTimeProvider>
+          <MainMenu onNavigate={mockOnNavigate} />
+        </ScreenTimeProvider>
+      );
       expect(root).toBeTruthy();
     });
   });
 
   describe('Cloud Animation Integrity', () => {
     it('should maintain cloud animations without rocket interference', () => {
-      const { root } = render(<MainMenu onNavigate={mockOnNavigate} />);
+      const { root } = render(
+        <ScreenTimeProvider>
+          <MainMenu onNavigate={mockOnNavigate} />
+        </ScreenTimeProvider>
+      );
       expect(root).toBeTruthy();
 
       // Cloud animations should work independently without rocket complexity
@@ -80,7 +93,11 @@ describe('Main Menu Performance Tests', () => {
         },
       });
 
-      const { root } = render(<MainMenu onNavigate={mockOnNavigate} />);
+      const { root } = render(
+        <ScreenTimeProvider>
+          <MainMenu onNavigate={mockOnNavigate} />
+        </ScreenTimeProvider>
+      );
       expect(root).toBeTruthy();
 
       // Component should handle cloud resume logic without rocket complexity
@@ -89,11 +106,19 @@ describe('Main Menu Performance Tests', () => {
 
   describe('Render Stability', () => {
     it('should maintain consistent rendering across re-renders', () => {
-      const { root, rerender } = render(<MainMenu onNavigate={mockOnNavigate} />);
+      const { root, rerender } = render(
+        <ScreenTimeProvider>
+          <MainMenu onNavigate={mockOnNavigate} />
+        </ScreenTimeProvider>
+      );
       expect(root).toBeTruthy();
 
       // Re-render should not break the animation sequence
-      rerender(<MainMenu onNavigate={mockOnNavigate} />);
+      rerender(
+        <ScreenTimeProvider>
+          <MainMenu onNavigate={mockOnNavigate} />
+        </ScreenTimeProvider>
+      );
       expect(root).toBeTruthy();
     });
 
@@ -109,7 +134,11 @@ describe('Main Menu Performance Tests', () => {
         },
       });
 
-      const { root } = render(<MainMenu onNavigate={mockOnNavigate} />);
+      const { root } = render(
+        <ScreenTimeProvider>
+          <MainMenu onNavigate={mockOnNavigate} />
+        </ScreenTimeProvider>
+      );
       expect(root).toBeTruthy();
     });
   });
