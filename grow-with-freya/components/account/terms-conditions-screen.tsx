@@ -1,9 +1,11 @@
 import React from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { MusicControl } from '@/components/ui/music-control';
+import { MoonBottomImage } from '@/components/main-menu/animated-components';
+import { mainMenuStyles } from '@/components/main-menu/styles';
 
 interface TermsConditionsScreenProps {
   onBack: () => void;
@@ -18,6 +20,11 @@ export function TermsConditionsScreen({ onBack }: TermsConditionsScreenProps) {
         colors={VISUAL_EFFECTS.GRADIENT_COLORS}
         style={styles.gradient}
       >
+        {/* Moon bottom background image */}
+        <View style={mainMenuStyles.bearContainer} pointerEvents="none">
+          <MoonBottomImage />
+        </View>
+
         {/* Header */}
         <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50), zIndex: 50 }]}>
           <Pressable style={styles.backButton} onPress={onBack}>
@@ -33,7 +40,10 @@ export function TermsConditionsScreen({ onBack }: TermsConditionsScreenProps) {
         </View>
 
         {/* Content */}
-        <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={[styles.content, { paddingBottom: Dimensions.get('window').height * 0.2 }]} // Add space for moon image
+        >
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>End User Licence Agreement</Text>
             <Text style={styles.appInfo}>
