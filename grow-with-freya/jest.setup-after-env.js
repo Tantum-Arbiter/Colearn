@@ -92,3 +92,61 @@ global.waitForAnimation = (duration = 1000) => {
     setTimeout(resolve, actualDuration);
   });
 };
+
+// Mock the translation system
+jest.mock('@/localization/translations', () => ({
+  useTranslation: jest.fn(() => ({
+    // Account Screen
+    account: 'Account',
+    back: 'Back',
+    language: 'Language',
+    textSize: 'Text Size',
+    notifications: 'Notifications',
+    screenTime: 'Screen Time',
+    debug: 'Debug',
+
+    // Main Menu
+    stories: 'Stories',
+    emotions: 'Emotions',
+    bedtimeMusic: 'Bedtime Music',
+
+    // Stories
+    chooseYourAdventure: 'Choose Your Adventure',
+    bedtimeStories: 'Bedtime Stories',
+    adventureStories: 'Adventure Stories',
+    storyPagesNotAvailable: 'Story pages not available',
+
+    // Music
+    chooseYourMusicType: 'Choose your music type',
+    tantrums: 'Tantrums',
+    tantrumsDescription: 'Calming music for difficult moments',
+    sleep: 'Sleep',
+    sleepDescription: 'Peaceful sounds for bedtime',
+
+    // Emotions
+    expressYourself: 'Express Yourself!',
+
+    // Default Page Messages
+    storyTimeMessage: 'Story Time!',
+    storyTimeSubtitle: 'Choose a magical adventure',
+    sensoryMessage: 'Sensory Play!',
+    sensorySubtitle: 'Explore textures and sounds',
+    emotionsMessage: 'Emotions!',
+    emotionsSubtitle: 'Learn about feelings',
+    bedtimeMessage: 'Bedtime!',
+    bedtimeSubtitle: 'Peaceful sounds for sleep',
+  })),
+}));
+
+// Mock the app store
+jest.mock('@/store/app-store', () => ({
+  useAppStore: jest.fn(() => ({
+    language: 'en',
+    textSize: 'normal',
+    setLanguage: jest.fn(),
+    setTextSize: jest.fn(),
+    backgroundAnimationState: 'idle',
+    updateBackgroundAnimationState: jest.fn(),
+    requestReturnToMainMenu: jest.fn(),
+  })),
+}));

@@ -21,17 +21,60 @@ export interface Translations {
   notificationDebug: string;
   audioDebug: string;
   resetApp: string;
-  
+
   // Language options
   english: string;
   polish: string;
   french: string;
-  
+
   // Text size options
   small: string;
   normal: string;
   large: string;
-  
+
+  // Main Menu
+  stories: string;
+  emotions: string;
+  bedtimeMusic: string;
+
+  // Stories
+  chooseYourAdventure: string;
+  bedtimeStories: string;
+  adventureStories: string;
+  natureStories: string;
+  friendshipStories: string;
+  learningStories: string;
+  fantasyStories: string;
+  storyPagesNotAvailable: string;
+
+  // Story Book Reader
+  storyTime: string;
+  sweetDreams: string;
+  readAnother: string;
+  rereadCurrent: string;
+
+  // Emotions
+  expressYourself: string;
+  happyFeelings: string;
+  feelAndExplore: string;
+
+  // Music
+  chooseYourMusicType: string;
+  tantrums: string;
+  tantrumsDescription: string;
+  sleep: string;
+  sleepDescription: string;
+
+  // Default Page Messages
+  storyTimeMessage: string;
+  storyTimeSubtitle: string;
+  sensoryMessage: string;
+  sensorySubtitle: string;
+  emotionsMessage: string;
+  emotionsSubtitle: string;
+  bedtimeMessage: string;
+  bedtimeSubtitle: string;
+
   // Common
   disabled: string;
   enabled: string;
@@ -62,17 +105,60 @@ export const translations: Record<Language, Translations> = {
     notificationDebug: 'Notification Debug',
     audioDebug: 'Audio Debug',
     resetApp: 'Reset App',
-    
+
     // Language options
     english: 'English',
     polish: 'Polish',
     french: 'French',
-    
+
     // Text size options
     small: 'Small',
     normal: 'Normal',
     large: 'Large',
-    
+
+    // Main Menu
+    stories: 'Stories',
+    emotions: 'Emotions',
+    bedtimeMusic: 'Bedtime Music',
+
+    // Stories
+    chooseYourAdventure: 'Choose Your Adventure',
+    bedtimeStories: 'Bedtime Stories',
+    adventureStories: 'Adventure Stories',
+    natureStories: 'Nature Stories',
+    friendshipStories: 'Friendship Stories',
+    learningStories: 'Learning Stories',
+    fantasyStories: 'Fantasy Stories',
+    storyPagesNotAvailable: 'Story pages not available',
+
+    // Story Book Reader
+    storyTime: 'Story Time!',
+    sweetDreams: 'Sweet Dreams!',
+    readAnother: 'Read Another',
+    rereadCurrent: 'Read Again',
+
+    // Emotions
+    expressYourself: 'Express Yourself!',
+    happyFeelings: 'Happy Feelings!',
+    feelAndExplore: 'Feel & Explore!',
+
+    // Music
+    chooseYourMusicType: 'Choose your music type',
+    tantrums: 'Tantrums',
+    tantrumsDescription: 'Calming binaural beats to help soothe during difficult moments',
+    sleep: 'Sleep',
+    sleepDescription: 'Gentle melodies and soothing sounds for peaceful rest',
+
+    // Default Page Messages
+    storyTimeMessage: 'Story Time!',
+    storyTimeSubtitle: 'Magical tales and adventures await you here. Let your imagination soar!',
+    sensoryMessage: 'Feel & Explore!',
+    sensorySubtitle: 'Touch, see, hear, and discover the world around you through your senses.',
+    emotionsMessage: 'Happy Feelings!',
+    emotionsSubtitle: 'Learn about emotions and how to express your feelings in healthy ways.',
+    bedtimeMessage: 'Sweet Dreams!',
+    bedtimeSubtitle: 'Gentle melodies and soothing sounds to help you drift off to sleep.',
+
     // Common
     disabled: 'Disabled',
     enabled: 'Enabled',
@@ -102,17 +188,60 @@ export const translations: Record<Language, Translations> = {
     notificationDebug: 'Debug Powiadomień',
     audioDebug: 'Debug Audio',
     resetApp: 'Resetuj Aplikację',
-    
+
     // Language options
     english: 'Angielski',
     polish: 'Polski',
     french: 'Francuski',
-    
+
     // Text size options
     small: 'Mały',
     normal: 'Normalny',
     large: 'Duży',
-    
+
+    // Main Menu
+    stories: 'Opowieści',
+    emotions: 'Emocje',
+    bedtimeMusic: 'Muzyka na Dobranoc',
+
+    // Stories
+    chooseYourAdventure: 'Wybierz Swoją Przygodę',
+    bedtimeStories: 'Opowieści na Dobranoc',
+    adventureStories: 'Opowieści Przygodowe',
+    natureStories: 'Opowieści o Naturze',
+    friendshipStories: 'Opowieści o Przyjaźni',
+    learningStories: 'Opowieści Edukacyjne',
+    fantasyStories: 'Opowieści Fantasy',
+    storyPagesNotAvailable: 'Strony opowieści niedostępne',
+
+    // Story Book Reader
+    storyTime: 'Czas na Opowieść!',
+    sweetDreams: 'Słodkich Snów!',
+    readAnother: 'Przeczytaj Inną',
+    rereadCurrent: 'Przeczytaj Ponownie',
+
+    // Emotions
+    expressYourself: 'Wyrażaj Siebie!',
+    happyFeelings: 'Szczęśliwe Uczucia!',
+    feelAndExplore: 'Czuj i Odkrywaj!',
+
+    // Music
+    chooseYourMusicType: 'Wybierz rodzaj muzyki',
+    tantrums: 'Napady Złości',
+    tantrumsDescription: 'Uspokajające dźwięki binauralne pomagające w trudnych chwilach',
+    sleep: 'Sen',
+    sleepDescription: 'Delikatne melodie i kojące dźwięki dla spokojnego odpoczynku',
+
+    // Default Page Messages
+    storyTimeMessage: 'Czas na Opowieść!',
+    storyTimeSubtitle: 'Magiczne opowieści i przygody czekają na Ciebie tutaj. Pozwól swojej wyobraźni szybować!',
+    sensoryMessage: 'Czuj i Odkrywaj!',
+    sensorySubtitle: 'Dotykaj, patrz, słuchaj i odkrywaj świat wokół siebie przez swoje zmysły.',
+    emotionsMessage: 'Szczęśliwe Uczucia!',
+    emotionsSubtitle: 'Ucz się o emocjach i jak wyrażać swoje uczucia w zdrowy sposób.',
+    bedtimeMessage: 'Słodkich Snów!',
+    bedtimeSubtitle: 'Delikatne melodie i kojące dźwięki pomogą Ci zasnąć.',
+
     // Common
     disabled: 'Wyłączony',
     enabled: 'Włączony',
@@ -142,17 +271,60 @@ export const translations: Record<Language, Translations> = {
     notificationDebug: 'Debug Notifications',
     audioDebug: 'Debug Audio',
     resetApp: 'Réinitialiser l\'App',
-    
+
     // Language options
     english: 'Anglais',
     polish: 'Polonais',
     french: 'Français',
-    
+
     // Text size options
     small: 'Petit',
     normal: 'Normal',
     large: 'Grand',
-    
+
+    // Main Menu
+    stories: 'Histoires',
+    emotions: 'Émotions',
+    bedtimeMusic: 'Musique du Coucher',
+
+    // Stories
+    chooseYourAdventure: 'Choisissez Votre Aventure',
+    bedtimeStories: 'Histoires du Coucher',
+    adventureStories: 'Histoires d\'Aventure',
+    natureStories: 'Histoires de Nature',
+    friendshipStories: 'Histoires d\'Amitié',
+    learningStories: 'Histoires Éducatives',
+    fantasyStories: 'Histoires Fantasy',
+    storyPagesNotAvailable: 'Pages d\'histoire non disponibles',
+
+    // Story Book Reader
+    storyTime: 'L\'Heure des Histoires!',
+    sweetDreams: 'Beaux Rêves!',
+    readAnother: 'Lire une Autre',
+    rereadCurrent: 'Relire',
+
+    // Emotions
+    expressYourself: 'Exprimez-Vous!',
+    happyFeelings: 'Sentiments Joyeux!',
+    feelAndExplore: 'Ressentez et Explorez!',
+
+    // Music
+    chooseYourMusicType: 'Choisissez votre type de musique',
+    tantrums: 'Colères',
+    tantrumsDescription: 'Sons binauraux apaisants pour aider à calmer dans les moments difficiles',
+    sleep: 'Sommeil',
+    sleepDescription: 'Mélodies douces et sons apaisants pour un repos paisible',
+
+    // Default Page Messages
+    storyTimeMessage: 'L\'Heure des Histoires!',
+    storyTimeSubtitle: 'Des contes magiques et des aventures vous attendent ici. Laissez votre imagination s\'envoler!',
+    sensoryMessage: 'Ressentez et Explorez!',
+    sensorySubtitle: 'Touchez, voyez, entendez et découvrez le monde qui vous entoure à travers vos sens.',
+    emotionsMessage: 'Sentiments Joyeux!',
+    emotionsSubtitle: 'Apprenez les émotions et comment exprimer vos sentiments de manière saine.',
+    bedtimeMessage: 'Beaux Rêves!',
+    bedtimeSubtitle: 'Mélodies douces et sons apaisants pour vous aider à vous endormir.',
+
     // Common
     disabled: 'Désactivé',
     enabled: 'Activé',

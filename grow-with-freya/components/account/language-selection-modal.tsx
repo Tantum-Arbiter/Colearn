@@ -15,7 +15,7 @@ interface LanguageSelectionModalProps {
 }
 
 const LANGUAGES: { code: Language; flag: string }[] = [
-  { code: 'en', flag: '🇺🇸' },
+  { code: 'en', flag: '🇬🇧' },
   { code: 'pl', flag: '🇵🇱' },
   { code: 'fr', flag: '🇫🇷' },
 ];

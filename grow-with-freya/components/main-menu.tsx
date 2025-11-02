@@ -40,6 +40,7 @@ import {
 import { createCloudAnimationNew } from './main-menu/cloud-animations';
 import type { MenuItemData } from './main-menu/index';
 import { useScreenTimeTracking } from '@/hooks/use-screen-time-tracking';
+import { useTranslation } from '@/localization/translations';
 
 interface MainMenuProps {
   onNavigate: (destination: string) => void;
@@ -60,10 +61,19 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
   const { width: screenWidth, height: screenHeight } = getScreenDimensions();
 
   // Get persistent animation state from store
-  const { backgroundAnimationState, updateBackgroundAnimationState } = useAppStore();
+  const { backgroundAnimationState, updateBackgroundAnimationState, language } = useAppStore();
+  const t = useTranslation(language);
 
   // Safe state management to prevent updates on unmounted components
   const [menuItems] = useSafeState(DEFAULT_MENU_ITEMS);
+
+  // Create translated menu items
+  const translatedMenuItems = useMemo(() => {
+    return menuItems.map(item => ({
+      ...item,
+      label: t[item.label as keyof typeof t] || item.label
+    }));
+  }, [menuItems, t]);
 
   // Animation values with cleanup - always start clouds from off-screen positions
   const starRotation = useSharedValue(0);
@@ -87,7 +97,7 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
   const animationsCancelled = useRef(false);
 
   // Safe menu state management
-  const [menuOrder, setMenuOrder] = useSafeState<MenuItemData[]>(menuItems);
+  const [menuOrder, setMenuOrder] = useSafeState<MenuItemData[]>(translatedMenuItems);
   const [lastSwapTime, setLastSwapTime] = useSafeState<number>(0);
   const [newlySelectedItem, setNewlySelectedItem] = useSafeState<string | null>(null);
 
