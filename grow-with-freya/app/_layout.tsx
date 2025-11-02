@@ -25,7 +25,7 @@ import { ScreenTimeProvider } from '@/components/screen-time/screen-time-provide
 import { Story } from '@/types/story';
 import { preloadCriticalImages, preloadSecondaryImages } from '@/services/image-preloader';
 import { EnhancedPageTransition } from '@/components/ui/enhanced-page-transition';
-import { DefaultPage } from '@/components/default-page';
+
 import { StoryTransitionProvider } from '@/contexts/story-transition-context';
 import { GlobalSoundProvider } from '@/contexts/global-sound-context';
 

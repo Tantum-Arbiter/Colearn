@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Audio } from 'expo-av';
@@ -88,7 +88,7 @@ export function AudioDebugScreen({ onBack }: AudioDebugScreenProps) {
     }
   };
 
-  const getSystemInfo = async () => {
+  const getSystemInfo = useCallback(async () => {
     try {
       const info = {
         isLoaded,
@@ -104,7 +104,7 @@ export function AudioDebugScreen({ onBack }: AudioDebugScreenProps) {
     } catch (error) {
       addTestResult(`❌ Failed to get system info: ${error}`);
     }
-  };
+  }, [isLoaded, isPlaying, volume, isMuted, backgroundMusic, addTestResult]);
 
   useEffect(() => {
     getSystemInfo();
