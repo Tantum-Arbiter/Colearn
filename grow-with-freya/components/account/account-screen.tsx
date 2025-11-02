@@ -49,7 +49,7 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
       -1,
       true
     );
-  }, []);
+  }, [starOpacity]);
 
   const starAnimatedStyle = useAnimatedStyle(() => ({
     opacity: starOpacity.value,

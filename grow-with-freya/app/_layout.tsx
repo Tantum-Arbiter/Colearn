@@ -131,7 +131,7 @@ function AppContent() {
     console.log('TEMPORARY: Resetting app state for testing');
     resetAppForTesting();
     setShowLoginAfterOnboarding(false);
-  }, []);
+  }, [resetAppForTesting]);
 
   // Initialize app state
   useEffect(() => {
@@ -140,7 +140,7 @@ function AppContent() {
     if (!isAppReady) {
       console.log('App not ready, showing splash');
     }
-  }, []);
+  }, [isAppReady]);
 
   useEffect(() => {
     console.log('App state check:', { isAppReady, hasCompletedOnboarding, showLoginAfterOnboarding });
@@ -191,7 +191,7 @@ function AppContent() {
     else if (currentPage !== 'story-reader' && currentView !== 'app') {
       setCurrentView('app');
     }
-  }, [currentPage]);
+  }, [currentPage, currentView]);
 
   // Listen for return to main menu requests
   useEffect(() => {
@@ -199,7 +199,7 @@ function AppContent() {
       handleBackToMainMenu();
       clearReturnToMainMenu();
     }
-  }, [shouldReturnToMainMenu]);
+  }, [shouldReturnToMainMenu, clearReturnToMainMenu]);
 
 
 
@@ -243,14 +243,7 @@ function AppContent() {
     setCurrentPage('main');
   };
 
-  // Helper function to create DefaultPage components
-  const createDefaultPage = (icon: string, title: string) => (
-    <DefaultPage
-      icon={icon}
-      title={title}
-      onBack={handleBackToMainMenu}
-    />
-  );
+
 
   const handleBackToMainMenu = () => {
     setCurrentPage('main');

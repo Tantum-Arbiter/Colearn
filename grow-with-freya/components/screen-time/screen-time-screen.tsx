@@ -272,7 +272,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
           <ScrollView style={[styles.scrollView, { zIndex: 10 }]} contentContainerStyle={styles.content}>
           {/* Today's Usage */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Today's Usage</Text>
+            <Text style={styles.sectionTitle}>Today&apos;s Usage</Text>
             
             <View style={styles.usageCard}>
               <View style={styles.usageHeader}>
@@ -302,7 +302,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
 
           {/* Age Settings */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Child's Age</Text>
+            <Text style={styles.sectionTitle}>Child&apos;s Age</Text>
             
             <View style={styles.ageSelector}>
               <Text style={styles.currentAge}>
@@ -351,7 +351,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
 
               <View style={styles.chartContainer}>
                 <Text style={styles.chartNote}>
-                  🔥 Your child's screen time patterns by hour and day
+                  🔥 Your child&apos;s screen time patterns by hour and day
                 </Text>
 
                 {/* Heatmap */}
@@ -462,7 +462,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
 
             <View style={styles.scheduleIntro}>
               <Text style={styles.scheduleIntroText}>
-                📅 Set up personalized notification times for your child's screen time activities. You'll receive gentle reminders when it's time for stories, emotions, or music activities.
+                📅 Set up personalized notification times for your child&apos;s screen time activities. You&apos;ll receive gentle reminders when it&apos;s time for stories, emotions, or music activities.
               </Text>
             </View>
 

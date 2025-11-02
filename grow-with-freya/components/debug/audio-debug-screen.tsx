@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Audio } from 'expo-av';
 import { useBackgroundMusic } from '@/hooks/use-background-music';
@@ -108,7 +108,7 @@ export function AudioDebugScreen({ onBack }: AudioDebugScreenProps) {
 
   useEffect(() => {
     getSystemInfo();
-  }, [isLoaded, isPlaying, volume, isMuted]);
+  }, [getSystemInfo, isLoaded, isPlaying, volume, isMuted]);
 
   return (
     <LinearGradient
