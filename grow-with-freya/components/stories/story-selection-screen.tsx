@@ -22,7 +22,7 @@ import { mainMenuStyles } from '@/components/main-menu/styles';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 import { MusicControl } from '@/components/ui/music-control';
 import { useScreenTimeTracking } from '@/hooks/use-screen-time-tracking';
-import { useTranslation } from '@/localization/translations';
+
 
 interface StorySelectionScreenProps {
   onStorySelect?: (story: Story) => void;
@@ -32,10 +32,9 @@ const { width: screenWidth } = Dimensions.get('window');
 
 export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProps) {
   const insets = useSafeAreaInsets();
-  const { requestReturnToMainMenu, language } = useAppStore();
+  const { requestReturnToMainMenu } = useAppStore();
   const { startTransition } = useStoryTransition();
   const lastCallRef = useRef<number>(0);
-  const t = useTranslation(language);
 
   // Track screen time for story browsing
   useScreenTimeTracking({
@@ -219,7 +218,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
             textShadowOffset: { width: 0, height: 3 },
             textShadowRadius: 8,
           }}>
-            {t.chooseYourAdventure}
+            Choose Your Adventure
           </Text>
         </View>
 
@@ -241,7 +240,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
                   textShadowOffset: { width: 0, height: 3 },
                   textShadowRadius: 6,
                 }}>
-                  {t[`${genre}Stories` as keyof typeof t] || `${genre.charAt(0).toUpperCase() + genre.slice(1)} Stories`}
+                  {`${genre.charAt(0).toUpperCase() + genre.slice(1)} Stories`}
                 </Text>
                 
                 {/* Horizontal Carousel */}

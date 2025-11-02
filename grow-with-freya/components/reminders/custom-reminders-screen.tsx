@@ -98,7 +98,7 @@ export const CustomRemindersScreen: React.FC<CustomRemindersScreenProps> = ({
   const handleToggleReminder = async (reminderId: string) => {
     const success = await reminderService.toggleReminder(reminderId);
     if (success) {
-      // Update state directly instead of reloading everything
+      // Update state directly and reload stats to reflect the change
       setReminders(prevReminders =>
         prevReminders.map(reminder =>
           reminder.id === reminderId
@@ -106,6 +106,14 @@ export const CustomRemindersScreen: React.FC<CustomRemindersScreenProps> = ({
             : reminder
         )
       );
+
+      // Reload stats to update the counts
+      try {
+        const reminderStats = await reminderService.getReminderStats();
+        setStats(reminderStats);
+      } catch (error) {
+        console.error('Failed to reload reminder stats:', error);
+      }
     }
   };
 

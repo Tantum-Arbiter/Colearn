@@ -23,7 +23,7 @@ import { mainMenuStyles } from '@/components/main-menu/styles';
 import { Fonts } from '@/constants/theme';
 import { MusicControl } from '@/components/ui/music-control';
 import { useAppStore } from '@/store/app-store';
-import { useTranslation } from '@/localization/translations';
+
 
 interface MusicMainMenuProps {
   onTantrumsSelect: () => void;
@@ -39,8 +39,7 @@ export function MusicMainMenu({
   onBack 
 }: MusicMainMenuProps) {
   const insets = useSafeAreaInsets();
-  const { language } = useAppStore();
-  const t = useTranslation(language);
+
 
   // Generate star positions for background
   const starPositions = useMemo(() => generateStarPositions(VISUAL_EFFECTS.STAR_COUNT), []);
@@ -111,7 +110,7 @@ export function MusicMainMenu({
         zIndex: 30,
       }}>
         <Pressable style={styles.backButton} onPress={onBack} testID="back-button">
-          <Text style={styles.backButtonText}>{t.back}</Text>
+          <Text style={styles.backButtonText}>← Back</Text>
         </Pressable>
         <View style={{ width: 24 }} />
         <MusicControl
@@ -124,7 +123,7 @@ export function MusicMainMenu({
       {/* Content container with flex: 1 for proper layout */}
       <View style={{ flex: 1, paddingTop: insets.top + 80, zIndex: 10 }}>
         <View style={styles.content}>
-        <Text style={styles.subtitle}>{t.chooseYourMusicType}</Text>
+        <Text style={styles.subtitle}>Choose your music type</Text>
         
         <View style={styles.optionsContainer}>
           {/* Tantrums Option */}
@@ -133,9 +132,9 @@ export function MusicMainMenu({
               colors={['#FF6B6B', '#FF8E8E']}
               style={styles.optionGradient}
             >
-              <Text style={styles.optionTitle}>{t.tantrums}</Text>
+              <Text style={styles.optionTitle}>Tantrums</Text>
               <Text style={styles.optionDescription}>
-                {t.tantrumsDescription}
+                Calming music to help during difficult moments
               </Text>
             </LinearGradient>
           </Pressable>
@@ -146,9 +145,9 @@ export function MusicMainMenu({
               colors={['#6B73FF', '#8E95FF']}
               style={styles.optionGradient}
             >
-              <Text style={styles.optionTitle}>{t.sleep}</Text>
+              <Text style={styles.optionTitle}>Sleep</Text>
               <Text style={styles.optionDescription}>
-                {t.sleepDescription}
+                Gentle sounds to help your child drift off to sleep
               </Text>
             </LinearGradient>
           </Pressable>

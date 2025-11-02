@@ -19,7 +19,7 @@ import { useStoryTransition } from '@/contexts/story-transition-context';
 import { StoryCompletionScreen } from './story-completion-screen';
 import { MusicControl } from '../ui/music-control';
 import { useAppStore } from '@/store/app-store';
-import { useTranslation } from '@/localization/translations';
+
 
 
 interface StoryBookReaderProps {
@@ -40,9 +40,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
   const [preloadedPages, setPreloadedPages] = useState<Set<number>>(new Set());
   const [showCompletionScreen, setShowCompletionScreen] = useState(false);
 
-  // Translation support
-  const { language } = useAppStore();
-  const t = useTranslation(language);
+
 
   // Completion screen entrance animation
   const completionOpacity = useSharedValue(0);
@@ -654,9 +652,9 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
   if (!currentPage) {
     return (
       <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>{t.storyPagesNotAvailable}</Text>
+        <Text style={styles.errorText}>Story pages not available</Text>
         <Pressable style={styles.exitButton} onPress={handleExit}>
-          <Text style={styles.exitButtonText}>{t.back}</Text>
+          <Text style={styles.exitButtonText}>← Back</Text>
         </Pressable>
       </View>
     );

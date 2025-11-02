@@ -15,7 +15,7 @@ import { mainMenuStyles } from './main-menu/styles';
 
 import { MusicControl } from '@/components/ui/music-control';
 import { useAppStore } from '@/store/app-store';
-import { useTranslation } from '@/localization/translations';
+
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -113,9 +113,7 @@ const pageContent: { [key: string]: { emoji: string; message: string; subtitle: 
 };
 
 export function DefaultPage({ icon, title, onBack }: DefaultPageProps) {
-  // Translation support
-  const { language } = useAppStore();
-  const t = useTranslation(language);
+
 
   // Star animation
   const starRotation = useSharedValue(0);
@@ -128,24 +126,10 @@ export function DefaultPage({ icon, title, onBack }: DefaultPageProps) {
     transform: [{ rotate: `${starRotation.value}deg` }],
   }));
 
-  // Get translated content based on title
+  // Get content based on title
   const content = useMemo(() => {
-    const baseContent = pageContent[title] || pageContent['Stories'];
-    return {
-      emoji: baseContent.emoji,
-      color: baseContent.color,
-      message: title === 'Stories' ? t.storyTimeMessage :
-               title === 'Sensory' ? t.sensoryMessage :
-               title === 'Emotions' ? t.emotionsMessage :
-               title === 'Bedtime' ? t.bedtimeMessage :
-               baseContent.message,
-      subtitle: title === 'Stories' ? t.storyTimeSubtitle :
-                title === 'Sensory' ? t.sensorySubtitle :
-                title === 'Emotions' ? t.emotionsSubtitle :
-                title === 'Bedtime' ? t.bedtimeSubtitle :
-                baseContent.subtitle,
-    };
-  }, [title, t]);
+    return pageContent[title] || pageContent['Stories'];
+  }, [title]);
   const svgType = mapIconNameToSvgType(icon);
   const SvgComponent = getSvgComponentFromSvg(svgType as any);
 

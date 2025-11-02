@@ -19,7 +19,7 @@ import { Fonts } from '@/constants/theme';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
 import { useAppStore } from '@/store/app-store';
-import { useTranslation } from '@/localization/translations';
+
 
 interface EmotionsMenuScreenProps {
   onStartGame: () => void;
@@ -34,8 +34,7 @@ export function EmotionsMenuScreen({
 }: EmotionsMenuScreenProps) {
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const insets = useSafeAreaInsets();
-  const { language } = useAppStore();
-  const t = useTranslation(language);
+
 
   // Get a few sample emotions to display
   const sampleEmotions = EMOTIONS.slice(0, 6);
@@ -132,7 +131,7 @@ export function EmotionsMenuScreen({
         </View>
 
         <View style={{ paddingHorizontal: 20, marginTop: -20 }}>
-          <ThemedText style={styles.title}>{t.expressYourself}</ThemedText>
+          <ThemedText style={styles.title}>Express Yourself!</ThemedText>
           <ThemedText style={styles.subtitle}>
             {themeData.name} {themeData.icon} • {themeData.description}
           </ThemedText>
