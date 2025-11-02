@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-echo "Running pre-commit hooks..."
+echo "Running pre-commit hooks for grow-with-freya..."
 
-# Run lint-staged to check and fix staged files
-npm run pre-commit
+# Change to grow-with-freya directory and run lint-staged
+cd grow-with-freya && npm run pre-commit

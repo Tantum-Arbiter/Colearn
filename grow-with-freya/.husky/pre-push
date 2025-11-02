@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-echo "Running pre-push validation..."
+echo "Running pre-push validation for grow-with-freya..."
 
-# Run full validation before push
-npm run validate
+# Change to grow-with-freya directory and run full validation
+cd grow-with-freya && npm run validate
