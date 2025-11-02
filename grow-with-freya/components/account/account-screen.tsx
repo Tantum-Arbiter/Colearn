@@ -13,6 +13,10 @@ import { PrivacyPolicyScreen } from './privacy-policy-screen';
 import { ScreenTimeScreen } from '../screen-time/screen-time-screen';
 import { NotificationDebugScreen } from '../debug/notification-debug-screen';
 import { AudioDebugScreen } from '../debug/audio-debug-screen';
+import { LanguageSelectionModal } from './language-selection-modal';
+import { TextSizeSelectionModal } from './text-size-selection-modal';
+import { useTranslation } from '../../localization/translations';
+import { scaleText, getLanguageDisplayName, getTextSizeDisplayName } from '../../utils/text-scaling';
 
 interface AccountScreenProps {
   onBack: () => void;
@@ -37,8 +41,19 @@ const generateStarPositions = () => {
 
 export function AccountScreen({ onBack }: AccountScreenProps) {
   const [currentView, setCurrentView] = useState<'main' | 'terms' | 'privacy' | 'screen-time' | 'notification-debug' | 'audio-debug'>('main');
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
+  const [showTextSizeModal, setShowTextSizeModal] = useState(false);
   const insets = useSafeAreaInsets();
-  const { setOnboardingComplete, setAppReady } = useAppStore();
+  const {
+    setOnboardingComplete,
+    setAppReady,
+    language,
+    textSize,
+    setLanguage,
+    setTextSize
+  } = useAppStore();
+
+  const t = useTranslation(language);
 
   // Star animation
   const starOpacity = useSharedValue(0.4);
@@ -122,10 +137,14 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
         {/* Header */}
         <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50), zIndex: 50 }]}>
           <Pressable style={styles.backButton} onPress={onBack}>
-            <Text style={styles.backButtonText}>← Back</Text>
+            <Text style={[styles.backButtonText, { fontSize: scaleText(16, textSize) }]}>
+              {t.back}
+            </Text>
           </Pressable>
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>Account</Text>
+            <Text style={[styles.title, { fontSize: scaleText(28, textSize) }]}>
+              {t.account}
+            </Text>
           </View>
           <MusicControl
             size={24}
@@ -137,31 +156,65 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
         <ScrollView style={[styles.scrollView, { zIndex: 10 }]} contentContainerStyle={styles.content}>
           {/* App Settings Section */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>App Settings</Text>
+            <Text style={[styles.sectionTitle, { fontSize: scaleText(22, textSize) }]}>
+              {t.appSettings}
+            </Text>
 
             <View style={styles.settingItem}>
-              <Text style={styles.settingLabel}>Version</Text>
-              <Text style={styles.settingValue}>1.0.0</Text>
+              <Text style={[styles.settingLabel, { fontSize: scaleText(16, textSize) }]}>
+                {t.version}
+              </Text>
+              <Text style={[styles.settingValue, { fontSize: scaleText(16, textSize) }]}>
+                1.0.0
+              </Text>
+            </View>
+
+            <Pressable
+              style={styles.settingItem}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setShowLanguageModal(true);
+              }}
+            >
+              <Text style={[styles.settingLabel, { fontSize: scaleText(16, textSize) }]}>
+                {t.language}
+              </Text>
+              <Text style={[styles.settingValue, { fontSize: scaleText(16, textSize) }]}>
+                {getLanguageDisplayName(language)} →
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.settingItem}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setShowTextSizeModal(true);
+              }}
+            >
+              <Text style={[styles.settingLabel, { fontSize: scaleText(16, textSize) }]}>
+                {t.textSize}
+              </Text>
+              <Text style={[styles.settingValue, { fontSize: scaleText(16, textSize) }]}>
+                {getTextSizeDisplayName(textSize)} →
+              </Text>
+            </Pressable>
+
+            <View style={styles.settingItem}>
+              <Text style={[styles.settingLabel, { fontSize: scaleText(16, textSize) }]}>
+                {t.iconSize}
+              </Text>
+              <Text style={[styles.settingValue, { fontSize: scaleText(16, textSize) }]}>
+                {t.large}
+              </Text>
             </View>
 
             <View style={styles.settingItem}>
-              <Text style={styles.settingLabel}>Language</Text>
-              <Text style={styles.settingValue}>English</Text>
-            </View>
-
-            <View style={styles.settingItem}>
-              <Text style={styles.settingLabel}>Text Size</Text>
-              <Text style={styles.settingValue}>Medium</Text>
-            </View>
-
-            <View style={styles.settingItem}>
-              <Text style={styles.settingLabel}>Icon Size</Text>
-              <Text style={styles.settingValue}>Large</Text>
-            </View>
-
-            <View style={styles.settingItem}>
-              <Text style={styles.settingLabel}>Black & White Mode</Text>
-              <Text style={styles.settingValue}>Disabled</Text>
+              <Text style={[styles.settingLabel, { fontSize: scaleText(16, textSize) }]}>
+                {t.blackWhiteMode}
+              </Text>
+              <Text style={[styles.settingValue, { fontSize: scaleText(16, textSize) }]}>
+                {t.disabled}
+              </Text>
             </View>
 
             <Pressable
@@ -171,27 +224,39 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
                 setCurrentView('screen-time');
               }}
             >
-              <Text style={styles.buttonText}>Screen Time Controls</Text>
+              <Text style={[styles.buttonText, { fontSize: scaleText(16, textSize) }]}>
+                {t.screenTimeControls}
+              </Text>
             </Pressable>
           </View>
 
           {/* Character Section */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Character</Text>
+            <Text style={[styles.sectionTitle, { fontSize: scaleText(22, textSize) }]}>
+              {t.character}
+            </Text>
 
             <View style={styles.settingItem}>
-              <Text style={styles.settingLabel}>Character Name</Text>
-              <Text style={styles.settingValue}>Your Child&apos;s Name</Text>
+              <Text style={[styles.settingLabel, { fontSize: scaleText(16, textSize) }]}>
+                {t.characterName}
+              </Text>
+              <Text style={[styles.settingValue, { fontSize: scaleText(16, textSize) }]}>
+                {t.yourChildsName}
+              </Text>
             </View>
 
             <Pressable style={styles.button}>
-              <Text style={styles.buttonText}>Edit Character (Coming Soon)</Text>
+              <Text style={[styles.buttonText, { fontSize: scaleText(16, textSize) }]}>
+                {t.editCharacter}
+              </Text>
             </Pressable>
           </View>
 
           {/* Privacy & Legal */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Privacy & Legal</Text>
+            <Text style={[styles.sectionTitle, { fontSize: scaleText(22, textSize) }]}>
+              {t.privacyLegal}
+            </Text>
 
             <Pressable
               style={styles.button}
@@ -200,7 +265,9 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
                 setCurrentView('terms');
               }}
             >
-              <Text style={styles.buttonText}>Terms & Conditions</Text>
+              <Text style={[styles.buttonText, { fontSize: scaleText(16, textSize) }]}>
+                {t.termsConditions}
+              </Text>
             </Pressable>
 
             <Pressable
@@ -210,13 +277,17 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
                 setCurrentView('privacy');
               }}
             >
-              <Text style={styles.buttonText}>Privacy Policy</Text>
+              <Text style={[styles.buttonText, { fontSize: scaleText(16, textSize) }]}>
+                {t.privacyPolicy}
+              </Text>
             </Pressable>
           </View>
 
           {/* Developer Options */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Developer Options</Text>
+            <Text style={[styles.sectionTitle, { fontSize: scaleText(22, textSize) }]}>
+              {t.developerOptions}
+            </Text>
 
             <Pressable
               style={styles.button}
@@ -225,7 +296,9 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
                 setCurrentView('notification-debug');
               }}
             >
-              <Text style={styles.buttonText}>Notification Debug</Text>
+              <Text style={[styles.buttonText, { fontSize: scaleText(16, textSize) }]}>
+                {t.notificationDebug}
+              </Text>
             </Pressable>
 
             <Pressable
@@ -235,18 +308,39 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
                 setCurrentView('audio-debug');
               }}
             >
-              <Text style={styles.buttonText}>Audio Debug</Text>
+              <Text style={[styles.buttonText, { fontSize: scaleText(16, textSize) }]}>
+                {t.audioDebug}
+              </Text>
             </Pressable>
 
             <Pressable
               style={[styles.button, styles.resetButton]}
               onPress={handleResetApp}
             >
-              <Text style={[styles.buttonText, styles.resetButtonText]}>Reset App</Text>
+              <Text style={[styles.buttonText, styles.resetButtonText, { fontSize: scaleText(16, textSize) }]}>
+                {t.resetApp}
+              </Text>
             </Pressable>
           </View>
         </ScrollView>
 
+        {/* Language Selection Modal */}
+        <LanguageSelectionModal
+          visible={showLanguageModal}
+          currentLanguage={language}
+          currentTextSize={textSize}
+          onSelect={setLanguage}
+          onClose={() => setShowLanguageModal(false)}
+        />
+
+        {/* Text Size Selection Modal */}
+        <TextSizeSelectionModal
+          visible={showTextSizeModal}
+          currentTextSize={textSize}
+          currentLanguage={language}
+          onSelect={setTextSize}
+          onClose={() => setShowTextSizeModal(false)}
+        />
 
       </LinearGradient>
     </View>
@@ -275,7 +369,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   backButtonText: {
-    fontSize: 16,
     color: 'white',
     fontWeight: 'bold',
   },
@@ -284,7 +377,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 28,
     fontWeight: 'bold',
     color: '#FFFFFF',
     textAlign: 'center',
@@ -306,7 +398,6 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   sectionTitle: {
-    fontSize: 22,
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 15,
@@ -327,12 +418,10 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   settingLabel: {
-    fontSize: 16,
     color: '#FFFFFF',
     fontWeight: '500',
   },
   settingValue: {
-    fontSize: 16,
     color: '#E0E0E0',
   },
   button: {
@@ -347,7 +436,6 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: 'white',
-    fontSize: 16,
     fontWeight: 'bold',
     textShadowColor: 'rgba(0, 0, 0, 0.5)',
     textShadowOffset: { width: 0, height: 1 },
@@ -358,7 +446,6 @@ const styles = StyleSheet.create({
   },
   resetButtonText: {
     color: 'white',
-    fontSize: 16,
     fontWeight: 'bold',
     textShadowColor: 'rgba(0, 0, 0, 0.5)',
     textShadowOffset: { width: 0, height: 1 },

@@ -2,6 +2,9 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+export type Language = 'en' | 'pl' | 'fr';
+export type TextSize = 'small' | 'normal' | 'large';
+
 export interface AppState {
   // App initialization
   isAppReady: boolean;
@@ -23,6 +26,10 @@ export interface AppState {
   screenTimeEnabled: boolean;
   notificationsEnabled: boolean;
   hasRequestedNotificationPermission: boolean;
+
+  // Accessibility & Localization
+  language: Language;
+  textSize: TextSize;
 
   // Background animation state persistence
   backgroundAnimationState: {
@@ -46,6 +53,8 @@ export interface AppState {
   setScreenTimeEnabled: (enabled: boolean) => void;
   setNotificationsEnabled: (enabled: boolean) => void;
   setNotificationPermissionRequested: (requested: boolean) => void;
+  setLanguage: (language: Language) => void;
+  setTextSize: (textSize: TextSize) => void;
   updateBackgroundAnimationState: (state: {
     cloudFloat1: number;
     cloudFloat2: number;
@@ -69,6 +78,8 @@ export const useAppStore = create<AppState>()(
       screenTimeEnabled: true,
       notificationsEnabled: false,
       hasRequestedNotificationPermission: false,
+      language: 'en',
+      textSize: 'normal',
       backgroundAnimationState: {
         cloudFloat1: -200,
         cloudFloat2: -400,
@@ -88,6 +99,8 @@ export const useAppStore = create<AppState>()(
       setScreenTimeEnabled: (enabled) => set({ screenTimeEnabled: enabled }),
       setNotificationsEnabled: (enabled) => set({ notificationsEnabled: enabled }),
       setNotificationPermissionRequested: (requested) => set({ hasRequestedNotificationPermission: requested }),
+      setLanguage: (language) => set({ language }),
+      setTextSize: (textSize) => set({ textSize }),
       requestReturnToMainMenu: () => set((state) => {
         // Prevent multiple rapid requests
         if (state.shouldReturnToMainMenu) {
@@ -110,6 +123,8 @@ export const useAppStore = create<AppState>()(
         screenTimeEnabled: state.screenTimeEnabled,
         notificationsEnabled: state.notificationsEnabled,
         hasRequestedNotificationPermission: state.hasRequestedNotificationPermission,
+        language: state.language,
+        textSize: state.textSize,
         backgroundAnimationState: state.backgroundAnimationState,
       }),
 
