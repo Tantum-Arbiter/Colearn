@@ -50,11 +50,16 @@ function AppContent() {
   const {
     isAppReady,
     hasCompletedOnboarding,
+    showLoginAfterOnboarding,
     setOnboardingComplete,
-    resetAppForTesting,
+    setLoginComplete,
+    setShowLoginAfterOnboarding,
+    setAppReady,
     setCurrentScreen,
     shouldReturnToMainMenu,
-    clearReturnToMainMenu
+    clearReturnToMainMenu,
+    clearPersistedStorage,
+    resetAppForTesting
   } = useAppStore();
 
 
@@ -71,7 +76,11 @@ function AppContent() {
   const [currentView, setCurrentView] = useState<AppView>('splash');
   const [currentPage, setCurrentPage] = useState<PageKey>('main');
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
-  const [showLoginAfterOnboarding, setShowLoginAfterOnboarding] = useState(false);
+
+  // Debug current view changes
+  useEffect(() => {
+    console.log('📱 Current view changed to:', currentView);
+  }, [currentView]);
 
 
 
@@ -126,36 +135,57 @@ function AppContent() {
     initializeImagePreloading();
   }, []);
 
-  // Temporary: Reset app state for testing - remove this in production
+
+
+  // TEMPORARY: Force clear persisted state on every app start for debugging
   useEffect(() => {
-    console.log('TEMPORARY: Resetting app state for testing');
-    resetAppForTesting();
-    setShowLoginAfterOnboarding(false);
-  }, [resetAppForTesting]);
+    const forceReset = async () => {
+      console.log('🧹 TEMPORARY: Forcing app reset for debugging...');
+      await clearPersistedStorage();
+      resetAppForTesting();
+
+      // Give a moment for state to reset
+      setTimeout(() => {
+        setAppReady(true);
+      }, 100);
+    };
+
+    forceReset();
+  }, []);
 
   // Initialize app state
   useEffect(() => {
-    console.log('App initializing...');
+    console.log('🚀 App initializing...');
+    console.log('🚀 Initial app state:', {
+      isAppReady,
+      hasCompletedOnboarding,
+      showLoginAfterOnboarding,
+      currentView
+    });
     // App should start with splash screen
     if (!isAppReady) {
-      console.log('App not ready, showing splash');
+      console.log('🚀 App not ready, showing splash');
     }
-  }, [isAppReady]);
+  }, []);
 
   useEffect(() => {
-    console.log('App state check:', { isAppReady, hasCompletedOnboarding, showLoginAfterOnboarding });
+    console.log('🔄 App state check:', { isAppReady, hasCompletedOnboarding, showLoginAfterOnboarding });
+    console.log('🔄 Current view will be set based on state...');
+    console.log('🔄 Current view before update:', currentView);
 
     if (!isAppReady) {
-      console.log('Setting view to splash - app not ready');
+      console.log('🔄 Setting view to splash - app not ready');
       setCurrentView('splash');
     } else if (showLoginAfterOnboarding) {
-      console.log('Setting view to login - show login after onboarding');
+      console.log('🔄 Setting view to login - show login after onboarding');
       setCurrentView('login');
     } else if (!hasCompletedOnboarding) {
-      console.log('Setting view to onboarding - not completed');
+      console.log('🔄 Setting view to onboarding - not completed');
+      console.log('🔄 About to call setCurrentView("onboarding")');
       setCurrentView('onboarding');
+      console.log('🔄 Called setCurrentView("onboarding")');
     } else {
-      console.log('Setting view to app - all conditions met');
+      console.log('🔄 Setting view to app - all conditions met');
       setCurrentView('app');
       setCurrentPage('main');
     }
@@ -181,14 +211,22 @@ function AppContent() {
     return () => clearTimeout(timer);
   }, [currentView, musicLoaded, fadeIn, isPlaying, hasStartedBackgroundMusic]);
 
-  // Sync view with page changes
+  // Sync view with page changes (but don't interfere with onboarding/login flow)
   useEffect(() => {
+    // Don't sync if we're in onboarding, login, or splash views
+    if (currentView === 'splash' || currentView === 'onboarding' || currentView === 'login') {
+      console.log('🔄 Skipping view sync - in flow view:', currentView);
+      return;
+    }
+
     // For story-reader, we need a special view
     if (currentPage === 'story-reader' && currentView !== 'story-reader') {
+      console.log('🔄 Syncing view to story-reader');
       setCurrentView('story-reader');
     }
     // For all other pages (main, stories, emotions, etc.), use 'app' view
     else if (currentPage !== 'story-reader' && currentView !== 'app') {
+      console.log('🔄 Syncing view to app');
       setCurrentView('app');
     }
   }, [currentPage, currentView]);
@@ -284,15 +322,20 @@ function AppContent() {
     // The main menu will handle navigation to bedtime
   };
 
+  console.log('🎬 RENDER: currentView =', currentView);
+
   if (currentView === 'splash') {
+    console.log('🎬 RENDER: Returning splash screen');
     return <AppSplashScreen />;
   }
 
   if (currentView === 'onboarding') {
+    console.log('🎬 RENDER: Returning onboarding flow');
     return <OnboardingFlow onComplete={handleOnboardingComplete} />;
   }
 
   if (currentView === 'login') {
+    console.log('🎬 RENDER: Returning login screen');
     return <LoginScreen onSuccess={handleLoginSuccess} onSkip={handleLoginSkip} />;
   }
 

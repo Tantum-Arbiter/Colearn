@@ -9,6 +9,7 @@ export interface AppState {
   isAppReady: boolean;
   hasCompletedOnboarding: boolean;
   hasCompletedLogin: boolean;
+  showLoginAfterOnboarding: boolean;
 
   // Current user/child profile
   currentChildId: string | null;
@@ -40,6 +41,7 @@ export interface AppState {
   setAppReady: (ready: boolean) => void;
   setOnboardingComplete: (complete: boolean) => void;
   setLoginComplete: (complete: boolean) => void;
+  setShowLoginAfterOnboarding: (show: boolean) => void;
   resetAppForTesting: () => void; // Temporary function to reset app state
   setCurrentChild: (childId: string | null) => void;
   setChildAge: (ageInMonths: number) => void;
@@ -57,6 +59,7 @@ export interface AppState {
     rocketFloat1: number;
     rocketFloat2: number;
   }) => void;
+  clearPersistedStorage: () => Promise<void>;
 }
 
 export const useAppStore = create<AppState>()(
@@ -66,6 +69,7 @@ export const useAppStore = create<AppState>()(
       isAppReady: false,
       hasCompletedOnboarding: false, // This will be overridden by persisted state if it exists
       hasCompletedLogin: false,
+      showLoginAfterOnboarding: false,
       currentChildId: null,
       childAgeInMonths: 24, // Default to 24 months (2 years)
       currentScreen: 'splash',
@@ -86,7 +90,14 @@ export const useAppStore = create<AppState>()(
       setAppReady: (ready) => set({ isAppReady: ready }),
       setOnboardingComplete: (complete) => set({ hasCompletedOnboarding: complete }),
       setLoginComplete: (complete) => set({ hasCompletedLogin: complete }),
-      resetAppForTesting: () => set({ hasCompletedOnboarding: false, isAppReady: false }),
+      setShowLoginAfterOnboarding: (show) => set({ showLoginAfterOnboarding: show }),
+      resetAppForTesting: () => set({
+        hasCompletedOnboarding: false,
+        hasCompletedLogin: false,
+        isAppReady: false,
+        showLoginAfterOnboarding: false,
+        currentScreen: 'splash'
+      }),
       setCurrentChild: (childId) => set({ currentChildId: childId }),
       setChildAge: (ageInMonths) => set({ childAgeInMonths: ageInMonths }),
       setCurrentScreen: (screen) => set({ currentScreen: screen }),
@@ -104,6 +115,14 @@ export const useAppStore = create<AppState>()(
       }),
       clearReturnToMainMenu: () => set({ shouldReturnToMainMenu: false }),
       updateBackgroundAnimationState: (animationState) => set({ backgroundAnimationState: animationState }),
+      clearPersistedStorage: async () => {
+        try {
+          await AsyncStorage.removeItem('app-storage');
+          console.log('Persisted storage cleared successfully');
+        } catch (error) {
+          console.error('Failed to clear persisted storage:', error);
+        }
+      },
     }),
     {
       name: 'app-storage',
@@ -112,6 +131,8 @@ export const useAppStore = create<AppState>()(
       partialize: (state) => ({
         isAppReady: state.isAppReady,
         hasCompletedOnboarding: state.hasCompletedOnboarding,
+        hasCompletedLogin: state.hasCompletedLogin,
+        showLoginAfterOnboarding: state.showLoginAfterOnboarding,
         currentChildId: state.currentChildId,
         childAgeInMonths: state.childAgeInMonths,
         screenTimeEnabled: state.screenTimeEnabled,

@@ -42,7 +42,10 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
   const insets = useSafeAreaInsets();
   const {
     setOnboardingComplete,
-    setAppReady
+    setLoginComplete,
+    setAppReady,
+    setShowLoginAfterOnboarding,
+    clearPersistedStorage
   } = useAppStore();
 
   // Star animation
@@ -62,13 +65,22 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
     opacity: starOpacity.value,
   }));
 
-  const handleResetApp = () => {
+  const handleResetApp = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    // Clear persisted storage completely to ensure fresh start
+    await clearPersistedStorage();
+
+    // Reset all state to initial values
     setOnboardingComplete(false);
+    setLoginComplete(false);
+    setShowLoginAfterOnboarding(false);
     setAppReady(false);
+
+    // Give a moment for state to update and persist
     setTimeout(() => {
       setAppReady(true);
-    }, 100);
+    }, 500);
   };
 
   // Handle navigation between views
