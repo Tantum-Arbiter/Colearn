@@ -11,6 +11,8 @@ import { MusicControl } from '../ui/music-control';
 import { TermsConditionsScreen } from './terms-conditions-screen';
 import { PrivacyPolicyScreen } from './privacy-policy-screen';
 import { ScreenTimeScreen } from '../screen-time/screen-time-screen';
+import { NotificationDebugScreen } from '../debug/notification-debug-screen';
+import { AudioDebugScreen } from '../debug/audio-debug-screen';
 
 interface AccountScreenProps {
   onBack: () => void;
@@ -34,7 +36,7 @@ const generateStarPositions = () => {
 };
 
 export function AccountScreen({ onBack }: AccountScreenProps) {
-  const [currentView, setCurrentView] = useState<'main' | 'terms' | 'privacy' | 'screen-time'>('main');
+  const [currentView, setCurrentView] = useState<'main' | 'terms' | 'privacy' | 'screen-time' | 'notification-debug' | 'audio-debug'>('main');
   const insets = useSafeAreaInsets();
   const { setOnboardingComplete, setAppReady } = useAppStore();
 
@@ -75,6 +77,14 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
 
   if (currentView === 'screen-time') {
     return <ScreenTimeScreen onBack={() => setCurrentView('main')} />;
+  }
+
+  if (currentView === 'notification-debug') {
+    return <NotificationDebugScreen onBack={() => setCurrentView('main')} />;
+  }
+
+  if (currentView === 'audio-debug') {
+    return <AudioDebugScreen onBack={() => setCurrentView('main')} />;
   }
 
   return (
@@ -207,6 +217,26 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
           {/* Developer Options */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Developer Options</Text>
+
+            <Pressable
+              style={styles.button}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setCurrentView('notification-debug');
+              }}
+            >
+              <Text style={styles.buttonText}>Notification Debug</Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.button}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setCurrentView('audio-debug');
+              }}
+            >
+              <Text style={styles.buttonText}>Audio Debug</Text>
+            </Pressable>
 
             <Pressable
               style={[styles.button, styles.resetButton]}
