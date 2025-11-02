@@ -52,9 +52,7 @@ function AppContent() {
     hasCompletedOnboarding,
     showLoginAfterOnboarding,
     setOnboardingComplete,
-    setLoginComplete,
     setShowLoginAfterOnboarding,
-    setAppReady,
     setCurrentScreen,
     shouldReturnToMainMenu,
     clearReturnToMainMenu

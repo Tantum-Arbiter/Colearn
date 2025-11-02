@@ -195,7 +195,7 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
                 Character Name
               </Text>
               <Text style={styles.settingValue}>
-                Your Child's Name
+                Your Child&apos;s Name
               </Text>
             </View>
 
