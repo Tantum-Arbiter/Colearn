@@ -10,6 +10,7 @@ import { mainMenuStyles } from '../main-menu/styles';
 import { MusicControl } from '../ui/music-control';
 import { TermsConditionsScreen } from './terms-conditions-screen';
 import { PrivacyPolicyScreen } from './privacy-policy-screen';
+import { ScreenTimeScreen } from '../screen-time/screen-time-screen';
 
 interface AccountScreenProps {
   onBack: () => void;
@@ -33,7 +34,7 @@ const generateStarPositions = () => {
 };
 
 export function AccountScreen({ onBack }: AccountScreenProps) {
-  const [currentView, setCurrentView] = useState<'main' | 'terms' | 'privacy'>('main');
+  const [currentView, setCurrentView] = useState<'main' | 'terms' | 'privacy' | 'screen-time'>('main');
   const insets = useSafeAreaInsets();
   const { setOnboardingComplete, setAppReady } = useAppStore();
 
@@ -70,6 +71,10 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
 
   if (currentView === 'privacy') {
     return <PrivacyPolicyScreen onBack={() => setCurrentView('main')} />;
+  }
+
+  if (currentView === 'screen-time') {
+    return <ScreenTimeScreen onBack={() => setCurrentView('main')} />;
   }
 
   return (
@@ -148,6 +153,16 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
               <Text style={styles.settingLabel}>Black & White Mode</Text>
               <Text style={styles.settingValue}>Disabled</Text>
             </View>
+
+            <Pressable
+              style={styles.button}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setCurrentView('screen-time');
+              }}
+            >
+              <Text style={styles.buttonText}>Screen Time Controls</Text>
+            </Pressable>
           </View>
 
           {/* Character Section */}

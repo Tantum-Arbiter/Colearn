@@ -50,7 +50,9 @@ export default {
       predictiveBackGestureEnabled: false,
       permissions: [
         'MODIFY_AUDIO_SETTINGS',
-        'WAKE_LOCK'
+        'WAKE_LOCK',
+        'POST_NOTIFICATIONS',
+        'SCHEDULE_EXACT_ALARM'
       ]
     },
     web: {
@@ -59,7 +61,15 @@ export default {
     },
     plugins: [
       'expo-router',
-
+      [
+        'expo-notifications',
+        {
+          icon: './assets/images/notification-icon.png',
+          color: '#4ECDC4',
+          sounds: ['./assets/audio/notification.wav'],
+          mode: 'production'
+        }
+      ],
       [
         'expo-splash-screen',
         {

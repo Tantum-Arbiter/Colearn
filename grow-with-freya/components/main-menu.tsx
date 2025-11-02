@@ -39,6 +39,7 @@ import {
 
 import { createCloudAnimationNew } from './main-menu/cloud-animations';
 import type { MenuItemData } from './main-menu/index';
+import { useScreenTimeTracking } from '@/hooks/use-screen-time-tracking';
 
 interface MainMenuProps {
   onNavigate: (destination: string) => void;
@@ -47,6 +48,13 @@ interface MainMenuProps {
 
 function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
   const insets = useSafeAreaInsets();
+
+  // Track screen time for general app usage
+  useScreenTimeTracking({
+    activity: 'story', // Use story as general app usage
+    autoStart: true,
+    autoEnd: true,
+  });
 
   // Get current screen dimensions (updates with orientation changes)
   const { width: screenWidth, height: screenHeight } = getScreenDimensions();
@@ -523,43 +531,53 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
         <View style={mainMenuStyles.menuContainer}>
 
           <View style={mainMenuStyles.topRow}>
-            <MenuIcon
-              key={`top-left-${menuOrder[1].destination}`}
-              icon={menuOrder[1].icon}
-              label={menuOrder[1].label}
-              status="inactive"
-              onPress={() => handleIconPress(menuOrder[1])}
-              testID={`menu-icon-${menuOrder[1].destination}`}
-            />
-            <MenuIcon
-              key={`top-right-${menuOrder[2].destination}`}
-              icon={menuOrder[2].icon}
-              label={menuOrder[2].label}
-              status="inactive"
-              onPress={() => handleIconPress(menuOrder[2])}
-              testID={`menu-icon-${menuOrder[2].destination}`}
-            />
+            {menuOrder[1] && (
+              <MenuIcon
+                key={`top-left-${menuOrder[1].destination}`}
+                icon={menuOrder[1].icon}
+                label={menuOrder[1].label}
+                status="inactive"
+                onPress={() => handleIconPress(menuOrder[1])}
+                testID={`menu-icon-${menuOrder[1].destination}`}
+              />
+            )}
+            {menuOrder[2] && (
+              <MenuIcon
+                key={`top-right-${menuOrder[2].destination}`}
+                icon={menuOrder[2].icon}
+                label={menuOrder[2].label}
+                status="inactive"
+                onPress={() => handleIconPress(menuOrder[2])}
+                testID={`menu-icon-${menuOrder[2].destination}`}
+              />
+            )}
           </View>
 
-          {/* Bottom row */}
-          <View style={mainMenuStyles.bottomRow}>
-            <MenuIcon
-              key={`bottom-left-${menuOrder[3].destination}`}
-              icon={menuOrder[3].icon}
-              label={menuOrder[3].label}
-              status="inactive"
-              onPress={() => handleIconPress(menuOrder[3])}
-              testID={`menu-icon-${menuOrder[3].destination}`}
-            />
-            <MenuIcon
-              key={`bottom-right-${menuOrder[4].destination}`}
-              icon={menuOrder[4].icon}
-              label={menuOrder[4].label}
-              status="inactive"
-              onPress={() => handleIconPress(menuOrder[4])}
-              testID={`menu-icon-${menuOrder[4].destination}`}
-            />
-          </View>
+          {/* Bottom row - only show if we have more than 3 items */}
+          {menuOrder.length > 3 && (
+            <View style={mainMenuStyles.bottomRow}>
+              {menuOrder[3] && (
+                <MenuIcon
+                  key={`bottom-left-${menuOrder[3].destination}`}
+                  icon={menuOrder[3].icon}
+                  label={menuOrder[3].label}
+                  status="inactive"
+                  onPress={() => handleIconPress(menuOrder[3])}
+                  testID={`menu-icon-${menuOrder[3].destination}`}
+                />
+              )}
+              {menuOrder[4] && (
+                <MenuIcon
+                  key={`bottom-right-${menuOrder[4].destination}`}
+                  icon={menuOrder[4].icon}
+                  label={menuOrder[4].label}
+                  status="inactive"
+                  onPress={() => handleIconPress(menuOrder[4])}
+                  testID={`menu-icon-${menuOrder[4].destination}`}
+                />
+              )}
+            </View>
+          )}
         </View>
       </View>
     </LinearGradient>

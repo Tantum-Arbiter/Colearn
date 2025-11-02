@@ -19,6 +19,7 @@ import { generateStarPositions } from '@/components/main-menu/utils';
 import { BearTopImage } from '@/components/main-menu/animated-components';
 
 import { mainMenuStyles } from '@/components/main-menu/styles';
+import { useScreenTimeTracking } from '@/hooks/use-screen-time-tracking';
 
 interface EmotionsUnifiedScreenProps {
   onStartGame: (theme: EmotionTheme) => void;
@@ -29,6 +30,13 @@ export function EmotionsUnifiedScreen({ onStartGame, onBack }: EmotionsUnifiedSc
   const [selectedTheme, setSelectedTheme] = useState<EmotionTheme>('emoji');
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const insets = useSafeAreaInsets();
+
+  // Track screen time for emotions activities
+  useScreenTimeTracking({
+    activity: 'emotions',
+    autoStart: true,
+    autoEnd: true,
+  });
 
   // Generate star positions for background (matching stories pattern)
   const starPositions = useMemo(() => generateStarPositions(VISUAL_EFFECTS.STAR_COUNT), []);

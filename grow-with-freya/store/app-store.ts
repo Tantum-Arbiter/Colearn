@@ -10,6 +10,7 @@ export interface AppState {
 
   // Current user/child profile
   currentChildId: string | null;
+  childAgeInMonths: number; // For screen time calculations
 
   // UI state
   currentScreen: string;
@@ -17,6 +18,11 @@ export interface AppState {
 
   // Navigation state
   shouldReturnToMainMenu: boolean;
+
+  // Screen time management
+  screenTimeEnabled: boolean;
+  notificationsEnabled: boolean;
+  hasRequestedNotificationPermission: boolean;
 
   // Background animation state persistence
   backgroundAnimationState: {
@@ -32,10 +38,14 @@ export interface AppState {
   setLoginComplete: (complete: boolean) => void;
   resetAppForTesting: () => void; // Temporary function to reset app state
   setCurrentChild: (childId: string | null) => void;
+  setChildAge: (ageInMonths: number) => void;
   setCurrentScreen: (screen: string) => void;
   setLoading: (loading: boolean) => void;
   requestReturnToMainMenu: () => void;
   clearReturnToMainMenu: () => void;
+  setScreenTimeEnabled: (enabled: boolean) => void;
+  setNotificationsEnabled: (enabled: boolean) => void;
+  setNotificationPermissionRequested: (requested: boolean) => void;
   updateBackgroundAnimationState: (state: {
     cloudFloat1: number;
     cloudFloat2: number;
@@ -52,9 +62,13 @@ export const useAppStore = create<AppState>()(
       hasCompletedOnboarding: false, // This will be overridden by persisted state if it exists
       hasCompletedLogin: false,
       currentChildId: null,
+      childAgeInMonths: 24, // Default to 24 months (2 years)
       currentScreen: 'splash',
       isLoading: false,
       shouldReturnToMainMenu: false,
+      screenTimeEnabled: true,
+      notificationsEnabled: false,
+      hasRequestedNotificationPermission: false,
       backgroundAnimationState: {
         cloudFloat1: -200,
         cloudFloat2: -400,
@@ -68,8 +82,12 @@ export const useAppStore = create<AppState>()(
       setLoginComplete: (complete) => set({ hasCompletedLogin: complete }),
       resetAppForTesting: () => set({ hasCompletedOnboarding: false, isAppReady: false }),
       setCurrentChild: (childId) => set({ currentChildId: childId }),
+      setChildAge: (ageInMonths) => set({ childAgeInMonths: ageInMonths }),
       setCurrentScreen: (screen) => set({ currentScreen: screen }),
       setLoading: (loading) => set({ isLoading: loading }),
+      setScreenTimeEnabled: (enabled) => set({ screenTimeEnabled: enabled }),
+      setNotificationsEnabled: (enabled) => set({ notificationsEnabled: enabled }),
+      setNotificationPermissionRequested: (requested) => set({ hasRequestedNotificationPermission: requested }),
       requestReturnToMainMenu: () => set((state) => {
         // Prevent multiple rapid requests
         if (state.shouldReturnToMainMenu) {
@@ -88,6 +106,10 @@ export const useAppStore = create<AppState>()(
         isAppReady: state.isAppReady,
         hasCompletedOnboarding: state.hasCompletedOnboarding,
         currentChildId: state.currentChildId,
+        childAgeInMonths: state.childAgeInMonths,
+        screenTimeEnabled: state.screenTimeEnabled,
+        notificationsEnabled: state.notificationsEnabled,
+        hasRequestedNotificationPermission: state.hasRequestedNotificationPermission,
         backgroundAnimationState: state.backgroundAnimationState,
       }),
 

@@ -18,6 +18,8 @@ import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
 import { StoryBookReader } from '@/components/stories/story-book-reader';
 import { MusicScreen } from '@/components/music';
 import { EmotionsScreen } from '@/components/emotions';
+import { ScreenTimeProvider } from '@/components/screen-time/screen-time-provider';
+
 
 
 import { Story } from '@/types/story';
@@ -32,9 +34,11 @@ import { GlobalSoundProvider } from '@/contexts/global-sound-context';
 export default function RootLayout() {
   return (
     <GlobalSoundProvider>
-      <StoryTransitionProvider>
-        <AppContent />
-      </StoryTransitionProvider>
+      <ScreenTimeProvider>
+        <StoryTransitionProvider>
+          <AppContent />
+        </StoryTransitionProvider>
+      </ScreenTimeProvider>
     </GlobalSoundProvider>
   );
 }
@@ -62,7 +66,7 @@ function AppContent() {
   const [hasStartedBackgroundMusic, setHasStartedBackgroundMusic] = useState(false);
 
   type AppView = 'splash' | 'onboarding' | 'login' | 'app' | 'main' | 'stories' | 'story-reader' | 'account';
-  type PageKey = 'main' | 'stories' | 'story-reader' | 'sensory' | 'emotions' | 'bedtime' | 'screen_time' | 'account';
+  type PageKey = 'main' | 'stories' | 'story-reader' | 'emotions' | 'bedtime' | 'account';
 
   const [currentView, setCurrentView] = useState<AppView>('splash');
   const [currentPage, setCurrentPage] = useState<PageKey>('main');
@@ -183,7 +187,7 @@ function AppContent() {
     if (currentPage === 'story-reader' && currentView !== 'story-reader') {
       setCurrentView('story-reader');
     }
-    // For all other pages (main, stories, sensory, emotions, etc.), use 'app' view
+    // For all other pages (main, stories, emotions, etc.), use 'app' view
     else if (currentPage !== 'story-reader' && currentView !== 'app') {
       setCurrentView('app');
     }
@@ -223,10 +227,8 @@ function AppContent() {
     // Map destination strings to PageKey types
     const destinationMap: Record<string, PageKey> = {
       'stories': 'stories',
-      'sensory': 'sensory',
       'emotions': 'emotions',
       'bedtime': 'bedtime',
-      'screen_time': 'screen_time',
       'account': 'account'
     };
 
@@ -332,10 +334,10 @@ function AppContent() {
               selectedStory={selectedStory}
               onBack={handleBackToMainMenu}
             />,
-            sensory: createDefaultPage('brain', 'Sensory'),
+
             emotions: <EmotionsScreen onBack={handleBackToMainMenu} />,
             bedtime: <MusicScreen onBack={handleBackToMainMenu} />,
-            screen_time: createDefaultPage('clock', 'Screen Time'),
+
             account: <AccountScreen onBack={handleAccountBack} />,
           }}
           duration={800}
