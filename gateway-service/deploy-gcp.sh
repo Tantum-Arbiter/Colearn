@@ -91,6 +91,8 @@ create_secrets() {
         "google-client-secret"
         "apple-client-id"
         "apple-client-secret"
+        "firebase-project-id"
+        "firebase-service-account-key"
     )
     
     for secret in "${secrets[@]}"; do
@@ -154,6 +156,8 @@ deploy_service() {
         --set-secrets="GOOGLE_CLIENT_SECRET=google-client-secret:latest" \
         --set-secrets="APPLE_CLIENT_ID=apple-client-id:latest" \
         --set-secrets="APPLE_CLIENT_SECRET=apple-client-secret:latest" \
+        --set-secrets="FIREBASE_PROJECT_ID=firebase-project-id:latest" \
+        --set-secrets="FIREBASE_SERVICE_ACCOUNT_KEY=firebase-service-account-key:latest" \
         --set-env-vars="GCP_PROJECT_ID=${PROJECT_ID}" \
         --set-env-vars="GCP_REGION=${REGION}"
     

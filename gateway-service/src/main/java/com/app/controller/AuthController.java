@@ -1,7 +1,12 @@
 package com.app.controller;
 
 import com.app.config.JwtConfig;
+import com.app.model.User;
+import com.app.model.UserSession;
 import com.app.service.SecurityMonitoringService;
+import com.app.service.ApplicationMetricsService;
+import com.app.service.UserService;
+import com.app.service.SessionService;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.slf4j.Logger;
@@ -15,6 +20,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -30,10 +36,18 @@ public class AuthController {
     
     private final JwtConfig jwtConfig;
     private final SecurityMonitoringService securityMonitoringService;
+    private final ApplicationMetricsService applicationMetricsService;
+    private final UserService userService;
+    private final SessionService sessionService;
 
-    public AuthController(JwtConfig jwtConfig, SecurityMonitoringService securityMonitoringService) {
+    public AuthController(JwtConfig jwtConfig, SecurityMonitoringService securityMonitoringService,
+                         ApplicationMetricsService applicationMetricsService, UserService userService,
+                         SessionService sessionService) {
         this.jwtConfig = jwtConfig;
         this.securityMonitoringService = securityMonitoringService;
+        this.applicationMetricsService = applicationMetricsService;
+        this.userService = userService;
+        this.sessionService = sessionService;
     }
 
     /**
@@ -41,6 +55,7 @@ public class AuthController {
      */
     @PostMapping("/google")
     public ResponseEntity<?> authenticateWithGoogle(@RequestBody GoogleAuthRequest request, HttpServletRequest httpRequest) {
+        long startTime = System.currentTimeMillis();
         try {
             // Validate request
             if (request == null) {
@@ -74,25 +89,41 @@ public class AuthController {
                 return ResponseEntity.badRequest()
                         .body(createErrorResponse("Invalid token", "Email claim is missing or empty"));
             }
-            
+
+            // Get or create user in database
+            User user = userService.getOrCreateUser(email, name, picture, "google", providerId).join();
+
             // Generate our own tokens
-            String userId = generateUserId(email, "google");
-            String accessToken = jwtConfig.generateAccessToken(userId, email, "google");
-            String refreshToken = jwtConfig.generateRefreshToken(userId);
-            
+            String accessToken = jwtConfig.generateAccessToken(user.getId(), user.getEmail(), "google");
+            String refreshToken = jwtConfig.generateRefreshToken(user.getId());
+
+            // Create session in database
+            String deviceId = httpRequest.getHeader("X-Device-ID");
+            String deviceType = extractDeviceType(httpRequest);
+            String platform = extractPlatform(httpRequest);
+            String appVersion = httpRequest.getHeader("X-App-Version");
+
+            UserSession session = sessionService.createSession(
+                user.getId(), refreshToken, deviceId, deviceType, platform, appVersion
+            ).join();
+
             // Create response
             AuthResponse response = new AuthResponse();
             response.setSuccess(true);
-            response.setUser(createUserProfile(userId, email, name, picture, "google", providerId));
+            response.setUser(createUserProfileFromUser(user));
             response.setTokens(createTokenResponse(accessToken, refreshToken));
             response.setMessage("Google authentication successful");
             
-            logger.info("Google authentication successful for user: {}", email);
+            logger.info("Google authentication successful for user: {}", user.getEmail());
 
             // Log successful authentication for security monitoring
             String clientIp = getClientIpAddress(httpRequest);
             String userAgent = httpRequest.getHeader("User-Agent");
-            securityMonitoringService.logSuccessfulAuthentication(userId, "google", clientIp, userAgent);
+            securityMonitoringService.logSuccessfulAuthentication(user.getId(), "google", clientIp, userAgent);
+
+            // Record authentication metrics
+            long processingTime = System.currentTimeMillis() - startTime;
+            applicationMetricsService.recordAuthentication("google", deviceType, platform, appVersion, true, processingTime);
 
             return ResponseEntity.ok(response);
             
@@ -103,6 +134,13 @@ public class AuthController {
             String clientIp = getClientIpAddress(httpRequest);
             String userAgent = httpRequest.getHeader("User-Agent");
             securityMonitoringService.logFailedAuthentication("google", clientIp, userAgent);
+
+            // Record failed authentication metrics
+            long processingTime = System.currentTimeMillis() - startTime;
+            String deviceType = extractDeviceType(httpRequest);
+            String platform = extractPlatform(httpRequest);
+            String appVersion = httpRequest.getHeader("X-App-Version");
+            applicationMetricsService.recordAuthentication("google", deviceType, platform, appVersion, false, processingTime);
 
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(createErrorResponse("Invalid Google ID token", e.getMessage()));
@@ -118,6 +156,7 @@ public class AuthController {
      */
     @PostMapping("/apple")
     public ResponseEntity<?> authenticateWithApple(@RequestBody AppleAuthRequest request, HttpServletRequest httpRequest) {
+        long startTime = System.currentTimeMillis();
         try {
             // Validate request
             if (request == null) {
@@ -143,28 +182,44 @@ public class AuthController {
             // Extract user information
             String email = decodedJWT.getClaim("email").asString();
             String providerId = decodedJWT.getSubject();
-            
+
             // Apple doesn't always provide name in token, use from request if available
             String name = request.getUserInfo() != null ? request.getUserInfo().getName() : email;
-            
+
+            // Get or create user in database
+            User user = userService.getOrCreateUser(email, name, null, "apple", providerId).join();
+
             // Generate our own tokens
-            String userId = generateUserId(email, "apple");
-            String accessToken = jwtConfig.generateAccessToken(userId, email, "apple");
-            String refreshToken = jwtConfig.generateRefreshToken(userId);
-            
+            String accessToken = jwtConfig.generateAccessToken(user.getId(), user.getEmail(), "apple");
+            String refreshToken = jwtConfig.generateRefreshToken(user.getId());
+
+            // Create session in database
+            String deviceId = httpRequest.getHeader("X-Device-ID");
+            String deviceType = extractDeviceType(httpRequest);
+            String platform = extractPlatform(httpRequest);
+            String appVersion = httpRequest.getHeader("X-App-Version");
+
+            UserSession session = sessionService.createSession(
+                user.getId(), refreshToken, deviceId, deviceType, platform, appVersion
+            ).join();
+
             // Create response
             AuthResponse response = new AuthResponse();
             response.setSuccess(true);
-            response.setUser(createUserProfile(userId, email, name, null, "apple", providerId));
+            response.setUser(createUserProfileFromUser(user));
             response.setTokens(createTokenResponse(accessToken, refreshToken));
             response.setMessage("Apple authentication successful");
             
-            logger.info("Apple authentication successful for user: {}", email);
+            logger.info("Apple authentication successful for user: {}", user.getEmail());
 
             // Log successful authentication for security monitoring
             String clientIp = getClientIpAddress(httpRequest);
             String userAgent = httpRequest.getHeader("User-Agent");
-            securityMonitoringService.logSuccessfulAuthentication(userId, "apple", clientIp, userAgent);
+            securityMonitoringService.logSuccessfulAuthentication(user.getId(), "apple", clientIp, userAgent);
+
+            // Record authentication metrics
+            long processingTime = System.currentTimeMillis() - startTime;
+            applicationMetricsService.recordAuthentication("apple", deviceType, platform, appVersion, true, processingTime);
 
             return ResponseEntity.ok(response);
             
@@ -175,6 +230,13 @@ public class AuthController {
             String clientIp = getClientIpAddress(httpRequest);
             String userAgent = httpRequest.getHeader("User-Agent");
             securityMonitoringService.logFailedAuthentication("apple", clientIp, userAgent);
+
+            // Record failed authentication metrics
+            long processingTime = System.currentTimeMillis() - startTime;
+            String deviceType = extractDeviceType(httpRequest);
+            String platform = extractPlatform(httpRequest);
+            String appVersion = httpRequest.getHeader("X-App-Version");
+            applicationMetricsService.recordAuthentication("apple", deviceType, platform, appVersion, false, processingTime);
 
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(createErrorResponse("Invalid Apple ID token", e.getMessage()));
@@ -204,25 +266,31 @@ public class AuthController {
 
             logger.info("Token refresh attempt");
 
-            // Validate refresh token
-            DecodedJWT decodedJWT = jwtConfig.jwtVerifier().verify(request.getRefreshToken());
-            
-            // Check if it's a refresh token
-            String tokenType = decodedJWT.getClaim("type").asString();
-            if (!"refresh".equals(tokenType)) {
-                throw new JWTVerificationException("Invalid token type");
+            // Validate refresh token and get session from database
+            Optional<UserSession> sessionOpt = sessionService.getSessionByRefreshToken(request.getRefreshToken()).join();
+            if (sessionOpt.isEmpty()) {
+                throw new JWTVerificationException("Invalid refresh token");
             }
-            
-            // Extract user information
-            String userId = decodedJWT.getSubject();
-            
-            // For refresh, we need to get user info from somewhere (database/cache)
-            // For now, we'll extract from the existing token claims
-            // In production, you'd fetch from a user service
-            
+
+            UserSession session = sessionOpt.get();
+            if (!session.isValid()) {
+                throw new JWTVerificationException("Expired or revoked refresh token");
+            }
+
+            // Get user from database
+            Optional<User> userOpt = userService.getUserById(session.getUserId()).join();
+            if (userOpt.isEmpty()) {
+                throw new JWTVerificationException("User not found");
+            }
+
+            User user = userOpt.get();
+
             // Generate new tokens
-            String newAccessToken = jwtConfig.generateAccessToken(userId, "user@example.com", "google");
-            String newRefreshToken = jwtConfig.generateRefreshToken(userId);
+            String newAccessToken = jwtConfig.generateAccessToken(user.getId(), user.getEmail(), user.getProvider());
+            String newRefreshToken = jwtConfig.generateRefreshToken(user.getId());
+
+            // Update session with new refresh token
+            sessionService.validateAndRefreshSession(request.getRefreshToken(), newRefreshToken).join();
             
             // Create response
             TokenRefreshResponse response = new TokenRefreshResponse();
@@ -230,7 +298,7 @@ public class AuthController {
             response.setTokens(createTokenResponse(newAccessToken, newRefreshToken));
             response.setMessage("Token refresh successful");
             
-            logger.info("Token refresh successful for user: {}", userId);
+            logger.info("Token refresh successful for user: {}", user.getId());
             return ResponseEntity.ok(response);
             
         } catch (JWTVerificationException e) {
@@ -261,13 +329,20 @@ public class AuthController {
                         .body(createErrorResponse("Missing refresh token", "Refresh token is required"));
             }
 
-            // In a full implementation, you'd add tokens to a blacklist
-            // For stateless JWT, we just return success
+            // Revoke session in database
             logger.info("Token revocation requested");
+
+            Optional<UserSession> revokedSession = sessionService.revokeSessionByRefreshToken(request.getRefreshToken()).join();
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("message", "Tokens revoked successfully");
+            if (revokedSession.isPresent()) {
+                response.put("message", "Tokens revoked successfully");
+                logger.info("Session revoked for user: {}", revokedSession.get().getUserId());
+            } else {
+                response.put("message", "Token was already invalid or expired");
+                logger.info("Token revocation requested for invalid/expired token");
+            }
 
             return ResponseEntity.ok(response);
             
@@ -295,6 +370,19 @@ public class AuthController {
         profile.setProviderId(providerId);
         profile.setCreatedAt(Instant.now().toString());
         profile.setUpdatedAt(Instant.now().toString());
+        return profile;
+    }
+
+    private UserProfile createUserProfileFromUser(User user) {
+        UserProfile profile = new UserProfile();
+        profile.setId(user.getId());
+        profile.setEmail(user.getEmail());
+        profile.setName(user.getName());
+        profile.setPicture(user.getPicture());
+        profile.setProvider(user.getProvider());
+        profile.setProviderId(user.getProviderId());
+        profile.setCreatedAt(user.getCreatedAt().toString());
+        profile.setUpdatedAt(user.getUpdatedAt().toString());
         return profile;
     }
 
@@ -500,5 +588,61 @@ public class AuthController {
         }
 
         return request.getRemoteAddr();
+    }
+
+    /**
+     * Extract device type from user agent
+     */
+    private String extractDeviceType(HttpServletRequest request) {
+        String userAgent = request.getHeader("User-Agent");
+        if (userAgent == null) {
+            return "unknown";
+        }
+
+        userAgent = userAgent.toLowerCase();
+
+        if (userAgent.contains("bot") || userAgent.contains("crawler") || userAgent.contains("spider")) {
+            return "bot";
+        } else if (userAgent.contains("mobile") || userAgent.contains("android") ||
+                   userAgent.contains("iphone") || userAgent.contains("ipod")) {
+            return "mobile";
+        } else if (userAgent.contains("tablet") || userAgent.contains("ipad")) {
+            return "tablet";
+        } else if (userAgent.contains("windows") || userAgent.contains("macintosh") ||
+                   userAgent.contains("linux")) {
+            return "desktop";
+        } else {
+            return "unknown";
+        }
+    }
+
+    /**
+     * Extract platform from headers
+     */
+    private String extractPlatform(HttpServletRequest request) {
+        String platform = request.getHeader("X-Platform");
+        if (platform != null && !platform.trim().isEmpty()) {
+            return platform.toLowerCase();
+        }
+
+        String userAgent = request.getHeader("User-Agent");
+        if (userAgent == null) {
+            return "unknown";
+        }
+
+        userAgent = userAgent.toLowerCase();
+        if (userAgent.contains("android")) {
+            return "android";
+        } else if (userAgent.contains("ios") || userAgent.contains("iphone") || userAgent.contains("ipad")) {
+            return "ios";
+        } else if (userAgent.contains("windows")) {
+            return "windows";
+        } else if (userAgent.contains("mac")) {
+            return "macos";
+        } else if (userAgent.contains("linux")) {
+            return "linux";
+        } else {
+            return "unknown";
+        }
     }
 }
