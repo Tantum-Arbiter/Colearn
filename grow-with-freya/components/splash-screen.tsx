@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet, Dimensions, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { 
   useSharedValue, 
@@ -20,7 +20,13 @@ const { width, height } = Dimensions.get('window');
 SplashScreen.preventAutoHideAsync();
 
 export function AppSplashScreen() {
-  const { setAppReady, hasCompletedOnboarding, hasCompletedLogin } = useAppStore();
+  const { setAppReady, hasCompletedOnboarding, hasCompletedLogin, forceResetOnboarding } = useAppStore();
+
+  // Debug: Log current state
+  console.log('🚀 AppSplashScreen - Current state:', {
+    hasCompletedOnboarding,
+    hasCompletedLogin
+  });
 
   const logoScale = useSharedValue(0.8);
   const logoOpacity = useSharedValue(0);
@@ -132,6 +138,28 @@ export function AppSplashScreen() {
 
       <View style={styles.loadingContainer}>
         <ThemedText style={styles.loadingText}>Loading magical stories...</ThemedText>
+
+        {/* Temporary debug button - remove after testing */}
+        {__DEV__ && (
+          <Pressable
+            style={{
+              position: 'absolute',
+              bottom: 100,
+              right: 20,
+              backgroundColor: 'rgba(255,0,0,0.7)',
+              padding: 10,
+              borderRadius: 5,
+            }}
+            onPress={() => {
+              console.log('🔄 Force resetting onboarding state...');
+              forceResetOnboarding();
+            }}
+          >
+            <ThemedText style={{ color: 'white', fontSize: 12 }}>
+              RESET ONBOARDING
+            </ThemedText>
+          </Pressable>
+        )}
       </View>
     </LinearGradient>
   );
