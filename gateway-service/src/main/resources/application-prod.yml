@@ -51,7 +51,7 @@ spring:
     endpoints:
       web:
         exposure:
-          include: health,info,metrics,prometheus
+          include: health,info,metrics,prometheus,custom
         base-path: /actuator
     endpoint:
       health:
@@ -61,6 +61,18 @@ spring:
       export:
         prometheus:
           enabled: true
+      tags:
+        application: grow-with-freya-gateway
+        environment: production
+      distribution:
+        percentiles-histogram:
+          http.server.requests: true
+          app.response.time: true
+          app.authentication.time: true
+        percentiles:
+          http.server.requests: 0.5,0.95,0.99
+          app.response.time: 0.5,0.95,0.99
+          app.authentication.time: 0.5,0.95,0.99
     health:
       diskspace:
         enabled: true
@@ -81,12 +93,18 @@ google:
     jwks-uri: https://www.googleapis.com/oauth2/v3/certs
     issuer: https://accounts.google.com
 
-# Apple OAuth Configuration  
+# Apple OAuth Configuration
 apple:
   oauth:
     client-id: ${APPLE_CLIENT_ID}
     jwks-uri: https://appleid.apple.com/auth/keys
     issuer: https://appleid.apple.com
+
+# Firebase Configuration (Production)
+firebase:
+  project-id: ${FIREBASE_PROJECT_ID}
+  service-account-key: ${FIREBASE_SERVICE_ACCOUNT_KEY:#{null}}
+  database-url: ${FIREBASE_DATABASE_URL:#{null}}
 
 # CORS Configuration
 cors:

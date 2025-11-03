@@ -29,6 +29,7 @@ repositories {
 
 ext {
 	set('springCloudVersion', "2025.0.0")
+	set('testcontainersVersion', "1.20.4")
 }
 
 dependencies {
@@ -42,18 +43,25 @@ dependencies {
 	implementation 'com.auth0:java-jwt:4.4.0'
 	implementation 'com.fasterxml.jackson.core:jackson-databind'
 
+	// Firebase dependencies
+	implementation 'com.google.firebase:firebase-admin:9.4.1'
+	implementation 'com.google.auth:google-auth-library-oauth2-http:1.29.0'
+
 	// Monitoring
 	implementation 'io.micrometer:micrometer-registry-prometheus'
 
 	// Testing
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
+	testImplementation 'org.testcontainers:junit-jupiter'
+	testImplementation 'org.testcontainers:gcloud'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 dependencyManagement {
 	imports {
 		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+		mavenBom "org.testcontainers:testcontainers-bom:${testcontainersVersion}"
 	}
 }
 
