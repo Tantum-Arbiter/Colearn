@@ -2,6 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.5.5'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'jacoco'
 }
 
 group = 'com'
@@ -34,13 +35,19 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-authorization-server'
 	implementation 'org.springframework.cloud:spring-cloud-starter-gateway-server-webmvc'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator:3.2.8'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
 
+	// JWT dependencies
+	implementation 'com.auth0:java-jwt:4.4.0'
+	implementation 'com.fasterxml.jackson.core:jackson-databind'
+
+	// Monitoring
 	implementation 'io.micrometer:micrometer-registry-prometheus'
 
-
+	// Testing
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-
+	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
@@ -52,4 +59,13 @@ dependencyManagement {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+	dependsOn test
+	reports {
+		xml.required = true
+		html.required = true
+	}
 }

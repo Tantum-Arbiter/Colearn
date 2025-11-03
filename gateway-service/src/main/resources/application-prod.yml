@@ -1,0 +1,215 @@
+# Production Configuration for Grow with Freya Gateway Service
+# This configuration is optimized for GCP Cloud Run deployment
+
+server:
+  port: ${PORT:8080}
+  servlet:
+    context-path: /
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain,application/javascript,text/css
+  http2:
+    enabled: true
+
+spring:
+  application:
+    name: grow-with-freya-gateway
+  profiles:
+    active: prod
+  
+  # Security Configuration
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope: openid,profile,email
+          apple:
+            client-id: ${APPLE_CLIENT_ID}
+            client-secret: ${APPLE_CLIENT_SECRET}
+            scope: openid,name,email
+
+  # Logging Configuration
+  logging:
+    level:
+      com.app: INFO
+      org.springframework.security: WARN
+      org.springframework.web: WARN
+      AUDIT: INFO
+    pattern:
+      console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+      file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file:
+      name: /var/log/gateway/application.log
+      max-size: 100MB
+      max-history: 30
+
+  # Actuator Configuration
+  management:
+    endpoints:
+      web:
+        exposure:
+          include: health,info,metrics,prometheus
+        base-path: /actuator
+    endpoint:
+      health:
+        show-details: when-authorized
+        show-components: when-authorized
+    metrics:
+      export:
+        prometheus:
+          enabled: true
+    health:
+      diskspace:
+        enabled: true
+      db:
+        enabled: false
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET}
+  expiration-seconds: 900  # 15 minutes
+  refresh-expiration-seconds: 604800  # 7 days
+  issuer: grow-with-freya-gateway
+  
+# Google OAuth Configuration
+google:
+  oauth:
+    client-id: ${GOOGLE_CLIENT_ID}
+    jwks-uri: https://www.googleapis.com/oauth2/v3/certs
+    issuer: https://accounts.google.com
+
+# Apple OAuth Configuration  
+apple:
+  oauth:
+    client-id: ${APPLE_CLIENT_ID}
+    jwks-uri: https://appleid.apple.com/auth/keys
+    issuer: https://appleid.apple.com
+
+# CORS Configuration
+cors:
+  allowed-origins:
+    - https://growwithfreya.com
+    - https://www.growwithfreya.com
+    - https://app.growwithfreya.com
+    - exp://192.168.1.* # Expo development
+  allowed-methods:
+    - GET
+    - POST
+    - PUT
+    - PATCH
+    - DELETE
+    - OPTIONS
+  allowed-headers:
+    - Authorization
+    - Content-Type
+    - X-Requested-With
+    - X-Device-ID
+    - X-Session-ID
+    - X-App-Version
+    - X-Platform
+    - X-Timestamp
+    - X-Nonce
+    - X-Signature
+  allow-credentials: true
+  max-age: 3600
+
+# Rate Limiting Configuration
+rate-limiting:
+  default-requests-per-minute: 60
+  auth-requests-per-minute: 10
+  api-requests-per-minute: 100
+  cleanup-interval-minutes: 5
+
+# Security Headers Configuration
+security:
+  headers:
+    content-security-policy: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://accounts.google.com https://appleid.apple.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    strict-transport-security: "max-age=31536000; includeSubDomains; preload"
+    x-frame-options: "DENY"
+    x-content-type-options: "nosniff"
+    x-xss-protection: "1; mode=block"
+    referrer-policy: "strict-origin-when-cross-origin"
+
+# GCP Configuration
+gcp:
+  project-id: ${GCP_PROJECT_ID}
+  region: ${GCP_REGION:us-central1}
+  
+# Monitoring Configuration
+monitoring:
+  security:
+    enabled: true
+    brute-force-threshold: 5
+    brute-force-window-minutes: 5
+    suspicious-ip-threshold: 10
+    suspicious-ip-window-hours: 1
+
+# Cache Configuration
+cache:
+  jwks:
+    ttl-minutes: 60
+    max-size: 100
+  rate-limiting:
+    cleanup-interval-minutes: 5
+    max-entries: 10000
+
+# Environment Variables Required:
+# - JWT_SECRET: Strong secret key for JWT signing (minimum 256 bits)
+# - GOOGLE_CLIENT_ID: Google OAuth client ID
+# - GOOGLE_CLIENT_SECRET: Google OAuth client secret  
+# - APPLE_CLIENT_ID: Apple OAuth client ID
+# - APPLE_CLIENT_SECRET: Apple OAuth client secret
+# - GCP_PROJECT_ID: Google Cloud Project ID
+# - GCP_REGION: Google Cloud Region (optional, defaults to us-central1)
+
+# Health Check Configuration
+health:
+  check:
+    enabled: true
+    timeout-seconds: 30
+    
+# Request Validation Configuration
+request-validation:
+  enabled: true
+  max-request-size-mb: 10
+  suspicious-patterns:
+    enabled: true
+    log-only: false
+  user-agent:
+    required: true
+    block-suspicious: true
+
+# Audit Logging Configuration
+audit:
+  enabled: true
+  log-successful-auth: true
+  log-failed-auth: true
+  log-suspicious-requests: true
+  log-rate-limit-violations: true
+  log-token-operations: true
+  retention-days: 90
+
+# Performance Configuration
+performance:
+  async:
+    core-pool-size: 10
+    max-pool-size: 50
+    queue-capacity: 100
+  connection:
+    timeout-seconds: 30
+    read-timeout-seconds: 30
+  compression:
+    enabled: true
+    min-response-size: 1024
+
+# Feature Flags
+features:
+  security-monitoring: true
+  rate-limiting: true
+  request-validation: true
+  audit-logging: true
+  metrics-collection: true
+  health-checks: true
