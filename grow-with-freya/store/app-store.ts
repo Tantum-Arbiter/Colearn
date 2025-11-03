@@ -60,7 +60,6 @@ export interface AppState {
     rocketFloat2: number;
   }) => void;
   clearPersistedStorage: () => Promise<void>;
-  forceResetOnboarding: () => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -124,23 +123,16 @@ export const useAppStore = create<AppState>()(
           console.error('Failed to clear persisted storage:', error);
         }
       },
-      // Temporary debug method to force reset onboarding
-      forceResetOnboarding: () => set({
-        hasCompletedOnboarding: false,
-        hasCompletedLogin: false,
-        showLoginAfterOnboarding: false
-      }),
     }),
     {
       name: 'app-storage',
       storage: createJSONStorage(() => AsyncStorage),
       // Persist important app state including background animation positions
       // Note: isAppReady is NOT persisted - it should always start as false to ensure proper initialization
-      // Note: TEMPORARILY not persisting onboarding state for testing - will restore after demo
       partialize: (state) => ({
-        // hasCompletedOnboarding: state.hasCompletedOnboarding, // TEMPORARILY DISABLED FOR TESTING
-        // hasCompletedLogin: state.hasCompletedLogin, // TEMPORARILY DISABLED FOR TESTING
-        // showLoginAfterOnboarding: state.showLoginAfterOnboarding, // TEMPORARILY DISABLED FOR TESTING
+        hasCompletedOnboarding: state.hasCompletedOnboarding,
+        hasCompletedLogin: state.hasCompletedLogin,
+        showLoginAfterOnboarding: state.showLoginAfterOnboarding,
         currentChildId: state.currentChildId,
         childAgeInMonths: state.childAgeInMonths,
         screenTimeEnabled: state.screenTimeEnabled,
