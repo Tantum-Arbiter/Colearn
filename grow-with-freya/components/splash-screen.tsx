@@ -139,26 +139,44 @@ export function AppSplashScreen() {
       <View style={styles.loadingContainer}>
         <ThemedText style={styles.loadingText}>Loading magical stories...</ThemedText>
 
-        {/* Temporary debug button - remove after testing */}
+        {/* Temporary debug buttons - remove after testing */}
         {__DEV__ && (
-          <Pressable
-            style={{
-              position: 'absolute',
-              bottom: 100,
-              right: 20,
-              backgroundColor: 'rgba(255,0,0,0.7)',
-              padding: 10,
-              borderRadius: 5,
-            }}
-            onPress={() => {
-              console.log('🔄 Force resetting onboarding state...');
-              forceResetOnboarding();
-            }}
-          >
-            <ThemedText style={{ color: 'white', fontSize: 12 }}>
-              RESET ONBOARDING
-            </ThemedText>
-          </Pressable>
+          <View style={{ position: 'absolute', bottom: 80, right: 20 }}>
+            <Pressable
+              style={{
+                backgroundColor: 'rgba(255,0,0,0.7)',
+                padding: 8,
+                borderRadius: 5,
+                marginBottom: 10,
+              }}
+              onPress={() => {
+                console.log('🔄 Force resetting onboarding state...');
+                forceResetOnboarding();
+              }}
+            >
+              <ThemedText style={{ color: 'white', fontSize: 10 }}>
+                RESET ONBOARDING
+              </ThemedText>
+            </Pressable>
+
+            <Pressable
+              style={{
+                backgroundColor: 'rgba(0,0,255,0.7)',
+                padding: 8,
+                borderRadius: 5,
+              }}
+              onPress={async () => {
+                console.log('🗑️ Clearing all AsyncStorage...');
+                const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+                await AsyncStorage.clear();
+                console.log('✅ AsyncStorage cleared - restart app');
+              }}
+            >
+              <ThemedText style={{ color: 'white', fontSize: 10 }}>
+                CLEAR STORAGE
+              </ThemedText>
+            </Pressable>
+          </View>
         )}
       </View>
     </LinearGradient>

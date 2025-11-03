@@ -136,10 +136,11 @@ export const useAppStore = create<AppState>()(
       storage: createJSONStorage(() => AsyncStorage),
       // Persist important app state including background animation positions
       // Note: isAppReady is NOT persisted - it should always start as false to ensure proper initialization
+      // Note: TEMPORARILY not persisting onboarding state for testing - will restore after demo
       partialize: (state) => ({
-        hasCompletedOnboarding: state.hasCompletedOnboarding,
-        hasCompletedLogin: state.hasCompletedLogin,
-        showLoginAfterOnboarding: state.showLoginAfterOnboarding,
+        // hasCompletedOnboarding: state.hasCompletedOnboarding, // TEMPORARILY DISABLED FOR TESTING
+        // hasCompletedLogin: state.hasCompletedLogin, // TEMPORARILY DISABLED FOR TESTING
+        // showLoginAfterOnboarding: state.showLoginAfterOnboarding, // TEMPORARILY DISABLED FOR TESTING
         currentChildId: state.currentChildId,
         childAgeInMonths: state.childAgeInMonths,
         screenTimeEnabled: state.screenTimeEnabled,
