@@ -37,9 +37,20 @@ dependencies {
 
 	implementation 'io.micrometer:micrometer-registry-prometheus'
 
+	// Firebase dependencies
+	implementation 'com.google.firebase:firebase-admin:9.4.1'
+	implementation 'com.google.auth:google-auth-library-oauth2-http:1.29.0'
+
+	// JWT dependencies
+	implementation 'com.auth0:java-jwt:4.4.0'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+
+	// Test dependencies
+	testImplementation 'org.testcontainers:testcontainers:1.20.4'
+	testImplementation 'org.testcontainers:junit-jupiter:1.20.4'
+	testImplementation 'org.mockito:mockito-core:5.14.2'
 
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
