@@ -225,10 +225,11 @@ main() {
     log_success "Deployment completed successfully!"
     log_info "Next steps:"
     log_info "1. Update secrets with actual values"
-    log_info "2. Configure custom domain (optional)"
-    log_info "3. Set up CI/CD pipeline"
-    log_info "4. Configure monitoring alerts"
-    
+    log_info "2. Deploy Firestore configuration: ./deploy-firestore-config.sh"
+    log_info "3. Configure custom domain (optional)"
+    log_info "4. Set up CI/CD pipeline"
+    log_info "5. Configure monitoring alerts"
+
     echo ""
     log_info "Service URL: ${SERVICE_URL}"
     log_info "Health Check: ${SERVICE_URL}/actuator/health"
@@ -250,19 +251,30 @@ case "${1:-deploy}" in
         set_project
         create_secrets
         ;;
+    "firestore")
+        log_info "Deploying Firestore configuration..."
+        if [ -f "./deploy-firestore-config.sh" ]; then
+            export FIREBASE_PROJECT_ID="$PROJECT_ID"
+            ./deploy-firestore-config.sh
+        else
+            log_error "deploy-firestore-config.sh not found"
+            exit 1
+        fi
+        ;;
     "url")
         set_project
         get_service_url
         ;;
     "help")
-        echo "Usage: $0 [deploy|build|secrets|url|help]"
+        echo "Usage: $0 [deploy|build|secrets|firestore|url|help]"
         echo ""
         echo "Commands:"
-        echo "  deploy  - Full deployment (default)"
-        echo "  build   - Build and push Docker image only"
-        echo "  secrets - Create secrets only"
-        echo "  url     - Get service URL"
-        echo "  help    - Show this help"
+        echo "  deploy    - Full deployment (default)"
+        echo "  build     - Build and push Docker image only"
+        echo "  secrets   - Create secrets only"
+        echo "  firestore - Deploy Firestore indexes and rules"
+        echo "  url       - Get service URL"
+        echo "  help      - Show this help"
         echo ""
         echo "Environment variables:"
         echo "  GCP_PROJECT_ID - GCP project ID (default: grow-with-freya)"

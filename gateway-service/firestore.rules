@@ -1,0 +1,99 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function hasValidEmail() {
+      return request.resource.data.email is string && 
+             request.resource.data.email.matches('.*@.*\\..*');
+    }
+    
+    function hasValidProvider() {
+      return request.resource.data.provider is string &&
+             request.resource.data.provider in ['google', 'apple'];
+    }
+    
+    function hasRequiredUserFields() {
+      return request.resource.data.keys().hasAll(['email', 'provider', 'providerId', 'isActive']);
+    }
+    
+    function hasValidUserData() {
+      return hasValidEmail() && hasValidProvider();
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && 
+                       hasRequiredUserFields() && 
+                       hasValidUserData();
+      allow update: if isOwner(userId) && 
+                       hasValidUserData() &&
+                       // Prevent modification of critical fields
+                       request.resource.data.email == resource.data.email &&
+                       request.resource.data.provider == resource.data.provider &&
+                       request.resource.data.providerId == resource.data.providerId;
+      allow delete: if isOwner(userId);
+      
+      // Child profiles subcollection
+      match /children/{childId} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      // User preferences subcollection
+      match /preferences/{prefsId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+    
+    // Sessions collection
+    match /sessions/{sessionId} {
+      allow read: if isAuthenticated() && 
+                     resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && 
+                       request.resource.data.userId == request.auth.uid &&
+                       request.resource.data.keys().hasAll(['userId', 'refreshToken', 'isActive', 'expiresAt']);
+      allow update: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid &&
+                       request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid;
+    }
+    
+    // Stories collection (read-only for authenticated users)
+    match /stories/{storyId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Stories are managed by admin/backend only
+      
+      // Story pages subcollection
+      match /pages/{pageId} {
+        allow read: if isAuthenticated();
+        allow write: if false;
+      }
+    }
+    
+    // Admin collections (restricted)
+    match /admin/{document=**} {
+      allow read, write: if false; // Admin access only through backend
+    }
+    
+    // Analytics collections (write-only for authenticated users)
+    match /analytics/{document=**} {
+      allow read: if false;
+      allow write: if isAuthenticated();
+    }
+    
+    // Default deny all other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

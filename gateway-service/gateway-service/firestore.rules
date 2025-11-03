@@ -1,0 +1,106 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isValidEmail(email) {
+      return email is string && email.matches('.*@.*\\..*');
+    }
+    
+    function isValidProvider(provider) {
+      return provider in ['google', 'apple'];
+    }
+    
+    function hasRequiredUserFields() {
+      return request.resource.data.keys().hasAll(['email', 'name', 'provider', 'providerId', 'isActive', 'createdAt', 'updatedAt']);
+    }
+    
+    function hasValidUserData() {
+      return isValidEmail(request.resource.data.email) &&
+             isValidProvider(request.resource.data.provider) &&
+             request.resource.data.isActive is bool &&
+             request.resource.data.createdAt is timestamp &&
+             request.resource.data.updatedAt is timestamp;
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      // Allow read access to own user document
+      allow read: if isOwner(userId);
+      
+      // Allow create with proper validation
+      allow create: if isOwner(userId) && 
+                       hasRequiredUserFields() && 
+                       hasValidUserData();
+      
+      // Allow update to own user document with validation
+      allow update: if isOwner(userId) && 
+                       hasValidUserData() &&
+                       // Prevent changing critical fields
+                       request.resource.data.email == resource.data.email &&
+                       request.resource.data.provider == resource.data.provider &&
+                       request.resource.data.providerId == resource.data.providerId;
+      
+      // Allow delete of own user document
+      allow delete: if isOwner(userId);
+    }
+    
+    // User sessions collection
+    match /sessions/{sessionId} {
+      // Allow read access to own sessions
+      allow read: if isAuthenticated() && 
+                     resource.data.userId == request.auth.uid;
+      
+      // Allow create session with proper validation
+      allow create: if isAuthenticated() && 
+                       request.resource.data.userId == request.auth.uid &&
+                       request.resource.data.keys().hasAll(['userId', 'deviceType', 'isActive', 'createdAt', 'expiresAt']) &&
+                       request.resource.data.isActive is bool &&
+                       request.resource.data.createdAt is timestamp &&
+                       request.resource.data.expiresAt is timestamp;
+      
+      // Allow update to own sessions
+      allow update: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid &&
+                       request.resource.data.userId == request.auth.uid;
+      
+      // Allow delete of own sessions
+      allow delete: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid;
+    }
+    
+    // Stories collection - read-only for authenticated users
+    match /stories/{storyId} {
+      // Allow read access to all authenticated users
+      allow read: if isAuthenticated();
+      
+      // Only allow write access to admin users (implement admin check as needed)
+      // For now, no write access from client
+      allow write: if false;
+    }
+    
+    // Admin-only collections (if needed in the future)
+    match /admin/{document=**} {
+      // Implement admin role checking here
+      allow read, write: if false; // Placeholder - implement admin role check
+    }
+    
+    // Metrics and analytics collections (write-only for the service)
+    match /metrics/{document=**} {
+      allow read, write: if false; // Only backend service should access
+    }
+    
+    // Default deny rule for any other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
