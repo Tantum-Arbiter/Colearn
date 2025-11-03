@@ -13,12 +13,17 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import * as ScreenOrientation from 'expo-screen-orientation';
-import { Story, StoryPage, STORY_TAGS } from '@/types/story';
+import { Story, StoryPage, STORY_TAGS, AnimatedCharacter } from '@/types/story';
 import { Fonts } from '@/constants/theme';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 import { StoryCompletionScreen } from './story-completion-screen';
 import { MusicControl } from '../ui/music-control';
 import { useAppStore } from '@/store/app-store';
+import { AnimatedCharacterComponent } from './animated-character';
+import { characterAudioManager } from '@/services/character-audio';
+import { useCharacterAnimationTiming } from '@/hooks/use-character-animation-timing';
+// import { SimpleAnimatedCharacterDemo } from './simple-animated-character-demo'; // Temporarily disabled to fix infinite loop
+import { shouldShowAnimationsForStory, shouldUseSimpleDemo, isFeatureEnabled } from '@/constants/feature-flags';
 
 
 
@@ -39,6 +44,39 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
 
   const [preloadedPages, setPreloadedPages] = useState<Set<number>>(new Set());
   const [showCompletionScreen, setShowCompletionScreen] = useState(false);
+
+  // Feature flag debug info
+  useEffect(() => {
+    if (isFeatureEnabled('ENABLE_ANIMATION_DEBUG')) {
+      console.log('🎬 Animation Feature Flags:', {
+        storyId: story.id,
+        shouldShowAnimations: shouldShowAnimationsForStory(story.id),
+        shouldUseSimpleDemo: shouldUseSimpleDemo(),
+        isLandscapeReady,
+        currentPageIndex,
+      });
+    }
+  }, [story.id, isLandscapeReady, currentPageIndex]);
+
+  // Character animation timing
+  const {
+    isActive: isAnimationActive,
+    hasStarted: hasAnimationStarted,
+    resetAnimation: resetCharacterAnimations
+  } = useCharacterAnimationTiming({
+    isPageActive: isLandscapeReady && !isTransitioning && !showCompletionScreen,
+    config: {
+      startDelay: 2000,
+      autoStart: true,
+      resetOnInactive: true,
+    },
+    onAnimationStart: () => {
+      console.log('Character animations started for page:', currentPageIndex);
+    },
+    onAnimationReset: () => {
+      console.log('Character animations reset');
+    },
+  });
 
 
 
@@ -92,6 +130,11 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
         ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP)
           .then(() => console.log('Successfully restored to portrait'))
           .catch(error => console.warn('Failed to restore orientation:', error));
+
+        // Cleanup character audio
+        characterAudioManager.unloadAllCharacterAudio()
+          .then(() => console.log('Character audio cleanup complete'))
+          .catch(error => console.warn('Failed to cleanup character audio:', error));
       }
     };
   }, []);
@@ -111,6 +154,9 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
     exitScale.value = withTiming(0.8, { duration: 400, easing: Easing.out(Easing.cubic) });
     exitOpacity.value = withTiming(0.7, { duration: 400, easing: Easing.out(Easing.cubic) });
     exitRotateY.value = withTiming(-20, { duration: 400, easing: Easing.out(Easing.cubic) });
+
+    // Preload character audio for current page
+    preloadCharacterAudio();
 
     // Phase 2: Full opening after delay
     setTimeout(() => {
@@ -243,6 +289,44 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
         }
       }
     });
+  };
+
+  // Preload character audio for current page
+  const preloadCharacterAudio = async () => {
+    const currentPage = pages[currentPageIndex];
+    if (!currentPage?.animatedCharacters) return;
+
+    for (const character of currentPage.animatedCharacters) {
+      if (character.audioSource) {
+        try {
+          await characterAudioManager.loadCharacterAudio(
+            character.id,
+            character.audioSource,
+            { volume: 0.8 }
+          );
+          console.log(`Preloaded audio for character: ${character.name}`);
+        } catch (error) {
+          console.warn(`Failed to preload audio for character ${character.name}:`, error);
+        }
+      }
+    }
+  };
+
+  // Handle character press
+  const handleCharacterPress = async (characterId: string) => {
+    console.log(`Character pressed: ${characterId}`);
+
+    const currentPage = pages[currentPageIndex];
+    const character = currentPage?.animatedCharacters?.find(c => c.id === characterId);
+
+    if (character?.audioSource) {
+      try {
+        await characterAudioManager.playCharacterAudio(characterId);
+        console.log(`Playing audio for character: ${character.name}`);
+      } catch (error) {
+        console.warn(`Failed to play audio for character ${character.name}:`, error);
+      }
+    }
   };
 
   // Handle story completion with book closing animation
@@ -490,14 +574,38 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
               ]}
               resizeMode={imageResizeMode}
             />
-            {/* Character overlay - only show if character image exists */}
-            {page.characterImage && (
+            {/* Legacy Character overlay - only show if character image exists and no animated characters */}
+            {page.characterImage && !page.animatedCharacters && (
               <Image
                 source={typeof page.characterImage === 'string' ? { uri: page.characterImage } : page.characterImage}
                 style={styles.characterImage}
                 resizeMode="contain"
               />
             )}
+
+            {/* Animated Characters - new system */}
+            {page.animatedCharacters && page.animatedCharacters.map((character) => (
+              <AnimatedCharacterComponent
+                key={character.id}
+                character={character}
+                isActive={isLandscapeReady && !isTransitioning && !showCompletionScreen}
+                onCharacterPress={handleCharacterPress}
+                onAnimationComplete={() => {
+                  console.log(`Animation complete for character: ${character.name}`);
+                }}
+              />
+            ))}
+
+            {/* Simple Animation Demo - Feature Flagged Proof of Concept - TEMPORARILY DISABLED */}
+            {/* {shouldShowAnimationsForStory(story.id) && shouldUseSimpleDemo() && (
+              <SimpleAnimatedCharacterDemo
+                isActive={isLandscapeReady && !isTransitioning && !showCompletionScreen}
+                onCharacterPress={() => {
+                  console.log('Demo character pressed!');
+                  // Could play a simple sound effect here
+                }}
+              />
+            )} */}
 
             {/* Page indicator overlay - Top Left (hide on cover page and next page) */}
             {!isNextPage && page.pageNumber > 0 && (
@@ -568,6 +676,14 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
 
     // Update content immediately so previous page can start fading in
     setCurrentPageIndex(targetPageIndex);
+
+    // Reset character animations for new page
+    resetCharacterAnimations();
+
+    // Preload character audio for new page
+    setTimeout(() => {
+      preloadCharacterAudio();
+    }, 100);
 
     // Fade new page in
     setTimeout(() => {

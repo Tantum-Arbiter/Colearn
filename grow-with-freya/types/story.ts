@@ -1,11 +1,48 @@
 import { ImageSourcePropType } from 'react-native';
 
+export interface CharacterAnimation {
+  id: string;
+  name: string; // Animation name (e.g., 'idle', 'walking', 'jumping')
+  frames: string[]; // Array of image paths for animation frames (10-20 frames)
+  duration: number; // Total animation duration in milliseconds
+  loop: boolean; // Whether animation should loop
+  startDelay?: number; // Delay before animation starts (default: 2000ms)
+}
+
+export interface CharacterMovement {
+  type: 'translate' | 'scale' | 'rotate';
+  direction?: 'left' | 'right' | 'up' | 'down'; // For translate movements
+  distance?: number; // Distance in pixels or percentage
+  duration: number; // Movement duration in milliseconds
+  easing?: 'linear' | 'ease-in' | 'ease-out' | 'ease-in-out';
+}
+
+export interface CharacterPosition {
+  x: number | string; // X position (pixels or percentage)
+  y: number | string; // Y position (pixels or percentage)
+  width: number | string; // Character width (pixels or percentage)
+  height: number | string; // Character height (pixels or percentage)
+  zIndex?: number; // Layer order
+}
+
+export interface AnimatedCharacter {
+  id: string;
+  name: string;
+  position: CharacterPosition;
+  animations: CharacterAnimation[];
+  defaultAnimation?: string; // Default animation to play
+  audioSource?: string; // Audio file to play when character is tapped
+  movements?: CharacterMovement[]; // Sequential movements after animation
+  isInteractive?: boolean; // Whether character responds to touch
+}
+
 export interface StoryPage {
   id: string;
   pageNumber: number;
   type?: string; // Page type (e.g., 'cover', 'story')
   backgroundImage?: string; // Background image for the page
-  characterImage?: string; // Character/foreground image
+  characterImage?: string; // Legacy character image (for backward compatibility)
+  animatedCharacters?: AnimatedCharacter[]; // New animated characters system
   text: string; // Story text for this page
 }
 
