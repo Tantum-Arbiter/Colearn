@@ -149,20 +149,24 @@ function AppContent() {
   }, []);
 
   useEffect(() => {
-    console.log('App state check:', { isAppReady, hasCompletedOnboarding, showLoginAfterOnboarding });
-    console.log('Current view will be set based on state...');
+    console.log('🔍 App state check:', {
+      isAppReady,
+      hasCompletedOnboarding,
+      showLoginAfterOnboarding,
+      currentView
+    });
 
     if (!isAppReady) {
-      console.log('Setting view to splash - app not ready');
+      console.log('🚀 Setting view to splash - app not ready');
       setCurrentView('splash');
     } else if (showLoginAfterOnboarding) {
-      console.log('Setting view to login - show login after onboarding');
+      console.log('🔐 Setting view to login - show login after onboarding');
       setCurrentView('login');
     } else if (!hasCompletedOnboarding) {
-      console.log('Setting view to onboarding - not completed');
+      console.log('📚 Setting view to onboarding - not completed');
       setCurrentView('onboarding');
     } else {
-      console.log('Setting view to app - all conditions met');
+      console.log('🏠 Setting view to app - all conditions met');
       setCurrentView('app');
       setCurrentPage('main');
     }
