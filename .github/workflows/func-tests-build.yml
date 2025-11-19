@@ -56,11 +56,11 @@ jobs:
 
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-#      - name: Deploy to Cloud Run
-#        run: |
-#          gcloud run deploy $SERVICE
-#            --image "europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/artifact-repo/${{ env.IMAGE_NAME }}:${{ steps.build.outputs.version }}"
-#            --region ${{ env.REGION }}
-#            --project ${{ env.PROJECT_ID }}
-#            --service-account svc-deploy-functional@${{ env.PROJECT_ID }}.iam.gserviceaccount.com
-#            --no-allow-unauthenticated
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy $SERVICE
+            --image "europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/artifact-repo/${{ env.IMAGE_NAME }}:${{ steps.build.outputs.version }}"
+            --region ${{ env.REGION }}
+            --project ${{ env.PROJECT_ID }}
+            --service-account svc-deploy-functional@${{ env.PROJECT_ID }}.iam.gserviceaccount.com
+            --no-allow-unauthenticated
