@@ -18,11 +18,16 @@ private final String baseUrl = System.getenv().getOrDefault("GATEWAY_BASE_URL", 
 
     @When("I GET {string}")
     public void i_get(String path) throws IOException, InterruptedException {
+        String fullUrl = baseUrl + path;
+        System.out.println("Making GET request to: " + fullUrl);
+
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + path))
+                .uri(URI.create(fullUrl))
                 .GET()
                 .build();
         response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        System.out.println("Response status: " + response.statusCode());
     }
 
     @Then("the response status should be {int}")
