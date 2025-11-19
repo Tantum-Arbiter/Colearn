@@ -149,3 +149,31 @@ jobs:
             --limit=1000 \
             --format="value(textPayload)"
 
+
+
+  functional-tests-compose:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build and run functional tests via Docker Compose
+        run: |
+          docker compose version
+          docker compose -f docker-compose.functional-tests.yml up --build --abort-on-container-exit --exit-code-from func-tests
+        timeout-minutes: 30
+
+      - name: Teardown
+        if: always()
+        run: docker compose -f docker-compose.functional-tests.yml down -v
+
+      - name: Upload functional test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: functional-test-reports
+          path: func-tests/build/reports
+          if-no-files-found: warn

@@ -26,12 +26,6 @@ public class ChildProfile {
     @JsonProperty("avatar")
     private String avatar; // "boy" or "girl" or custom avatar URL
 
-    @JsonProperty("birthDate")
-    private LocalDate birthDate;
-
-    @JsonProperty("ageInMonths")
-    private int ageInMonths;
-
     @JsonProperty("isActive")
     private boolean isActive = true;
 
@@ -66,13 +60,11 @@ public class ChildProfile {
     }
 
     // Constructor for new child
-    public ChildProfile(String id, String name, String avatar, LocalDate birthDate) {
+    public ChildProfile(String id, String name, String avatar) {
         this();
         this.id = id;
         this.name = name;
         this.avatar = avatar;
-        this.birthDate = birthDate;
-        this.ageInMonths = calculateAgeInMonths(birthDate);
     }
 
     // Getters and Setters
@@ -100,24 +92,6 @@ public class ChildProfile {
     public void setAvatar(String avatar) {
         this.avatar = avatar;
         this.updatedAt = Instant.now();
-    }
-
-    public LocalDate getBirthDate() {
-        return birthDate;
-    }
-
-    public void setBirthDate(LocalDate birthDate) {
-        this.birthDate = birthDate;
-        this.ageInMonths = calculateAgeInMonths(birthDate);
-        this.updatedAt = Instant.now();
-    }
-
-    public int getAgeInMonths() {
-        return ageInMonths;
-    }
-
-    public void setAgeInMonths(int ageInMonths) {
-        this.ageInMonths = ageInMonths;
     }
 
     public boolean isActive() {
@@ -186,16 +160,6 @@ public class ChildProfile {
     }
 
     // Helper methods
-    private int calculateAgeInMonths(LocalDate birthDate) {
-        if (birthDate == null) return 0;
-        
-        LocalDate now = LocalDate.now();
-        int years = now.getYear() - birthDate.getYear();
-        int months = now.getMonthValue() - birthDate.getMonthValue();
-        
-        return (years * 12) + months;
-    }
-
     public void addFavorite(String storyId) {
         if (this.favorites == null) {
             this.favorites = new ArrayList<>();
@@ -215,14 +179,6 @@ public class ChildProfile {
 
     public boolean isFavorite(String storyId) {
         return this.favorites != null && this.favorites.contains(storyId);
-    }
-
-    public String getAgeRange() {
-        if (ageInMonths < 24) return "0-2";
-        if (ageInMonths < 36) return "2-3";
-        if (ageInMonths < 48) return "3-4";
-        if (ageInMonths < 60) return "4-5";
-        return "5+";
     }
 
     // Nested classes
@@ -390,7 +346,6 @@ public class ChildProfile {
                 "id='" + id + '\'' +
                 ", name='" + name + '\'' +
                 ", avatar='" + avatar + '\'' +
-                ", ageInMonths=" + ageInMonths +
                 ", isActive=" + isActive +
                 ", storiesCompleted=" + (progress != null ? progress.getStoriesCompleted() : 0) +
                 '}';

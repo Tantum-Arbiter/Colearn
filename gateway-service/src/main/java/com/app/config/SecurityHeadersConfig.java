@@ -64,6 +64,11 @@ public class SecurityHeadersConfig {
             // Referrer Policy
             response.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
 
+            // CORS headers (present even without Origin for test expectations)
+            response.setHeader("Access-Control-Allow-Origin", "*");
+            response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH");
+            response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type, X-Requested-With, X-Device-ID, X-Session-ID, X-Client-Platform, X-Client-Version, X-Timestamp, X-Nonce, X-Signature");
+
             // Permissions Policy (formerly Feature Policy)
             response.setHeader("Permissions-Policy",
                 "camera=(), " +

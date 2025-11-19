@@ -160,8 +160,8 @@ public class FirebaseUserRepository implements UserRepository {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 Query query = firestore.collection(COLLECTION_NAME)
-                        .whereEqualTo("isActive", true);
-                
+                        .whereEqualTo("active", true);
+
                 ApiFuture<QuerySnapshot> future = query.get();
                 QuerySnapshot querySnapshot = future.get();
                 
@@ -299,7 +299,7 @@ public class FirebaseUserRepository implements UserRepository {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 Query query = firestore.collection(COLLECTION_NAME)
-                        .whereEqualTo("isActive", true);
+                        .whereEqualTo("active", true);
 
                 ApiFuture<QuerySnapshot> future = query.get();
                 QuerySnapshot querySnapshot = future.get();

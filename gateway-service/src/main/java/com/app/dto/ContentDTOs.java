@@ -36,6 +36,7 @@ public class ContentDTOs {
         public void setEmoji(String emoji) { this.emoji = emoji; }
         public String getCoverImage() { return coverImage; }
         public void setCoverImage(String coverImage) { this.coverImage = coverImage; }
+        @com.fasterxml.jackson.annotation.JsonProperty("isAvailable")
         public boolean isAvailable() { return isAvailable; }
         public void setAvailable(boolean available) { isAvailable = available; }
         public String getAgeRange() { return ageRange; }
@@ -98,6 +99,7 @@ public class ContentDTOs {
         private AppSettings settings;
         private String version;
         private String lastUpdated;
+        private List<Announcement> announcements;
 
         // Getters and setters
         public List<StoryMetadata> getStories() { return stories; }
@@ -110,6 +112,8 @@ public class ContentDTOs {
         public void setVersion(String version) { this.version = version; }
         public String getLastUpdated() { return lastUpdated; }
         public void setLastUpdated(String lastUpdated) { this.lastUpdated = lastUpdated; }
+        public List<Announcement> getAnnouncements() { return announcements; }
+        public void setAnnouncements(List<Announcement> announcements) { this.announcements = announcements; }
     }
 
     public static class ContentCategory {
@@ -137,7 +141,7 @@ public class ContentDTOs {
 
     public static class AppSettings {
         private boolean maintenanceMode;
-        private String minAppVersion;
+        private String appVersion;
         private int maxDailyUsage;
         private List<String> featuresEnabled;
         private List<Announcement> announcements;
@@ -145,8 +149,8 @@ public class ContentDTOs {
         // Getters and setters
         public boolean isMaintenanceMode() { return maintenanceMode; }
         public void setMaintenanceMode(boolean maintenanceMode) { this.maintenanceMode = maintenanceMode; }
-        public String getMinAppVersion() { return minAppVersion; }
-        public void setMinAppVersion(String minAppVersion) { this.minAppVersion = minAppVersion; }
+        public String getAppVersion() { return appVersion; }
+        public void setAppVersion(String appVersion) { this.appVersion = appVersion; }
         public int getMaxDailyUsage() { return maxDailyUsage; }
         public void setMaxDailyUsage(int maxDailyUsage) { this.maxDailyUsage = maxDailyUsage; }
         public List<String> getFeaturesEnabled() { return featuresEnabled; }

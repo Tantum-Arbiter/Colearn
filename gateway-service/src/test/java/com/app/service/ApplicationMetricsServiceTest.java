@@ -334,4 +334,15 @@ class ApplicationMetricsServiceTest {
         assertEquals(1L, deviceTypes.get("tablet"));
         assertEquals(1L, deviceTypes.get("desktop"));
     }
+
+    @Test
+    void testCircuitBreakerCustomMetrics() {
+        metricsService.recordCircuitBreakerStateTransition("default", "CLOSED", "OPEN");
+        metricsService.recordCircuitBreakerCall("default", "failure");
+
+        assertNotNull(meterRegistry.find("app.circuitbreaker.state.transitions")
+                .tag("name", "default").meter(), "state transition meter should exist");
+        assertNotNull(meterRegistry.find("app.circuitbreaker.calls")
+                .tag("name", "default").meter(), "calls meter should exist");
+    }
 }

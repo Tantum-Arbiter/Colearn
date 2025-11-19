@@ -1,0 +1,73 @@
+# Test profile configuration for faster, graceful shutdowns and quieter logs
+
+server:
+  shutdown: graceful
+
+spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 5s
+
+
+  mvc:
+    async:
+      request-timeout: 2s
+
+logging:
+  level:
+    root: INFO
+    org.springframework: WARN
+    org.springframework.security: WARN
+    com.app: INFO
+
+
+
+# Performance timeouts for gateway HTTP clients (enforced via TimeLimiter)
+performance:
+  connection:
+    default-timeout-seconds: 1
+    cms-timeout-seconds: 3
+  inbound:
+    request-timeout-seconds: 5
+
+# Resilience4j Circuit Breakers - fast settings for tests
+resilience4j:
+  circuitbreaker:
+    instances:
+      default:
+        failure-rate-threshold: 50
+        slow-call-rate-threshold: 100
+        slow-call-duration-threshold: 1s
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 6
+        minimum-number-of-calls: 4
+        wait-duration-in-open-state: 3s
+        permitted-number-of-calls-in-half-open-state: 2
+        automatic-transition-from-open-to-half-open-enabled: true
+        record-exceptions:
+          - java.util.concurrent.TimeoutException
+          - java.util.concurrent.CompletionException
+          - java.util.concurrent.ExecutionException
+          - java.net.SocketTimeoutException
+          - java.net.ConnectException
+          - org.springframework.web.client.ResourceAccessException
+          - org.springframework.web.client.RestClientException
+          - org.springframework.web.client.HttpServerErrorException
+      cms:
+        failure-rate-threshold: 50
+        slow-call-rate-threshold: 100
+        slow-call-duration-threshold: 3s
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 6
+        minimum-number-of-calls: 4
+        wait-duration-in-open-state: 3s
+        permitted-number-of-calls-in-half-open-state: 2
+        automatic-transition-from-open-to-half-open-enabled: true
+        record-exceptions:
+          - java.util.concurrent.TimeoutException
+          - java.util.concurrent.CompletionException
+          - java.util.concurrent.ExecutionException
+          - java.net.SocketTimeoutException
+          - java.net.ConnectException
+          - org.springframework.web.client.ResourceAccessException
+          - org.springframework.web.client.RestClientException
+          - org.springframework.web.client.HttpServerErrorException

@@ -1,0 +1,199 @@
+{
+  "mappings": [
+    {
+      "name": "Google OAuth - Token Exchange Success",
+      "request": {
+        "method": "POST",
+        "urlPath": "/oauth2/v4/token",
+        "headers": {
+          "Content-Type": {
+            "equalTo": "application/x-www-form-urlencoded"
+          }
+        },
+        "bodyPatterns": [
+          {
+            "contains": "grant_type=authorization_code"
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "access_token": "google-access-token-{{randomValue length=50 type='ALPHANUMERIC'}}",
+          "expires_in": 3599,
+          "refresh_token": "google-refresh-token-{{randomValue length=50 type='ALPHANUMERIC'}}",
+          "scope": "openid email profile",
+          "token_type": "Bearer",
+          "id_token": "google-id-token-{{randomValue length=100 type='ALPHANUMERIC'}}"
+        },
+        "transformers": ["response-template"]
+      }
+    },
+    {
+      "name": "Google OAuth - User Info Success",
+      "request": {
+        "method": "GET",
+        "urlPath": "/oauth2/v2/userinfo",
+        "headers": {
+          "Authorization": {
+            "matches": "Bearer google-access-token-.*"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "id": "123456789",
+          "email": "test.user@gmail.com",
+          "verified_email": true,
+          "name": "Test User",
+          "given_name": "Test",
+          "family_name": "User",
+          "picture": "https://lh3.googleusercontent.com/a/default-user",
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "name": "Google OAuth - User Info with Valid Token",
+      "request": {
+        "method": "GET",
+        "urlPath": "/oauth2/v2/userinfo",
+        "headers": {
+          "Authorization": {
+            "matches": "Bearer valid-google-.*"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "id": "123456789",
+          "email": "test.user@gmail.com",
+          "verified_email": true,
+          "name": "Test User",
+          "given_name": "Test",
+          "family_name": "User",
+          "picture": "https://lh3.googleusercontent.com/a/default-user",
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "name": "Google OAuth - User Info Invalid Token",
+      "request": {
+        "method": "GET",
+        "urlPath": "/oauth2/v2/userinfo",
+        "headers": {
+          "Authorization": {
+            "matches": "Bearer invalid-.*"
+          }
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "error": {
+            "code": 401,
+            "message": "Invalid Credentials",
+            "status": "UNAUTHENTICATED"
+          }
+        }
+      }
+    },
+    {
+      "name": "Google OAuth - Token Info Success",
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/oauth2/v1/tokeninfo.*",
+        "queryParameters": {
+          "id_token": {
+            "matches": "valid-google-.*"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "iss": "https://accounts.google.com",
+          "aud": "your-google-client-id.apps.googleusercontent.com",
+          "sub": "123456789",
+          "email": "test.user@gmail.com",
+          "email_verified": "true",
+          "name": "Test User",
+          "picture": "https://lh3.googleusercontent.com/a/default-user",
+          "given_name": "Test",
+          "family_name": "User",
+          "locale": "en",
+          "iat": "{{now offset='-5 minutes' format='epoch'}}",
+          "exp": "{{now offset='+55 minutes' format='epoch'}}"
+        },
+        "transformers": ["response-template"]
+      }
+    },
+    {
+      "name": "Google OAuth - Token Info Invalid",
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/oauth2/v1/tokeninfo.*",
+        "queryParameters": {
+          "id_token": {
+            "matches": "invalid-.*"
+          }
+        }
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "error": "invalid_token",
+          "error_description": "Invalid Value"
+        }
+      }
+    },
+    {
+      "name": "Google OAuth - Invalid Token Exchange",
+      "request": {
+        "method": "POST",
+        "urlPath": "/oauth2/v4/token",
+        "headers": {
+          "Content-Type": {
+            "equalTo": "application/x-www-form-urlencoded"
+          }
+        },
+        "bodyPatterns": [
+          {
+            "contains": "code=invalid-code"
+          }
+        ]
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "error": "invalid_grant",
+          "error_description": "Bad Request"
+        }
+      }
+    }
+  ]
+}

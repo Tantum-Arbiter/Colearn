@@ -1,0 +1,173 @@
+{
+  "mappings": [
+    {
+      "name": "Firebase - Verify Google ID Token Success",
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/v1/projects/.*/accounts:lookup.*",
+        "headers": {
+          "Authorization": {
+            "matches": "Bearer valid-google-.*"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "users": [
+            {
+              "localId": "firebase-user-{{randomValue length=20 type='ALPHANUMERIC'}}",
+              "email": "test.user@gmail.com",
+              "emailVerified": true,
+              "displayName": "Test User",
+              "providerUserInfo": [
+                {
+                  "providerId": "google.com",
+                  "federatedId": "123456789",
+                  "email": "test.user@gmail.com",
+                  "displayName": "Test User"
+                }
+              ],
+              "photoUrl": "https://lh3.googleusercontent.com/a/default-user",
+              "passwordHash": "",
+              "passwordUpdatedAt": "{{now format='yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}}",
+              "validSince": "{{now offset='-1 days' format='yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}}",
+              "disabled": false,
+              "lastLoginAt": "{{now format='yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}}",
+              "createdAt": "{{now offset='-30 days' format='yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}}",
+              "customAuth": false
+            }
+          ]
+        },
+        "transformers": ["response-template"]
+      }
+    },
+    {
+      "name": "Firebase - Verify Apple ID Token Success",
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/v1/projects/.*/accounts:lookup.*",
+        "headers": {
+          "Authorization": {
+            "matches": "Bearer valid-apple-.*"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "users": [
+            {
+              "localId": "firebase-user-{{randomValue length=20 type='ALPHANUMERIC'}}",
+              "email": "test.user@privaterelay.appleid.com",
+              "emailVerified": true,
+              "displayName": "Test User",
+              "providerUserInfo": [
+                {
+                  "providerId": "apple.com",
+                  "federatedId": "000000.123456789.1234",
+                  "email": "test.user@privaterelay.appleid.com",
+                  "displayName": "Test User"
+                }
+              ],
+              "photoUrl": "",
+              "passwordHash": "",
+              "passwordUpdatedAt": "{{now format='yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}}",
+              "validSince": "{{now offset='-1 days' format='yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}}",
+              "disabled": false,
+              "lastLoginAt": "{{now format='yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}}",
+              "createdAt": "{{now offset='-30 days' format='yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}}",
+              "customAuth": false
+            }
+          ]
+        },
+        "transformers": ["response-template"]
+      }
+    },
+    {
+      "name": "Firebase - Verify ID Token Invalid",
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/v1/projects/.*/accounts:lookup.*",
+        "headers": {
+          "Authorization": {
+            "matches": "Bearer invalid-.*"
+          }
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "error": {
+            "code": 401,
+            "message": "INVALID_ID_TOKEN",
+            "errors": [
+              {
+                "message": "Invalid ID token.",
+                "domain": "global",
+                "reason": "invalid"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "Firebase - Create User Success",
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "/v1/projects/.*/accounts:signUp.*"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "localId": "firebase-user-{{randomValue length=20 type='ALPHANUMERIC'}}",
+          "email": "{{jsonPath request.body '$.email'}}",
+          "displayName": "{{jsonPath request.body '$.displayName'}}",
+          "idToken": "firebase-id-token-{{randomValue length=50 type='ALPHANUMERIC'}}",
+          "refreshToken": "firebase-refresh-token-{{randomValue length=50 type='ALPHANUMERIC'}}",
+          "expiresIn": "3600"
+        },
+        "transformers": ["response-template"]
+      }
+    },
+    {
+      "name": "Firebase - JWKS Public Keys",
+      "request": {
+        "method": "GET",
+        "urlPath": "/v1/projects/colean-func/publicKeys"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json",
+          "Cache-Control": "public, max-age=3600"
+        },
+        "jsonBody": {
+          "keys": [
+            {
+              "kty": "RSA",
+              "kid": "firebase-key-1",
+              "use": "sig",
+              "alg": "RS256",
+              "n": "test-modulus-value",
+              "e": "AQAB"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

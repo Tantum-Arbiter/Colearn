@@ -15,7 +15,12 @@ spring:
     name: grow-with-freya-gateway-dev
   profiles:
     active: dev
-  
+
+
+  mvc:
+    async:
+      request-timeout: 15s
+
   # Security Configuration (relaxed for development)
   security:
     oauth2:
@@ -75,7 +80,7 @@ jwt:
   expiration-seconds: 3600  # 1 hour (longer for development)
   refresh-expiration-seconds: 86400  # 1 day (shorter for development)
   issuer: grow-with-freya-gateway-dev
-  
+
 # Google OAuth Configuration
 google:
   oauth:
@@ -161,7 +166,7 @@ health:
   check:
     enabled: true
     timeout-seconds: 10
-    
+
 # Request Validation Configuration (relaxed for development)
 request-validation:
   enabled: true
@@ -190,8 +195,10 @@ performance:
     max-pool-size: 10
     queue-capacity: 50
   connection:
-    timeout-seconds: 60  # Longer for debugging
-    read-timeout-seconds: 60
+    default-timeout-seconds: 1
+    cms-timeout-seconds: 3
+  inbound:
+    request-timeout-seconds: 15
   compression:
     enabled: false
     min-response-size: 1024
@@ -217,3 +224,41 @@ dev:
   testing:
     bypass-rate-limiting: false
     bypass-request-validation: false
+
+
+# Resilience4j Circuit Breakers (development)
+resilience4j:
+  circuitbreaker:
+    instances:
+      default:
+        failure-rate-threshold: 50
+        slow-call-rate-threshold: 100
+        slow-call-duration-threshold: 1s
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        wait-duration-in-open-state: 5s
+        permitted-number-of-calls-in-half-open-state: 2
+        automatic-transition-from-open-to-half-open-enabled: true
+        record-exceptions:
+          - java.util.concurrent.TimeoutException
+          - java.util.concurrent.CompletionException
+          - java.net.SocketTimeoutException
+          - java.net.ConnectException
+          - org.springframework.web.client.ResourceAccessException
+      cms:
+        failure-rate-threshold: 50
+        slow-call-rate-threshold: 100
+        slow-call-duration-threshold: 3s
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        wait-duration-in-open-state: 5s
+        permitted-number-of-calls-in-half-open-state: 2
+        automatic-transition-from-open-to-half-open-enabled: true
+        record-exceptions:
+          - java.util.concurrent.TimeoutException
+          - java.util.concurrent.CompletionException
+          - java.net.SocketTimeoutException
+          - java.net.ConnectException
+          - org.springframework.web.client.ResourceAccessException

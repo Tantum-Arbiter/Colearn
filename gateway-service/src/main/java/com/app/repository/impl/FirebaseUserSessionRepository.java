@@ -114,8 +114,8 @@ public class FirebaseUserSessionRepository implements UserSessionRepository {
             try {
                 Query query = firestore.collection(COLLECTION_NAME)
                         .whereEqualTo("userId", userId)
-                        .whereEqualTo("isActive", true);
-                
+                        .whereEqualTo("active", true);
+
                 ApiFuture<QuerySnapshot> future = query.get();
                 QuerySnapshot querySnapshot = future.get();
                 
@@ -232,10 +232,10 @@ public class FirebaseUserSessionRepository implements UserSessionRepository {
                 
                 Instant now = Instant.now();
                 ApiFuture<WriteResult> future = docRef.update(
-                        "isActive", false,
+                        "active", false,
                         "revokedAt", now
                 );
-                
+
                 WriteResult result = future.get();
                 logger.debug("Session revoked: {} at {}", sessionId, result.getUpdateTime());
                 
@@ -366,7 +366,7 @@ public class FirebaseUserSessionRepository implements UserSessionRepository {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 Query query = firestore.collection(COLLECTION_NAME)
-                        .whereEqualTo("isActive", true);
+                        .whereEqualTo("active", true);
 
                 ApiFuture<QuerySnapshot> future = query.get();
                 QuerySnapshot querySnapshot = future.get();
@@ -396,7 +396,7 @@ public class FirebaseUserSessionRepository implements UserSessionRepository {
                 Instant expirationThreshold = now.plusSeconds(withinMinutes * 60L);
 
                 Query query = firestore.collection(COLLECTION_NAME)
-                        .whereEqualTo("isActive", true)
+                        .whereEqualTo("active", true)
                         .whereLessThanOrEqualTo("expiresAt", expirationThreshold)
                         .whereGreaterThan("expiresAt", now);
 

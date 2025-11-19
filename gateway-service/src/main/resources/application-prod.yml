@@ -16,7 +16,12 @@ spring:
     name: grow-with-freya-gateway
   profiles:
     active: prod
-  
+
+
+  mvc:
+    async:
+      request-timeout: 30s
+
   # Security Configuration
   security:
     oauth2:
@@ -85,7 +90,7 @@ jwt:
   expiration-seconds: 900  # 15 minutes
   refresh-expiration-seconds: 604800  # 7 days
   issuer: grow-with-freya-gateway
-  
+
 # Google OAuth Configuration
 google:
   oauth:
@@ -155,7 +160,7 @@ security:
 gcp:
   project-id: ${GCP_PROJECT_ID}
   region: ${GCP_REGION:us-central1}
-  
+
 # Monitoring Configuration
 monitoring:
   security:
@@ -177,7 +182,7 @@ cache:
 # Environment Variables Required:
 # - JWT_SECRET: Strong secret key for JWT signing (minimum 256 bits)
 # - GOOGLE_CLIENT_ID: Google OAuth client ID
-# - GOOGLE_CLIENT_SECRET: Google OAuth client secret  
+# - GOOGLE_CLIENT_SECRET: Google OAuth client secret
 # - APPLE_CLIENT_ID: Apple OAuth client ID
 # - APPLE_CLIENT_SECRET: Apple OAuth client secret
 # - GCP_PROJECT_ID: Google Cloud Project ID
@@ -188,7 +193,7 @@ health:
   check:
     enabled: true
     timeout-seconds: 30
-    
+
 # Request Validation Configuration
 request-validation:
   enabled: true
@@ -217,8 +222,10 @@ performance:
     max-pool-size: 50
     queue-capacity: 100
   connection:
-    timeout-seconds: 30
-    read-timeout-seconds: 30
+    default-timeout-seconds: 1
+    cms-timeout-seconds: 3
+  inbound:
+    request-timeout-seconds: 30
   compression:
     enabled: true
     min-response-size: 1024
@@ -231,3 +238,41 @@ features:
   audit-logging: true
   metrics-collection: true
   health-checks: true
+
+
+# Resilience4j Circuit Breakers
+resilience4j:
+  circuitbreaker:
+    instances:
+      default:
+        failure-rate-threshold: 50
+        slow-call-rate-threshold: 100
+        slow-call-duration-threshold: 1s
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        record-exceptions:
+          - java.util.concurrent.TimeoutException
+          - java.util.concurrent.CompletionException
+          - java.net.SocketTimeoutException
+          - java.net.ConnectException
+          - org.springframework.web.client.ResourceAccessException
+      cms:
+        failure-rate-threshold: 50
+        slow-call-rate-threshold: 100
+        slow-call-duration-threshold: 3s
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        record-exceptions:
+          - java.util.concurrent.TimeoutException
+          - java.util.concurrent.CompletionException
+          - java.net.SocketTimeoutException
+          - java.net.ConnectException
+          - org.springframework.web.client.ResourceAccessException

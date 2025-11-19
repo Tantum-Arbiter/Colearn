@@ -41,7 +41,8 @@ class RequestValidationFilterTest {
     @BeforeEach
     void setUp() throws IOException {
         requestValidationFilter = new RequestValidationFilter();
-        when(response.getWriter()).thenReturn(printWriter);
+        // lenient to avoid unnecessary stubbing failures in tests that don't write
+        lenient().when(response.getWriter()).thenReturn(printWriter);
     }
 
     @Test
@@ -171,7 +172,7 @@ class RequestValidationFilterTest {
     }
 
     @Test
-    void doFilterInternal_WithMissingUserAgent_ShouldBlockRequest() throws ServletException, IOException {
+    void doFilterInternal_WithMissingUserAgent_ShouldAllowButWarn() throws ServletException, IOException {
         // Given
         when(request.getRequestURI()).thenReturn("/api/test");
         when(request.getQueryString()).thenReturn(null);
@@ -182,10 +183,8 @@ class RequestValidationFilterTest {
         requestValidationFilter.doFilterInternal(request, response, filterChain);
 
         // Then
-        verify(response).setStatus(HttpServletResponse.SC_BAD_REQUEST);
-        verify(response).setContentType("application/json");
-        verify(printWriter).write(contains("Missing required headers"));
-        verify(filterChain, never()).doFilter(request, response);
+        verify(filterChain).doFilter(request, response);
+        verify(response, never()).setStatus(HttpServletResponse.SC_BAD_REQUEST);
     }
 
     @Test

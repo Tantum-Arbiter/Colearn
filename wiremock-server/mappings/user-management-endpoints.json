@@ -1,0 +1,281 @@
+{
+  "mappings": [
+    {
+      "name": "Users - Get User Profile Success",
+      "request": {
+        "method": "GET",
+        "urlPath": "/api/users/profile",
+        "headers": {
+          "Authorization": {
+            "matches": "Bearer valid-.*"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "id": "user-{{randomValue length=10 type='ALPHANUMERIC'}}",
+          "email": "test.user@gmail.com",
+          "name": "Test User",
+          "picture": "https://lh3.googleusercontent.com/a/default-user",
+          "provider": "google",
+          "providerId": "123456789",
+          "isActive": true,
+          "isEmailVerified": true,
+          "createdAt": "{{now offset='-30 days' format='yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}}",
+          "updatedAt": "{{now format='yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}}",
+          "lastLoginAt": "{{now format='yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}}",
+          "children": [],
+          "preferences": {
+            "language": "en",
+            "timezone": "UTC",
+            "theme": "light",
+            "notifications": {
+              "email": true,
+              "push": true,
+              "reminders": true
+            },
+            "privacy": {
+              "shareData": false,
+              "analytics": true
+            },
+            "screenTime": {
+              "dailyLimit": 60,
+              "bedtimeMode": false,
+              "bedtimeStart": "20:00"
+            },
+            "audio": {
+              "backgroundMusic": true,
+              "soundEffects": true,
+              "volume": 0.8
+            }
+          }
+        },
+        "transformers": ["response-template"]
+      }
+    },
+    {
+      "name": "Users - Update User Profile Success",
+      "request": {
+        "method": "POST",
+        "urlPath": "/api/users/profile",
+        "headers": {
+          "Authorization": {
+            "matches": "Bearer valid-.*"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\"id\": \"user-{{randomValue length=10 type='ALPHANUMERIC'}}\", \"email\": \"test.user@gmail.com\", \"displayName\": \"{{jsonPath request.body '$.displayName'}}\", \"picture\": \"https://lh3.googleusercontent.com/a/default-user\", \"provider\": \"google\", \"updatedAt\": \"{{now format='yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}}\", \"preferences\": {{{jsonPath request.body '$.preferences'}}}}",
+        "transformers": ["response-template"]
+      }
+    },
+    {
+      "name": "Users - Get Children List Success",
+      "request": {
+        "method": "GET",
+        "urlPath": "/api/users/children",
+        "headers": {
+          "Authorization": {
+            "matches": "Bearer valid-.*"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "children": [
+            {
+              "id": "child-{{randomValue length=8 type='ALPHANUMERIC'}}",
+              "name": "Test Child",
+              "avatar": "bear",
+              "birthDate": "2020-05-15",
+              "ageInMonths": 42,
+              "isActive": true,
+              "createdAt": "{{now offset='-10 days' format='yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}}",
+              "preferences": {
+                "favoriteStories": ["bedtime", "adventure"],
+                "screenTimeLimit": 30
+              }
+            }
+          ]
+        },
+        "transformers": ["response-template"]
+      }
+    },
+    {
+      "name": "Users - Create Child Profile Success",
+      "request": {
+        "method": "POST",
+        "urlPath": "/api/users/children",
+        "headers": {
+          "Authorization": {
+            "matches": "Bearer valid-.*"
+          }
+        }
+      },
+      "response": {
+        "status": 201,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\"id\": \"child-{{randomValue length=8 type='ALPHANUMERIC'}}\", \"name\": \"{{jsonPath request.body '$.name'}}\", \"avatar\": \"{{jsonPath request.body '$.avatar'}}\", \"birthDate\": \"{{jsonPath request.body '$.birthDate'}}\", \"ageInMonths\": 42, \"isActive\": true, \"createdAt\": \"{{now format='yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}}\", \"preferences\": {{{jsonPath request.body '$.preferences'}}}}",
+        "transformers": ["response-template"]
+      }
+    },
+    {
+      "name": "Users - Update Child Profile Success",
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "/api/users/children/child-.*",
+        "headers": {
+          "Authorization": {
+            "matches": "Bearer valid-.*"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\"id\": \"child-123\", \"name\": \"{{jsonPath request.body '$.name'}}\", \"avatar\": \"bear\", \"birthDate\": \"2020-05-15\", \"ageInMonths\": 42, \"isActive\": true, \"updatedAt\": \"{{now format='yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}}\", \"preferences\": {{{jsonPath request.body '$.preferences'}}}}",
+        "transformers": ["response-template"]
+      }
+    },
+    {
+      "name": "Users - Delete Child Profile Success",
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "/api/users/children/.*/delete",
+        "headers": {
+          "Authorization": {
+            "matches": "Bearer valid-.*"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "success": true,
+          "message": "Child profile deleted successfully"
+        }
+      }
+    },
+    {
+      "name": "Users - Get User Preferences Success",
+      "request": {
+        "method": "GET",
+        "urlPath": "/api/users/preferences",
+        "headers": {
+          "Authorization": {
+            "matches": "Bearer valid-.*"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "notifications": {
+            "email": true,
+            "push": true,
+            "reminders": true
+          },
+          "privacy": {
+            "shareData": false,
+            "analytics": true
+          },
+          "screenTime": {
+            "dailyLimit": 60,
+            "bedtimeMode": false,
+            "bedtimeStart": "20:00"
+          },
+          "audio": {
+            "backgroundMusic": true,
+            "soundEffects": true,
+            "volume": 0.8
+          }
+        }
+      }
+    },
+    {
+      "name": "Users - Update User Preferences Success",
+      "request": {
+        "method": "POST",
+        "urlPath": "/api/users/preferences",
+        "headers": {
+          "Authorization": {
+            "matches": "Bearer valid-.*"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\"success\": true, \"message\": \"Preferences updated successfully\", \"preferences\": {{{jsonPath request.body '$'}}}}",
+        "transformers": ["response-template"]
+      }
+    },
+    {
+      "name": "Users - Unauthorized Access",
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/api/users/.*"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "success": false,
+          "errorCode": "GTW-007",
+          "error": "Unauthorized access to resource",
+          "message": "Authentication required"
+        }
+      }
+    },
+    {
+      "name": "Users - Forbidden Access to Other User Data",
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/api/users/other-user-.*/profile",
+        "headers": {
+          "Authorization": {
+            "matches": "Bearer valid-.*"
+          }
+        }
+      },
+      "response": {
+        "status": 403,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "success": false,
+          "errorCode": "GTW-008",
+          "error": "Insufficient permissions for this operation",
+          "message": "Access denied"
+        }
+      }
+    }
+  ]
+}

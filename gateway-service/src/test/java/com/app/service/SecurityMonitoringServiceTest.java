@@ -26,11 +26,9 @@ class SecurityMonitoringServiceTest {
         // Given
         String userId = "test-user-123";
         String provider = "google";
-        String ipAddress = "192.168.1.1";
-        String userAgent = "Mozilla/5.0";
 
         // When
-        securityMonitoringService.logSuccessfulAuthentication(userId, provider, ipAddress, userAgent);
+        securityMonitoringService.logSuccessfulAuthentication(userId, provider);
 
         // Then
         AtomicLong successfulLogins = (AtomicLong) ReflectionTestUtils.getField(securityMonitoringService, "successfulLogins");
@@ -41,11 +39,9 @@ class SecurityMonitoringServiceTest {
     void logFailedAuthentication_ShouldIncrementCounter() {
         // Given
         String reason = "Invalid credentials";
-        String ipAddress = "192.168.1.1";
-        String userAgent = "Mozilla/5.0";
 
         // When
-        securityMonitoringService.logFailedAuthentication(reason, ipAddress, userAgent);
+        securityMonitoringService.logFailedAuthentication(reason);
 
         // Then
         AtomicLong failedLogins = (AtomicLong) ReflectionTestUtils.getField(securityMonitoringService, "failedLogins");
@@ -57,11 +53,9 @@ class SecurityMonitoringServiceTest {
         // Given
         String requestUri = "/api/test";
         String reason = "SQL injection attempt";
-        String ipAddress = "192.168.1.1";
-        String userAgent = "Mozilla/5.0";
 
         // When
-        securityMonitoringService.logSuspiciousRequest(requestUri, reason, ipAddress, userAgent);
+        securityMonitoringService.logSuspiciousRequest(requestUri, reason);
 
         // Then
         AtomicLong suspiciousRequests = (AtomicLong) ReflectionTestUtils.getField(securityMonitoringService, "suspiciousRequests");
@@ -73,11 +67,9 @@ class SecurityMonitoringServiceTest {
         // Given
         String clientKey = "user-123";
         String endpoint = "/api/test";
-        int requestCount = 101;
-        int limit = 100;
 
         // When
-        securityMonitoringService.logRateLimitViolation(clientKey, endpoint, "127.0.0.1");
+        securityMonitoringService.logRateLimitViolation(clientKey, endpoint);
 
         // Then
         AtomicLong rateLimitViolations = (AtomicLong) ReflectionTestUtils.getField(securityMonitoringService, "rateLimitViolations");
@@ -88,10 +80,9 @@ class SecurityMonitoringServiceTest {
     void logTokenRefresh_ShouldIncrementCounter() {
         // Given
         String userId = "test-user-123";
-        String ipAddress = "192.168.1.1";
 
         // When
-        securityMonitoringService.logTokenRefresh(userId, ipAddress);
+        securityMonitoringService.logTokenRefresh(userId);
 
         // Then
         AtomicLong tokenRefreshes = (AtomicLong) ReflectionTestUtils.getField(securityMonitoringService, "tokenRefreshes");
@@ -102,10 +93,9 @@ class SecurityMonitoringServiceTest {
     void logTokenRevocation_ShouldIncrementCounter() {
         // Given
         String userId = "test-user-123";
-        String ipAddress = "192.168.1.1";
 
         // When
-        securityMonitoringService.logTokenRevocation(userId, ipAddress, "user_requested");
+        securityMonitoringService.logTokenRevocation(userId, "user_requested");
 
         // Then
         AtomicLong tokenRevocations = (AtomicLong) ReflectionTestUtils.getField(securityMonitoringService, "tokenRevocations");
@@ -115,9 +105,9 @@ class SecurityMonitoringServiceTest {
     @Test
     void getSecurityMetrics_ShouldReturnCurrentMetrics() {
         // Given
-        securityMonitoringService.logSuccessfulAuthentication("user1", "google", "192.168.1.1", "Mozilla/5.0");
-        securityMonitoringService.logFailedAuthentication("Invalid credentials", "192.168.1.2", "Mozilla/5.0");
-        securityMonitoringService.logSuspiciousRequest("/api/test", "SQL injection", "192.168.1.3", "Mozilla/5.0");
+        securityMonitoringService.logSuccessfulAuthentication("user1", "google");
+        securityMonitoringService.logFailedAuthentication("Invalid credentials");
+        securityMonitoringService.logSuspiciousRequest("/api/test", "SQL injection");
 
         // When
         Map<String, Object> metrics = securityMonitoringService.getSecurityMetrics();
@@ -131,68 +121,26 @@ class SecurityMonitoringServiceTest {
         assertEquals(0L, metrics.get("tokenRefreshes"));
         assertEquals(0L, metrics.get("tokenRevocations"));
         assertTrue(metrics.containsKey("timestamp"));
-        assertTrue(metrics.containsKey("monitoredIps"));
     }
 
     @Test
-    void multipleFailedLogins_ShouldTriggerBruteForceDetection() {
-        // Given
-        String ipAddress = "192.168.1.100";
-        String userAgent = "Mozilla/5.0";
-
-        // When - Simulate multiple failed login attempts (more than 10 to trigger suspicious IP detection)
+    void multipleFailedLogins_ShouldIncrementCounter() {
+        // Given - Simulate multiple failed login attempts
         for (int i = 0; i < 12; i++) {
-            securityMonitoringService.logFailedAuthentication("Invalid credentials", ipAddress, userAgent);
+            securityMonitoringService.logFailedAuthentication("Invalid credentials");
         }
 
         // Then
         AtomicLong failedLogins = (AtomicLong) ReflectionTestUtils.getField(securityMonitoringService, "failedLogins");
         assertEquals(12L, failedLogins.get());
-
-        // Verify IP is tracked as suspicious (threshold is 10 failed logins)
-        assertTrue(securityMonitoringService.isSuspiciousIp(ipAddress));
-    }
-
-    @Test
-    void isSuspiciousIp_WithHighFailureRate_ShouldReturnTrue() {
-        // Given
-        String ipAddress = "192.168.1.200";
-        String userAgent = "Mozilla/5.0";
-
-        // When - Generate many failed attempts
-        for (int i = 0; i < 15; i++) {
-            securityMonitoringService.logFailedAuthentication("Invalid credentials", ipAddress, userAgent);
-        }
-
-        // Then
-        assertTrue(securityMonitoringService.isSuspiciousIp(ipAddress));
-    }
-
-    @Test
-    void isSuspiciousIp_WithLowFailureRate_ShouldReturnFalse() {
-        // Given
-        String ipAddress = "192.168.1.201";
-        String userAgent = "Mozilla/5.0";
-
-        // When - Generate few failed attempts
-        for (int i = 0; i < 2; i++) {
-            securityMonitoringService.logFailedAuthentication("Invalid credentials", ipAddress, userAgent);
-        }
-
-        // Then
-        assertFalse(securityMonitoringService.isSuspiciousIp(ipAddress));
     }
 
     @Test
     void mixedSuccessAndFailureLogins_ShouldTrackBothCorrectly() {
-        // Given
-        String ipAddress = "192.168.1.50";
-        String userAgent = "Mozilla/5.0";
-
         // When
-        securityMonitoringService.logSuccessfulAuthentication("user1", "google", ipAddress, userAgent);
-        securityMonitoringService.logSuccessfulAuthentication("user2", "apple", ipAddress, userAgent);
-        securityMonitoringService.logFailedAuthentication("Invalid credentials", ipAddress, userAgent);
+        securityMonitoringService.logSuccessfulAuthentication("user1", "google");
+        securityMonitoringService.logSuccessfulAuthentication("user2", "apple");
+        securityMonitoringService.logFailedAuthentication("Invalid credentials");
 
         // Then
         Map<String, Object> metrics = securityMonitoringService.getSecurityMetrics();
@@ -213,10 +161,8 @@ class SecurityMonitoringServiceTest {
             threads[i] = new Thread(() -> {
                 for (int j = 0; j < operationsPerThread; j++) {
                     securityMonitoringService.logSuccessfulAuthentication(
-                        "user-" + threadId + "-" + j, 
-                        "google", 
-                        "192.168.1." + threadId, 
-                        "Mozilla/5.0"
+                        "user-" + threadId + "-" + j,
+                        "google"
                     );
                 }
             });
@@ -247,9 +193,9 @@ class SecurityMonitoringServiceTest {
     @Test
     void resetMetrics_ShouldClearAllCounters() {
         // Given
-        securityMonitoringService.logSuccessfulAuthentication("user1", "google", "192.168.1.1", "Mozilla/5.0");
-        securityMonitoringService.logFailedAuthentication("Invalid credentials", "192.168.1.2", "Mozilla/5.0");
-        securityMonitoringService.logSuspiciousRequest("/api/test", "SQL injection", "192.168.1.3", "Mozilla/5.0");
+        securityMonitoringService.logSuccessfulAuthentication("user1", "google");
+        securityMonitoringService.logFailedAuthentication("Invalid credentials");
+        securityMonitoringService.logSuspiciousRequest("/api/test", "SQL injection");
 
         // When
         // Reset metrics by creating a new instance (no resetMetrics method available)

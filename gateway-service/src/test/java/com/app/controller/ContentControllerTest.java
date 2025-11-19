@@ -1,23 +1,26 @@
 package com.app.controller;
 
-import com.app.service.GatewayServiceApplication;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.context.ActiveProfiles;
+
 
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
-@WebMvcTest(ContentController.class)
-@ContextConfiguration(classes = GatewayServiceApplication.class)
+@SpringBootTest(classes = com.app.service.GatewayServiceApplication.class)
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
 class ContentControllerTest {
 
     @Autowired
@@ -116,7 +119,7 @@ class ContentControllerTest {
 
         // When & Then
         mockMvc.perform(post("/api/v1/user/preferences")
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON).with(csrf())
                 .content(objectMapper.writeValueAsString(preferences)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -131,7 +134,7 @@ class ContentControllerTest {
 
         // When & Then
         mockMvc.perform(post("/api/v1/user/preferences")
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON).with(csrf())
                 .content(objectMapper.writeValueAsString(preferences)))
                 .andExpect(status().isUnauthorized());
     }
@@ -141,7 +144,7 @@ class ContentControllerTest {
     void updateUserPreferences_WithEmptyData_ShouldReturnBadRequest() throws Exception {
         // When & Then
         mockMvc.perform(post("/api/v1/user/preferences")
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON).with(csrf())
                 .content("{}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
@@ -153,7 +156,7 @@ class ContentControllerTest {
     void updateUserPreferences_WithInvalidJson_ShouldReturnBadRequest() throws Exception {
         // When & Then
         mockMvc.perform(post("/api/v1/user/preferences")
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON).with(csrf())
                 .content("invalid json"))
                 .andExpect(status().isBadRequest());
     }
@@ -170,7 +173,7 @@ class ContentControllerTest {
 
         // When & Then
         mockMvc.perform(post("/api/v1/batch")
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON).with(csrf())
                 .content(objectMapper.writeValueAsString(batchRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -188,7 +191,7 @@ class ContentControllerTest {
 
         // When & Then
         mockMvc.perform(post("/api/v1/batch")
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON).with(csrf())
                 .content(objectMapper.writeValueAsString(batchRequest)))
                 .andExpect(status().isUnauthorized());
     }
@@ -202,7 +205,7 @@ class ContentControllerTest {
 
         // When & Then
         mockMvc.perform(post("/api/v1/batch")
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON).with(csrf())
                 .content(objectMapper.writeValueAsString(batchRequest)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
@@ -223,7 +226,7 @@ class ContentControllerTest {
 
         // When & Then
         mockMvc.perform(post("/api/v1/batch")
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON).with(csrf())
                 .content(objectMapper.writeValueAsString(batchRequest)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
@@ -242,7 +245,7 @@ class ContentControllerTest {
 
         // When & Then
         mockMvc.perform(post("/api/v1/batch")
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON).with(csrf())
                 .content(objectMapper.writeValueAsString(batchRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))

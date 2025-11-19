@@ -1,0 +1,166 @@
+{
+  "mappings": [
+    {
+      "name": "Gateway - Get Current User Profile",
+      "request": {
+        "method": "GET",
+        "urlPath": "/api/auth/me",
+        "headers": {
+          "Authorization": {
+            "matches": "Bearer valid-.*"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "success": true,
+          "user": {
+            "id": "user-{{randomValue length=10 type='ALPHANUMERIC'}}",
+            "email": "test.user@gmail.com",
+            "name": "Test User",
+            "picture": "https://lh3.googleusercontent.com/a/default-user",
+            "provider": "google",
+            "providerId": "123456789",
+            "isActive": true,
+            "isEmailVerified": true,
+            "createdAt": "{{now offset='-30 days' format='yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}}",
+            "updatedAt": "{{now format='yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}}",
+            "lastLoginAt": "{{now format='yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}}"
+          }
+        },
+        "transformers": ["response-template"]
+      }
+    },
+    {
+      "name": "Gateway - Get Current User Profile Unauthorized",
+      "request": {
+        "method": "GET",
+        "urlPath": "/api/auth/me"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "success": false,
+          "error": "Unauthorized",
+          "message": "Authentication required"
+        }
+      }
+    },
+    {
+      "name": "Gateway - User Registration Success",
+      "request": {
+        "method": "POST",
+        "urlPath": "/api/auth/register",
+        "headers": {
+          "Authorization": {
+            "matches": "Bearer valid-.*"
+          }
+        }
+      },
+      "response": {
+        "status": 201,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "success": true,
+          "userId": "user-{{randomValue length=10 type='ALPHANUMERIC'}}",
+          "email": "test.user@gmail.com",
+          "name": "Test User",
+          "provider": "google",
+          "createdAt": "{{now format='yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}}",
+          "message": "User registered successfully"
+        },
+        "transformers": ["response-template"]
+      }
+    },
+    {
+      "name": "Gateway - User Login Success",
+      "request": {
+        "method": "POST",
+        "urlPath": "/api/auth/login",
+        "headers": {
+          "Authorization": {
+            "matches": "Bearer valid-.*"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "success": true,
+          "accessToken": "gateway-access-token-{{randomValue length=50 type='ALPHANUMERIC'}}",
+          "refreshToken": "gateway-refresh-token-{{randomValue length=50 type='ALPHANUMERIC'}}",
+          "expiresIn": 3600,
+          "tokenType": "Bearer",
+          "user": {
+            "id": "user-{{randomValue length=10 type='ALPHANUMERIC'}}",
+            "email": "test.user@gmail.com",
+            "name": "Test User",
+            "provider": "google"
+          },
+          "message": "Login successful"
+        },
+        "transformers": ["response-template"]
+      }
+    },
+    {
+      "name": "Gateway - Token Refresh Success",
+      "request": {
+        "method": "POST",
+        "urlPath": "/api/auth/refresh",
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": "$.refreshToken"
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "success": true,
+          "accessToken": "gateway-access-token-{{randomValue length=50 type='ALPHANUMERIC'}}",
+          "expiresIn": 3600,
+          "tokenType": "Bearer",
+          "message": "Token refresh successful"
+        },
+        "transformers": ["response-template"]
+      }
+    },
+    {
+      "name": "Gateway - User Logout Success",
+      "request": {
+        "method": "POST",
+        "urlPath": "/api/auth/logout",
+        "headers": {
+          "Authorization": {
+            "matches": "Bearer .*"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "success": true,
+          "message": "Successfully logged out"
+        }
+      }
+    }
+  ]
+}
