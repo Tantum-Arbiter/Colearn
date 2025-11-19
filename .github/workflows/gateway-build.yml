@@ -99,7 +99,8 @@ jobs:
             --region ${{ env.REGION }} \
             --project ${{ env.PROJECT_ID }} \
             --service-account svc-deploy-functional@${{ env.PROJECT_ID }}.iam.gserviceaccount.com \
-            --no-allow-unauthenticated
+            --no-allow-unauthenticated \
+            --set-env-vars SPRING_PROFILES_ACTIVE=dev,BACKEND_URL_GATEWAY_SERVICE=${{ secrets.BACKEND_URL_GATEWAY_SERVICE }},GATEWAY_AUDIENCE=${{ secrets.GATEWAY_AUDIENCE }}
 
   run-functional-tests:
     needs: deploy-functional
@@ -115,6 +116,11 @@ jobs:
         with:
           project_id: ${{ env.PROJECT_ID }}
 
+      - name: Debug Gateway API URL
+        run: |
+          echo "BACKEND_URL_GATEWAY_SERVICE = ${{ secrets.BACKEND_URL_GATEWAY_SERVICE }}"
+          echo "GATEWAY_AUDIENCE present = ${{ secrets.GATEWAY_AUDIENCE && 'YES' || 'NO' }}"
+
       - name: Re-deploy Cloud Run Job with latest test image
         run: |
           echo "Redeploying job: gateway-functional-test-job"
@@ -127,7 +133,7 @@ jobs:
             --cpu=2 \
             --max-retries=0 \
             --task-timeout=300s \
-            --set-env-vars BACKEND_URL_GATEWAY_SERVICE=${{ secrets.BACKEND_URL_GATEWAY_SERVICE }}
+            --set-env-vars BACKEND_URL_GATEWAY_SERVICE=${{ secrets.BACKEND_URL_GATEWAY_SERVICE }},GATEWAY_AUDIENCE=${{ secrets.GATEWAY_AUDIENCE }}
 
       - name: Execute Cloud Run Job
         id: execute-tests
@@ -141,12 +147,19 @@ jobs:
 
           echo "JOB_NAME=$JOB_NAME" >> $GITHUB_ENV
 
-      - name: Print Logs from Cloud Run Job
-        run: |
-          echo "Fetching logs from execution: $JOB_NAME"
-          gcloud logging read "resource.type=cloud_run_job AND resource.labels.execution_name=$JOB_NAME" \
-            --project=${{ env.PROJECT_ID }} \
-            --region=${{ env.REGION }} \
-            --limit=1000 \
-            --format="value(textPayload)"
-
+#      - name: Cleanup previous instance
+#        run: |
+#          gcloud run revisions list \
+#            --service=$SERVICE \
+#            --region=$REGION \
+#            --format="value(metadata.name,status.traffic[0].percent)" \
+#            --project=$PROJECT_ID | \
+#          while read revision traffic; do
+#            if [[ "$traffic" == "0" ]]; then
+#              echo "Deleting previous instance: $revision"
+#              gcloud run revisions delete "$revision" \
+#                --region=$REGION \
+#                --project=$PROJECT_ID \
+#                --quiet
+#            fi
+#          done
