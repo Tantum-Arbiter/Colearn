@@ -24,11 +24,11 @@ env:
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest  # Fixed typo: ubuntu-lates -> ubuntu-latest
+    runs-on: ubuntu-latest 
     outputs:
       image_tag: ${{ steps.build.outputs.version }}
     steps:
-      - name: Checkout  # Fixed typo: Checkou -> Checkout
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -71,7 +71,7 @@ jobs:
 
   deploy-functional:
     needs: build-and-push
-    runs-on: ubuntu-latest  # Fixed typo: ubuntu-lates -> ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Authenticate with GCP
         uses: google-github-actions/auth@v2
@@ -103,7 +103,7 @@ jobs:
 
   run-functional-tests:
     needs: deploy-functional
-    runs-on: ubuntu-latest  # Fixed typo: ubuntu-lates -> ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Authenticate with GCP
         uses: google-github-actions/auth@v2
@@ -146,19 +146,19 @@ jobs:
 
           echo "JOB_NAME=$JOB_NAME" >> $GITHUB_ENV
 
-#      - name: Cleanup previous instance
-#        run: |
-#          gcloud run revisions list \
-#            --service=$SERVICE \
-#            --region=$REGION \
-#            --format="value(metadata.name,status.traffic[0].percent)" \
-#            --project=$PROJECT_ID | \
-#          while read revision traffic; do
-#            if [[ "$traffic" == "0" ]]; then
-#              echo "Deleting previous instance: $revision"
-#              gcloud run revisions delete "$revision" \
-#                --region=$REGION \
-#                --project=$PROJECT_ID \
-#                --quiet
-#            fi
-#          done
+      - name: Cleanup previous instance
+        run: |
+          gcloud run revisions list \
+            --service=$SERVICE \
+            --region=$REGION \
+            --format="value(metadata.name,status.traffic[0].percent)" \
+            --project=$PROJECT_ID | \
+          while read revision traffic; do
+            if [[ "$traffic" == "0" ]]; then
+              echo "Deleting previous instance: $revision"
+              gcloud run revisions delete "$revision" \
+                --region=$REGION \
+                --project=$PROJECT_ID \
+                --quiet
+            fi
+          done
