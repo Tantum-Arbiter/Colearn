@@ -2,12 +2,11 @@ name: Gateway Build and Push
 
 on:
   workflow_dispatch:
-  # DISABLED: Will re-enable after Security Scan workflow is verified
-  # push:
-  #   paths:
-  #     - 'gateway-service/**'
-  #     - '.github/workflows/gateway-build.yml'
-  #     - 'infra/**'
+  push:
+    paths:
+      - 'gateway-service/**'
+      - '.github/workflows/gateway-build.yml'
+      - 'infra/**'
 
 # CRITICAL: Add concurrency control to prevent queuing issues
 concurrency:
@@ -119,7 +118,7 @@ jobs:
       - name: Debug Gateway API URL
         run: |
           echo "BACKEND_URL_GATEWAY_SERVICE = ${{ secrets.BACKEND_URL_GATEWAY_SERVICE }}"
-          echo "GATEWAY_AUDIENCE present = ${{ secrets.GATEWAY_AUDIENCE && 'YES' || 'NO' }}"
+          echo "GATEWAY_AUDIENCE = ${{ secrets.GATEWAY_AUDIENCE }}"
 
       - name: Re-deploy Cloud Run Job with latest test image
         run: |
