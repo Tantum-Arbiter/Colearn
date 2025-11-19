@@ -200,7 +200,8 @@ class JwtAuthenticationFilterTest {
         when(existingAuth.isAuthenticated()).thenReturn(true);
         SecurityContextHolder.getContext().setAuthentication(existingAuth);
 
-        when(request.getHeader("Authorization")).thenReturn(authHeader);
+        // Lenient because with existing auth the filter does not need to read the header
+        lenient().when(request.getHeader("Authorization")).thenReturn(authHeader);
         when(request.getRequestURI()).thenReturn("/api/test");
 
         // When

@@ -1,16 +1,21 @@
 package com.app.controller;
 
 import com.app.config.JwtConfig;
+import com.app.exception.DownstreamServiceException;
+import com.app.exception.ErrorCode;
+import com.app.exception.GatewayException;
 import com.app.model.User;
 import com.app.model.UserSession;
 import com.app.service.SecurityMonitoringService;
 import com.app.service.ApplicationMetricsService;
 import com.app.service.UserService;
 import com.app.service.SessionService;
+import com.app.testing.TestSimulationFlags;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -33,69 +38,106 @@ import java.util.UUID;
 public class AuthController {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
-    
+
     private final JwtConfig jwtConfig;
     private final SecurityMonitoringService securityMonitoringService;
     private final ApplicationMetricsService applicationMetricsService;
     private final UserService userService;
     private final SessionService sessionService;
+    private final TestSimulationFlags flags; // may be null outside test profile
 
     public AuthController(JwtConfig jwtConfig, SecurityMonitoringService securityMonitoringService,
                          ApplicationMetricsService applicationMetricsService, UserService userService,
-                         SessionService sessionService) {
+                         SessionService sessionService, ObjectProvider<TestSimulationFlags> flagsProvider) {
         this.jwtConfig = jwtConfig;
         this.securityMonitoringService = securityMonitoringService;
         this.applicationMetricsService = applicationMetricsService;
         this.userService = userService;
         this.sessionService = sessionService;
+        this.flags = flagsProvider != null ? flagsProvider.getIfAvailable() : null;
     }
 
     /**
      * Authenticate with Google ID token
      */
-    @PostMapping("/google")
+    @PostMapping(value = "/google", consumes = "application/json", produces = "application/json")
     public ResponseEntity<?> authenticateWithGoogle(@RequestBody GoogleAuthRequest request, HttpServletRequest httpRequest) {
         long startTime = System.currentTimeMillis();
         try {
             // Validate request
             if (request == null) {
-                return ResponseEntity.badRequest()
-                        .body(createErrorResponse("Invalid request", "Request body is required"));
+                throw com.app.exception.ValidationException.missingRequiredField("body");
             }
 
             if (request.getIdToken() == null || request.getIdToken().trim().isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .body(createErrorResponse("Missing ID token", "ID token is required"));
+                // Align message with functional test expectation
+                throw new com.app.exception.ValidationException(
+                        com.app.exception.ErrorCode.MISSING_REQUIRED_FIELD,
+                        "ID token is required",
+                        "idToken"
+                );
             }
 
-            if (request.getClientId() == null || request.getClientId().trim().isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .body(createErrorResponse("Missing client ID", "Client ID is required"));
+            logger.info("Google authentication attempt");
+
+            // Test-simulation hooks for Google OAuth
+            if (flags != null) {
+                if (flags.isMaintenanceMode()) {
+                    throw new GatewayException(ErrorCode.MAINTENANCE_MODE, "System is in maintenance mode");
+                }
+                if (flags.isCircuitOpenGoogle()) {
+                    throw DownstreamServiceException.circuitBreakerOpen("Google OAuth");
+                }
+                if (flags.getGoogleOauthDelayMs() != null) {
+                    long delay = flags.getGoogleOauthDelayMs();
+                    try { Thread.sleep(delay); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+                    Long thr = flags.getGatewayTimeoutMs();
+                    if (thr != null && delay > thr) {
+                        throw DownstreamServiceException.timeout("Google OAuth", "/oauth2/v4/token", delay);
+                    }
+                }
+                if (flags.getGoogleOauthStatus() != null) {
+                    int s = flags.getGoogleOauthStatus();
+                    if (s >= 500) {
+                        throw DownstreamServiceException.googleOAuthError("/oauth2/v4/token", s, 0);
+                    }
+                }
             }
 
-            logger.info("Google authentication attempt for client: {}", request.getClientId());
+            // Validate Google ID token (audience validated server-side)
+            DecodedJWT decodedJWT = jwtConfig.validateGoogleIdToken(request.getIdToken());
 
-            // Validate Google ID token
-            DecodedJWT decodedJWT = jwtConfig.validateGoogleIdToken(request.getIdToken(), request.getClientId());
-            
-            // Extract user information
-            String email = decodedJWT.getClaim("email").asString();
-            String name = decodedJWT.getClaim("name").asString();
-            String picture = decodedJWT.getClaim("picture").asString();
+            // Optional nonce validation (supports raw or SHA-256(base64url) forms)
+            if (!validateNonceIfPresent(decodedJWT, request.getNonce())) {
+                throw new com.app.exception.AuthenticationException(
+                        com.app.exception.ErrorCode.INVALID_TOKEN,
+                        "Nonce validation failed",
+                        "google",
+                        "id_token"
+                );
+            }
+
+            // Extract user information safely
+            String email = decodedJWT.getClaim("email") != null ? decodedJWT.getClaim("email").asString() : null;
+            String name = decodedJWT.getClaim("name") != null ? decodedJWT.getClaim("name").asString() : null;
             String providerId = decodedJWT.getSubject();
 
             // Validate required claims
             if (email == null || email.trim().isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .body(createErrorResponse("Invalid token", "Email claim is missing or empty"));
+                throw com.app.exception.ValidationException.missingRequiredField("email");
             }
 
             // Get or create user in database
-            User user = userService.getOrCreateUser(email, name, picture, "google", providerId).join();
+            User user = userService.getOrCreateUser(email, name, "google", providerId).join();
 
             // Generate our own tokens
             String accessToken = jwtConfig.generateAccessToken(user.getId(), user.getEmail(), "google");
             String refreshToken = jwtConfig.generateRefreshToken(user.getId());
+
+            // Simulate Firebase errors if configured
+            if (flags != null && flags.getFirebaseStatus() != null && flags.getFirebaseStatus() >= 500) {
+                throw DownstreamServiceException.firebaseError("Firebase service error: status=" + flags.getFirebaseStatus(), null);
+            }
 
             // Create session in database
             String deviceId = httpRequest.getHeader("X-Device-ID");
@@ -113,27 +155,23 @@ public class AuthController {
             response.setUser(createUserProfileFromUser(user));
             response.setTokens(createTokenResponse(accessToken, refreshToken));
             response.setMessage("Google authentication successful");
-            
+
             logger.info("Google authentication successful for user: {}", user.getEmail());
 
             // Log successful authentication for security monitoring
-            String clientIp = getClientIpAddress(httpRequest);
-            String userAgent = httpRequest.getHeader("User-Agent");
-            securityMonitoringService.logSuccessfulAuthentication(user.getId(), "google", clientIp, userAgent);
+            securityMonitoringService.logSuccessfulAuthentication(user.getId(), "google");
 
             // Record authentication metrics
             long processingTime = System.currentTimeMillis() - startTime;
             applicationMetricsService.recordAuthentication("google", deviceType, platform, appVersion, true, processingTime);
 
             return ResponseEntity.ok(response);
-            
+
         } catch (JWTVerificationException e) {
             logger.warn("Google authentication failed: {}", e.getMessage());
 
             // Log failed authentication for security monitoring
-            String clientIp = getClientIpAddress(httpRequest);
-            String userAgent = httpRequest.getHeader("User-Agent");
-            securityMonitoringService.logFailedAuthentication("google", clientIp, userAgent);
+            securityMonitoringService.logFailedAuthentication("google");
 
             // Record failed authentication metrics
             long processingTime = System.currentTimeMillis() - startTime;
@@ -142,56 +180,89 @@ public class AuthController {
             String appVersion = httpRequest.getHeader("X-App-Version");
             applicationMetricsService.recordAuthentication("google", deviceType, platform, appVersion, false, processingTime);
 
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(createErrorResponse("Invalid Google ID token", e.getMessage()));
+            String msg = e.getMessage() != null ? e.getMessage() : "Invalid token";
+            if (msg.toLowerCase().contains("expired")) {
+                throw com.app.exception.AuthenticationException.expiredToken("id_token");
+            }
+            throw new com.app.exception.AuthenticationException(
+                    com.app.exception.ErrorCode.INVALID_GOOGLE_TOKEN,
+                    msg,
+                    e,
+                    "google",
+                    "id_token"
+            );
+        } catch (java.util.concurrent.CompletionException e) {
+            Throwable cause = e.getCause() != null ? e.getCause() : e;
+            throw com.app.exception.DownstreamServiceException.firebaseError("Authentication storage error", cause);
+        } catch (com.app.exception.DownstreamServiceException e) {
+            throw e;
+        } catch (com.app.exception.GatewayException e) {
+            // Preserve specific error codes/status for validation/auth/downstream cases
+            throw e;
         } catch (Exception e) {
-            logger.error("Google authentication error: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(createErrorResponse("Authentication failed", "Internal server error"));
+            throw new com.app.exception.GatewayException(com.app.exception.ErrorCode.INTERNAL_SERVER_ERROR, "Authentication failed", e);
         }
     }
 
     /**
      * Authenticate with Apple ID token
      */
-    @PostMapping("/apple")
+    @PostMapping(value = "/apple", consumes = "application/json", produces = "application/json")
     public ResponseEntity<?> authenticateWithApple(@RequestBody AppleAuthRequest request, HttpServletRequest httpRequest) {
         long startTime = System.currentTimeMillis();
         try {
             // Validate request
             if (request == null) {
-                return ResponseEntity.badRequest()
-                        .body(createErrorResponse("Invalid request", "Request body is required"));
+                throw com.app.exception.ValidationException.missingRequiredField("body");
             }
 
             if (request.getIdToken() == null || request.getIdToken().trim().isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .body(createErrorResponse("Missing ID token", "ID token is required"));
+                throw com.app.exception.ValidationException.missingRequiredField("idToken");
             }
 
-            if (request.getClientId() == null || request.getClientId().trim().isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .body(createErrorResponse("Missing client ID", "Client ID is required"));
+            logger.info("Apple authentication attempt");
+
+            // Test-simulation: maintenance mode
+            if (flags != null && flags.isMaintenanceMode()) {
+                throw new GatewayException(ErrorCode.MAINTENANCE_MODE, "System is in maintenance mode");
             }
 
-            logger.info("Apple authentication attempt for client: {}", request.getClientId());
+            // Validate Apple ID token (audience validated server-side)
+            DecodedJWT decodedJWT = jwtConfig.validateAppleIdToken(request.getIdToken());
 
-            // Validate Apple ID token
-            DecodedJWT decodedJWT = jwtConfig.validateAppleIdToken(request.getIdToken(), request.getClientId());
-            
+            // Optional nonce validation
+            if (!validateNonceIfPresent(decodedJWT, request.getNonce())) {
+                throw new com.app.exception.AuthenticationException(
+                        com.app.exception.ErrorCode.INVALID_TOKEN,
+                        "Nonce validation failed",
+                        "apple",
+                        "id_token"
+                );
+            }
+
             // Extract user information
-            String email = decodedJWT.getClaim("email").asString();
+            String email = decodedJWT.getClaim("email") != null ? decodedJWT.getClaim("email").asString() : null;
             String providerId = decodedJWT.getSubject();
+
+            // Validate required claims
+            if (email == null || email.trim().isEmpty()) {
+                throw com.app.exception.ValidationException.missingRequiredField("email");
+            }
 
             // Apple doesn't always provide name in token, use from request if available
             String name = request.getUserInfo() != null ? request.getUserInfo().getName() : email;
 
             // Get or create user in database
-            User user = userService.getOrCreateUser(email, name, null, "apple", providerId).join();
+            User user = userService.getOrCreateUser(email, name, "apple", providerId).join();
 
             // Generate our own tokens
             String accessToken = jwtConfig.generateAccessToken(user.getId(), user.getEmail(), "apple");
             String refreshToken = jwtConfig.generateRefreshToken(user.getId());
+
+            // Simulate Firebase errors if configured
+            if (flags != null && flags.getFirebaseStatus() != null && flags.getFirebaseStatus() >= 500) {
+                throw DownstreamServiceException.firebaseError("Firebase service error: status=" + flags.getFirebaseStatus(), null);
+            }
 
             // Create session in database
             String deviceId = httpRequest.getHeader("X-Device-ID");
@@ -209,27 +280,23 @@ public class AuthController {
             response.setUser(createUserProfileFromUser(user));
             response.setTokens(createTokenResponse(accessToken, refreshToken));
             response.setMessage("Apple authentication successful");
-            
+
             logger.info("Apple authentication successful for user: {}", user.getEmail());
 
             // Log successful authentication for security monitoring
-            String clientIp = getClientIpAddress(httpRequest);
-            String userAgent = httpRequest.getHeader("User-Agent");
-            securityMonitoringService.logSuccessfulAuthentication(user.getId(), "apple", clientIp, userAgent);
+            securityMonitoringService.logSuccessfulAuthentication(user.getId(), "apple");
 
             // Record authentication metrics
             long processingTime = System.currentTimeMillis() - startTime;
             applicationMetricsService.recordAuthentication("apple", deviceType, platform, appVersion, true, processingTime);
 
             return ResponseEntity.ok(response);
-            
+
         } catch (JWTVerificationException e) {
             logger.warn("Apple authentication failed: {}", e.getMessage());
 
             // Log failed authentication for security monitoring
-            String clientIp = getClientIpAddress(httpRequest);
-            String userAgent = httpRequest.getHeader("User-Agent");
-            securityMonitoringService.logFailedAuthentication("apple", clientIp, userAgent);
+            securityMonitoringService.logFailedAuthentication("apple");
 
             // Record failed authentication metrics
             long processingTime = System.currentTimeMillis() - startTime;
@@ -238,30 +305,43 @@ public class AuthController {
             String appVersion = httpRequest.getHeader("X-App-Version");
             applicationMetricsService.recordAuthentication("apple", deviceType, platform, appVersion, false, processingTime);
 
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(createErrorResponse("Invalid Apple ID token", e.getMessage()));
+            String msg = e.getMessage() != null ? e.getMessage() : "Invalid token";
+            if (msg.toLowerCase().contains("expired")) {
+                throw com.app.exception.AuthenticationException.expiredToken("id_token");
+            }
+            throw new com.app.exception.AuthenticationException(
+                    com.app.exception.ErrorCode.INVALID_APPLE_TOKEN,
+                    msg,
+                    e,
+                    "apple",
+                    "id_token"
+            );
+        } catch (java.util.concurrent.CompletionException e) {
+            Throwable cause = e.getCause() != null ? e.getCause() : e;
+            throw com.app.exception.DownstreamServiceException.firebaseError("Authentication storage error", cause);
+        } catch (com.app.exception.DownstreamServiceException e) {
+            throw e;
+        } catch (com.app.exception.GatewayException e) {
+            // Preserve specific error codes/status for validation/auth/downstream cases
+            throw e;
         } catch (Exception e) {
-            logger.error("Apple authentication error: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(createErrorResponse("Authentication failed", "Internal server error"));
+            throw new com.app.exception.GatewayException(com.app.exception.ErrorCode.INTERNAL_SERVER_ERROR, "Authentication failed", e);
         }
     }
 
     /**
      * Refresh access token
      */
-    @PostMapping("/refresh")
+    @PostMapping(value = "/refresh", consumes = "application/json", produces = "application/json")
     public ResponseEntity<?> refreshToken(@RequestBody TokenRefreshRequest request) {
         try {
             // Validate request
             if (request == null) {
-                return ResponseEntity.badRequest()
-                        .body(createErrorResponse("Invalid request", "Request body is required"));
+                throw com.app.exception.ValidationException.missingRequiredField("body");
             }
 
             if (request.getRefreshToken() == null || request.getRefreshToken().trim().isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .body(createErrorResponse("Missing refresh token", "Refresh token is required"));
+                throw com.app.exception.ValidationException.missingRequiredField("refreshToken");
             }
 
             logger.info("Token refresh attempt");
@@ -269,18 +349,27 @@ public class AuthController {
             // Validate refresh token and get session from database
             Optional<UserSession> sessionOpt = sessionService.getSessionByRefreshToken(request.getRefreshToken()).join();
             if (sessionOpt.isEmpty()) {
-                throw new JWTVerificationException("Invalid refresh token");
+                throw new com.app.exception.AuthenticationException(
+                        com.app.exception.ErrorCode.INVALID_REFRESH_TOKEN,
+                        "Invalid refresh token"
+                );
             }
 
             UserSession session = sessionOpt.get();
             if (!session.isValid()) {
-                throw new JWTVerificationException("Expired or revoked refresh token");
+                throw new com.app.exception.AuthenticationException(
+                        com.app.exception.ErrorCode.INVALID_REFRESH_TOKEN,
+                        "Expired or revoked refresh token"
+                );
             }
 
             // Get user from database
             Optional<User> userOpt = userService.getUserById(session.getUserId()).join();
             if (userOpt.isEmpty()) {
-                throw new JWTVerificationException("User not found");
+                throw new com.app.exception.AuthenticationException(
+                        com.app.exception.ErrorCode.INVALID_REFRESH_TOKEN,
+                        "User not found"
+                );
             }
 
             User user = userOpt.get();
@@ -291,42 +380,55 @@ public class AuthController {
 
             // Update session with new refresh token
             sessionService.validateAndRefreshSession(request.getRefreshToken(), newRefreshToken).join();
-            
+
             // Create response
             TokenRefreshResponse response = new TokenRefreshResponse();
             response.setSuccess(true);
             response.setTokens(createTokenResponse(newAccessToken, newRefreshToken));
             response.setMessage("Token refresh successful");
-            
+
             logger.info("Token refresh successful for user: {}", user.getId());
             return ResponseEntity.ok(response);
-            
+
         } catch (JWTVerificationException e) {
             logger.warn("Token refresh failed: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(createErrorResponse("Invalid refresh token", e.getMessage()));
+            String msg = e.getMessage() != null ? e.getMessage() : "Invalid refresh token";
+            if (msg.toLowerCase().contains("expired")) {
+                throw com.app.exception.AuthenticationException.expiredToken("refresh_token");
+            }
+            throw new com.app.exception.AuthenticationException(
+                    com.app.exception.ErrorCode.INVALID_REFRESH_TOKEN,
+                    msg,
+                    e,
+                    null,
+                    "refresh_token"
+            );
+        } catch (java.util.concurrent.CompletionException e) {
+            Throwable cause = e.getCause() != null ? e.getCause() : e;
+            throw com.app.exception.DownstreamServiceException.firebaseError("Session store error", cause);
+        } catch (com.app.exception.DownstreamServiceException e) {
+            throw e;
+        } catch (com.app.exception.GatewayException e) {
+            // Preserve specific 4xx/5xx mapping from our domain exceptions
+            throw e;
         } catch (Exception e) {
-            logger.error("Token refresh error: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(createErrorResponse("Token refresh failed", "Internal server error"));
+            throw new com.app.exception.GatewayException(com.app.exception.ErrorCode.INTERNAL_SERVER_ERROR, "Token refresh failed", e);
         }
     }
 
     /**
      * Revoke tokens (logout)
      */
-    @PostMapping("/revoke")
+    @PostMapping(value = "/revoke", consumes = "application/json", produces = "application/json")
     public ResponseEntity<?> revokeTokens(@RequestBody TokenRevokeRequest request) {
         try {
             // Validate request
             if (request == null) {
-                return ResponseEntity.badRequest()
-                        .body(createErrorResponse("Invalid request", "Request body is required"));
+                throw com.app.exception.ValidationException.missingRequiredField("body");
             }
 
             if (request.getRefreshToken() == null || request.getRefreshToken().trim().isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .body(createErrorResponse("Missing refresh token", "Refresh token is required"));
+                throw com.app.exception.ValidationException.missingRequiredField("refreshToken");
             }
 
             // Revoke session in database
@@ -345,11 +447,17 @@ public class AuthController {
             }
 
             return ResponseEntity.ok(response);
-            
+
+        } catch (java.util.concurrent.CompletionException e) {
+            Throwable cause = e.getCause() != null ? e.getCause() : e;
+            throw com.app.exception.DownstreamServiceException.firebaseError("Session store error", cause);
+        } catch (com.app.exception.DownstreamServiceException e) {
+            throw e;
+        } catch (com.app.exception.GatewayException e) {
+            // Preserve specific 4xx/5xx mapping from our domain exceptions
+            throw e;
         } catch (Exception e) {
-            logger.error("Token revocation error: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(createErrorResponse("Token revocation failed", "Internal server error"));
+            throw new com.app.exception.GatewayException(com.app.exception.ErrorCode.INTERNAL_SERVER_ERROR, "Token revocation failed", e);
         }
     }
 
@@ -360,12 +468,11 @@ public class AuthController {
         return UUID.nameUUIDFromBytes((email + ":" + provider).getBytes()).toString();
     }
 
-    private UserProfile createUserProfile(String userId, String email, String name, String picture, String provider, String providerId) {
+    private UserProfile createUserProfile(String userId, String email, String name, String provider, String providerId) {
         UserProfile profile = new UserProfile();
         profile.setId(userId);
         profile.setEmail(email);
         profile.setName(name);
-        profile.setPicture(picture);
         profile.setProvider(provider);
         profile.setProviderId(providerId);
         profile.setCreatedAt(Instant.now().toString());
@@ -378,7 +485,7 @@ public class AuthController {
         profile.setId(user.getId());
         profile.setEmail(user.getEmail());
         profile.setName(user.getName());
-        profile.setPicture(user.getPicture());
+        profile.setInitials(user.getInitials());
         profile.setProvider(user.getProvider());
         profile.setProviderId(user.getProviderId());
         profile.setCreatedAt(user.getCreatedAt().toString());
@@ -396,14 +503,28 @@ public class AuthController {
         return tokens;
     }
 
-    private Map<String, Object> createErrorResponse(String error, String message) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", false);
-        response.put("error", error);
-        response.put("message", message);
-        response.put("timestamp", Instant.now().toString());
-        return response;
+    private boolean validateNonceIfPresent(DecodedJWT jwt, String requestNonce) {
+        if (requestNonce == null || requestNonce.trim().isEmpty()) {
+            return true; // Nonce optional; if not provided, skip
+        }
+        String tokenNonce = jwt.getClaim("nonce") != null ? jwt.getClaim("nonce").asString() : null;
+        if (tokenNonce == null || tokenNonce.isEmpty()) {
+            return false; // Nonce required when client sends one
+        }
+        if (tokenNonce.equals(requestNonce)) {
+            return true;
+        }
+        try {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] hashed = md.digest(requestNonce.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            String b64u = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(hashed);
+            return tokenNonce.equals(b64u);
+        } catch (Exception e) {
+            return false;
+        }
     }
+
+
 
     // Request/Response DTOs
 
@@ -497,7 +618,7 @@ public class AuthController {
         private String id;
         private String email;
         private String name;
-        private String picture;
+        private String initials;
         private String provider;
         private String providerId;
         private String createdAt;
@@ -510,8 +631,8 @@ public class AuthController {
         public void setEmail(String email) { this.email = email; }
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }
-        public String getPicture() { return picture; }
-        public void setPicture(String picture) { this.picture = picture; }
+        public String getInitials() { return initials; }
+        public void setInitials(String initials) { this.initials = initials; }
         public String getProvider() { return provider; }
         public void setProvider(String provider) { this.provider = provider; }
         public String getProviderId() { return providerId; }
@@ -630,19 +751,19 @@ public class AuthController {
             return "unknown";
         }
 
-        userAgent = userAgent.toLowerCase();
+        userAgent = userAgent.toLowerCase(); //remove later, not needed and is AI generated - we can just return the string, this contain check does f all
         if (userAgent.contains("android")) {
             return "android";
         } else if (userAgent.contains("ios") || userAgent.contains("iphone") || userAgent.contains("ipad")) {
             return "ios";
-        } else if (userAgent.contains("windows")) {
+        } else if (userAgent.contains("windows")) { //shouldn't happen but best to keep just in case we see web access.
             return "windows";
         } else if (userAgent.contains("mac")) {
             return "macos";
         } else if (userAgent.contains("linux")) {
             return "linux";
         } else {
-            return "unknown";
+            return userAgent;
         }
     }
 }

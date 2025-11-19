@@ -3,6 +3,7 @@ package com.app.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,12 +36,6 @@ public class UserSession {
     @JsonProperty("appVersion")
     private String appVersion;
 
-    @JsonProperty("userAgent")
-    private String userAgent;
-
-    @JsonProperty("ipAddress")
-    private String ipAddress;
-
     @JsonProperty("isActive")
     private boolean isActive = true;
 
@@ -72,7 +67,7 @@ public class UserSession {
         this.userId = userId;
         this.refreshToken = refreshToken;
         this.deviceId = deviceId;
-        
+
         // Set expiration to 7 days from now (default refresh token expiry)
         this.expiresAt = Instant.now().plusSeconds(7 * 24 * 60 * 60);
     }
@@ -132,22 +127,6 @@ public class UserSession {
 
     public void setAppVersion(String appVersion) {
         this.appVersion = appVersion;
-    }
-
-    public String getUserAgent() {
-        return userAgent;
-    }
-
-    public void setUserAgent(String userAgent) {
-        this.userAgent = userAgent;
-    }
-
-    public String getIpAddress() {
-        return ipAddress;
-    }
-
-    public void setIpAddress(String ipAddress) {
-        this.ipAddress = ipAddress;
     }
 
     public boolean isActive() {

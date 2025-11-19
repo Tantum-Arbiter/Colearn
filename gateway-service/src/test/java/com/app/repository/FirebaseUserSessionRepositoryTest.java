@@ -66,7 +66,7 @@ class FirebaseUserSessionRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        repository = new FirebaseUserSessionRepository(firestore, metricsService);
+        repository = new FirebaseUserSessionRepository(firestore);
         
         // Create test session
         testSession = new UserSession();
@@ -78,7 +78,7 @@ class FirebaseUserSessionRepositoryTest {
         testSession.setPlatform("ios");
         testSession.setAppVersion("1.0.0");
         testSession.setCreatedAt(Instant.now());
-        testSession.setLastAccessed(Instant.now());
+        testSession.setLastAccessedAt(Instant.now());
         testSession.setExpiresAt(Instant.now().plusSeconds(7 * 24 * 60 * 60)); // 7 days
         testSession.setActive(true);
     }
@@ -180,9 +180,10 @@ class FirebaseUserSessionRepositoryTest {
 
         when(firestore.collection("user_sessions")).thenReturn(collectionReference);
         when(collectionReference.whereEqualTo("refreshToken", testSession.getRefreshToken())).thenReturn(query);
-        when(query.whereEqualTo("active", true)).thenReturn(query);
+        when(query.limit(1)).thenReturn(query);
         when(query.get()).thenReturn(querySnapshotFuture);
         when(querySnapshotFuture.get()).thenReturn(querySnapshot);
+        when(querySnapshot.isEmpty()).thenReturn(false);
         when(querySnapshot.getDocuments()).thenReturn(documents);
 
         // Act
@@ -196,7 +197,7 @@ class FirebaseUserSessionRepositoryTest {
         // Verify Firestore interactions
         verify(firestore).collection("user_sessions");
         verify(collectionReference).whereEqualTo("refreshToken", testSession.getRefreshToken());
-        verify(query).whereEqualTo("active", true);
+        verify(query).limit(1);
         verify(query).get();
     }
 
@@ -205,10 +206,10 @@ class FirebaseUserSessionRepositoryTest {
         // Arrange
         when(firestore.collection("user_sessions")).thenReturn(collectionReference);
         when(collectionReference.whereEqualTo("refreshToken", testSession.getRefreshToken())).thenReturn(query);
-        when(query.whereEqualTo("active", true)).thenReturn(query);
+        when(query.limit(1)).thenReturn(query);
         when(query.get()).thenReturn(querySnapshotFuture);
         when(querySnapshotFuture.get()).thenReturn(querySnapshot);
-        when(querySnapshot.getDocuments()).thenReturn(new ArrayList<>());
+        when(querySnapshot.isEmpty()).thenReturn(true);
 
         // Act
         CompletableFuture<Optional<UserSession>> result = repository.findByRefreshToken(testSession.getRefreshToken());
@@ -254,17 +255,24 @@ class FirebaseUserSessionRepositoryTest {
         // Arrange
         when(firestore.collection("user_sessions")).thenReturn(collectionReference);
         when(collectionReference.document(testSession.getId())).thenReturn(documentReference);
-        when(documentReference.update(anyMap())).thenReturn(writeResultFuture);
+        when(documentReference.update(eq("active"), eq(false), eq("revokedAt"), any(Instant.class))).thenReturn(writeResultFuture);
         when(writeResultFuture.get()).thenReturn(writeResult);
 
+        // Mock for findById call after revocation
+        when(documentReference.get()).thenReturn(documentSnapshotFuture);
+        when(documentSnapshotFuture.get()).thenReturn(documentSnapshot);
+        when(documentSnapshot.exists()).thenReturn(true);
+        when(documentSnapshot.toObject(UserSession.class)).thenReturn(testSession);
+
         // Act
-        CompletableFuture<Void> result = repository.revokeSession(testSession.getId());
+        CompletableFuture<UserSession> result = repository.revokeSession(testSession.getId());
         result.get();
 
         // Assert
-        verify(firestore).collection("user_sessions");
-        verify(collectionReference).document(testSession.getId());
-        verify(documentReference).update(anyMap());
+        verify(firestore, times(2)).collection("user_sessions"); // Called in revokeSession and findById
+        verify(collectionReference, times(2)).document(testSession.getId()); // Called in revokeSession and findById
+        verify(documentReference).update(eq("active"), eq(false), eq("revokedAt"), any(Instant.class));
+        verify(documentReference).get(); // Called in findById
     }
 
     @Test
@@ -276,7 +284,7 @@ class FirebaseUserSessionRepositoryTest {
         when(documentSnapshotFuture.get()).thenReturn(documentSnapshot);
         when(documentSnapshot.exists()).thenReturn(true);
         when(documentSnapshot.toObject(UserSession.class)).thenReturn(testSession);
-        when(documentReference.update(anyMap())).thenReturn(writeResultFuture);
+        when(documentReference.update(eq("lastAccessedAt"), any(Instant.class))).thenReturn(writeResultFuture);
         when(writeResultFuture.get()).thenReturn(writeResult);
 
         // Act
@@ -291,7 +299,7 @@ class FirebaseUserSessionRepositoryTest {
         verify(firestore, times(2)).collection("user_sessions");
         verify(collectionReference, times(2)).document(testSession.getId());
         verify(documentReference).get();
-        verify(documentReference).update(anyMap());
+        verify(documentReference).update(eq("lastAccessedAt"), any(Instant.class));
     }
 
     @Test

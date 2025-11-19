@@ -1,0 +1,161 @@
+services:
+  # WireMock Server for mocking external services
+  wiremock:
+    build:
+      context: ./wiremock-server
+      dockerfile: Dockerfile
+    container_name: wiremock-server
+    profiles:
+      - infra
+      - func
+      - gw-tests
+      - gateway
+
+    ports:
+      - "9000:8080"  # WireMock port
+    environment:
+      - WIREMOCK_OPTIONS=--global-response-templating --verbose
+    volumes:
+      - ./wiremock-server/mappings:/home/wiremock/mappings:ro
+      - ./wiremock-server/__files:/home/wiremock/__files:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/__admin/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    stop_grace_period: 20s
+    init: true
+
+    networks:
+      - func-test-network
+
+  # Firestore Emulator
+  firestore:
+    build:
+      context: ./firestore-emulator
+      dockerfile: Dockerfile
+    container_name: firestore-emulator
+    profiles:
+      - infra
+      - func
+      - gw-tests
+      - gateway
+
+    command: gcloud beta emulators firestore start --host-port=0.0.0.0:8080 --project=test-project
+    ports:
+      - "8082:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8080'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    stop_grace_period: 30s
+    init: true
+    networks:
+      func-test-network:
+        aliases:
+          - firestore
+          - firestore-emulator
+
+  # Gateway Service (the service under test)
+  gateway:
+    build:
+      context: ./gateway-service
+      dockerfile: Dockerfile
+    container_name: gateway-service
+    profiles:
+      - gateway
+      - func
+
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=test
+      - FIREBASE_PROJECT_ID=colean-func-test
+      - GOOGLE_OAUTH_CLIENT_ID=test-client-id
+      - GOOGLE_OAUTH_CLIENT_SECRET=test-client-secret
+      - APPLE_OAUTH_CLIENT_ID=test-apple-client-id
+      - WIREMOCK_BASE_URL=http://wiremock:8080
+      # Override external service URLs to point to WireMock
+      - FIREBASE_AUTH_URL=http://wiremock:8080
+      - GOOGLE_OAUTH_URL=http://wiremock:8080
+      - APPLE_OAUTH_URL=http://wiremock:8080
+      - FIREBASE_EMULATOR_HOST=firestore-emulator
+      - FIREBASE_EMULATOR_PORT=8080
+
+    depends_on:
+      wiremock:
+        condition: service_healthy
+      firestore:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/private/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+    stop_grace_period: 40s
+    init: true
+    networks:
+      - func-test-network
+
+  # Gateway unit/integration tests
+  gateway-tests:
+    build:
+      context: ./gateway-service
+      dockerfile: Dockerfile
+      target: builder
+    container_name: gateway-tests
+    profiles:
+      - gw-tests
+
+    environment:
+      - SPRING_PROFILES_ACTIVE=test
+      - FIREBASE_PROJECT_ID=test-project
+      - FIREBASE_EMULATOR_HOST=firestore-emulator
+      - FIREBASE_EMULATOR_PORT=8080
+      - WIREMOCK_BASE_URL=http://wiremock:8080
+      - FIREBASE_AUTH_URL=http://wiremock:8080
+      - GOOGLE_OAUTH_URL=http://wiremock:8080
+      - APPLE_OAUTH_URL=http://wiremock:8080
+    depends_on:
+      wiremock:
+        condition: service_healthy
+      firestore:
+        condition: service_healthy
+    networks:
+      - func-test-network
+    command: ["gradle", "test", "--no-daemon", "-x", "jacocoTestReport"]
+
+  # Functional Tests
+  func-tests:
+    build:
+      context: ./func-tests
+      dockerfile: Dockerfile
+    container_name: func-tests
+    profiles:
+      - func
+
+    environment:
+      - SPRING_PROFILES_ACTIVE=test
+      - GATEWAY_BASE_URL=http://gateway:8080
+      - WIREMOCK_BASE_URL=http://wiremock:8080
+    depends_on:
+      gateway:
+        condition: service_healthy
+      wiremock:
+        condition: service_healthy
+    volumes:
+      # Only bind-mount reports/results so we don't override compiled classes inside the container
+      - ./func-tests/build/reports:/app/build/reports
+      - ./func-tests/build/test-results:/app/build/test-results
+      - ./func-tests/build/cucumber-reports:/app/build/cucumber-reports
+    networks:
+      - func-test-network
+    command: ["./gradlew", "functionalTest", "--no-daemon", "--info"]
+
+networks:
+  func-test-network:
+    driver: bridge

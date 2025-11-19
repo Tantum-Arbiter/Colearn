@@ -1,6 +1,8 @@
 package com.app.config;
 
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.auth.oauth2.AccessToken;
+
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.FirestoreOptions;
 import com.google.firebase.FirebaseApp;
@@ -17,6 +19,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Date;
+
 
 /**
  * Firebase Configuration for Firestore Database Integration
@@ -65,7 +69,7 @@ public class FirebaseConfig {
 
             FirebaseOptions options = optionsBuilder.build();
             FirebaseApp app = FirebaseApp.initializeApp(options);
-            
+
             logger.info("Firebase App initialized successfully");
             return app;
         } else {
@@ -81,18 +85,18 @@ public class FirebaseConfig {
     @Profile("!test")
     public Firestore firestore(FirebaseApp firebaseApp) {
         logger.info("Creating Firestore client");
-        
+
         // Check if emulator is configured
         if (emulatorHost != null && !emulatorHost.trim().isEmpty()) {
             logger.info("Using Firestore emulator at {}:{}", emulatorHost, emulatorPort);
-            
-            // Configure Firestore to use emulator
+
+            // Configure Firestore to use emulator (plaintext)
             FirestoreOptions options = FirestoreOptions.newBuilder()
                     .setProjectId(projectId)
-                    .setHost(emulatorHost + ":" + emulatorPort)
-                    .setCredentials(getGoogleCredentials())
+                    .setEmulatorHost(emulatorHost + ":" + emulatorPort)
+                    .setCredentials(getTestCredentials())
                     .build();
-            
+
             return options.getService();
         } else {
             // Use production Firestore
@@ -107,16 +111,16 @@ public class FirebaseConfig {
     @Profile("test")
     public Firestore testFirestore() {
         logger.info("Creating test Firestore client with emulator");
-        
+
         String testEmulatorHost = emulatorHost != null ? emulatorHost : "localhost";
         int testEmulatorPort = emulatorPort > 0 ? emulatorPort : 8080;
-        
+
         FirestoreOptions options = FirestoreOptions.newBuilder()
                 .setProjectId("test-project")
-                .setHost(testEmulatorHost + ":" + testEmulatorPort)
+                .setEmulatorHost(testEmulatorHost + ":" + testEmulatorPort)
                 .setCredentials(getTestCredentials())
                 .build();
-        
+
         return options.getService();
     }
 
@@ -146,12 +150,7 @@ public class FirebaseConfig {
      * Get test credentials for emulator
      */
     private GoogleCredentials getTestCredentials() {
-        try {
-            // For testing, we can use mock credentials
-            return GoogleCredentials.newBuilder().build();
-        } catch (Exception e) {
-            logger.warn("Using default test credentials");
-            return null;
-        }
+        AccessToken token = new AccessToken("emulator-token", new Date(System.currentTimeMillis() + 3600_000));
+        return GoogleCredentials.create(token);
     }
 }

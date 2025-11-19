@@ -1,0 +1,316 @@
+{
+  "mappings": [
+    {
+      "priority": 1,
+      "request": {
+        "method": "GET",
+        "urlPath": "/v1/projects/colean-func/accounts:lookup",
+        "headers": {
+          "X-Test-Scenario": {
+            "equalTo": "service-unavailable"
+          }
+        }
+      },
+      "response": {
+        "status": 503,
+        "fixedDelayMilliseconds": 2000,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "error": {
+            "code": 503,
+            "message": "Service Unavailable",
+            "status": "UNAVAILABLE",
+            "details": [
+              {
+                "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+                "reason": "SERVICE_UNAVAILABLE",
+                "domain": "firebase.googleapis.com"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "priority": 1,
+      "request": {
+        "method": "GET",
+        "urlPath": "/v1/projects/colean-func/accounts:lookup",
+        "headers": {
+          "X-Test-Scenario": {
+            "equalTo": "timeout"
+          }
+        }
+      },
+      "response": {
+        "fixedDelayMilliseconds": 10000,
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "users": []
+        }
+      }
+    },
+    {
+      "priority": 1,
+      "request": {
+        "method": "GET",
+        "urlPath": "/v1/projects/colean-func/accounts:lookup",
+        "headers": {
+          "X-Test-Scenario": {
+            "equalTo": "internal-error"
+          }
+        }
+      },
+      "response": {
+        "status": 500,
+        "fixedDelayMilliseconds": 1000,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "error": {
+            "code": 500,
+            "message": "Internal Server Error",
+            "status": "INTERNAL",
+            "details": [
+              {
+                "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+                "reason": "INTERNAL_ERROR",
+                "domain": "firebase.googleapis.com"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "priority": 1,
+      "request": {
+        "method": "GET",
+        "urlPath": "/v1/projects/colean-func/accounts:lookup",
+        "headers": {
+          "X-Test-Scenario": {
+            "equalTo": "quota-exceeded"
+          }
+        }
+      },
+      "response": {
+        "status": 429,
+        "headers": {
+          "Content-Type": "application/json",
+          "Retry-After": "60"
+        },
+        "jsonBody": {
+          "error": {
+            "code": 429,
+            "message": "Quota exceeded",
+            "status": "RESOURCE_EXHAUSTED",
+            "details": [
+              {
+                "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+                "reason": "RATE_LIMIT_EXCEEDED",
+                "domain": "firebase.googleapis.com",
+                "metadata": {
+                  "quota_limit": "1000",
+                  "quota_limit_name": "RequestsPerMinutePerProject"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "priority": 1,
+      "request": {
+        "method": "POST",
+        "urlPath": "/v1/projects/colean-func/accounts",
+        "headers": {
+          "X-Test-Scenario": {
+            "equalTo": "create-user-error"
+          }
+        }
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "error": {
+            "code": 400,
+            "message": "EMAIL_EXISTS",
+            "status": "INVALID_ARGUMENT",
+            "details": [
+              {
+                "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+                "reason": "EMAIL_EXISTS",
+                "domain": "firebase.googleapis.com"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "priority": 1,
+      "request": {
+        "method": "POST",
+        "urlPath": "/v1/projects/colean-func/accounts:update",
+        "headers": {
+          "X-Test-Scenario": {
+            "equalTo": "concurrent-modification"
+          }
+        }
+      },
+      "response": {
+        "status": 409,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "error": {
+            "code": 409,
+            "message": "ABORTED",
+            "status": "ABORTED",
+            "details": [
+              {
+                "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+                "reason": "CONCURRENT_MODIFICATION",
+                "domain": "firebase.googleapis.com"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "priority": 1,
+      "request": {
+        "method": "GET",
+        "urlPath": "/v1/projects/colean-func/accounts:lookup",
+        "headers": {
+          "X-Test-Scenario": {
+            "equalTo": "connection-error"
+          }
+        }
+      },
+      "response": {
+        "fault": "CONNECTION_RESET_BY_PEER"
+      }
+    },
+    {
+      "priority": 1,
+      "request": {
+        "method": "GET",
+        "urlPath": "/v1/projects/colean-func/accounts:lookup",
+        "headers": {
+          "X-Test-Scenario": {
+            "equalTo": "random-delay"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "delayDistribution": {
+          "type": "lognormal",
+          "median": 2000,
+          "sigma": 0.4
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "users": [
+            {
+              "localId": "test-user-id",
+              "email": "test@example.com",
+              "emailVerified": true,
+              "displayName": "Test User",
+              "providerUserInfo": [
+                {
+                  "providerId": "google.com",
+                  "federatedId": "google-user-id",
+                  "email": "test@example.com",
+                  "displayName": "Test User"
+                }
+              ],
+              "createdAt": "1234567890000",
+              "lastLoginAt": "1234567890000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "priority": 1,
+      "request": {
+        "method": "GET",
+        "urlPath": "/v1/projects/colean-func/accounts:lookup",
+        "headers": {
+          "X-Test-Scenario": {
+            "equalTo": "database-error"
+          }
+        }
+      },
+      "response": {
+        "status": 500,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "error": {
+            "code": 500,
+            "message": "Database connection failed",
+            "status": "INTERNAL",
+            "details": [
+              {
+                "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+                "reason": "DATABASE_ERROR",
+                "domain": "firebase.googleapis.com"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "priority": 1,
+      "request": {
+        "method": "GET",
+        "urlPath": "/v1/projects/colean-func/accounts:lookup",
+        "headers": {
+          "X-Test-Scenario": {
+            "equalTo": "maintenance-mode"
+          }
+        }
+      },
+      "response": {
+        "status": 503,
+        "headers": {
+          "Content-Type": "application/json",
+          "Retry-After": "3600"
+        },
+        "jsonBody": {
+          "error": {
+            "code": 503,
+            "message": "Service is temporarily unavailable due to maintenance",
+            "status": "UNAVAILABLE",
+            "details": [
+              {
+                "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+                "reason": "MAINTENANCE_MODE",
+                "domain": "firebase.googleapis.com"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

@@ -45,9 +45,9 @@ class RateLimitingFilterTest {
     void setUp() throws IOException {
         rateLimitingFilter = new RateLimitingFilter();
         SecurityContextHolder.clearContext();
-        
-        // Mock response writer
-        when(response.getWriter()).thenReturn(printWriter);
+
+        // Mock response writer (lenient to avoid unnecessary stubbing failures)
+        lenient().when(response.getWriter()).thenReturn(printWriter);
     }
 
     @Test
@@ -122,7 +122,8 @@ class RateLimitingFilterTest {
         String ipAddress = "192.168.1.103";
         
         when(request.getRequestURI()).thenReturn("/api/test");
-        when(request.getRemoteAddr()).thenReturn(ipAddress);
+        // lenient because userId path doesn't need remoteAddr
+        lenient().when(request.getRemoteAddr()).thenReturn(ipAddress);
         when(authentication.getPrincipal()).thenReturn(userId);
         when(authentication.isAuthenticated()).thenReturn(true);
         

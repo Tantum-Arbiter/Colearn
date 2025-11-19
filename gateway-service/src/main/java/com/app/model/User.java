@@ -25,8 +25,8 @@ public class User {
     @JsonProperty("name")
     private String name;
 
-    @JsonProperty("picture")
-    private String picture;
+    @JsonProperty("initials")
+    private String initials;
 
     @JsonProperty("provider")
     private String provider; // "google", "apple"
@@ -66,12 +66,12 @@ public class User {
     }
 
     // Constructor for new user creation
-    public User(String id, String email, String name, String picture, String provider, String providerId) {
+    public User(String id, String email, String name, String provider, String providerId) {
         this();
         this.id = id;
         this.email = email;
         this.name = name;
-        this.picture = picture;
+        this.initials = generateInitials(name);
         this.provider = provider;
         this.providerId = providerId;
         this.lastLoginAt = Instant.now();
@@ -100,14 +100,15 @@ public class User {
 
     public void setName(String name) {
         this.name = name;
+        this.initials = generateInitials(name);
     }
 
-    public String getPicture() {
-        return picture;
+    public String getInitials() {
+        return initials;
     }
 
-    public void setPicture(String picture) {
-        this.picture = picture;
+    public void setInitials(String initials) {
+        this.initials = initials;
     }
 
     public String getProvider() {
@@ -233,12 +234,31 @@ public class User {
         this.updatedAt = Instant.now();
     }
 
+    // Helper method to generate initials from name
+    private String generateInitials(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            return "??";
+        }
+
+        String[] parts = name.trim().split("\\s+");
+        if (parts.length == 1) {
+            // Single name - use first two characters
+            return parts[0].substring(0, Math.min(2, parts[0].length())).toUpperCase();
+        } else {
+            // Multiple names - use first character of first and last name
+            String first = parts[0].substring(0, 1).toUpperCase();
+            String last = parts[parts.length - 1].substring(0, 1).toUpperCase();
+            return first + last;
+        }
+    }
+
     @Override
     public String toString() {
         return "User{" +
                 "id='" + id + '\'' +
                 ", email='" + email + '\'' +
                 ", name='" + name + '\'' +
+                ", initials='" + initials + '\'' +
                 ", provider='" + provider + '\'' +
                 ", isActive=" + isActive +
                 ", lastLoginAt=" + lastLoginAt +

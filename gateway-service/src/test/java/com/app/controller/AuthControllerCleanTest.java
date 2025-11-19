@@ -2,6 +2,11 @@ package com.app.controller;
 
 import com.app.config.JwtConfig;
 import com.app.service.SecurityMonitoringService;
+import com.app.service.ApplicationMetricsService;
+import com.app.service.UserService;
+import com.app.service.SessionService;
+import com.app.model.User;
+import com.app.model.UserSession;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.exceptions.JWTVerificationException;
@@ -16,9 +21,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
 
+import java.time.Instant;
+import java.util.concurrent.CompletableFuture;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 /**
  * Clean TDD-based tests for AuthController with proper separation of concerns.
@@ -32,6 +41,15 @@ class AuthControllerCleanTest {
 
     @Mock
     private SecurityMonitoringService securityMonitoringService;
+
+    @Mock
+    private ApplicationMetricsService applicationMetricsService;
+
+    @Mock
+    private UserService userService;
+
+    @Mock
+    private SessionService sessionService;
 
     @Mock
     private DecodedJWT mockDecodedJWT;
@@ -48,6 +66,9 @@ class AuthControllerCleanTest {
         mockRequest = new MockHttpServletRequest();
         mockRequest.setRemoteAddr("127.0.0.1");
         mockRequest.addHeader("User-Agent", "GrowWithFreya-Test/1.0");
+
+        // Use lenient mocking to avoid unnecessary stubbing exceptions
+        lenient().doNothing().when(applicationMetricsService).recordAuthentication(anyString(), anyString(), anyString(), anyString(), anyBoolean(), anyLong());
     }
 
     @Test
@@ -55,6 +76,7 @@ class AuthControllerCleanTest {
         // Given
         AuthController.GoogleAuthRequest request = createValidGoogleRequest();
         setupValidGoogleTokenMocks();
+        setupUserAndSessionMocks();
 
         // When
         ResponseEntity<?> response = authController.authenticateWithGoogle(request, mockRequest);
@@ -62,28 +84,29 @@ class AuthControllerCleanTest {
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        
+
         // Verify security monitoring was called
         verify(securityMonitoringService).logSuccessfulAuthentication(
-            anyString(), eq("google"), eq("127.0.0.1"), eq("GrowWithFreya-Test/1.0"));
+            anyString(), eq("google"));
     }
 
     @Test
     void authenticateWithGoogle_WithInvalidToken_ShouldReturnUnauthorized() {
         // Given
         AuthController.GoogleAuthRequest request = createValidGoogleRequest();
-        when(jwtConfig.validateGoogleIdToken(anyString(), anyString()))
+        when(jwtConfig.validateGoogleIdToken(anyString()))
             .thenThrow(new JWTVerificationException("Invalid token"));
 
-        // When
-        ResponseEntity<?> response = authController.authenticateWithGoogle(request, mockRequest);
+        // When / Then
+        com.app.exception.AuthenticationException ex = assertThrows(
+                com.app.exception.AuthenticationException.class,
+                () -> authController.authenticateWithGoogle(request, mockRequest)
+        );
+        assertEquals("GTW-002", ex.getErrorCode().getCode());
 
-        // Then
-        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
-        
         // Verify failed authentication was logged
         verify(securityMonitoringService).logFailedAuthentication(
-            eq("google"), eq("127.0.0.1"), eq("GrowWithFreya-Test/1.0"));
+            eq("google"));
     }
 
     @Test
@@ -93,29 +116,29 @@ class AuthControllerCleanTest {
         request.setClientId("google-client-id");
         // idToken is null
 
-        // When
-        ResponseEntity<?> response = authController.authenticateWithGoogle(request, mockRequest);
-
-        // Then
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        // When / Then
+        com.app.exception.ValidationException ex = assertThrows(
+                com.app.exception.ValidationException.class,
+                () -> authController.authenticateWithGoogle(request, mockRequest)
+        );
+        assertEquals("GTW-101", ex.getErrorCode().getCode());
     }
 
     @Test
     void authenticateWithGoogle_WithNullEmailClaim_ShouldReturnBadRequest() {
         // Given
         AuthController.GoogleAuthRequest request = createValidGoogleRequest();
-        when(jwtConfig.validateGoogleIdToken(anyString(), anyString())).thenReturn(mockDecodedJWT);
+        when(jwtConfig.validateGoogleIdToken(anyString())).thenReturn(mockDecodedJWT);
 
-        // Mock email claim to return null
-        com.auth0.jwt.interfaces.Claim emailClaim = mock(com.auth0.jwt.interfaces.Claim.class);
-        when(emailClaim.asString()).thenReturn(null);
-        when(mockDecodedJWT.getClaim("email")).thenReturn(emailClaim);
+        // Mock email claim to return null - should be treated as missing required field
+        when(mockDecodedJWT.getClaim("email")).thenReturn(null);
 
-        // When
-        ResponseEntity<?> response = authController.authenticateWithGoogle(request, mockRequest);
-
-        // Then
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        // When / Then
+        com.app.exception.ValidationException ex = assertThrows(
+                com.app.exception.ValidationException.class,
+                () -> authController.authenticateWithGoogle(request, mockRequest)
+        );
+        assertEquals("GTW-101", ex.getErrorCode().getCode());
     }
 
     @Test
@@ -123,6 +146,7 @@ class AuthControllerCleanTest {
         // Given
         AuthController.AppleAuthRequest request = createValidAppleRequest();
         setupValidAppleTokenMocks();
+        setupUserAndSessionMocks();
 
         // When
         ResponseEntity<?> response = authController.authenticateWithApple(request, mockRequest);
@@ -130,28 +154,29 @@ class AuthControllerCleanTest {
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        
+
         // Verify security monitoring was called
         verify(securityMonitoringService).logSuccessfulAuthentication(
-            anyString(), eq("apple"), eq("127.0.0.1"), eq("GrowWithFreya-Test/1.0"));
+            anyString(), eq("apple"));
     }
 
     @Test
     void authenticateWithApple_WithInvalidToken_ShouldReturnUnauthorized() {
         // Given
         AuthController.AppleAuthRequest request = createValidAppleRequest();
-        when(jwtConfig.validateAppleIdToken(anyString(), anyString()))
+        when(jwtConfig.validateAppleIdToken(anyString()))
             .thenThrow(new JWTVerificationException("Invalid token"));
 
-        // When
-        ResponseEntity<?> response = authController.authenticateWithApple(request, mockRequest);
+        // When / Then
+        com.app.exception.AuthenticationException ex = assertThrows(
+                com.app.exception.AuthenticationException.class,
+                () -> authController.authenticateWithApple(request, mockRequest)
+        );
+        assertEquals("GTW-003", ex.getErrorCode().getCode());
 
-        // Then
-        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
-        
         // Verify failed authentication was logged
         verify(securityMonitoringService).logFailedAuthentication(
-            eq("apple"), eq("127.0.0.1"), eq("GrowWithFreya-Test/1.0"));
+            eq("apple"));
     }
 
     // Helper methods for creating test data
@@ -166,35 +191,83 @@ class AuthControllerCleanTest {
         AuthController.AppleAuthRequest request = new AuthController.AppleAuthRequest();
         request.setIdToken("valid.apple.id.token");
         request.setClientId("apple-client-id");
-        
+
         AuthController.UserInfo userInfo = new AuthController.UserInfo();
         userInfo.setName("Apple User");
         request.setUserInfo(userInfo);
-        
+
         return request;
     }
 
-    private void setupValidGoogleTokenMocks() {
-        when(jwtConfig.validateGoogleIdToken(anyString(), anyString())).thenReturn(mockDecodedJWT);
-        when(mockDecodedJWT.getClaim("email")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(mockDecodedJWT.getClaim("email").asString()).thenReturn("test@gmail.com");
-        when(mockDecodedJWT.getClaim("name")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(mockDecodedJWT.getClaim("name").asString()).thenReturn("Test User");
-        when(mockDecodedJWT.getClaim("picture")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(mockDecodedJWT.getClaim("picture").asString()).thenReturn("https://example.com/avatar.jpg");
-        when(mockDecodedJWT.getSubject()).thenReturn("google-user-123");
+    private void setupUserAndSessionMocks() {
+        // Create test user
+        User testUser = new User();
+        testUser.setId("test-user-id");
+        testUser.setEmail("test@example.com");
+        testUser.setName("Test User");
+        testUser.setProvider("google");
+        testUser.setProviderId("google-123");
+        testUser.setCreatedAt(Instant.now());
+        testUser.setUpdatedAt(Instant.now());
+        testUser.setActive(true);
+        testUser.setLastLoginAt(Instant.now());
 
-        when(jwtConfig.generateAccessToken(anyString(), anyString(), anyString())).thenReturn("access.token.here");
-        when(jwtConfig.generateRefreshToken(anyString())).thenReturn("refresh.token.here");
+        // Create test session
+        UserSession testSession = new UserSession();
+        testSession.setId("test-session-id");
+        testSession.setUserId("test-user-id");
+        testSession.setRefreshToken("refresh-token-123");
+        testSession.setDeviceId("device-123");
+        testSession.setDeviceType("mobile");
+        testSession.setPlatform("ios");
+        testSession.setAppVersion("1.0.0");
+        testSession.setCreatedAt(Instant.now());
+        testSession.setLastAccessedAt(Instant.now());
+        testSession.setExpiresAt(Instant.now().plusSeconds(7 * 24 * 60 * 60));
+        testSession.setActive(true);
+
+        // Mock UserService with any arguments (including nulls)
+        lenient().when(userService.getOrCreateUser(any(), any(), any(), any()))
+            .thenReturn(CompletableFuture.completedFuture(testUser));
+
+        // Mock SessionService with any arguments (including nulls)
+        lenient().when(sessionService.createSession(any(), any(), any(), any(), any(), any()))
+            .thenReturn(CompletableFuture.completedFuture(testSession));
+    }
+
+    private void setupValidGoogleTokenMocks() {
+        lenient().when(jwtConfig.validateGoogleIdToken(anyString())).thenReturn(mockDecodedJWT);
+
+        // Create mock claims
+        Claim emailClaim = mock(Claim.class);
+        lenient().when(emailClaim.asString()).thenReturn("test@gmail.com");
+        lenient().when(mockDecodedJWT.getClaim("email")).thenReturn(emailClaim);
+
+        Claim nameClaim = mock(Claim.class);
+        lenient().when(nameClaim.asString()).thenReturn("Test User");
+        lenient().when(mockDecodedJWT.getClaim("name")).thenReturn(nameClaim);
+
+        Claim pictureClaim = mock(Claim.class);
+        lenient().when(pictureClaim.asString()).thenReturn("https://example.com/avatar.jpg");
+        lenient().when(mockDecodedJWT.getClaim("picture")).thenReturn(pictureClaim);
+
+        lenient().when(mockDecodedJWT.getSubject()).thenReturn("google-user-123");
+
+        lenient().when(jwtConfig.generateAccessToken(anyString(), anyString(), anyString())).thenReturn("access.token.here");
+        lenient().when(jwtConfig.generateRefreshToken(anyString())).thenReturn("refresh.token.here");
     }
 
     private void setupValidAppleTokenMocks() {
-        when(jwtConfig.validateAppleIdToken(anyString(), anyString())).thenReturn(mockDecodedJWT);
-        when(mockDecodedJWT.getClaim("email")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(mockDecodedJWT.getClaim("email").asString()).thenReturn("test@icloud.com");
-        when(mockDecodedJWT.getSubject()).thenReturn("apple-user-123");
+        lenient().when(jwtConfig.validateAppleIdToken(anyString())).thenReturn(mockDecodedJWT);
 
-        when(jwtConfig.generateAccessToken(anyString(), anyString(), anyString())).thenReturn("access.token.here");
-        when(jwtConfig.generateRefreshToken(anyString())).thenReturn("refresh.token.here");
+        // Create mock claims
+        Claim emailClaim = mock(Claim.class);
+        lenient().when(emailClaim.asString()).thenReturn("test@icloud.com");
+        lenient().when(mockDecodedJWT.getClaim("email")).thenReturn(emailClaim);
+
+        lenient().when(mockDecodedJWT.getSubject()).thenReturn("apple-user-123");
+
+        lenient().when(jwtConfig.generateAccessToken(anyString(), anyString(), anyString())).thenReturn("access.token.here");
+        lenient().when(jwtConfig.generateRefreshToken(anyString())).thenReturn("refresh.token.here");
     }
 }

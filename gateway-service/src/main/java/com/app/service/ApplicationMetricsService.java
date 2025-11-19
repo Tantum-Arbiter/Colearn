@@ -26,9 +26,9 @@ public class ApplicationMetricsService {
     private static final Logger logger = LoggerFactory.getLogger(ApplicationMetricsService.class);
 
     private final MeterRegistry meterRegistry;
-    
+
     // Dynamic counters and timers are created on-demand using builders
-    
+
     // Gauges for active sessions and connections
     private final AtomicLong activeSessions = new AtomicLong(0);
     private final AtomicLong activeConnections = new AtomicLong(0);
@@ -44,7 +44,7 @@ public class ApplicationMetricsService {
 
     public ApplicationMetricsService(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
-        
+
         // Initialize gauges
         Gauge.builder("app.sessions.active", activeSessions, AtomicLong::doubleValue)
                 .description("Number of active sessions")
@@ -64,7 +64,7 @@ public class ApplicationMetricsService {
         String appVersion = extractAppVersion(request);
         String endpoint = sanitizeEndpoint(request.getRequestURI());
         String method = request.getMethod();
-        
+
         Tags tags = Tags.of(
             "device_type", deviceType,
             "platform", platform,
@@ -74,7 +74,7 @@ public class ApplicationMetricsService {
             "status_code", String.valueOf(statusCode),
             "status_class", getStatusClass(statusCode)
         );
-        
+
         // Record request counter
         Counter.builder("app.requests.total")
                 .tags(tags)
@@ -86,22 +86,22 @@ public class ApplicationMetricsService {
                 .tags(tags)
                 .register(meterRegistry)
                 .record(responseTimeMs, TimeUnit.MILLISECONDS);
-        
+
         // Update device type counters
         updateDeviceTypeCounter(deviceType);
         updatePlatformCounter(platform);
         if (appVersion != null) {
             updateAppVersionCounter(appVersion);
         }
-        
-        logger.debug("Recorded request: device={}, platform={}, version={}, endpoint={}, status={}, time={}ms", 
+
+        logger.debug("Recorded request: device={}, platform={}, version={}, endpoint={}, status={}, time={}ms",
                     deviceType, platform, appVersion, endpoint, statusCode, responseTimeMs);
     }
 
     /**
      * Record authentication attempt
      */
-    public void recordAuthentication(String provider, String deviceType, String platform, 
+    public void recordAuthentication(String provider, String deviceType, String platform,
                                    String appVersion, boolean successful, long processingTimeMs) {
         Tags tags = Tags.of(
             "provider", provider,
@@ -110,7 +110,7 @@ public class ApplicationMetricsService {
             "app_version", appVersion != null ? appVersion : "unknown",
             "result", successful ? "success" : "failure"
         );
-        
+
         Counter.builder("app.authentication.total")
                 .tags(tags)
                 .register(meterRegistry)
@@ -119,7 +119,7 @@ public class ApplicationMetricsService {
                 .tags(tags)
                 .register(meterRegistry)
                 .record(processingTimeMs, TimeUnit.MILLISECONDS);
-        
+
         if (successful) {
             incrementActiveSessions();
         }
@@ -132,7 +132,7 @@ public class ApplicationMetricsService {
         String deviceType = extractDeviceType(request);
         String platform = extractPlatform(request);
         String endpoint = sanitizeEndpoint(request.getRequestURI());
-        
+
         Tags tags = Tags.of(
             "device_type", deviceType,
             "platform", platform,
@@ -140,7 +140,7 @@ public class ApplicationMetricsService {
             "error_type", errorType,
             "error_code", errorCode
         );
-        
+
         Counter.builder("app.errors.total")
                 .tags(tags)
                 .register(meterRegistry)
@@ -154,14 +154,14 @@ public class ApplicationMetricsService {
         String deviceType = extractDeviceType(request);
         String platform = extractPlatform(request);
         String endpoint = sanitizeEndpoint(request.getRequestURI());
-        
+
         Tags tags = Tags.of(
             "device_type", deviceType,
             "platform", platform,
             "endpoint", endpoint,
             "limit_type", limitType
         );
-        
+
         Counter.builder("app.rate_limit.violations")
                 .tags(tags)
                 .register(meterRegistry)
@@ -176,9 +176,9 @@ public class ApplicationMetricsService {
         if (userAgent == null) {
             return "unknown";
         }
-        
+
         userAgent = userAgent.toLowerCase();
-        
+
         if (BOT_PATTERN.matcher(userAgent).find()) {
             return "bot";
         } else if (MOBILE_PATTERN.matcher(userAgent).find()) {
@@ -200,12 +200,12 @@ public class ApplicationMetricsService {
         if (platform != null && !platform.trim().isEmpty()) {
             return platform.toLowerCase();
         }
-        
+
         String userAgent = request.getHeader("User-Agent");
         if (userAgent == null) {
             return "unknown";
         }
-        
+
         userAgent = userAgent.toLowerCase();
         if (userAgent.contains("android")) {
             return "android";
@@ -236,7 +236,7 @@ public class ApplicationMetricsService {
         if (uri == null) {
             return "unknown";
         }
-        
+
         // Replace UUIDs and numeric IDs with placeholders
         return uri.replaceAll("/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", "/{uuid}")
                  .replaceAll("/\\d+", "/{id}")
@@ -320,15 +320,15 @@ public class ApplicationMetricsService {
         summary.put("active_connections", activeConnections.get());
         summary.put("device_types", deviceTypeCounters.entrySet().stream()
                 .collect(java.util.stream.Collectors.toMap(
-                    Map.Entry::getKey, 
+                    Map.Entry::getKey,
                     e -> e.getValue().get())));
         summary.put("platforms", platformCounters.entrySet().stream()
                 .collect(java.util.stream.Collectors.toMap(
-                    Map.Entry::getKey, 
+                    Map.Entry::getKey,
                     e -> e.getValue().get())));
         summary.put("app_versions", appVersionCounters.entrySet().stream()
                 .collect(java.util.stream.Collectors.toMap(
-                    Map.Entry::getKey, 
+                    Map.Entry::getKey,
                     e -> e.getValue().get())));
         return summary;
     }
@@ -616,4 +616,25 @@ public class ApplicationMetricsService {
         logger.debug("Firestore batch operation metric recorded: {} {} on {} - {} items, {} ({}ms)",
                 operation, status, collection, batchSize, success ? "success" : "error", durationMs);
     }
+
+    // --- Circuit Breaker metrics ---
+    public void recordCircuitBreakerStateTransition(String name, String fromState, String toState) {
+        Counter.builder("app.circuitbreaker.state.transitions")
+                .description("Circuit breaker state transitions")
+                .tag("name", name)
+                .tag("from_state", fromState)
+                .tag("to_state", toState)
+                .register(meterRegistry)
+                .increment();
+    }
+
+    public void recordCircuitBreakerCall(String name, String outcome) {
+        Counter.builder("app.circuitbreaker.calls")
+                .description("Circuit breaker call outcomes")
+                .tag("name", name)
+                .tag("outcome", outcome)
+                .register(meterRegistry)
+                .increment();
+    }
+
 }

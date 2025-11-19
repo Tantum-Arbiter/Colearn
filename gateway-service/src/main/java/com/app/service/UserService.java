@@ -11,8 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.Period;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -38,7 +36,7 @@ public class UserService {
     /**
      * Create a new user from OAuth authentication
      */
-    public CompletableFuture<User> createUser(String email, String name, String picture, 
+    public CompletableFuture<User> createUser(String email, String name,
                                             String provider, String providerId) {
         logger.info("Creating new user: {} with provider: {}", email, provider);
         
@@ -56,7 +54,6 @@ public class UserService {
                 user.setId(UUID.randomUUID().toString());
                 user.setEmail(email);
                 user.setName(name);
-                user.setPicture(picture);
                 user.setProvider(provider);
                 user.setProviderId(providerId);
                 user.setActive(true);
@@ -122,10 +119,10 @@ public class UserService {
     /**
      * Get or create user from OAuth authentication
      */
-    public CompletableFuture<User> getOrCreateUser(String email, String name, String picture, 
+    public CompletableFuture<User> getOrCreateUser(String email, String name,
                                                  String provider, String providerId) {
         logger.debug("Getting or creating user: {} with provider: {}", email, provider);
-        
+
         return userRepository.findByProviderAndProviderId(provider, providerId)
                 .thenCompose(userOpt -> {
                     if (userOpt.isPresent()) {
@@ -134,8 +131,7 @@ public class UserService {
                         existingUser.updateLastLogin();
                         // Update profile info in case it changed
                         existingUser.setName(name);
-                        existingUser.setPicture(picture);
-                        
+
                         return userRepository.save(existingUser)
                                 .thenApply(savedUser -> {
                                     metricsService.recordUserLogin(provider, "existing");
@@ -143,7 +139,7 @@ public class UserService {
                                 });
                     } else {
                         // Create new user
-                        return createUser(email, name, picture, provider, providerId)
+                        return createUser(email, name, provider, providerId)
                                 .thenApply(newUser -> {
                                     metricsService.recordUserLogin(provider, "new");
                                     return newUser;
@@ -203,8 +199,6 @@ public class UserService {
                     child.setId(UUID.randomUUID().toString());
                     child.setName(request.getName());
                     child.setAvatar(request.getAvatar());
-                    child.setBirthDate(request.getBirthDate());
-                    child.setAgeInMonths(calculateAgeInMonths(request.getBirthDate()));
                     child.setActive(true);
                     child.setCreatedAt(Instant.now());
                     
@@ -247,11 +241,7 @@ public class UserService {
                     if (request.getAvatar() != null) {
                         child.setAvatar(request.getAvatar());
                     }
-                    if (request.getBirthDate() != null) {
-                        child.setBirthDate(request.getBirthDate());
-                        child.setAgeInMonths(calculateAgeInMonths(request.getBirthDate()));
-                    }
-                    
+
                     user.setUpdatedAt(Instant.now());
                     
                     return userRepository.save(user)
@@ -394,15 +384,5 @@ public class UserService {
         if (request.getPrivacy() != null) {
             // Update privacy preferences from map
         }
-    }
-
-    private int calculateAgeInMonths(LocalDate birthDate) {
-        if (birthDate == null) {
-            return 0;
-        }
-        
-        LocalDate now = LocalDate.now();
-        Period period = Period.between(birthDate, now);
-        return period.getYears() * 12 + period.getMonths();
     }
 }

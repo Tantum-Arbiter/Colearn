@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  wiremock:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wiremock-server
+    ports:
+      - "8080:8080"
+    volumes:
+      # Mount mappings directory for live updates
+      - ./mappings:/home/wiremock/mappings:ro
+      # Mount static files directory
+      - ./__files:/home/wiremock/__files:ro
+    environment:
+      # WireMock configuration options
+      - WIREMOCK_OPTIONS=--global-response-templating --verbose --enable-browser-proxying
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/__admin/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+networks:
+  default:
+    name: wiremock-network

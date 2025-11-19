@@ -1,7 +1,9 @@
-package com.app.integration;
+ package com.app.integration;
 
 import com.app.config.JwtConfig;
 import com.app.service.SecurityMonitoringService;
+import com.app.security.RateLimitingFilter;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,7 +12,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import com.app.service.GatewayServiceApplication;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,7 +22,8 @@ import java.util.Map;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
+@SpringBootTest(classes = GatewayServiceApplication.class)
+@ActiveProfiles("test")
 @AutoConfigureMockMvc
 class SecurityScenarioIntegrationTest {
 
@@ -31,6 +36,9 @@ class SecurityScenarioIntegrationTest {
     @Autowired
     private JwtConfig jwtConfig;
 
+    @Autowired
+    private RateLimitingFilter rateLimitingFilter;
+
     @MockBean
     private SecurityMonitoringService securityMonitoringService;
 
@@ -38,6 +46,10 @@ class SecurityScenarioIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        // Reset rate limiting state between tests to avoid cross-test interference
+        if (rateLimitingFilter != null) {
+            rateLimitingFilter.resetForTests();
+        }
         validAccessToken = jwtConfig.generateAccessToken("test-user-123", "test@example.com", "google");
     }
 

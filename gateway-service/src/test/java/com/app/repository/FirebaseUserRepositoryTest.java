@@ -66,7 +66,7 @@ class FirebaseUserRepositoryTest {
     private FirebaseUserRepository repository;
     private User testUser;
 
-    @BeEach
+    @BeforeEach
     void setUp() {
         repository = new FirebaseUserRepository(firestore, metricsService);
         
@@ -75,26 +75,24 @@ class FirebaseUserRepositoryTest {
         testUser.setId("test-user-id");
         testUser.setEmail("test@example.com");
         testUser.setName("Test User");
-        testUser.setPicture("https://example.com/picture.jpg");
         testUser.setProvider("google");
         testUser.setProviderId("google-123");
         testUser.setCreatedAt(Instant.now());
         testUser.setUpdatedAt(Instant.now());
         testUser.setActive(true);
-        testUser.setLastLogin(Instant.now());
-        
-        // Setup preferences
+        testUser.setLastLoginAt(Instant.now());
+
+        // Setup preferences (constructor initializes nested objects)
         UserPreferences preferences = new UserPreferences();
-        preferences.setNotificationsEnabled(true);
-        preferences.setScreenTimeLimit(60);
+        preferences.getNotifications().setPushEnabled(true);
+        preferences.getScreenTime().setDailyLimitMinutes(60);
         testUser.setPreferences(preferences);
-        
+
         // Setup children
         List<ChildProfile> children = new ArrayList<>();
         ChildProfile child = new ChildProfile();
         child.setId("child-1");
         child.setName("Test Child");
-        child.setAge(5);
         child.setCreatedAt(Instant.now());
         children.add(child);
         testUser.setChildren(children);
@@ -208,9 +206,10 @@ class FirebaseUserRepositoryTest {
 
         when(firestore.collection("users")).thenReturn(collectionReference);
         when(collectionReference.whereEqualTo("email", testUser.getEmail())).thenReturn(query);
-        when(query.whereEqualTo("active", true)).thenReturn(query);
+        when(query.limit(1)).thenReturn(query);
         when(query.get()).thenReturn(querySnapshotFuture);
         when(querySnapshotFuture.get()).thenReturn(querySnapshot);
+        when(querySnapshot.isEmpty()).thenReturn(false);
         when(querySnapshot.getDocuments()).thenReturn(documents);
 
         // Act
@@ -224,7 +223,7 @@ class FirebaseUserRepositoryTest {
         // Verify Firestore interactions
         verify(firestore).collection("users");
         verify(collectionReference).whereEqualTo("email", testUser.getEmail());
-        verify(query).whereEqualTo("active", true);
+        verify(query).limit(1);
         verify(query).get();
     }
 
@@ -233,10 +232,10 @@ class FirebaseUserRepositoryTest {
         // Arrange
         when(firestore.collection("users")).thenReturn(collectionReference);
         when(collectionReference.whereEqualTo("email", testUser.getEmail())).thenReturn(query);
-        when(query.whereEqualTo("active", true)).thenReturn(query);
+        when(query.limit(1)).thenReturn(query);
         when(query.get()).thenReturn(querySnapshotFuture);
         when(querySnapshotFuture.get()).thenReturn(querySnapshot);
-        when(querySnapshot.getDocuments()).thenReturn(new ArrayList<>());
+        when(querySnapshot.isEmpty()).thenReturn(true);
 
         // Act
         CompletableFuture<Optional<User>> result = repository.findByEmail(testUser.getEmail());
@@ -252,17 +251,26 @@ class FirebaseUserRepositoryTest {
         Instant loginTime = Instant.now();
         when(firestore.collection("users")).thenReturn(collectionReference);
         when(collectionReference.document(testUser.getId())).thenReturn(documentReference);
-        when(documentReference.update(anyMap())).thenReturn(writeResultFuture);
+        when(documentReference.update(eq("lastLoginAt"), any(Instant.class), eq("updatedAt"), any(Instant.class))).thenReturn(writeResultFuture);
         when(writeResultFuture.get()).thenReturn(writeResult);
 
+        // Mock for findById call after update
+        when(documentReference.get()).thenReturn(documentSnapshotFuture);
+        when(documentSnapshotFuture.get()).thenReturn(documentSnapshot);
+        when(documentSnapshot.exists()).thenReturn(true);
+        when(documentSnapshot.toObject(User.class)).thenReturn(testUser);
+
         // Act
-        CompletableFuture<Void> result = repository.updateLastLogin(testUser.getId(), loginTime);
-        result.get();
+        CompletableFuture<User> result = repository.updateLastLogin(testUser.getId());
+        User updatedUser = result.get();
 
         // Assert
-        verify(firestore).collection("users");
-        verify(collectionReference).document(testUser.getId());
-        verify(documentReference).update(anyMap());
+        assertNotNull(updatedUser);
+        assertEquals(testUser.getId(), updatedUser.getId());
+        verify(firestore, times(2)).collection("users"); // Called in updateLastLogin and findById
+        verify(collectionReference, times(2)).document(testUser.getId()); // Called in updateLastLogin and findById
+        verify(documentReference).update(eq("lastLoginAt"), any(Instant.class), eq("updatedAt"), any(Instant.class));
+        verify(documentReference).get(); // Called in findById
     }
 
     @Test
@@ -270,16 +278,25 @@ class FirebaseUserRepositoryTest {
         // Arrange
         when(firestore.collection("users")).thenReturn(collectionReference);
         when(collectionReference.document(testUser.getId())).thenReturn(documentReference);
-        when(documentReference.update(anyMap())).thenReturn(writeResultFuture);
+        when(documentReference.update(eq("isActive"), eq(false), eq("updatedAt"), any(Instant.class))).thenReturn(writeResultFuture);
         when(writeResultFuture.get()).thenReturn(writeResult);
 
+        // Mock for findById call after update
+        when(documentReference.get()).thenReturn(documentSnapshotFuture);
+        when(documentSnapshotFuture.get()).thenReturn(documentSnapshot);
+        when(documentSnapshot.exists()).thenReturn(true);
+        when(documentSnapshot.toObject(User.class)).thenReturn(testUser);
+
         // Act
-        CompletableFuture<Void> result = repository.deactivateUser(testUser.getId());
-        result.get();
+        CompletableFuture<User> result = repository.deactivateUser(testUser.getId());
+        User deactivatedUser = result.get();
 
         // Assert
-        verify(firestore).collection("users");
-        verify(collectionReference).document(testUser.getId());
-        verify(documentReference).update(anyMap());
+        assertNotNull(deactivatedUser);
+        assertEquals(testUser.getId(), deactivatedUser.getId());
+        verify(firestore, times(2)).collection("users"); // Called in deactivateUser and findById
+        verify(collectionReference, times(2)).document(testUser.getId()); // Called in deactivateUser and findById
+        verify(documentReference).update(eq("isActive"), eq(false), eq("updatedAt"), any(Instant.class));
+        verify(documentReference).get(); // Called in findById
     }
 }

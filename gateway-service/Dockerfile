@@ -2,7 +2,7 @@
 # Optimized for GCP Cloud Run deployment
 
 # Build stage
-FROM gradle:8.5-jdk21-alpine AS builder
+FROM gradle:8.5-jdk21 AS builder
 
 # Set working directory
 WORKDIR /app
@@ -21,7 +21,7 @@ COPY src/ src/
 RUN gradle build --no-daemon -x test
 
 # Runtime stage
-FROM openjdk:21-jre-slim
+FROM eclipse-temurin:21-jre
 
 # Install security updates and required packages
 RUN apt-get update && \
@@ -60,7 +60,7 @@ ENV SPRING_PROFILES_ACTIVE=prod
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8080/actuator/health || exit 1
+    CMD curl -f http://localhost:8080/private/healthcheck || exit 1
 
 # Expose port
 EXPOSE 8080

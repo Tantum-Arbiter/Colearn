@@ -1,7 +1,13 @@
 package com.app.integration;
 
 import com.app.config.JwtConfig;
+import com.app.security.RateLimitingFilter;
+import com.app.service.GatewayServiceApplication;
 import com.app.service.SecurityMonitoringService;
+import com.app.service.SessionService;
+import com.app.service.UserService;
+import com.app.model.User;
+import com.app.model.UserSession;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,19 +16,25 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
+@SpringBootTest(classes = GatewayServiceApplication.class)
+@ActiveProfiles("test")
 @AutoConfigureMockMvc
 class AuthenticationFlowIntegrationTest {
 
@@ -38,14 +50,50 @@ class AuthenticationFlowIntegrationTest {
     @MockBean
     private SecurityMonitoringService securityMonitoringService;
 
+    @Autowired
+    private RateLimitingFilter rateLimitingFilter;
+
+    @MockBean
+    private SessionService sessionService;
+
+    @MockBean
+    private UserService userService;
+
     private String validAccessToken;
     private String validRefreshToken;
 
     @BeforeEach
     void setUp() {
+        // Reset rate limiting state between tests to avoid cross-test interference
+        if (rateLimitingFilter != null) {
+            rateLimitingFilter.resetForTests();
+        }
         // Generate valid tokens for testing
         validAccessToken = jwtConfig.generateAccessToken("test-user-123", "test@example.com", "google");
         validRefreshToken = jwtConfig.generateRefreshToken("test-user-123");
+
+        // Stub user and session services to avoid external Firestore dependency
+        User mockUser = new User();
+        mockUser.setId("test-user-123");
+        mockUser.setEmail("test@example.com");
+        mockUser.setProvider("google");
+        mockUser.setEmailVerified(true);
+        when(userService.getUserById("test-user-123"))
+            .thenReturn(CompletableFuture.completedFuture(Optional.of(mockUser)));
+
+        UserSession mockSession = new UserSession();
+        mockSession.setId("session-1");
+        mockSession.setUserId("test-user-123");
+        mockSession.setRefreshToken(validRefreshToken);
+        mockSession.setActive(true);
+        mockSession.setExpiresAt(Instant.now().plusSeconds(3600));
+
+        when(sessionService.getSessionByRefreshToken(validRefreshToken))
+            .thenReturn(CompletableFuture.completedFuture(Optional.of(mockSession)));
+        when(sessionService.validateAndRefreshSession(eq(validRefreshToken), anyString()))
+            .thenAnswer(inv -> CompletableFuture.completedFuture(mockSession));
+        when(sessionService.revokeSessionByRefreshToken(anyString()))
+            .thenReturn(CompletableFuture.completedFuture(Optional.of(mockSession)));
     }
 
     @Test
@@ -235,7 +283,7 @@ class AuthenticationFlowIntegrationTest {
         // This test simulates concurrent requests to ensure thread safety
         int numberOfThreads = 10;
         int requestsPerThread = 5;
-        
+
         Thread[] threads = new Thread[numberOfThreads];
         final Exception[] exceptions = new Exception[numberOfThreads];
 
@@ -264,7 +312,7 @@ class AuthenticationFlowIntegrationTest {
 
         // Check that no exceptions occurred
         for (int i = 0; i < numberOfThreads; i++) {
-            assertNull(exceptions[i], "Thread " + i + " threw an exception: " + 
+            assertNull(exceptions[i], "Thread " + i + " threw an exception: " +
                 (exceptions[i] != null ? exceptions[i].getMessage() : "null"));
         }
     }
@@ -273,7 +321,7 @@ class AuthenticationFlowIntegrationTest {
     void tokenExpirationIntegration_ShouldHandleExpiredTokens() throws Exception {
         // Generate an expired token (this is a simplified test - in reality you'd need to wait or mock time)
         String expiredToken = jwtConfig.generateAccessToken("test-user", "test@example.com", "google");
-        
+
         // For this test, we'll use an obviously invalid token format
         String invalidToken = "expired.token.here";
 
@@ -306,4 +354,194 @@ class AuthenticationFlowIntegrationTest {
         // In a real implementation, you might verify that device/session tracking worked
         // by checking logs or metrics
     }
+
+    @Test
+    void tokenTampering_AccessTokenPayloadChanged_ShouldBeRejected() throws Exception {
+        // Take a valid token and tamper the payload without resigning
+        String[] parts = validAccessToken.split("\\.");
+        java.util.Base64.Decoder urlDec = java.util.Base64.getUrlDecoder();
+        java.util.Base64.Encoder urlEnc = java.util.Base64.getUrlEncoder().withoutPadding();
+        String payloadJson = new String(urlDec.decode(parts[1]), java.nio.charset.StandardCharsets.UTF_8);
+        com.fasterxml.jackson.databind.node.ObjectNode node = (com.fasterxml.jackson.databind.node.ObjectNode) objectMapper.readTree(payloadJson);
+        node.put("email", "attacker@example.com"); // tamper a claim
+        String newPayload = urlEnc.encodeToString(objectMapper.writeValueAsBytes(node));
+        String tampered = parts[0] + "." + newPayload + "." + parts[2]; // signature now invalid
+
+        mockMvc.perform(get("/api/v1/stories/batch")
+                .header("Authorization", "Bearer " + tampered))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void tokenTampering_AccessTokenExpiryClaimTampered_ShouldBeRejected() throws Exception {
+        // Change exp to far future without resigning (still invalid signature)
+        String[] parts = validAccessToken.split("\\.");
+        java.util.Base64.Decoder urlDec = java.util.Base64.getUrlDecoder();
+        java.util.Base64.Encoder urlEnc = java.util.Base64.getUrlEncoder().withoutPadding();
+        String payloadJson = new String(urlDec.decode(parts[1]), java.nio.charset.StandardCharsets.UTF_8);
+        com.fasterxml.jackson.databind.node.ObjectNode node = (com.fasterxml.jackson.databind.node.ObjectNode) objectMapper.readTree(payloadJson);
+        long future = (System.currentTimeMillis() / 1000L) + 3600L * 24L;
+        node.put("exp", future);
+        String newPayload = urlEnc.encodeToString(objectMapper.writeValueAsBytes(node));
+        String tampered = parts[0] + "." + newPayload + "." + parts[2];
+
+        mockMvc.perform(get("/api/v1/stories/batch")
+                .header("Authorization", "Bearer " + tampered))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void tokenExpiry_AccessTokenExpired_ShouldBeRejected() throws Exception {
+        // Build a correctly signed but expired access token
+        java.util.Date past = new java.util.Date(System.currentTimeMillis() - 60_000);
+        String expired = com.auth0.jwt.JWT.create()
+                .withIssuer("grow-with-freya-gateway")
+                .withSubject("test-user-123")
+                .withClaim("email", "test@example.com")
+                .withClaim("provider", "google")
+                .withClaim("type", "access")
+                .withIssuedAt(new java.util.Date(System.currentTimeMillis() - 120_000))
+                .withExpiresAt(past)
+                .sign(jwtConfig.jwtAlgorithm());
+
+        mockMvc.perform(get("/api/v1/stories/batch")
+                .header("Authorization", "Bearer " + expired))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void tokenTemporal_AccessTokenNotBeforeInFuture_ShouldBeRejected() throws Exception {
+        // Build a correctly signed token that is not yet valid (nbf in the future)
+        java.util.Date futureNbf = new java.util.Date(System.currentTimeMillis() + 60_000);
+        String notYetValid = com.auth0.jwt.JWT.create()
+                .withIssuer("grow-with-freya-gateway")
+                .withSubject("test-user-123")
+                .withClaim("email", "test@example.com")
+                .withClaim("provider", "google")
+                .withClaim("type", "access")
+                .withIssuedAt(new java.util.Date())
+                .withNotBefore(futureNbf)
+                .withExpiresAt(new java.util.Date(System.currentTimeMillis() + 3600_000))
+                .sign(jwtConfig.jwtAlgorithm());
+
+        mockMvc.perform(get("/api/v1/stories/batch")
+                .header("Authorization", "Bearer " + notYetValid))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void tokenType_WrongTypeRefresh_ShouldBeRejected() throws Exception {
+        // Build a correctly signed token with wrong type claim
+        String wrongType = com.auth0.jwt.JWT.create()
+                .withIssuer("grow-with-freya-gateway")
+                .withSubject("test-user-123")
+                .withClaim("email", "test@example.com")
+                .withClaim("provider", "google")
+                .withClaim("type", "refresh")
+                .withIssuedAt(new java.util.Date())
+                .withExpiresAt(new java.util.Date(System.currentTimeMillis() + 3600_000))
+                .sign(jwtConfig.jwtAlgorithm());
+
+        mockMvc.perform(get("/api/v1/stories/batch")
+                .header("Authorization", "Bearer " + wrongType))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void tokenIssuer_WrongIssuer_ShouldBeRejected() throws Exception {
+        String wrongIssuer = com.auth0.jwt.JWT.create()
+                .withIssuer("some-other-issuer")
+                .withSubject("test-user-123")
+                .withClaim("email", "test@example.com")
+                .withClaim("provider", "google")
+                .withClaim("type", "access")
+                .withIssuedAt(new java.util.Date())
+                .withExpiresAt(new java.util.Date(System.currentTimeMillis() + 3600_000))
+                .sign(jwtConfig.jwtAlgorithm());
+
+        mockMvc.perform(get("/api/v1/stories/batch")
+                .header("Authorization", "Bearer " + wrongIssuer))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void tokenMalformed_TwoParts_ShouldBeRejected() throws Exception {
+        String twoParts = "aaa.bbb";
+        mockMvc.perform(get("/api/v1/stories/batch")
+                .header("Authorization", "Bearer " + twoParts))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void tokenMalformed_FourParts_ShouldBeRejected() throws Exception {
+        String fourParts = "a.b.c.d";
+        mockMvc.perform(get("/api/v1/stories/batch")
+                .header("Authorization", "Bearer " + fourParts))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void tokenMalformed_InvalidBase64_ShouldBeRejected() throws Exception {
+        String invalidBase64 = "eyJhbGciOiJIUzI1NiJ9.@@@.sig";
+        mockMvc.perform(get("/api/v1/stories/batch")
+                .header("Authorization", "Bearer " + invalidBase64))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void tokenMalformed_HeaderNotJson_ShouldBeRejected() throws Exception {
+        java.util.Base64.Encoder enc = java.util.Base64.getUrlEncoder().withoutPadding();
+        String header = enc.encodeToString("not-json".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        String payload = enc.encodeToString("{}".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        String token = header + "." + payload + ".sig";
+        mockMvc.perform(get("/api/v1/stories/batch")
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void tokenMalformed_PayloadNotJson_ShouldBeRejected() throws Exception {
+        java.util.Base64.Encoder enc = java.util.Base64.getUrlEncoder().withoutPadding();
+        String header = enc.encodeToString("{\"alg\":\"HS256\",\"typ\":\"JWT\"}".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        String payload = enc.encodeToString("not-json".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        String token = header + "." + payload + ".sig";
+        mockMvc.perform(get("/api/v1/stories/batch")
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void tokenTemporal_ExpiredByOneSecond_ShouldBeRejected() throws Exception {
+        String expired = com.auth0.jwt.JWT.create()
+                .withIssuer("grow-with-freya-gateway")
+                .withSubject("test-user-123")
+                .withClaim("email", "test@example.com")
+                .withClaim("provider", "google")
+                .withClaim("type", "access")
+                .withIssuedAt(new java.util.Date(System.currentTimeMillis() - 2_000))
+                .withExpiresAt(new java.util.Date(System.currentTimeMillis() - 1_000))
+                .sign(jwtConfig.jwtAlgorithm());
+        mockMvc.perform(get("/api/v1/stories/batch")
+                .header("Authorization", "Bearer " + expired))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void tokenTemporal_NotBeforeByOneSecond_ShouldBeRejected() throws Exception {
+        String notYetValid = com.auth0.jwt.JWT.create()
+                .withIssuer("grow-with-freya-gateway")
+                .withSubject("test-user-123")
+                .withClaim("email", "test@example.com")
+                .withClaim("provider", "google")
+                .withClaim("type", "access")
+                .withIssuedAt(new java.util.Date())
+                .withNotBefore(new java.util.Date(System.currentTimeMillis() + 1_000))
+                .withExpiresAt(new java.util.Date(System.currentTimeMillis() + 3600_000))
+                .sign(jwtConfig.jwtAlgorithm());
+        mockMvc.perform(get("/api/v1/stories/batch")
+                .header("Authorization", "Bearer " + notYetValid))
+                .andExpect(status().isUnauthorized());
+    }
+
+
 }

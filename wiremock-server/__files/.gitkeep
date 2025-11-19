@@ -1,0 +1,3 @@
+# This directory contains static files served by WireMock
+# Place any static response files (JSON, XML, HTML, etc.) here
+# Files can be referenced in mappings using "bodyFileName"

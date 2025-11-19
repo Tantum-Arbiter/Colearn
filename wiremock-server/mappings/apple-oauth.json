@@ -1,0 +1,185 @@
+{
+  "mappings": [
+    {
+      "name": "Apple OAuth - Token Exchange Success",
+      "request": {
+        "method": "POST",
+        "urlPath": "/auth/oauth2/v2/token",
+        "headers": {
+          "Content-Type": {
+            "equalTo": "application/x-www-form-urlencoded"
+          }
+        },
+        "bodyPatterns": [
+          {
+            "contains": "grant_type=authorization_code"
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "access_token": "apple-access-token-{{randomValue length=50 type='ALPHANUMERIC'}}",
+          "token_type": "Bearer",
+          "expires_in": 3600,
+          "refresh_token": "apple-refresh-token-{{randomValue length=50 type='ALPHANUMERIC'}}",
+          "id_token": "apple-id-token-{{randomValue length=100 type='ALPHANUMERIC'}}"
+        },
+        "transformers": ["response-template"]
+      }
+    },
+    {
+      "name": "Apple OAuth - Public Keys",
+      "request": {
+        "method": "GET",
+        "urlPath": "/auth/keys"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json",
+          "Cache-Control": "public, max-age=86400"
+        },
+        "jsonBody": {
+          "keys": [
+            {
+              "kty": "RSA",
+              "kid": "apple-key-1",
+              "use": "sig",
+              "alg": "RS256",
+              "n": "apple-test-modulus-value",
+              "e": "AQAB"
+            },
+            {
+              "kty": "RSA",
+              "kid": "apple-key-2",
+              "use": "sig",
+              "alg": "RS256",
+              "n": "apple-test-modulus-value-2",
+              "e": "AQAB"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Apple OAuth - User Info Success",
+      "request": {
+        "method": "POST",
+        "urlPath": "/auth/userinfo",
+        "headers": {
+          "Authorization": {
+            "matches": "Bearer apple-access-token-.*"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "sub": "000000.123456789.1234",
+          "email": "test.user@privaterelay.appleid.com",
+          "email_verified": "true",
+          "is_private_email": "true",
+          "real_user_status": 2
+        }
+      }
+    },
+    {
+      "name": "Apple OAuth - User Info with Valid Token",
+      "request": {
+        "method": "POST",
+        "urlPath": "/auth/userinfo",
+        "headers": {
+          "Authorization": {
+            "matches": "Bearer valid-apple-.*"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "sub": "000000.123456789.1234",
+          "email": "test.user@privaterelay.appleid.com",
+          "email_verified": "true",
+          "is_private_email": "true",
+          "real_user_status": 2
+        }
+      }
+    },
+    {
+      "name": "Apple OAuth - User Info Invalid Token",
+      "request": {
+        "method": "POST",
+        "urlPath": "/auth/userinfo",
+        "headers": {
+          "Authorization": {
+            "matches": "Bearer invalid-.*"
+          }
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "error": "invalid_token"
+        }
+      }
+    },
+    {
+      "name": "Apple OAuth - Invalid Token Exchange",
+      "request": {
+        "method": "POST",
+        "urlPath": "/auth/oauth2/v2/token",
+        "headers": {
+          "Content-Type": {
+            "equalTo": "application/x-www-form-urlencoded"
+          }
+        },
+        "bodyPatterns": [
+          {
+            "contains": "code=invalid-code"
+          }
+        ]
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "error": "invalid_grant"
+        }
+      }
+    },
+    {
+      "name": "Apple OAuth - Token Revocation Success",
+      "request": {
+        "method": "POST",
+        "urlPath": "/auth/revoke",
+        "headers": {
+          "Content-Type": {
+            "equalTo": "application/x-www-form-urlencoded"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {}
+      }
+    }
+  ]
+}
