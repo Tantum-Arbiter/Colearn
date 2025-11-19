@@ -2,12 +2,11 @@ name: Gateway Build and Push
 
 on:
   workflow_dispatch:
-  # DISABLED: Will re-enable after Security Scan workflow is verified
-  # push:
-  #   paths:
-  #     - 'gateway-service/**'
-  #     - '.github/workflows/gateway-build.yml'
-  #     - 'infra/**'
+  push:
+    paths:
+      - 'gateway-service/**'
+      - '.github/workflows/gateway-build.yml'
+      - 'infra/**'
 
 # CRITICAL: Add concurrency control to prevent queuing issues
 concurrency:
@@ -25,11 +24,11 @@ env:
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest  # Fixed typo: ubuntu-lates -> ubuntu-latest
+    runs-on: ubuntu-latest 
     outputs:
       image_tag: ${{ steps.build.outputs.version }}
     steps:
-      - name: Checkout  # Fixed typo: Checkou -> Checkout
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -72,7 +71,7 @@ jobs:
 
   deploy-functional:
     needs: build-and-push
-    runs-on: ubuntu-latest  # Fixed typo: ubuntu-lates -> ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Authenticate with GCP
         uses: google-github-actions/auth@v2
@@ -99,11 +98,12 @@ jobs:
             --region ${{ env.REGION }} \
             --project ${{ env.PROJECT_ID }} \
             --service-account svc-deploy-functional@${{ env.PROJECT_ID }}.iam.gserviceaccount.com \
-            --no-allow-unauthenticated
+            --no-allow-unauthenticated \
+            --set-env-vars SPRING_PROFILES_ACTIVE=dev,BACKEND_URL_GATEWAY_SERVICE=${{ secrets.BACKEND_URL_GATEWAY_SERVICE }},GATEWAY_AUDIENCE=${{ secrets.GATEWAY_AUDIENCE }}
 
   run-functional-tests:
     needs: deploy-functional
-    runs-on: ubuntu-latest  # Fixed typo: ubuntu-lates -> ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Authenticate with GCP
         uses: google-github-actions/auth@v2
@@ -114,6 +114,11 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ env.PROJECT_ID }}
+
+      - name: Debug Gateway API URL
+        run: |
+          echo "BACKEND_URL_GATEWAY_SERVICE = ${{ secrets.BACKEND_URL_GATEWAY_SERVICE }}"
+          echo "GATEWAY_AUDIENCE = ${{ secrets.GATEWAY_AUDIENCE }}"
 
       - name: Re-deploy Cloud Run Job with latest test image
         run: |
@@ -126,7 +131,8 @@ jobs:
             --memory=2Gi \
             --cpu=2 \
             --max-retries=0 \
-            --task-timeout=300s
+            --task-timeout=300s \
+            --set-env-vars BACKEND_URL_GATEWAY_SERVICE=${{ secrets.BACKEND_URL_GATEWAY_SERVICE }},GATEWAY_AUDIENCE=${{ secrets.GATEWAY_AUDIENCE }}
 
       - name: Execute Cloud Run Job
         id: execute-tests
@@ -140,40 +146,19 @@ jobs:
 
           echo "JOB_NAME=$JOB_NAME" >> $GITHUB_ENV
 
-      - name: Print Logs from Cloud Run Job
+      - name: Cleanup previous instance
         run: |
-          echo "Fetching logs from execution: $JOB_NAME"
-          gcloud logging read "resource.type=cloud_run_job AND resource.labels.execution_name=$JOB_NAME" \
-            --project=${{ env.PROJECT_ID }} \
-            --region=${{ env.REGION }} \
-            --limit=1000 \
-            --format="value(textPayload)"
-
-
-
-  functional-tests-compose:
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Build and run functional tests via Docker Compose
-        run: |
-          docker compose version
-          docker compose -f docker-compose.functional-tests.yml up --build --abort-on-container-exit --exit-code-from func-tests
-        timeout-minutes: 30
-
-      - name: Teardown
-        if: always()
-        run: docker compose -f docker-compose.functional-tests.yml down -v
-
-      - name: Upload functional test reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: functional-test-reports
-          path: func-tests/build/reports
-          if-no-files-found: warn
+          gcloud run revisions list \
+            --service=$SERVICE \
+            --region=$REGION \
+            --format="value(metadata.name,status.traffic[0].percent)" \
+            --project=$PROJECT_ID | \
+          while read revision traffic; do
+            if [[ "$traffic" == "0" ]]; then
+              echo "Deleting previous instance: $revision"
+              gcloud run revisions delete "$revision" \
+                --region=$REGION \
+                --project=$PROJECT_ID \
+                --quiet
+            fi
+          done
