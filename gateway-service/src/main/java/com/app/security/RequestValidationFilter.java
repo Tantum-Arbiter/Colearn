@@ -62,10 +62,12 @@ public class RequestValidationFilter extends OncePerRequestFilter {
         // Common boolean-based SQLi e.g. 1' OR '1'='1 or OR 1=1
         Pattern.compile("(?i).*(\\bor\\b\\s*\\d+\\s*=\\s*\\d+).*"),
         Pattern.compile("(?i).*(\\bor\\b\\s*'[^']*'\\s*=\\s*'[^']*').*"),
-        // SQL comment-based injection like admin'--
+        // SQL comment-based injection like admin'-- (only when preceded by a quote to avoid false positives on JWT tokens)
         Pattern.compile("(?i).*'\\s*--.*"),
-        // Also catch bare SQL comment tokens
-        Pattern.compile("(?i).*(--|#|/\\*|\\*/).*"),
+        // SQL comment tokens only when they appear in suspicious contexts (not in base64/JWT tokens)
+        // This pattern looks for -- or # followed by SQL keywords or at end of line after suspicious chars
+        Pattern.compile("(?i).*(--|#)\\s*(select|union|drop|delete|insert|update|from|where|exec).*"),
+        Pattern.compile("(?i).*(/\\*|\\*/).*"),
 
         // XSS patterns
         Pattern.compile("(?i).*(script|javascript|vbscript|onload|onerror|onclick).*"),
@@ -138,6 +140,22 @@ public class RequestValidationFilter extends OncePerRequestFilter {
                 writeError(response, HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE, ErrorCode.REQUEST_TOO_LARGE,
                         "Request payload too large", request, null);
                 return;
+            }
+
+            // Validate Accept header (must be application/json or */* or not present)
+            String acceptHeader = request.getHeader("Accept");
+            if (acceptHeader != null && !acceptHeader.trim().isEmpty()) {
+                // Normalize and check if it contains application/json or */*
+                String normalizedAccept = acceptHeader.toLowerCase().trim();
+                if (!normalizedAccept.contains("application/json") &&
+                    !normalizedAccept.contains("*/*") &&
+                    !normalizedAccept.contains("application/*")) {
+                    logger.warn("Unsupported Accept header from IP {}: {}", getClientIpAddress(request), acceptHeader);
+                    writeError(response, 406, ErrorCode.UNSUPPORTED_ACCEPT,
+                            "Accept header must be application/json or */*", request,
+                            Map.of("acceptHeader", acceptHeader, "supportedTypes", List.of("application/json", "*/*")));
+                    return;
+                }
             }
 
             // Validate headers for suspicious content (including CRLF injection)

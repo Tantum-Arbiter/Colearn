@@ -33,12 +33,17 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(RateLimitingFilter.class);
 
-    // Rate limiting configuration
-    private static final int DEFAULT_REQUESTS_PER_MINUTE = 60;
-    private static final int AUTH_REQUESTS_PER_MINUTE = 10;
-    private static final int API_REQUESTS_PER_MINUTE = 60;
+    // Rate limiting configuration from application properties
+    @Value("${rate-limiting.default-requests-per-minute:60}")
+    private int defaultRequestsPerMinute;
 
-    // Test overrides
+    @Value("${rate-limiting.auth-requests-per-minute:10}")
+    private int authRequestsPerMinute;
+
+    @Value("${rate-limiting.api-requests-per-minute:60}")
+    private int apiRequestsPerMinute;
+
+    // Test overrides (can be set via TestSimulationFlags)
     private volatile Integer overrideAuthPerMinute;
     private volatile Integer overrideApiPerMinute;
 
@@ -210,11 +215,11 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
     private int getRateLimit(String requestPath) {
         if (requestPath.startsWith("/auth/")) {
-            return overrideAuthPerMinute != null ? overrideAuthPerMinute : AUTH_REQUESTS_PER_MINUTE;
+            return overrideAuthPerMinute != null ? overrideAuthPerMinute : authRequestsPerMinute;
         } else if (requestPath.startsWith("/api/")) {
-            return overrideApiPerMinute != null ? overrideApiPerMinute : API_REQUESTS_PER_MINUTE;
+            return overrideApiPerMinute != null ? overrideApiPerMinute : apiRequestsPerMinute;
         } else {
-            return DEFAULT_REQUESTS_PER_MINUTE;
+            return defaultRequestsPerMinute;
         }
     }
 

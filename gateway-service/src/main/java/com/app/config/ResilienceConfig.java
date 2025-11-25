@@ -30,7 +30,6 @@ public class ResilienceConfig {
     public void init() {
         // Ensure instances exist
         CircuitBreaker defaultCb = circuitBreakerRegistry.circuitBreaker("default");
-        CircuitBreaker cmsCb = circuitBreakerRegistry.circuitBreaker("cms");
 
         // Bind Micrometer metrics for all circuit breakers
         try {
@@ -41,7 +40,6 @@ public class ResilienceConfig {
 
         // Register event listeners -> custom app metrics
         registerListeners(defaultCb);
-        registerListeners(cmsCb);
     }
 
     private void registerListeners(CircuitBreaker cb) {
@@ -49,9 +47,8 @@ public class ResilienceConfig {
             .onSuccess(event -> metricsService.recordCircuitBreakerCall(cb.getName(), "success"))
             .onError(event -> metricsService.recordCircuitBreakerCall(cb.getName(), "failure"))
             .onCallNotPermitted(event -> metricsService.recordCircuitBreakerCall(cb.getName(), "rejected"))
-            .onStateTransition(event -> metricsService.recordCircuitBreakerStateTransition(
+            .onStateTransition(event -> metricsService.recordCircuitBreakerState(
                     cb.getName(),
-                    event.getStateTransition().getFromState().name(),
                     event.getStateTransition().getToState().name()
             ));
     }

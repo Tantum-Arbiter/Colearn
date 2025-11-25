@@ -45,6 +45,10 @@ public enum ErrorCode {
     MISSING_REQUIRED_HEADER("GTW-110", "Required header is missing"),
     INVALID_HEADER("GTW-111", "Invalid header value"),
     UNSUPPORTED_ACCEPT("GTW-112", "Unsupported Accept header"),
+    INVALID_NICKNAME("GTW-113", "Invalid nickname - must be 1-20 characters"),
+    INVALID_AVATAR_TYPE("GTW-114", "Invalid avatar type - must be 'boy' or 'girl'"),
+    INVALID_AVATAR_ID("GTW-115", "Invalid avatar ID"),
+    INVALID_PROFILE_DATA("GTW-116", "Invalid profile data"),
 
     // Downstream service errors (GTW-200 to GTW-299)
     DOWNSTREAM_SERVICE_ERROR("GTW-200", "Downstream service error"),
@@ -88,6 +92,7 @@ public enum ErrorCode {
     EMAIL_NOT_VERIFIED("GTW-408", "Email address not verified"),
     PROFILE_INCOMPLETE("GTW-409", "User profile is incomplete"),
     CONCURRENT_UPDATE_CONFLICT("GTW-410", "Resource update conflict"),
+    PROFILE_NOT_FOUND("GTW-411", "User profile not found"),
 
     // System & Infrastructure errors (GTW-500 to GTW-599)
     INTERNAL_SERVER_ERROR("GTW-500", "Internal server error"),
@@ -187,7 +192,7 @@ public enum ErrorCode {
     }
     
     private boolean isNotFound() {
-        return this == USER_NOT_FOUND || this == CHILD_PROFILE_NOT_FOUND;
+        return this == USER_NOT_FOUND || this == CHILD_PROFILE_NOT_FOUND || this == PROFILE_NOT_FOUND;
     }
     
     private boolean isServiceUnavailable() {

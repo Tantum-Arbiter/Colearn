@@ -15,6 +15,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.concurrent.DelegatingSecurityContextExecutorService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -38,11 +39,15 @@ public class InboundRequestTimeoutFilter extends OncePerRequestFilter {
 
     private final ObjectProvider<TestSimulationFlags> flagsProvider; // test-profile only, may be null
     private final ObjectMapper objectMapper;
-    private final ExecutorService executor = Executors.newCachedThreadPool(r -> {
-        Thread t = new Thread(r, "gw-inbound-timeout");
-        t.setDaemon(true);
-        return t;
-    });
+
+    // Wrap executor with DelegatingSecurityContextExecutorService to propagate SecurityContext
+    private final ExecutorService executor = new DelegatingSecurityContextExecutorService(
+        Executors.newCachedThreadPool(r -> {
+            Thread t = new Thread(r, "gw-inbound-timeout");
+            t.setDaemon(true);
+            return t;
+        })
+    );
 
     public InboundRequestTimeoutFilter(ObjectMapper objectMapper,
                                        ObjectProvider<TestSimulationFlags> flagsProvider) {

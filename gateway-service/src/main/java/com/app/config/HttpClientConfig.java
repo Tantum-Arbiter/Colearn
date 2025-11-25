@@ -18,22 +18,9 @@ public class HttpClientConfig {
     @Value("${performance.connection.default-timeout-seconds:1}")
     private int defaultTimeoutSeconds;
 
-    @Value("${performance.connection.cms-timeout-seconds:3}")
-    private int cmsTimeoutSeconds;
-
     @Bean(name = "defaultRestTemplate")
     public RestTemplate defaultRestTemplate(RestTemplateBuilder builder) {
         Duration timeout = Duration.ofSeconds(Math.max(1, defaultTimeoutSeconds));
-        return builder
-                .setConnectTimeout(timeout)
-                .setReadTimeout(timeout)
-                .additionalInterceptors(requestIdInterceptor())
-                .build();
-    }
-
-    @Bean(name = "cmsRestTemplate")
-    public RestTemplate cmsRestTemplate(RestTemplateBuilder builder) {
-        Duration timeout = Duration.ofSeconds(Math.max(1, cmsTimeoutSeconds));
         return builder
                 .setConnectTimeout(timeout)
                 .setReadTimeout(timeout)

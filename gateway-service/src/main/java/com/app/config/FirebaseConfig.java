@@ -58,9 +58,15 @@ public class FirebaseConfig {
             FirebaseOptions.Builder optionsBuilder = FirebaseOptions.builder()
                     .setProjectId(projectId);
 
-            // Configure credentials
-            GoogleCredentials credentials = getGoogleCredentials();
-            optionsBuilder.setCredentials(credentials);
+            // Check if using emulator - if so, use test credentials
+            if (emulatorHost != null && !emulatorHost.trim().isEmpty()) {
+                logger.info("Using Firestore emulator - initializing with test credentials");
+                optionsBuilder.setCredentials(getTestCredentials());
+            } else {
+                // Configure production credentials
+                GoogleCredentials credentials = getGoogleCredentials();
+                optionsBuilder.setCredentials(credentials);
+            }
 
             // Set database URL if provided
             if (databaseUrl != null && !databaseUrl.trim().isEmpty()) {
