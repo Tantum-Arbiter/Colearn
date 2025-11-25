@@ -19,6 +19,26 @@ logging:
     org.springframework.security: WARN
     com.app: INFO
 
+# CORS Configuration (permissive for testing)
+cors:
+  allowed-origins:
+    - http://localhost:*
+    - http://127.0.0.1:*
+    - exp://localhost:*
+    - exp://127.0.0.1:*
+    - http://host.docker.internal:*
+  allowed-methods:
+    - GET
+    - POST
+    - PUT
+    - PATCH
+    - DELETE
+    - OPTIONS
+  allowed-headers:
+    - "*"
+  allow-credentials: true
+  max-age: 3600
+
 
 
 # Performance timeouts for gateway HTTP clients (enforced via TimeLimiter)
