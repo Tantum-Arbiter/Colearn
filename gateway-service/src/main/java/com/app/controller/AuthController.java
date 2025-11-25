@@ -5,7 +5,9 @@ import com.app.exception.DownstreamServiceException;
 import com.app.exception.ErrorCode;
 import com.app.exception.GatewayException;
 import com.app.model.User;
+import com.app.model.UserProfile;
 import com.app.model.UserSession;
+import com.app.repository.UserProfileRepository;
 import com.app.service.SecurityMonitoringService;
 import com.app.service.ApplicationMetricsService;
 import com.app.service.UserService;
@@ -44,16 +46,19 @@ public class AuthController {
     private final ApplicationMetricsService applicationMetricsService;
     private final UserService userService;
     private final SessionService sessionService;
+    private final UserProfileRepository userProfileRepository;
     private final TestSimulationFlags flags; // may be null outside test profile
 
     public AuthController(JwtConfig jwtConfig, SecurityMonitoringService securityMonitoringService,
                          ApplicationMetricsService applicationMetricsService, UserService userService,
-                         SessionService sessionService, ObjectProvider<TestSimulationFlags> flagsProvider) {
+                         SessionService sessionService, UserProfileRepository userProfileRepository,
+                         ObjectProvider<TestSimulationFlags> flagsProvider) {
         this.jwtConfig = jwtConfig;
         this.securityMonitoringService = securityMonitoringService;
         this.applicationMetricsService = applicationMetricsService;
         this.userService = userService;
         this.sessionService = sessionService;
+        this.userProfileRepository = userProfileRepository;
         this.flags = flagsProvider != null ? flagsProvider.getIfAvailable() : null;
     }
 
@@ -156,7 +161,7 @@ public class AuthController {
             response.setTokens(createTokenResponse(accessToken, refreshToken));
             response.setMessage("Google authentication successful");
 
-            logger.info("Google authentication successful for user: {}", user.getEmail());
+            logger.info("Google authentication successful for user ID: {}", user.getId());
 
             // Log successful authentication for security monitoring
             securityMonitoringService.logSuccessfulAuthentication(user.getId(), "google");
@@ -281,7 +286,7 @@ public class AuthController {
             response.setTokens(createTokenResponse(accessToken, refreshToken));
             response.setMessage("Apple authentication successful");
 
-            logger.info("Apple authentication successful for user: {}", user.getEmail());
+            logger.info("Apple authentication successful for user ID: {}", user.getId());
 
             // Log successful authentication for security monitoring
             securityMonitoringService.logSuccessfulAuthentication(user.getId(), "apple");
@@ -333,8 +338,16 @@ public class AuthController {
      * Refresh access token
      */
     @PostMapping(value = "/refresh", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<?> refreshToken(@RequestBody TokenRefreshRequest request) {
+    public ResponseEntity<?> refreshToken(@RequestBody TokenRefreshRequest request, HttpServletRequest httpRequest) {
+        long startTime = System.currentTimeMillis();
+        String deviceType = "unknown";
+        String platform = "unknown";
+
         try {
+            // Extract device info early for metrics
+            deviceType = extractDeviceType(httpRequest);
+            platform = extractPlatform(httpRequest);
+
             // Validate request
             if (request == null) {
                 throw com.app.exception.ValidationException.missingRequiredField("body");
@@ -381,16 +394,36 @@ public class AuthController {
             // Update session with new refresh token
             sessionService.validateAndRefreshSession(request.getRefreshToken(), newRefreshToken).join();
 
+            // Fetch user profile for automatic sync
+            Optional<UserProfile> profileOpt = userProfileRepository.findByUserId(user.getId()).join();
+
             // Create response
             TokenRefreshResponse response = new TokenRefreshResponse();
             response.setSuccess(true);
             response.setTokens(createTokenResponse(newAccessToken, newRefreshToken));
             response.setMessage("Token refresh successful");
 
+            // Include profile data if available (for automatic cross-device sync)
+            if (profileOpt.isPresent()) {
+                response.setProfile(profileOpt.get());
+                logger.debug("Including profile data in token refresh response for user: {}", user.getId());
+            } else {
+                logger.debug("No profile found for user: {} - client will need to create one", user.getId());
+            }
+
+            // Record successful token refresh metrics
+            long processingTime = System.currentTimeMillis() - startTime;
+            applicationMetricsService.recordTokenRefresh(user.getProvider(), deviceType, platform, true, processingTime);
+            securityMonitoringService.logTokenRefresh(user.getId());
+
             logger.info("Token refresh successful for user: {}", user.getId());
             return ResponseEntity.ok(response);
 
         } catch (JWTVerificationException e) {
+            // Record failed token refresh metrics
+            long processingTime = System.currentTimeMillis() - startTime;
+            applicationMetricsService.recordTokenRefresh("unknown", deviceType, platform, false, processingTime);
+
             logger.warn("Token refresh failed: {}", e.getMessage());
             String msg = e.getMessage() != null ? e.getMessage() : "Invalid refresh token";
             if (msg.toLowerCase().contains("expired")) {
@@ -404,6 +437,10 @@ public class AuthController {
                     "refresh_token"
             );
         } catch (java.util.concurrent.CompletionException e) {
+            // Record failed token refresh metrics
+            long processingTime = System.currentTimeMillis() - startTime;
+            applicationMetricsService.recordTokenRefresh("unknown", deviceType, platform, false, processingTime);
+
             Throwable cause = e.getCause() != null ? e.getCause() : e;
             throw com.app.exception.DownstreamServiceException.firebaseError("Session store error", cause);
         } catch (com.app.exception.DownstreamServiceException e) {
@@ -412,6 +449,10 @@ public class AuthController {
             // Preserve specific 4xx/5xx mapping from our domain exceptions
             throw e;
         } catch (Exception e) {
+            // Record failed token refresh metrics
+            long processingTime = System.currentTimeMillis() - startTime;
+            applicationMetricsService.recordTokenRefresh("unknown", deviceType, platform, false, processingTime);
+
             throw new com.app.exception.GatewayException(com.app.exception.ErrorCode.INTERNAL_SERVER_ERROR, "Token refresh failed", e);
         }
     }
@@ -420,7 +461,10 @@ public class AuthController {
      * Revoke tokens (logout)
      */
     @PostMapping(value = "/revoke", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<?> revokeTokens(@RequestBody TokenRevokeRequest request) {
+    public ResponseEntity<?> revokeTokens(@RequestBody TokenRevokeRequest request, HttpServletRequest httpRequest) {
+        String deviceType = extractDeviceType(httpRequest);
+        String platform = extractPlatform(httpRequest);
+
         try {
             // Validate request
             if (request == null) {
@@ -438,17 +482,31 @@ public class AuthController {
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
+
             if (revokedSession.isPresent()) {
                 response.put("message", "Tokens revoked successfully");
                 logger.info("Session revoked for user: {}", revokedSession.get().getUserId());
+
+                // Record successful token revocation metrics
+                applicationMetricsService.recordTokenRevocation(deviceType, platform, "user_logout", true);
+                securityMonitoringService.logTokenRevocation(revokedSession.get().getUserId(), "user_logout");
+
+                // Decrement active sessions
+                applicationMetricsService.decrementActiveSessions();
             } else {
                 response.put("message", "Token was already invalid or expired");
                 logger.info("Token revocation requested for invalid/expired token");
+
+                // Record revocation attempt for invalid token
+                applicationMetricsService.recordTokenRevocation(deviceType, platform, "invalid_token", true);
             }
 
             return ResponseEntity.ok(response);
 
         } catch (java.util.concurrent.CompletionException e) {
+            // Record failed token revocation metrics
+            applicationMetricsService.recordTokenRevocation(deviceType, platform, "error", false);
+
             Throwable cause = e.getCause() != null ? e.getCause() : e;
             throw com.app.exception.DownstreamServiceException.firebaseError("Session store error", cause);
         } catch (com.app.exception.DownstreamServiceException e) {
@@ -457,6 +515,9 @@ public class AuthController {
             // Preserve specific 4xx/5xx mapping from our domain exceptions
             throw e;
         } catch (Exception e) {
+            // Record failed token revocation metrics
+            applicationMetricsService.recordTokenRevocation(deviceType, platform, "error", false);
+
             throw new com.app.exception.GatewayException(com.app.exception.ErrorCode.INTERNAL_SERVER_ERROR, "Token revocation failed", e);
         }
     }
@@ -468,8 +529,8 @@ public class AuthController {
         return UUID.nameUUIDFromBytes((email + ":" + provider).getBytes()).toString();
     }
 
-    private UserProfile createUserProfile(String userId, String email, String name, String provider, String providerId) {
-        UserProfile profile = new UserProfile();
+    private UserInfo createUserProfile(String userId, String email, String name, String provider, String providerId) {
+        UserInfo profile = new UserInfo();
         profile.setId(userId);
         profile.setEmail(email);
         profile.setName(name);
@@ -480,8 +541,8 @@ public class AuthController {
         return profile;
     }
 
-    private UserProfile createUserProfileFromUser(User user) {
-        UserProfile profile = new UserProfile();
+    private UserInfo createUserProfileFromUser(User user) {
+        UserInfo profile = new UserInfo();
         profile.setId(user.getId());
         profile.setEmail(user.getEmail());
         profile.setName(user.getName());
@@ -584,15 +645,15 @@ public class AuthController {
 
     public static class AuthResponse {
         private boolean success;
-        private UserProfile user;
+        private UserInfo user;
         private JWTTokens tokens;
         private String message;
 
         // Getters and setters
         public boolean isSuccess() { return success; }
         public void setSuccess(boolean success) { this.success = success; }
-        public UserProfile getUser() { return user; }
-        public void setUser(UserProfile user) { this.user = user; }
+        public UserInfo getUser() { return user; }
+        public void setUser(UserInfo user) { this.user = user; }
         public JWTTokens getTokens() { return tokens; }
         public void setTokens(JWTTokens tokens) { this.tokens = tokens; }
         public String getMessage() { return message; }
@@ -603,6 +664,7 @@ public class AuthController {
         private boolean success;
         private JWTTokens tokens;
         private String message;
+        private com.app.model.UserProfile profile; // Include profile data for automatic sync
 
         // Getters and setters
         public boolean isSuccess() { return success; }
@@ -611,10 +673,12 @@ public class AuthController {
         public void setTokens(JWTTokens tokens) { this.tokens = tokens; }
         public String getMessage() { return message; }
         public void setMessage(String message) { this.message = message; }
+        public com.app.model.UserProfile getProfile() { return profile; }
+        public void setProfile(com.app.model.UserProfile profile) { this.profile = profile; }
     }
 
     // Supporting DTOs
-    public static class UserProfile {
+    public static class UserInfo {
         private String id;
         private String email;
         private String name;
@@ -678,20 +742,6 @@ public class AuthController {
         public void setOsVersion(String osVersion) { this.osVersion = osVersion; }
         public String getAppVersion() { return appVersion; }
         public void setAppVersion(String appVersion) { this.appVersion = appVersion; }
-    }
-
-    public static class UserInfo {
-        private String email;
-        private String name;
-        private String picture;
-
-        // Getters and setters
-        public String getEmail() { return email; }
-        public void setEmail(String email) { this.email = email; }
-        public String getName() { return name; }
-        public void setName(String name) { this.name = name; }
-        public String getPicture() { return picture; }
-        public void setPicture(String picture) { this.picture = picture; }
     }
 
     /**

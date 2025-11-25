@@ -387,6 +387,33 @@ public class FirebaseUserSessionRepository implements UserSessionRepository {
     }
 
     @Override
+    public CompletableFuture<List<UserSession>> findAllActiveSessions() {
+        logger.debug("Finding all active sessions");
+
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                Query query = firestore.collection(COLLECTION_NAME)
+                        .whereEqualTo("active", true);
+
+                ApiFuture<QuerySnapshot> future = query.get();
+                QuerySnapshot querySnapshot = future.get();
+
+                // Filter out expired sessions and return valid ones
+                List<UserSession> sessions = querySnapshot.getDocuments().stream()
+                        .map(doc -> doc.toObject(UserSession.class))
+                        .filter(session -> session != null && session.isValid())
+                        .collect(java.util.stream.Collectors.toList());
+
+                logger.debug("Found {} active sessions", sessions.size());
+                return sessions;
+            } catch (Exception e) {
+                logger.error("Error finding all active sessions", e);
+                throw new RuntimeException("Failed to find all active sessions", e);
+            }
+        });
+    }
+
+    @Override
     public CompletableFuture<List<UserSession>> findSessionsExpiringWithin(int withinMinutes) {
         logger.debug("Finding sessions expiring within {} minutes", withinMinutes);
 

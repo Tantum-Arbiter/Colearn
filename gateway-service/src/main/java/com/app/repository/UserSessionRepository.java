@@ -108,6 +108,13 @@ public interface UserSessionRepository {
     CompletableFuture<Long> countActiveSessions();
 
     /**
+     * Find all active sessions (across all users)
+     * Used for refresh token validation when tokens are hashed
+     * @return CompletableFuture with list of all active sessions
+     */
+    CompletableFuture<List<UserSession>> findAllActiveSessions();
+
+    /**
      * Find sessions that will expire soon (within specified minutes)
      * @param withinMinutes Minutes until expiration
      * @return CompletableFuture with list of sessions

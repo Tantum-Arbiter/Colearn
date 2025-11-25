@@ -7,6 +7,8 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -33,6 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Configuration
 public class JwtConfig {
 
+    private static final Logger logger = LoggerFactory.getLogger(JwtConfig.class);
     private final Environment environment;
 
     @Value("${app.jwt.secret:default-secret-change-in-production}")
@@ -49,6 +52,9 @@ public class JwtConfig {
 
     @Value("${apple.oauth.client-id:}")
     private String appleClientId;
+
+    @Value("${apple.oauth.expo-client-id:host.exp.Exponent}")
+    private String appleExpoClientId;
 
     // Google OAuth2 endpoints
     private static final String GOOGLE_CERTS_URL = "https://www.googleapis.com/oauth2/v3/certs";
@@ -157,11 +163,21 @@ public class JwtConfig {
                 throw new JWTVerificationException("Missing key ID in token header");
             }
 
+            // Log the audience values for debugging
+            String tokenAudience = decodedHeader.getAudience() != null && !decodedHeader.getAudience().isEmpty()
+                ? decodedHeader.getAudience().get(0) : "null";
+            logger.debug("Apple ID token validation - Expected audiences: {} or {}, Token audience: {}",
+                appleClientId, appleExpoClientId, tokenAudience);
+
+            // Determine which audience to validate against
+            String expectedAudience = tokenAudience.equals(appleExpoClientId) ? appleExpoClientId : appleClientId;
+            logger.debug("Using expected audience: {}", expectedAudience);
+
             RSAPublicKey publicKey = getApplePublicKey(keyId);
             Algorithm algorithm = Algorithm.RSA256(publicKey, null);
             JWTVerifier verifier = JWT.require(algorithm)
                     .withIssuer(APPLE_ISSUER)
-                    .withAudience(appleClientId)
+                    .withAudience(expectedAudience)
                     .build();
             return verifier.verify(idToken);
         } catch (Exception e) {
