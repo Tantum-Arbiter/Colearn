@@ -308,7 +308,7 @@ export class ReminderService {
       // Only sync if user is authenticated
       const isAuthenticated = await ApiClient.isAuthenticated();
       if (!isAuthenticated) {
-        console.log('⏭️ [ReminderService] Skipping backend sync - not authenticated');
+        console.log('[ReminderService] Skipping backend sync - not authenticated');
         return;
       }
 
@@ -335,7 +335,7 @@ export class ReminderService {
     try {
       const isAuthenticated = await ApiClient.isAuthenticated();
       if (!isAuthenticated) {
-        console.log('⏭️ [ReminderService] Skipping backend pull - not authenticated');
+        console.log('[ReminderService] Skipping backend pull - not authenticated');
         return;
       }
 

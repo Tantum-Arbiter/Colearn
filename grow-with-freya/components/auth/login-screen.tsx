@@ -36,12 +36,6 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
   const [isAppleLoading, setIsAppleLoading] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [currentView, setCurrentView] = useState<'main' | 'terms' | 'privacy'>('main');
-  const {
-    setUserProfile,
-    setScreenTimeEnabled,
-    setNotificationsEnabled,
-    setChildAge
-  } = useAppStore();
 
   // Google OAuth hook
   const [request, response, promptAsync] = Google.useAuthRequest(
@@ -172,60 +166,12 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
       );
       await SecureStorage.storeUserData(result.user);
 
-      // Fetch and store user profile + settings
+      // Fetch and sync user profile + settings
       try {
         const profile = await ApiClient.getProfile();
-        if (profile) {
-          // Store profile (nickname, avatar)
-          setUserProfile(profile.nickname, profile.avatarType, profile.avatarId);
-          console.log('✅ [LoginScreen] Profile loaded:', profile.nickname);
-          console.log('📊 [LoginScreen] Profile data:', JSON.stringify(profile, null, 2));
-
-          // Sync settings from profile
-          if (profile.notifications) {
-            console.log('🔔 [LoginScreen] Notifications data:', profile.notifications);
-            if (typeof profile.notifications.screenTimeEnabled === 'boolean') {
-              setScreenTimeEnabled(profile.notifications.screenTimeEnabled);
-              console.log('⏰ [LoginScreen] Screen time enabled:', profile.notifications.screenTimeEnabled);
-            }
-            if (typeof profile.notifications.smartRemindersEnabled === 'boolean') {
-              setNotificationsEnabled(profile.notifications.smartRemindersEnabled);
-              console.log('🔔 [LoginScreen] Smart reminders enabled:', profile.notifications.smartRemindersEnabled);
-            }
-          } else {
-            console.log('⚠️ [LoginScreen] No notifications data in profile');
-          }
-
-          // Sync child age from profile
-          if (profile.schedule?.childAgeRange) {
-            const ageRange = profile.schedule.childAgeRange;
-            console.log('👶 [LoginScreen] Child age range:', ageRange);
-            let ageInMonths = 24; // Default
-            if (ageRange === '18-24m') {
-              ageInMonths = 21; // Middle of range
-            } else if (ageRange === '2-6y') {
-              ageInMonths = 48; // 4 years (middle of range)
-            } else if (ageRange === '6+') {
-              ageInMonths = 84; // 7 years
-            }
-            setChildAge(ageInMonths);
-            console.log('👶 [LoginScreen] Child age set to:', ageInMonths, 'months');
-          } else {
-            console.log('⚠️ [LoginScreen] No schedule/childAgeRange data in profile');
-          }
-
-          console.log('✅ [LoginScreen] Settings synced from backend');
-        }
+        await ProfileSyncService.fullSync(profile);
       } catch (error) {
         console.log('ℹ️ [LoginScreen] No profile found, user may need to create one');
-      }
-
-      // Sync reminders from backend
-      try {
-        await reminderService.syncFromBackend();
-        console.log('✅ [LoginScreen] Reminders synced from backend');
-      } catch (error) {
-        console.log('ℹ️ [LoginScreen] Failed to sync reminders:', error);
       }
 
       // Success! Transition to main menu
