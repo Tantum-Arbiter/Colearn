@@ -142,6 +142,7 @@ services:
       - SPRING_PROFILES_ACTIVE=test
       - GATEWAY_BASE_URL=http://gateway:8080
       - WIREMOCK_BASE_URL=http://wiremock:8080
+      - CUCUMBER_FILTER_TAGS=${CUCUMBER_FILTER_TAGS:-}
     depends_on:
       gateway:
         condition: service_healthy

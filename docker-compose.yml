@@ -1,4 +1,31 @@
 services:
+  # Firestore Emulator for local development
+  firestore:
+    build:
+      context: ./firestore-emulator
+      dockerfile: Dockerfile
+    container_name: firestore-emulator
+    command: >
+      bash -c "mkdir -p /opt/data &&
+      gcloud beta emulators firestore start
+      --host-port=0.0.0.0:8080
+      --project=grow-with-freya-dev"
+    ports:
+      - "8082:8080"  # Firestore emulator on port 8082
+      - "4000:4000"  # Firestore UI (if enabled)
+    volumes:
+      - firestore-data:/opt/data  # Persist Firestore data
+    environment:
+      FIRESTORE_EMULATOR_CACHE_DIR: /opt/data
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8080'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    networks:
+      - default-network
+
   gateway-service:
     build: gateway-service
     ports:
@@ -8,6 +35,15 @@ services:
     labels:
       prometheus-scrape: "true"
     restart: always
+    env_file:
+      - gateway-service/.env
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      FIREBASE_EMULATOR_HOST: firestore
+      FIREBASE_EMULATOR_PORT: 8080
+    depends_on:
+      firestore:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://gateway-service:8080/private/healthcheck"]
       interval: 5s
@@ -92,3 +128,7 @@ services:
 networks:
   default-network:
     driver: bridge
+
+volumes:
+  firestore-data:
+    driver: local
