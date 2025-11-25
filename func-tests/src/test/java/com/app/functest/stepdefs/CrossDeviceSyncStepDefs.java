@@ -6,7 +6,9 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import io.restassured.response.Response;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
@@ -306,6 +308,121 @@ public class CrossDeviceSyncStepDefs extends BaseStepDefs {
 
         json.append("}");
         return json.toString();
+    }
+
+    @When("I update the user profile with custom reminders:")
+    public void iUpdateTheUserProfileWithCustomReminders(DataTable dataTable) {
+        List<Map<String, String>> reminders = dataTable.asMaps(String.class, String.class);
+
+        // First, get the current profile to preserve existing fields
+        String token = deviceTokens.get("current");
+        assertNotNull(token, "No current access token set");
+
+        Response profileResponse = applyDefaultClientHeaders(given())
+            .header("Authorization", "Bearer " + token)
+            .when()
+            .get("/api/profile");
+
+        // Build reminders array
+        StringBuilder remindersJson = new StringBuilder("[");
+        for (int i = 0; i < reminders.size(); i++) {
+            Map<String, String> reminder = reminders.get(i);
+            if (i > 0) {
+                remindersJson.append(",");
+            }
+            remindersJson.append("{");
+            remindersJson.append("\"id\":\"").append(reminder.get("id")).append("\",");
+            remindersJson.append("\"title\":\"").append(reminder.get("title")).append("\",");
+            remindersJson.append("\"message\":\"").append(reminder.get("message")).append("\",");
+            remindersJson.append("\"dayOfWeek\":").append(reminder.get("dayOfWeek")).append(",");
+            remindersJson.append("\"time\":\"").append(reminder.get("time")).append("\",");
+            remindersJson.append("\"isActive\":").append(reminder.get("isActive"));
+            remindersJson.append("}");
+        }
+        remindersJson.append("]");
+
+        // Build profile update with reminders
+        String nickname = profileResponse.jsonPath().getString("nickname");
+        String avatarType = profileResponse.jsonPath().getString("avatarType");
+        String avatarId = profileResponse.jsonPath().getString("avatarId");
+
+        // Get existing notifications to preserve them
+        String notificationsJson = "{}";
+        try {
+            Object notifications = profileResponse.jsonPath().get("notifications");
+            if (notifications != null) {
+                notificationsJson = profileResponse.jsonPath().getJsonObject("notifications").toString();
+            }
+        } catch (Exception e) {
+            // No notifications, use empty object
+        }
+
+        String body = String.format("""
+            {
+              "nickname": "%s",
+              "avatarType": "%s",
+              "avatarId": "%s",
+              "notifications": %s,
+              "schedule": {
+                "customReminders": %s
+              }
+            }
+            """, nickname, avatarType, avatarId, notificationsJson, remindersJson);
+
+        lastResponse = applyDefaultClientHeaders(given())
+            .header("Authorization", "Bearer " + token)
+            .header("Content-Type", "application/json")
+            .body(body)
+            .when()
+            .post("/api/profile");
+    }
+
+    @Then("the response field {string} should be an array with {int} items")
+    public void theResponseFieldShouldBeAnArrayWithItems(String fieldPath, int expectedSize) {
+        assertNotNull(lastResponse, "No response received");
+        List<?> array = lastResponse.jsonPath().getList(fieldPath);
+        assertNotNull(array, "Field '" + fieldPath + "' should be an array but was null");
+        assertEquals(expectedSize, array.size(), "Array size mismatch for field '" + fieldPath + "'");
+    }
+
+    @Then("the custom reminder at index {int} should have field {string} with value {string}")
+    public void theCustomReminderAtIndexShouldHaveFieldWithValue(int index, String field, String expectedValue) {
+        assertNotNull(lastResponse, "No response received");
+        String fieldPath = "schedule.customReminders[" + index + "]." + field;
+
+        // Handle boolean and numeric values
+        if ("true".equalsIgnoreCase(expectedValue) || "false".equalsIgnoreCase(expectedValue)) {
+            Boolean expected = Boolean.parseBoolean(expectedValue);
+            Boolean actual = lastResponse.jsonPath().getBoolean(fieldPath);
+            assertEquals(expected, actual, "Field '" + fieldPath + "' value mismatch");
+        } else if (expectedValue.matches("\\d+")) {
+            Integer expected = Integer.parseInt(expectedValue);
+            Integer actual = lastResponse.jsonPath().getInt(fieldPath);
+            assertEquals(expected, actual, "Field '" + fieldPath + "' value mismatch");
+        } else {
+            String actualValue = lastResponse.jsonPath().getString(fieldPath);
+            assertEquals(expectedValue, actualValue, "Field '" + fieldPath + "' value mismatch");
+        }
+    }
+
+    @Then("the custom reminder in profile at index {int} should have field {string} with value {string}")
+    public void theCustomReminderInProfileAtIndexShouldHaveFieldWithValue(int index, String field, String expectedValue) {
+        assertNotNull(lastResponse, "No response received");
+        String fieldPath = "profile.schedule.customReminders[" + index + "]." + field;
+
+        // Handle boolean and numeric values
+        if ("true".equalsIgnoreCase(expectedValue) || "false".equalsIgnoreCase(expectedValue)) {
+            Boolean expected = Boolean.parseBoolean(expectedValue);
+            Boolean actual = lastResponse.jsonPath().getBoolean(fieldPath);
+            assertEquals(expected, actual, "Field '" + fieldPath + "' value mismatch");
+        } else if (expectedValue.matches("\\d+")) {
+            Integer expected = Integer.parseInt(expectedValue);
+            Integer actual = lastResponse.jsonPath().getInt(fieldPath);
+            assertEquals(expected, actual, "Field '" + fieldPath + "' value mismatch");
+        } else {
+            String actualValue = lastResponse.jsonPath().getString(fieldPath);
+            assertEquals(expectedValue, actualValue, "Field '" + fieldPath + "' value mismatch");
+        }
     }
 }
 

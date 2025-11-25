@@ -263,10 +263,12 @@ export class ApiClient {
     const schedule = profile.schedule || {};
     schedule.customReminders = reminders;
 
+    // Preserve ALL existing profile fields when updating reminders
     await this.updateProfile({
       nickname: profile.nickname,
       avatarType: profile.avatarType,
       avatarId: profile.avatarId,
+      notifications: profile.notifications || {}, // Preserve notifications
       schedule,
     });
   }

@@ -229,3 +229,143 @@ Feature: Cross-Device Data Synchronization
     Then the response status should be 200
     And the response field "profile.nickname" should be "UpdatedMultiUser"
     And the response field "profile.avatarType" should be "boy"
+
+  @authentication @user-profile @reminders
+  Scenario: User creates reminders on Device A, then logs in on Device B and sees synced reminders
+    # Device A - Login and create profile
+    Given I authenticate with Google using a valid ID token for device "device-a"
+    And I store the access token as "device_a_access_token"
+    And I store the refresh token as "device_a_refresh_token"
+
+    When I use the access token "device_a_access_token"
+    And I create a user profile with:
+      | nickname   | ReminderUser |
+      | avatarType | girl         |
+      | avatarId   | girl-1       |
+    Then the response status should be 201
+
+    # Device A - Add custom reminders to profile
+    When I use the access token "device_a_access_token"
+    And I update the user profile with custom reminders:
+      | id                          | title                | message                    | dayOfWeek | time  | isActive |
+      | reminder_1                  | Morning Story        | Time for a morning story   | 1         | 08:00 | true     |
+      | reminder_2                  | Bedtime Routine      | Time to get ready for bed  | 1         | 19:30 | true     |
+      | reminder_3                  | Emotion Check        | How are you feeling?       | 3         | 15:00 | false    |
+    Then the response status should be 200
+
+    # Device A - Verify reminders were saved
+    When I use the access token "device_a_access_token"
+    And I get the user profile
+    Then the response status should be 200
+    And the response field "schedule.customReminders" should be an array with 3 items
+    And the custom reminder at index 0 should have field "title" with value "Morning Story"
+    And the custom reminder at index 1 should have field "title" with value "Bedtime Routine"
+    And the custom reminder at index 2 should have field "isActive" with value "false"
+
+    # Device B - Login with same user
+    When I authenticate with Google using the same ID token for device "device-b"
+    And I store the access token as "device_b_access_token"
+    Then the response status should be 200
+
+    # Device B - Verify reminders synced
+    When I use the access token "device_b_access_token"
+    And I get the user profile
+    Then the response status should be 200
+    And the response field "schedule.customReminders" should be an array with 3 items
+    And the custom reminder at index 0 should have field "title" with value "Morning Story"
+    And the custom reminder at index 0 should have field "dayOfWeek" with value "1"
+    And the custom reminder at index 0 should have field "time" with value "08:00"
+    And the custom reminder at index 0 should have field "isActive" with value "true"
+    And the custom reminder at index 1 should have field "title" with value "Bedtime Routine"
+    And the custom reminder at index 2 should have field "title" with value "Emotion Check"
+    And the custom reminder at index 2 should have field "isActive" with value "false"
+
+  @authentication @user-profile @reminders
+  Scenario: User updates reminders on Device A, Device B sees changes after token refresh
+    # Device A - Login and create profile with reminders
+    Given I authenticate with Google using a valid ID token for device "device-a"
+    And I store the access token as "device_a_access_token"
+    And I store the refresh token as "device_a_refresh_token"
+
+    When I use the access token "device_a_access_token"
+    And I create a user profile with:
+      | nickname   | ReminderUser |
+      | avatarType | girl         |
+      | avatarId   | girl-1       |
+    Then the response status should be 201
+
+    When I use the access token "device_a_access_token"
+    And I update the user profile with custom reminders:
+      | id         | title         | message              | dayOfWeek | time  | isActive |
+      | reminder_1 | Morning Story | Time for a story     | 1         | 08:00 | true     |
+    Then the response status should be 200
+
+    # Device B - Login with same user
+    When I authenticate with Google using the same ID token for device "device-b"
+    And I store the access token as "device_b_access_token"
+    And I store the refresh token as "device_b_refresh_token"
+    Then the response status should be 200
+
+    # Device B - Verify initial reminder
+    When I use the access token "device_b_access_token"
+    And I get the user profile
+    Then the response status should be 200
+    And the response field "schedule.customReminders" should be an array with 1 items
+    And the custom reminder at index 0 should have field "title" with value "Morning Story"
+
+    # Device A - Update reminders (add new one and modify existing)
+    When I use the access token "device_a_access_token"
+    And I update the user profile with custom reminders:
+      | id         | title              | message                  | dayOfWeek | time  | isActive |
+      | reminder_1 | Morning Story Time | Updated story time       | 1         | 08:30 | true     |
+      | reminder_2 | Afternoon Snack    | Time for a healthy snack | 1         | 15:00 | true     |
+    Then the response status should be 200
+
+    # Device B - Refresh token and verify updated reminders
+    When I refresh the access token using "device_b_refresh_token"
+    Then the response status should be 200
+    And the response field "profile.schedule.customReminders" should be an array with 2 items
+    And the custom reminder in profile at index 0 should have field "title" with value "Morning Story Time"
+    And the custom reminder in profile at index 0 should have field "time" with value "08:30"
+    And the custom reminder in profile at index 1 should have field "title" with value "Afternoon Snack"
+
+  @authentication @user-profile @reminders @settings
+  Scenario: Updating reminders preserves notification settings
+    # Login and create profile with notification settings
+    Given I authenticate with Google using a valid ID token for device "device-a"
+    And I store the access token as "access_token"
+
+    When I use the access token "access_token"
+    And I create a user profile with:
+      | nickname                            | TestUser |
+      | avatarType                          | girl     |
+      | avatarId                            | girl-1   |
+      | notifications.screenTimeEnabled     | true     |
+      | notifications.smartRemindersEnabled | true     |
+      | schedule.childAgeRange              | 2-6y     |
+    Then the response status should be 201
+
+    # Verify initial settings
+    When I use the access token "access_token"
+    And I get the user profile
+    Then the response status should be 200
+    And the response field "notifications.screenTimeEnabled" should be "true"
+    And the response field "notifications.smartRemindersEnabled" should be "true"
+    And the response field "schedule.childAgeRange" should be "2-6y"
+
+    # Update reminders
+    When I use the access token "access_token"
+    And I update the user profile with custom reminders:
+      | id         | title         | message          | dayOfWeek | time  | isActive |
+      | reminder_1 | Morning Story | Time for a story | 1         | 08:00 | true     |
+    Then the response status should be 200
+
+    # Verify reminders were added AND notification settings were preserved
+    When I use the access token "access_token"
+    And I get the user profile
+    Then the response status should be 200
+    And the response field "schedule.customReminders" should be an array with 1 items
+    And the custom reminder at index 0 should have field "title" with value "Morning Story"
+    And the response field "notifications.screenTimeEnabled" should be "true"
+    And the response field "notifications.smartRemindersEnabled" should be "true"
+    And the response field "schedule.childAgeRange" should be "2-6y"
