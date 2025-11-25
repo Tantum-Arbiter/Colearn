@@ -73,9 +73,6 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   // Get organized story data
   const availableGenres = useMemo(() => {
     const genres = getGenresWithStories();
-    console.log('StorySelectionScreen: Available genres:', genres);
-    console.log('StorySelectionScreen: ALL_STORIES length:', ALL_STORIES.length);
-    console.log('StorySelectionScreen: Using CENTERED horizontal carousels with centered headings');
     return genres;
   }, []);
 
@@ -277,8 +274,6 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
                     }}
                     keyExtractor={(story) => story.id}
                     renderItem={({ item: story, index }) => {
-                      console.log(`CAROUSEL: Rendering ${story.title} in ${genre}`);
-
                       // Create a ref for this specific card
                       const cardRef = React.createRef();
 

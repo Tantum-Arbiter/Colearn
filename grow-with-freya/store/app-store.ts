@@ -11,6 +11,11 @@ export interface AppState {
   hasCompletedLogin: boolean;
   showLoginAfterOnboarding: boolean;
 
+  // User profile (synced from backend)
+  userNickname: string | null;
+  userAvatarType: 'boy' | 'girl' | null;
+  userAvatarId: string | null;
+
   // Current user/child profile
   currentChildId: string | null;
   childAgeInMonths: number; // For screen time calculations
@@ -43,6 +48,8 @@ export interface AppState {
   setLoginComplete: (complete: boolean) => void;
   setShowLoginAfterOnboarding: (show: boolean) => void;
   resetAppForTesting: () => void; // Temporary function to reset app state
+  setUserProfile: (nickname: string, avatarType: 'boy' | 'girl', avatarId: string) => void;
+  clearUserProfile: () => void;
   setCurrentChild: (childId: string | null) => void;
   setChildAge: (ageInMonths: number) => void;
   setCurrentScreen: (screen: string) => void;
@@ -70,6 +77,9 @@ export const useAppStore = create<AppState>()(
       hasCompletedOnboarding: false, // This will be overridden by persisted state if it exists
       hasCompletedLogin: false,
       showLoginAfterOnboarding: false,
+      userNickname: null,
+      userAvatarType: null,
+      userAvatarId: null,
       currentChildId: null,
       childAgeInMonths: 24, // Default to 24 months (2 years)
       currentScreen: 'splash',
@@ -97,6 +107,16 @@ export const useAppStore = create<AppState>()(
         isAppReady: false,
         showLoginAfterOnboarding: false,
         currentScreen: 'splash'
+      }),
+      setUserProfile: (nickname, avatarType, avatarId) => set({
+        userNickname: nickname,
+        userAvatarType: avatarType,
+        userAvatarId: avatarId
+      }),
+      clearUserProfile: () => set({
+        userNickname: null,
+        userAvatarType: null,
+        userAvatarId: null
       }),
       setCurrentChild: (childId) => set({ currentChildId: childId }),
       setChildAge: (ageInMonths) => set({ childAgeInMonths: ageInMonths }),
@@ -133,6 +153,9 @@ export const useAppStore = create<AppState>()(
         hasCompletedOnboarding: state.hasCompletedOnboarding,
         hasCompletedLogin: state.hasCompletedLogin,
         showLoginAfterOnboarding: state.showLoginAfterOnboarding,
+        userNickname: state.userNickname,
+        userAvatarType: state.userAvatarType,
+        userAvatarId: state.userAvatarId,
         currentChildId: state.currentChildId,
         childAgeInMonths: state.childAgeInMonths,
         screenTimeEnabled: state.screenTimeEnabled,

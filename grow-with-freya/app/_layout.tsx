@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
+import { AppState, AppStateStatus, Dimensions } from 'react-native';
 import * as ScreenOrientation from 'expo-screen-orientation';
 
 import 'react-native-reanimated';
@@ -14,6 +15,7 @@ import { OnboardingFlow } from '@/components/onboarding/onboarding-flow';
 import { LoginScreen } from '@/components/auth/login-screen';
 import { AccountScreen } from '@/components/account/account-screen';
 import { MainMenu } from '@/components/main-menu';
+import { ApiClient } from '@/services/api-client';
 import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
 import { StoryBookReader } from '@/components/stories/story-book-reader';
 import { MusicScreen } from '@/components/music';
@@ -85,27 +87,54 @@ function AppContent() {
 
 
   // Ensure app starts and stays in portrait mode (except for story reader)
+  // Note: iPads don't support portrait-only locking, so we allow all orientations on tablets
   useEffect(() => {
     const initializeOrientation = async () => {
       try {
-        // Lock to portrait orientation for the main app
-        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-        console.log('App initialized in portrait mode');
+        const { width, height } = Dimensions.get('window');
+        const isTablet = Math.min(width, height) >= 768; // iPad and larger
+
+        if (isTablet) {
+          // Allow all orientations on tablets
+          await ScreenOrientation.unlockAsync();
+          console.log('App initialized with unlocked orientation (tablet)');
+        } else {
+          // Lock to portrait orientation for phones
+          await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+          console.log('App initialized in portrait mode (phone)');
+        }
       } catch (error) {
-        console.warn('Failed to initialize portrait orientation:', error);
+        console.warn('Failed to initialize orientation:', error);
       }
     };
 
     initializeOrientation();
   }, []);
 
-  // Ensure portrait mode when not in story reader
+  // Ensure portrait mode when not in story reader (phones only)
   useEffect(() => {
-    if (currentView !== 'story-reader') {
-      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP)
-        .then(() => console.log('Restored portrait mode for:', currentView))
-        .catch(error => console.warn('Failed to restore portrait mode:', error));
-    }
+    const handleOrientation = async () => {
+      try {
+        const { width, height } = Dimensions.get('window');
+        const isTablet = Math.min(width, height) >= 768;
+
+        if (currentView !== 'story-reader') {
+          if (isTablet) {
+            // Allow all orientations on tablets
+            await ScreenOrientation.unlockAsync();
+            console.log('Unlocked orientation for tablet:', currentView);
+          } else {
+            // Lock to portrait on phones
+            await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+            console.log('Restored portrait mode for phone:', currentView);
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to set orientation:', error);
+      }
+    };
+
+    handleOrientation();
   }, [currentView]);
 
 
@@ -149,17 +178,59 @@ function AppContent() {
   }, []);
 
   useEffect(() => {
-    if (!isAppReady) {
-      setCurrentView('splash');
-    } else if (showLoginAfterOnboarding) {
-      setCurrentView('login');
-    } else if (!hasCompletedOnboarding) {
-      setCurrentView('onboarding');
-    } else {
-      setCurrentView('app');
-      setCurrentPage('main');
-    }
+    const checkAuthAndSetView = async () => {
+      if (!isAppReady) {
+        setCurrentView('splash');
+        return;
+      }
+
+      // Check if user is authenticated (this will auto-refresh tokens if needed)
+      const isAuthenticated = await ApiClient.isAuthenticated();
+      console.log('Authentication check:', { isAuthenticated, hasCompletedOnboarding, showLoginAfterOnboarding });
+
+      if (showLoginAfterOnboarding) {
+        setCurrentView('login');
+      } else if (!hasCompletedOnboarding) {
+        setCurrentView('onboarding');
+      } else if (!isAuthenticated) {
+        // User has completed onboarding but is not authenticated
+        // Show login screen
+        console.log('User not authenticated - showing login');
+        setShowLoginAfterOnboarding(true);
+        setCurrentView('login');
+      } else {
+        // User is authenticated, go to app
+        console.log('User authenticated - going to app');
+        setCurrentView('app');
+        setCurrentPage('main');
+      }
+    };
+
+    checkAuthAndSetView();
   }, [isAppReady, hasCompletedOnboarding, showLoginAfterOnboarding]);
+
+  // Refresh tokens when app comes back from background
+  useEffect(() => {
+    const handleAppStateChange = async (nextAppState: AppStateStatus) => {
+      if (nextAppState === 'active') {
+        // App became active - check if tokens need refresh
+        console.log('App became active - checking authentication');
+        const isAuthenticated = await ApiClient.isAuthenticated();
+
+        if (!isAuthenticated && hasCompletedOnboarding) {
+          // Tokens expired and couldn't be refreshed - show login
+          console.log('Authentication expired - showing login');
+          setShowLoginAfterOnboarding(true);
+          setCurrentView('login');
+        } else if (isAuthenticated) {
+          console.log('Authentication valid - tokens refreshed if needed');
+        }
+      }
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    return () => subscription?.remove();
+  }, [hasCompletedOnboarding]);
 
   // Start background music once when transitioning from splash (only once!)
   useEffect(() => {
@@ -220,11 +291,15 @@ function AppContent() {
   const handleLoginSuccess = () => {
     console.log('Login completed - going to app');
     setShowLoginAfterOnboarding(false);
+    setCurrentView('app');
+    setCurrentPage('main');
   };
 
   const handleLoginSkip = () => {
     console.log('Login skipped - going to app');
     setShowLoginAfterOnboarding(false);
+    setCurrentView('app');
+    setCurrentPage('main');
   };
 
 

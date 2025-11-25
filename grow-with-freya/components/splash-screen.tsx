@@ -34,6 +34,9 @@ export function AppSplashScreen() {
   useEffect(() => {
     async function prepare() {
       try {
+        // Hide native splash screen immediately and show our custom one
+        await SplashScreen.hideAsync();
+
         await Font.loadAsync({});
 
         logoOpacity.value = withTiming(1, { duration: 1000 });
@@ -55,7 +58,6 @@ export function AppSplashScreen() {
           delayTimeoutRef.current = setTimeout(resolve, 2500);
         });
 
-        await SplashScreen.hideAsync();
         console.log('Splash screen complete. App state:', { hasCompletedOnboarding, hasCompletedLogin });
         setAppReady(true);
 
