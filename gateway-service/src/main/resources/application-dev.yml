@@ -13,9 +13,6 @@ server:
 spring:
   application:
     name: grow-with-freya-gateway-dev
-  profiles:
-    active: dev
-
 
   mvc:
     async:
@@ -74,11 +71,11 @@ spring:
           app.response.time: 0.5,0.95,0.99
           app.authentication.time: 0.5,0.95,0.99
 
-# JWT Configuration (shorter expiration for development)
+# JWT Configuration
 jwt:
   secret: ${JWT_SECRET:dev-secret-key-that-is-at-least-256-bits-long-for-development-only}
-  expiration-seconds: 3600  # 1 hour (longer for development)
-  refresh-expiration-seconds: 86400  # 1 day (shorter for development)
+  expiration-seconds: 3600  # 1 hour
+  refresh-expiration-seconds: 86400  # 1 day
   issuer: grow-with-freya-gateway-dev
 
 # Google OAuth Configuration
@@ -92,6 +89,7 @@ google:
 apple:
   oauth:
     client-id: ${APPLE_CLIENT_ID:your-apple-client-id}
+    expo-client-id: ${APPLE_EXPO_CLIENT_ID:host.exp.Exponent}
     jwks-uri: https://appleid.apple.com/auth/keys
     issuer: https://appleid.apple.com
 
@@ -196,7 +194,6 @@ performance:
     queue-capacity: 50
   connection:
     default-timeout-seconds: 1
-    cms-timeout-seconds: 3
   inbound:
     request-timeout-seconds: 15
   compression:
@@ -234,22 +231,6 @@ resilience4j:
         failure-rate-threshold: 50
         slow-call-rate-threshold: 100
         slow-call-duration-threshold: 1s
-        sliding-window-type: COUNT_BASED
-        sliding-window-size: 10
-        minimum-number-of-calls: 5
-        wait-duration-in-open-state: 5s
-        permitted-number-of-calls-in-half-open-state: 2
-        automatic-transition-from-open-to-half-open-enabled: true
-        record-exceptions:
-          - java.util.concurrent.TimeoutException
-          - java.util.concurrent.CompletionException
-          - java.net.SocketTimeoutException
-          - java.net.ConnectException
-          - org.springframework.web.client.ResourceAccessException
-      cms:
-        failure-rate-threshold: 50
-        slow-call-rate-threshold: 100
-        slow-call-duration-threshold: 3s
         sliding-window-type: COUNT_BASED
         sliding-window-size: 10
         minimum-number-of-calls: 5

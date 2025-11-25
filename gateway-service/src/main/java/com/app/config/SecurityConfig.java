@@ -8,7 +8,11 @@ import com.app.filter.MetricsFilter;
 import com.app.exception.ErrorCode;
 import com.app.exception.ErrorResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,6 +20,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -23,9 +28,8 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -36,12 +40,40 @@ import java.util.UUID;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    private static final Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
+
+    /**
+     * Configure SecurityContext to use MODE_INHERITABLETHREADLOCAL
+     * This ensures the security context is propagated to child threads (e.g., async request processing)
+     */
+    @PostConstruct
+    public void init() {
+        logger.info("🔧 Configuring SecurityContext to use MODE_INHERITABLETHREADLOCAL for async thread propagation");
+        SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
+        logger.info("✅ SecurityContext strategy set to: {}", SecurityContextHolder.getContextHolderStrategy().getClass().getSimpleName());
+    }
+
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final RequestValidationFilter requestValidationFilter;
     private final RateLimitingFilter rateLimitingFilter;
     private final SecurityHeadersConfig.SecurityHeadersFilter securityHeadersFilter;
     private final MetricsFilter metricsFilter;
     private final ObjectMapper objectMapper;
+
+    @Value("${cors.allowed-origins}")
+    private List<String> allowedOrigins;
+
+    @Value("${cors.allowed-methods}")
+    private List<String> allowedMethods;
+
+    @Value("${cors.allowed-headers}")
+    private List<String> allowedHeaders;
+
+    @Value("${cors.allow-credentials}")
+    private boolean allowCredentials;
+
+    @Value("${cors.max-age}")
+    private long maxAge;
 
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter,
@@ -184,39 +216,25 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+        logger.info("Configuring CORS with origins from application.yml");
+
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Allow specific origins (update for production)
-        configuration.setAllowedOriginPatterns(Arrays.asList(
-            "http://localhost:*",
-            "https://*.expo.dev",
-            "https://*.growwithfreya.com"
-        ));
+        // Use origins from application.yml (environment-specific)
+        configuration.setAllowedOriginPatterns(allowedOrigins);
+        logger.info("CORS allowed origins: {}", allowedOrigins);
 
-        // Allow specific methods
-        configuration.setAllowedMethods(Arrays.asList(
-            "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
-        ));
+        // Use methods from application.yml
+        configuration.setAllowedMethods(allowedMethods);
 
-        // Allow specific headers
-        configuration.setAllowedHeaders(Arrays.asList(
-            "Authorization",
-            "Content-Type",
-            "X-Requested-With",
-            "X-Device-ID",
-            "X-Session-ID",
-            "X-Client-Platform",
-            "X-Client-Version",
-            "X-Timestamp",
-            "X-Nonce",
-            "X-Signature"
-        ));
+        // Use headers from application.yml
+        configuration.setAllowedHeaders(allowedHeaders);
 
-        // Allow credentials
-        configuration.setAllowCredentials(true);
+        // Use credentials setting from application.yml
+        configuration.setAllowCredentials(allowCredentials);
 
-        // Cache preflight response for 1 hour
-        configuration.setMaxAge(3600L);
+        // Use max age from application.yml
+        configuration.setMaxAge(maxAge);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
