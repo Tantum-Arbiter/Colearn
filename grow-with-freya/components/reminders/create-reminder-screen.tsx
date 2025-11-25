@@ -53,6 +53,18 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
   const [creating, setCreating] = useState(false);
   const [existingReminders, setExistingReminders] = useState<CustomReminder[]>([]);
 
+  // Track unsaved changes
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Update unsaved changes flag whenever form fields change
+  useEffect(() => {
+    const changed =
+      title.trim() !== '' ||
+      message.trim() !== '' ||
+      selectedDay !== null;
+    setHasUnsavedChanges(changed);
+  }, [title, message, selectedDay]);
+
   // Animate stars with a gentle pulsing effect
   useEffect(() => {
     starOpacity.value = withRepeat(
@@ -197,6 +209,21 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
     return date.toTimeString().slice(0, 5); // HH:MM format
   };
 
+  const handleBack = () => {
+    if (hasUnsavedChanges) {
+      Alert.alert(
+        'Unsaved Changes',
+        'You have unsaved changes. Are you sure you want to leave without saving?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Leave', style: 'destructive', onPress: onBack }
+        ]
+      );
+    } else {
+      onBack();
+    }
+  };
+
   const handleCreateReminder = async () => {
     // Validation
     if (!title.trim()) {
@@ -235,7 +262,10 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
         timeString
       );
 
-      // Transition directly to reminders page without confirmation
+      // Clear unsaved changes flag
+      setHasUnsavedChanges(false);
+
+      // Return to reminders list - user will save on main Screen Time page
       onSuccess();
     } catch (error) {
       console.error('Failed to create reminder:', error);
@@ -279,7 +309,7 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50) }]}>
-          <Pressable onPress={onBack} style={styles.backButton}>
+          <Pressable onPress={handleBack} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="rgba(255, 255, 255, 0.8)" />
           </Pressable>
           <Text style={styles.title}>Create Reminder</Text>

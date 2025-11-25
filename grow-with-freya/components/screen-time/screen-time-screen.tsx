@@ -15,6 +15,8 @@ import { useScreenTime } from './screen-time-provider';
 import { CustomRemindersScreen, CreateReminderScreen } from '../reminders';
 import { styles } from './styles';
 import { formatDurationCompact } from '../../utils/time-formatting';
+import { ApiClient } from '@/services/api-client';
+import { reminderService } from '@/services/reminder-service';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -55,6 +57,26 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
   const [stats, setStats] = useState<ScreenTimeStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState<'main' | 'custom-reminders' | 'create-reminder'>('main');
+
+  // Track local changes (not yet saved to backend)
+  const [localChildAge, setLocalChildAge] = useState(childAgeInMonths);
+  const [localScreenTimeEnabled, setLocalScreenTimeEnabled] = useState(screenTimeEnabled);
+  const [localNotificationsEnabled, setLocalNotificationsEnabled] = useState(notificationsEnabled);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [reminderChangeCounter, setReminderChangeCounter] = useState(0); // Force re-check when reminders change
+
+  // Track changes to detect unsaved state (including reminders)
+  useEffect(() => {
+    const settingsChanged =
+      localChildAge !== childAgeInMonths ||
+      localScreenTimeEnabled !== screenTimeEnabled ||
+      localNotificationsEnabled !== notificationsEnabled;
+
+    const remindersChanged = reminderService.hasUnsavedChanges();
+
+    setHasUnsavedChanges(settingsChanged || remindersChanged);
+  }, [localChildAge, localScreenTimeEnabled, localNotificationsEnabled, childAgeInMonths, screenTimeEnabled, notificationsEnabled, currentPage, reminderChangeCounter]); // Re-check when reminders change
 
   // Star animation
   const starOpacity = useSharedValue(0.4);
@@ -101,34 +123,57 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
     }
   };
 
-  const handleBack = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    onBack();
+  const handleBack = async () => {
+    if (hasUnsavedChanges) {
+      Alert.alert(
+        'Unsaved Changes',
+        'You have unsaved changes. Are you sure you want to leave without saving?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Leave',
+            style: 'destructive',
+            onPress: async () => {
+              // Revert reminder changes
+              await reminderService.revertChanges();
+
+              // Reset local state to match app store
+              setLocalChildAge(childAgeInMonths);
+              setLocalScreenTimeEnabled(screenTimeEnabled);
+              setLocalNotificationsEnabled(notificationsEnabled);
+              setHasUnsavedChanges(false);
+
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onBack();
+            }
+          }
+        ]
+      );
+    } else {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      onBack();
+    }
   };
 
   const handleToggleScreenTime = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setScreenTimeEnabled(!screenTimeEnabled);
+    setLocalScreenTimeEnabled(!localScreenTimeEnabled);
   };
 
   const handleToggleNotifications = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    
-    if (!notificationsEnabled && !hasRequestedNotificationPermission) {
+
+    if (!localNotificationsEnabled && !hasRequestedNotificationPermission) {
       // Request permission first
       const notificationService = NotificationService.getInstance();
       const permissionStatus = await notificationService.requestPermissions();
       setNotificationPermissionRequested(true);
-      
+
       if (permissionStatus.granted) {
-        setNotificationsEnabled(true);
-        // Schedule notifications based on current recommendations
-        if (stats?.recommendedSchedule) {
-          await notificationService.scheduleRecommendedReminders(stats.recommendedSchedule);
-        }
+        setLocalNotificationsEnabled(true);
         Alert.alert(
-          'Notifications Enabled! 🔔',
-          'You\'ll receive gentle reminders for screen time activities based on your usage patterns.'
+          'Notifications Enabled!',
+          'Don\'t forget to save your changes at the bottom of the page!'
         );
       } else {
         Alert.alert(
@@ -141,18 +186,120 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
         );
       }
     } else {
-      setNotificationsEnabled(!notificationsEnabled);
-      if (!notificationsEnabled) {
-        // Cancel all notifications when disabled
-        const notificationService = NotificationService.getInstance();
-        await notificationService.cancelAllScheduledNotifications();
-      }
+      setLocalNotificationsEnabled(!localNotificationsEnabled);
     }
   };
 
   const handleAgeChange = (newAge: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setChildAge(newAge);
+    setLocalChildAge(newAge);
+  };
+
+  const handleSaveSettings = async () => {
+    try {
+      setIsSaving(true);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+      // Update local app store
+      setChildAge(localChildAge);
+      setScreenTimeEnabled(localScreenTimeEnabled);
+      setNotificationsEnabled(localNotificationsEnabled);
+
+      // Handle notification scheduling/cancellation
+      const notificationService = NotificationService.getInstance();
+      if (localNotificationsEnabled && !notificationsEnabled) {
+        // Notifications were just enabled - schedule them
+        if (stats?.recommendedSchedule) {
+          await notificationService.scheduleRecommendedReminders(stats.recommendedSchedule);
+        }
+      } else if (!localNotificationsEnabled && notificationsEnabled) {
+        // Notifications were just disabled - cancel them
+        await notificationService.cancelAllScheduledNotifications();
+      }
+
+      // Sync to backend (only if authenticated)
+      const isAuthenticated = await ApiClient.isAuthenticated();
+      if (isAuthenticated) {
+        try {
+          // Convert age to age range string
+          const ageRange = localChildAge < 24 ? '18-24m' :
+                          localChildAge < 72 ? '2-6y' :
+                          '6+';
+
+          let profile;
+          try {
+            // Try to get existing profile
+            profile = await ApiClient.getProfile();
+          } catch (error: any) {
+            // Profile doesn't exist - create one with default nickname/avatar
+            if (error.message?.includes('404')) {
+              console.log('ℹ️ [ScreenTimeScreen] No profile found - creating one with settings');
+              profile = {
+                nickname: 'User',
+                avatarType: 'girl' as const,
+                avatarId: 'girl-1',
+                notifications: {},
+                schedule: {},
+              };
+            } else {
+              throw error;
+            }
+          }
+
+          // Update or create profile with new settings
+          await ApiClient.updateProfile({
+            nickname: profile.nickname,
+            avatarType: profile.avatarType,
+            avatarId: profile.avatarId,
+            notifications: {
+              ...(profile.notifications || {}),
+              screenTimeEnabled: localScreenTimeEnabled,
+              smartRemindersEnabled: localNotificationsEnabled,
+            },
+            schedule: {
+              ...(profile.schedule || {}),
+              childAgeRange: ageRange,
+            },
+          });
+
+          // Sync reminders to backend (only if reminders changed)
+          if (reminderService.hasUnsavedChanges()) {
+            console.log('[ScreenTimeScreen] Syncing reminders to backend...');
+            await reminderService.syncToBackend();
+          }
+
+          console.log('[ScreenTimeScreen] Settings synced to backend');
+        } catch (error: any) {
+          console.log('[ScreenTimeScreen] Failed to sync to backend:', error);
+          // Still commit reminders locally
+          if (reminderService.hasUnsavedChanges()) {
+            await reminderService.commitChanges();
+          }
+        }
+      } else {
+        // Not authenticated - just commit reminders locally
+        if (reminderService.hasUnsavedChanges()) {
+          await reminderService.commitChanges();
+        }
+      }
+
+      // Reload stats with new age
+      await loadStats();
+
+      setHasUnsavedChanges(false);
+      Alert.alert(
+        'Settings Saved!',
+        'Your screen time preferences and custom reminders have been saved and synced across your devices.'
+      );
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+      Alert.alert(
+        'Save Failed',
+        'Failed to save your settings. Please try again.'
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const getDailyLimit = () => {
@@ -201,7 +348,12 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
     return 'For children 6+ years, establish consistent limits on screen time and ensure it doesn\'t interfere with sleep, physical activity, and other healthy behaviors.';
   };
 
-  const dailyLimit = getDailyLimit();
+  // Use local state for display (not yet saved)
+  const dailyLimit = useMemo(() => {
+    const screenTimeService = ScreenTimeService.getInstance();
+    return screenTimeService.getDailyLimit(localChildAge);
+  }, [localChildAge]);
+
   const todayUsage = contextTodayUsage; // Use real-time usage from context
   const usagePercentage = getUsagePercentage(todayUsage, dailyLimit);
 
@@ -255,13 +407,17 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
           <CustomRemindersScreen
             onBack={() => setCurrentPage('main')}
             onCreateNew={() => setCurrentPage('create-reminder')}
+            onReminderChange={() => setReminderChangeCounter(prev => prev + 1)}
           />
         )}
 
         {currentPage === 'create-reminder' && (
           <CreateReminderScreen
             onBack={() => setCurrentPage('custom-reminders')}
-            onSuccess={() => setCurrentPage('custom-reminders')}
+            onSuccess={() => {
+              setReminderChangeCounter(prev => prev + 1);
+              setCurrentPage('custom-reminders');
+            }}
           />
         )}
 
@@ -300,44 +456,44 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
           {/* Age Settings */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Child&apos;s Age</Text>
-            
+
             <View style={styles.ageSelector}>
               <Text style={styles.currentAge}>
-                Current: {getAgeRangeText(childAgeInMonths)}
+                Current: {getAgeRangeText(localChildAge)}
               </Text>
-              
+
               <View style={styles.ageButtons}>
                 <Pressable
-                  style={[styles.ageButton, childAgeInMonths < 24 && styles.ageButtonActive]}
+                  style={[styles.ageButton, localChildAge < 24 && styles.ageButtonActive]}
                   onPress={() => handleAgeChange(20)}
                 >
-                  <Text style={[styles.ageButtonText, childAgeInMonths < 24 && styles.ageButtonTextActive]}>
+                  <Text style={[styles.ageButtonText, localChildAge < 24 && styles.ageButtonTextActive]}>
                     18-24 months
                   </Text>
                 </Pressable>
 
                 <Pressable
-                  style={[styles.ageButton, childAgeInMonths >= 24 && childAgeInMonths < 72 && styles.ageButtonActive]}
+                  style={[styles.ageButton, localChildAge >= 24 && localChildAge < 72 && styles.ageButtonActive]}
                   onPress={() => handleAgeChange(36)}
                 >
-                  <Text style={[styles.ageButtonText, childAgeInMonths >= 24 && childAgeInMonths < 72 && styles.ageButtonTextActive]}>
+                  <Text style={[styles.ageButtonText, localChildAge >= 24 && localChildAge < 72 && styles.ageButtonTextActive]}>
                     2-6 years old
                   </Text>
                 </Pressable>
 
                 <Pressable
-                  style={[styles.ageButton, childAgeInMonths >= 72 && styles.ageButtonActive]}
+                  style={[styles.ageButton, localChildAge >= 72 && styles.ageButtonActive]}
                   onPress={() => handleAgeChange(84)}
                 >
-                  <Text style={[styles.ageButtonText, childAgeInMonths >= 72 && styles.ageButtonTextActive]}>
+                  <Text style={[styles.ageButtonText, localChildAge >= 72 && styles.ageButtonTextActive]}>
                     6+ years
                   </Text>
                 </Pressable>
               </View>
             </View>
-            
+
             <Text style={styles.guidelines}>
-              {getGuidelinesText(childAgeInMonths)}
+              {getGuidelinesText(localChildAge)}
             </Text>
           </View>
 
@@ -348,7 +504,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
 
               <View style={styles.chartContainer}>
                 <Text style={styles.chartNote}>
-                  🔥 Your child&apos;s screen time patterns by day
+                  Your child&apos;s screen time patterns by day
                 </Text>
 
                 {/* Heatmap */}
@@ -360,9 +516,9 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
                       const usage = dayData?.usage || 0;
                       const isOverRecommended = dayData?.isOverRecommended || false;
 
-                      // Get age-appropriate daily limit for proper scaling
-                      const dailyLimit = childAgeInMonths < 24 ? 15 * 60 : // 15 minutes in seconds for 18-24 months
-                                       childAgeInMonths < 72 ? 60 * 60 : // 60 minutes in seconds for 2-6 years
+                      // Get age-appropriate daily limit for proper scaling (use local age for immediate feedback)
+                      const dailyLimit = localChildAge < 24 ? 15 * 60 : // 15 minutes in seconds for 18-24 months
+                                       localChildAge < 72 ? 60 * 60 : // 60 minutes in seconds for 2-6 years
                                        120 * 60; // 120 minutes in seconds for 6+ years
 
                       // Calculate fill percentage based on daily limit (0-100%)
@@ -459,7 +615,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
 
             <View style={styles.scheduleIntro}>
               <Text style={styles.scheduleIntroText}>
-                📅 Set up personalized notification times for your child&apos;s screen time activities. You&apos;ll receive gentle reminders when it&apos;s time for stories, emotions, or music activities.
+                Set up personalized notification times for your child&apos;s screen time activities. You&apos;ll receive gentle reminders when it&apos;s time for stories, emotions, or music activities.
               </Text>
             </View>
 
@@ -471,7 +627,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
             </Pressable>
 
             <View style={styles.recommendedTimes}>
-              <Text style={styles.recommendedTimesTitle}>💡 Recommended Times</Text>
+              <Text style={styles.recommendedTimesTitle}>Recommended Times</Text>
               <Text style={styles.recommendedTimesText}>
                 Based on child development research, the best times for screen activities are:
               </Text>
@@ -493,7 +649,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
             </View>
 
             <View style={styles.bedtimeWarning}>
-              <Text style={styles.bedtimeWarningTitle}>🌙 Bedtime Guidelines</Text>
+              <Text style={styles.bedtimeWarningTitle}>Bedtime Guidelines</Text>
               <Text style={styles.bedtimeWarningText}>
                 Screen time after 7 PM can interfere with sleep quality. For best results, finish screen activities at least 1 hour before bedtime to help your child wind down naturally.
               </Text>
@@ -512,10 +668,10 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
                 </Text>
               </View>
               <Pressable
-                style={[styles.toggle, screenTimeEnabled && styles.toggleActive]}
+                style={[styles.toggle, localScreenTimeEnabled && styles.toggleActive]}
                 onPress={handleToggleScreenTime}
               >
-                <View style={[styles.toggleThumb, screenTimeEnabled && styles.toggleThumbActive]} />
+                <View style={[styles.toggleThumb, localScreenTimeEnabled && styles.toggleThumbActive]} />
               </Pressable>
             </View>
 
@@ -527,13 +683,31 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
                 </Text>
               </View>
               <Pressable
-                style={[styles.toggle, notificationsEnabled && styles.toggleActive]}
+                style={[styles.toggle, localNotificationsEnabled && styles.toggleActive]}
                 onPress={handleToggleNotifications}
               >
-                <View style={[styles.toggleThumb, notificationsEnabled && styles.toggleThumbActive]} />
+                <View style={[styles.toggleThumb, localNotificationsEnabled && styles.toggleThumbActive]} />
               </Pressable>
             </View>
           </View>
+
+          {/* Save Button - Only show when there are unsaved changes */}
+          {hasUnsavedChanges && (
+            <View style={styles.section}>
+              <Pressable
+                style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
+                onPress={handleSaveSettings}
+                disabled={isSaving}
+              >
+                <Text style={styles.saveButtonText}>
+                  {isSaving ? 'Saving...' : 'Save Settings'}
+                </Text>
+              </Pressable>
+              <Text style={styles.saveNote}>
+                Your settings will be synced across all your devices
+              </Text>
+            </View>
+          )}
           </ScrollView>
         )}
       </LinearGradient>

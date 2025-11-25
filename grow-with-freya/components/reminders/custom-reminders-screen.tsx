@@ -26,11 +26,13 @@ const generateStarPositions = () => {
 interface CustomRemindersScreenProps {
   onBack: () => void;
   onCreateNew: () => void;
+  onReminderChange?: () => void; // Callback when reminders are modified
 }
 
 export const CustomRemindersScreen: React.FC<CustomRemindersScreenProps> = ({
   onBack,
   onCreateNew,
+  onReminderChange,
 }) => {
   const insets = useSafeAreaInsets();
   const [reminders, setReminders] = useState<CustomReminder[]>([]);
@@ -65,7 +67,9 @@ export const CustomRemindersScreen: React.FC<CustomRemindersScreenProps> = ({
         reminderService.getAllReminders(),
         reminderService.getReminderStats(),
       ]);
-      
+
+      console.log('[CustomRemindersScreen] Loaded reminders:', allReminders.map(r => ({ id: r.id, title: r.title, isActive: r.isActive })));
+
       setReminders(allReminders);
       setStats(reminderStats);
     } catch (error) {
@@ -78,7 +82,7 @@ export const CustomRemindersScreen: React.FC<CustomRemindersScreenProps> = ({
   const handleDeleteReminder = async (reminderId: string, title: string) => {
     Alert.alert(
       'Delete Reminder',
-      `Are you sure you want to delete "${title}"? You will no longer receive notifications for this reminder.`,
+      `Are you sure you want to delete "${title}"?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -88,6 +92,7 @@ export const CustomRemindersScreen: React.FC<CustomRemindersScreenProps> = ({
             const success = await reminderService.deleteReminder(reminderId);
             if (success) {
               await loadReminders();
+              onReminderChange?.(); // Notify parent that reminders changed
             }
           },
         },
@@ -96,16 +101,13 @@ export const CustomRemindersScreen: React.FC<CustomRemindersScreenProps> = ({
   };
 
   const handleToggleReminder = async (reminderId: string) => {
+    console.log('[CustomRemindersScreen] Toggling reminder:', reminderId);
     const success = await reminderService.toggleReminder(reminderId);
     if (success) {
-      // Update state directly and reload stats to reflect the change
-      setReminders(prevReminders =>
-        prevReminders.map(reminder =>
-          reminder.id === reminderId
-            ? { ...reminder, isActive: !reminder.isActive }
-            : reminder
-        )
-      );
+      // Reload reminders from service to get the authoritative state
+      const updatedReminders = await reminderService.getAllReminders();
+      console.log('[CustomRemindersScreen] Reloaded state from service:', updatedReminders.map(r => ({ id: r.id, title: r.title, isActive: r.isActive })));
+      setReminders(updatedReminders);
 
       // Reload stats to update the counts
       try {
@@ -114,6 +116,9 @@ export const CustomRemindersScreen: React.FC<CustomRemindersScreenProps> = ({
       } catch (error) {
         console.error('Failed to reload reminder stats:', error);
       }
+
+      // Notify parent that reminders changed
+      onReminderChange?.();
     }
   };
 

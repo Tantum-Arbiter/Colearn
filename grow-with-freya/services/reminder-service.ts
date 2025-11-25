@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { SchedulableTriggerInputTypes } from 'expo-notifications';
+import { ApiClient } from './api-client';
 
 export interface CustomReminder {
   id: string;
@@ -24,7 +25,9 @@ const REMINDERS_STORAGE_KEY = 'custom_reminders';
 
 export class ReminderService {
   private static instance: ReminderService;
-  private reminders: CustomReminder[] = [];
+  private reminders: CustomReminder[] = []; // Current working state (may have unsaved changes)
+  private savedReminders: CustomReminder[] = []; // Last saved state (to AsyncStorage)
+  private lastSyncedReminders: CustomReminder[] = []; // Last synced state (to backend)
 
   private constructor() {
     this.loadReminders();
@@ -43,6 +46,8 @@ export class ReminderService {
       const stored = await AsyncStorage.getItem(REMINDERS_STORAGE_KEY);
       if (stored) {
         this.reminders = JSON.parse(stored);
+        this.savedReminders = JSON.parse(JSON.stringify(this.reminders)); // Deep copy
+        this.lastSyncedReminders = JSON.parse(JSON.stringify(this.reminders)); // Deep copy
       }
     } catch (error) {
       console.error('Failed to load reminders:', error);
@@ -83,8 +88,10 @@ export class ReminderService {
     }
 
     this.reminders.push(reminder);
-    await this.saveReminders();
-    
+
+    // Don't save to AsyncStorage - wait for user to click "Save Settings"
+    console.log('[ReminderService] Reminder created (not yet saved)');
+
     return reminder;
   }
 
@@ -96,7 +103,7 @@ export class ReminderService {
     }
 
     const reminder = this.reminders[reminderIndex];
-    
+
     // Cancel both scheduled notifications
     if (reminder.notificationId) {
       await Notifications.cancelScheduledNotificationAsync(reminder.notificationId);
@@ -105,9 +112,12 @@ export class ReminderService {
       await Notifications.cancelScheduledNotificationAsync(reminder.advanceNotificationId);
     }
 
+    // Remove from in-memory array (don't save to AsyncStorage yet)
     this.reminders.splice(reminderIndex, 1);
-    await this.saveReminders();
-    
+
+    // Don't save to AsyncStorage - wait for user to click "Save Settings"
+    console.log('[ReminderService] Reminder deleted (not yet saved)');
+
     return true;
   }
 
@@ -118,7 +128,9 @@ export class ReminderService {
       return false;
     }
 
+    const oldState = reminder.isActive;
     reminder.isActive = !reminder.isActive;
+    console.log(`[ReminderService] Toggling reminder ${reminderId}: ${oldState} -> ${reminder.isActive}`);
 
     if (reminder.isActive) {
       // Re-schedule both notifications
@@ -138,25 +150,24 @@ export class ReminderService {
       }
     }
 
-    await this.saveReminders();
+    // Don't save to AsyncStorage - wait for user to click "Save Settings"
+    console.log('[ReminderService] Reminder toggled (not yet saved). Current state:', this.reminders.map(r => ({ id: r.id, isActive: r.isActive })));
     return true;
   }
 
-  // Get all reminders
+  // Get all reminders (from in-memory state, not AsyncStorage)
   async getAllReminders(): Promise<CustomReminder[]> {
-    await this.loadReminders();
+    console.log('[ReminderService] getAllReminders() called. Current state:', this.reminders.map(r => ({ id: r.id, title: r.title, isActive: r.isActive })));
     return [...this.reminders];
   }
 
   // Get reminders for a specific day
   async getRemindersForDay(dayOfWeek: number): Promise<CustomReminder[]> {
-    await this.loadReminders();
     return this.reminders.filter(r => r.dayOfWeek === dayOfWeek && r.isActive);
   }
 
   // Get reminder statistics
   async getReminderStats(): Promise<ReminderStats> {
-    await this.loadReminders();
     
     const today = new Date().getDay();
     const upcomingToday = this.reminders.filter(r => 
@@ -241,6 +252,138 @@ export class ReminderService {
     const period = hours >= 12 ? 'PM' : 'AM';
     const displayHours = hours % 12 || 12;
     return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+  }
+
+  // Check if reminders have unsaved changes (compared to last saved state)
+  hasUnsavedChanges(): boolean {
+    // Compare current reminders with last saved state (not synced state)
+    if (this.reminders.length !== this.savedReminders.length) {
+      return true;
+    }
+
+    // Deep comparison of reminder IDs and properties
+    const currentIds = this.reminders.map(r => r.id).sort();
+    const savedIds = this.savedReminders.map(r => r.id).sort();
+
+    if (JSON.stringify(currentIds) !== JSON.stringify(savedIds)) {
+      return true;
+    }
+
+    // Check if any reminder properties changed
+    for (const reminder of this.reminders) {
+      const saved = this.savedReminders.find(r => r.id === reminder.id);
+      if (!saved) return true;
+
+      if (
+        reminder.title !== saved.title ||
+        reminder.message !== saved.message ||
+        reminder.dayOfWeek !== saved.dayOfWeek ||
+        reminder.time !== saved.time ||
+        reminder.isActive !== saved.isActive
+      ) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  // Revert unsaved changes (restore from last saved state)
+  async revertChanges(): Promise<void> {
+    this.reminders = JSON.parse(JSON.stringify(this.savedReminders));
+    await this.rescheduleAllNotifications();
+    console.log('[ReminderService] Reverted to last saved state');
+  }
+
+  // Commit changes to AsyncStorage (but not backend yet)
+  async commitChanges(): Promise<void> {
+    await this.saveReminders();
+    this.savedReminders = JSON.parse(JSON.stringify(this.reminders));
+    console.log('[ReminderService] Changes committed to local storage');
+  }
+
+  // Sync reminders to backend (called manually from Screen Time page)
+  async syncToBackend(): Promise<void> {
+    try {
+      // Only sync if user is authenticated
+      const isAuthenticated = await ApiClient.isAuthenticated();
+      if (!isAuthenticated) {
+        console.log('⏭️ [ReminderService] Skipping backend sync - not authenticated');
+        return;
+      }
+
+      console.log('[ReminderService] Syncing reminders to backend...');
+
+      // First commit to local storage
+      await this.commitChanges();
+
+      // Then sync to backend
+      await ApiClient.syncReminders(this.reminders);
+
+      // Update last synced state
+      this.lastSyncedReminders = JSON.parse(JSON.stringify(this.reminders));
+
+      console.log('[ReminderService] Reminders synced to backend');
+    } catch (error) {
+      console.error('[ReminderService] Failed to sync reminders to backend:', error);
+      throw error; // Throw so Screen Time page can show error
+    }
+  }
+
+  // Pull reminders from backend and merge with local
+  async syncFromBackend(): Promise<void> {
+    try {
+      const isAuthenticated = await ApiClient.isAuthenticated();
+      if (!isAuthenticated) {
+        console.log('⏭️ [ReminderService] Skipping backend pull - not authenticated');
+        return;
+      }
+
+      console.log('[ReminderService] Pulling reminders from backend...');
+      const backendReminders = await ApiClient.getReminders();
+
+      if (backendReminders && backendReminders.length > 0) {
+        // Merge backend reminders with local (backend is source of truth)
+        this.reminders = backendReminders;
+        await this.saveReminders();
+
+        // Update last synced state
+        this.lastSyncedReminders = JSON.parse(JSON.stringify(this.reminders));
+
+        // Reschedule all notifications
+        await this.rescheduleAllNotifications();
+
+        console.log(`[ReminderService] Pulled ${backendReminders.length} reminders from backend`);
+      } else {
+        // No reminders on backend - mark current state as synced
+        this.lastSyncedReminders = JSON.parse(JSON.stringify(this.reminders));
+      }
+    } catch (error) {
+      console.error('[ReminderService] Failed to pull reminders from backend:', error);
+      // Continue with local reminders
+    }
+  }
+
+  // Reschedule all notifications (useful after sync)
+  private async rescheduleAllNotifications(): Promise<void> {
+    for (const reminder of this.reminders) {
+      if (reminder.isActive) {
+        // Cancel existing notifications
+        if (reminder.notificationId) {
+          await Notifications.cancelScheduledNotificationAsync(reminder.notificationId);
+        }
+        if (reminder.advanceNotificationId) {
+          await Notifications.cancelScheduledNotificationAsync(reminder.advanceNotificationId);
+        }
+
+        // Reschedule
+        const notificationId = await this.scheduleNotification(reminder);
+        if (notificationId) {
+          reminder.notificationId = notificationId;
+        }
+      }
+    }
+    await this.saveReminders();
   }
 }
 
