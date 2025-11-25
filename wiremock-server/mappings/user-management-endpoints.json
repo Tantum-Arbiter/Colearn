@@ -99,7 +99,7 @@
               "id": "child-{{randomValue length=8 type='ALPHANUMERIC'}}",
               "name": "Test Child",
               "avatar": "bear",
-              "birthDate": "2020-05-15",
+              "ageRange": "4-5",
               "ageInMonths": 42,
               "isActive": true,
               "createdAt": "{{now offset='-10 days' format='yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}}",
@@ -129,7 +129,7 @@
         "headers": {
           "Content-Type": "application/json"
         },
-        "body": "{\"id\": \"child-{{randomValue length=8 type='ALPHANUMERIC'}}\", \"name\": \"{{jsonPath request.body '$.name'}}\", \"avatar\": \"{{jsonPath request.body '$.avatar'}}\", \"birthDate\": \"{{jsonPath request.body '$.birthDate'}}\", \"ageInMonths\": 42, \"isActive\": true, \"createdAt\": \"{{now format='yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}}\", \"preferences\": {{{jsonPath request.body '$.preferences'}}}}",
+        "body": "{\"id\": \"child-{{randomValue length=8 type='ALPHANUMERIC'}}\", \"name\": \"{{jsonPath request.body '$.name'}}\", \"avatar\": \"{{jsonPath request.body '$.avatar'}}\", \"ageRange\": \"{{jsonPath request.body '$.ageRange'}}\", \"ageInMonths\": 42, \"isActive\": true, \"createdAt\": \"{{now format='yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}}\", \"preferences\": {{{jsonPath request.body '$.preferences'}}}}",
         "transformers": ["response-template"]
       }
     },
@@ -149,7 +149,7 @@
         "headers": {
           "Content-Type": "application/json"
         },
-        "body": "{\"id\": \"child-123\", \"name\": \"{{jsonPath request.body '$.name'}}\", \"avatar\": \"bear\", \"birthDate\": \"2020-05-15\", \"ageInMonths\": 42, \"isActive\": true, \"updatedAt\": \"{{now format='yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}}\", \"preferences\": {{{jsonPath request.body '$.preferences'}}}}",
+        "body": "{\"id\": \"child-123\", \"name\": \"{{jsonPath request.body '$.name'}}\", \"avatar\": \"bear\", \"ageRange\": \"4-5\", \"ageInMonths\": 42, \"isActive\": true, \"updatedAt\": \"{{now format='yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}}\", \"preferences\": {{{jsonPath request.body '$.preferences'}}}}",
         "transformers": ["response-template"]
       }
     },

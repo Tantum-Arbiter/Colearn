@@ -117,7 +117,7 @@
       "name": "Google OAuth - Token Info Success",
       "request": {
         "method": "GET",
-        "urlPathPattern": "/oauth2/v1/tokeninfo.*",
+        "urlPathPattern": "/oauth2/v3/tokeninfo.*",
         "queryParameters": {
           "id_token": {
             "matches": "valid-google-.*"
@@ -150,7 +150,7 @@
       "name": "Google OAuth - Token Info Invalid",
       "request": {
         "method": "GET",
-        "urlPathPattern": "/oauth2/v1/tokeninfo.*",
+        "urlPathPattern": "/oauth2/v3/tokeninfo.*",
         "queryParameters": {
           "id_token": {
             "matches": "invalid-.*"
