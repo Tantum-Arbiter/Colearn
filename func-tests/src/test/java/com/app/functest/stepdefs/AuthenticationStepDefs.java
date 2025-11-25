@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Step definitions for authentication-related functional tests
  */
-public class AuthenticationStepDefs {
+public class AuthenticationStepDefs extends BaseStepDefs {
 
     // Track scenario-scoped WireMock stubs so we can clean them up after each scenario
     private final List<StubMapping> scenarioStubs = new ArrayList<>();
@@ -70,7 +70,7 @@ public class AuthenticationStepDefs {
         }
     }
 
-    private Response lastResponse;
+    // Note: lastResponse is inherited from BaseStepDefs and is static to share state across all step definition classes
     private RequestSpecification requestSpec;
     private String authToken;
     private String gatewayBaseUrl;
@@ -93,13 +93,6 @@ public class AuthenticationStepDefs {
             }
         }
         scenarioStubs.clear();
-    }
-
-    private RequestSpecification applyDefaultClientHeaders(RequestSpecification req) {
-        return req
-            .header("X-Client-Platform", "ios")
-            .header("X-Client-Version", "1.0.0")
-            .header("X-Device-ID", "device-123");
     }
 
 
@@ -216,7 +209,12 @@ public class AuthenticationStepDefs {
     @Then("the response status should be {int}")
     public void theResponseStatusShouldBe(int expectedStatus) {
         assertNotNull(lastResponse, "No response received");
-        assertEquals(expectedStatus, lastResponse.getStatusCode());
+        int actualStatus = lastResponse.getStatusCode();
+        if (expectedStatus != actualStatus) {
+            System.out.println("STATUS MISMATCH: Expected " + expectedStatus + " but got " + actualStatus);
+            System.out.println("Response body: " + lastResponse.getBody().asString());
+        }
+        assertEquals(expectedStatus, actualStatus);
     }
 
     @Then("the response should contain {string}")
@@ -230,7 +228,25 @@ public class AuthenticationStepDefs {
     @Then("the response should have field {string} with value {string}")
     public void theResponseShouldHaveFieldWithValue(String fieldPath, String expectedValue) {
         assertNotNull(lastResponse, "No response received");
-        lastResponse.then().body(fieldPath, equalTo(expectedValue));
+
+        // Convert string value to appropriate type for comparison
+        Object expectedTypedValue;
+        if ("true".equalsIgnoreCase(expectedValue)) {
+            expectedTypedValue = true;
+        } else if ("false".equalsIgnoreCase(expectedValue)) {
+            expectedTypedValue = false;
+        } else if (expectedValue.matches("-?\\d+")) {
+            // Integer
+            expectedTypedValue = Integer.parseInt(expectedValue);
+        } else if (expectedValue.matches("-?\\d+\\.\\d+")) {
+            // Float/Double
+            expectedTypedValue = Double.parseDouble(expectedValue);
+        } else {
+            // String
+            expectedTypedValue = expectedValue;
+        }
+
+        lastResponse.then().body(fieldPath, equalTo(expectedTypedValue));
     }
 
     @Then("the response should have field {string}")
@@ -511,18 +527,18 @@ public class AuthenticationStepDefs {
             )
         );
 
-        // Invalid age (future birthDate)
+        // Invalid ageRange
         scenarioStubs.add(
             WireMock.stubFor(
                 WireMock.post(WireMock.urlPathEqualTo("/api/users/children"))
                     .withHeader("Authorization", WireMock.matching(".*"))
-                    .withRequestBody(WireMock.containing("\"birthDate\": \"2030-"))
+                    .withRequestBody(WireMock.containing("\"ageRange\": \"invalid-range\""))
                     .atPriority(1)
                     .willReturn(WireMock.aResponse()
                         .withStatus(400)
                         .withHeader("Content-Type", "application/json")
                         .withBody("""
-                            {"success":false,"errorCode":"GTW-405","error":"Invalid child profile data","details":{"field":"birthDate"}}
+                            {"success":false,"errorCode":"GTW-405","error":"Invalid child profile data","details":{"field":"ageRange"}}
                             """))
             )
         );
@@ -794,7 +810,7 @@ public class AuthenticationStepDefs {
     @When("body:")
     public void withBody(String body) {
         boolean providedClientHeader = pendingHeaders != null && pendingHeaders.keySet().stream().anyMatch(k ->
-            k.equalsIgnoreCase("X-Client-Platform") || k.equalsIgnoreCase("X-Client-Version") || k.equalsIgnoreCase("X-Device-ID")
+            k.equalsIgnoreCase("X-Client-Platform") || k.equalsIgnoreCase("X-Client-Version") || k.equalsIgnoreCase("X-Device-ID") || k.equalsIgnoreCase("User-Agent")
         );
         RequestSpecification request = providedClientHeader ? given() : applyDefaultClientHeaders(given());
         if (pendingHeaders != null) {
@@ -831,7 +847,7 @@ public class AuthenticationStepDefs {
     @When("I send a GET request to {string} with headers:")
     public void iSendGetRequestWithHeaders(String endpoint, Map<String, String> headers) {
         boolean providedClientHeader = headers != null && headers.keySet().stream().anyMatch(k ->
-            k.equalsIgnoreCase("X-Client-Platform") || k.equalsIgnoreCase("X-Client-Version") || k.equalsIgnoreCase("X-Device-ID")
+            k.equalsIgnoreCase("X-Client-Platform") || k.equalsIgnoreCase("X-Client-Version") || k.equalsIgnoreCase("X-Device-ID") || k.equalsIgnoreCase("User-Agent")
         );
         RequestSpecification request = providedClientHeader ? given() : applyDefaultClientHeaders(given());
         for (Map.Entry<String, String> header : headers.entrySet()) {

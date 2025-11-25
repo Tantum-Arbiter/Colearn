@@ -1,3 +1,4 @@
+@user-management @emulator-only @local @docker
 Feature: User Management
   As a user of the Grow with Freya application
   I want to manage my user profile and children
@@ -8,6 +9,7 @@ Feature: User Management
     And Firebase is configured in WireMock
     And WireMock is configured for "Google" OAuth provider
 
+  @smoke
   Scenario: Get user profile with valid authentication
     Given a valid "Google" OAuth token
     When I make an authenticated GET request to "/api/users/profile" with token "valid-google-token"
@@ -128,11 +130,13 @@ Feature: User Management
     And the response JSON field "screenTime.dailyLimit" should be 60
     And the response JSON field "audio.volume" should be 0.7
 
+  @security @error-handling
   Scenario: Access user data without authentication fails
     When I make a GET request to "/api/users/profile"
     Then the response status code should be 401
     And the response should contain "Authentication required" in the body
 
+  @security @error-handling
   Scenario: Access another user's data fails
     Given a valid "Google" OAuth token
     When I make an authenticated GET request to "/api/users/other-user-id/profile" with token "valid-google-token"

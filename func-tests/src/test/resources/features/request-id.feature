@@ -1,3 +1,4 @@
+@request-id @local @docker @gcp-dev
 Feature: Request ID propagation
   As a client of the gateway
   I want each request to have a UUID request ID
@@ -6,6 +7,7 @@ Feature: Request ID propagation
   Background:
     Given I have a valid authentication token
 
+  @smoke
   Scenario: Gateway generates X-Request-Id when missing and propagates downstream
     Given WireMock returns 200 for GET "/api/users/profile"
     When I send a GET request to "/api/users/profile" with valid authentication

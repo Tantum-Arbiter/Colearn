@@ -1,3 +1,4 @@
+@authentication @emulator-only @local @docker @security
 Feature: Authentication
   As a user of the Grow with Freya application
   I want to authenticate using OAuth providers
@@ -7,6 +8,7 @@ Feature: Authentication
     Given the gateway service is running
     And Firebase is configured in WireMock
 
+  @smoke
   Scenario: Successful Google OAuth authentication
     Given WireMock is configured for "Google" OAuth provider
     And a valid "Google" OAuth token
@@ -17,6 +19,7 @@ Feature: Authentication
     And the response should have field "name"
     And WireMock should have received 1 request(s) to "/oauth2/v2/userinfo"
 
+  @smoke
   Scenario: Successful Apple OAuth authentication
     Given WireMock is configured for "Apple" OAuth provider
     And a valid "Apple" OAuth token
@@ -26,6 +29,7 @@ Feature: Authentication
     And the response should have field "email"
     And the response should have field "name"
 
+  @error-handling
   Scenario: Authentication with invalid token
     Given WireMock is configured for "Google" OAuth provider
     And an invalid OAuth token
@@ -54,6 +58,7 @@ Feature: Authentication
     And the response should have field "refreshToken"
     And the response should have field "expiresIn"
 
+  @security @error-handling
   Scenario: Access protected endpoint without authentication
     When I call the "/api/users/profile" endpoint
     Then the response status should be 401

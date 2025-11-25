@@ -1,5 +1,7 @@
+@health @local @docker @gcp-dev
 Feature: Gateway Service private endpoints
 
+  @smoke
   Scenario: Healthcheck returns status UP
     When I make a GET request to "/private/healthcheck"
     Then the response status code should be 200

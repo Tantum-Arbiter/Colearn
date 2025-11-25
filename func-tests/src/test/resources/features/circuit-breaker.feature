@@ -1,8 +1,10 @@
+@circuit-breaker @performance @local @docker @emulator-only
 Feature: Circuit breaker behavior
   As a gateway
   I want to open circuit breakers after repeated slow/time-out calls
   So that clients fail fast and upstreams are protected
 
+  @smoke
   Scenario: Default circuit breaker opens after repeated timeouts
     Given I have a valid authentication token
     And WireMock adds dribble delay of 2.5 seconds over 10 chunks for path "/api/users/.*"
