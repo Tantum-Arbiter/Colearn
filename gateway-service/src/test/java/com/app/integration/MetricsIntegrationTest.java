@@ -31,13 +31,13 @@ class MetricsIntegrationTest {
     @Test
     void testMetricsAreCollectedForApiRequests() throws Exception {
         // Given - make some API requests to generate metrics
-        mockMvc.perform(get("/api/content")
+        mockMvc.perform(get("/api/auth/me")
                 .header("User-Agent", "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X)")
                 .header("X-Platform", "ios")
                 .header("X-App-Version", "1.2.3"))
                 .andExpect(status().isUnauthorized()); // Expected since no auth token
 
-        mockMvc.perform(get("/api/stories")
+        mockMvc.perform(get("/api/auth/me")
                 .header("User-Agent", "Mozilla/5.0 (iPad; CPU OS 14_0 like Mac OS X)")
                 .header("X-Platform", "ios")
                 .header("X-App-Version", "1.2.3"))
@@ -107,8 +107,8 @@ class MetricsIntegrationTest {
     @Test
     void testRequestMetricsEndpoint() throws Exception {
         // Given - make some requests
-        mockMvc.perform(get("/api/content"));
-        mockMvc.perform(post("/api/data").contentType(MediaType.APPLICATION_JSON).content("{}"));
+        mockMvc.perform(get("/api/auth/me"));
+        mockMvc.perform(get("/api/auth/me").contentType(MediaType.APPLICATION_JSON).content("{}"));
 
         // When
         MvcResult result = mockMvc.perform(get("/actuator/custom/requests"))
@@ -166,7 +166,7 @@ class MetricsIntegrationTest {
     @Test
     void testPerformanceMetricsEndpoint() throws Exception {
         // Given - make some requests to generate performance data
-        mockMvc.perform(get("/api/content"));
+        mockMvc.perform(get("/api/auth/me"));
 
         // When
         MvcResult result = mockMvc.perform(get("/actuator/custom/performance"))
@@ -210,7 +210,7 @@ class MetricsIntegrationTest {
     @Test
     void testPrometheusMetricsEndpoint() throws Exception {
         // Given - make some requests to generate metrics
-        mockMvc.perform(get("/api/content")
+        mockMvc.perform(get("/api/auth/me")
                 .header("User-Agent", "Mozilla/5.0 (iPhone)")
                 .header("X-Platform", "ios"));
 
@@ -292,7 +292,7 @@ class MetricsIntegrationTest {
     @Test
     void testResponseTimeMetricsAreRecorded() throws Exception {
         // Given - make a request
-        mockMvc.perform(get("/api/content")
+        mockMvc.perform(get("/api/auth/me")
                 .header("User-Agent", "Mozilla/5.0 (iPhone)")
                 .header("X-Platform", "ios"));
 

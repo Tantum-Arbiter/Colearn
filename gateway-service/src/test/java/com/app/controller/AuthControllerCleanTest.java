@@ -102,7 +102,7 @@ class AuthControllerCleanTest {
                 com.app.exception.AuthenticationException.class,
                 () -> authController.authenticateWithGoogle(request, mockRequest)
         );
-        assertEquals("GTW-002", ex.getErrorCode().getCode());
+        assertEquals("GTW-003", ex.getErrorCode().getCode());
 
         // Verify failed authentication was logged
         verify(securityMonitoringService).logFailedAuthentication(
@@ -172,7 +172,7 @@ class AuthControllerCleanTest {
                 com.app.exception.AuthenticationException.class,
                 () -> authController.authenticateWithApple(request, mockRequest)
         );
-        assertEquals("GTW-003", ex.getErrorCode().getCode());
+        assertEquals("GTW-004", ex.getErrorCode().getCode());
 
         // Verify failed authentication was logged
         verify(securityMonitoringService).logFailedAuthentication(

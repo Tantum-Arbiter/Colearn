@@ -19,10 +19,7 @@ export const createCloudAnimationNew = (
   const { width: screenWidth } = getScreenDimensions();
   const exitPosition = screenWidth + LAYOUT.CLOUD_EXIT_MARGIN;
 
-  const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development';
-  if (isDev) {
-    console.log(`NEW Cloud animation setup: screenWidth=${screenWidth}, exitPosition=${exitPosition}, startPosition=${startPosition}`);
-  }
+  const isDev = false; // Disabled verbose cloud logging
 
   cancelAnimation(cloudValue);
 

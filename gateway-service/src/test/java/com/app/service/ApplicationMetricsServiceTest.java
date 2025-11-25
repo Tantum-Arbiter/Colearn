@@ -337,12 +337,359 @@ class ApplicationMetricsServiceTest {
 
     @Test
     void testCircuitBreakerCustomMetrics() {
-        metricsService.recordCircuitBreakerStateTransition("default", "CLOSED", "OPEN");
+        // Record state changes
+        metricsService.recordCircuitBreakerState("default", "CLOSED");
+        metricsService.recordCircuitBreakerState("default", "OPEN");
         metricsService.recordCircuitBreakerCall("default", "failure");
 
-        assertNotNull(meterRegistry.find("app.circuitbreaker.state.transitions")
-                .tag("name", "default").meter(), "state transition meter should exist");
+        // Verify state gauge exists and is set to 1 for OPEN
+        Gauge openGauge = meterRegistry.find("app.circuitbreaker.state")
+                .tag("name", "default")
+                .tag("state", "OPEN")
+                .gauge();
+        assertNotNull(openGauge, "OPEN state gauge should exist");
+        assertEquals(1.0, openGauge.value(), "OPEN state should be active");
+
+        // Verify CLOSED state is now 0
+        Gauge closedGauge = meterRegistry.find("app.circuitbreaker.state")
+                .tag("name", "default")
+                .tag("state", "CLOSED")
+                .gauge();
+        assertNotNull(closedGauge, "CLOSED state gauge should exist");
+        assertEquals(0.0, closedGauge.value(), "CLOSED state should be inactive");
+
+        // Verify calls counter
         assertNotNull(meterRegistry.find("app.circuitbreaker.calls")
                 .tag("name", "default").meter(), "calls meter should exist");
+    }
+
+    // --- Sad Case / Error Metrics Tests ---
+
+    @Test
+    void testRecordAuthenticationFailure() {
+        // When
+        metricsService.recordAuthenticationFailure("google", "mobile", "ios", "invalid_token", "GTW-101");
+
+        // Then
+        Counter counter = meterRegistry.find("app.authentication.failures")
+                .tag("provider", "google")
+                .tag("device_type", "mobile")
+                .tag("platform", "ios")
+                .tag("error_type", "invalid_token")
+                .tag("error_code", "GTW-101")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    @Test
+    void testRecordTokenRefreshFailure() {
+        // When
+        metricsService.recordTokenRefreshFailure("google", "mobile", "ios", "expired_refresh_token");
+
+        // Then
+        Counter counter = meterRegistry.find("app.tokens.refresh.failures")
+                .tag("provider", "google")
+                .tag("device_type", "mobile")
+                .tag("platform", "ios")
+                .tag("error_type", "expired_refresh_token")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    @Test
+    void testRecordFirestoreFailure() {
+        // When
+        metricsService.recordFirestoreFailure("users", "read", "timeout", 5000);
+
+        // Then
+        Counter counter = meterRegistry.find("app.firestore.failures")
+                .tag("collection", "users")
+                .tag("operation", "read")
+                .tag("error_type", "timeout")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+
+        Timer timer = meterRegistry.find("app.firestore.failure.duration")
+                .tag("collection", "users")
+                .tag("operation", "read")
+                .tag("error_type", "timeout")
+                .timer();
+        assertNotNull(timer);
+        assertEquals(1, timer.count());
+        assertTrue(timer.totalTime(java.util.concurrent.TimeUnit.MILLISECONDS) >= 5000);
+    }
+
+    @Test
+    void testRecordProfileOperationFailure() {
+        // When
+        metricsService.recordProfileOperationFailure("created", "validation_error");
+
+        // Then
+        Counter counter = meterRegistry.find("app.profiles.failures")
+                .tag("operation", "created")
+                .tag("error_type", "validation_error")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    @Test
+    void testRecordSessionOperationFailure() {
+        // When
+        metricsService.recordSessionOperationFailure("created", "firestore_error");
+
+        // Then
+        Counter counter = meterRegistry.find("app.sessions.failures")
+                .tag("operation", "created")
+                .tag("error_type", "firestore_error")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    // Token Operation Metrics Tests
+
+    @Test
+    void testRecordTokenRefresh_Successful() {
+        // When
+        metricsService.recordTokenRefresh("google", "mobile", "ios", true, 150);
+
+        // Then
+        Counter counter = meterRegistry.find("app.tokens.refresh.total")
+                .tag("provider", "google")
+                .tag("device_type", "mobile")
+                .tag("platform", "ios")
+                .tag("result", "success")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+
+        Timer timer = meterRegistry.find("app.tokens.refresh.time")
+                .tag("provider", "google")
+                .tag("device_type", "mobile")
+                .tag("platform", "ios")
+                .tag("result", "success")
+                .timer();
+        assertNotNull(timer);
+        assertEquals(1, timer.count());
+        assertTrue(timer.totalTime(java.util.concurrent.TimeUnit.MILLISECONDS) >= 150);
+    }
+
+    @Test
+    void testRecordTokenRefresh_Failed() {
+        // When
+        metricsService.recordTokenRefresh("apple", "tablet", "ios", false, 75);
+
+        // Then
+        Counter counter = meterRegistry.find("app.tokens.refresh.total")
+                .tag("provider", "apple")
+                .tag("device_type", "tablet")
+                .tag("platform", "ios")
+                .tag("result", "failure")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+
+        Timer timer = meterRegistry.find("app.tokens.refresh.time")
+                .tag("provider", "apple")
+                .tag("device_type", "tablet")
+                .tag("platform", "ios")
+                .tag("result", "failure")
+                .timer();
+        assertNotNull(timer);
+        assertEquals(1, timer.count());
+    }
+
+    @Test
+    void testRecordTokenRevocation_UserLogout() {
+        // When
+        metricsService.recordTokenRevocation("mobile", "android", "user_logout", true);
+
+        // Then
+        Counter counter = meterRegistry.find("app.tokens.revocation.total")
+                .tag("device_type", "mobile")
+                .tag("platform", "android")
+                .tag("reason", "user_logout")
+                .tag("result", "success")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    @Test
+    void testRecordTokenRevocation_InvalidToken() {
+        // When
+        metricsService.recordTokenRevocation("desktop", "windows", "invalid_token", true);
+
+        // Then
+        Counter counter = meterRegistry.find("app.tokens.revocation.total")
+                .tag("device_type", "desktop")
+                .tag("platform", "windows")
+                .tag("reason", "invalid_token")
+                .tag("result", "success")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    @Test
+    void testRecordTokenRevocation_Error() {
+        // When
+        metricsService.recordTokenRevocation("mobile", "ios", "error", false);
+
+        // Then
+        Counter counter = meterRegistry.find("app.tokens.revocation.total")
+                .tag("device_type", "mobile")
+                .tag("platform", "ios")
+                .tag("reason", "error")
+                .tag("result", "failure")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    @Test
+    void testMultipleTokenRefreshes_DifferentProviders() {
+        // When
+        metricsService.recordTokenRefresh("google", "mobile", "ios", true, 100);
+        metricsService.recordTokenRefresh("google", "mobile", "ios", true, 120);
+        metricsService.recordTokenRefresh("apple", "mobile", "ios", true, 110);
+
+        // Then
+        Counter googleCounter = meterRegistry.find("app.tokens.refresh.total")
+                .tag("provider", "google")
+                .tag("result", "success")
+                .counter();
+        assertNotNull(googleCounter);
+        assertEquals(2.0, googleCounter.count());
+
+        Counter appleCounter = meterRegistry.find("app.tokens.refresh.total")
+                .tag("provider", "apple")
+                .tag("result", "success")
+                .counter();
+        assertNotNull(appleCounter);
+        assertEquals(1.0, appleCounter.count());
+    }
+
+    // User Profile Metrics Tests
+
+    @Test
+    void testRecordProfileCreated_Successful() {
+        // When
+        metricsService.recordProfileCreated("user-123", true, 200);
+
+        // Then
+        Counter counter = meterRegistry.find("app.user.profiles.total")
+                .tag("user_id", "user-123")
+                .tag("result", "success")
+                .tag("operation", "created")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+
+        Timer timer = meterRegistry.find("app.user.profiles.time")
+                .tag("user_id", "user-123")
+                .tag("result", "success")
+                .tag("operation", "created")
+                .timer();
+        assertNotNull(timer);
+        assertEquals(1, timer.count());
+        assertTrue(timer.totalTime(java.util.concurrent.TimeUnit.MILLISECONDS) >= 200);
+    }
+
+    @Test
+    void testRecordProfileCreated_Failed() {
+        // When
+        metricsService.recordProfileCreated("user-456", false, 100);
+
+        // Then
+        Counter counter = meterRegistry.find("app.user.profiles.total")
+                .tag("user_id", "user-456")
+                .tag("result", "failure")
+                .tag("operation", "created")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    @Test
+    void testRecordProfileUpdated_Successful() {
+        // When
+        metricsService.recordProfileUpdated("user-789", true, 150);
+
+        // Then
+        Counter counter = meterRegistry.find("app.user.profiles.total")
+                .tag("user_id", "user-789")
+                .tag("result", "success")
+                .tag("operation", "updated")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+
+        Timer timer = meterRegistry.find("app.user.profiles.time")
+                .tag("user_id", "user-789")
+                .tag("result", "success")
+                .tag("operation", "updated")
+                .timer();
+        assertNotNull(timer);
+        assertEquals(1, timer.count());
+        assertTrue(timer.totalTime(java.util.concurrent.TimeUnit.MILLISECONDS) >= 150);
+    }
+
+    @Test
+    void testRecordProfileUpdated_Failed() {
+        // When
+        metricsService.recordProfileUpdated("user-999", false, 50);
+
+        // Then
+        Counter counter = meterRegistry.find("app.user.profiles.total")
+                .tag("user_id", "user-999")
+                .tag("result", "failure")
+                .tag("operation", "updated")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    @Test
+    void testRecordProfileRetrieved_Found() {
+        // When
+        metricsService.recordProfileRetrieved("user-111", true, 75);
+
+        // Then
+        Counter counter = meterRegistry.find("app.user.profiles.total")
+                .tag("user_id", "user-111")
+                .tag("result", "found")
+                .tag("operation", "retrieved")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+
+        Timer timer = meterRegistry.find("app.user.profiles.time")
+                .tag("user_id", "user-111")
+                .tag("result", "found")
+                .tag("operation", "retrieved")
+                .timer();
+        assertNotNull(timer);
+        assertEquals(1, timer.count());
+        assertTrue(timer.totalTime(java.util.concurrent.TimeUnit.MILLISECONDS) >= 75);
+    }
+
+    @Test
+    void testRecordProfileRetrieved_NotFound() {
+        // When
+        metricsService.recordProfileRetrieved("user-222", false, 50);
+
+        // Then
+        Counter counter = meterRegistry.find("app.user.profiles.total")
+                .tag("user_id", "user-222")
+                .tag("result", "not_found")
+                .tag("operation", "retrieved")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
     }
 }

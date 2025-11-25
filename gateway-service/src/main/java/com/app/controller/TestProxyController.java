@@ -40,7 +40,6 @@ public class TestProxyController {
     private static final Logger logger = LoggerFactory.getLogger(TestProxyController.class);
 
     private final RestTemplate defaultRestTemplate;
-    private final RestTemplate cmsRestTemplate;
     private final RestTemplateBuilder restTemplateBuilder;
     private final CircuitBreakerRegistry circuitBreakerRegistry;
     private final ObjectProvider<TestSimulationFlags> flagsProvider;
@@ -52,12 +51,10 @@ public class TestProxyController {
     });
 
     public TestProxyController(@Qualifier("defaultRestTemplate") RestTemplate defaultRestTemplate,
-                               @Qualifier("cmsRestTemplate") RestTemplate cmsRestTemplate,
                                RestTemplateBuilder restTemplateBuilder,
                                CircuitBreakerRegistry circuitBreakerRegistry,
                                ObjectProvider<TestSimulationFlags> flagsProvider) {
         this.defaultRestTemplate = defaultRestTemplate;
-        this.cmsRestTemplate = cmsRestTemplate;
         this.restTemplateBuilder = restTemplateBuilder;
         this.circuitBreakerRegistry = circuitBreakerRegistry;
         this.flagsProvider = flagsProvider;
@@ -68,9 +65,6 @@ public class TestProxyController {
 
     @Value("${performance.connection.default-timeout-seconds:1}")
     private int defaultTimeoutSeconds;
-
-    @Value("${performance.connection.cms-timeout-seconds:3}")
-    private int cmsTimeoutSeconds;
 
     @GetMapping("/api/auth/me")
     public ResponseEntity<String> authMe(HttpServletRequest request) {
@@ -102,16 +96,6 @@ public class TestProxyController {
     @RequestMapping(value = "/api/auth/**", method = { RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.DELETE })
     public ResponseEntity<byte[]> proxyAuth(HttpServletRequest request) throws IOException, TimeoutException {
         return forward(request, defaultRestTemplate, "default", "Auth Service");
-    }
-
-    @RequestMapping(value = "/api/v1/content/**", method = { RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.DELETE })
-    public ResponseEntity<byte[]> proxyContent(HttpServletRequest request) throws IOException, TimeoutException {
-        return forward(request, cmsRestTemplate, "cms", "CMS Service");
-    }
-
-    @RequestMapping(value = "/api/v1/stories/**", method = { RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.DELETE })
-    public ResponseEntity<byte[]> proxyStories(HttpServletRequest request) throws IOException, TimeoutException {
-        return forward(request, cmsRestTemplate, "cms", "CMS Service");
     }
 
     private ResponseEntity<byte[]> forward(HttpServletRequest request, RestTemplate client, String breakerName, String serviceName) throws IOException, TimeoutException {
@@ -168,7 +152,7 @@ public class TestProxyController {
         logger.debug("Proxying {} {} -> {}", method, originalPath, targetUrl);
 
         // Resolve per-request timeout (test flags override if present)
-        Duration timeout = resolveTimeout("cms".equals(breakerName));
+        Duration timeout = resolveTimeout();
         // Use the injected RestTemplate (preconfigured per profile) instead of building a new one
         RestTemplate rt = client;
 
@@ -266,12 +250,12 @@ public class TestProxyController {
         return generated;
     }
 
-    private Duration resolveTimeout(boolean cms) {
+    private Duration resolveTimeout() {
         TestSimulationFlags flags = flagsProvider != null ? flagsProvider.getIfAvailable() : null;
         if (flags != null && flags.getGatewayTimeoutMs() != null && flags.getGatewayTimeoutMs() > 0) {
             return Duration.ofMillis(flags.getGatewayTimeoutMs());
         }
-        return Duration.ofSeconds(cms ? cmsTimeoutSeconds : defaultTimeoutSeconds);
+        return Duration.ofSeconds(defaultTimeoutSeconds);
     }
 
     private void copyHeader(HttpServletRequest request, HttpHeaders target, String name) {

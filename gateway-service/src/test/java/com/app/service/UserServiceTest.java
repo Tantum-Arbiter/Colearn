@@ -12,7 +12,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -278,7 +277,7 @@ class UserServiceTest {
         // Arrange
         UserDTOs.CreateChildProfileRequest request = new UserDTOs.CreateChildProfileRequest();
         request.setName("New Child");
-        request.setBirthDate(LocalDate.now().minusYears(3)); // 3 years old
+        request.setAgeRange("2-3");
         request.setAvatar("avatar1");
 
         when(userRepository.findById(testUser.getId()))
@@ -293,7 +292,6 @@ class UserServiceTest {
         // Assert
         assertNotNull(updatedUser);
         verify(userRepository).save(any(User.class));
-        verify(metricsService).recordChildProfileCreated(testUser.getId());
     }
 
     @Test
@@ -312,7 +310,6 @@ class UserServiceTest {
         // Assert
         assertNotNull(updatedUser);
         verify(userRepository).save(any(User.class));
-        verify(metricsService).recordChildProfileRemoved(testUser.getId(), childId);
     }
 
     @Test

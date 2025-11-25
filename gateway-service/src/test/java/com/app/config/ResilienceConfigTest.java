@@ -30,7 +30,6 @@ class ResilienceConfigTest {
         Set<String> names = circuitBreakerRegistry.getAllCircuitBreakers()
                 .stream().map(CircuitBreaker::getName).collect(Collectors.toSet());
         assertTrue(names.contains("default"), "default circuit breaker not registered");
-        assertTrue(names.contains("cms"), "cms circuit breaker not registered");
     }
 }
 

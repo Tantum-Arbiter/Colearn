@@ -18,6 +18,7 @@ import java.util.concurrent.ExecutionException;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 /**
  * Unit tests for SessionService
@@ -31,18 +32,33 @@ class SessionServiceTest {
     @Mock
     private ApplicationMetricsService metricsService;
 
+    @Mock
+    private RefreshTokenHashingService hashingService;
+
     private SessionService sessionService;
     private UserSession testSession;
 
     @BeforeEach
     void setUp() {
-        sessionService = new SessionService(sessionRepository, metricsService);
-        
+        sessionService = new SessionService(sessionRepository, metricsService, hashingService);
+
+        // Mock hashing service to return a predictable hash (lenient to avoid UnnecessaryStubbingException)
+        lenient().when(hashingService.hashToken(anyString())).thenAnswer(invocation -> {
+            String token = invocation.getArgument(0);
+            return "hashed_" + token;
+        });
+
+        lenient().when(hashingService.validateToken(anyString(), anyString())).thenAnswer(invocation -> {
+            String providedToken = invocation.getArgument(0);
+            String storedHash = invocation.getArgument(1);
+            return storedHash.equals("hashed_" + providedToken);
+        });
+
         // Create test session
         testSession = new UserSession();
         testSession.setId("test-session-id");
         testSession.setUserId("test-user-id");
-        testSession.setRefreshToken("test-refresh-token");
+        testSession.setRefreshToken("hashed_test-refresh-token"); // Now hashed
         testSession.setDeviceId("test-device-id");
         testSession.setDeviceType("mobile");
         testSession.setPlatform("ios");
@@ -210,20 +226,24 @@ class SessionServiceTest {
     @Test
     void getSessionByRefreshToken_Success() throws Exception {
         // Arrange
-        when(sessionRepository.findByRefreshToken(testSession.getRefreshToken()))
-                .thenReturn(CompletableFuture.completedFuture(Optional.of(testSession)));
+        List<UserSession> allSessions = List.of(testSession);
+        when(sessionRepository.findAllActiveSessions())
+                .thenReturn(CompletableFuture.completedFuture(allSessions));
 
-        // Act
-        CompletableFuture<Optional<UserSession>> result = sessionService.getSessionByRefreshToken(testSession.getRefreshToken());
+        // Act - provide the plaintext token, it will be validated against the hashed version
+        CompletableFuture<Optional<UserSession>> result = sessionService.getSessionByRefreshToken("test-refresh-token");
         Optional<UserSession> foundSession = result.get();
 
         // Assert
         assertTrue(foundSession.isPresent());
         assertEquals(testSession.getRefreshToken(), foundSession.get().getRefreshToken());
-        
+
         // Verify repository interaction
-        verify(sessionRepository).findByRefreshToken(testSession.getRefreshToken());
-        
+        verify(sessionRepository).findAllActiveSessions();
+
+        // Verify hashing service was called to validate
+        verify(hashingService).validateToken("test-refresh-token", "hashed_test-refresh-token");
+
         // Verify metrics
         verify(metricsService).recordSessionLookup("refresh_token", "found");
     }
@@ -232,55 +252,61 @@ class SessionServiceTest {
     void validateAndRefreshSession_Success() throws Exception {
         // Arrange
         String newRefreshToken = "new-refresh-token";
+        String hashedNewRefreshToken = "hashed_new-refresh-token";
         UserSession updatedSession = new UserSession();
         updatedSession.setId(testSession.getId());
         updatedSession.setUserId(testSession.getUserId());
         updatedSession.setDeviceType(testSession.getDeviceType());
         updatedSession.setPlatform(testSession.getPlatform());
-        updatedSession.setRefreshToken(newRefreshToken);
+        updatedSession.setRefreshToken(hashedNewRefreshToken);
 
-        when(sessionRepository.findByRefreshToken(testSession.getRefreshToken()))
-                .thenReturn(CompletableFuture.completedFuture(Optional.of(testSession)));
-        when(sessionRepository.updateRefreshToken(testSession.getId(), newRefreshToken))
+        List<UserSession> allSessions = List.of(testSession);
+        when(sessionRepository.findAllActiveSessions())
+                .thenReturn(CompletableFuture.completedFuture(allSessions));
+        when(sessionRepository.updateRefreshToken(testSession.getId(), hashedNewRefreshToken))
                 .thenReturn(CompletableFuture.completedFuture(updatedSession));
         when(sessionRepository.extendSession(eq(testSession.getId()), anyLong()))
                 .thenReturn(CompletableFuture.completedFuture(updatedSession));
         when(sessionRepository.updateLastAccessed(eq(testSession.getId())))
                 .thenReturn(CompletableFuture.completedFuture(updatedSession));
 
-        // Act
+        // Act - provide plaintext token
         CompletableFuture<UserSession> result = sessionService.validateAndRefreshSession(
-                testSession.getRefreshToken(), newRefreshToken);
+                "test-refresh-token", newRefreshToken);
         UserSession refreshedSession = result.get();
 
         // Assert
         assertNotNull(refreshedSession);
         assertEquals(testSession.getId(), refreshedSession.getId());
-        
+
         // Verify repository interactions
-        verify(sessionRepository).findByRefreshToken(testSession.getRefreshToken());
-        verify(sessionRepository).updateRefreshToken(testSession.getId(), newRefreshToken);
-        
+        verify(sessionRepository).findAllActiveSessions();
+        verify(sessionRepository).updateRefreshToken(testSession.getId(), hashedNewRefreshToken);
+
+        // Verify hashing service was called
+        verify(hashingService).validateToken("test-refresh-token", "hashed_test-refresh-token");
+        verify(hashingService).hashToken(newRefreshToken);
+
         // Verify metrics
         verify(metricsService).recordSessionRefreshed(testSession.getDeviceType(), testSession.getPlatform());
     }
 
     @Test
     void validateAndRefreshSession_InvalidToken() throws Exception {
-        // Arrange
-        when(sessionRepository.findByRefreshToken(testSession.getRefreshToken()))
-                .thenReturn(CompletableFuture.completedFuture(Optional.empty()));
+        // Arrange - return empty list (no sessions match)
+        when(sessionRepository.findAllActiveSessions())
+                .thenReturn(CompletableFuture.completedFuture(List.of()));
 
         // Act & Assert
         CompletableFuture<UserSession> result = sessionService.validateAndRefreshSession(
-                testSession.getRefreshToken(), "new-refresh-token");
+                "invalid-token", "new-refresh-token");
 
         ExecutionException exception = assertThrows(ExecutionException.class, () -> result.get());
         assertTrue(exception.getCause() instanceof IllegalArgumentException);
         assertEquals("Invalid refresh token", exception.getCause().getMessage());
-        
+
         // Verify repository interactions
-        verify(sessionRepository).findByRefreshToken(testSession.getRefreshToken());
+        verify(sessionRepository).findAllActiveSessions();
         verify(sessionRepository, never()).updateRefreshToken(anyString(), anyString());
     }
 
@@ -320,23 +346,24 @@ class SessionServiceTest {
         revokedSession.setActive(false);
         revokedSession.setRevokedAt(Instant.now());
 
-        when(sessionRepository.findByRefreshToken(testSession.getRefreshToken()))
-                .thenReturn(CompletableFuture.completedFuture(Optional.of(testSession)));
+        List<UserSession> allSessions = List.of(testSession);
+        when(sessionRepository.findAllActiveSessions())
+                .thenReturn(CompletableFuture.completedFuture(allSessions));
         when(sessionRepository.revokeSession(testSession.getId()))
                 .thenReturn(CompletableFuture.completedFuture(revokedSession));
 
-        // Act
-        CompletableFuture<Optional<UserSession>> result = sessionService.revokeSessionByRefreshToken(testSession.getRefreshToken());
+        // Act - provide plaintext token
+        CompletableFuture<Optional<UserSession>> result = sessionService.revokeSessionByRefreshToken("test-refresh-token");
         Optional<UserSession> resultSession = result.get();
 
         // Assert
         assertTrue(resultSession.isPresent());
         assertEquals(testSession.getId(), resultSession.get().getId());
-        
+
         // Verify repository interactions
-        verify(sessionRepository).findByRefreshToken(testSession.getRefreshToken());
+        verify(sessionRepository).findAllActiveSessions();
         verify(sessionRepository).revokeSession(testSession.getId());
-        
+
         // Verify metrics
         verify(metricsService).recordSessionRevoked(testSession.getDeviceType(), testSession.getPlatform(), "manual");
     }

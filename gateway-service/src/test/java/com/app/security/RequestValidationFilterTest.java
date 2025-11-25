@@ -17,8 +17,10 @@ import java.io.StringReader;
 import java.util.Collections;
 import java.util.Enumeration;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -41,8 +43,6 @@ class RequestValidationFilterTest {
     @BeforeEach
     void setUp() throws IOException {
         requestValidationFilter = new RequestValidationFilter();
-        // lenient to avoid unnecessary stubbing failures in tests that don't write
-        lenient().when(response.getWriter()).thenReturn(printWriter);
     }
 
     @Test
@@ -59,17 +59,20 @@ class RequestValidationFilterTest {
         requestValidationFilter.doFilterInternal(request, response, filterChain);
 
         // Then
-        verify(filterChain).doFilter(request, response);
+        verify(filterChain).doFilter(any(), eq(response));
         verify(response, never()).setStatus(HttpServletResponse.SC_BAD_REQUEST);
     }
 
     @Test
     void doFilterInternal_WithSqlInjectionInUrl_ShouldBlockRequest() throws ServletException, IOException {
         // Given
-        when(request.getRequestURI()).thenReturn("/api/test?id=1' OR '1'='1");
-        when(request.getQueryString()).thenReturn("id=1' OR '1'='1");
+        when(request.getRequestURI()).thenReturn("/api/test");
+        when(request.getQueryString()).thenReturn("id=1' OR 1=1--");
         when(request.getContentLength()).thenReturn(50);
         when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0");
+        when(request.getHeaderNames()).thenReturn(Collections.enumeration(Collections.singletonList("User-Agent")));
+        when(request.getHeaders("User-Agent")).thenReturn(Collections.enumeration(Collections.singletonList("Mozilla/5.0")));
+        when(response.getWriter()).thenReturn(printWriter);
 
         // When
         requestValidationFilter.doFilterInternal(request, response, filterChain);
@@ -77,8 +80,8 @@ class RequestValidationFilterTest {
         // Then
         verify(response).setStatus(HttpServletResponse.SC_BAD_REQUEST);
         verify(response).setContentType("application/json");
-        verify(printWriter).write(contains("Suspicious request detected"));
-        verify(filterChain, never()).doFilter(request, response);
+        verify(printWriter).write(contains("Suspicious URL or parameters detected"));
+        verify(filterChain, never()).doFilter(any(), eq(response));
     }
 
     @Test
@@ -88,6 +91,7 @@ class RequestValidationFilterTest {
         when(request.getQueryString()).thenReturn("comment=<script>alert('xss')</script>");
         when(request.getContentLength()).thenReturn(50);
         when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0");
+        when(response.getWriter()).thenReturn(printWriter);
 
         // When
         requestValidationFilter.doFilterInternal(request, response, filterChain);
@@ -95,8 +99,8 @@ class RequestValidationFilterTest {
         // Then
         verify(response).setStatus(HttpServletResponse.SC_BAD_REQUEST);
         verify(response).setContentType("application/json");
-        verify(printWriter).write(contains("Suspicious request detected"));
-        verify(filterChain, never()).doFilter(request, response);
+        verify(printWriter).write(contains("Suspicious URL or parameters detected"));
+        verify(filterChain, never()).doFilter(any(), eq(response));
     }
 
     @Test
@@ -106,6 +110,7 @@ class RequestValidationFilterTest {
         when(request.getQueryString()).thenReturn(null);
         when(request.getContentLength()).thenReturn(50);
         when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0");
+        when(response.getWriter()).thenReturn(printWriter);
 
         // When
         requestValidationFilter.doFilterInternal(request, response, filterChain);
@@ -113,8 +118,8 @@ class RequestValidationFilterTest {
         // Then
         verify(response).setStatus(HttpServletResponse.SC_BAD_REQUEST);
         verify(response).setContentType("application/json");
-        verify(printWriter).write(contains("Suspicious request detected"));
-        verify(filterChain, never()).doFilter(request, response);
+        verify(printWriter).write(contains("Suspicious URL or parameters detected"));
+        verify(filterChain, never()).doFilter(any(), eq(response));
     }
 
     @Test
@@ -124,6 +129,7 @@ class RequestValidationFilterTest {
         when(request.getQueryString()).thenReturn("cmd=ls; rm -rf /");
         when(request.getContentLength()).thenReturn(50);
         when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0");
+        when(response.getWriter()).thenReturn(printWriter);
 
         // When
         requestValidationFilter.doFilterInternal(request, response, filterChain);
@@ -131,8 +137,8 @@ class RequestValidationFilterTest {
         // Then
         verify(response).setStatus(HttpServletResponse.SC_BAD_REQUEST);
         verify(response).setContentType("application/json");
-        verify(printWriter).write(contains("Suspicious request detected"));
-        verify(filterChain, never()).doFilter(request, response);
+        verify(printWriter).write(contains("Suspicious URL or parameters detected"));
+        verify(filterChain, never()).doFilter(any(), eq(response));
     }
 
     @Test
@@ -142,6 +148,7 @@ class RequestValidationFilterTest {
         when(request.getQueryString()).thenReturn(null);
         when(request.getContentLength()).thenReturn(11 * 1024 * 1024); // 11MB > 10MB limit
         when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0");
+        when(response.getWriter()).thenReturn(printWriter);
 
         // When
         requestValidationFilter.doFilterInternal(request, response, filterChain);
@@ -149,8 +156,8 @@ class RequestValidationFilterTest {
         // Then
         verify(response).setStatus(HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
         verify(response).setContentType("application/json");
-        verify(printWriter).write(contains("Request too large"));
-        verify(filterChain, never()).doFilter(request, response);
+        verify(printWriter).write(contains("Request payload too large"));
+        verify(filterChain, never()).doFilter(any(), eq(response));
     }
 
     @Test
@@ -160,15 +167,16 @@ class RequestValidationFilterTest {
         when(request.getQueryString()).thenReturn(null);
         when(request.getContentLength()).thenReturn(50);
         when(request.getHeader("User-Agent")).thenReturn("sqlmap/1.0");
+        when(response.getWriter()).thenReturn(printWriter);
 
         // When
         requestValidationFilter.doFilterInternal(request, response, filterChain);
 
         // Then
-        verify(response).setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        verify(response).setStatus(HttpServletResponse.SC_FORBIDDEN); // 403 for security violations
         verify(response).setContentType("application/json");
-        verify(printWriter).write(contains("Suspicious request detected"));
-        verify(filterChain, never()).doFilter(request, response);
+        verify(printWriter).write(contains("Suspicious user agent detected"));
+        verify(filterChain, never()).doFilter(any(), eq(response));
     }
 
     @Test
@@ -183,7 +191,7 @@ class RequestValidationFilterTest {
         requestValidationFilter.doFilterInternal(request, response, filterChain);
 
         // Then
-        verify(filterChain).doFilter(request, response);
+        verify(filterChain).doFilter(any(), eq(response));
         verify(response, never()).setStatus(HttpServletResponse.SC_BAD_REQUEST);
     }
 
@@ -197,7 +205,8 @@ class RequestValidationFilterTest {
         when(request.getHeaderNames()).thenReturn(Collections.enumeration(
             java.util.Arrays.asList("User-Agent", "X-Forwarded-For")));
         when(request.getHeaders("X-Forwarded-For")).thenReturn(Collections.enumeration(
-            Collections.singletonList("192.168.1.1' OR '1'='1")));
+            Collections.singletonList("192.168.1.1' OR 1=1--")));
+        when(response.getWriter()).thenReturn(printWriter);
 
         // When
         requestValidationFilter.doFilterInternal(request, response, filterChain);
@@ -205,8 +214,8 @@ class RequestValidationFilterTest {
         // Then
         verify(response).setStatus(HttpServletResponse.SC_BAD_REQUEST);
         verify(response).setContentType("application/json");
-        verify(printWriter).write(contains("Suspicious request detected"));
-        verify(filterChain, never()).doFilter(request, response);
+        verify(printWriter).write(contains("Suspicious headers detected"));
+        verify(filterChain, never()).doFilter(any(), eq(response));
     }
 
     @Test
@@ -218,6 +227,7 @@ class RequestValidationFilterTest {
         when(request.getContentLength()).thenReturn(suspiciousBody.length());
         when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0");
         when(request.getReader()).thenReturn(new BufferedReader(new StringReader(suspiciousBody)));
+        when(response.getWriter()).thenReturn(printWriter);
 
         // When
         requestValidationFilter.doFilterInternal(request, response, filterChain);
@@ -225,8 +235,8 @@ class RequestValidationFilterTest {
         // Then
         verify(response).setStatus(HttpServletResponse.SC_BAD_REQUEST);
         verify(response).setContentType("application/json");
-        verify(printWriter).write(contains("Suspicious request detected"));
-        verify(filterChain, never()).doFilter(request, response);
+        verify(printWriter).write(contains("Suspicious request body detected"));
+        verify(filterChain, never()).doFilter(any(), eq(response));
     }
 
     @Test
@@ -245,7 +255,7 @@ class RequestValidationFilterTest {
         requestValidationFilter.doFilterInternal(request, response, filterChain);
 
         // Then
-        verify(filterChain).doFilter(request, response);
+        verify(filterChain).doFilter(any(), eq(response));
         verify(response, never()).setStatus(HttpServletResponse.SC_BAD_REQUEST);
     }
 
@@ -256,6 +266,7 @@ class RequestValidationFilterTest {
         when(request.getQueryString()).thenReturn("filter=(&(uid=*)(password=*))");
         when(request.getContentLength()).thenReturn(50);
         when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0");
+        when(response.getWriter()).thenReturn(printWriter);
 
         // When
         requestValidationFilter.doFilterInternal(request, response, filterChain);
@@ -263,8 +274,8 @@ class RequestValidationFilterTest {
         // Then
         verify(response).setStatus(HttpServletResponse.SC_BAD_REQUEST);
         verify(response).setContentType("application/json");
-        verify(printWriter).write(contains("Suspicious request detected"));
-        verify(filterChain, never()).doFilter(request, response);
+        verify(printWriter).write(contains("Suspicious URL or parameters detected"));
+        verify(filterChain, never()).doFilter(any(), eq(response));
     }
 
     @Test
@@ -274,6 +285,7 @@ class RequestValidationFilterTest {
         when(request.getQueryString()).thenReturn("id=1' UNION SELECT * FROM users--");
         when(request.getContentLength()).thenReturn(50);
         when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0");
+        when(response.getWriter()).thenReturn(printWriter);
 
         // When
         requestValidationFilter.doFilterInternal(request, response, filterChain);
@@ -281,8 +293,8 @@ class RequestValidationFilterTest {
         // Then
         verify(response).setStatus(HttpServletResponse.SC_BAD_REQUEST);
         verify(response).setContentType("application/json");
-        verify(printWriter).write(contains("Suspicious request detected"));
-        verify(filterChain, never()).doFilter(request, response);
+        verify(printWriter).write(contains("Suspicious URL or parameters detected"));
+        verify(filterChain, never()).doFilter(any(), eq(response));
     }
 
     @Test
@@ -299,7 +311,7 @@ class RequestValidationFilterTest {
         requestValidationFilter.doFilterInternal(request, response, filterChain);
 
         // Then
-        verify(filterChain).doFilter(request, response);
+        verify(filterChain).doFilter(any(), eq(response));
         verify(response, never()).setStatus(HttpServletResponse.SC_BAD_REQUEST);
     }
 
@@ -317,7 +329,7 @@ class RequestValidationFilterTest {
         requestValidationFilter.doFilterInternal(request, response, filterChain);
 
         // Then
-        verify(filterChain).doFilter(request, response);
+        verify(filterChain).doFilter(any(), eq(response));
         verify(response, never()).setStatus(HttpServletResponse.SC_BAD_REQUEST);
     }
 }

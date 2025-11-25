@@ -398,34 +398,7 @@ public class ApplicationMetricsService {
         logger.debug("User list query metric recorded: {} with {} results", queryType, resultCount);
     }
 
-    // Child Profile Metrics
 
-    public void recordChildProfileCreated(String userId) {
-        Counter.builder("app.children.created")
-                .tags("user_id", userId)
-                .description("Number of child profiles created")
-                .register(meterRegistry)
-                .increment();
-        logger.debug("Child profile creation metric recorded for user: {}", userId);
-    }
-
-    public void recordChildProfileUpdated(String userId, String childId) {
-        Counter.builder("app.children.updated")
-                .tags("user_id", userId, "child_id", childId)
-                .description("Number of child profile updates")
-                .register(meterRegistry)
-                .increment();
-        logger.debug("Child profile update metric recorded for user: {}, child: {}", userId, childId);
-    }
-
-    public void recordChildProfileRemoved(String userId, String childId) {
-        Counter.builder("app.children.removed")
-                .tags("user_id", userId, "child_id", childId)
-                .description("Number of child profiles removed")
-                .register(meterRegistry)
-                .increment();
-        logger.debug("Child profile removal metric recorded for user: {}, child: {}", userId, childId);
-    }
 
     // Session Management Metrics
 
@@ -618,16 +591,37 @@ public class ApplicationMetricsService {
     }
 
     // --- Circuit Breaker metrics ---
-    public void recordCircuitBreakerStateTransition(String name, String fromState, String toState) {
-        Counter.builder("app.circuitbreaker.state.transitions")
-                .description("Circuit breaker state transitions")
-                .tag("name", name)
-                .tag("from_state", fromState)
-                .tag("to_state", toState)
-                .register(meterRegistry)
-                .increment();
+
+    private final Map<String, AtomicLong> circuitBreakerStateCounters = new ConcurrentHashMap<>();
+
+    /**
+     * Record circuit breaker state - creates a gauge per state (OPEN, HALF_OPEN, CLOSED)
+     */
+    public void recordCircuitBreakerState(String name, String state) {
+        String gaugeKey = name + "_" + state;
+
+        // Reset all states for this circuit breaker to 0
+        circuitBreakerStateCounters.entrySet().stream()
+                .filter(entry -> entry.getKey().startsWith(name + "_"))
+                .forEach(entry -> entry.getValue().set(0));
+
+        // Set the current state to 1
+        circuitBreakerStateCounters.computeIfAbsent(gaugeKey, k -> {
+            AtomicLong counter = new AtomicLong(0);
+            Gauge.builder("app.circuitbreaker.state", counter, AtomicLong::doubleValue)
+                    .description("Circuit breaker current state (1=active, 0=inactive)")
+                    .tag("name", name)
+                    .tag("state", state)
+                    .register(meterRegistry);
+            return counter;
+        }).set(1);
+
+        logger.debug("Circuit breaker state recorded: {} is now {}", name, state);
     }
 
+    /**
+     * Record circuit breaker call outcomes
+     */
     public void recordCircuitBreakerCall(String name, String outcome) {
         Counter.builder("app.circuitbreaker.calls")
                 .description("Circuit breaker call outcomes")
@@ -635,6 +629,242 @@ public class ApplicationMetricsService {
                 .tag("outcome", outcome)
                 .register(meterRegistry)
                 .increment();
+    }
+
+    // --- Sad Case / Error Rate Metrics ---
+
+    /**
+     * Record authentication failure with detailed error information
+     */
+    public void recordAuthenticationFailure(String provider, String deviceType, String platform, String errorType, String errorCode) {
+        Tags tags = Tags.of(
+            "provider", provider,
+            "device_type", deviceType,
+            "platform", platform,
+            "error_type", errorType,
+            "error_code", errorCode
+        );
+
+        Counter.builder("app.authentication.failures")
+                .tags(tags)
+                .description("Number of authentication failures")
+                .register(meterRegistry)
+                .increment();
+
+        logger.debug("Authentication failure recorded: provider={}, error_type={}, error_code={}",
+                    provider, errorType, errorCode);
+    }
+
+    /**
+     * Record token refresh failure
+     */
+    public void recordTokenRefreshFailure(String provider, String deviceType, String platform, String errorType) {
+        Tags tags = Tags.of(
+            "provider", provider,
+            "device_type", deviceType,
+            "platform", platform,
+            "error_type", errorType
+        );
+
+        Counter.builder("app.tokens.refresh.failures")
+                .tags(tags)
+                .description("Number of token refresh failures")
+                .register(meterRegistry)
+                .increment();
+
+        logger.debug("Token refresh failure recorded: provider={}, error_type={}", provider, errorType);
+    }
+
+    /**
+     * Record Firestore operation failure with error details
+     */
+    public void recordFirestoreFailure(String collection, String operation, String errorType, long durationMs) {
+        Tags tags = Tags.of(
+            "collection", collection,
+            "operation", operation,
+            "error_type", errorType
+        );
+
+        Counter.builder("app.firestore.failures")
+                .tags(tags)
+                .description("Number of Firestore operation failures")
+                .register(meterRegistry)
+                .increment();
+
+        Timer.builder("app.firestore.failure.duration")
+                .tags(tags)
+                .description("Duration of failed Firestore operations")
+                .register(meterRegistry)
+                .record(durationMs, TimeUnit.MILLISECONDS);
+
+        logger.debug("Firestore failure recorded: {} {} on {} - {} ({}ms)",
+                    operation, errorType, collection, errorType, durationMs);
+    }
+
+    /**
+     * Record profile operation failure
+     */
+    public void recordProfileOperationFailure(String operation, String errorType) {
+        Tags tags = Tags.of(
+            "operation", operation,
+            "error_type", errorType
+        );
+
+        Counter.builder("app.profiles.failures")
+                .tags(tags)
+                .description("Number of profile operation failures")
+                .register(meterRegistry)
+                .increment();
+
+        logger.debug("Profile operation failure recorded: operation={}, error_type={}", operation, errorType);
+    }
+
+    /**
+     * Record session operation failure
+     */
+    public void recordSessionOperationFailure(String operation, String errorType) {
+        Tags tags = Tags.of(
+            "operation", operation,
+            "error_type", errorType
+        );
+
+        Counter.builder("app.sessions.failures")
+                .tags(tags)
+                .description("Number of session operation failures")
+                .register(meterRegistry)
+                .increment();
+
+        logger.debug("Session operation failure recorded: operation={}, error_type={}", operation, errorType);
+    }
+
+    // --- Token Operation Metrics ---
+
+    /**
+     * Record token refresh operation
+     */
+    public void recordTokenRefresh(String provider, String deviceType, String platform, boolean successful, long processingTimeMs) {
+        Tags tags = Tags.of(
+            "provider", provider,
+            "device_type", deviceType,
+            "platform", platform,
+            "result", successful ? "success" : "failure"
+        );
+
+        Counter.builder("app.tokens.refresh.total")
+                .tags(tags)
+                .description("Number of token refresh operations")
+                .register(meterRegistry)
+                .increment();
+
+        Timer.builder("app.tokens.refresh.time")
+                .tags(tags)
+                .description("Token refresh processing time")
+                .register(meterRegistry)
+                .record(processingTimeMs, TimeUnit.MILLISECONDS);
+
+        logger.debug("Token refresh metric recorded: {} on {} - {} ({}ms)",
+                    provider, platform, successful ? "success" : "failure", processingTimeMs);
+    }
+
+    /**
+     * Record token revocation (logout)
+     */
+    public void recordTokenRevocation(String deviceType, String platform, String reason, boolean successful) {
+        Tags tags = Tags.of(
+            "device_type", deviceType,
+            "platform", platform,
+            "reason", reason,
+            "result", successful ? "success" : "failure"
+        );
+
+        Counter.builder("app.tokens.revocation.total")
+                .tags(tags)
+                .description("Number of token revocation operations")
+                .register(meterRegistry)
+                .increment();
+
+        logger.debug("Token revocation metric recorded: {} on {} - reason: {} - {}",
+                    deviceType, platform, reason, successful ? "success" : "failure");
+    }
+
+    // --- User Profile Metrics ---
+
+    /**
+     * Record profile creation
+     */
+    public void recordProfileCreated(String userId, boolean successful, long processingTimeMs) {
+        Tags tags = Tags.of(
+            "user_id", userId,
+            "result", successful ? "success" : "failure",
+            "operation", "created"
+        );
+
+        Counter.builder("app.user.profiles.total")
+                .tags(tags)
+                .description("Number of user profile operations")
+                .register(meterRegistry)
+                .increment();
+
+        Timer.builder("app.user.profiles.time")
+                .tags(tags)
+                .description("User profile operation processing time")
+                .register(meterRegistry)
+                .record(processingTimeMs, TimeUnit.MILLISECONDS);
+
+        logger.debug("Profile creation metric recorded: user={} - {} ({}ms)",
+                    userId, successful ? "success" : "failure", processingTimeMs);
+    }
+
+    /**
+     * Record profile update
+     */
+    public void recordProfileUpdated(String userId, boolean successful, long processingTimeMs) {
+        Tags tags = Tags.of(
+            "user_id", userId,
+            "result", successful ? "success" : "failure",
+            "operation", "updated"
+        );
+
+        Counter.builder("app.user.profiles.total")
+                .tags(tags)
+                .description("Number of user profile operations")
+                .register(meterRegistry)
+                .increment();
+
+        Timer.builder("app.user.profiles.time")
+                .tags(tags)
+                .description("User profile operation processing time")
+                .register(meterRegistry)
+                .record(processingTimeMs, TimeUnit.MILLISECONDS);
+
+        logger.debug("Profile update metric recorded: user={} - {} ({}ms)",
+                    userId, successful ? "success" : "failure", processingTimeMs);
+    }
+
+    /**
+     * Record profile retrieval
+     */
+    public void recordProfileRetrieved(String userId, boolean found, long processingTimeMs) {
+        Tags tags = Tags.of(
+            "user_id", userId,
+            "result", found ? "found" : "not_found",
+            "operation", "retrieved"
+        );
+
+        Counter.builder("app.user.profiles.total")
+                .tags(tags)
+                .description("Number of user profile operations")
+                .register(meterRegistry)
+                .increment();
+
+        Timer.builder("app.user.profiles.time")
+                .tags(tags)
+                .description("User profile operation processing time")
+                .register(meterRegistry)
+                .record(processingTimeMs, TimeUnit.MILLISECONDS);
+
+        logger.debug("Profile retrieval metric recorded: user={} - {} ({}ms)",
+                    userId, found ? "found" : "not_found", processingTimeMs);
     }
 
 }

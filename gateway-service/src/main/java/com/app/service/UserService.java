@@ -199,16 +199,16 @@ public class UserService {
                     child.setId(UUID.randomUUID().toString());
                     child.setName(request.getName());
                     child.setAvatar(request.getAvatar());
+                    child.setAgeRange(request.getAgeRange());
                     child.setActive(true);
                     child.setCreatedAt(Instant.now());
-                    
+
                     // Add child to user
                     user.addChild(child);
                     user.setUpdatedAt(Instant.now());
                     
                     return userRepository.save(user)
                             .thenApply(savedUser -> {
-                                metricsService.recordChildProfileCreated(userId);
                                 logger.info("Child profile added for user: {} - child: {}", userId, child.getId());
                                 return savedUser;
                             });
@@ -241,12 +241,14 @@ public class UserService {
                     if (request.getAvatar() != null) {
                         child.setAvatar(request.getAvatar());
                     }
+                    if (request.getAgeRange() != null) {
+                        child.setAgeRange(request.getAgeRange());
+                    }
 
                     user.setUpdatedAt(Instant.now());
                     
                     return userRepository.save(user)
                             .thenApply(savedUser -> {
-                                metricsService.recordChildProfileUpdated(userId, childId);
                                 logger.debug("Child profile updated: {} for user: {}", childId, userId);
                                 return savedUser;
                             });
@@ -275,7 +277,6 @@ public class UserService {
                     
                     return userRepository.save(user)
                             .thenApply(savedUser -> {
-                                metricsService.recordChildProfileRemoved(userId, childId);
                                 logger.info("Child profile removed: {} for user: {}", childId, userId);
                                 return savedUser;
                             });

@@ -21,6 +21,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
+import org.springframework.test.util.ReflectionTestUtils;
+
 @ExtendWith(MockitoExtension.class)
 class RateLimitingFilterTest {
 
@@ -44,6 +46,13 @@ class RateLimitingFilterTest {
     @BeforeEach
     void setUp() throws IOException {
         rateLimitingFilter = new RateLimitingFilter();
+
+        // Set rate limiting configuration values using reflection
+        ReflectionTestUtils.setField(rateLimitingFilter, "defaultRequestsPerMinute", 60);
+        ReflectionTestUtils.setField(rateLimitingFilter, "authRequestsPerMinute", 10);
+        ReflectionTestUtils.setField(rateLimitingFilter, "apiRequestsPerMinute", 100);
+        ReflectionTestUtils.setField(rateLimitingFilter, "rateLimitingEnabled", true);
+
         SecurityContextHolder.clearContext();
 
         // Mock response writer (lenient to avoid unnecessary stubbing failures)
@@ -70,16 +79,38 @@ class RateLimitingFilterTest {
         String ipAddress = "192.168.1.100";
         when(request.getRequestURI()).thenReturn("/api/test");
         when(request.getRemoteAddr()).thenReturn(ipAddress);
+        when(response.getWriter()).thenReturn(printWriter);
 
-        // When - Make requests exceeding the default limit (60 per minute)
-        for (int i = 0; i < 61; i++) {
+        // When - Make requests exceeding the API limit (100 per minute)
+        int allowedCount = 0;
+        int blockedCount = 0;
+
+        for (int i = 0; i < 101; i++) {
+            // Reset mocks for each iteration to track individual calls
+            reset(response, filterChain, printWriter);
+            when(response.getWriter()).thenReturn(printWriter);
+
             rateLimitingFilter.doFilterInternal(request, response, filterChain);
+
+            // Check if this request was allowed or blocked
+            try {
+                verify(filterChain).doFilter(request, response);
+                allowedCount++;
+            } catch (AssertionError e) {
+                // Request was blocked
+                try {
+                    verify(response).setStatus(429);
+                    blockedCount++;
+                } catch (AssertionError e2) {
+                    // Neither allowed nor blocked - something is wrong
+                    fail("Request " + i + " was neither allowed nor blocked");
+                }
+            }
         }
 
-        // Then - Last request should be blocked
-        verify(response, atLeastOnce()).setStatus(429); // HTTP 429 Too Many Requests
-        verify(response, atLeastOnce()).setContentType("application/json");
-        verify(printWriter, atLeastOnce()).write(anyString());
+        // Then - First 100 requests should be allowed, 101st should be blocked
+        assertEquals(100, allowedCount, "Expected 100 requests to be allowed");
+        assertEquals(1, blockedCount, "Expected 1 request to be blocked");
     }
 
     @Test

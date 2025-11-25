@@ -85,7 +85,8 @@ export function PrivacyPolicyScreen({ onBack }: PrivacyPolicyScreenProps) {
             <Text style={styles.subsectionTitle}>2.3 Automatic data (app operations)</Text>
             <Text style={styles.bodyText}>
               • Basic diagnostic logs (timestamp, route, status, duration).{'\n'}
-              • Crash data on your device if you opt in to OS crash reporting.
+              • Crash data on your device if you opt in to OS crash reporting.{'\n'}
+              • Pseudonymous device identifier (for security, abuse prevention, and secure access – cannot identify a person, not shared with third parties).
             </Text>
           </View>
 
@@ -95,7 +96,7 @@ export function PrivacyPolicyScreen({ onBack }: PrivacyPolicyScreenProps) {
               • Contract: To provide the app, sign you in, sync content, and show your profiles.{'\n'}
               • Consent: To record parental consent and any optional features that require it.{'\n'}
               • Legal obligation: To respond to data subject requests.{'\n'}
-              • Legitimate interests (minimal, balanced): Security, fraud prevention, service analytics strictly necessary to operate the app.
+              • Legitimate interests (minimal, balanced): Security, fraud prevention, service analytics strictly necessary to operate the app. We process a pseudonymous device identifier to protect the app, prevent abuse, and ensure secure access. This identifier cannot be used to identify a person and is not shared with third parties.
             </Text>
           </View>
 

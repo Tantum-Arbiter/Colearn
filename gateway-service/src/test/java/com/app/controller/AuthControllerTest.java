@@ -548,7 +548,7 @@ class AuthControllerTest {
                 .header("User-Agent", "GrowWithFreya-Test/1.0")
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.error").value("Invalid nonce"));
+                .andExpect(jsonPath("$.error").value("Invalid or expired token"));
     }
 
     @Test
@@ -575,7 +575,7 @@ class AuthControllerTest {
                 .header("User-Agent", "GrowWithFreya-Test/1.0")
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.error").value("Invalid nonce"));
+                .andExpect(jsonPath("$.error").value("Invalid or expired token"));
     }
 
     @Test
@@ -635,7 +635,7 @@ class AuthControllerTest {
                 .header("User-Agent", "GrowWithFreya-Test/1.0")
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.error").value("Invalid nonce"));
+                .andExpect(jsonPath("$.error").value("Invalid or expired token"));
     }
 
 
@@ -708,7 +708,7 @@ class AuthControllerTest {
                 .header("User-Agent", "GrowWithFreya-Test/1.0")
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.error").value("Invalid Google ID token"));
+                .andExpect(jsonPath("$.error").value("Token has expired"));
     }
 
     @Test
@@ -750,7 +750,7 @@ class AuthControllerTest {
                 .header("User-Agent", "GrowWithFreya-Test/1.0")
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.error").value("Invalid Apple ID token"));
+                .andExpect(jsonPath("$.error").value("Token has expired"));
     }
 
     @Test

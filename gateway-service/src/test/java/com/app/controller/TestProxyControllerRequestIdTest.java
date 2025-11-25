@@ -28,14 +28,13 @@ class TestProxyControllerRequestIdTest {
     @Test
     void forwardsXRequestIdToDownstream() throws Exception {
         RestTemplate defaultRt = mock(RestTemplate.class);
-        RestTemplate cmsRt = mock(RestTemplate.class);
         RestTemplateBuilder builder = new RestTemplateBuilder();
         CircuitBreakerRegistry registry = CircuitBreakerRegistry.ofDefaults();
         @SuppressWarnings("unchecked")
         ObjectProvider<TestSimulationFlags> flagsProvider = mock(ObjectProvider.class);
         when(flagsProvider.getIfAvailable()).thenReturn(null);
 
-        TestProxyController controller = new TestProxyController(defaultRt, cmsRt, builder, registry, flagsProvider);
+        TestProxyController controller = new TestProxyController(defaultRt, builder, registry, flagsProvider);
         ReflectionTestUtils.setField(controller, "wiremockBaseUrl", "http://example.com");
 
         // Mock downstream response

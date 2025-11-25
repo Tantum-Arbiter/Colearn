@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Dimensions, Pressable, Alert, Image } from 'react-native';
+import { View, StyleSheet, Dimensions, Pressable, Alert, Image, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -12,10 +12,16 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { FontAwesome5 } from '@expo/vector-icons';
+import * as Google from 'expo-auth-session/providers/google';
 
 import { ThemedText } from '../themed-text';
 import { TermsConditionsScreen } from '../account/terms-conditions-screen';
 import { PrivacyPolicyScreen } from '../account/privacy-policy-screen';
+import { AuthService } from '@/services/auth-service';
+import { SecureStorage } from '@/services/secure-storage';
+import { ApiClient } from '@/services/api-client';
+import { useAppStore } from '@/store/app-store';
+import { ProfileSyncService } from '@/services/profile-sync-service';
 
 const { width } = Dimensions.get('window');
 
@@ -30,6 +36,17 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
   const [isAppleLoading, setIsAppleLoading] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [currentView, setCurrentView] = useState<'main' | 'terms' | 'privacy'>('main');
+  const {
+    setUserProfile,
+    setScreenTimeEnabled,
+    setNotificationsEnabled,
+    setChildAge
+  } = useAppStore();
+
+  // Google OAuth hook
+  const [request, response, promptAsync] = Google.useAuthRequest(
+    AuthService.getGoogleConfig()
+  );
 
   // Animation values
   const titleOpacity = useSharedValue(0);
@@ -80,30 +97,155 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setIsGoogleLoading(true);
 
-    // Simulate login process
-    setTimeout(() => {
-      setIsGoogleLoading(false);
-      Alert.alert(
-        'Coming Soon!',
-        'Google Sign-In will be available once OAuth credentials are configured.',
-        [{ text: 'OK', onPress: () => transitionToMainMenu(onSuccess) }]
+    try {
+      // Trigger Google OAuth flow
+      const result = await AuthService.signInWithGoogle(promptAsync);
+
+      // Store tokens securely
+      await SecureStorage.storeTokens(
+        result.tokens.accessToken,
+        result.tokens.refreshToken
       );
-    }, 1500);
+      await SecureStorage.storeUserData(result.user);
+
+      // Fetch and sync user profile + settings
+      try {
+        const profile = await ApiClient.getProfile();
+        await ProfileSyncService.fullSync(profile);
+      } catch (error) {
+        console.log('ℹ️ [LoginScreen] No profile found, user may need to create one');
+      }
+
+      // Success! Transition to main menu
+      setIsGoogleLoading(false);
+      transitionToMainMenu(onSuccess);
+    } catch (error: any) {
+      setIsGoogleLoading(false);
+      console.error('Google sign-in error:', error);
+
+      // Don't show error if user cancelled
+      if (error.message?.includes('cancelled')) {
+        return;
+      }
+
+      Alert.alert(
+        'Sign-In Failed',
+        'Failed to sign in with Google. Please try again.',
+        [{ text: 'OK' }]
+      );
+    }
   };
 
   const handleAppleLogin = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    // Check if Apple Sign-In is available (iOS only)
+    if (Platform.OS !== 'ios') {
+      Alert.alert(
+        'Not Available',
+        'Apple Sign-In is only available on iOS devices.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    const isAvailable = await AuthService.isAppleSignInAvailable();
+    if (!isAvailable) {
+      Alert.alert(
+        'Not Available',
+        'Apple Sign-In is not available on this device.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
     setIsAppleLoading(true);
 
-    // Simulate login process
-    setTimeout(() => {
-      setIsAppleLoading(false);
-      Alert.alert(
-        'Coming Soon!',
-        'Apple Sign-In will be available once OAuth credentials are configured.',
-        [{ text: 'OK', onPress: () => transitionToMainMenu(onSuccess) }]
+    try {
+      // Trigger Apple OAuth flow
+      const result = await AuthService.signInWithApple();
+
+      // Store tokens securely
+      await SecureStorage.storeTokens(
+        result.tokens.accessToken,
+        result.tokens.refreshToken
       );
-    }, 1500);
+      await SecureStorage.storeUserData(result.user);
+
+      // Fetch and store user profile + settings
+      try {
+        const profile = await ApiClient.getProfile();
+        if (profile) {
+          // Store profile (nickname, avatar)
+          setUserProfile(profile.nickname, profile.avatarType, profile.avatarId);
+          console.log('✅ [LoginScreen] Profile loaded:', profile.nickname);
+          console.log('📊 [LoginScreen] Profile data:', JSON.stringify(profile, null, 2));
+
+          // Sync settings from profile
+          if (profile.notifications) {
+            console.log('🔔 [LoginScreen] Notifications data:', profile.notifications);
+            if (typeof profile.notifications.screenTimeEnabled === 'boolean') {
+              setScreenTimeEnabled(profile.notifications.screenTimeEnabled);
+              console.log('⏰ [LoginScreen] Screen time enabled:', profile.notifications.screenTimeEnabled);
+            }
+            if (typeof profile.notifications.smartRemindersEnabled === 'boolean') {
+              setNotificationsEnabled(profile.notifications.smartRemindersEnabled);
+              console.log('🔔 [LoginScreen] Smart reminders enabled:', profile.notifications.smartRemindersEnabled);
+            }
+          } else {
+            console.log('⚠️ [LoginScreen] No notifications data in profile');
+          }
+
+          // Sync child age from profile
+          if (profile.schedule?.childAgeRange) {
+            const ageRange = profile.schedule.childAgeRange;
+            console.log('👶 [LoginScreen] Child age range:', ageRange);
+            let ageInMonths = 24; // Default
+            if (ageRange === '18-24m') {
+              ageInMonths = 21; // Middle of range
+            } else if (ageRange === '2-6y') {
+              ageInMonths = 48; // 4 years (middle of range)
+            } else if (ageRange === '6+') {
+              ageInMonths = 84; // 7 years
+            }
+            setChildAge(ageInMonths);
+            console.log('👶 [LoginScreen] Child age set to:', ageInMonths, 'months');
+          } else {
+            console.log('⚠️ [LoginScreen] No schedule/childAgeRange data in profile');
+          }
+
+          console.log('✅ [LoginScreen] Settings synced from backend');
+        }
+      } catch (error) {
+        console.log('ℹ️ [LoginScreen] No profile found, user may need to create one');
+      }
+
+      // Sync reminders from backend
+      try {
+        await reminderService.syncFromBackend();
+        console.log('✅ [LoginScreen] Reminders synced from backend');
+      } catch (error) {
+        console.log('ℹ️ [LoginScreen] Failed to sync reminders:', error);
+      }
+
+      // Success! Transition to main menu
+      setIsAppleLoading(false);
+      transitionToMainMenu(onSuccess);
+    } catch (error: any) {
+      setIsAppleLoading(false);
+      console.error('Apple sign-in error:', error);
+
+      // Don't show error if user cancelled
+      if (error.message?.includes('cancelled')) {
+        return;
+      }
+
+      Alert.alert(
+        'Sign-In Failed',
+        'Failed to sign in with Apple. Please try again.',
+        [{ text: 'OK' }]
+      );
+    }
   };
 
   const handleSkip = () => {
