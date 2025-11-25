@@ -26,6 +26,9 @@ public class ChildProfile {
     @JsonProperty("avatar")
     private String avatar; // "boy" or "girl" or custom avatar URL
 
+    @JsonProperty("ageRange")
+    private String ageRange; // e.g., "2-3", "4-5", "6+"
+
     @JsonProperty("isActive")
     private boolean isActive = true;
 
@@ -91,6 +94,15 @@ public class ChildProfile {
 
     public void setAvatar(String avatar) {
         this.avatar = avatar;
+        this.updatedAt = Instant.now();
+    }
+
+    public String getAgeRange() {
+        return ageRange;
+    }
+
+    public void setAgeRange(String ageRange) {
+        this.ageRange = ageRange;
         this.updatedAt = Instant.now();
     }
 

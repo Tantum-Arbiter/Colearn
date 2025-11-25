@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -402,8 +401,8 @@ public class UserDTOs {
         @JsonProperty("avatar")
         private String avatar;
 
-        @JsonProperty("birthDate")
-        private LocalDate birthDate;
+        @JsonProperty("ageRange")
+        private String ageRange; // e.g., "2-3", "4-5", "6+"
 
         // Getters and Setters
         public String getName() { return name; }
@@ -412,8 +411,8 @@ public class UserDTOs {
         public String getAvatar() { return avatar; }
         public void setAvatar(String avatar) { this.avatar = avatar; }
 
-        public LocalDate getBirthDate() { return birthDate; }
-        public void setBirthDate(LocalDate birthDate) { this.birthDate = birthDate; }
+        public String getAgeRange() { return ageRange; }
+        public void setAgeRange(String ageRange) { this.ageRange = ageRange; }
     }
 
     /**
@@ -476,8 +475,8 @@ public class UserDTOs {
         @JsonProperty("avatar")
         private String avatar;
 
-        @JsonProperty("birthDate")
-        private LocalDate birthDate;
+        @JsonProperty("ageRange")
+        private String ageRange; // e.g., "2-3", "4-5", "6+"
 
         @JsonProperty("preferences")
         private Map<String, Object> preferences;
@@ -489,8 +488,8 @@ public class UserDTOs {
         public String getAvatar() { return avatar; }
         public void setAvatar(String avatar) { this.avatar = avatar; }
 
-        public LocalDate getBirthDate() { return birthDate; }
-        public void setBirthDate(LocalDate birthDate) { this.birthDate = birthDate; }
+        public String getAgeRange() { return ageRange; }
+        public void setAgeRange(String ageRange) { this.ageRange = ageRange; }
 
         public Map<String, Object> getPreferences() { return preferences; }
         public void setPreferences(Map<String, Object> preferences) { this.preferences = preferences; }
