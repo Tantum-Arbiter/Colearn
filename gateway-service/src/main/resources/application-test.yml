@@ -27,6 +27,8 @@ cors:
     - exp://localhost:*
     - exp://127.0.0.1:*
     - http://host.docker.internal:*
+    - https://app.growwithfreya.com
+    - https://www.growwithfreya.com
   allowed-methods:
     - GET
     - POST

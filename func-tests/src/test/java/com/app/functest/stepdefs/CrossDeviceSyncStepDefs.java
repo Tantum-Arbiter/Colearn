@@ -346,12 +346,12 @@ public class CrossDeviceSyncStepDefs extends BaseStepDefs {
         String avatarType = profileResponse.jsonPath().getString("avatarType");
         String avatarId = profileResponse.jsonPath().getString("avatarId");
 
-        // Get existing notifications to preserve them
+        // Get existing notifications to preserve them - use proper JSON serialization
         String notificationsJson = "{}";
         try {
-            Object notifications = profileResponse.jsonPath().get("notifications");
-            if (notifications != null) {
-                notificationsJson = profileResponse.jsonPath().getJsonObject("notifications").toString();
+            Map<String, Object> notifications = profileResponse.jsonPath().getMap("notifications");
+            if (notifications != null && !notifications.isEmpty()) {
+                notificationsJson = mapToJson(notifications);
             }
         } catch (Exception e) {
             // No notifications, use empty object
@@ -375,6 +375,34 @@ public class CrossDeviceSyncStepDefs extends BaseStepDefs {
             .body(body)
             .when()
             .post("/api/profile");
+    }
+
+    /**
+     * Helper method to convert a Map to JSON string
+     */
+    private String mapToJson(Map<String, Object> map) {
+        StringBuilder json = new StringBuilder("{");
+        boolean first = true;
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            if (!first) {
+                json.append(",");
+            }
+            first = false;
+            json.append("\"").append(entry.getKey()).append("\":");
+            Object value = entry.getValue();
+            if (value instanceof String) {
+                json.append("\"").append(value).append("\"");
+            } else if (value instanceof Boolean || value instanceof Number) {
+                json.append(value);
+            } else if (value == null) {
+                json.append("null");
+            } else {
+                // For complex objects, convert to string representation
+                json.append("\"").append(value.toString()).append("\"");
+            }
+        }
+        json.append("}");
+        return json.toString();
     }
 
     @Then("the response field {string} should be an array with {int} items")

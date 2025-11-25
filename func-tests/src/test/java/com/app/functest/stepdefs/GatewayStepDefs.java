@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Step definitions for gateway service functional tests
  */
-public class GatewayStepDefs {
+public class GatewayStepDefs extends BaseStepDefs {
 
     @Before(order = 0)
     public void configureWireMockClient() {
@@ -62,7 +62,6 @@ public class GatewayStepDefs {
         }
     }
 
-    private Response lastResponse;
     private String gatewayBaseUrl;
 
     @Given("the gateway service is healthy")
