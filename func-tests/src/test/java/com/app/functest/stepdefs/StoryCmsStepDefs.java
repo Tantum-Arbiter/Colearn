@@ -286,13 +286,8 @@ public class StoryCmsStepDefs extends BaseStepDefs {
         assertThat("Response array should be empty", array.size(), equalTo(0));
     }
 
-    @Then("the response should have field {string} with value {string}")
-    public void theResponseShouldHaveFieldWithValue(String fieldName, String expectedValue) {
-        String actualValue = lastResponse.jsonPath().getString(fieldName);
-        assertThat("Response should have field: " + fieldName, actualValue, notNullValue());
-        assertThat("Field " + fieldName + " should have value: " + expectedValue,
-                actualValue, equalTo(expectedValue));
-    }
+    // Note: "the response should have field {string} with value {string}" step
+    // is defined in AuthenticationStepDefs.java to avoid duplication
 
     @When("I make a GET request to {string} without client headers")
     public void iMakeAGETRequestWithoutClientHeaders(String endpoint) {
