@@ -69,12 +69,23 @@ public abstract class BaseStepDefs {
     /**
      * Get IAM identity token for Cloud Run authentication.
      * Uses the GCP metadata server which is available in Cloud Run environments.
+     * The audience must match the Cloud Run service URL (GATEWAY_AUDIENCE), not the
+     * Cloudflare/proxy URL (GATEWAY_BASE_URL).
      */
     protected static String getGcpIamToken() {
         if (!gcpIamTokenFetched) {
             gcpIamTokenFetched = true;
             try {
-                String targetAudience = getGatewayBaseUrl();
+                // Use GATEWAY_AUDIENCE for IAM token (Cloud Run service URL)
+                // Fall back to GATEWAY_BASE_URL if not set
+                String targetAudience = System.getenv("GATEWAY_AUDIENCE");
+                if (targetAudience == null || targetAudience.isBlank()) {
+                    targetAudience = System.getProperty("GATEWAY_AUDIENCE");
+                }
+                if (targetAudience == null || targetAudience.isBlank()) {
+                    targetAudience = getGatewayBaseUrl();
+                    logger.warn("GATEWAY_AUDIENCE not set, falling back to GATEWAY_BASE_URL: {}", targetAudience);
+                }
                 logger.info("=== IAM Token Generation (Metadata Server) ===");
                 logger.info("Target audience: {}", targetAudience);
 
