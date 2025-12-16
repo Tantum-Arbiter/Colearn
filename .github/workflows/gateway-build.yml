@@ -208,7 +208,7 @@ jobs:
             --cpu=2 \
             --max-retries=0 \
             --task-timeout=300s \
-            --set-env-vars "BACKEND_URL_GATEWAY_SERVICE=${{ secrets.BACKEND_URL_GATEWAY_SERVICE }},GATEWAY_AUDIENCE=${{ secrets.GATEWAY_AUDIENCE }},CUCUMBER_TAGS=@gcp-dev and not @emulator-only,TEST_ENV=gcp,GCP_FIREBASE_ID_TOKEN=${{ steps.firebase-token.outputs.token }}"
+            --set-env-vars "GATEWAY_BASE_URL=${{ secrets.BACKEND_URL_GATEWAY_SERVICE }},BACKEND_URL_GATEWAY_SERVICE=${{ secrets.BACKEND_URL_GATEWAY_SERVICE }},GATEWAY_AUDIENCE=${{ secrets.GATEWAY_AUDIENCE }},CUCUMBER_TAGS=@gcp-dev and not @emulator-only,TEST_ENV=gcp,GCP_FIREBASE_ID_TOKEN=${{ steps.firebase-token.outputs.token }}"
 
       - name: Execute Cloud Run Job
         id: execute-tests

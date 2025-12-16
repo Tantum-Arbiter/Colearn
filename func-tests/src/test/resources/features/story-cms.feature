@@ -1,4 +1,4 @@
-@story-cms @local @docker @gcp-dev
+@story-cms @local @docker @emulator-only
 Feature: Story CMS and Delta-Sync
   As a mobile app
   I want to sync story metadata from Firestore
