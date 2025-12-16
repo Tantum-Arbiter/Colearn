@@ -239,7 +239,14 @@ public class AuthenticationStepDefs extends BaseStepDefs {
 
     @Given("I have a valid authentication token")
     public void iHaveAValidAuthenticationToken() {
-        this.authToken = "gateway-access-token";
+        if (isGcpMode()) {
+            this.authToken = getGcpAuthToken();
+            if (this.authToken == null || this.authToken.isBlank()) {
+                throw new IllegalStateException("GCP mode requires Firebase authentication but no token was obtained");
+            }
+        } else {
+            this.authToken = "gateway-access-token";
+        }
         currentAuthToken = this.authToken;
         this.requestSpec = applyDefaultClientHeaders(given()).header("Authorization", "Bearer " + authToken)
                                   .header("Content-Type", "application/json");
@@ -810,7 +817,16 @@ public class AuthenticationStepDefs extends BaseStepDefs {
         RequestSpecification request = providedClientHeader ? given() : applyDefaultClientHeaders(given());
         if (pendingHeaders != null) {
             for (Map.Entry<String, String> header : pendingHeaders.entrySet()) {
-                request.header(header.getKey(), header.getValue());
+                String value = header.getValue();
+                // In GCP mode, replace placeholder tokens with the real Firebase-obtained token
+                if (isGcpMode() && header.getKey().equalsIgnoreCase("Authorization") &&
+                    (value.contains("valid-user-test") || value.contains("gateway-access-token"))) {
+                    String gcpToken = getGcpAuthToken();
+                    if (gcpToken != null && !gcpToken.isBlank()) {
+                        value = "Bearer " + gcpToken;
+                    }
+                }
+                request.header(header.getKey(), value);
             }
         }
         if (authToken != null && !authToken.isBlank()) {
@@ -846,7 +862,16 @@ public class AuthenticationStepDefs extends BaseStepDefs {
         );
         RequestSpecification request = providedClientHeader ? given() : applyDefaultClientHeaders(given());
         for (Map.Entry<String, String> header : headers.entrySet()) {
-            request.header(header.getKey(), header.getValue());
+            String value = header.getValue();
+            // In GCP mode, replace placeholder tokens with the real Firebase-obtained token
+            if (isGcpMode() && header.getKey().equalsIgnoreCase("Authorization") &&
+                (value.contains("valid-user-test") || value.contains("gateway-access-token"))) {
+                String gcpToken = getGcpAuthToken();
+                if (gcpToken != null && !gcpToken.isBlank()) {
+                    value = "Bearer " + gcpToken;
+                }
+            }
+            request.header(header.getKey(), value);
         }
         lastResponse = request.when().get(endpoint);
     }
