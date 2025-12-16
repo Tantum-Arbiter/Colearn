@@ -855,6 +855,13 @@ public class AuthenticationStepDefs extends BaseStepDefs {
         lastResponse = req.when().get(endpoint);
     }
 
+    @When("I send a GET request to {string} with header {string} value {string}")
+    public void iSendGetRequestWithSingleHeader(String endpoint, String headerName, String headerValue) {
+        RequestSpecification req = applyDefaultClientHeaders(given());
+        req.header(headerName, headerValue);
+        lastResponse = req.when().get(endpoint);
+    }
+
     @When("I send a GET request to {string} with headers:")
     public void iSendGetRequestWithHeaders(String endpoint, Map<String, String> headers) {
         boolean providedClientHeader = headers != null && headers.keySet().stream().anyMatch(k ->

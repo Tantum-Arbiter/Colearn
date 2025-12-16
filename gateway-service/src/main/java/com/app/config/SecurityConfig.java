@@ -93,7 +93,9 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        boolean isTestProfile = activeProfile != null && activeProfile.toLowerCase().contains("test");
+        boolean isTestOrDevProfile = activeProfile != null &&
+            (activeProfile.toLowerCase().contains("test") || activeProfile.toLowerCase().contains("dev"));
+        boolean isProdProfile = activeProfile != null && activeProfile.toLowerCase().contains("prod");
 
         http
             // Disable CSRF for stateless API
@@ -115,18 +117,18 @@ public class SecurityConfig {
             // Configure authorization rules
             .authorizeHttpRequests(auth -> {
                 // Internal/private endpoints
-                // In test profile: accessible for functional testing
+                // In test/dev profiles: accessible for functional testing and debugging
                 // In production: blocked from external clients (use GCP IAP or VPC for internal access)
-                if (isTestProfile) {
-                    logger.info("Test profile active - allowing access to /private/**, /actuator/**, /health/**");
-                    auth.requestMatchers("/private/**").permitAll();
-                    auth.requestMatchers("/actuator/**").permitAll();
-                    auth.requestMatchers("/health/**").permitAll();
-                } else {
+                if (isProdProfile) {
                     logger.info("Production profile - blocking access to /private/**, /actuator/**, /health/**");
                     auth.requestMatchers("/private/**").denyAll();
                     auth.requestMatchers("/actuator/**").denyAll();
                     auth.requestMatchers("/health/**").denyAll();
+                } else {
+                    logger.info("Non-prod profile ({}) - allowing access to /private/**, /actuator/**, /health/**", activeProfile);
+                    auth.requestMatchers("/private/**").permitAll();
+                    auth.requestMatchers("/actuator/**").permitAll();
+                    auth.requestMatchers("/health/**").permitAll();
                 }
 
                 // Auth endpoints - accessible for login flow
