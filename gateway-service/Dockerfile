@@ -11,14 +11,14 @@ WORKDIR /app
 COPY build.gradle settings.gradle ./
 COPY gradle/ gradle/
 
-# Download dependencies (this layer will be cached if dependencies don't change)
-RUN gradle dependencies --no-daemon
+# Download dependencies with --refresh-dependencies to ensure latest versions
+RUN gradle dependencies --no-daemon --refresh-dependencies
 
 # Copy source code
 COPY src/ src/
 
-# Build the application
-RUN gradle build --no-daemon -x test
+# Build the application (clean first to ensure fresh build)
+RUN gradle clean build --no-daemon -x test
 
 # Runtime stage
 FROM eclipse-temurin:21-jre
