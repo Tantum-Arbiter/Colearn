@@ -73,11 +73,18 @@ public abstract class BaseStepDefs {
             gcpIamTokenFetched = true;
             try {
                 String targetAudience = getGatewayBaseUrl();
-                logger.info("Fetching IAM identity token for audience: {}", targetAudience);
+                logger.info("=== IAM Token Generation ===");
+                logger.info("Target audience: {}", targetAudience);
+                logger.info("TEST_ENV: {}", System.getenv("TEST_ENV"));
+                logger.info("isGcpMode: {}", isGcpMode());
 
                 GoogleCredentials credentials = GoogleCredentials.getApplicationDefault();
+                logger.info("Credentials class: {}", credentials.getClass().getName());
+
                 if (!(credentials instanceof IdTokenProvider)) {
-                    logger.warn("Default credentials do not support ID tokens - IAM auth may fail");
+                    logger.error("FATAL: Credentials class {} does not implement IdTokenProvider",
+                            credentials.getClass().getName());
+                    logger.error("Cloud Run IAM authentication will fail!");
                     return null;
                 }
 
@@ -88,9 +95,10 @@ public abstract class BaseStepDefs {
 
                 idTokenCredentials.refresh();
                 gcpIamToken = idTokenCredentials.getIdToken().getTokenValue();
-                logger.info("IAM identity token obtained successfully");
+                logger.info("IAM identity token obtained successfully (length: {})", gcpIamToken.length());
             } catch (Exception e) {
-                logger.error("Failed to get IAM identity token: {}", e.getMessage());
+                logger.error("Failed to get IAM identity token: {} - {}", e.getClass().getName(), e.getMessage());
+                e.printStackTrace();
             }
         }
         return gcpIamToken;
@@ -163,7 +171,10 @@ public abstract class BaseStepDefs {
         if (isGcpMode()) {
             String iamToken = getGcpIamToken();
             if (iamToken != null) {
+                logger.info("Adding IAM token to request (length: {})", iamToken.length());
                 spec = spec.header("Authorization", "Bearer " + iamToken);
+            } else {
+                logger.error("IAM token is NULL - Cloud Run will reject request with 403!");
             }
         }
 
