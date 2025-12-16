@@ -62,6 +62,10 @@ dependencies {
 	implementation 'com.google.firebase:firebase-admin:9.7.0'
 	implementation 'com.google.auth:google-auth-library-oauth2-http:1.29.0'
 
+	// Explicit dependencies to fix CVEs in firebase-admin transitive deps
+	implementation "io.grpc:grpc-netty-shaded:${grpcVersion}"
+	implementation "io.netty:netty-codec-http:${nettyVersion}"
+
 	// Monitoring
 	implementation 'io.micrometer:micrometer-registry-prometheus'
 
