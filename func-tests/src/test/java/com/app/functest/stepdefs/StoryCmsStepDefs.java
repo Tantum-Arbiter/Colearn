@@ -180,11 +180,8 @@ public class StoryCmsStepDefs extends BaseStepDefs {
         assertThat("Response should be a valid JSON array", array, notNullValue());
     }
 
-    @Then("the response should contain field {string}")
-    public void theResponseShouldContainField(String fieldName) {
-        Object value = lastResponse.jsonPath().get(fieldName);
-        assertThat("Response should contain field: " + fieldName, value, notNullValue());
-    }
+    // Note: "the response should contain field {string}" step
+    // is defined in CrossDeviceSyncStepDefs.java to avoid duplication
 
     @Then("the response field {string} should be greater than {int}")
     public void theResponseFieldShouldBeGreaterThan(String fieldName, int value) {
@@ -213,12 +210,8 @@ public class StoryCmsStepDefs extends BaseStepDefs {
         }
     }
 
-    @Then("the response time should be less than {int} milliseconds")
-    public void theResponseTimeShouldBeLessThanMilliseconds(int maxTime) {
-        long responseTime = lastResponse.getTime();
-        assertThat("Response time should be less than " + maxTime + "ms",
-                responseTime, lessThan((long) maxTime));
-    }
+    // Note: "the response time should be less than {int} milliseconds" step
+    // is defined in GatewayStepDefs.java to avoid duplication
 
     @Then("device {string} should receive all available stories")
     public void deviceShouldReceiveAllAvailableStories(String deviceId) {
