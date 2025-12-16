@@ -31,7 +31,7 @@ ext {
 	set('springCloudVersion', "2025.0.0")
 	set('nettyVersion', "4.1.129.Final")
 	set('grpcVersion', "1.75.0")
-	set('googleAuthVersion', "1.30.0")
+	set('googleAuthVersion', "1.37.1")
 }
 
 // Force transitive dependency versions to fix CVEs and version mismatches
