@@ -33,6 +33,20 @@ ext {
 	set('grpcVersion', "1.75.0")
 }
 
+// Force transitive dependency versions to fix CVEs
+configurations.all {
+	resolutionStrategy {
+		force "io.grpc:grpc-netty-shaded:${grpcVersion}"
+		force "io.netty:netty-handler:${nettyVersion}"
+		force "io.netty:netty-codec-http:${nettyVersion}"
+		force "io.netty:netty-common:${nettyVersion}"
+		force "io.netty:netty-buffer:${nettyVersion}"
+		force "io.netty:netty-transport:${nettyVersion}"
+		force "io.netty:netty-codec:${nettyVersion}"
+		force "io.netty:netty-resolver:${nettyVersion}"
+	}
+}
+
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-authorization-server'
 	implementation 'org.springframework.cloud:spring-cloud-starter-gateway-server-webmvc'
@@ -47,18 +61,6 @@ dependencies {
 	// Firebase dependencies
 	implementation 'com.google.firebase:firebase-admin:9.7.0'
 	implementation 'com.google.auth:google-auth-library-oauth2-http:1.29.0'
-
-	// Security fixes for transitive dependencies (CVE-2025-55163, CVE-2025-24970, CVE-2025-58056, CVE-2025-58057, CVE-2024-47535, CVE-2025-25193, CVE-2025-67735)
-	constraints {
-		implementation("io.grpc:grpc-netty-shaded:${grpcVersion}")
-		implementation("io.netty:netty-handler:${nettyVersion}")
-		implementation("io.netty:netty-codec-http:${nettyVersion}")
-		implementation("io.netty:netty-common:${nettyVersion}")
-		implementation("io.netty:netty-buffer:${nettyVersion}")
-		implementation("io.netty:netty-transport:${nettyVersion}")
-		implementation("io.netty:netty-codec:${nettyVersion}")
-		implementation("io.netty:netty-resolver:${nettyVersion}")
-	}
 
 	// Monitoring
 	implementation 'io.micrometer:micrometer-registry-prometheus'
