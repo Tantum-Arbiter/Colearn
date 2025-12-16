@@ -1,4 +1,4 @@
-@health @local @docker @gcp-dev
+@health @local @docker @emulator-only
 Feature: Gateway Service Health
   As a system administrator
   I want to monitor the health of the gateway service

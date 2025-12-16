@@ -1,4 +1,4 @@
-@metrics @prometheus @local @docker @gcp-dev
+@metrics @prometheus @local @docker @emulator-only
 Feature: Prometheus Metrics for Token and Profile Operations
 
   Background:
