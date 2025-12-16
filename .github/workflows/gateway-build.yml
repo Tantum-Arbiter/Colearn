@@ -98,19 +98,12 @@ jobs:
             --region ${{ env.REGION }} \
             --project ${{ env.PROJECT_ID }} \
             --service-account gateway-dev-sa@${{ env.PROJECT_ID }}.iam.gserviceaccount.com \
-            --no-allow-unauthenticated \
+            --ingress internal-and-cloud-load-balancing \
+            --allow-unauthenticated \
             --memory 1Gi \
             --cpu 1 \
             --timeout 300 \
-            --set-env-vars "SPRING_PROFILES_ACTIVE=gcp-dev,FIREBASE_PROJECT_ID=${{ env.PROJECT_ID }},BACKEND_URL_GATEWAY_SERVICE=${{ secrets.BACKEND_URL_GATEWAY_SERVICE }},GATEWAY_AUDIENCE=${{ secrets.GATEWAY_AUDIENCE }}"
-
-      - name: Grant run.invoker to func-tests service account
-        run: |
-          gcloud run services add-iam-policy-binding $SERVICE \
-            --region ${{ env.REGION }} \
-            --project ${{ env.PROJECT_ID }} \
-            --member "serviceAccount:svc-deploy-functional@${{ env.PROJECT_ID }}.iam.gserviceaccount.com" \
-            --role "roles/run.invoker"
+            --set-env-vars "SPRING_PROFILES_ACTIVE=gcp-dev,FIREBASE_PROJECT_ID=${{ env.PROJECT_ID }},BACKEND_URL_GATEWAY_SERVICE=${{ secrets.BACKEND_URL_GATEWAY_SERVICE }}"
 
   run-functional-tests:
     needs: deploy-functional
@@ -216,7 +209,7 @@ jobs:
             --cpu=2 \
             --max-retries=0 \
             --task-timeout=300s \
-            --set-env-vars "GATEWAY_BASE_URL=${{ secrets.BACKEND_URL_GATEWAY_SERVICE }},BACKEND_URL_GATEWAY_SERVICE=${{ secrets.BACKEND_URL_GATEWAY_SERVICE }},GATEWAY_AUDIENCE=${{ secrets.GATEWAY_AUDIENCE }},CUCUMBER_TAGS=@gcp-dev and not @emulator-only,TEST_ENV=gcp,GCP_FIREBASE_ID_TOKEN=${{ steps.firebase-token.outputs.token }}"
+            --set-env-vars "GATEWAY_BASE_URL=${{ secrets.BACKEND_URL_GATEWAY_SERVICE }},CUCUMBER_TAGS=@gcp-dev and not @emulator-only,TEST_ENV=gcp,GCP_FIREBASE_ID_TOKEN=${{ steps.firebase-token.outputs.token }}"
 
       - name: Execute Cloud Run Job
         id: execute-tests
