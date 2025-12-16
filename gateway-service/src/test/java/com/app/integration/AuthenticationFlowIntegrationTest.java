@@ -72,12 +72,11 @@ class AuthenticationFlowIntegrationTest {
         validAccessToken = "valid-test-access-token-123";
         validRefreshToken = "valid-test-refresh-token-456";
 
-        // Stub user and session services to avoid external Firestore dependency
+        // Stub user and session services to avoid external Firestore dependency (PII-free)
         User mockUser = new User();
         mockUser.setId("test-user-123");
-        mockUser.setEmail("test@example.com");
         mockUser.setProvider("google");
-        mockUser.setEmailVerified(true);
+        mockUser.setProviderId("google-123");
         when(userService.getUserById("test-user-123"))
             .thenReturn(CompletableFuture.completedFuture(Optional.of(mockUser)));
 
@@ -109,7 +108,7 @@ class AuthenticationFlowIntegrationTest {
                 .header("X-Device-ID", "test-device-123"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value("user-123"))
-                .andExpect(jsonPath("$.email").value("test.user@example.com"));
+                .andExpect(jsonPath("$.provider").value("google"));
 
         // Step 2: Test with another fake token
         mockMvc.perform(get("/api/auth/me")
@@ -292,12 +291,11 @@ class AuthenticationFlowIntegrationTest {
 
     @Test
     void tokenExpiry_AccessTokenExpired_ShouldBeRejected() throws Exception {
-        // Build a correctly signed but expired access token
+        // Build a correctly signed but expired access token (PII-free - no email)
         java.util.Date past = new java.util.Date(System.currentTimeMillis() - 60_000);
         String expired = com.auth0.jwt.JWT.create()
                 .withIssuer("grow-with-freya-gateway")
                 .withSubject("test-user-123")
-                .withClaim("email", "test@example.com")
                 .withClaim("provider", "google")
                 .withClaim("type", "access")
                 .withIssuedAt(new java.util.Date(System.currentTimeMillis() - 120_000))
@@ -314,12 +312,11 @@ class AuthenticationFlowIntegrationTest {
 
     @Test
     void tokenTemporal_AccessTokenNotBeforeInFuture_ShouldBeRejected() throws Exception {
-        // Build a correctly signed token that is not yet valid (nbf in the future)
+        // Build a correctly signed token that is not yet valid (nbf in the future) (PII-free - no email)
         java.util.Date futureNbf = new java.util.Date(System.currentTimeMillis() + 60_000);
         String notYetValid = com.auth0.jwt.JWT.create()
                 .withIssuer("grow-with-freya-gateway")
                 .withSubject("test-user-123")
-                .withClaim("email", "test@example.com")
                 .withClaim("provider", "google")
                 .withClaim("type", "access")
                 .withIssuedAt(new java.util.Date())
@@ -337,11 +334,10 @@ class AuthenticationFlowIntegrationTest {
 
     @Test
     void tokenType_WrongTypeRefresh_ShouldBeRejected() throws Exception {
-        // Build a correctly signed token with wrong type claim
+        // Build a correctly signed token with wrong type claim (PII-free - no email)
         String wrongType = com.auth0.jwt.JWT.create()
                 .withIssuer("grow-with-freya-gateway")
                 .withSubject("test-user-123")
-                .withClaim("email", "test@example.com")
                 .withClaim("provider", "google")
                 .withClaim("type", "refresh")
                 .withIssuedAt(new java.util.Date())
@@ -358,10 +354,10 @@ class AuthenticationFlowIntegrationTest {
 
     @Test
     void tokenIssuer_WrongIssuer_ShouldBeRejected() throws Exception {
+        // PII-free - no email claim
         String wrongIssuer = com.auth0.jwt.JWT.create()
                 .withIssuer("some-other-issuer")
                 .withSubject("test-user-123")
-                .withClaim("email", "test@example.com")
                 .withClaim("provider", "google")
                 .withClaim("type", "access")
                 .withIssuedAt(new java.util.Date())
@@ -439,10 +435,10 @@ class AuthenticationFlowIntegrationTest {
 
     @Test
     void tokenTemporal_ExpiredByOneSecond_ShouldBeRejected() throws Exception {
+        // PII-free - no email claim
         String expired = com.auth0.jwt.JWT.create()
                 .withIssuer("grow-with-freya-gateway")
                 .withSubject("test-user-123")
-                .withClaim("email", "test@example.com")
                 .withClaim("provider", "google")
                 .withClaim("type", "access")
                 .withIssuedAt(new java.util.Date(System.currentTimeMillis() - 2_000))
@@ -458,10 +454,10 @@ class AuthenticationFlowIntegrationTest {
 
     @Test
     void tokenTemporal_NotBeforeByOneSecond_ShouldBeRejected() throws Exception {
+        // PII-free - no email claim
         String notYetValid = com.auth0.jwt.JWT.create()
                 .withIssuer("grow-with-freya-gateway")
                 .withSubject("test-user-123")
-                .withClaim("email", "test@example.com")
                 .withClaim("provider", "google")
                 .withClaim("type", "access")
                 .withIssuedAt(new java.util.Date())

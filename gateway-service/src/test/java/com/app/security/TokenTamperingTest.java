@@ -165,14 +165,12 @@ class TokenTamperingTest {
 
     @Test
     void tokenTampering_WithEmptyClaims_ShouldRejectToken() throws Exception {
-        // Given - A token with empty claims
+        // Given - A token with empty claims (PII-free - no email)
         String tokenWithEmptyClaims = "valid.jwt.token";
 
         when(request.getHeader("Authorization")).thenReturn("Bearer " + tokenWithEmptyClaims);
         when(jwtConfig.validateAccessToken(tokenWithEmptyClaims)).thenReturn(decodedJWT);
         when(decodedJWT.getSubject()).thenReturn(""); // Empty subject
-        when(decodedJWT.getClaim("email")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(decodedJWT.getClaim("email").asString()).thenReturn("");
 
         // When
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
@@ -201,14 +199,12 @@ class TokenTamperingTest {
 
     @Test
     void tokenTampering_WithReplayAttack_ShouldHandleGracefully() throws Exception {
-        // Given - Same valid token used multiple times (replay attack simulation)
+        // Given - Same valid token used multiple times (replay attack simulation) (PII-free - no email)
         String replayToken = "valid.jwt.token";
 
         when(request.getHeader("Authorization")).thenReturn("Bearer " + replayToken);
         when(jwtConfig.validateAccessToken(replayToken)).thenReturn(decodedJWT);
         when(decodedJWT.getSubject()).thenReturn("user123");
-        when(decodedJWT.getClaim("email")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(decodedJWT.getClaim("email").asString()).thenReturn("test@example.com");
         when(decodedJWT.getClaim("provider")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
         when(decodedJWT.getClaim("provider").asString()).thenReturn("google");
 
@@ -224,14 +220,12 @@ class TokenTamperingTest {
 
     @Test
     void tokenTampering_WithSQLInjectionInClaims_ShouldHandleSafely() throws Exception {
-        // Given - A token with SQL injection attempt in claims
+        // Given - A token with SQL injection attempt in claims (PII-free - no email)
         String sqlInjectionToken = "valid.jwt.token";
 
         when(request.getHeader("Authorization")).thenReturn("Bearer " + sqlInjectionToken);
         when(jwtConfig.validateAccessToken(sqlInjectionToken)).thenReturn(decodedJWT);
         when(decodedJWT.getSubject()).thenReturn("'; DROP TABLE users; --");
-        when(decodedJWT.getClaim("email")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(decodedJWT.getClaim("email").asString()).thenReturn("test@example.com");
         when(decodedJWT.getClaim("provider")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
         when(decodedJWT.getClaim("provider").asString()).thenReturn("google");
 
@@ -246,16 +240,14 @@ class TokenTamperingTest {
 
     @Test
     void tokenTampering_WithXSSInClaims_ShouldHandleSafely() throws Exception {
-        // Given - A token with XSS attempt in claims
+        // Given - A token with XSS attempt in provider claim (PII-free - no email)
         String xssToken = "valid.jwt.token";
 
         when(request.getHeader("Authorization")).thenReturn("Bearer " + xssToken);
         when(jwtConfig.validateAccessToken(xssToken)).thenReturn(decodedJWT);
         when(decodedJWT.getSubject()).thenReturn("user123");
-        when(decodedJWT.getClaim("email")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(decodedJWT.getClaim("email").asString()).thenReturn("<script>alert('xss')</script>");
         when(decodedJWT.getClaim("provider")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(decodedJWT.getClaim("provider").asString()).thenReturn("google");
+        when(decodedJWT.getClaim("provider").asString()).thenReturn("<script>alert('xss')</script>");
 
         // When
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);

@@ -49,11 +49,10 @@ class JwtAuthenticationFilterTest {
 
     @Test
     void doFilterInternal_WithValidJwtToken_ShouldSetAuthentication() throws ServletException, IOException {
-        // Given
+        // Given (PII-free - no email claim)
         String validToken = "valid.jwt.token";
         String authHeader = "Bearer " + validToken;
         String userId = "test-user-123";
-        String email = "test@example.com";
         String provider = "google";
 
         when(request.getHeader("Authorization")).thenReturn(authHeader);
@@ -64,8 +63,6 @@ class JwtAuthenticationFilterTest {
 
         when(jwtConfig.validateAccessToken(validToken)).thenReturn(decodedJWT);
         when(decodedJWT.getSubject()).thenReturn(userId);
-        when(decodedJWT.getClaim("email")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(decodedJWT.getClaim("email").asString()).thenReturn(email);
         when(decodedJWT.getClaim("provider")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
         when(decodedJWT.getClaim("provider").asString()).thenReturn(provider);
 
@@ -74,12 +71,12 @@ class JwtAuthenticationFilterTest {
 
         // Then
         verify(filterChain).doFilter(request, response);
-        
+
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         assertNotNull(authentication);
         assertEquals(userId, authentication.getPrincipal());
         assertTrue(authentication.isAuthenticated());
-        
+
         // Verify user details are set
         assertNotNull(authentication.getDetails());
     }

@@ -72,10 +72,9 @@ class ProfileControllerTest {
         UsernamePasswordAuthenticationToken authentication =
             new UsernamePasswordAuthenticationToken(userId, null, authorities);
         
-        JwtAuthenticationFilter.UserAuthenticationDetails details = 
+        JwtAuthenticationFilter.UserAuthenticationDetails details =
             new JwtAuthenticationFilter.UserAuthenticationDetails();
         details.setUserId(userId);
-        details.setEmail("test@example.com");
         details.setProvider("google");
         authentication.setDetails(details);
         

@@ -3,6 +3,7 @@ package com.app.controller;
 import com.app.config.JwtConfig;
 import com.app.model.User;
 import com.app.model.UserSession;
+import com.app.repository.UserProfileRepository;
 import com.app.service.ApplicationMetricsService;
 import com.app.service.SecurityMonitoringService;
 import com.app.service.SessionService;
@@ -54,6 +55,9 @@ class AuthControllerTest {
     @MockBean
     private SessionService sessionService;
 
+    @MockBean
+    private UserProfileRepository userProfileRepository;
+
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -81,26 +85,18 @@ class AuthControllerTest {
         request.setIdToken("valid.google.id.token");
 
         when(jwtConfig.validateGoogleIdToken(anyString())).thenReturn(mockDecodedJWT);
-        when(mockDecodedJWT.getClaim("email")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(mockDecodedJWT.getClaim("email").asString()).thenReturn("test@gmail.com");
-        when(mockDecodedJWT.getClaim("name")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(mockDecodedJWT.getClaim("name").asString()).thenReturn("Test User");
-        when(mockDecodedJWT.getClaim("picture")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(mockDecodedJWT.getClaim("picture").asString()).thenReturn("https://example.com/avatar.jpg");
         when(mockDecodedJWT.getSubject()).thenReturn("google-user-123");
 
-        // Mock JWT validation instead of generateUserId (method doesn't exist)
-        when(jwtConfig.generateAccessToken(anyString(), anyString(), anyString())).thenReturn("access.token.here");
+        // Mock JWT generation (PII-free - only 2 args)
+        when(jwtConfig.generateAccessToken(anyString(), anyString())).thenReturn("access.token.here");
         when(jwtConfig.generateRefreshToken(anyString())).thenReturn("refresh.token.here");
 
-        // Mock user and session creation for successful Google auth
+        // Mock user and session creation for successful Google auth (PII-free)
         User user = new User();
         user.setId("google-user-123");
-        user.setEmail("test@gmail.com");
-        user.setName("Test User");
         user.setProvider("google");
         user.setProviderId("google-user-123");
-        when(userService.getOrCreateUser(anyString(), anyString(), eq("google"), anyString()))
+        when(userService.getOrCreateUser(eq("google"), anyString()))
                 .thenReturn(java.util.concurrent.CompletableFuture.completedFuture(user));
         when(sessionService.createSession(anyString(), anyString(), any(), any(), any(), any()))
                 .thenReturn(java.util.concurrent.CompletableFuture.completedFuture(
@@ -113,8 +109,6 @@ class AuthControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.user.email").value("test@gmail.com"))
-                .andExpect(jsonPath("$.user.name").value("Test User"))
                 .andExpect(jsonPath("$.user.provider").value("google"))
                 .andExpect(jsonPath("$.tokens.accessToken").value("access.token.here"))
                 .andExpect(jsonPath("$.tokens.refreshToken").value("refresh.token.here"));
@@ -152,31 +146,19 @@ class AuthControllerTest {
         request.setIdToken("valid.apple.id.token");
         request.setClientId("apple-client-id");
 
-        // Set user info with name
-        AuthController.UserInfo userInfo = new AuthController.UserInfo();
-        userInfo.setName("Apple User");
-        userInfo.setEmail("test@icloud.com");
-        request.setUserInfo(userInfo);
-
         when(jwtConfig.validateAppleIdToken(anyString())).thenReturn(mockDecodedJWT);
-        when(mockDecodedJWT.getClaim("email")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(mockDecodedJWT.getClaim("email").asString()).thenReturn("test@icloud.com");
-        when(mockDecodedJWT.getClaim("name")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(mockDecodedJWT.getClaim("name").asString()).thenReturn("Apple User");
         when(mockDecodedJWT.getSubject()).thenReturn("apple-user-123");
 
-        // Mock JWT validation instead of generateUserId (method doesn't exist)
-        when(jwtConfig.generateAccessToken(anyString(), anyString(), anyString())).thenReturn("access.token.here");
+        // Mock JWT generation (PII-free - only 2 args)
+        when(jwtConfig.generateAccessToken(anyString(), anyString())).thenReturn("access.token.here");
         when(jwtConfig.generateRefreshToken(anyString())).thenReturn("refresh.token.here");
 
-        // Mock user and session creation for successful Apple auth
+        // Mock user and session creation for successful Apple auth (PII-free)
         User appleUser = new User();
         appleUser.setId("apple-user-123");
-        appleUser.setEmail("test@icloud.com");
-        appleUser.setName("Apple User");
         appleUser.setProvider("apple");
         appleUser.setProviderId("apple-user-123");
-        when(userService.getOrCreateUser(anyString(), anyString(), eq("apple"), anyString()))
+        when(userService.getOrCreateUser(eq("apple"), anyString()))
                 .thenReturn(java.util.concurrent.CompletableFuture.completedFuture(appleUser));
         when(sessionService.createSession(anyString(), anyString(), any(), any(), any(), any()))
                 .thenReturn(java.util.concurrent.CompletableFuture.completedFuture(
@@ -189,8 +171,6 @@ class AuthControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.user.email").value("test@icloud.com"))
-                .andExpect(jsonPath("$.user.name").value("Apple User"))
                 .andExpect(jsonPath("$.user.provider").value("apple"))
                 .andExpect(jsonPath("$.tokens.accessToken").value("access.token.here"))
                 .andExpect(jsonPath("$.tokens.refreshToken").value("refresh.token.here"));
@@ -208,10 +188,10 @@ class AuthControllerTest {
         // Use validateAccessToken instead of validateRefreshToken (method doesn't exist)
         when(jwtConfig.validateAccessToken(anyString())).thenReturn(mockDecodedJWT);
         when(mockDecodedJWT.getSubject()).thenReturn("user-123");
-        when(jwtConfig.generateAccessToken(anyString(), anyString(), anyString())).thenReturn("new.access.token");
+        when(jwtConfig.generateAccessToken(anyString(), anyString())).thenReturn("new.access.token");
         when(jwtConfig.generateRefreshToken(anyString())).thenReturn("new.refresh.token");
 
-        // Mock session and user for refresh flow
+        // Mock session and user for refresh flow (PII-free)
         UserSession session = new UserSession();
         session.setId("session-123");
         session.setUserId("user-123");
@@ -221,12 +201,14 @@ class AuthControllerTest {
                 .thenReturn(java.util.concurrent.CompletableFuture.completedFuture(java.util.Optional.of(session)));
         User refreshUser = new User();
         refreshUser.setId("user-123");
-        refreshUser.setEmail("user@example.com");
         refreshUser.setProvider("google");
         when(userService.getUserById(eq("user-123")))
                 .thenReturn(java.util.concurrent.CompletableFuture.completedFuture(java.util.Optional.of(refreshUser)));
         when(sessionService.validateAndRefreshSession(anyString(), anyString()))
                 .thenReturn(java.util.concurrent.CompletableFuture.completedFuture(session));
+        // Mock userProfileRepository for profile sync
+        when(userProfileRepository.findByUserId(anyString()))
+                .thenReturn(java.util.concurrent.CompletableFuture.completedFuture(java.util.Optional.empty()));
 
         // When & Then
         mockMvc.perform(post("/auth/refresh")
@@ -307,27 +289,18 @@ class AuthControllerTest {
         // Given
         AuthController.GoogleAuthRequest request = new AuthController.GoogleAuthRequest();
         request.setIdToken("valid.google.id.token");
-        // clientId is optional and ignored by backend
 
         when(jwtConfig.validateGoogleIdToken(anyString())).thenReturn(mockDecodedJWT);
-        when(mockDecodedJWT.getClaim("email")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(mockDecodedJWT.getClaim("email").asString()).thenReturn("test@gmail.com");
-        when(mockDecodedJWT.getClaim("name")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(mockDecodedJWT.getClaim("name").asString()).thenReturn("Test User");
         when(mockDecodedJWT.getSubject()).thenReturn("google-user-123");
-        when(mockDecodedJWT.getClaim("picture")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(mockDecodedJWT.getClaim("picture").asString()).thenReturn("https://example.com/avatar.jpg");
 
-
+        // Mock user and session creation (PII-free)
         User user = new User();
         user.setId("google-user-123");
-        user.setEmail("test@gmail.com");
-        user.setName("Test User");
         user.setProvider("google");
         user.setProviderId("google-user-123");
-        when(userService.getOrCreateUser(anyString(), anyString(), eq("google"), anyString()))
+        when(userService.getOrCreateUser(eq("google"), anyString()))
                 .thenReturn(java.util.concurrent.CompletableFuture.completedFuture(user));
-        when(jwtConfig.generateAccessToken(anyString(), anyString(), anyString())).thenReturn("access.token.here");
+        when(jwtConfig.generateAccessToken(anyString(), anyString())).thenReturn("access.token.here");
         when(jwtConfig.generateRefreshToken(anyString())).thenReturn("refresh.token.here");
         when(sessionService.createSession(anyString(), anyString(), any(), any(), any(), any()))
                 .thenReturn(java.util.concurrent.CompletableFuture.completedFuture(
@@ -340,7 +313,7 @@ class AuthControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.user.email").value("test@gmail.com"));
+                .andExpect(jsonPath("$.user.provider").value("google"));
     }
 
     @Test
@@ -415,30 +388,6 @@ class AuthControllerTest {
     }
 
     @Test
-    void authenticateWithGoogle_WithNullClaims_ShouldHandleGracefully() throws Exception {
-        // Given
-        AuthController.GoogleAuthRequest request = new AuthController.GoogleAuthRequest();
-        request.setIdToken("valid.google.id.token");
-
-        when(jwtConfig.validateGoogleIdToken(anyString())).thenReturn(mockDecodedJWT);
-        when(mockDecodedJWT.getClaim("email")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(mockDecodedJWT.getClaim("email").asString()).thenReturn(null);
-        when(mockDecodedJWT.getClaim("name")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(mockDecodedJWT.getClaim("name").asString()).thenReturn(null);
-        when(mockDecodedJWT.getClaim("picture")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(mockDecodedJWT.getClaim("picture").asString()).thenReturn(null);
-        when(mockDecodedJWT.getSubject()).thenReturn("google-user-123");
-
-        // When & Then
-        mockMvc.perform(post("/auth/google")
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("User-Agent", "GrowWithFreya-Test/1.0")
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error").exists());
-    }
-    @Test
     void authenticateWithGoogle_WithValidRawNonce_ShouldSucceed() throws Exception {
         // Given
         AuthController.GoogleAuthRequest request = new AuthController.GoogleAuthRequest();
@@ -446,25 +395,18 @@ class AuthControllerTest {
         request.setNonce("raw-nonce-123");
 
         when(jwtConfig.validateGoogleIdToken(anyString())).thenReturn(mockDecodedJWT);
-        when(mockDecodedJWT.getClaim("email")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(mockDecodedJWT.getClaim("email").asString()).thenReturn("test@gmail.com");
-        when(mockDecodedJWT.getClaim("name")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(mockDecodedJWT.getClaim("name").asString()).thenReturn("Test User");
-        when(mockDecodedJWT.getClaim("picture")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(mockDecodedJWT.getClaim("picture").asString()).thenReturn("https://example.com/avatar.jpg");
         when(mockDecodedJWT.getClaim("nonce")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
         when(mockDecodedJWT.getClaim("nonce").asString()).thenReturn("raw-nonce-123");
         when(mockDecodedJWT.getSubject()).thenReturn("google-user-123");
 
+        // Mock user and session creation (PII-free)
         User user = new User();
         user.setId("google-user-123");
-        user.setEmail("test@gmail.com");
-        user.setName("Test User");
         user.setProvider("google");
         user.setProviderId("google-user-123");
-        when(userService.getOrCreateUser(anyString(), anyString(), eq("google"), anyString()))
+        when(userService.getOrCreateUser(eq("google"), anyString()))
                 .thenReturn(java.util.concurrent.CompletableFuture.completedFuture(user));
-        when(jwtConfig.generateAccessToken(anyString(), anyString(), anyString())).thenReturn("access.token.here");
+        when(jwtConfig.generateAccessToken(anyString(), anyString())).thenReturn("access.token.here");
         when(jwtConfig.generateRefreshToken(anyString())).thenReturn("refresh.token.here");
         when(sessionService.createSession(anyString(), anyString(), any(), any(), any(), any()))
                 .thenReturn(java.util.concurrent.CompletableFuture.completedFuture(
@@ -492,25 +434,18 @@ class AuthControllerTest {
         request.setNonce(rawNonce);
 
         when(jwtConfig.validateGoogleIdToken(anyString())).thenReturn(mockDecodedJWT);
-        when(mockDecodedJWT.getClaim("email")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(mockDecodedJWT.getClaim("email").asString()).thenReturn("test@gmail.com");
-        when(mockDecodedJWT.getClaim("name")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(mockDecodedJWT.getClaim("name").asString()).thenReturn("Test User");
-        when(mockDecodedJWT.getClaim("picture")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(mockDecodedJWT.getClaim("picture").asString()).thenReturn("https://example.com/avatar.jpg");
         when(mockDecodedJWT.getClaim("nonce")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
         when(mockDecodedJWT.getClaim("nonce").asString()).thenReturn(hashedB64u);
         when(mockDecodedJWT.getSubject()).thenReturn("google-user-123");
 
+        // Mock user and session creation (PII-free)
         User user = new User();
         user.setId("google-user-123");
-        user.setEmail("test@gmail.com");
-        user.setName("Test User");
         user.setProvider("google");
         user.setProviderId("google-user-123");
-        when(userService.getOrCreateUser(anyString(), anyString(), eq("google"), anyString()))
+        when(userService.getOrCreateUser(eq("google"), anyString()))
                 .thenReturn(java.util.concurrent.CompletableFuture.completedFuture(user));
-        when(jwtConfig.generateAccessToken(anyString(), anyString(), anyString())).thenReturn("access.token.here");
+        when(jwtConfig.generateAccessToken(anyString(), anyString())).thenReturn("access.token.here");
         when(jwtConfig.generateRefreshToken(anyString())).thenReturn("refresh.token.here");
         when(sessionService.createSession(anyString(), anyString(), any(), any(), any(), any()))
                 .thenReturn(java.util.concurrent.CompletableFuture.completedFuture(
@@ -533,12 +468,6 @@ class AuthControllerTest {
         request.setNonce("present-but-token-missing");
 
         when(jwtConfig.validateGoogleIdToken(anyString())).thenReturn(mockDecodedJWT);
-        when(mockDecodedJWT.getClaim("email")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(mockDecodedJWT.getClaim("email").asString()).thenReturn("test@gmail.com");
-        when(mockDecodedJWT.getClaim("name")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(mockDecodedJWT.getClaim("name").asString()).thenReturn("Test User");
-        when(mockDecodedJWT.getClaim("picture")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(mockDecodedJWT.getClaim("picture").asString()).thenReturn("https://example.com/avatar.jpg");
         when(mockDecodedJWT.getClaim("nonce")).thenReturn(null);
         when(mockDecodedJWT.getSubject()).thenReturn("google-user-123");
 
@@ -559,12 +488,6 @@ class AuthControllerTest {
         request.setNonce("nonce-a");
 
         when(jwtConfig.validateGoogleIdToken(anyString())).thenReturn(mockDecodedJWT);
-        when(mockDecodedJWT.getClaim("email")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(mockDecodedJWT.getClaim("email").asString()).thenReturn("test@gmail.com");
-        when(mockDecodedJWT.getClaim("name")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(mockDecodedJWT.getClaim("name").asString()).thenReturn("Test User");
-        when(mockDecodedJWT.getClaim("picture")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(mockDecodedJWT.getClaim("picture").asString()).thenReturn("https://example.com/avatar.jpg");
         when(mockDecodedJWT.getClaim("nonce")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
         when(mockDecodedJWT.getClaim("nonce").asString()).thenReturn("different-nonce");
         when(mockDecodedJWT.getSubject()).thenReturn("google-user-123");
@@ -586,21 +509,18 @@ class AuthControllerTest {
         request.setNonce("apple-nonce-1");
 
         when(jwtConfig.validateAppleIdToken(anyString())).thenReturn(mockDecodedJWT);
-        when(mockDecodedJWT.getClaim("email")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(mockDecodedJWT.getClaim("email").asString()).thenReturn("test@icloud.com");
         when(mockDecodedJWT.getClaim("nonce")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
         when(mockDecodedJWT.getClaim("nonce").asString()).thenReturn("apple-nonce-1");
         when(mockDecodedJWT.getSubject()).thenReturn("apple-user-123");
 
+        // Mock user and session creation (PII-free)
         User user = new User();
         user.setId("apple-user-123");
-        user.setEmail("test@icloud.com");
-        user.setName("Apple User");
         user.setProvider("apple");
         user.setProviderId("apple-user-123");
-        when(userService.getOrCreateUser(anyString(), anyString(), eq("apple"), anyString()))
+        when(userService.getOrCreateUser(eq("apple"), anyString()))
                 .thenReturn(java.util.concurrent.CompletableFuture.completedFuture(user));
-        when(jwtConfig.generateAccessToken(anyString(), anyString(), anyString())).thenReturn("access.token.here");
+        when(jwtConfig.generateAccessToken(anyString(), anyString())).thenReturn("access.token.here");
         when(jwtConfig.generateRefreshToken(anyString())).thenReturn("refresh.token.here");
         when(sessionService.createSession(anyString(), anyString(), any(), any(), any(), any()))
                 .thenReturn(java.util.concurrent.CompletableFuture.completedFuture(
@@ -623,8 +543,6 @@ class AuthControllerTest {
         request.setNonce("n1");
 
         when(jwtConfig.validateAppleIdToken(anyString())).thenReturn(mockDecodedJWT);
-        when(mockDecodedJWT.getClaim("email")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(mockDecodedJWT.getClaim("email").asString()).thenReturn("test@icloud.com");
         when(mockDecodedJWT.getClaim("nonce")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
         when(mockDecodedJWT.getClaim("nonce").asString()).thenReturn("n2");
         when(mockDecodedJWT.getSubject()).thenReturn("apple-user-123");
@@ -653,21 +571,18 @@ class AuthControllerTest {
         request.setNonce(rawNonce);
 
         when(jwtConfig.validateAppleIdToken(anyString())).thenReturn(mockDecodedJWT);
-        when(mockDecodedJWT.getClaim("email")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
-        when(mockDecodedJWT.getClaim("email").asString()).thenReturn("test@icloud.com");
         when(mockDecodedJWT.getClaim("nonce")).thenReturn(mock(com.auth0.jwt.interfaces.Claim.class));
         when(mockDecodedJWT.getClaim("nonce").asString()).thenReturn(hashedB64u);
         when(mockDecodedJWT.getSubject()).thenReturn("apple-user-123");
 
+        // Mock user and session creation (PII-free)
         User user = new User();
         user.setId("apple-user-123");
-        user.setEmail("test@icloud.com");
-        user.setName("Apple User");
         user.setProvider("apple");
         user.setProviderId("apple-user-123");
-        when(userService.getOrCreateUser(anyString(), anyString(), eq("apple"), anyString()))
+        when(userService.getOrCreateUser(eq("apple"), anyString()))
                 .thenReturn(java.util.concurrent.CompletableFuture.completedFuture(user));
-        when(jwtConfig.generateAccessToken(anyString(), anyString(), anyString())).thenReturn("access.token.here");
+        when(jwtConfig.generateAccessToken(anyString(), anyString())).thenReturn("access.token.here");
         when(jwtConfig.generateRefreshToken(anyString())).thenReturn("refresh.token.here");
         when(sessionService.createSession(anyString(), anyString(), any(), any(), any(), any()))
                 .thenReturn(java.util.concurrent.CompletableFuture.completedFuture(

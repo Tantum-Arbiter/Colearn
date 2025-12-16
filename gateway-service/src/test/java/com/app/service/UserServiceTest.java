@@ -40,12 +40,10 @@ class UserServiceTest {
     @BeforeEach
     void setUp() {
         userService = new UserService(userRepository, metricsService);
-        
-        // Create test user
+
+        // Create test user (PII-free)
         testUser = new User();
         testUser.setId("test-user-id");
-        testUser.setEmail("test@example.com");
-        testUser.setName("Test User");
         testUser.setProvider("google");
         testUser.setProviderId("google-123");
         testUser.setCreatedAt(Instant.now());
@@ -71,15 +69,13 @@ class UserServiceTest {
 
     @Test
     void createUser_Success() throws Exception {
-        // Arrange
-        when(userRepository.findByEmail(testUser.getEmail()))
+        // Arrange (PII-free - no email lookup needed)
+        when(userRepository.findByProviderAndProviderId(testUser.getProvider(), testUser.getProviderId()))
                 .thenReturn(CompletableFuture.completedFuture(Optional.empty()));
         when(userRepository.save(any(User.class))).thenReturn(CompletableFuture.completedFuture(testUser));
 
         // Act
         CompletableFuture<User> result = userService.createUser(
-                testUser.getEmail(),
-                testUser.getName(),
                 testUser.getProvider(),
                 testUser.getProviderId()
         );
@@ -87,16 +83,15 @@ class UserServiceTest {
 
         // Assert
         assertNotNull(createdUser);
-        assertEquals(testUser.getEmail(), createdUser.getEmail());
-        assertEquals(testUser.getName(), createdUser.getName());
         assertEquals(testUser.getProvider(), createdUser.getProvider());
+        assertEquals(testUser.getProviderId(), createdUser.getProviderId());
         assertTrue(createdUser.isActive());
         assertNotNull(createdUser.getCreatedAt());
         assertNotNull(createdUser.getUpdatedAt());
-        
+
         // Verify repository interaction
         verify(userRepository).save(any(User.class));
-        
+
         // Verify metrics
         verify(metricsService).recordUserCreated(testUser.getProvider());
     }
@@ -104,15 +99,13 @@ class UserServiceTest {
     @Test
     void createUser_Failure() throws Exception {
         // Arrange
-        when(userRepository.findByEmail(testUser.getEmail()))
+        when(userRepository.findByProviderAndProviderId(testUser.getProvider(), testUser.getProviderId()))
                 .thenReturn(CompletableFuture.completedFuture(Optional.empty()));
         when(userRepository.save(any(User.class)))
                 .thenReturn(CompletableFuture.failedFuture(new RuntimeException("Database error")));
 
         // Act & Assert
         CompletableFuture<User> result = userService.createUser(
-                testUser.getEmail(),
-                testUser.getName(),
                 testUser.getProvider(),
                 testUser.getProviderId()
         );
@@ -120,7 +113,7 @@ class UserServiceTest {
         ExecutionException exception = assertThrows(ExecutionException.class, () -> result.get());
         assertTrue(exception.getCause() instanceof RuntimeException);
         assertEquals("Failed to create user", exception.getCause().getMessage());
-        
+
         // Verify error metrics
         verify(metricsService).recordUserCreationError(testUser.getProvider(), "CompletionException");
     }
@@ -138,11 +131,11 @@ class UserServiceTest {
         // Assert
         assertTrue(foundUser.isPresent());
         assertEquals(testUser.getId(), foundUser.get().getId());
-        assertEquals(testUser.getEmail(), foundUser.get().getEmail());
-        
+        assertEquals(testUser.getProvider(), foundUser.get().getProvider());
+
         // Verify repository interaction
         verify(userRepository).findById(testUser.getId());
-        
+
         // Verify metrics
         verify(metricsService).recordUserLookup("id", "found");
     }
@@ -159,30 +152,9 @@ class UserServiceTest {
 
         // Assert
         assertFalse(foundUser.isPresent());
-        
+
         // Verify metrics
         verify(metricsService).recordUserLookup("id", "not_found");
-    }
-
-    @Test
-    void getUserByEmail_Success() throws Exception {
-        // Arrange
-        when(userRepository.findByEmail(testUser.getEmail()))
-                .thenReturn(CompletableFuture.completedFuture(Optional.of(testUser)));
-
-        // Act
-        CompletableFuture<Optional<User>> result = userService.getUserByEmail(testUser.getEmail());
-        Optional<User> foundUser = result.get();
-
-        // Assert
-        assertTrue(foundUser.isPresent());
-        assertEquals(testUser.getEmail(), foundUser.get().getEmail());
-        
-        // Verify repository interaction
-        verify(userRepository).findByEmail(testUser.getEmail());
-        
-        // Verify metrics
-        verify(metricsService).recordUserLookup("email", "found");
     }
 
     @Test
@@ -193,10 +165,8 @@ class UserServiceTest {
         when(userRepository.save(any(User.class)))
                 .thenReturn(CompletableFuture.completedFuture(testUser));
 
-        // Act
+        // Act (PII-free - only provider and providerId)
         CompletableFuture<User> result = userService.getOrCreateUser(
-                testUser.getEmail(),
-                testUser.getName(),
                 testUser.getProvider(),
                 testUser.getProviderId()
         );
@@ -205,31 +175,28 @@ class UserServiceTest {
         // Assert
         assertNotNull(user);
         assertEquals(testUser.getId(), user.getId());
-        assertEquals(testUser.getEmail(), user.getEmail());
-        
+        assertEquals(testUser.getProvider(), user.getProvider());
+
         // Verify repository interactions
         verify(userRepository).findByProviderAndProviderId(testUser.getProvider(), testUser.getProviderId());
         verify(userRepository).save(any(User.class));
         verify(userRepository, never()).updateLastLogin(anyString());
-        
+
         // Verify metrics
-        verify(metricsService).recordUserLogin(testUser.getProvider(), "existing"); // existing user
+        verify(metricsService).recordUserLogin(testUser.getProvider(), "existing");
     }
 
     @Test
     void getOrCreateUser_NewUser() throws Exception {
-        // Arrange
+        // Arrange (PII-free - no email lookup needed)
+        // Note: findByProviderAndProviderId is called twice - once in getOrCreateUser and once in createUser
         when(userRepository.findByProviderAndProviderId(testUser.getProvider(), testUser.getProviderId()))
-                .thenReturn(CompletableFuture.completedFuture(Optional.empty()));
-        when(userRepository.findByEmail(testUser.getEmail()))
                 .thenReturn(CompletableFuture.completedFuture(Optional.empty()));
         when(userRepository.save(any(User.class)))
                 .thenReturn(CompletableFuture.completedFuture(testUser));
 
-        // Act
+        // Act (PII-free - only provider and providerId)
         CompletableFuture<User> result = userService.getOrCreateUser(
-                testUser.getEmail(),
-                testUser.getName(),
                 testUser.getProvider(),
                 testUser.getProviderId()
         );
@@ -237,17 +204,17 @@ class UserServiceTest {
 
         // Assert
         assertNotNull(user);
-        assertEquals(testUser.getEmail(), user.getEmail());
-        assertEquals(testUser.getName(), user.getName());
-        
-        // Verify repository interactions
-        verify(userRepository).findByProviderAndProviderId(testUser.getProvider(), testUser.getProviderId());
+        assertEquals(testUser.getProvider(), user.getProvider());
+        assertEquals(testUser.getProviderId(), user.getProviderId());
+
+        // Verify repository interactions (findByProviderAndProviderId called twice: once in getOrCreateUser, once in createUser)
+        verify(userRepository, times(2)).findByProviderAndProviderId(testUser.getProvider(), testUser.getProviderId());
         verify(userRepository).save(any(User.class));
         verify(userRepository, never()).updateLastLogin(anyString());
-        
+
         // Verify metrics
         verify(metricsService).recordUserCreated(testUser.getProvider());
-        verify(metricsService).recordUserLogin(testUser.getProvider(), "new"); // new user
+        verify(metricsService).recordUserLogin(testUser.getProvider(), "new");
     }
 
     @Test

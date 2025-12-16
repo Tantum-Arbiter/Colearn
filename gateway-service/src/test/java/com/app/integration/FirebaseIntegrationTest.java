@@ -100,20 +100,17 @@ class FirebaseIntegrationTest {
 
     @Test
     void testCompleteUserLifecycle() throws Exception {
-        // Test user creation
-        String email = "test@example.com";
-        String name = "Test User";
+        // Test user creation (PII-free)
         String provider = "google";
         String providerId = "google-123";
 
-        CompletableFuture<User> createResult = userService.createUser(email, name, provider, providerId);
+        CompletableFuture<User> createResult = userService.createUser(provider, providerId);
         User createdUser = createResult.get();
 
         assertNotNull(createdUser);
         assertNotNull(createdUser.getId());
-        assertEquals(email, createdUser.getEmail());
-        assertEquals(name, createdUser.getName());
         assertEquals(provider, createdUser.getProvider());
+        assertEquals(providerId, createdUser.getProviderId());
         assertTrue(createdUser.isActive());
 
         // Test user retrieval by ID
@@ -122,40 +119,24 @@ class FirebaseIntegrationTest {
 
         assertTrue(foundById.isPresent());
         assertEquals(createdUser.getId(), foundById.get().getId());
-        assertEquals(email, foundById.get().getEmail());
+        assertEquals(provider, foundById.get().getProvider());
 
-        // Test user retrieval by email
-        CompletableFuture<Optional<User>> findByEmailResult = userService.getUserByEmail(email);
-        Optional<User> foundByEmail = findByEmailResult.get();
-
-        assertTrue(foundByEmail.isPresent());
-        assertEquals(createdUser.getId(), foundByEmail.get().getId());
-        assertEquals(email, foundByEmail.get().getEmail());
-
-        // Test getOrCreateUser with existing user
-        CompletableFuture<User> getOrCreateResult = userService.getOrCreateUser(email, name, provider, providerId);
+        // Test getOrCreateUser with existing user (PII-free - 2 args)
+        CompletableFuture<User> getOrCreateResult = userService.getOrCreateUser(provider, providerId);
         User existingUser = getOrCreateResult.get();
 
         assertEquals(createdUser.getId(), existingUser.getId());
-        assertEquals(email, existingUser.getEmail());
+        assertEquals(provider, existingUser.getProvider());
 
         // Test user deactivation
         CompletableFuture<User> deactivateResult = userService.deactivateUser(createdUser.getId());
         deactivateResult.get();
-
-        // Verify user is deactivated (should not be found in active searches)
-        CompletableFuture<Optional<User>> findDeactivatedResult = userService.getUserByEmail(email);
-        Optional<User> deactivatedUser = findDeactivatedResult.get();
-
-        // Note: This depends on repository implementation - some might still return deactivated users
-        // The important thing is that the deactivation operation completed successfully
     }
 
     @Test
     void testCompleteSessionLifecycle() throws Exception {
-        // First create a user
-        CompletableFuture<User> userResult = userService.createUser(
-                "session-test@example.com", "Session Test User", "google", "google-456");
+        // First create a user (PII-free)
+        CompletableFuture<User> userResult = userService.createUser("google", "google-456");
         User user = userResult.get();
 
         // Test session creation
@@ -232,9 +213,8 @@ class FirebaseIntegrationTest {
 
     @Test
     void testSessionLimitEnforcement() throws Exception {
-        // Create a user
-        CompletableFuture<User> userResult = userService.createUser(
-                "limit-test@example.com", "Limit Test User", "google", "google-789");
+        // Create a user (PII-free)
+        CompletableFuture<User> userResult = userService.createUser("google", "google-789");
         User user = userResult.get();
 
         // Create 5 sessions (at the limit)
@@ -272,9 +252,8 @@ class FirebaseIntegrationTest {
 
     @Test
     void testRevokeAllUserSessions() throws Exception {
-        // Create a user
-        CompletableFuture<User> userResult = userService.createUser(
-                "revoke-all-test@example.com", "Revoke All Test User", "google", "google-999");
+        // Create a user (PII-free)
+        CompletableFuture<User> userResult = userService.createUser("google", "google-999");
         User user = userResult.get();
 
         // Create multiple sessions

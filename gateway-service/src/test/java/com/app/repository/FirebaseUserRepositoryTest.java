@@ -69,12 +69,10 @@ class FirebaseUserRepositoryTest {
     @BeforeEach
     void setUp() {
         repository = new FirebaseUserRepository(firestore, metricsService);
-        
-        // Create test user
+
+        // Create test user (PII-free)
         testUser = new User();
         testUser.setId("test-user-id");
-        testUser.setEmail("test@example.com");
-        testUser.setName("Test User");
         testUser.setProvider("google");
         testUser.setProviderId("google-123");
         testUser.setCreatedAt(Instant.now());
@@ -114,13 +112,13 @@ class FirebaseUserRepositoryTest {
         // Assert
         assertNotNull(savedUser);
         assertEquals(testUser.getId(), savedUser.getId());
-        assertEquals(testUser.getEmail(), savedUser.getEmail());
-        
+        assertEquals(testUser.getProvider(), savedUser.getProvider());
+
         // Verify Firestore interactions
         verify(firestore).collection("users");
         verify(collectionReference).document(testUser.getId());
         verify(documentReference).set(testUser);
-        
+
         // Verify metrics
         verify(metricsService).recordFirestoreOperation(eq("users"), eq("save"), eq(true), anyLong());
     }
@@ -166,8 +164,8 @@ class FirebaseUserRepositoryTest {
         // Assert
         assertTrue(foundUser.isPresent());
         assertEquals(testUser.getId(), foundUser.get().getId());
-        assertEquals(testUser.getEmail(), foundUser.get().getEmail());
-        
+        assertEquals(testUser.getProvider(), foundUser.get().getProvider());
+
         // Verify Firestore interactions
         verify(firestore).collection("users");
         verify(collectionReference).document(testUser.getId());
@@ -194,55 +192,6 @@ class FirebaseUserRepositoryTest {
         verify(firestore).collection("users");
         verify(collectionReference).document(testUser.getId());
         verify(documentReference).get();
-    }
-
-    @Test
-    void findByEmail_Success() throws Exception {
-        // Arrange
-        List<QueryDocumentSnapshot> documents = new ArrayList<>();
-        QueryDocumentSnapshot doc = mock(QueryDocumentSnapshot.class);
-        when(doc.toObject(User.class)).thenReturn(testUser);
-        documents.add(doc);
-
-        when(firestore.collection("users")).thenReturn(collectionReference);
-        when(collectionReference.whereEqualTo("email", testUser.getEmail())).thenReturn(query);
-        when(query.limit(1)).thenReturn(query);
-        when(query.get()).thenReturn(querySnapshotFuture);
-        when(querySnapshotFuture.get()).thenReturn(querySnapshot);
-        when(querySnapshot.isEmpty()).thenReturn(false);
-        when(querySnapshot.getDocuments()).thenReturn(documents);
-
-        // Act
-        CompletableFuture<Optional<User>> result = repository.findByEmail(testUser.getEmail());
-        Optional<User> foundUser = result.get();
-
-        // Assert
-        assertTrue(foundUser.isPresent());
-        assertEquals(testUser.getEmail(), foundUser.get().getEmail());
-        
-        // Verify Firestore interactions
-        verify(firestore).collection("users");
-        verify(collectionReference).whereEqualTo("email", testUser.getEmail());
-        verify(query).limit(1);
-        verify(query).get();
-    }
-
-    @Test
-    void findByEmail_NotFound() throws Exception {
-        // Arrange
-        when(firestore.collection("users")).thenReturn(collectionReference);
-        when(collectionReference.whereEqualTo("email", testUser.getEmail())).thenReturn(query);
-        when(query.limit(1)).thenReturn(query);
-        when(query.get()).thenReturn(querySnapshotFuture);
-        when(querySnapshotFuture.get()).thenReturn(querySnapshot);
-        when(querySnapshot.isEmpty()).thenReturn(true);
-
-        // Act
-        CompletableFuture<Optional<User>> result = repository.findByEmail(testUser.getEmail());
-        Optional<User> foundUser = result.get();
-
-        // Assert
-        assertFalse(foundUser.isPresent());
     }
 
     @Test
