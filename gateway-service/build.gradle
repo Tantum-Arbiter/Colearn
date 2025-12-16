@@ -31,9 +31,10 @@ ext {
 	set('springCloudVersion', "2025.0.0")
 	set('nettyVersion', "4.1.129.Final")
 	set('grpcVersion', "1.75.0")
+	set('googleAuthVersion', "1.30.0")
 }
 
-// Force transitive dependency versions to fix CVEs
+// Force transitive dependency versions to fix CVEs and version mismatches
 configurations.all {
 	resolutionStrategy {
 		force "io.grpc:grpc-netty-shaded:${grpcVersion}"
@@ -44,6 +45,9 @@ configurations.all {
 		force "io.netty:netty-transport:${nettyVersion}"
 		force "io.netty:netty-codec:${nettyVersion}"
 		force "io.netty:netty-resolver:${nettyVersion}"
+		// Fix google-auth-library version mismatch (CertificateSourceUnavailableException)
+		force "com.google.auth:google-auth-library-credentials:${googleAuthVersion}"
+		force "com.google.auth:google-auth-library-oauth2-http:${googleAuthVersion}"
 	}
 }
 
@@ -60,7 +64,10 @@ dependencies {
 
 	// Firebase dependencies
 	implementation 'com.google.firebase:firebase-admin:9.7.0'
-	implementation 'com.google.auth:google-auth-library-oauth2-http:1.29.0'
+
+	// Google Auth - explicit versions to fix CertificateSourceUnavailableException
+	implementation "com.google.auth:google-auth-library-oauth2-http:${googleAuthVersion}"
+	implementation "com.google.auth:google-auth-library-credentials:${googleAuthVersion}"
 
 	// Explicit dependencies to fix CVEs in firebase-admin transitive deps
 	implementation "io.grpc:grpc-netty-shaded:${grpcVersion}"
