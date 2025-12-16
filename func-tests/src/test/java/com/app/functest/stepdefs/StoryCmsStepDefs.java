@@ -43,7 +43,8 @@ public class StoryCmsStepDefs extends BaseStepDefs {
 
         if (versionJson.has("storyChecksums")) {
             JSONObject checksums = versionJson.getJSONObject("storyChecksums");
-            for (String key : checksums.keySet()) {
+            for (Object keyObj : checksums.names() != null ? checksums.names().toList() : java.util.Collections.emptyList()) {
+                String key = keyObj.toString();
                 serverChecksums.put(key, checksums.getString(key));
             }
         }
@@ -97,7 +98,8 @@ public class StoryCmsStepDefs extends BaseStepDefs {
         if (versionJson.has("storyChecksums")) {
             JSONObject checksums = versionJson.getJSONObject("storyChecksums");
             int added = 0;
-            for (String key : checksums.keySet()) {
+            for (Object keyObj : checksums.names() != null ? checksums.names().toList() : java.util.Collections.emptyList()) {
+                String key = keyObj.toString();
                 if (added < count) {
                     serverChecksums.put(key, checksums.getString(key));
                     added++;
