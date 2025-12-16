@@ -66,7 +66,8 @@ dependencies {
     testImplementation 'junit:junit:4.13.2' // Required for @RunWith
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
 
-    // No project dependencies needed - WireMock runs as separate container
+    // Google Auth library for IAM identity tokens (GCP mode)
+    testImplementation 'com.google.auth:google-auth-library-oauth2-http:1.23.0'
 }
 
 sourceSets {

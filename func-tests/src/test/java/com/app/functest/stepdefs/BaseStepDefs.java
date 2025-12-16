@@ -1,5 +1,8 @@
 package com.app.functest.stepdefs;
 
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.auth.oauth2.IdTokenCredentials;
+import com.google.auth.oauth2.IdTokenProvider;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
@@ -31,6 +34,10 @@ public abstract class BaseStepDefs {
     private static String gcpFirebaseToken = null;
     private static boolean gcpTokenFetched = false;
 
+    // GCP IAM identity token - for Cloud Run authentication (--no-allow-unauthenticated)
+    private static String gcpIamToken = null;
+    private static boolean gcpIamTokenFetched = false;
+
     /**
      * Check if running in GCP mode (no WireMock available).
      * Set TEST_ENV=gcp to run tests against real GCP services.
@@ -58,6 +65,38 @@ public abstract class BaseStepDefs {
     }
 
     /**
+     * Get IAM identity token for Cloud Run authentication.
+     * Uses Application Default Credentials (ADC) from the service account.
+     */
+    protected static String getGcpIamToken() {
+        if (!gcpIamTokenFetched) {
+            gcpIamTokenFetched = true;
+            try {
+                String targetAudience = getGatewayBaseUrl();
+                logger.info("Fetching IAM identity token for audience: {}", targetAudience);
+
+                GoogleCredentials credentials = GoogleCredentials.getApplicationDefault();
+                if (!(credentials instanceof IdTokenProvider)) {
+                    logger.warn("Default credentials do not support ID tokens - IAM auth may fail");
+                    return null;
+                }
+
+                IdTokenCredentials idTokenCredentials = IdTokenCredentials.newBuilder()
+                        .setIdTokenProvider((IdTokenProvider) credentials)
+                        .setTargetAudience(targetAudience)
+                        .build();
+
+                idTokenCredentials.refresh();
+                gcpIamToken = idTokenCredentials.getIdToken().getTokenValue();
+                logger.info("IAM identity token obtained successfully");
+            } catch (Exception e) {
+                logger.error("Failed to get IAM identity token: {}", e.getMessage());
+            }
+        }
+        return gcpIamToken;
+    }
+
+    /**
      * In GCP mode, authenticate using Firebase and get a real gateway token.
      * The Firebase ID token is passed via GCP_FIREBASE_ID_TOKEN environment variable.
      * This is called once per test run and the token is cached.
@@ -78,11 +117,20 @@ public abstract class BaseStepDefs {
                 String baseUrl = getGatewayBaseUrl();
                 logger.info("Authenticating with Firebase at {}/auth/firebase", baseUrl);
 
-                Response response = given()
+                // Build request with IAM token for Cloud Run auth
+                var requestSpec = given()
                         .baseUri(baseUrl)
                         .contentType("application/json")
                         .header("User-Agent", "GrowWithFreya-FuncTest/1.0.0")
-                        .header("X-Device-ID", "func-test-device")
+                        .header("X-Device-ID", "func-test-device");
+
+                // Add IAM token for Cloud Run authentication
+                String iamToken = getGcpIamToken();
+                if (iamToken != null) {
+                    requestSpec = requestSpec.header("Authorization", "Bearer " + iamToken);
+                }
+
+                Response response = requestSpec
                         .body("{\"idToken\": \"" + firebaseIdToken + "\"}")
                         .post("/auth/firebase");
 
@@ -101,37 +149,54 @@ public abstract class BaseStepDefs {
     }
 
     /**
-     * Apply default client headers to a request (no authentication)
+     * Apply default client headers to a request (no authentication).
+     * In GCP mode, also adds IAM token for Cloud Run authentication.
      */
     protected RequestSpecification applyDefaultClientHeaders(RequestSpecification req) {
-        return req
+        var spec = req
             .header("X-Client-Platform", "ios")
             .header("X-Client-Version", "1.0.0")
             .header("X-Device-ID", "device-123")
             .header("User-Agent", "GrowWithFreya/1.0.0 (iOS 17.0)");
+
+        // In GCP mode, add IAM token for Cloud Run authentication
+        if (isGcpMode()) {
+            String iamToken = getGcpIamToken();
+            if (iamToken != null) {
+                spec = spec.header("Authorization", "Bearer " + iamToken);
+            }
+        }
+
+        return spec;
     }
 
     /**
      * Apply default client headers with authentication token.
      * Use this for protected /api/** endpoints.
-     * In GCP mode, uses Firebase-obtained token.
-     * In local/Docker mode, uses currentAuthToken or DEFAULT_TEST_TOKEN.
+     * In GCP mode:
+     *   - Authorization header contains IAM token (for Cloud Run)
+     *   - X-Forwarded-Authorization header contains gateway JWT (for the app)
+     * In local/Docker mode:
+     *   - Authorization header contains gateway JWT
      */
     protected RequestSpecification applyAuthenticatedHeaders(RequestSpecification req) {
-        String token;
+        String appToken;
         if (isGcpMode()) {
-            token = getGcpAuthToken();
-            if (token == null) {
-                // Fallback - test will likely fail but with clear error
-                logger.warn("No GCP auth token available - using default test token (will fail in GCP)");
-                token = DEFAULT_TEST_TOKEN;
+            appToken = getGcpAuthToken();
+            if (appToken == null) {
+                logger.warn("No GCP auth token available - test will fail");
+                appToken = DEFAULT_TEST_TOKEN;
             }
+
+            var spec = applyDefaultClientHeaders(req);
+            // App token goes in X-Forwarded-Authorization (IAM token is already in Authorization)
+            return spec.header("X-Forwarded-Authorization", "Bearer " + appToken);
         } else {
-            token = (currentAuthToken != null && !currentAuthToken.isBlank())
+            appToken = (currentAuthToken != null && !currentAuthToken.isBlank())
                 ? currentAuthToken : DEFAULT_TEST_TOKEN;
+            return applyDefaultClientHeaders(req)
+                .header("Authorization", "Bearer " + appToken);
         }
-        return applyDefaultClientHeaders(req)
-            .header("Authorization", "Bearer " + token);
     }
 
     /**
@@ -152,6 +217,8 @@ public abstract class BaseStepDefs {
     protected static void resetGcpTokenState() {
         gcpFirebaseToken = null;
         gcpTokenFetched = false;
+        gcpIamToken = null;
+        gcpIamTokenFetched = false;
     }
 }
 

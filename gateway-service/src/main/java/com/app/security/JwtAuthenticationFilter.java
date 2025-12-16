@@ -87,7 +87,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     /**
-     * Extract JWT token from Authorization header
+     * Extract JWT token from Authorization header.
+     * When running behind IAM-authenticated Cloud Run, the Authorization header contains
+     * the IAM identity token. In this case, check X-Forwarded-Authorization for the app token.
      */
     private String extractTokenFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
@@ -97,10 +99,55 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (token == null || token.trim().isEmpty()) {
                 return null;
             }
+
+            // Check if this looks like a Google IAM identity token (starts with "eyJ" and contains google.com issuer)
+            // IAM tokens have issuer "https://accounts.google.com" - our gateway tokens have our own issuer
+            if (isGoogleIamToken(token)) {
+                // IAM token detected - check X-Forwarded-Authorization for the actual app token
+                String forwardedAuth = request.getHeader("X-Forwarded-Authorization");
+                if (forwardedAuth != null && forwardedAuth.startsWith("Bearer ")) {
+                    String appToken = forwardedAuth.substring(7);
+                    if (appToken != null && !appToken.trim().isEmpty()) {
+                        logger.debug("Using X-Forwarded-Authorization for app-level auth (IAM token in Authorization)");
+                        return appToken;
+                    }
+                }
+                // No app token in X-Forwarded-Authorization, return null (unauthenticated at app level)
+                logger.debug("IAM token detected but no X-Forwarded-Authorization - proceeding unauthenticated at app level");
+                return null;
+            }
+
             return token;
         }
 
+        // Also check X-Forwarded-Authorization as fallback (for flexibility)
+        String forwardedAuth = request.getHeader("X-Forwarded-Authorization");
+        if (forwardedAuth != null && forwardedAuth.startsWith("Bearer ")) {
+            String token = forwardedAuth.substring(7);
+            if (token != null && !token.trim().isEmpty()) {
+                return token;
+            }
+        }
+
         return null;
+    }
+
+    /**
+     * Check if a token looks like a Google IAM identity token.
+     * Google IAM tokens are JWTs with issuer "https://accounts.google.com".
+     */
+    private boolean isGoogleIamToken(String token) {
+        try {
+            // Quick check: decode the payload without verification to check issuer
+            String[] parts = token.split("\\.");
+            if (parts.length != 3) {
+                return false;
+            }
+            String payload = new String(java.util.Base64.getUrlDecoder().decode(parts[1]));
+            return payload.contains("\"iss\":\"https://accounts.google.com\"");
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     /**

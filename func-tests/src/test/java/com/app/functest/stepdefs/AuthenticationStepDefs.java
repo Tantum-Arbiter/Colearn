@@ -267,6 +267,40 @@ public class AuthenticationStepDefs extends BaseStepDefs {
             .get(endpoint);
     }
 
+    @Given("I have a valid Firebase ID token")
+    public void iHaveAValidFirebaseIdToken() {
+        if (!isGcpMode()) {
+            throw new IllegalStateException("Firebase ID token step only works in GCP mode");
+        }
+        String firebaseIdToken = System.getenv("GCP_FIREBASE_ID_TOKEN");
+        if (firebaseIdToken == null || firebaseIdToken.isBlank()) {
+            firebaseIdToken = System.getProperty("GCP_FIREBASE_ID_TOKEN");
+        }
+        if (firebaseIdToken == null || firebaseIdToken.isBlank()) {
+            throw new IllegalStateException("GCP_FIREBASE_ID_TOKEN environment variable not set");
+        }
+        this.authToken = firebaseIdToken;
+    }
+
+    @When("I authenticate with Firebase")
+    public void iAuthenticateWithFirebase() {
+        if (!isGcpMode()) {
+            throw new IllegalStateException("Firebase authentication step only works in GCP mode");
+        }
+        lastResponse = applyDefaultClientHeaders(given())
+            .header("Content-Type", "application/json")
+            .body("{\"idToken\": \"" + authToken + "\"}")
+            .when()
+            .post("/auth/firebase");
+
+        if (lastResponse.getStatusCode() == 200) {
+            String accessToken = lastResponse.jsonPath().getString("tokens.accessToken");
+            if (accessToken != null && !accessToken.isBlank()) {
+                currentAuthToken = accessToken;
+            }
+        }
+    }
+
     @Given("WireMock is configured to return {int} for user profile requests")
     public void wireMockIsConfiguredToReturnForUserProfileRequests(int status) {
         StubMapping m = WireMock.stubFor(

@@ -104,6 +104,14 @@ jobs:
             --timeout 300 \
             --set-env-vars "SPRING_PROFILES_ACTIVE=gcp-dev,FIREBASE_PROJECT_ID=${{ env.PROJECT_ID }},BACKEND_URL_GATEWAY_SERVICE=${{ secrets.BACKEND_URL_GATEWAY_SERVICE }},GATEWAY_AUDIENCE=${{ secrets.GATEWAY_AUDIENCE }}"
 
+      - name: Grant run.invoker to func-tests service account
+        run: |
+          gcloud run services add-iam-policy-binding $SERVICE \
+            --region ${{ env.REGION }} \
+            --project ${{ env.PROJECT_ID }} \
+            --member "serviceAccount:svc-deploy-functional@${{ env.PROJECT_ID }}.iam.gserviceaccount.com" \
+            --role "roles/run.invoker"
+
   run-functional-tests:
     needs: deploy-functional
     runs-on: ubuntu-latest
