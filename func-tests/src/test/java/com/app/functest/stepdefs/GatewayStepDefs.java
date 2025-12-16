@@ -93,6 +93,8 @@ public class GatewayStepDefs extends BaseStepDefs {
 
     private String gatewayBaseUrl;
 
+    private static volatile boolean gatewayVerifiedHealthy = false;
+
     @Given("the gateway service is healthy")
     public void theGatewayServiceIsHealthy() {
         String cfg = System.getenv("GATEWAY_BASE_URL");
@@ -105,10 +107,18 @@ public class GatewayStepDefs extends BaseStepDefs {
         gatewayBaseUrl = cfg;
         RestAssured.baseURI = gatewayBaseUrl;
 
-        // Wait for service to be ready using public auth status endpoint
+        // Only verify health once per test run - gateway won't go unhealthy mid-test
+        if (gatewayVerifiedHealthy) {
+            return;
+        }
+
+        // In GCP mode, use shorter timeout since gateway is already deployed
+        int maxWaitSeconds = isGcpMode() ? 10 : 30;
+        int pollIntervalMs = isGcpMode() ? 500 : 2000;
+
         await()
-            .atMost(30, TimeUnit.SECONDS)
-            .pollInterval(2, TimeUnit.SECONDS)
+            .atMost(maxWaitSeconds, TimeUnit.SECONDS)
+            .pollInterval(pollIntervalMs, TimeUnit.MILLISECONDS)
             .until(() -> {
                 try {
                     return given()
@@ -121,6 +131,8 @@ public class GatewayStepDefs extends BaseStepDefs {
                     return false;
                 }
             });
+
+        gatewayVerifiedHealthy = true;
     }
 
     @Given("Firebase is configured in WireMock")
