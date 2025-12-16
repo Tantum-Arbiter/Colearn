@@ -31,6 +31,11 @@ public class AuthenticationStepDefs extends BaseStepDefs {
 
     @Before(order = 0)
     public void configureWireMockClient() {
+        // Skip WireMock configuration when running against GCP (real services)
+        if (isGcpMode()) {
+            return;
+        }
+
         String base = System.getenv("WIREMOCK_BASE_URL");
         if (base == null || base.isBlank()) {
             base = System.getProperty("WIREMOCK_BASE_URL");
@@ -118,6 +123,11 @@ public class AuthenticationStepDefs extends BaseStepDefs {
 
     @Given("WireMock is configured for {string} OAuth provider")
     public void wireMockIsConfiguredForOAuthProvider(String provider) {
+        // Skip WireMock stubs when running against GCP (real services)
+        if (isGcpMode()) {
+            return;
+        }
+
         // Do not reset WireMock here; keep file-based mappings loaded by the container.
         // Load provider-specific stubs
         switch (provider.toLowerCase()) {
@@ -491,6 +501,11 @@ public class AuthenticationStepDefs extends BaseStepDefs {
     // Always-on conditional stubs for specific invalid payloads
     @Before(order = 2)
     public void addConditionalUserManagementStubs() {
+        // Skip WireMock stubs when running against GCP (real services)
+        if (isGcpMode()) {
+            return;
+        }
+
         // Ensure WireMock client points at the Docker service host before registering stubs
         ensureWireMockConfigured();
 
@@ -639,6 +654,11 @@ public class AuthenticationStepDefs extends BaseStepDefs {
 
     // Helper to defensively (re)configure WireMock target host/port
     private void ensureWireMockConfigured() {
+        // Skip WireMock configuration when running against GCP (real services)
+        if (isGcpMode()) {
+            return;
+        }
+
         String base = System.getenv("WIREMOCK_BASE_URL");
         if (base == null || base.isBlank()) {
             base = System.getProperty("WIREMOCK_BASE_URL");

@@ -24,6 +24,11 @@ public class GatewayStepDefs extends BaseStepDefs {
 
     @Before(order = 0)
     public void configureWireMockClient() {
+        // Skip WireMock configuration when running against GCP (real services)
+        if (isGcpMode()) {
+            return;
+        }
+
         String base = System.getenv("WIREMOCK_BASE_URL");
         if (base == null || base.isBlank()) {
             base = System.getProperty("WIREMOCK_BASE_URL");
