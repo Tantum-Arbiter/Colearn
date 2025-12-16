@@ -97,9 +97,9 @@ jobs:
             --image "europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/artifact-repo/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.image_tag }}" \
             --region ${{ env.REGION }} \
             --project ${{ env.PROJECT_ID }} \
-            --service-account svc-deploy-functional@${{ env.PROJECT_ID }}.iam.gserviceaccount.com \
+            --service-account gateway-dev-sa@${{ env.PROJECT_ID }}.iam.gserviceaccount.com \
             --no-allow-unauthenticated \
-            --set-env-vars SPRING_PROFILES_ACTIVE=dev,BACKEND_URL_GATEWAY_SERVICE=${{ secrets.BACKEND_URL_GATEWAY_SERVICE }},GATEWAY_AUDIENCE=${{ secrets.GATEWAY_AUDIENCE }}
+            --set-env-vars "SPRING_PROFILES_ACTIVE=gcp-dev,FIREBASE_PROJECT_ID=${{ env.PROJECT_ID }},BACKEND_URL_GATEWAY_SERVICE=${{ secrets.BACKEND_URL_GATEWAY_SERVICE }},GATEWAY_AUDIENCE=${{ secrets.GATEWAY_AUDIENCE }}"
 
   run-functional-tests:
     needs: deploy-functional

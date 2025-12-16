@@ -1,0 +1,93 @@
+# GCP Development Profile - connects to real Firestore (no emulator)
+# Usage: SPRING_PROFILES_ACTIVE=gcp-dev
+
+server:
+  port: ${PORT:8080}
+  servlet:
+    context-path: /
+  compression:
+    enabled: true
+  http2:
+    enabled: true
+
+spring:
+  application:
+    name: grow-with-freya-gateway-gcp-dev
+  mvc:
+    async:
+      request-timeout: 30s
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:}
+            client-secret: ${GOOGLE_CLIENT_SECRET:}
+            scope: openid,profile,email
+          apple:
+            client-id: ${APPLE_CLIENT_ID:}
+            client-secret: ${APPLE_CLIENT_SECRET:}
+            scope: openid,name,email
+
+jwt:
+  secret: ${JWT_SECRET:}
+  expiration-seconds: 3600
+  refresh-expiration-seconds: 86400
+  issuer: grow-with-freya-gateway
+
+google:
+  oauth:
+    client-id: ${GOOGLE_CLIENT_ID:}
+    ios-client-id: ${GOOGLE_IOS_CLIENT_ID:}
+    android-client-id: ${GOOGLE_ANDROID_CLIENT_ID:}
+    jwks-uri: https://www.googleapis.com/oauth2/v3/certs
+    issuer: https://accounts.google.com
+
+apple:
+  oauth:
+    client-id: ${APPLE_CLIENT_ID:}
+    expo-client-id: ${APPLE_EXPO_CLIENT_ID:host.exp.Exponent}
+    jwks-uri: https://appleid.apple.com/auth/keys
+    issuer: https://appleid.apple.com
+
+firebase:
+  project-id: ${FIREBASE_PROJECT_ID:apt-icon-472307-b7}
+  service-account-key: ${FIREBASE_SERVICE_ACCOUNT_KEY:#{null}}
+  database-url: ${FIREBASE_DATABASE_URL:#{null}}
+  emulator:
+    host: ${FIREBASE_EMULATOR_HOST:}
+    port: ${FIREBASE_EMULATOR_PORT:0}
+
+cors:
+  allowed-origins:
+    - https://growwithfreya.com
+    - https://www.growwithfreya.com
+    - https://app.growwithfreya.com
+    - http://localhost:*
+    - exp://localhost:*
+  allowed-methods:
+    - GET
+    - POST
+    - PUT
+    - PATCH
+    - DELETE
+    - OPTIONS
+  allowed-headers:
+    - "*"
+  allow-credentials: true
+  max-age: 3600
+
+rate-limiting:
+  default-requests-per-minute: 6000
+  auth-requests-per-minute: 6000
+  api-requests-per-minute: 6000
+  cleanup-interval-minutes: 5
+
+logging:
+  level:
+    com.app: DEBUG
+    com.google.cloud: INFO
+    com.google.firebase: INFO
+    org.springframework.security: WARN
+    root: INFO
+
