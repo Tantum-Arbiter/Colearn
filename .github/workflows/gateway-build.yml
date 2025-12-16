@@ -118,10 +118,83 @@ jobs:
         with:
           project_id: ${{ env.PROJECT_ID }}
 
+      - name: Set up Node.js for Firebase token generation
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Generate Firebase ID Token for functional tests
+        id: firebase-token
+        run: |
+          # Install Firebase Admin SDK
+          npm install firebase-admin
+
+          # Create script to generate custom token and exchange for ID token
+          cat > generate-token.js << 'EOF'
+          const admin = require('firebase-admin');
+
+          // Initialize with service account from environment
+          const serviceAccount = JSON.parse(process.env.FIREBASE_SA_KEY);
+          admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount),
+            projectId: serviceAccount.project_id
+          });
+
+          async function generateIdToken() {
+            try {
+              // Create a custom token for a test user
+              const customToken = await admin.auth().createCustomToken('func-test-user', {
+                testUser: true
+              });
+
+              // Exchange custom token for ID token using Firebase Auth REST API
+              const response = await fetch(
+                `https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=${process.env.FIREBASE_WEB_API_KEY}`,
+                {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    token: customToken,
+                    returnSecureToken: true
+                  })
+                }
+              );
+
+              if (!response.ok) {
+                const error = await response.text();
+                console.error('Firebase Auth API error:', error);
+                process.exit(1);
+              }
+
+              const data = await response.json();
+              // Output the ID token (masked in logs)
+              console.log(`::add-mask::${data.idToken}`);
+              console.log(`firebase_id_token=${data.idToken}`);
+            } catch (error) {
+              console.error('Error generating token:', error);
+              process.exit(1);
+            }
+          }
+
+          generateIdToken();
+          EOF
+
+          # Run the script and capture output
+          OUTPUT=$(node generate-token.js)
+          FIREBASE_ID_TOKEN=$(echo "$OUTPUT" | grep "firebase_id_token=" | cut -d'=' -f2)
+
+          # Set as output (masked)
+          echo "::add-mask::$FIREBASE_ID_TOKEN"
+          echo "token=$FIREBASE_ID_TOKEN" >> $GITHUB_OUTPUT
+        env:
+          FIREBASE_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          FIREBASE_WEB_API_KEY: ${{ secrets.FIREBASE_WEB_API_KEY }}
+
       - name: Debug Gateway API URL
         run: |
           echo "BACKEND_URL_GATEWAY_SERVICE = ${{ secrets.BACKEND_URL_GATEWAY_SERVICE }}"
           echo "GATEWAY_AUDIENCE = ${{ secrets.GATEWAY_AUDIENCE }}"
+          echo "Firebase token generated: ${{ steps.firebase-token.outputs.token != '' }}"
 
       - name: Re-deploy Cloud Run Job with latest test image
         run: |
@@ -135,7 +208,7 @@ jobs:
             --cpu=2 \
             --max-retries=0 \
             --task-timeout=300s \
-            --set-env-vars "BACKEND_URL_GATEWAY_SERVICE=${{ secrets.BACKEND_URL_GATEWAY_SERVICE }},GATEWAY_AUDIENCE=${{ secrets.GATEWAY_AUDIENCE }},CUCUMBER_TAGS=@gcp-dev and not @emulator-only"
+            --set-env-vars "BACKEND_URL_GATEWAY_SERVICE=${{ secrets.BACKEND_URL_GATEWAY_SERVICE }},GATEWAY_AUDIENCE=${{ secrets.GATEWAY_AUDIENCE }},CUCUMBER_TAGS=@gcp-dev and not @emulator-only,TEST_ENV=gcp,GCP_FIREBASE_ID_TOKEN=${{ steps.firebase-token.outputs.token }}"
 
       - name: Execute Cloud Run Job
         id: execute-tests

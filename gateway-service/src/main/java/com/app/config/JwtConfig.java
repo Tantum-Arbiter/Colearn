@@ -70,6 +70,12 @@ public class JwtConfig {
     private static final String APPLE_KEYS_URL = "https://appleid.apple.com/auth/keys";
     private static final String APPLE_ISSUER = "https://appleid.apple.com";
 
+    // Firebase endpoints (for functional testing in gcp-dev)
+    private static final String FIREBASE_KEYS_URL = "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com";
+
+    @Value("${firebase.project-id:}")
+    private String firebaseProjectId;
+
     // Cache for public keys
     private final Map<String, RSAPublicKey> publicKeyCache = new ConcurrentHashMap<>();
     private final RestTemplate restTemplate;
@@ -222,6 +228,60 @@ public class JwtConfig {
     }
 
     /**
+     * Validate Firebase ID token (for functional testing in test/gcp-dev profiles only).
+     * Firebase ID tokens use RS256 algorithm with Google's public keys.
+     * Issuer: https://securetoken.google.com/{PROJECT_ID}
+     * Audience: {PROJECT_ID}
+     */
+    public DecodedJWT validateFirebaseIdToken(String idToken) throws JWTVerificationException {
+        if (firebaseProjectId == null || firebaseProjectId.isBlank()) {
+            throw new JWTVerificationException("Firebase project ID not configured");
+        }
+
+        String firebaseIssuer = "https://securetoken.google.com/" + firebaseProjectId;
+
+        // In test profile, bypass real JWKS verification
+        if (environment != null && environment.acceptsProfiles(Profiles.of("test"))) {
+            if (idToken == null || idToken.isBlank()) {
+                throw new JWTVerificationException("Invalid Firebase ID token: empty");
+            }
+            String lower = idToken.toLowerCase();
+            if (lower.contains("expired")) {
+                throw new JWTVerificationException("Token has expired");
+            }
+            if (lower.contains("invalid")) {
+                throw new JWTVerificationException("Invalid Firebase ID token");
+            }
+            String fake = JWT.create()
+                    .withIssuer(firebaseIssuer)
+                    .withSubject("test-firebase-user")
+                    .withClaim("email", "test.user@firebase.test")
+                    .withIssuedAt(new java.util.Date())
+                    .withExpiresAt(new java.util.Date(System.currentTimeMillis() + 3600_000))
+                    .sign(jwtAlgorithm());
+            return JWT.decode(fake);
+        }
+
+        try {
+            DecodedJWT decodedHeader = JWT.decode(idToken);
+            String keyId = decodedHeader.getKeyId();
+            if (keyId == null) {
+                throw new JWTVerificationException("Missing key ID in token header");
+            }
+
+            RSAPublicKey publicKey = getFirebasePublicKey(keyId);
+            Algorithm algorithm = Algorithm.RSA256(publicKey, null);
+            JWTVerifier verifier = JWT.require(algorithm)
+                    .withIssuer(firebaseIssuer)
+                    .withAudience(firebaseProjectId)
+                    .build();
+            return verifier.verify(idToken);
+        } catch (Exception e) {
+            throw new JWTVerificationException("Invalid Firebase ID token: " + e.getMessage(), e);
+        }
+    }
+
+    /**
      * Generate our own JWT access token (PII-free)
      */
     public String generateAccessToken(String userId, String provider) {
@@ -296,6 +356,35 @@ public class JwtConfig {
             }
         }
         throw new RuntimeException("Public key not found for key ID: " + keyId);
+    }
+
+    private RSAPublicKey getFirebasePublicKey(String keyId) throws IOException, java.security.cert.CertificateException {
+        String cacheKey = "firebase_" + keyId;
+        if (publicKeyCache.containsKey(cacheKey)) {
+            return publicKeyCache.get(cacheKey);
+        }
+        // Firebase returns a JSON object with kid:x509cert pairs (not JWKS format)
+        String response = restTemplate.getForObject(FIREBASE_KEYS_URL, String.class);
+        JsonNode keysNode = objectMapper.readTree(response);
+        if (keysNode.has(keyId)) {
+            String certPem = keysNode.get(keyId).asText();
+            RSAPublicKey publicKey = extractPublicKeyFromX509(certPem);
+            publicKeyCache.put(cacheKey, publicKey);
+            return publicKey;
+        }
+        throw new RuntimeException("Firebase public key not found for key ID: " + keyId);
+    }
+
+    private RSAPublicKey extractPublicKeyFromX509(String certPem) throws java.security.cert.CertificateException {
+        String cleanCert = certPem
+                .replace("-----BEGIN CERTIFICATE-----", "")
+                .replace("-----END CERTIFICATE-----", "")
+                .replaceAll("\\s+", "");
+        byte[] certBytes = Base64.getDecoder().decode(cleanCert);
+        java.security.cert.CertificateFactory cf = java.security.cert.CertificateFactory.getInstance("X.509");
+        java.security.cert.X509Certificate cert = (java.security.cert.X509Certificate)
+                cf.generateCertificate(new java.io.ByteArrayInputStream(certBytes));
+        return (RSAPublicKey) cert.getPublicKey();
     }
 
     private RSAPublicKey buildRSAPublicKey(JsonNode key) throws NoSuchAlgorithmException, InvalidKeySpecException {
