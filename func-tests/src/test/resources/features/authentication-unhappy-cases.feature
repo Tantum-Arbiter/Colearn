@@ -8,7 +8,7 @@ Feature: Authentication Unhappy Cases
     Given the gateway service is running
     And Firebase is configured in WireMock
 
-  @validation @gcp-dev
+  @validation
   Scenario: Authentication with malformed JSON (missing closing brace)
     Given WireMock is configured for "Google" OAuth provider
     When I send a POST request to "/auth/google" with malformed JSON:
@@ -20,7 +20,7 @@ Feature: Authentication Unhappy Cases
     And the response should have field "error" with value "Malformed JSON in request body"
     And the response should have field "success" with value "false"
 
-  @validation @gcp-dev
+  @validation
   Scenario: Google authentication missing required idToken field
     Given WireMock is configured for "Google" OAuth provider
     When I send a POST request to "/auth/google" with body:
@@ -34,7 +34,7 @@ Feature: Authentication Unhappy Cases
     And the response should have field "error" with value "Required field is missing"
     And the response should contain "idToken"
 
-  @validation @gcp-dev
+  @validation
   Scenario: Google authentication with empty string idToken
     Given WireMock is configured for "Google" OAuth provider
     When I send a POST request to "/auth/google" with body:
