@@ -53,6 +53,9 @@ public class GatewayStepDefs extends BaseStepDefs {
 
     @Before(order = 1)
     public void resetGatewayState() {
+        currentAuthToken = null;
+        lastResponse = null;
+
         String cfg = System.getenv("GATEWAY_BASE_URL");
         if (cfg == null || cfg.isBlank()) {
             cfg = System.getProperty("GATEWAY_BASE_URL");
@@ -60,14 +63,19 @@ public class GatewayStepDefs extends BaseStepDefs {
         if (cfg == null || cfg.isBlank()) {
             cfg = "http://gateway:8080";
         }
-        // Set the global base URI for all RestAssured requests
         RestAssured.baseURI = cfg;
-        System.out.println("[GatewayStepDefs] RestAssured.baseURI set to: " + cfg);
 
+        // Reset gateway state (rate limiter, circuit breakers, Firestore test data)
         try {
-            given().baseUri(cfg).when().post("/private/reset").then().statusCode(anyOf(is(200), is(404)));
+            given()
+                .baseUri(cfg)
+                .contentType("application/json")
+                .when()
+                .post("/private/reset")
+                .then()
+                .statusCode(200);
         } catch (Exception ignored) {
-            // ignore
+            // In non-test profile this endpoint may not exist; ignore
         }
     }
 
@@ -85,7 +93,7 @@ public class GatewayStepDefs extends BaseStepDefs {
         gatewayBaseUrl = cfg;
         RestAssured.baseURI = gatewayBaseUrl;
 
-        // Wait for service to be ready
+        // Wait for service to be ready using public auth status endpoint
         await()
             .atMost(30, TimeUnit.SECONDS)
             .pollInterval(2, TimeUnit.SECONDS)
@@ -93,7 +101,7 @@ public class GatewayStepDefs extends BaseStepDefs {
                 try {
                     return given()
                         .when()
-                            .get("/private/healthcheck")
+                            .get("/auth/status")
                         .then()
                             .extract()
                             .statusCode() == 200;
@@ -278,36 +286,50 @@ public class GatewayStepDefs extends BaseStepDefs {
 
     @When("I make a GET request to {string}")
     public void iMakeAGetRequestTo(String endpoint) {
-        lastResponse = given()
-            .header("X-Client-Platform", "ios")
-            .header("X-Client-Version", "1.0.0")
-            .header("X-Device-ID", "device-123")
-            .when()
-                .get(endpoint);
+        if (currentAuthToken != null && endpoint.startsWith("/api/")) {
+            lastResponse = applyAuthenticatedHeaders(given())
+                .when()
+                    .get(endpoint);
+        } else {
+            lastResponse = applyDefaultClientHeaders(given())
+                .when()
+                    .get(endpoint);
+        }
     }
 
     @When("I make a POST request to {string}")
     public void iMakeAPostRequestTo(String endpoint) {
-        lastResponse = given()
-            .header("X-Client-Platform", "ios")
-            .header("X-Client-Version", "1.0.0")
-            .header("X-Device-ID", "device-123")
-            .header("Content-Type", "application/json")
-            .when()
-                .post(endpoint);
+        // Use authentication if token is set (for /api/** endpoints)
+        if (currentAuthToken != null && endpoint.startsWith("/api/")) {
+            lastResponse = applyAuthenticatedHeaders(given())
+                .header("Content-Type", "application/json")
+                .when()
+                    .post(endpoint);
+        } else {
+            lastResponse = applyDefaultClientHeaders(given())
+                .header("Content-Type", "application/json")
+                .when()
+                    .post(endpoint);
+        }
     }
 
 
     @When("I make a POST request to {string} with body:")
     public void iMakeAPostRequestToWithBody(String endpoint, String body) {
-        lastResponse = given()
-            .header("X-Client-Platform", "ios")
-            .header("X-Client-Version", "1.0.0")
-            .header("X-Device-ID", "device-123")
-            .header("Content-Type", "application/json")
-            .body(body)
-            .when()
-                .post(endpoint);
+        // Use authentication if token is set (for /api/** endpoints)
+        if (currentAuthToken != null && endpoint.startsWith("/api/")) {
+            lastResponse = applyAuthenticatedHeaders(given())
+                .header("Content-Type", "application/json")
+                .body(body)
+                .when()
+                    .post(endpoint);
+        } else {
+            lastResponse = applyDefaultClientHeaders(given())
+                .header("Content-Type", "application/json")
+                .body(body)
+                .when()
+                    .post(endpoint);
+        }
     }
 
     @When("I make an authenticated GET request to {string} with token {string}")
@@ -429,4 +451,40 @@ public class GatewayStepDefs extends BaseStepDefs {
         assertEquals(expectedValue, actualValue,
             "Header " + headerName + " has unexpected value");
     }
+
+    @Then("the response header {string} should contain {string}")
+    public void theResponseHeaderShouldContain(String headerName, String expectedSubstring) {
+        assertNotNull(lastResponse, "No response received");
+        String actualValue = lastResponse.getHeader(headerName);
+        assertNotNull(actualValue, "Header " + headerName + " is not present");
+        assertTrue(actualValue.contains(expectedSubstring),
+            "Header " + headerName + " does not contain: " + expectedSubstring);
+    }
+
+    @When("I make an OPTIONS request to {string} with headers:")
+    public void iMakeAnOptionsRequestToWithHeaders(String endpoint, io.cucumber.datatable.DataTable dataTable) {
+        // Don't apply default headers - use only the headers provided in the test
+        // This allows tests to send specific CORS preflight headers without interference
+        var requestSpec = given();
+        for (var row : dataTable.asLists()) {
+            if (row.size() >= 2) {
+                requestSpec = requestSpec.header(row.get(0), row.get(1));
+            }
+        }
+        lastResponse = requestSpec.when().options(endpoint);
+    }
+
+    @When("I make a GET request to {string} with headers:")
+    public void iMakeAGetRequestToWithHeaders(String endpoint, io.cucumber.datatable.DataTable dataTable) {
+        // Don't apply default headers - use only the headers provided in the test
+        // This allows tests to send specific headers (like malicious User-Agent) without interference
+        var requestSpec = given();
+        for (var row : dataTable.asLists()) {
+            if (row.size() >= 2) {
+                requestSpec = requestSpec.header(row.get(0), row.get(1));
+            }
+        }
+        lastResponse = requestSpec.when().get(endpoint);
+    }
+
 }

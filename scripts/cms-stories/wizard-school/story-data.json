@@ -1,0 +1,91 @@
+{
+  "id": "wizard-school",
+  "title": "First Day at Wizard School",
+  "category": "fantasy",
+  "tag": "✨ Fantasy",
+  "emoji": "🪄",
+  "coverImage": "assets/stories/wizard-school/cover/thumbnail.webp",
+  "isAvailable": true,
+  "ageRange": "4-7",
+  "duration": 12,
+  "description": "Experience the magic of your first day at wizard school with new friends and spells.",
+  "isPremium": true,
+  "author": "Freya Stories",
+  "tags": [
+    "fantasy"
+  ],
+  "pages": [
+    {
+      "id": "wizard-school-1",
+      "pageNumber": 1,
+      "backgroundImage": "assets/stories/wizard-school/page-1/background.webp",
+      "text": "Page 1 text goes here..."
+    },
+    {
+      "id": "wizard-school-2",
+      "pageNumber": 2,
+      "backgroundImage": "assets/stories/wizard-school/page-2/background.webp",
+      "text": "Page 2 text goes here..."
+    },
+    {
+      "id": "wizard-school-3",
+      "pageNumber": 3,
+      "backgroundImage": "assets/stories/wizard-school/page-3/background.webp",
+      "text": "Page 3 text goes here..."
+    },
+    {
+      "id": "wizard-school-4",
+      "pageNumber": 4,
+      "backgroundImage": "assets/stories/wizard-school/page-4/background.webp",
+      "text": "Page 4 text goes here..."
+    },
+    {
+      "id": "wizard-school-5",
+      "pageNumber": 5,
+      "backgroundImage": "assets/stories/wizard-school/page-5/background.webp",
+      "text": "Page 5 text goes here..."
+    },
+    {
+      "id": "wizard-school-6",
+      "pageNumber": 6,
+      "backgroundImage": "assets/stories/wizard-school/page-6/background.webp",
+      "text": "Page 6 text goes here..."
+    },
+    {
+      "id": "wizard-school-7",
+      "pageNumber": 7,
+      "backgroundImage": "assets/stories/wizard-school/page-7/background.webp",
+      "text": "Page 7 text goes here..."
+    },
+    {
+      "id": "wizard-school-8",
+      "pageNumber": 8,
+      "backgroundImage": "assets/stories/wizard-school/page-8/background.webp",
+      "text": "Page 8 text goes here..."
+    },
+    {
+      "id": "wizard-school-9",
+      "pageNumber": 9,
+      "backgroundImage": "assets/stories/wizard-school/page-9/background.webp",
+      "text": "Page 9 text goes here..."
+    },
+    {
+      "id": "wizard-school-10",
+      "pageNumber": 10,
+      "backgroundImage": "assets/stories/wizard-school/page-10/background.webp",
+      "text": "Page 10 text goes here..."
+    },
+    {
+      "id": "wizard-school-11",
+      "pageNumber": 11,
+      "backgroundImage": "assets/stories/wizard-school/page-11/background.webp",
+      "text": "Page 11 text goes here..."
+    },
+    {
+      "id": "wizard-school-12",
+      "pageNumber": 12,
+      "backgroundImage": "assets/stories/wizard-school/page-12/background.webp",
+      "text": "Page 12 text goes here..."
+    }
+  ]
+}

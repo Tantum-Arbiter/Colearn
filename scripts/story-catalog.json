@@ -1,0 +1,235 @@
+{
+  "bundled": [
+    {
+      "id": "snuggle-little-wombat",
+      "title": "Snuggle Little Wombat",
+      "category": "bedtime",
+      "emoji": "🐨",
+      "description": "A gentle bedtime story about a little wombat getting ready for sleep with cozy snuggles and sweet dreams.",
+      "ageRange": "2-5",
+      "duration": 8
+    },
+    {
+      "id": "sleepy-forest",
+      "title": "The Sleepy Forest",
+      "category": "bedtime",
+      "emoji": "🦉",
+      "description": "In a peaceful forest, all the woodland creatures settle down for a cozy night's sleep.",
+      "ageRange": "2-5",
+      "duration": 8
+    },
+    {
+      "id": "moonlight-lullaby",
+      "title": "Moonlight Lullaby",
+      "category": "bedtime",
+      "emoji": "🌙",
+      "description": "The moon sings a gentle lullaby to all the sleepy children around the world.",
+      "ageRange": "2-4",
+      "duration": 6
+    },
+    {
+      "id": "treasure-island",
+      "title": "Treasure Island Adventure",
+      "category": "adventure",
+      "emoji": "🏴‍☠️",
+      "description": "Join Captain Pip on an exciting journey to find hidden treasure on a mysterious island.",
+      "ageRange": "3-6",
+      "duration": 10
+    },
+    {
+      "id": "mountain-climb",
+      "title": "The Great Mountain Climb",
+      "category": "adventure",
+      "emoji": "⛰️",
+      "description": "Follow brave little goat as she climbs the tallest mountain to see the sunrise.",
+      "ageRange": "3-6",
+      "duration": 9
+    },
+    {
+      "id": "jungle-explorer",
+      "title": "Jungle Explorer",
+      "category": "adventure",
+      "emoji": "🦁",
+      "description": "Explore the jungle and meet amazing animals with young explorer Leo.",
+      "ageRange": "3-6",
+      "duration": 10
+    },
+    {
+      "id": "butterfly-garden",
+      "title": "The Butterfly Garden",
+      "category": "nature",
+      "emoji": "🦋",
+      "description": "Discover the magical life cycle of butterflies in a beautiful garden.",
+      "ageRange": "2-5",
+      "duration": 7
+    },
+    {
+      "id": "ocean-friends",
+      "title": "Ocean Friends",
+      "category": "nature",
+      "emoji": "🐠",
+      "description": "Dive deep into the ocean and meet colorful fish, playful dolphins, and gentle whales.",
+      "ageRange": "2-5",
+      "duration": 8
+    },
+    {
+      "id": "forest-walk",
+      "title": "A Walk in the Forest",
+      "category": "nature",
+      "emoji": "🌲",
+      "description": "Take a peaceful walk through the forest and discover its hidden wonders.",
+      "ageRange": "2-4",
+      "duration": 7
+    },
+    {
+      "id": "best-friends",
+      "title": "Best Friends Forever",
+      "category": "friendship",
+      "emoji": "🐻",
+      "description": "Bear and Bunny learn what it means to be true friends through thick and thin.",
+      "ageRange": "3-5",
+      "duration": 8
+    },
+    {
+      "id": "sharing-is-caring",
+      "title": "Sharing is Caring",
+      "category": "friendship",
+      "emoji": "🎁",
+      "description": "Little Fox learns the joy of sharing with friends at the forest picnic.",
+      "ageRange": "2-4",
+      "duration": 6
+    },
+    {
+      "id": "new-friend",
+      "title": "Making a New Friend",
+      "category": "friendship",
+      "emoji": "🐰",
+      "description": "Shy Rabbit learns how to make friends at the playground.",
+      "ageRange": "2-5",
+      "duration": 7
+    },
+    {
+      "id": "counting-stars",
+      "title": "Counting Stars",
+      "category": "learning",
+      "emoji": "⭐",
+      "description": "Learn to count from 1 to 10 by counting twinkling stars in the night sky.",
+      "ageRange": "2-4",
+      "duration": 6
+    },
+    {
+      "id": "rainbow-colors",
+      "title": "Rainbow Colors",
+      "category": "learning",
+      "emoji": "🌈",
+      "description": "Discover all the colors of the rainbow with playful animals.",
+      "ageRange": "2-4",
+      "duration": 7
+    },
+    {
+      "id": "abc-adventure",
+      "title": "ABC Adventure",
+      "category": "learning",
+      "emoji": "🔤",
+      "description": "Learn the alphabet with fun animals from A to Z.",
+      "ageRange": "3-5",
+      "duration": 8
+    },
+    {
+      "id": "fairy-garden",
+      "title": "The Fairy Garden",
+      "category": "fantasy",
+      "emoji": "🧚",
+      "description": "Visit a magical garden where fairies dance and flowers sing.",
+      "ageRange": "3-6",
+      "duration": 8
+    },
+    {
+      "id": "dragon-friend",
+      "title": "My Dragon Friend",
+      "category": "fantasy",
+      "emoji": "🐉",
+      "description": "Meet a friendly dragon who loves to play and share adventures.",
+      "ageRange": "3-6",
+      "duration": 9
+    },
+    {
+      "id": "unicorn-dreams",
+      "title": "Unicorn Dreams",
+      "category": "fantasy",
+      "emoji": "🦄",
+      "description": "Journey to a magical land where unicorns make dreams come true.",
+      "ageRange": "3-6",
+      "duration": 8
+    }
+  ],
+  "cms_only": [
+    {
+      "id": "starlight-dreams",
+      "title": "Starlight Dreams",
+      "category": "bedtime",
+      "emoji": "✨",
+      "description": "A magical bedtime story about a child who rides on starlight to visit dream worlds.",
+      "ageRange": "3-6",
+      "duration": 10,
+      "isPremium": true,
+      "author": "Freya Stories"
+    },
+    {
+      "id": "pirate-adventure",
+      "title": "The Pirate's Secret",
+      "category": "adventure",
+      "emoji": "⚓",
+      "description": "Discover the secret treasure map and sail the seven seas with Captain Ruby.",
+      "ageRange": "4-7",
+      "duration": 12,
+      "isPremium": true,
+      "author": "Freya Stories"
+    },
+    {
+      "id": "rainforest-rescue",
+      "title": "Rainforest Rescue",
+      "category": "nature",
+      "emoji": "🦜",
+      "description": "Help save the rainforest animals and learn about protecting our planet.",
+      "ageRange": "4-7",
+      "duration": 11,
+      "isPremium": true,
+      "author": "Freya Stories"
+    },
+    {
+      "id": "kindness-club",
+      "title": "The Kindness Club",
+      "category": "friendship",
+      "emoji": "💝",
+      "description": "Join the Kindness Club and spread joy through acts of kindness.",
+      "ageRange": "3-6",
+      "duration": 9,
+      "isPremium": true,
+      "author": "Freya Stories"
+    },
+    {
+      "id": "science-explorer",
+      "title": "Little Science Explorer",
+      "category": "learning",
+      "emoji": "🔬",
+      "description": "Discover amazing science facts through fun experiments and exploration.",
+      "ageRange": "4-7",
+      "duration": 10,
+      "isPremium": true,
+      "author": "Freya Stories"
+    },
+    {
+      "id": "wizard-school",
+      "title": "First Day at Wizard School",
+      "category": "fantasy",
+      "emoji": "🪄",
+      "description": "Experience the magic of your first day at wizard school with new friends and spells.",
+      "ageRange": "4-7",
+      "duration": 12,
+      "isPremium": true,
+      "author": "Freya Stories"
+    }
+  ]
+}
+

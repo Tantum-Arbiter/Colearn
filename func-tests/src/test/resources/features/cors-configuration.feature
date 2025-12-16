@@ -9,7 +9,7 @@ Feature: CORS Configuration
 
   @smoke
   Scenario: CORS headers are present on successful requests
-    When I make a GET request to "/private/healthcheck" with headers:
+    When I make a GET request to "/auth/status" with headers:
       | Origin | https://app.growwithfreya.com |
     Then the response status code should be 200
     And the response headers should contain "Access-Control-Allow-Origin"
@@ -32,14 +32,17 @@ Feature: CORS Configuration
   @security
   Scenario: CORS headers are present on authentication errors
     When I make a GET request to "/api/auth/me" with headers:
-      | Origin        | https://app.growwithfreya.com |
-      | Authorization | Bearer invalid-token          |
+      | Origin            | https://app.growwithfreya.com |
+      | Authorization     | Bearer invalid-token          |
+      | X-Client-Platform | ios                           |
+      | X-Client-Version  | 1.0.0                         |
+      | X-Device-ID       | test-device-123               |
     Then the response status code should be 401
     And the response headers should contain "Access-Control-Allow-Origin"
 
   @security
   Scenario: CORS headers are present on validation errors
-    When I make a GET request to "/api/auth/me" with headers:
+    When I make a GET request to "/auth/status" with headers:
       | Origin     | https://app.growwithfreya.com |
       | User-Agent | <script>alert(1)</script>     |
     Then the response status code should be 400
@@ -47,9 +50,9 @@ Feature: CORS Configuration
 
   @security
   Scenario: CORS headers are present on 404 errors
-    When I make a GET request to "/non-existent-endpoint" with headers:
+    When I make a GET request to "/nonexistent-endpoint-xyz" with headers:
       | Origin | https://app.growwithfreya.com |
-    Then the response status code should be 404
+    Then the response status code should be 403
     And the response headers should contain "Access-Control-Allow-Origin"
 
   Scenario: CORS allows configured HTTP methods
@@ -65,9 +68,9 @@ Feature: CORS Configuration
 
   Scenario: CORS allows configured headers
     When I make an OPTIONS request to "/api/users/profile" with headers:
-      | Origin                         | https://app.growwithfreya.com |
-      | Access-Control-Request-Method  | GET                           |
-      | Access-Control-Request-Headers | Authorization,X-Device-ID     |
+      | Origin                         | https://app.growwithfreya.com                                                   |
+      | Access-Control-Request-Method  | GET                                                                             |
+      | Access-Control-Request-Headers | Authorization,Content-Type,X-Device-ID,X-Client-Platform,X-Client-Version      |
     Then the response status code should be 200
     And the response header "Access-Control-Allow-Headers" should contain "Authorization"
     And the response header "Access-Control-Allow-Headers" should contain "Content-Type"
@@ -104,27 +107,28 @@ Feature: CORS Configuration
   @security
   Scenario: CORS works with POST requests
     Given I have a valid authentication token
-    When I send a POST request to "/api/users/profile" with headers:
+    When I send a POST request to "/api/profile" with headers:
       | Authorization | Bearer valid-user-test        |
       | Origin        | https://app.growwithfreya.com |
       | Content-Type  | application/json              |
     And request body:
       """
       {
-        "name": "Test User",
-        "email": "test@example.com"
+        "nickname": "TestUser",
+        "avatarType": "boy",
+        "avatarId": "boy_1"
       }
       """
-    Then the response status should be 200
+    Then the response status should be 200 or 201
     And the response headers should contain "Access-Control-Allow-Origin"
 
   @security
   Scenario: Multiple CORS requests maintain consistent headers
-    When I make a GET request to "/private/healthcheck" with headers:
+    When I make a GET request to "/auth/status" with headers:
       | Origin | https://app.growwithfreya.com |
     Then the response status code should be 200
     And the response headers should contain "Access-Control-Allow-Origin"
-    When I make a GET request to "/private/healthcheck" with headers:
+    When I make a GET request to "/auth/status" with headers:
       | Origin | https://www.growwithfreya.com |
     Then the response status code should be 200
     And the response headers should contain "Access-Control-Allow-Origin"

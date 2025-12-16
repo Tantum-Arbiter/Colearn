@@ -1,0 +1,73 @@
+{
+  "id": "mountain-climb",
+  "title": "The Great Mountain Climb",
+  "category": "adventure",
+  "tag": "🗺️ Adventure",
+  "emoji": "⛰️",
+  "coverImage": "assets/stories/mountain-climb/cover/thumbnail.webp",
+  "isAvailable": true,
+  "ageRange": "3-6",
+  "duration": 9,
+  "description": "Follow brave little goat as she climbs the tallest mountain to see the sunrise.",
+  "isPremium": false,
+  "author": "Freya Stories",
+  "tags": [
+    "adventure"
+  ],
+  "pages": [
+    {
+      "id": "mountain-climb-1",
+      "pageNumber": 1,
+      "backgroundImage": "assets/stories/mountain-climb/page-1/background.webp",
+      "text": "Page 1 text goes here..."
+    },
+    {
+      "id": "mountain-climb-2",
+      "pageNumber": 2,
+      "backgroundImage": "assets/stories/mountain-climb/page-2/background.webp",
+      "text": "Page 2 text goes here..."
+    },
+    {
+      "id": "mountain-climb-3",
+      "pageNumber": 3,
+      "backgroundImage": "assets/stories/mountain-climb/page-3/background.webp",
+      "text": "Page 3 text goes here..."
+    },
+    {
+      "id": "mountain-climb-4",
+      "pageNumber": 4,
+      "backgroundImage": "assets/stories/mountain-climb/page-4/background.webp",
+      "text": "Page 4 text goes here..."
+    },
+    {
+      "id": "mountain-climb-5",
+      "pageNumber": 5,
+      "backgroundImage": "assets/stories/mountain-climb/page-5/background.webp",
+      "text": "Page 5 text goes here..."
+    },
+    {
+      "id": "mountain-climb-6",
+      "pageNumber": 6,
+      "backgroundImage": "assets/stories/mountain-climb/page-6/background.webp",
+      "text": "Page 6 text goes here..."
+    },
+    {
+      "id": "mountain-climb-7",
+      "pageNumber": 7,
+      "backgroundImage": "assets/stories/mountain-climb/page-7/background.webp",
+      "text": "Page 7 text goes here..."
+    },
+    {
+      "id": "mountain-climb-8",
+      "pageNumber": 8,
+      "backgroundImage": "assets/stories/mountain-climb/page-8/background.webp",
+      "text": "Page 8 text goes here..."
+    },
+    {
+      "id": "mountain-climb-9",
+      "pageNumber": 9,
+      "backgroundImage": "assets/stories/mountain-climb/page-9/background.webp",
+      "text": "Page 9 text goes here..."
+    }
+  ]
+}

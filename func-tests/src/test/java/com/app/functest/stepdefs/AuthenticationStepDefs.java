@@ -29,51 +29,8 @@ public class AuthenticationStepDefs extends BaseStepDefs {
     // Track scenario-scoped WireMock stubs so we can clean them up after each scenario
     private final List<StubMapping> scenarioStubs = new ArrayList<>();
 
-    @Before(order = 0)
-    public void configureWireMockClient() {
-        // Skip WireMock configuration when running against GCP (real services)
-        if (isGcpMode()) {
-            return;
-        }
-
-        String base = System.getenv("WIREMOCK_BASE_URL");
-        if (base == null || base.isBlank()) {
-            base = System.getProperty("WIREMOCK_BASE_URL");
-        }
-        if (base == null || base.isBlank()) {
-            base = "http://wiremock:8080";
-        }
-        try {
-            URI uri = URI.create(base);
-            String host = uri.getHost();
-            int port = uri.getPort() != -1 ? uri.getPort() : ("https".equalsIgnoreCase(uri.getScheme()) ? 443 : 80);
-            WireMock.configureFor(host, port);
-        } catch (Exception e) {
-            WireMock.configureFor("wiremock", 8080);
-        }
-        // Ensure isolation between scenarios: remove any dynamic stubs and request journal
-        try {
-            WireMock.reset();
-        } catch (Exception ignored) {
-        }
-    }
-
-    @Before(order = 1)
-    public void resetGatewayState() {
-        String cfg = System.getenv("GATEWAY_BASE_URL");
-        if (cfg == null || cfg.isBlank()) {
-            cfg = System.getProperty("GATEWAY_BASE_URL");
-        }
-        if (cfg == null || cfg.isBlank()) {
-            cfg = "http://gateway:8080";
-        }
-        try {
-
-            given().baseUri(cfg).when().post("/private/reset").then().statusCode(anyOf(is(200), is(404)));
-        } catch (Exception ignored) {
-            // Gateway may not expose reset endpoint in non-test profiles; ignore failures
-        }
-    }
+    // Note: @Before hooks are now centralized in GatewayStepDefs to avoid duplicate hooks
+    // and ensure predictable execution order
 
     // Note: lastResponse is inherited from BaseStepDefs and is static to share state across all step definition classes
     private RequestSpecification requestSpec;
@@ -116,7 +73,7 @@ public class AuthenticationStepDefs extends BaseStepDefs {
         // Verify gateway is accessible
         given()
             .when()
-                .get("/private/healthcheck")
+                .get("/auth/status")
             .then()
                 .statusCode(200);
     }
@@ -227,6 +184,14 @@ public class AuthenticationStepDefs extends BaseStepDefs {
         assertEquals(expectedStatus, actualStatus);
     }
 
+    @Then("the response status should be {int} or {int}")
+    public void theResponseStatusShouldBeOr(int status1, int status2) {
+        assertNotNull(lastResponse, "No response received");
+        int actualStatus = lastResponse.getStatusCode();
+        assertTrue(actualStatus == status1 || actualStatus == status2,
+            "Expected status " + status1 + " or " + status2 + " but got " + actualStatus);
+    }
+
     @Then("the response should contain {string}")
     public void theResponseShouldContain(String expectedContent) {
         assertNotNull(lastResponse, "No response received");
@@ -275,6 +240,7 @@ public class AuthenticationStepDefs extends BaseStepDefs {
     @Given("I have a valid authentication token")
     public void iHaveAValidAuthenticationToken() {
         this.authToken = "gateway-access-token";
+        currentAuthToken = this.authToken;
         this.requestSpec = applyDefaultClientHeaders(given()).header("Authorization", "Bearer " + authToken)
                                   .header("Content-Type", "application/json");
     }
@@ -829,6 +795,15 @@ public class AuthenticationStepDefs extends BaseStepDefs {
 
     @When("body:")
     public void withBody(String body) {
+        executePendingRequestWithBody(body);
+    }
+
+    @When("request body:")
+    public void withRequestBody(String body) {
+        executePendingRequestWithBody(body);
+    }
+
+    private void executePendingRequestWithBody(String body) {
         boolean providedClientHeader = pendingHeaders != null && pendingHeaders.keySet().stream().anyMatch(k ->
             k.equalsIgnoreCase("X-Client-Platform") || k.equalsIgnoreCase("X-Client-Version") || k.equalsIgnoreCase("X-Device-ID") || k.equalsIgnoreCase("User-Agent")
         );

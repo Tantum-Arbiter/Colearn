@@ -1,0 +1,67 @@
+{
+  "id": "fairy-garden",
+  "title": "The Fairy Garden",
+  "category": "fantasy",
+  "tag": "✨ Fantasy",
+  "emoji": "🧚",
+  "coverImage": "assets/stories/fairy-garden/cover/thumbnail.webp",
+  "isAvailable": true,
+  "ageRange": "3-6",
+  "duration": 8,
+  "description": "Visit a magical garden where fairies dance and flowers sing.",
+  "isPremium": false,
+  "author": "Freya Stories",
+  "tags": [
+    "fantasy"
+  ],
+  "pages": [
+    {
+      "id": "fairy-garden-1",
+      "pageNumber": 1,
+      "backgroundImage": "assets/stories/fairy-garden/page-1/background.webp",
+      "text": "Page 1 text goes here..."
+    },
+    {
+      "id": "fairy-garden-2",
+      "pageNumber": 2,
+      "backgroundImage": "assets/stories/fairy-garden/page-2/background.webp",
+      "text": "Page 2 text goes here..."
+    },
+    {
+      "id": "fairy-garden-3",
+      "pageNumber": 3,
+      "backgroundImage": "assets/stories/fairy-garden/page-3/background.webp",
+      "text": "Page 3 text goes here..."
+    },
+    {
+      "id": "fairy-garden-4",
+      "pageNumber": 4,
+      "backgroundImage": "assets/stories/fairy-garden/page-4/background.webp",
+      "text": "Page 4 text goes here..."
+    },
+    {
+      "id": "fairy-garden-5",
+      "pageNumber": 5,
+      "backgroundImage": "assets/stories/fairy-garden/page-5/background.webp",
+      "text": "Page 5 text goes here..."
+    },
+    {
+      "id": "fairy-garden-6",
+      "pageNumber": 6,
+      "backgroundImage": "assets/stories/fairy-garden/page-6/background.webp",
+      "text": "Page 6 text goes here..."
+    },
+    {
+      "id": "fairy-garden-7",
+      "pageNumber": 7,
+      "backgroundImage": "assets/stories/fairy-garden/page-7/background.webp",
+      "text": "Page 7 text goes here..."
+    },
+    {
+      "id": "fairy-garden-8",
+      "pageNumber": 8,
+      "backgroundImage": "assets/stories/fairy-garden/page-8/background.webp",
+      "text": "Page 8 text goes here..."
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "id": "moonlight-lullaby",
+  "title": "Moonlight Lullaby",
+  "category": "bedtime",
+  "tag": "🌙 Bedtime",
+  "emoji": "🌙",
+  "coverImage": "assets/stories/moonlight-lullaby/cover/thumbnail.webp",
+  "isAvailable": true,
+  "ageRange": "2-4",
+  "duration": 6,
+  "description": "The moon sings a gentle lullaby to all the sleepy children around the world.",
+  "isPremium": false,
+  "author": "Freya Stories",
+  "tags": [
+    "bedtime"
+  ],
+  "pages": [
+    {
+      "id": "moonlight-lullaby-1",
+      "pageNumber": 1,
+      "backgroundImage": "assets/stories/moonlight-lullaby/page-1/background.webp",
+      "text": "Page 1 text goes here..."
+    },
+    {
+      "id": "moonlight-lullaby-2",
+      "pageNumber": 2,
+      "backgroundImage": "assets/stories/moonlight-lullaby/page-2/background.webp",
+      "text": "Page 2 text goes here..."
+    },
+    {
+      "id": "moonlight-lullaby-3",
+      "pageNumber": 3,
+      "backgroundImage": "assets/stories/moonlight-lullaby/page-3/background.webp",
+      "text": "Page 3 text goes here..."
+    },
+    {
+      "id": "moonlight-lullaby-4",
+      "pageNumber": 4,
+      "backgroundImage": "assets/stories/moonlight-lullaby/page-4/background.webp",
+      "text": "Page 4 text goes here..."
+    },
+    {
+      "id": "moonlight-lullaby-5",
+      "pageNumber": 5,
+      "backgroundImage": "assets/stories/moonlight-lullaby/page-5/background.webp",
+      "text": "Page 5 text goes here..."
+    },
+    {
+      "id": "moonlight-lullaby-6",
+      "pageNumber": 6,
+      "backgroundImage": "assets/stories/moonlight-lullaby/page-6/background.webp",
+      "text": "Page 6 text goes here..."
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "id": "butterfly-garden",
+  "title": "The Butterfly Garden",
+  "category": "nature",
+  "tag": "🐢 Nature",
+  "emoji": "🦋",
+  "coverImage": "assets/stories/butterfly-garden/cover/thumbnail.webp",
+  "isAvailable": true,
+  "ageRange": "2-5",
+  "duration": 7,
+  "description": "Discover the magical life cycle of butterflies in a beautiful garden.",
+  "isPremium": false,
+  "author": "Freya Stories",
+  "tags": [
+    "nature"
+  ],
+  "pages": [
+    {
+      "id": "butterfly-garden-1",
+      "pageNumber": 1,
+      "backgroundImage": "assets/stories/butterfly-garden/page-1/background.webp",
+      "text": "Page 1 text goes here..."
+    },
+    {
+      "id": "butterfly-garden-2",
+      "pageNumber": 2,
+      "backgroundImage": "assets/stories/butterfly-garden/page-2/background.webp",
+      "text": "Page 2 text goes here..."
+    },
+    {
+      "id": "butterfly-garden-3",
+      "pageNumber": 3,
+      "backgroundImage": "assets/stories/butterfly-garden/page-3/background.webp",
+      "text": "Page 3 text goes here..."
+    },
+    {
+      "id": "butterfly-garden-4",
+      "pageNumber": 4,
+      "backgroundImage": "assets/stories/butterfly-garden/page-4/background.webp",
+      "text": "Page 4 text goes here..."
+    },
+    {
+      "id": "butterfly-garden-5",
+      "pageNumber": 5,
+      "backgroundImage": "assets/stories/butterfly-garden/page-5/background.webp",
+      "text": "Page 5 text goes here..."
+    },
+    {
+      "id": "butterfly-garden-6",
+      "pageNumber": 6,
+      "backgroundImage": "assets/stories/butterfly-garden/page-6/background.webp",
+      "text": "Page 6 text goes here..."
+    },
+    {
+      "id": "butterfly-garden-7",
+      "pageNumber": 7,
+      "backgroundImage": "assets/stories/butterfly-garden/page-7/background.webp",
+      "text": "Page 7 text goes here..."
+    }
+  ]
+}

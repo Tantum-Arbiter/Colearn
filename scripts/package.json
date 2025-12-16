@@ -1,0 +1,21 @@
+{
+  "name": "colearn-scripts",
+  "version": "1.0.0",
+  "description": "CI/CD scripts for Colearn project",
+  "private": true,
+  "scripts": {
+    "upload-stories": "node upload-stories-to-firestore.js",
+    "upload-cms-stories": "UPLOAD_MODE=cms-only node upload-stories-to-firestore.js",
+    "upload-bundled-stories": "UPLOAD_MODE=bundled node upload-stories-to-firestore.js",
+    "upload-all-stories": "UPLOAD_MODE=all node upload-stories-to-firestore.js",
+    "generate-stories": "node generate-story-files.js",
+    "generate-bundled-ts": "node generate-bundled-stories-ts.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
+

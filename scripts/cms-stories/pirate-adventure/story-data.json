@@ -1,0 +1,91 @@
+{
+  "id": "pirate-adventure",
+  "title": "The Pirate's Secret",
+  "category": "adventure",
+  "tag": "🗺️ Adventure",
+  "emoji": "⚓",
+  "coverImage": "assets/stories/pirate-adventure/cover/thumbnail.webp",
+  "isAvailable": true,
+  "ageRange": "4-7",
+  "duration": 12,
+  "description": "Discover the secret treasure map and sail the seven seas with Captain Ruby.",
+  "isPremium": true,
+  "author": "Freya Stories",
+  "tags": [
+    "adventure"
+  ],
+  "pages": [
+    {
+      "id": "pirate-adventure-1",
+      "pageNumber": 1,
+      "backgroundImage": "assets/stories/pirate-adventure/page-1/background.webp",
+      "text": "Page 1 text goes here..."
+    },
+    {
+      "id": "pirate-adventure-2",
+      "pageNumber": 2,
+      "backgroundImage": "assets/stories/pirate-adventure/page-2/background.webp",
+      "text": "Page 2 text goes here..."
+    },
+    {
+      "id": "pirate-adventure-3",
+      "pageNumber": 3,
+      "backgroundImage": "assets/stories/pirate-adventure/page-3/background.webp",
+      "text": "Page 3 text goes here..."
+    },
+    {
+      "id": "pirate-adventure-4",
+      "pageNumber": 4,
+      "backgroundImage": "assets/stories/pirate-adventure/page-4/background.webp",
+      "text": "Page 4 text goes here..."
+    },
+    {
+      "id": "pirate-adventure-5",
+      "pageNumber": 5,
+      "backgroundImage": "assets/stories/pirate-adventure/page-5/background.webp",
+      "text": "Page 5 text goes here..."
+    },
+    {
+      "id": "pirate-adventure-6",
+      "pageNumber": 6,
+      "backgroundImage": "assets/stories/pirate-adventure/page-6/background.webp",
+      "text": "Page 6 text goes here..."
+    },
+    {
+      "id": "pirate-adventure-7",
+      "pageNumber": 7,
+      "backgroundImage": "assets/stories/pirate-adventure/page-7/background.webp",
+      "text": "Page 7 text goes here..."
+    },
+    {
+      "id": "pirate-adventure-8",
+      "pageNumber": 8,
+      "backgroundImage": "assets/stories/pirate-adventure/page-8/background.webp",
+      "text": "Page 8 text goes here..."
+    },
+    {
+      "id": "pirate-adventure-9",
+      "pageNumber": 9,
+      "backgroundImage": "assets/stories/pirate-adventure/page-9/background.webp",
+      "text": "Page 9 text goes here..."
+    },
+    {
+      "id": "pirate-adventure-10",
+      "pageNumber": 10,
+      "backgroundImage": "assets/stories/pirate-adventure/page-10/background.webp",
+      "text": "Page 10 text goes here..."
+    },
+    {
+      "id": "pirate-adventure-11",
+      "pageNumber": 11,
+      "backgroundImage": "assets/stories/pirate-adventure/page-11/background.webp",
+      "text": "Page 11 text goes here..."
+    },
+    {
+      "id": "pirate-adventure-12",
+      "pageNumber": 12,
+      "backgroundImage": "assets/stories/pirate-adventure/page-12/background.webp",
+      "text": "Page 12 text goes here..."
+    }
+  ]
+}

@@ -81,7 +81,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             logger.warn("Invalid JWT token: {}", ve.getMessage());
         } catch (Exception e) {
             logger.error("JWT authentication failed: {}", e.getMessage());
-            // Don't set authentication - let Spring Security handle unauthorized access
         }
 
         filterChain.doFilter(request, response);
@@ -108,12 +107,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      * Validate token and set authentication context
      */
     private void validateAndSetAuthentication(HttpServletRequest request, String token) {
-        // In test profile, accept known fake tokens without attempting real JWT verification
         boolean testProfile = isTestProfile();
         boolean acceptedFake = isAcceptedFakeToken(token);
-        if (testProfile) {
-            logger.info("[TEST-AUTH] incoming token prefix='{}', acceptedFake={}", token != null ? token.substring(0, Math.min(12, token.length())) : "null", acceptedFake);
-        }
         if (testProfile && acceptedFake) {
             setAuthenticationFromFakeToken(request, token);
             return;
@@ -222,7 +217,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         details.setUserAgent(request.getHeader("User-Agent"));
         authentication.setDetails(details);
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        logger.debug("Accepted test token and set authentication for user: {}", userId);
+        logger.debug("Test authentication set for user: {}", userId);
     }
 
 

@@ -16,7 +16,6 @@ logging:
   level:
     root: INFO
     org.springframework: WARN
-    org.springframework.security: WARN
     com.app: INFO
 
 # CORS Configuration (permissive for testing)
@@ -37,7 +36,14 @@ cors:
     - DELETE
     - OPTIONS
   allowed-headers:
-    - "*"
+    - Authorization
+    - Content-Type
+    - X-Device-ID
+    - X-Client-Platform
+    - X-Client-Version
+    - X-Request-ID
+    - Accept
+    - Origin
   allow-credentials: true
   max-age: 3600
 

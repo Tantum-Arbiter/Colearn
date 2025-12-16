@@ -276,8 +276,11 @@ public class RequestValidationFilter extends OncePerRequestFilter {
                 // Special-case User-Agent: if there are multiple headers provided, avoid getHeaders("User-Agent")
                 // to prevent strict stubbing argument mismatch in tests that only stub X-Forwarded-For
                 if ("User-Agent".equalsIgnoreCase(name) && headerNames.size() > 1) {
-                    // Still touch the header so any getHeader("User-Agent") stubs are consumed
-                    request.getHeader(name);
+                    // Still validate the User-Agent value for suspicious patterns
+                    String userAgentValue = request.getHeader(name);
+                    if (userAgentValue != null && (containsCrLf(userAgentValue) || containsSuspiciousPattern(userAgentValue))) {
+                        return false;
+                    }
                     continue;
                 }
 

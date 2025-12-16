@@ -1,0 +1,55 @@
+{
+  "id": "sharing-is-caring",
+  "title": "Sharing is Caring",
+  "category": "friendship",
+  "tag": "🤝 Friendship",
+  "emoji": "🎁",
+  "coverImage": "assets/stories/sharing-is-caring/cover/thumbnail.webp",
+  "isAvailable": true,
+  "ageRange": "2-4",
+  "duration": 6,
+  "description": "Little Fox learns the joy of sharing with friends at the forest picnic.",
+  "isPremium": false,
+  "author": "Freya Stories",
+  "tags": [
+    "friendship"
+  ],
+  "pages": [
+    {
+      "id": "sharing-is-caring-1",
+      "pageNumber": 1,
+      "backgroundImage": "assets/stories/sharing-is-caring/page-1/background.webp",
+      "text": "Page 1 text goes here..."
+    },
+    {
+      "id": "sharing-is-caring-2",
+      "pageNumber": 2,
+      "backgroundImage": "assets/stories/sharing-is-caring/page-2/background.webp",
+      "text": "Page 2 text goes here..."
+    },
+    {
+      "id": "sharing-is-caring-3",
+      "pageNumber": 3,
+      "backgroundImage": "assets/stories/sharing-is-caring/page-3/background.webp",
+      "text": "Page 3 text goes here..."
+    },
+    {
+      "id": "sharing-is-caring-4",
+      "pageNumber": 4,
+      "backgroundImage": "assets/stories/sharing-is-caring/page-4/background.webp",
+      "text": "Page 4 text goes here..."
+    },
+    {
+      "id": "sharing-is-caring-5",
+      "pageNumber": 5,
+      "backgroundImage": "assets/stories/sharing-is-caring/page-5/background.webp",
+      "text": "Page 5 text goes here..."
+    },
+    {
+      "id": "sharing-is-caring-6",
+      "pageNumber": 6,
+      "backgroundImage": "assets/stories/sharing-is-caring/page-6/background.webp",
+      "text": "Page 6 text goes here..."
+    }
+  ]
+}

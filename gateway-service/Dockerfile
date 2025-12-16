@@ -60,7 +60,7 @@ ENV SPRING_PROFILES_ACTIVE=prod
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8080/private/healthcheck || exit 1
+    CMD curl -f -A "HealthCheck/1.0" http://localhost:8080/auth/status || exit 1
 
 # Expose port
 EXPOSE 8080

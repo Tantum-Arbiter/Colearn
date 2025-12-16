@@ -41,10 +41,10 @@ Feature: Gateway Service Health
     And the response time should be less than 1000 milliseconds
 
   @error-handling
-  Scenario: Service handles 404 gracefully
+  Scenario: Service denies access to unknown endpoints
     Given the gateway service is healthy
     When I make a GET request to "/non-existent-endpoint"
-    Then the response status code should be 404
+    Then the response status code should be 403
     And the response time should be less than 1000 milliseconds
 
   Scenario: CORS headers are present

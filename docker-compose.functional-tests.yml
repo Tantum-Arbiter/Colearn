@@ -91,7 +91,7 @@ services:
       firestore:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/private/healthcheck"]
+      test: ["CMD", "curl", "-f", "-A", "HealthCheck/1.0", "http://localhost:8080/auth/status"]
       interval: 30s
       timeout: 10s
       retries: 5

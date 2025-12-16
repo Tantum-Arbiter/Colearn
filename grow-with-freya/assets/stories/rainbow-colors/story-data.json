@@ -1,0 +1,61 @@
+{
+  "id": "rainbow-colors",
+  "title": "Rainbow Colors",
+  "category": "learning",
+  "tag": "📚 Learning",
+  "emoji": "🌈",
+  "coverImage": "assets/stories/rainbow-colors/cover/thumbnail.webp",
+  "isAvailable": true,
+  "ageRange": "2-4",
+  "duration": 7,
+  "description": "Discover all the colors of the rainbow with playful animals.",
+  "isPremium": false,
+  "author": "Freya Stories",
+  "tags": [
+    "learning"
+  ],
+  "pages": [
+    {
+      "id": "rainbow-colors-1",
+      "pageNumber": 1,
+      "backgroundImage": "assets/stories/rainbow-colors/page-1/background.webp",
+      "text": "Page 1 text goes here..."
+    },
+    {
+      "id": "rainbow-colors-2",
+      "pageNumber": 2,
+      "backgroundImage": "assets/stories/rainbow-colors/page-2/background.webp",
+      "text": "Page 2 text goes here..."
+    },
+    {
+      "id": "rainbow-colors-3",
+      "pageNumber": 3,
+      "backgroundImage": "assets/stories/rainbow-colors/page-3/background.webp",
+      "text": "Page 3 text goes here..."
+    },
+    {
+      "id": "rainbow-colors-4",
+      "pageNumber": 4,
+      "backgroundImage": "assets/stories/rainbow-colors/page-4/background.webp",
+      "text": "Page 4 text goes here..."
+    },
+    {
+      "id": "rainbow-colors-5",
+      "pageNumber": 5,
+      "backgroundImage": "assets/stories/rainbow-colors/page-5/background.webp",
+      "text": "Page 5 text goes here..."
+    },
+    {
+      "id": "rainbow-colors-6",
+      "pageNumber": 6,
+      "backgroundImage": "assets/stories/rainbow-colors/page-6/background.webp",
+      "text": "Page 6 text goes here..."
+    },
+    {
+      "id": "rainbow-colors-7",
+      "pageNumber": 7,
+      "backgroundImage": "assets/stories/rainbow-colors/page-7/background.webp",
+      "text": "Page 7 text goes here..."
+    }
+  ]
+}

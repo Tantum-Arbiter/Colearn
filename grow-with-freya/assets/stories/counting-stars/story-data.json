@@ -1,0 +1,55 @@
+{
+  "id": "counting-stars",
+  "title": "Counting Stars",
+  "category": "learning",
+  "tag": "📚 Learning",
+  "emoji": "⭐",
+  "coverImage": "assets/stories/counting-stars/cover/thumbnail.webp",
+  "isAvailable": true,
+  "ageRange": "2-4",
+  "duration": 6,
+  "description": "Learn to count from 1 to 10 by counting twinkling stars in the night sky.",
+  "isPremium": false,
+  "author": "Freya Stories",
+  "tags": [
+    "learning"
+  ],
+  "pages": [
+    {
+      "id": "counting-stars-1",
+      "pageNumber": 1,
+      "backgroundImage": "assets/stories/counting-stars/page-1/background.webp",
+      "text": "Page 1 text goes here..."
+    },
+    {
+      "id": "counting-stars-2",
+      "pageNumber": 2,
+      "backgroundImage": "assets/stories/counting-stars/page-2/background.webp",
+      "text": "Page 2 text goes here..."
+    },
+    {
+      "id": "counting-stars-3",
+      "pageNumber": 3,
+      "backgroundImage": "assets/stories/counting-stars/page-3/background.webp",
+      "text": "Page 3 text goes here..."
+    },
+    {
+      "id": "counting-stars-4",
+      "pageNumber": 4,
+      "backgroundImage": "assets/stories/counting-stars/page-4/background.webp",
+      "text": "Page 4 text goes here..."
+    },
+    {
+      "id": "counting-stars-5",
+      "pageNumber": 5,
+      "backgroundImage": "assets/stories/counting-stars/page-5/background.webp",
+      "text": "Page 5 text goes here..."
+    },
+    {
+      "id": "counting-stars-6",
+      "pageNumber": 6,
+      "backgroundImage": "assets/stories/counting-stars/page-6/background.webp",
+      "text": "Page 6 text goes here..."
+    }
+  ]
+}

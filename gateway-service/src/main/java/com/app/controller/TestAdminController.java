@@ -2,6 +2,9 @@ package com.app.controller;
 
 import com.app.exception.ErrorCode;
 import com.app.exception.GatewayException;
+import com.app.model.ContentVersion;
+import com.app.model.Story;
+import com.app.model.StoryPage;
 import com.app.model.User;
 import com.app.model.UserSession;
 import com.app.security.RateLimitingFilter;
@@ -23,8 +26,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -78,13 +85,14 @@ public class TestAdminController {
                 logger.warn("Failed to reset circuit breakers: {}", ex.getMessage());
             }
 
-            // Clear Firestore test data
+            // Clear Firestore test data and seed test stories
             if (firestore != null) {
                 try {
                     clearFirestoreCollections();
-                    logger.info("Cleared Firestore test data");
+                    seedTestStories();
+                    logger.info("Cleared and seeded Firestore test data");
                 } catch (Exception ex) {
-                    logger.warn("Failed to clear Firestore data: {}", ex.getMessage());
+                    logger.warn("Failed to clear/seed Firestore data: {}", ex.getMessage());
                 }
             }
 
@@ -142,6 +150,116 @@ public class TestAdminController {
             logger.info("Deleted {} profiles, {} users, {} sessions", profilesDeleted, usersDeleted, sessionsDeleted);
         } catch (Exception e) {
             logger.error("Error clearing Firestore collections", e);
+        }
+    }
+
+    private void seedTestStories() {
+        try {
+            List<Story> testStories = createTestStories();
+            Map<String, String> storyChecksums = new HashMap<>();
+
+            for (Story story : testStories) {
+                String checksum = calculateStoryChecksum(story);
+                story.setChecksum(checksum);
+                firestore.collection("stories").document(story.getId()).set(story).get();
+                storyChecksums.put(story.getId(), checksum);
+            }
+
+            ContentVersion contentVersion = new ContentVersion();
+            contentVersion.setId("current");
+            contentVersion.setVersion(1);
+            contentVersion.setLastUpdated(Instant.now());
+            contentVersion.setStoryChecksums(storyChecksums);
+            contentVersion.setTotalStories(testStories.size());
+
+            firestore.collection("content_versions").document("current").set(contentVersion).get();
+
+            logger.info("Seeded {} test stories and content version", testStories.size());
+        } catch (Exception e) {
+            logger.error("Error seeding test stories", e);
+        }
+    }
+
+    private List<Story> createTestStories() {
+        List<Story> stories = new ArrayList<>();
+
+        Story story1 = new Story("test-story-1", "The Sleepy Bear", "bedtime");
+        story1.setDescription("A cozy bedtime story about a sleepy bear");
+        story1.setAgeRange("2-5");
+        story1.setDuration(5);
+        story1.setTag("Bedtime");
+        story1.setEmoji("moon");
+        story1.setAuthor("Test Author");
+        story1.setTags(List.of("bedtime", "animals", "sleep"));
+        story1.setPages(List.of(
+            new StoryPage("page-1-1", 1, "Once upon a time, there was a sleepy bear."),
+            new StoryPage("page-1-2", 2, "The bear yawned and stretched."),
+            new StoryPage("page-1-3", 3, "Time for bed, said the bear.")
+        ));
+        stories.add(story1);
+
+        Story story2 = new Story("test-story-2", "The Brave Bunny", "adventure");
+        story2.setDescription("An adventure story about a brave bunny");
+        story2.setAgeRange("3-6");
+        story2.setDuration(6);
+        story2.setTag("Adventure");
+        story2.setEmoji("rabbit");
+        story2.setAuthor("Test Author");
+        story2.setTags(List.of("adventure", "animals", "courage"));
+        story2.setPages(List.of(
+            new StoryPage("page-2-1", 1, "Bunny hopped through the forest."),
+            new StoryPage("page-2-2", 2, "She found a mysterious path."),
+            new StoryPage("page-2-3", 3, "Bunny was brave and explored.")
+        ));
+        stories.add(story2);
+
+        Story story3 = new Story("test-story-3", "Friends Forever", "friendship");
+        story3.setDescription("A heartwarming story about friendship");
+        story3.setAgeRange("2-5");
+        story3.setDuration(4);
+        story3.setTag("Friendship");
+        story3.setEmoji("heart");
+        story3.setAuthor("Test Author");
+        story3.setTags(List.of("friendship", "kindness"));
+        story3.setPages(List.of(
+            new StoryPage("page-3-1", 1, "Two friends played together."),
+            new StoryPage("page-3-2", 2, "They shared their toys."),
+            new StoryPage("page-3-3", 3, "Best friends forever!")
+        ));
+        stories.add(story3);
+
+        return stories;
+    }
+
+    private String calculateStoryChecksum(Story story) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            StringBuilder content = new StringBuilder();
+            content.append(story.getId());
+            content.append(story.getTitle());
+            content.append(story.getCategory());
+            content.append(story.getDescription() != null ? story.getDescription() : "");
+            content.append(story.getVersion());
+
+            if (story.getPages() != null) {
+                story.getPages().forEach(page -> {
+                    content.append(page.getId());
+                    content.append(page.getText());
+                    content.append(page.getPageNumber());
+                });
+            }
+
+            byte[] hash = digest.digest(content.toString().getBytes(StandardCharsets.UTF_8));
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (Exception e) {
+            logger.error("Error calculating story checksum for: {}", story.getId(), e);
+            throw new RuntimeException("Failed to calculate checksum", e);
         }
     }
 

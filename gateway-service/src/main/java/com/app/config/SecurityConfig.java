@@ -48,9 +48,7 @@ public class SecurityConfig {
      */
     @PostConstruct
     public void init() {
-        logger.info("🔧 Configuring SecurityContext to use MODE_INHERITABLETHREADLOCAL for async thread propagation");
         SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
-        logger.info("✅ SecurityContext strategy set to: {}", SecurityContextHolder.getContextHolderStrategy().getClass().getSimpleName());
     }
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -75,6 +73,9 @@ public class SecurityConfig {
     @Value("${cors.max-age}")
     private long maxAge;
 
+    @Value("${spring.profiles.active:prod}")
+    private String activeProfile;
+
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter,
             RequestValidationFilter requestValidationFilter,
@@ -92,6 +93,8 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        boolean isTestProfile = activeProfile != null && activeProfile.toLowerCase().contains("test");
+
         http
             // Disable CSRF for stateless API
             .csrf(csrf -> csrf.disable())
@@ -110,21 +113,35 @@ public class SecurityConfig {
             .httpBasic(basic -> basic.disable())
 
             // Configure authorization rules
-            .authorizeHttpRequests(auth -> auth
-                // Public endpoints
-                .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/health/**").permitAll()
-                .requestMatchers("/actuator/**").permitAll()
-                .requestMatchers("/private/**").permitAll()
-                .requestMatchers("/").permitAll()
-                .requestMatchers("/public/**").permitAll()
+            .authorizeHttpRequests(auth -> {
+                // Internal/private endpoints
+                // In test profile: accessible for functional testing
+                // In production: blocked from external clients (use GCP IAP or VPC for internal access)
+                if (isTestProfile) {
+                    logger.info("Test profile active - allowing access to /private/**, /actuator/**, /health/**");
+                    auth.requestMatchers("/private/**").permitAll();
+                    auth.requestMatchers("/actuator/**").permitAll();
+                    auth.requestMatchers("/health/**").permitAll();
+                } else {
+                    logger.info("Production profile - blocking access to /private/**, /actuator/**, /health/**");
+                    auth.requestMatchers("/private/**").denyAll();
+                    auth.requestMatchers("/actuator/**").denyAll();
+                    auth.requestMatchers("/health/**").denyAll();
+                }
 
-                // Protected API endpoints
-                .requestMatchers("/api/**").authenticated()
+                // Auth endpoints - accessible for login flow
+                // Protected by client validation filter + rate limiting
+                auth.requestMatchers("/auth/**").permitAll();
 
-                // All other requests are permitted so unmapped paths return 404 (not 401)
-                .anyRequest().permitAll()
-            )
+                // Root endpoint - minimal info only
+                auth.requestMatchers("/").permitAll();
+
+                // Protected API endpoints - require valid JWT
+                auth.requestMatchers("/api/**").authenticated();
+
+                // All other requests denied
+                auth.anyRequest().denyAll();
+            })
 
             // Add metrics first so we record even when security short-circuits
             .addFilterBefore(metricsFilter, UsernamePasswordAuthenticationFilter.class)

@@ -5,6 +5,7 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import io.restassured.response.Response;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,8 +32,8 @@ public class StoryCmsStepDefs extends BaseStepDefs {
 
     @Given("I have a sync request with current server checksums")
     public void iHaveASyncRequestWithCurrentServerChecksums() {
-        // First get current server version
-        Response versionResponse = applyDefaultClientHeaders(given())
+        // First get current server version (requires authentication)
+        Response versionResponse = applyAuthenticatedHeaders(given())
                 .when()
                 .get("/api/stories/version");
 
@@ -45,7 +46,9 @@ public class StoryCmsStepDefs extends BaseStepDefs {
         syncRequest = new HashMap<>();
         syncRequest.put("clientVersion", versionResponse.jsonPath().getInt("version"));
         syncRequest.put("storyChecksums", serverChecksums);
-        syncRequest.put("lastSyncTimestamp", versionResponse.jsonPath().getLong("lastUpdated"));
+        String lastUpdatedStr = versionResponse.jsonPath().getString("lastUpdated");
+        long lastSyncTimestamp = lastUpdatedStr != null ? Instant.parse(lastUpdatedStr).toEpochMilli() : 0L;
+        syncRequest.put("lastSyncTimestamp", lastSyncTimestamp);
     }
 
     @Given("I have a sync request with outdated checksums")
@@ -80,8 +83,8 @@ public class StoryCmsStepDefs extends BaseStepDefs {
 
     @Given("I have a sync request with {int} matching checksums")
     public void iHaveASyncRequestWithMatchingChecksums(int count) {
-        // Get current server checksums
-        Response versionResponse = applyDefaultClientHeaders(given())
+        // Get current server checksums (requires authentication)
+        Response versionResponse = applyAuthenticatedHeaders(given())
                 .when()
                 .get("/api/stories/version");
 
@@ -99,7 +102,9 @@ public class StoryCmsStepDefs extends BaseStepDefs {
         syncRequest = new HashMap<>();
         syncRequest.put("clientVersion", versionResponse.jsonPath().getInt("version"));
         syncRequest.put("storyChecksums", serverChecksums);
-        syncRequest.put("lastSyncTimestamp", versionResponse.jsonPath().getLong("lastUpdated"));
+        String lastUpdatedStr = versionResponse.jsonPath().getString("lastUpdated");
+        long lastSyncTimestamp = lastUpdatedStr != null ? Instant.parse(lastUpdatedStr).toEpochMilli() : 0L;
+        syncRequest.put("lastSyncTimestamp", lastSyncTimestamp);
     }
 
     @Given("device {string} has synced all stories")
@@ -133,7 +138,7 @@ public class StoryCmsStepDefs extends BaseStepDefs {
 
         String requestBody = mapToJson(syncRequest);
 
-        lastResponse = applyDefaultClientHeaders(given())
+        lastResponse = applyAuthenticatedHeaders(given())
                 .contentType("application/json")
                 .body(requestBody)
                 .when()
@@ -142,7 +147,7 @@ public class StoryCmsStepDefs extends BaseStepDefs {
 
     @When("I make a POST request to {string} with invalid JSON")
     public void iMakeAPOSTRequestToWithInvalidJSON(String endpoint) {
-        lastResponse = applyDefaultClientHeaders(given())
+        lastResponse = applyAuthenticatedHeaders(given())
                 .contentType("application/json")
                 .body("{invalid json")
                 .when()
@@ -157,8 +162,8 @@ public class StoryCmsStepDefs extends BaseStepDefs {
 
     @When("I make a GET request to the story endpoint")
     public void iMakeAGETRequestToTheStoryEndpoint() {
-        // Get first available story
-        Response storiesResponse = applyDefaultClientHeaders(given())
+        // Get first available story (requires authentication)
+        Response storiesResponse = applyAuthenticatedHeaders(given())
                 .when()
                 .get("/api/stories");
 
@@ -166,7 +171,7 @@ public class StoryCmsStepDefs extends BaseStepDefs {
         if (stories != null && !stories.isEmpty()) {
             String storyId = (String) stories.get(0).get("id");
 
-            lastResponse = applyDefaultClientHeaders(given())
+            lastResponse = applyAuthenticatedHeaders(given())
                     .when()
                     .get("/api/stories/" + storyId);
         }
@@ -286,6 +291,7 @@ public class StoryCmsStepDefs extends BaseStepDefs {
     public void iMakeAGETRequestWithoutClientHeaders(String endpoint) {
         requestStartTime = System.currentTimeMillis();
         lastResponse = given()
+                .header("Authorization", "Bearer " + getEffectiveAuthToken())
                 .when()
                 .get(endpoint);
     }
@@ -294,6 +300,7 @@ public class StoryCmsStepDefs extends BaseStepDefs {
     public void iMakeAPOSTRequestWithoutXClientPlatformHeader(String endpoint) {
         requestStartTime = System.currentTimeMillis();
         lastResponse = given()
+                .header("Authorization", "Bearer " + getEffectiveAuthToken())
                 .header("X-Client-Version", "1.0.0")
                 .header("X-Device-ID", "test-device-123")
                 .contentType("application/json")
@@ -306,6 +313,7 @@ public class StoryCmsStepDefs extends BaseStepDefs {
     public void iMakeAGETRequestWithInvalidXClientVersion(String endpoint, String invalidVersion) {
         requestStartTime = System.currentTimeMillis();
         lastResponse = given()
+                .header("Authorization", "Bearer " + getEffectiveAuthToken())
                 .header("X-Client-Platform", "ios")
                 .header("X-Client-Version", invalidVersion)
                 .header("X-Device-ID", "test-device-123")

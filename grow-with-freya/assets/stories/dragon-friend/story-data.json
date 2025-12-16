@@ -1,0 +1,73 @@
+{
+  "id": "dragon-friend",
+  "title": "My Dragon Friend",
+  "category": "fantasy",
+  "tag": "✨ Fantasy",
+  "emoji": "🐉",
+  "coverImage": "assets/stories/dragon-friend/cover/thumbnail.webp",
+  "isAvailable": true,
+  "ageRange": "3-6",
+  "duration": 9,
+  "description": "Meet a friendly dragon who loves to play and share adventures.",
+  "isPremium": false,
+  "author": "Freya Stories",
+  "tags": [
+    "fantasy"
+  ],
+  "pages": [
+    {
+      "id": "dragon-friend-1",
+      "pageNumber": 1,
+      "backgroundImage": "assets/stories/dragon-friend/page-1/background.webp",
+      "text": "Page 1 text goes here..."
+    },
+    {
+      "id": "dragon-friend-2",
+      "pageNumber": 2,
+      "backgroundImage": "assets/stories/dragon-friend/page-2/background.webp",
+      "text": "Page 2 text goes here..."
+    },
+    {
+      "id": "dragon-friend-3",
+      "pageNumber": 3,
+      "backgroundImage": "assets/stories/dragon-friend/page-3/background.webp",
+      "text": "Page 3 text goes here..."
+    },
+    {
+      "id": "dragon-friend-4",
+      "pageNumber": 4,
+      "backgroundImage": "assets/stories/dragon-friend/page-4/background.webp",
+      "text": "Page 4 text goes here..."
+    },
+    {
+      "id": "dragon-friend-5",
+      "pageNumber": 5,
+      "backgroundImage": "assets/stories/dragon-friend/page-5/background.webp",
+      "text": "Page 5 text goes here..."
+    },
+    {
+      "id": "dragon-friend-6",
+      "pageNumber": 6,
+      "backgroundImage": "assets/stories/dragon-friend/page-6/background.webp",
+      "text": "Page 6 text goes here..."
+    },
+    {
+      "id": "dragon-friend-7",
+      "pageNumber": 7,
+      "backgroundImage": "assets/stories/dragon-friend/page-7/background.webp",
+      "text": "Page 7 text goes here..."
+    },
+    {
+      "id": "dragon-friend-8",
+      "pageNumber": 8,
+      "backgroundImage": "assets/stories/dragon-friend/page-8/background.webp",
+      "text": "Page 8 text goes here..."
+    },
+    {
+      "id": "dragon-friend-9",
+      "pageNumber": 9,
+      "backgroundImage": "assets/stories/dragon-friend/page-9/background.webp",
+      "text": "Page 9 text goes here..."
+    }
+  ]
+}

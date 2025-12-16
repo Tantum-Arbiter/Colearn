@@ -1,0 +1,73 @@
+{
+  "id": "kindness-club",
+  "title": "The Kindness Club",
+  "category": "friendship",
+  "tag": "🤝 Friendship",
+  "emoji": "💝",
+  "coverImage": "assets/stories/kindness-club/cover/thumbnail.webp",
+  "isAvailable": true,
+  "ageRange": "3-6",
+  "duration": 9,
+  "description": "Join the Kindness Club and spread joy through acts of kindness.",
+  "isPremium": true,
+  "author": "Freya Stories",
+  "tags": [
+    "friendship"
+  ],
+  "pages": [
+    {
+      "id": "kindness-club-1",
+      "pageNumber": 1,
+      "backgroundImage": "assets/stories/kindness-club/page-1/background.webp",
+      "text": "Page 1 text goes here..."
+    },
+    {
+      "id": "kindness-club-2",
+      "pageNumber": 2,
+      "backgroundImage": "assets/stories/kindness-club/page-2/background.webp",
+      "text": "Page 2 text goes here..."
+    },
+    {
+      "id": "kindness-club-3",
+      "pageNumber": 3,
+      "backgroundImage": "assets/stories/kindness-club/page-3/background.webp",
+      "text": "Page 3 text goes here..."
+    },
+    {
+      "id": "kindness-club-4",
+      "pageNumber": 4,
+      "backgroundImage": "assets/stories/kindness-club/page-4/background.webp",
+      "text": "Page 4 text goes here..."
+    },
+    {
+      "id": "kindness-club-5",
+      "pageNumber": 5,
+      "backgroundImage": "assets/stories/kindness-club/page-5/background.webp",
+      "text": "Page 5 text goes here..."
+    },
+    {
+      "id": "kindness-club-6",
+      "pageNumber": 6,
+      "backgroundImage": "assets/stories/kindness-club/page-6/background.webp",
+      "text": "Page 6 text goes here..."
+    },
+    {
+      "id": "kindness-club-7",
+      "pageNumber": 7,
+      "backgroundImage": "assets/stories/kindness-club/page-7/background.webp",
+      "text": "Page 7 text goes here..."
+    },
+    {
+      "id": "kindness-club-8",
+      "pageNumber": 8,
+      "backgroundImage": "assets/stories/kindness-club/page-8/background.webp",
+      "text": "Page 8 text goes here..."
+    },
+    {
+      "id": "kindness-club-9",
+      "pageNumber": 9,
+      "backgroundImage": "assets/stories/kindness-club/page-9/background.webp",
+      "text": "Page 9 text goes here..."
+    }
+  ]
+}

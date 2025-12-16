@@ -63,6 +63,18 @@ public class AuthController {
     }
 
     /**
+     * Simple status endpoint for CORS preflight and connectivity checks
+     * Returns minimal info - no sensitive data
+     */
+    @GetMapping(value = "/status", produces = "application/json")
+    public ResponseEntity<Map<String, Object>> status() {
+        return ResponseEntity.ok(Map.of(
+            "status", "available",
+            "service", "auth"
+        ));
+    }
+
+    /**
      * Authenticate with Google ID token
      */
     @PostMapping(value = "/google", consumes = "application/json", produces = "application/json")

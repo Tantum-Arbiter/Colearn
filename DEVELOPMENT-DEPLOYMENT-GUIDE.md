@@ -66,6 +66,17 @@ Your Spring Boot gateway service currently exposes the following REST APIs:
 - Create session in Firestore `user_sessions` collection
 - Return JWT access token (15 min) + refresh token (7 days)
 
+**Why No JWT Auth Required:**
+These endpoints don't require JWT authentication because they are the **entry point** for obtaining tokens:
+| Endpoint | Why No JWT | How It's Protected Instead |
+|----------|------------|---------------------------|
+| `/auth/google` | User doesn't have a JWT yet - this is how they get one | Requires valid Google OAuth ID token (RSA256 signature verification via JWKS) |
+| `/auth/apple` | User doesn't have a JWT yet - this is how they get one | Requires valid Apple OAuth ID token (RSA256 signature verification via JWKS) |
+| `/auth/refresh` | Access token may be expired, user needs new one | Requires valid refresh token that matches BCrypt hash in Firestore |
+| `/auth/revoke` | User is logging out, access token may be expired | Requires valid refresh token to identify which session to revoke |
+
+These endpoints ARE secured - just via OAuth token validation or refresh token validation rather than JWT. An attacker cannot call these endpoints without possessing a valid OAuth ID token from Google/Apple or a valid refresh token.
+
 **Security Features:**
 -  **OAuth Token Validation** - RSA256 public key verification for Google/Apple ID tokens
 -  **JWKS Fetching** - Automatic public key rotation from Google/Apple
@@ -88,6 +99,11 @@ Your Spring Boot gateway service currently exposes the following REST APIs:
 - Sync nickname, avatar, notifications, schedule across devices
 - Validate profile data (nickname 1-20 chars, avatarType: boy/girl)
 
+**Why JWT Auth IS Required:**
+These endpoints access user-specific data and must verify the caller's identity:
+- **GET** returns the authenticated user's profile - without auth, we wouldn't know whose profile to return
+- **POST** modifies the authenticated user's profile - without auth, anyone could modify any user's data
+
 #### **Metrics & Monitoring APIs** (`/actuator/*`)
 | Endpoint | Method | Purpose | Auth Required |
 |----------|--------|---------|---------------|
@@ -105,6 +121,26 @@ Your Spring Boot gateway service currently exposes the following REST APIs:
 - Track request counts, response times, error rates
 - Track active sessions, connections
 
+**Why No JWT Auth Required:**
+| Endpoint | Why No Auth | How It's Protected Instead |
+|----------|-------------|---------------------------|
+| `/actuator/health` | Load balancers and orchestrators need unauthenticated access for health checks | Network isolation (internal only in production) |
+| `/actuator/prometheus` | Prometheus scraper needs to poll without credentials | Network isolation + no sensitive data exposed |
+| `/actuator/custom/*` | Monitoring dashboards need automated access | Network isolation + aggregate data only (no PII) |
+
+**Production Protection:**
+In production, these endpoints are protected by **network-level security** rather than application-level auth:
+- Cloud Run **ingress settings** restrict access to internal GCP traffic only
+- Endpoints are not exposed to the public internet
+- Only GCP services (Cloud Monitoring, load balancers) can reach them
+- Rate limiting still applies to prevent abuse
+
+**Why This Approach:**
+- Monitoring tools (Prometheus, Cloud Monitoring, load balancers) don't support JWT auth
+- Adding auth would break health checks and auto-scaling
+- Data exposed is aggregate metrics only - no user PII or sensitive information
+- Industry standard practice for observability endpoints
+
 #### **Private APIs** (`/private/*`)
 | Endpoint | Method | Purpose | Auth Required |
 |----------|--------|---------|---------------|
@@ -116,6 +152,13 @@ Your Spring Boot gateway service currently exposes the following REST APIs:
 **What they do:**
 - Provide internal endpoints for monitoring/debugging
 - Not exposed to public internet (Cloud Run internal only)
+
+**Why No JWT Auth Required:**
+These are internal-only endpoints protected entirely by network isolation:
+- **Cloud Run ingress = "internal"** means only VPC traffic can reach them
+- Used by internal tooling, debugging, and ops team
+- No sensitive data - only metadata and aggregate metrics
+- Adding JWT auth would complicate internal tooling without security benefit
 
 ### **0.2 Current Prometheus Metrics Being Collected**
 

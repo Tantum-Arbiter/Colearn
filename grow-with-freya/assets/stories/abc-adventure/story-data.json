@@ -1,0 +1,67 @@
+{
+  "id": "abc-adventure",
+  "title": "ABC Adventure",
+  "category": "learning",
+  "tag": "📚 Learning",
+  "emoji": "🔤",
+  "coverImage": "assets/stories/abc-adventure/cover/thumbnail.webp",
+  "isAvailable": true,
+  "ageRange": "3-5",
+  "duration": 8,
+  "description": "Learn the alphabet with fun animals from A to Z.",
+  "isPremium": false,
+  "author": "Freya Stories",
+  "tags": [
+    "learning"
+  ],
+  "pages": [
+    {
+      "id": "abc-adventure-1",
+      "pageNumber": 1,
+      "backgroundImage": "assets/stories/abc-adventure/page-1/background.webp",
+      "text": "Page 1 text goes here..."
+    },
+    {
+      "id": "abc-adventure-2",
+      "pageNumber": 2,
+      "backgroundImage": "assets/stories/abc-adventure/page-2/background.webp",
+      "text": "Page 2 text goes here..."
+    },
+    {
+      "id": "abc-adventure-3",
+      "pageNumber": 3,
+      "backgroundImage": "assets/stories/abc-adventure/page-3/background.webp",
+      "text": "Page 3 text goes here..."
+    },
+    {
+      "id": "abc-adventure-4",
+      "pageNumber": 4,
+      "backgroundImage": "assets/stories/abc-adventure/page-4/background.webp",
+      "text": "Page 4 text goes here..."
+    },
+    {
+      "id": "abc-adventure-5",
+      "pageNumber": 5,
+      "backgroundImage": "assets/stories/abc-adventure/page-5/background.webp",
+      "text": "Page 5 text goes here..."
+    },
+    {
+      "id": "abc-adventure-6",
+      "pageNumber": 6,
+      "backgroundImage": "assets/stories/abc-adventure/page-6/background.webp",
+      "text": "Page 6 text goes here..."
+    },
+    {
+      "id": "abc-adventure-7",
+      "pageNumber": 7,
+      "backgroundImage": "assets/stories/abc-adventure/page-7/background.webp",
+      "text": "Page 7 text goes here..."
+    },
+    {
+      "id": "abc-adventure-8",
+      "pageNumber": 8,
+      "backgroundImage": "assets/stories/abc-adventure/page-8/background.webp",
+      "text": "Page 8 text goes here..."
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+name: Story CMS Deployment
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'grow-with-freya/assets/stories/**/story-data.json'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'gcp-dev'
+        type: choice
+        options:
+          - gcp-dev
+          - gcp-prod
+
+jobs:
+  upload-stories:
+    name: Upload Story Metadata to Firestore
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: scripts/package-lock.json
+
+      - name: Install dependencies
+        working-directory: scripts
+        run: npm ci
+
+      - name: Decode Firebase Service Account Key
+        env:
+          FIREBASE_SERVICE_ACCOUNT_BASE64: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+        run: |
+          echo "$FIREBASE_SERVICE_ACCOUNT_BASE64" | base64 -d > scripts/service-account-key.json
+
+      - name: Upload stories to Firestore
+        working-directory: scripts
+        env:
+          FIREBASE_SERVICE_ACCOUNT_KEY_PATH: ./service-account-key.json
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        run: npm run upload-stories
+
+      - name: Clean up service account key
+        if: always()
+        run: rm -f scripts/service-account-key.json
+
+      - name: Summary
+        run: |
+          echo "## 📚 Story CMS Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Story metadata uploaded to Firestore" >> $GITHUB_STEP_SUMMARY
+          echo "🔥 Project: ${{ secrets.FIREBASE_PROJECT_ID }}" >> $GITHUB_STEP_SUMMARY
+          echo "📅 Timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
+
+  notify-deployment:
+    name: Notify Deployment Status
+    runs-on: ubuntu-latest
+    needs: upload-stories
+    if: always()
+    
+    steps:
+      - name: Deployment Success
+        if: needs.upload-stories.result == 'success'
+        run: |
+          echo "✅ Story metadata successfully deployed to Firestore"
+          echo "Mobile apps will receive updates on next sync"
+
+      - name: Deployment Failed
+        if: needs.upload-stories.result == 'failure'
+        run: |
+          echo "❌ Story metadata deployment failed"
+          exit 1
+
