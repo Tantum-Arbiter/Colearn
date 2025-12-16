@@ -35,29 +35,26 @@ public class UserService {
 
     /**
      * Create a new user from OAuth authentication
+     * PII-free: only provider and providerId are stored
      */
-    public CompletableFuture<User> createUser(String email, String name,
-                                            String provider, String providerId) {
-        logger.info("Creating new user: {} with provider: {}", email, provider);
-        
+    public CompletableFuture<User> createUser(String provider, String providerId) {
+        logger.info("Creating new user with provider: {}", provider);
+
         return CompletableFuture.supplyAsync(() -> {
             try {
-                // Check if user already exists
-                Optional<User> existingUser = userRepository.findByEmail(email).join();
+                // Check if user already exists by provider+providerId
+                Optional<User> existingUser = userRepository.findByProviderAndProviderId(provider, providerId).join();
                 if (existingUser.isPresent()) {
-                    logger.warn("User already exists: {}", email);
-                    throw new IllegalArgumentException("User already exists with email: " + email);
+                    logger.warn("User already exists with provider: {} and providerId: {}", provider, providerId);
+                    throw new IllegalArgumentException("User already exists with this provider");
                 }
 
-                // Create new user
+                // Create new user (PII-free)
                 User user = new User();
                 user.setId(UUID.randomUUID().toString());
-                user.setEmail(email);
-                user.setName(name);
                 user.setProvider(provider);
                 user.setProviderId(providerId);
                 user.setActive(true);
-                user.setEmailVerified(true); // OAuth providers verify email
                 user.setCreatedAt(Instant.now());
                 user.setUpdatedAt(Instant.now());
                 user.updateLastLogin();
@@ -67,15 +64,15 @@ public class UserService {
 
                 // Save user
                 User savedUser = userRepository.save(user).join();
-                
+
                 // Record metrics
                 metricsService.recordUserCreated(provider);
-                
+
                 logger.info("User created successfully: {}", savedUser.getId());
                 return savedUser;
-                
+
             } catch (Exception e) {
-                logger.error("Error creating user: {}", email, e);
+                logger.error("Error creating user with provider: {}", provider, e);
                 metricsService.recordUserCreationError(provider, e.getClass().getSimpleName());
                 throw new RuntimeException("Failed to create user", e);
             }
@@ -100,28 +97,11 @@ public class UserService {
     }
 
     /**
-     * Get user by email
-     */
-    public CompletableFuture<Optional<User>> getUserByEmail(String email) {
-        logger.debug("Getting user by email: {}", email);
-        
-        return userRepository.findByEmail(email)
-                .thenApply(userOpt -> {
-                    if (userOpt.isPresent()) {
-                        metricsService.recordUserLookup("email", "found");
-                    } else {
-                        metricsService.recordUserLookup("email", "not_found");
-                    }
-                    return userOpt;
-                });
-    }
-
-    /**
      * Get or create user from OAuth authentication
+     * PII-free: only provider and providerId are used for lookup/creation
      */
-    public CompletableFuture<User> getOrCreateUser(String email, String name,
-                                                 String provider, String providerId) {
-        logger.debug("Getting or creating user: {} with provider: {}", email, provider);
+    public CompletableFuture<User> getOrCreateUser(String provider, String providerId) {
+        logger.debug("Getting or creating user with provider: {}", provider);
 
         return userRepository.findByProviderAndProviderId(provider, providerId)
                 .thenCompose(userOpt -> {
@@ -129,8 +109,6 @@ public class UserService {
                         User existingUser = userOpt.get();
                         // Update last login
                         existingUser.updateLastLogin();
-                        // Update profile info in case it changed
-                        existingUser.setName(name);
 
                         return userRepository.save(existingUser)
                                 .thenApply(savedUser -> {
@@ -139,7 +117,7 @@ public class UserService {
                                 });
                     } else {
                         // Create new user
-                        return createUser(email, name, provider, providerId)
+                        return createUser(provider, providerId)
                                 .thenApply(newUser -> {
                                     metricsService.recordUserLogin(provider, "new");
                                     return newUser;

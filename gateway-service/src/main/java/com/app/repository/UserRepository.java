@@ -26,14 +26,7 @@ public interface UserRepository {
     CompletableFuture<Optional<User>> findById(String userId);
 
     /**
-     * Find user by email
-     * @param email User email
-     * @return CompletableFuture with Optional user
-     */
-    CompletableFuture<Optional<User>> findByEmail(String email);
-
-    /**
-     * Find user by provider and provider ID
+     * Find user by provider and provider ID (primary lookup method for PII-free design)
      * @param provider OAuth provider (google, apple)
      * @param providerId Provider's user ID
      * @return CompletableFuture with Optional user
@@ -73,13 +66,6 @@ public interface UserRepository {
      * @return CompletableFuture with void
      */
     CompletableFuture<Void> deleteUser(String userId);
-
-    /**
-     * Check if user exists by email
-     * @param email User email
-     * @return CompletableFuture with boolean
-     */
-    CompletableFuture<Boolean> existsByEmail(String email);
 
     /**
      * Count total active users

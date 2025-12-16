@@ -95,35 +95,6 @@ public class FirebaseUserRepository implements UserRepository {
     }
 
     @Override
-    public CompletableFuture<Optional<User>> findByEmail(String email) {
-        logger.debug("Finding user by email: {}", email);
-        
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                Query query = firestore.collection(COLLECTION_NAME)
-                        .whereEqualTo("email", email)
-                        .limit(1);
-                
-                ApiFuture<QuerySnapshot> future = query.get();
-                QuerySnapshot querySnapshot = future.get();
-                
-                if (!querySnapshot.isEmpty()) {
-                    DocumentSnapshot document = querySnapshot.getDocuments().get(0);
-                    User user = document.toObject(User.class);
-                    logger.debug("User found by email: {}", email);
-                    return Optional.of(user);
-                } else {
-                    logger.debug("User not found by email: {}", email);
-                    return Optional.empty();
-                }
-            } catch (Exception e) {
-                logger.error("Error finding user by email: {}", email, e);
-                throw new RuntimeException("Failed to find user by email", e);
-            }
-        });
-    }
-
-    @Override
     public CompletableFuture<Optional<User>> findByProviderAndProviderId(String provider, String providerId) {
         logger.debug("Finding user by provider: {} and providerId: {}", provider, providerId);
         
@@ -283,13 +254,6 @@ public class FirebaseUserRepository implements UserRepository {
                 throw new RuntimeException("Failed to delete user", e);
             }
         });
-    }
-
-    @Override
-    public CompletableFuture<Boolean> existsByEmail(String email) {
-        logger.debug("Checking if user exists by email: {}", email);
-        
-        return findByEmail(email).thenApply(Optional::isPresent);
     }
 
     @Override

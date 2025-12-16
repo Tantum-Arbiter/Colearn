@@ -12,6 +12,9 @@ import java.util.Map;
 /**
  * User entity model for Firebase Firestore
  * Represents a parent/guardian user in the Grow with Freya app
+ *
+ * PII-free design: No email, name, or personally identifying information is stored.
+ * User identification relies on provider + providerId for cross-device sync.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class User {
@@ -19,26 +22,14 @@ public class User {
     @JsonProperty("id")
     private String id;
 
-    @JsonProperty("email")
-    private String email;
-
-    @JsonProperty("name")
-    private String name;
-
-    @JsonProperty("initials")
-    private String initials;
-
     @JsonProperty("provider")
     private String provider; // "google", "apple"
 
     @JsonProperty("providerId")
-    private String providerId; // OAuth provider's user ID
+    private String providerId; // OAuth provider's user ID (opaque identifier)
 
     @JsonProperty("isActive")
     private boolean isActive = true;
-
-    @JsonProperty("isEmailVerified")
-    private boolean isEmailVerified = false;
 
     @JsonProperty("lastLoginAt")
     private Instant lastLoginAt;
@@ -66,12 +57,9 @@ public class User {
     }
 
     // Constructor for new user creation
-    public User(String id, String email, String name, String provider, String providerId) {
+    public User(String id, String provider, String providerId) {
         this();
         this.id = id;
-        this.email = email;
-        this.name = name;
-        this.initials = generateInitials(name);
         this.provider = provider;
         this.providerId = providerId;
         this.lastLoginAt = Instant.now();
@@ -84,31 +72,6 @@ public class User {
 
     public void setId(String id) {
         this.id = id;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-        this.initials = generateInitials(name);
-    }
-
-    public String getInitials() {
-        return initials;
-    }
-
-    public void setInitials(String initials) {
-        this.initials = initials;
     }
 
     public String getProvider() {
@@ -133,14 +96,6 @@ public class User {
 
     public void setActive(boolean active) {
         isActive = active;
-    }
-
-    public boolean isEmailVerified() {
-        return isEmailVerified;
-    }
-
-    public void setEmailVerified(boolean emailVerified) {
-        isEmailVerified = emailVerified;
     }
 
     public Instant getLastLoginAt() {
@@ -234,31 +189,10 @@ public class User {
         this.updatedAt = Instant.now();
     }
 
-    // Helper method to generate initials from name
-    private String generateInitials(String name) {
-        if (name == null || name.trim().isEmpty()) {
-            return "??";
-        }
-
-        String[] parts = name.trim().split("\\s+");
-        if (parts.length == 1) {
-            // Single name - use first two characters
-            return parts[0].substring(0, Math.min(2, parts[0].length())).toUpperCase();
-        } else {
-            // Multiple names - use first character of first and last name
-            String first = parts[0].substring(0, 1).toUpperCase();
-            String last = parts[parts.length - 1].substring(0, 1).toUpperCase();
-            return first + last;
-        }
-    }
-
     @Override
     public String toString() {
         return "User{" +
                 "id='" + id + '\'' +
-                ", email='" + email + '\'' +
-                ", name='" + name + '\'' +
-                ", initials='" + initials + '\'' +
                 ", provider='" + provider + '\'' +
                 ", isActive=" + isActive +
                 ", lastLoginAt=" + lastLoginAt +
