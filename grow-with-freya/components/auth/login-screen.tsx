@@ -22,6 +22,7 @@ import { SecureStorage } from '@/services/secure-storage';
 import { ApiClient } from '@/services/api-client';
 import { useAppStore } from '@/store/app-store';
 import { ProfileSyncService } from '@/services/profile-sync-service';
+import { StorySyncService } from '@/services/story-sync-service';
 
 const { width } = Dimensions.get('window');
 
@@ -38,9 +39,65 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
   const [currentView, setCurrentView] = useState<'main' | 'terms' | 'privacy'>('main');
 
   // Google OAuth hook
-  const [request, response, promptAsync] = Google.useAuthRequest(
+  const [, response, promptAsync] = Google.useAuthRequest(
     AuthService.getGoogleConfig()
   );
+
+  // Handle Google OAuth response (token exchange happens asynchronously)
+  React.useEffect(() => {
+    const handleGoogleResponse = async () => {
+      if (response?.type === 'success' && response.authentication?.idToken) {
+        setIsGoogleLoading(true);
+        try {
+          const result = await AuthService.completeGoogleSignIn(response.authentication.idToken);
+
+          console.log('🔑 [LoginScreen] Storing tokens...');
+          await SecureStorage.storeTokens(
+            result.tokens.accessToken,
+            result.tokens.refreshToken
+          );
+          await SecureStorage.storeUserData(result.user);
+          console.log('✅ [LoginScreen] Login complete, tokens stored');
+
+          setIsGoogleLoading(false);
+          transitionToMainMenu(onSuccess);
+
+          // Sync profile and stories in background after transition starts
+          setTimeout(async () => {
+            try {
+              const profile = await ApiClient.getProfile();
+              await ProfileSyncService.fullSync(profile);
+              console.log('✅ [LoginScreen] Profile synced');
+            } catch (error) {
+              console.log('ℹ️ [LoginScreen] Profile sync deferred');
+            }
+
+            StorySyncService.prefetchStories()
+              .then(() => console.log('✅ [LoginScreen] Story metadata synced'))
+              .catch(() => console.log('ℹ️ [LoginScreen] Story sync deferred'));
+          }, 500);
+        } catch (error: any) {
+          setIsGoogleLoading(false);
+          console.error('Google sign-in error:', error);
+
+          const isTimeout = error.message?.includes('timed out');
+          Alert.alert(
+            isTimeout ? 'Connection Timeout' : 'Sign-In Failed',
+            isTimeout
+              ? 'The server is taking too long to respond. Please check your connection and try again.'
+              : 'Unable to sign in with Google. Please try again.',
+            [{ text: 'OK' }]
+          );
+        }
+      } else if (response?.type === 'error') {
+        setIsGoogleLoading(false);
+        console.error('Google OAuth error:', response.error);
+        Alert.alert('Sign-In Failed', 'Unable to sign in with Google. Please try again.', [{ text: 'OK' }]);
+      }
+    };
+
+    handleGoogleResponse();
+  }, [response]);
 
   // Animation values
   const titleOpacity = useSharedValue(0);
@@ -53,7 +110,6 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
   const buttonsTranslateY = useSharedValue(30);
 
   React.useEffect(() => {
-    // Staggered entrance animations
     titleOpacity.value = withDelay(200, withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) }));
     titleTranslateY.value = withDelay(200, withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) }));
 
@@ -64,7 +120,6 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
     buttonsTranslateY.value = withDelay(800, withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) }));
   }, [buttonsOpacity, buttonsTranslateY, illustrationOpacity, illustrationScale, titleOpacity, titleTranslateY]);
 
-  // Smooth transition to main menu
   const transitionToMainMenu = (callback: () => void) => {
     if (isTransitioning) return;
 
@@ -90,50 +145,17 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
   const handleGoogleLogin = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setIsGoogleLoading(true);
-
     try {
-      // Trigger Google OAuth flow
-      const result = await AuthService.signInWithGoogle(promptAsync);
-
-      // Store tokens securely
-      await SecureStorage.storeTokens(
-        result.tokens.accessToken,
-        result.tokens.refreshToken
-      );
-      await SecureStorage.storeUserData(result.user);
-
-      // Fetch and sync user profile + settings
-      try {
-        const profile = await ApiClient.getProfile();
-        await ProfileSyncService.fullSync(profile);
-      } catch (error) {
-        console.log('ℹ️ [LoginScreen] No profile found, user may need to create one');
-      }
-
-      // Success! Transition to main menu
+      await promptAsync();
+    } catch (error) {
       setIsGoogleLoading(false);
-      transitionToMainMenu(onSuccess);
-    } catch (error: any) {
-      setIsGoogleLoading(false);
-      console.error('Google sign-in error:', error);
-
-      // Don't show error if user cancelled
-      if (error.message?.includes('cancelled')) {
-        return;
-      }
-
-      Alert.alert(
-        'Sign-In Failed',
-        'Failed to sign in with Google. Please try again.',
-        [{ text: 'OK' }]
-      );
+      console.error('Google OAuth prompt error:', error);
     }
   };
 
   const handleAppleLogin = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-    // Check if Apple Sign-In is available (iOS only)
     if (Platform.OS !== 'ios') {
       Alert.alert(
         'Not Available',
@@ -156,17 +178,14 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
     setIsAppleLoading(true);
 
     try {
-      // Trigger Apple OAuth flow
       const result = await AuthService.signInWithApple();
 
-      // Store tokens securely
       await SecureStorage.storeTokens(
         result.tokens.accessToken,
         result.tokens.refreshToken
       );
       await SecureStorage.storeUserData(result.user);
 
-      // Fetch and sync user profile + settings
       try {
         const profile = await ApiClient.getProfile();
         await ProfileSyncService.fullSync(profile);
@@ -174,21 +193,30 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
         console.log('ℹ️ [LoginScreen] No profile found, user may need to create one');
       }
 
-      // Success! Transition to main menu
+      try {
+        console.log('📚 [LoginScreen] Prefetching story metadata...');
+        await StorySyncService.prefetchStories();
+        console.log('✅ [LoginScreen] Story metadata synced');
+      } catch (error) {
+        console.error('❌ [LoginScreen] Story sync failed:', error);
+      }
+
       setIsAppleLoading(false);
       transitionToMainMenu(onSuccess);
     } catch (error: any) {
       setIsAppleLoading(false);
       console.error('Apple sign-in error:', error);
 
-      // Don't show error if user cancelled
       if (error.message?.includes('cancelled')) {
         return;
       }
 
+      const isTimeout = error.message?.includes('timed out');
       Alert.alert(
-        'Sign-In Failed',
-        'Failed to sign in with Apple. Please try again.',
+        isTimeout ? 'Connection Timeout' : 'Sign-In Failed',
+        isTimeout
+          ? 'Sign-in is taking too long. Please check your connection and try again.'
+          : 'Failed to sign in with Apple. Please try again.',
         [{ text: 'OK' }]
       );
     }
@@ -288,23 +316,25 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
             </View>
           </Pressable>
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.loginButton,
-              styles.appleButton,
-              pressed && styles.buttonPressed,
-              (isGoogleLoading || isAppleLoading) && styles.buttonDisabled,
-            ]}
-            onPress={handleAppleLogin}
-            disabled={isGoogleLoading || isAppleLoading}
-          >
-            <View style={styles.buttonContent}>
-              <FontAwesome5 name="apple" size={18} color="#000000" style={styles.iconSpacing} />
-              <ThemedText style={[styles.buttonText, styles.appleButtonText]}>
-                {isAppleLoading ? 'Signing in...' : 'Continue with Apple'}
-              </ThemedText>
-            </View>
-          </Pressable>
+          {Platform.OS === 'ios' && (
+            <Pressable
+              style={({ pressed }) => [
+                styles.loginButton,
+                styles.appleButton,
+                pressed && styles.buttonPressed,
+                (isGoogleLoading || isAppleLoading) && styles.buttonDisabled,
+              ]}
+              onPress={handleAppleLogin}
+              disabled={isGoogleLoading || isAppleLoading}
+            >
+              <View style={styles.buttonContent}>
+                <FontAwesome5 name="apple" size={18} color="#FFFFFF" style={styles.iconSpacing} />
+                <ThemedText style={[styles.buttonText, styles.appleButtonText]}>
+                  {isAppleLoading ? 'Signing in...' : 'Continue with Apple'}
+                </ThemedText>
+              </View>
+            </Pressable>
+          )}
 
           {/* Skip Button */}
           <Pressable
@@ -413,6 +443,8 @@ const styles = StyleSheet.create({
   },
   appleButton: {
     backgroundColor: '#000000',
+    borderWidth: 1,
+    borderColor: '#000000',
   },
   buttonPressed: {
     transform: [{ scale: 0.98 }],
@@ -425,10 +457,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
   },
   iconSpacing: {
-    marginRight: 8,
+    marginRight: 10,
   },
   buttonText: {
     fontSize: 16,

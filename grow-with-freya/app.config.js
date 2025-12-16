@@ -26,20 +26,22 @@ export default {
     },
     ios: {
       supportsTablet: true,
-      bundleIdentifier: IS_DEV
-        ? 'com.growwithfreya.app.dev'
-        : IS_PREVIEW
-        ? 'com.growwithfreya.app.preview'
-        : 'com.growwithfreya.app',
+      bundleIdentifier: 'com.growwithfreya.app',
       associatedDomains: ['applinks:growwithfreya.com'],
-
+      infoPlist: {
+        ITSAppUsesNonExemptEncryption: false,
+        CFBundleURLTypes: [
+          {
+            CFBundleURLSchemes: [
+              'com.growwithfreya.app',
+              'com.googleusercontent.apps.1086096096900-377j71ktgif6t78evg63218cj9de2cjs'
+            ]
+          }
+        ]
+      }
     },
     android: {
-      package: IS_DEV
-        ? 'com.growwithfreya.app.dev'
-        : IS_PREVIEW
-        ? 'com.growwithfreya.app.preview'
-        : 'com.growwithfreya.app',
+      package: 'com.growwithfreya.app',
       adaptiveIcon: {
         backgroundColor: '#E6F4FE',
         foregroundImage: './assets/images/android-icon-foreground.png',
@@ -64,9 +66,7 @@ export default {
       [
         'expo-notifications',
         {
-          icon: './assets/images/notification-icon.png',
           color: '#4ECDC4',
-          sounds: ['./assets/audio/notification.wav'],
           mode: 'production'
         }
       ],

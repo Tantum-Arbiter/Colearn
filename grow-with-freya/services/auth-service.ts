@@ -1,4 +1,3 @@
-import * as Google from 'expo-auth-session/providers/google';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
@@ -6,6 +5,27 @@ import { Platform } from 'react-native';
 WebBrowser.maybeCompleteAuthSession();
 
 const GATEWAY_URL = process.env.EXPO_PUBLIC_GATEWAY_URL || 'http://localhost:8080';
+const AUTH_TIMEOUT_MS = 10000;
+
+const fetchWithTimeout = async (url: string, options: RequestInit): Promise<Response> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), AUTH_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      throw new Error('Login timed out. Please try again.');
+    }
+    throw error;
+  }
+};
 
 interface AuthResponse {
   success: boolean;
@@ -24,46 +44,42 @@ interface AuthResponse {
 }
 
 export class AuthService {
+  private static getIosRedirectUri(): string | undefined {
+    const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+    if (!iosClientId) return undefined;
+    const clientIdPrefix = iosClientId.replace('.apps.googleusercontent.com', '');
+    return `com.googleusercontent.apps.${clientIdPrefix}:/oauthredirect`;
+  }
+
   private static googleConfig = {
     iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
     androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
     webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+    expoClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
   };
 
   /**
-   * Sign in with Google
-   * Note: This method should be called from a component that uses the useAuthRequest hook
+   * Complete Google sign-in by sending the ID token to the backend
    */
-  static async signInWithGoogle(promptAsync: () => Promise<any>): Promise<AuthResponse> {
+  static async completeGoogleSignIn(idToken: string): Promise<AuthResponse> {
     try {
-      const result = await promptAsync();
+      const authResponse = await fetchWithTimeout(`${GATEWAY_URL}/auth/google`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Client-Platform': Platform.OS,
+          'X-Client-Version': '1.0.0',
+          'X-Device-ID': 'device-id-here',
+        },
+        body: JSON.stringify({ idToken }),
+      });
 
-      if (result.type === 'success') {
-        const { authentication } = result;
-
-        // Send ID token to your backend
-        const authResponse = await fetch(`${GATEWAY_URL}/auth/google`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Client-Platform': Platform.OS,
-            'X-Client-Version': '1.0.0',
-            'X-Device-ID': 'device-id-here', // TODO: Get from device
-          },
-          body: JSON.stringify({
-            idToken: authentication?.idToken,
-          }),
-        });
-
-        if (!authResponse.ok) {
-          const errorText = await authResponse.text();
-          throw new Error(`Authentication failed: ${errorText}`);
-        }
-
-        return await authResponse.json();
+      if (!authResponse.ok) {
+        const errorText = await authResponse.text();
+        throw new Error(`Authentication failed: ${errorText}`);
       }
 
-      throw new Error('Google sign-in was cancelled');
+      return await authResponse.json();
     } catch (error) {
       console.error('Google sign-in error:', error);
       throw error;
@@ -74,16 +90,20 @@ export class AuthService {
    * Get Google OAuth configuration for useAuthRequest hook
    */
   static getGoogleConfig() {
-    return {
+    const config: Record<string, string | undefined> = {
       iosClientId: this.googleConfig.iosClientId,
       androidClientId: this.googleConfig.androidClientId,
       webClientId: this.googleConfig.webClientId,
+      expoClientId: this.googleConfig.expoClientId,
     };
+
+    if (Platform.OS === 'ios') {
+      config.redirectUri = this.getIosRedirectUri();
+    }
+
+    return config;
   }
 
-  /**
-   * Sign in with Apple
-   */
   static async signInWithApple(): Promise<AuthResponse> {
     try {
       const credential = await AppleAuthentication.signInAsync({
@@ -93,14 +113,13 @@ export class AuthService {
         ],
       });
 
-      // Send credential to your backend
-      const authResponse = await fetch(`${GATEWAY_URL}/auth/apple`, {
+      const authResponse = await fetchWithTimeout(`${GATEWAY_URL}/auth/apple`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-Client-Platform': Platform.OS,
           'X-Client-Version': '1.0.0',
-          'X-Device-ID': 'device-id-here', // TODO: Get from device
+          'X-Device-ID': 'device-id-here',
         },
         body: JSON.stringify({
           idToken: credential.identityToken,
@@ -117,7 +136,7 @@ export class AuthService {
       }
 
       return await authResponse.json();
-    } catch (error) {
+    } catch (error: any) {
       if (error.code === 'ERR_CANCELED') {
         throw new Error('Apple sign-in was cancelled');
       }

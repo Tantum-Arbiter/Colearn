@@ -135,8 +135,12 @@ export class ApiClient {
 
       // Return profile data if available (for automatic sync)
       return data.profile || null;
-    } catch (error) {
-      await SecureStorage.clearAuthData();
+    } catch (error: any) {
+      // Only clear auth for actual token issues, not network errors
+      if (error.message?.includes('No refresh token') ||
+          error.message?.includes('Token refresh failed')) {
+        await SecureStorage.clearAuthData();
+      }
       throw error;
     }
   }
@@ -196,10 +200,15 @@ export class ApiClient {
         }
 
         return await retryResponse.json();
-      } catch (error) {
-        // Refresh failed, clear auth and throw
-        await SecureStorage.clearAuthData();
-        throw new Error('Authentication failed - please login again');
+      } catch (error: any) {
+        // Only clear auth for actual auth failures, not network/other errors
+        if (error.message?.includes('Token refresh failed') ||
+            error.message?.includes('No refresh token')) {
+          await SecureStorage.clearAuthData();
+          throw new Error('Authentication failed - please login again');
+        }
+        // For other errors (network, etc), just throw without clearing auth
+        throw error;
       }
     }
 
