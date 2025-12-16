@@ -1,13 +1,15 @@
 package com.app.functest.stepdefs;
 
-import com.google.auth.oauth2.GoogleCredentials;
-import com.google.auth.oauth2.IdTokenCredentials;
-import com.google.auth.oauth2.IdTokenProvider;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 import static io.restassured.RestAssured.given;
 
@@ -66,38 +68,45 @@ public abstract class BaseStepDefs {
 
     /**
      * Get IAM identity token for Cloud Run authentication.
-     * Uses Application Default Credentials (ADC) from the service account.
+     * Uses the GCP metadata server which is available in Cloud Run environments.
      */
     protected static String getGcpIamToken() {
         if (!gcpIamTokenFetched) {
             gcpIamTokenFetched = true;
             try {
                 String targetAudience = getGatewayBaseUrl();
-                logger.info("=== IAM Token Generation ===");
+                logger.info("=== IAM Token Generation (Metadata Server) ===");
                 logger.info("Target audience: {}", targetAudience);
-                logger.info("TEST_ENV: {}", System.getenv("TEST_ENV"));
-                logger.info("isGcpMode: {}", isGcpMode());
 
-                GoogleCredentials credentials = GoogleCredentials.getApplicationDefault();
-                logger.info("Credentials class: {}", credentials.getClass().getName());
+                String metadataUrl = "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity?audience=" + targetAudience;
+                logger.info("Metadata URL: {}", metadataUrl);
 
-                if (!(credentials instanceof IdTokenProvider)) {
-                    logger.error("FATAL: Credentials class {} does not implement IdTokenProvider",
-                            credentials.getClass().getName());
-                    logger.error("Cloud Run IAM authentication will fail!");
-                    return null;
+                URL url = new URL(metadataUrl);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                conn.setRequestProperty("Metadata-Flavor", "Google");
+                conn.setConnectTimeout(5000);
+                conn.setReadTimeout(5000);
+
+                int responseCode = conn.getResponseCode();
+                logger.info("Metadata server response code: {}", responseCode);
+
+                if (responseCode == 200) {
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+                        gcpIamToken = reader.readLine();
+                        logger.info("IAM identity token obtained successfully (length: {})", gcpIamToken.length());
+                    }
+                } else {
+                    logger.error("Metadata server returned error: {}", responseCode);
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getErrorStream()))) {
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            logger.error("Error: {}", line);
+                        }
+                    }
                 }
-
-                IdTokenCredentials idTokenCredentials = IdTokenCredentials.newBuilder()
-                        .setIdTokenProvider((IdTokenProvider) credentials)
-                        .setTargetAudience(targetAudience)
-                        .build();
-
-                idTokenCredentials.refresh();
-                gcpIamToken = idTokenCredentials.getIdToken().getTokenValue();
-                logger.info("IAM identity token obtained successfully (length: {})", gcpIamToken.length());
             } catch (Exception e) {
-                logger.error("Failed to get IAM identity token: {} - {}", e.getClass().getName(), e.getMessage());
+                logger.error("Failed to get IAM identity token from metadata server: {} - {}", e.getClass().getName(), e.getMessage());
                 e.printStackTrace();
             }
         }
