@@ -65,11 +65,11 @@ public class GatewayStepDefs extends BaseStepDefs {
         }
         RestAssured.baseURI = cfg;
 
-        // Configure RestAssured with reasonable timeouts to prevent hanging
+        // Configure RestAssured with strict timeouts to prevent hanging (15s max)
         RestAssured.config = RestAssured.config()
             .httpClient(HttpClientConfig.httpClientConfig()
-                .setParam("http.connection.timeout", 10000)
-                .setParam("http.socket.timeout", 30000));
+                .setParam("http.connection.timeout", 5000)
+                .setParam("http.socket.timeout", 15000));
 
         // Skip reset in GCP mode - endpoint only exists in test profile
         if (isGcpMode()) {
