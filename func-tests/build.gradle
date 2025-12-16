@@ -103,15 +103,24 @@ tasks.register('cucumberTest', JavaExec) {
     classpath = sourceSets.test.runtimeClasspath
     mainClass.set("io.cucumber.core.cli.Main")
 
-    args = [
+    def baseArgs = [
             '--plugin', 'pretty',
             '--plugin', 'html:build/cucumber-reports/cucumber.html',
             '--plugin', 'json:build/cucumber-reports/cucumber.json',
             '--plugin', 'junit:build/cucumber-reports/cucumber-junit.xml',
             '--glue', 'com.app.functest.stepdefs',
-            '--glue', 'com.app.functest.config',
-            'src/test/resources/features'
+            '--glue', 'com.app.functest.config'
     ]
+
+    // Support tag filtering via CUCUMBER_TAGS environment variable
+    // Example: CUCUMBER_TAGS="@gcp-dev and not @emulator-only"
+    def cucumberTags = System.getenv('CUCUMBER_TAGS')
+    if (cucumberTags != null && !cucumberTags.isEmpty()) {
+        baseArgs += ['--tags', cucumberTags]
+    }
+
+    baseArgs += ['src/test/resources/features']
+    args = baseArgs
 }
 
 tasks.register('functionalTest') {

@@ -113,6 +113,11 @@ public class GatewayStepDefs extends BaseStepDefs {
 
     @Given("Firebase is configured in WireMock")
     public void firebaseIsConfiguredInWireMock() {
+        // Skip WireMock configuration when running against GCP (real services)
+        if (isGcpMode()) {
+            return;
+        }
+
         // Setup Firebase Auth stubs
         WireMock.stubFor(
             WireMock.post(WireMock.urlPathEqualTo("/v1/accounts:lookup"))

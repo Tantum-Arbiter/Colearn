@@ -135,7 +135,7 @@ jobs:
             --cpu=2 \
             --max-retries=0 \
             --task-timeout=300s \
-            --set-env-vars BACKEND_URL_GATEWAY_SERVICE=${{ secrets.BACKEND_URL_GATEWAY_SERVICE }},GATEWAY_AUDIENCE=${{ secrets.GATEWAY_AUDIENCE }}
+            --set-env-vars "BACKEND_URL_GATEWAY_SERVICE=${{ secrets.BACKEND_URL_GATEWAY_SERVICE }},GATEWAY_AUDIENCE=${{ secrets.GATEWAY_AUDIENCE }},CUCUMBER_TAGS=@gcp-dev and not @emulator-only"
 
       - name: Execute Cloud Run Job
         id: execute-tests
