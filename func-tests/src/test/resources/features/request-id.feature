@@ -1,4 +1,4 @@
-@request-id @local @docker @gcp-dev
+@request-id @local @docker
 Feature: Request ID propagation
   As a client of the gateway
   I want each request to have a UUID request ID

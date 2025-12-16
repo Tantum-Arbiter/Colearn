@@ -98,7 +98,7 @@ jobs:
             --region ${{ env.REGION }} \
             --project ${{ env.PROJECT_ID }} \
             --service-account gateway-dev-sa@${{ env.PROJECT_ID }}.iam.gserviceaccount.com \
-            --allow-unauthenticated \
+            --no-allow-unauthenticated \
             --memory 1Gi \
             --cpu 1 \
             --timeout 300 \
