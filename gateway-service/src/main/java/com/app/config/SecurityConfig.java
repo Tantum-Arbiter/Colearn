@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -57,6 +58,7 @@ public class SecurityConfig {
     private final SecurityHeadersConfig.SecurityHeadersFilter securityHeadersFilter;
     private final MetricsFilter metricsFilter;
     private final ObjectMapper objectMapper;
+    private final Environment environment;
 
     @Value("${cors.allowed-origins}")
     private List<String> allowedOrigins;
@@ -73,33 +75,54 @@ public class SecurityConfig {
     @Value("${cors.max-age}")
     private long maxAge;
 
-    @Value("${spring.profiles.active:prod}")
-    private String activeProfile;
-
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter,
             RequestValidationFilter requestValidationFilter,
             RateLimitingFilter rateLimitingFilter,
             SecurityHeadersConfig.SecurityHeadersFilter securityHeadersFilter,
             MetricsFilter metricsFilter,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            Environment environment) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.requestValidationFilter = requestValidationFilter;
         this.rateLimitingFilter = rateLimitingFilter;
         this.securityHeadersFilter = securityHeadersFilter;
         this.metricsFilter = metricsFilter;
         this.objectMapper = objectMapper;
+        this.environment = environment;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        logger.info("SecurityConfig initializing with activeProfile='{}' (raw value from spring.profiles.active)", activeProfile);
+        // Use Environment.getActiveProfiles() for reliable profile detection
+        String[] activeProfiles = environment.getActiveProfiles();
+        String profilesStr = String.join(",", activeProfiles);
+        logger.info("SecurityConfig initializing with activeProfiles=[{}]", profilesStr);
 
-        boolean isTestOrDevProfile = activeProfile != null &&
-            (activeProfile.toLowerCase().contains("test") || activeProfile.toLowerCase().contains("dev"));
-        boolean isProdProfile = activeProfile != null && activeProfile.toLowerCase().contains("prod");
+        // Check if any active profile contains "dev" or "test"
+        boolean isTestOrDevProfile = false;
+        boolean isProdProfile = false;
+        for (String profile : activeProfiles) {
+            String lowerProfile = profile.toLowerCase();
+            if (lowerProfile.contains("test") || lowerProfile.contains("dev")) {
+                isTestOrDevProfile = true;
+            }
+            if (lowerProfile.contains("prod")) {
+                isProdProfile = true;
+            }
+        }
+
+        // Default to prod-like security if no profiles are active
+        if (activeProfiles.length == 0) {
+            logger.warn("No active profiles detected - defaulting to production security (blocking /private/**)");
+            isProdProfile = true;
+        }
 
         logger.info("SecurityConfig profile detection: isTestOrDevProfile={}, isProdProfile={}", isTestOrDevProfile, isProdProfile);
+
+        // Final decision: allow private endpoints only if dev/test and NOT prod
+        final boolean allowPrivateEndpoints = isTestOrDevProfile && !isProdProfile;
+        logger.info("SecurityConfig decision: allowPrivateEndpoints={}", allowPrivateEndpoints);
 
         http
             // Disable CSRF for stateless API
@@ -123,16 +146,16 @@ public class SecurityConfig {
                 // Internal/private endpoints
                 // In test/dev profiles: accessible for functional testing and debugging
                 // In production: blocked from external clients (use GCP IAP or VPC for internal access)
-                if (isProdProfile) {
+                if (allowPrivateEndpoints) {
+                    logger.info("Non-prod profile - allowing access to /private/**, /actuator/**, /health/**");
+                    auth.requestMatchers("/private/**").permitAll();
+                    auth.requestMatchers("/actuator/**").permitAll();
+                    auth.requestMatchers("/health/**").permitAll();
+                } else {
                     logger.info("Production profile - blocking access to /private/**, /actuator/**, /health/**");
                     auth.requestMatchers("/private/**").denyAll();
                     auth.requestMatchers("/actuator/**").denyAll();
                     auth.requestMatchers("/health/**").denyAll();
-                } else {
-                    logger.info("Non-prod profile ({}) - allowing access to /private/**, /actuator/**, /health/**", activeProfile);
-                    auth.requestMatchers("/private/**").permitAll();
-                    auth.requestMatchers("/actuator/**").permitAll();
-                    auth.requestMatchers("/health/**").permitAll();
                 }
 
                 // Auth endpoints - accessible for login flow
