@@ -93,9 +93,13 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        logger.info("SecurityConfig initializing with activeProfile='{}' (raw value from spring.profiles.active)", activeProfile);
+
         boolean isTestOrDevProfile = activeProfile != null &&
             (activeProfile.toLowerCase().contains("test") || activeProfile.toLowerCase().contains("dev"));
         boolean isProdProfile = activeProfile != null && activeProfile.toLowerCase().contains("prod");
+
+        logger.info("SecurityConfig profile detection: isTestOrDevProfile={}, isProdProfile={}", isTestOrDevProfile, isProdProfile);
 
         http
             // Disable CSRF for stateless API

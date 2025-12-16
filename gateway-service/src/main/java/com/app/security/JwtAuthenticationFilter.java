@@ -234,6 +234,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return path.startsWith("/auth/") ||
                path.startsWith("/health") ||
                path.startsWith("/actuator/") ||
+               path.startsWith("/private/") ||
                path.equals("/") ||
                path.startsWith("/public/");
     }
