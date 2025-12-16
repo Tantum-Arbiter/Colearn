@@ -60,6 +60,10 @@ public class GatewayStepDefs extends BaseStepDefs {
         if (cfg == null || cfg.isBlank()) {
             cfg = "http://gateway:8080";
         }
+        // Set the global base URI for all RestAssured requests
+        RestAssured.baseURI = cfg;
+        System.out.println("[GatewayStepDefs] RestAssured.baseURI set to: " + cfg);
+
         try {
             given().baseUri(cfg).when().post("/private/reset").then().statusCode(anyOf(is(200), is(404)));
         } catch (Exception ignored) {
@@ -334,7 +338,13 @@ public class GatewayStepDefs extends BaseStepDefs {
     @Then("the response status code should be {int}")
     public void theResponseStatusCodeShouldBe(int expectedStatus) {
         assertNotNull(lastResponse, "No response received");
-        assertEquals(expectedStatus, lastResponse.getStatusCode());
+        int actualStatus = lastResponse.getStatusCode();
+        String responseBody = lastResponse.getBody().asString();
+        if (expectedStatus != actualStatus) {
+            String truncatedBody = responseBody.length() > 500 ? responseBody.substring(0, 500) + "..." : responseBody;
+            fail("Expected status " + expectedStatus + " but got " + actualStatus +
+                ". Response body: " + truncatedBody);
+        }
     }
 
     @Then("the response should contain JSON field {string}")

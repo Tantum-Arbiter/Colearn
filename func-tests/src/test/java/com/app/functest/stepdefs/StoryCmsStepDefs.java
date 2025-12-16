@@ -1,14 +1,12 @@
 package com.app.functest.stepdefs;
 
-import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import io.restassured.response.Response;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
@@ -38,21 +36,16 @@ public class StoryCmsStepDefs extends BaseStepDefs {
                 .when()
                 .get("/api/stories/version");
 
-        JSONObject versionJson = new JSONObject(versionResponse.getBody().asString());
         Map<String, String> serverChecksums = new HashMap<>();
-
-        if (versionJson.has("storyChecksums")) {
-            JSONObject checksums = versionJson.getJSONObject("storyChecksums");
-            for (Object keyObj : checksums.names() != null ? checksums.names().toList() : java.util.Collections.emptyList()) {
-                String key = keyObj.toString();
-                serverChecksums.put(key, checksums.getString(key));
-            }
+        Map<String, String> storyChecksums = versionResponse.jsonPath().getMap("storyChecksums");
+        if (storyChecksums != null) {
+            serverChecksums.putAll(storyChecksums);
         }
 
         syncRequest = new HashMap<>();
-        syncRequest.put("clientVersion", versionJson.getInt("version"));
+        syncRequest.put("clientVersion", versionResponse.jsonPath().getInt("version"));
         syncRequest.put("storyChecksums", serverChecksums);
-        syncRequest.put("lastSyncTimestamp", versionJson.getLong("lastUpdated"));
+        syncRequest.put("lastSyncTimestamp", versionResponse.jsonPath().getLong("lastUpdated"));
     }
 
     @Given("I have a sync request with outdated checksums")
@@ -92,25 +85,21 @@ public class StoryCmsStepDefs extends BaseStepDefs {
                 .when()
                 .get("/api/stories/version");
 
-        JSONObject versionJson = new JSONObject(versionResponse.getBody().asString());
         Map<String, String> serverChecksums = new HashMap<>();
-
-        if (versionJson.has("storyChecksums")) {
-            JSONObject checksums = versionJson.getJSONObject("storyChecksums");
+        Map<String, String> storyChecksums = versionResponse.jsonPath().getMap("storyChecksums");
+        if (storyChecksums != null) {
             int added = 0;
-            for (Object keyObj : checksums.names() != null ? checksums.names().toList() : java.util.Collections.emptyList()) {
-                String key = keyObj.toString();
-                if (added < count) {
-                    serverChecksums.put(key, checksums.getString(key));
-                    added++;
-                }
+            for (Map.Entry<String, String> entry : storyChecksums.entrySet()) {
+                if (added >= count) break;
+                serverChecksums.put(entry.getKey(), entry.getValue());
+                added++;
             }
         }
 
         syncRequest = new HashMap<>();
-        syncRequest.put("clientVersion", versionJson.getInt("version"));
+        syncRequest.put("clientVersion", versionResponse.jsonPath().getInt("version"));
         syncRequest.put("storyChecksums", serverChecksums);
-        syncRequest.put("lastSyncTimestamp", versionJson.getLong("lastUpdated"));
+        syncRequest.put("lastSyncTimestamp", versionResponse.jsonPath().getLong("lastUpdated"));
     }
 
     @Given("device {string} has synced all stories")
@@ -173,10 +162,9 @@ public class StoryCmsStepDefs extends BaseStepDefs {
                 .when()
                 .get("/api/stories");
 
-        JSONArray stories = new JSONArray(storiesResponse.getBody().asString());
-        if (stories.length() > 0) {
-            JSONObject firstStory = stories.getJSONObject(0);
-            String storyId = firstStory.getString("id");
+        List<Map<String, Object>> stories = storiesResponse.jsonPath().getList("$");
+        if (stories != null && !stories.isEmpty()) {
+            String storyId = (String) stories.get(0).get("id");
 
             lastResponse = applyDefaultClientHeaders(given())
                     .when()
@@ -188,44 +176,40 @@ public class StoryCmsStepDefs extends BaseStepDefs {
     public void theResponseShouldBeAJSONArray() {
         String body = lastResponse.getBody().asString();
         assertThat("Response should start with [", body.trim(), startsWith("["));
-        JSONArray array = new JSONArray(body);
+        List<?> array = lastResponse.jsonPath().getList("$");
         assertThat("Response should be a valid JSON array", array, notNullValue());
     }
 
     @Then("the response should contain field {string}")
     public void theResponseShouldContainField(String fieldName) {
-        JSONObject json = new JSONObject(lastResponse.getBody().asString());
-        assertThat("Response should contain field: " + fieldName, json.has(fieldName), is(true));
+        Object value = lastResponse.jsonPath().get(fieldName);
+        assertThat("Response should contain field: " + fieldName, value, notNullValue());
     }
 
     @Then("the response field {string} should be greater than {int}")
     public void theResponseFieldShouldBeGreaterThan(String fieldName, int value) {
-        JSONObject json = new JSONObject(lastResponse.getBody().asString());
-        int actualValue = json.getInt(fieldName);
+        int actualValue = lastResponse.jsonPath().getInt(fieldName);
         assertThat(fieldName + " should be greater than " + value, actualValue, greaterThan(value));
     }
 
     @Then("the response field {string} should equal {int}")
     public void theResponseFieldShouldEqual(String fieldName, int expectedValue) {
-        JSONObject json = new JSONObject(lastResponse.getBody().asString());
-        int actualValue = json.getInt(fieldName);
+        int actualValue = lastResponse.jsonPath().getInt(fieldName);
         assertThat(fieldName + " should equal " + expectedValue, actualValue, equalTo(expectedValue));
     }
 
     @Then("the response should contain updated stories only")
     public void theResponseShouldContainUpdatedStoriesOnly() {
-        JSONObject json = new JSONObject(lastResponse.getBody().asString());
-        JSONArray stories = json.getJSONArray("stories");
-        assertThat("Should contain updated stories", stories.length(), greaterThan(0));
+        List<?> stories = lastResponse.jsonPath().getList("stories");
+        assertThat("Should contain updated stories", stories.size(), greaterThan(0));
     }
 
     @Then("all stories in response should have category {string}")
     public void allStoriesInResponseShouldHaveCategory(String category) {
-        JSONArray stories = new JSONArray(lastResponse.getBody().asString());
-        for (int i = 0; i < stories.length(); i++) {
-            JSONObject story = stories.getJSONObject(i);
-            assertThat("Story should have category " + category,
-                    story.getString("category"), equalTo(category));
+        List<Map<String, Object>> stories = lastResponse.jsonPath().getList("$");
+        for (int i = 0; i < stories.size(); i++) {
+            String actualCategory = (String) stories.get(i).get("category");
+            assertThat("Story should have category " + category, actualCategory, equalTo(category));
         }
     }
 
@@ -238,8 +222,7 @@ public class StoryCmsStepDefs extends BaseStepDefs {
 
     @Then("device {string} should receive all available stories")
     public void deviceShouldReceiveAllAvailableStories(String deviceId) {
-        JSONObject json = new JSONObject(lastResponse.getBody().asString());
-        int updatedStories = json.getInt("updatedStories");
+        int updatedStories = lastResponse.jsonPath().getInt("updatedStories");
         assertThat("Device should receive stories", updatedStories, greaterThan(0));
     }
 
@@ -251,36 +234,32 @@ public class StoryCmsStepDefs extends BaseStepDefs {
 
     @Then("each story should have field {string}")
     public void eachStoryShouldHaveField(String fieldName) {
-        JSONArray stories = new JSONArray(lastResponse.getBody().asString());
-        assertThat("Should have at least one story", stories.length(), greaterThan(0));
+        List<Map<String, Object>> stories = lastResponse.jsonPath().getList("$");
+        assertThat("Should have at least one story", stories.size(), greaterThan(0));
 
-        for (int i = 0; i < stories.length(); i++) {
-            JSONObject story = stories.getJSONObject(i);
-            assertThat("Story " + i + " should have field: " + fieldName,
-                    story.has(fieldName), is(true));
+        for (int i = 0; i < stories.size(); i++) {
+            Object value = stories.get(i).get(fieldName);
+            assertThat("Story " + i + " should have field: " + fieldName, value, notNullValue());
         }
     }
 
     @Then("each page should have field {string}")
     public void eachPageShouldHaveField(String fieldName) {
-        JSONObject story = new JSONObject(lastResponse.getBody().asString());
-        JSONArray pages = story.getJSONArray("pages");
+        List<Map<String, Object>> pages = lastResponse.jsonPath().getList("pages");
 
-        for (int i = 0; i < pages.length(); i++) {
-            JSONObject page = pages.getJSONObject(i);
-            assertThat("Page " + i + " should have field: " + fieldName,
-                    page.has(fieldName), is(true));
+        for (int i = 0; i < pages.size(); i++) {
+            Object value = pages.get(i).get(fieldName);
+            assertThat("Page " + i + " should have field: " + fieldName, value, notNullValue());
         }
     }
 
     @Then("pages should be ordered by pageNumber")
     public void pagesShouldBeOrderedByPageNumber() {
-        JSONObject story = new JSONObject(lastResponse.getBody().asString());
-        JSONArray pages = story.getJSONArray("pages");
+        List<Map<String, Object>> pages = lastResponse.jsonPath().getList("pages");
 
-        for (int i = 0; i < pages.length() - 1; i++) {
-            int currentPageNum = pages.getJSONObject(i).getInt("pageNumber");
-            int nextPageNum = pages.getJSONObject(i + 1).getInt("pageNumber");
+        for (int i = 0; i < pages.size() - 1; i++) {
+            int currentPageNum = (Integer) pages.get(i).get("pageNumber");
+            int nextPageNum = (Integer) pages.get(i + 1).get("pageNumber");
             assertThat("Pages should be ordered", currentPageNum, lessThan(nextPageNum));
         }
     }
@@ -303,16 +282,16 @@ public class StoryCmsStepDefs extends BaseStepDefs {
 
     @Then("the response should be empty")
     public void theResponseShouldBeEmpty() {
-        JSONArray array = new JSONArray(lastResponse.getBody().asString());
-        assertThat("Response array should be empty", array.length(), equalTo(0));
+        List<?> array = lastResponse.jsonPath().getList("$");
+        assertThat("Response array should be empty", array.size(), equalTo(0));
     }
 
     @Then("the response should have field {string} with value {string}")
     public void theResponseShouldHaveFieldWithValue(String fieldName, String expectedValue) {
-        JSONObject json = new JSONObject(lastResponse.getBody().asString());
-        assertThat("Response should have field: " + fieldName, json.has(fieldName), is(true));
+        String actualValue = lastResponse.jsonPath().getString(fieldName);
+        assertThat("Response should have field: " + fieldName, actualValue, notNullValue());
         assertThat("Field " + fieldName + " should have value: " + expectedValue,
-                json.getString(fieldName), equalTo(expectedValue));
+                actualValue, equalTo(expectedValue));
     }
 
     @When("I make a GET request to {string} without client headers")
@@ -346,9 +325,23 @@ public class StoryCmsStepDefs extends BaseStepDefs {
                 .get(endpoint);
     }
 
-    // Helper method to convert Map to JSON string
     private String mapToJson(Map<String, Object> map) {
-        JSONObject json = new JSONObject(map);
-        return json.toString();
+        StringBuilder sb = new StringBuilder("{");
+        boolean first = true;
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            if (!first) sb.append(",");
+            first = false;
+            sb.append("\"").append(entry.getKey()).append("\":");
+            Object value = entry.getValue();
+            if (value instanceof String) {
+                sb.append("\"").append(value).append("\"");
+            } else if (value instanceof Map) {
+                sb.append(mapToJson((Map<String, Object>) value));
+            } else {
+                sb.append(value);
+            }
+        }
+        sb.append("}");
+        return sb.toString();
     }
 }
