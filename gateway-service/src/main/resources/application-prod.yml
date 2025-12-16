@@ -87,7 +87,7 @@ spring:
 # JWT Configuration
 jwt:
   secret: ${JWT_SECRET}
-  expiration-seconds: 900  # 15 minutes
+  expiration-seconds: 3600  # 1 hour
   refresh-expiration-seconds: 604800  # 7 days
   issuer: grow-with-freya-gateway
 
@@ -95,6 +95,8 @@ jwt:
 google:
   oauth:
     client-id: ${GOOGLE_CLIENT_ID}
+    ios-client-id: ${GOOGLE_IOS_CLIENT_ID:}
+    android-client-id: ${GOOGLE_ANDROID_CLIENT_ID:}
     jwks-uri: https://www.googleapis.com/oauth2/v3/certs
     issuer: https://accounts.google.com
 
