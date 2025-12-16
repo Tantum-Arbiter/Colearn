@@ -238,20 +238,15 @@ public class TestAdminController {
 
         try {
             String userId = (String) body.get("userId");
-            String email = (String) body.get("email");
-            String displayName = (String) body.get("displayName");
             String provider = (String) body.get("provider");
             String providerId = (String) body.get("providerId");
 
-            // Create user directly in Firestore
+            // Create user directly in Firestore (PII-free - no email/name)
             User user = new User();
             user.setId(userId != null ? userId : UUID.randomUUID().toString());
-            user.setEmail(email);
-            user.setName(displayName);
             user.setProvider(provider);
             user.setProviderId(providerId);
             user.setActive(true);
-            user.setEmailVerified(true);
             user.setCreatedAt(Instant.now());
             user.setUpdatedAt(Instant.now());
             user.updateLastLogin();

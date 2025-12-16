@@ -50,6 +50,12 @@ public class JwtConfig {
     @Value("${google.oauth.client-id:}")
     private String googleClientId;
 
+    @Value("${google.oauth.ios-client-id:}")
+    private String googleIosClientId;
+
+    @Value("${google.oauth.android-client-id:}")
+    private String googleAndroidClientId;
+
     @Value("${apple.oauth.client-id:}")
     private String appleClientId;
 
@@ -119,16 +125,46 @@ public class JwtConfig {
                 throw new JWTVerificationException("Missing key ID in token header");
             }
 
+            // Get the token's audience to determine which client ID to validate against
+            String tokenAudience = decodedHeader.getAudience() != null && !decodedHeader.getAudience().isEmpty()
+                ? decodedHeader.getAudience().get(0) : null;
+
+            // Validate that the audience is one of our known client IDs
+            String expectedAudience = determineGoogleAudience(tokenAudience);
+            if (expectedAudience == null) {
+                throw new JWTVerificationException("The Claim 'aud' value doesn't contain the required audience.");
+            }
+
             RSAPublicKey publicKey = getGooglePublicKey(keyId);
             Algorithm algorithm = Algorithm.RSA256(publicKey, null);
             JWTVerifier verifier = JWT.require(algorithm)
                     .withIssuer(GOOGLE_ISSUER)
-                    .withAudience(googleClientId)
+                    .withAudience(expectedAudience)
                     .build();
             return verifier.verify(idToken);
         } catch (Exception e) {
             throw new JWTVerificationException("Invalid Google ID token: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Determine which Google client ID to use for audience validation
+     */
+    private String determineGoogleAudience(String tokenAudience) {
+        if (tokenAudience == null) {
+            return null;
+        }
+        // Check against all valid Google client IDs
+        if (tokenAudience.equals(googleClientId)) {
+            return googleClientId;
+        }
+        if (googleIosClientId != null && !googleIosClientId.isEmpty() && tokenAudience.equals(googleIosClientId)) {
+            return googleIosClientId;
+        }
+        if (googleAndroidClientId != null && !googleAndroidClientId.isEmpty() && tokenAudience.equals(googleAndroidClientId)) {
+            return googleAndroidClientId;
+        }
+        return null;
     }
 
     /**
@@ -186,13 +222,12 @@ public class JwtConfig {
     }
 
     /**
-     * Generate our own JWT access token
+     * Generate our own JWT access token (PII-free)
      */
-    public String generateAccessToken(String userId, String email, String provider) {
+    public String generateAccessToken(String userId, String provider) {
         return JWT.create()
                 .withIssuer("grow-with-freya-gateway")
                 .withSubject(userId)
-                .withClaim("email", email)
                 .withClaim("provider", provider)
                 .withClaim("type", "access")
                 .withIssuedAt(new java.util.Date())

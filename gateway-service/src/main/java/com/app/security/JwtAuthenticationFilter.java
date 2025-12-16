@@ -122,12 +122,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // Validate our own JWT access token
             DecodedJWT decodedJWT = jwtConfig.validateAccessToken(token);
 
-            // Extract user information
+            // Extract user information (PII-free - no email)
             String userId = decodedJWT.getSubject();
-            String email = decodedJWT.getClaim("email").asString();
             String provider = decodedJWT.getClaim("provider").asString();
 
-            if (userId != null && email != null) {
+            if (userId != null) {
                 // Create authentication token
                 List<SimpleGrantedAuthority> authorities = Collections.singletonList(
                     new SimpleGrantedAuthority("ROLE_USER")
@@ -136,10 +135,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(userId, null, authorities);
 
-                // Set additional details
+                // Set additional details (PII-free)
                 UserAuthenticationDetails details = new UserAuthenticationDetails();
                 details.setUserId(userId);
-                details.setEmail(email);
                 details.setProvider(provider);
                 details.setDeviceId(request.getHeader("X-Device-ID"));
                 details.setSessionId(request.getHeader("X-Session-ID"));
@@ -212,13 +210,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private void setAuthenticationFromFakeToken(HttpServletRequest request, String token) {
         String userId = "user-" + Math.abs(token.hashCode());
-        String email = "test.user@example.com";
         List<SimpleGrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userId, null, authorities);
 
         UserAuthenticationDetails details = new UserAuthenticationDetails();
         details.setUserId(userId);
-        details.setEmail(email);
         details.setProvider(token != null && token.toLowerCase().contains("apple") ? "Apple" : "Google");
         details.setDeviceId(request.getHeader("X-Device-ID"));
         details.setSessionId(request.getHeader("X-Session-ID"));
@@ -248,11 +244,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     /**
-     * Custom authentication details to store additional user information
+     * Custom authentication details to store additional user information (PII-free)
      */
     public static class UserAuthenticationDetails extends WebAuthenticationDetailsSource {
         private String userId;
-        private String email;
         private String provider;
         private String deviceId;
         private String sessionId;
@@ -262,9 +257,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // Getters and setters
         public String getUserId() { return userId; }
         public void setUserId(String userId) { this.userId = userId; }
-
-        public String getEmail() { return email; }
-        public void setEmail(String email) { this.email = email; }
 
         public String getProvider() { return provider; }
         public void setProvider(String provider) { this.provider = provider; }
@@ -285,7 +277,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         public String toString() {
             return "UserAuthenticationDetails{" +
                     "userId='" + userId + '\'' +
-                    ", email='" + email + '\'' +
                     ", provider='" + provider + '\'' +
                     ", deviceId='" + deviceId + '\'' +
                     ", sessionId='" + sessionId + '\'' +

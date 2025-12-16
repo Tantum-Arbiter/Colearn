@@ -122,21 +122,14 @@ public class AuthController {
                 );
             }
 
-            // Extract user information safely
-            String email = decodedJWT.getClaim("email") != null ? decodedJWT.getClaim("email").asString() : null;
-            String name = decodedJWT.getClaim("name") != null ? decodedJWT.getClaim("name").asString() : null;
+            // Extract providerId from token (no PII needed)
             String providerId = decodedJWT.getSubject();
 
-            // Validate required claims
-            if (email == null || email.trim().isEmpty()) {
-                throw com.app.exception.ValidationException.missingRequiredField("email");
-            }
+            // Get or create user in database (PII-free)
+            User user = userService.getOrCreateUser("google", providerId).join();
 
-            // Get or create user in database
-            User user = userService.getOrCreateUser(email, name, "google", providerId).join();
-
-            // Generate our own tokens
-            String accessToken = jwtConfig.generateAccessToken(user.getId(), user.getEmail(), "google");
+            // Generate our own tokens (PII-free)
+            String accessToken = jwtConfig.generateAccessToken(user.getId(), "google");
             String refreshToken = jwtConfig.generateRefreshToken(user.getId());
 
             // Simulate Firebase errors if configured
@@ -245,23 +238,14 @@ public class AuthController {
                 );
             }
 
-            // Extract user information
-            String email = decodedJWT.getClaim("email") != null ? decodedJWT.getClaim("email").asString() : null;
+            // Extract providerId from token (no PII needed)
             String providerId = decodedJWT.getSubject();
 
-            // Validate required claims
-            if (email == null || email.trim().isEmpty()) {
-                throw com.app.exception.ValidationException.missingRequiredField("email");
-            }
+            // Get or create user in database (PII-free)
+            User user = userService.getOrCreateUser("apple", providerId).join();
 
-            // Apple doesn't always provide name in token, use from request if available
-            String name = request.getUserInfo() != null ? request.getUserInfo().getName() : email;
-
-            // Get or create user in database
-            User user = userService.getOrCreateUser(email, name, "apple", providerId).join();
-
-            // Generate our own tokens
-            String accessToken = jwtConfig.generateAccessToken(user.getId(), user.getEmail(), "apple");
+            // Generate our own tokens (PII-free)
+            String accessToken = jwtConfig.generateAccessToken(user.getId(), "apple");
             String refreshToken = jwtConfig.generateRefreshToken(user.getId());
 
             // Simulate Firebase errors if configured
@@ -387,8 +371,8 @@ public class AuthController {
 
             User user = userOpt.get();
 
-            // Generate new tokens
-            String newAccessToken = jwtConfig.generateAccessToken(user.getId(), user.getEmail(), user.getProvider());
+            // Generate new tokens (PII-free)
+            String newAccessToken = jwtConfig.generateAccessToken(user.getId(), user.getProvider());
             String newRefreshToken = jwtConfig.generateRefreshToken(user.getId());
 
             // Update session with new refresh token
@@ -524,29 +508,9 @@ public class AuthController {
 
     // Helper methods
 
-    private String generateUserId(String email, String provider) {
-        // Generate deterministic user ID based on email and provider
-        return UUID.nameUUIDFromBytes((email + ":" + provider).getBytes()).toString();
-    }
-
-    private UserInfo createUserProfile(String userId, String email, String name, String provider, String providerId) {
-        UserInfo profile = new UserInfo();
-        profile.setId(userId);
-        profile.setEmail(email);
-        profile.setName(name);
-        profile.setProvider(provider);
-        profile.setProviderId(providerId);
-        profile.setCreatedAt(Instant.now().toString());
-        profile.setUpdatedAt(Instant.now().toString());
-        return profile;
-    }
-
     private UserInfo createUserProfileFromUser(User user) {
         UserInfo profile = new UserInfo();
         profile.setId(user.getId());
-        profile.setEmail(user.getEmail());
-        profile.setName(user.getName());
-        profile.setInitials(user.getInitials());
         profile.setProvider(user.getProvider());
         profile.setProviderId(user.getProviderId());
         profile.setCreatedAt(user.getCreatedAt().toString());
@@ -677,12 +641,9 @@ public class AuthController {
         public void setProfile(com.app.model.UserProfile profile) { this.profile = profile; }
     }
 
-    // Supporting DTOs
+    // Supporting DTOs (PII-free)
     public static class UserInfo {
         private String id;
-        private String email;
-        private String name;
-        private String initials;
         private String provider;
         private String providerId;
         private String createdAt;
@@ -691,12 +652,6 @@ public class AuthController {
         // Getters and setters
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
-        public String getEmail() { return email; }
-        public void setEmail(String email) { this.email = email; }
-        public String getName() { return name; }
-        public void setName(String name) { this.name = name; }
-        public String getInitials() { return initials; }
-        public void setInitials(String initials) { this.initials = initials; }
         public String getProvider() { return provider; }
         public void setProvider(String provider) { this.provider = provider; }
         public String getProviderId() { return providerId; }
