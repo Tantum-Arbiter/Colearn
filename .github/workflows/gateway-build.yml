@@ -99,6 +99,9 @@ jobs:
             --project ${{ env.PROJECT_ID }} \
             --service-account gateway-dev-sa@${{ env.PROJECT_ID }}.iam.gserviceaccount.com \
             --no-allow-unauthenticated \
+            --memory 1Gi \
+            --cpu 1 \
+            --timeout 300 \
             --set-env-vars "SPRING_PROFILES_ACTIVE=gcp-dev,FIREBASE_PROJECT_ID=${{ env.PROJECT_ID }},BACKEND_URL_GATEWAY_SERVICE=${{ secrets.BACKEND_URL_GATEWAY_SERVICE }},GATEWAY_AUDIENCE=${{ secrets.GATEWAY_AUDIENCE }}"
 
   run-functional-tests:
