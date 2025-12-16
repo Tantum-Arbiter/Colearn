@@ -6,8 +6,8 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import io.restassured.RestAssured;
+import io.restassured.config.HttpClientConfig;
 import io.restassured.response.Response;
-
 
 import java.util.concurrent.TimeUnit;
 import java.net.URI;
@@ -65,11 +65,23 @@ public class GatewayStepDefs extends BaseStepDefs {
         }
         RestAssured.baseURI = cfg;
 
+        // Configure RestAssured with reasonable timeouts to prevent hanging
+        RestAssured.config = RestAssured.config()
+            .httpClient(HttpClientConfig.httpClientConfig()
+                .setParam("http.connection.timeout", 10000)
+                .setParam("http.socket.timeout", 30000));
+
+        // Skip reset in GCP mode - endpoint only exists in test profile
+        if (isGcpMode()) {
+            return;
+        }
+
         // Reset gateway state (rate limiter, circuit breakers, Firestore test data)
         try {
             given()
                 .baseUri(cfg)
                 .contentType("application/json")
+                .header("User-Agent", "GrowWithFreya-FuncTest/1.0.0")
                 .when()
                 .post("/private/reset")
                 .then()
