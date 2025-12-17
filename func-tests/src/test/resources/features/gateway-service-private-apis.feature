@@ -1,4 +1,4 @@
-@health @local @docker
+@health @local @docker @gcp-dev
 Feature: Gateway Service private endpoints
 
   @smoke

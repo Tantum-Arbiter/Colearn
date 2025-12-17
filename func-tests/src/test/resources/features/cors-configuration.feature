@@ -1,4 +1,4 @@
-@cors @security @local @docker
+@cors @security @local @docker @gcp-dev
 Feature: CORS Configuration
   As a gateway service
   I want to enforce environment-specific CORS policies
