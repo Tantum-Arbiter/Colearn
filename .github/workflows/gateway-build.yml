@@ -220,7 +220,7 @@ jobs:
             --region ${{ env.REGION }} \
             --project ${{ env.PROJECT_ID }} \
             --wait \
-            --format="value(metadata.name)") || true
+            --format="value(metadata.name)")
 
           echo "JOB_NAME=$JOB_NAME" >> $GITHUB_ENV
 
