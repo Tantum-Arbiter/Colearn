@@ -103,11 +103,16 @@ public class ApplicationMetricsService {
      */
     public void recordAuthentication(String provider, String deviceType, String platform,
                                    String appVersion, boolean successful, long processingTimeMs) {
+        String safeProvider = provider != null ? provider : "unknown";
+        String safeDeviceType = deviceType != null ? deviceType : "unknown";
+        String safePlatform = platform != null ? platform : "unknown";
+        String safeAppVersion = appVersion != null ? appVersion : "unknown";
+
         Tags tags = Tags.of(
-            "provider", provider,
-            "device_type", deviceType,
-            "platform", platform,
-            "app_version", appVersion != null ? appVersion : "unknown",
+            "provider", safeProvider,
+            "device_type", safeDeviceType,
+            "platform", safePlatform,
+            "app_version", safeAppVersion,
             "result", successful ? "success" : "failure"
         );
 
