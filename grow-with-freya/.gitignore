@@ -102,6 +102,9 @@ web_modules/
 .env.production.local
 .env.local
 
+# Sentry
+.sentryclirc
+
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache
@@ -310,3 +313,5 @@ logs
 
 # App example (if exists)
 app-example
+
+.env.local

@@ -38,6 +38,14 @@
             "backgroundColor": "#2E8B8B"
           }
         }
+      ],
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "project": "grow-with-freya",
+          "organization": "grow-with-freya"
+        }
       ]
     ],
     "experiments": {
