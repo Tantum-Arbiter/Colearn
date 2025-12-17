@@ -336,66 +336,76 @@ public class ApplicationMetricsService {
     // User Management Metrics
 
     public void recordUserCreated(String provider) {
+        String safeProvider = provider != null ? provider : "unknown";
         Counter.builder("app.users.created")
-                .tags("provider", provider)
+                .tags("provider", safeProvider)
                 .description("Number of users created")
                 .register(meterRegistry)
                 .increment();
-        logger.debug("User created metric recorded for provider: {}", provider);
+        logger.debug("User created metric recorded for provider: {}", safeProvider);
     }
 
     public void recordUserCreationError(String provider, String errorType) {
+        String safeProvider = provider != null ? provider : "unknown";
+        String safeErrorType = errorType != null ? errorType : "unknown";
         Counter.builder("app.users.creation.errors")
-                .tags("provider", provider, "error_type", errorType)
+                .tags("provider", safeProvider, "error_type", safeErrorType)
                 .description("Number of user creation errors")
                 .register(meterRegistry)
                 .increment();
-        logger.debug("User creation error metric recorded for provider: {}, error: {}", provider, errorType);
+        logger.debug("User creation error metric recorded for provider: {}, error: {}", safeProvider, safeErrorType);
     }
 
     public void recordUserLookup(String lookupType, String result) {
+        String safeLookupType = lookupType != null ? lookupType : "unknown";
+        String safeResult = result != null ? result : "unknown";
         Counter.builder("app.users.lookups")
-                .tags("lookup_type", lookupType, "result", result)
+                .tags("lookup_type", safeLookupType, "result", safeResult)
                 .description("Number of user lookups")
                 .register(meterRegistry)
                 .increment();
-        logger.debug("User lookup metric recorded: {} -> {}", lookupType, result);
+        logger.debug("User lookup metric recorded: {} -> {}", safeLookupType, safeResult);
     }
 
     public void recordUserLogin(String provider, String userType) {
+        String safeProvider = provider != null ? provider : "unknown";
+        String safeUserType = userType != null ? userType : "unknown";
         Counter.builder("app.users.logins")
-                .tags("provider", provider, "user_type", userType)
+                .tags("provider", safeProvider, "user_type", safeUserType)
                 .description("Number of user logins")
                 .register(meterRegistry)
                 .increment();
-        logger.debug("User login metric recorded: {} user via {}", userType, provider);
+        logger.debug("User login metric recorded: {} user via {}", safeUserType, safeProvider);
     }
 
     public void recordUserPreferencesUpdate(String userId) {
+        String safeUserId = userId != null ? userId : "unknown";
         Counter.builder("app.users.preferences.updates")
-                .tags("user_id", userId)
+                .tags("user_id", safeUserId)
                 .description("Number of user preference updates")
                 .register(meterRegistry)
                 .increment();
-        logger.debug("User preferences update metric recorded for user: {}", userId);
+        logger.debug("User preferences update metric recorded for user: {}", safeUserId);
     }
 
     public void recordUserDeactivated(String userId) {
+        String safeUserId = userId != null ? userId : "unknown";
         Counter.builder("app.users.deactivated")
-                .tags("user_id", userId)
+                .tags("user_id", safeUserId)
                 .description("Number of users deactivated")
                 .register(meterRegistry)
                 .increment();
-        logger.debug("User deactivation metric recorded for user: {}", userId);
+        logger.debug("User deactivation metric recorded for user: {}", safeUserId);
     }
 
     public void recordUserListQuery(String queryType, int resultCount) {
+        String safeQueryType = queryType != null ? queryType : "unknown";
         Counter.builder("app.users.list.queries")
-                .tags("query_type", queryType, "result_count", String.valueOf(resultCount))
+                .tags("query_type", safeQueryType, "result_count", String.valueOf(resultCount))
                 .description("Number of user list queries")
                 .register(meterRegistry)
                 .increment();
-        logger.debug("User list query metric recorded: {} with {} results", queryType, resultCount);
+        logger.debug("User list query metric recorded: {} with {} results", safeQueryType, resultCount);
     }
 
 
@@ -425,66 +435,78 @@ public class ApplicationMetricsService {
     }
 
     public void recordSessionLookup(String lookupType, String result) {
+        String safeLookupType = lookupType != null ? lookupType : "unknown";
+        String safeResult = result != null ? result : "unknown";
         Counter.builder("app.sessions.lookups")
-                .tags("lookup_type", lookupType, "result", result)
+                .tags("lookup_type", safeLookupType, "result", safeResult)
                 .description("Number of session lookups")
                 .register(meterRegistry)
                 .increment();
-        logger.debug("Session lookup metric recorded: {} -> {}", lookupType, result);
+        logger.debug("Session lookup metric recorded: {} -> {}", safeLookupType, safeResult);
     }
 
     public void recordSessionRefreshed(String deviceType, String platform) {
+        String safeDeviceType = deviceType != null ? deviceType : "unknown";
+        String safePlatform = platform != null ? platform : "unknown";
         Counter.builder("app.sessions.refreshed")
-                .tags("device_type", deviceType, "platform", platform)
+                .tags("device_type", safeDeviceType, "platform", safePlatform)
                 .description("Number of sessions refreshed")
                 .register(meterRegistry)
                 .increment();
-        logger.debug("Session refresh metric recorded: {} on {}", deviceType, platform);
+        logger.debug("Session refresh metric recorded: {} on {}", safeDeviceType, safePlatform);
     }
 
     public void recordSessionRevoked(String deviceType, String platform, String reason) {
+        String safeDeviceType = deviceType != null ? deviceType : "unknown";
+        String safePlatform = platform != null ? platform : "unknown";
+        String safeReason = reason != null ? reason : "unknown";
         Counter.builder("app.sessions.revoked")
-                .tags("device_type", deviceType, "platform", platform, "reason", reason)
+                .tags("device_type", safeDeviceType, "platform", safePlatform, "reason", safeReason)
                 .description("Number of sessions revoked")
                 .register(meterRegistry)
                 .increment();
-        logger.debug("Session revocation metric recorded: {} on {} - reason: {}", deviceType, platform, reason);
+        logger.debug("Session revocation metric recorded: {} on {} - reason: {}", safeDeviceType, safePlatform, safeReason);
     }
 
     public void recordSessionAccess(String deviceType, String platform) {
+        String safeDeviceType = deviceType != null ? deviceType : "unknown";
+        String safePlatform = platform != null ? platform : "unknown";
         Counter.builder("app.sessions.accessed")
-                .tags("device_type", deviceType, "platform", platform)
+                .tags("device_type", safeDeviceType, "platform", safePlatform)
                 .description("Number of session accesses")
                 .register(meterRegistry)
                 .increment();
-        logger.debug("Session access metric recorded: {} on {}", deviceType, platform);
+        logger.debug("Session access metric recorded: {} on {}", safeDeviceType, safePlatform);
     }
 
     public void recordUserSessionsRevoked(String userId, int sessionCount) {
+        String safeUserId = userId != null ? userId : "unknown";
         Counter.builder("app.sessions.user.revoked")
-                .tags("user_id", userId, "session_count", String.valueOf(sessionCount))
+                .tags("user_id", safeUserId, "session_count", String.valueOf(sessionCount))
                 .description("Number of user session revocations")
                 .register(meterRegistry)
                 .increment();
-        logger.debug("User sessions revocation metric recorded: {} sessions for user {}", sessionCount, userId);
+        logger.debug("User sessions revocation metric recorded: {} sessions for user {}", sessionCount, safeUserId);
     }
 
     public void recordDeviceSessionsRevoked(String deviceId, int sessionCount) {
+        String safeDeviceId = deviceId != null ? deviceId : "unknown";
         Counter.builder("app.sessions.device.revoked")
-                .tags("device_id", deviceId, "session_count", String.valueOf(sessionCount))
+                .tags("device_id", safeDeviceId, "session_count", String.valueOf(sessionCount))
                 .description("Number of device session revocations")
                 .register(meterRegistry)
                 .increment();
-        logger.debug("Device sessions revocation metric recorded: {} sessions for device {}", sessionCount, deviceId);
+        logger.debug("Device sessions revocation metric recorded: {} sessions for device {}", sessionCount, safeDeviceId);
     }
 
     public void recordUserSessionQuery(String userId, int resultCount) {
+        String safeUserId = userId != null ? userId : "unknown";
         Counter.builder("app.sessions.user.queries")
-                .tags("user_id", userId, "result_count", String.valueOf(resultCount))
+                .tags("user_id", safeUserId, "result_count", String.valueOf(resultCount))
                 .description("Number of user session queries")
                 .register(meterRegistry)
                 .increment();
-        logger.debug("User session query metric recorded: {} sessions for user {}", resultCount, userId);
+        logger.debug("User session query metric recorded: {} sessions for user {}", resultCount, safeUserId);
     }
 
     public void recordExpiredSessionsCleanup(Long deletedCount) {
@@ -508,22 +530,24 @@ public class ApplicationMetricsService {
     // Firebase/Firestore Metrics
 
     public void recordFirestoreOperation(String collection, String operation, boolean success, long durationMs) {
+        String safeCollection = collection != null ? collection : "unknown";
+        String safeOperation = operation != null ? operation : "unknown";
         String status = success ? "success" : "error";
 
         Counter.builder("app.firestore.operations")
-                .tags("collection", collection, "operation", operation, "status", status)
+                .tags("collection", safeCollection, "operation", safeOperation, "status", status)
                 .description("Number of Firestore operations")
                 .register(meterRegistry)
                 .increment();
 
         Timer.builder("app.firestore.operation.duration")
-                .tags("collection", collection, "operation", operation, "status", status)
+                .tags("collection", safeCollection, "operation", safeOperation, "status", status)
                 .description("Duration of Firestore operations")
                 .register(meterRegistry)
                 .record(durationMs, TimeUnit.MILLISECONDS);
 
         logger.debug("Firestore operation metric recorded: {} {} on {} - {} ({}ms)",
-                operation, status, collection, success ? "success" : "error", durationMs);
+                safeOperation, status, safeCollection, success ? "success" : "error", durationMs);
     }
 
     public void recordFirestoreConnectionHealth(boolean healthy) {
@@ -539,53 +563,61 @@ public class ApplicationMetricsService {
     }
 
     public void recordFirestoreDocumentCount(String collection, long count) {
+        String safeCollection = collection != null ? collection : "unknown";
         Gauge.builder("app.firestore.documents.count", () -> count)
-                .tags("collection", collection)
+                .tags("collection", safeCollection)
                 .description("Number of documents in Firestore collection")
                 .register(meterRegistry);
 
-        logger.debug("Firestore document count metric recorded: {} documents in {}", count, collection);
+        logger.debug("Firestore document count metric recorded: {} documents in {}", count, safeCollection);
     }
 
     public void recordFirestoreQueryPerformance(String collection, String queryType, long durationMs, int resultCount) {
+        String safeCollection = collection != null ? collection : "unknown";
+        String safeQueryType = queryType != null ? queryType : "unknown";
         Timer.builder("app.firestore.query.duration")
-                .tags("collection", collection, "query_type", queryType, "result_count", String.valueOf(resultCount))
+                .tags("collection", safeCollection, "query_type", safeQueryType, "result_count", String.valueOf(resultCount))
                 .description("Duration of Firestore queries")
                 .register(meterRegistry)
                 .record(durationMs, TimeUnit.MILLISECONDS);
 
         Counter.builder("app.firestore.queries")
-                .tags("collection", collection, "query_type", queryType)
+                .tags("collection", safeCollection, "query_type", safeQueryType)
                 .description("Number of Firestore queries")
                 .register(meterRegistry)
                 .increment();
 
         logger.debug("Firestore query performance metric recorded: {} query on {} - {}ms, {} results",
-                queryType, collection, durationMs, resultCount);
+                safeQueryType, safeCollection, durationMs, resultCount);
     }
 
     public void recordFirestoreError(String collection, String operation, String errorType) {
+        String safeCollection = collection != null ? collection : "unknown";
+        String safeOperation = operation != null ? operation : "unknown";
+        String safeErrorType = errorType != null ? errorType : "unknown";
         Counter.builder("app.firestore.errors")
-                .tags("collection", collection, "operation", operation, "error_type", errorType)
+                .tags("collection", safeCollection, "operation", safeOperation, "error_type", safeErrorType)
                 .description("Number of Firestore errors")
                 .register(meterRegistry)
                 .increment();
 
         logger.debug("Firestore error metric recorded: {} {} on {} - {}",
-                operation, errorType, collection, errorType);
+                safeOperation, safeErrorType, safeCollection, safeErrorType);
     }
 
     public void recordFirestoreBatchOperation(String collection, String operation, int batchSize, boolean success, long durationMs) {
+        String safeCollection = collection != null ? collection : "unknown";
+        String safeOperation = operation != null ? operation : "unknown";
         String status = success ? "success" : "error";
 
         Counter.builder("app.firestore.batch.operations")
-                .tags("collection", collection, "operation", operation, "status", status, "batch_size", String.valueOf(batchSize))
+                .tags("collection", safeCollection, "operation", safeOperation, "status", status, "batch_size", String.valueOf(batchSize))
                 .description("Number of Firestore batch operations")
                 .register(meterRegistry)
                 .increment();
 
         Timer.builder("app.firestore.batch.duration")
-                .tags("collection", collection, "operation", operation, "status", status)
+                .tags("collection", safeCollection, "operation", safeOperation, "status", status)
                 .description("Duration of Firestore batch operations")
                 .register(meterRegistry)
                 .record(durationMs, TimeUnit.MILLISECONDS);
@@ -602,11 +634,13 @@ public class ApplicationMetricsService {
      * Record circuit breaker state - creates a gauge per state (OPEN, HALF_OPEN, CLOSED)
      */
     public void recordCircuitBreakerState(String name, String state) {
-        String gaugeKey = name + "_" + state;
+        String safeName = name != null ? name : "unknown";
+        String safeState = state != null ? state : "unknown";
+        String gaugeKey = safeName + "_" + safeState;
 
         // Reset all states for this circuit breaker to 0
         circuitBreakerStateCounters.entrySet().stream()
-                .filter(entry -> entry.getKey().startsWith(name + "_"))
+                .filter(entry -> entry.getKey().startsWith(safeName + "_"))
                 .forEach(entry -> entry.getValue().set(0));
 
         // Set the current state to 1
@@ -614,23 +648,25 @@ public class ApplicationMetricsService {
             AtomicLong counter = new AtomicLong(0);
             Gauge.builder("app.circuitbreaker.state", counter, AtomicLong::doubleValue)
                     .description("Circuit breaker current state (1=active, 0=inactive)")
-                    .tag("name", name)
-                    .tag("state", state)
+                    .tag("name", safeName)
+                    .tag("state", safeState)
                     .register(meterRegistry);
             return counter;
         }).set(1);
 
-        logger.debug("Circuit breaker state recorded: {} is now {}", name, state);
+        logger.debug("Circuit breaker state recorded: {} is now {}", safeName, safeState);
     }
 
     /**
      * Record circuit breaker call outcomes
      */
     public void recordCircuitBreakerCall(String name, String outcome) {
+        String safeName = name != null ? name : "unknown";
+        String safeOutcome = outcome != null ? outcome : "unknown";
         Counter.builder("app.circuitbreaker.calls")
                 .description("Circuit breaker call outcomes")
-                .tag("name", name)
-                .tag("outcome", outcome)
+                .tag("name", safeName)
+                .tag("outcome", safeOutcome)
                 .register(meterRegistry)
                 .increment();
     }
@@ -641,12 +677,17 @@ public class ApplicationMetricsService {
      * Record authentication failure with detailed error information
      */
     public void recordAuthenticationFailure(String provider, String deviceType, String platform, String errorType, String errorCode) {
+        String safeProvider = provider != null ? provider : "unknown";
+        String safeDeviceType = deviceType != null ? deviceType : "unknown";
+        String safePlatform = platform != null ? platform : "unknown";
+        String safeErrorType = errorType != null ? errorType : "unknown";
+        String safeErrorCode = errorCode != null ? errorCode : "unknown";
         Tags tags = Tags.of(
-            "provider", provider,
-            "device_type", deviceType,
-            "platform", platform,
-            "error_type", errorType,
-            "error_code", errorCode
+            "provider", safeProvider,
+            "device_type", safeDeviceType,
+            "platform", safePlatform,
+            "error_type", safeErrorType,
+            "error_code", safeErrorCode
         );
 
         Counter.builder("app.authentication.failures")
@@ -656,18 +697,22 @@ public class ApplicationMetricsService {
                 .increment();
 
         logger.debug("Authentication failure recorded: provider={}, error_type={}, error_code={}",
-                    provider, errorType, errorCode);
+                    safeProvider, safeErrorType, safeErrorCode);
     }
 
     /**
      * Record token refresh failure
      */
     public void recordTokenRefreshFailure(String provider, String deviceType, String platform, String errorType) {
+        String safeProvider = provider != null ? provider : "unknown";
+        String safeDeviceType = deviceType != null ? deviceType : "unknown";
+        String safePlatform = platform != null ? platform : "unknown";
+        String safeErrorType = errorType != null ? errorType : "unknown";
         Tags tags = Tags.of(
-            "provider", provider,
-            "device_type", deviceType,
-            "platform", platform,
-            "error_type", errorType
+            "provider", safeProvider,
+            "device_type", safeDeviceType,
+            "platform", safePlatform,
+            "error_type", safeErrorType
         );
 
         Counter.builder("app.tokens.refresh.failures")
@@ -676,17 +721,20 @@ public class ApplicationMetricsService {
                 .register(meterRegistry)
                 .increment();
 
-        logger.debug("Token refresh failure recorded: provider={}, error_type={}", provider, errorType);
+        logger.debug("Token refresh failure recorded: provider={}, error_type={}", safeProvider, safeErrorType);
     }
 
     /**
      * Record Firestore operation failure with error details
      */
     public void recordFirestoreFailure(String collection, String operation, String errorType, long durationMs) {
+        String safeCollection = collection != null ? collection : "unknown";
+        String safeOperation = operation != null ? operation : "unknown";
+        String safeErrorType = errorType != null ? errorType : "unknown";
         Tags tags = Tags.of(
-            "collection", collection,
-            "operation", operation,
-            "error_type", errorType
+            "collection", safeCollection,
+            "operation", safeOperation,
+            "error_type", safeErrorType
         );
 
         Counter.builder("app.firestore.failures")
@@ -702,16 +750,18 @@ public class ApplicationMetricsService {
                 .record(durationMs, TimeUnit.MILLISECONDS);
 
         logger.debug("Firestore failure recorded: {} {} on {} - {} ({}ms)",
-                    operation, errorType, collection, errorType, durationMs);
+                    safeOperation, safeErrorType, safeCollection, safeErrorType, durationMs);
     }
 
     /**
      * Record profile operation failure
      */
     public void recordProfileOperationFailure(String operation, String errorType) {
+        String safeOperation = operation != null ? operation : "unknown";
+        String safeErrorType = errorType != null ? errorType : "unknown";
         Tags tags = Tags.of(
-            "operation", operation,
-            "error_type", errorType
+            "operation", safeOperation,
+            "error_type", safeErrorType
         );
 
         Counter.builder("app.profiles.failures")
@@ -720,16 +770,18 @@ public class ApplicationMetricsService {
                 .register(meterRegistry)
                 .increment();
 
-        logger.debug("Profile operation failure recorded: operation={}, error_type={}", operation, errorType);
+        logger.debug("Profile operation failure recorded: operation={}, error_type={}", safeOperation, safeErrorType);
     }
 
     /**
      * Record session operation failure
      */
     public void recordSessionOperationFailure(String operation, String errorType) {
+        String safeOperation = operation != null ? operation : "unknown";
+        String safeErrorType = errorType != null ? errorType : "unknown";
         Tags tags = Tags.of(
-            "operation", operation,
-            "error_type", errorType
+            "operation", safeOperation,
+            "error_type", safeErrorType
         );
 
         Counter.builder("app.sessions.failures")
@@ -738,7 +790,7 @@ public class ApplicationMetricsService {
                 .register(meterRegistry)
                 .increment();
 
-        logger.debug("Session operation failure recorded: operation={}, error_type={}", operation, errorType);
+        logger.debug("Session operation failure recorded: operation={}, error_type={}", safeOperation, safeErrorType);
     }
 
     // --- Token Operation Metrics ---
@@ -747,10 +799,13 @@ public class ApplicationMetricsService {
      * Record token refresh operation
      */
     public void recordTokenRefresh(String provider, String deviceType, String platform, boolean successful, long processingTimeMs) {
+        String safeProvider = provider != null ? provider : "unknown";
+        String safeDeviceType = deviceType != null ? deviceType : "unknown";
+        String safePlatform = platform != null ? platform : "unknown";
         Tags tags = Tags.of(
-            "provider", provider,
-            "device_type", deviceType,
-            "platform", platform,
+            "provider", safeProvider,
+            "device_type", safeDeviceType,
+            "platform", safePlatform,
             "result", successful ? "success" : "failure"
         );
 
@@ -767,17 +822,20 @@ public class ApplicationMetricsService {
                 .record(processingTimeMs, TimeUnit.MILLISECONDS);
 
         logger.debug("Token refresh metric recorded: {} on {} - {} ({}ms)",
-                    provider, platform, successful ? "success" : "failure", processingTimeMs);
+                    safeProvider, safePlatform, successful ? "success" : "failure", processingTimeMs);
     }
 
     /**
      * Record token revocation (logout)
      */
     public void recordTokenRevocation(String deviceType, String platform, String reason, boolean successful) {
+        String safeDeviceType = deviceType != null ? deviceType : "unknown";
+        String safePlatform = platform != null ? platform : "unknown";
+        String safeReason = reason != null ? reason : "unknown";
         Tags tags = Tags.of(
-            "device_type", deviceType,
-            "platform", platform,
-            "reason", reason,
+            "device_type", safeDeviceType,
+            "platform", safePlatform,
+            "reason", safeReason,
             "result", successful ? "success" : "failure"
         );
 
@@ -788,7 +846,7 @@ public class ApplicationMetricsService {
                 .increment();
 
         logger.debug("Token revocation metric recorded: {} on {} - reason: {} - {}",
-                    deviceType, platform, reason, successful ? "success" : "failure");
+                    safeDeviceType, safePlatform, safeReason, successful ? "success" : "failure");
     }
 
     // --- User Profile Metrics ---
@@ -797,8 +855,9 @@ public class ApplicationMetricsService {
      * Record profile creation
      */
     public void recordProfileCreated(String userId, boolean successful, long processingTimeMs) {
+        String safeUserId = userId != null ? userId : "unknown";
         Tags tags = Tags.of(
-            "user_id", userId,
+            "user_id", safeUserId,
             "result", successful ? "success" : "failure",
             "operation", "created"
         );
@@ -816,15 +875,16 @@ public class ApplicationMetricsService {
                 .record(processingTimeMs, TimeUnit.MILLISECONDS);
 
         logger.debug("Profile creation metric recorded: user={} - {} ({}ms)",
-                    userId, successful ? "success" : "failure", processingTimeMs);
+                    safeUserId, successful ? "success" : "failure", processingTimeMs);
     }
 
     /**
      * Record profile update
      */
     public void recordProfileUpdated(String userId, boolean successful, long processingTimeMs) {
+        String safeUserId = userId != null ? userId : "unknown";
         Tags tags = Tags.of(
-            "user_id", userId,
+            "user_id", safeUserId,
             "result", successful ? "success" : "failure",
             "operation", "updated"
         );
@@ -842,15 +902,16 @@ public class ApplicationMetricsService {
                 .record(processingTimeMs, TimeUnit.MILLISECONDS);
 
         logger.debug("Profile update metric recorded: user={} - {} ({}ms)",
-                    userId, successful ? "success" : "failure", processingTimeMs);
+                    safeUserId, successful ? "success" : "failure", processingTimeMs);
     }
 
     /**
      * Record profile retrieval
      */
     public void recordProfileRetrieved(String userId, boolean found, long processingTimeMs) {
+        String safeUserId = userId != null ? userId : "unknown";
         Tags tags = Tags.of(
-            "user_id", userId,
+            "user_id", safeUserId,
             "result", found ? "found" : "not_found",
             "operation", "retrieved"
         );
@@ -868,7 +929,7 @@ public class ApplicationMetricsService {
                 .record(processingTimeMs, TimeUnit.MILLISECONDS);
 
         logger.debug("Profile retrieval metric recorded: user={} - {} ({}ms)",
-                    userId, found ? "found" : "not_found", processingTimeMs);
+                    safeUserId, found ? "found" : "not_found", processingTimeMs);
     }
 
 }
