@@ -220,9 +220,61 @@ jobs:
             --region ${{ env.REGION }} \
             --project ${{ env.PROJECT_ID }} \
             --wait \
-            --format="value(metadata.name)")
+            --format="value(metadata.name)") || true
 
           echo "JOB_NAME=$JOB_NAME" >> $GITHUB_ENV
+
+      - name: Fetch and Display Test Results
+        if: always()
+        run: |
+          echo "## 🧪 Functional Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Give logs a moment to be available
+          sleep 5
+
+          # Fetch logs from the most recent job execution
+          gcloud logging read 'resource.type="cloud_run_job" AND resource.labels.job_name="gateway-functional-test-job"' \
+            --limit=500 \
+            --format="value(textPayload)" \
+            --project=${{ env.PROJECT_ID }} \
+            --freshness=10m > test-output.log 2>&1 || true
+
+          # Check if we got any output
+          if [ ! -s test-output.log ]; then
+            echo "⚠️ No logs retrieved from Cloud Run Job" >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
+
+          # Extract Cucumber summary (scenarios and steps lines)
+          echo "### Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          grep -E "^[0-9]+ (Scenarios?|Steps?)" test-output.log | head -5 >> $GITHUB_STEP_SUMMARY || echo "No summary found" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Check for pass/fail
+          if grep -qE "[0-9]+ Scenarios? \([0-9]+ passed\)$" test-output.log; then
+            echo "✅ **All scenarios passed!**" >> $GITHUB_STEP_SUMMARY
+          elif grep -q "failed" test-output.log; then
+            echo "❌ **Some tests failed**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Failed Scenarios" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            grep -B5 "FAILED\|failed\|AssertionError" test-output.log | head -50 >> $GITHUB_STEP_SUMMARY || true
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "ℹ️ **Check logs for details**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Show last 30 lines for context
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "<details><summary>📋 Last 30 log lines</summary>" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -30 test-output.log >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "</details>" >> $GITHUB_STEP_SUMMARY
 
       - name: Cleanup previous instance
         run: |
