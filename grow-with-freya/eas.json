@@ -24,11 +24,10 @@
       "channel": "preview",
       "env": {
         "NODE_ENV": "staging",
-        "EXPO_PUBLIC_GATEWAY_URL": "https://gateway-service-jludng4t5a-ew.a.run.app"
+        "EXPO_PUBLIC_GATEWAY_URL": "https://api.colearnwithfreya.co.uk"
       },
       "ios": {
-        "resourceClass": "m-medium",
-        "simulator": true
+        "resourceClass": "m-medium"
       },
       "android": {
         "buildType": "apk"
