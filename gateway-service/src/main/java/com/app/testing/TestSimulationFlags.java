@@ -5,9 +5,10 @@ import org.springframework.stereotype.Component;
 
 /**
  * Test-only simulation flags to steer gateway behavior during functional tests.
+ * Available in 'test' profile (local/Docker) and 'gcp-dev' profile (GCP functional tests).
  */
 @Component
-@Profile("test")
+@Profile({"test", "gcp-dev"})
 public class TestSimulationFlags {
     // Downstream simulation
     private Integer googleOauthStatus; // e.g., 503
