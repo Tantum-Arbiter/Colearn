@@ -73,21 +73,13 @@ public class GatewayStepDefs extends BaseStepDefs {
                 .setParam("http.socket.timeout", 15000));
 
         // Reset gateway state (rate limiter, circuit breakers, Firestore test data)
-        // This seeds test stories in both test profile and gcp-dev profile
-        // Note: In GCP, the Load Balancer may not route /private/** paths, so this is optional
+        // Note: In GCP, /private/** paths may not be routed through the Load Balancer
         try {
-            RequestSpecification req = given()
+            int statusCode = given()
                 .baseUri(cfg)
                 .contentType("application/json")
-                .header("User-Agent", "GrowWithFreya-FuncTest/1.0.0");
-
-            // Add Cloud Armor bypass header for GCP mode
-            String bypassSecret = getCloudArmorBypassSecret();
-            if (bypassSecret != null && !bypassSecret.isBlank()) {
-                req = req.header("X-Test-Bypass", bypassSecret);
-            }
-
-            int statusCode = req.when()
+                .header("User-Agent", "GrowWithFreya-FuncTest/1.0.0")
+                .when()
                 .post("/private/reset")
                 .then()
                 .extract()
@@ -96,10 +88,9 @@ public class GatewayStepDefs extends BaseStepDefs {
             if (statusCode == 200) {
                 System.out.println("Gateway state reset successfully");
             } else {
-                System.out.println("Reset endpoint returned " + statusCode + " - continuing (may be Load Balancer path restriction)");
+                System.out.println("Reset endpoint returned " + statusCode + " - continuing");
             }
         } catch (Throwable ignored) {
-            // Endpoint may not exist in some profiles or be blocked by Load Balancer; ignore
             System.out.println("Reset endpoint not accessible - continuing without reset");
         }
     }
@@ -129,20 +120,12 @@ public class GatewayStepDefs extends BaseStepDefs {
         int maxWaitSeconds = isGcpMode() ? 10 : 30;
         int pollIntervalMs = isGcpMode() ? 500 : 2000;
 
-        // Get bypass secret once before the polling loop
-        String bypassSecret = getCloudArmorBypassSecret();
-
         await()
             .atMost(maxWaitSeconds, TimeUnit.SECONDS)
             .pollInterval(pollIntervalMs, TimeUnit.MILLISECONDS)
             .until(() -> {
                 try {
-                    RequestSpecification req = given();
-                    // Add Cloud Armor bypass header for GCP mode
-                    if (bypassSecret != null && !bypassSecret.isBlank()) {
-                        req = req.header("X-Test-Bypass", bypassSecret);
-                    }
-                    return req
+                    return given()
                         .when()
                             .get("/auth/status")
                         .then()
