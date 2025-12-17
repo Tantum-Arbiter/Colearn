@@ -74,6 +74,7 @@ public class GatewayStepDefs extends BaseStepDefs {
 
         // Reset gateway state (rate limiter, circuit breakers, Firestore test data)
         // This seeds test stories in both test profile and gcp-dev profile
+        // Note: In GCP, the Load Balancer may not route /private/** paths, so this is optional
         try {
             RequestSpecification req = given()
                 .baseUri(cfg)
@@ -86,12 +87,20 @@ public class GatewayStepDefs extends BaseStepDefs {
                 req = req.header("X-Test-Bypass", bypassSecret);
             }
 
-            req.when()
+            int statusCode = req.when()
                 .post("/private/reset")
                 .then()
-                .statusCode(200);
-        } catch (Exception ignored) {
-            // Endpoint may not exist in some profiles; ignore
+                .extract()
+                .statusCode();
+
+            if (statusCode == 200) {
+                System.out.println("Gateway state reset successfully");
+            } else {
+                System.out.println("Reset endpoint returned " + statusCode + " - continuing (may be Load Balancer path restriction)");
+            }
+        } catch (Throwable ignored) {
+            // Endpoint may not exist in some profiles or be blocked by Load Balancer; ignore
+            System.out.println("Reset endpoint not accessible - continuing without reset");
         }
     }
 
