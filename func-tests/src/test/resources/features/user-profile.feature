@@ -1,4 +1,4 @@
-@user-profile @gcp-dev @local @docker
+@user-profile @local @docker @emulator-only
 Feature: User Profile Management
   As a user of the Grow with Freya application
   I want to manage my profile settings

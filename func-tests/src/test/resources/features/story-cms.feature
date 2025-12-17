@@ -146,7 +146,7 @@ Feature: Story CMS and Delta-Sync
     And the response should have field "errorCode"
     And the response should have field "error"
 
-  @error-handling
+  @error-handling @emulator-only
   Scenario: Sync request with null checksums
     When I make a POST request to "/api/stories/sync" with body:
       """

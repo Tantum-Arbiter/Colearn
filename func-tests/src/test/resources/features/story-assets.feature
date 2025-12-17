@@ -75,7 +75,7 @@ Feature: Story Asset Delivery with Signed URLs
     Then the response status code should be 400
     And the response should have field "errorCode"
 
-  @error-handling
+  @error-handling @emulator-only
   Scenario: Asset sync request with null checksums
     When I make a POST request to "/api/assets/sync" with body:
       """
