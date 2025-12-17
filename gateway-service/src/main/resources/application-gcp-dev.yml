@@ -83,6 +83,24 @@ rate-limiting:
   api-requests-per-minute: 6000
   cleanup-interval-minutes: 5
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: grow-with-freya-gateway
+      environment: gcp-dev
+
 logging:
   level:
     com.app: DEBUG
