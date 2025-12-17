@@ -93,9 +93,17 @@ public class RequestValidationFilter extends OncePerRequestFilter {
     // Rate limiting (simple implementation)
     private static final int MAX_REQUESTS_PER_MINUTE = 100;
 
+    // Master toggle to enable/disable the entire filter (gcp-dev can disable since Cloudflare WAF handles security)
+    @Value("${app.security.request-validation.enabled:true}")
+    private boolean filterEnabled = true;
+
     // Toggle for inspecting JSON request bodies (test profile can disable)
     @Value("${app.security.request-validation.inspect-body:true}")
     private boolean inspectBodyEnabled = true;
+
+    // Toggle for validating headers for suspicious patterns (gcp-dev can disable to allow GCP infrastructure headers)
+    @Value("${app.security.request-validation.validate-headers:true}")
+    private boolean validateHeadersEnabled = true;
 
     @Override
     protected void doFilterInternal(
@@ -103,6 +111,12 @@ public class RequestValidationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
+
+        // Skip all validation if filter is disabled (e.g., gcp-dev profile relies on Cloudflare WAF)
+        if (!filterEnabled) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         try {
             // Check User-Agent header; warn if missing but do not block
@@ -159,7 +173,8 @@ public class RequestValidationFilter extends OncePerRequestFilter {
             }
 
             // Validate headers for suspicious content (including CRLF injection)
-            if (!validateHeaders(request)) {
+            // Skip validation when disabled (e.g., gcp-dev profile to allow GCP infrastructure headers)
+            if (validateHeadersEnabled && !validateHeaders(request)) {
                 logger.warn("Suspicious headers detected from IP: {}", getClientIpAddress(request));
 
                 // Touch URI/query to satisfy strict stubbing when tests set them

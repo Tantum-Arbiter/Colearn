@@ -197,14 +197,14 @@ class RequestValidationFilterTest {
 
     @Test
     void doFilterInternal_WithSuspiciousHeaders_ShouldBlockRequest() throws ServletException, IOException {
-        // Given
+        // Given - use X-Custom-Header which is NOT in the GCP infrastructure whitelist
         when(request.getRequestURI()).thenReturn("/api/test");
         when(request.getQueryString()).thenReturn(null);
         when(request.getContentLength()).thenReturn(50);
         when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0");
         when(request.getHeaderNames()).thenReturn(Collections.enumeration(
-            java.util.Arrays.asList("User-Agent", "X-Forwarded-For")));
-        when(request.getHeaders("X-Forwarded-For")).thenReturn(Collections.enumeration(
+            java.util.Arrays.asList("User-Agent", "X-Custom-Header")));
+        when(request.getHeaders("X-Custom-Header")).thenReturn(Collections.enumeration(
             Collections.singletonList("192.168.1.1' OR 1=1--")));
         when(response.getWriter()).thenReturn(printWriter);
 
