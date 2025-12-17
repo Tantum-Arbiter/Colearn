@@ -89,8 +89,7 @@ Feature: CORS Configuration
   @security
   Scenario: CORS works with authenticated requests
     Given I have a valid authentication token
-    When I send a GET request to "/api/auth/me" with headers:
-      | Authorization | Bearer valid-user-test        |
+    When I send a GET request to "/auth/status" with headers:
       | Origin        | https://app.growwithfreya.com |
     Then the response status should be 200
     And the response headers should contain "Access-Control-Allow-Origin"

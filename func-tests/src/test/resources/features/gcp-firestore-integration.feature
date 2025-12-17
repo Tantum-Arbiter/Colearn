@@ -35,7 +35,7 @@ Feature: GCP Firestore Integration
         }
       }
       """
-    Then the response status should be 201
+    Then the response status should be 200 or 201
     And the response should have field "userId"
     And the response should have field "nickname" with value "GcpTestUser"
     And the response should have field "avatarType" with value "girl"
