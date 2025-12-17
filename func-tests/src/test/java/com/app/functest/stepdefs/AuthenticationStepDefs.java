@@ -848,6 +848,9 @@ public class AuthenticationStepDefs extends BaseStepDefs {
         boolean providedClientHeader = pendingHeaders != null && pendingHeaders.keySet().stream().anyMatch(k ->
             k.equalsIgnoreCase("X-Client-Platform") || k.equalsIgnoreCase("X-Client-Version") || k.equalsIgnoreCase("X-Device-ID") || k.equalsIgnoreCase("User-Agent")
         );
+        boolean providedAuthHeader = pendingHeaders != null && pendingHeaders.keySet().stream()
+            .anyMatch(k -> k.equalsIgnoreCase("Authorization"));
+
         RequestSpecification request = providedClientHeader ? given() : applyDefaultClientHeaders(given());
         if (pendingHeaders != null) {
             for (Map.Entry<String, String> header : pendingHeaders.entrySet()) {
@@ -863,7 +866,8 @@ public class AuthenticationStepDefs extends BaseStepDefs {
                 request.header(header.getKey(), value);
             }
         }
-        if (authToken != null && !authToken.isBlank()) {
+        // Only add authToken if no Authorization header was provided in pendingHeaders
+        if (!providedAuthHeader && authToken != null && !authToken.isBlank()) {
             request.header("Authorization", "Bearer " + authToken);
         }
         request.contentType("application/json").body(body);
