@@ -1,4 +1,4 @@
-@cross-device-sync @gcp-dev @local @docker
+@cross-device-sync @local @docker @emulator-only
 Feature: Cross-Device Data Synchronization
   As a user with multiple devices
   I want my profile and settings to sync automatically

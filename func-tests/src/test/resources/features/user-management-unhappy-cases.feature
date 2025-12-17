@@ -1,3 +1,4 @@
+@user-management @error-handling @local @docker @emulator-only
 Feature: User Management Unhappy Cases
   As a system administrator
   I want to ensure the user management system handles error scenarios gracefully

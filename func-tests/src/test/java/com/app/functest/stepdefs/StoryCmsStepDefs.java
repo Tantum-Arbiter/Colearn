@@ -243,7 +243,9 @@ public class StoryCmsStepDefs extends BaseStepDefs {
 
     @Then("each page should have field {string}")
     public void eachPageShouldHaveField(String fieldName) {
+        assertThat("Response should not be null", lastResponse, notNullValue());
         List<Map<String, Object>> pages = lastResponse.jsonPath().getList("pages");
+        assertThat("Pages should not be null", pages, notNullValue());
 
         for (int i = 0; i < pages.size(); i++) {
             Object value = pages.get(i).get(fieldName);
@@ -253,7 +255,9 @@ public class StoryCmsStepDefs extends BaseStepDefs {
 
     @Then("pages should be ordered by pageNumber")
     public void pagesShouldBeOrderedByPageNumber() {
+        assertThat("Response should not be null", lastResponse, notNullValue());
         List<Map<String, Object>> pages = lastResponse.jsonPath().getList("pages");
+        assertThat("Pages should not be null", pages, notNullValue());
 
         for (int i = 0; i < pages.size() - 1; i++) {
             int currentPageNum = (Integer) pages.get(i).get("pageNumber");

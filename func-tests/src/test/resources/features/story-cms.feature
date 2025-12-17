@@ -23,7 +23,7 @@ Feature: Story CMS and Delta-Sync
     And the response should contain field "totalStories"
     And the response should contain field "lastUpdated"
 
-  @delta-sync
+  @delta-sync @emulator-only
   Scenario: Initial sync with no client data
     Given I have a sync request with no client checksums
     When I make a POST request to "/api/stories/sync" with the sync request
@@ -34,14 +34,14 @@ Feature: Story CMS and Delta-Sync
     And the response should contain field "totalStories"
     And the response field "updatedStories" should be greater than 0
 
-  @delta-sync
+  @delta-sync @emulator-only
   Scenario: Delta sync with matching checksums
     Given I have a sync request with current server checksums
     When I make a POST request to "/api/stories/sync" with the sync request
     Then the response status code should be 200
     And the response field "updatedStories" should equal 0
 
-  @delta-sync
+  @delta-sync @emulator-only
   Scenario: Delta sync with outdated checksums
     Given I have a sync request with outdated checksums
     When I make a POST request to "/api/stories/sync" with the sync request
@@ -49,7 +49,7 @@ Feature: Story CMS and Delta-Sync
     And the response field "updatedStories" should be greater than 0
     And the response should contain updated stories only
 
-  @story-retrieval
+  @story-retrieval @emulator-only
   Scenario: Get story by ID
     Given a story exists with ID "test-story-1"
     When I make a GET request to "/api/stories/test-story-1"
@@ -64,7 +64,7 @@ Feature: Story CMS and Delta-Sync
     When I make a GET request to "/api/stories/non-existent-story"
     Then the response status code should be 404
 
-  @story-retrieval
+  @story-retrieval @emulator-only
   Scenario: Get stories by category
     Given stories exist in category "bedtime"
     When I make a GET request to "/api/stories/category/bedtime"
@@ -72,7 +72,7 @@ Feature: Story CMS and Delta-Sync
     And the response should be a JSON array
     And all stories in response should have category "bedtime"
 
-  @delta-sync @performance
+  @delta-sync @performance @emulator-only
   Scenario: Sync performance with dataset
     Given 3 stories exist in the system
     And I have a sync request with 0 matching checksums
@@ -81,7 +81,7 @@ Feature: Story CMS and Delta-Sync
     And the response time should be less than 2000 milliseconds
     And the response field "updatedStories" should equal 3
 
-  @delta-sync @cross-device
+  @delta-sync @cross-device @emulator-only
   Scenario: Multiple devices sync independently
     Given device "A" has synced all stories
     And device "B" has never synced
@@ -89,7 +89,7 @@ Feature: Story CMS and Delta-Sync
     Then device "B" should receive all available stories
     And device "A" sync state should be unchanged
 
-  @story-metadata
+  @story-metadata @emulator-only
   Scenario: Story metadata includes all required fields
     When I make a GET request to "/api/stories"
     Then the response status code should be 200
@@ -103,7 +103,7 @@ Feature: Story CMS and Delta-Sync
     And each story should have field "checksum"
     And each story should have field "pages"
 
-  @story-pages
+  @story-pages @emulator-only
   Scenario: Story pages include required fields
     Given a story exists with pages
     When I make a GET request to the story endpoint
@@ -158,21 +158,21 @@ Feature: Story CMS and Delta-Sync
       """
     Then the response status code should be 500
 
-  @error-handling
+  @error-handling @emulator-only
   Scenario: Get all stories with missing required headers
     When I make a GET request to "/api/stories" without client headers
     Then the response status code should be 400
     And the response should have field "errorCode" with value "GTW-101"
     And the response should have field "error" with value "Required field is missing"
 
-  @error-handling
+  @error-handling @emulator-only
   Scenario: Sync stories with missing X-Client-Platform header
     Given I have a sync request with no client checksums
     When I make a POST request to "/api/stories/sync" without X-Client-Platform header
     Then the response status code should be 400
     And the response should have field "errorCode" with value "GTW-101"
 
-  @error-handling
+  @error-handling @emulator-only
   Scenario: Get story by ID with invalid X-Client-Version format
     When I make a GET request to "/api/stories/test-story-1" with invalid X-Client-Version "v1.0"
     Then the response status code should be 400

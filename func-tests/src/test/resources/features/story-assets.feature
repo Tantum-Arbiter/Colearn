@@ -16,7 +16,7 @@ Feature: Story Asset Delivery with Signed URLs
     And the response should contain field "totalAssets"
     And the response should contain field "lastUpdated"
 
-  @smoke
+  @smoke @emulator-only
   Scenario: Get signed URL for existing asset
     When I make a GET request to "/api/assets/url?path=stories/test-story-1/cover.webp"
     Then the response status code should be 200
@@ -24,13 +24,13 @@ Feature: Story Asset Delivery with Signed URLs
     And the response should contain field "signedUrl"
     And the response field "signedUrl" should contain "test-story-1"
 
-  @smoke @integration
+  @smoke @integration @emulator-only
   Scenario: Signed URL can be used to fetch asset
     When I make a GET request to "/api/assets/url?path=stories/test-story-1/cover.webp"
     Then the response status code should be 200
     And the signed URL should successfully download the asset
 
-  @delta-sync
+  @delta-sync @emulator-only
   Scenario: Initial asset sync with no client data
     Given I have an asset sync request with no client checksums
     When I make a POST request to "/api/assets/sync" with the asset sync request
@@ -41,14 +41,14 @@ Feature: Story Asset Delivery with Signed URLs
     And the response should contain field "totalAssets"
     And the response field "updatedCount" should be greater than 0
 
-  @delta-sync
+  @delta-sync @emulator-only
   Scenario: Asset sync with matching checksums
     Given I have an asset sync request with current server checksums
     When I make a POST request to "/api/assets/sync" with the asset sync request
     Then the response status code should be 200
     And the response field "updatedCount" should equal 0
 
-  @delta-sync
+  @delta-sync @emulator-only
   Scenario: Asset sync with outdated checksums
     Given I have an asset sync request with outdated checksums
     When I make a POST request to "/api/assets/sync" with the asset sync request
@@ -87,19 +87,19 @@ Feature: Story Asset Delivery with Signed URLs
       """
     Then the response status code should be 400
 
-  @error-handling
+  @error-handling @emulator-only
   Scenario: Get asset version with missing required headers
     When I make a GET request to "/api/assets/version" without client headers
     Then the response status code should be 400
     And the response should have field "errorCode" with value "GTW-101"
 
-  @signed-url @gcp-func-only
+  @signed-url @emulator-only
   Scenario: Signed URLs include required query parameters
     When I make a GET request to "/api/assets/url?path=stories/test-story-1/cover.webp"
     Then the response status code should be 200
     And the signed URL should contain signature parameters
 
-  @asset-metadata
+  @asset-metadata @emulator-only
   Scenario: Asset version includes all required fields
     When I make a GET request to "/api/assets/version"
     Then the response status code should be 200
@@ -109,7 +109,7 @@ Feature: Story Asset Delivery with Signed URLs
     And the response should contain field "assetChecksums"
     And the response should contain field "totalAssets"
 
-  @delta-sync @performance
+  @delta-sync @performance @emulator-only
   Scenario: Asset sync performance
     Given assets exist in the system
     And I have an asset sync request with 0 matching checksums

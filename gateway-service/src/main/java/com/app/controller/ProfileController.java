@@ -84,6 +84,41 @@ public class ProfileController {
     }
 
     /**
+     * Delete user profile
+     * DELETE /api/profile
+     */
+    @DeleteMapping("/profile")
+    public ResponseEntity<?> deleteProfile() {
+        String userId = getAuthenticatedUserId();
+        if (userId == null) {
+            throw new GatewayException(ErrorCode.UNAUTHORIZED_ACCESS, "Authentication required");
+        }
+
+        logger.debug("Deleting profile for user: {}", userId);
+
+        try {
+            Optional<UserProfile> existingProfileOpt = userProfileRepository.findByUserId(userId).join();
+
+            if (existingProfileOpt.isEmpty()) {
+                throw new GatewayException(ErrorCode.PROFILE_NOT_FOUND, "User profile not found");
+            }
+
+            userProfileRepository.delete(userId).join();
+
+            logger.info("Successfully deleted profile for user: {}", userId);
+            return ResponseEntity.noContent().build();
+
+        } catch (GatewayException e) {
+            throw e;
+        } catch (Exception e) {
+            metricsService.recordProfileOperationFailure("delete", e.getClass().getSimpleName());
+
+            logger.error("Error deleting profile for user: {}", userId, e);
+            throw new GatewayException(ErrorCode.DATABASE_ERROR, "Failed to delete profile", e);
+        }
+    }
+
+    /**
      * Create or update user profile
      * POST /api/profile
      */

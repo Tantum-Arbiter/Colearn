@@ -1,4 +1,4 @@
-@authentication @error-handling @local @docker
+@authentication @error-handling @local @docker @emulator-only
 Feature: Authentication Unhappy Cases
   As a system administrator
   I want to ensure the authentication system handles error scenarios gracefully

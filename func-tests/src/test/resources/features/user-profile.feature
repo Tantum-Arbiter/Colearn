@@ -88,7 +88,7 @@ Feature: User Profile Management
     And the response should have field "avatarId" with value "boy_2"
     And the response should have field "notifications.enabled" with value "false"
 
-  @error-handling
+  @error-handling @emulator-only
   Scenario: Get profile returns 404 when profile does not exist
     Given I have a valid access token
     When I send an authenticated GET request to "/api/profile"
