@@ -13,9 +13,9 @@ RUN ./gradlew clean testClasses --no-daemon
 # Runtime stage
 FROM amazoncorretto:21
 
-# Install curl for health checks and gcloud CLI for GCS uploads
+# Install curl, which (required by gcloud installer), and python3 for gcloud CLI
 RUN yum update -y && \
-    yum install -y curl python3 && \
+    yum install -y curl which python3 && \
     curl -sSL https://sdk.cloud.google.com > /tmp/install.sh && \
     bash /tmp/install.sh --disable-prompts --install-dir=/opt && \
     rm /tmp/install.sh && \
