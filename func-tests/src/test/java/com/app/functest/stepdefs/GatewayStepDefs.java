@@ -8,6 +8,7 @@ import io.cucumber.java.en.When;
 import io.restassured.RestAssured;
 import io.restassured.config.HttpClientConfig;
 import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
 
 import java.util.concurrent.TimeUnit;
 import java.net.URI;
@@ -74,11 +75,18 @@ public class GatewayStepDefs extends BaseStepDefs {
         // Reset gateway state (rate limiter, circuit breakers, Firestore test data)
         // This seeds test stories in both test profile and gcp-dev profile
         try {
-            given()
+            RequestSpecification req = given()
                 .baseUri(cfg)
                 .contentType("application/json")
-                .header("User-Agent", "GrowWithFreya-FuncTest/1.0.0")
-                .when()
+                .header("User-Agent", "GrowWithFreya-FuncTest/1.0.0");
+
+            // Add Cloud Armor bypass header for GCP mode
+            String bypassSecret = getCloudArmorBypassSecret();
+            if (bypassSecret != null && !bypassSecret.isBlank()) {
+                req = req.header("X-Test-Bypass", bypassSecret);
+            }
+
+            req.when()
                 .post("/private/reset")
                 .then()
                 .statusCode(200);
@@ -112,12 +120,20 @@ public class GatewayStepDefs extends BaseStepDefs {
         int maxWaitSeconds = isGcpMode() ? 10 : 30;
         int pollIntervalMs = isGcpMode() ? 500 : 2000;
 
+        // Get bypass secret once before the polling loop
+        String bypassSecret = getCloudArmorBypassSecret();
+
         await()
             .atMost(maxWaitSeconds, TimeUnit.SECONDS)
             .pollInterval(pollIntervalMs, TimeUnit.MILLISECONDS)
             .until(() -> {
                 try {
-                    return given()
+                    RequestSpecification req = given();
+                    // Add Cloud Armor bypass header for GCP mode
+                    if (bypassSecret != null && !bypassSecret.isBlank()) {
+                        req = req.header("X-Test-Bypass", bypassSecret);
+                    }
+                    return req
                         .when()
                             .get("/auth/status")
                         .then()
