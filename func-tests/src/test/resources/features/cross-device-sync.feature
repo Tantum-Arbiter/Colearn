@@ -1,4 +1,4 @@
-@cross-device-sync @emulator-only @local @docker
+@cross-device-sync @gcp-dev @local @docker
 Feature: Cross-Device Data Synchronization
   As a user with multiple devices
   I want my profile and settings to sync automatically
@@ -6,6 +6,7 @@ Feature: Cross-Device Data Synchronization
 
   Background:
     Given the gateway service is running
+    And test data is cleaned up for the current user
     And the Firestore emulator is available
 
   @authentication @user-profile

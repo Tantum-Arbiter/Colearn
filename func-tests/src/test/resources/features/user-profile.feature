@@ -1,4 +1,4 @@
-@user-profile @emulator-only @local @docker
+@user-profile @gcp-dev @local @docker
 Feature: User Profile Management
   As a user of the Grow with Freya application
   I want to manage my profile settings
@@ -6,6 +6,7 @@ Feature: User Profile Management
 
   Background:
     Given the gateway service is running
+    And test data is cleaned up for the current user
     And Firebase is configured in WireMock
 
   @smoke

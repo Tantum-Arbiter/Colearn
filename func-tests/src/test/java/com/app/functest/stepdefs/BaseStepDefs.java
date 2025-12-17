@@ -1,5 +1,6 @@
 package com.app.functest.stepdefs;
 
+import io.cucumber.java.en.Given;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import org.slf4j.Logger;
@@ -29,6 +30,9 @@ public abstract class BaseStepDefs {
     // GCP Firebase token - obtained once per test run by calling /auth/firebase
     private static String gcpFirebaseToken = null;
     private static boolean gcpTokenFetched = false;
+
+    // Track if cleanup has been performed for this test run
+    private static boolean cleanupPerformed = false;
 
     /**
      * Check if running in GCP mode (no WireMock available).
@@ -153,6 +157,66 @@ public abstract class BaseStepDefs {
     protected static void resetGcpTokenState() {
         gcpFirebaseToken = null;
         gcpTokenFetched = false;
+    }
+
+    /**
+     * Clean up test data for the authenticated user at the START of tests.
+     * This ensures a clean state before running tests while leaving data
+     * after tests for manual inspection.
+     *
+     * In GCP mode: Deletes the user's profile from real Firestore
+     * In local mode: No cleanup needed (emulator resets between runs)
+     */
+    protected void cleanupTestDataForCurrentUser() {
+        if (!isGcpMode()) {
+            logger.debug("Skipping cleanup in local mode - emulator handles cleanup");
+            return;
+        }
+
+        if (cleanupPerformed) {
+            logger.debug("Cleanup already performed for this test run");
+            return;
+        }
+
+        String token = getGcpAuthToken();
+        if (token == null) {
+            logger.warn("No auth token available for cleanup");
+            return;
+        }
+
+        try {
+            String baseUrl = getGatewayBaseUrl();
+            logger.info("Cleaning up test data for authenticated user at {}", baseUrl);
+
+            Response response = given()
+                    .baseUri(baseUrl)
+                    .header("Authorization", "Bearer " + token)
+                    .header("X-Client-Platform", "ios")
+                    .header("X-Client-Version", "1.0.0")
+                    .header("X-Device-ID", "func-test-cleanup")
+                    .header("User-Agent", "GrowWithFreya-FuncTest/1.0.0")
+                    .delete("/api/profile");
+
+            if (response.getStatusCode() == 200 || response.getStatusCode() == 204) {
+                logger.info("Successfully cleaned up user profile");
+            } else if (response.getStatusCode() == 404) {
+                logger.info("No profile to clean up (404)");
+            } else {
+                logger.warn("Cleanup returned unexpected status: {} - {}",
+                        response.getStatusCode(), response.getBody().asString());
+            }
+
+            cleanupPerformed = true;
+        } catch (Exception e) {
+            logger.error("Failed to clean up test data", e);
+        }
+    }
+
+    /**
+     * Reset cleanup state (for testing purposes)
+     */
+    protected static void resetCleanupState() {
+        cleanupPerformed = false;
     }
 }
 

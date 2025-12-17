@@ -32,7 +32,13 @@ public class CrossDeviceSyncStepDefs extends BaseStepDefs {
 
     @Given("I authenticate with Google using a valid ID token for device {string}")
     public void iAuthenticateWithGoogleUsingValidIdTokenForDevice(String deviceId) {
-        // Create a unique test user for this scenario
+        if (isGcpMode()) {
+            // In GCP mode, use real Firebase authentication
+            authenticateWithFirebaseForDevice(deviceId);
+            return;
+        }
+
+        // Local/Docker mode: Create a unique test user for this scenario
         String timestamp = String.valueOf(System.currentTimeMillis());
         String userId = "test-user-" + timestamp;
         String email = "test-" + timestamp + "@example.com";
@@ -83,7 +89,13 @@ public class CrossDeviceSyncStepDefs extends BaseStepDefs {
 
     @When("I authenticate with Google using the same ID token for device {string}")
     public void iAuthenticateWithGoogleUsingSameIdTokenForDevice(String deviceId) {
-        // Use the same user but different device
+        if (isGcpMode()) {
+            // In GCP mode, use real Firebase authentication (same user, different device)
+            authenticateWithFirebaseForDevice(deviceId);
+            return;
+        }
+
+        // Local/Docker mode: Use the same user but different device
         lastResponse = applyDefaultClientHeaders(given())
             .header("Content-Type", "application/json")
             .body(String.format("""
@@ -99,6 +111,31 @@ public class CrossDeviceSyncStepDefs extends BaseStepDefs {
                 """, this.lastIdToken, deviceId))
             .when()
             .post("/auth/google");
+    }
+
+    /**
+     * Authenticate with Firebase in GCP mode using the real Firebase ID token.
+     * This simulates a device login using the test Firebase user.
+     */
+    private void authenticateWithFirebaseForDevice(String deviceId) {
+        String firebaseIdToken = System.getenv("GCP_FIREBASE_ID_TOKEN");
+        if (firebaseIdToken == null || firebaseIdToken.isBlank()) {
+            firebaseIdToken = System.getProperty("GCP_FIREBASE_ID_TOKEN");
+        }
+        if (firebaseIdToken == null || firebaseIdToken.isBlank()) {
+            throw new IllegalStateException("GCP mode requires GCP_FIREBASE_ID_TOKEN environment variable");
+        }
+
+        lastResponse = applyDefaultClientHeaders(given())
+            .header("Content-Type", "application/json")
+            .header("X-Device-ID", deviceId)
+            .body(String.format("""
+                {
+                  "idToken": "%s"
+                }
+                """, firebaseIdToken))
+            .when()
+            .post("/auth/firebase");
     }
 
     @When("I store the access token as {string}")
@@ -246,9 +283,12 @@ public class CrossDeviceSyncStepDefs extends BaseStepDefs {
 
     @Given("the Firestore emulator is available")
     public void theFirestoreEmulatorIsAvailable() {
-        // This is a precondition check - in Docker Compose, Firestore is always available
+        // In GCP mode, we use real Firestore (not emulator)
+        if (isGcpMode()) {
+            return;
+        }
+        // In Docker Compose, Firestore emulator is always available
         // In local dev, this would check if the emulator is running
-        // For now, we assume it's available as part of the test infrastructure
     }
 
     // Helper method to build profile JSON from DataTable

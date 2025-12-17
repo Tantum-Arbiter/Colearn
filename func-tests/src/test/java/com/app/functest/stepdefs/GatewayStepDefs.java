@@ -313,6 +313,11 @@ public class GatewayStepDefs extends BaseStepDefs {
         );
     }
 
+    @Given("test data is cleaned up for the current user")
+    public void testDataIsCleanedUpForTheCurrentUser() {
+        cleanupTestDataForCurrentUser();
+    }
+
     @When("I make a GET request to {string}")
     public void iMakeAGetRequestTo(String endpoint) {
         if (currentAuthToken != null && endpoint.startsWith("/api/")) {
