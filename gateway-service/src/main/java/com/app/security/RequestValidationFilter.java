@@ -354,7 +354,18 @@ public class RequestValidationFilter extends OncePerRequestFilter {
                n.equals("set-cookie") ||
                n.equals("cache-control") ||
                n.equals("pragma") ||
-               n.equals("link");
+               n.equals("link") ||
+               n.equals("x-cloud-trace-context") ||
+               n.equals("traceparent") ||
+               n.equals("tracestate") ||
+               n.equals("x-request-id") ||
+               n.equals("x-b3-traceid") ||
+               n.equals("x-b3-spanid") ||
+               n.equals("x-b3-parentspanid") ||
+               n.equals("x-b3-sampled") ||
+               n.equals("x-b3-flags") ||
+               n.startsWith("x-goog-") ||
+               n.startsWith("x-google-");
     }
 
     private boolean validateUrlAndParameters(HttpServletRequest request) {
