@@ -98,7 +98,7 @@ jobs:
             --region ${{ env.REGION }} \
             --project ${{ env.PROJECT_ID }} \
             --service-account gateway-dev-sa@${{ env.PROJECT_ID }}.iam.gserviceaccount.com \
-            --ingress all \
+            --ingress internal-and-cloud-load-balancing \
             --allow-unauthenticated \
             --memory 1Gi \
             --cpu 1 \
