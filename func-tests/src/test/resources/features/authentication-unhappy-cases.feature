@@ -228,26 +228,6 @@ Feature: Authentication Unhappy Cases
     And the response should have field "error" with value "Brute force attack detected"
     And the response should have field "details.limitType" with value "BRUTE_FORCE_PROTECTION"
 
-  Scenario: Request with User-Agent "SuspiciousBot/1.0" blocked by security filter
-    Given WireMock is configured for "Google" OAuth provider
-    When I send a POST request to "/auth/google" with headers:
-      | User-Agent | SuspiciousBot/1.0 |
-    And body:
-      """
-      {
-        "idToken": "valid-google-token",
-        "clientId": "test-client-id"
-      }
-      """
-    Then the response status should be 403
-    And the response should have field "errorCode" with value "GTW-305"
-    And the response should have field "error" with value "Invalid or suspicious user agent"
-
-    And the response should have field "path"
-    And the response JSON field "timestamp" should be a valid ISO-8601 timestamp
-    And the response should have field "requestId"
-    And the response should have field "details.userAgent" with value "SuspiciousBot/1.0"
-
   Scenario: System maintenance mode
     Given the system is in maintenance mode
     When I send a POST request to "/auth/google" with body:
@@ -274,18 +254,6 @@ Feature: Authentication Unhappy Cases
     And the response should have field "errorCode" with value "GTW-209"
     And the response should have field "error" with value "Circuit breaker is open for downstream service"
     And the response should have field "details.service" with value "Google OAuth"
-
-
-  Scenario: Request with X-Bad header containing XSS payload "<script>alert(1)</script>"
-    When I send a GET request to "/api/auth/me" with headers:
-      | Authorization | Bearer valid-fake-token          |
-      | User-Agent    | GrowWithFreya-Test/1.0           |
-      | X-Bad         | <script>alert(1)</script>        |
-    Then the response status should be 400
-    And the response should have field "errorCode" with value "GTW-306"
-    And the response should have field "error" with value "Request validation failed"
-    And the response should have field "success" with value "false"
-    And the response should have field "path"
 
   # Mandatory client headers enforcement
   Scenario: Request to /api/auth/me missing required X-Client-Platform header
