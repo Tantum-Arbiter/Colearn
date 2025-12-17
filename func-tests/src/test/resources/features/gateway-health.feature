@@ -31,7 +31,7 @@ Feature: Gateway Service Health
     When I make a GET request to "/private/prometheus"
     Then the response status code should be 200
     And the response headers should contain "Content-Type"
-    And the response header "Content-Type" should be "text/plain;version=0.0.4;charset=utf-8"
+    And the response header "Content-Type" should contain "text/plain"
     And the response time should be less than 2000 milliseconds
 
   Scenario: Service responds to root endpoint

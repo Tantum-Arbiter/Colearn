@@ -40,8 +40,10 @@ Feature: CORS Configuration
     Then the response status code should be 401
     And the response headers should contain "Access-Control-Allow-Origin"
 
-  @security
+  @security @emulator-only
   Scenario: CORS headers are present on validation errors
+    # This test verifies RequestValidationFilter behavior which is disabled in GCP
+    # (Cloudflare WAF handles these checks at the edge in production)
     When I make a GET request to "/auth/status" with headers:
       | Origin     | https://app.growwithfreya.com |
       | User-Agent | <script>alert(1)</script>     |

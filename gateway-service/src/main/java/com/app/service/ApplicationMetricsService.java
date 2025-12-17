@@ -403,21 +403,25 @@ public class ApplicationMetricsService {
     // Session Management Metrics
 
     public void recordSessionCreated(String deviceType, String platform) {
+        String safeDeviceType = deviceType != null ? deviceType : "unknown";
+        String safePlatform = platform != null ? platform : "unknown";
         Counter.builder("app.sessions.created")
-                .tags("device_type", deviceType, "platform", platform)
+                .tags("device_type", safeDeviceType, "platform", safePlatform)
                 .description("Number of sessions created")
                 .register(meterRegistry)
                 .increment();
-        logger.debug("Session creation metric recorded: {} on {}", deviceType, platform);
+        logger.debug("Session creation metric recorded: {} on {}", safeDeviceType, safePlatform);
     }
 
     public void recordSessionCreationError(String deviceType, String errorType) {
+        String safeDeviceType = deviceType != null ? deviceType : "unknown";
+        String safeErrorType = errorType != null ? errorType : "unknown";
         Counter.builder("app.sessions.creation.errors")
-                .tags("device_type", deviceType, "error_type", errorType)
+                .tags("device_type", safeDeviceType, "error_type", safeErrorType)
                 .description("Number of session creation errors")
                 .register(meterRegistry)
                 .increment();
-        logger.debug("Session creation error metric recorded: {} - {}", deviceType, errorType);
+        logger.debug("Session creation error metric recorded: {} - {}", safeDeviceType, safeErrorType);
     }
 
     public void recordSessionLookup(String lookupType, String result) {
