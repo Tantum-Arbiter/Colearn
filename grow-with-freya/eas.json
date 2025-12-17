@@ -8,7 +8,8 @@
       "distribution": "internal",
       "channel": "development",
       "env": {
-        "NODE_ENV": "development"
+        "NODE_ENV": "development",
+        "EXPO_PUBLIC_GATEWAY_URL": "http://localhost:8080"
       },
       "ios": {
         "resourceClass": "m-medium"
@@ -22,7 +23,8 @@
       "distribution": "internal",
       "channel": "preview",
       "env": {
-        "NODE_ENV": "staging"
+        "NODE_ENV": "staging",
+        "EXPO_PUBLIC_GATEWAY_URL": "https://gateway-service-jludng4t5a-ew.a.run.app"
       },
       "ios": {
         "resourceClass": "m-medium",
@@ -35,7 +37,8 @@
     "production": {
       "channel": "production",
       "env": {
-        "NODE_ENV": "production"
+        "NODE_ENV": "production",
+        "EXPO_PUBLIC_GATEWAY_URL": "https://api.colearnwithfreya.co.uk"
       },
       "ios": {
         "resourceClass": "m-medium"

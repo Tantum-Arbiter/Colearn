@@ -27,7 +27,7 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: 'com.growwithfreya.app',
-      associatedDomains: ['applinks:growwithfreya.com'],
+      associatedDomains: ['applinks:colearnwithfreya.co.uk'],
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
         CFBundleURLTypes: [
