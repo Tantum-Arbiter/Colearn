@@ -19,6 +19,7 @@ import { formatDurationCompact } from '../../utils/time-formatting';
 import { EditProfileScreen } from './edit-profile-screen';
 import { ApiClient } from '../../services/api-client';
 import { Alert } from 'react-native';
+import * as Sentry from '@sentry/react-native';
 
 
 interface AccountScreenProps {
@@ -392,6 +393,19 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
             >
               <Text style={styles.buttonText}>
                 Reset Today&apos;s Screen Time ({formatDurationCompact(todayUsage)})
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.button}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                Sentry.captureException(new Error('Test crash from Developer Options'));
+                Alert.alert('Sentry Test', 'Test error sent to Sentry!');
+              }}
+            >
+              <Text style={styles.buttonText}>
+                Test Sentry Crash
               </Text>
             </Pressable>
 
