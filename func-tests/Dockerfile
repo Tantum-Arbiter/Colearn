@@ -13,10 +13,16 @@ RUN ./gradlew clean testClasses --no-daemon
 # Runtime stage
 FROM amazoncorretto:21
 
-# Install curl for health checks and debugging
+# Install curl for health checks and gcloud CLI for GCS uploads
 RUN yum update -y && \
-    yum install -y curl && \
+    yum install -y curl python3 && \
+    curl -sSL https://sdk.cloud.google.com > /tmp/install.sh && \
+    bash /tmp/install.sh --disable-prompts --install-dir=/opt && \
+    rm /tmp/install.sh && \
     yum clean all
+
+# Add gcloud to PATH
+ENV PATH="/opt/google-cloud-sdk/bin:${PATH}"
 
 # Set working directory
 WORKDIR /app
@@ -24,15 +30,14 @@ WORKDIR /app
 # Copy built application from builder stage
 COPY --from=builder /app /app
 
-# Make gradlew executable
-RUN chmod +x ./gradlew
+# Make scripts executable
+RUN chmod +x ./gradlew ./entrypoint.sh
 
 # Create report/result directories (host-mounted in compose)
 RUN mkdir -p build/reports build/test-results build/cucumber-reports
 
-
 # Environment variables
 ENV SPRING_PROFILES_ACTIVE=test
 
-# Default command runs functional tests with a clean build to avoid stale classes
-CMD ["./gradlew", "functionalTest", "--no-daemon", "--info"]
+# Use entrypoint script to run tests and upload reports
+CMD ["./entrypoint.sh"]
