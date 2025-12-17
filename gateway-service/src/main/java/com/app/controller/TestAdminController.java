@@ -43,10 +43,11 @@ import java.util.concurrent.Callable;
 
 /**
  * Test-only admin endpoints to control server state during functional tests.
+ * Available in 'test' profile (local/Docker) and 'gcp-dev' profile (GCP functional tests).
  */
 @RestController
 @RequestMapping("/private")
-@Profile("test")
+@Profile({"test", "gcp-dev"})
 public class TestAdminController {
 
     private static final Logger logger = LoggerFactory.getLogger(TestAdminController.class);

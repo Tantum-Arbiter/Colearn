@@ -71,12 +71,8 @@ public class GatewayStepDefs extends BaseStepDefs {
                 .setParam("http.connection.timeout", 5000)
                 .setParam("http.socket.timeout", 15000));
 
-        // Skip reset in GCP mode - endpoint only exists in test profile
-        if (isGcpMode()) {
-            return;
-        }
-
         // Reset gateway state (rate limiter, circuit breakers, Firestore test data)
+        // This seeds test stories in both test profile and gcp-dev profile
         try {
             given()
                 .baseUri(cfg)
@@ -87,7 +83,7 @@ public class GatewayStepDefs extends BaseStepDefs {
                 .then()
                 .statusCode(200);
         } catch (Exception ignored) {
-            // In non-test profile this endpoint may not exist; ignore
+            // Endpoint may not exist in some profiles; ignore
         }
     }
 
