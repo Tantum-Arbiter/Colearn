@@ -10,19 +10,17 @@ COPY . .
 # Build test classes and dependencies (clean to avoid stale compiled classes)
 RUN ./gradlew clean testClasses --no-daemon
 
+# Copy gcloud CLI from official image
+FROM gcr.io/google.com/cloudsdktool/google-cloud-cli:slim AS gcloud
+
 # Runtime stage
 FROM amazoncorretto:21
 
-# Install curl, which, tar, gzip (required by gcloud installer), and python3 for gcloud CLI
-RUN yum update -y && \
-    yum install -y curl which tar gzip python3 && \
-    curl -sSL https://sdk.cloud.google.com > /tmp/install.sh && \
-    bash /tmp/install.sh --disable-prompts --install-dir=/opt && \
-    rm /tmp/install.sh && \
-    yum clean all
+# Copy gcloud from the official image
+COPY --from=gcloud /usr/lib/google-cloud-sdk /usr/lib/google-cloud-sdk
 
 # Add gcloud to PATH
-ENV PATH="/opt/google-cloud-sdk/bin:${PATH}"
+ENV PATH="/usr/lib/google-cloud-sdk/bin:${PATH}"
 
 # Set working directory
 WORKDIR /app
