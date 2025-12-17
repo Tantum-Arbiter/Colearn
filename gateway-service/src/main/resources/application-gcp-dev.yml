@@ -64,7 +64,7 @@ firebase:
 gcs:
   project-id: ${GCS_PROJECT_ID:apt-icon-472307-b7}
   bucket: ${GCS_BUCKET:colearnwithfreya-assets}
-  cdn-host: ${GCS_CDN_HOST:assets.colearnwithfreya.co.uk}
+  cdn-host: ${GCS_CDN_HOST:}
   service-account-key: ${GCS_SERVICE_ACCOUNT_KEY:#{null}}
   signed-url-duration-minutes: 60
 
