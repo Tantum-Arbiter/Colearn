@@ -65,6 +65,9 @@ dependencies {
 	// Firebase dependencies
 	implementation 'com.google.firebase:firebase-admin:9.7.0'
 
+	// Google Cloud Storage for asset delivery
+	implementation 'com.google.cloud:google-cloud-storage:2.43.1'
+
 	// Google Auth - explicit versions to fix CertificateSourceUnavailableException
 	implementation "com.google.auth:google-auth-library-oauth2-http:${googleAuthVersion}"
 	implementation "com.google.auth:google-auth-library-credentials:${googleAuthVersion}"

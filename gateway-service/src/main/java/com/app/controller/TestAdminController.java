@@ -1,7 +1,9 @@
 package com.app.controller;
 
+import com.app.config.GcsConfig.GcsProperties;
 import com.app.exception.ErrorCode;
 import com.app.exception.GatewayException;
+import com.app.model.AssetVersion;
 import com.app.model.ContentVersion;
 import com.app.model.Story;
 import com.app.model.StoryPage;
@@ -12,6 +14,9 @@ import com.app.service.SessionService;
 import com.app.service.UserService;
 import com.app.testing.TestSimulationFlags;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.BlobInfo;
+import com.google.cloud.storage.Storage;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import org.slf4j.Logger;
@@ -59,6 +64,12 @@ public class TestAdminController {
     @Autowired(required = false)
     private SessionService sessionService;
 
+    @Autowired(required = false)
+    private Storage storage;
+
+    @Autowired(required = false)
+    private GcsProperties gcsProperties;
+
     public TestAdminController(RateLimitingFilter rateLimitingFilter,
                                TestSimulationFlags flags,
                                CircuitBreakerRegistry circuitBreakerRegistry) {
@@ -90,6 +101,7 @@ public class TestAdminController {
                 try {
                     clearFirestoreCollections();
                     seedTestStories();
+                    seedTestAssets();
                     logger.info("Cleared and seeded Firestore test data");
                 } catch (Exception ex) {
                     logger.warn("Failed to clear/seed Firestore data: {}", ex.getMessage());
@@ -177,6 +189,86 @@ public class TestAdminController {
             logger.info("Seeded {} test stories and content version", testStories.size());
         } catch (Exception e) {
             logger.error("Error seeding test stories", e);
+        }
+    }
+
+    private void seedTestAssets() {
+        if (storage == null || gcsProperties == null) {
+            logger.warn("Storage or GcsProperties not available, skipping asset seeding");
+            return;
+        }
+
+        try {
+            String bucket = gcsProperties.bucketName();
+            Map<String, String> assetChecksums = new HashMap<>();
+
+            // Create test bucket if it doesn't exist (for emulator)
+            try {
+                if (storage.get(bucket) == null) {
+                    storage.create(com.google.cloud.storage.BucketInfo.of(bucket));
+                    logger.info("Created test bucket: {}", bucket);
+                }
+            } catch (Exception e) {
+                logger.debug("Bucket might already exist: {}", e.getMessage());
+            }
+
+            // Seed test assets for each story
+            List<String[]> testAssets = List.of(
+                new String[]{"stories/test-story-1/cover.webp", "image/webp"},
+                new String[]{"stories/test-story-1/page-1/background.webp", "image/webp"},
+                new String[]{"stories/test-story-1/page-2/background.webp", "image/webp"},
+                new String[]{"stories/test-story-2/cover.webp", "image/webp"},
+                new String[]{"stories/test-story-2/page-1/background.webp", "image/webp"},
+                new String[]{"stories/test-story-3/cover.webp", "image/webp"}
+            );
+
+            for (String[] asset : testAssets) {
+                String path = asset[0];
+                String contentType = asset[1];
+
+                // Create dummy content
+                byte[] content = ("Test asset content for " + path).getBytes(StandardCharsets.UTF_8);
+                String checksum = calculateAssetChecksum(content);
+
+                BlobId blobId = BlobId.of(bucket, path);
+                BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
+                        .setContentType(contentType)
+                        .build();
+
+                storage.create(blobInfo, content);
+                logger.debug("Seeded asset to bucket '{}' with path '{}'", bucket, path);
+                assetChecksums.put(path, checksum);
+            }
+
+            // Save asset version to Firestore
+            AssetVersion assetVersion = new AssetVersion();
+            assetVersion.setId("current");
+            assetVersion.setVersion(1);
+            assetVersion.setLastUpdated(Instant.now());
+            assetVersion.setAssetChecksums(assetChecksums);
+            assetVersion.setTotalAssets(testAssets.size());
+
+            firestore.collection("asset_versions").document("current").set(assetVersion).get();
+
+            logger.info("Seeded {} test assets and asset version", testAssets.size());
+        } catch (Exception e) {
+            logger.error("Error seeding test assets", e);
+        }
+    }
+
+    private String calculateAssetChecksum(byte[] content) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(content);
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to calculate checksum", e);
         }
     }
 

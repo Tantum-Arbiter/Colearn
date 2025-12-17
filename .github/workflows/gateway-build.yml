@@ -103,7 +103,7 @@ jobs:
             --memory 1Gi \
             --cpu 1 \
             --timeout 300 \
-            --set-env-vars "SPRING_PROFILES_ACTIVE=gcp-dev,FIREBASE_PROJECT_ID=${{ env.PROJECT_ID }},BACKEND_URL_GATEWAY_SERVICE=${{ secrets.BACKEND_URL_GATEWAY_SERVICE }}"
+            --set-env-vars "SPRING_PROFILES_ACTIVE=gcp-dev,FIREBASE_PROJECT_ID=${{ env.PROJECT_ID }},GCS_PROJECT_ID=${{ env.PROJECT_ID }},GCS_BUCKET=colearnwithfreya-assets,BACKEND_URL_GATEWAY_SERVICE=${{ secrets.BACKEND_URL_GATEWAY_SERVICE }}"
 
   run-functional-tests:
     needs: deploy-functional

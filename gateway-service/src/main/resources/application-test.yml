@@ -26,8 +26,9 @@ cors:
     - exp://localhost:*
     - exp://127.0.0.1:*
     - http://host.docker.internal:*
-    - https://app.growwithfreya.com
-    - https://www.growwithfreya.com
+    - https://app.colearnwithfreya.co.uk
+    - https://www.colearnwithfreya.co.uk
+    - https://assets.colearnwithfreya.co.uk
   allowed-methods:
     - GET
     - POST
@@ -70,6 +71,14 @@ rate-limiting:
   auth-requests-per-minute: 6000
   api-requests-per-minute: 6000
   cleanup-interval-minutes: 1
+
+# GCS Configuration (for asset storage testing)
+gcs:
+  project-id: ${GCS_PROJECT_ID:test-project}
+  bucket: ${GCS_BUCKET:colearnwithfreya-assets-test}
+  cdn-host: ${GCS_CDN_HOST:}
+  emulator-host: ${GCS_EMULATOR_HOST:}
+  signed-url-duration-minutes: 60
 
 # Resilience4j Circuit Breakers - fast settings for tests
 resilience4j:

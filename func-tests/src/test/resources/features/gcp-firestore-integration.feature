@@ -1,4 +1,4 @@
-@gcp-dev @gcp-firestore
+@gcp-dev @gcp-firestore @gcp-func-only
 Feature: GCP Firestore Integration
   As a developer
   I want to verify the gateway integrates correctly with GCP Firestore

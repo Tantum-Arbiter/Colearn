@@ -10,7 +10,7 @@ Feature: CORS Configuration
   @smoke
   Scenario: CORS headers are present on successful requests
     When I make a GET request to "/auth/status" with headers:
-      | Origin | https://app.growwithfreya.com |
+      | Origin | https://app.colearnwithfreya.co.uk |
     Then the response status code should be 200
     And the response headers should contain "Access-Control-Allow-Origin"
     And the response headers should contain "Access-Control-Allow-Methods"
@@ -20,9 +20,9 @@ Feature: CORS Configuration
   @smoke
   Scenario: CORS preflight request is handled correctly
     When I make an OPTIONS request to "/api/auth/me" with headers:
-      | Origin                         | https://app.growwithfreya.com |
-      | Access-Control-Request-Method  | GET                           |
-      | Access-Control-Request-Headers | Authorization,Content-Type    |
+      | Origin                         | https://app.colearnwithfreya.co.uk |
+      | Access-Control-Request-Method  | GET                                |
+      | Access-Control-Request-Headers | Authorization,Content-Type         |
     Then the response status code should be 200
     And the response headers should contain "Access-Control-Allow-Origin"
     And the response headers should contain "Access-Control-Allow-Methods"
@@ -32,26 +32,26 @@ Feature: CORS Configuration
   @security
   Scenario: CORS headers are present on authentication errors
     When I make a GET request to "/api/auth/me" with headers:
-      | Origin            | https://app.growwithfreya.com |
-      | Authorization     | Bearer invalid-token          |
-      | X-Client-Platform | ios                           |
-      | X-Client-Version  | 1.0.0                         |
-      | X-Device-ID       | test-device-123               |
+      | Origin            | https://app.colearnwithfreya.co.uk |
+      | Authorization     | Bearer invalid-token               |
+      | X-Client-Platform | ios                                |
+      | X-Client-Version  | 1.0.0                              |
+      | X-Device-ID       | test-device-123                    |
     Then the response status code should be 401
     And the response headers should contain "Access-Control-Allow-Origin"
 
   @security
   Scenario: CORS headers are present on 404 errors
     When I make a GET request to "/nonexistent-endpoint-xyz" with headers:
-      | Origin | https://app.growwithfreya.com |
+      | Origin | https://app.colearnwithfreya.co.uk |
     Then the response status code should be 403
     And the response headers should contain "Access-Control-Allow-Origin"
 
   Scenario: CORS allows configured HTTP methods
     When I make an OPTIONS request to "/api/users/profile" with headers:
-      | Origin                         | https://app.growwithfreya.com |
-      | Access-Control-Request-Method  | POST                          |
-      | Access-Control-Request-Headers | Authorization,Content-Type    |
+      | Origin                         | https://app.colearnwithfreya.co.uk |
+      | Access-Control-Request-Method  | POST                               |
+      | Access-Control-Request-Headers | Authorization,Content-Type         |
     Then the response status code should be 200
     And the response header "Access-Control-Allow-Methods" should contain "POST"
     And the response header "Access-Control-Allow-Methods" should contain "GET"
@@ -60,7 +60,7 @@ Feature: CORS Configuration
 
   Scenario: CORS allows configured headers
     When I make an OPTIONS request to "/api/users/profile" with headers:
-      | Origin                         | https://app.growwithfreya.com                                                   |
+      | Origin                         | https://app.colearnwithfreya.co.uk                                              |
       | Access-Control-Request-Method  | GET                                                                             |
       | Access-Control-Request-Headers | Authorization,Content-Type,X-Device-ID,X-Client-Platform,X-Client-Version      |
     Then the response status code should be 200
@@ -72,17 +72,17 @@ Feature: CORS Configuration
 
   Scenario: CORS credentials flag is set correctly
     When I make an OPTIONS request to "/api/auth/me" with headers:
-      | Origin                         | https://app.growwithfreya.com |
-      | Access-Control-Request-Method  | GET                           |
-      | Access-Control-Request-Headers | Authorization                 |
+      | Origin                         | https://app.colearnwithfreya.co.uk |
+      | Access-Control-Request-Method  | GET                                |
+      | Access-Control-Request-Headers | Authorization                      |
     Then the response status code should be 200
     And the response header "Access-Control-Allow-Credentials" should be "true"
 
   Scenario: CORS max age is set for preflight caching
     When I make an OPTIONS request to "/api/auth/me" with headers:
-      | Origin                         | https://app.growwithfreya.com |
-      | Access-Control-Request-Method  | GET                           |
-      | Access-Control-Request-Headers | Authorization                 |
+      | Origin                         | https://app.colearnwithfreya.co.uk |
+      | Access-Control-Request-Method  | GET                                |
+      | Access-Control-Request-Headers | Authorization                      |
     Then the response status code should be 200
     And the response headers should contain "Access-Control-Max-Age"
 
@@ -90,7 +90,7 @@ Feature: CORS Configuration
   Scenario: CORS works with authenticated requests
     Given I have a valid authentication token
     When I send a GET request to "/auth/status" with headers:
-      | Origin        | https://app.growwithfreya.com |
+      | Origin        | https://app.colearnwithfreya.co.uk |
     Then the response status should be 200
     And the response headers should contain "Access-Control-Allow-Origin"
     And the response headers should contain "Access-Control-Allow-Credentials"
@@ -99,9 +99,9 @@ Feature: CORS Configuration
   Scenario: CORS works with POST requests
     Given I have a valid authentication token
     When I send a POST request to "/api/profile" with headers:
-      | Authorization | Bearer valid-user-test        |
-      | Origin        | https://app.growwithfreya.com |
-      | Content-Type  | application/json              |
+      | Authorization | Bearer valid-user-test             |
+      | Origin        | https://app.colearnwithfreya.co.uk |
+      | Content-Type  | application/json                   |
     And request body:
       """
       {
@@ -116,11 +116,11 @@ Feature: CORS Configuration
   @security
   Scenario: Multiple CORS requests maintain consistent headers
     When I make a GET request to "/auth/status" with headers:
-      | Origin | https://app.growwithfreya.com |
+      | Origin | https://app.colearnwithfreya.co.uk |
     Then the response status code should be 200
     And the response headers should contain "Access-Control-Allow-Origin"
     When I make a GET request to "/auth/status" with headers:
-      | Origin | https://www.growwithfreya.com |
+      | Origin | https://www.colearnwithfreya.co.uk |
     Then the response status code should be 200
     And the response headers should contain "Access-Control-Allow-Origin"
 

@@ -937,4 +937,40 @@ public class ApplicationMetricsService {
                     safeUserId, found ? "found" : "not_found", processingTimeMs);
     }
 
+    // --- GCS / Asset Metrics ---
+
+    public void recordGcsOperation(String operation, boolean success, long durationMs) {
+        String safeOperation = operation != null ? operation : "unknown";
+        String status = success ? "success" : "error";
+
+        Counter.builder("app.gcs.operations")
+                .tags("operation", safeOperation, "status", status)
+                .description("Number of GCS operations")
+                .register(meterRegistry)
+                .increment();
+
+        Timer.builder("app.gcs.operation.duration")
+                .tags("operation", safeOperation, "status", status)
+                .description("Duration of GCS operations")
+                .register(meterRegistry)
+                .record(durationMs, TimeUnit.MILLISECONDS);
+
+        logger.debug("GCS operation metric recorded: {} - {} ({}ms)", safeOperation, status, durationMs);
+    }
+
+    public void recordAssetSync(int assetsRequested, int assetsReturned, long durationMs) {
+        Counter.builder("app.assets.sync.requests")
+                .description("Number of asset sync requests")
+                .register(meterRegistry)
+                .increment();
+
+        Timer.builder("app.assets.sync.duration")
+                .description("Duration of asset sync operations")
+                .register(meterRegistry)
+                .record(durationMs, TimeUnit.MILLISECONDS);
+
+        logger.debug("Asset sync metric recorded: requested={}, returned={}, duration={}ms",
+                assetsRequested, assetsReturned, durationMs);
+    }
+
 }

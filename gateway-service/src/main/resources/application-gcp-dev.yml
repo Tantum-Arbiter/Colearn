@@ -61,11 +61,19 @@ firebase:
     host: ${FIREBASE_EMULATOR_HOST:}
     port: ${FIREBASE_EMULATOR_PORT:0}
 
+gcs:
+  project-id: ${GCS_PROJECT_ID:apt-icon-472307-b7}
+  bucket: ${GCS_BUCKET:colearnwithfreya-assets}
+  cdn-host: ${GCS_CDN_HOST:assets.colearnwithfreya.co.uk}
+  service-account-key: ${GCS_SERVICE_ACCOUNT_KEY:#{null}}
+  signed-url-duration-minutes: 60
+
 cors:
   allowed-origins:
-    - https://growwithfreya.com
-    - https://www.growwithfreya.com
-    - https://app.growwithfreya.com
+    - https://colearnwithfreya.co.uk
+    - https://www.colearnwithfreya.co.uk
+    - https://app.colearnwithfreya.co.uk
+    - https://assets.colearnwithfreya.co.uk
     - http://localhost:*
     - exp://localhost:*
   allowed-methods:

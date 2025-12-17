@@ -25,8 +25,10 @@ import org.junit.runner.RunWith;
         "json:build/reports/tests/cucumber.json",
         "junit:build/reports/tests/cucumber-junit.xml"
     },
-    tags = "not @ignore"
+    tags = "not @ignore and not @gcp-func-only"
 )
 public class CucumberTestRunner {
     // Test runner class - no implementation needed
+    // Note: @gcp-func-only tests are excluded from Docker/local runs
+    // and should only run against real GCP in gcp-dev environment
 }

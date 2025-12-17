@@ -116,9 +116,10 @@ firebase:
 # CORS Configuration
 cors:
   allowed-origins:
-    - https://growwithfreya.com
-    - https://www.growwithfreya.com
-    - https://app.growwithfreya.com
+    - https://colearnwithfreya.co.uk
+    - https://www.colearnwithfreya.co.uk
+    - https://app.colearnwithfreya.co.uk
+    - https://assets.colearnwithfreya.co.uk
     # Note: For local testing against production, temporarily add your device IP here
     # Example: - exp://192.168.1.100:19000
   allowed-methods:
