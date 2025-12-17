@@ -107,14 +107,33 @@ public abstract class BaseStepDefs {
     }
 
     /**
+     * Get Cloud Armor bypass secret for GCP functional tests.
+     * This header allows tests running as Cloud Run Jobs to bypass the Cloudflare-only IP restriction.
+     */
+    protected static String getCloudArmorBypassSecret() {
+        String secret = System.getenv("CLOUD_ARMOR_BYPASS_SECRET");
+        if (secret == null || secret.isBlank()) {
+            secret = System.getProperty("CLOUD_ARMOR_BYPASS_SECRET");
+        }
+        return secret;
+    }
+
+    /**
      * Apply default client headers to a request (no authentication).
+     * In GCP mode, also adds Cloud Armor bypass header.
      */
     protected RequestSpecification applyDefaultClientHeaders(RequestSpecification req) {
-        return req
+        req = req
             .header("X-Client-Platform", "ios")
             .header("X-Client-Version", "1.0.0")
             .header("X-Device-ID", "device-123")
             .header("User-Agent", "GrowWithFreya/1.0.0 (iOS 17.0)");
+
+        String bypassSecret = getCloudArmorBypassSecret();
+        if (bypassSecret != null && !bypassSecret.isBlank()) {
+            req = req.header("X-Test-Bypass", bypassSecret);
+        }
+        return req;
     }
 
     /**
