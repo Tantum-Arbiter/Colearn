@@ -1,7 +1,9 @@
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import { SecureStorage } from './secure-storage';
 
-const GATEWAY_URL = process.env.EXPO_PUBLIC_GATEWAY_URL || 'http://localhost:8080';
+const extra = Constants.expoConfig?.extra || {};
+const GATEWAY_URL = extra.gatewayUrl || process.env.EXPO_PUBLIC_GATEWAY_URL || 'http://localhost:8080';
 
 interface TokenPayload {
   exp: number;

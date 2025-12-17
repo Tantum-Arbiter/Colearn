@@ -1,11 +1,17 @@
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 
 WebBrowser.maybeCompleteAuthSession();
 
-const GATEWAY_URL = process.env.EXPO_PUBLIC_GATEWAY_URL || 'http://localhost:8080';
+const extra = Constants.expoConfig?.extra || {};
+const GATEWAY_URL = extra.gatewayUrl || process.env.EXPO_PUBLIC_GATEWAY_URL || 'http://localhost:8080';
 const AUTH_TIMEOUT_MS = 10000;
+
+const GOOGLE_IOS_CLIENT_ID = extra.googleIosClientId || process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+const GOOGLE_ANDROID_CLIENT_ID = extra.googleAndroidClientId || process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
+const GOOGLE_WEB_CLIENT_ID = extra.googleWebClientId || process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
 
 const fetchWithTimeout = async (url: string, options: RequestInit): Promise<Response> => {
   const controller = new AbortController();
@@ -45,17 +51,16 @@ interface AuthResponse {
 
 export class AuthService {
   private static getIosRedirectUri(): string | undefined {
-    const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
-    if (!iosClientId) return undefined;
-    const clientIdPrefix = iosClientId.replace('.apps.googleusercontent.com', '');
+    if (!GOOGLE_IOS_CLIENT_ID) return undefined;
+    const clientIdPrefix = GOOGLE_IOS_CLIENT_ID.replace('.apps.googleusercontent.com', '');
     return `com.googleusercontent.apps.${clientIdPrefix}:/oauthredirect`;
   }
 
   private static googleConfig = {
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-    expoClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+    iosClientId: GOOGLE_IOS_CLIENT_ID,
+    androidClientId: GOOGLE_ANDROID_CLIENT_ID,
+    webClientId: GOOGLE_WEB_CLIENT_ID,
+    expoClientId: GOOGLE_WEB_CLIENT_ID,
   };
 
   /**
