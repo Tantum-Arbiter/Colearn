@@ -1,4 +1,7 @@
 HELP.md
+STORY-CATALOG.md
+STORY-CMS-MOBILE-IMPLEMENTATION.md
+STORY-CMS-SETUP.md
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
