@@ -37,6 +37,10 @@ app:
   security:
     request-validation:
       enabled: false
+    cloudflare:
+      require-validation: true
+      allowed-direct-paths: /health,/actuator/health
+      allowed-user-agents: GrowWithFreya-FuncTest
 
 google:
   oauth:

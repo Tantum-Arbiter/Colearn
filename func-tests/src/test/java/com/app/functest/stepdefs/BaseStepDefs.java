@@ -114,7 +114,7 @@ public abstract class BaseStepDefs {
             .header("X-Client-Platform", "ios")
             .header("X-Client-Version", "1.0.0")
             .header("X-Device-ID", "device-123")
-            .header("User-Agent", "GrowWithFreya/1.0.0 (iOS 17.0)");
+            .header("User-Agent", "GrowWithFreya-FuncTest/1.0.0");
     }
 
     /**
