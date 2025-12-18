@@ -93,19 +93,6 @@ jobs:
           fi
         continue-on-error: true
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        if: env.CODECOV_TOKEN != ''
-        with:
-          directory: ${{ env.WORKING_DIRECTORY }}/coverage
-          flags: unittests
-          name: grow-with-freya-coverage
-          fail_ci_if_error: false
-          token: ${{ secrets.CODECOV_TOKEN }}
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        continue-on-error: true
-
       - name: Cache test results
         uses: actions/cache@v4
         with:
@@ -322,7 +309,6 @@ jobs:
 
           echo "###  Available Artifacts:" >> $GITHUB_STEP_SUMMARY
           echo "- Web build available for download (30 days retention)" >> $GITHUB_STEP_SUMMARY
-          echo "- Test coverage reports uploaded to Codecov" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [[ "${{ needs.eas-build.result }}" == "success" ]]; then
