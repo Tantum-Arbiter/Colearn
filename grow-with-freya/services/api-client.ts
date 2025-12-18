@@ -294,7 +294,7 @@ export class ApiClient {
     } catch (error: any) {
       // If profile doesn't exist (404), return empty array
       if (error.message?.includes('404')) {
-        console.log('ℹ️ [ApiClient] No profile found - returning empty reminders');
+        console.log('[ApiClient] No profile found - returning empty reminders');
         return [];
       }
       throw error;
@@ -305,9 +305,9 @@ export class ApiClient {
    * Logout - clear all authentication data
    */
   static async logout(): Promise<void> {
-    console.log('🔓 [ApiClient] Logging out - clearing all auth data');
+    console.log('[ApiClient] Logging out - clearing all auth data');
     await SecureStorage.clearAuthData();
-    console.log('✅ [ApiClient] Logout complete');
+    console.log('[ApiClient] Logout complete');
   }
 
   /**
@@ -318,24 +318,24 @@ export class ApiClient {
     const refreshToken = await SecureStorage.getRefreshToken();
 
     if (!accessToken || !refreshToken) {
-      console.log('❌ [ApiClient] No tokens - not authenticated');
+      console.log('[ApiClient] No tokens - not authenticated');
       return false;
     }
 
     // If access token is valid, we're authenticated
     if (!this.isTokenExpired(accessToken)) {
-      console.log('✅ [ApiClient] Token valid - authenticated');
+      console.log('[ApiClient] Token valid - authenticated');
       return true;
     }
 
     // Try to refresh the token
     try {
-      console.log('🔄 [ApiClient] Token expired - refreshing...');
+      console.log('[ApiClient] Token expired - refreshing...');
       await this.ensureValidToken();
-      console.log('✅ [ApiClient] Token refresh successful');
+      console.log('[ApiClient] Token refresh successful');
       return true;
     } catch (error) {
-      console.log('❌ [ApiClient] Token refresh failed - login required');
+      console.log('[ApiClient] Token refresh failed - login required');
       return false;
     }
   }

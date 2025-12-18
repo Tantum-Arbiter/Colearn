@@ -32,9 +32,9 @@ export function AudioDebugScreen({ onBack }: AudioDebugScreenProps) {
         interruptionModeIOS: 1,
         interruptionModeAndroid: 2,
       });
-      addTestResult('✅ Audio mode set successfully');
+      addTestResult('[OK] Audio mode set successfully');
     } catch (error) {
-      addTestResult(`❌ Audio mode failed: ${error}`);
+      addTestResult(`[ERROR] Audio mode failed: ${error}`);
     }
   };
 
@@ -50,21 +50,21 @@ export function AudioDebugScreen({ onBack }: AudioDebugScreenProps) {
           volume: 0.1,
         }
       );
-      addTestResult('✅ Audio file loaded successfully');
-      
+      addTestResult('[OK] Audio file loaded successfully');
+
       // Test play
       await sound.playAsync();
-      addTestResult('✅ Audio playback started');
-      
+      addTestResult('[OK] Audio playback started');
+
       // Stop after 2 seconds
       setTimeout(async () => {
         await sound.stopAsync();
         await sound.unloadAsync();
-        addTestResult('✅ Audio stopped and unloaded');
+        addTestResult('[OK] Audio stopped and unloaded');
       }, 2000);
-      
+
     } catch (error) {
-      addTestResult(`❌ Audio file test failed: ${error}`);
+      addTestResult(`[ERROR] Audio file test failed: ${error}`);
     }
   };
 
@@ -75,16 +75,16 @@ export function AudioDebugScreen({ onBack }: AudioDebugScreenProps) {
         addTestResult('Background music not loaded, initializing...');
         await backgroundMusic.initialize();
       }
-      
+
       if (backgroundMusic.getIsLoaded()) {
-        addTestResult('✅ Background music service loaded');
+        addTestResult('[OK] Background music service loaded');
         await backgroundMusic.play();
-        addTestResult('✅ Background music play attempted');
+        addTestResult('[OK] Background music play attempted');
       } else {
-        addTestResult('❌ Background music service failed to load');
+        addTestResult('[ERROR] Background music service failed to load');
       }
     } catch (error) {
-      addTestResult(`❌ Background music test failed: ${error}`);
+      addTestResult(`[ERROR] Background music test failed: ${error}`);
     }
   };
 
@@ -102,7 +102,7 @@ export function AudioDebugScreen({ onBack }: AudioDebugScreenProps) {
       setAudioInfo(info);
       addTestResult(`System info updated: ${JSON.stringify(info)}`);
     } catch (error) {
-      addTestResult(`❌ Failed to get system info: ${error}`);
+      addTestResult(`[ERROR] Failed to get system info: ${error}`);
     }
   }, [isLoaded, isPlaying, volume, isMuted, backgroundMusic, addTestResult]);
 
@@ -125,12 +125,12 @@ export function AudioDebugScreen({ onBack }: AudioDebugScreenProps) {
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>System Status</Text>
-          <Text style={styles.infoText}>Loaded: {audioInfo.isLoaded ? '✅' : '❌'}</Text>
-          <Text style={styles.infoText}>Playing: {audioInfo.isPlaying ? '✅' : '❌'}</Text>
+          <Text style={styles.infoText}>Loaded: {audioInfo.isLoaded ? 'Yes' : 'No'}</Text>
+          <Text style={styles.infoText}>Playing: {audioInfo.isPlaying ? 'Yes' : 'No'}</Text>
           <Text style={styles.infoText}>Volume: {audioInfo.volume}</Text>
-          <Text style={styles.infoText}>Muted: {audioInfo.isMuted ? '✅' : '❌'}</Text>
-          <Text style={styles.infoText}>Service Loaded: {audioInfo.serviceLoaded ? '✅' : '❌'}</Text>
-          <Text style={styles.infoText}>Service Playing: {audioInfo.servicePlaying ? '✅' : '❌'}</Text>
+          <Text style={styles.infoText}>Muted: {audioInfo.isMuted ? 'Yes' : 'No'}</Text>
+          <Text style={styles.infoText}>Service Loaded: {audioInfo.serviceLoaded ? 'Yes' : 'No'}</Text>
+          <Text style={styles.infoText}>Service Playing: {audioInfo.servicePlaying ? 'Yes' : 'No'}</Text>
         </View>
 
         <View style={styles.section}>

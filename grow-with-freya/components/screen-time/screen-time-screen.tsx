@@ -233,7 +233,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
           } catch (error: any) {
             // Profile doesn't exist - create one with default nickname/avatar
             if (error.message?.includes('404')) {
-              console.log('ℹ️ [ScreenTimeScreen] No profile found - creating one with settings');
+              console.log('[ScreenTimeScreen] No profile found - creating one with settings');
               profile = {
                 nickname: 'User',
                 avatarType: 'girl' as const,

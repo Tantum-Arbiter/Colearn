@@ -97,13 +97,13 @@ public class TestAdminController {
                 logger.warn("Failed to reset circuit breakers: {}", ex.getMessage());
             }
 
-            // Clear Firestore test data and seed test stories
+            // Seed test stories/assets - user data is NOT cleared so it persists for inspection
             if (firestore != null) {
                 try {
-                    clearFirestoreCollections();
+                    clearCmsCollections();
                     seedTestStories();
                     seedTestAssets();
-                    logger.info("Cleared and seeded Firestore test data");
+                    logger.info("Cleared CMS data and seeded test stories/assets");
                 } catch (Exception ex) {
                     logger.warn("Failed to clear/seed Firestore data: {}", ex.getMessage());
                 }
@@ -122,47 +122,49 @@ public class TestAdminController {
     }
 
     /**
-     * Clear Firestore collections for test isolation
+     * Clear CMS collections (stories, content_versions, asset_versions) for test data refresh.
+     * User data (users, user_profiles, user_sessions) is NOT cleared so it persists for inspection.
      */
-    private void clearFirestoreCollections() {
+    private void clearCmsCollections() {
         try {
-            int profilesDeleted = 0;
-            int usersDeleted = 0;
-            int sessionsDeleted = 0;
+            int storiesDeleted = 0;
+            int contentVersionsDeleted = 0;
+            int assetVersionsDeleted = 0;
 
-            // Clear user_profiles collection
-            for (var docRef : firestore.collection("user_profiles").listDocuments()) {
+            // Clear stories collection
+            for (var docRef : firestore.collection("stories").listDocuments()) {
                 try {
                     docRef.delete().get();
-                    profilesDeleted++;
+                    storiesDeleted++;
                 } catch (Exception e) {
-                    logger.warn("Failed to delete user_profiles document: {}", e.getMessage());
+                    logger.warn("Failed to delete stories document: {}", e.getMessage());
                 }
             }
 
-            // Clear users collection
-            for (var docRef : firestore.collection("users").listDocuments()) {
+            // Clear content_versions collection
+            for (var docRef : firestore.collection("content_versions").listDocuments()) {
                 try {
                     docRef.delete().get();
-                    usersDeleted++;
+                    contentVersionsDeleted++;
                 } catch (Exception e) {
-                    logger.warn("Failed to delete users document: {}", e.getMessage());
+                    logger.warn("Failed to delete content_versions document: {}", e.getMessage());
                 }
             }
 
-            // Clear user_sessions collection
-            for (var docRef : firestore.collection("user_sessions").listDocuments()) {
+            // Clear asset_versions collection
+            for (var docRef : firestore.collection("asset_versions").listDocuments()) {
                 try {
                     docRef.delete().get();
-                    sessionsDeleted++;
+                    assetVersionsDeleted++;
                 } catch (Exception e) {
-                    logger.warn("Failed to delete user_sessions document: {}", e.getMessage());
+                    logger.warn("Failed to delete asset_versions document: {}", e.getMessage());
                 }
             }
 
-            logger.info("Deleted {} profiles, {} users, {} sessions", profilesDeleted, usersDeleted, sessionsDeleted);
+            logger.info("Deleted {} stories, {} content_versions, {} asset_versions",
+                    storiesDeleted, contentVersionsDeleted, assetVersionsDeleted);
         } catch (Exception e) {
-            logger.error("Error clearing Firestore collections", e);
+            logger.error("Error clearing CMS collections", e);
         }
     }
 

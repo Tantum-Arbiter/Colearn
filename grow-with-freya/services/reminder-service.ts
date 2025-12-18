@@ -385,6 +385,14 @@ export class ReminderService {
     }
     await this.saveReminders();
   }
+
+  // Clear all reminders (for logout)
+  async clearAllReminders(): Promise<void> {
+    this.reminders = [];
+    this.savedReminders = [];
+    this.lastSyncedReminders = [];
+    await AsyncStorage.removeItem(REMINDERS_STORAGE_KEY);
+  }
 }
 
 export const reminderService = ReminderService.getInstance();

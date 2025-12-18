@@ -18,6 +18,7 @@ import { useScreenTime } from '../screen-time/screen-time-provider';
 import { formatDurationCompact } from '../../utils/time-formatting';
 import { EditProfileScreen } from './edit-profile-screen';
 import { ApiClient } from '../../services/api-client';
+import { reminderService } from '../../services/reminder-service';
 import { Alert } from 'react-native';
 import * as Sentry from '@sentry/react-native';
 
@@ -54,7 +55,8 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
     setLoginComplete,
     setAppReady,
     setShowLoginAfterOnboarding,
-    clearPersistedStorage
+    clearPersistedStorage,
+    clearUserProfile
   } = useAppStore();
 
   // Screen time context for resetting today's usage
@@ -95,6 +97,12 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
             try {
               // Clear authentication tokens
               await ApiClient.logout();
+
+              // Clear user profile data from store
+              clearUserProfile();
+
+              // Clear reminders
+              await reminderService.clearAllReminders();
 
               // Reset login state
               setLoginComplete(false);

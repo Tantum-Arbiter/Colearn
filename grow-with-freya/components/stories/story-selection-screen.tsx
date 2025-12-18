@@ -56,9 +56,9 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       try {
         const loadedStories = await StoryLoader.getStories();
         setStories(loadedStories);
-        console.log(`📚 [StorySelectionScreen] Loaded ${loadedStories.length} stories`);
+        console.log(`[StorySelectionScreen] Loaded ${loadedStories.length} stories`);
       } catch (error) {
-        console.error('❌ [StorySelectionScreen] Error loading stories:', error);
+        console.error('[StorySelectionScreen] Error loading stories:', error);
         // Fallback to ALL_STORIES already set in state
       } finally {
         setIsLoadingStories(false);

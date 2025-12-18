@@ -51,13 +51,13 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
         try {
           const result = await AuthService.completeGoogleSignIn(response.authentication.idToken);
 
-          console.log('🔑 [LoginScreen] Storing tokens...');
+          console.log('[LoginScreen] Storing tokens...');
           await SecureStorage.storeTokens(
             result.tokens.accessToken,
             result.tokens.refreshToken
           );
           await SecureStorage.storeUserData(result.user);
-          console.log('✅ [LoginScreen] Login complete, tokens stored');
+          console.log('[LoginScreen] Login complete, tokens stored');
 
           setIsGoogleLoading(false);
           transitionToMainMenu(onSuccess);
@@ -67,14 +67,14 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
             try {
               const profile = await ApiClient.getProfile();
               await ProfileSyncService.fullSync(profile);
-              console.log('✅ [LoginScreen] Profile synced');
+              console.log('[LoginScreen] Profile synced');
             } catch (error) {
-              console.log('ℹ️ [LoginScreen] Profile sync deferred');
+              console.log('[LoginScreen] Profile sync deferred');
             }
 
             StorySyncService.prefetchStories()
-              .then(() => console.log('✅ [LoginScreen] Story metadata synced'))
-              .catch(() => console.log('ℹ️ [LoginScreen] Story sync deferred'));
+              .then(() => console.log('[LoginScreen] Story metadata synced'))
+              .catch(() => console.log('[LoginScreen] Story sync deferred'));
           }, 500);
         } catch (error: any) {
           setIsGoogleLoading(false);
@@ -190,15 +190,15 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
         const profile = await ApiClient.getProfile();
         await ProfileSyncService.fullSync(profile);
       } catch (error) {
-        console.log('ℹ️ [LoginScreen] No profile found, user may need to create one');
+        console.log('[LoginScreen] No profile found, user may need to create one');
       }
 
       try {
-        console.log('📚 [LoginScreen] Prefetching story metadata...');
+        console.log('[LoginScreen] Prefetching story metadata...');
         await StorySyncService.prefetchStories();
-        console.log('✅ [LoginScreen] Story metadata synced');
+        console.log('[LoginScreen] Story metadata synced');
       } catch (error) {
-        console.error('❌ [LoginScreen] Story sync failed:', error);
+        console.error('[LoginScreen] Story sync failed:', error);
       }
 
       setIsAppleLoading(false);

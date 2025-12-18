@@ -27,7 +27,7 @@ export class StorySyncService {
       }
       return JSON.parse(data);
     } catch (error) {
-      console.error('❌ [StorySyncService] Error reading local sync metadata:', error);
+      console.error('[StorySyncService] Error reading local sync metadata:', error);
       return null;
     }
   }
@@ -38,13 +38,13 @@ export class StorySyncService {
   static async saveSyncMetadata(metadata: StorySyncMetadata): Promise<void> {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(metadata));
-      console.log('✅ [StorySyncService] Sync metadata saved:', {
+      console.log('[StorySyncService] Sync metadata saved:', {
         version: metadata.version,
         stories: metadata.stories.length,
         lastSync: new Date(metadata.lastSyncTimestamp).toISOString()
       });
     } catch (error) {
-      console.error('❌ [StorySyncService] Error saving sync metadata:', error);
+      console.error('[StorySyncService] Error saving sync metadata:', error);
       throw error;
     }
   }
@@ -54,12 +54,12 @@ export class StorySyncService {
    */
   static async getContentVersion(): Promise<ContentVersion> {
     try {
-      console.log('📡 [StorySyncService] Fetching content version from backend...');
+      console.log('[StorySyncService] Fetching content version from backend...');
       const response = await ApiClient.request<ContentVersion>('/api/stories/version');
-      console.log('✅ [StorySyncService] Content version:', response);
+      console.log('[StorySyncService] Content version:', response);
       return response;
     } catch (error) {
-      console.error('❌ [StorySyncService] Error fetching content version:', error);
+      console.error('[StorySyncService] Error fetching content version:', error);
       throw error;
     }
   }
@@ -73,7 +73,7 @@ export class StorySyncService {
       
       // If no local data, sync is needed
       if (!localMetadata) {
-        console.log('ℹ️ [StorySyncService] No local data, sync needed');
+        console.log('[StorySyncService] No local data, sync needed');
         return true;
       }
 
@@ -82,8 +82,8 @@ export class StorySyncService {
 
       // Compare versions
       const syncNeeded = serverVersion.version > localMetadata.version;
-      
-      console.log('🔍 [StorySyncService] Sync check:', {
+
+      console.log('[StorySyncService] Sync check:', {
         localVersion: localMetadata.version,
         serverVersion: serverVersion.version,
         syncNeeded
@@ -91,7 +91,7 @@ export class StorySyncService {
 
       return syncNeeded;
     } catch (error) {
-      console.error('❌ [StorySyncService] Error checking sync status:', error);
+      console.error('[StorySyncService] Error checking sync status:', error);
       // On error, assume sync is needed
       return true;
     }
@@ -103,7 +103,7 @@ export class StorySyncService {
    */
   static async syncStories(): Promise<Story[]> {
     try {
-      console.log('🔄 [StorySyncService] Starting story sync...');
+      console.log('[StorySyncService] Starting story sync...');
 
       // Get local metadata
       const localMetadata = await this.getLocalSyncMetadata();
@@ -115,7 +115,7 @@ export class StorySyncService {
         lastSyncTimestamp: localMetadata?.lastSyncTimestamp || 0
       };
 
-      console.log('📤 [StorySyncService] Sync request:', {
+      console.log('[StorySyncService] Sync request:', {
         clientVersion: syncRequest.clientVersion,
         localStories: Object.keys(syncRequest.storyChecksums).length
       });
@@ -126,7 +126,7 @@ export class StorySyncService {
         body: JSON.stringify(syncRequest)
       });
 
-      console.log('📥 [StorySyncService] Sync response:', {
+      console.log('[StorySyncService] Sync response:', {
         serverVersion: syncResponse.serverVersion,
         updatedStories: syncResponse.updatedStories,
         totalStories: syncResponse.totalStories
@@ -135,10 +135,10 @@ export class StorySyncService {
       // Merge updated stories with existing stories
       const existingStories = localMetadata?.stories || [];
       const updatedStoryIds = new Set(syncResponse.stories.map(s => s.id));
-      
+
       // Keep existing stories that weren't updated
       const unchangedStories = existingStories.filter(s => !updatedStoryIds.has(s.id));
-      
+
       // Combine unchanged + updated stories
       const allStories = [...unchangedStories, ...syncResponse.stories];
 
@@ -152,14 +152,14 @@ export class StorySyncService {
 
       await this.saveSyncMetadata(newMetadata);
 
-      console.log('✅ [StorySyncService] Sync complete:', {
+      console.log('[StorySyncService] Sync complete:', {
         totalStories: allStories.length,
         updatedStories: syncResponse.updatedStories
       });
 
       return allStories;
     } catch (error) {
-      console.error('❌ [StorySyncService] Sync failed:', error);
+      console.error('[StorySyncService] Sync failed:', error);
       throw error;
     }
   }
@@ -170,25 +170,25 @@ export class StorySyncService {
    */
   static async prefetchStories(): Promise<Story[]> {
     try {
-      console.log('🚀 [StorySyncService] Prefetching stories...');
+      console.log('[StorySyncService] Prefetching stories...');
 
       const syncNeeded = await this.isSyncNeeded();
 
       if (syncNeeded) {
-        console.log('📥 [StorySyncService] Sync needed, fetching updates...');
+        console.log('[StorySyncService] Sync needed, fetching updates...');
         return await this.syncStories();
       } else {
-        console.log('✅ [StorySyncService] Stories up to date, using local cache');
+        console.log('[StorySyncService] Stories up to date, using local cache');
         const metadata = await this.getLocalSyncMetadata();
         return metadata?.stories || [];
       }
     } catch (error) {
-      console.error('❌ [StorySyncService] Prefetch failed:', error);
+      console.error('[StorySyncService] Prefetch failed:', error);
 
       // Fallback to local cache if available
       const metadata = await this.getLocalSyncMetadata();
       if (metadata?.stories) {
-        console.log('⚠️ [StorySyncService] Using cached stories due to sync error');
+        console.log('[StorySyncService] Using cached stories due to sync error');
         return metadata.stories;
       }
 
@@ -205,7 +205,7 @@ export class StorySyncService {
       const metadata = await this.getLocalSyncMetadata();
       return metadata?.stories || [];
     } catch (error) {
-      console.error('❌ [StorySyncService] Error getting local stories:', error);
+      console.error('[StorySyncService] Error getting local stories:', error);
       return [];
     }
   }
@@ -217,9 +217,9 @@ export class StorySyncService {
   static async clearCache(): Promise<void> {
     try {
       await AsyncStorage.removeItem(STORAGE_KEY);
-      console.log('✅ [StorySyncService] Cache cleared');
+      console.log('[StorySyncService] Cache cleared');
     } catch (error) {
-      console.error('❌ [StorySyncService] Error clearing cache:', error);
+      console.error('[StorySyncService] Error clearing cache:', error);
       throw error;
     }
   }

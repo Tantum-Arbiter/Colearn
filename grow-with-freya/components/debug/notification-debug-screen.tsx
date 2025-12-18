@@ -29,73 +29,73 @@ export function NotificationDebugScreen({ onBack }: NotificationDebugScreenProps
   // Test notification permissions
   const testPermissions = async () => {
     setIsLoading(true);
-    addDebugInfo('🔍 Testing notification permissions...');
-    
+    addDebugInfo('Testing notification permissions...');
+
     try {
       // Check if running on device
       if (!Device.isDevice) {
-        addDebugInfo('❌ Not running on physical device - notifications won\'t work');
+        addDebugInfo('[ERROR] Not running on physical device - notifications won\'t work');
         setIsLoading(false);
         return;
       }
-      
-      addDebugInfo('✅ Running on physical device');
-      
+
+      addDebugInfo('[OK] Running on physical device');
+
       // Get current permissions
       const { status: currentStatus } = await Notifications.getPermissionsAsync();
-      addDebugInfo(`📋 Current permission status: ${currentStatus}`);
-      
+      addDebugInfo(`Current permission status: ${currentStatus}`);
+
       // Request permissions if needed
       if (currentStatus !== 'granted') {
-        addDebugInfo('🔔 Requesting notification permissions...');
+        addDebugInfo('Requesting notification permissions...');
         const { status: newStatus } = await Notifications.requestPermissionsAsync();
-        addDebugInfo(`📋 New permission status: ${newStatus}`);
+        addDebugInfo(`New permission status: ${newStatus}`);
       }
-      
+
       // Test with notification service
       const notificationService = NotificationService.getInstance();
       const permissionStatus = await notificationService.getPermissionStatus();
-      addDebugInfo(`🔧 NotificationService status: granted=${permissionStatus.granted}, canAskAgain=${permissionStatus.canAskAgain}`);
-      
+      addDebugInfo(`NotificationService status: granted=${permissionStatus.granted}, canAskAgain=${permissionStatus.canAskAgain}`);
+
     } catch (error) {
-      addDebugInfo(`❌ Permission test failed: ${error}`);
+      addDebugInfo(`[ERROR] Permission test failed: ${error}`);
     }
-    
+
     setIsLoading(false);
   };
 
   // Test immediate notification
   const testImmediateNotification = async () => {
     setIsLoading(true);
-    addDebugInfo('🚀 Testing immediate notification...');
-    
+    addDebugInfo('Testing immediate notification...');
+
     try {
       const notificationId = await Notifications.scheduleNotificationAsync({
         content: {
-          title: 'Test Notification 🧪',
+          title: 'Test Notification',
           body: 'This is a test notification from Grow with Freya debug tool',
           sound: 'default',
         },
         trigger: null, // Send immediately
       });
-      
-      addDebugInfo(`✅ Immediate notification scheduled with ID: ${notificationId}`);
+
+      addDebugInfo(`[OK] Immediate notification scheduled with ID: ${notificationId}`);
     } catch (error) {
-      addDebugInfo(`❌ Immediate notification failed: ${error}`);
+      addDebugInfo(`[ERROR] Immediate notification failed: ${error}`);
     }
-    
+
     setIsLoading(false);
   };
 
   // Test scheduled notification (5 seconds from now)
   const testScheduledNotification = async () => {
     setIsLoading(true);
-    addDebugInfo('⏰ Testing scheduled notification (5 seconds)...');
-    
+    addDebugInfo('Testing scheduled notification (5 seconds)...');
+
     try {
       const notificationId = await Notifications.scheduleNotificationAsync({
         content: {
-          title: 'Scheduled Test 📅',
+          title: 'Scheduled Test',
           body: 'This scheduled notification should appear in 5 seconds',
           sound: 'default',
         },
@@ -104,24 +104,24 @@ export function NotificationDebugScreen({ onBack }: NotificationDebugScreenProps
           seconds: 5,
         },
       });
-      
-      addDebugInfo(`✅ Scheduled notification set with ID: ${notificationId}`);
+
+      addDebugInfo(`[OK] Scheduled notification set with ID: ${notificationId}`);
     } catch (error) {
-      addDebugInfo(`❌ Scheduled notification failed: ${error}`);
+      addDebugInfo(`[ERROR] Scheduled notification failed: ${error}`);
     }
-    
+
     setIsLoading(false);
   };
 
   // List all scheduled notifications
   const listScheduledNotifications = async () => {
     setIsLoading(true);
-    addDebugInfo('📋 Listing all scheduled notifications...');
-    
+    addDebugInfo('Listing all scheduled notifications...');
+
     try {
       const notifications = await Notifications.getAllScheduledNotificationsAsync();
-      addDebugInfo(`📊 Found ${notifications.length} scheduled notifications:`);
-      
+      addDebugInfo(`Found ${notifications.length} scheduled notifications:`);
+
       if (notifications.length === 0) {
         addDebugInfo('   (No scheduled notifications found)');
       } else {
@@ -137,22 +137,22 @@ export function NotificationDebugScreen({ onBack }: NotificationDebugScreenProps
         });
       }
     } catch (error) {
-      addDebugInfo(`❌ Failed to list notifications: ${error}`);
+      addDebugInfo(`[ERROR] Failed to list notifications: ${error}`);
     }
-    
+
     setIsLoading(false);
   };
 
   // Test custom reminders
   const testCustomReminders = async () => {
     setIsLoading(true);
-    addDebugInfo('🎯 Testing custom reminders system...');
-    
+    addDebugInfo('Testing custom reminders system...');
+
     try {
       const reminders = await reminderService.getAllReminders();
-      
-      addDebugInfo(`📊 Found ${reminders.length} custom reminders:`);
-      
+
+      addDebugInfo(`Found ${reminders.length} custom reminders:`);
+
       if (reminders.length === 0) {
         addDebugInfo('   (No custom reminders found)');
       } else {
@@ -162,53 +162,53 @@ export function NotificationDebugScreen({ onBack }: NotificationDebugScreenProps
           const period = hours >= 12 ? 'PM' : 'AM';
           const displayHours = hours % 12 || 12;
           const timeFormatted = `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
-          const status = reminder.isActive ? '✅ Active' : '❌ Inactive';
-          
+          const status = reminder.isActive ? '[Active]' : '[Inactive]';
+
           addDebugInfo(`   ${index + 1}. "${reminder.title}" - ${dayName} at ${timeFormatted} ${status}`);
           addDebugInfo(`      Message: "${reminder.message}"`);
           addDebugInfo(`      Notification ID: ${reminder.notificationId || 'None'}`);
           addDebugInfo(`      Advance ID: ${reminder.advanceNotificationId || 'None'}`);
         });
       }
-      
+
       // Test creating a reminder for tomorrow at current time + 2 minutes
       const now = new Date();
       const testTime = new Date(now.getTime() + 2 * 60 * 1000); // 2 minutes from now
       const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-      
+
       const tomorrowDayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][tomorrow.getDay()] || 'Unknown';
-      addDebugInfo(`🧪 Creating test reminder for ${tomorrowDayName} at ${testTime.getHours()}:${testTime.getMinutes().toString().padStart(2, '0')}...`);
-      
+      addDebugInfo(`Creating test reminder for ${tomorrowDayName} at ${testTime.getHours()}:${testTime.getMinutes().toString().padStart(2, '0')}...`);
+
       const testReminder = await reminderService.createReminder(
         'Debug Test Reminder',
         'This is a test reminder created by the debug tool',
         tomorrow.getDay(),
         `${testTime.getHours()}:${testTime.getMinutes().toString().padStart(2, '0')}`
       );
-      
-      addDebugInfo(`✅ Test reminder created with ID: ${testReminder.id}`);
+
+      addDebugInfo(`[OK] Test reminder created with ID: ${testReminder.id}`);
       addDebugInfo(`   Notification ID: ${testReminder.notificationId}`);
       addDebugInfo(`   Advance Notification ID: ${testReminder.advanceNotificationId}`);
-      
+
     } catch (error) {
-      addDebugInfo(`❌ Custom reminders test failed: ${error}`);
+      addDebugInfo(`[ERROR] Custom reminders test failed: ${error}`);
     }
-    
+
     setIsLoading(false);
   };
 
   // Clear all notifications
   const clearAllNotifications = async () => {
     setIsLoading(true);
-    addDebugInfo('🧹 Clearing all scheduled notifications...');
-    
+    addDebugInfo('Clearing all scheduled notifications...');
+
     try {
       await Notifications.cancelAllScheduledNotificationsAsync();
-      addDebugInfo('✅ All scheduled notifications cleared');
+      addDebugInfo('[OK] All scheduled notifications cleared');
     } catch (error) {
-      addDebugInfo(`❌ Failed to clear notifications: ${error}`);
+      addDebugInfo(`[ERROR] Failed to clear notifications: ${error}`);
     }
-    
+
     setIsLoading(false);
   };
 

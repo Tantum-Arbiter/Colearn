@@ -14,9 +14,6 @@ server:
 spring:
   application:
     name: grow-with-freya-gateway
-  profiles:
-    active: prod
-
 
   mvc:
     async:
@@ -208,6 +205,13 @@ request-validation:
   user-agent:
     required: true
     block-suspicious: true
+
+# Cloudflare Security Configuration
+app:
+  security:
+    cloudflare:
+      require-validation: true
+      allowed-direct-paths: /health,/actuator/health
 
 # Audit Logging Configuration
 audit:

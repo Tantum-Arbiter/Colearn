@@ -25,23 +25,23 @@ export class StoryLoader {
       const cmsStories = await StorySyncService.getLocalStories();
 
       if (cmsStories && cmsStories.length > 0) {
-        console.log(`📚 [StoryLoader] Merging ${localStories.length} local + ${cmsStories.length} CMS stories`);
+        console.log(`[StoryLoader] Merging ${localStories.length} local + ${cmsStories.length} CMS stories`);
 
         // Merge: CMS stories can override local stories with same ID
         const localIds = new Set(localStories.map(s => s.id));
         const uniqueCmsStories = cmsStories.filter(s => !localIds.has(s.id));
 
         const allStories = [...localStories, ...uniqueCmsStories];
-        console.log(`✅ [StoryLoader] Total stories: ${allStories.length}`);
+        console.log(`[StoryLoader] Total stories: ${allStories.length}`);
         return allStories;
       }
 
       // No CMS stories yet - return local only
-      console.log(`📦 [StoryLoader] Using ${localStories.length} local stories (offline mode)`);
+      console.log(`[StoryLoader] Using ${localStories.length} local stories (offline mode)`);
       return localStories;
     } catch (error) {
-      console.error('❌ [StoryLoader] Error loading stories:', error);
-      console.log('⚠️ [StoryLoader] Falling back to local stories');
+      console.error('[StoryLoader] Error loading stories:', error);
+      console.log('[StoryLoader] Falling back to local stories');
       return ALL_STORIES;
     }
   }
@@ -83,12 +83,12 @@ export class StoryLoader {
    */
   static async refreshStories(): Promise<Story[]> {
     try {
-      console.log('🔄 [StoryLoader] Forcing story refresh...');
+      console.log('[StoryLoader] Forcing story refresh...');
       const stories = await StorySyncService.syncStories();
-      console.log(`✅ [StoryLoader] Refreshed ${stories.length} stories`);
+      console.log(`[StoryLoader] Refreshed ${stories.length} stories`);
       return stories;
     } catch (error) {
-      console.error('❌ [StoryLoader] Refresh failed:', error);
+      console.error('[StoryLoader] Refresh failed:', error);
       throw error;
     }
   }
@@ -128,7 +128,7 @@ export class StoryLoader {
       const localIds = new Set(ALL_STORIES.map(s => s.id));
       return cmsStories.filter(s => !localIds.has(s.id));
     } catch (error) {
-      console.error('❌ [StoryLoader] Error loading CMS stories:', error);
+      console.error('[StoryLoader] Error loading CMS stories:', error);
       return [];
     }
   }
