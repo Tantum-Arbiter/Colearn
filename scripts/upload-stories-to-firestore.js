@@ -125,32 +125,71 @@ function readStoryFilesFromDir(storiesDir) {
 }
 
 /**
- * Upload stories to Firestore
+ * Get current checksums from Firestore for delta comparison
+ */
+async function getCurrentChecksums() {
+  try {
+    const versionRef = db.collection('content_versions').doc('current');
+    const versionDoc = await versionRef.get();
+
+    if (versionDoc.exists && versionDoc.data().storyChecksums) {
+      return versionDoc.data().storyChecksums;
+    }
+  } catch (error) {
+    console.log('Could not fetch current checksums, will upload all stories');
+  }
+  return {};
+}
+
+/**
+ * Upload stories to Firestore (delta-sync: only upload changed stories)
  */
 async function uploadStories(stories) {
-  if (DRY_RUN) {
-    console.log(`\n🔍 [DRY RUN] Would upload ${stories.length} stories to Firestore...`);
-  } else {
-    console.log(`\n📤 Uploading ${stories.length} stories to Firestore...`);
-  }
+  console.log(`\n📊 Checking ${stories.length} stories for changes...`);
 
-  const batch = db.batch();
+  const currentChecksums = await getCurrentChecksums();
   const storyChecksums = {};
+  const changedStories = [];
+  const unchangedStories = [];
 
   for (const story of stories) {
-    if (!DRY_RUN) {
-      const storyRef = db.collection('stories').doc(story.id);
-      batch.set(storyRef, story);
-    }
     storyChecksums[story.id] = story.checksum;
-    console.log(`  ${DRY_RUN ? '🔍' : '➡️'}  ${story.id}: ${story.title}`);
+
+    if (currentChecksums[story.id] === story.checksum) {
+      unchangedStories.push(story);
+    } else {
+      changedStories.push(story);
+    }
   }
 
-  if (!DRY_RUN) {
-    await batch.commit();
-    console.log(`✅ Successfully uploaded ${stories.length} stories`);
+  console.log(`  ✅ ${unchangedStories.length} unchanged (skipping)`);
+  console.log(`  📝 ${changedStories.length} new/changed (uploading)`);
+
+  if (changedStories.length === 0) {
+    console.log('\n✨ No changes detected - nothing to upload!');
+    return storyChecksums;
+  }
+
+  if (DRY_RUN) {
+    console.log(`\n🔍 [DRY RUN] Would upload ${changedStories.length} stories:`);
+    for (const story of changedStories) {
+      const isNew = !currentChecksums[story.id];
+      console.log(`  🔍 ${story.id}: ${story.title} (${isNew ? 'NEW' : 'CHANGED'})`);
+    }
   } else {
-    console.log(`🔍 [DRY RUN] Would upload ${stories.length} stories`);
+    console.log(`\n📤 Uploading ${changedStories.length} changed stories...`);
+
+    const batch = db.batch();
+    for (const story of changedStories) {
+      const storyRef = db.collection('stories').doc(story.id);
+      batch.set(storyRef, story);
+      const isNew = !currentChecksums[story.id];
+      console.log(`  ➡️  ${story.id}: ${story.title} (${isNew ? 'NEW' : 'CHANGED'})`);
+    }
+
+    await batch.commit();
+    console.log(`✅ Successfully uploaded ${changedStories.length} stories`);
+    console.log(`💰 Saved ${unchangedStories.length} writes (delta-sync)`);
   }
 
   return storyChecksums;
