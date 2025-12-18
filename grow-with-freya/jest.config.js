@@ -69,6 +69,7 @@ module.exports = {
     '^expo-device$': '<rootDir>/__mocks__/expo-device.js',
     '^@react-native-community/datetimepicker$': '<rootDir>/__mocks__/@react-native-community/datetimepicker.js',
     '^expo/virtual/env$': '<rootDir>/__mocks__/expo-env.js',
+    '^expo-constants$': '<rootDir>/__mocks__/expo-constants.js',
   },
   // preset: 'jest-expo', // Disabled to avoid prettier dependency issue
   transform: {

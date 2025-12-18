@@ -38,10 +38,15 @@ describe('ApiClient', () => {
     });
 
     it('should attempt refresh when access token is expired', async () => {
+      // Mock getAccessToken to return expired token for all calls until after refresh
+      // isAuthenticated calls getAccessToken, then ensureValidToken calls it again
+      // After refresh, getAccessToken should return the new valid token
       (SecureStorage.getAccessToken as jest.Mock)
-        .mockResolvedValueOnce(mockExpiredToken)
-        .mockResolvedValueOnce(mockAccessToken);
+        .mockResolvedValueOnce(mockExpiredToken)  // isAuthenticated check
+        .mockResolvedValueOnce(mockExpiredToken)  // ensureValidToken check
+        .mockResolvedValueOnce(mockAccessToken);  // after refresh
       (SecureStorage.getRefreshToken as jest.Mock).mockResolvedValue(mockRefreshToken);
+      (SecureStorage.storeTokens as jest.Mock).mockResolvedValue(undefined);
       (global.fetch as jest.Mock).mockResolvedValue({
         ok: true,
         json: async () => ({
