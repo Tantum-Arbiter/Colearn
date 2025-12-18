@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, Dimensions, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -19,7 +19,6 @@ import { formatDurationCompact } from '../../utils/time-formatting';
 import { EditProfileScreen } from './edit-profile-screen';
 import { ApiClient } from '../../services/api-client';
 import { reminderService } from '../../services/reminder-service';
-import { Alert } from 'react-native';
 import * as Sentry from '@sentry/react-native';
 
 

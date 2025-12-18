@@ -112,11 +112,14 @@ gradle-app.setting
 !gradle-wrapper.jar
 !gradle-wrapper.properties
 
-# Environment files
+# Environment files - NEVER commit these
 .env
 .env.local
 .env.*.local
 *.env
+**/.env
+**/.env.*
+!**/.env.example
 
 # GCP credentials
 **/service-account-key*.json

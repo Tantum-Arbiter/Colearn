@@ -15,7 +15,7 @@ interface TokenPayload {
 
 export class ApiClient {
   private static isRefreshing = false;
-  private static refreshPromise: Promise<void> | null = null;
+  private static refreshPromise: Promise<any> | null = null;
 
   /**
    * Decode JWT token to get payload
@@ -299,15 +299,6 @@ export class ApiClient {
       }
       throw error;
     }
-  }
-
-  /**
-   * Logout - clear all authentication data
-   */
-  static async logout(): Promise<void> {
-    console.log('[ApiClient] Logging out - clearing all auth data');
-    await SecureStorage.clearAuthData();
-    console.log('[ApiClient] Logout complete');
   }
 
   /**

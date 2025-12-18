@@ -249,11 +249,12 @@ jobs:
           retention-days: 30
 
   # Job 6: EAS Build (Native Apps - iOS Production for TestFlight)
+  # Runs AFTER performance tests to ensure all checks pass first
   eas-build:
     name: EAS Build (iOS Production)
     runs-on: ubuntu-latest
-    needs: [semantic-version]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.semantic-version.result == 'success'
+    needs: [semantic-version, performance-test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.semantic-version.result == 'success' && needs.performance-test.result == 'success'
     defaults:
       run:
         working-directory: ${{ env.WORKING_DIRECTORY }}
@@ -297,11 +298,12 @@ jobs:
           echo "2. Once complete, submit manually: \`eas submit --platform ios\`" >> $GITHUB_STEP_SUMMARY
 
   # Job 7: Performance Testing
+  # Runs after web build completes
   performance-test:
     name: Performance Tests
     runs-on: ubuntu-latest
-    needs: [build-web, eas-build]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && always() && needs.build-web.result == 'success'
+    needs: [build-web]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && needs.build-web.result == 'success'
     defaults:
       run:
         working-directory: ${{ env.WORKING_DIRECTORY }}

@@ -20,7 +20,6 @@ import { PrivacyPolicyScreen } from '../account/privacy-policy-screen';
 import { AuthService } from '@/services/auth-service';
 import { SecureStorage } from '@/services/secure-storage';
 import { ApiClient } from '@/services/api-client';
-import { useAppStore } from '@/store/app-store';
 import { ProfileSyncService } from '@/services/profile-sync-service';
 import { StorySyncService } from '@/services/story-sync-service';
 
@@ -68,7 +67,7 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
               const profile = await ApiClient.getProfile();
               await ProfileSyncService.fullSync(profile);
               console.log('[LoginScreen] Profile synced');
-            } catch (error) {
+            } catch {
               console.log('[LoginScreen] Profile sync deferred');
             }
 
@@ -97,6 +96,7 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
     };
 
     handleGoogleResponse();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [response]);
 
   // Animation values
@@ -189,7 +189,7 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
       try {
         const profile = await ApiClient.getProfile();
         await ProfileSyncService.fullSync(profile);
-      } catch (error) {
+      } catch {
         console.log('[LoginScreen] No profile found, user may need to create one');
       }
 
