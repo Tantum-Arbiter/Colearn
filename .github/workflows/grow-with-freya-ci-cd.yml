@@ -222,11 +222,6 @@ jobs:
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Authenticate with Expo
-        run: eas login --non-interactive
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-
       - name: Build iOS (production)
         run: eas build --platform ios --profile production --non-interactive --no-wait
         env:
