@@ -15,22 +15,47 @@ const crypto = require('crypto');
 const BUNDLED_STORIES_DIR = path.join(__dirname, '../grow-with-freya/assets/stories');
 const CMS_STORIES_DIR = path.join(__dirname, 'cms-stories');
 const SERVICE_ACCOUNT_PATH = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH;
+const SERVICE_ACCOUNT_JSON = process.env.GCP_SA_KEY; // Base64 or raw JSON for CI
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'apt-icon-472307-b7';
 const UPLOAD_MODE = process.env.UPLOAD_MODE || 'cms-only'; // 'cms-only', 'bundled', or 'all'
+const DRY_RUN = process.env.DRY_RUN === 'true';
 
 // Initialize Firebase Admin
-if (!SERVICE_ACCOUNT_PATH) {
-  console.error('❌ Error: FIREBASE_SERVICE_ACCOUNT_KEY_PATH environment variable not set');
-  console.log('Usage: FIREBASE_SERVICE_ACCOUNT_KEY_PATH=/path/to/key.json node upload-stories-to-firestore.js');
+function getServiceAccountCredentials() {
+  // Option 1: Base64-encoded JSON (for CI/CD)
+  if (SERVICE_ACCOUNT_JSON) {
+    try {
+      // Try base64 decode first
+      const decoded = Buffer.from(SERVICE_ACCOUNT_JSON, 'base64').toString('utf8');
+      return JSON.parse(decoded);
+    } catch {
+      // Fall back to raw JSON
+      try {
+        return JSON.parse(SERVICE_ACCOUNT_JSON);
+      } catch (e) {
+        console.error('❌ Error: GCP_SA_KEY is not valid JSON or base64');
+        process.exit(1);
+      }
+    }
+  }
+
+  // Option 2: File path (for local development)
+  if (SERVICE_ACCOUNT_PATH) {
+    if (!fs.existsSync(SERVICE_ACCOUNT_PATH)) {
+      console.error(`❌ Error: Service account key file not found: ${SERVICE_ACCOUNT_PATH}`);
+      process.exit(1);
+    }
+    return require(SERVICE_ACCOUNT_PATH);
+  }
+
+  console.error('❌ Error: No service account credentials provided');
+  console.log('Usage:');
+  console.log('  Local: FIREBASE_SERVICE_ACCOUNT_KEY_PATH=/path/to/key.json node upload-stories-to-firestore.js');
+  console.log('  CI/CD: GCP_SA_KEY=<base64-json> node upload-stories-to-firestore.js');
   process.exit(1);
 }
 
-if (!fs.existsSync(SERVICE_ACCOUNT_PATH)) {
-  console.error(`❌ Error: Service account key file not found: ${SERVICE_ACCOUNT_PATH}`);
-  process.exit(1);
-}
-
-const serviceAccount = require(SERVICE_ACCOUNT_PATH);
+const serviceAccount = getServiceAccountCredentials();
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -100,24 +125,72 @@ function readStoryFilesFromDir(storiesDir) {
 }
 
 /**
- * Upload stories to Firestore
+ * Get current checksums from Firestore for delta comparison
+ */
+async function getCurrentChecksums() {
+  try {
+    const versionRef = db.collection('content_versions').doc('current');
+    const versionDoc = await versionRef.get();
+
+    if (versionDoc.exists && versionDoc.data().storyChecksums) {
+      return versionDoc.data().storyChecksums;
+    }
+  } catch (error) {
+    console.log('Could not fetch current checksums, will upload all stories');
+  }
+  return {};
+}
+
+/**
+ * Upload stories to Firestore (delta-sync: only upload changed stories)
  */
 async function uploadStories(stories) {
-  console.log(`\n📤 Uploading ${stories.length} stories to Firestore...`);
+  console.log(`\n📊 Checking ${stories.length} stories for changes...`);
 
-  const batch = db.batch();
+  const currentChecksums = await getCurrentChecksums();
   const storyChecksums = {};
+  const changedStories = [];
+  const unchangedStories = [];
 
   for (const story of stories) {
-    const storyRef = db.collection('stories').doc(story.id);
-    batch.set(storyRef, story);
     storyChecksums[story.id] = story.checksum;
-    console.log(`  ➡️  ${story.id}: ${story.title}`);
+
+    if (currentChecksums[story.id] === story.checksum) {
+      unchangedStories.push(story);
+    } else {
+      changedStories.push(story);
+    }
   }
 
-  // Commit batch
-  await batch.commit();
-  console.log(`✅ Successfully uploaded ${stories.length} stories`);
+  console.log(`  ✅ ${unchangedStories.length} unchanged (skipping)`);
+  console.log(`  📝 ${changedStories.length} new/changed (uploading)`);
+
+  if (changedStories.length === 0) {
+    console.log('\n✨ No changes detected - nothing to upload!');
+    return storyChecksums;
+  }
+
+  if (DRY_RUN) {
+    console.log(`\n🔍 [DRY RUN] Would upload ${changedStories.length} stories:`);
+    for (const story of changedStories) {
+      const isNew = !currentChecksums[story.id];
+      console.log(`  🔍 ${story.id}: ${story.title} (${isNew ? 'NEW' : 'CHANGED'})`);
+    }
+  } else {
+    console.log(`\n📤 Uploading ${changedStories.length} changed stories...`);
+
+    const batch = db.batch();
+    for (const story of changedStories) {
+      const storyRef = db.collection('stories').doc(story.id);
+      batch.set(storyRef, story);
+      const isNew = !currentChecksums[story.id];
+      console.log(`  ➡️  ${story.id}: ${story.title} (${isNew ? 'NEW' : 'CHANGED'})`);
+    }
+
+    await batch.commit();
+    console.log(`✅ Successfully uploaded ${changedStories.length} stories`);
+    console.log(`💰 Saved ${unchangedStories.length} writes (delta-sync)`);
+  }
 
   return storyChecksums;
 }
@@ -126,6 +199,11 @@ async function uploadStories(stories) {
  * Update content version document
  */
 async function updateContentVersion(storyChecksums) {
+  if (DRY_RUN) {
+    console.log('\n🔍 [DRY RUN] Would update content version...');
+    return { version: 0, totalStories: Object.keys(storyChecksums).length };
+  }
+
   console.log('\n📝 Updating content version...');
 
   const versionRef = db.collection('content_versions').doc('current');

@@ -1,0 +1,170 @@
+name: CMS Story Delete
+
+on:
+  workflow_dispatch:
+    inputs:
+      story_ids:
+        description: 'Story ID(s) to delete (comma-separated, e.g., wizard-school,starlight-dreams)'
+        required: true
+        type: string
+      confirm_delete:
+        description: 'Type the story ID(s) again to confirm deletion'
+        required: true
+        type: string
+      dry_run:
+        description: 'Dry run (show what would be deleted)'
+        required: true
+        default: true
+        type: boolean
+
+jobs:
+  validate-deletion:
+    name: Validate Deletion Request
+    runs-on: ubuntu-latest
+    outputs:
+      stories_to_delete: ${{ steps.parse.outputs.stories }}
+
+    steps:
+      - name: Verify confirmation matches
+        run: |
+          if [ "${{ github.event.inputs.story_ids }}" != "${{ github.event.inputs.confirm_delete }}" ]; then
+            echo "ERROR: Confirmation does not match story IDs"
+            echo "Story IDs: ${{ github.event.inputs.story_ids }}"
+            echo "Confirmation: ${{ github.event.inputs.confirm_delete }}"
+            exit 1
+          fi
+          echo "Confirmation verified for stories: ${{ github.event.inputs.story_ids }}"
+
+      - name: Parse and validate story IDs
+        id: parse
+        run: |
+          INPUT="${{ github.event.inputs.story_ids }}"
+          # Remove spaces around commas and trim
+          CLEANED=$(echo "$INPUT" | tr -d ' ')
+          echo "stories=$CLEANED" >> $GITHUB_OUTPUT
+          echo "Stories to process: $CLEANED"
+
+          # Count stories
+          COUNT=$(echo "$CLEANED" | tr ',' '\n' | wc -l)
+          echo "Total stories: $COUNT"
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup gcloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Check which stories exist
+        run: |
+          STORIES="${{ steps.parse.outputs.stories }}"
+          echo "Checking stories in GCS and preparing deletion list..."
+          echo ""
+
+          IFS=',' read -ra STORY_ARRAY <<< "$STORIES"
+          for STORY_ID in "${STORY_ARRAY[@]}"; do
+            echo "--- $STORY_ID ---"
+            if gsutil ls "gs://colearnwithfreya-assets/stories/${STORY_ID}/" 2>/dev/null; then
+              echo "  GCS: EXISTS"
+              gsutil ls "gs://colearnwithfreya-assets/stories/${STORY_ID}/" | head -5
+            else
+              echo "  GCS: NOT FOUND"
+            fi
+            echo ""
+          done
+
+  delete-stories:
+    name: Delete Stories
+    runs-on: ubuntu-latest
+    needs: validate-deletion
+    if: github.event.inputs.dry_run == 'false'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup gcloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: scripts
+        run: npm install
+
+      - name: Delete from GCS
+        run: |
+          STORIES="${{ needs.validate-deletion.outputs.stories_to_delete }}"
+          echo "Deleting stories from GCS..."
+
+          IFS=',' read -ra STORY_ARRAY <<< "$STORIES"
+          for STORY_ID in "${STORY_ARRAY[@]}"; do
+            echo "--- Deleting $STORY_ID from GCS ---"
+            if gsutil ls "gs://colearnwithfreya-assets/stories/${STORY_ID}/" 2>/dev/null; then
+              gsutil -m rm -r "gs://colearnwithfreya-assets/stories/${STORY_ID}/"
+              echo "Deleted: $STORY_ID"
+            else
+              echo "Not found in GCS: $STORY_ID"
+            fi
+          done
+
+      - name: Delete from Firestore
+        working-directory: scripts
+        run: |
+          node -e "
+          const admin = require('firebase-admin');
+          const serviceAccount = JSON.parse(Buffer.from(process.env.GCP_SA_KEY, 'base64').toString('utf8'));
+          admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+          const db = admin.firestore();
+
+          async function deleteStories() {
+            const storyIds = '${{ needs.validate-deletion.outputs.stories_to_delete }}'.split(',');
+
+            for (const storyId of storyIds) {
+              const docRef = db.collection('stories').doc(storyId);
+              const doc = await docRef.get();
+
+              if (doc.exists) {
+                await docRef.delete();
+                console.log('Deleted from Firestore:', storyId);
+              } else {
+                console.log('Not found in Firestore:', storyId);
+              }
+            }
+          }
+
+          deleteStories().then(() => process.exit(0)).catch(e => { console.error(e); process.exit(1); });
+          "
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Create deletion summary
+        run: |
+          STORIES="${{ needs.validate-deletion.outputs.stories_to_delete }}"
+          COUNT=$(echo "$STORIES" | tr ',' '\n' | wc -l)
+
+          echo "## Stories Deleted" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Stories deleted**: $COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Story ID | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
+
+          IFS=',' read -ra STORY_ARRAY <<< "$STORIES"
+          for STORY_ID in "${STORY_ARRAY[@]}"; do
+            echo "| \`$STORY_ID\` | Deleted |" >> $GITHUB_STEP_SUMMARY
+          done
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Deleted by**: @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Time**: $(date -u)" >> $GITHUB_STEP_SUMMARY
+

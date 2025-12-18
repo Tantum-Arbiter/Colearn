@@ -1,0 +1,154 @@
+name: CMS Stories Sync
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/cms-stories/**'
+      - 'grow-with-freya/assets/stories/**/story-data.json'
+      - 'scripts/story-schema.json'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/cms-stories/**'
+      - 'grow-with-freya/assets/stories/**/story-data.json'
+      - 'scripts/story-schema.json'
+  workflow_dispatch:
+    inputs:
+      upload_mode:
+        description: 'Upload mode'
+        required: true
+        default: 'cms-only'
+        type: choice
+        options:
+          - cms-only
+          - bundled
+          - all
+      dry_run:
+        description: 'Dry run (validate only)'
+        required: true
+        default: true
+        type: boolean
+
+jobs:
+  validate-stories:
+    name: Validate Story Files
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install ajv-cli for validation
+        run: npm install -g ajv-cli
+
+      - name: Validate CMS stories
+        run: |
+          echo "Validating CMS stories..."
+          for file in scripts/cms-stories/*/story-data.json; do
+            if [ -f "$file" ]; then
+              echo "  Validating: $file"
+              ajv validate -s scripts/story-schema.json -d "$file" --strict=false
+            fi
+          done
+
+      - name: Validate bundled stories
+        run: |
+          echo "Validating bundled stories..."
+          for file in grow-with-freya/assets/stories/*/story-data.json; do
+            if [ -f "$file" ]; then
+              echo "  Validating: $file"
+              ajv validate -s scripts/story-schema.json -d "$file" --strict=false
+            fi
+          done
+
+      - name: Check for duplicate story IDs
+        run: |
+          echo "Checking for duplicate story IDs..."
+          ids=$(cat scripts/cms-stories/*/story-data.json grow-with-freya/assets/stories/*/story-data.json 2>/dev/null | jq -r '.id' | sort)
+          duplicates=$(echo "$ids" | uniq -d)
+          if [ -n "$duplicates" ]; then
+            echo "Duplicate story IDs found:"
+            echo "$duplicates"
+            exit 1
+          fi
+          echo "No duplicate IDs found"
+
+  sync-to-gcs:
+    name: Sync Assets to GCS
+    runs-on: ubuntu-latest
+    needs: validate-stories
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'false')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup gcloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Sync CMS assets to GCS (delta-sync)
+        run: |
+          echo "Syncing CMS story assets to GCS bucket..."
+
+          # gsutil rsync only uploads changed files (delta-sync)
+          # -r = recursive, -d = delete files not in source, -c = compare checksums
+          gsutil -m rsync -r -c \
+            scripts/cms-stories/ \
+            gs://colearnwithfreya-assets/stories/
+
+          echo "Asset sync complete"
+
+      - name: Show sync results
+        run: |
+          echo "Assets in bucket:"
+          gsutil ls -r gs://colearnwithfreya-assets/stories/ | head -50
+
+  sync-to-firestore:
+    name: Sync Metadata to Firestore
+    runs-on: ubuntu-latest
+    needs: [validate-stories, sync-to-gcs]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: scripts
+        run: npm install
+
+      - name: Upload story metadata to Firestore
+        working-directory: scripts
+        run: node upload-stories-to-firestore.js
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          FIREBASE_PROJECT_ID: apt-icon-472307-b7
+          UPLOAD_MODE: cms-only
+
+      - name: Create sync summary
+        run: |
+          echo "## CMS Stories Sync Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Assets synced to GCS:" >> $GITHUB_STEP_SUMMARY
+          echo "Bucket: \`gs://colearnwithfreya-assets/stories/\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Stories:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          ls -1 scripts/cms-stories/ 2>/dev/null || echo "No CMS stories"
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
