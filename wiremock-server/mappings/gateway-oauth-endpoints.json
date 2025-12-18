@@ -1,0 +1,252 @@
+{
+  "mappings": [
+    {
+      "name": "Gateway - Google OAuth Authentication Success",
+      "request": {
+        "method": "POST",
+        "urlPath": "/auth/google",
+        "headers": {
+          "Content-Type": {
+            "equalTo": "application/json"
+          }
+        },
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": {
+              "expression": "$.idToken",
+              "equalTo": "valid-google-token"
+            }
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "success": true,
+          "user": {
+            "id": "user-{{randomValue length=10 type='ALPHANUMERIC'}}",
+            "email": "test.user@gmail.com",
+            "name": "Test User",
+            "picture": "https://lh3.googleusercontent.com/a/default-user",
+            "provider": "google",
+            "providerId": "123456789",
+            "createdAt": "{{now offset='-30 days' format='yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}}",
+            "updatedAt": "{{now format='yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}}"
+          },
+          "tokens": {
+            "accessToken": "gateway-access-token-{{randomValue length=50 type='ALPHANUMERIC'}}",
+            "refreshToken": "gateway-refresh-token-{{randomValue length=50 type='ALPHANUMERIC'}}",
+            "expiresIn": 3600
+          },
+          "message": "Authentication successful"
+        },
+        "transformers": ["response-template"]
+      }
+    },
+    {
+      "name": "Gateway - Apple OAuth Authentication Success",
+      "request": {
+        "method": "POST",
+        "urlPath": "/auth/apple",
+        "headers": {
+          "Content-Type": {
+            "equalTo": "application/json"
+          }
+        },
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": {
+              "expression": "$.idToken",
+              "equalTo": "valid-apple-token"
+            }
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "success": true,
+          "user": {
+            "id": "user-{{randomValue length=10 type='ALPHANUMERIC'}}",
+            "email": "test.user@privaterelay.appleid.com",
+            "name": "Test User",
+            "picture": "",
+            "provider": "apple",
+            "providerId": "000000.123456789.1234",
+            "createdAt": "{{now offset='-30 days' format='yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}}",
+            "updatedAt": "{{now format='yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}}"
+          },
+          "tokens": {
+            "accessToken": "gateway-access-token-{{randomValue length=50 type='ALPHANUMERIC'}}",
+            "refreshToken": "gateway-refresh-token-{{randomValue length=50 type='ALPHANUMERIC'}}",
+            "expiresIn": 3600
+          },
+          "message": "Authentication successful"
+        },
+        "transformers": ["response-template"]
+      }
+    },
+    {
+      "name": "Gateway - Google OAuth Authentication Invalid Token",
+      "request": {
+        "method": "POST",
+        "urlPath": "/auth/google",
+        "headers": {
+          "Content-Type": {
+            "equalTo": "application/json"
+          }
+        },
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": {
+              "expression": "$.idToken",
+              "equalTo": "invalid-token"
+            }
+          }
+        ]
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "success": false,
+          "error": "INVALID_TOKEN",
+          "message": "Invalid Google ID token"
+        }
+      }
+    },
+    {
+      "name": "Gateway - Apple OAuth Authentication Invalid Token",
+      "request": {
+        "method": "POST",
+        "urlPath": "/auth/apple",
+        "headers": {
+          "Content-Type": {
+            "equalTo": "application/json"
+          }
+        },
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": {
+              "expression": "$.idToken",
+              "equalTo": "invalid-token"
+            }
+          }
+        ]
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "success": false,
+          "error": "INVALID_TOKEN",
+          "message": "Invalid Apple ID token"
+        }
+      }
+    },
+    {
+      "name": "Gateway - Token Refresh Success",
+      "request": {
+        "method": "POST",
+        "urlPath": "/auth/refresh",
+        "headers": {
+          "Content-Type": {
+            "equalTo": "application/json"
+          }
+        },
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": {
+              "expression": "$.refreshToken",
+              "matches": "gateway-refresh-token-.*"
+            }
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "success": true,
+          "tokens": {
+            "accessToken": "gateway-access-token-{{randomValue length=50 type='ALPHANUMERIC'}}",
+            "refreshToken": "gateway-refresh-token-{{randomValue length=50 type='ALPHANUMERIC'}}",
+            "expiresIn": 3600
+          },
+          "message": "Token refresh successful"
+        },
+        "transformers": ["response-template"]
+      }
+    },
+    {
+      "name": "Gateway - Token Refresh Invalid",
+      "request": {
+        "method": "POST",
+        "urlPath": "/auth/refresh",
+        "headers": {
+          "Content-Type": {
+            "equalTo": "application/json"
+          }
+        },
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": {
+              "expression": "$.refreshToken",
+              "equalTo": "invalid-refresh-token"
+            }
+          }
+        ]
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "success": false,
+          "error": "INVALID_REFRESH_TOKEN",
+          "message": "Invalid or expired refresh token"
+        }
+      }
+    },
+    {
+      "name": "Gateway - Token Revocation Success",
+      "request": {
+        "method": "POST",
+        "urlPath": "/auth/revoke",
+        "headers": {
+          "Content-Type": {
+            "equalTo": "application/json"
+          }
+        },
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": "$.refreshToken"
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "success": true,
+          "message": "Token revoked successfully"
+        }
+      }
+    }
+  ]
+}

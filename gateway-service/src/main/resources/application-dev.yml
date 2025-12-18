@@ -1,0 +1,247 @@
+# Development Configuration for Grow with Freya Gateway Service
+# This configuration is optimized for local development and testing
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+  compression:
+    enabled: false
+  http2:
+    enabled: false
+
+spring:
+  application:
+    name: grow-with-freya-gateway-dev
+
+  mvc:
+    async:
+      request-timeout: 15s
+
+  # Security Configuration (relaxed for development)
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:your-google-client-id}
+            client-secret: ${GOOGLE_CLIENT_SECRET:your-google-client-secret}
+            scope: openid,profile,email
+          apple:
+            client-id: ${APPLE_CLIENT_ID:your-apple-client-id}
+            client-secret: ${APPLE_CLIENT_SECRET:your-apple-client-secret}
+            scope: openid,name,email
+
+  # Logging Configuration (more verbose for development)
+  logging:
+    level:
+      com.app: DEBUG
+      org.springframework.security: DEBUG
+      org.springframework.web: DEBUG
+      AUDIT: DEBUG
+      root: INFO
+    pattern:
+      console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+  # Actuator Configuration (all endpoints exposed for development)
+  management:
+    endpoints:
+      web:
+        exposure:
+          include: "*"
+        base-path: /actuator
+    endpoint:
+      health:
+        show-details: always
+        show-components: always
+    metrics:
+      export:
+        prometheus:
+          enabled: true
+      tags:
+        application: grow-with-freya-gateway
+        environment: development
+      distribution:
+        percentiles-histogram:
+          http.server.requests: true
+          app.response.time: true
+          app.authentication.time: true
+        percentiles:
+          http.server.requests: 0.5,0.95,0.99
+          app.response.time: 0.5,0.95,0.99
+          app.authentication.time: 0.5,0.95,0.99
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:dev-secret-key-that-is-at-least-256-bits-long-for-development-only}
+  expiration-seconds: 3600  # 1 hour
+  refresh-expiration-seconds: 86400  # 1 day
+  issuer: grow-with-freya-gateway-dev
+
+# Google OAuth Configuration
+google:
+  oauth:
+    client-id: ${GOOGLE_CLIENT_ID:your-google-client-id}
+    ios-client-id: ${GOOGLE_IOS_CLIENT_ID:}
+    android-client-id: ${GOOGLE_ANDROID_CLIENT_ID:}
+    jwks-uri: https://www.googleapis.com/oauth2/v3/certs
+    issuer: https://accounts.google.com
+
+# Apple OAuth Configuration
+apple:
+  oauth:
+    client-id: ${APPLE_CLIENT_ID:your-apple-client-id}
+    expo-client-id: ${APPLE_EXPO_CLIENT_ID:host.exp.Exponent}
+    jwks-uri: https://appleid.apple.com/auth/keys
+    issuer: https://appleid.apple.com
+
+# Firebase Configuration (Development)
+firebase:
+  project-id: ${FIREBASE_PROJECT_ID:grow-with-freya-dev}
+  service-account-key: ${FIREBASE_SERVICE_ACCOUNT_KEY:#{null}}
+  database-url: ${FIREBASE_DATABASE_URL:#{null}}
+  emulator:
+    host: ${FIREBASE_EMULATOR_HOST:localhost}
+    port: ${FIREBASE_EMULATOR_PORT:8080}
+
+# CORS Configuration (permissive for development)
+cors:
+  allowed-origins:
+    - http://localhost:*
+    - http://127.0.0.1:*
+    - exp://localhost:*
+    - exp://127.0.0.1:*
+    - exp://192.168.*:*
+    - exp://10.0.*:*
+    - https://localhost:*
+  allowed-methods:
+    - GET
+    - POST
+    - PUT
+    - PATCH
+    - DELETE
+    - OPTIONS
+  allowed-headers:
+    - "*"
+  allow-credentials: true
+  max-age: 3600
+
+# Rate Limiting Configuration (relaxed for development)
+rate-limiting:
+  default-requests-per-minute: 1000
+  auth-requests-per-minute: 100
+  api-requests-per-minute: 1000
+  cleanup-interval-minutes: 1
+
+# Security Headers Configuration (relaxed for development)
+security:
+  headers:
+    content-security-policy: "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src 'self' http: https: ws: wss:;"
+    strict-transport-security: ""  # Disabled for HTTP development
+    x-frame-options: "SAMEORIGIN"
+    x-content-type-options: "nosniff"
+    x-xss-protection: "1; mode=block"
+    referrer-policy: "no-referrer-when-downgrade"
+
+# Monitoring Configuration (verbose for development)
+monitoring:
+  security:
+    enabled: true
+    brute-force-threshold: 50  # Higher threshold for development
+    brute-force-window-minutes: 5
+    suspicious-ip-threshold: 100  # Higher threshold for development
+    suspicious-ip-window-hours: 1
+
+# Cache Configuration (shorter TTL for development)
+cache:
+  jwks:
+    ttl-minutes: 5  # Shorter for development
+    max-size: 10
+  rate-limiting:
+    cleanup-interval-minutes: 1
+    max-entries: 1000
+
+# Health Check Configuration
+health:
+  check:
+    enabled: true
+    timeout-seconds: 10
+
+# Request Validation Configuration (relaxed for development)
+request-validation:
+  enabled: true
+  max-request-size-mb: 50  # Larger for development
+  suspicious-patterns:
+    enabled: true
+    log-only: true  # Only log, don't block in development
+  user-agent:
+    required: false  # Not required in development
+    block-suspicious: false
+
+# Audit Logging Configuration (verbose for development)
+audit:
+  enabled: true
+  log-successful-auth: true
+  log-failed-auth: true
+  log-suspicious-requests: true
+  log-rate-limit-violations: true
+  log-token-operations: true
+  retention-days: 7  # Shorter retention for development
+
+# Performance Configuration
+performance:
+  async:
+    core-pool-size: 2
+    max-pool-size: 10
+    queue-capacity: 50
+  connection:
+    default-timeout-seconds: 1
+  inbound:
+    request-timeout-seconds: 15
+  compression:
+    enabled: false
+    min-response-size: 1024
+
+# Feature Flags (all enabled for development testing)
+features:
+  security-monitoring: true
+  rate-limiting: true
+  request-validation: true
+  audit-logging: true
+  metrics-collection: true
+  health-checks: true
+
+# Development-specific settings
+dev:
+  mock-data:
+    enabled: true
+    story-count: 50
+  debug:
+    log-requests: true
+    log-responses: true
+    log-jwt-tokens: false  # Security: never log tokens even in dev
+  testing:
+    bypass-rate-limiting: false
+    bypass-request-validation: false
+
+
+# Resilience4j Circuit Breakers (development)
+resilience4j:
+  circuitbreaker:
+    instances:
+      default:
+        failure-rate-threshold: 50
+        slow-call-rate-threshold: 100
+        slow-call-duration-threshold: 1s
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        wait-duration-in-open-state: 5s
+        permitted-number-of-calls-in-half-open-state: 2
+        automatic-transition-from-open-to-half-open-enabled: true
+        record-exceptions:
+          - java.util.concurrent.TimeoutException
+          - java.util.concurrent.CompletionException
+          - java.net.SocketTimeoutException
+          - java.net.ConnectException
+          - org.springframework.web.client.ResourceAccessException

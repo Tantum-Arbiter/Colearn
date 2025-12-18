@@ -1,0 +1,61 @@
+{
+  "id": "forest-walk",
+  "title": "A Walk in the Forest",
+  "category": "nature",
+  "tag": "🐢 Nature",
+  "emoji": "🌲",
+  "coverImage": "assets/stories/forest-walk/cover/thumbnail.webp",
+  "isAvailable": true,
+  "ageRange": "2-4",
+  "duration": 7,
+  "description": "Take a peaceful walk through the forest and discover its hidden wonders.",
+  "isPremium": false,
+  "author": "Freya Stories",
+  "tags": [
+    "nature"
+  ],
+  "pages": [
+    {
+      "id": "forest-walk-1",
+      "pageNumber": 1,
+      "backgroundImage": "assets/stories/forest-walk/page-1/background.webp",
+      "text": "Page 1 text goes here..."
+    },
+    {
+      "id": "forest-walk-2",
+      "pageNumber": 2,
+      "backgroundImage": "assets/stories/forest-walk/page-2/background.webp",
+      "text": "Page 2 text goes here..."
+    },
+    {
+      "id": "forest-walk-3",
+      "pageNumber": 3,
+      "backgroundImage": "assets/stories/forest-walk/page-3/background.webp",
+      "text": "Page 3 text goes here..."
+    },
+    {
+      "id": "forest-walk-4",
+      "pageNumber": 4,
+      "backgroundImage": "assets/stories/forest-walk/page-4/background.webp",
+      "text": "Page 4 text goes here..."
+    },
+    {
+      "id": "forest-walk-5",
+      "pageNumber": 5,
+      "backgroundImage": "assets/stories/forest-walk/page-5/background.webp",
+      "text": "Page 5 text goes here..."
+    },
+    {
+      "id": "forest-walk-6",
+      "pageNumber": 6,
+      "backgroundImage": "assets/stories/forest-walk/page-6/background.webp",
+      "text": "Page 6 text goes here..."
+    },
+    {
+      "id": "forest-walk-7",
+      "pageNumber": 7,
+      "backgroundImage": "assets/stories/forest-walk/page-7/background.webp",
+      "text": "Page 7 text goes here..."
+    }
+  ]
+}

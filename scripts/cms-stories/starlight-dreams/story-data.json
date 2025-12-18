@@ -1,0 +1,79 @@
+{
+  "id": "starlight-dreams",
+  "title": "Starlight Dreams",
+  "category": "bedtime",
+  "tag": "🌙 Bedtime",
+  "emoji": "✨",
+  "coverImage": "assets/stories/starlight-dreams/cover/thumbnail.webp",
+  "isAvailable": true,
+  "ageRange": "3-6",
+  "duration": 10,
+  "description": "A magical bedtime story about a child who rides on starlight to visit dream worlds.",
+  "isPremium": true,
+  "author": "Freya Stories",
+  "tags": [
+    "bedtime"
+  ],
+  "pages": [
+    {
+      "id": "starlight-dreams-1",
+      "pageNumber": 1,
+      "backgroundImage": "assets/stories/starlight-dreams/page-1/background.webp",
+      "text": "Page 1 text goes here..."
+    },
+    {
+      "id": "starlight-dreams-2",
+      "pageNumber": 2,
+      "backgroundImage": "assets/stories/starlight-dreams/page-2/background.webp",
+      "text": "Page 2 text goes here..."
+    },
+    {
+      "id": "starlight-dreams-3",
+      "pageNumber": 3,
+      "backgroundImage": "assets/stories/starlight-dreams/page-3/background.webp",
+      "text": "Page 3 text goes here..."
+    },
+    {
+      "id": "starlight-dreams-4",
+      "pageNumber": 4,
+      "backgroundImage": "assets/stories/starlight-dreams/page-4/background.webp",
+      "text": "Page 4 text goes here..."
+    },
+    {
+      "id": "starlight-dreams-5",
+      "pageNumber": 5,
+      "backgroundImage": "assets/stories/starlight-dreams/page-5/background.webp",
+      "text": "Page 5 text goes here..."
+    },
+    {
+      "id": "starlight-dreams-6",
+      "pageNumber": 6,
+      "backgroundImage": "assets/stories/starlight-dreams/page-6/background.webp",
+      "text": "Page 6 text goes here..."
+    },
+    {
+      "id": "starlight-dreams-7",
+      "pageNumber": 7,
+      "backgroundImage": "assets/stories/starlight-dreams/page-7/background.webp",
+      "text": "Page 7 text goes here..."
+    },
+    {
+      "id": "starlight-dreams-8",
+      "pageNumber": 8,
+      "backgroundImage": "assets/stories/starlight-dreams/page-8/background.webp",
+      "text": "Page 8 text goes here..."
+    },
+    {
+      "id": "starlight-dreams-9",
+      "pageNumber": 9,
+      "backgroundImage": "assets/stories/starlight-dreams/page-9/background.webp",
+      "text": "Page 9 text goes here..."
+    },
+    {
+      "id": "starlight-dreams-10",
+      "pageNumber": 10,
+      "backgroundImage": "assets/stories/starlight-dreams/page-10/background.webp",
+      "text": "Page 10 text goes here..."
+    }
+  ]
+}

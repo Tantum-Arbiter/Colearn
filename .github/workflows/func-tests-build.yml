@@ -2,11 +2,10 @@ name: Func Tests Build and Deploy
 
 on:
   workflow_dispatch:
-  # DISABLED: Will re-enable after Security Scan workflow is verified
-  # push:
-  #   paths:
-  #     - 'func-tests/**'
-  #     - '.github/workflows/func-tests-build.yml'
+  push:
+    paths:
+      - 'func-tests/**'
+      - '.github/workflows/func-tests-build.yml'
 
 # Add concurrency control to prevent queuing issues
 concurrency:

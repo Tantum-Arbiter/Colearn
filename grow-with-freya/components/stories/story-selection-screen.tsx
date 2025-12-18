@@ -14,6 +14,7 @@ import { ALL_STORIES, getStoriesByGenre, getGenresWithStories, getRandomStory } 
 import { Story, StoryCategory, STORY_TAGS } from '@/types/story';
 import { Fonts } from '@/constants/theme';
 import { useAppStore } from '@/store/app-store';
+import { StoryLoader } from '@/services/story-loader';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
 import { BearTopImage } from '@/components/main-menu/animated-components';
@@ -46,6 +47,27 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   // Scroll tracking for dynamic carousel effects
   const [scrollPositions, setScrollPositions] = useState<{ [key: string]: number }>({});
 
+  // Load stories from StoryLoader (synced metadata or fallback to MOCK_STORIES)
+  const [stories, setStories] = useState<Story[]>(ALL_STORIES);
+  const [isLoadingStories, setIsLoadingStories] = useState(true);
+
+  useEffect(() => {
+    const loadStories = async () => {
+      try {
+        const loadedStories = await StoryLoader.getStories();
+        setStories(loadedStories);
+        console.log(`[StorySelectionScreen] Loaded ${loadedStories.length} stories`);
+      } catch (error) {
+        console.error('[StorySelectionScreen] Error loading stories:', error);
+        // Fallback to ALL_STORIES already set in state
+      } finally {
+        setIsLoadingStories(false);
+      }
+    };
+
+    loadStories();
+  }, []);
+
   // Generate star positions for background
   const starPositions = useMemo(() => generateStarPositions(VISUAL_EFFECTS.STAR_COUNT), []);
 
@@ -70,14 +92,17 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     };
   });
 
-  // Get organized story data
+  // Get organized story data from loaded stories
   const availableGenres = useMemo(() => {
-    const genres = getGenresWithStories();
-    console.log('StorySelectionScreen: Available genres:', genres);
-    console.log('StorySelectionScreen: ALL_STORIES length:', ALL_STORIES.length);
-    console.log('StorySelectionScreen: Using CENTERED horizontal carousels with centered headings');
-    return genres;
-  }, []);
+    const genreMap: Record<string, Story[]> = {};
+    stories.forEach(story => {
+      if (!genreMap[story.category]) {
+        genreMap[story.category] = [];
+      }
+      genreMap[story.category].push(story);
+    });
+    return Object.keys(genreMap).filter(genre => genreMap[genre].length > 0);
+  }, [stories]);
 
   const handleBackToMenu = useCallback(() => {
     // Debounce rapid back button presses (500ms)
@@ -225,7 +250,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
         {/* Stories Carousels */}
         <ScrollView style={{ flex: 1 }}>
           {availableGenres.map((genre) => {
-            const genreStories = ALL_STORIES.filter(story => story.category === genre);
+            const genreStories = stories.filter(story => story.category === genre);
             
             return (
               <View key={genre} style={{ marginBottom: 40 }}>
@@ -277,8 +302,6 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
                     }}
                     keyExtractor={(story) => story.id}
                     renderItem={({ item: story, index }) => {
-                      console.log(`CAROUSEL: Rendering ${story.title} in ${genre}`);
-
                       // Create a ref for this specific card
                       const cardRef = React.createRef();
 

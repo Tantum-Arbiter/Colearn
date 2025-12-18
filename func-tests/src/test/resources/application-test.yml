@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: func-tests
+
+server:
+  port: 8081
+
+# Test configuration
+test:
+  gateway:
+    base-url: http://localhost:8080
+  wiremock:
+    port: 9000
+    base-url: http://localhost:9000
+  timeouts:
+    default: 30000
+    long: 60000
+    short: 5000
+
+# WireMock configuration for tests
+wiremock:
+  server:
+    port: 9000
+    mappings-path: wiremock/mappings
+    verbose: false
+
+# Logging configuration for tests
+logging:
+  level:
+    com.app.functest: DEBUG
+    com.github.tomakehurst.wiremock: WARN
+    org.springframework: WARN
+    io.restassured: WARN
+    root: WARN
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# Disable Spring Boot features not needed for tests
+management:
+  endpoints:
+    enabled-by-default: false
+    web:
+      exposure:
+        include: health

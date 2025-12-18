@@ -1,0 +1,79 @@
+{
+  "id": "jungle-explorer",
+  "title": "Jungle Explorer",
+  "category": "adventure",
+  "tag": "🗺️ Adventure",
+  "emoji": "🦁",
+  "coverImage": "assets/stories/jungle-explorer/cover/thumbnail.webp",
+  "isAvailable": true,
+  "ageRange": "3-6",
+  "duration": 10,
+  "description": "Explore the jungle and meet amazing animals with young explorer Leo.",
+  "isPremium": false,
+  "author": "Freya Stories",
+  "tags": [
+    "adventure"
+  ],
+  "pages": [
+    {
+      "id": "jungle-explorer-1",
+      "pageNumber": 1,
+      "backgroundImage": "assets/stories/jungle-explorer/page-1/background.webp",
+      "text": "Page 1 text goes here..."
+    },
+    {
+      "id": "jungle-explorer-2",
+      "pageNumber": 2,
+      "backgroundImage": "assets/stories/jungle-explorer/page-2/background.webp",
+      "text": "Page 2 text goes here..."
+    },
+    {
+      "id": "jungle-explorer-3",
+      "pageNumber": 3,
+      "backgroundImage": "assets/stories/jungle-explorer/page-3/background.webp",
+      "text": "Page 3 text goes here..."
+    },
+    {
+      "id": "jungle-explorer-4",
+      "pageNumber": 4,
+      "backgroundImage": "assets/stories/jungle-explorer/page-4/background.webp",
+      "text": "Page 4 text goes here..."
+    },
+    {
+      "id": "jungle-explorer-5",
+      "pageNumber": 5,
+      "backgroundImage": "assets/stories/jungle-explorer/page-5/background.webp",
+      "text": "Page 5 text goes here..."
+    },
+    {
+      "id": "jungle-explorer-6",
+      "pageNumber": 6,
+      "backgroundImage": "assets/stories/jungle-explorer/page-6/background.webp",
+      "text": "Page 6 text goes here..."
+    },
+    {
+      "id": "jungle-explorer-7",
+      "pageNumber": 7,
+      "backgroundImage": "assets/stories/jungle-explorer/page-7/background.webp",
+      "text": "Page 7 text goes here..."
+    },
+    {
+      "id": "jungle-explorer-8",
+      "pageNumber": 8,
+      "backgroundImage": "assets/stories/jungle-explorer/page-8/background.webp",
+      "text": "Page 8 text goes here..."
+    },
+    {
+      "id": "jungle-explorer-9",
+      "pageNumber": 9,
+      "backgroundImage": "assets/stories/jungle-explorer/page-9/background.webp",
+      "text": "Page 9 text goes here..."
+    },
+    {
+      "id": "jungle-explorer-10",
+      "pageNumber": 10,
+      "backgroundImage": "assets/stories/jungle-explorer/page-10/background.webp",
+      "text": "Page 10 text goes here..."
+    }
+  ]
+}

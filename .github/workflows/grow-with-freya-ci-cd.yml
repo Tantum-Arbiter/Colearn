@@ -248,19 +248,15 @@ jobs:
           path: ${{ env.WORKING_DIRECTORY }}/dist
           retention-days: 30
 
-  # Job 6: EAS Build (Native Apps)
+  # Job 6: EAS Build (Native Apps - iOS Production for TestFlight)
   eas-build:
-    name: EAS Build
+    name: EAS Build (iOS Production)
     runs-on: ubuntu-latest
     needs: [semantic-version]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.EAS_BUILDS_ENABLED == 'true' && needs.semantic-version.result == 'success'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.semantic-version.result == 'success'
     defaults:
       run:
         working-directory: ${{ env.WORKING_DIRECTORY }}
-    strategy:
-      matrix:
-        platform: [android, ios]
-        profile: [preview]
 
     steps:
       - name: Checkout code
@@ -274,26 +270,31 @@ jobs:
       - name: Setup Expo and EAS
         run: |
           npm install -g @expo/cli@${{ env.EXPO_CLI_VERSION }}
-          npm install -g eas-cli
+          npm install -g eas-cli@latest
 
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
       - name: Authenticate with Expo
-        run: |
-          if [ -n "${{ secrets.EXPO_TOKEN }}" ]; then
-            eas login --non-interactive
-          else
-            echo "EXPO_TOKEN not available, skipping EAS authentication"
-            exit 1
-          fi
+        run: eas login --non-interactive
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
-      - name: Build ${{ matrix.platform }} (${{ matrix.profile }})
-        run: eas build --platform ${{ matrix.platform }} --profile ${{ matrix.profile }} --non-interactive --wait
+      - name: Build iOS (production)
+        run: eas build --platform ios --profile production --non-interactive --no-wait
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+      - name: Build summary
+        run: |
+          echo "## EAS Build Triggered" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "iOS production build has been queued on EAS." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Next steps:**" >> $GITHUB_STEP_SUMMARY
+          echo "1. Check build status: [EAS Dashboard](https://expo.dev/accounts/tantum-arbiter/projects/grow-with-freya/builds)" >> $GITHUB_STEP_SUMMARY
+          echo "2. Once complete, submit manually: \`eas submit --platform ios\`" >> $GITHUB_STEP_SUMMARY
 
   # Job 7: Performance Testing
   performance-test:
@@ -368,6 +369,17 @@ jobs:
           echo "- Web build available for download (30 days retention)" >> $GITHUB_STEP_SUMMARY
           echo "- Test coverage reports uploaded to Codecov" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ needs.eas-build.result }}" == "success" ]]; then
+            echo "###  TestFlight Submission:" >> $GITHUB_STEP_SUMMARY
+            echo "iOS build queued. To submit to TestFlight:" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+            echo "cd grow-with-freya && eas submit --platform ios" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+
           echo "###  Quick Links:" >> $GITHUB_STEP_SUMMARY
           echo "- [Repository](https://github.com/${{ github.repository }})" >> $GITHUB_STEP_SUMMARY
           echo "- [Commit](https://github.com/${{ github.repository }}/commit/${{ github.sha }})" >> $GITHUB_STEP_SUMMARY
+          echo "- [EAS Builds](https://expo.dev/accounts/tantum-arbiter/projects/grow-with-freya/builds)" >> $GITHUB_STEP_SUMMARY

@@ -9,54 +9,59 @@
   "ageRange": "2-5",
   "duration": 8,
   "description": "A gentle bedtime story about a little wombat getting ready for sleep with cozy snuggles and sweet dreams.",
+  "isPremium": false,
+  "author": "Freya Stories",
+  "tags": [
+    "bedtime"
+  ],
   "pages": [
     {
       "id": "snuggle-little-wombat-1",
       "pageNumber": 1,
       "backgroundImage": "assets/stories/snuggle-little-wombat/page-1/background.webp",
-      "text": "Wombat yawned, the sky turnt blue, time to rest, the stars peek through."
+      "text": "Page 1 text goes here..."
     },
     {
       "id": "snuggle-little-wombat-2",
       "pageNumber": 2,
       "backgroundImage": "assets/stories/snuggle-little-wombat/page-2/background.webp",
-      "text": "Wombat stared, the night felt new, time to dream, like we must do."
+      "text": "Page 2 text goes here..."
     },
     {
       "id": "snuggle-little-wombat-3",
       "pageNumber": 3,
       "backgroundImage": "assets/stories/snuggle-little-wombat/page-3/background.webp",
-      "text": "Wombat walked, the stars shined through, looking for a nest, that's warm and new."
+      "text": "Page 3 text goes here..."
     },
     {
       "id": "snuggle-little-wombat-4",
       "pageNumber": 4,
       "backgroundImage": "assets/stories/snuggle-little-wombat/page-4/background.webp",
-      "text": "Wombat smiled, a burrow in view, time to rest, and dream things new."
+      "text": "Page 4 text goes here..."
     },
     {
       "id": "snuggle-little-wombat-5",
       "pageNumber": 5,
       "backgroundImage": "assets/stories/snuggle-little-wombat/page-5/background.webp",
-      "text": "Wombat stopped, where soft roots grew, inside the burrow, the quietness grew."
+      "text": "Page 5 text goes here..."
     },
     {
       "id": "snuggle-little-wombat-6",
       "pageNumber": 6,
       "backgroundImage": "assets/stories/snuggle-little-wombat/page-6/background.webp",
-      "text": "Wombat nests, the night time grew, sleeping in a bed, where dreams come true."
+      "text": "Page 6 text goes here..."
     },
     {
       "id": "snuggle-little-wombat-7",
       "pageNumber": 7,
       "backgroundImage": "assets/stories/snuggle-little-wombat/page-7/background.webp",
-      "text": "Wombat dreamt, with gentle cheer, hugging berries he held so dear."
+      "text": "Page 7 text goes here..."
     },
     {
       "id": "snuggle-little-wombat-8",
       "pageNumber": 8,
       "backgroundImage": "assets/stories/snuggle-little-wombat/page-8/background.webp",
-      "text": "Wombat sleeps, in quiet delight, your turn - turn off the light... goodnight!"
+      "text": "Page 8 text goes here..."
     }
   ]
 }

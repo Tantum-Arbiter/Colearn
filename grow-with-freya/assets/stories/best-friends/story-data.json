@@ -1,0 +1,67 @@
+{
+  "id": "best-friends",
+  "title": "Best Friends Forever",
+  "category": "friendship",
+  "tag": "🤝 Friendship",
+  "emoji": "🐻",
+  "coverImage": "assets/stories/best-friends/cover/thumbnail.webp",
+  "isAvailable": true,
+  "ageRange": "3-5",
+  "duration": 8,
+  "description": "Bear and Bunny learn what it means to be true friends through thick and thin.",
+  "isPremium": false,
+  "author": "Freya Stories",
+  "tags": [
+    "friendship"
+  ],
+  "pages": [
+    {
+      "id": "best-friends-1",
+      "pageNumber": 1,
+      "backgroundImage": "assets/stories/best-friends/page-1/background.webp",
+      "text": "Page 1 text goes here..."
+    },
+    {
+      "id": "best-friends-2",
+      "pageNumber": 2,
+      "backgroundImage": "assets/stories/best-friends/page-2/background.webp",
+      "text": "Page 2 text goes here..."
+    },
+    {
+      "id": "best-friends-3",
+      "pageNumber": 3,
+      "backgroundImage": "assets/stories/best-friends/page-3/background.webp",
+      "text": "Page 3 text goes here..."
+    },
+    {
+      "id": "best-friends-4",
+      "pageNumber": 4,
+      "backgroundImage": "assets/stories/best-friends/page-4/background.webp",
+      "text": "Page 4 text goes here..."
+    },
+    {
+      "id": "best-friends-5",
+      "pageNumber": 5,
+      "backgroundImage": "assets/stories/best-friends/page-5/background.webp",
+      "text": "Page 5 text goes here..."
+    },
+    {
+      "id": "best-friends-6",
+      "pageNumber": 6,
+      "backgroundImage": "assets/stories/best-friends/page-6/background.webp",
+      "text": "Page 6 text goes here..."
+    },
+    {
+      "id": "best-friends-7",
+      "pageNumber": 7,
+      "backgroundImage": "assets/stories/best-friends/page-7/background.webp",
+      "text": "Page 7 text goes here..."
+    },
+    {
+      "id": "best-friends-8",
+      "pageNumber": 8,
+      "backgroundImage": "assets/stories/best-friends/page-8/background.webp",
+      "text": "Page 8 text goes here..."
+    }
+  ]
+}

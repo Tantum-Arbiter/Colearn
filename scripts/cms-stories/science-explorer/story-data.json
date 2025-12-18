@@ -1,0 +1,79 @@
+{
+  "id": "science-explorer",
+  "title": "Little Science Explorer",
+  "category": "learning",
+  "tag": "📚 Learning",
+  "emoji": "🔬",
+  "coverImage": "assets/stories/science-explorer/cover/thumbnail.webp",
+  "isAvailable": true,
+  "ageRange": "4-7",
+  "duration": 10,
+  "description": "Discover amazing science facts through fun experiments and exploration.",
+  "isPremium": true,
+  "author": "Freya Stories",
+  "tags": [
+    "learning"
+  ],
+  "pages": [
+    {
+      "id": "science-explorer-1",
+      "pageNumber": 1,
+      "backgroundImage": "assets/stories/science-explorer/page-1/background.webp",
+      "text": "Page 1 text goes here..."
+    },
+    {
+      "id": "science-explorer-2",
+      "pageNumber": 2,
+      "backgroundImage": "assets/stories/science-explorer/page-2/background.webp",
+      "text": "Page 2 text goes here..."
+    },
+    {
+      "id": "science-explorer-3",
+      "pageNumber": 3,
+      "backgroundImage": "assets/stories/science-explorer/page-3/background.webp",
+      "text": "Page 3 text goes here..."
+    },
+    {
+      "id": "science-explorer-4",
+      "pageNumber": 4,
+      "backgroundImage": "assets/stories/science-explorer/page-4/background.webp",
+      "text": "Page 4 text goes here..."
+    },
+    {
+      "id": "science-explorer-5",
+      "pageNumber": 5,
+      "backgroundImage": "assets/stories/science-explorer/page-5/background.webp",
+      "text": "Page 5 text goes here..."
+    },
+    {
+      "id": "science-explorer-6",
+      "pageNumber": 6,
+      "backgroundImage": "assets/stories/science-explorer/page-6/background.webp",
+      "text": "Page 6 text goes here..."
+    },
+    {
+      "id": "science-explorer-7",
+      "pageNumber": 7,
+      "backgroundImage": "assets/stories/science-explorer/page-7/background.webp",
+      "text": "Page 7 text goes here..."
+    },
+    {
+      "id": "science-explorer-8",
+      "pageNumber": 8,
+      "backgroundImage": "assets/stories/science-explorer/page-8/background.webp",
+      "text": "Page 8 text goes here..."
+    },
+    {
+      "id": "science-explorer-9",
+      "pageNumber": 9,
+      "backgroundImage": "assets/stories/science-explorer/page-9/background.webp",
+      "text": "Page 9 text goes here..."
+    },
+    {
+      "id": "science-explorer-10",
+      "pageNumber": 10,
+      "backgroundImage": "assets/stories/science-explorer/page-10/background.webp",
+      "text": "Page 10 text goes here..."
+    }
+  ]
+}

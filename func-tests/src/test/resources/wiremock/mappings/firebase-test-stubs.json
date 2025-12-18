@@ -1,0 +1,99 @@
+{
+  "mappings": [
+    {
+      "id": "a1b2c3d4-e5f6-4890-abcd-ef1234567890",
+      "name": "Firebase - Verify ID Token for Tests",
+      "request": {
+        "method": "POST",
+        "urlPath": "/v1/accounts:lookup",
+        "headers": {
+          "Content-Type": {
+            "equalTo": "application/json"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "users": [
+            {
+              "localId": "test-firebase-user-id",
+              "email": "test@example.com",
+              "emailVerified": true,
+              "displayName": "Test User",
+              "providerUserInfo": [
+                {
+                  "providerId": "google.com",
+                  "federatedId": "123456789",
+                  "email": "test@example.com",
+                  "displayName": "Test User"
+                }
+              ],
+              "photoUrl": "https://example.com/photo.jpg",
+              "disabled": false,
+              "lastLoginAt": "2023-01-01T00:00:00.000Z",
+              "createdAt": "2023-01-01T00:00:00.000Z"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "b2c3d4e5-f617-4901-bcde-f23456789012",
+      "name": "Firebase - Create User for Tests",
+      "request": {
+        "method": "POST",
+        "urlPath": "/v1/accounts:signUp"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "localId": "new-test-user-id",
+          "email": "newuser@example.com",
+          "displayName": "New Test User",
+          "idToken": "test-firebase-id-token",
+          "refreshToken": "test-firebase-refresh-token",
+          "expiresIn": "3600"
+        }
+      }
+    },
+    {
+      "id": "c3d4e5f6-a7b8-4012-cdef-345678901234",
+      "name": "Firebase - Invalid Token for Tests",
+      "request": {
+        "method": "POST",
+        "urlPath": "/v1/accounts:lookup",
+        "bodyPatterns": [
+          {
+            "contains": "invalid-token"
+          }
+        ]
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "error": {
+            "code": 400,
+            "message": "INVALID_ID_TOKEN",
+            "errors": [
+              {
+                "message": "Invalid ID token.",
+                "domain": "global",
+                "reason": "invalid"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

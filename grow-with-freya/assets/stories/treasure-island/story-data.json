@@ -1,0 +1,79 @@
+{
+  "id": "treasure-island",
+  "title": "Treasure Island Adventure",
+  "category": "adventure",
+  "tag": "🗺️ Adventure",
+  "emoji": "🏴‍☠️",
+  "coverImage": "assets/stories/treasure-island/cover/thumbnail.webp",
+  "isAvailable": true,
+  "ageRange": "3-6",
+  "duration": 10,
+  "description": "Join Captain Pip on an exciting journey to find hidden treasure on a mysterious island.",
+  "isPremium": false,
+  "author": "Freya Stories",
+  "tags": [
+    "adventure"
+  ],
+  "pages": [
+    {
+      "id": "treasure-island-1",
+      "pageNumber": 1,
+      "backgroundImage": "assets/stories/treasure-island/page-1/background.webp",
+      "text": "Page 1 text goes here..."
+    },
+    {
+      "id": "treasure-island-2",
+      "pageNumber": 2,
+      "backgroundImage": "assets/stories/treasure-island/page-2/background.webp",
+      "text": "Page 2 text goes here..."
+    },
+    {
+      "id": "treasure-island-3",
+      "pageNumber": 3,
+      "backgroundImage": "assets/stories/treasure-island/page-3/background.webp",
+      "text": "Page 3 text goes here..."
+    },
+    {
+      "id": "treasure-island-4",
+      "pageNumber": 4,
+      "backgroundImage": "assets/stories/treasure-island/page-4/background.webp",
+      "text": "Page 4 text goes here..."
+    },
+    {
+      "id": "treasure-island-5",
+      "pageNumber": 5,
+      "backgroundImage": "assets/stories/treasure-island/page-5/background.webp",
+      "text": "Page 5 text goes here..."
+    },
+    {
+      "id": "treasure-island-6",
+      "pageNumber": 6,
+      "backgroundImage": "assets/stories/treasure-island/page-6/background.webp",
+      "text": "Page 6 text goes here..."
+    },
+    {
+      "id": "treasure-island-7",
+      "pageNumber": 7,
+      "backgroundImage": "assets/stories/treasure-island/page-7/background.webp",
+      "text": "Page 7 text goes here..."
+    },
+    {
+      "id": "treasure-island-8",
+      "pageNumber": 8,
+      "backgroundImage": "assets/stories/treasure-island/page-8/background.webp",
+      "text": "Page 8 text goes here..."
+    },
+    {
+      "id": "treasure-island-9",
+      "pageNumber": 9,
+      "backgroundImage": "assets/stories/treasure-island/page-9/background.webp",
+      "text": "Page 9 text goes here..."
+    },
+    {
+      "id": "treasure-island-10",
+      "pageNumber": 10,
+      "backgroundImage": "assets/stories/treasure-island/page-10/background.webp",
+      "text": "Page 10 text goes here..."
+    }
+  ]
+}

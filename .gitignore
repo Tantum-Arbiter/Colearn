@@ -1,4 +1,7 @@
 HELP.md
+STORY-CATALOG.md
+STORY-CMS-MOBILE-IMPLEMENTATION.md
+STORY-CMS-SETUP.md
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
@@ -108,3 +111,34 @@ logs
 gradle-app.setting
 !gradle-wrapper.jar
 !gradle-wrapper.properties
+
+# Environment files
+.env
+.env.local
+.env.*.local
+*.env
+
+# GCP credentials
+**/service-account-key*.json
+**/*-sa.json
+**/grow-with-freya-sa.json
+
+# Expo
+.expo/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+
+# Misc
+*.bak
+*.swp
+*~

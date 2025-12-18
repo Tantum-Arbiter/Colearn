@@ -16,7 +16,11 @@ export default {
       eas: {
         projectId: '439b6b2f-be5f-4d59-98eb-73befbd1973e'
       },
-
+      gatewayUrl: process.env.EXPO_PUBLIC_GATEWAY_URL,
+      googleIosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+      googleAndroidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+      googleWebClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+      appleClientId: process.env.EXPO_PUBLIC_APPLE_CLIENT_ID,
     },
     updates: {
       url: 'https://u.expo.dev/439b6b2f-be5f-4d59-98eb-73befbd1973e'
@@ -26,20 +30,22 @@ export default {
     },
     ios: {
       supportsTablet: true,
-      bundleIdentifier: IS_DEV
-        ? 'com.growwithfreya.app.dev'
-        : IS_PREVIEW
-        ? 'com.growwithfreya.app.preview'
-        : 'com.growwithfreya.app',
-      associatedDomains: ['applinks:growwithfreya.com'],
-
+      bundleIdentifier: 'com.growwithfreya.app',
+      associatedDomains: ['applinks:colearnwithfreya.co.uk'],
+      infoPlist: {
+        ITSAppUsesNonExemptEncryption: false,
+        CFBundleURLTypes: [
+          {
+            CFBundleURLSchemes: [
+              'com.growwithfreya.app',
+              'com.googleusercontent.apps.1086096096900-377j71ktgif6t78evg63218cj9de2cjs'
+            ]
+          }
+        ]
+      }
     },
     android: {
-      package: IS_DEV
-        ? 'com.growwithfreya.app.dev'
-        : IS_PREVIEW
-        ? 'com.growwithfreya.app.preview'
-        : 'com.growwithfreya.app',
+      package: 'com.growwithfreya.app',
       adaptiveIcon: {
         backgroundColor: '#E6F4FE',
         foregroundImage: './assets/images/android-icon-foreground.png',
@@ -64,9 +70,7 @@ export default {
       [
         'expo-notifications',
         {
-          icon: './assets/images/notification-icon.png',
           color: '#4ECDC4',
-          sounds: ['./assets/audio/notification.wav'],
           mode: 'production'
         }
       ],

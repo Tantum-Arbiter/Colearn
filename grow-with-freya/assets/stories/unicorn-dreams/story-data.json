@@ -1,0 +1,67 @@
+{
+  "id": "unicorn-dreams",
+  "title": "Unicorn Dreams",
+  "category": "fantasy",
+  "tag": "✨ Fantasy",
+  "emoji": "🦄",
+  "coverImage": "assets/stories/unicorn-dreams/cover/thumbnail.webp",
+  "isAvailable": true,
+  "ageRange": "3-6",
+  "duration": 8,
+  "description": "Journey to a magical land where unicorns make dreams come true.",
+  "isPremium": false,
+  "author": "Freya Stories",
+  "tags": [
+    "fantasy"
+  ],
+  "pages": [
+    {
+      "id": "unicorn-dreams-1",
+      "pageNumber": 1,
+      "backgroundImage": "assets/stories/unicorn-dreams/page-1/background.webp",
+      "text": "Page 1 text goes here..."
+    },
+    {
+      "id": "unicorn-dreams-2",
+      "pageNumber": 2,
+      "backgroundImage": "assets/stories/unicorn-dreams/page-2/background.webp",
+      "text": "Page 2 text goes here..."
+    },
+    {
+      "id": "unicorn-dreams-3",
+      "pageNumber": 3,
+      "backgroundImage": "assets/stories/unicorn-dreams/page-3/background.webp",
+      "text": "Page 3 text goes here..."
+    },
+    {
+      "id": "unicorn-dreams-4",
+      "pageNumber": 4,
+      "backgroundImage": "assets/stories/unicorn-dreams/page-4/background.webp",
+      "text": "Page 4 text goes here..."
+    },
+    {
+      "id": "unicorn-dreams-5",
+      "pageNumber": 5,
+      "backgroundImage": "assets/stories/unicorn-dreams/page-5/background.webp",
+      "text": "Page 5 text goes here..."
+    },
+    {
+      "id": "unicorn-dreams-6",
+      "pageNumber": 6,
+      "backgroundImage": "assets/stories/unicorn-dreams/page-6/background.webp",
+      "text": "Page 6 text goes here..."
+    },
+    {
+      "id": "unicorn-dreams-7",
+      "pageNumber": 7,
+      "backgroundImage": "assets/stories/unicorn-dreams/page-7/background.webp",
+      "text": "Page 7 text goes here..."
+    },
+    {
+      "id": "unicorn-dreams-8",
+      "pageNumber": 8,
+      "backgroundImage": "assets/stories/unicorn-dreams/page-8/background.webp",
+      "text": "Page 8 text goes here..."
+    }
+  ]
+}

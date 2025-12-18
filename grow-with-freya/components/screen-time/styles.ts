@@ -580,5 +580,34 @@ export const styles = StyleSheet.create({
     lineHeight: 22, // Increased line height for better readability
   },
 
+  // Save Button Styles
+  saveButton: {
+    backgroundColor: '#10B981',
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  saveButtonDisabled: {
+    backgroundColor: 'rgba(16, 185, 129, 0.5)',
+  },
+  saveButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  saveNote: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 14,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
 
 });

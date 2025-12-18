@@ -16,6 +16,11 @@ import { AudioDebugScreen } from '../debug/audio-debug-screen';
 import ScreenTimeService from '../../services/screen-time-service';
 import { useScreenTime } from '../screen-time/screen-time-provider';
 import { formatDurationCompact } from '../../utils/time-formatting';
+import { EditProfileScreen } from './edit-profile-screen';
+import { ApiClient } from '../../services/api-client';
+import { reminderService } from '../../services/reminder-service';
+import { Alert } from 'react-native';
+import * as Sentry from '@sentry/react-native';
 
 
 interface AccountScreenProps {
@@ -40,15 +45,18 @@ const generateStarPositions = () => {
 };
 
 export function AccountScreen({ onBack }: AccountScreenProps) {
-  const [currentView, setCurrentView] = useState<'main' | 'terms' | 'privacy' | 'screen-time' | 'notification-debug' | 'audio-debug'>('main');
+  const [currentView, setCurrentView] = useState<'main' | 'terms' | 'privacy' | 'screen-time' | 'notification-debug' | 'audio-debug' | 'edit-profile'>('main');
 
   const insets = useSafeAreaInsets();
   const {
+    userNickname,
+    userAvatarType,
     setOnboardingComplete,
     setLoginComplete,
     setAppReady,
     setShowLoginAfterOnboarding,
-    clearPersistedStorage
+    clearPersistedStorage,
+    clearUserProfile
   } = useAppStore();
 
   // Screen time context for resetting today's usage
@@ -71,22 +79,82 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
     opacity: starOpacity.value,
   }));
 
+  const handleLogout = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout? You will need to sign in again.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Clear authentication tokens
+              await ApiClient.logout();
+
+              // Clear user profile data from store
+              clearUserProfile();
+
+              // Clear reminders
+              await reminderService.clearAllReminders();
+
+              // Reset login state
+              setLoginComplete(false);
+              setShowLoginAfterOnboarding(true);
+
+              // Go back to main menu (which will redirect to login)
+              onBack();
+            } catch (error) {
+              console.error('Logout error:', error);
+              Alert.alert('Error', 'Failed to logout. Please try again.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleResetApp = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    // Clear persisted storage completely to ensure fresh start
-    await clearPersistedStorage();
+    Alert.alert(
+      'Reset App',
+      'This will clear ALL app data including your login, character, and settings. Are you sure?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Reset',
+          style: 'destructive',
+          onPress: async () => {
+            // Clear authentication tokens
+            await ApiClient.logout();
 
-    // Reset all state to initial values
-    setOnboardingComplete(false);
-    setLoginComplete(false);
-    setShowLoginAfterOnboarding(false);
-    setAppReady(false);
+            // Clear persisted storage completely to ensure fresh start
+            await clearPersistedStorage();
 
-    // Give a moment for state to update and persist
-    setTimeout(() => {
-      setAppReady(true);
-    }, 500);
+            // Reset all state to initial values
+            setOnboardingComplete(false);
+            setLoginComplete(false);
+            setShowLoginAfterOnboarding(false);
+            setAppReady(false);
+
+            // Give a moment for state to update and persist
+            setTimeout(() => {
+              setAppReady(true);
+            }, 500);
+          },
+        },
+      ]
+    );
   };
 
   const handleResetTodayUsage = async () => {
@@ -124,6 +192,10 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
 
   if (currentView === 'audio-debug') {
     return <AudioDebugScreen onBack={() => setCurrentView('main')} />;
+  }
+
+  if (currentView === 'edit-profile') {
+    return <EditProfileScreen onBack={() => setCurrentView('main')} />;
   }
 
   return (
@@ -209,24 +281,39 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
             </Pressable>
           </View>
 
-          {/* Character Section */}
+          {/* Profile Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>
-              Character
+              Profile
             </Text>
 
             <View style={styles.settingItem}>
               <Text style={styles.settingLabel}>
-                Character Name
+                Nickname
               </Text>
               <Text style={styles.settingValue}>
-                Your Child&apos;s Name
+                {userNickname || 'Not set'}
               </Text>
             </View>
 
-            <Pressable style={styles.button}>
+            <View style={styles.settingItem}>
+              <Text style={styles.settingLabel}>
+                Avatar Type
+              </Text>
+              <Text style={styles.settingValue}>
+                {userAvatarType ? (userAvatarType === 'boy' ? '👦 Boy' : '👧 Girl') : 'Not set'}
+              </Text>
+            </View>
+
+            <Pressable
+              style={styles.button}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setCurrentView('edit-profile');
+              }}
+            >
               <Text style={styles.buttonText}>
-                Edit Character (Coming Soon)
+                Edit Profile
               </Text>
             </Pressable>
           </View>
@@ -258,6 +345,22 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
             >
               <Text style={styles.buttonText}>
                 Privacy Policy
+              </Text>
+            </Pressable>
+          </View>
+
+          {/* Account Actions */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>
+              Account Actions
+            </Text>
+
+            <Pressable
+              style={[styles.button, styles.logoutButton]}
+              onPress={handleLogout}
+            >
+              <Text style={[styles.buttonText, styles.logoutButtonText]}>
+                Logout
               </Text>
             </Pressable>
           </View>
@@ -298,6 +401,19 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
             >
               <Text style={styles.buttonText}>
                 Reset Today&apos;s Screen Time ({formatDurationCompact(todayUsage)})
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.button}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                Sentry.captureException(new Error('Test crash from Developer Options'));
+                Alert.alert('Sentry Test', 'Test error sent to Sentry!');
+              }}
+            >
+              <Text style={styles.buttonText}>
+                Test Sentry Crash
               </Text>
             </Pressable>
 
@@ -407,6 +523,16 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  logoutButton: {
+    backgroundColor: 'rgba(255, 152, 0, 0.8)',
+  },
+  logoutButtonText: {
     color: 'white',
     fontWeight: 'bold',
     textShadowColor: 'rgba(0, 0, 0, 0.5)',

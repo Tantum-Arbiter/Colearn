@@ -1,0 +1,105 @@
+# Test profile configuration for faster, graceful shutdowns and quieter logs
+
+server:
+  shutdown: graceful
+
+spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 5s
+
+
+  mvc:
+    async:
+      request-timeout: 2s
+
+logging:
+  level:
+    root: INFO
+    org.springframework: WARN
+    com.app: INFO
+
+# CORS Configuration (permissive for testing)
+cors:
+  allowed-origins:
+    - http://localhost:*
+    - http://127.0.0.1:*
+    - exp://localhost:*
+    - exp://127.0.0.1:*
+    - http://host.docker.internal:*
+    - https://app.colearnwithfreya.co.uk
+    - https://www.colearnwithfreya.co.uk
+    - https://assets.colearnwithfreya.co.uk
+  allowed-methods:
+    - GET
+    - POST
+    - PUT
+    - PATCH
+    - DELETE
+    - OPTIONS
+  allowed-headers:
+    - Authorization
+    - Content-Type
+    - X-Device-ID
+    - X-Client-Platform
+    - X-Client-Version
+    - X-Request-ID
+    - Accept
+    - Origin
+  allow-credentials: true
+  max-age: 3600
+
+
+
+# Performance timeouts for gateway HTTP clients (enforced via TimeLimiter)
+performance:
+  connection:
+    default-timeout-seconds: 1
+  inbound:
+    request-timeout-seconds: 5
+
+# JWT Configuration (1 hour for tests to match test expectations)
+app:
+  jwt:
+    expiration: 3600  # 1 hour
+    refresh-expiration: 604800  # 7 days
+  security:
+    rate-limit:
+      enabled: true
+
+rate-limiting:
+  default-requests-per-minute: 6000
+  auth-requests-per-minute: 6000
+  api-requests-per-minute: 6000
+  cleanup-interval-minutes: 1
+
+# GCS Configuration (for asset storage testing)
+gcs:
+  project-id: ${GCS_PROJECT_ID:test-project}
+  bucket: ${GCS_BUCKET:colearnwithfreya-assets-test}
+  cdn-host: ${GCS_CDN_HOST:}
+  emulator-host: ${GCS_EMULATOR_HOST:}
+  signed-url-duration-minutes: 60
+
+# Resilience4j Circuit Breakers - fast settings for tests
+resilience4j:
+  circuitbreaker:
+    instances:
+      default:
+        failure-rate-threshold: 50
+        slow-call-rate-threshold: 100
+        slow-call-duration-threshold: 1s
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 6
+        minimum-number-of-calls: 4
+        wait-duration-in-open-state: 3s
+        permitted-number-of-calls-in-half-open-state: 2
+        automatic-transition-from-open-to-half-open-enabled: true
+        record-exceptions:
+          - java.util.concurrent.TimeoutException
+          - java.util.concurrent.CompletionException
+          - java.util.concurrent.ExecutionException
+          - java.net.SocketTimeoutException
+          - java.net.ConnectException
+          - org.springframework.web.client.ResourceAccessException
+          - org.springframework.web.client.RestClientException
+          - org.springframework.web.client.HttpServerErrorException
