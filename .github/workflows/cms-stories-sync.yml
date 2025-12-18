@@ -79,11 +79,45 @@ jobs:
           fi
           echo "No duplicate IDs found"
 
-  sync-to-firestore:
-    name: Sync to Firestore
+  sync-to-gcs:
+    name: Sync Assets to GCS
     runs-on: ubuntu-latest
     needs: validate-stories
     if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'false')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup gcloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Sync CMS assets to GCS (delta-sync)
+        run: |
+          echo "Syncing CMS story assets to GCS bucket..."
+
+          # gsutil rsync only uploads changed files (delta-sync)
+          # -r = recursive, -d = delete files not in source, -c = compare checksums
+          gsutil -m rsync -r -c \
+            scripts/cms-stories/ \
+            gs://colearnwithfreya-assets/stories/
+
+          echo "Asset sync complete"
+
+      - name: Show sync results
+        run: |
+          echo "Assets in bucket:"
+          gsutil ls -r gs://colearnwithfreya-assets/stories/ | head -50
+
+  sync-to-firestore:
+    name: Sync Metadata to Firestore
+    runs-on: ubuntu-latest
+    needs: [validate-stories, sync-to-gcs]
 
     steps:
       - name: Checkout code
@@ -98,24 +132,23 @@ jobs:
         working-directory: scripts
         run: npm install
 
-      - name: Upload stories to Firestore
+      - name: Upload story metadata to Firestore
         working-directory: scripts
         run: node upload-stories-to-firestore.js
         env:
           GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
           FIREBASE_PROJECT_ID: apt-icon-472307-b7
-          UPLOAD_MODE: ${{ github.event.inputs.upload_mode || 'all' }}
+          UPLOAD_MODE: cms-only
 
       - name: Create sync summary
         run: |
           echo "## CMS Stories Sync Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Mode**: ${{ github.event.inputs.upload_mode || 'all' }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "### Assets synced to GCS:" >> $GITHUB_STEP_SUMMARY
+          echo "Bucket: \`gs://colearnwithfreya-assets/stories/\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Stories synced:" >> $GITHUB_STEP_SUMMARY
+          echo "### Stories:" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          ls -1 scripts/cms-stories/*/story-data.json 2>/dev/null | xargs -I{} basename $(dirname {}) || echo "No CMS stories"
-          ls -1 grow-with-freya/assets/stories/*/story-data.json 2>/dev/null | xargs -I{} basename $(dirname {}) || echo "No bundled stories"
+          ls -1 scripts/cms-stories/ 2>/dev/null || echo "No CMS stories"
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
