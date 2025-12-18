@@ -4,14 +4,12 @@ on:
   push:
     branches: [main]
     paths:
-      - 'scripts/cms-stories/**'
-      - 'grow-with-freya/assets/stories/**/story-data.json'
+      - 'cms-assets/**'
       - 'scripts/story-schema.json'
   pull_request:
     branches: [main]
     paths:
-      - 'scripts/cms-stories/**'
-      - 'grow-with-freya/assets/stories/**/story-data.json'
+      - 'cms-assets/**'
       - 'scripts/story-schema.json'
   workflow_dispatch:
     inputs:
@@ -50,17 +48,7 @@ jobs:
       - name: Validate CMS stories
         run: |
           echo "Validating CMS stories..."
-          for file in scripts/cms-stories/*/story-data.json; do
-            if [ -f "$file" ]; then
-              echo "  Validating: $file"
-              ajv validate -s scripts/story-schema.json -d "$file" --strict=false
-            fi
-          done
-
-      - name: Validate bundled stories
-        run: |
-          echo "Validating bundled stories..."
-          for file in grow-with-freya/assets/stories/*/story-data.json; do
+          for file in cms-assets/*/story-data.json; do
             if [ -f "$file" ]; then
               echo "  Validating: $file"
               ajv validate -s scripts/story-schema.json -d "$file" --strict=false
@@ -70,7 +58,7 @@ jobs:
       - name: Check for duplicate story IDs
         run: |
           echo "Checking for duplicate story IDs..."
-          ids=$(cat scripts/cms-stories/*/story-data.json grow-with-freya/assets/stories/*/story-data.json 2>/dev/null | jq -r '.id' | sort)
+          ids=$(cat cms-assets/*/story-data.json 2>/dev/null | jq -r '.id' | sort)
           duplicates=$(echo "$ids" | uniq -d)
           if [ -n "$duplicates" ]; then
             echo "Duplicate story IDs found:"
@@ -102,9 +90,9 @@ jobs:
           echo "Syncing CMS story assets to GCS bucket..."
 
           # gsutil rsync only uploads changed files (delta-sync)
-          # -r = recursive, -d = delete files not in source, -c = compare checksums
+          # -r = recursive, -c = compare checksums
           gsutil -m rsync -r -c \
-            scripts/cms-stories/ \
+            cms-assets/ \
             gs://colearnwithfreya-assets/stories/
 
           echo "Asset sync complete"
@@ -149,6 +137,6 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Stories:" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          ls -1 scripts/cms-stories/ 2>/dev/null || echo "No CMS stories"
+          ls -1 cms-assets/ 2>/dev/null || echo "No CMS stories"
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 

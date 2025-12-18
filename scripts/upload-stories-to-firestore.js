@@ -13,7 +13,7 @@ const crypto = require('crypto');
 
 // Configuration
 const BUNDLED_STORIES_DIR = path.join(__dirname, '../grow-with-freya/assets/stories');
-const CMS_STORIES_DIR = path.join(__dirname, 'cms-stories');
+const CMS_STORIES_DIR = path.join(__dirname, '../cms-assets');
 const SERVICE_ACCOUNT_PATH = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH;
 const SERVICE_ACCOUNT_JSON = process.env.GCP_SA_KEY; // Base64 or raw JSON for CI
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'apt-icon-472307-b7';
