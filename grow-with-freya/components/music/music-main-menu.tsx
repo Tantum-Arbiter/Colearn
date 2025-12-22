@@ -22,7 +22,6 @@ import { BearTopImage } from '@/components/main-menu/animated-components';
 import { mainMenuStyles } from '@/components/main-menu/styles';
 import { Fonts } from '@/constants/theme';
 import { PageHeader } from '@/components/ui/page-header';
-import { useAppStore } from '@/store/app-store';
 import { useAccessibility } from '@/hooks/use-accessibility';
 
 

@@ -18,7 +18,6 @@ import { getThemeById } from '@/data/emotion-themes';
 import { Fonts } from '@/constants/theme';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
-import { useAppStore } from '@/store/app-store';
 
 
 interface EmotionsMenuScreenProps {

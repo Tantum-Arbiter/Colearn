@@ -773,7 +773,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
               }
             }}
           >
-            <Text style={[styles.settingsButtonText, { fontSize: scaledFontSize(18) }]}>☰</Text>
+            <Text style={[styles.settingsButtonText, { fontSize: scaledFontSize(24) }]}>☰</Text>
           </Pressable>
         </View>
 
@@ -820,8 +820,8 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
                 setActiveSubmenu('main');
               }}
             >
-              <Text style={[styles.submenuBackArrow, { fontSize: scaledFontSize(14) }]}>‹</Text>
               <Text style={[styles.settingsMenuTitle, { fontSize: scaledFontSize(14) }]}>Font / Button Size</Text>
+              <Text style={[styles.menuItemArrow, { fontSize: scaledFontSize(14) }]}>›</Text>
             </Pressable>
             <View style={styles.textSizeOptionsRow}>
               {TEXT_SIZE_OPTIONS.map((option) => (
@@ -1125,12 +1125,8 @@ const styles = StyleSheet.create({
   submenuHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 10,
-  },
-  submenuBackArrow: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-    marginRight: 8,
   },
   textSizeOptionsRow: {
     flexDirection: 'row',

@@ -104,7 +104,7 @@ export function AudioDebugScreen({ onBack }: AudioDebugScreenProps) {
     } catch (error) {
       addTestResult(`[ERROR] Failed to get system info: ${error}`);
     }
-  }, [isLoaded, isPlaying, volume, isMuted, backgroundMusic, addTestResult]);
+  }, [isLoaded, isPlaying, volume, isMuted, addTestResult]);
 
   useEffect(() => {
     getSystemInfo();

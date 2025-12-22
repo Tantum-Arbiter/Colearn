@@ -196,7 +196,7 @@ function AppContent() {
     if (!isAppReady) {
       console.log('App not ready, showing splash');
     }
-  }, []);
+  }, [isAppReady, hasCompletedOnboarding, showLoginAfterOnboarding, currentView]);
 
   useEffect(() => {
     const checkAuthAndSetView = async () => {
@@ -262,7 +262,7 @@ function AppContent() {
 
     const subscription = AppState.addEventListener('change', handleAppStateChange);
     return () => subscription?.remove();
-  }, [hasCompletedOnboarding, isGuestMode]);
+  }, [hasCompletedOnboarding, isGuestMode, setShowLoginAfterOnboarding]);
 
   // Start background music once when transitioning from splash (only once!)
   useEffect(() => {

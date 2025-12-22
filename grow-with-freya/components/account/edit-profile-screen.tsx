@@ -12,7 +12,7 @@ interface EditProfileScreenProps {
 
 export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
   const insets = useSafeAreaInsets();
-  const { userNickname, userAvatarType, userAvatarId, setUserProfile } = useAppStore();
+  const { userNickname, userAvatarType, userAvatarId, isGuestMode, setUserProfile } = useAppStore();
   const { scaledFontSize, scaledButtonSize, scaledPadding } = useAccessibility();
 
   const [nickname, setNickname] = useState(userNickname || '');
@@ -35,17 +35,26 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
     setIsSaving(true);
 
     try {
-      const profile = await ApiClient.updateProfile({
-        nickname: nickname.trim(),
-        avatarType,
-        avatarId,
-      });
+      if (isGuestMode) {
+        // Guest mode: save locally only, no API call
+        setUserProfile(nickname.trim(), avatarType, avatarId);
+        Alert.alert('Success', 'Profile saved locally!', [
+          { text: 'OK', onPress: onBack }
+        ]);
+      } else {
+        // Signed in: save to GCP
+        const profile = await ApiClient.updateProfile({
+          nickname: nickname.trim(),
+          avatarType,
+          avatarId,
+        });
 
-      setUserProfile(profile.nickname, profile.avatarType, profile.avatarId);
+        setUserProfile(profile.nickname, profile.avatarType, profile.avatarId);
 
-      Alert.alert('Success', 'Profile updated successfully!', [
-        { text: 'OK', onPress: onBack }
-      ]);
+        Alert.alert('Success', 'Profile updated successfully!', [
+          { text: 'OK', onPress: onBack }
+        ]);
+      }
     } catch (error: any) {
       console.error('Failed to update profile:', error);
       Alert.alert('Error', 'Failed to update profile. Please try again.');

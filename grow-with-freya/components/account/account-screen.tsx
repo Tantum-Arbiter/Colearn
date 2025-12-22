@@ -44,8 +44,20 @@ const generateStarPositions = () => {
   return stars;
 };
 
+type Language = 'en' | 'pl' | 'es' | 'de';
+
+const LANGUAGES: { code: Language; name: string; flag: string }[] = [
+  { code: 'en', name: 'English', flag: '🇬🇧' },
+  { code: 'pl', name: 'Polski', flag: '🇵🇱' },
+  { code: 'es', name: 'Español', flag: '🇪🇸' },
+  { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+];
+
 export function AccountScreen({ onBack }: AccountScreenProps) {
   const [currentView, setCurrentView] = useState<'main' | 'terms' | 'privacy' | 'screen-time' | 'notification-debug' | 'audio-debug' | 'edit-profile'>('main');
+  const [showGrayscaleInfo, setShowGrayscaleInfo] = useState(false);
+  const [showLanguageOverlay, setShowLanguageOverlay] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState<Language>('en');
 
   const insets = useSafeAreaInsets();
   const {
@@ -269,6 +281,33 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
             </View>
 
             <Pressable
+              style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}
+              onPress={isGuestMode ? handleLogin : handleLogout}
+            >
+              <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>
+                {isGuestMode ? 'Login' : 'Logout'}
+              </Text>
+              <Text style={[styles.settingValue, { fontSize: scaledFontSize(16) }]}>
+                {isGuestMode ? '→' : '→'}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setShowLanguageOverlay(true);
+              }}
+            >
+              <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>
+                Language
+              </Text>
+              <Text style={[styles.settingValue, { fontSize: scaledFontSize(16) }]}>
+                {LANGUAGES.find(l => l.code === selectedLanguage)?.flag} {LANGUAGES.find(l => l.code === selectedLanguage)?.name} →
+              </Text>
+            </Pressable>
+
+            <Pressable
               style={[styles.button, { paddingVertical: scaledPadding(12), minHeight: scaledButtonSize(44) }]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -365,6 +404,31 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
             <Text style={[styles.accessibilityHint, { fontSize: scaledFontSize(12) }]} numberOfLines={2} adjustsFontSizeToFit>
               Adjust text and button sizes for better visibility
             </Text>
+
+            <Pressable
+              style={styles.grayscaleInfoBox}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setShowGrayscaleInfo(!showGrayscaleInfo);
+              }}
+            >
+              <Text style={[styles.grayscaleInfoTitle, { fontSize: scaledFontSize(14) }]}>
+                Grayscale / High Contrast {showGrayscaleInfo ? '▼' : '▶'}
+              </Text>
+              {showGrayscaleInfo && (
+                <>
+                  <Text style={[styles.grayscaleInfoText, { fontSize: scaledFontSize(12) }]}>
+                    For black & white mode, use your device's built-in accessibility settings:
+                  </Text>
+                  <Text style={[styles.grayscaleInfoPath, { fontSize: scaledFontSize(11) }]}>
+                    <Text style={styles.platformBold}>iOS:</Text> Settings → Accessibility → Display & Text Size → Color Filters → Grayscale
+                  </Text>
+                  <Text style={[styles.grayscaleInfoPath, { fontSize: scaledFontSize(11) }]}>
+                    <Text style={styles.platformBold}>Android:</Text> Settings → Accessibility → Color adjustment → Grayscale
+                  </Text>
+                </>
+              )}
+            </Pressable>
           </View>
 
           {/* Privacy & Legal */}
@@ -394,22 +458,6 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
             >
               <Text style={[styles.buttonText, { fontSize: scaledFontSize(16) }]}>
                 Privacy Policy
-              </Text>
-            </Pressable>
-          </View>
-
-          {/* Account Actions */}
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>
-              Account Actions
-            </Text>
-
-            <Pressable
-              style={[styles.button, { paddingVertical: scaledPadding(12), minHeight: scaledButtonSize(44) }, isGuestMode ? styles.loginButton : styles.logoutButton]}
-              onPress={isGuestMode ? handleLogin : handleLogout}
-            >
-              <Text style={[styles.buttonText, { fontSize: scaledFontSize(16) }, isGuestMode ? styles.loginButtonText : styles.logoutButtonText]}>
-                {isGuestMode ? 'Login' : 'Logout'}
               </Text>
             </Pressable>
           </View>
@@ -477,7 +525,46 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
           </View>
         </ScrollView>
 
-
+        {/* Language Selection Overlay */}
+        {showLanguageOverlay && (
+          <Pressable
+            style={styles.languageOverlay}
+            onPress={() => setShowLanguageOverlay(false)}
+          >
+            <Pressable
+              style={styles.languageModal}
+              onPress={(e) => e.stopPropagation()}
+            >
+              <Text style={[styles.languageModalTitle, { fontSize: scaledFontSize(18) }]}>
+                Select Language
+              </Text>
+              {LANGUAGES.map((lang) => (
+                <Pressable
+                  key={lang.code}
+                  style={[
+                    styles.languageOption,
+                    selectedLanguage === lang.code && styles.languageOptionSelected,
+                  ]}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setSelectedLanguage(lang.code);
+                    setShowLanguageOverlay(false);
+                  }}
+                >
+                  <Text style={[styles.languageFlag, { fontSize: scaledFontSize(24) }]}>
+                    {lang.flag}
+                  </Text>
+                  <Text style={[styles.languageName, { fontSize: scaledFontSize(16) }]}>
+                    {lang.name}
+                  </Text>
+                  {selectedLanguage === lang.code && (
+                    <Text style={[styles.languageCheck, { fontSize: scaledFontSize(18) }]}>✓</Text>
+                  )}
+                </Pressable>
+              ))}
+            </Pressable>
+          </Pressable>
+        )}
 
       </LinearGradient>
     </View>
@@ -645,5 +732,84 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontStyle: 'italic',
   },
-
+  grayscaleInfoBox: {
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  grayscaleInfoTitle: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  grayscaleInfoText: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 8,
+    lineHeight: 18,
+  },
+  grayscaleInfoPath: {
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontStyle: 'italic',
+    marginBottom: 4,
+    lineHeight: 16,
+  },
+  platformBold: {
+    fontWeight: 'bold',
+    fontStyle: 'normal',
+    color: '#FFFFFF',
+  },
+  languageOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  languageModal: {
+    backgroundColor: 'rgba(30, 30, 60, 0.95)',
+    borderRadius: 20,
+    padding: 20,
+    width: '80%',
+    maxWidth: 300,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  languageModalTitle: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  languageOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+    marginBottom: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  languageOptionSelected: {
+    backgroundColor: 'rgba(100, 150, 255, 0.3)',
+    borderWidth: 1,
+    borderColor: 'rgba(100, 150, 255, 0.5)',
+  },
+  languageFlag: {
+    marginRight: 12,
+  },
+  languageName: {
+    color: '#FFFFFF',
+    flex: 1,
+  },
+  languageCheck: {
+    color: '#4CAF50',
+    fontWeight: 'bold',
+  },
 });

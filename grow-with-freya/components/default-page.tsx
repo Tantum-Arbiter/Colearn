@@ -14,7 +14,6 @@ import { BearTopImage } from './main-menu/animated-components';
 import { mainMenuStyles } from './main-menu/styles';
 
 import { MusicControl } from '@/components/ui/music-control';
-import { useAppStore } from '@/store/app-store';
 
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
