@@ -1,9 +1,6 @@
 import { useMemo } from 'react';
-import { Dimensions } from 'react-native';
+import { useWindowDimensions } from 'react-native';
 import { useAppStore } from '@/store/app-store';
-
-const { width: screenWidth } = Dimensions.get('window');
-const isTablet = screenWidth >= 768;
 
 export interface AccessibilityScale {
   textSizeScale: number;
@@ -38,29 +35,31 @@ export const TEXT_SIZE_OPTIONS = [
 
 export function useAccessibility(): AccessibilityScale {
   const textSizeScale = useAppStore((state) => state.textSizeScale);
-  
+  const { width: screenWidth } = useWindowDimensions();
+  const isTablet = screenWidth >= 768;
+
   return useMemo(() => {
     // Apply tablet scale multiplier on top of user preference
     const tabletMultiplier = isTablet ? 1.15 : 1.0;
     const effectiveScale = textSizeScale * tabletMultiplier;
-    
+
     const scaledFontSize = (baseSize: number): number => {
       return Math.round(baseSize * effectiveScale);
     };
-    
+
     const scaledButtonSize = (baseSize: number): number => {
       // Button sizes scale slightly less aggressively than text
       const buttonScale = 1 + (textSizeScale - 1) * 0.6;
       const effectiveButtonScale = buttonScale * tabletMultiplier;
       return Math.round(baseSize * effectiveButtonScale);
     };
-    
+
     const scaledPadding = (basePadding: number): number => {
       // Padding scales even less to maintain layout proportions
       const paddingScale = 1 + (textSizeScale - 1) * 0.4;
       return Math.round(basePadding * paddingScale * (isTablet ? 1.1 : 1.0));
     };
-    
+
     // Pre-calculate common font sizes
     const fontSizes = {
       tiny: scaledFontSize(12),
@@ -70,14 +69,14 @@ export function useAccessibility(): AccessibilityScale {
       title: scaledFontSize(24),
       largeTitle: scaledFontSize(34),
     };
-    
+
     // Pre-calculate button sizes (touch target minimums)
     const buttonSizes = {
       small: scaledButtonSize(36),
       medium: scaledButtonSize(44),
       large: scaledButtonSize(56),
     };
-    
+
     return {
       textSizeScale,
       scaledFontSize,
@@ -86,13 +85,22 @@ export function useAccessibility(): AccessibilityScale {
       fontSizes,
       buttonSizes,
     };
-  }, [textSizeScale]);
+  }, [textSizeScale, isTablet]);
+}
+
+// Helper to determine tablet at module level for non-hook contexts
+function getIsTablet(): boolean {
+  // This is a fallback for non-hook contexts - uses initial dimensions
+  // For reactive updates, always use the useAccessibility hook
+  const { Dimensions } = require('react-native');
+  const { width } = Dimensions.get('window');
+  return width >= 768;
 }
 
 // Export a utility function for getting scaled size without the hook
 // (useful in StyleSheet.create which runs outside components)
 export function getBaseScaledSize(baseSize: number, scale: number): number {
-  const tabletMultiplier = isTablet ? 1.15 : 1.0;
+  const tabletMultiplier = getIsTablet() ? 1.15 : 1.0;
   return Math.round(baseSize * scale * tabletMultiplier);
 }
 

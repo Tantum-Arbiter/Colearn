@@ -19,7 +19,8 @@ import { useStoryTransition } from '@/contexts/story-transition-context';
 import { StoryCompletionScreen } from './story-completion-screen';
 import { MusicControl } from '../ui/music-control';
 import { useAppStore } from '@/store/app-store';
-import { useAccessibility } from '@/hooks/use-accessibility';
+import { useAccessibility, TEXT_SIZE_OPTIONS } from '@/hooks/use-accessibility';
+import * as Haptics from 'expo-haptics';
 
 
 
@@ -40,9 +41,12 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
 
   const [preloadedPages, setPreloadedPages] = useState<Set<number>>(new Set());
   const [showCompletionScreen, setShowCompletionScreen] = useState(false);
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+  const [activeSubmenu, setActiveSubmenu] = useState<'main' | 'fontSize' | null>(null);
 
   // Accessibility scaling
   const { scaledFontSize, scaledButtonSize, textSizeScale } = useAccessibility();
+  const setTextSizeScale = useAppStore((state) => state.setTextSizeScale);
 
   // Track if text box needs scrolling (for larger text sizes)
   const [canScrollText, setCanScrollText] = useState(false);
@@ -528,14 +532,15 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
               />
             )}
 
-            {/* Page indicator overlay - Top Left (hide on cover page and next page) */}
+            {/* Page indicator overlay - Top Left, after exit button (hide on cover page and next page) */}
             {!isNextPage && page.pageNumber > 0 && (
               <View style={[styles.pageIndicatorOverlay, {
-                top: Math.max(insets.top + 5, 20),
-                left: Math.max(insets.left + 5, 20),
-                paddingHorizontal: scaledButtonSize(8),
-                paddingVertical: scaledButtonSize(4),
-                borderRadius: scaledButtonSize(12),
+                top: Math.max(insets.top + 5, 20) + scaledButtonSize(50) / 2 - scaledButtonSize(16),
+                left: Math.max(insets.left + 5, 20) + scaledButtonSize(50) + 12,
+                height: scaledButtonSize(32),
+                minWidth: scaledButtonSize(50),
+                paddingHorizontal: scaledButtonSize(12),
+                borderRadius: scaledButtonSize(16),
               }]}>
                 <Text style={[styles.pageIndicatorText, { fontSize: scaledFontSize(14) }]}>
                   {page.pageNumber}/{pages.length - 1}
@@ -721,19 +726,18 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       ]}>
 
 
-        {/* Top Right Controls - Exit and Sound */}
-        <View style={[styles.topRightControls, {
+        {/* Top Left Controls - Exit Button (aligned with bottom back button) */}
+        <View style={[styles.topLeftControls, {
           paddingTop: Math.max(insets.top + 5, 20),
-          paddingRight: Math.max(insets.right + 5, 20)
+          paddingLeft: Math.max(insets.left + 5, 20)
         }]}>
-          <MusicControl size={28} color="white" />
           <Pressable
             style={[
               styles.exitButton,
               {
-                width: scaledButtonSize(48),
-                height: scaledButtonSize(48),
-                borderRadius: scaledButtonSize(24),
+                width: scaledButtonSize(50),
+                height: scaledButtonSize(50),
+                borderRadius: scaledButtonSize(25),
               }
             ]}
             onPress={handleExit}
@@ -741,6 +745,113 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
             <Text style={[styles.exitButtonText, { fontSize: scaledFontSize(20) }]}>✕</Text>
           </Pressable>
         </View>
+
+        {/* Top Right Controls - Sound and Settings (aligned with bottom next button) */}
+        <View style={[styles.topRightControls, {
+          paddingTop: Math.max(insets.top + 5, 20),
+          paddingRight: Math.max(insets.right + 5, 20)
+        }]}>
+          <MusicControl size={28} color="white" />
+          {/* Settings/Burger Menu Button */}
+          <Pressable
+            style={[
+              styles.settingsButton,
+              {
+                width: scaledButtonSize(50),
+                height: scaledButtonSize(50),
+                borderRadius: scaledButtonSize(25),
+              }
+            ]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              if (showSettingsMenu) {
+                setShowSettingsMenu(false);
+                setActiveSubmenu(null);
+              } else {
+                setShowSettingsMenu(true);
+                setActiveSubmenu('main');
+              }
+            }}
+          >
+            <Text style={[styles.settingsButtonText, { fontSize: scaledFontSize(18) }]}>☰</Text>
+          </Pressable>
+        </View>
+
+        {/* Settings Menu Overlay - closes menu when tapping outside */}
+        {showSettingsMenu && (
+          <Pressable
+            style={styles.settingsOverlay}
+            onPress={() => {
+              setShowSettingsMenu(false);
+              setActiveSubmenu(null);
+            }}
+          />
+        )}
+
+        {/* Settings Menu Dropdown - Main Menu */}
+        {showSettingsMenu && activeSubmenu === 'main' && (
+          <View style={[styles.settingsMenu, {
+            top: Math.max(insets.top + 5, 20) + scaledButtonSize(50) + 10,
+            right: Math.max(insets.right + 5, 20),
+          }]}>
+            <Pressable
+              style={styles.menuItem}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setActiveSubmenu('fontSize');
+              }}
+            >
+              <Text style={[styles.menuItemText, { fontSize: scaledFontSize(14) }]}>Font / Button Size</Text>
+              <Text style={[styles.menuItemArrow, { fontSize: scaledFontSize(14) }]}>›</Text>
+            </Pressable>
+          </View>
+        )}
+
+        {/* Settings Menu Dropdown - Font Size Options */}
+        {showSettingsMenu && activeSubmenu === 'fontSize' && (
+          <View style={[styles.settingsMenu, {
+            top: Math.max(insets.top + 5, 20) + scaledButtonSize(50) + 10,
+            right: Math.max(insets.right + 5, 20),
+          }]}>
+            <Pressable
+              style={styles.submenuHeader}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setActiveSubmenu('main');
+              }}
+            >
+              <Text style={[styles.submenuBackArrow, { fontSize: scaledFontSize(14) }]}>‹</Text>
+              <Text style={[styles.settingsMenuTitle, { fontSize: scaledFontSize(14) }]}>Font / Button Size</Text>
+            </Pressable>
+            <View style={styles.textSizeOptionsRow}>
+              {TEXT_SIZE_OPTIONS.map((option) => (
+                <Pressable
+                  key={option.value}
+                  style={[
+                    styles.textSizeOption,
+                    textSizeScale === option.value && styles.textSizeOptionSelected,
+                  ]}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setTextSizeScale(option.value);
+                    setShowSettingsMenu(false);
+                    setActiveSubmenu(null);
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.textSizeOptionText,
+                      textSizeScale === option.value && styles.textSizeOptionTextSelected,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {option.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        )}
 
         {/* Simple Single Page - Just Like Cover Tap */}
         <Animated.View style={[styles.pageContent, currentPageAnimatedStyle]}>
@@ -901,10 +1012,19 @@ const styles = StyleSheet.create({
     zIndex: 10, // Ensure UI controls appear above all page content
     pointerEvents: 'box-none', // Allow touches to pass through to page content where there are no controls
   },
+  topLeftControls: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    zIndex: 10,
+  },
   topRightControls: {
     position: 'absolute',
     top: 0,
-    right: 20,
+    right: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
@@ -917,26 +1037,127 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   exitButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.25)', // Glass morphism transparency
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
     borderRadius: 20,
     width: 40,
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)', // Subtle border for glass effect
+    borderColor: 'rgba(255, 255, 255, 0.3)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 6,
-    // Glass morphism effect (backdropFilter not supported in React Native)
     overflow: 'hidden',
   },
   exitButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFFFFF', // White text
+    color: '#FFFFFF',
+  },
+  settingsButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+    overflow: 'hidden',
+  },
+  settingsButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  settingsOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 50,
+  },
+  settingsMenu: {
+    position: 'absolute',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    borderRadius: 16,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+    zIndex: 100,
+    overflow: 'hidden',
+  },
+  settingsMenuTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
+  menuItemText: {
+    color: '#FFFFFF',
+    fontWeight: '500',
+  },
+  menuItemArrow: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    marginLeft: 12,
+  },
+  submenuHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  submenuBackArrow: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    marginRight: 8,
+  },
+  textSizeOptionsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  textSizeOption: {
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  textSizeOptionSelected: {
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+  },
+  textSizeOptionText: {
+    color: '#FFFFFF',
+    fontWeight: '500',
+    fontSize: 12,
+  },
+  textSizeOptionTextSelected: {
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
   // Transition screen styles
   transitionContainer: {
@@ -1026,19 +1247,18 @@ const styles = StyleSheet.create({
   },
   pageIndicatorOverlay: {
     position: 'absolute',
-    backgroundColor: 'rgba(255, 255, 255, 0.25)', // Glass morphism transparency
-    paddingHorizontal: 8, // Reduced padding for smaller indicator
-    paddingVertical: 4, // Reduced padding for smaller indicator
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)', // Subtle border for glass effect
+    borderColor: 'rgba(255, 255, 255, 0.3)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 6,
-    // Glass morphism effect (backdropFilter not supported in React Native)
     overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
     zIndex: 3,
   },
   imagePlaceholder: {

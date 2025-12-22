@@ -28,12 +28,19 @@ export const MusicControl: React.FC<MusicControlProps> = ({
   const backgroundSize = scaledButtonSize(48);
 
   // For white color, use a more visible semi-transparent background
+  // Validates hex color format before appending opacity
   const getBackgroundColor = () => {
     if (!showBackground) return 'transparent';
     if (color === '#FFFFFF' || color === 'white' || color === '#FFF') {
       return 'rgba(255, 255, 255, 0.2)';
     }
-    return `${color}20`;
+    // Validate hex color format (# followed by 3 or 6 hex digits)
+    const isValidHex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(color);
+    if (isValidHex) {
+      return `${color}20`;
+    }
+    // Fallback for non-hex colors
+    return 'rgba(74, 144, 226, 0.12)';
   };
 
   return (
