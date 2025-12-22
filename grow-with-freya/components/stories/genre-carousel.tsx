@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, ListRenderItem, ViewToken } from 'rea
 import { Story, StoryCategory, STORY_TAGS } from '@/types/story';
 import { StoryThumbnail } from './story-thumbnail';
 import { Fonts } from '@/constants/theme';
+import { useAccessibility } from '@/hooks/use-accessibility';
 
 interface GenreCarouselProps {
   genre: StoryCategory;
@@ -24,6 +25,7 @@ export const GenreCarousel: React.FC<GenreCarouselProps> = ({
   onStoryPress,
 }) => {
   const [viewableItems, setViewableItems] = useState<Set<string>>(new Set());
+  const { scaledFontSize } = useAccessibility();
 
   const genreInfo = STORY_TAGS[genre];
 
@@ -83,10 +85,10 @@ export const GenreCarousel: React.FC<GenreCarouselProps> = ({
       {/* Genre Header */}
       <View style={styles.header}>
         <View style={styles.titleContainer}>
-          <Text style={styles.emoji}>{genreInfo.emoji}</Text>
-          <Text style={styles.title}>{genreInfo.label}</Text>
+          <Text style={[styles.emoji, { fontSize: scaledFontSize(20) }]}>{genreInfo.emoji}</Text>
+          <Text style={[styles.title, { fontSize: scaledFontSize(18) }]}>{genreInfo.label}</Text>
         </View>
-        <Text style={styles.count}>{genreStories.length} stories</Text>
+        <Text style={[styles.count, { fontSize: scaledFontSize(12) }]}>{genreStories.length} stories</Text>
       </View>
 
       {/* Stories Carousel */}

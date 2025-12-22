@@ -22,6 +22,8 @@ import { SecureStorage } from '@/services/secure-storage';
 import { ApiClient } from '@/services/api-client';
 import { ProfileSyncService } from '@/services/profile-sync-service';
 import { StorySyncService } from '@/services/story-sync-service';
+import { useAppStore } from '@/store/app-store';
+import { useAccessibility } from '@/hooks/use-accessibility';
 
 const { width } = Dimensions.get('window');
 
@@ -32,10 +34,13 @@ interface LoginScreenProps {
 
 export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
   const insets = useSafeAreaInsets();
+  const { scaledFontSize, scaledButtonSize, scaledPadding } = useAccessibility();
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isAppleLoading, setIsAppleLoading] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [currentView, setCurrentView] = useState<'main' | 'terms' | 'privacy'>('main');
+
+  const { setGuestMode } = useAppStore();
 
   // Google OAuth hook
   const [, response, promptAsync] = Google.useAuthRequest(
@@ -57,6 +62,9 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
           );
           await SecureStorage.storeUserData(result.user);
           console.log('[LoginScreen] Login complete, tokens stored');
+
+          // Clear guest mode since user is now authenticated
+          setGuestMode(false);
 
           setIsGoogleLoading(false);
           transitionToMainMenu(onSuccess);
@@ -186,6 +194,9 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
       );
       await SecureStorage.storeUserData(result.user);
 
+      // Clear guest mode since user is now authenticated
+      setGuestMode(false);
+
       try {
         const profile = await ApiClient.getProfile();
         await ProfileSyncService.fullSync(profile);
@@ -223,6 +234,9 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
   };
 
   const handleSkip = () => {
+    // Set guest mode - no backend calls will be made
+    setGuestMode(true);
+    console.log('[LoginScreen] Continuing as guest - no backend calls');
     const callback = onSkip || onSuccess;
     transitionToMainMenu(callback);
   };
@@ -275,10 +289,10 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
         {/* Header */}
         <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
           <Animated.View style={[styles.titleContainer, titleAnimatedStyle]}>
-            <ThemedText type="title" style={styles.title}>
+            <ThemedText type="title" style={[styles.title, { fontSize: scaledFontSize(28) }]}>
               Welcome to{'\n'}Grow with Freya
             </ThemedText>
-            <ThemedText style={styles.subtitle}>
+            <ThemedText style={[styles.subtitle, { fontSize: scaledFontSize(16) }]}>
               Sign in to save your child&apos;s progress and sync across devices
             </ThemedText>
           </Animated.View>
@@ -302,6 +316,7 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
             style={({ pressed }) => [
               styles.loginButton,
               styles.googleButton,
+              { minHeight: scaledButtonSize(50), paddingVertical: scaledPadding(14), paddingHorizontal: scaledPadding(20) },
               pressed && styles.buttonPressed,
               (isGoogleLoading || isAppleLoading) && styles.buttonDisabled,
             ]}
@@ -309,8 +324,8 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
             disabled={isGoogleLoading || isAppleLoading}
           >
             <View style={styles.buttonContent}>
-              <FontAwesome5 name="google" size={18} color="#4285F4" style={styles.iconSpacing} />
-              <ThemedText style={[styles.buttonText, styles.googleButtonText]}>
+              <FontAwesome5 name="google" size={scaledButtonSize(18)} color="#4285F4" style={styles.iconSpacing} />
+              <ThemedText style={[styles.buttonText, styles.googleButtonText, { fontSize: scaledFontSize(16) }]}>
                 {isGoogleLoading ? 'Signing in...' : 'Continue with Google'}
               </ThemedText>
             </View>
@@ -321,6 +336,7 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
               style={({ pressed }) => [
                 styles.loginButton,
                 styles.appleButton,
+                { minHeight: scaledButtonSize(50), paddingVertical: scaledPadding(14), paddingHorizontal: scaledPadding(20) },
                 pressed && styles.buttonPressed,
                 (isGoogleLoading || isAppleLoading) && styles.buttonDisabled,
               ]}
@@ -328,8 +344,8 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
               disabled={isGoogleLoading || isAppleLoading}
             >
               <View style={styles.buttonContent}>
-                <FontAwesome5 name="apple" size={18} color="#FFFFFF" style={styles.iconSpacing} />
-                <ThemedText style={[styles.buttonText, styles.appleButtonText]}>
+                <FontAwesome5 name="apple" size={scaledButtonSize(18)} color="#FFFFFF" style={styles.iconSpacing} />
+                <ThemedText style={[styles.buttonText, styles.appleButtonText, { fontSize: scaledFontSize(16) }]}>
                   {isAppleLoading ? 'Signing in...' : 'Continue with Apple'}
                 </ThemedText>
               </View>
@@ -340,11 +356,12 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
           <Pressable
             style={({ pressed }) => [
               styles.skipButton,
+              { minHeight: scaledButtonSize(44), paddingVertical: scaledPadding(12) },
               pressed && styles.skipButtonPressed,
             ]}
             onPress={handleSkip}
           >
-            <ThemedText style={styles.skipButtonText}>
+            <ThemedText style={[styles.skipButtonText, { fontSize: scaledFontSize(14) }]}>
               Continue without signing in
             </ThemedText>
           </Pressable>
@@ -353,13 +370,13 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
         {/* Footer */}
         <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
           <View style={styles.footerTextContainer}>
-            <ThemedText style={styles.footerText}>By continuing, you agree to our </ThemedText>
+            <ThemedText style={[styles.footerText, { fontSize: scaledFontSize(12) }]}>By continuing, you agree to our </ThemedText>
             <Pressable onPress={handleTermsPress} style={styles.linkPressable}>
-              <ThemedText style={styles.legalLink}>Terms & Conditions</ThemedText>
+              <ThemedText style={[styles.legalLink, { fontSize: scaledFontSize(12) }]}>Terms & Conditions</ThemedText>
             </Pressable>
-            <ThemedText style={styles.footerText}> and </ThemedText>
+            <ThemedText style={[styles.footerText, { fontSize: scaledFontSize(12) }]}> and </ThemedText>
             <Pressable onPress={handlePrivacyPress} style={styles.linkPressable}>
-              <ThemedText style={styles.legalLink}>Privacy Policy</ThemedText>
+              <ThemedText style={[styles.legalLink, { fontSize: scaledFontSize(12) }]}>Privacy Policy</ThemedText>
             </Pressable>
           </View>
         </View>

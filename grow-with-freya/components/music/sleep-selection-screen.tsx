@@ -25,6 +25,7 @@ import { MusicTrack } from '@/types/music';
 import { Fonts } from '@/constants/theme';
 import { MusicControl } from '@/components/ui/music-control';
 import { SleepSequencePlayer } from '@/services/sleep-sequence-player';
+import { useAccessibility } from '@/hooks/use-accessibility';
 
 interface SleepSelectionScreenProps {
   onTrackSelect: (track: MusicTrack) => void;
@@ -36,6 +37,7 @@ const { width: screenWidth } = Dimensions.get('window');
 export function SleepSelectionScreen({ onTrackSelect, onBack }: SleepSelectionScreenProps) {
   const insets = useSafeAreaInsets();
   const [showSleepInfo, setShowSleepInfo] = useState(false);
+  const { scaledFontSize, scaledButtonSize, scaledPadding } = useAccessibility();
 
   // Get sleep-related tracks
   const sleepTracks = useMemo(() => {
@@ -138,8 +140,8 @@ export function SleepSelectionScreen({ onTrackSelect, onBack }: SleepSelectionSc
         justifyContent: 'space-between',
         zIndex: 30,
       }}>
-        <Pressable style={styles.backButton} onPress={onBack}>
-          <Text style={styles.backButtonText}>← Back</Text>
+        <Pressable style={[styles.backButton, { minHeight: scaledButtonSize(40) }]} onPress={onBack}>
+          <Text style={[styles.backButtonText, { fontSize: scaledFontSize(16) }]}>← Back</Text>
         </Pressable>
         <View style={{ width: 24 }} />
         <MusicControl
@@ -159,46 +161,46 @@ export function SleepSelectionScreen({ onTrackSelect, onBack }: SleepSelectionSc
         <View style={styles.content}>
           {/* Title - Enhanced with shadow */}
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>Bedtime Music</Text>
-            <Text style={styles.subtitle}>Choose your sleep experience</Text>
+            <Text style={[styles.title, { fontSize: scaledFontSize(34) }]}>Bedtime Music</Text>
+            <Text style={[styles.subtitle, { fontSize: scaledFontSize(18) }]}>Choose your sleep experience</Text>
           </View>
-          
+
           <View style={styles.tracksContainer}>
             {sleepTracks.map((track) => (
               <Pressable
                 key={track.id}
-                style={styles.trackCard}
+                style={[styles.trackCard, { minHeight: scaledButtonSize(80), padding: scaledPadding(15) }]}
                 onPress={() => handleTrackPress(track)}
               >
                 <View style={styles.trackIcon}>
-                  <Text style={styles.trackIconText}>
+                  <Text style={[styles.trackIconText, { fontSize: scaledFontSize(24) }]}>
                     {track.isSequence ? '🌙' : '🎵'}
                   </Text>
                 </View>
-                
+
                 <View style={styles.trackInfo}>
-                  <Text style={styles.trackTitle} numberOfLines={2}>
+                  <Text style={[styles.trackTitle, { fontSize: scaledFontSize(18) }]} numberOfLines={2}>
                     {track.title}
                   </Text>
-                  
+
                   {track.isSequence ? (
-                    <Text style={styles.trackDescription}>
+                    <Text style={[styles.trackDescription, { fontSize: scaledFontSize(14) }]}>
                       Complete 2-phase sleep progression (60 min when complete)
                     </Text>
                   ) : (
-                    <Text style={styles.trackDescription}>
+                    <Text style={[styles.trackDescription, { fontSize: scaledFontSize(14) }]}>
                       Phase {track.sequenceOrder} • {formatDuration(track.duration)}
                     </Text>
                   )}
-                  
-                  <Text style={styles.trackDuration}>
+
+                  <Text style={[styles.trackDuration, { fontSize: scaledFontSize(12) }]}>
                     {formatDuration(track.duration)}
                   </Text>
                 </View>
 
                 {track.isSequence && (
                   <View style={styles.sequenceBadge}>
-                    <Text style={styles.sequenceBadgeText}>AUTO</Text>
+                    <Text style={[styles.sequenceBadgeText, { fontSize: scaledFontSize(10) }]}>AUTO</Text>
                   </View>
                 )}
               </Pressable>
@@ -211,7 +213,7 @@ export function SleepSelectionScreen({ onTrackSelect, onBack }: SleepSelectionSc
               style={styles.infoHeader}
               onPress={() => setShowSleepInfo(!showSleepInfo)}
             >
-              <Text style={styles.infoTitle}>
+              <Text style={[styles.infoTitle, { fontSize: scaledFontSize(18) }]}>
                 Sleep Progression {showSleepInfo ? '▼' : '▶'}
               </Text>
             </Pressable>

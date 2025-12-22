@@ -13,9 +13,9 @@ import * as Haptics from 'expo-haptics';
 
 import { ThemedText } from '../themed-text';
 import { getIconSvgType, getSvgComponentFromSvg } from './assets';
-import { 
-  createIconPulseAnimation, 
-  createGlowAnimation, 
+import {
+  createIconPulseAnimation,
+  createGlowAnimation,
   createShimmerAnimation,
   createSelectionAnimation,
   createPressAnimation,
@@ -23,6 +23,7 @@ import {
 } from './animations';
 import { LAYOUT, VISUAL_EFFECTS, IconStatus } from './constants';
 import { menuIconStyles } from './styles';
+import { useAccessibility } from '@/hooks/use-accessibility';
 
 export interface MenuIconProps {
   icon: string;
@@ -50,6 +51,8 @@ export const MenuIcon = React.memo(function MenuIcon({
   const shimmer = useSharedValue(0);
   const selectionScale = useSharedValue(1);
   const selectionGlow = useSharedValue(0);
+
+  const { scaledFontSize } = useAccessibility();
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -295,6 +298,7 @@ export const MenuIcon = React.memo(function MenuIcon({
         <ThemedText style={[
           menuIconStyles.label,
           isLarge && menuIconStyles.largeLabel,
+          { fontSize: scaledFontSize(isLarge ? 16 : 14) },
         ]}>
           {label}
         </ThemedText>

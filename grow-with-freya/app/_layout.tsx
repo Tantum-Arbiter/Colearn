@@ -73,6 +73,7 @@ function AppContent() {
     isAppReady,
     hasCompletedOnboarding,
     showLoginAfterOnboarding,
+    isGuestMode,
     setOnboardingComplete,
     setShowLoginAfterOnboarding,
     setCurrentScreen,
@@ -195,7 +196,7 @@ function AppContent() {
     if (!isAppReady) {
       console.log('App not ready, showing splash');
     }
-  }, []);
+  }, [isAppReady, hasCompletedOnboarding, showLoginAfterOnboarding, currentView]);
 
   useEffect(() => {
     const checkAuthAndSetView = async () => {
@@ -206,12 +207,17 @@ function AppContent() {
 
       // Check if user is authenticated (this will auto-refresh tokens if needed)
       const isAuthenticated = await ApiClient.isAuthenticated();
-      console.log('Authentication check:', { isAuthenticated, hasCompletedOnboarding, showLoginAfterOnboarding });
+      console.log('Authentication check:', { isAuthenticated, hasCompletedOnboarding, showLoginAfterOnboarding, isGuestMode });
 
       if (showLoginAfterOnboarding) {
         setCurrentView('login');
       } else if (!hasCompletedOnboarding) {
         setCurrentView('onboarding');
+      } else if (isGuestMode) {
+        // User is in guest mode - allow access without authentication
+        console.log('Guest mode - going to app without backend calls');
+        setCurrentView('app');
+        setCurrentPage('main');
       } else if (!isAuthenticated) {
         // User has completed onboarding but is not authenticated
         // Show login screen
@@ -227,12 +233,19 @@ function AppContent() {
     };
 
     checkAuthAndSetView();
-  }, [isAppReady, hasCompletedOnboarding, showLoginAfterOnboarding]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAppReady, hasCompletedOnboarding, showLoginAfterOnboarding, isGuestMode]);
 
-  // Refresh tokens when app comes back from background
+  // Refresh tokens when app comes back from background (skip for guest mode)
   useEffect(() => {
     const handleAppStateChange = async (nextAppState: AppStateStatus) => {
       if (nextAppState === 'active') {
+        // Skip authentication check for guest mode users
+        if (isGuestMode) {
+          console.log('App became active - guest mode, skipping auth check');
+          return;
+        }
+
         // App became active - check if tokens need refresh
         console.log('App became active - checking authentication');
         const isAuthenticated = await ApiClient.isAuthenticated();
@@ -250,7 +263,7 @@ function AppContent() {
 
     const subscription = AppState.addEventListener('change', handleAppStateChange);
     return () => subscription?.remove();
-  }, [hasCompletedOnboarding]);
+  }, [hasCompletedOnboarding, isGuestMode, setShowLoginAfterOnboarding]);
 
   // Start background music once when transitioning from splash (only once!)
   useEffect(() => {

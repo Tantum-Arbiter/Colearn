@@ -28,6 +28,7 @@ import { useMusicPlayer } from '@/hooks/use-music-player';
 import { getCategoryInfo } from '@/data/music';
 import { Fonts } from '@/constants/theme';
 import { SleepSequencePlayer } from '@/services/sleep-sequence-player';
+import { useAccessibility } from '@/hooks/use-accessibility';
 
 interface MusicPlayerScreenProps {
   onBack: () => void;
@@ -37,6 +38,7 @@ const { width: screenWidth } = Dimensions.get('window');
 
 export function MusicPlayerScreen({ onBack }: MusicPlayerScreenProps) {
   const insets = useSafeAreaInsets();
+  const { scaledFontSize, scaledButtonSize, scaledPadding } = useAccessibility();
   const {
     currentTrack,
     currentPlaylist,
@@ -208,8 +210,8 @@ export function MusicPlayerScreen({ onBack }: MusicPlayerScreenProps) {
 
       {/* Header */}
       <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50), zIndex: 50 }]}>
-        <Pressable style={styles.backButton} onPress={onBack}>
-          <Text style={styles.backButtonText}>← Back</Text>
+        <Pressable style={[styles.backButton, { minHeight: scaledButtonSize(40) }]} onPress={onBack}>
+          <Text style={[styles.backButtonText, { fontSize: scaledFontSize(16) }]}>← Back</Text>
         </Pressable>
         <View style={{ width: 24 }} />
         <MusicControl size={24} color="white" />
@@ -221,24 +223,24 @@ export function MusicPlayerScreen({ onBack }: MusicPlayerScreenProps) {
       <View style={styles.content}>
         {/* Album Art Placeholder */}
         <View style={[styles.albumArt, { backgroundColor: categoryInfo?.color || '#4ECDC4' }]}>
-          <Text style={styles.albumArtIcon}>{categoryInfo?.emoji || '♪'}</Text>
+          <Text style={[styles.albumArtIcon, { fontSize: scaledFontSize(80) }]}>{categoryInfo?.emoji || '♪'}</Text>
         </View>
 
         {/* Track Info */}
         <View style={styles.trackInfo}>
-          <Text style={styles.trackTitle}>{currentTrack.title}</Text>
-          <Text style={styles.trackArtist}>{currentTrack.artist || 'Unknown Artist'}</Text>
+          <Text style={[styles.trackTitle, { fontSize: scaledFontSize(24) }]}>{currentTrack.title}</Text>
+          <Text style={[styles.trackArtist, { fontSize: scaledFontSize(18) }]}>{currentTrack.artist || 'Unknown Artist'}</Text>
           {currentPlaylist && (
-            <Text style={styles.playlistName}>from {currentPlaylist.title}</Text>
+            <Text style={[styles.playlistName, { fontSize: scaledFontSize(14) }]}>from {currentPlaylist.title}</Text>
           )}
 
           {/* Repeat Status for Tantrum Tracks */}
           {currentTrack?.subcategory === 'tantrum' && (
             <View style={styles.sequenceStatus}>
-              <Text style={styles.sequenceText}>
+              <Text style={[styles.sequenceText, { fontSize: scaledFontSize(14) }]}>
                 Repeat {repeatCount + 1} of 3
               </Text>
-              <Text style={styles.sequenceTime}>
+              <Text style={[styles.sequenceTime, { fontSize: scaledFontSize(12) }]}>
                 Calming session in progress
               </Text>
             </View>
@@ -248,26 +250,26 @@ export function MusicPlayerScreen({ onBack }: MusicPlayerScreenProps) {
           {sequenceStatus?.isActive && (
             <View style={styles.sleepCountdownContainer}>
               <View style={styles.phaseIndicator}>
-                <Text style={styles.phaseText}>
+                <Text style={[styles.phaseText, { fontSize: scaledFontSize(18) }]}>
                   {sequenceStatus.isInThetaPhase ? 'Deep Sleep Phase' : 'Relaxation Phase'}
                 </Text>
-                <Text style={styles.phaseSubtext}>
+                <Text style={[styles.phaseSubtext, { fontSize: scaledFontSize(14) }]}>
                   Phase {sequenceStatus.currentPhase} of {sequenceStatus.totalPhases}
                 </Text>
               </View>
 
               {/* Current Phase Countdown */}
               <View style={styles.countdownTimer}>
-                <Text style={styles.countdownLabel}>Current phase remaining</Text>
-                <Text style={styles.countdownTime}>
+                <Text style={[styles.countdownLabel, { fontSize: scaledFontSize(14) }]}>Current phase remaining</Text>
+                <Text style={[styles.countdownTime, { fontSize: scaledFontSize(32) }]}>
                   {Math.floor(sequenceStatus.remainingTimeInPhase / 60)}:{(Math.floor(sequenceStatus.remainingTimeInPhase % 60)).toString().padStart(2, '0')}
                 </Text>
               </View>
 
               {/* Total Experience Length */}
               <View style={styles.totalTimeContainer}>
-                <Text style={styles.totalTimeLabel}>Total experience remaining</Text>
-                <Text style={styles.totalTimeText}>
+                <Text style={[styles.totalTimeLabel, { fontSize: scaledFontSize(12) }]}>Total experience remaining</Text>
+                <Text style={[styles.totalTimeText, { fontSize: scaledFontSize(18) }]}>
                   {Math.floor(sequenceStatus.remainingTimeTotal / 60)}:{(Math.floor(sequenceStatus.remainingTimeTotal % 60)).toString().padStart(2, '0')}
                 </Text>
               </View>

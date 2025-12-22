@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable, Dimensions, FlatList, Image } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Dimensions, FlatList, Image, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -21,8 +21,9 @@ import { BearTopImage } from '@/components/main-menu/animated-components';
 
 import { mainMenuStyles } from '@/components/main-menu/styles';
 import { useStoryTransition } from '@/contexts/story-transition-context';
-import { MusicControl } from '@/components/ui/music-control';
+import { PageHeader } from '@/components/ui/page-header';
 import { useScreenTimeTracking } from '@/hooks/use-screen-time-tracking';
+import { useAccessibility } from '@/hooks/use-accessibility';
 
 
 interface StorySelectionScreenProps {
@@ -36,6 +37,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   const { requestReturnToMainMenu } = useAppStore();
   const { startTransition } = useStoryTransition();
   const lastCallRef = useRef<number>(0);
+  const { scaledFontSize, scaledButtonSize, scaledPadding, textSizeScale } = useAccessibility();
 
   // Track screen time for story browsing
   useScreenTimeTracking({
@@ -194,58 +196,11 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
         />
       ))}
 
-      {/* Header with back button and audio button - ABSOLUTE POSITIONING */}
-      <View style={{
-        position: 'absolute',
-        top: insets.top + 20,
-        left: 20,
-        right: 20,
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        justifyContent: 'space-between',
-        zIndex: 30,
-      }}>
-          <Pressable
-            style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-              paddingHorizontal: 16,
-              paddingVertical: 8,
-              borderRadius: 20,
-              marginBottom: 20,
-            }}
-            onPress={handleBackToMenu}
-          >
-            <Text style={{
-              color: 'white',
-              fontSize: 16,
-              fontWeight: 'bold',
-              fontFamily: Fonts.rounded,
-            }}>← Back</Text>
-          </Pressable>
+      {/* Shared page header component */}
+      <PageHeader title="Stories" onBack={handleBackToMenu} />
 
-          <MusicControl
-            size={24}
-            color="#FFFFFF"
-            style={{ marginBottom: 20 }}
-          />
-        </View>
-
-      {/* Content container with flex: 1 for proper layout */}
-      <View style={{ flex: 1, paddingTop: insets.top + 80, zIndex: 10 }}>
-        {/* Title - Enhanced with shadow only */}
-        <View style={{ paddingHorizontal: 20, marginTop: -20 }}>
-          <Text style={{
-            color: 'white',
-            fontSize: 34,
-            fontWeight: 'bold',
-            textAlign: 'center',
-            textShadowColor: 'rgba(0, 0, 0, 0.9)',
-            textShadowOffset: { width: 0, height: 3 },
-            textShadowRadius: 8,
-          }}>
-            Choose Your Adventure
-          </Text>
-        </View>
+      {/* Content container with flex: 1 for proper layout - dynamic padding for scaled text */}
+      <View style={{ flex: 1, paddingTop: insets.top + 140 + (textSizeScale - 1) * 60, zIndex: 10 }}>
 
         {/* Stories Carousels */}
         <ScrollView style={{ flex: 1 }}>
@@ -346,11 +301,14 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
                         cardScale = 0.9 - (transitionProgress * 0.1); // 0.9 to 0.8
                       }
 
+                      // Scale story card dimensions based on accessibility settings
+                      const scaledCardW = scaledButtonSize(160);
+                      const scaledCardH = scaledButtonSize(120);
+
                       return (
                         <Pressable
                           onPress={() => {
                             console.log('Pressable onPress triggered for:', story.title);
-                            // Temporarily use fallback without animation to test
                             handleStoryPress(story);
                           }}
                         >
@@ -358,18 +316,18 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
                             style={{
                               opacity: cardOpacity,
                               transform: [{ scale: cardScale }],
-                              marginRight: 15, // Add spacing between items
+                              marginRight: 15,
                               backgroundColor: 'white',
-                              borderRadius: 15,
-                              padding: 0, // No padding for full fill
-                              width: 160,
-                              height: 120, // Fixed height
+                              borderRadius: scaledButtonSize(15),
+                              padding: 0,
+                              width: scaledCardW,
+                              height: scaledCardH,
                               shadowColor: '#000',
                               shadowOffset: { width: 0, height: 2 },
                               shadowOpacity: 0.1,
                               shadowRadius: 4,
                               elevation: 3,
-                              overflow: 'hidden', // Ensure content respects border radius
+                              overflow: 'hidden',
                             }}
                           >
 
@@ -377,22 +335,22 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
                             <Image
                               source={typeof story.coverImage === 'string' ? { uri: story.coverImage } : story.coverImage}
                               style={{
-                                width: 160,
-                                height: 120,
-                                borderRadius: 15,
+                                width: scaledCardW,
+                                height: scaledCardH,
+                                borderRadius: scaledButtonSize(15),
                               }}
                               resizeMode="cover"
                             />
                           ) : (
                             <View style={{
-                              width: 160,
-                              height: 120,
+                              width: scaledCardW,
+                              height: scaledCardH,
                               backgroundColor: '#f0f0f0',
                               justifyContent: 'center',
                               alignItems: 'center',
-                              borderRadius: 15,
+                              borderRadius: scaledButtonSize(15),
                             }}>
-                              <Text style={{ fontSize: 48 }}>{story.emoji}</Text>
+                              <Text style={{ fontSize: scaledFontSize(48) }}>{story.emoji}</Text>
                             </View>
                           )}
                           </Animated.View>
@@ -412,25 +370,27 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
             style={{
               backgroundColor: '#FF6B6B',
               borderRadius: 25,
-              paddingHorizontal: 32,
-              paddingVertical: 15,
+              paddingHorizontal: scaledPadding(32),
+              paddingVertical: scaledPadding(15),
               alignItems: 'center',
               shadowColor: '#000',
               shadowOffset: { width: 0, height: 2 },
               shadowOpacity: 0.2,
               shadowRadius: 4,
               elevation: 3,
-              maxWidth: 250,
+              maxWidth: 280,
+              minHeight: scaledButtonSize(50),
+              justifyContent: 'center',
             }}
             onPress={handleSurpriseMe}
           >
             <Text style={{
               color: 'white',
-              fontSize: 18,
+              fontSize: scaledFontSize(18),
               fontWeight: 'bold',
               fontFamily: Fonts.rounded,
             }}>
-Surprise Me!
+              Surprise Me!
             </Text>
           </Pressable>
         </View>

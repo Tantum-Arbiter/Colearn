@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Pressable, StyleSheet, Dimensions } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
@@ -7,13 +7,13 @@ import Animated, {
   withTiming,
   withSpring,
   withSequence,
-  withDelay,
   Easing,
 } from 'react-native-reanimated';
 import { ThemedText } from '@/components/themed-text';
 import { EmotionCardProps } from '@/types/emotion';
 import { getThemeIcon, getThemeName } from '@/data/emotion-themes';
 import * as Haptics from 'expo-haptics';
+import { useAccessibility } from '@/hooks/use-accessibility';
 
 export function EmotionCard({
   emotion,
@@ -24,6 +24,9 @@ export function EmotionCard({
   size = 'medium',
   theme = 'emoji'
 }: EmotionCardProps) {
+  // Accessibility scaling
+  const { scaledFontSize } = useAccessibility();
+
   // Animation values
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.8);
@@ -141,12 +144,12 @@ export function EmotionCard({
           end={{ x: 1, y: 1 }}
         >
           {/* Theme Icon - centered */}
-          <ThemedText style={[styles.emoji, { fontSize: config.fontSize }]}>
+          <ThemedText style={[styles.emoji, { fontSize: scaledFontSize(config.fontSize) }]}>
             {getThemeIcon(emotion.id, theme)}
           </ThemedText>
 
           {/* Themed emotion name */}
-          <ThemedText style={[styles.emotionName, { fontSize: config.titleSize }]}>
+          <ThemedText style={[styles.emotionName, { fontSize: scaledFontSize(config.titleSize) }]}>
             {getThemeName(emotion.id, theme)}
           </ThemedText>
         </LinearGradient>

@@ -16,9 +16,9 @@ export function AudioDebugScreen({ onBack }: AudioDebugScreenProps) {
   const { isLoaded, isPlaying, volume } = useBackgroundMusic();
   const { isMuted } = useGlobalSound();
 
-  const addTestResult = (result: string) => {
+  const addTestResult = useCallback((result: string) => {
     setTestResults(prev => [...prev, `${new Date().toLocaleTimeString()}: ${result}`]);
-  };
+  }, []);
 
   const testAudioMode = async () => {
     try {
@@ -104,7 +104,7 @@ export function AudioDebugScreen({ onBack }: AudioDebugScreenProps) {
     } catch (error) {
       addTestResult(`[ERROR] Failed to get system info: ${error}`);
     }
-  }, [isLoaded, isPlaying, volume, isMuted, backgroundMusic, addTestResult]);
+  }, [isLoaded, isPlaying, volume, isMuted, addTestResult]);
 
   useEffect(() => {
     getSystemInfo();

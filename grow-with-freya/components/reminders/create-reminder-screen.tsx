@@ -7,6 +7,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming } fr
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { reminderService, ReminderService, CustomReminder } from '../../services/reminder-service';
 import { styles } from './styles';
+import { useAccessibility } from '@/hooks/use-accessibility';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -34,6 +35,7 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
   onSuccess,
 }) => {
   const insets = useSafeAreaInsets();
+  const { scaledFontSize, scaledButtonSize, scaledPadding } = useAccessibility();
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
@@ -309,25 +311,25 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50) }]}>
-          <Pressable onPress={handleBack} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="rgba(255, 255, 255, 0.8)" />
+          <Pressable onPress={handleBack} style={[styles.backButton, { minHeight: scaledButtonSize(40) }]}>
+            <Ionicons name="arrow-back" size={scaledButtonSize(24)} color="rgba(255, 255, 255, 0.8)" />
           </Pressable>
-          <Text style={styles.title}>Create Reminder</Text>
+          <Text style={[styles.title, { fontSize: scaledFontSize(20) }]}>Create Reminder</Text>
           <View style={styles.headerSpacer} />
         </View>
 
         {/* Exercise Templates */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Templates</Text>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(16) }]}>Quick Templates</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.templatesScroll}>
             {exerciseTemplates.map((template, index) => (
               <Pressable
                 key={index}
                 onPress={() => handleUseTemplate(template)}
-                style={styles.templateCard}
+                style={[styles.templateCard, { padding: scaledPadding(12) }]}
               >
-                <Text style={styles.templateTitle}>{template.title}</Text>
-                <Text style={styles.templateMessage} numberOfLines={2}>
+                <Text style={[styles.templateTitle, { fontSize: scaledFontSize(14) }]}>{template.title}</Text>
+                <Text style={[styles.templateMessage, { fontSize: scaledFontSize(12) }]} numberOfLines={2}>
                   {template.message}
                 </Text>
               </Pressable>
@@ -337,13 +339,13 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
 
         {/* Form */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Reminder Details</Text>
-          
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(16) }]}>Reminder Details</Text>
+
           {/* Title Input */}
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Title</Text>
+            <Text style={[styles.inputLabel, { fontSize: scaledFontSize(14) }]}>Title</Text>
             <TextInput
-              style={styles.textInput}
+              style={[styles.textInput, { fontSize: scaledFontSize(16), padding: scaledPadding(12) }]}
               value={title}
               onChangeText={setTitle}
               placeholder="Enter reminder title..."
@@ -354,9 +356,9 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
 
           {/* Message Input */}
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Message</Text>
+            <Text style={[styles.inputLabel, { fontSize: scaledFontSize(14) }]}>Message</Text>
             <TextInput
-              style={[styles.textInput, styles.textAreaInput]}
+              style={[styles.textInput, styles.textAreaInput, { fontSize: scaledFontSize(16), padding: scaledPadding(12) }]}
               value={message}
               onChangeText={setMessage}
               placeholder="Enter reminder message..."
@@ -369,7 +371,7 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
 
           {/* Day Selection */}
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Day of Week</Text>
+            <Text style={[styles.inputLabel, { fontSize: scaledFontSize(14) }]}>Day of Week</Text>
             <View style={styles.daySelector}>
               {daysOfWeek.map(day => (
                 <Pressable
@@ -377,11 +379,13 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
                   onPress={() => setSelectedDay(day.value)}
                   style={[
                     styles.dayButton,
+                    { minHeight: scaledButtonSize(40), paddingVertical: scaledPadding(8), paddingHorizontal: scaledPadding(10) },
                     selectedDay === day.value && styles.dayButtonSelected
                   ]}
                 >
                   <Text style={[
                     styles.dayButtonText,
+                    { fontSize: scaledFontSize(12) },
                     selectedDay === day.value && styles.dayButtonTextSelected
                   ]}>
                     {day.short}
@@ -393,15 +397,15 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
 
           {/* Time Selection */}
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Time</Text>
-            <Pressable onPress={() => setShowTimeOptions(!showTimeOptions)} style={styles.timeButton}>
-              <Ionicons name="time-outline" size={20} color="rgba(255, 255, 255, 0.8)" />
-              <Text style={styles.timeButtonText}>
+            <Text style={[styles.inputLabel, { fontSize: scaledFontSize(14) }]}>Time</Text>
+            <Pressable onPress={() => setShowTimeOptions(!showTimeOptions)} style={[styles.timeButton, { minHeight: scaledButtonSize(44), paddingVertical: scaledPadding(12), paddingHorizontal: scaledPadding(16) }]}>
+              <Ionicons name="time-outline" size={scaledButtonSize(20)} color="rgba(255, 255, 255, 0.8)" />
+              <Text style={[styles.timeButtonText, { fontSize: scaledFontSize(16) }]}>
                 {ReminderService.formatTime(formatTime(selectedTime))}
               </Text>
               <Ionicons
                 name={showTimeOptions ? "chevron-up" : "chevron-down"}
-                size={16}
+                size={scaledButtonSize(16)}
                 color="rgba(255, 255, 255, 0.6)"
               />
             </Pressable>
@@ -424,6 +428,7 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
                       disabled={isDisabled}
                       style={[
                         styles.timeOptionButton,
+                        { minHeight: scaledButtonSize(36), paddingVertical: scaledPadding(8), paddingHorizontal: scaledPadding(12) },
                         isSelected && styles.timeOptionButtonSelected,
                         isConflict && styles.timeOptionButtonConflict,
                         isTooSoon && styles.timeOptionButtonDisabled
@@ -431,6 +436,7 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
                     >
                       <Text style={[
                         styles.timeOptionText,
+                        { fontSize: scaledFontSize(12) },
                         isSelected && styles.timeOptionTextSelected,
                         isConflict && styles.timeOptionTextConflict,
                         isTooSoon && styles.timeOptionTextDisabled
@@ -440,14 +446,14 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
                       {/* Only show conflict indicator for selected day */}
                       {isConflict && (
                         <View style={[styles.activityIndicator, { backgroundColor: 'rgba(255, 99, 71, 1)' }]}>
-                          <Text style={styles.activityCount}>!</Text>
+                          <Text style={[styles.activityCount, { fontSize: scaledFontSize(10) }]}>!</Text>
                         </View>
                       )}
                     </Pressable>
                   );
                 })}
               </View>
-              <Text style={styles.conflictHint}>
+              <Text style={[styles.conflictHint, { fontSize: scaledFontSize(12) }]}>
                 {selectedDay !== null && isTimeSlotTaken(selectedDay, formatTime(selectedTime))
                   ? '⚠️ This time slot is already taken for this day'
                   : selectedDay !== null
@@ -474,9 +480,9 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
           <Pressable
             onPress={handleCreateReminder}
             disabled={creating}
-            style={[styles.createButton, creating && styles.createButtonDisabled]}
+            style={[styles.createButton, { minHeight: scaledButtonSize(48), paddingVertical: scaledPadding(14) }, creating && styles.createButtonDisabled]}
           >
-            <Text style={styles.createButtonText}>
+            <Text style={[styles.createButtonText, { fontSize: scaledFontSize(16) }]}>
               {creating ? 'Creating...' : 'Create Reminder'}
             </Text>
           </Pressable>
