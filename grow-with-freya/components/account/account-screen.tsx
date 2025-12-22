@@ -412,7 +412,11 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
                 setShowGrayscaleInfo(!showGrayscaleInfo);
               }}
             >
-              <Text style={[styles.grayscaleInfoTitle, { fontSize: scaledFontSize(14) }]}>
+              <Text style={[
+                styles.grayscaleInfoTitle,
+                showGrayscaleInfo && styles.grayscaleInfoTitleExpanded,
+                { fontSize: scaledFontSize(14) }
+              ]}>
                 Grayscale / High Contrast {showGrayscaleInfo ? '▼' : '▶'}
               </Text>
               {showGrayscaleInfo && (
@@ -734,15 +738,20 @@ const styles = StyleSheet.create({
   },
   grayscaleInfoBox: {
     marginTop: 16,
-    padding: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 8,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
   },
   grayscaleInfoTitle: {
     color: '#FFFFFF',
     fontWeight: '600',
+    textAlign: 'left',
+  },
+  grayscaleInfoTitleExpanded: {
     marginBottom: 8,
   },
   grayscaleInfoText: {

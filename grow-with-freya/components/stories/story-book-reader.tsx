@@ -43,6 +43,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
   const [showCompletionScreen, setShowCompletionScreen] = useState(false);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<'main' | 'fontSize' | null>(null);
+  const [readingMode, setReadingMode] = useState<'read' | 'record' | 'narrate'>('read');
 
   // Accessibility scaling
   const { scaledFontSize, scaledButtonSize, textSizeScale } = useAccessibility();
@@ -773,7 +774,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
               }
             }}
           >
-            <Text style={[styles.settingsButtonText, { fontSize: scaledFontSize(24) }]}>☰</Text>
+            <Text style={[styles.settingsButtonText, { fontSize: scaledFontSize(28), marginTop: 2 }]}>☰</Text>
           </Pressable>
         </View>
 
@@ -959,9 +960,57 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
             testID="cover-tap-overlay"
           >
             <View style={styles.coverTapHint}>
-              <Text style={styles.coverTapText}>Tap to begin</Text>
+              <Text style={[styles.coverTapText, { fontSize: scaledFontSize(16) }]}>Tap to begin</Text>
             </View>
           </Pressable>
+        )}
+
+        {/* Reading Mode Selection - Bottom left of cover page */}
+        {currentPageIndex === 0 && (
+          <View style={[styles.modeSelectionContainer, {
+            bottom: Math.max(insets.bottom + 10, 15),
+            left: Math.max(insets.left + 10, 15),
+          }]}>
+            <Pressable
+              style={[
+                styles.modeButton,
+                readingMode === 'read' && styles.modeButtonSelected
+              ]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setReadingMode('read');
+              }}
+            >
+              <Text style={[styles.modeButtonIcon, { fontSize: scaledFontSize(24) }]}>∞</Text>
+              <Text style={[styles.modeButtonText, { fontSize: scaledFontSize(12) }]}>Read</Text>
+            </Pressable>
+            <Pressable
+              style={[
+                styles.modeButton,
+                readingMode === 'record' && styles.modeButtonSelected
+              ]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setReadingMode('record');
+              }}
+            >
+              <Text style={[styles.modeButtonIcon, { fontSize: scaledFontSize(24) }]}>●</Text>
+              <Text style={[styles.modeButtonText, { fontSize: scaledFontSize(12) }]}>Record</Text>
+            </Pressable>
+            <Pressable
+              style={[
+                styles.modeButton,
+                readingMode === 'narrate' && styles.modeButtonSelected
+              ]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setReadingMode('narrate');
+              }}
+            >
+              <Text style={[styles.modeButtonIcon, { fontSize: scaledFontSize(24) }]}>♫</Text>
+              <Text style={[styles.modeButtonText, { fontSize: scaledFontSize(12) }]}>Narrate</Text>
+            </Pressable>
+          </View>
         )}
 
         </View>
@@ -1481,15 +1530,58 @@ const styles = StyleSheet.create({
   coverTapText: {
     fontSize: 16,
     fontFamily: Fonts.sans,
-    fontWeight: '500',
-    color: '#2C3E50',
+    fontWeight: '700',
+    color: '#FFFFFF',
     textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   pageIndicatorText: {
     fontSize: 14,
     fontFamily: Fonts.sans,
     fontWeight: '600',
     color: 'white',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  modeSelectionContainer: {
+    position: 'absolute',
+    flexDirection: 'column',
+    gap: 8,
+    zIndex: 100,
+    alignItems: 'flex-start',
+  },
+  modeButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    borderRadius: 15,
+    paddingVertical: 4,
+    paddingLeft: 8,
+    paddingRight: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    gap: 0,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    width: 122,
+  },
+  modeButtonSelected: {
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    borderColor: 'rgba(255, 255, 255, 0.8)',
+  },
+  modeButtonIcon: {
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginRight: 10,
+    zIndex: 1,
+  },
+  modeButtonText: {
+    color: '#FFFFFF',
+    fontFamily: Fonts.sans,
+    fontWeight: '600',
     textAlign: 'center',
     textShadowColor: 'rgba(0, 0, 0, 0.5)',
     textShadowOffset: { width: 0, height: 1 },
