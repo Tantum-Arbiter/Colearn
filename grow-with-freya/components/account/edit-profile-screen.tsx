@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useAppStore } from '../../store/app-store';
 import { ApiClient } from '../../services/api-client';
+import { useAccessibility } from '@/hooks/use-accessibility';
 
 interface EditProfileScreenProps {
   onBack: () => void;
@@ -12,6 +13,7 @@ interface EditProfileScreenProps {
 export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
   const insets = useSafeAreaInsets();
   const { userNickname, userAvatarType, userAvatarId, setUserProfile } = useAppStore();
+  const { scaledFontSize, scaledButtonSize, scaledPadding } = useAccessibility();
 
   const [nickname, setNickname] = useState(userNickname || '');
   const [avatarType, setAvatarType] = useState<'boy' | 'girl'>(userAvatarType || 'girl');
@@ -61,41 +63,43 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50) }]}>
-        <Pressable style={styles.backButton} onPress={onBack}>
-          <Text style={styles.backButtonText}>← Back</Text>
+        <Pressable style={[styles.backButton, { minHeight: scaledButtonSize(40) }]} onPress={onBack}>
+          <Text style={[styles.backButtonText, { fontSize: scaledFontSize(16) }]}>← Back</Text>
         </Pressable>
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>Edit Profile</Text>
+          <Text style={[styles.title, { fontSize: scaledFontSize(20) }]}>Edit Profile</Text>
         </View>
         <View style={{ width: 60 }} />
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Nickname</Text>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(16) }]}>Nickname</Text>
           <TextInput
-            style={styles.textInput}
+            style={[styles.textInput, { fontSize: scaledFontSize(16), padding: scaledPadding(15) }]}
             value={nickname}
             onChangeText={setNickname}
             placeholder="Enter your nickname..."
             placeholderTextColor="rgba(255, 255, 255, 0.4)"
             maxLength={20}
           />
-          <Text style={styles.helperText}>{nickname.length}/20 characters</Text>
+          <Text style={[styles.helperText, { fontSize: scaledFontSize(12) }]}>{nickname.length}/20 characters</Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Avatar Type</Text>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(16) }]}>Avatar Type</Text>
           <View style={styles.avatarTypeContainer}>
             <Pressable
               style={[
                 styles.avatarTypeButton,
+                { minHeight: scaledButtonSize(50), paddingHorizontal: scaledPadding(20) },
                 avatarType === 'boy' && styles.avatarTypeButtonActive
               ]}
               onPress={() => handleAvatarTypeChange('boy')}
             >
               <Text style={[
                 styles.avatarTypeText,
+                { fontSize: scaledFontSize(16) },
                 avatarType === 'boy' && styles.avatarTypeTextActive
               ]}>
                 👦 Boy
@@ -105,12 +109,14 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
             <Pressable
               style={[
                 styles.avatarTypeButton,
+                { minHeight: scaledButtonSize(50), paddingHorizontal: scaledPadding(20) },
                 avatarType === 'girl' && styles.avatarTypeButtonActive
               ]}
               onPress={() => handleAvatarTypeChange('girl')}
             >
               <Text style={[
                 styles.avatarTypeText,
+                { fontSize: scaledFontSize(16) },
                 avatarType === 'girl' && styles.avatarTypeTextActive
               ]}>
                 👧 Girl
@@ -120,11 +126,11 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
         </View>
 
         <Pressable
-          style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
+          style={[styles.saveButton, { minHeight: scaledButtonSize(50), padding: scaledPadding(15) }, isSaving && styles.saveButtonDisabled]}
           onPress={handleSave}
           disabled={isSaving}
         >
-          <Text style={styles.saveButtonText}>
+          <Text style={[styles.saveButtonText, { fontSize: scaledFontSize(18) }]}>
             {isSaving ? 'Saving...' : 'Save Changes'}
           </Text>
         </Pressable>

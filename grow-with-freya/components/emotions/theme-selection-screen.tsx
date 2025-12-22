@@ -16,6 +16,7 @@ import { EmotionTheme } from '@/types/emotion';
 import { getAllThemes, getThemeById } from '@/data/emotion-themes';
 import { Fonts } from '@/constants/theme';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
+import { useAccessibility } from '@/hooks/use-accessibility';
 
 interface ThemeSelectionScreenProps {
   onThemeSelected: (theme: EmotionTheme) => void;
@@ -31,6 +32,7 @@ export function ThemeSelectionScreen({
   const insets = useSafeAreaInsets();
   const [currentTheme, setCurrentTheme] = useState<EmotionTheme>(selectedTheme);
   const themes = getAllThemes();
+  const { scaledFontSize, scaledButtonSize, scaledPadding } = useAccessibility();
 
   const handleThemePress = (themeId: EmotionTheme) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -60,16 +62,18 @@ export function ThemeSelectionScreen({
           <Pressable
             style={{
               backgroundColor: 'rgba(255, 255, 255, 0.2)',
-              paddingHorizontal: 16,
-              paddingVertical: 8,
+              paddingHorizontal: scaledPadding(16),
+              paddingVertical: scaledPadding(8),
               borderRadius: 20,
               marginBottom: 20,
+              minHeight: scaledButtonSize(36),
+              justifyContent: 'center',
             }}
             onPress={onBack}
           >
             <ThemedText style={{
               color: 'white',
-              fontSize: 16,
+              fontSize: scaledFontSize(16),
               fontWeight: 'bold',
               fontFamily: Fonts.primary,
             }}>← Back</ThemedText>
@@ -83,8 +87,8 @@ export function ThemeSelectionScreen({
         </View>
 
         <View style={{ paddingHorizontal: 20, marginTop: -20 }}>
-          <ThemedText style={styles.title}>Pick Your Style!</ThemedText>
-          <ThemedText style={styles.subtitle}>
+          <ThemedText style={[styles.title, { fontSize: scaledFontSize(32) }]}>Pick Your Style!</ThemedText>
+          <ThemedText style={[styles.subtitle, { fontSize: scaledFontSize(18) }]}>
             Choose how you want to express emotions
           </ThemedText>
         </View>
@@ -104,12 +108,12 @@ export function ThemeSelectionScreen({
 
         {/* Continue button at bottom */}
         <View style={styles.actionSection}>
-          <Pressable style={styles.continueButton} onPress={handleContinue}>
+          <Pressable style={[styles.continueButton, { minHeight: scaledButtonSize(56) }]} onPress={handleContinue}>
             <LinearGradient
               colors={['#FF6B6B', '#FF8E8E']}
-              style={styles.buttonGradient}
+              style={[styles.buttonGradient, { paddingVertical: scaledPadding(16) }]}
             >
-              <ThemedText style={styles.continueButtonText}>
+              <ThemedText style={[styles.continueButtonText, { fontSize: scaledFontSize(20) }]}>
                 Continue with {getThemeById(currentTheme).name} 🎮
               </ThemedText>
             </LinearGradient>

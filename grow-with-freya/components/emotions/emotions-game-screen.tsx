@@ -21,6 +21,7 @@ import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
 import { BearTopImage } from '@/components/main-menu/animated-components';
 import { mainMenuStyles } from '@/components/main-menu/styles';
+import { useAccessibility } from '@/hooks/use-accessibility';
 
 interface EmotionsGameScreenProps {
   onBack: () => void;
@@ -32,7 +33,8 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'emoji' }: EmotionsGameScreenProps) {
   const insets = useSafeAreaInsets();
-  
+  const { scaledFontSize, scaledButtonSize, scaledPadding } = useAccessibility();
+
   const [gameState, setGameState] = useState<EmotionGameState>({
     currentEmotion: null,
     score: 0,
@@ -276,8 +278,8 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
 
       {/* Header */}
       <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50), zIndex: 50 }]}>
-        <Pressable style={styles.backButton} onPress={onBack}>
-          <ThemedText style={styles.backButtonText}>← Back</ThemedText>
+        <Pressable style={[styles.backButton, { minHeight: scaledButtonSize(40) }]} onPress={onBack}>
+          <ThemedText style={[styles.backButtonText, { fontSize: scaledFontSize(16) }]}>← Back</ThemedText>
         </Pressable>
 
         <View style={{ width: 24 }} />
@@ -293,7 +295,7 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
         <Animated.View style={[styles.emotionContainer, cardAnimatedStyle]}>
           <EmotionCard
             emotion={gameState.currentEmotion}
-            onPress={() => {}} // Disabled during game
+            onPress={() => {}}
             size="large"
             isSelected={false}
             theme={selectedTheme}
@@ -302,7 +304,7 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
 
         {/* Expression prompt */}
         <Animated.View style={[styles.promptContainer, promptAnimatedStyle]}>
-          <ThemedText style={styles.promptText}>
+          <ThemedText style={[styles.promptText, { fontSize: scaledFontSize(20) }]}>
             {gameState.currentPrompt}
           </ThemedText>
         </Animated.View>
@@ -313,13 +315,16 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
             styles.expressionButton,
             {
               backgroundColor: gameState.currentEmotion.color,
-              opacity: (!gameState.isGameActive || isCardAnimating) ? 0.5 : 1
+              opacity: (!gameState.isGameActive || isCardAnimating) ? 0.5 : 1,
+              minHeight: scaledButtonSize(50),
+              paddingHorizontal: scaledPadding(24),
+              paddingVertical: scaledPadding(15),
             }
           ]}
           onPress={handleExpressionComplete}
           disabled={!gameState.isGameActive || isCardAnimating}
         >
-          <ThemedText style={styles.expressionButtonText}>
+          <ThemedText style={[styles.expressionButtonText, { fontSize: scaledFontSize(18) }]}>
             {isCardAnimating
               ? "Loading..."
               : `I'm expressing ${gameState.currentEmotion.name}!`
@@ -329,7 +334,7 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
 
         {/* Progress indicator */}
         <View style={styles.progressContainer}>
-          <ThemedText style={styles.progressText}>
+          <ThemedText style={[styles.progressText, { fontSize: scaledFontSize(16) }]}>
             Progress: {gameState.completedEmotions.length} / {EMOTION_GAME_CONFIG.emotionsPerLevel}
           </ThemedText>
           <View style={styles.progressBar}>
@@ -346,10 +351,10 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
 
         {/* Timer countdown */}
         <View style={styles.timerContainer}>
-          <ThemedText style={styles.timerLabel}>
+          <ThemedText style={[styles.timerLabel, { fontSize: scaledFontSize(18) }]}>
             {isTimerActive ? 'Time remaining:' : 'Ready to start!'}
           </ThemedText>
-          <ThemedText style={styles.timerText}>
+          <ThemedText style={[styles.timerText, { fontSize: scaledFontSize(18) }]}>
             {isTimerActive ? `${timeLeft}s` : ''}
           </ThemedText>
         </View>

@@ -13,10 +13,13 @@
  */
 export function formatDuration(totalSeconds: number): string {
   if (totalSeconds === 0) return "0s";
-  
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
+
+  // Round to nearest second to avoid floating point display issues
+  const roundedSeconds = Math.round(totalSeconds);
+
+  const hours = Math.floor(roundedSeconds / 3600);
+  const minutes = Math.floor((roundedSeconds % 3600) / 60);
+  const seconds = roundedSeconds % 60;
   
   const parts: string[] = [];
   
@@ -47,10 +50,13 @@ export function formatDuration(totalSeconds: number): string {
  */
 export function formatDurationCompact(totalSeconds: number): string {
   if (totalSeconds === 0) return "0s";
-  
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
+
+  // Round to nearest second to avoid floating point display issues
+  const roundedSeconds = Math.round(totalSeconds);
+
+  const hours = Math.floor(roundedSeconds / 3600);
+  const minutes = Math.floor((roundedSeconds % 3600) / 60);
+  const seconds = roundedSeconds % 60;
   
   if (hours > 0) {
     if (minutes > 0) {

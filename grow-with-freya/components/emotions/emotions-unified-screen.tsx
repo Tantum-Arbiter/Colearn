@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { View, StyleSheet, Pressable, Dimensions, Text } from 'react-native';
+import { useState, useEffect, useMemo } from 'react';
+import { View, StyleSheet, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -10,16 +10,17 @@ import Animated, {
   Easing
 } from 'react-native-reanimated';
 import { ThemedText } from '@/components/themed-text';
-import { MusicControl } from '@/components/ui/music-control';
+import { Fonts } from '@/constants/theme';
+import { PageHeader } from '@/components/ui/page-header';
 import { EmotionTheme } from '@/types/emotion';
 import { getThemeById, EMOTION_THEMES } from '@/data/emotion-themes';
-import { Fonts } from '@/constants/theme';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
 import { BearTopImage } from '@/components/main-menu/animated-components';
 
 import { mainMenuStyles } from '@/components/main-menu/styles';
 import { useScreenTimeTracking } from '@/hooks/use-screen-time-tracking';
+import { useAccessibility } from '@/hooks/use-accessibility';
 
 interface EmotionsUnifiedScreenProps {
   onStartGame: (theme: EmotionTheme) => void;
@@ -30,6 +31,7 @@ export function EmotionsUnifiedScreen({ onStartGame, onBack }: EmotionsUnifiedSc
   const [selectedTheme, setSelectedTheme] = useState<EmotionTheme>('emoji');
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const insets = useSafeAreaInsets();
+  const { scaledFontSize, scaledButtonSize, scaledPadding, textSizeScale } = useAccessibility();
 
   // Track screen time for emotions activities
   useScreenTimeTracking({
@@ -105,82 +107,26 @@ export function EmotionsUnifiedScreen({ onStartGame, onBack }: EmotionsUnifiedSc
         />
       ))}
 
-      {/* Content container with flex: 1 for proper layout */}
-      {/* Header with back button and audio button - ABSOLUTE POSITIONING */}
-      <View style={{
-        position: 'absolute',
-        top: insets.top + 20,
-        left: 20,
-        right: 20,
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        justifyContent: 'space-between',
-        zIndex: 30,
-      }}>
-          <Pressable
-            style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-              paddingHorizontal: 16,
-              paddingVertical: 8,
-              borderRadius: 20,
-              marginBottom: 20,
-            }}
-            onPress={onBack}
-          >
-            <Text style={{
-              color: 'white',
-              fontSize: 16,
-              fontWeight: 'bold',
-              fontFamily: Fonts.primary,
-            }}>← Back</Text>
-          </Pressable>
+      {/* Shared page header component */}
+      <PageHeader
+        title="Express Yourself!"
+        subtitle="Choose your style and learn about emotions"
+        onBack={onBack}
+      />
 
-          <MusicControl
-            size={24}
-            color="#FFFFFF"
-            style={{ marginBottom: 20 }}
-          />
-        </View>
-
-      {/* Content container with flex: 1 for proper layout */}
-      <View style={{ flex: 1, paddingTop: insets.top + 80, zIndex: 10 }}>
-        {/* Title - Enhanced with shadow only */}
-        <View style={{ paddingHorizontal: 20, marginTop: -20 }}>
-          <Text style={{
-            color: 'white',
-            fontSize: 34,
-            fontWeight: 'bold',
-            textAlign: 'center',
-            textShadowColor: 'rgba(0, 0, 0, 0.9)',
-            textShadowOffset: { width: 0, height: 3 },
-            textShadowRadius: 8,
-          }}>
-            Express Yourself!
-          </Text>
-          <Text style={{
-            color: 'rgba(255, 255, 255, 0.95)',
-            fontSize: 16,
-            textAlign: 'center',
-            marginTop: 8,
-            textShadowColor: 'rgba(0, 0, 0, 0.8)',
-            textShadowOffset: { width: 0, height: 2 },
-            textShadowRadius: 4,
-          }}>
-            Choose your style and learn about emotions
-          </Text>
-        </View>
-
-        {/* Content area with stories-pattern spacing */}
+      {/* Content container with flex: 1 for proper layout - dynamic padding for scaled text */}
+      <View style={{ flex: 1, paddingTop: insets.top + 160 + (textSizeScale - 1) * 80, zIndex: 10 }}>
         <View style={styles.content}>
-          {/* Theme Selection Section */}
-          <View style={styles.themeSection}>
-            <ThemedText style={styles.sectionTitle}>Pick Your Style</ThemedText>
-            <View style={styles.themesContainer}>
-              {Object.values(EMOTION_THEMES).map((theme) => (
+          {/* Theme Selection */}
+          <View style={styles.themesContainer}>
+            {Object.values(EMOTION_THEMES).map((theme) => {
+              const cardSize = scaledButtonSize(100);
+              return (
                 <Pressable
                   key={theme.id}
                   style={[
                     styles.themeCard,
+                    { width: cardSize, height: cardSize },
                     selectedTheme === theme.id && styles.themeCardSelected
                   ]}
                   onPress={() => handleThemePress(theme.id)}
@@ -189,49 +135,48 @@ export function EmotionsUnifiedScreen({ onStartGame, onBack }: EmotionsUnifiedSc
                     colors={selectedTheme === theme.id ? ['#FF6B6B', '#FF8E8E'] : ['rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.05)']}
                     style={styles.themeCardGradient}
                   >
-                    <ThemedText style={styles.themeIcon}>{theme.icon}</ThemedText>
-                    <ThemedText style={styles.themeName}>{theme.name}</ThemedText>
+                    <ThemedText style={[styles.themeIcon, { fontSize: cardSize * 0.22 }]}>{theme.icon}</ThemedText>
+                    <ThemedText style={[styles.themeName, { fontSize: scaledFontSize(12) }]} numberOfLines={1}>{theme.name}</ThemedText>
                   </LinearGradient>
                 </Pressable>
-              ))}
-            </View>
-            <ThemedText style={styles.themeDescription}>
-              {selectedThemeData.description}
-            </ThemedText>
+              );
+            })}
           </View>
 
-          {/* How to Play Section */}
-          <View style={styles.howToPlaySection}>
-            <Pressable 
-              style={styles.howToPlayHeader}
-              onPress={() => setShowHowToPlay(!showHowToPlay)}
+          <ThemedText style={[styles.themeDescription, { fontSize: scaledFontSize(14) }]}>
+            {selectedThemeData.description}
+          </ThemedText>
+
+          {/* How to Play */}
+          <Pressable
+            style={[styles.howToPlayCard, { marginTop: scaledPadding(20) }]}
+            onPress={() => setShowHowToPlay(!showHowToPlay)}
+          >
+            <LinearGradient
+              colors={['rgba(255, 255, 255, 0.15)', 'rgba(255, 255, 255, 0.05)']}
+              style={[styles.howToPlayGradient, { padding: scaledPadding(15) }]}
             >
-              <ThemedText style={styles.sectionTitle}>
+              <ThemedText style={[styles.howToPlayTitle, { fontSize: scaledFontSize(18) }]}>
                 How to Play {showHowToPlay ? '▼' : '▶'}
               </ThemedText>
-            </Pressable>
-            
-            {showHowToPlay && (
-              <View style={styles.instructionsContainer}>
-                <ThemedText style={styles.instructions}>
+              {showHowToPlay && (
+                <ThemedText style={[styles.instructions, { fontSize: scaledFontSize(14), marginTop: scaledPadding(10) }]}>
                   • Look at the picture{'\n'}
                   • Make the same face!{'\n'}
                   • Show me happy, sad, or silly{'\n'}
                   • Let&apos;s learn about feelings together!
                 </ThemedText>
-              </View>
-            )}
-          </View>
-        </View>
+              )}
+            </LinearGradient>
+          </Pressable>
 
-        {/* Bottom Action Button (fixed at bottom) */}
-        <View style={styles.bottomSection}>
-          <Pressable style={styles.startButton} onPress={handleStartGame}>
+          {/* Start Button */}
+          <Pressable style={[styles.startButton, { marginTop: scaledPadding(20), minHeight: scaledButtonSize(50), alignSelf: 'center' }]} onPress={handleStartGame}>
             <LinearGradient
               colors={['#FF6B6B', '#FF8E8E']}
-              style={styles.buttonGradient}
+              style={[styles.buttonGradient, { paddingHorizontal: scaledPadding(32), paddingVertical: scaledPadding(15) }]}
             >
-              <ThemedText style={styles.startButtonText} numberOfLines={1}>
+              <ThemedText style={[styles.startButtonText, { fontSize: scaledFontSize(16) }]}>
                 Express with {selectedThemeData.name}!
               </ThemedText>
             </LinearGradient>
@@ -251,9 +196,11 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     paddingTop: 30,
+    overflow: 'visible',
   },
   themeSection: {
     marginBottom: 30,
+    overflow: 'visible',
   },
   sectionTitle: {
     color: 'white',
@@ -314,23 +261,27 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontStyle: 'italic',
     fontFamily: Fonts.primary,
+    marginBottom: 10,
   },
-  howToPlaySection: {
-    marginBottom: 20,
-  },
-  howToPlayHeader: {
-    alignItems: 'center',
-  },
-  instructionsContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  howToPlayCard: {
     borderRadius: 15,
+    overflow: 'hidden',
+  },
+  howToPlayGradient: {
     padding: 15,
-    marginTop: 10,
+    borderRadius: 15,
+  },
+  howToPlayTitle: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    fontFamily: Fonts.primary,
   },
   instructions: {
     color: 'white',
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 14,
+    lineHeight: 22,
     fontFamily: Fonts.primary,
   },
   bottomSection: {
@@ -350,14 +301,16 @@ const styles = StyleSheet.create({
     maxWidth: 250, // Match stories "Surprise Me!" button width
   },
   buttonGradient: {
-    paddingHorizontal: 32, // Match stories "Surprise Me!" button padding
+    paddingHorizontal: 32,
     paddingVertical: 15,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   startButtonText: {
     color: 'white',
-    fontSize: 16, // Reduced from 18 to ensure single line text
+    fontSize: 16,
     fontWeight: 'bold',
     fontFamily: Fonts.primary,
+    textAlign: 'center',
   },
 });

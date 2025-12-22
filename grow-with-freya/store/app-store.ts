@@ -10,6 +10,7 @@ export interface AppState {
   hasCompletedOnboarding: boolean;
   hasCompletedLogin: boolean;
   showLoginAfterOnboarding: boolean;
+  isGuestMode: boolean; // User continued without signing in
 
   // User profile (synced from backend)
   userNickname: string | null;
@@ -32,6 +33,9 @@ export interface AppState {
   notificationsEnabled: boolean;
   hasRequestedNotificationPermission: boolean;
 
+  // Accessibility settings
+  textSizeScale: number; // 1.0 = normal, 0.8 = smaller, 1.2/1.4 = larger
+
 
 
   // Background animation state persistence
@@ -47,6 +51,7 @@ export interface AppState {
   setOnboardingComplete: (complete: boolean) => void;
   setLoginComplete: (complete: boolean) => void;
   setShowLoginAfterOnboarding: (show: boolean) => void;
+  setGuestMode: (isGuest: boolean) => void;
   resetAppForTesting: () => void; // Temporary function to reset app state
   setUserProfile: (nickname: string, avatarType: 'boy' | 'girl', avatarId: string) => void;
   clearUserProfile: () => void;
@@ -59,6 +64,7 @@ export interface AppState {
   setScreenTimeEnabled: (enabled: boolean) => void;
   setNotificationsEnabled: (enabled: boolean) => void;
   setNotificationPermissionRequested: (requested: boolean) => void;
+  setTextSizeScale: (scale: number) => void;
 
   updateBackgroundAnimationState: (state: {
     cloudFloat1: number;
@@ -77,6 +83,7 @@ export const useAppStore = create<AppState>()(
       hasCompletedOnboarding: false, // This will be overridden by persisted state if it exists
       hasCompletedLogin: false,
       showLoginAfterOnboarding: false,
+      isGuestMode: false,
       userNickname: null,
       userAvatarType: null,
       userAvatarId: null,
@@ -88,6 +95,7 @@ export const useAppStore = create<AppState>()(
       screenTimeEnabled: true,
       notificationsEnabled: false,
       hasRequestedNotificationPermission: false,
+      textSizeScale: 1.0, // Default to normal size
 
       backgroundAnimationState: {
         cloudFloat1: -200,
@@ -101,11 +109,13 @@ export const useAppStore = create<AppState>()(
       setOnboardingComplete: (complete) => set({ hasCompletedOnboarding: complete }),
       setLoginComplete: (complete) => set({ hasCompletedLogin: complete }),
       setShowLoginAfterOnboarding: (show) => set({ showLoginAfterOnboarding: show }),
+      setGuestMode: (isGuest) => set({ isGuestMode: isGuest }),
       resetAppForTesting: () => set({
         hasCompletedOnboarding: false,
         hasCompletedLogin: false,
         isAppReady: false,
         showLoginAfterOnboarding: false,
+        isGuestMode: false,
         currentScreen: 'splash'
       }),
       setUserProfile: (nickname, avatarType, avatarId) => set({
@@ -125,6 +135,7 @@ export const useAppStore = create<AppState>()(
       setScreenTimeEnabled: (enabled) => set({ screenTimeEnabled: enabled }),
       setNotificationsEnabled: (enabled) => set({ notificationsEnabled: enabled }),
       setNotificationPermissionRequested: (requested) => set({ hasRequestedNotificationPermission: requested }),
+      setTextSizeScale: (scale) => set({ textSizeScale: scale }),
 
       requestReturnToMainMenu: () => set((state) => {
         // Prevent multiple rapid requests
@@ -153,6 +164,7 @@ export const useAppStore = create<AppState>()(
         hasCompletedOnboarding: state.hasCompletedOnboarding,
         hasCompletedLogin: state.hasCompletedLogin,
         showLoginAfterOnboarding: state.showLoginAfterOnboarding,
+        isGuestMode: state.isGuestMode,
         userNickname: state.userNickname,
         userAvatarType: state.userAvatarType,
         userAvatarId: state.userAvatarId,
@@ -161,6 +173,7 @@ export const useAppStore = create<AppState>()(
         screenTimeEnabled: state.screenTimeEnabled,
         notificationsEnabled: state.notificationsEnabled,
         hasRequestedNotificationPermission: state.hasRequestedNotificationPermission,
+        textSizeScale: state.textSizeScale,
 
         backgroundAnimationState: state.backgroundAnimationState,
       }),

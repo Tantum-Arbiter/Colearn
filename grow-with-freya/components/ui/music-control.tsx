@@ -2,22 +2,38 @@ import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useGlobalSound } from '@/contexts/global-sound-context';
+import { useAccessibility } from '@/hooks/use-accessibility';
 
 interface MusicControlProps {
   size?: number;
   color?: string;
   style?: any;
+  showBackground?: boolean;
 }
 
 export const MusicControl: React.FC<MusicControlProps> = ({
   size = 32,
   color = '#4A90E2',
-  style
+  style,
+  showBackground = true
 }) => {
-  const { isMuted, volume, isLoaded, toggleMute } = useGlobalSound();
+  const { isMuted, toggleMute } = useGlobalSound();
+  const { scaledButtonSize } = useAccessibility();
 
   const handlePress = () => {
     toggleMute();
+  };
+
+  const scaledIconSize = scaledButtonSize(size);
+  const backgroundSize = scaledButtonSize(48);
+
+  // For white color, use a more visible semi-transparent background
+  const getBackgroundColor = () => {
+    if (!showBackground) return 'transparent';
+    if (color === '#FFFFFF' || color === 'white' || color === '#FFF') {
+      return 'rgba(255, 255, 255, 0.2)';
+    }
+    return `${color}20`;
   };
 
   return (
@@ -30,10 +46,18 @@ export const MusicControl: React.FC<MusicControlProps> = ({
         accessibilityRole="button"
         testID="music-control-button"
       >
-        <View style={[styles.iconBackground, { backgroundColor: `${color}20` }]}>
+        <View style={[
+          styles.iconBackground,
+          {
+            backgroundColor: getBackgroundColor(),
+            width: backgroundSize,
+            height: backgroundSize,
+            borderRadius: backgroundSize / 2,
+          }
+        ]}>
           <Ionicons
             name={isMuted ? 'volume-mute' : 'volume-high'}
-            size={size}
+            size={scaledIconSize}
             color={color}
             testID={`music-icon-${isMuted ? 'muted' : 'playing'}`}
           />
@@ -53,9 +77,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconBackground: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
   },

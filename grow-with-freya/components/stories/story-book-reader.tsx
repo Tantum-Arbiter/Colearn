@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, Dimensions, StatusBar, Image, ImageBackground } from 'react-native';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { View, Text, StyleSheet, Pressable, Dimensions, StatusBar, Image, ImageBackground, ScrollView, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -19,6 +19,7 @@ import { useStoryTransition } from '@/contexts/story-transition-context';
 import { StoryCompletionScreen } from './story-completion-screen';
 import { MusicControl } from '../ui/music-control';
 import { useAppStore } from '@/store/app-store';
+import { useAccessibility } from '@/hooks/use-accessibility';
 
 
 
@@ -39,6 +40,34 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
 
   const [preloadedPages, setPreloadedPages] = useState<Set<number>>(new Set());
   const [showCompletionScreen, setShowCompletionScreen] = useState(false);
+
+  // Accessibility scaling
+  const { scaledFontSize, scaledButtonSize, textSizeScale } = useAccessibility();
+
+  // Track if text box needs scrolling (for larger text sizes)
+  const [canScrollText, setCanScrollText] = useState(false);
+  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
+
+  // Reset scroll state when page changes
+  useEffect(() => {
+    setCanScrollText(false);
+    setHasScrolledToBottom(false);
+  }, [currentPageIndex]);
+
+  // Handle text scroll events
+  const handleTextScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    const isAtBottom = contentOffset.y + layoutMeasurement.height >= contentSize.height - 5;
+    setHasScrolledToBottom(isAtBottom);
+  }, []);
+
+  // Handle text content size change to detect overflow
+  const handleTextContentSizeChange = useCallback((contentWidth: number, contentHeight: number) => {
+    // Calculate the max visible height based on accessibility scale
+    const baseMaxHeight = 80;
+    const scaledMaxHeight = baseMaxHeight * (1 + (textSizeScale - 1) * 0.5);
+    setCanScrollText(contentHeight > scaledMaxHeight);
+  }, [textSizeScale]);
 
 
 
@@ -504,8 +533,11 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
               <View style={[styles.pageIndicatorOverlay, {
                 top: Math.max(insets.top + 5, 20),
                 left: Math.max(insets.left + 5, 20),
+                paddingHorizontal: scaledButtonSize(8),
+                paddingVertical: scaledButtonSize(4),
+                borderRadius: scaledButtonSize(12),
               }]}>
-                <Text style={styles.pageIndicatorText}>
+                <Text style={[styles.pageIndicatorText, { fontSize: scaledFontSize(14) }]}>
                   {page.pageNumber}/{pages.length - 1}
                 </Text>
               </View>
@@ -694,9 +726,19 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
           paddingTop: Math.max(insets.top + 5, 20),
           paddingRight: Math.max(insets.right + 5, 20)
         }]}>
-          <MusicControl size={24} color="white" />
-          <Pressable style={styles.exitButton} onPress={handleExit}>
-            <Text style={styles.exitButtonText}>✕</Text>
+          <MusicControl size={28} color="white" />
+          <Pressable
+            style={[
+              styles.exitButton,
+              {
+                width: scaledButtonSize(48),
+                height: scaledButtonSize(48),
+                borderRadius: scaledButtonSize(24),
+              }
+            ]}
+            onPress={handleExit}
+          >
+            <Text style={[styles.exitButtonText, { fontSize: scaledFontSize(20) }]}>✕</Text>
           </Pressable>
         </View>
 
@@ -720,6 +762,11 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
             style={[
               styles.navButton,
               styles.prevButton,
+              {
+                width: scaledButtonSize(50),
+                height: scaledButtonSize(50),
+                borderRadius: scaledButtonSize(25),
+              },
               currentPageIndex <= 0 && styles.navButtonDisabled
             ]}
             onPress={handlePreviousPage}
@@ -728,22 +775,41 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
           >
             <Text style={[
               styles.navButtonText,
+              { fontSize: scaledFontSize(20) },
               currentPageIndex <= 0 && styles.navButtonTextDisabled
             ]}>
               ←
             </Text>
           </Pressable>
 
-          {/* Story Text Box - Center */}
+          {/* Story Text Box - Center - Scrollable for accessibility */}
           <View style={styles.centerTextContainer}>
-            <View style={styles.centerTextBox}>
-              <Text
-                style={currentPage?.pageNumber === 0 ? styles.coverText : styles.storyText}
-                numberOfLines={currentPage?.pageNumber === 0 ? 3 : 2}
-                ellipsizeMode="tail"
+            <View style={[
+              styles.centerTextBox,
+              { maxHeight: 80 * (1 + (textSizeScale - 1) * 0.5) }
+            ]}>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                onScroll={handleTextScroll}
+                scrollEventThrottle={16}
+                onContentSizeChange={handleTextContentSizeChange}
+                bounces={false}
               >
-                {currentPage?.text}
-              </Text>
+                <Text
+                  style={[
+                    currentPage?.pageNumber === 0 ? styles.coverText : styles.storyText,
+                    { fontSize: scaledFontSize(currentPage?.pageNumber === 0 ? 18 : 16) }
+                  ]}
+                >
+                  {currentPage?.text}
+                </Text>
+              </ScrollView>
+              {/* Scroll indicator - shows when text overflows and user hasn't scrolled to bottom */}
+              {canScrollText && !hasScrolledToBottom && (
+                <View style={styles.scrollIndicator}>
+                  <Text style={[styles.scrollIndicatorText, { fontSize: scaledFontSize(14) }]}>↓</Text>
+                </View>
+              )}
             </View>
           </View>
 
@@ -752,6 +818,11 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
             style={[
               styles.navButton,
               styles.nextButton,
+              {
+                width: scaledButtonSize(50),
+                height: scaledButtonSize(50),
+                borderRadius: scaledButtonSize(25),
+              },
               currentPageIndex === pages.length - 1 && styles.completeButton
             ]}
             onPress={handleNextPage}
@@ -760,6 +831,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
           >
             <Text style={[
               styles.navButtonText,
+              { fontSize: scaledFontSize(20) },
               currentPageIndex === pages.length - 1 && styles.completeButtonText
             ]}>
               {currentPageIndex === pages.length - 1 ? '✓' : '→'}
@@ -1014,18 +1086,35 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.7)',
     borderRadius: 20,
     paddingHorizontal: 25,
-    paddingVertical: 15, // Adequate padding for 2 lines
-    minHeight: 80, // Proper height for 2 lines of text
-    maxHeight: 80, // Fixed height to ensure only 2 lines
+    paddingVertical: 15,
+    minHeight: 80,
     width: '100%',
-    minWidth: 200, // Minimum width for readability
-    maxWidth: 500, // Maximum width to prevent over-stretching on large screens
-    justifyContent: 'center', // Center text vertically
+    minWidth: 200,
+    maxWidth: 500,
+    justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  scrollIndicator: {
+    position: 'absolute',
+    bottom: 4,
+    right: 10,
+    backgroundColor: 'rgba(44, 62, 80, 0.7)',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scrollIndicatorText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 
   // Legacy text styles (for compatibility)

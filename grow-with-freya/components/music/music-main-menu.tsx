@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  Pressable, 
-  Dimensions 
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  Dimensions
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,8 +21,9 @@ import { BearTopImage } from '@/components/main-menu/animated-components';
 
 import { mainMenuStyles } from '@/components/main-menu/styles';
 import { Fonts } from '@/constants/theme';
-import { MusicControl } from '@/components/ui/music-control';
+import { PageHeader } from '@/components/ui/page-header';
 import { useAppStore } from '@/store/app-store';
+import { useAccessibility } from '@/hooks/use-accessibility';
 
 
 interface MusicMainMenuProps {
@@ -33,12 +34,13 @@ interface MusicMainMenuProps {
 
 const { width: screenWidth } = Dimensions.get('window');
 
-export function MusicMainMenu({ 
-  onTantrumsSelect, 
-  onSleepSelect, 
-  onBack 
+export function MusicMainMenu({
+  onTantrumsSelect,
+  onSleepSelect,
+  onBack
 }: MusicMainMenuProps) {
   const insets = useSafeAreaInsets();
+  const { scaledFontSize, scaledButtonSize, scaledPadding, textSizeScale } = useAccessibility();
 
 
   // Generate star positions for background
@@ -98,55 +100,39 @@ export function MusicMainMenu({
         />
       ))}
 
-      {/* Header with back button and audio button - ABSOLUTE POSITIONING */}
-      <View style={{
-        position: 'absolute',
-        top: insets.top + 20,
-        left: 20,
-        right: 20,
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        justifyContent: 'space-between',
-        zIndex: 30,
-      }}>
-        <Pressable style={styles.backButton} onPress={onBack} testID="back-button">
-          <Text style={styles.backButtonText}>← Back</Text>
-        </Pressable>
-        <View style={{ width: 24 }} />
-        <MusicControl
-          size={24}
-          color="#FFFFFF"
-          style={{ marginBottom: 20 }}
-        />
-      </View>
+      {/* Shared page header component */}
+      <PageHeader
+        title="Sleep"
+        subtitle="Choose your music type"
+        onBack={onBack}
+      />
 
-      {/* Content container with flex: 1 for proper layout */}
-      <View style={{ flex: 1, paddingTop: insets.top + 80, zIndex: 10 }}>
+      {/* Content container with flex: 1 for proper layout - dynamic padding for scaled text */}
+      <View style={{ flex: 1, paddingTop: insets.top + 140 + (textSizeScale - 1) * 60, zIndex: 10 }}>
         <View style={styles.content}>
-        <Text style={styles.subtitle}>Choose your music type</Text>
-        
+
         <View style={styles.optionsContainer}>
           {/* Tantrums Option */}
-          <Pressable style={styles.optionCard} onPress={onTantrumsSelect}>
+          <Pressable style={[styles.optionCard, { minHeight: scaledButtonSize(120) }]} onPress={onTantrumsSelect}>
             <LinearGradient
               colors={['#FF6B6B', '#FF8E8E']}
-              style={styles.optionGradient}
+              style={[styles.optionGradient, { padding: scaledPadding(20) }]}
             >
-              <Text style={styles.optionTitle}>Tantrums</Text>
-              <Text style={styles.optionDescription}>
+              <Text style={[styles.optionTitle, { fontSize: scaledFontSize(24) }]}>Tantrums</Text>
+              <Text style={[styles.optionDescription, { fontSize: scaledFontSize(16) }]}>
                 Calming music to help during difficult moments
               </Text>
             </LinearGradient>
           </Pressable>
 
           {/* Sleep Option */}
-          <Pressable style={styles.optionCard} onPress={onSleepSelect}>
+          <Pressable style={[styles.optionCard, { minHeight: scaledButtonSize(120) }]} onPress={onSleepSelect}>
             <LinearGradient
               colors={['#6B73FF', '#8E95FF']}
-              style={styles.optionGradient}
+              style={[styles.optionGradient, { padding: scaledPadding(20) }]}
             >
-              <Text style={styles.optionTitle}>Sleep</Text>
-              <Text style={styles.optionDescription}>
+              <Text style={[styles.optionTitle, { fontSize: scaledFontSize(24) }]}>Sleep</Text>
+              <Text style={[styles.optionDescription, { fontSize: scaledFontSize(16) }]}>
                 Gentle sounds to help your child drift off to sleep
               </Text>
             </LinearGradient>

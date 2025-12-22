@@ -24,6 +24,7 @@ import { getTracksByCategory } from '@/data/music';
 import { MusicTrack } from '@/types/music';
 import { Fonts } from '@/constants/theme';
 import { MusicControl } from '@/components/ui/music-control';
+import { useAccessibility } from '@/hooks/use-accessibility';
 
 interface TantrumSelectionScreenProps {
   onTrackSelect: (track: MusicTrack) => void;
@@ -35,6 +36,7 @@ const { width: screenWidth } = Dimensions.get('window');
 export function TantrumSelectionScreen({ onTrackSelect, onBack }: TantrumSelectionScreenProps) {
   const insets = useSafeAreaInsets();
   const [showTips, setShowTips] = useState(false);
+  const { scaledFontSize, scaledButtonSize, scaledPadding } = useAccessibility();
 
   // Get tantrum-related tracks
   const tantrumTracks = useMemo(() => {
@@ -133,8 +135,8 @@ export function TantrumSelectionScreen({ onTrackSelect, onBack }: TantrumSelecti
         justifyContent: 'space-between',
         zIndex: 30,
       }}>
-        <Pressable style={styles.backButton} onPress={onBack}>
-          <Text style={styles.backButtonText}>← Back</Text>
+        <Pressable style={[styles.backButton, { minHeight: scaledButtonSize(40) }]} onPress={onBack}>
+          <Text style={[styles.backButtonText, { fontSize: scaledFontSize(16) }]}>← Back</Text>
         </Pressable>
         <View style={{ width: 24 }} />
         <MusicControl
@@ -152,44 +154,44 @@ export function TantrumSelectionScreen({ onTrackSelect, onBack }: TantrumSelecti
           showsVerticalScrollIndicator={false}
         >
         <View style={styles.content}>
-          <Text style={styles.subtitle}>Choose your calming sound</Text>
-          
+          <Text style={[styles.subtitle, { fontSize: scaledFontSize(18) }]}>Choose your calming sound</Text>
+
           <View style={styles.tracksContainer}>
             {tantrumTracks.map((track) => {
               const typeInfo = getTrackTypeInfo(track);
-              
+
               return (
                 <Pressable
                   key={track.id}
-                  style={styles.trackCard}
+                  style={[styles.trackCard, { minHeight: scaledButtonSize(80), padding: scaledPadding(15) }]}
                   onPress={() => onTrackSelect(track)}
                 >
                   <View style={[styles.trackIcon, { backgroundColor: typeInfo.color }]}>
-                    <Text style={styles.trackIconText}>{typeInfo.icon}</Text>
+                    <Text style={[styles.trackIconText, { fontSize: scaledFontSize(24) }]}>{typeInfo.icon}</Text>
                   </View>
-                  
+
                   <View style={styles.trackInfo}>
-                    <Text style={styles.trackTitle} numberOfLines={2}>
+                    <Text style={[styles.trackTitle, { fontSize: scaledFontSize(18) }]} numberOfLines={2}>
                       {track.title}
                     </Text>
-                    
-                    <Text style={styles.trackType}>
+
+                    <Text style={[styles.trackType, { fontSize: scaledFontSize(12) }]}>
                       {typeInfo.type}
                     </Text>
-                    
+
                     {track.description && (
-                      <Text style={styles.trackDescription} numberOfLines={2}>
+                      <Text style={[styles.trackDescription, { fontSize: scaledFontSize(14) }]} numberOfLines={2}>
                         {track.description}
                       </Text>
                     )}
-                    
-                    <Text style={styles.trackDuration}>
+
+                    <Text style={[styles.trackDuration, { fontSize: scaledFontSize(12) }]}>
                       {formatDuration(track.duration)}
                     </Text>
                   </View>
 
                   <View style={styles.playIcon}>
-                    <Text style={styles.playIconText}>▶️</Text>
+                    <Text style={[styles.playIconText, { fontSize: scaledFontSize(16) }]}>▶️</Text>
                   </View>
                 </Pressable>
               );
@@ -202,14 +204,14 @@ export function TantrumSelectionScreen({ onTrackSelect, onBack }: TantrumSelecti
               style={styles.tipsHeader}
               onPress={() => setShowTips(!showTips)}
             >
-              <Text style={styles.tipTitle}>
+              <Text style={[styles.tipTitle, { fontSize: scaledFontSize(18) }]}>
                 Tips for Best Results {showTips ? '▼' : '▶'}
               </Text>
             </Pressable>
 
             {showTips && (
               <View style={styles.tipBox}>
-                <Text style={styles.tipText}>
+                <Text style={[styles.tipText, { fontSize: scaledFontSize(14) }]}>
                   • Use during the early stages of a tantrum{'\n'}
                   • Create a calm, comfortable environment{'\n'}
                   • Stay with your child and breathe together{'\n'}

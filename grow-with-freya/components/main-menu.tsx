@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppStore } from '@/store/app-store';
 import { MusicControl } from '@/components/ui/music-control';
 import { Ionicons } from '@expo/vector-icons';
+import { useAccessibility } from '@/hooks/use-accessibility';
 
 import { ErrorBoundary } from './error-boundary';
 import {
@@ -49,6 +50,7 @@ interface MainMenuProps {
 
 function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
   const insets = useSafeAreaInsets();
+  const { scaledButtonSize } = useAccessibility();
 
   // Track screen time for general app usage
   useScreenTimeTracking({
@@ -500,8 +502,16 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
             style={legacyStyles.accountButton}
             onPress={() => onNavigate('account')}
           >
-            <View style={[legacyStyles.accountIconBackground, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]}>
-              <Ionicons name="person-outline" size={24} color="white" />
+            <View style={[
+              legacyStyles.accountIconBackground,
+              {
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                width: scaledButtonSize(48),
+                height: scaledButtonSize(48),
+                borderRadius: scaledButtonSize(48) / 2,
+              }
+            ]}>
+              <Ionicons name="person-outline" size={scaledButtonSize(24)} color="white" />
             </View>
           </Pressable>
         </View>

@@ -6,6 +6,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming } fr
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { reminderService, ReminderService, CustomReminder, ReminderStats } from '../../services/reminder-service';
 import { styles } from './styles';
+import { useAccessibility } from '@/hooks/use-accessibility';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -35,6 +36,7 @@ export const CustomRemindersScreen: React.FC<CustomRemindersScreenProps> = ({
   onReminderChange,
 }) => {
   const insets = useSafeAreaInsets();
+  const { scaledFontSize, scaledButtonSize, scaledPadding } = useAccessibility();
   const [reminders, setReminders] = useState<CustomReminder[]>([]);
   const [stats, setStats] = useState<ReminderStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -172,29 +174,29 @@ export const CustomRemindersScreen: React.FC<CustomRemindersScreenProps> = ({
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50) }]}>
-          <Pressable onPress={onBack} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="rgba(255, 255, 255, 0.8)" />
+          <Pressable onPress={onBack} style={[styles.backButton, { minHeight: scaledButtonSize(40) }]}>
+            <Ionicons name="arrow-back" size={scaledButtonSize(24)} color="rgba(255, 255, 255, 0.8)" />
           </Pressable>
-          <Text style={styles.title}>Custom Reminders</Text>
-          <Pressable onPress={onCreateNew} style={styles.addButton}>
-            <Ionicons name="add" size={24} color="rgba(255, 255, 255, 0.8)" />
+          <Text style={[styles.title, { fontSize: scaledFontSize(20) }]}>Custom Reminders</Text>
+          <Pressable onPress={onCreateNew} style={[styles.addButton, { minHeight: scaledButtonSize(40) }]}>
+            <Ionicons name="add" size={scaledButtonSize(24)} color="rgba(255, 255, 255, 0.8)" />
           </Pressable>
         </View>
 
         {/* Stats */}
         {stats && (
-          <View style={styles.statsContainer}>
+          <View style={[styles.statsContainer, { padding: scaledPadding(16) }]}>
             <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{stats.totalReminders}</Text>
-              <Text style={styles.statLabel}>Total</Text>
+              <Text style={[styles.statNumber, { fontSize: scaledFontSize(24) }]}>{stats.totalReminders}</Text>
+              <Text style={[styles.statLabel, { fontSize: scaledFontSize(12) }]}>Total</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{stats.activeReminders}</Text>
-              <Text style={styles.statLabel}>Active</Text>
+              <Text style={[styles.statNumber, { fontSize: scaledFontSize(24) }]}>{stats.activeReminders}</Text>
+              <Text style={[styles.statLabel, { fontSize: scaledFontSize(12) }]}>Active</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{stats.upcomingToday.length}</Text>
-              <Text style={styles.statLabel}>Today</Text>
+              <Text style={[styles.statNumber, { fontSize: scaledFontSize(24) }]}>{stats.upcomingToday.length}</Text>
+              <Text style={[styles.statLabel, { fontSize: scaledFontSize(12) }]}>Today</Text>
             </View>
           </View>
         )}
@@ -202,17 +204,17 @@ export const CustomRemindersScreen: React.FC<CustomRemindersScreenProps> = ({
         {/* Reminders by Day */}
         {loading ? (
           <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>Loading reminders...</Text>
+            <Text style={[styles.loadingText, { fontSize: scaledFontSize(16) }]}>Loading reminders...</Text>
           </View>
         ) : reminders.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="notifications-outline" size={64} color="rgba(255, 255, 255, 0.3)" />
-            <Text style={styles.emptyTitle}>No Custom Reminders</Text>
-            <Text style={styles.emptyMessage}>
+            <Ionicons name="notifications-outline" size={scaledButtonSize(64)} color="rgba(255, 255, 255, 0.3)" />
+            <Text style={[styles.emptyTitle, { fontSize: scaledFontSize(20) }]}>No Custom Reminders</Text>
+            <Text style={[styles.emptyMessage, { fontSize: scaledFontSize(14) }]}>
               Create your first reminder to get started with personalized exercise notifications.
             </Text>
-            <Pressable onPress={onCreateNew} style={styles.createFirstButton}>
-              <Text style={styles.createFirstButtonText}>Create First Reminder</Text>
+            <Pressable onPress={onCreateNew} style={[styles.createFirstButton, { minHeight: scaledButtonSize(48), paddingVertical: scaledPadding(12), paddingHorizontal: scaledPadding(24) }]}>
+              <Text style={[styles.createFirstButtonText, { fontSize: scaledFontSize(16) }]}>Create First Reminder</Text>
             </Pressable>
           </View>
         ) : (
@@ -223,48 +225,50 @@ export const CustomRemindersScreen: React.FC<CustomRemindersScreenProps> = ({
 
               return (
                 <View key={dayOfWeek} style={styles.daySection}>
-                  <Text style={styles.dayTitle}>
+                  <Text style={[styles.dayTitle, { fontSize: scaledFontSize(16) }]}>
                     {ReminderService.getDayName(dayOfWeek)}
                   </Text>
-                  
+
                   {dayReminders.map(reminder => (
-                    <View key={reminder.id} style={styles.reminderCard}>
+                    <View key={reminder.id} style={[styles.reminderCard, { padding: scaledPadding(12) }]}>
                       <View style={styles.reminderContent}>
                         <View style={styles.reminderHeader}>
-                          <Text style={styles.reminderTitle}>{reminder.title}</Text>
-                          <Text style={styles.reminderTime}>
+                          <Text style={[styles.reminderTitle, { fontSize: scaledFontSize(16) }]}>{reminder.title}</Text>
+                          <Text style={[styles.reminderTime, { fontSize: scaledFontSize(14) }]}>
                             {ReminderService.formatTime(reminder.time)}
                           </Text>
                         </View>
-                        
-                        <Text style={styles.reminderMessage}>{reminder.message}</Text>
-                        
+
+                        <Text style={[styles.reminderMessage, { fontSize: scaledFontSize(12) }]}>{reminder.message}</Text>
+
                         <View style={styles.reminderActions}>
                           <Pressable
                             onPress={() => handleToggleReminder(reminder.id)}
                             style={[
                               styles.toggleButton,
+                              { minHeight: scaledButtonSize(32), paddingVertical: scaledPadding(6), paddingHorizontal: scaledPadding(10) },
                               reminder.isActive ? styles.toggleButtonActive : styles.toggleButtonInactive
                             ]}
                           >
                             <Ionicons
                               name={reminder.isActive ? "notifications" : "notifications-off"}
-                              size={16}
+                              size={scaledButtonSize(16)}
                               color={reminder.isActive ? "#4CAF50" : "rgba(255, 255, 255, 0.5)"}
                             />
                             <Text style={[
                               styles.toggleButtonText,
+                              { fontSize: scaledFontSize(12) },
                               reminder.isActive ? styles.toggleButtonTextActive : styles.toggleButtonTextInactive
                             ]}>
                               {reminder.isActive ? 'Active' : 'Inactive'}
                             </Text>
                           </Pressable>
-                          
+
                           <Pressable
                             onPress={() => handleDeleteReminder(reminder.id, reminder.title)}
-                            style={styles.deleteButton}
+                            style={[styles.deleteButton, { minHeight: scaledButtonSize(32), padding: scaledPadding(8) }]}
                           >
-                            <Ionicons name="trash-outline" size={16} color="#FF6B6B" />
+                            <Ionicons name="trash-outline" size={scaledButtonSize(16)} color="#FF6B6B" />
                           </Pressable>
                         </View>
                       </View>
