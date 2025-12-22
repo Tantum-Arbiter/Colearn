@@ -1,6 +1,7 @@
-import React, { useEffect, useCallback, useRef, useMemo } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import React, { useEffect, useCallback, useRef, useMemo, useState } from 'react';
+import { View, Pressable, StyleSheet, Modal, Text, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Fonts } from '@/constants/theme';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -50,7 +51,40 @@ interface MainMenuProps {
 
 function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
   const insets = useSafeAreaInsets();
-  const { scaledButtonSize } = useAccessibility();
+  const { scaledButtonSize, scaledFontSize } = useAccessibility();
+
+  // Parents Only modal state
+  const [showParentsOnlyModal, setShowParentsOnlyModal] = useState(false);
+  const [parentsOnlyChallenge, setParentsOnlyChallenge] = useState<{ emoji: string; word: string }>({ emoji: '🐱', word: 'cat' });
+  const [parentsOnlyInput, setParentsOnlyInput] = useState('');
+  const parentsOnlyCallbackRef = useRef<(() => void) | null>(null);
+
+  const PARENT_CHALLENGES = [
+    { emoji: '🐱', word: 'cat' },
+    { emoji: '🦆', word: 'duck' },
+    { emoji: '🐕', word: 'dog' },
+    { emoji: '🐫', word: 'camel' },
+  ];
+
+  const showParentChallenge = (callback: () => void) => {
+    const randomChallenge = PARENT_CHALLENGES[Math.floor(Math.random() * PARENT_CHALLENGES.length)];
+    setParentsOnlyChallenge(randomChallenge);
+    setParentsOnlyInput('');
+    parentsOnlyCallbackRef.current = callback;
+    setShowParentsOnlyModal(true);
+  };
+
+  const handleParentChallengeSubmit = () => {
+    if (parentsOnlyInput.toLowerCase().trim() === parentsOnlyChallenge.word.toLowerCase()) {
+      setShowParentsOnlyModal(false);
+      setParentsOnlyInput('');
+
+      if (parentsOnlyCallbackRef.current) {
+        parentsOnlyCallbackRef.current();
+        parentsOnlyCallbackRef.current = null;
+      }
+    }
+  };
 
   // Track screen time for general app usage
   useScreenTimeTracking({
@@ -500,7 +534,7 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
         <View style={legacyStyles.accountButtonContainer}>
           <Pressable
             style={legacyStyles.accountButton}
-            onPress={() => onNavigate('account')}
+            onPress={() => showParentChallenge(() => onNavigate('account'))}
           >
             <View style={[
               legacyStyles.accountIconBackground,
@@ -591,6 +625,57 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
           )}
         </View>
       </View>
+
+      {/* Parents Only Challenge Modal */}
+      <Modal
+        visible={showParentsOnlyModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          setShowParentsOnlyModal(false);
+          setParentsOnlyInput('');
+        }}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={parentsOnlyStyles.modalOverlay}
+        >
+          <View style={parentsOnlyStyles.content}>
+            <Pressable
+              style={parentsOnlyStyles.closeButton}
+              onPress={() => {
+                setShowParentsOnlyModal(false);
+                setParentsOnlyInput('');
+              }}
+            >
+              <Text style={parentsOnlyStyles.closeButtonText}>✕</Text>
+            </Pressable>
+            <Text style={[parentsOnlyStyles.title, { fontSize: scaledFontSize(22) }]}>Parents Only</Text>
+            <Text style={parentsOnlyStyles.emoji}>{parentsOnlyChallenge.emoji}</Text>
+            <Text style={[parentsOnlyStyles.subtitle, { fontSize: scaledFontSize(14) }]}>Type the animal name to continue</Text>
+            <TextInput
+              style={[parentsOnlyStyles.input, { fontSize: scaledFontSize(18) }]}
+              value={parentsOnlyInput}
+              onChangeText={setParentsOnlyInput}
+              placeholder="Type here..."
+              placeholderTextColor="rgba(255, 255, 255, 0.5)"
+              autoCapitalize="none"
+              autoCorrect={false}
+              onSubmitEditing={handleParentChallengeSubmit}
+            />
+            <Pressable
+              style={[
+                parentsOnlyStyles.confirmButton,
+                parentsOnlyInput.toLowerCase().trim() !== parentsOnlyChallenge.word.toLowerCase() && parentsOnlyStyles.buttonDisabled
+              ]}
+              onPress={handleParentChallengeSubmit}
+              disabled={parentsOnlyInput.toLowerCase().trim() !== parentsOnlyChallenge.word.toLowerCase()}
+            >
+              <Text style={[parentsOnlyStyles.confirmButtonText, { fontSize: scaledFontSize(16) }]}>Continue</Text>
+            </Pressable>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </LinearGradient>
   );
 }
@@ -644,6 +729,91 @@ const legacyStyles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: getResponsiveSize(20),
     paddingTop: getResponsiveSize(20),
+  },
+});
+
+const parentsOnlyStyles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  content: {
+    backgroundColor: 'rgba(44, 62, 80, 0.85)',
+    borderRadius: 20,
+    padding: 24,
+    paddingTop: 40,
+    alignItems: 'center',
+    minWidth: 280,
+    maxWidth: 320,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  title: {
+    fontSize: 22,
+    fontFamily: Fonts.sans,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 16,
+  },
+  emoji: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  subtitle: {
+    fontSize: 14,
+    fontFamily: Fonts.sans,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  input: {
+    width: '100%',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 18,
+    fontFamily: Fonts.sans,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  confirmButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(78, 205, 196, 0.8)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  confirmButtonText: {
+    fontSize: 16,
+    fontFamily: Fonts.sans,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  buttonDisabled: {
+    backgroundColor: 'rgba(150, 150, 150, 0.5)',
   },
 });
 

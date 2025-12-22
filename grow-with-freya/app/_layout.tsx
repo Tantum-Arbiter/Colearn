@@ -76,6 +76,7 @@ function AppContent() {
     isGuestMode,
     setOnboardingComplete,
     setShowLoginAfterOnboarding,
+    setGuestMode,
     setCurrentScreen,
     shouldReturnToMainMenu,
     clearReturnToMainMenu
@@ -329,7 +330,8 @@ function AppContent() {
   };
 
   const handleLoginSkip = () => {
-    console.log('Login skipped - going to app');
+    console.log('Login skipped (guest mode) - going to app');
+    setGuestMode(true);
     setShowLoginAfterOnboarding(false);
     setCurrentView('app');
     setCurrentPage('main');

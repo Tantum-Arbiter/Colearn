@@ -1,0 +1,267 @@
+import { Audio } from 'expo-av';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Paths, Directory, File } from 'expo-file-system';
+
+const VOICE_OVERS_STORAGE_KEY = '@voice_overs';
+const RECORDINGS_DIRECTORY_NAME = 'voice-recordings';
+
+export interface PageRecording {
+  pageIndex: number;
+  uri: string;
+  duration: number;
+}
+
+export interface VoiceOver {
+  id: string;
+  storyId: string;
+  name: string;
+  createdAt: number;
+  pageRecordings: Record<number, PageRecording>;
+}
+
+export interface VoiceOverMetadata {
+  voiceOvers: VoiceOver[];
+}
+
+class VoiceRecordingService {
+  private recording: Audio.Recording | null = null;
+  private isRecording: boolean = false;
+  private recordingStartTime: number = 0;
+
+  private recordingsDir: Directory | null = null;
+
+  async initialize(): Promise<void> {
+    try {
+      this.recordingsDir = new Directory(Paths.document, RECORDINGS_DIRECTORY_NAME);
+      if (!this.recordingsDir.exists) {
+        this.recordingsDir.create();
+        console.log('Voice recordings directory created');
+      }
+    } catch (error) {
+      console.error('Failed to initialize voice recording service:', error);
+    }
+  }
+
+  async requestPermissions(): Promise<boolean> {
+    try {
+      const { status } = await Audio.requestPermissionsAsync();
+      return status === 'granted';
+    } catch (error) {
+      console.error('Failed to request audio permissions:', error);
+      return false;
+    }
+  }
+
+  async startRecording(): Promise<boolean> {
+    try {
+      const hasPermission = await this.requestPermissions();
+      if (!hasPermission) {
+        console.warn('Microphone permission not granted');
+        return false;
+      }
+
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: false,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
+      });
+
+      const { recording } = await Audio.Recording.createAsync(
+        Audio.RecordingOptionsPresets.HIGH_QUALITY
+      );
+
+      this.recording = recording;
+      this.isRecording = true;
+      this.recordingStartTime = Date.now();
+
+      console.log('Recording started');
+      return true;
+    } catch (error) {
+      console.error('Failed to start recording:', error);
+      return false;
+    }
+  }
+
+  async stopRecording(): Promise<{ uri: string; duration: number } | null> {
+    if (!this.recording || !this.isRecording) {
+      return null;
+    }
+
+    // Mark as not recording immediately to prevent double-stop
+    const recordingToStop = this.recording;
+    const duration = Date.now() - this.recordingStartTime;
+    this.recording = null;
+    this.isRecording = false;
+
+    try {
+      await recordingToStop.stopAndUnloadAsync();
+      const uri = recordingToStop.getURI();
+
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: true,
+        shouldDuckAndroid: false,
+        playThroughEarpieceAndroid: false,
+      });
+
+      console.log('Recording stopped:', uri);
+      return uri ? { uri, duration } : null;
+    } catch (error) {
+      console.error('Failed to stop recording:', error);
+      return null;
+    }
+  }
+
+  getIsRecording(): boolean {
+    return this.isRecording;
+  }
+
+  getRecordingDuration(): number {
+    if (!this.isRecording) return 0;
+    return Date.now() - this.recordingStartTime;
+  }
+
+  async saveRecording(
+    _storyId: string,
+    voiceOverId: string,
+    pageIndex: number,
+    tempUri: string,
+    _duration: number
+  ): Promise<string | null> {
+    try {
+      if (!this.recordingsDir) {
+        await this.initialize();
+      }
+      const filename = `${voiceOverId}_page${pageIndex}.m4a`;
+      const tempFile = new File(tempUri);
+      const targetPath = `${this.recordingsDir!.uri}${filename}`;
+      const permanentFile = new File(targetPath);
+
+      // Delete existing file if it exists (for overwrites)
+      try {
+        if (permanentFile.exists) {
+          permanentFile.delete();
+          console.log('Deleted existing recording:', targetPath);
+        }
+      } catch (deleteError) {
+        console.warn('Could not delete existing file:', deleteError);
+      }
+
+      // Use move instead of copy - move replaces existing files
+      tempFile.move(permanentFile);
+      console.log('Recording saved:', permanentFile.uri);
+      return permanentFile.uri;
+    } catch (error) {
+      console.error('Failed to save recording:', error);
+      return null;
+    }
+  }
+
+  async getVoiceOvers(): Promise<VoiceOver[]> {
+    try {
+      const data = await AsyncStorage.getItem(VOICE_OVERS_STORAGE_KEY);
+      if (!data) return [];
+      const metadata: VoiceOverMetadata = JSON.parse(data);
+      return metadata.voiceOvers || [];
+    } catch (error) {
+      console.error('Failed to get voice overs:', error);
+      return [];
+    }
+  }
+
+  async getVoiceOversForStory(storyId: string): Promise<VoiceOver[]> {
+    const allVoiceOvers = await this.getVoiceOvers();
+    return allVoiceOvers.filter(vo => vo.storyId === storyId);
+  }
+
+  async createVoiceOver(storyId: string, name: string): Promise<VoiceOver> {
+    const voiceOver: VoiceOver = {
+      id: `vo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      storyId,
+      name,
+      createdAt: Date.now(),
+      pageRecordings: {},
+    };
+
+    const voiceOvers = await this.getVoiceOvers();
+    voiceOvers.push(voiceOver);
+    await this.saveVoiceOvers(voiceOvers);
+
+    console.log('Voice over created:', voiceOver.id);
+    return voiceOver;
+  }
+
+  async updateVoiceOver(voiceOver: VoiceOver): Promise<void> {
+    const voiceOvers = await this.getVoiceOvers();
+    const index = voiceOvers.findIndex(vo => vo.id === voiceOver.id);
+    if (index !== -1) {
+      voiceOvers[index] = voiceOver;
+      await this.saveVoiceOvers(voiceOvers);
+    }
+  }
+
+  async addPageRecording(
+    voiceOverId: string,
+    pageIndex: number,
+    uri: string,
+    duration: number
+  ): Promise<void> {
+    const voiceOvers = await this.getVoiceOvers();
+    const voiceOver = voiceOvers.find(vo => vo.id === voiceOverId);
+    if (voiceOver) {
+      voiceOver.pageRecordings[pageIndex] = { pageIndex, uri, duration };
+      await this.saveVoiceOvers(voiceOvers);
+      console.log(`Page ${pageIndex} recording added to voice over ${voiceOverId}`);
+    }
+  }
+
+  async deleteVoiceOver(voiceOverId: string): Promise<void> {
+    try {
+      const voiceOvers = await this.getVoiceOvers();
+      const voiceOver = voiceOvers.find(vo => vo.id === voiceOverId);
+
+      if (voiceOver) {
+        for (const recording of Object.values(voiceOver.pageRecordings)) {
+          try {
+            const file = new File(recording.uri);
+            if (file.exists) {
+              file.delete();
+            }
+          } catch (e) {
+            console.warn('Failed to delete recording file:', e);
+          }
+        }
+      }
+
+      const filtered = voiceOvers.filter(vo => vo.id !== voiceOverId);
+      await this.saveVoiceOvers(filtered);
+      console.log('Voice over deleted:', voiceOverId);
+    } catch (error) {
+      console.error('Failed to delete voice over:', error);
+    }
+  }
+
+  private async saveVoiceOvers(voiceOvers: VoiceOver[]): Promise<void> {
+    const metadata: VoiceOverMetadata = { voiceOvers };
+    await AsyncStorage.setItem(VOICE_OVERS_STORAGE_KEY, JSON.stringify(metadata));
+  }
+
+  async playRecording(uri: string): Promise<Audio.Sound | null> {
+    try {
+      const { sound } = await Audio.Sound.createAsync(
+        { uri },
+        { shouldPlay: true }
+      );
+      return sound;
+    } catch (error) {
+      console.error('Failed to play recording:', error);
+      return null;
+    }
+  }
+}
+
+export const voiceRecordingService = new VoiceRecordingService();
+
