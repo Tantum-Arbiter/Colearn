@@ -14,7 +14,7 @@ interface TermsConditionsScreenProps {
 
 export function TermsConditionsScreen({ onBack }: TermsConditionsScreenProps) {
   const insets = useSafeAreaInsets();
-  const { scaledFontSize, scaledButtonSize, scaledPadding } = useAccessibility();
+  const { scaledFontSize, scaledButtonSize } = useAccessibility();
 
   return (
     <View style={styles.container}>

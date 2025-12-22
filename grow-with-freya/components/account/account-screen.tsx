@@ -422,7 +422,7 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
               {showGrayscaleInfo && (
                 <>
                   <Text style={[styles.grayscaleInfoText, { fontSize: scaledFontSize(12) }]}>
-                    For black & white mode, use your device's built-in accessibility settings:
+                    For black &amp; white mode, use your device&apos;s built-in accessibility settings:
                   </Text>
                   <Text style={[styles.grayscaleInfoPath, { fontSize: scaledFontSize(11) }]}>
                     <Text style={styles.platformBold}>iOS:</Text> Settings → Accessibility → Display & Text Size → Color Filters → Grayscale

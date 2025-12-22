@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Pressable, StyleSheet, Dimensions } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
@@ -7,7 +7,6 @@ import Animated, {
   withTiming,
   withSpring,
   withSequence,
-  withDelay,
   Easing,
 } from 'react-native-reanimated';
 import { ThemedText } from '@/components/themed-text';

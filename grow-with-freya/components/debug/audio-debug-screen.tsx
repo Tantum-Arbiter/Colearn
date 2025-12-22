@@ -16,9 +16,9 @@ export function AudioDebugScreen({ onBack }: AudioDebugScreenProps) {
   const { isLoaded, isPlaying, volume } = useBackgroundMusic();
   const { isMuted } = useGlobalSound();
 
-  const addTestResult = (result: string) => {
+  const addTestResult = useCallback((result: string) => {
     setTestResults(prev => [...prev, `${new Date().toLocaleTimeString()}: ${result}`]);
-  };
+  }, []);
 
   const testAudioMode = async () => {
     try {

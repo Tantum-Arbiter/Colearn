@@ -76,6 +76,7 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
     setTimeout(() => {
       setIsCardAnimating(false);
     }, 800);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Timer effect
@@ -96,6 +97,7 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
     }
 
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isTimerActive, timeLeft]);
 
   const handleEmotionPress = (selectedEmotion: Emotion) => {

@@ -22,8 +22,11 @@ module.exports = {
   ],
 
   // Module name mapping for animation components
-  moduleNameMapping: {
+  moduleNameMapper: {
+    ...require('./jest.config.js').moduleNameMapper,
     '^@/components/ui/entrance-animation$': '<rootDir>/components/ui/entrance-animation.tsx',
+    '^react-native-reanimated$': '<rootDir>/__mocks__/react-native-reanimated.js',
+    '^expo-haptics$': '<rootDir>/__mocks__/expo-haptics.js',
   },
 
   // Test environment optimized for React Native animations
@@ -96,10 +99,4 @@ module.exports = {
     },
   },
 
-  // Mock configuration for animation dependencies
-  moduleNameMapping: {
-    ...require('./jest.config.js').moduleNameMapping,
-    '^react-native-reanimated$': '<rootDir>/__mocks__/react-native-reanimated.js',
-    '^expo-haptics$': '<rootDir>/__mocks__/expo-haptics.js',
-  },
 };

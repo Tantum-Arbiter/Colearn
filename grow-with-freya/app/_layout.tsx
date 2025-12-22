@@ -233,6 +233,7 @@ function AppContent() {
     };
 
     checkAuthAndSetView();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAppReady, hasCompletedOnboarding, showLoginAfterOnboarding, isGuestMode]);
 
   // Refresh tokens when app comes back from background (skip for guest mode)
