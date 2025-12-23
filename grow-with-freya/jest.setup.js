@@ -117,6 +117,33 @@ jest.mock('expo-file-system', () => ({
   },
 }));
 
+// Mock expo-file-system/next (new API with Paths, Directory, File classes)
+jest.mock('expo-file-system/next', () => {
+  const mockFile = {
+    exists: false,
+    uri: 'file:///mock-file-uri',
+    delete: jest.fn(),
+    move: jest.fn(),
+    copy: jest.fn(),
+  };
+
+  const mockDirectory = {
+    exists: false,
+    uri: 'file:///mock-document-directory/voice-recordings/',
+    create: jest.fn(),
+    delete: jest.fn(),
+  };
+
+  return {
+    Paths: {
+      document: 'file:///mock-document-directory/',
+      cache: 'file:///mock-cache-directory/',
+    },
+    Directory: jest.fn(() => mockDirectory),
+    File: jest.fn(() => mockFile),
+  };
+});
+
 // Mock expo-av
 jest.mock('expo-av', () => ({
   Audio: {

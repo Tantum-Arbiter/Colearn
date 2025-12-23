@@ -1,6 +1,6 @@
 import { Audio } from 'expo-av';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Paths, Directory, File } from 'expo-file-system';
+import { Paths, Directory, File } from 'expo-file-system/next';
 
 const VOICE_OVERS_STORAGE_KEY = '@voice_overs';
 const RECORDINGS_DIRECTORY_NAME = 'voice-recordings';
