@@ -10,8 +10,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppStore } from '@/store/app-store';
 import { MusicControl } from '@/components/ui/music-control';
+import { ParentsOnlyModal } from '@/components/ui/parents-only-modal';
 import { Ionicons } from '@expo/vector-icons';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
 
 import { ErrorBoundary } from './error-boundary';
 import {
@@ -40,7 +42,6 @@ import {
 
 import { createCloudAnimationNew } from './main-menu/cloud-animations';
 import type { MenuItemData } from './main-menu/index';
-import { useScreenTimeTracking } from '@/hooks/use-screen-time-tracking';
 
 
 interface MainMenuProps {
@@ -50,14 +51,10 @@ interface MainMenuProps {
 
 function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
   const insets = useSafeAreaInsets();
-  const { scaledButtonSize } = useAccessibility();
+  const { scaledButtonSize, scaledFontSize } = useAccessibility();
 
-  // Track screen time for general app usage
-  useScreenTimeTracking({
-    activity: 'story', // Use story as general app usage
-    autoStart: true,
-    autoEnd: true,
-  });
+  // Parents Only modal - using shared hook
+  const parentsOnly = useParentsOnlyChallenge();
 
   // Get current screen dimensions (updates with orientation changes)
   const { width: screenWidth, height: screenHeight } = getScreenDimensions();
@@ -500,7 +497,7 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
         <View style={legacyStyles.accountButtonContainer}>
           <Pressable
             style={legacyStyles.accountButton}
-            onPress={() => onNavigate('account')}
+            onPress={() => parentsOnly.showChallenge(() => onNavigate('account'))}
           >
             <View style={[
               legacyStyles.accountIconBackground,
@@ -591,6 +588,18 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
           )}
         </View>
       </View>
+
+      {/* Parents Only Challenge Modal */}
+      <ParentsOnlyModal
+        visible={parentsOnly.isVisible}
+        challenge={parentsOnly.challenge}
+        inputValue={parentsOnly.inputValue}
+        onInputChange={parentsOnly.setInputValue}
+        onSubmit={parentsOnly.handleSubmit}
+        onClose={parentsOnly.handleClose}
+        isInputValid={parentsOnly.isInputValid}
+        scaledFontSize={scaledFontSize}
+      />
     </LinearGradient>
   );
 }
@@ -646,6 +655,8 @@ const legacyStyles = StyleSheet.create({
     paddingTop: getResponsiveSize(20),
   },
 });
+
+
 
 // Wrap with error boundary for crash protection
 const MainMenuWithErrorBoundary = React.memo(function MainMenuWithErrorBoundary(props: MainMenuProps) {

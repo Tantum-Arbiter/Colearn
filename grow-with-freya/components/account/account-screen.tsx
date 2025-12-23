@@ -79,7 +79,7 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
   const { todayUsage, refreshUsage } = useScreenTime();
 
   // Accessibility scaling (textSizeScale already from useAppStore above)
-  const { scaledFontSize, scaledButtonSize, scaledPadding } = useAccessibility();
+  const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
 
   // Star animation
   const starOpacity = useSharedValue(0.4);
@@ -231,26 +231,27 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
         colors={['#1E3A8A', '#1E3A8A', '#1E3A8A']} // Darkest color from main menu gradient
         style={styles.gradient}
       >
-        {/* Animated stars background */}
-        {stars.map((star) => (
-          <Animated.View
-            key={`star-${star.id}`}
-            style={[
-              starAnimatedStyle,
-              {
-                position: 'absolute',
-                width: 3,
-                height: 3,
-                backgroundColor: '#FFFFFF',
-                borderRadius: 1.5,
-                opacity: star.opacity,
-                left: star.left,
-                top: star.top,
-                zIndex: 1,
-              },
-            ]}
-          />
-        ))}
+        {/* Animated stars background - pointerEvents none to allow scrolling through */}
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          {stars.map((star) => (
+            <Animated.View
+              key={`star-${star.id}`}
+              style={[
+                starAnimatedStyle,
+                {
+                  position: 'absolute',
+                  width: 3,
+                  height: 3,
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: 1.5,
+                  opacity: star.opacity,
+                  left: star.left,
+                  top: star.top,
+                },
+              ]}
+            />
+          ))}
+        </View>
 
         {/* Moon bottom background image - behind all other components */}
         <View style={mainMenuStyles.bearContainer} pointerEvents="none">
@@ -260,11 +261,13 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
         {/* Shared page header component */}
         <PageHeader title="Account" onBack={onBack} />
 
-        {/* Content */}
-        <ScrollView
-          style={[styles.scrollView, { zIndex: 10, marginTop: insets.top + 140 + (textSizeScale - 1) * 60 }]}
-          contentContainerStyle={[styles.content, { paddingBottom: Dimensions.get('window').height * 0.2 }]}
-        >
+        {/* Content container with flex: 1 for proper scrolling */}
+        <View style={{ flex: 1, paddingTop: insets.top + 140 + (textSizeScale - 1) * 60 }}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={[styles.content, { paddingBottom: Dimensions.get('window').height * 0.2 }, isTablet && { alignItems: 'center' }]}
+          >
+          <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
           {/* App Settings Section */}
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>
@@ -527,7 +530,9 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
               </Text>
             </Pressable>
           </View>
-        </ScrollView>
+          </View>
+          </ScrollView>
+        </View>
 
         {/* Language Selection Overlay */}
         {showLanguageOverlay && (
@@ -618,9 +623,6 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 20,
     paddingBottom: 40,
-    maxWidth: 400,
-    alignSelf: 'center',
-    width: '100%',
   },
   section: {
     marginBottom: 30,

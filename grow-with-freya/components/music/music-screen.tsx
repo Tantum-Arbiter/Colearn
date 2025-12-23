@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MusicMainMenu } from './music-main-menu';
 import { TantrumInfoScreen } from './tantrum-info-screen';
 import { TantrumSelectionScreen } from './tantrum-selection-screen';
@@ -7,7 +7,6 @@ import { MusicPlayerScreen } from './music-player-screen';
 import { useMusicPlayer } from '@/hooks/use-music-player';
 import { MusicTrack, MusicCategory } from '@/types/music';
 import { getPlaylistByCategory } from '@/data/music';
-import { useScreenTimeTracking } from '@/hooks/use-screen-time-tracking';
 
 interface MusicScreenProps {
   onBack: () => void;
@@ -20,12 +19,11 @@ export function MusicScreen({ onBack }: MusicScreenProps) {
   const [previousView, setPreviousView] = useState<MusicView>('main-menu');
   const { loadTrack, loadPlaylist, clearTrack, currentTrack, pause } = useMusicPlayer();
 
-  // Track screen time for music activities
-  useScreenTimeTracking({
-    activity: 'music',
-    autoStart: true,
-    autoEnd: true,
-  });
+  // Refs to hold stable function references for cleanup
+  const pauseRef = useRef(pause);
+  const clearTrackRef = useRef(clearTrack);
+  pauseRef.current = pause;
+  clearTrackRef.current = clearTrack;
 
   // Reset to main menu when component mounts
   useEffect(() => {
@@ -34,8 +32,11 @@ export function MusicScreen({ onBack }: MusicScreenProps) {
 
     // Cleanup function: clear music and restore background when leaving music section
     return () => {
-      console.log('Music screen unmounting - clearing music and restoring background');
-      clearTrack(); // Only clear when actually leaving the music section
+      console.log('Music screen unmounting - stopping and clearing music');
+      // First pause to immediately stop playback, then clear track
+      // This ensures the binaural beats don't continue playing after leaving
+      pauseRef.current();
+      clearTrackRef.current();
     };
   }, []);
 

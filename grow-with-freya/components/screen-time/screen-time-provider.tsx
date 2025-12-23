@@ -83,20 +83,43 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
     };
   }, [notificationsEnabled]);
 
-  // Handle app state changes
+  // Auto-start tracking when provider mounts (app opens) and screen time is enabled
+  useEffect(() => {
+    if (screenTimeEnabled && !isTracking) {
+      console.log('Screen time: Auto-starting session on app mount');
+      screenTimeService.startSession('story', childAgeInMonths).then(() => {
+        setIsTracking(true);
+        setCurrentActivity('story');
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screenTimeEnabled]);
+
+  // Handle app state changes - end on background, restart on active
   useEffect(() => {
     const handleAppStateChange = async (nextAppState: AppStateStatus) => {
       if (nextAppState === 'background' || nextAppState === 'inactive') {
         // App going to background, end current session
         if (isTracking) {
-          await endActivity();
+          console.log('Screen time: Ending session on background');
+          await screenTimeService.endSession();
+          setIsTracking(false);
+          setCurrentActivity(null);
+        }
+      } else if (nextAppState === 'active') {
+        // App becoming active, start a new session if screen time is enabled
+        if (screenTimeEnabled && !isTracking) {
+          console.log('Screen time: Starting session on app active');
+          await screenTimeService.startSession('story', childAgeInMonths);
+          setIsTracking(true);
+          setCurrentActivity('story');
         }
       }
     };
 
     const subscription = AppState.addEventListener('change', handleAppStateChange);
     return () => subscription?.remove();
-  }, [isTracking]);
+  }, [isTracking, screenTimeEnabled, childAgeInMonths]);
 
   const startActivity = useCallback(async (activity: 'story' | 'emotions' | 'music') => {
     if (!screenTimeEnabled) return;

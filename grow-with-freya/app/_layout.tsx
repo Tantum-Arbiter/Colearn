@@ -71,11 +71,13 @@ function AppContent() {
   const colorScheme = useColorScheme();
   const {
     isAppReady,
+    hasHydrated,
     hasCompletedOnboarding,
     showLoginAfterOnboarding,
     isGuestMode,
     setOnboardingComplete,
     setShowLoginAfterOnboarding,
+    setGuestMode,
     setCurrentScreen,
     shouldReturnToMainMenu,
     clearReturnToMainMenu
@@ -200,46 +202,59 @@ function AppContent() {
 
   useEffect(() => {
     const checkAuthAndSetView = async () => {
+      // Wait for store to be hydrated from AsyncStorage before checking auth
+      if (!hasHydrated) {
+        console.log('Waiting for store hydration...');
+        return;
+      }
+
       if (!isAppReady) {
         setCurrentView('splash');
         return;
       }
-
-      // Check if user is authenticated (this will auto-refresh tokens if needed)
-      const isAuthenticated = await ApiClient.isAuthenticated();
-      console.log('Authentication check:', { isAuthenticated, hasCompletedOnboarding, showLoginAfterOnboarding, isGuestMode });
 
       if (showLoginAfterOnboarding) {
         setCurrentView('login');
       } else if (!hasCompletedOnboarding) {
         setCurrentView('onboarding');
       } else if (isGuestMode) {
-        // User is in guest mode - allow access without authentication
+        // User is in guest mode - allow access without authentication (no backend calls)
         console.log('Guest mode - going to app without backend calls');
         setCurrentView('app');
         setCurrentPage('main');
-      } else if (!isAuthenticated) {
-        // User has completed onboarding but is not authenticated
-        // Show login screen
-        console.log('User not authenticated - showing login');
-        setShowLoginAfterOnboarding(true);
-        setCurrentView('login');
       } else {
-        // User is authenticated, go to app
-        console.log('User authenticated - going to app');
-        setCurrentView('app');
-        setCurrentPage('main');
+        // Only check authentication when not in guest mode
+        const isAuthenticated = await ApiClient.isAuthenticated();
+        console.log('Authentication check:', { isAuthenticated, hasCompletedOnboarding });
+
+        if (!isAuthenticated) {
+          // User has completed onboarding but is not authenticated - show login screen
+          console.log('User not authenticated - showing login');
+          setShowLoginAfterOnboarding(true);
+          setCurrentView('login');
+        } else {
+          // User is authenticated, go to app
+          console.log('User authenticated - going to app');
+          setCurrentView('app');
+          setCurrentPage('main');
+        }
       }
     };
 
     checkAuthAndSetView();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAppReady, hasCompletedOnboarding, showLoginAfterOnboarding, isGuestMode]);
+  }, [isAppReady, hasHydrated, hasCompletedOnboarding, showLoginAfterOnboarding, isGuestMode]);
 
   // Refresh tokens when app comes back from background (skip for guest mode)
   useEffect(() => {
     const handleAppStateChange = async (nextAppState: AppStateStatus) => {
       if (nextAppState === 'active') {
+        // Wait for store to be hydrated before checking auth
+        if (!hasHydrated) {
+          console.log('App became active - waiting for store hydration');
+          return;
+        }
+
         // Skip authentication check for guest mode users
         if (isGuestMode) {
           console.log('App became active - guest mode, skipping auth check');
@@ -263,7 +278,7 @@ function AppContent() {
 
     const subscription = AppState.addEventListener('change', handleAppStateChange);
     return () => subscription?.remove();
-  }, [hasCompletedOnboarding, isGuestMode, setShowLoginAfterOnboarding]);
+  }, [hasHydrated, hasCompletedOnboarding, isGuestMode, setShowLoginAfterOnboarding]);
 
   // Start background music once when transitioning from splash (only once!)
   useEffect(() => {
@@ -329,7 +344,8 @@ function AppContent() {
   };
 
   const handleLoginSkip = () => {
-    console.log('Login skipped - going to app');
+    console.log('Login skipped (guest mode) - going to app');
+    setGuestMode(true);
     setShowLoginAfterOnboarding(false);
     setCurrentView('app');
     setCurrentPage('main');

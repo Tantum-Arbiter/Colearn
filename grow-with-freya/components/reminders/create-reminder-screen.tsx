@@ -35,7 +35,7 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
   onSuccess,
 }) => {
   const insets = useSafeAreaInsets();
-  const { scaledFontSize, scaledButtonSize, scaledPadding } = useAccessibility();
+  const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
@@ -308,7 +308,8 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
         />
       ))}
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} contentContainerStyle={isTablet ? { alignItems: 'center' } : undefined}>
+        <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
         {/* Header */}
         <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50) }]}>
           <Pressable onPress={handleBack} style={[styles.backButton, { minHeight: scaledButtonSize(40) }]}>
@@ -486,6 +487,7 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
               {creating ? 'Creating...' : 'Create Reminder'}
             </Text>
           </Pressable>
+        </View>
         </View>
       </ScrollView>
     </LinearGradient>

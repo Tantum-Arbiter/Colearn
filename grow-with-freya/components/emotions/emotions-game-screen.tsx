@@ -29,7 +29,7 @@ interface EmotionsGameScreenProps {
 
 export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'emoji' }: EmotionsGameScreenProps) {
   const insets = useSafeAreaInsets();
-  const { scaledFontSize, scaledButtonSize, scaledPadding } = useAccessibility();
+  const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
 
   // Initialize with an emotion immediately to avoid loading screen
   const initialEmotion = getRandomEmotion([]);
@@ -260,7 +260,7 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
       </View>
 
       {/* Game content */}
-      <View style={styles.gameContent}>
+      <View style={[styles.gameContent, isTablet && { maxWidth: contentMaxWidth, alignSelf: 'center', width: '100%' }]}>
         {/* Current emotion card */}
         <Animated.View style={[styles.emotionContainer, cardAnimatedStyle]}>
           <EmotionCard

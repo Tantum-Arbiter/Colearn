@@ -75,9 +75,14 @@ class BackgroundMusicService {
    * Start playing background music
    */
   async play(): Promise<void> {
+    // Auto-reinitialize if the music was cleaned up
     if (!this.isLoaded || !this.sound) {
-      console.warn('Background music not loaded - please add a valid audio file to assets/audio/background-soundtrack.wav');
-      return;
+      console.log('Background music not loaded - reinitializing...');
+      await this.initialize();
+      if (!this.isLoaded || !this.sound) {
+        console.warn('Failed to reinitialize background music');
+        return;
+      }
     }
 
     try {

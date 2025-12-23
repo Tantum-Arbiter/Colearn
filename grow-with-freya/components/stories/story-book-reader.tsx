@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, Dimensions, StatusBar, Image, ImageBackground, ScrollView, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, Pressable, Dimensions, StatusBar, Image, ImageBackground, ScrollView, NativeSyntheticEvent, NativeScrollEvent, Modal, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -13,14 +13,19 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import * as ScreenOrientation from 'expo-screen-orientation';
+import { Audio } from 'expo-av';
 import { Story, StoryPage, STORY_TAGS } from '@/types/story';
 import { Fonts } from '@/constants/theme';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 import { StoryCompletionScreen } from './story-completion-screen';
 import { MusicControl } from '../ui/music-control';
+import { ParentsOnlyModal } from '../ui/parents-only-modal';
 import { useAppStore } from '@/store/app-store';
 import { useAccessibility, TEXT_SIZE_OPTIONS } from '@/hooks/use-accessibility';
+import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
 import * as Haptics from 'expo-haptics';
+import { voiceRecordingService, VoiceOver } from '@/services/voice-recording-service';
+import { useGlobalSound } from '@/contexts/global-sound-context';
 
 
 
@@ -45,34 +50,85 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
   const [activeSubmenu, setActiveSubmenu] = useState<'main' | 'fontSize' | null>(null);
   const [readingMode, setReadingMode] = useState<'read' | 'record' | 'narrate'>('read');
 
+  // Voice recording state
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const [currentVoiceOver, setCurrentVoiceOver] = useState<VoiceOver | null>(null);
+  const [showVoiceOverNameModal, setShowVoiceOverNameModal] = useState(false);
+  const [voiceOverName, setVoiceOverName] = useState('');
+  const [currentRecordingUri, setCurrentRecordingUri] = useState<string | null>(null);
+  const [tempRecordingUri, setTempRecordingUri] = useState<string | null>(null);
+  const [tempRecordingDuration, setTempRecordingDuration] = useState(0);
+  const [playbackSound, setPlaybackSound] = useState<Audio.Sound | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [availableVoiceOvers, setAvailableVoiceOvers] = useState<VoiceOver[]>([]);
+  const [showVoiceOverSelectModal, setShowVoiceOverSelectModal] = useState(false);
+  const [selectedVoiceOver, setSelectedVoiceOver] = useState<VoiceOver | null>(null);
+  const [isOverwriteSession, setIsOverwriteSession] = useState(false);
+  const [isNewVoiceOver, setIsNewVoiceOver] = useState(false);
+  const [narrationProgress, setNarrationProgress] = useState(0);
+  const [narrationDuration, setNarrationDuration] = useState(0);
+  const [shouldAutoStopRecording, setShouldAutoStopRecording] = useState(false);
+  const [shouldAutoAdvance, setShouldAutoAdvance] = useState(false);
+  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const textScrollViewRef = useRef<ScrollView>(null);
+
+  // Parents Only modal - using shared hook
+  const parentsOnly = useParentsOnlyChallenge();
+
+  // Background music control for recording
+  const globalSound = useGlobalSound();
+  const [wasMusicPlayingBeforeRecording, setWasMusicPlayingBeforeRecording] = useState(false);
+
   // Accessibility scaling
   const { scaledFontSize, scaledButtonSize, textSizeScale } = useAccessibility();
   const setTextSizeScale = useAppStore((state) => state.setTextSizeScale);
 
   // Track if text box needs scrolling (for larger text sizes)
   const [canScrollText, setCanScrollText] = useState(false);
-  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
+  // true = show up arrow (user is at bottom), false = show down arrow (user is at top/middle)
+  const [showUpArrow, setShowUpArrow] = useState(false);
 
-  // Reset scroll state when page changes
+  // Reset scroll state when page changes and scroll to top
   useEffect(() => {
     setCanScrollText(false);
-    setHasScrolledToBottom(false);
+    setShowUpArrow(false);
+    setScrollViewHeight(0);
+    setTextContentHeight(0);
+    // Scroll to top of text box when page changes
+    textScrollViewRef.current?.scrollTo({ y: 0, animated: false });
   }, [currentPageIndex]);
 
-  // Handle text scroll events
+  // Handle text scroll events - track position for up/down indicators
   const handleTextScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
-    const isAtBottom = contentOffset.y + layoutMeasurement.height >= contentSize.height - 5;
-    setHasScrolledToBottom(isAtBottom);
+    // Add small tolerance for edge detection
+    const isAtBottom = contentOffset.y + layoutMeasurement.height >= contentSize.height - 10;
+    const isAtTop = contentOffset.y <= 5;
+    // Show up arrow only when at bottom (and not at top for single-screen content)
+    setShowUpArrow(isAtBottom && !isAtTop);
   }, []);
+
+  // Track ScrollView layout height for accurate overflow detection
+  const [scrollViewHeight, setScrollViewHeight] = useState(0);
+  const [textContentHeight, setTextContentHeight] = useState(0);
+
+  // Check if text can scroll whenever either dimension changes
+  useEffect(() => {
+    if (scrollViewHeight > 0 && textContentHeight > 0) {
+      setCanScrollText(textContentHeight > scrollViewHeight + 2);
+    }
+  }, [scrollViewHeight, textContentHeight]);
 
   // Handle text content size change to detect overflow
   const handleTextContentSizeChange = useCallback((contentWidth: number, contentHeight: number) => {
-    // Calculate the max visible height based on accessibility scale
-    const baseMaxHeight = 80;
-    const scaledMaxHeight = baseMaxHeight * (1 + (textSizeScale - 1) * 0.5);
-    setCanScrollText(contentHeight > scaledMaxHeight);
-  }, [textSizeScale]);
+    setTextContentHeight(contentHeight);
+  }, []);
+
+  // Handle ScrollView layout to get actual visible height
+  const handleScrollViewLayout = useCallback((event: { nativeEvent: { layout: { height: number } } }) => {
+    setScrollViewHeight(event.nativeEvent.layout.height);
+  }, []);
 
 
 
@@ -284,6 +340,28 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
     try {
       console.log('Starting story completion transition...');
 
+      // In record mode, go back to cover page instead of showing completion screen
+      if (readingMode === 'record') {
+        console.log('Recording complete - returning to cover page');
+        const voiceOverName = currentVoiceOver?.name || 'this story';
+        // Reset recording state
+        setTempRecordingUri(null);
+        setCurrentRecordingUri(null);
+        setIsNewVoiceOver(false);
+        setIsOverwriteSession(false);
+        setReadingMode('read');
+        setCurrentVoiceOver(null);
+        // Go back to cover page
+        setCurrentPageIndex(0);
+        // Ensure page opacity is correct
+        currentPageOpacity.value = 1;
+        Alert.alert(
+          'Recording Complete',
+          `Your voice recording for "${voiceOverName}" has been saved.`,
+          [{ text: 'OK' }]
+        );
+        return;
+      }
 
       console.log('Waiting for final page to settle...');
       await new Promise(resolve => {
@@ -397,12 +475,377 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
   const handleCoverTap = () => {
     if (currentPageIndex !== 0) return; // Only work on cover page
 
+    // In record mode, require a voice over profile to be selected first
+    if (readingMode === 'record' && !currentVoiceOver) {
+      setShowVoiceOverNameModal(true);
+      return;
+    }
+
+    // In narrate mode, require a voice over profile to be selected first
+    if (readingMode === 'narrate' && !currentVoiceOver) {
+      setShowVoiceOverSelectModal(true);
+      return;
+    }
+
     console.log('Cover tapped - going directly to page 1');
 
     // Go directly to page 1 with no animation
     setCurrentPageIndex(1);
   };
   const storyTag = story.category ? STORY_TAGS[story.category] : null;
+
+  // Initialize voice recording service and load voice overs
+  useEffect(() => {
+    const initRecording = async () => {
+      await voiceRecordingService.initialize();
+      const voiceOvers = await voiceRecordingService.getVoiceOversForStory(story.id);
+      setAvailableVoiceOvers(voiceOvers);
+    };
+    initRecording();
+
+    return () => {
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+      }
+      if (playbackSound) {
+        playbackSound.unloadAsync();
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [story.id]);
+
+  // Load existing recording when page changes (in record mode)
+  useEffect(() => {
+    // Stop any current playback
+    setIsPlaying(false);
+    if (playbackSound) {
+      playbackSound.stopAsync();
+    }
+
+    // In record mode, check if there's an existing recording for this page
+    if (readingMode === 'record' && currentVoiceOver && currentPageIndex > 0) {
+      const existingRecording = currentVoiceOver.pageRecordings[currentPageIndex];
+      if (existingRecording) {
+        setCurrentRecordingUri(existingRecording.uri);
+        console.log(`Loaded existing recording for page ${currentPageIndex}: ${existingRecording.uri}`);
+      } else {
+        setCurrentRecordingUri(null);
+      }
+    } else {
+      setCurrentRecordingUri(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPageIndex, readingMode, currentVoiceOver]);
+
+  // Recording functions
+  const startRecordingNow = async (activeVoiceOver: VoiceOver) => {
+    try {
+      // Pause background music before recording
+      if (globalSound.isPlaying) {
+        setWasMusicPlayingBeforeRecording(true);
+        await globalSound.pause();
+        console.log('Background music paused for recording');
+      } else {
+        setWasMusicPlayingBeforeRecording(false);
+      }
+
+      const success = await voiceRecordingService.startRecording();
+      if (success) {
+        setIsRecording(true);
+        setRecordingDuration(0);
+        setShouldAutoStopRecording(false);
+        recordingTimerRef.current = setInterval(() => {
+          setRecordingDuration(prev => {
+            if (prev >= 29) {
+              // Set flag to trigger auto-stop via useEffect (don't call async from state update)
+              setShouldAutoStopRecording(true);
+              return 30;
+            }
+            return prev + 1;
+          });
+        }, 1000);
+      } else {
+        // Resume music if recording failed
+        if (wasMusicPlayingBeforeRecording) {
+          await globalSound.play();
+        }
+        Alert.alert('Permission Required', 'Microphone access is needed to record your voice.');
+      }
+    } catch (error) {
+      console.error('Failed to start recording:', error);
+      // Resume music if recording failed
+      if (wasMusicPlayingBeforeRecording) {
+        await globalSound.play();
+      }
+      Alert.alert('Recording Error', 'Failed to start recording. Please try again.');
+    }
+  };
+
+  const handleStartRecording = async (voiceOverToUse?: VoiceOver, skipOverwriteCheck?: boolean) => {
+    const activeVoiceOver = voiceOverToUse || currentVoiceOver;
+
+    if (!activeVoiceOver) {
+      setShowVoiceOverNameModal(true);
+      return;
+    }
+
+    // Check if there's an existing recording for this page
+    // Skip if: overwrite session already started, explicitly skipped, or it's a newly created voice over
+    if (!isOverwriteSession && !skipOverwriteCheck && !isNewVoiceOver) {
+      const existingRecording = activeVoiceOver.pageRecordings[currentPageIndex];
+      if (existingRecording || tempRecordingUri) {
+        Alert.alert(
+          'Overwrite Recording?',
+          'This page already has a recording. Are you sure you want to overwrite it with a new recording?',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Overwrite',
+              style: 'destructive',
+              onPress: () => {
+                setTempRecordingUri(null);
+                setCurrentRecordingUri(null);
+                startRecordingNow(activeVoiceOver);
+              },
+            },
+          ]
+        );
+        return;
+      }
+    }
+
+    // Clear temp recording if re-recording on same page
+    if (tempRecordingUri) {
+      setTempRecordingUri(null);
+      setCurrentRecordingUri(null);
+    }
+
+    startRecordingNow(activeVoiceOver);
+  };
+
+  const handleStopRecording = async () => {
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+    setShouldAutoStopRecording(false);
+
+    const result = await voiceRecordingService.stopRecording();
+    setIsRecording(false);
+
+    // Resume background music if it was playing before recording
+    if (wasMusicPlayingBeforeRecording) {
+      await globalSound.play();
+      console.log('Background music resumed after recording');
+      setWasMusicPlayingBeforeRecording(false);
+    }
+
+    if (result) {
+      // Store temp recording - will be saved permanently when user clicks next
+      setTempRecordingUri(result.uri);
+      setTempRecordingDuration(result.duration);
+      setCurrentRecordingUri(result.uri);
+    }
+  };
+
+  // Auto-stop recording when 30 seconds is reached
+  useEffect(() => {
+    if (shouldAutoStopRecording && isRecording) {
+      handleStopRecording();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shouldAutoStopRecording, isRecording]);
+
+  const saveCurrentRecording = async () => {
+    if (!tempRecordingUri || !currentVoiceOver) return;
+
+    try {
+      const savedUri = await voiceRecordingService.saveRecording(
+        story.id,
+        currentVoiceOver.id,
+        currentPageIndex,
+        tempRecordingUri,
+        tempRecordingDuration
+      );
+      if (savedUri) {
+        await voiceRecordingService.addPageRecording(
+          currentVoiceOver.id,
+          currentPageIndex,
+          savedUri,
+          tempRecordingDuration
+        );
+        // Refresh voice over data
+        const updatedVoiceOvers = await voiceRecordingService.getVoiceOversForStory(story.id);
+        setAvailableVoiceOvers(updatedVoiceOvers);
+        const updated = updatedVoiceOvers.find(vo => vo.id === currentVoiceOver.id);
+        if (updated) setCurrentVoiceOver(updated);
+      }
+      // Clear temp recording after saving
+      setTempRecordingUri(null);
+      setTempRecordingDuration(0);
+    } catch (error) {
+      console.error('Failed to save recording:', error);
+    }
+  };
+
+  const handleCreateVoiceOver = async () => {
+    if (!voiceOverName.trim()) return;
+
+    // Check for duplicate names
+    const normalizedName = voiceOverName.trim().toLowerCase();
+    const existingWithSameName = availableVoiceOvers.find(
+      vo => vo.name.toLowerCase() === normalizedName
+    );
+    if (existingWithSameName) {
+      Alert.alert('Name Already Exists', `A voice over named "${voiceOverName.trim()}" already exists. Please choose a different name.`);
+      return;
+    }
+
+    try {
+      const newVoiceOver = await voiceRecordingService.createVoiceOver(story.id, voiceOverName.trim());
+      setCurrentVoiceOver(newVoiceOver);
+      setAvailableVoiceOvers(prev => [...prev, newVoiceOver]);
+      setVoiceOverName('');
+      setShowVoiceOverNameModal(false);
+      // Reset state for new voice over - no overwrite prompts needed
+      setTempRecordingUri(null);
+      setCurrentRecordingUri(null);
+      setIsOverwriteSession(false);
+      setIsNewVoiceOver(true);
+    } catch (error) {
+      console.error('Failed to create voice over:', error);
+      Alert.alert('Error', 'Failed to create voice over. Please try again.');
+    }
+  };
+
+  const handlePlayRecording = async () => {
+    if (!currentRecordingUri) return;
+
+    if (playbackSound) {
+      await playbackSound.unloadAsync();
+    }
+
+    const sound = await voiceRecordingService.playRecording(currentRecordingUri);
+    if (sound) {
+      setPlaybackSound(sound);
+      setIsPlaying(true);
+      sound.setOnPlaybackStatusUpdate((status) => {
+        if (status.isLoaded && status.didJustFinish) {
+          setIsPlaying(false);
+        }
+      });
+    }
+  };
+
+  const handleStopPlayback = async () => {
+    if (playbackSound) {
+      await playbackSound.stopAsync();
+      setIsPlaying(false);
+    }
+  };
+
+  const handlePauseNarration = async () => {
+    if (playbackSound) {
+      await playbackSound.pauseAsync();
+      setIsPlaying(false);
+    }
+  };
+
+  const handleResumeNarration = async () => {
+    if (playbackSound) {
+      await playbackSound.playAsync();
+      setIsPlaying(true);
+    }
+  };
+
+  const handleReplayNarration = async () => {
+    if (playbackSound) {
+      await playbackSound.setPositionAsync(0);
+      await playbackSound.playAsync();
+      setIsPlaying(true);
+      setNarrationProgress(0);
+    }
+  };
+
+  const handleSelectVoiceOver = (voiceOver: VoiceOver) => {
+    setSelectedVoiceOver(voiceOver);
+    setCurrentVoiceOver(voiceOver);
+    setShowVoiceOverSelectModal(false);
+  };
+
+  // Narrate mode: auto-play recording when page changes
+  useEffect(() => {
+    if (readingMode !== 'narrate' || !selectedVoiceOver || currentPageIndex === 0) {
+      return;
+    }
+
+    const pageRecording = selectedVoiceOver.pageRecordings[currentPageIndex];
+    if (!pageRecording) {
+      return;
+    }
+
+    const playNarration = async () => {
+      if (playbackSound) {
+        await playbackSound.unloadAsync();
+      }
+
+      // Set duration from the recorded page info
+      setNarrationDuration(pageRecording.duration || 0);
+      setNarrationProgress(0);
+
+      const sound = await voiceRecordingService.playRecording(pageRecording.uri);
+      if (sound) {
+        setPlaybackSound(sound);
+        setIsPlaying(true);
+        sound.setOnPlaybackStatusUpdate((status) => {
+          if (status.isLoaded) {
+            // Update progress
+            const positionMs = status.positionMillis || 0;
+            const durationMs = status.durationMillis || 1;
+            setNarrationProgress(positionMs / 1000);
+            setNarrationDuration(durationMs / 1000);
+
+            if (status.didJustFinish) {
+              setIsPlaying(false);
+              setNarrationProgress(0);
+              // Set flag to trigger auto-advance via useEffect
+              setShouldAutoAdvance(true);
+            }
+          }
+        });
+      }
+    };
+
+    // Wait 2 seconds before starting narration
+    const delayTimer = setTimeout(() => {
+      playNarration();
+    }, 2000);
+
+    return () => clearTimeout(delayTimer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPageIndex, readingMode, selectedVoiceOver]);
+
+  // Show voice over selection when entering narrate mode
+  useEffect(() => {
+    if (readingMode === 'narrate' && availableVoiceOvers.length > 0 && !selectedVoiceOver) {
+      setShowVoiceOverSelectModal(true);
+    }
+  }, [readingMode, availableVoiceOvers, selectedVoiceOver]);
+
+  // Auto-advance to next page after narration finishes (2 second delay)
+  useEffect(() => {
+    if (shouldAutoAdvance && readingMode === 'narrate' && currentPageIndex < pages.length - 1) {
+      const advanceTimer = setTimeout(() => {
+        setShouldAutoAdvance(false);
+        handleNextPage();
+      }, 2000);
+
+      return () => clearTimeout(advanceTimer);
+    } else if (shouldAutoAdvance) {
+      setShouldAutoAdvance(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shouldAutoAdvance]);
 
   // Completion screen handlers
   const handleReadAnother = (newStory: Story) => {
@@ -554,8 +997,17 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
     );
   };
   
-  const handleNextPage = () => {
+  const handleNextPage = async () => {
     if (isTransitioning) return;
+
+    // In record mode, save the current recording before moving to next page
+    if (readingMode === 'record' && tempRecordingUri) {
+      await saveCurrentRecording();
+    }
+
+    // Clear temp recording state - existing recordings will be loaded by useEffect
+    setTempRecordingUri(null);
+    setTempRecordingDuration(0);
 
     // Check if we're on the last page
     if (currentPageIndex >= pages.length - 1) {
@@ -590,8 +1042,17 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
     }, 50); // Small delay to ensure content switch happens first
   };
   
-  const handlePreviousPage = () => {
+  const handlePreviousPage = async () => {
     if (isTransitioning || currentPageIndex <= 0) return;
+
+    // In record mode, save the current recording before moving to previous page
+    if (readingMode === 'record' && tempRecordingUri) {
+      await saveCurrentRecording();
+    }
+
+    // Clear temp recording state - existing recordings will be loaded by useEffect
+    setTempRecordingUri(null);
+    setTempRecordingDuration(0);
 
     setIsTransitioning(true);
     const targetPageIndex = currentPageIndex - 1;
@@ -747,6 +1208,133 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
           </Pressable>
         </View>
 
+        {/* Recording Controls - Top Center (only visible in record mode on story pages) */}
+        {readingMode === 'record' && currentPageIndex > 0 && (
+          <View style={[styles.recordingControlsContainer, {
+            paddingTop: Math.max(insets.top + 5, 20),
+          }]}>
+            {!isRecording && !currentRecordingUri && (
+              <Pressable
+                style={styles.recordButton}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  handleStartRecording();
+                }}
+              >
+                <View style={styles.recordButtonInner} />
+              </Pressable>
+            )}
+            {isRecording && (
+              <View style={styles.recordingActiveContainer}>
+                <Pressable
+                  style={styles.stopButton}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    handleStopRecording();
+                  }}
+                >
+                  <View style={styles.stopButtonInner} />
+                </Pressable>
+                <Text style={styles.recordingTimer}>{recordingDuration}s / 30s</Text>
+              </View>
+            )}
+            {currentRecordingUri && !isRecording && (
+              <View style={styles.playbackControlsContainer}>
+                {!isPlaying ? (
+                  <Pressable
+                    style={styles.playButton}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      handlePlayRecording();
+                    }}
+                  >
+                    <Text style={styles.playButtonIcon}>▶</Text>
+                  </Pressable>
+                ) : (
+                  <Pressable
+                    style={styles.playButton}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      handleStopPlayback();
+                    }}
+                  >
+                    <Text style={styles.playButtonIcon}>⏸</Text>
+                  </Pressable>
+                )}
+                <Pressable
+                  style={styles.reRecordButton}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setCurrentRecordingUri(null);
+                  }}
+                >
+                  <Text style={styles.reRecordButtonText}>↺</Text>
+                </Pressable>
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Narration Playback Controls - Top Center (only visible in narrate mode on story pages) */}
+        {readingMode === 'narrate' && currentPageIndex > 0 && selectedVoiceOver && (
+          <View style={[styles.narrationControlsContainer, {
+            paddingTop: Math.max(insets.top + 5, 20),
+          }]}>
+            <View style={[styles.narrationPlaybackContainer, {
+              paddingVertical: scaledButtonSize(6),
+              paddingHorizontal: scaledButtonSize(8),
+              gap: scaledButtonSize(6),
+            }]}>
+              {/* Play/Pause Button */}
+              <Pressable
+                style={[styles.narrationPlayPauseButton, {
+                  width: scaledButtonSize(32),
+                  height: scaledButtonSize(32),
+                  borderRadius: scaledButtonSize(16),
+                }]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  if (isPlaying) {
+                    handlePauseNarration();
+                  } else {
+                    handleResumeNarration();
+                  }
+                }}
+              >
+                <Text style={[styles.narrationPlayPauseIcon, { fontSize: scaledFontSize(14) }]}>{isPlaying ? '❚❚' : '▶'}</Text>
+              </Pressable>
+              {/* Progress Bar */}
+              <View style={styles.narrationProgressContainer}>
+                <View style={[styles.narrationProgressBar, { width: scaledButtonSize(84), height: scaledButtonSize(4) }]}>
+                  <View
+                    style={[
+                      styles.narrationProgressFill,
+                      { width: `${narrationDuration > 0 ? (narrationProgress / narrationDuration) * 100 : 0}%` }
+                    ]}
+                  />
+                </View>
+                <Text style={[styles.narrationTimeText, { fontSize: scaledFontSize(10) }]}>
+                  {Math.floor(narrationProgress)}s / {Math.floor(narrationDuration)}s
+                </Text>
+              </View>
+              {/* Replay Button */}
+              <Pressable
+                style={[styles.narrationReplayButton, {
+                  width: scaledButtonSize(28),
+                  height: scaledButtonSize(28),
+                  borderRadius: scaledButtonSize(14),
+                }]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  handleReplayNarration();
+                }}
+              >
+                <Text style={[styles.narrationReplayIcon, { fontSize: scaledFontSize(16) }]}>↻</Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
+
         {/* Top Right Controls - Sound and Settings (aligned with bottom next button) */}
         <View style={[styles.topRightControls, {
           paddingTop: Math.max(insets.top + 5, 20),
@@ -864,11 +1452,40 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
 
         {/* Bottom UI Panel - Text and Controls (hide on cover page) */}
         {currentPage && currentPageIndex > 0 && (
-          <View style={[styles.bottomUIPanel, {
-            paddingLeft: Math.max(insets.left + 5, 20),
-            paddingRight: Math.max(insets.right + 5, 20),
-            paddingBottom: Math.max(insets.bottom + 5, 20),
-          }]}>
+          <View style={[
+            styles.bottomUIPanel,
+            readingMode === 'record' && styles.bottomUIPanelRecordMode,
+            {
+              paddingLeft: Math.max(insets.left + 5, 20),
+              paddingRight: Math.max(insets.right + 5, 20),
+              paddingBottom: Math.max(insets.bottom + 5, 20),
+            }
+          ]}>
+
+          {/* Record Mode: Text box above navigation row */}
+          {readingMode === 'record' && (
+            <View style={styles.recordModeTextWrapper}>
+              <View style={styles.recordModeTextBox}>
+                <Text
+                  style={[
+                    styles.storyText,
+                    {
+                      fontSize: scaledFontSize(isTablet ? 20 : 16),
+                      lineHeight: scaledFontSize(isTablet ? 20 : 16) * 1.6,
+                    }
+                  ]}
+                >
+                  {currentPage?.text}
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {/* Navigation Row */}
+          <View style={[
+            styles.navigationRow,
+            readingMode === 'record' && styles.navigationRowRecordMode
+          ]}>
           {/* Previous Button - Left Side */}
           <Pressable
             style={[
@@ -879,10 +1496,10 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
                 height: scaledButtonSize(50),
                 borderRadius: scaledButtonSize(25),
               },
-              currentPageIndex <= 0 && styles.navButtonDisabled
+              (currentPageIndex <= 0 || (readingMode === 'record' && isRecording)) && styles.navButtonDisabled
             ]}
             onPress={handlePreviousPage}
-            disabled={currentPageIndex <= 0 || isTransitioning}
+            disabled={currentPageIndex <= 0 || isTransitioning || (readingMode === 'record' && isRecording)}
             testID="left-touch-area"
           >
             <Text style={[
@@ -894,36 +1511,79 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
             </Text>
           </Pressable>
 
-          {/* Story Text Box - Center - Scrollable for accessibility */}
-          <View style={styles.centerTextContainer}>
-            <View style={[
-              styles.centerTextBox,
-              { maxHeight: 80 * (1 + (textSizeScale - 1) * 0.5) }
-            ]}>
-              <ScrollView
-                showsVerticalScrollIndicator={false}
-                onScroll={handleTextScroll}
-                scrollEventThrottle={16}
-                onContentSizeChange={handleTextContentSizeChange}
-                bounces={false}
-              >
-                <Text
-                  style={[
-                    currentPage?.pageNumber === 0 ? styles.coverText : styles.storyText,
-                    { fontSize: scaledFontSize(currentPage?.pageNumber === 0 ? 18 : 16) }
-                  ]}
-                >
-                  {currentPage?.text}
-                </Text>
-              </ScrollView>
-              {/* Scroll indicator - shows when text overflows and user hasn't scrolled to bottom */}
-              {canScrollText && !hasScrolledToBottom && (
-                <View style={styles.scrollIndicator}>
-                  <Text style={[styles.scrollIndicatorText, { fontSize: scaledFontSize(14) }]}>↓</Text>
-                </View>
-              )}
+          {/* Story Text Box - Center - Scrollable for accessibility (non-record modes only) */}
+          {readingMode !== 'record' && (
+            <View style={styles.centerTextContainer}>
+              {(() => {
+                // Tablet gets larger base font for better readability
+                // iPad base sizes are significantly larger to compensate for 2-line limit
+                const baseFontSize = currentPage?.pageNumber === 0
+                  ? (isTablet ? 28 : 18)
+                  : (isTablet ? 26 : 16);
+                const fontSize = scaledFontSize(baseFontSize);
+                const lineHeight = fontSize * 1.5;
+                // 2 lines on all devices - enforced for consistent reading experience
+                const maxLines = 2;
+                const verticalPadding = 30;
+                const fixedTextBoxHeight = (lineHeight * maxLines) + verticalPadding;
+
+                return (
+                  <View style={[
+                    styles.centerTextBox,
+                    {
+                      height: fixedTextBoxHeight,
+                      minHeight: fixedTextBoxHeight,
+                      maxHeight: fixedTextBoxHeight,
+                    }
+                  ]}>
+                    <ScrollView
+                      key={`text-scroll-${currentPageIndex}`}
+                      ref={textScrollViewRef}
+                      showsVerticalScrollIndicator={false}
+                      onScroll={handleTextScroll}
+                      scrollEventThrottle={16}
+                      onContentSizeChange={handleTextContentSizeChange}
+                      onLayout={handleScrollViewLayout}
+                      bounces={false}
+                    >
+                      <Text
+                        style={[
+                          currentPage?.pageNumber === 0 ? styles.coverText : styles.storyText,
+                          {
+                            fontSize: fontSize,
+                            lineHeight: lineHeight,
+                          }
+                        ]}
+                      >
+                        {currentPage?.text}
+                      </Text>
+                    </ScrollView>
+                    {/* Scroll indicator - down arrow when at top/middle, up arrow when at bottom */}
+                    {canScrollText && !showUpArrow && (
+                      <Pressable
+                        style={styles.scrollIndicator}
+                        onPress={() => {
+                          textScrollViewRef.current?.scrollToEnd({ animated: true });
+                        }}
+                      >
+                        <Text style={[styles.scrollIndicatorText, { fontSize: scaledFontSize(14) }]}>↓</Text>
+                      </Pressable>
+                    )}
+                    {canScrollText && showUpArrow && (
+                      <Pressable
+                        style={[styles.scrollIndicator, styles.scrollIndicatorTop]}
+                        onPress={() => {
+                          textScrollViewRef.current?.scrollTo({ y: 0, animated: true });
+                        }}
+                      >
+                        <Text style={[styles.scrollIndicatorText, { fontSize: scaledFontSize(14) }]}>↑</Text>
+                      </Pressable>
+                    )}
+                  </View>
+                );
+              })()}
             </View>
-          </View>
+          )}
 
           {/* Next Button - Right Side */}
           <Pressable
@@ -935,10 +1595,11 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
                 height: scaledButtonSize(50),
                 borderRadius: scaledButtonSize(25),
               },
-              currentPageIndex === pages.length - 1 && styles.completeButton
+              currentPageIndex === pages.length - 1 && styles.completeButton,
+              (readingMode === 'record' && (isRecording || (currentPageIndex > 0 && !tempRecordingUri && !currentVoiceOver?.pageRecordings[currentPageIndex]))) && styles.navButtonDisabled
             ]}
             onPress={handleNextPage}
-            disabled={isTransitioning}
+            disabled={isTransitioning || (readingMode === 'record' && (isRecording || (currentPageIndex > 0 && !tempRecordingUri && !currentVoiceOver?.pageRecordings[currentPageIndex])))}
             testID="right-touch-area"
           >
             <Text style={[
@@ -950,6 +1611,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
             </Text>
           </Pressable>
           </View>
+          </View>
         )}
 
         {/* Cover page tap-to-continue overlay - Excludes top UI area */}
@@ -960,7 +1622,23 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
             testID="cover-tap-overlay"
           >
             <View style={styles.coverTapHint}>
-              <Text style={[styles.coverTapText, { fontSize: scaledFontSize(16) }]}>Tap to begin</Text>
+              {readingMode === 'record' && !currentVoiceOver ? (
+                <Text style={[styles.coverTapText, { fontSize: scaledFontSize(16) }]}>Select a voice profile</Text>
+              ) : readingMode === 'record' && currentVoiceOver ? (
+                <>
+                  <Text style={[styles.coverTapText, { fontSize: scaledFontSize(14), opacity: 0.8 }]}>Recording as: {currentVoiceOver.name}</Text>
+                  <Text style={[styles.coverTapText, { fontSize: scaledFontSize(16), marginTop: 4 }]}>Tap to begin</Text>
+                </>
+              ) : readingMode === 'narrate' && !currentVoiceOver ? (
+                <Text style={[styles.coverTapText, { fontSize: scaledFontSize(16) }]}>Select a voice over</Text>
+              ) : readingMode === 'narrate' && currentVoiceOver ? (
+                <>
+                  <Text style={[styles.coverTapText, { fontSize: scaledFontSize(14), opacity: 0.8 }]}>Narrating as: {currentVoiceOver.name}</Text>
+                  <Text style={[styles.coverTapText, { fontSize: scaledFontSize(16), marginTop: 4 }]}>Tap to begin</Text>
+                </>
+              ) : (
+                <Text style={[styles.coverTapText, { fontSize: scaledFontSize(16) }]}>Tap to begin</Text>
+              )}
             </View>
           </Pressable>
         )}
@@ -992,6 +1670,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setReadingMode('record');
+                setShowVoiceOverNameModal(true);
               }}
             >
               <Text style={[styles.modeButtonIcon, { fontSize: scaledFontSize(24) }]}>●</Text>
@@ -1005,6 +1684,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setReadingMode('narrate');
+                setShowVoiceOverSelectModal(true);
               }}
             >
               <Text style={[styles.modeButtonIcon, { fontSize: scaledFontSize(24) }]}>♫</Text>
@@ -1015,6 +1695,203 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
 
         </View>
       </View>
+
+      {/* Voice Over Name Modal */}
+      <Modal
+        visible={showVoiceOverNameModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowVoiceOverNameModal(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlayTop}
+        >
+          <View style={styles.modalContent}>
+            <Pressable
+              style={styles.modalCloseButton}
+              onPress={() => {
+                setShowVoiceOverNameModal(false);
+                setVoiceOverName('');
+              }}
+            >
+              <Text style={styles.modalCloseButtonText}>✕</Text>
+            </Pressable>
+            <Text style={styles.modalTitle}>Voice Over Profile</Text>
+
+            {/* Existing voice overs */}
+            {availableVoiceOvers.length > 0 && (
+              <>
+                <Text style={styles.modalSubtitle}>Select existing to overwrite:</Text>
+                <View style={styles.voiceOverList}>
+                  {availableVoiceOvers.map((vo) => (
+                    <View key={vo.id} style={styles.voiceOverItemWithDelete}>
+                      <Pressable
+                        style={styles.voiceOverItemSelectable}
+                        onPress={() => {
+                          const hasExistingRecordings = Object.keys(vo.pageRecordings).length > 0;
+                          if (hasExistingRecordings) {
+                            Alert.alert(
+                              'Overwrite Voice Over?',
+                              `"${vo.name}" already has ${Object.keys(vo.pageRecordings).length} page(s) recorded. Do you want to overwrite with new recordings?`,
+                              [
+                                { text: 'Cancel', style: 'cancel' },
+                                {
+                                  text: 'Overwrite',
+                                  style: 'destructive',
+                                  onPress: () => {
+                                    setCurrentVoiceOver(vo);
+                                    setIsOverwriteSession(true);
+                                    setShowVoiceOverNameModal(false);
+                                  },
+                                },
+                              ]
+                            );
+                          } else {
+                            setCurrentVoiceOver(vo);
+                            setShowVoiceOverNameModal(false);
+                          }
+                        }}
+                      >
+                        <Text style={styles.voiceOverItemText}>{vo.name}</Text>
+                        <Text style={styles.voiceOverItemPages}>
+                          {Object.keys(vo.pageRecordings).length} pages recorded
+                        </Text>
+                      </Pressable>
+                      <Pressable
+                        style={styles.deleteButton}
+                        onPress={() => {
+                          setShowVoiceOverNameModal(false);
+                          setTimeout(() => {
+                            parentsOnly.showChallenge(() => {
+                              Alert.alert(
+                                'Delete Voice Over',
+                                `Are you sure you want to delete "${vo.name}"? This cannot be undone.`,
+                                [
+                                  {
+                                    text: 'Cancel',
+                                    style: 'cancel',
+                                    onPress: () => setShowVoiceOverNameModal(true),
+                                  },
+                                  {
+                                    text: 'Delete',
+                                    style: 'destructive',
+                                    onPress: async () => {
+                                      await voiceRecordingService.deleteVoiceOver(vo.id);
+                                      const updated = await voiceRecordingService.getVoiceOversForStory(story.id);
+                                      setAvailableVoiceOvers(updated);
+                                      if (currentVoiceOver?.id === vo.id) {
+                                        setCurrentVoiceOver(null);
+                                      }
+                                      if (selectedVoiceOver?.id === vo.id) {
+                                        setSelectedVoiceOver(null);
+                                      }
+                                      setShowVoiceOverNameModal(true);
+                                    },
+                                  },
+                                ]
+                              );
+                            });
+                          }, 300);
+                        }}
+                      >
+                        <Text style={styles.deleteButtonText}>✕</Text>
+                      </Pressable>
+                    </View>
+                  ))}
+                </View>
+              </>
+            )}
+
+            {/* Create new section */}
+            {availableVoiceOvers.length < 3 ? (
+              <>
+                <Text style={[styles.modalSubtitle, availableVoiceOvers.length > 0 && { marginTop: 16 }]}>
+                  {availableVoiceOvers.length > 0 ? 'Or create new:' : 'Enter a name for your recording:'}
+                </Text>
+                <TextInput
+                  style={styles.modalInput}
+                  value={voiceOverName}
+                  onChangeText={setVoiceOverName}
+                  placeholder="e.g., Mummy's Voice"
+                  placeholderTextColor="#999"
+                  autoFocus={availableVoiceOvers.length === 0}
+                />
+                <View style={styles.modalButtonsCentered}>
+                  <Pressable
+                    style={[styles.modalButtonConfirm, !voiceOverName.trim() && styles.modalButtonDisabled]}
+                    onPress={handleCreateVoiceOver}
+                    disabled={!voiceOverName.trim()}
+                  >
+                    <Text style={styles.modalButtonConfirmText}>Create</Text>
+                  </Pressable>
+                </View>
+              </>
+            ) : (
+              <Text style={[styles.modalSubtitle, { marginTop: 16, color: '#666' }]}>
+                Maximum of 3 voice overs reached. Delete one to create a new one.
+              </Text>
+            )}
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Voice Over Selection Modal */}
+      <Modal
+        visible={showVoiceOverSelectModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowVoiceOverSelectModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Pressable
+              style={styles.modalCloseButton}
+              onPress={() => {
+                setShowVoiceOverSelectModal(false);
+                setReadingMode('read');
+              }}
+            >
+              <Text style={styles.modalCloseButtonText}>✕</Text>
+            </Pressable>
+            <Text style={styles.modalTitle}>Select Voice Over</Text>
+            <Text style={styles.modalSubtitle}>Choose a recording to play</Text>
+            {availableVoiceOvers.length === 0 ? (
+              <Text style={styles.noVoiceOversText}>No voice overs recorded yet</Text>
+            ) : (
+              <View style={styles.voiceOverList}>
+                {availableVoiceOvers.map((vo) => (
+                  <Pressable
+                    key={vo.id}
+                    style={styles.voiceOverItem}
+                    onPress={() => handleSelectVoiceOver(vo)}
+                  >
+                    <Text style={styles.voiceOverItemName}>{vo.name}</Text>
+                    <Text style={styles.voiceOverItemPages}>
+                      {Object.keys(vo.pageRecordings).length} pages recorded
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Parents Only Challenge Modal */}
+      <ParentsOnlyModal
+        visible={parentsOnly.isVisible}
+        challenge={parentsOnly.challenge}
+        inputValue={parentsOnly.inputValue}
+        onInputChange={parentsOnly.setInputValue}
+        onSubmit={parentsOnly.handleSubmit}
+        onClose={() => {
+          parentsOnly.handleClose();
+          setShowVoiceOverNameModal(true);
+        }}
+        isInputValid={parentsOnly.isInputValid}
+        scaledFontSize={scaledFontSize}
+      />
     </Animated.View>
   );
 }
@@ -1068,7 +1945,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    zIndex: 10,
+    zIndex: 20,
   },
   topRightControls: {
     position: 'absolute',
@@ -1077,7 +1954,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    zIndex: 10,
+    zIndex: 20,
   },
   exitButtonContainer: {
     position: 'absolute',
@@ -1266,11 +2143,31 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     flexDirection: 'row',
-    alignItems: 'center', // Center align all elements
+    alignItems: 'center',
     justifyContent: 'space-between',
     minHeight: 100,
     paddingTop: 5,
     zIndex: 5,
+  },
+  bottomUIPanelRecordMode: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  recordModeTextWrapper: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  navigationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  navigationRowRecordMode: {
+    justifyContent: 'center',
+    gap: 40,
   },
   backgroundImage: {
     width: '100%',
@@ -1344,8 +2241,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: 20, // Proper spacing from navigation buttons
-    maxWidth: '70%', // Limit width to ensure button spacing on larger screens
+    marginHorizontal: 20,
+    maxWidth: '70%',
+  },
+  recordModeTextContainer: {
+    flex: 0,
+    flexGrow: 0,
+    flexShrink: 0,
   },
   centerTextBox: {
     backgroundColor: 'rgba(255, 255, 255, 0.7)',
@@ -1363,18 +2265,34 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     position: 'relative',
-    overflow: 'hidden',
+  },
+  recordModeTextBox: {
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderRadius: 20,
+    paddingHorizontal: 25,
+    paddingVertical: 20,
+    width: '90%',
+    maxWidth: 700,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
   scrollIndicator: {
     position: 'absolute',
     bottom: 4,
-    right: 10,
+    right: 4,
     backgroundColor: 'rgba(44, 62, 80, 0.7)',
     borderRadius: 10,
     width: 20,
     height: 20,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  scrollIndicatorTop: {
+    bottom: undefined,
+    top: 4,
   },
   scrollIndicatorText: {
     color: '#FFFFFF',
@@ -1519,6 +2437,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     alignItems: 'center',
     paddingBottom: 60,
+    zIndex: 5, // Below topLeftControls and topRightControls (zIndex: 10)
   },
   coverTapHint: {
     backgroundColor: 'rgba(255, 255, 255, 0.25)',
@@ -1586,5 +2505,337 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.5)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
+  },
+  // Recording controls styles
+  recordingControlsContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 15,
+    pointerEvents: 'box-none',
+  },
+  recordButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+  },
+  recordButtonInner: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#FF4444',
+  },
+  recordingActiveContainer: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  stopButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255, 68, 68, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+  },
+  stopButtonInner: {
+    width: 22,
+    height: 22,
+    borderRadius: 4,
+    backgroundColor: '#FFFFFF',
+  },
+  recordingTimer: {
+    color: '#FFFFFF',
+    fontFamily: Fonts.sans,
+    fontSize: 14,
+    fontWeight: '600',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  playbackControlsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  playButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(76, 175, 80, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+  },
+  playButtonIcon: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    marginLeft: 3,
+  },
+  reRecordButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255, 152, 0, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+  },
+  reRecordButtonText: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  // Narration playback styles
+  narrationControlsContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 15,
+  },
+  narrationPlaybackContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 18,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    gap: 6,
+  },
+  narrationPlayPauseButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    overflow: 'visible',
+  },
+  narrationPlayPauseIcon: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  narrationReplayButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+  },
+  narrationReplayIcon: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  narrationProgressContainer: {
+    flexDirection: 'column',
+    gap: 2,
+  },
+  narrationProgressBar: {
+    width: 84,
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  narrationProgressFill: {
+    height: '100%',
+    backgroundColor: '#4ECDC4',
+    borderRadius: 2,
+  },
+  narrationTimeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    textAlign: 'center',
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalOverlayTop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    paddingTop: 80,
+    paddingHorizontal: 20,
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 24,
+    width: '100%',
+    maxWidth: 340,
+    alignItems: 'center',
+    position: 'relative',
+  },
+  modalCloseButton: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  modalCloseButtonText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#666',
+  },
+  voiceOverItemWithDelete: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 8,
+  },
+  voiceOverItemSelectable: {
+    flex: 1,
+    backgroundColor: '#F0F4F8',
+    borderRadius: 12,
+    padding: 14,
+  },
+  voiceOverItemText: {
+    fontSize: 16,
+    fontFamily: Fonts.sans,
+    fontWeight: '600',
+    color: '#2C3E50',
+  },
+  voiceOverItemPages: {
+    fontSize: 12,
+    fontFamily: Fonts.sans,
+    color: '#666',
+    marginTop: 2,
+  },
+  deleteButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FF6B6B',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  deleteButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontFamily: Fonts.sans,
+    fontWeight: '700',
+    color: '#2C3E50',
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    fontFamily: Fonts.sans,
+    color: '#666',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  modalInput: {
+    width: '100%',
+    height: 50,
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    fontFamily: Fonts.sans,
+    color: '#2C3E50',
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  modalButtonsCentered: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  modalButtonCancel: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#E0E0E0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalButtonCancelText: {
+    fontSize: 16,
+    fontFamily: Fonts.sans,
+    fontWeight: '600',
+    color: '#666',
+  },
+  modalButtonConfirm: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#4ECDC4',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalButtonConfirmText: {
+    fontSize: 16,
+    fontFamily: Fonts.sans,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  modalButtonDisabled: {
+    backgroundColor: '#B0B0B0',
+  },
+  noVoiceOversText: {
+    fontSize: 14,
+    fontFamily: Fonts.sans,
+    color: '#999',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  voiceOverList: {
+    width: '100%',
+    marginBottom: 16,
+  },
+  voiceOverItem: {
+    width: '100%',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  voiceOverItemName: {
+    fontSize: 16,
+    fontFamily: Fonts.sans,
+    fontWeight: '600',
+    color: '#2C3E50',
   },
 });

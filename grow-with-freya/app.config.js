@@ -6,7 +6,7 @@ export default {
     name: IS_DEV ? 'Grow with Freya (Dev)' : IS_PREVIEW ? 'Grow with Freya (Preview)' : 'Grow with Freya',
     slug: 'grow-with-freya',
     version: '1.0.0',
-    orientation: 'portrait',
+    orientation: 'default',
     icon: './assets/images/icon.png',
     scheme: 'growwithfreya',
     userInterfaceStyle: 'automatic',
@@ -34,6 +34,7 @@ export default {
       associatedDomains: ['applinks:colearnwithfreya.co.uk'],
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
+        NSMicrophoneUsageDescription: 'This app needs access to your microphone to record your voice for story narration.',
         CFBundleURLTypes: [
           {
             CFBundleURLSchemes: [
@@ -85,7 +86,7 @@ export default {
             backgroundColor: '#2E8B8B'
           }
         }
-      ]
+      ],
     ],
     experiments: {
       typedRoutes: true,

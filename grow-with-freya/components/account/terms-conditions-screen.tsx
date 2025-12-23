@@ -14,7 +14,7 @@ interface TermsConditionsScreenProps {
 
 export function TermsConditionsScreen({ onBack }: TermsConditionsScreenProps) {
   const insets = useSafeAreaInsets();
-  const { scaledFontSize, scaledButtonSize } = useAccessibility();
+  const { scaledFontSize, scaledButtonSize, isTablet, contentMaxWidth } = useAccessibility();
 
   return (
     <View style={styles.container}>
@@ -44,8 +44,9 @@ export function TermsConditionsScreen({ onBack }: TermsConditionsScreenProps) {
         {/* Content */}
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={[styles.content, { paddingBottom: Dimensions.get('window').height * 0.2 }]}
+          contentContainerStyle={[styles.content, { paddingBottom: Dimensions.get('window').height * 0.2 }, isTablet && { alignItems: 'center' }]}
         >
+          <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>End User Licence Agreement</Text>
             <Text style={[styles.appInfo, { fontSize: scaledFontSize(14) }]}>
@@ -170,6 +171,7 @@ export function TermsConditionsScreen({ onBack }: TermsConditionsScreenProps) {
             <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
               Questions? support@growwithfreya.com. You can also write to Tantum Arbiter, United Kingdom.
             </Text>
+          </View>
           </View>
         </ScrollView>
       </LinearGradient>

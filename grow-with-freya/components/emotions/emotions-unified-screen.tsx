@@ -19,7 +19,6 @@ import { generateStarPositions } from '@/components/main-menu/utils';
 import { BearTopImage } from '@/components/main-menu/animated-components';
 
 import { mainMenuStyles } from '@/components/main-menu/styles';
-import { useScreenTimeTracking } from '@/hooks/use-screen-time-tracking';
 import { useAccessibility } from '@/hooks/use-accessibility';
 
 interface EmotionsUnifiedScreenProps {
@@ -31,14 +30,7 @@ export function EmotionsUnifiedScreen({ onStartGame, onBack }: EmotionsUnifiedSc
   const [selectedTheme, setSelectedTheme] = useState<EmotionTheme>('emoji');
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const insets = useSafeAreaInsets();
-  const { scaledFontSize, scaledButtonSize, scaledPadding, textSizeScale } = useAccessibility();
-
-  // Track screen time for emotions activities
-  useScreenTimeTracking({
-    activity: 'emotions',
-    autoStart: true,
-    autoEnd: true,
-  });
+  const { scaledFontSize, scaledButtonSize, scaledPadding, textSizeScale, isTablet, contentMaxWidth } = useAccessibility();
 
   // Generate star positions for background (matching stories pattern)
   const starPositions = useMemo(() => generateStarPositions(VISUAL_EFFECTS.STAR_COUNT), []);
@@ -115,8 +107,8 @@ export function EmotionsUnifiedScreen({ onStartGame, onBack }: EmotionsUnifiedSc
       />
 
       {/* Content container with flex: 1 for proper layout - dynamic padding for scaled text */}
-      <View style={{ flex: 1, paddingTop: insets.top + 160 + (textSizeScale - 1) * 80, zIndex: 10 }}>
-        <View style={styles.content}>
+      <View style={{ flex: 1, paddingTop: insets.top + 160 + (textSizeScale - 1) * 80, zIndex: 10, alignItems: isTablet ? 'center' : undefined }}>
+        <View style={[styles.content, isTablet && { maxWidth: contentMaxWidth, width: '100%' }]}>
           {/* Theme Selection */}
           <View style={styles.themesContainer}>
             {Object.values(EMOTION_THEMES).map((theme) => {
