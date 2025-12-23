@@ -1265,9 +1265,9 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
               {/* Play/Pause Button */}
               <Pressable
                 style={[styles.narrationPlayPauseButton, {
-                  width: scaledButtonSize(28),
-                  height: scaledButtonSize(28),
-                  borderRadius: scaledButtonSize(14),
+                  width: scaledButtonSize(32),
+                  height: scaledButtonSize(32),
+                  borderRadius: scaledButtonSize(16),
                 }]}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -1278,7 +1278,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
                   }
                 }}
               >
-                <Text style={[styles.narrationPlayPauseIcon, { fontSize: scaledFontSize(12) }]}>{isPlaying ? '❚❚' : '►'}</Text>
+                <Text style={[styles.narrationPlayPauseIcon, { fontSize: scaledFontSize(14) }]}>{isPlaying ? '❚❚' : '▶'}</Text>
               </Pressable>
               {/* Progress Bar */}
               <View style={styles.narrationProgressContainer}>
@@ -2282,7 +2282,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     position: 'relative',
-    overflow: 'hidden',
   },
   recordModeTextBox: {
     backgroundColor: 'rgba(255, 255, 255, 0.85)',
@@ -2641,10 +2640,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1.5,
     borderColor: 'rgba(255, 255, 255, 0.6)',
+    overflow: 'visible',
   },
   narrationPlayPauseIcon: {
     color: '#FFFFFF',
     fontSize: 12,
+    textAlign: 'center',
   },
   narrationReplayButton: {
     width: 28,
