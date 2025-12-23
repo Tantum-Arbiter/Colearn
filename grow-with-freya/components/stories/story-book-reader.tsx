@@ -19,8 +19,10 @@ import { Fonts } from '@/constants/theme';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 import { StoryCompletionScreen } from './story-completion-screen';
 import { MusicControl } from '../ui/music-control';
+import { ParentsOnlyModal } from '../ui/parents-only-modal';
 import { useAppStore } from '@/store/app-store';
 import { useAccessibility, TEXT_SIZE_OPTIONS } from '@/hooks/use-accessibility';
+import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
 import * as Haptics from 'expo-haptics';
 import { voiceRecordingService, VoiceOver } from '@/services/voice-recording-service';
 
@@ -70,38 +72,8 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const textScrollViewRef = useRef<ScrollView>(null);
 
-  // Parents Only modal state
-  const [showParentsOnlyModal, setShowParentsOnlyModal] = useState(false);
-  const [parentsOnlyChallenge, setParentsOnlyChallenge] = useState<{ emoji: string; word: string }>({ emoji: '🐱', word: 'cat' });
-  const [parentsOnlyInput, setParentsOnlyInput] = useState('');
-  const parentsOnlyCallbackRef = useRef<(() => void) | null>(null);
-
-  const PARENT_CHALLENGES = [
-    { emoji: '🐱', word: 'cat' },
-    { emoji: '🦆', word: 'duck' },
-    { emoji: '🐕', word: 'dog' },
-    { emoji: '🐫', word: 'camel' },
-  ];
-
-  const showParentChallenge = (callback: () => void) => {
-    const randomChallenge = PARENT_CHALLENGES[Math.floor(Math.random() * PARENT_CHALLENGES.length)];
-    setParentsOnlyChallenge(randomChallenge);
-    setParentsOnlyInput('');
-    parentsOnlyCallbackRef.current = callback;
-    setShowParentsOnlyModal(true);
-  };
-
-  const handleParentChallengeSubmit = () => {
-    if (parentsOnlyInput.toLowerCase().trim() === parentsOnlyChallenge.word.toLowerCase()) {
-      setShowParentsOnlyModal(false);
-      setParentsOnlyInput('');
-
-      if (parentsOnlyCallbackRef.current) {
-        parentsOnlyCallbackRef.current();
-        parentsOnlyCallbackRef.current = null;
-      }
-    }
-  };
+  // Parents Only modal - using shared hook
+  const parentsOnly = useParentsOnlyChallenge();
 
   // Accessibility scaling
   const { scaledFontSize, scaledButtonSize, textSizeScale } = useAccessibility();
@@ -109,12 +81,13 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
 
   // Track if text box needs scrolling (for larger text sizes)
   const [canScrollText, setCanScrollText] = useState(false);
-  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
+  // true = show up arrow (user is at bottom), false = show down arrow (user is at top/middle)
+  const [showUpArrow, setShowUpArrow] = useState(false);
 
   // Reset scroll state when page changes and scroll to top
   useEffect(() => {
     setCanScrollText(false);
-    setHasScrolledToBottom(false);
+    setShowUpArrow(false);
     setScrollViewHeight(0);
     setTextContentHeight(0);
     // Scroll to top of text box when page changes
@@ -127,8 +100,8 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
     // Add small tolerance for edge detection
     const isAtBottom = contentOffset.y + layoutMeasurement.height >= contentSize.height - 10;
     const isAtTop = contentOffset.y <= 5;
-    // Show down arrow when at top or in middle, show up arrow when at bottom
-    setHasScrolledToBottom(isAtBottom && !isAtTop);
+    // Show up arrow only when at bottom (and not at top for single-screen content)
+    setShowUpArrow(isAtBottom && !isAtTop);
   }, []);
 
   // Track ScrollView layout height for accurate overflow detection
@@ -1535,8 +1508,8 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
                         {currentPage?.text}
                       </Text>
                     </ScrollView>
-                    {/* Scroll indicator - tappable to scroll down/up */}
-                    {canScrollText && !hasScrolledToBottom && (
+                    {/* Scroll indicator - down arrow when at top/middle, up arrow when at bottom */}
+                    {canScrollText && !showUpArrow && (
                       <Pressable
                         style={styles.scrollIndicator}
                         onPress={() => {
@@ -1546,7 +1519,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
                         <Text style={[styles.scrollIndicatorText, { fontSize: scaledFontSize(14) }]}>↓</Text>
                       </Pressable>
                     )}
-                    {canScrollText && hasScrolledToBottom && (
+                    {canScrollText && showUpArrow && (
                       <Pressable
                         style={[styles.scrollIndicator, styles.scrollIndicatorTop]}
                         onPress={() => {
@@ -1740,7 +1713,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
                         onPress={() => {
                           setShowVoiceOverNameModal(false);
                           setTimeout(() => {
-                            showParentChallenge(() => {
+                            parentsOnly.showChallenge(() => {
                               Alert.alert(
                                 'Delete Voice Over',
                                 `Are you sure you want to delete "${vo.name}"? This cannot be undone.`,
@@ -1856,59 +1829,19 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       </Modal>
 
       {/* Parents Only Challenge Modal */}
-      <Modal
-        visible={showParentsOnlyModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => {
-          setShowParentsOnlyModal(false);
-          setParentsOnlyInput('');
-          parentsOnlyCallbackRef.current = null;
+      <ParentsOnlyModal
+        visible={parentsOnly.isVisible}
+        challenge={parentsOnly.challenge}
+        inputValue={parentsOnly.inputValue}
+        onInputChange={parentsOnly.setInputValue}
+        onSubmit={parentsOnly.handleSubmit}
+        onClose={() => {
+          parentsOnly.handleClose();
           setShowVoiceOverNameModal(true);
         }}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalOverlay}
-        >
-          <View style={styles.parentsOnlyContent}>
-            <Pressable
-              style={styles.parentsOnlyCloseButton}
-              onPress={() => {
-                setShowParentsOnlyModal(false);
-                setParentsOnlyInput('');
-                parentsOnlyCallbackRef.current = null;
-                setShowVoiceOverNameModal(true);
-              }}
-            >
-              <Text style={styles.parentsOnlyCloseButtonText}>✕</Text>
-            </Pressable>
-            <Text style={[styles.parentsOnlyTitle, { fontSize: scaledFontSize(22) }]}>Parents Only</Text>
-            <Text style={styles.parentsOnlyEmoji}>{parentsOnlyChallenge.emoji}</Text>
-            <Text style={[styles.parentsOnlySubtitle, { fontSize: scaledFontSize(14) }]}>Type the animal name to continue</Text>
-            <TextInput
-              style={[styles.parentsOnlyInput, { fontSize: scaledFontSize(18) }]}
-              value={parentsOnlyInput}
-              onChangeText={setParentsOnlyInput}
-              placeholder="Type here..."
-              placeholderTextColor="rgba(255, 255, 255, 0.5)"
-              autoCapitalize="none"
-              autoCorrect={false}
-              onSubmitEditing={handleParentChallengeSubmit}
-            />
-            <Pressable
-              style={[
-                styles.parentsOnlyConfirmButton,
-                parentsOnlyInput.toLowerCase().trim() !== parentsOnlyChallenge.word.toLowerCase() && styles.parentsOnlyButtonDisabled
-              ]}
-              onPress={handleParentChallengeSubmit}
-              disabled={parentsOnlyInput.toLowerCase().trim() !== parentsOnlyChallenge.word.toLowerCase()}
-            >
-              <Text style={[styles.parentsOnlyConfirmButtonText, { fontSize: scaledFontSize(16) }]}>Continue</Text>
-            </Pressable>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+        isInputValid={parentsOnly.isInputValid}
+        scaledFontSize={scaledFontSize}
+      />
     </Animated.View>
   );
 }
@@ -2854,82 +2787,5 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sans,
     fontWeight: '600',
     color: '#2C3E50',
-  },
-  // Parents Only modal styles
-  parentsOnlyContent: {
-    backgroundColor: 'rgba(44, 62, 80, 0.85)',
-    borderRadius: 20,
-    padding: 24,
-    paddingTop: 40,
-    alignItems: 'center',
-    minWidth: 280,
-    maxWidth: 320,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  parentsOnlyCloseButton: {
-    position: 'absolute',
-    top: 10,
-    left: 10,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  parentsOnlyCloseButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  parentsOnlyTitle: {
-    fontSize: 22,
-    fontFamily: Fonts.sans,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 16,
-  },
-  parentsOnlyEmoji: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
-  parentsOnlySubtitle: {
-    fontSize: 14,
-    fontFamily: Fonts.sans,
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  parentsOnlyInput: {
-    width: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 18,
-    fontFamily: Fonts.sans,
-    color: '#FFFFFF',
-    textAlign: 'center',
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  parentsOnlyConfirmButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(78, 205, 196, 0.8)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  parentsOnlyConfirmButtonText: {
-    fontSize: 16,
-    fontFamily: Fonts.sans,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  parentsOnlyButtonDisabled: {
-    backgroundColor: 'rgba(150, 150, 150, 0.5)',
   },
 });

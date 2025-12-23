@@ -218,12 +218,15 @@ class VoiceRecordingService {
     }
   }
 
-  async deleteVoiceOver(voiceOverId: string): Promise<void> {
+  async deleteVoiceOver(voiceOverId: string): Promise<{ success: boolean; orphanedFiles: string[] }> {
+    const orphanedFiles: string[] = [];
+
     try {
       const voiceOvers = await this.getVoiceOvers();
       const voiceOver = voiceOvers.find(vo => vo.id === voiceOverId);
 
       if (voiceOver) {
+        // Attempt to delete all recording files, tracking failures
         for (const recording of Object.values(voiceOver.pageRecordings)) {
           try {
             const file = new File(recording.uri);
@@ -231,16 +234,29 @@ class VoiceRecordingService {
               file.delete();
             }
           } catch (e) {
-            console.warn('Failed to delete recording file:', e);
+            // Track files that failed to delete
+            orphanedFiles.push(recording.uri);
+            console.warn('Failed to delete recording file:', recording.uri, e);
           }
         }
       }
 
+      // Only update metadata - orphaned files are logged but don't block deletion
+      // This is intentional: user expectation is the voice over is "deleted"
+      // even if some files remain (they can be cleaned up later)
       const filtered = voiceOvers.filter(vo => vo.id !== voiceOverId);
       await this.saveVoiceOvers(filtered);
-      console.log('Voice over deleted:', voiceOverId);
+
+      if (orphanedFiles.length > 0) {
+        console.warn(`Voice over ${voiceOverId} deleted but ${orphanedFiles.length} file(s) could not be removed`);
+      } else {
+        console.log('Voice over deleted:', voiceOverId);
+      }
+
+      return { success: true, orphanedFiles };
     } catch (error) {
       console.error('Failed to delete voice over:', error);
+      return { success: false, orphanedFiles };
     }
   }
 

@@ -49,6 +49,7 @@ export interface AppState {
 
   // Actions
   setAppReady: (ready: boolean) => void;
+  setHasHydrated: (hydrated: boolean) => void;
   setOnboardingComplete: (complete: boolean) => void;
   setLoginComplete: (complete: boolean) => void;
   setShowLoginAfterOnboarding: (show: boolean) => void;
@@ -108,6 +109,7 @@ export const useAppStore = create<AppState>()(
 
       // Actions
       setAppReady: (ready) => set({ isAppReady: ready }),
+      setHasHydrated: (hydrated) => set({ hasHydrated: hydrated }),
       setOnboardingComplete: (complete) => set({ hasCompletedOnboarding: complete }),
       setLoginComplete: (complete) => set({ hasCompletedLogin: complete }),
       setShowLoginAfterOnboarding: (show) => set({ showLoginAfterOnboarding: show }),
@@ -178,9 +180,13 @@ export const useAppStore = create<AppState>()(
         textSizeScale: state.textSizeScale,
         backgroundAnimationState: state.backgroundAnimationState,
       }),
-      onRehydrateStorage: () => (state) => {
+      onRehydrateStorage: () => (state, error) => {
+        if (error) {
+          console.error('[AppStore] Failed to hydrate from AsyncStorage:', error);
+        }
         if (state) {
-          state.hasHydrated = true;
+          // Use proper action to update state - avoids race conditions
+          state.setHasHydrated(true);
           console.log('[AppStore] Store hydrated from AsyncStorage');
         }
       },
