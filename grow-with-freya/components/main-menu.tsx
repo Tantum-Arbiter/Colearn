@@ -42,7 +42,6 @@ import {
 
 import { createCloudAnimationNew } from './main-menu/cloud-animations';
 import type { MenuItemData } from './main-menu/index';
-import { useScreenTimeTracking } from '@/hooks/use-screen-time-tracking';
 
 
 interface MainMenuProps {
@@ -56,13 +55,6 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
 
   // Parents Only modal - using shared hook
   const parentsOnly = useParentsOnlyChallenge();
-
-  // Track screen time for general app usage
-  useScreenTimeTracking({
-    activity: 'story', // Use story as general app usage
-    autoStart: true,
-    autoEnd: true,
-  });
 
   // Get current screen dimensions (updates with orientation changes)
   const { width: screenWidth, height: screenHeight } = getScreenDimensions();

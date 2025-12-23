@@ -25,6 +25,7 @@ import { useAccessibility, TEXT_SIZE_OPTIONS } from '@/hooks/use-accessibility';
 import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
 import * as Haptics from 'expo-haptics';
 import { voiceRecordingService, VoiceOver } from '@/services/voice-recording-service';
+import { useGlobalSound } from '@/contexts/global-sound-context';
 
 
 
@@ -74,6 +75,10 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
 
   // Parents Only modal - using shared hook
   const parentsOnly = useParentsOnlyChallenge();
+
+  // Background music control for recording
+  const globalSound = useGlobalSound();
+  const [wasMusicPlayingBeforeRecording, setWasMusicPlayingBeforeRecording] = useState(false);
 
   // Accessibility scaling
   const { scaledFontSize, scaledButtonSize, textSizeScale } = useAccessibility();
@@ -509,19 +514,41 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [story.id]);
 
-  // Reset recording state when page changes
+  // Load existing recording when page changes (in record mode)
   useEffect(() => {
-    setCurrentRecordingUri(null);
+    // Stop any current playback
     setIsPlaying(false);
     if (playbackSound) {
       playbackSound.stopAsync();
     }
+
+    // In record mode, check if there's an existing recording for this page
+    if (readingMode === 'record' && currentVoiceOver && currentPageIndex > 0) {
+      const existingRecording = currentVoiceOver.pageRecordings[currentPageIndex];
+      if (existingRecording) {
+        setCurrentRecordingUri(existingRecording.uri);
+        console.log(`Loaded existing recording for page ${currentPageIndex}: ${existingRecording.uri}`);
+      } else {
+        setCurrentRecordingUri(null);
+      }
+    } else {
+      setCurrentRecordingUri(null);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPageIndex]);
+  }, [currentPageIndex, readingMode, currentVoiceOver]);
 
   // Recording functions
   const startRecordingNow = async (activeVoiceOver: VoiceOver) => {
     try {
+      // Pause background music before recording
+      if (globalSound.isPlaying) {
+        setWasMusicPlayingBeforeRecording(true);
+        await globalSound.pause();
+        console.log('Background music paused for recording');
+      } else {
+        setWasMusicPlayingBeforeRecording(false);
+      }
+
       const success = await voiceRecordingService.startRecording();
       if (success) {
         setIsRecording(true);
@@ -538,10 +565,18 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
           });
         }, 1000);
       } else {
+        // Resume music if recording failed
+        if (wasMusicPlayingBeforeRecording) {
+          await globalSound.play();
+        }
         Alert.alert('Permission Required', 'Microphone access is needed to record your voice.');
       }
     } catch (error) {
       console.error('Failed to start recording:', error);
+      // Resume music if recording failed
+      if (wasMusicPlayingBeforeRecording) {
+        await globalSound.play();
+      }
       Alert.alert('Recording Error', 'Failed to start recording. Please try again.');
     }
   };
@@ -597,6 +632,13 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
 
     const result = await voiceRecordingService.stopRecording();
     setIsRecording(false);
+
+    // Resume background music if it was playing before recording
+    if (wasMusicPlayingBeforeRecording) {
+      await globalSound.play();
+      console.log('Background music resumed after recording');
+      setWasMusicPlayingBeforeRecording(false);
+    }
 
     if (result) {
       // Store temp recording - will be saved permanently when user clicks next
@@ -963,8 +1005,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       await saveCurrentRecording();
     }
 
-    // Reset recording state for new page
-    setCurrentRecordingUri(null);
+    // Clear temp recording state - existing recordings will be loaded by useEffect
     setTempRecordingUri(null);
     setTempRecordingDuration(0);
 
@@ -1001,8 +1042,17 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
     }, 50); // Small delay to ensure content switch happens first
   };
   
-  const handlePreviousPage = () => {
+  const handlePreviousPage = async () => {
     if (isTransitioning || currentPageIndex <= 0) return;
+
+    // In record mode, save the current recording before moving to previous page
+    if (readingMode === 'record' && tempRecordingUri) {
+      await saveCurrentRecording();
+    }
+
+    // Clear temp recording state - existing recordings will be loaded by useEffect
+    setTempRecordingUri(null);
+    setTempRecordingDuration(0);
 
     setIsTransitioning(true);
     const targetPageIndex = currentPageIndex - 1;
