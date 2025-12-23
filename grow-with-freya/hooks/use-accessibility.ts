@@ -2,12 +2,17 @@ import { useMemo } from 'react';
 import { useWindowDimensions } from 'react-native';
 import { useAppStore } from '@/store/app-store';
 
+// Max content width for tablet layouts to prevent stretching
+export const TABLET_CONTENT_MAX_WIDTH = 500;
+
 export interface AccessibilityScale {
   textSizeScale: number;
   scaledFontSize: (baseSize: number) => number;
   scaledButtonSize: (baseSize: number) => number;
   scaledPadding: (basePadding: number) => number;
-  
+  isTablet: boolean;
+  contentMaxWidth: number; // Use this to constrain content width on tablets
+
   // Pre-calculated common sizes for convenience
   fontSizes: {
     tiny: number;
@@ -17,7 +22,7 @@ export interface AccessibilityScale {
     title: number;
     largeTitle: number;
   };
-  
+
   buttonSizes: {
     small: number;
     medium: number;
@@ -82,10 +87,12 @@ export function useAccessibility(): AccessibilityScale {
       scaledFontSize,
       scaledButtonSize,
       scaledPadding,
+      isTablet,
+      contentMaxWidth: isTablet ? TABLET_CONTENT_MAX_WIDTH : screenWidth,
       fontSizes,
       buttonSizes,
     };
-  }, [textSizeScale, isTablet]);
+  }, [textSizeScale, isTablet, screenWidth]);
 }
 
 // Helper to determine tablet at module level for non-hook contexts

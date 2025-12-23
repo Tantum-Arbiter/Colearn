@@ -31,7 +31,7 @@ export function EmotionsUnifiedScreen({ onStartGame, onBack }: EmotionsUnifiedSc
   const [selectedTheme, setSelectedTheme] = useState<EmotionTheme>('emoji');
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const insets = useSafeAreaInsets();
-  const { scaledFontSize, scaledButtonSize, scaledPadding, textSizeScale } = useAccessibility();
+  const { scaledFontSize, scaledButtonSize, scaledPadding, textSizeScale, isTablet, contentMaxWidth } = useAccessibility();
 
   // Track screen time for emotions activities
   useScreenTimeTracking({
@@ -115,8 +115,8 @@ export function EmotionsUnifiedScreen({ onStartGame, onBack }: EmotionsUnifiedSc
       />
 
       {/* Content container with flex: 1 for proper layout - dynamic padding for scaled text */}
-      <View style={{ flex: 1, paddingTop: insets.top + 160 + (textSizeScale - 1) * 80, zIndex: 10 }}>
-        <View style={styles.content}>
+      <View style={{ flex: 1, paddingTop: insets.top + 160 + (textSizeScale - 1) * 80, zIndex: 10, alignItems: isTablet ? 'center' : undefined }}>
+        <View style={[styles.content, isTablet && { maxWidth: contentMaxWidth, width: '100%' }]}>
           {/* Theme Selection */}
           <View style={styles.themesContainer}>
             {Object.values(EMOTION_THEMES).map((theme) => {

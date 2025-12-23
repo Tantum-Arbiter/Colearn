@@ -41,7 +41,7 @@ const generateStarPositions = () => {
 
 export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
   const insets = useSafeAreaInsets();
-  const { scaledFontSize, scaledButtonSize, scaledPadding } = useAccessibility();
+  const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
   const {
     childAgeInMonths,
     screenTimeEnabled,
@@ -424,7 +424,8 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
         )}
 
         {currentPage === 'main' && (
-          <ScrollView style={[styles.scrollView, { zIndex: 10 }]} contentContainerStyle={styles.content}>
+          <ScrollView style={[styles.scrollView, { zIndex: 10 }]} contentContainerStyle={[styles.content, isTablet && { alignItems: 'center' }]}>
+          <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
           {/* Today's Usage */}
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>Today&apos;s Usage</Text>
@@ -710,6 +711,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
               </Text>
             </View>
           )}
+          </View>
           </ScrollView>
         )}
       </LinearGradient>

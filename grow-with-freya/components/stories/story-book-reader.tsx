@@ -66,6 +66,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
   const [narrationProgress, setNarrationProgress] = useState(0);
   const [narrationDuration, setNarrationDuration] = useState(0);
   const [shouldAutoStopRecording, setShouldAutoStopRecording] = useState(false);
+  const [shouldAutoAdvance, setShouldAutoAdvance] = useState(false);
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const textScrollViewRef = useRef<ScrollView>(null);
 
@@ -110,19 +111,24 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
   const [canScrollText, setCanScrollText] = useState(false);
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
 
-  // Reset scroll state when page changes
+  // Reset scroll state when page changes and scroll to top
   useEffect(() => {
     setCanScrollText(false);
     setHasScrolledToBottom(false);
     setScrollViewHeight(0);
     setTextContentHeight(0);
+    // Scroll to top of text box when page changes
+    textScrollViewRef.current?.scrollTo({ y: 0, animated: false });
   }, [currentPageIndex]);
 
-  // Handle text scroll events
+  // Handle text scroll events - track position for up/down indicators
   const handleTextScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
-    const isAtBottom = contentOffset.y + layoutMeasurement.height >= contentSize.height - 5;
-    setHasScrolledToBottom(isAtBottom);
+    // Add small tolerance for edge detection
+    const isAtBottom = contentOffset.y + layoutMeasurement.height >= contentSize.height - 10;
+    const isAtTop = contentOffset.y <= 5;
+    // Show down arrow when at top or in middle, show up arrow when at bottom
+    setHasScrolledToBottom(isAtBottom && !isAtTop);
   }, []);
 
   // Track ScrollView layout height for accurate overflow detection
@@ -737,6 +743,15 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
     }
   };
 
+  const handleReplayNarration = async () => {
+    if (playbackSound) {
+      await playbackSound.setPositionAsync(0);
+      await playbackSound.playAsync();
+      setIsPlaying(true);
+      setNarrationProgress(0);
+    }
+  };
+
   const handleSelectVoiceOver = (voiceOver: VoiceOver) => {
     setSelectedVoiceOver(voiceOver);
     setCurrentVoiceOver(voiceOver);
@@ -778,12 +793,8 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
             if (status.didJustFinish) {
               setIsPlaying(false);
               setNarrationProgress(0);
-              // Auto-advance to next page after narration finishes
-              if (currentPageIndex < pages.length - 1) {
-                setTimeout(() => {
-                  handleNextPage();
-                }, 500);
-              }
+              // Set flag to trigger auto-advance via useEffect
+              setShouldAutoAdvance(true);
             }
           }
         });
@@ -805,6 +816,21 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       setShowVoiceOverSelectModal(true);
     }
   }, [readingMode, availableVoiceOvers, selectedVoiceOver]);
+
+  // Auto-advance to next page after narration finishes (2 second delay)
+  useEffect(() => {
+    if (shouldAutoAdvance && readingMode === 'narrate' && currentPageIndex < pages.length - 1) {
+      const advanceTimer = setTimeout(() => {
+        setShouldAutoAdvance(false);
+        handleNextPage();
+      }, 2000);
+
+      return () => clearTimeout(advanceTimer);
+    } else if (shouldAutoAdvance) {
+      setShouldAutoAdvance(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shouldAutoAdvance]);
 
   // Completion screen handlers
   const handleReadAnother = (newStory: Story) => {
@@ -1231,9 +1257,18 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
           <View style={[styles.narrationControlsContainer, {
             paddingTop: Math.max(insets.top + 5, 20),
           }]}>
-            <View style={styles.narrationPlaybackContainer}>
+            <View style={[styles.narrationPlaybackContainer, {
+              paddingVertical: scaledButtonSize(6),
+              paddingHorizontal: scaledButtonSize(8),
+              gap: scaledButtonSize(6),
+            }]}>
+              {/* Play/Pause Button */}
               <Pressable
-                style={styles.narrationPlayPauseButton}
+                style={[styles.narrationPlayPauseButton, {
+                  width: scaledButtonSize(28),
+                  height: scaledButtonSize(28),
+                  borderRadius: scaledButtonSize(14),
+                }]}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   if (isPlaying) {
@@ -1243,10 +1278,11 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
                   }
                 }}
               >
-                <Text style={styles.narrationPlayPauseIcon}>{isPlaying ? '❚❚' : '►'}</Text>
+                <Text style={[styles.narrationPlayPauseIcon, { fontSize: scaledFontSize(12) }]}>{isPlaying ? '❚❚' : '►'}</Text>
               </Pressable>
+              {/* Progress Bar */}
               <View style={styles.narrationProgressContainer}>
-                <View style={styles.narrationProgressBar}>
+                <View style={[styles.narrationProgressBar, { width: scaledButtonSize(84), height: scaledButtonSize(4) }]}>
                   <View
                     style={[
                       styles.narrationProgressFill,
@@ -1254,10 +1290,24 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
                     ]}
                   />
                 </View>
-                <Text style={styles.narrationTimeText}>
+                <Text style={[styles.narrationTimeText, { fontSize: scaledFontSize(10) }]}>
                   {Math.floor(narrationProgress)}s / {Math.floor(narrationDuration)}s
                 </Text>
               </View>
+              {/* Replay Button */}
+              <Pressable
+                style={[styles.narrationReplayButton, {
+                  width: scaledButtonSize(28),
+                  height: scaledButtonSize(28),
+                  borderRadius: scaledButtonSize(14),
+                }]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  handleReplayNarration();
+                }}
+              >
+                <Text style={[styles.narrationReplayIcon, { fontSize: scaledFontSize(16) }]}>↻</Text>
+              </Pressable>
             </View>
           </View>
         )}
@@ -1397,8 +1447,8 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
                   style={[
                     styles.storyText,
                     {
-                      fontSize: scaledFontSize(16),
-                      lineHeight: scaledFontSize(16) * 1.6,
+                      fontSize: scaledFontSize(isTablet ? 20 : 16),
+                      lineHeight: scaledFontSize(isTablet ? 20 : 16) * 1.6,
                     }
                   ]}
                 >
@@ -1442,10 +1492,15 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
           {readingMode !== 'record' && (
             <View style={styles.centerTextContainer}>
               {(() => {
-                const baseFontSize = currentPage?.pageNumber === 0 ? 18 : 16;
+                // Tablet gets larger base font for better readability
+                // iPad base sizes are significantly larger to compensate for 2-line limit
+                const baseFontSize = currentPage?.pageNumber === 0
+                  ? (isTablet ? 28 : 18)
+                  : (isTablet ? 26 : 16);
                 const fontSize = scaledFontSize(baseFontSize);
                 const lineHeight = fontSize * 1.5;
-                const maxLines = isTablet ? 4 : 2;
+                // 2 lines on all devices - enforced for consistent reading experience
+                const maxLines = 2;
                 const verticalPadding = 30;
                 const fixedTextBoxHeight = (lineHeight * maxLines) + verticalPadding;
 
@@ -1459,6 +1514,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
                     }
                   ]}>
                     <ScrollView
+                      key={`text-scroll-${currentPageIndex}`}
                       ref={textScrollViewRef}
                       showsVerticalScrollIndicator={false}
                       onScroll={handleTextScroll}
@@ -1479,7 +1535,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
                         {currentPage?.text}
                       </Text>
                     </ScrollView>
-                    {/* Scroll indicator - tappable to scroll down */}
+                    {/* Scroll indicator - tappable to scroll down/up */}
                     {canScrollText && !hasScrolledToBottom && (
                       <Pressable
                         style={styles.scrollIndicator}
@@ -1488,6 +1544,16 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
                         }}
                       >
                         <Text style={[styles.scrollIndicatorText, { fontSize: scaledFontSize(14) }]}>↓</Text>
+                      </Pressable>
+                    )}
+                    {canScrollText && hasScrolledToBottom && (
+                      <Pressable
+                        style={[styles.scrollIndicator, styles.scrollIndicatorTop]}
+                        onPress={() => {
+                          textScrollViewRef.current?.scrollTo({ y: 0, animated: true });
+                        }}
+                      >
+                        <Text style={[styles.scrollIndicatorText, { fontSize: scaledFontSize(14) }]}>↑</Text>
                       </Pressable>
                     )}
                   </View>
@@ -1619,6 +1685,15 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
           style={styles.modalOverlayTop}
         >
           <View style={styles.modalContent}>
+            <Pressable
+              style={styles.modalCloseButton}
+              onPress={() => {
+                setShowVoiceOverNameModal(false);
+                setVoiceOverName('');
+              }}
+            >
+              <Text style={styles.modalCloseButtonText}>✕</Text>
+            </Pressable>
             <Text style={styles.modalTitle}>Voice Over Profile</Text>
 
             {/* Existing voice overs */}
@@ -1719,16 +1794,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
                   placeholderTextColor="#999"
                   autoFocus={availableVoiceOvers.length === 0}
                 />
-                <View style={styles.modalButtons}>
-                  <Pressable
-                    style={styles.modalButtonCancel}
-                    onPress={() => {
-                      setShowVoiceOverNameModal(false);
-                      setVoiceOverName('');
-                    }}
-                  >
-                    <Text style={styles.modalButtonCancelText}>Cancel</Text>
-                  </Pressable>
+                <View style={styles.modalButtonsCentered}>
                   <Pressable
                     style={[styles.modalButtonConfirm, !voiceOverName.trim() && styles.modalButtonDisabled]}
                     onPress={handleCreateVoiceOver}
@@ -1739,22 +1805,9 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
                 </View>
               </>
             ) : (
-              <>
-                <Text style={[styles.modalSubtitle, { marginTop: 16, color: '#666' }]}>
-                  Maximum of 3 voice overs reached. Delete one to create a new one.
-                </Text>
-                <View style={styles.modalButtons}>
-                  <Pressable
-                    style={styles.modalButtonCancel}
-                    onPress={() => {
-                      setShowVoiceOverNameModal(false);
-                      setVoiceOverName('');
-                    }}
-                  >
-                    <Text style={styles.modalButtonCancelText}>Close</Text>
-                  </Pressable>
-                </View>
-              </>
+              <Text style={[styles.modalSubtitle, { marginTop: 16, color: '#666' }]}>
+                Maximum of 3 voice overs reached. Delete one to create a new one.
+              </Text>
             )}
           </View>
         </KeyboardAvoidingView>
@@ -1769,6 +1822,15 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
+            <Pressable
+              style={styles.modalCloseButton}
+              onPress={() => {
+                setShowVoiceOverSelectModal(false);
+                setReadingMode('read');
+              }}
+            >
+              <Text style={styles.modalCloseButtonText}>✕</Text>
+            </Pressable>
             <Text style={styles.modalTitle}>Select Voice Over</Text>
             <Text style={styles.modalSubtitle}>Choose a recording to play</Text>
             {availableVoiceOvers.length === 0 ? (
@@ -1789,15 +1851,6 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
                 ))}
               </View>
             )}
-            <Pressable
-              style={styles.modalButtonCancel}
-              onPress={() => {
-                setShowVoiceOverSelectModal(false);
-                setReadingMode('read');
-              }}
-            >
-              <Text style={styles.modalButtonCancelText}>Cancel</Text>
-            </Pressable>
           </View>
         </View>
       </Modal>
@@ -2247,13 +2300,17 @@ const styles = StyleSheet.create({
   scrollIndicator: {
     position: 'absolute',
     bottom: 4,
-    right: 10,
+    right: 4,
     backgroundColor: 'rgba(44, 62, 80, 0.7)',
     borderRadius: 10,
     width: 20,
     height: 20,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  scrollIndicatorTop: {
+    bottom: undefined,
+    top: 4,
   },
   scrollIndicatorText: {
     color: '#FFFFFF',
@@ -2589,6 +2646,21 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 12,
   },
+  narrationReplayButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+  },
+  narrationReplayIcon: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   narrationProgressContainer: {
     flexDirection: 'column',
     gap: 2,
@@ -2633,6 +2705,24 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 340,
     alignItems: 'center',
+    position: 'relative',
+  },
+  modalCloseButton: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  modalCloseButtonText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#666',
   },
   voiceOverItemWithDelete: {
     flexDirection: 'row',
@@ -2701,6 +2791,11 @@ const styles = StyleSheet.create({
   modalButtons: {
     flexDirection: 'row',
     gap: 12,
+    width: '100%',
+  },
+  modalButtonsCentered: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     width: '100%',
   },
   modalButtonCancel: {

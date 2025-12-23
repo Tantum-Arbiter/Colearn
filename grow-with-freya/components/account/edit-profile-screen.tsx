@@ -13,7 +13,7 @@ interface EditProfileScreenProps {
 export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
   const insets = useSafeAreaInsets();
   const { userNickname, userAvatarType, userAvatarId, isGuestMode, setUserProfile } = useAppStore();
-  const { scaledFontSize, scaledButtonSize, scaledPadding } = useAccessibility();
+  const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
 
   const [nickname, setNickname] = useState(userNickname || '');
   const [avatarType, setAvatarType] = useState<'boy' | 'girl'>(userAvatarType || 'girl');
@@ -81,7 +81,8 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
         <View style={{ width: 60 }} />
       </View>
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={[styles.content, isTablet && { alignItems: 'center' }]}>
+        <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(16) }]}>Nickname</Text>
           <TextInput
@@ -143,6 +144,7 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
             {isSaving ? 'Saving...' : 'Save Changes'}
           </Text>
         </Pressable>
+        </View>
       </ScrollView>
     </View>
   );

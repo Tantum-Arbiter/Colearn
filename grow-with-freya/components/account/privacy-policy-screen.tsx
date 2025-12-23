@@ -14,7 +14,7 @@ interface PrivacyPolicyScreenProps {
 
 export function PrivacyPolicyScreen({ onBack }: PrivacyPolicyScreenProps) {
   const insets = useSafeAreaInsets();
-  const { scaledFontSize, scaledButtonSize } = useAccessibility();
+  const { scaledFontSize, scaledButtonSize, isTablet, contentMaxWidth } = useAccessibility();
 
   return (
     <View style={styles.container}>
@@ -44,8 +44,9 @@ export function PrivacyPolicyScreen({ onBack }: PrivacyPolicyScreenProps) {
         {/* Content */}
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={[styles.content, { paddingBottom: Dimensions.get('window').height * 0.2 }]}
+          contentContainerStyle={[styles.content, { paddingBottom: Dimensions.get('window').height * 0.2 }, isTablet && { alignItems: 'center' }]}
         >
+          <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>UK/EU GDPR & Child-Appropriate</Text>
             <Text style={[styles.appInfo, { fontSize: scaledFontSize(14) }]}>
@@ -195,6 +196,7 @@ export function PrivacyPolicyScreen({ onBack }: PrivacyPolicyScreenProps) {
             <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
               We may update this policy. We will post updates in-app and revise the Effective date. For significant changes, we will give you reasonable notice.
             </Text>
+          </View>
           </View>
         </ScrollView>
       </LinearGradient>

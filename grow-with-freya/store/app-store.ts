@@ -7,6 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export interface AppState {
   // App initialization
   isAppReady: boolean;
+  hasHydrated: boolean; // True when store has loaded from AsyncStorage
   hasCompletedOnboarding: boolean;
   hasCompletedLogin: boolean;
   showLoginAfterOnboarding: boolean;
@@ -80,6 +81,7 @@ export const useAppStore = create<AppState>()(
     (set) => ({
       // Initial state
       isAppReady: false,
+      hasHydrated: false, // Will be set to true after AsyncStorage loads
       hasCompletedOnboarding: false, // This will be overridden by persisted state if it exists
       hasCompletedLogin: false,
       showLoginAfterOnboarding: false,
@@ -159,7 +161,7 @@ export const useAppStore = create<AppState>()(
       name: 'app-storage',
       storage: createJSONStorage(() => AsyncStorage),
       // Persist important app state including background animation positions
-      // Note: isAppReady is NOT persisted - it should always start as false to ensure proper initialization
+      // Note: isAppReady and hasHydrated are NOT persisted
       partialize: (state) => ({
         hasCompletedOnboarding: state.hasCompletedOnboarding,
         hasCompletedLogin: state.hasCompletedLogin,
@@ -174,10 +176,14 @@ export const useAppStore = create<AppState>()(
         notificationsEnabled: state.notificationsEnabled,
         hasRequestedNotificationPermission: state.hasRequestedNotificationPermission,
         textSizeScale: state.textSizeScale,
-
         backgroundAnimationState: state.backgroundAnimationState,
       }),
-
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.hasHydrated = true;
+          console.log('[AppStore] Store hydrated from AsyncStorage');
+        }
+      },
     }
   )
 );
