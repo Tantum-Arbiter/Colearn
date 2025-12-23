@@ -94,6 +94,29 @@ jest.mock('expo-font', () => ({
   loadAsync: jest.fn(),
 }));
 
+// Mock expo-file-system
+jest.mock('expo-file-system', () => ({
+  documentDirectory: 'file:///mock-document-directory/',
+  cacheDirectory: 'file:///mock-cache-directory/',
+  makeDirectoryAsync: jest.fn(() => Promise.resolve()),
+  getInfoAsync: jest.fn(() => Promise.resolve({ exists: false, isDirectory: false })),
+  readAsStringAsync: jest.fn(() => Promise.resolve('')),
+  writeAsStringAsync: jest.fn(() => Promise.resolve()),
+  deleteAsync: jest.fn(() => Promise.resolve()),
+  moveAsync: jest.fn(() => Promise.resolve()),
+  copyAsync: jest.fn(() => Promise.resolve()),
+  readDirectoryAsync: jest.fn(() => Promise.resolve([])),
+  downloadAsync: jest.fn(() => Promise.resolve({ uri: '' })),
+  EncodingType: {
+    UTF8: 'utf8',
+    Base64: 'base64',
+  },
+  FileSystemUploadType: {
+    BINARY_CONTENT: 0,
+    MULTIPART: 1,
+  },
+}));
+
 // Mock expo-av
 jest.mock('expo-av', () => ({
   Audio: {
@@ -176,6 +199,39 @@ jest.mock('react-native-safe-area-context', () => ({
 // Mock custom hooks
 jest.mock('@/hooks/use-theme-color', () => ({
   useThemeColor: () => '#000000',
+}));
+
+// Mock useAccessibility hook
+jest.mock('@/hooks/use-accessibility', () => ({
+  useAccessibility: () => ({
+    textSizeScale: 1.0,
+    scaledFontSize: (size) => size,
+    scaledButtonSize: (size) => size,
+    scaledPadding: (padding) => padding,
+    isTablet: false,
+    contentMaxWidth: 375,
+    fontSizes: {
+      tiny: 12,
+      small: 14,
+      body: 16,
+      subtitle: 18,
+      title: 24,
+      largeTitle: 34,
+    },
+    buttonSizes: {
+      small: 36,
+      medium: 44,
+      large: 56,
+    },
+  }),
+  TABLET_CONTENT_MAX_WIDTH: 500,
+  TEXT_SIZE_OPTIONS: [
+    { label: 'Small', value: 0.85 },
+    { label: 'Default', value: 1.0 },
+    { label: 'Large', value: 1.15 },
+    { label: 'X Large', value: 1.3 },
+  ],
+  getBaseScaledSize: (baseSize, scale) => Math.round(baseSize * scale),
 }));
 
 // Mock story transition context
