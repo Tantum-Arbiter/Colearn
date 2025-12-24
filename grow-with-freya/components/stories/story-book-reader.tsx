@@ -417,6 +417,18 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
     try {
       console.log('Starting exit transition...');
 
+      // Stop any playing narration/recording audio immediately
+      if (playbackSound) {
+        try {
+          await playbackSound.stopAsync();
+          await playbackSound.unloadAsync();
+          setPlaybackSound(null);
+          setIsPlaying(false);
+        } catch (audioError) {
+          console.warn('Failed to stop playback audio on exit:', audioError);
+        }
+      }
+
       // Start book closing animation
       console.log('Starting exit animation phase 1');
       exitScale.value = withTiming(0.8, { duration: 300, easing: Easing.out(Easing.cubic) });
@@ -917,6 +929,18 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
   const handleCloseCompletion = async () => {
     try {
       console.log('Closing story reader with soft fade transition');
+
+      // Stop any playing narration/recording audio
+      if (playbackSound) {
+        try {
+          await playbackSound.stopAsync();
+          await playbackSound.unloadAsync();
+          setPlaybackSound(null);
+          setIsPlaying(false);
+        } catch (audioError) {
+          console.warn('Failed to stop playback audio on close:', audioError);
+        }
+      }
 
       // Simple, soft fade out transition
       scrollUpOpacity.value = withTiming(0, {
@@ -1705,7 +1729,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalOverlayTop}
+          style={styles.modalOverlay}
         >
           <View style={styles.modalContent}>
             <Pressable
@@ -2673,14 +2697,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-  },
-  modalOverlayTop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    paddingTop: 80,
-    paddingHorizontal: 20,
   },
   modalContent: {
     backgroundColor: '#FFFFFF',

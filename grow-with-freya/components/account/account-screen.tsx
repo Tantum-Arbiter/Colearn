@@ -1,26 +1,37 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet, Dimensions, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSpring, useAnimatedScrollHandler } from 'react-native-reanimated';
 import { useAppStore } from '../../store/app-store';
 import { MoonBottomImage } from '../main-menu/animated-components';
 import { mainMenuStyles } from '../main-menu/styles';
 import { PageHeader } from '../ui/page-header';
-import { TermsConditionsScreen } from './terms-conditions-screen';
-import { PrivacyPolicyScreen } from './privacy-policy-screen';
-import { ScreenTimeScreen } from '../screen-time/screen-time-screen';
+import { TermsConditionsContent } from './terms-conditions-screen';
+import { PrivacyPolicyContent } from './privacy-policy-screen';
+import { ScreenTimeContent } from '../screen-time/screen-time-screen';
+import { CustomRemindersContent, CreateReminderContent } from '../reminders';
 import { NotificationDebugScreen } from '../debug/notification-debug-screen';
 import { AudioDebugScreen } from '../debug/audio-debug-screen';
 import ScreenTimeService from '../../services/screen-time-service';
 import { useScreenTime } from '../screen-time/screen-time-provider';
 import { formatDurationCompact } from '../../utils/time-formatting';
-import { EditProfileScreen } from './edit-profile-screen';
+import { EditProfileContent } from './edit-profile-screen';
 import { ApiClient } from '../../services/api-client';
 import { reminderService } from '../../services/reminder-service';
 import * as Sentry from '@sentry/react-native';
 import { TEXT_SIZE_OPTIONS, useAccessibility } from '../../hooks/use-accessibility';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+type SlideView = 'main' | 'screen-time' | 'custom-reminders' | 'create-reminder' | 'edit-profile' | 'terms' | 'privacy';
+
+// Order matters for animation: adjacent slides animate, distant slides jump
+// screen-time → custom-reminders → create-reminder are adjacent for smooth navigation
+const SLIDE_VIEWS: SlideView[] = ['main', 'screen-time', 'custom-reminders', 'create-reminder', 'edit-profile', 'terms', 'privacy'];
+
+const getSlideIndex = (view: SlideView): number => SLIDE_VIEWS.indexOf(view);
 
 
 interface AccountScreenProps {
@@ -54,10 +65,28 @@ const LANGUAGES: { code: Language; name: string; flag: string }[] = [
 ];
 
 export function AccountScreen({ onBack }: AccountScreenProps) {
-  const [currentView, setCurrentView] = useState<'main' | 'terms' | 'privacy' | 'screen-time' | 'notification-debug' | 'audio-debug' | 'edit-profile'>('main');
+  const [currentView, setCurrentView] = useState<SlideView>('main');
   const [showGrayscaleInfo, setShowGrayscaleInfo] = useState(false);
   const [showLanguageOverlay, setShowLanguageOverlay] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState<Language>('en');
+
+  // For debug screens that still use conditional rendering
+  const [debugView, setDebugView] = useState<'none' | 'notification-debug' | 'audio-debug'>('none');
+
+  // Track reminder changes for the screen time content
+  const [reminderChangeCounter, setReminderChangeCounter] = useState(0);
+
+  // Track unsaved changes across all screens (currently mainly for reminders)
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Re-check for unsaved changes when reminder counter changes
+  useEffect(() => {
+    const remindersChanged = reminderService.hasUnsavedChanges();
+    setHasUnsavedChanges(remindersChanged);
+  }, [reminderChangeCounter]);
+
+  // Horizontal scroll ref for slide navigation
+  const horizontalScrollRef = useRef<ScrollView>(null);
 
   const insets = useSafeAreaInsets();
   const {
@@ -77,6 +106,39 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
 
   // Screen time context for resetting today's usage
   const { todayUsage, refreshUsage } = useScreenTime();
+
+  // Navigate to a slide view
+  // Use animated: false to avoid showing intermediate pages when jumping more than 1 slide
+  const navigateToSlide = useCallback((view: SlideView) => {
+    const index = getSlideIndex(view);
+    const currentIndex = getSlideIndex(currentView);
+    // Only animate if moving 1 slide, otherwise jump directly
+    const shouldAnimate = Math.abs(index - currentIndex) <= 1;
+    horizontalScrollRef.current?.scrollTo({ x: index * SCREEN_WIDTH, animated: shouldAnimate });
+    setCurrentView(view);
+  }, [currentView]);
+
+  // Navigate back to main
+  const navigateToMain = useCallback(() => {
+    const currentIndex = getSlideIndex(currentView);
+    // Only animate if moving 1 slide, otherwise jump directly
+    const shouldAnimate = currentIndex <= 1;
+    horizontalScrollRef.current?.scrollTo({ x: 0, animated: shouldAnimate });
+    setCurrentView('main');
+  }, [currentView]);
+
+  // Get the title for the current slide view
+  const getSlideTitle = useCallback((view: SlideView): string => {
+    switch (view) {
+      case 'screen-time': return 'Screen Time';
+      case 'edit-profile': return 'Edit Profile';
+      case 'terms': return 'Terms & Conditions';
+      case 'privacy': return 'Privacy Policy';
+      case 'custom-reminders': return 'Custom Reminders';
+      case 'create-reminder': return 'Create Reminder';
+      default: return 'Account';
+    }
+  }, []);
 
   // Accessibility scaling (textSizeScale already from useAppStore above)
   const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
@@ -200,30 +262,56 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
     }
   };
 
-  // Handle navigation between views
-  if (currentView === 'terms') {
-    return <TermsConditionsScreen onBack={() => setCurrentView('main')} />;
+  // Handle navigation for debug views (still use conditional rendering)
+  if (debugView === 'notification-debug') {
+    return <NotificationDebugScreen onBack={() => setDebugView('none')} />;
   }
 
-  if (currentView === 'privacy') {
-    return <PrivacyPolicyScreen onBack={() => setCurrentView('main')} />;
+  if (debugView === 'audio-debug') {
+    return <AudioDebugScreen onBack={() => setDebugView('none')} />;
   }
 
-  if (currentView === 'screen-time') {
-    return <ScreenTimeScreen onBack={() => setCurrentView('main')} />;
-  }
+  // Handle back based on current view - respects navigation hierarchy
+  const handleBack = async () => {
+    // If leaving the account screen entirely (from main) and have unsaved changes, auto-save
+    if (currentView === 'main' && hasUnsavedChanges) {
+      try {
+        // Auto-save: commit reminder changes locally
+        if (reminderService.hasUnsavedChanges()) {
+          await reminderService.commitChanges();
+        }
 
-  if (currentView === 'notification-debug') {
-    return <NotificationDebugScreen onBack={() => setCurrentView('main')} />;
-  }
+        // Sync to backend if signed in
+        const isAuthenticated = await ApiClient.isAuthenticated();
+        if (isAuthenticated) {
+          try {
+            await reminderService.syncToBackend();
+            console.log('[AccountScreen] Auto-saved reminders to backend');
+          } catch (syncError) {
+            console.log('[AccountScreen] Failed to sync to backend (saved locally):', syncError);
+          }
+        }
 
-  if (currentView === 'audio-debug') {
-    return <AudioDebugScreen onBack={() => setCurrentView('main')} />;
-  }
+        setHasUnsavedChanges(false);
+      } catch (error) {
+        console.error('[AccountScreen] Failed to auto-save:', error);
+        // Still exit even if save fails - data is preserved locally
+      }
 
-  if (currentView === 'edit-profile') {
-    return <EditProfileScreen onBack={() => setCurrentView('main')} />;
-  }
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      onBack();
+      return;
+    }
+
+    if (currentView === 'main') {
+      onBack();
+    } else if (currentView === 'create-reminder' || currentView === 'custom-reminders') {
+      // Reminder views go back to screen-time
+      navigateToSlide('screen-time');
+    } else {
+      navigateToMain();
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -258,16 +346,30 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
           <MoonBottomImage />
         </View>
 
-        {/* Shared page header component */}
-        <PageHeader title="Account" onBack={onBack} />
+        {/* Shared page header component - title changes based on current view */}
+        <PageHeader
+          title={getSlideTitle(currentView)}
+          onBack={handleBack}
+          rightActionIcon={currentView === 'custom-reminders' ? 'add' : undefined}
+          onRightAction={currentView === 'custom-reminders' ? () => navigateToSlide('create-reminder') : undefined}
+        />
 
-        {/* Content container with flex: 1 for proper scrolling */}
+        {/* Horizontal scroll container for slide navigation */}
         <View style={{ flex: 1, paddingTop: insets.top + 140 + (textSizeScale - 1) * 60 }}>
           <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={[styles.content, { paddingBottom: Dimensions.get('window').height * 0.2 }, isTablet && { alignItems: 'center' }]}
+            ref={horizontalScrollRef}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            scrollEnabled={false}
+            style={{ flex: 1 }}
           >
-          <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
+            {/* Main Account Page */}
+            <View style={{ width: SCREEN_WIDTH }}>
+              <ScrollView
+                style={styles.scrollView}
+                contentContainerStyle={[styles.content, { paddingBottom: Dimensions.get('window').height * 0.2 }, isTablet && { alignItems: 'center' }]}
+              >
+                <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
           {/* App Settings Section */}
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>
@@ -314,7 +416,7 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
               style={[styles.button, { paddingVertical: scaledPadding(12), minHeight: scaledButtonSize(44) }]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setCurrentView('screen-time');
+                navigateToSlide('screen-time');
               }}
             >
               <Text style={[styles.buttonText, { fontSize: scaledFontSize(16) }]}>
@@ -351,7 +453,7 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
               style={[styles.button, { paddingVertical: scaledPadding(12), minHeight: scaledButtonSize(44) }]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setCurrentView('edit-profile');
+                navigateToSlide('edit-profile');
               }}
             >
               <Text style={[styles.buttonText, { fontSize: scaledFontSize(16) }]}>
@@ -448,7 +550,7 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
               style={[styles.button, { paddingVertical: scaledPadding(12), minHeight: scaledButtonSize(44) }]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setCurrentView('terms');
+                navigateToSlide('terms');
               }}
             >
               <Text style={[styles.buttonText, { fontSize: scaledFontSize(16) }]}>
@@ -460,7 +562,7 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
               style={[styles.button, { paddingVertical: scaledPadding(12), minHeight: scaledButtonSize(44) }]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setCurrentView('privacy');
+                navigateToSlide('privacy');
               }}
             >
               <Text style={[styles.buttonText, { fontSize: scaledFontSize(16) }]}>
@@ -479,7 +581,7 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
               style={[styles.button, { paddingVertical: scaledPadding(12), minHeight: scaledButtonSize(44) }]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setCurrentView('notification-debug');
+                setDebugView('notification-debug');
               }}
             >
               <Text style={[styles.buttonText, { fontSize: scaledFontSize(16) }]}>
@@ -491,7 +593,7 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
               style={[styles.button, { paddingVertical: scaledPadding(12), minHeight: scaledButtonSize(44) }]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setCurrentView('audio-debug');
+                setDebugView('audio-debug');
               }}
             >
               <Text style={[styles.buttonText, { fontSize: scaledFontSize(16) }]}>
@@ -530,7 +632,54 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
               </Text>
             </Pressable>
           </View>
-          </View>
+                </View>
+              </ScrollView>
+            </View>
+
+            {/* Screen Time Page */}
+            <View style={{ width: SCREEN_WIDTH }}>
+              <ScreenTimeContent
+                paddingTop={10}
+                onNavigateToReminders={() => navigateToSlide('custom-reminders')}
+              />
+            </View>
+
+            {/* Custom Reminders Page - adjacent to Screen Time for smooth animation */}
+            <View style={{ width: SCREEN_WIDTH }}>
+              <CustomRemindersContent
+                paddingTop={10}
+                onCreateNew={() => navigateToSlide('create-reminder')}
+                onReminderChange={() => setReminderChangeCounter(prev => prev + 1)}
+                refreshTrigger={reminderChangeCounter}
+              />
+            </View>
+
+            {/* Create Reminder Page - adjacent to Custom Reminders for smooth animation */}
+            <View style={{ width: SCREEN_WIDTH }}>
+              <CreateReminderContent
+                paddingTop={10}
+                onBack={() => navigateToSlide('custom-reminders')}
+                onSuccess={() => {
+                  setReminderChangeCounter(prev => prev + 1);
+                  navigateToSlide('custom-reminders');
+                }}
+              />
+            </View>
+
+            {/* Edit Profile Page */}
+            <View style={{ width: SCREEN_WIDTH }}>
+              <EditProfileContent paddingTop={10} onSaveComplete={navigateToMain} />
+            </View>
+
+            {/* Terms & Conditions Page */}
+            <View style={{ width: SCREEN_WIDTH }}>
+              <TermsConditionsContent paddingTop={10} />
+            </View>
+
+            {/* Privacy Policy Page */}
+            <View style={{ width: SCREEN_WIDTH }}>
+              <PrivacyPolicyContent paddingTop={10} />
+            </View>
           </ScrollView>
         </View>
 

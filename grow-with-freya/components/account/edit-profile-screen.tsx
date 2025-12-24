@@ -10,6 +10,11 @@ interface EditProfileScreenProps {
   onBack: () => void;
 }
 
+interface EditProfileContentProps {
+  paddingTop?: number;
+  onSaveComplete?: () => void;
+}
+
 export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
   const insets = useSafeAreaInsets();
   const { userNickname, userAvatarType, userAvatarId, isGuestMode, setUserProfile } = useAppStore();
@@ -251,4 +256,130 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
+// Content-only component for embedding in horizontal scroll
+export function EditProfileContent({ paddingTop = 0, onSaveComplete }: EditProfileContentProps) {
+  const { userNickname, userAvatarType, userAvatarId, isGuestMode, setUserProfile } = useAppStore();
+  const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
+
+  const [nickname, setNickname] = useState(userNickname || '');
+  const [avatarType, setAvatarType] = useState<'boy' | 'girl'>(userAvatarType || 'girl');
+  const [avatarId, setAvatarId] = useState(userAvatarId || 'girl_1');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!nickname.trim()) {
+      Alert.alert('Error', 'Please enter a nickname');
+      return;
+    }
+
+    if (nickname.length > 20) {
+      Alert.alert('Error', 'Nickname must be 20 characters or less');
+      return;
+    }
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setIsSaving(true);
+
+    try {
+      if (isGuestMode) {
+        setUserProfile(nickname.trim(), avatarType, avatarId);
+        Alert.alert('Success', 'Profile saved locally!', [
+          { text: 'OK', onPress: onSaveComplete }
+        ]);
+      } else {
+        const profile = await ApiClient.updateProfile({
+          nickname: nickname.trim(),
+          avatarType,
+          avatarId,
+        });
+
+        setUserProfile(profile.nickname, profile.avatarType, profile.avatarId);
+
+        Alert.alert('Success', 'Profile updated successfully!', [
+          { text: 'OK', onPress: onSaveComplete }
+        ]);
+      }
+    } catch (error: any) {
+      console.error('Failed to update profile:', error);
+      Alert.alert('Error', 'Failed to update profile. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleAvatarTypeChange = (type: 'boy' | 'girl') => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setAvatarType(type);
+    setAvatarId(type === 'boy' ? 'boy_1' : 'girl_1');
+  };
+
+  return (
+    <ScrollView style={styles.scrollView} contentContainerStyle={[styles.content, { paddingTop }, isTablet && { alignItems: 'center' }]}>
+      <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(16) }]}>Nickname</Text>
+          <TextInput
+            style={[styles.textInput, { fontSize: scaledFontSize(16), padding: scaledPadding(15) }]}
+            value={nickname}
+            onChangeText={setNickname}
+            placeholder="Enter your nickname..."
+            placeholderTextColor="rgba(255, 255, 255, 0.4)"
+            maxLength={20}
+          />
+          <Text style={[styles.helperText, { fontSize: scaledFontSize(12) }]}>{nickname.length}/20 characters</Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(16) }]}>Avatar Type</Text>
+          <View style={styles.avatarTypeContainer}>
+            <Pressable
+              style={[
+                styles.avatarTypeButton,
+                { minHeight: scaledButtonSize(50), paddingHorizontal: scaledPadding(20) },
+                avatarType === 'boy' && styles.avatarTypeButtonActive
+              ]}
+              onPress={() => handleAvatarTypeChange('boy')}
+            >
+              <Text style={[
+                styles.avatarTypeText,
+                { fontSize: scaledFontSize(16) },
+                avatarType === 'boy' && styles.avatarTypeTextActive
+              ]}>
+                👦 Boy
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={[
+                styles.avatarTypeButton,
+                { minHeight: scaledButtonSize(50), paddingHorizontal: scaledPadding(20) },
+                avatarType === 'girl' && styles.avatarTypeButtonActive
+              ]}
+              onPress={() => handleAvatarTypeChange('girl')}
+            >
+              <Text style={[
+                styles.avatarTypeText,
+                { fontSize: scaledFontSize(16) },
+                avatarType === 'girl' && styles.avatarTypeTextActive
+              ]}>
+                👧 Girl
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+
+        <Pressable
+          style={[styles.saveButton, { minHeight: scaledButtonSize(50), padding: scaledPadding(15) }, isSaving && styles.saveButtonDisabled]}
+          onPress={handleSave}
+          disabled={isSaving}
+        >
+          <Text style={[styles.saveButtonText, { fontSize: scaledFontSize(18) }]}>
+            {isSaving ? 'Saving...' : 'Save Changes'}
+          </Text>
+        </Pressable>
+      </View>
+    </ScrollView>
+  );
+}
 

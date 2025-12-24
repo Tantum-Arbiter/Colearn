@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Modal,
   View,
@@ -33,6 +33,20 @@ export function ParentsOnlyModal({
   isInputValid,
   scaledFontSize = (size) => size,
 }: ParentsOnlyModalProps) {
+  const [isFocused, setIsFocused] = useState(false);
+  const inputRef = useRef<TextInput>(null);
+
+  // Auto-focus the input when modal becomes visible
+  useEffect(() => {
+    if (visible) {
+      // Small delay to ensure modal is fully visible before focusing
+      const timer = setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [visible]);
+
   return (
     <Modal
       visible={visible}
@@ -54,7 +68,12 @@ export function ParentsOnlyModal({
             Type the animal name to continue
           </Text>
           <TextInput
-            style={[styles.input, { fontSize: scaledFontSize(18) }]}
+            ref={inputRef}
+            style={[
+              styles.input,
+              { fontSize: scaledFontSize(18) },
+              isFocused && styles.inputFocused,
+            ]}
             value={inputValue}
             onChangeText={onInputChange}
             placeholder="Type here..."
@@ -62,6 +81,8 @@ export function ParentsOnlyModal({
             autoCapitalize="none"
             autoCorrect={false}
             onSubmitEditing={onSubmit}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
           />
           <Pressable
             style={[styles.confirmButton, !isInputValid && styles.buttonDisabled]}
@@ -138,8 +159,17 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     textAlign: 'center',
     marginBottom: 16,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  inputFocused: {
+    borderColor: '#4ECDC4',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    shadowColor: '#4ECDC4',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 5,
   },
   confirmButton: {
     paddingVertical: 12,

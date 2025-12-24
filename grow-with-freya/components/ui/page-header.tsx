@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Pressable, Text, StyleSheet, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { MusicControl } from './music-control';
 import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
@@ -13,6 +14,8 @@ interface PageHeaderProps {
   onBack: () => void;
   showMusicControl?: boolean;
   subtitle?: string;
+  rightActionIcon?: keyof typeof Ionicons.glyphMap;
+  onRightAction?: () => void;
 }
 
 export function PageHeader({
@@ -20,6 +23,8 @@ export function PageHeader({
   onBack,
   showMusicControl = true,
   subtitle,
+  rightActionIcon,
+  onRightAction,
 }: PageHeaderProps) {
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledPadding, scaledButtonSize, textSizeScale } = useAccessibility();
@@ -59,12 +64,28 @@ export function PageHeader({
           <Text style={[styles.backButtonText, { fontSize: backFontSize }]} numberOfLines={1}>← Back</Text>
         </Pressable>
 
-        {showMusicControl && (
-          <MusicControl
-            size={musicIconSize}
-            color="#FFFFFF"
-          />
-        )}
+        <View style={styles.rightControls}>
+          {rightActionIcon && onRightAction && (
+            <Pressable
+              style={[
+                styles.rightActionButton,
+                {
+                  width: musicBackgroundSize,
+                  height: musicBackgroundSize,
+                }
+              ]}
+              onPress={onRightAction}
+            >
+              <Ionicons name={rightActionIcon} size={musicIconSize} color="#FFFFFF" />
+            </Pressable>
+          )}
+          {showMusicControl && (
+            <MusicControl
+              size={musicIconSize}
+              color="#FFFFFF"
+            />
+          )}
+        </View>
       </View>
 
       {/* Title - positioned below header */}
@@ -96,6 +117,17 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     fontFamily: Fonts.primary,
+  },
+  rightControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  rightActionButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   titleContainer: {
     position: 'absolute',
