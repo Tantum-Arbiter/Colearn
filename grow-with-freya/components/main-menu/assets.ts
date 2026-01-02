@@ -1,5 +1,13 @@
 // Import getScreenDimensions for responsive sizing
 import { getScreenDimensions } from './constants';
+import {
+  CloudSvg,
+  StoriesSvg,
+  SensorySvg,
+  EmotionsSvg,
+  BedtimeSvg,
+  ScreentimeSvg,
+} from './svg-components';
 
 export const WEBP_ASSETS = {
   bear: require('../../assets/images/ui-elements/bear-bottom-screen.webp'),
@@ -136,16 +144,6 @@ export const getSvgAssetFromPath = (svgType: keyof typeof SVG_PATHS) => {
 };
 
 export const getSvgComponentFromSvg = (svgType: keyof typeof SVG_PATHS | 'balloon') => {
-   
-  const {
-    CloudSvg,
-    StoriesSvg,
-    SensorySvg,
-    EmotionsSvg,
-    BedtimeSvg,
-    ScreentimeSvg,
-  } = require('./svg-components');
-
   switch (svgType) {
     case 'cloud':
     case 'balloon': // Backward compatibility - balloon maps to cloud

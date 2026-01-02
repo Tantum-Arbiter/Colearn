@@ -31,7 +31,7 @@ interface MusicMainMenuProps {
   onBack: () => void;
 }
 
-const { width: screenWidth } = Dimensions.get('window');
+const _dimensions = Dimensions.get('window'); // Keep for potential future use
 
 export function MusicMainMenu({
   onTantrumsSelect,
@@ -61,6 +61,7 @@ export function MusicMainMenu({
       );
     }, 600); // Wait for page transition (500ms + 100ms buffer)
     return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const useStarAnimatedStyle = () => {

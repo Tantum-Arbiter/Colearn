@@ -80,6 +80,7 @@ export const MenuIcon = React.memo(function MenuIcon({
       selectionScale.value = scaleAnimation;
       selectionGlow.value = glowAnimation;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [triggerSelectionAnimation, status, label]); // Removed useSharedValue objects from deps to prevent infinite re-renders
 
   // Main animation effects for active icons
@@ -115,13 +116,16 @@ export const MenuIcon = React.memo(function MenuIcon({
         shimmer.value = 0;
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, isLarge]); // Removed useSharedValue objects from deps to prevent infinite re-renders
 
   useEffect(() => {
+    // Capture ref value for cleanup function
+    const currentTimeoutRef = timeoutRef.current;
     return () => {
       // Clear timeout
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
+      if (currentTimeoutRef) {
+        clearTimeout(currentTimeoutRef);
       }
       try {
         cancelReanimatedAnimation(scale);
@@ -246,8 +250,9 @@ export const MenuIcon = React.memo(function MenuIcon({
       console.warn('Haptic feedback failed:', error);
     }
 
-    // Visual animations 
+    // Visual animations
     handleAnimationsThrottled();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [handleCorePress, handleAnimationsThrottled]);
 
   // Memoize SVG component to prevent re-creation on every render

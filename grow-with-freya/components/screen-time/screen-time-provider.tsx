@@ -53,7 +53,7 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
 
   // Check if current screen is exempt from tracking
   const isOnExemptScreen = EXEMPT_SCREENS.some(screen =>
-    currentScreen.toLowerCase().includes(screen.toLowerCase())
+    currentScreen?.toLowerCase().includes(screen.toLowerCase()) ?? false
   );
 
   // Update today's usage periodically and check for daily reset

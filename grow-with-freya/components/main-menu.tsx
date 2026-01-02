@@ -57,7 +57,7 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
   const parentsOnly = useParentsOnlyChallenge();
 
   // Get current screen dimensions (updates with orientation changes)
-  const { width: screenWidth, height: screenHeight } = getScreenDimensions();
+  const { height: screenHeight } = getScreenDimensions();
 
   // Get persistent animation state from store - using selectors to prevent unnecessary re-renders
   const backgroundAnimationState = useAppStore((state) => state.backgroundAnimationState);
