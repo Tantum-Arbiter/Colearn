@@ -36,6 +36,7 @@ interface CustomRemindersContentProps {
   onCreateNew: () => void;
   onReminderChange?: () => void;
   refreshTrigger?: number; // Increment to trigger a reload
+  isActive?: boolean; // Whether this screen is currently visible
 }
 
 export const CustomRemindersScreen: React.FC<CustomRemindersScreenProps> = ({
@@ -300,15 +301,19 @@ export const CustomRemindersContent: React.FC<CustomRemindersContentProps> = ({
   onCreateNew,
   onReminderChange,
   refreshTrigger = 0,
+  isActive = false,
 }) => {
   const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
   const [reminders, setReminders] = useState<CustomReminder[]>([]);
   const [stats, setStats] = useState<ReminderStats | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Reload reminders when becoming active or when refreshTrigger changes
   useEffect(() => {
-    loadReminders();
-  }, [refreshTrigger]); // Reload when refreshTrigger changes
+    if (isActive) {
+      loadReminders();
+    }
+  }, [isActive, refreshTrigger]);
 
   const loadReminders = async () => {
     try {

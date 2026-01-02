@@ -35,6 +35,8 @@ interface CreateReminderContentProps {
   paddingTop?: number;
   onBack: () => void;
   onSuccess: () => void;
+  refreshTrigger?: number; // Increment to trigger reload of existing reminders
+  isActive?: boolean; // Whether this screen is currently visible
 }
 
 export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
@@ -506,6 +508,8 @@ export const CreateReminderContent: React.FC<CreateReminderContentProps> = ({
   paddingTop = 0,
   onBack,
   onSuccess,
+  refreshTrigger = 0,
+  isActive = false,
 }) => {
   const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
   const [title, setTitle] = useState('');
@@ -564,13 +568,19 @@ export const CreateReminderContent: React.FC<CreateReminderContentProps> = ({
     { title: 'Morning Stretch', message: 'Time for your morning stretching routine! Start your day with gentle movements.' },
   ];
 
+  // Reload existing reminders when:
+  // - Component becomes active (user navigates to this screen)
+  // - refreshTrigger changes (a reminder was created/modified elsewhere)
   useEffect(() => {
-    loadExistingReminders();
-  }, []);
+    if (isActive) {
+      loadExistingReminders();
+    }
+  }, [isActive, refreshTrigger]);
 
   const loadExistingReminders = async () => {
     try {
       const reminders = await reminderService.getAllReminders();
+      console.log('[CreateReminderContent] Loaded existing reminders:', reminders.length);
       setExistingReminders(reminders);
     } catch (error) {
       console.error('Failed to load existing reminders:', error);

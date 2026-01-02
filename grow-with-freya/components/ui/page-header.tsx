@@ -16,6 +16,8 @@ interface PageHeaderProps {
   subtitle?: string;
   rightActionIcon?: keyof typeof Ionicons.glyphMap;
   onRightAction?: () => void;
+  /** Optional background color for header area to block scrolling content */
+  headerBackgroundColor?: string;
 }
 
 export function PageHeader({
@@ -25,6 +27,7 @@ export function PageHeader({
   subtitle,
   rightActionIcon,
   onRightAction,
+  headerBackgroundColor,
 }: PageHeaderProps) {
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledPadding, scaledButtonSize, textSizeScale } = useAccessibility();
@@ -46,8 +49,16 @@ export function PageHeader({
   const musicBackgroundSize = scaledButtonSize(48);
   const backButtonHeight = musicBackgroundSize;
 
+  // Calculate the full header height (from top to where content starts)
+  const headerHeight = insets.top + 140 + (textSizeScale - 1) * 60;
+
   return (
     <>
+      {/* Solid background behind header area to block scrolling content - only when color is provided */}
+      {headerBackgroundColor && (
+        <View style={[styles.headerBackground, { height: headerHeight, backgroundColor: headerBackgroundColor }]} />
+      )}
+
       {/* Header with back button and music control - absolute positioned */}
       <View style={[styles.headerContainer, { top: insets.top + 20 }]}>
         <Pressable
@@ -100,6 +111,13 @@ export function PageHeader({
 }
 
 const styles = StyleSheet.create({
+  headerBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 20,
+  },
   headerContainer: {
     position: 'absolute',
     left: 20,
