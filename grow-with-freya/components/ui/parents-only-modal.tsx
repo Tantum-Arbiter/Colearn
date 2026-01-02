@@ -5,10 +5,11 @@ import {
   Text,
   TextInput,
   Pressable,
-  KeyboardAvoidingView,
   Platform,
   StyleSheet,
   useWindowDimensions,
+  Keyboard,
+  Animated,
 } from 'react-native';
 import { Fonts } from '@/constants/theme';
 import type { ParentChallenge } from '@/hooks/use-parents-only-challenge';
@@ -37,9 +38,41 @@ export function ParentsOnlyModal({
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<TextInput>(null);
   const { width, height } = useWindowDimensions();
+  const keyboardOffset = useRef(new Animated.Value(0)).current;
 
   // Detect phone in landscape (small height + landscape orientation)
   const isPhoneLandscape = height < 500 && width > height;
+
+  // Smooth keyboard animation using Animated API
+  useEffect(() => {
+    const keyboardWillShow = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (event) => {
+        const keyboardHeight = event.endCoordinates.height;
+        // Animate to move content up by half the keyboard height (content is centered)
+        Animated.timing(keyboardOffset, {
+          toValue: -(keyboardHeight / 2.5),
+          duration: Platform.OS === 'ios' ? event.duration : 250,
+          useNativeDriver: true,
+        }).start();
+      }
+    );
+    const keyboardWillHide = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      (event) => {
+        Animated.timing(keyboardOffset, {
+          toValue: 0,
+          duration: Platform.OS === 'ios' ? event.duration : 250,
+          useNativeDriver: true,
+        }).start();
+      }
+    );
+
+    return () => {
+      keyboardWillShow.remove();
+      keyboardWillHide.remove();
+    };
+  }, [keyboardOffset]);
 
   // Auto-focus the input when modal becomes visible
   useEffect(() => {
@@ -47,10 +80,13 @@ export function ParentsOnlyModal({
       // Small delay to ensure modal is fully visible before focusing
       const timer = setTimeout(() => {
         inputRef.current?.focus();
-      }, 100);
+      }, 300);
       return () => clearTimeout(timer);
+    } else {
+      // Reset keyboard offset when modal closes
+      keyboardOffset.setValue(0);
     }
-  }, [visible]);
+  }, [visible, keyboardOffset]);
 
   return (
     <Modal
@@ -60,14 +96,11 @@ export function ParentsOnlyModal({
       onRequestClose={onClose}
       supportedOrientations={['portrait', 'landscape']}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.modalOverlay}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
-      >
-        <View style={[
+      <View style={styles.modalOverlay}>
+        <Animated.View style={[
           styles.content,
           isPhoneLandscape && styles.contentLandscape,
+          { transform: [{ translateY: keyboardOffset }] },
         ]}>
           <Pressable style={styles.closeButton} onPress={onClose}>
             <Text style={styles.closeButtonText}>✕</Text>
@@ -149,8 +182,8 @@ export function ParentsOnlyModal({
               </Pressable>
             </>
           )}
-        </View>
-      </KeyboardAvoidingView>
+        </Animated.View>
+      </View>
     </Modal>
   );
 }
