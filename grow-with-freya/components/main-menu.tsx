@@ -204,6 +204,7 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
     } finally {
       endTimer();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [menuOrder, lastSwapTime, onNavigate]);
 
   const handleIconPress = handleIconPressInternal;
@@ -239,6 +240,7 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
       cancelAnimation(cloudFloat1);
       cancelAnimation(cloudFloat2);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty deps - only run on mount/unmount
 
 
@@ -259,7 +261,8 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
 
   // Generate star positions based on current screen dimensions
   // IMPORTANT: This must be called before any conditional returns to follow Rules of Hooks
-  const stars = useMemo(() => generateStarPositions(), [screenWidth, screenHeight]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const stars = useMemo(() => generateStarPositions(), []);
 
   // PERFORMANCE: Memoize cloud container styles to prevent re-creating objects on every render
   const cloud1ContainerStyle = useMemo(() => ({

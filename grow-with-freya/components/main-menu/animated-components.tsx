@@ -1,12 +1,5 @@
-import React, { useEffect } from 'react';
-import { Image, View } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withDelay,
-  Easing,
-} from 'react-native-reanimated';
+import React from 'react';
+import { View } from 'react-native';
 import { ASSET_DIMENSIONS } from './assets';
 import { CloudSvg, FreyaRocketSvg, FreyaRocketRightSvg } from './svg-components';
 import { CachedBearImage, CachedBearTopImage, CachedMoonImage, CachedMoonBottomImage } from '../ui/cached-image';
