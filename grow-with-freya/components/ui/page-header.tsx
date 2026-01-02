@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Pressable, Text, StyleSheet, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { MusicControl } from './music-control';
 import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
@@ -13,6 +14,10 @@ interface PageHeaderProps {
   onBack: () => void;
   showMusicControl?: boolean;
   subtitle?: string;
+  rightActionIcon?: keyof typeof Ionicons.glyphMap;
+  onRightAction?: () => void;
+  /** Optional background color for header area to block scrolling content */
+  headerBackgroundColor?: string;
 }
 
 export function PageHeader({
@@ -20,6 +25,9 @@ export function PageHeader({
   onBack,
   showMusicControl = true,
   subtitle,
+  rightActionIcon,
+  onRightAction,
+  headerBackgroundColor,
 }: PageHeaderProps) {
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledPadding, scaledButtonSize, textSizeScale } = useAccessibility();
@@ -41,8 +49,16 @@ export function PageHeader({
   const musicBackgroundSize = scaledButtonSize(48);
   const backButtonHeight = musicBackgroundSize;
 
+  // Calculate the full header height (from top to where content starts)
+  const headerHeight = insets.top + 140 + (textSizeScale - 1) * 60;
+
   return (
     <>
+      {/* Solid background behind header area to block scrolling content - only when color is provided */}
+      {headerBackgroundColor && (
+        <View style={[styles.headerBackground, { height: headerHeight, backgroundColor: headerBackgroundColor }]} />
+      )}
+
       {/* Header with back button and music control - absolute positioned */}
       <View style={[styles.headerContainer, { top: insets.top + 20 }]}>
         <Pressable
@@ -59,12 +75,28 @@ export function PageHeader({
           <Text style={[styles.backButtonText, { fontSize: backFontSize }]} numberOfLines={1}>← Back</Text>
         </Pressable>
 
-        {showMusicControl && (
-          <MusicControl
-            size={musicIconSize}
-            color="#FFFFFF"
-          />
-        )}
+        <View style={styles.rightControls}>
+          {rightActionIcon && onRightAction && (
+            <Pressable
+              style={[
+                styles.rightActionButton,
+                {
+                  width: musicBackgroundSize,
+                  height: musicBackgroundSize,
+                }
+              ]}
+              onPress={onRightAction}
+            >
+              <Ionicons name={rightActionIcon} size={musicIconSize} color="#FFFFFF" />
+            </Pressable>
+          )}
+          {showMusicControl && (
+            <MusicControl
+              size={musicIconSize}
+              color="#FFFFFF"
+            />
+          )}
+        </View>
       </View>
 
       {/* Title - positioned below header */}
@@ -79,6 +111,13 @@ export function PageHeader({
 }
 
 const styles = StyleSheet.create({
+  headerBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 20,
+  },
   headerContainer: {
     position: 'absolute',
     left: 20,
@@ -96,6 +135,17 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     fontFamily: Fonts.primary,
+  },
+  rightControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  rightActionButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   titleContainer: {
     position: 'absolute',

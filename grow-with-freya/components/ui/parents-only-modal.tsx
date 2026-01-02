@@ -1,13 +1,15 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Modal,
   View,
   Text,
   TextInput,
   Pressable,
-  KeyboardAvoidingView,
   Platform,
   StyleSheet,
+  useWindowDimensions,
+  Keyboard,
+  Animated,
 } from 'react-native';
 import { Fonts } from '@/constants/theme';
 import type { ParentChallenge } from '@/hooks/use-parents-only-challenge';
@@ -33,47 +35,155 @@ export function ParentsOnlyModal({
   isInputValid,
   scaledFontSize = (size) => size,
 }: ParentsOnlyModalProps) {
+  const [isFocused, setIsFocused] = useState(false);
+  const inputRef = useRef<TextInput>(null);
+  const { width, height } = useWindowDimensions();
+  const keyboardOffset = useRef(new Animated.Value(0)).current;
+
+  // Detect phone in landscape (small height + landscape orientation)
+  const isPhoneLandscape = height < 500 && width > height;
+
+  // Smooth keyboard animation using Animated API
+  useEffect(() => {
+    const keyboardWillShow = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (event) => {
+        const keyboardHeight = event.endCoordinates.height;
+        // Animate to move content up by half the keyboard height (content is centered)
+        Animated.timing(keyboardOffset, {
+          toValue: -(keyboardHeight / 2.5),
+          duration: Platform.OS === 'ios' ? event.duration : 250,
+          useNativeDriver: true,
+        }).start();
+      }
+    );
+    const keyboardWillHide = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      (event) => {
+        Animated.timing(keyboardOffset, {
+          toValue: 0,
+          duration: Platform.OS === 'ios' ? event.duration : 250,
+          useNativeDriver: true,
+        }).start();
+      }
+    );
+
+    return () => {
+      keyboardWillShow.remove();
+      keyboardWillHide.remove();
+    };
+  }, [keyboardOffset]);
+
+  // Auto-focus the input when modal becomes visible
+  useEffect(() => {
+    if (visible) {
+      // Small delay to ensure modal is fully visible before focusing
+      const timer = setTimeout(() => {
+        inputRef.current?.focus();
+      }, 300);
+      return () => clearTimeout(timer);
+    } else {
+      // Reset keyboard offset when modal closes
+      keyboardOffset.setValue(0);
+    }
+  }, [visible, keyboardOffset]);
+
   return (
     <Modal
       visible={visible}
       transparent
       animationType="fade"
       onRequestClose={onClose}
+      supportedOrientations={['portrait', 'landscape']}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.modalOverlay}
-      >
-        <View style={styles.content}>
+      <View style={styles.modalOverlay}>
+        <Animated.View style={[
+          styles.content,
+          isPhoneLandscape && styles.contentLandscape,
+          { transform: [{ translateY: keyboardOffset }] },
+        ]}>
           <Pressable style={styles.closeButton} onPress={onClose}>
             <Text style={styles.closeButtonText}>✕</Text>
           </Pressable>
-          <Text style={[styles.title, { fontSize: scaledFontSize(22) }]}>Parents Only</Text>
-          <Text style={styles.emoji}>{challenge.emoji}</Text>
-          <Text style={[styles.subtitle, { fontSize: scaledFontSize(14) }]}>
-            Type the animal name to continue
-          </Text>
-          <TextInput
-            style={[styles.input, { fontSize: scaledFontSize(18) }]}
-            value={inputValue}
-            onChangeText={onInputChange}
-            placeholder="Type here..."
-            placeholderTextColor="rgba(255, 255, 255, 0.5)"
-            autoCapitalize="none"
-            autoCorrect={false}
-            onSubmitEditing={onSubmit}
-          />
-          <Pressable
-            style={[styles.confirmButton, !isInputValid && styles.buttonDisabled]}
-            onPress={onSubmit}
-            disabled={!isInputValid}
-          >
-            <Text style={[styles.confirmButtonText, { fontSize: scaledFontSize(16) }]}>
-              Continue
-            </Text>
-          </Pressable>
-        </View>
-      </KeyboardAvoidingView>
+
+          {isPhoneLandscape ? (
+            // Compact horizontal layout for phone landscape
+            <View style={styles.landscapeLayout}>
+              <View style={styles.landscapeLeft}>
+                <Text style={styles.emojiCompact}>{challenge.emoji}</Text>
+              </View>
+              <View style={styles.landscapeRight}>
+                <Text style={[styles.titleCompact, { fontSize: scaledFontSize(16) }]}>
+                  Type the animal name
+                </Text>
+                <View style={styles.inputRow}>
+                  <TextInput
+                    ref={inputRef}
+                    style={[
+                      styles.inputCompact,
+                      { fontSize: scaledFontSize(16) },
+                      isFocused && styles.inputFocused,
+                    ]}
+                    value={inputValue}
+                    onChangeText={onInputChange}
+                    placeholder="Type here..."
+                    placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    onSubmitEditing={onSubmit}
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => setIsFocused(false)}
+                  />
+                  <Pressable
+                    style={[styles.confirmButtonCompact, !isInputValid && styles.buttonDisabled]}
+                    onPress={onSubmit}
+                    disabled={!isInputValid}
+                  >
+                    <Text style={[styles.confirmButtonText, { fontSize: scaledFontSize(14) }]}>
+                      Go
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+          ) : (
+            // Standard vertical layout for portrait/tablet
+            <>
+              <Text style={[styles.title, { fontSize: scaledFontSize(22) }]}>Parents Only</Text>
+              <Text style={styles.emoji}>{challenge.emoji}</Text>
+              <Text style={[styles.subtitle, { fontSize: scaledFontSize(14) }]}>
+                Type the animal name to continue
+              </Text>
+              <TextInput
+                ref={inputRef}
+                style={[
+                  styles.input,
+                  { fontSize: scaledFontSize(18) },
+                  isFocused && styles.inputFocused,
+                ]}
+                value={inputValue}
+                onChangeText={onInputChange}
+                placeholder="Type here..."
+                placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                autoCapitalize="none"
+                autoCorrect={false}
+                onSubmitEditing={onSubmit}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+              />
+              <Pressable
+                style={[styles.confirmButton, !isInputValid && styles.buttonDisabled]}
+                onPress={onSubmit}
+                disabled={!isInputValid}
+              >
+                <Text style={[styles.confirmButtonText, { fontSize: scaledFontSize(16) }]}>
+                  Continue
+                </Text>
+              </Pressable>
+            </>
+          )}
+        </Animated.View>
+      </View>
     </Modal>
   );
 }
@@ -84,6 +194,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 16,
   },
   content: {
     backgroundColor: 'rgba(44, 62, 80, 0.85)',
@@ -96,22 +207,32 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
+  contentLandscape: {
+    flexDirection: 'row',
+    paddingTop: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    minWidth: 'auto',
+    maxWidth: 420,
+  },
   closeButton: {
     position: 'absolute',
-    top: 10,
-    left: 10,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    top: 8,
+    left: 8,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 10,
   },
   closeButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
   },
+  // Portrait/tablet styles
   title: {
     fontSize: 22,
     fontFamily: Fonts.sans,
@@ -138,8 +259,17 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     textAlign: 'center',
     marginBottom: 16,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  inputFocused: {
+    borderColor: '#4ECDC4',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    shadowColor: '#4ECDC4',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 5,
   },
   confirmButton: {
     paddingVertical: 12,
@@ -155,6 +285,49 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     backgroundColor: 'rgba(150, 150, 150, 0.5)',
+  },
+  // Landscape phone compact styles
+  landscapeLayout: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 24,
+  },
+  landscapeLeft: {
+    marginRight: 16,
+  },
+  landscapeRight: {
+    flex: 1,
+  },
+  emojiCompact: {
+    fontSize: 44,
+  },
+  titleCompact: {
+    fontSize: 16,
+    fontFamily: Fonts.sans,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  inputCompact: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    color: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  confirmButtonCompact: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(52, 152, 219, 0.8)',
+    borderRadius: 10,
   },
 });
 

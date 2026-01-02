@@ -194,51 +194,7 @@ jobs:
           path: ${{ env.WORKING_DIRECTORY }}/dist
           retention-days: 30
 
-  # Job 5: EAS Build (Native Apps - iOS Production for TestFlight)
-  # Runs AFTER performance tests to ensure all checks pass first
-  eas-build:
-    name: EAS Build (iOS Production)
-    runs-on: ubuntu-latest
-    needs: [performance-test]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.performance-test.result == 'success'
-    defaults:
-      run:
-        working-directory: ${{ env.WORKING_DIRECTORY }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Setup Expo and EAS
-        run: |
-          npm install -g @expo/cli@${{ env.EXPO_CLI_VERSION }}
-          npm install -g eas-cli@latest
-
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
-
-      - name: Build iOS (production)
-        run: eas build --platform ios --profile production --non-interactive --no-wait
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-
-      - name: Build summary
-        run: |
-          echo "## EAS Build Triggered" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "iOS production build has been queued on EAS." >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Next steps:**" >> $GITHUB_STEP_SUMMARY
-          echo "1. Check build status: [EAS Dashboard](https://expo.dev/accounts/tantum-arbiter/projects/grow-with-freya/builds)" >> $GITHUB_STEP_SUMMARY
-          echo "2. Once complete, submit manually: \`eas submit --platform ios\`" >> $GITHUB_STEP_SUMMARY
-
-  # Job 7: Performance Testing
+  # Job 5: Performance Testing
   # Runs after web build completes
   performance-test:
     name: Performance Tests
@@ -281,24 +237,23 @@ jobs:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
         continue-on-error: true
 
-  # Job 7: Deployment Summary
+  # Job 6: Deployment Summary
   deployment-summary:
     name: Deployment Summary
     runs-on: ubuntu-latest
-    needs: [test-and-lint, type-check, security-audit, build-web, eas-build, performance-test]
+    needs: [test-and-lint, type-check, security-audit, build-web, performance-test]
     if: always()
 
     steps:
       - name: Create deployment summary
         run: |
-          echo "##  Grow with Freya - Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "##  Grow with Freya - CI/CD Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "###  Build Status:" >> $GITHUB_STEP_SUMMARY
           echo "- **Tests & Lint**: ${{ needs.test-and-lint.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- **TypeScript Check**: ${{ needs.type-check.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Security Audit**: ${{ needs.security-audit.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Web Build**: ${{ needs.build-web.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **EAS Build**: ${{ needs.eas-build.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Performance Tests**: ${{ needs.performance-test.result }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
@@ -306,12 +261,13 @@ jobs:
           echo "- Web build available for download (30 days retention)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          if [[ "${{ needs.eas-build.result }}" == "success" ]]; then
-            echo "###  TestFlight Submission:" >> $GITHUB_STEP_SUMMARY
-            echo "iOS build queued. To submit to TestFlight:" >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-            echo "cd grow-with-freya && eas submit --platform ios" >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          # Check if all required jobs passed
+          if [[ "${{ needs.test-and-lint.result }}" == "success" && "${{ needs.type-check.result }}" == "success" && "${{ needs.build-web.result }}" == "success" ]]; then
+            echo "###  EAS Build Ready" >> $GITHUB_STEP_SUMMARY
+            echo "All CI checks passed! You can now trigger EAS build manually:" >> $GITHUB_STEP_SUMMARY
+            echo "1. Go to **Actions** → **EAS Build (Manual)**" >> $GITHUB_STEP_SUMMARY
+            echo "2. Click **Run workflow**" >> $GITHUB_STEP_SUMMARY
+            echo "3. Select platform and profile" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
 
@@ -319,3 +275,4 @@ jobs:
           echo "- [Repository](https://github.com/${{ github.repository }})" >> $GITHUB_STEP_SUMMARY
           echo "- [Commit](https://github.com/${{ github.repository }}/commit/${{ github.sha }})" >> $GITHUB_STEP_SUMMARY
           echo "- [EAS Builds](https://expo.dev/accounts/tantum-arbiter/projects/grow-with-freya/builds)" >> $GITHUB_STEP_SUMMARY
+          echo "- [Trigger EAS Build](https://github.com/${{ github.repository }}/actions/workflows/deploy-eas.yml)" >> $GITHUB_STEP_SUMMARY

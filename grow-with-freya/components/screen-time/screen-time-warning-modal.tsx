@@ -80,6 +80,7 @@ export function ScreenTimeWarningModal({
       transparent
       animationType="fade"
       onRequestClose={handleDismiss}
+      supportedOrientations={['portrait', 'landscape']}
     >
       <BlurView intensity={20} style={styles.overlay}>
         <View style={styles.modalContainer}>

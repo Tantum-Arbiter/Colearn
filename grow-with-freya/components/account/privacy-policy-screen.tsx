@@ -12,6 +12,10 @@ interface PrivacyPolicyScreenProps {
   onBack: () => void;
 }
 
+interface PrivacyPolicyContentProps {
+  paddingTop?: number;
+}
+
 export function PrivacyPolicyScreen({ onBack }: PrivacyPolicyScreenProps) {
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledButtonSize, isTablet, contentMaxWidth } = useAccessibility();
@@ -289,3 +293,146 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
 });
+
+// Content-only component for embedding in horizontal scroll
+export function PrivacyPolicyContent({ paddingTop = 0 }: PrivacyPolicyContentProps) {
+  const { scaledFontSize, isTablet, contentMaxWidth } = useAccessibility();
+
+  return (
+    <ScrollView
+      style={styles.scrollView}
+      contentContainerStyle={[
+        styles.content,
+        { paddingBottom: Dimensions.get('window').height * 0.2, paddingTop },
+        isTablet && { alignItems: 'center' }
+      ]}
+    >
+      <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>UK/EU GDPR & Child-Appropriate</Text>
+          <Text style={[styles.appInfo, { fontSize: scaledFontSize(14) }]}>
+            App: Grow with Freya{'\n'}
+            Controller: Tantum Arbiter, United Kingdom{'\n'}
+            Contact (privacy): privacy@growwithfreya.com{'\n'}
+            Data Protection Officer: N/A{'\n'}
+            Effective date: November 1, 2025{'\n'}
+            Version: 1.0
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>1. What this policy covers</Text>
+          <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
+            This explains what personal data we collect, why we collect it, how we use it, and your rights. The app is intended for children aged 0–6 used with a parent/guardian. The parent/guardian is the account holder.
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>2. What data we collect</Text>
+          <Text style={[styles.subsectionTitle, { fontSize: scaledFontSize(16) }]}>2.1 Data you provide</Text>
+          <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
+            • Parent account sign-in: Your Apple/Google account identifier (token), not your password.{'\n'}
+            • Child profiles: Display name/alias and avatar selection.{'\n'}
+            • Consents: Records of parent/guardian consents (terms version, consent scope, timestamp).{'\n'}
+            • Device registration: Device identifier, platform, and model to keep profiles in sync.{'\n'}
+            • Support: Emails or messages you send us.
+          </Text>
+
+          <Text style={[styles.subsectionTitle, { fontSize: scaledFontSize(16) }]}>2.2 Data we do not collect in MVP</Text>
+          <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
+            • No advertising identifiers, no third-party ads, no behavioral tracking.{'\n'}
+            • No payment data.{'\n'}
+            • No voice recordings (voice features are deferred).{'\n'}
+            • No precise location.
+          </Text>
+
+          <Text style={[styles.subsectionTitle, { fontSize: scaledFontSize(16) }]}>2.3 Automatic data (app operations)</Text>
+          <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
+            • Basic diagnostic logs (timestamp, route, status, duration).{'\n'}
+            • Crash data on your device if you opt in to OS crash reporting.{'\n'}
+            • Pseudonymous device identifier (for security, abuse prevention, and secure access – cannot identify a person, not shared with third parties).
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>3. Why we use your data (lawful bases)</Text>
+          <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
+            • Contract: To provide the app, sign you in, sync content, and show your profiles.{'\n'}
+            • Consent: To record parental consent and any optional features that require it.{'\n'}
+            • Legal obligation: To respond to data subject requests.{'\n'}
+            • Legitimate interests (minimal, balanced): Security, fraud prevention, service analytics strictly necessary to operate the app.
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>4. How we use the data</Text>
+          <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
+            • Authenticate the parent/guardian account via Apple/Google.{'\n'}
+            • Create and manage child profiles and keep them in sync across your devices.{'\n'}
+            • Record and honour consent choices.{'\n'}
+            • Deliver stories and media from our content service/CMS.{'\n'}
+            • Provide support and maintain service security.
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>5. Children&apos;s data &amp; parental consent</Text>
+          <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
+            • The app is used with a parent/guardian.{'\n'}
+            • We only process children&apos;s data (profile alias and avatar) with verifiable parental consent.{'\n'}
+            • Parents can review, export, or delete children&apos;s data at any time (see Section 9).
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>6. Data sharing</Text>
+          <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
+            We use carefully chosen processors to run the app:{'\n'}
+            • Cloud hosting & object storage for content and profile data.{'\n'}
+            • Apple/Google for sign-in.{'\n\n'}
+            We do not sell personal data. We do not share data with advertisers.
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>7. International transfers</Text>
+          <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
+            If we transfer data outside the UK/EU, we use recognised safeguards, such as UK Addendum to SCCs / EU SCCs or a valid adequacy decision.
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>8. Data retention</Text>
+          <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
+            • Account data & profiles: kept while your account is active.{'\n'}
+            • Consent records: kept for 7 years for compliance.{'\n'}
+            • Diagnostics logs: up to 30 days.
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>9. Your rights (UK/EU)</Text>
+          <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
+            You can exercise these rights by emailing privacy@growwithfreya.com:{'\n'}
+            • Access, Rectification, Erasure, Restriction, Portability, Objection, Withdraw consent{'\n\n'}
+            You also have the right to complain to the UK ICO or your local data protection authority.
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>10. Security</Text>
+          <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
+            We use industry-standard security, including encrypted transport (HTTPS) and secure storage.
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>11. Contact</Text>
+          <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
+            Questions? privacy@growwithfreya.com
+          </Text>
+        </View>
+      </View>
+    </ScrollView>
+  );
+}

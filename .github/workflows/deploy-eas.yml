@@ -1,12 +1,12 @@
-name: Deploy to EAS
+name: EAS Build (Manual)
 
 on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Deployment environment'
+        description: 'Build profile'
         required: true
-        default: 'preview'
+        default: 'production'
         type: choice
         options:
           - development
@@ -15,31 +15,84 @@ on:
       platform:
         description: 'Platform to build'
         required: true
-        default: 'all'
+        default: 'ios'
         type: choice
         options:
           - ios
           - android
           - all
-      skip_tests:
-        description: 'Skip tests (not recommended for production)'
+      wait_for_build:
+        description: 'Wait for build to complete'
         required: false
         default: false
         type: boolean
-
-  # DISABLED: Will re-enable after Security Scan workflow is verified
-  # push:
-  #   tags:
-  #     - 'v*'
 
 env:
   WORKING_DIRECTORY: grow-with-freya
   NODE_VERSION: '20'
 
 jobs:
-  deploy:
-    name: Deploy to EAS
+  # First, verify the CI pipeline is green
+  check-ci-status:
+    name: Verify CI Pipeline
     runs-on: ubuntu-latest
+    outputs:
+      ci-passed: ${{ steps.check.outputs.passed }}
+
+    steps:
+      - name: Check latest CI workflow status
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Get the latest successful run of the CI workflow on the current branch
+            const { data: runs } = await github.rest.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'grow-with-freya-ci-cd.yml',
+              branch: context.ref.replace('refs/heads/', ''),
+              status: 'success',
+              per_page: 1
+            });
+
+            if (runs.total_count === 0) {
+              core.setFailed('No successful CI run found on this branch. Please ensure CI passes before triggering EAS build.');
+              core.setOutput('passed', 'false');
+              return;
+            }
+
+            const latestRun = runs.workflow_runs[0];
+            const headSha = context.sha;
+
+            // Check if the latest successful run is for the current commit or a recent one
+            console.log(`Latest successful CI run: ${latestRun.head_sha}`);
+            console.log(`Current commit: ${headSha}`);
+
+            // Allow if the successful run is on the same commit or within the last few commits
+            if (latestRun.head_sha === headSha) {
+              console.log('CI passed for current commit!');
+              core.setOutput('passed', 'true');
+            } else {
+              // Check if CI passed for a recent commit (within last 24 hours)
+              const runDate = new Date(latestRun.created_at);
+              const now = new Date();
+              const hoursDiff = (now - runDate) / (1000 * 60 * 60);
+
+              if (hoursDiff < 24) {
+                console.log(`CI passed recently (${hoursDiff.toFixed(1)} hours ago). Proceeding with build.`);
+                core.setOutput('passed', 'true');
+              } else {
+                core.setFailed('No recent successful CI run found. Please run CI before triggering EAS build.');
+                core.setOutput('passed', 'false');
+              }
+            }
+
+  # Build using EAS
+  eas-build:
+    name: EAS Build
+    runs-on: ubuntu-latest
+    needs: check-ci-status
+    if: needs.check-ci-status.outputs.ci-passed == 'true'
     defaults:
       run:
         working-directory: ${{ env.WORKING_DIRECTORY }}
@@ -63,79 +116,75 @@ jobs:
           npm install -g eas-cli@latest
 
       - name: Install dependencies
-        run: npm ci
-
-      - name: Authenticate with Expo
-        run: eas login --non-interactive
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-
-      - name: Run tests
-        if: ${{ !inputs.skip_tests }}
-        run: npm run test:ci
-
-      - name: Run type check
-        if: ${{ !inputs.skip_tests }}
-        run: npm run type-check
-
-      - name: Run linter
-        if: ${{ !inputs.skip_tests }}
-        run: npm run lint
-
-      - name: Determine deployment environmen
-        id: env
-        run: |
-          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == refs/tags/* ]]; then
-            echo "environment=production" >> $GITHUB_OUTPUT
-            echo "platform=all" >> $GITHUB_OUTPUT
-          else
-            echo "environment=${{ inputs.environment || 'preview' }}" >> $GITHUB_OUTPUT
-            echo "platform=${{ inputs.platform || 'all' }}" >> $GITHUB_OUTPUT
-          fi
+        run: npm ci --legacy-peer-deps || npm install --legacy-peer-deps
 
       - name: Build for iOS
-        if: steps.env.outputs.platform == 'ios' || steps.env.outputs.platform == 'all'
-        run: eas build --platform ios --profile ${{ steps.env.outputs.environment }} --non-interactive --wait
+        if: inputs.platform == 'ios' || inputs.platform == 'all'
+        run: |
+          if [[ "${{ inputs.wait_for_build }}" == "true" ]]; then
+            eas build --platform ios --profile ${{ inputs.environment }} --non-interactive --wait
+          else
+            eas build --platform ios --profile ${{ inputs.environment }} --non-interactive --no-wait
+          fi
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
       - name: Build for Android
-        if: steps.env.outputs.platform == 'android' || steps.env.outputs.platform == 'all'
-        run: eas build --platform android --profile ${{ steps.env.outputs.environment }} --non-interactive --wait
+        if: inputs.platform == 'android' || inputs.platform == 'all'
+        run: |
+          if [[ "${{ inputs.wait_for_build }}" == "true" ]]; then
+            eas build --platform android --profile ${{ inputs.environment }} --non-interactive --wait
+          else
+            eas build --platform android --profile ${{ inputs.environment }} --non-interactive --no-wait
+          fi
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
-      - name: Create deployment summary
+      - name: Create build summary
         run: |
-          echo "## EAS Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## EAS Build Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Deployment Details:" >> $GITHUB_STEP_SUMMARY
-          echo "- **Environment**: ${{ steps.env.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Platform**: ${{ steps.env.outputs.platform }}" >> $GITHUB_STEP_SUMMARY
+          echo "### Build Details:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Profile**: ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Platform**: ${{ inputs.platform }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Wait for build**: ${{ inputs.wait_for_build }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Build Links:" >> $GITHUB_STEP_SUMMARY
-          echo "Check your builds at: [EAS Dashboard](https://expo.dev/accounts/[your-account]/projects/grow-with-freya/builds)" >> $GITHUB_STEP_SUMMARY
+          echo "Check your builds at: [EAS Dashboard](https://expo.dev/accounts/tantum-arbiter/projects/grow-with-freya/builds)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          if [[ "${{ steps.env.outputs.environment }}" == "production" ]]; then
-            echo "### App Store Submission:" >> $GITHUB_STEP_SUMMARY
-            echo "Production builds are ready for app store submission." >> $GITHUB_STEP_SUMMARY
-            echo "Use \`eas submit\` to submit to app stores when ready." >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ inputs.environment }}" == "production" ]]; then
+            echo "### Next Steps:" >> $GITHUB_STEP_SUMMARY
+            echo "Once the build completes, submit to TestFlight:" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+            echo "cd grow-with-freya && eas submit --platform ios" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           fi
 
   notify:
-    name: Notify Deploymen
+    name: Build Notification
     runs-on: ubuntu-latest
-    needs: deploy
+    needs: [check-ci-status, eas-build]
     if: always()
 
     steps:
-      - name: Deployment notification
+      - name: Build notification
         run: |
-          if [[ "${{ needs.deploy.result }}" == "success" ]]; then
-            echo "Deployment completed successfully!"
+          echo "## Build Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ needs.check-ci-status.outputs.ci-passed }}" != "true" ]]; then
+            echo "❌ **CI check failed** - EAS build was not triggered" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Please ensure the CI pipeline passes before triggering EAS build." >> $GITHUB_STEP_SUMMARY
+            exit 1
+          elif [[ "${{ needs.eas-build.result }}" == "success" ]]; then
+            echo "✅ **EAS build triggered successfully!**" >> $GITHUB_STEP_SUMMARY
           else
-            echo "Deployment failed!"
+            echo "❌ **EAS build failed**" >> $GITHUB_STEP_SUMMARY
             exit 1
           fi

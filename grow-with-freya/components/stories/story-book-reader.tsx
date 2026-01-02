@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, Dimensions, StatusBar, Image, ImageBackground, ScrollView, NativeSyntheticEvent, NativeScrollEvent, Modal, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Dimensions, StatusBar, Image, ImageBackground, ScrollView, NativeSyntheticEvent, NativeScrollEvent, Modal, TextInput, Alert, KeyboardAvoidingView, Platform, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -274,6 +274,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
   const { width: screenWidth, height: screenHeight } = screenDimensions;
   const isTablet = Math.min(screenWidth, screenHeight) >= 768; // iPad and larger
   const isLandscape = screenWidth > screenHeight;
+  const isPhoneLandscape = !isTablet && isLandscape;
 
   // Image resize mode based on device type
   const imageResizeMode = isTablet ? 'contain' : 'cover';
@@ -416,6 +417,18 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
   const handleExit = async () => {
     try {
       console.log('Starting exit transition...');
+
+      // Stop any playing narration/recording audio immediately
+      if (playbackSound) {
+        try {
+          await playbackSound.stopAsync();
+          await playbackSound.unloadAsync();
+          setPlaybackSound(null);
+          setIsPlaying(false);
+        } catch (audioError) {
+          console.warn('Failed to stop playback audio on exit:', audioError);
+        }
+      }
 
       // Start book closing animation
       console.log('Starting exit animation phase 1');
@@ -917,6 +930,18 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
   const handleCloseCompletion = async () => {
     try {
       console.log('Closing story reader with soft fade transition');
+
+      // Stop any playing narration/recording audio
+      if (playbackSound) {
+        try {
+          await playbackSound.stopAsync();
+          await playbackSound.unloadAsync();
+          setPlaybackSound(null);
+          setIsPlaying(false);
+        } catch (audioError) {
+          console.warn('Failed to stop playback audio on close:', audioError);
+        }
+      }
 
       // Simple, soft fade out transition
       scrollUpOpacity.value = withTiming(0, {
@@ -1702,135 +1727,280 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
         transparent
         animationType="fade"
         onRequestClose={() => setShowVoiceOverNameModal(false)}
+        supportedOrientations={['portrait', 'landscape']}
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalOverlayTop}
+          style={styles.modalOverlay}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
         >
-          <View style={styles.modalContent}>
+          <View style={[
+            styles.modalContent,
+            isPhoneLandscape && styles.modalContentLandscape,
+          ]}>
             <Pressable
-              style={styles.modalCloseButton}
+              style={[
+                styles.modalCloseButton,
+                isPhoneLandscape && styles.modalCloseButtonCompact,
+              ]}
               onPress={() => {
                 setShowVoiceOverNameModal(false);
                 setVoiceOverName('');
               }}
             >
-              <Text style={styles.modalCloseButtonText}>✕</Text>
+              <Text style={[
+                styles.modalCloseButtonText,
+                isPhoneLandscape && { fontSize: 14 },
+              ]}>✕</Text>
             </Pressable>
-            <Text style={styles.modalTitle}>Voice Over Profile</Text>
 
-            {/* Existing voice overs */}
-            {availableVoiceOvers.length > 0 && (
-              <>
-                <Text style={styles.modalSubtitle}>Select existing to overwrite:</Text>
-                <View style={styles.voiceOverList}>
-                  {availableVoiceOvers.map((vo) => (
-                    <View key={vo.id} style={styles.voiceOverItemWithDelete}>
-                      <Pressable
-                        style={styles.voiceOverItemSelectable}
-                        onPress={() => {
-                          const hasExistingRecordings = Object.keys(vo.pageRecordings).length > 0;
-                          if (hasExistingRecordings) {
-                            Alert.alert(
-                              'Overwrite Voice Over?',
-                              `"${vo.name}" already has ${Object.keys(vo.pageRecordings).length} page(s) recorded. Do you want to overwrite with new recordings?`,
-                              [
-                                { text: 'Cancel', style: 'cancel' },
-                                {
-                                  text: 'Overwrite',
-                                  style: 'destructive',
-                                  onPress: () => {
-                                    setCurrentVoiceOver(vo);
-                                    setIsOverwriteSession(true);
-                                    setShowVoiceOverNameModal(false);
-                                  },
-                                },
-                              ]
-                            );
-                          } else {
-                            setCurrentVoiceOver(vo);
-                            setShowVoiceOverNameModal(false);
-                          }
-                        }}
-                      >
-                        <Text style={styles.voiceOverItemText}>{vo.name}</Text>
-                        <Text style={styles.voiceOverItemPages}>
-                          {Object.keys(vo.pageRecordings).length} pages recorded
-                        </Text>
-                      </Pressable>
-                      <Pressable
-                        style={styles.deleteButton}
-                        onPress={() => {
-                          setShowVoiceOverNameModal(false);
-                          setTimeout(() => {
-                            parentsOnly.showChallenge(() => {
+            {isPhoneLandscape ? (
+              // Phone landscape: horizontal two-column layout
+              <View style={[
+                styles.landscapeModalLayout,
+                availableVoiceOvers.length >= 3 && styles.landscapeModalLayoutFullWidth,
+              ]}>
+                {/* Left column: existing voice overs */}
+                {availableVoiceOvers.length > 0 && (
+                  <View style={[
+                    styles.landscapeModalLeft,
+                    availableVoiceOvers.length >= 3 && styles.landscapeModalLeftFull,
+                  ]}>
+                    <Text style={styles.landscapeModalLabel}>
+                      {availableVoiceOvers.length >= 3 ? 'Select (max 3):' : 'Select:'}
+                    </Text>
+                    {availableVoiceOvers.map((vo) => (
+                      <View key={vo.id} style={styles.landscapeVoiceOverRow}>
+                        <Pressable
+                          style={styles.landscapeVoiceOverButton}
+                          onPress={() => {
+                            const hasExistingRecordings = Object.keys(vo.pageRecordings).length > 0;
+                            if (hasExistingRecordings) {
                               Alert.alert(
-                                'Delete Voice Over',
-                                `Are you sure you want to delete "${vo.name}"? This cannot be undone.`,
+                                'Overwrite Voice Over?',
+                                `"${vo.name}" already has ${Object.keys(vo.pageRecordings).length} page(s) recorded. Do you want to overwrite with new recordings?`,
                                 [
+                                  { text: 'Cancel', style: 'cancel' },
                                   {
-                                    text: 'Cancel',
-                                    style: 'cancel',
-                                    onPress: () => setShowVoiceOverNameModal(true),
-                                  },
-                                  {
-                                    text: 'Delete',
+                                    text: 'Overwrite',
                                     style: 'destructive',
-                                    onPress: async () => {
-                                      await voiceRecordingService.deleteVoiceOver(vo.id);
-                                      const updated = await voiceRecordingService.getVoiceOversForStory(story.id);
-                                      setAvailableVoiceOvers(updated);
-                                      if (currentVoiceOver?.id === vo.id) {
-                                        setCurrentVoiceOver(null);
-                                      }
-                                      if (selectedVoiceOver?.id === vo.id) {
-                                        setSelectedVoiceOver(null);
-                                      }
-                                      setShowVoiceOverNameModal(true);
+                                    onPress: () => {
+                                      setCurrentVoiceOver(vo);
+                                      setIsOverwriteSession(true);
+                                      setShowVoiceOverNameModal(false);
                                     },
                                   },
                                 ]
                               );
-                            });
-                          }, 300);
-                        }}
+                            } else {
+                              setCurrentVoiceOver(vo);
+                              setShowVoiceOverNameModal(false);
+                            }
+                          }}
+                        >
+                          <Text style={styles.landscapeVoiceOverText}>{vo.name}</Text>
+                        </Pressable>
+                        <Pressable
+                          style={styles.landscapeDeleteButton}
+                          onPress={() => {
+                            setShowVoiceOverNameModal(false);
+                            setTimeout(() => {
+                              parentsOnly.showChallenge(() => {
+                                Alert.alert(
+                                  'Delete Voice Over',
+                                  `Are you sure you want to delete "${vo.name}"?`,
+                                  [
+                                    {
+                                      text: 'Cancel',
+                                      style: 'cancel',
+                                      onPress: () => setShowVoiceOverNameModal(true),
+                                    },
+                                    {
+                                      text: 'Delete',
+                                      style: 'destructive',
+                                      onPress: async () => {
+                                        await voiceRecordingService.deleteVoiceOver(vo.id);
+                                        const updated = await voiceRecordingService.getVoiceOversForStory(story.id);
+                                        setAvailableVoiceOvers(updated);
+                                        if (currentVoiceOver?.id === vo.id) {
+                                          setCurrentVoiceOver(null);
+                                        }
+                                        if (selectedVoiceOver?.id === vo.id) {
+                                          setSelectedVoiceOver(null);
+                                        }
+                                        setShowVoiceOverNameModal(true);
+                                      },
+                                    },
+                                  ]
+                                );
+                              });
+                            }, 300);
+                          }}
+                        >
+                          <Text style={styles.landscapeDeleteText}>✕</Text>
+                        </Pressable>
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+                {/* Right column: create new (only if under max) */}
+                {availableVoiceOvers.length < 3 && (
+                  <View style={[
+                    styles.landscapeModalRight,
+                    availableVoiceOvers.length === 0 && { flex: 1 },
+                  ]}>
+                    <Text style={styles.landscapeModalLabel}>
+                      {availableVoiceOvers.length > 0 ? 'Or new:' : 'Enter name:'}
+                    </Text>
+                    <View style={styles.landscapeInputRow}>
+                      <TextInput
+                        style={styles.landscapeInput}
+                        value={voiceOverName}
+                        onChangeText={setVoiceOverName}
+                        placeholder="Name..."
+                        placeholderTextColor="#999"
+                        autoFocus={availableVoiceOvers.length === 0}
+                      />
+                      <Pressable
+                        style={[
+                          styles.landscapeCreateButton,
+                          !voiceOverName.trim() && styles.modalButtonDisabled,
+                        ]}
+                        onPress={handleCreateVoiceOver}
+                        disabled={!voiceOverName.trim()}
                       >
-                        <Text style={styles.deleteButtonText}>✕</Text>
+                        <Text style={styles.landscapeCreateText}>+</Text>
                       </Pressable>
                     </View>
-                  ))}
-                </View>
-              </>
-            )}
-
-            {/* Create new section */}
-            {availableVoiceOvers.length < 3 ? (
-              <>
-                <Text style={[styles.modalSubtitle, availableVoiceOvers.length > 0 && { marginTop: 16 }]}>
-                  {availableVoiceOvers.length > 0 ? 'Or create new:' : 'Enter a name for your recording:'}
-                </Text>
-                <TextInput
-                  style={styles.modalInput}
-                  value={voiceOverName}
-                  onChangeText={setVoiceOverName}
-                  placeholder="e.g., Mummy's Voice"
-                  placeholderTextColor="#999"
-                  autoFocus={availableVoiceOvers.length === 0}
-                />
-                <View style={styles.modalButtonsCentered}>
-                  <Pressable
-                    style={[styles.modalButtonConfirm, !voiceOverName.trim() && styles.modalButtonDisabled]}
-                    onPress={handleCreateVoiceOver}
-                    disabled={!voiceOverName.trim()}
-                  >
-                    <Text style={styles.modalButtonConfirmText}>Create</Text>
-                  </Pressable>
-                </View>
-              </>
+                  </View>
+                )}
+              </View>
             ) : (
-              <Text style={[styles.modalSubtitle, { marginTop: 16, color: '#666' }]}>
-                Maximum of 3 voice overs reached. Delete one to create a new one.
-              </Text>
+              // Portrait/tablet: standard vertical layout
+              <>
+                <Text style={styles.modalTitle}>Voice Over Profile</Text>
+
+                {/* Existing voice overs */}
+                {availableVoiceOvers.length > 0 && (
+                  <>
+                    <Text style={styles.modalSubtitle}>Select existing to overwrite:</Text>
+                    <View style={styles.voiceOverList}>
+                      {availableVoiceOvers.map((vo) => (
+                        <View key={vo.id} style={styles.voiceOverItemWithDelete}>
+                          <Pressable
+                            style={styles.voiceOverItemSelectable}
+                            onPress={() => {
+                              const hasExistingRecordings = Object.keys(vo.pageRecordings).length > 0;
+                              if (hasExistingRecordings) {
+                                Alert.alert(
+                                  'Overwrite Voice Over?',
+                                  `"${vo.name}" already has ${Object.keys(vo.pageRecordings).length} page(s) recorded. Do you want to overwrite with new recordings?`,
+                                  [
+                                    { text: 'Cancel', style: 'cancel' },
+                                    {
+                                      text: 'Overwrite',
+                                      style: 'destructive',
+                                      onPress: () => {
+                                        setCurrentVoiceOver(vo);
+                                        setIsOverwriteSession(true);
+                                        setShowVoiceOverNameModal(false);
+                                      },
+                                    },
+                                  ]
+                                );
+                              } else {
+                                setCurrentVoiceOver(vo);
+                                setShowVoiceOverNameModal(false);
+                              }
+                            }}
+                          >
+                            <Text style={styles.voiceOverItemText}>{vo.name}</Text>
+                            <Text style={styles.voiceOverItemPages}>
+                              {Object.keys(vo.pageRecordings).length} pages recorded
+                            </Text>
+                          </Pressable>
+                          <Pressable
+                            style={styles.deleteButton}
+                            onPress={() => {
+                              setShowVoiceOverNameModal(false);
+                              setTimeout(() => {
+                                parentsOnly.showChallenge(() => {
+                                  Alert.alert(
+                                    'Delete Voice Over',
+                                    `Are you sure you want to delete "${vo.name}"? This cannot be undone.`,
+                                    [
+                                      {
+                                        text: 'Cancel',
+                                        style: 'cancel',
+                                        onPress: () => setShowVoiceOverNameModal(true),
+                                      },
+                                      {
+                                        text: 'Delete',
+                                        style: 'destructive',
+                                        onPress: async () => {
+                                          await voiceRecordingService.deleteVoiceOver(vo.id);
+                                          const updated = await voiceRecordingService.getVoiceOversForStory(story.id);
+                                          setAvailableVoiceOvers(updated);
+                                          if (currentVoiceOver?.id === vo.id) {
+                                            setCurrentVoiceOver(null);
+                                          }
+                                          if (selectedVoiceOver?.id === vo.id) {
+                                            setSelectedVoiceOver(null);
+                                          }
+                                          setShowVoiceOverNameModal(true);
+                                        },
+                                      },
+                                    ]
+                                  );
+                                });
+                              }, 300);
+                            }}
+                          >
+                            <Text style={styles.deleteButtonText}>✕</Text>
+                          </Pressable>
+                        </View>
+                      ))}
+                    </View>
+                  </>
+                )}
+
+                {/* Create new section */}
+                {availableVoiceOvers.length < 3 ? (
+                  <>
+                    <Text style={[
+                      styles.modalSubtitle,
+                      availableVoiceOvers.length > 0 && { marginTop: 16 },
+                    ]}>
+                      {availableVoiceOvers.length > 0 ? 'Or create new:' : 'Enter a name for your recording:'}
+                    </Text>
+                    <TextInput
+                      style={styles.modalInput}
+                      value={voiceOverName}
+                      onChangeText={setVoiceOverName}
+                      placeholder="e.g., Mummy's Voice"
+                      placeholderTextColor="#999"
+                      autoFocus={availableVoiceOvers.length === 0}
+                    />
+                    <View style={styles.modalButtonsCentered}>
+                      <Pressable
+                        style={[
+                          styles.modalButtonConfirm,
+                          !voiceOverName.trim() && styles.modalButtonDisabled,
+                        ]}
+                        onPress={handleCreateVoiceOver}
+                        disabled={!voiceOverName.trim()}
+                      >
+                        <Text style={styles.modalButtonConfirmText}>Create</Text>
+                      </Pressable>
+                    </View>
+                  </>
+                ) : (
+                  <Text style={[styles.modalSubtitle, { marginTop: 16, color: '#666' }]}>
+                    Maximum of 3 voice overs reached. Delete one to create a new one.
+                  </Text>
+                )}
+              </>
             )}
           </View>
         </KeyboardAvoidingView>
@@ -1842,6 +2012,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
         transparent
         animationType="fade"
         onRequestClose={() => setShowVoiceOverSelectModal(false)}
+        supportedOrientations={['portrait', 'landscape']}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -2646,8 +2817,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   narrationProgressContainer: {
-    flexDirection: 'column',
-    gap: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
   },
   narrationProgressBar: {
     width: 84,
@@ -2665,6 +2837,8 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 10,
     textAlign: 'center',
+    position: 'absolute',
+    top: 8,
   },
   // Modal styles
   modalOverlay: {
@@ -2673,14 +2847,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-  },
-  modalOverlayTop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    paddingTop: 80,
-    paddingHorizontal: 20,
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
@@ -2837,5 +3003,117 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sans,
     fontWeight: '600',
     color: '#2C3E50',
+  },
+  // Phone landscape modal styles
+  modalContentLandscape: {
+    padding: 14,
+    paddingLeft: 44,
+    maxWidth: 550,
+    width: '95%',
+    alignItems: 'stretch',
+  },
+  modalCloseButtonCompact: {
+    top: 8,
+    left: 8,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+  },
+  landscapeModalLayout: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  landscapeModalLayoutFullWidth: {
+    justifyContent: 'center',
+  },
+  landscapeModalLeft: {
+    flex: 1,
+    marginRight: 16,
+  },
+  landscapeModalLeftFull: {
+    flex: 0,
+    width: '100%',
+    marginRight: 0,
+  },
+  landscapeModalRight: {
+    flex: 1,
+  },
+  landscapeModalLabel: {
+    fontSize: 13,
+    fontFamily: Fonts.sans,
+    fontWeight: '600',
+    color: '#666',
+    marginBottom: 6,
+  },
+  landscapeVoiceOverRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  landscapeVoiceOverButton: {
+    flex: 1,
+    minHeight: 38,
+    minWidth: 100,
+    backgroundColor: '#F0F4F8',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    justifyContent: 'center',
+  },
+  landscapeVoiceOverText: {
+    fontSize: 15,
+    fontFamily: Fonts.sans,
+    fontWeight: '500',
+    color: '#2C3E50',
+  },
+  landscapeDeleteButton: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#FF6B6B',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 6,
+  },
+  landscapeDeleteText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  landscapeInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  landscapeInput: {
+    flex: 1,
+    height: 36,
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    fontSize: 14,
+    fontFamily: Fonts.sans,
+    color: '#2C3E50',
+  },
+  landscapeCreateButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: '#4ECDC4',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  landscapeCreateText: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '600',
+  },
+  landscapeMaxText: {
+    fontSize: 12,
+    fontFamily: Fonts.sans,
+    color: '#999',
+    fontStyle: 'italic',
   },
 });

@@ -41,38 +41,36 @@ export function formatDuration(totalSeconds: number): string {
 
 /**
  * Format seconds into a compact time string for display in limited space
+ * Only shows whole minutes (no seconds tracking)
  * Examples:
- * - 30 seconds -> "30s"
- * - 90 seconds -> "1m 30s"
+ * - 30 seconds -> "<1m"
+ * - 90 seconds -> "1m"
  * - 3600 seconds -> "1h"
  * - 3690 seconds -> "1h 1m"
  * - 7200 seconds -> "2h"
  */
 export function formatDurationCompact(totalSeconds: number): string {
-  if (totalSeconds === 0) return "0s";
+  if (totalSeconds === 0) return "0m";
 
   // Round to nearest second to avoid floating point display issues
   const roundedSeconds = Math.round(totalSeconds);
 
   const hours = Math.floor(roundedSeconds / 3600);
   const minutes = Math.floor((roundedSeconds % 3600) / 60);
-  const seconds = roundedSeconds % 60;
-  
+
   if (hours > 0) {
     if (minutes > 0) {
       return `${hours}h ${minutes}m`;
     }
     return `${hours}h`;
   }
-  
+
   if (minutes > 0) {
-    if (seconds > 0) {
-      return `${minutes}m ${seconds}s`;
-    }
     return `${minutes}m`;
   }
-  
-  return `${seconds}s`;
+
+  // Less than 1 minute - show "<1m" instead of seconds
+  return "<1m";
 }
 
 /**
