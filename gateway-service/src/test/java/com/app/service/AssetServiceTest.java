@@ -2,6 +2,8 @@ package com.app.service;
 
 import com.app.config.GcsConfig.GcsProperties;
 import com.app.dto.AssetSyncResponse.AssetInfo;
+import com.app.exception.AssetUrlGenerationException;
+import com.app.exception.InvalidAssetPathException;
 import com.app.model.AssetVersion;
 import com.app.repository.AssetVersionRepository;
 import com.google.cloud.storage.BlobId;
@@ -10,7 +12,6 @@ import com.google.cloud.storage.Storage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -45,7 +46,8 @@ class AssetServiceTest {
 
     @BeforeEach
     void setUp() {
-        gcsProperties = new GcsProperties("test-bucket", 60);
+        // GcsProperties(bucketName, signedUrlDurationMinutes, cdnHost, emulatorHost)
+        gcsProperties = new GcsProperties("test-bucket", 60, null, null);
         assetService = new AssetService(storage, gcsProperties, assetVersionRepository, metricsService);
 
         testAssetVersion = new AssetVersion();
@@ -64,26 +66,19 @@ class AssetServiceTest {
     void generateSignedUrl_ProductionMode_CallsStorageWithCorrectParameters() throws Exception {
         String assetPath = "stories/story-1/cover.webp";
         URL mockUrl = new URL("https://storage.googleapis.com/test-bucket/stories/story-1/cover.webp?X-Goog-Signature=abc");
-        
+
         when(storage.signUrl(any(BlobInfo.class), anyLong(), any(TimeUnit.class), any()))
                 .thenReturn(mockUrl);
 
         String result = assetService.generateSignedUrl(assetPath);
 
-        ArgumentCaptor<BlobInfo> blobInfoCaptor = ArgumentCaptor.forClass(BlobInfo.class);
-        ArgumentCaptor<Long> durationCaptor = ArgumentCaptor.forClass(Long.class);
-        ArgumentCaptor<TimeUnit> timeUnitCaptor = ArgumentCaptor.forClass(TimeUnit.class);
+        // Verify storage.signUrl was called with correct parameters
+        verify(storage).signUrl(argThat(blobInfo ->
+                "test-bucket".equals(blobInfo.getBucket()) && assetPath.equals(blobInfo.getName())),
+                eq(60L), eq(TimeUnit.MINUTES), any());
 
-        verify(storage).signUrl(blobInfoCaptor.capture(), durationCaptor.capture(), 
-                               timeUnitCaptor.capture(), any(Storage.SignUrlOption.class));
-
-        BlobInfo capturedBlobInfo = blobInfoCaptor.getValue();
-        assertEquals("test-bucket", capturedBlobInfo.getBucket());
-        assertEquals(assetPath, capturedBlobInfo.getName());
-        assertEquals(60L, durationCaptor.getValue());
-        assertEquals(TimeUnit.MINUTES, timeUnitCaptor.getValue());
         assertEquals(mockUrl.toString(), result);
-        verify(metricsService).recordGcsOperation("signUrl", true, anyLong());
+        verify(metricsService).recordGcsOperation(eq("signUrl"), eq(true), anyLong());
     }
 
     @Test
@@ -92,8 +87,55 @@ class AssetServiceTest {
         when(storage.signUrl(any(), anyLong(), any(), any()))
                 .thenThrow(new RuntimeException("GCS error"));
 
-        assertThrows(RuntimeException.class, () -> assetService.generateSignedUrl(assetPath));
-        verify(metricsService).recordGcsOperation("signUrl", false, anyLong());
+        assertThrows(AssetUrlGenerationException.class, () -> assetService.generateSignedUrl(assetPath));
+        verify(metricsService).recordGcsOperation(eq("signUrl"), eq(false), anyLong());
+    }
+
+    @Test
+    void generateSignedUrl_WithPathTraversal_ThrowsInvalidAssetPathException() {
+        String maliciousPath = "stories/../../../etc/passwd";
+
+        InvalidAssetPathException exception = assertThrows(InvalidAssetPathException.class,
+                () -> assetService.generateSignedUrl(maliciousPath));
+
+        assertTrue(exception.getMessage().contains("Path traversal"));
+        verify(storage, never()).signUrl(any(), anyLong(), any(), any());
+    }
+
+    @Test
+    void generateSignedUrl_WithAbsolutePath_ThrowsInvalidAssetPathException() {
+        String absolutePath = "/stories/story-1/cover.webp";
+
+        InvalidAssetPathException exception = assertThrows(InvalidAssetPathException.class,
+                () -> assetService.generateSignedUrl(absolutePath));
+
+        assertTrue(exception.getMessage().contains("Absolute paths"));
+        verify(storage, never()).signUrl(any(), anyLong(), any(), any());
+    }
+
+    @Test
+    void generateSignedUrl_WithInvalidPrefix_ThrowsInvalidAssetPathException() {
+        String invalidPath = "secrets/api-key.txt";
+
+        InvalidAssetPathException exception = assertThrows(InvalidAssetPathException.class,
+                () -> assetService.generateSignedUrl(invalidPath));
+
+        assertTrue(exception.getMessage().contains("must start with one of"));
+        verify(storage, never()).signUrl(any(), anyLong(), any(), any());
+    }
+
+    @Test
+    void generateSignedUrl_WithNullPath_ThrowsInvalidAssetPathException() {
+        assertThrows(InvalidAssetPathException.class,
+                () -> assetService.generateSignedUrl(null));
+        verify(storage, never()).signUrl(any(), anyLong(), any(), any());
+    }
+
+    @Test
+    void generateSignedUrl_WithEmptyPath_ThrowsInvalidAssetPathException() {
+        assertThrows(InvalidAssetPathException.class,
+                () -> assetService.generateSignedUrl(""));
+        verify(storage, never()).signUrl(any(), anyLong(), any(), any());
     }
 
     @Test
