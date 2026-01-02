@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { reminderService, ReminderService, CustomReminder, ReminderStats } from '../../services/reminder-service';
 import { styles } from './styles';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { StarBackground } from '@/components/ui/star-background';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -385,9 +386,11 @@ export const CustomRemindersContent: React.FC<CustomRemindersContentProps> = ({
   const daysOfWeek = [0, 1, 2, 3, 4, 5, 6];
 
   return (
-    <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} contentContainerStyle={[{ paddingTop }, isTablet ? { alignItems: 'center' } : undefined]}>
-      <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
-        {/* Stats */}
+    <View style={{ flex: 1 }}>
+      <StarBackground />
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} contentContainerStyle={[{ paddingTop }, isTablet ? { alignItems: 'center' } : undefined]}>
+        <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
+          {/* Stats */}
         {stats && (
           <View style={[styles.statsContainer, { padding: scaledPadding(16) }]}>
             <View style={styles.statItem}>
@@ -481,9 +484,10 @@ export const CustomRemindersContent: React.FC<CustomRemindersContentProps> = ({
                 </View>
               );
             })}
-          </View>
-        )}
-      </View>
-    </ScrollView>
+            </View>
+          )}
+        </View>
+      </ScrollView>
+    </View>
   );
 };

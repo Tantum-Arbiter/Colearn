@@ -7,6 +7,7 @@ import { MusicControl } from '@/components/ui/music-control';
 import { MoonBottomImage } from '@/components/main-menu/animated-components';
 import { mainMenuStyles } from '@/components/main-menu/styles';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { StarBackground } from '@/components/ui/star-background';
 
 interface TermsConditionsScreenProps {
   onBack: () => void;
@@ -264,17 +265,19 @@ export function TermsConditionsContent({ paddingTop = 0 }: TermsConditionsConten
   const { scaledFontSize, isTablet, contentMaxWidth } = useAccessibility();
 
   return (
-    <ScrollView
-      style={styles.scrollView}
-      contentContainerStyle={[
-        styles.content,
-        { paddingBottom: Dimensions.get('window').height * 0.2, paddingTop },
-        isTablet && { alignItems: 'center' }
-      ]}
-    >
-      <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>End User Licence Agreement</Text>
+    <View style={{ flex: 1 }}>
+      <StarBackground />
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: Dimensions.get('window').height * 0.2, paddingTop },
+          isTablet && { alignItems: 'center' }
+        ]}
+      >
+        <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>End User Licence Agreement</Text>
           <Text style={[styles.appInfo, { fontSize: scaledFontSize(14) }]}>
             App: Grow with Freya{'\n'}
             Provider: Tantum Arbiter, United Kingdom{'\n'}
@@ -392,13 +395,14 @@ export function TermsConditionsContent({ paddingTop = 0 }: TermsConditionsConten
           </Text>
         </View>
 
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>15. Contact</Text>
-          <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
-            Questions? support@growwithfreya.com. You can also write to Tantum Arbiter, United Kingdom.
-          </Text>
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>15. Contact</Text>
+            <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
+              Questions? support@growwithfreya.com. You can also write to Tantum Arbiter, United Kingdom.
+            </Text>
+          </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }

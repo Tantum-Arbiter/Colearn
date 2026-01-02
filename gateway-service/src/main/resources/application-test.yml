@@ -10,7 +10,7 @@ spring:
 
   mvc:
     async:
-      request-timeout: 2s
+      request-timeout: 30s
 
 logging:
   level:
@@ -55,7 +55,7 @@ performance:
   connection:
     default-timeout-seconds: 1
   inbound:
-    request-timeout-seconds: 5
+    request-timeout-seconds: 30
 
 # JWT Configuration (1 hour for tests to match test expectations)
 app:

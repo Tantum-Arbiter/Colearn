@@ -58,7 +58,7 @@ export const MenuIcon = React.memo(function MenuIcon({
 
   React.useEffect(() => {
     if (triggerSelectionAnimation && status === 'animated_interactive') {
-      console.log('Triggering selection animation for:', label);
+      // Debug logging disabled for performance
 
       try {
         cancelReanimatedAnimation(selectionScale);

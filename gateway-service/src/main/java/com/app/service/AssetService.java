@@ -92,7 +92,8 @@ public class AssetService {
         }
 
         // Check for null bytes (could be used to bypass validation)
-        if (assetPath.contains("\0")) {
+        // Check both actual null bytes and URL-encoded null bytes that may not have been decoded
+        if (assetPath.contains("\0") || assetPath.contains("%00") || assetPath.contains("%2500")) {
             throw new InvalidAssetPathException(assetPath, "Null bytes are not allowed in path");
         }
 

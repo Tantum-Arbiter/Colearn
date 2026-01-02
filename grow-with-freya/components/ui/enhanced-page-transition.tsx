@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, memo } from 'react';
 import { View, StyleSheet, Text, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
@@ -23,7 +23,8 @@ interface AnimatedPageProps {
   animationValue: SharedValue<number>;
 }
 
-const AnimatedPage: React.FC<AnimatedPageProps> = ({ pageKey, pageComponent, isActive, animationValue }) => {
+// Memoized page component to prevent unnecessary re-renders
+const AnimatedPage: React.FC<AnimatedPageProps> = memo(({ pageKey, pageComponent, isActive, animationValue }) => {
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: animationValue.value }],
   }));
@@ -41,7 +42,7 @@ const AnimatedPage: React.FC<AnimatedPageProps> = ({ pageKey, pageComponent, isA
       )}
     </Animated.View>
   );
-};
+});
 
 /**
  * EnhancedPageTransition provides vertical scroll transitions between any pages
@@ -122,12 +123,11 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   }, [screenHeight]);
 
   useEffect(() => {
+    // Use bezier curve for smoother animation that doesn't "snap" at the end
     const animationConfig = {
       duration,
-      easing: Easing.out(Easing.cubic),
+      easing: Easing.bezier(0.25, 0.1, 0.25, 1), // Smooth ease-out curve
     };
-
-    console.log('EnhancedPageTransition: Animating to page:', currentPage);
 
     // Animate main menu
     if (currentPage === 'account') {
@@ -182,12 +182,10 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
       {Object.entries(pages).map(([pageKey, pageComponent]) => {
         // Only render pages that have animation values
         if (!pageAnimations[pageKey]) {
-          console.warn(`No animation value for page: ${pageKey}`);
           return null;
         }
 
         const isActive = currentPage === pageKey;
-        console.log(`Rendering page ${pageKey}, active: ${isActive}, component:`, !!pageComponent);
 
         return (
           <AnimatedPage

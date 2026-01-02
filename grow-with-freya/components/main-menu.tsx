@@ -59,8 +59,9 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
   // Get current screen dimensions (updates with orientation changes)
   const { width: screenWidth, height: screenHeight } = getScreenDimensions();
 
-  // Get persistent animation state from store
-  const { backgroundAnimationState, updateBackgroundAnimationState } = useAppStore();
+  // Get persistent animation state from store - using selectors to prevent unnecessary re-renders
+  const backgroundAnimationState = useAppStore((state) => state.backgroundAnimationState);
+  const updateBackgroundAnimationState = useAppStore((state) => state.updateBackgroundAnimationState);
 
   // Safe state management to prevent updates on unmounted components
   const [menuItems] = useSafeState(DEFAULT_MENU_ITEMS);
@@ -92,9 +93,6 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
   const [newlySelectedItem, setNewlySelectedItem] = useSafeState<string | null>(null);
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const animationWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const animationRestartRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const periodicSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Component cleanup on unmount
   useEffect(() => {
@@ -102,22 +100,10 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
       // PERFORMANCE CRITICAL: Cancel all animations immediately to prevent memory leaks
       animationsCancelled.current = true;
 
-      // Clear all timeouts to prevent memory leaks - CRITICAL for performance
+      // Clear all timeouts to prevent memory leaks
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
-      }
-      if (animationWatchdogRef.current) {
-        clearTimeout(animationWatchdogRef.current);
-        animationWatchdogRef.current = null;
-      }
-      if (animationRestartRef.current) {
-        clearTimeout(animationRestartRef.current);
-        animationRestartRef.current = null;
-      }
-      if (periodicSaveRef.current) {
-        clearTimeout(periodicSaveRef.current);
-        periodicSaveRef.current = null;
       }
 
       // Reset animation limiter to prevent memory buildup
@@ -166,82 +152,6 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
       }
     };
   }, []); // PERFORMANCE: Empty dependency array to prevent re-renders
-
-  // Pause/resume animations based on isActive state
-  useEffect(() => {
-    if (!isActive) {
-      // Pause animations when not active
-      animationsCancelled.current = true;
-
-      // Clear all timers
-      if (animationWatchdogRef.current) {
-        clearTimeout(animationWatchdogRef.current);
-        animationWatchdogRef.current = null;
-      }
-      if (animationRestartRef.current) {
-        clearTimeout(animationRestartRef.current);
-        animationRestartRef.current = null;
-      }
-      if (periodicSaveRef.current) {
-        clearTimeout(periodicSaveRef.current);
-        periodicSaveRef.current = null;
-      }
-
-      // Cancel animations
-      try {
-        cancelAnimation(cloudFloat1);
-        cancelAnimation(cloudFloat2);
-        cancelAnimation(starRotation);
-      } catch (error) {
-        console.warn('Could not cancel animations when pausing:', error);
-      }
-
-      // Save current positions
-      try {
-        const currentCloud1 = cloudFloat1.value;
-        const currentCloud2 = cloudFloat2.value;
-
-        if (isFinite(currentCloud1) && isFinite(currentCloud2)) {
-          updateBackgroundAnimationState({
-            cloudFloat1: currentCloud1,
-            cloudFloat2: currentCloud2,
-            rocketFloat1: backgroundAnimationState?.rocketFloat1 || 0,
-            rocketFloat2: backgroundAnimationState?.rocketFloat2 || 0,
-          });
-        }
-      } catch (error) {
-        console.warn('Failed to save animation state when pausing:', error);
-      }
-    } else {
-      // Resume animations when becoming active
-      animationsCancelled.current = false;
-
-      // Restart animations after a short delay
-      setTimeout(() => {
-        if (isActive && !animationsCancelled.current) {
-          // Restart cloud animations
-          // Check if we can resume from persisted state
-          const cloud1CanResume = backgroundAnimationState?.cloudFloat1 !== undefined &&
-                                  isFinite(backgroundAnimationState.cloudFloat1) &&
-                                  !isNaN(backgroundAnimationState.cloudFloat1);
-          const cloud2CanResume = backgroundAnimationState?.cloudFloat2 !== undefined &&
-                                  isFinite(backgroundAnimationState.cloudFloat2) &&
-                                  !isNaN(backgroundAnimationState.cloudFloat2);
-
-          // If we can resume, set the cloud to the persisted position first
-          if (cloud1CanResume) {
-            cloudFloat1.value = backgroundAnimationState.cloudFloat1;
-          }
-          if (cloud2CanResume) {
-            cloudFloat2.value = backgroundAnimationState.cloudFloat2;
-          }
-
-          cloudFloat1.value = createCloudAnimationNew(cloudFloat1, 0, -200, cloud1CanResume);
-          cloudFloat2.value = createCloudAnimationNew(cloudFloat2, ANIMATION_TIMINGS.CLOUD_STAGGER_DELAY, -400, cloud2CanResume);
-        }
-      }, 100);
-    }
-  }, [isActive]);
 
   // Performance-optimized icon press handler with debouncing and error handling
   const handleIconPressInternal = useCallback((selectedItem: MenuItemData) => {
@@ -299,126 +209,35 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
 
 
 
+  // Start cloud animations once on mount - they run continuously
+  // PERFORMANCE: Animations don't stop/restart on page transitions to prevent jitter
   useEffect(() => {
-    // PERFORMANCE OPTIMIZED: Reduced animation initialization overhead
-    const startAnimations = () => {
-      if (!animationsCancelled.current && isActive) {
-        // Check if we can resume from persisted state
-        const cloud1CanResume = backgroundAnimationState?.cloudFloat1 !== undefined &&
-                                isFinite(backgroundAnimationState.cloudFloat1) &&
-                                !isNaN(backgroundAnimationState.cloudFloat1);
-        const cloud2CanResume = backgroundAnimationState?.cloudFloat2 !== undefined &&
-                                isFinite(backgroundAnimationState.cloudFloat2) &&
-                                !isNaN(backgroundAnimationState.cloudFloat2);
+    // Check if we can resume from persisted state
+    const cloud1CanResume = backgroundAnimationState?.cloudFloat1 !== undefined &&
+                            isFinite(backgroundAnimationState.cloudFloat1) &&
+                            !isNaN(backgroundAnimationState.cloudFloat1);
+    const cloud2CanResume = backgroundAnimationState?.cloudFloat2 !== undefined &&
+                            isFinite(backgroundAnimationState.cloudFloat2) &&
+                            !isNaN(backgroundAnimationState.cloudFloat2);
 
-        // Start animations with minimal overhead
-        // If we can resume, set the cloud to the persisted position first, then start animation
-        if (cloud1CanResume) {
-          cloudFloat1.value = backgroundAnimationState.cloudFloat1;
-        }
-        if (cloud2CanResume) {
-          cloudFloat2.value = backgroundAnimationState.cloudFloat2;
-        }
+    // If we can resume, set the cloud to the persisted position first
+    if (cloud1CanResume) {
+      cloudFloat1.value = backgroundAnimationState.cloudFloat1;
+    }
+    if (cloud2CanResume) {
+      cloudFloat2.value = backgroundAnimationState.cloudFloat2;
+    }
 
-        cloudFloat1.value = createCloudAnimationNew(cloudFloat1, 0, -200, cloud1CanResume);
-        cloudFloat2.value = createCloudAnimationNew(cloudFloat2, ANIMATION_TIMINGS.CLOUD_STAGGER_DELAY, -400, cloud2CanResume);
+    // Start cloud animations - they will run continuously
+    cloudFloat1.value = createCloudAnimationNew(cloudFloat1, 0, -200, cloud1CanResume);
+    cloudFloat2.value = createCloudAnimationNew(cloudFloat2, ANIMATION_TIMINGS.CLOUD_STAGGER_DELAY, -400, cloud2CanResume);
 
-        // Rockets removed entirely
-
-        // IMPROVED: Enhanced animation watchdog with position tracking (reduced frequency)
-        if (animationWatchdogRef.current) {
-          clearTimeout(animationWatchdogRef.current);
-        }
-
-        // Store initial positions for movement detection
-        let lastCloud1Pos = cloudFloat1.value;
-        let lastCloud2Pos = cloudFloat2.value;
-
-        animationWatchdogRef.current = setTimeout(() => {
-          if (!animationsCancelled.current) {
-            const cloud1Pos = cloudFloat1.value;
-            const cloud2Pos = cloudFloat2.value;
-
-            // Check for invalid values
-            const cloud1Invalid = !isFinite(cloud1Pos) || isNaN(cloud1Pos);
-            const cloud2Invalid = !isFinite(cloud2Pos) || isNaN(cloud2Pos);
-
-            // Check for stuck animations (no movement) - more lenient threshold
-            const cloud1Stuck = Math.abs(cloud1Pos - lastCloud1Pos) < 10;
-            const cloud2Stuck = Math.abs(cloud2Pos - lastCloud2Pos) < 10;
-
-            // Only restart if there are serious issues
-            if (cloud1Invalid || cloud2Invalid) {
-              console.log('Animation watchdog: Restarting animations due to invalid positions');
-              // Force restart with fresh positions
-              cloudFloat1.value = createCloudAnimationNew(cloudFloat1, 0, -200, false);
-              cloudFloat2.value = createCloudAnimationNew(cloudFloat2, ANIMATION_TIMINGS.CLOUD_STAGGER_DELAY, -400, false);
-            } else if (cloud1Stuck && cloud2Stuck) {
-              console.log('Animation watchdog: Both clouds stuck, fresh restart to prevent issues');
-              // Use fresh restart instead of resume to prevent position issues
-              cloudFloat1.value = createCloudAnimationNew(cloudFloat1, 0, -200, false);
-              cloudFloat2.value = createCloudAnimationNew(cloudFloat2, ANIMATION_TIMINGS.CLOUD_STAGGER_DELAY, -400, false);
-            }
-          }
-        }, 45000); // Check every 45 seconds (reduced frequency)
-
-        // PREVENTIVE: Periodic animation restart to prevent long-term drift (less frequent)
-        animationRestartRef.current = setTimeout(() => {
-          if (!animationsCancelled.current) {
-            console.log('Periodic animation restart: Refreshing cloud animations with fresh start');
-            // Use fresh restart to prevent any position-related issues
-            cloudFloat1.value = createCloudAnimationNew(cloudFloat1, 0, -200, false);
-            cloudFloat2.value = createCloudAnimationNew(cloudFloat2, ANIMATION_TIMINGS.CLOUD_STAGGER_DELAY, -400, false);
-          }
-        }, 600000); // Restart every 10 minutes (much less frequent)
-
-        // RELIABILITY: Periodic position save to prevent data loss
-        const savePositions = () => {
-          if (!animationsCancelled.current) {
-            try {
-              const currentCloud1 = cloudFloat1.value;
-              const currentCloud2 = cloudFloat2.value;
-
-              // Only save if positions are valid
-              if (isFinite(currentCloud1) && !isNaN(currentCloud1) &&
-                  isFinite(currentCloud2) && !isNaN(currentCloud2)) {
-                updateBackgroundAnimationState({
-                  cloudFloat1: currentCloud1,
-                  cloudFloat2: currentCloud2,
-                  rocketFloat1: 1000,
-                  rocketFloat2: -200,
-                });
-              }
-            } catch (error) {
-              console.warn('Failed to save animation positions periodically:', error);
-            }
-
-            // Schedule next save
-            periodicSaveRef.current = setTimeout(savePositions, 30000); // Save every 30 seconds
-          }
-        };
-
-        // Start periodic saving
-        periodicSaveRef.current = setTimeout(savePositions, 30000);
-      }
-    };
-
-    // Start animations immediately, but allow for component mounting
-    const timeoutId = setTimeout(startAnimations, 50);
-
+    // Cleanup on unmount only
     return () => {
-      clearTimeout(timeoutId);
-      if (animationWatchdogRef.current) {
-        clearTimeout(animationWatchdogRef.current);
-      }
-      if (animationRestartRef.current) {
-        clearTimeout(animationRestartRef.current);
-      }
-      if (periodicSaveRef.current) {
-        clearTimeout(periodicSaveRef.current);
-      }
+      cancelAnimation(cloudFloat1);
+      cancelAnimation(cloudFloat2);
     };
-  }, [isActive]); // Re-run when isActive changes
+  }, []); // Empty deps - only run on mount/unmount
 
 
 
@@ -439,6 +258,17 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
   // Generate star positions based on current screen dimensions
   // IMPORTANT: This must be called before any conditional returns to follow Rules of Hooks
   const stars = useMemo(() => generateStarPositions(), [screenWidth, screenHeight]);
+
+  // PERFORMANCE: Memoize cloud container styles to prevent re-creating objects on every render
+  const cloud1ContainerStyle = useMemo(() => ({
+    top: screenHeight * LAYOUT.CLOUD_TOP_POSITION_1,
+    zIndex: LAYOUT.Z_INDEX.CLOUDS_BEHIND
+  }), [screenHeight]);
+
+  const cloud2ContainerStyle = useMemo(() => ({
+    top: screenHeight * LAYOUT.CLOUD_TOP_POSITION_2,
+    zIndex: LAYOUT.Z_INDEX.CLOUDS_FRONT
+  }), [screenHeight]);
 
 
 
@@ -466,16 +296,18 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
           />
         ))}
 
-        <Animated.View style={[mainMenuStyles.cloudContainer, cloudAnimatedStyle1, {
-          top: screenHeight * LAYOUT.CLOUD_TOP_POSITION_1,
-          zIndex: LAYOUT.Z_INDEX.CLOUDS_BEHIND
-        }]}>
+        <Animated.View
+          style={[mainMenuStyles.cloudContainer, cloudAnimatedStyle1, cloud1ContainerStyle]}
+          renderToHardwareTextureAndroid
+          shouldRasterizeIOS
+        >
           <Cloud1 width={ASSET_DIMENSIONS.cloud1.width} height={ASSET_DIMENSIONS.cloud1.height} />
         </Animated.View>
-        <Animated.View style={[mainMenuStyles.cloudContainerFront, cloudAnimatedStyle2, {
-          top: screenHeight * LAYOUT.CLOUD_TOP_POSITION_2,
-          zIndex: LAYOUT.Z_INDEX.CLOUDS_FRONT
-        }]}>
+        <Animated.View
+          style={[mainMenuStyles.cloudContainerFront, cloudAnimatedStyle2, cloud2ContainerStyle]}
+          renderToHardwareTextureAndroid
+          shouldRasterizeIOS
+        >
           <Cloud2 width={ASSET_DIMENSIONS.cloud2.width} height={ASSET_DIMENSIONS.cloud2.height} />
         </Animated.View>
 

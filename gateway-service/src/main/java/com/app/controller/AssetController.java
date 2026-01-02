@@ -82,6 +82,16 @@ public class AssetController {
         logger.debug("POST /api/assets/sync - Client version: {}, Client has {} assets",
                 request.getClientVersion(), request.getAssetChecksums().size());
 
+        // Explicit size validation for asset checksums (belt-and-suspenders with @Size annotation)
+        if (request.getAssetChecksums() != null && request.getAssetChecksums().size() > AssetSyncRequest.MAX_ASSET_CHECKSUMS) {
+            logger.warn("Asset sync request exceeds maximum checksums: {} > {}",
+                    request.getAssetChecksums().size(), AssetSyncRequest.MAX_ASSET_CHECKSUMS);
+            ErrorResponse error = createErrorResponse(
+                    "assetChecksums cannot exceed " + AssetSyncRequest.MAX_ASSET_CHECKSUMS + " entries",
+                    "/api/assets/sync", ErrorCode.FIELD_VALIDATION_FAILED);
+            return ResponseEntity.badRequest().body(error);
+        }
+
         try {
             AssetVersion serverVersion = assetService.getCurrentAssetVersion().join();
             List<AssetInfo> assetsToSync = assetService.getAssetsToSync(request.getAssetChecksums()).join();

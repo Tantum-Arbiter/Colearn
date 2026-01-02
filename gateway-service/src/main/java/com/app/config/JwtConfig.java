@@ -114,10 +114,17 @@ public class JwtConfig {
             if (lower.contains("invalid")) {
                 throw new JWTVerificationException("Invalid Google ID token");
             }
+            // Extract a unique identifier from the mock token for test isolation
+            // Format: "mock-id-token-{timestamp}" -> use "google-{timestamp}" as providerId
+            String subject = "test-google-user";
+            if (idToken.startsWith("mock-id-token-")) {
+                String timestamp = idToken.substring("mock-id-token-".length());
+                subject = "google-" + timestamp;
+            }
             // Create a simple signed JWT so downstream code can read claims if needed
             String fake = JWT.create()
                     .withIssuer(GOOGLE_ISSUER)
-                    .withSubject("test-google-user")
+                    .withSubject(subject)
                     .withClaim("email", "test.user@gmail.com")
                     .withIssuedAt(new java.util.Date())
                     .withExpiresAt(new java.util.Date(System.currentTimeMillis() + 3600_000))

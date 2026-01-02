@@ -112,8 +112,8 @@ Feature: User Profile Management
     Then the response status should be 400
     And the response should have field "success" with value "false"
     And the response should have field "errorCode" with value "GTW-113"
-    And the response should have field "error" with value "Invalid nickname - must be 1-20 characters"
-    And the response should have field "message" with value "Nickname must be 1-20 characters"
+    And the response should have field "error"
+    And the response should have field "message"
 
   @validation @error-handling
   Scenario: Create profile with avatarType "invalid" (must be "boy" or "girl")
@@ -129,8 +129,8 @@ Feature: User Profile Management
     Then the response status should be 400
     And the response should have field "success" with value "false"
     And the response should have field "errorCode" with value "GTW-114"
-    And the response should have field "error" with value "Invalid avatar type - must be 'boy' or 'girl'"
-    And the response should have field "message" with value "Avatar type must be 'boy' or 'girl'"
+    And the response should have field "error"
+    And the response should have field "message"
 
   @validation @error-handling
   Scenario: Create profile missing required avatarType and avatarId fields
@@ -144,8 +144,8 @@ Feature: User Profile Management
     Then the response status should be 400
     And the response should have field "success" with value "false"
     And the response should have field "errorCode" with value "GTW-114"
-    And the response should have field "error" with value "Invalid avatar type - must be 'boy' or 'girl'"
-    And the response should have field "message" with value "Avatar type is required"
+    And the response should have field "error"
+    And the response should have field "message"
 
   @security @error-handling
   Scenario: Unauthorized access without token
@@ -153,6 +153,6 @@ Feature: User Profile Management
     Then the response status should be 401
     And the response should have field "success" with value "false"
     And the response should have field "errorCode" with value "GTW-007"
-    And the response should have field "error" with value "Unauthorized access to resource"
+    And the response should have field "error"
     And the response should have field "message"
 

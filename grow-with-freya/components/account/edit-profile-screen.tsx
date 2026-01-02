@@ -3,8 +3,9 @@ import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, Alert } from 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useAppStore } from '../../store/app-store';
-import { ApiClient } from '../../services/api-client';
+import { backgroundSaveService } from '../../services/background-save-service';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { StarBackground } from '@/components/ui/star-background';
 
 interface EditProfileScreenProps {
   onBack: () => void;
@@ -23,7 +24,6 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
   const [nickname, setNickname] = useState(userNickname || '');
   const [avatarType, setAvatarType] = useState<'boy' | 'girl'>(userAvatarType || 'girl');
   const [avatarId, setAvatarId] = useState(userAvatarId || 'girl_1');
-  const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = async () => {
     if (!nickname.trim()) {
@@ -37,35 +37,21 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
     }
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setIsSaving(true);
 
-    try {
-      if (isGuestMode) {
-        // Guest mode: save locally only, no API call
-        setUserProfile(nickname.trim(), avatarType, avatarId);
-        Alert.alert('Success', 'Profile saved locally!', [
-          { text: 'OK', onPress: onBack }
-        ]);
-      } else {
-        // Signed in: save to GCP
-        const profile = await ApiClient.updateProfile({
-          nickname: nickname.trim(),
-          avatarType,
-          avatarId,
-        });
+    // Save locally immediately for instant feedback
+    setUserProfile(nickname.trim(), avatarType, avatarId);
 
-        setUserProfile(profile.nickname, profile.avatarType, profile.avatarId);
-
-        Alert.alert('Success', 'Profile updated successfully!', [
-          { text: 'OK', onPress: onBack }
-        ]);
-      }
-    } catch (error: any) {
-      console.error('Failed to update profile:', error);
-      Alert.alert('Error', 'Failed to update profile. Please try again.');
-    } finally {
-      setIsSaving(false);
+    if (!isGuestMode) {
+      // Queue the API call to run in the background with retry
+      backgroundSaveService.queueProfileSave({
+        nickname: nickname.trim(),
+        avatarType,
+        avatarId,
+      });
     }
+
+    // Navigate back immediately - no waiting for API
+    onBack();
   };
 
   const handleAvatarTypeChange = (type: 'boy' | 'girl') => {
@@ -141,12 +127,11 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
         </View>
 
         <Pressable
-          style={[styles.saveButton, { minHeight: scaledButtonSize(50), padding: scaledPadding(15) }, isSaving && styles.saveButtonDisabled]}
+          style={[styles.saveButton, { minHeight: scaledButtonSize(50), padding: scaledPadding(15) }]}
           onPress={handleSave}
-          disabled={isSaving}
         >
           <Text style={[styles.saveButtonText, { fontSize: scaledFontSize(18) }]}>
-            {isSaving ? 'Saving...' : 'Save Changes'}
+            Save Changes
           </Text>
         </Pressable>
         </View>
@@ -265,7 +250,6 @@ export function EditProfileContent({ paddingTop = 0, onSaveComplete }: EditProfi
   const [nickname, setNickname] = useState(userNickname || '');
   const [avatarType, setAvatarType] = useState<'boy' | 'girl'>(userAvatarType || 'girl');
   const [avatarId, setAvatarId] = useState(userAvatarId || 'girl_1');
-  const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = async () => {
     if (!nickname.trim()) {
@@ -279,33 +263,21 @@ export function EditProfileContent({ paddingTop = 0, onSaveComplete }: EditProfi
     }
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setIsSaving(true);
 
-    try {
-      if (isGuestMode) {
-        setUserProfile(nickname.trim(), avatarType, avatarId);
-        Alert.alert('Success', 'Profile saved locally!', [
-          { text: 'OK', onPress: onSaveComplete }
-        ]);
-      } else {
-        const profile = await ApiClient.updateProfile({
-          nickname: nickname.trim(),
-          avatarType,
-          avatarId,
-        });
+    // Save locally immediately for instant feedback
+    setUserProfile(nickname.trim(), avatarType, avatarId);
 
-        setUserProfile(profile.nickname, profile.avatarType, profile.avatarId);
-
-        Alert.alert('Success', 'Profile updated successfully!', [
-          { text: 'OK', onPress: onSaveComplete }
-        ]);
-      }
-    } catch (error: any) {
-      console.error('Failed to update profile:', error);
-      Alert.alert('Error', 'Failed to update profile. Please try again.');
-    } finally {
-      setIsSaving(false);
+    if (!isGuestMode) {
+      // Queue the API call to run in the background with retry
+      backgroundSaveService.queueProfileSave({
+        nickname: nickname.trim(),
+        avatarType,
+        avatarId,
+      });
     }
+
+    // Call completion handler immediately - no waiting for API
+    onSaveComplete?.();
   };
 
   const handleAvatarTypeChange = (type: 'boy' | 'girl') => {
@@ -315,10 +287,12 @@ export function EditProfileContent({ paddingTop = 0, onSaveComplete }: EditProfi
   };
 
   return (
-    <ScrollView style={styles.scrollView} contentContainerStyle={[styles.content, { paddingTop }, isTablet && { alignItems: 'center' }]}>
-      <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(16) }]}>Nickname</Text>
+    <View style={{ flex: 1 }}>
+      <StarBackground />
+      <ScrollView style={styles.scrollView} contentContainerStyle={[styles.content, { paddingTop }, isTablet && { alignItems: 'center' }]}>
+        <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(16) }]}>Nickname</Text>
           <TextInput
             style={[styles.textInput, { fontSize: scaledFontSize(16), padding: scaledPadding(15) }]}
             value={nickname}
@@ -369,17 +343,17 @@ export function EditProfileContent({ paddingTop = 0, onSaveComplete }: EditProfi
           </View>
         </View>
 
-        <Pressable
-          style={[styles.saveButton, { minHeight: scaledButtonSize(50), padding: scaledPadding(15) }, isSaving && styles.saveButtonDisabled]}
-          onPress={handleSave}
-          disabled={isSaving}
-        >
-          <Text style={[styles.saveButtonText, { fontSize: scaledFontSize(18) }]}>
-            {isSaving ? 'Saving...' : 'Save Changes'}
-          </Text>
-        </Pressable>
-      </View>
-    </ScrollView>
+          <Pressable
+            style={[styles.saveButton, { minHeight: scaledButtonSize(50), padding: scaledPadding(15) }]}
+            onPress={handleSave}
+          >
+            <Text style={[styles.saveButtonText, { fontSize: scaledFontSize(18) }]}>
+              Save Changes
+            </Text>
+          </Pressable>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 

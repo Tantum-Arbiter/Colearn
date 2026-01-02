@@ -48,15 +48,19 @@ export function MusicMainMenu({
   // Star rotation animation
   const starRotation = useSharedValue(0);
 
+  // PERFORMANCE: Defer star animation until after page transition to prevent jitter
   useEffect(() => {
-    starRotation.value = withRepeat(
-      withTiming(360, {
-        duration: 20000,
-        easing: Easing.linear,
-      }),
-      -1,
-      false
-    );
+    const timeoutId = setTimeout(() => {
+      starRotation.value = withRepeat(
+        withTiming(360, {
+          duration: 20000,
+          easing: Easing.linear,
+        }),
+        -1,
+        false
+      );
+    }, 600); // Wait for page transition (500ms + 100ms buffer)
+    return () => clearTimeout(timeoutId);
   }, []);
 
   const useStarAnimatedStyle = () => {

@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { reminderService, ReminderService, CustomReminder } from '../../services/reminder-service';
 import { styles } from './styles';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { StarBackground } from '@/components/ui/star-background';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -655,9 +656,11 @@ export const CreateReminderContent: React.FC<CreateReminderContentProps> = ({
   };
 
   return (
-    <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} contentContainerStyle={[{ paddingTop }, isTablet ? { alignItems: 'center' } : undefined]}>
-      <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
-        {/* Exercise Templates */}
+    <View style={{ flex: 1 }}>
+      <StarBackground />
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} contentContainerStyle={[{ paddingTop }, isTablet ? { alignItems: 'center' } : undefined]}>
+        <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
+          {/* Exercise Templates */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(16) }]}>Quick Templates</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.templatesScroll}>
@@ -776,15 +779,16 @@ export const CreateReminderContent: React.FC<CreateReminderContentProps> = ({
         </View>
 
         <View style={styles.section}>
-          <Pressable
-            onPress={handleCreateReminder}
-            disabled={creating}
-            style={[styles.createButton, { minHeight: scaledButtonSize(48), paddingVertical: scaledPadding(14) }, creating && styles.createButtonDisabled]}
-          >
-            <Text style={[styles.createButtonText, { fontSize: scaledFontSize(16) }]}>{creating ? 'Creating...' : 'Create Reminder'}</Text>
-          </Pressable>
+            <Pressable
+              onPress={handleCreateReminder}
+              disabled={creating}
+              style={[styles.createButton, { minHeight: scaledButtonSize(48), paddingVertical: scaledPadding(14) }, creating && styles.createButtonDisabled]}
+            >
+              <Text style={[styles.createButtonText, { fontSize: scaledFontSize(16) }]}>{creating ? 'Creating...' : 'Create Reminder'}</Text>
+            </Pressable>
+          </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 };

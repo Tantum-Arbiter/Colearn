@@ -143,13 +143,13 @@ class AnimationLimiter {
     // Enable rapid mode after 25 interactions within 3 seconds (much more lenient)
     if (this.interactionCount >= 25) {
       this.rapidInteractionMode = true;
-      console.log('Rapid interaction detected - disabling infinite animations (count:', this.interactionCount, ')');
+      // Debug logging disabled for performance
     }
 
     // Enable extreme rapid mode (circuit breaker) after 30 interactions within 1 second (increased from 20)
     if (this.extremeInteractionCount >= 30) {
       this.extremeRapidMode = true;
-      console.log('EXTREME rapid interaction detected - enabling circuit breaker');
+      // Debug logging disabled for performance
     }
 
     // Clear existing timeouts
@@ -164,14 +164,14 @@ class AnimationLimiter {
     this.rapidInteractionTimeout = setTimeout(() => {
       this.rapidInteractionMode = false;
       this.interactionCount = 0;
-      console.log('Rapid interaction mode disabled - re-enabling animations');
+      // Debug logging disabled for performance
     }, 3000);
 
     // Reset extreme mode after 5 seconds of no interactions
     this.extremeRapidTimeout = setTimeout(() => {
       this.extremeRapidMode = false;
       this.extremeInteractionCount = 0;
-      console.log('Extreme rapid interaction mode disabled');
+      // Debug logging disabled for performance
     }, 5000);
   }
 

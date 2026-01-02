@@ -199,13 +199,16 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
   const starOpacity = useSharedValue(0.4);
   const stars = useMemo(() => generateStarPositions(), []);
 
-  // Animate stars with a gentle pulsing effect
+  // PERFORMANCE: Defer star animation until after page transition to prevent jitter
   React.useEffect(() => {
-    starOpacity.value = withRepeat(
-      withTiming(0.8, { duration: 2000 }),
-      -1,
-      true
-    );
+    const timeoutId = setTimeout(() => {
+      starOpacity.value = withRepeat(
+        withTiming(0.8, { duration: 2000 }),
+        -1,
+        true
+      );
+    }, 600); // Wait for page transition (500ms + 100ms buffer)
+    return () => clearTimeout(timeoutId);
   }, [starOpacity]);
 
   const starAnimatedStyle = useAnimatedStyle(() => ({
@@ -829,7 +832,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#1E3A8A', // Match the main gradient background
+    backgroundColor: '#1E3A8A', // Solid background to cover main content
     zIndex: 10,
   },
   content: {
