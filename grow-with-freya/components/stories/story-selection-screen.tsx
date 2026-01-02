@@ -10,6 +10,7 @@ import Animated, {
   withRepeat,
   Easing
 } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 import { ALL_STORIES, getStoriesByGenre, getGenresWithStories, getRandomStory } from '@/data/stories';
 import { Story, StoryCategory, STORY_TAGS } from '@/types/story';
 import { Fonts } from '@/constants/theme';
@@ -23,6 +24,7 @@ import { mainMenuStyles } from '@/components/main-menu/styles';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 import { PageHeader } from '@/components/ui/page-header';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { StoryPreviewModal } from './story-preview-modal';
 
 
 interface StorySelectionScreenProps {
@@ -44,6 +46,21 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   // Load stories from StoryLoader (synced metadata or fallback to MOCK_STORIES)
   const [stories, setStories] = useState<Story[]>(ALL_STORIES);
   const [isLoadingStories, setIsLoadingStories] = useState(true);
+
+  // Story preview modal state
+  const [previewStory, setPreviewStory] = useState<Story | null>(null);
+  const [isPreviewVisible, setIsPreviewVisible] = useState(false);
+
+  const handleLongPress = useCallback((story: Story) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setPreviewStory(story);
+    setIsPreviewVisible(true);
+  }, []);
+
+  const handleClosePreview = useCallback(() => {
+    setIsPreviewVisible(false);
+    setPreviewStory(null);
+  }, []);
 
   // PERFORMANCE: Defer story loading until after page transition to prevent jitter
   useEffect(() => {
@@ -125,6 +142,8 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       return;
     }
 
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
     // Get the card position for transition animation
     if (pressableRef && pressableRef.current) {
       pressableRef.current.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
@@ -146,11 +165,12 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   }, [onStorySelect, startTransition]);
 
   const handleSurpriseMe = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const randomStory = getRandomStory();
     if (randomStory) {
-      handleStoryPress(randomStory);
+      handleLongPress(randomStory);
     }
-  }, [handleStoryPress]);
+  }, [handleLongPress]);
 
   // Handle scroll events to track current position for each carousel
   const handleScroll = useCallback((genre: string, event: any) => {
@@ -305,6 +325,8 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
                       return (
                         <Pressable
                           onPress={() => handleStoryPress(story)}
+                          onLongPress={() => handleLongPress(story)}
+                          delayLongPress={400}
                         >
                           <Animated.View
                             style={{
@@ -389,6 +411,14 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
           </Pressable>
         </View>
       </View>
+
+      {/* Story Preview Modal */}
+      <StoryPreviewModal
+        story={previewStory}
+        visible={isPreviewVisible}
+        onClose={handleClosePreview}
+        onReadStory={(story) => handleStoryPress(story)}
+      />
     </LinearGradient>
   );
 }
