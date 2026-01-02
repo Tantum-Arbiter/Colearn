@@ -149,6 +149,7 @@ function ThemeCard({ theme, isSelected, onPress, animationDelay }: ThemeCardProp
       scale.value = withSpring(1, { damping: 15, stiffness: 150 });
       translateY.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) });
     }, delay);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   React.useEffect(() => {
@@ -157,6 +158,7 @@ function ThemeCard({ theme, isSelected, onPress, animationDelay }: ThemeCardProp
     } else {
       glowOpacity.value = withTiming(0, { duration: 300 });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSelected]);
 
   const handlePress = () => {
@@ -177,9 +179,6 @@ function ThemeCard({ theme, isSelected, onPress, animationDelay }: ThemeCardProp
   const glowAnimatedStyle = useAnimatedStyle(() => ({
     opacity: glowOpacity.value,
   }));
-
-  // Sample emotions for preview
-  const sampleEmotions = ['happy', 'sad', 'excited'];
 
   return (
     <Animated.View style={[styles.themeCardContainer, cardAnimatedStyle]}>

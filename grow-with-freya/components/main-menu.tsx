@@ -81,6 +81,7 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
         hasPersistedState: !!backgroundAnimationState
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 
@@ -151,6 +152,7 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
         console.log('MainMenu component unmounted - cleaned up animations and timers');
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // PERFORMANCE: Empty dependency array to prevent re-renders
 
   // Performance-optimized icon press handler with debouncing and error handling

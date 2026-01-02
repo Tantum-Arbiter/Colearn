@@ -51,6 +51,7 @@ export function EmotionsUnifiedScreen({ onStartGame, onBack }: EmotionsUnifiedSc
       );
     }, 600); // Wait for page transition (500ms + 100ms buffer)
     return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const useStarAnimatedStyle = () => {

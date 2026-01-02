@@ -24,7 +24,7 @@ interface AnimatedPageProps {
 }
 
 // Memoized page component to prevent unnecessary re-renders
-const AnimatedPage: React.FC<AnimatedPageProps> = memo(({ pageKey, pageComponent, isActive, animationValue }) => {
+const AnimatedPage: React.FC<AnimatedPageProps> = memo(function AnimatedPage({ pageKey, pageComponent, isActive, animationValue }) {
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: animationValue.value }],
   }));
