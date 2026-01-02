@@ -2817,8 +2817,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   narrationProgressContainer: {
-    flexDirection: 'column',
-    gap: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
   },
   narrationProgressBar: {
     width: 84,
@@ -2836,6 +2837,8 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 10,
     textAlign: 'center',
+    position: 'absolute',
+    top: 8,
   },
   // Modal styles
   modalOverlay: {
