@@ -16,6 +16,7 @@ import { LoginScreen } from '@/components/auth/login-screen';
 import { AccountScreen } from '@/components/account/account-screen';
 import { MainMenu } from '@/components/main-menu';
 import { ApiClient } from '@/services/api-client';
+import { backgroundSaveService } from '@/services/background-save-service';
 import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
 import { StoryBookReader } from '@/components/stories/story-book-reader';
 import { MusicScreen } from '@/components/music';
@@ -98,10 +99,10 @@ function AppContent() {
   const [currentPage, setCurrentPage] = useState<PageKey>('main');
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
 
-  // Debug current view changes
-  useEffect(() => {
-    console.log('Current view changed to:', currentView);
-  }, [currentView]);
+  // Debug current view changes (disabled for performance)
+  // useEffect(() => {
+  //   console.log('Current view changed to:', currentView);
+  // }, [currentView]);
 
 
 
@@ -185,20 +186,7 @@ function AppContent() {
 
 
 
-  // Initialize app state
-  useEffect(() => {
-    console.log('App initializing...');
-    console.log('Initial app state:', {
-      isAppReady,
-      hasCompletedOnboarding,
-      showLoginAfterOnboarding,
-      currentView
-    });
-    // App should start with splash screen
-    if (!isAppReady) {
-      console.log('App not ready, showing splash');
-    }
-  }, [isAppReady, hasCompletedOnboarding, showLoginAfterOnboarding, currentView]);
+  // Initialize app state - logs disabled for performance
 
   useEffect(() => {
     const checkAuthAndSetView = async () => {
@@ -272,6 +260,8 @@ function AppContent() {
           setCurrentView('login');
         } else if (isAuthenticated) {
           console.log('Authentication valid - tokens refreshed if needed');
+          // Retry any pending background saves now that we're authenticated
+          backgroundSaveService.retryPendingSaves();
         }
       }
     };
@@ -304,18 +294,15 @@ function AppContent() {
   useEffect(() => {
     // Don't sync if we're in onboarding, login, or splash views
     if (currentView === 'splash' || currentView === 'onboarding' || currentView === 'login') {
-      console.log('Skipping view sync - in flow view:', currentView);
       return;
     }
 
     // For story-reader, we need a special view
     if (currentPage === 'story-reader' && currentView !== 'story-reader') {
-      console.log('Syncing view to story-reader');
       setCurrentView('story-reader');
     }
     // For all other pages (main, stories, emotions, etc.), use 'app' view
     else if (currentPage !== 'story-reader' && currentView !== 'app') {
-      console.log('Syncing view to app');
       setCurrentView('app');
     }
   }, [currentPage, currentView]);
@@ -331,20 +318,17 @@ function AppContent() {
 
 
   const handleOnboardingComplete = () => {
-    console.log('Onboarding completed - going to login');
     setOnboardingComplete(true);
     setShowLoginAfterOnboarding(true);
   };
 
   const handleLoginSuccess = () => {
-    console.log('Login completed - going to app');
     setShowLoginAfterOnboarding(false);
     setCurrentView('app');
     setCurrentPage('main');
   };
 
   const handleLoginSkip = () => {
-    console.log('Login skipped (guest mode) - going to app');
     setGuestMode(true);
     setShowLoginAfterOnboarding(false);
     setCurrentView('app');
@@ -354,8 +338,6 @@ function AppContent() {
 
 
   const handleMainMenuNavigate = (destination: string) => {
-    console.log('Navigating to:', destination);
-
     // Map destination strings to PageKey types
     const destinationMap: Record<string, PageKey> = {
       'stories': 'stories',
@@ -389,27 +371,22 @@ function AppContent() {
   };
 
   const handleStorySelect = (story: Story) => {
-    console.log('Selected story with transition:', story.title);
     setSelectedStory(story);
-
     // Start thumbnail expansion animation first, then transition to story reader
     // The SimpleStoryScreen will handle the expansion animation and call handleStoryTransitionComplete
   };
 
   const handleStoryTransitionComplete = () => {
-    console.log('Thumbnail expansion complete - transitioning to story reader');
     setCurrentView('story-reader');
     setCurrentPage('story-reader');
   };
 
   const handleReadAnother = (story: Story) => {
-    console.log('Reading another story:', story.title);
     setSelectedStory(story);
     // Stay in story-reader view, just change the story
   };
 
   const handleBedtimeMusic = () => {
-    console.log('Opening bedtime music from story completion');
     setCurrentView('main');
     setCurrentPage('main');
     setSelectedStory(null);
@@ -465,7 +442,7 @@ function AppContent() {
 
             account: <AccountScreen onBack={handleAccountBack} />,
           }}
-          duration={800}
+          duration={500}
         />
 
         <StatusBar style="auto" />

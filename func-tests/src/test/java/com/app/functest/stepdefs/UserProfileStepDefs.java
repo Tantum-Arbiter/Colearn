@@ -19,8 +19,9 @@ public class UserProfileStepDefs extends BaseStepDefs {
             }
             currentAuthToken = token;
         } else {
-            // In local/Docker mode, use test token accepted by the gateway's test profile
-            currentAuthToken = DEFAULT_TEST_TOKEN;
+            // In local/Docker mode, use a unique test token per scenario for test isolation
+            // This ensures each scenario gets a fresh user without leftover profile data
+            currentAuthToken = "gateway-access-token-" + System.currentTimeMillis() + "-" + System.nanoTime();
         }
     }
 

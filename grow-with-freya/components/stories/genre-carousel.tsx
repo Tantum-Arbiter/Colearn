@@ -31,12 +31,7 @@ export const GenreCarousel: React.FC<GenreCarouselProps> = ({
 
   // Filter stories for this genre
   const genreStories = useMemo(() => {
-    const filtered = stories.filter(story => story.category === genre);
-    console.log(`GenreCarousel ${genre}: ${filtered.length} stories found`);
-    if (filtered.length === 0) {
-      console.log(`GenreCarousel ${genre}: No stories found, returning null`);
-    }
-    return filtered;
+    return stories.filter(story => story.category === genre);
   }, [stories, genre]);
 
   // Handle viewability changes for performance optimization

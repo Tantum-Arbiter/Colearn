@@ -98,6 +98,7 @@ public class GcsConfig {
 
     @Bean
     public GcsProperties gcsProperties() {
+        // Centralize all environment variable lookups here
         String effectiveBucket = System.getenv("GCS_BUCKET");
         if (effectiveBucket == null || effectiveBucket.isEmpty()) {
             effectiveBucket = bucketName;
@@ -106,12 +107,20 @@ public class GcsConfig {
         if (effectiveCdnHost == null || effectiveCdnHost.isEmpty()) {
             effectiveCdnHost = cdnHost;
         }
-        return new GcsProperties(effectiveBucket, signedUrlDurationMinutes, effectiveCdnHost);
+        String effectiveEmulatorHost = System.getenv("GCS_EMULATOR_HOST");
+        if (effectiveEmulatorHost == null || effectiveEmulatorHost.isEmpty()) {
+            effectiveEmulatorHost = emulatorHost;
+        }
+        return new GcsProperties(effectiveBucket, signedUrlDurationMinutes, effectiveCdnHost, effectiveEmulatorHost);
     }
 
-    public record GcsProperties(String bucketName, int signedUrlDurationMinutes, String cdnHost) {
+    public record GcsProperties(String bucketName, int signedUrlDurationMinutes, String cdnHost, String emulatorHost) {
         public boolean hasCdnHost() {
             return cdnHost != null && !cdnHost.isEmpty();
+        }
+
+        public boolean hasEmulatorHost() {
+            return emulatorHost != null && !emulatorHost.isEmpty();
         }
     }
 }

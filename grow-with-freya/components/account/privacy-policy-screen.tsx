@@ -7,6 +7,7 @@ import { MusicControl } from '@/components/ui/music-control';
 import { MoonBottomImage } from '@/components/main-menu/animated-components';
 import { mainMenuStyles } from '@/components/main-menu/styles';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { StarBackground } from '@/components/ui/star-background';
 
 interface PrivacyPolicyScreenProps {
   onBack: () => void;
@@ -299,17 +300,19 @@ export function PrivacyPolicyContent({ paddingTop = 0 }: PrivacyPolicyContentPro
   const { scaledFontSize, isTablet, contentMaxWidth } = useAccessibility();
 
   return (
-    <ScrollView
-      style={styles.scrollView}
-      contentContainerStyle={[
-        styles.content,
-        { paddingBottom: Dimensions.get('window').height * 0.2, paddingTop },
-        isTablet && { alignItems: 'center' }
-      ]}
-    >
-      <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>UK/EU GDPR & Child-Appropriate</Text>
+    <View style={{ flex: 1 }}>
+      <StarBackground />
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: Dimensions.get('window').height * 0.2, paddingTop },
+          isTablet && { alignItems: 'center' }
+        ]}
+      >
+        <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>UK/EU GDPR & Child-Appropriate</Text>
           <Text style={[styles.appInfo, { fontSize: scaledFontSize(14) }]}>
             App: Grow with Freya{'\n'}
             Controller: Tantum Arbiter, United Kingdom{'\n'}
@@ -426,13 +429,14 @@ export function PrivacyPolicyContent({ paddingTop = 0 }: PrivacyPolicyContentPro
           </Text>
         </View>
 
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>11. Contact</Text>
-          <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
-            Questions? privacy@growwithfreya.com
-          </Text>
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>11. Contact</Text>
+            <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
+              Questions? privacy@growwithfreya.com
+            </Text>
+          </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }

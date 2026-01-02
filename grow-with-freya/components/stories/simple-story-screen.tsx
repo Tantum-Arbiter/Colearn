@@ -15,11 +15,7 @@ export function SimpleStoryScreen({
   onStoryTransitionComplete,
   onBack,
 }: SimpleStoryScreenProps) {
-  console.log('SimpleStoryScreen rendering - using StorySelectionScreen');
-
   const handleStorySelect = (story: Story) => {
-    console.log('SimpleStoryScreen: Story selected, calling callbacks');
-
     // Call the story select callback
     if (onStorySelect) {
       onStorySelect(story);
@@ -28,7 +24,6 @@ export function SimpleStoryScreen({
     // Since we're not doing the thumbnail expansion animation,
     // immediately call the transition complete callback
     if (onStoryTransitionComplete) {
-      console.log('SimpleStoryScreen: Calling transition complete immediately');
       onStoryTransitionComplete();
     }
   };

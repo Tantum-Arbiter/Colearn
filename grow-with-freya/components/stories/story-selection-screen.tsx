@@ -45,21 +45,26 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   const [stories, setStories] = useState<Story[]>(ALL_STORIES);
   const [isLoadingStories, setIsLoadingStories] = useState(true);
 
+  // PERFORMANCE: Defer story loading until after page transition to prevent jitter
   useEffect(() => {
-    const loadStories = async () => {
-      try {
-        const loadedStories = await StoryLoader.getStories();
-        setStories(loadedStories);
-        console.log(`[StorySelectionScreen] Loaded ${loadedStories.length} stories`);
-      } catch (error) {
-        console.error('[StorySelectionScreen] Error loading stories:', error);
-        // Fallback to ALL_STORIES already set in state
-      } finally {
-        setIsLoadingStories(false);
-      }
-    };
+    const timeoutId = setTimeout(() => {
+      const loadStories = async () => {
+        try {
+          const loadedStories = await StoryLoader.getStories();
+          setStories(loadedStories);
+          console.log(`[StorySelectionScreen] Loaded ${loadedStories.length} stories`);
+        } catch (error) {
+          console.error('[StorySelectionScreen] Error loading stories:', error);
+          // Fallback to ALL_STORIES already set in state
+        } finally {
+          setIsLoadingStories(false);
+        }
+      };
 
-    loadStories();
+      loadStories();
+    }, 600); // Wait for page transition (500ms + 100ms buffer)
+
+    return () => clearTimeout(timeoutId);
   }, []);
 
   // Generate star positions for background
@@ -68,15 +73,20 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   // Star rotation animation
   const starRotation = useSharedValue(0);
 
+  // PERFORMANCE: Defer star animation until after page transition to prevent jitter
   useEffect(() => {
-    starRotation.value = withRepeat(
-      withTiming(360, {
-        duration: 20000, // 20 second rotation cycle
-        easing: Easing.linear,
-      }),
-      -1,
-      false
-    );
+    const timeoutId = setTimeout(() => {
+      starRotation.value = withRepeat(
+        withTiming(360, {
+          duration: 20000, // 20 second rotation cycle
+          easing: Easing.linear,
+        }),
+        -1,
+        false
+      );
+    }, 600); // Wait for page transition (500ms + 100ms buffer)
+
+    return () => clearTimeout(timeoutId);
   }, []);
 
   // Animated style for star rotation
@@ -111,17 +121,13 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   }, [requestReturnToMainMenu]);
 
   const handleStoryPress = useCallback((story: Story, pressableRef?: any) => {
-    console.log('Story pressed:', story.title, 'isAvailable:', story.isAvailable);
-
     if (!story.isAvailable) {
-      console.log('Story not available:', story.title);
       return;
     }
 
     // Get the card position for transition animation
     if (pressableRef && pressableRef.current) {
       pressableRef.current.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
-        console.log('Card layout for transition:', { x: pageX, y: pageY, width, height });
 
 
         startTransition(story.id, { x: pageX, y: pageY, width, height }, story);
@@ -133,7 +139,6 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       });
     } else {
       // Fallback without animation - still call onStorySelect
-      console.log('Using fallback story selection (no animation)');
       if (onStorySelect) {
         onStorySelect(story);
       }
@@ -299,10 +304,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
 
                       return (
                         <Pressable
-                          onPress={() => {
-                            console.log('Pressable onPress triggered for:', story.title);
-                            handleStoryPress(story);
-                          }}
+                          onPress={() => handleStoryPress(story)}
                         >
                           <Animated.View
                             style={{

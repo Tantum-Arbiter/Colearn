@@ -9,6 +9,7 @@ import { useAppStore } from '../../store/app-store';
 import { MoonBottomImage } from '../main-menu/animated-components';
 import { mainMenuStyles } from '../main-menu/styles';
 import { MusicControl } from '../ui/music-control';
+import { StarBackground } from '../ui/star-background';
 import ScreenTimeService, { ScreenTimeStats, SCREEN_TIME_LIMITS } from '../../services/screen-time-service';
 import NotificationService from '../../services/notification-service';
 import { useScreenTime } from './screen-time-provider';
@@ -18,6 +19,7 @@ import { formatDurationCompact } from '../../utils/time-formatting';
 import { ApiClient } from '@/services/api-client';
 import { reminderService } from '@/services/reminder-service';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { backgroundSaveService } from '@/services/background-save-service';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -224,65 +226,40 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
         await notificationService.cancelAllScheduledNotifications();
       }
 
-      // Sync to backend (only if authenticated)
+      // Sync to backend in background (only if authenticated)
       const isAuthenticated = await ApiClient.isAuthenticated();
       if (isAuthenticated) {
-        try {
-          // Convert age to age range string
-          const ageRange = localChildAge < 24 ? '18-24m' :
-                          localChildAge < 72 ? '2-6y' :
-                          '6+';
+        // Convert age to age range string
+        const ageRange = localChildAge < 24 ? '18-24m' :
+                        localChildAge < 72 ? '2-6y' :
+                        '6+';
 
-          let profile;
-          try {
-            // Try to get existing profile
-            profile = await ApiClient.getProfile();
-          } catch (error: any) {
-            // Profile doesn't exist - create one with default nickname/avatar
-            if (error.message?.includes('404')) {
-              console.log('[ScreenTimeScreen] No profile found - creating one with settings');
-              profile = {
-                nickname: 'User',
-                avatarType: 'girl' as const,
-                avatarId: 'girl-1',
-                notifications: {},
-                schedule: {},
-              };
-            } else {
-              throw error;
-            }
-          }
+        // Get current profile info from app store for the background save
+        const { userNickname, userAvatarType, userAvatarId } = useAppStore.getState();
 
-          // Update or create profile with new settings
-          await ApiClient.updateProfile({
-            nickname: profile.nickname,
-            avatarType: profile.avatarType,
-            avatarId: profile.avatarId,
-            notifications: {
-              ...(profile.notifications || {}),
-              screenTimeEnabled: localScreenTimeEnabled,
-              smartRemindersEnabled: localNotificationsEnabled,
-            },
-            schedule: {
-              ...(profile.schedule || {}),
-              childAgeRange: ageRange,
-            },
+        // Queue profile update to run in background with retry
+        backgroundSaveService.queueProfileSave({
+          nickname: userNickname || 'User',
+          avatarType: userAvatarType || 'girl',
+          avatarId: userAvatarId || 'girl-1',
+          notifications: {
+            screenTimeEnabled: localScreenTimeEnabled,
+            smartRemindersEnabled: localNotificationsEnabled,
+          },
+          schedule: {
+            childAgeRange: ageRange,
+          },
+        });
+
+        // Sync reminders to backend (in background, don't block)
+        if (reminderService.hasUnsavedChanges()) {
+          console.log('[ScreenTimeScreen] Syncing reminders to backend...');
+          reminderService.syncToBackend().catch((error: any) => {
+            console.log('[ScreenTimeScreen] Failed to sync reminders:', error);
           });
-
-          // Sync reminders to backend (only if reminders changed)
-          if (reminderService.hasUnsavedChanges()) {
-            console.log('[ScreenTimeScreen] Syncing reminders to backend...');
-            await reminderService.syncToBackend();
-          }
-
-          console.log('[ScreenTimeScreen] Settings synced to backend');
-        } catch (error: any) {
-          console.log('[ScreenTimeScreen] Failed to sync to backend:', error);
-          // Still commit reminders locally
-          if (reminderService.hasUnsavedChanges()) {
-            await reminderService.commitChanges();
-          }
         }
+
+        console.log('[ScreenTimeScreen] Settings queued for background sync');
       } else {
         // Not authenticated - just commit reminders locally
         if (reminderService.hasUnsavedChanges()) {
@@ -824,12 +801,14 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
   const usagePercentage = dailyLimit > 0 ? Math.min((todayUsage / dailyLimit) * 100, 100) : 0;
 
   return (
-    <ScrollView
-      style={styles.scrollView}
-      contentContainerStyle={[styles.content, { paddingTop }, isTablet && { alignItems: 'center' }]}
-    >
-      <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
-        {/* Today's Usage */}
+    <View style={{ flex: 1 }}>
+      <StarBackground />
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[styles.content, { paddingTop }, isTablet && { alignItems: 'center' }]}
+      >
+        <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
+          {/* Today's Usage */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>Today&apos;s Usage</Text>
 
@@ -1075,8 +1054,9 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
           </View>
         </View>
 
-        {/* Save button removed - auto-save on exit from account screen */}
-      </View>
-    </ScrollView>
+          {/* Save button removed - auto-save on exit from account screen */}
+        </View>
+      </ScrollView>
+    </View>
   );
 }

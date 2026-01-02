@@ -90,6 +90,11 @@ public class RequestValidationFilter extends OncePerRequestFilter {
     // Maximum request size (1MB) to align with integration test expectations
     private static final long MAX_REQUEST_SIZE = 1 * 1024 * 1024;
 
+    // Maximum request size for asset/story sync endpoints (600KB)
+    // This allows ~10000 checksums (the DTO limit) but rejects excessive requests early
+    // Each checksum entry is ~55 bytes, so 10000 entries ≈ 550KB
+    private static final long MAX_SYNC_REQUEST_SIZE = 600 * 1024;
+
     // Rate limiting (simple implementation)
     private static final int MAX_REQUESTS_PER_MINUTE = 100;
 
@@ -144,6 +149,8 @@ public class RequestValidationFilter extends OncePerRequestFilter {
             }
 
             // Validate request size
+            String uri = request.getRequestURI();
+            boolean isSyncEndpoint = uri != null && (uri.endsWith("/assets/sync") || uri.endsWith("/stories/sync"));
             if (!validateRequestSize(request)) {
                 logger.warn("Request size too large from IP: {}", getClientIpAddress(request));
 
@@ -151,8 +158,14 @@ public class RequestValidationFilter extends OncePerRequestFilter {
                 request.getRequestURI();
                 request.getQueryString();
 
-                writeError(response, HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE, ErrorCode.REQUEST_TOO_LARGE,
-                        "Request payload too large", request, null);
+                // For sync endpoints, return 400 (bad request - too many checksums) instead of 413
+                if (isSyncEndpoint) {
+                    writeError(response, HttpServletResponse.SC_BAD_REQUEST, ErrorCode.REQUEST_VALIDATION_FAILED,
+                            "Request contains too many checksums", request, Map.of("reason", "excessive_checksums"));
+                } else {
+                    writeError(response, HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE, ErrorCode.REQUEST_TOO_LARGE,
+                            "Request payload too large", request, null);
+                }
                 return;
             }
 
@@ -187,7 +200,7 @@ public class RequestValidationFilter extends OncePerRequestFilter {
             }
 
             // Enforce mandatory client headers for API endpoints when Authorization is present
-            String uri = request.getRequestURI();
+            // uri is already retrieved earlier for sync endpoint detection
             if (uri != null && uri.startsWith("/api/") && request.getHeader("Authorization") != null
                     && !"OPTIONS".equalsIgnoreCase(request.getMethod())) {
                 List<String> missingHeaders = new ArrayList<>();
@@ -236,7 +249,22 @@ public class RequestValidationFilter extends OncePerRequestFilter {
             if (inspectBodyEnabled && shouldInspectBody(request)) {
                 CachedBodyHttpServletRequest wrapped = new CachedBodyHttpServletRequest(request);
                 String body = new String(wrapped.getCachedBody(), StandardCharsets.UTF_8);
-                if (!body.isEmpty() && containsSuspiciousPattern(body)) {
+
+                // For sync endpoints, validate checksum count early before expensive processing
+                if (isSyncEndpoint && !body.isEmpty()) {
+                    int checksumCount = countJsonMapEntries(body, "assetChecksums", "storyChecksums");
+                    if (checksumCount > 10000) {
+                        logger.warn("Sync request with excessive checksums ({}) from IP: {}", checksumCount, getClientIpAddress(request));
+                        writeError(response, HttpServletResponse.SC_BAD_REQUEST, ErrorCode.REQUEST_VALIDATION_FAILED,
+                                "Request contains too many checksums (max: 10000)", request, Map.of("reason", "excessive_checksums", "count", checksumCount));
+                        return;
+                    }
+                }
+
+                // Skip expensive regex pattern matching on large bodies (>100KB) to avoid performance issues
+                // Large JSON payloads (like sync requests) are validated by their structure/schema, not patterns
+                boolean skipPatternMatching = body.length() > 100 * 1024;
+                if (!body.isEmpty() && !skipPatternMatching && containsSuspiciousPattern(body)) {
                     logger.warn("Suspicious request body detected from IP: {}", getClientIpAddress(request));
                     writeError(response, HttpServletResponse.SC_BAD_REQUEST, ErrorCode.REQUEST_VALIDATION_FAILED,
                             "Suspicious request body detected", request, Map.of("reason", "body"));
@@ -247,7 +275,21 @@ public class RequestValidationFilter extends OncePerRequestFilter {
                 // Fallback: wrap request to safely read via reader or stream without consuming the original
                 CachedBodyHttpServletRequest wrapped = new CachedBodyHttpServletRequest(request);
                 String body = new String(wrapped.getCachedBody(), StandardCharsets.UTF_8);
-                if (!body.isEmpty() && containsSuspiciousPattern(body)) {
+
+                // For sync endpoints, validate checksum count early before expensive processing
+                if (isSyncEndpoint && !body.isEmpty()) {
+                    int checksumCount = countJsonMapEntries(body, "assetChecksums", "storyChecksums");
+                    if (checksumCount > 10000) {
+                        logger.warn("Sync request with excessive checksums ({}) from IP: {}", checksumCount, getClientIpAddress(request));
+                        writeError(response, HttpServletResponse.SC_BAD_REQUEST, ErrorCode.REQUEST_VALIDATION_FAILED,
+                                "Request contains too many checksums (max: 10000)", request, Map.of("reason", "excessive_checksums", "count", checksumCount));
+                        return;
+                    }
+                }
+
+                // Skip expensive regex pattern matching on large bodies (>100KB)
+                boolean skipPatternMatching = body.length() > 100 * 1024;
+                if (!body.isEmpty() && !skipPatternMatching && containsSuspiciousPattern(body)) {
                     logger.warn("Suspicious request body detected from IP: {}", getClientIpAddress(request));
                     writeError(response, HttpServletResponse.SC_BAD_REQUEST, ErrorCode.REQUEST_VALIDATION_FAILED,
                             "Suspicious request body detected", request, Map.of("reason", "body"));
@@ -277,6 +319,11 @@ public class RequestValidationFilter extends OncePerRequestFilter {
         // Use servlet API getContentLength() to align with tests
         int contentLength = request.getContentLength();
         if (contentLength >= 0) {
+            // Apply stricter limit for sync endpoints to reject excessive checksums early
+            String uri = request.getRequestURI();
+            if (uri != null && (uri.endsWith("/assets/sync") || uri.endsWith("/stories/sync"))) {
+                return contentLength <= MAX_SYNC_REQUEST_SIZE;
+            }
             return contentLength <= MAX_REQUEST_SIZE;
         }
         return true;
@@ -716,5 +763,42 @@ public class RequestValidationFilter extends OncePerRequestFilter {
         response.setStatus(status);
         response.setContentType("application/json");
         response.getWriter().write(objectMapper.writeValueAsString(err));
+    }
+
+    /**
+     * Counts the number of entries in a JSON map field without fully parsing the JSON.
+     * This is an efficient way to validate checksum counts in large sync requests.
+     * Returns the maximum count found across all specified field names.
+     */
+    private int countJsonMapEntries(String jsonBody, String... fieldNames) {
+        int maxCount = 0;
+        for (String fieldName : fieldNames) {
+            // Find the field in the JSON: "fieldName": {
+            String searchPattern = "\"" + fieldName + "\"";
+            int fieldIndex = jsonBody.indexOf(searchPattern);
+            if (fieldIndex < 0) continue;
+
+            // Find the opening brace after the field name
+            int braceStart = jsonBody.indexOf('{', fieldIndex + searchPattern.length());
+            if (braceStart < 0) continue;
+
+            // Count key-value pairs by counting colons within the map
+            // This is a rough estimate but sufficient for validation
+            int count = 0;
+            int depth = 1;
+            boolean inString = false;
+            for (int i = braceStart + 1; i < jsonBody.length() && depth > 0; i++) {
+                char c = jsonBody.charAt(i);
+                if (c == '"' && (i == 0 || jsonBody.charAt(i - 1) != '\\')) {
+                    inString = !inString;
+                } else if (!inString) {
+                    if (c == '{') depth++;
+                    else if (c == '}') depth--;
+                    else if (c == ':' && depth == 1) count++;
+                }
+            }
+            maxCount = Math.max(maxCount, count);
+        }
+        return maxCount;
     }
 }

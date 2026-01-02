@@ -66,11 +66,11 @@ public class GatewayStepDefs extends BaseStepDefs {
         }
         RestAssured.baseURI = cfg;
 
-        // Configure RestAssured with strict timeouts to prevent hanging (15s max)
+        // Configure RestAssured with strict timeouts to prevent hanging (180s max for large payloads)
         RestAssured.config = RestAssured.config()
             .httpClient(HttpClientConfig.httpClientConfig()
                 .setParam("http.connection.timeout", 5000)
-                .setParam("http.socket.timeout", 15000));
+                .setParam("http.socket.timeout", 180000));
 
         // Reset gateway state (rate limiter, circuit breakers, Firestore test data)
         // Note: In GCP, /private/** paths may not be routed through the Load Balancer

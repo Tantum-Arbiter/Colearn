@@ -29,11 +29,15 @@ interface ScreenTimeProviderProps {
   children: React.ReactNode;
 }
 
+// Screens where screen time tracking should be paused (passive listening, not active use)
+const EXEMPT_SCREENS = ['bedtime', 'music', 'sleep', 'music-player'];
+
 export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
   const {
     screenTimeEnabled,
     childAgeInMonths,
     notificationsEnabled,
+    currentScreen,
   } = useAppStore();
 
   const [isTracking, setIsTracking] = useState(false);
@@ -41,9 +45,16 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
   const [todayUsage, setTodayUsage] = useState(0);
   const [currentWarning, setCurrentWarning] = useState<ScreenTimeWarning | null>(null);
   const [showWarningModal, setShowWarningModal] = useState(false);
+  // Track if we're paused due to being on an exempt screen (vs actually stopped)
+  const [isPausedForExemptScreen, setIsPausedForExemptScreen] = useState(false);
 
   const screenTimeService = ScreenTimeService.getInstance();
   const notificationService = NotificationService.getInstance();
+
+  // Check if current screen is exempt from tracking
+  const isOnExemptScreen = EXEMPT_SCREENS.some(screen =>
+    currentScreen?.toLowerCase().includes(screen.toLowerCase()) ?? false
+  );
 
   // Update today's usage periodically and check for daily reset
   useEffect(() => {
@@ -84,8 +95,9 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
   }, [notificationsEnabled]);
 
   // Auto-start tracking when provider mounts (app opens) and screen time is enabled
+  // BUT don't start if we're on an exempt screen (sleep/music)
   useEffect(() => {
-    if (screenTimeEnabled && !isTracking) {
+    if (screenTimeEnabled && !isTracking && !isOnExemptScreen) {
       console.log('Screen time: Auto-starting session on app mount');
       screenTimeService.startSession('story', childAgeInMonths).then(() => {
         setIsTracking(true);
@@ -108,7 +120,8 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
         }
       } else if (nextAppState === 'active') {
         // App becoming active, start a new session if screen time is enabled
-        if (screenTimeEnabled && !isTracking) {
+        // BUT don't start if we're on an exempt screen (sleep/music)
+        if (screenTimeEnabled && !isTracking && !isOnExemptScreen) {
           console.log('Screen time: Starting session on app active');
           await screenTimeService.startSession('story', childAgeInMonths);
           setIsTracking(true);
@@ -119,7 +132,30 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
 
     const subscription = AppState.addEventListener('change', handleAppStateChange);
     return () => subscription?.remove();
-  }, [isTracking, screenTimeEnabled, childAgeInMonths]);
+  }, [isTracking, screenTimeEnabled, childAgeInMonths, isOnExemptScreen]);
+
+  // Pause/resume tracking based on exempt screens (sleep/music pages)
+  useEffect(() => {
+    const handleExemptScreenChange = async () => {
+      if (isOnExemptScreen && isTracking && !isPausedForExemptScreen) {
+        // User navigated to sleep/music screen - pause tracking
+        console.log('Screen time: Pausing session for exempt screen:', currentScreen);
+        await screenTimeService.endSession();
+        setIsTracking(false);
+        setCurrentActivity(null);
+        setIsPausedForExemptScreen(true);
+      } else if (!isOnExemptScreen && isPausedForExemptScreen && screenTimeEnabled) {
+        // User left sleep/music screen - resume tracking
+        console.log('Screen time: Resuming session after exempt screen:', currentScreen);
+        await screenTimeService.startSession('story', childAgeInMonths);
+        setIsTracking(true);
+        setCurrentActivity('story');
+        setIsPausedForExemptScreen(false);
+      }
+    };
+
+    handleExemptScreenChange();
+  }, [isOnExemptScreen, isTracking, isPausedForExemptScreen, screenTimeEnabled, childAgeInMonths, currentScreen]);
 
   const startActivity = useCallback(async (activity: 'story' | 'emotions' | 'music') => {
     if (!screenTimeEnabled) return;

@@ -34,11 +34,11 @@ interface MusicPlayerScreenProps {
   onBack: () => void;
 }
 
-const { width: screenWidth } = Dimensions.get('window');
+const _dimensions = Dimensions.get('window'); // Keep for potential future use
 
 export function MusicPlayerScreen({ onBack }: MusicPlayerScreenProps) {
   const insets = useSafeAreaInsets();
-  const { scaledFontSize, scaledButtonSize, scaledPadding } = useAccessibility();
+  const { scaledFontSize, scaledButtonSize } = useAccessibility();
   const {
     currentTrack,
     currentPlaylist,
