@@ -128,7 +128,7 @@ export class StorySyncService {
         body: JSON.stringify(syncRequest)
       });
 
-      console.log('[CMS-SYNC] ✅ Sync response received:', {
+      console.log('[CMS-SYNC] Sync response received:', {
         serverVersion: syncResponse.serverVersion,
         updatedStories: syncResponse.updatedStories,
         totalStories: syncResponse.totalStories,
@@ -137,7 +137,7 @@ export class StorySyncService {
 
       // Log each story received from CMS
       if (syncResponse.stories && syncResponse.stories.length > 0) {
-        console.log('[CMS-SYNC] 📚 Stories received from CMS:');
+        console.log('[CMS-SYNC] Stories received from CMS:');
         syncResponse.stories.forEach((story, index) => {
           const pageCount = story.pages?.length || 0;
           console.log(`[CMS-SYNC]   ${index + 1}. ${story.id}`);
@@ -177,7 +177,7 @@ export class StorySyncService {
 
       await this.saveSyncMetadata(newMetadata);
 
-      console.log('[CMS-SYNC] ✅ Sync complete - saved to local storage:', {
+      console.log('[CMS-SYNC] Sync complete - saved to local storage:', {
         totalStories: allStories.length,
         newStories: syncResponse.stories.length,
         unchangedStories: unchangedStories.length,
@@ -187,7 +187,7 @@ export class StorySyncService {
 
       return allStories;
     } catch (error) {
-      console.error('[CMS-SYNC] ❌ Sync failed:', error);
+      console.error('[CMS-SYNC] Sync failed:', error);
       throw error;
     }
   }
