@@ -34,6 +34,7 @@ interface MusicPlayerScreenProps {
   onBack: () => void;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const _dimensions = Dimensions.get('window'); // Keep for potential future use
 
 export function MusicPlayerScreen({ onBack }: MusicPlayerScreenProps) {
@@ -45,16 +46,8 @@ export function MusicPlayerScreen({ onBack }: MusicPlayerScreenProps) {
     playbackState,
     currentTime,
     duration,
-    volume,
-    isMuted,
-    repeatMode,
-    isShuffled,
     error,
     repeatCount,
-    play,
-    pause,
-    stop,
-    next,
     previous,
     seekTo,
     setVolume,
