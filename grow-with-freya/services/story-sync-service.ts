@@ -103,7 +103,8 @@ export class StorySyncService {
    */
   static async syncStories(): Promise<Story[]> {
     try {
-      console.log('[StorySyncService] Starting story sync...');
+      console.log('[CMS-SYNC] ========================================');
+      console.log('[CMS-SYNC] Starting CMS story sync...');
 
       // Get local metadata
       const localMetadata = await this.getLocalSyncMetadata();
@@ -115,9 +116,10 @@ export class StorySyncService {
         lastSyncTimestamp: localMetadata?.lastSyncTimestamp || 0
       };
 
-      console.log('[StorySyncService] Sync request:', {
+      console.log('[CMS-SYNC] Sync request:', {
         clientVersion: syncRequest.clientVersion,
-        localStories: Object.keys(syncRequest.storyChecksums).length
+        localStories: Object.keys(syncRequest.storyChecksums).length,
+        cachedStoryIds: Object.keys(syncRequest.storyChecksums)
       });
 
       // Call sync endpoint
@@ -126,11 +128,34 @@ export class StorySyncService {
         body: JSON.stringify(syncRequest)
       });
 
-      console.log('[StorySyncService] Sync response:', {
+      console.log('[CMS-SYNC] ✅ Sync response received:', {
         serverVersion: syncResponse.serverVersion,
         updatedStories: syncResponse.updatedStories,
-        totalStories: syncResponse.totalStories
+        totalStories: syncResponse.totalStories,
+        lastUpdated: new Date(syncResponse.lastUpdated).toISOString()
       });
+
+      // Log each story received from CMS
+      if (syncResponse.stories && syncResponse.stories.length > 0) {
+        console.log('[CMS-SYNC] 📚 Stories received from CMS:');
+        syncResponse.stories.forEach((story, index) => {
+          const pageCount = story.pages?.length || 0;
+          console.log(`[CMS-SYNC]   ${index + 1}. ${story.id}`);
+          console.log(`[CMS-SYNC]      Title: "${story.title}"`);
+          console.log(`[CMS-SYNC]      Category: ${story.category}`);
+          console.log(`[CMS-SYNC]      Pages: ${pageCount}`);
+          console.log(`[CMS-SYNC]      Cover: ${story.coverImage}`);
+
+          // Log page images
+          if (story.pages) {
+            story.pages.forEach(page => {
+              console.log(`[CMS-SYNC]      Page ${page.pageNumber}: ${page.backgroundImage}`);
+            });
+          }
+        });
+      } else {
+        console.log('[CMS-SYNC] No new stories to download (already up to date)');
+      }
 
       // Merge updated stories with existing stories
       const existingStories = localMetadata?.stories || [];
@@ -152,14 +177,17 @@ export class StorySyncService {
 
       await this.saveSyncMetadata(newMetadata);
 
-      console.log('[StorySyncService] Sync complete:', {
+      console.log('[CMS-SYNC] ✅ Sync complete - saved to local storage:', {
         totalStories: allStories.length,
-        updatedStories: syncResponse.updatedStories
+        newStories: syncResponse.stories.length,
+        unchangedStories: unchangedStories.length,
+        storyIds: allStories.map(s => s.id)
       });
+      console.log('[CMS-SYNC] ========================================');
 
       return allStories;
     } catch (error) {
-      console.error('[StorySyncService] Sync failed:', error);
+      console.error('[CMS-SYNC] ❌ Sync failed:', error);
       throw error;
     }
   }

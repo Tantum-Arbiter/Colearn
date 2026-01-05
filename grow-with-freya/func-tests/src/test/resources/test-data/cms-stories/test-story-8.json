@@ -1,0 +1,61 @@
+{
+  "id": "test-story-8",
+  "title": "Test Story 8 - Category Adventure",
+  "category": "adventure",
+  "tag": "🗺️ Adventure",
+  "emoji": "🌟",
+  "coverImage": "assets/stories/squirrels-snowman/cover/thumbnail.webp",
+  "isAvailable": true,
+  "ageRange": "2-5",
+  "duration": 10,
+  "description": "Test story 8 for CMS functional testing.",
+  "isPremium": false,
+  "author": "Test Author",
+  "tags": ["test", "adventure"],
+  "version": 1,
+  "checksum": "test-checksum-8-v1",
+  "pages": [
+    {
+      "id": "test-story-8-cover",
+      "pageNumber": 0,
+      "type": "cover",
+      "backgroundImage": "assets/stories/squirrels-snowman/cover/cover.webp",
+      "text": "Test Story 8\n\nA Test Adventure"
+    },
+    {
+      "id": "test-story-8-page-1",
+      "pageNumber": 1,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-1/page-1.webp",
+      "text": "TEST STORY 8 - Page 1.\nThis is unique test content for story 8."
+    },
+    {
+      "id": "test-story-8-page-2",
+      "pageNumber": 2,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-2/props/page-2.webp",
+      "text": "TEST STORY 8 - Page 2.\nMore unique content to verify CMS loading."
+    },
+    {
+      "id": "test-story-8-page-3",
+      "pageNumber": 3,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-3/page-3.webp",
+      "text": "TEST STORY 8 - Page 3.\nThe adventure continues with test data."
+    },
+    {
+      "id": "test-story-8-page-4",
+      "pageNumber": 4,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-4/page-4.webp",
+      "text": "TEST STORY 8 - Page 4.\nValidating content delivery from CMS."
+    },
+    {
+      "id": "test-story-8-page-5",
+      "pageNumber": 5,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-5/page-5.webp",
+      "text": "TEST STORY 8 - Page 5.\nThe end of test story 8."
+    }
+  ]
+}

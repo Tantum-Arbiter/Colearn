@@ -1,0 +1,145 @@
+{
+  "id": "squirrels-snowman",
+  "title": "The Squirrel's Snowman",
+  "category": "nature",
+  "tag": "🐢 Nature",
+  "emoji": "🐿️",
+  "coverImage": "assets/stories/squirrels-snowman/cover/thumbnail.webp",
+  "isAvailable": true,
+  "ageRange": "2-5",
+  "duration": 10,
+  "description": "A delightful winter story about a squirrel who builds a snowman.",
+  "isPremium": true,
+  "author": "Freya Stories",
+  "tags": ["nature", "winter", "friendship"],
+
+  "_disclaimer": "IMPORTANT: This content is NOT original work. It is used solely for proof-of-concept and technical demonstration purposes to showcase the app's adaptability to modern interactive book formats. All rights belong to the original copyright holders. This content must NOT be used in production or distributed commercially.",
+  "_attribution": "Third-party content used for demonstration purposes only",
+  "_usageType": "proof-of-concept",
+  "_notForProduction": true,
+  "pages": [
+    {
+      "id": "squirrels-snowman-cover",
+      "pageNumber": 0,
+      "type": "cover",
+      "backgroundImage": "assets/stories/squirrels-snowman/cover/cover.webp",
+      "text": "The Squirrel's Snowman\n\nA winter adventure"
+    },
+    {
+      "id": "squirrels-snowman-1",
+      "pageNumber": 1,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-1/page-1.webp",
+      "text": "Squirrel puts her boots on.\nHer hat is on her head."
+    },
+    {
+      "id": "squirrels-snowman-2",
+      "pageNumber": 2,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-2/props/page-2.webp",
+      "text": "She wants to make a snowman.\nWhat's inside this shed?",
+      "interactiveElements": [
+        {
+          "id": "door",
+          "type": "reveal",
+          "image": "assets/stories/squirrels-snowman/page-2/door-open.webp",
+          "position": { "x": 0.481, "y": 0.337 },
+          "size": { "width": 0.273, "height": 0.301 }
+        }
+      ]
+    },
+    {
+      "id": "squirrels-snowman-3",
+      "pageNumber": 3,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-3/page-3.webp",
+      "text": "Squirrel's snowman has a head.\nNow he needs a nose."
+    },
+    {
+      "id": "squirrels-snowman-4",
+      "pageNumber": 4,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-4/page-4.webp",
+      "text": "Can Squirrel find a carrot?\nWhat do you suppose?",
+      "interactiveElements": [
+        {
+          "id": "basket",
+          "type": "reveal",
+          "image": "assets/stories/squirrels-snowman/page-4/props/page-4-basket-open.webp",
+          "position": { "x": 0.633, "y": 0.637 },
+          "size": { "width": 0.245, "height": 0.308 }
+        }
+      ]
+    },
+    {
+      "id": "squirrels-snowman-5",
+      "pageNumber": 5,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-5/page-5.webp",
+      "text": "Now the snowman needs some eyes.\nSquirrel visits Mole."
+    },
+    {
+      "id": "squirrels-snowman-6",
+      "pageNumber": 6,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-6/page-6.webp",
+      "text": "They look inside a great big box\nand find some lumps of coal.",
+      "interactiveElements": [
+        {
+          "id": "basket",
+          "type": "reveal",
+          "image": "assets/stories/squirrels-snowman/page-6/props/page-6-basket-open.webp",
+          "position": { "x": 0.471, "y": 0.579 },
+          "size": { "width": 0.396, "height": 0.366 }
+        }
+      ]
+    },
+    {
+      "id": "squirrels-snowman-7",
+      "pageNumber": 7,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-7/page-7.webp",
+      "text": "A hat, a scarf, and twigs for arms -\nthe snowman is complete!"
+    },
+    {
+      "id": "squirrels-snowman-8",
+      "pageNumber": 8,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-8/page-8.webp",
+      "text": "Squirrel's feeling hungry.\nWhat's she going to eat?",
+      "interactiveElements": [
+        {
+          "id": "food-cover",
+          "type": "reveal",
+          "image": "assets/stories/squirrels-snowman/page-8/props/page-8-food-cover-open.webp",
+          "position": { "x": 0.335, "y": 0.609 },
+          "size": { "width": 0.287, "height": 0.213 }
+        }
+      ]
+    },
+    {
+      "id": "squirrels-snowman-9",
+      "pageNumber": 9,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-9/page-9.webp",
+      "text": "Now it's Squirrel's bedtime.\nShe's tucked up nice and tight."
+    },
+    {
+      "id": "squirrels-snowman-10",
+      "pageNumber": 10,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-10/page-10.webp",
+      "text": "Who's outside the window?\nShall we wave goodnight?",
+      "interactiveElements": [
+        {
+          "id": "curtains",
+          "type": "reveal",
+          "image": "assets/stories/squirrels-snowman/page-10/props/page-10-curtains-open.webp",
+          "position": { "x": 0.373, "y": 0.380 },
+          "size": { "width": 0.601, "height": 0.387 }
+        }
+      ]
+    }
+  ]
+}
+

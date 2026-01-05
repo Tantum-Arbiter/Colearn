@@ -441,6 +441,131 @@ public class TestAdminController {
     }
 
     /**
+     * Seed a single story to Firestore for functional testing.
+     * This allows tests to seed specific story data without resetting all state.
+     */
+    @PostMapping("/seed/story")
+    public ResponseEntity<Map<String, Object>> seedStory(@RequestBody Map<String, Object> storyData) {
+        if (firestore == null) {
+            return ResponseEntity.status(503).body(Map.of("error", "Firestore not available"));
+        }
+
+        try {
+            String storyId = (String) storyData.get("id");
+            if (storyId == null || storyId.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Story id is required"));
+            }
+
+            // Create Story object from the request data
+            Story story = new Story();
+            story.setId(storyId);
+            story.setTitle((String) storyData.get("title"));
+            story.setCategory((String) storyData.get("category"));
+            story.setDescription((String) storyData.get("description"));
+            story.setAgeRange((String) storyData.get("ageRange"));
+            story.setTag((String) storyData.get("tag"));
+            story.setEmoji((String) storyData.get("emoji"));
+            story.setAuthor((String) storyData.get("author"));
+            story.setCoverImage((String) storyData.get("coverImage"));
+
+            if (storyData.get("duration") != null) {
+                story.setDuration(((Number) storyData.get("duration")).intValue());
+            }
+            if (storyData.get("version") != null) {
+                story.setVersion(((Number) storyData.get("version")).intValue());
+            }
+            if (storyData.get("isAvailable") != null) {
+                story.setAvailable(Boolean.TRUE.equals(storyData.get("isAvailable")));
+            }
+            if (storyData.get("isPremium") != null) {
+                story.setPremium(Boolean.TRUE.equals(storyData.get("isPremium")));
+            }
+            if (storyData.get("tags") instanceof List<?> tagsList) {
+                story.setTags(tagsList.stream().map(Object::toString).toList());
+            }
+
+            // Parse pages
+            if (storyData.get("pages") instanceof List<?> pagesList) {
+                List<StoryPage> pages = new ArrayList<>();
+                for (Object pageObj : pagesList) {
+                    if (pageObj instanceof Map<?, ?> pageMap) {
+                        StoryPage page = new StoryPage();
+                        page.setId((String) pageMap.get("id"));
+                        if (pageMap.get("pageNumber") != null) {
+                            page.setPageNumber(((Number) pageMap.get("pageNumber")).intValue());
+                        }
+                        page.setType((String) pageMap.get("type"));
+                        page.setText((String) pageMap.get("text"));
+                        page.setBackgroundImage((String) pageMap.get("backgroundImage"));
+                        pages.add(page);
+                    }
+                }
+                story.setPages(pages);
+            }
+
+            // Calculate checksum if not provided
+            String checksum = (String) storyData.get("checksum");
+            if (checksum == null || checksum.isBlank()) {
+                checksum = calculateStoryChecksum(story);
+            }
+            story.setChecksum(checksum);
+
+            // Save story to Firestore
+            firestore.collection("stories").document(storyId).set(story).get();
+
+            // Update content version with new story checksum
+            updateContentVersionWithStory(storyId, checksum);
+
+            logger.info("Seeded story: {} with checksum: {}", storyId, checksum);
+
+            Map<String, Object> resp = new HashMap<>();
+            resp.put("status", "created");
+            resp.put("storyId", storyId);
+            resp.put("checksum", checksum);
+            return ResponseEntity.ok(resp);
+        } catch (Exception e) {
+            logger.error("Failed to seed story", e);
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Update the content version document with a new or updated story checksum.
+     */
+    private void updateContentVersionWithStory(String storyId, String checksum) {
+        try {
+            var docRef = firestore.collection("content_versions").document("current");
+            var doc = docRef.get().get();
+
+            ContentVersion contentVersion;
+            Map<String, String> storyChecksums;
+
+            if (doc.exists()) {
+                contentVersion = doc.toObject(ContentVersion.class);
+                storyChecksums = contentVersion.getStoryChecksums();
+                if (storyChecksums == null) {
+                    storyChecksums = new HashMap<>();
+                }
+            } else {
+                contentVersion = new ContentVersion();
+                contentVersion.setId("current");
+                contentVersion.setVersion(1);
+                storyChecksums = new HashMap<>();
+            }
+
+            storyChecksums.put(storyId, checksum);
+            contentVersion.setStoryChecksums(storyChecksums);
+            contentVersion.setTotalStories(storyChecksums.size());
+            contentVersion.setLastUpdated(Instant.now());
+            contentVersion.setVersion(contentVersion.getVersion() + 1);
+
+            docRef.set(contentVersion).get();
+        } catch (Exception e) {
+            logger.warn("Failed to update content version for story {}: {}", storyId, e.getMessage());
+        }
+    }
+
+    /**
      * Create a test user in Firestore (test profile only)
      */
     @PostMapping("/test/create-user")

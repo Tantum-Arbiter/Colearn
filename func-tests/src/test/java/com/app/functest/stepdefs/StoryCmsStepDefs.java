@@ -22,46 +22,10 @@ public class StoryCmsStepDefs extends BaseStepDefs {
     private Map<String, Object> syncRequest;
     private long requestStartTime;
 
-    @Given("I have a sync request with no client checksums")
-    public void iHaveASyncRequestWithNoClientChecksums() {
-        syncRequest = new HashMap<>();
-        syncRequest.put("clientVersion", 0);
-        syncRequest.put("storyChecksums", new HashMap<String, String>());
-        syncRequest.put("lastSyncTimestamp", 0L);
-    }
-
-    @Given("I have a sync request with current server checksums")
-    public void iHaveASyncRequestWithCurrentServerChecksums() {
-        // First get current server version (requires authentication)
-        Response versionResponse = applyAuthenticatedHeaders(given())
-                .when()
-                .get("/api/stories/version");
-
-        Map<String, String> serverChecksums = new HashMap<>();
-        Map<String, String> storyChecksums = versionResponse.jsonPath().getMap("storyChecksums");
-        if (storyChecksums != null) {
-            serverChecksums.putAll(storyChecksums);
-        }
-
-        syncRequest = new HashMap<>();
-        syncRequest.put("clientVersion", versionResponse.jsonPath().getInt("version"));
-        syncRequest.put("storyChecksums", serverChecksums);
-        String lastUpdatedStr = versionResponse.jsonPath().getString("lastUpdated");
-        long lastSyncTimestamp = lastUpdatedStr != null ? Instant.parse(lastUpdatedStr).toEpochMilli() : 0L;
-        syncRequest.put("lastSyncTimestamp", lastSyncTimestamp);
-    }
-
-    @Given("I have a sync request with outdated checksums")
-    public void iHaveASyncRequestWithOutdatedChecksums() {
-        Map<String, String> outdatedChecksums = new HashMap<>();
-        outdatedChecksums.put("story-1", "outdated-checksum-1");
-        outdatedChecksums.put("story-2", "outdated-checksum-2");
-
-        syncRequest = new HashMap<>();
-        syncRequest.put("clientVersion", 1);
-        syncRequest.put("storyChecksums", outdatedChecksums);
-        syncRequest.put("lastSyncTimestamp", System.currentTimeMillis() - 86400000L); // 24 hours ago
-    }
+    // Note: "I have a sync request with no client checksums" is defined in CmsContentSyncStepDefs.java
+    // Note: "I have a sync request with current server checksums" is defined in CmsContentSyncStepDefs.java
+    // Note: "I have a sync request with outdated checksums" is defined in CmsContentSyncStepDefs.java
+    // Note: "I have a sync request with {int} matching checksums" is defined in CmsContentSyncStepDefs.java
 
     @Given("a story exists with ID {string}")
     public void aStoryExistsWithID(String storyId) {
@@ -79,32 +43,6 @@ public class StoryCmsStepDefs extends BaseStepDefs {
     public void storiesExistInTheSystem(int count) {
         // For now, we assume stories exist in the system
         // In a full implementation, we would seed test data
-    }
-
-    @Given("I have a sync request with {int} matching checksums")
-    public void iHaveASyncRequestWithMatchingChecksums(int count) {
-        // Get current server checksums (requires authentication)
-        Response versionResponse = applyAuthenticatedHeaders(given())
-                .when()
-                .get("/api/stories/version");
-
-        Map<String, String> serverChecksums = new HashMap<>();
-        Map<String, String> storyChecksums = versionResponse.jsonPath().getMap("storyChecksums");
-        if (storyChecksums != null) {
-            int added = 0;
-            for (Map.Entry<String, String> entry : storyChecksums.entrySet()) {
-                if (added >= count) break;
-                serverChecksums.put(entry.getKey(), entry.getValue());
-                added++;
-            }
-        }
-
-        syncRequest = new HashMap<>();
-        syncRequest.put("clientVersion", versionResponse.jsonPath().getInt("version"));
-        syncRequest.put("storyChecksums", serverChecksums);
-        String lastUpdatedStr = versionResponse.jsonPath().getString("lastUpdated");
-        long lastSyncTimestamp = lastUpdatedStr != null ? Instant.parse(lastUpdatedStr).toEpochMilli() : 0L;
-        syncRequest.put("lastSyncTimestamp", lastSyncTimestamp);
     }
 
     @Given("device {string} has synced all stories")
@@ -132,18 +70,7 @@ public class StoryCmsStepDefs extends BaseStepDefs {
         syncRequest.put("storyChecksums", "not-a-map");
     }
 
-    @When("I make a POST request to {string} with the sync request")
-    public void iMakeAPOSTRequestToWithTheSyncRequest(String endpoint) {
-        requestStartTime = System.currentTimeMillis();
-
-        String requestBody = mapToJson(syncRequest);
-
-        lastResponse = applyAuthenticatedHeaders(given())
-                .contentType("application/json")
-                .body(requestBody)
-                .when()
-                .post(endpoint);
-    }
+    // Note: "I make a POST request to {string} with the sync request" is defined in CmsContentSyncStepDefs.java
 
     @When("I make a POST request to {string} with invalid JSON")
     public void iMakeAPOSTRequestToWithInvalidJSON(String endpoint) {
@@ -156,8 +83,18 @@ public class StoryCmsStepDefs extends BaseStepDefs {
 
     @When("device {string} makes a sync request")
     public void deviceMakesASyncRequest(String deviceId) {
-        iHaveASyncRequestWithNoClientChecksums();
-        iMakeAPOSTRequestToWithTheSyncRequest("/api/stories/sync");
+        // Initialize sync request with no checksums
+        syncRequest = new HashMap<>();
+        syncRequest.put("clientVersion", 0);
+        syncRequest.put("storyChecksums", new HashMap<String, String>());
+        syncRequest.put("lastSyncTimestamp", 0L);
+
+        // Make the POST request
+        lastResponse = applyAuthenticatedHeaders(given())
+                .contentType("application/json")
+                .body(mapToJson(syncRequest))
+                .when()
+                .post("/api/stories/sync");
     }
 
     @When("I make a GET request to the story endpoint")
@@ -177,16 +114,8 @@ public class StoryCmsStepDefs extends BaseStepDefs {
         }
     }
 
-    @Then("the response should be a JSON array")
-    public void theResponseShouldBeAJSONArray() {
-        String body = lastResponse.getBody().asString();
-        assertThat("Response should start with [", body.trim(), startsWith("["));
-        List<?> array = lastResponse.jsonPath().getList("$");
-        assertThat("Response should be a valid JSON array", array, notNullValue());
-    }
-
-    // Note: "the response should contain field {string}" step
-    // is defined in CrossDeviceSyncStepDefs.java to avoid duplication
+    // Note: "the response should be a JSON array" is defined in CmsContentSyncStepDefs.java
+    // Note: "the response should contain field {string}" step is defined in CrossDeviceSyncStepDefs.java
 
     @Then("the response field {string} should be greater than {int}")
     public void theResponseFieldShouldBeGreaterThan(String fieldName, int value) {
@@ -194,11 +123,7 @@ public class StoryCmsStepDefs extends BaseStepDefs {
         assertThat(fieldName + " should be greater than " + value, actualValue, greaterThan(value));
     }
 
-    @Then("the response field {string} should equal {int}")
-    public void theResponseFieldShouldEqual(String fieldName, int expectedValue) {
-        int actualValue = lastResponse.jsonPath().getInt(fieldName);
-        assertThat(fieldName + " should equal " + expectedValue, actualValue, equalTo(expectedValue));
-    }
+    // Note: "the response field {string} should equal {int}" is defined in CmsContentSyncStepDefs.java
 
     @Then("the response should contain updated stories only")
     public void theResponseShouldContainUpdatedStoriesOnly() {
@@ -241,17 +166,7 @@ public class StoryCmsStepDefs extends BaseStepDefs {
         }
     }
 
-    @Then("each page should have field {string}")
-    public void eachPageShouldHaveField(String fieldName) {
-        assertThat("Response should not be null", lastResponse, notNullValue());
-        List<Map<String, Object>> pages = lastResponse.jsonPath().getList("pages");
-        assertThat("Pages should not be null", pages, notNullValue());
-
-        for (int i = 0; i < pages.size(); i++) {
-            Object value = pages.get(i).get(fieldName);
-            assertThat("Page " + i + " should have field: " + fieldName, value, notNullValue());
-        }
-    }
+    // Note: "each page should have field {string}" is defined in CmsContentSyncStepDefs.java
 
     @Then("pages should be ordered by pageNumber")
     public void pagesShouldBeOrderedByPageNumber() {
@@ -300,18 +215,7 @@ public class StoryCmsStepDefs extends BaseStepDefs {
                 .get(endpoint);
     }
 
-    @When("I make a POST request to {string} without X-Client-Platform header")
-    public void iMakeAPOSTRequestWithoutXClientPlatformHeader(String endpoint) {
-        requestStartTime = System.currentTimeMillis();
-        lastResponse = given()
-                .header("Authorization", "Bearer " + getEffectiveAuthToken())
-                .header("X-Client-Version", "1.0.0")
-                .header("X-Device-ID", "test-device-123")
-                .contentType("application/json")
-                .body(mapToJson(syncRequest))
-                .when()
-                .post(endpoint);
-    }
+    // Note: "I make a POST request to {string} without X-Client-Platform header" is defined in CmsContentSyncStepDefs.java
 
     @When("I make a GET request to {string} with invalid X-Client-Version {string}")
     public void iMakeAGETRequestWithInvalidXClientVersion(String endpoint, String invalidVersion) {

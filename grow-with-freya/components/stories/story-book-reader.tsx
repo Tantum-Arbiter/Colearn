@@ -14,7 +14,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { Audio } from 'expo-av';
-import { Story, StoryPage, STORY_TAGS } from '@/types/story';
+import { Story, StoryPage, STORY_TAGS, InteractiveElement } from '@/types/story';
+import { InteractiveElementComponent } from './interactive-element';
 import { Fonts } from '@/constants/theme';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 import { StoryCompletionScreen } from './story-completion-screen';
@@ -980,7 +981,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
               style={[
                 styles.backgroundImageStyle,
                 isTablet
-                  ? { width: '100%', height: '100%' }
+                  ? { width: '100%', height: '100%', transform: [{ scale: 1.35 }] }
                   : {
                       position: 'absolute',
                       bottom: 0,
@@ -999,6 +1000,23 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
                 style={styles.characterImage}
                 resizeMode="contain"
               />
+            )}
+
+            {/* Interactive Elements - Props that can be tapped to reveal */}
+            {page.interactiveElements && page.interactiveElements.length > 0 && (
+              <>
+                {page.interactiveElements.map((element: InteractiveElement) => (
+                  <InteractiveElementComponent
+                    key={element.id}
+                    element={element}
+                    containerWidth={screenWidth}
+                    containerHeight={screenHeight}
+                    storyId={story.id}
+                    isTablet={isTablet}
+                    tabletScale={1.35}
+                  />
+                ))}
+              </>
             )}
 
             {/* Page indicator overlay - Top Left, after exit button (hide on cover page and next page) */}
@@ -2134,19 +2152,19 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   exitButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    backgroundColor: 'rgba(130, 130, 130, 0.35)',
     borderRadius: 20,
     width: 40,
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: 'rgba(100, 100, 100, 0.2)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowRadius: 6,
+    elevation: 4,
     overflow: 'hidden',
   },
   exitButtonText: {
@@ -2155,19 +2173,19 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   settingsButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    backgroundColor: 'rgba(130, 130, 130, 0.35)',
     borderRadius: 20,
     width: 40,
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: 'rgba(100, 100, 100, 0.2)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowRadius: 6,
+    elevation: 4,
     overflow: 'hidden',
   },
   settingsButtonText: {
@@ -2185,16 +2203,16 @@ const styles = StyleSheet.create({
   },
   settingsMenu: {
     position: 'absolute',
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    backgroundColor: 'rgba(130, 130, 130, 0.75)',
     borderRadius: 16,
     padding: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: 'rgba(100, 100, 100, 0.2)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowRadius: 6,
+    elevation: 4,
     zIndex: 100,
     overflow: 'hidden',
   },
@@ -2360,15 +2378,15 @@ const styles = StyleSheet.create({
   },
   pageIndicatorOverlay: {
     position: 'absolute',
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    backgroundColor: 'rgba(130, 130, 130, 0.35)',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: 'rgba(100, 100, 100, 0.2)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowRadius: 6,
+    elevation: 4,
     overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
@@ -2421,7 +2439,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   centerTextBox: {
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    backgroundColor: 'rgba(130, 130, 130, 0.35)',
     borderRadius: 20,
     paddingHorizontal: 25,
     paddingVertical: 15,
@@ -2430,20 +2448,24 @@ const styles = StyleSheet.create({
     minWidth: 200,
     maxWidth: 500,
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(100, 100, 100, 0.2)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
     position: 'relative',
   },
   recordModeTextBox: {
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    backgroundColor: 'rgba(130, 130, 130, 0.4)',
     borderRadius: 20,
     paddingHorizontal: 25,
     paddingVertical: 20,
     width: '90%',
     maxWidth: 700,
+    borderWidth: 1,
+    borderColor: 'rgba(100, 100, 100, 0.2)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -2478,33 +2500,41 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   textBox: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: 'rgba(130, 130, 130, 0.35)',
     borderRadius: 20,
     paddingHorizontal: 20,
     paddingVertical: 20,
     width: '100%',
     flex: 1,
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(100, 100, 100, 0.2)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
     elevation: 4,
   },
   storyText: {
     fontSize: 16, // Slightly smaller for better fit
     fontFamily: Fonts.sans,
-    color: '#2C3E50', // Dark text for readability in white text box
+    color: '#FFFFFF', // White text for visibility on grey background
     textAlign: 'center',
     lineHeight: 24, // Proper line height for 2 lines (16px font + 8px spacing)
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   coverText: {
     fontSize: 18, // Larger for cover page
     fontFamily: Fonts.sans,
     fontWeight: '600', // Semi-bold for title
-    color: '#2C3E50', // Dark text for readability
+    color: '#FFFFFF', // White text for visibility on grey background
     textAlign: 'center',
     lineHeight: 26, // Proper line height for 3 lines
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   // Bottom navigation styles
   bottomNavigationContainer: {
@@ -2523,26 +2553,25 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   navButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.25)', // More transparent for glass effect
+    backgroundColor: 'rgba(130, 130, 130, 0.35)', // Soft grey for visibility on light/dark backgrounds
     borderRadius: 25,
     width: 50,
     height: 50,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)', // Subtle border for glass effect
+    borderColor: 'rgba(100, 100, 100, 0.2)', // Subtle border
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 6,
-    // Glass morphism effect (backdropFilter not supported in React Native)
+    shadowRadius: 6,
+    elevation: 4,
     overflow: 'hidden',
   },
 
   navButtonDisabled: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)', // Very transparent for disabled state
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: 'rgba(130, 130, 130, 0.2)', // Lighter for disabled state
+    borderColor: 'rgba(100, 100, 100, 0.1)',
   },
   navButtonText: {
     fontSize: 20,
@@ -2611,11 +2640,17 @@ const styles = StyleSheet.create({
     zIndex: 5, // Below topLeftControls and topRightControls (zIndex: 10)
   },
   coverTapHint: {
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    backgroundColor: 'rgba(130, 130, 130, 0.35)',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 25,
-    // backdropFilter not supported in React Native
+    borderWidth: 1,
+    borderColor: 'rgba(100, 100, 100, 0.2)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
   coverTapText: {
     fontSize: 16,
@@ -2645,7 +2680,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   modeButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    backgroundColor: 'rgba(130, 130, 130, 0.35)',
     borderRadius: 15,
     paddingVertical: 4,
     paddingLeft: 8,
@@ -2659,8 +2694,8 @@ const styles = StyleSheet.create({
     width: 122,
   },
   modeButtonSelected: {
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: 'rgba(130, 130, 130, 0.5)',
+    borderColor: 'rgba(255, 255, 255, 0.6)',
   },
   modeButtonIcon: {
     color: '#FFFFFF',

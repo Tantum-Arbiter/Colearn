@@ -35,40 +35,55 @@ public class StoryController {
 
     @GetMapping
     public ResponseEntity<List<Story>> getAllStories() {
-        logger.debug("GET /api/stories - Getting all available stories");
+        logger.info("[CMS] GET /api/stories - Request received for all stories");
         try {
             List<Story> stories = storyService.getAllAvailableStories().join();
-            logger.debug("Returning {} available stories", stories.size());
+            logger.info("[CMS] GET /api/stories - Returning {} stories", stories.size());
+            stories.forEach(story -> {
+                int pageCount = story.getPages() != null ? story.getPages().size() : 0;
+                logger.info("[CMS]   -> Story: id={}, title='{}', category={}, pages={}, premium={}",
+                        story.getId(), story.getTitle(), story.getCategory(), pageCount, story.isPremium());
+            });
             return ResponseEntity.ok(stories);
         } catch (CompletionException e) {
-            logger.error("Error getting all stories", e.getCause());
+            logger.error("[CMS] GET /api/stories - Error getting all stories", e.getCause());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
     @GetMapping("/{storyId}")
     public ResponseEntity<Story> getStoryById(@PathVariable String storyId) {
-        logger.debug("GET /api/stories/{} - Getting story by ID", storyId);
+        logger.info("[CMS] GET /api/stories/{} - Request received", storyId);
         try {
             Optional<Story> storyOpt = storyService.getStoryById(storyId).join();
             if (storyOpt.isPresent()) {
-                logger.debug("Story found: {}", storyId);
-                return ResponseEntity.ok(storyOpt.get());
+                Story story = storyOpt.get();
+                int pageCount = story.getPages() != null ? story.getPages().size() : 0;
+                logger.info("[CMS] GET /api/stories/{} - Found: title='{}', pages={}, coverImage={}",
+                        storyId, story.getTitle(), pageCount, story.getCoverImage());
+                if (story.getPages() != null) {
+                    story.getPages().forEach(page ->
+                        logger.info("[CMS]   -> Page {}: backgroundImage={}",
+                                page.getPageNumber(), page.getBackgroundImage()));
+                }
+                return ResponseEntity.ok(story);
             } else {
-                logger.debug("Story not found: {}", storyId);
+                logger.warn("[CMS] GET /api/stories/{} - Story NOT FOUND", storyId);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
             }
         } catch (CompletionException e) {
-            logger.error("Error getting story: {}", storyId, e.getCause());
+            logger.error("[CMS] GET /api/stories/{} - Error", storyId, e.getCause());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
     @PostMapping("/sync")
     public ResponseEntity<?> syncStories(@RequestBody StorySyncRequest request) {
+        logger.info("[CMS] POST /api/stories/sync - Sync request received");
+
         // Validate required fields
         if (request.getClientVersion() == null || request.getStoryChecksums() == null || request.getLastSyncTimestamp() == null) {
-            logger.warn("POST /api/stories/sync - Missing required fields in request");
+            logger.warn("[CMS] POST /api/stories/sync - Missing required fields in request");
             ErrorResponse errorResponse = new ErrorResponse();
             errorResponse.setSuccess(false);
             errorResponse.setErrorCode(ErrorCode.MISSING_REQUIRED_FIELD.getCode());
@@ -80,8 +95,13 @@ public class StoryController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
 
-        logger.debug("POST /api/stories/sync - Client version: {}, Client has {} stories",
+        logger.info("[CMS] POST /api/stories/sync - Client version: {}, Client has {} cached stories",
                 request.getClientVersion(), request.getStoryChecksums().size());
+
+        if (!request.getStoryChecksums().isEmpty()) {
+            logger.info("[CMS]   -> Client cached story IDs: {}", request.getStoryChecksums().keySet());
+        }
+
         try {
             ContentVersion serverVersion = storyService.getCurrentContentVersion().join();
             List<Story> storiesToSync = storyService.getStoriesToSync(request.getStoryChecksums()).join();
@@ -93,14 +113,25 @@ public class StoryController {
             response.setTotalStories(serverVersion.getTotalStories());
             response.setLastUpdated(serverVersion.getLastUpdated().toEpochMilli());
 
-            logger.debug("Sync response: serverVersion={}, updatedStories={}, totalStories={}",
+            logger.info("[CMS] POST /api/stories/sync - Response: serverVersion={}, updatedStories={}, totalStories={}",
                     response.getServerVersion(),
                     response.getUpdatedStories(),
                     response.getTotalStories());
 
+            storiesToSync.forEach(story -> {
+                int pageCount = story.getPages() != null ? story.getPages().size() : 0;
+                logger.info("[CMS]   -> Syncing story: id={}, title='{}', pages={}",
+                        story.getId(), story.getTitle(), pageCount);
+                if (story.getPages() != null && !story.getPages().isEmpty()) {
+                    story.getPages().forEach(page ->
+                        logger.info("[CMS]       -> Page {}: image={}",
+                                page.getPageNumber(), page.getBackgroundImage()));
+                }
+            });
+
             return ResponseEntity.ok(response);
         } catch (CompletionException e) {
-            logger.error("Error syncing stories", e.getCause());
+            logger.error("[CMS] POST /api/stories/sync - Error syncing stories", e.getCause());
             ErrorResponse errorResponse = new ErrorResponse();
             errorResponse.setSuccess(false);
             errorResponse.setErrorCode(ErrorCode.INTERNAL_SERVER_ERROR.getCode());
@@ -115,26 +146,29 @@ public class StoryController {
 
     @GetMapping("/version")
     public ResponseEntity<ContentVersion> getContentVersion() {
-        logger.debug("GET /api/stories/version - Getting content version");
+        logger.info("[CMS] GET /api/stories/version - Request received");
         try {
             ContentVersion version = storyService.getCurrentContentVersion().join();
-            logger.debug("Content version: {}", version.getVersion());
+            logger.info("[CMS] GET /api/stories/version - Version: {}, totalStories: {}",
+                    version.getVersion(), version.getTotalStories());
             return ResponseEntity.ok(version);
         } catch (CompletionException e) {
-            logger.error("Error getting content version", e.getCause());
+            logger.error("[CMS] GET /api/stories/version - Error", e.getCause());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
     @GetMapping("/category/{category}")
     public ResponseEntity<List<Story>> getStoriesByCategory(@PathVariable String category) {
-        logger.debug("GET /api/stories/category/{} - Getting stories by category", category);
+        logger.info("[CMS] GET /api/stories/category/{} - Request received", category);
         try {
             List<Story> stories = storyService.getStoriesByCategory(category).join();
-            logger.debug("Found {} stories in category: {}", stories.size(), category);
+            logger.info("[CMS] GET /api/stories/category/{} - Found {} stories", category, stories.size());
+            stories.forEach(story ->
+                logger.info("[CMS]   -> Story: id={}, title='{}'", story.getId(), story.getTitle()));
             return ResponseEntity.ok(stories);
         } catch (CompletionException e) {
-            logger.error("Error getting stories by category: {}", category, e.getCause());
+            logger.error("[CMS] GET /api/stories/category/{} - Error", category, e.getCause());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
