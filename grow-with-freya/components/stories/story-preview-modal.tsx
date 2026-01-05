@@ -195,13 +195,13 @@ const styles = StyleSheet.create({
     maxHeight: 300,
   },
   title: {
-    fontFamily: Fonts.heading,
+    fontFamily: Fonts.primary,
     fontWeight: '700',
     color: '#2D3436',
     marginBottom: 4,
   },
   author: {
-    fontFamily: Fonts.body,
+    fontFamily: Fonts.sans,
     color: '#636E72',
     marginBottom: 16,
     fontStyle: 'italic',
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
   },
   metaItem: {},
   metaLabel: {
-    fontFamily: Fonts.body,
+    fontFamily: Fonts.sans,
     fontSize: 11,
     color: '#B2BEC3',
     textTransform: 'uppercase',
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   metaValue: {
-    fontFamily: Fonts.body,
+    fontFamily: Fonts.sans,
     fontWeight: '600',
     color: '#2D3436',
   },
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   sectionLabel: {
-    fontFamily: Fonts.body,
+    fontFamily: Fonts.sans,
     fontSize: 11,
     color: '#B2BEC3',
     textTransform: 'uppercase',
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   tagText: {
-    fontFamily: Fonts.body,
+    fontFamily: Fonts.sans,
     fontWeight: '500',
     color: '#FFFFFF',
   },
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   description: {
-    fontFamily: Fonts.body,
+    fontFamily: Fonts.sans,
     color: '#636E72',
     lineHeight: 22,
   },
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   closeButtonText: {
-    fontFamily: Fonts.body,
+    fontFamily: Fonts.sans,
     fontWeight: '600',
     color: '#636E72',
   },
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   readButtonText: {
-    fontFamily: Fonts.body,
+    fontFamily: Fonts.sans,
     fontWeight: '600',
     color: '#FFFFFF',
   },
