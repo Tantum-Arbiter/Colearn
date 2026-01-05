@@ -33,22 +33,14 @@ export function StoryCompletionScreen({
 }: StoryCompletionScreenProps) {
   const insets = useSafeAreaInsets();
 
-  // Force portrait orientation on phones, allow landscape/portrait on tablets
+  // Keep landscape orientation for consistency with story reader
+  // The story reader will handle orientation when it mounts/unmounts
   useEffect(() => {
     const handleOrientation = async () => {
       try {
-        const { width, height } = Dimensions.get('window');
-        const isTablet = Math.min(width, height) >= 768; // iPad and larger
-
-        if (!isTablet) {
-          // Force portrait on phones
-          await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-          console.log('Story completion: Forced portrait orientation on phone');
-        } else {
-          // Allow both orientations on tablets
-          await ScreenOrientation.unlockAsync();
-          console.log('Story completion: Unlocked orientation for tablet');
-        }
+        // Stay in landscape - the completion screen is part of the story experience
+        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+        console.log('Story completion: Staying in landscape mode');
       } catch (error) {
         console.warn('Failed to set orientation in story completion:', error);
       }

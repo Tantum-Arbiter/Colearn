@@ -5,6 +5,7 @@ on:
     branches:
       - main
     paths:
+      - 'scripts/cms-stories/**/story-data.json'
       - 'grow-with-freya/assets/stories/**/story-data.json'
   workflow_dispatch:
     inputs:
@@ -16,6 +17,8 @@ on:
         options:
           - gcp-dev
           - gcp-prod
+  # Allow gateway-build workflow to call this
+  workflow_call:
 
 jobs:
   upload-stories:

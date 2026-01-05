@@ -31,6 +31,7 @@ interface MusicMainMenuProps {
   onBack: () => void;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const _dimensions = Dimensions.get('window'); // Keep for potential future use
 
 export function MusicMainMenu({

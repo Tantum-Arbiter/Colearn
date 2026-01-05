@@ -27,20 +27,11 @@ export const MusicControl: React.FC<MusicControlProps> = ({
   const scaledIconSize = scaledButtonSize(size);
   const backgroundSize = scaledButtonSize(48);
 
-  // For white color, use a more visible semi-transparent background
-  // Validates hex color format before appending opacity
+  // Use a soft greyish background for visibility on both light and dark backgrounds
   const getBackgroundColor = () => {
     if (!showBackground) return 'transparent';
-    if (color === '#FFFFFF' || color === 'white' || color === '#FFF') {
-      return 'rgba(255, 255, 255, 0.2)';
-    }
-    // Validate hex color format (# followed by 3 or 6 hex digits)
-    const isValidHex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(color);
-    if (isValidHex) {
-      return `${color}20`;
-    }
-    // Fallback for non-hex colors
-    return 'rgba(74, 144, 226, 0.12)';
+    // Use soft grey background for visibility on any background color
+    return 'rgba(130, 130, 130, 0.35)';
   };
 
   return (
@@ -86,5 +77,12 @@ const styles = StyleSheet.create({
   iconBackground: {
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(100, 100, 100, 0.2)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
 });

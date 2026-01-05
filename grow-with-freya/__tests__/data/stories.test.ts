@@ -94,24 +94,24 @@ describe('Stories Data', () => {
   });
 
   describe('ALL_STORIES', () => {
-    it('should have exactly 17 stories total', () => {
-      expect(ALL_STORIES).toHaveLength(17);
+    it('should have exactly 18 stories total', () => {
+      expect(ALL_STORIES).toHaveLength(18);
     });
 
     it('should contain all mock, additional, and placeholder stories', () => {
-      // ALL_STORIES = MOCK_STORIES (7) + ADDITIONAL_STORIES (6) + PLACEHOLDER_STORIES (4) = 17
+      // ALL_STORIES = MOCK_STORIES (7) + ADDITIONAL_STORIES (7) + PLACEHOLDER_STORIES (4) = 18
       const available = ALL_STORIES.filter(story => story.isAvailable);
       const unavailable = ALL_STORIES.filter(story => !story.isAvailable);
 
-      expect(available).toHaveLength(13); // 7 mock + 6 additional
+      expect(available).toHaveLength(14); // 7 mock + 7 additional
       expect(unavailable).toHaveLength(4); // 4 placeholders
     });
 
-    it('should have 13 available and 4 unavailable stories', () => {
+    it('should have 14 available and 4 unavailable stories', () => {
       const available = ALL_STORIES.filter(story => story.isAvailable);
       const unavailable = ALL_STORIES.filter(story => !story.isAvailable);
 
-      expect(available).toHaveLength(13);
+      expect(available).toHaveLength(14);
       expect(unavailable).toHaveLength(4);
     });
 
@@ -126,7 +126,7 @@ describe('Stories Data', () => {
     it('should return only available stories', () => {
       const availableStories = getAvailableStories();
 
-      expect(availableStories).toHaveLength(13); // 7 mock + 6 additional
+      expect(availableStories).toHaveLength(14); // 7 mock + 7 additional
       availableStories.forEach(story => {
         expect(story.isAvailable).toBe(true);
       });

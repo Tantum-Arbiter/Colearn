@@ -1,0 +1,61 @@
+{
+  "id": "test-story-10",
+  "title": "Test Story 10 - Unique Content",
+  "category": "family",
+  "tag": "🏷️ Test",
+  "emoji": "📖",
+  "coverImage": "assets/stories/cms-squirrels-snowman/cover/thumbnail.webp",
+  "isAvailable": true,
+  "ageRange": "2-5",
+  "duration": 15,
+  "description": "Test story 10 for CMS functional testing.",
+  "isPremium": false,
+  "author": "Test Author",
+  "tags": ["test"],
+  "version": 1,
+  "checksum": "test-checksum-10-v1",
+  "pages": [
+    {
+      "id": "test-story-10-cover",
+      "pageNumber": 0,
+      "type": "cover",
+      "backgroundImage": "assets/stories/cms-squirrels-snowman/cover/cover.webp",
+      "text": "Test Story 10\n\nA Test Adventure"
+    },
+    {
+      "id": "test-story-10-page-1",
+      "pageNumber": 1,
+      "type": "story",
+      "backgroundImage": "assets/stories/cms-squirrels-snowman/page-1/page-1.webp",
+      "text": "TEST STORY 10 - Page 1.\nThis is unique test content for story 10."
+    },
+    {
+      "id": "test-story-10-page-2",
+      "pageNumber": 2,
+      "type": "story",
+      "backgroundImage": "assets/stories/cms-squirrels-snowman/page-2/page-2.webp",
+      "text": "TEST STORY 10 - Page 2.\nMore unique content to verify CMS loading."
+    },
+    {
+      "id": "test-story-10-page-3",
+      "pageNumber": 3,
+      "type": "story",
+      "backgroundImage": "assets/stories/cms-squirrels-snowman/page-3/page-3.webp",
+      "text": "TEST STORY 10 - Page 3.\nThe adventure continues with test data."
+    },
+    {
+      "id": "test-story-10-page-4",
+      "pageNumber": 4,
+      "type": "story",
+      "backgroundImage": "assets/stories/cms-squirrels-snowman/page-4/page-4.webp",
+      "text": "TEST STORY 10 - Page 4.\nValidating content delivery from CMS."
+    },
+    {
+      "id": "test-story-10-page-5",
+      "pageNumber": 5,
+      "type": "story",
+      "backgroundImage": "assets/stories/cms-squirrels-snowman/page-5/page-5.webp",
+      "text": "TEST STORY 10 - Page 5.\nThe end of test story 10."
+    }
+  ]
+}

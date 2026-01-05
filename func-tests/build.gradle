@@ -52,6 +52,10 @@ dependencies {
     testImplementation 'com.jayway.jsonpath:json-path:2.9.0'
     testImplementation 'org.apache.commons:commons-lang3:3.13.0'
 
+    // Jackson for JSON processing
+    testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.15.3'
+    testImplementation 'com.fasterxml.jackson.core:jackson-core:2.15.3'
+
     // Jakarta annotations (for @PostConstruct, @PreDestroy)
     testImplementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
 
@@ -120,7 +124,8 @@ tasks.register('cucumberTest', JavaExec) {
     if (cucumberTags != null && !cucumberTags.isEmpty()) {
         baseArgs += ['--tags', cucumberTags]
     } else {
-        baseArgs += ['--tags', 'not @ignore and not @gcp-func-only']
+        // Default: exclude tests that require real GCP or are marked to ignore
+        baseArgs += ['--tags', 'not @ignore and not @gcp-func-only and not @gcp']
     }
 
     baseArgs += ['src/test/resources/features']

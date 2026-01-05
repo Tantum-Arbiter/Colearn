@@ -20,28 +20,34 @@ export class StoryLoader {
     try {
       // Start with local stories (offline-first)
       const localStories = [...ALL_STORIES];
+      console.log(`[CMS-LOADER] Local bundled stories: ${localStories.length}`);
 
       // Try to get CMS stories from sync cache
       const cmsStories = await StorySyncService.getLocalStories();
 
       if (cmsStories && cmsStories.length > 0) {
-        console.log(`[StoryLoader] Merging ${localStories.length} local + ${cmsStories.length} CMS stories`);
+        console.log(`[CMS-LOADER] CMS stories in cache: ${cmsStories.length}`);
+
+        // Log each CMS story
+        cmsStories.forEach((story, index) => {
+          console.log(`[CMS-LOADER]   ${index + 1}. ${story.id} - "${story.title}" (${story.pages?.length || 0} pages)`);
+        });
 
         // Merge: CMS stories can override local stories with same ID
         const localIds = new Set(localStories.map(s => s.id));
         const uniqueCmsStories = cmsStories.filter(s => !localIds.has(s.id));
 
         const allStories = [...localStories, ...uniqueCmsStories];
-        console.log(`[StoryLoader] Total stories: ${allStories.length}`);
+        console.log(`[CMS-LOADER] Merged: ${localStories.length} local + ${uniqueCmsStories.length} unique CMS = ${allStories.length} total`);
         return allStories;
       }
 
       // No CMS stories yet - return local only
-      console.log(`[StoryLoader] Using ${localStories.length} local stories (offline mode)`);
+      console.log(`[CMS-LOADER] No CMS stories in cache - using ${localStories.length} local stories (offline mode)`);
       return localStories;
     } catch (error) {
-      console.error('[StoryLoader] Error loading stories:', error);
-      console.log('[StoryLoader] Falling back to local stories');
+      console.error('[CMS-LOADER] Error loading stories:', error);
+      console.log('[CMS-LOADER] Falling back to local stories');
       return ALL_STORIES;
     }
   }

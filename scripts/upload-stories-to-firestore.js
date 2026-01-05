@@ -197,6 +197,7 @@ async function uploadStories(stories) {
 
 /**
  * Update content version document
+ * Merges new checksums with existing ones to support partial uploads (cms-only, bundled, etc.)
  */
 async function updateContentVersion(storyChecksums) {
   if (DRY_RUN) {
@@ -210,16 +211,21 @@ async function updateContentVersion(storyChecksums) {
   const versionDoc = await versionRef.get();
 
   let version = 1;
+  let existingChecksums = {};
   if (versionDoc.exists) {
     version = (versionDoc.data().version || 0) + 1;
+    existingChecksums = versionDoc.data().storyChecksums || {};
   }
+
+  // Merge new checksums with existing ones (new values override existing)
+  const mergedChecksums = { ...existingChecksums, ...storyChecksums };
 
   const contentVersion = {
     id: 'current',
     version: version,
     lastUpdated: admin.firestore.Timestamp.now(),
-    storyChecksums: storyChecksums,
-    totalStories: Object.keys(storyChecksums).length
+    storyChecksums: mergedChecksums,
+    totalStories: Object.keys(mergedChecksums).length
   };
 
   await versionRef.set(contentVersion);

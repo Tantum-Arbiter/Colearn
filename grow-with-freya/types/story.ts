@@ -1,5 +1,27 @@
 import { ImageSourcePropType } from 'react-native';
 
+// Interactive element types for story pages
+export type InteractiveElementType = 'reveal' | 'toggle' | 'drag';
+
+export interface InteractiveElementPosition {
+  x: number; // Normalized 0-1 (percentage of background width)
+  y: number; // Normalized 0-1 (percentage of background height)
+}
+
+export interface InteractiveElementSize {
+  width: number;  // Normalized 0-1 (percentage of background width)
+  height: number; // Normalized 0-1 (percentage of background height)
+}
+
+export interface InteractiveElement {
+  id: string;
+  type: InteractiveElementType;
+  image: string; // Asset path to the prop image
+  position: InteractiveElementPosition;
+  size: InteractiveElementSize;
+  hitArea?: InteractiveElementPosition & InteractiveElementSize; // Optional custom hit area
+}
+
 export interface StoryPage {
   id: string;
   pageNumber: number;
@@ -7,6 +29,7 @@ export interface StoryPage {
   backgroundImage?: string; // Background image for the page
   characterImage?: string; // Character/foreground image
   text: string; // Story text for this page
+  interactiveElements?: InteractiveElement[]; // Optional interactive props for this page
 }
 
 export interface Story {

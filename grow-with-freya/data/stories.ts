@@ -436,8 +436,155 @@ export const PLACEHOLDER_STORIES: Story[] = Array.from({ length: 4 }, (_, index)
   pages: []
 }));
 
-// Combine all stories
-export const ALL_STORIES: Story[] = [...MOCK_STORIES, ...ADDITIONAL_STORIES, ...PLACEHOLDER_STORIES];
+// Interactive Elements Test Story - The Squirrel's Snowman
+// DISCLAIMER: This is NOT original content. Used for proof-of-concept only.
+const INTERACTIVE_TEST_STORIES: Story[] = [
+  {
+    id: 'squirrels-snowman',
+    title: 'The Squirrel\'s Snowman',
+    category: 'bedtime',
+    tag: '🎄 Christmas',
+    emoji: '🎄',
+    coverImage: require('../assets/stories/squirrels-snowman/cover/thumbnail.webp'),
+    isAvailable: true,
+    ageRange: '2-5',
+    duration: 11,
+    description: 'A delightful winter story about a squirrel and a snowman.',
+    pages: [
+      {
+        id: 'squirrels-snowman-cover',
+        pageNumber: 0,
+        type: 'cover',
+        backgroundImage: require('../assets/stories/squirrels-snowman/cover/cover.webp'),
+        text: 'The Squirrel\'s Snowman'
+      },
+      {
+        id: 'squirrels-snowman-1',
+        pageNumber: 1,
+        type: 'story',
+        backgroundImage: require('../assets/stories/squirrels-snowman/page-1/background.webp'),
+        text: 'Squirrel puts her boots on.\nHer hat is on her head.'
+      },
+      {
+        id: 'squirrels-snowman-2',
+        pageNumber: 2,
+        type: 'story',
+        backgroundImage: require('../assets/stories/squirrels-snowman/page-2/background.webp'),
+        text: 'She wants to make a snowman.\nWhat\'s inside this shed?',
+        interactiveElements: [
+          {
+            id: 'door',
+            type: 'reveal' as const,
+            image: require('../assets/stories/squirrels-snowman/page-2/props/door-open.webp'),
+            position: { x: 0.481, y: 0.337 },
+            size: { width: 0.273, height: 0.301 }
+          }
+        ]
+      },
+      {
+        id: 'squirrels-snowman-3',
+        pageNumber: 3,
+        type: 'story',
+        backgroundImage: require('../assets/stories/squirrels-snowman/page-3/background.webp'),
+        text: 'Squirrel\'s snowman has a head.\nNow he needs a nose.'
+      },
+      {
+        id: 'squirrels-snowman-4',
+        pageNumber: 4,
+        type: 'story',
+        backgroundImage: require('../assets/stories/squirrels-snowman/page-4/background.webp'),
+        text: 'Can Squirrel find a carrot?\nWhat do you suppose?',
+        interactiveElements: [
+          {
+            id: 'basket',
+            type: 'reveal' as const,
+            image: require('../assets/stories/squirrels-snowman/page-4/props/basket-open.webp'),
+            position: { x: 0.475, y: 0.478 },
+            size: { width: 0.183, height: 0.230 }
+          }
+        ]
+      },
+      {
+        id: 'squirrels-snowman-5',
+        pageNumber: 5,
+        type: 'story',
+        backgroundImage: require('../assets/stories/squirrels-snowman/page-5/background.webp'),
+        text: 'Now the snowman needs some eyes.\nSquirrel visits Mole.'
+      },
+      {
+        id: 'squirrels-snowman-6',
+        pageNumber: 6,
+        type: 'story',
+        backgroundImage: require('../assets/stories/squirrels-snowman/page-6/background.webp'),
+        text: 'They look inside a great big box\nand find some lumps of coal.',
+        interactiveElements: [
+          {
+            id: 'crate',
+            type: 'reveal' as const,
+            image: require('../assets/stories/squirrels-snowman/page-6/props/basket-open.webp'),
+            position: { x: 0.348, y: 0.433 },
+            size: { width: 0.308, height: 0.280 }
+          }
+        ]
+      },
+      {
+        id: 'squirrels-snowman-7',
+        pageNumber: 7,
+        type: 'story',
+        backgroundImage: require('../assets/stories/squirrels-snowman/page-7/background.webp'),
+        text: 'A hat, a scarf, and twigs for arms -\nthe snowman is complete!'
+      },
+      {
+        id: 'squirrels-snowman-8',
+        pageNumber: 8,
+        type: 'story',
+        backgroundImage: require('../assets/stories/squirrels-snowman/page-8/background.webp'),
+        text: 'Squirrel\'s feeling hungry.\nWhat\'s she going to eat?',
+        interactiveElements: [
+          {
+            id: 'plate-cover',
+            type: 'reveal' as const,
+            image: require('../assets/stories/squirrels-snowman/page-8/props/food-cover-open.webp'),
+            position: { x: 0.254, y: 0.460 },
+            size: { width: 0.212, height: 0.158 }
+          }
+        ]
+      },
+      {
+        id: 'squirrels-snowman-9',
+        pageNumber: 9,
+        type: 'story',
+        backgroundImage: require('../assets/stories/squirrels-snowman/page-9/background.webp'),
+        text: 'Now it\'s Squirrel\'s bedtime.\nShe\'s tucked up nice and tight.'
+      },
+      {
+        id: 'squirrels-snowman-10',
+        pageNumber: 10,
+        type: 'story',
+        backgroundImage: require('../assets/stories/squirrels-snowman/page-10/background.webp'),
+        text: 'Who\'s outside the window?\nShall we wave goodnight?',
+        interactiveElements: [
+          {
+            id: 'curtains',
+            type: 'reveal' as const,
+            image: require('../assets/stories/squirrels-snowman/page-10/props/curtains-open.webp'),
+            position: { x: 0.279, y: 0.286 },
+            size: { width: 0.451, height: 0.291 }
+          }
+        ]
+      }
+    ]
+  }
+];
+
+// Combine all stories (squirrels-snowman comes right after snuggle-little-wombat)
+export const ALL_STORIES: Story[] = [
+  MOCK_STORIES[0], // snuggle-little-wombat
+  ...INTERACTIVE_TEST_STORIES, // squirrels-snowman
+  ...MOCK_STORIES.slice(1), // rest of mock stories
+  ...ADDITIONAL_STORIES,
+  ...PLACEHOLDER_STORIES
+];
 
 // Helper functions
 export function getAvailableStories(): Story[] {

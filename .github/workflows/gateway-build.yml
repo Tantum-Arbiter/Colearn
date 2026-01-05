@@ -106,8 +106,35 @@ jobs:
             --timeout 300 \
             --set-env-vars "SPRING_PROFILES_ACTIVE=gcp-dev,FIREBASE_PROJECT_ID=${{ env.PROJECT_ID }},GCS_PROJECT_ID=${{ env.PROJECT_ID }},GCS_BUCKET=colearnwithfreya-assets,BACKEND_URL_GATEWAY_SERVICE=${{ secrets.BACKEND_URL_GATEWAY_SERVICE }},APPLE_CLIENT_ID=com.growwithfreya.app,GOOGLE_IOS_CLIENT_ID=1086096096900-377j71ktgif6t78evg63218cj9de2cjs.apps.googleusercontent.com"
 
-  run-functional-tests:
+  # Sync CMS stories to Firestore before running functional tests
+  sync-cms-stories:
     needs: deploy-functional
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: scripts/package-lock.json
+
+      - name: Install dependencies
+        working-directory: scripts
+        run: npm ci
+
+      - name: Upload CMS stories to Firestore
+        working-directory: scripts
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          FIREBASE_PROJECT_ID: ${{ env.PROJECT_ID }}
+          UPLOAD_MODE: cms-only
+        run: npm run upload-stories
+
+  run-functional-tests:
+    needs: [deploy-functional, sync-cms-stories]
     runs-on: ubuntu-latest
     steps:
       - name: Authenticate with GCP
