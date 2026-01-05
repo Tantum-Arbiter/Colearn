@@ -152,7 +152,6 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       try {
         console.log('Story reader mounted - checking orientation...');
 
-
         const orientation = await ScreenOrientation.getOrientationAsync();
         const isLandscape = orientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
                            orientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT;
@@ -161,10 +160,9 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
           console.log('Already in landscape from thumbnail expansion');
           setIsLandscapeReady(true);
         } else {
-          console.log('Not in landscape yet - thumbnail expansion should have handled this');
-
+          console.log('Not in landscape yet - forcing landscape mode');
           await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
-          console.log('Fallback landscape transition complete');
+          console.log('Landscape transition complete');
           setIsLandscapeReady(true);
         }
       } catch (error) {
@@ -174,7 +172,6 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
     };
 
     checkAndSetLandscape();
-
 
     return () => {
       if (isMounted) {
@@ -276,9 +273,6 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
   const isTablet = Math.min(screenWidth, screenHeight) >= 768; // iPad and larger
   const isLandscape = screenWidth > screenHeight;
   const isPhoneLandscape = !isTablet && isLandscape;
-
-  // Image resize mode based on device type
-  const imageResizeMode = isTablet ? 'contain' : 'cover';
 
   // Aggressive preloading for instant page transitions
   const preloadAdjacentPages = (currentIndex: number) => {
@@ -966,21 +960,24 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
   const renderPageContent = (page: any, isNextPage = false) => {
     if (!page) return null;
 
+    // Cover pages (page 0) use smaller scale for better presentation
+    const isCoverPage = page.pageNumber === 0;
+    const baseScale = isTablet ? 1.35 : 1.8;
+    const imageScale = isCoverPage ? baseScale * 0.99 : baseScale;
+
     return (
       <>
         {/* Full Screen Background Image */}
         {page.backgroundImage ? (
           <View style={[
             styles.fullScreenBackground,
-            {
-              backgroundColor: imageResizeMode === 'contain' ? '#000' : 'transparent'
-            }
+            { backgroundColor: '#000' }
           ]}>
             <Image
               source={typeof page.backgroundImage === 'string' ? { uri: page.backgroundImage } : page.backgroundImage}
               style={[
                 styles.backgroundImageStyle,
-                { width: '100%', height: '100%', transform: [{ scale: isTablet ? 1.35 : 1.8 }] }
+                { width: '100%', height: '100%', transform: [{ scale: imageScale }] }
               ]}
               resizeMode="contain"
             />

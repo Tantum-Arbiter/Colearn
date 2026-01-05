@@ -442,9 +442,9 @@ const INTERACTIVE_TEST_STORIES: Story[] = [
   {
     id: 'squirrels-snowman',
     title: 'The Squirrel\'s Snowman',
-    category: 'nature',
-    tag: '🐿️ Nature',
-    emoji: '🐿️',
+    category: 'bedtime',
+    tag: '🎄 Christmas',
+    emoji: '🎄',
     coverImage: require('../assets/stories/squirrels-snowman/cover/thumbnail.webp'),
     isAvailable: true,
     ageRange: '2-5',
@@ -577,8 +577,14 @@ const INTERACTIVE_TEST_STORIES: Story[] = [
   }
 ];
 
-// Combine all stories
-export const ALL_STORIES: Story[] = [...MOCK_STORIES, ...ADDITIONAL_STORIES, ...PLACEHOLDER_STORIES, ...INTERACTIVE_TEST_STORIES];
+// Combine all stories (squirrels-snowman comes right after snuggle-little-wombat)
+export const ALL_STORIES: Story[] = [
+  MOCK_STORIES[0], // snuggle-little-wombat
+  ...INTERACTIVE_TEST_STORIES, // squirrels-snowman
+  ...MOCK_STORIES.slice(1), // rest of mock stories
+  ...ADDITIONAL_STORIES,
+  ...PLACEHOLDER_STORIES
+];
 
 // Helper functions
 export function getAvailableStories(): Story[] {
