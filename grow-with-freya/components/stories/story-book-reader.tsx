@@ -973,25 +973,16 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
           <View style={[
             styles.fullScreenBackground,
             {
-              backgroundColor: isTablet && imageResizeMode === 'contain' ? '#000' : 'transparent'
+              backgroundColor: imageResizeMode === 'contain' ? '#000' : 'transparent'
             }
           ]}>
             <Image
               source={typeof page.backgroundImage === 'string' ? { uri: page.backgroundImage } : page.backgroundImage}
               style={[
                 styles.backgroundImageStyle,
-                isTablet
-                  ? { width: '100%', height: '100%', transform: [{ scale: 1.35 }] }
-                  : {
-                      position: 'absolute',
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      height: '170%',
-                      width: '100%'
-                    }
+                { width: '100%', height: '100%', transform: [{ scale: isTablet ? 1.35 : 1.8 }] }
               ]}
-              resizeMode={imageResizeMode}
+              resizeMode="contain"
             />
             {/* Character overlay - only show if character image exists */}
             {page.characterImage && (
@@ -1013,7 +1004,6 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
                     containerHeight={screenHeight}
                     storyId={story.id}
                     isTablet={isTablet}
-                    tabletScale={1.35}
                   />
                 ))}
               </>

@@ -27,7 +27,6 @@ interface InteractiveElementProps {
   containerHeight: number;
   storyId: string;
   isTablet: boolean;
-  tabletScale?: number;
 }
 
 // Animation constants (similar to main menu glow)
@@ -40,17 +39,9 @@ const INDICATOR_SIZE = 60; // Circular indicator size in pixels
 const PULSE_SCALE_MIN = 0.9;
 const PULSE_SCALE_MAX = 1.15;
 
-// Phone content area - defines the visible safe zone within the design canvas
-// Normalized coordinates (0-1) in story data are relative to this content area
-// Based on Photoshop template: Canvas 2732×2048, Phone safe area X:68 Y:498 W:2594 H:1142
-const PHONE_CONTENT_AREA = {
-  // Normalized offsets (percentage of screen)
-  offsetX: 68 / 2732,       // 0.0249 - 2.5% from left
-  offsetY: 498 / 2048,      // 0.243 - 24.3% from top
-  // Normalized dimensions (percentage of screen)
-  widthRatio: 2594 / 2732,  // 0.949 - 94.9% of width
-  heightRatio: 1142 / 2048, // 0.558 - 55.8% of height
-};
+// Scale factors for contain + scale approach (matching story-book-reader.tsx)
+const TABLET_SCALE = 1.35;
+const PHONE_SCALE = 1.8;
 
 export const InteractiveElementComponent: React.FC<InteractiveElementProps> = ({
   element,
@@ -58,7 +49,6 @@ export const InteractiveElementComponent: React.FC<InteractiveElementProps> = ({
   containerHeight,
   storyId,
   isTablet,
-  tabletScale = 1,
 }) => {
   const [isRevealed, setIsRevealed] = useState(false);
 
@@ -69,70 +59,56 @@ export const InteractiveElementComponent: React.FC<InteractiveElementProps> = ({
   const propScale = useSharedValue(0.95);
 
   // Calculate pixel positions from normalized coordinates
-  // On tablets: account for "contain" letterboxing + 1.35 scale from center
-  // On phones: apply content area offset and scaling
+  // Both tablet and phone use: resizeMode="contain" + scale from center
+  // This provides a consistent, predictable coordinate system for all devices
   const calculatePosition = (normalizedX: number, normalizedY: number, normalizedW: number, normalizedH: number) => {
-    if (isTablet) {
-      // Tablet: Image uses resizeMode="contain" then scale 1.35 from center
-      // Normalized coords are based on 2048x1536 (4:3) canvas from Photoshop
-      const scale = tabletScale;
-      const imageAspectRatio = 2048 / 1536; // 4:3 = 1.333
-      const screenAspectRatio = containerWidth / containerHeight;
+    // Use device-appropriate scale factor
+    const scale = isTablet ? TABLET_SCALE : PHONE_SCALE;
 
-      // Calculate how the image fits with "contain" (before 1.35 scale)
-      let imageDisplayWidth: number;
-      let imageDisplayHeight: number;
-      let imageOffsetX: number;
-      let imageOffsetY: number;
+    // Image uses 4:3 aspect ratio canvas from Photoshop template
+    const imageAspectRatio = 2048 / 1536; // 4:3 = 1.333
+    const screenAspectRatio = containerWidth / containerHeight;
 
-      if (screenAspectRatio > imageAspectRatio) {
-        // Screen is wider than image - letterbox on sides (black bars left/right)
-        imageDisplayHeight = containerHeight;
-        imageDisplayWidth = containerHeight * imageAspectRatio;
-        imageOffsetX = (containerWidth - imageDisplayWidth) / 2;
-        imageOffsetY = 0;
-      } else {
-        // Screen is taller than image - letterbox on top/bottom
-        imageDisplayWidth = containerWidth;
-        imageDisplayHeight = containerWidth / imageAspectRatio;
-        imageOffsetX = 0;
-        imageOffsetY = (containerHeight - imageDisplayHeight) / 2;
-      }
+    // Calculate how the image fits with "contain" (before scale)
+    let imageDisplayWidth: number;
+    let imageDisplayHeight: number;
+    let imageOffsetX: number;
+    let imageOffsetY: number;
 
-      // Position within the contained image area (before scale)
-      const origLeft = imageOffsetX + (normalizedX * imageDisplayWidth);
-      const origTop = imageOffsetY + (normalizedY * imageDisplayHeight);
-      const origWidth = normalizedW * imageDisplayWidth;
-      const origHeight = normalizedH * imageDisplayHeight;
-
-      // Now apply 1.35 scale from screen center (matching the background transform)
-      const centerX = containerWidth / 2;
-      const centerY = containerHeight / 2;
-      const scaledLeft = centerX + (origLeft - centerX) * scale;
-      const scaledTop = centerY + (origTop - centerY) * scale;
-      const scaledWidth = origWidth * scale;
-      const scaledHeight = origHeight * scale;
-
-      return {
-        left: scaledLeft,
-        top: scaledTop,
-        width: scaledWidth,
-        height: scaledHeight,
-      };
+    if (screenAspectRatio > imageAspectRatio) {
+      // Screen is wider than image - letterbox on sides (black bars left/right)
+      imageDisplayHeight = containerHeight;
+      imageDisplayWidth = containerHeight * imageAspectRatio;
+      imageOffsetX = (containerWidth - imageDisplayWidth) / 2;
+      imageOffsetY = 0;
     } else {
-      // Phone: position within content area (with offset and scaling)
-      const contentWidth = containerWidth * PHONE_CONTENT_AREA.widthRatio;
-      const contentHeight = containerHeight * PHONE_CONTENT_AREA.heightRatio;
-      const offsetX = containerWidth * PHONE_CONTENT_AREA.offsetX;
-      const offsetY = containerHeight * PHONE_CONTENT_AREA.offsetY;
-
-      return {
-        left: offsetX + (normalizedX * contentWidth),
-        top: offsetY + (normalizedY * contentHeight),
-        width: normalizedW * contentWidth,
-        height: normalizedH * contentHeight,
-      };
+      // Screen is taller than image - letterbox on top/bottom
+      imageDisplayWidth = containerWidth;
+      imageDisplayHeight = containerWidth / imageAspectRatio;
+      imageOffsetX = 0;
+      imageOffsetY = (containerHeight - imageDisplayHeight) / 2;
     }
+
+    // Position within the contained image area (before scale)
+    const origLeft = imageOffsetX + (normalizedX * imageDisplayWidth);
+    const origTop = imageOffsetY + (normalizedY * imageDisplayHeight);
+    const origWidth = normalizedW * imageDisplayWidth;
+    const origHeight = normalizedH * imageDisplayHeight;
+
+    // Apply scale from screen center (matching the background transform)
+    const centerX = containerWidth / 2;
+    const centerY = containerHeight / 2;
+    const scaledLeft = centerX + (origLeft - centerX) * scale;
+    const scaledTop = centerY + (origTop - centerY) * scale;
+    const scaledWidth = origWidth * scale;
+    const scaledHeight = origHeight * scale;
+
+    return {
+      left: scaledLeft,
+      top: scaledTop,
+      width: scaledWidth,
+      height: scaledHeight,
+    };
   };
 
   const { left, top, width, height } = calculatePosition(
