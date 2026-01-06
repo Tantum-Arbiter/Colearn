@@ -23,6 +23,9 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class GatewayStepDefs extends BaseStepDefs {
 
+    // Track if gateway reset has been performed this test run (to avoid excessive Firestore ops in GCP)
+    private static boolean gatewayResetPerformed = false;
+
     @Before(order = 0)
     public void configureWireMockClient() {
         // Skip WireMock configuration when running against GCP (real services)
@@ -72,6 +75,13 @@ public class GatewayStepDefs extends BaseStepDefs {
                 .setParam("http.connection.timeout", 5000)
                 .setParam("http.socket.timeout", 180000));
 
+        // In GCP mode, only reset once per test run to avoid excessive Firestore operations
+        // The /private/reset clears and reseeds CMS collections which is expensive (~30 ops)
+        if (isGcpMode() && gatewayResetPerformed) {
+            System.out.println("Skipping /private/reset in GCP mode (already done this run)");
+            return;
+        }
+
         // Reset gateway state (rate limiter, circuit breakers, Firestore test data)
         // Note: In GCP, /private/** paths may not be routed through the Load Balancer
         try {
@@ -87,6 +97,7 @@ public class GatewayStepDefs extends BaseStepDefs {
 
             if (statusCode == 200) {
                 System.out.println("Gateway state reset successfully");
+                gatewayResetPerformed = true;
             } else {
                 System.out.println("Reset endpoint returned " + statusCode + " - continuing");
             }
