@@ -17,21 +17,8 @@ echo "=========================================="
 echo "Generated reports:"
 ls -la build/cucumber-reports/ 2>/dev/null || echo "No reports directory found"
 
-# Upload CMS books to Firebase after tests complete
-if [ $TEST_EXIT_CODE -eq 0 ]; then
-    echo ""
-    echo "=========================================="
-    echo "Uploading CMS books to Firebase..."
-    echo "=========================================="
-
-    GATEWAY_URL="${GATEWAY_URL:-http://localhost:8080}"
-
-    # Make the script executable and run it
-    chmod +x upload-cms-books.sh
-    ./upload-cms-books.sh "$GATEWAY_URL" 3 || echo "Warning: CMS book upload failed (non-critical)"
-else
-    echo "Tests failed, skipping CMS book upload"
-fi
+# Note: CMS books are now created and persisted by the functional tests themselves
+# See cms-content-sync.feature for the "Create and persist CMS test books" scenario
 
 # Upload reports to GCS if bucket is configured
 if [ -n "$GCS_REPORTS_BUCKET" ]; then
