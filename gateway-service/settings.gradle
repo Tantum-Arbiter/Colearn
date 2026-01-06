@@ -1,29 +1,9 @@
 pluginManagement {
     repositories {
-        // Use Gradle Plugin Portal's own artifacts only, avoid Maven Central redirect
-        maven {
-            url 'https://plugins.gradle.org/m2/'
-            content {
-                includeGroupByRegex 'org\\.gradle\\..*'
-                includeGroupByRegex 'com\\.gradle\\..*'
-            }
-        }
-        // Google's Maven mirror - more reliable than Maven Central
+        // Google's Maven mirror first - avoids Maven Central 403s in Cloud Build
         maven { url 'https://maven-central.storage.googleapis.com' }
-        // JCenter backup
-        maven { url 'https://jcenter.bintray.com' }
-        // Fallback to actual repos
         gradlePluginPortal()
         mavenCentral()
-    }
-}
-
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
-    repositories {
-        maven { url 'https://maven-central.storage.googleapis.com' }
-        mavenCentral()
-        google()
     }
 }
 
