@@ -1,3 +1,20 @@
+pluginManagement {
+    repositories {
+        maven { url 'https://maven-central.storage.googleapis.com' }  // Google mirror (faster, avoids Maven Central 403s in Cloud Build)
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories {
+        maven { url 'https://maven-central.storage.googleapis.com' }  // Google mirror (faster, avoids Maven Central 403s in Cloud Build)
+        mavenCentral()
+        google()
+    }
+}
+
 rootProject.name = 'nft'
 include 'src:main:gatling'
 findProject(':src:main:gatling')?.name = 'gatling'
