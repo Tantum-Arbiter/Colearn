@@ -12,17 +12,11 @@ COPY build.gradle settings.gradle gradlew ./
 COPY gradle/ gradle/
 COPY src/ src/
 
-# Copy Gradle init script to rewrite Maven Central URLs (avoid 403s in Cloud Build)
-RUN mkdir -p /root/.gradle/init.d
-COPY gradle/init.d/maven-mirror.gradle /root/.gradle/init.d/maven-mirror.gradle
-
 # Ensure gradlew is executable
 RUN chmod +x gradlew
 
-# Build the application with retry logic (Maven Central sometimes returns 403)
-RUN ./gradlew build --no-daemon -x test --init-script /root/.gradle/init.d/maven-mirror.gradle || \
-    (sleep 10 && ./gradlew build --no-daemon -x test --init-script /root/.gradle/init.d/maven-mirror.gradle) || \
-    (sleep 30 && ./gradlew build --no-daemon -x test --init-script /root/.gradle/init.d/maven-mirror.gradle)
+# Build the application (Google mirrors configured in build.gradle)
+RUN ./gradlew build --no-daemon -x test
 
 # Runtime stage
 FROM eclipse-temurin:21-jre
