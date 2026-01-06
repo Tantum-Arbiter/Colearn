@@ -11,8 +11,8 @@ WORKDIR /app
 COPY build.gradle settings.gradle ./
 COPY gradle/ gradle/
 
-# Download dependencies with --refresh-dependencies to ensure latest versions
-RUN gradle dependencies --no-daemon --refresh-dependencies
+# Download dependencies (cached in Docker layer for faster subsequent builds)
+RUN gradle dependencies --no-daemon
 
 # Copy source code
 COPY src/ src/
