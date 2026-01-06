@@ -52,6 +52,9 @@ public class TestAdminController {
 
     private static final Logger logger = LoggerFactory.getLogger(TestAdminController.class);
 
+    // Track if Firestore has been seeded this JVM run (to avoid excessive Firestore ops)
+    private static volatile boolean firestoreSeeded = false;
+
     private final RateLimitingFilter rateLimitingFilter;
     private final TestSimulationFlags flags;
     private final CircuitBreakerRegistry circuitBreakerRegistry;
@@ -97,16 +100,20 @@ public class TestAdminController {
                 logger.warn("Failed to reset circuit breakers: {}", ex.getMessage());
             }
 
-            // Seed test stories/assets - user data is NOT cleared so it persists for inspection
-            if (firestore != null) {
+            // Seed test stories/assets ONCE per JVM run to avoid excessive Firestore ops (~30 writes)
+            // User data is NOT cleared so it persists for inspection
+            if (firestore != null && !firestoreSeeded) {
                 try {
                     clearCmsCollections();
                     seedTestStories();
                     seedTestAssets();
-                    logger.info("Cleared CMS data and seeded test stories/assets");
+                    firestoreSeeded = true;
+                    logger.info("Cleared CMS data and seeded test stories/assets (first reset this run)");
                 } catch (Exception ex) {
                     logger.warn("Failed to clear/seed Firestore data: {}", ex.getMessage());
                 }
+            } else if (firestoreSeeded) {
+                logger.debug("Skipping Firestore seeding (already done this run)");
             }
 
             Map<String, Object> resp = new HashMap<>();
