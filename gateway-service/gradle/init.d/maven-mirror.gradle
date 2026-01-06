@@ -1,0 +1,15 @@
+// Gradle init script to rewrite Maven Central URLs to Google's mirror
+// This avoids 403 errors from Maven Central in Cloud Build
+
+allprojects {
+    repositories.all { repo ->
+        if (repo instanceof MavenArtifactRepository) {
+            def url = repo.url.toString()
+            if (url.contains("repo.maven.apache.org") || url.contains("repo1.maven.org")) {
+                println "Rewriting Maven Central URL: ${url}"
+                repo.url = uri("https://maven-central-asia.storage-download.googleapis.com/maven2/")
+            }
+        }
+    }
+}
+

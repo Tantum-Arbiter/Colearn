@@ -7,24 +7,14 @@ FROM gradle:8.5-jdk21 AS builder
 # Set working directory
 WORKDIR /app
 
-# Create Gradle init script to rewrite Maven Central URLs (avoid 403s in Cloud Build)
-RUN mkdir -p /root/.gradle/init.d && \
-    echo 'allprojects { \
-        repositories.all { repo -> \
-            if (repo instanceof MavenArtifactRepository) { \
-                def url = repo.url.toString() \
-                if (url.contains("repo.maven.apache.org") || url.contains("repo1.maven.org")) { \
-                    println "Rewriting Maven Central URL: ${url}" \
-                    repo.url = uri("https://maven-central-asia.storage-download.googleapis.com/maven2/") \
-                } \
-            } \
-        } \
-    }' > /root/.gradle/init.d/maven-mirror.gradle
-
 # Copy all project files
 COPY build.gradle settings.gradle gradlew ./
 COPY gradle/ gradle/
 COPY src/ src/
+
+# Copy Gradle init script to rewrite Maven Central URLs (avoid 403s in Cloud Build)
+RUN mkdir -p /root/.gradle/init.d
+COPY gradle/init.d/maven-mirror.gradle /root/.gradle/init.d/maven-mirror.gradle
 
 # Ensure gradlew is executable
 RUN chmod +x gradlew
