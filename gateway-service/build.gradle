@@ -24,8 +24,17 @@ java {
 }
 
 repositories {
-	maven { url 'https://maven-central.storage.googleapis.com' }  // Google mirror (faster, more reliable)
-	mavenCentral()
+	// Use ONLY Google's Maven Central mirror - avoid repo.maven.apache.org completely
+	// to work around 403 errors in Cloud Build
+	maven {
+		url 'https://maven-central.storage.googleapis.com'
+		metadataSources {
+			mavenPom()
+			artifact()
+		}
+	}
+	google()  // For Google/Android artifacts
+	// mavenCentral() intentionally removed - causes 403 in Cloud Build
 }
 
 ext {

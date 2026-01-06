@@ -1,9 +1,15 @@
 pluginManagement {
     repositories {
-        // Google's Maven mirror first - avoids Maven Central 403s in Cloud Build
-        maven { url 'https://maven-central.storage.googleapis.com' }
+        // Use ONLY Google's Maven Central mirror - avoid repo.maven.apache.org completely
+        maven {
+            url 'https://maven-central.storage.googleapis.com'
+            metadataSources {
+                mavenPom()
+                artifact()
+            }
+        }
         gradlePluginPortal()
-        mavenCentral()
+        // mavenCentral() intentionally removed - causes 403 in Cloud Build
     }
 }
 
