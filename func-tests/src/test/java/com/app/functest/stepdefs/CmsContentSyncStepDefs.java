@@ -177,9 +177,200 @@ public class CmsContentSyncStepDefs extends BaseStepDefs {
 
     @Given("the story {string} exists in GCP Firestore")
     public void theStoryExistsInGCPFirestore(String storyId) {
-        // For GCP tests, we assume the story exists
-        // The actual verification happens in the When/Then steps
-        logger.info("Assuming story {} exists in GCP Firestore", storyId);
+        // Seed the test story to GCP Firestore to ensure it exists
+        logger.info("Seeding test story {} to GCP Firestore", storyId);
+        seedGcpTestStory(storyId);
+    }
+
+    /**
+     * Seed a test story to GCP Firestore via the private seeding endpoint.
+     * Creates a unique story with enough pages to pass functional tests.
+     */
+    private void seedGcpTestStory(String storyId) {
+        String timestamp = String.valueOf(System.currentTimeMillis());
+        String testStory = String.format("""
+            {
+                "id": "%s",
+                "title": "GCP Test Story - %s",
+                "category": "nature",
+                "tag": "🐿️ Nature",
+                "emoji": "🐿️",
+                "coverImage": "assets/stories/squirrels-snowman/cover/thumbnail.webp",
+                "isAvailable": true,
+                "ageRange": "2-5",
+                "duration": 10,
+                "description": "A test story seeded for GCP functional testing at %s.",
+                "isPremium": true,
+                "author": "GCP Test Suite",
+                "tags": ["test", "gcp", "nature"],
+                "version": 1,
+                "pages": [
+                    {"id": "%s-cover", "pageNumber": 0, "type": "cover", "backgroundImage": "assets/stories/squirrels-snowman/cover/cover.webp", "text": "GCP Test Story\\n\\nA Winter Adventure"},
+                    {"id": "%s-page-1", "pageNumber": 1, "type": "story", "backgroundImage": "assets/stories/squirrels-snowman/page-1/page-1.webp", "text": "Page 1 - The squirrel wakes up."},
+                    {"id": "%s-page-2", "pageNumber": 2, "type": "story", "backgroundImage": "assets/stories/squirrels-snowman/page-2/page-2.webp", "text": "Page 2 - She puts on her boots."},
+                    {"id": "%s-page-3", "pageNumber": 3, "type": "story", "backgroundImage": "assets/stories/squirrels-snowman/page-3/page-3.webp", "text": "Page 3 - The snow is falling."},
+                    {"id": "%s-page-4", "pageNumber": 4, "type": "story", "backgroundImage": "assets/stories/squirrels-snowman/page-4/page-4.webp", "text": "Page 4 - Time to build a snowman!"},
+                    {"id": "%s-page-5", "pageNumber": 5, "type": "story", "backgroundImage": "assets/stories/squirrels-snowman/page-5/page-5.webp", "text": "Page 5 - Finding the carrot nose."},
+                    {"id": "%s-page-6", "pageNumber": 6, "type": "story", "backgroundImage": "assets/stories/squirrels-snowman/page-6/page-6.webp", "text": "Page 6 - The mole helps out."},
+                    {"id": "%s-page-7", "pageNumber": 7, "type": "story", "backgroundImage": "assets/stories/squirrels-snowman/page-7/page-7.webp", "text": "Page 7 - Coal for eyes!"},
+                    {"id": "%s-page-8", "pageNumber": 8, "type": "story", "backgroundImage": "assets/stories/squirrels-snowman/page-8/page-8.webp", "text": "Page 8 - The scarf goes on."},
+                    {"id": "%s-page-9", "pageNumber": 9, "type": "story", "backgroundImage": "assets/stories/squirrels-snowman/page-9/page-9.webp", "text": "Page 9 - Time for hot cocoa."},
+                    {"id": "%s-page-10", "pageNumber": 10, "type": "story", "backgroundImage": "assets/stories/squirrels-snowman/page-10/page-10.webp", "text": "Page 10 - Goodnight, snowman!"}
+                ]
+            }
+            """, storyId, storyId, timestamp, storyId, storyId, storyId, storyId, storyId, storyId, storyId, storyId, storyId, storyId, storyId);
+
+        Response response = given()
+                .contentType("application/json")
+                .body(testStory)
+                .when()
+                .post("/private/seed/story");
+
+        if (response.getStatusCode() != 200 && response.getStatusCode() != 201) {
+            logger.warn("Failed to seed GCP test story: {} - Status: {}, Body: {}",
+                    storyId, response.getStatusCode(), response.getBody().asString());
+            throw new RuntimeException("Failed to seed GCP test story: " + storyId);
+        }
+        logger.info("Successfully seeded GCP test story: {}", storyId);
+    }
+
+    @Given("I modify story {string} by changing the tag to {string}")
+    public void iModifyStoryByChangingTheTag(String storyId, String newTag) {
+        logger.info("Modifying story {} - changing tag to: {}", storyId, newTag);
+        modifyStoryField(storyId, "tag", newTag);
+    }
+
+    @Given("I modify story {string} by adding a new page")
+    public void iModifyStoryByAddingNewPage(String storyId) {
+        logger.info("Modifying story {} - adding new page", storyId);
+        addPageToStory(storyId);
+    }
+
+    @Given("I modify story {string} page {int} text to {string}")
+    public void iModifyStoryPageText(String storyId, int pageNumber, String newText) {
+        logger.info("Modifying story {} page {} text to: {}", storyId, pageNumber, newText);
+        modifyStoryPageText(storyId, pageNumber, newText);
+    }
+
+    /**
+     * Modify a field on an existing story to trigger delta sync
+     */
+    private void modifyStoryField(String storyId, String field, String value) {
+        // First fetch the current story
+        Response getResponse = applyAuthenticatedHeaders(given())
+                .when()
+                .get("/api/stories/" + storyId);
+
+        if (getResponse.getStatusCode() != 200) {
+            throw new RuntimeException("Story not found for modification: " + storyId);
+        }
+
+        try {
+            Map<String, Object> story = objectMapper.readValue(getResponse.getBody().asString(), Map.class);
+            story.put(field, value);
+            story.put("version", ((Number) story.getOrDefault("version", 1)).intValue() + 1);
+            // Remove checksum so server recalculates it
+            story.remove("checksum");
+
+            Response response = given()
+                    .contentType("application/json")
+                    .body(objectMapper.writeValueAsString(story))
+                    .when()
+                    .post("/private/seed/story");
+
+            assertThat("Story modification should succeed", response.getStatusCode(), anyOf(equalTo(200), equalTo(201)));
+            logger.info("Modified story {} field {} to: {}", storyId, field, value);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to modify story: " + storyId, e);
+        }
+    }
+
+    /**
+     * Add a new page to an existing story to trigger delta sync
+     */
+    private void addPageToStory(String storyId) {
+        Response getResponse = applyAuthenticatedHeaders(given())
+                .when()
+                .get("/api/stories/" + storyId);
+
+        if (getResponse.getStatusCode() != 200) {
+            throw new RuntimeException("Story not found for modification: " + storyId);
+        }
+
+        try {
+            Map<String, Object> story = objectMapper.readValue(getResponse.getBody().asString(), Map.class);
+            List<Map<String, Object>> pages = (List<Map<String, Object>>) story.get("pages");
+            int newPageNumber = pages.size();
+
+            Map<String, Object> newPage = new HashMap<>();
+            newPage.put("id", storyId + "-page-new-" + System.currentTimeMillis());
+            newPage.put("pageNumber", newPageNumber);
+            newPage.put("type", "story");
+            newPage.put("backgroundImage", "assets/stories/squirrels-snowman/page-1/page-1.webp");
+            newPage.put("text", "NEW PAGE ADDED - This page was added during delta sync testing!");
+            pages.add(newPage);
+
+            story.put("pages", pages);
+            story.put("version", ((Number) story.getOrDefault("version", 1)).intValue() + 1);
+            story.remove("checksum");
+
+            Response response = given()
+                    .contentType("application/json")
+                    .body(objectMapper.writeValueAsString(story))
+                    .when()
+                    .post("/private/seed/story");
+
+            assertThat("Story page addition should succeed", response.getStatusCode(), anyOf(equalTo(200), equalTo(201)));
+            logger.info("Added new page to story {}, now has {} pages", storyId, pages.size());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to add page to story: " + storyId, e);
+        }
+    }
+
+    /**
+     * Modify text of a specific page in a story
+     */
+    private void modifyStoryPageText(String storyId, int pageNumber, String newText) {
+        Response getResponse = applyAuthenticatedHeaders(given())
+                .when()
+                .get("/api/stories/" + storyId);
+
+        if (getResponse.getStatusCode() != 200) {
+            throw new RuntimeException("Story not found for modification: " + storyId);
+        }
+
+        try {
+            Map<String, Object> story = objectMapper.readValue(getResponse.getBody().asString(), Map.class);
+            List<Map<String, Object>> pages = (List<Map<String, Object>>) story.get("pages");
+
+            boolean found = false;
+            for (Map<String, Object> page : pages) {
+                if (((Number) page.get("pageNumber")).intValue() == pageNumber) {
+                    page.put("text", newText);
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                throw new RuntimeException("Page " + pageNumber + " not found in story " + storyId);
+            }
+
+            story.put("pages", pages);
+            story.put("version", ((Number) story.getOrDefault("version", 1)).intValue() + 1);
+            story.remove("checksum");
+
+            Response response = given()
+                    .contentType("application/json")
+                    .body(objectMapper.writeValueAsString(story))
+                    .when()
+                    .post("/private/seed/story");
+
+            assertThat("Story page text modification should succeed", response.getStatusCode(), anyOf(equalTo(200), equalTo(201)));
+            logger.info("Modified page {} text in story {}", pageNumber, storyId);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to modify page text in story: " + storyId, e);
+        }
     }
 
     @When("I perform {int} consecutive sync requests")
