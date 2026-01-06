@@ -110,6 +110,9 @@ jobs:
     needs: deploy-functional
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Authenticate with GCP
         uses: google-github-actions/auth@v2
         with:
@@ -124,6 +127,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+
+      - name: Sync CMS stories to Firestore before tests
+        working-directory: scripts
+        run: |
+          echo "Syncing CMS stories to Firestore to ensure test data is available..."
+          npm install
+          node upload-stories-to-firestore.js
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          FIREBASE_PROJECT_ID: apt-icon-472307-b7
+          UPLOAD_MODE: cms-only
 
       - name: Generate Firebase ID Token for functional tests
         id: firebase-token
