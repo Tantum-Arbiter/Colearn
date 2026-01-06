@@ -24,17 +24,16 @@ java {
 }
 
 repositories {
-	// Use ONLY Google's Maven Central mirror - avoid repo.maven.apache.org completely
-	// to work around 403 errors in Cloud Build
+	// Avoid repo.maven.apache.org - causes 403 in Cloud Build
 	maven {
-		url 'https://maven-central.storage.googleapis.com'
-		metadataSources {
-			mavenPom()
-			artifact()
-		}
+		url 'https://maven-central-asia.storage-download.googleapis.com/maven2/'
+		name 'GoogleAsiaProxy'
 	}
-	google()  // For Google/Android artifacts
-	// mavenCentral() intentionally removed - causes 403 in Cloud Build
+	maven {
+		url 'https://maven-central-eu.storage-download.googleapis.com/maven2/'
+		name 'GoogleEUProxy'
+	}
+	google()
 }
 
 ext {

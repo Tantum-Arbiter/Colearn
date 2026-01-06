@@ -1,15 +1,15 @@
 pluginManagement {
     repositories {
-        // Use ONLY Google's Maven Central mirror - avoid repo.maven.apache.org completely
+        // Avoid repo.maven.apache.org - causes 403 in Cloud Build
         maven {
-            url 'https://maven-central.storage.googleapis.com'
-            metadataSources {
-                mavenPom()
-                artifact()
-            }
+            url 'https://maven-central-asia.storage-download.googleapis.com/maven2/'
+            name 'GoogleAsiaProxy'
+        }
+        maven {
+            url 'https://maven-central-eu.storage-download.googleapis.com/maven2/'
+            name 'GoogleEUProxy'
         }
         gradlePluginPortal()
-        // mavenCentral() intentionally removed - causes 403 in Cloud Build
     }
 }
 
