@@ -1,5 +1,6 @@
 allprojects {
     repositories {
+        maven { url 'https://maven-central.storage.googleapis.com' }  // Google mirror (faster, more reliable)
         mavenCentral()
     }
 }

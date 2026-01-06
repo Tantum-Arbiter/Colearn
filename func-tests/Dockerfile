@@ -8,7 +8,11 @@ WORKDIR /app
 COPY . .
 
 # Build test classes and dependencies (clean to avoid stale compiled classes)
-RUN ./gradlew clean testClasses --no-daemon
+# Retry mechanism for transient Maven Central 403 errors
+RUN for i in 1 2 3; do \
+      ./gradlew clean testClasses --no-daemon && break || \
+      (echo "Attempt $i failed, retrying in 10s..." && sleep 10); \
+    done
 
 # Copy gcloud CLI from official image
 FROM gcr.io/google.com/cloudsdktool/google-cloud-cli:slim AS gcloud
