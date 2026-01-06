@@ -107,10 +107,10 @@ Feature: CMS Content Sync and Delta Sync Testing
 
   @gcp-dev @gcp
   Scenario: Verify Squirrel's Snowman story exists on GCP
-    Given the story "squirrels-snowman" exists in GCP Firestore
-    When I make a GET request to "/api/stories/squirrels-snowman"
+    Given the story "cms-squirrels-snowman" exists in GCP Firestore
+    When I make a GET request to "/api/stories/cms-squirrels-snowman"
     Then the response status code should be 200
-    And the response should contain field "id" with value "squirrels-snowman"
+    And the response should contain field "id" with value "cms-squirrels-snowman"
     And the response should contain field "title"
     And the response field "pages" should have at least 10 items
 
