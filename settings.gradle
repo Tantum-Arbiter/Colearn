@@ -6,6 +6,15 @@ pluginManagement {
     }
 }
 
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories {
+        maven { url 'https://maven-central.storage.googleapis.com' }  // Google mirror (faster, avoids Maven Central 403s)
+        mavenCentral()
+        google()
+    }
+}
+
 rootProject.name = 'colearn'
 
 include 'gateway-service'
