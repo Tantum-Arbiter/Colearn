@@ -25,7 +25,6 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 
 @SpringBootTest(classes = GatewayServiceApplication.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -104,14 +103,12 @@ class StoryControllerTest {
 
         // Act & Assert
         mockMvc.perform(get("/api/stories"))
-                .andExpect(request().asyncStarted())
-                .andDo(result -> mockMvc.perform(asyncDispatch(result))
-                        .andExpect(status().isOk())
-                        .andExpect(jsonPath("$").isArray())
-                        .andExpect(jsonPath("$.length()").value(2))
-                        .andExpect(jsonPath("$[0].id").value("story-1"))
-                        .andExpect(jsonPath("$[0].title").value("The Sleepy Forest"))
-                        .andExpect(jsonPath("$[1].id").value("story-2")));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].id").value("story-1"))
+                .andExpect(jsonPath("$[0].title").value("The Sleepy Forest"))
+                .andExpect(jsonPath("$[1].id").value("story-2"));
 
         verify(storyService, times(1)).getAllAvailableStories();
     }
@@ -124,11 +121,9 @@ class StoryControllerTest {
 
         // Act & Assert
         mockMvc.perform(get("/api/stories"))
-                .andExpect(request().asyncStarted())
-                .andDo(result -> mockMvc.perform(asyncDispatch(result))
-                        .andExpect(status().isOk())
-                        .andExpect(jsonPath("$").isArray())
-                        .andExpect(jsonPath("$.length()").value(0)));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(0));
 
         verify(storyService, times(1)).getAllAvailableStories();
     }
@@ -141,9 +136,7 @@ class StoryControllerTest {
 
         // Act & Assert
         mockMvc.perform(get("/api/stories"))
-                .andExpect(request().asyncStarted())
-                .andDo(result -> mockMvc.perform(asyncDispatch(result))
-                        .andExpect(status().isInternalServerError()));
+                .andExpect(status().isInternalServerError());
 
         verify(storyService, times(1)).getAllAvailableStories();
     }
@@ -156,14 +149,12 @@ class StoryControllerTest {
 
         // Act & Assert
         mockMvc.perform(get("/api/stories/story-1"))
-                .andExpect(request().asyncStarted())
-                .andDo(result -> mockMvc.perform(asyncDispatch(result))
-                        .andExpect(status().isOk())
-                        .andExpect(jsonPath("$.id").value("story-1"))
-                        .andExpect(jsonPath("$.title").value("The Sleepy Forest"))
-                        .andExpect(jsonPath("$.category").value("bedtime"))
-                        .andExpect(jsonPath("$.pages").isArray())
-                        .andExpect(jsonPath("$.pages.length()").value(1)));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("story-1"))
+                .andExpect(jsonPath("$.title").value("The Sleepy Forest"))
+                .andExpect(jsonPath("$.category").value("bedtime"))
+                .andExpect(jsonPath("$.pages").isArray())
+                .andExpect(jsonPath("$.pages.length()").value(1));
 
         verify(storyService, times(1)).getStoryById("story-1");
     }
@@ -176,9 +167,7 @@ class StoryControllerTest {
 
         // Act & Assert
         mockMvc.perform(get("/api/stories/non-existent"))
-                .andExpect(request().asyncStarted())
-                .andDo(result -> mockMvc.perform(asyncDispatch(result))
-                        .andExpect(status().isNotFound()));
+                .andExpect(status().isNotFound());
 
         verify(storyService, times(1)).getStoryById("non-existent");
     }
@@ -191,9 +180,7 @@ class StoryControllerTest {
 
         // Act & Assert
         mockMvc.perform(get("/api/stories/story-1"))
-                .andExpect(request().asyncStarted())
-                .andDo(result -> mockMvc.perform(asyncDispatch(result))
-                        .andExpect(status().isInternalServerError()));
+                .andExpect(status().isInternalServerError());
 
         verify(storyService, times(1)).getStoryById("story-1");
     }
@@ -207,12 +194,10 @@ class StoryControllerTest {
 
         // Act & Assert
         mockMvc.perform(get("/api/stories/category/bedtime"))
-                .andExpect(request().asyncStarted())
-                .andDo(result -> mockMvc.perform(asyncDispatch(result))
-                        .andExpect(status().isOk())
-                        .andExpect(jsonPath("$").isArray())
-                        .andExpect(jsonPath("$.length()").value(1))
-                        .andExpect(jsonPath("$[0].category").value("bedtime")));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].category").value("bedtime"));
 
         verify(storyService, times(1)).getStoriesByCategory("bedtime");
     }
@@ -225,11 +210,9 @@ class StoryControllerTest {
 
         // Act & Assert
         mockMvc.perform(get("/api/stories/category/non-existent-category"))
-                .andExpect(request().asyncStarted())
-                .andDo(result -> mockMvc.perform(asyncDispatch(result))
-                        .andExpect(status().isOk())
-                        .andExpect(jsonPath("$").isArray())
-                        .andExpect(jsonPath("$.length()").value(0)));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(0));
 
         verify(storyService, times(1)).getStoriesByCategory("non-existent-category");
     }
@@ -242,9 +225,7 @@ class StoryControllerTest {
 
         // Act & Assert
         mockMvc.perform(get("/api/stories/category/bedtime"))
-                .andExpect(request().asyncStarted())
-                .andDo(result -> mockMvc.perform(asyncDispatch(result))
-                        .andExpect(status().isInternalServerError()));
+                .andExpect(status().isInternalServerError());
 
         verify(storyService, times(1)).getStoriesByCategory("bedtime");
     }
@@ -257,14 +238,12 @@ class StoryControllerTest {
 
         // Act & Assert
         mockMvc.perform(get("/api/stories/version"))
-                .andExpect(request().asyncStarted())
-                .andDo(result -> mockMvc.perform(asyncDispatch(result))
-                        .andExpect(status().isOk())
-                        .andExpect(jsonPath("$.version").value(1))
-                        .andExpect(jsonPath("$.totalStories").value(2))
-                        .andExpect(jsonPath("$.storyChecksums").exists())
-                        .andExpect(jsonPath("$.storyChecksums.story-1").value("checksum1"))
-                        .andExpect(jsonPath("$.storyChecksums.story-2").value("checksum2")));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.version").value(1))
+                .andExpect(jsonPath("$.totalStories").value(2))
+                .andExpect(jsonPath("$.storyChecksums").exists())
+                .andExpect(jsonPath("$.storyChecksums.story-1").value("checksum1"))
+                .andExpect(jsonPath("$.storyChecksums.story-2").value("checksum2"));
 
         verify(storyService, times(1)).getCurrentContentVersion();
     }
@@ -277,9 +256,7 @@ class StoryControllerTest {
 
         // Act & Assert
         mockMvc.perform(get("/api/stories/version"))
-                .andExpect(request().asyncStarted())
-                .andDo(result -> mockMvc.perform(asyncDispatch(result))
-                        .andExpect(status().isInternalServerError()));
+                .andExpect(status().isInternalServerError());
 
         verify(storyService, times(1)).getCurrentContentVersion();
     }
@@ -302,14 +279,12 @@ class StoryControllerTest {
         mockMvc.perform(post("/api/stories/sync")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(request().asyncStarted())
-                .andDo(result -> mockMvc.perform(asyncDispatch(result))
-                        .andExpect(status().isOk())
-                        .andExpect(jsonPath("$.serverVersion").value(1))
-                        .andExpect(jsonPath("$.updatedStories").value(2))
-                        .andExpect(jsonPath("$.totalStories").value(2))
-                        .andExpect(jsonPath("$.stories").isArray())
-                        .andExpect(jsonPath("$.stories.length()").value(2)));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.serverVersion").value(1))
+                .andExpect(jsonPath("$.updatedStories").value(2))
+                .andExpect(jsonPath("$.totalStories").value(2))
+                .andExpect(jsonPath("$.stories").isArray())
+                .andExpect(jsonPath("$.stories.length()").value(2));
 
         verify(storyService, times(1)).getStoriesToSync(anyMap());
         verify(storyService, times(1)).getCurrentContentVersion();
@@ -332,13 +307,11 @@ class StoryControllerTest {
         mockMvc.perform(post("/api/stories/sync")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(request().asyncStarted())
-                .andDo(result -> mockMvc.perform(asyncDispatch(result))
-                        .andExpect(status().isOk())
-                        .andExpect(jsonPath("$.serverVersion").value(1))
-                        .andExpect(jsonPath("$.updatedStories").value(0))
-                        .andExpect(jsonPath("$.stories").isArray())
-                        .andExpect(jsonPath("$.stories.length()").value(0)));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.serverVersion").value(1))
+                .andExpect(jsonPath("$.updatedStories").value(0))
+                .andExpect(jsonPath("$.stories").isArray())
+                .andExpect(jsonPath("$.stories.length()").value(0));
 
         verify(storyService, times(1)).getStoriesToSync(anyMap());
         verify(storyService, times(1)).getCurrentContentVersion();
@@ -364,13 +337,11 @@ class StoryControllerTest {
         mockMvc.perform(post("/api/stories/sync")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(request().asyncStarted())
-                .andDo(result -> mockMvc.perform(asyncDispatch(result))
-                        .andExpect(status().isOk())
-                        .andExpect(jsonPath("$.serverVersion").value(1))
-                        .andExpect(jsonPath("$.updatedStories").value(1))
-                        .andExpect(jsonPath("$.stories").isArray())
-                        .andExpect(jsonPath("$.stories.length()").value(1)));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.serverVersion").value(1))
+                .andExpect(jsonPath("$.updatedStories").value(1))
+                .andExpect(jsonPath("$.stories").isArray())
+                .andExpect(jsonPath("$.stories.length()").value(1));
 
         verify(storyService, times(1)).getStoriesToSync(anyMap());
         verify(storyService, times(1)).getCurrentContentVersion();
@@ -378,10 +349,10 @@ class StoryControllerTest {
 
     @Test
     void syncStories_InvalidRequest_MissingFields() throws Exception {
-        // Arrange - Invalid request with null fields causes NPE before async starts
+        // Arrange - Invalid request with null fields
         String invalidJson = "{}";
 
-        // Act & Assert - Expect 500 error due to NPE from missing fields
+        // Act & Assert - Expect 500 error due to missing fields
         mockMvc.perform(post("/api/stories/sync")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalidJson))
@@ -403,9 +374,7 @@ class StoryControllerTest {
         mockMvc.perform(post("/api/stories/sync")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(request().asyncStarted())
-                .andDo(result -> mockMvc.perform(asyncDispatch(result))
-                        .andExpect(status().isInternalServerError()));
+                .andExpect(status().isInternalServerError());
 
         verify(storyService, times(1)).getCurrentContentVersion();
     }

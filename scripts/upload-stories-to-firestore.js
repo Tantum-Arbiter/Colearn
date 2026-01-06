@@ -57,6 +57,10 @@ function getServiceAccountCredentials() {
 
 const serviceAccount = getServiceAccountCredentials();
 
+// Log which service account is being used (for debugging)
+console.log(`🔐 Using service account: ${serviceAccount.client_email}`);
+console.log(`📁 Project ID: ${PROJECT_ID}`);
+
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   projectId: PROJECT_ID

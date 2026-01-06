@@ -195,7 +195,7 @@ public class FirebaseStoryRepository implements StoryRepository {
             long startTime = System.currentTimeMillis();
             try {
                 Query query = firestore.collection(COLLECTION_NAME)
-                        .whereEqualTo("available", true);
+                        .whereEqualTo("isAvailable", true);
 
                 ApiFuture<QuerySnapshot> future = query.get();
                 QuerySnapshot querySnapshot = future.get();

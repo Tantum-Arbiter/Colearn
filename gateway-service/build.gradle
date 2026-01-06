@@ -65,6 +65,9 @@ dependencies {
 	// Firebase dependencies
 	implementation 'com.google.firebase:firebase-admin:9.7.0'
 
+	// Google Cloud Firestore (explicit for @PropertyName annotation)
+	implementation 'com.google.cloud:google-cloud-firestore:3.27.2'
+
 	// Google Cloud Storage for asset delivery
 	implementation 'com.google.cloud:google-cloud-storage:2.43.1'
 
