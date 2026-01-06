@@ -1,3 +1,11 @@
+pluginManagement {
+    repositories {
+        maven { url 'https://maven-central.storage.googleapis.com' }  // Google mirror (faster, avoids Maven Central 403s)
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
 rootProject.name = 'colearn'
 
 include 'gateway-service'

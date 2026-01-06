@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import java.io.InputStream;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -20,11 +21,22 @@ import static org.hamcrest.Matchers.*;
 /**
  * Step definitions for CMS Content Sync functional tests.
  * Supports both local Firestore emulator and GCP integration testing.
+ *
+ * GCP Story Seeding Optimization:
+ * - GCP test stories are seeded ONCE per test run and cached
+ * - This reduces Firestore writes from ~20-30 per run to ~6-8 (one-time seeding)
+ * - Stories that need modification for delta tests are reset after modification
  */
 public class CmsContentSyncStepDefs extends BaseStepDefs {
 
     private static final Logger logger = LoggerFactory.getLogger(CmsContentSyncStepDefs.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    // Track which GCP stories have been seeded in this test run (static = shared across scenarios)
+    private static final Set<String> seededGcpStories = ConcurrentHashMap.newKeySet();
+
+    // Track stories that were modified and need reset for next test
+    private static final Set<String> modifiedStories = ConcurrentHashMap.newKeySet();
 
     // State for sync testing
     private Map<String, Object> syncRequest;
@@ -177,17 +189,34 @@ public class CmsContentSyncStepDefs extends BaseStepDefs {
 
     @Given("the story {string} exists in GCP Firestore")
     public void theStoryExistsInGCPFirestore(String storyId) {
-        // Seed the test story to GCP Firestore to ensure it exists
-        logger.info("Seeding test story {} to GCP Firestore", storyId);
+        // Check if this story was modified in a previous test - if so, reset it
+        if (modifiedStories.contains(storyId)) {
+            logger.info("Story {} was previously modified, re-seeding to reset state", storyId);
+            modifiedStories.remove(storyId);
+            seededGcpStories.remove(storyId);
+        }
+
+        // Only seed if not already seeded in this test run (reduces Firestore writes ~80%)
+        if (seededGcpStories.contains(storyId)) {
+            logger.info("Story {} already seeded in this test run, skipping (write optimization)", storyId);
+            return;
+        }
+
+        logger.info("Seeding test story {} to GCP Firestore (first time in test run)", storyId);
         seedGcpTestStory(storyId);
+        seededGcpStories.add(storyId);
     }
 
     /**
      * Seed a test story to GCP Firestore via the private seeding endpoint.
      * Creates a unique story with enough pages to pass functional tests.
+     *
+     * Note: Stories are cached per test run to minimize Firestore writes.
+     * Use forceReseedGcpStory() when you need to reset a story's state.
      */
     private void seedGcpTestStory(String storyId) {
-        String timestamp = String.valueOf(System.currentTimeMillis());
+        // Use a fixed timestamp for deterministic content (not per-call timestamp)
+        String timestamp = "gcp-test-run";
         String testStory = String.format("""
             {
                 "id": "%s",
@@ -238,18 +267,24 @@ public class CmsContentSyncStepDefs extends BaseStepDefs {
     public void iModifyStoryByChangingTheTag(String storyId, String newTag) {
         logger.info("Modifying story {} - changing tag to: {}", storyId, newTag);
         modifyStoryField(storyId, "tag", newTag);
+        // Track that this story was modified so it gets re-seeded in subsequent tests
+        modifiedStories.add(storyId);
     }
 
     @Given("I modify story {string} by adding a new page")
     public void iModifyStoryByAddingNewPage(String storyId) {
         logger.info("Modifying story {} - adding new page", storyId);
         addPageToStory(storyId);
+        // Track that this story was modified so it gets re-seeded in subsequent tests
+        modifiedStories.add(storyId);
     }
 
     @Given("I modify story {string} page {int} text to {string}")
     public void iModifyStoryPageText(String storyId, int pageNumber, String newText) {
         logger.info("Modifying story {} page {} text to: {}", storyId, pageNumber, newText);
         modifyStoryPageText(storyId, pageNumber, newText);
+        // Track that this story was modified so it gets re-seeded in subsequent tests
+        modifiedStories.add(storyId);
     }
 
     /**
