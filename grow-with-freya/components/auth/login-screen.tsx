@@ -39,6 +39,7 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
   const [isAppleLoading, setIsAppleLoading] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [currentView, setCurrentView] = useState<'main' | 'terms' | 'privacy'>('main');
+  const [processedResponseId, setProcessedResponseId] = useState<string | null>(null);
 
   const { setGuestMode } = useAppStore();
 
@@ -50,8 +51,17 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
   // Handle Google OAuth response (token exchange happens asynchronously)
   React.useEffect(() => {
     const handleGoogleResponse = async () => {
-      if (response?.type === 'success' && response.authentication?.idToken) {
-        setIsGoogleLoading(true);
+      // Skip if no response or we've already processed this response
+      if (!response) {
+        return;
+      }
+
+      const responseId = JSON.stringify(response);
+      if (processedResponseId === responseId) {
+        return;
+      }
+
+      if (response.type === 'success' && response.authentication?.idToken) {
         try {
           const result = await AuthService.completeGoogleSignIn(response.authentication.idToken);
 
@@ -67,6 +77,7 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
           setGuestMode(false);
 
           setIsGoogleLoading(false);
+          setProcessedResponseId(responseId);
           transitionToMainMenu(onSuccess);
 
           // Sync profile and stories in background after transition starts
@@ -85,6 +96,7 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
           }, 500);
         } catch (error: any) {
           setIsGoogleLoading(false);
+          setProcessedResponseId(responseId);
           console.error('Google sign-in error:', error);
 
           const isTimeout = error.message?.includes('timed out');
@@ -96,16 +108,22 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
             [{ text: 'OK' }]
           );
         }
-      } else if (response?.type === 'error') {
+      } else if (response.type === 'error') {
         setIsGoogleLoading(false);
+        setProcessedResponseId(responseId);
         console.error('Google OAuth error:', response.error);
         Alert.alert('Sign-In Failed', 'Unable to sign in with Google. Please try again.', [{ text: 'OK' }]);
+      } else if (response.type === 'dismiss') {
+        // User cancelled the sign-in
+        setIsGoogleLoading(false);
+        setProcessedResponseId(responseId);
+        console.log('[LoginScreen] Google sign-in cancelled by user');
       }
     };
 
     handleGoogleResponse();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [response]);
+  }, [response, processedResponseId]);
 
   // Animation values
   const titleOpacity = useSharedValue(0);
@@ -154,7 +172,13 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setIsGoogleLoading(true);
     try {
-      await promptAsync();
+      const result = await promptAsync();
+      // promptAsync returns immediately with the result
+      // If it's not a success, we should reset the loading state
+      if (result?.type !== 'success') {
+        setIsGoogleLoading(false);
+      }
+      // If it's success, the response handler will manage the loading state
     } catch (error) {
       setIsGoogleLoading(false);
       console.error('Google OAuth prompt error:', error);
@@ -218,7 +242,15 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
       setIsAppleLoading(false);
       console.error('Apple sign-in error:', error);
 
-      if (error.message?.includes('cancelled')) {
+      // Check for user cancellation - multiple possible error messages
+      const isCancelled =
+        error.message?.includes('cancelled') ||
+        error.message?.includes('user cancelled') ||
+        error.code === 'ERR_CANCELED' ||
+        error.code === 'ERR_REQUEST_CANCELLED';
+
+      if (isCancelled) {
+        console.log('[LoginScreen] Apple sign-in cancelled by user');
         return;
       }
 
@@ -313,12 +345,9 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
         {/* Login Buttons */}
         <Animated.View style={[styles.buttonContainer, buttonsAnimatedStyle]}>
           <Pressable
-            style={({ pressed }) => [
+            style={[
               styles.loginButton,
               styles.googleButton,
-              { minHeight: scaledButtonSize(50), paddingVertical: scaledPadding(14), paddingHorizontal: scaledPadding(20) },
-              pressed && styles.buttonPressed,
-              (isGoogleLoading || isAppleLoading) && styles.buttonDisabled,
             ]}
             onPress={handleGoogleLogin}
             disabled={isGoogleLoading || isAppleLoading}
@@ -333,12 +362,9 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
 
           {Platform.OS === 'ios' && (
             <Pressable
-              style={({ pressed }) => [
+              style={[
                 styles.loginButton,
                 styles.appleButton,
-                { minHeight: scaledButtonSize(50), paddingVertical: scaledPadding(14), paddingHorizontal: scaledPadding(20) },
-                pressed && styles.buttonPressed,
-                (isGoogleLoading || isAppleLoading) && styles.buttonDisabled,
               ]}
               onPress={handleAppleLogin}
               disabled={isGoogleLoading || isAppleLoading}
@@ -354,11 +380,7 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
 
           {/* Skip Button */}
           <Pressable
-            style={({ pressed }) => [
-              styles.skipButton,
-              { minHeight: scaledButtonSize(44), paddingVertical: scaledPadding(12) },
-              pressed && styles.skipButtonPressed,
-            ]}
+            style={styles.skipButton}
             onPress={handleSkip}
           >
             <ThemedText style={[styles.skipButtonText, { fontSize: scaledFontSize(14) }]}>
@@ -464,11 +486,11 @@ const styles = StyleSheet.create({
     borderColor: '#000000',
   },
   buttonPressed: {
-    transform: [{ scale: 0.98 }],
-    opacity: 0.8,
+    opacity: 0.7,
   },
   buttonDisabled: {
-    opacity: 0.6,
+    // Don't change opacity to avoid layout shift
+    // The disabled prop on Pressable will prevent interaction
   },
   buttonContent: {
     flexDirection: 'row',
