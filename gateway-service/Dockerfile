@@ -7,18 +7,13 @@ FROM gradle:8.5-jdk21 AS builder
 # Set working directory
 WORKDIR /app
 
-# Copy gradle files first for better caching
+# Copy all project files
 COPY build.gradle settings.gradle ./
 COPY gradle/ gradle/
-
-# Download dependencies with --refresh-dependencies to ensure latest versions
-RUN gradle dependencies --no-daemon --refresh-dependencies
-
-# Copy source code
 COPY src/ src/
 
-# Build the application (clean first to ensure fresh build)
-RUN gradle clean build --no-daemon -x test
+# Build the application (dependencies downloaded during build, single network request)
+RUN gradle build --no-daemon -x test
 
 # Runtime stage
 FROM eclipse-temurin:21-jre

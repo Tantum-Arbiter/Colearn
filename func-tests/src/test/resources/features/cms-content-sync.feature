@@ -98,45 +98,86 @@ Feature: CMS Content Sync and Delta Sync Testing
   # GCP INTEGRATION TESTS - 1 Book (Squirrel's Snowman)
   # ============================================================================
 
-  @gcp-dev @gcp
-  Scenario: Pull single story from GCP CMS
+  @gcp-dev
+  Scenario: Pull stories from GCP CMS after seeding test data
+    Given the story "gcp-func-test-story" exists in GCP Firestore
     When I make a GET request to "/api/stories"
     Then the response status code should be 200
     And the response should be a JSON array
     And the response should contain at least 1 story
 
-  @gcp-dev @gcp
-  Scenario: Verify Squirrel's Snowman story exists on GCP
-    Given the story "cms-squirrels-snowman" exists in GCP Firestore
-    When I make a GET request to "/api/stories/cms-squirrels-snowman"
+  @gcp-dev
+  Scenario: Verify seeded test story exists and has required content
+    Given the story "gcp-func-test-snowman" exists in GCP Firestore
+    When I make a GET request to "/api/stories/gcp-func-test-snowman"
     Then the response status code should be 200
-    And the response should contain field "id" with value "cms-squirrels-snowman"
+    And the response should contain field "id" with value "gcp-func-test-snowman"
     And the response should contain field "title"
     And the response field "pages" should have at least 10 items
 
-  @gcp-dev @gcp @delta-sync
+  @gcp-dev @delta-sync
   Scenario: GCP delta sync returns content version
+    Given the story "gcp-version-test" exists in GCP Firestore
     When I make a GET request to "/api/stories/version"
     Then the response status code should be 200
     And the response should contain field "version"
     And the response should contain field "totalStories"
     And the response field "totalStories" should be at least 1
 
-  @gcp-dev @gcp @delta-sync
-  Scenario: GCP initial sync retrieves available stories
-    Given I have a sync request with no client checksums
+  @gcp-dev @delta-sync
+  Scenario: GCP initial sync retrieves seeded story
+    Given the story "gcp-sync-test" exists in GCP Firestore
+    And I have a sync request with no client checksums
     When I make a POST request to "/api/stories/sync" with the sync request
     Then the response status code should be 200
     And the response should contain field "serverVersion"
     And the response should contain field "stories"
     And the response field "stories" should not be empty
 
-  @gcp-dev @gcp @delta-sync
+  @gcp-dev @delta-sync
   Scenario: GCP delta sync with current checksums returns no updates
-    Given I have a sync request with current server checksums
+    Given the story "gcp-checksum-test" exists in GCP Firestore
+    And I have a sync request with current server checksums
     When I make a POST request to "/api/stories/sync" with the sync request
     Then the response status code should be 200
     And the response field "updatedStories" should equal 0
+
+  # ============================================================================
+  # DELTA SYNC MODIFICATION TESTS - Prove delta sync detects changes
+  # ============================================================================
+
+  @gcp-dev @delta-sync @delta-modification
+  Scenario: Delta sync detects tag change in story
+    Given the story "gcp-delta-tag-test" exists in GCP Firestore
+    And I have performed an initial sync
+    And I have a sync request with previous checksums
+    When I modify story "gcp-delta-tag-test" by changing the tag to "🚀 Modified Tag"
+    And I make a POST request to "/api/stories/sync" with the sync request
+    Then the response status code should be 200
+    And the response field "updatedStories" should be at least 1
+    And the response should contain story "gcp-delta-tag-test"
+
+  @gcp-dev @delta-sync @delta-modification
+  Scenario: Delta sync detects added page in story
+    Given the story "gcp-delta-page-test" exists in GCP Firestore
+    And I have performed an initial sync
+    And I have a sync request with previous checksums
+    When I modify story "gcp-delta-page-test" by adding a new page
+    And I make a POST request to "/api/stories/sync" with the sync request
+    Then the response status code should be 200
+    And the response field "updatedStories" should be at least 1
+    And the response should contain story "gcp-delta-page-test"
+
+  @gcp-dev @delta-sync @delta-modification
+  Scenario: Delta sync detects page text change
+    Given the story "gcp-delta-text-test" exists in GCP Firestore
+    And I have performed an initial sync
+    And I have a sync request with previous checksums
+    When I modify story "gcp-delta-text-test" page 1 text to "MODIFIED TEXT - Delta sync should detect this change!"
+    And I make a POST request to "/api/stories/sync" with the sync request
+    Then the response status code should be 200
+    And the response field "updatedStories" should be at least 1
+    And the response should contain story "gcp-delta-text-test"
 
   # ============================================================================
   # PERFORMANCE AND RELIABILITY TESTS
