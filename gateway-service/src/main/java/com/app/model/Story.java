@@ -2,6 +2,7 @@ package com.app.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.cloud.firestore.annotation.PropertyName;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -35,6 +36,7 @@ public class Story {
     private String coverImage; // Asset path reference
 
     @JsonProperty("isAvailable")
+    @PropertyName("isAvailable")
     private boolean available;
 
     @JsonProperty("ageRange")
@@ -143,10 +145,12 @@ public class Story {
         this.coverImage = coverImage;
     }
 
+    @PropertyName("isAvailable")
     public boolean isAvailable() {
         return available;
     }
 
+    @PropertyName("isAvailable")
     public void setAvailable(boolean available) {
         this.available = available;
     }

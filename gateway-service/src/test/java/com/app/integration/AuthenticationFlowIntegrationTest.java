@@ -177,9 +177,9 @@ class AuthenticationFlowIntegrationTest {
 
     @Test
     void corsIntegration_ShouldHandlePreflightRequests() throws Exception {
-        // Test preflight request
+        // Test preflight request - use allowed origin from test configuration
         mockMvc.perform(options("/api/auth/me")
-                .header("Origin", "https://app.growwithfreya.com")
+                .header("Origin", "https://app.colearnwithfreya.co.uk")
                 .header("Access-Control-Request-Method", "GET")
                 .header("Access-Control-Request-Headers", "Authorization"))
                 .andExpect(status().isOk())
@@ -193,7 +193,7 @@ class AuthenticationFlowIntegrationTest {
                 .header("X-Client-Platform", "ios")
                 .header("X-Client-Version", "1.0.0")
                 .header("X-Device-ID", "test-device-123")
-                .header("Origin", "https://app.growwithfreya.com"))
+                .header("Origin", "https://app.colearnwithfreya.co.uk"))
                 .andExpect(status().isOk())
                 .andExpect(header().exists("Access-Control-Allow-Origin"));
     }

@@ -338,9 +338,9 @@ public class RequestValidationFilter extends OncePerRequestFilter {
                 // Special-case User-Agent: if there are multiple headers provided, avoid getHeaders("User-Agent")
                 // to prevent strict stubbing argument mismatch in tests that only stub X-Forwarded-For
                 if ("User-Agent".equalsIgnoreCase(name) && headerNames.size() > 1) {
-                    // Still validate the User-Agent value for suspicious patterns
+                    // User-Agent is safe for special chars (contains semicolons), only check CRLF
                     String userAgentValue = request.getHeader(name);
-                    if (userAgentValue != null && (containsCrLf(userAgentValue) || containsSuspiciousPattern(userAgentValue))) {
+                    if (userAgentValue != null && containsCrLf(userAgentValue)) {
                         return false;
                     }
                     continue;
@@ -381,8 +381,8 @@ public class RequestValidationFilter extends OncePerRequestFilter {
                 }
             }
         } else {
-            // Fallback to specific headers of interest
-            String[] headersToCheck = {"User-Agent", "Referer", "X-Forwarded-For", "X-Real-IP"};
+            // Fallback to specific headers of interest - only check CRLF for User-Agent
+            String[] headersToCheck = {"Referer", "X-Forwarded-For", "X-Real-IP"};
             for (String headerName : headersToCheck) {
                 String headerValue = request.getHeader(headerName);
                 if (headerValue != null) {
@@ -390,6 +390,11 @@ public class RequestValidationFilter extends OncePerRequestFilter {
                         return false;
                     }
                 }
+            }
+            // User-Agent only needs CRLF check (it commonly contains semicolons)
+            String userAgent = request.getHeader("User-Agent");
+            if (userAgent != null && containsCrLf(userAgent)) {
+                return false;
             }
         }
 
@@ -419,6 +424,7 @@ public class RequestValidationFilter extends OncePerRequestFilter {
                n.equals("link") ||
                n.equals("forwarded") ||
                n.equals("via") ||
+               n.equals("user-agent") ||  // User-Agent commonly contains semicolons (e.g., "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0)")
                n.equals("x-cloud-trace-context") ||
                n.equals("x-serverless-trace-context") ||
                n.equals("traceparent") ||
