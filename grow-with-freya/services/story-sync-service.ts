@@ -416,29 +416,32 @@ export class StorySyncService {
   /**
    * Prefetch all story cover images to ensure they're cached before showing the story selection screen
    * This should be called after prefetchStories() to ensure smooth UX
+   * Returns a map of storyId -> cachedCoverPath for instant display
    */
-  static async prefetchCoverImages(): Promise<void> {
+  static async prefetchCoverImages(): Promise<Map<string, string>> {
+    const cachedPaths = new Map<string, string>();
+
     try {
-      console.log('[StorySyncService] Prefetching cover images...');
+      console.log('[StorySyncService] Prefetching cover images for instant display...');
 
       const stories = await this.getLocalStories();
-      const coverUrls = stories
-        .map(story => story.coverImage)
-        .filter((url): url is string => !!url);
+      const storiesWithCovers = stories.filter(s => typeof s.coverImage === 'string' && s.coverImage);
 
-      console.log(`[StorySyncService] Found ${coverUrls.length} cover images to prefetch`);
+      console.log(`[StorySyncService] Found ${storiesWithCovers.length} CMS stories with cover images to cache`);
 
       // Download all cover images in parallel
-      const downloadPromises = coverUrls.map(async (url) => {
+      const downloadPromises = storiesWithCovers.map(async (story) => {
         try {
+          const url = story.coverImage as string;
           const cachedPath = await AuthenticatedImageService.getImageUri(url);
           if (cachedPath) {
-            console.log(`[StorySyncService] Cover image cached: ${url.substring(url.lastIndexOf('/') + 1)}`);
+            cachedPaths.set(story.id, cachedPath);
+            console.log(`[StorySyncService] ✓ Cover cached: ${story.id} -> ${cachedPath.split('/').pop()}`);
             return true;
           }
           return false;
         } catch (error) {
-          console.warn(`[StorySyncService] Failed to cache cover image: ${url}`, error);
+          console.warn(`[StorySyncService] ✗ Failed to cache cover: ${story.id}`, error);
           return false;
         }
       });
@@ -446,10 +449,67 @@ export class StorySyncService {
       const results = await Promise.all(downloadPromises);
       const successCount = results.filter(Boolean).length;
 
-      console.log(`[StorySyncService] Cover image prefetch complete: ${successCount}/${coverUrls.length} successful`);
+      console.log(`[StorySyncService] Cover image prefetch complete: ${successCount}/${storiesWithCovers.length} successful`);
+
+      // Store the cached paths for quick lookup
+      await this.saveCachedCoverPaths(cachedPaths);
+
+      return cachedPaths;
     } catch (error) {
       console.error('[StorySyncService] Cover image prefetch failed:', error);
-      // Don't throw - this is not critical
+      return cachedPaths;
     }
+  }
+
+  /**
+   * Save cached cover paths to AsyncStorage for instant access
+   */
+  private static async saveCachedCoverPaths(paths: Map<string, string>): Promise<void> {
+    try {
+      const obj = Object.fromEntries(paths);
+      await AsyncStorage.setItem('cached_cover_paths', JSON.stringify(obj));
+      console.log(`[StorySyncService] Saved ${paths.size} cached cover paths`);
+    } catch (error) {
+      console.error('[StorySyncService] Error saving cached cover paths:', error);
+    }
+  }
+
+  /**
+   * Get cached cover path for a story
+   * Returns the local file path if cached, otherwise the remote URL
+   */
+  static async getCachedCoverPath(storyId: string, remoteUrl: string): Promise<string> {
+    try {
+      const data = await AsyncStorage.getItem('cached_cover_paths');
+      if (data) {
+        const paths = JSON.parse(data) as Record<string, string>;
+        if (paths[storyId]) {
+          // Verify the cached file still exists
+          const FileSystem = await import('expo-file-system');
+          const info = await FileSystem.getInfoAsync(paths[storyId]);
+          if (info.exists) {
+            return paths[storyId];
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('[StorySyncService] Error getting cached cover path:', error);
+    }
+    return remoteUrl;
+  }
+
+  /**
+   * Get all cached cover paths
+   */
+  static async getAllCachedCoverPaths(): Promise<Record<string, string>> {
+    try {
+      const data = await AsyncStorage.getItem('cached_cover_paths');
+      if (data) {
+        return JSON.parse(data) as Record<string, string>;
+      }
+    } catch (error) {
+      console.warn('[StorySyncService] Error getting all cached cover paths:', error);
+    }
+    return {};
   }
 }

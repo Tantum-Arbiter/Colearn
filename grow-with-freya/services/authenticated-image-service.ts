@@ -17,15 +17,53 @@ const WEBP_MAGIC_OFFSET_4 = 'WEBP';
  * Service for downloading and caching images that require authentication
  * Downloads images with auth token and caches them locally
  * Includes file validation to prevent corrupted images from being served
+ * Uses in-memory cache for instant subsequent lookups (same performance as local images)
  */
 export class AuthenticatedImageService {
   private static readonly CACHE_DIR = `${FileSystem.cacheDirectory || FileSystem.documentDirectory}story-images/`;
+
+  // In-memory cache of verified cached paths for instant lookup
+  // Key: remote URL, Value: local cached path
+  private static memoryCache: Map<string, string> = new Map();
+
+  /**
+   * Get a cached URI instantly from memory if available (synchronous check)
+   * Returns null if not in memory cache - caller should then use getImageUri
+   */
+  static getMemoryCachedUri(remoteUrl: string): string | null {
+    const cached = this.memoryCache.get(remoteUrl);
+    if (cached) {
+      // Don't log every hit to reduce noise
+      return cached;
+    }
+    return null;
+  }
+
+  /**
+   * Pre-populate the memory cache with known cached paths
+   * Called after prefetching cover images for instant subsequent display
+   */
+  static populateMemoryCache(urlToPathMap: Map<string, string>): void {
+    let count = 0;
+    urlToPathMap.forEach((localPath, remoteUrl) => {
+      this.memoryCache.set(remoteUrl, localPath);
+      count++;
+    });
+    console.log(`[AuthImageService] Memory cache populated with ${count} entries for instant lookup`);
+  }
 
   /**
    * Get a cached image URI with authentication
    * Downloads and caches the image if not already cached
    */
   static async getImageUri(remoteUrl: string): Promise<string | null> {
+    // First check memory cache for instant return (no async/await)
+    const memoryCached = this.memoryCache.get(remoteUrl);
+    if (memoryCached) {
+      console.log(`[AuthImageService] ⚡ INSTANT from memory cache: ${memoryCached.split('/').pop()}`);
+      return memoryCached;
+    }
+
     console.log(`[AuthImageService] ===== getImageUri START =====`);
     console.log(`[AuthImageService] CACHE_DIR: ${this.CACHE_DIR}`);
     console.log(`[AuthImageService] cacheDirectory: ${FileSystem.cacheDirectory}`);
@@ -57,6 +95,8 @@ export class AuthenticatedImageService {
       const isValid = await this.validateCachedFile(cachedPath);
       if (isValid) {
         console.log(`[AuthImageService] Using validated cached image: ${cacheFilename}`);
+        // Add to memory cache for instant subsequent lookups
+        this.memoryCache.set(remoteUrl, cachedPath);
         return cachedPath;
       }
 
@@ -121,6 +161,8 @@ export class AuthenticatedImageService {
         const isValid = await this.validateCachedFile(cachedPath);
         if (isValid) {
           console.log(`[AuthImageService] Image cached and validated: ${cacheFilename}`);
+          // Add to memory cache for instant subsequent lookups
+          this.memoryCache.set(remoteUrl, cachedPath);
           return cachedPath;
         } else {
           console.error(`[AuthImageService] Downloaded file failed validation, deleting: ${cachedPath}`);
@@ -182,6 +224,8 @@ export class AuthenticatedImageService {
 
         if (downloadResult.status === 200) {
           console.log(`[AuthImageService] Successfully downloaded alternative: ${altUrl}`);
+          // Add to memory cache for instant subsequent lookups
+          this.memoryCache.set(remoteUrl, cachedPath);
           return cachedPath;
         }
       } catch (error) {
@@ -252,8 +296,9 @@ export class AuthenticatedImageService {
   /**
    * Download and cache an asset from a signed URL
    * Used by AssetSyncService for prefetching
+   * Also populates the memory cache for instant subsequent lookups
    */
-  static async downloadAndCacheAsset(signedUrl: string, assetPath: string): Promise<string> {
+  static async downloadAndCacheAsset(signedUrl: string, assetPath: string, remoteUrl?: string): Promise<string> {
     try {
       // Create cache directory if it doesn't exist
       const dirInfo = await FileSystem.getInfoAsync(this.CACHE_DIR);
@@ -269,6 +314,10 @@ export class AuthenticatedImageService {
       const cachedInfo = await FileSystem.getInfoAsync(cachedPath);
       if (cachedInfo.exists) {
         console.log(`[AuthImageService] Asset already cached: ${assetPath}`);
+        // Add to memory cache if remoteUrl provided
+        if (remoteUrl) {
+          this.memoryCache.set(remoteUrl, cachedPath);
+        }
         return cachedPath;
       }
 
@@ -278,6 +327,10 @@ export class AuthenticatedImageService {
 
       if (downloadResult.status === 200) {
         console.log(`[AuthImageService] Asset cached successfully: ${assetPath}`);
+        // Add to memory cache if remoteUrl provided for instant subsequent lookups
+        if (remoteUrl) {
+          this.memoryCache.set(remoteUrl, cachedPath);
+        }
         return cachedPath;
       } else {
         console.error(`[AuthImageService] Download failed with status ${downloadResult.status}`);
@@ -290,14 +343,20 @@ export class AuthenticatedImageService {
   }
 
   /**
-   * Clear the image cache
+   * Clear the image cache (both file system and memory)
    */
   static async clearCache(): Promise<void> {
     try {
+      // Clear memory cache first
+      const memoryCacheSize = this.memoryCache.size;
+      this.memoryCache.clear();
+      console.log(`[AuthImageService] Memory cache cleared (${memoryCacheSize} entries)`);
+
+      // Clear file system cache
       const dirInfo = await FileSystem.getInfoAsync(this.CACHE_DIR);
       if (dirInfo.exists) {
         await FileSystem.deleteAsync(this.CACHE_DIR);
-        console.log('[AuthImageService] Cache cleared');
+        console.log('[AuthImageService] File cache cleared');
       }
     } catch (error) {
       console.error('[AuthImageService] Error clearing cache:', error);

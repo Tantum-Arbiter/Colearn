@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Image, ImageProps, View, ActivityIndicator, Text, StyleSheet } from 'react-native';
 import { AuthenticatedImageService } from '@/services/authenticated-image-service';
 
@@ -17,6 +17,7 @@ const DEFAULT_MAX_RETRIES = 2;
 /**
  * Component for loading images that require authentication
  * Automatically downloads and caches images with auth token
+ * Uses memory cache for instant display (same performance as local images)
  * Includes retry logic for corrupted cache files
  */
 export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
@@ -30,14 +31,25 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
   maxRetries = DEFAULT_MAX_RETRIES,
   ...props
 }) => {
-  const [cachedUri, setCachedUri] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // Check memory cache synchronously for instant display
+  const memoryCachedUri = useMemo(() => {
+    return AuthenticatedImageService.getMemoryCachedUri(uri);
+  }, [uri]);
+
+  const [cachedUri, setCachedUri] = useState<string | null>(memoryCachedUri);
+  const [isLoading, setIsLoading] = useState(!memoryCachedUri);
   const [hasError, setHasError] = useState(false);
   const retryCountRef = useRef(0);
   const isMountedRef = useRef(true);
 
   const loadImage = useCallback(async (forceRefresh: boolean = false) => {
     try {
+      // Skip if we already have the cached URI from memory
+      if (cachedUri && !forceRefresh) {
+        console.log(`[AuthenticatedImage] ⚡ Already have cached URI, skipping load`);
+        return;
+      }
+
       console.log(`[AuthenticatedImage] Loading image (retry: ${retryCountRef.current}, forceRefresh: ${forceRefresh}):`, uri);
 
       if (!isMountedRef.current) return;
@@ -70,7 +82,7 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
         setIsLoading(false);
       }
     }
-  }, [uri]);
+  }, [uri, cachedUri]);
 
   // Handle image render errors - retry with cache invalidation
   const handleRenderError = useCallback(async () => {
@@ -89,12 +101,16 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
   useEffect(() => {
     isMountedRef.current = true;
     retryCountRef.current = 0;
-    loadImage(false);
+
+    // Skip async loading if we already have the URI from memory cache
+    if (!memoryCachedUri) {
+      loadImage(false);
+    }
 
     return () => {
       isMountedRef.current = false;
     };
-  }, [uri, loadImage]);
+  }, [uri, loadImage, memoryCachedUri]);
 
   // Show loading indicator
   if (isLoading && showLoadingIndicator) {
