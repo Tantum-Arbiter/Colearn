@@ -17,6 +17,8 @@ import * as Google from 'expo-auth-session/providers/google';
 import { ThemedText } from '../themed-text';
 import { TermsConditionsScreen } from '../account/terms-conditions-screen';
 import { PrivacyPolicyScreen } from '../account/privacy-policy-screen';
+import { LoadingOverlay, type LoadingPhase } from './loading-overlay';
+import { MainMenu } from '../main-menu';
 import { AuthService } from '@/services/auth-service';
 import { SecureStorage } from '@/services/secure-storage';
 import { ApiClient } from '@/services/api-client';
@@ -30,9 +32,10 @@ const { width } = Dimensions.get('window');
 interface LoginScreenProps {
   onSuccess: () => void;
   onSkip?: () => void;
+  onNavigate?: (destination: string) => void;
 }
 
-export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
+export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps) {
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledButtonSize, scaledPadding } = useAccessibility();
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -40,6 +43,8 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [currentView, setCurrentView] = useState<'main' | 'terms' | 'privacy'>('main');
   const [processedResponseId, setProcessedResponseId] = useState<string | null>(null);
+  const [loadingPhase, setLoadingPhase] = useState<LoadingPhase | null>(null);
+  const [showLoadingOverlay, setShowLoadingOverlay] = useState(false);
 
   const { setGuestMode } = useAppStore();
 
@@ -63,6 +68,10 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
 
       if (response.type === 'success' && response.authentication?.idToken) {
         try {
+          // Show loading overlay for authentication
+          setShowLoadingOverlay(true);
+          setLoadingPhase('authenticating');
+
           const result = await AuthService.completeGoogleSignIn(response.authentication.idToken);
 
           console.log('[LoginScreen] Storing tokens...');
@@ -78,35 +87,47 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
 
           setIsGoogleLoading(false);
           setProcessedResponseId(responseId);
-          transitionToMainMenu(onSuccess);
 
-          // Sync profile and stories in background after transition starts
-          setTimeout(async () => {
-            try {
-              const profile = await ApiClient.getProfile();
-              await ProfileSyncService.fullSync(profile);
-              console.log('[LoginScreen] Profile synced');
-            } catch {
-              console.log('[LoginScreen] Profile sync deferred');
-            }
+          // Wait 2 seconds before moving to syncing phase
+          // This gives the user time to see the "Signing in..." message
+          await new Promise(resolve => setTimeout(resolve, 2000));
 
-            StorySyncService.prefetchStories()
-              .then(() => console.log('[LoginScreen] Story metadata synced'))
-              .catch(() => console.log('[LoginScreen] Story sync deferred'));
-          }, 500);
+          // Move to syncing phase
+          setLoadingPhase('syncing');
+
+          // Sync profile and stories
+          try {
+            const profile = await ApiClient.getProfile();
+            await ProfileSyncService.fullSync(profile);
+            console.log('[LoginScreen] Profile synced');
+          } catch {
+            console.log('[LoginScreen] Profile sync deferred');
+          }
+
+          try {
+            await StorySyncService.prefetchStories();
+            console.log('[LoginScreen] Story metadata synced');
+            // CMS call completed successfully - hide loading overlay to show checkmark
+            setShowLoadingOverlay(false);
+          } catch (syncError) {
+            console.error('[LoginScreen] Story sync failed:', syncError);
+            // Show sync error message but allow app to continue in offline mode
+            setLoadingPhase('sync-error');
+            setTimeout(() => {
+              // Still hide overlay after showing error, app will work in offline mode
+              setShowLoadingOverlay(false);
+            }, 2000);
+          }
         } catch (error: any) {
           setIsGoogleLoading(false);
           setProcessedResponseId(responseId);
           console.error('Google sign-in error:', error);
 
-          const isTimeout = error.message?.includes('timed out');
-          Alert.alert(
-            isTimeout ? 'Connection Timeout' : 'Sign-In Failed',
-            isTimeout
-              ? 'The server is taking too long to respond. Please check your connection and try again.'
-              : 'Unable to sign in with Google. Please try again.',
-            [{ text: 'OK' }]
-          );
+          // Show auth error in overlay
+          setLoadingPhase('auth-error');
+          setTimeout(() => {
+            setShowLoadingOverlay(false);
+          }, 2000);
         }
       } else if (response.type === 'error') {
         setIsGoogleLoading(false);
@@ -134,6 +155,8 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
   const illustrationScale = useSharedValue(0.8);
   const buttonsOpacity = useSharedValue(0);
   const buttonsTranslateY = useSharedValue(30);
+  const mainMenuTranslateX = useSharedValue(width); // Start off-screen to the right
+  const loginScreenTranslateX = useSharedValue(0); // Login screen starts at 0
 
   React.useEffect(() => {
     titleOpacity.value = withDelay(200, withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) }));
@@ -152,19 +175,20 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
     setIsTransitioning(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-    // Fade out and scale down animation with smooth easing
-    containerOpacity.value = withTiming(0, {
-      duration: 500,
+    // Slide MainMenu in from the right (starts immediately) - 50% slower = 1400ms
+    mainMenuTranslateX.value = withTiming(0, {
+      duration: 1400,
+      easing: Easing.out(Easing.cubic),
+    });
+
+    // Slide login screen out to the left - 50% slower = 1400ms
+    loginScreenTranslateX.value = withTiming(-width, {
+      duration: 1400,
       easing: Easing.out(Easing.cubic),
     }, (finished) => {
       if (finished) {
         runOnJS(callback)();
       }
-    });
-
-    containerScale.value = withTiming(0.96, {
-      duration: 500,
-      easing: Easing.out(Easing.cubic),
     });
   };
 
@@ -208,9 +232,14 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
     }
 
     setIsAppleLoading(true);
+    // Don't show loading overlay yet - wait for user to confirm in Apple dialog
 
     try {
       const result = await AuthService.signInWithApple();
+
+      // Only show loading overlay after user has confirmed sign-in
+      setShowLoadingOverlay(true);
+      setLoadingPhase('authenticating');
 
       await SecureStorage.storeTokens(
         result.tokens.accessToken,
@@ -221,9 +250,15 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
       // Clear guest mode since user is now authenticated
       setGuestMode(false);
 
+      setIsAppleLoading(false);
+
+      // Move to syncing phase
+      setLoadingPhase('syncing');
+
       try {
         const profile = await ApiClient.getProfile();
         await ProfileSyncService.fullSync(profile);
+        console.log('[LoginScreen] Profile synced');
       } catch {
         console.log('[LoginScreen] No profile found, user may need to create one');
       }
@@ -232,12 +267,17 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
         console.log('[LoginScreen] Prefetching story metadata...');
         await StorySyncService.prefetchStories();
         console.log('[LoginScreen] Story metadata synced');
-      } catch (error) {
-        console.error('[LoginScreen] Story sync failed:', error);
+        // CMS call completed successfully - hide loading overlay to show checkmark
+        setShowLoadingOverlay(false);
+      } catch (syncError) {
+        console.error('[LoginScreen] Story sync failed:', syncError);
+        // Show sync error message but allow app to continue in offline mode
+        setLoadingPhase('sync-error');
+        setTimeout(() => {
+          // Still hide overlay after showing error, app will work in offline mode
+          setShowLoadingOverlay(false);
+        }, 2000);
       }
-
-      setIsAppleLoading(false);
-      transitionToMainMenu(onSuccess);
     } catch (error: any) {
       setIsAppleLoading(false);
       console.error('Apple sign-in error:', error);
@@ -251,17 +291,15 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
 
       if (isCancelled) {
         console.log('[LoginScreen] Apple sign-in cancelled by user');
+        setShowLoadingOverlay(false);
         return;
       }
 
-      const isTimeout = error.message?.includes('timed out');
-      Alert.alert(
-        isTimeout ? 'Connection Timeout' : 'Sign-In Failed',
-        isTimeout
-          ? 'Sign-in is taking too long. Please check your connection and try again.'
-          : 'Failed to sign in with Apple. Please try again.',
-        [{ text: 'OK' }]
-      );
+      // Show auth error in overlay
+      setLoadingPhase('auth-error');
+      setTimeout(() => {
+        setShowLoadingOverlay(false);
+      }, 2000);
     }
   };
 
@@ -312,12 +350,24 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
     return <PrivacyPolicyScreen onBack={() => setCurrentView('main')} />;
   }
 
+  const mainMenuAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: mainMenuTranslateX.value }],
+    // Keep opacity at 1 always - no fade in/out, just slide
+    opacity: 1,
+  }));
+
+  const loginScreenAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: loginScreenTranslateX.value }],
+  }));
+
   return (
     <Animated.View style={[styles.container, containerAnimatedStyle]}>
-      <LinearGradient
-        colors={['#E8F5E8', '#F0F8FF', '#E6F3FF']}
-        style={styles.gradient}
-      >
+      {/* Login Screen - slides out to the left */}
+      <Animated.View style={[styles.loginScreenWrapper, loginScreenAnimatedStyle]}>
+        <LinearGradient
+          colors={['#E8F5E8', '#F0F8FF', '#E6F3FF']}
+          style={styles.gradient}
+        >
         {/* Header */}
         <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
           <Animated.View style={[styles.titleContainer, titleAnimatedStyle]}>
@@ -403,6 +453,20 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
           </View>
         </View>
       </LinearGradient>
+      </Animated.View>
+
+      {/* MainMenu slides in from the right - only render during transition to avoid flash */}
+      {isTransitioning && (
+        <Animated.View style={[styles.mainMenuContainer, mainMenuAnimatedStyle]} pointerEvents="auto">
+          <MainMenu onNavigate={onNavigate || (() => {})} isActive={true} />
+        </Animated.View>
+      )}
+
+      {/* Loading Overlay */}
+      <LoadingOverlay
+        phase={showLoadingOverlay ? loadingPhase : null}
+        onPulseComplete={() => transitionToMainMenu(onSuccess)}
+      />
     </Animated.View>
   );
 }
@@ -410,6 +474,15 @@ export function LoginScreen({ onSuccess, onSkip }: LoginScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  loginScreenWrapper: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1,
+  },
+  mainMenuContainer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 999,
+    overflow: 'hidden',
   },
   gradient: {
     flex: 1,

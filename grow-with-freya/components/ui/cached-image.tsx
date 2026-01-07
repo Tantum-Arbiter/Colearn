@@ -89,14 +89,18 @@ export const CachedImage: React.FC<CachedImageProps> = ({
 // Import the bear image at the top level - use relative path for Jest compatibility
 const bearImage = require('../../assets/images/ui-elements/bear-bottom-screen.webp');
 
-export const CachedBearImage: React.FC<{ style?: any }> = ({ style }) => {
+export const CachedBearImage: React.FC<{ style?: any; width?: number; height?: number }> = ({
+  style,
+  width = 286,
+  height = 286
+}) => {
   return (
     <CachedImage
       source={bearImage}
       style={[
         {
-          width: 286,
-          height: 286,
+          width,
+          height,
           opacity: 0.8,
         },
         style,
@@ -114,14 +118,18 @@ export const CachedBearImage: React.FC<{ style?: any }> = ({ style }) => {
 // Import the moon image at the top level - use relative path for Jest compatibility
 const moonImage = require('../../assets/images/ui-elements/moon-top-screen.webp');
 
-export const CachedMoonImage: React.FC<{ style?: any }> = ({ style }) => {
+export const CachedMoonImage: React.FC<{ style?: any; width?: number; height?: number }> = ({
+  style,
+  width = 286,
+  height = 286
+}) => {
   return (
     <CachedImage
       source={moonImage}
       style={[
         {
-          width: 286,
-          height: 286,
+          width,
+          height,
           opacity: 0.8,
         },
         style,
@@ -139,14 +147,18 @@ export const CachedMoonImage: React.FC<{ style?: any }> = ({ style }) => {
 // Import the bear-top image at the top level - use relative path for Jest compatibility
 const bearTopImage = require('../../assets/images/ui-elements/bear-top-screen.webp');
 
-export const CachedBearTopImage: React.FC<{ style?: any }> = ({ style }) => {
+export const CachedBearTopImage: React.FC<{ style?: any; width?: number; height?: number }> = ({
+  style,
+  width = 286,
+  height = 286
+}) => {
   return (
     <CachedImage
       source={bearTopImage}
       style={[
         {
-          width: 286,
-          height: 286,
+          width,
+          height,
           opacity: 0.8,
         },
         style,
@@ -164,14 +176,18 @@ export const CachedBearTopImage: React.FC<{ style?: any }> = ({ style }) => {
 // Import the moon-bottom image at the top level - use relative path for Jest compatibility
 const moonBottomImage = require('../../assets/images/ui-elements/moon-bottom-screen.webp');
 
-export const CachedMoonBottomImage: React.FC<{ style?: any }> = ({ style }) => {
+export const CachedMoonBottomImage: React.FC<{ style?: any; width?: number; height?: number }> = ({
+  style,
+  width = 286,
+  height = 286
+}) => {
   return (
     <CachedImage
       source={moonBottomImage}
       style={[
         {
-          width: 286,
-          height: 286,
+          width,
+          height,
           opacity: 0.8,
         },
         style,

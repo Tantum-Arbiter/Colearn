@@ -321,11 +321,25 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
       </View>
 
       <View style={mainMenuStyles.bearContainer} pointerEvents="none">
-        <BearImage />
+        {isActive ? (
+          <BearImage />
+        ) : (
+          <BearImage
+            width={ASSET_DIMENSIONS.bear.width / 5}
+            height={ASSET_DIMENSIONS.bear.height / 5}
+          />
+        )}
       </View>
 
       <View style={mainMenuStyles.moonContainer} pointerEvents="none">
-        <MoonImage />
+        {isActive ? (
+          <MoonImage />
+        ) : (
+          <MoonImage
+            width={ASSET_DIMENSIONS.moon.width / 5}
+            height={ASSET_DIMENSIONS.moon.height / 5}
+          />
+        )}
       </View>
 
 
