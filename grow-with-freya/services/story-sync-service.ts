@@ -124,6 +124,17 @@ export class StorySyncService {
   }
 
   /**
+   * Helper to format bytes to human readable string
+   */
+  private static formatBytes(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  /**
    * Perform delta-sync with backend
    * Only downloads stories that have changed
    */
@@ -134,6 +145,7 @@ export class StorySyncService {
 
       // Get local metadata
       const localMetadata = await this.getLocalSyncMetadata();
+      const isInitialSync = !localMetadata || localMetadata.version === 0;
 
       // Build sync request
       const syncRequest: StorySyncRequest = {
@@ -142,19 +154,58 @@ export class StorySyncService {
         lastSyncTimestamp: localMetadata?.lastSyncTimestamp || 0
       };
 
-      console.log('[CMS-SYNC] Sync request:', {
+      // Calculate request payload size
+      const requestPayload = JSON.stringify(syncRequest);
+      const requestSize = new TextEncoder().encode(requestPayload).length;
+
+      console.log('[CMS-SYNC] ----------------------------------------');
+      console.log('[CMS-SYNC] SYNC TYPE:', isInitialSync ? '🆕 INITIAL SYNC (full download)' : '🔄 DELTA SYNC (changes only)');
+      console.log('[CMS-SYNC] ----------------------------------------');
+      console.log('[CMS-SYNC] Request payload:', {
         clientVersion: syncRequest.clientVersion,
-        localStories: Object.keys(syncRequest.storyChecksums).length,
-        cachedStoryIds: Object.keys(syncRequest.storyChecksums)
+        localStoriesCount: Object.keys(syncRequest.storyChecksums).length,
+        requestPayloadSize: this.formatBytes(requestSize),
       });
+      if (!isInitialSync) {
+        console.log('[CMS-SYNC] Local story checksums sent for delta comparison:');
+        Object.entries(syncRequest.storyChecksums).forEach(([id, checksum]) => {
+          console.log(`[CMS-SYNC]   - ${id}: ${checksum.substring(0, 16)}...`);
+        });
+      }
 
       // Call sync endpoint
       const syncResponse = await ApiClient.request<StorySyncResponse>('/api/stories/sync', {
         method: 'POST',
-        body: JSON.stringify(syncRequest)
+        body: requestPayload
       });
 
-      console.log('[CMS-SYNC] Sync response received:', {
+      // Calculate response payload size
+      const responsePayload = JSON.stringify(syncResponse);
+      const responseSize = new TextEncoder().encode(responsePayload).length;
+      const storiesPayloadSize = JSON.stringify(syncResponse.stories || []);
+      const storiesSize = new TextEncoder().encode(storiesPayloadSize).length;
+
+      console.log('[CMS-SYNC] ----------------------------------------');
+      console.log('[CMS-SYNC] RESPONSE PAYLOAD SIZE:');
+      console.log(`[CMS-SYNC]   📦 Total response: ${this.formatBytes(responseSize)}`);
+      console.log(`[CMS-SYNC]   📚 Stories data: ${this.formatBytes(storiesSize)}`);
+      console.log(`[CMS-SYNC]   📊 Metadata overhead: ${this.formatBytes(responseSize - storiesSize)}`);
+      console.log('[CMS-SYNC] ----------------------------------------');
+
+      // Log delta sync details
+      if (!isInitialSync) {
+        const unchangedCount = syncResponse.totalStories - syncResponse.updatedStories;
+        const savedBytes = unchangedCount > 0 ?
+          Math.round(storiesSize * (unchangedCount / Math.max(syncResponse.updatedStories, 1))) : 0;
+
+        console.log('[CMS-SYNC] DELTA SYNC RESULTS:');
+        console.log(`[CMS-SYNC]   ✅ Stories unchanged (skipped): ${unchangedCount}`);
+        console.log(`[CMS-SYNC]   📝 Stories updated/new (downloaded): ${syncResponse.updatedStories}`);
+        console.log(`[CMS-SYNC]   💾 Estimated bandwidth saved: ~${this.formatBytes(savedBytes)}`);
+        console.log('[CMS-SYNC] ----------------------------------------');
+      }
+
+      console.log('[CMS-SYNC] Sync response summary:', {
         serverVersion: syncResponse.serverVersion,
         updatedStories: syncResponse.updatedStories,
         totalStories: syncResponse.totalStories,
@@ -232,12 +283,18 @@ export class StorySyncService {
 
       await this.saveSyncMetadata(newMetadata);
 
-      console.log('[CMS-SYNC] Sync complete - saved to local storage:', {
-        totalStories: allStories.length,
-        newStories: syncResponse.stories.length,
-        unchangedStories: unchangedStories.length,
-        storyIds: allStories.map(s => s.id)
-      });
+      // Calculate final storage size
+      const storedDataSize = new TextEncoder().encode(JSON.stringify(newMetadata)).length;
+
+      console.log('[CMS-SYNC] ----------------------------------------');
+      console.log('[CMS-SYNC] SYNC COMPLETE SUMMARY:');
+      console.log(`[CMS-SYNC]   📚 Total stories now cached: ${allStories.length}`);
+      console.log(`[CMS-SYNC]   🆕 New/updated stories this sync: ${syncResponse.stories.length}`);
+      console.log(`[CMS-SYNC]   ♻️  Unchanged stories retained: ${unchangedStories.length}`);
+      console.log(`[CMS-SYNC]   💾 Local storage size: ${this.formatBytes(storedDataSize)}`);
+      console.log(`[CMS-SYNC]   🔢 Content version: ${syncResponse.serverVersion}`);
+      console.log('[CMS-SYNC] ----------------------------------------');
+      console.log('[CMS-SYNC] Cached story IDs:', allStories.map(s => s.id));
       console.log('[CMS-SYNC] ========================================');
 
       return allStories;
