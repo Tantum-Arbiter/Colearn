@@ -257,6 +257,13 @@ function AppContent() {
               try {
                 await StorySyncService.prefetchCoverImages();
                 console.log('[_layout] Cover images prefetched successfully');
+
+                // If stories were removed (assets no longer available on CMS), refresh the cache
+                if (StorySyncService.lastPrefetchRemovedStories) {
+                  console.log('[_layout] Stories removed due to unavailable assets, refreshing cache');
+                  StoryLoader.invalidateCache();
+                  await StoryLoader.getStories();
+                }
               } catch (imageError) {
                 console.error('[_layout] Cover image prefetch failed:', imageError);
                 // Continue anyway - images will be downloaded on-demand

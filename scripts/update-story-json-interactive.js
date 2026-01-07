@@ -11,6 +11,7 @@ const path = require('path');
 const CMS_STORIES_DIR = path.join(__dirname, 'cms-stories');
 
 // Interactive elements configuration (from squirrels-snowman reference)
+// CORRECT coordinates from grow-with-freya/data/stories.ts (the working local bundled story)
 const INTERACTIVE_CONFIG = {
   2: {
     id: 'door',
@@ -23,29 +24,29 @@ const INTERACTIVE_CONFIG = {
     id: 'basket',
     type: 'reveal',
     propFile: 'page-4-basket-open.webp',
-    position: { x: 0.633, y: 0.637 },
-    size: { width: 0.245, height: 0.308 }
+    position: { x: 0.475, y: 0.478 },
+    size: { width: 0.183, height: 0.230 }
   },
   6: {
-    id: 'basket',
+    id: 'crate',
     type: 'reveal',
     propFile: 'page-6-basket-open.webp',
-    position: { x: 0.471, y: 0.579 },
-    size: { width: 0.396, height: 0.366 }
+    position: { x: 0.348, y: 0.433 },
+    size: { width: 0.308, height: 0.280 }
   },
   8: {
     id: 'food-cover',
     type: 'reveal',
     propFile: 'page-8-food-cover-open.webp',
-    position: { x: 0.335, y: 0.609 },
-    size: { width: 0.287, height: 0.213 }
+    position: { x: 0.254, y: 0.460 },
+    size: { width: 0.212, height: 0.158 }
   },
   10: {
     id: 'curtains',
     type: 'reveal',
     propFile: 'page-10-curtains-open.webp',
-    position: { x: 0.373, y: 0.380 },
-    size: { width: 0.601, height: 0.387 }
+    position: { x: 0.279, y: 0.286 },
+    size: { width: 0.451, height: 0.291 }
   }
 };
 

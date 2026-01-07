@@ -65,8 +65,8 @@
           "id": "basket",
           "type": "reveal",
           "image": "assets/stories/squirrels-snowman/page-4/props/page-4-basket-open.webp",
-          "position": { "x": 0.633, "y": 0.637 },
-          "size": { "width": 0.245, "height": 0.308 }
+          "position": { "x": 0.475, "y": 0.478 },
+          "size": { "width": 0.183, "height": 0.230 }
         }
       ]
     },
@@ -85,11 +85,11 @@
       "text": "They look inside a great big box\nand find some lumps of coal.",
       "interactiveElements": [
         {
-          "id": "basket",
+          "id": "crate",
           "type": "reveal",
           "image": "assets/stories/squirrels-snowman/page-6/props/page-6-basket-open.webp",
-          "position": { "x": 0.471, "y": 0.579 },
-          "size": { "width": 0.396, "height": 0.366 }
+          "position": { "x": 0.348, "y": 0.433 },
+          "size": { "width": 0.308, "height": 0.280 }
         }
       ]
     },
@@ -111,8 +111,8 @@
           "id": "food-cover",
           "type": "reveal",
           "image": "assets/stories/squirrels-snowman/page-8/props/page-8-food-cover-open.webp",
-          "position": { "x": 0.335, "y": 0.609 },
-          "size": { "width": 0.287, "height": 0.213 }
+          "position": { "x": 0.254, "y": 0.460 },
+          "size": { "width": 0.212, "height": 0.158 }
         }
       ]
     },
@@ -134,8 +134,8 @@
           "id": "curtains",
           "type": "reveal",
           "image": "assets/stories/squirrels-snowman/page-10/props/page-10-curtains-open.webp",
-          "position": { "x": 0.373, "y": 0.380 },
-          "size": { "width": 0.601, "height": 0.387 }
+          "position": { "x": 0.279, "y": 0.286 },
+          "size": { "width": 0.451, "height": 0.291 }
         }
       ]
     }

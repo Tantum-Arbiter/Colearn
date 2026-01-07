@@ -102,7 +102,7 @@ export class StorySyncService {
   static async isSyncNeeded(): Promise<boolean> {
     try {
       const localMetadata = await this.getLocalSyncMetadata();
-      
+
       // If no local data, sync is needed
       if (!localMetadata) {
         console.log('[StorySyncService] No local data, sync needed');
@@ -112,13 +112,32 @@ export class StorySyncService {
       // Get server version
       const serverVersion = await this.getContentVersion();
 
-      // Compare versions
-      const syncNeeded = serverVersion.version > localMetadata.version;
+      // Check 1: Version number increased (new content added)
+      const versionIncreased = serverVersion.version > localMetadata.version;
+
+      // Check 2: Story count changed (stories added or DELETED)
+      const localStoryCount = localMetadata.stories?.length || 0;
+      const serverStoryCount = serverVersion.totalStories || 0;
+      const storyCountChanged = localStoryCount !== serverStoryCount;
+
+      // Check 3: Local has stories that server doesn't (deletions)
+      const serverStoryIds = new Set(Object.keys(serverVersion.storyChecksums || {}));
+      const localStoryIds = Object.keys(localMetadata.storyChecksums || {});
+      const deletedStories = localStoryIds.filter(id => !serverStoryIds.has(id));
+      const hasDeletedStories = deletedStories.length > 0;
+
+      const syncNeeded = versionIncreased || storyCountChanged || hasDeletedStories;
 
       console.log('[StorySyncService] Sync check:', {
         localVersion: localMetadata.version,
         serverVersion: serverVersion.version,
-        syncNeeded
+        localStoryCount,
+        serverStoryCount,
+        deletedStories: deletedStories.length > 0 ? deletedStories : 'none',
+        syncNeeded,
+        reason: versionIncreased ? 'version_increased' :
+                storyCountChanged ? 'story_count_changed' :
+                hasDeletedStories ? 'stories_deleted' : 'up_to_date'
       });
 
       return syncNeeded;
@@ -298,8 +317,20 @@ export class StorySyncService {
       const existingStories = localMetadata?.stories || [];
       const updatedStoryIds = new Set(syncResponse.stories.map(s => s.id));
 
-      // Keep existing stories that weren't updated
-      const unchangedStories = existingStories.filter(s => !updatedStoryIds.has(s.id));
+      // Get set of story IDs that still exist on the server
+      const serverStoryIds = new Set(Object.keys(syncResponse.storyChecksums || {}));
+
+      // Keep existing stories that weren't updated AND still exist on the server
+      // This handles deletions: if a story was deleted from CMS, it won't be in serverStoryIds
+      const unchangedStories = existingStories.filter(s =>
+        !updatedStoryIds.has(s.id) && serverStoryIds.has(s.id)
+      );
+
+      // Check for deleted stories
+      const deletedStories = existingStories.filter(s => !serverStoryIds.has(s.id));
+      if (deletedStories.length > 0) {
+        console.log('[CMS-SYNC] 🗑️  Stories deleted from CMS:', deletedStories.map(s => s.id));
+      }
 
       // Combine unchanged + updated stories
       const allStories = [...unchangedStories, ...syncResponse.stories];
@@ -325,6 +356,7 @@ export class StorySyncService {
       console.log(`[CMS-SYNC]   📚 Total stories now cached: ${allStories.length}`);
       console.log(`[CMS-SYNC]   🆕 New/updated stories this sync: ${syncResponse.stories.length}`);
       console.log(`[CMS-SYNC]   ♻️  Unchanged stories retained: ${unchangedStories.length}`);
+      console.log(`[CMS-SYNC]   🗑️  Stories removed (deleted from CMS): ${deletedStories.length}`);
       console.log(`[CMS-SYNC]   💾 Local storage size: ${this.formatBytes(storedDataSize)}`);
       console.log(`[CMS-SYNC]   🔢 Content version: ${syncResponse.serverVersion}`);
       console.log('[CMS-SYNC] ----------------------------------------');
@@ -451,12 +483,23 @@ export class StorySyncService {
   }
 
   /**
+   * Result of prefetching cover images
+   */
+  static lastPrefetchRemovedStories = false;
+
+  /**
    * Prefetch all story cover images to ensure they're cached before showing the story selection screen
    * This should be called after prefetchStories() to ensure smooth UX
    * Returns a map of storyId -> cachedCoverPath for instant display
+   *
+   * IMPORTANT: Stories whose covers fail to load are removed from local cache
+   * This handles the case where a story was removed from CMS but still exists locally
+   * Check StorySyncService.lastPrefetchRemovedStories to see if stories were removed
    */
   static async prefetchCoverImages(): Promise<Map<string, string>> {
     const cachedPaths = new Map<string, string>();
+    const failedStoryIds: string[] = [];
+    this.lastPrefetchRemovedStories = false;
 
     try {
       console.log('[StorySyncService] Prefetching cover images for instant display...');
@@ -466,12 +509,6 @@ export class StorySyncService {
 
       console.log(`[StorySyncService] Found ${storiesWithCovers.length} CMS stories with cover images to cache`);
 
-      // DEBUG: Log all cover image URLs to check if they're unique
-      storiesWithCovers.forEach((story, idx) => {
-        console.log(`[StorySyncService] Story ${idx + 1}: ${story.id}`);
-        console.log(`[StorySyncService]   coverImage URL: "${story.coverImage}"`);
-      });
-
       // Download all cover images in parallel
       const downloadPromises = storiesWithCovers.map(async (story) => {
         try {
@@ -479,20 +516,30 @@ export class StorySyncService {
           const cachedPath = await AuthenticatedImageService.getImageUri(url);
           if (cachedPath) {
             cachedPaths.set(story.id, cachedPath);
-            console.log(`[StorySyncService] ✓ Cover cached: ${story.id} -> ${cachedPath.split('/').pop()}`);
-            return true;
+            console.log(`[StorySyncService] ✓ Cover cached: ${story.id}`);
+            return { storyId: story.id, success: true };
           }
-          return false;
+          console.warn(`[StorySyncService] ✗ Cover not available: ${story.id} - will remove from cache`);
+          failedStoryIds.push(story.id);
+          return { storyId: story.id, success: false };
         } catch (error) {
           console.warn(`[StorySyncService] ✗ Failed to cache cover: ${story.id}`, error);
-          return false;
+          failedStoryIds.push(story.id);
+          return { storyId: story.id, success: false };
         }
       });
 
       const results = await Promise.all(downloadPromises);
-      const successCount = results.filter(Boolean).length;
+      const successCount = results.filter(r => r.success).length;
 
       console.log(`[StorySyncService] Cover image prefetch complete: ${successCount}/${storiesWithCovers.length} successful`);
+
+      // Remove stories with unavailable covers from local cache
+      if (failedStoryIds.length > 0) {
+        console.log(`[StorySyncService] Removing ${failedStoryIds.length} stories with unavailable assets from cache`);
+        await this.removeStoriesFromCache(failedStoryIds);
+        this.lastPrefetchRemovedStories = true;
+      }
 
       // Store the cached paths for quick lookup
       await this.saveCachedCoverPaths(cachedPaths);
@@ -501,6 +548,35 @@ export class StorySyncService {
     } catch (error) {
       console.error('[StorySyncService] Cover image prefetch failed:', error);
       return cachedPaths;
+    }
+  }
+
+  /**
+   * Remove stories from local cache
+   * Called when story assets are no longer available on the server
+   */
+  private static async removeStoriesFromCache(storyIds: string[]): Promise<void> {
+    try {
+      const metadata = await this.getLocalSyncMetadata();
+      if (!metadata) return;
+
+      const storyIdsSet = new Set(storyIds);
+      const remainingStories = metadata.stories.filter(s => !storyIdsSet.has(s.id));
+
+      // Update checksums to remove deleted stories
+      const updatedChecksums = { ...metadata.storyChecksums };
+      storyIds.forEach(id => delete updatedChecksums[id]);
+
+      const updatedMetadata: StorySyncMetadata = {
+        ...metadata,
+        stories: remainingStories,
+        storyChecksums: updatedChecksums,
+      };
+
+      await this.saveSyncMetadata(updatedMetadata);
+      console.log(`[StorySyncService] Removed ${storyIds.length} unavailable stories from cache. Remaining: ${remainingStories.length}`);
+    } catch (error) {
+      console.error('[StorySyncService] Error removing stories from cache:', error);
     }
   }
 
