@@ -266,18 +266,20 @@ export class AuthenticatedImageService {
 
   /**
    * Generate a cache filename from URL
-   * Uses hash of full URL to avoid collisions when multiple images have same filename
+   * Backend uses unique descriptive filenames like:
+   * - squirrel-snowman-cover.webp
+   * - squirrel-snowman-page-1-bg.webp
+   * Just extract the filename directly from the URL
    */
   private static getCacheFilename(url: string): string {
-    // Always use hash of full URL to avoid collisions
-    // e.g., story1/cover/cover.webp and story2/cover/cover.webp would both be "cover.webp"
-    // but we need them to be different files
-    const hash = this.hashCode(url);
     const urlParts = url.split('/');
     const filename = urlParts[urlParts.length - 1];
-    const ext = filename.includes('.') ? filename.substring(filename.lastIndexOf('.')) : '.webp';
 
-    return `image-${hash}${ext}`;
+    // Remove any query parameters
+    const cleanFilename = filename.split('?')[0];
+
+    console.log(`[AuthImageService] Cache filename: ${cleanFilename} (from ${url})`);
+    return cleanFilename || `image-${this.hashCode(url)}.webp`;
   }
 
   /**

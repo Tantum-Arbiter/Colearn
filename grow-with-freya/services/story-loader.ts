@@ -9,14 +9,60 @@ import { ALL_STORIES, getAvailableStories } from '@/data/stories';
  * - Local stories (from stories.ts): Always available, work offline
  * - CMS stories: Downloaded after login, premium content
  * - Merged result: Local stories + CMS stories (no duplicates)
+ * - Memory cache: Keeps stories in memory for instant access after first load
  */
 export class StoryLoader {
+  // In-memory cache for instant story access after first load
+  // Prevents stories from "disappearing" when navigating between screens
+  private static cachedStories: Story[] | null = null;
+  private static isLoading: boolean = false;
+  private static loadPromise: Promise<Story[]> | null = null;
 
   /**
-   * Get all available stories
-   * Merges local stories with CMS-synced stories
+   * Get cached stories synchronously if available
+   * Returns null if no cache exists yet
+   * Use this for initial render to avoid blank state
+   */
+  static getCachedStories(): Story[] | null {
+    return this.cachedStories;
+  }
+
+  /**
+   * Get stories with instant return if cached
+   * First call loads async and caches; subsequent calls return cached instantly
    */
   static async getStories(): Promise<Story[]> {
+    // Return cached stories immediately if available
+    if (this.cachedStories) {
+      console.log(`[CMS-LOADER] ⚡ Returning ${this.cachedStories.length} cached stories instantly`);
+      return this.cachedStories;
+    }
+
+    // If already loading, wait for the existing promise to avoid duplicate loads
+    if (this.isLoading && this.loadPromise) {
+      console.log(`[CMS-LOADER] Waiting for existing load to complete...`);
+      return this.loadPromise;
+    }
+
+    // Start loading
+    this.isLoading = true;
+    this.loadPromise = this.loadStoriesInternal();
+
+    try {
+      const stories = await this.loadPromise;
+      this.cachedStories = stories;
+      console.log(`[CMS-LOADER] ✓ Cached ${stories.length} stories for instant access`);
+      return stories;
+    } finally {
+      this.isLoading = false;
+      this.loadPromise = null;
+    }
+  }
+
+  /**
+   * Internal method to actually load and merge stories
+   */
+  private static async loadStoriesInternal(): Promise<Story[]> {
     try {
       // Start with local stories (offline-first)
       const localStories = [...ALL_STORIES];
@@ -105,14 +151,27 @@ export class StoryLoader {
   }
 
   /**
+   * Invalidate the in-memory cache
+   * Call this after sync completes to ensure fresh stories are loaded
+   */
+  static invalidateCache(): void {
+    console.log('[StoryLoader] Invalidating story cache');
+    this.cachedStories = null;
+  }
+
+  /**
    * Force refresh stories from backend
+   * Also invalidates cache so next getStories() loads fresh
    */
   static async refreshStories(): Promise<Story[]> {
     try {
       console.log('[StoryLoader] Forcing story refresh...');
+      this.invalidateCache();
       const stories = await StorySyncService.syncStories();
-      console.log(`[StoryLoader] Refreshed ${stories.length} stories`);
-      return stories;
+      // Update cache with fresh stories
+      this.cachedStories = await this.loadStoriesInternal();
+      console.log(`[StoryLoader] Refreshed ${this.cachedStories.length} stories`);
+      return this.cachedStories;
     } catch (error) {
       console.error('[StoryLoader] Refresh failed:', error);
       throw error;

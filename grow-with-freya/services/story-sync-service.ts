@@ -429,6 +429,12 @@ export class StorySyncService {
 
       console.log(`[StorySyncService] Found ${storiesWithCovers.length} CMS stories with cover images to cache`);
 
+      // DEBUG: Log all cover image URLs to check if they're unique
+      storiesWithCovers.forEach((story, idx) => {
+        console.log(`[StorySyncService] Story ${idx + 1}: ${story.id}`);
+        console.log(`[StorySyncService]   coverImage URL: "${story.coverImage}"`);
+      });
+
       // Download all cover images in parallel
       const downloadPromises = storiesWithCovers.map(async (story) => {
         try {

@@ -4,14 +4,19 @@
   "category": "nature",
   "tag": "🐢 Nature",
   "emoji": "🐿️",
-  "coverImage": "assets/stories/cms-test-1-snowman-squirrel/cover/thumbnail.webp",
+  "coverImage": "assets/stories/cms-test-1-snowman-squirrel/cover/cms-test-1-snowman-squirrel-thumbnail.webp",
   "isAvailable": true,
   "ageRange": "2-5",
   "duration": 10,
   "description": "CMS Test Story 1 - A delightful winter story about a squirrel who builds a snowman.",
   "isPremium": true,
   "author": "Freya Stories",
-  "tags": ["nature", "winter", "friendship", "test"],
+  "tags": [
+    "nature",
+    "winter",
+    "friendship",
+    "test"
+  ],
   "_disclaimer": "Test story for CMS sync validation",
   "_usageType": "test",
   "pages": [
@@ -19,79 +24,78 @@
       "id": "cms-test-1-cover",
       "pageNumber": 0,
       "type": "cover",
-      "backgroundImage": "assets/stories/cms-test-1-snowman-squirrel/cover/cover.webp",
+      "backgroundImage": "assets/stories/cms-test-1-snowman-squirrel/cover/cms-test-1-snowman-squirrel-cover.webp",
       "text": "CMS Test 1\nSnowman Squirrel"
     },
     {
       "id": "cms-test-1-page-1",
       "pageNumber": 1,
       "type": "story",
-      "backgroundImage": "assets/stories/cms-test-1-snowman-squirrel/page-1/page-1.webp",
+      "backgroundImage": "assets/stories/cms-test-1-snowman-squirrel/page-1/cms-test-1-snowman-squirrel-page-1.webp",
       "text": "Squirrel puts her boots on.\nHer hat is on her head."
     },
     {
       "id": "cms-test-1-page-2",
       "pageNumber": 2,
       "type": "story",
-      "backgroundImage": "assets/stories/cms-test-1-snowman-squirrel/page-2/page-2.webp",
+      "backgroundImage": "assets/stories/cms-test-1-snowman-squirrel/page-2/cms-test-1-snowman-squirrel-page-2.webp",
       "text": "She wants to make a snowman.\nWhat's inside this shed?"
     },
     {
       "id": "cms-test-1-page-3",
       "pageNumber": 3,
       "type": "story",
-      "backgroundImage": "assets/stories/cms-test-1-snowman-squirrel/page-3/page-3.webp",
+      "backgroundImage": "assets/stories/cms-test-1-snowman-squirrel/page-3/cms-test-1-snowman-squirrel-page-3.webp",
       "text": "Squirrel's snowman has a head.\nNow he needs a nose."
     },
     {
       "id": "cms-test-1-page-4",
       "pageNumber": 4,
       "type": "story",
-      "backgroundImage": "assets/stories/cms-test-1-snowman-squirrel/page-4/page-4.webp",
+      "backgroundImage": "assets/stories/cms-test-1-snowman-squirrel/page-4/cms-test-1-snowman-squirrel-page-4.webp",
       "text": "Can Squirrel find a carrot?\nWhat do you suppose?"
     },
     {
       "id": "cms-test-1-page-5",
       "pageNumber": 5,
       "type": "story",
-      "backgroundImage": "assets/stories/cms-test-1-snowman-squirrel/page-5/page-5.webp",
+      "backgroundImage": "assets/stories/cms-test-1-snowman-squirrel/page-5/cms-test-1-snowman-squirrel-page-5.webp",
       "text": "Now the snowman needs some eyes.\nSquirrel visits Mole."
     },
     {
       "id": "cms-test-1-page-6",
       "pageNumber": 6,
       "type": "story",
-      "backgroundImage": "assets/stories/cms-test-1-snowman-squirrel/page-6/page-6.webp",
+      "backgroundImage": "assets/stories/cms-test-1-snowman-squirrel/page-6/cms-test-1-snowman-squirrel-page-6.webp",
       "text": "They look inside a great big box\nand find some lumps of coal."
     },
     {
       "id": "cms-test-1-page-7",
       "pageNumber": 7,
       "type": "story",
-      "backgroundImage": "assets/stories/cms-test-1-snowman-squirrel/page-7/page-7.webp",
+      "backgroundImage": "assets/stories/cms-test-1-snowman-squirrel/page-7/cms-test-1-snowman-squirrel-page-7.webp",
       "text": "A hat, a scarf, and twigs for arms -\nthe snowman is complete!"
     },
     {
       "id": "cms-test-1-page-8",
       "pageNumber": 8,
       "type": "story",
-      "backgroundImage": "assets/stories/cms-test-1-snowman-squirrel/page-8/page-8.webp",
+      "backgroundImage": "assets/stories/cms-test-1-snowman-squirrel/page-8/cms-test-1-snowman-squirrel-page-8.webp",
       "text": "Squirrel's feeling hungry.\nWhat's she going to eat?"
     },
     {
       "id": "cms-test-1-page-9",
       "pageNumber": 9,
       "type": "story",
-      "backgroundImage": "assets/stories/cms-test-1-snowman-squirrel/page-9/page-9.webp",
+      "backgroundImage": "assets/stories/cms-test-1-snowman-squirrel/page-9/cms-test-1-snowman-squirrel-page-9.webp",
       "text": "Now it's Squirrel's bedtime.\nShe's tucked up nice and tight."
     },
     {
       "id": "cms-test-1-page-10",
       "pageNumber": 10,
       "type": "story",
-      "backgroundImage": "assets/stories/cms-test-1-snowman-squirrel/page-10/page-10.webp",
+      "backgroundImage": "assets/stories/cms-test-1-snowman-squirrel/page-10/cms-test-1-snowman-squirrel-page-10.webp",
       "text": "Who's outside the window?\nShall we wave goodnight?"
     }
   ]
 }
-

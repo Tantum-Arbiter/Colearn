@@ -24,6 +24,7 @@ import { SecureStorage } from '@/services/secure-storage';
 import { ApiClient } from '@/services/api-client';
 import { ProfileSyncService } from '@/services/profile-sync-service';
 import { StorySyncService } from '@/services/story-sync-service';
+import { StoryLoader } from '@/services/story-loader';
 import { AssetSyncService } from '@/services/asset-sync-service';
 import { useAppStore } from '@/store/app-store';
 import { useAccessibility } from '@/hooks/use-accessibility';
@@ -108,6 +109,11 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
           try {
             await StorySyncService.prefetchStories();
             console.log('[LoginScreen] Story metadata synced');
+
+            // Pre-populate StoryLoader cache for instant story list display
+            // This ensures stories don't "disappear" when navigating between screens
+            await StoryLoader.getStories();
+            console.log('[LoginScreen] StoryLoader cache populated');
 
             // Prefetch cover images to ensure smooth story selection screen
             try {
@@ -281,6 +287,10 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
         console.log('[LoginScreen] Prefetching story metadata...');
         await StorySyncService.prefetchStories();
         console.log('[LoginScreen] Story metadata synced');
+
+        // Pre-populate StoryLoader cache for instant story list display
+        await StoryLoader.getStories();
+        console.log('[LoginScreen] StoryLoader cache populated');
 
         // Prefetch cover images to ensure smooth story selection screen
         try {

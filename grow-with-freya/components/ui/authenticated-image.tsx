@@ -136,6 +136,9 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
     return null;
   }
 
+  // Log the exact URI being used (helps debug file:// path issues)
+  console.log(`[AuthenticatedImage] Rendering with URI: ${cachedUri}`);
+
   return (
     <Image
       {...props}
@@ -148,9 +151,10 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
           onLoad();
         }
       }}
-      onError={() => {
-        // Don't log the error object as it's often null and not helpful
-        console.warn(`[AuthenticatedImage] Image render failed for: ${cachedUri.split('/').pop()}`);
+      onError={(error) => {
+        // Log detailed error info for debugging
+        console.error(`[AuthenticatedImage] Image render failed for URI: ${cachedUri}`);
+        console.error(`[AuthenticatedImage] Error details:`, error?.nativeEvent);
         handleRenderError();
       }}
     />

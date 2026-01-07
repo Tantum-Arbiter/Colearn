@@ -18,6 +18,7 @@ import { MainMenu } from '@/components/main-menu';
 import { ApiClient } from '@/services/api-client';
 import { backgroundSaveService } from '@/services/background-save-service';
 import { StorySyncService } from '@/services/story-sync-service';
+import { StoryLoader } from '@/services/story-loader';
 import { AssetSyncService } from '@/services/asset-sync-service';
 import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
 import { StoryBookReader } from '@/components/stories/story-book-reader';
@@ -247,6 +248,10 @@ function AppContent() {
             try {
               await StorySyncService.prefetchStories();
               console.log('[_layout] Stories prefetched successfully');
+
+              // Pre-populate StoryLoader cache for instant story list display
+              await StoryLoader.getStories();
+              console.log('[_layout] StoryLoader cache populated');
 
               // Prefetch cover images to ensure they're cached before showing story selection
               try {

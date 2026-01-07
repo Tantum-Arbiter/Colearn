@@ -44,9 +44,19 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   // Scroll tracking for dynamic carousel effects
   const [scrollPositions, setScrollPositions] = useState<{ [key: string]: number }>({});
 
-  // Load stories from StoryLoader (synced metadata or fallback to MOCK_STORIES)
-  const [stories, setStories] = useState<Story[]>(ALL_STORIES);
-  const [isLoadingStories, setIsLoadingStories] = useState(true);
+  // Load stories from StoryLoader with instant cache support
+  // If stories are already cached (from previous visit), use them immediately - no flicker
+  const initialStories = useMemo(() => {
+    const cached = StoryLoader.getCachedStories();
+    if (cached && cached.length > 0) {
+      console.log(`[StorySelectionScreen] ⚡ Using ${cached.length} cached stories instantly`);
+      return cached;
+    }
+    return ALL_STORIES;
+  }, []);
+
+  const [stories, setStories] = useState<Story[]>(initialStories);
+  const [isLoadingStories, setIsLoadingStories] = useState(!StoryLoader.getCachedStories());
 
   // Story preview modal state
   const [previewStory, setPreviewStory] = useState<Story | null>(null);
@@ -63,8 +73,16 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     setPreviewStory(null);
   }, []);
 
-  // PERFORMANCE: Defer story loading until after page transition to prevent jitter
+  // Load stories - instant if cached, async if first load
   useEffect(() => {
+    // If we already have cached stories, no need to load again
+    if (StoryLoader.getCachedStories()) {
+      console.log(`[StorySelectionScreen] Stories already cached, skipping async load`);
+      setIsLoadingStories(false);
+      return;
+    }
+
+    // First load - defer until after page transition to prevent jitter
     const timeoutId = setTimeout(() => {
       const loadStories = async () => {
         try {
