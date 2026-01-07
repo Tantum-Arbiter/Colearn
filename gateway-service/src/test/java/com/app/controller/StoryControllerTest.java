@@ -2,6 +2,7 @@ package com.app.controller;
 
 import com.app.dto.StorySyncRequest;
 import com.app.model.ContentVersion;
+import com.app.model.InteractiveElement;
 import com.app.model.Story;
 import com.app.model.StoryPage;
 import com.app.service.GatewayServiceApplication;
@@ -46,7 +47,7 @@ class StoryControllerTest {
 
     @BeforeEach
     void setUp() {
-        // Create test story 1
+        // Create test story 1 with interactive elements
         testStory1 = new Story();
         testStory1.setId("story-1");
         testStory1.setTitle("The Sleepy Forest");
@@ -58,11 +59,25 @@ class StoryControllerTest {
         testStory1.setVersion(1);
         testStory1.setChecksum("checksum1");
 
+        // Page without interactive elements
         StoryPage page1 = new StoryPage();
         page1.setId("story-1-page-1");
         page1.setPageNumber(1);
         page1.setText("Once upon a time...");
-        testStory1.setPages(Arrays.asList(page1));
+
+        // Page with interactive elements
+        StoryPage page2 = new StoryPage();
+        page2.setId("story-1-page-2");
+        page2.setPageNumber(2);
+        page2.setText("What's inside this shed?");
+        page2.setBackgroundImage("assets/stories/story-1/page-2/page-2.webp");
+
+        InteractiveElement doorElement = new InteractiveElement("door", "reveal", "assets/stories/story-1/page-2/door-open.webp");
+        doorElement.setPosition(new InteractiveElement.Position(0.481, 0.337));
+        doorElement.setSize(new InteractiveElement.Size(0.273, 0.301));
+        page2.setInteractiveElements(Arrays.asList(doorElement));
+
+        testStory1.setPages(Arrays.asList(page1, page2));
 
         // Create test story 2
         testStory2 = new Story();
@@ -76,11 +91,11 @@ class StoryControllerTest {
         testStory2.setVersion(1);
         testStory2.setChecksum("checksum2");
 
-        StoryPage page2 = new StoryPage();
-        page2.setId("story-2-page-1");
-        page2.setPageNumber(1);
-        page2.setText("It was a happy day...");
-        testStory2.setPages(Arrays.asList(page2));
+        StoryPage page2Story2 = new StoryPage();
+        page2Story2.setId("story-2-page-1");
+        page2Story2.setPageNumber(1);
+        page2Story2.setText("It was a happy day...");
+        testStory2.setPages(Arrays.asList(page2Story2));
 
         // Create test content version
         testContentVersion = new ContentVersion();
@@ -154,7 +169,46 @@ class StoryControllerTest {
                 .andExpect(jsonPath("$.title").value("The Sleepy Forest"))
                 .andExpect(jsonPath("$.category").value("bedtime"))
                 .andExpect(jsonPath("$.pages").isArray())
-                .andExpect(jsonPath("$.pages.length()").value(1));
+                .andExpect(jsonPath("$.pages.length()").value(2));
+
+        verify(storyService, times(1)).getStoryById("story-1");
+    }
+
+    @Test
+    void getStoryById_IncludesInteractiveElements() throws Exception {
+        // Arrange
+        when(storyService.getStoryById("story-1"))
+                .thenReturn(CompletableFuture.completedFuture(Optional.of(testStory1)));
+
+        // Act & Assert - Verify interactive elements are returned in response
+        mockMvc.perform(get("/api/stories/story-1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("story-1"))
+                .andExpect(jsonPath("$.pages[1].interactiveElements").isArray())
+                .andExpect(jsonPath("$.pages[1].interactiveElements.length()").value(1))
+                .andExpect(jsonPath("$.pages[1].interactiveElements[0].id").value("door"))
+                .andExpect(jsonPath("$.pages[1].interactiveElements[0].type").value("reveal"))
+                .andExpect(jsonPath("$.pages[1].interactiveElements[0].image").value("assets/stories/story-1/page-2/door-open.webp"))
+                .andExpect(jsonPath("$.pages[1].interactiveElements[0].position.x").value(0.481))
+                .andExpect(jsonPath("$.pages[1].interactiveElements[0].position.y").value(0.337))
+                .andExpect(jsonPath("$.pages[1].interactiveElements[0].size.width").value(0.273))
+                .andExpect(jsonPath("$.pages[1].interactiveElements[0].size.height").value(0.301));
+
+        verify(storyService, times(1)).getStoryById("story-1");
+    }
+
+    @Test
+    void getStoryById_PageWithoutInteractiveElements() throws Exception {
+        // Arrange
+        when(storyService.getStoryById("story-1"))
+                .thenReturn(CompletableFuture.completedFuture(Optional.of(testStory1)));
+
+        // Act & Assert - Page 1 should have empty interactiveElements
+        mockMvc.perform(get("/api/stories/story-1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pages[0].id").value("story-1-page-1"))
+                .andExpect(jsonPath("$.pages[0].interactiveElements").isArray())
+                .andExpect(jsonPath("$.pages[0].interactiveElements.length()").value(0));
 
         verify(storyService, times(1)).getStoryById("story-1");
     }

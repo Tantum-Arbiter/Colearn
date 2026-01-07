@@ -5,6 +5,7 @@ import {
   withTiming,
   Easing,
   runOnJS,
+  cancelAnimation,
 } from 'react-native-reanimated';
 
 /**
@@ -15,14 +16,24 @@ export function useLoadingCircleAnimation() {
   const rotation = useSharedValue(0);
 
   const startAnimation = () => {
+    // Reset rotation to 0 before starting to ensure consistent speed
+    cancelAnimation(rotation);
+    rotation.value = 0;
+
+    // Use withRepeat for continuous rotation
+    // Duration of 1000ms (1 second) per rotation for a nice smooth spin
     rotation.value = withRepeat(
       withTiming(360, {
-        duration: 2000,
+        duration: 1000,
         easing: Easing.linear,
       }),
-      -1,
-      false
+      -1, // Infinite repeat
+      false // Don't reverse
     );
+  };
+
+  const stopAnimation = () => {
+    cancelAnimation(rotation);
   };
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -31,7 +42,7 @@ export function useLoadingCircleAnimation() {
     ],
   }));
 
-  return { rotation, startAnimation, animatedStyle };
+  return { rotation, startAnimation, stopAnimation, animatedStyle };
 }
 
 /**

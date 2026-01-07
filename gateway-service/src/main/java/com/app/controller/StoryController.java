@@ -123,9 +123,16 @@ public class StoryController {
                 logger.info("[CMS]   -> Syncing story: id={}, title='{}', pages={}",
                         story.getId(), story.getTitle(), pageCount);
                 if (story.getPages() != null && !story.getPages().isEmpty()) {
-                    story.getPages().forEach(page ->
-                        logger.info("[CMS]       -> Page {}: image={}",
-                                page.getPageNumber(), page.getBackgroundImage()));
+                    story.getPages().forEach(page -> {
+                        int interactiveCount = page.getInteractiveElements() != null ? page.getInteractiveElements().size() : 0;
+                        logger.info("[CMS]       -> Page {}: image={}, interactiveElements={}",
+                                page.getPageNumber(), page.getBackgroundImage(), interactiveCount);
+                        if (page.getInteractiveElements() != null) {
+                            page.getInteractiveElements().forEach(el ->
+                                logger.info("[CMS]           -> Element: id={}, type={}, image={}",
+                                        el.getId(), el.getType(), el.getImage()));
+                        }
+                    });
                 }
             });
 

@@ -8,7 +8,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Pressable, Image, StyleSheet, Dimensions } from 'react-native';
+import { Pressable, StyleSheet, Image, ImageSourcePropType } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -20,6 +20,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { InteractiveElement as InteractiveElementType } from '@/types/story';
+import { AuthenticatedImage } from '@/components/ui/authenticated-image';
 
 interface InteractiveElementProps {
   element: InteractiveElementType;
@@ -213,10 +214,35 @@ export const InteractiveElementComponent: React.FC<InteractiveElementProps> = ({
     transform: [{ scale: propScale.value }],
   }));
 
-  // Resolve image source
-  const imageSource = typeof element.image === 'string'
-    ? { uri: element.image }
-    : element.image;
+  // Determine if image is a local require() or a remote URL string
+  const isLocalImage = typeof element.image === 'number';
+  const imageUri = typeof element.image === 'string' ? element.image : '';
+
+  // Render the appropriate image component based on source type
+  const renderPropImage = () => {
+    if (isLocalImage) {
+      // Local bundled image (require() returns a number)
+      return (
+        <Image
+          source={element.image as unknown as ImageSourcePropType}
+          style={styles.propImage}
+          resizeMode="contain"
+        />
+      );
+    } else if (imageUri) {
+      // Remote CMS image URL
+      return (
+        <AuthenticatedImage
+          uri={imageUri}
+          style={styles.propImage}
+          resizeMode="contain"
+          fallbackEmoji="✨"
+          showLoadingIndicator={false}
+        />
+      );
+    }
+    return null;
+  };
 
   return (
     <>
@@ -265,11 +291,7 @@ export const InteractiveElementComponent: React.FC<InteractiveElementProps> = ({
         ]}
         pointerEvents="none" // Let touches pass through to hit area
       >
-        <Image
-          source={imageSource}
-          style={styles.propImage}
-          resizeMode="contain"
-        />
+        {renderPropImage()}
       </Animated.View>
     </>
   );

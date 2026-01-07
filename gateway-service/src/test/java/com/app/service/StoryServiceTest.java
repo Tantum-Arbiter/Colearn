@@ -1,6 +1,7 @@
 package com.app.service;
 
 import com.app.model.ContentVersion;
+import com.app.model.InteractiveElement;
 import com.app.model.Story;
 import com.app.model.StoryPage;
 import com.app.repository.ContentVersionRepository;
@@ -53,13 +54,27 @@ class StoryServiceTest {
         testStory1.setCreatedAt(Instant.now());
         testStory1.setUpdatedAt(Instant.now());
 
-        // Add pages to story 1
+        // Add pages to story 1 (with interactive elements)
         List<StoryPage> pages1 = new ArrayList<>();
         StoryPage page1 = new StoryPage();
         page1.setId("page-1");
         page1.setPageNumber(1);
         page1.setText("Once upon a time in a sleepy forest...");
         pages1.add(page1);
+
+        // Page with interactive element
+        StoryPage page2 = new StoryPage();
+        page2.setId("page-2");
+        page2.setPageNumber(2);
+        page2.setText("What's inside this shed?");
+        page2.setBackgroundImage("assets/stories/story-1/page-2/page-2.webp");
+
+        InteractiveElement doorElement = new InteractiveElement("door", "reveal", "assets/stories/story-1/page-2/door-open.webp");
+        doorElement.setPosition(new InteractiveElement.Position(0.481, 0.337));
+        doorElement.setSize(new InteractiveElement.Size(0.273, 0.301));
+        page2.setInteractiveElements(Arrays.asList(doorElement));
+        pages1.add(page2);
+
         testStory1.setPages(pages1);
 
         // Create test story 2
@@ -77,11 +92,11 @@ class StoryServiceTest {
 
         // Add pages to story 2
         List<StoryPage> pages2 = new ArrayList<>();
-        StoryPage page2 = new StoryPage();
-        page2.setId("page-2");
-        page2.setPageNumber(1);
-        page2.setText("Today was a happy day...");
-        pages2.add(page2);
+        StoryPage story2Page1 = new StoryPage();
+        story2Page1.setId("story2-page-1");
+        story2Page1.setPageNumber(1);
+        story2Page1.setText("Today was a happy day...");
+        pages2.add(story2Page1);
         testStory2.setPages(pages2);
 
         // Create test content version
@@ -468,6 +483,70 @@ class StoryServiceTest {
         List<Story> resultStories = result.get();
         assertEquals(0, resultStories.size());
         verify(storyRepository, times(1)).findByCategory("non-existent-category");
+    }
+
+    @Test
+    void getStoryById_WithInteractiveElements() throws Exception {
+        // Arrange
+        when(storyRepository.findById("story-1"))
+                .thenReturn(CompletableFuture.completedFuture(Optional.of(testStory1)));
+
+        // Act
+        CompletableFuture<Optional<Story>> result = storyService.getStoryById("story-1");
+
+        // Assert
+        assertNotNull(result);
+        Optional<Story> resultStory = result.get();
+        assertTrue(resultStory.isPresent());
+
+        Story story = resultStory.get();
+        assertEquals(2, story.getPages().size());
+
+        // Verify page without interactive elements
+        StoryPage page1 = story.getPages().get(0);
+        assertNotNull(page1.getInteractiveElements());
+        assertTrue(page1.getInteractiveElements().isEmpty());
+
+        // Verify page with interactive elements
+        StoryPage page2 = story.getPages().get(1);
+        assertNotNull(page2.getInteractiveElements());
+        assertEquals(1, page2.getInteractiveElements().size());
+
+        InteractiveElement element = page2.getInteractiveElements().get(0);
+        assertEquals("door", element.getId());
+        assertEquals("reveal", element.getType());
+        assertEquals("assets/stories/story-1/page-2/door-open.webp", element.getImage());
+        assertNotNull(element.getPosition());
+        assertEquals(0.481, element.getPosition().getX(), 0.001);
+        assertEquals(0.337, element.getPosition().getY(), 0.001);
+        assertNotNull(element.getSize());
+        assertEquals(0.273, element.getSize().getWidth(), 0.001);
+        assertEquals(0.301, element.getSize().getHeight(), 0.001);
+
+        verify(storyRepository, times(1)).findById("story-1");
+    }
+
+    @Test
+    void saveStory_WithInteractiveElements_UpdatesChecksum() throws Exception {
+        // Arrange
+        when(storyRepository.save(any(Story.class)))
+                .thenReturn(CompletableFuture.completedFuture(testStory1));
+        when(contentVersionRepository.updateStoryChecksum(anyString(), anyString()))
+                .thenReturn(CompletableFuture.completedFuture(null));
+
+        // Act
+        CompletableFuture<Story> result = storyService.saveStory(testStory1);
+
+        // Assert
+        assertNotNull(result);
+        Story savedStory = result.get();
+        assertEquals(2, savedStory.getPages().size());
+        assertNotNull(savedStory.getPages().get(1).getInteractiveElements());
+        assertEquals(1, savedStory.getPages().get(1).getInteractiveElements().size());
+
+        verify(storyRepository, times(1)).save(testStory1);
+        // Checksum should include interactive elements data
+        verify(contentVersionRepository, times(1)).updateStoryChecksum(eq("story-1"), anyString());
     }
 }
 

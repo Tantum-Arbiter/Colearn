@@ -436,6 +436,15 @@ function AppContent() {
   };
 
   const handleStorySelect = (story: Story) => {
+    // DEBUG: Log story data to diagnose CMS image issues
+    if (story.id.startsWith('cms-')) {
+      console.log(`[_layout] DEBUG: Selected CMS story "${story.id}"`);
+      console.log(`[_layout]   Cover: ${story.coverImage}`);
+      console.log(`[_layout]   Pages: ${story.pages?.length || 0}`);
+      story.pages?.forEach((page, idx) => {
+        console.log(`[_layout]   Page ${idx}: ${page.backgroundImage || 'NO_IMAGE'}`);
+      });
+    }
     setSelectedStory(story);
     // Start thumbnail expansion animation first, then transition to story reader
     // The SimpleStoryScreen will handle the expansion animation and call handleStoryTransitionComplete

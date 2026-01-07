@@ -79,7 +79,13 @@ function calculateStoryChecksum(story) {
     story.category,
     story.description || '',
     story.version || 1,
-    ...story.pages.map(p => `${p.id}${p.text}${p.pageNumber}`)
+    ...story.pages.map(p => {
+      // Include interactive elements in checksum
+      const interactiveStr = p.interactiveElements
+        ? JSON.stringify(p.interactiveElements)
+        : '';
+      return `${p.id}${p.text}${p.pageNumber}${p.backgroundImage || ''}${interactiveStr}`;
+    })
   ].join('');
 
   return crypto.createHash('sha256').update(content).digest('hex');

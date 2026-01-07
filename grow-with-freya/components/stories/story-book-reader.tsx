@@ -478,6 +478,22 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
   const pages = story.pages || [];
   const currentPage = pages[currentPageIndex];
 
+  // DEBUG: Log page background images and interactive elements to diagnose CMS issues
+  useEffect(() => {
+    console.log(`[StoryBookReader] DEBUG: Story "${story.id}" page details:`);
+    pages.forEach((page, idx) => {
+      const hasInteractive = page.interactiveElements && page.interactiveElements.length > 0;
+      console.log(`[StoryBookReader]   Page ${idx} (pageNumber: ${page.pageNumber}):`);
+      console.log(`[StoryBookReader]     - Background: ${page.backgroundImage || 'NO_IMAGE'}`);
+      console.log(`[StoryBookReader]     - Interactive elements: ${hasInteractive ? page.interactiveElements!.length : 0}`);
+      if (hasInteractive) {
+        page.interactiveElements!.forEach((el, elIdx) => {
+          console.log(`[StoryBookReader]       ${elIdx}: id=${el.id}, type=${el.type}, image=${el.image}`);
+        });
+      }
+    });
+  }, [story.id, pages]);
+
   // No caching needed - simple single page approach
 
   // Handle cover tap to go directly to page 1
@@ -960,6 +976,11 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
   // Function to render page content
   const renderPageContent = (page: any, isNextPage = false) => {
     if (!page) return null;
+
+    // DEBUG: Log which page is being rendered and its background image
+    if (story.id.startsWith('cms-')) {
+      console.log(`[StoryBookReader] RENDER: Page ${page.pageNumber}, BG: ${page.backgroundImage?.split('/').pop() || 'NONE'}`);
+    }
 
     // Cover pages (page 0) use smaller scale for better presentation
     const isCoverPage = page.pageNumber === 0;

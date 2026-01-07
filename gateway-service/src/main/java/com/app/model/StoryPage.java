@@ -2,7 +2,10 @@ package com.app.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.cloud.firestore.annotation.PropertyName;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -13,28 +16,40 @@ import java.util.Objects;
 public class StoryPage {
 
     @JsonProperty("id")
+    @PropertyName("id")
     private String id;
 
     @JsonProperty("pageNumber")
+    @PropertyName("pageNumber")
     private int pageNumber;
 
     @JsonProperty("type")
+    @PropertyName("type")
     private String type; // e.g., "cover", "story"
 
     @JsonProperty("text")
+    @PropertyName("text")
     private String text;
 
     @JsonProperty("backgroundImage")
+    @PropertyName("backgroundImage")
     private String backgroundImage; // Asset path reference (not URL)
 
     @JsonProperty("characterImage")
+    @PropertyName("characterImage")
     private String characterImage; // Asset path reference (not URL)
+
+    @JsonProperty("interactiveElements")
+    @PropertyName("interactiveElements")
+    private List<InteractiveElement> interactiveElements; // Optional interactive props
 
     // Constructors
     public StoryPage() {
+        this.interactiveElements = new ArrayList<>();
     }
 
     public StoryPage(String id, int pageNumber, String text) {
+        this();
         this.id = id;
         this.pageNumber = pageNumber;
         this.text = text;
@@ -87,6 +102,14 @@ public class StoryPage {
 
     public void setCharacterImage(String characterImage) {
         this.characterImage = characterImage;
+    }
+
+    public List<InteractiveElement> getInteractiveElements() {
+        return interactiveElements;
+    }
+
+    public void setInteractiveElements(List<InteractiveElement> interactiveElements) {
+        this.interactiveElements = interactiveElements;
     }
 
     @Override

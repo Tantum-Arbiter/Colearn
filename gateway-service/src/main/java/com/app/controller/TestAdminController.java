@@ -5,6 +5,7 @@ import com.app.exception.ErrorCode;
 import com.app.exception.GatewayException;
 import com.app.model.AssetVersion;
 import com.app.model.ContentVersion;
+import com.app.model.InteractiveElement;
 import com.app.model.Story;
 import com.app.model.StoryPage;
 import com.app.model.User;
@@ -293,11 +294,21 @@ public class TestAdminController {
         story1.setEmoji("moon");
         story1.setAuthor("Test Author");
         story1.setTags(List.of("bedtime", "animals", "sleep"));
-        story1.setPages(List.of(
-            new StoryPage("page-1-1", 1, "Once upon a time, there was a sleepy bear."),
-            new StoryPage("page-1-2", 2, "The bear yawned and stretched."),
-            new StoryPage("page-1-3", 3, "Time for bed, said the bear.")
-        ));
+
+        // Create pages - page 2 has an interactive element for testing
+        StoryPage page1 = new StoryPage("page-1-1", 1, "Once upon a time, there was a sleepy bear.");
+        StoryPage page2 = new StoryPage("page-1-2", 2, "The bear yawned and stretched.");
+        page2.setBackgroundImage("assets/stories/test-story-1/page-2/background.webp");
+
+        // Add interactive element to page 2 for functional tests
+        InteractiveElement doorElement = new InteractiveElement("door", "reveal", "assets/stories/test-story-1/page-2/door-open.webp");
+        doorElement.setPosition(new InteractiveElement.Position(0.481, 0.337));
+        doorElement.setSize(new InteractiveElement.Size(0.273, 0.301));
+        page2.setInteractiveElements(List.of(doorElement));
+
+        StoryPage page3 = new StoryPage("page-1-3", 3, "Time for bed, said the bear.");
+
+        story1.setPages(List.of(page1, page2, page3));
         stories.add(story1);
 
         Story story2 = new Story("test-story-2", "The Brave Bunny", "adventure");
@@ -504,6 +515,48 @@ public class TestAdminController {
                         page.setType((String) pageMap.get("type"));
                         page.setText((String) pageMap.get("text"));
                         page.setBackgroundImage((String) pageMap.get("backgroundImage"));
+                        page.setCharacterImage((String) pageMap.get("characterImage"));
+
+                        // Parse interactiveElements
+                        if (pageMap.get("interactiveElements") instanceof List<?> elementsList) {
+                            List<InteractiveElement> elements = new ArrayList<>();
+                            for (Object elemObj : elementsList) {
+                                if (elemObj instanceof Map<?, ?> elemMap) {
+                                    InteractiveElement elem = new InteractiveElement();
+                                    elem.setId((String) elemMap.get("id"));
+                                    elem.setType((String) elemMap.get("type"));
+                                    elem.setImage((String) elemMap.get("image"));
+
+                                    // Parse position
+                                    if (elemMap.get("position") instanceof Map<?, ?> posMap) {
+                                        InteractiveElement.Position pos = new InteractiveElement.Position();
+                                        if (posMap.get("x") != null) {
+                                            pos.setX(((Number) posMap.get("x")).doubleValue());
+                                        }
+                                        if (posMap.get("y") != null) {
+                                            pos.setY(((Number) posMap.get("y")).doubleValue());
+                                        }
+                                        elem.setPosition(pos);
+                                    }
+
+                                    // Parse size
+                                    if (elemMap.get("size") instanceof Map<?, ?> sizeMap) {
+                                        InteractiveElement.Size size = new InteractiveElement.Size();
+                                        if (sizeMap.get("width") != null) {
+                                            size.setWidth(((Number) sizeMap.get("width")).doubleValue());
+                                        }
+                                        if (sizeMap.get("height") != null) {
+                                            size.setHeight(((Number) sizeMap.get("height")).doubleValue());
+                                        }
+                                        elem.setSize(size);
+                                    }
+
+                                    elements.add(elem);
+                                }
+                            }
+                            page.setInteractiveElements(elements);
+                        }
+
                         pages.add(page);
                     }
                 }

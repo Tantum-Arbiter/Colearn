@@ -18,9 +18,15 @@ const GATEWAY_URL = extra.gatewayUrl || process.env.EXPO_PUBLIC_GATEWAY_URL || '
 /**
  * Convert relative asset paths to absolute URLs
  * If the path is already a full URL, return as-is
+ * If the path is a number (require() result), return as-is for local images
  */
-function resolveAssetUrl(path: string | undefined): string | undefined {
-  if (!path) return undefined;
+function resolveAssetUrl(path: string | number | undefined): string | number | undefined {
+  if (path === undefined || path === null) return undefined;
+
+  // If it's a number (require() result for local bundled images), return as-is
+  if (typeof path === 'number') {
+    return path;
+  }
 
   // If it's already a full URL, return as-is
   if (path.startsWith('http://') || path.startsWith('https://')) {
@@ -225,14 +231,33 @@ export class StorySyncService {
           coverImage: resolveAssetUrl(story.coverImage as string | undefined),
           pages: story.pages?.map(page => ({
             ...page,
-            backgroundImage: resolveAssetUrl(page.backgroundImage),
-            characterImage: resolveAssetUrl(page.characterImage),
-            interactiveElements: page.interactiveElements?.map(element => ({
-              ...element,
-              image: resolveAssetUrl(element.image) || element.image,
-            })),
+            backgroundImage: resolveAssetUrl(page.backgroundImage) as string | undefined,
+            characterImage: resolveAssetUrl(page.characterImage) as string | undefined,
+            interactiveElements: page.interactiveElements?.map(element => {
+              const resolvedImage = resolveAssetUrl(element.image);
+              return {
+                ...element,
+                image: (resolvedImage !== undefined ? resolvedImage : element.image) as string | number,
+              };
+            }),
           }))
-        }));
+        })) as Story[];
+
+        // Invalidate cached images for updated stories
+        // This ensures fresh images are downloaded if content changed on the server
+        const existingStories = localMetadata?.stories || [];
+
+        for (const story of syncResponse.stories) {
+          // Get the old version of this story to find cached image URLs
+          const oldStory = existingStories.find(s => s.id === story.id);
+          if (oldStory) {
+            const urlsToInvalidate = this.extractImageUrls(oldStory);
+            if (urlsToInvalidate.length > 0) {
+              console.log(`[CMS-SYNC] Invalidating ${urlsToInvalidate.length} cached images for updated story: ${story.id}`);
+              await AuthenticatedImageService.invalidateCacheForUrls(urlsToInvalidate);
+            }
+          }
+        }
       }
 
       // Log each story received from CMS
@@ -323,14 +348,17 @@ export class StorySyncService {
       coverImage: resolveAssetUrl(story.coverImage as string | undefined),
       pages: story.pages?.map(page => ({
         ...page,
-        backgroundImage: resolveAssetUrl(page.backgroundImage),
-        characterImage: resolveAssetUrl(page.characterImage),
-        interactiveElements: page.interactiveElements?.map(element => ({
-          ...element,
-          image: resolveAssetUrl(element.image) || element.image,
-        })),
+        backgroundImage: resolveAssetUrl(page.backgroundImage) as string | undefined,
+        characterImage: resolveAssetUrl(page.characterImage) as string | undefined,
+        interactiveElements: page.interactiveElements?.map(element => {
+          const resolvedImage = resolveAssetUrl(element.image);
+          return {
+            ...element,
+            image: (resolvedImage !== undefined ? resolvedImage : element.image) as string | number,
+          };
+        }),
       }))
-    }));
+    })) as Story[];
   }
 
   /**
@@ -526,5 +554,40 @@ export class StorySyncService {
       console.warn('[StorySyncService] Error getting all cached cover paths:', error);
     }
     return {};
+  }
+
+  /**
+   * Extract all image URLs from a story
+   * Used for cache invalidation when a story is updated
+   */
+  private static extractImageUrls(story: Story): string[] {
+    const urls: string[] = [];
+
+    // Cover image
+    if (story.coverImage && typeof story.coverImage === 'string') {
+      urls.push(story.coverImage);
+    }
+
+    // Page images
+    if (story.pages) {
+      for (const page of story.pages) {
+        if (page.backgroundImage) {
+          urls.push(page.backgroundImage);
+        }
+        if (page.characterImage) {
+          urls.push(page.characterImage);
+        }
+        // Interactive element images (only string URLs, not require() numbers)
+        if (page.interactiveElements) {
+          for (const element of page.interactiveElements) {
+            if (element.image && typeof element.image === 'string') {
+              urls.push(element.image);
+            }
+          }
+        }
+      }
+    }
+
+    return urls;
   }
 }
