@@ -16,7 +16,7 @@ export interface InteractiveElementSize {
 export interface InteractiveElement {
   id: string;
   type: InteractiveElementType;
-  image: string; // Asset path to the prop image
+  image: string | number; // Asset path (string for CMS) or require() result (number for local)
   position: InteractiveElementPosition;
   size: InteractiveElementSize;
   hitArea?: InteractiveElementPosition & InteractiveElementSize; // Optional custom hit area
