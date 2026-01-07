@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { AppState, AppStateStatus, Dimensions } from 'react-native';
@@ -213,6 +213,15 @@ function AppContent() {
         setCurrentView('app');
         setCurrentPage('main');
       } else {
+        // Skip auth check if we just completed a fresh login
+        if (justLoggedInRef.current) {
+          console.log('Skipping auth check - just completed fresh login');
+          justLoggedInRef.current = false;
+          setCurrentView('app');
+          setCurrentPage('main');
+          return;
+        }
+
         // Only check authentication when not in guest mode
         try {
           // Add timeout to prevent hanging
@@ -359,7 +368,12 @@ function AppContent() {
     setShowLoginAfterOnboarding(true);
   };
 
+  // Track if we just completed a fresh login to skip redundant auth checks
+  const justLoggedInRef = useRef(false);
+
   const handleLoginSuccess = () => {
+    // Mark that we just logged in - skip the next auth check
+    justLoggedInRef.current = true;
     setShowLoginAfterOnboarding(false);
     setCurrentView('app');
     setCurrentPage('main');
