@@ -1,5 +1,6 @@
 import React, { useCallback, useRef, useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Dimensions, FlatList, Image, Pressable } from 'react-native';
+import { AuthenticatedImage } from '@/components/ui/authenticated-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -348,15 +349,27 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
                           >
 
                           {story.coverImage ? (
-                            <Image
-                              source={typeof story.coverImage === 'string' ? { uri: story.coverImage } : story.coverImage}
-                              style={{
-                                width: scaledCardW,
-                                height: scaledCardH,
-                                borderRadius: scaledButtonSize(15),
-                              }}
-                              resizeMode="cover"
-                            />
+                            typeof story.coverImage === 'string' && story.coverImage.includes('api.colearnwithfreya.co.uk') ? (
+                              <AuthenticatedImage
+                                uri={story.coverImage}
+                                style={{
+                                  width: scaledCardW,
+                                  height: scaledCardH,
+                                  borderRadius: scaledButtonSize(15),
+                                }}
+                                resizeMode="cover"
+                              />
+                            ) : (
+                              <Image
+                                source={typeof story.coverImage === 'string' ? { uri: story.coverImage } : story.coverImage}
+                                style={{
+                                  width: scaledCardW,
+                                  height: scaledCardH,
+                                  borderRadius: scaledButtonSize(15),
+                                }}
+                                resizeMode="cover"
+                              />
+                            )
                           ) : (
                             <View style={{
                               width: scaledCardW,

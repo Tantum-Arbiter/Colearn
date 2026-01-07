@@ -13,6 +13,7 @@ import { BlurView } from 'expo-blur';
 import { Story, STORY_TAGS } from '@/types/story';
 import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { AuthenticatedImage } from '@/components/ui/authenticated-image';
 
 interface StoryPreviewModalProps {
   story: Story | null;
@@ -53,11 +54,19 @@ export function StoryPreviewModal({
           {/* Cover Image */}
           <View style={styles.coverContainer}>
             {story.coverImage ? (
-              <Image
-                source={typeof story.coverImage === 'string' ? { uri: story.coverImage } : story.coverImage}
-                style={styles.coverImage}
-                resizeMode="cover"
-              />
+              typeof story.coverImage === 'string' && story.coverImage.includes('api.colearnwithfreya.co.uk') ? (
+                <AuthenticatedImage
+                  uri={story.coverImage}
+                  style={styles.coverImage}
+                  resizeMode="cover"
+                />
+              ) : (
+                <Image
+                  source={typeof story.coverImage === 'string' ? { uri: story.coverImage } : story.coverImage}
+                  style={styles.coverImage}
+                  resizeMode="cover"
+                />
+              )
             ) : (
               <View style={[styles.coverImage, styles.placeholderCover]}>
                 <Text style={{ fontSize: 64 }}>{story.emoji}</Text>

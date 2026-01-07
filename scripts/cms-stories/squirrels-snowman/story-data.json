@@ -36,13 +36,13 @@
       "id": "squirrels-snowman-2",
       "pageNumber": 2,
       "type": "story",
-      "backgroundImage": "assets/stories/squirrels-snowman/page-2/props/page-2.webp",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-2/page-2.webp",
       "text": "She wants to make a snowman.\nWhat's inside this shed?",
       "interactiveElements": [
         {
           "id": "door",
           "type": "reveal",
-          "image": "assets/stories/squirrels-snowman/page-2/door-open.webp",
+          "image": "assets/stories/squirrels-snowman/page-2/props/door-open.webp",
           "position": { "x": 0.481, "y": 0.337 },
           "size": { "width": 0.273, "height": 0.301 }
         }

@@ -92,7 +92,7 @@ async function getAssetChecksums() {
         // Calculate checksum
         const checksum = calculateChecksum(content);
         const path = file.name;
-        const size = file.metadata.size || 0;
+        const size = parseInt(file.metadata.size, 10) || 0;
 
         assetChecksums[path] = checksum;
         totalAssets++;
@@ -123,7 +123,7 @@ async function updateAssetVersion(assetChecksums, totalAssets, totalSizeBytes) {
   const assetVersion = {
     id: 'current',
     version: 1,
-    lastUpdated: new Date().toISOString(),
+    lastUpdated: admin.firestore.Timestamp.now(),
     assetChecksums: assetChecksums,
     totalAssets: totalAssets,
     totalSizeBytes: totalSizeBytes,
