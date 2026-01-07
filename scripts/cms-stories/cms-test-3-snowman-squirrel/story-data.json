@@ -39,7 +39,22 @@
       "pageNumber": 2,
       "type": "story",
       "backgroundImage": "assets/stories/cms-test-3-snowman-squirrel/page-2/cms-test-3-snowman-squirrel-page-2.webp",
-      "text": "She wants to make a snowman.\nWhat's inside this shed?"
+      "text": "She wants to make a snowman.\nWhat's inside this shed?",
+      "interactiveElements": [
+        {
+          "id": "door",
+          "type": "reveal",
+          "image": "assets/stories/cms-test-3-snowman-squirrel/page-2/props/cms-test-3-snowman-squirrel-door-open.webp",
+          "position": {
+            "x": 0.481,
+            "y": 0.337
+          },
+          "size": {
+            "width": 0.273,
+            "height": 0.301
+          }
+        }
+      ]
     },
     {
       "id": "cms-test-3-page-3",
@@ -53,7 +68,22 @@
       "pageNumber": 4,
       "type": "story",
       "backgroundImage": "assets/stories/cms-test-3-snowman-squirrel/page-4/cms-test-3-snowman-squirrel-page-4.webp",
-      "text": "Can Squirrel find a carrot?\nWhat do you suppose?"
+      "text": "Can Squirrel find a carrot?\nWhat do you suppose?",
+      "interactiveElements": [
+        {
+          "id": "basket",
+          "type": "reveal",
+          "image": "assets/stories/cms-test-3-snowman-squirrel/page-4/props/cms-test-3-snowman-squirrel-page-4-basket-open.webp",
+          "position": {
+            "x": 0.633,
+            "y": 0.637
+          },
+          "size": {
+            "width": 0.245,
+            "height": 0.308
+          }
+        }
+      ]
     },
     {
       "id": "cms-test-3-page-5",
@@ -67,7 +97,22 @@
       "pageNumber": 6,
       "type": "story",
       "backgroundImage": "assets/stories/cms-test-3-snowman-squirrel/page-6/cms-test-3-snowman-squirrel-page-6.webp",
-      "text": "They look inside a great big box\nand find some lumps of coal."
+      "text": "They look inside a great big box\nand find some lumps of coal.",
+      "interactiveElements": [
+        {
+          "id": "basket",
+          "type": "reveal",
+          "image": "assets/stories/cms-test-3-snowman-squirrel/page-6/props/cms-test-3-snowman-squirrel-page-6-basket-open.webp",
+          "position": {
+            "x": 0.471,
+            "y": 0.579
+          },
+          "size": {
+            "width": 0.396,
+            "height": 0.366
+          }
+        }
+      ]
     },
     {
       "id": "cms-test-3-page-7",
@@ -81,7 +126,22 @@
       "pageNumber": 8,
       "type": "story",
       "backgroundImage": "assets/stories/cms-test-3-snowman-squirrel/page-8/cms-test-3-snowman-squirrel-page-8.webp",
-      "text": "Squirrel's feeling hungry.\nWhat's she going to eat?"
+      "text": "Squirrel's feeling hungry.\nWhat's she going to eat?",
+      "interactiveElements": [
+        {
+          "id": "food-cover",
+          "type": "reveal",
+          "image": "assets/stories/cms-test-3-snowman-squirrel/page-8/props/cms-test-3-snowman-squirrel-page-8-food-cover-open.webp",
+          "position": {
+            "x": 0.335,
+            "y": 0.609
+          },
+          "size": {
+            "width": 0.287,
+            "height": 0.213
+          }
+        }
+      ]
     },
     {
       "id": "cms-test-3-page-9",
@@ -95,7 +155,22 @@
       "pageNumber": 10,
       "type": "story",
       "backgroundImage": "assets/stories/cms-test-3-snowman-squirrel/page-10/cms-test-3-snowman-squirrel-page-10.webp",
-      "text": "Who's outside the window?\nShall we wave goodnight?"
+      "text": "Who's outside the window?\nShall we wave goodnight?",
+      "interactiveElements": [
+        {
+          "id": "curtains",
+          "type": "reveal",
+          "image": "assets/stories/cms-test-3-snowman-squirrel/page-10/props/cms-test-3-snowman-squirrel-page-10-curtains-open.webp",
+          "position": {
+            "x": 0.373,
+            "y": 0.38
+          },
+          "size": {
+            "width": 0.601,
+            "height": 0.387
+          }
+        }
+      ]
     }
   ]
 }
