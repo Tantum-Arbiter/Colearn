@@ -21,7 +21,27 @@ const { Storage } = require('@google-cloud/storage');
 const crypto = require('crypto');
 
 // Parse GCP service account key
-const gcpKey = JSON.parse(process.env.GCP_SA_KEY);
+let gcpKey;
+try {
+  const gcpKeyStr = process.env.GCP_SA_KEY;
+  if (!gcpKeyStr) {
+    console.error('Error: GCP_SA_KEY environment variable is required');
+    process.exit(1);
+  }
+
+  // Try base64 decode first
+  try {
+    const decoded = Buffer.from(gcpKeyStr, 'base64').toString('utf8');
+    gcpKey = JSON.parse(decoded);
+  } catch {
+    // Fall back to raw JSON
+    gcpKey = JSON.parse(gcpKeyStr);
+  }
+} catch (error) {
+  console.error('Error: GCP_SA_KEY is not valid JSON or base64:', error.message);
+  process.exit(1);
+}
+
 const projectId = process.env.FIREBASE_PROJECT_ID;
 
 if (!projectId) {
