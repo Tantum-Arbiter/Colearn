@@ -154,9 +154,11 @@ export class StorySyncService {
         lastSyncTimestamp: localMetadata?.lastSyncTimestamp || 0
       };
 
-      // Calculate request payload size
+      // Calculate request payload size (use length as fallback for test environments)
       const requestPayload = JSON.stringify(syncRequest);
-      const requestSize = new TextEncoder().encode(requestPayload).length;
+      const requestSize = typeof TextEncoder !== 'undefined'
+        ? new TextEncoder().encode(requestPayload).length
+        : requestPayload.length;
 
       console.log('[CMS-SYNC] ----------------------------------------');
       console.log('[CMS-SYNC] SYNC TYPE:', isInitialSync ? '🆕 INITIAL SYNC (full download)' : '🔄 DELTA SYNC (changes only)');
@@ -179,11 +181,15 @@ export class StorySyncService {
         body: requestPayload
       });
 
-      // Calculate response payload size
+      // Calculate response payload size (use length as fallback for test environments)
       const responsePayload = JSON.stringify(syncResponse);
-      const responseSize = new TextEncoder().encode(responsePayload).length;
+      const responseSize = typeof TextEncoder !== 'undefined'
+        ? new TextEncoder().encode(responsePayload).length
+        : responsePayload.length;
       const storiesPayloadSize = JSON.stringify(syncResponse.stories || []);
-      const storiesSize = new TextEncoder().encode(storiesPayloadSize).length;
+      const storiesSize = typeof TextEncoder !== 'undefined'
+        ? new TextEncoder().encode(storiesPayloadSize).length
+        : storiesPayloadSize.length;
 
       console.log('[CMS-SYNC] ----------------------------------------');
       console.log('[CMS-SYNC] RESPONSE PAYLOAD SIZE:');
@@ -283,8 +289,11 @@ export class StorySyncService {
 
       await this.saveSyncMetadata(newMetadata);
 
-      // Calculate final storage size
-      const storedDataSize = new TextEncoder().encode(JSON.stringify(newMetadata)).length;
+      // Calculate final storage size (use length as fallback for test environments)
+      const storedDataString = JSON.stringify(newMetadata);
+      const storedDataSize = typeof TextEncoder !== 'undefined'
+        ? new TextEncoder().encode(storedDataString).length
+        : storedDataString.length;
 
       console.log('[CMS-SYNC] ----------------------------------------');
       console.log('[CMS-SYNC] SYNC COMPLETE SUMMARY:');
