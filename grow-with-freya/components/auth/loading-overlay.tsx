@@ -26,6 +26,7 @@ const WINDOW_HEIGHT = 280;
 export function LoadingOverlay({ phase, onPulseComplete }: LoadingOverlayProps) {
   const [displayText, setDisplayText] = useState('Signing in...');
   const [wasLoading, setWasLoading] = useState(false);
+  const [hadError, setHadError] = useState(false);
   const [showCheckmark, setShowCheckmark] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const soundRef = useRef<Audio.Sound | null>(null);
@@ -74,16 +75,18 @@ export function LoadingOverlay({ phase, onPulseComplete }: LoadingOverlayProps) 
       // Show the overlay and start loading animation
       setIsVisible(true);
       setWasLoading(true);
+      setHadError(false); // Reset error state when starting a new loading phase
       setShowCheckmark(false);
       setDisplayText(phase === 'authenticating' ? 'Signing in...' : 'Loading your stories...');
       startLoadingCircle();
       fadeInText();
     } else if (phase === 'auth-error' || phase === 'sync-error') {
-      // Show error state
+      // Show error state and remember that we had an error
       setIsVisible(true);
+      setHadError(true);
       setDisplayText(phase === 'auth-error' ? 'Sign-in failed' : 'Couldn\'t load stories');
       fadeOutText();
-    } else if (!phase && wasLoading && !isError) {
+    } else if (!phase && wasLoading && !hadError) {
       // Loading completed successfully - show checkmark
       setShowCheckmark(true);
       loadingCircleAnim.rotation.value = 0;
@@ -107,6 +110,11 @@ export function LoadingOverlay({ phase, onPulseComplete }: LoadingOverlayProps) 
         }, 300);
       });
       setWasLoading(false);
+    } else if (!phase && hadError) {
+      // Error was shown and overlay is now being hidden - reset state for next attempt
+      setIsVisible(false);
+      setWasLoading(false);
+      setHadError(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
