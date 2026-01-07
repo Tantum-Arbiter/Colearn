@@ -8,6 +8,7 @@ import {
 } from '../types/story';
 import { ApiClient } from './api-client';
 import Constants from 'expo-constants';
+import { AuthenticatedImageService } from './authenticated-image-service';
 
 const STORAGE_KEY = 'story_sync_metadata';
 
@@ -345,5 +346,45 @@ export class StorySyncService {
         ? new Date(metadata.lastSyncTimestamp).toISOString()
         : null
     };
+  }
+
+  /**
+   * Prefetch all story cover images to ensure they're cached before showing the story selection screen
+   * This should be called after prefetchStories() to ensure smooth UX
+   */
+  static async prefetchCoverImages(): Promise<void> {
+    try {
+      console.log('[StorySyncService] Prefetching cover images...');
+
+      const stories = await this.getLocalStories();
+      const coverUrls = stories
+        .map(story => story.coverImage)
+        .filter((url): url is string => !!url);
+
+      console.log(`[StorySyncService] Found ${coverUrls.length} cover images to prefetch`);
+
+      // Download all cover images in parallel
+      const downloadPromises = coverUrls.map(async (url) => {
+        try {
+          const cachedPath = await AuthenticatedImageService.getImageUri(url);
+          if (cachedPath) {
+            console.log(`[StorySyncService] Cover image cached: ${url.substring(url.lastIndexOf('/') + 1)}`);
+            return true;
+          }
+          return false;
+        } catch (error) {
+          console.warn(`[StorySyncService] Failed to cache cover image: ${url}`, error);
+          return false;
+        }
+      });
+
+      const results = await Promise.all(downloadPromises);
+      const successCount = results.filter(Boolean).length;
+
+      console.log(`[StorySyncService] Cover image prefetch complete: ${successCount}/${coverUrls.length} successful`);
+    } catch (error) {
+      console.error('[StorySyncService] Cover image prefetch failed:', error);
+      // Don't throw - this is not critical
+    }
   }
 }

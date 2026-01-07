@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Image, ImageProps, View, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Image, ImageProps, View, ActivityIndicator, Text, StyleSheet } from 'react-native';
 import { AuthenticatedImageService } from '@/services/authenticated-image-service';
 
 interface AuthenticatedImageProps extends Omit<ImageProps, 'source' | 'onLoad'> {
@@ -8,81 +8,95 @@ interface AuthenticatedImageProps extends Omit<ImageProps, 'source' | 'onLoad'> 
   showLoadingIndicator?: boolean;
   loadingIndicatorColor?: string;
   onLoad?: () => void;
+  maxRetries?: number;
 }
+
+// Maximum retry attempts for loading an image
+const DEFAULT_MAX_RETRIES = 2;
 
 /**
  * Component for loading images that require authentication
  * Automatically downloads and caches images with auth token
+ * Includes retry logic for corrupted cache files
  */
 export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
   uri,
-  fallbackEmoji,
+  fallbackEmoji = '📖',
   showLoadingIndicator = false,
   loadingIndicatorColor = '#666',
   style,
   onError,
   onLoad,
+  maxRetries = DEFAULT_MAX_RETRIES,
   ...props
 }) => {
   const [cachedUri, setCachedUri] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const retryCountRef = useRef(0);
+  const isMountedRef = useRef(true);
 
-  console.log('[AuthenticatedImage] ===== COMPONENT MOUNTED =====');
-  console.log('[AuthenticatedImage] Component rendered with uri:', uri);
-  console.log('[AuthenticatedImage] Current state - cachedUri:', cachedUri, 'isLoading:', isLoading, 'hasError:', hasError);
+  const loadImage = useCallback(async (forceRefresh: boolean = false) => {
+    try {
+      console.log(`[AuthenticatedImage] Loading image (retry: ${retryCountRef.current}, forceRefresh: ${forceRefresh}):`, uri);
+
+      if (!isMountedRef.current) return;
+
+      setIsLoading(true);
+      setHasError(false);
+
+      // If forcing refresh, invalidate the cache first
+      if (forceRefresh) {
+        console.log('[AuthenticatedImage] Invalidating cache before retry...');
+        await AuthenticatedImageService.invalidateCache(uri);
+      }
+
+      const localUri = await AuthenticatedImageService.getImageUri(uri);
+
+      if (!isMountedRef.current) return;
+
+      if (localUri) {
+        console.log('[AuthenticatedImage] Image loaded successfully:', localUri.split('/').pop());
+        setCachedUri(localUri);
+      } else {
+        console.error('[AuthenticatedImage] Failed to get image URI - service returned null');
+        setHasError(true);
+      }
+      setIsLoading(false);
+    } catch (error) {
+      console.error('[AuthenticatedImage] Error loading image:', error);
+      if (isMountedRef.current) {
+        setHasError(true);
+        setIsLoading(false);
+      }
+    }
+  }, [uri]);
+
+  // Handle image render errors - retry with cache invalidation
+  const handleRenderError = useCallback(async () => {
+    console.error(`[AuthenticatedImage] Image render failed, retry count: ${retryCountRef.current}/${maxRetries}`);
+
+    if (retryCountRef.current < maxRetries) {
+      retryCountRef.current += 1;
+      console.log(`[AuthenticatedImage] Retrying with cache invalidation (attempt ${retryCountRef.current})`);
+      await loadImage(true); // Force refresh
+    } else {
+      console.error('[AuthenticatedImage] Max retries exceeded, showing fallback');
+      setHasError(true);
+    }
+  }, [loadImage, maxRetries]);
 
   useEffect(() => {
-    let isMounted = true;
-
-    const loadImage = async () => {
-      try {
-        console.log('[AuthenticatedImage] Starting to load image:', uri);
-        setIsLoading(true);
-        setHasError(false);
-
-        console.log('[AuthenticatedImage] Calling AuthenticatedImageService.getImageUri...');
-        console.log('[AuthenticatedImage] AuthenticatedImageService class:', AuthenticatedImageService);
-        console.log('[AuthenticatedImage] AuthenticatedImageService.getImageUri:', AuthenticatedImageService.getImageUri);
-        let localUri: string | null = null;
-        try {
-          localUri = await AuthenticatedImageService.getImageUri(uri);
-          console.log('[AuthenticatedImage] AuthenticatedImageService returned:', localUri);
-        } catch (serviceError) {
-          console.error('[AuthenticatedImage] Service threw error:', serviceError);
-          console.error('[AuthenticatedImage] Service error message:', serviceError instanceof Error ? serviceError.message : String(serviceError));
-          throw serviceError;
-        }
-
-        if (isMounted) {
-          if (localUri) {
-            console.log('[AuthenticatedImage] Image loaded successfully:', localUri);
-            setCachedUri(localUri);
-            if (onLoad) {
-              onLoad();
-            }
-          } else {
-            console.error('[AuthenticatedImage] Failed to get image URI - service returned null');
-            setHasError(true);
-          }
-          setIsLoading(false);
-        }
-      } catch (error) {
-        console.error('[AuthenticatedImage] Error loading image:', error);
-        if (isMounted) {
-          setHasError(true);
-          setIsLoading(false);
-        }
-      }
-    };
-
-    loadImage();
+    isMountedRef.current = true;
+    retryCountRef.current = 0;
+    loadImage(false);
 
     return () => {
-      isMounted = false;
+      isMountedRef.current = false;
     };
-  }, [uri, onLoad]);
+  }, [uri, loadImage]);
 
+  // Show loading indicator
   if (isLoading && showLoadingIndicator) {
     return (
       <View style={[style, { justifyContent: 'center', alignItems: 'center' }]}>
@@ -91,20 +105,20 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
     );
   }
 
+  // Show fallback emoji on error (after all retries exhausted)
   if (hasError) {
-    console.log('[AuthenticatedImage] hasError is true, calling onError and returning null');
-    if (onError) {
-      onError({ nativeEvent: { error: 'Failed to load authenticated image' } } as any);
-    }
-    return null;
+    console.log('[AuthenticatedImage] Showing fallback emoji after error');
+    return (
+      <View style={[style, styles.fallbackContainer]}>
+        <Text style={styles.fallbackEmoji}>{fallbackEmoji}</Text>
+      </View>
+    );
   }
 
+  // Still loading without indicator
   if (!cachedUri) {
-    console.log('[AuthenticatedImage] cachedUri is null, returning null');
     return null;
   }
-
-  console.log('[AuthenticatedImage] Rendering Image with cachedUri:', cachedUri);
 
   return (
     <Image
@@ -112,20 +126,29 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
       source={{ uri: cachedUri }}
       style={style}
       onLoad={() => {
-        console.log('[AuthenticatedImage] Image rendered from cache');
+        console.log('[AuthenticatedImage] Image rendered successfully');
+        retryCountRef.current = 0; // Reset retry count on success
         if (onLoad) {
           onLoad();
         }
       }}
-      onError={(error) => {
-        console.error('[AuthenticatedImage] Image render error:', error);
-        console.error('[AuthenticatedImage] cachedUri was:', cachedUri);
-        setHasError(true);
-        if (onError) {
-          onError(error);
-        }
+      onError={() => {
+        // Don't log the error object as it's often null and not helpful
+        console.warn(`[AuthenticatedImage] Image render failed for: ${cachedUri.split('/').pop()}`);
+        handleRenderError();
       }}
     />
   );
 };
+
+const styles = StyleSheet.create({
+  fallbackContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+  },
+  fallbackEmoji: {
+    fontSize: 40,
+  },
+});
 

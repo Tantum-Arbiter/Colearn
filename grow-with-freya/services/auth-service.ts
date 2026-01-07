@@ -7,7 +7,7 @@ WebBrowser.maybeCompleteAuthSession();
 
 const extra = Constants.expoConfig?.extra || {};
 const GATEWAY_URL = extra.gatewayUrl || process.env.EXPO_PUBLIC_GATEWAY_URL || 'http://localhost:8080';
-const AUTH_TIMEOUT_MS = 20000;
+const AUTH_TIMEOUT_MS = 3000; // 3 second timeout for sign-in
 
 const GOOGLE_IOS_CLIENT_ID = extra.googleIosClientId || process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 const GOOGLE_ANDROID_CLIENT_ID = extra.googleAndroidClientId || process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;

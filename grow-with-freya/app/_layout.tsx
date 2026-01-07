@@ -247,12 +247,21 @@ function AppContent() {
             try {
               await StorySyncService.prefetchStories();
               console.log('[_layout] Stories prefetched successfully');
+
+              // Prefetch cover images to ensure they're cached before showing story selection
+              try {
+                await StorySyncService.prefetchCoverImages();
+                console.log('[_layout] Cover images prefetched successfully');
+              } catch (imageError) {
+                console.error('[_layout] Cover image prefetch failed:', imageError);
+                // Continue anyway - images will be downloaded on-demand
+              }
             } catch (syncError) {
               console.error('[_layout] Story prefetch failed, will use offline mode:', syncError);
               // Continue anyway - app will use cached stories or local fallback
             }
 
-            // Prefetch assets in background (non-blocking)
+            // Prefetch other assets in background (non-blocking)
             try {
               await AssetSyncService.prefetchAssets();
               console.log('[_layout] Assets prefetched successfully');

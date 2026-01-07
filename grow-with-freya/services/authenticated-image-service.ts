@@ -1,4 +1,3 @@
-import { SecureStorage } from './secure-storage';
 import { ApiClient } from './api-client';
 import * as FileSystem from 'expo-file-system/legacy';
 
@@ -7,9 +6,17 @@ interface SignedUrlResponse {
   signedUrl: string;
 }
 
+// Minimum valid image file size in bytes (100 bytes - a valid image should be larger)
+const MIN_VALID_FILE_SIZE = 100;
+
+// WebP magic bytes for validation
+const WEBP_MAGIC = 'RIFF';
+const WEBP_MAGIC_OFFSET_4 = 'WEBP';
+
 /**
  * Service for downloading and caching images that require authentication
  * Downloads images with auth token and caches them locally
+ * Includes file validation to prevent corrupted images from being served
  */
 export class AuthenticatedImageService {
   private static readonly CACHE_DIR = `${FileSystem.cacheDirectory || FileSystem.documentDirectory}story-images/`;
@@ -46,12 +53,17 @@ export class AuthenticatedImageService {
       const cacheFilename = this.getCacheFilename(remoteUrl);
       const cachedPath = `${this.CACHE_DIR}${cacheFilename}`;
 
-      // Check if image is already cached
-      const cachedInfo = await FileSystem.getInfoAsync(cachedPath);
-      if (cachedInfo.exists) {
-        console.log(`[AuthImageService] Using cached image: ${cacheFilename}`);
+      // Check if image is already cached AND valid
+      const isValid = await this.validateCachedFile(cachedPath);
+      if (isValid) {
+        console.log(`[AuthImageService] Using validated cached image: ${cacheFilename}`);
         return cachedPath;
       }
+
+      // Check if file exists at all (even if it failed strict validation)
+      // We'll use this as a fallback if we can't authenticate
+      const fileInfo = await FileSystem.getInfoAsync(cachedPath);
+      const hasAnyCache = fileInfo.exists;
 
       // Extract asset path from URL
       // URL format: https://api.colearnwithfreya.co.uk/assets/stories/...
@@ -59,26 +71,37 @@ export class AuthenticatedImageService {
       const assetPath = this.extractAssetPath(remoteUrl);
       if (!assetPath) {
         console.warn(`[AuthImageService] Could not extract asset path from URL: ${remoteUrl}`);
+        // If we have any cached file, use it as fallback
+        if (hasAnyCache) {
+          console.log(`[AuthImageService] Using unvalidated cache as fallback: ${cacheFilename}`);
+          return cachedPath;
+        }
         return null;
       }
 
-      console.log(`[AuthImageService] Extracted asset path: ${assetPath}`);
-
       // Get signed URL from backend
-      console.log(`[AuthImageService] Requesting signed URL for asset: ${assetPath}`);
       let signedUrlResponse: SignedUrlResponse | null = null;
       try {
         signedUrlResponse = await ApiClient.request<SignedUrlResponse>(
           `/api/assets/url?path=${encodeURIComponent(assetPath)}`
         );
-        console.log(`[AuthImageService] Signed URL response:`, signedUrlResponse);
       } catch (apiCallError) {
-        console.error(`[AuthImageService] API call failed:`, apiCallError);
-        console.error(`[AuthImageService] Error message:`, apiCallError instanceof Error ? apiCallError.message : String(apiCallError));
+        // If auth fails and we have a cached file, use it instead of erroring
+        if (hasAnyCache) {
+          console.log(`[AuthImageService] Auth failed but using cached file: ${cacheFilename}`);
+          return cachedPath;
+        }
+        // Only log error if we have no fallback
+        console.warn(`[AuthImageService] Cannot load image (not authenticated, no cache): ${cacheFilename}`);
         return null;
       }
 
       if (!signedUrlResponse || !signedUrlResponse.signedUrl) {
+        // If no signed URL but we have cache, use it
+        if (hasAnyCache) {
+          console.log(`[AuthImageService] No signed URL but using cached file: ${cacheFilename}`);
+          return cachedPath;
+        }
         console.warn(`[AuthImageService] No signed URL returned for: ${assetPath}`);
         return null;
       }
@@ -94,15 +117,16 @@ export class AuthenticatedImageService {
       console.log(`[AuthImageService] Download result status: ${downloadResult.status}`);
 
       if (downloadResult.status === 200) {
-        console.log(`[AuthImageService] Image cached successfully: ${cacheFilename}`);
-        // Verify file exists before returning
-        const fileInfo = await FileSystem.getInfoAsync(cachedPath);
-        console.log(`[AuthImageService] File exists check: ${fileInfo.exists}, size: ${fileInfo.exists ? (fileInfo as any).size : 'N/A'}`);
-        if (!fileInfo.exists) {
-          console.error(`[AuthImageService] File was not actually created at: ${cachedPath}`);
+        // Validate the downloaded file
+        const isValid = await this.validateCachedFile(cachedPath);
+        if (isValid) {
+          console.log(`[AuthImageService] Image cached and validated: ${cacheFilename}`);
+          return cachedPath;
+        } else {
+          console.error(`[AuthImageService] Downloaded file failed validation, deleting: ${cachedPath}`);
+          await this.deleteFile(cachedPath);
           return null;
         }
-        return cachedPath;
       } else if (downloadResult.status === 404) {
         // File not found - try alternative filenames
         console.warn(`[AuthImageService] File not found (404): ${assetPath}`);
@@ -277,6 +301,92 @@ export class AuthenticatedImageService {
       }
     } catch (error) {
       console.error('[AuthImageService] Error clearing cache:', error);
+    }
+  }
+
+  /**
+   * Validate a cached file to ensure it's not corrupted
+   * Checks: file exists, minimum size, and optionally image header magic bytes
+   */
+  private static async validateCachedFile(filePath: string): Promise<boolean> {
+    try {
+      const fileInfo = await FileSystem.getInfoAsync(filePath);
+
+      if (!fileInfo.exists) {
+        console.log(`[AuthImageService] Validation failed: file does not exist`);
+        return false;
+      }
+
+      const size = (fileInfo as any).size || 0;
+      if (size < MIN_VALID_FILE_SIZE) {
+        console.log(`[AuthImageService] Validation failed: file too small (${size} bytes)`);
+        return false;
+      }
+
+      // Read first few bytes to verify it's a valid image
+      // WebP files start with "RIFF" followed by 4 bytes of size, then "WEBP"
+      try {
+        const base64Content = await FileSystem.readAsStringAsync(filePath, {
+          encoding: FileSystem.EncodingType.Base64,
+          length: 12,
+          position: 0
+        });
+
+        // Decode base64 to check magic bytes
+        const bytes = atob(base64Content);
+        const header = bytes.substring(0, 4);
+        const webpMarker = bytes.substring(8, 12);
+
+        // Check for WebP format
+        if (filePath.endsWith('.webp')) {
+          if (header !== WEBP_MAGIC || webpMarker !== WEBP_MAGIC_OFFSET_4) {
+            console.log(`[AuthImageService] Validation failed: invalid WebP header (got: ${header}...${webpMarker})`);
+            return false;
+          }
+        }
+        // For other formats, just check that we could read the file
+
+      } catch (readError) {
+        // If we can't read the file, it might be corrupted
+        console.log(`[AuthImageService] Validation failed: could not read file header`, readError);
+        return false;
+      }
+
+      console.log(`[AuthImageService] File validated successfully: ${filePath.split('/').pop()}`);
+      return true;
+    } catch (error) {
+      console.error(`[AuthImageService] Error validating file:`, error);
+      return false;
+    }
+  }
+
+  /**
+   * Delete a file from the cache
+   */
+  private static async deleteFile(filePath: string): Promise<void> {
+    try {
+      const fileInfo = await FileSystem.getInfoAsync(filePath);
+      if (fileInfo.exists) {
+        await FileSystem.deleteAsync(filePath);
+        console.log(`[AuthImageService] Deleted file: ${filePath.split('/').pop()}`);
+      }
+    } catch (error) {
+      console.error(`[AuthImageService] Error deleting file:`, error);
+    }
+  }
+
+  /**
+   * Invalidate a specific cached image by URL
+   * Call this when an image fails to render to force re-download on next request
+   */
+  static async invalidateCache(remoteUrl: string): Promise<void> {
+    try {
+      const cacheFilename = this.getCacheFilename(remoteUrl);
+      const cachedPath = `${this.CACHE_DIR}${cacheFilename}`;
+      await this.deleteFile(cachedPath);
+      console.log(`[AuthImageService] Invalidated cache for: ${remoteUrl}`);
+    } catch (error) {
+      console.error(`[AuthImageService] Error invalidating cache:`, error);
     }
   }
 }

@@ -109,7 +109,16 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
             await StorySyncService.prefetchStories();
             console.log('[LoginScreen] Story metadata synced');
 
-            // Prefetch assets in background
+            // Prefetch cover images to ensure smooth story selection screen
+            try {
+              await StorySyncService.prefetchCoverImages();
+              console.log('[LoginScreen] Cover images prefetched');
+            } catch (imageError) {
+              console.error('[LoginScreen] Cover image prefetch failed:', imageError);
+              // Continue anyway - images will be downloaded on-demand
+            }
+
+            // Prefetch other assets in background
             try {
               await AssetSyncService.prefetchAssets();
               console.log('[LoginScreen] Assets prefetched');
@@ -273,7 +282,16 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
         await StorySyncService.prefetchStories();
         console.log('[LoginScreen] Story metadata synced');
 
-        // Prefetch assets in background
+        // Prefetch cover images to ensure smooth story selection screen
+        try {
+          await StorySyncService.prefetchCoverImages();
+          console.log('[LoginScreen] Cover images prefetched');
+        } catch (imageError) {
+          console.error('[LoginScreen] Cover image prefetch failed:', imageError);
+          // Continue anyway - images will be downloaded on-demand
+        }
+
+        // Prefetch other assets in background
         try {
           await AssetSyncService.prefetchAssets();
           console.log('[LoginScreen] Assets prefetched');

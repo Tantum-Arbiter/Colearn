@@ -248,9 +248,10 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     alignItems: 'center',
+    marginTop: -10,
   },
   statusText: {
-    fontSize: 17, // 12 * 1.4 rounded
+    fontSize: 20,
     fontWeight: '600',
     color: '#333333',
     textAlign: 'center',
@@ -259,7 +260,7 @@ const styles = StyleSheet.create({
     color: '#FF6B6B',
   },
   subText: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#666666',
     textAlign: 'center',
     marginTop: 8,
