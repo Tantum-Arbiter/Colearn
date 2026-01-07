@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, StyleSheet, Dimensions, Text } from 'react-native';
+import { View, StyleSheet, Dimensions, Text, TouchableOpacity } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -8,6 +8,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Audio } from 'expo-av';
 import LottieView from 'lottie-react-native';
+import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 
 import { useLoadingCircleAnimation, useTextFadeAnimation, useCheckmarkAnimation } from './loading-animations';
 
@@ -18,20 +20,32 @@ export type LoadingPhase = 'authenticating' | 'syncing' | 'auth-error' | 'sync-e
 interface LoadingOverlayProps {
   phase: LoadingPhase;
   onPulseComplete?: () => void;
+  onClose?: () => void;
 }
 
 const WINDOW_WIDTH = 280;
 const WINDOW_HEIGHT = 280;
 
-export function LoadingOverlay({ phase, onPulseComplete }: LoadingOverlayProps) {
+export function LoadingOverlay({ phase, onPulseComplete, onClose }: LoadingOverlayProps) {
   const [displayText, setDisplayText] = useState('Signing in...');
+  const [subText, setSubText] = useState<string | null>(null);
   const [wasLoading, setWasLoading] = useState(false);
   const [hadError, setHadError] = useState(false);
   const [showCheckmark, setShowCheckmark] = useState(false);
+  const [showErrorState, setShowErrorState] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const soundRef = useRef<Audio.Sound | null>(null);
   const windowTranslateX = useSharedValue(0);
   const overlayOpacity = useSharedValue(1);
+
+  const handleClose = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setIsVisible(false);
+    setShowErrorState(false);
+    setHadError(false);
+    setWasLoading(false);
+    onClose?.();
+  };
 
   // Use animation hooks
   const loadingCircleAnim = useLoadingCircleAnimation();
@@ -77,14 +91,18 @@ export function LoadingOverlay({ phase, onPulseComplete }: LoadingOverlayProps) 
       setWasLoading(true);
       setHadError(false); // Reset error state when starting a new loading phase
       setShowCheckmark(false);
+      setShowErrorState(false);
       setDisplayText(phase === 'authenticating' ? 'Signing in...' : 'Loading your stories...');
+      setSubText(null);
       startLoadingCircle();
       fadeInText();
     } else if (phase === 'auth-error' || phase === 'sync-error') {
       // Show error state and remember that we had an error
       setIsVisible(true);
       setHadError(true);
+      setShowErrorState(true);
       setDisplayText(phase === 'auth-error' ? 'Sign-in failed' : 'Couldn\'t load stories');
+      setSubText('Please try again');
       fadeOutText();
     } else if (!phase && wasLoading && !hadError) {
       // Loading completed successfully - show checkmark
@@ -135,14 +153,16 @@ export function LoadingOverlay({ phase, onPulseComplete }: LoadingOverlayProps) 
       <Animated.View style={[styles.overlay, overlayAnimatedStyle]}>
         {/* Small Loading Window */}
         <Animated.View style={[styles.window, windowAnimatedStyle]}>
-          {/* Loading Circle or Checkmark - overlaid in same space */}
+          {/* Loading Circle, Checkmark, or Error Icon - overlaid in same space */}
           <View style={styles.loadingCircleContainer}>
-            {/* Loading Circle - always render, opacity controlled by animation */}
-            <Animated.View style={[loadingCircleAnim.animatedStyle, { opacity: showCheckmark ? 0 : 1 }]}>
-              <View style={styles.loadingCircle} />
-            </Animated.View>
+            {/* Loading Circle - show when loading and not in error/success state */}
+            {!showCheckmark && !showErrorState && (
+              <Animated.View style={loadingCircleAnim.animatedStyle}>
+                <View style={styles.loadingCircle} />
+              </Animated.View>
+            )}
 
-            {/* Checkmark - fades in when loading completes */}
+            {/* Checkmark - fades in when loading completes successfully */}
             {showCheckmark && (
               <Animated.View style={[checkmarkAnim.checkmarkAnimatedStyle, styles.checkmarkOverlay]}>
                 <LottieView
@@ -153,6 +173,13 @@ export function LoadingOverlay({ phase, onPulseComplete }: LoadingOverlayProps) 
                 />
               </Animated.View>
             )}
+
+            {/* Error Icon - shows when there's an error */}
+            {showErrorState && (
+              <View style={styles.errorIconContainer}>
+                <Ionicons name="alert-circle" size={70} color="#FF6B6B" />
+              </View>
+            )}
           </View>
 
           {/* Status Text */}
@@ -160,7 +187,17 @@ export function LoadingOverlay({ phase, onPulseComplete }: LoadingOverlayProps) 
             <Text style={[styles.statusText, isError && styles.errorText]}>
               {displayText}
             </Text>
+            {subText && (
+              <Text style={styles.subText}>{subText}</Text>
+            )}
           </Animated.View>
+
+          {/* Close Button - only shown on error */}
+          {showErrorState && (
+            <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          )}
         </Animated.View>
       </Animated.View>
     </Animated.View>
@@ -221,6 +258,12 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#FF6B6B',
   },
+  subText: {
+    fontSize: 14,
+    color: '#666666',
+    textAlign: 'center',
+    marginTop: 8,
+  },
   checkmark: {
     width: 146, // 104 * 1.4
     height: 146, // 104 * 1.4
@@ -233,6 +276,22 @@ const styles = StyleSheet.create({
     height: 112, // 80 * 1.4
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  errorIconContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeButton: {
+    marginTop: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    backgroundColor: '#4ECDC4',
+    borderRadius: 25,
+  },
+  closeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

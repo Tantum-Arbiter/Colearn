@@ -124,21 +124,15 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
             console.error('[LoginScreen] Story sync failed:', syncError);
             // Show sync error message but allow app to continue in offline mode
             setLoadingPhase('sync-error');
-            setTimeout(() => {
-              // Still hide overlay after showing error, app will work in offline mode
-              setShowLoadingOverlay(false);
-            }, 2000);
+            // User will manually close the error overlay
           }
         } catch (error: any) {
           setIsGoogleLoading(false);
           setProcessedResponseId(responseId);
           console.error('Google sign-in error:', error);
 
-          // Show auth error in overlay
+          // Show auth error in overlay - user will manually close
           setLoadingPhase('auth-error');
-          setTimeout(() => {
-            setShowLoadingOverlay(false);
-          }, 2000);
         }
       } else if (response.type === 'error') {
         setIsGoogleLoading(false);
@@ -294,10 +288,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
         console.error('[LoginScreen] Story sync failed:', syncError);
         // Show sync error message but allow app to continue in offline mode
         setLoadingPhase('sync-error');
-        setTimeout(() => {
-          // Still hide overlay after showing error, app will work in offline mode
-          setShowLoadingOverlay(false);
-        }, 2000);
+        // User will manually close the error overlay
       }
     } catch (error: any) {
       setIsAppleLoading(false);
@@ -316,11 +307,8 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
         return;
       }
 
-      // Show auth error in overlay
+      // Show auth error in overlay - user will manually close
       setLoadingPhase('auth-error');
-      setTimeout(() => {
-        setShowLoadingOverlay(false);
-      }, 2000);
     }
   };
 
@@ -488,6 +476,10 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
       <LoadingOverlay
         phase={showLoadingOverlay ? loadingPhase : null}
         onPulseComplete={() => transitionToMainMenu(onSuccess)}
+        onClose={() => {
+          setShowLoadingOverlay(false);
+          setLoadingPhase(null);
+        }}
       />
     </Animated.View>
   );
