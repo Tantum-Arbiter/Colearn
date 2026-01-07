@@ -83,9 +83,8 @@ export class StoryLoader {
           }
           if (story.pages && story.pages.length > 0) {
             story.pages.forEach(page => {
-              if (page.backgroundImage || page.characterImage) {
-                console.log(`[CMS-LOADER]      Page ${page.pageNumber}: BG=${page.backgroundImage ? '✓' : '✗'}, Char=${page.characterImage ? '✓' : '✗'}`);
-              }
+              // Log full URL for debugging
+              console.log(`[CMS-LOADER]      Page ${page.pageNumber}: ${page.backgroundImage || 'NO_BG_IMAGE'}`);
             });
           }
         });

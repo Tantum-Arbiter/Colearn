@@ -442,6 +442,9 @@ export class AuthenticatedImageService {
    */
   static async invalidateCache(remoteUrl: string): Promise<void> {
     try {
+      // Remove from memory cache
+      this.memoryCache.delete(remoteUrl);
+
       const cacheFilename = this.getCacheFilename(remoteUrl);
       const cachedPath = `${this.CACHE_DIR}${cacheFilename}`;
       await this.deleteFile(cachedPath);
@@ -449,6 +452,22 @@ export class AuthenticatedImageService {
     } catch (error) {
       console.error(`[AuthImageService] Error invalidating cache:`, error);
     }
+  }
+
+  /**
+   * Invalidate all cached images for a list of URLs
+   * Used when a story is updated to ensure fresh images are downloaded
+   */
+  static async invalidateCacheForUrls(urls: string[]): Promise<void> {
+    console.log(`[AuthImageService] Invalidating cache for ${urls.length} URLs`);
+
+    for (const url of urls) {
+      if (url) {
+        await this.invalidateCache(url);
+      }
+    }
+
+    console.log(`[AuthImageService] Cache invalidation complete for ${urls.length} URLs`);
   }
 }
 

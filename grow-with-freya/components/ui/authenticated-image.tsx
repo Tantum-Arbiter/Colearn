@@ -33,7 +33,9 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
 }) => {
   // Check memory cache synchronously for instant display
   const memoryCachedUri = useMemo(() => {
-    return AuthenticatedImageService.getMemoryCachedUri(uri);
+    const cached = AuthenticatedImageService.getMemoryCachedUri(uri);
+    console.log(`[AuthenticatedImage] Memory cache check for: ${uri.split('/').pop()} -> ${cached ? 'HIT' : 'MISS'}`);
+    return cached;
   }, [uri]);
 
   const [cachedUri, setCachedUri] = useState<string | null>(memoryCachedUri);
@@ -41,6 +43,15 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
   const [hasError, setHasError] = useState(false);
   const retryCountRef = useRef(0);
   const isMountedRef = useRef(true);
+
+  // Reset state when uri changes - this is critical for page transitions
+  // Without this, the old cachedUri would persist when navigating between pages
+  useEffect(() => {
+    setCachedUri(memoryCachedUri);
+    setIsLoading(!memoryCachedUri);
+    setHasError(false);
+    retryCountRef.current = 0;
+  }, [uri, memoryCachedUri]);
 
   const loadImage = useCallback(async (forceRefresh: boolean = false) => {
     try {
@@ -100,7 +111,6 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
 
   useEffect(() => {
     isMountedRef.current = true;
-    retryCountRef.current = 0;
 
     // Skip async loading if we already have the URI from memory cache
     if (!memoryCachedUri) {

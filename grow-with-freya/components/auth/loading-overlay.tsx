@@ -107,7 +107,7 @@ export function LoadingOverlay({ phase, onPulseComplete, onClose }: LoadingOverl
     } else if (!phase && wasLoading && !hadError) {
       // Loading completed successfully - show checkmark
       setShowCheckmark(true);
-      loadingCircleAnim.rotation.value = 0;
+      loadingCircleAnim.stopAnimation(); // Stop the rotation animation cleanly
       fadeOutText();
       playCheckmarkEffect(() => {
         playClickSound();
