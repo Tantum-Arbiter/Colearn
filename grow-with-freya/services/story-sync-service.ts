@@ -1,14 +1,39 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { 
-  Story, 
-  StorySyncRequest, 
-  StorySyncResponse, 
+import {
+  Story,
+  StorySyncRequest,
+  StorySyncResponse,
   StorySyncMetadata,
-  ContentVersion 
+  ContentVersion
 } from '../types/story';
 import { ApiClient } from './api-client';
+import Constants from 'expo-constants';
 
 const STORAGE_KEY = 'story_sync_metadata';
+
+const extra = Constants.expoConfig?.extra || {};
+const GATEWAY_URL = extra.gatewayUrl || process.env.EXPO_PUBLIC_GATEWAY_URL || 'http://localhost:8080';
+
+/**
+ * Convert relative asset paths to absolute URLs
+ * If the path is already a full URL, return as-is
+ */
+function resolveAssetUrl(path: string | undefined): string | undefined {
+  if (!path) return undefined;
+
+  // If it's already a full URL, return as-is
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+
+  // If it's a relative path, prepend the gateway URL
+  if (path.startsWith('assets/')) {
+    return `${GATEWAY_URL}/${path}`;
+  }
+
+  // For other paths, assume they're relative to the gateway
+  return `${GATEWAY_URL}/${path}`;
+}
 
 /**
  * Service for syncing story metadata from backend with delta-sync
@@ -135,6 +160,19 @@ export class StorySyncService {
         lastUpdated: new Date(syncResponse.lastUpdated).toISOString()
       });
 
+      // Resolve asset URLs for all stories
+      if (syncResponse.stories && syncResponse.stories.length > 0) {
+        syncResponse.stories = syncResponse.stories.map(story => ({
+          ...story,
+          coverImage: resolveAssetUrl(story.coverImage as string | undefined),
+          pages: story.pages?.map(page => ({
+            ...page,
+            backgroundImage: resolveAssetUrl(page.backgroundImage),
+            characterImage: resolveAssetUrl(page.characterImage),
+          }))
+        }));
+      }
+
       // Log each story received from CMS
       if (syncResponse.stories && syncResponse.stories.length > 0) {
         console.log('[CMS-SYNC] Stories received from CMS:');
@@ -144,12 +182,24 @@ export class StorySyncService {
           console.log(`[CMS-SYNC]      Title: "${story.title}"`);
           console.log(`[CMS-SYNC]      Category: ${story.category}`);
           console.log(`[CMS-SYNC]      Pages: ${pageCount}`);
-          console.log(`[CMS-SYNC]      Cover: ${story.coverImage}`);
+          console.log(`[CMS-SYNC]      Cover Image: ${story.coverImage ? '✓ Present' : '✗ Missing'}`);
+          if (story.coverImage) {
+            console.log(`[CMS-SYNC]        URL: ${story.coverImage}`);
+          }
 
           // Log page images
-          if (story.pages) {
+          if (story.pages && story.pages.length > 0) {
+            console.log(`[CMS-SYNC]      Page Images:`);
             story.pages.forEach(page => {
-              console.log(`[CMS-SYNC]      Page ${page.pageNumber}: ${page.backgroundImage}`);
+              const hasBackground = page.backgroundImage ? '✓' : '✗';
+              const hasCharacter = page.characterImage ? '✓' : '✗';
+              console.log(`[CMS-SYNC]        Page ${page.pageNumber}: Background ${hasBackground}, Character ${hasCharacter}`);
+              if (page.backgroundImage) {
+                console.log(`[CMS-SYNC]          BG: ${page.backgroundImage}`);
+              }
+              if (page.characterImage) {
+                console.log(`[CMS-SYNC]          Char: ${page.characterImage}`);
+              }
             });
           }
         });
@@ -193,6 +243,22 @@ export class StorySyncService {
   }
 
   /**
+   * Resolve asset URLs in stories
+   * Ensures all image URLs are absolute, not relative
+   */
+  private static resolveStoriesAssetUrls(stories: Story[]): Story[] {
+    return stories.map(story => ({
+      ...story,
+      coverImage: resolveAssetUrl(story.coverImage as string | undefined),
+      pages: story.pages?.map(page => ({
+        ...page,
+        backgroundImage: resolveAssetUrl(page.backgroundImage),
+        characterImage: resolveAssetUrl(page.characterImage),
+      }))
+    }));
+  }
+
+  /**
    * Prefetch stories on login
    * Performs initial sync or delta-sync based on local state
    */
@@ -208,7 +274,9 @@ export class StorySyncService {
       } else {
         console.log('[StorySyncService] Stories up to date, using local cache');
         const metadata = await this.getLocalSyncMetadata();
-        return metadata?.stories || [];
+        const stories = metadata?.stories || [];
+        // Ensure all asset URLs are resolved
+        return this.resolveStoriesAssetUrls(stories);
       }
     } catch (error) {
       console.error('[StorySyncService] Prefetch failed:', error);
@@ -217,7 +285,8 @@ export class StorySyncService {
       const metadata = await this.getLocalSyncMetadata();
       if (metadata?.stories) {
         console.log('[StorySyncService] Using cached stories due to sync error');
-        return metadata.stories;
+        // Ensure all asset URLs are resolved
+        return this.resolveStoriesAssetUrls(metadata.stories);
       }
 
       throw error;
@@ -227,11 +296,14 @@ export class StorySyncService {
   /**
    * Get locally cached stories
    * Returns empty array if no cache exists
+   * Ensures all asset URLs are resolved to absolute URLs
    */
   static async getLocalStories(): Promise<Story[]> {
     try {
       const metadata = await this.getLocalSyncMetadata();
-      return metadata?.stories || [];
+      const stories = metadata?.stories || [];
+      // Ensure all asset URLs are resolved
+      return this.resolveStoriesAssetUrls(stories);
     } catch (error) {
       console.error('[StorySyncService] Error getting local stories:', error);
       return [];

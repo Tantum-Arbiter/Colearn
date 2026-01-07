@@ -8,10 +8,12 @@
     "upload-cms-stories": "UPLOAD_MODE=cms-only node upload-stories-to-firestore.js",
     "upload-bundled-stories": "UPLOAD_MODE=bundled node upload-stories-to-firestore.js",
     "upload-all-stories": "UPLOAD_MODE=all node upload-stories-to-firestore.js",
+    "upload-assets": "node upload-assets-to-firestore.js",
     "generate-stories": "node generate-story-files.js",
     "generate-bundled-ts": "node generate-bundled-stories-ts.js"
   },
   "dependencies": {
+    "@google-cloud/storage": "^7.0.0",
     "firebase-admin": "^12.0.0"
   },
   "engines": {

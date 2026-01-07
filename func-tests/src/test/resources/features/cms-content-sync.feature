@@ -225,3 +225,24 @@ Feature: CMS Content Sync and Delta Sync Testing
     And the response should contain field "version"
     And the response should contain field "checksum"
 
+  # ============================================================================
+  # CMS BOOK PERSISTENCE TESTS - Creates books that persist after tests
+  # ============================================================================
+
+  @gcp-dev @cms-persistence @smoke
+  Scenario: Create and persist CMS test books for manual testing
+    Given I create CMS test book "cms-test-1-squirrel-snowman" with title "CMS test 1 - squirrel snowman"
+    And I create CMS test book "cms-test-2-squirrel-snowman" with title "CMS test 2 - squirrel snowman"
+    And I create CMS test book "cms-test-3-squirrel-snowman" with title "CMS test 3 - squirrel snowman"
+    When I make a GET request to "/api/stories/cms-test-1-squirrel-snowman"
+    Then the response status code should be 200
+    And the response should contain field "id" with value "cms-test-1-squirrel-snowman"
+    And the response should contain field "title" with value "CMS test 1 - squirrel snowman"
+    And the response field "pages" should have at least 10 items
+    When I make a GET request to "/api/stories/cms-test-2-squirrel-snowman"
+    Then the response status code should be 200
+    And the response should contain field "id" with value "cms-test-2-squirrel-snowman"
+    When I make a GET request to "/api/stories/cms-test-3-squirrel-snowman"
+    Then the response status code should be 200
+    And the response should contain field "id" with value "cms-test-3-squirrel-snowman"
+

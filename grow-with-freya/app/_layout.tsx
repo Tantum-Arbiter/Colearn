@@ -17,6 +17,8 @@ import { AccountScreen } from '@/components/account/account-screen';
 import { MainMenu } from '@/components/main-menu';
 import { ApiClient } from '@/services/api-client';
 import { backgroundSaveService } from '@/services/background-save-service';
+import { StorySyncService } from '@/services/story-sync-service';
+import { AssetSyncService } from '@/services/asset-sync-service';
 import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
 import { StoryBookReader } from '@/components/stories/story-book-reader';
 import { MusicScreen } from '@/components/music';
@@ -212,19 +214,54 @@ function AppContent() {
         setCurrentPage('main');
       } else {
         // Only check authentication when not in guest mode
-        const isAuthenticated = await ApiClient.isAuthenticated();
-        console.log('Authentication check:', { isAuthenticated, hasCompletedOnboarding });
+        try {
+          // Add timeout to prevent hanging
+          const authPromise = ApiClient.isAuthenticated();
+          const timeoutPromise = new Promise<boolean>((resolve) => {
+            setTimeout(() => {
+              console.warn('Authentication check timeout - assuming not authenticated');
+              resolve(false);
+            }, 5000);
+          });
 
-        if (!isAuthenticated) {
-          // User has completed onboarding but is not authenticated - show login screen
-          console.log('User not authenticated - showing login');
+          const isAuthenticated = await Promise.race([authPromise, timeoutPromise]);
+          console.log('Authentication check:', { isAuthenticated, hasCompletedOnboarding });
+
+          if (!isAuthenticated) {
+            // User has completed onboarding but is not authenticated - show login screen
+            console.log('User not authenticated - showing login');
+            setShowLoginAfterOnboarding(true);
+            setCurrentView('login');
+          } else {
+            // User is authenticated - prefetch stories and assets before showing app
+            console.log('User authenticated - prefetching stories');
+            try {
+              await StorySyncService.prefetchStories();
+              console.log('[_layout] Stories prefetched successfully');
+            } catch (syncError) {
+              console.error('[_layout] Story prefetch failed, will use offline mode:', syncError);
+              // Continue anyway - app will use cached stories or local fallback
+            }
+
+            // Prefetch assets in background (non-blocking)
+            try {
+              await AssetSyncService.prefetchAssets();
+              console.log('[_layout] Assets prefetched successfully');
+            } catch (assetError) {
+              console.error('[_layout] Asset prefetch failed, will download on-demand:', assetError);
+              // Continue anyway - app will download assets on-demand
+            }
+
+            // Now go to app
+            console.log('User authenticated - going to app');
+            setCurrentView('app');
+            setCurrentPage('main');
+          }
+        } catch (error) {
+          console.error('Authentication check error:', error);
+          // On error, show login screen
           setShowLoginAfterOnboarding(true);
           setCurrentView('login');
-        } else {
-          // User is authenticated, go to app
-          console.log('User authenticated - going to app');
-          setCurrentView('app');
-          setCurrentPage('main');
         }
       }
     };

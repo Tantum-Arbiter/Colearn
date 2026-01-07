@@ -17,6 +17,9 @@ echo "=========================================="
 echo "Generated reports:"
 ls -la build/cucumber-reports/ 2>/dev/null || echo "No reports directory found"
 
+# Note: CMS books are now created and persisted by the functional tests themselves
+# See cms-content-sync.feature for the "Create and persist CMS test books" scenario
+
 # Upload reports to GCS if bucket is configured
 if [ -n "$GCS_REPORTS_BUCKET" ]; then
     echo "=========================================="

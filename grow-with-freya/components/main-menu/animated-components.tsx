@@ -68,7 +68,13 @@ export const FreyaRocketRight = React.memo(function FreyaRocketRight({
   );
 });
 
-export const BearImage = React.memo(function BearImage() {
+export const BearImage = React.memo(function BearImage({
+  width = ASSET_DIMENSIONS.bear.width,
+  height = ASSET_DIMENSIONS.bear.height
+}: {
+  width?: number;
+  height?: number;
+} = {}) {
   return (
     <View style={{
       width: '100%',
@@ -76,12 +82,18 @@ export const BearImage = React.memo(function BearImage() {
       justifyContent: 'flex-end',
       alignItems: 'center',
     }}>
-      <CachedBearImage />
+      <CachedBearImage width={width} height={height} />
     </View>
   );
 });
 
-export const MoonImage = React.memo(function MoonImage() {
+export const MoonImage = React.memo(function MoonImage({
+  width = ASSET_DIMENSIONS.moon.width,
+  height = ASSET_DIMENSIONS.moon.height
+}: {
+  width?: number;
+  height?: number;
+} = {}) {
   return (
     <View style={{
       width: '100%',
@@ -89,7 +101,7 @@ export const MoonImage = React.memo(function MoonImage() {
       justifyContent: 'flex-start',
       alignItems: 'center',
     }}>
-      <CachedMoonImage />
+      <CachedMoonImage width={width} height={height} />
     </View>
   );
 });

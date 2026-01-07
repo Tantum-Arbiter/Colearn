@@ -1,4 +1,4 @@
-# GCP Development Profile - connects to real Firestore (no emulator)
+#lge 8 i GCP Development Profile - connects to real Firestore (no emulator)
 # Usage: SPRING_PROFILES_ACTIVE=gcp-dev
 
 server:
@@ -39,8 +39,8 @@ app:
       enabled: false
     cloudflare:
       require-validation: true
-      allowed-direct-paths: /health,/actuator/health
-      allowed-user-agents: GrowWithFreya-FuncTest
+      allowed-direct-paths: /health,/actuator/health,/auth/refresh
+      allowed-user-agents: GrowWithFreya,GrowWithFreya-FuncTest
 
 google:
   oauth:

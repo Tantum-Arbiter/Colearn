@@ -25,6 +25,26 @@ export class StoryLoader {
       // Try to get CMS stories from sync cache
       const cmsStories = await StorySyncService.getLocalStories();
 
+      // Debug: Log CMS stories with image info
+      if (cmsStories && cmsStories.length > 0) {
+        console.log(`[CMS-LOADER] CMS stories loaded from cache: ${cmsStories.length}`);
+        cmsStories.forEach((story, index) => {
+          const hasCover = story.coverImage ? '✓' : '✗';
+          const pageCount = story.pages?.length || 0;
+          console.log(`[CMS-LOADER]   ${index + 1}. ${story.id} - Cover: ${hasCover}, Pages: ${pageCount}`);
+          if (story.coverImage) {
+            console.log(`[CMS-LOADER]      Cover URL: ${story.coverImage}`);
+          }
+          if (story.pages && story.pages.length > 0) {
+            story.pages.forEach(page => {
+              if (page.backgroundImage || page.characterImage) {
+                console.log(`[CMS-LOADER]      Page ${page.pageNumber}: BG=${page.backgroundImage ? '✓' : '✗'}, Char=${page.characterImage ? '✓' : '✗'}`);
+              }
+            });
+          }
+        });
+      }
+
       if (cmsStories && cmsStories.length > 0) {
         console.log(`[CMS-LOADER] CMS stories in cache: ${cmsStories.length}`);
 

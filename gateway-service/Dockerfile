@@ -8,12 +8,15 @@ FROM gradle:8.5-jdk21 AS builder
 WORKDIR /app
 
 # Copy all project files
-COPY build.gradle settings.gradle ./
+COPY build.gradle settings.gradle gradlew ./
 COPY gradle/ gradle/
 COPY src/ src/
 
-# Build the application (dependencies downloaded during build, single network request)
-RUN gradle build --no-daemon -x test
+# Ensure gradlew is executable
+RUN chmod +x gradlew
+
+# Build the application (Google mirrors configured in build.gradle)
+RUN ./gradlew build --no-daemon -x test
 
 # Runtime stage
 FROM eclipse-temurin:21-jre

@@ -667,6 +667,46 @@ public class CmsContentSyncStepDefs extends BaseStepDefs {
 
     // Note: "the response time should be less than {int} milliseconds" is defined in GatewayStepDefs.java
 
+    /**
+     * Create a CMS test book from the squirrel snowman template
+     * These books persist in Firestore after tests complete
+     */
+    @Given("I create CMS test book {string} with title {string}")
+    public void iCreateCmsTestBook(String storyId, String title) throws Exception {
+        logger.info("Creating CMS test book: {} with title: {}", storyId, title);
+
+        // Load the base squirrel snowman story
+        JsonNode baseStory = loadTestStory("cms-squirrels-snowman");
+
+        // Convert to mutable map
+        Map<String, Object> story = objectMapper.convertValue(baseStory, Map.class);
+
+        // Update ID and title
+        story.put("id", storyId);
+        story.put("title", title);
+
+        // Ensure required fields are set
+        story.put("version", 1);
+        story.put("isPremium", true);
+        story.put("author", "Freya Stories");
+        story.put("isAvailable", true);
+
+        // Remove checksum so server recalculates it
+        story.remove("checksum");
+
+        // Upload to gateway's private seeding endpoint
+        Response response = given()
+                .contentType("application/json")
+                .body(objectMapper.writeValueAsString(story))
+                .when()
+                .post("/private/seed/story");
+
+        assertThat("CMS test book creation should succeed",
+                response.getStatusCode(), anyOf(equalTo(200), equalTo(201)));
+
+        logger.info("Successfully created CMS test book: {}", storyId);
+    }
+
     private String mapToJson(Map<String, Object> map) {
         try {
             return objectMapper.writeValueAsString(map);

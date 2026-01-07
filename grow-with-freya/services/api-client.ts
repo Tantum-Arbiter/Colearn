@@ -222,6 +222,19 @@ export class ApiClient {
   }
 
   /**
+   * Public method to refresh the access token
+   * Used by services that need to ensure token validity
+   */
+  static async refreshToken(): Promise<void> {
+    try {
+      await this.performTokenRefresh();
+    } catch (error) {
+      console.error('[ApiClient] Failed to refresh token:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Get user profile
    */
   static async getProfile(): Promise<{

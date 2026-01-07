@@ -27,6 +27,7 @@ import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
 import * as Haptics from 'expo-haptics';
 import { voiceRecordingService, VoiceOver } from '@/services/voice-recording-service';
 import { useGlobalSound } from '@/contexts/global-sound-context';
+import { AuthenticatedImage } from '@/components/ui/authenticated-image';
 
 
 
@@ -973,21 +974,58 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
             styles.fullScreenBackground,
             { backgroundColor: '#000' }
           ]}>
-            <Image
-              source={typeof page.backgroundImage === 'string' ? { uri: page.backgroundImage } : page.backgroundImage}
-              style={[
-                styles.backgroundImageStyle,
-                { width: '100%', height: '100%', transform: [{ scale: imageScale }] }
-              ]}
-              resizeMode="contain"
-            />
+            {typeof page.backgroundImage === 'string' && page.backgroundImage.includes('api.colearnwithfreya.co.uk') ? (
+              <AuthenticatedImage
+                uri={page.backgroundImage}
+                style={[
+                  styles.backgroundImageStyle,
+                  { width: '100%', height: '100%', transform: [{ scale: imageScale }] }
+                ]}
+                resizeMode="contain"
+                onLoad={() => console.log(`[StoryBookReader] Page ${page.pageNumber}: Background image loaded`)}
+                onError={(error) => {
+                  console.error(`[StoryBookReader] Page ${page.pageNumber}: Background image error:`, error);
+                }}
+              />
+            ) : (
+              <Image
+                source={typeof page.backgroundImage === 'string' ? { uri: page.backgroundImage } : page.backgroundImage}
+                style={[
+                  styles.backgroundImageStyle,
+                  { width: '100%', height: '100%', transform: [{ scale: imageScale }] }
+                ]}
+                resizeMode="contain"
+                onLoad={() => console.log(`[StoryBookReader] Page ${page.pageNumber}: Background image loaded`)}
+                onError={(error) => {
+                  console.error(`[StoryBookReader] Page ${page.pageNumber}: Background image error:`, JSON.stringify(error));
+                  console.error(`[StoryBookReader] Page ${page.pageNumber}: Attempted URL:`, page.backgroundImage);
+                }}
+              />
+            )}
             {/* Character overlay - only show if character image exists */}
             {page.characterImage && (
-              <Image
-                source={typeof page.characterImage === 'string' ? { uri: page.characterImage } : page.characterImage}
-                style={styles.characterImage}
-                resizeMode="contain"
-              />
+              typeof page.characterImage === 'string' && page.characterImage.includes('api.colearnwithfreya.co.uk') ? (
+                <AuthenticatedImage
+                  uri={page.characterImage}
+                  style={styles.characterImage}
+                  resizeMode="contain"
+                  onLoad={() => console.log(`[StoryBookReader] Page ${page.pageNumber}: Character image loaded`)}
+                  onError={(error) => {
+                    console.error(`[StoryBookReader] Page ${page.pageNumber}: Character image error:`, error);
+                  }}
+                />
+              ) : (
+                <Image
+                  source={typeof page.characterImage === 'string' ? { uri: page.characterImage } : page.characterImage}
+                  style={styles.characterImage}
+                  resizeMode="contain"
+                  onLoad={() => console.log(`[StoryBookReader] Page ${page.pageNumber}: Character image loaded`)}
+                  onError={(error) => {
+                    console.error(`[StoryBookReader] Page ${page.pageNumber}: Character image error:`, JSON.stringify(error));
+                    console.error(`[StoryBookReader] Page ${page.pageNumber}: Attempted URL:`, page.characterImage);
+                  }}
+                />
+              )
             )}
 
             {/* Interactive Elements - Props that can be tapped to reveal */}

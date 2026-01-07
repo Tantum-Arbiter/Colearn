@@ -20,6 +20,7 @@ import { formatDurationCompact } from '../../utils/time-formatting';
 import { EditProfileContent } from './edit-profile-screen';
 import { ApiClient } from '../../services/api-client';
 import { reminderService } from '../../services/reminder-service';
+import { StorySyncService } from '../../services/story-sync-service';
 import * as Sentry from '@sentry/react-native';
 import { TEXT_SIZE_OPTIONS, useAccessibility } from '../../hooks/use-accessibility';
 
@@ -239,21 +240,23 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
           style: 'destructive',
           onPress: async () => {
             try {
-              // Clear authentication tokens
-              await ApiClient.logout();
-
-              // Clear user profile data from store
+              // Clear user profile data from store (instant)
               clearUserProfile();
 
-              // Clear reminders
-              await reminderService.clearAllReminders();
-
-              // Reset login state
+              // Reset login state (instant)
               setLoginComplete(false);
               setShowLoginAfterOnboarding(true);
 
-              // Go back to main menu (which will redirect to login)
+              // Go back to main menu (which will redirect to login) - instant
               onBack();
+
+              // Clear authentication tokens and reminders in background (non-blocking)
+              ApiClient.logout().catch(error => {
+                console.error('Background logout error:', error);
+              });
+              reminderService.clearAllReminders().catch(error => {
+                console.error('Background reminder clear error:', error);
+              });
             } catch (error) {
               console.error('Logout error:', error);
               Alert.alert('Error', 'Failed to logout. Please try again.');
@@ -279,22 +282,28 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
           text: 'Reset',
           style: 'destructive',
           onPress: async () => {
-            // Clear authentication tokens
-            await ApiClient.logout();
-
-            // Clear persisted storage completely to ensure fresh start
-            await clearPersistedStorage();
-
-            // Reset all state to initial values
+            // Reset all state to initial values (instant)
             setOnboardingComplete(false);
             setLoginComplete(false);
             setShowLoginAfterOnboarding(false);
             setAppReady(false);
 
-            // Give a moment for state to update and persist
+            // Immediately set app ready to trigger navigation
             setTimeout(() => {
               setAppReady(true);
-            }, 500);
+            }, 100);
+
+            // Clear everything in background (non-blocking)
+            // This includes auth tokens, persisted storage, and story cache
+            ApiClient.logout().catch(error => {
+              console.error('Background logout error:', error);
+            });
+            clearPersistedStorage().catch(error => {
+              console.error('Background storage clear error:', error);
+            });
+            StorySyncService.clearCache().catch(error => {
+              console.error('Background story cache clear error:', error);
+            });
           },
         },
       ]

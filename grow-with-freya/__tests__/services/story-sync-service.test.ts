@@ -12,13 +12,14 @@ jest.mock('@react-native-async-storage/async-storage');
 jest.mock('../../services/api-client');
 
 describe('StorySyncService', () => {
+  // Mock stories with resolved URLs (as returned by the service after resolveAssetUrl)
   const mockStory1: Story = {
     id: 'story-1',
     title: 'Test Story 1',
     category: 'bedtime',
     tag: '🌙 Bedtime',
     emoji: '🐨',
-    coverImage: 'assets/stories/story-1/cover.webp',
+    coverImage: 'http://localhost:8080/assets/stories/story-1/cover.webp',
     isAvailable: true,
     ageRange: '2-5',
     duration: 8,
@@ -30,7 +31,8 @@ describe('StorySyncService', () => {
         id: 'story-1-page-1',
         pageNumber: 1,
         text: 'Page 1 text',
-        backgroundImage: 'assets/stories/story-1/page-1/background.webp'
+        backgroundImage: 'http://localhost:8080/assets/stories/story-1/page-1/background.webp',
+        characterImage: undefined
       }
     ]
   };
@@ -41,7 +43,7 @@ describe('StorySyncService', () => {
     category: 'adventure',
     tag: '🗺️ Adventure',
     emoji: '🦁',
-    coverImage: 'assets/stories/story-2/cover.webp',
+    coverImage: 'http://localhost:8080/assets/stories/story-2/cover.webp',
     isAvailable: true,
     ageRange: '3-6',
     duration: 10,
@@ -213,9 +215,48 @@ describe('StorySyncService', () => {
 
   describe('syncStories', () => {
     it('should perform initial sync when no local data exists', async () => {
-      const syncResponse: StorySyncResponse = {
+      // Mock API response with relative paths
+      const apiResponse: StorySyncResponse = {
         serverVersion: 1,
-        stories: [mockStory1, mockStory2],
+        stories: [
+          {
+            id: 'story-1',
+            title: 'Test Story 1',
+            category: 'bedtime',
+            tag: '🌙 Bedtime',
+            emoji: '🐨',
+            coverImage: 'assets/stories/story-1/cover.webp',
+            isAvailable: true,
+            ageRange: '2-5',
+            duration: 8,
+            description: 'A test story',
+            version: 1,
+            checksum: 'checksum-1',
+            pages: [
+              {
+                id: 'story-1-page-1',
+                pageNumber: 1,
+                text: 'Page 1 text',
+                backgroundImage: 'assets/stories/story-1/page-1/background.webp'
+              }
+            ]
+          },
+          {
+            id: 'story-2',
+            title: 'Test Story 2',
+            category: 'adventure',
+            tag: '🗺️ Adventure',
+            emoji: '🦁',
+            coverImage: 'assets/stories/story-2/cover.webp',
+            isAvailable: true,
+            ageRange: '3-6',
+            duration: 10,
+            description: 'Another test story',
+            version: 1,
+            checksum: 'checksum-2',
+            pages: []
+          }
+        ],
         storyChecksums: { 'story-1': 'checksum-1', 'story-2': 'checksum-2' },
         totalStories: 2,
         updatedStories: 2,
@@ -223,7 +264,7 @@ describe('StorySyncService', () => {
       };
 
       (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
-      (ApiClient.request as jest.Mock).mockResolvedValue(syncResponse);
+      (ApiClient.request as jest.Mock).mockResolvedValue(apiResponse);
 
       const result = await StorySyncService.syncStories();
 
@@ -247,18 +288,34 @@ describe('StorySyncService', () => {
         stories: [mockStory1]
       };
 
-      const updatedStory2 = { ...mockStory2, version: 2, checksum: 'checksum-2-updated' };
-      const syncResponse: StorySyncResponse = {
+      // Mock API response with relative paths for updated story
+      const apiResponse: StorySyncResponse = {
         serverVersion: 2,
-        stories: [updatedStory2],
+        stories: [{
+          id: 'story-2',
+          title: 'Test Story 2',
+          category: 'adventure',
+          tag: '🗺️ Adventure',
+          emoji: '🦁',
+          coverImage: 'assets/stories/story-2/cover.webp',
+          isAvailable: true,
+          ageRange: '3-6',
+          duration: 10,
+          description: 'Another test story',
+          version: 2,
+          checksum: 'checksum-2-updated',
+          pages: []
+        }],
         storyChecksums: { 'story-1': 'checksum-1', 'story-2': 'checksum-2-updated' },
         totalStories: 2,
         updatedStories: 1,
         lastUpdated: Date.now()
       };
 
+      const updatedStory2 = { ...mockStory2, version: 2, checksum: 'checksum-2-updated' };
+
       (AsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify(localMetadata));
-      (ApiClient.request as jest.Mock).mockResolvedValue(syncResponse);
+      (ApiClient.request as jest.Mock).mockResolvedValue(apiResponse);
 
       const result = await StorySyncService.syncStories();
 
@@ -268,9 +325,31 @@ describe('StorySyncService', () => {
     });
 
     it('should save updated metadata after sync', async () => {
-      const syncResponse: StorySyncResponse = {
+      // Mock API response with relative paths
+      const apiResponse: StorySyncResponse = {
         serverVersion: 1,
-        stories: [mockStory1],
+        stories: [{
+          id: 'story-1',
+          title: 'Test Story 1',
+          category: 'bedtime',
+          tag: '🌙 Bedtime',
+          emoji: '🐨',
+          coverImage: 'assets/stories/story-1/cover.webp',
+          isAvailable: true,
+          ageRange: '2-5',
+          duration: 8,
+          description: 'A test story',
+          version: 1,
+          checksum: 'checksum-1',
+          pages: [
+            {
+              id: 'story-1-page-1',
+              pageNumber: 1,
+              text: 'Page 1 text',
+              backgroundImage: 'assets/stories/story-1/page-1/background.webp'
+            }
+          ]
+        }],
         storyChecksums: { 'story-1': 'checksum-1' },
         totalStories: 1,
         updatedStories: 1,
@@ -278,7 +357,7 @@ describe('StorySyncService', () => {
       };
 
       (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
-      (ApiClient.request as jest.Mock).mockResolvedValue(syncResponse);
+      (ApiClient.request as jest.Mock).mockResolvedValue(apiResponse);
 
       await StorySyncService.syncStories();
 
@@ -291,9 +370,31 @@ describe('StorySyncService', () => {
 
   describe('prefetchStories', () => {
     it('should sync when sync is needed', async () => {
-      const syncResponse: StorySyncResponse = {
+      // Mock API response with relative paths (service will resolve them)
+      const apiResponse: StorySyncResponse = {
         serverVersion: 1,
-        stories: [mockStory1],
+        stories: [{
+          id: 'story-1',
+          title: 'Test Story 1',
+          category: 'bedtime',
+          tag: '🌙 Bedtime',
+          emoji: '🐨',
+          coverImage: 'assets/stories/story-1/cover.webp',
+          isAvailable: true,
+          ageRange: '2-5',
+          duration: 8,
+          description: 'A test story',
+          version: 1,
+          checksum: 'checksum-1',
+          pages: [
+            {
+              id: 'story-1-page-1',
+              pageNumber: 1,
+              text: 'Page 1 text',
+              backgroundImage: 'assets/stories/story-1/page-1/background.webp'
+            }
+          ]
+        }],
         storyChecksums: { 'story-1': 'checksum-1' },
         totalStories: 1,
         updatedStories: 1,
@@ -301,7 +402,7 @@ describe('StorySyncService', () => {
       };
 
       (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
-      (ApiClient.request as jest.Mock).mockResolvedValue(syncResponse);
+      (ApiClient.request as jest.Mock).mockResolvedValue(apiResponse);
 
       const result = await StorySyncService.prefetchStories();
 

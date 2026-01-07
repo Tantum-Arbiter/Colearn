@@ -10,6 +10,7 @@ import Animated, {
 import * as Haptics from 'expo-haptics';
 import { Story } from '@/types/story';
 import { Fonts } from '@/constants/theme';
+import { AuthenticatedImage } from '@/components/ui/authenticated-image';
 
 interface StoryThumbnailProps {
   story: Story;
@@ -77,17 +78,29 @@ export const StoryThumbnail: React.FC<StoryThumbnailProps> = ({
     opacity: opacity.value,
   }));
 
+  const isCmsImage = typeof story.coverImage === 'string' && story.coverImage.includes('api.colearnwithfreya.co.uk');
+
   const getCoverImageSource = (): ImageSourcePropType | null => {
-    if (!story.coverImage) return null;
-    
+    if (!story.coverImage) {
+      console.log(`[StoryThumbnail] ${story.id}: No cover image`);
+      return null;
+    }
+
     // Handle both require() and URL string formats
     if (typeof story.coverImage === 'string') {
+      console.log(`[StoryThumbnail] ${story.id}: Loading cover from URL: ${story.coverImage}, isCMS=${isCmsImage}`);
       return { uri: story.coverImage };
     }
+    console.log(`[StoryThumbnail] ${story.id}: Loading cover from require()`);
     return story.coverImage;
   };
 
   const coverImageSource = getCoverImageSource();
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log(`[StoryThumbnail] ${story.id}: Render state - isVisible=${isVisible}, coverImageSource=${!!coverImageSource}, imageError=${imageError}, isCmsImage=${isCmsImage}`);
+  }, [isVisible, coverImageSource, imageError, isCmsImage, story.id]);
 
   return (
     <Animated.View style={[styles.container, { width, height }, animatedStyle]}>
@@ -100,14 +113,37 @@ export const StoryThumbnail: React.FC<StoryThumbnailProps> = ({
       >
         {/* Cover Image */}
         <View style={styles.imageContainer}>
-          {isVisible && coverImageSource && !imageError ? (
-            <Image
-              source={coverImageSource}
-              style={styles.coverImage}
-              onLoad={() => setImageLoaded(true)}
-              onError={() => setImageError(true)}
-              resizeMode="cover"
-            />
+          {coverImageSource && !imageError ? (
+            isCmsImage ? (
+              <AuthenticatedImage
+                uri={story.coverImage as string}
+                style={styles.coverImage}
+                resizeMode="cover"
+                onLoad={() => {
+                  console.log(`[StoryThumbnail] ${story.id}: CMS image loaded successfully`);
+                  setImageLoaded(true);
+                }}
+                onError={(error) => {
+                  console.error(`[StoryThumbnail] ${story.id}: CMS image load error:`, error);
+                  setImageError(true);
+                }}
+              />
+            ) : (
+              <Image
+                source={coverImageSource}
+                style={styles.coverImage}
+                onLoad={() => {
+                  console.log(`[StoryThumbnail] ${story.id}: Image loaded successfully`);
+                  setImageLoaded(true);
+                }}
+                onError={(error) => {
+                  console.error(`[StoryThumbnail] ${story.id}: Image load error:`, JSON.stringify(error));
+                  console.error(`[StoryThumbnail] ${story.id}: Attempted to load:`, coverImageSource);
+                  setImageError(true);
+                }}
+                resizeMode="cover"
+              />
+            )
           ) : (
             <View style={[styles.placeholderImage, { backgroundColor: story.isAvailable ? '#E8F4FD' : '#F5F5F5' }]}>
               <Text style={styles.placeholderEmoji}>{story.emoji}</Text>
