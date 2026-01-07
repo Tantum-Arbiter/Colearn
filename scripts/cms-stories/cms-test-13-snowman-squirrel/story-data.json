@@ -75,12 +75,12 @@
           "type": "reveal",
           "image": "assets/stories/cms-test-13-snowman-squirrel/page-4/props/cms-test-13-snowman-squirrel-page-4-basket-open.webp",
           "position": {
-            "x": 0.633,
-            "y": 0.637
+            "x": 0.475,
+            "y": 0.478
           },
           "size": {
-            "width": 0.245,
-            "height": 0.308
+            "width": 0.183,
+            "height": 0.23
           }
         }
       ]
@@ -100,16 +100,16 @@
       "text": "They look inside a great big box\nand find some lumps of coal.",
       "interactiveElements": [
         {
-          "id": "basket",
+          "id": "crate",
           "type": "reveal",
           "image": "assets/stories/cms-test-13-snowman-squirrel/page-6/props/cms-test-13-snowman-squirrel-page-6-basket-open.webp",
           "position": {
-            "x": 0.471,
-            "y": 0.579
+            "x": 0.348,
+            "y": 0.433
           },
           "size": {
-            "width": 0.396,
-            "height": 0.366
+            "width": 0.308,
+            "height": 0.28
           }
         }
       ]
@@ -133,12 +133,12 @@
           "type": "reveal",
           "image": "assets/stories/cms-test-13-snowman-squirrel/page-8/props/cms-test-13-snowman-squirrel-page-8-food-cover-open.webp",
           "position": {
-            "x": 0.335,
-            "y": 0.609
+            "x": 0.254,
+            "y": 0.46
           },
           "size": {
-            "width": 0.287,
-            "height": 0.213
+            "width": 0.212,
+            "height": 0.158
           }
         }
       ]
@@ -162,12 +162,12 @@
           "type": "reveal",
           "image": "assets/stories/cms-test-13-snowman-squirrel/page-10/props/cms-test-13-snowman-squirrel-page-10-curtains-open.webp",
           "position": {
-            "x": 0.373,
-            "y": 0.38
+            "x": 0.279,
+            "y": 0.286
           },
           "size": {
-            "width": 0.601,
-            "height": 0.387
+            "width": 0.451,
+            "height": 0.291
           }
         }
       ]

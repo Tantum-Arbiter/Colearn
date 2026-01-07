@@ -26,6 +26,10 @@ export class AuthenticatedImageService {
   // Key: remote URL, Value: local cached path
   private static memoryCache: Map<string, string> = new Map();
 
+  // Track in-flight requests to prevent duplicate concurrent downloads
+  // Key: remote URL, Value: promise that resolves to cached path or null
+  private static inFlightRequests: Map<string, Promise<string | null>> = new Map();
+
   /**
    * Get a cached URI instantly from memory if available (synchronous check)
    * Returns null if not in memory cache - caller should then use getImageUri
@@ -55,30 +59,45 @@ export class AuthenticatedImageService {
   /**
    * Get a cached image URI with authentication
    * Downloads and caches the image if not already cached
+   * Uses request deduplication to prevent duplicate concurrent downloads
    */
   static async getImageUri(remoteUrl: string): Promise<string | null> {
     // First check memory cache for instant return (no async/await)
     const memoryCached = this.memoryCache.get(remoteUrl);
     if (memoryCached) {
-      console.log(`[AuthImageService] ⚡ INSTANT from memory cache: ${memoryCached.split('/').pop()}`);
       return memoryCached;
     }
 
-    console.log(`[AuthImageService] ===== getImageUri START =====`);
-    console.log(`[AuthImageService] CACHE_DIR: ${this.CACHE_DIR}`);
-    console.log(`[AuthImageService] cacheDirectory: ${FileSystem.cacheDirectory}`);
-    console.log(`[AuthImageService] documentDirectory: ${FileSystem.documentDirectory}`);
+    // For non-authenticated URLs, return as-is
+    if (!remoteUrl.includes('api.colearnwithfreya.co.uk')) {
+      return remoteUrl;
+    }
+
+    // Check if there's already an in-flight request for this URL
+    const existingRequest = this.inFlightRequests.get(remoteUrl);
+    if (existingRequest) {
+      console.log(`[AuthImageService] Waiting for in-flight request: ${remoteUrl.split('/').pop()}`);
+      return existingRequest;
+    }
+
+    // Create and track the new request
+    const requestPromise = this.fetchAndCacheImage(remoteUrl);
+    this.inFlightRequests.set(remoteUrl, requestPromise);
+
     try {
-      console.log(`[AuthImageService] getImageUri called with: ${remoteUrl}`);
-      console.log(`[AuthImageService] URL includes api.colearnwithfreya.co.uk: ${remoteUrl.includes('api.colearnwithfreya.co.uk')}`);
+      const result = await requestPromise;
+      return result;
+    } finally {
+      // Clean up in-flight request tracking
+      this.inFlightRequests.delete(remoteUrl);
+    }
+  }
 
-      // For non-authenticated URLs, return as-is
-      if (!remoteUrl.includes('api.colearnwithfreya.co.uk')) {
-        console.log(`[AuthImageService] Non-CMS URL, returning as-is: ${remoteUrl}`);
-        return remoteUrl;
-      }
-
-      console.log(`[AuthImageService] CMS URL detected, proceeding with auth download`);
+  /**
+   * Internal method to actually fetch and cache an image
+   */
+  private static async fetchAndCacheImage(remoteUrl: string): Promise<string | null> {
+    try {
 
       // Create cache directory if it doesn't exist
       const dirInfo = await FileSystem.getInfoAsync(this.CACHE_DIR);
@@ -191,23 +210,27 @@ export class AuthenticatedImageService {
   private static async tryAlternativePaths(
     remoteUrl: string,
     cachedPath: string,
-    cacheFilename: string
+    _cacheFilename: string
   ): Promise<string | null> {
-    console.log(`[AuthImageService] Trying alternative paths for: ${remoteUrl}`);
-
-    // Generate alternative paths to try
-    const alternatives = [
+    // Generate alternative paths to try (deduplicated)
+    const alternativesSet = new Set([
       remoteUrl.replace('/cover.webp', '/thumbnail.webp'),
       remoteUrl.replace('/thumbnail.webp', '/cover.webp'),
       remoteUrl.replace('/cover/cover.webp', '/cover/thumbnail.webp'),
       remoteUrl.replace('/cover/thumbnail.webp', '/cover/cover.webp'),
-    ];
+    ]);
+
+    // Remove original URL from alternatives
+    alternativesSet.delete(remoteUrl);
+    const alternatives = Array.from(alternativesSet);
+
+    if (alternatives.length === 0) {
+      console.warn(`[AuthImageService] No alternative paths available for: ${remoteUrl}`);
+      return null;
+    }
 
     for (const altUrl of alternatives) {
-      if (altUrl === remoteUrl) continue; // Skip if same as original
-
       try {
-        console.log(`[AuthImageService] Trying alternative: ${altUrl}`);
         const altAssetPath = this.extractAssetPath(altUrl);
         if (!altAssetPath) continue;
 
@@ -223,18 +246,19 @@ export class AuthenticatedImageService {
         );
 
         if (downloadResult.status === 200) {
-          console.log(`[AuthImageService] Successfully downloaded alternative: ${altUrl}`);
+          console.log(`[AuthImageService] Downloaded via alternative path: ${altAssetPath}`);
           // Add to memory cache for instant subsequent lookups
           this.memoryCache.set(remoteUrl, cachedPath);
           return cachedPath;
         }
-      } catch (error) {
-        console.warn(`[AuthImageService] Alternative path failed:`, error);
+      } catch {
+        // Silently continue to next alternative
         continue;
       }
     }
 
-    console.error(`[AuthImageService] All alternative paths failed for: ${remoteUrl}`);
+    // Only log once when all alternatives fail (not for each attempt)
+    console.warn(`[AuthImageService] Asset not available: ${this.extractAssetPath(remoteUrl)}`);
     return null;
   }
 

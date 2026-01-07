@@ -119,6 +119,13 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
             try {
               await StorySyncService.prefetchCoverImages();
               console.log('[LoginScreen] Cover images prefetched');
+
+              // If stories were removed (assets no longer available on CMS), refresh the cache
+              if (StorySyncService.lastPrefetchRemovedStories) {
+                console.log('[LoginScreen] Stories removed due to unavailable assets, refreshing cache');
+                StoryLoader.invalidateCache();
+                await StoryLoader.getStories();
+              }
             } catch (imageError) {
               console.error('[LoginScreen] Cover image prefetch failed:', imageError);
               // Continue anyway - images will be downloaded on-demand
@@ -296,6 +303,13 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
         try {
           await StorySyncService.prefetchCoverImages();
           console.log('[LoginScreen] Cover images prefetched');
+
+          // If stories were removed (assets no longer available on CMS), refresh the cache
+          if (StorySyncService.lastPrefetchRemovedStories) {
+            console.log('[LoginScreen] Stories removed due to unavailable assets, refreshing cache');
+            StoryLoader.invalidateCache();
+            await StoryLoader.getStories();
+          }
         } catch (imageError) {
           console.error('[LoginScreen] Cover image prefetch failed:', imageError);
           // Continue anyway - images will be downloaded on-demand
