@@ -231,14 +231,17 @@ export class StorySyncService {
           coverImage: resolveAssetUrl(story.coverImage as string | undefined),
           pages: story.pages?.map(page => ({
             ...page,
-            backgroundImage: resolveAssetUrl(page.backgroundImage),
-            characterImage: resolveAssetUrl(page.characterImage),
-            interactiveElements: page.interactiveElements?.map(element => ({
-              ...element,
-              image: resolveAssetUrl(element.image) || element.image,
-            })),
+            backgroundImage: resolveAssetUrl(page.backgroundImage) as string | undefined,
+            characterImage: resolveAssetUrl(page.characterImage) as string | undefined,
+            interactiveElements: page.interactiveElements?.map(element => {
+              const resolvedImage = resolveAssetUrl(element.image);
+              return {
+                ...element,
+                image: (resolvedImage !== undefined ? resolvedImage : element.image) as string | number,
+              };
+            }),
           }))
-        }));
+        })) as Story[];
 
         // Invalidate cached images for updated stories
         // This ensures fresh images are downloaded if content changed on the server
@@ -345,14 +348,17 @@ export class StorySyncService {
       coverImage: resolveAssetUrl(story.coverImage as string | undefined),
       pages: story.pages?.map(page => ({
         ...page,
-        backgroundImage: resolveAssetUrl(page.backgroundImage),
-        characterImage: resolveAssetUrl(page.characterImage),
-        interactiveElements: page.interactiveElements?.map(element => ({
-          ...element,
-          image: resolveAssetUrl(element.image) || element.image,
-        })),
+        backgroundImage: resolveAssetUrl(page.backgroundImage) as string | undefined,
+        characterImage: resolveAssetUrl(page.characterImage) as string | undefined,
+        interactiveElements: page.interactiveElements?.map(element => {
+          const resolvedImage = resolveAssetUrl(element.image);
+          return {
+            ...element,
+            image: (resolvedImage !== undefined ? resolvedImage : element.image) as string | number,
+          };
+        }),
       }))
-    }));
+    })) as Story[];
   }
 
   /**
