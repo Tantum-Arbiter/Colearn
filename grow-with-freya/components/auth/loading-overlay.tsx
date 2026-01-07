@@ -103,7 +103,7 @@ export function LoadingOverlay({ phase, onPulseComplete, onClose }: LoadingOverl
       setShowErrorState(true);
       setDisplayText(phase === 'auth-error' ? 'Sign-in failed' : 'Couldn\'t load stories');
       setSubText('Please try again');
-      fadeOutText();
+      fadeInText(); // Show the error text
     } else if (!phase && wasLoading && !hadError) {
       // Loading completed successfully - show checkmark
       setShowCheckmark(true);
