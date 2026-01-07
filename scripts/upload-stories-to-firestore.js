@@ -19,6 +19,7 @@ const SERVICE_ACCOUNT_JSON = process.env.GCP_SA_KEY; // Base64 or raw JSON for C
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'apt-icon-472307-b7';
 const UPLOAD_MODE = process.env.UPLOAD_MODE || 'cms-only'; // 'cms-only', 'bundled', or 'all'
 const DRY_RUN = process.env.DRY_RUN === 'true';
+const FORCE_UPLOAD = process.env.FORCE_UPLOAD === 'true'; // Force re-upload all stories, ignoring checksums
 
 // Initialize Firebase Admin
 function getServiceAccountCredentials() {
@@ -151,7 +152,11 @@ async function getCurrentChecksums() {
 async function uploadStories(stories) {
   console.log(`\n📊 Checking ${stories.length} stories for changes...`);
 
-  const currentChecksums = await getCurrentChecksums();
+  if (FORCE_UPLOAD) {
+    console.log('  ⚠️  FORCE_UPLOAD enabled - uploading all stories regardless of checksums');
+  }
+
+  const currentChecksums = FORCE_UPLOAD ? {} : await getCurrentChecksums();
   const storyChecksums = {};
   const changedStories = [];
   const unchangedStories = [];

@@ -29,6 +29,11 @@ on:
         required: true
         default: true
         type: boolean
+      force_upload:
+        description: 'Force re-upload all stories (ignore checksums)'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   validate-stories:
@@ -138,7 +143,8 @@ jobs:
         env:
           GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
           FIREBASE_PROJECT_ID: apt-icon-472307-b7
-          UPLOAD_MODE: cms-only
+          UPLOAD_MODE: ${{ github.event.inputs.upload_mode || 'cms-only' }}
+          FORCE_UPLOAD: ${{ github.event.inputs.force_upload || 'false' }}
 
       - name: Upload asset checksums to Firestore
         working-directory: scripts
