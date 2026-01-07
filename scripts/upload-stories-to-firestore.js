@@ -205,8 +205,45 @@ async function uploadStories(stories) {
 }
 
 /**
+ * Delete stories that exist in Firestore but not in source files
+ * Returns the list of deleted story IDs
+ */
+async function deleteOrphanedStories(validStoryIds) {
+  console.log('\n🗑️  Checking for orphaned stories to delete...');
+
+  const existingDocs = await db.collection('stories').listDocuments();
+  const existingIds = existingDocs.map(doc => doc.id);
+  const orphanedIds = existingIds.filter(id => !validStoryIds.includes(id));
+
+  if (orphanedIds.length === 0) {
+    console.log('  ✅ No orphaned stories found');
+    return [];
+  }
+
+  console.log(`  ⚠️  Found ${orphanedIds.length} orphaned stories to delete:`);
+  for (const id of orphanedIds) {
+    console.log(`    🗑️  ${id}`);
+  }
+
+  if (DRY_RUN) {
+    console.log('  🔍 [DRY RUN] Would delete above stories');
+    return orphanedIds;
+  }
+
+  // Delete in batches
+  const batch = db.batch();
+  for (const id of orphanedIds) {
+    batch.delete(db.collection('stories').doc(id));
+  }
+  await batch.commit();
+
+  console.log(`  ✅ Deleted ${orphanedIds.length} orphaned stories`);
+  return orphanedIds;
+}
+
+/**
  * Update content version document
- * Merges new checksums with existing ones to support partial uploads (cms-only, bundled, etc.)
+ * Replaces checksums entirely to ensure orphaned stories are removed
  */
 async function updateContentVersion(storyChecksums) {
   if (DRY_RUN) {
@@ -220,21 +257,17 @@ async function updateContentVersion(storyChecksums) {
   const versionDoc = await versionRef.get();
 
   let version = 1;
-  let existingChecksums = {};
   if (versionDoc.exists) {
     version = (versionDoc.data().version || 0) + 1;
-    existingChecksums = versionDoc.data().storyChecksums || {};
   }
 
-  // Merge new checksums with existing ones (new values override existing)
-  const mergedChecksums = { ...existingChecksums, ...storyChecksums };
-
+  // Replace checksums entirely (not merge) to ensure orphaned stories are removed
   const contentVersion = {
     id: 'current',
     version: version,
     lastUpdated: admin.firestore.Timestamp.now(),
-    storyChecksums: mergedChecksums,
-    totalStories: Object.keys(mergedChecksums).length
+    storyChecksums: storyChecksums,
+    totalStories: Object.keys(storyChecksums).length
   };
 
   await versionRef.set(contentVersion);
@@ -291,13 +324,20 @@ async function main() {
     // Upload to Firestore
     const storyChecksums = await uploadStories(stories);
 
-    // Update content version
+    // Delete orphaned stories (stories in Firestore but not in source files)
+    const validStoryIds = stories.map(s => s.id);
+    const deletedIds = await deleteOrphanedStories(validStoryIds);
+
+    // Update content version (replaces checksums entirely, removing deleted stories)
     const contentVersion = await updateContentVersion(storyChecksums);
 
     console.log('\n✨ Upload complete!');
     console.log(`   Mode: ${UPLOAD_MODE}`);
     console.log(`   Version: ${contentVersion.version}`);
     console.log(`   Stories: ${contentVersion.totalStories}`);
+    if (deletedIds.length > 0) {
+      console.log(`   Deleted: ${deletedIds.length} orphaned stories`);
+    }
     console.log(`   Timestamp: ${contentVersion.lastUpdated.toDate().toISOString()}`);
 
   } catch (error) {
