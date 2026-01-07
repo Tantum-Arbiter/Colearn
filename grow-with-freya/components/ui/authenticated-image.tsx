@@ -81,7 +81,7 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [uri]);
+  }, [uri, onLoad]);
 
   if (isLoading && showLoadingIndicator) {
     return (

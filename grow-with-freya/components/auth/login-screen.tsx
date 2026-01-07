@@ -38,7 +38,7 @@ interface LoginScreenProps {
 
 export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps) {
   const insets = useSafeAreaInsets();
-  const { scaledFontSize, scaledButtonSize, scaledPadding } = useAccessibility();
+  const { scaledFontSize, scaledButtonSize } = useAccessibility();
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isAppleLoading, setIsAppleLoading] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -342,6 +342,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
     setCurrentView('privacy');
   };
 
+  // All hooks must be called before any early returns
   const titleAnimatedStyle = useAnimatedStyle(() => ({
     opacity: titleOpacity.value,
     transform: [{ translateY: titleTranslateY.value }],
@@ -362,15 +363,6 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
     transform: [{ scale: containerScale.value }],
   }));
 
-  // Handle navigation between views
-  if (currentView === 'terms') {
-    return <TermsConditionsScreen onBack={() => setCurrentView('main')} />;
-  }
-
-  if (currentView === 'privacy') {
-    return <PrivacyPolicyScreen onBack={() => setCurrentView('main')} />;
-  }
-
   const mainMenuAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: mainMenuTranslateX.value }],
     // Keep opacity at 1 always - no fade in/out, just slide
@@ -380,6 +372,15 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
   const loginScreenAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: loginScreenTranslateX.value }],
   }));
+
+  // Handle navigation between views (after all hooks)
+  if (currentView === 'terms') {
+    return <TermsConditionsScreen onBack={() => setCurrentView('main')} />;
+  }
+
+  if (currentView === 'privacy') {
+    return <PrivacyPolicyScreen onBack={() => setCurrentView('main')} />;
+  }
 
   return (
     <Animated.View style={[styles.container, containerAnimatedStyle]}>

@@ -48,11 +48,7 @@ export function MusicPlayerScreen({ onBack }: MusicPlayerScreenProps) {
     duration,
     error,
     repeatCount,
-    previous,
     seekTo,
-    setVolume,
-    toggleMute,
-    setRepeatMode,
     toggleShuffle,
     togglePlayPause,
   } = useMusicPlayer();

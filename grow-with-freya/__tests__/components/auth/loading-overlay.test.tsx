@@ -27,18 +27,18 @@ describe('LoadingOverlay', () => {
     expect(tree).toBeTruthy();
   });
 
-  it('renders complete phase', () => {
+  it('renders null phase (completion)', () => {
     const mockCallback = jest.fn();
-    const { toJSON } = render(<LoadingOverlay phase="complete" onAnimationComplete={mockCallback} />);
+    const { toJSON } = render(<LoadingOverlay phase={null} onPulseComplete={mockCallback} />);
     const tree = toJSON();
     expect(tree).toBeTruthy();
   });
 
   it('renders without crashing for all phases', () => {
-    const phases: Array<'authenticating' | 'syncing' | 'complete' | 'auth-error' | 'sync-error'> = [
+    const phases: Array<'authenticating' | 'syncing' | 'auth-error' | 'sync-error' | null> = [
       'authenticating',
       'syncing',
-      'complete',
+      null,
       'auth-error',
       'sync-error',
     ];

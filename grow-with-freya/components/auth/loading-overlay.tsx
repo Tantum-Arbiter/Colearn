@@ -5,15 +5,13 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   Easing,
-  runOnJS,
 } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Audio } from 'expo-av';
 import LottieView from 'lottie-react-native';
 
-import { createLoadingCircleAnimation, createTextFadeAnimation, createCheckmarkAnimation } from './loading-animations';
+import { useLoadingCircleAnimation, useTextFadeAnimation, useCheckmarkAnimation } from './loading-animations';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 export type LoadingPhase = 'authenticating' | 'syncing' | 'auth-error' | 'sync-error' | null;
 
@@ -26,7 +24,6 @@ const WINDOW_WIDTH = 280;
 const WINDOW_HEIGHT = 280;
 
 export function LoadingOverlay({ phase, onPulseComplete }: LoadingOverlayProps) {
-  const insets = useSafeAreaInsets();
   const [displayText, setDisplayText] = useState('Signing in...');
   const [wasLoading, setWasLoading] = useState(false);
   const [showCheckmark, setShowCheckmark] = useState(false);
@@ -35,10 +32,10 @@ export function LoadingOverlay({ phase, onPulseComplete }: LoadingOverlayProps) 
   const windowTranslateX = useSharedValue(0);
   const overlayOpacity = useSharedValue(1);
 
-  // Create animations using hooks directly in the component
-  const loadingCircleAnim = useRef(createLoadingCircleAnimation()).current;
-  const textFadeAnim = useRef(createTextFadeAnimation()).current;
-  const checkmarkAnim = useRef(createCheckmarkAnimation()).current;
+  // Use animation hooks
+  const loadingCircleAnim = useLoadingCircleAnimation();
+  const textFadeAnim = useTextFadeAnimation();
+  const checkmarkAnim = useCheckmarkAnimation();
 
   // Always compute these values
   const isError = phase === 'auth-error' || phase === 'sync-error';
@@ -111,6 +108,7 @@ export function LoadingOverlay({ phase, onPulseComplete }: LoadingOverlayProps) 
       });
       setWasLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
   const windowAnimatedStyle = useAnimatedStyle(() => ({

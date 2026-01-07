@@ -1,4 +1,4 @@
-import Animated, {
+import {
   useSharedValue,
   useAnimatedStyle,
   withRepeat,
@@ -8,10 +8,10 @@ import Animated, {
 } from 'react-native-reanimated';
 
 /**
- * Create a cycling loading circle animation
+ * Custom hook for cycling loading circle animation
  * Rotates continuously, then plays click effect when complete
  */
-export function createLoadingCircleAnimation() {
+export function useLoadingCircleAnimation() {
   const rotation = useSharedValue(0);
 
   const startAnimation = () => {
@@ -35,10 +35,10 @@ export function createLoadingCircleAnimation() {
 }
 
 /**
- * Create a checkmark completion animation
+ * Custom hook for checkmark completion animation
  * Shows checkmark when loading completes
  */
-export function createCheckmarkAnimation() {
+export function useCheckmarkAnimation() {
   const checkmarkOpacity = useSharedValue(0);
 
   const playCheckmarkEffect = (onComplete?: () => void) => {
@@ -61,9 +61,9 @@ export function createCheckmarkAnimation() {
 }
 
 /**
- * Create a fade in/out animation for text
+ * Custom hook for fade in/out animation for text
  */
-export function createTextFadeAnimation() {
+export function useTextFadeAnimation() {
   const opacity = useSharedValue(0);
 
   const startFadeIn = () => {
