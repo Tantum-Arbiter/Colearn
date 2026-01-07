@@ -24,6 +24,7 @@ import { SecureStorage } from '@/services/secure-storage';
 import { ApiClient } from '@/services/api-client';
 import { ProfileSyncService } from '@/services/profile-sync-service';
 import { StorySyncService } from '@/services/story-sync-service';
+import { AssetSyncService } from '@/services/asset-sync-service';
 import { useAppStore } from '@/store/app-store';
 import { useAccessibility } from '@/hooks/use-accessibility';
 
@@ -107,6 +108,16 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
           try {
             await StorySyncService.prefetchStories();
             console.log('[LoginScreen] Story metadata synced');
+
+            // Prefetch assets in background
+            try {
+              await AssetSyncService.prefetchAssets();
+              console.log('[LoginScreen] Assets prefetched');
+            } catch (assetError) {
+              console.error('[LoginScreen] Asset prefetch failed:', assetError);
+              // Continue anyway - assets will be downloaded on-demand
+            }
+
             // CMS call completed successfully - hide loading overlay to show checkmark
             setShowLoadingOverlay(false);
           } catch (syncError) {
@@ -267,6 +278,16 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
         console.log('[LoginScreen] Prefetching story metadata...');
         await StorySyncService.prefetchStories();
         console.log('[LoginScreen] Story metadata synced');
+
+        // Prefetch assets in background
+        try {
+          await AssetSyncService.prefetchAssets();
+          console.log('[LoginScreen] Assets prefetched');
+        } catch (assetError) {
+          console.error('[LoginScreen] Asset prefetch failed:', assetError);
+          // Continue anyway - assets will be downloaded on-demand
+        }
+
         // CMS call completed successfully - hide loading overlay to show checkmark
         setShowLoadingOverlay(false);
       } catch (syncError) {

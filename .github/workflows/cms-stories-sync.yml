@@ -140,6 +140,13 @@ jobs:
           FIREBASE_PROJECT_ID: apt-icon-472307-b7
           UPLOAD_MODE: cms-only
 
+      - name: Upload asset checksums to Firestore
+        working-directory: scripts
+        run: node upload-assets-to-firestore.js
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          FIREBASE_PROJECT_ID: apt-icon-472307-b7
+
       - name: Create sync summary
         run: |
           echo "## CMS Stories Sync Summary" >> $GITHUB_STEP_SUMMARY

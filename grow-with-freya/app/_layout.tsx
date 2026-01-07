@@ -18,6 +18,7 @@ import { MainMenu } from '@/components/main-menu';
 import { ApiClient } from '@/services/api-client';
 import { backgroundSaveService } from '@/services/background-save-service';
 import { StorySyncService } from '@/services/story-sync-service';
+import { AssetSyncService } from '@/services/asset-sync-service';
 import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
 import { StoryBookReader } from '@/components/stories/story-book-reader';
 import { MusicScreen } from '@/components/music';
@@ -232,7 +233,7 @@ function AppContent() {
             setShowLoginAfterOnboarding(true);
             setCurrentView('login');
           } else {
-            // User is authenticated - prefetch stories before showing app
+            // User is authenticated - prefetch stories and assets before showing app
             console.log('User authenticated - prefetching stories');
             try {
               await StorySyncService.prefetchStories();
@@ -240,6 +241,15 @@ function AppContent() {
             } catch (syncError) {
               console.error('[_layout] Story prefetch failed, will use offline mode:', syncError);
               // Continue anyway - app will use cached stories or local fallback
+            }
+
+            // Prefetch assets in background (non-blocking)
+            try {
+              await AssetSyncService.prefetchAssets();
+              console.log('[_layout] Assets prefetched successfully');
+            } catch (assetError) {
+              console.error('[_layout] Asset prefetch failed, will download on-demand:', assetError);
+              // Continue anyway - app will download assets on-demand
             }
 
             // Now go to app
