@@ -203,6 +203,157 @@ public class StoryCmsStepDefs extends BaseStepDefs {
         assertThat("Response array should be empty", array.size(), equalTo(0));
     }
 
+    // Interactive Elements step definitions
+
+    @Then("page {int} should have field {string}")
+    public void pageShouldHaveField(int pageNumber, String fieldName) {
+        List<Map<String, Object>> pages = lastResponse.jsonPath().getList("pages");
+        assertThat("Pages should not be null", pages, notNullValue());
+
+        // Find page by pageNumber (0-indexed in array, but pageNumber field may differ)
+        Map<String, Object> targetPage = null;
+        for (Map<String, Object> page : pages) {
+            Integer pn = (Integer) page.get("pageNumber");
+            if (pn != null && pn == pageNumber) {
+                targetPage = page;
+                break;
+            }
+        }
+        assertThat("Page " + pageNumber + " should exist", targetPage, notNullValue());
+        assertThat("Page " + pageNumber + " should have field: " + fieldName,
+                targetPage.get(fieldName), notNullValue());
+    }
+
+    @Then("page {int} interactiveElements should be an array")
+    public void pageInteractiveElementsShouldBeAnArray(int pageNumber) {
+        List<Map<String, Object>> pages = lastResponse.jsonPath().getList("pages");
+        assertThat("Pages should not be null", pages, notNullValue());
+
+        Map<String, Object> targetPage = null;
+        for (Map<String, Object> page : pages) {
+            Integer pn = (Integer) page.get("pageNumber");
+            if (pn != null && pn == pageNumber) {
+                targetPage = page;
+                break;
+            }
+        }
+        assertThat("Page " + pageNumber + " should exist", targetPage, notNullValue());
+        Object interactiveElements = targetPage.get("interactiveElements");
+        assertThat("interactiveElements should be a list", interactiveElements, instanceOf(List.class));
+    }
+
+    @Then("page {int} interactiveElements should have at least {int} element")
+    public void pageInteractiveElementsShouldHaveAtLeastElement(int pageNumber, int minCount) {
+        List<Map<String, Object>> pages = lastResponse.jsonPath().getList("pages");
+        Map<String, Object> targetPage = null;
+        for (Map<String, Object> page : pages) {
+            Integer pn = (Integer) page.get("pageNumber");
+            if (pn != null && pn == pageNumber) {
+                targetPage = page;
+                break;
+            }
+        }
+        assertThat("Page " + pageNumber + " should exist", targetPage, notNullValue());
+        List<?> elements = (List<?>) targetPage.get("interactiveElements");
+        assertThat("interactiveElements should have at least " + minCount + " element(s)",
+                elements.size(), greaterThanOrEqualTo(minCount));
+    }
+
+    @Then("each interactive element should have field {string}")
+    public void eachInteractiveElementShouldHaveField(String fieldName) {
+        List<Map<String, Object>> pages = lastResponse.jsonPath().getList("pages");
+        for (Map<String, Object> page : pages) {
+            List<Map<String, Object>> elements = (List<Map<String, Object>>) page.get("interactiveElements");
+            if (elements != null && !elements.isEmpty()) {
+                for (Map<String, Object> element : elements) {
+                    assertThat("Interactive element should have field: " + fieldName,
+                            element.get(fieldName), notNullValue());
+                }
+            }
+        }
+    }
+
+    @Then("page {int} first interactive element position.x should be between {int} and {int}")
+    public void pageFirstInteractiveElementPositionXShouldBeBetween(int pageNumber, int min, int max) {
+        List<Map<String, Object>> pages = lastResponse.jsonPath().getList("pages");
+        Map<String, Object> targetPage = null;
+        for (Map<String, Object> page : pages) {
+            Integer pn = (Integer) page.get("pageNumber");
+            if (pn != null && pn == pageNumber) {
+                targetPage = page;
+                break;
+            }
+        }
+        assertThat("Page " + pageNumber + " should exist", targetPage, notNullValue());
+        List<Map<String, Object>> elements = (List<Map<String, Object>>) targetPage.get("interactiveElements");
+        assertThat("Should have interactive elements", elements, notNullValue());
+        assertThat("Should have at least one element", elements.size(), greaterThan(0));
+
+        Map<String, Object> position = (Map<String, Object>) elements.get(0).get("position");
+        assertThat("Position should exist", position, notNullValue());
+        Double x = ((Number) position.get("x")).doubleValue();
+        assertThat("position.x should be between " + min + " and " + max, x,
+                allOf(greaterThanOrEqualTo((double) min), lessThanOrEqualTo((double) max)));
+    }
+
+    @Then("page {int} first interactive element position.y should be between {int} and {int}")
+    public void pageFirstInteractiveElementPositionYShouldBeBetween(int pageNumber, int min, int max) {
+        List<Map<String, Object>> pages = lastResponse.jsonPath().getList("pages");
+        Map<String, Object> targetPage = null;
+        for (Map<String, Object> page : pages) {
+            Integer pn = (Integer) page.get("pageNumber");
+            if (pn != null && pn == pageNumber) {
+                targetPage = page;
+                break;
+            }
+        }
+        assertThat("Page " + pageNumber + " should exist", targetPage, notNullValue());
+        List<Map<String, Object>> elements = (List<Map<String, Object>>) targetPage.get("interactiveElements");
+        Map<String, Object> position = (Map<String, Object>) elements.get(0).get("position");
+        Double y = ((Number) position.get("y")).doubleValue();
+        assertThat("position.y should be between " + min + " and " + max, y,
+                allOf(greaterThanOrEqualTo((double) min), lessThanOrEqualTo((double) max)));
+    }
+
+    @Then("page {int} first interactive element size.width should be between {int} and {int}")
+    public void pageFirstInteractiveElementSizeWidthShouldBeBetween(int pageNumber, int min, int max) {
+        List<Map<String, Object>> pages = lastResponse.jsonPath().getList("pages");
+        Map<String, Object> targetPage = null;
+        for (Map<String, Object> page : pages) {
+            Integer pn = (Integer) page.get("pageNumber");
+            if (pn != null && pn == pageNumber) {
+                targetPage = page;
+                break;
+            }
+        }
+        assertThat("Page " + pageNumber + " should exist", targetPage, notNullValue());
+        List<Map<String, Object>> elements = (List<Map<String, Object>>) targetPage.get("interactiveElements");
+        Map<String, Object> size = (Map<String, Object>) elements.get(0).get("size");
+        assertThat("Size should exist", size, notNullValue());
+        Double width = ((Number) size.get("width")).doubleValue();
+        assertThat("size.width should be between " + min + " and " + max, width,
+                allOf(greaterThanOrEqualTo((double) min), lessThanOrEqualTo((double) max)));
+    }
+
+    @Then("page {int} first interactive element size.height should be between {int} and {int}")
+    public void pageFirstInteractiveElementSizeHeightShouldBeBetween(int pageNumber, int min, int max) {
+        List<Map<String, Object>> pages = lastResponse.jsonPath().getList("pages");
+        Map<String, Object> targetPage = null;
+        for (Map<String, Object> page : pages) {
+            Integer pn = (Integer) page.get("pageNumber");
+            if (pn != null && pn == pageNumber) {
+                targetPage = page;
+                break;
+            }
+        }
+        assertThat("Page " + pageNumber + " should exist", targetPage, notNullValue());
+        List<Map<String, Object>> elements = (List<Map<String, Object>>) targetPage.get("interactiveElements");
+        Map<String, Object> size = (Map<String, Object>) elements.get(0).get("size");
+        Double height = ((Number) size.get("height")).doubleValue();
+        assertThat("size.height should be between " + min + " and " + max, height,
+                allOf(greaterThanOrEqualTo((double) min), lessThanOrEqualTo((double) max)));
+    }
+
     // Note: "the response should have field {string} with value {string}" step
     // is defined in AuthenticationStepDefs.java to avoid duplication
 

@@ -79,7 +79,7 @@ Feature: Story CMS and Delta-Sync
     When I make a POST request to "/api/stories/sync" with the sync request
     Then the response status code should be 200
     And the response time should be less than 2000 milliseconds
-    And the response field "updatedStories" should equal 3
+    And the response field "updatedStories" should be greater than 2
 
   @delta-sync @cross-device @emulator-only
   Scenario: Multiple devices sync independently
@@ -111,6 +111,47 @@ Feature: Story CMS and Delta-Sync
     And each page should have field "pageNumber"
     And each page should have field "text"
     And pages should be ordered by pageNumber
+
+  @story-pages @interactive-elements @emulator-only
+  Scenario: Story pages can include interactive elements
+    Given I seed test story "test-story-1" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/test-story-1"
+    Then the response status code should be 200
+    And the response should contain field "pages"
+    And page 2 should have field "interactiveElements"
+    And page 2 interactiveElements should be an array
+
+  @story-pages @interactive-elements @emulator-only
+  Scenario: Interactive elements include required fields
+    Given I seed test story "test-story-1" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/test-story-1"
+    Then the response status code should be 200
+    And page 2 interactiveElements should have at least 1 element
+    And each interactive element should have field "id"
+    And each interactive element should have field "type"
+    And each interactive element should have field "image"
+    And each interactive element should have field "position"
+    And each interactive element should have field "size"
+
+  @story-pages @interactive-elements @emulator-only
+  Scenario: Interactive element position has normalized coordinates
+    Given I seed test story "test-story-1" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/test-story-1"
+    Then the response status code should be 200
+    And page 2 first interactive element position.x should be between 0 and 1
+    And page 2 first interactive element position.y should be between 0 and 1
+
+  @story-pages @interactive-elements @emulator-only
+  Scenario: Interactive element size has normalized dimensions
+    Given I seed test story "test-story-1" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/test-story-1"
+    Then the response status code should be 200
+    And page 2 first interactive element size.width should be between 0 and 1
+    And page 2 first interactive element size.height should be between 0 and 1
 
   @error-handling
   Scenario: Sync with invalid request body

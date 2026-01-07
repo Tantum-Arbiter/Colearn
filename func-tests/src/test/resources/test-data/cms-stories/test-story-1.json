@@ -34,7 +34,16 @@
       "pageNumber": 2,
       "type": "story",
       "backgroundImage": "assets/stories/cms-squirrels-snowman/page-2/page-2.webp",
-      "text": "TEST STORY 1 - Page 2.\nMore unique content to verify CMS loading."
+      "text": "TEST STORY 1 - Page 2.\nMore unique content to verify CMS loading.",
+      "interactiveElements": [
+        {
+          "id": "door",
+          "type": "reveal",
+          "image": "assets/stories/cms-squirrels-snowman/page-2/door-open.webp",
+          "position": { "x": 0.481, "y": 0.337 },
+          "size": { "width": 0.273, "height": 0.301 }
+        }
+      ]
     },
     {
       "id": "test-story-1-page-3",
