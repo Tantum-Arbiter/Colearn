@@ -56,7 +56,10 @@ admin.initializeApp({
 });
 
 const firestore = admin.firestore();
-const storage = new Storage({ projectId });
+const storage = new Storage({
+  projectId: projectId,
+  credentials: gcpKey
+});
 
 /**
  * Calculate SHA-256 checksum of a buffer
