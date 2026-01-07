@@ -170,6 +170,10 @@ export class StorySyncService {
             ...page,
             backgroundImage: resolveAssetUrl(page.backgroundImage),
             characterImage: resolveAssetUrl(page.characterImage),
+            interactiveElements: page.interactiveElements?.map(element => ({
+              ...element,
+              image: resolveAssetUrl(element.image) || element.image,
+            })),
           }))
         }));
       }
@@ -255,6 +259,10 @@ export class StorySyncService {
         ...page,
         backgroundImage: resolveAssetUrl(page.backgroundImage),
         characterImage: resolveAssetUrl(page.characterImage),
+        interactiveElements: page.interactiveElements?.map(element => ({
+          ...element,
+          image: resolveAssetUrl(element.image) || element.image,
+        })),
       }))
     }));
   }
