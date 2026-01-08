@@ -49,7 +49,6 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   const initialStories = useMemo(() => {
     const cached = StoryLoader.getCachedStories();
     if (cached && cached.length > 0) {
-      console.log(`[StorySelectionScreen] ⚡ Using ${cached.length} cached stories instantly`);
       return cached;
     }
     return ALL_STORIES;
@@ -77,7 +76,6 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   useEffect(() => {
     // If we already have cached stories, no need to load again
     if (StoryLoader.getCachedStories()) {
-      console.log(`[StorySelectionScreen] Stories already cached, skipping async load`);
       setIsLoadingStories(false);
       return;
     }
@@ -88,9 +86,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
         try {
           const loadedStories = await StoryLoader.getStories();
           setStories(loadedStories);
-          console.log(`[StorySelectionScreen] Loaded ${loadedStories.length} stories`);
-        } catch (error) {
-          console.error('[StorySelectionScreen] Error loading stories:', error);
+        } catch {
           // Fallback to ALL_STORIES already set in state
         } finally {
           setIsLoadingStories(false);

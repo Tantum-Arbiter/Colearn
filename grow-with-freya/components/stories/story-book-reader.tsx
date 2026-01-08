@@ -28,6 +28,9 @@ import * as Haptics from 'expo-haptics';
 import { voiceRecordingService, VoiceOver } from '@/services/voice-recording-service';
 import { useGlobalSound } from '@/contexts/global-sound-context';
 import { AuthenticatedImage } from '@/components/ui/authenticated-image';
+import { Logger } from '@/utils/logger';
+
+const log = Logger.create('StoryBookReader');
 
 
 
@@ -151,23 +154,16 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
 
     const checkAndSetLandscape = async () => {
       try {
-        console.log('Story reader mounted - checking orientation...');
-
         const orientation = await ScreenOrientation.getOrientationAsync();
         const isLandscape = orientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
                            orientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT;
 
-        if (isLandscape) {
-          console.log('Already in landscape from thumbnail expansion');
-          setIsLandscapeReady(true);
-        } else {
-          console.log('Not in landscape yet - forcing landscape mode');
+        if (!isLandscape) {
           await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
-          console.log('Landscape transition complete');
-          setIsLandscapeReady(true);
         }
+        setIsLandscapeReady(true);
       } catch (error) {
-        console.warn('Failed to check/set orientation:', error);
+        log.warn('Failed to set orientation:', error);
         setIsLandscapeReady(true); // Continue anyway
       }
     };
@@ -177,17 +173,14 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
     return () => {
       if (isMounted) {
         isMounted = false;
-        console.log('Restoring portrait orientation...');
         ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP)
-          .then(() => console.log('Successfully restored to portrait'))
-          .catch(error => console.warn('Failed to restore orientation:', error));
+          .catch(error => log.warn('Failed to restore orientation:', error));
       }
     };
   }, []);
 
   // Handle story fade-in animation and initial preloading (only once when component mounts)
   useEffect(() => {
-    console.log('Story reader starting - book opening animation');
 
     // Start with book in closed state
     exitScale.value = 0.3;
@@ -211,9 +204,8 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
 
 
     // Preload all story pages immediately for instant navigation
-    console.log('Starting aggressive preload of all story pages');
     const pages = story.pages || [];
-    pages.forEach((page, index) => {
+    pages.forEach((page) => {
       if (page.backgroundImage) {
         const source = typeof page.backgroundImage === 'string'
           ? { uri: page.backgroundImage }
@@ -237,7 +229,6 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
 
     // Mark all pages as preloaded
     setPreloadedPages(new Set(pages.map((_, index) => index)));
-    console.log(`Preloaded all ${pages.length} story pages for instant navigation`);
   }, []); // Empty dependency array ensures this only runs once
 
   // Preload adjacent pages when current page changes (skip on last page)
@@ -249,8 +240,6 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       // Don't preload on last page to avoid interference with completion transition
       if (!isLastPage) {
         preloadAdjacentPages(currentPageIndex);
-      } else {
-        console.log('Skipping preload on last page to ensure clean completion transition');
       }
     }
   }, [currentPageIndex, isLandscapeReady]);
@@ -278,16 +267,13 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
   // Aggressive preloading for instant page transitions
   const preloadAdjacentPages = (currentIndex: number) => {
     const pages = story.pages || [];
-    const pagesToPreload = [];
     const isLastPage = currentIndex >= pages.length - 1;
 
     // Skip preloading entirely if we're on the last page
-    if (isLastPage) {
-      console.log('On last page - skipping all preloading to ensure clean completion');
-      return;
-    }
+    if (isLastPage) return;
 
     // Preload 2 pages in each direction for ultra-smooth navigation
+    const pagesToPreload = [];
     for (let i = Math.max(0, currentIndex - 2); i <= Math.min(pages.length - 1, currentIndex + 2); i++) {
       if (i !== currentIndex) {
         pagesToPreload.push(i);
@@ -298,19 +284,14 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       if (!preloadedPages.has(pageIndex)) {
         const page = pages[pageIndex];
         if (page) {
-          console.log(`Preloading page ${pageIndex} for instant transitions`);
-
           // Preload background image with high priority
           if (page.backgroundImage) {
             const source = typeof page.backgroundImage === 'string'
               ? { uri: page.backgroundImage }
               : page.backgroundImage;
 
-            // Use Image.prefetch for local images, or direct prefetch for URIs
             if (source.uri) {
               Image.prefetch(source.uri).catch(() => {});
-            } else {
-              // For require() images, they're already bundled - just mark as preloaded
             }
           }
 
@@ -335,11 +316,8 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
   // Handle story completion with book closing animation
   const handleStoryCompletion = async () => {
     try {
-      console.log('Starting story completion transition...');
-
       // In record mode, go back to cover page instead of showing completion screen
       if (readingMode === 'record') {
-        console.log('Recording complete - returning to cover page');
         const voiceOverName = currentVoiceOver?.name || 'this story';
         // Reset recording state
         setTempRecordingUri(null);
@@ -360,21 +338,17 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
         return;
       }
 
-      console.log('Waiting for final page to settle...');
+      // Wait for final page to settle
       await new Promise(resolve => {
-        // Use requestAnimationFrame to ensure render cycle is complete
         requestAnimationFrame(() => {
-          // Add small additional delay to ensure image rendering is complete
           setTimeout(resolve, 50);
         });
       });
 
       // Start book closing animation
-      console.log('Starting completion animation phase 1');
       exitScale.value = withTiming(0.8, { duration: 400, easing: Easing.out(Easing.cubic) });
       exitOpacity.value = withTiming(0.7, { duration: 400, easing: Easing.out(Easing.cubic) });
       exitRotateY.value = withTiming(-20, { duration: 400, easing: Easing.out(Easing.cubic) });
-
 
       await new Promise(resolve => setTimeout(resolve, 400));
 
@@ -383,11 +357,9 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       exitOpacity.value = withTiming(0, { duration: 600, easing: Easing.in(Easing.cubic) });
       exitRotateY.value = withTiming(-90, { duration: 600, easing: Easing.in(Easing.cubic) });
 
-
       await new Promise(resolve => setTimeout(resolve, 600));
 
       // Show completion screen with entrance animation
-      console.log('Book closing animation complete - animating in completion screen');
       setShowCompletionScreen(true);
 
       // Small delay to ensure completion screen is mounted, then animate in
@@ -403,7 +375,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       exitRotateY.value = 0;
 
     } catch (error) {
-      console.error('Error during story completion transition:', error);
+      log.error('Error during story completion transition:', error);
       // Fallback: show completion screen immediately
       setShowCompletionScreen(true);
     }
@@ -412,8 +384,6 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
   // Handle exit with orientation restore
   const handleExit = async () => {
     try {
-      console.log('Starting exit transition...');
-
       // Stop any playing narration/recording audio immediately
       if (playbackSound) {
         try {
@@ -422,16 +392,14 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
           setPlaybackSound(null);
           setIsPlaying(false);
         } catch (audioError) {
-          console.warn('Failed to stop playback audio on exit:', audioError);
+          log.warn('Failed to stop playback audio on exit:', audioError);
         }
       }
 
       // Start book closing animation
-      console.log('Starting exit animation phase 1');
       exitScale.value = withTiming(0.8, { duration: 300, easing: Easing.out(Easing.cubic) });
       exitOpacity.value = withTiming(0.7, { duration: 300, easing: Easing.out(Easing.cubic) });
       exitRotateY.value = withTiming(-20, { duration: 300, easing: Easing.out(Easing.cubic) });
-
 
       await new Promise(resolve => setTimeout(resolve, 300));
 
@@ -440,19 +408,17 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       exitOpacity.value = withTiming(0, { duration: 400, easing: Easing.in(Easing.cubic) });
       exitRotateY.value = withTiming(-90, { duration: 400, easing: Easing.in(Easing.cubic) });
 
-
       await new Promise(resolve => setTimeout(resolve, 400));
 
       // Restore portrait orientation
       await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-      console.log('Successfully restored to portrait on exit');
 
       // Small delay for orientation change
       await new Promise(resolve => setTimeout(resolve, 200));
 
       onExit();
     } catch (error) {
-      console.warn('Failed to restore orientation on exit:', error);
+      log.warn('Failed to restore orientation on exit:', error);
       onExit();
     }
   };
@@ -480,20 +446,15 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
 
   // DEBUG: Log page background images and interactive elements to diagnose CMS issues
   useEffect(() => {
-    console.log(`[StoryBookReader] DEBUG: Story "${story.id}" page details:`);
-    pages.forEach((page, idx) => {
-      const hasInteractive = page.interactiveElements && page.interactiveElements.length > 0;
-      console.log(`[StoryBookReader]   Page ${idx} (pageNumber: ${page.pageNumber}):`);
-      console.log(`[StoryBookReader]     - Background: ${page.backgroundImage || 'NO_IMAGE'}`);
-      console.log(`[StoryBookReader]     - Interactive elements: ${hasInteractive ? page.interactiveElements!.length : 0}`);
-      if (hasInteractive) {
-        page.interactiveElements!.forEach((el, elIdx) => {
-          console.log(`[StoryBookReader]       ${elIdx}: id=${el.id}, type=${el.type}, image=${el.image}`);
-          console.log(`[StoryBookReader]         position: x=${el.position?.x}, y=${el.position?.y}`);
-          console.log(`[StoryBookReader]         size: w=${el.size?.width}, h=${el.size?.height}`);
-        });
-      }
-    });
+    if (__DEV__) {
+      log.debug(`Story "${story.id}" has ${pages.length} pages`);
+      pages.forEach((page, idx) => {
+        const hasInteractive = page.interactiveElements && page.interactiveElements.length > 0;
+        if (hasInteractive) {
+          log.debug(`Page ${idx}: ${page.interactiveElements!.length} interactive elements`);
+        }
+      });
+    }
   }, [story.id, pages]);
 
   // No caching needed - simple single page approach
@@ -513,8 +474,6 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       setShowVoiceOverSelectModal(true);
       return;
     }
-
-    console.log('Cover tapped - going directly to page 1');
 
     // Go directly to page 1 with no animation
     setCurrentPageIndex(1);
@@ -554,7 +513,6 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       const existingRecording = currentVoiceOver.pageRecordings[currentPageIndex];
       if (existingRecording) {
         setCurrentRecordingUri(existingRecording.uri);
-        console.log(`Loaded existing recording for page ${currentPageIndex}: ${existingRecording.uri}`);
       } else {
         setCurrentRecordingUri(null);
       }
@@ -571,7 +529,6 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       if (globalSound.isPlaying) {
         setWasMusicPlayingBeforeRecording(true);
         await globalSound.pause();
-        console.log('Background music paused for recording');
       } else {
         setWasMusicPlayingBeforeRecording(false);
       }
@@ -599,7 +556,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
         Alert.alert('Permission Required', 'Microphone access is needed to record your voice.');
       }
     } catch (error) {
-      console.error('Failed to start recording:', error);
+      log.error('Failed to start recording:', error);
       // Resume music if recording failed
       if (wasMusicPlayingBeforeRecording) {
         await globalSound.play();
@@ -663,7 +620,6 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
     // Resume background music if it was playing before recording
     if (wasMusicPlayingBeforeRecording) {
       await globalSound.play();
-      console.log('Background music resumed after recording');
       setWasMusicPlayingBeforeRecording(false);
     }
 
@@ -711,7 +667,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       setTempRecordingUri(null);
       setTempRecordingDuration(0);
     } catch (error) {
-      console.error('Failed to save recording:', error);
+      log.error('Failed to save recording:', error);
     }
   };
 
@@ -740,7 +696,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       setIsOverwriteSession(false);
       setIsNewVoiceOver(true);
     } catch (error) {
-      console.error('Failed to create voice over:', error);
+      log.error('Failed to create voice over:', error);
       Alert.alert('Error', 'Failed to create voice over. Please try again.');
     }
   };
@@ -876,15 +832,12 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
 
   // Completion screen handlers
   const handleReadAnother = (newStory: Story) => {
-    console.log('Reading another story:', newStory.title);
     if (onReadAnother) {
       onReadAnother(newStory);
     }
   };
 
   const handleRereadCurrent = async () => {
-    console.log('Re-reading current story - starting reverse animation');
-
     try {
       // Reset to cover page immediately (before hiding completion screen)
       setCurrentPageIndex(0);
@@ -898,9 +851,6 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
 
       // Small delay to ensure completion screen is hidden and cover page is ready
       await new Promise(resolve => setTimeout(resolve, 100));
-
-      // Use the same book opening animation as initial story load
-      console.log('Re-reading story - starting book opening animation');
 
       // Start with book in closed state
       exitScale.value = 0.3;
@@ -920,10 +870,8 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
         exitOpacity.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) });
         exitRotateY.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) });
       }, 400);
-
-      console.log('Story restarted - back to cover page with fade-in');
     } catch (error) {
-      console.error('Error during re-read transition:', error);
+      log.error('Error during re-read transition:', error);
       // Fallback: immediate transition with proper animation reset
       setShowCompletionScreen(false);
       setCurrentPageIndex(0);
@@ -935,7 +883,6 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
   };
 
   const handleBedtimeMusic = () => {
-    console.log('Opening bedtime music');
     if (onBedtimeMusic) {
       onBedtimeMusic();
     }
@@ -943,8 +890,6 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
 
   const handleCloseCompletion = async () => {
     try {
-      console.log('Closing story reader with soft fade transition');
-
       // Stop any playing narration/recording audio
       if (playbackSound) {
         try {
@@ -953,7 +898,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
           setPlaybackSound(null);
           setIsPlaying(false);
         } catch (audioError) {
-          console.warn('Failed to stop playback audio on close:', audioError);
+          log.warn('Failed to stop playback audio on close:', audioError);
         }
       }
 
@@ -969,7 +914,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       // Call exit after animation
       onExit();
     } catch (error) {
-      console.error('Error during close animation:', error);
+      log.error('Error during close animation:', error);
       // Fallback: immediate exit
       onExit();
     }
@@ -978,11 +923,6 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
   // Function to render page content
   const renderPageContent = (page: any, isNextPage = false) => {
     if (!page) return null;
-
-    // DEBUG: Log which page is being rendered and its background image
-    if (story.id.startsWith('cms-')) {
-      console.log(`[StoryBookReader] RENDER: Page ${page.pageNumber}, BG: ${page.backgroundImage?.split('/').pop() || 'NONE'}`);
-    }
 
     // Cover pages (page 0) use smaller scale for better presentation
     const isCoverPage = page.pageNumber === 0;
@@ -1005,9 +945,8 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
                   { width: '100%', height: '100%', transform: [{ scale: imageScale }] }
                 ]}
                 resizeMode="contain"
-                onLoad={() => console.log(`[StoryBookReader] Page ${page.pageNumber}: Background image loaded`)}
                 onError={(error) => {
-                  console.error(`[StoryBookReader] Page ${page.pageNumber}: Background image error:`, error);
+                  log.error(`Page ${page.pageNumber}: Background image error:`, error);
                 }}
               />
             ) : (
@@ -1018,10 +957,8 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
                   { width: '100%', height: '100%', transform: [{ scale: imageScale }] }
                 ]}
                 resizeMode="contain"
-                onLoad={() => console.log(`[StoryBookReader] Page ${page.pageNumber}: Background image loaded`)}
                 onError={(error) => {
-                  console.error(`[StoryBookReader] Page ${page.pageNumber}: Background image error:`, JSON.stringify(error));
-                  console.error(`[StoryBookReader] Page ${page.pageNumber}: Attempted URL:`, page.backgroundImage);
+                  log.error(`Page ${page.pageNumber}: Background image error:`, JSON.stringify(error));
                 }}
               />
             )}
@@ -1032,9 +969,8 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
                   uri={page.characterImage}
                   style={styles.characterImage}
                   resizeMode="contain"
-                  onLoad={() => console.log(`[StoryBookReader] Page ${page.pageNumber}: Character image loaded`)}
                   onError={(error) => {
-                    console.error(`[StoryBookReader] Page ${page.pageNumber}: Character image error:`, error);
+                    log.error(`Page ${page.pageNumber}: Character image error:`, error);
                   }}
                 />
               ) : (
@@ -1042,10 +978,8 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
                   source={typeof page.characterImage === 'string' ? { uri: page.characterImage } : page.characterImage}
                   style={styles.characterImage}
                   resizeMode="contain"
-                  onLoad={() => console.log(`[StoryBookReader] Page ${page.pageNumber}: Character image loaded`)}
                   onError={(error) => {
-                    console.error(`[StoryBookReader] Page ${page.pageNumber}: Character image error:`, JSON.stringify(error));
-                    console.error(`[StoryBookReader] Page ${page.pageNumber}: Attempted URL:`, page.characterImage);
+                    log.error(`Page ${page.pageNumber}: Character image error:`, JSON.stringify(error));
                   }}
                 />
               )
@@ -1102,15 +1036,12 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
 
     // Check if we're on the last page
     if (currentPageIndex >= pages.length - 1) {
-      console.log('Story completed - starting book closing animation');
       handleStoryCompletion();
       return;
     }
 
     setIsTransitioning(true);
     const targetPageIndex = currentPageIndex + 1;
-
-    console.log('Starting beautiful crossfade to next page');
 
     // Beautiful crossfade: current fades out while next fades in simultaneously
     currentPageOpacity.value = withTiming(0, {
@@ -1129,10 +1060,9 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       });
 
       setIsTransitioning(false);
-      console.log(`Beautiful crossfade complete - now on page ${targetPageIndex}`);
     }, 50); // Small delay to ensure content switch happens first
   };
-  
+
   const handlePreviousPage = async () => {
     if (isTransitioning || currentPageIndex <= 0) return;
 
@@ -1147,8 +1077,6 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
 
     setIsTransitioning(true);
     const targetPageIndex = currentPageIndex - 1;
-
-    console.log('Starting beautiful crossfade to previous page');
 
     // Beautiful crossfade: current fades out while previous fades in simultaneously
     currentPageOpacity.value = withTiming(0, {
@@ -1167,7 +1095,6 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       });
 
       setIsTransitioning(false);
-      console.log(`Beautiful crossfade complete - now on page ${targetPageIndex}`);
     }, 50); // Small delay to ensure content switch happens first
   };
   
