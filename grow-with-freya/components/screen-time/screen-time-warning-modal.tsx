@@ -1,11 +1,19 @@
-import React from 'react';
-import { View, Text, Modal, Pressable, StyleSheet, Dimensions } from 'react-native';
+import React, { useEffect, useCallback } from 'react';
+import { View, Text, Pressable, StyleSheet, Dimensions } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  Easing,
+  runOnJS,
+} from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { ScreenTimeWarning } from '../../services/screen-time-service';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const ANIMATION_DURATION = 300;
 
 interface ScreenTimeWarningModalProps {
   visible: boolean;
@@ -18,12 +26,50 @@ export function ScreenTimeWarningModal({
   warning,
   onDismiss,
 }: ScreenTimeWarningModalProps) {
-  if (!warning) return null;
+  // Animation values for slide up/down
+  const translateY = useSharedValue(SCREEN_HEIGHT);
+  const backdropOpacity = useSharedValue(0);
+  const isAnimatingOut = useSharedValue(false);
 
-  const handleDismiss = () => {
+  // Animate in when visible changes
+  useEffect(() => {
+    if (visible && warning) {
+      // Slide up from bottom
+      translateY.value = withTiming(0, {
+        duration: ANIMATION_DURATION,
+        easing: Easing.out(Easing.cubic),
+      });
+      backdropOpacity.value = withTiming(1, { duration: ANIMATION_DURATION });
+    }
+  }, [visible, warning]);
+
+  // Handle close with slide down animation
+  const handleDismiss = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    onDismiss();
-  };
+    isAnimatingOut.value = true;
+    backdropOpacity.value = withTiming(0, { duration: ANIMATION_DURATION });
+    translateY.value = withTiming(
+      SCREEN_HEIGHT,
+      {
+        duration: ANIMATION_DURATION,
+        easing: Easing.in(Easing.cubic),
+      },
+      (finished) => {
+        if (finished) {
+          runOnJS(onDismiss)();
+          isAnimatingOut.value = false;
+        }
+      }
+    );
+  }, [onDismiss]);
+
+  const modalAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+  }));
+
+  const backdropAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: backdropOpacity.value,
+  }));
 
   const formatRemainingTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -72,17 +118,21 @@ export function ScreenTimeWarningModal({
     }
   };
 
-
+  // Don't render if not visible and no warning
+  if (!visible && !warning) return null;
+  if (!warning) return null;
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={handleDismiss}
-      supportedOrientations={['portrait', 'landscape']}
-    >
-      <BlurView intensity={20} style={styles.overlay}>
+    <View style={styles.absoluteContainer} pointerEvents={visible ? 'auto' : 'none'}>
+      {/* Backdrop - tap to close */}
+      <Pressable style={StyleSheet.absoluteFill} onPress={handleDismiss}>
+        <Animated.View style={[styles.backdrop, backdropAnimatedStyle]}>
+          <BlurView intensity={20} style={StyleSheet.absoluteFill} tint="dark" />
+        </Animated.View>
+      </Pressable>
+
+      {/* Modal content - slides up/down */}
+      <Animated.View style={[styles.modalWrapper, modalAnimatedStyle]}>
         <View style={styles.modalContainer}>
           <LinearGradient
             colors={['#1E3A8A', '#3B82F6']}
@@ -134,17 +184,25 @@ export function ScreenTimeWarningModal({
             </View>
           </LinearGradient>
         </View>
-      </BlurView>
-    </Modal>
+      </Animated.View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
+  absoluteContainer: {
+    ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 1000,
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalWrapper: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalContainer: {
     width: SCREEN_WIDTH * 0.85,

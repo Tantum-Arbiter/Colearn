@@ -69,11 +69,8 @@ export const GenreCarousel: React.FC<GenreCarouselProps> = ({
 
   // Don't render if no stories in this genre
   if (genreStories.length === 0) {
-    console.log(`GenreCarousel ${genre}: Returning null due to no stories`);
     return null;
   }
-
-  console.log(`GenreCarousel ${genre}: Rendering with ${genreStories.length} stories`);
 
   return (
     <View style={styles.container} testID={`genre-carousel-${genre}`}>

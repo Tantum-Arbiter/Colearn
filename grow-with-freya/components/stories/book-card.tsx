@@ -10,6 +10,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Story, STORY_TAGS } from '@/types/story';
 import { Fonts } from '@/constants/theme';
+import { Logger } from '@/utils/logger';
+
+const log = Logger.create('BookCard');
 
 interface BookCardProps {
   story: Story;
@@ -32,14 +35,6 @@ export function BookCard({ story, onPress, index = 0 }: BookCardProps) {
   const isPlaceholder = !story.isAvailable;
   const storyTag = story.category ? STORY_TAGS[story.category] : null;
 
-  // Debug logging for each card
-  console.log(`BookCard ${index} rendering:`, {
-    id: story.id,
-    title: story.title,
-    isPlaceholder,
-    isAvailable: story.isAvailable
-  });
-
   // Animation values - temporarily disable animation for debugging
   const opacity = useSharedValue(1);
   const scale = useSharedValue(1);
@@ -54,11 +49,8 @@ export function BookCard({ story, onPress, index = 0 }: BookCardProps) {
       easing: Easing.out(Easing.cubic),
     };
 
-    console.log(`BookCard ${index} (${story.title}) animation starting with delay ${delay}ms`);
-
     // Use setTimeout to ensure animation runs after component mount
     const timer = setTimeout(() => {
-      console.log(`BookCard ${index} (${story.title}) animation executing`);
       opacity.value = withTiming(1, animationConfig);
       scale.value = withTiming(1, animationConfig);
       translateY.value = withTiming(0, animationConfig);
@@ -66,9 +58,8 @@ export function BookCard({ story, onPress, index = 0 }: BookCardProps) {
 
     // Fallback timer to ensure cards are visible even if animation fails
     const fallbackTimer = setTimeout(() => {
-      console.log(`BookCard ${index} (${story.title}) fallback check - opacity: ${opacity.value}`);
       if (opacity.value < 0.5) {
-        console.log(`BookCard ${index} (${story.title}) applying fallback visibility`);
+        log.warn(`Card ${index} (${story.title}) applying fallback visibility`);
         opacity.value = 1;
         scale.value = 1;
         translateY.value = 0;

@@ -8,6 +8,9 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAppStore } from '@/store/app-store';
+import { Logger } from '@/utils/logger';
+
+const log = Logger.create('Layout');
 
 import { useBackgroundMusic } from '@/hooks/use-background-music';
 import { AppSplashScreen } from '@/components/splash-screen';
@@ -124,14 +127,12 @@ function AppContent() {
         if (isTablet) {
           // Allow all orientations on tablets
           await ScreenOrientation.unlockAsync();
-          console.log('App initialized with unlocked orientation (tablet)');
         } else {
           // Lock to portrait orientation for phones
           await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-          console.log('App initialized in portrait mode (phone)');
         }
       } catch (error) {
-        console.warn('Failed to initialize orientation:', error);
+        log.warn('Failed to initialize orientation:', error);
       }
     };
 
@@ -149,15 +150,13 @@ function AppContent() {
           if (isTablet) {
             // Allow all orientations on tablets
             await ScreenOrientation.unlockAsync();
-            console.log('Unlocked orientation for tablet:', currentView);
           } else {
             // Lock to portrait on phones
             await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-            console.log('Restored portrait mode for phone:', currentView);
           }
         }
       } catch (error) {
-        console.warn('Failed to set orientation:', error);
+        log.warn('Failed to set orientation:', error);
       }
     };
 
@@ -171,16 +170,14 @@ function AppContent() {
     const initializeImagePreloading = async () => {
       try {
         // Preload critical images first (including bear image)
-        const criticalResult = await preloadCriticalImages();
-        console.log('Critical images preloaded:', criticalResult);
+        await preloadCriticalImages();
 
         // Preload secondary images in background after a short delay
         setTimeout(async () => {
-          const secondaryResult = await preloadSecondaryImages();
-          console.log('Secondary images preloaded:', secondaryResult);
+          await preloadSecondaryImages();
         }, 3000); // PERFORMANCE: Increased delay to prevent blocking
       } catch (error) {
-        console.warn('Image preloading failed:', error);
+        log.warn('Image preloading failed:', error);
       }
     };
 
@@ -195,7 +192,6 @@ function AppContent() {
     const checkAuthAndSetView = async () => {
       // Wait for store to be hydrated from AsyncStorage before checking auth
       if (!hasHydrated) {
-        console.log('Waiting for store hydration...');
         return;
       }
 
@@ -210,13 +206,11 @@ function AppContent() {
         setCurrentView('onboarding');
       } else if (isGuestMode) {
         // User is in guest mode - allow access without authentication (no backend calls)
-        console.log('Guest mode - going to app without backend calls');
         setCurrentView('app');
         setCurrentPage('main');
       } else {
         // Skip auth check if we just completed a fresh login
         if (justLoggedInRef.current) {
-          console.log('Skipping auth check - just completed fresh login');
           justLoggedInRef.current = false;
           setCurrentView('app');
           setCurrentPage('main');
@@ -229,66 +223,57 @@ function AppContent() {
           const authPromise = ApiClient.isAuthenticated();
           const timeoutPromise = new Promise<boolean>((resolve) => {
             setTimeout(() => {
-              console.warn('Authentication check timeout - assuming not authenticated');
+              log.warn('Authentication check timeout - assuming not authenticated');
               resolve(false);
             }, 5000);
           });
 
           const isAuthenticated = await Promise.race([authPromise, timeoutPromise]);
-          console.log('Authentication check:', { isAuthenticated, hasCompletedOnboarding });
 
           if (!isAuthenticated) {
             // User has completed onboarding but is not authenticated - show login screen
-            console.log('User not authenticated - showing login');
             setShowLoginAfterOnboarding(true);
             setCurrentView('login');
           } else {
             // User is authenticated - prefetch stories and assets before showing app
-            console.log('User authenticated - prefetching stories');
             try {
               await StorySyncService.prefetchStories();
-              console.log('[_layout] Stories prefetched successfully');
 
               // Pre-populate StoryLoader cache for instant story list display
               await StoryLoader.getStories();
-              console.log('[_layout] StoryLoader cache populated');
 
               // Prefetch cover images to ensure they're cached before showing story selection
               try {
                 await StorySyncService.prefetchCoverImages();
-                console.log('[_layout] Cover images prefetched successfully');
 
                 // If stories were removed (assets no longer available on CMS), refresh the cache
                 if (StorySyncService.lastPrefetchRemovedStories) {
-                  console.log('[_layout] Stories removed due to unavailable assets, refreshing cache');
                   StoryLoader.invalidateCache();
                   await StoryLoader.getStories();
                 }
               } catch (imageError) {
-                console.error('[_layout] Cover image prefetch failed:', imageError);
+                log.error('Cover image prefetch failed:', imageError);
                 // Continue anyway - images will be downloaded on-demand
               }
             } catch (syncError) {
-              console.error('[_layout] Story prefetch failed, will use offline mode:', syncError);
+              log.error('Story prefetch failed, will use offline mode:', syncError);
               // Continue anyway - app will use cached stories or local fallback
             }
 
             // Prefetch other assets in background (non-blocking)
             try {
               await AssetSyncService.prefetchAssets();
-              console.log('[_layout] Assets prefetched successfully');
             } catch (assetError) {
-              console.error('[_layout] Asset prefetch failed, will download on-demand:', assetError);
+              log.error('Asset prefetch failed, will download on-demand:', assetError);
               // Continue anyway - app will download assets on-demand
             }
 
             // Now go to app
-            console.log('User authenticated - going to app');
             setCurrentView('app');
             setCurrentPage('main');
           }
         } catch (error) {
-          console.error('Authentication check error:', error);
+          log.error('Authentication check error:', error);
           // On error, show login screen
           setShowLoginAfterOnboarding(true);
           setCurrentView('login');
@@ -306,27 +291,22 @@ function AppContent() {
       if (nextAppState === 'active') {
         // Wait for store to be hydrated before checking auth
         if (!hasHydrated) {
-          console.log('App became active - waiting for store hydration');
           return;
         }
 
         // Skip authentication check for guest mode users
         if (isGuestMode) {
-          console.log('App became active - guest mode, skipping auth check');
           return;
         }
 
         // App became active - check if tokens need refresh
-        console.log('App became active - checking authentication');
         const isAuthenticated = await ApiClient.isAuthenticated();
 
         if (!isAuthenticated && hasCompletedOnboarding) {
           // Tokens expired and couldn't be refreshed - show login
-          console.log('Authentication expired - showing login');
           setShowLoginAfterOnboarding(true);
           setCurrentView('login');
         } else if (isAuthenticated) {
-          console.log('Authentication valid - tokens refreshed if needed');
           // Retry any pending background saves now that we're authenticated
           backgroundSaveService.retryPendingSaves();
         }
@@ -345,9 +325,8 @@ function AppContent() {
           // Start background music with a gentle fade-in - only when first leaving splash
           await fadeIn(3000); // 3 second fade-in
           setHasStartedBackgroundMusic(true); // Mark that we've started music
-          console.log('Background music started for the journey');
         } catch (error) {
-          console.warn('Failed to start background music:', error);
+          log.warn('Failed to start background music:', error);
         }
       }
     };
@@ -443,15 +422,6 @@ function AppContent() {
   };
 
   const handleStorySelect = (story: Story) => {
-    // DEBUG: Log story data to diagnose CMS image issues
-    if (story.id.startsWith('cms-')) {
-      console.log(`[_layout] DEBUG: Selected CMS story "${story.id}"`);
-      console.log(`[_layout]   Cover: ${story.coverImage}`);
-      console.log(`[_layout]   Pages: ${story.pages?.length || 0}`);
-      story.pages?.forEach((page, idx) => {
-        console.log(`[_layout]   Page ${idx}: ${page.backgroundImage || 'NO_IMAGE'}`);
-      });
-    }
     setSelectedStory(story);
     // Start thumbnail expansion animation first, then transition to story reader
     // The SimpleStoryScreen will handle the expansion animation and call handleStoryTransitionComplete

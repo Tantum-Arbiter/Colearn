@@ -1,19 +1,20 @@
-import React, { useCallback, useRef, useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Dimensions, FlatList, Image, Pressable } from 'react-native';
+import React, { useCallback, useRef, useEffect, useMemo, useState, memo, useLayoutEffect } from 'react';
+import { View, Text, ScrollView, StyleSheet, Dimensions, FlatList, Pressable, ListRenderItem } from 'react-native';
+import { Image } from 'expo-image';
 import { AuthenticatedImage } from '@/components/ui/authenticated-image';
+import { AuthenticatedImageService } from '@/services/authenticated-image-service';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withTiming,
-  withDelay,
   withRepeat,
+  withTiming,
   Easing
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { ALL_STORIES, getStoriesByGenre, getGenresWithStories, getRandomStory } from '@/data/stories';
-import { Story, StoryCategory, STORY_TAGS } from '@/types/story';
+import { ALL_STORIES, getRandomStory } from '@/data/stories';
+import { Story } from '@/types/story';
 import { Fonts } from '@/constants/theme';
 import { useAppStore } from '@/store/app-store';
 import { StoryLoader } from '@/services/story-loader';
@@ -27,10 +28,72 @@ import { PageHeader } from '@/components/ui/page-header';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { StoryPreviewModal } from './story-preview-modal';
 
+// Constants for card dimensions - defined once, not on every render
+const CARD_WIDTH = 160;
+const CARD_HEIGHT = 120;
+const CARD_MARGIN = 15;
+const ITEM_WIDTH = CARD_WIDTH + CARD_MARGIN;
 
 interface StorySelectionScreenProps {
   onStorySelect?: (story: Story) => void;
 }
+
+interface StoryCardProps {
+  story: Story;
+  onPress: (story: Story) => void;
+  onLongPress: (story: Story) => void;
+  cardWidth: number;
+  cardHeight: number;
+  borderRadius: number;
+  emojiFontSize: number;
+}
+
+// Memoized story card component - prevents re-renders during scroll
+const StoryCard = memo(function StoryCard({
+  story,
+  onPress,
+  onLongPress,
+  cardWidth,
+  cardHeight,
+  borderRadius,
+  emojiFontSize,
+}: StoryCardProps) {
+  const handlePress = useCallback(() => onPress(story), [story, onPress]);
+  const handleLongPress = useCallback(() => onLongPress(story), [story, onLongPress]);
+
+  return (
+    <Pressable
+      onPress={handlePress}
+      onLongPress={handleLongPress}
+      delayLongPress={400}
+      style={styles.cardPressable}
+    >
+      <View style={[styles.card, { width: cardWidth, height: cardHeight, borderRadius }]}>
+        {story.coverImage ? (
+          typeof story.coverImage === 'string' && story.coverImage.includes('api.colearnwithfreya.co.uk') ? (
+            <AuthenticatedImage
+              uri={story.coverImage}
+              style={[styles.coverImage, { width: cardWidth, height: cardHeight, borderRadius }]}
+              resizeMode="cover"
+            />
+          ) : (
+            <Image
+              source={typeof story.coverImage === 'string' ? { uri: story.coverImage } : story.coverImage}
+              style={[styles.coverImage, { width: cardWidth, height: cardHeight, borderRadius }]}
+              contentFit="cover"
+              transition={0} // Prevent flicker on remount - works on iOS and Android
+              cachePolicy="memory-disk" // Use aggressive caching
+            />
+          )
+        ) : (
+          <View style={[styles.placeholderContainer, { width: cardWidth, height: cardHeight, borderRadius }]}>
+            <Text style={{ fontSize: emojiFontSize }}>{story.emoji}</Text>
+          </View>
+        )}
+      </View>
+    </Pressable>
+  );
+});
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -41,8 +104,11 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   const lastCallRef = useRef<number>(0);
   const { scaledFontSize, scaledButtonSize, scaledPadding, textSizeScale } = useAccessibility();
 
-  // Scroll tracking for dynamic carousel effects
-  const [scrollPositions, setScrollPositions] = useState<{ [key: string]: number }>({});
+  // Pre-calculate scaled dimensions once (not on every render item)
+  const scaledCardW = scaledButtonSize(CARD_WIDTH);
+  const scaledCardH = scaledButtonSize(CARD_HEIGHT);
+  const scaledBorderRadius = scaledButtonSize(15);
+  const scaledEmojiFontSize = scaledFontSize(48);
 
   // Load stories from StoryLoader with instant cache support
   // If stories are already cached (from previous visit), use them immediately - no flicker
@@ -71,6 +137,24 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     setIsPreviewVisible(false);
     setPreviewStory(null);
   }, []);
+
+  // Warm the memory cache for CMS story cover images BEFORE first render
+  // This ensures images display instantly without flicker on screen remount
+  useLayoutEffect(() => {
+    const warmCache = async () => {
+      const cmsUrls = stories
+        .map(s => s.coverImage)
+        .filter((img): img is string =>
+          typeof img === 'string' && img.includes('api.colearnwithfreya.co.uk')
+        );
+
+      if (cmsUrls.length > 0) {
+        await AuthenticatedImageService.warmMemoryCache(cmsUrls);
+      }
+    };
+
+    warmCache();
+  }, [stories]);
 
   // Load stories - instant if cached, async if first load
   useEffect(() => {
@@ -187,14 +271,28 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     }
   }, [handleLongPress]);
 
-  // Handle scroll events to track current position for each carousel
-  const handleScroll = useCallback((genre: string, event: any) => {
-    const scrollX = event.nativeEvent.contentOffset.x;
-    setScrollPositions(prev => ({
-      ...prev,
-      [genre]: scrollX
-    }));
-  }, []);
+  // Memoized render function for story cards
+  const renderStoryCard: ListRenderItem<Story> = useCallback(({ item: story }) => (
+    <StoryCard
+      story={story}
+      onPress={handleStoryPress}
+      onLongPress={handleLongPress}
+      cardWidth={scaledCardW}
+      cardHeight={scaledCardH}
+      borderRadius={scaledBorderRadius}
+      emojiFontSize={scaledEmojiFontSize}
+    />
+  ), [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize]);
+
+  // Memoized key extractor
+  const keyExtractor = useCallback((story: Story) => story.id, []);
+
+  // Memoized getItemLayout for fast scrolling
+  const getItemLayout = useCallback((_data: any, index: number) => ({
+    length: ITEM_WIDTH,
+    offset: ITEM_WIDTH * index,
+    index,
+  }), []);
 
   // CENTERED CAROUSELS WITH STARRY BACKGROUND
   return (
@@ -255,153 +353,26 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
                   {`${genre.charAt(0).toUpperCase() + genre.slice(1)} Stories`}
                 </Text>
                 
-                {/* Horizontal Carousel */}
-                <View style={{ 
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '100%'
-                }}>
-                  <FlatList
-                    data={genreStories}
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    pagingEnabled={false}
-                    decelerationRate="fast"
-                    snapToOffsets={genreStories.map((_, index) => index * 175)} // Exact snap positions
-                    disableIntervalMomentum={true}
-                    onScroll={(event) => handleScroll(genre, event)}
-                    scrollEventThrottle={16}
-                    getItemLayout={(data, index) => ({
-                      length: 175,
-                      offset: 175 * index,
-                      index,
-                    })}
-                    initialScrollIndex={0}
-                    style={{
-                      flexGrow: 0,
-                      alignSelf: 'center'
-                    }}
-                    contentContainerStyle={{
-                      paddingLeft: (Dimensions.get('window').width / 2) - 80, // Center the first item (half of 160px card width)
-                      paddingRight: (Dimensions.get('window').width / 2) - 80, // Center the last item
-                      justifyContent: 'flex-start',
-                      alignItems: 'center',
-                    }}
-                    keyExtractor={(story) => story.id}
-                    renderItem={({ item: story, index }) => {
-                      // Create a ref for this specific card
-                      const cardRef = React.createRef();
-
-                      // Calculate dynamic opacity and scale based on scroll position
-                      const scrollX = scrollPositions[genre] || 0;
-                      const cardWidth = 175; // Card width (160) + margin (15)
-                      const containerWidth = Dimensions.get('window').width;
-                      const paddingLeft = (containerWidth / 2) - 80; // Our padding offset (half of card width, not including margin)
-
-                      // Calculate the position of this card relative to the center of the screen
-                      const cardPosition = (index * cardWidth) + paddingLeft - scrollX + 80; // +80 for card center (excluding margin)
-                      const screenCenter = containerWidth / 2;
-                      const distanceFromCenter = Math.abs(cardPosition - screenCenter);
-
-                      // Determine if this card is the selected (center) one
-                      const isSelected = distanceFromCenter < cardWidth / 2;
-
-                      // Calculate position relative to selected item
-                      const cardCenterX = cardPosition;
-                      const selectedItemX = screenCenter;
-                      const relativePosition = (cardCenterX - selectedItemX) / cardWidth;
-
-                      // Calculate smooth scale and opacity based on distance from center
-                      const absRelativePosition = Math.abs(relativePosition);
-
-                      let cardOpacity = 1.0;
-                      let cardScale = 1.0;
-
-                      if (absRelativePosition < 0.5) {
-                        // Selected item (center): largest and fully visible
-                        cardOpacity = 1.0;
-                        cardScale = 1.0;
-                      } else if (absRelativePosition < 1.5) {
-                        // Adjacent items: smooth transition from 1.0 to 0.9
-                        const transitionProgress = (absRelativePosition - 0.5) / 1.0; // 0 to 1
-                        cardOpacity = 1.0 - (transitionProgress * 0.2); // 1.0 to 0.8
-                        cardScale = 1.0 - (transitionProgress * 0.1); // 1.0 to 0.9
-                      } else {
-                        // Distant items: smooth transition from 0.9 to 0.8
-                        const transitionProgress = Math.min((absRelativePosition - 1.5) / 1.0, 1.0); // 0 to 1, capped
-                        cardOpacity = 0.8 - (transitionProgress * 0.2); // 0.8 to 0.6
-                        cardScale = 0.9 - (transitionProgress * 0.1); // 0.9 to 0.8
-                      }
-
-                      // Scale story card dimensions based on accessibility settings
-                      const scaledCardW = scaledButtonSize(160);
-                      const scaledCardH = scaledButtonSize(120);
-
-                      return (
-                        <Pressable
-                          onPress={() => handleStoryPress(story)}
-                          onLongPress={() => handleLongPress(story)}
-                          delayLongPress={400}
-                        >
-                          <Animated.View
-                            style={{
-                              opacity: cardOpacity,
-                              transform: [{ scale: cardScale }],
-                              marginRight: 15,
-                              backgroundColor: 'white',
-                              borderRadius: scaledButtonSize(15),
-                              padding: 0,
-                              width: scaledCardW,
-                              height: scaledCardH,
-                              shadowColor: '#000',
-                              shadowOffset: { width: 0, height: 2 },
-                              shadowOpacity: 0.1,
-                              shadowRadius: 4,
-                              elevation: 3,
-                              overflow: 'hidden',
-                            }}
-                          >
-
-                          {story.coverImage ? (
-                            typeof story.coverImage === 'string' && story.coverImage.includes('api.colearnwithfreya.co.uk') ? (
-                              <AuthenticatedImage
-                                uri={story.coverImage}
-                                style={{
-                                  width: scaledCardW,
-                                  height: scaledCardH,
-                                  borderRadius: scaledButtonSize(15),
-                                }}
-                                resizeMode="cover"
-                              />
-                            ) : (
-                              <Image
-                                source={typeof story.coverImage === 'string' ? { uri: story.coverImage } : story.coverImage}
-                                style={{
-                                  width: scaledCardW,
-                                  height: scaledCardH,
-                                  borderRadius: scaledButtonSize(15),
-                                }}
-                                resizeMode="cover"
-                              />
-                            )
-                          ) : (
-                            <View style={{
-                              width: scaledCardW,
-                              height: scaledCardH,
-                              backgroundColor: '#f0f0f0',
-                              justifyContent: 'center',
-                              alignItems: 'center',
-                              borderRadius: scaledButtonSize(15),
-                            }}>
-                              <Text style={{ fontSize: scaledFontSize(48) }}>{story.emoji}</Text>
-                            </View>
-                          )}
-                          </Animated.View>
-                        </Pressable>
-                      );
-                    }}
-                  />
-                </View>
+                {/* Horizontal Carousel - Optimized for performance */}
+                <FlatList
+                  data={genreStories}
+                  renderItem={renderStoryCard}
+                  keyExtractor={keyExtractor}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  getItemLayout={getItemLayout}
+                  // Performance optimizations
+                  removeClippedSubviews={true}
+                  maxToRenderPerBatch={5}
+                  windowSize={7}
+                  initialNumToRender={3}
+                  updateCellsBatchingPeriod={50}
+                  // Scroll behavior
+                  decelerationRate="fast"
+                  snapToInterval={ITEM_WIDTH}
+                  snapToAlignment="start"
+                  contentContainerStyle={styles.carouselContent}
+                />
               </View>
             );
           })}
@@ -450,4 +421,32 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   );
 }
 
-// Removed StyleSheet to avoid caching issues - using inline styles instead
+// Static styles - created once, not on every render
+const styles = StyleSheet.create({
+  cardPressable: {
+    marginRight: CARD_MARGIN,
+  },
+  card: {
+    backgroundColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    overflow: 'hidden',
+  },
+  coverImage: {
+    // Dynamic width/height/borderRadius applied via inline style
+    // Background color prevents flash while image loads
+    backgroundColor: '#e8e8e8',
+  },
+  placeholderContainer: {
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  carouselContent: {
+    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
+});

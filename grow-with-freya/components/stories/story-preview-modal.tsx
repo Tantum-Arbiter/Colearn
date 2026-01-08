@@ -1,14 +1,20 @@
-import React from 'react';
+import React, { useEffect, useCallback } from 'react';
 import {
-  Modal,
   View,
   Text,
   Pressable,
   StyleSheet,
-  Image,
   ScrollView,
   Dimensions,
 } from 'react-native';
+import { Image } from 'expo-image';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  runOnJS,
+  Easing,
+} from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { Story, STORY_TAGS } from '@/types/story';
 import { Fonts } from '@/constants/theme';
@@ -23,6 +29,7 @@ interface StoryPreviewModalProps {
 }
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+const ANIMATION_DURATION = 300;
 
 export function StoryPreviewModal({
   story,
@@ -32,22 +39,69 @@ export function StoryPreviewModal({
 }: StoryPreviewModalProps) {
   const { scaledFontSize, scaledPadding, scaledButtonSize } = useAccessibility();
 
+  // Animation values for slide up/down
+  const translateY = useSharedValue(screenHeight);
+  const backdropOpacity = useSharedValue(0);
+  const isAnimatingOut = useSharedValue(false);
+
+  // Animate in when visible changes
+  useEffect(() => {
+    if (visible && story) {
+      // Slide up from bottom
+      translateY.value = withTiming(0, {
+        duration: ANIMATION_DURATION,
+        easing: Easing.out(Easing.cubic),
+      });
+      backdropOpacity.value = withTiming(1, { duration: ANIMATION_DURATION });
+    }
+  }, [visible, story]);
+
+  // Handle close with slide down animation
+  const handleClose = useCallback(() => {
+    isAnimatingOut.value = true;
+    backdropOpacity.value = withTiming(0, { duration: ANIMATION_DURATION });
+    translateY.value = withTiming(
+      screenHeight,
+      {
+        duration: ANIMATION_DURATION,
+        easing: Easing.in(Easing.cubic),
+      },
+      (finished) => {
+        if (finished) {
+          runOnJS(onClose)();
+          isAnimatingOut.value = false;
+        }
+      }
+    );
+  }, [onClose]);
+
+  const modalAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+  }));
+
+  const backdropAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: backdropOpacity.value,
+  }));
+
+  // Don't render if not visible and no story
+  if (!visible && !story) return null;
   if (!story) return null;
 
   const tagInfo = STORY_TAGS[story.category];
   const displayTags = story.tags || [story.tag];
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-    >
-      <Pressable style={styles.overlay} onPress={onClose}>
-        <BlurView intensity={20} style={StyleSheet.absoluteFill} tint="dark" />
-        
-        <Pressable 
+    <View style={styles.absoluteContainer} pointerEvents={visible ? 'auto' : 'none'}>
+      {/* Backdrop - tap to close */}
+      <Pressable style={StyleSheet.absoluteFill} onPress={handleClose}>
+        <Animated.View style={[styles.backdrop, backdropAnimatedStyle]}>
+          <BlurView intensity={20} style={StyleSheet.absoluteFill} tint="dark" />
+        </Animated.View>
+      </Pressable>
+
+      {/* Modal Content - slides up from bottom */}
+      <Animated.View style={[styles.modalWrapper, modalAnimatedStyle]}>
+        <Pressable
           style={[styles.modalContent, { maxHeight: screenHeight * 0.75 }]}
           onPress={(e) => e.stopPropagation()}
         >
@@ -64,7 +118,9 @@ export function StoryPreviewModal({
                 <Image
                   source={typeof story.coverImage === 'string' ? { uri: story.coverImage } : story.coverImage}
                   style={styles.coverImage}
-                  resizeMode="cover"
+                  contentFit="cover"
+                  transition={0}
+                  cachePolicy="memory-disk"
                 />
               )
             ) : (
@@ -74,7 +130,7 @@ export function StoryPreviewModal({
             )}
           </View>
 
-          <ScrollView 
+          <ScrollView
             style={styles.contentScroll}
             showsVerticalScrollIndicator={false}
           >
@@ -115,8 +171,8 @@ export function StoryPreviewModal({
               <Text style={styles.sectionLabel}>Tags</Text>
               <View style={styles.tagsRow}>
                 {displayTags.map((tag, index) => (
-                  <View 
-                    key={index} 
+                  <View
+                    key={index}
                     style={[styles.tag, { backgroundColor: tagInfo?.color || '#E0E0E0' }]}
                   >
                     <Text style={[styles.tagText, { fontSize: scaledFontSize(12) }]}>
@@ -140,7 +196,7 @@ export function StoryPreviewModal({
 
           {/* Action Buttons */}
           <View style={styles.buttonRow}>
-            <Pressable style={styles.closeButton} onPress={onClose}>
+            <Pressable style={styles.closeButton} onPress={handleClose}>
               <Text style={[styles.closeButtonText, { fontSize: scaledFontSize(16) }]}>
                 Close
               </Text>
@@ -149,8 +205,9 @@ export function StoryPreviewModal({
               <Pressable
                 style={styles.readButton}
                 onPress={() => {
-                  onClose();
-                  onReadStory(story);
+                  handleClose();
+                  // Delay the story navigation until after modal slides out
+                  setTimeout(() => onReadStory(story), ANIMATION_DURATION);
                 }}
               >
                 <Text style={[styles.readButtonText, { fontSize: scaledFontSize(16) }]}>
@@ -160,17 +217,24 @@ export function StoryPreviewModal({
             )}
           </View>
         </Pressable>
-      </Pressable>
-    </Modal>
+      </Animated.View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
+  absoluteContainer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1000,
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalWrapper: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
     width: screenWidth * 0.85,

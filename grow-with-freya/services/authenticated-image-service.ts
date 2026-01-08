@@ -59,6 +59,39 @@ export class AuthenticatedImageService {
   }
 
   /**
+   * Warm the memory cache from disk cache for a list of URLs
+   * This is synchronous-ish: it checks if files exist on disk and adds them to memory cache
+   * Call this when mounting screens that display authenticated images to prevent flicker
+   */
+  static async warmMemoryCache(urls: string[]): Promise<void> {
+    const startTime = Date.now();
+    let warmedCount = 0;
+
+    for (const url of urls) {
+      if (!url || this.memoryCache.has(url)) {
+        continue; // Skip if already in memory or invalid
+      }
+
+      const cacheFilename = this.getCacheFilename(url);
+      const cachedPath = `${this.CACHE_DIR}${cacheFilename}`;
+
+      try {
+        const fileInfo = await FileSystem.getInfoAsync(cachedPath);
+        if (fileInfo.exists) {
+          this.memoryCache.set(url, cachedPath);
+          warmedCount++;
+        }
+      } catch {
+        // Ignore errors - just skip this URL
+      }
+    }
+
+    if (warmedCount > 0) {
+      log.info(`Warmed memory cache with ${warmedCount} images in ${Date.now() - startTime}ms`);
+    }
+  }
+
+  /**
    * Get a cached image URI with authentication
    * Downloads and caches the image if not already cached
    * Uses request deduplication to prevent duplicate concurrent downloads

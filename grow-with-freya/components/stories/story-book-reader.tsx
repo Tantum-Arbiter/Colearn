@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, Dimensions, StatusBar, Image, ImageBackground, ScrollView, NativeSyntheticEvent, NativeScrollEvent, Modal, TextInput, Alert, KeyboardAvoidingView, Platform, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Dimensions, StatusBar, ImageBackground, ScrollView, NativeSyntheticEvent, NativeScrollEvent, Modal, TextInput, Alert, KeyboardAvoidingView, Platform, useWindowDimensions, Image as RNImage } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -956,7 +957,9 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
                   styles.backgroundImageStyle,
                   { width: '100%', height: '100%', transform: [{ scale: imageScale }] }
                 ]}
-                resizeMode="contain"
+                contentFit="contain"
+                transition={0}
+                cachePolicy="memory-disk"
                 onError={(error) => {
                   log.error(`Page ${page.pageNumber}: Background image error:`, JSON.stringify(error));
                 }}
@@ -977,7 +980,9 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
                 <Image
                   source={typeof page.characterImage === 'string' ? { uri: page.characterImage } : page.characterImage}
                   style={styles.characterImage}
-                  resizeMode="contain"
+                  contentFit="contain"
+                  transition={0}
+                  cachePolicy="memory-disk"
                   onError={(error) => {
                     log.error(`Page ${page.pageNumber}: Character image error:`, JSON.stringify(error));
                   }}
