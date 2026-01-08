@@ -66,14 +66,10 @@ describe('StoryBookReader', () => {
   });
 
   it('renders with all required props', () => {
-    const mockOnReadAnother = jest.fn();
-    const mockOnBedtimeMusic = jest.fn();
     const result = render(
       <StoryBookReader
         story={mockStory}
         onExit={mockOnExit}
-        onReadAnother={mockOnReadAnother}
-        onBedtimeMusic={mockOnBedtimeMusic}
       />
     );
     expect(result).toBeTruthy();

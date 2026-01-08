@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { Dimensions, Image, StyleSheet, View, Text, Pressable, Modal, TextInput, KeyboardAvoidingView, Platform, Alert, ScrollView } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -56,7 +56,7 @@ interface StoryTransitionContextType {
   selectModeAndBegin: (mode: ReadingMode) => void;
   cancelTransition: () => void;
   completeTransition: () => void;
-  startExitAnimation: (onComplete: () => void) => void;
+  startExitAnimation: (onComplete: () => void, currentPageIndex?: number) => void;
   isExitAnimating: boolean;
 
   // Animation values
@@ -104,6 +104,8 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const [showVoiceOverSelectModal, setShowVoiceOverSelectModal] = useState(false);
   const [voiceOverName, setVoiceOverName] = useState('');
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  // Ref for exit page index - synchronous, available immediately (React state is async)
+  const exitPageIndexRef = useRef<number | null>(null);
 
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledButtonSize, scaledPadding } = useAccessibility();
@@ -122,6 +124,10 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const pageFlipProgress = useSharedValue(0); // 0 = closed, 1 = open (cover rotated away)
   const bookExpansion = useSharedValue(0); // 0 = book size, 1 = full screen
   const [isExpandingToReader, setIsExpandingToReader] = useState(false);
+
+  // Shared value for exit animating - used in animated styles for immediate effect
+  // (React state isExitAnimating is async and can cause a frame delay)
+  const isExitAnimatingShared = useSharedValue(0); // 0 = not exiting, 1 = exiting
   
   // Preload story images during transition
   const preloadStoryImages = (story: Story) => {
@@ -271,39 +277,29 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     // Hide mode selection to trigger slide-out animation
     setShowModeSelection(false);
 
-    // Animation timing
+    // Animation timing - fast flip to minimize pixelation visibility
     const BUTTON_EXIT_DURATION = 250;  // Time for buttons to slide out
-    const COVER_FLIP_DURATION = 600;
-    const HOLD_AFTER_FLIP = 500;  // Time to see the page after cover flips
-    const SCALE_DURATION = 400;   // Time to scale up to full screen
-
-    // DON'T change cardPosition or reset transforms here!
-    // The book is already visually centered via transitionX/Y/Scale.
-    // Changing them causes a flash because state updates are async but
-    // shared value updates are sync.
+    const COVER_FLIP_DURATION = 250;   // Fast flip to reduce pixelation visibility
+    const HOLD_AFTER_FLIP = 300;       // Time to see the page after cover flips
+    const SCALE_DURATION = 400;        // Time to scale to full screen
 
     // Just reset flip/expansion values (these don't affect position)
     bookExpansion.value = 0;
     pageFlipProgress.value = 0;
 
-    // Wait for buttons to slide out before starting flip
+    // Wait for buttons to slide out before starting animation
     setTimeout(() => {
-      // DON'T change cardPosition or reset transforms here!
-      // The book is visually centered via transitionX/Y/Scale transforms.
-      // Changing cardPosition causes a flash because state updates are async
-      // but shared value updates are sync.
-
       // Set expanding state
       setIsExpandingToReader(true);
 
-      // Start the flip animation
       requestAnimationFrame(() => {
+        // PHASE 1: Flip the cover (2D scaleX - no pixelation!)
         pageFlipProgress.value = withTiming(1, {
           duration: COVER_FLIP_DURATION,
           easing: Easing.inOut(Easing.cubic)
         });
 
-        // After flip completes + hold time, scale to full screen
+        // PHASE 2: After flip completes + hold, scale to full screen
         setTimeout(() => {
           // Load the story reader NOW (at start of scale) so it loads behind
           if (onBeginCallback) {
@@ -393,6 +389,8 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     // Reset page flip and expansion values
     pageFlipProgress.value = 0;
     bookExpansion.value = 0;
+    isExitAnimatingShared.value = 0;
+    isExpandingOrExitingShared.value = 0;
     setIsExpandingToReader(false);
   };
 
@@ -422,98 +420,143 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   };
 
   // Start the exit animation (called by story reader when exiting)
-  const startExitAnimation = (onComplete: () => void) => {
+  // Flow: Take over at full screen → shrink with curved box → close cover → return to tile
+  // This mirrors the opening animation but in reverse
+  const startExitAnimation = (onComplete: () => void, currentPageIndex?: number) => {
     if (!originalCardPosition || !selectedStory) {
       onComplete();
       return;
     }
 
-    console.log('Starting exit animation back to original position:', originalCardPosition);
-    setIsExitAnimating(true);
-    setIsTransitioning(true);
+    console.log('Starting exit animation back to original position:', originalCardPosition, 'from page:', currentPageIndex);
 
-    // Animation timing - simple: dissolve in, flip cover, animate back
-    const DISSOLVE_IN_DURATION = 300;
-    const COVER_FLIP_DURATION = 600;
-    const RETURN_DURATION = 400;
+    // Animation timing
+    const SHRINK_DURATION = 350;       // Shrink from full screen to book size
+    const HOLD_AFTER_SHRINK = 300;     // Brief pause after shrink
+    const COVER_FLIP_DURATION = 500;   // Half second to close cover
+    const RETURN_DURATION = 300;       // Same as cancelTransition
 
-    // Use the SAME centered position calculation as the mode selection window
-    const targetScale = 1.2;
+    // Calculate the SAME values as startTransition uses
+    // Target book size: 55% of screen width
+    const targetWidth = screenWidth * 0.55;
+    const targetScale = targetWidth / originalCardPosition.width;
+
+    // Calculate center positions (same as startTransition)
     const targetCenterX = screenWidth / 2;
-    const targetCenterY = (screenHeight / 2) - 30; // Same offset as mode selection
+    const targetCenterY = (screenHeight / 2) - 30;
+
+    // Current center position of original card
+    const currentCenterX = originalCardPosition.x + originalCardPosition.width / 2;
+    const currentCenterY = originalCardPosition.y + originalCardPosition.height / 2;
+
+    // How much to move the center (same as startTransition calculates)
+    const moveX = targetCenterX - currentCenterX;
+    const moveY = targetCenterY - currentCenterY;
+
+    // Calculate final book position for targetBookPosition
     const scaledWidth = originalCardPosition.width * targetScale;
     const scaledHeight = originalCardPosition.height * targetScale;
+    const targetBookX = targetCenterX - scaledWidth / 2;
+    const targetBookY = targetCenterY - scaledHeight / 2;
+
     const centeredPosition = {
-      x: targetCenterX - scaledWidth / 2,
-      y: targetCenterY - scaledHeight / 2,
+      x: targetBookX,
+      y: targetBookY,
       width: scaledWidth,
       height: scaledHeight,
     };
 
-    // Start with the book at center, page open (first page showing)
-    setCardPosition(centeredPosition);
+    // SET ALL ANIMATION VALUES FIRST - before any state changes
+    // Start positioned at CENTER (where the open book was) using the SAME transform values as opening end state
+    transitionX.value = moveX;          // Same X offset as end of opening animation
+    transitionY.value = moveY;          // Same Y offset as end of opening animation
+    transitionScale.value = targetScale; // Same scale as end of opening animation
+    transitionOpacity.value = 1;
+    pageFlipProgress.value = 1;         // Cover is open (current page visible)
+    bookExpansion.value = 1;            // Start at FULL SCREEN
+    overlayOpacity.value = 1;           // Full opacity - hides everything until book renders
+    isExitAnimatingShared.value = 1;        // Set immediately for animated styles
+    isExpandingOrExitingShared.value = 1;   // Also set this for styles that check it
+
+    // Set exit card position in shared values (React state is async, shared values are immediate)
+    exitCardX.value = originalCardPosition.x;
+    exitCardY.value = originalCardPosition.y;
+    exitCardWidth.value = originalCardPosition.width;
+    exitCardHeight.value = originalCardPosition.height;
+
+    // Use ORIGINAL card position as base (same as opening animation)
+    // This way animating transitionX/Y/Scale to 0/0/1 returns to original position
+    // Set ref IMMEDIATELY (synchronous) so renderPageImage uses correct page on first render
+    exitPageIndexRef.current = currentPageIndex ?? 1;
+    setCardPosition(originalCardPosition);
     setTargetBookPosition(centeredPosition);
+    setIsExitAnimating(true);
+    setIsTransitioning(true);
 
-    // Initial state: page is open, overlay fading in
-    transitionX.value = 0;
-    transitionY.value = 0;
-    transitionScale.value = 1;
-    transitionOpacity.value = 0; // Start invisible, fade in
-    overlayOpacity.value = 0;
-    pageFlipProgress.value = 1; // Page is open
+    // Delay before starting animations to let React render with correct initial state
+    const SETTLE_DELAY = 100;
 
-    // Phase 1: Fade in the overlay with the first page showing
-    transitionOpacity.value = withTiming(1, {
-      duration: DISSOLVE_IN_DURATION,
-      easing: Easing.out(Easing.quad)
-    });
-    overlayOpacity.value = withTiming(0.85, {
-      duration: DISSOLVE_IN_DURATION,
-      easing: Easing.out(Easing.quad)
-    });
+    // Quickly fade overlay from fully opaque (1) to normal level (0.85)
+    // This happens immediately so there's no white flash
+    setTimeout(() => {
+      overlayOpacity.value = withTiming(0.85, {
+        duration: 50,
+        easing: Easing.out(Easing.quad)
+      });
+    }, 16); // After first frame
 
-    // Phase 2: Flip the cover back over the page
+    // Phase 1: Shrink from full screen to centered book size (with curved corners)
+    setTimeout(() => {
+      bookExpansion.value = withTiming(0, {
+        duration: SHRINK_DURATION,
+        easing: Easing.inOut(Easing.cubic)
+      });
+    }, SETTLE_DELAY);
+
+    // Phase 2: Close the cover
     setTimeout(() => {
       pageFlipProgress.value = withTiming(0, {
         duration: COVER_FLIP_DURATION,
         easing: Easing.inOut(Easing.cubic)
       });
-    }, DISSOLVE_IN_DURATION + 100);
+    }, SETTLE_DELAY + SHRINK_DURATION + HOLD_AFTER_SHRINK);
 
-    // Phase 3: After cover flips, animate back to original grid position
+    // Phase 3: Return to original position - exact reverse of opening animation
+    // Animate transitionX/Y/Scale back to 0/0/1 (same as cancelTransition)
     setTimeout(() => {
-      const deltaX = originalCardPosition.x - centeredPosition.x;
-      const deltaY = originalCardPosition.y - centeredPosition.y;
-      const scaleRatio = originalCardPosition.width / centeredPosition.width;
-
-      transitionX.value = withTiming(deltaX, {
+      transitionX.value = withTiming(0, {
         duration: RETURN_DURATION,
-        easing: Easing.inOut(Easing.cubic)
+        easing: Easing.out(Easing.cubic)
       });
-      transitionY.value = withTiming(deltaY, {
+      transitionY.value = withTiming(0, {
         duration: RETURN_DURATION,
-        easing: Easing.inOut(Easing.cubic)
+        easing: Easing.out(Easing.cubic)
       });
-      transitionScale.value = withTiming(scaleRatio, {
+      transitionScale.value = withTiming(1, {
         duration: RETURN_DURATION,
-        easing: Easing.inOut(Easing.cubic)
+        easing: Easing.out(Easing.cubic)
       });
-
-      // Fade out overlay as book returns
       overlayOpacity.value = withTiming(0, {
         duration: RETURN_DURATION,
         easing: Easing.out(Easing.quad)
       });
-    }, DISSOLVE_IN_DURATION + 100 + COVER_FLIP_DURATION + 100);
+    }, SETTLE_DELAY + SHRINK_DURATION + HOLD_AFTER_SHRINK + COVER_FLIP_DURATION);
 
     // Complete the animation
     setTimeout(() => {
       finishExitAnimation(onComplete);
-    }, DISSOLVE_IN_DURATION + 100 + COVER_FLIP_DURATION + 100 + RETURN_DURATION + 50);
+    }, SETTLE_DELAY + SHRINK_DURATION + HOLD_AFTER_SHRINK + COVER_FLIP_DURATION + RETURN_DURATION + 50);
   };
 
   const finishExitAnimation = (onComplete: () => void) => {
+    isExitAnimatingShared.value = 0;
+    isExpandingOrExitingShared.value = 0;
+    exitCardX.value = 0;
+    exitCardY.value = 0;
+    exitCardWidth.value = 0;
+    exitCardHeight.value = 0;
     setIsExitAnimating(false);
+    exitPageIndexRef.current = null;
     resetTransition();
     setOriginalCardPosition(null);
     onComplete();
@@ -536,11 +579,21 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     };
   });
 
+  // Check if expansion/exit animations should be active (using shared value for immediate effect)
+  const isExpandingOrExitingShared = useSharedValue(0);
+
+  // Sync the shared value with React state
+  // This ensures the shared value is updated when isExpandingToReader or isExitAnimating changes
+  useEffect(() => {
+    isExpandingOrExitingShared.value = (isExpandingToReader || isExitAnimating) ? 1 : 0;
+  }, [isExpandingToReader, isExitAnimating]);
+
   // Animated style for the book cover flip (rotates around left edge like opening a book)
-  // IMPORTANT: Use cardPosition.width (the actual rendered size), NOT targetBookPosition.width
-  // (which is the visually scaled size). The cover element is sized relative to cardPosition.
+  // Uses shared values for immediate effect during exit
   const coverFlipAnimatedStyle = useAnimatedStyle(() => {
-    if (!cardPosition) {
+    // Check shared values directly for immediate effect
+    const isActive = isExitAnimatingShared.value === 1 || isExpandingOrExitingShared.value === 1;
+    if (!cardPosition || !isActive) {
       return {
         transform: [{ perspective: 1000 }, { rotateY: '0deg' }],
       };
@@ -548,25 +601,91 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
     const halfWidth = cardPosition.width / 2;
     // Rotate from 0 to -150 degrees around left edge (spine)
-    // This keeps the cover visible (attached at spine) while revealing the first page
-    // -150 instead of -180 so the cover doesn't completely disappear behind the book
     const rotation = interpolate(pageFlipProgress.value, [0, 1], [0, -150]);
 
     return {
       transform: [
-        { perspective: 1200 },  // Higher perspective for less distortion
-        { translateX: -halfWidth },  // Move pivot point to left edge (spine)
+        { perspective: 1200 },
+        { translateX: -halfWidth },
         { rotateY: `${rotation}deg` },
-        { translateX: halfWidth },   // Move back
+        { translateX: halfWidth },
       ],
     };
   });
+
+  // Animated style for cover front face - hide when rotated past 90 degrees
+  const coverFrontFaceStyle = useAnimatedStyle(() => {
+    const isActive = isExitAnimatingShared.value === 1 || isExpandingOrExitingShared.value === 1;
+    if (!isActive) return { opacity: 1 };
+    const rotation = interpolate(pageFlipProgress.value, [0, 1], [0, -150]);
+    const opacity = Math.abs(rotation) < 90 ? 1 : 0;
+    return { opacity };
+  });
+
+  // Animated style for cover back face - show when rotated past 90 degrees
+  const coverBackFaceStyle = useAnimatedStyle(() => {
+    const isActive = isExitAnimatingShared.value === 1 || isExpandingOrExitingShared.value === 1;
+    if (!isActive) return { opacity: 0 };
+    const rotation = interpolate(pageFlipProgress.value, [0, 1], [0, -150]);
+    const opacity = Math.abs(rotation) >= 90 ? 1 : 0;
+    return { opacity };
+  });
+
+  // Store original card position in shared values for exit animation (React state is async)
+  const exitCardX = useSharedValue(0);
+  const exitCardY = useSharedValue(0);
+  const exitCardWidth = useSharedValue(0);
+  const exitCardHeight = useSharedValue(0);
 
   // Animated style for book expansion to full screen
   // IMPORTANT: This must include ALL transforms (position + scale) because
   // React Native style arrays don't merge transforms - they replace them.
   const bookExpansionAnimatedStyle = useAnimatedStyle(() => {
-    // Don't apply any transform until expansion actually starts
+    const isExiting = isExitAnimatingShared.value === 1;
+
+    // During EXIT: Use shared values for the exit card position (not React state)
+    // The book starts at FULL SCREEN and shrinks to CENTERED BOOK size (not tile size)
+    if (isExiting && exitCardWidth.value > 0) {
+      // bookExpansion: 1 = full screen, 0 = centered book size (same as opening animation)
+      // transitionScale.value holds the scale from tile to centered book
+
+      // Calculate full screen scale based on original card size
+      const scaleToFillX = screenWidth / exitCardWidth.value;
+      const scaleToFillY = screenHeight / exitCardHeight.value;
+      const scaleToFill = Math.max(scaleToFillX, scaleToFillY);
+
+      // Current scale: interpolate from CENTERED BOOK scale to full-screen scale
+      // transitionScale.value is the scale from tile to centered book (set during opening)
+      const currentScale = interpolate(bookExpansion.value, [0, 1], [transitionScale.value, scaleToFill]);
+
+      // The center of the original card (tile position)
+      const cardCenterX = exitCardX.value + exitCardWidth.value / 2;
+      const cardCenterY = exitCardY.value + exitCardHeight.value / 2;
+
+      // The center of the screen
+      const screenCenterX = screenWidth / 2;
+      const screenCenterY = screenHeight / 2;
+
+      // How much to move to center the card on screen
+      const moveToScreenCenterX = screenCenterX - cardCenterX;
+      const moveToScreenCenterY = screenCenterY - cardCenterY;
+
+      // Interpolate position:
+      // bookExpansion=1: centered on screen (full screen mode)
+      // bookExpansion=0: use transitionX/Y (centered book position - same offset used during opening)
+      const currentTranslateX = interpolate(bookExpansion.value, [0, 1], [transitionX.value, moveToScreenCenterX]);
+      const currentTranslateY = interpolate(bookExpansion.value, [0, 1], [transitionY.value, moveToScreenCenterY]);
+
+      return {
+        transform: [
+          { translateX: currentTranslateX },
+          { translateY: currentTranslateY },
+          { scale: currentScale }
+        ],
+      };
+    }
+
+    // OPENING animation: use the existing system
     if (!targetBookPosition || bookExpansion.value < 0.01) {
       return {};
     }
@@ -719,7 +838,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   };
 
   // Render the cover image for the selected story
-  // Use 100% width/height so the image scales properly with the container
   const renderCoverImage = () => {
     if (!selectedStory?.coverImage || !cardPosition) return null;
 
@@ -744,18 +862,21 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
         style={{ width: '100%', height: '100%', borderRadius: 15 }}
         contentFit="cover"
         cachePolicy="memory-disk"
+        priority="high"
       />
     );
   };
 
-  // Render the first page image (revealed when cover flips open)
-  // This shows the actual first page content
-  const renderFirstPageImage = () => {
+  // Render a page image (revealed when cover flips open, or during exit)
+  // pageIndex defaults to 1 (first content page) for opening, or exitPageIndex for exiting
+  const renderPageImage = (pageIndex?: number) => {
     if (!selectedStory?.pages || selectedStory.pages.length < 2 || !cardPosition) return null;
 
-    // Get the first content page (index 1, after cover at index 0)
-    const firstPage = selectedStory.pages[1];
-    const imageSource = firstPage?.backgroundImage || firstPage?.characterImage;
+    // Use provided pageIndex, or exitPageIndexRef (synchronous) during exit, or default to first content page
+    // exitPageIndexRef.current is set synchronously so it's available on first render
+    const targetPageIndex = pageIndex ?? (exitPageIndexRef.current !== null ? exitPageIndexRef.current : 1);
+    const page = selectedStory.pages[targetPageIndex];
+    const imageSource = page?.backgroundImage || page?.characterImage;
 
     if (!imageSource) {
       // Show a placeholder with the story theme
@@ -792,6 +913,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
         style={{ width: '100%', height: '100%', borderRadius: 15 }}
         contentFit="cover"
         cachePolicy="memory-disk"
+        priority="high"
       />
     );
   };
@@ -842,56 +964,60 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                 overflow: (isExpandingToReader || isExitAnimating) ? 'visible' : 'hidden',
               },
               transitionAnimatedStyle,
-              (isExpandingToReader || isExitAnimating) && bookExpansionAnimatedStyle,
+              bookExpansionAnimatedStyle, // Always apply - style handles inactive case
             ]}
           >
-            {/* First page behind the cover - ONLY render when flipping/exiting */}
-            {(isExpandingToReader || isExitAnimating) && (
-              <View
-                style={{
-                  position: 'absolute',
-                  width: '100%',
-                  height: '100%',
-                  borderRadius: 15,
-                  overflow: 'hidden',
-                  backgroundColor: '#F5F5DC', // Fallback color
-                }}
-              >
-                {renderFirstPageImage()}
-              </View>
-            )}
-
-            {/* Book cover (flips open when "Begin" is pressed) */}
-            <Animated.View
-              style={[
-                { position: 'absolute', width: '100%', height: '100%', borderRadius: 15, overflow: 'visible' },
-                (isExpandingToReader || isExitAnimating) && coverFlipAnimatedStyle,
-              ]}
-            >
-              {/* Front of cover - the cover image */}
-              <View style={{
+            {/* First page behind the cover - always render so it's ready for exit animation
+                The cover is on top, so this is only visible when cover flips open */}
+            <View
+              style={{
                 position: 'absolute',
                 width: '100%',
                 height: '100%',
                 borderRadius: 15,
                 overflow: 'hidden',
-                backfaceVisibility: 'hidden',
-              }}>
+                backgroundColor: '#F5F5DC', // Fallback color
+              }}
+            >
+              {renderPageImage()}
+            </View>
+
+            {/* Book cover (flips open when "Begin" is pressed) */}
+            <Animated.View
+              style={[
+                { position: 'absolute', width: '100%', height: '100%', borderRadius: 15, overflow: 'visible' },
+                coverFlipAnimatedStyle, // Always apply - style handles inactive case
+              ]}
+            >
+              {/* Front of cover - the cover image (hidden when rotation > 90deg) */}
+              <Animated.View style={[
+                {
+                  position: 'absolute',
+                  width: '100%',
+                  height: '100%',
+                  borderRadius: 15,
+                  overflow: 'hidden',
+                  opacity: 1, // Default: visible
+                },
+                coverFrontFaceStyle, // Always apply - style handles inactive case
+              ]}>
                 {renderCoverImage()}
                 {/* Book spine shadow effect */}
                 <View style={styles.spineGradient} />
-              </View>
+              </Animated.View>
 
-              {/* Back of cover - white page (rotated 180deg so it shows when cover flips) */}
-              <View style={{
-                position: 'absolute',
-                width: '100%',
-                height: '100%',
-                borderRadius: 15,
-                backgroundColor: '#FFFEF5',
-                backfaceVisibility: 'hidden',
-                transform: [{ rotateY: '180deg' }],
-              }} />
+              {/* Back of cover - white page (shown when rotation > 90deg) */}
+              <Animated.View style={[
+                {
+                  position: 'absolute',
+                  width: '100%',
+                  height: '100%',
+                  borderRadius: 15,
+                  backgroundColor: '#FFFEF5',
+                  opacity: 0, // Default: hidden until flip animation starts
+                },
+                coverBackFaceStyle, // Always apply - style handles inactive case
+              ]} />
             </Animated.View>
           </Animated.View>
 
@@ -995,7 +1121,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                   setShowPreviewModal(true);
                 }}
               >
-                <Text style={[styles.modeButtonIcon, { fontSize: scaledFontSize(22) }]}>👁</Text>
+                <Text style={[styles.modeButtonIcon, { fontSize: scaledFontSize(22) }]}>◉</Text>
                 <Text style={[styles.modeButtonText, { fontSize: scaledFontSize(18) }]}>Preview</Text>
               </Pressable>
             </Animated.View>

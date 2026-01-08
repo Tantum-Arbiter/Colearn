@@ -1,17 +1,21 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Image, ImageProps, View, ActivityIndicator, Text, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, Text, StyleSheet, ImageStyle, StyleProp } from 'react-native';
+import { Image as ExpoImage, ImageContentFit } from 'expo-image';
 import { AuthenticatedImageService } from '@/services/authenticated-image-service';
 import { Logger } from '@/utils/logger';
 
 const log = Logger.create('AuthenticatedImage');
 
-interface AuthenticatedImageProps extends Omit<ImageProps, 'source' | 'onLoad'> {
+interface AuthenticatedImageProps {
   uri: string;
   fallbackEmoji?: string;
   showLoadingIndicator?: boolean;
   loadingIndicatorColor?: string;
   onLoad?: () => void;
   maxRetries?: number;
+  style?: StyleProp<ImageStyle>;
+  resizeMode?: 'cover' | 'contain' | 'stretch' | 'center';
+  allowDownscaling?: boolean;
 }
 
 // Maximum retry attempts for loading an image
@@ -29,10 +33,10 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
   showLoadingIndicator = false,
   loadingIndicatorColor = '#666',
   style,
-  onError,
   onLoad,
   maxRetries = DEFAULT_MAX_RETRIES,
-  ...props
+  resizeMode = 'cover',
+  allowDownscaling = true,
 }) => {
   // Check memory cache synchronously for instant display
   // This runs during render (not in useEffect) so it's available on first paint
@@ -156,12 +160,23 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
     return <View style={[style, { backgroundColor: '#e8e8e8' }]} />;
   }
 
+  // Map resizeMode to expo-image contentFit
+  const contentFitMap: Record<string, ImageContentFit> = {
+    cover: 'cover',
+    contain: 'contain',
+    stretch: 'fill',
+    center: 'none',
+  };
+
   return (
-    <Image
-      {...props}
+    <ExpoImage
       source={{ uri: cachedUri }}
       style={style}
-      fadeDuration={0} // No fade - instant display to prevent flicker (Android)
+      contentFit={contentFitMap[resizeMode] || 'cover'}
+      transition={0} // No transition - instant display to prevent flicker
+      cachePolicy="memory-disk"
+      priority="high" // High priority for crisp rendering during animations
+      allowDownscaling={allowDownscaling} // Prevent pixelation during scale animations
       onLoad={() => {
         retryCountRef.current = 0; // Reset retry count on success
         if (onLoad) {
@@ -171,7 +186,7 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
       onError={(error) => {
         // Log detailed error info for debugging
         log.error(`Image render failed for URI: ${cachedUri}`);
-        log.error('Error details:', error?.nativeEvent);
+        log.error('Error details:', error);
         handleRenderError();
       }}
     />

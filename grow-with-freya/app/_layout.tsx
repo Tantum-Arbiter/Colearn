@@ -467,18 +467,6 @@ function AppContent() {
     // This prevents EnhancedPageTransition from animating the page away
   };
 
-  const handleReadAnother = (story: Story) => {
-    setSelectedStory(story);
-    // Stay in story-reader view, just change the story
-  };
-
-  const handleBedtimeMusic = () => {
-    setCurrentView('main');
-    setCurrentPage('main');
-    setSelectedStory(null);
-    // The main menu will handle navigation to bedtime
-  };
-
   if (currentView === 'splash') {
     return <AppSplashScreen />;
   }
@@ -528,8 +516,6 @@ function AppContent() {
               skipCoverPage={true}
               skipInitialFadeIn={true}
               onExit={handleBackToStories}
-              onReadAnother={handleReadAnother}
-              onBedtimeMusic={handleBedtimeMusic}
             />
           </View>
         )}

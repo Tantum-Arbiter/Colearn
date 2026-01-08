@@ -19,7 +19,6 @@ import { Story, StoryPage, STORY_TAGS, InteractiveElement } from '@/types/story'
 import { InteractiveElementComponent } from './interactive-element';
 import { Fonts } from '@/constants/theme';
 import { useStoryTransition } from '@/contexts/story-transition-context';
-import { StoryCompletionScreen } from './story-completion-screen';
 import { MusicControl } from '../ui/music-control';
 import { ParentsOnlyModal } from '../ui/parents-only-modal';
 import { useAppStore } from '@/store/app-store';
@@ -42,8 +41,6 @@ interface StoryBookReaderProps {
   skipCoverPage?: boolean;
   skipInitialFadeIn?: boolean; // Skip fade-in when transitioning from overlay (image already visible)
   onExit: () => void;
-  onReadAnother?: (story: Story) => void;
-  onBedtimeMusic?: () => void;
 }
 
 export function StoryBookReader({
@@ -53,8 +50,6 @@ export function StoryBookReader({
   skipCoverPage = false,
   skipInitialFadeIn = false,
   onExit,
-  onReadAnother,
-  onBedtimeMusic
 }: StoryBookReaderProps) {
   const insets = useSafeAreaInsets();
   const { isTransitioning: isStoryTransitioning, completeTransition, startExitAnimation } = useStoryTransition();
@@ -65,7 +60,6 @@ export function StoryBookReader({
   const [isLandscapeReady, setIsLandscapeReady] = useState(false);
 
   const [preloadedPages, setPreloadedPages] = useState<Set<number>>(new Set());
-  const [showCompletionScreen, setShowCompletionScreen] = useState(false);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<'main' | 'fontSize' | null>(null);
   const [readingMode, setReadingMode] = useState<'read' | 'record' | 'narrate'>(initialMode);
@@ -151,16 +145,6 @@ export function StoryBookReader({
   }, []);
 
 
-
-  // Completion screen entrance animation
-  const completionOpacity = useSharedValue(0);
-  const completionScale = useSharedValue(0.8);
-
-  // Soft fade exit animation
-  const scrollUpOpacity = useSharedValue(1);
-
-
-
   // Simple single page approach - no caching needed
 
 
@@ -200,6 +184,8 @@ export function StoryBookReader({
     // the story transition context overlay before we get here
     exitScale.value = 1;
     exitRotateY.value = 0;
+    exitTranslateX.value = 0;
+    exitTranslateY.value = 0;
     storyOpacity.value = 1;
 
     if (skipInitialFadeIn) {
@@ -321,10 +307,10 @@ export function StoryBookReader({
     });
   };
 
-  // Handle story completion with book closing animation
+  // Handle story completion - triggers exit animation
   const handleStoryCompletion = async () => {
     try {
-      // In record mode, go back to cover page instead of showing completion screen
+      // In record mode, go back to cover page instead of exiting
       if (readingMode === 'record') {
         const voiceOverName = currentVoiceOver?.name || 'this story';
         // Reset recording state
@@ -346,46 +332,12 @@ export function StoryBookReader({
         return;
       }
 
-      // Wait for final page to settle
-      await new Promise(resolve => {
-        requestAnimationFrame(() => {
-          setTimeout(resolve, 50);
-        });
-      });
-
-      // Start book closing animation
-      exitScale.value = withTiming(0.8, { duration: 400, easing: Easing.out(Easing.cubic) });
-      exitOpacity.value = withTiming(0.7, { duration: 400, easing: Easing.out(Easing.cubic) });
-      exitRotateY.value = withTiming(-20, { duration: 400, easing: Easing.out(Easing.cubic) });
-
-      await new Promise(resolve => setTimeout(resolve, 400));
-
-      // Continue closing animation
-      exitScale.value = withTiming(0.3, { duration: 600, easing: Easing.in(Easing.cubic) });
-      exitOpacity.value = withTiming(0, { duration: 600, easing: Easing.in(Easing.cubic) });
-      exitRotateY.value = withTiming(-90, { duration: 600, easing: Easing.in(Easing.cubic) });
-
-      await new Promise(resolve => setTimeout(resolve, 600));
-
-      // Show completion screen with entrance animation
-      setShowCompletionScreen(true);
-
-      // Small delay to ensure completion screen is mounted, then animate in
-      await new Promise(resolve => setTimeout(resolve, 50));
-
-      // Animate completion screen entrance
-      completionOpacity.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.cubic) });
-      completionScale.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.cubic) });
-
-      // Reset animation values for potential re-entry
-      exitScale.value = 1;
-      exitOpacity.value = 1;
-      exitRotateY.value = 0;
-
+      // Story complete - trigger exit animation (same as pressing X button)
+      handleExit();
     } catch (error) {
-      log.error('Error during story completion transition:', error);
-      // Fallback: show completion screen immediately
-      setShowCompletionScreen(true);
+      log.error('Error during story completion:', error);
+      // Fallback: immediate exit
+      onExit();
     }
   };
 
@@ -404,21 +356,28 @@ export function StoryBookReader({
         }
       }
 
-      // Fade out the story reader
-      exitOpacity.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.cubic) });
-
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      // Restore portrait orientation
+      // Restore portrait orientation first (story reader stays visible)
       await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
 
       // Small delay for orientation change
       await new Promise(resolve => setTimeout(resolve, 200));
 
-      // Use the transition context exit animation to shrink back to the card slot
+      // Start the exit animation - this renders the transition overlay BEHIND the story reader
+      // The story reader has zIndex 2000 (higher than overlay's 1000) so it stays on top
+      // This prevents any white flash from the overlay mounting/initializing
       startExitAnimation(() => {
-        onExit();
-      });
+        // After the animation completes, call onExit
+        setTimeout(() => {
+          onExit();
+        }, 50);
+      }, currentPageIndex);
+
+      // Wait for the overlay to fully render and initialize (the book at full screen)
+      // The story reader stays on top during this time, hiding any initialization
+      await new Promise(resolve => setTimeout(resolve, 150));
+
+      // Now fade out the story reader to reveal the ready animation underneath
+      exitOpacity.value = withTiming(0, { duration: 150, easing: Easing.out(Easing.cubic) });
     } catch (error) {
       log.warn('Failed to restore orientation on exit:', error);
       onExit();
@@ -439,6 +398,8 @@ export function StoryBookReader({
   const exitScale = useSharedValue(1);
   const exitOpacity = useSharedValue(1);
   const exitRotateY = useSharedValue(0);
+  const exitTranslateX = useSharedValue(0);
+  const exitTranslateY = useSharedValue(0);
 
 
   
@@ -846,93 +807,6 @@ export function StoryBookReader({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shouldAutoAdvance]);
 
-  // Completion screen handlers
-  const handleReadAnother = (newStory: Story) => {
-    if (onReadAnother) {
-      onReadAnother(newStory);
-    }
-  };
-
-  const handleRereadCurrent = async () => {
-    try {
-      // Reset to cover page immediately (before hiding completion screen)
-      setCurrentPageIndex(0);
-
-      // Reset completion animation values
-      completionOpacity.value = 0;
-      completionScale.value = 0.8;
-
-      // Hide completion screen
-      setShowCompletionScreen(false);
-
-      // Small delay to ensure completion screen is hidden and cover page is ready
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // Simple fade in for re-read (no book opening animation needed)
-      exitScale.value = 1;
-      exitOpacity.value = 0;
-      exitRotateY.value = 0;
-      storyOpacity.value = 1;
-
-      // Fade in
-      exitOpacity.value = withTiming(1, { duration: 400, easing: Easing.out(Easing.cubic) });
-    } catch (error) {
-      log.error('Error during re-read transition:', error);
-      // Fallback: immediate transition with proper animation reset
-      setShowCompletionScreen(false);
-      setCurrentPageIndex(0);
-      exitScale.value = 1;
-      exitOpacity.value = 1;
-      exitRotateY.value = 0;
-      storyOpacity.value = 1;
-    }
-  };
-
-  const handleBedtimeMusic = () => {
-    if (onBedtimeMusic) {
-      onBedtimeMusic();
-    }
-  };
-
-  const handleCloseCompletion = async () => {
-    try {
-      // Stop any playing narration/recording audio
-      if (playbackSound) {
-        try {
-          await playbackSound.stopAsync();
-          await playbackSound.unloadAsync();
-          setPlaybackSound(null);
-          setIsPlaying(false);
-        } catch (audioError) {
-          log.warn('Failed to stop playback audio on close:', audioError);
-        }
-      }
-
-      // Simple, soft fade out transition
-      scrollUpOpacity.value = withTiming(0, {
-        duration: 400,
-        easing: Easing.out(Easing.quad)
-      });
-
-      await new Promise(resolve => setTimeout(resolve, 400));
-
-      // Restore portrait orientation
-      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-
-      // Small delay for orientation change
-      await new Promise(resolve => setTimeout(resolve, 200));
-
-      // Use the transition context exit animation to shrink back to the card slot
-      startExitAnimation(() => {
-        onExit();
-      });
-    } catch (error) {
-      log.error('Error during close animation:', error);
-      // Fallback: immediate exit
-      onExit();
-    }
-  };
-
   // Function to render page content
   const renderPageContent = (page: any, isNextPage = false) => {
     if (!page) return null;
@@ -1140,25 +1014,17 @@ export function StoryBookReader({
   const exitAnimatedStyle = useAnimatedStyle(() => {
     return {
       opacity: exitOpacity.value,
+      // Keep story reader above the transition overlay (zIndex 1000) until it fades out
+      // This prevents any white flash from the overlay mounting
+      zIndex: exitOpacity.value > 0 ? 2000 : 0,
       transform: [
+        { translateX: exitTranslateX.value },
+        { translateY: exitTranslateY.value },
         { scale: exitScale.value },
         { rotateY: `${exitRotateY.value}deg` },
       ],
     };
   });
-
-  // Animated style for completion screen entrance
-  const completionAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: completionOpacity.value,
-    transform: [{ scale: completionScale.value }],
-  }));
-
-  // Animated style for soft fade exit
-  const fadeExitAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: scrollUpOpacity.value,
-  }));
-
-
 
 
 
@@ -1191,21 +1057,6 @@ export function StoryBookReader({
           <Text style={styles.exitButtonText}>← Back</Text>
         </Pressable>
       </View>
-    );
-  }
-
-  // Show completion screen when story is finished
-  if (showCompletionScreen) {
-    return (
-      <Animated.View style={[{ flex: 1 }, completionAnimatedStyle, fadeExitAnimatedStyle]}>
-        <StoryCompletionScreen
-          completedStory={story}
-          onReadAnother={handleReadAnother}
-          onRereadCurrent={handleRereadCurrent}
-          onBedtimeMusic={handleBedtimeMusic}
-          onClose={handleCloseCompletion}
-        />
-      </Animated.View>
     );
   }
 
@@ -1375,7 +1226,7 @@ export function StoryBookReader({
           paddingTop: Math.max(insets.top + 5, 20),
           paddingRight: Math.max(insets.right + 5, 20)
         }]}>
-          <MusicControl size={28} color="white" />
+          <MusicControl size={28} variant="story" />
           {/* Settings/Burger Menu Button */}
           <Pressable
             style={[
@@ -2144,14 +1995,14 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   exitButton: {
-    backgroundColor: 'rgba(130, 130, 130, 0.35)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 20,
     width: 40,
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(100, 100, 100, 0.2)',
+    borderColor: 'rgba(0, 0, 0, 0.1)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -2162,17 +2013,20 @@ const styles = StyleSheet.create({
   exitButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#333333',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 1,
   },
   settingsButton: {
-    backgroundColor: 'rgba(130, 130, 130, 0.35)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 20,
     width: 40,
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(100, 100, 100, 0.2)',
+    borderColor: 'rgba(0, 0, 0, 0.1)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -2183,7 +2037,10 @@ const styles = StyleSheet.create({
   settingsButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#333333',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 1,
   },
   settingsOverlay: {
     position: 'absolute',
@@ -2370,10 +2227,10 @@ const styles = StyleSheet.create({
   },
   pageIndicatorOverlay: {
     position: 'absolute',
-    backgroundColor: 'rgba(130, 130, 130, 0.35)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(100, 100, 100, 0.2)',
+    borderColor: 'rgba(0, 0, 0, 0.1)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -2398,7 +2255,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: Fonts.sans,
     fontWeight: '500',
-    color: '#FFFFFF', // White text
+    color: '#333333', // Dark text to match white background
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 1,
   },
   // Bottom attached text styles
   bottomTextContainer: {
@@ -2431,7 +2291,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   centerTextBox: {
-    backgroundColor: 'rgba(130, 130, 130, 0.35)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 20,
     paddingHorizontal: 25,
     paddingVertical: 15,
@@ -2441,7 +2301,7 @@ const styles = StyleSheet.create({
     maxWidth: 500,
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(100, 100, 100, 0.2)',
+    borderColor: 'rgba(0, 0, 0, 0.1)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -2450,14 +2310,14 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   recordModeTextBox: {
-    backgroundColor: 'rgba(130, 130, 130, 0.4)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 20,
     paddingHorizontal: 25,
     paddingVertical: 20,
     width: '90%',
     maxWidth: 700,
     borderWidth: 1,
-    borderColor: 'rgba(100, 100, 100, 0.2)',
+    borderColor: 'rgba(0, 0, 0, 0.1)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -2492,7 +2352,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   textBox: {
-    backgroundColor: 'rgba(130, 130, 130, 0.35)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 20,
     paddingHorizontal: 20,
     paddingVertical: 20,
@@ -2500,7 +2360,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(100, 100, 100, 0.2)',
+    borderColor: 'rgba(0, 0, 0, 0.1)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -2510,23 +2370,23 @@ const styles = StyleSheet.create({
   storyText: {
     fontSize: 16, // Slightly smaller for better fit
     fontFamily: Fonts.sans,
-    color: '#FFFFFF', // White text for visibility on grey background
+    color: '#333333', // Dark text for visibility on white background
     textAlign: 'center',
     lineHeight: 24, // Proper line height for 2 lines (16px font + 8px spacing)
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 1,
   },
   coverText: {
     fontSize: 18, // Larger for cover page
     fontFamily: Fonts.sans,
     fontWeight: '600', // Semi-bold for title
-    color: '#FFFFFF', // White text for visibility on grey background
+    color: '#333333', // Dark text for visibility on white background
     textAlign: 'center',
     lineHeight: 26, // Proper line height for 3 lines
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 1,
   },
   // Bottom navigation styles
   bottomNavigationContainer: {
@@ -2545,14 +2405,14 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   navButton: {
-    backgroundColor: 'rgba(130, 130, 130, 0.35)', // Soft grey for visibility on light/dark backgrounds
+    backgroundColor: 'rgba(255, 255, 255, 0.9)', // White with 90% opacity to match text box
     borderRadius: 25,
     width: 50,
     height: 50,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(100, 100, 100, 0.2)', // Subtle border
+    borderColor: 'rgba(0, 0, 0, 0.1)', // Subtle dark border
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -2562,16 +2422,19 @@ const styles = StyleSheet.create({
   },
 
   navButtonDisabled: {
-    backgroundColor: 'rgba(130, 130, 130, 0.2)', // Lighter for disabled state
-    borderColor: 'rgba(100, 100, 100, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.4)', // Lighter for disabled state
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   navButtonText: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFFFFF', // White text
+    color: '#333333', // Dark text with black stroke
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 1,
   },
   navButtonTextDisabled: {
-    color: '#CCC',
+    color: '#999',
   },
   completeButton: {
     backgroundColor: 'rgba(76, 175, 80, 0.9)', // Green background for completion
@@ -2632,12 +2495,12 @@ const styles = StyleSheet.create({
     zIndex: 5, // Below topLeftControls and topRightControls (zIndex: 10)
   },
   coverTapHint: {
-    backgroundColor: 'rgba(130, 130, 130, 0.35)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 25,
     borderWidth: 1,
-    borderColor: 'rgba(100, 100, 100, 0.2)',
+    borderColor: 'rgba(0, 0, 0, 0.1)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -2648,21 +2511,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: Fonts.sans,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#333333',
     textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 1,
   },
   pageIndicatorText: {
     fontSize: 14,
     fontFamily: Fonts.sans,
     fontWeight: '600',
-    color: 'white',
+    color: '#333333',
     textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 1,
   },
   modeSelectionContainer: {
     position: 'absolute',
@@ -2672,7 +2535,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   modeButton: {
-    backgroundColor: 'rgba(130, 130, 130, 0.35)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 15,
     paddingVertical: 4,
     paddingLeft: 8,
@@ -2686,23 +2549,26 @@ const styles = StyleSheet.create({
     width: 122,
   },
   modeButtonSelected: {
-    backgroundColor: 'rgba(130, 130, 130, 0.5)',
-    borderColor: 'rgba(255, 255, 255, 0.6)',
+    backgroundColor: 'rgba(255, 255, 255, 1)',
+    borderColor: 'rgba(0, 0, 0, 0.3)',
   },
   modeButtonIcon: {
-    color: '#FFFFFF',
+    color: '#333333',
     textAlign: 'center',
     marginRight: 10,
     zIndex: 1,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 1,
   },
   modeButtonText: {
-    color: '#FFFFFF',
+    color: '#333333',
     fontFamily: Fonts.sans,
     fontWeight: '600',
     textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 1,
   },
   // Recording controls styles
   recordingControlsContainer: {
