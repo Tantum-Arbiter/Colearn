@@ -71,6 +71,10 @@ export function ScreenTimeWarningModal({
     opacity: backdropOpacity.value,
   }));
 
+  // Don't render if not visible and no warning
+  if (!visible && !warning) return null;
+  if (!warning) return null;
+
   const formatRemainingTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -117,10 +121,6 @@ export function ScreenTimeWarningModal({
         return '#6B7280'; // Gray
     }
   };
-
-  // Don't render if not visible and no warning
-  if (!visible && !warning) return null;
-  if (!warning) return null;
 
   return (
     <View style={styles.absoluteContainer} pointerEvents={visible ? 'auto' : 'none'}>

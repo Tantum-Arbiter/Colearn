@@ -105,6 +105,11 @@ export function StoryPreviewModal({
           style={[styles.modalContent, { maxHeight: screenHeight * 0.75 }]}
           onPress={(e) => e.stopPropagation()}
         >
+          {/* X Close Button - top left */}
+          <Pressable style={styles.xCloseButton} onPress={handleClose}>
+            <Text style={styles.xCloseButtonText}>✕</Text>
+          </Pressable>
+
           {/* Cover Image */}
           <View style={styles.coverContainer}>
             {story.coverImage ? (
@@ -194,16 +199,11 @@ export function StoryPreviewModal({
             )}
           </ScrollView>
 
-          {/* Action Buttons */}
-          <View style={styles.buttonRow}>
-            <Pressable style={styles.closeButton} onPress={handleClose}>
-              <Text style={[styles.closeButtonText, { fontSize: scaledFontSize(16) }]}>
-                Close
-              </Text>
-            </Pressable>
-            {story.isAvailable && onReadStory && (
+          {/* Action Buttons - only show if Read Story is available */}
+          {story.isAvailable && onReadStory && (
+            <View style={styles.buttonRow}>
               <Pressable
-                style={styles.readButton}
+                style={[styles.readButton, { flex: 1 }]}
                 onPress={() => {
                   handleClose();
                   // Delay the story navigation until after modal slides out
@@ -214,8 +214,8 @@ export function StoryPreviewModal({
                   Read Story
                 </Text>
               </Pressable>
-            )}
-          </View>
+            </View>
+          )}
         </Pressable>
       </Animated.View>
     </View>
@@ -247,6 +247,23 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 20,
     elevation: 10,
+  },
+  xCloseButton: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  xCloseButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   coverContainer: {
     width: '100%',

@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useEffect, useMemo, useState, memo, useLayoutEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, Dimensions, FlatList, Pressable, ListRenderItem } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Dimensions, FlatList, Pressable, ListRenderItem, findNodeHandle, UIManager } from 'react-native';
 import { Image } from 'expo-image';
 import { AuthenticatedImage } from '@/components/ui/authenticated-image';
 import { AuthenticatedImageService } from '@/services/authenticated-image-service';
@@ -40,12 +40,13 @@ interface StorySelectionScreenProps {
 
 interface StoryCardProps {
   story: Story;
-  onPress: (story: Story) => void;
+  onPress: (story: Story, ref: React.RefObject<View>) => void;
   onLongPress: (story: Story) => void;
   cardWidth: number;
   cardHeight: number;
   borderRadius: number;
   emojiFontSize: number;
+  isHidden?: boolean; // Hide when this card is being animated in the transition overlay
 }
 
 // Memoized story card component - prevents re-renders during scroll
@@ -57,41 +58,59 @@ const StoryCard = memo(function StoryCard({
   cardHeight,
   borderRadius,
   emojiFontSize,
+  isHidden,
 }: StoryCardProps) {
-  const handlePress = useCallback(() => onPress(story), [story, onPress]);
+  const cardRef = useRef<View>(null);
+
+  const handlePress = useCallback(() => {
+    // Pass the ref to onPress so the parent can measure position
+    onPress(story, cardRef);
+  }, [story, onPress]);
+
   const handleLongPress = useCallback(() => onLongPress(story), [story, onLongPress]);
 
-  return (
-    <Pressable
-      onPress={handlePress}
-      onLongPress={handleLongPress}
-      delayLongPress={400}
-      style={styles.cardPressable}
-    >
-      <View style={[styles.card, { width: cardWidth, height: cardHeight, borderRadius }]}>
-        {story.coverImage ? (
-          typeof story.coverImage === 'string' && story.coverImage.includes('api.colearnwithfreya.co.uk') ? (
-            <AuthenticatedImage
-              uri={story.coverImage}
-              style={[styles.coverImage, { width: cardWidth, height: cardHeight, borderRadius }]}
-              resizeMode="cover"
-            />
-          ) : (
-            <Image
-              source={typeof story.coverImage === 'string' ? { uri: story.coverImage } : story.coverImage}
-              style={[styles.coverImage, { width: cardWidth, height: cardHeight, borderRadius }]}
-              contentFit="cover"
-              transition={0} // Prevent flicker on remount - works on iOS and Android
-              cachePolicy="memory-disk" // Use aggressive caching
-            />
-          )
-        ) : (
-          <View style={[styles.placeholderContainer, { width: cardWidth, height: cardHeight, borderRadius }]}>
-            <Text style={{ fontSize: emojiFontSize }}>{story.emoji}</Text>
-          </View>
-        )}
+  // When hidden, render an invisible placeholder to maintain layout but hide content completely
+  if (isHidden) {
+    return (
+      <View ref={cardRef} collapsable={false} style={styles.cardPressable}>
+        <View style={[styles.card, { width: cardWidth, height: cardHeight, borderRadius, opacity: 0 }]} />
       </View>
-    </Pressable>
+    );
+  }
+
+  return (
+    <View ref={cardRef} collapsable={false}>
+      <Pressable
+        onPress={handlePress}
+        onLongPress={handleLongPress}
+        delayLongPress={400}
+        style={styles.cardPressable}
+      >
+        <View style={[styles.card, { width: cardWidth, height: cardHeight, borderRadius }]}>
+          {story.coverImage ? (
+            typeof story.coverImage === 'string' && story.coverImage.includes('api.colearnwithfreya.co.uk') ? (
+              <AuthenticatedImage
+                uri={story.coverImage}
+                style={[styles.coverImage, { width: cardWidth, height: cardHeight, borderRadius }]}
+                resizeMode="cover"
+              />
+            ) : (
+              <Image
+                source={typeof story.coverImage === 'string' ? { uri: story.coverImage } : story.coverImage}
+                style={[styles.coverImage, { width: cardWidth, height: cardHeight, borderRadius }]}
+                contentFit="cover"
+                transition={0} // Prevent flicker on remount - works on iOS and Android
+                cachePolicy="memory-disk" // Use aggressive caching
+              />
+            )
+          ) : (
+            <View style={[styles.placeholderContainer, { width: cardWidth, height: cardHeight, borderRadius }]}>
+              <Text style={{ fontSize: emojiFontSize }}>{story.emoji}</Text>
+            </View>
+          )}
+        </View>
+      </Pressable>
+    </View>
   );
 });
 
@@ -100,9 +119,25 @@ const { width: screenWidth } = Dimensions.get('window');
 export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProps) {
   const insets = useSafeAreaInsets();
   const { requestReturnToMainMenu } = useAppStore();
-  const { startTransition } = useStoryTransition();
+  const { startTransition, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader } = useStoryTransition();
   const lastCallRef = useRef<number>(0);
+  const surpriseButtonRef = useRef<View>(null);
   const { scaledFontSize, scaledButtonSize, scaledPadding, textSizeScale } = useAccessibility();
+
+  // Animation for Surprise Me button (slide down when transitioning)
+  const surpriseButtonTranslateY = useSharedValue(0);
+
+  useEffect(() => {
+    if (isTransitioning) {
+      surpriseButtonTranslateY.value = withTiming(200, { duration: 300, easing: Easing.out(Easing.cubic) });
+    } else {
+      surpriseButtonTranslateY.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.cubic) });
+    }
+  }, [isTransitioning, surpriseButtonTranslateY]);
+
+  const surpriseButtonAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: surpriseButtonTranslateY.value }],
+  }));
 
   // Pre-calculate scaled dimensions once (not on every render item)
   const scaledCardW = scaledButtonSize(CARD_WIDTH);
@@ -266,10 +301,16 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   const handleSurpriseMe = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const randomStory = getRandomStory();
-    if (randomStory) {
-      handleLongPress(randomStory);
+    if (randomStory && surpriseButtonRef.current) {
+      // Measure the button position and start the transition from there
+      surpriseButtonRef.current.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
+        startTransition(randomStory.id, { x: pageX, y: pageY, width, height }, randomStory);
+        if (onStorySelect) {
+          onStorySelect(randomStory);
+        }
+      });
     }
-  }, [handleLongPress]);
+  }, [startTransition, onStorySelect]);
 
   // Memoized render function for story cards
   const renderStoryCard: ListRenderItem<Story> = useCallback(({ item: story }) => (
@@ -281,8 +322,9 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       cardHeight={scaledCardH}
       borderRadius={scaledBorderRadius}
       emojiFontSize={scaledEmojiFontSize}
+      isHidden={(isTransitioning || shouldShowStoryReader || isExpandingToReader) && selectedStoryId === story.id}
     />
-  ), [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize]);
+  ), [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader]);
 
   // Memoized key extractor
   const keyExtractor = useCallback((story: Story) => story.id, []);
@@ -327,7 +369,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       ))}
 
       {/* Shared page header component */}
-      <PageHeader title="Stories" onBack={handleBackToMenu} />
+      <PageHeader title="Stories" onBack={handleBackToMenu} hideControls={isTransitioning} />
 
       {/* Content container with flex: 1 for proper layout - dynamic padding for scaled text */}
       <View style={{ flex: 1, paddingTop: insets.top + 140 + (textSizeScale - 1) * 60, zIndex: 10 }}>
@@ -378,36 +420,38 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
           })}
         </ScrollView>
 
-        {/* Bottom Button */}
-        <View style={{ padding: 20, paddingBottom: insets.bottom + 20, alignItems: 'center' }}>
-          <Pressable
-            style={{
-              backgroundColor: '#FF6B6B',
-              borderRadius: 25,
-              paddingHorizontal: scaledPadding(32),
-              paddingVertical: scaledPadding(15),
-              alignItems: 'center',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.2,
-              shadowRadius: 4,
-              elevation: 3,
-              maxWidth: 280,
-              minHeight: scaledButtonSize(50),
-              justifyContent: 'center',
-            }}
-            onPress={handleSurpriseMe}
-          >
-            <Text style={{
-              color: 'white',
-              fontSize: scaledFontSize(18),
-              fontWeight: 'bold',
-              fontFamily: Fonts.rounded,
-            }}>
-              Surprise Me!
-            </Text>
-          </Pressable>
-        </View>
+        {/* Bottom Button - slides down when book is selected */}
+        <Animated.View style={[{ padding: 20, paddingBottom: insets.bottom + 20, alignItems: 'center' }, surpriseButtonAnimatedStyle]}>
+          <View ref={surpriseButtonRef} collapsable={false}>
+            <Pressable
+              style={{
+                backgroundColor: '#FF6B6B',
+                borderRadius: 25,
+                paddingHorizontal: scaledPadding(32),
+                paddingVertical: scaledPadding(15),
+                alignItems: 'center',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.2,
+                shadowRadius: 4,
+                elevation: 3,
+                maxWidth: 280,
+                minHeight: scaledButtonSize(50),
+                justifyContent: 'center',
+              }}
+              onPress={handleSurpriseMe}
+            >
+              <Text style={{
+                color: 'white',
+                fontSize: scaledFontSize(18),
+                fontWeight: 'bold',
+                fontFamily: Fonts.rounded,
+              }}>
+                Surprise Me!
+              </Text>
+            </Pressable>
+          </View>
+        </Animated.View>
       </View>
 
       {/* Story Preview Modal */}

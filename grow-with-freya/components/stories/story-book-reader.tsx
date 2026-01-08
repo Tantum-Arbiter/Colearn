@@ -37,15 +37,29 @@ const log = Logger.create('StoryBookReader');
 
 interface StoryBookReaderProps {
   story: Story;
+  initialMode?: 'read' | 'record' | 'narrate';
+  initialVoiceOver?: VoiceOver | null;
+  skipCoverPage?: boolean;
+  skipInitialFadeIn?: boolean; // Skip fade-in when transitioning from overlay (image already visible)
   onExit: () => void;
   onReadAnother?: (story: Story) => void;
   onBedtimeMusic?: () => void;
 }
 
-export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }: StoryBookReaderProps) {
+export function StoryBookReader({
+  story,
+  initialMode = 'read',
+  initialVoiceOver = null,
+  skipCoverPage = false,
+  skipInitialFadeIn = false,
+  onExit,
+  onReadAnother,
+  onBedtimeMusic
+}: StoryBookReaderProps) {
   const insets = useSafeAreaInsets();
-  const { isTransitioning: isStoryTransitioning, completeTransition } = useStoryTransition();
-  const [currentPageIndex, setCurrentPageIndex] = useState(0); // Start with cover page
+  const { isTransitioning: isStoryTransitioning, completeTransition, startExitAnimation } = useStoryTransition();
+  // Start from page 1 if skipping cover, otherwise start from cover (page 0)
+  const [currentPageIndex, setCurrentPageIndex] = useState(skipCoverPage ? 1 : 0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isOrientationTransitioning, setIsOrientationTransitioning] = useState(false);
   const [isLandscapeReady, setIsLandscapeReady] = useState(false);
@@ -54,12 +68,12 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
   const [showCompletionScreen, setShowCompletionScreen] = useState(false);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<'main' | 'fontSize' | null>(null);
-  const [readingMode, setReadingMode] = useState<'read' | 'record' | 'narrate'>('read');
+  const [readingMode, setReadingMode] = useState<'read' | 'record' | 'narrate'>(initialMode);
 
   // Voice recording state
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
-  const [currentVoiceOver, setCurrentVoiceOver] = useState<VoiceOver | null>(null);
+  const [currentVoiceOver, setCurrentVoiceOver] = useState<VoiceOver | null>(initialVoiceOver);
   const [showVoiceOverNameModal, setShowVoiceOverNameModal] = useState(false);
   const [voiceOverName, setVoiceOverName] = useState('');
   const [currentRecordingUri, setCurrentRecordingUri] = useState<string | null>(null);
@@ -69,7 +83,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
   const [isPlaying, setIsPlaying] = useState(false);
   const [availableVoiceOvers, setAvailableVoiceOvers] = useState<VoiceOver[]>([]);
   const [showVoiceOverSelectModal, setShowVoiceOverSelectModal] = useState(false);
-  const [selectedVoiceOver, setSelectedVoiceOver] = useState<VoiceOver | null>(null);
+  const [selectedVoiceOver, setSelectedVoiceOver] = useState<VoiceOver | null>(initialVoiceOver);
   const [isOverwriteSession, setIsOverwriteSession] = useState(false);
   const [isNewVoiceOver, setIsNewVoiceOver] = useState(false);
   const [narrationProgress, setNarrationProgress] = useState(0);
@@ -182,27 +196,20 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
 
   // Handle story fade-in animation and initial preloading (only once when component mounts)
   useEffect(() => {
-
-    // Start with book in closed state
-    exitScale.value = 0.3;
-    exitOpacity.value = 0;
-    exitRotateY.value = -90;
+    // Simple fade-in entrance - the book opening animation is now handled by
+    // the story transition context overlay before we get here
+    exitScale.value = 1;
+    exitRotateY.value = 0;
     storyOpacity.value = 1;
 
-    // Book opening animation (reverse of closing)
-    // Phase 1: Initial opening
-    exitScale.value = withTiming(0.8, { duration: 400, easing: Easing.out(Easing.cubic) });
-    exitOpacity.value = withTiming(0.7, { duration: 400, easing: Easing.out(Easing.cubic) });
-    exitRotateY.value = withTiming(-20, { duration: 400, easing: Easing.out(Easing.cubic) });
-
-    // Phase 2: Full opening after delay
-    setTimeout(() => {
-      exitScale.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) });
-      exitOpacity.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) });
-      exitRotateY.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) });
-    }, 400);
-
-
+    if (skipInitialFadeIn) {
+      // Skip fade-in - image is already visible from transition overlay
+      exitOpacity.value = 1;
+    } else {
+      // Simple fade in
+      exitOpacity.value = 0;
+      exitOpacity.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.cubic) });
+    }
 
     // Preload all story pages immediately for instant navigation
     const pages = story.pages || [];
@@ -382,7 +389,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
     }
   };
 
-  // Handle exit with orientation restore
+  // Handle exit with orientation restore and reverse animation
   const handleExit = async () => {
     try {
       // Stop any playing narration/recording audio immediately
@@ -397,19 +404,10 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
         }
       }
 
-      // Start book closing animation
-      exitScale.value = withTiming(0.8, { duration: 300, easing: Easing.out(Easing.cubic) });
-      exitOpacity.value = withTiming(0.7, { duration: 300, easing: Easing.out(Easing.cubic) });
-      exitRotateY.value = withTiming(-20, { duration: 300, easing: Easing.out(Easing.cubic) });
+      // Fade out the story reader
+      exitOpacity.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.cubic) });
 
       await new Promise(resolve => setTimeout(resolve, 300));
-
-      // Continue closing animation
-      exitScale.value = withTiming(0.3, { duration: 400, easing: Easing.in(Easing.cubic) });
-      exitOpacity.value = withTiming(0, { duration: 400, easing: Easing.in(Easing.cubic) });
-      exitRotateY.value = withTiming(-90, { duration: 400, easing: Easing.in(Easing.cubic) });
-
-      await new Promise(resolve => setTimeout(resolve, 400));
 
       // Restore portrait orientation
       await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
@@ -417,7 +415,10 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       // Small delay for orientation change
       await new Promise(resolve => setTimeout(resolve, 200));
 
-      onExit();
+      // Use the transition context exit animation to shrink back to the card slot
+      startExitAnimation(() => {
+        onExit();
+      });
     } catch (error) {
       log.warn('Failed to restore orientation on exit:', error);
       onExit();
@@ -487,6 +488,20 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       await voiceRecordingService.initialize();
       const voiceOvers = await voiceRecordingService.getVoiceOversForStory(story.id);
       setAvailableVoiceOvers(voiceOvers);
+
+      // If starting in record or narrate mode (skipping cover), show the appropriate modal
+      // after voice overs are loaded - BUT only if no voice over was already selected
+      // (from the transition context's mode selection screen)
+      if (skipCoverPage && initialMode === 'record' && !initialVoiceOver) {
+        // Small delay to ensure component is mounted
+        setTimeout(() => {
+          setShowVoiceOverNameModal(true);
+        }, 100);
+      } else if (skipCoverPage && initialMode === 'narrate' && !initialVoiceOver) {
+        setTimeout(() => {
+          setShowVoiceOverSelectModal(true);
+        }, 100);
+      }
     };
     initRecording();
 
@@ -499,7 +514,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [story.id]);
+  }, [story.id, skipCoverPage, initialMode]);
 
   // Load existing recording when page changes (in record mode)
   useEffect(() => {
@@ -853,24 +868,14 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       // Small delay to ensure completion screen is hidden and cover page is ready
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      // Start with book in closed state
-      exitScale.value = 0.3;
+      // Simple fade in for re-read (no book opening animation needed)
+      exitScale.value = 1;
       exitOpacity.value = 0;
-      exitRotateY.value = -90;
+      exitRotateY.value = 0;
       storyOpacity.value = 1;
 
-      // Book opening animation (reverse of closing)
-      // Phase 1: Initial opening
-      exitScale.value = withTiming(0.8, { duration: 400, easing: Easing.out(Easing.cubic) });
-      exitOpacity.value = withTiming(0.7, { duration: 400, easing: Easing.out(Easing.cubic) });
-      exitRotateY.value = withTiming(-20, { duration: 400, easing: Easing.out(Easing.cubic) });
-
-      // Phase 2: Full opening after delay
-      setTimeout(() => {
-        exitScale.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) });
-        exitOpacity.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) });
-        exitRotateY.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) });
-      }, 400);
+      // Fade in
+      exitOpacity.value = withTiming(1, { duration: 400, easing: Easing.out(Easing.cubic) });
     } catch (error) {
       log.error('Error during re-read transition:', error);
       // Fallback: immediate transition with proper animation reset
@@ -909,11 +914,18 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
         easing: Easing.out(Easing.quad)
       });
 
-
       await new Promise(resolve => setTimeout(resolve, 400));
 
-      // Call exit after animation
-      onExit();
+      // Restore portrait orientation
+      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+
+      // Small delay for orientation change
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      // Use the transition context exit animation to shrink back to the card slot
+      startExitAnimation(() => {
+        onExit();
+      });
     } catch (error) {
       log.error('Error during close animation:', error);
       // Fallback: immediate exit
