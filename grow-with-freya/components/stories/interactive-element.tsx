@@ -176,8 +176,9 @@ export const InteractiveElementComponent: React.FC<InteractiveElementProps> = ({
 
   // Handle tap
   const handlePress = () => {
+    console.log(`[InteractiveElement] Tapped element: ${element.id}, currently revealed: ${isRevealed}`);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    
+
     if (isRevealed) {
       // Hide prop
       propOpacity.value = withTiming(0, {

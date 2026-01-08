@@ -489,6 +489,8 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       if (hasInteractive) {
         page.interactiveElements!.forEach((el, elIdx) => {
           console.log(`[StoryBookReader]       ${elIdx}: id=${el.id}, type=${el.type}, image=${el.image}`);
+          console.log(`[StoryBookReader]         position: x=${el.position?.x}, y=${el.position?.y}`);
+          console.log(`[StoryBookReader]         size: w=${el.size?.width}, h=${el.size?.height}`);
         });
       }
     });

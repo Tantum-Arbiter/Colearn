@@ -21,6 +21,7 @@ import { EditProfileContent } from './edit-profile-screen';
 import { ApiClient } from '../../services/api-client';
 import { reminderService } from '../../services/reminder-service';
 import { StorySyncService } from '../../services/story-sync-service';
+import { AssetSyncService } from '../../services/asset-sync-service';
 import * as Sentry from '@sentry/react-native';
 import { TEXT_SIZE_OPTIONS, useAccessibility } from '../../hooks/use-accessibility';
 
@@ -251,6 +252,8 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
               onBack();
 
               // Clear authentication tokens and reminders in background (non-blocking)
+              // Note: We keep story and asset caches intact for delta sync efficiency
+              // Changed assets will be detected via checksum comparison on next login
               ApiClient.logout().catch(error => {
                 console.error('Background logout error:', error);
               });
@@ -294,7 +297,7 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
             }, 100);
 
             // Clear everything in background (non-blocking)
-            // This includes auth tokens, persisted storage, and story cache
+            // This includes auth tokens, persisted storage, story cache, and asset cache
             ApiClient.logout().catch(error => {
               console.error('Background logout error:', error);
             });
@@ -303,6 +306,9 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
             });
             StorySyncService.clearCache().catch(error => {
               console.error('Background story cache clear error:', error);
+            });
+            AssetSyncService.clearCache().catch(error => {
+              console.error('Background asset cache clear error:', error);
             });
           },
         },
