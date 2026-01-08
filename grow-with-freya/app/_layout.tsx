@@ -507,8 +507,9 @@ function AppContent() {
         />
 
         {/* Story reader rendered on top - only loads AFTER mode selection is complete (not during transition) */}
+        {/* zIndex 2000 ensures story reader stays above transition overlay (zIndex 1000) during exit animation */}
         {(showStoryReader && storyBeingRead) && (
-          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 500 }}>
+          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2000 }}>
             <StoryBookReader
               story={storyBeingRead}
               initialMode={transitionMode}
