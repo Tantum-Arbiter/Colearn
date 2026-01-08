@@ -26,7 +26,7 @@ import { ParentsOnlyModal } from '@/components/ui/parents-only-modal';
 import { StoryPreviewModal } from '@/components/stories/story-preview-modal';
 
 // Animation timing constants
-const MOVE_TO_CENTER_DURATION = 450;
+const MOVE_TO_CENTER_DURATION = 600; // Slower, smoother transition from tile to center
 const BUTTONS_DELAY = 200; // Delay before buttons slide in
 
 export type ReadingMode = 'read' | 'record' | 'narrate';
@@ -277,11 +277,11 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     // Hide mode selection to trigger slide-out animation
     setShowModeSelection(false);
 
-    // Animation timing - fast flip to minimize pixelation visibility
-    const BUTTON_EXIT_DURATION = 250;  // Time for buttons to slide out
-    const COVER_FLIP_DURATION = 250;   // Fast flip to reduce pixelation visibility
-    const HOLD_AFTER_FLIP = 300;       // Time to see the page after cover flips
-    const SCALE_DURATION = 400;        // Time to scale to full screen
+    // Animation timing - very fast to minimize pixelation visibility during scaling
+    const BUTTON_EXIT_DURATION = 150;  // Time for buttons to slide out
+    const COVER_FLIP_DURATION = 200;   // Fast flip to reduce pixelation visibility
+    const HOLD_AFTER_FLIP = 100;       // Brief pause to see the page after cover flips
+    const SCALE_DURATION = 200;        // Very fast scale to full screen
 
     // Just reset flip/expansion values (these don't affect position)
     bookExpansion.value = 0;
@@ -352,19 +352,19 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
     // Animate back and fade out
     transitionX.value = withTiming(0, {
-      duration: 300,
+      duration: 400,
       easing: Easing.out(Easing.cubic)
     });
     transitionY.value = withTiming(0, {
-      duration: 300,
+      duration: 400,
       easing: Easing.out(Easing.cubic)
     });
     transitionScale.value = withTiming(1, {
-      duration: 300,
+      duration: 400,
       easing: Easing.out(Easing.cubic)
     });
     overlayOpacity.value = withTiming(0, {
-      duration: 300,
+      duration: 400,
       easing: Easing.out(Easing.quad)
     }, () => {
       runOnJS(resetTransition)();
@@ -431,10 +431,10 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     console.log('Starting exit animation back to original position:', originalCardPosition, 'from page:', currentPageIndex);
 
     // Animation timing
-    const SHRINK_DURATION = 350;       // Shrink from full screen to book size
-    const HOLD_AFTER_SHRINK = 300;     // Brief pause after shrink
-    const COVER_FLIP_DURATION = 500;   // Half second to close cover
-    const RETURN_DURATION = 300;       // Same as cancelTransition
+    const SHRINK_DURATION = 200;       // Fast shrink from full screen to book size
+    const HOLD_AFTER_SHRINK = 100;     // Brief pause after shrink
+    const COVER_FLIP_DURATION = 250;   // Quick flip to close cover
+    const RETURN_DURATION = 500;       // Slower, smoother return to tile position
 
     // Calculate the SAME values as startTransition uses
     // Target book size: 55% of screen width
@@ -521,6 +521,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       });
     }, SETTLE_DELAY + SHRINK_DURATION + HOLD_AFTER_SHRINK);
 
+    // Phase 3: Return to original position - exact reverse of opening animation
     // Phase 3: Return to original position - exact reverse of opening animation
     // Animate transitionX/Y/Scale back to 0/0/1 (same as cancelTransition)
     setTimeout(() => {
@@ -875,6 +876,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     // Use provided pageIndex, or exitPageIndexRef (synchronous) during exit, or default to first content page
     // exitPageIndexRef.current is set synchronously so it's available on first render
     const targetPageIndex = pageIndex ?? (exitPageIndexRef.current !== null ? exitPageIndexRef.current : 1);
+    console.log('[renderPageImage] exitPageIndexRef.current:', exitPageIndexRef.current, 'targetPageIndex:', targetPageIndex);
     const page = selectedStory.pages[targetPageIndex];
     const imageSource = page?.backgroundImage || page?.characterImage;
 
@@ -928,13 +930,16 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
           {/* Shadow overlay background */}
           <Animated.View style={[styles.shadowOverlay, overlayAnimatedStyle]} />
 
-          {/* X Close button - top left of book (hidden when preview modal is showing) */}
-          {showModeSelection && targetBookPosition && !showPreviewModal && (
+          {/* X Close button - top left of book */}
+          {/* Stays visible when preview modal is showing, but dimmed by overlay */}
+          {showModeSelection && targetBookPosition && (
             <Animated.View
               entering={FadeIn.delay(100).duration(200)}
               style={[styles.closeButtonContainer, {
                 left: targetBookPosition.x - scaledButtonSize(12),
                 top: targetBookPosition.y - scaledButtonSize(12),
+                // When preview modal is showing, dim the button with the overlay
+                opacity: showPreviewModal ? 0.3 : 1,
               }]}
             >
               <Pressable
@@ -945,6 +950,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                 }]}
                 onPress={cancelTransition}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                disabled={showPreviewModal} // Disable when preview is showing
               >
                 <Text style={[styles.closeButtonText, { fontSize: scaledFontSize(20) }]}>✕</Text>
               </Pressable>
@@ -1020,6 +1026,29 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
               ]} />
             </Animated.View>
           </Animated.View>
+
+          {/* High-resolution cover overlay - appears after animation completes */}
+          {/* This is positioned at the actual target position (no scaling) for crisp rendering */}
+          {showModeSelection && targetBookPosition && cardPosition && !isExpandingToReader && (
+            <Animated.View
+              entering={FadeIn.duration(150)}
+              style={{
+                position: 'absolute',
+                left: targetBookPosition.x,
+                top: targetBookPosition.y,
+                width: targetBookPosition.width,
+                height: targetBookPosition.height,
+                borderRadius: 15,
+                overflow: 'hidden',
+                zIndex: 10, // Above the scaled container
+              }}
+            >
+              {renderCoverImage()}
+              {/* Book spine shadow effect - scaled to match the scaled container's spine */}
+              {/* The original spine is 8px but gets scaled up in the container, so we match that */}
+              <View style={[styles.spineGradient, { width: 8 * (targetBookPosition.width / cardPosition.width) }]} />
+            </Animated.View>
+          )}
 
           {/* Mode selection buttons - positioned to the LEFT of the book */}
           {showModeSelection && targetBookPosition && (
@@ -1442,18 +1471,23 @@ const styles = StyleSheet.create({
   modalCloseButton: {
     position: 'absolute',
     top: 12,
-    right: 12,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#f0f0f0',
+    left: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
   modalCloseButtonText: {
-    fontSize: 18,
-    color: '#666',
+    fontSize: 20,
+    color: '#333',
     fontWeight: '600',
   },
   modalTitle: {
