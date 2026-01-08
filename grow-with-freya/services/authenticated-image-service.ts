@@ -323,8 +323,9 @@ export class AuthenticatedImageService {
    * Download and cache an asset from a signed URL
    * Used by AssetSyncService for prefetching
    * Also populates the memory cache for instant subsequent lookups
+   * @param forceUpdate - If true, re-downloads even if file exists (for delta sync updates)
    */
-  static async downloadAndCacheAsset(signedUrl: string, assetPath: string, remoteUrl?: string): Promise<string> {
+  static async downloadAndCacheAsset(signedUrl: string, assetPath: string, remoteUrl?: string, forceUpdate = false): Promise<string> {
     try {
       // Create cache directory if it doesn't exist
       const dirInfo = await FileSystem.getInfoAsync(this.CACHE_DIR);
@@ -336,15 +337,22 @@ export class AuthenticatedImageService {
       const cacheFilename = this.getCacheFilename(assetPath);
       const cachedPath = `${this.CACHE_DIR}${cacheFilename}`;
 
-      // Check if already cached
-      const cachedInfo = await FileSystem.getInfoAsync(cachedPath);
-      if (cachedInfo.exists) {
-        console.log(`[AuthImageService] Asset already cached: ${assetPath}`);
-        // Add to memory cache if remoteUrl provided
-        if (remoteUrl) {
-          this.memoryCache.set(remoteUrl, cachedPath);
+      // Check if already cached (skip if forceUpdate is true - asset has changed on server)
+      if (!forceUpdate) {
+        const cachedInfo = await FileSystem.getInfoAsync(cachedPath);
+        if (cachedInfo.exists) {
+          console.log(`[AuthImageService] Asset already cached: ${assetPath}`);
+          // Add to memory cache if remoteUrl provided
+          if (remoteUrl) {
+            this.memoryCache.set(remoteUrl, cachedPath);
+          }
+          return cachedPath;
         }
-        return cachedPath;
+      } else {
+        // Force update: delete existing file and clear from memory cache
+        console.log(`[AuthImageService] Force updating asset: ${assetPath}`);
+        this.memoryCache.delete(remoteUrl || assetPath);
+        await this.deleteFile(cachedPath);
       }
 
       // Download the asset
