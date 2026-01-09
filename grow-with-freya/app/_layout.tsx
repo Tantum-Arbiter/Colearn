@@ -328,14 +328,16 @@ function AppContent() {
     return () => subscription?.remove();
   }, [hasHydrated, hasCompletedOnboarding, isGuestMode, setShowLoginAfterOnboarding]);
 
-  // Start background music once when transitioning from splash (only once!)
+  // Start background music when main menu loads (after sign in or app restart)
   useEffect(() => {
     const startBackgroundMusic = async () => {
-      if (musicLoaded && (currentView === 'onboarding' || currentView === 'app') && !isPlaying && !hasStartedBackgroundMusic) {
+      // Only start music when entering the main app (main menu) - not during onboarding
+      if (musicLoaded && currentView === 'app' && !isPlaying && !hasStartedBackgroundMusic) {
         try {
-          // Start background music with a gentle fade-in - only when first leaving splash
+          // Start background music with a gentle fade-in
           await fadeIn(3000); // 3 second fade-in
           setHasStartedBackgroundMusic(true); // Mark that we've started music
+          console.log('[BackgroundMusic] Started playing on main menu load');
         } catch (error) {
           log.warn('Failed to start background music:', error);
         }
