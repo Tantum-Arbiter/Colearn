@@ -93,9 +93,12 @@ export class AssetSyncService {
         return;
       }
 
+      console.log(`[AssetSyncService] Syncing ${assetsToSync.length} assets...`);
+
       // Download all assets in parallel with forceUpdate=true since these are changed assets
       const downloadPromises = assetsToSync.map(async (asset) => {
         try {
+          console.log(`[AssetSyncService] Downloading asset: ${asset.path}`);
           // Download using the signed URL with forceUpdate=true to replace existing cached files
           await AuthenticatedImageService.downloadAndCacheAsset(
             asset.signedUrl,
@@ -157,6 +160,20 @@ export class AssetSyncService {
       await AsyncStorage.removeItem(this.STORAGE_KEY);
     } catch (error) {
       log.error('Error clearing checksums:', error);
+    }
+  }
+
+  /**
+   * Clear asset checksums only (not the cached files)
+   * This forces a full re-validation on next sync, ensuring any corrupted
+   * or outdated files are detected and re-downloaded
+   */
+  static async clearChecksums(): Promise<void> {
+    try {
+      await AsyncStorage.removeItem(this.STORAGE_KEY);
+      console.log('[AssetSyncService] Asset checksums cleared - will re-validate on next sync');
+    } catch (error) {
+      console.error('[AssetSyncService] Error clearing checksums:', error);
     }
   }
 }
