@@ -207,13 +207,16 @@ export function StoryPreviewModal({
               <Pressable
                 style={[styles.readButton, { flex: 1 }]}
                 onPress={() => {
-                  handleClose();
-                  // Delay the story navigation until after modal slides out
-                  setTimeout(() => onReadStory(story), ANIMATION_DURATION);
+                  // Start the story transition FIRST (before closing modal)
+                  // This ensures the card ref is still available for measuring position
+                  // The transition overlay will cover this modal anyway
+                  onReadStory(story);
+                  // Then close the modal (with a small delay to let transition start)
+                  setTimeout(() => handleClose(), 50);
                 }}
               >
                 <Text style={[styles.readButtonText, { fontSize: scaledFontSize(16) }]}>
-                  Read Story
+                  View Story
                 </Text>
               </Pressable>
             </View>

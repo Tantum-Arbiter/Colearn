@@ -41,7 +41,7 @@ interface StorySelectionScreenProps {
 interface StoryCardProps {
   story: Story;
   onPress: (story: Story, ref: React.RefObject<View>) => void;
-  onLongPress: (story: Story) => void;
+  onLongPress: (story: Story, ref: React.RefObject<View>) => void;
   cardWidth: number;
   cardHeight: number;
   borderRadius: number;
@@ -67,7 +67,8 @@ const StoryCard = memo(function StoryCard({
     onPress(story, cardRef);
   }, [story, onPress]);
 
-  const handleLongPress = useCallback(() => onLongPress(story), [story, onLongPress]);
+  // Pass the ref to onLongPress so we can use it when "Read Story" is pressed from preview
+  const handleLongPress = useCallback(() => onLongPress(story, cardRef), [story, onLongPress]);
 
   // When hidden, render an invisible placeholder to maintain layout but hide content completely
   if (isHidden) {
@@ -145,16 +146,21 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   // Story preview modal state
   const [previewStory, setPreviewStory] = useState<Story | null>(null);
   const [isPreviewVisible, setIsPreviewVisible] = useState(false);
+  // Store the card ref for the currently previewed story so we can animate from it
+  const previewCardRef = useRef<React.RefObject<View> | null>(null);
 
-  const handleLongPress = useCallback((story: Story) => {
+  const handleLongPress = useCallback((story: Story, cardRef: React.RefObject<View>) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setPreviewStory(story);
     setIsPreviewVisible(true);
+    // Store the ref so we can use it when "Read Story" is pressed
+    previewCardRef.current = cardRef;
   }, []);
 
   const handleClosePreview = useCallback(() => {
     setIsPreviewVisible(false);
     setPreviewStory(null);
+    previewCardRef.current = null;
   }, []);
 
   // Warm the memory cache for CMS story cover images BEFORE first render
@@ -262,11 +268,12 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
+    // Use the provided ref, or fall back to the stored preview card ref
+    const refToUse = pressableRef || previewCardRef.current;
+
     // Get the card position for transition animation
-    if (pressableRef && pressableRef.current) {
-      pressableRef.current.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
-
-
+    if (refToUse && refToUse.current) {
+      refToUse.current.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
         startTransition(story.id, { x: pageX, y: pageY, width, height }, story);
 
         // Also call the onStorySelect callback for app navigation
@@ -275,7 +282,15 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
         }
       });
     } else {
-      // Fallback without animation - still call onStorySelect
+      // Last resort fallback - use a default centered position for the animation
+      const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+      const fallbackWidth = 160;
+      const fallbackHeight = 120;
+      const fallbackX = (screenWidth - fallbackWidth) / 2;
+      const fallbackY = (screenHeight - fallbackHeight) / 2;
+
+      startTransition(story.id, { x: fallbackX, y: fallbackY, width: fallbackWidth, height: fallbackHeight }, story);
+
       if (onStorySelect) {
         onStorySelect(story);
       }
