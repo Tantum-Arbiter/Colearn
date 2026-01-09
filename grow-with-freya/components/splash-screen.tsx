@@ -1,36 +1,68 @@
-import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Dimensions, Pressable } from 'react-native';
+import React, { useEffect, useRef, useMemo } from 'react';
+import { View, StyleSheet, Dimensions, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withTiming, 
-  withRepeat, 
-  withSequence,
-  Easing 
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withRepeat,
+  Easing
 } from 'react-native-reanimated';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Font from 'expo-font';
 
-import { ThemedText } from './themed-text';
 import { useAppStore } from '@/store/app-store';
 import { DeviceInfoService } from '@/services/device-info-service';
 
 const { width, height } = Dimensions.get('window');
 
+// Same gradient colors as main menu
+const GRADIENT_COLORS = ['#1E3A8A', '#3B82F6', '#4ECDC4'] as const;
+
+// Star configuration (matching main menu)
+const STAR_COUNT = 15;
+const STAR_SIZE = 3;
+const STAR_AREA_HEIGHT_RATIO = 0.6;
+
+// Generate deterministic star positions
+const generateStars = (count: number) => {
+  const stars = [];
+  const starAreaHeight = height * STAR_AREA_HEIGHT_RATIO;
+
+  // Use seeded random for consistent positions
+  const seededRandom = (seed: number) => {
+    const x = Math.sin(seed * 9999) * 10000;
+    return x - Math.floor(x);
+  };
+
+  for (let i = 0; i < count; i++) {
+    stars.push({
+      id: i,
+      left: seededRandom(i * 1.1) * (width - 20) + 10,
+      top: seededRandom(i * 2.3) * starAreaHeight + 20,
+      opacity: 0.3 + seededRandom(i * 3.7) * 0.4,
+    });
+  }
+  return stars;
+};
+
 SplashScreen.preventAutoHideAsync();
+
+// Logo size matches login page: 306px on phone, 420px on tablet
+const logoSize = width > 768 ? 420 : 306;
 
 export function AppSplashScreen() {
   const { setAppReady, hasCompletedOnboarding, hasCompletedLogin } = useAppStore();
 
   const logoScale = useSharedValue(0.8);
   const logoOpacity = useSharedValue(0);
-  const textOpacity = useSharedValue(0);
   const starRotation = useSharedValue(0);
 
   // Timeout cleanup refs
-  const textTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const delayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Generate star positions (same as main menu)
+  const stars = useMemo(() => generateStars(STAR_COUNT), []);
 
   useEffect(() => {
     async function prepare() {
@@ -43,21 +75,20 @@ export function AppSplashScreen() {
 
         await Font.loadAsync({});
 
+        // Animate logo appearing
         logoOpacity.value = withTiming(1, { duration: 1000 });
         logoScale.value = withTiming(1, {
           duration: 1000,
           easing: Easing.out(Easing.back(1.5))
         });
 
-        textTimeoutRef.current = setTimeout(() => {
-          textOpacity.value = withTiming(1, { duration: 800 });
-        }, 500);
-
+        // Star rotation animation
         starRotation.value = withRepeat(
           withTiming(360, { duration: 3000, easing: Easing.linear }),
           -1
         );
 
+        // Wait for animations to complete
         await new Promise<void>(resolve => {
           delayTimeoutRef.current = setTimeout(resolve, 2500);
         });
@@ -77,9 +108,6 @@ export function AppSplashScreen() {
 
     // Cleanup timeouts on unmount
     return () => {
-      if (textTimeoutRef.current) {
-        clearTimeout(textTimeoutRef.current);
-      }
       if (delayTimeoutRef.current) {
         clearTimeout(delayTimeoutRef.current);
       }
@@ -91,55 +119,61 @@ export function AppSplashScreen() {
     transform: [{ scale: logoScale.value }],
   }));
 
-  const textAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: textOpacity.value,
-  }));
-
   const starAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${starRotation.value}deg` }],
   }));
 
   return (
     <LinearGradient
-      colors={['#4ECDC4', '#44A08D', '#2E8B8B']}
+      colors={GRADIENT_COLORS as unknown as string[]}
       style={styles.container}
     >
+      {/* Background layer for stars */}
       <View style={styles.starsContainer}>
-        {[...Array(20)].map((_, i) => (
+        {/* Animated stars (same as main menu) */}
+        {stars.map((star) => (
           <Animated.View
-            key={i}
+            key={`star-${star.id}`}
             style={[
               styles.star,
               starAnimatedStyle,
               {
-                left: Math.random() * width,
-                top: Math.random() * height,
-                opacity: 0.3 + Math.random() * 0.7,
+                left: star.left,
+                top: star.top,
+                opacity: star.opacity,
               }
             ]}
           />
         ))}
       </View>
 
-      <View style={styles.logoContainer}>
-        <Animated.View style={[styles.logoCircle, logoAnimatedStyle]}>
-          <ThemedText style={styles.logoText}>🌟</ThemedText>
-        </Animated.View>
-        
-        <Animated.View style={textAnimatedStyle}>
-          <ThemedText type="title" style={styles.appName}>
-            Grow with Freya
-          </ThemedText>
-          <ThemedText style={styles.tagline}>
-            Personalized stories for your little one
-          </ThemedText>
-        </Animated.View>
+      {/* Moon/planet image at top (same as main menu) */}
+      <View style={styles.moonContainer} pointerEvents="none">
+        <Image
+          source={require('@/assets/images/ui-elements/moon-top-screen.webp')}
+          style={styles.moonImage}
+          resizeMode="contain"
+        />
       </View>
 
-      <View style={styles.loadingContainer}>
-        <ThemedText style={styles.loadingText}>Loading magical stories...</ThemedText>
+      {/* Bear/earth image at bottom (same as main menu) */}
+      <View style={styles.bearContainer} pointerEvents="none">
+        <Image
+          source={require('@/assets/images/ui-elements/bear-bottom-screen.webp')}
+          style={styles.bearImage}
+          resizeMode="contain"
+        />
+      </View>
 
-
+      {/* Centered logo (same size as login page) */}
+      <View style={styles.logoContainer}>
+        <Animated.View style={[styles.logoWrapper, logoAnimatedStyle]}>
+          <Image
+            source={require('@/assets/images/icon.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
+        </Animated.View>
       </View>
     </LinearGradient>
   );
@@ -153,57 +187,67 @@ const styles = StyleSheet.create({
   },
   starsContainer: {
     position: 'absolute',
-    width: '100%',
-    height: '100%',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    zIndex: 1,
   },
   star: {
     position: 'absolute',
-    width: 4,
-    height: 4,
-    backgroundColor: 'white',
-    borderRadius: 2,
+    width: STAR_SIZE,
+    height: STAR_SIZE,
+    backgroundColor: '#FFFFFF',
+    borderRadius: STAR_SIZE / 2,
+  },
+  moonContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    width: '100%',
+    height: '15%',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    zIndex: 2,
+  },
+  moonImage: {
+    width: 286,
+    height: 286,
+    opacity: 0.8,
+  },
+  bearContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    width: '100%',
+    height: '15%',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    zIndex: 2,
+  },
+  bearImage: {
+    width: 286,
+    height: 286,
+    opacity: 0.8,
   },
   logoContainer: {
-    alignItems: 'center',
-    marginBottom: 100,
-  },
-  logoCircle: {
-    width: 240,
-    height: 240,
-    borderRadius: 120,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 40,
-    borderWidth: 5,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    zIndex: 10,
   },
-  logoText: {
-    fontSize: 120,
+  logoWrapper: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  appName: {
-    color: 'white',
-    fontSize: 32,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 10,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-  },
-  tagline: {
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontSize: 16,
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
-  loadingContainer: {
-    position: 'absolute',
-    bottom: 100,
-  },
-  loadingText: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 14,
-    textAlign: 'center',
+  logoImage: {
+    width: logoSize,
+    height: logoSize,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
   },
 });
