@@ -14,6 +14,7 @@ import * as Font from 'expo-font';
 
 import { ThemedText } from './themed-text';
 import { useAppStore } from '@/store/app-store';
+import { DeviceInfoService } from '@/services/device-info-service';
 
 const { width, height } = Dimensions.get('window');
 
@@ -36,6 +37,9 @@ export function AppSplashScreen() {
       try {
         // Hide native splash screen immediately and show our custom one
         await SplashScreen.hideAsync();
+
+        // Initialize device info service (generates/loads device ID)
+        await DeviceInfoService.initialize();
 
         await Font.loadAsync({});
 
