@@ -8,8 +8,16 @@ const AUDIO_TRACKS = {
   classicEpic: require('../assets/audio/background/classic-epic.mp3'),
 };
 
-// Track types for the playlist
-type TrackType = 'random' | 'epic';
+// Track names for the playlist
+type TrackName = 'flute-background' | 'classic-loop-background' | 'classic-epic';
+
+// Playlist order: random start -> other track -> epic -> repeat
+// The playlist cycles: track1 -> track2 -> epic -> track1 -> track2 -> epic...
+const TRACK_INFO: Record<TrackName, { source: any; name: TrackName }> = {
+  'flute-background': { source: AUDIO_TRACKS.fluteBackground, name: 'flute-background' },
+  'classic-loop-background': { source: AUDIO_TRACKS.classicLoopBackground, name: 'classic-loop-background' },
+  'classic-epic': { source: AUDIO_TRACKS.classicEpic, name: 'classic-epic' },
+};
 
 class BackgroundMusicService {
   private sound: Audio.Sound | null = null;
@@ -22,20 +30,33 @@ class BackgroundMusicService {
   private hasVolumeBeenSetByUser: boolean = false; // Track if user has explicitly set volume
   private volumeChangeCallbacks: ((volume: number) => void)[] = []; // Callbacks for volume changes
 
-  // Playlist state
-  private currentTrackType: TrackType = 'random';
-  private currentTrackName: string = '';
+  // Playlist state - cycles through all 3 tracks
+  private currentTrackName: TrackName = 'flute-background';
+  private playlistOrder: TrackName[] = []; // The order for this session
 
   /**
-   * Get a random track from the two random options
+   * Initialize playlist order with random starting track
+   * Order: random first -> other track -> epic
    */
-  private getRandomTrack(): { source: any; name: string } {
-    const randomTracks = [
-      { source: AUDIO_TRACKS.fluteBackground, name: 'flute-background' },
-      { source: AUDIO_TRACKS.classicLoopBackground, name: 'classic-loop-background' },
-    ];
-    const index = Math.floor(Math.random() * randomTracks.length);
-    return randomTracks[index];
+  private initializePlaylistOrder(): void {
+    // Randomly decide which track plays first
+    const startWithFlute = Math.random() < 0.5;
+    if (startWithFlute) {
+      this.playlistOrder = ['flute-background', 'classic-loop-background', 'classic-epic'];
+    } else {
+      this.playlistOrder = ['classic-loop-background', 'flute-background', 'classic-epic'];
+    }
+    console.log(`Playlist order initialized: ${this.playlistOrder.join(' -> ')}`);
+  }
+
+  /**
+   * Get the next track in the playlist
+   */
+  private getNextTrack(): { source: any; name: TrackName } {
+    const currentIndex = this.playlistOrder.indexOf(this.currentTrackName);
+    const nextIndex = (currentIndex + 1) % this.playlistOrder.length;
+    const nextTrackName = this.playlistOrder[nextIndex];
+    return TRACK_INFO[nextTrackName];
   }
 
   /**
@@ -82,12 +103,13 @@ class BackgroundMusicService {
       });
       console.log('Audio mode configured: DO_NOT_MIX (iOS) / DUCK_OTHERS (Android) for audio control');
 
-      // Start with a random track (loops until we transition to epic)
-      const randomTrack = this.getRandomTrack();
-      this.currentTrackType = 'random';
-      this.currentTrackName = randomTrack.name;
+      // Initialize playlist with random starting track
+      this.initializePlaylistOrder();
+      const firstTrack = TRACK_INFO[this.playlistOrder[0]];
+      this.currentTrackName = firstTrack.name;
 
-      this.sound = await this.loadTrack(randomTrack.source, true); // Random tracks loop
+      // All tracks play once (no looping) - we manually advance to next track when done
+      this.sound = await this.loadTrack(firstTrack.source, false);
       this.isLoaded = true;
       this.isInitializing = false;
 
@@ -106,16 +128,15 @@ class BackgroundMusicService {
   }
 
   /**
-   * Switch to the epic finale track (called when user is about to finish a session)
-   * The epic track will play once and then loop the random tracks again
+   * Switch to the next track in the playlist
+   * Called automatically when a track finishes
    */
-  async switchToEpicFinale(): Promise<void> {
-    if (!this.isLoaded || this.currentTrackType === 'epic') {
-      return;
-    }
-
+  private async switchToNextTrack(): Promise<void> {
     try {
       const wasPlaying = this.isPlaying;
+      const nextTrack = this.getNextTrack();
+
+      console.log(`Switching from ${this.currentTrackName} to ${nextTrack.name}`);
 
       // Unload current track
       if (this.sound) {
@@ -123,15 +144,14 @@ class BackgroundMusicService {
         await this.sound.unloadAsync();
       }
 
-      // Load epic track (does not loop - will trigger transition back to random when done)
-      this.sound = await this.loadTrack(AUDIO_TRACKS.classicEpic, false);
-      this.currentTrackType = 'epic';
-      this.currentTrackName = 'classic-epic';
+      // Load the next track (no looping - we advance manually)
+      this.sound = await this.loadTrack(nextTrack.source, false);
+      this.currentTrackName = nextTrack.name;
 
       // Set up playback status update listener
       this.sound.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate);
 
-      console.log('Switched to epic finale track');
+      console.log(`Now playing: ${this.currentTrackName}`);
 
       // Resume playing if was playing before
       if (wasPlaying) {
@@ -140,42 +160,7 @@ class BackgroundMusicService {
         this.isPlaying = true;
       }
     } catch (error) {
-      console.error('Failed to switch to epic track:', error);
-    }
-  }
-
-  /**
-   * Switch back to a random looping track (called after epic finishes)
-   */
-  private async switchToRandomTrack(): Promise<void> {
-    try {
-      const wasPlaying = this.isPlaying;
-
-      // Unload current track
-      if (this.sound) {
-        await this.sound.stopAsync();
-        await this.sound.unloadAsync();
-      }
-
-      // Load a new random track (loops)
-      const randomTrack = this.getRandomTrack();
-      this.sound = await this.loadTrack(randomTrack.source, true);
-      this.currentTrackType = 'random';
-      this.currentTrackName = randomTrack.name;
-
-      // Set up playback status update listener
-      this.sound.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate);
-
-      console.log(`Switched to random track: ${this.currentTrackName}`);
-
-      // Resume playing if was playing before
-      if (wasPlaying) {
-        await this.sound.setVolumeAsync(this.volume);
-        await this.sound.playAsync();
-        this.isPlaying = true;
-      }
-    } catch (error) {
-      console.error('Failed to switch to random track:', error);
+      console.error('Failed to switch to next track:', error);
     }
   }
 
@@ -541,10 +526,10 @@ class BackgroundMusicService {
   /**
    * Get current track info (for debugging/logging)
    */
-  getCurrentTrackInfo(): { type: TrackType; name: string } {
+  getCurrentTrackInfo(): { name: TrackName; playlistOrder: TrackName[] } {
     return {
-      type: this.currentTrackType,
       name: this.currentTrackName,
+      playlistOrder: [...this.playlistOrder],
     };
   }
 
@@ -561,16 +546,10 @@ class BackgroundMusicService {
           this.isPlaying = status.isPlaying;
         }
 
-        // Handle track completion
+        // Handle track completion - advance to next track in playlist
         if (status.didJustFinish) {
-          if (this.currentTrackType === 'epic') {
-            // Epic track finished - switch back to a random looping track
-            console.log('Epic track finished, switching to random track');
-            this.switchToRandomTrack();
-          } else {
-            // Random track looped (native looping handles this)
-            console.log(`Background music looped: ${this.currentTrackName}`);
-          }
+          console.log(`Track finished: ${this.currentTrackName}, advancing to next track`);
+          this.switchToNextTrack();
         }
       } else if (status.error) {
         console.warn('Background music playback error:', status.error);
