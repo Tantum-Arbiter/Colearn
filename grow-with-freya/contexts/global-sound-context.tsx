@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode } from 'react';
 import { useBackgroundMusic } from '@/hooks/use-background-music';
 
 interface GlobalSoundState {
@@ -26,25 +26,21 @@ interface GlobalSoundProviderProps {
 
 export function GlobalSoundProvider({ children }: GlobalSoundProviderProps) {
   const backgroundMusic = useBackgroundMusic();
-  const [isMuted, setIsMuted] = useState(false);
 
-  // Sync muted state with volume
-  useEffect(() => {
-    setIsMuted(backgroundMusic.volume === 0);
-  }, [backgroundMusic.volume]);
-
-  const toggleMute = () => {
-    if (backgroundMusic.volume === 0) {
-      // Unmute: restore to default volume (18%)
-      backgroundMusic.setVolume(0.18);
+  // Use the mute/unmute methods from backgroundMusic hook
+  // These properly persist muted state across track changes
+  const toggleMute = async () => {
+    if (backgroundMusic.isMuted) {
+      // Unmute: resume playback
+      await backgroundMusic.unmute();
     } else {
-      // Mute: set volume to 0
-      backgroundMusic.setVolume(0);
+      // Mute: pause and prevent auto-advance to next track
+      await backgroundMusic.mute();
     }
   };
 
   const contextValue: GlobalSoundContextType = {
-    isMuted,
+    isMuted: backgroundMusic.isMuted,
     volume: backgroundMusic.volume,
     isPlaying: backgroundMusic.isPlaying,
     isLoaded: backgroundMusic.isLoaded,

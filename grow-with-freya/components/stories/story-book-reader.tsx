@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, Dimensions, StatusBar, ImageBackground, ScrollView, NativeSyntheticEvent, NativeScrollEvent, Modal, TextInput, Alert, KeyboardAvoidingView, Platform, useWindowDimensions, Image as RNImage, AppState } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Dimensions, StatusBar, ImageBackground, ScrollView, Modal, TextInput, Alert, KeyboardAvoidingView, Platform, useWindowDimensions, Image as RNImage, AppState } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -59,6 +59,7 @@ export function StoryBookReader({
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isOrientationTransitioning, setIsOrientationTransitioning] = useState(false);
   const [isLandscapeReady, setIsLandscapeReady] = useState(false);
+  const [isExiting, setIsExiting] = useState(false); // Prevent double-tap on exit/close buttons
 
   const [preloadedPages, setPreloadedPages] = useState<Set<number>>(new Set());
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
@@ -99,52 +100,26 @@ export function StoryBookReader({
   const { scaledFontSize, scaledButtonSize, textSizeScale } = useAccessibility();
   const setTextSizeScale = useAppStore((state) => state.setTextSizeScale);
 
-  // Track if text box needs scrolling (for larger text sizes)
-  const [canScrollText, setCanScrollText] = useState(false);
-  // true = show up arrow (user is at bottom), false = show down arrow (user is at top/middle)
-  const [showUpArrow, setShowUpArrow] = useState(false);
-
-  // Reset scroll state when page changes and scroll to top
+  // Reset scroll position and flash indicators when page or story changes
   useEffect(() => {
-    // Reset scroll indicator state but keep dimension tracking -
-    // the callbacks will update with new values when ScrollView remounts
-    setShowUpArrow(false);
-    // Scroll to top of text box when page changes
     textScrollViewRef.current?.scrollTo({ y: 0, animated: false });
-  }, [currentPageIndex]);
+    // Flash scroll indicators after a short delay to ensure ScrollView is ready
+    const timer = setTimeout(() => {
+      textScrollViewRef.current?.flashScrollIndicators();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [currentPageIndex, story.id]);
 
-  // Handle text scroll events - track position for up/down indicators
-  const handleTextScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
-    // Add small tolerance for edge detection
-    const isAtBottom = contentOffset.y + layoutMeasurement.height >= contentSize.height - 10;
-    const isAtTop = contentOffset.y <= 5;
-    // Show up arrow only when at bottom (and not at top for single-screen content)
-    setShowUpArrow(isAtBottom && !isAtTop);
-  }, []);
-
-  // Track ScrollView layout height for accurate overflow detection
-  const [scrollViewHeight, setScrollViewHeight] = useState(0);
-  const [textContentHeight, setTextContentHeight] = useState(0);
-
-  // Check if text can scroll whenever either dimension changes or page changes
+  // Also reset scroll position and flash when text size changes
   useEffect(() => {
-    if (scrollViewHeight > 0 && textContentHeight > 0) {
-      // Use a small threshold to account for rounding errors
-      const needsScroll = textContentHeight > scrollViewHeight + 1;
-      setCanScrollText(needsScroll);
-    }
-  }, [scrollViewHeight, textContentHeight, currentPageIndex]);
+    textScrollViewRef.current?.scrollTo({ y: 0, animated: false });
+    const timer = setTimeout(() => {
+      textScrollViewRef.current?.flashScrollIndicators();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [textSizeScale]);
 
-  // Handle text content size change to detect overflow
-  const handleTextContentSizeChange = useCallback((contentWidth: number, contentHeight: number) => {
-    setTextContentHeight(contentHeight);
-  }, []);
 
-  // Handle ScrollView layout to get actual visible height
-  const handleScrollViewLayout = useCallback((event: { nativeEvent: { layout: { height: number } } }) => {
-    setScrollViewHeight(event.nativeEvent.layout.height);
-  }, []);
 
 
   // Simple single page approach - no caching needed
@@ -311,6 +286,9 @@ export function StoryBookReader({
 
   // Handle story completion - triggers exit animation
   const handleStoryCompletion = async () => {
+    // Prevent double-tap on finish button
+    if (isExiting) return;
+
     try {
       // In record mode, show completion message and return to mode selection
       if (readingMode === 'record') {
@@ -351,6 +329,10 @@ export function StoryBookReader({
 
   // Handle exit with orientation restore and reverse animation
   const handleExit = async () => {
+    // Prevent double-tap on exit/close button
+    if (isExiting) return;
+    setIsExiting(true);
+
     try {
       // Stop any playing narration/recording audio immediately
       if (playbackSound) {
@@ -1170,9 +1152,11 @@ export function StoryBookReader({
                 width: scaledButtonSize(50),
                 height: scaledButtonSize(50),
                 borderRadius: scaledButtonSize(25),
+                opacity: isExiting ? 0.5 : 1,
               }
             ]}
             onPress={handleExit}
+            disabled={isExiting}
           >
             <Text style={[styles.exitButtonText, { fontSize: scaledFontSize(20) }]}>✕</Text>
           </Pressable>
@@ -1509,13 +1493,11 @@ export function StoryBookReader({
                     }
                   ]}>
                     <ScrollView
-                      key={`text-scroll-${currentPageIndex}`}
+                      key={`text-scroll-${story.id}-${currentPageIndex}-${textSizeScale}`}
                       ref={textScrollViewRef}
-                      showsVerticalScrollIndicator={false}
-                      onScroll={handleTextScroll}
+                      showsVerticalScrollIndicator={true}
+                      indicatorStyle="black"
                       scrollEventThrottle={16}
-                      onContentSizeChange={handleTextContentSizeChange}
-                      onLayout={handleScrollViewLayout}
                       bounces={false}
                       nestedScrollEnabled={true}
                       scrollEnabled={true}
@@ -1527,6 +1509,7 @@ export function StoryBookReader({
                           {
                             fontSize: fontSize,
                             lineHeight: lineHeight,
+                            paddingRight: 15,
                           },
                           textAnimatedStyle
                         ]}
@@ -1534,27 +1517,6 @@ export function StoryBookReader({
                         {currentPage?.text}
                       </Animated.Text>
                     </ScrollView>
-                    {/* Scroll indicator - down arrow when at top/middle, up arrow when at bottom */}
-                    {canScrollText && !showUpArrow && (
-                      <Pressable
-                        style={styles.scrollIndicator}
-                        onPress={() => {
-                          textScrollViewRef.current?.scrollToEnd({ animated: true });
-                        }}
-                      >
-                        <Text style={[styles.scrollIndicatorText, { fontSize: scaledFontSize(14) }]}>↓</Text>
-                      </Pressable>
-                    )}
-                    {canScrollText && showUpArrow && (
-                      <Pressable
-                        style={[styles.scrollIndicator, styles.scrollIndicatorTop]}
-                        onPress={() => {
-                          textScrollViewRef.current?.scrollTo({ y: 0, animated: true });
-                        }}
-                      >
-                        <Text style={[styles.scrollIndicatorText, { fontSize: scaledFontSize(14) }]}>↑</Text>
-                      </Pressable>
-                    )}
                   </View>
                 );
               })()}
@@ -1572,10 +1534,11 @@ export function StoryBookReader({
                 borderRadius: scaledButtonSize(25),
               },
               currentPageIndex === pages.length - 1 && styles.completeButton,
-              (readingMode === 'record' && (isRecording || (currentPageIndex > 0 && !tempRecordingUri && !currentVoiceOver?.pageRecordings[currentPageIndex]))) && styles.navButtonDisabled
+              (readingMode === 'record' && (isRecording || (currentPageIndex > 0 && !tempRecordingUri && !currentVoiceOver?.pageRecordings[currentPageIndex]))) && styles.navButtonDisabled,
+              isExiting && styles.navButtonDisabled
             ]}
             onPress={handleNextPage}
-            disabled={isTransitioning || (readingMode === 'record' && (isRecording || (currentPageIndex > 0 && !tempRecordingUri && !currentVoiceOver?.pageRecordings[currentPageIndex])))}
+            disabled={isTransitioning || isExiting || (readingMode === 'record' && (isRecording || (currentPageIndex > 0 && !tempRecordingUri && !currentVoiceOver?.pageRecordings[currentPageIndex])))}
             testID="right-touch-area"
           >
             <Text style={[
@@ -2413,26 +2376,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 6,
     elevation: 4,
-  },
-  scrollIndicator: {
-    position: 'absolute',
-    bottom: 4,
-    right: 4,
-    backgroundColor: 'rgba(44, 62, 80, 0.7)',
-    borderRadius: 10,
-    width: 20,
-    height: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  scrollIndicatorTop: {
-    bottom: undefined,
-    top: 4,
-  },
-  scrollIndicatorText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold',
   },
 
   // Legacy text styles (for compatibility)

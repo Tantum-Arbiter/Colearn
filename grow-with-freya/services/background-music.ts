@@ -1,23 +1,8 @@
 import { Audio } from 'expo-av';
 import { AVPlaybackStatus } from 'expo-av';
 
-// Audio track sources - must use require() for bundled assets
-const AUDIO_TRACKS = {
-  fluteBackground: require('../assets/audio/background/flute-background.mp3'),
-  classicLoopBackground: require('../assets/audio/background/classic-loop-background.mp3'),
-  classicEpic: require('../assets/audio/background/classic-epic.mp3'),
-};
-
-// Track names for the playlist
-type TrackName = 'flute-background' | 'classic-loop-background' | 'classic-epic';
-
-// Playlist order: random start -> other track -> epic -> repeat
-// The playlist cycles: track1 -> track2 -> epic -> track1 -> track2 -> epic...
-const TRACK_INFO: Record<TrackName, { source: any; name: TrackName }> = {
-  'flute-background': { source: AUDIO_TRACKS.fluteBackground, name: 'flute-background' },
-  'classic-loop-background': { source: AUDIO_TRACKS.classicLoopBackground, name: 'classic-loop-background' },
-  'classic-epic': { source: AUDIO_TRACKS.classicEpic, name: 'classic-epic' },
-};
+// Single background music track
+const BACKGROUND_TRACK = require('../assets/audio/background/classic-epic.mp3');
 
 class BackgroundMusicService {
   private sound: Audio.Sound | null = null;
@@ -29,53 +14,7 @@ class BackgroundMusicService {
   private stateChangeCallbacks: (() => void)[] = []; // Callbacks for state changes
   private hasVolumeBeenSetByUser: boolean = false; // Track if user has explicitly set volume
   private volumeChangeCallbacks: ((volume: number) => void)[] = []; // Callbacks for volume changes
-
-  // Playlist state - cycles through all 3 tracks
-  private currentTrackName: TrackName = 'flute-background';
-  private playlistOrder: TrackName[] = []; // The order for this session
-
-  /**
-   * Initialize playlist order with random starting track
-   * Order: random first -> other track -> epic
-   */
-  private initializePlaylistOrder(): void {
-    // Randomly decide which track plays first
-    const startWithFlute = Math.random() < 0.5;
-    if (startWithFlute) {
-      this.playlistOrder = ['flute-background', 'classic-loop-background', 'classic-epic'];
-    } else {
-      this.playlistOrder = ['classic-loop-background', 'flute-background', 'classic-epic'];
-    }
-    console.log(`Playlist order initialized: ${this.playlistOrder.join(' -> ')}`);
-  }
-
-  /**
-   * Get the next track in the playlist
-   */
-  private getNextTrack(): { source: any; name: TrackName } {
-    const currentIndex = this.playlistOrder.indexOf(this.currentTrackName);
-    const nextIndex = (currentIndex + 1) % this.playlistOrder.length;
-    const nextTrackName = this.playlistOrder[nextIndex];
-    return TRACK_INFO[nextTrackName];
-  }
-
-  /**
-   * Load a specific track
-   */
-  private async loadTrack(source: any, isLooping: boolean): Promise<Audio.Sound> {
-    const { sound } = await Audio.Sound.createAsync(
-      source,
-      {
-        shouldPlay: false,
-        isLooping: isLooping,
-        volume: this.volume,
-        rate: 1.0,
-        shouldCorrectPitch: true,
-        progressUpdateIntervalMillis: 1000, // Check more frequently for track completion
-      }
-    );
-    return sound;
-  }
+  private isMuted: boolean = false; // Track if user has muted the music
 
   /**
    * Initialize and load the background music
@@ -103,20 +42,25 @@ class BackgroundMusicService {
       });
       console.log('Audio mode configured: DO_NOT_MIX (iOS) / DUCK_OTHERS (Android) for audio control');
 
-      // Initialize playlist with random starting track
-      this.initializePlaylistOrder();
-      const firstTrack = TRACK_INFO[this.playlistOrder[0]];
-      this.currentTrackName = firstTrack.name;
-
-      // All tracks play once (no looping) - we manually advance to next track when done
-      this.sound = await this.loadTrack(firstTrack.source, false);
+      // Load the single background track with looping enabled
+      const { sound } = await Audio.Sound.createAsync(
+        BACKGROUND_TRACK,
+        {
+          shouldPlay: false,
+          isLooping: true, // Loop the single track
+          volume: this.volume,
+          rate: 1.0,
+          shouldCorrectPitch: true,
+        }
+      );
+      this.sound = sound;
       this.isLoaded = true;
       this.isInitializing = false;
 
       // Set up playback status update listener
       this.sound.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate);
 
-      console.log(`Background music initialized with track: ${this.currentTrackName}`);
+      console.log('Background music initialized');
     } catch (error) {
       console.error('Failed to initialize background music:', error);
       console.error('Error details:', JSON.stringify(error, null, 2));
@@ -128,52 +72,13 @@ class BackgroundMusicService {
   }
 
   /**
-   * Switch to the next track in the playlist
-   * Called automatically when a track finishes
-   */
-  private async switchToNextTrack(): Promise<void> {
-    try {
-      const nextTrack = this.getNextTrack();
-
-      console.log(`Switching from ${this.currentTrackName} to ${nextTrack.name}`);
-
-      // Unload current track - remove listener first
-      if (this.sound) {
-        this.sound.setOnPlaybackStatusUpdate(null);
-        try {
-          await this.sound.stopAsync();
-        } catch (e) {
-          // Ignore stop errors - track may already be finished
-        }
-        await this.sound.unloadAsync();
-        this.sound = null;
-      }
-
-      // Update current track name before loading
-      this.currentTrackName = nextTrack.name;
-
-      // Load the next track (no looping - we advance manually)
-      this.sound = await this.loadTrack(nextTrack.source, false);
-
-      // Set up playback status update listener BEFORE playing
-      this.sound.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate);
-
-      // Set volume and start playing
-      await this.sound.setVolumeAsync(this.volume);
-      await this.sound.playAsync();
-      this.isPlaying = true;
-
-      console.log(`Now playing: ${this.currentTrackName}`);
-    } catch (error) {
-      console.error('Failed to switch to next track:', error);
-      this.isPlaying = false;
-    }
-  }
-
-  /**
    * Start playing background music
+   * This also clears the muted flag since user is explicitly requesting playback
    */
   async play(): Promise<void> {
+    // Clear muted flag when explicitly playing
+    this.isMuted = false;
+
     // Auto-reinitialize if the music was cleaned up
     if (!this.isLoaded || !this.sound) {
       console.log('Background music not loaded - reinitializing...');
@@ -219,7 +124,7 @@ class BackgroundMusicService {
   }
 
   /**
-   * Pause background music
+   * Pause background music (does NOT set muted flag - use mute() to persist across tracks)
    */
   async pause(): Promise<void> {
     if (!this.isLoaded || !this.sound) {
@@ -274,6 +179,36 @@ class BackgroundMusicService {
     } catch (error) {
       console.warn('Failed to stop background music:', error);
     }
+  }
+
+  /**
+   * Mute background music - this persists across track changes
+   * When muted, new tracks won't auto-play when the current track finishes
+   */
+  async mute(): Promise<void> {
+    console.log('Muting background music (persists across tracks)');
+    this.isMuted = true;
+    await this.pause();
+    this.notifyStateChange();
+  }
+
+  /**
+   * Unmute background music and optionally resume playing
+   */
+  async unmute(resumePlayback: boolean = true): Promise<void> {
+    console.log(`Unmuting background music (resumePlayback: ${resumePlayback})`);
+    this.isMuted = false;
+    if (resumePlayback) {
+      await this.play();
+    }
+    this.notifyStateChange();
+  }
+
+  /**
+   * Check if music is muted (persists across tracks)
+   */
+  getIsMuted(): boolean {
+    return this.isMuted;
   }
 
   /**
@@ -552,10 +487,9 @@ class BackgroundMusicService {
           this.isPlaying = status.isPlaying;
         }
 
-        // Handle track completion - advance to next track in playlist
+        // Log when track loops
         if (status.didJustFinish) {
-          console.log(`Track finished: ${this.currentTrackName}, advancing to next track`);
-          this.switchToNextTrack();
+          console.log('Background music looped');
         }
       } else if (status.error) {
         console.warn('Background music playback error:', status.error);
@@ -574,5 +508,13 @@ class BackgroundMusicService {
   };
 }
 
-// Export singleton instance
-export const backgroundMusic = new BackgroundMusicService();
+// Use global variable to persist singleton across hot reloads
+// This prevents multiple instances from being created during development
+declare global {
+  // eslint-disable-next-line no-var
+  var __backgroundMusicInstance: BackgroundMusicService | undefined;
+}
+
+// Export singleton instance - reuse existing instance if available (survives hot reloads)
+export const backgroundMusic = global.__backgroundMusicInstance ?? new BackgroundMusicService();
+global.__backgroundMusicInstance = backgroundMusic;

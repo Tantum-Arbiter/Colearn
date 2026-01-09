@@ -119,6 +119,9 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
   const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
+  // Border radius for book covers - matches StoryCard (computed once, used in animations)
+  const bookBorderRadius = scaledButtonSize(15);
+
   // Animation values for the transitioning card
   const transitionScale = useSharedValue(1);
   const transitionX = useSharedValue(0);
@@ -130,6 +133,10 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const pageFlipProgress = useSharedValue(0); // 0 = closed, 1 = open (cover rotated away)
   const bookExpansion = useSharedValue(0); // 0 = book size, 1 = full screen
   const [isExpandingToReader, setIsExpandingToReader] = useState(false);
+
+  // Current compensated border radius - updated by bookExpansionAnimatedStyle
+  // Used by child views that need to match parent's borderRadius when overflow: 'visible'
+  const currentCompensatedBorderRadius = useSharedValue(bookBorderRadius);
 
   // Shared value for exit animating - used in animated styles for immediate effect
   // (React state isExitAnimating is async and can cause a frame delay)
@@ -670,6 +677,10 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   };
 
   const transitionAnimatedStyle = useAnimatedStyle(() => {
+    // Compensate border radius for scale to keep visual radius consistent
+    // When element is scaled up, we need to reduce border radius proportionally
+    const compensatedBorderRadius = bookBorderRadius / transitionScale.value;
+
     return {
       transform: [
         { translateX: transitionX.value },
@@ -677,6 +688,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
         { scale: transitionScale.value }
       ],
       opacity: transitionOpacity.value,
+      borderRadius: compensatedBorderRadius,
     };
   });
 
@@ -721,21 +733,41 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   });
 
   // Animated style for cover front face - hide when rotated past 90 degrees
+  // Also handles borderRadius compensation when parent has overflow: 'visible' during expansion
   const coverFrontFaceStyle = useAnimatedStyle(() => {
     const isActive = isExitAnimatingShared.value === 1 || isExpandingOrExitingShared.value === 1;
-    if (!isActive) return { opacity: 1 };
+
+    // Use the shared compensated border radius - this is updated by bookExpansionAnimatedStyle
+    // to match the parent container's borderRadius during expansion
+    const compensatedBorderRadius = currentCompensatedBorderRadius.value;
+
+    if (!isActive) return { opacity: 1, borderRadius: compensatedBorderRadius };
+
     const rotation = interpolate(pageFlipProgress.value, [0, 1], [0, -150]);
     const opacity = Math.abs(rotation) < 90 ? 1 : 0;
-    return { opacity };
+
+    return { opacity, borderRadius: compensatedBorderRadius };
   });
 
   // Animated style for cover back face - show when rotated past 90 degrees
+  // Also handles borderRadius compensation when parent has overflow: 'visible' during expansion
   const coverBackFaceStyle = useAnimatedStyle(() => {
     const isActive = isExitAnimatingShared.value === 1 || isExpandingOrExitingShared.value === 1;
-    if (!isActive) return { opacity: 0 };
+
+    // Use the shared compensated border radius - this is updated by bookExpansionAnimatedStyle
+    const compensatedBorderRadius = currentCompensatedBorderRadius.value;
+
+    if (!isActive) return { opacity: 0, borderRadius: compensatedBorderRadius };
+
     const rotation = interpolate(pageFlipProgress.value, [0, 1], [0, -150]);
     const opacity = Math.abs(rotation) >= 90 ? 1 : 0;
-    return { opacity };
+    return { opacity, borderRadius: compensatedBorderRadius };
+  });
+
+  // Animated style for the first page behind the cover
+  // Needs borderRadius when parent has overflow: 'visible' during expansion
+  const firstPageAnimatedStyle = useAnimatedStyle(() => {
+    return { borderRadius: currentCompensatedBorderRadius.value };
   });
 
   // Store original card position in shared values for exit animation (React state is async)
@@ -783,17 +815,27 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       const currentTranslateX = interpolate(bookExpansion.value, [0, 1], [transitionX.value, moveToScreenCenterX]);
       const currentTranslateY = interpolate(bookExpansion.value, [0, 1], [transitionY.value, moveToScreenCenterY]);
 
+      // Border radius: keep compensated for current scale (maintains curved appearance)
+      // The visual radius stays consistent as the book scales up/down
+      const currentBorderRadius = bookBorderRadius / currentScale;
+
+      // Update shared value for child views to use
+      currentCompensatedBorderRadius.value = currentBorderRadius;
+
       return {
         transform: [
           { translateX: currentTranslateX },
           { translateY: currentTranslateY },
           { scale: currentScale }
         ],
+        borderRadius: currentBorderRadius,
       };
     }
 
-    // OPENING animation: use the existing system
+    // OPENING animation (expanding to reader): use the existing system
     if (!targetBookPosition || bookExpansion.value < 0.01) {
+      // Not expanding - update shared value to match transitionAnimatedStyle
+      currentCompensatedBorderRadius.value = bookBorderRadius / transitionScale.value;
       return {};
     }
 
@@ -805,14 +847,25 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     // Interpolate scale from 1 to full screen scale
     const expansionScale = interpolate(bookExpansion.value, [0, 1], [1, scaleToFill]);
 
+    // Combined scale
+    const combinedScale = transitionScale.value * expansionScale;
+
+    // Border radius: keep compensated for current scale (maintains curved appearance)
+    // The visual radius stays consistent as the book scales up to full screen
+    const currentBorderRadius = bookBorderRadius / combinedScale;
+
+    // Update shared value for child views to use
+    currentCompensatedBorderRadius.value = currentBorderRadius;
+
     // MUST include the position transforms from transitionAnimatedStyle
     // because this style will override them when active
     return {
       transform: [
         { translateX: transitionX.value },
         { translateY: transitionY.value },
-        { scale: transitionScale.value * expansionScale }
+        { scale: combinedScale }
       ],
+      borderRadius: currentBorderRadius,
     };
   });
 
@@ -948,6 +1001,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   };
 
   // Render the cover image for the selected story
+  // Note: No borderRadius on images - parent container handles clipping with overflow: hidden
   const renderCoverImage = () => {
     if (!selectedStory?.coverImage || !cardPosition) return null;
 
@@ -958,7 +1012,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       return (
         <AuthenticatedImage
           uri={selectedStory.coverImage as string}
-          style={{ width: '100%', height: '100%', borderRadius: 15 }}
+          style={{ width: '100%', height: '100%' }}
           resizeMode="cover"
         />
       );
@@ -969,7 +1023,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
         source={typeof selectedStory.coverImage === 'string'
           ? { uri: selectedStory.coverImage }
           : selectedStory.coverImage}
-        style={{ width: '100%', height: '100%', borderRadius: 15 }}
+        style={{ width: '100%', height: '100%' }}
         contentFit="cover"
         cachePolicy="memory-disk"
         priority="high"
@@ -979,6 +1033,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
   // Render a page image (revealed when cover flips open, or during exit)
   // pageIndex defaults to 1 (first content page) for opening, or exitPageIndex for exiting
+  // Note: No borderRadius on images - parent container handles clipping with overflow: hidden
   const renderPageImage = (pageIndex?: number) => {
     if (!selectedStory?.pages || selectedStory.pages.length < 2 || !cardPosition) return null;
 
@@ -995,7 +1050,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
         <View style={{
           width: '100%',
           height: '100%',
-          borderRadius: 15,
           backgroundColor: '#F5F5DC',
           justifyContent: 'center',
           alignItems: 'center'
@@ -1012,7 +1066,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       return (
         <AuthenticatedImage
           uri={imageSource as string}
-          style={{ width: '100%', height: '100%', borderRadius: 15 }}
+          style={{ width: '100%', height: '100%' }}
           resizeMode="cover"
         />
       );
@@ -1021,7 +1075,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     return (
       <ExpoImage
         source={typeof imageSource === 'string' ? { uri: imageSource } : imageSource}
-        style={{ width: '100%', height: '100%', borderRadius: 15 }}
+        style={{ width: '100%', height: '100%' }}
         contentFit="cover"
         cachePolicy="memory-disk"
         priority="high"
@@ -1075,6 +1129,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                 top: cardPosition.y,
                 width: cardPosition.width,
                 height: cardPosition.height,
+                borderRadius: bookBorderRadius, // Match StoryCard border radius
                 // Allow overflow during page flip for rotation
                 overflow: (isExpandingToReader || isExitAnimating) ? 'visible' : 'hidden',
               },
@@ -1084,23 +1139,26 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
           >
             {/* First page behind the cover - always render so it's ready for exit animation
                 The cover is on top, so this is only visible when cover flips open */}
-            <View
-              style={{
-                position: 'absolute',
-                width: '100%',
-                height: '100%',
-                borderRadius: 15,
-                overflow: 'hidden',
-                backgroundColor: '#F5F5DC', // Fallback color
-              }}
-            >
-              {renderPageImage()}
-            </View>
-
-            {/* Book cover (flips open when "Begin" is pressed) */}
             <Animated.View
               style={[
-                { position: 'absolute', width: '100%', height: '100%', borderRadius: 15, overflow: 'visible' },
+                {
+                  position: 'absolute',
+                  width: '100%',
+                  height: '100%',
+                  overflow: 'hidden',
+                  backgroundColor: '#F5F5DC', // Fallback color
+                },
+                firstPageAnimatedStyle, // Handles borderRadius when parent has overflow: 'visible'
+              ]}
+            >
+              {renderPageImage()}
+            </Animated.View>
+
+            {/* Book cover (flips open when "Begin" is pressed)
+                No borderRadius here - parent container handles clipping */}
+            <Animated.View
+              style={[
+                { position: 'absolute', width: '100%', height: '100%', overflow: 'visible' },
                 coverFlipAnimatedStyle, // Always apply - style handles inactive case
               ]}
             >
@@ -1110,7 +1168,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                   position: 'absolute',
                   width: '100%',
                   height: '100%',
-                  borderRadius: 15,
                   overflow: 'hidden',
                   opacity: 1, // Default: visible
                 },
@@ -1127,7 +1184,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                   position: 'absolute',
                   width: '100%',
                   height: '100%',
-                  borderRadius: 15,
                   backgroundColor: '#FFFEF5',
                   opacity: 0, // Default: hidden until flip animation starts
                 },
@@ -1147,7 +1203,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                 top: targetBookPosition.y,
                 width: targetBookPosition.width,
                 height: targetBookPosition.height,
-                borderRadius: 15,
+                borderRadius: bookBorderRadius, // This one is NOT scaled, so use the actual value
                 overflow: 'hidden',
                 zIndex: 10, // Above the scaled container
               }}
@@ -1498,7 +1554,7 @@ const styles = StyleSheet.create({
   },
   bookContainer: {
     position: 'absolute',
-    borderRadius: 15,
+    // borderRadius set dynamically via scaledButtonSize(15) to match StoryCard
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
