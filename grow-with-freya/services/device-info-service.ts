@@ -6,6 +6,21 @@ import Constants from 'expo-constants';
 const DEVICE_ID_KEY = 'device_unique_id';
 
 /**
+ * COPPA-Compliant Device Information Service
+ *
+ * This service collects ONLY the minimum device data required for:
+ * - Session management (anonymous device ID)
+ * - UX optimization (phone vs tablet)
+ * - App functionality (platform)
+ * - Debugging (app version, OS version, brand, manufacturer)
+ *
+ * We do NOT collect:
+ * - Device model name (fingerprinting risk)
+ * - Device name (often contains user's real name)
+ * - Location, advertising IDs, or any PII
+ */
+
+/**
  * Generate a UUID v4 without external dependencies
  * Uses crypto.getRandomValues when available, falls back to Math.random
  */
@@ -129,21 +144,31 @@ export class DeviceInfoService {
   }
 
   /**
-   * Get device model name
-   */
-  static getModelName(): string {
-    return Device.modelName || 'Unknown';
-  }
-
-  /**
-   * Get OS version
+   * Get OS version (useful for debugging compatibility issues)
    */
   static getOsVersion(): string {
     return Device.osVersion || 'Unknown';
   }
 
   /**
+   * Get device brand (e.g., "Apple", "Samsung")
+   * Useful for debugging device-specific issues
+   */
+  static getBrand(): string {
+    return Device.brand || 'Unknown';
+  }
+
+  /**
+   * Get device manufacturer (e.g., "Apple", "Samsung")
+   * Useful for debugging device-specific issues
+   */
+  static getManufacturer(): string {
+    return Device.manufacturer || 'Unknown';
+  }
+
+  /**
    * Get all device info as an object for API headers
+   * Only includes COPPA-compliant, non-PII data
    */
   static getDeviceHeaders(): Record<string, string> {
     return {
@@ -151,22 +176,9 @@ export class DeviceInfoService {
       'X-Device-Type': this.getDeviceType(),
       'X-Client-Platform': this.getPlatform(),
       'X-App-Version': this.getAppVersion(),
-    };
-  }
-
-  /**
-   * Get device metadata for analytics/logging
-   */
-  static getDeviceMetadata(): Record<string, string> {
-    return {
-      deviceId: this.getDeviceId(),
-      deviceType: this.getDeviceType(),
-      platform: this.getPlatform(),
-      appVersion: this.getAppVersion(),
-      modelName: this.getModelName(),
-      osVersion: this.getOsVersion(),
-      brand: Device.brand || 'Unknown',
-      manufacturer: Device.manufacturer || 'Unknown',
+      'X-OS-Version': this.getOsVersion(),
+      'X-Device-Brand': this.getBrand(),
+      'X-Device-Manufacturer': this.getManufacturer(),
     };
   }
 }
