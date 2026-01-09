@@ -48,6 +48,10 @@ interface StoryTransitionContextType {
   onBeginCallback: (() => void) | null;
   setOnBeginCallback: (callback: (() => void) | null) => void;
 
+  // Callback when returning to mode selection - the _layout listens to hide story reader
+  onReturnToModeSelectionCallback: (() => void) | null;
+  setOnReturnToModeSelectionCallback: (callback: (() => void) | null) => void;
+
   // Card position and size for animation
   cardPosition: { x: number; y: number; width: number; height: number } | null;
 
@@ -57,6 +61,7 @@ interface StoryTransitionContextType {
   cancelTransition: () => void;
   completeTransition: () => void;
   startExitAnimation: (onComplete: () => void, currentPageIndex?: number) => void;
+  returnToModeSelection: (onComplete: () => void, currentPageIndex?: number) => void;
   isExitAnimating: boolean;
 
   // Animation values
@@ -95,6 +100,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const [targetBookPosition, setTargetBookPosition] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [shouldShowStoryReader, setShouldShowStoryReader] = useState(false);
   const [onBeginCallback, setOnBeginCallback] = useState<(() => void) | null>(null);
+  const [onReturnToModeSelectionCallback, setOnReturnToModeSelectionCallback] = useState<(() => void) | null>(null);
   const [isExitAnimating, setIsExitAnimating] = useState(false);
 
   // Voice over state for record/narrate mode selection
@@ -199,6 +205,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     setSelectedStory(story || null);
     setCardPosition(cardLayout);
     setOriginalCardPosition(cardLayout); // Save original position for exit animation
+
     setIsTransitioning(true);
     setSelectedMode('read'); // Reset to default mode
 
@@ -233,7 +240,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     const targetBookY = targetCenterY - scaledHeight / 2;
     setTargetBookPosition({ x: targetBookX, y: targetBookY, width: scaledWidth, height: scaledHeight });
 
-    // Reset animation values
+    // Animate from card position to center
     transitionOpacity.value = 1;
     transitionScale.value = 1;
     transitionX.value = 0;
@@ -445,7 +452,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     const targetCenterX = screenWidth / 2;
     const targetCenterY = (screenHeight / 2) - 30;
 
-    // Current center position of original card
+    // Current center position of original card (for the opening animation match)
     const currentCenterX = originalCardPosition.x + originalCardPosition.width / 2;
     const currentCenterY = originalCardPosition.y + originalCardPosition.height / 2;
 
@@ -478,7 +485,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     isExitAnimatingShared.value = 1;        // Set immediately for animated styles
     isExpandingOrExitingShared.value = 1;   // Also set this for styles that check it
 
-    // Set exit card position in shared values (React state is async, shared values are immediate)
+    // Set exit card position in shared values
     exitCardX.value = originalCardPosition.x;
     exitCardY.value = originalCardPosition.y;
     exitCardWidth.value = originalCardPosition.width;
@@ -522,8 +529,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     }, SETTLE_DELAY + SHRINK_DURATION + HOLD_AFTER_SHRINK);
 
     // Phase 3: Return to original position - exact reverse of opening animation
-    // Phase 3: Return to original position - exact reverse of opening animation
-    // Animate transitionX/Y/Scale back to 0/0/1 (same as cancelTransition)
     setTimeout(() => {
       transitionX.value = withTiming(0, {
         duration: RETURN_DURATION,
@@ -561,6 +566,107 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     resetTransition();
     setOriginalCardPosition(null);
     onComplete();
+  };
+
+  // Return to mode selection overlay (from story reader, e.g., after recording completes)
+  // Animates from full screen back to centered book with mode selection buttons
+  // Reverse of selectModeAndBegin: shrink -> flip cover back -> show buttons
+  const returnToModeSelection = (onComplete: () => void, currentPageIndex?: number) => {
+    if (!originalCardPosition || !selectedStory) {
+      onComplete();
+      return;
+    }
+
+    console.log('Returning to mode selection from reader');
+
+    // Animation timing (reverse of selectModeAndBegin)
+    const SHRINK_DURATION = 200;        // Shrink from full screen to book size
+    const HOLD_AFTER_SHRINK = 100;      // Brief pause before flipping
+    const COVER_FLIP_DURATION = 200;    // Flip cover back
+    const BUTTONS_DELAY = 50;           // Delay before showing buttons
+
+    // Calculate the centered position (same as startTransition)
+    const targetWidth = screenWidth * 0.55;
+    const targetScale = targetWidth / originalCardPosition.width;
+    const targetCenterX = screenWidth / 2;
+    const targetCenterY = (screenHeight / 2) - 30;
+    const currentCenterX = originalCardPosition.x + originalCardPosition.width / 2;
+    const currentCenterY = originalCardPosition.y + originalCardPosition.height / 2;
+    const moveX = targetCenterX - currentCenterX;
+    const moveY = targetCenterY - currentCenterY;
+    const scaledWidth = originalCardPosition.width * targetScale;
+    const scaledHeight = originalCardPosition.height * targetScale;
+    const targetBookX = targetCenterX - scaledWidth / 2;
+    const targetBookY = targetCenterY - scaledHeight / 2;
+
+    const centeredPosition = {
+      x: targetBookX,
+      y: targetBookY,
+      width: scaledWidth,
+      height: scaledHeight,
+    };
+
+    // Set initial values (starting from full screen, showing first page)
+    transitionX.value = moveX;
+    transitionY.value = moveY;
+    transitionScale.value = targetScale;
+    transitionOpacity.value = 1;
+    pageFlipProgress.value = 1; // Start showing first page (flipped open)
+    bookExpansion.value = 1;    // Full screen
+    overlayOpacity.value = 1;
+    isExitAnimatingShared.value = 1;
+    isExpandingOrExitingShared.value = 1;
+
+    // Set exit card position in shared values (React state is async, shared values are immediate)
+    exitCardX.value = originalCardPosition.x;
+    exitCardY.value = originalCardPosition.y;
+    exitCardWidth.value = originalCardPosition.width;
+    exitCardHeight.value = originalCardPosition.height;
+
+    // Set page index for renderPageImage - show the current page during the shrink animation
+    exitPageIndexRef.current = currentPageIndex ?? 1;
+
+    // Set state
+    setCardPosition(originalCardPosition);
+    setTargetBookPosition(centeredPosition);
+    setIsExitAnimating(true);
+    setIsTransitioning(true);
+
+    // Now hide the story reader - the animated book will be visible on top
+    if (onReturnToModeSelectionCallback) {
+      onReturnToModeSelectionCallback();
+    }
+
+    // PHASE 1: Shrink from full screen to book size
+    requestAnimationFrame(() => {
+      bookExpansion.value = withTiming(0, {
+        duration: SHRINK_DURATION,
+        easing: Easing.inOut(Easing.cubic)
+      });
+      overlayOpacity.value = withTiming(0.85, {
+        duration: SHRINK_DURATION,
+        easing: Easing.out(Easing.quad)
+      });
+
+      // PHASE 2: After shrink completes, flip cover back
+      setTimeout(() => {
+        pageFlipProgress.value = withTiming(0, {
+          duration: COVER_FLIP_DURATION,
+          easing: Easing.inOut(Easing.cubic)
+        });
+
+        // PHASE 3: After flip completes, show mode selection buttons
+        setTimeout(() => {
+          isExitAnimatingShared.value = 0;
+          isExpandingOrExitingShared.value = 0;
+          exitPageIndexRef.current = null; // Reset page index ref
+          setIsExitAnimating(false);
+          setShowModeSelection(true);
+          setSelectedMode('read'); // Reset to default mode
+          onComplete();
+        }, COVER_FLIP_DURATION + BUTTONS_DELAY);
+      }, SHRINK_DURATION + HOLD_AFTER_SHRINK);
+    });
   };
 
   const transitionAnimatedStyle = useAnimatedStyle(() => {
@@ -823,12 +929,15 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     shouldShowStoryReader,
     onBeginCallback,
     setOnBeginCallback,
+    onReturnToModeSelectionCallback,
+    setOnReturnToModeSelectionCallback,
     cardPosition,
     startTransition,
     selectModeAndBegin,
     cancelTransition,
     completeTransition,
     startExitAnimation,
+    returnToModeSelection,
     isExitAnimating,
     transitionScale,
     transitionX,
@@ -1156,7 +1265,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
             </Animated.View>
           )}
 
-          {/* Tap to begin button - same position as Surprise Me (bottom center with padding) */}
+          {/* Tap to begin button (bottom center with padding) */}
           {showModeSelection && (
             <Animated.View
               entering={SlideInDown.delay(100).duration(350).springify()}

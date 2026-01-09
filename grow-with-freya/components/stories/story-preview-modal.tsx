@@ -137,7 +137,9 @@ export function StoryPreviewModal({
 
           <ScrollView
             style={styles.contentScroll}
-            showsVerticalScrollIndicator={false}
+            showsVerticalScrollIndicator={true}
+            nestedScrollEnabled={true}
+            scrollEnabled={true}
           >
             {/* Title */}
             <Text style={[styles.title, { fontSize: scaledFontSize(24) }]}>
@@ -287,7 +289,7 @@ const styles = StyleSheet.create({
   },
   contentScroll: {
     padding: 20,
-    maxHeight: 300,
+    maxHeight: 400, // Increased for XL text accessibility
   },
   title: {
     fontFamily: Fonts.primary,

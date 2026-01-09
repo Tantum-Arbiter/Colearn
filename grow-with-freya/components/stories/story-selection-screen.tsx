@@ -13,7 +13,7 @@ import Animated, {
   Easing
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { ALL_STORIES, getRandomStory } from '@/data/stories';
+import { ALL_STORIES } from '@/data/stories';
 import { Story } from '@/types/story';
 import { Fonts } from '@/constants/theme';
 import { useAppStore } from '@/store/app-store';
@@ -121,23 +121,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   const { requestReturnToMainMenu } = useAppStore();
   const { startTransition, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader } = useStoryTransition();
   const lastCallRef = useRef<number>(0);
-  const surpriseButtonRef = useRef<View>(null);
   const { scaledFontSize, scaledButtonSize, scaledPadding, textSizeScale } = useAccessibility();
-
-  // Animation for Surprise Me button (slide down when transitioning)
-  const surpriseButtonTranslateY = useSharedValue(0);
-
-  useEffect(() => {
-    if (isTransitioning) {
-      surpriseButtonTranslateY.value = withTiming(200, { duration: 300, easing: Easing.out(Easing.cubic) });
-    } else {
-      surpriseButtonTranslateY.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.cubic) });
-    }
-  }, [isTransitioning, surpriseButtonTranslateY]);
-
-  const surpriseButtonAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: surpriseButtonTranslateY.value }],
-  }));
 
   // Pre-calculate scaled dimensions once (not on every render item)
   const scaledCardW = scaledButtonSize(CARD_WIDTH);
@@ -298,20 +282,6 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     }
   }, [onStorySelect, startTransition]);
 
-  const handleSurpriseMe = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const randomStory = getRandomStory();
-    if (randomStory && surpriseButtonRef.current) {
-      // Measure the button position and start the transition from there
-      surpriseButtonRef.current.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
-        startTransition(randomStory.id, { x: pageX, y: pageY, width, height }, randomStory);
-        if (onStorySelect) {
-          onStorySelect(randomStory);
-        }
-      });
-    }
-  }, [startTransition, onStorySelect]);
-
   // Memoized render function for story cards
   const renderStoryCard: ListRenderItem<Story> = useCallback(({ item: story }) => (
     <StoryCard
@@ -419,39 +389,6 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
             );
           })}
         </ScrollView>
-
-        {/* Bottom Button - slides down when book is selected */}
-        <Animated.View style={[{ padding: 20, paddingBottom: insets.bottom + 20, alignItems: 'center' }, surpriseButtonAnimatedStyle]}>
-          <View ref={surpriseButtonRef} collapsable={false}>
-            <Pressable
-              style={{
-                backgroundColor: '#FF6B6B',
-                borderRadius: 25,
-                paddingHorizontal: scaledPadding(32),
-                paddingVertical: scaledPadding(15),
-                alignItems: 'center',
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.2,
-                shadowRadius: 4,
-                elevation: 3,
-                maxWidth: 280,
-                minHeight: scaledButtonSize(50),
-                justifyContent: 'center',
-              }}
-              onPress={handleSurpriseMe}
-            >
-              <Text style={{
-                color: 'white',
-                fontSize: scaledFontSize(18),
-                fontWeight: 'bold',
-                fontFamily: Fonts.rounded,
-              }}>
-                Surprise Me!
-              </Text>
-            </Pressable>
-          </View>
-        </Animated.View>
       </View>
 
       {/* Story Preview Modal */}

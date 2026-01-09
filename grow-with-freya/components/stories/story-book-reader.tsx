@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, Dimensions, StatusBar, ImageBackground, ScrollView, NativeSyntheticEvent, NativeScrollEvent, Modal, TextInput, Alert, KeyboardAvoidingView, Platform, useWindowDimensions, Image as RNImage } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Dimensions, StatusBar, ImageBackground, ScrollView, NativeSyntheticEvent, NativeScrollEvent, Modal, TextInput, Alert, KeyboardAvoidingView, Platform, useWindowDimensions, Image as RNImage, AppState } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -52,9 +52,10 @@ export function StoryBookReader({
   onExit,
 }: StoryBookReaderProps) {
   const insets = useSafeAreaInsets();
-  const { isTransitioning: isStoryTransitioning, completeTransition, startExitAnimation } = useStoryTransition();
+  const { isTransitioning: isStoryTransitioning, completeTransition, startExitAnimation, returnToModeSelection } = useStoryTransition();
   // Start from page 1 if skipping cover, otherwise start from cover (page 0)
   const [currentPageIndex, setCurrentPageIndex] = useState(skipCoverPage ? 1 : 0);
+  const [previousPageIndex, setPreviousPageIndex] = useState<number | null>(null); // For crossfade
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isOrientationTransitioning, setIsOrientationTransitioning] = useState(false);
   const [isLandscapeReady, setIsLandscapeReady] = useState(false);
@@ -105,10 +106,9 @@ export function StoryBookReader({
 
   // Reset scroll state when page changes and scroll to top
   useEffect(() => {
-    setCanScrollText(false);
+    // Reset scroll indicator state but keep dimension tracking -
+    // the callbacks will update with new values when ScrollView remounts
     setShowUpArrow(false);
-    setScrollViewHeight(0);
-    setTextContentHeight(0);
     // Scroll to top of text box when page changes
     textScrollViewRef.current?.scrollTo({ y: 0, animated: false });
   }, [currentPageIndex]);
@@ -127,12 +127,14 @@ export function StoryBookReader({
   const [scrollViewHeight, setScrollViewHeight] = useState(0);
   const [textContentHeight, setTextContentHeight] = useState(0);
 
-  // Check if text can scroll whenever either dimension changes
+  // Check if text can scroll whenever either dimension changes or page changes
   useEffect(() => {
     if (scrollViewHeight > 0 && textContentHeight > 0) {
-      setCanScrollText(textContentHeight > scrollViewHeight + 2);
+      // Use a small threshold to account for rounding errors
+      const needsScroll = textContentHeight > scrollViewHeight + 1;
+      setCanScrollText(needsScroll);
     }
-  }, [scrollViewHeight, textContentHeight]);
+  }, [scrollViewHeight, textContentHeight, currentPageIndex]);
 
   // Handle text content size change to detect overflow
   const handleTextContentSizeChange = useCallback((contentWidth: number, contentHeight: number) => {
@@ -310,7 +312,7 @@ export function StoryBookReader({
   // Handle story completion - triggers exit animation
   const handleStoryCompletion = async () => {
     try {
-      // In record mode, go back to cover page instead of exiting
+      // In record mode, show completion message and return to mode selection
       if (readingMode === 'record') {
         const voiceOverName = currentVoiceOver?.name || 'this story';
         // Reset recording state
@@ -318,16 +320,22 @@ export function StoryBookReader({
         setCurrentRecordingUri(null);
         setIsNewVoiceOver(false);
         setIsOverwriteSession(false);
-        setReadingMode('read');
-        setCurrentVoiceOver(null);
-        // Go back to cover page
-        setCurrentPageIndex(0);
-        // Ensure page opacity is correct
-        currentPageOpacity.value = 1;
+
         Alert.alert(
           'Recording Complete',
           `Your voice recording for "${voiceOverName}" has been saved.`,
-          [{ text: 'OK' }]
+          [{
+            text: 'OK',
+            onPress: () => {
+              // Return to mode selection overlay (not full exit)
+              // Pass current page index so the exit animation shows the current page
+              returnToModeSelection(() => {
+                // Reset reading mode after returning to mode selection
+                setReadingMode('read');
+                setCurrentVoiceOver(null);
+              }, currentPageIndex);
+            }
+          }]
         );
         return;
       }
@@ -391,8 +399,9 @@ export function StoryBookReader({
   const bookOpeningScale = useSharedValue(1);
   const bookOpeningRotateY = useSharedValue(0);
 
-  // Simple single page opacity - just like cover tap
-  const currentPageOpacity = useSharedValue(1);
+  // Separate opacity values for image and text transitions
+  const imageOpacity = useSharedValue(1); // Image fades IN only (no fade out)
+  const textOpacity = useSharedValue(1);  // Text fades out then in
 
   // Exit animation values
   const exitScale = useSharedValue(1);
@@ -402,10 +411,11 @@ export function StoryBookReader({
   const exitTranslateY = useSharedValue(0);
 
 
-  
+
   // Get story pages or create default pages if none exist
   const pages = story.pages || [];
   const currentPage = pages[currentPageIndex];
+  const previousPage = previousPageIndex !== null ? pages[previousPageIndex] : null;
 
   // DEBUG: Log page background images and interactive elements to diagnose CMS issues
   useEffect(() => {
@@ -502,6 +512,12 @@ export function StoryBookReader({
   // Recording functions
   const startRecordingNow = async (activeVoiceOver: VoiceOver) => {
     try {
+      // Check if app is in background - can't start recording if so
+      if (AppState.currentState !== 'active') {
+        log.warn('Cannot start recording while app is in background');
+        return;
+      }
+
       // Pause background music before recording
       if (globalSound.isPlaying) {
         setWasMusicPlayingBeforeRecording(true);
@@ -807,14 +823,83 @@ export function StoryBookReader({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shouldAutoAdvance]);
 
-  // Function to render page content
-  const renderPageContent = (page: any, isNextPage = false) => {
-    if (!page) return null;
+  // Function to render just the image layer (for background/previous page - no animation)
+  const renderPageImage = (page: any, withAnimation = true) => {
+    if (!page || !page.backgroundImage) return null;
 
-    // Cover pages (page 0) use smaller scale for better presentation
     const isCoverPage = page.pageNumber === 0;
     const baseScale = isTablet ? 1.35 : 1.8;
     const imageScale = isCoverPage ? baseScale * 0.99 : baseScale;
+
+    const imageContent = (
+      <>
+        {typeof page.backgroundImage === 'string' && page.backgroundImage.includes('api.colearnwithfreya.co.uk') ? (
+          <AuthenticatedImage
+            uri={page.backgroundImage}
+            style={[
+              styles.backgroundImageStyle,
+              { width: '100%', height: '100%', transform: [{ scale: imageScale }] }
+            ]}
+            resizeMode="contain"
+            onError={(error) => {
+              log.error(`Page ${page.pageNumber}: Background image error:`, error);
+            }}
+          />
+        ) : (
+          <Image
+            source={typeof page.backgroundImage === 'string' ? { uri: page.backgroundImage } : page.backgroundImage}
+            style={[
+              styles.backgroundImageStyle,
+              { width: '100%', height: '100%', transform: [{ scale: imageScale }] }
+            ]}
+            contentFit="contain"
+            transition={0}
+            cachePolicy="memory-disk"
+            onError={(error) => {
+              log.error(`Page ${page.pageNumber}: Background image error:`, JSON.stringify(error));
+            }}
+          />
+        )}
+        {/* Character overlay */}
+        {page.characterImage && (
+          typeof page.characterImage === 'string' && page.characterImage.includes('api.colearnwithfreya.co.uk') ? (
+            <AuthenticatedImage
+              uri={page.characterImage}
+              style={styles.characterImage}
+              resizeMode="contain"
+              onError={(error) => {
+                log.error(`Page ${page.pageNumber}: Character image error:`, error);
+              }}
+            />
+          ) : (
+            <Image
+              source={typeof page.characterImage === 'string' ? { uri: page.characterImage } : page.characterImage}
+              style={styles.characterImage}
+              contentFit="contain"
+              transition={0}
+              cachePolicy="memory-disk"
+              onError={(error) => {
+                log.error(`Page ${page.pageNumber}: Character image error:`, JSON.stringify(error));
+              }}
+            />
+          )
+        )}
+      </>
+    );
+
+    if (withAnimation) {
+      return (
+        <Animated.View style={[StyleSheet.absoluteFill, imageAnimatedStyle]}>
+          {imageContent}
+        </Animated.View>
+      );
+    }
+    return <View style={StyleSheet.absoluteFill}>{imageContent}</View>;
+  };
+
+  // Function to render page content
+  const renderPageContent = (page: any, isNextPage = false) => {
+    if (!page) return null;
 
     return (
       <>
@@ -824,57 +909,12 @@ export function StoryBookReader({
             styles.fullScreenBackground,
             { backgroundColor: '#000' }
           ]}>
-            {typeof page.backgroundImage === 'string' && page.backgroundImage.includes('api.colearnwithfreya.co.uk') ? (
-              <AuthenticatedImage
-                uri={page.backgroundImage}
-                style={[
-                  styles.backgroundImageStyle,
-                  { width: '100%', height: '100%', transform: [{ scale: imageScale }] }
-                ]}
-                resizeMode="contain"
-                onError={(error) => {
-                  log.error(`Page ${page.pageNumber}: Background image error:`, error);
-                }}
-              />
-            ) : (
-              <Image
-                source={typeof page.backgroundImage === 'string' ? { uri: page.backgroundImage } : page.backgroundImage}
-                style={[
-                  styles.backgroundImageStyle,
-                  { width: '100%', height: '100%', transform: [{ scale: imageScale }] }
-                ]}
-                contentFit="contain"
-                transition={0}
-                cachePolicy="memory-disk"
-                onError={(error) => {
-                  log.error(`Page ${page.pageNumber}: Background image error:`, JSON.stringify(error));
-                }}
-              />
+            {/* Previous page image - stays at full opacity during crossfade */}
+            {previousPage && previousPage.backgroundImage && (
+              renderPageImage(previousPage, false)
             )}
-            {/* Character overlay - only show if character image exists */}
-            {page.characterImage && (
-              typeof page.characterImage === 'string' && page.characterImage.includes('api.colearnwithfreya.co.uk') ? (
-                <AuthenticatedImage
-                  uri={page.characterImage}
-                  style={styles.characterImage}
-                  resizeMode="contain"
-                  onError={(error) => {
-                    log.error(`Page ${page.pageNumber}: Character image error:`, error);
-                  }}
-                />
-              ) : (
-                <Image
-                  source={typeof page.characterImage === 'string' ? { uri: page.characterImage } : page.characterImage}
-                  style={styles.characterImage}
-                  contentFit="contain"
-                  transition={0}
-                  cachePolicy="memory-disk"
-                  onError={(error) => {
-                    log.error(`Page ${page.pageNumber}: Character image error:`, JSON.stringify(error));
-                  }}
-                />
-              )
-            )}
+            {/* Current page image - fades in on top */}
+            {renderPageImage(page, true)}
 
             {/* Interactive Elements - Props that can be tapped to reveal */}
             {page.interactiveElements && page.interactiveElements.length > 0 && (
@@ -934,28 +974,48 @@ export function StoryBookReader({
     setIsTransitioning(true);
     const targetPageIndex = currentPageIndex + 1;
 
-    // Beautiful crossfade: current fades out while next fades in simultaneously
-    currentPageOpacity.value = withTiming(0, {
-      duration: 600,
-      easing: Easing.inOut(Easing.quad)
+    // Text: Fade out first
+    textOpacity.value = withTiming(0, {
+      duration: 300,
+      easing: Easing.out(Easing.quad)
     });
 
-    // Update content immediately so next page can start fading in
-    setCurrentPageIndex(targetPageIndex);
+    // Set previous page FIRST so it's visible before we hide the current image
+    setPreviousPageIndex(currentPageIndex);
 
-    // Fade new page in
-    setTimeout(() => {
-      currentPageOpacity.value = withTiming(1, {
-        duration: 600,
-        easing: Easing.inOut(Easing.quad)
-      });
+    // Use requestAnimationFrame to ensure previous page is rendered
+    requestAnimationFrame(() => {
+      // Now set new image to invisible - previous page is already visible underneath
+      imageOpacity.value = 0;
 
-      setIsTransitioning(false);
-    }, 50); // Small delay to ensure content switch happens first
+      // Change to the new page
+      setCurrentPageIndex(targetPageIndex);
+
+      // Small delay to ensure React has rendered the new content
+      setTimeout(() => {
+        // Image: Fade in the new image (old image stays visible underneath)
+        imageOpacity.value = withTiming(1, {
+          duration: 400,
+          easing: Easing.inOut(Easing.quad)
+        });
+        // Text: Fade in the new text
+        textOpacity.value = withTiming(1, {
+          duration: 300,
+          easing: Easing.in(Easing.quad)
+        });
+
+        // Clear previous page after crossfade completes
+        setTimeout(() => {
+          setPreviousPageIndex(null);
+          setIsTransitioning(false);
+        }, 400);
+      }, 50);
+    });
   };
 
   const handlePreviousPage = async () => {
-    if (isTransitioning || currentPageIndex <= 0) return;
+    // Disable going back to cover page (page 0) - stop at page 1
+    if (isTransitioning || currentPageIndex <= 1) return;
 
     // In record mode, save the current recording before moving to previous page
     if (readingMode === 'record' && tempRecordingUri) {
@@ -969,29 +1029,53 @@ export function StoryBookReader({
     setIsTransitioning(true);
     const targetPageIndex = currentPageIndex - 1;
 
-    // Beautiful crossfade: current fades out while previous fades in simultaneously
-    currentPageOpacity.value = withTiming(0, {
-      duration: 600,
-      easing: Easing.inOut(Easing.quad)
+    // Text: Fade out first
+    textOpacity.value = withTiming(0, {
+      duration: 300,
+      easing: Easing.out(Easing.quad)
     });
 
-    // Update content immediately so previous page can start fading in
-    setCurrentPageIndex(targetPageIndex);
+    // Set previous page FIRST so it's visible before we hide the current image
+    setPreviousPageIndex(currentPageIndex);
 
-    // Fade new page in
-    setTimeout(() => {
-      currentPageOpacity.value = withTiming(1, {
-        duration: 600,
-        easing: Easing.inOut(Easing.quad)
-      });
+    // Use requestAnimationFrame to ensure previous page is rendered
+    requestAnimationFrame(() => {
+      // Now set new image to invisible - previous page is already visible underneath
+      imageOpacity.value = 0;
 
-      setIsTransitioning(false);
-    }, 50); // Small delay to ensure content switch happens first
+      // Change to the new page
+      setCurrentPageIndex(targetPageIndex);
+
+      // Small delay to ensure React has rendered the new content
+      setTimeout(() => {
+        // Image: Fade in the new image (old image stays visible underneath)
+        imageOpacity.value = withTiming(1, {
+          duration: 400,
+          easing: Easing.inOut(Easing.quad)
+        });
+        // Text: Fade in the new text
+        textOpacity.value = withTiming(1, {
+          duration: 300,
+          easing: Easing.in(Easing.quad)
+        });
+
+        // Clear previous page after crossfade completes
+        setTimeout(() => {
+          setPreviousPageIndex(null);
+          setIsTransitioning(false);
+        }, 400);
+      }, 50);
+    });
   };
   
-  // Simple animated style for single page
-  const currentPageAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: currentPageOpacity.value,
+  // Animated style for image (fades in only)
+  const imageAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: imageOpacity.value,
+  }));
+
+  // Animated style for text (fades out then in)
+  const textAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: textOpacity.value,
   }));
 
 
@@ -1144,7 +1228,7 @@ export function StoryBookReader({
                       handleStopPlayback();
                     }}
                   >
-                    <Text style={styles.playButtonIcon}>⏸</Text>
+                    <Text style={styles.pauseButtonIcon}>||</Text>
                   </Pressable>
                 )}
                 <Pressable
@@ -1187,7 +1271,7 @@ export function StoryBookReader({
                   }
                 }}
               >
-                <Text style={[styles.narrationPlayPauseIcon, { fontSize: scaledFontSize(14) }]}>{isPlaying ? '❚❚' : '▶'}</Text>
+                <Text style={[styles.narrationPlayPauseIcon, { fontSize: scaledFontSize(isPlaying ? 10 : 14) }]}>{isPlaying ? '||' : '▶'}</Text>
               </Pressable>
               {/* Progress Bar */}
               <View style={styles.narrationProgressContainer}>
@@ -1329,9 +1413,9 @@ export function StoryBookReader({
         )}
 
         {/* Simple Single Page - Just Like Cover Tap */}
-        <Animated.View style={[styles.pageContent, currentPageAnimatedStyle]}>
+        <View style={styles.pageContent}>
           {renderPageContent(currentPage)}
-        </Animated.View>
+        </View>
 
         {/* UI Controls Layer */}
         <View style={styles.uiControlsLayer}>
@@ -1352,17 +1436,19 @@ export function StoryBookReader({
           {readingMode === 'record' && (
             <View style={styles.recordModeTextWrapper}>
               <View style={styles.recordModeTextBox}>
-                <Text
+                {/* Only the text fades, not the text box */}
+                <Animated.Text
                   style={[
                     styles.storyText,
                     {
                       fontSize: scaledFontSize(isTablet ? 20 : 16),
                       lineHeight: scaledFontSize(isTablet ? 20 : 16) * 1.6,
-                    }
+                    },
+                    textAnimatedStyle
                   ]}
                 >
                   {currentPage?.text}
-                </Text>
+                </Animated.Text>
               </View>
             </View>
           )}
@@ -1382,16 +1468,16 @@ export function StoryBookReader({
                 height: scaledButtonSize(50),
                 borderRadius: scaledButtonSize(25),
               },
-              (currentPageIndex <= 0 || (readingMode === 'record' && isRecording)) && styles.navButtonDisabled
+              (currentPageIndex <= 1 || (readingMode === 'record' && isRecording)) && styles.navButtonDisabled
             ]}
             onPress={handlePreviousPage}
-            disabled={currentPageIndex <= 0 || isTransitioning || (readingMode === 'record' && isRecording)}
+            disabled={currentPageIndex <= 1 || isTransitioning || (readingMode === 'record' && isRecording)}
             testID="left-touch-area"
           >
             <Text style={[
               styles.navButtonText,
               { fontSize: scaledFontSize(20) },
-              currentPageIndex <= 0 && styles.navButtonTextDisabled
+              currentPageIndex <= 1 && styles.navButtonTextDisabled
             ]}>
               ←
             </Text>
@@ -1431,18 +1517,22 @@ export function StoryBookReader({
                       onContentSizeChange={handleTextContentSizeChange}
                       onLayout={handleScrollViewLayout}
                       bounces={false}
+                      nestedScrollEnabled={true}
+                      scrollEnabled={true}
                     >
-                      <Text
+                      {/* Only the text fades, not the text box */}
+                      <Animated.Text
                         style={[
                           currentPage?.pageNumber === 0 ? styles.coverText : styles.storyText,
                           {
                             fontSize: fontSize,
                             lineHeight: lineHeight,
-                          }
+                          },
+                          textAnimatedStyle
                         ]}
                       >
                         {currentPage?.text}
-                      </Text>
+                      </Animated.Text>
                     </ScrollView>
                     {/* Scroll indicator - down arrow when at top/middle, up arrow when at bottom */}
                     {canScrollText && !showUpArrow && (
@@ -2644,6 +2734,15 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 20,
     marginLeft: 3,
+  },
+  pauseButtonIcon: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'center',
+    letterSpacing: 2,
+    marginLeft: 2,
+    marginTop: -1,
   },
   reRecordButton: {
     width: 50,

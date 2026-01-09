@@ -79,7 +79,8 @@ function AppContent() {
     selectedStory: transitionStory,
     selectedMode: transitionMode,
     selectedVoiceOver: transitionVoiceOver,
-    setOnBeginCallback
+    setOnBeginCallback,
+    setOnReturnToModeSelectionCallback
   } = useStoryTransition();
 
   const colorScheme = useColorScheme();
@@ -390,6 +391,24 @@ function AppContent() {
       setOnBeginCallback(null);
     };
   }, [transitionStory, setOnBeginCallback]);
+
+  // Register callback for when returning to mode selection from story reader
+  useEffect(() => {
+    const handleReturnToModeSelection = () => {
+      // Hide the story reader but keep the story selected
+      setShowStoryReader(false);
+      setCurrentView('app');
+      // Ensure we're on the stories page (not main menu)
+      setCurrentPage('stories');
+      // Don't clear storyBeingRead - we'll need it if they choose to read again
+    };
+
+    setOnReturnToModeSelectionCallback(() => () => handleReturnToModeSelection());
+
+    return () => {
+      setOnReturnToModeSelectionCallback(null);
+    };
+  }, [setOnReturnToModeSelectionCallback]);
 
   const handleOnboardingComplete = () => {
     setOnboardingComplete(true);
