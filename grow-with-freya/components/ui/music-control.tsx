@@ -1,8 +1,10 @@
-import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useGlobalSound } from '@/contexts/global-sound-context';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { AudioControlModal } from './audio-control-modal';
+import * as Haptics from 'expo-haptics';
 
 interface MusicControlProps {
   size?: number;
@@ -20,12 +22,29 @@ export const MusicControl: React.FC<MusicControlProps> = ({
   showBackground = true,
   variant = 'menu', // Default to menu styling for backwards compatibility
 }) => {
-  const { isMuted, toggleMute } = useGlobalSound();
+  const {
+    isMuted,
+    toggleMute,
+    masterVolume,
+    musicVolume,
+    voiceOverVolume,
+    setMasterVolume,
+    setMusicVolume,
+    setVoiceOverVolume,
+  } = useGlobalSound();
   const { scaledButtonSize } = useAccessibility();
 
-  const handlePress = () => {
+  const [showAudioModal, setShowAudioModal] = useState(false);
+
+  const handlePress = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     toggleMute();
-  };
+  }, [toggleMute]);
+
+  const handleLongPress = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setShowAudioModal(true);
+  }, []);
 
   const scaledIconSize = scaledButtonSize(size);
   const backgroundSize = scaledButtonSize(48);
@@ -47,39 +66,54 @@ export const MusicControl: React.FC<MusicControlProps> = ({
   };
 
   return (
-    <View style={[styles.container, style]}>
-      <TouchableOpacity
-        style={styles.iconContainer}
-        onPress={handlePress}
-        activeOpacity={0.7}
-        accessibilityLabel={isMuted ? 'Unmute background music' : 'Mute background music'}
-        accessibilityRole="button"
-        testID="music-control-button"
-      >
-        <View style={[
-          styles.iconBackground,
-          {
-            backgroundColor: getBackgroundColor(),
-            width: backgroundSize,
-            height: backgroundSize,
-            borderRadius: backgroundSize / 2,
-            borderColor: getBorderColor(),
-          }
-        ]}>
-          <Ionicons
-            name={isMuted ? 'volume-mute' : 'volume-high'}
-            size={scaledIconSize}
-            color={iconColor}
-            style={{
-              textShadowColor: strokeColor,
-              textShadowOffset: { width: 0, height: 0 },
-              textShadowRadius: 1,
-            }}
-            testID={`music-icon-${isMuted ? 'muted' : 'playing'}`}
-          />
-        </View>
-      </TouchableOpacity>
-    </View>
+    <>
+      <View style={[styles.container, style]}>
+        <Pressable
+          style={styles.iconContainer}
+          onPress={handlePress}
+          onLongPress={handleLongPress}
+          delayLongPress={400}
+          accessibilityLabel={isMuted ? 'Unmute background music. Long press for audio settings.' : 'Mute background music. Long press for audio settings.'}
+          accessibilityRole="button"
+          accessibilityHint="Long press to open audio volume controls"
+          testID="music-control-button"
+        >
+          <View style={[
+            styles.iconBackground,
+            {
+              backgroundColor: getBackgroundColor(),
+              width: backgroundSize,
+              height: backgroundSize,
+              borderRadius: backgroundSize / 2,
+              borderColor: getBorderColor(),
+            }
+          ]}>
+            <Ionicons
+              name={isMuted ? 'volume-mute' : 'volume-high'}
+              size={scaledIconSize}
+              color={iconColor}
+              style={{
+                textShadowColor: strokeColor,
+                textShadowOffset: { width: 0, height: 0 },
+                textShadowRadius: 1,
+              }}
+              testID={`music-icon-${isMuted ? 'muted' : 'playing'}`}
+            />
+          </View>
+        </Pressable>
+      </View>
+
+      <AudioControlModal
+        visible={showAudioModal}
+        onClose={() => setShowAudioModal(false)}
+        masterVolume={masterVolume}
+        musicVolume={musicVolume}
+        voiceOverVolume={voiceOverVolume}
+        onMasterVolumeChange={setMasterVolume}
+        onMusicVolumeChange={setMusicVolume}
+        onVoiceOverVolumeChange={setVoiceOverVolume}
+      />
+    </>
   );
 };
 
