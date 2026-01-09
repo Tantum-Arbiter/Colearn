@@ -1,6 +1,9 @@
 import { Audio } from 'expo-av';
 import { AVPlaybackStatus } from 'expo-av';
 
+// Single background music track
+const BACKGROUND_TRACK = require('../assets/audio/background/classic-epic.mp3');
+
 class BackgroundMusicService {
   private sound: Audio.Sound | null = null;
   private isPlaying: boolean = false;
@@ -11,6 +14,7 @@ class BackgroundMusicService {
   private stateChangeCallbacks: (() => void)[] = []; // Callbacks for state changes
   private hasVolumeBeenSetByUser: boolean = false; // Track if user has explicitly set volume
   private volumeChangeCallbacks: ((volume: number) => void)[] = []; // Callbacks for volume changes
+  private isMuted: boolean = false; // Track if user has muted the music
 
   /**
    * Initialize and load the background music
@@ -38,21 +42,17 @@ class BackgroundMusicService {
       });
       console.log('Audio mode configured: DO_NOT_MIX (iOS) / DUCK_OTHERS (Android) for audio control');
 
-      // Load the background soundtrack with simple looping
-      const audioSource = require('../assets/audio/background-soundtrack.wav');
-
+      // Load the single background track with looping enabled
       const { sound } = await Audio.Sound.createAsync(
-        audioSource,
+        BACKGROUND_TRACK,
         {
           shouldPlay: false,
-          isLooping: true, // Simple native looping
+          isLooping: true, // Loop the single track
           volume: this.volume,
           rate: 1.0,
           shouldCorrectPitch: true,
-          progressUpdateIntervalMillis: 10000, // Reduce update frequency to prevent memory leaks
         }
       );
-
       this.sound = sound;
       this.isLoaded = true;
       this.isInitializing = false;
@@ -60,11 +60,11 @@ class BackgroundMusicService {
       // Set up playback status update listener
       this.sound.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate);
 
-      console.log('Background music initialized successfully');
+      console.log('Background music initialized');
     } catch (error) {
       console.error('Failed to initialize background music:', error);
       console.error('Error details:', JSON.stringify(error, null, 2));
-      console.warn('To fix this: Add a valid audio file to assets/audio/background-soundtrack.wav');
+      console.warn('To fix this: Check that audio files exist in assets/audio/background/');
       console.warn('On Android: Check that MODIFY_AUDIO_SETTINGS permission is granted');
       this.isInitializing = false;
       // Don't throw - allow app to continue without music
@@ -73,8 +73,12 @@ class BackgroundMusicService {
 
   /**
    * Start playing background music
+   * This also clears the muted flag since user is explicitly requesting playback
    */
   async play(): Promise<void> {
+    // Clear muted flag when explicitly playing
+    this.isMuted = false;
+
     // Auto-reinitialize if the music was cleaned up
     if (!this.isLoaded || !this.sound) {
       console.log('Background music not loaded - reinitializing...');
@@ -120,7 +124,7 @@ class BackgroundMusicService {
   }
 
   /**
-   * Pause background music
+   * Pause background music (does NOT set muted flag - use mute() to persist across tracks)
    */
   async pause(): Promise<void> {
     if (!this.isLoaded || !this.sound) {
@@ -175,6 +179,36 @@ class BackgroundMusicService {
     } catch (error) {
       console.warn('Failed to stop background music:', error);
     }
+  }
+
+  /**
+   * Mute background music - this persists across track changes
+   * When muted, new tracks won't auto-play when the current track finishes
+   */
+  async mute(): Promise<void> {
+    console.log('Muting background music (persists across tracks)');
+    this.isMuted = true;
+    await this.pause();
+    this.notifyStateChange();
+  }
+
+  /**
+   * Unmute background music and optionally resume playing
+   */
+  async unmute(resumePlayback: boolean = true): Promise<void> {
+    console.log(`Unmuting background music (resumePlayback: ${resumePlayback})`);
+    this.isMuted = false;
+    if (resumePlayback) {
+      await this.play();
+    }
+    this.notifyStateChange();
+  }
+
+  /**
+   * Check if music is muted (persists across tracks)
+   */
+  getIsMuted(): boolean {
+    return this.isMuted;
   }
 
   /**
@@ -443,7 +477,7 @@ class BackgroundMusicService {
           this.isPlaying = status.isPlaying;
         }
 
-        // Simple looping - let native looping handle it
+        // Log when track loops
         if (status.didJustFinish) {
           console.log('Background music looped');
         }
@@ -464,5 +498,13 @@ class BackgroundMusicService {
   };
 }
 
-// Export singleton instance
-export const backgroundMusic = new BackgroundMusicService();
+// Use global variable to persist singleton across hot reloads
+// This prevents multiple instances from being created during development
+declare global {
+  // eslint-disable-next-line no-var
+  var __backgroundMusicInstance: BackgroundMusicService | undefined;
+}
+
+// Export singleton instance - reuse existing instance if available (survives hot reloads)
+export const backgroundMusic = global.__backgroundMusicInstance ?? new BackgroundMusicService();
+global.__backgroundMusicInstance = backgroundMusic;

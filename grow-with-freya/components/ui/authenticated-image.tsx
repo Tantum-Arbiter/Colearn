@@ -1,14 +1,23 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Image, ImageProps, View, ActivityIndicator, Text, StyleSheet } from 'react-native';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { View, ActivityIndicator, Text, StyleSheet, ImageStyle, StyleProp } from 'react-native';
+import { Image as ExpoImage, ImageContentFit } from 'expo-image';
 import { AuthenticatedImageService } from '@/services/authenticated-image-service';
+import { Logger } from '@/utils/logger';
 
-interface AuthenticatedImageProps extends Omit<ImageProps, 'source' | 'onLoad'> {
+const log = Logger.create('AuthenticatedImage');
+
+interface AuthenticatedImageProps {
   uri: string;
   fallbackEmoji?: string;
   showLoadingIndicator?: boolean;
   loadingIndicatorColor?: string;
   onLoad?: () => void;
+  onError?: (error: unknown) => void;
   maxRetries?: number;
+  style?: StyleProp<ImageStyle>;
+  resizeMode?: 'cover' | 'contain' | 'stretch' | 'center';
+  allowDownscaling?: boolean;
+  transition?: number;
 }
 
 // Maximum retry attempts for loading an image
@@ -26,42 +35,56 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
   showLoadingIndicator = false,
   loadingIndicatorColor = '#666',
   style,
-  onError,
   onLoad,
+  onError,
   maxRetries = DEFAULT_MAX_RETRIES,
-  ...props
+  resizeMode = 'cover',
+  allowDownscaling = true,
+  transition = 0,
 }) => {
   // Check memory cache synchronously for instant display
-  const memoryCachedUri = useMemo(() => {
-    const cached = AuthenticatedImageService.getMemoryCachedUri(uri);
-    console.log(`[AuthenticatedImage] Memory cache check for: ${uri.split('/').pop()} -> ${cached ? 'HIT' : 'MISS'}`);
-    return cached;
-  }, [uri]);
+  // This runs during render (not in useEffect) so it's available on first paint
+  const memoryCachedUri = AuthenticatedImageService.getMemoryCachedUri(uri);
 
-  const [cachedUri, setCachedUri] = useState<string | null>(memoryCachedUri);
-  const [isLoading, setIsLoading] = useState(!memoryCachedUri);
-  const [hasError, setHasError] = useState(false);
+  // Use a ref to track the previous URI to detect changes
+  const prevUriRef = useRef(uri);
   const retryCountRef = useRef(0);
   const isMountedRef = useRef(true);
 
-  // Reset state when uri changes - this is critical for page transitions
-  // Without this, the old cachedUri would persist when navigating between pages
-  useEffect(() => {
-    setCachedUri(memoryCachedUri);
-    setIsLoading(!memoryCachedUri);
-    setHasError(false);
+  // Initialize state - if we have memory cache, use it immediately
+  const [cachedUri, setCachedUri] = useState<string | null>(memoryCachedUri);
+  const [isLoading, setIsLoading] = useState(!memoryCachedUri);
+  const [hasError, setHasError] = useState(false);
+
+  // Handle URI changes - only reset if URI actually changed
+  // This avoids unnecessary state updates on remount with same URI
+  if (prevUriRef.current !== uri) {
+    prevUriRef.current = uri;
     retryCountRef.current = 0;
-  }, [uri, memoryCachedUri]);
+
+    if (memoryCachedUri) {
+      // New URI but we have it cached - update synchronously during render
+      if (cachedUri !== memoryCachedUri) {
+        setCachedUri(memoryCachedUri);
+        setIsLoading(false);
+        setHasError(false);
+      }
+    } else {
+      // New URI with no cache - need to load
+      if (cachedUri !== null || !isLoading) {
+        setCachedUri(null);
+        setIsLoading(true);
+        setHasError(false);
+      }
+    }
+  }
 
   const loadImage = useCallback(async (forceRefresh: boolean = false) => {
     try {
       // Skip if we already have the cached URI from memory
       if (cachedUri && !forceRefresh) {
-        console.log(`[AuthenticatedImage] ⚡ Already have cached URI, skipping load`);
         return;
       }
-
-      console.log(`[AuthenticatedImage] Loading image (retry: ${retryCountRef.current}, forceRefresh: ${forceRefresh}):`, uri);
 
       if (!isMountedRef.current) return;
 
@@ -70,7 +93,6 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
 
       // If forcing refresh, invalidate the cache first
       if (forceRefresh) {
-        console.log('[AuthenticatedImage] Invalidating cache before retry...');
         await AuthenticatedImageService.invalidateCache(uri);
       }
 
@@ -79,35 +101,36 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
       if (!isMountedRef.current) return;
 
       if (localUri) {
-        console.log('[AuthenticatedImage] Image loaded successfully:', localUri.split('/').pop());
         setCachedUri(localUri);
       } else {
-        console.error('[AuthenticatedImage] Failed to get image URI - service returned null');
+        const err = new Error('Failed to get image URI - service returned null');
+        log.error(err.message);
         setHasError(true);
+        onError?.(err);
       }
       setIsLoading(false);
     } catch (error) {
-      console.error('[AuthenticatedImage] Error loading image:', error);
+      log.error('Error loading image:', error);
       if (isMountedRef.current) {
         setHasError(true);
         setIsLoading(false);
+        onError?.(error);
       }
     }
-  }, [uri, cachedUri]);
+  }, [uri, cachedUri, onError]);
 
   // Handle image render errors - retry with cache invalidation
-  const handleRenderError = useCallback(async () => {
-    console.error(`[AuthenticatedImage] Image render failed, retry count: ${retryCountRef.current}/${maxRetries}`);
-
+  const handleRenderError = useCallback(async (error?: unknown) => {
     if (retryCountRef.current < maxRetries) {
       retryCountRef.current += 1;
-      console.log(`[AuthenticatedImage] Retrying with cache invalidation (attempt ${retryCountRef.current})`);
+      log.warn(`Image render failed, retrying (attempt ${retryCountRef.current}/${maxRetries})`);
       await loadImage(true); // Force refresh
     } else {
-      console.error('[AuthenticatedImage] Max retries exceeded, showing fallback');
+      log.error('Max retries exceeded, showing fallback');
       setHasError(true);
+      onError?.(error);
     }
-  }, [loadImage, maxRetries]);
+  }, [loadImage, maxRetries, onError]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -133,7 +156,6 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
 
   // Show fallback emoji on error (after all retries exhausted)
   if (hasError) {
-    console.log('[AuthenticatedImage] Showing fallback emoji after error');
     return (
       <View style={[style, styles.fallbackContainer]}>
         <Text style={styles.fallbackEmoji}>{fallbackEmoji}</Text>
@@ -141,21 +163,29 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
     );
   }
 
-  // Still loading without indicator
+  // Still loading without indicator - render solid background placeholder to prevent flash
   if (!cachedUri) {
-    return null;
+    return <View style={[style, { backgroundColor: '#e8e8e8' }]} />;
   }
 
-  // Log the exact URI being used (helps debug file:// path issues)
-  console.log(`[AuthenticatedImage] Rendering with URI: ${cachedUri}`);
+  // Map resizeMode to expo-image contentFit
+  const contentFitMap: Record<string, ImageContentFit> = {
+    cover: 'cover',
+    contain: 'contain',
+    stretch: 'fill',
+    center: 'none',
+  };
 
   return (
-    <Image
-      {...props}
+    <ExpoImage
       source={{ uri: cachedUri }}
       style={style}
+      contentFit={contentFitMap[resizeMode] || 'cover'}
+      transition={transition}
+      cachePolicy="memory-disk"
+      priority="high" // High priority for crisp rendering during animations
+      allowDownscaling={allowDownscaling} // Prevent pixelation during scale animations
       onLoad={() => {
-        console.log('[AuthenticatedImage] Image rendered successfully');
         retryCountRef.current = 0; // Reset retry count on success
         if (onLoad) {
           onLoad();
@@ -163,9 +193,9 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
       }}
       onError={(error) => {
         // Log detailed error info for debugging
-        console.error(`[AuthenticatedImage] Image render failed for URI: ${cachedUri}`);
-        console.error(`[AuthenticatedImage] Error details:`, error?.nativeEvent);
-        handleRenderError();
+        log.error(`Image render failed for URI: ${cachedUri}`);
+        log.error('Error details:', error);
+        handleRenderError(error);
       }}
     />
   );

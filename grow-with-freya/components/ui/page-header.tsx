@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Pressable, Text, StyleSheet, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import { MusicControl } from './music-control';
 import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
@@ -18,6 +19,8 @@ interface PageHeaderProps {
   onRightAction?: () => void;
   /** Optional background color for header area to block scrolling content */
   headerBackgroundColor?: string;
+  /** When true, hides the back button and music control with animations */
+  hideControls?: boolean;
 }
 
 export function PageHeader({
@@ -28,9 +31,35 @@ export function PageHeader({
   rightActionIcon,
   onRightAction,
   headerBackgroundColor,
+  hideControls = false,
 }: PageHeaderProps) {
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledPadding, scaledButtonSize, textSizeScale } = useAccessibility();
+
+  // Animation values for hiding/showing controls
+  const backButtonTranslateX = useSharedValue(0);
+  const rightControlsTranslateX = useSharedValue(0);
+
+  useEffect(() => {
+    if (hideControls) {
+      // Slide back button to the left (off screen)
+      backButtonTranslateX.value = withTiming(-150, { duration: 300, easing: Easing.out(Easing.cubic) });
+      // Slide right controls to the right (off screen)
+      rightControlsTranslateX.value = withTiming(150, { duration: 300, easing: Easing.out(Easing.cubic) });
+    } else {
+      // Slide back to original position
+      backButtonTranslateX.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.cubic) });
+      rightControlsTranslateX.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.cubic) });
+    }
+  }, [hideControls, backButtonTranslateX, rightControlsTranslateX]);
+
+  const backButtonAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: backButtonTranslateX.value }],
+  }));
+
+  const rightControlsAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: rightControlsTranslateX.value }],
+  }));
 
   // Calculate scaled sizes
   const backButtonPaddingH = scaledPadding(isTablet ? 20 : 16);
@@ -61,21 +90,23 @@ export function PageHeader({
 
       {/* Header with back button and music control - absolute positioned */}
       <View style={[styles.headerContainer, { top: insets.top + 20 }]}>
-        <Pressable
-          style={[
-            styles.backButton,
-            {
-              paddingHorizontal: backButtonPaddingH,
-              height: backButtonHeight,
-              justifyContent: 'center',
-            }
-          ]}
-          onPress={onBack}
-        >
-          <Text style={[styles.backButtonText, { fontSize: backFontSize }]} numberOfLines={1}>← Back</Text>
-        </Pressable>
+        <Animated.View style={backButtonAnimatedStyle}>
+          <Pressable
+            style={[
+              styles.backButton,
+              {
+                paddingHorizontal: backButtonPaddingH,
+                height: backButtonHeight,
+                justifyContent: 'center',
+              }
+            ]}
+            onPress={onBack}
+          >
+            <Text style={[styles.backButtonText, { fontSize: backFontSize }]} numberOfLines={1}>← Back</Text>
+          </Pressable>
+        </Animated.View>
 
-        <View style={styles.rightControls}>
+        <Animated.View style={[styles.rightControls, rightControlsAnimatedStyle]}>
           {rightActionIcon && onRightAction && (
             <Pressable
               style={[
@@ -96,7 +127,7 @@ export function PageHeader({
               color="#FFFFFF"
             />
           )}
-        </View>
+        </Animated.View>
       </View>
 
       {/* Title - positioned below header */}

@@ -1,5 +1,8 @@
 import { ApiClient } from './api-client';
 import * as FileSystem from 'expo-file-system/legacy';
+import { Logger } from '@/utils/logger';
+
+const log = Logger.create('AuthImageService');
 
 interface SignedUrlResponse {
   path: string;
@@ -53,7 +56,39 @@ export class AuthenticatedImageService {
       this.memoryCache.set(remoteUrl, localPath);
       count++;
     });
-    console.log(`[AuthImageService] Memory cache populated with ${count} entries for instant lookup`);
+  }
+
+  /**
+   * Warm the memory cache from disk cache for a list of URLs
+   * This is synchronous-ish: it checks if files exist on disk and adds them to memory cache
+   * Call this when mounting screens that display authenticated images to prevent flicker
+   */
+  static async warmMemoryCache(urls: string[]): Promise<void> {
+    const startTime = Date.now();
+    let warmedCount = 0;
+
+    for (const url of urls) {
+      if (!url || this.memoryCache.has(url)) {
+        continue; // Skip if already in memory or invalid
+      }
+
+      const cacheFilename = this.getCacheFilename(url);
+      const cachedPath = `${this.CACHE_DIR}${cacheFilename}`;
+
+      try {
+        const fileInfo = await FileSystem.getInfoAsync(cachedPath);
+        if (fileInfo.exists) {
+          this.memoryCache.set(url, cachedPath);
+          warmedCount++;
+        }
+      } catch {
+        // Ignore errors - just skip this URL
+      }
+    }
+
+    if (warmedCount > 0) {
+      log.info(`Warmed memory cache with ${warmedCount} images in ${Date.now() - startTime}ms`);
+    }
   }
 
   /**
@@ -76,7 +111,6 @@ export class AuthenticatedImageService {
     // Check if there's already an in-flight request for this URL
     const existingRequest = this.inFlightRequests.get(remoteUrl);
     if (existingRequest) {
-      console.log(`[AuthImageService] Waiting for in-flight request: ${remoteUrl.split('/').pop()}`);
       return existingRequest;
     }
 
@@ -102,7 +136,6 @@ export class AuthenticatedImageService {
       // Create cache directory if it doesn't exist
       const dirInfo = await FileSystem.getInfoAsync(this.CACHE_DIR);
       if (!dirInfo.exists) {
-        console.log(`[AuthImageService] Creating cache directory: ${this.CACHE_DIR}`);
         await FileSystem.makeDirectoryAsync(this.CACHE_DIR, { intermediates: true });
       }
 
@@ -113,7 +146,6 @@ export class AuthenticatedImageService {
       // Check if image is already cached AND valid
       const isValid = await this.validateCachedFile(cachedPath);
       if (isValid) {
-        console.log(`[AuthImageService] Using validated cached image: ${cacheFilename}`);
         // Add to memory cache for instant subsequent lookups
         this.memoryCache.set(remoteUrl, cachedPath);
         return cachedPath;
@@ -129,10 +161,9 @@ export class AuthenticatedImageService {
       // We need to extract: stories/...
       const assetPath = this.extractAssetPath(remoteUrl);
       if (!assetPath) {
-        console.warn(`[AuthImageService] Could not extract asset path from URL: ${remoteUrl}`);
+        log.warn(`Could not extract asset path from URL: ${remoteUrl}`);
         // If we have any cached file, use it as fallback
         if (hasAnyCache) {
-          console.log(`[AuthImageService] Using unvalidated cache as fallback: ${cacheFilename}`);
           return cachedPath;
         }
         return null;
@@ -147,25 +178,19 @@ export class AuthenticatedImageService {
       } catch (apiCallError) {
         // If auth fails and we have a cached file, use it instead of erroring
         if (hasAnyCache) {
-          console.log(`[AuthImageService] Auth failed but using cached file: ${cacheFilename}`);
           return cachedPath;
         }
-        // Only log error if we have no fallback
-        console.warn(`[AuthImageService] Cannot load image (not authenticated, no cache): ${cacheFilename}`);
         return null;
       }
 
       if (!signedUrlResponse || !signedUrlResponse.signedUrl) {
         // If no signed URL but we have cache, use it
         if (hasAnyCache) {
-          console.log(`[AuthImageService] No signed URL but using cached file: ${cacheFilename}`);
           return cachedPath;
         }
-        console.warn(`[AuthImageService] No signed URL returned for: ${assetPath}`);
+        log.warn(`No signed URL returned for: ${assetPath}`);
         return null;
       }
-
-      console.log(`[AuthImageService] Got signed URL, downloading image`);
 
       // Download using the signed URL (no auth needed, URL is pre-signed)
       const downloadResult = await FileSystem.downloadAsync(
@@ -173,32 +198,27 @@ export class AuthenticatedImageService {
         cachedPath
       );
 
-      console.log(`[AuthImageService] Download result status: ${downloadResult.status}`);
-
       if (downloadResult.status === 200) {
         // Validate the downloaded file
         const isValid = await this.validateCachedFile(cachedPath);
         if (isValid) {
-          console.log(`[AuthImageService] Image cached and validated: ${cacheFilename}`);
           // Add to memory cache for instant subsequent lookups
           this.memoryCache.set(remoteUrl, cachedPath);
           return cachedPath;
         } else {
-          console.error(`[AuthImageService] Downloaded file failed validation, deleting: ${cachedPath}`);
+          log.error(`Downloaded file failed validation, deleting: ${cachedPath}`);
           await this.deleteFile(cachedPath);
           return null;
         }
       } else if (downloadResult.status === 404) {
         // File not found - try alternative filenames
-        console.warn(`[AuthImageService] File not found (404): ${assetPath}`);
         return await this.tryAlternativePaths(remoteUrl, cachedPath, cacheFilename);
       } else {
-        console.error(`[AuthImageService] Download failed with status ${downloadResult.status}`);
+        log.error(`Download failed with status ${downloadResult.status}`);
         return null;
       }
     } catch (error) {
-      console.error(`[AuthImageService] FATAL ERROR in getImageUri:`, error);
-      console.error(`[AuthImageService] Error stack:`, error instanceof Error ? error.stack : 'no stack');
+      log.error(`Error in getImageUri:`, error);
       return null;
     }
   }
@@ -225,7 +245,6 @@ export class AuthenticatedImageService {
     const alternatives = Array.from(alternativesSet);
 
     if (alternatives.length === 0) {
-      console.warn(`[AuthImageService] No alternative paths available for: ${remoteUrl}`);
       return null;
     }
 
@@ -246,7 +265,6 @@ export class AuthenticatedImageService {
         );
 
         if (downloadResult.status === 200) {
-          console.log(`[AuthImageService] Downloaded via alternative path: ${altAssetPath}`);
           // Add to memory cache for instant subsequent lookups
           this.memoryCache.set(remoteUrl, cachedPath);
           return cachedPath;
@@ -257,8 +275,8 @@ export class AuthenticatedImageService {
       }
     }
 
-    // Only log once when all alternatives fail (not for each attempt)
-    console.warn(`[AuthImageService] Asset not available: ${this.extractAssetPath(remoteUrl)}`);
+    // Asset not available via any path
+    log.warn(`Asset not available: ${this.extractAssetPath(remoteUrl)}`);
     return null;
   }
 
@@ -280,10 +298,9 @@ export class AuthenticatedImageService {
         path = path.substring('assets/'.length);
       }
 
-      console.log(`[AuthImageService] Extracted path from URL: ${path}`);
       return path || null;
     } catch (error) {
-      console.error(`[AuthImageService] Error parsing URL: ${url}`, error);
+      log.error(`Error parsing URL: ${url}`, error);
       return null;
     }
   }
@@ -302,7 +319,6 @@ export class AuthenticatedImageService {
     // Remove any query parameters
     const cleanFilename = filename.split('?')[0];
 
-    console.log(`[AuthImageService] Cache filename: ${cleanFilename} (from ${url})`);
     return cleanFilename || `image-${this.hashCode(url)}.webp`;
   }
 
@@ -356,22 +372,20 @@ export class AuthenticatedImageService {
       }
 
       // Download the asset
-      console.log(`[AuthImageService] Downloading asset: ${assetPath}`);
       const downloadResult = await FileSystem.downloadAsync(signedUrl, cachedPath);
 
       if (downloadResult.status === 200) {
-        console.log(`[AuthImageService] Asset cached successfully: ${assetPath}`);
         // Add to memory cache if remoteUrl provided for instant subsequent lookups
         if (remoteUrl) {
           this.memoryCache.set(remoteUrl, cachedPath);
         }
         return cachedPath;
       } else {
-        console.error(`[AuthImageService] Download failed with status ${downloadResult.status}`);
+        log.error(`Download failed with status ${downloadResult.status}`);
         throw new Error(`Download failed with status ${downloadResult.status}`);
       }
     } catch (error) {
-      console.error(`[AuthImageService] Error downloading asset ${assetPath}:`, error);
+      log.error(`Error downloading asset ${assetPath}:`, error);
       throw error;
     }
   }
@@ -382,18 +396,15 @@ export class AuthenticatedImageService {
   static async clearCache(): Promise<void> {
     try {
       // Clear memory cache first
-      const memoryCacheSize = this.memoryCache.size;
       this.memoryCache.clear();
-      console.log(`[AuthImageService] Memory cache cleared (${memoryCacheSize} entries)`);
 
       // Clear file system cache
       const dirInfo = await FileSystem.getInfoAsync(this.CACHE_DIR);
       if (dirInfo.exists) {
         await FileSystem.deleteAsync(this.CACHE_DIR);
-        console.log('[AuthImageService] File cache cleared');
       }
     } catch (error) {
-      console.error('[AuthImageService] Error clearing cache:', error);
+      log.error('Error clearing cache:', error);
     }
   }
 
@@ -406,13 +417,11 @@ export class AuthenticatedImageService {
       const fileInfo = await FileSystem.getInfoAsync(filePath);
 
       if (!fileInfo.exists) {
-        console.log(`[AuthImageService] Validation failed: file does not exist`);
         return false;
       }
 
       const size = (fileInfo as any).size || 0;
       if (size < MIN_VALID_FILE_SIZE) {
-        console.log(`[AuthImageService] Validation failed: file too small (${size} bytes)`);
         return false;
       }
 
@@ -433,22 +442,19 @@ export class AuthenticatedImageService {
         // Check for WebP format
         if (filePath.endsWith('.webp')) {
           if (header !== WEBP_MAGIC || webpMarker !== WEBP_MAGIC_OFFSET_4) {
-            console.log(`[AuthImageService] Validation failed: invalid WebP header (got: ${header}...${webpMarker})`);
             return false;
           }
         }
         // For other formats, just check that we could read the file
 
-      } catch (readError) {
+      } catch {
         // If we can't read the file, it might be corrupted
-        console.log(`[AuthImageService] Validation failed: could not read file header`, readError);
         return false;
       }
 
-      console.log(`[AuthImageService] File validated successfully: ${filePath.split('/').pop()}`);
       return true;
     } catch (error) {
-      console.error(`[AuthImageService] Error validating file:`, error);
+      log.error(`Error validating file:`, error);
       return false;
     }
   }
@@ -461,10 +467,9 @@ export class AuthenticatedImageService {
       const fileInfo = await FileSystem.getInfoAsync(filePath);
       if (fileInfo.exists) {
         await FileSystem.deleteAsync(filePath);
-        console.log(`[AuthImageService] Deleted file: ${filePath.split('/').pop()}`);
       }
     } catch (error) {
-      console.error(`[AuthImageService] Error deleting file:`, error);
+      log.error(`Error deleting file:`, error);
     }
   }
 
@@ -480,9 +485,8 @@ export class AuthenticatedImageService {
       const cacheFilename = this.getCacheFilename(remoteUrl);
       const cachedPath = `${this.CACHE_DIR}${cacheFilename}`;
       await this.deleteFile(cachedPath);
-      console.log(`[AuthImageService] Invalidated cache for: ${remoteUrl}`);
     } catch (error) {
-      console.error(`[AuthImageService] Error invalidating cache:`, error);
+      log.error(`Error invalidating cache:`, error);
     }
   }
 
@@ -491,15 +495,11 @@ export class AuthenticatedImageService {
    * Used when a story is updated to ensure fresh images are downloaded
    */
   static async invalidateCacheForUrls(urls: string[]): Promise<void> {
-    console.log(`[AuthImageService] Invalidating cache for ${urls.length} URLs`);
-
     for (const url of urls) {
       if (url) {
         await this.invalidateCache(url);
       }
     }
-
-    console.log(`[AuthImageService] Cache invalidation complete for ${urls.length} URLs`);
   }
 }
 

@@ -46,10 +46,10 @@ import type { MenuItemData } from './main-menu/index';
 
 interface MainMenuProps {
   onNavigate: (destination: string) => void;
-  isActive?: boolean; // Add isActive prop to control animations
+  isActive?: boolean; // Kept for API compatibility with EnhancedPageTransition
 }
 
-function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
+function MainMenuComponent({ onNavigate }: MainMenuProps) {
   const insets = useSafeAreaInsets();
   const { scaledButtonSize, scaledFontSize } = useAccessibility();
 
@@ -321,25 +321,11 @@ function MainMenuComponent({ onNavigate, isActive = true }: MainMenuProps) {
       </View>
 
       <View style={mainMenuStyles.bearContainer} pointerEvents="none">
-        {isActive ? (
-          <BearImage />
-        ) : (
-          <BearImage
-            width={ASSET_DIMENSIONS.bear.width / 5}
-            height={ASSET_DIMENSIONS.bear.height / 5}
-          />
-        )}
+        <BearImage />
       </View>
 
       <View style={mainMenuStyles.moonContainer} pointerEvents="none">
-        {isActive ? (
-          <MoonImage />
-        ) : (
-          <MoonImage
-            width={ASSET_DIMENSIONS.moon.width / 5}
-            height={ASSET_DIMENSIONS.moon.height / 5}
-          />
-        )}
+        <MoonImage />
       </View>
 
 

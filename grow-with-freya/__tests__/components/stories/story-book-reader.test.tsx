@@ -89,32 +89,6 @@ describe('StoryBookReader', () => {
     expect(() => result.toJSON()).not.toThrow();
   });
 
-  it('renders with onReadAnother prop', () => {
-    const mockOnReadAnother = jest.fn();
-    const result = render(
-      <StoryBookReader
-        story={mockStory}
-        onExit={mockOnExit}
-        onReadAnother={mockOnReadAnother}
-      />
-    );
-    expect(result).toBeTruthy();
-    expect(() => result.toJSON()).not.toThrow();
-  });
-
-  it('renders with onBedtimeMusic prop', () => {
-    const mockOnBedtimeMusic = jest.fn();
-    const result = render(
-      <StoryBookReader
-        story={mockStory}
-        onExit={mockOnExit}
-        onBedtimeMusic={mockOnBedtimeMusic}
-      />
-    );
-    expect(result).toBeTruthy();
-    expect(() => result.toJSON()).not.toThrow();
-  });
-
   it('handles story without pages gracefully', () => {
     const storyWithoutPages: Story = {
       ...mockStory,

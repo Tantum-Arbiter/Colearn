@@ -12,25 +12,16 @@ interface SimpleStoryScreenProps {
 export function SimpleStoryScreen({
   onStorySelect,
   selectedStory,
-  onStoryTransitionComplete,
   onBack,
 }: SimpleStoryScreenProps) {
-  const handleStorySelect = (story: Story) => {
-    // Call the story select callback
-    if (onStorySelect) {
-      onStorySelect(story);
-    }
-
-    // Since we're not doing the thumbnail expansion animation,
-    // immediately call the transition complete callback
-    if (onStoryTransitionComplete) {
-      onStoryTransitionComplete();
-    }
-  };
+  // Story selection now uses the StoryTransitionContext for mode selection overlay
+  // The onStoryTransitionComplete is no longer called immediately -
+  // instead, the context's onBeginCallback handles starting the story reader
+  // after the user selects a mode and taps "Begin"
 
   return (
     <StorySelectionScreen
-      onStorySelect={handleStorySelect}
+      onStorySelect={onStorySelect}
     />
   );
 }

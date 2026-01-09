@@ -67,8 +67,6 @@ export function MusicSelectionScreen({
   });
 
   const handleTrackPress = async (track: MusicTrack) => {
-    console.log('Track selected:', track.title);
-
     // Handle sequence tracks (like sleep progression)
     if (track.isSequence && track.sequenceTracks) {
       try {
@@ -78,28 +76,24 @@ export function MusicSelectionScreen({
           .filter((t): t is MusicTrack => t !== undefined);
 
         if (sequenceTracks.length > 0) {
-          console.log('Starting sleep sequence with', sequenceTracks.length, 'phases');
-
           // Start the sleep sequence
           const sleepPlayer = SleepSequencePlayer.getInstance();
           await sleepPlayer.startSleepSequence(
             sequenceTracks,
-            (phase, phaseNumber) => {
-              console.log(`Phase ${phaseNumber}: ${phase.title}`);
+            () => {
+              // Phase change callback - no logging needed
             },
             () => {
-              console.log('Sleep sequence completed');
+              // Completion callback - no logging needed
             }
           );
 
           // Select the first track for the UI
           onTrackSelect(sequenceTracks[0]);
         } else {
-          console.warn('No valid tracks found for sequence');
           onTrackSelect(track);
         }
-      } catch (error) {
-        console.error('Failed to start sleep sequence:', error);
+      } catch {
         onTrackSelect(track);
       }
     } else {
@@ -109,7 +103,6 @@ export function MusicSelectionScreen({
   };
 
   const handlePlaylistPress = (category: MusicCategory) => {
-    console.log('Playlist selected:', category);
     onPlaylistSelect(category);
   };
 

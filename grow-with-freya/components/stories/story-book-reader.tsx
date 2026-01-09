@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, Dimensions, StatusBar, Image, ImageBackground, ScrollView, NativeSyntheticEvent, NativeScrollEvent, Modal, TextInput, Alert, KeyboardAvoidingView, Platform, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Dimensions, StatusBar, ImageBackground, ScrollView, Modal, TextInput, Alert, KeyboardAvoidingView, Platform, useWindowDimensions, Image as RNImage, AppState } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -18,7 +19,6 @@ import { Story, StoryPage, STORY_TAGS, InteractiveElement } from '@/types/story'
 import { InteractiveElementComponent } from './interactive-element';
 import { Fonts } from '@/constants/theme';
 import { useStoryTransition } from '@/contexts/story-transition-context';
-import { StoryCompletionScreen } from './story-completion-screen';
 import { MusicControl } from '../ui/music-control';
 import { ParentsOnlyModal } from '../ui/parents-only-modal';
 import { useAppStore } from '@/store/app-store';
@@ -28,34 +28,50 @@ import * as Haptics from 'expo-haptics';
 import { voiceRecordingService, VoiceOver } from '@/services/voice-recording-service';
 import { useGlobalSound } from '@/contexts/global-sound-context';
 import { AuthenticatedImage } from '@/components/ui/authenticated-image';
+import { Logger } from '@/utils/logger';
+import { PagePreviewModal } from './pages-preview-modal';
+
+const log = Logger.create('StoryBookReader');
 
 
 
 interface StoryBookReaderProps {
   story: Story;
+  initialMode?: 'read' | 'record' | 'narrate';
+  initialVoiceOver?: VoiceOver | null;
+  skipCoverPage?: boolean;
+  skipInitialFadeIn?: boolean; // Skip fade-in when transitioning from overlay (image already visible)
   onExit: () => void;
-  onReadAnother?: (story: Story) => void;
-  onBedtimeMusic?: () => void;
 }
 
-export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }: StoryBookReaderProps) {
+export function StoryBookReader({
+  story,
+  initialMode = 'read',
+  initialVoiceOver = null,
+  skipCoverPage = false,
+  skipInitialFadeIn = false,
+  onExit,
+}: StoryBookReaderProps) {
   const insets = useSafeAreaInsets();
-  const { isTransitioning: isStoryTransitioning, completeTransition } = useStoryTransition();
-  const [currentPageIndex, setCurrentPageIndex] = useState(0); // Start with cover page
+  const { isTransitioning: isStoryTransitioning, completeTransition, startExitAnimation, returnToModeSelection } = useStoryTransition();
+  // Start from page 1 if skipping cover, otherwise start from cover (page 0)
+  const [currentPageIndex, setCurrentPageIndex] = useState(skipCoverPage ? 1 : 0);
+  const [previousPageIndex, setPreviousPageIndex] = useState<number | null>(null); // For crossfade
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isOrientationTransitioning, setIsOrientationTransitioning] = useState(false);
   const [isLandscapeReady, setIsLandscapeReady] = useState(false);
+  const [isExiting, setIsExiting] = useState(false); // Prevent double-tap on exit/close buttons
 
   const [preloadedPages, setPreloadedPages] = useState<Set<number>>(new Set());
-  const [showCompletionScreen, setShowCompletionScreen] = useState(false);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<'main' | 'fontSize' | null>(null);
-  const [readingMode, setReadingMode] = useState<'read' | 'record' | 'narrate'>('read');
+  const [showPagePreview, setShowPagePreview] = useState(false);
+  const [readingMode, setReadingMode] = useState<'read' | 'record' | 'narrate'>(initialMode);
 
   // Voice recording state
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
-  const [currentVoiceOver, setCurrentVoiceOver] = useState<VoiceOver | null>(null);
+  const [currentVoiceOver, setCurrentVoiceOver] = useState<VoiceOver | null>(initialVoiceOver);
   const [showVoiceOverNameModal, setShowVoiceOverNameModal] = useState(false);
   const [voiceOverName, setVoiceOverName] = useState('');
   const [currentRecordingUri, setCurrentRecordingUri] = useState<string | null>(null);
@@ -65,7 +81,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
   const [isPlaying, setIsPlaying] = useState(false);
   const [availableVoiceOvers, setAvailableVoiceOvers] = useState<VoiceOver[]>([]);
   const [showVoiceOverSelectModal, setShowVoiceOverSelectModal] = useState(false);
-  const [selectedVoiceOver, setSelectedVoiceOver] = useState<VoiceOver | null>(null);
+  const [selectedVoiceOver, setSelectedVoiceOver] = useState<VoiceOver | null>(initialVoiceOver);
   const [isOverwriteSession, setIsOverwriteSession] = useState(false);
   const [isNewVoiceOver, setIsNewVoiceOver] = useState(false);
   const [narrationProgress, setNarrationProgress] = useState(0);
@@ -86,60 +102,25 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
   const { scaledFontSize, scaledButtonSize, textSizeScale } = useAccessibility();
   const setTextSizeScale = useAppStore((state) => state.setTextSizeScale);
 
-  // Track if text box needs scrolling (for larger text sizes)
-  const [canScrollText, setCanScrollText] = useState(false);
-  // true = show up arrow (user is at bottom), false = show down arrow (user is at top/middle)
-  const [showUpArrow, setShowUpArrow] = useState(false);
-
-  // Reset scroll state when page changes and scroll to top
+  // Reset scroll position and flash indicators when page or story changes
   useEffect(() => {
-    setCanScrollText(false);
-    setShowUpArrow(false);
-    setScrollViewHeight(0);
-    setTextContentHeight(0);
-    // Scroll to top of text box when page changes
     textScrollViewRef.current?.scrollTo({ y: 0, animated: false });
-  }, [currentPageIndex]);
+    // Flash scroll indicators after a short delay to ensure ScrollView is ready
+    const timer = setTimeout(() => {
+      textScrollViewRef.current?.flashScrollIndicators();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [currentPageIndex, story.id]);
 
-  // Handle text scroll events - track position for up/down indicators
-  const handleTextScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
-    // Add small tolerance for edge detection
-    const isAtBottom = contentOffset.y + layoutMeasurement.height >= contentSize.height - 10;
-    const isAtTop = contentOffset.y <= 5;
-    // Show up arrow only when at bottom (and not at top for single-screen content)
-    setShowUpArrow(isAtBottom && !isAtTop);
-  }, []);
-
-  // Track ScrollView layout height for accurate overflow detection
-  const [scrollViewHeight, setScrollViewHeight] = useState(0);
-  const [textContentHeight, setTextContentHeight] = useState(0);
-
-  // Check if text can scroll whenever either dimension changes
+  // Also reset scroll position and flash when text size changes
   useEffect(() => {
-    if (scrollViewHeight > 0 && textContentHeight > 0) {
-      setCanScrollText(textContentHeight > scrollViewHeight + 2);
-    }
-  }, [scrollViewHeight, textContentHeight]);
+    textScrollViewRef.current?.scrollTo({ y: 0, animated: false });
+    const timer = setTimeout(() => {
+      textScrollViewRef.current?.flashScrollIndicators();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [textSizeScale]);
 
-  // Handle text content size change to detect overflow
-  const handleTextContentSizeChange = useCallback((contentWidth: number, contentHeight: number) => {
-    setTextContentHeight(contentHeight);
-  }, []);
-
-  // Handle ScrollView layout to get actual visible height
-  const handleScrollViewLayout = useCallback((event: { nativeEvent: { layout: { height: number } } }) => {
-    setScrollViewHeight(event.nativeEvent.layout.height);
-  }, []);
-
-
-
-  // Completion screen entrance animation
-  const completionOpacity = useSharedValue(0);
-  const completionScale = useSharedValue(0.8);
-
-  // Soft fade exit animation
-  const scrollUpOpacity = useSharedValue(1);
 
 
 
@@ -151,23 +132,16 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
 
     const checkAndSetLandscape = async () => {
       try {
-        console.log('Story reader mounted - checking orientation...');
-
         const orientation = await ScreenOrientation.getOrientationAsync();
         const isLandscape = orientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
                            orientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT;
 
-        if (isLandscape) {
-          console.log('Already in landscape from thumbnail expansion');
-          setIsLandscapeReady(true);
-        } else {
-          console.log('Not in landscape yet - forcing landscape mode');
+        if (!isLandscape) {
           await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
-          console.log('Landscape transition complete');
-          setIsLandscapeReady(true);
         }
+        setIsLandscapeReady(true);
       } catch (error) {
-        console.warn('Failed to check/set orientation:', error);
+        log.warn('Failed to set orientation:', error);
         setIsLandscapeReady(true); // Continue anyway
       }
     };
@@ -177,43 +151,34 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
     return () => {
       if (isMounted) {
         isMounted = false;
-        console.log('Restoring portrait orientation...');
         ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP)
-          .then(() => console.log('Successfully restored to portrait'))
-          .catch(error => console.warn('Failed to restore orientation:', error));
+          .catch(error => log.warn('Failed to restore orientation:', error));
       }
     };
   }, []);
 
   // Handle story fade-in animation and initial preloading (only once when component mounts)
   useEffect(() => {
-    console.log('Story reader starting - book opening animation');
-
-    // Start with book in closed state
-    exitScale.value = 0.3;
-    exitOpacity.value = 0;
-    exitRotateY.value = -90;
+    // Simple fade-in entrance - the book opening animation is now handled by
+    // the story transition context overlay before we get here
+    exitScale.value = 1;
+    exitRotateY.value = 0;
+    exitTranslateX.value = 0;
+    exitTranslateY.value = 0;
     storyOpacity.value = 1;
 
-    // Book opening animation (reverse of closing)
-    // Phase 1: Initial opening
-    exitScale.value = withTiming(0.8, { duration: 400, easing: Easing.out(Easing.cubic) });
-    exitOpacity.value = withTiming(0.7, { duration: 400, easing: Easing.out(Easing.cubic) });
-    exitRotateY.value = withTiming(-20, { duration: 400, easing: Easing.out(Easing.cubic) });
-
-    // Phase 2: Full opening after delay
-    setTimeout(() => {
-      exitScale.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) });
-      exitOpacity.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) });
-      exitRotateY.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) });
-    }, 400);
-
-
+    if (skipInitialFadeIn) {
+      // Skip fade-in - image is already visible from transition overlay
+      exitOpacity.value = 1;
+    } else {
+      // Simple fade in
+      exitOpacity.value = 0;
+      exitOpacity.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.cubic) });
+    }
 
     // Preload all story pages immediately for instant navigation
-    console.log('Starting aggressive preload of all story pages');
     const pages = story.pages || [];
-    pages.forEach((page, index) => {
+    pages.forEach((page) => {
       if (page.backgroundImage) {
         const source = typeof page.backgroundImage === 'string'
           ? { uri: page.backgroundImage }
@@ -237,7 +202,6 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
 
     // Mark all pages as preloaded
     setPreloadedPages(new Set(pages.map((_, index) => index)));
-    console.log(`Preloaded all ${pages.length} story pages for instant navigation`);
   }, []); // Empty dependency array ensures this only runs once
 
   // Preload adjacent pages when current page changes (skip on last page)
@@ -249,8 +213,6 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       // Don't preload on last page to avoid interference with completion transition
       if (!isLastPage) {
         preloadAdjacentPages(currentPageIndex);
-      } else {
-        console.log('Skipping preload on last page to ensure clean completion transition');
       }
     }
   }, [currentPageIndex, isLandscapeReady]);
@@ -278,16 +240,13 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
   // Aggressive preloading for instant page transitions
   const preloadAdjacentPages = (currentIndex: number) => {
     const pages = story.pages || [];
-    const pagesToPreload = [];
     const isLastPage = currentIndex >= pages.length - 1;
 
     // Skip preloading entirely if we're on the last page
-    if (isLastPage) {
-      console.log('On last page - skipping all preloading to ensure clean completion');
-      return;
-    }
+    if (isLastPage) return;
 
     // Preload 2 pages in each direction for ultra-smooth navigation
+    const pagesToPreload = [];
     for (let i = Math.max(0, currentIndex - 2); i <= Math.min(pages.length - 1, currentIndex + 2); i++) {
       if (i !== currentIndex) {
         pagesToPreload.push(i);
@@ -298,19 +257,14 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       if (!preloadedPages.has(pageIndex)) {
         const page = pages[pageIndex];
         if (page) {
-          console.log(`Preloading page ${pageIndex} for instant transitions`);
-
           // Preload background image with high priority
           if (page.backgroundImage) {
             const source = typeof page.backgroundImage === 'string'
               ? { uri: page.backgroundImage }
               : page.backgroundImage;
 
-            // Use Image.prefetch for local images, or direct prefetch for URIs
             if (source.uri) {
               Image.prefetch(source.uri).catch(() => {});
-            } else {
-              // For require() images, they're already bundled - just mark as preloaded
             }
           }
 
@@ -332,88 +286,56 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
     });
   };
 
-  // Handle story completion with book closing animation
+  // Handle story completion - triggers exit animation
   const handleStoryCompletion = async () => {
-    try {
-      console.log('Starting story completion transition...');
+    // Prevent double-tap on finish button
+    if (isExiting) return;
 
-      // In record mode, go back to cover page instead of showing completion screen
+    try {
+      // In record mode, show completion message and return to mode selection
       if (readingMode === 'record') {
-        console.log('Recording complete - returning to cover page');
         const voiceOverName = currentVoiceOver?.name || 'this story';
         // Reset recording state
         setTempRecordingUri(null);
         setCurrentRecordingUri(null);
         setIsNewVoiceOver(false);
         setIsOverwriteSession(false);
-        setReadingMode('read');
-        setCurrentVoiceOver(null);
-        // Go back to cover page
-        setCurrentPageIndex(0);
-        // Ensure page opacity is correct
-        currentPageOpacity.value = 1;
+
         Alert.alert(
           'Recording Complete',
           `Your voice recording for "${voiceOverName}" has been saved.`,
-          [{ text: 'OK' }]
+          [{
+            text: 'OK',
+            onPress: () => {
+              // Return to mode selection overlay (not full exit)
+              // Pass current page index so the exit animation shows the current page
+              returnToModeSelection(() => {
+                // Reset reading mode after returning to mode selection
+                setReadingMode('read');
+                setCurrentVoiceOver(null);
+              }, currentPageIndex);
+            }
+          }]
         );
         return;
       }
 
-      console.log('Waiting for final page to settle...');
-      await new Promise(resolve => {
-        // Use requestAnimationFrame to ensure render cycle is complete
-        requestAnimationFrame(() => {
-          // Add small additional delay to ensure image rendering is complete
-          setTimeout(resolve, 50);
-        });
-      });
-
-      // Start book closing animation
-      console.log('Starting completion animation phase 1');
-      exitScale.value = withTiming(0.8, { duration: 400, easing: Easing.out(Easing.cubic) });
-      exitOpacity.value = withTiming(0.7, { duration: 400, easing: Easing.out(Easing.cubic) });
-      exitRotateY.value = withTiming(-20, { duration: 400, easing: Easing.out(Easing.cubic) });
-
-
-      await new Promise(resolve => setTimeout(resolve, 400));
-
-      // Continue closing animation
-      exitScale.value = withTiming(0.3, { duration: 600, easing: Easing.in(Easing.cubic) });
-      exitOpacity.value = withTiming(0, { duration: 600, easing: Easing.in(Easing.cubic) });
-      exitRotateY.value = withTiming(-90, { duration: 600, easing: Easing.in(Easing.cubic) });
-
-
-      await new Promise(resolve => setTimeout(resolve, 600));
-
-      // Show completion screen with entrance animation
-      console.log('Book closing animation complete - animating in completion screen');
-      setShowCompletionScreen(true);
-
-      // Small delay to ensure completion screen is mounted, then animate in
-      await new Promise(resolve => setTimeout(resolve, 50));
-
-      // Animate completion screen entrance
-      completionOpacity.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.cubic) });
-      completionScale.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.cubic) });
-
-      // Reset animation values for potential re-entry
-      exitScale.value = 1;
-      exitOpacity.value = 1;
-      exitRotateY.value = 0;
-
+      // Story complete - trigger exit animation (same as pressing X button)
+      handleExit();
     } catch (error) {
-      console.error('Error during story completion transition:', error);
-      // Fallback: show completion screen immediately
-      setShowCompletionScreen(true);
+      log.error('Error during story completion:', error);
+      // Fallback: immediate exit
+      onExit();
     }
   };
 
-  // Handle exit with orientation restore
+  // Handle exit with orientation restore and reverse animation
   const handleExit = async () => {
-    try {
-      console.log('Starting exit transition...');
+    // Prevent double-tap on exit/close button
+    if (isExiting) return;
+    setIsExiting(true);
 
+    try {
       // Stop any playing narration/recording audio immediately
       if (playbackSound) {
         try {
@@ -422,37 +344,34 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
           setPlaybackSound(null);
           setIsPlaying(false);
         } catch (audioError) {
-          console.warn('Failed to stop playback audio on exit:', audioError);
+          log.warn('Failed to stop playback audio on exit:', audioError);
         }
       }
 
-      // Start book closing animation
-      console.log('Starting exit animation phase 1');
-      exitScale.value = withTiming(0.8, { duration: 300, easing: Easing.out(Easing.cubic) });
-      exitOpacity.value = withTiming(0.7, { duration: 300, easing: Easing.out(Easing.cubic) });
-      exitRotateY.value = withTiming(-20, { duration: 300, easing: Easing.out(Easing.cubic) });
-
-
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      // Continue closing animation
-      exitScale.value = withTiming(0.3, { duration: 400, easing: Easing.in(Easing.cubic) });
-      exitOpacity.value = withTiming(0, { duration: 400, easing: Easing.in(Easing.cubic) });
-      exitRotateY.value = withTiming(-90, { duration: 400, easing: Easing.in(Easing.cubic) });
-
-
-      await new Promise(resolve => setTimeout(resolve, 400));
-
-      // Restore portrait orientation
+      // Restore portrait orientation first (story reader stays visible)
       await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-      console.log('Successfully restored to portrait on exit');
 
       // Small delay for orientation change
       await new Promise(resolve => setTimeout(resolve, 200));
 
-      onExit();
+      // Start the exit animation - this renders the transition overlay BEHIND the story reader
+      // The story reader has zIndex 2000 (higher than overlay's 1000) so it stays on top
+      // This prevents any white flash from the overlay mounting/initializing
+      startExitAnimation(() => {
+        // After the animation completes, call onExit
+        setTimeout(() => {
+          onExit();
+        }, 50);
+      }, currentPageIndex);
+
+      // Wait for the overlay to fully render and initialize (the book at full screen)
+      // The story reader stays on top during this time, hiding any initialization
+      await new Promise(resolve => setTimeout(resolve, 150));
+
+      // Now fade out the story reader to reveal the ready animation underneath
+      exitOpacity.value = withTiming(0, { duration: 150, easing: Easing.out(Easing.cubic) });
     } catch (error) {
-      console.warn('Failed to restore orientation on exit:', error);
+      log.warn('Failed to restore orientation on exit:', error);
       onExit();
     }
   };
@@ -464,36 +383,56 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
   const bookOpeningScale = useSharedValue(1);
   const bookOpeningRotateY = useSharedValue(0);
 
-  // Simple single page opacity - just like cover tap
-  const currentPageOpacity = useSharedValue(1);
+  // Separate opacity values for image and text transitions
+  const imageOpacity = useSharedValue(1); // Image fades IN only (no fade out)
+  const textOpacity = useSharedValue(1);  // Text fades out then in
 
   // Exit animation values
   const exitScale = useSharedValue(1);
   const exitOpacity = useSharedValue(1);
   const exitRotateY = useSharedValue(0);
+  const exitTranslateX = useSharedValue(0);
+  const exitTranslateY = useSharedValue(0);
+
+  // Page preview slide-out animations
+  const leftButtonSlide = useSharedValue(0);
+  const rightButtonSlide = useSharedValue(0);
+  const textBoxSlide = useSharedValue(0);
+  const uiOpacity = useSharedValue(1);
 
 
-  
+
   // Get story pages or create default pages if none exist
   const pages = story.pages || [];
   const currentPage = pages[currentPageIndex];
+  const previousPage = previousPageIndex !== null ? pages[previousPageIndex] : null;
 
   // DEBUG: Log page background images and interactive elements to diagnose CMS issues
   useEffect(() => {
-    console.log(`[StoryBookReader] DEBUG: Story "${story.id}" page details:`);
-    pages.forEach((page, idx) => {
-      const hasInteractive = page.interactiveElements && page.interactiveElements.length > 0;
-      console.log(`[StoryBookReader]   Page ${idx} (pageNumber: ${page.pageNumber}):`);
-      console.log(`[StoryBookReader]     - Background: ${page.backgroundImage || 'NO_IMAGE'}`);
-      console.log(`[StoryBookReader]     - Interactive elements: ${hasInteractive ? page.interactiveElements!.length : 0}`);
-      if (hasInteractive) {
-        page.interactiveElements!.forEach((el, elIdx) => {
-          console.log(`[StoryBookReader]       ${elIdx}: id=${el.id}, type=${el.type}, image=${el.image}`);
-          console.log(`[StoryBookReader]         position: x=${el.position?.x}, y=${el.position?.y}`);
-          console.log(`[StoryBookReader]         size: w=${el.size?.width}, h=${el.size?.height}`);
-        });
+    if (__DEV__) {
+      log.debug(`Story "${story.id}" has ${pages.length} pages`);
+      pages.forEach((page, idx) => {
+        const hasInteractive = page.interactiveElements && page.interactiveElements.length > 0;
+        if (hasInteractive) {
+          log.debug(`Page ${idx}: ${page.interactiveElements!.length} interactive elements`);
+        }
+      });
+    }
+  }, [story.id, pages]);
+
+  // Prefetch all page images for smooth page preview modal
+  useEffect(() => {
+    const imagesToPrefetch: string[] = [];
+    pages.forEach((page) => {
+      const imageSource = page.backgroundImage || page.characterImage;
+      if (typeof imageSource === 'string' && imageSource.length > 0) {
+        imagesToPrefetch.push(imageSource);
       }
     });
+
+    if (imagesToPrefetch.length > 0) {
+      Image.prefetch(imagesToPrefetch);
+    }
   }, [story.id, pages]);
 
   // No caching needed - simple single page approach
@@ -514,8 +453,6 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       return;
     }
 
-    console.log('Cover tapped - going directly to page 1');
-
     // Go directly to page 1 with no animation
     setCurrentPageIndex(1);
   };
@@ -527,6 +464,20 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       await voiceRecordingService.initialize();
       const voiceOvers = await voiceRecordingService.getVoiceOversForStory(story.id);
       setAvailableVoiceOvers(voiceOvers);
+
+      // If starting in record or narrate mode (skipping cover), show the appropriate modal
+      // after voice overs are loaded - BUT only if no voice over was already selected
+      // (from the transition context's mode selection screen)
+      if (skipCoverPage && initialMode === 'record' && !initialVoiceOver) {
+        // Small delay to ensure component is mounted
+        setTimeout(() => {
+          setShowVoiceOverNameModal(true);
+        }, 100);
+      } else if (skipCoverPage && initialMode === 'narrate' && !initialVoiceOver) {
+        setTimeout(() => {
+          setShowVoiceOverSelectModal(true);
+        }, 100);
+      }
     };
     initRecording();
 
@@ -539,7 +490,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [story.id]);
+  }, [story.id, skipCoverPage, initialMode]);
 
   // Load existing recording when page changes (in record mode)
   useEffect(() => {
@@ -554,7 +505,6 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       const existingRecording = currentVoiceOver.pageRecordings[currentPageIndex];
       if (existingRecording) {
         setCurrentRecordingUri(existingRecording.uri);
-        console.log(`Loaded existing recording for page ${currentPageIndex}: ${existingRecording.uri}`);
       } else {
         setCurrentRecordingUri(null);
       }
@@ -567,11 +517,16 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
   // Recording functions
   const startRecordingNow = async (activeVoiceOver: VoiceOver) => {
     try {
+      // Check if app is in background - can't start recording if so
+      if (AppState.currentState !== 'active') {
+        log.warn('Cannot start recording while app is in background');
+        return;
+      }
+
       // Pause background music before recording
       if (globalSound.isPlaying) {
         setWasMusicPlayingBeforeRecording(true);
         await globalSound.pause();
-        console.log('Background music paused for recording');
       } else {
         setWasMusicPlayingBeforeRecording(false);
       }
@@ -599,7 +554,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
         Alert.alert('Permission Required', 'Microphone access is needed to record your voice.');
       }
     } catch (error) {
-      console.error('Failed to start recording:', error);
+      log.error('Failed to start recording:', error);
       // Resume music if recording failed
       if (wasMusicPlayingBeforeRecording) {
         await globalSound.play();
@@ -663,7 +618,6 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
     // Resume background music if it was playing before recording
     if (wasMusicPlayingBeforeRecording) {
       await globalSound.play();
-      console.log('Background music resumed after recording');
       setWasMusicPlayingBeforeRecording(false);
     }
 
@@ -711,7 +665,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       setTempRecordingUri(null);
       setTempRecordingDuration(0);
     } catch (error) {
-      console.error('Failed to save recording:', error);
+      log.error('Failed to save recording:', error);
     }
   };
 
@@ -740,7 +694,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
       setIsOverwriteSession(false);
       setIsNewVoiceOver(true);
     } catch (error) {
-      console.error('Failed to create voice over:', error);
+      log.error('Failed to create voice over:', error);
       Alert.alert('Error', 'Failed to create voice over. Please try again.');
     }
   };
@@ -874,120 +828,124 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shouldAutoAdvance]);
 
-  // Completion screen handlers
-  const handleReadAnother = (newStory: Story) => {
-    console.log('Reading another story:', newStory.title);
-    if (onReadAnother) {
-      onReadAnother(newStory);
+  // Animate UI elements when page preview opens/closes
+  useEffect(() => {
+    const slideDistance = 150;
+    const duration = 250;
+    const modalAnimationDuration = 300; // Match the modal slide-down duration
+
+    if (showPagePreview) {
+      // Slide out: left button to left, right button to right, text box down
+      leftButtonSlide.value = withTiming(-slideDistance, { duration, easing: Easing.out(Easing.cubic) });
+      rightButtonSlide.value = withTiming(slideDistance, { duration, easing: Easing.out(Easing.cubic) });
+      textBoxSlide.value = withTiming(slideDistance, { duration, easing: Easing.out(Easing.cubic) });
+      uiOpacity.value = withTiming(0, { duration });
+    } else {
+      // Wait for modal to slide down first, then slide buttons back in
+      const delayTimer = setTimeout(() => {
+        leftButtonSlide.value = withTiming(0, { duration, easing: Easing.out(Easing.cubic) });
+        rightButtonSlide.value = withTiming(0, { duration, easing: Easing.out(Easing.cubic) });
+        textBoxSlide.value = withTiming(0, { duration, easing: Easing.out(Easing.cubic) });
+        uiOpacity.value = withTiming(1, { duration });
+      }, modalAnimationDuration);
+
+      return () => clearTimeout(delayTimer);
     }
-  };
+  }, [showPagePreview]);
 
-  const handleRereadCurrent = async () => {
-    console.log('Re-reading current story - starting reverse animation');
+  // Animated styles for page preview slide-out
+  const leftButtonAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: leftButtonSlide.value }],
+    opacity: uiOpacity.value,
+  }));
 
-    try {
-      // Reset to cover page immediately (before hiding completion screen)
-      setCurrentPageIndex(0);
+  const rightButtonAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: rightButtonSlide.value }],
+    opacity: uiOpacity.value,
+  }));
 
-      // Reset completion animation values
-      completionOpacity.value = 0;
-      completionScale.value = 0.8;
+  const textBoxAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: textBoxSlide.value }],
+    opacity: uiOpacity.value,
+  }));
 
-      // Hide completion screen
-      setShowCompletionScreen(false);
+  // Function to render just the image layer (for background/previous page - no animation)
+  const renderPageImage = (page: any, withAnimation = true) => {
+    if (!page || !page.backgroundImage) return null;
 
-      // Small delay to ensure completion screen is hidden and cover page is ready
-      await new Promise(resolve => setTimeout(resolve, 100));
+    const isCoverPage = page.pageNumber === 0;
+    const baseScale = isTablet ? 1.35 : 1.8;
+    const imageScale = isCoverPage ? baseScale * 0.99 : baseScale;
 
-      // Use the same book opening animation as initial story load
-      console.log('Re-reading story - starting book opening animation');
+    const imageContent = (
+      <>
+        {typeof page.backgroundImage === 'string' && page.backgroundImage.includes('api.colearnwithfreya.co.uk') ? (
+          <AuthenticatedImage
+            uri={page.backgroundImage}
+            style={[
+              styles.backgroundImageStyle,
+              { width: '100%', height: '100%', transform: [{ scale: imageScale }] }
+            ]}
+            resizeMode="contain"
+            onError={(error) => {
+              log.error(`Page ${page.pageNumber}: Background image error:`, error);
+            }}
+          />
+        ) : (
+          <Image
+            source={typeof page.backgroundImage === 'string' ? { uri: page.backgroundImage } : page.backgroundImage}
+            style={[
+              styles.backgroundImageStyle,
+              { width: '100%', height: '100%', transform: [{ scale: imageScale }] }
+            ]}
+            contentFit="contain"
+            transition={0}
+            cachePolicy="memory-disk"
+            onError={(error) => {
+              log.error(`Page ${page.pageNumber}: Background image error:`, JSON.stringify(error));
+            }}
+          />
+        )}
+        {/* Character overlay */}
+        {page.characterImage && (
+          typeof page.characterImage === 'string' && page.characterImage.includes('api.colearnwithfreya.co.uk') ? (
+            <AuthenticatedImage
+              uri={page.characterImage}
+              style={styles.characterImage}
+              resizeMode="contain"
+              onError={(error) => {
+                log.error(`Page ${page.pageNumber}: Character image error:`, error);
+              }}
+            />
+          ) : (
+            <Image
+              source={typeof page.characterImage === 'string' ? { uri: page.characterImage } : page.characterImage}
+              style={styles.characterImage}
+              contentFit="contain"
+              transition={0}
+              cachePolicy="memory-disk"
+              onError={(error) => {
+                log.error(`Page ${page.pageNumber}: Character image error:`, JSON.stringify(error));
+              }}
+            />
+          )
+        )}
+      </>
+    );
 
-      // Start with book in closed state
-      exitScale.value = 0.3;
-      exitOpacity.value = 0;
-      exitRotateY.value = -90;
-      storyOpacity.value = 1;
-
-      // Book opening animation (reverse of closing)
-      // Phase 1: Initial opening
-      exitScale.value = withTiming(0.8, { duration: 400, easing: Easing.out(Easing.cubic) });
-      exitOpacity.value = withTiming(0.7, { duration: 400, easing: Easing.out(Easing.cubic) });
-      exitRotateY.value = withTiming(-20, { duration: 400, easing: Easing.out(Easing.cubic) });
-
-      // Phase 2: Full opening after delay
-      setTimeout(() => {
-        exitScale.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) });
-        exitOpacity.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) });
-        exitRotateY.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) });
-      }, 400);
-
-      console.log('Story restarted - back to cover page with fade-in');
-    } catch (error) {
-      console.error('Error during re-read transition:', error);
-      // Fallback: immediate transition with proper animation reset
-      setShowCompletionScreen(false);
-      setCurrentPageIndex(0);
-      exitScale.value = 1;
-      exitOpacity.value = 1;
-      exitRotateY.value = 0;
-      storyOpacity.value = 1;
+    if (withAnimation) {
+      return (
+        <Animated.View style={[StyleSheet.absoluteFill, imageAnimatedStyle]}>
+          {imageContent}
+        </Animated.View>
+      );
     }
-  };
-
-  const handleBedtimeMusic = () => {
-    console.log('Opening bedtime music');
-    if (onBedtimeMusic) {
-      onBedtimeMusic();
-    }
-  };
-
-  const handleCloseCompletion = async () => {
-    try {
-      console.log('Closing story reader with soft fade transition');
-
-      // Stop any playing narration/recording audio
-      if (playbackSound) {
-        try {
-          await playbackSound.stopAsync();
-          await playbackSound.unloadAsync();
-          setPlaybackSound(null);
-          setIsPlaying(false);
-        } catch (audioError) {
-          console.warn('Failed to stop playback audio on close:', audioError);
-        }
-      }
-
-      // Simple, soft fade out transition
-      scrollUpOpacity.value = withTiming(0, {
-        duration: 400,
-        easing: Easing.out(Easing.quad)
-      });
-
-
-      await new Promise(resolve => setTimeout(resolve, 400));
-
-      // Call exit after animation
-      onExit();
-    } catch (error) {
-      console.error('Error during close animation:', error);
-      // Fallback: immediate exit
-      onExit();
-    }
+    return <View style={StyleSheet.absoluteFill}>{imageContent}</View>;
   };
 
   // Function to render page content
   const renderPageContent = (page: any, isNextPage = false) => {
     if (!page) return null;
-
-    // DEBUG: Log which page is being rendered and its background image
-    if (story.id.startsWith('cms-')) {
-      console.log(`[StoryBookReader] RENDER: Page ${page.pageNumber}, BG: ${page.backgroundImage?.split('/').pop() || 'NONE'}`);
-    }
-
-    // Cover pages (page 0) use smaller scale for better presentation
-    const isCoverPage = page.pageNumber === 0;
-    const baseScale = isTablet ? 1.35 : 1.8;
-    const imageScale = isCoverPage ? baseScale * 0.99 : baseScale;
 
     return (
       <>
@@ -997,59 +955,12 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
             styles.fullScreenBackground,
             { backgroundColor: '#000' }
           ]}>
-            {typeof page.backgroundImage === 'string' && page.backgroundImage.includes('api.colearnwithfreya.co.uk') ? (
-              <AuthenticatedImage
-                uri={page.backgroundImage}
-                style={[
-                  styles.backgroundImageStyle,
-                  { width: '100%', height: '100%', transform: [{ scale: imageScale }] }
-                ]}
-                resizeMode="contain"
-                onLoad={() => console.log(`[StoryBookReader] Page ${page.pageNumber}: Background image loaded`)}
-                onError={(error) => {
-                  console.error(`[StoryBookReader] Page ${page.pageNumber}: Background image error:`, error);
-                }}
-              />
-            ) : (
-              <Image
-                source={typeof page.backgroundImage === 'string' ? { uri: page.backgroundImage } : page.backgroundImage}
-                style={[
-                  styles.backgroundImageStyle,
-                  { width: '100%', height: '100%', transform: [{ scale: imageScale }] }
-                ]}
-                resizeMode="contain"
-                onLoad={() => console.log(`[StoryBookReader] Page ${page.pageNumber}: Background image loaded`)}
-                onError={(error) => {
-                  console.error(`[StoryBookReader] Page ${page.pageNumber}: Background image error:`, JSON.stringify(error));
-                  console.error(`[StoryBookReader] Page ${page.pageNumber}: Attempted URL:`, page.backgroundImage);
-                }}
-              />
+            {/* Previous page image - stays at full opacity during crossfade */}
+            {previousPage && previousPage.backgroundImage && (
+              renderPageImage(previousPage, false)
             )}
-            {/* Character overlay - only show if character image exists */}
-            {page.characterImage && (
-              typeof page.characterImage === 'string' && page.characterImage.includes('api.colearnwithfreya.co.uk') ? (
-                <AuthenticatedImage
-                  uri={page.characterImage}
-                  style={styles.characterImage}
-                  resizeMode="contain"
-                  onLoad={() => console.log(`[StoryBookReader] Page ${page.pageNumber}: Character image loaded`)}
-                  onError={(error) => {
-                    console.error(`[StoryBookReader] Page ${page.pageNumber}: Character image error:`, error);
-                  }}
-                />
-              ) : (
-                <Image
-                  source={typeof page.characterImage === 'string' ? { uri: page.characterImage } : page.characterImage}
-                  style={styles.characterImage}
-                  resizeMode="contain"
-                  onLoad={() => console.log(`[StoryBookReader] Page ${page.pageNumber}: Character image loaded`)}
-                  onError={(error) => {
-                    console.error(`[StoryBookReader] Page ${page.pageNumber}: Character image error:`, JSON.stringify(error));
-                    console.error(`[StoryBookReader] Page ${page.pageNumber}: Attempted URL:`, page.characterImage);
-                  }}
-                />
-              )
-            )}
+            {/* Current page image - fades in on top */}
+            {renderPageImage(page, true)}
 
             {/* Interactive Elements - Props that can be tapped to reveal */}
             {page.interactiveElements && page.interactiveElements.length > 0 && (
@@ -1102,7 +1013,6 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
 
     // Check if we're on the last page
     if (currentPageIndex >= pages.length - 1) {
-      console.log('Story completed - starting book closing animation');
       handleStoryCompletion();
       return;
     }
@@ -1110,31 +1020,48 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
     setIsTransitioning(true);
     const targetPageIndex = currentPageIndex + 1;
 
-    console.log('Starting beautiful crossfade to next page');
-
-    // Beautiful crossfade: current fades out while next fades in simultaneously
-    currentPageOpacity.value = withTiming(0, {
-      duration: 600,
-      easing: Easing.inOut(Easing.quad)
+    // Text: Fade out first
+    textOpacity.value = withTiming(0, {
+      duration: 300,
+      easing: Easing.out(Easing.quad)
     });
 
-    // Update content immediately so next page can start fading in
-    setCurrentPageIndex(targetPageIndex);
+    // Set previous page FIRST so it's visible before we hide the current image
+    setPreviousPageIndex(currentPageIndex);
 
-    // Fade new page in
-    setTimeout(() => {
-      currentPageOpacity.value = withTiming(1, {
-        duration: 600,
-        easing: Easing.inOut(Easing.quad)
-      });
+    // Use requestAnimationFrame to ensure previous page is rendered
+    requestAnimationFrame(() => {
+      // Now set new image to invisible - previous page is already visible underneath
+      imageOpacity.value = 0;
 
-      setIsTransitioning(false);
-      console.log(`Beautiful crossfade complete - now on page ${targetPageIndex}`);
-    }, 50); // Small delay to ensure content switch happens first
+      // Change to the new page
+      setCurrentPageIndex(targetPageIndex);
+
+      // Small delay to ensure React has rendered the new content
+      setTimeout(() => {
+        // Image: Fade in the new image (old image stays visible underneath)
+        imageOpacity.value = withTiming(1, {
+          duration: 400,
+          easing: Easing.inOut(Easing.quad)
+        });
+        // Text: Fade in the new text
+        textOpacity.value = withTiming(1, {
+          duration: 300,
+          easing: Easing.in(Easing.quad)
+        });
+
+        // Clear previous page after crossfade completes
+        setTimeout(() => {
+          setPreviousPageIndex(null);
+          setIsTransitioning(false);
+        }, 400);
+      }, 50);
+    });
   };
-  
+
   const handlePreviousPage = async () => {
-    if (isTransitioning || currentPageIndex <= 0) return;
+    // Disable going back to cover page (page 0) - stop at page 1
+    if (isTransitioning || currentPageIndex <= 1) return;
 
     // In record mode, save the current recording before moving to previous page
     if (readingMode === 'record' && tempRecordingUri) {
@@ -1148,32 +1075,53 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
     setIsTransitioning(true);
     const targetPageIndex = currentPageIndex - 1;
 
-    console.log('Starting beautiful crossfade to previous page');
-
-    // Beautiful crossfade: current fades out while previous fades in simultaneously
-    currentPageOpacity.value = withTiming(0, {
-      duration: 600,
-      easing: Easing.inOut(Easing.quad)
+    // Text: Fade out first
+    textOpacity.value = withTiming(0, {
+      duration: 300,
+      easing: Easing.out(Easing.quad)
     });
 
-    // Update content immediately so previous page can start fading in
-    setCurrentPageIndex(targetPageIndex);
+    // Set previous page FIRST so it's visible before we hide the current image
+    setPreviousPageIndex(currentPageIndex);
 
-    // Fade new page in
-    setTimeout(() => {
-      currentPageOpacity.value = withTiming(1, {
-        duration: 600,
-        easing: Easing.inOut(Easing.quad)
-      });
+    // Use requestAnimationFrame to ensure previous page is rendered
+    requestAnimationFrame(() => {
+      // Now set new image to invisible - previous page is already visible underneath
+      imageOpacity.value = 0;
 
-      setIsTransitioning(false);
-      console.log(`Beautiful crossfade complete - now on page ${targetPageIndex}`);
-    }, 50); // Small delay to ensure content switch happens first
+      // Change to the new page
+      setCurrentPageIndex(targetPageIndex);
+
+      // Small delay to ensure React has rendered the new content
+      setTimeout(() => {
+        // Image: Fade in the new image (old image stays visible underneath)
+        imageOpacity.value = withTiming(1, {
+          duration: 400,
+          easing: Easing.inOut(Easing.quad)
+        });
+        // Text: Fade in the new text
+        textOpacity.value = withTiming(1, {
+          duration: 300,
+          easing: Easing.in(Easing.quad)
+        });
+
+        // Clear previous page after crossfade completes
+        setTimeout(() => {
+          setPreviousPageIndex(null);
+          setIsTransitioning(false);
+        }, 400);
+      }, 50);
+    });
   };
   
-  // Simple animated style for single page
-  const currentPageAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: currentPageOpacity.value,
+  // Animated style for image (fades in only)
+  const imageAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: imageOpacity.value,
+  }));
+
+  // Animated style for text (fades out then in)
+  const textAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: textOpacity.value,
   }));
 
 
@@ -1196,25 +1144,17 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
   const exitAnimatedStyle = useAnimatedStyle(() => {
     return {
       opacity: exitOpacity.value,
+      // Keep story reader above the transition overlay (zIndex 1000) until it fades out
+      // This prevents any white flash from the overlay mounting
+      zIndex: exitOpacity.value > 0 ? 2000 : 0,
       transform: [
+        { translateX: exitTranslateX.value },
+        { translateY: exitTranslateY.value },
         { scale: exitScale.value },
         { rotateY: `${exitRotateY.value}deg` },
       ],
     };
   });
-
-  // Animated style for completion screen entrance
-  const completionAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: completionOpacity.value,
-    transform: [{ scale: completionScale.value }],
-  }));
-
-  // Animated style for soft fade exit
-  const fadeExitAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: scrollUpOpacity.value,
-  }));
-
-
 
 
 
@@ -1250,21 +1190,6 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
     );
   }
 
-  // Show completion screen when story is finished
-  if (showCompletionScreen) {
-    return (
-      <Animated.View style={[{ flex: 1 }, completionAnimatedStyle, fadeExitAnimatedStyle]}>
-        <StoryCompletionScreen
-          completedStory={story}
-          onReadAnother={handleReadAnother}
-          onRereadCurrent={handleRereadCurrent}
-          onBedtimeMusic={handleBedtimeMusic}
-          onClose={handleCloseCompletion}
-        />
-      </Animated.View>
-    );
-  }
-
   // Story reader is always visible with book opening animation
 
   return (
@@ -1291,9 +1216,11 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
                 width: scaledButtonSize(50),
                 height: scaledButtonSize(50),
                 borderRadius: scaledButtonSize(25),
+                opacity: isExiting ? 0.5 : 1,
               }
             ]}
             onPress={handleExit}
+            disabled={isExiting}
           >
             <Text style={[styles.exitButtonText, { fontSize: scaledFontSize(20) }]}>✕</Text>
           </Pressable>
@@ -1349,7 +1276,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
                       handleStopPlayback();
                     }}
                   >
-                    <Text style={styles.playButtonIcon}>⏸</Text>
+                    <Text style={styles.pauseButtonIcon}>||</Text>
                   </Pressable>
                 )}
                 <Pressable
@@ -1392,7 +1319,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
                   }
                 }}
               >
-                <Text style={[styles.narrationPlayPauseIcon, { fontSize: scaledFontSize(14) }]}>{isPlaying ? '❚❚' : '▶'}</Text>
+                <Text style={[styles.narrationPlayPauseIcon, { fontSize: scaledFontSize(isPlaying ? 10 : 14) }]}>{isPlaying ? '||' : '▶'}</Text>
               </Pressable>
               {/* Progress Bar */}
               <View style={styles.narrationProgressContainer}>
@@ -1431,7 +1358,7 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
           paddingTop: Math.max(insets.top + 5, 20),
           paddingRight: Math.max(insets.right + 5, 20)
         }]}>
-          <MusicControl size={28} color="white" />
+          <MusicControl size={28} variant="story" />
           {/* Settings/Burger Menu Button */}
           <Pressable
             style={[
@@ -1474,6 +1401,18 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
             top: Math.max(insets.top + 5, 20) + scaledButtonSize(50) + 10,
             right: Math.max(insets.right + 5, 20),
           }]}>
+            <Pressable
+              style={styles.menuItem}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setShowSettingsMenu(false);
+                setActiveSubmenu(null);
+                setShowPagePreview(true);
+              }}
+            >
+              <Text style={[styles.menuItemText, { fontSize: scaledFontSize(14) }]}>Page Preview</Text>
+            </Pressable>
+            <View style={styles.menuDivider} />
             <Pressable
               style={styles.menuItem}
               onPress={() => {
@@ -1534,9 +1473,9 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
         )}
 
         {/* Simple Single Page - Just Like Cover Tap */}
-        <Animated.View style={[styles.pageContent, currentPageAnimatedStyle]}>
+        <View style={styles.pageContent}>
           {renderPageContent(currentPage)}
-        </Animated.View>
+        </View>
 
         {/* UI Controls Layer */}
         <View style={styles.uiControlsLayer}>
@@ -1557,17 +1496,19 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
           {readingMode === 'record' && (
             <View style={styles.recordModeTextWrapper}>
               <View style={styles.recordModeTextBox}>
-                <Text
+                {/* Only the text fades, not the text box */}
+                <Animated.Text
                   style={[
                     styles.storyText,
                     {
                       fontSize: scaledFontSize(isTablet ? 20 : 16),
                       lineHeight: scaledFontSize(isTablet ? 20 : 16) * 1.6,
-                    }
+                    },
+                    textAnimatedStyle
                   ]}
                 >
                   {currentPage?.text}
-                </Text>
+                </Animated.Text>
               </View>
             </View>
           )}
@@ -1578,33 +1519,35 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
             readingMode === 'record' && styles.navigationRowRecordMode
           ]}>
           {/* Previous Button - Left Side */}
-          <Pressable
-            style={[
-              styles.navButton,
-              styles.prevButton,
-              {
-                width: scaledButtonSize(50),
-                height: scaledButtonSize(50),
-                borderRadius: scaledButtonSize(25),
-              },
-              (currentPageIndex <= 0 || (readingMode === 'record' && isRecording)) && styles.navButtonDisabled
-            ]}
-            onPress={handlePreviousPage}
-            disabled={currentPageIndex <= 0 || isTransitioning || (readingMode === 'record' && isRecording)}
-            testID="left-touch-area"
-          >
-            <Text style={[
-              styles.navButtonText,
-              { fontSize: scaledFontSize(20) },
-              currentPageIndex <= 0 && styles.navButtonTextDisabled
-            ]}>
-              ←
-            </Text>
-          </Pressable>
+          <Animated.View style={leftButtonAnimatedStyle}>
+            <Pressable
+              style={[
+                styles.navButton,
+                styles.prevButton,
+                {
+                  width: scaledButtonSize(50),
+                  height: scaledButtonSize(50),
+                  borderRadius: scaledButtonSize(25),
+                },
+                (currentPageIndex <= 1 || (readingMode === 'record' && isRecording)) && styles.navButtonDisabled
+              ]}
+              onPress={handlePreviousPage}
+              disabled={currentPageIndex <= 1 || isTransitioning || (readingMode === 'record' && isRecording)}
+              testID="left-touch-area"
+            >
+              <Text style={[
+                styles.navButtonText,
+                { fontSize: scaledFontSize(20) },
+                currentPageIndex <= 1 && styles.navButtonTextDisabled
+              ]}>
+                ←
+              </Text>
+            </Pressable>
+          </Animated.View>
 
           {/* Story Text Box - Center - Scrollable for accessibility (non-record modes only) */}
           {readingMode !== 'record' && (
-            <View style={styles.centerTextContainer}>
+            <Animated.View style={[styles.centerTextContainer, textBoxAnimatedStyle]}>
               {(() => {
                 // Tablet gets larger base font for better readability
                 // iPad base sizes are significantly larger to compensate for 2-line limit
@@ -1628,79 +1571,64 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
                     }
                   ]}>
                     <ScrollView
-                      key={`text-scroll-${currentPageIndex}`}
+                      key={`text-scroll-${story.id}-${currentPageIndex}-${textSizeScale}`}
                       ref={textScrollViewRef}
-                      showsVerticalScrollIndicator={false}
-                      onScroll={handleTextScroll}
+                      showsVerticalScrollIndicator={true}
+                      indicatorStyle="black"
                       scrollEventThrottle={16}
-                      onContentSizeChange={handleTextContentSizeChange}
-                      onLayout={handleScrollViewLayout}
                       bounces={false}
+                      nestedScrollEnabled={true}
+                      scrollEnabled={true}
                     >
-                      <Text
+                      {/* Only the text fades, not the text box */}
+                      <Animated.Text
                         style={[
                           currentPage?.pageNumber === 0 ? styles.coverText : styles.storyText,
                           {
                             fontSize: fontSize,
                             lineHeight: lineHeight,
-                          }
+                            paddingRight: 15,
+                          },
+                          textAnimatedStyle
                         ]}
                       >
                         {currentPage?.text}
-                      </Text>
+                      </Animated.Text>
                     </ScrollView>
-                    {/* Scroll indicator - down arrow when at top/middle, up arrow when at bottom */}
-                    {canScrollText && !showUpArrow && (
-                      <Pressable
-                        style={styles.scrollIndicator}
-                        onPress={() => {
-                          textScrollViewRef.current?.scrollToEnd({ animated: true });
-                        }}
-                      >
-                        <Text style={[styles.scrollIndicatorText, { fontSize: scaledFontSize(14) }]}>↓</Text>
-                      </Pressable>
-                    )}
-                    {canScrollText && showUpArrow && (
-                      <Pressable
-                        style={[styles.scrollIndicator, styles.scrollIndicatorTop]}
-                        onPress={() => {
-                          textScrollViewRef.current?.scrollTo({ y: 0, animated: true });
-                        }}
-                      >
-                        <Text style={[styles.scrollIndicatorText, { fontSize: scaledFontSize(14) }]}>↑</Text>
-                      </Pressable>
-                    )}
                   </View>
                 );
               })()}
-            </View>
+            </Animated.View>
           )}
 
           {/* Next Button - Right Side */}
-          <Pressable
-            style={[
-              styles.navButton,
-              styles.nextButton,
-              {
-                width: scaledButtonSize(50),
-                height: scaledButtonSize(50),
-                borderRadius: scaledButtonSize(25),
-              },
-              currentPageIndex === pages.length - 1 && styles.completeButton,
-              (readingMode === 'record' && (isRecording || (currentPageIndex > 0 && !tempRecordingUri && !currentVoiceOver?.pageRecordings[currentPageIndex]))) && styles.navButtonDisabled
-            ]}
-            onPress={handleNextPage}
-            disabled={isTransitioning || (readingMode === 'record' && (isRecording || (currentPageIndex > 0 && !tempRecordingUri && !currentVoiceOver?.pageRecordings[currentPageIndex])))}
-            testID="right-touch-area"
-          >
-            <Text style={[
-              styles.navButtonText,
-              { fontSize: scaledFontSize(20) },
-              currentPageIndex === pages.length - 1 && styles.completeButtonText
-            ]}>
-              {currentPageIndex === pages.length - 1 ? '✓' : '→'}
-            </Text>
-          </Pressable>
+          <Animated.View style={rightButtonAnimatedStyle}>
+            <Pressable
+              style={[
+                styles.navButton,
+                styles.nextButton,
+                {
+                  width: scaledButtonSize(50),
+                  height: scaledButtonSize(50),
+                  borderRadius: scaledButtonSize(25),
+                },
+                currentPageIndex === pages.length - 1 && styles.completeButton,
+                (readingMode === 'record' && (isRecording || (currentPageIndex > 0 && !tempRecordingUri && !currentVoiceOver?.pageRecordings[currentPageIndex]))) && styles.navButtonDisabled,
+                isExiting && styles.navButtonDisabled
+              ]}
+              onPress={handleNextPage}
+              disabled={isTransitioning || isExiting || (readingMode === 'record' && (isRecording || (currentPageIndex > 0 && !tempRecordingUri && !currentVoiceOver?.pageRecordings[currentPageIndex])))}
+              testID="right-touch-area"
+            >
+              <Text style={[
+                styles.navButtonText,
+                { fontSize: scaledFontSize(20) },
+                currentPageIndex === pages.length - 1 && styles.completeButtonText
+              ]}>
+                {currentPageIndex === pages.length - 1 ? '✓' : '→'}
+              </Text>
+            </Pressable>
+          </Animated.View>
           </View>
           </View>
         )}
@@ -2129,6 +2057,18 @@ export function StoryBookReader({ story, onExit, onReadAnother, onBedtimeMusic }
         isInputValid={parentsOnly.isInputValid}
         scaledFontSize={scaledFontSize}
       />
+
+      {/* Page Preview Modal */}
+      <PagePreviewModal
+        story={story}
+        currentPageIndex={currentPageIndex}
+        visible={showPagePreview}
+        onClose={() => setShowPagePreview(false)}
+        onSelectPage={(pageIndex) => {
+          setCurrentPageIndex(pageIndex);
+          setShowPagePreview(false);
+        }}
+      />
     </Animated.View>
   );
 }
@@ -2200,14 +2140,14 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   exitButton: {
-    backgroundColor: 'rgba(130, 130, 130, 0.35)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 20,
     width: 40,
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(100, 100, 100, 0.2)',
+    borderColor: 'rgba(0, 0, 0, 0.1)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -2218,17 +2158,20 @@ const styles = StyleSheet.create({
   exitButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#333333',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 1,
   },
   settingsButton: {
-    backgroundColor: 'rgba(130, 130, 130, 0.35)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 20,
     width: 40,
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(100, 100, 100, 0.2)',
+    borderColor: 'rgba(0, 0, 0, 0.1)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -2239,7 +2182,10 @@ const styles = StyleSheet.create({
   settingsButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#333333',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 1,
   },
   settingsOverlay: {
     position: 'absolute',
@@ -2275,6 +2221,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 8,
     paddingHorizontal: 4,
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    marginVertical: 4,
   },
   menuItemText: {
     color: '#FFFFFF',
@@ -2426,10 +2377,10 @@ const styles = StyleSheet.create({
   },
   pageIndicatorOverlay: {
     position: 'absolute',
-    backgroundColor: 'rgba(130, 130, 130, 0.35)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(100, 100, 100, 0.2)',
+    borderColor: 'rgba(0, 0, 0, 0.1)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -2454,7 +2405,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: Fonts.sans,
     fontWeight: '500',
-    color: '#FFFFFF', // White text
+    color: '#333333', // Dark text to match white background
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 1,
   },
   // Bottom attached text styles
   bottomTextContainer: {
@@ -2487,7 +2441,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   centerTextBox: {
-    backgroundColor: 'rgba(130, 130, 130, 0.35)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 20,
     paddingHorizontal: 25,
     paddingVertical: 15,
@@ -2497,7 +2451,7 @@ const styles = StyleSheet.create({
     maxWidth: 500,
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(100, 100, 100, 0.2)',
+    borderColor: 'rgba(0, 0, 0, 0.1)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -2506,39 +2460,19 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   recordModeTextBox: {
-    backgroundColor: 'rgba(130, 130, 130, 0.4)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 20,
     paddingHorizontal: 25,
     paddingVertical: 20,
     width: '90%',
     maxWidth: 700,
     borderWidth: 1,
-    borderColor: 'rgba(100, 100, 100, 0.2)',
+    borderColor: 'rgba(0, 0, 0, 0.1)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 6,
     elevation: 4,
-  },
-  scrollIndicator: {
-    position: 'absolute',
-    bottom: 4,
-    right: 4,
-    backgroundColor: 'rgba(44, 62, 80, 0.7)',
-    borderRadius: 10,
-    width: 20,
-    height: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  scrollIndicatorTop: {
-    bottom: undefined,
-    top: 4,
-  },
-  scrollIndicatorText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold',
   },
 
   // Legacy text styles (for compatibility)
@@ -2548,7 +2482,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   textBox: {
-    backgroundColor: 'rgba(130, 130, 130, 0.35)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 20,
     paddingHorizontal: 20,
     paddingVertical: 20,
@@ -2556,7 +2490,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(100, 100, 100, 0.2)',
+    borderColor: 'rgba(0, 0, 0, 0.1)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -2566,23 +2500,23 @@ const styles = StyleSheet.create({
   storyText: {
     fontSize: 16, // Slightly smaller for better fit
     fontFamily: Fonts.sans,
-    color: '#FFFFFF', // White text for visibility on grey background
+    color: '#333333', // Dark text for visibility on white background
     textAlign: 'center',
     lineHeight: 24, // Proper line height for 2 lines (16px font + 8px spacing)
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 1,
   },
   coverText: {
     fontSize: 18, // Larger for cover page
     fontFamily: Fonts.sans,
     fontWeight: '600', // Semi-bold for title
-    color: '#FFFFFF', // White text for visibility on grey background
+    color: '#333333', // Dark text for visibility on white background
     textAlign: 'center',
     lineHeight: 26, // Proper line height for 3 lines
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 1,
   },
   // Bottom navigation styles
   bottomNavigationContainer: {
@@ -2601,14 +2535,14 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   navButton: {
-    backgroundColor: 'rgba(130, 130, 130, 0.35)', // Soft grey for visibility on light/dark backgrounds
+    backgroundColor: 'rgba(255, 255, 255, 0.9)', // White with 90% opacity to match text box
     borderRadius: 25,
     width: 50,
     height: 50,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(100, 100, 100, 0.2)', // Subtle border
+    borderColor: 'rgba(0, 0, 0, 0.1)', // Subtle dark border
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -2618,16 +2552,19 @@ const styles = StyleSheet.create({
   },
 
   navButtonDisabled: {
-    backgroundColor: 'rgba(130, 130, 130, 0.2)', // Lighter for disabled state
-    borderColor: 'rgba(100, 100, 100, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.4)', // Lighter for disabled state
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   navButtonText: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFFFFF', // White text
+    color: '#333333', // Dark text with black stroke
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 1,
   },
   navButtonTextDisabled: {
-    color: '#CCC',
+    color: '#999',
   },
   completeButton: {
     backgroundColor: 'rgba(76, 175, 80, 0.9)', // Green background for completion
@@ -2688,12 +2625,12 @@ const styles = StyleSheet.create({
     zIndex: 5, // Below topLeftControls and topRightControls (zIndex: 10)
   },
   coverTapHint: {
-    backgroundColor: 'rgba(130, 130, 130, 0.35)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 25,
     borderWidth: 1,
-    borderColor: 'rgba(100, 100, 100, 0.2)',
+    borderColor: 'rgba(0, 0, 0, 0.1)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -2704,21 +2641,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: Fonts.sans,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#333333',
     textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 1,
   },
   pageIndicatorText: {
     fontSize: 14,
     fontFamily: Fonts.sans,
     fontWeight: '600',
-    color: 'white',
+    color: '#333333',
     textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 1,
   },
   modeSelectionContainer: {
     position: 'absolute',
@@ -2728,7 +2665,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   modeButton: {
-    backgroundColor: 'rgba(130, 130, 130, 0.35)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 15,
     paddingVertical: 4,
     paddingLeft: 8,
@@ -2742,23 +2679,26 @@ const styles = StyleSheet.create({
     width: 122,
   },
   modeButtonSelected: {
-    backgroundColor: 'rgba(130, 130, 130, 0.5)',
-    borderColor: 'rgba(255, 255, 255, 0.6)',
+    backgroundColor: 'rgba(255, 255, 255, 1)',
+    borderColor: 'rgba(0, 0, 0, 0.3)',
   },
   modeButtonIcon: {
-    color: '#FFFFFF',
+    color: '#333333',
     textAlign: 'center',
     marginRight: 10,
     zIndex: 1,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 1,
   },
   modeButtonText: {
-    color: '#FFFFFF',
+    color: '#333333',
     fontFamily: Fonts.sans,
     fontWeight: '600',
     textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 1,
   },
   // Recording controls styles
   recordingControlsContainer: {
@@ -2834,6 +2774,15 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 20,
     marginLeft: 3,
+  },
+  pauseButtonIcon: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'center',
+    letterSpacing: 2,
+    marginLeft: 2,
+    marginTop: -1,
   },
   reRecordButton: {
     width: 50,

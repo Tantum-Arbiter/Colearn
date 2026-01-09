@@ -1,14 +1,20 @@
-import React from 'react';
+import React, { useEffect, useCallback } from 'react';
 import {
-  Modal,
   View,
   Text,
   Pressable,
   StyleSheet,
-  Image,
   ScrollView,
   Dimensions,
 } from 'react-native';
+import { Image } from 'expo-image';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  runOnJS,
+  Easing,
+} from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { Story, STORY_TAGS } from '@/types/story';
 import { Fonts } from '@/constants/theme';
@@ -23,6 +29,7 @@ interface StoryPreviewModalProps {
 }
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+const ANIMATION_DURATION = 300;
 
 export function StoryPreviewModal({
   story,
@@ -32,25 +39,77 @@ export function StoryPreviewModal({
 }: StoryPreviewModalProps) {
   const { scaledFontSize, scaledPadding, scaledButtonSize } = useAccessibility();
 
+  // Animation values for slide up/down
+  const translateY = useSharedValue(screenHeight);
+  const backdropOpacity = useSharedValue(0);
+  const isAnimatingOut = useSharedValue(false);
+
+  // Animate in when visible changes
+  useEffect(() => {
+    if (visible && story) {
+      // Slide up from bottom
+      translateY.value = withTiming(0, {
+        duration: ANIMATION_DURATION,
+        easing: Easing.out(Easing.cubic),
+      });
+      backdropOpacity.value = withTiming(1, { duration: ANIMATION_DURATION });
+    }
+  }, [visible, story]);
+
+  // Handle close with slide down animation
+  const handleClose = useCallback(() => {
+    isAnimatingOut.value = true;
+    backdropOpacity.value = withTiming(0, { duration: ANIMATION_DURATION });
+    translateY.value = withTiming(
+      screenHeight,
+      {
+        duration: ANIMATION_DURATION,
+        easing: Easing.in(Easing.cubic),
+      },
+      (finished) => {
+        if (finished) {
+          runOnJS(onClose)();
+          isAnimatingOut.value = false;
+        }
+      }
+    );
+  }, [onClose]);
+
+  const modalAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+  }));
+
+  const backdropAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: backdropOpacity.value,
+  }));
+
+  // Don't render if not visible and no story
+  if (!visible && !story) return null;
   if (!story) return null;
 
   const tagInfo = STORY_TAGS[story.category];
   const displayTags = story.tags || [story.tag];
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-    >
-      <Pressable style={styles.overlay} onPress={onClose}>
-        <BlurView intensity={20} style={StyleSheet.absoluteFill} tint="dark" />
-        
-        <Pressable 
+    <View style={styles.absoluteContainer} pointerEvents={visible ? 'auto' : 'none'}>
+      {/* Backdrop - tap to close */}
+      <Pressable style={StyleSheet.absoluteFill} onPress={handleClose}>
+        <Animated.View style={[styles.backdrop, backdropAnimatedStyle]}>
+          <BlurView intensity={20} style={StyleSheet.absoluteFill} tint="dark" />
+        </Animated.View>
+      </Pressable>
+
+      {/* Modal Content - slides up from bottom */}
+      <Animated.View style={[styles.modalWrapper, modalAnimatedStyle]}>
+        <Pressable
           style={[styles.modalContent, { maxHeight: screenHeight * 0.75 }]}
           onPress={(e) => e.stopPropagation()}
         >
+          {/* X Close Button - top left */}
+          <Pressable style={styles.xCloseButton} onPress={handleClose}>
+            <Text style={styles.xCloseButtonText}>✕</Text>
+          </Pressable>
+
           {/* Cover Image */}
           <View style={styles.coverContainer}>
             {story.coverImage ? (
@@ -64,7 +123,9 @@ export function StoryPreviewModal({
                 <Image
                   source={typeof story.coverImage === 'string' ? { uri: story.coverImage } : story.coverImage}
                   style={styles.coverImage}
-                  resizeMode="cover"
+                  contentFit="cover"
+                  transition={0}
+                  cachePolicy="memory-disk"
                 />
               )
             ) : (
@@ -74,9 +135,11 @@ export function StoryPreviewModal({
             )}
           </View>
 
-          <ScrollView 
+          <ScrollView
             style={styles.contentScroll}
-            showsVerticalScrollIndicator={false}
+            showsVerticalScrollIndicator={true}
+            nestedScrollEnabled={true}
+            scrollEnabled={true}
           >
             {/* Title */}
             <Text style={[styles.title, { fontSize: scaledFontSize(24) }]}>
@@ -115,8 +178,8 @@ export function StoryPreviewModal({
               <Text style={styles.sectionLabel}>Tags</Text>
               <View style={styles.tagsRow}>
                 {displayTags.map((tag, index) => (
-                  <View 
-                    key={index} 
+                  <View
+                    key={index}
                     style={[styles.tag, { backgroundColor: tagInfo?.color || '#E0E0E0' }]}
                   >
                     <Text style={[styles.tagText, { fontSize: scaledFontSize(12) }]}>
@@ -138,39 +201,45 @@ export function StoryPreviewModal({
             )}
           </ScrollView>
 
-          {/* Action Buttons */}
-          <View style={styles.buttonRow}>
-            <Pressable style={styles.closeButton} onPress={onClose}>
-              <Text style={[styles.closeButtonText, { fontSize: scaledFontSize(16) }]}>
-                Close
-              </Text>
-            </Pressable>
-            {story.isAvailable && onReadStory && (
+          {/* Action Buttons - only show if Read Story is available */}
+          {story.isAvailable && onReadStory && (
+            <View style={styles.buttonRow}>
               <Pressable
-                style={styles.readButton}
+                style={[styles.readButton, { flex: 1 }]}
                 onPress={() => {
-                  onClose();
+                  // Start the story transition FIRST (before closing modal)
+                  // This ensures the card ref is still available for measuring position
+                  // The transition overlay will cover this modal anyway
                   onReadStory(story);
+                  // Then close the modal (with a small delay to let transition start)
+                  setTimeout(() => handleClose(), 50);
                 }}
               >
                 <Text style={[styles.readButtonText, { fontSize: scaledFontSize(16) }]}>
-                  Read Story
+                  View Story
                 </Text>
               </Pressable>
-            )}
-          </View>
+            </View>
+          )}
         </Pressable>
-      </Pressable>
-    </Modal>
+      </Animated.View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
+  absoluteContainer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1000,
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalWrapper: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
     width: screenWidth * 0.85,
@@ -183,6 +252,28 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 20,
     elevation: 10,
+  },
+  xCloseButton: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  xCloseButtonText: {
+    color: '#333',
+    fontSize: 20,
+    fontWeight: '600',
   },
   coverContainer: {
     width: '100%',
@@ -201,7 +292,7 @@ const styles = StyleSheet.create({
   },
   contentScroll: {
     padding: 20,
-    maxHeight: 300,
+    maxHeight: 400, // Increased for XL text accessibility
   },
   title: {
     fontFamily: Fonts.primary,

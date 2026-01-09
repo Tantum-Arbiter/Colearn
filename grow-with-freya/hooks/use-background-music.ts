@@ -6,6 +6,7 @@ interface BackgroundMusicState {
   isPlaying: boolean;
   isLoaded: boolean;
   volume: number;
+  isMuted: boolean; // Persists across track changes
 }
 
 interface BackgroundMusicControls {
@@ -16,12 +17,15 @@ interface BackgroundMusicControls {
   fadeIn: (duration?: number) => Promise<void>;
   fadeOut: (duration?: number) => Promise<void>;
   toggle: () => Promise<void>;
+  mute: () => Promise<void>;
+  unmute: () => Promise<void>;
 }
 
 export function useBackgroundMusic(): BackgroundMusicState & BackgroundMusicControls {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [volume, setVolumeState] = useState(0.18); // Match service default
+  const [isMuted, setIsMuted] = useState(false);
 
   // Initialize background music on mount (only once globally)
   useEffect(() => {
@@ -30,6 +34,7 @@ export function useBackgroundMusic(): BackgroundMusicState & BackgroundMusicCont
         await backgroundMusic.initialize();
         setIsLoaded(backgroundMusic.getIsLoaded());
         setVolumeState(backgroundMusic.getVolume());
+        setIsMuted(backgroundMusic.getIsMuted());
         // Sync initial playing state after initialization
         setIsPlaying(backgroundMusic.getIsPlaying());
         console.log(`Background music hook initialized - playing: ${backgroundMusic.getIsPlaying()}`);
@@ -48,9 +53,14 @@ export function useBackgroundMusic(): BackgroundMusicState & BackgroundMusicCont
   useEffect(() => {
     const unsubscribeState = backgroundMusic.onStateChange(() => {
       const currentlyPlaying = backgroundMusic.getIsPlaying();
+      const currentlyMuted = backgroundMusic.getIsMuted();
       if (currentlyPlaying !== isPlaying) {
         console.log(`Background music state change notification: ${isPlaying} -> ${currentlyPlaying}`);
         setIsPlaying(currentlyPlaying);
+      }
+      if (currentlyMuted !== isMuted) {
+        console.log(`Background music muted state change: ${isMuted} -> ${currentlyMuted}`);
+        setIsMuted(currentlyMuted);
       }
     });
 
@@ -64,7 +74,7 @@ export function useBackgroundMusic(): BackgroundMusicState & BackgroundMusicCont
       unsubscribeState();
       unsubscribeVolume();
     };
-  }, [isPlaying, volume]);
+  }, [isPlaying, volume, isMuted]);
 
   // Handle app state changes (pause music when app goes to background)
   useEffect(() => {
@@ -172,10 +182,32 @@ export function useBackgroundMusic(): BackgroundMusicState & BackgroundMusicCont
     syncState();
   }, [isPlaying, play, pause, syncState]);
 
+  const mute = useCallback(async () => {
+    try {
+      await backgroundMusic.mute();
+      setIsMuted(true);
+      setIsPlaying(false);
+    } catch (error) {
+      console.warn('Failed to mute background music:', error);
+    }
+  }, []);
+
+  const unmute = useCallback(async () => {
+    try {
+      await backgroundMusic.unmute();
+      setIsMuted(false);
+      // Force immediate state sync after unmute
+      syncState();
+    } catch (error) {
+      console.warn('Failed to unmute background music:', error);
+    }
+  }, [syncState]);
+
   return {
     isPlaying,
     isLoaded,
     volume,
+    isMuted,
     play,
     pause,
     stop,
@@ -183,5 +215,7 @@ export function useBackgroundMusic(): BackgroundMusicState & BackgroundMusicCont
     fadeIn,
     fadeOut,
     toggle,
+    mute,
+    unmute,
   };
 }

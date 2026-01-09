@@ -1,14 +1,15 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
-import { AppState, AppStateStatus, Dimensions } from 'react-native';
+import { AppState, AppStateStatus, Dimensions, View } from 'react-native';
 import * as ScreenOrientation from 'expo-screen-orientation';
+import * as Sentry from '@sentry/react-native';
 
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAppStore } from '@/store/app-store';
-
+import { Logger } from '@/utils/logger';
 import { useBackgroundMusic } from '@/hooks/use-background-music';
 import { AppSplashScreen } from '@/components/splash-screen';
 import { OnboardingFlow } from '@/components/onboarding/onboarding-flow';
@@ -25,16 +26,13 @@ import { StoryBookReader } from '@/components/stories/story-book-reader';
 import { MusicScreen } from '@/components/music';
 import { EmotionsScreen } from '@/components/emotions';
 import { ScreenTimeProvider } from '@/components/screen-time/screen-time-provider';
-
-
-
 import { Story } from '@/types/story';
 import { preloadCriticalImages, preloadSecondaryImages } from '@/services/image-preloader';
 import { EnhancedPageTransition } from '@/components/ui/enhanced-page-transition';
-
-import { StoryTransitionProvider } from '@/contexts/story-transition-context';
+import { StoryTransitionProvider, useStoryTransition } from '@/contexts/story-transition-context';
 import { GlobalSoundProvider } from '@/contexts/global-sound-context';
-import * as Sentry from '@sentry/react-native';
+
+const log = Logger.create('Layout');
 
 Sentry.init({
   dsn: 'https://0de17ab586a0e7cd361706a1054022bb@o4510552687902720.ingest.de.sentry.io/4510552711364688',
@@ -71,7 +69,15 @@ export default Sentry.wrap(function RootLayout() {
 
 // Main app content that can access the story transition context
 function AppContent() {
-  // No longer using story transition context
+  // Access story transition context to know when to show story reader
+  const {
+    selectedStory: transitionStory,
+    selectedMode: transitionMode,
+    selectedVoiceOver: transitionVoiceOver,
+    setOnBeginCallback,
+    setOnReturnToModeSelectionCallback
+  } = useStoryTransition();
+
   const colorScheme = useColorScheme();
   const {
     isAppReady,
@@ -101,6 +107,9 @@ function AppContent() {
   const [currentView, setCurrentView] = useState<AppView>('splash');
   const [currentPage, setCurrentPage] = useState<PageKey>('main');
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
+  // Story being read - kept separate so it persists during book closing animation
+  const [storyBeingRead, setStoryBeingRead] = useState<Story | null>(null);
+  const [showStoryReader, setShowStoryReader] = useState(false);
 
   // Debug current view changes (disabled for performance)
   // useEffect(() => {
@@ -124,14 +133,12 @@ function AppContent() {
         if (isTablet) {
           // Allow all orientations on tablets
           await ScreenOrientation.unlockAsync();
-          console.log('App initialized with unlocked orientation (tablet)');
         } else {
           // Lock to portrait orientation for phones
           await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-          console.log('App initialized in portrait mode (phone)');
         }
       } catch (error) {
-        console.warn('Failed to initialize orientation:', error);
+        log.warn('Failed to initialize orientation:', error);
       }
     };
 
@@ -149,15 +156,13 @@ function AppContent() {
           if (isTablet) {
             // Allow all orientations on tablets
             await ScreenOrientation.unlockAsync();
-            console.log('Unlocked orientation for tablet:', currentView);
           } else {
             // Lock to portrait on phones
             await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-            console.log('Restored portrait mode for phone:', currentView);
           }
         }
       } catch (error) {
-        console.warn('Failed to set orientation:', error);
+        log.warn('Failed to set orientation:', error);
       }
     };
 
@@ -171,16 +176,14 @@ function AppContent() {
     const initializeImagePreloading = async () => {
       try {
         // Preload critical images first (including bear image)
-        const criticalResult = await preloadCriticalImages();
-        console.log('Critical images preloaded:', criticalResult);
+        await preloadCriticalImages();
 
         // Preload secondary images in background after a short delay
         setTimeout(async () => {
-          const secondaryResult = await preloadSecondaryImages();
-          console.log('Secondary images preloaded:', secondaryResult);
+          await preloadSecondaryImages();
         }, 3000); // PERFORMANCE: Increased delay to prevent blocking
       } catch (error) {
-        console.warn('Image preloading failed:', error);
+        log.warn('Image preloading failed:', error);
       }
     };
 
@@ -195,7 +198,6 @@ function AppContent() {
     const checkAuthAndSetView = async () => {
       // Wait for store to be hydrated from AsyncStorage before checking auth
       if (!hasHydrated) {
-        console.log('Waiting for store hydration...');
         return;
       }
 
@@ -210,13 +212,11 @@ function AppContent() {
         setCurrentView('onboarding');
       } else if (isGuestMode) {
         // User is in guest mode - allow access without authentication (no backend calls)
-        console.log('Guest mode - going to app without backend calls');
         setCurrentView('app');
         setCurrentPage('main');
       } else {
         // Skip auth check if we just completed a fresh login
         if (justLoggedInRef.current) {
-          console.log('Skipping auth check - just completed fresh login');
           justLoggedInRef.current = false;
           setCurrentView('app');
           setCurrentPage('main');
@@ -229,66 +229,57 @@ function AppContent() {
           const authPromise = ApiClient.isAuthenticated();
           const timeoutPromise = new Promise<boolean>((resolve) => {
             setTimeout(() => {
-              console.warn('Authentication check timeout - assuming not authenticated');
+              log.warn('Authentication check timeout - assuming not authenticated');
               resolve(false);
             }, 5000);
           });
 
           const isAuthenticated = await Promise.race([authPromise, timeoutPromise]);
-          console.log('Authentication check:', { isAuthenticated, hasCompletedOnboarding });
 
           if (!isAuthenticated) {
             // User has completed onboarding but is not authenticated - show login screen
-            console.log('User not authenticated - showing login');
             setShowLoginAfterOnboarding(true);
             setCurrentView('login');
           } else {
             // User is authenticated - prefetch stories and assets before showing app
-            console.log('User authenticated - prefetching stories');
             try {
               await StorySyncService.prefetchStories();
-              console.log('[_layout] Stories prefetched successfully');
 
               // Pre-populate StoryLoader cache for instant story list display
               await StoryLoader.getStories();
-              console.log('[_layout] StoryLoader cache populated');
 
               // Prefetch cover images to ensure they're cached before showing story selection
               try {
                 await StorySyncService.prefetchCoverImages();
-                console.log('[_layout] Cover images prefetched successfully');
 
                 // If stories were removed (assets no longer available on CMS), refresh the cache
                 if (StorySyncService.lastPrefetchRemovedStories) {
-                  console.log('[_layout] Stories removed due to unavailable assets, refreshing cache');
                   StoryLoader.invalidateCache();
                   await StoryLoader.getStories();
                 }
               } catch (imageError) {
-                console.error('[_layout] Cover image prefetch failed:', imageError);
+                log.error('Cover image prefetch failed:', imageError);
                 // Continue anyway - images will be downloaded on-demand
               }
             } catch (syncError) {
-              console.error('[_layout] Story prefetch failed, will use offline mode:', syncError);
+              log.error('Story prefetch failed, will use offline mode:', syncError);
               // Continue anyway - app will use cached stories or local fallback
             }
 
             // Prefetch other assets in background (non-blocking)
             try {
               await AssetSyncService.prefetchAssets();
-              console.log('[_layout] Assets prefetched successfully');
             } catch (assetError) {
-              console.error('[_layout] Asset prefetch failed, will download on-demand:', assetError);
+              log.error('Asset prefetch failed, will download on-demand:', assetError);
               // Continue anyway - app will download assets on-demand
             }
 
             // Now go to app
-            console.log('User authenticated - going to app');
             setCurrentView('app');
             setCurrentPage('main');
           }
         } catch (error) {
-          console.error('Authentication check error:', error);
+          log.error('Authentication check error:', error);
           // On error, show login screen
           setShowLoginAfterOnboarding(true);
           setCurrentView('login');
@@ -306,27 +297,22 @@ function AppContent() {
       if (nextAppState === 'active') {
         // Wait for store to be hydrated before checking auth
         if (!hasHydrated) {
-          console.log('App became active - waiting for store hydration');
           return;
         }
 
         // Skip authentication check for guest mode users
         if (isGuestMode) {
-          console.log('App became active - guest mode, skipping auth check');
           return;
         }
 
         // App became active - check if tokens need refresh
-        console.log('App became active - checking authentication');
         const isAuthenticated = await ApiClient.isAuthenticated();
 
         if (!isAuthenticated && hasCompletedOnboarding) {
           // Tokens expired and couldn't be refreshed - show login
-          console.log('Authentication expired - showing login');
           setShowLoginAfterOnboarding(true);
           setCurrentView('login');
         } else if (isAuthenticated) {
-          console.log('Authentication valid - tokens refreshed if needed');
           // Retry any pending background saves now that we're authenticated
           backgroundSaveService.retryPendingSaves();
         }
@@ -337,17 +323,18 @@ function AppContent() {
     return () => subscription?.remove();
   }, [hasHydrated, hasCompletedOnboarding, isGuestMode, setShowLoginAfterOnboarding]);
 
-  // Start background music once when transitioning from splash (only once!)
+  // Start background music when main menu loads (after sign in or app restart)
   useEffect(() => {
     const startBackgroundMusic = async () => {
-      if (musicLoaded && (currentView === 'onboarding' || currentView === 'app') && !isPlaying && !hasStartedBackgroundMusic) {
+      // Only start music when entering the main app (main menu) - not during onboarding
+      if (musicLoaded && currentView === 'app' && !isPlaying && !hasStartedBackgroundMusic) {
         try {
-          // Start background music with a gentle fade-in - only when first leaving splash
+          // Start background music with a gentle fade-in
           await fadeIn(3000); // 3 second fade-in
           setHasStartedBackgroundMusic(true); // Mark that we've started music
-          console.log('Background music started for the journey');
+          console.log('[BackgroundMusic] Started playing on main menu load');
         } catch (error) {
-          console.warn('Failed to start background music:', error);
+          log.warn('Failed to start background music:', error);
         }
       }
     };
@@ -357,22 +344,23 @@ function AppContent() {
     return () => clearTimeout(timer);
   }, [currentView, musicLoaded, fadeIn, isPlaying, hasStartedBackgroundMusic]);
 
-  // Sync view with page changes (but don't interfere with onboarding/login flow)
+  // Sync view with page changes (but don't interfere with onboarding/login flow or story reader)
   useEffect(() => {
     // Don't sync if we're in onboarding, login, or splash views
     if (currentView === 'splash' || currentView === 'onboarding' || currentView === 'login') {
       return;
     }
 
-    // For story-reader, we need a special view
-    if (currentPage === 'story-reader' && currentView !== 'story-reader') {
-      setCurrentView('story-reader');
+    // Don't interfere with story reader - it manages its own view state
+    if (showStoryReader || currentView === 'story-reader') {
+      return;
     }
-    // For all other pages (main, stories, emotions, etc.), use 'app' view
-    else if (currentPage !== 'story-reader' && currentView !== 'app') {
+
+    // For all other cases, ensure we're in 'app' view
+    if (currentView !== 'app') {
       setCurrentView('app');
     }
-  }, [currentPage, currentView]);
+  }, [currentPage, currentView, showStoryReader]);
 
   // Listen for return to main menu requests
   useEffect(() => {
@@ -382,7 +370,42 @@ function AppContent() {
     }
   }, [shouldReturnToMainMenu, clearReturnToMainMenu]);
 
+  // Register callback for when user taps "Begin" in mode selection
+  useEffect(() => {
+    const handleBegin = () => {
+      // Use the transition's selected story for the story reader
+      if (transitionStory) {
+        setStoryBeingRead(transitionStory);
+        setShowStoryReader(true);
+        setCurrentView('story-reader');
+      }
+    };
 
+    // Use wrapper to avoid React's setState(fn) behavior interpreting handleBegin as an updater
+    setOnBeginCallback(() => () => handleBegin());
+
+    return () => {
+      setOnBeginCallback(null);
+    };
+  }, [transitionStory, setOnBeginCallback]);
+
+  // Register callback for when returning to mode selection from story reader
+  useEffect(() => {
+    const handleReturnToModeSelection = () => {
+      // Hide the story reader but keep the story selected
+      setShowStoryReader(false);
+      setCurrentView('app');
+      // Ensure we're on the stories page (not main menu)
+      setCurrentPage('stories');
+      // Don't clear storyBeingRead - we'll need it if they choose to read again
+    };
+
+    setOnReturnToModeSelectionCallback(() => () => handleReturnToModeSelection());
+
+    return () => {
+      setOnReturnToModeSelectionCallback(null);
+    };
+  }, [setOnReturnToModeSelectionCallback]);
 
   const handleOnboardingComplete = () => {
     setOnboardingComplete(true);
@@ -437,41 +460,27 @@ function AppContent() {
   };
 
   const handleBackToStories = () => {
-    setCurrentView('app');
-    setCurrentPage('stories');
+    // Story reader's exit animation has already completed by the time this is called
+    // Just clean up and switch views
+    setShowStoryReader(false);
+    setStoryBeingRead(null);
     setSelectedStory(null);
+    setCurrentView('app');
+    // currentPage stays 'stories' - we never change it when entering/exiting story reader
   };
 
   const handleStorySelect = (story: Story) => {
-    // DEBUG: Log story data to diagnose CMS image issues
-    if (story.id.startsWith('cms-')) {
-      console.log(`[_layout] DEBUG: Selected CMS story "${story.id}"`);
-      console.log(`[_layout]   Cover: ${story.coverImage}`);
-      console.log(`[_layout]   Pages: ${story.pages?.length || 0}`);
-      story.pages?.forEach((page, idx) => {
-        console.log(`[_layout]   Page ${idx}: ${page.backgroundImage || 'NO_IMAGE'}`);
-      });
-    }
     setSelectedStory(story);
     // Start thumbnail expansion animation first, then transition to story reader
     // The SimpleStoryScreen will handle the expansion animation and call handleStoryTransitionComplete
   };
 
   const handleStoryTransitionComplete = () => {
+    setStoryBeingRead(selectedStory);
+    setShowStoryReader(true);
     setCurrentView('story-reader');
-    setCurrentPage('story-reader');
-  };
-
-  const handleReadAnother = (story: Story) => {
-    setSelectedStory(story);
-    // Stay in story-reader view, just change the story
-  };
-
-  const handleBedtimeMusic = () => {
-    setCurrentView('main');
-    setCurrentPage('main');
-    setSelectedStory(null);
-    // The main menu will handle navigation to bedtime
+    // Keep currentPage as 'stories' so the stories page stays rendered underneath
+    // This prevents EnhancedPageTransition from animating the page away
   };
 
   if (currentView === 'splash') {
@@ -488,32 +497,19 @@ function AppContent() {
 
 
 
-  // Handle story reader view
-  if (currentView === 'story-reader' && selectedStory) {
+  // Handle main app navigation with story reader overlay
+  // Story reader is rendered on top of the app view so when it closes,
+  // the story selection page is already visible underneath - no flash
+  if (currentView === 'app' || currentView === 'story-reader') {
     return (
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <StoryBookReader
-          story={selectedStory}
-          onExit={handleBackToStories}
-          onReadAnother={handleReadAnother}
-          onBedtimeMusic={handleBedtimeMusic}
-        />
-        <StatusBar style="auto" />
-      </ThemeProvider>
-    );
-  }
-
-  // Handle main app navigation with coordinated scroll transitions
-  if (currentView === 'app') {
-    return (
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        {/* App navigation always rendered underneath */}
         <EnhancedPageTransition
           currentPage={currentPage as string}
           pages={{
             main: <MainMenu onNavigate={handleMainMenuNavigate} isActive={currentPage === 'main'} />,
             stories: <SimpleStoryScreen
               onStorySelect={handleStorySelect}
-              onStoryTransitionComplete={handleStoryTransitionComplete}
               selectedStory={selectedStory}
               onBack={handleBackToMainMenu}
             />,
@@ -525,6 +521,21 @@ function AppContent() {
           }}
           duration={500}
         />
+
+        {/* Story reader rendered on top - only loads AFTER mode selection is complete (not during transition) */}
+        {/* zIndex 2000 ensures story reader stays above transition overlay (zIndex 1000) during exit animation */}
+        {(showStoryReader && storyBeingRead) && (
+          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2000 }}>
+            <StoryBookReader
+              story={storyBeingRead}
+              initialMode={transitionMode}
+              initialVoiceOver={transitionVoiceOver}
+              skipCoverPage={true}
+              skipInitialFadeIn={true}
+              onExit={handleBackToStories}
+            />
+          </View>
+        )}
 
         <StatusBar style="auto" />
 

@@ -9,6 +9,9 @@ import {
 import { ApiClient } from './api-client';
 import Constants from 'expo-constants';
 import { AuthenticatedImageService } from './authenticated-image-service';
+import { Logger } from '../utils/logger';
+
+const log = Logger.create('StorySyncService');
 
 const STORAGE_KEY = 'story_sync_metadata';
 
@@ -59,7 +62,7 @@ export class StorySyncService {
       }
       return JSON.parse(data);
     } catch (error) {
-      console.error('[StorySyncService] Error reading local sync metadata:', error);
+      log.error('Error reading local sync metadata:', error);
       return null;
     }
   }
@@ -70,13 +73,13 @@ export class StorySyncService {
   static async saveSyncMetadata(metadata: StorySyncMetadata): Promise<void> {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(metadata));
-      console.log('[StorySyncService] Sync metadata saved:', {
+      log.debug('Sync metadata saved:', {
         version: metadata.version,
         stories: metadata.stories.length,
         lastSync: new Date(metadata.lastSyncTimestamp).toISOString()
       });
     } catch (error) {
-      console.error('[StorySyncService] Error saving sync metadata:', error);
+      log.error('Error saving sync metadata:', error);
       throw error;
     }
   }
@@ -86,12 +89,12 @@ export class StorySyncService {
    */
   static async getContentVersion(): Promise<ContentVersion> {
     try {
-      console.log('[StorySyncService] Fetching content version from backend...');
+      log.debug('Fetching content version from backend...');
       const response = await ApiClient.request<ContentVersion>('/api/stories/version');
-      console.log('[StorySyncService] Content version:', response);
+      log.debug('Content version:', response);
       return response;
     } catch (error) {
-      console.error('[StorySyncService] Error fetching content version:', error);
+      log.error('Error fetching content version:', error);
       throw error;
     }
   }
@@ -105,7 +108,7 @@ export class StorySyncService {
 
       // If no local data, sync is needed
       if (!localMetadata) {
-        console.log('[StorySyncService] No local data, sync needed');
+        log.debug('No local data, sync needed');
         return true;
       }
 
@@ -128,7 +131,7 @@ export class StorySyncService {
 
       const syncNeeded = versionIncreased || storyCountChanged || hasDeletedStories;
 
-      console.log('[StorySyncService] Sync check:', {
+      log.debug('Sync check:', {
         localVersion: localMetadata.version,
         serverVersion: serverVersion.version,
         localStoryCount,
@@ -142,7 +145,7 @@ export class StorySyncService {
 
       return syncNeeded;
     } catch (error) {
-      console.error('[StorySyncService] Error checking sync status:', error);
+      log.error('Error checking sync status:', error);
       // On error, assume sync is needed
       return true;
     }
@@ -165,12 +168,10 @@ export class StorySyncService {
    */
   static async syncStories(): Promise<Story[]> {
     try {
-      console.log('[CMS-SYNC] ========================================');
-      console.log('[CMS-SYNC] Starting CMS story sync...');
-
-      // Get local metadata
       const localMetadata = await this.getLocalSyncMetadata();
       const isInitialSync = !localMetadata || localMetadata.version === 0;
+
+      log.info(`Starting ${isInitialSync ? 'initial' : 'delta'} sync...`);
 
       // Build sync request
       const syncRequest: StorySyncRequest = {
@@ -179,26 +180,7 @@ export class StorySyncService {
         lastSyncTimestamp: localMetadata?.lastSyncTimestamp || 0
       };
 
-      // Calculate request payload size (use length as fallback for test environments)
       const requestPayload = JSON.stringify(syncRequest);
-      const requestSize = typeof TextEncoder !== 'undefined'
-        ? new TextEncoder().encode(requestPayload).length
-        : requestPayload.length;
-
-      console.log('[CMS-SYNC] ----------------------------------------');
-      console.log('[CMS-SYNC] SYNC TYPE:', isInitialSync ? '🆕 INITIAL SYNC (full download)' : '🔄 DELTA SYNC (changes only)');
-      console.log('[CMS-SYNC] ----------------------------------------');
-      console.log('[CMS-SYNC] Request payload:', {
-        clientVersion: syncRequest.clientVersion,
-        localStoriesCount: Object.keys(syncRequest.storyChecksums).length,
-        requestPayloadSize: this.formatBytes(requestSize),
-      });
-      if (!isInitialSync) {
-        console.log('[CMS-SYNC] Local story checksums sent for delta comparison:');
-        Object.entries(syncRequest.storyChecksums).forEach(([id, checksum]) => {
-          console.log(`[CMS-SYNC]   - ${id}: ${checksum.substring(0, 16)}...`);
-        });
-      }
 
       // Call sync endpoint
       const syncResponse = await ApiClient.request<StorySyncResponse>('/api/stories/sync', {
@@ -206,42 +188,7 @@ export class StorySyncService {
         body: requestPayload
       });
 
-      // Calculate response payload size (use length as fallback for test environments)
-      const responsePayload = JSON.stringify(syncResponse);
-      const responseSize = typeof TextEncoder !== 'undefined'
-        ? new TextEncoder().encode(responsePayload).length
-        : responsePayload.length;
-      const storiesPayloadSize = JSON.stringify(syncResponse.stories || []);
-      const storiesSize = typeof TextEncoder !== 'undefined'
-        ? new TextEncoder().encode(storiesPayloadSize).length
-        : storiesPayloadSize.length;
-
-      console.log('[CMS-SYNC] ----------------------------------------');
-      console.log('[CMS-SYNC] RESPONSE PAYLOAD SIZE:');
-      console.log(`[CMS-SYNC]   📦 Total response: ${this.formatBytes(responseSize)}`);
-      console.log(`[CMS-SYNC]   📚 Stories data: ${this.formatBytes(storiesSize)}`);
-      console.log(`[CMS-SYNC]   📊 Metadata overhead: ${this.formatBytes(responseSize - storiesSize)}`);
-      console.log('[CMS-SYNC] ----------------------------------------');
-
-      // Log delta sync details
-      if (!isInitialSync) {
-        const unchangedCount = syncResponse.totalStories - syncResponse.updatedStories;
-        const savedBytes = unchangedCount > 0 ?
-          Math.round(storiesSize * (unchangedCount / Math.max(syncResponse.updatedStories, 1))) : 0;
-
-        console.log('[CMS-SYNC] DELTA SYNC RESULTS:');
-        console.log(`[CMS-SYNC]   ✅ Stories unchanged (skipped): ${unchangedCount}`);
-        console.log(`[CMS-SYNC]   📝 Stories updated/new (downloaded): ${syncResponse.updatedStories}`);
-        console.log(`[CMS-SYNC]   💾 Estimated bandwidth saved: ~${this.formatBytes(savedBytes)}`);
-        console.log('[CMS-SYNC] ----------------------------------------');
-      }
-
-      console.log('[CMS-SYNC] Sync response summary:', {
-        serverVersion: syncResponse.serverVersion,
-        updatedStories: syncResponse.updatedStories,
-        totalStories: syncResponse.totalStories,
-        lastUpdated: new Date(syncResponse.lastUpdated).toISOString()
-      });
+      log.info(`Sync complete: ${syncResponse.updatedStories} updated, ${syncResponse.totalStories} total stories`);
 
       // Resolve asset URLs for all stories
       if (syncResponse.stories && syncResponse.stories.length > 0) {
@@ -272,45 +219,11 @@ export class StorySyncService {
           if (oldStory) {
             const urlsToInvalidate = this.extractImageUrls(oldStory);
             if (urlsToInvalidate.length > 0) {
-              console.log(`[CMS-SYNC] Invalidating ${urlsToInvalidate.length} cached images for updated story: ${story.id}`);
+              log.debug(`Invalidating ${urlsToInvalidate.length} cached images for: ${story.id}`);
               await AuthenticatedImageService.invalidateCacheForUrls(urlsToInvalidate);
             }
           }
         }
-      }
-
-      // Log each story received from CMS
-      if (syncResponse.stories && syncResponse.stories.length > 0) {
-        console.log('[CMS-SYNC] Stories received from CMS:');
-        syncResponse.stories.forEach((story, index) => {
-          const pageCount = story.pages?.length || 0;
-          console.log(`[CMS-SYNC]   ${index + 1}. ${story.id}`);
-          console.log(`[CMS-SYNC]      Title: "${story.title}"`);
-          console.log(`[CMS-SYNC]      Category: ${story.category}`);
-          console.log(`[CMS-SYNC]      Pages: ${pageCount}`);
-          console.log(`[CMS-SYNC]      Cover Image: ${story.coverImage ? '✓ Present' : '✗ Missing'}`);
-          if (story.coverImage) {
-            console.log(`[CMS-SYNC]        URL: ${story.coverImage}`);
-          }
-
-          // Log page images
-          if (story.pages && story.pages.length > 0) {
-            console.log(`[CMS-SYNC]      Page Images:`);
-            story.pages.forEach(page => {
-              const hasBackground = page.backgroundImage ? '✓' : '✗';
-              const hasCharacter = page.characterImage ? '✓' : '✗';
-              console.log(`[CMS-SYNC]        Page ${page.pageNumber}: Background ${hasBackground}, Character ${hasCharacter}`);
-              if (page.backgroundImage) {
-                console.log(`[CMS-SYNC]          BG: ${page.backgroundImage}`);
-              }
-              if (page.characterImage) {
-                console.log(`[CMS-SYNC]          Char: ${page.characterImage}`);
-              }
-            });
-          }
-        });
-      } else {
-        console.log('[CMS-SYNC] No new stories to download (already up to date)');
       }
 
       // Merge updated stories with existing stories
@@ -329,7 +242,7 @@ export class StorySyncService {
       // Check for deleted stories
       const deletedStories = existingStories.filter(s => !serverStoryIds.has(s.id));
       if (deletedStories.length > 0) {
-        console.log('[CMS-SYNC] 🗑️  Stories deleted from CMS:', deletedStories.map(s => s.id));
+        log.info(`Removed ${deletedStories.length} deleted stories:`, deletedStories.map(s => s.id));
       }
 
       // Combine unchanged + updated stories
@@ -345,27 +258,11 @@ export class StorySyncService {
 
       await this.saveSyncMetadata(newMetadata);
 
-      // Calculate final storage size (use length as fallback for test environments)
-      const storedDataString = JSON.stringify(newMetadata);
-      const storedDataSize = typeof TextEncoder !== 'undefined'
-        ? new TextEncoder().encode(storedDataString).length
-        : storedDataString.length;
-
-      console.log('[CMS-SYNC] ----------------------------------------');
-      console.log('[CMS-SYNC] SYNC COMPLETE SUMMARY:');
-      console.log(`[CMS-SYNC]   📚 Total stories now cached: ${allStories.length}`);
-      console.log(`[CMS-SYNC]   🆕 New/updated stories this sync: ${syncResponse.stories.length}`);
-      console.log(`[CMS-SYNC]   ♻️  Unchanged stories retained: ${unchangedStories.length}`);
-      console.log(`[CMS-SYNC]   🗑️  Stories removed (deleted from CMS): ${deletedStories.length}`);
-      console.log(`[CMS-SYNC]   💾 Local storage size: ${this.formatBytes(storedDataSize)}`);
-      console.log(`[CMS-SYNC]   🔢 Content version: ${syncResponse.serverVersion}`);
-      console.log('[CMS-SYNC] ----------------------------------------');
-      console.log('[CMS-SYNC] Cached story IDs:', allStories.map(s => s.id));
-      console.log('[CMS-SYNC] ========================================');
+      log.debug(`Cached ${allStories.length} stories (version ${syncResponse.serverVersion})`);
 
       return allStories;
     } catch (error) {
-      console.error('[CMS-SYNC] Sync failed:', error);
+      log.error('Sync failed:', error);
       throw error;
     }
   }
@@ -399,27 +296,27 @@ export class StorySyncService {
    */
   static async prefetchStories(): Promise<Story[]> {
     try {
-      console.log('[StorySyncService] Prefetching stories...');
+      log.debug('Prefetching stories...');
 
       const syncNeeded = await this.isSyncNeeded();
 
       if (syncNeeded) {
-        console.log('[StorySyncService] Sync needed, fetching updates...');
+        log.debug('Sync needed, fetching updates...');
         return await this.syncStories();
       } else {
-        console.log('[StorySyncService] Stories up to date, using local cache');
+        log.debug('Stories up to date, using local cache');
         const metadata = await this.getLocalSyncMetadata();
         const stories = metadata?.stories || [];
         // Ensure all asset URLs are resolved
         return this.resolveStoriesAssetUrls(stories);
       }
     } catch (error) {
-      console.error('[StorySyncService] Prefetch failed:', error);
+      log.error('Prefetch failed:', error);
 
       // Fallback to local cache if available
       const metadata = await this.getLocalSyncMetadata();
       if (metadata?.stories) {
-        console.log('[StorySyncService] Using cached stories due to sync error');
+        log.warn('Using cached stories due to sync error');
         // Ensure all asset URLs are resolved
         return this.resolveStoriesAssetUrls(metadata.stories);
       }
@@ -440,7 +337,7 @@ export class StorySyncService {
       // Ensure all asset URLs are resolved
       return this.resolveStoriesAssetUrls(stories);
     } catch (error) {
-      console.error('[StorySyncService] Error getting local stories:', error);
+      log.error('Error getting local stories:', error);
       return [];
     }
   }
@@ -452,9 +349,9 @@ export class StorySyncService {
   static async clearCache(): Promise<void> {
     try {
       await AsyncStorage.removeItem(STORAGE_KEY);
-      console.log('[StorySyncService] Cache cleared');
+      log.debug('Cache cleared');
     } catch (error) {
-      console.error('[StorySyncService] Error clearing cache:', error);
+      log.error('Error clearing cache:', error);
       throw error;
     }
   }
@@ -502,12 +399,10 @@ export class StorySyncService {
     this.lastPrefetchRemovedStories = false;
 
     try {
-      console.log('[StorySyncService] Prefetching cover images for instant display...');
-
       const stories = await this.getLocalStories();
       const storiesWithCovers = stories.filter(s => typeof s.coverImage === 'string' && s.coverImage);
 
-      console.log(`[StorySyncService] Found ${storiesWithCovers.length} CMS stories with cover images to cache`);
+      log.debug(`Prefetching ${storiesWithCovers.length} cover images...`);
 
       // Download all cover images in parallel
       const downloadPromises = storiesWithCovers.map(async (story) => {
@@ -516,14 +411,13 @@ export class StorySyncService {
           const cachedPath = await AuthenticatedImageService.getImageUri(url);
           if (cachedPath) {
             cachedPaths.set(story.id, cachedPath);
-            console.log(`[StorySyncService] ✓ Cover cached: ${story.id}`);
             return { storyId: story.id, success: true };
           }
-          console.warn(`[StorySyncService] ✗ Cover not available: ${story.id} - will remove from cache`);
+          log.warn(`Cover not available: ${story.id}`);
           failedStoryIds.push(story.id);
           return { storyId: story.id, success: false };
         } catch (error) {
-          console.warn(`[StorySyncService] ✗ Failed to cache cover: ${story.id}`, error);
+          log.warn(`Failed to cache cover: ${story.id}`, error);
           failedStoryIds.push(story.id);
           return { storyId: story.id, success: false };
         }
@@ -532,11 +426,8 @@ export class StorySyncService {
       const results = await Promise.all(downloadPromises);
       const successCount = results.filter(r => r.success).length;
 
-      console.log(`[StorySyncService] Cover image prefetch complete: ${successCount}/${storiesWithCovers.length} successful`);
-
-      // Remove stories with unavailable covers from local cache
       if (failedStoryIds.length > 0) {
-        console.log(`[StorySyncService] Removing ${failedStoryIds.length} stories with unavailable assets from cache`);
+        log.info(`Cover prefetch: ${successCount}/${storiesWithCovers.length} cached, removing ${failedStoryIds.length} unavailable`);
         await this.removeStoriesFromCache(failedStoryIds);
         this.lastPrefetchRemovedStories = true;
       }
@@ -546,7 +437,7 @@ export class StorySyncService {
 
       return cachedPaths;
     } catch (error) {
-      console.error('[StorySyncService] Cover image prefetch failed:', error);
+      log.error('Cover image prefetch failed:', error);
       return cachedPaths;
     }
   }
@@ -574,9 +465,9 @@ export class StorySyncService {
       };
 
       await this.saveSyncMetadata(updatedMetadata);
-      console.log(`[StorySyncService] Removed ${storyIds.length} unavailable stories from cache. Remaining: ${remainingStories.length}`);
+      log.debug(`Removed ${storyIds.length} unavailable stories, ${remainingStories.length} remaining`);
     } catch (error) {
-      console.error('[StorySyncService] Error removing stories from cache:', error);
+      log.error('Error removing stories from cache:', error);
     }
   }
 
@@ -587,9 +478,8 @@ export class StorySyncService {
     try {
       const obj = Object.fromEntries(paths);
       await AsyncStorage.setItem('cached_cover_paths', JSON.stringify(obj));
-      console.log(`[StorySyncService] Saved ${paths.size} cached cover paths`);
     } catch (error) {
-      console.error('[StorySyncService] Error saving cached cover paths:', error);
+      log.error('Error saving cached cover paths:', error);
     }
   }
 
@@ -612,7 +502,7 @@ export class StorySyncService {
         }
       }
     } catch (error) {
-      console.warn('[StorySyncService] Error getting cached cover path:', error);
+      log.warn('Error getting cached cover path:', error);
     }
     return remoteUrl;
   }
@@ -627,7 +517,7 @@ export class StorySyncService {
         return JSON.parse(data) as Record<string, string>;
       }
     } catch (error) {
-      console.warn('[StorySyncService] Error getting all cached cover paths:', error);
+      log.warn('Error getting all cached cover paths:', error);
     }
     return {};
   }

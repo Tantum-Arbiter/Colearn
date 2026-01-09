@@ -1,6 +1,9 @@
 import { Story } from '@/types/story';
 import { StorySyncService } from './story-sync-service';
 import { ALL_STORIES, getAvailableStories } from '@/data/stories';
+import { Logger } from '@/utils/logger';
+
+const log = Logger.create('StoryLoader');
 
 /**
  * Story loader that merges local stories with CMS-synced stories
@@ -34,13 +37,13 @@ export class StoryLoader {
   static async getStories(): Promise<Story[]> {
     // Return cached stories immediately if available
     if (this.cachedStories) {
-      console.log(`[CMS-LOADER] ⚡ Returning ${this.cachedStories.length} cached stories instantly`);
+      log.debug(`Returning ${this.cachedStories.length} cached stories instantly`);
       return this.cachedStories;
     }
 
     // If already loading, wait for the existing promise to avoid duplicate loads
     if (this.isLoading && this.loadPromise) {
-      console.log(`[CMS-LOADER] Waiting for existing load to complete...`);
+      log.debug('Waiting for existing load to complete...');
       return this.loadPromise;
     }
 
@@ -51,7 +54,7 @@ export class StoryLoader {
     try {
       const stories = await this.loadPromise;
       this.cachedStories = stories;
-      console.log(`[CMS-LOADER] ✓ Cached ${stories.length} stories for instant access`);
+      log.debug(`Cached ${stories.length} stories for instant access`);
       return stories;
     } finally {
       this.isLoading = false;
@@ -66,53 +69,29 @@ export class StoryLoader {
     try {
       // Start with local stories (offline-first)
       const localStories = [...ALL_STORIES];
-      console.log(`[CMS-LOADER] Local bundled stories: ${localStories.length}`);
+      log.debug(`Local bundled stories: ${localStories.length}`);
 
       // Try to get CMS stories from sync cache
       const cmsStories = await StorySyncService.getLocalStories();
 
-      // Debug: Log CMS stories with image info
       if (cmsStories && cmsStories.length > 0) {
-        console.log(`[CMS-LOADER] CMS stories loaded from cache: ${cmsStories.length}`);
-        cmsStories.forEach((story, index) => {
-          const hasCover = story.coverImage ? '✓' : '✗';
-          const pageCount = story.pages?.length || 0;
-          console.log(`[CMS-LOADER]   ${index + 1}. ${story.id} - Cover: ${hasCover}, Pages: ${pageCount}`);
-          if (story.coverImage) {
-            console.log(`[CMS-LOADER]      Cover URL: ${story.coverImage}`);
-          }
-          if (story.pages && story.pages.length > 0) {
-            story.pages.forEach(page => {
-              // Log full URL for debugging
-              console.log(`[CMS-LOADER]      Page ${page.pageNumber}: ${page.backgroundImage || 'NO_BG_IMAGE'}`);
-            });
-          }
-        });
-      }
-
-      if (cmsStories && cmsStories.length > 0) {
-        console.log(`[CMS-LOADER] CMS stories in cache: ${cmsStories.length}`);
-
-        // Log each CMS story
-        cmsStories.forEach((story, index) => {
-          console.log(`[CMS-LOADER]   ${index + 1}. ${story.id} - "${story.title}" (${story.pages?.length || 0} pages)`);
-        });
+        log.debug(`CMS stories in cache: ${cmsStories.length}`);
 
         // Merge: CMS stories can override local stories with same ID
         const localIds = new Set(localStories.map(s => s.id));
         const uniqueCmsStories = cmsStories.filter(s => !localIds.has(s.id));
 
         const allStories = [...localStories, ...uniqueCmsStories];
-        console.log(`[CMS-LOADER] Merged: ${localStories.length} local + ${uniqueCmsStories.length} unique CMS = ${allStories.length} total`);
+        log.debug(`Merged: ${localStories.length} local + ${uniqueCmsStories.length} unique CMS = ${allStories.length} total`);
         return allStories;
       }
 
       // No CMS stories yet - return local only
-      console.log(`[CMS-LOADER] No CMS stories in cache - using ${localStories.length} local stories (offline mode)`);
+      log.debug(`No CMS stories in cache - using ${localStories.length} local stories (offline mode)`);
       return localStories;
     } catch (error) {
-      console.error('[CMS-LOADER] Error loading stories:', error);
-      console.log('[CMS-LOADER] Falling back to local stories');
+      log.error('Error loading stories:', error);
+      log.warn('Falling back to local stories');
       return ALL_STORIES;
     }
   }
@@ -154,7 +133,7 @@ export class StoryLoader {
    * Call this after sync completes to ensure fresh stories are loaded
    */
   static invalidateCache(): void {
-    console.log('[StoryLoader] Invalidating story cache');
+    log.debug('Invalidating story cache');
     this.cachedStories = null;
   }
 
@@ -164,15 +143,15 @@ export class StoryLoader {
    */
   static async refreshStories(): Promise<Story[]> {
     try {
-      console.log('[StoryLoader] Forcing story refresh...');
+      log.debug('Forcing story refresh...');
       this.invalidateCache();
       const stories = await StorySyncService.syncStories();
       // Update cache with fresh stories
       this.cachedStories = await this.loadStoriesInternal();
-      console.log(`[StoryLoader] Refreshed ${this.cachedStories.length} stories`);
+      log.debug(`Refreshed ${this.cachedStories.length} stories`);
       return this.cachedStories;
     } catch (error) {
-      console.error('[StoryLoader] Refresh failed:', error);
+      log.error('Refresh failed:', error);
       throw error;
     }
   }
@@ -212,7 +191,7 @@ export class StoryLoader {
       const localIds = new Set(ALL_STORIES.map(s => s.id));
       return cmsStories.filter(s => !localIds.has(s.id));
     } catch (error) {
-      console.error('[StoryLoader] Error loading CMS stories:', error);
+      log.error('Error loading CMS stories:', error);
       return [];
     }
   }

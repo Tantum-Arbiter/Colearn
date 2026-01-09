@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, Pressable, StyleSheet, Image, ImageSourcePropType } from 'react-native';
+import { View, Text, Pressable, StyleSheet, ImageSourcePropType } from 'react-native';
+import { Image } from 'expo-image';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -11,6 +12,9 @@ import * as Haptics from 'expo-haptics';
 import { Story } from '@/types/story';
 import { Fonts } from '@/constants/theme';
 import { AuthenticatedImage } from '@/components/ui/authenticated-image';
+import { Logger } from '@/utils/logger';
+
+const log = Logger.create('StoryThumbnail');
 
 interface StoryThumbnailProps {
   story: Story;
@@ -82,25 +86,17 @@ export const StoryThumbnail: React.FC<StoryThumbnailProps> = ({
 
   const getCoverImageSource = (): ImageSourcePropType | null => {
     if (!story.coverImage) {
-      console.log(`[StoryThumbnail] ${story.id}: No cover image`);
       return null;
     }
 
     // Handle both require() and URL string formats
     if (typeof story.coverImage === 'string') {
-      console.log(`[StoryThumbnail] ${story.id}: Loading cover from URL: ${story.coverImage}, isCMS=${isCmsImage}`);
       return { uri: story.coverImage };
     }
-    console.log(`[StoryThumbnail] ${story.id}: Loading cover from require()`);
     return story.coverImage;
   };
 
   const coverImageSource = getCoverImageSource();
-
-  // Debug logging
-  React.useEffect(() => {
-    console.log(`[StoryThumbnail] ${story.id}: Render state - isVisible=${isVisible}, coverImageSource=${!!coverImageSource}, imageError=${imageError}, isCmsImage=${isCmsImage}`);
-  }, [isVisible, coverImageSource, imageError, isCmsImage, story.id]);
 
   return (
     <Animated.View style={[styles.container, { width, height }, animatedStyle]}>
@@ -120,11 +116,10 @@ export const StoryThumbnail: React.FC<StoryThumbnailProps> = ({
                 style={styles.coverImage}
                 resizeMode="cover"
                 onLoad={() => {
-                  console.log(`[StoryThumbnail] ${story.id}: CMS image loaded successfully`);
                   setImageLoaded(true);
                 }}
                 onError={(error) => {
-                  console.error(`[StoryThumbnail] ${story.id}: CMS image load error:`, error);
+                  log.error(`${story.id}: CMS image load error:`, error);
                   setImageError(true);
                 }}
               />
@@ -133,15 +128,15 @@ export const StoryThumbnail: React.FC<StoryThumbnailProps> = ({
                 source={coverImageSource}
                 style={styles.coverImage}
                 onLoad={() => {
-                  console.log(`[StoryThumbnail] ${story.id}: Image loaded successfully`);
                   setImageLoaded(true);
                 }}
                 onError={(error) => {
-                  console.error(`[StoryThumbnail] ${story.id}: Image load error:`, JSON.stringify(error));
-                  console.error(`[StoryThumbnail] ${story.id}: Attempted to load:`, coverImageSource);
+                  log.error(`${story.id}: Image load error:`, JSON.stringify(error));
                   setImageError(true);
                 }}
-                resizeMode="cover"
+                contentFit="cover"
+                transition={0}
+                cachePolicy="memory-disk"
               />
             )
           ) : (

@@ -8,7 +8,6 @@ import { render } from '@testing-library/react-native';
 import { MainMenu } from '@/components/main-menu';
 import { StorySelectionScreen } from '@/components/stories/story-selection-screen';
 import { StoryBookReader } from '@/components/stories/story-book-reader';
-import { StoryCompletionScreen } from '@/components/stories/story-completion-screen';
 import { Story } from '@/types/story';
 import { resetAnimationMocks } from '@/__tests__/utils/animation-test-utils';
 
@@ -113,8 +112,6 @@ describe('Visual Regression Tests', () => {
         <StoryBookReader
           story={SNAPSHOT_TEST_STORY}
           onExit={jest.fn()}
-          onReadAnother={jest.fn()}
-          onBedtimeMusic={jest.fn()}
         />
       );
       expect(toJSON()).toMatchSnapshot('story-book-reader-initial');
@@ -134,46 +131,9 @@ describe('Visual Regression Tests', () => {
         <StoryBookReader
           story={bedtimeStory}
           onExit={jest.fn()}
-          onReadAnother={jest.fn()}
-          onBedtimeMusic={jest.fn()}
         />
       );
       expect(toJSON()).toMatchSnapshot('story-book-reader-bedtime');
-    });
-  });
-
-  describe('StoryCompletionScreen Snapshots', () => {
-    it('should match StoryCompletionScreen snapshot', () => {
-      const { toJSON } = render(
-        <StoryCompletionScreen
-          completedStory={SNAPSHOT_TEST_STORY}
-          onClose={jest.fn()}
-          onReadAnother={jest.fn()}
-          onRereadCurrent={jest.fn()}
-          onBedtimeMusic={jest.fn()}
-        />
-      );
-      expect(toJSON()).toMatchSnapshot('story-completion-default');
-    });
-
-    it('should match StoryCompletionScreen for bedtime stories', () => {
-      const bedtimeStory: Story = {
-        ...SNAPSHOT_TEST_STORY,
-        category: 'bedtime',
-        tag: '🌙 Bedtime',
-        emoji: '🌙',
-      };
-
-      const { toJSON } = render(
-        <StoryCompletionScreen
-          completedStory={bedtimeStory}
-          onClose={jest.fn()}
-          onReadAnother={jest.fn()}
-          onRereadCurrent={jest.fn()}
-          onBedtimeMusic={jest.fn()}
-        />
-      );
-      expect(toJSON()).toMatchSnapshot('story-completion-bedtime');
     });
   });
 
@@ -193,8 +153,6 @@ describe('Visual Regression Tests', () => {
         <StoryBookReader
           story={SNAPSHOT_TEST_STORY}
           onExit={jest.fn()}
-          onReadAnother={jest.fn()}
-          onBedtimeMusic={jest.fn()}
         />
       );
       expect(toJSON()).toMatchSnapshot('story-reader-cover-page');
@@ -256,8 +214,6 @@ describe('Visual Regression Tests', () => {
         <StoryBookReader
           story={incompleteStory}
           onExit={jest.fn()}
-          onReadAnother={jest.fn()}
-          onBedtimeMusic={jest.fn()}
         />
       );
       expect(toJSON()).toMatchSnapshot('story-reader-incomplete-data');
@@ -283,19 +239,6 @@ describe('Visual Regression Tests', () => {
       const { toJSON } = render(<StorySelectionScreen />);
       expect(toJSON()).toMatchSnapshot('story-selection-card-styling');
     });
-
-    it('should match completion screen with consistent button styling', () => {
-      const { toJSON } = render(
-        <StoryCompletionScreen
-          completedStory={SNAPSHOT_TEST_STORY}
-          onClose={jest.fn()}
-          onReadAnother={jest.fn()}
-          onRereadCurrent={jest.fn()}
-          onBedtimeMusic={jest.fn()}
-        />
-      );
-      expect(toJSON()).toMatchSnapshot('completion-screen-button-styling');
-    });
   });
 
   describe('Accessibility Snapshots', () => {
@@ -317,8 +260,6 @@ describe('Visual Regression Tests', () => {
         <StoryBookReader
           story={SNAPSHOT_TEST_STORY}
           onExit={jest.fn()}
-          onReadAnother={jest.fn()}
-          onBedtimeMusic={jest.fn()}
         />
       );
       expect(toJSON()).toMatchSnapshot('story-reader-accessibility');
@@ -345,8 +286,6 @@ describe('Visual Regression Tests', () => {
         <StoryBookReader
           story={longTitleStory}
           onExit={jest.fn()}
-          onReadAnother={jest.fn()}
-          onBedtimeMusic={jest.fn()}
         />
       );
       expect(toJSON()).toMatchSnapshot('story-reader-long-content');
@@ -371,8 +310,6 @@ describe('Visual Regression Tests', () => {
         <StoryBookReader
           story={minimalStory}
           onExit={jest.fn()}
-          onReadAnother={jest.fn()}
-          onBedtimeMusic={jest.fn()}
         />
       );
       expect(toJSON()).toMatchSnapshot('story-reader-minimal-content');

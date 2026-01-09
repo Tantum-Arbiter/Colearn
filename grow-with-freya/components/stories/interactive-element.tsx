@@ -8,7 +8,9 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Pressable, StyleSheet, Image, ImageSourcePropType } from 'react-native';
+import { Pressable, StyleSheet, ImageSourcePropType } from 'react-native';
+import { Image } from 'expo-image';
+import { Logger } from '@/utils/logger';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -174,9 +176,11 @@ export const InteractiveElementComponent: React.FC<InteractiveElementProps> = ({
     };
   }, [isRevealed, glowOpacity, indicatorScale]);
 
+  const log = Logger.create('InteractiveElement');
+
   // Handle tap
   const handlePress = () => {
-    console.log(`[InteractiveElement] Tapped element: ${element.id}, currently revealed: ${isRevealed}`);
+    log.debug(`Tapped element: ${element.id}, currently revealed: ${isRevealed}`);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     if (isRevealed) {
@@ -227,7 +231,9 @@ export const InteractiveElementComponent: React.FC<InteractiveElementProps> = ({
         <Image
           source={element.image as unknown as ImageSourcePropType}
           style={styles.propImage}
-          resizeMode="contain"
+          contentFit="contain"
+          transition={0}
+          cachePolicy="memory-disk"
         />
       );
     } else if (imageUri) {
