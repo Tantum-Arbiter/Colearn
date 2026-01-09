@@ -133,34 +133,40 @@ class BackgroundMusicService {
    */
   private async switchToNextTrack(): Promise<void> {
     try {
-      const wasPlaying = this.isPlaying;
       const nextTrack = this.getNextTrack();
 
       console.log(`Switching from ${this.currentTrackName} to ${nextTrack.name}`);
 
-      // Unload current track
+      // Unload current track - remove listener first
       if (this.sound) {
-        await this.sound.stopAsync();
+        this.sound.setOnPlaybackStatusUpdate(null);
+        try {
+          await this.sound.stopAsync();
+        } catch (e) {
+          // Ignore stop errors - track may already be finished
+        }
         await this.sound.unloadAsync();
+        this.sound = null;
       }
+
+      // Update current track name before loading
+      this.currentTrackName = nextTrack.name;
 
       // Load the next track (no looping - we advance manually)
       this.sound = await this.loadTrack(nextTrack.source, false);
-      this.currentTrackName = nextTrack.name;
 
-      // Set up playback status update listener
+      // Set up playback status update listener BEFORE playing
       this.sound.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate);
 
-      console.log(`Now playing: ${this.currentTrackName}`);
+      // Set volume and start playing
+      await this.sound.setVolumeAsync(this.volume);
+      await this.sound.playAsync();
+      this.isPlaying = true;
 
-      // Resume playing if was playing before
-      if (wasPlaying) {
-        await this.sound.setVolumeAsync(this.volume);
-        await this.sound.playAsync();
-        this.isPlaying = true;
-      }
+      console.log(`Now playing: ${this.currentTrackName}`);
     } catch (error) {
       console.error('Failed to switch to next track:', error);
+      this.isPlaying = false;
     }
   }
 
