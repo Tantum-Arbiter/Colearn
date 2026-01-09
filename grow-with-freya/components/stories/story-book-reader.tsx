@@ -29,6 +29,7 @@ import { voiceRecordingService, VoiceOver } from '@/services/voice-recording-ser
 import { useGlobalSound } from '@/contexts/global-sound-context';
 import { AuthenticatedImage } from '@/components/ui/authenticated-image';
 import { Logger } from '@/utils/logger';
+import { PagePreviewModal } from './pages-preview-modal';
 
 const log = Logger.create('StoryBookReader');
 
@@ -64,6 +65,7 @@ export function StoryBookReader({
   const [preloadedPages, setPreloadedPages] = useState<Set<number>>(new Set());
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<'main' | 'fontSize' | null>(null);
+  const [showPagePreview, setShowPagePreview] = useState(false);
   const [readingMode, setReadingMode] = useState<'read' | 'record' | 'narrate'>(initialMode);
 
   // Voice recording state
@@ -392,6 +394,12 @@ export function StoryBookReader({
   const exitTranslateX = useSharedValue(0);
   const exitTranslateY = useSharedValue(0);
 
+  // Page preview slide-out animations
+  const leftButtonSlide = useSharedValue(0);
+  const rightButtonSlide = useSharedValue(0);
+  const textBoxSlide = useSharedValue(0);
+  const uiOpacity = useSharedValue(1);
+
 
 
   // Get story pages or create default pages if none exist
@@ -409,6 +417,21 @@ export function StoryBookReader({
           log.debug(`Page ${idx}: ${page.interactiveElements!.length} interactive elements`);
         }
       });
+    }
+  }, [story.id, pages]);
+
+  // Prefetch all page images for smooth page preview modal
+  useEffect(() => {
+    const imagesToPrefetch: string[] = [];
+    pages.forEach((page) => {
+      const imageSource = page.backgroundImage || page.characterImage;
+      if (typeof imageSource === 'string' && imageSource.length > 0) {
+        imagesToPrefetch.push(imageSource);
+      }
+    });
+
+    if (imagesToPrefetch.length > 0) {
+      Image.prefetch(imagesToPrefetch);
     }
   }, [story.id, pages]);
 
@@ -804,6 +827,47 @@ export function StoryBookReader({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shouldAutoAdvance]);
+
+  // Animate UI elements when page preview opens/closes
+  useEffect(() => {
+    const slideDistance = 150;
+    const duration = 250;
+    const modalAnimationDuration = 300; // Match the modal slide-down duration
+
+    if (showPagePreview) {
+      // Slide out: left button to left, right button to right, text box down
+      leftButtonSlide.value = withTiming(-slideDistance, { duration, easing: Easing.out(Easing.cubic) });
+      rightButtonSlide.value = withTiming(slideDistance, { duration, easing: Easing.out(Easing.cubic) });
+      textBoxSlide.value = withTiming(slideDistance, { duration, easing: Easing.out(Easing.cubic) });
+      uiOpacity.value = withTiming(0, { duration });
+    } else {
+      // Wait for modal to slide down first, then slide buttons back in
+      const delayTimer = setTimeout(() => {
+        leftButtonSlide.value = withTiming(0, { duration, easing: Easing.out(Easing.cubic) });
+        rightButtonSlide.value = withTiming(0, { duration, easing: Easing.out(Easing.cubic) });
+        textBoxSlide.value = withTiming(0, { duration, easing: Easing.out(Easing.cubic) });
+        uiOpacity.value = withTiming(1, { duration });
+      }, modalAnimationDuration);
+
+      return () => clearTimeout(delayTimer);
+    }
+  }, [showPagePreview]);
+
+  // Animated styles for page preview slide-out
+  const leftButtonAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: leftButtonSlide.value }],
+    opacity: uiOpacity.value,
+  }));
+
+  const rightButtonAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: rightButtonSlide.value }],
+    opacity: uiOpacity.value,
+  }));
+
+  const textBoxAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: textBoxSlide.value }],
+    opacity: uiOpacity.value,
+  }));
 
   // Function to render just the image layer (for background/previous page - no animation)
   const renderPageImage = (page: any, withAnimation = true) => {
@@ -1341,6 +1405,18 @@ export function StoryBookReader({
               style={styles.menuItem}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setShowSettingsMenu(false);
+                setActiveSubmenu(null);
+                setShowPagePreview(true);
+              }}
+            >
+              <Text style={[styles.menuItemText, { fontSize: scaledFontSize(14) }]}>Page Preview</Text>
+            </Pressable>
+            <View style={styles.menuDivider} />
+            <Pressable
+              style={styles.menuItem}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setActiveSubmenu('fontSize');
               }}
             >
@@ -1443,33 +1519,35 @@ export function StoryBookReader({
             readingMode === 'record' && styles.navigationRowRecordMode
           ]}>
           {/* Previous Button - Left Side */}
-          <Pressable
-            style={[
-              styles.navButton,
-              styles.prevButton,
-              {
-                width: scaledButtonSize(50),
-                height: scaledButtonSize(50),
-                borderRadius: scaledButtonSize(25),
-              },
-              (currentPageIndex <= 1 || (readingMode === 'record' && isRecording)) && styles.navButtonDisabled
-            ]}
-            onPress={handlePreviousPage}
-            disabled={currentPageIndex <= 1 || isTransitioning || (readingMode === 'record' && isRecording)}
-            testID="left-touch-area"
-          >
-            <Text style={[
-              styles.navButtonText,
-              { fontSize: scaledFontSize(20) },
-              currentPageIndex <= 1 && styles.navButtonTextDisabled
-            ]}>
-              ←
-            </Text>
-          </Pressable>
+          <Animated.View style={leftButtonAnimatedStyle}>
+            <Pressable
+              style={[
+                styles.navButton,
+                styles.prevButton,
+                {
+                  width: scaledButtonSize(50),
+                  height: scaledButtonSize(50),
+                  borderRadius: scaledButtonSize(25),
+                },
+                (currentPageIndex <= 1 || (readingMode === 'record' && isRecording)) && styles.navButtonDisabled
+              ]}
+              onPress={handlePreviousPage}
+              disabled={currentPageIndex <= 1 || isTransitioning || (readingMode === 'record' && isRecording)}
+              testID="left-touch-area"
+            >
+              <Text style={[
+                styles.navButtonText,
+                { fontSize: scaledFontSize(20) },
+                currentPageIndex <= 1 && styles.navButtonTextDisabled
+              ]}>
+                ←
+              </Text>
+            </Pressable>
+          </Animated.View>
 
           {/* Story Text Box - Center - Scrollable for accessibility (non-record modes only) */}
           {readingMode !== 'record' && (
-            <View style={styles.centerTextContainer}>
+            <Animated.View style={[styles.centerTextContainer, textBoxAnimatedStyle]}>
               {(() => {
                 // Tablet gets larger base font for better readability
                 // iPad base sizes are significantly larger to compensate for 2-line limit
@@ -1520,35 +1598,37 @@ export function StoryBookReader({
                   </View>
                 );
               })()}
-            </View>
+            </Animated.View>
           )}
 
           {/* Next Button - Right Side */}
-          <Pressable
-            style={[
-              styles.navButton,
-              styles.nextButton,
-              {
-                width: scaledButtonSize(50),
-                height: scaledButtonSize(50),
-                borderRadius: scaledButtonSize(25),
-              },
-              currentPageIndex === pages.length - 1 && styles.completeButton,
-              (readingMode === 'record' && (isRecording || (currentPageIndex > 0 && !tempRecordingUri && !currentVoiceOver?.pageRecordings[currentPageIndex]))) && styles.navButtonDisabled,
-              isExiting && styles.navButtonDisabled
-            ]}
-            onPress={handleNextPage}
-            disabled={isTransitioning || isExiting || (readingMode === 'record' && (isRecording || (currentPageIndex > 0 && !tempRecordingUri && !currentVoiceOver?.pageRecordings[currentPageIndex])))}
-            testID="right-touch-area"
-          >
-            <Text style={[
-              styles.navButtonText,
-              { fontSize: scaledFontSize(20) },
-              currentPageIndex === pages.length - 1 && styles.completeButtonText
-            ]}>
-              {currentPageIndex === pages.length - 1 ? '✓' : '→'}
-            </Text>
-          </Pressable>
+          <Animated.View style={rightButtonAnimatedStyle}>
+            <Pressable
+              style={[
+                styles.navButton,
+                styles.nextButton,
+                {
+                  width: scaledButtonSize(50),
+                  height: scaledButtonSize(50),
+                  borderRadius: scaledButtonSize(25),
+                },
+                currentPageIndex === pages.length - 1 && styles.completeButton,
+                (readingMode === 'record' && (isRecording || (currentPageIndex > 0 && !tempRecordingUri && !currentVoiceOver?.pageRecordings[currentPageIndex]))) && styles.navButtonDisabled,
+                isExiting && styles.navButtonDisabled
+              ]}
+              onPress={handleNextPage}
+              disabled={isTransitioning || isExiting || (readingMode === 'record' && (isRecording || (currentPageIndex > 0 && !tempRecordingUri && !currentVoiceOver?.pageRecordings[currentPageIndex])))}
+              testID="right-touch-area"
+            >
+              <Text style={[
+                styles.navButtonText,
+                { fontSize: scaledFontSize(20) },
+                currentPageIndex === pages.length - 1 && styles.completeButtonText
+              ]}>
+                {currentPageIndex === pages.length - 1 ? '✓' : '→'}
+              </Text>
+            </Pressable>
+          </Animated.View>
           </View>
           </View>
         )}
@@ -1977,6 +2057,18 @@ export function StoryBookReader({
         isInputValid={parentsOnly.isInputValid}
         scaledFontSize={scaledFontSize}
       />
+
+      {/* Page Preview Modal */}
+      <PagePreviewModal
+        story={story}
+        currentPageIndex={currentPageIndex}
+        visible={showPagePreview}
+        onClose={() => setShowPagePreview(false)}
+        onSelectPage={(pageIndex) => {
+          setCurrentPageIndex(pageIndex);
+          setShowPagePreview(false);
+        }}
+      />
     </Animated.View>
   );
 }
@@ -2129,6 +2221,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 8,
     paddingHorizontal: 4,
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    marginVertical: 4,
   },
   menuItemText: {
     color: '#FFFFFF',

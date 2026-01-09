@@ -16,6 +16,7 @@ interface AuthenticatedImageProps {
   style?: StyleProp<ImageStyle>;
   resizeMode?: 'cover' | 'contain' | 'stretch' | 'center';
   allowDownscaling?: boolean;
+  transition?: number;
 }
 
 // Maximum retry attempts for loading an image
@@ -37,6 +38,7 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
   maxRetries = DEFAULT_MAX_RETRIES,
   resizeMode = 'cover',
   allowDownscaling = true,
+  transition = 0,
 }) => {
   // Check memory cache synchronously for instant display
   // This runs during render (not in useEffect) so it's available on first paint
@@ -173,7 +175,7 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
       source={{ uri: cachedUri }}
       style={style}
       contentFit={contentFitMap[resizeMode] || 'cover'}
-      transition={0} // No transition - instant display to prevent flicker
+      transition={transition}
       cachePolicy="memory-disk"
       priority="high" // High priority for crisp rendering during animations
       allowDownscaling={allowDownscaling} // Prevent pixelation during scale animations
