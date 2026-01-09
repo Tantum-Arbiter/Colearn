@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   title: {
-    fontFamily: Fonts.display,
+    fontFamily: Fonts.rounded,
     fontWeight: '700',
     color: '#FFFFFF',
   },

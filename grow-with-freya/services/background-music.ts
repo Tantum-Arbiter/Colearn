@@ -465,16 +465,6 @@ class BackgroundMusicService {
   }
 
   /**
-   * Get current track info (for debugging/logging)
-   */
-  getCurrentTrackInfo(): { name: TrackName; playlistOrder: TrackName[] } {
-    return {
-      name: this.currentTrackName,
-      playlistOrder: [...this.playlistOrder],
-    };
-  }
-
-  /**
    * Handle playback status updates
    */
   private onPlaybackStatusUpdate = (status: AVPlaybackStatus) => {

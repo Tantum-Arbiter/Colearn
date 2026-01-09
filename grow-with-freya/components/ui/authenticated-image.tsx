@@ -12,6 +12,7 @@ interface AuthenticatedImageProps {
   showLoadingIndicator?: boolean;
   loadingIndicatorColor?: string;
   onLoad?: () => void;
+  onError?: (error: unknown) => void;
   maxRetries?: number;
   style?: StyleProp<ImageStyle>;
   resizeMode?: 'cover' | 'contain' | 'stretch' | 'center';
@@ -35,6 +36,7 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
   loadingIndicatorColor = '#666',
   style,
   onLoad,
+  onError,
   maxRetries = DEFAULT_MAX_RETRIES,
   resizeMode = 'cover',
   allowDownscaling = true,
@@ -101,8 +103,10 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
       if (localUri) {
         setCachedUri(localUri);
       } else {
-        log.error('Failed to get image URI - service returned null');
+        const err = new Error('Failed to get image URI - service returned null');
+        log.error(err.message);
         setHasError(true);
+        onError?.(err);
       }
       setIsLoading(false);
     } catch (error) {
@@ -110,12 +114,13 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
       if (isMountedRef.current) {
         setHasError(true);
         setIsLoading(false);
+        onError?.(error);
       }
     }
-  }, [uri, cachedUri]);
+  }, [uri, cachedUri, onError]);
 
   // Handle image render errors - retry with cache invalidation
-  const handleRenderError = useCallback(async () => {
+  const handleRenderError = useCallback(async (error?: unknown) => {
     if (retryCountRef.current < maxRetries) {
       retryCountRef.current += 1;
       log.warn(`Image render failed, retrying (attempt ${retryCountRef.current}/${maxRetries})`);
@@ -123,8 +128,9 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
     } else {
       log.error('Max retries exceeded, showing fallback');
       setHasError(true);
+      onError?.(error);
     }
-  }, [loadImage, maxRetries]);
+  }, [loadImage, maxRetries, onError]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -189,7 +195,7 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
         // Log detailed error info for debugging
         log.error(`Image render failed for URI: ${cachedUri}`);
         log.error('Error details:', error);
-        handleRenderError();
+        handleRenderError(error);
       }}
     />
   );

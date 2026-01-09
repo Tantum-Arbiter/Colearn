@@ -40,8 +40,8 @@ interface StorySelectionScreenProps {
 
 interface StoryCardProps {
   story: Story;
-  onPress: (story: Story, ref: React.RefObject<View>) => void;
-  onLongPress: (story: Story, ref: React.RefObject<View>) => void;
+  onPress: (story: Story, ref: React.RefObject<View | null>) => void;
+  onLongPress: (story: Story, ref: React.RefObject<View | null>) => void;
   cardWidth: number;
   cardHeight: number;
   borderRadius: number;
@@ -147,9 +147,9 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   const [previewStory, setPreviewStory] = useState<Story | null>(null);
   const [isPreviewVisible, setIsPreviewVisible] = useState(false);
   // Store the card ref for the currently previewed story so we can animate from it
-  const previewCardRef = useRef<React.RefObject<View> | null>(null);
+  const previewCardRef = useRef<React.RefObject<View | null> | null>(null);
 
-  const handleLongPress = useCallback((story: Story, cardRef: React.RefObject<View>) => {
+  const handleLongPress = useCallback((story: Story, cardRef: React.RefObject<View | null>) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setPreviewStory(story);
     setIsPreviewVisible(true);

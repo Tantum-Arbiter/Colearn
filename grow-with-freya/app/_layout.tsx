@@ -3,15 +3,13 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { StatusBar } from 'expo-status-bar';
 import { AppState, AppStateStatus, Dimensions, View } from 'react-native';
 import * as ScreenOrientation from 'expo-screen-orientation';
+import * as Sentry from '@sentry/react-native';
 
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAppStore } from '@/store/app-store';
 import { Logger } from '@/utils/logger';
-
-const log = Logger.create('Layout');
-
 import { useBackgroundMusic } from '@/hooks/use-background-music';
 import { AppSplashScreen } from '@/components/splash-screen';
 import { OnboardingFlow } from '@/components/onboarding/onboarding-flow';
@@ -28,16 +26,13 @@ import { StoryBookReader } from '@/components/stories/story-book-reader';
 import { MusicScreen } from '@/components/music';
 import { EmotionsScreen } from '@/components/emotions';
 import { ScreenTimeProvider } from '@/components/screen-time/screen-time-provider';
-
-
-
 import { Story } from '@/types/story';
 import { preloadCriticalImages, preloadSecondaryImages } from '@/services/image-preloader';
 import { EnhancedPageTransition } from '@/components/ui/enhanced-page-transition';
-
 import { StoryTransitionProvider, useStoryTransition } from '@/contexts/story-transition-context';
 import { GlobalSoundProvider } from '@/contexts/global-sound-context';
-import * as Sentry from '@sentry/react-native';
+
+const log = Logger.create('Layout');
 
 Sentry.init({
   dsn: 'https://0de17ab586a0e7cd361706a1054022bb@o4510552687902720.ingest.de.sentry.io/4510552711364688',
