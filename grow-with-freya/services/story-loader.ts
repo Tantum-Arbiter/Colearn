@@ -6,12 +6,12 @@ import { Logger } from '@/utils/logger';
 const log = Logger.create('StoryLoader');
 
 /**
- * Story loader that merges local stories with CMS-synced stories
+ * Story loader that uses CMS as the source of truth
  *
  * Strategy:
- * - Local stories (from stories.ts): Always available, work offline
- * - CMS stories: Downloaded after login, premium content
- * - Merged result: Local stories + CMS stories (no duplicates)
+ * - CMS is the source of truth for what stories to display
+ * - Stories not in CMS are not shown (even if bundled locally)
+ * - Bundled stories provide offline fallback for initial app experience
  * - Memory cache: Keeps stories in memory for instant access after first load
  */
 export class StoryLoader {
@@ -63,35 +63,27 @@ export class StoryLoader {
   }
 
   /**
-   * Internal method to actually load and merge stories
+   * Internal method to load stories from CMS (source of truth)
+   * Falls back to bundled stories only for initial offline experience
    */
   private static async loadStoriesInternal(): Promise<Story[]> {
     try {
-      // Start with local stories (offline-first)
-      const localStories = [...ALL_STORIES];
-      log.debug(`Local bundled stories: ${localStories.length}`);
-
-      // Try to get CMS stories from sync cache
+      // CMS is the source of truth - get stories from sync cache
       const cmsStories = await StorySyncService.getLocalStories();
 
       if (cmsStories && cmsStories.length > 0) {
-        log.debug(`CMS stories in cache: ${cmsStories.length}`);
-
-        // Merge: CMS stories can override local stories with same ID
-        const localIds = new Set(localStories.map(s => s.id));
-        const uniqueCmsStories = cmsStories.filter(s => !localIds.has(s.id));
-
-        const allStories = [...localStories, ...uniqueCmsStories];
-        log.debug(`Merged: ${localStories.length} local + ${uniqueCmsStories.length} unique CMS = ${allStories.length} total`);
-        return allStories;
+        log.debug(`CMS stories (source of truth): ${cmsStories.length}`);
+        return cmsStories;
       }
 
-      // No CMS stories yet - return local only
-      log.debug(`No CMS stories in cache - using ${localStories.length} local stories (offline mode)`);
+      // No CMS data yet (first launch, offline, or not logged in)
+      // Fall back to bundled stories for initial experience
+      const localStories = [...ALL_STORIES];
+      log.debug(`No CMS data - using ${localStories.length} bundled stories (offline/initial mode)`);
       return localStories;
     } catch (error) {
       log.error('Error loading stories:', error);
-      log.warn('Falling back to local stories');
+      log.warn('Falling back to bundled stories');
       return ALL_STORIES;
     }
   }
