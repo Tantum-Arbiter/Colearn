@@ -230,7 +230,7 @@ export function StoryPreviewModal({
 const styles = StyleSheet.create({
   absoluteContainer: {
     ...StyleSheet.absoluteFillObject,
-    zIndex: 1000,
+    zIndex: 2000, // Higher than story transition overlay (1001) to ensure modal is on top
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,

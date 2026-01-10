@@ -3,6 +3,7 @@ import { Dimensions, Image, StyleSheet, View, Text, Pressable, Modal, TextInput,
 import { Image as ExpoImage } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import * as ScreenOrientation from 'expo-screen-orientation';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -13,6 +14,7 @@ import Animated, {
   FadeIn,
   SlideInDown,
   SlideInLeft,
+  SlideOutDown,
   SlideOutLeft,
   interpolate,
 } from 'react-native-reanimated';
@@ -105,6 +107,11 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const [onReturnToModeSelectionCallback, setOnReturnToModeSelectionCallback] = useState<(() => void) | null>(null);
   const [isExitAnimating, setIsExitAnimating] = useState(false);
 
+  // Screen dimensions state - updates when orientation changes
+  const [screenDimensions, setScreenDimensions] = useState(Dimensions.get('window'));
+  // Track if we rotated to landscape for the current transition (to rotate back on cancel/exit)
+  const wasRotatedForTransition = useRef(false);
+
   // Voice over state for record/narrate mode selection
   const [availableVoiceOvers, setAvailableVoiceOvers] = useState<VoiceOver[]>([]);
   const [currentVoiceOver, setCurrentVoiceOver] = useState<VoiceOver | null>(null);
@@ -122,16 +129,31 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const previewButtonRef = useRef<View>(null);
 
   // Tutorial hook
-  const { shouldShowTutorial } = useTutorial();
+  const { shouldShowTutorial, activeTutorial } = useTutorial();
+
+  // Block touches immediately when book mode tutorial should show but hasn't started yet
+  const shouldBlockBookModeTouches = showModeSelection &&
+    shouldShowTutorial('book_mode_tour') && activeTutorial !== 'book_mode_tour';
 
   const insets = useSafeAreaInsets();
-  const { scaledFontSize, scaledButtonSize, scaledPadding } = useAccessibility();
+  const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet } = useAccessibility();
   const parentsOnly = useParentsOnlyChallenge();
 
-  const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+  // Use screenDimensions state so layout updates when orientation changes
+  const { width: screenWidth, height: screenHeight } = screenDimensions;
+  const isPhone = !isTablet;
+  const isLandscape = screenWidth > screenHeight;
 
   // Border radius for book covers - matches StoryCard (computed once, used in animations)
   const bookBorderRadius = scaledButtonSize(15);
+
+  // Listen for dimension changes (orientation changes)
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener('change', ({ window }) => {
+      setScreenDimensions(window);
+    });
+    return () => subscription?.remove();
+  }, []);
 
   // Animation values for the transitioning card
   const transitionScale = useSharedValue(1);
@@ -203,8 +225,81 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     });
   };
 
-  const startTransition = (storyId: string, cardLayout: { x: number; y: number; width: number; height: number }, story?: Story) => {
-    console.log('Starting book preview transition for:', storyId, 'from position:', cardLayout);
+  // Helper to calculate and animate to center position
+  const animateToCenter = (
+    cardLayout: { x: number; y: number; width: number; height: number },
+    width: number,
+    height: number,
+    showButtons: boolean = true
+  ) => {
+    // Detect if we're in phone portrait mode (phones stay in portrait for mode selection)
+    const isLandscapeNow = width > height;
+    const isPhonePortraitNow = isPhone && !isLandscapeNow;
+
+    console.log('animateToCenter - width:', width, 'height:', height, 'isPhonePortraitNow:', isPhonePortraitNow);
+
+    // For phone portrait mode: book positioned above center, buttons below
+    // Book takes about 75% of screen width for phones (larger to fill space better)
+    // For tablets: 55% of screen width
+    const targetWidth = isPhonePortraitNow ? width * 0.75 : width * 0.55;
+    const targetScale = targetWidth / cardLayout.width;
+
+    // Calculate center position for the scaled book
+    // For phone portrait: book is positioned above center (in upper portion of screen)
+    const targetCenterX = width / 2;
+    // Position book in upper portion - leave room for buttons below
+    // The book should take up roughly the top 55% of the screen
+    const targetCenterY = isPhonePortraitNow
+      ? height * 0.32  // Above center for portrait phones
+      : (height / 2) - 30;  // Slightly above center for tablets
+
+    // Current center position
+    const currentCenterX = cardLayout.x + cardLayout.width / 2;
+    const currentCenterY = cardLayout.y + cardLayout.height / 2;
+
+    // How much to move the center
+    const moveX = targetCenterX - currentCenterX;
+    const moveY = targetCenterY - currentCenterY;
+
+    // Calculate final book position (after animation) for positioning close button
+    const scaledWidth = cardLayout.width * targetScale;
+    const scaledHeight = cardLayout.height * targetScale;
+    const targetBookX = targetCenterX - scaledWidth / 2;
+    const targetBookY = targetCenterY - scaledHeight / 2;
+    setTargetBookPosition({ x: targetBookX, y: targetBookY, width: scaledWidth, height: scaledHeight });
+
+    // Animate card to center of screen
+    transitionX.value = withTiming(moveX, {
+      duration: MOVE_TO_CENTER_DURATION,
+      easing: Easing.out(Easing.cubic)
+    });
+
+    transitionY.value = withTiming(moveY, {
+      duration: MOVE_TO_CENTER_DURATION,
+      easing: Easing.out(Easing.cubic)
+    });
+
+    transitionScale.value = withTiming(targetScale, {
+      duration: MOVE_TO_CENTER_DURATION,
+      easing: Easing.out(Easing.cubic)
+    });
+
+    // Fade in the shadow overlay
+    overlayOpacity.value = withTiming(1, {
+      duration: MOVE_TO_CENTER_DURATION,
+      easing: Easing.out(Easing.cubic)
+    });
+
+    // Show mode selection buttons after animation completes
+    if (showButtons) {
+      setTimeout(() => {
+        setShowModeSelection(true);
+      }, MOVE_TO_CENTER_DURATION + BUTTONS_DELAY);
+    }
+  };
+
+  const startTransition = async (storyId: string, cardLayout: { x: number; y: number; width: number; height: number }, story?: Story) => {
+    console.log('Starting book preview transition for:', storyId, 'from position:', cardLayout, 'isPhone:', isPhone);
 
     // Reset ALL animation values from any previous transition FIRST
     pageFlipProgress.value = 0;
@@ -232,32 +327,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       preloadStoryImages(story);
     }
 
-    // Calculate target position (center of screen)
-    // Target book size: 55% of screen width
-    const targetWidth = screenWidth * 0.55;
-    const targetScale = targetWidth / cardLayout.width;
-
-    // Calculate center position for the scaled book
-    // The scale transform is applied from the center of the element, so we need to
-    // calculate where the top-left corner needs to be for the book to appear centered
-    const targetCenterX = screenWidth / 2;
-    const targetCenterY = (screenHeight / 2) - 30; // Slightly above center for buttons
-
-    // Current center position
-    const currentCenterX = cardLayout.x + cardLayout.width / 2;
-    const currentCenterY = cardLayout.y + cardLayout.height / 2;
-
-    // How much to move the center
-    const moveX = targetCenterX - currentCenterX;
-    const moveY = targetCenterY - currentCenterY;
-
-    // Calculate final book position (after animation) for positioning close button
-    const scaledWidth = cardLayout.width * targetScale;
-    const scaledHeight = cardLayout.height * targetScale;
-    const targetBookX = targetCenterX - scaledWidth / 2;
-    const targetBookY = targetCenterY - scaledHeight / 2;
-    setTargetBookPosition({ x: targetBookX, y: targetBookY, width: scaledWidth, height: scaledHeight });
-
     // Animate from card position to center
     transitionOpacity.value = 1;
     transitionScale.value = 1;
@@ -265,36 +334,14 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     transitionY.value = 0;
     overlayOpacity.value = 0;
 
-    // Animate card to center of screen
-    transitionX.value = withTiming(moveX, {
-      duration: MOVE_TO_CENTER_DURATION,
-      easing: Easing.out(Easing.cubic)
-    });
-
-    transitionY.value = withTiming(moveY, {
-      duration: MOVE_TO_CENTER_DURATION,
-      easing: Easing.out(Easing.cubic)
-    });
-
-    transitionScale.value = withTiming(targetScale, {
-      duration: MOVE_TO_CENTER_DURATION,
-      easing: Easing.out(Easing.cubic)
-    });
-
-    // Fade in the shadow overlay
-    overlayOpacity.value = withTiming(1, {
-      duration: MOVE_TO_CENTER_DURATION,
-      easing: Easing.out(Easing.cubic)
-    });
-
-    // Show mode selection buttons after animation completes
-    setTimeout(() => {
-      setShowModeSelection(true);
-    }, MOVE_TO_CENTER_DURATION + BUTTONS_DELAY);
+    // For phones: stay in portrait for mode selection (book above, buttons below)
+    // Rotation to landscape happens when "Begin" is pressed
+    // For tablets: animate normally
+    animateToCenter(cardLayout, screenWidth, screenHeight, true);
   };
 
   // User selects a mode and taps "Begin"
-  const selectModeAndBegin = (mode: ReadingMode) => {
+  const selectModeAndBegin = async (mode: ReadingMode) => {
     console.log('Starting story with mode:', mode);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSelectedMode(mode);
@@ -304,6 +351,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
     // Animation timing - very fast to minimize pixelation visibility during scaling
     const BUTTON_EXIT_DURATION = 150;  // Time for buttons to slide out
+    const ROTATION_DURATION = 300;     // Time for rotation to landscape
     const COVER_FLIP_DURATION = 200;   // Fast flip to reduce pixelation visibility
     const HOLD_AFTER_FLIP = 100;       // Brief pause to see the page after cover flips
     const SCALE_DURATION = 200;        // Very fast scale to full screen
@@ -312,40 +360,93 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     bookExpansion.value = 0;
     pageFlipProgress.value = 0;
 
-    // Wait for buttons to slide out before starting animation
-    setTimeout(() => {
-      // Set expanding state
-      setIsExpandingToReader(true);
+    // Wait for buttons to slide out
+    await new Promise(resolve => setTimeout(resolve, BUTTON_EXIT_DURATION));
 
-      requestAnimationFrame(() => {
-        // PHASE 1: Flip the cover (2D scaleX - no pixelation!)
-        pageFlipProgress.value = withTiming(1, {
-          duration: COVER_FLIP_DURATION,
+    // For phones in portrait: rotate to landscape before opening the book
+    if (isPhone && !isLandscape && cardPosition) {
+      console.log('Phone in portrait - rotating to landscape before opening book');
+      wasRotatedForTransition.current = true;
+
+      // Fade overlay slightly to smooth the rotation
+      overlayOpacity.value = withTiming(0.9, {
+        duration: 150,
+        easing: Easing.out(Easing.cubic)
+      });
+
+      try {
+        // Rotate to landscape
+        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+
+        // Wait for dimensions to settle
+        await new Promise(resolve => setTimeout(resolve, ROTATION_DURATION));
+
+        // Get new dimensions after rotation
+        const newDims = Dimensions.get('window');
+        console.log('Rotated to landscape, new dimensions:', newDims);
+        setScreenDimensions(newDims);
+
+        // Recalculate book position for landscape - center it for the opening animation
+        const targetWidth = newDims.width * 0.55;
+        const targetScale = targetWidth / cardPosition.width;
+        const targetHeight = cardPosition.height * targetScale;
+        const targetCenterX = newDims.width / 2;
+        const targetCenterY = newDims.height / 2;
+
+        // Update target book position for landscape
+        setTargetBookPosition({
+          x: targetCenterX - targetWidth / 2,
+          y: targetCenterY - targetHeight / 2,
+          width: targetWidth,
+          height: targetHeight,
+        });
+
+        // Animate book to center of landscape screen
+        const cardCenterX = cardPosition.x + cardPosition.width / 2;
+        const cardCenterY = cardPosition.y + cardPosition.height / 2;
+        transitionX.value = withTiming(targetCenterX - cardCenterX, { duration: 200, easing: Easing.out(Easing.cubic) });
+        transitionY.value = withTiming(targetCenterY - cardCenterY, { duration: 200, easing: Easing.out(Easing.cubic) });
+        transitionScale.value = withTiming(targetScale, { duration: 200, easing: Easing.out(Easing.cubic) });
+
+        // Wait for position animation
+        await new Promise(resolve => setTimeout(resolve, 200));
+
+      } catch (error) {
+        console.warn('Failed to rotate to landscape:', error);
+      }
+    }
+
+    // Set expanding state
+    setIsExpandingToReader(true);
+
+    requestAnimationFrame(() => {
+      // PHASE 1: Flip the cover (2D scaleX - no pixelation!)
+      pageFlipProgress.value = withTiming(1, {
+        duration: COVER_FLIP_DURATION,
+        easing: Easing.inOut(Easing.cubic)
+      });
+
+      // PHASE 2: After flip completes + hold, scale to full screen
+      setTimeout(() => {
+        // Load the story reader NOW (at start of scale) so it loads behind
+        if (onBeginCallback) {
+          onBeginCallback();
+        }
+
+        // Scale the book to fill the screen
+        bookExpansion.value = withTiming(1, {
+          duration: SCALE_DURATION,
           easing: Easing.inOut(Easing.cubic)
         });
 
-        // PHASE 2: After flip completes + hold, scale to full screen
+        // After scale completes, instant switch - reader is already loaded behind
         setTimeout(() => {
-          // Load the story reader NOW (at start of scale) so it loads behind
-          if (onBeginCallback) {
-            onBeginCallback();
-          }
-
-          // Scale the book to fill the screen
-          bookExpansion.value = withTiming(1, {
-            duration: SCALE_DURATION,
-            easing: Easing.inOut(Easing.cubic)
-          });
-
-          // After scale completes, instant switch - reader is already loaded behind
-          setTimeout(() => {
-            transitionOpacity.value = 0;
-            overlayOpacity.value = 0;
-            completeTransitionOnly();
-          }, SCALE_DURATION);
-        }, COVER_FLIP_DURATION + HOLD_AFTER_FLIP);
-      });
-    }, BUTTON_EXIT_DURATION);
+          transitionOpacity.value = 0;
+          overlayOpacity.value = 0;
+          completeTransitionOnly();
+        }, SCALE_DURATION);
+      }, COVER_FLIP_DURATION + HOLD_AFTER_FLIP);
+    });
   };
 
   // Complete transition without calling onBeginCallback (already called)
@@ -369,29 +470,86 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     }, 50);
   };
 
+  // Return to portrait orientation on phones
+  const returnToPortrait = async () => {
+    if (wasRotatedForTransition.current) {
+      console.log('Returning to portrait orientation');
+      wasRotatedForTransition.current = false;
+      try {
+        // Lock back to portrait (phones should stay portrait-locked)
+        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+
+        // Wait for the orientation change to take effect
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Update dimensions
+        const newDims = Dimensions.get('window');
+        setScreenDimensions(newDims);
+
+        // Note: Do NOT call unlockAsync() - phones should remain portrait-locked
+      } catch (error) {
+        console.warn('Failed to return to portrait:', error);
+      }
+    }
+  };
+
   // User cancels (taps X)
-  const cancelTransition = () => {
+  const cancelTransition = async () => {
     console.log('Cancelling story transition');
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    // Step 1: Trigger button exit animations (SlideOutLeft takes 250ms)
     setShowModeSelection(false);
 
-    // Animate back and fade out
-    transitionX.value = withTiming(0, {
-      duration: 400,
-      easing: Easing.out(Easing.cubic)
-    });
-    transitionY.value = withTiming(0, {
-      duration: 400,
-      easing: Easing.out(Easing.cubic)
-    });
-    transitionScale.value = withTiming(1, {
-      duration: 400,
-      easing: Easing.out(Easing.cubic)
-    });
-    overlayOpacity.value = withTiming(0, {
-      duration: 400,
-      easing: Easing.out(Easing.quad)
-    }, () => {
+    // Step 2: Wait for button exit animations to complete
+    await new Promise(resolve => setTimeout(resolve, 280));
+
+    // If we rotated for this transition, rotate back first then animate
+    if (wasRotatedForTransition.current && originalCardPosition) {
+      console.log('Cancelling with rotation - rotating to portrait');
+
+      // Step 3: Rotate back to portrait
+      await returnToPortrait();
+
+      // Step 4: Wait for layout to settle
+      await new Promise(resolve => setTimeout(resolve, 150));
+
+      // Step 5: Get portrait dimensions and calculate centered position
+      const dims = Dimensions.get('window');
+      const targetWidth = dims.width * 0.55;
+      const targetScale = targetWidth / originalCardPosition.width;
+      const targetCenterX = dims.width / 2;
+      const targetCenterY = (dims.height / 2) - 30;
+      const cardCenterX = originalCardPosition.x + originalCardPosition.width / 2;
+      const cardCenterY = originalCardPosition.y + originalCardPosition.height / 2;
+      const moveX = targetCenterX - cardCenterX;
+      const moveY = targetCenterY - cardCenterY;
+
+      // Step 6: Set cardPosition to original and position book at center
+      setCardPosition(originalCardPosition);
+      transitionX.value = moveX;
+      transitionY.value = moveY;
+      transitionScale.value = targetScale;
+      overlayOpacity.value = 1;
+
+      // Step 7: Wait for state to apply
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      // Step 8: Animate book back to tile position and fade out
+      transitionX.value = withTiming(0, { duration: 400, easing: Easing.out(Easing.cubic) });
+      transitionY.value = withTiming(0, { duration: 400, easing: Easing.out(Easing.cubic) });
+      transitionScale.value = withTiming(1, { duration: 400, easing: Easing.out(Easing.cubic) });
+      overlayOpacity.value = withTiming(0, { duration: 400, easing: Easing.out(Easing.quad) }, () => {
+        runOnJS(resetTransition)();
+      });
+      return;
+    }
+
+    // Standard cancel (no rotation) - animate back and fade out
+    transitionX.value = withTiming(0, { duration: 400, easing: Easing.out(Easing.cubic) });
+    transitionY.value = withTiming(0, { duration: 400, easing: Easing.out(Easing.cubic) });
+    transitionScale.value = withTiming(1, { duration: 400, easing: Easing.out(Easing.cubic) });
+    overlayOpacity.value = withTiming(0, { duration: 400, easing: Easing.out(Easing.quad) }, () => {
       runOnJS(resetTransition)();
     });
   };
@@ -417,6 +575,8 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     isExitAnimatingShared.value = 0;
     isExpandingOrExitingShared.value = 0;
     setIsExpandingToReader(false);
+    // Reset rotation tracking
+    wasRotatedForTransition.current = false;
   };
 
   const completeTransition = () => {
@@ -1106,30 +1266,39 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
           {/* X Close button - top left of book */}
           {/* Stays visible when preview modal is showing, but dimmed by overlay */}
-          {showModeSelection && targetBookPosition && (
+          {showModeSelection && targetBookPosition && (() => {
+            // Phone portrait mode: standard close button size
+            const isPhonePortrait = isPhone && !isLandscape;
+            const closeButtonSize = isPhonePortrait ? scaledButtonSize(36) : scaledButtonSize(44);
+            const closeButtonRadius = closeButtonSize / 2;
+            const closeButtonOffset = isPhonePortrait ? scaledButtonSize(8) : scaledButtonSize(12);
+            const closeIconSize = isPhonePortrait ? scaledFontSize(16) : scaledFontSize(20);
+
+            // Hide close button completely when preview modal is showing to avoid z-index conflicts
+            if (showPreviewModal) return null;
+
+            return (
             <Animated.View
               entering={FadeIn.delay(100).duration(200)}
               style={[styles.closeButtonContainer, {
-                left: targetBookPosition.x - scaledButtonSize(12),
-                top: targetBookPosition.y - scaledButtonSize(12),
-                // When preview modal is showing, dim the button with the overlay
-                opacity: showPreviewModal ? 0.3 : 1,
+                left: targetBookPosition.x - closeButtonOffset,
+                top: targetBookPosition.y - closeButtonOffset,
               }]}
             >
               <Pressable
                 style={[styles.closeButton, {
-                  width: scaledButtonSize(44),
-                  height: scaledButtonSize(44),
-                  borderRadius: scaledButtonSize(22),
+                  width: closeButtonSize,
+                  height: closeButtonSize,
+                  borderRadius: closeButtonRadius,
                 }]}
                 onPress={cancelTransition}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                disabled={showPreviewModal} // Disable when preview is showing
               >
-                <Text style={[styles.closeButtonText, { fontSize: scaledFontSize(20) }]}>✕</Text>
+                <Text style={[styles.closeButtonText, { fontSize: closeIconSize }]}>✕</Text>
               </Pressable>
             </Animated.View>
-          )}
+            );
+          })()}
 
           {/* Centered book with page flip and expansion animation */}
           <Animated.View
@@ -1226,17 +1395,58 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
             </Animated.View>
           )}
 
-          {/* Mode selection buttons - positioned to the LEFT of the book */}
-          {showModeSelection && targetBookPosition && (
+
+
+          {/* Mode selection buttons - positioned BELOW the book for phone portrait, LEFT for tablet */}
+          {showModeSelection && targetBookPosition && (() => {
+            // Phone portrait mode: buttons below the book in a horizontal row
+            const isPhonePortrait = isPhone && !isLandscape;
+
+            // Sizing for phone portrait mode - boxed buttons with icon on top, text below
+            // Tablet keeps horizontal button layout (icon and text side by side)
+            // Use fixed width for phone to ensure consistent button sizes
+            const buttonWidth = isPhonePortrait ? scaledButtonSize(68) : scaledButtonSize(140);
+            const buttonPaddingV = isPhonePortrait ? scaledPadding(10) : scaledPadding(12);
+            const buttonPaddingH = isPhonePortrait ? scaledPadding(6) : scaledPadding(20);
+            const buttonRadius = isPhonePortrait ? scaledButtonSize(14) : scaledButtonSize(20);
+            const iconSize = isPhonePortrait ? scaledFontSize(22) : scaledFontSize(22);
+            const textSize = isPhonePortrait ? scaledFontSize(10) : scaledFontSize(18);
+            const buttonGap = isPhonePortrait ? scaledPadding(3) : scaledPadding(8);
+            const containerGap = isPhonePortrait ? 8 : 20;
+            const containerMargin = isPhonePortrait ? 20 : 20;
+            // Only add margin to icon on tablet (row layout) - phone column layout uses gap instead
+            const iconMarginRight = isPhonePortrait ? 0 : 10;
+
+            // Button layout: column for phone (icon on top), row for tablet (icon beside text)
+            const buttonFlexDirection = isPhonePortrait ? 'column' as const : 'row' as const;
+
+            // For phone portrait: position buttons horizontally below the book, centered on screen
+            // For tablet: position buttons vertically to the left of the book
+            const buttonContainerStyle = isPhonePortrait
+              ? {
+                  // Horizontal layout below the book, centered
+                  flexDirection: 'row' as const,
+                  top: targetBookPosition.y + targetBookPosition.height + containerMargin,
+                  left: 0,
+                  right: 0,
+                  justifyContent: 'center' as const,
+                  alignItems: 'center' as const,
+                  gap: containerGap,
+                }
+              : {
+                  // Vertical layout to the left of the book (tablet)
+                  right: screenWidth - targetBookPosition.x + containerMargin,
+                  top: targetBookPosition.y,
+                  height: targetBookPosition.height,
+                  justifyContent: 'center' as const,
+                  gap: containerGap,
+                };
+
+            return (
             <Animated.View
-              entering={SlideInLeft.delay(0).duration(350).springify()}
-              exiting={SlideOutLeft.duration(250)}
-              style={[styles.modeSelectionContainer, {
-                right: screenWidth - targetBookPosition.x + 20,
-                top: targetBookPosition.y,
-                height: targetBookPosition.height,
-                justifyContent: 'center',
-              }]}
+              entering={isPhonePortrait ? SlideInDown.delay(0).duration(350).springify() : SlideInLeft.delay(0).duration(350).springify()}
+              exiting={isPhonePortrait ? SlideOutDown.duration(250) : SlideOutLeft.duration(250)}
+              style={[styles.modeSelectionContainer, buttonContainerStyle]}
             >
               <View ref={readButtonRef} collapsable={false}>
                 <Pressable
@@ -1244,11 +1454,14 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                     styles.modeButton,
                     selectedMode === 'read' && styles.modeButtonSelected,
                     {
-                      borderRadius: scaledButtonSize(20),
-                      paddingVertical: scaledPadding(12),
-                      paddingHorizontal: scaledPadding(20),
-                      gap: scaledPadding(8),
-                      width: scaledButtonSize(140),
+                      flexDirection: buttonFlexDirection,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: buttonRadius,
+                      paddingVertical: buttonPaddingV,
+                      paddingHorizontal: buttonPaddingH,
+                      gap: buttonGap,
+                      width: buttonWidth,
                     }
                   ]}
                   onPress={() => {
@@ -1257,8 +1470,8 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                     setCurrentVoiceOver(null); // Clear voice over for read mode
                   }}
                 >
-                  <Text style={[styles.modeButtonIcon, { fontSize: scaledFontSize(22) }]}>∞</Text>
-                  <Text style={[styles.modeButtonText, { fontSize: scaledFontSize(18) }]}>Read</Text>
+                  <Text style={[styles.modeButtonIcon, { fontSize: iconSize, marginRight: iconMarginRight }]}>∞</Text>
+                  <Text style={[styles.modeButtonText, { fontSize: textSize, textAlign: 'center' }]}>Read</Text>
                 </Pressable>
               </View>
 
@@ -1268,11 +1481,14 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                     styles.modeButton,
                     selectedMode === 'record' && styles.modeButtonSelected,
                     {
-                      borderRadius: scaledButtonSize(20),
-                      paddingVertical: scaledPadding(12),
-                      paddingHorizontal: scaledPadding(20),
-                      gap: scaledPadding(8),
-                      width: scaledButtonSize(140),
+                      flexDirection: buttonFlexDirection,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: buttonRadius,
+                      paddingVertical: buttonPaddingV,
+                      paddingHorizontal: buttonPaddingH,
+                      gap: buttonGap,
+                      width: buttonWidth,
                     }
                   ]}
                   onPress={() => {
@@ -1283,8 +1499,8 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                     setShowVoiceOverNameModal(true);
                   }}
                 >
-                  <Text style={[styles.modeButtonIcon, { fontSize: scaledFontSize(22) }]}>●</Text>
-                  <Text style={[styles.modeButtonText, { fontSize: scaledFontSize(18) }]}>Record</Text>
+                  <Text style={[styles.modeButtonIcon, { fontSize: iconSize, marginRight: iconMarginRight }]}>●</Text>
+                  <Text style={[styles.modeButtonText, { fontSize: textSize, textAlign: 'center' }]}>Record</Text>
                 </Pressable>
               </View>
 
@@ -1294,11 +1510,14 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                     styles.modeButton,
                     selectedMode === 'narrate' && styles.modeButtonSelected,
                     {
-                      borderRadius: scaledButtonSize(20),
-                      paddingVertical: scaledPadding(12),
-                      paddingHorizontal: scaledPadding(20),
-                      gap: scaledPadding(8),
-                      width: scaledButtonSize(140),
+                      flexDirection: buttonFlexDirection,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: buttonRadius,
+                      paddingVertical: buttonPaddingV,
+                      paddingHorizontal: buttonPaddingH,
+                      gap: buttonGap,
+                      width: buttonWidth,
                     }
                   ]}
                   onPress={() => {
@@ -1309,8 +1528,8 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                     setShowVoiceOverSelectModal(true);
                   }}
                 >
-                  <Text style={[styles.modeButtonIcon, { fontSize: scaledFontSize(22) }]}>♫</Text>
-                  <Text style={[styles.modeButtonText, { fontSize: scaledFontSize(18) }]}>Narrate</Text>
+                  <Text style={[styles.modeButtonIcon, { fontSize: iconSize, marginRight: iconMarginRight }]}>♫</Text>
+                  <Text style={[styles.modeButtonText, { fontSize: textSize, textAlign: 'center' }]}>Narrate</Text>
                 </Pressable>
               </View>
 
@@ -1319,11 +1538,14 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                   style={[
                     styles.modeButton,
                     {
-                      borderRadius: scaledButtonSize(20),
-                      paddingVertical: scaledPadding(12),
-                      paddingHorizontal: scaledPadding(20),
-                      gap: scaledPadding(8),
-                      width: scaledButtonSize(140),
+                      flexDirection: buttonFlexDirection,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: buttonRadius,
+                      paddingVertical: buttonPaddingV,
+                      paddingHorizontal: buttonPaddingH,
+                      gap: buttonGap,
+                      width: buttonWidth,
                     }
                   ]}
                   onPress={() => {
@@ -1331,27 +1553,37 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                     setShowPreviewModal(true);
                   }}
                 >
-                  <Text style={[styles.modeButtonIcon, { fontSize: scaledFontSize(22) }]}>◉</Text>
-                  <Text style={[styles.modeButtonText, { fontSize: scaledFontSize(18) }]}>Preview</Text>
+                  <Text style={[styles.modeButtonIcon, { fontSize: iconSize, marginRight: iconMarginRight }]}>◉</Text>
+                  <Text style={[styles.modeButtonText, { fontSize: textSize, textAlign: 'center' }]}>Preview</Text>
                 </Pressable>
               </View>
             </Animated.View>
-          )}
+            );
+          })()}
 
           {/* Tap to begin button (bottom center with padding) */}
-          {showModeSelection && (
+          {showModeSelection && (() => {
+            // Phone portrait mode: slightly smaller begin button
+            const isPhonePortrait = isPhone && !isLandscape;
+            const beginButtonRadius = isPhonePortrait ? scaledButtonSize(18) : scaledButtonSize(20);
+            const beginButtonPaddingV = isPhonePortrait ? scaledPadding(10) : scaledPadding(12);
+            const beginButtonPaddingH = isPhonePortrait ? scaledPadding(20) : scaledPadding(24);
+            const beginTextSize = isPhonePortrait ? scaledFontSize(16) : scaledFontSize(18);
+            const bottomPadding = isPhonePortrait ? Math.max(insets.bottom + 16, 24) : insets.bottom + 20;
+
+            return (
             <Animated.View
               entering={SlideInDown.delay(100).duration(350).springify()}
-              style={[styles.tapToBeginContainer, { bottom: insets.bottom + 20 }]}
+              style={[styles.tapToBeginContainer, { bottom: bottomPadding }]}
             >
               <Pressable
                 style={[
                   styles.modeButton,
                   styles.modeButtonSelected,
                   {
-                    borderRadius: scaledButtonSize(20),
-                    paddingVertical: scaledPadding(12),
-                    paddingHorizontal: scaledPadding(24),
+                    borderRadius: beginButtonRadius,
+                    paddingVertical: beginButtonPaddingV,
+                    paddingHorizontal: beginButtonPaddingH,
                     gap: scaledPadding(8),
                   }
                 ]}
@@ -1368,7 +1600,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                   selectModeAndBegin(selectedMode);
                 }}
               >
-                <Text style={[styles.modeButtonText, { fontSize: scaledFontSize(18) }]}>
+                <Text style={[styles.modeButtonText, { fontSize: beginTextSize }]}>
                   {selectedMode === 'record' && currentVoiceOver
                     ? `Record as: ${currentVoiceOver.name}`
                     : selectedMode === 'narrate' && currentVoiceOver
@@ -1377,7 +1609,8 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                 </Text>
               </Pressable>
             </Animated.View>
-          )}
+            );
+          })()}
 
           {/* Voice Over Name Modal (for Record mode) */}
           <Modal
@@ -1542,6 +1775,16 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
             onClose={() => setShowPreviewModal(false)}
           />
 
+          {/* Touch blocking layer - shown immediately when book mode tutorial should show */}
+          {shouldBlockBookModeTouches && (
+            <Pressable
+              style={StyleSheet.absoluteFill}
+              onPress={() => {}}
+              onPressIn={() => {}}
+              onPressOut={() => {}}
+            />
+          )}
+
           {/* Book Mode Tutorial Overlay - shows on first book open */}
           {showModeSelection && shouldShowTutorial('book_mode_tour') && (
             <TutorialOverlay
@@ -1569,7 +1812,7 @@ const styles = StyleSheet.create({
   },
   shadowOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
   },
   closeButtonContainer: {
     position: 'absolute',
@@ -1639,7 +1882,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: '#FFFFFF',
     textAlign: 'center',
-    marginRight: 10,
+    // marginRight is handled inline based on button layout direction
     zIndex: 1,
   },
   modeButtonText: {

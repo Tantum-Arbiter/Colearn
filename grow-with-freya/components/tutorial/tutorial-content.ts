@@ -15,28 +15,28 @@ export const MAIN_MENU_TOUR_STEPS: Omit<TutorialStep, 'target'>[] = [
     id: 'stories_button',
     title: 'Story Library 📚',
     description: 'Tap here to explore our collection of interactive stories with beautiful illustrations and fun interactions.',
-    arrowDirection: 'down',
+    // No arrow needed - tip is positioned below button
     tipPosition: 'below',
   },
   {
     id: 'emotions_button',
     title: 'Emotion Check-ins 💜',
     description: 'Help your child learn about their feelings with guided emotion check-ins.',
-    arrowDirection: 'down',
-    tipPosition: 'below',
+    // Tip positioned above the button pair with no arrow
+    tipPosition: 'above',
   },
   {
     id: 'bedtime_button',
     title: 'Calming Sounds 🌙',
     description: 'Relaxing sounds and lullabies to help your little one drift off to sleep - or calm down during a meltdown or tantrum.',
-    arrowDirection: 'down',
-    tipPosition: 'below',
+    // Tip positioned above the button pair with no arrow
+    tipPosition: 'above',
   },
   {
     id: 'settings_button',
     title: 'Settings & Account ⚙️',
     description: 'Your parenting control centre! Set screen time limits, create routine alerts, personalise your child\'s avatar, and manage your family\'s experience - all in one safe place.',
-    arrowDirection: 'down',
+    // No arrowDirection - let default logic calculate correct arrow based on button position
     tipPosition: 'center',
   },
   {
@@ -152,37 +152,37 @@ export const BOOK_MODE_TOUR_STEPS: Omit<TutorialStep, 'target'>[] = [
     id: 'read_button',
     title: 'Read Mode 📖',
     description: 'Tap here to read the story yourself with your child. Turn pages at your own pace.',
-    arrowDirection: 'left',
-    tipPosition: 'center',
+    arrowDirection: 'up',  // Arrow points up to button above tip
+    tipPosition: 'below',  // Tip positioned below buttons on phone
     spotlightShape: 'rounded-rect',
-    spotlightBorderRadius: 20,
+    spotlightBorderRadius: 16,
   },
   {
     id: 'record_button',
     title: 'Record Mode 🎙️',
     description: 'Record your own voice reading the story. Perfect for when you\'re away!',
-    arrowDirection: 'left',
-    tipPosition: 'center',
+    arrowDirection: 'up',
+    tipPosition: 'below',
     spotlightShape: 'rounded-rect',
-    spotlightBorderRadius: 20,
+    spotlightBorderRadius: 16,
   },
   {
     id: 'narrate_button',
     title: 'Narrate Mode 🎧',
     description: 'Listen to a previously recorded voice reading the story aloud.',
-    arrowDirection: 'left',
-    tipPosition: 'center',
+    arrowDirection: 'up',
+    tipPosition: 'below',
     spotlightShape: 'rounded-rect',
-    spotlightBorderRadius: 20,
+    spotlightBorderRadius: 16,
   },
   {
     id: 'preview_button',
     title: 'Preview 👀',
     description: 'See story details before starting. Tip: You can also long-press any book tile for a quick preview!',
-    arrowDirection: 'left',
-    tipPosition: 'center',
+    arrowDirection: 'up',
+    tipPosition: 'below',
     spotlightShape: 'rounded-rect',
-    spotlightBorderRadius: 20,
+    spotlightBorderRadius: 16,
   },
 ];
 

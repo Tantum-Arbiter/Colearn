@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Modal, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Modal, useWindowDimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -11,8 +11,6 @@ import { Fonts } from '@/constants/theme';
 import { useTutorial, TutorialId } from '@/contexts/tutorial-context';
 import { RECORD_MODE_TOUR_STEPS, NARRATE_MODE_TOUR_STEPS } from './tutorial-content';
 import { TutorialStep } from './spotlight-overlay';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface ModeTipsOverlayProps {
   mode: 'record' | 'narrate';
@@ -45,6 +43,7 @@ const STEP_ICONS: Record<string, string> = {
  * Mode Tips Overlay - Shows guidance for Record or Narrate mode on first use
  */
 export function ModeTipsOverlay({ mode, isActive, forceShow = false, onClose }: ModeTipsOverlayProps) {
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const { shouldShowTutorial, completeTutorial, startTutorial, activeTutorial } = useTutorial();
   const [isVisible, setIsVisible] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
@@ -55,6 +54,14 @@ export function ModeTipsOverlay({ mode, isActive, forceShow = false, onClose }: 
   const tutorial = TUTORIALS[mode];
   const steps = tutorial.steps;
 
+  // Dynamic card width based on current screen dimensions
+  const cardWidth = Math.min(screenWidth - 40, 340);
+  // Check if we're on a phone in landscape
+  const isPhoneLandscape = Math.min(screenWidth, screenHeight) < 600 && screenWidth > screenHeight;
+
+  // Check if we should show the tutorial (compute once to avoid dependency issues)
+  const shouldShow = isActive && shouldShowTutorial(tutorial.id) && activeTutorial === null;
+
   // Show tips when mode is active and tutorial not completed OR forceShow is true
   useEffect(() => {
     if (forceShow) {
@@ -63,7 +70,7 @@ export function ModeTipsOverlay({ mode, isActive, forceShow = false, onClose }: 
       setCurrentStep(0);
       opacity.value = withTiming(1, { duration: 300 });
       scale.value = withSpring(1, { damping: 15 });
-    } else if (isActive && shouldShowTutorial(tutorial.id) && activeTutorial === null) {
+    } else if (shouldShow) {
       // Small delay to let UI settle
       const timer = setTimeout(() => {
         startTutorial(tutorial.id);
@@ -74,7 +81,7 @@ export function ModeTipsOverlay({ mode, isActive, forceShow = false, onClose }: 
       }, 800);
       return () => clearTimeout(timer);
     }
-  }, [isActive, shouldShowTutorial, tutorial.id, opacity, scale, activeTutorial, startTutorial, forceShow]);
+  }, [shouldShow, tutorial.id, opacity, scale, startTutorial, forceShow]);
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -113,50 +120,99 @@ export function ModeTipsOverlay({ mode, isActive, forceShow = false, onClose }: 
   const isLastStep = currentStep === steps.length - 1;
   const isFirstStep = currentStep === 0;
 
+  // For phone landscape, use a more compact horizontal layout
+  const landscapeCardStyle = isPhoneLandscape ? {
+    flexDirection: 'row' as const,
+    width: Math.min(screenWidth - 80, 500),
+    padding: 16,
+    alignItems: 'center' as const,
+  } : {
+    width: cardWidth,
+  };
+
   return (
     <Modal transparent visible={isVisible} animationType="none" statusBarTranslucent>
+      {/* Main container */}
       <View style={styles.overlay}>
-        <Animated.View style={[styles.card, animatedCardStyle]}>
-          {/* Icon */}
-          <View style={styles.iconContainer}>
-            <Text style={styles.icon}>{STEP_ICONS[currentTip.id] || '📖'}</Text>
-          </View>
+        {/* Invisible touch-blocking layer - blocks ALL touches immediately on mount */}
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={() => {}}
+          onPressIn={() => {}}
+          onPressOut={() => {}}
+        />
+        <Animated.View style={[styles.card, landscapeCardStyle, animatedCardStyle]}>
+          {isPhoneLandscape ? (
+            // Landscape layout: icon on left, content on right
+            <>
+              <View style={[styles.iconContainer, { marginBottom: 0, marginRight: 16 }]}>
+                <Text style={styles.icon}>{STEP_ICONS[currentTip.id] || '📖'}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.title, { marginBottom: 4 }]}>{currentTip.title}</Text>
+                <Text style={[styles.description, { marginBottom: 8 }]}>{currentTip.description}</Text>
+                <View style={[styles.buttonRow, { marginTop: 4 }]}>
+                  <View style={styles.progressDots}>
+                    {steps.map((_, i) => (
+                      <View key={i} style={[styles.dot, i === currentStep && styles.dotActive]} />
+                    ))}
+                  </View>
+                  <View style={styles.navButtons}>
+                    {!isFirstStep && (
+                      <Pressable onPress={handlePrevious} style={styles.navButton}>
+                        <Ionicons name="chevron-back" size={18} color="#fff" />
+                      </Pressable>
+                    )}
+                    <Pressable onPress={handleNext} style={[styles.navButton, styles.nextButton]}>
+                      <Text style={[styles.nextText, { fontSize: 12 }]}>{isLastStep ? 'Got it!' : 'Next'}</Text>
+                    </Pressable>
+                    <Pressable onPress={handleClose} style={[styles.skipButton, { marginLeft: 8 }]}>
+                      <Text style={[styles.skipText, { fontSize: 11 }]}>Skip</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              </View>
+            </>
+          ) : (
+            // Portrait layout: vertical stack
+            <>
+              <View style={styles.iconContainer}>
+                <Text style={styles.icon}>{STEP_ICONS[currentTip.id] || '📖'}</Text>
+              </View>
 
-          <Text style={styles.title}>{currentTip.title}</Text>
-          <Text style={styles.description}>{currentTip.description}</Text>
+              <Text style={styles.title}>{currentTip.title}</Text>
+              <Text style={styles.description}>{currentTip.description}</Text>
 
-          {/* Progress dots */}
-          <View style={styles.progressDots}>
-            {steps.map((_, i) => (
-              <View key={i} style={[styles.dot, i === currentStep && styles.dotActive]} />
-            ))}
-          </View>
+              <View style={styles.progressDots}>
+                {steps.map((_, i) => (
+                  <View key={i} style={[styles.dot, i === currentStep && styles.dotActive]} />
+                ))}
+              </View>
 
-          {/* Navigation */}
-          <View style={styles.buttonRow}>
-            <Pressable onPress={handleClose} style={styles.skipButton}>
-              <Text style={styles.skipText}>Skip</Text>
-            </Pressable>
-
-            <View style={styles.navButtons}>
-              {!isFirstStep && (
-                <Pressable onPress={handlePrevious} style={styles.navButton}>
-                  <Ionicons name="chevron-back" size={20} color="#fff" />
+              <View style={styles.buttonRow}>
+                <Pressable onPress={handleClose} style={styles.skipButton}>
+                  <Text style={styles.skipText}>Skip</Text>
                 </Pressable>
-              )}
-              <Pressable onPress={handleNext} style={[styles.navButton, styles.nextButton]}>
-                <Text style={styles.nextText}>{isLastStep ? 'Got it!' : 'Next'}</Text>
-                {!isLastStep && <Ionicons name="chevron-forward" size={18} color="#fff" />}
-              </Pressable>
-            </View>
-          </View>
-        </Animated.View>
+
+                <View style={styles.navButtons}>
+                  {!isFirstStep && (
+                    <Pressable onPress={handlePrevious} style={styles.navButton}>
+                      <Ionicons name="chevron-back" size={20} color="#fff" />
+                    </Pressable>
+                  )}
+                  <Pressable onPress={handleNext} style={[styles.navButton, styles.nextButton]}>
+                    <Text style={styles.nextText}>{isLastStep ? 'Got it!' : 'Next'}</Text>
+                    {!isLastStep && <Ionicons name="chevron-forward" size={18} color="#fff" />}
+                  </Pressable>
+                </View>
+              </View>
+            </>
+          )}
+          </Animated.View>
       </View>
     </Modal>
   );
 }
-
-const CARD_WIDTH = Math.min(SCREEN_WIDTH - 40, 340);
 
 const styles = StyleSheet.create({
   overlay: {
@@ -166,7 +222,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   card: {
-    width: CARD_WIDTH,
+    // Base width - overridden dynamically in component
     backgroundColor: '#fff',
     borderRadius: 20,
     padding: 24,

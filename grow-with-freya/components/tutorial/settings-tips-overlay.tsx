@@ -80,7 +80,15 @@ export function SettingsTipsOverlay({ isActive = true }: SettingsTipsOverlayProp
 
   return (
     <Modal transparent visible={isVisible} animationType="none" statusBarTranslucent>
+      {/* Main container */}
       <View style={styles.overlay}>
+        {/* Invisible touch-blocking layer - blocks ALL touches immediately on mount */}
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={() => {}}
+          onPressIn={() => {}}
+          onPressOut={() => {}}
+        />
         <Animated.View style={[styles.card, animatedCardStyle]}>
           <View style={styles.iconContainer}>
             <Text style={styles.icon}>
@@ -123,7 +131,7 @@ export function SettingsTipsOverlay({ isActive = true }: SettingsTipsOverlayProp
               </Pressable>
             </View>
           </View>
-        </Animated.View>
+          </Animated.View>
       </View>
     </Modal>
   );

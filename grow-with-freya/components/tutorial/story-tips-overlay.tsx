@@ -1,19 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Modal, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Pressable, useWindowDimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
   withSpring,
-  FadeIn,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/constants/theme';
 import { useTutorial } from '@/contexts/tutorial-context';
 import { STORY_READER_TIPS } from './tutorial-content';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface StoryTipsOverlayProps {
   storyId: string;
@@ -27,31 +24,50 @@ interface StoryTipsOverlayProps {
  */
 export function StoryTipsOverlay({ storyId, forceShow = false, onClose }: StoryTipsOverlayProps) {
   const insets = useSafeAreaInsets();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const { hasSeenFirstStory, markFirstStoryViewed, shouldShowTutorial } = useTutorial();
-  const [isVisible, setIsVisible] = useState(false);
+  const [isMounted, setIsMounted] = useState(false); // Controls touch-blocking overlay
+  const [isVisible, setIsVisible] = useState(false); // Controls card visibility
   const [currentStep, setCurrentStep] = useState(0);
 
-  const opacity = useSharedValue(0);
-  const scale = useSharedValue(0.9);
+  const overlayOpacity = useSharedValue(0);
+  const cardOpacity = useSharedValue(0);
+  const cardScale = useSharedValue(0.9);
 
-  // Show tips on first story if tutorial not completed OR if forceShow is true
+  // Dynamic card width based on current screen dimensions
+  const cardWidth = Math.min(screenWidth - 40, 340);
+  // Check if we're on a phone in landscape
+  const isPhoneLandscape = Math.min(screenWidth, screenHeight) < 600 && screenWidth > screenHeight;
+
+  // Check if we should show the tutorial (compute once to avoid dependency issues)
+  const shouldShow = !hasSeenFirstStory && shouldShowTutorial('story_reader_tips');
+
+  // Mount immediately to block touches, then show card after delay
   useEffect(() => {
     if (forceShow) {
       // Immediately show when forceShow is true
+      setIsMounted(true);
       setIsVisible(true);
       setCurrentStep(0);
-      opacity.value = withTiming(1, { duration: 300 });
-      scale.value = withSpring(1, { damping: 15 });
-    } else if (!hasSeenFirstStory && shouldShowTutorial('story_reader_tips')) {
-      // Small delay to let story load first
+      overlayOpacity.value = withTiming(1, { duration: 300 });
+      cardOpacity.value = withTiming(1, { duration: 300 });
+      cardScale.value = withSpring(1, { damping: 20, stiffness: 200 });
+    } else if (shouldShow) {
+      // Mount immediately to block touches during loading
+      setIsMounted(true);
+      overlayOpacity.value = withTiming(0.5, { duration: 300 }); // Partial overlay during loading
+
+      // Delay for phone to wait for orientation change to complete
+      const delay = isPhoneLandscape ? 2000 : 1200;
       const timer = setTimeout(() => {
         setIsVisible(true);
-        opacity.value = withTiming(1, { duration: 300 });
-        scale.value = withSpring(1, { damping: 15 });
-      }, 1000);
+        overlayOpacity.value = withTiming(1, { duration: 300 });
+        cardOpacity.value = withTiming(1, { duration: 300 });
+        cardScale.value = withSpring(1, { damping: 20, stiffness: 200 }); // Less bouncy
+      }, delay);
       return () => clearTimeout(timer);
     }
-  }, [hasSeenFirstStory, shouldShowTutorial, opacity, scale, forceShow]);
+  }, [shouldShow, overlayOpacity, cardOpacity, cardScale, forceShow, isPhoneLandscape]);
 
   const handleNext = () => {
     if (currentStep < STORY_READER_TIPS.length - 1) {
@@ -68,9 +84,11 @@ export function StoryTipsOverlay({ storyId, forceShow = false, onClose }: StoryT
   };
 
   const handleClose = () => {
-    opacity.value = withTiming(0, { duration: 200 });
+    cardOpacity.value = withTiming(0, { duration: 200 });
+    overlayOpacity.value = withTiming(0, { duration: 200 });
     setTimeout(() => {
       setIsVisible(false);
+      setIsMounted(false);
       if (!forceShow) {
         // Only mark as viewed if not force-shown from menu
         markFirstStoryViewed();
@@ -79,84 +97,152 @@ export function StoryTipsOverlay({ storyId, forceShow = false, onClose }: StoryT
     }, 200);
   };
 
-  const animatedCardStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ scale: scale.value }],
+  const animatedOverlayStyle = useAnimatedStyle(() => ({
+    opacity: overlayOpacity.value,
   }));
 
-  if (!isVisible) return null;
+  const animatedCardStyle = useAnimatedStyle(() => ({
+    opacity: cardOpacity.value,
+    transform: [{ scale: cardScale.value }],
+  }));
 
+  // Safety check - don't render if not mounted
   const currentTip = STORY_READER_TIPS[currentStep];
+  if (!isMounted) return null;
+
   const isLastStep = currentStep === STORY_READER_TIPS.length - 1;
   const isFirstStep = currentStep === 0;
 
+  // For phone landscape, use a more compact horizontal layout
+  const landscapeCardStyle = isPhoneLandscape ? {
+    flexDirection: 'row' as const,
+    width: Math.min(screenWidth - 80, 500),
+    padding: 16,
+    alignItems: 'center' as const,
+  } : {
+    width: cardWidth,
+  };
+
   return (
-    <Modal transparent visible={isVisible} animationType="none" statusBarTranslucent>
-      <View style={styles.overlay}>
-        <Animated.View style={[styles.card, animatedCardStyle]}>
-          {/* Icon/Emoji */}
-          <View style={styles.iconContainer}>
-            <Text style={styles.icon}>
-              {currentTip.id === 'story_welcome' && '📖'}
-              {currentTip.id === 'interactive_elements' && '✨'}
-              {currentTip.id === 'point_and_discuss' && '👆'}
-              {currentTip.id === 'pause_and_predict' && '🤔'}
-              {currentTip.id === 'voices_and_sounds' && '🎭'}
-              {currentTip.id === 'navigate_story' && '📱'}
-            </Text>
-          </View>
+    <View style={styles.overlayContainer} pointerEvents="box-none">
+      {/* Background overlay - fades in immediately to block touches */}
+      <Animated.View style={[styles.overlay, animatedOverlayStyle]} pointerEvents="auto">
+        {/* Invisible touch-blocking layer - blocks ALL touches */}
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={() => {}}
+          onPressIn={() => {}}
+          onPressOut={() => {}}
+        />
+      </Animated.View>
 
-          <Text style={styles.title}>{currentTip.title}</Text>
-          <Text style={styles.description}>{currentTip.description}</Text>
+      {/* Card content - only shows after delay, with separate animation */}
+      {isVisible && currentTip && (
+        <View style={styles.cardContainer} pointerEvents="box-none">
+          <Animated.View style={[styles.card, landscapeCardStyle, animatedCardStyle]}>
+            {isPhoneLandscape ? (
+              // Landscape layout: icon on left, content on right
+              <>
+                <View style={[styles.iconContainer, { marginBottom: 0, marginRight: 16 }]}>
+                  <Text style={styles.icon}>
+                    {currentTip.id === 'story_welcome' && '📖'}
+                    {currentTip.id === 'interactive_elements' && '✨'}
+                    {currentTip.id === 'point_and_discuss' && '👆'}
+                    {currentTip.id === 'pause_and_predict' && '🤔'}
+                    {currentTip.id === 'voices_and_sounds' && '🎭'}
+                    {currentTip.id === 'navigate_story' && '📱'}
+                  </Text>
+                </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.title, { marginBottom: 4 }]}>{currentTip.title}</Text>
+                <Text style={[styles.description, { marginBottom: 8 }]}>{currentTip.description}</Text>
+                <View style={[styles.buttonRow, { marginTop: 4 }]}>
+                  <View style={styles.progressDots}>
+                    {STORY_READER_TIPS.map((_, i) => (
+                      <View key={i} style={[styles.dot, i === currentStep && styles.dotActive]} />
+                    ))}
+                  </View>
+                  <View style={styles.navButtons}>
+                    {!isFirstStep && (
+                      <Pressable onPress={handlePrevious} style={styles.navButton}>
+                        <Ionicons name="chevron-back" size={18} color="#fff" />
+                      </Pressable>
+                    )}
+                    <Pressable onPress={handleNext} style={[styles.navButton, styles.nextButton]}>
+                      <Text style={[styles.nextText, { fontSize: 12 }]}>{isLastStep ? 'Go!' : 'Next'}</Text>
+                    </Pressable>
+                    <Pressable onPress={handleClose} style={[styles.skipButton, { marginLeft: 8 }]}>
+                      <Text style={[styles.skipText, { fontSize: 11 }]}>Skip</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              </View>
+            </>
+          ) : (
+            // Portrait layout: vertical stack
+            <>
+              <View style={styles.iconContainer}>
+                <Text style={styles.icon}>
+                  {currentTip.id === 'story_welcome' && '📖'}
+                  {currentTip.id === 'interactive_elements' && '✨'}
+                  {currentTip.id === 'point_and_discuss' && '👆'}
+                  {currentTip.id === 'pause_and_predict' && '🤔'}
+                  {currentTip.id === 'voices_and_sounds' && '🎭'}
+                  {currentTip.id === 'navigate_story' && '📱'}
+                </Text>
+              </View>
 
-          {/* Progress dots */}
-          <View style={styles.progressDots}>
-            {STORY_READER_TIPS.map((_, i) => (
-              <View
-                key={i}
-                style={[styles.dot, i === currentStep && styles.dotActive]}
-              />
-            ))}
-          </View>
+              <Text style={styles.title}>{currentTip.title}</Text>
+              <Text style={styles.description}>{currentTip.description}</Text>
 
-          {/* Navigation */}
-          <View style={styles.buttonRow}>
-            <Pressable onPress={handleClose} style={styles.skipButton}>
-              <Text style={styles.skipText}>Skip All</Text>
-            </Pressable>
+              <View style={styles.progressDots}>
+                {STORY_READER_TIPS.map((_, i) => (
+                  <View key={i} style={[styles.dot, i === currentStep && styles.dotActive]} />
+                ))}
+              </View>
 
-            <View style={styles.navButtons}>
-              {!isFirstStep && (
-                <Pressable onPress={handlePrevious} style={styles.navButton}>
-                  <Ionicons name="chevron-back" size={20} color="#fff" />
+              <View style={styles.buttonRow}>
+                <Pressable onPress={handleClose} style={styles.skipButton}>
+                  <Text style={styles.skipText}>Skip All</Text>
                 </Pressable>
-              )}
-              <Pressable
-                onPress={handleNext}
-                style={[styles.navButton, styles.nextButton]}
-              >
-                <Text style={styles.nextText}>{isLastStep ? 'Start Reading!' : 'Next'}</Text>
-                {!isLastStep && <Ionicons name="chevron-forward" size={18} color="#fff" />}
-              </Pressable>
-            </View>
-          </View>
-        </Animated.View>
-      </View>
-    </Modal>
+
+                <View style={styles.navButtons}>
+                  {!isFirstStep && (
+                    <Pressable onPress={handlePrevious} style={styles.navButton}>
+                      <Ionicons name="chevron-back" size={20} color="#fff" />
+                    </Pressable>
+                  )}
+                  <Pressable onPress={handleNext} style={[styles.navButton, styles.nextButton]}>
+                    <Text style={styles.nextText}>{isLastStep ? 'Start Reading!' : 'Next'}</Text>
+                    {!isLastStep && <Ionicons name="chevron-forward" size={18} color="#fff" />}
+                  </Pressable>
+                </View>
+              </View>
+            </>
+          )}
+          </Animated.View>
+        </View>
+      )}
+    </View>
   );
 }
 
-const CARD_WIDTH = Math.min(SCREEN_WIDTH - 40, 340);
-
 const styles = StyleSheet.create({
+  overlayContainer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 9999,
+  },
   overlay: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.75)',
+  },
+  cardContainer: {
+    ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
   },
   card: {
-    width: CARD_WIDTH,
+    // Base width - overridden dynamically in component
     backgroundColor: '#fff',
     borderRadius: 20,
     padding: 24,

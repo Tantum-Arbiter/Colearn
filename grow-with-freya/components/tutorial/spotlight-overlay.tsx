@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import { View, Text, StyleSheet, Dimensions, Pressable, Modal, Platform } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Pressable, Modal, Platform, useWindowDimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -18,8 +18,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/constants/theme';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export interface SpotlightTarget {
   x: number;
@@ -159,6 +157,8 @@ function SketchArrow({
   ctrlX,
   ctrlY,
   visible,
+  screenWidth,
+  screenHeight,
 }: {
   fromX: number;
   fromY: number;
@@ -167,6 +167,8 @@ function SketchArrow({
   ctrlX: number;
   ctrlY: number;
   visible: boolean;
+  screenWidth: number;
+  screenHeight: number;
 }) {
   const drawProgress = useSharedValue(0);
 
@@ -209,8 +211,8 @@ function SketchArrow({
 
   return (
     <Svg
-      width={SCREEN_WIDTH}
-      height={SCREEN_HEIGHT}
+      width={screenWidth}
+      height={screenHeight}
       style={StyleSheet.absoluteFill}
       pointerEvents="none"
     >
@@ -250,6 +252,7 @@ export function SpotlightOverlay({
   skipAnimation = false,
 }: SpotlightOverlayProps) {
   const insets = useSafeAreaInsets();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const tipOpacity = useSharedValue(skipAnimation ? 1 : 0);
   const tipScale = useSharedValue(skipAnimation ? 1 : 0.9);
   const overlayOpacity = useSharedValue(skipAnimation ? 1 : 0);
@@ -258,6 +261,12 @@ export function SpotlightOverlay({
   const isFirstStep = currentStepIndex === 0;
 
   const hasTarget = !!step.target;
+
+  // Check if we're on a phone in landscape mode (shorter dimension < 600 and width > height)
+  const isPhoneLandscape = Math.min(screenWidth, screenHeight) < 600 && screenWidth > screenHeight;
+
+  // Dynamic tip width based on orientation
+  const dynamicTipWidth = isPhoneLandscape ? Math.min(screenWidth - 80, 420) : TIP_WIDTH;
 
   // Track if we've done the initial animation to prevent flicker on re-renders
   const hasAnimatedIn = useRef(skipAnimation);
@@ -292,51 +301,106 @@ export function SpotlightOverlay({
   const tipHeight = 160; // Smaller height
 
   const getTipPosition = () => {
-    const centerLeft = (SCREEN_WIDTH - TIP_WIDTH) / 2;
-    const centerTop = (SCREEN_HEIGHT - tipHeight) / 2;
+    const centerLeft = (screenWidth - TIP_WIDTH) / 2;
+    const centerTop = (screenHeight - tipHeight) / 2;
     const target = step.target;
+
+    // Check if we're on a small mobile screen (phone) - use shorter dimension to detect phone
+    const isSmallScreen = Math.min(screenWidth, screenHeight) < 600;
+    // Check if portrait orientation
+    const isPortrait = screenHeight > screenWidth;
+    const isPhonePortrait = isSmallScreen && isPortrait;
 
     // Use tipPosition from step configuration if available
     if (step.tipPosition === 'center') {
       return { left: centerLeft, top: centerTop };
     }
 
+    // Handle 'below' tipPosition - position tip below the target button
+    if (step.tipPosition === 'below' && target) {
+      // Book mode buttons on iPad/tablet: position tip to the right of the button
+      const bookModeButtons = ['read_button', 'record_button', 'narrate_button', 'preview_button'];
+      if (!isPhonePortrait && bookModeButtons.includes(step.id)) {
+        const margin = 20;
+        const tipLeft = target.x + target.width + margin;
+        // Center tip vertically with the button
+        const tipTop = target.y + (target.height / 2) - (tipHeight / 2);
+        // Make sure tip doesn't go off screen
+        const maxLeft = screenWidth - TIP_WIDTH - 20;
+        const minTop = insets.top + 20;
+        const maxTop = screenHeight - tipHeight - insets.bottom - 20;
+        return {
+          left: Math.min(tipLeft, maxLeft),
+          top: Math.max(minTop, Math.min(tipTop, maxTop))
+        };
+      }
+      // For phones or other cases: position tip below the target
+      const margin = 30;
+      const tipTop = target.y + target.height + margin;
+      // Make sure tip doesn't go off screen
+      const maxTop = screenHeight - tipHeight - insets.bottom - 20;
+      return { left: centerLeft, top: Math.min(tipTop, maxTop) };
+    }
+
+    // Handle 'above' tipPosition - position tip above the target button
+    // For emotions and bedtime buttons, use fixed percentage positioning since they're
+    // in the lower portion of the screen and we want tip clearly above them
+    if (step.tipPosition === 'above') {
+      // Emotions and bedtime buttons are in lower half - position tip at ~30% from top
+      // This ensures tip is visible above the buttons without overlapping
+      if (step.id === 'emotions_button' || step.id === 'bedtime_button') {
+        return { left: centerLeft, top: screenHeight * 0.30 };
+      }
+      // For other 'above' positioned tips, use target-relative positioning
+      if (target) {
+        const margin = isPhonePortrait ? 40 : 30;
+        const tipTop = target.y - tipHeight - margin;
+        const minTop = insets.top + 20;
+        return { left: centerLeft, top: Math.max(tipTop, minTop) };
+      }
+      // Fallback
+      return { left: centerLeft, top: screenHeight * 0.35 };
+    }
+
     // Legacy per-step-id positioning for backwards compatibility
     switch (step.id) {
       case 'stories_button':
-        // Position just below center menu button
-        return { left: centerLeft, top: SCREEN_HEIGHT * 0.55 };
-      case 'emotions_button':
-        // Position to the right of the button, vertically aligned
-        if (target) {
-          const buttonRight = target.x + target.width;
-          const tipLeft = Math.min(buttonRight + 20, SCREEN_WIDTH - TIP_WIDTH - 10);
-          const tipTop = target.y + target.height / 2 - tipHeight / 2;
-          return { left: tipLeft, top: Math.max(tipTop, 50) };
+        // Position below center menu button, lower on phones to avoid overlap
+        if (isPhonePortrait) {
+          return { left: centerLeft, top: screenHeight * 0.62 };
         }
-        return { left: centerLeft, top: SCREEN_HEIGHT * 0.50 };
-      case 'bedtime_button':
-        // Position to the left of the button, vertically aligned
-        if (target) {
-          const tipLeft = Math.max(target.x - TIP_WIDTH - 20, 10);
-          const tipTop = target.y + target.height / 2 - tipHeight / 2;
-          return { left: tipLeft, top: Math.max(tipTop, 50) };
-        }
-        return { left: centerLeft, top: SCREEN_HEIGHT * 0.50 };
+        return { left: centerLeft, top: screenHeight * 0.55 };
       case 'settings_button':
       case 'sound_control':
       case 'welcome':
       default:
         // Default to middle area
-        return { left: centerLeft, top: SCREEN_HEIGHT * 0.50 };
+        return { left: centerLeft, top: screenHeight * 0.50 };
     }
   };
 
   const tipPosition = getTipPosition();
 
+  // Check if we're on a small mobile screen (phone) - use shorter dimension to detect phone
+  const isSmallScreen = Math.min(screenWidth, screenHeight) < 600;
+  // Check if portrait orientation
+  const isPortrait = screenHeight > screenWidth;
+  const isPhoneDevice = isSmallScreen;
+
   // Calculate sketch arrow coordinates (from center of tip card to target button)
   const getSketchArrowCoords = () => {
     if (!hasTarget || !step.target) return null;
+
+    // No arrows for main menu buttons (stories, emotions, bedtime) - on all devices
+    if (step.id === 'stories_button' || step.id === 'emotions_button' || step.id === 'bedtime_button') {
+      return null;
+    }
+
+    // No arrows for book mode buttons - on all devices (tip is positioned next to button)
+    const bookModeButtons = ['read_button', 'record_button', 'narrate_button', 'preview_button'];
+    if (bookModeButtons.includes(step.id)) {
+      return null;
+    }
 
     const target = step.target;
     const buttonCenterX = target.x + target.width / 2;
@@ -372,21 +436,22 @@ export function SpotlightOverlay({
       const toX = target.x - distanceFromButton;
       const toY = buttonCenterY;
       return { fromX, fromY, toX, toY, ctrlX: fromX, ctrlY: toY };
-    }
-
-    // Legacy per-step-id positioning for backwards compatibility
-    if (step.id === 'emotions_button') {
+    } else if (step.arrowDirection === 'up') {
+      // Arrow starts from inside top edge of tip, goes to bottom edge of button
       const fromX = tipCenterX;
-      const fromY = tipCenterY;
-      const toX = buttonCenterX + buttonRadiusX + distanceFromButton;
-      const toY = buttonCenterY;
-      return { fromX, fromY, toX, toY, ctrlX: fromX, ctrlY: toY };
-    } else if (step.id === 'bedtime_button') {
+      const fromY = tipPosition.top + arrowInset;
+      const toX = buttonCenterX;
+      const toY = target.y + target.height + distanceFromButton;
+      // Control point creates a smooth curve
+      return { fromX, fromY, toX, toY, ctrlX: toX, ctrlY: fromY };
+    } else if (step.arrowDirection === 'down') {
+      // Arrow starts from inside bottom edge of tip, goes to top edge of button
       const fromX = tipCenterX;
-      const fromY = tipCenterY;
-      const toX = buttonCenterX - buttonRadiusX - distanceFromButton;
-      const toY = buttonCenterY;
-      return { fromX, fromY, toX, toY, ctrlX: fromX, ctrlY: toY };
+      const fromY = tipPosition.top + tipCardHeight - arrowInset;
+      const toX = buttonCenterX;
+      const toY = target.y - distanceFromButton;
+      // Control point creates a smooth curve
+      return { fromX, fromY, toX, toY, ctrlX: toX, ctrlY: fromY };
     }
 
     // Default: vertical approach
@@ -447,19 +512,27 @@ export function SpotlightOverlay({
 
   return (
     <Modal transparent visible={visible} animationType="none" statusBarTranslucent>
+      {/* Main container */}
       <View style={styles.overlay}>
+        {/* Invisible touch-blocking layer - blocks ALL touches immediately on mount */}
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={() => {}}
+          onPressIn={() => {}}
+          onPressOut={() => {}}
+        />
         {/* Semi-transparent overlay with spotlight cutout for target */}
-        <Animated.View style={[StyleSheet.absoluteFill, animatedOverlayStyle]} pointerEvents="box-none">
+        <Animated.View style={[StyleSheet.absoluteFill, animatedOverlayStyle]} pointerEvents="none">
           <Svg
             key={`svg-${step.id}-${currentStepIndex}`}
-            width={SCREEN_WIDTH}
-            height={SCREEN_HEIGHT}
+            width={screenWidth}
+            height={screenHeight}
             style={StyleSheet.absoluteFill}
           >
             <Defs>
               <Mask id={maskId}>
                 {/* White = visible (dim overlay), Black = transparent (spotlight) */}
-                <Rect x="0" y="0" width={SCREEN_WIDTH} height={SCREEN_HEIGHT} fill="white" />
+                <Rect x="0" y="0" width={screenWidth} height={screenHeight} fill="white" />
                 {renderSpotlightShape()}
               </Mask>
             </Defs>
@@ -467,8 +540,8 @@ export function SpotlightOverlay({
             <Rect
               x="0"
               y="0"
-              width={SCREEN_WIDTH}
-              height={SCREEN_HEIGHT}
+              width={screenWidth}
+              height={screenHeight}
               fill="rgba(0, 0, 0, 0.75)"
               mask={`url(#${maskId})`}
             />
@@ -495,52 +568,106 @@ export function SpotlightOverlay({
             ctrlX={sketchArrowCoords.ctrlX}
             ctrlY={sketchArrowCoords.ctrlY}
             visible={visible}
+            screenWidth={screenWidth}
+            screenHeight={screenHeight}
           />
         )}
 
-        {/* Tip card */}
-        <Animated.View style={[styles.tipCard, tipPosition, animatedTipStyle]}>
-          {/* Step indicator badge */}
-          <View style={styles.stepBadge}>
-            <Text style={styles.stepBadgeText}>
-              {currentStepIndex + 1} / {totalSteps}
-            </Text>
-          </View>
-
-          <Text style={styles.tipTitle}>{step.title}</Text>
-          <Text style={styles.tipDescription}>{step.description}</Text>
-
-          {/* Progress bar instead of dots for cleaner look */}
-          <View style={styles.progressBar}>
-            <View
-              style={[
-                styles.progressFill,
-                { width: `${((currentStepIndex + 1) / totalSteps) * 100}%` }
-              ]}
-            />
-          </View>
-
-          {/* Navigation buttons */}
-          <View style={styles.buttonRow}>
-            <Pressable onPress={onSkip} style={styles.skipButton}>
-              <Text style={styles.skipText}>Skip tour</Text>
-            </Pressable>
-
-            <View style={styles.navButtons}>
-              {!isFirstStep && (
-                <Pressable onPress={onPrevious} style={styles.navButton}>
-                  <Ionicons name="arrow-back" size={18} color="#666" />
+        {/* Tip card - landscape uses compact horizontal layout */}
+        <Animated.View
+          style={[
+            styles.tipCard,
+            tipPosition,
+            animatedTipStyle,
+            isPhoneLandscape && {
+              width: dynamicTipWidth,
+              flexDirection: 'row',
+              padding: 12,
+              paddingTop: 12,
+              alignItems: 'center',
+            }
+          ]}
+        >
+          {isPhoneLandscape ? (
+            // Landscape layout: horizontal arrangement
+            <>
+              <View style={{ flex: 1, marginRight: 12 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                  <Text style={[styles.tipTitle, { marginBottom: 0, marginRight: 8, fontSize: 14 }]}>{step.title}</Text>
+                  <View style={[styles.stepBadge, { position: 'relative', top: 0, right: 0 }]}>
+                    <Text style={[styles.stepBadgeText, { fontSize: 10 }]}>
+                      {currentStepIndex + 1}/{totalSteps}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={[styles.tipDescription, { fontSize: 12, marginBottom: 6 }]}>{step.description}</Text>
+                <View style={[styles.progressBar, { height: 3 }]}>
+                  <View style={[styles.progressFill, { width: `${((currentStepIndex + 1) / totalSteps) * 100}%` }]} />
+                </View>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                {!isFirstStep && (
+                  <Pressable onPress={onPrevious} style={[styles.navButton, { padding: 6 }]}>
+                    <Ionicons name="arrow-back" size={16} color="#666" />
+                  </Pressable>
+                )}
+                <Pressable
+                  onPress={isLastStep ? onComplete : onNext}
+                  style={[styles.navButton, styles.nextButton, { paddingHorizontal: 12, paddingVertical: 6 }]}
+                >
+                  <Text style={[styles.nextText, { fontSize: 12 }]}>{isLastStep ? 'Done' : 'Next'}</Text>
                 </Pressable>
-              )}
-              <Pressable
-                onPress={isLastStep ? onComplete : onNext}
-                style={[styles.navButton, styles.nextButton]}
-              >
-                <Text style={styles.nextText}>{isLastStep ? 'Got it!' : 'Next'}</Text>
-                {!isLastStep && <Ionicons name="arrow-forward" size={16} color="#fff" />}
-              </Pressable>
-            </View>
-          </View>
+                <Pressable onPress={onSkip} style={[styles.skipButton, { marginLeft: 4 }]}>
+                  <Text style={[styles.skipText, { fontSize: 11 }]}>Skip</Text>
+                </Pressable>
+              </View>
+            </>
+          ) : (
+            // Portrait layout: vertical arrangement
+            <>
+              {/* Step indicator badge */}
+              <View style={styles.stepBadge}>
+                <Text style={styles.stepBadgeText}>
+                  {currentStepIndex + 1} / {totalSteps}
+                </Text>
+              </View>
+
+              <Text style={styles.tipTitle}>{step.title}</Text>
+              <Text style={styles.tipDescription}>{step.description}</Text>
+
+              {/* Progress bar instead of dots for cleaner look */}
+              <View style={styles.progressBar}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    { width: `${((currentStepIndex + 1) / totalSteps) * 100}%` }
+                  ]}
+                />
+              </View>
+
+              {/* Navigation buttons */}
+              <View style={styles.buttonRow}>
+                <Pressable onPress={onSkip} style={styles.skipButton}>
+                  <Text style={styles.skipText}>Skip tour</Text>
+                </Pressable>
+
+                <View style={styles.navButtons}>
+                  {!isFirstStep && (
+                    <Pressable onPress={onPrevious} style={styles.navButton}>
+                      <Ionicons name="arrow-back" size={18} color="#666" />
+                    </Pressable>
+                  )}
+                  <Pressable
+                    onPress={isLastStep ? onComplete : onNext}
+                    style={[styles.navButton, styles.nextButton]}
+                  >
+                    <Text style={styles.nextText}>{isLastStep ? 'Got it!' : 'Next'}</Text>
+                    {!isLastStep && <Ionicons name="arrow-forward" size={16} color="#fff" />}
+                  </Pressable>
+                </View>
+              </View>
+            </>
+          )}
         </Animated.View>
       </View>
     </Modal>
@@ -550,7 +677,9 @@ export function SpotlightOverlay({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    position: 'relative',
+    // Background color ensures touch blocking works immediately, even during animations
+    // Using fully transparent so the animated SVG overlay provides the visual effect
+    backgroundColor: 'transparent',
   },
   tipCard: {
     position: 'absolute',
