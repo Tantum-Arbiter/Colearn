@@ -436,6 +436,135 @@ export const PLACEHOLDER_STORIES: Story[] = Array.from({ length: 4 }, (_, index)
   pages: []
 }));
 
+// Learn Music placeholder stories
+export const MUSIC_PLACEHOLDER_STORIES: Story[] = [
+  {
+    id: 'music-placeholder-1',
+    title: 'Musical Adventures',
+    category: 'music',
+    tag: '🎵 Learn Music',
+    emoji: '🎹',
+    coverImage: '',
+    isAvailable: false,
+    ageRange: '2-5',
+    duration: 8,
+    description: 'Learn about musical instruments and sounds!',
+    pages: []
+  },
+  {
+    id: 'music-placeholder-2',
+    title: 'Rhythm & Rhyme',
+    category: 'music',
+    tag: '🎵 Learn Music',
+    emoji: '🥁',
+    coverImage: '',
+    isAvailable: false,
+    ageRange: '2-5',
+    duration: 8,
+    description: 'Discover the joy of rhythm and rhyme!',
+    pages: []
+  },
+  {
+    id: 'music-placeholder-3',
+    title: 'Singing Stars',
+    category: 'music',
+    tag: '🎵 Learn Music',
+    emoji: '🎤',
+    coverImage: '',
+    isAvailable: false,
+    ageRange: '2-5',
+    duration: 8,
+    description: 'Sing along with your favorite songs!',
+    pages: []
+  }
+];
+
+// Spontaneous Activities placeholder stories
+export const ACTIVITIES_PLACEHOLDER_STORIES: Story[] = [
+  {
+    id: 'activities-placeholder-1',
+    title: 'Fun & Games',
+    category: 'activities',
+    tag: '🎲 Activities',
+    emoji: '🎯',
+    coverImage: '',
+    isAvailable: false,
+    ageRange: '2-5',
+    duration: 8,
+    description: 'Exciting games and activities to try!',
+    pages: []
+  },
+  {
+    id: 'activities-placeholder-2',
+    title: 'Creative Play',
+    category: 'activities',
+    tag: '🎲 Activities',
+    emoji: '🎨',
+    coverImage: '',
+    isAvailable: false,
+    ageRange: '2-5',
+    duration: 8,
+    description: 'Let your imagination run wild!',
+    pages: []
+  },
+  {
+    id: 'activities-placeholder-3',
+    title: 'Move & Groove',
+    category: 'activities',
+    tag: '🎲 Activities',
+    emoji: '🏃',
+    coverImage: '',
+    isAvailable: false,
+    ageRange: '2-5',
+    duration: 8,
+    description: 'Active games to get you moving!',
+    pages: []
+  }
+];
+
+// Growing Together placeholder stories
+export const GROWING_PLACEHOLDER_STORIES: Story[] = [
+  {
+    id: 'growing-placeholder-1',
+    title: 'Family Moments',
+    category: 'growing',
+    tag: '🌱 Growing',
+    emoji: '👨‍👩‍👧',
+    coverImage: '',
+    isAvailable: false,
+    ageRange: '2-5',
+    duration: 8,
+    description: 'Special moments with family!',
+    pages: []
+  },
+  {
+    id: 'growing-placeholder-2',
+    title: 'Learning Together',
+    category: 'growing',
+    tag: '🌱 Growing',
+    emoji: '🤗',
+    coverImage: '',
+    isAvailable: false,
+    ageRange: '2-5',
+    duration: 8,
+    description: 'Grow and learn with your loved ones!',
+    pages: []
+  },
+  {
+    id: 'growing-placeholder-3',
+    title: 'Sharing & Caring',
+    category: 'growing',
+    tag: '🌱 Growing',
+    emoji: '💝',
+    coverImage: '',
+    isAvailable: false,
+    ageRange: '2-5',
+    duration: 8,
+    description: 'Learn about kindness and sharing!',
+    pages: []
+  }
+];
+
 // Interactive Elements Test Story - The Squirrel's Snowman
 // DISCLAIMER: This is NOT original content. Used for proof-of-concept only.
 const INTERACTIVE_TEST_STORIES: Story[] = [
@@ -583,7 +712,10 @@ export const ALL_STORIES: Story[] = [
   ...INTERACTIVE_TEST_STORIES, // squirrels-snowman
   ...MOCK_STORIES.slice(1), // rest of mock stories
   ...ADDITIONAL_STORIES,
-  ...PLACEHOLDER_STORIES
+  ...PLACEHOLDER_STORIES,
+  ...MUSIC_PLACEHOLDER_STORIES,
+  ...ACTIVITIES_PLACEHOLDER_STORIES,
+  ...GROWING_PLACEHOLDER_STORIES
 ];
 
 // Helper functions

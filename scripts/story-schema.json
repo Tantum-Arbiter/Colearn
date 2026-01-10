@@ -18,7 +18,7 @@
     },
     "category": {
       "type": "string",
-      "enum": ["bedtime", "adventure", "nature", "friendship", "learning", "fantasy"]
+      "enum": ["bedtime", "adventure", "nature", "friendship", "learning", "fantasy", "music", "activities", "growing"]
     },
     "tag": {
       "type": "string",

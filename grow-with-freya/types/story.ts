@@ -55,7 +55,7 @@ export interface Story {
   checksum?: string; // SHA-256 checksum for delta-sync
 }
 
-export type StoryCategory = 'bedtime' | 'adventure' | 'nature' | 'friendship' | 'learning' | 'fantasy';
+export type StoryCategory = 'bedtime' | 'adventure' | 'nature' | 'friendship' | 'learning' | 'fantasy' | 'music' | 'activities' | 'growing';
 
 export interface StoryTag {
   category: StoryCategory;
@@ -100,6 +100,24 @@ export const STORY_TAGS: Record<StoryCategory, StoryTag> = {
     emoji: '✨',
     label: 'Fantasy',
     color: '#DDA0DD'
+  },
+  music: {
+    category: 'music',
+    emoji: '🎵',
+    label: 'Learn Music',
+    color: '#FF9F43'
+  },
+  activities: {
+    category: 'activities',
+    emoji: '🎲',
+    label: 'Spontaneous Activities',
+    color: '#6C5CE7'
+  },
+  growing: {
+    category: 'growing',
+    emoji: '🌱',
+    label: 'Growing Together',
+    color: '#00B894'
   }
 };
 
