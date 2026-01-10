@@ -124,9 +124,12 @@ export function AppSplashScreen() {
         disclaimerOpacity.value = 1; // Make container visible immediately
         setStartTyping(true);
 
-        // Wait for user to read disclaimer (typing takes ~2s, then show for 2.5s more)
+        // Wait for typewriter effect to complete and user to read
+        // Disclaimer: ~1.8s, pause: 300ms, newline: ~150ms, "cole": ~340ms, blink pause: 800ms,
+        // backspace: ~160ms, pause: 150ms, "de.": ~255ms = ~4s total
+        // Plus 1.5s to read "code." before transitioning
         await new Promise<void>(resolve => {
-          delayTimeoutRef.current = setTimeout(resolve, 4500);
+          delayTimeoutRef.current = setTimeout(resolve, 5700);
         });
 
         console.log('Splash screen complete. App state:', { hasCompletedOnboarding, hasCompletedLogin });
@@ -169,13 +172,16 @@ export function AppSplashScreen() {
   }));
 
   const DISCLAIMER_TEXT = "a university project.";
-  const AUTHOR_TEXT = "cole.";
   const [typedText, setTypedText] = useState('');
   const [typedAuthor, setTypedAuthor] = useState('');
   const [isTypingComplete, setIsTypingComplete] = useState(false);
+  const [isAuthorComplete, setIsAuthorComplete] = useState(false);
   const [startTyping, setStartTyping] = useState(false);
+  const [showCursor, setShowCursor] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const authorTypingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cursorBlinkRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Typewriter effect for disclaimer
   useEffect(() => {
@@ -204,23 +210,123 @@ export function AppSplashScreen() {
     };
   }, [startTyping]);
 
+  // Cursor blinking effect during pauses
+  useEffect(() => {
+    if (isPaused) {
+      // Start blinking when paused
+      cursorBlinkRef.current = setInterval(() => {
+        setShowCursor(prev => !prev);
+      }, 400);
+    } else {
+      // Show cursor constantly when typing
+      setShowCursor(true);
+      if (cursorBlinkRef.current) {
+        clearInterval(cursorBlinkRef.current);
+        cursorBlinkRef.current = null;
+      }
+    }
+
+    return () => {
+      if (cursorBlinkRef.current) {
+        clearInterval(cursorBlinkRef.current);
+      }
+    };
+  }, [isPaused]);
+
+  // Hide cursor when all typing is complete
+  useEffect(() => {
+    if (isAuthorComplete) {
+      setShowCursor(false);
+      if (cursorBlinkRef.current) {
+        clearInterval(cursorBlinkRef.current);
+        cursorBlinkRef.current = null;
+      }
+    }
+  }, [isAuthorComplete]);
+
   // Typewriter effect for author (starts after disclaimer completes)
+  // Types 2 newlines (enter effect), then "cole", backspaces "el", types "de." to show "code."
   useEffect(() => {
     if (!isTypingComplete) return;
 
+    // Animation phases: newline -> type "cole" -> pause -> backspace "el" -> type "de."
+    const NEWLINE_COUNT = 1; // One "enter" press
+    const INITIAL_TEXT = "cole";
+    const BACKSPACE_COUNT = 2; // Remove "e" and "l"
+    const FINAL_ADDITION = "de.";
+
+    let phase: 'newlines' | 'typing' | 'pausing' | 'backspacing' | 'finishing' = 'newlines';
+    let newlineCount = 0;
     let currentIndex = 0;
-    const typeNextChar = () => {
-      if (currentIndex < AUTHOR_TEXT.length) {
-        setTypedAuthor(AUTHOR_TEXT.slice(0, currentIndex + 1));
-        currentIndex++;
-        // Random delay between 50-120ms for natural typing feel
-        const delay = 50 + Math.random() * 70;
-        authorTypingTimeoutRef.current = setTimeout(typeNextChar, delay);
+    let backspaceCount = 0;
+    let finishIndex = 0;
+    let currentText = '';
+
+    const animate = () => {
+      const delay = 50 + Math.random() * 70;
+
+      if (phase === 'newlines') {
+        setIsPaused(false);
+        // Add newlines (simulating pressing enter)
+        if (newlineCount < NEWLINE_COUNT) {
+          currentText += '\n';
+          setTypedAuthor(currentText);
+          newlineCount++;
+          // Slightly longer delay for "enter" press feel
+          authorTypingTimeoutRef.current = setTimeout(animate, 150);
+        } else {
+          // Move to typing "cole"
+          phase = 'typing';
+          authorTypingTimeoutRef.current = setTimeout(animate, 100);
+        }
+      } else if (phase === 'typing') {
+        setIsPaused(false);
+        // Type "cole"
+        if (currentIndex < INITIAL_TEXT.length) {
+          currentText = currentText.slice(0, NEWLINE_COUNT) + INITIAL_TEXT.slice(0, currentIndex + 1);
+          setTypedAuthor(currentText);
+          currentIndex++;
+          authorTypingTimeoutRef.current = setTimeout(animate, delay);
+        } else {
+          // Start pause before backspacing - cursor will blink 1 time
+          // Blink interval is 400ms, so 1 full blink = 2 state changes = 800ms
+          phase = 'pausing';
+          setIsPaused(true);
+          authorTypingTimeoutRef.current = setTimeout(animate, 800);
+        }
+      } else if (phase === 'pausing') {
+        // End pause, start backspacing
+        phase = 'backspacing';
+        setIsPaused(false);
+        authorTypingTimeoutRef.current = setTimeout(animate, 100);
+      } else if (phase === 'backspacing') {
+        // Backspace "e" then "l"
+        if (backspaceCount < BACKSPACE_COUNT) {
+          currentText = currentText.slice(0, -1);
+          setTypedAuthor(currentText);
+          backspaceCount++;
+          authorTypingTimeoutRef.current = setTimeout(animate, delay + 30);
+        } else {
+          // Brief pause before typing final text
+          phase = 'finishing';
+          authorTypingTimeoutRef.current = setTimeout(animate, 150);
+        }
+      } else if (phase === 'finishing') {
+        // Type "de."
+        if (finishIndex < FINAL_ADDITION.length) {
+          currentText = currentText + FINAL_ADDITION[finishIndex];
+          setTypedAuthor(currentText);
+          finishIndex++;
+          authorTypingTimeoutRef.current = setTimeout(animate, delay);
+        } else {
+          // Done - hide cursor
+          setIsAuthorComplete(true);
+        }
       }
     };
 
     // Start typing author after a short pause
-    authorTypingTimeoutRef.current = setTimeout(typeNextChar, 300);
+    authorTypingTimeoutRef.current = setTimeout(animate, 300);
 
     return () => {
       if (authorTypingTimeoutRef.current) {
@@ -278,11 +384,21 @@ export function AppSplashScreen() {
         </Animated.View>
       </View>
 
-      {/* Disclaimer text with typewriter effect */}
+      {/* Disclaimer text with typewriter effect and cursor */}
       <Animated.View style={[styles.disclaimerContainer, disclaimerAnimatedStyle]}>
-        <Text style={styles.disclaimerText}>{typedText}</Text>
+        <Text style={styles.disclaimerText}>
+          {typedText}
+          {!isTypingComplete && (
+            <Text style={[styles.cursor, { opacity: showCursor ? 1 : 0 }]}>|</Text>
+          )}
+        </Text>
         {isTypingComplete && (
-          <Text style={[styles.disclaimerText, { marginTop: 12 }]}>{typedAuthor}</Text>
+          <Text style={[styles.disclaimerText, { marginTop: 12 }]}>
+            {typedAuthor}
+            {!isAuthorComplete && (
+              <Text style={[styles.cursor, { opacity: showCursor ? 1 : 0 }]}>|</Text>
+            )}
+          </Text>
         )}
       </Animated.View>
 
@@ -376,6 +492,10 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
     letterSpacing: 1,
+  },
+  cursor: {
+    color: '#FFFFFF',
+    fontWeight: '300',
   },
   versionContainer: {
     position: 'absolute',

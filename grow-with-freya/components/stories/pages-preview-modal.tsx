@@ -1,10 +1,10 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
   Pressable,
   StyleSheet,
-  ScrollView,
+  FlatList,
   useWindowDimensions,
 } from 'react-native';
 import { Image } from 'expo-image';
@@ -45,24 +45,42 @@ export function PagePreviewModal({
   const { scaledFontSize, scaledButtonSize } = useAccessibility();
 
   const isTablet = Math.max(screenWidth, screenHeight) >= 1024;
-  const numColumns = isTablet ? 3 : 2;
+  const isLandscape = screenWidth > screenHeight;
 
-  const horizontalPadding = 40;
-  const gap = 12;
+  // Phone: 2 columns (larger tiles, easier to tap)
+  // Tablet: 4 columns for more content
+  const numColumns = isTablet ? 4 : 2;
+
+  // Padding must match ScrollView's paddingHorizontal (20 each side = 40 total)
+  // Add extra padding on phone to shrink tiles
+  const horizontalPadding = isTablet ? 40 : 60;
+  const gap = isTablet ? 12 : 16;
   const availableWidth = screenWidth - horizontalPadding - (gap * (numColumns - 1));
   const thumbnailWidth = availableWidth / numColumns;
-  const thumbnailHeight = thumbnailWidth * 0.65;
-  const rowHeight = thumbnailHeight + 30 + gap; // thumbnail + label + gap
+  // Phone landscape: shorter tiles, Phone portrait: taller tiles
+  const thumbnailHeight = thumbnailWidth * (isLandscape && !isTablet ? 0.55 : 0.65);
+  // Row height: thumbnail + container extra height (30) + gap between rows
+  const containerHeight = thumbnailHeight + 30;
+  const rowHeight = containerHeight + gap;
 
   // Calculate initial scroll position to show current page
   // Since we skip cover (index 0), adjust the index for scroll calculation
   const adjustedPageIndex = Math.max(0, currentPageIndex - 1);
+  // Which row the current page is in (for scrolling)
   const currentRow = Math.floor(adjustedPageIndex / numColumns);
-  const initialScrollY = Math.max(0, currentRow * rowHeight - rowHeight * 0.5);
 
+  const flatListRef = useRef<FlatList>(null);
+  const hasScrolledRef = useRef(false);
   const translateY = useSharedValue(screenHeight);
   const backdropOpacity = useSharedValue(0);
   const isAnimatingOut = useSharedValue(false);
+
+  // Reset scroll flag when modal closes
+  useEffect(() => {
+    if (!visible) {
+      hasScrolledRef.current = false;
+    }
+  }, [visible]);
 
   useEffect(() => {
     if (visible) {
@@ -71,8 +89,32 @@ export function PagePreviewModal({
         easing: Easing.out(Easing.cubic),
       });
       backdropOpacity.value = withTiming(1, { duration: ANIMATION_DURATION });
+
+      // Scroll to the row containing current page after animation
+      hasScrolledRef.current = false;
     }
   }, [visible]);
+
+  // Get item layout for FlatList scrollToIndex
+  const getItemLayout = useCallback((_data: any, index: number) => ({
+    length: rowHeight,
+    offset: rowHeight * index,
+    index,
+  }), [rowHeight]);
+
+  // Scroll to current row when list is ready
+  const handleLayout = useCallback(() => {
+    if (visible && !hasScrolledRef.current && currentRow > 0) {
+      hasScrolledRef.current = true;
+      setTimeout(() => {
+        flatListRef.current?.scrollToIndex({
+          index: currentRow,
+          animated: true,
+          viewPosition: 0.3, // Position current row 30% from top
+        });
+      }, 100);
+    }
+  }, [visible, currentRow]);
 
   const handleClose = useCallback(() => {
     if (isAnimatingOut.value) return;
@@ -101,12 +143,12 @@ export function PagePreviewModal({
     transform: [{ translateY: translateY.value }],
   }));
 
-  if (!visible && translateY.value === screenHeight) return null;
+  // Skip cover page (index 0), only show actual story pages
+  const pages = (story.pages || []).slice(1);
 
-  const pages = story.pages || [];
-
-  // Render a page thumbnail - actualIndex is the real page index in the story
-  const renderPageThumbnail = (page: StoryPage, actualIndex: number) => {
+  // Render a page thumbnail for FlatList - must be before any early return
+  const renderItem = useCallback(({ item: page, index }: { item: StoryPage; index: number }) => {
+    const actualIndex = index + 1; // +1 because we skipped cover
     const isCurrentPage = actualIndex === currentPageIndex;
     const imageSource = page.backgroundImage || page.characterImage;
     const isCmsImage = typeof imageSource === 'string' &&
@@ -114,13 +156,12 @@ export function PagePreviewModal({
 
     return (
       <Pressable
-        key={page.id}
-        style={[styles.thumbnailContainer, { width: thumbnailWidth, height: thumbnailHeight + 30 }]}
+        style={[styles.thumbnailContainer, { width: thumbnailWidth, height: containerHeight }]}
         onPress={() => handlePageSelect(actualIndex)}
       >
         <View style={[
           styles.thumbnail,
-          { width: thumbnailWidth, height: thumbnailHeight },
+          { width: thumbnailWidth - gap, height: thumbnailHeight },
           isCurrentPage && styles.thumbnailCurrent,
         ]}>
           {imageSource ? (
@@ -145,7 +186,10 @@ export function PagePreviewModal({
         </Text>
       </Pressable>
     );
-  };
+  }, [currentPageIndex, thumbnailWidth, thumbnailHeight, containerHeight, gap, handlePageSelect, scaledFontSize]);
+
+  // Early return after all hooks
+  if (!visible) return null;
 
   return (
     <View style={styles.container} pointerEvents="box-none">
@@ -166,17 +210,20 @@ export function PagePreviewModal({
             <Text style={[styles.closeButtonText, { fontSize: scaledFontSize(18) }]}>×</Text>
           </Pressable>
         </View>
-        <ScrollView
+        <FlatList
+          ref={flatListRef}
+          data={pages}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          numColumns={numColumns}
           style={styles.scrollView}
-          contentContainerStyle={[styles.gridContainer, { gap, paddingHorizontal: 20 }]}
+          contentContainerStyle={[styles.gridContainer, { paddingHorizontal: horizontalPadding / 2 }]}
+          columnWrapperStyle={styles.columnWrapper}
           showsVerticalScrollIndicator={false}
-          contentOffset={{ x: 0, y: initialScrollY }}
-        >
-          <View style={[styles.grid, { gap }]}>
-            {/* Skip cover page (index 0), only show actual story pages */}
-            {pages.slice(1).map((page, displayIndex) => renderPageThumbnail(page, displayIndex + 1))}
-          </View>
-        </ScrollView>
+          onLayout={handleLayout}
+          getItemLayout={getItemLayout}
+          initialNumToRender={10}
+        />
       </Animated.View>
     </View>
   );
@@ -237,9 +284,8 @@ const styles = StyleSheet.create({
   gridContainer: {
     paddingBottom: 20,
   },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  columnWrapper: {
+    justifyContent: 'center',
   },
   thumbnailContainer: {
     alignItems: 'center',
