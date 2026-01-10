@@ -91,6 +91,7 @@ export function StoryBookReader({
   const [narrationDuration, setNarrationDuration] = useState(0);
   const [shouldAutoStopRecording, setShouldAutoStopRecording] = useState(false);
   const [shouldAutoAdvance, setShouldAutoAdvance] = useState(false);
+  const [narrationAutoPlay, setNarrationAutoPlay] = useState(true); // Auto-play and advance in narrate mode
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const textScrollViewRef = useRef<ScrollView>(null);
 
@@ -757,9 +758,9 @@ export function StoryBookReader({
     setShowVoiceOverSelectModal(false);
   };
 
-  // Narrate mode: auto-play recording when page changes
+  // Narrate mode: auto-play recording when page changes (if auto-play is enabled)
   useEffect(() => {
-    if (readingMode !== 'narrate' || !selectedVoiceOver || currentPageIndex === 0) {
+    if (readingMode !== 'narrate' || !selectedVoiceOver || currentPageIndex === 0 || !narrationAutoPlay) {
       return;
     }
 
@@ -792,8 +793,10 @@ export function StoryBookReader({
             if (status.didJustFinish) {
               setIsPlaying(false);
               setNarrationProgress(0);
-              // Set flag to trigger auto-advance via useEffect
-              setShouldAutoAdvance(true);
+              // Set flag to trigger auto-advance via useEffect (only if auto-play enabled)
+              if (narrationAutoPlay) {
+                setShouldAutoAdvance(true);
+              }
             }
           }
         });
@@ -807,7 +810,7 @@ export function StoryBookReader({
 
     return () => clearTimeout(delayTimer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPageIndex, readingMode, selectedVoiceOver]);
+  }, [currentPageIndex, readingMode, selectedVoiceOver, narrationAutoPlay]);
 
   // Show voice over selection when entering narrate mode
   useEffect(() => {
@@ -816,9 +819,9 @@ export function StoryBookReader({
     }
   }, [readingMode, availableVoiceOvers, selectedVoiceOver]);
 
-  // Auto-advance to next page after narration finishes (2 second delay)
+  // Auto-advance to next page after narration finishes (2 second delay) - only if auto-play is enabled
   useEffect(() => {
-    if (shouldAutoAdvance && readingMode === 'narrate' && currentPageIndex < pages.length - 1) {
+    if (shouldAutoAdvance && readingMode === 'narrate' && currentPageIndex < pages.length - 1 && narrationAutoPlay) {
       const advanceTimer = setTimeout(() => {
         setShouldAutoAdvance(false);
         handleNextPage();
@@ -829,7 +832,7 @@ export function StoryBookReader({
       setShouldAutoAdvance(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shouldAutoAdvance]);
+  }, [shouldAutoAdvance, narrationAutoPlay]);
 
   // Animate UI elements when page preview opens/closes
   useEffect(() => {
@@ -1426,6 +1429,23 @@ export function StoryBookReader({
               <Text style={[styles.menuItemText, { fontSize: scaledFontSize(14) }]}>Font / Button Size</Text>
               <Text style={[styles.menuItemArrow, { fontSize: scaledFontSize(14) }]}>›</Text>
             </Pressable>
+            {/* Auto-play toggle - only in narrate mode */}
+            {readingMode === 'narrate' && (
+              <>
+                <View style={styles.menuDivider} />
+                <Pressable
+                  style={styles.menuItem}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setNarrationAutoPlay(prev => !prev);
+                  }}
+                >
+                  <Text style={[styles.menuItemText, { fontSize: scaledFontSize(14) }]}>
+                    {narrationAutoPlay ? 'Auto-Play: On' : 'Auto-Play: Off'}
+                  </Text>
+                </Pressable>
+              </>
+            )}
             <View style={styles.menuDivider} />
             <Pressable
               style={styles.menuItem}
