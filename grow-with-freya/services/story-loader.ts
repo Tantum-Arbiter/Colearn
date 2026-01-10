@@ -6,12 +6,12 @@ import { Logger } from '@/utils/logger';
 const log = Logger.create('StoryLoader');
 
 /**
- * Story loader that uses CMS as the source of truth
+ * Story loader that combines bundled and CMS stories
  *
  * Strategy:
- * - CMS is the source of truth for what stories to display
- * - Once synced, only CMS stories are shown (stories deleted from CMS are removed)
- * - Bundled stories shown only when CMS has no stories (first launch, offline, or CMS empty)
+ * - Bundled stories: Always available (offline-first, part of app bundle)
+ * - CMS stories: Additional premium content synced from backend
+ * - CMS-only stories deleted from CMS are automatically removed
  * - Memory cache: Keeps stories in memory for instant access after first load
  */
 export class StoryLoader {
@@ -63,30 +63,35 @@ export class StoryLoader {
   }
 
   /**
-   * Internal method to load stories
+   * Internal method to load and merge stories
    *
    * Strategy:
-   * - CMS is the source of truth for what stories to display
-   * - If no CMS data yet (first launch before sync), show bundled stories as initial experience
-   * - Once synced with actual stories, ONLY stories in the CMS are shown
-   * - Stories deleted from CMS are removed from the app
+   * - Bundled stories are always available (offline-first)
+   * - CMS stories add additional premium content
+   * - CMS-only stories that are deleted from CMS are removed (handled by sync)
    */
   private static async loadStoriesInternal(): Promise<Story[]> {
     try {
-      // Check if we have synced with CMS and have stories
-      const syncStatus = await StorySyncService.getSyncStatus();
+      // Start with bundled stories (always available)
+      const bundledStories = [...ALL_STORIES];
+      const bundledIds = new Set(bundledStories.map(s => s.id));
+      log.debug(`Bundled stories: ${bundledStories.length}`);
 
-      if (syncStatus.hasLocalData && syncStatus.localStoryCount > 0) {
-        // We have synced and have stories - CMS is source of truth
-        const cmsStories = await StorySyncService.getLocalStories();
-        log.debug(`CMS stories (source of truth): ${cmsStories.length}`);
-        return cmsStories;
+      // Get CMS stories (includes both synced bundled stories and CMS-only stories)
+      const cmsStories = await StorySyncService.getLocalStories();
+
+      if (cmsStories && cmsStories.length > 0) {
+        // Find CMS-only stories (not in bundled)
+        const cmsOnlyStories = cmsStories.filter(s => !bundledIds.has(s.id));
+
+        // Combine: all bundled + CMS-only stories
+        const allStories = [...bundledStories, ...cmsOnlyStories];
+        log.debug(`Combined: ${bundledStories.length} bundled + ${cmsOnlyStories.length} CMS-only = ${allStories.length} total`);
+        return allStories;
       }
 
-      // No CMS stories available (first launch, offline, or CMS is empty)
-      // Show bundled stories as fallback
-      const bundledStories = [...ALL_STORIES];
-      log.debug(`No CMS stories - using ${bundledStories.length} bundled stories as fallback`);
+      // No CMS data - return bundled only
+      log.debug(`No CMS data - using ${bundledStories.length} bundled stories`);
       return bundledStories;
     } catch (error) {
       log.error('Error loading stories:', error);
