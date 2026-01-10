@@ -57,7 +57,10 @@ export function TutorialOverlay({
   } = useTutorial();
 
   const [targetMeasurements, setTargetMeasurements] = useState<Record<string, SpotlightTarget>>({});
+  const [isMeasurementReady, setIsMeasurementReady] = useState(false);
+  const [hasShownOverlay, setHasShownOverlay] = useState(false);
   const hasStarted = useRef(false);
+  const hasInitialMeasurement = useRef(false);
   const startTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Get steps for this tutorial - memoized to prevent recalculation
@@ -81,12 +84,12 @@ export function TutorialOverlay({
       // Set flag immediately to prevent multiple starts
       hasStarted.current = true;
 
-      // Small delay to let layout settle
+      // 1 second delay to let layout and initial animations settle
       startTimeoutRef.current = setTimeout(() => {
         startTutorial(tutorialId);
         onStart?.();
         log.debug(`Auto-started tutorial: ${tutorialId}`);
-      }, 500);
+      }, 1000);
     }
 
     return () => {
@@ -102,7 +105,11 @@ export function TutorialOverlay({
   // Measure target elements when tutorial becomes active or step changes
   // Uses InteractionManager to wait for animations to complete
   useEffect(() => {
-    if (!isActive) return;
+    if (!isActive) {
+      setIsMeasurementReady(false);
+      hasInitialMeasurement.current = false;
+      return;
+    }
 
     let isCancelled = false;
 
@@ -117,6 +124,10 @@ export function TutorialOverlay({
 
         if (entries.length === 0) {
           setTargetMeasurements({});
+          if (!hasInitialMeasurement.current) {
+            hasInitialMeasurement.current = true;
+            setIsMeasurementReady(true);
+          }
           return;
         }
 
@@ -131,6 +142,11 @@ export function TutorialOverlay({
               measureCount++;
               if (measureCount === entries.length && !isCancelled) {
                 setTargetMeasurements(measurements);
+                // Only set measurement ready on first measurement, not step changes
+                if (!hasInitialMeasurement.current) {
+                  hasInitialMeasurement.current = true;
+                  setIsMeasurementReady(true);
+                }
                 log.debug('Measured tutorial targets:', Object.keys(measurements));
               }
             });
@@ -138,6 +154,10 @@ export function TutorialOverlay({
             measureCount++;
             if (measureCount === entries.length && !isCancelled) {
               setTargetMeasurements(measurements);
+              if (!hasInitialMeasurement.current) {
+                hasInitialMeasurement.current = true;
+                setIsMeasurementReady(true);
+              }
             }
           }
         });
@@ -173,9 +193,27 @@ export function TutorialOverlay({
     return null;
   }
 
+  const currentTarget = targetMeasurements[currentStepData.id];
+
+  // Check if this step has a targetRef but measurement isn't available yet
+  const stepHasTargetRef = currentStepData.id in targetRefs;
+  const isReady = isMeasurementReady && (!stepHasTargetRef || currentTarget);
+
+  // Don't render until we have all measurements ready
+  // This prevents the overlay from mounting, animating, then repositioning
+  if (!isReady) {
+    return null;
+  }
+
+  // Mark that we've shown the overlay (for skipping animation on remounts)
+  if (!hasShownOverlay) {
+    // Use setTimeout to avoid state update during render
+    setTimeout(() => setHasShownOverlay(true), 0);
+  }
+
   const stepWithTarget: TutorialStep = {
     ...currentStepData,
-    target: targetMeasurements[currentStepData.id],
+    target: currentTarget,
   };
 
   return (
@@ -188,6 +226,7 @@ export function TutorialOverlay({
       onPrevious={previousStep}
       onSkip={handleSkip}
       onComplete={handleComplete}
+      skipAnimation={hasShownOverlay}
     />
   );
 }

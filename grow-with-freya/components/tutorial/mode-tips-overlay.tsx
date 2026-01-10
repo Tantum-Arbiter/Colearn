@@ -5,36 +5,57 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   withSpring,
-  FadeIn,
 } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/constants/theme';
-import { useTutorial } from '@/contexts/tutorial-context';
-import { STORY_READER_TIPS } from './tutorial-content';
+import { useTutorial, TutorialId } from '@/contexts/tutorial-context';
+import { RECORD_MODE_TOUR_STEPS, NARRATE_MODE_TOUR_STEPS } from './tutorial-content';
+import { TutorialStep } from './spotlight-overlay';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-interface StoryTipsOverlayProps {
-  storyId: string;
+interface ModeTipsOverlayProps {
+  mode: 'record' | 'narrate';
+  isActive: boolean;
   forceShow?: boolean;
   onClose?: () => void;
 }
 
+const TUTORIALS: Record<'record' | 'narrate', { id: TutorialId; steps: Omit<TutorialStep, 'target'>[] }> = {
+  record: { id: 'record_mode_tour', steps: RECORD_MODE_TOUR_STEPS },
+  narrate: { id: 'narrate_mode_tour', steps: NARRATE_MODE_TOUR_STEPS },
+};
+
+const STEP_ICONS: Record<string, string> = {
+  // Record mode icons
+  'record_intro': '🎙️',
+  'record_button_tip': '🔴',
+  'playback_controls': '↺',
+  'record_limit': '👨‍👩‍👧',
+  'record_benefit': '💜',
+  'record_navigation': '📖',
+  // Narrate mode icons
+  'narrate_intro': '🎧',
+  'auto_playback': '📖',
+  'narrate_controls': '▶️',
+  'narrate_benefit': '💜',
+};
+
 /**
- * Story Tips Overlay - Shows parent guidance tips on first story opened
- * Displays a series of slides about how to maximize story time
+ * Mode Tips Overlay - Shows guidance for Record or Narrate mode on first use
  */
-export function StoryTipsOverlay({ storyId, forceShow = false, onClose }: StoryTipsOverlayProps) {
-  const insets = useSafeAreaInsets();
-  const { hasSeenFirstStory, markFirstStoryViewed, shouldShowTutorial } = useTutorial();
+export function ModeTipsOverlay({ mode, isActive, forceShow = false, onClose }: ModeTipsOverlayProps) {
+  const { shouldShowTutorial, completeTutorial, startTutorial, activeTutorial } = useTutorial();
   const [isVisible, setIsVisible] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
 
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.9);
 
-  // Show tips on first story if tutorial not completed OR if forceShow is true
+  const tutorial = TUTORIALS[mode];
+  const steps = tutorial.steps;
+
+  // Show tips when mode is active and tutorial not completed OR forceShow is true
   useEffect(() => {
     if (forceShow) {
       // Immediately show when forceShow is true
@@ -42,19 +63,21 @@ export function StoryTipsOverlay({ storyId, forceShow = false, onClose }: StoryT
       setCurrentStep(0);
       opacity.value = withTiming(1, { duration: 300 });
       scale.value = withSpring(1, { damping: 15 });
-    } else if (!hasSeenFirstStory && shouldShowTutorial('story_reader_tips')) {
-      // Small delay to let story load first
+    } else if (isActive && shouldShowTutorial(tutorial.id) && activeTutorial === null) {
+      // Small delay to let UI settle
       const timer = setTimeout(() => {
+        startTutorial(tutorial.id);
         setIsVisible(true);
+        setCurrentStep(0);
         opacity.value = withTiming(1, { duration: 300 });
         scale.value = withSpring(1, { damping: 15 });
-      }, 1000);
+      }, 800);
       return () => clearTimeout(timer);
     }
-  }, [hasSeenFirstStory, shouldShowTutorial, opacity, scale, forceShow]);
+  }, [isActive, shouldShowTutorial, tutorial.id, opacity, scale, activeTutorial, startTutorial, forceShow]);
 
   const handleNext = () => {
-    if (currentStep < STORY_READER_TIPS.length - 1) {
+    if (currentStep < steps.length - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
       handleClose();
@@ -72,8 +95,8 @@ export function StoryTipsOverlay({ storyId, forceShow = false, onClose }: StoryT
     setTimeout(() => {
       setIsVisible(false);
       if (!forceShow) {
-        // Only mark as viewed if not force-shown from menu
-        markFirstStoryViewed();
+        // Only complete tutorial if not force-shown from menu
+        completeTutorial();
       }
       onClose?.();
     }, 200);
@@ -86,24 +109,17 @@ export function StoryTipsOverlay({ storyId, forceShow = false, onClose }: StoryT
 
   if (!isVisible) return null;
 
-  const currentTip = STORY_READER_TIPS[currentStep];
-  const isLastStep = currentStep === STORY_READER_TIPS.length - 1;
+  const currentTip = steps[currentStep];
+  const isLastStep = currentStep === steps.length - 1;
   const isFirstStep = currentStep === 0;
 
   return (
     <Modal transparent visible={isVisible} animationType="none" statusBarTranslucent>
       <View style={styles.overlay}>
         <Animated.View style={[styles.card, animatedCardStyle]}>
-          {/* Icon/Emoji */}
+          {/* Icon */}
           <View style={styles.iconContainer}>
-            <Text style={styles.icon}>
-              {currentTip.id === 'story_welcome' && '📖'}
-              {currentTip.id === 'interactive_elements' && '✨'}
-              {currentTip.id === 'point_and_discuss' && '👆'}
-              {currentTip.id === 'pause_and_predict' && '🤔'}
-              {currentTip.id === 'voices_and_sounds' && '🎭'}
-              {currentTip.id === 'navigate_story' && '📱'}
-            </Text>
+            <Text style={styles.icon}>{STEP_ICONS[currentTip.id] || '📖'}</Text>
           </View>
 
           <Text style={styles.title}>{currentTip.title}</Text>
@@ -111,18 +127,15 @@ export function StoryTipsOverlay({ storyId, forceShow = false, onClose }: StoryT
 
           {/* Progress dots */}
           <View style={styles.progressDots}>
-            {STORY_READER_TIPS.map((_, i) => (
-              <View
-                key={i}
-                style={[styles.dot, i === currentStep && styles.dotActive]}
-              />
+            {steps.map((_, i) => (
+              <View key={i} style={[styles.dot, i === currentStep && styles.dotActive]} />
             ))}
           </View>
 
           {/* Navigation */}
           <View style={styles.buttonRow}>
             <Pressable onPress={handleClose} style={styles.skipButton}>
-              <Text style={styles.skipText}>Skip All</Text>
+              <Text style={styles.skipText}>Skip</Text>
             </Pressable>
 
             <View style={styles.navButtons}>
@@ -131,11 +144,8 @@ export function StoryTipsOverlay({ storyId, forceShow = false, onClose }: StoryT
                   <Ionicons name="chevron-back" size={20} color="#fff" />
                 </Pressable>
               )}
-              <Pressable
-                onPress={handleNext}
-                style={[styles.navButton, styles.nextButton]}
-              >
-                <Text style={styles.nextText}>{isLastStep ? 'Start Reading!' : 'Next'}</Text>
+              <Pressable onPress={handleNext} style={[styles.navButton, styles.nextButton]}>
+                <Text style={styles.nextText}>{isLastStep ? 'Got it!' : 'Next'}</Text>
                 {!isLastStep && <Ionicons name="chevron-forward" size={18} color="#fff" />}
               </Pressable>
             </View>

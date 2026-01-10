@@ -107,7 +107,7 @@ export function MusicMainMenu({
 
       {/* Shared page header component */}
       <PageHeader
-        title="Sleep"
+        title="Calming"
         subtitle="Choose your music type"
         onBack={onBack}
       />

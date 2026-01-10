@@ -48,9 +48,10 @@ import type { MenuItemData } from './main-menu/index';
 interface MainMenuProps {
   onNavigate: (destination: string) => void;
   isActive?: boolean; // Kept for API compatibility with EnhancedPageTransition
+  disableTutorial?: boolean; // When true, don't show the tutorial (used during login transition)
 }
 
-function MainMenuComponent({ onNavigate }: MainMenuProps) {
+function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProps) {
   const insets = useSafeAreaInsets();
   const { scaledButtonSize, scaledFontSize } = useAccessibility();
 
@@ -468,11 +469,13 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
         scaledFontSize={scaledFontSize}
       />
 
-      {/* Main Menu Tutorial - shown on first login */}
-      <TutorialOverlay
-        tutorialId="main_menu_tour"
-        targetRefs={tutorialTargetRefs}
-      />
+      {/* Main Menu Tutorial - shown on first login, but not during login transition */}
+      {!disableTutorial && (
+        <TutorialOverlay
+          tutorialId="main_menu_tour"
+          targetRefs={tutorialTargetRefs}
+        />
+      )}
     </LinearGradient>
   );
 }

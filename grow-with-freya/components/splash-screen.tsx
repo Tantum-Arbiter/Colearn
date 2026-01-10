@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef, useMemo, useState } from 'react';
 import { View, StyleSheet, Dimensions, Image, Text } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
@@ -14,6 +14,7 @@ import * as Font from 'expo-font';
 import { useAppStore } from '@/store/app-store';
 import { DeviceInfoService } from '@/services/device-info-service';
 import { FreyaRocketRightSvg } from './main-menu/svg-components';
+import { Fonts } from '@/constants/theme';
 
 const { width, height } = Dimensions.get('window');
 
@@ -119,12 +120,13 @@ export function AppSplashScreen() {
           delayTimeoutRef.current = setTimeout(resolve, 1600);
         });
 
-        // Fade in disclaimer text
-        disclaimerOpacity.value = withTiming(1, { duration: 800 });
+        // Start typewriter effect for disclaimer
+        disclaimerOpacity.value = 1; // Make container visible immediately
+        setStartTyping(true);
 
-        // Wait for user to read disclaimer
+        // Wait for user to read disclaimer (typing takes ~2s, then show for 2.5s more)
         await new Promise<void>(resolve => {
-          delayTimeoutRef.current = setTimeout(resolve, 4000);
+          delayTimeoutRef.current = setTimeout(resolve, 4500);
         });
 
         console.log('Splash screen complete. App state:', { hasCompletedOnboarding, hasCompletedLogin });
@@ -166,7 +168,66 @@ export function AppSplashScreen() {
     opacity: disclaimerOpacity.value,
   }));
 
-  const DISCLAIMER_TEXT = "A university project.";
+  const DISCLAIMER_TEXT = "a university project.";
+  const AUTHOR_TEXT = "cole.";
+  const [typedText, setTypedText] = useState('');
+  const [typedAuthor, setTypedAuthor] = useState('');
+  const [isTypingComplete, setIsTypingComplete] = useState(false);
+  const [startTyping, setStartTyping] = useState(false);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const authorTypingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Typewriter effect for disclaimer
+  useEffect(() => {
+    if (!startTyping) return;
+
+    let currentIndex = 0;
+    const typeNextChar = () => {
+      if (currentIndex < DISCLAIMER_TEXT.length) {
+        setTypedText(DISCLAIMER_TEXT.slice(0, currentIndex + 1));
+        currentIndex++;
+        // Random delay between 50-120ms for natural typing feel
+        const delay = 50 + Math.random() * 70;
+        typingTimeoutRef.current = setTimeout(typeNextChar, delay);
+      } else {
+        setIsTypingComplete(true);
+      }
+    };
+
+    // Start typing
+    typingTimeoutRef.current = setTimeout(typeNextChar, 100);
+
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, [startTyping]);
+
+  // Typewriter effect for author (starts after disclaimer completes)
+  useEffect(() => {
+    if (!isTypingComplete) return;
+
+    let currentIndex = 0;
+    const typeNextChar = () => {
+      if (currentIndex < AUTHOR_TEXT.length) {
+        setTypedAuthor(AUTHOR_TEXT.slice(0, currentIndex + 1));
+        currentIndex++;
+        // Random delay between 50-120ms for natural typing feel
+        const delay = 50 + Math.random() * 70;
+        authorTypingTimeoutRef.current = setTimeout(typeNextChar, delay);
+      }
+    };
+
+    // Start typing author after a short pause
+    authorTypingTimeoutRef.current = setTimeout(typeNextChar, 300);
+
+    return () => {
+      if (authorTypingTimeoutRef.current) {
+        clearTimeout(authorTypingTimeoutRef.current);
+      }
+    };
+  }, [isTypingComplete]);
 
   return (
     <LinearGradient
@@ -217,9 +278,12 @@ export function AppSplashScreen() {
         </Animated.View>
       </View>
 
-      {/* Disclaimer text */}
+      {/* Disclaimer text with typewriter effect */}
       <Animated.View style={[styles.disclaimerContainer, disclaimerAnimatedStyle]}>
-        <Text style={styles.disclaimerText}>{DISCLAIMER_TEXT}</Text>
+        <Text style={styles.disclaimerText}>{typedText}</Text>
+        {isTypingComplete && (
+          <Text style={[styles.disclaimerText, { marginTop: 12 }]}>{typedAuthor}</Text>
+        )}
       </Animated.View>
 
       {/* App version at bottom */}
@@ -307,9 +371,11 @@ const styles = StyleSheet.create({
   },
   disclaimerText: {
     color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontFamily: Fonts.mono,
+    fontWeight: '500',
     textAlign: 'center',
+    letterSpacing: 1,
   },
   versionContainer: {
     position: 'absolute',

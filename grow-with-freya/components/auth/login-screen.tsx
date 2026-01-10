@@ -508,9 +508,10 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
       </Animated.View>
 
       {/* MainMenu slides in from the right - only render during transition to avoid flash */}
+      {/* disableTutorial=true prevents the tour from starting during login transition */}
       {isTransitioning && (
         <Animated.View style={[styles.mainMenuContainer, mainMenuAnimatedStyle]} pointerEvents="auto">
-          <MainMenu onNavigate={onNavigate || (() => {})} isActive={true} />
+          <MainMenu onNavigate={onNavigate || (() => {})} isActive={true} disableTutorial={true} />
         </Animated.View>
       )}
 

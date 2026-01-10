@@ -27,15 +27,15 @@ export const MAIN_MENU_TOUR_STEPS: Omit<TutorialStep, 'target'>[] = [
   },
   {
     id: 'bedtime_button',
-    title: 'Bedtime Music 🌙',
-    description: 'Relaxing sounds and lullabies to help your little one drift off to sleep.',
+    title: 'Calming Sounds 🌙',
+    description: 'Relaxing sounds and lullabies to help your little one drift off to sleep - or calm down during a meltdown or tantrum.',
     arrowDirection: 'down',
     tipPosition: 'below',
   },
   {
     id: 'settings_button',
     title: 'Settings & Account ⚙️',
-    description: 'Customise your experience and manage your account settings.',
+    description: 'Your parenting control centre! Set screen time limits, create routine alerts, personalise your child\'s avatar, and manage your family\'s experience - all in one safe place.',
     arrowDirection: 'down',
     tipPosition: 'center',
   },
@@ -144,6 +144,123 @@ export const GESTURE_HINTS: Record<string, Omit<TutorialStep, 'target'>> = {
 };
 
 /**
+ * Book Mode Selection Tour - shown when opening first book
+ * Introduces the reading mode options
+ */
+export const BOOK_MODE_TOUR_STEPS: Omit<TutorialStep, 'target'>[] = [
+  {
+    id: 'read_button',
+    title: 'Read Mode 📖',
+    description: 'Tap here to read the story yourself with your child. Turn pages at your own pace.',
+    arrowDirection: 'left',
+    tipPosition: 'center',
+    spotlightShape: 'rounded-rect',
+    spotlightBorderRadius: 20,
+  },
+  {
+    id: 'record_button',
+    title: 'Record Mode 🎙️',
+    description: 'Record your own voice reading the story. Perfect for when you\'re away!',
+    arrowDirection: 'left',
+    tipPosition: 'center',
+    spotlightShape: 'rounded-rect',
+    spotlightBorderRadius: 20,
+  },
+  {
+    id: 'narrate_button',
+    title: 'Narrate Mode 🎧',
+    description: 'Listen to a previously recorded voice reading the story aloud.',
+    arrowDirection: 'left',
+    tipPosition: 'center',
+    spotlightShape: 'rounded-rect',
+    spotlightBorderRadius: 20,
+  },
+  {
+    id: 'preview_button',
+    title: 'Preview 👀',
+    description: 'See story details before starting. Tip: You can also long-press any book tile for a quick preview!',
+    arrowDirection: 'left',
+    tipPosition: 'center',
+    spotlightShape: 'rounded-rect',
+    spotlightBorderRadius: 20,
+  },
+];
+
+/**
+ * Record Mode Tutorial - shown when entering record mode for the first time
+ * Explains how to record voice overs for stories
+ */
+export const RECORD_MODE_TOUR_STEPS: Omit<TutorialStep, 'target'>[] = [
+  {
+    id: 'record_intro',
+    title: 'Record Your Voice 🎙️',
+    description: 'You\'re about to create something magical! Record yourself reading this story so your child can hear YOUR voice anytime.',
+    tipPosition: 'center',
+  },
+  {
+    id: 'record_button_tip',
+    title: 'Tap the Red Button 🔴',
+    description: 'Tap the red circle button at the top to start recording. Read the text at the bottom of the screen aloud - take your time and use fun voices!',
+    tipPosition: 'center',
+  },
+  {
+    id: 'playback_controls',
+    title: 'Listen & Re-record ↺',
+    description: 'After recording, tap ▶ to hear yourself. Not happy? Tap the orange ↺ button to re-record that page. You can perfect each page before moving on.',
+    tipPosition: 'center',
+  },
+  {
+    id: 'record_limit',
+    title: 'Up to 3 Voices 👨‍👩‍👧',
+    description: 'Each book can have up to 3 recorded voices - perfect for mum, dad, and a grandparent! Your child can choose whose voice to listen to at storytime.',
+    tipPosition: 'center',
+  },
+  {
+    id: 'record_benefit',
+    title: 'The Power of Your Voice 💜',
+    description: 'Your voice is incredibly soothing to your child. When caregivers read stories using your recording, your little one feels safe and connected to you - even when you\'re apart.',
+    tipPosition: 'center',
+  },
+  {
+    id: 'record_navigation',
+    title: 'Page by Page 📖',
+    description: 'Record each page, then tap the arrow to move to the next. Your recordings are saved automatically. You can always come back to re-record any page later!',
+    tipPosition: 'center',
+  },
+];
+
+/**
+ * Narrate Mode Tutorial - shown when entering narrate mode for the first time
+ * Explains how auto-playback works
+ */
+export const NARRATE_MODE_TOUR_STEPS: Omit<TutorialStep, 'target'>[] = [
+  {
+    id: 'narrate_intro',
+    title: 'Story Time Magic 🎧',
+    description: 'Sit back and enjoy! The story will be read aloud using a recorded voice - your child can listen to a familiar, loving voice anytime.',
+    tipPosition: 'center',
+  },
+  {
+    id: 'auto_playback',
+    title: 'Automatic Reading 📖',
+    description: 'The recording will play automatically on each page. When it finishes, the page will turn by itself after a short pause.',
+    tipPosition: 'center',
+  },
+  {
+    id: 'narrate_controls',
+    title: 'Playback Controls ▶️',
+    description: 'Use the controls at the top to pause, resume, or replay the current page. You can also manually turn pages using the arrows at any time.',
+    tipPosition: 'center',
+  },
+  {
+    id: 'narrate_benefit',
+    title: 'Comfort & Connection 💜',
+    description: 'Perfect for bedtime when you\'re tired, or when grandparents or caregivers are looking after your little one. Your voice brings comfort even when you\'re not there.',
+    tipPosition: 'center',
+  },
+];
+
+/**
  * Get tutorial steps by ID
  */
 export function getTutorialSteps(tutorialId: string): Omit<TutorialStep, 'target'>[] {
@@ -154,6 +271,12 @@ export function getTutorialSteps(tutorialId: string): Omit<TutorialStep, 'target
       return STORY_READER_TIPS;
     case 'settings_walkthrough':
       return SETTINGS_WALKTHROUGH_STEPS;
+    case 'book_mode_tour':
+      return BOOK_MODE_TOUR_STEPS;
+    case 'record_mode_tour':
+      return RECORD_MODE_TOUR_STEPS;
+    case 'narrate_mode_tour':
+      return NARRATE_MODE_TOUR_STEPS;
     default:
       return [];
   }

@@ -101,7 +101,7 @@ export interface MenuItemData {
 export const DEFAULT_MENU_ITEMS: MenuItemData[] = [
   { icon: 'stories-icon', label: 'Stories', destination: 'stories' },
   { icon: 'emotions-icon', label: 'Emotions', destination: 'emotions' },
-  { icon: 'bedtime-icon', label: 'Bedtime Music', destination: 'bedtime' },
+  { icon: 'bedtime-icon', label: 'Calming', destination: 'bedtime' },
 ] as const;
 
 export type IconStatus = 'animated_interactive' | 'inactive';

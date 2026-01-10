@@ -35,6 +35,10 @@ export interface TutorialStep {
   target?: SpotlightTarget; // Optional - if not provided, shows centered modal
   arrowDirection?: 'up' | 'down' | 'left' | 'right';
   tipPosition?: 'above' | 'below' | 'left' | 'right' | 'center';
+  /** Shape of the spotlight cutout - 'circle' (default) or 'rounded-rect' */
+  spotlightShape?: 'circle' | 'rounded-rect';
+  /** Border radius for rounded-rect spotlight shape (default: 20) */
+  spotlightBorderRadius?: number;
 }
 
 interface SpotlightOverlayProps {
@@ -46,13 +50,23 @@ interface SpotlightOverlayProps {
   onPrevious: () => void;
   onSkip: () => void;
   onComplete: () => void;
+  /** If true, skip the fade-in animation (used when step changes) */
+  skipAnimation?: boolean;
 }
 
 const TIP_WIDTH = 280; // Smaller width for less intrusive tips
 const PULSE_RING_SIZE = 20; // Extra size for pulsing ring
 
 // Pulsing ring component for focus indication
-function PulsingRing({ target }: { target: SpotlightTarget }) {
+function PulsingRing({
+  target,
+  useRoundedRect = false,
+  borderRadius = 20,
+}: {
+  target: SpotlightTarget;
+  useRoundedRect?: boolean;
+  borderRadius?: number;
+}) {
   const pulseScale = useSharedValue(1);
   const pulseOpacity = useSharedValue(0.6);
 
@@ -83,8 +97,31 @@ function PulsingRing({ target }: { target: SpotlightTarget }) {
     opacity: pulseOpacity.value,
   }));
 
-  // Use a perfect circle based on the smaller dimension
   const padding = PULSE_RING_SIZE / 2;
+
+  if (useRoundedRect) {
+    // Rounded rectangle ring matching button shape
+    return (
+      <Animated.View
+        style={[
+          {
+            position: 'absolute',
+            left: target.x - padding,
+            top: target.y - padding,
+            width: target.width + padding * 2,
+            height: target.height + padding * 2,
+            borderRadius: borderRadius,
+            borderWidth: 2,
+            borderColor: 'rgba(255, 255, 255, 0.7)',
+          },
+          animatedRingStyle,
+        ]}
+        pointerEvents="none"
+      />
+    );
+  }
+
+  // Default: circular ring based on the smaller dimension
   const diameter = Math.min(target.width, target.height) + padding * 2;
   const radius = diameter / 2;
   // Center the circle on the target
@@ -210,11 +247,12 @@ export function SpotlightOverlay({
   onPrevious,
   onSkip,
   onComplete,
+  skipAnimation = false,
 }: SpotlightOverlayProps) {
   const insets = useSafeAreaInsets();
-  const tipOpacity = useSharedValue(0);
-  const tipScale = useSharedValue(0.9);
-  const overlayOpacity = useSharedValue(0);
+  const tipOpacity = useSharedValue(skipAnimation ? 1 : 0);
+  const tipScale = useSharedValue(skipAnimation ? 1 : 0.9);
+  const overlayOpacity = useSharedValue(skipAnimation ? 1 : 0);
 
   const isLastStep = currentStepIndex === totalSteps - 1;
   const isFirstStep = currentStepIndex === 0;
@@ -222,7 +260,7 @@ export function SpotlightOverlay({
   const hasTarget = !!step.target;
 
   // Track if we've done the initial animation to prevent flicker on re-renders
-  const hasAnimatedIn = useRef(false);
+  const hasAnimatedIn = useRef(skipAnimation);
 
   useEffect(() => {
     if (visible && !hasAnimatedIn.current) {
@@ -250,17 +288,20 @@ export function SpotlightOverlay({
 
   if (!visible) return null;
 
-  // Dynamic tip positioning based on step
-  // - stories_button (center): just below the center menu item
-  // - emotions_button: to the right of the button, aligned
-  // - bedtime_button: to the left of the button, aligned
-  // - settings_button, sound_control: middle of screen
+  // Dynamic tip positioning based on step.tipPosition property
   const tipHeight = 160; // Smaller height
 
   const getTipPosition = () => {
     const centerLeft = (SCREEN_WIDTH - TIP_WIDTH) / 2;
+    const centerTop = (SCREEN_HEIGHT - tipHeight) / 2;
     const target = step.target;
 
+    // Use tipPosition from step configuration if available
+    if (step.tipPosition === 'center') {
+      return { left: centerLeft, top: centerTop };
+    }
+
+    // Legacy per-step-id positioning for backwards compatibility
     switch (step.id) {
       case 'stories_button':
         // Position just below center menu button
@@ -283,11 +324,7 @@ export function SpotlightOverlay({
         }
         return { left: centerLeft, top: SCREEN_HEIGHT * 0.50 };
       case 'settings_button':
-        // Settings/account - window in middle
-        return { left: centerLeft, top: SCREEN_HEIGHT * 0.50 };
       case 'sound_control':
-        // Sound control - window in middle
-        return { left: centerLeft, top: SCREEN_HEIGHT * 0.50 };
       case 'welcome':
       default:
         // Default to middle area
@@ -305,36 +342,57 @@ export function SpotlightOverlay({
     const buttonCenterX = target.x + target.width / 2;
     const buttonCenterY = target.y + target.height / 2;
 
-    // Arrow starts from the center (50%) of the tip card
+    // Arrow starts from the left edge of the tip card (for left-pointing arrows)
+    // or center for other directions
     const tipCardHeight = 160;
     const tipCenterX = tipPosition.left + TIP_WIDTH / 2;
     const tipCenterY = tipPosition.top + tipCardHeight / 2;
-    const fromX = tipCenterX;
-    const fromY = tipCenterY;
 
     // Stop arrow at a fixed distance from the button edge
     const distanceFromButton = 25;
     const buttonRadiusX = target.width / 2;
     const buttonRadiusY = target.height / 2;
 
-    // Determine approach direction based on relative positions
-    const isAbove = buttonCenterY < fromY;
-    const isLeft = buttonCenterX < fromX;
+    // Inset from edge of tip card so arrow appears to start from within the card
+    const arrowInset = 20;
 
-    // For emotions/bedtime buttons, approach from the side
+    // Use arrowDirection from step configuration if available
+    if (step.arrowDirection === 'left') {
+      // Arrow starts from inside left edge of tip, goes to right edge of button
+      const fromX = tipPosition.left + arrowInset;
+      const fromY = tipCenterY;
+      const toX = target.x + target.width + distanceFromButton;
+      const toY = buttonCenterY;
+      // Control point creates an L-shaped curve
+      return { fromX, fromY, toX, toY, ctrlX: fromX, ctrlY: toY };
+    } else if (step.arrowDirection === 'right') {
+      // Arrow starts from inside right edge of tip, goes to left edge of button
+      const fromX = tipPosition.left + TIP_WIDTH - arrowInset;
+      const fromY = tipCenterY;
+      const toX = target.x - distanceFromButton;
+      const toY = buttonCenterY;
+      return { fromX, fromY, toX, toY, ctrlX: fromX, ctrlY: toY };
+    }
+
+    // Legacy per-step-id positioning for backwards compatibility
     if (step.id === 'emotions_button') {
-      // Tip is to the right, arrow goes left to button
+      const fromX = tipCenterX;
+      const fromY = tipCenterY;
       const toX = buttonCenterX + buttonRadiusX + distanceFromButton;
       const toY = buttonCenterY;
       return { fromX, fromY, toX, toY, ctrlX: fromX, ctrlY: toY };
     } else if (step.id === 'bedtime_button') {
-      // Tip is to the left, arrow goes right to button
+      const fromX = tipCenterX;
+      const fromY = tipCenterY;
       const toX = buttonCenterX - buttonRadiusX - distanceFromButton;
       const toY = buttonCenterY;
       return { fromX, fromY, toX, toY, ctrlX: fromX, ctrlY: toY };
     }
 
     // Default: vertical approach
+    const fromX = tipCenterX;
+    const fromY = tipCenterY;
+    const isAbove = buttonCenterY < fromY;
     const toX = buttonCenterX;
     const toY = isAbove
       ? buttonCenterY + buttonRadiusY + distanceFromButton
@@ -351,14 +409,46 @@ export function SpotlightOverlay({
   // Calculate spotlight cutout sized to the actual button dimensions
   const target = step.target;
   const spotlightPadding = 8; // Padding around the button
+  const useRoundedRect = step.spotlightShape === 'rounded-rect';
+  const spotlightBorderRadius = step.spotlightBorderRadius ?? 20;
 
   // Unique mask ID per step to prevent conflicts when switching steps
   const maskId = `spotlight-mask-${step.id}-${currentStepIndex}`;
 
+  // Render the appropriate spotlight shape for the mask
+  const renderSpotlightShape = () => {
+    if (!target) return null;
+
+    if (useRoundedRect) {
+      // Rounded rectangle spotlight matching button shape
+      return (
+        <Rect
+          x={target.x - spotlightPadding}
+          y={target.y - spotlightPadding}
+          width={target.width + spotlightPadding * 2}
+          height={target.height + spotlightPadding * 2}
+          rx={spotlightBorderRadius}
+          ry={spotlightBorderRadius}
+          fill="black"
+        />
+      );
+    }
+
+    // Default: circular spotlight
+    return (
+      <Circle
+        cx={target.x + target.width / 2}
+        cy={target.y + target.height / 2}
+        r={Math.min(target.width, target.height) / 2 + spotlightPadding}
+        fill="black"
+      />
+    );
+  };
+
   return (
     <Modal transparent visible={visible} animationType="none" statusBarTranslucent>
       <View style={styles.overlay}>
-        {/* Semi-transparent overlay with circular cutout for target */}
+        {/* Semi-transparent overlay with spotlight cutout for target */}
         <Animated.View style={[StyleSheet.absoluteFill, animatedOverlayStyle]} pointerEvents="box-none">
           <Svg
             key={`svg-${step.id}-${currentStepIndex}`}
@@ -370,14 +460,7 @@ export function SpotlightOverlay({
               <Mask id={maskId}>
                 {/* White = visible (dim overlay), Black = transparent (spotlight) */}
                 <Rect x="0" y="0" width={SCREEN_WIDTH} height={SCREEN_HEIGHT} fill="white" />
-                {target && (
-                  <Circle
-                    cx={target.x + target.width / 2}
-                    cy={target.y + target.height / 2}
-                    r={Math.min(target.width, target.height) / 2 + spotlightPadding}
-                    fill="black"
-                  />
-                )}
+                {renderSpotlightShape()}
               </Mask>
             </Defs>
             {/* Semi-transparent overlay with spotlight hole */}
@@ -393,7 +476,13 @@ export function SpotlightOverlay({
         </Animated.View>
 
         {/* Pulsing ring for focus indication */}
-        {hasTarget && step.target && <PulsingRing target={step.target} />}
+        {hasTarget && step.target && (
+          <PulsingRing
+            target={step.target}
+            useRoundedRect={useRoundedRect}
+            borderRadius={spotlightBorderRadius}
+          />
+        )}
 
         {/* Sketch-style curved arrow from center to target */}
         {sketchArrowCoords && (

@@ -161,7 +161,7 @@ export function SleepSelectionScreen({ onTrackSelect, onBack }: SleepSelectionSc
         <View style={styles.content}>
           {/* Title - Enhanced with shadow */}
           <View style={styles.titleContainer}>
-            <Text style={[styles.title, { fontSize: scaledFontSize(34) }]}>Bedtime Music</Text>
+            <Text style={[styles.title, { fontSize: scaledFontSize(34) }]}>Sleep Sounds</Text>
             <Text style={[styles.subtitle, { fontSize: scaledFontSize(18) }]}>Choose your sleep experience</Text>
           </View>
 

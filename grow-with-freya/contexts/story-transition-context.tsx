@@ -24,6 +24,8 @@ import { voiceRecordingService, VoiceOver } from '@/services/voice-recording-ser
 import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
 import { ParentsOnlyModal } from '@/components/ui/parents-only-modal';
 import { StoryPreviewModal } from '@/components/stories/story-preview-modal';
+import { TutorialOverlay } from '@/components/tutorial/tutorial-overlay';
+import { useTutorial } from '@/contexts/tutorial-context';
 
 // Animation timing constants
 const MOVE_TO_CENTER_DURATION = 600; // Slower, smoother transition from tile to center
@@ -112,6 +114,15 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   // Ref for exit page index - synchronous, available immediately (React state is async)
   const exitPageIndexRef = useRef<number | null>(null);
+
+  // Refs for tutorial spotlight targets (mode buttons)
+  const readButtonRef = useRef<View>(null);
+  const recordButtonRef = useRef<View>(null);
+  const narrateButtonRef = useRef<View>(null);
+  const previewButtonRef = useRef<View>(null);
+
+  // Tutorial hook
+  const { shouldShowTutorial } = useTutorial();
 
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledButtonSize, scaledPadding } = useAccessibility();
@@ -1227,97 +1238,103 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                 justifyContent: 'center',
               }]}
             >
-              <Pressable
-                style={[
-                  styles.modeButton,
-                  selectedMode === 'read' && styles.modeButtonSelected,
-                  {
-                    borderRadius: scaledButtonSize(20),
-                    paddingVertical: scaledPadding(12),
-                    paddingHorizontal: scaledPadding(20),
-                    gap: scaledPadding(8),
-                    width: scaledButtonSize(140),
-                  }
-                ]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setSelectedMode('read');
-                  setCurrentVoiceOver(null); // Clear voice over for read mode
-                }}
-              >
-                <Text style={[styles.modeButtonIcon, { fontSize: scaledFontSize(22) }]}>∞</Text>
-                <Text style={[styles.modeButtonText, { fontSize: scaledFontSize(18) }]}>Read</Text>
-              </Pressable>
+              <View ref={readButtonRef} collapsable={false}>
+                <Pressable
+                  style={[
+                    styles.modeButton,
+                    selectedMode === 'read' && styles.modeButtonSelected,
+                    {
+                      borderRadius: scaledButtonSize(20),
+                      paddingVertical: scaledPadding(12),
+                      paddingHorizontal: scaledPadding(20),
+                      gap: scaledPadding(8),
+                      width: scaledButtonSize(140),
+                    }
+                  ]}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setSelectedMode('read');
+                    setCurrentVoiceOver(null); // Clear voice over for read mode
+                  }}
+                >
+                  <Text style={[styles.modeButtonIcon, { fontSize: scaledFontSize(22) }]}>∞</Text>
+                  <Text style={[styles.modeButtonText, { fontSize: scaledFontSize(18) }]}>Read</Text>
+                </Pressable>
+              </View>
 
-              <Pressable
-                style={[
-                  styles.modeButton,
-                  selectedMode === 'record' && styles.modeButtonSelected,
-                  {
-                    borderRadius: scaledButtonSize(20),
-                    paddingVertical: scaledPadding(12),
-                    paddingHorizontal: scaledPadding(20),
-                    gap: scaledPadding(8),
-                    width: scaledButtonSize(140),
-                  }
-                ]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setSelectedMode('record');
-                  // Only show modal if no voice over is selected for record mode
-                  if (!currentVoiceOver || selectedMode !== 'record') {
+              <View ref={recordButtonRef} collapsable={false}>
+                <Pressable
+                  style={[
+                    styles.modeButton,
+                    selectedMode === 'record' && styles.modeButtonSelected,
+                    {
+                      borderRadius: scaledButtonSize(20),
+                      paddingVertical: scaledPadding(12),
+                      paddingHorizontal: scaledPadding(20),
+                      gap: scaledPadding(8),
+                      width: scaledButtonSize(140),
+                    }
+                  ]}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setSelectedMode('record');
+                    // Close narrate modal if open, then show record modal
+                    setShowVoiceOverSelectModal(false);
                     setShowVoiceOverNameModal(true);
-                  }
-                }}
-              >
-                <Text style={[styles.modeButtonIcon, { fontSize: scaledFontSize(22) }]}>●</Text>
-                <Text style={[styles.modeButtonText, { fontSize: scaledFontSize(18) }]}>Record</Text>
-              </Pressable>
+                  }}
+                >
+                  <Text style={[styles.modeButtonIcon, { fontSize: scaledFontSize(22) }]}>●</Text>
+                  <Text style={[styles.modeButtonText, { fontSize: scaledFontSize(18) }]}>Record</Text>
+                </Pressable>
+              </View>
 
-              <Pressable
-                style={[
-                  styles.modeButton,
-                  selectedMode === 'narrate' && styles.modeButtonSelected,
-                  {
-                    borderRadius: scaledButtonSize(20),
-                    paddingVertical: scaledPadding(12),
-                    paddingHorizontal: scaledPadding(20),
-                    gap: scaledPadding(8),
-                    width: scaledButtonSize(140),
-                  }
-                ]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setSelectedMode('narrate');
-                  // Only show modal if no voice over is selected for narrate mode
-                  if (!currentVoiceOver || selectedMode !== 'narrate') {
+              <View ref={narrateButtonRef} collapsable={false}>
+                <Pressable
+                  style={[
+                    styles.modeButton,
+                    selectedMode === 'narrate' && styles.modeButtonSelected,
+                    {
+                      borderRadius: scaledButtonSize(20),
+                      paddingVertical: scaledPadding(12),
+                      paddingHorizontal: scaledPadding(20),
+                      gap: scaledPadding(8),
+                      width: scaledButtonSize(140),
+                    }
+                  ]}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setSelectedMode('narrate');
+                    // Close record modal if open, then show narrate modal
+                    setShowVoiceOverNameModal(false);
                     setShowVoiceOverSelectModal(true);
-                  }
-                }}
-              >
-                <Text style={[styles.modeButtonIcon, { fontSize: scaledFontSize(22) }]}>♫</Text>
-                <Text style={[styles.modeButtonText, { fontSize: scaledFontSize(18) }]}>Narrate</Text>
-              </Pressable>
+                  }}
+                >
+                  <Text style={[styles.modeButtonIcon, { fontSize: scaledFontSize(22) }]}>♫</Text>
+                  <Text style={[styles.modeButtonText, { fontSize: scaledFontSize(18) }]}>Narrate</Text>
+                </Pressable>
+              </View>
 
-              <Pressable
-                style={[
-                  styles.modeButton,
-                  {
-                    borderRadius: scaledButtonSize(20),
-                    paddingVertical: scaledPadding(12),
-                    paddingHorizontal: scaledPadding(20),
-                    gap: scaledPadding(8),
-                    width: scaledButtonSize(140),
-                  }
-                ]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setShowPreviewModal(true);
-                }}
-              >
-                <Text style={[styles.modeButtonIcon, { fontSize: scaledFontSize(22) }]}>◉</Text>
-                <Text style={[styles.modeButtonText, { fontSize: scaledFontSize(18) }]}>Preview</Text>
-              </Pressable>
+              <View ref={previewButtonRef} collapsable={false}>
+                <Pressable
+                  style={[
+                    styles.modeButton,
+                    {
+                      borderRadius: scaledButtonSize(20),
+                      paddingVertical: scaledPadding(12),
+                      paddingHorizontal: scaledPadding(20),
+                      gap: scaledPadding(8),
+                      width: scaledButtonSize(140),
+                    }
+                  ]}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setShowPreviewModal(true);
+                  }}
+                >
+                  <Text style={[styles.modeButtonIcon, { fontSize: scaledFontSize(22) }]}>◉</Text>
+                  <Text style={[styles.modeButtonText, { fontSize: scaledFontSize(18) }]}>Preview</Text>
+                </Pressable>
+              </View>
             </Animated.View>
           )}
 
@@ -1338,7 +1355,18 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                     gap: scaledPadding(8),
                   }
                 ]}
-                onPress={() => selectModeAndBegin(selectedMode)}
+                onPress={() => {
+                  // For record/narrate modes, require a voice over to be selected
+                  if (selectedMode === 'record' && !currentVoiceOver) {
+                    setShowVoiceOverNameModal(true);
+                    return;
+                  }
+                  if (selectedMode === 'narrate' && !currentVoiceOver) {
+                    setShowVoiceOverSelectModal(true);
+                    return;
+                  }
+                  selectModeAndBegin(selectedMode);
+                }}
               >
                 <Text style={[styles.modeButtonText, { fontSize: scaledFontSize(18) }]}>
                   {selectedMode === 'record' && currentVoiceOver
@@ -1513,6 +1541,19 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
             visible={showPreviewModal}
             onClose={() => setShowPreviewModal(false)}
           />
+
+          {/* Book Mode Tutorial Overlay - shows on first book open */}
+          {showModeSelection && shouldShowTutorial('book_mode_tour') && (
+            <TutorialOverlay
+              tutorialId="book_mode_tour"
+              targetRefs={{
+                'read_button': readButtonRef,
+                'record_button': recordButtonRef,
+                'narrate_button': narrateButtonRef,
+                'preview_button': previewButtonRef,
+              }}
+            />
+          )}
         </View>
       )}
     </StoryTransitionContext.Provider>
@@ -1617,6 +1658,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
+    zIndex: 200,
   },
   // Modal styles
   modalOverlay: {

@@ -33,7 +33,7 @@ describe('MainMenu Component', () => {
 
     expect(getByLabelText('Stories button')).toBeTruthy();
     expect(getByLabelText('Emotions button')).toBeTruthy();
-    expect(getByLabelText('Bedtime Music button')).toBeTruthy();
+    expect(getByLabelText('Calming button')).toBeTruthy();
     // Note: Screen Time button may not be visible in test environment
   });
 

@@ -31,6 +31,7 @@ import { AuthenticatedImage } from '@/components/ui/authenticated-image';
 import { Logger } from '@/utils/logger';
 import { PagePreviewModal } from './pages-preview-modal';
 import { StoryTipsOverlay } from '@/components/tutorial/story-tips-overlay';
+import { ModeTipsOverlay } from '@/components/tutorial/mode-tips-overlay';
 
 const log = Logger.create('StoryBookReader');
 
@@ -67,6 +68,7 @@ export function StoryBookReader({
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<'main' | 'fontSize' | null>(null);
   const [showPagePreview, setShowPagePreview] = useState(false);
+  const [showTipsOverlay, setShowTipsOverlay] = useState(false);
   const [readingMode, setReadingMode] = useState<'read' | 'record' | 'narrate'>(initialMode);
 
   // Voice recording state
@@ -1424,6 +1426,20 @@ export function StoryBookReader({
               <Text style={[styles.menuItemText, { fontSize: scaledFontSize(14) }]}>Font / Button Size</Text>
               <Text style={[styles.menuItemArrow, { fontSize: scaledFontSize(14) }]}>›</Text>
             </Pressable>
+            <View style={styles.menuDivider} />
+            <Pressable
+              style={styles.menuItem}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setShowSettingsMenu(false);
+                setActiveSubmenu(null);
+                setShowTipsOverlay(true);
+              }}
+            >
+              <Text style={[styles.menuItemText, { fontSize: scaledFontSize(14) }]}>
+                {readingMode === 'read' ? 'Reading Tips' : readingMode === 'record' ? 'Recording Tips' : 'Narration Tips'}
+              </Text>
+            </Pressable>
           </View>
         )}
 
@@ -2071,8 +2087,30 @@ export function StoryBookReader({
         }}
       />
 
-      {/* Story Tips Overlay - shown on first story */}
-      <StoryTipsOverlay storyId={story.id} />
+      {/* Story Tips Overlay - shown on first story in READ mode only, or when triggered from menu */}
+      {readingMode === 'read' && (
+        <StoryTipsOverlay
+          storyId={story.id}
+          forceShow={showTipsOverlay}
+          onClose={() => setShowTipsOverlay(false)}
+        />
+      )}
+
+      {/* Record Mode Tips - shown on first time using record mode, or when triggered from menu */}
+      <ModeTipsOverlay
+        mode="record"
+        isActive={readingMode === 'record' && currentPageIndex > 0}
+        forceShow={showTipsOverlay && readingMode === 'record'}
+        onClose={() => setShowTipsOverlay(false)}
+      />
+
+      {/* Narrate Mode Tips - shown on first time using narrate mode, or when triggered from menu */}
+      <ModeTipsOverlay
+        mode="narrate"
+        isActive={readingMode === 'narrate' && currentPageIndex > 0}
+        forceShow={showTipsOverlay && readingMode === 'narrate'}
+        onClose={() => setShowTipsOverlay(false)}
+      />
     </Animated.View>
   );
 }

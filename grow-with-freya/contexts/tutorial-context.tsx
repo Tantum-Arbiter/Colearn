@@ -13,7 +13,10 @@ export type TutorialId =
   | 'main_menu_tour'
   | 'story_reader_tips'
   | 'settings_walkthrough'
-  | 'gesture_hints';
+  | 'gesture_hints'
+  | 'book_mode_tour'
+  | 'record_mode_tour'
+  | 'narrate_mode_tour';
 
 /**
  * Persisted tutorial state
