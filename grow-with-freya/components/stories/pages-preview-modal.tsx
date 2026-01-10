@@ -55,7 +55,9 @@ export function PagePreviewModal({
   const rowHeight = thumbnailHeight + 30 + gap; // thumbnail + label + gap
 
   // Calculate initial scroll position to show current page
-  const currentRow = Math.floor(currentPageIndex / numColumns);
+  // Since we skip cover (index 0), adjust the index for scroll calculation
+  const adjustedPageIndex = Math.max(0, currentPageIndex - 1);
+  const currentRow = Math.floor(adjustedPageIndex / numColumns);
   const initialScrollY = Math.max(0, currentRow * rowHeight - rowHeight * 0.5);
 
   const translateY = useSharedValue(screenHeight);
@@ -103,8 +105,9 @@ export function PagePreviewModal({
 
   const pages = story.pages || [];
 
-  const renderPageThumbnail = (page: StoryPage, index: number) => {
-    const isCurrentPage = index === currentPageIndex;
+  // Render a page thumbnail - actualIndex is the real page index in the story
+  const renderPageThumbnail = (page: StoryPage, actualIndex: number) => {
+    const isCurrentPage = actualIndex === currentPageIndex;
     const imageSource = page.backgroundImage || page.characterImage;
     const isCmsImage = typeof imageSource === 'string' &&
       imageSource.includes('api.colearnwithfreya.co.uk');
@@ -113,7 +116,7 @@ export function PagePreviewModal({
       <Pressable
         key={page.id}
         style={[styles.thumbnailContainer, { width: thumbnailWidth, height: thumbnailHeight + 30 }]}
-        onPress={() => handlePageSelect(index)}
+        onPress={() => handlePageSelect(actualIndex)}
       >
         <View style={[
           styles.thumbnail,
@@ -138,7 +141,7 @@ export function PagePreviewModal({
           )}
         </View>
         <Text style={[styles.pageNumber, { fontSize: scaledFontSize(12) }]}>
-          {index === 0 ? 'Cover' : `Page ${index}`}
+          Page {actualIndex}
         </Text>
       </Pressable>
     );
@@ -170,7 +173,8 @@ export function PagePreviewModal({
           contentOffset={{ x: 0, y: initialScrollY }}
         >
           <View style={[styles.grid, { gap }]}>
-            {pages.map((page, index) => renderPageThumbnail(page, index))}
+            {/* Skip cover page (index 0), only show actual story pages */}
+            {pages.slice(1).map((page, displayIndex) => renderPageThumbnail(page, displayIndex + 1))}
           </View>
         </ScrollView>
       </Animated.View>

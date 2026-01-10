@@ -350,7 +350,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     setShowModeSelection(false);
 
     // Animation timing - very fast to minimize pixelation visibility during scaling
-    const BUTTON_EXIT_DURATION = 150;  // Time for buttons to slide out
+    const BUTTON_EXIT_DURATION = 300;  // Time for buttons to slide out (SlideOutDown is 250ms + buffer)
     const ROTATION_DURATION = 300;     // Time for rotation to landscape
     const COVER_FLIP_DURATION = 200;   // Fast flip to reduce pixelation visibility
     const HOLD_AFTER_FLIP = 100;       // Brief pause to see the page after cover flips
