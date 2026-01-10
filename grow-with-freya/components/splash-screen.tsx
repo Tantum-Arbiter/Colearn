@@ -71,6 +71,7 @@ export function AppSplashScreen() {
   const rocketOpacity = useSharedValue(0);
   const disclaimerOpacity = useSharedValue(0);
   const starRotation = useSharedValue(0);
+  const screenOpacity = useSharedValue(1); // For fade-out transition
 
   // Timeout cleanup refs
   const delayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -132,6 +133,14 @@ export function AppSplashScreen() {
           delayTimeoutRef.current = setTimeout(resolve, 5700);
         });
 
+        // Fade out the splash screen smoothly
+        screenOpacity.value = withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) });
+
+        // Wait for fade out to complete before transitioning
+        await new Promise<void>(resolve => {
+          delayTimeoutRef.current = setTimeout(resolve, 500);
+        });
+
         console.log('Splash screen complete. App state:', { hasCompletedOnboarding, hasCompletedLogin });
         setAppReady(true);
 
@@ -169,6 +178,10 @@ export function AppSplashScreen() {
 
   const disclaimerAnimatedStyle = useAnimatedStyle(() => ({
     opacity: disclaimerOpacity.value,
+  }));
+
+  const screenAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: screenOpacity.value,
   }));
 
   const DISCLAIMER_TEXT = "a university project.";
@@ -336,11 +349,12 @@ export function AppSplashScreen() {
   }, [isTypingComplete]);
 
   return (
-    <LinearGradient
-      colors={GRADIENT_COLORS}
-      style={styles.container}
-    >
-      {/* Background layer for stars */}
+    <Animated.View style={[styles.container, screenAnimatedStyle]}>
+      <LinearGradient
+        colors={GRADIENT_COLORS}
+        style={styles.gradientContainer}
+      >
+        {/* Background layer for stars */}
       <View style={styles.starsContainer}>
         {/* Animated stars (same as main menu) */}
         {stars.map((star) => (
@@ -402,16 +416,20 @@ export function AppSplashScreen() {
         )}
       </Animated.View>
 
-      {/* App version at bottom */}
-      <View style={styles.versionContainer}>
-        <Text style={styles.versionText}>v{DeviceInfoService.getAppVersion()}</Text>
-      </View>
-    </LinearGradient>
+        {/* App version at bottom */}
+        <View style={styles.versionContainer}>
+          <Text style={styles.versionText}>v{DeviceInfoService.getAppVersion()}</Text>
+        </View>
+      </LinearGradient>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  gradientContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',

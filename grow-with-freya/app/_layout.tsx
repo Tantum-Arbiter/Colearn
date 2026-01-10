@@ -58,15 +58,17 @@ Sentry.init({
 
 export default Sentry.wrap(function RootLayout() {
   return (
-    <GlobalSoundProvider>
-      <TutorialProvider>
-        <ScreenTimeProvider>
-          <StoryTransitionProvider>
-            <AppContent />
-          </StoryTransitionProvider>
-        </ScreenTimeProvider>
-      </TutorialProvider>
-    </GlobalSoundProvider>
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+      <GlobalSoundProvider>
+        <TutorialProvider>
+          <ScreenTimeProvider>
+            <StoryTransitionProvider>
+              <AppContent />
+            </StoryTransitionProvider>
+          </ScreenTimeProvider>
+        </TutorialProvider>
+      </GlobalSoundProvider>
+    </View>
   );
 });
 

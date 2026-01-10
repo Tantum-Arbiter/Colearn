@@ -5,6 +5,8 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   cancelAnimation,
+  withTiming,
+  Easing as ReanimatedEasing,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -81,6 +83,16 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
   const starRotation = useSharedValue(0);
   const cloudFloat1 = useSharedValue(LAYOUT.OFF_SCREEN_LEFT as number); // Always start from off-screen left (-200)
   const cloudFloat2 = useSharedValue(-400 as number); // Always start from off-screen left (-400)
+  const containerOpacity = useSharedValue(0); // For fade-in from splash screen
+
+  // Fade in the container on mount (smooth transition from splash)
+  useEffect(() => {
+    containerOpacity.value = withTiming(1, { duration: 500, easing: ReanimatedEasing.out(ReanimatedEasing.cubic) });
+  }, []);
+
+  const containerAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: containerOpacity.value,
+  }));
 
   // Debug logging for position restoration
   useEffect(() => {
@@ -315,13 +327,14 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
 
 
   return (
-    <LinearGradient
-      colors={VISUAL_EFFECTS.GRADIENT_COLORS}
-      style={mainMenuStyles.container}
-      testID="main-menu-container"
-    >
+    <Animated.View style={[{ flex: 1 }, containerAnimatedStyle]}>
+      <LinearGradient
+        colors={VISUAL_EFFECTS.GRADIENT_COLORS}
+        style={mainMenuStyles.container}
+        testID="main-menu-container"
+      >
 
-      <View style={mainMenuStyles.backgroundGradient}>
+        <View style={mainMenuStyles.backgroundGradient}>
 
         {stars.map((star) => (
           <Animated.View
@@ -488,14 +501,15 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
         />
       )}
 
-      {/* Main Menu Tutorial - shown on first login, but not during login transition */}
-      {!disableTutorial && (
-        <TutorialOverlay
-          tutorialId="main_menu_tour"
-          targetRefs={tutorialTargetRefs}
-        />
-      )}
-    </LinearGradient>
+        {/* Main Menu Tutorial - shown on first login, but not during login transition */}
+        {!disableTutorial && (
+          <TutorialOverlay
+            tutorialId="main_menu_tour"
+            targetRefs={tutorialTargetRefs}
+          />
+        )}
+      </LinearGradient>
+    </Animated.View>
   );
 }
 

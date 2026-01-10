@@ -177,7 +177,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
   const titleOpacity = useSharedValue(0);
   const titleTranslateY = useSharedValue(-20);
   const illustrationOpacity = useSharedValue(0);
-  const containerOpacity = useSharedValue(1);
+  const containerOpacity = useSharedValue(0); // Start at 0 for fade-in from splash
   const containerScale = useSharedValue(1);
   const illustrationScale = useSharedValue(0.8);
   const buttonsOpacity = useSharedValue(0);
@@ -186,6 +186,9 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
   const loginScreenTranslateX = useSharedValue(0); // Login screen starts at 0
 
   React.useEffect(() => {
+    // Fade in the entire container first (smooth transition from splash)
+    containerOpacity.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) });
+
     titleOpacity.value = withDelay(200, withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) }));
     titleTranslateY.value = withDelay(200, withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) }));
 
@@ -194,7 +197,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
 
     buttonsOpacity.value = withDelay(800, withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) }));
     buttonsTranslateY.value = withDelay(800, withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) }));
-  }, [buttonsOpacity, buttonsTranslateY, illustrationOpacity, illustrationScale, titleOpacity, titleTranslateY]);
+  }, [buttonsOpacity, buttonsTranslateY, containerOpacity, illustrationOpacity, illustrationScale, titleOpacity, titleTranslateY]);
 
   const transitionToMainMenu = (callback: () => void) => {
     if (isTransitioning) return;

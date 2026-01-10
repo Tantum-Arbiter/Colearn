@@ -69,6 +69,12 @@ export function OnboardingScreen({
   const imageTranslateY = useSharedValue(30);
   const buttonOpacity = useSharedValue(0);
   const buttonTranslateY = useSharedValue(20);
+  const containerOpacity = useSharedValue(0); // For initial fade-in from splash
+
+  // Initial container fade-in (runs once on mount)
+  useEffect(() => {
+    containerOpacity.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) });
+  }, []);
 
   useEffect(() => {
     textOpacity.value = 0;
@@ -87,6 +93,10 @@ export function OnboardingScreen({
     buttonOpacity.value = withDelay(500, withTiming(1, { duration: 500, easing: Easing.out(Easing.back(1.1)) }));
     buttonTranslateY.value = withDelay(500, withTiming(0, { duration: 500, easing: Easing.out(Easing.back(1.1)) }));
   }, [currentStep]);
+
+  const containerAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: containerOpacity.value,
+  }));
 
   const handleNext = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -292,7 +302,7 @@ export function OnboardingScreen({
   };
 
   return (
-    <View style={{ flex: 1 }} {...panResponder.panHandlers}>
+    <Animated.View style={[{ flex: 1 }, containerAnimatedStyle]} {...panResponder.panHandlers}>
       <LinearGradient
         colors={['#E8F5E8', '#F0F8FF', '#E6F3FF']}
         style={styles.container}
@@ -380,7 +390,7 @@ export function OnboardingScreen({
         </ThemedText>
       </Animated.View>
     </LinearGradient>
-    </View>
+    </Animated.View>
   );
 }
 
