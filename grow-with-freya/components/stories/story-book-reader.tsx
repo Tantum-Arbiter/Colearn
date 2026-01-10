@@ -63,6 +63,7 @@ export function StoryBookReader({
   const [isOrientationTransitioning, setIsOrientationTransitioning] = useState(false);
   const [isLandscapeReady, setIsLandscapeReady] = useState(false);
   const [isExiting, setIsExiting] = useState(false); // Prevent double-tap on exit/close buttons
+  const isExitingRef = useRef(false); // Ref for cleanup to check if exit animation handles rotation
 
   const [preloadedPages, setPreloadedPages] = useState<Set<number>>(new Set());
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
@@ -155,8 +156,11 @@ export function StoryBookReader({
     return () => {
       if (isMounted) {
         isMounted = false;
-        ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP)
-          .catch(error => log.warn('Failed to restore orientation:', error));
+        // Only restore orientation if NOT exiting via handleExit (exit animation handles rotation)
+        if (!isExitingRef.current) {
+          ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP)
+            .catch(error => log.warn('Failed to restore orientation:', error));
+        }
       }
     };
   }, []);
@@ -338,6 +342,7 @@ export function StoryBookReader({
     // Prevent double-tap on exit/close button
     if (isExiting) return;
     setIsExiting(true);
+    isExitingRef.current = true; // Mark that exit animation will handle rotation
 
     try {
       // Stop any playing narration/recording audio immediately
@@ -352,16 +357,11 @@ export function StoryBookReader({
         }
       }
 
-      // Restore portrait orientation first (story reader stays visible)
-      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-
-      // Small delay for orientation change
-      await new Promise(resolve => setTimeout(resolve, 200));
-
-      // Start the exit animation - this renders the transition overlay BEHIND the story reader
-      // The story reader has zIndex 2000 (higher than overlay's 1000) so it stays on top
-      // This prevents any white flash from the overlay mounting/initializing
-      startExitAnimation(() => {
+      // Start the exit animation FIRST while still in landscape
+      // The shrink animation will happen, then we rotate, then cover closes and returns to tile
+      // This prevents the weird visual effect of rotating before shrinking
+      // Note: Don't await here - we want to fade out the reader while animation starts
+      const exitPromise = startExitAnimation(() => {
         // After the animation completes, call onExit
         setTimeout(() => {
           onExit();
@@ -374,6 +374,9 @@ export function StoryBookReader({
 
       // Now fade out the story reader to reveal the ready animation underneath
       exitOpacity.value = withTiming(0, { duration: 150, easing: Easing.out(Easing.cubic) });
+
+      // Wait for the exit animation to complete (handles rotation on phone)
+      await exitPromise;
     } catch (error) {
       log.warn('Failed to restore orientation on exit:', error);
       onExit();

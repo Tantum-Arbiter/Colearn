@@ -64,7 +64,7 @@ interface StoryTransitionContextType {
   selectModeAndBegin: (mode: ReadingMode) => void;
   cancelTransition: () => void;
   completeTransition: () => void;
-  startExitAnimation: (onComplete: () => void, currentPageIndex?: number) => void;
+  startExitAnimation: (onComplete: () => void, currentPageIndex?: number) => Promise<void>;
   returnToModeSelection: (onComplete: () => void, currentPageIndex?: number) => void;
   isExitAnimating: boolean;
 
@@ -165,6 +165,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   // Book page flip and expansion animation values
   const pageFlipProgress = useSharedValue(0); // 0 = closed, 1 = open (cover rotated away)
   const bookExpansion = useSharedValue(0); // 0 = book size, 1 = full screen
+  const bookRotation = useSharedValue(0); // Rotation in degrees - used to counter-rotate during screen rotation
   const [isExpandingToReader, setIsExpandingToReader] = useState(false);
 
   // Current compensated border radius - updated by bookExpansionAnimatedStyle
@@ -572,6 +573,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     // Reset page flip and expansion values
     pageFlipProgress.value = 0;
     bookExpansion.value = 0;
+    bookRotation.value = 0;
     isExitAnimatingShared.value = 0;
     isExpandingOrExitingShared.value = 0;
     setIsExpandingToReader(false);
@@ -607,28 +609,45 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   // Start the exit animation (called by story reader when exiting)
   // Flow: Take over at full screen → shrink with curved box → close cover → return to tile
   // This mirrors the opening animation but in reverse
-  const startExitAnimation = (onComplete: () => void, currentPageIndex?: number) => {
+  // On PHONE: shrink first (while in landscape), rotate to portrait, then close cover and return
+  // On TABLET: no rotation needed, just shrink/close/return
+  const startExitAnimation = async (onComplete: () => void, currentPageIndex?: number) => {
     if (!originalCardPosition || !selectedStory) {
       onComplete();
       return;
     }
 
-    console.log('Starting exit animation back to original position:', originalCardPosition, 'from page:', currentPageIndex);
+    // Get current screen dimensions to detect if we're in landscape
+    const currentDims = Dimensions.get('window');
+    const currentWidth = currentDims.width;
+    const currentHeight = currentDims.height;
+    const isCurrentlyLandscape = currentWidth > currentHeight;
 
-    // Animation timing
-    const SHRINK_DURATION = 200;       // Fast shrink from full screen to book size
-    const HOLD_AFTER_SHRINK = 100;     // Brief pause after shrink
-    const COVER_FLIP_DURATION = 250;   // Quick flip to close cover
-    const RETURN_DURATION = 500;       // Slower, smoother return to tile position
+    // Detect phone vs tablet based on the SMALLER dimension (doesn't change with orientation)
+    // Phones typically have a smaller dimension under 500-600 points
+    const smallerDimension = Math.min(currentWidth, currentHeight);
+    const isActuallyPhone = smallerDimension < 500;
 
-    // Calculate the SAME values as startTransition uses
-    // Target book size: 55% of screen width
-    const targetWidth = screenWidth * 0.55;
+    // We need to rotate if: we're on a phone AND currently in landscape
+    // (phone story reader forces landscape, so we need to rotate back to portrait on exit)
+    const needsRotation = isActuallyPhone && isCurrentlyLandscape;
+
+    console.log('Starting exit animation - isActuallyPhone:', isActuallyPhone, 'smallerDim:', smallerDimension, 'isCurrentlyLandscape:', isCurrentlyLandscape, 'needsRotation:', needsRotation);
+
+    // Animation timing - slowed down for smoother feel
+    const SHRINK_DURATION = 350;       // Shrink from full screen to book size
+    const HOLD_AFTER_SHRINK = 150;     // Pause after shrink before next phase
+    const COVER_FLIP_DURATION = 300;   // Flip to close cover
+    const RETURN_DURATION = 600;       // Smooth return to tile position
+
+    // Calculate the SAME values as startTransition uses for the CURRENT orientation
+    // Target book size: 55% of screen width (for landscape/tablet)
+    const targetWidth = currentWidth * 0.55;
     const targetScale = targetWidth / originalCardPosition.width;
 
-    // Calculate center positions (same as startTransition)
-    const targetCenterX = screenWidth / 2;
-    const targetCenterY = (screenHeight / 2) - 30;
+    // Calculate center positions for CURRENT orientation
+    const targetCenterX = currentWidth / 2;
+    const targetCenterY = (currentHeight / 2) - 30;
 
     // Current center position of original card (for the opening animation match)
     const currentCenterX = originalCardPosition.x + originalCardPosition.width / 2;
@@ -681,10 +700,10 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     // Delay before starting animations to let React render with correct initial state
     const SETTLE_DELAY = 100;
 
-    // Quickly fade overlay from fully opaque (1) to normal level (0.85)
+    // Quickly fade overlay from fully opaque (1) to normal level (0.92)
     // This happens immediately so there's no white flash
     setTimeout(() => {
-      overlayOpacity.value = withTiming(0.85, {
+      overlayOpacity.value = withTiming(0.92, {
         duration: 50,
         easing: Easing.out(Easing.quad)
       });
@@ -698,38 +717,88 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       });
     }, SETTLE_DELAY);
 
-    // Phase 2: Close the cover
-    setTimeout(() => {
+    // If we need to rotate (phone in landscape): shrink, close cover, fade to black, rotate, fade in
+    // The carousel isn't visible in landscape, so we use the overlay as a transition screen
+    if (needsRotation) {
+      console.log('Phone exit: using rotation flow with black screen transition');
+      // Wait for shrink to complete
+      await new Promise(resolve => setTimeout(resolve, SETTLE_DELAY + SHRINK_DURATION + HOLD_AFTER_SHRINK));
+
+      // Phase 2: Close the cover (still in landscape)
       pageFlipProgress.value = withTiming(0, {
         duration: COVER_FLIP_DURATION,
         easing: Easing.inOut(Easing.cubic)
       });
-    }, SETTLE_DELAY + SHRINK_DURATION + HOLD_AFTER_SHRINK);
+      await new Promise(resolve => setTimeout(resolve, COVER_FLIP_DURATION + 100));
 
-    // Phase 3: Return to original position - exact reverse of opening animation
-    setTimeout(() => {
-      transitionX.value = withTiming(0, {
-        duration: RETURN_DURATION,
-        easing: Easing.out(Easing.cubic)
-      });
-      transitionY.value = withTiming(0, {
-        duration: RETURN_DURATION,
-        easing: Easing.out(Easing.cubic)
-      });
-      transitionScale.value = withTiming(1, {
-        duration: RETURN_DURATION,
-        easing: Easing.out(Easing.cubic)
-      });
-      overlayOpacity.value = withTiming(0, {
-        duration: RETURN_DURATION,
-        easing: Easing.out(Easing.quad)
-      });
-    }, SETTLE_DELAY + SHRINK_DURATION + HOLD_AFTER_SHRINK + COVER_FLIP_DURATION);
+      // Disable bookExpansionAnimatedStyle
+      exitCardWidth.value = 0;
+      exitCardHeight.value = 0;
 
-    // Complete the animation
-    setTimeout(() => {
+      // Phase 3: Fade to full black overlay (hide the book, keep overlay dark)
+      // This creates a clean transition screen for the rotation
+      overlayOpacity.value = withTiming(1, { duration: 300 }); // Ensure overlay is fully opaque
+      transitionOpacity.value = withTiming(0, { duration: 300 }); // Fade out the book
+      await new Promise(resolve => setTimeout(resolve, 350));
+
+      // Phase 4: Rotate screen to portrait (user sees black screen)
+      try {
+        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+        // Wait for rotation to fully settle
+        await new Promise(resolve => setTimeout(resolve, 400));
+      } catch (error) {
+        console.warn('Failed to rotate to portrait during exit:', error);
+      }
+
+      // Update dimensions after rotation
+      const portraitDims = Dimensions.get('window');
+      setScreenDimensions(portraitDims);
+
+      // Wait for layout to update
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Phase 5: Fade out overlay to reveal carousel in portrait
+      overlayOpacity.value = withTiming(0, { duration: 400 });
+      await new Promise(resolve => setTimeout(resolve, 450));
+
+      // Complete the animation
       finishExitAnimation(onComplete);
-    }, SETTLE_DELAY + SHRINK_DURATION + HOLD_AFTER_SHRINK + COVER_FLIP_DURATION + RETURN_DURATION + 50);
+    } else {
+      // TABLET or already portrait: Original flow - no rotation needed
+      console.log('Tablet/portrait exit: using non-rotation flow');
+      // Phase 2: Close the cover
+      setTimeout(() => {
+        pageFlipProgress.value = withTiming(0, {
+          duration: COVER_FLIP_DURATION,
+          easing: Easing.inOut(Easing.cubic)
+        });
+      }, SETTLE_DELAY + SHRINK_DURATION + HOLD_AFTER_SHRINK);
+
+      // Phase 3: Return to original position - exact reverse of opening animation
+      setTimeout(() => {
+        transitionX.value = withTiming(0, {
+          duration: RETURN_DURATION,
+          easing: Easing.out(Easing.cubic)
+        });
+        transitionY.value = withTiming(0, {
+          duration: RETURN_DURATION,
+          easing: Easing.out(Easing.cubic)
+        });
+        transitionScale.value = withTiming(1, {
+          duration: RETURN_DURATION,
+          easing: Easing.out(Easing.cubic)
+        });
+        overlayOpacity.value = withTiming(0, {
+          duration: RETURN_DURATION,
+          easing: Easing.out(Easing.quad)
+        });
+      }, SETTLE_DELAY + SHRINK_DURATION + HOLD_AFTER_SHRINK + COVER_FLIP_DURATION);
+
+      // Complete the animation
+      setTimeout(() => {
+        finishExitAnimation(onComplete);
+      }, SETTLE_DELAY + SHRINK_DURATION + HOLD_AFTER_SHRINK + COVER_FLIP_DURATION + RETURN_DURATION + 50);
+    }
   };
 
   const finishExitAnimation = (onComplete: () => void) => {
@@ -739,6 +808,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     exitCardY.value = 0;
     exitCardWidth.value = 0;
     exitCardHeight.value = 0;
+    bookRotation.value = 0; // Ensure rotation is reset
     setIsExitAnimating(false);
     exitPageIndexRef.current = null;
     resetTransition();
@@ -821,7 +891,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
         duration: SHRINK_DURATION,
         easing: Easing.inOut(Easing.cubic)
       });
-      overlayOpacity.value = withTiming(0.85, {
+      overlayOpacity.value = withTiming(0.92, {
         duration: SHRINK_DURATION,
         easing: Easing.out(Easing.quad)
       });
@@ -856,7 +926,8 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       transform: [
         { translateX: transitionX.value },
         { translateY: transitionY.value },
-        { scale: transitionScale.value }
+        { scale: transitionScale.value },
+        { rotate: `${bookRotation.value}deg` }
       ],
       opacity: transitionOpacity.value,
       borderRadius: compensatedBorderRadius,
@@ -1309,12 +1380,11 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                 top: cardPosition.y,
                 width: cardPosition.width,
                 height: cardPosition.height,
-                borderRadius: bookBorderRadius, // Match StoryCard border radius
-                // Allow overflow during page flip for rotation
+                borderRadius: bookBorderRadius,
                 overflow: (isExpandingToReader || isExitAnimating) ? 'visible' : 'hidden',
               },
               transitionAnimatedStyle,
-              bookExpansionAnimatedStyle, // Always apply - style handles inactive case
+              bookExpansionAnimatedStyle,
             ]}
           >
             {/* First page behind the cover - always render so it's ready for exit animation
@@ -1812,7 +1882,7 @@ const styles = StyleSheet.create({
   },
   shadowOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    backgroundColor: 'rgba(0, 0, 0, 0.92)',
   },
   closeButtonContainer: {
     position: 'absolute',
