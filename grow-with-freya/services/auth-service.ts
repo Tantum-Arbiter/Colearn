@@ -2,6 +2,7 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
+import { DeviceInfoService } from './device-info-service';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -72,9 +73,7 @@ export class AuthService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Client-Platform': Platform.OS,
-          'X-Client-Version': '1.0.0',
-          'X-Device-ID': 'device-id-here',
+          ...DeviceInfoService.getDeviceHeaders(),
         },
         body: JSON.stringify({ idToken }),
       });
@@ -122,9 +121,7 @@ export class AuthService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Client-Platform': Platform.OS,
-          'X-Client-Version': '1.0.0',
-          'X-Device-ID': 'device-id-here',
+          ...DeviceInfoService.getDeviceHeaders(),
         },
         body: JSON.stringify({
           idToken: credential.identityToken,

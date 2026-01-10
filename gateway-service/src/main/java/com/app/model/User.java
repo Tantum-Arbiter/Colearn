@@ -46,6 +46,11 @@ public class User {
     @JsonProperty("children")
     private List<ChildProfile> children = new ArrayList<>();
 
+    /**
+     * COPPA COMPLIANCE WARNING: This field must NOT contain any PII.
+     * Only store anonymous, non-identifying technical data if needed.
+     * Currently unused - kept for future extensibility.
+     */
     @JsonProperty("metadata")
     private Map<String, Object> metadata = new HashMap<>();
 

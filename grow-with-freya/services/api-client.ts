@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { SecureStorage } from './secure-storage';
+import { DeviceInfoService } from './device-info-service';
 
 const extra = Constants.expoConfig?.extra || {};
 const GATEWAY_URL = extra.gatewayUrl || process.env.EXPO_PUBLIC_GATEWAY_URL || 'http://localhost:8080';
@@ -113,10 +114,8 @@ export class ApiClient {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Client-Platform': Platform.OS,
-          'X-Client-Version': '1.0.0',
-          'X-Device-ID': 'device-id-here', // TODO: Get from device
-          'User-Agent': `GrowWithFreya/1.0.0 (${Platform.OS === 'ios' ? 'iOS' : 'Android'})`,
+          ...DeviceInfoService.getDeviceHeaders(),
+          'User-Agent': `GrowWithFreya/${DeviceInfoService.getAppVersion()} (${Platform.OS === 'ios' ? 'iOS' : 'Android'})`,
         },
         body: JSON.stringify({ refreshToken }),
       });
@@ -161,12 +160,10 @@ export class ApiClient {
       throw new Error('Not authenticated - please login');
     }
 
-    // Add authorization header
+    // Add authorization header with device info
     const headers = {
       'Content-Type': 'application/json',
-      'X-Client-Platform': Platform.OS,
-      'X-Client-Version': '1.0.0',
-      'X-Device-ID': 'device-id-here', // TODO: Get from device
+      ...DeviceInfoService.getDeviceHeaders(),
       ...options.headers,
       'Authorization': `Bearer ${accessToken}`,
     };
