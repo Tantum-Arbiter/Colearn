@@ -105,12 +105,12 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
   const settingsButtonRef = useRef<View>(null);
 
   // Helper to get the correct ref for a menu item destination
-  const getRefForDestination = (destination: string): React.RefObject<View | null> | null => {
+  const getRefForDestination = (destination: string): React.RefObject<View | null> | undefined => {
     switch (destination) {
       case 'stories': return storiesButtonRef;
       case 'emotions': return emotionsButtonRef;
       case 'bedtime': return bedtimeButtonRef;
-      default: return null;
+      default: return undefined;
     }
   };
 
