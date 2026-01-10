@@ -2,8 +2,8 @@
  * MenuIcon component - Individual menu icon with animations and interactions
  */
 
-import React, { useCallback, useRef, useEffect, useMemo } from 'react';
-import { Pressable } from 'react-native';
+import React, { useCallback, useRef, useEffect, useMemo, forwardRef } from 'react';
+import { Pressable, View } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -34,6 +34,8 @@ export interface MenuIconProps {
   isLarge?: boolean;
   triggerSelectionAnimation?: boolean;
   testID?: string;
+  /** Ref to the circular icon container for spotlight targeting */
+  iconRef?: React.RefObject<View | null>;
 }
 
 export const MenuIcon = React.memo(function MenuIcon({
@@ -43,7 +45,8 @@ export const MenuIcon = React.memo(function MenuIcon({
   onPress,
   isLarge = false,
   triggerSelectionAnimation = false,
-  testID
+  testID,
+  iconRef,
 }: MenuIconProps) {
   const scale = useSharedValue(1);
   const rotation = useSharedValue(0);
@@ -270,33 +273,36 @@ export const MenuIcon = React.memo(function MenuIcon({
 
   return (
     <Animated.View style={[menuIconStyles.container, animatedStyle, glowStyle]}>
-      <Pressable
-        style={({ pressed }) => [
-          menuIconStyles.icon,
-          isLarge && menuIconStyles.largeIcon,
-          status === 'inactive' && menuIconStyles.iconInactive,
-          pressed && menuIconStyles.iconPressed,
-        ]}
-        onPress={handlePress}
-        testID={testID}
-        accessible={true}
-        accessibilityRole="button"
-        accessibilityLabel={`${label} button`}
-      >
-        {/* Shining star overlay for active icon */}
-        {status === 'animated_interactive' && (
-          <Animated.View style={[menuIconStyles.shimmerOverlay, shimmerStyle]}>
-            <ThemedText style={menuIconStyles.starEmoji}>✨</ThemedText>
-          </Animated.View>
-        )}
+      {/* Wrapper View for ref - measures just the circular icon, not the label */}
+      <View ref={iconRef} collapsable={false}>
+        <Pressable
+          style={({ pressed }) => [
+            menuIconStyles.icon,
+            isLarge && menuIconStyles.largeIcon,
+            status === 'inactive' && menuIconStyles.iconInactive,
+            pressed && menuIconStyles.iconPressed,
+          ]}
+          onPress={handlePress}
+          testID={testID}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={`${label} button`}
+        >
+          {/* Shining star overlay for active icon */}
+          {status === 'animated_interactive' && (
+            <Animated.View style={[menuIconStyles.shimmerOverlay, shimmerStyle]}>
+              <ThemedText style={menuIconStyles.starEmoji}>✨</ThemedText>
+            </Animated.View>
+          )}
 
-        <SvgComponent
-          width={memoizedIconSize}
-          height={memoizedIconSize}
-          opacity={1}
-        />
+          <SvgComponent
+            width={memoizedIconSize}
+            height={memoizedIconSize}
+            opacity={1}
+          />
 
-      </Pressable>
+        </Pressable>
+      </View>
 
       {/* Only show text label for selected/glowing icon (rendered outside the circle for proper centering) */}
       {status === 'animated_interactive' && (

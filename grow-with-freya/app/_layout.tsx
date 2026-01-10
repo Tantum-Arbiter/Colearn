@@ -31,6 +31,7 @@ import { preloadCriticalImages, preloadSecondaryImages } from '@/services/image-
 import { EnhancedPageTransition } from '@/components/ui/enhanced-page-transition';
 import { StoryTransitionProvider, useStoryTransition } from '@/contexts/story-transition-context';
 import { GlobalSoundProvider } from '@/contexts/global-sound-context';
+import { TutorialProvider } from '@/contexts/tutorial-context';
 
 const log = Logger.create('Layout');
 
@@ -58,11 +59,13 @@ Sentry.init({
 export default Sentry.wrap(function RootLayout() {
   return (
     <GlobalSoundProvider>
-      <ScreenTimeProvider>
-        <StoryTransitionProvider>
-          <AppContent />
-        </StoryTransitionProvider>
-      </ScreenTimeProvider>
+      <TutorialProvider>
+        <ScreenTimeProvider>
+          <StoryTransitionProvider>
+            <AppContent />
+          </StoryTransitionProvider>
+        </ScreenTimeProvider>
+      </TutorialProvider>
     </GlobalSoundProvider>
   );
 });
@@ -517,7 +520,7 @@ function AppContent() {
             emotions: <EmotionsScreen onBack={handleBackToMainMenu} />,
             bedtime: <MusicScreen onBack={handleBackToMainMenu} />,
 
-            account: <AccountScreen onBack={handleAccountBack} />,
+            account: <AccountScreen onBack={handleAccountBack} isActive={currentPage === 'account'} />,
           }}
           duration={500}
         />

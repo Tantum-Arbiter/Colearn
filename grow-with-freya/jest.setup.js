@@ -408,6 +408,28 @@ jest.mock('react-native', () => {
   return RN;
 });
 
+// Mock TutorialContext
+jest.mock('./contexts/tutorial-context', () => ({
+  TutorialProvider: ({ children }) => children,
+  useTutorial: () => ({
+    isLoaded: true,
+    completedTutorials: [],
+    hasSeenFirstStory: true,
+    hasSeenSettings: true,
+    activeTutorial: null,
+    currentStep: 0,
+    startTutorial: jest.fn(),
+    nextStep: jest.fn(),
+    previousStep: jest.fn(),
+    skipTutorial: jest.fn(),
+    completeTutorial: jest.fn(),
+    shouldShowTutorial: jest.fn().mockReturnValue(false),
+    markFirstStoryViewed: jest.fn(),
+    markSettingsViewed: jest.fn(),
+    resetAllTutorials: jest.fn().mockResolvedValue(undefined),
+  }),
+}));
+
 // Mock console methods to reduce noise in tests
 global.console = {
   ...console,

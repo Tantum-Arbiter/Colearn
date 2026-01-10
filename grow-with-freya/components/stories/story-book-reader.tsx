@@ -30,6 +30,7 @@ import { useGlobalSound } from '@/contexts/global-sound-context';
 import { AuthenticatedImage } from '@/components/ui/authenticated-image';
 import { Logger } from '@/utils/logger';
 import { PagePreviewModal } from './pages-preview-modal';
+import { StoryTipsOverlay } from '@/components/tutorial/story-tips-overlay';
 
 const log = Logger.create('StoryBookReader');
 
@@ -2069,6 +2070,9 @@ export function StoryBookReader({
           setShowPagePreview(false);
         }}
       />
+
+      {/* Story Tips Overlay - shown on first story */}
+      <StoryTipsOverlay storyId={story.id} />
     </Animated.View>
   );
 }

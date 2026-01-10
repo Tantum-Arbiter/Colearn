@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { View, StyleSheet, Dimensions, Text, TouchableOpacity } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -34,6 +34,7 @@ export function LoadingOverlay({ phase, onPulseComplete, onClose }: LoadingOverl
   const [showCheckmark, setShowCheckmark] = useState(false);
   const [showErrorState, setShowErrorState] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [showSignedIn, setShowSignedIn] = useState(false); // Show "Signed in" during syncing
   const soundRef = useRef<Audio.Sound | null>(null);
   const windowTranslateX = useSharedValue(0);
   const overlayOpacity = useSharedValue(1);
@@ -93,6 +94,8 @@ export function LoadingOverlay({ phase, onPulseComplete, onClose }: LoadingOverl
       setShowCheckmark(false);
       setShowErrorState(false);
       setDisplayText(phase === 'authenticating' ? 'Signing in...' : 'Loading your stories...');
+      // Show "Signed in" when we're in syncing phase (means auth succeeded)
+      setShowSignedIn(phase === 'syncing');
       setSubText(null);
       startLoadingCircle();
       fadeInText();
@@ -189,6 +192,13 @@ export function LoadingOverlay({ phase, onPulseComplete, onClose }: LoadingOverl
             </Text>
             {subText && (
               <Text style={styles.subText}>{subText}</Text>
+            )}
+            {/* Signed in indicator - shown during syncing phase */}
+            {showSignedIn && (
+              <View style={styles.signedInContainer}>
+                <Ionicons name="checkmark-circle" size={18} color="#4ECDC4" />
+                <Text style={styles.signedInText}>Signed in</Text>
+              </View>
             )}
           </Animated.View>
 
@@ -293,6 +303,17 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  signedInContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    gap: 6,
+  },
+  signedInText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#4ECDC4',
   },
 });
 

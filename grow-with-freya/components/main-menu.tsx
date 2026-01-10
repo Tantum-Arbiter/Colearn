@@ -14,6 +14,7 @@ import { ParentsOnlyModal } from '@/components/ui/parents-only-modal';
 import { Ionicons } from '@expo/vector-icons';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
+import { TutorialOverlay } from '@/components/tutorial';
 
 import { ErrorBoundary } from './error-boundary';
 import {
@@ -94,6 +95,32 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
   const [newlySelectedItem, setNewlySelectedItem] = useSafeState<string | null>(null);
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Tutorial target refs - using refs that get populated when buttons render
+  const storiesButtonRef = useRef<View>(null);
+  const emotionsButtonRef = useRef<View>(null);
+  const bedtimeButtonRef = useRef<View>(null);
+  const musicControlRef = useRef<View>(null);
+  const settingsButtonRef = useRef<View>(null);
+
+  // Helper to get the correct ref for a menu item destination
+  const getRefForDestination = (destination: string): React.RefObject<View | null> | null => {
+    switch (destination) {
+      case 'stories': return storiesButtonRef;
+      case 'emotions': return emotionsButtonRef;
+      case 'bedtime': return bedtimeButtonRef;
+      default: return null;
+    }
+  };
+
+  // Build tutorial target refs map - maps step IDs to refs
+  const tutorialTargetRefs = useMemo(() => ({
+    'stories_button': storiesButtonRef,
+    'emotions_button': emotionsButtonRef,
+    'bedtime_button': bedtimeButtonRef,
+    'settings_button': settingsButtonRef,
+    'sound_control': musicControlRef,
+  }), []);
 
   // Component cleanup on unmount
   useEffect(() => {
@@ -330,8 +357,8 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
 
 
       <View style={[legacyStyles.topButtons, { paddingTop: insets.top + getResponsiveSize(20) }]}>
-        {/* Account Button */}
-        <View style={legacyStyles.accountButtonContainer}>
+        {/* Account/Settings Button */}
+        <View ref={settingsButtonRef} style={legacyStyles.accountButtonContainer}>
           <Pressable
             style={legacyStyles.accountButton}
             onPress={() => parentsOnly.showChallenge(() => onNavigate('account'))}
@@ -353,7 +380,7 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
         <View style={{ flex: 1 }} />
 
         {/* Music Control */}
-        <View style={legacyStyles.musicControlContainer}>
+        <View ref={musicControlRef} style={legacyStyles.musicControlContainer}>
           <MusicControl size={24} color="#FFFFFF" />
         </View>
       </View>
@@ -370,6 +397,7 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
             isLarge={true}
             triggerSelectionAnimation={newlySelectedItem === menuOrder[0].destination}
             testID={`menu-icon-${menuOrder[0].destination}`}
+            iconRef={getRefForDestination(menuOrder[0].destination)}
           />
         </View>
 
@@ -384,6 +412,7 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
                 status="inactive"
                 onPress={() => handleIconPress(menuOrder[1])}
                 testID={`menu-icon-${menuOrder[1].destination}`}
+                iconRef={getRefForDestination(menuOrder[1].destination)}
               />
             )}
             {menuOrder[2] && (
@@ -394,6 +423,7 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
                 status="inactive"
                 onPress={() => handleIconPress(menuOrder[2])}
                 testID={`menu-icon-${menuOrder[2].destination}`}
+                iconRef={getRefForDestination(menuOrder[2].destination)}
               />
             )}
           </View>
@@ -436,6 +466,12 @@ function MainMenuComponent({ onNavigate }: MainMenuProps) {
         onClose={parentsOnly.handleClose}
         isInputValid={parentsOnly.isInputValid}
         scaledFontSize={scaledFontSize}
+      />
+
+      {/* Main Menu Tutorial - shown on first login */}
+      <TutorialOverlay
+        tutorialId="main_menu_tour"
+        targetRefs={tutorialTargetRefs}
       />
     </LinearGradient>
   );

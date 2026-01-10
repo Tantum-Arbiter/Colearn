@@ -24,6 +24,8 @@ import { StorySyncService } from '../../services/story-sync-service';
 import { AssetSyncService } from '../../services/asset-sync-service';
 import * as Sentry from '@sentry/react-native';
 import { TEXT_SIZE_OPTIONS, useAccessibility } from '../../hooks/use-accessibility';
+import { SettingsTipsOverlay } from '../tutorial/settings-tips-overlay';
+import { useTutorial } from '../../contexts/tutorial-context';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -35,6 +37,7 @@ const SLIDE_DURATION = 300;
 
 interface AccountScreenProps {
   onBack: () => void;
+  isActive?: boolean;
 }
 
 // Generate star positions for background
@@ -63,7 +66,7 @@ const LANGUAGES: { code: Language; name: string; flag: string }[] = [
   { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
 ];
 
-export function AccountScreen({ onBack }: AccountScreenProps) {
+export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
   const [currentView, setCurrentView] = useState<SlideView>('main');
   const [showGrayscaleInfo, setShowGrayscaleInfo] = useState(false);
   const [showLanguageOverlay, setShowLanguageOverlay] = useState(false);
@@ -197,6 +200,9 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
   // Accessibility scaling (textSizeScale already from useAppStore above)
   const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
 
+  // Tutorial reset
+  const { resetAllTutorials } = useTutorial();
+
   // Star animation
   const starOpacity = useSharedValue(0.4);
   const stars = useMemo(() => generateStarPositions(), []);
@@ -297,7 +303,7 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
             }, 100);
 
             // Clear everything in background (non-blocking)
-            // This includes auth tokens, persisted storage, story cache, and asset cache
+            // This includes auth tokens, persisted storage, story cache, asset cache, and tutorials
             ApiClient.logout().catch(error => {
               console.error('Background logout error:', error);
             });
@@ -309,6 +315,9 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
             });
             AssetSyncService.clearCache().catch(error => {
               console.error('Background asset cache clear error:', error);
+            });
+            resetAllTutorials().catch(error => {
+              console.error('Background tutorial reset error:', error);
             });
           },
         },
@@ -797,6 +806,9 @@ export function AccountScreen({ onBack }: AccountScreenProps) {
         )}
 
       </LinearGradient>
+
+      {/* Settings Tips Overlay - shown on first visit */}
+      <SettingsTipsOverlay isActive={isActive} />
     </View>
   );
 }
