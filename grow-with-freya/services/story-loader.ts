@@ -10,8 +10,8 @@ const log = Logger.create('StoryLoader');
  *
  * Strategy:
  * - CMS is the source of truth for what stories to display
- * - Stories not in CMS are not shown (even if bundled locally)
- * - Bundled stories provide offline fallback for initial app experience
+ * - Once synced, only CMS stories are shown (stories deleted from CMS are removed)
+ * - Bundled stories shown only when CMS has no stories (first launch, offline, or CMS empty)
  * - Memory cache: Keeps stories in memory for instant access after first load
  */
 export class StoryLoader {
@@ -63,24 +63,31 @@ export class StoryLoader {
   }
 
   /**
-   * Internal method to load stories from CMS (source of truth)
-   * Falls back to bundled stories only for initial offline experience
+   * Internal method to load stories
+   *
+   * Strategy:
+   * - CMS is the source of truth for what stories to display
+   * - If no CMS data yet (first launch before sync), show bundled stories as initial experience
+   * - Once synced with actual stories, ONLY stories in the CMS are shown
+   * - Stories deleted from CMS are removed from the app
    */
   private static async loadStoriesInternal(): Promise<Story[]> {
     try {
-      // CMS is the source of truth - get stories from sync cache
-      const cmsStories = await StorySyncService.getLocalStories();
+      // Check if we have synced with CMS and have stories
+      const syncStatus = await StorySyncService.getSyncStatus();
 
-      if (cmsStories && cmsStories.length > 0) {
+      if (syncStatus.hasLocalData && syncStatus.localStoryCount > 0) {
+        // We have synced and have stories - CMS is source of truth
+        const cmsStories = await StorySyncService.getLocalStories();
         log.debug(`CMS stories (source of truth): ${cmsStories.length}`);
         return cmsStories;
       }
 
-      // No CMS data yet (first launch, offline, or not logged in)
-      // Fall back to bundled stories for initial experience
-      const localStories = [...ALL_STORIES];
-      log.debug(`No CMS data - using ${localStories.length} bundled stories (offline/initial mode)`);
-      return localStories;
+      // No CMS stories available (first launch, offline, or CMS is empty)
+      // Show bundled stories as fallback
+      const bundledStories = [...ALL_STORIES];
+      log.debug(`No CMS stories - using ${bundledStories.length} bundled stories as fallback`);
+      return bundledStories;
     } catch (error) {
       log.error('Error loading stories:', error);
       log.warn('Falling back to bundled stories');
