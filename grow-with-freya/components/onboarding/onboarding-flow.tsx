@@ -43,7 +43,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
     },
     {
       title: "Backed by Research!",
-      body: "Our product and content is created with input from children development experts and researchers. Every child deserves the best start to their life, that's why we're entirely free.",
+      body: "This app is developed as part of a Masters degree study on child development, exploring how digital exercises can support a healthy parent-child relationship. Research suggests co-engagement and short usage sessions provide the greatest benefits.",
       illustration: "parent hugging child",
       buttonLabel: "Let's begin…",
     },

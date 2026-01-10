@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useMemo } from 'react';
-import { View, StyleSheet, Dimensions, Image } from 'react-native';
+import { View, StyleSheet, Dimensions, Image, Text } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
@@ -13,6 +13,7 @@ import * as Font from 'expo-font';
 
 import { useAppStore } from '@/store/app-store';
 import { DeviceInfoService } from '@/services/device-info-service';
+import { FreyaRocketRightSvg } from './main-menu/svg-components';
 
 const { width, height } = Dimensions.get('window');
 
@@ -23,6 +24,9 @@ const GRADIENT_COLORS = ['#1E3A8A', '#3B82F6', '#4ECDC4'] as const;
 const STAR_COUNT = 15;
 const STAR_SIZE = 3;
 const STAR_AREA_HEIGHT_RATIO = 0.6;
+
+// Rocket size - responsive
+const ROCKET_SIZE = width > 768 ? 200 : 120;
 
 // Generate deterministic star positions
 const generateStars = (count: number) => {
@@ -48,14 +52,23 @@ const generateStars = (count: number) => {
 
 SplashScreen.preventAutoHideAsync();
 
-// Logo size matches login page: 306px on phone, 420px on tablet
-const logoSize = width > 768 ? 420 : 306;
+// Center position for rocket to stop at
+const CENTER_X = (width - ROCKET_SIZE) / 2;
+const CENTER_Y = (height - ROCKET_SIZE) / 2;
+
+// Start position: further left, behind the bear image
+const START_X = -ROCKET_SIZE * 1.5;
+const START_Y = height + ROCKET_SIZE / 2;
 
 export function AppSplashScreen() {
   const { setAppReady, hasCompletedOnboarding, hasCompletedLogin } = useAppStore();
 
-  const logoScale = useSharedValue(0.8);
-  const logoOpacity = useSharedValue(0);
+  const rocketX = useSharedValue(START_X);
+  const rocketY = useSharedValue(START_Y);
+  const rocketScale = useSharedValue(0.3); // Start small
+  const rocketRotation = useSharedValue(-30); // Start angle
+  const rocketOpacity = useSharedValue(0);
+  const disclaimerOpacity = useSharedValue(0);
   const starRotation = useSharedValue(0);
 
   // Timeout cleanup refs
@@ -75,11 +88,24 @@ export function AppSplashScreen() {
 
         await Font.loadAsync({});
 
-        // Animate logo appearing
-        logoOpacity.value = withTiming(1, { duration: 1000 });
-        logoScale.value = withTiming(1, {
-          duration: 1000,
-          easing: Easing.out(Easing.back(1.5))
+        // Animate rocket from bottom-left to center, growing as it moves
+        rocketOpacity.value = withTiming(1, { duration: 200 });
+        rocketX.value = withTiming(CENTER_X, {
+          duration: 1500,
+          easing: Easing.out(Easing.cubic)
+        });
+        rocketY.value = withTiming(CENTER_Y, {
+          duration: 1500,
+          easing: Easing.out(Easing.cubic)
+        });
+        rocketScale.value = withTiming(1.4, {
+          duration: 1500,
+          easing: Easing.out(Easing.back(1.2))
+        });
+        // Pivot the rocket: starts at -30deg, dips to -25deg as it arrives
+        rocketRotation.value = withTiming(-25, {
+          duration: 1500,
+          easing: Easing.out(Easing.cubic)
         });
 
         // Star rotation animation
@@ -88,9 +114,17 @@ export function AppSplashScreen() {
           -1
         );
 
-        // Wait for animations to complete
+        // Wait for rocket animation to complete
         await new Promise<void>(resolve => {
-          delayTimeoutRef.current = setTimeout(resolve, 2500);
+          delayTimeoutRef.current = setTimeout(resolve, 1600);
+        });
+
+        // Fade in disclaimer text
+        disclaimerOpacity.value = withTiming(1, { duration: 800 });
+
+        // Wait for user to read disclaimer
+        await new Promise<void>(resolve => {
+          delayTimeoutRef.current = setTimeout(resolve, 4000);
         });
 
         console.log('Splash screen complete. App state:', { hasCompletedOnboarding, hasCompletedLogin });
@@ -114,14 +148,25 @@ export function AppSplashScreen() {
     };
   }, []);
 
-  const logoAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: logoOpacity.value,
-    transform: [{ scale: logoScale.value }],
+  const rocketAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: rocketOpacity.value,
+    transform: [
+      { translateX: rocketX.value },
+      { translateY: rocketY.value },
+      { scale: rocketScale.value },
+      { rotate: `${rocketRotation.value}deg` }, // Pivots as it moves
+    ],
   }));
 
   const starAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${starRotation.value}deg` }],
   }));
+
+  const disclaimerAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: disclaimerOpacity.value,
+  }));
+
+  const DISCLAIMER_TEXT = "A university project.";
 
   return (
     <LinearGradient
@@ -165,15 +210,21 @@ export function AppSplashScreen() {
         />
       </View>
 
-      {/* Centered logo (same size as login page) */}
-      <View style={styles.logoContainer}>
-        <Animated.View style={[styles.logoWrapper, logoAnimatedStyle]}>
-          <Image
-            source={require('@/assets/images/icon.png')}
-            style={styles.logoImage}
-            resizeMode="contain"
-          />
+      {/* Freya rocket flying across screen */}
+      <View style={styles.rocketContainer}>
+        <Animated.View style={[styles.rocketWrapper, rocketAnimatedStyle]}>
+          <FreyaRocketRightSvg width={ROCKET_SIZE} height={ROCKET_SIZE} />
         </Animated.View>
+      </View>
+
+      {/* Disclaimer text */}
+      <Animated.View style={[styles.disclaimerContainer, disclaimerAnimatedStyle]}>
+        <Text style={styles.disclaimerText}>{DISCLAIMER_TEXT}</Text>
+      </Animated.View>
+
+      {/* App version at bottom */}
+      <View style={styles.versionContainer}>
+        <Text style={styles.versionText}>v{DeviceInfoService.getAppVersion()}</Text>
       </View>
     </LinearGradient>
   );
@@ -232,22 +283,44 @@ const styles = StyleSheet.create({
     height: 286,
     opacity: 0.8,
   },
-  logoContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  rocketContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: ROCKET_SIZE,
+    height: ROCKET_SIZE,
     zIndex: 10,
   },
-  logoWrapper: {
+  rocketWrapper: {
+    width: ROCKET_SIZE,
+    height: ROCKET_SIZE,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  logoImage: {
-    width: logoSize,
-    height: logoSize,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
+  disclaimerContainer: {
+    position: 'absolute',
+    top: CENTER_Y + ROCKET_SIZE * 1.4 + 20, // Below the scaled rocket
+    left: 20,
+    right: 20,
+    zIndex: 15,
+    alignItems: 'center',
+  },
+  disclaimerText: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  versionContainer: {
+    position: 'absolute',
+    bottom: 20,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 20,
+  },
+  versionText: {
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontSize: 12,
   },
 });
