@@ -18,7 +18,7 @@ import { FreyaRocketRightSvg } from './main-menu/svg-components';
 const { width, height } = Dimensions.get('window');
 
 // Same gradient colors as main menu
-const GRADIENT_COLORS = ['#1E3A8A', '#3B82F6', '#4ECDC4'] as const;
+const GRADIENT_COLORS: [string, string, string] = ['#1E3A8A', '#3B82F6', '#4ECDC4'];
 
 // Star configuration (matching main menu)
 const STAR_COUNT = 15;
@@ -170,7 +170,7 @@ export function AppSplashScreen() {
 
   return (
     <LinearGradient
-      colors={GRADIENT_COLORS as unknown as string[]}
+      colors={GRADIENT_COLORS}
       style={styles.container}
     >
       {/* Background layer for stars */}
