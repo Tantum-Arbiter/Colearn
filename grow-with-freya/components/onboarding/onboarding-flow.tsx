@@ -45,6 +45,12 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
       title: "Backed by Research!",
       body: "This app is developed as part of a Masters degree study on child development, exploring how digital exercises can support a healthy parent-child relationship. Research suggests co-engagement and short usage sessions provide the greatest benefits.",
       illustration: "parent hugging child",
+      buttonLabel: "Next",
+    },
+    {
+      title: "Please Note",
+      body: "This app is in active development. Some features may not work as expected - please screenshot any issues with a timestamp and description.\n\nThe backend sleeps when unused to save costs. If sign-in fails, please wait 30 seconds. During active use, expect ~1 second response times. Story loading varies based on network and data size.\n\nStory content includes original works, AI-generated stories, and children's books used for educational research purposes.",
+      illustration: "disclaimer",
       buttonLabel: "Let's begin…",
     },
   ];

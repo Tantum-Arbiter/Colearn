@@ -171,6 +171,10 @@ export function OnboardingScreen({
       {
         tagline: "🔬 Bridging Psychology with Technology",
         benefit: "Growing together, forever"
+      },
+      {
+        tagline: "⚠️ Early Access Preview",
+        benefit: "Thank you for helping us improve!"
       }
     ];
 
@@ -206,6 +210,7 @@ export function OnboardingScreen({
       ['🎨', '🦋', '🌺', '🐱'],
       ['🎵', '🐸', '🌙', '🎶'],
       ['📚', '🌱', '🐝', '🌻'],
+      ['📋', '🔧', '📱', '💡'],
     ];
 
     const elements = kidFriendlyElements[step - 1] || [];
@@ -289,6 +294,7 @@ export function OnboardingScreen({
       'two children avatars (Tina and Bruno)': 'tina-bruno',
       'adult holding phone speaking': 'voice-recording',
       'parent hugging child': 'research-backed',
+      'disclaimer': 'research-backed', // Reuse research-backed for now
     };
 
     const pngName = illustrationMap[content] || 'tina-bruno';
