@@ -492,9 +492,10 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
       />
 
       {/* Touch blocking layer - shown immediately when tutorial should show, blocks during 1s delay */}
+      {/* Must have high zIndex to block all button touches during tutorial loading */}
       {shouldBlockTouches && (
         <Pressable
-          style={StyleSheet.absoluteFill}
+          style={[StyleSheet.absoluteFill, { zIndex: 1000 }]}
           onPress={() => {}}
           onPressIn={() => {}}
           onPressOut={() => {}}

@@ -1846,9 +1846,10 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
           />
 
           {/* Touch blocking layer - shown immediately when book mode tutorial should show */}
+          {/* Must have higher zIndex than modeSelectionContainer (100) to block button touches */}
           {shouldBlockBookModeTouches && (
             <Pressable
-              style={StyleSheet.absoluteFill}
+              style={[StyleSheet.absoluteFill, { zIndex: 200 }]}
               onPress={() => {}}
               onPressIn={() => {}}
               onPressOut={() => {}}
