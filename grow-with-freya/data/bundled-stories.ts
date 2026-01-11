@@ -24,6 +24,7 @@ export const BUNDLED_STORIES: Story[] = [
     ageRange: '2-5',
     duration: 8,
     description: 'A gentle bedtime story about a little wombat getting ready for sleep with cozy snuggles and sweet dreams.',
+    tags: ['adventure', 'bedtime', 'calming', 'animals'], // Wombat is an adventure book
     pages: [
     {
       id: 'snuggle-little-wombat-1',

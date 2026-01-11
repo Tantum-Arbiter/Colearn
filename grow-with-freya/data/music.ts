@@ -5,6 +5,15 @@ import { MusicTrack, MusicPlaylist, MusicCategory, MusicCategoryInfo } from '@/t
  * Note: Audio files will need to be added to assets/audio/music/ directory
  */
 
+// Music tag types for filtering
+export type MusicTag = 'calming' | 'bedtime' | 'stories';
+
+export const MUSIC_TAG_INFO: Record<MusicTag, { label: string; emoji: string; color: string }> = {
+  calming: { label: 'Calming', emoji: '🧘', color: '#4ECDC4' },
+  bedtime: { label: 'Bedtime', emoji: '🌙', color: '#96CEB4' },
+  stories: { label: 'Stories', emoji: '📖', color: '#FFB347' },
+};
+
 // Helper function to safely require audio files
 function requireAudioFile(filename: string): any {
   try {
@@ -26,6 +35,102 @@ function requireAudioFile(filename: string): any {
   }
 }
 
+// Mock placeholder tracks (no audio - coming soon)
+export const MOCK_TRACKS: MusicTrack[] = [
+  {
+    id: 'mock-happy-song',
+    title: 'Happy Song',
+    artist: 'Coming Soon',
+    category: 'background',
+    duration: 180,
+    audioSource: null,
+    description: 'An upbeat, cheerful song to brighten your day!',
+    isAvailable: false,
+    tags: ['calming'],
+    ageRange: '2+',
+    volume: 0.5,
+  },
+  {
+    id: 'mock-exciting-sing-along',
+    title: 'Exciting Sing Along',
+    artist: 'Coming Soon',
+    category: 'background',
+    duration: 240,
+    audioSource: null,
+    description: 'A fun sing-along song for the whole family!',
+    isAvailable: false,
+    tags: ['calming'],
+    ageRange: '2+',
+    volume: 0.5,
+  },
+  {
+    id: 'mock-warm-down-time',
+    title: 'Warm Down Time',
+    artist: 'Coming Soon',
+    category: 'bedtime',
+    duration: 300,
+    audioSource: null,
+    description: 'Gentle music to help wind down before sleep.',
+    isAvailable: false,
+    tags: ['bedtime', 'calming'],
+    ageRange: '2+',
+    volume: 0.4,
+  },
+  // Bedtime Stories & Lullabies
+  {
+    id: 'mock-sleepy-bear-adventure',
+    title: 'Sleepy Bear Adventure',
+    artist: 'Coming Soon',
+    category: 'bedtime',
+    duration: 480,
+    audioSource: null,
+    description: 'A gentle bedtime story about a little bear finding the perfect spot to sleep.',
+    isAvailable: false,
+    tags: ['stories', 'bedtime'],
+    ageRange: '2+',
+    volume: 0.5,
+  },
+  {
+    id: 'mock-twinkle-star-lullaby',
+    title: 'Twinkle Star Lullaby',
+    artist: 'Coming Soon',
+    category: 'bedtime',
+    duration: 240,
+    audioSource: null,
+    description: 'A soothing lullaby to help little ones drift off to dreamland.',
+    isAvailable: false,
+    tags: ['stories', 'bedtime'],
+    ageRange: '0+',
+    volume: 0.4,
+  },
+  {
+    id: 'mock-moon-goodnight',
+    title: 'Goodnight Moon Story',
+    artist: 'Coming Soon',
+    category: 'bedtime',
+    duration: 360,
+    audioSource: null,
+    description: 'A classic bedtime story about saying goodnight to everything around.',
+    isAvailable: false,
+    tags: ['stories', 'bedtime'],
+    ageRange: '1+',
+    volume: 0.5,
+  },
+  {
+    id: 'mock-ocean-waves-lullaby',
+    title: 'Ocean Waves Lullaby',
+    artist: 'Coming Soon',
+    category: 'bedtime',
+    duration: 600,
+    audioSource: null,
+    description: 'Gentle ocean sounds mixed with a soft melody for peaceful sleep.',
+    isAvailable: false,
+    tags: ['stories', 'bedtime', 'calming'],
+    ageRange: '0+',
+    volume: 0.3,
+  },
+];
+
 // Tantrum Calming Music Tracks - Currently using binaural beats for tantrum calming
 export const TANTRUM_CALMING_TRACKS: MusicTrack[] = [
   // No traditional nature sounds yet - using binaural beats for tantrum calming functionality
@@ -36,7 +141,7 @@ export const BEDTIME_TRACKS: MusicTrack[] = [
   // No traditional bedtime tracks yet - using binaural beats for sleep functionality
 ];
 
-// Binaural Beats Tracks
+// Binaural Beats Tracks (with updated tags for filtering)
 export const BINAURAL_BEATS_TRACKS: MusicTrack[] = [
   // Tantrum Calming - Single 10Hz track
   {
@@ -48,24 +153,23 @@ export const BINAURAL_BEATS_TRACKS: MusicTrack[] = [
     audioSource: requireAudioFile('binaural-beats/tantrums/alpha-waves-10hz.mp3'),
     description: 'Alpha waves for calming during tantrums. Use with headphones for best effect.',
     isAvailable: true,
-    tags: ['alpha', 'tantrum', 'calming', '10hz'],
+    tags: ['calming'], // Simplified tag for filtering
     ageRange: '3+',
     volume: 0.4,
     subcategory: 'tantrum',
   },
 
   // Sleep Progression - Two-phase sequence: Alpha → Theta
-  // Note: Currently only theta phase is available, alpha phase coming soon
   {
     id: 'sleep-alpha-phase',
-    title: 'Transcendent Alpha Phase',
+    title: 'Getting to Sleep',
     artist: 'Binaural Beats',
     category: 'binaural-beats',
     duration: 900, // 15 minutes
     audioSource: requireAudioFile('binaural-beats/sleep/transcendent/alpha-phase.mp3'),
-    description: 'Alpha waves (15 min loop) to begin sleep relaxation. Part 1 of transcendent sleep progression.',
-    isAvailable: true, // Available now!
-    tags: ['alpha', 'sleep', 'phase1', 'relaxation', 'transcendent'],
+    description: 'Alpha waves to begin sleep relaxation. Loops until stopped.',
+    isAvailable: true,
+    tags: ['bedtime', 'calming'],
     ageRange: '3+',
     volume: 0.4,
     subcategory: 'sleep',
@@ -74,46 +178,55 @@ export const BINAURAL_BEATS_TRACKS: MusicTrack[] = [
   },
   {
     id: 'sleep-theta-phase',
-    title: 'Transcendent Theta Phase',
+    title: 'Getting into Deep Sleep',
     artist: 'Binaural Beats',
     category: 'binaural-beats',
     duration: 2700, // 45 minutes
     audioSource: requireAudioFile('binaural-beats/sleep/transcendent/theta-phase.mp3'),
-    description: 'Theta waves (45 min loop) for deep sleep. Final phase of transcendent sleep progression.',
-    isAvailable: true, // Available now
-    tags: ['theta', 'sleep', 'phase2', 'deep-sleep', 'transcendent'],
+    description: 'Theta waves for deep sleep. Loops until stopped.',
+    isAvailable: true,
+    tags: ['bedtime'],
     ageRange: '3+',
     volume: 0.2,
     subcategory: 'sleep',
     sequenceOrder: 2,
-    nextTrackId: null, // End of sequence
+    nextTrackId: null,
   },
 
-  // Sleep Sequence - Combined playlist track (currently only theta available)
+  // Sleep Sequence - Combined playlist track
   {
     id: 'sleep-full-sequence',
-    title: 'Transcendent Sleep Sequence',
+    title: 'Full Sleep Sequence',
     artist: 'Binaural Beats',
     category: 'binaural-beats',
-    duration: 3600, // Will be 60 minutes total when complete (15min alpha + 45min theta)
-    audioSource: null, // This is a virtual track that plays the sequence
-    description: 'Complete 60-minute sleep progression: Alpha waves (15min) → Theta waves (45min). Helps transition from relaxation to deep sleep.',
-    isAvailable: true, // Full sequence now available
-    tags: ['sleep', 'sequence', 'progression', 'transcendent', 'two-phase'],
+    duration: 3600, // 60 minutes total (15min alpha + 45min theta)
+    audioSource: null, // Virtual track that plays the sequence
+    description: 'Complete sleep progression: Getting to Sleep → Getting into Deep Sleep.',
+    isAvailable: true,
+    tags: ['bedtime'],
     ageRange: '3+',
     volume: 0.3,
     subcategory: 'sleep',
     isSequence: true,
-    sequenceTracks: ['sleep-alpha-phase', 'sleep-theta-phase'], // Full two-phase sequence: Alpha → Theta
+    sequenceTracks: ['sleep-alpha-phase', 'sleep-theta-phase'],
   },
 ];
 
-// Combine all tracks
+// Combine all tracks (including mock tracks for display)
 export const ALL_MUSIC_TRACKS: MusicTrack[] = [
-  ...TANTRUM_CALMING_TRACKS,
-  ...BEDTIME_TRACKS,
   ...BINAURAL_BEATS_TRACKS,
+  ...MOCK_TRACKS,
 ];
+
+// Get tracks filtered by tag
+export function getTracksByTag(tag: MusicTag): MusicTrack[] {
+  return ALL_MUSIC_TRACKS.filter(track => track.tags?.includes(tag));
+}
+
+// Get all available tags from tracks
+export function getAllTags(): MusicTag[] {
+  return ['calming', 'bedtime', 'stories'];
+}
 
 // Create playlists
 export const TANTRUM_CALMING_PLAYLIST: MusicPlaylist = {

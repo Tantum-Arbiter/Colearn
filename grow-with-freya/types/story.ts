@@ -57,6 +57,38 @@ export interface Story {
 
 export type StoryCategory = 'bedtime' | 'adventure' | 'nature' | 'friendship' | 'learning' | 'fantasy' | 'music' | 'activities' | 'growing';
 
+// Filter tags for story filtering (different from category)
+// 15 total tags for children's content
+export type StoryFilterTag =
+  | 'calming' | 'bedtime' | 'adventure' | 'learning' | 'music'
+  | 'family-exercises' | 'imagination-games' | 'animals' | 'friendship'
+  | 'nature' | 'fantasy' | 'counting' | 'emotions' | 'silly' | 'rhymes';
+
+export interface StoryFilterTagInfo {
+  id: StoryFilterTag;
+  emoji: string;
+  label: string;
+  color: string;
+}
+
+export const STORY_FILTER_TAGS: Record<StoryFilterTag, StoryFilterTagInfo> = {
+  calming: { id: 'calming', emoji: '🧘', label: 'Calming', color: '#4ECDC4' },
+  bedtime: { id: 'bedtime', emoji: '🌙', label: 'Bedtime', color: '#96CEB4' },
+  adventure: { id: 'adventure', emoji: '🗺️', label: 'Adventure', color: '#FF6B6B' },
+  learning: { id: 'learning', emoji: '📚', label: 'Learning', color: '#FFEAA7' },
+  music: { id: 'music', emoji: '🎵', label: 'Music', color: '#FF9F43' },
+  'family-exercises': { id: 'family-exercises', emoji: '👨‍👩‍👧', label: 'Family', color: '#45B7D1' },
+  'imagination-games': { id: 'imagination-games', emoji: '🎭', label: 'Imagination', color: '#DDA0DD' },
+  animals: { id: 'animals', emoji: '🐾', label: 'Animals', color: '#8B4513' },
+  friendship: { id: 'friendship', emoji: '🤝', label: 'Friendship', color: '#FFB6C1' },
+  nature: { id: 'nature', emoji: '🌳', label: 'Nature', color: '#228B22' },
+  fantasy: { id: 'fantasy', emoji: '✨', label: 'Fantasy', color: '#9370DB' },
+  counting: { id: 'counting', emoji: '🔢', label: 'Counting', color: '#20B2AA' },
+  emotions: { id: 'emotions', emoji: '💖', label: 'Emotions', color: '#FF69B4' },
+  silly: { id: 'silly', emoji: '🤪', label: 'Silly', color: '#FFD700' },
+  rhymes: { id: 'rhymes', emoji: '📝', label: 'Rhymes', color: '#87CEEB' },
+};
+
 export interface StoryTag {
   category: StoryCategory;
   emoji: string;

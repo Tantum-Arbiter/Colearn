@@ -14,7 +14,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { ALL_STORIES } from '@/data/stories';
-import { Story } from '@/types/story';
+import { Story, StoryFilterTag, STORY_FILTER_TAGS } from '@/types/story';
 import { Fonts } from '@/constants/theme';
 import { useAppStore } from '@/store/app-store';
 import { StoryLoader } from '@/services/story-loader';
@@ -142,6 +142,35 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
 
   const [stories, setStories] = useState<Story[]>(initialStories);
   const [isLoadingStories, setIsLoadingStories] = useState(!StoryLoader.getCachedStories());
+  const [selectedTags, setSelectedTags] = useState<Set<StoryFilterTag>>(new Set());
+
+  // Filter stories based on selected tags (OR logic - match any selected tag)
+  const filteredStories = useMemo(() => {
+    if (selectedTags.size === 0) return stories;
+    return stories.filter(story =>
+      Array.from(selectedTags).some(tag => story.tags?.includes(tag))
+    );
+  }, [stories, selectedTags]);
+
+  // Available filter tags - all 15 children's genres
+  const filterTags: StoryFilterTag[] = [
+    'calming', 'bedtime', 'adventure', 'learning', 'music',
+    'family-exercises', 'imagination-games', 'animals', 'friendship',
+    'nature', 'fantasy', 'counting', 'emotions', 'silly', 'rhymes'
+  ];
+
+  const handleTagPress = useCallback((tag: StoryFilterTag) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelectedTags(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(tag)) {
+        newSet.delete(tag);
+      } else {
+        newSet.add(tag);
+      }
+      return newSet;
+    });
+  }, []);
 
   // Story preview modal state
   const [previewStory, setPreviewStory] = useState<Story | null>(null);
@@ -237,17 +266,17 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     };
   });
 
-  // Get organized story data from loaded stories
+  // Get organized story data from filtered stories
   const availableGenres = useMemo(() => {
     const genreMap: Record<string, Story[]> = {};
-    stories.forEach(story => {
+    filteredStories.forEach(story => {
       if (!genreMap[story.category]) {
         genreMap[story.category] = [];
       }
       genreMap[story.category].push(story);
     });
     return Object.keys(genreMap).filter(genre => genreMap[genre].length > 0);
-  }, [stories]);
+  }, [filteredStories]);
 
   const handleBackToMenu = useCallback(() => {
     // Debounce rapid back button presses (500ms)
@@ -357,13 +386,54 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       <PageHeader title="Stories" onBack={handleBackToMenu} hideControls={isTransitioning} />
 
       {/* Content container with flex: 1 for proper layout - dynamic padding for scaled text */}
-      <View style={{ flex: 1, paddingTop: insets.top + 140 + (textSizeScale - 1) * 60, zIndex: 10 }}>
+      <View style={{ flex: 1, paddingTop: insets.top + 180 + (textSizeScale - 1) * 60, zIndex: 10 }}>
+
+        {/* Tag Filters */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.tagScrollView}
+          contentContainerStyle={styles.tagContainer}
+        >
+          {filterTags.map((tag) => {
+            const tagInfo = STORY_FILTER_TAGS[tag];
+            const isSelected = selectedTags.has(tag);
+            return (
+              <Pressable
+                key={tag}
+                style={[
+                  styles.tagButton,
+                  isSelected && { backgroundColor: tagInfo.color }
+                ]}
+                onPress={() => handleTagPress(tag)}
+              >
+                <Text style={styles.tagEmoji}>{tagInfo.emoji}</Text>
+                <Text style={[styles.tagLabel, { fontSize: scaledFontSize(12) }]}>
+                  {tagInfo.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
 
         {/* Stories Carousels */}
         <ScrollView style={{ flex: 1 }}>
+          {availableGenres.length === 0 && selectedTags.size > 0 && (
+            <View style={styles.noResultsContainer}>
+              <Text style={styles.noResultsText}>
+                No stories found with selected filters
+              </Text>
+              <Pressable
+                style={styles.clearFilterButton}
+                onPress={() => setSelectedTags(new Set())}
+              >
+                <Text style={styles.clearFilterText}>Clear Filters</Text>
+              </Pressable>
+            </View>
+          )}
           {availableGenres.map((genre) => {
-            const genreStories = stories.filter(story => story.category === genre);
-            
+            const genreStories = filteredStories.filter(story => story.category === genre);
+
             return (
               <View key={genre} style={{ marginBottom: 40 }}>
                 {/* Centered Genre Heading - Shadow only */}
@@ -379,7 +449,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
                 }}>
                   {`${genre.charAt(0).toUpperCase() + genre.slice(1)} Stories`}
                 </Text>
-                
+
                 {/* Horizontal Carousel - Optimized for performance */}
                 <FlatList
                   data={genreStories}
@@ -444,5 +514,52 @@ const styles = StyleSheet.create({
   carouselContent: {
     paddingHorizontal: 20,
     alignItems: 'center',
+  },
+  tagScrollView: {
+    flexGrow: 0,
+    marginBottom: 16,
+  },
+  tagContainer: {
+    paddingHorizontal: 20,
+    gap: 8,
+  },
+  tagButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    gap: 4,
+  },
+  tagEmoji: {
+    fontSize: 14,
+  },
+  tagLabel: {
+    color: 'white',
+    fontFamily: Fonts.rounded,
+    fontWeight: '600',
+  },
+  noResultsContainer: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  noResultsText: {
+    color: 'white',
+    fontFamily: Fonts.rounded,
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  clearFilterButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  clearFilterText: {
+    color: 'white',
+    fontFamily: Fonts.rounded,
+    fontWeight: '600',
   },
 });

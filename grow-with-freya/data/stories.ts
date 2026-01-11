@@ -45,7 +45,7 @@ const sleepyForestPages: StoryPage[] = [
 ];
 
 export const MOCK_STORIES: Story[] = [
-  // Add snuggle-little-wombat story first
+  // Add snuggle-little-wombat story first - Adventure story
   {
     id: 'snuggle-little-wombat',
     title: 'Snuggle Little Wombat',
@@ -57,6 +57,7 @@ export const MOCK_STORIES: Story[] = [
     ageRange: '2-5',
     duration: 9, // 8 story pages + 1 cover page
     description: 'A gentle bedtime story about a little wombat getting ready for sleep with cozy snuggles and sweet dreams.',
+    tags: ['adventure', 'bedtime', 'calming', 'animals'], // Wombat is an adventure book
     pages: [
       {
         id: 'snuggle-little-wombat-cover',
@@ -125,6 +126,7 @@ export const MOCK_STORIES: Story[] = [
     ageRange: '2-5',
     duration: 8,
     description: 'A gentle tale about woodland creatures getting ready for sleep.',
+    tags: ['bedtime', 'calming', 'nature', 'animals'],
     pages: sleepyForestPages
   },
   {
@@ -138,6 +140,7 @@ export const MOCK_STORIES: Story[] = [
     ageRange: '3-6',
     duration: 12,
     description: 'Join Captain Freya on a treasure hunt across the seven seas!',
+    tags: ['adventure', 'imagination-games'],
     pages: [
       {
         id: 'pa-page-1',
@@ -231,6 +234,7 @@ export const MOCK_STORIES: Story[] = [
     ageRange: '3-5',
     duration: 9,
     description: 'A heartwarming story about making new friends.',
+    tags: ['calming', 'family-exercises', 'friendship', 'emotions'],
     pages: [
       {
         id: 'bff-page-1',
@@ -270,6 +274,7 @@ export const MOCK_STORIES: Story[] = [
     ageRange: '3-6',
     duration: 7,
     description: 'Learn to count with friendly dragons!',
+    tags: ['learning', 'imagination-games', 'counting', 'fantasy'],
     pages: [
       {
         id: 'cd-page-1',
@@ -309,6 +314,7 @@ export const MOCK_STORIES: Story[] = [
     ageRange: '4-7',
     duration: 10,
     description: 'A magical adventure in a land of dreams and wonder.',
+    tags: ['imagination-games', 'bedtime', 'fantasy', 'calming'],
     pages: [
       {
         id: 'ud-page-1',
@@ -565,20 +571,21 @@ export const GROWING_PLACEHOLDER_STORIES: Story[] = [
   }
 ];
 
-// Interactive Elements Test Story - The Squirrel's Snowman
+// Interactive Elements Test Story - The Squirrel's Snowman (Nature book)
 // DISCLAIMER: This is NOT original content. Used for proof-of-concept only.
 const INTERACTIVE_TEST_STORIES: Story[] = [
   {
     id: 'squirrels-snowman',
     title: 'The Squirrel\'s Snowman',
-    category: 'bedtime',
-    tag: '🎄 Christmas',
+    category: 'nature',
+    tag: '🐢 Nature',
     emoji: '🎄',
     coverImage: require('../assets/stories/squirrels-snowman/cover/thumbnail.webp'),
     isAvailable: true,
     ageRange: '2-5',
     duration: 11,
     description: 'A delightful winter story about a squirrel and a snowman.',
+    tags: ['calming', 'bedtime', 'nature', 'animals', 'friendship'], // Nature book
     pages: [
       {
         id: 'squirrels-snowman-cover',

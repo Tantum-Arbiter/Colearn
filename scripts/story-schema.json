@@ -58,8 +58,10 @@
     },
     "tags": {
       "type": "array",
+      "description": "Filter tags for story categorization. 15 children's genres available.",
       "items": {
-        "type": "string"
+        "type": "string",
+        "enum": ["calming", "bedtime", "adventure", "learning", "music", "family-exercises", "imagination-games", "animals", "friendship", "nature", "fantasy", "counting", "emotions", "silly", "rhymes"]
       }
     },
     "version": {
