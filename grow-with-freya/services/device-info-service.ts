@@ -141,10 +141,21 @@ export class DeviceInfoService {
    * Tries multiple sources for compatibility with different Expo environments
    */
   static getAppVersion(): string {
-    return Constants.expoConfig?.version
-      || Constants.manifest?.version
-      || Constants.manifest2?.extra?.expoClient?.version
-      || '1.0.1';
+    // expoConfig is the primary source in modern Expo
+    if (Constants.expoConfig?.version) {
+      return Constants.expoConfig.version;
+    }
+    // Fallback for older Expo versions - use type assertion for legacy manifest
+    const manifest = Constants.manifest as Record<string, unknown> | null;
+    if (manifest?.version && typeof manifest.version === 'string') {
+      return manifest.version;
+    }
+    // manifest2 fallback for EAS builds
+    const manifest2Version = Constants.manifest2?.extra?.expoClient?.version;
+    if (manifest2Version) {
+      return manifest2Version;
+    }
+    return '1.0.1';
   }
 
   /**
