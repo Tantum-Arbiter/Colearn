@@ -84,12 +84,13 @@ export function TutorialOverlay({
       // Set flag immediately to prevent multiple starts
       hasStarted.current = true;
 
-      // 1 second delay to let layout and initial animations settle
-      startTimeoutRef.current = setTimeout(() => {
+      // Start tutorial immediately - the overlay blocks touches once visible
+      // Using requestAnimationFrame to ensure we're in the next frame after mount
+      requestAnimationFrame(() => {
         startTutorial(tutorialId);
         onStart?.();
         log.debug(`Auto-started tutorial: ${tutorialId}`);
-      }, 1000);
+      });
     }
 
     return () => {

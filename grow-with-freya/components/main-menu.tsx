@@ -58,13 +58,7 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
   const insets = useSafeAreaInsets();
   const { scaledButtonSize, scaledFontSize } = useAccessibility();
 
-  // Tutorial state - check if we should block touches while tutorial loads
-  const { shouldShowTutorial, isLoaded: tutorialLoaded, activeTutorial } = useTutorial();
 
-  // Block touches immediately when tutorial should show but hasn't started yet
-  // This prevents users from tapping during the 1-second delay before tutorial starts
-  const shouldBlockTouches = !disableTutorial && tutorialLoaded &&
-    shouldShowTutorial('main_menu_tour') && activeTutorial !== 'main_menu_tour';
 
   // Parents Only modal - using shared hook
   const parentsOnly = useParentsOnlyChallenge();
@@ -490,17 +484,6 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
         isInputValid={parentsOnly.isInputValid}
         scaledFontSize={scaledFontSize}
       />
-
-      {/* Touch blocking layer - shown immediately when tutorial should show, blocks during 1s delay */}
-      {/* Must have high zIndex to block all button touches during tutorial loading */}
-      {shouldBlockTouches && (
-        <Pressable
-          style={[StyleSheet.absoluteFill, { zIndex: 1000 }]}
-          onPress={() => {}}
-          onPressIn={() => {}}
-          onPressOut={() => {}}
-        />
-      )}
 
         {/* Main Menu Tutorial - shown on first login, but not during login transition */}
         {!disableTutorial && (
