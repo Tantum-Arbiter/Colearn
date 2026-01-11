@@ -571,6 +571,38 @@ export const GROWING_PLACEHOLDER_STORIES: Story[] = [
   }
 ];
 
+// Your Story placeholder stories (personalized)
+export const PERSONALIZED_PLACEHOLDER_STORIES: Story[] = [
+  {
+    id: 'personalized-placeholder-1',
+    title: 'Your Adventure',
+    category: 'personalized',
+    tag: '🎭 Your Story',
+    emoji: '⭐',
+    coverImage: '',
+    isAvailable: false,
+    ageRange: '2-5',
+    duration: 8,
+    description: 'Create your own personalized story!',
+    pages: [],
+    tags: ['personalized']
+  },
+  {
+    id: 'personalized-placeholder-2',
+    title: 'Your Journey',
+    category: 'personalized',
+    tag: '🎭 Your Story',
+    emoji: '🌟',
+    coverImage: '',
+    isAvailable: false,
+    ageRange: '2-5',
+    duration: 8,
+    description: 'A story starring you!',
+    pages: [],
+    tags: ['personalized']
+  }
+];
+
 // Interactive Elements Test Story - The Squirrel's Snowman (Nature book)
 // DISCLAIMER: This is NOT original content. Used for proof-of-concept only.
 const INTERACTIVE_TEST_STORIES: Story[] = [
@@ -720,6 +752,7 @@ export const ALL_STORIES: Story[] = [
   ...MOCK_STORIES.slice(1), // rest of mock stories
   ...ADDITIONAL_STORIES,
   ...PLACEHOLDER_STORIES,
+  ...PERSONALIZED_PLACEHOLDER_STORIES, // Your Story section
   ...MUSIC_PLACEHOLDER_STORIES,
   ...ACTIVITIES_PLACEHOLDER_STORIES,
   ...GROWING_PLACEHOLDER_STORIES

@@ -152,9 +152,9 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     );
   }, [stories, selectedTags]);
 
-  // Available filter tags - all 15 children's genres
+  // Available filter tags - all 16 children's genres (including personalized)
   const filterTags: StoryFilterTag[] = [
-    'calming', 'bedtime', 'adventure', 'learning', 'music',
+    'personalized', 'calming', 'bedtime', 'adventure', 'learning', 'music',
     'family-exercises', 'imagination-games', 'animals', 'friendship',
     'nature', 'fantasy', 'counting', 'emotions', 'silly', 'rhymes'
   ];
@@ -445,6 +445,10 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
           )}
           {availableGenres.map((genre) => {
             const genreStories = filteredStories.filter(story => story.category === genre);
+            // Special heading for personalized stories
+            const genreHeading = genre === 'personalized'
+              ? 'Your Story'
+              : `${genre.charAt(0).toUpperCase() + genre.slice(1)} Stories`;
 
             return (
               <View key={genre} style={{ marginBottom: 40 }}>
@@ -459,7 +463,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
                   textShadowOffset: { width: 0, height: 3 },
                   textShadowRadius: 6,
                 }}>
-                  {`${genre.charAt(0).toUpperCase() + genre.slice(1)} Stories`}
+                  {genreHeading}
                 </Text>
 
                 {/* Horizontal Carousel - Optimized for performance */}

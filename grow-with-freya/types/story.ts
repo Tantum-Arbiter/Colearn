@@ -58,9 +58,9 @@ export interface Story {
 export type StoryCategory = 'personalized' | 'bedtime' | 'adventure' | 'nature' | 'friendship' | 'learning' | 'fantasy' | 'music' | 'activities' | 'growing';
 
 // Filter tags for story filtering (different from category)
-// 15 total tags for children's content
+// 16 total tags for children's content (including personalized)
 export type StoryFilterTag =
-  | 'calming' | 'bedtime' | 'adventure' | 'learning' | 'music'
+  | 'personalized' | 'calming' | 'bedtime' | 'adventure' | 'learning' | 'music'
   | 'family-exercises' | 'imagination-games' | 'animals' | 'friendship'
   | 'nature' | 'fantasy' | 'counting' | 'emotions' | 'silly' | 'rhymes';
 
@@ -72,6 +72,7 @@ export interface StoryFilterTagInfo {
 }
 
 export const STORY_FILTER_TAGS: Record<StoryFilterTag, StoryFilterTagInfo> = {
+  personalized: { id: 'personalized', emoji: '🎭', label: 'Your Story', color: '#FF69B4' },
   calming: { id: 'calming', emoji: '🧘', label: 'Calming', color: '#4ECDC4' },
   bedtime: { id: 'bedtime', emoji: '🌙', label: 'Bedtime', color: '#96CEB4' },
   adventure: { id: 'adventure', emoji: '🗺️', label: 'Adventure', color: '#FF6B6B' },
