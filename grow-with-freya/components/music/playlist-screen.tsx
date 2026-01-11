@@ -14,7 +14,6 @@ import Animated, {
   useAnimatedStyle,
   withRepeat,
   withTiming,
-  withSpring,
   Easing,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -46,7 +45,6 @@ export function PlaylistScreen({ onBack }: PlaylistScreenProps) {
   const [expandedTrackId, setExpandedTrackId] = useState<string | null>(null);
 
   const {
-    currentTrack,
     playbackState,
     currentTime,
     duration,
@@ -66,7 +64,7 @@ export function PlaylistScreen({ onBack }: PlaylistScreenProps) {
       withTiming(360, { duration: 60000, easing: Easing.linear }),
       -1
     );
-  }, []);
+  }, [starRotation]);
 
   const starAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${starRotation.value}deg` }],

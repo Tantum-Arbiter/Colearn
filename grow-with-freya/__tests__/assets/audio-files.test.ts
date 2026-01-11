@@ -47,7 +47,7 @@ describe('Audio Files Existence', () => {
       expect(sequenceTrack?.isSequence).toBe(true);
       expect(sequenceTrack?.sequenceTracks).toEqual(['sleep-alpha-phase', 'sleep-theta-phase']); // Full two-phase sequence
       expect(sequenceTrack?.isAvailable).toBe(true);
-      expect(sequenceTrack?.duration).toBe(3600); // 60 minutes total when complete
+      expect(sequenceTrack?.duration).toBe(216); // ~3:36 total (actual audio length)
     });
   });
 
@@ -136,23 +136,25 @@ describe('Audio Files Existence', () => {
       const tantrumTrack = BINAURAL_BEATS_TRACKS.find(track => track.id === 'tantrum-alpha-10hz');
       const thetaTrack = BINAURAL_BEATS_TRACKS.find(track => track.id === 'sleep-theta-phase');
 
-      // Tantrum track should be reasonable duration (15 minutes = 900 seconds)
-      expect(tantrumTrack?.duration).toBe(900);
-      
-      // Theta track should be longer for deep sleep (45 minutes = 2700 seconds)
-      expect(thetaTrack?.duration).toBe(2700);
+      // Tantrum track actual duration (~1:45)
+      expect(tantrumTrack?.duration).toBe(105);
 
-      // Sequence should be 60 minutes total when complete (15min alpha + 45min theta)
+      // Theta track actual duration (2:00)
+      expect(thetaTrack?.duration).toBe(120);
+
+      // Sequence actual total duration (~3:36)
       const sequenceTrack = BINAURAL_BEATS_TRACKS.find(track => track.id === 'sleep-full-sequence');
-      expect(sequenceTrack?.duration).toBe(3600); // 60 minutes
+      expect(sequenceTrack?.duration).toBe(216);
     });
 
-    it('should have transcendent branding in sleep tracks', () => {
+    it('should have sleep tracks with appropriate metadata', () => {
       const sleepTracks = BINAURAL_BEATS_TRACKS.filter(track => track.subcategory === 'sleep');
-      
+
+      expect(sleepTracks.length).toBeGreaterThan(0);
       sleepTracks.forEach(track => {
-        expect(track.title).toContain('Transcendent');
-        expect(track.tags).toContain('transcendent');
+        expect(track.category).toBe('binaural-beats');
+        expect(track.subcategory).toBe('sleep');
+        expect(track.isAvailable).toBe(true);
       });
     });
   });

@@ -49,7 +49,6 @@ export function MusicPlayerScreen({ onBack }: MusicPlayerScreenProps) {
     error,
     repeatCount,
     seekTo,
-    toggleShuffle,
     togglePlayPause,
   } = useMusicPlayer();
 
@@ -82,7 +81,7 @@ export function MusicPlayerScreen({ onBack }: MusicPlayerScreenProps) {
       -1,
       false
     );
-  }, []);
+  }, [starRotation]);
 
   // Animate play button when state changes
   useEffect(() => {
@@ -90,7 +89,7 @@ export function MusicPlayerScreen({ onBack }: MusicPlayerScreenProps) {
       damping: 15,
       stiffness: 150,
     });
-  }, [playbackState]);
+  }, [playbackState, playButtonScale]);
 
   // Show error alerts
   useEffect(() => {

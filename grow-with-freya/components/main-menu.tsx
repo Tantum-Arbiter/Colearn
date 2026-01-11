@@ -88,7 +88,7 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
   // Fade in the container on mount (smooth transition from splash)
   useEffect(() => {
     containerOpacity.value = withTiming(1, { duration: 500, easing: ReanimatedEasing.out(ReanimatedEasing.cubic) });
-  }, []);
+  }, [containerOpacity]);
 
   const containerAnimatedStyle = useAnimatedStyle(() => ({
     opacity: containerOpacity.value,

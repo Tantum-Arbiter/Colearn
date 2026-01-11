@@ -480,14 +480,6 @@ function AppContent() {
     // The SimpleStoryScreen will handle the expansion animation and call handleStoryTransitionComplete
   };
 
-  const handleStoryTransitionComplete = () => {
-    setStoryBeingRead(selectedStory);
-    setShowStoryReader(true);
-    setCurrentView('story-reader');
-    // Keep currentPage as 'stories' so the stories page stays rendered underneath
-    // This prevents EnhancedPageTransition from animating the page away
-  };
-
   if (currentView === 'splash') {
     return <AppSplashScreen />;
   }

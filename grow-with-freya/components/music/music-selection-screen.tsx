@@ -57,7 +57,7 @@ export function MusicSelectionScreen({
       -1,
       false
     );
-  }, []);
+  }, [starRotation]);
 
   // Animated style for star rotation
   const starAnimatedStyle = useAnimatedStyle(() => {

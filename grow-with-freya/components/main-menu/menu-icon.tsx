@@ -2,7 +2,7 @@
  * MenuIcon component - Individual menu icon with animations and interactions
  */
 
-import React, { useCallback, useRef, useEffect, useMemo, forwardRef } from 'react';
+import React, { useCallback, useRef, useEffect, useMemo } from 'react';
 import { Pressable, View } from 'react-native';
 import Animated, {
   useSharedValue,
