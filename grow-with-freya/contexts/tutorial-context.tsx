@@ -93,13 +93,16 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
     loadState();
   }, []);
 
-  // Persist state changes
+  // Persist state changes - updates state immediately (optimistically) then persists to storage
   const persistState = useCallback(async (newState: TutorialState) => {
+    // Update state immediately to avoid race conditions
+    setState(newState);
     try {
       await AsyncStorage.setItem(TUTORIAL_STORAGE_KEY, JSON.stringify(newState));
-      setState(newState);
     } catch (error) {
       log.error('Failed to persist tutorial state:', error);
+      // Note: State is already updated, so UI remains consistent even if persist fails
+      // On next app load, the state will be reloaded from storage (which may be stale)
     }
   }, []);
 

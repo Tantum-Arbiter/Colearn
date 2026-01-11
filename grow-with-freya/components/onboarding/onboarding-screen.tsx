@@ -150,6 +150,9 @@ export function OnboardingScreen({
     transform: [{ translateY: buttonTranslateY.value }],
   }));
 
+  // Steps 6 and 7 are text-only screens (no illustration)
+  const isTextOnlyScreen = currentStep === 6 || currentStep === 7;
+
   const renderContextualContent = (step: number) => {
     const contextualData = [
       {
@@ -173,18 +176,35 @@ export function OnboardingScreen({
         benefit: "Growing together, forever"
       },
       {
-        tagline: "⚠️ Early Access Preview",
+        tagline: "",
         benefit: "Thank you for helping us improve!"
+      },
+      {
+        tagline: "",
+        benefit: ""
       }
     ];
 
     const data = contextualData[step - 1];
     if (!data) return null;
 
+    // Skip rendering if both tagline and benefit are empty
+    if (!data.tagline && !data.benefit) return null;
+
+    // For text-only screens (6 and 7), show larger tagline in the content area
+    if (step === 6 || step === 7) {
+      return (
+        <View style={styles.textOnlyTaglineWrapper}>
+          {data.tagline ? <ThemedText style={styles.textOnlyTagline}>{data.tagline}</ThemedText> : null}
+          {data.benefit ? <ThemedText style={styles.textOnlyBenefit}>{data.benefit}</ThemedText> : null}
+        </View>
+      );
+    }
+
     return (
       <View style={styles.contextualWrapper}>
-        <ThemedText style={styles.tagline}>{data.tagline}</ThemedText>
-        <ThemedText style={styles.benefit}>{data.benefit}</ThemedText>
+        {data.tagline ? <ThemedText style={styles.tagline}>{data.tagline}</ThemedText> : null}
+        {data.benefit ? <ThemedText style={styles.benefit}>{data.benefit}</ThemedText> : null}
       </View>
     );
   };
@@ -211,6 +231,7 @@ export function OnboardingScreen({
       ['🎵', '🐸', '🌙', '🎶'],
       ['📚', '🌱', '🐝', '🌻'],
       ['📋', '🔧', '📱', '💡'],
+      ['🔒', '🛡️', '✅', '💚'],
     ];
 
     const elements = kidFriendlyElements[step - 1] || [];
@@ -334,7 +355,11 @@ export function OnboardingScreen({
 
       <View style={styles.contentContainer}>
         <Animated.View
-          style={[styles.textContainer, textAnimatedStyle]}
+          style={[
+            styles.textContainer,
+            textAnimatedStyle,
+            isTextOnlyScreen && styles.textContainerExpanded
+          ]}
         >
           <ThemedText type="title" style={styles.title}>
             {title}
@@ -348,19 +373,21 @@ export function OnboardingScreen({
           </View>
         </Animated.View>
 
-        <Animated.View
-          style={[styles.illustrationContainer, imageAnimatedStyle]}
-        >
-          <View style={styles.decorativeBackground}>
-            {renderDecorativeElements(currentStep)}
-          </View>
+        {!isTextOnlyScreen && (
+          <Animated.View
+            style={[styles.illustrationContainer, imageAnimatedStyle]}
+          >
+            <View style={styles.decorativeBackground}>
+              {renderDecorativeElements(currentStep)}
+            </View>
 
-          {renderIllustration(illustration)}
+            {renderIllustration(illustration)}
 
-          <View style={styles.floatingElements}>
-            {renderFloatingElements()}
-          </View>
-        </Animated.View>
+            <View style={styles.floatingElements}>
+              {renderFloatingElements()}
+            </View>
+          </Animated.View>
+        )}
       </View>
 
 
@@ -447,6 +474,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     width: '100%',
   },
+  textContainerExpanded: {
+    flex: 1,
+    justifyContent: 'center',
+    marginBottom: 0,
+  },
   title: {
     fontSize: 26,
     fontWeight: 'bold',
@@ -479,6 +511,24 @@ const styles = StyleSheet.create({
   benefit: {
     fontSize: 12,
     color: '#7A7A7A',
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  // Text-only screen styles (for steps 6 and 7)
+  textOnlyTaglineWrapper: {
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 30,
+  },
+  textOnlyTagline: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#2E8B8B',
+    textAlign: 'center',
+  },
+  textOnlyBenefit: {
+    fontSize: 16,
+    color: '#5A5A5A',
     textAlign: 'center',
     fontStyle: 'italic',
   },

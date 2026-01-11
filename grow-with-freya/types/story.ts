@@ -55,7 +55,7 @@ export interface Story {
   checksum?: string; // SHA-256 checksum for delta-sync
 }
 
-export type StoryCategory = 'bedtime' | 'adventure' | 'nature' | 'friendship' | 'learning' | 'fantasy' | 'music' | 'activities' | 'growing';
+export type StoryCategory = 'personalized' | 'bedtime' | 'adventure' | 'nature' | 'friendship' | 'learning' | 'fantasy' | 'music' | 'activities' | 'growing';
 
 // Filter tags for story filtering (different from category)
 // 15 total tags for children's content
@@ -97,6 +97,12 @@ export interface StoryTag {
 }
 
 export const STORY_TAGS: Record<StoryCategory, StoryTag> = {
+  personalized: {
+    category: 'personalized',
+    emoji: '🎭',
+    label: 'Your Avatar, Your Story',
+    color: '#FF69B4'
+  },
   bedtime: {
     category: 'bedtime',
     emoji: '🌙',

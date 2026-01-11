@@ -49,8 +49,14 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
     },
     {
       title: "Please Note",
-      body: "This app is in active development. Some features may not work as expected - please screenshot any issues with a timestamp and description.\n\nThe backend sleeps when unused to save costs. If sign-in fails, please wait 30 seconds. During active use, expect ~1 second response times. Story loading varies based on network and data size.\n\nStory content includes original works, AI-generated stories, and children's books used for educational research purposes.",
+      body: "This app is in active development. Some features may not work - please screenshot issues with a timestamp.\n\nThe backend sleeps when unused. If sign-in fails, wait 30 seconds. Story loading varies by network.\n\nStory content includes original works, AI-generated stories, and children's books used for educational research.",
       illustration: "disclaimer",
+      buttonLabel: "Next",
+    },
+    {
+      title: "Your Privacy",
+      body: "Your data is secure. No personal information is collected or stored.\n\nSigning in via Google or Apple is safe and pseudonymized - we only receive an anonymous identifier, not your email or personal details.\n\nSession syncing across devices is fully anonymized. All data follows best security practices with encryption in transit and at rest.\n\nThis app is designed with privacy-first principles for you and your family.",
+      illustration: "privacy",
       buttonLabel: "Let's begin…",
     },
   ];

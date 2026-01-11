@@ -14,7 +14,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { ALL_STORIES } from '@/data/stories';
-import { Story, StoryFilterTag, STORY_FILTER_TAGS } from '@/types/story';
+import { Story, StoryCategory, StoryFilterTag, STORY_FILTER_TAGS } from '@/types/story';
 import { Fonts } from '@/constants/theme';
 import { useAppStore } from '@/store/app-store';
 import { StoryLoader } from '@/services/story-loader';
@@ -266,6 +266,12 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     };
   });
 
+  // Preferred genre order - personalized first, then others
+  const GENRE_ORDER: StoryCategory[] = [
+    'personalized', 'bedtime', 'adventure', 'nature', 'friendship',
+    'learning', 'fantasy', 'music', 'activities', 'growing'
+  ];
+
   // Get organized story data from filtered stories
   const availableGenres = useMemo(() => {
     const genreMap: Record<string, Story[]> = {};
@@ -275,7 +281,13 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       }
       genreMap[story.category].push(story);
     });
-    return Object.keys(genreMap).filter(genre => genreMap[genre].length > 0);
+    const genresWithStories = Object.keys(genreMap).filter(genre => genreMap[genre].length > 0);
+    // Sort by preferred order
+    return genresWithStories.sort((a, b) => {
+      const aIndex = GENRE_ORDER.indexOf(a as StoryCategory);
+      const bIndex = GENRE_ORDER.indexOf(b as StoryCategory);
+      return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
+    });
   }, [filteredStories]);
 
   const handleBackToMenu = useCallback(() => {

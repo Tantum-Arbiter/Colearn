@@ -149,7 +149,7 @@ export const BINAURAL_BEATS_TRACKS: MusicTrack[] = [
     title: 'Tantrum Calming (10Hz)',
     artist: 'Binaural Beats',
     category: 'binaural-beats',
-    duration: 900, // 15 minutes
+    duration: 105, // ~1:45 actual audio length
     audioSource: requireAudioFile('binaural-beats/tantrums/alpha-waves-10hz.mp3'),
     description: 'Alpha waves for calming during tantrums. Use with headphones for best effect.',
     isAvailable: true,
@@ -165,7 +165,7 @@ export const BINAURAL_BEATS_TRACKS: MusicTrack[] = [
     title: 'Getting to Sleep',
     artist: 'Binaural Beats',
     category: 'binaural-beats',
-    duration: 900, // 15 minutes
+    duration: 96, // ~1:36 actual audio length
     audioSource: requireAudioFile('binaural-beats/sleep/transcendent/alpha-phase.mp3'),
     description: 'Alpha waves to begin sleep relaxation. Loops until stopped.',
     isAvailable: true,
@@ -181,7 +181,7 @@ export const BINAURAL_BEATS_TRACKS: MusicTrack[] = [
     title: 'Getting into Deep Sleep',
     artist: 'Binaural Beats',
     category: 'binaural-beats',
-    duration: 2700, // 45 minutes
+    duration: 120, // 2:00 actual audio length
     audioSource: requireAudioFile('binaural-beats/sleep/transcendent/theta-phase.mp3'),
     description: 'Theta waves for deep sleep. Loops until stopped.',
     isAvailable: true,
@@ -199,7 +199,7 @@ export const BINAURAL_BEATS_TRACKS: MusicTrack[] = [
     title: 'Full Sleep Sequence',
     artist: 'Binaural Beats',
     category: 'binaural-beats',
-    duration: 3600, // 60 minutes total (15min alpha + 45min theta)
+    duration: 216, // ~3:36 total (1:36 alpha + 2:00 theta)
     audioSource: null, // Virtual track that plays the sequence
     description: 'Complete sleep progression: Getting to Sleep → Getting into Deep Sleep.',
     isAvailable: true,
