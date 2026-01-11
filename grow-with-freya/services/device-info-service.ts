@@ -138,9 +138,13 @@ export class DeviceInfoService {
 
   /**
    * Get app version from Constants
+   * Tries multiple sources for compatibility with different Expo environments
    */
   static getAppVersion(): string {
-    return Constants.expoConfig?.version || '1.0.0';
+    return Constants.expoConfig?.version
+      || Constants.manifest?.version
+      || Constants.manifest2?.extra?.expoClient?.version
+      || '1.0.1';
   }
 
   /**
