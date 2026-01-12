@@ -19,12 +19,24 @@ function requireAudioFile(filename: string): any {
   try {
     // Use require() to load audio files from assets
     switch (filename) {
+      // Binaural beats
       case 'binaural-beats/tantrums/alpha-waves-10hz.mp3':
         return require('../assets/audio/music/binaural-beats/tantrums/alpha-waves-10hz.mp3');
       case 'binaural-beats/sleep/transcendent/alpha-phase.mp3':
         return require('../assets/audio/music/binaural-beats/sleep/transcendent/alpha-phase.mp3');
       case 'binaural-beats/sleep/transcendent/theta-phase.mp3':
         return require('../assets/audio/music/binaural-beats/sleep/transcendent/theta-phase.mp3');
+      // Audiobooks
+      case 'audiobooks/bears_birthday_party-st.mp3':
+        return require('../assets/audio/audiobooks/bears_birthday_party-st.mp3');
+      case 'audiobooks/damsel-the-elephant.mp3':
+        return require('../assets/audio/audiobooks/damsel-the-elephant.mp3');
+      case 'audiobooks/jimmy-mouse-and-the-city-slickers.mp3':
+        return require('../assets/audio/audiobooks/jimmy-mouse-and-the-city-slickers.mp3');
+      case 'audiobooks/new-year-in-the-jungle.mp3':
+        return require('../assets/audio/audiobooks/new-year-in-the-jungle.mp3');
+      case 'audiobooks/snow-white-shorter.mp3':
+        return require('../assets/audio/audiobooks/snow-white-shorter.mp3');
       default:
         console.warn(`Audio file not found: ${filename}`);
         return null;
@@ -36,13 +48,14 @@ function requireAudioFile(filename: string): any {
 }
 
 // Mock placeholder tracks (no audio - coming soon)
+// Duration set to 0 - actual duration is determined at runtime when audio loads
 export const MOCK_TRACKS: MusicTrack[] = [
   {
     id: 'mock-happy-song',
     title: 'Happy Song',
     artist: 'Coming Soon',
     category: 'background',
-    duration: 180,
+    duration: 0,
     audioSource: null,
     description: 'An upbeat, cheerful song to brighten your day!',
     isAvailable: false,
@@ -55,7 +68,7 @@ export const MOCK_TRACKS: MusicTrack[] = [
     title: 'Exciting Sing Along',
     artist: 'Coming Soon',
     category: 'background',
-    duration: 240,
+    duration: 0,
     audioSource: null,
     description: 'A fun sing-along song for the whole family!',
     isAvailable: false,
@@ -68,7 +81,7 @@ export const MOCK_TRACKS: MusicTrack[] = [
     title: 'Warm Down Time',
     artist: 'Coming Soon',
     category: 'bedtime',
-    duration: 300,
+    duration: 0,
     audioSource: null,
     description: 'Gentle music to help wind down before sleep.',
     isAvailable: false,
@@ -82,7 +95,7 @@ export const MOCK_TRACKS: MusicTrack[] = [
     title: 'Sleepy Bear Adventure',
     artist: 'Coming Soon',
     category: 'bedtime',
-    duration: 480,
+    duration: 0,
     audioSource: null,
     description: 'A gentle bedtime story about a little bear finding the perfect spot to sleep.',
     isAvailable: false,
@@ -95,7 +108,7 @@ export const MOCK_TRACKS: MusicTrack[] = [
     title: 'Twinkle Star Lullaby',
     artist: 'Coming Soon',
     category: 'bedtime',
-    duration: 240,
+    duration: 0,
     audioSource: null,
     description: 'A soothing lullaby to help little ones drift off to dreamland.',
     isAvailable: false,
@@ -108,7 +121,7 @@ export const MOCK_TRACKS: MusicTrack[] = [
     title: 'Goodnight Moon Story',
     artist: 'Coming Soon',
     category: 'bedtime',
-    duration: 360,
+    duration: 0,
     audioSource: null,
     description: 'A classic bedtime story about saying goodnight to everything around.',
     isAvailable: false,
@@ -121,7 +134,7 @@ export const MOCK_TRACKS: MusicTrack[] = [
     title: 'Ocean Waves Lullaby',
     artist: 'Coming Soon',
     category: 'bedtime',
-    duration: 600,
+    duration: 0,
     audioSource: null,
     description: 'Gentle ocean sounds mixed with a soft melody for peaceful sleep.',
     isAvailable: false,
@@ -142,6 +155,7 @@ export const BEDTIME_TRACKS: MusicTrack[] = [
 ];
 
 // Binaural Beats Tracks (with updated tags for filtering)
+// Duration set to 0 - actual duration is determined at runtime when audio loads
 export const BINAURAL_BEATS_TRACKS: MusicTrack[] = [
   // Tantrum Calming - Single 10Hz track
   {
@@ -149,11 +163,11 @@ export const BINAURAL_BEATS_TRACKS: MusicTrack[] = [
     title: 'Tantrum Calming (10Hz)',
     artist: 'Binaural Beats',
     category: 'binaural-beats',
-    duration: 105, // ~1:45 actual audio length
+    duration: 0,
     audioSource: requireAudioFile('binaural-beats/tantrums/alpha-waves-10hz.mp3'),
     description: 'Alpha waves for calming during tantrums. Use with headphones for best effect.',
     isAvailable: true,
-    tags: ['calming'], // Simplified tag for filtering
+    tags: ['calming'],
     ageRange: '3+',
     volume: 0.4,
     subcategory: 'tantrum',
@@ -165,7 +179,7 @@ export const BINAURAL_BEATS_TRACKS: MusicTrack[] = [
     title: 'Getting to Sleep',
     artist: 'Binaural Beats',
     category: 'binaural-beats',
-    duration: 96, // ~1:36 actual audio length
+    duration: 0,
     audioSource: requireAudioFile('binaural-beats/sleep/transcendent/alpha-phase.mp3'),
     description: 'Alpha waves to begin sleep relaxation. Loops until stopped.',
     isAvailable: true,
@@ -181,7 +195,7 @@ export const BINAURAL_BEATS_TRACKS: MusicTrack[] = [
     title: 'Getting into Deep Sleep',
     artist: 'Binaural Beats',
     category: 'binaural-beats',
-    duration: 120, // 2:00 actual audio length
+    duration: 0,
     audioSource: requireAudioFile('binaural-beats/sleep/transcendent/theta-phase.mp3'),
     description: 'Theta waves for deep sleep. Loops until stopped.',
     isAvailable: true,
@@ -199,7 +213,7 @@ export const BINAURAL_BEATS_TRACKS: MusicTrack[] = [
     title: 'Full Sleep Sequence',
     artist: 'Binaural Beats',
     category: 'binaural-beats',
-    duration: 96, // ~1:36 (first track length - loops until next phase)
+    duration: 0,
     audioSource: null, // Virtual track that plays the sequence
     description: 'Complete sleep progression: Getting to Sleep → Getting into Deep Sleep.',
     isAvailable: true,
@@ -212,9 +226,86 @@ export const BINAURAL_BEATS_TRACKS: MusicTrack[] = [
   },
 ];
 
+// Audio Books - Bedtime stories narrated for listening
+// Audio files located in: assets/audio/audiobooks/
+// Duration set to 0 - actual duration is determined at runtime when audio loads
+export const AUDIOBOOK_TRACKS: MusicTrack[] = [
+  {
+    id: 'audiobook-bears-birthday-party',
+    title: "Bear's Birthday Party",
+    artist: 'Bedtime Story',
+    category: 'bedtime',
+    duration: 0, // Determined at runtime
+    audioSource: requireAudioFile('audiobooks/bears_birthday_party-st.mp3'),
+    description: 'A heartwarming tale about a bear celebrating a special birthday.',
+    isAvailable: true,
+    tags: ['stories', 'bedtime'],
+    ageRange: '2-5',
+    volume: 0.6,
+    subcategory: 'audiobook',
+  },
+  {
+    id: 'audiobook-damsel-the-elephant',
+    title: 'Damsel the Elephant',
+    artist: 'Bedtime Story',
+    category: 'bedtime',
+    duration: 0, // Determined at runtime
+    audioSource: requireAudioFile('audiobooks/damsel-the-elephant.mp3'),
+    description: 'Join Damsel the elephant on a gentle adventure.',
+    isAvailable: true,
+    tags: ['stories', 'bedtime'],
+    ageRange: '2-5',
+    volume: 0.6,
+    subcategory: 'audiobook',
+  },
+  {
+    id: 'audiobook-jimmy-mouse',
+    title: 'Jimmy Mouse and the City Slickers',
+    artist: 'Bedtime Story',
+    category: 'bedtime',
+    duration: 0, // Determined at runtime
+    audioSource: requireAudioFile('audiobooks/jimmy-mouse-and-the-city-slickers.mp3'),
+    description: 'A little mouse discovers the big city.',
+    isAvailable: true,
+    tags: ['stories', 'bedtime'],
+    ageRange: '2-5',
+    volume: 0.6,
+    subcategory: 'audiobook',
+  },
+  {
+    id: 'audiobook-new-year-jungle',
+    title: 'New Year in the Jungle',
+    artist: 'Bedtime Story',
+    category: 'bedtime',
+    duration: 0, // Determined at runtime
+    audioSource: requireAudioFile('audiobooks/new-year-in-the-jungle.mp3'),
+    description: 'The jungle animals celebrate a new year together.',
+    isAvailable: true,
+    tags: ['stories', 'bedtime'],
+    ageRange: '2-5',
+    volume: 0.6,
+    subcategory: 'audiobook',
+  },
+  {
+    id: 'audiobook-snow-white',
+    title: 'Snow White',
+    artist: 'Bedtime Story',
+    category: 'bedtime',
+    duration: 0, // Determined at runtime
+    audioSource: requireAudioFile('audiobooks/snow-white-shorter.mp3'),
+    description: 'The classic fairy tale of Snow White, perfect for bedtime.',
+    isAvailable: true,
+    tags: ['stories', 'bedtime'],
+    ageRange: '3-6',
+    volume: 0.6,
+    subcategory: 'audiobook',
+  },
+];
+
 // Combine all tracks (including mock tracks for display)
 export const ALL_MUSIC_TRACKS: MusicTrack[] = [
   ...BINAURAL_BEATS_TRACKS,
+  ...AUDIOBOOK_TRACKS,
   ...MOCK_TRACKS,
 ];
 

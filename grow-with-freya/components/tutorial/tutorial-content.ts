@@ -28,7 +28,7 @@ export const MAIN_MENU_TOUR_STEPS: Omit<TutorialStep, 'target'>[] = [
   {
     id: 'bedtime_button',
     title: 'Calming Sounds 🌙',
-    description: 'Relaxing sounds and lullabies to help your little one drift off to sleep - or calm down during a meltdown or tantrum.',
+    description: 'Relaxing sounds, audio books, and lullabies to help your little one drift off to sleep - or calm down during a meltdown or tantrum.',
     // Tip positioned above the button pair with no arrow
     tipPosition: 'above',
   },

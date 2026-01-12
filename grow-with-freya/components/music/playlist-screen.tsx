@@ -235,7 +235,7 @@ export function PlaylistScreen({ onBack, isActive = true }: PlaylistScreenProps)
                         {track.title}
                       </Text>
                       <Text style={[styles.trackArtist, { fontSize: scaledFontSize(12) }]}>
-                        {track.artist} • {formatDuration(track.duration)}
+                        {track.artist}{track.duration > 0 ? ` • ${formatDuration(track.duration)}` : ''}
                       </Text>
                       {!track.isAvailable && (
                         <Text style={[styles.comingSoon, { fontSize: scaledFontSize(11) }]}>
