@@ -26,12 +26,12 @@ export function CustomIcon({ name, size = 24, color, style, type = 'auto' }: Cus
       'activities': require('@/assets/images/menu-icons/activities.svg'),
       'profile': require('@/assets/images/menu-icons/profile.svg'),
 
-      // PNG Menu icons - Pre-loaded for performance
-      'stories-icon': require('@/assets/images/menu-icons/stories-icon.png'),
-      'sensory-icon': require('@/assets/images/menu-icons/sensory-icon.png'),
-      'emotions-icon': require('@/assets/images/menu-icons/emotions-icon.png'),
-      'bedtime-icon': require('@/assets/images/menu-icons/bedtime-icon.png'),
-      'screentime-icon': require('@/assets/images/menu-icons/screentime-icon.png'),
+      // Menu icons (SVG format)
+      'stories-icon': require('@/assets/images/menu-icons/stories-icon.svg'),
+      'sensory-icon': require('@/assets/images/menu-icons/sensory-icon.svg'),
+      'emotions-icon': require('@/assets/images/menu-icons/emotions-icon.svg'),
+      'bedtime-icon': require('@/assets/images/menu-icons/bedtime-icon.svg'),
+      'screentime-icon': require('@/assets/images/menu-icons/screentime-icon.svg'),
 
       // Characters - Only existing files
       'blue-monster-mascot': require('@/assets/images/characters/blue-monster-mascot.svg'),

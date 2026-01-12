@@ -13,14 +13,14 @@ interface PngIllustrationProps {
 export function PngIllustration({ name, style, maxWidth, maxHeight }: PngIllustrationProps) {
   const getIllustrationSource = (illustrationName: string) => {
     const illustrations: { [key: string]: any } = {
-      'family-reading': require('@/assets/images/illustrations/welcome-family.png'),
-      'screen-time-family': require('@/assets/images/illustrations/screen-time-family.png'),
-      'tina-bruno': require('@/assets/images/illustrations/tina-bruno-characters.png'),
-      'voice-recording': require('@/assets/images/illustrations/voice-recording.png'),
-      'research-backed': require('@/assets/images/illustrations/research-backed.png'),
+      'family-reading': require('@/assets/images/illustrations/welcome-family.webp'),
+      'screen-time-family': require('@/assets/images/illustrations/screen-time-family.webp'),
+      'tina-bruno': require('@/assets/images/illustrations/tina-bruno-characters.webp'),
+      'voice-recording': require('@/assets/images/illustrations/voice-recording.webp'),
+      'research-backed': require('@/assets/images/illustrations/research-backed.webp'),
 
-      'welcome-family': require('@/assets/images/illustrations/welcome-family.png'),
-      'tina-bruno-characters': require('@/assets/images/illustrations/tina-bruno-characters.png'),
+      'welcome-family': require('@/assets/images/illustrations/welcome-family.webp'),
+      'tina-bruno-characters': require('@/assets/images/illustrations/tina-bruno-characters.webp'),
     };
 
     return illustrations[illustrationName] || illustrations['tina-bruno'];

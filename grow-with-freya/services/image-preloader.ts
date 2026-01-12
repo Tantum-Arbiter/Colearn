@@ -25,11 +25,11 @@ const SECONDARY_IMAGES: any[] = [
  * Separated to avoid impacting app startup performance
  */
 const ONBOARDING_IMAGES = [
-  require('../assets/images/illustrations/welcome-family.png'),
-  require('../assets/images/illustrations/screen-time-family.png'),
-  require('../assets/images/illustrations/tina-bruno-characters.png'),
-  require('../assets/images/illustrations/voice-recording.png'),
-  require('../assets/images/illustrations/research-backed.png'),
+  require('../assets/images/illustrations/welcome-family.webp'),
+  require('../assets/images/illustrations/screen-time-family.webp'),
+  require('../assets/images/illustrations/tina-bruno-characters.webp'),
+  require('../assets/images/illustrations/voice-recording.webp'),
+  require('../assets/images/illustrations/research-backed.webp'),
 ];
 
 interface PreloadResult {
