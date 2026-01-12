@@ -1,7 +1,7 @@
 {
   "name": "grow-with-freya",
   "main": "expo-router/entry",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "_comment": "CI/CD pipeline test - snapshots aligned with CI environment",
   "scripts": {
     "start": "expo start",
