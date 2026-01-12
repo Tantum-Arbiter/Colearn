@@ -512,7 +512,7 @@ function AppContent() {
             />,
 
             emotions: <EmotionsScreen onBack={handleBackToMainMenu} />,
-            bedtime: <MusicScreen onBack={handleBackToMainMenu} />,
+            bedtime: <MusicScreen onBack={handleBackToMainMenu} isActive={currentPage === 'bedtime'} />,
 
             account: <AccountScreen onBack={handleAccountBack} isActive={currentPage === 'account'} />,
           }}

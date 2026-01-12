@@ -47,7 +47,7 @@ describe('Audio Files Existence', () => {
       expect(sequenceTrack?.isSequence).toBe(true);
       expect(sequenceTrack?.sequenceTracks).toEqual(['sleep-alpha-phase', 'sleep-theta-phase']); // Full two-phase sequence
       expect(sequenceTrack?.isAvailable).toBe(true);
-      expect(sequenceTrack?.duration).toBe(216); // ~3:36 total (actual audio length)
+      expect(sequenceTrack?.duration).toBe(96); // ~1:36 (first track length)
     });
   });
 

@@ -32,17 +32,28 @@ import { SleepSequencePlayer } from '@/services/sleep-sequence-player';
 
 interface PlaylistScreenProps {
   onBack: () => void;
+  isActive?: boolean;
 }
 
 const { width: screenWidth } = Dimensions.get('window');
 const MAX_CONTENT_WIDTH = 500;
 const isTablet = screenWidth > 600;
 
-export function PlaylistScreen({ onBack }: PlaylistScreenProps) {
+export function PlaylistScreen({ onBack, isActive = true }: PlaylistScreenProps) {
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledButtonSize, textSizeScale } = useAccessibility();
   const [selectedTags, setSelectedTags] = useState<Set<MusicTag>>(new Set());
   const [expandedTrackId, setExpandedTrackId] = useState<string | null>(null);
+
+  // Reset expanded track when screen becomes inactive
+  const wasActiveRef = React.useRef(isActive);
+  React.useEffect(() => {
+    if (wasActiveRef.current && !isActive) {
+      // Screen becoming inactive - reset expanded track
+      setExpandedTrackId(null);
+    }
+    wasActiveRef.current = isActive;
+  }, [isActive]);
 
   const {
     playbackState,
@@ -52,8 +63,21 @@ export function PlaylistScreen({ onBack }: PlaylistScreenProps) {
     togglePlayPause,
     seekTo,
     stop,
+    pause,
+    clearTrack,
     setRepeatMode,
   } = useMusicPlayer();
+
+  // Handle back button - pause audio and restore background music before leaving
+  const handleBack = useCallback(async () => {
+    // Pause and clear any playing track
+    await pause();
+    await clearTrack();
+    // Reset expanded track state so it's fresh when returning
+    setExpandedTrackId(null);
+    // Then navigate back
+    onBack();
+  }, [pause, clearTrack, onBack]);
 
   // Star animation
   const starPositions = useMemo(() => generateStarPositions(VISUAL_EFFECTS.STAR_COUNT), []);
@@ -99,6 +123,9 @@ export function PlaylistScreen({ onBack }: PlaylistScreenProps) {
       setExpandedTrackId(null);
       return;
     }
+
+    // Stop any currently playing track before switching
+    await stop();
 
     // Expand and load this track
     setExpandedTrackId(track.id);
@@ -159,7 +186,7 @@ export function PlaylistScreen({ onBack }: PlaylistScreenProps) {
         />
       ))}
 
-      <PageHeader title="Music" subtitle="Choose a track to play" onBack={onBack} />
+      <PageHeader title="Music" subtitle="Choose a track to play" onBack={handleBack} />
 
       <View style={{ flex: 1, paddingTop: insets.top + 180 + (textSizeScale - 1) * 60, zIndex: 10 }}>
         {/* Centered content wrapper for tablets */}

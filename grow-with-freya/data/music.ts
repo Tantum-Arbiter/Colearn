@@ -199,7 +199,7 @@ export const BINAURAL_BEATS_TRACKS: MusicTrack[] = [
     title: 'Full Sleep Sequence',
     artist: 'Binaural Beats',
     category: 'binaural-beats',
-    duration: 216, // ~3:36 total (1:36 alpha + 2:00 theta)
+    duration: 96, // ~1:36 (first track length - loops until next phase)
     audioSource: null, // Virtual track that plays the sequence
     description: 'Complete sleep progression: Getting to Sleep → Getting into Deep Sleep.',
     isAvailable: true,
