@@ -27,10 +27,10 @@ export function EmotionCard({
   // Accessibility scaling
   const { scaledFontSize } = useAccessibility();
 
-  // Animation values
+  // Animation values - matching MainMenuEntrance fade style
   const opacity = useSharedValue(0);
-  const scale = useSharedValue(0.8);
-  const translateY = useSharedValue(20);
+  const scale = useSharedValue(1); // Start at 1 for pure fade effect
+  const translateY = useSharedValue(0); // No translate for pure fade
   const pressScale = useSharedValue(1);
   const glowOpacity = useSharedValue(0);
   const rotateZ = useSharedValue(0);
@@ -49,16 +49,15 @@ export function EmotionCard({
   // Get image source for image-based themes (like bear)
   const themeImage = getThemeImage(emotion.id, theme);
 
-  // Entrance animation
+  // Entrance animation - matching MainMenuEntrance fade style
   useEffect(() => {
     const timer = setTimeout(() => {
-      opacity.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) });
-      scale.value = withSpring(1, { damping: 15, stiffness: 150 });
-      translateY.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) });
+      // Pure fade animation like MainMenuEntrance (400ms, Easing.out(Easing.cubic))
+      opacity.value = withTiming(1, { duration: 400, easing: Easing.out(Easing.cubic) });
     }, animationDelay);
 
     return () => clearTimeout(timer);
-  }, [animationDelay, opacity, scale, translateY]);
+  }, [animationDelay, opacity]);
 
   // Selection animation
   useEffect(() => {

@@ -49,33 +49,44 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
   const [isTimerActive, setIsTimerActive] = useState(true);
   const [isCardAnimating, setIsCardAnimating] = useState(true);
 
+  // Screen fade-in animation (like MainMenuEntrance)
+  const screenOpacity = useSharedValue(0);
+
   // Animation values - start with card hidden for spin-in animation
   const cardScale = useSharedValue(0);
   const cardRotation = useSharedValue(360);
   const promptOpacity = useSharedValue(0);
 
-  // Run initial spin-in animation on mount
+  // Run screen fade-in and card spin-in animation on mount
   useEffect(() => {
-    // Spin in the first card
-    cardRotation.value = withTiming(0, {
-      duration: 600,
-      easing: Easing.inOut(Easing.cubic)
+    // Fade in the entire screen first (like MainMenuEntrance)
+    screenOpacity.value = withTiming(1, {
+      duration: 400,
+      easing: Easing.out(Easing.cubic)
     });
 
-    cardScale.value = withSequence(
-      withTiming(1.1, { duration: 400 }),
-      withTiming(1, { duration: 200 })
-    );
+    // Spin in the first card (starts after a small delay for screen fade)
+    setTimeout(() => {
+      cardRotation.value = withTiming(0, {
+        duration: 600,
+        easing: Easing.inOut(Easing.cubic)
+      });
+
+      cardScale.value = withSequence(
+        withTiming(1.1, { duration: 400 }),
+        withTiming(1, { duration: 200 })
+      );
+    }, 100);
 
     // Fade in prompt after delay
     setTimeout(() => {
       promptOpacity.value = withTiming(1, { duration: 400 });
-    }, 300);
+    }, 400);
 
     // Enable button presses after animation completes
     setTimeout(() => {
       setIsCardAnimating(false);
-    }, 800);
+    }, 900);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -222,11 +233,13 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
   };
 
   // Animated styles
+  const screenAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: screenOpacity.value,
+  }));
+
   const promptAnimatedStyle = useAnimatedStyle(() => ({
     opacity: promptOpacity.value,
   }));
-
-
 
   const cardAnimatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -236,15 +249,16 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
   }));
 
   return (
-    <LinearGradient
-      colors={['#FFEAA7', '#96CEB4', '#45B7D1']}
-      style={styles.container}
-    >
+    <Animated.View style={[{ flex: 1 }, screenAnimatedStyle]}>
+      <LinearGradient
+        colors={['#FFEAA7', '#96CEB4', '#45B7D1']}
+        style={styles.container}
+      >
 
-      {/* Bear top background image */}
-      <View style={mainMenuStyles.moonContainer} pointerEvents="none">
-        <BearTopImage />
-      </View>
+        {/* Bear top background image */}
+        <View style={mainMenuStyles.moonContainer} pointerEvents="none">
+          <BearTopImage />
+        </View>
 
       {/* Header */}
       <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50), zIndex: 50 }]}>
@@ -331,7 +345,8 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
       </View>
 
 
-    </LinearGradient>
+      </LinearGradient>
+    </Animated.View>
   );
 }
 
