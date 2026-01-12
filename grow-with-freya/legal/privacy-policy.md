@@ -1,6 +1,6 @@
 # Privacy Policy
 
-**Last Updated: October 29, 2025**
+**Last Updated: January 12, 2026**
 
 ## 1. Introduction
 
@@ -24,7 +24,7 @@ We may collect only the following limited information:
 **Device Information:**
 - Device type and operating system version
 - App version and usage statistics
-- Crash reports and error logs (anonymized)
+- Crash reports and error logs (anonymized, **opt-in only** - requires your explicit consent)
 
 **Usage Data:**
 - Which stories or activities are accessed
@@ -97,10 +97,33 @@ You may delete your account and all associated data at any time through the App 
 ### 7.1 App Stores
 Downloads and purchases are processed through app stores (Apple App Store, Google Play Store), which have their own privacy policies.
 
-### 7.2 Analytics
+### 7.2 Crash Reporting (Optional, Consent-Based)
+We offer an **optional** crash reporting feature powered by Sentry (https://sentry.io). This feature is:
+
+- **Opt-in only**: Crash reporting is disabled by default and requires explicit consent during onboarding
+- **Revocable**: You can enable or disable crash reporting at any time in Settings → Privacy & Legal → Crash Reports
+- **Anonymous**: Crash reports contain only technical information about what went wrong (error messages, stack traces, device type, OS version)
+- **Privacy-focused**: We have disabled personally identifiable information (PII) collection. No IP addresses, user identifiers, or personal data are collected
+
+**What crash reports contain:**
+- Technical error details (what went wrong in the app)
+- Device type and operating system version
+- App version
+- Timestamp of the crash
+
+**What crash reports do NOT contain:**
+- Your name, email, or any personal information
+- Your child's information or activity
+- Photos, audio, or any content from the app
+- Location data or IP addresses
+- Device identifiers that could identify you
+
+For more information about Sentry's privacy practices, visit: https://sentry.io/privacy/
+
+### 7.3 Analytics
 We may use privacy-compliant analytics services that do not collect personal information about children.
 
-### 7.3 No Advertising
+### 7.4 No Advertising
 Our App does not display third-party advertisements or collect data for advertising purposes.
 
 ## 8. International Users

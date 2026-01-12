@@ -34,6 +34,9 @@ export interface AppState {
   notificationsEnabled: boolean;
   hasRequestedNotificationPermission: boolean;
 
+  // Privacy settings
+  crashReportingEnabled: boolean; // User consent for Sentry crash reporting
+
   // Accessibility settings
   textSizeScale: number; // 1.0 = normal, 0.8 = smaller, 1.2/1.4 = larger
 
@@ -66,6 +69,7 @@ export interface AppState {
   setScreenTimeEnabled: (enabled: boolean) => void;
   setNotificationsEnabled: (enabled: boolean) => void;
   setNotificationPermissionRequested: (requested: boolean) => void;
+  setCrashReportingEnabled: (enabled: boolean) => void;
   setTextSizeScale: (scale: number) => void;
 
   updateBackgroundAnimationState: (state: {
@@ -98,6 +102,7 @@ export const useAppStore = create<AppState>()(
       screenTimeEnabled: true,
       notificationsEnabled: false,
       hasRequestedNotificationPermission: false,
+      crashReportingEnabled: false, // Default to disabled until user consents
       textSizeScale: 1.0, // Default to normal size
 
       backgroundAnimationState: {
@@ -139,6 +144,7 @@ export const useAppStore = create<AppState>()(
       setScreenTimeEnabled: (enabled) => set({ screenTimeEnabled: enabled }),
       setNotificationsEnabled: (enabled) => set({ notificationsEnabled: enabled }),
       setNotificationPermissionRequested: (requested) => set({ hasRequestedNotificationPermission: requested }),
+      setCrashReportingEnabled: (enabled) => set({ crashReportingEnabled: enabled }),
       setTextSizeScale: (scale) => set({ textSizeScale: scale }),
 
       requestReturnToMainMenu: () => set((state) => {
@@ -177,6 +183,7 @@ export const useAppStore = create<AppState>()(
         screenTimeEnabled: state.screenTimeEnabled,
         notificationsEnabled: state.notificationsEnabled,
         hasRequestedNotificationPermission: state.hasRequestedNotificationPermission,
+        crashReportingEnabled: state.crashReportingEnabled,
         textSizeScale: state.textSizeScale,
         backgroundAnimationState: state.backgroundAnimationState,
       }),

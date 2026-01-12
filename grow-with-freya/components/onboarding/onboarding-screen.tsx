@@ -150,8 +150,8 @@ export function OnboardingScreen({
     transform: [{ translateY: buttonTranslateY.value }],
   }));
 
-  // Steps 6 and 7 are text-only screens (no illustration)
-  const isTextOnlyScreen = currentStep === 6 || currentStep === 7;
+  // Steps 6, 7, and 8 are text-only screens (no illustration)
+  const isTextOnlyScreen = currentStep === 6 || currentStep === 7 || currentStep === 8;
 
   const renderContextualContent = (step: number) => {
     const contextualData = [
@@ -181,7 +181,11 @@ export function OnboardingScreen({
       },
       {
         tagline: "",
-        benefit: ""
+        benefit: "Your data stays yours"
+      },
+      {
+        tagline: "",
+        benefit: "Anonymous crash reports help fix bugs faster"
       }
     ];
 
@@ -191,8 +195,8 @@ export function OnboardingScreen({
     // Skip rendering if both tagline and benefit are empty
     if (!data.tagline && !data.benefit) return null;
 
-    // For text-only screens (6 and 7), show larger tagline in the content area
-    if (step === 6 || step === 7) {
+    // For text-only screens (6, 7, and 8), show larger tagline in the content area
+    if (step === 6 || step === 7 || step === 8) {
       return (
         <View style={styles.textOnlyTaglineWrapper}>
           {data.tagline ? <ThemedText style={styles.textOnlyTagline}>{data.tagline}</ThemedText> : null}
@@ -316,6 +320,8 @@ export function OnboardingScreen({
       'adult holding phone speaking': 'voice-recording',
       'parent hugging child': 'research-backed',
       'disclaimer': 'research-backed', // Reuse research-backed for now
+      'privacy': 'research-backed', // Reuse research-backed for privacy screen
+      'crash-reporting': 'research-backed', // Reuse research-backed for crash reporting screen
     };
 
     const pngName = illustrationMap[content] || 'tina-bruno';

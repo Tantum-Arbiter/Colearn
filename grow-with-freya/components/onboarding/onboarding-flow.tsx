@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Alert } from 'react-native';
 import { OnboardingScreen } from './onboarding-screen';
 import { useAppStore } from '@/store/app-store';
 import { preloadOnboardingImages } from '@/services/image-preloader';
@@ -10,7 +11,7 @@ interface OnboardingFlowProps {
 export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const { setOnboardingComplete } = useAppStore();
+  const { setOnboardingComplete, setCrashReportingEnabled } = useAppStore();
 
   // Timeout cleanup refs
   const nextTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -57,13 +58,20 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
       title: "Your Privacy",
       body: "Your data is secure. No personal information is collected or stored.\n\nSigning in via Google or Apple is safe and pseudonymized - we only receive an anonymous identifier, not your email or personal details.\n\nSession syncing across devices is fully anonymized. All data follows best security practices with encryption in transit and at rest.\n\nThis app is designed with privacy-first principles for you and your family.",
       illustration: "privacy",
-      buttonLabel: "Let's begin…",
+      buttonLabel: "Next",
+    },
+    {
+      title: "Help Us Improve",
+      body: "Would you like to help us improve the app by sharing anonymous crash reports?\n\nCrash reports help us identify and fix issues quickly. They contain only technical information about what went wrong - no personal data, photos, or content.\n\nYou can change this setting anytime in Settings.",
+      illustration: "crash-reporting",
+      buttonLabel: "Next",
+      showCrashReportingDialog: true,
     },
   ];
 
-  const handleNext = () => {
+  // Proceed to next step (or complete onboarding)
+  const proceedToNext = () => {
     setIsTransitioning(true);
-
     if (nextTimeoutRef.current) {
       clearTimeout(nextTimeoutRef.current);
     }
@@ -76,6 +84,42 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
       }
       setIsTransitioning(false);
     }, 300);
+  };
+
+  const handleNext = () => {
+    const currentScreenData = onboardingScreens[currentStep];
+
+    // Show crash reporting consent dialog on that specific screen
+    if (currentScreenData.showCrashReportingDialog) {
+      Alert.alert(
+        'Enable Crash Reports?',
+        'Anonymous crash reports help us fix bugs and improve the app. No personal data is collected.\n\nYou can change this anytime in Settings.',
+        [
+          {
+            text: 'No Thanks',
+            style: 'cancel',
+            onPress: () => {
+              setCrashReportingEnabled(false);
+              console.log('[Onboarding] User declined crash reporting');
+              proceedToNext();
+            },
+          },
+          {
+            text: 'Enable',
+            style: 'default',
+            onPress: () => {
+              setCrashReportingEnabled(true);
+              console.log('[Onboarding] User enabled crash reporting');
+              proceedToNext();
+            },
+          },
+        ],
+        { cancelable: false }
+      );
+      return;
+    }
+
+    proceedToNext();
   };
 
   const handlePrevious = () => {

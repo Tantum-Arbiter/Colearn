@@ -123,7 +123,9 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
     userAvatarType,
     textSizeScale,
     isGuestMode,
+    crashReportingEnabled,
     setTextSizeScale,
+    setCrashReportingEnabled,
     setOnboardingComplete,
     setLoginComplete,
     setAppReady,
@@ -625,6 +627,33 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
               Privacy & Legal
             </Text>
 
+            {/* Crash Reporting Toggle */}
+            <Pressable
+              style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setCrashReportingEnabled(!crashReportingEnabled);
+              }}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>
+                  Crash Reports
+                </Text>
+                <Text style={[styles.settingHint, { fontSize: scaledFontSize(12) }]}>
+                  Help us fix bugs by sending anonymous crash data
+                </Text>
+              </View>
+              <View style={[
+                styles.toggle,
+                crashReportingEnabled && styles.toggleEnabled
+              ]}>
+                <View style={[
+                  styles.toggleThumb,
+                  crashReportingEnabled && styles.toggleThumbEnabled
+                ]} />
+              </View>
+            </Pressable>
+
             <Pressable
               style={[styles.button, { paddingVertical: scaledPadding(12), minHeight: scaledButtonSize(44) }]}
               onPress={() => {
@@ -1064,5 +1093,29 @@ const styles = StyleSheet.create({
   languageCheck: {
     color: '#4CAF50',
     fontWeight: 'bold',
+  },
+  settingHint: {
+    color: 'rgba(255, 255, 255, 0.6)',
+    marginTop: 2,
+  },
+  toggle: {
+    width: 50,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    justifyContent: 'center',
+    paddingHorizontal: 2,
+  },
+  toggleEnabled: {
+    backgroundColor: '#4CAF50',
+  },
+  toggleThumb: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+  },
+  toggleThumbEnabled: {
+    alignSelf: 'flex-end',
   },
 });
