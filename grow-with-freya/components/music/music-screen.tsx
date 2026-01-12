@@ -8,7 +8,7 @@ interface MusicScreenProps {
 }
 
 export function MusicScreen({ onBack, isActive = true }: MusicScreenProps) {
-  const { clearTrack, pause, playbackState } = useMusicPlayer();
+  const { clearTrack, pause } = useMusicPlayer();
 
   // Refs to hold stable function references for cleanup
   const pauseRef = useRef(pause);

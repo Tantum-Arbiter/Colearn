@@ -58,10 +58,11 @@ module.exports = {
     '!**/coverage/**',
   ],
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/$1',
+    // Image and asset mocks must come BEFORE the @/ alias to properly intercept
     '\\.(png|jpg|jpeg|gif|webp)$': '<rootDir>/__mocks__/imageMock.js',
     '\\.(svg)$': '<rootDir>/__mocks__/svgMock.tsx',
     '\\.(wav|mp3|m4a|aac|oga)$': 'identity-obj-proxy',
+    '^@/(.*)$': '<rootDir>/$1',
     '^react-native$': 'react-native-web',
     '^expo-screen-orientation$': '<rootDir>/__mocks__/expo-screen-orientation.js',
     '^expo-haptics$': '<rootDir>/__mocks__/expo-haptics.js',

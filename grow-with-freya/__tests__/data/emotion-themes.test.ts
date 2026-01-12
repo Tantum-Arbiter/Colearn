@@ -47,7 +47,7 @@ describe('Emotion Themes', () => {
   describe('getThemeIcon', () => {
     it('should return correct icon for valid emotion and theme', () => {
       expect(getThemeIcon('happy', 'emoji')).toBe('😊');
-      expect(getThemeIcon('happy', 'animals')).toBe('🐱');
+      expect(getThemeIcon('happy', 'animals')).toBe('🐰');
       expect(getThemeIcon('happy', 'bear')).toBe('🐻');
     });
 
@@ -59,7 +59,7 @@ describe('Emotion Themes', () => {
   describe('getThemeName', () => {
     it('should return correct name for valid emotion and theme', () => {
       expect(getThemeName('happy', 'emoji')).toBe('Happy');
-      expect(getThemeName('happy', 'animals')).toBe('Happy Cat');
+      expect(getThemeName('happy', 'animals')).toBe('Happy Bunny');
       expect(getThemeName('happy', 'bear')).toBe('Happy Bear');
     });
 
