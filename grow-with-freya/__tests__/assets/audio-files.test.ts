@@ -142,9 +142,9 @@ describe('Audio Files Existence', () => {
       // Theta track actual duration (2:00)
       expect(thetaTrack?.duration).toBe(120);
 
-      // Sequence actual total duration (~3:36)
+      // Sleep full sequence duration (~1:36 - first track length, loops until next phase)
       const sequenceTrack = BINAURAL_BEATS_TRACKS.find(track => track.id === 'sleep-full-sequence');
-      expect(sequenceTrack?.duration).toBe(216);
+      expect(sequenceTrack?.duration).toBe(96);
     });
 
     it('should have sleep tracks with appropriate metadata', () => {
