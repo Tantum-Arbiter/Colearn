@@ -12,6 +12,7 @@ const TUTORIAL_STORAGE_KEY = '@tutorial_state';
 export type TutorialId =
   | 'main_menu_tour'
   | 'story_reader_tips'
+  | 'emotion_cards_tips'
   | 'settings_walkthrough'
   | 'gesture_hints'
   | 'book_mode_tour'
@@ -25,6 +26,7 @@ interface TutorialState {
   completedTutorials: TutorialId[];
   hasSeenFirstStory: boolean;
   hasSeenSettings: boolean;
+  hasSeenEmotionCards: boolean;
   lastResetTimestamp: number;
 }
 
@@ -32,6 +34,7 @@ const DEFAULT_STATE: TutorialState = {
   completedTutorials: [],
   hasSeenFirstStory: false,
   hasSeenSettings: false,
+  hasSeenEmotionCards: false,
   lastResetTimestamp: 0,
 };
 
@@ -41,6 +44,7 @@ interface TutorialContextType {
   completedTutorials: TutorialId[];
   hasSeenFirstStory: boolean;
   hasSeenSettings: boolean;
+  hasSeenEmotionCards: boolean;
 
   // Active tutorial management
   activeTutorial: TutorialId | null;
@@ -57,6 +61,7 @@ interface TutorialContextType {
   shouldShowTutorial: (tutorialId: TutorialId) => boolean;
   markFirstStoryViewed: () => void;
   markSettingsViewed: () => void;
+  markEmotionCardsViewed: () => void;
 
   // Reset (for settings)
   resetAllTutorials: () => Promise<void>;
@@ -164,6 +169,13 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
     }
   }, [state, persistState]);
 
+  const markEmotionCardsViewed = useCallback(() => {
+    if (!state.hasSeenEmotionCards) {
+      const newState = { ...state, hasSeenEmotionCards: true };
+      persistState(newState);
+    }
+  }, [state, persistState]);
+
   const resetAllTutorials = useCallback(async () => {
     const newState: TutorialState = {
       ...DEFAULT_STATE,
@@ -178,6 +190,7 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
     completedTutorials: state.completedTutorials,
     hasSeenFirstStory: state.hasSeenFirstStory,
     hasSeenSettings: state.hasSeenSettings,
+    hasSeenEmotionCards: state.hasSeenEmotionCards,
     activeTutorial,
     currentStep,
     startTutorial,
@@ -188,6 +201,7 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
     shouldShowTutorial,
     markFirstStoryViewed,
     markSettingsViewed,
+    markEmotionCardsViewed,
     resetAllTutorials,
   };
 

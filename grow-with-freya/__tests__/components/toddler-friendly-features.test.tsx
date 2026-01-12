@@ -205,11 +205,11 @@ describe('Toddler-Friendly Features', () => {
       // Theme cards should be easily tappable
       const emojiCard = getByText('Emoji');
       const animalsCard = getByText('Animals');
-      const fairiesCard = getByText('Fairies');
+      const bearCard = getByText('Bear');
 
       expect(emojiCard).toBeTruthy();
       expect(animalsCard).toBeTruthy();
-      expect(fairiesCard).toBeTruthy();
+      expect(bearCard).toBeTruthy();
 
       // Should be able to tap them
       fireEvent.press(animalsCard);

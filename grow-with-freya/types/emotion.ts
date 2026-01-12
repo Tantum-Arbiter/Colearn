@@ -1,8 +1,9 @@
-export type EmotionTheme = 'emoji' | 'animals' | 'fairies';
+export type EmotionTheme = 'emoji' | 'animals' | 'bear';
 
 export interface EmotionThemeItem {
   icon: string;
   name: string;
+  image?: number; // Optional image source (require() returns a number)
 }
 
 export interface EmotionThemeData {
@@ -10,6 +11,7 @@ export interface EmotionThemeData {
   name: string;
   description: string;
   icon: string;
+  themeIcon?: number; // Optional image source for theme icon (require() returns a number)
   emotions: Record<string, EmotionThemeItem>;
 }
 

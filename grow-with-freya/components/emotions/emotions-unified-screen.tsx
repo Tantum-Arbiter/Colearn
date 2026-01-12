@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { View, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet, Pressable, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -13,10 +13,11 @@ import { ThemedText } from '@/components/themed-text';
 import { Fonts } from '@/constants/theme';
 import { PageHeader } from '@/components/ui/page-header';
 import { EmotionTheme } from '@/types/emotion';
-import { getThemeById, EMOTION_THEMES } from '@/data/emotion-themes';
+import { getThemeById, EMOTION_THEMES, BEAR_EMOTION_IMAGES } from '@/data/emotion-themes';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
 import { BearTopImage } from '@/components/main-menu/animated-components';
+import { EmotionCardsTipsOverlay } from '@/components/tutorial';
 
 import { mainMenuStyles } from '@/components/main-menu/styles';
 import { useAccessibility } from '@/hooks/use-accessibility';
@@ -106,7 +107,7 @@ export function EmotionsUnifiedScreen({ onStartGame, onBack }: EmotionsUnifiedSc
 
       {/* Shared page header component */}
       <PageHeader
-        title="Express Yourself!"
+        title="Emotion Cards"
         subtitle="Choose your style and learn about emotions"
         onBack={onBack}
       />
@@ -118,6 +119,7 @@ export function EmotionsUnifiedScreen({ onStartGame, onBack }: EmotionsUnifiedSc
           <View style={styles.themesContainer}>
             {Object.values(EMOTION_THEMES).map((theme) => {
               const cardSize = scaledButtonSize(100);
+              const hasThemeIcon = theme.themeIcon !== undefined;
               return (
                 <Pressable
                   key={theme.id}
@@ -132,8 +134,19 @@ export function EmotionsUnifiedScreen({ onStartGame, onBack }: EmotionsUnifiedSc
                     colors={selectedTheme === theme.id ? ['#FF6B6B', '#FF8E8E'] : ['rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.05)']}
                     style={styles.themeCardGradient}
                   >
-                    <ThemedText style={[styles.themeIcon, { fontSize: cardSize * 0.22 }]}>{theme.icon}</ThemedText>
-                    <ThemedText style={[styles.themeName, { fontSize: scaledFontSize(12) }]} numberOfLines={1}>{theme.name}</ThemedText>
+                    {hasThemeIcon ? (
+                      <View style={{ width: '100%', height: '100%', backgroundColor: '#fdf8e1', overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
+                        <Image
+                          source={theme.themeIcon}
+                          style={{ width: '140%', height: '140%' }}
+                          resizeMode="cover"
+                        />
+                      </View>
+                    ) : (
+                      <View style={{ width: '100%', height: '100%', backgroundColor: '#FF6B6B', alignItems: 'center', justifyContent: 'center' }}>
+                        <ThemedText style={[styles.themeIcon, { fontSize: cardSize * 0.5, lineHeight: cardSize * 0.6 }]}>{theme.icon}</ThemedText>
+                      </View>
+                    )}
                   </LinearGradient>
                 </Pressable>
               );
@@ -166,20 +179,25 @@ export function EmotionsUnifiedScreen({ onStartGame, onBack }: EmotionsUnifiedSc
               )}
             </LinearGradient>
           </Pressable>
-
-          {/* Start Button */}
-          <Pressable style={[styles.startButton, { marginTop: scaledPadding(20), minHeight: scaledButtonSize(50), alignSelf: 'center' }]} onPress={handleStartGame}>
-            <LinearGradient
-              colors={['#FF6B6B', '#FF8E8E']}
-              style={[styles.buttonGradient, { paddingHorizontal: scaledPadding(32), paddingVertical: scaledPadding(15) }]}
-            >
-              <ThemedText style={[styles.startButtonText, { fontSize: scaledFontSize(16) }]}>
-                Express with {selectedThemeData.name}!
-              </ThemedText>
-            </LinearGradient>
-          </Pressable>
         </View>
       </View>
+
+      {/* Start Button - Fixed to bottom */}
+      <View style={[styles.bottomButtonContainer, { paddingBottom: insets.bottom + 20 }]}>
+        <Pressable style={[styles.startButton, { minHeight: scaledButtonSize(50) }]} onPress={handleStartGame}>
+          <LinearGradient
+            colors={['#FF6B6B', '#FF8E8E']}
+            style={[styles.buttonGradient, { paddingHorizontal: scaledPadding(32), paddingVertical: scaledPadding(15) }]}
+          >
+            <ThemedText style={[styles.startButtonText, { fontSize: scaledFontSize(16) }]}>
+              Express with {selectedThemeData.name}!
+            </ThemedText>
+          </LinearGradient>
+        </Pressable>
+      </View>
+
+      {/* Tips overlay for first-time users */}
+      <EmotionCardsTipsOverlay />
     </LinearGradient>
   );
 }
@@ -239,18 +257,11 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 8,
   },
   themeIcon: {
-    fontSize: 24,
-    marginBottom: 4,
-  },
-  themeName: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: 'bold',
     textAlign: 'center',
-    fontFamily: Fonts.primary,
+    textAlignVertical: 'center',
+    includeFontPadding: false,
   },
   themeDescription: {
     color: 'rgba(255, 255, 255, 0.8)',
@@ -281,10 +292,14 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     fontFamily: Fonts.primary,
   },
-  bottomSection: {
-    paddingHorizontal: 20,
-    paddingBottom: Math.max(20, 20),
+  bottomButtonContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     alignItems: 'center',
+    paddingHorizontal: 20,
+    zIndex: 20,
   },
   startButton: {
     borderRadius: 25,

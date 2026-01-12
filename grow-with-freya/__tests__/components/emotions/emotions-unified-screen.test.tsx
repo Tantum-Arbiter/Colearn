@@ -119,11 +119,11 @@ describe('EmotionsUnifiedScreen', () => {
       // Initially shows emoji theme
       expect(getByText('Express with Emoji!')).toBeTruthy();
 
-      // Change to fairies theme
-      fireEvent.press(getByText('Fairies'));
+      // Change to bear theme
+      fireEvent.press(getByText('Bear'));
 
       // Button text should update
-      expect(getByText('Express with Fairies!')).toBeTruthy();
+      expect(getByText('Express with Bear!')).toBeTruthy();
     });
   });
 

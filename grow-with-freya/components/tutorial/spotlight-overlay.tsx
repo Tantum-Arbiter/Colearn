@@ -37,6 +37,8 @@ export interface TutorialStep {
   spotlightShape?: 'circle' | 'rounded-rect';
   /** Border radius for rounded-rect spotlight shape (default: 20) */
   spotlightBorderRadius?: number;
+  /** Optional image to display in the tip */
+  image?: number;
 }
 
 interface SpotlightOverlayProps {

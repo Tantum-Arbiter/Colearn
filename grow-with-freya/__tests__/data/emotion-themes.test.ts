@@ -8,9 +8,9 @@ import {
 
 describe('Emotion Themes', () => {
   describe('EMOTION_THEMES', () => {
-    it('should contain all three themes', () => {
+    it('should contain all themes', () => {
       expect(EMOTION_THEMES).toBeDefined();
-      expect(Object.keys(EMOTION_THEMES)).toEqual(['emoji', 'animals', 'fairies']);
+      expect(Object.keys(EMOTION_THEMES)).toEqual(['emoji', 'animals', 'bear']);
     });
 
     it('should have valid theme structure', () => {
@@ -48,7 +48,7 @@ describe('Emotion Themes', () => {
     it('should return correct icon for valid emotion and theme', () => {
       expect(getThemeIcon('happy', 'emoji')).toBe('😊');
       expect(getThemeIcon('happy', 'animals')).toBe('🐱');
-      expect(getThemeIcon('happy', 'fairies')).toBe('🧚‍♀️');
+      expect(getThemeIcon('happy', 'bear')).toBe('🐻');
     });
 
     it('should return fallback for invalid emotion', () => {
@@ -60,7 +60,7 @@ describe('Emotion Themes', () => {
     it('should return correct name for valid emotion and theme', () => {
       expect(getThemeName('happy', 'emoji')).toBe('Happy');
       expect(getThemeName('happy', 'animals')).toBe('Happy Cat');
-      expect(getThemeName('happy', 'fairies')).toBe('Joyful Fairy');
+      expect(getThemeName('happy', 'bear')).toBe('Happy Bear');
     });
 
     it('should return fallback for invalid emotion', () => {
@@ -73,7 +73,7 @@ describe('Emotion Themes', () => {
       const themes = getAllThemes();
       expect(Array.isArray(themes)).toBe(true);
       expect(themes).toHaveLength(3);
-      expect(themes.map(t => t.id)).toEqual(['emoji', 'animals', 'fairies']);
+      expect(themes.map(t => t.id)).toEqual(['emoji', 'animals', 'bear']);
     });
   });
 
@@ -82,14 +82,14 @@ describe('Emotion Themes', () => {
       const emojiTheme = getThemeById('emoji');
       expect(emojiTheme.id).toBe('emoji');
       expect(emojiTheme.name).toBe('Emoji');
-      
+
       const animalsTheme = getThemeById('animals');
       expect(animalsTheme.id).toBe('animals');
       expect(animalsTheme.name).toBe('Animals');
-      
-      const fairiesTheme = getThemeById('fairies');
-      expect(fairiesTheme.id).toBe('fairies');
-      expect(fairiesTheme.name).toBe('Fairies');
+
+      const bearTheme = getThemeById('bear');
+      expect(bearTheme.id).toBe('bear');
+      expect(bearTheme.name).toBe('Bear');
     });
   });
 });

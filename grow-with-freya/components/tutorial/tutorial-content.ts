@@ -92,6 +92,46 @@ export const STORY_READER_TIPS: Omit<TutorialStep, 'target'>[] = [
 ];
 
 /**
+ * Emotion Cards Tips - shown on first visit to emotion cards
+ * Parent guidance for using emotion cards with young children
+ */
+export const EMOTION_CARDS_TIPS: Omit<TutorialStep, 'target'>[] = [
+  {
+    id: 'emotion_cards_welcome',
+    title: 'Welcome to Emotion Cards! 🎭',
+    description: 'Ages 1-3 is a crucial time when children become aware of emotions but may not know how to express or understand them.',
+    tipPosition: 'center',
+  },
+  {
+    id: 'emotion_cards_together',
+    title: 'Work Together 👨‍👩‍👧',
+    description: 'Sit with your child and name each emotion as you see it. "Look, the bear is happy! Can you show me your happy face?"',
+    tipPosition: 'center',
+    image: require('@/assets/images/ui-elements/emotion-cards-tip.webp'),
+  },
+  {
+    id: 'emotion_cards_connect',
+    title: 'Connect to Life 💡',
+    description: 'Link emotions to real experiences: "Remember when we went to the park? You felt excited just like this!"',
+    tipPosition: 'center',
+    image: require('@/assets/images/ui-elements/emotion-cards-tip.webp'),
+  },
+  {
+    id: 'emotion_cards_scenarios',
+    title: 'Mimic Scenarios 🎭',
+    description: 'Ask your child "How would you feel or look if...?" to build their emotional vocabulary through playful mimicry.',
+    tipPosition: 'center',
+    image: require('@/assets/images/ui-elements/emotion-cards-tip.webp'),
+  },
+  {
+    id: 'emotion_cards_themes',
+    title: 'Choose a Theme 🎨',
+    description: 'Pick from Emoji, Animals, or Bear themes. Your child might connect better with certain styles - try them all!',
+    tipPosition: 'center',
+  },
+];
+
+/**
  * Settings Walkthrough - shown on first settings visit
  */
 export const SETTINGS_WALKTHROUGH_STEPS: Omit<TutorialStep, 'target'>[] = [
@@ -269,6 +309,8 @@ export function getTutorialSteps(tutorialId: string): Omit<TutorialStep, 'target
       return MAIN_MENU_TOUR_STEPS;
     case 'story_reader_tips':
       return STORY_READER_TIPS;
+    case 'emotion_cards_tips':
+      return EMOTION_CARDS_TIPS;
     case 'settings_walkthrough':
       return SETTINGS_WALKTHROUGH_STEPS;
     case 'book_mode_tour':

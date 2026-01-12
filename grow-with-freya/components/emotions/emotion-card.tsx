@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
@@ -11,7 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ThemedText } from '@/components/themed-text';
 import { EmotionCardProps } from '@/types/emotion';
-import { getThemeIcon, getThemeName } from '@/data/emotion-themes';
+import { getThemeIcon, getThemeName, getThemeImage } from '@/data/emotion-themes';
 import * as Haptics from 'expo-haptics';
 import { useAccessibility } from '@/hooks/use-accessibility';
 
@@ -35,15 +35,19 @@ export function EmotionCard({
   const glowOpacity = useSharedValue(0);
   const rotateZ = useSharedValue(0);
 
-  // Size configurations
+  // Size configurations - imageSize for bear theme images (nearly fills card)
+  // emojiFontSize is larger than fontSize for emoji theme to make emojis more prominent
   const sizeConfig = {
-    tiny: { width: 80, height: 90, fontSize: 28, titleSize: 12 },
-    small: { width: 120, height: 140, fontSize: 40, titleSize: 16 },
-    medium: { width: 150, height: 180, fontSize: 50, titleSize: 18 },
-    large: { width: 200, height: 240, fontSize: 70, titleSize: 24 }
+    tiny: { width: 80, height: 90, fontSize: 28, emojiFontSize: 34, titleSize: 12, imageSize: 75 },
+    small: { width: 120, height: 140, fontSize: 40, emojiFontSize: 48, titleSize: 16, imageSize: 115 },
+    medium: { width: 150, height: 180, fontSize: 50, emojiFontSize: 60, titleSize: 18, imageSize: 145 },
+    large: { width: 200, height: 240, fontSize: 70, emojiFontSize: 85, titleSize: 24, imageSize: 195 }
   };
 
   const config = sizeConfig[size];
+
+  // Get image source for image-based themes (like bear)
+  const themeImage = getThemeImage(emotion.id, theme);
 
   // Entrance animation
   useEffect(() => {
@@ -143,10 +147,18 @@ export function EmotionCard({
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
-          {/* Theme Icon - centered */}
-          <ThemedText style={[styles.emoji, { fontSize: scaledFontSize(config.fontSize) }]}>
-            {getThemeIcon(emotion.id, theme)}
-          </ThemedText>
+          {/* Theme Icon or Image - centered */}
+          {themeImage ? (
+            <Image
+              source={themeImage}
+              style={[styles.emotionImage, { width: config.imageSize, height: config.imageSize }]}
+              resizeMode="contain"
+            />
+          ) : (
+            <ThemedText style={[styles.emoji, { fontSize: scaledFontSize(config.emojiFontSize), marginTop: 16 }]}>
+              {getThemeIcon(emotion.id, theme)}
+            </ThemedText>
+          )}
 
           {/* Themed emotion name */}
           <ThemedText style={[styles.emotionName, { fontSize: scaledFontSize(config.titleSize) }]}>
@@ -203,5 +215,9 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
+  },
+  emotionImage: {
+    marginBottom: 12,
+    borderRadius: 8,
   },
 });
