@@ -75,14 +75,6 @@ export function ScreenTimeWarningModal({
   if (!visible && !warning) return null;
   if (!warning) return null;
 
-  const formatRemainingTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    if (minutes === 0) return `${remainingSeconds} seconds`;
-    if (remainingSeconds === 0) return `${minutes} minutes`;
-    return `${minutes} minutes and ${remainingSeconds} seconds`;
-  };
-
   const getModalIcon = () => {
     switch (warning.type) {
       case 'approaching_limit':
@@ -148,16 +140,6 @@ export function ScreenTimeWarningModal({
 
             {/* Message */}
             <Text style={styles.message}>{warning.message}</Text>
-
-            {/* Remaining Time (if applicable) */}
-            {warning.remainingTime > 0 && (
-              <View style={styles.timeContainer}>
-                <Text style={styles.timeLabel}>Time remaining:</Text>
-                <Text style={styles.timeValue}>
-                  {formatRemainingTime(warning.remainingTime)}
-                </Text>
-              </View>
-            )}
 
             {/* WHO/AAP Guidelines Note */}
             <View style={styles.guidelinesContainer}>
@@ -245,23 +227,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 16,
-  },
-  timeContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 16,
-    alignItems: 'center',
-  },
-  timeLabel: {
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 14,
-    marginBottom: 4,
-  },
-  timeValue: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
   },
   guidelinesContainer: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
