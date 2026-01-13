@@ -15,7 +15,7 @@ import { useLoadingCircleAnimation, useTextFadeAnimation, useCheckmarkAnimation 
 
 const { width } = Dimensions.get('window');
 
-export type LoadingPhase = 'authenticating' | 'syncing' | 'auth-error' | 'sync-error' | null;
+export type LoadingPhase = 'authenticating' | 'syncing' | 'complete' | 'auth-error' | 'sync-error' | null;
 
 interface LoadingOverlayProps {
   phase: LoadingPhase;
