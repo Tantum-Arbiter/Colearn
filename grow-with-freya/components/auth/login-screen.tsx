@@ -283,14 +283,8 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
           console.log('[LoginScreen] Asset prefetch deferred');
         }
 
-        // Wait before completing
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        setLoadingPhase('complete');
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
+        // Let LoadingOverlay handle checkmark, sound, and transition (same as iOS)
         setShowLoadingOverlay(false);
-        setLoadingPhase(null);
-        onSuccess();
         return;
       } catch (error: any) {
         setIsGoogleLoading(false);
