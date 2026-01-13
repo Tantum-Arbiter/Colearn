@@ -182,6 +182,12 @@ export class MusicPlayerService implements MusicService {
   }
 
   async loadTrack(track: MusicTrack): Promise<void> {
+    // Skip audio on Android in dev mode to prevent ExoPlayer threading errors
+    if (__DEV__ && Platform.OS === 'android') {
+      DEBUG_LOGS && console.log('Music player disabled on Android in dev mode');
+      return;
+    }
+
     try {
       this.updateState({ isLoading: true, error: null });
 

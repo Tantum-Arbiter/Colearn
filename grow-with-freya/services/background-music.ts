@@ -59,6 +59,13 @@ class BackgroundMusicService {
    * Initialize and load the background music
    */
   async initialize(): Promise<void> {
+    // Skip audio entirely on Android in dev mode to prevent ExoPlayer threading errors during reload
+    // This is a pragmatic workaround - audio works fine in production builds
+    if (__DEV__ && Platform.OS === 'android') {
+      DEBUG_LOGS && console.log('Background music disabled on Android in dev mode');
+      return;
+    }
+
     // Prevent multiple initializations
     if (this.isLoaded || this.isInitializing) {
       DEBUG_LOGS && console.log('Background music already initialized or initializing');
