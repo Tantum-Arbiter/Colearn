@@ -1,8 +1,21 @@
 import { Audio } from 'expo-av';
 import { AVPlaybackStatus } from 'expo-av';
+import { InteractionManager, Platform } from 'react-native';
 
 // Debug logging - set to false for production performance
 const DEBUG_LOGS = false;
+
+// Helper to run audio operations on main thread (required for Android ExoPlayer)
+const runOnMainThread = <T>(fn: () => Promise<T>): Promise<T> => {
+  if (Platform.OS === 'android') {
+    return new Promise((resolve, reject) => {
+      InteractionManager.runAfterInteractions(() => {
+        fn().then(resolve).catch(reject);
+      });
+    });
+  }
+  return fn();
+};
 
 // Single background music track
 const BACKGROUND_TRACK = require('../assets/audio/background/classic-epic.mp3');
@@ -356,7 +369,10 @@ class BackgroundMusicService {
 
         currentStep++;
         const newVolume = startVolume + (volumeStep * currentStep);
-        await this.sound.setVolumeAsync(Math.min(targetVolume, Math.max(0, newVolume)));
+        // Ensure audio operations run on main thread (required for Android)
+        await runOnMainThread(() =>
+          this.sound!.setVolumeAsync(Math.min(targetVolume, Math.max(0, newVolume)))
+        );
 
         if (currentStep < steps) {
           this.fadeTimer = setTimeout(fadeStep, stepDuration);
@@ -397,7 +413,7 @@ class BackgroundMusicService {
           console.warn('Fade out timeout - forcing completion');
           if (this.sound && this.isLoaded) {
             this.pause().then(() => {
-              this.sound?.setVolumeAsync(currentVolume);
+              runOnMainThread(() => this.sound!.setVolumeAsync(currentVolume));
             });
           }
           resolve();
@@ -409,14 +425,14 @@ class BackgroundMusicService {
               clearTimeout(timeoutId);
               if (this.sound && this.isLoaded) {
                 await this.pause();
-                await this.sound.setVolumeAsync(currentVolume); // Restore original volume
+                await runOnMainThread(() => this.sound!.setVolumeAsync(currentVolume)); // Restore original volume
               }
               resolve(); // Resolve the promise when fade is complete
               return;
             }
 
             currentStep--;
-            await this.sound.setVolumeAsync(volumeStep * currentStep);
+            await runOnMainThread(() => this.sound!.setVolumeAsync(volumeStep * currentStep));
 
             if (currentStep > 0) {
               this.fadeTimer = setTimeout(fadeStep, stepDuration);
@@ -424,7 +440,7 @@ class BackgroundMusicService {
               // Final step - pause and restore volume
               clearTimeout(timeoutId);
               await this.pause();
-              await this.sound.setVolumeAsync(currentVolume);
+              await runOnMainThread(() => this.sound!.setVolumeAsync(currentVolume));
               resolve(); // Resolve the promise when fade is complete
             }
           } catch (stepError) {

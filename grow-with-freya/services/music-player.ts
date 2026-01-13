@@ -1,4 +1,5 @@
 import { Audio, AVPlaybackStatus } from 'expo-av';
+import { InteractionManager, Platform } from 'react-native';
 import {
   MusicTrack,
   MusicPlaylist,
@@ -11,6 +12,18 @@ import { backgroundMusic } from './background-music';
 
 // Debug logging - set to false for production performance
 const DEBUG_LOGS = false;
+
+// Helper to run audio operations on main thread (required for Android ExoPlayer)
+const runOnMainThread = <T>(fn: () => Promise<T>): Promise<T> => {
+  if (Platform.OS === 'android') {
+    return new Promise((resolve, reject) => {
+      InteractionManager.runAfterInteractions(() => {
+        fn().then(resolve).catch(reject);
+      });
+    });
+  }
+  return fn();
+};
 
 /**
  * Music Player Service
@@ -569,7 +582,8 @@ export class MusicPlayerService implements MusicService {
     this.seekTimeout = setTimeout(async () => {
       try {
         if (this.sound) {
-          await this.sound.setPositionAsync(position * 1000); // Convert to milliseconds
+          // Ensure audio operations run on main thread (required for Android)
+          await runOnMainThread(() => this.sound!.setPositionAsync(position * 1000));
         }
       } catch (error) {
         console.warn('Seek operation failed:', error);
@@ -581,10 +595,11 @@ export class MusicPlayerService implements MusicService {
 
   async setVolume(volume: number): Promise<void> {
     const clampedVolume = Math.max(0, Math.min(1, volume));
-    
+
     if (this.sound) {
       try {
-        await this.sound.setVolumeAsync(clampedVolume);
+        // Ensure audio operations run on main thread (required for Android)
+        await runOnMainThread(() => this.sound!.setVolumeAsync(clampedVolume));
       } catch (error) {
         console.error('Failed to set volume:', error);
       }
@@ -595,10 +610,11 @@ export class MusicPlayerService implements MusicService {
 
   async toggleMute(): Promise<void> {
     const { isMuted, volume } = this.state;
-    
+
     if (this.sound) {
       try {
-        await this.sound.setVolumeAsync(isMuted ? volume : 0);
+        // Ensure audio operations run on main thread (required for Android)
+        await runOnMainThread(() => this.sound!.setVolumeAsync(isMuted ? volume : 0));
       } catch (error) {
         console.error('Failed to toggle mute:', error);
       }
