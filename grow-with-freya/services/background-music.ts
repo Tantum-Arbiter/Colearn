@@ -1,6 +1,16 @@
-import { Audio } from 'expo-av';
-import { AVPlaybackStatus } from 'expo-av';
 import { Platform, LogBox } from 'react-native';
+import type { AVPlaybackStatus } from 'expo-av';
+
+// Lazy-load expo-av to prevent native initialization during hot reload
+// This is critical for Android where ExoPlayer has threading requirements
+let Audio: typeof import('expo-av').Audio | null = null;
+const getAudio = async () => {
+  if (!Audio) {
+    const expoAv = await import('expo-av');
+    Audio = expoAv.Audio;
+  }
+  return Audio;
+};
 
 // Debug logging - set to false for production performance
 const DEBUG_LOGS = false;
@@ -34,7 +44,7 @@ const runOnMainThread = <T>(fn: () => Promise<T>): Promise<T> => {
 const BACKGROUND_TRACK = require('../assets/audio/background/classic-epic.mp3');
 
 class BackgroundMusicService {
-  private sound: Audio.Sound | null = null;
+  private sound: import('expo-av').Audio.Sound | null = null;
   private isPlaying: boolean = false;
   private isLoaded: boolean = false;
   private volume: number = 0.18; // Default volume (18% - 60% of previous 30%)
@@ -66,7 +76,8 @@ class BackgroundMusicService {
 
       // Set audio mode for iOS/iPad compatibility - FORCE exclusive audio control
       // This is the single source of audio mode configuration for the entire app
-      await Audio.setAudioModeAsync({
+      const AudioModule = await getAudio();
+      await AudioModule.setAudioModeAsync({
         allowsRecordingIOS: false,
         staysActiveInBackground: true,
         playsInSilentModeIOS: true,
@@ -78,7 +89,7 @@ class BackgroundMusicService {
       DEBUG_LOGS && console.log('Audio mode configured: DO_NOT_MIX (iOS) / DUCK_OTHERS (Android) for audio control');
 
       // Load the single background track with looping enabled
-      const { sound } = await Audio.Sound.createAsync(
+      const { sound } = await AudioModule.Sound.createAsync(
         BACKGROUND_TRACK,
         {
           shouldPlay: false,
@@ -118,7 +129,8 @@ class BackgroundMusicService {
       // Use a small delay to ensure we're on the main thread after any hot reload
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      await Audio.setAudioModeAsync({
+      const AudioModule = await getAudio();
+      await AudioModule.setAudioModeAsync({
         allowsRecordingIOS: false,
         staysActiveInBackground: true,
         playsInSilentModeIOS: true,
@@ -128,7 +140,7 @@ class BackgroundMusicService {
         interruptionModeAndroid: 2,
       });
 
-      const { sound } = await Audio.Sound.createAsync(
+      const { sound } = await AudioModule.Sound.createAsync(
         BACKGROUND_TRACK,
         {
           shouldPlay: false,
