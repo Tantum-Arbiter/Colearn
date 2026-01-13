@@ -236,11 +236,12 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
     // On Android, use native Google Sign-In if available
     if (Platform.OS === 'android' && AuthService.isNativeGoogleSignInAvailable()) {
       try {
-        // Show loading overlay
+        // Don't show loading overlay yet - wait for user to complete Google sign-in
+        const result = await AuthService.signInWithGoogleNative();
+
+        // User completed sign-in - now show loading overlay
         setShowLoadingOverlay(true);
         setLoadingPhase('authenticating');
-
-        const result = await AuthService.signInWithGoogleNative();
 
         console.log('[LoginScreen] Storing tokens...');
         await SecureStorage.storeTokens(
