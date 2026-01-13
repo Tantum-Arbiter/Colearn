@@ -47,6 +47,12 @@ class BackgroundMusicService {
     this.isInitializing = true;
 
     try {
+      // On Android, wrap audio initialization to handle threading issues during hot reload
+      if (Platform.OS === 'android') {
+        await this.initializeAndroidSafe();
+        return;
+      }
+
       // Set audio mode for iOS/iPad compatibility - FORCE exclusive audio control
       // This is the single source of audio mode configuration for the entire app
       await Audio.setAudioModeAsync({
@@ -90,6 +96,51 @@ class BackgroundMusicService {
       console.warn('On Android: Check that MODIFY_AUDIO_SETTINGS permission is granted');
       this.isInitializing = false;
       // Don't throw - allow app to continue without music
+    }
+  }
+
+  /**
+   * Android-safe initialization that handles threading issues during hot reload
+   */
+  private async initializeAndroidSafe(): Promise<void> {
+    try {
+      // Use a small delay to ensure we're on the main thread after any hot reload
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        staysActiveInBackground: true,
+        playsInSilentModeIOS: true,
+        shouldDuckAndroid: false,
+        playThroughEarpieceAndroid: false,
+        interruptionModeIOS: 1,
+        interruptionModeAndroid: 2,
+      });
+
+      const { sound } = await Audio.Sound.createAsync(
+        BACKGROUND_TRACK,
+        {
+          shouldPlay: false,
+          isLooping: true,
+          volume: this.volume,
+          rate: 1.0,
+          shouldCorrectPitch: true,
+        }
+      );
+      this.sound = sound;
+      this.isLoaded = true;
+      this.isInitializing = false;
+
+      DEBUG_LOGS && console.log('Background music initialized (Android)');
+    } catch (error: any) {
+      // Check if this is a threading error - if so, skip silently during dev
+      if (error?.message?.includes('thread') || error?.message?.includes('IllegalStateException')) {
+        console.warn('Background music initialization skipped due to threading (hot reload)');
+        this.isInitializing = false;
+        return;
+      }
+      console.error('Failed to initialize background music on Android:', error);
+      this.isInitializing = false;
     }
   }
 
