@@ -1,10 +1,24 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
-import { AppState, AppStateStatus, Dimensions, View } from 'react-native';
+import { AppState, AppStateStatus, Dimensions, View, Platform } from 'react-native';
 import * as ScreenOrientation from 'expo-screen-orientation';
+import { DevSettings } from 'react-native';
 
 import 'react-native-reanimated';
+
+// On Android in dev mode, disable Fast Refresh to prevent ExoPlayer threading errors
+// ExoPlayer callbacks fire on background threads which crash during Fast Refresh
+if (__DEV__ && Platform.OS === 'android') {
+  try {
+    // @ts-ignore - DevSettings is available in dev mode
+    if (DevSettings && DevSettings.setHotLoadingEnabled) {
+      DevSettings.setHotLoadingEnabled(false);
+    }
+  } catch {
+    // Ignore if DevSettings is not available
+  }
+}
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAppStore } from '@/store/app-store';
