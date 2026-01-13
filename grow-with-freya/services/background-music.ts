@@ -599,6 +599,28 @@ class BackgroundMusicService {
 declare global {
   // eslint-disable-next-line no-var
   var __backgroundMusicInstance: BackgroundMusicService | undefined;
+  // eslint-disable-next-line no-var
+  var __audioCleanupScheduled: boolean | undefined;
+}
+
+// On Android, schedule cleanup of the sound instance before hot reload
+// This must happen synchronously before the module is re-evaluated
+if (Platform.OS === 'android' && __DEV__ && global.__backgroundMusicInstance && !global.__audioCleanupScheduled) {
+  global.__audioCleanupScheduled = true;
+  // Synchronously null out the sound reference to prevent callbacks from firing
+  const instance = global.__backgroundMusicInstance as any;
+  if (instance.sound) {
+    // Remove the callback first (synchronous)
+    try {
+      instance.sound.setOnPlaybackStatusUpdate(null);
+    } catch {
+      // Ignore errors
+    }
+    // Mark as not loaded so it reinitializes
+    instance.isLoaded = false;
+    instance.sound = null;
+  }
+  global.__audioCleanupScheduled = false;
 }
 
 // Export singleton instance - reuse existing instance if available (survives hot reloads)
