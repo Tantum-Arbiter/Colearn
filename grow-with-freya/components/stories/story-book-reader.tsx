@@ -14,7 +14,6 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import * as ScreenOrientation from 'expo-screen-orientation';
-import { Audio } from 'expo-av';
 import { Story, StoryPage, STORY_TAGS, InteractiveElement } from '@/types/story';
 import { InteractiveElementComponent } from './interactive-element';
 import { Fonts } from '@/constants/theme';
@@ -81,7 +80,7 @@ export function StoryBookReader({
   const [currentRecordingUri, setCurrentRecordingUri] = useState<string | null>(null);
   const [tempRecordingUri, setTempRecordingUri] = useState<string | null>(null);
   const [tempRecordingDuration, setTempRecordingDuration] = useState(0);
-  const [playbackSound, setPlaybackSound] = useState<Audio.Sound | null>(null);
+  const [playbackSound, setPlaybackSound] = useState<import('expo-av').Audio.Sound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [availableVoiceOvers, setAvailableVoiceOvers] = useState<VoiceOver[]>([]);
   const [showVoiceOverSelectModal, setShowVoiceOverSelectModal] = useState(false);

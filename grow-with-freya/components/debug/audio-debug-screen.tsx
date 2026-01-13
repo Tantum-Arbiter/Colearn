@@ -1,10 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Audio } from 'expo-av';
 import { useBackgroundMusic } from '@/hooks/use-background-music';
 import { useGlobalSound } from '@/contexts/global-sound-context';
 import { backgroundMusic } from '@/services/background-music';
+
+// Lazy-load expo-av to prevent ExoPlayer threading errors on Android during hot reload
+const getAudio = async () => {
+  const { Audio } = await import('expo-av');
+  return Audio;
+};
 
 interface AudioDebugScreenProps {
   onBack: () => void;
@@ -23,6 +28,7 @@ export function AudioDebugScreen({ onBack }: AudioDebugScreenProps) {
   const testAudioMode = async () => {
     try {
       addTestResult('Testing audio mode configuration...');
+      const Audio = await getAudio();
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
         staysActiveInBackground: true,
@@ -41,6 +47,7 @@ export function AudioDebugScreen({ onBack }: AudioDebugScreenProps) {
   const testAudioFile = async () => {
     try {
       addTestResult('Testing audio file loading...');
+      const Audio = await getAudio();
       const audioSource = require('../../assets/audio/background-soundtrack.wav');
       const { sound } = await Audio.Sound.createAsync(
         audioSource,

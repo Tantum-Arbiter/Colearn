@@ -6,10 +6,15 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
-import { Audio } from 'expo-av';
 import LottieView from 'lottie-react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+
+// Lazy-load expo-av to prevent ExoPlayer threading errors on Android during hot reload
+const getAudio = async () => {
+  const { Audio } = await import('expo-av');
+  return Audio;
+};
 
 import { useLoadingCircleAnimation, useTextFadeAnimation, useCheckmarkAnimation } from './loading-animations';
 
@@ -35,7 +40,7 @@ export function LoadingOverlay({ phase, onPulseComplete, onClose }: LoadingOverl
   const [showErrorState, setShowErrorState] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [showSignedIn, setShowSignedIn] = useState(false); // Show "Signed in" during syncing
-  const soundRef = useRef<Audio.Sound | null>(null);
+  const soundRef = useRef<import('expo-av').Audio.Sound | null>(null);
   const windowTranslateX = useSharedValue(0);
   const overlayOpacity = useSharedValue(1);
 
@@ -61,12 +66,13 @@ export function LoadingOverlay({ phase, onPulseComplete, onClose }: LoadingOverl
   const playClickSound = async () => {
     try {
       if (!soundRef.current) {
+        const Audio = await getAudio();
         const { sound } = await Audio.Sound.createAsync(
           require('@/assets/sounds/click.wav')
         );
         soundRef.current = sound;
       }
-      await soundRef.current.replayAsync();
+      await soundRef.current?.replayAsync();
     } catch (error) {
       console.error('Error playing click sound:', error);
     }

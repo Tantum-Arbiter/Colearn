@@ -1,5 +1,5 @@
-import { Audio, AVPlaybackStatus } from 'expo-av';
 import { Platform } from 'react-native';
+import type { AVPlaybackStatus } from 'expo-av';
 import {
   MusicTrack,
   MusicPlaylist,
@@ -12,6 +12,17 @@ import { backgroundMusic } from './background-music';
 
 // Debug logging - set to false for production performance
 const DEBUG_LOGS = false;
+
+// Lazy-load expo-av to prevent native initialization during hot reload
+// This is critical for Android where ExoPlayer has threading requirements
+let Audio: typeof import('expo-av').Audio | null = null;
+const getAudio = async () => {
+  if (!Audio) {
+    const expoAv = await import('expo-av');
+    Audio = expoAv.Audio;
+  }
+  return Audio;
+};
 
 // Helper to run audio operations on main/UI thread (required for Android ExoPlayer)
 // Uses setImmediate which schedules on the next tick of the JS event loop (main thread)
@@ -33,7 +44,7 @@ const runOnMainThread = <T>(fn: () => Promise<T>): Promise<T> => {
  */
 export class MusicPlayerService implements MusicService {
   private static instance: MusicPlayerService | null = null;
-  private sound: Audio.Sound | null = null;
+  private sound: import('expo-av').Audio.Sound | null = null;
   private state: MusicPlayerState;
   private stateChangeCallbacks: ((state: MusicPlayerState) => void)[] = [];
   private isInitialized = false;
@@ -191,7 +202,8 @@ export class MusicPlayerService implements MusicService {
       // Enable looping for sleep tracks to match intended duration
       const shouldLoop = track.subcategory === 'sleep' && !track.isSequence;
 
-      const { sound } = await Audio.Sound.createAsync(
+      const AudioModule = await getAudio();
+      const { sound } = await AudioModule.Sound.createAsync(
         track.audioSource,
         {
           shouldPlay: false,
@@ -287,7 +299,8 @@ export class MusicPlayerService implements MusicService {
       }
 
       // Load first track
-      const { sound } = await Audio.Sound.createAsync(
+      const AudioModule = await getAudio();
+      const { sound } = await AudioModule.Sound.createAsync(
         track.audioSource,
         {
           shouldPlay: false,
@@ -369,7 +382,8 @@ export class MusicPlayerService implements MusicService {
         await backgroundMusic.cleanup();
 
         // Force set audio mode to be even more restrictive for track playback
-        await Audio.setAudioModeAsync({
+        const AudioModule = await getAudio();
+        await AudioModule.setAudioModeAsync({
           allowsRecordingIOS: false,
           staysActiveInBackground: true,
           playsInSilentModeIOS: true,
