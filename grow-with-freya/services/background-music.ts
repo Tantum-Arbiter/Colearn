@@ -5,6 +5,26 @@ import { Platform } from 'react-native';
 // Debug logging - set to false for production performance
 const DEBUG_LOGS = false;
 
+// Suppress ExoPlayer threading errors on Android during hot reload
+// These errors occur when callbacks fire on background threads during module re-evaluation
+if (Platform.OS === 'android' && __DEV__) {
+  const originalErrorHandler = ErrorUtils.getGlobalHandler();
+  ErrorUtils.setGlobalHandler((error, isFatal) => {
+    // Check if this is the ExoPlayer threading error
+    const errorMessage = error?.message || String(error);
+    if (errorMessage.includes('player is accessed on the current thread') ||
+        errorMessage.includes('expected main')) {
+      // Suppress this specific error - it's a hot reload artifact
+      console.warn('Suppressed ExoPlayer threading error during hot reload');
+      return;
+    }
+    // Pass through to original handler for all other errors
+    if (originalErrorHandler) {
+      originalErrorHandler(error, isFatal);
+    }
+  });
+}
+
 // Helper to run audio operations on main/UI thread (required for Android ExoPlayer)
 // Uses setImmediate which schedules on the next tick of the JS event loop (main thread)
 const runOnMainThread = <T>(fn: () => Promise<T>): Promise<T> => {
