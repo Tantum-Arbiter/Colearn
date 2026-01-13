@@ -38,6 +38,13 @@ class BackgroundMusicService {
    * Initialize and load the background music
    */
   async initialize(): Promise<void> {
+    // Skip audio entirely on Android in development to avoid ExoPlayer threading issues
+    // The issue is that hot reload causes ExoPlayer to be accessed from wrong threads
+    if (Platform.OS === 'android' && __DEV__) {
+      console.log('Background music disabled on Android in development mode');
+      return;
+    }
+
     // Prevent multiple initializations
     if (this.isLoaded || this.isInitializing) {
       DEBUG_LOGS && console.log('Background music already initialized or initializing');
@@ -47,7 +54,7 @@ class BackgroundMusicService {
     this.isInitializing = true;
 
     try {
-      // On Android, wrap audio initialization to handle threading issues during hot reload
+      // On Android production, use safe initialization
       if (Platform.OS === 'android') {
         await this.initializeAndroidSafe();
         return;
@@ -581,24 +588,7 @@ declare global {
   var __backgroundMusicInstance: BackgroundMusicService | undefined;
 }
 
-// On Android during hot reload, the old instance may have stale native references
-// that cause threading errors. Clean up the old instance first.
-if (Platform.OS === 'android' && global.__backgroundMusicInstance) {
-  // Attempt to cleanup the old instance silently
-  try {
-    global.__backgroundMusicInstance.cleanup().catch(() => {});
-  } catch {
-    // Ignore cleanup errors during hot reload
-  }
-  global.__backgroundMusicInstance = undefined;
-}
-
 // Export singleton instance - reuse existing instance if available (survives hot reloads)
-// On Android, always create a new instance to avoid threading issues
-export const backgroundMusic = (Platform.OS === 'android')
-  ? new BackgroundMusicService()
-  : (global.__backgroundMusicInstance ?? new BackgroundMusicService());
-
-if (Platform.OS !== 'android') {
-  global.__backgroundMusicInstance = backgroundMusic;
-}
+// Don't try to cleanup old instances on Android - it causes threading errors
+export const backgroundMusic = global.__backgroundMusicInstance ?? new BackgroundMusicService();
+global.__backgroundMusicInstance = backgroundMusic;
