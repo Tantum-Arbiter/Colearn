@@ -47,7 +47,7 @@ describe('Audio Files Existence', () => {
       expect(sequenceTrack?.isSequence).toBe(true);
       expect(sequenceTrack?.sequenceTracks).toEqual(['sleep-alpha-phase', 'sleep-theta-phase']); // Full two-phase sequence
       expect(sequenceTrack?.isAvailable).toBe(true);
-      expect(sequenceTrack?.duration).toBe(96); // ~1:36 (first track length)
+      expect(sequenceTrack?.duration).toBe(0); // Duration determined at runtime when audio loads
     });
   });
 
@@ -132,19 +132,15 @@ describe('Audio Files Existence', () => {
       expect(thetaTrack?.audioSource).not.toBeNull();
     });
 
-    it('should have appropriate durations for binaural beats', () => {
+    it('should have durations set to 0 for runtime determination', () => {
       const tantrumTrack = BINAURAL_BEATS_TRACKS.find(track => track.id === 'tantrum-alpha-10hz');
       const thetaTrack = BINAURAL_BEATS_TRACKS.find(track => track.id === 'sleep-theta-phase');
-
-      // Tantrum track actual duration (~1:45)
-      expect(tantrumTrack?.duration).toBe(105);
-
-      // Theta track actual duration (2:00)
-      expect(thetaTrack?.duration).toBe(120);
-
-      // Sleep full sequence duration (~1:36 - first track length, loops until next phase)
       const sequenceTrack = BINAURAL_BEATS_TRACKS.find(track => track.id === 'sleep-full-sequence');
-      expect(sequenceTrack?.duration).toBe(96);
+
+      // All durations are 0 - actual duration determined at runtime when audio loads
+      expect(tantrumTrack?.duration).toBe(0);
+      expect(thetaTrack?.duration).toBe(0);
+      expect(sequenceTrack?.duration).toBe(0);
     });
 
     it('should have sleep tracks with appropriate metadata', () => {

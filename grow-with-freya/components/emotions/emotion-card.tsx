@@ -5,7 +5,6 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withSpring,
   withSequence,
   Easing,
 } from 'react-native-reanimated';
@@ -195,12 +194,13 @@ const styles = StyleSheet.create({
   cardGradient: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
+    justifyContent: 'space-between',
+    paddingTop: 12,
+    paddingBottom: 8,
+    paddingHorizontal: 8,
   },
   emoji: {
     textAlign: 'center',
-    marginBottom: 12,
     flex: 1,
     textAlignVertical: 'center',
     lineHeight: undefined, // Reset line height to prevent clipping
@@ -210,13 +210,13 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 8,
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
+    flexShrink: 0,
   },
   emotionImage: {
-    marginBottom: 12,
+    flex: 1,
     borderRadius: 8,
   },
 });
