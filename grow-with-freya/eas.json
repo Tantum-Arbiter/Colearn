@@ -10,7 +10,31 @@
       "channel": "development",
       "env": {
         "NODE_ENV": "development",
-        "EXPO_PUBLIC_GATEWAY_URL": "http://localhost:8080"
+        "EXPO_PUBLIC_GATEWAY_URL": "https://api.colearnwithfreya.co.uk",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "1086096096900-377j71ktgif6t78evg63218cj9de2cjs.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "1086096096900-id6lrdbdp8s892kbl002km69318ptp94.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "1086096096900-66bre59kd3j3l51vsfjcphntgf2m6qbi.apps.googleusercontent.com",
+        "EXPO_PUBLIC_APPLE_CLIENT_ID": "com.growwithfreya.app"
+      },
+      "ios": {
+        "resourceClass": "m-medium"
+      },
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleDebug"
+      }
+    },
+    "development-local": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "channel": "development",
+      "env": {
+        "NODE_ENV": "development",
+        "EXPO_PUBLIC_GATEWAY_URL": "http://localhost:8080",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "1086096096900-377j71ktgif6t78evg63218cj9de2cjs.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "1086096096900-id6lrdbdp8s892kbl002km69318ptp94.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "1086096096900-66bre59kd3j3l51vsfjcphntgf2m6qbi.apps.googleusercontent.com",
+        "EXPO_PUBLIC_APPLE_CLIENT_ID": "com.growwithfreya.app"
       },
       "ios": {
         "resourceClass": "m-medium"
