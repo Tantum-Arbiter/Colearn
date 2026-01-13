@@ -38,13 +38,6 @@ class BackgroundMusicService {
    * Initialize and load the background music
    */
   async initialize(): Promise<void> {
-    // Skip audio entirely on Android in development to avoid ExoPlayer threading issues
-    // The issue is that hot reload causes ExoPlayer to be accessed from wrong threads
-    if (Platform.OS === 'android' && __DEV__) {
-      console.log('Background music disabled on Android in development mode');
-      return;
-    }
-
     // Prevent multiple initializations
     if (this.isLoaded || this.isInitializing) {
       DEBUG_LOGS && console.log('Background music already initialized or initializing');
