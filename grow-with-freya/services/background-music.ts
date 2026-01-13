@@ -6,11 +6,12 @@ import { Platform } from 'react-native';
 const DEBUG_LOGS = false;
 
 // Helper to run audio operations on main/UI thread (required for Android ExoPlayer)
-// requestAnimationFrame is guaranteed to run on the UI thread
+// Uses setImmediate which schedules on the next tick of the JS event loop (main thread)
 const runOnMainThread = <T>(fn: () => Promise<T>): Promise<T> => {
   if (Platform.OS === 'android') {
     return new Promise((resolve, reject) => {
-      requestAnimationFrame(() => {
+      // setImmediate runs on the next tick of the JS event loop, which is on the main thread
+      setImmediate(() => {
         fn().then(resolve).catch(reject);
       });
     });
