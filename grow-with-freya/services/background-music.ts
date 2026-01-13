@@ -1,6 +1,9 @@
 import { Audio } from 'expo-av';
 import { AVPlaybackStatus } from 'expo-av';
 
+// Debug logging - set to false for production performance
+const DEBUG_LOGS = false;
+
 // Single background music track
 const BACKGROUND_TRACK = require('../assets/audio/background/classic-epic.mp3');
 
@@ -22,7 +25,7 @@ class BackgroundMusicService {
   async initialize(): Promise<void> {
     // Prevent multiple initializations
     if (this.isLoaded || this.isInitializing) {
-      console.log('Background music already initialized or initializing');
+      DEBUG_LOGS && console.log('Background music already initialized or initializing');
       return;
     }
 
@@ -40,7 +43,7 @@ class BackgroundMusicService {
         interruptionModeIOS: 1, // DO_NOT_MIX - prevents multiple audio sources
         interruptionModeAndroid: 2, // DUCK_OTHERS - more compatible on Android
       });
-      console.log('Audio mode configured: DO_NOT_MIX (iOS) / DUCK_OTHERS (Android) for audio control');
+      DEBUG_LOGS && console.log('Audio mode configured: DO_NOT_MIX (iOS) / DUCK_OTHERS (Android) for audio control');
 
       // Load the single background track with looping enabled
       const { sound } = await Audio.Sound.createAsync(
@@ -60,7 +63,7 @@ class BackgroundMusicService {
       // Set up playback status update listener
       this.sound.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate);
 
-      console.log('Background music initialized');
+      DEBUG_LOGS && console.log('Background music initialized');
     } catch (error) {
       console.error('Failed to initialize background music:', error);
       console.error('Error details:', JSON.stringify(error, null, 2));
@@ -81,7 +84,7 @@ class BackgroundMusicService {
 
     // Auto-reinitialize if the music was cleaned up
     if (!this.isLoaded || !this.sound) {
-      console.log('Background music not loaded - reinitializing...');
+      DEBUG_LOGS && console.log('Background music not loaded - reinitializing...');
       await this.initialize();
       if (!this.isLoaded || !this.sound) {
         console.warn('Failed to reinitialize background music');
@@ -93,7 +96,7 @@ class BackgroundMusicService {
       // Double-check the actual playback status to prevent overlaps
       const status = await this.sound.getStatusAsync();
       if (status.isLoaded && status.isPlaying) {
-        console.log('Background music already playing (verified by status)');
+        DEBUG_LOGS && console.log('Background music already playing (verified by status)');
         this.isPlaying = true;
         return;
       }
@@ -104,13 +107,13 @@ class BackgroundMusicService {
           await this.sound.setVolumeAsync(this.volume);
           console.log(`Background music started with default volume: ${this.volume}`);
         } else {
-          console.log('Background music started (preserving user-set volume)');
+          DEBUG_LOGS && console.log('Background music started (preserving user-set volume)');
         }
         await this.sound.playAsync();
         this.isPlaying = true;
         this.notifyStateChange(); // Notify state change
       } else {
-        console.log('Background music already playing (by flag)');
+        DEBUG_LOGS && console.log('Background music already playing (by flag)');
       }
     } catch (error) {
       console.error('Failed to play background music:', error);
@@ -128,12 +131,12 @@ class BackgroundMusicService {
    */
   async pause(): Promise<void> {
     if (!this.isLoaded || !this.sound) {
-      console.log('Background music not loaded, cannot pause');
+      DEBUG_LOGS && console.log('Background music not loaded, cannot pause');
       return;
     }
 
     try {
-      console.log('Attempting to pause background music, current state:', this.isPlaying);
+      DEBUG_LOGS && console.log('Attempting to pause background music, current state:', this.isPlaying);
 
       // Always try to pause, regardless of isPlaying state (in case of state sync issues)
       await this.sound.pauseAsync();
@@ -142,17 +145,17 @@ class BackgroundMusicService {
       // Verify the pause worked by checking the actual status
       const status = await this.sound.getStatusAsync();
       if (status.isLoaded) {
-        console.log('Background music pause result - isPlaying:', status.isPlaying);
+        DEBUG_LOGS && console.log('Background music pause result - isPlaying:', status.isPlaying);
         this.isPlaying = status.isPlaying; // Sync with actual state
 
         if (status.isPlaying) {
           console.warn('Background music still playing after pause attempt, trying stop instead');
           await this.sound.stopAsync();
           this.isPlaying = false;
-          console.log('Background music stopped forcefully');
+          DEBUG_LOGS && console.log('Background music stopped forcefully');
           this.notifyStateChange(); // Notify state change
         } else {
-          console.log('Background music successfully paused');
+          DEBUG_LOGS && console.log('Background music successfully paused');
           this.notifyStateChange(); // Notify state change
         }
       }
@@ -174,7 +177,7 @@ class BackgroundMusicService {
     try {
       await this.sound.stopAsync();
       this.isPlaying = false;
-      console.log('Background music stopped');
+      DEBUG_LOGS && console.log('Background music stopped');
       this.notifyStateChange(); // Notify state change
     } catch (error) {
       console.warn('Failed to stop background music:', error);
@@ -186,7 +189,7 @@ class BackgroundMusicService {
    * When muted, new tracks won't auto-play when the current track finishes
    */
   async mute(): Promise<void> {
-    console.log('Muting background music (persists across tracks)');
+    DEBUG_LOGS && console.log('Muting background music (persists across tracks)');
     this.isMuted = true;
     await this.pause();
     this.notifyStateChange();
@@ -457,7 +460,7 @@ class BackgroundMusicService {
         this.isLoaded = false;
         this.isPlaying = false;
         this.isInitializing = false;
-        console.log('Background music cleaned up');
+        DEBUG_LOGS && console.log('Background music cleaned up');
       } catch (error) {
         console.warn('Failed to cleanup background music:', error);
       }
@@ -479,7 +482,7 @@ class BackgroundMusicService {
 
         // Log when track loops
         if (status.didJustFinish) {
-          console.log('Background music looped');
+          DEBUG_LOGS && console.log('Background music looped');
         }
       } else if (status.error) {
         console.warn('Background music playback error:', status.error);

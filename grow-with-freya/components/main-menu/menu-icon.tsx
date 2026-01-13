@@ -226,17 +226,11 @@ export const MenuIcon = React.memo(function MenuIcon({
   // Core functionality handler (not throttled)
   const handleCorePress = useCallback(() => {
     try {
-      // Remove debug logging in production
-      const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development';
-      if (isDev) {
-        console.log('MenuIcon press:', label);
-      }
-
       onPress();
     } catch (error) {
       console.error('Error in MenuIcon core press:', error);
     }
-  }, [label, onPress]);
+  }, [onPress]);
 
   const handleAnimationsThrottled = handleAnimations;
 

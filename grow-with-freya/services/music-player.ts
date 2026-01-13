@@ -9,6 +9,9 @@ import {
 } from '@/types/music';
 import { backgroundMusic } from './background-music';
 
+// Debug logging - set to false for production performance
+const DEBUG_LOGS = false;
+
 /**
  * Music Player Service
  * Handles playback of individual music tracks and playlists
@@ -55,7 +58,7 @@ export class MusicPlayerService implements MusicService {
     try {
       // Don't set audio mode here - let background music service handle it
       // to prevent conflicts between multiple audio mode configurations
-      console.log('Music player service initialized (audio mode managed by background music service)');
+      DEBUG_LOGS && console.log('Music player service initialized (audio mode managed by background music service)');
       this.isInitialized = true;
     } catch (error) {
       console.error('Failed to initialize music player service:', error);
@@ -124,7 +127,7 @@ export class MusicPlayerService implements MusicService {
 
     // If tantrum track has completed 3 times, stop and restore background music
     if (currentTrack?.subcategory === 'tantrum' && repeatCount >= 2) {
-      console.log('Tantrum track completed 3 times, stopping and restoring background music');
+      DEBUG_LOGS && console.log('Tantrum track completed 3 times, stopping and restoring background music');
       this.updateState({ playbackState: 'stopped', repeatCount: 0 });
       await this.restoreBackgroundMusic();
       return;
@@ -202,10 +205,10 @@ export class MusicPlayerService implements MusicService {
       const isSequenceTrack = track.isSequence || (this.state.currentTrack?.isSequence);
 
       if (isSequenceTrack && wasBackgroundMusicFaded) {
-        console.log('Preserving background music fade state for sequence phase transition');
+        DEBUG_LOGS && console.log('Preserving background music fade state for sequence phase transition');
         // Keep the existing fade state for sequence transitions
       } else {
-        console.log('Resetting background music fade flag for new track');
+        DEBUG_LOGS && console.log('Resetting background music fade flag for new track');
         this.hasBackgroundMusicFaded = false;
       }
 
@@ -325,15 +328,15 @@ export class MusicPlayerService implements MusicService {
     }
 
     try {
-      console.log('=== MUSIC PLAYER PLAY START ===');
-      console.log('Track:', this.state.currentTrack.title);
-      console.log('Is sequence track:', this.state.currentTrack.isSequence);
-      console.log('Background music playing before:', backgroundMusic.getIsPlaying());
-      console.log('hasBackgroundMusicFaded flag:', this.hasBackgroundMusicFaded);
+      DEBUG_LOGS && console.log('=== MUSIC PLAYER PLAY START ===');
+      DEBUG_LOGS && console.log('Track:', this.state.currentTrack.title);
+      DEBUG_LOGS && console.log('Is sequence track:', this.state.currentTrack.isSequence);
+      DEBUG_LOGS && console.log('Background music playing before:', backgroundMusic.getIsPlaying());
+      DEBUG_LOGS && console.log('hasBackgroundMusicFaded flag:', this.hasBackgroundMusicFaded);
 
       // FORCE AUDIO SESSION OVERRIDE: Set exclusive audio mode when track plays
       if (backgroundMusic.getIsPlaying() && !this.hasBackgroundMusicFaded) {
-        console.log('FORCING exclusive audio session for track playback');
+        DEBUG_LOGS && console.log('FORCING exclusive audio session for track playback');
 
         // Remember that background music was playing so we can restore it later
         this.wasBackgroundMusicPlayingBeforeTrack = true;
@@ -356,25 +359,25 @@ export class MusicPlayerService implements MusicService {
         // Wait for audio session to be fully configured
         await new Promise(resolve => setTimeout(resolve, 500));
 
-        console.log('Exclusive audio session configured for track');
+        DEBUG_LOGS && console.log('Exclusive audio session configured for track');
         this.hasBackgroundMusicFaded = true;
       } else if (this.hasBackgroundMusicFaded) {
-        console.log('Background music already stopped for this track');
+        DEBUG_LOGS && console.log('Background music already stopped for this track');
         // Ensure background music is still stopped when resuming
         if (backgroundMusic.getIsPlaying()) {
-          console.log('Background music was restarted, stopping it again');
+          DEBUG_LOGS && console.log('Background music was restarted, stopping it again');
           await backgroundMusic.stop();
         }
       } else {
-        console.log('Background music not playing, no need to stop');
+        DEBUG_LOGS && console.log('Background music not playing, no need to stop');
       }
 
-      console.log('Starting track playback:', this.state.currentTrack.title);
+      DEBUG_LOGS && console.log('Starting track playback:', this.state.currentTrack.title);
       await this.sound.playAsync();
       this.updateState({ playbackState: 'playing', error: null });
-      console.log('Track playing successfully');
-      console.log('Background music final status:', backgroundMusic.getIsPlaying());
-      console.log('=== MUSIC PLAYER PLAY END ===');
+      DEBUG_LOGS && console.log('Track playing successfully');
+      DEBUG_LOGS && console.log('Background music final status:', backgroundMusic.getIsPlaying());
+      DEBUG_LOGS && console.log('=== MUSIC PLAYER PLAY END ===');
     } catch (error) {
       console.error('Failed to play track:', error);
       this.updateState({ error: 'Failed to play track' });
@@ -387,7 +390,7 @@ export class MusicPlayerService implements MusicService {
     try {
       await this.sound.pauseAsync();
       this.updateState({ playbackState: 'paused' });
-      console.log('Playback paused');
+      DEBUG_LOGS && console.log('Playback paused');
 
       // When pausing, restore background music but keep the fade flag
       // This prevents audio overlap when resuming the same track
@@ -407,7 +410,7 @@ export class MusicPlayerService implements MusicService {
         playbackState: 'stopped',
         currentTime: 0
       });
-      console.log('Playback stopped');
+      DEBUG_LOGS && console.log('Playback stopped');
 
       // Restore background music when track stops
       await this.restoreBackgroundMusic();
@@ -445,7 +448,7 @@ export class MusicPlayerService implements MusicService {
         repeatCount: 0,
       });
 
-      console.log('Track cleared and player reset');
+      DEBUG_LOGS && console.log('Track cleared and player reset');
 
       // Reset background music fade flag
       this.hasBackgroundMusicFaded = false;
@@ -477,32 +480,32 @@ export class MusicPlayerService implements MusicService {
   private async restoreBackgroundMusic(): Promise<void> {
     try {
       if (!this.state.currentTrack || this.state.playbackState === 'paused') {
-        console.log('Restoring background music (reinitialize if needed)');
-        console.log('wasBackgroundMusicPlayingBeforeTrack:', this.wasBackgroundMusicPlayingBeforeTrack);
+        DEBUG_LOGS && console.log('Restoring background music (reinitialize if needed)');
+        DEBUG_LOGS && console.log('wasBackgroundMusicPlayingBeforeTrack:', this.wasBackgroundMusicPlayingBeforeTrack);
 
         if (!backgroundMusic.getIsLoaded()) {
-          console.log('Background music was unloaded, reinitializing...');
+          DEBUG_LOGS && console.log('Background music was unloaded, reinitializing...');
           await backgroundMusic.initialize();
         }
 
         // Start playing if background music was playing before a track was started
         // Use our saved flag since backgroundMusic.getIsPlaying() will be false after stop/cleanup
         if (this.wasBackgroundMusicPlayingBeforeTrack) {
-          console.log('Background music was playing before track, restoring it');
+          DEBUG_LOGS && console.log('Background music was playing before track, restoring it');
           await backgroundMusic.play();
         } else if (backgroundMusic.getIsPlaying()) {
-          console.log('Background music was already playing, ensuring it continues');
+          DEBUG_LOGS && console.log('Background music was already playing, ensuring it continues');
           await backgroundMusic.play();
         } else {
-          console.log('Background music was not playing, respecting user\'s pause/mute state');
+          DEBUG_LOGS && console.log('Background music was not playing, respecting user\'s pause/mute state');
         }
 
         if (!this.state.currentTrack) {
-          console.log('Resetting background music fade flag and restore flag (track cleared)');
+          DEBUG_LOGS && console.log('Resetting background music fade flag and restore flag (track cleared)');
           this.hasBackgroundMusicFaded = false;
           this.wasBackgroundMusicPlayingBeforeTrack = false;
         } else {
-          console.log('Keeping background music fade flag (track paused, may resume)');
+          DEBUG_LOGS && console.log('Keeping background music fade flag (track paused, may resume)');
         }
       }
     } catch (error) {
@@ -636,7 +639,7 @@ export class MusicPlayerService implements MusicService {
 
     this.stateChangeCallbacks = [];
     this.isInitialized = false;
-    console.log('Music player service cleaned up');
+    DEBUG_LOGS && console.log('Music player service cleaned up');
   }
 }
 

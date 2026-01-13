@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Dimensions, Pressable, Alert, Image, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+// Debug logging - set to false for production performance
+const DEBUG_LOGS = false;
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -83,13 +86,13 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
 
           const result = await AuthService.completeGoogleSignIn(response.authentication.idToken);
 
-          console.log('[LoginScreen] Storing tokens...');
+          DEBUG_LOGS && console.log('[LoginScreen] Storing tokens...');
           await SecureStorage.storeTokens(
             result.tokens.accessToken,
             result.tokens.refreshToken
           );
           await SecureStorage.storeUserData(result.user);
-          console.log('[LoginScreen] Login complete, tokens stored');
+          DEBUG_LOGS && console.log('[LoginScreen] Login complete, tokens stored');
 
           // Clear guest mode since user is now authenticated
           setGuestMode(false);
@@ -108,28 +111,28 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
           try {
             const profile = await ApiClient.getProfile();
             await ProfileSyncService.fullSync(profile);
-            console.log('[LoginScreen] Profile synced');
+            DEBUG_LOGS && console.log('[LoginScreen] Profile synced');
           } catch {
-            console.log('[LoginScreen] Profile sync deferred');
+            DEBUG_LOGS && console.log('[LoginScreen] Profile sync deferred');
           }
 
           try {
             await StorySyncService.prefetchStories();
-            console.log('[LoginScreen] Story metadata synced');
+            DEBUG_LOGS && console.log('[LoginScreen] Story metadata synced');
 
             // Pre-populate StoryLoader cache for instant story list display
             // This ensures stories don't "disappear" when navigating between screens
             await StoryLoader.getStories();
-            console.log('[LoginScreen] StoryLoader cache populated');
+            DEBUG_LOGS && console.log('[LoginScreen] StoryLoader cache populated');
 
             // Prefetch cover images to ensure smooth story selection screen
             try {
               await StorySyncService.prefetchCoverImages();
-              console.log('[LoginScreen] Cover images prefetched');
+              DEBUG_LOGS && console.log('[LoginScreen] Cover images prefetched');
 
               // If stories were removed (assets no longer available on CMS), refresh the cache
               if (StorySyncService.lastPrefetchRemovedStories) {
-                console.log('[LoginScreen] Stories removed due to unavailable assets, refreshing cache');
+                DEBUG_LOGS && console.log('[LoginScreen] Stories removed due to unavailable assets, refreshing cache');
                 StoryLoader.invalidateCache();
                 await StoryLoader.getStories();
               }
@@ -141,7 +144,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
             // Prefetch other assets in background
             try {
               await AssetSyncService.prefetchAssets();
-              console.log('[LoginScreen] Assets prefetched');
+              DEBUG_LOGS && console.log('[LoginScreen] Assets prefetched');
             } catch (assetError) {
               console.error('[LoginScreen] Asset prefetch failed:', assetError);
               // Continue anyway - assets will be downloaded on-demand
@@ -172,7 +175,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
         // User cancelled the sign-in
         setIsGoogleLoading(false);
         setProcessedResponseId(responseId);
-        console.log('[LoginScreen] Google sign-in cancelled by user');
+        DEBUG_LOGS && console.log('[LoginScreen] Google sign-in cancelled by user');
       }
     };
 
@@ -243,13 +246,13 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
         setShowLoadingOverlay(true);
         setLoadingPhase('authenticating');
 
-        console.log('[LoginScreen] Storing tokens...');
+        DEBUG_LOGS && console.log('[LoginScreen] Storing tokens...');
         await SecureStorage.storeTokens(
           result.tokens.accessToken,
           result.tokens.refreshToken
         );
         await SecureStorage.storeUserData(result.user);
-        console.log('[LoginScreen] Login complete, tokens stored');
+        DEBUG_LOGS && console.log('[LoginScreen] Login complete, tokens stored');
 
         // Clear guest mode since user is now authenticated
         setGuestMode(false);
@@ -265,9 +268,9 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
         try {
           const profile = await ApiClient.getProfile();
           await ProfileSyncService.fullSync(profile);
-          console.log('[LoginScreen] Profile synced');
+          DEBUG_LOGS && console.log('[LoginScreen] Profile synced');
         } catch {
-          console.log('[LoginScreen] Profile sync deferred');
+          DEBUG_LOGS && console.log('[LoginScreen] Profile sync deferred');
         }
 
         try {
@@ -281,7 +284,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
         try {
           await AssetSyncService.prefetchAssets();
         } catch {
-          console.log('[LoginScreen] Asset prefetch deferred');
+          DEBUG_LOGS && console.log('[LoginScreen] Asset prefetch deferred');
         }
 
         // Let LoadingOverlay handle checkmark, sound, and transition (same as iOS)
@@ -363,28 +366,28 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
       try {
         const profile = await ApiClient.getProfile();
         await ProfileSyncService.fullSync(profile);
-        console.log('[LoginScreen] Profile synced');
+        DEBUG_LOGS && console.log('[LoginScreen] Profile synced');
       } catch {
-        console.log('[LoginScreen] No profile found, user may need to create one');
+        DEBUG_LOGS && console.log('[LoginScreen] No profile found, user may need to create one');
       }
 
       try {
-        console.log('[LoginScreen] Prefetching story metadata...');
+        DEBUG_LOGS && console.log('[LoginScreen] Prefetching story metadata...');
         await StorySyncService.prefetchStories();
-        console.log('[LoginScreen] Story metadata synced');
+        DEBUG_LOGS && console.log('[LoginScreen] Story metadata synced');
 
         // Pre-populate StoryLoader cache for instant story list display
         await StoryLoader.getStories();
-        console.log('[LoginScreen] StoryLoader cache populated');
+        DEBUG_LOGS && console.log('[LoginScreen] StoryLoader cache populated');
 
         // Prefetch cover images to ensure smooth story selection screen
         try {
           await StorySyncService.prefetchCoverImages();
-          console.log('[LoginScreen] Cover images prefetched');
+          DEBUG_LOGS && console.log('[LoginScreen] Cover images prefetched');
 
           // If stories were removed (assets no longer available on CMS), refresh the cache
           if (StorySyncService.lastPrefetchRemovedStories) {
-            console.log('[LoginScreen] Stories removed due to unavailable assets, refreshing cache');
+            DEBUG_LOGS && console.log('[LoginScreen] Stories removed due to unavailable assets, refreshing cache');
             StoryLoader.invalidateCache();
             await StoryLoader.getStories();
           }
@@ -396,7 +399,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
         // Prefetch other assets in background
         try {
           await AssetSyncService.prefetchAssets();
-          console.log('[LoginScreen] Assets prefetched');
+          DEBUG_LOGS && console.log('[LoginScreen] Assets prefetched');
         } catch (assetError) {
           console.error('[LoginScreen] Asset prefetch failed:', assetError);
           // Continue anyway - assets will be downloaded on-demand
@@ -422,7 +425,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
         error.code === 'ERR_REQUEST_CANCELLED';
 
       if (isCancelled) {
-        console.log('[LoginScreen] Apple sign-in cancelled by user');
+        DEBUG_LOGS && console.log('[LoginScreen] Apple sign-in cancelled by user');
         setShowLoadingOverlay(false);
         return;
       }
@@ -435,7 +438,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
   const handleSkip = () => {
     // Set guest mode - no backend calls will be made
     setGuestMode(true);
-    console.log('[LoginScreen] Continuing as guest - no backend calls');
+    DEBUG_LOGS && console.log('[LoginScreen] Continuing as guest - no backend calls');
     const callback = onSkip || onSuccess;
     transitionToMainMenu(callback);
   };

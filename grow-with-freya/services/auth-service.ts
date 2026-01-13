@@ -4,6 +4,9 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { DeviceInfoService } from './device-info-service';
 
+// Debug logging - set to false for production performance
+const DEBUG_LOGS = false;
+
 // Only import native Google Sign-In on Android
 let GoogleSignin: any = null;
 let statusCodes: any = null;
@@ -13,7 +16,7 @@ if (Platform.OS === 'android') {
     GoogleSignin = googleSignIn.GoogleSignin;
     statusCodes = googleSignIn.statusCodes;
   } catch {
-    console.log('[AuthService] Native Google Sign-In not available');
+    DEBUG_LOGS && DEBUG_LOGS && console.log('[AuthService] Native Google Sign-In not available');
   }
 }
 
@@ -119,7 +122,7 @@ export class AuthService {
     }
     // Android will use native Google Sign-In (no redirect URI needed)
 
-    console.log('[AuthService] Google config:', JSON.stringify(config, null, 2));
+    DEBUG_LOGS && console.log('[AuthService] Google config:', JSON.stringify(config, null, 2));
     return config;
   }
 
@@ -140,7 +143,7 @@ export class AuthService {
       webClientId: GOOGLE_WEB_CLIENT_ID,
       offlineAccess: false,
     });
-    console.log('[AuthService] Native Google Sign-In configured');
+    DEBUG_LOGS && console.log('[AuthService] Native Google Sign-In configured');
   }
 
   /**
@@ -162,7 +165,7 @@ export class AuthService {
         throw new Error('No ID token received from Google Sign-In');
       }
 
-      console.log('[AuthService] Native Google Sign-In successful, completing with backend...');
+      DEBUG_LOGS && console.log('[AuthService] Native Google Sign-In successful, completing with backend...');
 
       // Complete sign-in with backend
       return await this.completeGoogleSignIn(idToken);

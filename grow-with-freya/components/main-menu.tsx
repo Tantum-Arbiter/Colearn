@@ -178,21 +178,9 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
             rocketFloat2: -200, // Static value - rockets removed
           });
 
-          const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development';
-          if (isDev) {
-            console.log('MainMenu unmounted - saved cloud positions:', {
-              cloud1: currentCloud1,
-              cloud2: currentCloud2
-            });
-          }
         }
       } catch (error) {
         console.warn('Failed to save animation state on unmount:', error);
-      }
-
-      const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development';
-      if (isDev) {
-        console.log('MainMenu component unmounted - cleaned up animations and timers');
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -203,16 +191,8 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
     const endTimer = performanceLogger.startTimer('icon-press');
 
     try {
-      // Removed startMenuAnimation check - was blocking core functionality
-
       const centerItem = menuOrder[0];
       const currentTime = Date.now();
-
-      // Remove debug logging in production
-      const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development';
-      if (isDev) {
-        console.log('Icon press:', selectedItem.label);
-      }
 
       if (selectedItem.destination === centerItem.destination) {
         // Use external navigation for all center items to get scroll transition

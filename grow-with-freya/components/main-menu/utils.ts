@@ -156,13 +156,10 @@ export const calculateSafePadding = (
 };
 
 /**
- * Logs performance metrics for debugging
- * @param label - Label for the metric
- * @param startTime - Start time from performance.now()
+ * Log performance metrics (disabled for performance - enable manually when profiling)
+ * @param _label - Label for the metric
+ * @param _startTime - Start time from performance.now()
  */
-export const logPerformance = (label: string, startTime: number): void => {
-  if (__DEV__) {
-    const endTime = performance.now();
-    console.log(`${label}: ${(endTime - startTime).toFixed(2)}ms`);
-  }
+export const logPerformance = (_label: string, _startTime: number): void => {
+  // Disabled for performance - uncomment when profiling
 };

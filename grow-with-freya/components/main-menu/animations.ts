@@ -36,11 +36,8 @@ export const createCloudAnimation = (
       // Continue from current position without resetting
       const currentPosition = cloudValue.value;
 
-      // Debug logging to identify stuck clouds
-      const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development';
-      if (isDev) {
-        console.log(`Cloud resume: current=${currentPosition}, start=${startPosition}, exit=${exitPosition}`);
-      }
+      // Debug logging disabled for performance
+      const isDev = false;
 
       if (currentPosition > startPosition && currentPosition < exitPosition) {
         const remainingDistance = exitPosition - currentPosition;

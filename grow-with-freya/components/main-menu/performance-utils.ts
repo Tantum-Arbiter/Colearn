@@ -250,29 +250,10 @@ export function useSafeAnimation(animationId: string) {
   return { startAnimation, endAnimation, cancelAnimation };
 }
 
-// Memory usage monitor (development only)
-export function useMemoryMonitor(componentName: string) {
-  useEffect(() => {
-    const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development';
-    if (isDev && (performance as any).memory) {
-      const memory = (performance as any).memory;
-      console.log(`${componentName} mounted - Memory:`, {
-        used: Math.round(memory.usedJSHeapSize / 1024 / 1024) + 'MB',
-        total: Math.round(memory.totalJSHeapSize / 1024 / 1024) + 'MB',
-        limit: Math.round(memory.jsHeapSizeLimit / 1024 / 1024) + 'MB',
-      });
-    }
-
-    return () => {
-      const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development';
-      if (isDev && (performance as any).memory) {
-        const memory = (performance as any).memory;
-        console.log(`${componentName} unmounted - Memory:`, {
-          used: Math.round(memory.usedJSHeapSize / 1024 / 1024) + 'MB',
-        });
-      }
-    };
-  }, [componentName]);
+// Memory usage monitor (disabled for performance - enable manually when debugging)
+export function useMemoryMonitor(_componentName: string) {
+  // Disabled - was causing performance issues
+  // Enable manually by uncommenting the code below when debugging memory
 }
 
 // Safe state updater to prevent updates on unmounted components
