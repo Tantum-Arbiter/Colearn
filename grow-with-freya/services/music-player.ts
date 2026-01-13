@@ -201,7 +201,11 @@ export class MusicPlayerService implements MusicService {
       );
 
       this.sound = sound;
-      this.sound.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate);
+      // Note: On Android, this callback runs on a native thread pool
+      // Only set callback on iOS to avoid threading issues on Android
+      if (Platform.OS !== 'android') {
+        this.sound.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate);
+      }
 
       this.updateState({
         currentTrack: track,
@@ -293,7 +297,11 @@ export class MusicPlayerService implements MusicService {
       );
 
       this.sound = sound;
-      this.sound.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate);
+      // Note: On Android, this callback runs on a native thread pool
+      // Only set callback on iOS to avoid threading issues on Android
+      if (Platform.OS !== 'android') {
+        this.sound.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate);
+      }
 
       this.updateState({
         currentTrack: track,

@@ -76,7 +76,11 @@ class BackgroundMusicService {
       this.isInitializing = false;
 
       // Set up playback status update listener
-      this.sound.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate);
+      // Note: On Android, this callback runs on a native thread pool, so we need to be careful
+      // Only set callback on iOS to avoid threading issues on Android
+      if (Platform.OS !== 'android') {
+        this.sound.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate);
+      }
 
       DEBUG_LOGS && console.log('Background music initialized');
     } catch (error) {
