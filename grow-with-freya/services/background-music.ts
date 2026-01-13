@@ -1,6 +1,16 @@
 import { Audio } from 'expo-av';
 import { AVPlaybackStatus } from 'expo-av';
-import { Platform } from 'react-native';
+import { Platform, LogBox } from 'react-native';
+
+// Ignore ExoPlayer threading errors during hot reload on Android
+// These are unavoidable with expo-av and don't affect app functionality
+if (Platform.OS === 'android' && __DEV__) {
+  LogBox.ignoreLogs([
+    'player is accessed on the current thread',
+    'expected main',
+    'IllegalStateException',
+  ]);
+}
 
 // Debug logging - set to false for production performance
 const DEBUG_LOGS = false;
