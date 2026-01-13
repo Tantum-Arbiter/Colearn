@@ -581,6 +581,24 @@ declare global {
   var __backgroundMusicInstance: BackgroundMusicService | undefined;
 }
 
+// On Android during hot reload, the old instance may have stale native references
+// that cause threading errors. Clean up the old instance first.
+if (Platform.OS === 'android' && global.__backgroundMusicInstance) {
+  // Attempt to cleanup the old instance silently
+  try {
+    global.__backgroundMusicInstance.cleanup().catch(() => {});
+  } catch {
+    // Ignore cleanup errors during hot reload
+  }
+  global.__backgroundMusicInstance = undefined;
+}
+
 // Export singleton instance - reuse existing instance if available (survives hot reloads)
-export const backgroundMusic = global.__backgroundMusicInstance ?? new BackgroundMusicService();
-global.__backgroundMusicInstance = backgroundMusic;
+// On Android, always create a new instance to avoid threading issues
+export const backgroundMusic = (Platform.OS === 'android')
+  ? new BackgroundMusicService()
+  : (global.__backgroundMusicInstance ?? new BackgroundMusicService());
+
+if (Platform.OS !== 'android') {
+  global.__backgroundMusicInstance = backgroundMusic;
+}
