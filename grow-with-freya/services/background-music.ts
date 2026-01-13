@@ -2,6 +2,9 @@ import { Audio } from 'expo-av';
 import { AVPlaybackStatus } from 'expo-av';
 import { Platform, LogBox } from 'react-native';
 
+// Debug logging - set to false for production performance
+const DEBUG_LOGS = false;
+
 // Ignore ExoPlayer threading errors during hot reload on Android
 // These are unavoidable with expo-av and don't affect app functionality
 if (Platform.OS === 'android' && __DEV__) {
@@ -9,30 +12,8 @@ if (Platform.OS === 'android' && __DEV__) {
     'player is accessed on the current thread',
     'expected main',
     'IllegalStateException',
+    'ExoPlayer',
   ]);
-}
-
-// Debug logging - set to false for production performance
-const DEBUG_LOGS = false;
-
-// Suppress ExoPlayer threading errors on Android during hot reload
-// These errors occur when callbacks fire on background threads during module re-evaluation
-if (Platform.OS === 'android' && __DEV__) {
-  const originalErrorHandler = ErrorUtils.getGlobalHandler();
-  ErrorUtils.setGlobalHandler((error, isFatal) => {
-    // Check if this is the ExoPlayer threading error
-    const errorMessage = error?.message || String(error);
-    if (errorMessage.includes('player is accessed on the current thread') ||
-        errorMessage.includes('expected main')) {
-      // Suppress this specific error - it's a hot reload artifact
-      console.warn('Suppressed ExoPlayer threading error during hot reload');
-      return;
-    }
-    // Pass through to original handler for all other errors
-    if (originalErrorHandler) {
-      originalErrorHandler(error, isFatal);
-    }
-  });
 }
 
 // Helper to run audio operations on main/UI thread (required for Android ExoPlayer)
