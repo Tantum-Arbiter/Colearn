@@ -50,12 +50,19 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
 
   const { setGuestMode } = useAppStore();
 
-  // Google OAuth hook
+  // Configure native Google Sign-In for Android on mount
+  React.useEffect(() => {
+    if (Platform.OS === 'android') {
+      AuthService.configureNativeGoogleSignIn();
+    }
+  }, []);
+
+  // Google OAuth hook (used for iOS only, but hook must be called unconditionally)
   const [, response, promptAsync] = Google.useAuthRequest(
     AuthService.getGoogleConfig()
   );
 
-  // Handle Google OAuth response (token exchange happens asynchronously)
+  // Handle Google OAuth response (token exchange happens asynchronously) - iOS only
   React.useEffect(() => {
     const handleGoogleResponse = async () => {
       // Skip if no response or we've already processed this response
@@ -225,6 +232,79 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
   const handleGoogleLogin = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setIsGoogleLoading(true);
+
+    // On Android, use native Google Sign-In if available
+    if (Platform.OS === 'android' && AuthService.isNativeGoogleSignInAvailable()) {
+      try {
+        // Show loading overlay
+        setShowLoadingOverlay(true);
+        setLoadingPhase('authenticating');
+
+        const result = await AuthService.signInWithGoogleNative();
+
+        console.log('[LoginScreen] Storing tokens...');
+        await SecureStorage.storeTokens(
+          result.tokens.accessToken,
+          result.tokens.refreshToken
+        );
+        await SecureStorage.storeUserData(result.user);
+        console.log('[LoginScreen] Login complete, tokens stored');
+
+        // Clear guest mode since user is now authenticated
+        setGuestMode(false);
+        setIsGoogleLoading(false);
+
+        // Wait 2 seconds before moving to syncing phase
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        // Move to syncing phase
+        setLoadingPhase('syncing');
+
+        // Sync profile and stories (same as iOS flow)
+        try {
+          const profile = await ApiClient.getProfile();
+          await ProfileSyncService.fullSync(profile);
+          console.log('[LoginScreen] Profile synced');
+        } catch {
+          console.log('[LoginScreen] Profile sync deferred');
+        }
+
+        try {
+          await StorySyncService.prefetchStories();
+          await StoryLoader.getStories();
+          await StorySyncService.prefetchCoverImages();
+        } catch (error) {
+          console.error('[LoginScreen] Sync error:', error);
+        }
+
+        try {
+          await AssetSyncService.prefetchAssets();
+        } catch {
+          console.log('[LoginScreen] Asset prefetch deferred');
+        }
+
+        // Wait before completing
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        setLoadingPhase('complete');
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        setShowLoadingOverlay(false);
+        setLoadingPhase(null);
+        onSuccess();
+        return;
+      } catch (error: any) {
+        setIsGoogleLoading(false);
+        setShowLoadingOverlay(false);
+        setLoadingPhase(null);
+        if (!error.message?.includes('cancelled')) {
+          console.error('Native Google Sign-In error:', error);
+          Alert.alert('Sign In Failed', error.message || 'Please try again.');
+        }
+        return;
+      }
+    }
+
+    // On iOS, use expo-auth-session flow
     try {
       const result = await promptAsync();
       // promptAsync returns immediately with the result

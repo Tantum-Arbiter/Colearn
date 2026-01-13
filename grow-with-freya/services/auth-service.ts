@@ -4,6 +4,19 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { DeviceInfoService } from './device-info-service';
 
+// Only import native Google Sign-In on Android
+let GoogleSignin: any = null;
+let statusCodes: any = null;
+if (Platform.OS === 'android') {
+  try {
+    const googleSignIn = require('@react-native-google-signin/google-signin');
+    GoogleSignin = googleSignIn.GoogleSignin;
+    statusCodes = googleSignIn.statusCodes;
+  } catch {
+    console.log('[AuthService] Native Google Sign-In not available');
+  }
+}
+
 WebBrowser.maybeCompleteAuthSession();
 
 const extra = Constants.expoConfig?.extra || {};
@@ -104,8 +117,68 @@ export class AuthService {
     if (Platform.OS === 'ios') {
       config.redirectUri = this.getIosRedirectUri();
     }
+    // Android will use native Google Sign-In (no redirect URI needed)
 
+    console.log('[AuthService] Google config:', JSON.stringify(config, null, 2));
     return config;
+  }
+
+  /**
+   * Check if native Google Sign-In is available (Android only)
+   */
+  static isNativeGoogleSignInAvailable(): boolean {
+    return Platform.OS === 'android' && GoogleSignin !== null;
+  }
+
+  /**
+   * Initialize native Google Sign-In for Android
+   */
+  static configureNativeGoogleSignIn(): void {
+    if (!this.isNativeGoogleSignInAvailable()) return;
+
+    GoogleSignin.configure({
+      webClientId: GOOGLE_WEB_CLIENT_ID,
+      offlineAccess: false,
+    });
+    console.log('[AuthService] Native Google Sign-In configured');
+  }
+
+  /**
+   * Sign in with Google using native SDK (Android only)
+   * Returns the auth response from the backend
+   */
+  static async signInWithGoogleNative(): Promise<AuthResponse> {
+    if (!this.isNativeGoogleSignInAvailable()) {
+      throw new Error('Native Google Sign-In is not available');
+    }
+
+    try {
+      await GoogleSignin.hasPlayServices();
+      const response = await GoogleSignin.signIn();
+
+      // Get the ID token
+      const idToken = response.data?.idToken;
+      if (!idToken) {
+        throw new Error('No ID token received from Google Sign-In');
+      }
+
+      console.log('[AuthService] Native Google Sign-In successful, completing with backend...');
+
+      // Complete sign-in with backend
+      return await this.completeGoogleSignIn(idToken);
+    } catch (error: any) {
+      if (statusCodes) {
+        if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+          throw new Error('Google sign-in was cancelled');
+        } else if (error.code === statusCodes.IN_PROGRESS) {
+          throw new Error('Google sign-in is already in progress');
+        } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+          throw new Error('Google Play Services is not available');
+        }
+      }
+      console.error('[AuthService] Native Google Sign-In error:', error);
+      throw error;
+    }
   }
 
   static async signInWithApple(): Promise<AuthResponse> {

@@ -28,6 +28,11 @@ expo-env.d.ts
 *.key
 *.mobileprovision
 
+# Local secrets (keystore passwords)
+android/local.properties.secrets
+android/app/eas-dev.keystore
+credentials.json
+
 # Metro
 .metro-health-check*
 
