@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
-import { AppState, AppStateStatus } from 'react-native';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { AppState, AppStateStatus, Platform } from 'react-native';
 import { backgroundMusic } from '@/services/background-music';
 
 interface BackgroundMusicState {
@@ -27,11 +27,30 @@ export function useBackgroundMusic(): BackgroundMusicState & BackgroundMusicCont
   const [volume, setVolumeState] = useState(0.18); // Match service default
   const [isMuted, setIsMuted] = useState(false);
 
+  // Track if we've already initialized to prevent re-init on hot reload
+  const hasInitialized = useRef(false);
+
   // Initialize background music on mount (only once globally)
   useEffect(() => {
+    // Skip if already initialized (prevents issues during hot reload)
+    if (hasInitialized.current) {
+      // Just sync state from existing service
+      setIsLoaded(backgroundMusic.getIsLoaded());
+      setVolumeState(backgroundMusic.getVolume());
+      setIsMuted(backgroundMusic.getIsMuted());
+      setIsPlaying(backgroundMusic.getIsPlaying());
+      return;
+    }
+
     const initializeMusic = async () => {
       try {
+        // On Android in dev mode, delay initialization to avoid hot reload threading issues
+        if (Platform.OS === 'android' && __DEV__) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+
         await backgroundMusic.initialize();
+        hasInitialized.current = true;
         setIsLoaded(backgroundMusic.getIsLoaded());
         setVolumeState(backgroundMusic.getVolume());
         setIsMuted(backgroundMusic.getIsMuted());
