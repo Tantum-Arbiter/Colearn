@@ -83,9 +83,6 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
             placeholder="Enter your nickname..."
             placeholderTextColor="rgba(255, 255, 255, 0.4)"
             maxLength={20}
-            autoCorrect={false}
-            spellCheck={false}
-            underlineColorAndroid="transparent"
           />
           <Text style={[styles.helperText, { fontSize: scaledFontSize(12) }]}>{nickname.length}/20 characters</Text>
         </View>
@@ -303,9 +300,6 @@ export function EditProfileContent({ paddingTop = 0, onSaveComplete }: EditProfi
             placeholder="Enter your nickname..."
             placeholderTextColor="rgba(255, 255, 255, 0.4)"
             maxLength={20}
-            autoCorrect={false}
-            spellCheck={false}
-            underlineColorAndroid="transparent"
           />
           <Text style={[styles.helperText, { fontSize: scaledFontSize(12) }]}>{nickname.length}/20 characters</Text>
         </View>
