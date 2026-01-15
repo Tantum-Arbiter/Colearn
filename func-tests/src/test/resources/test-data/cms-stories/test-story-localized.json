@@ -1,0 +1,122 @@
+{
+  "id": "test-story-localized",
+  "title": "The Friendly Squirrel",
+  "localizedTitle": {
+    "en": "The Friendly Squirrel",
+    "pl": "Przyjazna Wiewiórka",
+    "es": "La Ardilla Amigable",
+    "de": "Das freundliche Eichhörnchen"
+  },
+  "category": "nature",
+  "tag": "🐿️ Nature",
+  "emoji": "🐿️",
+  "coverImage": "assets/stories/cms-squirrels-snowman/cover/thumbnail.webp",
+  "isAvailable": true,
+  "ageRange": "2-5",
+  "duration": 5,
+  "description": "A story about a friendly squirrel who loves to share.",
+  "localizedDescription": {
+    "en": "A story about a friendly squirrel who loves to share.",
+    "pl": "Opowieść o przyjaznej wiewiórce, która uwielbia się dzielić.",
+    "es": "Una historia sobre una ardilla amigable a la que le encanta compartir.",
+    "de": "Eine Geschichte über ein freundliches Eichhörnchen, das gerne teilt."
+  },
+  "isPremium": false,
+  "author": "Test Author",
+  "tags": ["nature", "animals", "friendship"],
+  "version": 1,
+  "pages": [
+    {
+      "id": "test-story-localized-cover",
+      "pageNumber": 0,
+      "type": "cover",
+      "backgroundImage": "assets/stories/cms-squirrels-snowman/cover/cover.webp",
+      "text": "The Friendly Squirrel\n\nA Story About Sharing",
+      "localizedText": {
+        "en": "The Friendly Squirrel\n\nA Story About Sharing",
+        "pl": "Przyjazna Wiewiórka\n\nOpowieść o Dzieleniu się",
+        "es": "La Ardilla Amigable\n\nUna Historia Sobre Compartir",
+        "de": "Das freundliche Eichhörnchen\n\nEine Geschichte über das Teilen"
+      }
+    },
+    {
+      "id": "test-story-localized-page-1",
+      "pageNumber": 1,
+      "type": "story",
+      "backgroundImage": "assets/stories/cms-squirrels-snowman/page-1/page-1.webp",
+      "text": "Once upon a time, there was a friendly little squirrel named Sammy.",
+      "localizedText": {
+        "en": "Once upon a time, there was a friendly little squirrel named Sammy.",
+        "pl": "Dawno, dawno temu żyła sobie przyjazna mała wiewiórka o imieniu Sammy.",
+        "es": "Había una vez una pequeña ardilla amigable llamada Sammy.",
+        "de": "Es war einmal ein freundliches kleines Eichhörnchen namens Sammy."
+      }
+    },
+    {
+      "id": "test-story-localized-page-2",
+      "pageNumber": 2,
+      "type": "story",
+      "backgroundImage": "assets/stories/cms-squirrels-snowman/page-2/page-2.webp",
+      "text": "Sammy loved to collect acorns in the autumn forest.",
+      "localizedText": {
+        "en": "Sammy loved to collect acorns in the autumn forest.",
+        "pl": "Sammy uwielbiał zbierać żołędzie w jesiennym lesie.",
+        "es": "A Sammy le encantaba recolectar bellotas en el bosque de otoño.",
+        "de": "Sammy liebte es, im Herbstwald Eicheln zu sammeln."
+      }
+    },
+    {
+      "id": "test-story-localized-page-3",
+      "pageNumber": 3,
+      "type": "story",
+      "backgroundImage": "assets/stories/cms-squirrels-snowman/page-3/page-3.webp",
+      "text": "One day, Sammy met a hungry rabbit who had no food.",
+      "localizedText": {
+        "en": "One day, Sammy met a hungry rabbit who had no food.",
+        "pl": "Pewnego dnia Sammy spotkał głodnego królika, który nie miał jedzenia.",
+        "es": "Un día, Sammy conoció a un conejo hambriento que no tenía comida.",
+        "de": "Eines Tages traf Sammy einen hungrigen Hasen, der kein Essen hatte."
+      }
+    },
+    {
+      "id": "test-story-localized-page-4",
+      "pageNumber": 4,
+      "type": "story",
+      "backgroundImage": "assets/stories/cms-squirrels-snowman/page-4/page-4.webp",
+      "text": "\"Here, take some of my acorns,\" said Sammy with a smile.",
+      "localizedText": {
+        "en": "\"Here, take some of my acorns,\" said Sammy with a smile.",
+        "pl": "\"Proszę, weź trochę moich żołędzi\" — powiedział Sammy z uśmiechem.",
+        "es": "\"Aquí, toma algunas de mis bellotas\" — dijo Sammy con una sonrisa.",
+        "de": "\"Hier, nimm ein paar von meinen Eicheln\" — sagte Sammy mit einem Lächeln."
+      }
+    },
+    {
+      "id": "test-story-localized-page-5",
+      "pageNumber": 5,
+      "type": "story",
+      "backgroundImage": "assets/stories/cms-squirrels-snowman/page-5/page-5.webp",
+      "text": "The rabbit was so happy! They became the best of friends.",
+      "localizedText": {
+        "en": "The rabbit was so happy! They became the best of friends.",
+        "pl": "Królik był taki szczęśliwy! Zostali najlepszymi przyjaciółmi.",
+        "es": "¡El conejo estaba muy feliz! Se convirtieron en los mejores amigos.",
+        "de": "Der Hase war so glücklich! Sie wurden die besten Freunde."
+      }
+    },
+    {
+      "id": "test-story-localized-page-6",
+      "pageNumber": 6,
+      "type": "story",
+      "backgroundImage": "assets/stories/cms-squirrels-snowman/page-6/page-6.webp",
+      "text": "Sharing makes everyone happy. The End.",
+      "localizedText": {
+        "en": "Sharing makes everyone happy. The End.",
+        "pl": "Dzielenie się sprawia, że wszyscy są szczęśliwi. Koniec.",
+        "es": "Compartir hace feliz a todos. Fin.",
+        "de": "Teilen macht alle glücklich. Ende."
+      }
+    }
+  ]
+}
+

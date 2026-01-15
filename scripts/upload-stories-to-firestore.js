@@ -71,20 +71,28 @@ const db = admin.firestore();
 
 /**
  * Calculate SHA-256 checksum of story content
+ * Includes localized text for i18n support
  */
 function calculateStoryChecksum(story) {
+  // Helper to serialize LocalizedText objects
+  const serializeLocalized = (obj) => obj ? JSON.stringify(obj) : '';
+
   const content = [
     story.id,
     story.title,
+    serializeLocalized(story.localizedTitle),
     story.category,
     story.description || '',
+    serializeLocalized(story.localizedDescription),
     story.version || 1,
     ...story.pages.map(p => {
       // Include interactive elements in checksum
       const interactiveStr = p.interactiveElements
         ? JSON.stringify(p.interactiveElements)
         : '';
-      return `${p.id}${p.text}${p.pageNumber}${p.backgroundImage || ''}${interactiveStr}`;
+      // Include localized text in checksum
+      const localizedTextStr = serializeLocalized(p.localizedText);
+      return `${p.id}${p.text}${localizedTextStr}${p.pageNumber}${p.backgroundImage || ''}${interactiveStr}`;
     })
   ].join('');
 

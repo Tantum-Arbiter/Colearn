@@ -6,6 +6,7 @@ import com.app.exception.GatewayException;
 import com.app.model.AssetVersion;
 import com.app.model.ContentVersion;
 import com.app.model.InteractiveElement;
+import com.app.model.LocalizedText;
 import com.app.model.Story;
 import com.app.model.StoryPage;
 import com.app.model.User;
@@ -286,6 +287,7 @@ public class TestAdminController {
     private List<Story> createTestStories() {
         List<Story> stories = new ArrayList<>();
 
+        // Story 1: The Sleepy Bear (with localized content for i18n testing)
         Story story1 = new Story("test-story-1", "The Sleepy Bear", "bedtime");
         story1.setDescription("A cozy bedtime story about a sleepy bear");
         story1.setAgeRange("2-5");
@@ -295,10 +297,37 @@ public class TestAdminController {
         story1.setAuthor("Test Author");
         story1.setTags(List.of("bedtime", "animals", "sleep"));
 
-        // Create pages - page 2 has an interactive element for testing
+        // Add localized title and description for i18n testing
+        story1.setLocalizedTitle(new LocalizedText(
+            "The Sleepy Bear",
+            "Śpiący Miś",
+            "El Oso Dormido",
+            "Der schläfrige Bär"
+        ));
+        story1.setLocalizedDescription(new LocalizedText(
+            "A cozy bedtime story about a sleepy bear",
+            "Przytulna historia na dobranoc o śpiącym misiu",
+            "Un cuento acogedor para dormir sobre un oso dormido",
+            "Eine gemütliche Gute-Nacht-Geschichte über einen schläfrigen Bären"
+        ));
+
+        // Create pages with localized text
         StoryPage page1 = new StoryPage("page-1-1", 1, "Once upon a time, there was a sleepy bear.");
+        page1.setLocalizedText(new LocalizedText(
+            "Once upon a time, there was a sleepy bear.",
+            "Dawno, dawno temu żył sobie śpiący miś.",
+            "Había una vez un oso muy dormido.",
+            "Es war einmal ein schläfriger Bär."
+        ));
+
         StoryPage page2 = new StoryPage("page-1-2", 2, "The bear yawned and stretched.");
         page2.setBackgroundImage("assets/stories/test-story-1/page-2/background.webp");
+        page2.setLocalizedText(new LocalizedText(
+            "The bear yawned and stretched.",
+            "Miś ziewnął i przeciągnął się.",
+            "El oso bostezó y se estiró.",
+            "Der Bär gähnte und streckte sich."
+        ));
 
         // Add interactive element to page 2 for functional tests
         InteractiveElement doorElement = new InteractiveElement("door", "reveal", "assets/stories/test-story-1/page-2/door-open.webp");
@@ -307,10 +336,17 @@ public class TestAdminController {
         page2.setInteractiveElements(List.of(doorElement));
 
         StoryPage page3 = new StoryPage("page-1-3", 3, "Time for bed, said the bear.");
+        page3.setLocalizedText(new LocalizedText(
+            "Time for bed, said the bear.",
+            "Pora spać, powiedział miś.",
+            "Es hora de dormir, dijo el oso.",
+            "Zeit für's Bett, sagte der Bär."
+        ));
 
         story1.setPages(List.of(page1, page2, page3));
         stories.add(story1);
 
+        // Story 2: The Brave Bunny
         Story story2 = new Story("test-story-2", "The Brave Bunny", "adventure");
         story2.setDescription("An adventure story about a brave bunny");
         story2.setAgeRange("3-6");
@@ -326,6 +362,7 @@ public class TestAdminController {
         ));
         stories.add(story2);
 
+        // Story 3: Friends Forever
         Story story3 = new Story("test-story-3", "Friends Forever", "friendship");
         story3.setDescription("A heartwarming story about friendship");
         story3.setAgeRange("2-5");
@@ -344,20 +381,27 @@ public class TestAdminController {
         return stories;
     }
 
+    /**
+     * Calculate SHA-256 checksum of story content
+     * Includes localized text for i18n support
+     */
     private String calculateStoryChecksum(Story story) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             StringBuilder content = new StringBuilder();
             content.append(story.getId());
             content.append(story.getTitle());
+            content.append(serializeLocalizedText(story.getLocalizedTitle()));
             content.append(story.getCategory());
             content.append(story.getDescription() != null ? story.getDescription() : "");
+            content.append(serializeLocalizedText(story.getLocalizedDescription()));
             content.append(story.getVersion());
 
             if (story.getPages() != null) {
                 story.getPages().forEach(page -> {
                     content.append(page.getId());
                     content.append(page.getText());
+                    content.append(serializeLocalizedText(page.getLocalizedText()));
                     content.append(page.getPageNumber());
                 });
             }
@@ -374,6 +418,34 @@ public class TestAdminController {
             logger.error("Error calculating story checksum for: {}", story.getId(), e);
             throw new RuntimeException("Failed to calculate checksum", e);
         }
+    }
+
+    /**
+     * Serialize LocalizedText to a consistent string for checksum calculation
+     */
+    private String serializeLocalizedText(LocalizedText localizedText) {
+        if (localizedText == null) {
+            return "";
+        }
+        // Use a consistent order for languages to ensure deterministic checksums
+        StringBuilder sb = new StringBuilder();
+        if (localizedText.getEn() != null) sb.append("en:").append(localizedText.getEn()).append("|");
+        if (localizedText.getPl() != null) sb.append("pl:").append(localizedText.getPl()).append("|");
+        if (localizedText.getEs() != null) sb.append("es:").append(localizedText.getEs()).append("|");
+        if (localizedText.getDe() != null) sb.append("de:").append(localizedText.getDe()).append("|");
+        return sb.toString();
+    }
+
+    /**
+     * Parse a Map into a LocalizedText object for story seeding
+     */
+    private LocalizedText parseLocalizedText(Map<?, ?> map) {
+        LocalizedText lt = new LocalizedText();
+        if (map.get("en") != null) lt.setEn((String) map.get("en"));
+        if (map.get("pl") != null) lt.setPl((String) map.get("pl"));
+        if (map.get("es") != null) lt.setEs((String) map.get("es"));
+        if (map.get("de") != null) lt.setDe((String) map.get("de"));
+        return lt;
     }
 
     /**
@@ -502,6 +574,16 @@ public class TestAdminController {
                 story.setTags(tagsList.stream().map(Object::toString).toList());
             }
 
+            // Parse localized title
+            if (storyData.get("localizedTitle") instanceof Map<?, ?> localizedTitleMap) {
+                story.setLocalizedTitle(parseLocalizedText(localizedTitleMap));
+            }
+
+            // Parse localized description
+            if (storyData.get("localizedDescription") instanceof Map<?, ?> localizedDescMap) {
+                story.setLocalizedDescription(parseLocalizedText(localizedDescMap));
+            }
+
             // Parse pages
             if (storyData.get("pages") instanceof List<?> pagesList) {
                 List<StoryPage> pages = new ArrayList<>();
@@ -516,6 +598,11 @@ public class TestAdminController {
                         page.setText((String) pageMap.get("text"));
                         page.setBackgroundImage((String) pageMap.get("backgroundImage"));
                         page.setCharacterImage((String) pageMap.get("characterImage"));
+
+                        // Parse localized text for the page
+                        if (pageMap.get("localizedText") instanceof Map<?, ?> localizedTextMap) {
+                            page.setLocalizedText(parseLocalizedText(localizedTextMap));
+                        }
 
                         // Parse interactiveElements
                         if (pageMap.get("interactiveElements") instanceof List<?> elementsList) {

@@ -162,6 +162,7 @@ public class StoryService {
     /**
      * Calculate SHA-256 checksum of story content
      * Used for delta-sync to detect changes
+     * Includes localized text for i18n support
      */
     private String calculateStoryChecksum(Story story) {
         try {
@@ -171,15 +172,18 @@ public class StoryService {
             StringBuilder content = new StringBuilder();
             content.append(story.getId());
             content.append(story.getTitle());
+            content.append(serializeLocalizedText(story.getLocalizedTitle()));
             content.append(story.getCategory());
             content.append(story.getDescription() != null ? story.getDescription() : "");
+            content.append(serializeLocalizedText(story.getLocalizedDescription()));
             content.append(story.getVersion());
 
-            // Include page content
+            // Include page content (including localized text)
             if (story.getPages() != null) {
                 story.getPages().forEach(page -> {
                     content.append(page.getId());
                     content.append(page.getText());
+                    content.append(serializeLocalizedText(page.getLocalizedText()));
                     content.append(page.getPageNumber());
                 });
             }
@@ -199,6 +203,22 @@ public class StoryService {
             logger.error("Error calculating story checksum for: {}", story.getId(), e);
             throw new RuntimeException("Failed to calculate checksum", e);
         }
+    }
+
+    /**
+     * Serialize LocalizedText to a consistent string for checksum calculation
+     */
+    private String serializeLocalizedText(com.app.model.LocalizedText localizedText) {
+        if (localizedText == null) {
+            return "";
+        }
+        // Use a consistent order for languages to ensure deterministic checksums
+        StringBuilder sb = new StringBuilder();
+        if (localizedText.getEn() != null) sb.append("en:").append(localizedText.getEn()).append("|");
+        if (localizedText.getPl() != null) sb.append("pl:").append(localizedText.getPl()).append("|");
+        if (localizedText.getEs() != null) sb.append("es:").append(localizedText.getEs()).append("|");
+        if (localizedText.getDe() != null) sb.append("de:").append(localizedText.getDe()).append("|");
+        return sb.toString();
     }
 }
 

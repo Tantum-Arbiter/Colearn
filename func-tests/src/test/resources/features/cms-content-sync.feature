@@ -226,6 +226,50 @@ Feature: CMS Content Sync and Delta Sync Testing
     And the response should contain field "checksum"
 
   # ============================================================================
+  # LOCALIZATION (i18n) TESTS - Multi-language story content
+  # ============================================================================
+
+  @local @docker @emulator-only @i18n
+  Scenario: Localized story contains translations for all supported languages
+    Given I seed localized test story "test-story-localized" to the local Firestore emulator
+    When I make a GET request to "/api/stories/test-story-localized"
+    Then the response status code should be 200
+    And the response should contain field "localizedTitle"
+    And the response JSON field "localizedTitle.en" should be "The Friendly Squirrel"
+    And the response JSON field "localizedTitle.pl" should be "Przyjazna Wiewiórka"
+    And the response JSON field "localizedTitle.es" should be "La Ardilla Amigable"
+    And the response JSON field "localizedTitle.de" should be "Das freundliche Eichhörnchen"
+
+  @local @docker @emulator-only @i18n
+  Scenario: Localized story pages contain translated text
+    Given I seed localized test story "test-story-localized" to the local Firestore emulator
+    When I make a GET request to "/api/stories/test-story-localized"
+    Then the response status code should be 200
+    And page 1 should have localized text in "en"
+    And page 1 should have localized text in "pl"
+    And page 1 should have localized text in "es"
+    And page 1 should have localized text in "de"
+
+  @local @docker @emulator-only @i18n
+  Scenario: Delta sync includes localized content in checksum calculation
+    Given I seed localized test story "test-story-localized" to the local Firestore emulator
+    And I have performed an initial sync
+    When I modify story "test-story-localized" localized text for language "pl" on page 1
+    And I have a sync request with previous checksums
+    And I make a POST request to "/api/stories/sync" with the sync request
+    Then the response status code should be 200
+    And the response field "updatedStories" should be at least 1
+    And the response should contain story "test-story-localized"
+
+  @gcp-dev @i18n
+  Scenario: GCP stories support localized content fields
+    Given the story "gcp-i18n-test" exists in GCP Firestore with localized content
+    When I make a GET request to "/api/stories/gcp-i18n-test"
+    Then the response status code should be 200
+    And the response should contain field "localizedTitle"
+    And the response should contain field "localizedDescription"
+
+  # ============================================================================
   # CMS BOOK PERSISTENCE TESTS - Creates books that persist after tests
   # ============================================================================
 

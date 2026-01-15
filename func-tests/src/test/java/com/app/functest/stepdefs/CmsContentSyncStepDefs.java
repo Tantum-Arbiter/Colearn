@@ -714,5 +714,172 @@ public class CmsContentSyncStepDefs extends BaseStepDefs {
             throw new RuntimeException("Failed to convert map to JSON", e);
         }
     }
+
+    // ============================================================================
+    // LOCALIZATION (i18n) STEP DEFINITIONS
+    // ============================================================================
+
+    @Given("I seed localized test story {string} to the local Firestore emulator")
+    public void iSeedLocalizedTestStoryToTheLocalFirestoreEmulator(String storyId) throws Exception {
+        logger.info("Seeding localized test story {} to Firestore emulator", storyId);
+        JsonNode story = loadTestStory(storyId);
+        seedStoryToFirestore(story);
+    }
+
+    @Given("the story {string} exists in GCP Firestore with localized content")
+    public void theStoryExistsInGCPFirestoreWithLocalizedContent(String storyId) {
+        // Only seed if not already seeded in this test run
+        if (seededGcpStories.contains(storyId)) {
+            logger.info("Localized story {} already seeded in this test run, skipping", storyId);
+            return;
+        }
+
+        logger.info("Seeding localized test story {} to GCP Firestore", storyId);
+        seedGcpLocalizedTestStory(storyId);
+        seededGcpStories.add(storyId);
+    }
+
+    /**
+     * Seed a localized test story to GCP Firestore
+     */
+    private void seedGcpLocalizedTestStory(String storyId) {
+        String testStory = String.format("""
+            {
+                "id": "%s",
+                "title": "GCP Localized Test Story",
+                "localizedTitle": {
+                    "en": "GCP Localized Test Story",
+                    "pl": "GCP Zlokalizowana Historia Testowa",
+                    "es": "Historia de Prueba Localizada GCP",
+                    "de": "GCP Lokalisierte Testgeschichte"
+                },
+                "category": "nature",
+                "tag": "🌍 i18n",
+                "emoji": "🌍",
+                "coverImage": "assets/stories/squirrels-snowman/cover/thumbnail.webp",
+                "isAvailable": true,
+                "ageRange": "2-5",
+                "duration": 5,
+                "description": "A test story with localized content",
+                "localizedDescription": {
+                    "en": "A test story with localized content",
+                    "pl": "Historia testowa ze zlokalizowaną treścią",
+                    "es": "Una historia de prueba con contenido localizado",
+                    "de": "Eine Testgeschichte mit lokalisiertem Inhalt"
+                },
+                "isPremium": false,
+                "author": "Test Author",
+                "tags": ["i18n", "test"],
+                "version": 1,
+                "pages": [
+                    {
+                        "id": "%s-page-1",
+                        "pageNumber": 1,
+                        "type": "story",
+                        "text": "Hello, world!",
+                        "localizedText": {
+                            "en": "Hello, world!",
+                            "pl": "Witaj, świecie!",
+                            "es": "¡Hola, mundo!",
+                            "de": "Hallo, Welt!"
+                        }
+                    }
+                ]
+            }
+            """, storyId, storyId);
+
+        Response response = given()
+                .contentType("application/json")
+                .body(testStory)
+                .when()
+                .post("/private/seed/story");
+
+        if (response.getStatusCode() != 200 && response.getStatusCode() != 201) {
+            logger.warn("Failed to seed GCP localized test story: {} - Status: {}, Body: {}",
+                    storyId, response.getStatusCode(), response.getBody().asString());
+            throw new RuntimeException("Failed to seed GCP localized test story: " + storyId);
+        }
+        logger.info("Successfully seeded GCP localized test story: {}", storyId);
+    }
+
+    @Then("page {int} should have localized text in {string}")
+    public void pageShouldHaveLocalizedTextIn(int pageNumber, String language) {
+        List<Map<String, Object>> pages = lastResponse.jsonPath().getList("pages");
+        assertThat("Pages should not be null", pages, notNullValue());
+
+        Map<String, Object> targetPage = null;
+        for (Map<String, Object> page : pages) {
+            Integer pn = (Integer) page.get("pageNumber");
+            if (pn != null && pn == pageNumber) {
+                targetPage = page;
+                break;
+            }
+        }
+        assertThat("Page " + pageNumber + " should exist", targetPage, notNullValue());
+
+        Map<String, Object> localizedText = (Map<String, Object>) targetPage.get("localizedText");
+        assertThat("Page " + pageNumber + " should have localizedText", localizedText, notNullValue());
+        assertThat("Page " + pageNumber + " should have localized text in " + language,
+                localizedText.get(language), notNullValue());
+    }
+
+    @When("I modify story {string} localized text for language {string} on page {int}")
+    public void iModifyStoryLocalizedTextForLanguageOnPage(String storyId, String language, int pageNumber) {
+        logger.info("Modifying story {} localized text for {} on page {}", storyId, language, pageNumber);
+        modifyStoryLocalizedPageText(storyId, pageNumber, language, "MODIFIED LOCALIZED TEXT - " + System.currentTimeMillis());
+        modifiedStories.add(storyId);
+    }
+
+    /**
+     * Modify localized text of a specific page in a story
+     */
+    private void modifyStoryLocalizedPageText(String storyId, int pageNumber, String language, String newText) {
+        Response getResponse = applyAuthenticatedHeaders(given())
+                .when()
+                .get("/api/stories/" + storyId);
+
+        if (getResponse.getStatusCode() != 200) {
+            throw new RuntimeException("Story not found for modification: " + storyId);
+        }
+
+        try {
+            Map<String, Object> story = objectMapper.readValue(getResponse.getBody().asString(), Map.class);
+            List<Map<String, Object>> pages = (List<Map<String, Object>>) story.get("pages");
+
+            boolean found = false;
+            for (Map<String, Object> page : pages) {
+                if (((Number) page.get("pageNumber")).intValue() == pageNumber) {
+                    Map<String, Object> localizedText = (Map<String, Object>) page.get("localizedText");
+                    if (localizedText == null) {
+                        localizedText = new HashMap<>();
+                    }
+                    localizedText.put(language, newText);
+                    page.put("localizedText", localizedText);
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                throw new RuntimeException("Page " + pageNumber + " not found in story " + storyId);
+            }
+
+            story.put("pages", pages);
+            story.put("version", ((Number) story.getOrDefault("version", 1)).intValue() + 1);
+            story.remove("checksum");
+
+            Response response = given()
+                    .contentType("application/json")
+                    .body(objectMapper.writeValueAsString(story))
+                    .when()
+                    .post("/private/seed/story");
+
+            assertThat("Story localized text modification should succeed",
+                    response.getStatusCode(), anyOf(equalTo(200), equalTo(201)));
+            logger.info("Modified page {} localized text ({}) in story {}", pageNumber, language, storyId);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to modify localized text in story: " + storyId, e);
+        }
+    }
 }
 
