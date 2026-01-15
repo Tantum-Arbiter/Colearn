@@ -14,7 +14,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Fonts } from '@/constants/theme';
 import { PageHeader } from '@/components/ui/page-header';
 import { EmotionTheme } from '@/types/emotion';
-import { getThemeById, EMOTION_THEMES, BEAR_EMOTION_IMAGES } from '@/data/emotion-themes';
+import { getThemeById, EMOTION_THEMES } from '@/data/emotion-themes';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
 import { BearTopImage } from '@/components/main-menu/animated-components';

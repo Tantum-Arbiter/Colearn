@@ -31,9 +31,10 @@ describe('MainMenu Component', () => {
       </ScreenTimeProvider>
     );
 
-    expect(getByLabelText('Stories button')).toBeTruthy();
-    expect(getByLabelText('Emotions button')).toBeTruthy();
-    expect(getByLabelText('Calming button')).toBeTruthy();
+    // Labels now use i18n keys (mock returns keys directly)
+    expect(getByLabelText('menu.stories button')).toBeTruthy();
+    expect(getByLabelText('menu.emotions button')).toBeTruthy();
+    expect(getByLabelText('menu.calming button')).toBeTruthy();
     // Note: Screen Time button may not be visible in test environment
   });
 
@@ -44,7 +45,7 @@ describe('MainMenu Component', () => {
       </ScreenTimeProvider>
     );
 
-    const storiesButton = getByLabelText('Stories button');
+    const storiesButton = getByLabelText('menu.stories button');
     fireEvent.press(storiesButton);
 
     expect(mockOnNavigate).toHaveBeenCalledWith('stories');
@@ -57,7 +58,7 @@ describe('MainMenu Component', () => {
       </ScreenTimeProvider>
     );
 
-    const emotionsButton = getByLabelText('Emotions button');
+    const emotionsButton = getByLabelText('menu.emotions button');
     fireEvent.press(emotionsButton);
 
     // Should not crash when swapping icons

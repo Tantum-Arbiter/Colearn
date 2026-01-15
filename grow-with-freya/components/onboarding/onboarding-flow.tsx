@@ -19,9 +19,6 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const nextTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Screen keys for translation lookup
-  const screenKeys = ['welcome', 'screenTime', 'personalize', 'voiceRecording', 'research', 'disclaimer', 'privacy', 'crashReporting'];
-
   const onboardingScreens = [
     {
       title: t('onboarding.screens.welcome.title'),

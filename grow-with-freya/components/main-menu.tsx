@@ -18,7 +18,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
 import { TutorialOverlay } from '@/components/tutorial';
-import { useTutorial } from '@/contexts/tutorial-context';
 
 import { ErrorBoundary } from './error-boundary';
 import {
