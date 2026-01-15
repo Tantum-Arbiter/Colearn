@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback, useRef, useMemo } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet, InteractionManager } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
@@ -47,6 +47,9 @@ import {
 import { createCloudAnimationNew } from './main-menu/cloud-animations';
 import type { MenuItemData } from './main-menu/index';
 
+// PERFORMANCE: Generate star positions once at module level to prevent recalculation on every mount
+// This is safe because star positions are random and don't need to change between mounts
+const MEMOIZED_STAR_POSITIONS = generateStarPositions();
 
 interface MainMenuProps {
   onNavigate: (destination: string) => void;
@@ -236,30 +239,34 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
 
 
   // Start cloud animations once on mount - they run continuously
-  // PERFORMANCE: Animations don't stop/restart on page transitions to prevent jitter
+  // PERFORMANCE: Use InteractionManager to defer animations until after scroll transitions complete
   useEffect(() => {
-    // Check if we can resume from persisted state
-    const cloud1CanResume = backgroundAnimationState?.cloudFloat1 !== undefined &&
-                            isFinite(backgroundAnimationState.cloudFloat1) &&
-                            !isNaN(backgroundAnimationState.cloudFloat1);
-    const cloud2CanResume = backgroundAnimationState?.cloudFloat2 !== undefined &&
-                            isFinite(backgroundAnimationState.cloudFloat2) &&
-                            !isNaN(backgroundAnimationState.cloudFloat2);
+    // Defer cloud animation startup to prevent jitter during page transitions
+    const interactionHandle = InteractionManager.runAfterInteractions(() => {
+      // Check if we can resume from persisted state
+      const cloud1CanResume = backgroundAnimationState?.cloudFloat1 !== undefined &&
+                              isFinite(backgroundAnimationState.cloudFloat1) &&
+                              !isNaN(backgroundAnimationState.cloudFloat1);
+      const cloud2CanResume = backgroundAnimationState?.cloudFloat2 !== undefined &&
+                              isFinite(backgroundAnimationState.cloudFloat2) &&
+                              !isNaN(backgroundAnimationState.cloudFloat2);
 
-    // If we can resume, set the cloud to the persisted position first
-    if (cloud1CanResume) {
-      cloudFloat1.value = backgroundAnimationState.cloudFloat1;
-    }
-    if (cloud2CanResume) {
-      cloudFloat2.value = backgroundAnimationState.cloudFloat2;
-    }
+      // If we can resume, set the cloud to the persisted position first
+      if (cloud1CanResume) {
+        cloudFloat1.value = backgroundAnimationState.cloudFloat1;
+      }
+      if (cloud2CanResume) {
+        cloudFloat2.value = backgroundAnimationState.cloudFloat2;
+      }
 
-    // Start cloud animations - they will run continuously
-    cloudFloat1.value = createCloudAnimationNew(cloudFloat1, 0, -200, cloud1CanResume);
-    cloudFloat2.value = createCloudAnimationNew(cloudFloat2, ANIMATION_TIMINGS.CLOUD_STAGGER_DELAY, -400, cloud2CanResume);
+      // Start cloud animations - they will run continuously
+      cloudFloat1.value = createCloudAnimationNew(cloudFloat1, 0, -200, cloud1CanResume);
+      cloudFloat2.value = createCloudAnimationNew(cloudFloat2, ANIMATION_TIMINGS.CLOUD_STAGGER_DELAY, -400, cloud2CanResume);
+    });
 
     // Cleanup on unmount only
     return () => {
+      interactionHandle.cancel();
       cancelAnimation(cloudFloat1);
       cancelAnimation(cloudFloat2);
     };
@@ -282,10 +289,8 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
 
   // Rocket animations removed entirely
 
-  // Generate star positions based on current screen dimensions
-  // IMPORTANT: This must be called before any conditional returns to follow Rules of Hooks
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const stars = useMemo(() => generateStarPositions(), []);
+  // PERFORMANCE: Use module-level memoized star positions to prevent recalculation
+  const stars = MEMOIZED_STAR_POSITIONS;
 
   // PERFORMANCE: Memoize cloud container styles to prevent re-creating objects on every render
   const cloud1ContainerStyle = useMemo(() => ({

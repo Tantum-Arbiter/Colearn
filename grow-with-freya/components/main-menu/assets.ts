@@ -104,6 +104,12 @@ export const ASSET_DIMENSIONS = {
       height: getResponsiveAssetSize(286)
     };
   },
+  get moonBottom() {
+    return {
+      width: getResponsiveAssetSize(286),
+      height: getResponsiveAssetSize(286)
+    };
+  },
   icon: {
     get small() {
       return {

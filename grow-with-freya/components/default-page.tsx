@@ -45,6 +45,9 @@ const generateReversedStarPositions = (count: number = STAR_COUNT) => {
   return stars;
 };
 
+// PERFORMANCE: Generate star positions once at module level
+const MEMOIZED_REVERSED_STAR_POSITIONS = generateReversedStarPositions();
+
 interface DefaultPageProps {
   icon: string;
   title: string;
@@ -118,8 +121,8 @@ export function DefaultPage({ icon, title, onBack }: DefaultPageProps) {
   // Star animation
   const starRotation = useSharedValue(0);
 
-  // Generate star positions (consistent across re-renders)
-  const stars = useMemo(() => generateReversedStarPositions(), []);
+  // PERFORMANCE: Use module-level memoized star positions
+  const stars = MEMOIZED_REVERSED_STAR_POSITIONS;
 
   // Star animation style
   const starAnimatedStyle = useAnimatedStyle(() => ({

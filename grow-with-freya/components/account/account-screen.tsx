@@ -41,7 +41,7 @@ interface AccountScreenProps {
   isActive?: boolean;
 }
 
-// Generate star positions for background
+// PERFORMANCE: Generate star positions once at module level
 const generateStarPositions = () => {
   const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
   const stars = [];
@@ -57,6 +57,7 @@ const generateStarPositions = () => {
   }
   return stars;
 };
+const MEMOIZED_ACCOUNT_STAR_POSITIONS = generateStarPositions();
 
 type Language = 'en' | 'pl' | 'es' | 'de';
 
@@ -208,7 +209,8 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
 
   // Star animation
   const starOpacity = useSharedValue(0.4);
-  const stars = useMemo(() => generateStarPositions(), []);
+  // PERFORMANCE: Use module-level memoized star positions
+  const stars = MEMOIZED_ACCOUNT_STAR_POSITIONS;
 
   // PERFORMANCE: Defer star animation until after page transition to prevent jitter
   React.useEffect(() => {

@@ -106,7 +106,13 @@ export const MoonImage = React.memo(function MoonImage({
   );
 });
 
-export const BearTopImage = React.memo(function BearTopImage() {
+export const BearTopImage = React.memo(function BearTopImage({
+  width = ASSET_DIMENSIONS.bearTop.width,
+  height = ASSET_DIMENSIONS.bearTop.height
+}: {
+  width?: number;
+  height?: number;
+} = {}) {
   return (
     <View style={{
       width: '100%',
@@ -114,12 +120,18 @@ export const BearTopImage = React.memo(function BearTopImage() {
       justifyContent: 'flex-start',
       alignItems: 'center',
     }}>
-      <CachedBearTopImage />
+      <CachedBearTopImage width={width} height={height} />
     </View>
   );
 });
 
-export const MoonBottomImage = React.memo(function MoonBottomImage() {
+export const MoonBottomImage = React.memo(function MoonBottomImage({
+  width = ASSET_DIMENSIONS.moonBottom.width,
+  height = ASSET_DIMENSIONS.moonBottom.height
+}: {
+  width?: number;
+  height?: number;
+} = {}) {
   return (
     <View style={{
       width: '100%',
@@ -127,7 +139,7 @@ export const MoonBottomImage = React.memo(function MoonBottomImage() {
       justifyContent: 'flex-end',
       alignItems: 'center',
     }}>
-      <CachedMoonBottomImage />
+      <CachedMoonBottomImage width={width} height={height} />
     </View>
   );
 });
