@@ -264,12 +264,12 @@ export function SpotlightOverlay({
 
   const hasTarget = !!step.target;
 
-  // On Android, the modal with statusBarTranslucent extends behind the navigation bar,
+  // On Android, the modal with statusBarTranslucent extends behind the status bar,
   // but measureInWindow returns coordinates relative to the visible content area.
-  // We need to offset the Y coordinate by the navigation bar height on Android.
+  // We need to offset the Y coordinate by the status bar height on Android.
   const adjustedTarget = step.target && Platform.OS === 'android' ? {
     ...step.target,
-    y: step.target.y + insets.bottom,
+    y: step.target.y - insets.bottom,
   } : step.target;
 
   // Check if we're on a phone in landscape mode (shorter dimension < 600 and width > height)
