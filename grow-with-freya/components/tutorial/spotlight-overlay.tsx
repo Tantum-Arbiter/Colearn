@@ -794,6 +794,8 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
     color: '#fff',
     marginRight: 4,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
 });
 

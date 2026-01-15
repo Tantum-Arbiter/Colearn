@@ -14,6 +14,7 @@ import { BearTopImage } from './main-menu/animated-components';
 import { mainMenuStyles } from './main-menu/styles';
 
 import { MusicControl } from '@/components/ui/music-control';
+import { BackButtonText } from '@/constants/theme';
 
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -180,7 +181,7 @@ export function DefaultPage({ icon, title, onBack }: DefaultPageProps) {
         zIndex: 30,
       }}>
         <Pressable style={styles.backButton} onPress={onBack}>
-          <ThemedText style={styles.backButtonText}>← Back</ThemedText>
+          <ThemedText style={styles.backButtonText}>{BackButtonText}</ThemedText>
         </Pressable>
         <MusicControl
           size={24}

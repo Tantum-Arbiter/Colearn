@@ -309,9 +309,13 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   clearButton: {
     padding: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     fontSize: 24,

@@ -13,7 +13,7 @@ import { ThemedText } from '@/components/themed-text';
 import { EmotionCard } from './emotion-card';
 import { getRandomEmotion, getRandomPrompt, EMOTION_GAME_CONFIG } from '@/data/emotions';
 import { Emotion, EmotionGameState, EmotionTheme } from '@/types/emotion';
-import { Fonts } from '@/constants/theme';
+import { Fonts, BackButtonText } from '@/constants/theme';
 
 import { MusicControl } from '../ui/music-control';
 import * as Haptics from 'expo-haptics';
@@ -263,7 +263,7 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
       {/* Header */}
       <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50), zIndex: 50 }]}>
         <Pressable style={[styles.backButton, { minHeight: scaledButtonSize(40) }]} onPress={onBack}>
-          <ThemedText style={[styles.backButtonText, { fontSize: scaledFontSize(16) }]}>← Back</ThemedText>
+          <ThemedText style={[styles.backButtonText, { fontSize: scaledFontSize(16) }]}>{BackButtonText}</ThemedText>
         </Pressable>
 
         <View style={{ width: 24 }} />

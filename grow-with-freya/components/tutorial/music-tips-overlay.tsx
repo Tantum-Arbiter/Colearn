@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, useWindowDimensions, Image } from 'react-native';
+import { View, Text, StyleSheet, Pressable, useWindowDimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -9,27 +9,30 @@ import Animated, {
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/constants/theme';
 import { useTutorial } from '@/contexts/tutorial-context';
-import { EMOTION_CARDS_TIPS } from './tutorial-content';
+import { MUSIC_TIPS } from './tutorial-content';
 
-interface EmotionCardsTipsOverlayProps {
+interface MusicTipsOverlayProps {
   forceShow?: boolean;
   onClose?: () => void;
 }
 
 const STEP_ICONS: Record<string, string> = {
-  emotion_cards_welcome: '🎭',
-  emotion_cards_together: '👨‍👩‍👧',
-  emotion_cards_connect: '💡',
-  emotion_cards_scenarios: '🎮',
-  emotion_cards_themes: '🎨',
+  'music_welcome': '🎵',
+  'binaural_science': '🧠',
+  'headphones_tip': '🎧',
+  'tantrum_tip': '😤',
+  'sleep_science': '🌙',
+  'sleep_routine': '💤',
+  'music_stories': '📖',
 };
 
 /**
- * Emotion Cards Tips Overlay - Shows parent guidance tips on first emotion cards visit
+ * Music Tips Overlay - Shows parent guidance about binaural beats and calming sounds
+ * Displays on first visit to the music section
  */
-export function EmotionCardsTipsOverlay({ forceShow = false, onClose }: EmotionCardsTipsOverlayProps) {
+export function MusicTipsOverlay({ forceShow = false, onClose }: MusicTipsOverlayProps) {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
-  const { hasSeenEmotionCards, markEmotionCardsViewed, shouldShowTutorial } = useTutorial();
+  const { hasSeenMusic, markMusicViewed, shouldShowTutorial } = useTutorial();
   const [isMounted, setIsMounted] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
@@ -39,12 +42,9 @@ export function EmotionCardsTipsOverlay({ forceShow = false, onClose }: EmotionC
   const cardScale = useSharedValue(0.9);
 
   const cardWidth = Math.min(screenWidth - 40, 340);
-  // Limit image size to fit within card (with padding)
-  const maxImageSize = cardWidth - 48; // Account for card padding
-  const imageSize = Math.min(screenWidth * 0.6, maxImageSize, 250);
   const isPhoneLandscape = Math.min(screenWidth, screenHeight) < 600 && screenWidth > screenHeight;
 
-  const shouldShow = !hasSeenEmotionCards && shouldShowTutorial('emotion_cards_tips');
+  const shouldShow = !hasSeenMusic && shouldShowTutorial('music_tips');
 
   useEffect(() => {
     if (forceShow) {
@@ -66,10 +66,10 @@ export function EmotionCardsTipsOverlay({ forceShow = false, onClose }: EmotionC
       }, 800);
       return () => clearTimeout(timer);
     }
-  }, [shouldShow, overlayOpacity, cardOpacity, cardScale, forceShow]);
+  }, [shouldShow, forceShow, overlayOpacity, cardOpacity, cardScale]);
 
   const handleNext = () => {
-    if (currentStep < EMOTION_CARDS_TIPS.length - 1) {
+    if (currentStep < MUSIC_TIPS.length - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
       handleClose();
@@ -89,7 +89,7 @@ export function EmotionCardsTipsOverlay({ forceShow = false, onClose }: EmotionC
       setIsVisible(false);
       setIsMounted(false);
       if (!forceShow) {
-        markEmotionCardsViewed();
+        markMusicViewed();
       }
       onClose?.();
     }, 200);
@@ -104,10 +104,10 @@ export function EmotionCardsTipsOverlay({ forceShow = false, onClose }: EmotionC
     transform: [{ scale: cardScale.value }],
   }));
 
-  const currentTip = EMOTION_CARDS_TIPS[currentStep];
+  const currentTip = MUSIC_TIPS[currentStep];
   if (!isMounted) return null;
 
-  const isLastStep = currentStep === EMOTION_CARDS_TIPS.length - 1;
+  const isLastStep = currentStep === MUSIC_TIPS.length - 1;
   const isFirstStep = currentStep === 0;
 
   const landscapeCardStyle = isPhoneLandscape ? {
@@ -133,39 +133,70 @@ export function EmotionCardsTipsOverlay({ forceShow = false, onClose }: EmotionC
       {isVisible && currentTip && (
         <View style={styles.cardContainer} pointerEvents="box-none">
           <Animated.View style={[styles.card, landscapeCardStyle, animatedCardStyle]}>
-            {currentTip.image ? (
-              <Image source={currentTip.image} style={[styles.tipImage, { width: imageSize, height: imageSize }]} resizeMode="contain" />
+            {isPhoneLandscape ? (
+              <>
+                <View style={[styles.iconContainer, { marginBottom: 0, marginRight: 16 }]}>
+                  <Text style={styles.icon}>{STEP_ICONS[currentTip.id] || '🎵'}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.title, { marginBottom: 4 }]}>{currentTip.title}</Text>
+                  <Text style={[styles.description, { marginBottom: 8 }]}>{currentTip.description}</Text>
+                  <View style={[styles.buttonRow, { marginTop: 4 }]}>
+                    <View style={styles.progressDots}>
+                      {MUSIC_TIPS.map((_, i) => (
+                        <View key={i} style={[styles.dot, i === currentStep && styles.dotActive]} />
+                      ))}
+                    </View>
+                    <View style={styles.navButtons}>
+                      {!isFirstStep && (
+                        <Pressable onPress={handlePrevious} style={styles.navButton}>
+                          <Ionicons name="chevron-back" size={18} color="#fff" />
+                        </Pressable>
+                      )}
+                      <Pressable onPress={handleNext} style={[styles.navButton, styles.nextButton]}>
+                        <Text style={[styles.nextText, { fontSize: 12 }]}>{isLastStep ? 'Go!' : 'Next'}</Text>
+                      </Pressable>
+                      <Pressable onPress={handleClose} style={[styles.skipButton, { marginLeft: 8 }]}>
+                        <Text style={[styles.skipText, { fontSize: 11 }]}>Skip</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                </View>
+              </>
             ) : (
-              <View style={styles.iconContainer}>
-                <Text style={styles.icon}>{STEP_ICONS[currentTip.id] || '🎭'}</Text>
-              </View>
-            )}
+              <>
+                <View style={styles.iconContainer}>
+                  <Text style={styles.icon}>{STEP_ICONS[currentTip.id] || '🎵'}</Text>
+                </View>
 
-            <Text style={styles.title}>{currentTip.title}</Text>
-            <Text style={styles.description}>{currentTip.description}</Text>
+                <Text style={styles.title}>{currentTip.title}</Text>
+                <Text style={styles.description}>{currentTip.description}</Text>
 
-            <View style={styles.progressDots}>
-              {EMOTION_CARDS_TIPS.map((_, i) => (
-                <View key={i} style={[styles.dot, i === currentStep && styles.dotActive]} />
-              ))}
-            </View>
+                <View style={styles.progressDots}>
+                  {MUSIC_TIPS.map((_, i) => (
+                    <View key={i} style={[styles.dot, i === currentStep && styles.dotActive]} />
+                  ))}
+                </View>
 
-            <View style={styles.buttonRow}>
-              <Pressable onPress={handleClose} style={styles.skipButton}>
-                <Text style={styles.skipText}>Skip All</Text>
-              </Pressable>
-              <View style={styles.navButtons}>
-                {!isFirstStep && (
-                  <Pressable onPress={handlePrevious} style={styles.navButton}>
-                    <Ionicons name="chevron-back" size={20} color="#fff" />
+                <View style={styles.buttonRow}>
+                  <Pressable onPress={handleClose} style={styles.skipButton}>
+                    <Text style={styles.skipText}>Skip All</Text>
                   </Pressable>
-                )}
-                <Pressable onPress={handleNext} style={[styles.navButton, styles.nextButton]}>
-                  <Text style={styles.nextText}>{isLastStep ? 'Let\'s Go!' : 'Next'}</Text>
-                  {!isLastStep && <Ionicons name="chevron-forward" size={18} color="#fff" />}
-                </Pressable>
-              </View>
-            </View>
+
+                  <View style={styles.navButtons}>
+                    {!isFirstStep && (
+                      <Pressable onPress={handlePrevious} style={styles.navButton}>
+                        <Ionicons name="chevron-back" size={20} color="#fff" />
+                      </Pressable>
+                    )}
+                    <Pressable onPress={handleNext} style={[styles.navButton, styles.nextButton]}>
+                      <Text style={styles.nextText}>{isLastStep ? 'Let\'s Go!' : 'Next'}</Text>
+                      {!isLastStep && <Ionicons name="chevron-forward" size={18} color="#fff" />}
+                    </Pressable>
+                  </View>
+                </View>
+              </>
+            )}
           </Animated.View>
         </View>
       )}
@@ -202,7 +233,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#E8F4F8',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
@@ -213,7 +244,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontFamily: Fonts.sans,
-    fontWeight: '700',
+    fontWeight: '700' as const,
     color: '#1a1a2e',
     textAlign: 'center',
     marginBottom: 12,
@@ -224,12 +255,7 @@ const styles = StyleSheet.create({
     color: '#4a4a5a',
     textAlign: 'center',
     lineHeight: 22,
-    marginBottom: 16,
-  },
-  tipImage: {
-    borderRadius: 12,
-    marginBottom: 12,
-    alignSelf: 'center',
+    marginBottom: 20,
   },
   progressDots: {
     flexDirection: 'row',
@@ -259,7 +285,7 @@ const styles = StyleSheet.create({
   skipText: {
     fontSize: 14,
     fontFamily: Fonts.sans,
-    fontWeight: '500',
+    fontWeight: '500' as const,
     color: '#888',
   },
   navButtons: {
@@ -281,7 +307,7 @@ const styles = StyleSheet.create({
   nextText: {
     fontSize: 14,
     fontFamily: Fonts.sans,
-    fontWeight: '700',
+    fontWeight: '700' as const,
     color: '#fff',
     marginRight: 4,
   },

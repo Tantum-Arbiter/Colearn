@@ -1,6 +1,8 @@
 import React, { useEffect, useRef } from 'react';
+import { View, StyleSheet } from 'react-native';
 import { PlaylistScreen } from './playlist-screen';
 import { useMusicPlayer } from '@/hooks/use-music-player';
+import { MusicTipsOverlay } from '@/components/tutorial/music-tips-overlay';
 
 interface MusicScreenProps {
   onBack: () => void;
@@ -39,5 +41,17 @@ export function MusicScreen({ onBack, isActive = true }: MusicScreenProps) {
     };
   }, []);
 
-  return <PlaylistScreen onBack={onBack} isActive={isActive} />;
+  return (
+    <View style={styles.container}>
+      <PlaylistScreen onBack={onBack} isActive={isActive} />
+      {/* Music Tips Overlay - shows on first visit */}
+      <MusicTipsOverlay />
+    </View>
+  );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});

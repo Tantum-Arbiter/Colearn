@@ -6,8 +6,16 @@ const DEBUG_LOGS = false;
 // Single background music track
 const BACKGROUND_TRACK = require('../assets/audio/background/classic-epic.mp3');
 
+// Use global counter to track player instances across hot reloads
+declare global {
+  // eslint-disable-next-line no-var
+  var __bgMusicPlayerCounter: number | undefined;
+}
+global.__bgMusicPlayerCounter = global.__bgMusicPlayerCounter ?? 0;
+
 class BackgroundMusicService {
   private player: AudioPlayer | null = null;
+  private playerId: number = 0; // Unique ID for each player instance
   private isPlaying: boolean = false;
   private isLoaded: boolean = false;
   private volume: number = 0.18; // Default volume (18% - 60% of previous 30%)
@@ -32,6 +40,22 @@ class BackgroundMusicService {
     this.isInitializing = true;
 
     try {
+      // Clean up any existing player first to prevent duplicates
+      if (this.player) {
+        DEBUG_LOGS && console.log('Cleaning up existing player before reinitializing');
+        try {
+          if (this.statusListener) {
+            this.statusListener.remove();
+            this.statusListener = null;
+          }
+          this.player.pause();
+          this.player.release();
+        } catch (cleanupError) {
+          console.warn('Error cleaning up old player:', cleanupError);
+        }
+        this.player = null;
+      }
+
       // Set audio mode for iOS/iPad compatibility - FORCE exclusive audio control
       // This is the single source of audio mode configuration for the entire app
       await setAudioModeAsync({
@@ -42,6 +66,10 @@ class BackgroundMusicService {
       DEBUG_LOGS && console.log('Audio mode configured: doNotMix for exclusive audio control');
 
       // Create the audio player with expo-audio
+      global.__bgMusicPlayerCounter = (global.__bgMusicPlayerCounter ?? 0) + 1;
+      this.playerId = global.__bgMusicPlayerCounter;
+      DEBUG_LOGS && console.log(`[BGMusic] Creating player #${this.playerId}`);
+
       this.player = createAudioPlayer(BACKGROUND_TRACK, {
         updateInterval: 500,
       });
@@ -56,7 +84,7 @@ class BackgroundMusicService {
       this.isLoaded = true;
       this.isInitializing = false;
 
-      DEBUG_LOGS && console.log('Background music initialized with expo-audio');
+      DEBUG_LOGS && console.log(`[BGMusic] Player #${this.playerId} initialized successfully`);
     } catch (error) {
       console.error('Failed to initialize background music:', error);
       console.error('Error details:', JSON.stringify(error, null, 2));
@@ -71,6 +99,8 @@ class BackgroundMusicService {
    * This also clears the muted flag since user is explicitly requesting playback
    */
   async play(): Promise<void> {
+    DEBUG_LOGS && console.log(`[BGMusic] play() called - player #${this.playerId}, isLoaded: ${this.isLoaded}, isPlaying: ${this.isPlaying}`);
+
     // Clear muted flag when explicitly playing
     this.isMuted = false;
 
@@ -442,13 +472,14 @@ class BackgroundMusicService {
 
     if (this.player) {
       try {
+        DEBUG_LOGS && console.log(`[BGMusic] Cleaning up player #${this.playerId}`);
         this.player.pause();
         this.player.release();
         this.player = null;
         this.isLoaded = false;
         this.isPlaying = false;
         this.isInitializing = false;
-        DEBUG_LOGS && console.log('Background music cleaned up');
+        DEBUG_LOGS && console.log(`[BGMusic] Player #${this.playerId} cleaned up successfully`);
       } catch (error) {
         console.warn('Failed to cleanup background music:', error);
       }

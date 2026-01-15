@@ -15,7 +15,7 @@ import { MusicControl } from '@/components/ui/music-control';
 import { EMOTIONS } from '@/data/emotions';
 import { EmotionTheme } from '@/types/emotion';
 import { getThemeById } from '@/data/emotion-themes';
-import { Fonts } from '@/constants/theme';
+import { Fonts, BackButtonText } from '@/constants/theme';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
 
@@ -120,7 +120,7 @@ export function EmotionsMenuScreen({
               fontSize: 16,
               fontWeight: 'bold',
               fontFamily: Fonts.primary,
-            }}>← Back</ThemedText>
+            }}>{BackButtonText}</ThemedText>
           </Pressable>
 
           <MusicControl

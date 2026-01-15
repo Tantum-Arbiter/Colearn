@@ -1536,28 +1536,7 @@ export function StoryBookReader({
             }
           ]}>
 
-          {/* Record Mode: Text box above navigation row */}
-          {readingMode === 'record' && (
-            <View style={styles.recordModeTextWrapper}>
-              <View style={styles.recordModeTextBox}>
-                {/* Only the text fades, not the text box */}
-                <Animated.Text
-                  style={[
-                    styles.storyText,
-                    {
-                      fontSize: scaledFontSize(isTablet ? 20 : 16),
-                      lineHeight: scaledFontSize(isTablet ? 20 : 16) * 1.6,
-                    },
-                    textAnimatedStyle
-                  ]}
-                >
-                  {currentPage?.text}
-                </Animated.Text>
-              </View>
-            </View>
-          )}
-
-          {/* Navigation Row */}
+          {/* Navigation Row - includes text box in center for all modes */}
           <View style={[
             styles.navigationRow,
             readingMode === 'record' && styles.navigationRowRecordMode
@@ -1567,13 +1546,13 @@ export function StoryBookReader({
             <Pressable
               style={[
                 styles.navButton,
-                styles.prevButton,
+                styles.nextButton,
                 {
                   width: scaledButtonSize(50),
                   height: scaledButtonSize(50),
                   borderRadius: scaledButtonSize(25),
                 },
-                (currentPageIndex <= 1 || (readingMode === 'record' && isRecording)) && styles.navButtonDisabled
+                (currentPageIndex <= 1 || (readingMode === 'record' && isRecording)) && styles.navButtonDisabled,
               ]}
               onPress={handlePreviousPage}
               disabled={currentPageIndex <= 1 || isTransitioning || (readingMode === 'record' && isRecording)}
@@ -1589,61 +1568,59 @@ export function StoryBookReader({
             </Pressable>
           </Animated.View>
 
-          {/* Story Text Box - Center - Scrollable for accessibility (non-record modes only) */}
-          {readingMode !== 'record' && (
-            <Animated.View style={[styles.centerTextContainer, textBoxAnimatedStyle]}>
-              {(() => {
-                // Tablet gets larger base font for better readability
-                // iPad base sizes are significantly larger to compensate for 2-line limit
-                const baseFontSize = currentPage?.pageNumber === 0
-                  ? (isTablet ? 28 : 18)
-                  : (isTablet ? 26 : 16);
-                const fontSize = scaledFontSize(baseFontSize);
-                const lineHeight = fontSize * 1.5;
-                // 2 lines on all devices - enforced for consistent reading experience
-                const maxLines = 2;
-                const verticalPadding = 30;
-                const fixedTextBoxHeight = (lineHeight * maxLines) + verticalPadding;
+          {/* Story Text Box - Center - Scrollable for accessibility */}
+          <Animated.View style={[styles.centerTextContainer, textBoxAnimatedStyle]}>
+            {(() => {
+              // Tablet gets larger base font for better readability
+              // iPad base sizes are significantly larger to compensate for 2-line limit
+              const baseFontSize = currentPage?.pageNumber === 0
+                ? (isTablet ? 28 : 18)
+                : (isTablet ? 26 : 16);
+              const fontSize = scaledFontSize(baseFontSize);
+              const lineHeight = fontSize * 1.5;
+              // 2 lines on all devices - enforced for consistent reading experience
+              const maxLines = 2;
+              const verticalPadding = 30;
+              const fixedTextBoxHeight = (lineHeight * maxLines) + verticalPadding;
 
-                return (
-                  <View style={[
-                    styles.centerTextBox,
-                    {
-                      height: fixedTextBoxHeight,
-                      minHeight: fixedTextBoxHeight,
-                      maxHeight: fixedTextBoxHeight,
-                    }
-                  ]}>
-                    <ScrollView
-                      key={`text-scroll-${story.id}-${currentPageIndex}-${textSizeScale}`}
-                      ref={textScrollViewRef}
-                      showsVerticalScrollIndicator={true}
-                      indicatorStyle="black"
-                      scrollEventThrottle={16}
-                      bounces={false}
-                      nestedScrollEnabled={true}
-                      scrollEnabled={true}
+              return (
+                <View style={[
+                  styles.centerTextBox,
+                  {
+                    height: fixedTextBoxHeight,
+                    minHeight: fixedTextBoxHeight,
+                    maxHeight: fixedTextBoxHeight,
+                  }
+                ]}>
+                  <ScrollView
+                    key={`text-scroll-${story.id}-${currentPageIndex}-${textSizeScale}`}
+                    ref={textScrollViewRef}
+                    showsVerticalScrollIndicator={true}
+                    indicatorStyle="black"
+                    scrollEventThrottle={16}
+                    bounces={false}
+                    nestedScrollEnabled={true}
+                    scrollEnabled={true}
+                  >
+                    {/* Only the text fades, not the text box */}
+                    <Animated.Text
+                      style={[
+                        currentPage?.pageNumber === 0 ? styles.coverText : styles.storyText,
+                        {
+                          fontSize: fontSize,
+                          lineHeight: lineHeight,
+                          paddingRight: 15,
+                        },
+                        textAnimatedStyle
+                      ]}
                     >
-                      {/* Only the text fades, not the text box */}
-                      <Animated.Text
-                        style={[
-                          currentPage?.pageNumber === 0 ? styles.coverText : styles.storyText,
-                          {
-                            fontSize: fontSize,
-                            lineHeight: lineHeight,
-                            paddingRight: 15,
-                          },
-                          textAnimatedStyle
-                        ]}
-                      >
-                        {currentPage?.text}
-                      </Animated.Text>
-                    </ScrollView>
-                  </View>
-                );
-              })()}
-            </Animated.View>
-          )}
+                      {currentPage?.text}
+                    </Animated.Text>
+                  </ScrollView>
+                </View>
+              );
+            })()}
+          </Animated.View>
 
           {/* Next Button - Right Side */}
           <Animated.View style={rightButtonAnimatedStyle}>
@@ -1658,7 +1635,7 @@ export function StoryBookReader({
                 },
                 currentPageIndex === pages.length - 1 && styles.completeButton,
                 (readingMode === 'record' && (isRecording || (currentPageIndex > 0 && !tempRecordingUri && !currentVoiceOver?.pageRecordings[currentPageIndex]))) && styles.navButtonDisabled,
-                isExiting && styles.navButtonDisabled
+                isExiting && styles.navButtonDisabled,
               ]}
               onPress={handleNextPage}
               disabled={isTransitioning || isExiting || (readingMode === 'record' && (isRecording || (currentPageIndex > 0 && !tempRecordingUri && !currentVoiceOver?.pageRecordings[currentPageIndex])))}
@@ -2407,14 +2384,10 @@ const styles = StyleSheet.create({
     zIndex: 5,
   },
   bottomUIPanelRecordMode: {
-    flexDirection: 'column',
+    // Same row layout as other modes - no column stacking
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
-  },
-  recordModeTextWrapper: {
-    width: '100%',
-    alignItems: 'center',
-    marginBottom: 15,
+    justifyContent: 'space-between',
   },
   navigationRow: {
     flexDirection: 'row',
@@ -2423,8 +2396,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   navigationRowRecordMode: {
-    justifyContent: 'center',
-    gap: 40,
+    // Same layout as other modes - buttons on either side
+    justifyContent: 'space-between',
   },
   backgroundImage: {
     width: '100%',
@@ -2501,8 +2474,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: 20,
-    maxWidth: '70%',
+    marginHorizontal: 10,
+    maxWidth: '85%',
   },
   recordModeTextContainer: {
     flex: 0,
@@ -2517,7 +2490,7 @@ const styles = StyleSheet.create({
     minHeight: 80,
     width: '100%',
     minWidth: 200,
-    maxWidth: 500,
+    maxWidth: 700,
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: 'rgba(0, 0, 0, 0.1)',
@@ -2527,21 +2500,6 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 4,
     position: 'relative',
-  },
-  recordModeTextBox: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 20,
-    paddingHorizontal: 25,
-    paddingVertical: 20,
-    width: '90%',
-    maxWidth: 700,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.1)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 4,
   },
 
   // Legacy text styles (for compatibility)
@@ -2617,7 +2575,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 6,
     elevation: 4,
-    overflow: 'hidden',
+    // Note: removed overflow: 'hidden' to prevent Android text background issues
   },
 
   navButtonDisabled: {
@@ -2631,6 +2589,10 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 1,
+    textAlign: 'center',
+    textAlignVertical: 'center', // Android: ensure vertical centering
+    includeFontPadding: false, // Android: remove extra font padding for consistent centering
+    backgroundColor: 'transparent', // Ensure no background on the icon
   },
   navButtonTextDisabled: {
     color: '#999',

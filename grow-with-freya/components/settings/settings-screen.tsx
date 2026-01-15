@@ -20,6 +20,7 @@ import {
   generateStarPositions
 } from '@/components/main-menu/index';
 import { MusicControl } from '@/components/ui/music-control';
+import { BackButtonText } from '@/constants/theme';
 
 interface SettingsScreenProps {
   onBack: () => void;
@@ -145,7 +146,7 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
             textShadowColor: 'rgba(0, 0, 0, 0.5)',
             textShadowOffset: { width: 0, height: 1 },
             textShadowRadius: 2,
-          }}>← Back</ThemedText>
+          }}>{BackButtonText}</ThemedText>
         </Pressable>
 
         <MusicControl

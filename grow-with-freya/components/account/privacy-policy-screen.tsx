@@ -8,6 +8,7 @@ import { MoonBottomImage } from '@/components/main-menu/animated-components';
 import { mainMenuStyles } from '@/components/main-menu/styles';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { StarBackground } from '@/components/ui/star-background';
+import { BackButtonText } from '@/constants/theme';
 
 interface PrivacyPolicyScreenProps {
   onBack: () => void;
@@ -35,7 +36,7 @@ export function PrivacyPolicyScreen({ onBack }: PrivacyPolicyScreenProps) {
         {/* Header */}
         <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50), zIndex: 50 }]}>
           <Pressable style={[styles.backButton, { minHeight: scaledButtonSize(40) }]} onPress={onBack}>
-            <Text style={[styles.backButtonText, { fontSize: scaledFontSize(16) }]}>← Back</Text>
+            <Text style={[styles.backButtonText, { fontSize: scaledFontSize(16) }]}>{BackButtonText}</Text>
           </Pressable>
           <View style={styles.titleContainer}>
             <Text style={[styles.title, { fontSize: scaledFontSize(20) }]}>Privacy Policy</Text>

@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import { MusicControl } from './music-control';
-import { Fonts } from '@/constants/theme';
+import { Fonts, BackButtonText } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -102,7 +102,7 @@ export function PageHeader({
             ]}
             onPress={onBack}
           >
-            <Text style={[styles.backButtonText, { fontSize: backFontSize }]} numberOfLines={1}>← Back</Text>
+            <Text style={[styles.backButtonText, { fontSize: backFontSize }]} numberOfLines={1}>{BackButtonText}</Text>
           </Pressable>
         </Animated.View>
 

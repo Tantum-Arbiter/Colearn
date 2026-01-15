@@ -25,6 +25,7 @@ import { AssetSyncService } from '../../services/asset-sync-service';
 import * as Sentry from '@sentry/react-native';
 import { TEXT_SIZE_OPTIONS, useAccessibility } from '../../hooks/use-accessibility';
 import { SettingsTipsOverlay } from '../tutorial/settings-tips-overlay';
+import { ScreenTimeTipsOverlay } from '../tutorial/screen-time-tips-overlay';
 import { useTutorial } from '../../contexts/tutorial-context';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -203,7 +204,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
   const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
 
   // Tutorial reset
-  const { resetAllTutorials } = useTutorial();
+  const { resetAllTutorials, lastResetTimestamp } = useTutorial();
 
   // Star animation
   const starOpacity = useSharedValue(0.4);
@@ -751,6 +752,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
             paddingTop={insets.top + 140 + (textSizeScale - 1) * 60 + 10}
             onNavigateToReminders={() => navigateToSlide('custom-reminders')}
           />
+          <ScreenTimeTipsOverlay isActive={currentView === 'screen-time'} />
         </Animated.View>
 
         {/* Custom Reminders Page */}
@@ -836,8 +838,8 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
 
       </LinearGradient>
 
-      {/* Settings Tips Overlay - shown on first visit */}
-      <SettingsTipsOverlay isActive={isActive} />
+      {/* Settings Tips Overlay - shown on first visit, key forces remount after reset */}
+      <SettingsTipsOverlay key={`settings-tips-${lastResetTimestamp}`} isActive={isActive} />
     </View>
   );
 }

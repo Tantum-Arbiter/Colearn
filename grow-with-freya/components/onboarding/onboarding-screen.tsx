@@ -15,6 +15,7 @@ import * as Haptics from 'expo-haptics';
 
 import { ThemedText } from '../themed-text';
 import { PngIllustration } from '../ui/png-illustration';
+import { BackButtonText } from '@/constants/theme';
 
 const { width, height } = Dimensions.get('window');
 
@@ -398,7 +399,13 @@ export function OnboardingScreen({
 
 
       <Animated.View
-        style={[styles.buttonContainer, buttonAnimatedStyle, buttonContainerAnimatedStyle]}
+        style={[
+          styles.buttonContainer,
+          buttonAnimatedStyle,
+          buttonContainerAnimatedStyle,
+          // Add extra bottom padding on Android for navigation bar
+          Platform.OS === 'android' && { paddingBottom: Math.max(insets.bottom, 20) + 10 }
+        ]}
       >
         <View style={styles.navigationButtons}>
           {currentStep > 1 && (
@@ -406,7 +413,7 @@ export function OnboardingScreen({
               style={styles.backButton}
               onPress={handlePrevious}
             >
-              <ThemedText style={styles.backButtonText}>← Back</ThemedText>
+              <ThemedText style={styles.backButtonText}>{BackButtonText}</ThemedText>
             </Pressable>
           )}
 

@@ -18,6 +18,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
+import { BackButtonText } from '@/constants/theme';
 import { BearTopImage } from '@/components/main-menu/animated-components';
 import { mainMenuStyles } from '@/components/main-menu/styles';
 
@@ -139,7 +140,7 @@ export function MusicSelectionScreen({
       {/* Header with back button */}
       <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50), zIndex: 50 }]}>
         <Pressable style={styles.backButton} onPress={onBack}>
-          <Text style={styles.backButtonText}>← Back</Text>
+          <Text style={styles.backButtonText}>{BackButtonText}</Text>
         </Pressable>
         <View style={{ width: 24 }} />
         <MusicControl

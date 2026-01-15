@@ -26,7 +26,7 @@ import { mainMenuStyles } from '@/components/main-menu/styles';
 import { MusicControl } from '../ui/music-control';
 import { useMusicPlayer } from '@/hooks/use-music-player';
 import { getCategoryInfo } from '@/data/music';
-import { Fonts } from '@/constants/theme';
+import { Fonts, BackButtonText } from '@/constants/theme';
 import { SleepSequencePlayer } from '@/services/sleep-sequence-player';
 import { useAccessibility } from '@/hooks/use-accessibility';
 
@@ -155,7 +155,7 @@ export function MusicPlayerScreen({ onBack }: MusicPlayerScreenProps) {
       >
         <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50) }]}>
           <Pressable style={styles.backButton} onPress={onBack}>
-            <Text style={styles.backButtonText}>← Back</Text>
+            <Text style={styles.backButtonText}>{BackButtonText}</Text>
           </Pressable>
         </View>
         <View style={styles.emptyState}>
@@ -199,7 +199,7 @@ export function MusicPlayerScreen({ onBack }: MusicPlayerScreenProps) {
       {/* Header */}
       <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50), zIndex: 50 }]}>
         <Pressable style={[styles.backButton, { minHeight: scaledButtonSize(40) }]} onPress={onBack}>
-          <Text style={[styles.backButtonText, { fontSize: scaledFontSize(16) }]}>← Back</Text>
+          <Text style={[styles.backButtonText, { fontSize: scaledFontSize(16) }]}>{BackButtonText}</Text>
         </Pressable>
         <View style={{ width: 24 }} />
         <MusicControl size={24} color="white" />

@@ -137,30 +137,76 @@ export const EMOTION_CARDS_TIPS: Omit<TutorialStep, 'target'>[] = [
 export const SETTINGS_WALKTHROUGH_STEPS: Omit<TutorialStep, 'target'>[] = [
   {
     id: 'settings_intro',
-    title: 'Account Overview ⚙️',
-    description: 'Here you can personalise the app experience for your family.',
+    title: 'Your Account Settings 👋',
+    description: 'This is your control centre! Manage your account, personalise the app, and adjust settings for your family.',
     tipPosition: 'center',
   },
   {
-    id: 'notifications',
-    title: 'Notifications 🔔',
-    description: 'Set up bedtime reminders and story notifications to build consistent routines.',
-    arrowDirection: 'up',
-    tipPosition: 'below',
+    id: 'login',
+    title: 'Sign In for More 🔐',
+    description: 'Create an account or sign in to sync your progress across devices, save your child\'s achievements, and unlock premium features.',
+    tipPosition: 'center',
   },
   {
-    id: 'schedule',
-    title: 'Schedule Builder 📅',
-    description: 'Create custom reminders for story time, emotion check-ins, or any routine you want to establish.',
-    arrowDirection: 'up',
-    tipPosition: 'below',
+    id: 'language',
+    title: 'Change Language 🌍',
+    description: 'Tap the Language option to switch between English, Polish, Spanish, and German. Stories and the interface will update to your chosen language.',
+    tipPosition: 'center',
+  },
+  {
+    id: 'avatar',
+    title: 'Personalise Your Avatar 👤',
+    description: 'In the Profile section, you can change your child\'s nickname and avatar. This makes stories more personal and engaging!',
+    tipPosition: 'center',
   },
   {
     id: 'accessibility',
-    title: 'Accessibility Options 👁️',
-    description: 'Adjust text size, enable high contrast, and customise the experience for your child\'s needs.',
-    arrowDirection: 'up',
-    tipPosition: 'below',
+    title: 'Accessibility Options ♿',
+    description: 'Need larger text or buttons? Use the size slider to make everything easier to see and tap. Great for children who need extra visibility.',
+    tipPosition: 'center',
+  },
+  {
+    id: 'screen_time',
+    title: 'Screen Time Controls ⏱️',
+    description: 'Set healthy limits! Configure daily allowances based on your child\'s age, create custom reminders, and build healthy routines.',
+    tipPosition: 'center',
+  },
+];
+
+/**
+ * Screen Time Tips - shown on first visit to screen time controls
+ * Guides parents through screen time management features
+ */
+export const SCREEN_TIME_TIPS: Omit<TutorialStep, 'target'>[] = [
+  {
+    id: 'screen_time_intro',
+    title: 'Screen Time Management ⏱️',
+    description: 'Take control of your child\'s screen time with smart limits and helpful reminders.',
+    tipPosition: 'center',
+  },
+  {
+    id: 'age_based_limits',
+    title: 'Age-Based Alerts 👶',
+    description: 'Select your child\'s age range to get recommended screen time limits. You\'ll be alerted when they approach or reach these healthy boundaries.',
+    tipPosition: 'center',
+  },
+  {
+    id: 'weekly_heatmap',
+    title: 'Weekly Activity Heatmap 📊',
+    description: 'Track daily usage at a glance! The heatmap shows your child\'s screen time each day, colour-coded based on age-specific recommendations. Green means healthy, red indicates over the limit.',
+    tipPosition: 'center',
+  },
+  {
+    id: 'custom_reminders',
+    title: 'Custom Reminders 🔔',
+    description: 'Create personalised reminders for story time, bedtime routines, or breaks. Build healthy habits that work for your family.',
+    tipPosition: 'center',
+  },
+  {
+    id: 'routine_building',
+    title: 'Build a Routine 📅',
+    description: 'Set up recurring alerts to establish consistent daily routines. Regular schedules help children feel secure and develop good habits.',
+    tipPosition: 'center',
   },
 ];
 
@@ -313,6 +359,55 @@ export const NARRATE_MODE_TOUR_STEPS: Omit<TutorialStep, 'target'>[] = [
 ];
 
 /**
+ * Music Tips - shown on first visit to music/sound section
+ * Educates parents about binaural beats and calming sounds
+ */
+export const MUSIC_TIPS: Omit<TutorialStep, 'target'>[] = [
+  {
+    id: 'music_welcome',
+    title: 'Welcome to Calming Sounds 🎵',
+    description: 'This section uses specially designed audio to help your child relax, sleep, or calm down during challenging moments.',
+    tipPosition: 'center',
+  },
+  {
+    id: 'binaural_science',
+    title: 'The Science of Sound 🧠',
+    description: 'Our tracks use binaural beats - subtle sound frequencies that can help guide the brain into calmer states. Research shows these can reduce anxiety and promote relaxation in both children and adults.',
+    tipPosition: 'center',
+  },
+  {
+    id: 'headphones_tip',
+    title: 'Use Headphones 🎧',
+    description: 'For binaural beats to work effectively, headphones are recommended. The different frequencies in each ear create the calming effect. Without headphones, your child still benefits from the soothing music!',
+    tipPosition: 'center',
+  },
+  {
+    id: 'tantrum_tip',
+    title: 'During Tantrums 😤',
+    description: 'When emotions run high, try playing our tantrum-calming tracks. The gentle frequencies can help regulate your child\'s nervous system and bring them back to a calmer state more quickly.',
+    tipPosition: 'center',
+  },
+  {
+    id: 'sleep_science',
+    title: 'Better Sleep 🌙',
+    description: 'Our sleep tracks use delta wave frequencies (0.5-4 Hz) that naturally occur during deep sleep. Playing these as your child falls asleep can help them drift off faster and sleep more soundly.',
+    tipPosition: 'center',
+  },
+  {
+    id: 'sleep_routine',
+    title: 'Build a Routine 💤',
+    description: 'Try playing the same calming track each night as part of your bedtime routine. Over time, your child\'s brain will associate the sounds with sleep, making bedtime easier.',
+    tipPosition: 'center',
+  },
+  {
+    id: 'music_stories',
+    title: 'Stories Too! 📖',
+    description: 'Don\'t forget our story section! Reading together builds vocabulary, imagination, and that precious parent-child bond. Record your voice so your child can hear YOU even when you\'re apart.',
+    tipPosition: 'center',
+  },
+];
+
+/**
  * Get tutorial steps by ID
  */
 export function getTutorialSteps(tutorialId: string): Omit<TutorialStep, 'target'>[] {
@@ -331,8 +426,11 @@ export function getTutorialSteps(tutorialId: string): Omit<TutorialStep, 'target
       return RECORD_MODE_TOUR_STEPS;
     case 'narrate_mode_tour':
       return NARRATE_MODE_TOUR_STEPS;
+    case 'music_tips':
+      return MUSIC_TIPS;
+    case 'screen_time_tips':
+      return SCREEN_TIME_TIPS;
     default:
       return [];
   }
 }
-

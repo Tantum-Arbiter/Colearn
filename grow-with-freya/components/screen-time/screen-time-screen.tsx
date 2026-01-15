@@ -20,6 +20,7 @@ import { ApiClient } from '@/services/api-client';
 import { reminderService } from '@/services/reminder-service';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { backgroundSaveService } from '@/services/background-save-service';
+import { ScreenTimeTipsOverlay } from '../tutorial';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -697,6 +698,9 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
           </ScrollView>
         )}
       </LinearGradient>
+
+      {/* Tips overlay for first-time visitors */}
+      <ScreenTimeTipsOverlay />
     </View>
   );
 }

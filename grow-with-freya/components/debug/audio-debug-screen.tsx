@@ -5,6 +5,7 @@ import { useBackgroundMusic } from '@/hooks/use-background-music';
 import { useGlobalSound } from '@/contexts/global-sound-context';
 import { backgroundMusic } from '@/services/background-music';
 import { createAudioPlayer, setAudioModeAsync, AudioPlayer } from 'expo-audio';
+import { BackButtonText } from '@/constants/theme';
 
 interface AudioDebugScreenProps {
   onBack: () => void;
@@ -117,7 +118,7 @@ export function AudioDebugScreen({ onBack }: AudioDebugScreenProps) {
     >
       <View style={styles.header}>
         <Pressable style={styles.backButton} onPress={onBack}>
-          <Text style={styles.backButtonText}>← Back</Text>
+          <Text style={styles.backButtonText}>{BackButtonText}</Text>
         </Pressable>
         <Text style={styles.title}>Audio Debug</Text>
       </View>

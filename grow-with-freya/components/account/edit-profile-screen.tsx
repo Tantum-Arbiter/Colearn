@@ -6,6 +6,7 @@ import { useAppStore } from '../../store/app-store';
 import { backgroundSaveService } from '../../services/background-save-service';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { StarBackground } from '@/components/ui/star-background';
+import { BackButtonText } from '@/constants/theme';
 
 interface EditProfileScreenProps {
   onBack: () => void;
@@ -64,7 +65,7 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50) }]}>
         <Pressable style={[styles.backButton, { minHeight: scaledButtonSize(40) }]} onPress={onBack}>
-          <Text style={[styles.backButtonText, { fontSize: scaledFontSize(16) }]}>← Back</Text>
+          <Text style={[styles.backButtonText, { fontSize: scaledFontSize(16) }]}>{BackButtonText}</Text>
         </Pressable>
         <View style={styles.titleContainer}>
           <Text style={[styles.title, { fontSize: scaledFontSize(20) }]}>Edit Profile</Text>

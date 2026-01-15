@@ -55,3 +55,12 @@ export const Fonts = Platform.select({
     primary: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
   },
 });
+
+/**
+ * Platform-specific back button text.
+ * iOS shows arrow, Android shows just "Back" to avoid alignment issues.
+ */
+export const BackButtonText = Platform.select({
+  ios: '← Back',
+  default: 'Back',
+});

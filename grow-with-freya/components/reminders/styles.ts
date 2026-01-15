@@ -26,6 +26,8 @@ export const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   title: {
@@ -39,6 +41,8 @@ export const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 20,
     backgroundColor: 'rgba(78, 205, 196, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   headerSpacer: {
