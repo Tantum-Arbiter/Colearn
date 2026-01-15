@@ -616,7 +616,7 @@ const INTERACTIVE_TEST_STORIES: Story[] = [
     isAvailable: true,
     ageRange: '2-5',
     duration: 11,
-    description: 'A delightful winter story about a squirrel and a snowman.',
+    description: 'A delightful winter story about a squirrel and a snowman. This is not my own work, it is for proof of concept only.',
     tags: ['calming', 'bedtime', 'nature', 'animals', 'friendship'], // Nature book
     pages: [
       {

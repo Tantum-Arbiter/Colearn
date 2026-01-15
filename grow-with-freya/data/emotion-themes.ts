@@ -62,7 +62,7 @@ export const EMOTION_THEMES: Record<EmotionTheme, EmotionThemeData> = {
     emotions: {
       happy: { icon: '🐰', name: 'Happy Bunny', image: ANIMAL_EMOTION_IMAGES.happy },
       sad: { icon: '🐱', name: 'Sad Kitty', image: ANIMAL_EMOTION_IMAGES.sad },
-      angry: { icon: '🦁', name: 'Angry Lion', image: ANIMAL_EMOTION_IMAGES.angry },
+      angry: { icon: '🐶', name: 'Angry Dog', image: ANIMAL_EMOTION_IMAGES.angry },
       surprised: { icon: '🐥', name: 'Surprised Chick', image: ANIMAL_EMOTION_IMAGES.surprised },
       scared: { icon: '🦝', name: 'Scared Raccoon', image: ANIMAL_EMOTION_IMAGES.scared },
       excited: { icon: '🦊', name: 'Excited Fox', image: ANIMAL_EMOTION_IMAGES.excited },

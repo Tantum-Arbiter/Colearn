@@ -188,14 +188,14 @@ const styles = StyleSheet.create({
     fontSize: 32,
   },
   title: {
-    fontFamily: Fonts.heading,
+    fontFamily: Fonts.primary,
     fontSize: 20,
     color: '#fff',
     textAlign: 'center',
     marginBottom: 12,
   },
   description: {
-    fontFamily: Fonts.body,
+    fontFamily: Fonts.primary,
     fontSize: 15,
     color: 'rgba(255, 255, 255, 0.85)',
     textAlign: 'center',
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   skipText: {
-    fontFamily: Fonts.body,
+    fontFamily: Fonts.primary,
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.6)',
   },
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#9b59b6',
   },
   nextText: {
-    fontFamily: Fonts.body,
+    fontFamily: Fonts.primary,
     fontSize: 14,
     color: '#fff',
     marginRight: 4,

@@ -36,10 +36,18 @@ jest.mock('expo-haptics', () => ({
 jest.mock('react-native-reanimated', () => ({
   useSharedValue: jest.fn(() => ({ value: 0 })),
   useAnimatedStyle: jest.fn(() => ({})),
+  useAnimatedProps: jest.fn(() => ({})),
   withRepeat: jest.fn((animation) => animation),
   withTiming: jest.fn((value) => value),
+  withSpring: jest.fn((value) => value),
+  withSequence: jest.fn((value) => value),
+  withDelay: jest.fn((_, value) => value),
+  interpolate: jest.fn((value) => value),
+  Easing: { inOut: jest.fn(), bezier: jest.fn() },
+  createAnimatedComponent: (component: any) => component,
   default: {
     View: 'View',
+    createAnimatedComponent: (component: any) => component,
   },
 }));
 jest.mock('expo-linear-gradient', () => ({

@@ -106,6 +106,8 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const [onBeginCallback, setOnBeginCallback] = useState<(() => void) | null>(null);
   const [onReturnToModeSelectionCallback, setOnReturnToModeSelectionCallback] = useState<(() => void) | null>(null);
   const [isExitAnimating, setIsExitAnimating] = useState(false);
+  // Track when we're animating the cancel transition - blocks touches during animation
+  const [isCancelAnimating, setIsCancelAnimating] = useState(false);
 
   // Screen dimensions state - updates when orientation changes
   const [screenDimensions, setScreenDimensions] = useState(Dimensions.get('window'));
@@ -499,6 +501,9 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     console.log('Cancelling story transition');
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
+    // Block touches during the entire cancel animation
+    setIsCancelAnimating(true);
+
     // Step 1: Trigger button exit animations (SlideOutLeft takes 250ms)
     setShowModeSelection(false);
 
@@ -579,6 +584,8 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     setIsExpandingToReader(false);
     // Reset rotation tracking
     wasRotatedForTransition.current = false;
+    // Reset cancel animation flag
+    setIsCancelAnimating(false);
   };
 
   const completeTransition = () => {
@@ -1330,10 +1337,39 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       {children}
 
       {/* Book preview and mode selection overlay */}
+      {/* Keep blocking touches during cancel animation to prevent taps passing through to elements below */}
       {isTransitioning && cardPosition && selectedStory && (
-        <View style={styles.overlay} pointerEvents={showModeSelection ? 'auto' : 'none'}>
+        <View style={styles.overlay} pointerEvents={(showModeSelection || isCancelAnimating) ? 'auto' : 'none'}>
           {/* Shadow overlay background */}
           <Animated.View style={[styles.shadowOverlay, overlayAnimatedStyle]} />
+
+          {/* Tap anywhere to begin overlay - sits above shadow but below buttons */}
+          {/* Disabled when any modal is open */}
+          {showModeSelection && !showVoiceOverNameModal && !showVoiceOverSelectModal && !showPreviewModal && (
+            <Pressable
+              style={styles.tapAnywhereOverlay}
+              onPress={() => {
+                // Handle each mode appropriately
+                if (selectedMode === 'read') {
+                  selectModeAndBegin(selectedMode);
+                } else if (selectedMode === 'record') {
+                  if (currentVoiceOver) {
+                    selectModeAndBegin(selectedMode);
+                  } else {
+                    setShowVoiceOverNameModal(true);
+                  }
+                } else if (selectedMode === 'narrate') {
+                  if (currentVoiceOver) {
+                    selectModeAndBegin(selectedMode);
+                  } else {
+                    setShowVoiceOverSelectModal(true);
+                  }
+                } else if (selectedMode === 'preview') {
+                  setShowPreviewModal(true);
+                }
+              }}
+            />
+          )}
 
           {/* X Close button - top left of book */}
           {/* Stays visible when preview modal is showing, but dimmed by overlay */}
@@ -1885,6 +1921,10 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.92)',
   },
+  tapAnywhereOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1, // Below all buttons and book
+  },
   closeButtonContainer: {
     position: 'absolute',
     zIndex: 1001,
@@ -1916,6 +1956,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 20,
     elevation: 15,
+    zIndex: 50, // Above tap-anywhere overlay (zIndex: 1)
   },
   spineGradient: {
     position: 'absolute',
