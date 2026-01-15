@@ -1,10 +1,8 @@
-import { Platform } from 'react-native';
-import type { AVPlaybackStatus } from 'expo-av';
+import { createAudioPlayer, setAudioModeAsync, AudioPlayer } from 'expo-audio';
 import {
   MusicTrack,
   MusicPlaylist,
   MusicPlayerState,
-  PlaybackState,
   RepeatMode,
   MusicService
 } from '@/types/music';
@@ -13,38 +11,13 @@ import { backgroundMusic } from './background-music';
 // Debug logging - set to false for production performance
 const DEBUG_LOGS = false;
 
-// Lazy-load expo-av to prevent native initialization during hot reload
-// This is critical for Android where ExoPlayer has threading requirements
-let Audio: typeof import('expo-av').Audio | null = null;
-const getAudio = async () => {
-  if (!Audio) {
-    const expoAv = await import('expo-av');
-    Audio = expoAv.Audio;
-  }
-  return Audio;
-};
-
-// Helper to run audio operations on main/UI thread (required for Android ExoPlayer)
-// Uses setImmediate which schedules on the next tick of the JS event loop (main thread)
-const runOnMainThread = <T>(fn: () => Promise<T>): Promise<T> => {
-  if (Platform.OS === 'android') {
-    return new Promise((resolve, reject) => {
-      // setImmediate runs on the next tick of the JS event loop, which is on the main thread
-      setImmediate(() => {
-        fn().then(resolve).catch(reject);
-      });
-    });
-  }
-  return fn();
-};
-
 /**
  * Music Player Service
  * Handles playback of individual music tracks and playlists
  */
 export class MusicPlayerService implements MusicService {
   private static instance: MusicPlayerService | null = null;
-  private sound: import('expo-av').Audio.Sound | null = null;
+  private player: AudioPlayer | null = null;
   private state: MusicPlayerState;
   private stateChangeCallbacks: ((state: MusicPlayerState) => void)[] = [];
   private isInitialized = false;
@@ -112,18 +85,16 @@ export class MusicPlayerService implements MusicService {
     this.stateChangeCallbacks.forEach(callback => callback(this.state));
   }
 
-  private onPlaybackStatusUpdate = (status: AVPlaybackStatus): void => {
-    if (!status.isLoaded) return;
-
+  private onPlaybackStatusUpdate = (status: { playing: boolean; currentTime: number; duration: number; isBuffering?: boolean }): void => {
     this.updateState({
-      currentTime: status.positionMillis ? status.positionMillis / 1000 : 0,
-      duration: status.durationMillis ? status.durationMillis / 1000 : 0,
-      playbackState: status.isPlaying ? 'playing' : 
+      currentTime: status.currentTime,
+      duration: status.duration,
+      playbackState: status.playing ? 'playing' :
                     status.isBuffering ? 'loading' : 'paused',
     });
 
-    // Handle track completion
-    if (status.didJustFinish && !status.isLooping) {
+    // Handle track completion - check if we've reached the end
+    if (!status.playing && status.currentTime >= status.duration && status.duration > 0 && !this.player?.loop) {
       this.handleTrackCompletion();
     }
   };
@@ -143,8 +114,8 @@ export class MusicPlayerService implements MusicService {
 
       // Restart the track - don't call play() as it would fade background music again
       await this.seekTo(0);
-      if (this.sound) {
-        await this.sound.playAsync();
+      if (this.player) {
+        this.player.play();
         this.updateState({ playbackState: 'playing', error: null });
         console.log(`Repeating tantrum track: ${currentTrack.title} (${repeatCount + 1}/3)`);
       }
@@ -182,12 +153,6 @@ export class MusicPlayerService implements MusicService {
   }
 
   async loadTrack(track: MusicTrack): Promise<void> {
-    // Skip audio on Android in dev mode to prevent ExoPlayer threading errors
-    if (__DEV__ && Platform.OS === 'android') {
-      DEBUG_LOGS && console.log('Music player disabled on Android in dev mode');
-      return;
-    }
-
     try {
       this.updateState({ isLoading: true, error: null });
 
@@ -196,34 +161,25 @@ export class MusicPlayerService implements MusicService {
         throw new Error(`Audio file not found for track: ${track.title}`);
       }
 
-
-
-      // Unload previous sound
-      if (this.sound) {
-        await this.sound.unloadAsync();
-        this.sound = null;
+      // Release previous player
+      if (this.player) {
+        this.player.release();
+        this.player = null;
       }
 
       // Load new track
       // Enable looping for sleep tracks to match intended duration
       const shouldLoop = track.subcategory === 'sleep' && !track.isSequence;
 
-      const AudioModule = await getAudio();
-      const { sound } = await AudioModule.Sound.createAsync(
-        track.audioSource,
-        {
-          shouldPlay: false,
-          isLooping: shouldLoop,
-          volume: track.volume || this.state.volume,
-        }
-      );
+      this.player = createAudioPlayer(track.audioSource, {
+        updateInterval: 500,
+      });
 
-      this.sound = sound;
-      // Note: On Android, this callback runs on a native thread pool
-      // Only set callback on iOS to avoid threading issues on Android
-      if (Platform.OS !== 'android') {
-        this.sound.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate);
-      }
+      this.player.loop = shouldLoop;
+      this.player.volume = track.volume || this.state.volume;
+
+      // Set up playback status update listener
+      this.player.addListener('playbackStatusUpdate', this.onPlaybackStatusUpdate);
 
       this.updateState({
         currentTrack: track,
@@ -253,14 +209,14 @@ export class MusicPlayerService implements MusicService {
     } catch (error) {
       console.error('Failed to load track:', error);
 
-      // Clean up any partially loaded sound
-      if (this.sound) {
+      // Clean up any partially loaded player
+      if (this.player) {
         try {
-          await this.sound.unloadAsync();
-        } catch (unloadError) {
-          console.warn('Failed to unload sound after error:', unloadError);
+          this.player.release();
+        } catch (releaseError) {
+          console.warn('Failed to release player after error:', releaseError);
         }
-        this.sound = null;
+        this.player = null;
       }
 
       // Reset state to clean state when track fails to load
@@ -298,29 +254,22 @@ export class MusicPlayerService implements MusicService {
         throw new Error(`Audio file not found for track: ${track.title}`);
       }
 
-      // Unload previous sound
-      if (this.sound) {
-        await this.sound.unloadAsync();
-        this.sound = null;
+      // Release previous player
+      if (this.player) {
+        this.player.release();
+        this.player = null;
       }
 
       // Load first track
-      const AudioModule = await getAudio();
-      const { sound } = await AudioModule.Sound.createAsync(
-        track.audioSource,
-        {
-          shouldPlay: false,
-          isLooping: false,
-          volume: track.volume || this.state.volume,
-        }
-      );
+      this.player = createAudioPlayer(track.audioSource, {
+        updateInterval: 500,
+      });
 
-      this.sound = sound;
-      // Note: On Android, this callback runs on a native thread pool
-      // Only set callback on iOS to avoid threading issues on Android
-      if (Platform.OS !== 'android') {
-        this.sound.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate);
-      }
+      this.player.loop = false;
+      this.player.volume = track.volume || this.state.volume;
+
+      // Set up playback status update listener
+      this.player.addListener('playbackStatusUpdate', this.onPlaybackStatusUpdate);
 
       this.updateState({
         currentTrack: track,
@@ -335,14 +284,14 @@ export class MusicPlayerService implements MusicService {
     } catch (error) {
       console.error('Failed to load playlist:', error);
 
-      // Clean up any partially loaded sound
-      if (this.sound) {
+      // Clean up any partially loaded player
+      if (this.player) {
         try {
-          await this.sound.unloadAsync();
-        } catch (unloadError) {
-          console.warn('Failed to unload sound after error:', unloadError);
+          this.player.release();
+        } catch (releaseError) {
+          console.warn('Failed to release player after error:', releaseError);
         }
-        this.sound = null;
+        this.player = null;
       }
 
       // Reset state to clean state when playlist fails to load
@@ -364,7 +313,7 @@ export class MusicPlayerService implements MusicService {
   }
 
   async play(): Promise<void> {
-    if (!this.sound || !this.state.currentTrack) {
+    if (!this.player || !this.state.currentTrack) {
       console.warn('No track loaded');
       return;
     }
@@ -388,15 +337,10 @@ export class MusicPlayerService implements MusicService {
         await backgroundMusic.cleanup();
 
         // Force set audio mode to be even more restrictive for track playback
-        const AudioModule = await getAudio();
-        await AudioModule.setAudioModeAsync({
-          allowsRecordingIOS: false,
-          staysActiveInBackground: true,
-          playsInSilentModeIOS: true,
-          shouldDuckAndroid: false,
-          playThroughEarpieceAndroid: false,
-          interruptionModeIOS: 1, // DO_NOT_MIX
-          interruptionModeAndroid: 2, // DUCK_OTHERS - more compatible on Android
+        await setAudioModeAsync({
+          playsInSilentMode: true,
+          shouldPlayInBackground: true,
+          interruptionMode: 'doNotMix', // Exclusive audio
         });
 
         // Wait for audio session to be fully configured
@@ -416,7 +360,7 @@ export class MusicPlayerService implements MusicService {
       }
 
       DEBUG_LOGS && console.log('Starting track playback:', this.state.currentTrack.title);
-      await this.sound.playAsync();
+      this.player.play();
       this.updateState({ playbackState: 'playing', error: null });
       DEBUG_LOGS && console.log('Track playing successfully');
       DEBUG_LOGS && console.log('Background music final status:', backgroundMusic.getIsPlaying());
@@ -428,10 +372,10 @@ export class MusicPlayerService implements MusicService {
   }
 
   async pause(): Promise<void> {
-    if (!this.sound) return;
+    if (!this.player) return;
 
     try {
-      await this.sound.pauseAsync();
+      this.player.pause();
       this.updateState({ playbackState: 'paused' });
       DEBUG_LOGS && console.log('Playback paused');
 
@@ -445,10 +389,11 @@ export class MusicPlayerService implements MusicService {
   }
 
   async stop(): Promise<void> {
-    if (!this.sound) return;
+    if (!this.player) return;
 
     try {
-      await this.sound.stopAsync();
+      this.player.pause();
+      this.player.seekTo(0);
       this.updateState({
         playbackState: 'stopped',
         currentTime: 0
@@ -467,16 +412,16 @@ export class MusicPlayerService implements MusicService {
   async clearTrack(): Promise<void> {
     try {
       // Stop any currently playing audio immediately
-      if (this.sound) {
+      if (this.player) {
         try {
-          // Stop playback first, then unload
-          await this.sound.stopAsync();
+          // Stop playback first, then release
+          this.player.pause();
         } catch (stopError) {
-          console.warn('Failed to stop sound during clear:', stopError);
+          console.warn('Failed to stop player during clear:', stopError);
         }
 
-        await this.sound.unloadAsync();
-        this.sound = null;
+        this.player.release();
+        this.player = null;
       }
 
       this.updateState({
@@ -500,8 +445,8 @@ export class MusicPlayerService implements MusicService {
       await this.restoreBackgroundMusic();
     } catch (error) {
       console.error('Failed to clear track:', error);
-      // Force reset state even if unload fails
-      this.sound = null;
+      // Force reset state even if release fails
+      this.player = null;
       this.updateState({
         currentTrack: null,
         currentPlaylist: null,
@@ -598,7 +543,7 @@ export class MusicPlayerService implements MusicService {
   }
 
   async seekTo(position: number): Promise<void> {
-    if (!this.sound) return;
+    if (!this.player) return;
 
     // Clear any pending seek operation
     if (this.seekTimeout) {
@@ -609,11 +554,10 @@ export class MusicPlayerService implements MusicService {
     this.updateState({ currentTime: position });
 
     // Debounce the actual seek operation to prevent "Seeking interrupted" errors
-    this.seekTimeout = setTimeout(async () => {
+    this.seekTimeout = setTimeout(() => {
       try {
-        if (this.sound) {
-          // Ensure audio operations run on main thread (required for Android)
-          await runOnMainThread(() => this.sound!.setPositionAsync(position * 1000));
+        if (this.player) {
+          this.player.seekTo(position);
         }
       } catch (error) {
         console.warn('Seek operation failed:', error);
@@ -626,10 +570,9 @@ export class MusicPlayerService implements MusicService {
   async setVolume(volume: number): Promise<void> {
     const clampedVolume = Math.max(0, Math.min(1, volume));
 
-    if (this.sound) {
+    if (this.player) {
       try {
-        // Ensure audio operations run on main thread (required for Android)
-        await runOnMainThread(() => this.sound!.setVolumeAsync(clampedVolume));
+        this.player.volume = clampedVolume;
       } catch (error) {
         console.error('Failed to set volume:', error);
       }
@@ -641,10 +584,9 @@ export class MusicPlayerService implements MusicService {
   async toggleMute(): Promise<void> {
     const { isMuted, volume } = this.state;
 
-    if (this.sound) {
+    if (this.player) {
       try {
-        // Ensure audio operations run on main thread (required for Android)
-        await runOnMainThread(() => this.sound!.setVolumeAsync(isMuted ? volume : 0));
+        this.player.volume = isMuted ? volume : 0;
       } catch (error) {
         console.error('Failed to toggle mute:', error);
       }
@@ -674,13 +616,13 @@ export class MusicPlayerService implements MusicService {
       this.seekTimeout = null;
     }
 
-    if (this.sound) {
+    if (this.player) {
       try {
-        await this.sound.unloadAsync();
+        this.player.release();
       } catch (error) {
         console.error('Error during cleanup:', error);
       }
-      this.sound = null;
+      this.player = null;
     }
 
     this.stateChangeCallbacks = [];

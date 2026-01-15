@@ -1,15 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useBackgroundMusic } from '@/hooks/use-background-music';
 import { useGlobalSound } from '@/contexts/global-sound-context';
 import { backgroundMusic } from '@/services/background-music';
-
-// Lazy-load expo-av to prevent ExoPlayer threading errors on Android during hot reload
-const getAudio = async () => {
-  const { Audio } = await import('expo-av');
-  return Audio;
-};
+import { createAudioPlayer, setAudioModeAsync, AudioPlayer } from 'expo-audio';
 
 interface AudioDebugScreenProps {
   onBack: () => void;
@@ -20,6 +15,7 @@ export function AudioDebugScreen({ onBack }: AudioDebugScreenProps) {
   const [testResults, setTestResults] = useState<string[]>([]);
   const { isLoaded, isPlaying, volume } = useBackgroundMusic();
   const { isMuted } = useGlobalSound();
+  const testPlayerRef = useRef<AudioPlayer | null>(null);
 
   const addTestResult = useCallback((result: string) => {
     setTestResults(prev => [...prev, `${new Date().toLocaleTimeString()}: ${result}`]);
@@ -28,15 +24,10 @@ export function AudioDebugScreen({ onBack }: AudioDebugScreenProps) {
   const testAudioMode = async () => {
     try {
       addTestResult('Testing audio mode configuration...');
-      const Audio = await getAudio();
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-        staysActiveInBackground: true,
-        playsInSilentModeIOS: true,
-        shouldDuckAndroid: false,
-        playThroughEarpieceAndroid: false,
-        interruptionModeIOS: 1,
-        interruptionModeAndroid: 2,
+      await setAudioModeAsync({
+        allowsRecording: false,
+        shouldPlayInBackground: true,
+        playsInSilentMode: true,
       });
       addTestResult('[OK] Audio mode set successfully');
     } catch (error) {
@@ -47,27 +38,29 @@ export function AudioDebugScreen({ onBack }: AudioDebugScreenProps) {
   const testAudioFile = async () => {
     try {
       addTestResult('Testing audio file loading...');
-      const Audio = await getAudio();
+
+      // Release previous test player if exists
+      if (testPlayerRef.current) {
+        testPlayerRef.current.release();
+      }
+
       const audioSource = require('../../assets/audio/background-soundtrack.wav');
-      const { sound } = await Audio.Sound.createAsync(
-        audioSource,
-        {
-          shouldPlay: false,
-          isLooping: false,
-          volume: 0.1,
-        }
-      );
+      const player = createAudioPlayer(audioSource);
+      player.volume = 0.1;
+      testPlayerRef.current = player;
       addTestResult('[OK] Audio file loaded successfully');
 
       // Test play
-      await sound.playAsync();
+      player.play();
       addTestResult('[OK] Audio playback started');
 
       // Stop after 2 seconds
-      setTimeout(async () => {
-        await sound.stopAsync();
-        await sound.unloadAsync();
-        addTestResult('[OK] Audio stopped and unloaded');
+      setTimeout(() => {
+        if (testPlayerRef.current) {
+          testPlayerRef.current.release();
+          testPlayerRef.current = null;
+          addTestResult('[OK] Audio stopped and released');
+        }
       }, 2000);
 
     } catch (error) {

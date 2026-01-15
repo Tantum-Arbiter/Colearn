@@ -95,26 +95,37 @@ export function useBackgroundMusic(): BackgroundMusicState & BackgroundMusicCont
     };
   }, [isPlaying, volume, isMuted]);
 
-  // Handle app state changes (pause music when app goes to background)
+  // Track if music was playing before backgrounding (for resume on Android)
+  const wasPlayingBeforeBackground = useRef(false);
+
+  // Handle app state changes (pause music when app goes to background on Android)
   useEffect(() => {
     const handleAppStateChange = async (nextAppState: AppStateStatus) => {
       if (nextAppState === 'background' || nextAppState === 'inactive') {
-        // Let music continue in background with staysActiveInBackground: true
-        console.log('App backgrounded - music continues');
+        // On Android, pause music when app goes to background to avoid interrupting user
+        if (Platform.OS === 'android') {
+          wasPlayingBeforeBackground.current = backgroundMusic.getIsPlaying();
+          if (wasPlayingBeforeBackground.current) {
+            console.log('App backgrounded on Android - pausing music');
+            await backgroundMusic.pause();
+          }
+        } else {
+          // On iOS, let music continue in background (better UX for quick app switches)
+          console.log('App backgrounded - music continues');
+        }
       } else if (nextAppState === 'active') {
-        // Resume music when app becomes active (if it was playing before)
-        // But only if it's not intentionally paused by the music player
-        if (isPlaying && !backgroundMusic.getIsPlaying()) {
-          console.log('App became active - checking if background music should resume');
-          // Don't auto-resume if music player has intentionally paused it
-          // This prevents conflicts with foreground music playback
+        // On Android, resume music when app becomes active if it was playing before
+        if (Platform.OS === 'android' && wasPlayingBeforeBackground.current) {
+          console.log('App became active on Android - resuming music');
+          await backgroundMusic.play();
+          wasPlayingBeforeBackground.current = false;
         }
       }
     };
 
     const subscription = AppState.addEventListener('change', handleAppStateChange);
     return () => subscription?.remove();
-  }, [isPlaying]);
+  }, []);
 
   // Force sync state with background music service
   const syncState = useCallback(() => {

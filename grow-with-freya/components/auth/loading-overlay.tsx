@@ -9,29 +9,25 @@ import Animated, {
 import LottieView from 'lottie-react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-
-// Lazy-load expo-av to prevent ExoPlayer threading errors on Android during hot reload
-const getAudio = async () => {
-  const { Audio } = await import('expo-av');
-  return Audio;
-};
+import { createAudioPlayer, AudioPlayer } from 'expo-audio';
 
 import { useLoadingCircleAnimation, useTextFadeAnimation, useCheckmarkAnimation } from './loading-animations';
 
 const { width } = Dimensions.get('window');
 
-export type LoadingPhase = 'authenticating' | 'syncing' | 'complete' | 'auth-error' | 'sync-error' | null;
+export type LoadingPhase = 'authenticating' | 'syncing' | 'complete' | 'auth-error' | 'sync-error' | 'timeout-error' | null;
 
 interface LoadingOverlayProps {
   phase: LoadingPhase;
   onPulseComplete?: () => void;
   onClose?: () => void;
+  onContinueOffline?: () => void;
 }
 
 const WINDOW_WIDTH = 280;
 const WINDOW_HEIGHT = 280;
 
-export function LoadingOverlay({ phase, onPulseComplete, onClose }: LoadingOverlayProps) {
+export function LoadingOverlay({ phase, onPulseComplete, onClose, onContinueOffline }: LoadingOverlayProps) {
   const [displayText, setDisplayText] = useState('Signing in...');
   const [subText, setSubText] = useState<string | null>(null);
   const [wasLoading, setWasLoading] = useState(false);
@@ -40,7 +36,7 @@ export function LoadingOverlay({ phase, onPulseComplete, onClose }: LoadingOverl
   const [showErrorState, setShowErrorState] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [showSignedIn, setShowSignedIn] = useState(false); // Show "Signed in" during syncing
-  const soundRef = useRef<import('expo-av').Audio.Sound | null>(null);
+  const playerRef = useRef<AudioPlayer | null>(null);
   const windowTranslateX = useSharedValue(0);
   const overlayOpacity = useSharedValue(1);
 
@@ -59,20 +55,21 @@ export function LoadingOverlay({ phase, onPulseComplete, onClose }: LoadingOverl
   const checkmarkAnim = useCheckmarkAnimation();
 
   // Always compute these values
-  const isError = phase === 'auth-error' || phase === 'sync-error';
+  const isError = phase === 'auth-error' || phase === 'sync-error' || phase === 'timeout-error';
+  const isTimeoutError = phase === 'timeout-error';
   const isLoading = phase === 'authenticating' || phase === 'syncing';
 
   // Load and play click sound
   const playClickSound = async () => {
     try {
-      if (!soundRef.current) {
-        const Audio = await getAudio();
-        const { sound } = await Audio.Sound.createAsync(
-          require('@/assets/sounds/click.wav')
-        );
-        soundRef.current = sound;
+      // Release previous player if exists
+      if (playerRef.current) {
+        playerRef.current.release();
       }
-      await soundRef.current?.replayAsync();
+      // Create a new player for each click (expo-audio uses createAudioPlayer)
+      const player = createAudioPlayer(require('@/assets/sounds/click.wav'));
+      playerRef.current = player;
+      player.play();
     } catch (error) {
       console.error('Error playing click sound:', error);
     }
@@ -81,8 +78,8 @@ export function LoadingOverlay({ phase, onPulseComplete, onClose }: LoadingOverl
   // Cleanup sound on unmount
   useEffect(() => {
     return () => {
-      if (soundRef.current) {
-        soundRef.current.unloadAsync();
+      if (playerRef.current) {
+        playerRef.current.release();
       }
     };
   }, []);
@@ -105,13 +102,21 @@ export function LoadingOverlay({ phase, onPulseComplete, onClose }: LoadingOverl
       setSubText(null);
       startLoadingCircle();
       fadeInText();
-    } else if (phase === 'auth-error' || phase === 'sync-error') {
+    } else if (phase === 'auth-error' || phase === 'sync-error' || phase === 'timeout-error') {
       // Show error state and remember that we had an error
       setIsVisible(true);
       setHadError(true);
       setShowErrorState(true);
-      setDisplayText(phase === 'auth-error' ? 'Sign-in failed' : 'Couldn\'t load stories');
-      setSubText('Please try again');
+      if (phase === 'timeout-error') {
+        setDisplayText('Connection timed out');
+        setSubText('Unable to reach the server');
+      } else if (phase === 'auth-error') {
+        setDisplayText('Sign-in failed');
+        setSubText('Please try again');
+      } else {
+        setDisplayText('Couldn\'t load stories');
+        setSubText('Please try again');
+      }
       fadeInText(); // Show the error text
     } else if (!phase && wasLoading && !hadError) {
       // Loading completed successfully - show checkmark
@@ -208,11 +213,25 @@ export function LoadingOverlay({ phase, onPulseComplete, onClose }: LoadingOverl
             )}
           </Animated.View>
 
-          {/* Close Button - only shown on error */}
+          {/* Error Buttons - shown on error */}
           {showErrorState && (
-            <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
+            <View style={styles.errorButtonsContainer}>
+              <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
+                <Text style={styles.closeButtonText}>Try Again</Text>
+              </TouchableOpacity>
+              {isTimeoutError && onContinueOffline && (
+                <TouchableOpacity
+                  style={styles.offlineButton}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    handleClose();
+                    onContinueOffline();
+                  }}
+                >
+                  <Text style={styles.offlineButtonText}>Continue Offline</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           )}
         </Animated.View>
       </Animated.View>
@@ -298,8 +317,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  closeButton: {
+  errorButtonsContainer: {
     marginTop: 20,
+    alignItems: 'center',
+    gap: 12,
+  },
+  closeButton: {
     paddingVertical: 12,
     paddingHorizontal: 40,
     backgroundColor: '#4ECDC4',
@@ -309,6 +332,16 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  offlineButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 30,
+  },
+  offlineButtonText: {
+    color: '#666666',
+    fontSize: 14,
+    fontWeight: '500',
+    textDecorationLine: 'underline',
   },
   signedInContainer: {
     flexDirection: 'row',

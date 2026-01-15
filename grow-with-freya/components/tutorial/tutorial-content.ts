@@ -250,6 +250,12 @@ export const RECORD_MODE_TOUR_STEPS: Omit<TutorialStep, 'target'>[] = [
     tipPosition: 'center',
   },
   {
+    id: 'record_sound_tip',
+    title: 'Check Your Sound 🔊',
+    description: 'Tip: Long-press the speaker icon on the main menu to lower the background music. This helps you hear your recording playback more clearly!',
+    tipPosition: 'center',
+  },
+  {
     id: 'record_limit',
     title: 'Up to 3 Voices 👨‍👩‍👧',
     description: 'Each book can have up to 3 recorded voices - perfect for mum, dad, and a grandparent! Your child can choose whose voice to listen to at storytime.',
@@ -290,6 +296,12 @@ export const NARRATE_MODE_TOUR_STEPS: Omit<TutorialStep, 'target'>[] = [
     id: 'narrate_controls',
     title: 'Playback Controls ▶️',
     description: 'Use the controls at the top to pause, resume, or replay the current page. You can also manually turn pages using the arrows at any time.',
+    tipPosition: 'center',
+  },
+  {
+    id: 'narrate_sound_tip',
+    title: 'Balance Your Sound 🔊',
+    description: 'Tip: Long-press the speaker icon on the main menu to adjust the background music volume. Lower it to hear the recorded voice more clearly!',
     tipPosition: 'center',
   },
   {

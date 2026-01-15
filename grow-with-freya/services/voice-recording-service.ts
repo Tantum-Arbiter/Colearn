@@ -1,4 +1,7 @@
-import { Audio } from 'expo-av';
+import {
+  createAudioPlayer,
+  AudioPlayer,
+} from 'expo-audio';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Paths, Directory, File } from 'expo-file-system/next';
 
@@ -23,11 +26,18 @@ export interface VoiceOverMetadata {
   voiceOvers: VoiceOver[];
 }
 
+/**
+ * Voice Recording Service
+ *
+ * Handles file management, metadata storage, and playback for voice recordings.
+ *
+ * NOTE: Recording functionality has been moved to the useVoiceRecording hook
+ * since expo-audio only supports hook-based recording. Components should use
+ * the hook for recording and this service for file/metadata management.
+ *
+ * @see hooks/use-voice-recording.ts for recording functionality
+ */
 class VoiceRecordingService {
-  private recording: Audio.Recording | null = null;
-  private isRecording: boolean = false;
-  private recordingStartTime: number = 0;
-
   private recordingsDir: Directory | null = null;
 
   async initialize(): Promise<void> {
@@ -40,88 +50,6 @@ class VoiceRecordingService {
     } catch (error) {
       console.error('Failed to initialize voice recording service:', error);
     }
-  }
-
-  async requestPermissions(): Promise<boolean> {
-    try {
-      const { status } = await Audio.requestPermissionsAsync();
-      return status === 'granted';
-    } catch (error) {
-      console.error('Failed to request audio permissions:', error);
-      return false;
-    }
-  }
-
-  async startRecording(): Promise<boolean> {
-    try {
-      const hasPermission = await this.requestPermissions();
-      if (!hasPermission) {
-        console.warn('Microphone permission not granted');
-        return false;
-      }
-
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: false,
-        shouldDuckAndroid: true,
-        playThroughEarpieceAndroid: false,
-      });
-
-      const { recording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
-
-      this.recording = recording;
-      this.isRecording = true;
-      this.recordingStartTime = Date.now();
-
-      console.log('Recording started');
-      return true;
-    } catch (error) {
-      console.error('Failed to start recording:', error);
-      return false;
-    }
-  }
-
-  async stopRecording(): Promise<{ uri: string; duration: number } | null> {
-    if (!this.recording || !this.isRecording) {
-      return null;
-    }
-
-    // Mark as not recording immediately to prevent double-stop
-    const recordingToStop = this.recording;
-    const duration = Date.now() - this.recordingStartTime;
-    this.recording = null;
-    this.isRecording = false;
-
-    try {
-      await recordingToStop.stopAndUnloadAsync();
-      const uri = recordingToStop.getURI();
-
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: true,
-        shouldDuckAndroid: false,
-        playThroughEarpieceAndroid: false,
-      });
-
-      console.log('Recording stopped:', uri);
-      return uri ? { uri, duration } : null;
-    } catch (error) {
-      console.error('Failed to stop recording:', error);
-      return null;
-    }
-  }
-
-  getIsRecording(): boolean {
-    return this.isRecording;
-  }
-
-  getRecordingDuration(): number {
-    if (!this.isRecording) return 0;
-    return Date.now() - this.recordingStartTime;
   }
 
   async saveRecording(
@@ -265,13 +193,11 @@ class VoiceRecordingService {
     await AsyncStorage.setItem(VOICE_OVERS_STORAGE_KEY, JSON.stringify(metadata));
   }
 
-  async playRecording(uri: string): Promise<Audio.Sound | null> {
+  async playRecording(uri: string): Promise<AudioPlayer | null> {
     try {
-      const { sound } = await Audio.Sound.createAsync(
-        { uri },
-        { shouldPlay: true }
-      );
-      return sound;
+      const player = createAudioPlayer({ uri });
+      player.play();
+      return player;
     } catch (error) {
       console.error('Failed to play recording:', error);
       return null;

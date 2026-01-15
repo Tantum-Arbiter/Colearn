@@ -29,6 +29,7 @@ const STEP_ICONS: Record<string, string> = {
   'record_intro': '🎙️',
   'record_button_tip': '🔴',
   'playback_controls': '↺',
+  'record_sound_tip': '🔊',
   'record_limit': '👨‍👩‍👧',
   'record_benefit': '💜',
   'record_navigation': '📖',
@@ -36,6 +37,7 @@ const STEP_ICONS: Record<string, string> = {
   'narrate_intro': '🎧',
   'auto_playback': '📖',
   'narrate_controls': '▶️',
+  'narrate_sound_tip': '🔊',
   'narrate_benefit': '💜',
 };
 
@@ -64,22 +66,15 @@ export function ModeTipsOverlay({ mode, isActive, forceShow = false, onClose }: 
 
   // Show tips when mode is active and tutorial not completed OR forceShow is true
   useEffect(() => {
-    if (forceShow) {
-      // Immediately show when forceShow is true
+    if (forceShow || shouldShow) {
+      // Show immediately as page loads
+      if (!forceShow) {
+        startTutorial(tutorial.id);
+      }
       setIsVisible(true);
       setCurrentStep(0);
       opacity.value = withTiming(1, { duration: 300 });
       scale.value = withSpring(1, { damping: 15 });
-    } else if (shouldShow) {
-      // Small delay to let UI settle
-      const timer = setTimeout(() => {
-        startTutorial(tutorial.id);
-        setIsVisible(true);
-        setCurrentStep(0);
-        opacity.value = withTiming(1, { duration: 300 });
-        scale.value = withSpring(1, { damping: 15 });
-      }, 800);
-      return () => clearTimeout(timer);
     }
   }, [shouldShow, tutorial.id, opacity, scale, startTutorial, forceShow]);
 

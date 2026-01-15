@@ -163,8 +163,14 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
           setProcessedResponseId(responseId);
           console.error('Google sign-in error:', error);
 
-          // Show auth error in overlay - user will manually close
-          setLoadingPhase('auth-error');
+          // Check for timeout error
+          const isTimeout = error.message?.includes('timed out') ||
+                           error.message?.includes('timeout') ||
+                           error.name === 'AbortError';
+
+          // Show appropriate error in overlay - user will manually close
+          setShowLoadingOverlay(true);
+          setLoadingPhase(isTimeout ? 'timeout-error' : 'auth-error');
         }
       } else if (response.type === 'error') {
         setIsGoogleLoading(false);
@@ -430,8 +436,14 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
         return;
       }
 
-      // Show auth error in overlay - user will manually close
-      setLoadingPhase('auth-error');
+      // Check for timeout error
+      const isTimeout = error.message?.includes('timed out') ||
+                       error.message?.includes('timeout') ||
+                       error.name === 'AbortError';
+
+      // Show appropriate error in overlay - user will manually close
+      setShowLoadingOverlay(true);
+      setLoadingPhase(isTimeout ? 'timeout-error' : 'auth-error');
     }
   };
 
@@ -603,6 +615,12 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
         onClose={() => {
           setShowLoadingOverlay(false);
           setLoadingPhase(null);
+        }}
+        onContinueOffline={() => {
+          // Set guest mode and continue without signing in
+          setGuestMode(true);
+          DEBUG_LOGS && console.log('[LoginScreen] Continuing offline after timeout');
+          transitionToMainMenu(onSkip || onSuccess);
         }}
       />
     </Animated.View>

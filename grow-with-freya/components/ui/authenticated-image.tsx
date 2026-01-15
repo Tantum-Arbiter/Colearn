@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, ActivityIndicator, Text, StyleSheet, ImageStyle, StyleProp } from 'react-native';
 import { Image as ExpoImage, ImageContentFit } from 'expo-image';
 import { AuthenticatedImageService } from '@/services/authenticated-image-service';
+import { useAppStore } from '@/store/app-store';
 import { Logger } from '@/utils/logger';
 
 const log = Logger.create('AuthenticatedImage');
@@ -42,6 +43,9 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
   allowDownscaling = true,
   transition = 0,
 }) => {
+  // Check if user is in guest/offline mode - skip authenticated API calls
+  const isGuestMode = useAppStore((state) => state.isGuestMode);
+
   // Check memory cache synchronously for instant display
   // This runs during render (not in useEffect) so it's available on first paint
   const memoryCachedUri = AuthenticatedImageService.getMemoryCachedUri(uri);
@@ -88,6 +92,13 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
 
       if (!isMountedRef.current) return;
 
+      // In guest mode, don't make authenticated API calls - just show fallback
+      if (isGuestMode) {
+        setIsLoading(false);
+        setHasError(true); // Will show fallback emoji
+        return;
+      }
+
       setIsLoading(true);
       setHasError(false);
 
@@ -117,7 +128,7 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
         onError?.(error);
       }
     }
-  }, [uri, cachedUri, onError]);
+  }, [uri, cachedUri, onError, isGuestMode]);
 
   // Handle image render errors - retry with cache invalidation
   const handleRenderError = useCallback(async (error?: unknown) => {

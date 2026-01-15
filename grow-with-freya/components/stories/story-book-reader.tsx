@@ -25,6 +25,7 @@ import { useAccessibility, TEXT_SIZE_OPTIONS } from '@/hooks/use-accessibility';
 import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
 import * as Haptics from 'expo-haptics';
 import { voiceRecordingService, VoiceOver } from '@/services/voice-recording-service';
+import { useVoiceRecording } from '@/hooks/use-voice-recording';
 import { useGlobalSound } from '@/contexts/global-sound-context';
 import { AuthenticatedImage } from '@/components/ui/authenticated-image';
 import { Logger } from '@/utils/logger';
@@ -80,7 +81,7 @@ export function StoryBookReader({
   const [currentRecordingUri, setCurrentRecordingUri] = useState<string | null>(null);
   const [tempRecordingUri, setTempRecordingUri] = useState<string | null>(null);
   const [tempRecordingDuration, setTempRecordingDuration] = useState(0);
-  const [playbackSound, setPlaybackSound] = useState<import('expo-av').Audio.Sound | null>(null);
+  const [playbackPlayer, setPlaybackPlayer] = useState<import('expo-audio').AudioPlayer | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [availableVoiceOvers, setAvailableVoiceOvers] = useState<VoiceOver[]>([]);
   const [showVoiceOverSelectModal, setShowVoiceOverSelectModal] = useState(false);
@@ -101,6 +102,9 @@ export function StoryBookReader({
   // Background music control for recording
   const globalSound = useGlobalSound();
   const [wasMusicPlayingBeforeRecording, setWasMusicPlayingBeforeRecording] = useState(false);
+
+  // Voice recording hook (expo-audio requires hook-based recording)
+  const voiceRecording = useVoiceRecording();
 
   // Accessibility scaling
   const { scaledFontSize, scaledButtonSize, textSizeScale } = useAccessibility();
@@ -345,11 +349,11 @@ export function StoryBookReader({
 
     try {
       // Stop any playing narration/recording audio immediately
-      if (playbackSound) {
+      if (playbackPlayer) {
         try {
-          await playbackSound.stopAsync();
-          await playbackSound.unloadAsync();
-          setPlaybackSound(null);
+          playbackPlayer.pause();
+          playbackPlayer.release();
+          setPlaybackPlayer(null);
           setIsPlaying(false);
         } catch (audioError) {
           log.warn('Failed to stop playback audio on exit:', audioError);
@@ -491,8 +495,8 @@ export function StoryBookReader({
       if (recordingTimerRef.current) {
         clearInterval(recordingTimerRef.current);
       }
-      if (playbackSound) {
-        playbackSound.unloadAsync();
+      if (playbackPlayer) {
+        playbackPlayer.release();
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -502,8 +506,8 @@ export function StoryBookReader({
   useEffect(() => {
     // Stop any current playback
     setIsPlaying(false);
-    if (playbackSound) {
-      playbackSound.stopAsync();
+    if (playbackPlayer) {
+      playbackPlayer.pause();
     }
 
     // In record mode, check if there's an existing recording for this page
@@ -521,7 +525,7 @@ export function StoryBookReader({
   }, [currentPageIndex, readingMode, currentVoiceOver]);
 
   // Recording functions
-  const startRecordingNow = async (activeVoiceOver: VoiceOver) => {
+  const startRecordingNow = async (_activeVoiceOver: VoiceOver) => {
     try {
       // Check if app is in background - can't start recording if so
       if (AppState.currentState !== 'active') {
@@ -537,7 +541,8 @@ export function StoryBookReader({
         setWasMusicPlayingBeforeRecording(false);
       }
 
-      const success = await voiceRecordingService.startRecording();
+      // Use the hook for recording (expo-audio requires hook-based recording)
+      const success = await voiceRecording.startRecording();
       if (success) {
         setIsRecording(true);
         setRecordingDuration(0);
@@ -618,7 +623,8 @@ export function StoryBookReader({
     }
     setShouldAutoStopRecording(false);
 
-    const result = await voiceRecordingService.stopRecording();
+    // Use the hook for stopping recording (expo-audio requires hook-based recording)
+    const result = await voiceRecording.stopRecording();
     setIsRecording(false);
 
     // Resume background music if it was playing before recording
@@ -708,16 +714,16 @@ export function StoryBookReader({
   const handlePlayRecording = async () => {
     if (!currentRecordingUri) return;
 
-    if (playbackSound) {
-      await playbackSound.unloadAsync();
+    if (playbackPlayer) {
+      playbackPlayer.release();
     }
 
-    const sound = await voiceRecordingService.playRecording(currentRecordingUri);
-    if (sound) {
-      setPlaybackSound(sound);
+    const player = await voiceRecordingService.playRecording(currentRecordingUri);
+    if (player) {
+      setPlaybackPlayer(player);
       setIsPlaying(true);
-      sound.setOnPlaybackStatusUpdate((status) => {
-        if (status.isLoaded && status.didJustFinish) {
+      player.addListener('playbackStatusUpdate', (status) => {
+        if (status.didJustFinish) {
           setIsPlaying(false);
         }
       });
@@ -725,30 +731,31 @@ export function StoryBookReader({
   };
 
   const handleStopPlayback = async () => {
-    if (playbackSound) {
-      await playbackSound.stopAsync();
+    if (playbackPlayer) {
+      playbackPlayer.pause();
+      playbackPlayer.seekTo(0);
       setIsPlaying(false);
     }
   };
 
   const handlePauseNarration = async () => {
-    if (playbackSound) {
-      await playbackSound.pauseAsync();
+    if (playbackPlayer) {
+      playbackPlayer.pause();
       setIsPlaying(false);
     }
   };
 
   const handleResumeNarration = async () => {
-    if (playbackSound) {
-      await playbackSound.playAsync();
+    if (playbackPlayer) {
+      playbackPlayer.play();
       setIsPlaying(true);
     }
   };
 
   const handleReplayNarration = async () => {
-    if (playbackSound) {
-      await playbackSound.setPositionAsync(0);
-      await playbackSound.playAsync();
+    if (playbackPlayer) {
+      playbackPlayer.seekTo(0);
+      playbackPlayer.play();
       setIsPlaying(true);
       setNarrationProgress(0);
     }
@@ -772,33 +779,31 @@ export function StoryBookReader({
     }
 
     const playNarration = async () => {
-      if (playbackSound) {
-        await playbackSound.unloadAsync();
+      if (playbackPlayer) {
+        playbackPlayer.release();
       }
 
       // Set duration from the recorded page info
       setNarrationDuration(pageRecording.duration || 0);
       setNarrationProgress(0);
 
-      const sound = await voiceRecordingService.playRecording(pageRecording.uri);
-      if (sound) {
-        setPlaybackSound(sound);
+      const player = await voiceRecordingService.playRecording(pageRecording.uri);
+      if (player) {
+        setPlaybackPlayer(player);
         setIsPlaying(true);
-        sound.setOnPlaybackStatusUpdate((status) => {
-          if (status.isLoaded) {
-            // Update progress
-            const positionMs = status.positionMillis || 0;
-            const durationMs = status.durationMillis || 1;
-            setNarrationProgress(positionMs / 1000);
-            setNarrationDuration(durationMs / 1000);
+        player.addListener('playbackStatusUpdate', (status) => {
+          // Update progress
+          const positionSec = status.currentTime || 0;
+          const durationSec = status.duration || 1;
+          setNarrationProgress(positionSec);
+          setNarrationDuration(durationSec);
 
-            if (status.didJustFinish) {
-              setIsPlaying(false);
-              setNarrationProgress(0);
-              // Set flag to trigger auto-advance via useEffect (only if auto-play enabled)
-              if (narrationAutoPlay) {
-                setShouldAutoAdvance(true);
-              }
+          if (status.didJustFinish) {
+            setIsPlaying(false);
+            setNarrationProgress(0);
+            // Set flag to trigger auto-advance via useEffect (only if auto-play enabled)
+            if (narrationAutoPlay) {
+              setShouldAutoAdvance(true);
             }
           }
         });

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
-import { AppState, AppStateStatus, Dimensions, View, Platform } from 'react-native';
+import { AppState, AppStateStatus, Dimensions, View, Platform, ActivityIndicator, StyleSheet } from 'react-native';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { DevSettings } from 'react-native';
 
@@ -113,7 +113,7 @@ function AppContent() {
   // Track if we've already started background music to prevent auto-restart after manual pause
   const [hasStartedBackgroundMusic, setHasStartedBackgroundMusic] = useState(false);
 
-  type AppView = 'splash' | 'onboarding' | 'login' | 'app' | 'main' | 'stories' | 'story-reader' | 'account';
+  type AppView = 'splash' | 'onboarding' | 'login' | 'loading' | 'app' | 'main' | 'stories' | 'story-reader' | 'account';
   type PageKey = 'main' | 'stories' | 'story-reader' | 'emotions' | 'bedtime' | 'account';
 
   const [currentView, setCurrentView] = useState<AppView>('splash');
@@ -253,7 +253,10 @@ function AppContent() {
             setShowLoginAfterOnboarding(true);
             setCurrentView('login');
           } else {
-            // User is authenticated - prefetch stories and assets before showing app
+            // User is authenticated - show loading screen while prefetching
+            setCurrentView('loading');
+
+            // Prefetch stories and assets before showing app
             try {
               await StorySyncService.prefetchStories();
 
@@ -499,7 +502,14 @@ function AppContent() {
     return <LoginScreen onSuccess={handleLoginSuccess} onSkip={handleLoginSkip} />;
   }
 
-
+  // Loading screen shown during prefetch after app restart
+  if (currentView === 'loading') {
+    return (
+      <View style={loadingStyles.container}>
+        <ActivityIndicator size="large" color="#4ECDC4" />
+      </View>
+    );
+  }
 
   // Handle main app navigation with story reader overlay
   // Story reader is rendered on top of the app view so when it closes,
@@ -550,3 +560,13 @@ function AppContent() {
   // Fallback
   return <MainMenu onNavigate={handleMainMenuNavigate} />;
 }
+
+// Styles for the loading screen
+const loadingStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#1a1a2e', // Dark purple background matching app theme
+  },
+});
