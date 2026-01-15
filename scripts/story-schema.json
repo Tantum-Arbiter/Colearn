@@ -49,6 +49,26 @@
       "type": "string",
       "maxLength": 500
     },
+    "localizedTitle": {
+      "type": "object",
+      "description": "Localized story titles for multi-language support",
+      "properties": {
+        "en": { "type": "string" },
+        "pl": { "type": "string" },
+        "es": { "type": "string" },
+        "de": { "type": "string" }
+      }
+    },
+    "localizedDescription": {
+      "type": "object",
+      "description": "Localized story descriptions for multi-language support",
+      "properties": {
+        "en": { "type": "string" },
+        "pl": { "type": "string" },
+        "es": { "type": "string" },
+        "de": { "type": "string" }
+      }
+    },
     "isPremium": {
       "type": "boolean",
       "default": false
@@ -90,6 +110,16 @@
           },
           "text": {
             "type": "string"
+          },
+          "localizedText": {
+            "type": "object",
+            "description": "Localized page text for multi-language support",
+            "properties": {
+              "en": { "type": "string" },
+              "pl": { "type": "string" },
+              "es": { "type": "string" },
+              "de": { "type": "string" }
+            }
           },
           "backgroundImage": {
             "type": "string",

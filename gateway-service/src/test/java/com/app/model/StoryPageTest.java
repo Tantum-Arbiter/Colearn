@@ -162,8 +162,75 @@ class StoryPageTest {
     void testHashCode() {
         StoryPage page1 = new StoryPage("page-1", 2, "Text 1");
         StoryPage page2 = new StoryPage("page-1", 2, "Text 2");
-        
+
         assertEquals(page1.hashCode(), page2.hashCode());
+    }
+
+    // Localization tests
+
+    @Test
+    @DisplayName("Should set and get localizedText")
+    void testLocalizedTextGetterSetter() {
+        LocalizedText localizedText = new LocalizedText();
+        localizedText.setEn("English text");
+        localizedText.setPl("Polish text");
+
+        storyPage.setLocalizedText(localizedText);
+
+        assertNotNull(storyPage.getLocalizedText());
+        assertEquals("English text", storyPage.getLocalizedText().getEn());
+        assertEquals("Polish text", storyPage.getLocalizedText().getPl());
+    }
+
+    @Test
+    @DisplayName("Should return localized text for requested language")
+    void testGetTextForLanguage() {
+        LocalizedText localizedText = new LocalizedText();
+        localizedText.setEn("Once upon a time...");
+        localizedText.setPl("Dawno dawno temu...");
+        localizedText.setEs("Érase una vez...");
+        localizedText.setDe("Es war einmal...");
+
+        storyPage.setLocalizedText(localizedText);
+
+        assertEquals("Once upon a time...", storyPage.getTextForLanguage("en"));
+        assertEquals("Dawno dawno temu...", storyPage.getTextForLanguage("pl"));
+        assertEquals("Érase una vez...", storyPage.getTextForLanguage("es"));
+        assertEquals("Es war einmal...", storyPage.getTextForLanguage("de"));
+    }
+
+    @Test
+    @DisplayName("Should fallback to English when language not available")
+    void testTextForLanguageFallbackToEnglish() {
+        LocalizedText localizedText = new LocalizedText();
+        localizedText.setEn("English fallback");
+        // No Polish translation
+
+        storyPage.setLocalizedText(localizedText);
+
+        // Should fallback to English when Polish not available
+        assertEquals("English fallback", storyPage.getTextForLanguage("pl"));
+    }
+
+    @Test
+    @DisplayName("Should fallback to default text when no localization")
+    void testTextForLanguageFallbackToDefaultText() {
+        storyPage.setText("Default page text");
+        storyPage.setLocalizedText(null);
+
+        assertEquals("Default page text", storyPage.getTextForLanguage("en"));
+        assertEquals("Default page text", storyPage.getTextForLanguage("pl"));
+    }
+
+    @Test
+    @DisplayName("Should handle null language code")
+    void testTextForLanguageNullLanguage() {
+        LocalizedText localizedText = new LocalizedText();
+        localizedText.setEn("English text");
+        storyPage.setLocalizedText(localizedText);
+
+        // Null language should return English
+        assertEquals("English text", storyPage.getTextForLanguage(null));
     }
 }
 

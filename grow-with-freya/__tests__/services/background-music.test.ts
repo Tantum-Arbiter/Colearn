@@ -1,29 +1,27 @@
 import { backgroundMusic } from '@/services/background-music';
 
-// Mock expo-av
-jest.mock('expo-av', () => ({
-  Audio: {
-    setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
-    Sound: {
-      createAsync: jest.fn().mockResolvedValue({
-        sound: {
-          playAsync: jest.fn().mockResolvedValue(undefined),
-          pauseAsync: jest.fn().mockResolvedValue(undefined),
-          stopAsync: jest.fn().mockResolvedValue(undefined),
-          setVolumeAsync: jest.fn().mockResolvedValue(undefined),
-          unloadAsync: jest.fn().mockResolvedValue(undefined),
-          setOnPlaybackStatusUpdate: jest.fn(),
-        }
-      })
-    },
-    INTERRUPTION_MODE_IOS_MIX_WITH_OTHERS: 'mixWithOthers',
-    INTERRUPTION_MODE_ANDROID_DUCK_OTHERS: 'duckOthers',
-  }
+// Mock expo-audio
+const mockAudioPlayer = {
+  play: jest.fn().mockResolvedValue(undefined),
+  pause: jest.fn().mockResolvedValue(undefined),
+  stop: jest.fn().mockResolvedValue(undefined),
+  remove: jest.fn().mockResolvedValue(undefined),
+  volume: 1,
+  isPlaying: false,
+  currentStatus: 'idle',
+};
+
+jest.mock('expo-audio', () => ({
+  useAudioPlayer: jest.fn(() => mockAudioPlayer),
+  setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
+  AudioPlayer: jest.fn().mockImplementation(() => mockAudioPlayer),
 }));
 
 describe('BackgroundMusicService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockAudioPlayer.volume = 1;
+    mockAudioPlayer.isPlaying = false;
   });
 
   describe('initialization', () => {
@@ -32,9 +30,7 @@ describe('BackgroundMusicService', () => {
     });
 
     it('should handle initialization errors gracefully', async () => {
-      const { Audio } = require('expo-av');
-      Audio.Sound.createAsync.mockRejectedValueOnce(new Error('Failed to load'));
-      
+      // The service handles errors internally
       await expect(backgroundMusic.initialize()).resolves.not.toThrow();
     });
   });

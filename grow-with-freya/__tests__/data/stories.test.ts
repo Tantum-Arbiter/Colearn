@@ -211,24 +211,64 @@ describe('Stories Data', () => {
   describe('Performance', () => {
     it('should load story data quickly', () => {
       const startTime = performance.now();
-      
+
       // Access all story data
       const mockStories = MOCK_STORIES;
       const placeholderStories = PLACEHOLDER_STORIES;
       const allStories = ALL_STORIES;
       const availableStories = getAvailableStories();
       const randomStory = getRandomStory();
-      
+
       const endTime = performance.now();
-      
+
       expect(mockStories).toBeDefined();
       expect(placeholderStories).toBeDefined();
       expect(allStories).toBeDefined();
       expect(availableStories).toBeDefined();
       expect(randomStory).toBeDefined();
-      
+
       // Should load very quickly (less than 10ms)
       expect(endTime - startTime).toBeLessThan(10);
+    });
+  });
+
+  describe('Localization support', () => {
+    it('should accept localizedTitle field', () => {
+      // Verify story type accepts localized fields
+      const storyWithLocalization: Story = {
+        id: 'test-localized',
+        title: 'Default Title',
+        localizedTitle: {
+          en: 'English Title',
+          pl: 'Polish Title',
+        },
+        category: 'adventure',
+        tag: '🌟',
+        emoji: '🌟',
+        isAvailable: true,
+      };
+
+      expect(storyWithLocalization.localizedTitle?.en).toBe('English Title');
+      expect(storyWithLocalization.localizedTitle?.pl).toBe('Polish Title');
+    });
+
+    it('should accept localizedDescription field', () => {
+      const storyWithLocalization: Story = {
+        id: 'test-localized',
+        title: 'Title',
+        description: 'Default description',
+        localizedDescription: {
+          en: 'English description',
+          es: 'Spanish description',
+        },
+        category: 'bedtime',
+        tag: '🌙',
+        emoji: '🌙',
+        isAvailable: true,
+      };
+
+      expect(storyWithLocalization.localizedDescription?.en).toBe('English description');
+      expect(storyWithLocalization.localizedDescription?.es).toBe('Spanish description');
     });
   });
 });

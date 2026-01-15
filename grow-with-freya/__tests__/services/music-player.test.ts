@@ -1,19 +1,19 @@
 import { musicPlayer } from '@/services/music-player';
 import { MusicTrack, MusicPlaylist } from '@/types/music';
 
-// Create mock objects outside the jest.mock callback
+// Create mock sound object
 const mockSound = {
-  playAsync: jest.fn(),
-  pauseAsync: jest.fn(),
-  stopAsync: jest.fn(),
-  unloadAsync: jest.fn(),
-  setVolumeAsync: jest.fn(),
-  setPositionAsync: jest.fn(),
+  playAsync: jest.fn().mockResolvedValue(undefined),
+  pauseAsync: jest.fn().mockResolvedValue(undefined),
+  stopAsync: jest.fn().mockResolvedValue(undefined),
+  unloadAsync: jest.fn().mockResolvedValue(undefined),
+  setVolumeAsync: jest.fn().mockResolvedValue(undefined),
+  setPositionAsync: jest.fn().mockResolvedValue(undefined),
   setOnPlaybackStatusUpdate: jest.fn(),
 };
 
 const mockAudio = {
-  setAudioModeAsync: jest.fn(),
+  setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
   Sound: {
     createAsync: jest.fn().mockResolvedValue({ sound: mockSound }),
   },
@@ -21,7 +21,7 @@ const mockAudio = {
   INTERRUPTION_MODE_ANDROID_DO_NOT_MIX: 'DO_NOT_MIX',
 };
 
-// Mock expo-av
+// Mock expo-av (the music player still uses expo-av)
 jest.mock('expo-av', () => ({
   Audio: mockAudio,
 }));

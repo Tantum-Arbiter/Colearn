@@ -14,7 +14,9 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import * as ScreenOrientation from 'expo-screen-orientation';
-import { Story, StoryPage, STORY_TAGS, InteractiveElement } from '@/types/story';
+import { useTranslation } from 'react-i18next';
+import { Story, StoryPage, STORY_TAGS, InteractiveElement, getLocalizedText } from '@/types/story';
+import type { SupportedLanguage } from '@/services/i18n';
 import { InteractiveElementComponent } from './interactive-element';
 import { Fonts } from '@/constants/theme';
 import { useStoryTransition } from '@/contexts/story-transition-context';
@@ -56,6 +58,9 @@ export function StoryBookReader({
 }: StoryBookReaderProps) {
   const insets = useSafeAreaInsets();
   const { isTransitioning: isStoryTransitioning, completeTransition, startExitAnimation, returnToModeSelection } = useStoryTransition();
+  const { i18n, t } = useTranslation();
+  const currentLanguage = i18n.language as SupportedLanguage;
+  const displayTitle = getLocalizedText(story.localizedTitle, story.title, currentLanguage);
   // Start from page 1 if skipping cover, otherwise start from cover (page 0)
   const [currentPageIndex, setCurrentPageIndex] = useState(skipCoverPage ? 1 : 0);
   const [previousPageIndex, setPreviousPageIndex] = useState<number | null>(null); // For crossfade
@@ -1621,7 +1626,7 @@ export function StoryBookReader({
                         textAnimatedStyle
                       ]}
                     >
-                      {currentPage?.text}
+                      {currentPage ? getLocalizedText(currentPage.localizedText, currentPage.text, currentLanguage) : ''}
                     </Animated.Text>
                   </ScrollView>
                 </View>
@@ -1668,23 +1673,30 @@ export function StoryBookReader({
             onPress={handleCoverTap}
             testID="cover-tap-overlay"
           >
+            {/* Story Title - Centered on cover */}
+            <View style={styles.coverTitleContainer}>
+              <Text style={[styles.coverTitleText, { fontSize: scaledFontSize(28) }]} numberOfLines={3}>
+                {displayTitle}
+              </Text>
+            </View>
+
             <View style={styles.coverTapHint}>
               {readingMode === 'record' && !currentVoiceOver ? (
-                <Text style={[styles.coverTapText, { fontSize: scaledFontSize(16) }]}>Select a voice profile</Text>
+                <Text style={[styles.coverTapText, { fontSize: scaledFontSize(16) }]}>{t('reader.selectVoiceProfile')}</Text>
               ) : readingMode === 'record' && currentVoiceOver ? (
                 <>
-                  <Text style={[styles.coverTapText, { fontSize: scaledFontSize(14), opacity: 0.8 }]}>Recording as: {currentVoiceOver.name}</Text>
-                  <Text style={[styles.coverTapText, { fontSize: scaledFontSize(16), marginTop: 4 }]}>Tap to begin</Text>
+                  <Text style={[styles.coverTapText, { fontSize: scaledFontSize(14), opacity: 0.8 }]}>{t('reader.recordingAs', { name: currentVoiceOver.name })}</Text>
+                  <Text style={[styles.coverTapText, { fontSize: scaledFontSize(16), marginTop: 4 }]}>{t('reader.tapToBegin')}</Text>
                 </>
               ) : readingMode === 'narrate' && !currentVoiceOver ? (
-                <Text style={[styles.coverTapText, { fontSize: scaledFontSize(16) }]}>Select a voice over</Text>
+                <Text style={[styles.coverTapText, { fontSize: scaledFontSize(16) }]}>{t('reader.selectRecording')}</Text>
               ) : readingMode === 'narrate' && currentVoiceOver ? (
                 <>
-                  <Text style={[styles.coverTapText, { fontSize: scaledFontSize(14), opacity: 0.8 }]}>Narrating as: {currentVoiceOver.name}</Text>
-                  <Text style={[styles.coverTapText, { fontSize: scaledFontSize(16), marginTop: 4 }]}>Tap to begin</Text>
+                  <Text style={[styles.coverTapText, { fontSize: scaledFontSize(14), opacity: 0.8 }]}>{t('reader.listeningTo', { name: currentVoiceOver.name })}</Text>
+                  <Text style={[styles.coverTapText, { fontSize: scaledFontSize(16), marginTop: 4 }]}>{t('reader.tapToBegin')}</Text>
                 </>
               ) : (
-                <Text style={[styles.coverTapText, { fontSize: scaledFontSize(16) }]}>Tap to begin</Text>
+                <Text style={[styles.coverTapText, { fontSize: scaledFontSize(16) }]}>{t('reader.tapToBegin')}</Text>
               )}
             </View>
           </Pressable>
@@ -2657,10 +2669,28 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    justifyContent: 'flex-end',
+    justifyContent: 'center', // Center content vertically
     alignItems: 'center',
     paddingBottom: 60,
     zIndex: 5, // Below topLeftControls and topRightControls (zIndex: 10)
+  },
+  coverTitleContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 30,
+    marginBottom: 20,
+  },
+  coverTitleText: {
+    fontSize: 28,
+    fontFamily: Fonts.rounded,
+    fontWeight: '700',
+    color: 'white',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.7)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
+    letterSpacing: 0.5,
   },
   coverTapHint: {
     backgroundColor: 'rgba(255, 255, 255, 0.9)',

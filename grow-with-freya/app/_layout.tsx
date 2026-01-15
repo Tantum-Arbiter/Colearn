@@ -6,6 +6,8 @@ import * as ScreenOrientation from 'expo-screen-orientation';
 import { DevSettings } from 'react-native';
 
 import 'react-native-reanimated';
+// Initialize i18n service - must be imported before components that use translations
+import '@/services/i18n';
 
 // On Android in dev mode, disable Fast Refresh to prevent ExoPlayer threading errors
 // ExoPlayer callbacks fire on background threads which crash during Fast Refresh

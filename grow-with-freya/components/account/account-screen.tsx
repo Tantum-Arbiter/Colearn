@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../../store/app-store';
 import { MoonBottomImage } from '../main-menu/animated-components';
 import { mainMenuStyles } from '../main-menu/styles';
@@ -27,6 +28,7 @@ import { TEXT_SIZE_OPTIONS, useAccessibility } from '../../hooks/use-accessibili
 import { SettingsTipsOverlay } from '../tutorial/settings-tips-overlay';
 import { ScreenTimeTipsOverlay } from '../tutorial/screen-time-tips-overlay';
 import { useTutorial } from '../../contexts/tutorial-context';
+import { SUPPORTED_LANGUAGES, setStoredLanguage, type SupportedLanguage } from '../../services/i18n';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -59,20 +61,18 @@ const generateStarPositions = () => {
 };
 const MEMOIZED_ACCOUNT_STAR_POSITIONS = generateStarPositions();
 
-type Language = 'en' | 'pl' | 'es' | 'de';
-
-const LANGUAGES: { code: Language; name: string; flag: string }[] = [
-  { code: 'en', name: 'English', flag: '🇬🇧' },
-  { code: 'pl', name: 'Polski', flag: '🇵🇱' },
-  { code: 'es', name: 'Español', flag: '🇪🇸' },
-  { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
-];
-
 export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
+  const { i18n, t } = useTranslation();
   const [currentView, setCurrentView] = useState<SlideView>('main');
   const [showGrayscaleInfo, setShowGrayscaleInfo] = useState(false);
   const [showLanguageOverlay, setShowLanguageOverlay] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState<Language>('en');
+  const currentLanguage = i18n.language as SupportedLanguage;
+
+  const handleLanguageChange = useCallback(async (lang: SupportedLanguage) => {
+    await setStoredLanguage(lang);
+    setShowLanguageOverlay(false);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  }, []);
 
   // For debug screens that still use conditional rendering
   const [debugView, setDebugView] = useState<'none' | 'notification-debug' | 'audio-debug'>('none');
@@ -489,10 +489,10 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
               }}
             >
               <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>
-                Language
+                {t('account.language')}
               </Text>
               <Text style={[styles.settingValue, { fontSize: scaledFontSize(16) }]}>
-                {LANGUAGES.find(l => l.code === selectedLanguage)?.flag} {LANGUAGES.find(l => l.code === selectedLanguage)?.name} →
+                {SUPPORTED_LANGUAGES.find(l => l.code === currentLanguage)?.flag} {SUPPORTED_LANGUAGES.find(l => l.code === currentLanguage)?.nativeName} →
               </Text>
             </Pressable>
 
@@ -808,28 +808,24 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
               onPress={(e) => e.stopPropagation()}
             >
               <Text style={[styles.languageModalTitle, { fontSize: scaledFontSize(18) }]}>
-                Select Language
+                {t('account.selectLanguage')}
               </Text>
-              {LANGUAGES.map((lang) => (
+              {SUPPORTED_LANGUAGES.map((lang) => (
                 <Pressable
                   key={lang.code}
                   style={[
                     styles.languageOption,
-                    selectedLanguage === lang.code && styles.languageOptionSelected,
+                    currentLanguage === lang.code && styles.languageOptionSelected,
                   ]}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setSelectedLanguage(lang.code);
-                    setShowLanguageOverlay(false);
-                  }}
+                  onPress={() => handleLanguageChange(lang.code)}
                 >
                   <Text style={[styles.languageFlag, { fontSize: scaledFontSize(24) }]}>
                     {lang.flag}
                   </Text>
                   <Text style={[styles.languageName, { fontSize: scaledFontSize(16) }]}>
-                    {lang.name}
+                    {lang.nativeName}
                   </Text>
-                  {selectedLanguage === lang.code && (
+                  {currentLanguage === lang.code && (
                     <Text style={[styles.languageCheck, { fontSize: scaledFontSize(18) }]}>✓</Text>
                   )}
                 </Pressable>

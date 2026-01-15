@@ -26,7 +26,7 @@ export function SettingsTipsOverlay({ isActive = true }: SettingsTipsOverlayProp
   const [isVisible, setIsVisible] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const hasTriggeredRef = useRef(false);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.9);

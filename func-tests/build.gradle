@@ -137,6 +137,11 @@ tasks.register('functionalTest') {
     group = "verification"
     description = "Runs all functional tests including Cucumber scenarios"
     dependsOn test, cucumberTest
+
+    // Add an action so Gradle doesn't skip this task
+    doLast {
+        println "Functional tests completed successfully"
+    }
 }
 
 

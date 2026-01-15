@@ -94,14 +94,14 @@ export const VISUAL_EFFECTS = {
 
 export interface MenuItemData {
   icon: string;
-  label: string;
+  labelKey: string; // i18n translation key
   destination: string;
 }
 
 export const DEFAULT_MENU_ITEMS: MenuItemData[] = [
-  { icon: 'stories-icon', label: 'Stories', destination: 'stories' },
-  { icon: 'emotions-icon', label: 'Emotions', destination: 'emotions' },
-  { icon: 'bedtime-icon', label: 'Calming', destination: 'bedtime' },
+  { icon: 'stories-icon', labelKey: 'menu.stories', destination: 'stories' },
+  { icon: 'emotions-icon', labelKey: 'menu.emotions', destination: 'emotions' },
+  { icon: 'bedtime-icon', labelKey: 'menu.calming', destination: 'bedtime' },
 ] as const;
 
 export type IconStatus = 'animated_interactive' | 'inactive';

@@ -1,5 +1,5 @@
 // Mock for expo-screen-orientation
-export const OrientationLock = {
+const OrientationLock = {
   DEFAULT: 'DEFAULT',
   ALL: 'ALL',
   PORTRAIT: 'PORTRAIT',
@@ -10,7 +10,7 @@ export const OrientationLock = {
   LANDSCAPE_RIGHT: 'LANDSCAPE_RIGHT',
 };
 
-export const Orientation = {
+const Orientation = {
   UNKNOWN: 'UNKNOWN',
   PORTRAIT_UP: 'PORTRAIT_UP',
   PORTRAIT_DOWN: 'PORTRAIT_DOWN',
@@ -18,12 +18,12 @@ export const Orientation = {
   LANDSCAPE_RIGHT: 'LANDSCAPE_RIGHT',
 };
 
-export const lockAsync = jest.fn(() => Promise.resolve());
-export const unlockAsync = jest.fn(() => Promise.resolve());
-export const getOrientationAsync = jest.fn(() => Promise.resolve(Orientation.PORTRAIT_UP));
-export const getOrientationLockAsync = jest.fn(() => Promise.resolve(OrientationLock.DEFAULT));
+const lockAsync = jest.fn(() => Promise.resolve());
+const unlockAsync = jest.fn(() => Promise.resolve());
+const getOrientationAsync = jest.fn(() => Promise.resolve(Orientation.PORTRAIT_UP));
+const getOrientationLockAsync = jest.fn(() => Promise.resolve(OrientationLock.DEFAULT));
 
-export default {
+module.exports = {
   OrientationLock,
   Orientation,
   lockAsync,

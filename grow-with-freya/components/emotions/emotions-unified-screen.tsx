@@ -9,6 +9,7 @@ import Animated, {
   withTiming,
   Easing
 } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { ThemedText } from '@/components/themed-text';
 import { Fonts } from '@/constants/theme';
 import { PageHeader } from '@/components/ui/page-header';
@@ -32,6 +33,7 @@ export function EmotionsUnifiedScreen({ onStartGame, onBack }: EmotionsUnifiedSc
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledButtonSize, scaledPadding, textSizeScale, isTablet, contentMaxWidth } = useAccessibility();
+  const { t } = useTranslation();
 
   // Generate star positions for background (matching stories pattern)
   const starPositions = useMemo(() => generateStarPositions(VISUAL_EFFECTS.STAR_COUNT), []);
@@ -107,8 +109,8 @@ export function EmotionsUnifiedScreen({ onStartGame, onBack }: EmotionsUnifiedSc
 
       {/* Shared page header component */}
       <PageHeader
-        title="Emotion Cards"
-        subtitle="Choose your style and learn about emotions"
+        title={t('emotions.title')}
+        subtitle={t('emotions.subtitle')}
         onBack={onBack}
       />
 
@@ -167,14 +169,14 @@ export function EmotionsUnifiedScreen({ onStartGame, onBack }: EmotionsUnifiedSc
               style={[styles.howToPlayGradient, { padding: scaledPadding(15) }]}
             >
               <ThemedText style={[styles.howToPlayTitle, { fontSize: scaledFontSize(18) }]}>
-                How to Play {showHowToPlay ? '▼' : '▶'}
+                {showHowToPlay ? t('emotions.howToPlayExpanded') : t('emotions.howToPlayCollapsed')}
               </ThemedText>
               {showHowToPlay && (
                 <ThemedText style={[styles.instructions, { fontSize: scaledFontSize(14), marginTop: scaledPadding(10) }]}>
-                  • Look at the picture{'\n'}
-                  • Make the same face!{'\n'}
-                  • Show me happy, sad, or silly{'\n'}
-                  • Let&apos;s learn about feelings together!
+                  • {t('emotions.instructions.step1')}{'\n'}
+                  • {t('emotions.instructions.step2')}{'\n'}
+                  • {t('emotions.instructions.step3')}{'\n'}
+                  • {t('emotions.instructions.step4')}
                 </ThemedText>
               )}
             </LinearGradient>
@@ -190,7 +192,7 @@ export function EmotionsUnifiedScreen({ onStartGame, onBack }: EmotionsUnifiedSc
             style={[styles.buttonGradient, { paddingHorizontal: scaledPadding(32), paddingVertical: scaledPadding(15) }]}
           >
             <ThemedText style={[styles.startButtonText, { fontSize: scaledFontSize(16) }]}>
-              Express with {selectedThemeData.name}!
+              {t('emotions.expressWithTheme', { theme: selectedThemeData.name })}
             </ThemedText>
           </LinearGradient>
         </Pressable>

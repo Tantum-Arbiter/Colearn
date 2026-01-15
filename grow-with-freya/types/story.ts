@@ -1,4 +1,13 @@
 import { ImageSourcePropType } from 'react-native';
+import type { SupportedLanguage } from '@/services/i18n';
+
+// Localized text for story content
+export interface LocalizedText {
+  en: string; // Required - English is the fallback
+  pl?: string;
+  es?: string;
+  de?: string;
+}
 
 // Interactive element types for story pages
 export type InteractiveElementType = 'reveal' | 'toggle' | 'drag';
@@ -29,12 +38,14 @@ export interface StoryPage {
   backgroundImage?: string; // Background image for the page
   characterImage?: string; // Character/foreground image
   text: string; // Story text for this page
+  localizedText?: LocalizedText; // Translated page text
   interactiveElements?: InteractiveElement[]; // Optional interactive props for this page
 }
 
 export interface Story {
   id: string;
   title: string;
+  localizedTitle?: LocalizedText; // Translated titles
   category: StoryCategory;
   tag: string;
   emoji: string;
@@ -43,6 +54,7 @@ export interface Story {
   ageRange?: string;
   duration?: number; // in minutes
   description?: string;
+  localizedDescription?: LocalizedText; // Translated descriptions
   pages?: StoryPage[]; // 8 pages for the story book
 
   // Metadata for CMS and delta-sync
@@ -53,6 +65,19 @@ export interface Story {
   updatedAt?: string; // ISO timestamp
   version?: number; // For delta-sync
   checksum?: string; // SHA-256 checksum for delta-sync
+}
+
+/**
+ * Get localized text with fallback to English
+ */
+export function getLocalizedText(
+  localized: LocalizedText | undefined,
+  fallback: string,
+  language?: SupportedLanguage
+): string {
+  if (!localized) return fallback;
+  if (!language) return localized.en || fallback;
+  return localized[language] || localized.en || fallback;
 }
 
 export type StoryCategory = 'personalized' | 'bedtime' | 'adventure' | 'nature' | 'friendship' | 'learning' | 'fantasy' | 'music' | 'activities' | 'growing';

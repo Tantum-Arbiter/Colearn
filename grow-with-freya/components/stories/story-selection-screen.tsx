@@ -13,8 +13,9 @@ import Animated, {
   Easing
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 import { ALL_STORIES } from '@/data/stories';
-import { Story, StoryCategory, StoryFilterTag, STORY_FILTER_TAGS } from '@/types/story';
+import { Story, StoryCategory, StoryFilterTag, STORY_FILTER_TAGS, getLocalizedText } from '@/types/story';
 import { Fonts } from '@/constants/theme';
 import { useAppStore } from '@/store/app-store';
 import { StoryLoader } from '@/services/story-loader';
@@ -27,6 +28,7 @@ import { useStoryTransition } from '@/contexts/story-transition-context';
 import { PageHeader } from '@/components/ui/page-header';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { StoryPreviewModal } from './story-preview-modal';
+import type { SupportedLanguage } from '@/services/i18n';
 
 // Constants for card dimensions - defined once, not on every render
 const CARD_WIDTH = 160;
@@ -47,6 +49,7 @@ interface StoryCardProps {
   borderRadius: number;
   emojiFontSize: number;
   isHidden?: boolean; // Hide when this card is being animated in the transition overlay
+  language: SupportedLanguage;
 }
 
 // Memoized story card component - prevents re-renders during scroll
@@ -59,8 +62,10 @@ const StoryCard = memo(function StoryCard({
   borderRadius,
   emojiFontSize,
   isHidden,
+  language,
 }: StoryCardProps) {
   const cardRef = useRef<View>(null);
+  const displayTitle = getLocalizedText(story.localizedTitle, story.title, language);
 
   const handlePress = useCallback(() => {
     // Pass the ref to onPress so the parent can measure position
@@ -75,6 +80,9 @@ const StoryCard = memo(function StoryCard({
     return (
       <View ref={cardRef} collapsable={false} style={styles.cardPressable}>
         <View style={[styles.card, { width: cardWidth, height: cardHeight, borderRadius, opacity: 0 }]} />
+        <View style={[styles.cardTitleContainer, { width: cardWidth }]}>
+          <Text style={[styles.cardTitle, { opacity: 0 }]} numberOfLines={2}>{displayTitle}</Text>
+        </View>
       </View>
     );
   }
@@ -110,6 +118,10 @@ const StoryCard = memo(function StoryCard({
             </View>
           )}
         </View>
+        {/* Story title below the cover */}
+        <View style={[styles.cardTitleContainer, { width: cardWidth }]}>
+          <Text style={styles.cardTitle} numberOfLines={2}>{displayTitle}</Text>
+        </View>
       </Pressable>
     </View>
   );
@@ -123,6 +135,8 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   const { startTransition, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader } = useStoryTransition();
   const lastCallRef = useRef<number>(0);
   const { scaledFontSize, scaledButtonSize, scaledPadding, textSizeScale } = useAccessibility();
+  const { i18n, t } = useTranslation();
+  const currentLanguage = i18n.language as SupportedLanguage;
 
   // Pre-calculate scaled dimensions once (not on every render item)
   const scaledCardW = scaledButtonSize(CARD_WIDTH);
@@ -349,8 +363,9 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       borderRadius={scaledBorderRadius}
       emojiFontSize={scaledEmojiFontSize}
       isHidden={(isTransitioning || shouldShowStoryReader || isExpandingToReader) && selectedStoryId === story.id}
+      language={currentLanguage}
     />
-  ), [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader]);
+  ), [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader, currentLanguage]);
 
   // Memoized key extractor
   const keyExtractor = useCallback((story: Story) => story.id, []);
@@ -526,6 +541,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  cardTitleContainer: {
+    paddingTop: 6,
+    paddingHorizontal: 2,
+  },
+  cardTitle: {
+    color: 'white',
+    fontFamily: Fonts.rounded,
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+    minHeight: 32, // Space for 2 lines
   },
   carouselContent: {
     paddingHorizontal: 20,

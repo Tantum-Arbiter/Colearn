@@ -48,6 +48,13 @@ public class Story {
     @JsonProperty("description")
     private String description;
 
+    // Localized content fields (for multi-language support)
+    @JsonProperty("localizedTitle")
+    private LocalizedText localizedTitle;
+
+    @JsonProperty("localizedDescription")
+    private LocalizedText localizedDescription;
+
     @JsonProperty("pages")
     private List<StoryPage> pages;
 
@@ -177,6 +184,44 @@ public class Story {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public LocalizedText getLocalizedTitle() {
+        return localizedTitle;
+    }
+
+    public void setLocalizedTitle(LocalizedText localizedTitle) {
+        this.localizedTitle = localizedTitle;
+    }
+
+    public LocalizedText getLocalizedDescription() {
+        return localizedDescription;
+    }
+
+    public void setLocalizedDescription(LocalizedText localizedDescription) {
+        this.localizedDescription = localizedDescription;
+    }
+
+    /**
+     * Get title for a specific language, falling back to English or the default title
+     */
+    public String getTitleForLanguage(String languageCode) {
+        if (localizedTitle != null) {
+            String localized = localizedTitle.getText(languageCode);
+            if (localized != null) return localized;
+        }
+        return title;
+    }
+
+    /**
+     * Get description for a specific language, falling back to English or the default description
+     */
+    public String getDescriptionForLanguage(String languageCode) {
+        if (localizedDescription != null) {
+            String localized = localizedDescription.getText(languageCode);
+            if (localized != null) return localized;
+        }
+        return description;
     }
 
     public List<StoryPage> getPages() {

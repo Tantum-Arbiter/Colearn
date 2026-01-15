@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Alert } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { OnboardingScreen } from './onboarding-screen';
 import { useAppStore } from '@/store/app-store';
 import { preloadOnboardingImages } from '@/services/image-preloader';
@@ -12,59 +13,63 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const { setOnboardingComplete, setCrashReportingEnabled } = useAppStore();
+  const { t } = useTranslation();
 
   // Timeout cleanup refs
   const nextTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Screen keys for translation lookup
+  const screenKeys = ['welcome', 'screenTime', 'personalize', 'voiceRecording', 'research', 'disclaimer', 'privacy', 'crashReporting'];
+
   const onboardingScreens = [
     {
-      title: "Welcome!",
-      body: "Help your child's early development with our stories and activities",
+      title: t('onboarding.screens.welcome.title'),
+      body: t('onboarding.screens.welcome.body'),
       illustration: "family reading together",
-      buttonLabel: "Next",
+      buttonLabel: t('onboarding.screens.welcome.button'),
     },
     {
-      title: "Why we limit screen time",
-      body: "We encourage parents to use this app together with their child.",
+      title: t('onboarding.screens.screenTime.title'),
+      body: t('onboarding.screens.screenTime.body'),
       illustration: "parent hugging two children",
-      buttonLabel: "Next",
+      buttonLabel: t('onboarding.screens.screenTime.button'),
     },
     {
-      title: "Lets make it about them!",
-      body: "What's your name? Personalize the experience by entering your name and creating an avatar!",
+      title: t('onboarding.screens.personalize.title'),
+      body: t('onboarding.screens.personalize.body'),
       illustration: "two children avatars (Tina and Bruno)",
-      buttonLabel: "Next",
+      buttonLabel: t('onboarding.screens.personalize.button'),
     },
     {
-      title: "Record your voice!",
-      body: "Narrate your stories with your voice. Comfort your child whilst you're not there.",
+      title: t('onboarding.screens.voiceRecording.title'),
+      body: t('onboarding.screens.voiceRecording.body'),
       illustration: "adult holding phone speaking",
-      buttonLabel: "Next",
+      buttonLabel: t('onboarding.screens.voiceRecording.button'),
     },
     {
-      title: "Backed by Research!",
-      body: "This app is developed as part of a Masters degree study on child development, exploring how digital exercises can support a healthy parent-child relationship. Research suggests co-engagement and short usage sessions provide the greatest benefits.",
+      title: t('onboarding.screens.research.title'),
+      body: t('onboarding.screens.research.body'),
       illustration: "parent hugging child",
-      buttonLabel: "Next",
+      buttonLabel: t('onboarding.screens.research.button'),
     },
     {
-      title: "Please Note",
-      body: "This app is in active development. Some features may not work - please screenshot issues with a timestamp.\n\nThe backend sleeps when unused. If sign-in fails, wait 30 seconds. Story loading varies by network.\n\nStory content includes original works, AI-generated stories, and children's books used for educational research.",
+      title: t('onboarding.screens.disclaimer.title'),
+      body: t('onboarding.screens.disclaimer.body'),
       illustration: "disclaimer",
-      buttonLabel: "Next",
+      buttonLabel: t('onboarding.screens.disclaimer.button'),
     },
     {
-      title: "Your Privacy",
-      body: "Your data is secure. No personal information is collected or stored.\n\nSigning in via Google or Apple is safe and pseudonymized - we only receive an anonymous identifier, not your email or personal details.\n\nSession syncing across devices is fully anonymized. All data follows best security practices with encryption in transit and at rest.\n\nThis app is designed with privacy-first principles for you and your family.",
+      title: t('onboarding.screens.privacy.title'),
+      body: t('onboarding.screens.privacy.body'),
       illustration: "privacy",
-      buttonLabel: "Next",
+      buttonLabel: t('onboarding.screens.privacy.button'),
     },
     {
-      title: "Help Us Improve",
-      body: "Would you like to help us improve the app by sharing anonymous crash reports?\n\nCrash reports help us identify and fix issues quickly. They contain only technical information about what went wrong - no personal data, photos, or content.\n\nYou can change this setting anytime in Settings.",
+      title: t('onboarding.screens.crashReporting.title'),
+      body: t('onboarding.screens.crashReporting.body'),
       illustration: "crash-reporting",
-      buttonLabel: "Next",
+      buttonLabel: t('onboarding.screens.crashReporting.button'),
       showCrashReportingDialog: true,
     },
   ];

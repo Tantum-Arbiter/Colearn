@@ -9,6 +9,7 @@ import Animated, {
   Easing as ReanimatedEasing,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 import { useAppStore } from '@/store/app-store';
 import { MusicControl } from '@/components/ui/music-control';
@@ -60,6 +61,7 @@ interface MainMenuProps {
 function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProps) {
   const insets = useSafeAreaInsets();
   const { scaledButtonSize, scaledFontSize } = useAccessibility();
+  const { t } = useTranslation();
 
 
 
@@ -393,7 +395,7 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
           <MenuIcon
             key={`center-${menuOrder[0].destination}`}
             icon={menuOrder[0].icon}
-            label={menuOrder[0].label}
+            label={t(menuOrder[0].labelKey)}
             status="animated_interactive"
             onPress={() => handleIconPress(menuOrder[0])}
             isLarge={true}
@@ -410,7 +412,7 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
               <MenuIcon
                 key={`top-left-${menuOrder[1].destination}`}
                 icon={menuOrder[1].icon}
-                label={menuOrder[1].label}
+                label={t(menuOrder[1].labelKey)}
                 status="inactive"
                 onPress={() => handleIconPress(menuOrder[1])}
                 testID={`menu-icon-${menuOrder[1].destination}`}
@@ -421,7 +423,7 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
               <MenuIcon
                 key={`top-right-${menuOrder[2].destination}`}
                 icon={menuOrder[2].icon}
-                label={menuOrder[2].label}
+                label={t(menuOrder[2].labelKey)}
                 status="inactive"
                 onPress={() => handleIconPress(menuOrder[2])}
                 testID={`menu-icon-${menuOrder[2].destination}`}
@@ -437,7 +439,7 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
                 <MenuIcon
                   key={`bottom-left-${menuOrder[3].destination}`}
                   icon={menuOrder[3].icon}
-                  label={menuOrder[3].label}
+                  label={t(menuOrder[3].labelKey)}
                   status="inactive"
                   onPress={() => handleIconPress(menuOrder[3])}
                   testID={`menu-icon-${menuOrder[3].destination}`}
@@ -447,7 +449,7 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
                 <MenuIcon
                   key={`bottom-right-${menuOrder[4].destination}`}
                   icon={menuOrder[4].icon}
-                  label={menuOrder[4].label}
+                  label={t(menuOrder[4].labelKey)}
                   status="inactive"
                   onPress={() => handleIconPress(menuOrder[4])}
                   testID={`menu-icon-${menuOrder[4].destination}`}

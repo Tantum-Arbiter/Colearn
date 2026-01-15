@@ -15,6 +15,7 @@ import Animated, {
   withTiming,
   Easing
 } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
 import { BearTopImage } from '@/components/main-menu/animated-components';
@@ -41,6 +42,7 @@ export function MusicMainMenu({
 }: MusicMainMenuProps) {
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledButtonSize, scaledPadding, textSizeScale } = useAccessibility();
+  const { t } = useTranslation();
 
 
   // Generate star positions for background
@@ -107,8 +109,8 @@ export function MusicMainMenu({
 
       {/* Shared page header component */}
       <PageHeader
-        title="Calming"
-        subtitle="Choose your music type"
+        title={t('music.title')}
+        subtitle={t('music.subtitle')}
         onBack={onBack}
       />
 
@@ -123,9 +125,9 @@ export function MusicMainMenu({
               colors={['#FF6B6B', '#FF8E8E']}
               style={[styles.optionGradient, { padding: scaledPadding(20) }]}
             >
-              <Text style={[styles.optionTitle, { fontSize: scaledFontSize(24) }]}>Tantrums</Text>
+              <Text style={[styles.optionTitle, { fontSize: scaledFontSize(24) }]}>{t('music.tantrums')}</Text>
               <Text style={[styles.optionDescription, { fontSize: scaledFontSize(16) }]}>
-                Calming music to help during difficult moments
+                {t('music.tantrumsDescription')}
               </Text>
             </LinearGradient>
           </Pressable>
@@ -136,9 +138,9 @@ export function MusicMainMenu({
               colors={['#6B73FF', '#8E95FF']}
               style={[styles.optionGradient, { padding: scaledPadding(20) }]}
             >
-              <Text style={[styles.optionTitle, { fontSize: scaledFontSize(24) }]}>Sleep</Text>
+              <Text style={[styles.optionTitle, { fontSize: scaledFontSize(24) }]}>{t('music.sleep')}</Text>
               <Text style={[styles.optionDescription, { fontSize: scaledFontSize(16) }]}>
-                Gentle sounds to help your child drift off to sleep
+                {t('music.sleepDescription')}
               </Text>
             </LinearGradient>
           </Pressable>

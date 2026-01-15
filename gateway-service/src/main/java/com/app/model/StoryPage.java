@@ -31,6 +31,10 @@ public class StoryPage {
     @PropertyName("text")
     private String text;
 
+    @JsonProperty("localizedText")
+    @PropertyName("localizedText")
+    private LocalizedText localizedText; // Localized page text
+
     @JsonProperty("backgroundImage")
     @PropertyName("backgroundImage")
     private String backgroundImage; // Asset path reference (not URL)
@@ -86,6 +90,25 @@ public class StoryPage {
 
     public void setText(String text) {
         this.text = text;
+    }
+
+    public LocalizedText getLocalizedText() {
+        return localizedText;
+    }
+
+    public void setLocalizedText(LocalizedText localizedText) {
+        this.localizedText = localizedText;
+    }
+
+    /**
+     * Get text for a specific language, falling back to English or the default text
+     */
+    public String getTextForLanguage(String languageCode) {
+        if (localizedText != null) {
+            String localized = localizedText.getText(languageCode);
+            if (localized != null) return localized;
+        }
+        return text;
     }
 
     public String getBackgroundImage() {
