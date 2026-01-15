@@ -1899,6 +1899,9 @@ export function StoryBookReader({
                         placeholder="Name..."
                         placeholderTextColor="#999"
                         autoFocus={availableVoiceOvers.length === 0}
+                        autoCorrect={false}
+                        spellCheck={false}
+                        underlineColorAndroid="transparent"
                       />
                       <Pressable
                         style={[
@@ -2019,6 +2022,9 @@ export function StoryBookReader({
                       placeholder="e.g., Mummy's Voice"
                       placeholderTextColor="#999"
                       autoFocus={availableVoiceOvers.length === 0}
+                      autoCorrect={false}
+                      spellCheck={false}
+                      underlineColorAndroid="transparent"
                     />
                     <View style={styles.modalButtonsCentered}>
                       <Pressable

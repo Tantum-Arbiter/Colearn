@@ -362,6 +362,9 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
               placeholder="Enter reminder title..."
               placeholderTextColor="rgba(255, 255, 255, 0.4)"
               maxLength={50}
+              autoCorrect={false}
+              spellCheck={false}
+              underlineColorAndroid="transparent"
             />
           </View>
 
@@ -377,6 +380,9 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
               multiline
               numberOfLines={3}
               maxLength={200}
+              autoCorrect={false}
+              spellCheck={false}
+              underlineColorAndroid="transparent"
             />
           </View>
 
@@ -686,6 +692,9 @@ export const CreateReminderContent: React.FC<CreateReminderContentProps> = ({
               placeholder="Enter reminder title..."
               placeholderTextColor="rgba(255, 255, 255, 0.4)"
               maxLength={50}
+              autoCorrect={false}
+              spellCheck={false}
+              underlineColorAndroid="transparent"
             />
           </View>
 
@@ -700,6 +709,9 @@ export const CreateReminderContent: React.FC<CreateReminderContentProps> = ({
               multiline
               numberOfLines={3}
               maxLength={200}
+              autoCorrect={false}
+              spellCheck={false}
+              underlineColorAndroid="transparent"
             />
           </View>
 

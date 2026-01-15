@@ -130,6 +130,8 @@ export function ParentsOnlyModal({
                     placeholderTextColor="rgba(255, 255, 255, 0.5)"
                     autoCapitalize="none"
                     autoCorrect={false}
+                    spellCheck={false}
+                    underlineColorAndroid="transparent"
                     onSubmitEditing={onSubmit}
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
@@ -167,6 +169,8 @@ export function ParentsOnlyModal({
                 placeholderTextColor="rgba(255, 255, 255, 0.5)"
                 autoCapitalize="none"
                 autoCorrect={false}
+                spellCheck={false}
+                underlineColorAndroid="transparent"
                 onSubmitEditing={onSubmit}
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
