@@ -144,37 +144,57 @@ jest.mock('expo-file-system/next', () => {
   };
 });
 
-// Mock expo-av
-jest.mock('expo-av', () => ({
-  Audio: {
-    Sound: {
-      createAsync: jest.fn(() => Promise.resolve({
-        sound: {
-          playAsync: jest.fn(),
-          pauseAsync: jest.fn(),
-          stopAsync: jest.fn(),
-          unloadAsync: jest.fn(),
-          setIsLoopingAsync: jest.fn(),
-          setVolumeAsync: jest.fn(),
-          getStatusAsync: jest.fn(() => Promise.resolve({
-            isLoaded: true,
-            isPlaying: false,
-            positionMillis: 0,
-            durationMillis: 30000,
-          })),
-        },
-        status: {
-          isLoaded: true,
-          isPlaying: false,
-          positionMillis: 0,
-          durationMillis: 30000,
-        },
-      })),
-    },
+// Mock expo-audio (modern Expo audio API)
+jest.mock('expo-audio', () => {
+  const mockPlayer = {
+    play: jest.fn(),
+    pause: jest.fn(),
+    remove: jest.fn(),
+    release: jest.fn(),
+    seekTo: jest.fn(),
+    setVolume: jest.fn(),
+    setLoop: jest.fn(),
+    setRate: jest.fn(),
+    currentTime: 0,
+    duration: 30,
+    playing: false,
+    volume: 1,
+    loop: false,
+    isLoaded: true,
+    addListener: jest.fn(() => ({ remove: jest.fn() })),
+  };
+
+  const mockRecorder = {
+    prepareToRecordAsync: jest.fn(),
+    startAsync: jest.fn(),
+    stopAsync: jest.fn(),
+    record: jest.fn(),
+    stop: jest.fn(),
+    uri: 'mock://recording.m4a',
+    isRecording: false,
+  };
+
+  return {
+    createAudioPlayer: jest.fn(() => mockPlayer),
     setAudioModeAsync: jest.fn(),
-  },
-  AVPlaybackStatus: {},
-}));
+    AudioPlayer: jest.fn(),
+    useAudioRecorder: jest.fn(() => mockRecorder),
+    RecordingPresets: {
+      HIGH_QUALITY: {
+        extension: '.m4a',
+        outputFormat: 'aac',
+        audioEncoder: 'aac',
+        sampleRate: 44100,
+        numberOfChannels: 2,
+        bitRate: 128000,
+      },
+    },
+    AudioModule: {
+      requestRecordingPermissionsAsync: jest.fn(() => Promise.resolve({ granted: true })),
+      getRecordingPermissionsAsync: jest.fn(() => Promise.resolve({ granted: true })),
+    },
+  };
+});
 
 // Mock @expo/vector-icons
 jest.mock('@expo/vector-icons', () => {

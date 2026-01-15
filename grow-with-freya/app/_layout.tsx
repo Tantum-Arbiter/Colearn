@@ -11,9 +11,10 @@ import 'react-native-reanimated';
 // ExoPlayer callbacks fire on background threads which crash during Fast Refresh
 if (__DEV__ && Platform.OS === 'android') {
   try {
-    // @ts-ignore - DevSettings is available in dev mode
-    if (DevSettings && DevSettings.setHotLoadingEnabled) {
-      DevSettings.setHotLoadingEnabled(false);
+    // DevSettings is available in dev mode but has incomplete TypeScript types
+    const devSettings = DevSettings as { setHotLoadingEnabled?: (enabled: boolean) => void };
+    if (devSettings && devSettings.setHotLoadingEnabled) {
+      devSettings.setHotLoadingEnabled(false);
     }
   } catch {
     // Ignore if DevSettings is not available

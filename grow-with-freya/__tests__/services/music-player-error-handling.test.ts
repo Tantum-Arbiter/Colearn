@@ -1,14 +1,11 @@
 import { MusicPlayerService } from '@/services/music-player';
 import { MusicTrack, MusicPlaylist } from '@/types/music';
 
-// Mock expo-av
-jest.mock('expo-av', () => ({
-  Audio: {
-    setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
-    Sound: {
-      createAsync: jest.fn(),
-    },
-  },
+// Mock expo-audio (modern Expo audio API)
+jest.mock('expo-audio', () => ({
+  createAudioPlayer: jest.fn(),
+  setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
+  AudioPlayer: jest.fn(),
 }));
 
 describe('MusicPlayerService Error Handling', () => {
@@ -41,9 +38,11 @@ describe('MusicPlayerService Error Handling', () => {
         isAvailable: true,
       };
 
-      // Mock Audio.Sound.createAsync to throw an error
-      const { Audio } = require('expo-av');
-      Audio.Sound.createAsync.mockRejectedValueOnce(new Error('AVPlayerItem error -11800'));
+      // Mock createAudioPlayer to throw an error
+      const { createAudioPlayer } = require('expo-audio');
+      createAudioPlayer.mockImplementationOnce(() => {
+        throw new Error('AudioPlayer error');
+      });
 
       // Verify initial state
       expect(musicPlayer.getState().currentTrack).toBeNull();
@@ -102,9 +101,11 @@ describe('MusicPlayerService Error Handling', () => {
         isAvailable: true,
       };
 
-      // Mock Audio.Sound.createAsync to throw an error
-      const { Audio } = require('expo-av');
-      Audio.Sound.createAsync.mockRejectedValueOnce(new Error('AVPlayerItem error -11800'));
+      // Mock createAudioPlayer to throw an error
+      const { createAudioPlayer } = require('expo-audio');
+      createAudioPlayer.mockImplementationOnce(() => {
+        throw new Error('AudioPlayer error');
+      });
 
       // Try to load playlist (should fail)
       await expect(musicPlayer.loadPlaylist(mockPlaylist)).rejects.toThrow();
@@ -178,12 +179,15 @@ describe('MusicPlayerService Error Handling', () => {
       expect(state.isLoading).toBe(false);
     });
 
-    it('should handle sound unload errors gracefully', async () => {
-      // Mock a sound object that fails to unload
-      const mockSound = {
-        unloadAsync: jest.fn().mockRejectedValue(new Error('Unload failed')),
+    it('should handle player release errors gracefully', async () => {
+      // Mock a player object that fails to release
+      const mockPlayer = {
+        pause: jest.fn(),
+        release: jest.fn().mockImplementation(() => {
+          throw new Error('Release failed');
+        }),
       };
-      musicPlayer['sound'] = mockSound as any;
+      musicPlayer['player'] = mockPlayer as any;
 
       // Set some state
       musicPlayer['updateState']({
@@ -198,13 +202,13 @@ describe('MusicPlayerService Error Handling', () => {
         },
       });
 
-      // Call clearTrack - should not throw even if unload fails
+      // Call clearTrack - should not throw even if release fails
       await expect(musicPlayer.clearTrack()).resolves.not.toThrow();
 
-      // Verify state is still reset despite unload error
+      // Verify state is still reset despite release error
       const state = musicPlayer.getState();
       expect(state.currentTrack).toBeNull();
-      expect(musicPlayer['sound']).toBeNull();
+      expect(musicPlayer['player']).toBeNull();
     });
   });
 });
