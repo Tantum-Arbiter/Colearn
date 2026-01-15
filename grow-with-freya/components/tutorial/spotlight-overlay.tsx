@@ -264,6 +264,14 @@ export function SpotlightOverlay({
 
   const hasTarget = !!step.target;
 
+  // On Android, the modal with statusBarTranslucent extends behind the navigation bar,
+  // but measureInWindow returns coordinates relative to the visible content area.
+  // We need to offset the Y coordinate by the navigation bar height on Android.
+  const adjustedTarget = step.target && Platform.OS === 'android' ? {
+    ...step.target,
+    y: step.target.y + insets.bottom,
+  } : step.target;
+
   // Check if we're on a phone in landscape mode (shorter dimension < 600 and width > height)
   const isPhoneLandscape = Math.min(screenWidth, screenHeight) < 600 && screenWidth > screenHeight;
 
@@ -305,7 +313,8 @@ export function SpotlightOverlay({
   const getTipPosition = () => {
     const centerLeft = (screenWidth - TIP_WIDTH) / 2;
     const centerTop = (screenHeight - tipHeight) / 2;
-    const target = step.target;
+    // Use the Android-adjusted target for positioning
+    const target = adjustedTarget;
 
     // Check if we're on a small mobile screen (phone) - use shorter dimension to detect phone
     const isSmallScreen = Math.min(screenWidth, screenHeight) < 600;
@@ -391,7 +400,7 @@ export function SpotlightOverlay({
 
   // Calculate sketch arrow coordinates (from center of tip card to target button)
   const getSketchArrowCoords = () => {
-    if (!hasTarget || !step.target) return null;
+    if (!hasTarget || !adjustedTarget) return null;
 
     // No arrows for main menu buttons (stories, emotions, bedtime) - on all devices
     if (step.id === 'stories_button' || step.id === 'emotions_button' || step.id === 'bedtime_button') {
@@ -404,7 +413,8 @@ export function SpotlightOverlay({
       return null;
     }
 
-    const target = step.target;
+    // Use the Android-adjusted target for arrow positioning
+    const target = adjustedTarget;
     const buttonCenterX = target.x + target.width / 2;
     const buttonCenterY = target.y + target.height / 2;
 
@@ -474,7 +484,9 @@ export function SpotlightOverlay({
   const sketchArrowCoords = getSketchArrowCoords();
 
   // Calculate spotlight cutout sized to the actual button dimensions
-  const target = step.target;
+  // Use adjustedTarget which already accounts for Android navigation bar offset
+  const target = adjustedTarget;
+
   const spotlightPadding = 8; // Padding around the button
   const useRoundedRect = step.spotlightShape === 'rounded-rect';
   const spotlightBorderRadius = step.spotlightBorderRadius ?? 20;
@@ -551,9 +563,9 @@ export function SpotlightOverlay({
         </Animated.View>
 
         {/* Pulsing ring for focus indication */}
-        {hasTarget && step.target && (
+        {hasTarget && adjustedTarget && (
           <PulsingRing
-            target={step.target}
+            target={adjustedTarget}
             useRoundedRect={useRoundedRect}
             borderRadius={spotlightBorderRadius}
           />
