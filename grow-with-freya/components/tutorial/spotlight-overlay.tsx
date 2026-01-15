@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import { View, Text, StyleSheet, Dimensions, Pressable, Modal, Platform, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Pressable, useWindowDimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -264,13 +264,9 @@ export function SpotlightOverlay({
 
   const hasTarget = !!step.target;
 
-  // On Android, the modal with statusBarTranslucent extends behind the status bar,
-  // but measureInWindow returns coordinates relative to the visible content area.
-  // We need to offset the Y coordinate by the status bar height on Android.
-  const adjustedTarget = step.target && Platform.OS === 'android' ? {
-    ...step.target,
-    y: step.target.y - insets.bottom,
-  } : step.target;
+  // No coordinate adjustment needed - we now render as an absolute View instead of Modal,
+  // so the overlay is in the same coordinate system as the measured buttons
+  const adjustedTarget = step.target;
 
   // Check if we're on a phone in landscape mode (shorter dimension < 600 and width > height)
   const isPhoneLandscape = Math.min(screenWidth, screenHeight) < 600 && screenWidth > screenHeight;
@@ -525,7 +521,9 @@ export function SpotlightOverlay({
   };
 
   return (
-    <Modal transparent visible={visible} animationType="none" statusBarTranslucent>
+    // Use absolute positioning instead of Modal to stay in the same coordinate system
+    // as the measured buttons - this avoids Android navigation bar offset issues
+    <View style={styles.fullScreenOverlay}>
       {/* Main container */}
       <View style={styles.overlay}>
         {/* Invisible touch-blocking layer - blocks ALL touches immediately on mount */}
@@ -684,11 +682,19 @@ export function SpotlightOverlay({
           )}
         </Animated.View>
       </View>
-    </Modal>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  fullScreenOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 9999,
+  },
   overlay: {
     flex: 1,
     // Background color ensures touch blocking works immediately, even during animations
