@@ -9,6 +9,7 @@ import Animated, {
   withSpring,
   withDelay,
   FadeInUp,
+  ZoomIn,
   Easing
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -63,11 +64,13 @@ export function OnboardingScreen({
     }
   };
 
+  const isAndroid = Platform.OS === 'android';
   const buttonScale = useSharedValue(1);
   const textOpacity = useSharedValue(0);
   const textTranslateX = useSharedValue(50);
-  const imageOpacity = useSharedValue(0);
+  const imageOpacity = useSharedValue(isAndroid ? 1 : 0); // Android: no fade, iOS: fade in
   const imageTranslateY = useSharedValue(30);
+  const imageScale = useSharedValue(isAndroid ? 0 : 1); // Android: scale from 0, iOS: no scale
   const buttonOpacity = useSharedValue(0);
   const buttonTranslateY = useSharedValue(20);
   const containerOpacity = useSharedValue(0); // For initial fade-in from splash
@@ -80,16 +83,24 @@ export function OnboardingScreen({
   useEffect(() => {
     textOpacity.value = 0;
     textTranslateX.value = 50;
-    imageOpacity.value = 0;
+    imageOpacity.value = isAndroid ? 1 : 0;
     imageTranslateY.value = 30;
+    imageScale.value = isAndroid ? 0 : 1;
     buttonOpacity.value = 0;
     buttonTranslateY.value = 20;
 
     textOpacity.value = withDelay(100, withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) }));
     textTranslateX.value = withDelay(100, withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) }));
 
-    imageOpacity.value = withDelay(300, withTiming(1, { duration: 600, easing: Easing.out(Easing.back(1.1)) }));
-    imageTranslateY.value = withDelay(300, withTiming(0, { duration: 600, easing: Easing.out(Easing.back(1.1)) }));
+    if (isAndroid) {
+      // Android: scale from 0 to 1 (no opacity) to avoid shadow rendering issues
+      imageTranslateY.value = withDelay(300, withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) }));
+      imageScale.value = withDelay(300, withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) }));
+    } else {
+      // iOS: fade in with translate (original behavior)
+      imageOpacity.value = withDelay(300, withTiming(1, { duration: 600, easing: Easing.out(Easing.back(1.1)) }));
+      imageTranslateY.value = withDelay(300, withTiming(0, { duration: 600, easing: Easing.out(Easing.back(1.1)) }));
+    }
 
     buttonOpacity.value = withDelay(500, withTiming(1, { duration: 500, easing: Easing.out(Easing.back(1.1)) }));
     buttonTranslateY.value = withDelay(500, withTiming(0, { duration: 500, easing: Easing.out(Easing.back(1.1)) }));
@@ -143,7 +154,10 @@ export function OnboardingScreen({
 
   const imageAnimatedStyle = useAnimatedStyle(() => ({
     opacity: imageOpacity.value,
-    transform: [{ translateY: imageTranslateY.value }],
+    transform: [
+      { translateY: imageTranslateY.value },
+      { scale: imageScale.value }
+    ],
   }));
 
   const buttonContainerAnimatedStyle = useAnimatedStyle(() => ({
@@ -368,7 +382,11 @@ export function OnboardingScreen({
             isTextOnlyScreen && styles.textContainerExpanded
           ]}
         >
-          <ThemedText type="title" style={styles.title}>
+          <ThemedText type="title" style={[
+            styles.title,
+            // Step 7: "Your Privacy" should be one line
+            currentStep === 7 && styles.titleSingleLine
+          ]}>
             {title}
           </ThemedText>
           <ThemedText style={styles.body}>
@@ -382,7 +400,14 @@ export function OnboardingScreen({
 
         {!isTextOnlyScreen && (
           <Animated.View
-            style={[styles.illustrationContainer, imageAnimatedStyle]}
+            key={isAndroid ? `illustration-${currentStep}` : undefined}
+            entering={isAndroid ? ZoomIn.delay(300).duration(600) : undefined}
+            style={[
+              styles.illustrationContainer,
+              !isAndroid && imageAnimatedStyle, // iOS uses useAnimatedStyle, Android uses entering
+              // Step 5 needs image raised to center between text and buttons
+              currentStep === 5 && styles.illustrationContainerStep5
+            ]}
           >
             <View style={styles.decorativeBackground}>
               {renderDecorativeElements(currentStep)}
@@ -500,6 +525,10 @@ const styles = StyleSheet.create({
     color: '#2E8B8B',
     lineHeight: 32,
   },
+  titleSingleLine: {
+    // Ensure title fits on one line (e.g., "Your Privacy")
+    fontSize: 24,
+  },
   body: {
     fontSize: 16,
     textAlign: 'center',
@@ -552,6 +581,10 @@ const styles = StyleSheet.create({
     maxHeight: height * 0.5,
     position: 'relative',
     width: '100%',
+  },
+  illustrationContainerStep5: {
+    // Raise image to center between "Growing together forever" text and buttons
+    marginTop: -30,
   },
   decorativeBackground: {
     position: 'absolute',

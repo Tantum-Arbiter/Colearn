@@ -900,6 +900,7 @@ export function StoryBookReader({
               { width: '100%', height: '100%', transform: [{ scale: imageScale }] }
             ]}
             resizeMode="contain"
+            transition={0}
             onError={(error) => {
               log.error(`Page ${page.pageNumber}: Background image error:`, error);
             }}
@@ -926,6 +927,7 @@ export function StoryBookReader({
               uri={page.characterImage}
               style={styles.characterImage}
               resizeMode="contain"
+              transition={0}
               onError={(error) => {
                 log.error(`Page ${page.pageNumber}: Character image error:`, error);
               }}
@@ -948,7 +950,12 @@ export function StoryBookReader({
 
     if (withAnimation) {
       return (
-        <Animated.View style={[StyleSheet.absoluteFill, imageAnimatedStyle]}>
+        <Animated.View
+          style={[StyleSheet.absoluteFill, imageAnimatedStyle]}
+          // On Android, render the entire view (including image) as a single hardware texture
+          // This prevents the image from fading separately from its container
+          renderToHardwareTextureAndroid={true}
+        >
           {imageContent}
         </Animated.View>
       );
