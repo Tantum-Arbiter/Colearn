@@ -7,13 +7,18 @@ FROM gradle:8.5-jdk21 AS builder
 # Set working directory
 WORKDIR /app
 
-# Copy all project files
+# Copy build files first (changes less frequently)
 COPY build.gradle settings.gradle gradlew ./
 COPY gradle/ gradle/
-COPY src/ src/
 
 # Ensure gradlew is executable
 RUN chmod +x gradlew
+
+# Download dependencies first (cached unless build.gradle changes)
+RUN ./gradlew dependencies --no-daemon
+
+# Now copy source code (changes more frequently)
+COPY src/ src/
 
 # Build the application (Google mirrors configured in build.gradle)
 RUN ./gradlew build --no-daemon -x test
