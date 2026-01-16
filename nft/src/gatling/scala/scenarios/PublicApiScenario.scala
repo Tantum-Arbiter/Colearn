@@ -26,6 +26,12 @@ object PublicApiScenario {
   val testCategory = sys.env.getOrElse("TEST_CATEGORY", "bedtime")
   val testAssetPath = sys.env.getOrElse("TEST_ASSET_PATH", "stories/images/test.png")
 
+  // Load test configuration - keep low for local Docker testing
+  // With 12+ scenarios in parallel: actual RPS ≈ usersPerSec × number_of_scenarios
+  val testDuration = sys.props.getOrElse("NFT_DURATION_MINUTES", "2").toInt minutes
+  val usersPerSec = sys.props.getOrElse("NFT_USERS_PER_SEC", "2").toDouble  // 2 × 12 = ~24 RPS total
+  val rampDuration = sys.props.getOrElse("NFT_RAMP_SECONDS", "15").toInt seconds
+
   // Common headers
   val jsonHeaders = Map(
     "Content-Type" -> "application/json",
@@ -54,11 +60,11 @@ object PublicApiScenario {
         .get("/")
         .check(status.is(200))
     )
-    .inject(constantUsersPerSec(10) during (5 minutes))
+    .inject(constantUsersPerSec(usersPerSec) during testDuration)
     .throttle(
-      reachRps(10) in (30 seconds),
-      holdFor(5 minutes),
-      reachRps(0) in (30 seconds)
+      reachRps(usersPerSec.toInt) in rampDuration,
+      holdFor(testDuration),
+      reachRps(0) in rampDuration
     )
 
   val auth_status_scenario = scenario("GET /auth/status - Auth Service Status")
@@ -67,11 +73,11 @@ object PublicApiScenario {
         .get("/auth/status")
         .check(status.is(200))
     )
-    .inject(constantUsersPerSec(10) during (5 minutes))
+    .inject(constantUsersPerSec(usersPerSec) during testDuration)
     .throttle(
-      reachRps(10) in (30 seconds),
-      holdFor(5 minutes),
-      reachRps(0) in (30 seconds)
+      reachRps(usersPerSec.toInt) in rampDuration,
+      holdFor(testDuration),
+      reachRps(0) in rampDuration
     )
 
   // ============================================
