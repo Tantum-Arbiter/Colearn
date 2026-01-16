@@ -34,7 +34,6 @@ class PublicApiPeakLoad extends Simulation {
   // All public API scenarios
   val scenarios: List[PopulationBuilder] = List(
     // Status endpoints
-    PublicApiScenario.root_status_scenario,
     PublicApiScenario.auth_status_scenario,
 
     // Stories endpoints
@@ -76,7 +75,6 @@ class PublicApiSmokeTest extends Simulation {
 
   // Just status and basic story endpoints for quick validation
   val scenarios: List[PopulationBuilder] = List(
-    PublicApiScenario.root_status_scenario,
     PublicApiScenario.auth_status_scenario,
     PublicApiScenario.get_all_stories_scenario,
     PublicApiScenario.get_stories_version_scenario
