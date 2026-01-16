@@ -159,19 +159,8 @@ object PublicApiScenario {
   // Assets Endpoints (All /api/** require auth)
   // ============================================
 
-  val get_asset_url_scenario = scenario("GET /api/assets/url - Get Signed URL")
-    .exec(
-      http("get_asset_url")
-        .get(s"/api/assets/url?path=$testAssetPath")
-        .headers(authHeaders)
-        .check(status.in(200, 404, 503))  // 503 when GCS not available
-    )
-    .inject(constantUsersPerSec(10) during (5 minutes))
-    .throttle(
-      reachRps(10) in (30 seconds),
-      holdFor(5 minutes),
-      reachRps(0) in (30 seconds)
-    )
+  // NOTE: get_asset_url requires GCS credentials for signed URLs - skip in local NFT testing
+  // val get_asset_url_scenario = ...
 
   val get_assets_version_scenario = scenario("GET /api/assets/version - Get Asset Version")
     .exec(

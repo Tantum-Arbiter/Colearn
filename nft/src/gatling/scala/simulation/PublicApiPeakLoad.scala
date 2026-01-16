@@ -36,19 +36,18 @@ class PublicApiPeakLoad extends Simulation {
     // Status endpoints
     PublicApiScenario.root_status_scenario,
     PublicApiScenario.auth_status_scenario,
-    
+
     // Stories endpoints
     PublicApiScenario.get_all_stories_scenario,
     PublicApiScenario.get_story_by_id_scenario,
     PublicApiScenario.get_stories_version_scenario,
     PublicApiScenario.get_stories_by_category_scenario,
     PublicApiScenario.sync_stories_scenario,
-    
-    // Assets endpoints
-    PublicApiScenario.get_asset_url_scenario,
+
+    // Assets endpoints (get_asset_url requires GCS credentials - skip in local testing)
     PublicApiScenario.get_assets_version_scenario,
     PublicApiScenario.sync_assets_scenario,
-    
+
     // Profile endpoints (authenticated)
     PublicApiScenario.get_profile_scenario,
     PublicApiScenario.save_profile_scenario
