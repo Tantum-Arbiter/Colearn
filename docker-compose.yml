@@ -127,7 +127,7 @@ services:
     networks:
       - default-network
   
-  # alertmanager: # Note to sell, will do this later once deployed to cloud / can sensible store email to send messages to.
+  # alertmanager: # Note to self, will do this later once deployed to cloud / can sensible store email to send messages to.
   #   image: prom/alertmanager
   #   ports:
   #     - '9093:9093'
@@ -136,23 +136,24 @@ services:
   #   command:
   #     - '--config.file=/etc/alertmanager/alertmanager.yml'
   #   restart: always
-  
-  # grafana:
-  #   image: grafana/grafana-enterprise
-  #   ports:
-  #     - '3000:3000'
-  #   depends_on:
-  #     - prometheus
-  #   environment:
-  #     #      - GF_SERVER_ROOT_URL=http://my.grafana.server/
-  #     #      - GF_INSTALL_PLUGINS=grafana-clock-panel
-  #     - GF_INSTALL_PLUGINS=grafana-piechart-panel
-  #   volumes:
-  #     - './grafana/datasources:/etc/grafana/provisioning/datasources'
-  #     - './grafana/dashboards/dashboards.yml:/etc/grafana/provisioning/dashboards/main.yml'
-  #     - './grafana/dashboard-backup/:/var/lib/grafana/dashboards'
-  #   networks:
-  #     - default-network
+
+  grafana:
+    image: grafana/grafana-enterprise
+    ports:
+      - '3000:3000'
+    depends_on:
+      - prometheus
+    environment:
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+      - GF_SECURITY_ADMIN_PASSWORD=admin  # Default login: admin/admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - './grafana/datasources:/etc/grafana/provisioning/datasources'
+      - './grafana/dashboards/dashboards.yml:/etc/grafana/provisioning/dashboards/main.yml'
+      - './grafana/dashboard-definitions:/var/lib/grafana/dashboards'
+    networks:
+      - default-network
+    restart: always
   
 networks:
   default-network:
