@@ -28,6 +28,9 @@ services:
 
   gateway-service:
     build: gateway-service
+    profiles:
+      - default
+      - func-tests
     ports:
       - "8080:8080"
     networks:
