@@ -65,6 +65,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
   const { i18n, t } = useTranslation();
   const [currentView, setCurrentView] = useState<SlideView>('main');
   const [showGrayscaleInfo, setShowGrayscaleInfo] = useState(false);
+  const [showBlueLightInfo, setShowBlueLightInfo] = useState(false);
   const [showLanguageOverlay, setShowLanguageOverlay] = useState(false);
   const currentLanguage = i18n.language as SupportedLanguage;
 
@@ -621,6 +622,38 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
                 </>
               )}
             </Pressable>
+
+            <Pressable
+              style={styles.grayscaleInfoBox}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setShowBlueLightInfo(!showBlueLightInfo);
+              }}
+            >
+              <Text style={[
+                styles.grayscaleInfoTitle,
+                showBlueLightInfo && styles.grayscaleInfoTitleExpanded,
+                { fontSize: scaledFontSize(14) }
+              ]}>
+                {t('accessibility.blueLight')} {showBlueLightInfo ? '▼' : '▶'}
+              </Text>
+              {showBlueLightInfo && (
+                <>
+                  <Text style={[styles.grayscaleInfoText, { fontSize: scaledFontSize(12) }]}>
+                    {t('accessibility.blueLightHint')}
+                  </Text>
+                  <Text style={[styles.grayscaleInfoPath, { fontSize: scaledFontSize(11) }]}>
+                    <Text style={styles.platformBold}>iOS:</Text> {t('accessibility.blueLightIos')}
+                  </Text>
+                  <Text style={[styles.grayscaleInfoPath, { fontSize: scaledFontSize(11) }]}>
+                    <Text style={styles.platformBold}>Android:</Text> {t('accessibility.blueLightAndroid')}
+                  </Text>
+                  <Text style={[styles.blueLightBenefitText, { fontSize: scaledFontSize(11), marginTop: 8 }]}>
+                    💡 {t('accessibility.blueLightBenefit')}
+                  </Text>
+                </>
+              )}
+            </Pressable>
           </View>
 
           {/* Privacy & Legal */}
@@ -1041,6 +1074,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontStyle: 'normal',
     color: '#FFFFFF',
+  },
+  blueLightBenefitText: {
+    color: 'rgba(255, 255, 255, 0.85)',
+    lineHeight: 16,
+    fontStyle: 'italic',
   },
   languageOverlay: {
     position: 'absolute',

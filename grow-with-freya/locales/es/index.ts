@@ -101,6 +101,11 @@ export default {
     grayscaleHint: 'Para el modo blanco y negro, usa la configuración de accesibilidad de tu dispositivo:',
     grayscaleIos: 'Ajustes → Accesibilidad → Pantalla y tamaño de texto → Filtros de color → Escala de grises',
     grayscaleAndroid: 'Ajustes → Accesibilidad → Ajuste de color → Escala de grises',
+    blueLight: 'Filtro de luz azul (modo nocturno)',
+    blueLightHint: 'Reduce la luz azul para ayudar a tu hijo a dormir mejor. Activa el modo nocturno en tu dispositivo:',
+    blueLightIos: 'Ajustes → Pantalla y brillo → Night Shift → Activar',
+    blueLightAndroid: 'Ajustes → Pantalla → Luz nocturna (o Confort visual) → Activar',
+    blueLightBenefit: 'La luz azul de las pantallas puede afectar el sueño. Activar el modo nocturno por la noche ayuda al cerebro de tu hijo a prepararse para dormir al reducir las longitudes de onda azules estimulantes.',
   },
 
   // Story selection
