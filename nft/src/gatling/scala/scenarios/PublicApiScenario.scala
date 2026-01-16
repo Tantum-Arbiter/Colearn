@@ -33,7 +33,7 @@ object PublicApiScenario {
   val totalWarmupRps = 10   // 10 TPS total during warmup
   val totalPeakRps = 100    // 100 TPS total at peak
 
-  val warmupDuration = 30 seconds
+  val warmupDuration = 10 seconds
   val warmupRps = Math.max(1, totalWarmupRps / numScenarios)  // ~1 per scenario
   val rampToPeakDuration = 10 seconds
   val peakDuration = (4 minutes) + (30 seconds)  // 4:30
