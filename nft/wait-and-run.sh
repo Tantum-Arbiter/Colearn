@@ -30,26 +30,28 @@ echo "✓ Gateway is healthy"
 # Get auth token using mock Google OAuth (accepted in dev/test mode)
 echo ""
 echo "Authenticating with mock Google OAuth..."
-AUTH_RESPONSE=$(curl -sf -X POST "$GATEWAY_URL/auth/google" \
+AUTH_RESPONSE=$(curl -s -X POST "$GATEWAY_URL/auth/google" \
     -H "Content-Type: application/json" \
     -H "User-Agent: GrowWithFreya-NFT/1.0 (Gatling Load Test)" \
     -H "X-Device-ID: nft-load-test-device" \
     -H "X-Client-Platform: ios" \
     -H "X-Client-Version: 1.0.0" \
-    -d '{"idToken": "mock-id-token-nft-load-test"}' 2>/dev/null || echo "")
+    -d '{"idToken": "mock-id-token-nft-load-test"}' 2>&1)
 
-if [ -n "$AUTH_RESPONSE" ]; then
-    # Extract accessToken from JSON response
-    BEARER_TOKEN=$(echo "$AUTH_RESPONSE" | grep -o '"accessToken":"[^"]*"' | cut -d'"' -f4)
+echo "Auth response: $AUTH_RESPONSE"
+
+if echo "$AUTH_RESPONSE" | grep -q '"accessToken"'; then
+    # Extract accessToken using sed (more portable than jq)
+    BEARER_TOKEN=$(echo "$AUTH_RESPONSE" | sed -n 's/.*"accessToken":"\([^"]*\)".*/\1/p')
     if [ -n "$BEARER_TOKEN" ]; then
         export BEARER_TOKEN
-        echo "✓ Auth token obtained"
+        echo "✓ Auth token obtained (${#BEARER_TOKEN} chars)"
     else
-        echo "⚠ Could not parse token from response, authenticated tests may fail"
-        echo "Response: $AUTH_RESPONSE"
+        echo "⚠ Could not parse token from response"
     fi
 else
-    echo "⚠ Could not authenticate, authenticated tests may fail"
+    echo "⚠ Auth request failed or returned error"
+    echo "Response: $AUTH_RESPONSE"
 fi
 
 echo ""
