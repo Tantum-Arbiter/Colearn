@@ -70,8 +70,7 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
   // Get current screen dimensions (updates with orientation changes)
   const { height: screenHeight } = getScreenDimensions();
 
-  // Get persistent animation state from store - using selectors to prevent unnecessary re-renders
-  const backgroundAnimationState = useAppStore((state) => state.backgroundAnimationState);
+  // Get store action for saving animation state on unmount
   const updateBackgroundAnimationState = useAppStore((state) => state.updateBackgroundAnimationState);
 
   // Safe state management to prevent updates on unmounted components
@@ -91,20 +90,6 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
   const containerAnimatedStyle = useAnimatedStyle(() => ({
     opacity: containerOpacity.value,
   }));
-
-  // Debug logging for position restoration
-  useEffect(() => {
-    const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development';
-    if (isDev) {
-      console.log('MainMenu mounted - restoring cloud positions:', {
-        cloud1: backgroundAnimationState?.cloudFloat1 || -200,
-        cloud2: backgroundAnimationState?.cloudFloat2 || -400,
-        hasPersistedState: !!backgroundAnimationState
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
 
   // Animation cancellation flag
   const animationsCancelled = useRef(false);
@@ -244,25 +229,10 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
   useEffect(() => {
     // Defer cloud animation startup to prevent jitter during page transitions
     const interactionHandle = InteractionManager.runAfterInteractions(() => {
-      // Check if we can resume from persisted state
-      const cloud1CanResume = backgroundAnimationState?.cloudFloat1 !== undefined &&
-                              isFinite(backgroundAnimationState.cloudFloat1) &&
-                              !isNaN(backgroundAnimationState.cloudFloat1);
-      const cloud2CanResume = backgroundAnimationState?.cloudFloat2 !== undefined &&
-                              isFinite(backgroundAnimationState.cloudFloat2) &&
-                              !isNaN(backgroundAnimationState.cloudFloat2);
-
-      // If we can resume, set the cloud to the persisted position first
-      if (cloud1CanResume) {
-        cloudFloat1.value = backgroundAnimationState.cloudFloat1;
-      }
-      if (cloud2CanResume) {
-        cloudFloat2.value = backgroundAnimationState.cloudFloat2;
-      }
-
-      // Start cloud animations - they will run continuously
-      cloudFloat1.value = createCloudAnimationNew(cloudFloat1, 0, -200, cloud1CanResume);
-      cloudFloat2.value = createCloudAnimationNew(cloudFloat2, ANIMATION_TIMINGS.CLOUD_STAGGER_DELAY, -400, cloud2CanResume);
+      // Start cloud animations with staggered delays for visual variety
+      // Cloud 1 starts immediately from -200, Cloud 2 starts after a delay from -400
+      cloudFloat1.value = createCloudAnimationNew(cloudFloat1, 0, -200);
+      cloudFloat2.value = createCloudAnimationNew(cloudFloat2, ANIMATION_TIMINGS.CLOUD_STAGGER_DELAY, -400);
     });
 
     // Cleanup on unmount only

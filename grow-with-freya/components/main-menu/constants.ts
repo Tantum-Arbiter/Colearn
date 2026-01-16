@@ -15,7 +15,7 @@ export const ANIMATION_TIMINGS = {
   ROCKET_WAIT_TIME: 4000,
   BALLOON_DURATION: 40000,
   BALLOON_STAGGER_DELAY: 15000,
-  CLOUD_DURATION: 40000, // Backward compatibility
+  CLOUD_DURATION: 100000, // 100 seconds for very slow, gentle cloud drift
   CLOUD_STAGGER_DELAY: 15000, // Backward compatibility
   ICON_PULSE_DURATION: 2000,
   ICON_GLOW_DURATION: 2500,
