@@ -28,18 +28,11 @@ object PublicApiScenario {
   val testAssetPath = sys.env.getOrElse("TEST_ASSET_PATH", "stories/images/test.png")
 
   // Load test configuration
-  // Target: 100 TPS total across all 8 scenarios = ~12 TPS per scenario
-  // Pattern: 30s warmup at 10 TPS -> 4:30 at 100 TPS -> 10s cooldown
+  // 100 concurrent users constant throughout test, distributed across 8 scenarios
   val numScenarios = 8
-  val totalWarmupRps = 10   // 10 TPS total during warmup
-  val totalPeakRps = 100    // 100 TPS total at peak
-
-  val warmupDuration = 10 seconds
-  val warmupRps = Math.max(1, totalWarmupRps / numScenarios)  // ~1 per scenario
-  val rampToPeakDuration = 10 seconds
-  val peakDuration = (4 minutes) + (30 seconds)  // 4:30
-  val peakRps = Math.max(1, totalPeakRps / numScenarios)      // ~12 per scenario
-  val cooldownDuration = 10 seconds
+  val totalUsers = 100
+  val usersPerScenario = Math.max(1, totalUsers / numScenarios)  // ~12 users per scenario
+  val testDuration = 5 minutes
 
   // Common headers
   val jsonHeaders = Map(
@@ -63,12 +56,9 @@ object PublicApiScenario {
   // Status Endpoints (Health Checks)
   // ============================================
 
-  // Injection pattern: ramp warmup -> ramp to peak -> hold peak -> ramp down
+  // Injection pattern: constant concurrent users for the entire test duration
   def injectLoad(scn: ScenarioBuilder): PopulationBuilder = scn.inject(
-    rampUsersPerSec(0).to(warmupRps).during(warmupDuration),
-    rampUsersPerSec(warmupRps).to(peakRps).during(rampToPeakDuration),
-    constantUsersPerSec(peakRps).during(peakDuration),
-    rampUsersPerSec(peakRps).to(0).during(cooldownDuration)
+    constantConcurrentUsers(usersPerScenario).during(testDuration)
   )
 
   val root_status_scenario = injectLoad(
