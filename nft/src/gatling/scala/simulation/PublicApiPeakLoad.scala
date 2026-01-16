@@ -57,6 +57,9 @@ class PublicApiPeakLoad extends Simulation {
   setUp(scenarios)
     .protocols(httpProtocol)
     .assertions(
+      global.responseTime.mean.lt(200),
+      global.responseTime.percentile(50).lt(100),
+      global.responseTime.percentile(95).lt(400),
       global.responseTime.percentile(99).lt(600),
       forAll.successfulRequests.percent.gte(95) // Allow some auth failures for test tokens
     )
@@ -85,6 +88,9 @@ class PublicApiSmokeTest extends Simulation {
   setUp(scenarios)
     .protocols(httpProtocol)
     .assertions(
+      global.responseTime.mean.lt(150),
+      global.responseTime.percentile(50).lt(75),
+      global.responseTime.percentile(95).lt(300),
       global.responseTime.percentile(99).lt(500),
       forAll.successfulRequests.percent.is(100)
     )
@@ -110,6 +116,9 @@ class AuthenticatedApiPeakLoad extends Simulation {
   setUp(scenarios)
     .protocols(httpProtocol)
     .assertions(
+      global.responseTime.mean.lt(200),
+      global.responseTime.percentile(50).lt(100),
+      global.responseTime.percentile(95).lt(400),
       global.responseTime.percentile(99).lt(600),
       forAll.successfulRequests.percent.gte(90)
     )
