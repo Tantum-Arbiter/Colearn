@@ -19,8 +19,9 @@ import scala.language.postfixOps
  */
 object PublicApiScenario {
 
-  // Configuration from environment
-  val bearerToken = sys.env.getOrElse("BEARER_TOKEN", "test-bearer-token")
+  // Configuration from system properties (passed via -D) or environment
+  val bearerToken = sys.props.getOrElse("BEARER_TOKEN",
+    sys.env.getOrElse("BEARER_TOKEN", "test-bearer-token"))
   val testStoryId = sys.env.getOrElse("TEST_STORY_ID", "story-001")
   val testCategory = sys.env.getOrElse("TEST_CATEGORY", "bedtime")
   val testAssetPath = sys.env.getOrElse("TEST_ASSET_PATH", "stories/images/test.png")

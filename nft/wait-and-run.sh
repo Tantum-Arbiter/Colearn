@@ -60,6 +60,12 @@ echo "Starting NFT tests"
 echo "=========================================="
 echo ""
 
-# Run the Gatling tests
-exec ./gradlew gatlingRun --no-daemon
+# Run the Gatling tests with bearer token as system property
+if [ -n "$BEARER_TOKEN" ]; then
+    echo "Passing token to Gatling via system property"
+    exec ./gradlew gatlingRun -DBEARER_TOKEN="$BEARER_TOKEN" --no-daemon
+else
+    echo "WARNING: No BEARER_TOKEN - authenticated endpoints will fail"
+    exec ./gradlew gatlingRun --no-daemon
+fi
 
