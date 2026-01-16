@@ -46,11 +46,9 @@ class PublicApiPeakLoad extends Simulation {
 
     // Assets endpoints (get_asset_url requires GCS credentials - skip in local testing)
     PublicApiScenario.get_assets_version_scenario,
-    PublicApiScenario.sync_assets_scenario,
+    PublicApiScenario.sync_assets_scenario
 
-    // Profile endpoints (authenticated)
-    PublicApiScenario.get_profile_scenario,
-    PublicApiScenario.save_profile_scenario
+    // Profile endpoints - disabled (Firestore contention + same mock userId)
   )
 
   setUp(scenarios)
@@ -95,31 +93,6 @@ class PublicApiSmokeTest extends Simulation {
     )
 }
 
-/**
- * Authenticated endpoints only simulation
- */
-class AuthenticatedApiPeakLoad extends Simulation {
-  
-  val host = sys.env.getOrElse("GATEWAY_BASE_URL", "http://localhost:8080")
-
-  val httpProtocol = http
-    .baseUrl(host)
-    .acceptHeader("application/json")
-    .contentTypeHeader("application/json")
-
-  val scenarios: List[PopulationBuilder] = List(
-    PublicApiScenario.get_profile_scenario,
-    PublicApiScenario.save_profile_scenario
-  )
-
-  setUp(scenarios)
-    .protocols(httpProtocol)
-    .assertions(
-      global.responseTime.mean.lt(200),
-      global.responseTime.percentile(50).lt(100),
-      global.responseTime.percentile(95).lt(400),
-      global.responseTime.percentile(99).lt(600),
-      forAll.successfulRequests.percent.gte(90)
-    )
-}
+// AuthenticatedApiPeakLoad removed - profile endpoints cause Firestore contention
+// and all use the same mock userId under load
 

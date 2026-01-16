@@ -192,42 +192,13 @@ object PublicApiScenario {
     )
 
   // ============================================
-  // Profile Endpoints (Requires Authentication)
+  // Profile Endpoints - DISABLED for NFT
+  // Profile operations cause Firestore contention under load
+  // and all use the same mock userId. Better tested in func-tests.
   // ============================================
 
-  val get_profile_scenario = scenario("GET /api/profile - Get User Profile (Auth Required)")
-    .exec(
-      http("get_profile")
-        .get("/api/profile")
-        .headers(authHeaders)
-        .check(status.in(200, 401, 404))
-    )
-    .inject(constantUsersPerSec(10) during (5 minutes))
-    .throttle(
-      reachRps(10) in (30 seconds),
-      holdFor(5 minutes),
-      reachRps(0) in (30 seconds)
-    )
-
-  val save_profile_scenario = scenario("POST /api/profile - Save User Profile (Auth Required)")
-    .exec(
-      http("save_profile")
-        .post("/api/profile")
-        .headers(authHeaders)
-        .body(StringBody("""{
-          "nickname": "NFT Test User",
-          "avatarType": "boy",
-          "textSizePreference": 1.0,
-          "language": "en"
-        }"""))
-        .check(status.in(200, 201, 409))  // 409 if profile already exists
-    )
-    .inject(constantUsersPerSec(10) during (5 minutes))
-    .throttle(
-      reachRps(10) in (30 seconds),
-      holdFor(5 minutes),
-      reachRps(0) in (30 seconds)
-    )
+  // val get_profile_scenario = ...
+  // val save_profile_scenario = ...
 
   // ============================================
   // Helper for creating custom load tests
