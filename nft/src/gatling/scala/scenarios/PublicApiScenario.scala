@@ -27,11 +27,16 @@ object PublicApiScenario {
   val testAssetPath = sys.env.getOrElse("TEST_ASSET_PATH", "stories/images/test.png")
 
   // Load test configuration
-  // Ramp: 30s to 10 TPS -> Hold: 4:30 at 100 TPS -> Ramp down: 10s
+  // Target: 100 TPS total across all 8 scenarios = ~12 TPS per scenario
+  // Ramp: 30s to warmup -> Hold: 4:30 at peak -> Ramp down: 10s
+  val numScenarios = 8
+  val totalWarmupRps = 10   // 10 TPS total during warmup
+  val totalPeakRps = 100    // 100 TPS total at peak
+
   val warmupDuration = 30 seconds
-  val warmupRps = 10
+  val warmupRps = Math.max(1, totalWarmupRps / numScenarios)  // ~1 per scenario
   val peakDuration = (4 minutes) + (30 seconds)  // 4:30
-  val peakRps = 100
+  val peakRps = Math.max(1, totalPeakRps / numScenarios)      // ~12 per scenario
   val cooldownDuration = 10 seconds
 
   // Total test duration for injection (must cover full throttle)
