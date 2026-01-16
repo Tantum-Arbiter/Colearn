@@ -70,14 +70,14 @@ object PublicApiScenario {
     )
 
   // ============================================
-  // Stories Endpoints
+  // Stories Endpoints (All /api/** require auth)
   // ============================================
 
   val get_all_stories_scenario = scenario("GET /api/stories - Get All Stories")
     .exec(
       http("get_all_stories")
         .get("/api/stories")
-        .headers(jsonHeaders)
+        .headers(authHeaders)
         .check(status.is(200))
     )
     .inject(constantUsersPerSec(10) during (5 minutes))
@@ -91,7 +91,7 @@ object PublicApiScenario {
     .exec(
       http("get_story_by_id")
         .get(s"/api/stories/$testStoryId")
-        .headers(jsonHeaders)
+        .headers(authHeaders)
         .check(status.in(200, 404))
     )
     .inject(constantUsersPerSec(10) during (5 minutes))
@@ -105,7 +105,7 @@ object PublicApiScenario {
     .exec(
       http("get_stories_version")
         .get("/api/stories/version")
-        .headers(jsonHeaders)
+        .headers(authHeaders)
         .check(status.is(200))
     )
     .inject(constantUsersPerSec(10) during (5 minutes))
@@ -119,7 +119,7 @@ object PublicApiScenario {
     .exec(
       http("get_stories_by_category")
         .get(s"/api/stories/category/$testCategory")
-        .headers(jsonHeaders)
+        .headers(authHeaders)
         .check(status.in(200, 404))
     )
     .inject(constantUsersPerSec(10) during (5 minutes))
@@ -133,7 +133,7 @@ object PublicApiScenario {
     .exec(
       http("sync_stories")
         .post("/api/stories/sync")
-        .headers(jsonHeaders)
+        .headers(authHeaders)
         .body(StringBody("""{"clientVersion": "0"}"""))
         .check(status.in(200, 204))
     )
@@ -145,14 +145,14 @@ object PublicApiScenario {
     )
 
   // ============================================
-  // Assets Endpoints
+  // Assets Endpoints (All /api/** require auth)
   // ============================================
 
   val get_asset_url_scenario = scenario("GET /api/assets/url - Get Signed URL")
     .exec(
       http("get_asset_url")
         .get(s"/api/assets/url?path=$testAssetPath")
-        .headers(jsonHeaders)
+        .headers(authHeaders)
         .check(status.in(200, 404))
     )
     .inject(constantUsersPerSec(10) during (5 minutes))
@@ -166,7 +166,7 @@ object PublicApiScenario {
     .exec(
       http("get_assets_version")
         .get("/api/assets/version")
-        .headers(jsonHeaders)
+        .headers(authHeaders)
         .check(status.is(200))
     )
     .inject(constantUsersPerSec(10) during (5 minutes))
@@ -180,7 +180,7 @@ object PublicApiScenario {
     .exec(
       http("sync_assets")
         .post("/api/assets/sync")
-        .headers(jsonHeaders)
+        .headers(authHeaders)
         .body(StringBody("""{"clientVersion": "0"}"""))
         .check(status.in(200, 204))
     )
