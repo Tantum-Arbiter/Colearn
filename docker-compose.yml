@@ -28,9 +28,6 @@ services:
 
   gateway-service:
     build: gateway-service
-    profiles:
-      - default
-      - func-tests
     ports:
       - "8080:8080"
     networks:
@@ -69,33 +66,6 @@ services:
     volumes:
       - ./func-tests/build/reports:/app/build/reports
 
-  # Gateway with rate limiting disabled for NFT
-  gateway-service-nft:
-    build:
-      context: ./gateway-service
-    profiles:
-      - nft
-    image: gateway-service:latest
-    ports:
-      - "8081:8080"
-    networks:
-      - default-network
-    env_file:
-      - gateway-service/.env
-    environment:
-      SPRING_PROFILES_ACTIVE: dev
-      FIREBASE_EMULATOR_HOST: firestore
-      FIREBASE_EMULATOR_PORT: 8080
-      APP_SECURITY_RATE_LIMIT_ENABLED: "false"
-    depends_on:
-      firestore:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://gateway-service-nft:8080/private/healthcheck"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-
   nft:
     build:
       context: ./nft
@@ -103,10 +73,10 @@ services:
       - nft
     image: nft:latest
     depends_on:
-      gateway-service-nft:
+      gateway-service:
         condition: service_healthy
     environment:
-      GATEWAY_BASE_URL: http://gateway-service-nft:8080
+      GATEWAY_BASE_URL: http://gateway-service:8080
     networks:
       - default-network
     volumes:

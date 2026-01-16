@@ -126,11 +126,11 @@ cors:
   allow-credentials: true
   max-age: 3600
 
-# Rate Limiting Configuration (relaxed for development)
+# Rate Limiting Configuration (relaxed for development and NFT load testing)
 rate-limiting:
-  default-requests-per-minute: 1000
-  auth-requests-per-minute: 100
-  api-requests-per-minute: 1000
+  default-requests-per-minute: 10000
+  auth-requests-per-minute: 10000
+  api-requests-per-minute: 10000
   cleanup-interval-minutes: 1
 
 # Security Headers Configuration (relaxed for development)
