@@ -45,7 +45,6 @@ import {
 } from './main-menu/index';
 
 import { createCloudAnimationNew } from './main-menu/cloud-animations';
-import { FloatingObjects } from './main-menu/floating-objects';
 import type { MenuItemData } from './main-menu/index';
 
 // PERFORMANCE: Generate star positions once at module level to prevent recalculation on every mount
@@ -328,9 +327,6 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
       <View style={mainMenuStyles.moonContainer} pointerEvents="none">
         <MoonImage />
       </View>
-
-      {/* Floating objects at top of screen - rendered after moon to overlay it */}
-      <FloatingObjects />
 
       <View style={[legacyStyles.topButtons, { paddingTop: insets.top + getResponsiveSize(20) }]}>
         {/* Account/Settings Button */}
