@@ -52,9 +52,10 @@ services:
       retries: 20
 
   # ========================================
-  # NFT Load Testing Cluster (3 instances)
+  # NFT Load Testing (single gateway for local, scale up for CI/prod)
+  # To use multiple instances, set NFT_GATEWAY_REPLICAS env var
   # ========================================
-  gateway-1:
+  gateway-nft:
     build: gateway-service
     profiles:
       - nft
@@ -74,72 +75,6 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
-
-  gateway-2:
-    build: gateway-service
-    profiles:
-      - nft
-    networks:
-      - default-network
-    env_file:
-      - gateway-service/.env
-    environment:
-      SPRING_PROFILES_ACTIVE: dev,test
-      FIREBASE_EMULATOR_HOST: firestore
-      FIREBASE_EMULATOR_PORT: 8080
-    depends_on:
-      firestore:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/private/healthcheck"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-
-  gateway-3:
-    build: gateway-service
-    profiles:
-      - nft
-    networks:
-      - default-network
-    env_file:
-      - gateway-service/.env
-    environment:
-      SPRING_PROFILES_ACTIVE: dev,test
-      FIREBASE_EMULATOR_HOST: firestore
-      FIREBASE_EMULATOR_PORT: 8080
-    depends_on:
-      firestore:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/private/healthcheck"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-
-  # Nginx load balancer for NFT
-  nginx:
-    image: nginx:alpine
-    profiles:
-      - nft
-    ports:
-      - "8081:80"  # Use 8081 to not conflict with gateway-service on 8080
-    volumes:
-      - ./nft/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-    networks:
-      - default-network
-    depends_on:
-      gateway-1:
-        condition: service_healthy
-      gateway-2:
-        condition: service_healthy
-      gateway-3:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/nginx-health"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
 
   func-tests:
     build:
@@ -164,10 +99,10 @@ services:
       - nft
     image: nft:latest
     depends_on:
-      nginx:
+      gateway-nft:
         condition: service_healthy
     environment:
-      GATEWAY_BASE_URL: http://nginx:80
+      GATEWAY_BASE_URL: http://gateway-nft:8080
     networks:
       - default-network
     volumes:

@@ -60,12 +60,15 @@ echo "Starting NFT tests"
 echo "=========================================="
 echo ""
 
-# Run the Gatling tests with bearer token as system property
+# Run the PublicApiPeakLoad simulation (not all simulations)
+SIMULATION="${NFT_SIMULATION:-simulation.PublicApiPeakLoad}"
+echo "Running simulation: $SIMULATION"
+
 if [ -n "$BEARER_TOKEN" ]; then
     echo "Passing token to Gatling via system property"
-    exec ./gradlew gatlingRun -DBEARER_TOKEN="$BEARER_TOKEN" --no-daemon
+    exec ./gradlew gatlingRun-"$SIMULATION" -DBEARER_TOKEN="$BEARER_TOKEN" --no-daemon
 else
     echo "WARNING: No BEARER_TOKEN - authenticated endpoints will fail"
-    exec ./gradlew gatlingRun --no-daemon
+    exec ./gradlew gatlingRun-"$SIMULATION" --no-daemon
 fi
 
