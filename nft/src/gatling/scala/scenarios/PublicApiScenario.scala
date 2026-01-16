@@ -91,11 +91,11 @@ object PublicApiScenario {
         .headers(authHeaders)
         .check(status.is(200))
     )
-    .inject(constantUsersPerSec(10) during (5 minutes))
+    .inject(constantUsersPerSec(usersPerSec) during testDuration)
     .throttle(
-      reachRps(10) in (30 seconds),
-      holdFor(5 minutes),
-      reachRps(0) in (30 seconds)
+      reachRps(usersPerSec.toInt) in rampDuration,
+      holdFor(testDuration),
+      reachRps(0) in rampDuration
     )
 
   val get_story_by_id_scenario = scenario("GET /api/stories/{storyId} - Get Story by ID")
@@ -105,11 +105,11 @@ object PublicApiScenario {
         .headers(authHeaders)
         .check(status.in(200, 404))
     )
-    .inject(constantUsersPerSec(10) during (5 minutes))
+    .inject(constantUsersPerSec(usersPerSec) during testDuration)
     .throttle(
-      reachRps(10) in (30 seconds),
-      holdFor(5 minutes),
-      reachRps(0) in (30 seconds)
+      reachRps(usersPerSec.toInt) in rampDuration,
+      holdFor(testDuration),
+      reachRps(0) in rampDuration
     )
 
   val get_stories_version_scenario = scenario("GET /api/stories/version - Get Content Version")
@@ -119,11 +119,11 @@ object PublicApiScenario {
         .headers(authHeaders)
         .check(status.is(200))
     )
-    .inject(constantUsersPerSec(10) during (5 minutes))
+    .inject(constantUsersPerSec(usersPerSec) during testDuration)
     .throttle(
-      reachRps(10) in (30 seconds),
-      holdFor(5 minutes),
-      reachRps(0) in (30 seconds)
+      reachRps(usersPerSec.toInt) in rampDuration,
+      holdFor(testDuration),
+      reachRps(0) in rampDuration
     )
 
   val get_stories_by_category_scenario = scenario("GET /api/stories/category/{category} - Get Stories by Category")
@@ -133,11 +133,11 @@ object PublicApiScenario {
         .headers(authHeaders)
         .check(status.in(200, 404))
     )
-    .inject(constantUsersPerSec(10) during (5 minutes))
+    .inject(constantUsersPerSec(usersPerSec) during testDuration)
     .throttle(
-      reachRps(10) in (30 seconds),
-      holdFor(5 minutes),
-      reachRps(0) in (30 seconds)
+      reachRps(usersPerSec.toInt) in rampDuration,
+      holdFor(testDuration),
+      reachRps(0) in rampDuration
     )
 
   val sync_stories_scenario = scenario("POST /api/stories/sync - Sync Stories")
@@ -148,11 +148,11 @@ object PublicApiScenario {
         .body(StringBody("""{"clientVersion": 0, "storyChecksums": {}, "lastSyncTimestamp": 0}"""))
         .check(status.in(200, 204, 500))
     )
-    .inject(constantUsersPerSec(10) during (5 minutes))
+    .inject(constantUsersPerSec(usersPerSec) during testDuration)
     .throttle(
-      reachRps(10) in (30 seconds),
-      holdFor(5 minutes),
-      reachRps(0) in (30 seconds)
+      reachRps(usersPerSec.toInt) in rampDuration,
+      holdFor(testDuration),
+      reachRps(0) in rampDuration
     )
 
   // ============================================
@@ -169,11 +169,11 @@ object PublicApiScenario {
         .headers(authHeaders)
         .check(status.is(200))
     )
-    .inject(constantUsersPerSec(10) during (5 minutes))
+    .inject(constantUsersPerSec(usersPerSec) during testDuration)
     .throttle(
-      reachRps(10) in (30 seconds),
-      holdFor(5 minutes),
-      reachRps(0) in (30 seconds)
+      reachRps(usersPerSec.toInt) in rampDuration,
+      holdFor(testDuration),
+      reachRps(0) in rampDuration
     )
 
   val sync_assets_scenario = scenario("POST /api/assets/sync - Sync Assets")
@@ -184,11 +184,11 @@ object PublicApiScenario {
         .body(StringBody("""{"clientVersion": 0, "assetChecksums": {}, "lastSyncTimestamp": 0}"""))
         .check(status.in(200, 204, 500))
     )
-    .inject(constantUsersPerSec(10) during (5 minutes))
+    .inject(constantUsersPerSec(usersPerSec) during testDuration)
     .throttle(
-      reachRps(10) in (30 seconds),
-      holdFor(5 minutes),
-      reachRps(0) in (30 seconds)
+      reachRps(usersPerSec.toInt) in rampDuration,
+      holdFor(testDuration),
+      reachRps(0) in rampDuration
     )
 
   // ============================================
