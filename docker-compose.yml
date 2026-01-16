@@ -52,8 +52,7 @@ services:
       retries: 20
 
   # ========================================
-  # NFT Load Testing (single gateway for local, scale up for CI/prod)
-  # To use multiple instances, set NFT_GATEWAY_REPLICAS env var
+  # NFT Load Testing (2 replicas via deploy)
   # ========================================
   gateway-nft:
     build: gateway-service
@@ -75,6 +74,8 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+    deploy:
+      replicas: 2
 
   func-tests:
     build:
