@@ -107,6 +107,7 @@ export default {
   stories: {
     title: 'Bajki',
     genreStories: 'Bajki: {{genre}}',
+    yourFavorites: 'Twoje Ulubione',
     genres: {
       bedtime: 'Na dobranoc',
       adventure: 'Przygodowe',

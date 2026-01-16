@@ -12,16 +12,20 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  withSequence,
+  withSpring,
   runOnJS,
   Easing,
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { useTranslation } from 'react-i18next';
+import * as Haptics from 'expo-haptics';
 import { Story, STORY_TAGS, getLocalizedText } from '@/types/story';
 import type { SupportedLanguage } from '@/services/i18n';
 import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { AuthenticatedImage } from '@/components/ui/authenticated-image';
+import { useAppStore } from '@/store/app-store';
 
 interface StoryPreviewModalProps {
   story: Story | null;
@@ -43,6 +47,11 @@ export function StoryPreviewModal({
   const { t, i18n } = useTranslation();
   const currentLanguage = i18n.language as SupportedLanguage;
 
+  // Favorites state from store
+  const favoriteStoryIds = useAppStore((state) => state.favoriteStoryIds);
+  const toggleFavoriteStory = useAppStore((state) => state.toggleFavoriteStory);
+  const isFavorited = story ? favoriteStoryIds.includes(story.id) : false;
+
   // Get localized content
   const displayTitle = story ? getLocalizedText(story.localizedTitle, story.title, currentLanguage) : '';
   const displayDescription = story ? getLocalizedText(story.localizedDescription, story.description || '', currentLanguage) : '';
@@ -51,6 +60,9 @@ export function StoryPreviewModal({
   const translateY = useSharedValue(screenHeight);
   const backdropOpacity = useSharedValue(0);
   const isAnimatingOut = useSharedValue(false);
+
+  // Favorite star animation
+  const starScale = useSharedValue(1);
 
   // Animate in when visible changes
   useEffect(() => {
@@ -90,6 +102,24 @@ export function StoryPreviewModal({
   const backdropAnimatedStyle = useAnimatedStyle(() => ({
     opacity: backdropOpacity.value,
   }));
+
+  const starAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: starScale.value }],
+  }));
+
+  // Handle toggling favorite with animation
+  const handleToggleFavorite = useCallback(() => {
+    if (!story) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    // Bounce animation
+    starScale.value = withSequence(
+      withSpring(1.3, { damping: 10, stiffness: 400 }),
+      withSpring(1, { damping: 10, stiffness: 400 })
+    );
+
+    toggleFavoriteStory(story.id);
+  }, [story, toggleFavoriteStory, starScale]);
 
   // Don't render if not visible and no story
   if (!visible && !story) return null;
@@ -136,6 +166,13 @@ export function StoryPreviewModal({
           {/* X Close Button - top left */}
           <Pressable style={styles.xCloseButton} onPress={handleClose}>
             <Text style={styles.xCloseButtonText}>✕</Text>
+          </Pressable>
+
+          {/* Favorite Star Button - top right */}
+          <Pressable style={styles.favoriteButton} onPress={handleToggleFavorite}>
+            <Animated.Text style={[styles.favoriteButtonText, starAnimatedStyle]}>
+              {isFavorited ? '⭐' : '☆'}
+            </Animated.Text>
           </Pressable>
 
           {/* Cover Image */}
@@ -301,6 +338,27 @@ const styles = StyleSheet.create({
   xCloseButtonText: {
     color: '#333',
     fontSize: 20,
+    fontWeight: '600',
+  },
+  favoriteButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  favoriteButtonText: {
+    fontSize: 24,
     fontWeight: '600',
   },
   coverContainer: {

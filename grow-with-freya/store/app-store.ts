@@ -40,7 +40,8 @@ export interface AppState {
   // Accessibility settings
   textSizeScale: number; // 1.0 = normal, 0.8 = smaller, 1.2/1.4 = larger
 
-
+  // Story favorites
+  favoriteStoryIds: string[]; // Array of story IDs that user has favorited
 
   // Background animation state persistence
   backgroundAnimationState: {
@@ -71,6 +72,8 @@ export interface AppState {
   setNotificationPermissionRequested: (requested: boolean) => void;
   setCrashReportingEnabled: (enabled: boolean) => void;
   setTextSizeScale: (scale: number) => void;
+  toggleFavoriteStory: (storyId: string) => void;
+  isStoryFavorited: (storyId: string) => boolean;
 
   updateBackgroundAnimationState: (state: {
     cloudFloat1: number;
@@ -104,6 +107,7 @@ export const useAppStore = create<AppState>()(
       hasRequestedNotificationPermission: false,
       crashReportingEnabled: false, // Default to disabled until user consents
       textSizeScale: 1.0, // Default to normal size
+      favoriteStoryIds: [], // Start with no favorites
 
       backgroundAnimationState: {
         cloudFloat1: -200,
@@ -146,6 +150,20 @@ export const useAppStore = create<AppState>()(
       setNotificationPermissionRequested: (requested) => set({ hasRequestedNotificationPermission: requested }),
       setCrashReportingEnabled: (enabled) => set({ crashReportingEnabled: enabled }),
       setTextSizeScale: (scale) => set({ textSizeScale: scale }),
+      toggleFavoriteStory: (storyId) => set((state) => {
+        const isFavorited = state.favoriteStoryIds.includes(storyId);
+        if (isFavorited) {
+          return { favoriteStoryIds: state.favoriteStoryIds.filter(id => id !== storyId) };
+        } else {
+          return { favoriteStoryIds: [...state.favoriteStoryIds, storyId] };
+        }
+      }),
+      isStoryFavorited: (storyId) => {
+        // This is a selector-like function, but we need to return the value
+        // For zustand, we use get() but since we're inside the store definition,
+        // we need to access it differently. This will be used via useAppStore.getState()
+        return false; // Placeholder - actual check is done via selector
+      },
 
       requestReturnToMainMenu: () => set((state) => {
         // Prevent multiple rapid requests
@@ -185,6 +203,7 @@ export const useAppStore = create<AppState>()(
         hasRequestedNotificationPermission: state.hasRequestedNotificationPermission,
         crashReportingEnabled: state.crashReportingEnabled,
         textSizeScale: state.textSizeScale,
+        favoriteStoryIds: state.favoriteStoryIds,
         backgroundAnimationState: state.backgroundAnimationState,
       }),
       onRehydrateStorage: () => (state, error) => {

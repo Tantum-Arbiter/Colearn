@@ -158,6 +158,9 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   const [isLoadingStories, setIsLoadingStories] = useState(!StoryLoader.getCachedStories());
   const [selectedTags, setSelectedTags] = useState<Set<StoryFilterTag>>(new Set());
 
+  // Get favorite story IDs from store
+  const favoriteStoryIds = useAppStore((state) => state.favoriteStoryIds);
+
   // Filter stories based on selected tags (OR logic - match any selected tag)
   const filteredStories = useMemo(() => {
     if (selectedTags.size === 0) return stories;
@@ -165,6 +168,11 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       Array.from(selectedTags).some(tag => story.tags?.includes(tag))
     );
   }, [stories, selectedTags]);
+
+  // Get favorite stories (respects current filters)
+  const favoriteStories = useMemo(() => {
+    return filteredStories.filter(story => favoriteStoryIds.includes(story.id));
+  }, [filteredStories, favoriteStoryIds]);
 
   // Available filter tags - all 16 children's genres (including personalized)
   const filterTags: StoryFilterTag[] = [
@@ -459,6 +467,42 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
               </Pressable>
             </View>
           )}
+
+          {/* Your Favorites Carousel - shown only if there are favorites */}
+          {favoriteStories.length > 0 && (
+            <View style={{ marginBottom: 40 }}>
+              <Text style={{
+                color: '#FFD700',
+                fontSize: 24,
+                fontWeight: 'bold',
+                textAlign: 'center',
+                marginBottom: 15,
+                textShadowColor: 'rgba(0, 0, 0, 0.9)',
+                textShadowOffset: { width: 0, height: 3 },
+                textShadowRadius: 6,
+              }}>
+                ⭐ {t('stories.yourFavorites', { defaultValue: 'Your Favorites' })}
+              </Text>
+              <FlatList
+                data={favoriteStories}
+                renderItem={renderStoryCard}
+                keyExtractor={keyExtractor}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                getItemLayout={getItemLayout}
+                removeClippedSubviews={true}
+                maxToRenderPerBatch={5}
+                windowSize={7}
+                initialNumToRender={3}
+                updateCellsBatchingPeriod={50}
+                decelerationRate="fast"
+                snapToInterval={ITEM_WIDTH}
+                snapToAlignment="start"
+                contentContainerStyle={styles.carouselContent}
+              />
+            </View>
+          )}
+
           {availableGenres.map((genre) => {
             const genreStories = filteredStories.filter(story => story.category === genre);
             // Use translated genre name

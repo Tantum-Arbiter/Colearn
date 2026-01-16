@@ -107,6 +107,7 @@ export default {
   stories: {
     title: 'Cuentos',
     genreStories: 'Cuentos de {{genre}}',
+    yourFavorites: 'Tus Favoritos',
     genres: {
       bedtime: 'Hora de dormir',
       adventure: 'Aventura',
