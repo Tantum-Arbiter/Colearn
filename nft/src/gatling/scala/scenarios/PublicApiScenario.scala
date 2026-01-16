@@ -28,13 +28,15 @@ object PublicApiScenario {
   // Common headers
   val jsonHeaders = Map(
     "Content-Type" -> "application/json",
-    "Accept" -> "application/json"
+    "Accept" -> "application/json",
+    "User-Agent" -> "GrowWithFreya-NFT/1.0 (Gatling Load Test)"
   )
 
   val authHeaders = Map(
     "Content-Type" -> "application/json",
     "Accept" -> "application/json",
-    "Authorization" -> s"Bearer $bearerToken"
+    "Authorization" -> s"Bearer $bearerToken",
+    "User-Agent" -> "GrowWithFreya-NFT/1.0 (Gatling Load Test)"
   )
 
   // ============================================
