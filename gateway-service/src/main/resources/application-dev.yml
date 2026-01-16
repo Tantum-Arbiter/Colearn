@@ -43,33 +43,40 @@ spring:
     pattern:
       console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
 
-  # Actuator Configuration (all endpoints exposed for development)
-  management:
-    endpoints:
-      web:
-        exposure:
-          include: "*"
-        base-path: /actuator
-    endpoint:
-      health:
-        show-details: always
-        show-components: always
+# Actuator Configuration (all endpoints exposed for development)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+  prometheus:
     metrics:
       export:
-        prometheus:
-          enabled: true
-      tags:
-        application: grow-with-freya-gateway
-        environment: development
-      distribution:
-        percentiles-histogram:
-          http.server.requests: true
-          app.response.time: true
-          app.authentication.time: true
-        percentiles:
-          http.server.requests: 0.5,0.95,0.99
-          app.response.time: 0.5,0.95,0.99
-          app.authentication.time: 0.5,0.95,0.99
+        enabled: true
+  metrics:
+    tags:
+      application: grow-with-freya-gateway
+      environment: development
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+        app.response.time: true
+        app.authentication.time: true
+        app.firestore.operation.duration: true
+      percentiles:
+        http.server.requests: 0.5,0.95,0.99
+        app.response.time: 0.5,0.95,0.99
+        app.authentication.time: 0.5,0.95,0.99
+  observations:
+    http:
+      server:
+        requests:
+          name: http.server.requests
 
 # JWT Configuration
 jwt:

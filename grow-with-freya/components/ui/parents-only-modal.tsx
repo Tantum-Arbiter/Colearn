@@ -10,10 +10,18 @@ import {
   useWindowDimensions,
   Keyboard,
   Animated,
+  Dimensions,
+  StatusBar,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Fonts } from '@/constants/theme';
 import type { ParentChallenge } from '@/hooks/use-parents-only-challenge';
+
+// Get full screen dimensions (ignores keyboard resize on Android)
+const getFullScreenHeight = () => {
+  const screen = Dimensions.get('screen');
+  return screen.height;
+};
 
 interface ParentsOnlyModalProps {
   visible: boolean;
@@ -47,32 +55,34 @@ export function ParentsOnlyModal({
 
   // Smooth keyboard animation using Animated API
   useEffect(() => {
-    const keyboardWillShow = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-      (event) => {
-        const keyboardHeight = event.endCoordinates.height;
-        // Animate to move content up by half the keyboard height (content is centered)
-        Animated.timing(keyboardOffset, {
-          toValue: -(keyboardHeight / 2.5),
-          duration: Platform.OS === 'ios' ? event.duration : 250,
-          useNativeDriver: true,
-        }).start();
-      }
-    );
-    const keyboardWillHide = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
-      (event) => {
-        Animated.timing(keyboardOffset, {
-          toValue: 0,
-          duration: Platform.OS === 'ios' ? event.duration : 250,
-          useNativeDriver: true,
-        }).start();
-      }
-    );
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const keyboardShowListener = Keyboard.addListener(showEvent, (event) => {
+      const keyboardHeight = event.endCoordinates.height;
+      // Move content up - Android needs more offset since we're using fixed screen height
+      const offset = Platform.OS === 'ios'
+        ? -(keyboardHeight / 2.5)
+        : -(keyboardHeight / 2);
+
+      Animated.timing(keyboardOffset, {
+        toValue: offset,
+        duration: Platform.OS === 'ios' ? event.duration : 250,
+        useNativeDriver: true,
+      }).start();
+    });
+
+    const keyboardHideListener = Keyboard.addListener(hideEvent, (event) => {
+      Animated.timing(keyboardOffset, {
+        toValue: 0,
+        duration: Platform.OS === 'ios' ? event.duration : 250,
+        useNativeDriver: true,
+      }).start();
+    });
 
     return () => {
-      keyboardWillShow.remove();
-      keyboardWillHide.remove();
+      keyboardShowListener.remove();
+      keyboardHideListener.remove();
     };
   }, [keyboardOffset]);
 
@@ -90,6 +100,12 @@ export function ParentsOnlyModal({
     }
   }, [visible, keyboardOffset]);
 
+  // On Android, use fixed screen height to prevent overlay from shrinking when keyboard appears
+  const fullScreenStyle = Platform.OS === 'android' ? {
+    height: getFullScreenHeight(),
+    paddingTop: StatusBar.currentHeight || 0,
+  } : {};
+
   return (
     <Modal
       visible={visible}
@@ -97,8 +113,9 @@ export function ParentsOnlyModal({
       animationType="fade"
       onRequestClose={onClose}
       supportedOrientations={['portrait', 'landscape']}
+      statusBarTranslucent={Platform.OS === 'android'}
     >
-      <View style={styles.modalOverlay}>
+      <View style={[styles.modalOverlay, fullScreenStyle]}>
         <Animated.View style={[
           styles.content,
           isPhoneLandscape && styles.contentLandscape,

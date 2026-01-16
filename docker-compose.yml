@@ -114,28 +114,33 @@ services:
     ports:
       - '9090:9090'
     user: root
-    # links:
-    #   - alertmanager
+    depends_on:
+      - alertmanager
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock  # For service discovery
       - ./prometheus:/etc/prometheus
     extra_hosts:
-      - 'host.docker.internal:host-gateway' 
+      - 'host.docker.internal:host-gateway'
     command:
       - '--config.file=/etc/prometheus/prometheus-dev.yml'
+      - '--web.enable-lifecycle'  # Enable /-/reload endpoint
     restart: always
     networks:
       - default-network
-  
-  # alertmanager: # Note to self, will do this later once deployed to cloud / can sensible store email to send messages to.
-  #   image: prom/alertmanager
-  #   ports:
-  #     - '9093:9093'
-  #   volumes:
-  #     - ./alertmanager:/etc/alertmanager
-  #   command:
-  #     - '--config.file=/etc/alertmanager/alertmanager.yml'
-  #   restart: always
+
+  alertmanager:
+    image: prom/alertmanager
+    ports:
+      - '9093:9093'
+    volumes:
+      - ./alertmanager:/etc/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=http://localhost:9093'
+    restart: always
+    networks:
+      - default-network
 
   grafana:
     image: grafana/grafana-enterprise

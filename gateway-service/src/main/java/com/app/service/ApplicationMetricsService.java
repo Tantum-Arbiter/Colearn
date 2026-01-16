@@ -973,4 +973,210 @@ public class ApplicationMetricsService {
                 assetsRequested, assetsReturned, durationMs);
     }
 
+    // --- Caching Metrics ---
+
+    /**
+     * Record a cache hit
+     * @param cacheName Name of the cache (e.g., "jwks", "rate-limiting", "public-keys")
+     */
+    public void recordCacheHit(String cacheName) {
+        String safeCacheName = cacheName != null ? cacheName : "unknown";
+        Counter.builder("app.cache.hits")
+                .tags("cache", safeCacheName)
+                .description("Number of cache hits")
+                .register(meterRegistry)
+                .increment();
+        logger.debug("Cache hit recorded for cache: {}", safeCacheName);
+    }
+
+    /**
+     * Record a cache miss
+     * @param cacheName Name of the cache (e.g., "jwks", "rate-limiting", "public-keys")
+     */
+    public void recordCacheMiss(String cacheName) {
+        String safeCacheName = cacheName != null ? cacheName : "unknown";
+        Counter.builder("app.cache.misses")
+                .tags("cache", safeCacheName)
+                .description("Number of cache misses")
+                .register(meterRegistry)
+                .increment();
+        logger.debug("Cache miss recorded for cache: {}", safeCacheName);
+    }
+
+    /**
+     * Record a cache eviction
+     * @param cacheName Name of the cache (e.g., "jwks", "rate-limiting", "public-keys")
+     * @param reason Reason for eviction (e.g., "expired", "size_limit", "manual")
+     */
+    public void recordCacheEviction(String cacheName, String reason) {
+        String safeCacheName = cacheName != null ? cacheName : "unknown";
+        String safeReason = reason != null ? reason : "unknown";
+        Counter.builder("app.cache.evictions")
+                .tags("cache", safeCacheName, "reason", safeReason)
+                .description("Number of cache evictions")
+                .register(meterRegistry)
+                .increment();
+        logger.debug("Cache eviction recorded for cache: {}, reason: {}", safeCacheName, safeReason);
+    }
+
+    // --- Rate Limiting Metrics ---
+
+    /**
+     * Record when rate limit is exceeded (client blocked)
+     * @param endpoint The endpoint being rate limited
+     * @param clientKey Anonymized client identifier
+     */
+    public void recordRateLimitExceeded(String endpoint, String clientKey) {
+        String safeEndpoint = endpoint != null ? sanitizeEndpoint(endpoint) : "unknown";
+        String safeClientKey = clientKey != null ? clientKey : "unknown";
+        Counter.builder("app.rate_limit.exceeded")
+                .tags("endpoint", safeEndpoint, "client_key", safeClientKey)
+                .description("Number of times rate limit was exceeded")
+                .register(meterRegistry)
+                .increment();
+        logger.debug("Rate limit exceeded for endpoint: {}, client: {}", safeEndpoint, safeClientKey);
+    }
+
+    private final ConcurrentHashMap<String, AtomicLong> rateLimitRemainingGauges = new ConcurrentHashMap<>();
+
+    /**
+     * Update the remaining rate limit for a client/endpoint combination
+     * @param endpoint The endpoint
+     * @param remaining Number of requests remaining in the window
+     */
+    public void updateRateLimitRemaining(String endpoint, int remaining) {
+        String safeEndpoint = endpoint != null ? sanitizeEndpoint(endpoint) : "unknown";
+        String gaugeKey = safeEndpoint;
+
+        rateLimitRemainingGauges.computeIfAbsent(gaugeKey, k -> {
+            AtomicLong value = new AtomicLong(remaining);
+            Gauge.builder("app.rate_limit.remaining", value, AtomicLong::doubleValue)
+                    .tags("endpoint", safeEndpoint)
+                    .description("Remaining rate limit requests")
+                    .register(meterRegistry);
+            return value;
+        }).set(remaining);
+    }
+
+    // --- Token Validation Metrics ---
+
+    /**
+     * Record token validation result
+     * @param result The validation result: "success", "expired", "invalid", "malformed"
+     */
+    public void recordTokenValidation(String result) {
+        String safeResult = result != null ? result : "unknown";
+        Counter.builder("app.token.validation.total")
+                .tags("result", safeResult)
+                .description("Number of token validation attempts")
+                .register(meterRegistry)
+                .increment();
+        logger.debug("Token validation recorded with result: {}", safeResult);
+    }
+
+    /**
+     * Record token validation with additional context
+     * @param result The validation result: "success", "expired", "invalid", "malformed"
+     * @param tokenType Type of token: "access", "refresh", "id_token"
+     */
+    public void recordTokenValidation(String result, String tokenType) {
+        String safeResult = result != null ? result : "unknown";
+        String safeTokenType = tokenType != null ? tokenType : "unknown";
+        Counter.builder("app.token.validation.total")
+                .tags("result", safeResult, "token_type", safeTokenType)
+                .description("Number of token validation attempts")
+                .register(meterRegistry)
+                .increment();
+        logger.debug("Token validation recorded with result: {}, type: {}", safeResult, safeTokenType);
+    }
+
+    // --- Content Sync Metrics ---
+
+    /**
+     * Record story sync request
+     * @param storiesRequested Number of stories client requested to check
+     * @param storiesReturned Number of stories returned (changed/new)
+     * @param durationMs Duration of the sync operation in milliseconds
+     */
+    public void recordStorySync(int storiesRequested, int storiesReturned, long durationMs) {
+        Counter.builder("app.stories.sync.requests")
+                .tags("stories_returned", categorizeCount(storiesReturned))
+                .description("Number of story sync requests")
+                .register(meterRegistry)
+                .increment();
+
+        Timer.builder("app.stories.sync.duration")
+                .description("Duration of story sync operations")
+                .register(meterRegistry)
+                .record(durationMs, TimeUnit.MILLISECONDS);
+
+        logger.debug("Story sync metric recorded: requested={}, returned={}, duration={}ms",
+                storiesRequested, storiesReturned, durationMs);
+    }
+
+    /**
+     * Categorize count for metrics to avoid high cardinality
+     */
+    private String categorizeCount(int count) {
+        if (count == 0) return "0";
+        if (count <= 5) return "1-5";
+        if (count <= 10) return "6-10";
+        if (count <= 50) return "11-50";
+        return "50+";
+    }
+
+    // --- Response Size Metrics ---
+
+    /**
+     * Record response size for bandwidth monitoring
+     * @param endpoint The request endpoint
+     * @param method HTTP method
+     * @param sizeBytes Response size in bytes
+     */
+    public void recordResponseSize(String endpoint, String method, long sizeBytes) {
+        String safeEndpoint = endpoint != null ? sanitizeEndpoint(endpoint) : "unknown";
+        String safeMethod = method != null ? method : "unknown";
+
+        io.micrometer.core.instrument.DistributionSummary.builder("app.response.size.bytes")
+                .tags("endpoint", safeEndpoint, "method", safeMethod)
+                .description("Response size in bytes")
+                .baseUnit("bytes")
+                .publishPercentiles(0.5, 0.95, 0.99)
+                .register(meterRegistry)
+                .record(sizeBytes);
+
+        logger.debug("Response size recorded: endpoint={}, method={}, size={} bytes",
+                safeEndpoint, safeMethod, sizeBytes);
+    }
+
+    // --- Startup Metrics ---
+
+    private final AtomicLong startupTimeMs = new AtomicLong(0);
+
+    /**
+     * Record application startup time
+     * @param startupTimeMillis Time taken to start the application in milliseconds
+     */
+    public void recordStartupTime(long startupTimeMillis) {
+        startupTimeMs.set(startupTimeMillis);
+
+        // Create gauge if not already registered
+        if (meterRegistry.find("app.startup.time").gauge() == null) {
+            Gauge.builder("app.startup.time", startupTimeMs, AtomicLong::doubleValue)
+                    .description("Application startup time in milliseconds")
+                    .baseUnit("milliseconds")
+                    .register(meterRegistry);
+        }
+
+        logger.info("Application startup time recorded: {}ms", startupTimeMillis);
+    }
+
+    /**
+     * Get the recorded startup time
+     * @return Startup time in milliseconds
+     */
+    public long getStartupTime() {
+        return startupTimeMs.get();
+    }
+
 }

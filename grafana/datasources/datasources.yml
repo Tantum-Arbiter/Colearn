@@ -8,3 +8,10 @@ datasources:
     isDefault: true
     editable: true
 
+  - name: alertmanager
+    type: alertmanager
+    access: proxy
+    url: http://alertmanager:9093
+    editable: true
+    jsonData:
+      implementation: prometheus

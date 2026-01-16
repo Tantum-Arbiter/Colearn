@@ -1,6 +1,7 @@
 package com.app.security;
 
 import com.app.config.JwtConfig;
+import com.app.service.ApplicationMetricsService;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import jakarta.servlet.FilterChain;
@@ -33,15 +34,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtConfig jwtConfig;
     private final Environment environment;
+    private final ApplicationMetricsService metricsService;
 
     @org.springframework.beans.factory.annotation.Autowired
-    public JwtAuthenticationFilter(JwtConfig jwtConfig, Environment environment) {
+    public JwtAuthenticationFilter(JwtConfig jwtConfig, Environment environment, ApplicationMetricsService metricsService) {
         this.jwtConfig = jwtConfig;
         this.environment = environment;
+        this.metricsService = metricsService;
     }
 
     public JwtAuthenticationFilter(JwtConfig jwtConfig) {
-        this(jwtConfig, null);
+        this(jwtConfig, null, null);
     }
 
 
@@ -74,16 +77,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } catch (com.auth0.jwt.exceptions.TokenExpiredException te) {
             // Mark request with specific auth error for entry point to render GTW-005
             request.setAttribute("AUTH_ERROR_CODE", com.app.exception.ErrorCode.TOKEN_EXPIRED);
+            recordTokenValidationMetric("expired");
             logger.warn("Expired JWT token: {}", te.getMessage());
         } catch (com.auth0.jwt.exceptions.JWTVerificationException ve) {
             // Mark invalid token so entry point can render GTW-002
             request.setAttribute("AUTH_ERROR_CODE", com.app.exception.ErrorCode.INVALID_TOKEN);
+            recordTokenValidationMetric("invalid");
             logger.warn("Invalid JWT token: {}", ve.getMessage());
         } catch (Exception e) {
+            recordTokenValidationMetric("malformed");
             logger.error("JWT authentication failed: {}", e.getMessage());
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    /**
+     * Record token validation metric if metrics service is available
+     */
+    private void recordTokenValidationMetric(String result) {
+        if (metricsService != null) {
+            metricsService.recordTokenValidation(result);
+        }
     }
 
     /**
@@ -191,11 +206,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // Set authentication in security context
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
+                // Record successful token validation
+                recordTokenValidationMetric("success");
                 logger.debug("JWT authentication successful for user: {}", userId);
             }
 
         } catch (JWTVerificationException e) {
             logger.warn("Invalid JWT token: {}", e.getMessage());
+            // Determine if this is an expired token or invalid token
+            String errorMessage = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
+            if (errorMessage.contains("expired")) {
+                recordTokenValidationMetric("expired");
+            } else {
+                recordTokenValidationMetric("invalid");
+            }
             if (testProfile && isExpiredTestToken(token)) {
                 // mark specific expired token condition used by functional tests
                 request.setAttribute("AUTH_ERROR_CODE", com.app.exception.ErrorCode.TOKEN_EXPIRED);
@@ -203,6 +227,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 setAuthenticationFromFakeToken(request, token);
             }
         } catch (Exception e) {
+            recordTokenValidationMetric("malformed");
             logger.error("JWT authentication error: {}", e.getMessage());
             if (testProfile && isExpiredTestToken(token)) {
                 request.setAttribute("AUTH_ERROR_CODE", com.app.exception.ErrorCode.TOKEN_EXPIRED);

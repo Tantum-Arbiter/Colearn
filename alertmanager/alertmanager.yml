@@ -1,0 +1,86 @@
+# Alertmanager Configuration
+# For development, alerts are logged to stdout
+# For production, configure email/slack/pagerduty receivers
+
+global:
+  resolve_timeout: 5m
+  # SMTP settings for email notifications (configure for production)
+  # smtp_smarthost: 'smtp.gmail.com:587'
+  # smtp_from: 'alertmanager@yourdomain.com'
+  # smtp_auth_username: 'your-email@gmail.com'
+  # smtp_auth_password: 'your-app-password'
+
+# Route tree for alert routing
+route:
+  # Default receiver
+  receiver: 'default-receiver'
+  # Group alerts by alertname and service
+  group_by: ['alertname', 'service', 'severity']
+  # Wait before sending first notification for a new group
+  group_wait: 30s
+  # Wait before sending notification about new alerts added to group
+  group_interval: 5m
+  # Wait before resending a notification
+  repeat_interval: 4h
+  
+  # Child routes for specific alert routing
+  routes:
+    # Critical alerts - immediate notification
+    - match:
+        severity: critical
+      receiver: 'critical-receiver'
+      group_wait: 10s
+      repeat_interval: 1h
+    
+    # Warning alerts
+    - match:
+        severity: warning
+      receiver: 'warning-receiver'
+      group_wait: 1m
+      repeat_interval: 4h
+
+# Inhibition rules - suppress certain alerts when others are firing
+inhibit_rules:
+  # If critical is firing, suppress warning for same alertname
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'service']
+
+# Receivers define how to send notifications
+receivers:
+  - name: 'default-receiver'
+    # For development: just log (no external notification)
+    webhook_configs:
+      - url: 'http://localhost:9999/dev-null'
+        send_resolved: true
+        # This will fail silently in dev - that's fine
+
+  - name: 'critical-receiver'
+    # For production, configure email/slack/pagerduty
+    # email_configs:
+    #   - to: 'oncall@yourdomain.com'
+    #     send_resolved: true
+    # slack_configs:
+    #   - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+    #     channel: '#alerts-critical'
+    #     send_resolved: true
+    webhook_configs:
+      - url: 'http://localhost:9999/dev-null'
+        send_resolved: true
+
+  - name: 'warning-receiver'
+    # For production, configure appropriate notification
+    # slack_configs:
+    #   - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+    #     channel: '#alerts-warning'
+    #     send_resolved: true
+    webhook_configs:
+      - url: 'http://localhost:9999/dev-null'
+        send_resolved: true
+
+# Templates for notification formatting (optional)
+# templates:
+#   - '/etc/alertmanager/templates/*.tmpl'
+

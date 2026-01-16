@@ -1,5 +1,6 @@
 package com.app.security;
 
+import com.app.service.ApplicationMetricsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -41,11 +42,14 @@ class RateLimitingFilterTest {
     @Mock
     private Authentication authentication;
 
+    @Mock
+    private ApplicationMetricsService metricsService;
+
     private RateLimitingFilter rateLimitingFilter;
 
     @BeforeEach
     void setUp() throws IOException {
-        rateLimitingFilter = new RateLimitingFilter();
+        rateLimitingFilter = new RateLimitingFilter(metricsService);
 
         // Set rate limiting configuration values using reflection
         ReflectionTestUtils.setField(rateLimitingFilter, "defaultRequestsPerMinute", 60);

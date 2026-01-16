@@ -334,7 +334,210 @@ app_circuitbreaker_calls{name="default",outcome="rejected"} 5
 
 ---
 
-### 10. Error & Failure Metrics (Sad Cases)
+### 10. Cache Metrics
+
+#### `app_cache_hits` (Counter)
+Records cache hit events.
+
+**Tags:**
+- `cache`: Cache name (jwks, rate-limiting, public-keys, etc.)
+
+**Example:**
+```
+app_cache_hits{cache="jwks"} 1234
+app_cache_hits{cache="rate-limiting"} 567
+```
+
+#### `app_cache_misses` (Counter)
+Records cache miss events.
+
+**Tags:**
+- `cache`: Cache name
+
+**Example:**
+```
+app_cache_misses{cache="jwks"} 42
+```
+
+#### `app_cache_evictions` (Counter)
+Records cache eviction events.
+
+**Tags:**
+- `cache`: Cache name
+- `reason`: Eviction reason (expired, size_limit, manual)
+
+**Example:**
+```
+app_cache_evictions{cache="jwks",reason="expired"} 15
+```
+
+**Query Examples:**
+```promql
+# Cache hit rate
+rate(app_cache_hits[5m]) / (rate(app_cache_hits[5m]) + rate(app_cache_misses[5m]))
+
+# Cache evictions per minute
+rate(app_cache_evictions[1m])
+```
+
+---
+
+### 11. Rate Limiting Metrics
+
+#### `app_rate_limit_exceeded` (Counter)
+Records when rate limits are exceeded.
+
+**Tags:**
+- `endpoint`: Request endpoint
+- `client_key`: Client identifier (IP or user ID)
+
+**Example:**
+```
+app_rate_limit_exceeded{endpoint="/api/auth/login",client_key="ip:192.168.1.1"} 5
+```
+
+#### `app_rate_limit_remaining` (Gauge)
+Current remaining rate limit quota for an endpoint.
+
+**Tags:**
+- `endpoint`: Request endpoint
+
+**Example:**
+```
+app_rate_limit_remaining{endpoint="/api/stories"} 45
+```
+
+**Query Examples:**
+```promql
+# Rate limit violations per minute
+rate(app_rate_limit_exceeded[1m])
+
+# Endpoints with low remaining quota
+app_rate_limit_remaining < 10
+```
+
+---
+
+### 12. Token Validation Metrics
+
+#### `app_token_validation_total` (Counter)
+Records token validation attempts and outcomes.
+
+**Tags:**
+- `result`: Validation result (success, expired, invalid, malformed)
+- `token_type`: Token type (access, refresh) - optional
+
+**Examples:**
+```
+app_token_validation_total{result="success"} 5678
+app_token_validation_total{result="expired"} 123
+app_token_validation_total{result="invalid"} 45
+app_token_validation_total{result="malformed"} 12
+app_token_validation_total{result="success",token_type="access"} 4500
+```
+
+**Query Examples:**
+```promql
+# Token validation success rate
+rate(app_token_validation_total{result="success"}[5m]) / rate(app_token_validation_total[5m])
+
+# Expired token rate
+rate(app_token_validation_total{result="expired"}[5m])
+
+# Invalid token attempts (potential security concern)
+rate(app_token_validation_total{result="invalid"}[5m])
+```
+
+---
+
+### 13. Content Sync Metrics
+
+#### `app_stories_sync_requests` (Counter)
+Records story sync requests.
+
+**Tags:**
+- `stories_returned`: Bucket for number of stories returned (0, 1-5, 6-10, 11-50, 50+)
+
+**Example:**
+```
+app_stories_sync_requests{stories_returned="1-5"} 234
+app_stories_sync_requests{stories_returned="0"} 567
+```
+
+#### `app_stories_sync_duration` (Timer)
+Measures story sync operation duration.
+
+**Percentiles:** 0.5 (median), 0.95, 0.99
+
+**Example:**
+```
+app_stories_sync_duration_seconds_count 801
+app_stories_sync_duration_seconds_sum 45.2
+```
+
+**Query Examples:**
+```promql
+# Sync requests per minute
+rate(app_stories_sync_requests[1m])
+
+# Average sync duration
+rate(app_stories_sync_duration_seconds_sum[5m]) / rate(app_stories_sync_duration_seconds_count[5m])
+```
+
+---
+
+### 14. Response Size Metrics
+
+#### `app_response_size_bytes` (Distribution Summary)
+Records HTTP response sizes in bytes for bandwidth monitoring.
+
+**Tags:**
+- `endpoint`: Request endpoint
+- `method`: HTTP method (GET, POST, etc.)
+
+**Example:**
+```
+app_response_size_bytes_count{endpoint="/api/stories/sync",method="POST"} 234
+app_response_size_bytes_sum{endpoint="/api/stories/sync",method="POST"} 15728640
+app_response_size_bytes_max{endpoint="/api/stories/sync",method="POST"} 1048576
+```
+
+**Query Examples:**
+```promql
+# Average response size by endpoint
+rate(app_response_size_bytes_sum[5m]) / rate(app_response_size_bytes_count[5m])
+
+# Total bandwidth per minute
+rate(app_response_size_bytes_sum[1m])
+
+# Large response endpoints
+topk(5, rate(app_response_size_bytes_sum[5m]))
+```
+
+---
+
+### 15. Startup Metrics
+
+#### `app_startup_time` (Gauge)
+Records application startup time in milliseconds.
+
+**Example:**
+```
+app_startup_time 5234
+```
+
+**Query Examples:**
+```promql
+# Current startup time
+app_startup_time
+
+# Alert on slow startup (> 30 seconds)
+app_startup_time > 30000
+```
+
+---
+
+### 16. Error & Failure Metrics (Sad Cases)
 
 #### `app_authentication_failures` (Counter)
 Records authentication failures with detailed error information.
@@ -569,6 +772,42 @@ histogram_quantile(0.5, rate(app_firestore_operation_duration_bucket[5m]))
   annotations:
     summary: "High token refresh failure rate"
     description: "{{ $value | humanizePercentage }} of token refresh attempts are failing"
+
+- alert: HighRateLimitViolations
+  expr: rate(app_rate_limit_exceeded[5m]) > 10
+  for: 5m
+  labels:
+    severity: warning
+  annotations:
+    summary: "High rate limit violations"
+    description: "Rate limit exceeded {{ $value }} times per second"
+
+- alert: LowCacheHitRate
+  expr: rate(app_cache_hits[5m]) / (rate(app_cache_hits[5m]) + rate(app_cache_misses[5m])) < 0.8
+  for: 10m
+  labels:
+    severity: warning
+  annotations:
+    summary: "Low cache hit rate"
+    description: "Cache hit rate is {{ $value | humanizePercentage }}"
+
+- alert: HighTokenValidationFailures
+  expr: rate(app_token_validation_total{result=~"expired|invalid|malformed"}[5m]) / rate(app_token_validation_total[5m]) > 0.1
+  for: 5m
+  labels:
+    severity: warning
+  annotations:
+    summary: "High token validation failure rate"
+    description: "{{ $value | humanizePercentage }} of token validations are failing"
+
+- alert: SlowStartup
+  expr: app_startup_time > 60000
+  for: 0m
+  labels:
+    severity: warning
+  annotations:
+    summary: "Slow application startup"
+    description: "Application took {{ $value }}ms to start"
 ```
 
 ---
@@ -608,16 +847,17 @@ management:
 
 ### Endpoints with Metrics
 
-| Endpoint | Request Metrics | Operation Metrics | Timing Metrics |
-|----------|----------------|-------------------|----------------|
-| `POST /auth/google` | Yes | Yes `app_authentication_total` | Yes `app_authentication_time` |
-| `POST /auth/apple` | Yes | Yes `app_authentication_total` | Yes `app_authentication_time` |
-| `POST /auth/refresh` | Yes | Yes `app_tokens_refresh_total` | Yes `app_tokens_refresh_time` |
-| `POST /auth/revoke` | Yes | Yes `app_tokens_revocation_total` | No |
-| `GET /api/profile` | Yes | Yes `app_user_profiles_total{operation="retrieved"}` | Yes `app_user_profiles_time{operation="retrieved"}` |
-| `POST /api/profile` | Yes | Yes `app_user_profiles_total{operation="created/updated"}` | Yes `app_user_profiles_time{operation="created/updated"}` |
-| `GET /` | Yes | No | No |
-| `GET /private/prometheus` | No | No | No |
+| Endpoint | Request Metrics | Operation Metrics | Timing Metrics | Response Size |
+|----------|----------------|-------------------|----------------|---------------|
+| `POST /auth/google` | Yes | Yes `app_authentication_total` | Yes `app_authentication_time` | Yes |
+| `POST /auth/apple` | Yes | Yes `app_authentication_total` | Yes `app_authentication_time` | Yes |
+| `POST /auth/refresh` | Yes | Yes `app_tokens_refresh_total` | Yes `app_tokens_refresh_time` | Yes |
+| `POST /auth/revoke` | Yes | Yes `app_tokens_revocation_total` | No | Yes |
+| `GET /api/profile` | Yes | Yes `app_user_profiles_total{operation="retrieved"}` | Yes `app_user_profiles_time{operation="retrieved"}` | Yes |
+| `POST /api/profile` | Yes | Yes `app_user_profiles_total{operation="created/updated"}` | Yes `app_user_profiles_time{operation="created/updated"}` | Yes |
+| `POST /api/stories/sync` | Yes | Yes `app_stories_sync_requests` | Yes `app_stories_sync_duration` | Yes |
+| `GET /` | Yes | No | No | Yes |
+| `GET /private/prometheus` | No | No | No | No |
 
 **Legend:**
 - Yes = Metrics recorded
@@ -628,6 +868,20 @@ management:
 **Operation Metrics** are custom metrics specific to the business operation.
 
 **Timing Metrics** measure the processing time of the operation.
+
+**Response Size** is recorded by `MetricsFilter` via `app_response_size_bytes`.
+
+### Cross-Cutting Metrics
+
+These metrics are recorded across all endpoints:
+
+| Metric | Description | Recorded By |
+|--------|-------------|-------------|
+| `app_token_validation_total` | JWT token validation outcomes | `JwtAuthenticationFilter` |
+| `app_rate_limit_exceeded` | Rate limit violations | `RateLimitingFilter` |
+| `app_rate_limit_remaining` | Remaining rate limit quota | `RateLimitingFilter` |
+| `app_cache_hits/misses/evictions` | Cache operations | Various services |
+| `app_startup_time` | Application startup time | `StartupMetricsConfig` |
 
 ---
 

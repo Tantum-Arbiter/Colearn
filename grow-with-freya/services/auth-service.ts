@@ -26,6 +26,8 @@ const extra = Constants.expoConfig?.extra || {};
 const GATEWAY_URL = extra.gatewayUrl || process.env.EXPO_PUBLIC_GATEWAY_URL || 'http://localhost:8080';
 const AUTH_TIMEOUT_MS = 3000; // 3 second timeout for sign-in
 
+console.log('[AuthService] Gateway URL configured:', GATEWAY_URL);
+
 const GOOGLE_IOS_CLIENT_ID = extra.googleIosClientId || process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 const GOOGLE_ANDROID_CLIENT_ID = extra.googleAndroidClientId || process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
 const GOOGLE_WEB_CLIENT_ID = extra.googleWebClientId || process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
@@ -84,8 +86,11 @@ export class AuthService {
    * Complete Google sign-in by sending the ID token to the backend
    */
   static async completeGoogleSignIn(idToken: string): Promise<AuthResponse> {
+    const url = `${GATEWAY_URL}/auth/google`;
+    console.log('[AuthService] Google sign-in calling:', url);
+
     try {
-      const authResponse = await fetchWithTimeout(`${GATEWAY_URL}/auth/google`, {
+      const authResponse = await fetchWithTimeout(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -94,14 +99,17 @@ export class AuthService {
         body: JSON.stringify({ idToken }),
       });
 
+      console.log('[AuthService] Google sign-in response status:', authResponse.status);
+
       if (!authResponse.ok) {
         const errorText = await authResponse.text();
+        console.error('[AuthService] Google sign-in failed:', errorText);
         throw new Error(`Authentication failed: ${errorText}`);
       }
 
       return await authResponse.json();
     } catch (error) {
-      console.error('Google sign-in error:', error);
+      console.error('[AuthService] Google sign-in error:', error);
       throw error;
     }
   }
@@ -185,6 +193,8 @@ export class AuthService {
   }
 
   static async signInWithApple(): Promise<AuthResponse> {
+    const url = `${GATEWAY_URL}/auth/apple`;
+
     try {
       const credential = await AppleAuthentication.signInAsync({
         requestedScopes: [
@@ -193,7 +203,9 @@ export class AuthService {
         ],
       });
 
-      const authResponse = await fetchWithTimeout(`${GATEWAY_URL}/auth/apple`, {
+      console.log('[AuthService] Apple sign-in calling:', url);
+
+      const authResponse = await fetchWithTimeout(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -208,8 +220,11 @@ export class AuthService {
         }),
       });
 
+      console.log('[AuthService] Apple sign-in response status:', authResponse.status);
+
       if (!authResponse.ok) {
         const errorText = await authResponse.text();
+        console.error('[AuthService] Apple sign-in failed:', errorText);
         throw new Error(`Authentication failed: ${errorText}`);
       }
 
@@ -218,7 +233,7 @@ export class AuthService {
       if (error.code === 'ERR_CANCELED') {
         throw new Error('Apple sign-in was cancelled');
       }
-      console.error('Apple sign-in error:', error);
+      console.error('[AuthService] Apple sign-in error:', error);
       throw error;
     }
   }
