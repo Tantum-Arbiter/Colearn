@@ -18,6 +18,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 import { MusicTrack } from '@/types/music';
 import { ALL_MUSIC_TRACKS, MUSIC_TAG_INFO, MusicTag, formatDuration, getTrackById } from '@/data/music';
@@ -40,7 +41,17 @@ const MAX_CONTENT_WIDTH = 500;
 const isTablet = screenWidth > 600;
 
 export function PlaylistScreen({ onBack, isActive = true }: PlaylistScreenProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+
+  // Helper to get localized track text (uses translation key if available, falls back to default)
+  const getTrackTitle = useCallback((track: MusicTrack) => {
+    return track.titleKey ? t(track.titleKey) : track.title;
+  }, [t]);
+
+  const getTrackArtist = useCallback((track: MusicTrack) => {
+    return track.artistKey ? t(track.artistKey) : (track.artist || t('music.unknownArtist'));
+  }, [t]);
   const { scaledFontSize, scaledButtonSize, textSizeScale } = useAccessibility();
   const [selectedTags, setSelectedTags] = useState<Set<MusicTag>>(new Set());
   const [expandedTrackId, setExpandedTrackId] = useState<string | null>(null);
@@ -186,7 +197,7 @@ export function PlaylistScreen({ onBack, isActive = true }: PlaylistScreenProps)
         />
       ))}
 
-      <PageHeader title="Music" subtitle="Choose a track to play" onBack={handleBack} />
+      <PageHeader title={t('music.title')} subtitle={t('music.subtitle')} onBack={handleBack} />
 
       <View style={{ flex: 1, paddingTop: insets.top + 180 + (textSizeScale - 1) * 60, zIndex: 10 }}>
         {/* Centered content wrapper for tablets */}
@@ -204,7 +215,7 @@ export function PlaylistScreen({ onBack, isActive = true }: PlaylistScreenProps)
                 >
                   <Text style={styles.tagEmoji}>{tagInfo.emoji}</Text>
                   <Text style={[styles.tagLabel, { fontSize: scaledFontSize(14) }]}>
-                    {tagInfo.label}
+                    {t(tagInfo.labelKey)}
                   </Text>
                 </Pressable>
               );
@@ -232,14 +243,14 @@ export function PlaylistScreen({ onBack, isActive = true }: PlaylistScreenProps)
                     </View>
                     <View style={styles.trackInfo}>
                       <Text style={[styles.trackTitle, { fontSize: scaledFontSize(16) }]}>
-                        {track.title}
+                        {getTrackTitle(track)}
                       </Text>
                       <Text style={[styles.trackArtist, { fontSize: scaledFontSize(12) }]}>
-                        {track.artist}{track.duration > 0 ? ` • ${formatDuration(track.duration)}` : ''}
+                        {getTrackArtist(track)}{track.duration > 0 ? ` • ${formatDuration(track.duration)}` : ''}
                       </Text>
                       {!track.isAvailable && (
                         <Text style={[styles.comingSoon, { fontSize: scaledFontSize(11) }]}>
-                          Coming Soon
+                          {t('music.comingSoon')}
                         </Text>
                       )}
                     </View>
@@ -286,12 +297,12 @@ export function PlaylistScreen({ onBack, isActive = true }: PlaylistScreenProps)
                         {/* Loop indicator */}
                         <View style={styles.loopIndicator}>
                           <Ionicons name="repeat" size={16} color="#4ECDC4" />
-                          <Text style={styles.loopText}>Looping</Text>
+                          <Text style={styles.loopText}>{t('music.looping')}</Text>
                         </View>
 
                         {/* Status */}
                         {playbackState === 'loading' && (
-                          <Text style={styles.statusText}>Loading...</Text>
+                          <Text style={styles.statusText}>{t('music.loading')}</Text>
                         )}
                       </View>
                     );

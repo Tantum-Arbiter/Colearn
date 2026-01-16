@@ -39,10 +39,10 @@ jest.mock('@/hooks/use-accessibility', () => ({
     textSizeScale: 1,
   }),
   TEXT_SIZE_OPTIONS: [
-    { label: 'Small', value: 0.85 },
-    { label: 'Medium', value: 1.0 },
-    { label: 'Large', value: 1.15 },
-    { label: 'Extra Large', value: 1.3 },
+    { labelKey: 'common.small', value: 0.85 },
+    { labelKey: 'common.default', value: 1.0 },
+    { labelKey: 'common.large', value: 1.15 },
+    { labelKey: 'common.extraLarge', value: 1.3 },
   ],
 }));
 

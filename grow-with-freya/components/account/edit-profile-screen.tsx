@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../../store/app-store';
 import { backgroundSaveService } from '../../services/background-save-service';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { StarBackground } from '@/components/ui/star-background';
-import { BackButtonText } from '@/constants/theme';
+import { useBackButtonText } from '@/hooks/use-back-button-text';
 
 interface EditProfileScreenProps {
   onBack: () => void;
@@ -18,9 +19,11 @@ interface EditProfileContentProps {
 }
 
 export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { userNickname, userAvatarType, userAvatarId, isGuestMode, setUserProfile } = useAppStore();
   const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
+  const backButtonText = useBackButtonText();
 
   const [nickname, setNickname] = useState(userNickname || '');
   const [avatarType, setAvatarType] = useState<'boy' | 'girl'>(userAvatarType || 'girl');
@@ -28,12 +31,12 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
 
   const handleSave = async () => {
     if (!nickname.trim()) {
-      Alert.alert('Error', 'Please enter a nickname');
+      Alert.alert(t('common.error'), t('profile.enterNickname'));
       return;
     }
 
     if (nickname.length > 20) {
-      Alert.alert('Error', 'Nickname must be 20 characters or less');
+      Alert.alert(t('common.error'), t('profile.nicknameTooLong'));
       return;
     }
 
@@ -65,10 +68,10 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50) }]}>
         <Pressable style={[styles.backButton, { minHeight: scaledButtonSize(40) }]} onPress={onBack}>
-          <Text style={[styles.backButtonText, { fontSize: scaledFontSize(16) }]}>{BackButtonText}</Text>
+          <Text style={[styles.backButtonText, { fontSize: scaledFontSize(16) }]}>{backButtonText}</Text>
         </Pressable>
         <View style={styles.titleContainer}>
-          <Text style={[styles.title, { fontSize: scaledFontSize(20) }]}>Edit Profile</Text>
+          <Text style={[styles.title, { fontSize: scaledFontSize(20) }]}>{t('profile.editTitle')}</Text>
         </View>
         <View style={{ width: 60 }} />
       </View>
@@ -76,20 +79,20 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
       <ScrollView style={styles.scrollView} contentContainerStyle={[styles.content, isTablet && { alignItems: 'center' }]}>
         <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(16) }]}>Nickname</Text>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(16) }]}>{t('profile.nickname')}</Text>
           <TextInput
             style={[styles.textInput, { fontSize: scaledFontSize(16), padding: scaledPadding(15) }]}
             value={nickname}
             onChangeText={setNickname}
-            placeholder="Enter your nickname..."
+            placeholder={t('profile.nicknamePlaceholder')}
             placeholderTextColor="rgba(255, 255, 255, 0.4)"
             maxLength={20}
           />
-          <Text style={[styles.helperText, { fontSize: scaledFontSize(12) }]}>{nickname.length}/20 characters</Text>
+          <Text style={[styles.helperText, { fontSize: scaledFontSize(12) }]}>{t('profile.nicknameCharacters', { count: nickname.length })}</Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(16) }]}>Avatar Type</Text>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(16) }]}>{t('profile.avatarType')}</Text>
           <View style={styles.avatarTypeContainer}>
             <Pressable
               style={[
@@ -104,7 +107,7 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
                 { fontSize: scaledFontSize(16) },
                 avatarType === 'boy' && styles.avatarTypeTextActive
               ]}>
-                👦 Boy
+                {t('profile.boy')}
               </Text>
             </Pressable>
 
@@ -121,7 +124,7 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
                 { fontSize: scaledFontSize(16) },
                 avatarType === 'girl' && styles.avatarTypeTextActive
               ]}>
-                👧 Girl
+                {t('profile.girl')}
               </Text>
             </Pressable>
           </View>
@@ -132,7 +135,7 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
           onPress={handleSave}
         >
           <Text style={[styles.saveButtonText, { fontSize: scaledFontSize(18) }]}>
-            Save Changes
+            {t('profile.saveChanges')}
           </Text>
         </Pressable>
         </View>
@@ -245,6 +248,7 @@ const styles = StyleSheet.create({
 
 // Content-only component for embedding in horizontal scroll
 export function EditProfileContent({ paddingTop = 0, onSaveComplete }: EditProfileContentProps) {
+  const { t } = useTranslation();
   const { userNickname, userAvatarType, userAvatarId, isGuestMode, setUserProfile } = useAppStore();
   const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
 
@@ -254,12 +258,12 @@ export function EditProfileContent({ paddingTop = 0, onSaveComplete }: EditProfi
 
   const handleSave = async () => {
     if (!nickname.trim()) {
-      Alert.alert('Error', 'Please enter a nickname');
+      Alert.alert(t('common.error'), t('profile.enterNickname'));
       return;
     }
 
     if (nickname.length > 20) {
-      Alert.alert('Error', 'Nickname must be 20 characters or less');
+      Alert.alert(t('common.error'), t('profile.nicknameTooLong'));
       return;
     }
 
@@ -293,20 +297,20 @@ export function EditProfileContent({ paddingTop = 0, onSaveComplete }: EditProfi
       <ScrollView style={styles.scrollView} contentContainerStyle={[styles.content, { paddingTop }, isTablet && { alignItems: 'center' }]}>
         <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(16) }]}>Nickname</Text>
+            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(16) }]}>{t('profile.nickname')}</Text>
           <TextInput
             style={[styles.textInput, { fontSize: scaledFontSize(16), padding: scaledPadding(15) }]}
             value={nickname}
             onChangeText={setNickname}
-            placeholder="Enter your nickname..."
+            placeholder={t('profile.nicknamePlaceholder')}
             placeholderTextColor="rgba(255, 255, 255, 0.4)"
             maxLength={20}
           />
-          <Text style={[styles.helperText, { fontSize: scaledFontSize(12) }]}>{nickname.length}/20 characters</Text>
+          <Text style={[styles.helperText, { fontSize: scaledFontSize(12) }]}>{t('profile.nicknameCharacters', { count: nickname.length })}</Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(16) }]}>Avatar Type</Text>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(16) }]}>{t('profile.avatarType')}</Text>
           <View style={styles.avatarTypeContainer}>
             <Pressable
               style={[
@@ -321,7 +325,7 @@ export function EditProfileContent({ paddingTop = 0, onSaveComplete }: EditProfi
                 { fontSize: scaledFontSize(16) },
                 avatarType === 'boy' && styles.avatarTypeTextActive
               ]}>
-                👦 Boy
+                {t('profile.boy')}
               </Text>
             </Pressable>
 
@@ -338,7 +342,7 @@ export function EditProfileContent({ paddingTop = 0, onSaveComplete }: EditProfi
                 { fontSize: scaledFontSize(16) },
                 avatarType === 'girl' && styles.avatarTypeTextActive
               ]}>
-                👧 Girl
+                {t('profile.girl')}
               </Text>
             </Pressable>
           </View>
@@ -349,7 +353,7 @@ export function EditProfileContent({ paddingTop = 0, onSaveComplete }: EditProfi
             onPress={handleSave}
           >
             <Text style={[styles.saveButtonText, { fontSize: scaledFontSize(18) }]}>
-              Save Changes
+              {t('profile.saveChanges')}
             </Text>
           </Pressable>
         </View>

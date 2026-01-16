@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path, Defs, Mask, Rect, Circle } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/constants/theme';
+import { useTranslation } from 'react-i18next';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
@@ -253,6 +254,7 @@ export function SpotlightOverlay({
   onComplete,
   skipAnimation = false,
 }: SpotlightOverlayProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const tipOpacity = useSharedValue(skipAnimation ? 1 : 0);
@@ -627,12 +629,12 @@ export function SpotlightOverlay({
                 )}
                 <Pressable
                   onPress={isLastStep ? onComplete : onNext}
-                  style={[styles.navButton, styles.nextButton, { paddingHorizontal: 12, paddingVertical: 6 }]}
+                  style={[styles.navButton, styles.nextButton, { paddingHorizontal: 12, paddingVertical: 6, maxWidth: 120 }]}
                 >
-                  <Text style={[styles.nextText, { fontSize: 12 }]}>{isLastStep ? 'Done' : 'Next'}</Text>
+                  <Text style={[styles.nextText, { fontSize: 12 }]} numberOfLines={1} adjustsFontSizeToFit>{isLastStep ? t('tutorial.buttons.done') : t('tutorial.buttons.next')}</Text>
                 </Pressable>
                 <Pressable onPress={onSkip} style={[styles.skipButton, { marginLeft: 4 }]}>
-                  <Text style={[styles.skipText, { fontSize: 11 }]}>Skip</Text>
+                  <Text style={[styles.skipText, { fontSize: 11 }]} numberOfLines={1} adjustsFontSizeToFit>{t('tutorial.buttons.skip')}</Text>
                 </Pressable>
               </View>
             </>
@@ -662,7 +664,7 @@ export function SpotlightOverlay({
               {/* Navigation buttons */}
               <View style={styles.buttonRow}>
                 <Pressable onPress={onSkip} style={styles.skipButton}>
-                  <Text style={styles.skipText}>Skip tour</Text>
+                  <Text style={styles.skipText}>{t('tutorial.buttons.skipTour')}</Text>
                 </Pressable>
 
                 <View style={styles.navButtons}>
@@ -675,7 +677,7 @@ export function SpotlightOverlay({
                     onPress={isLastStep ? onComplete : onNext}
                     style={[styles.navButton, styles.nextButton]}
                   >
-                    <Text style={styles.nextText}>{isLastStep ? 'Got it!' : 'Next'}</Text>
+                    <Text style={styles.nextText} numberOfLines={1} adjustsFontSizeToFit>{isLastStep ? t('tutorial.buttons.gotIt') : t('tutorial.buttons.next')}</Text>
                     {!isLastStep && <Ionicons name="arrow-forward" size={16} color="#fff" />}
                   </Pressable>
                 </View>

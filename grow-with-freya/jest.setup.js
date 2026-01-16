@@ -273,10 +273,10 @@ jest.mock('@/hooks/use-accessibility', () => ({
   }),
   TABLET_CONTENT_MAX_WIDTH: 500,
   TEXT_SIZE_OPTIONS: [
-    { label: 'Small', value: 0.85 },
-    { label: 'Default', value: 1.0 },
-    { label: 'Large', value: 1.15 },
-    { label: 'X Large', value: 1.3 },
+    { labelKey: 'common.small', value: 0.85 },
+    { labelKey: 'common.default', value: 1.0 },
+    { labelKey: 'common.large', value: 1.15 },
+    { labelKey: 'common.extraLarge', value: 1.3 },
   ],
   getBaseScaledSize: (baseSize, scale) => Math.round(baseSize * scale),
 }));

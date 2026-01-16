@@ -57,8 +57,10 @@ describe('Stories Data', () => {
       MOCK_STORIES.forEach(story => {
         const categoryTag = STORY_TAGS[story.category];
         // Some stories have custom emojis that don't match the category emoji
-        // Just check that the tag contains the category label
-        expect(story.tag).toContain(categoryTag.label);
+        // Check that the tag contains either the category emoji or the category name
+        const hasEmoji = story.tag.includes(categoryTag.emoji);
+        const hasCategoryName = story.tag.toLowerCase().includes(story.category.toLowerCase());
+        expect(hasEmoji || hasCategoryName).toBe(true);
       });
     });
   });

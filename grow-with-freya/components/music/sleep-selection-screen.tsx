@@ -22,10 +22,11 @@ import { BearTopImage } from '@/components/main-menu/animated-components';
 import { mainMenuStyles } from '@/components/main-menu/styles';
 import { getTracksByCategory, getTrackById } from '@/data/music';
 import { MusicTrack } from '@/types/music';
-import { Fonts, BackButtonText } from '@/constants/theme';
+import { Fonts } from '@/constants/theme';
 import { MusicControl } from '@/components/ui/music-control';
 import { SleepSequencePlayer } from '@/services/sleep-sequence-player';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { useBackButtonText } from '@/hooks/use-back-button-text';
 
 interface SleepSelectionScreenProps {
   onTrackSelect: (track: MusicTrack) => void;
@@ -38,6 +39,7 @@ export function SleepSelectionScreen({ onTrackSelect, onBack }: SleepSelectionSc
   const insets = useSafeAreaInsets();
   const [showSleepInfo, setShowSleepInfo] = useState(false);
   const { scaledFontSize, scaledButtonSize, scaledPadding } = useAccessibility();
+  const backButtonText = useBackButtonText();
 
   // Get sleep-related tracks
   const sleepTracks = useMemo(() => {
@@ -141,7 +143,7 @@ export function SleepSelectionScreen({ onTrackSelect, onBack }: SleepSelectionSc
         zIndex: 30,
       }}>
         <Pressable style={[styles.backButton, { minHeight: scaledButtonSize(40) }]} onPress={onBack}>
-          <Text style={[styles.backButtonText, { fontSize: scaledFontSize(16) }]}>{BackButtonText}</Text>
+          <Text style={[styles.backButtonText, { fontSize: scaledFontSize(16) }]}>{backButtonText}</Text>
         </Pressable>
         <View style={{ width: 24 }} />
         <MusicControl

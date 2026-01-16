@@ -156,7 +156,7 @@ export function EmotionsUnifiedScreen({ onStartGame, onBack }: EmotionsUnifiedSc
           </View>
 
           <ThemedText style={[styles.themeDescription, { fontSize: scaledFontSize(14) }]}>
-            {selectedThemeData.description}
+            {selectedThemeData.descriptionKey ? t(selectedThemeData.descriptionKey) : selectedThemeData.description}
           </ThemedText>
 
           {/* How to Play */}
@@ -192,7 +192,7 @@ export function EmotionsUnifiedScreen({ onStartGame, onBack }: EmotionsUnifiedSc
             style={[styles.buttonGradient, { paddingHorizontal: scaledPadding(32), paddingVertical: scaledPadding(15) }]}
           >
             <ThemedText style={[styles.startButtonText, { fontSize: scaledFontSize(16) }]}>
-              {t('emotions.expressWithTheme', { theme: selectedThemeData.name })}
+              {t('emotions.expressWithTheme', { theme: selectedThemeData.nameKey ? t(selectedThemeData.nameKey) : selectedThemeData.name })}
             </ThemedText>
           </LinearGradient>
         </Pressable>

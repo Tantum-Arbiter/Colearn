@@ -191,15 +191,15 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
   // Get the title for the current slide view
   const getSlideTitle = useCallback((view: SlideView): string => {
     switch (view) {
-      case 'screen-time': return 'Screen Time';
-      case 'edit-profile': return 'Edit Profile';
-      case 'terms': return 'Terms & Conditions';
-      case 'privacy': return 'Privacy Policy';
-      case 'custom-reminders': return 'Custom Reminders';
-      case 'create-reminder': return 'Create Reminder';
-      default: return 'Account';
+      case 'screen-time': return t('account.screenTime');
+      case 'edit-profile': return t('profile.editTitle');
+      case 'terms': return t('account.termsAndConditions');
+      case 'privacy': return t('account.privacyPolicy');
+      case 'custom-reminders': return t('account.customReminders');
+      case 'create-reminder': return t('reminders.createTitle');
+      default: return t('account.title');
     }
-  }, []);
+  }, [t]);
 
   // Accessibility scaling (textSizeScale already from useAppStore above)
   const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
@@ -240,15 +240,15 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     Alert.alert(
-      'Logout',
-      'Are you sure you want to logout? You will need to sign in again.',
+      t('alerts.logout.title'),
+      t('alerts.logout.message'),
       [
         {
-          text: 'Cancel',
+          text: t('common.cancel'),
           style: 'cancel',
         },
         {
-          text: 'Logout',
+          text: t('common.logout'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -273,7 +273,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
               });
             } catch (error) {
               console.error('Logout error:', error);
-              Alert.alert('Error', 'Failed to logout. Please try again.');
+              Alert.alert(t('common.error'), t('alerts.logout.error'));
             }
           },
         },
@@ -285,15 +285,15 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     Alert.alert(
-      'Reset App',
-      'This will clear ALL app data including your login, character, and settings. Are you sure?',
+      t('alerts.resetApp.title'),
+      t('alerts.resetApp.message'),
       [
         {
-          text: 'Cancel',
+          text: t('common.cancel'),
           style: 'cancel',
         },
         {
-          text: 'Reset',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             // Reset all state to initial values (instant)
@@ -457,12 +457,12 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
           {/* App Settings Section */}
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>
-              App Settings
+              {t('account.settings')}
             </Text>
 
             <View style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}>
               <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>
-                Version
+                {t('common.version')}
               </Text>
               <Text style={[styles.settingValue, { fontSize: scaledFontSize(16) }]}>
                 1.0.0
@@ -474,10 +474,10 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
               onPress={isGuestMode ? handleLogin : handleLogout}
             >
               <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>
-                {isGuestMode ? 'Login' : 'Logout'}
+                {isGuestMode ? t('common.login') : t('common.logout')}
               </Text>
               <Text style={[styles.settingValue, { fontSize: scaledFontSize(16) }]}>
-                {isGuestMode ? '→' : '→'}
+                →
               </Text>
             </Pressable>
 
@@ -504,7 +504,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
               }}
             >
               <Text style={[styles.buttonText, { fontSize: scaledFontSize(16) }]}>
-                Screen Time Controls
+                {t('account.screenTime')}
               </Text>
             </Pressable>
           </View>
@@ -512,24 +512,24 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
           {/* Profile Section */}
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>
-              Profile
+              {t('account.profile')}
             </Text>
 
             <View style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}>
               <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>
-                Nickname
+                {t('account.nickname')}
               </Text>
               <Text style={[styles.settingValue, { fontSize: scaledFontSize(16) }]}>
-                {userNickname || 'Not set'}
+                {userNickname || t('common.notSet')}
               </Text>
             </View>
 
             <View style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}>
               <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>
-                Avatar Type
+                {t('account.avatarType')}
               </Text>
               <Text style={[styles.settingValue, { fontSize: scaledFontSize(16) }]}>
-                {userAvatarType ? (userAvatarType === 'boy' ? '👦 Boy' : '👧 Girl') : 'Not set'}
+                {userAvatarType ? (userAvatarType === 'boy' ? t('account.boy') : t('account.girl')) : t('common.notSet')}
               </Text>
             </View>
 
@@ -541,7 +541,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
               }}
             >
               <Text style={[styles.buttonText, { fontSize: scaledFontSize(16) }]}>
-                Edit Profile
+                {t('common.editProfile')}
               </Text>
             </Pressable>
           </View>
@@ -549,15 +549,15 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
           {/* Accessibility */}
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>
-              Accessibility
+              {t('accessibility.title')}
             </Text>
 
             <View style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}>
               <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>
-                Text Size
+                {t('account.textSize')}
               </Text>
               <Text style={[styles.settingValue, { fontSize: scaledFontSize(16) }]}>
-                {TEXT_SIZE_OPTIONS.find(opt => opt.value === textSizeScale)?.label || 'Default'}
+                {t(TEXT_SIZE_OPTIONS.find(opt => opt.value === textSizeScale)?.labelKey || 'common.default')}
               </Text>
             </View>
 
@@ -584,15 +584,14 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
                     numberOfLines={1}
                     adjustsFontSizeToFit
                   >
-                    {option.label}
+                    {t(option.labelKey)}
                   </Text>
                 </Pressable>
               ))}
             </View>
 
             <Text style={[styles.accessibilityHint, { fontSize: scaledFontSize(12) }]} numberOfLines={2} adjustsFontSizeToFit>
-              Adjust text and button sizes for better visibility
-            </Text>
+              {t('accessibility.textSizeHint')}</Text>
 
             <Pressable
               style={styles.grayscaleInfoBox}
@@ -606,18 +605,18 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
                 showGrayscaleInfo && styles.grayscaleInfoTitleExpanded,
                 { fontSize: scaledFontSize(14) }
               ]}>
-                Grayscale / High Contrast {showGrayscaleInfo ? '▼' : '▶'}
+                {t('accessibility.grayscale')} {showGrayscaleInfo ? '▼' : '▶'}
               </Text>
               {showGrayscaleInfo && (
                 <>
                   <Text style={[styles.grayscaleInfoText, { fontSize: scaledFontSize(12) }]}>
-                    For black &amp; white mode, use your device&apos;s built-in accessibility settings:
+                    {t('accessibility.grayscaleHint')}
                   </Text>
                   <Text style={[styles.grayscaleInfoPath, { fontSize: scaledFontSize(11) }]}>
-                    <Text style={styles.platformBold}>iOS:</Text> Settings → Accessibility → Display & Text Size → Color Filters → Grayscale
+                    <Text style={styles.platformBold}>iOS:</Text> {t('accessibility.grayscaleIos')}
                   </Text>
                   <Text style={[styles.grayscaleInfoPath, { fontSize: scaledFontSize(11) }]}>
-                    <Text style={styles.platformBold}>Android:</Text> Settings → Accessibility → Color adjustment → Grayscale
+                    <Text style={styles.platformBold}>Android:</Text> {t('accessibility.grayscaleAndroid')}
                   </Text>
                 </>
               )}
@@ -627,7 +626,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
           {/* Privacy & Legal */}
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>
-              Privacy & Legal
+              {t('account.legal')}
             </Text>
 
             {/* Crash Reporting Toggle */}
@@ -640,10 +639,10 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
             >
               <View style={{ flex: 1 }}>
                 <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>
-                  Crash Reports
+                  {t('account.crashReports')}
                 </Text>
                 <Text style={[styles.settingHint, { fontSize: scaledFontSize(12) }]}>
-                  Help us fix bugs by sending anonymous crash data
+                  {t('account.crashReportsHint')}
                 </Text>
               </View>
               <View style={[
@@ -665,7 +664,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
               }}
             >
               <Text style={[styles.buttonText, { fontSize: scaledFontSize(16) }]}>
-                Terms & Conditions
+                {t('account.termsAndConditions')}
               </Text>
             </Pressable>
 
@@ -677,7 +676,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
               }}
             >
               <Text style={[styles.buttonText, { fontSize: scaledFontSize(16) }]}>
-                Privacy Policy
+                {t('account.privacyPolicy')}
               </Text>
             </Pressable>
           </View>

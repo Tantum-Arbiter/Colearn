@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/constants/theme';
 import { useTutorial } from '@/contexts/tutorial-context';
 import { EMOTION_CARDS_TIPS } from './tutorial-content';
+import { useTranslation } from 'react-i18next';
 
 interface EmotionCardsTipsOverlayProps {
   forceShow?: boolean;
@@ -28,6 +29,7 @@ const STEP_ICONS: Record<string, string> = {
  * Emotion Cards Tips Overlay - Shows parent guidance tips on first emotion cards visit
  */
 export function EmotionCardsTipsOverlay({ forceShow = false, onClose }: EmotionCardsTipsOverlayProps) {
+  const { t } = useTranslation();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const { hasSeenEmotionCards, markEmotionCardsViewed, shouldShowTutorial } = useTutorial();
   const [isMounted, setIsMounted] = useState(false);
@@ -141,8 +143,8 @@ export function EmotionCardsTipsOverlay({ forceShow = false, onClose }: EmotionC
               </View>
             )}
 
-            <Text style={styles.title}>{currentTip.title}</Text>
-            <Text style={styles.description}>{currentTip.description}</Text>
+            <Text style={styles.title}>{t(currentTip.titleKey)}</Text>
+            <Text style={styles.description}>{t(currentTip.descriptionKey)}</Text>
 
             <View style={styles.progressDots}>
               {EMOTION_CARDS_TIPS.map((_, i) => (
@@ -152,7 +154,7 @@ export function EmotionCardsTipsOverlay({ forceShow = false, onClose }: EmotionC
 
             <View style={styles.buttonRow}>
               <Pressable onPress={handleClose} style={styles.skipButton}>
-                <Text style={styles.skipText}>Skip All</Text>
+                <Text style={styles.skipText}>{t('tutorial.buttons.skipAll')}</Text>
               </Pressable>
               <View style={styles.navButtons}>
                 {!isFirstStep && (
@@ -161,7 +163,7 @@ export function EmotionCardsTipsOverlay({ forceShow = false, onClose }: EmotionC
                   </Pressable>
                 )}
                 <Pressable onPress={handleNext} style={[styles.navButton, styles.nextButton]}>
-                  <Text style={styles.nextText}>{isLastStep ? 'Let\'s Go!' : 'Next'}</Text>
+                  <Text style={styles.nextText}>{isLastStep ? t('tutorial.buttons.letsGo') : t('tutorial.buttons.next')}</Text>
                   {!isLastStep && <Ionicons name="chevron-forward" size={18} color="#fff" />}
                 </Pressable>
               </View>

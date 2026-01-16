@@ -17,7 +17,6 @@ const mockEmotion: Emotion = {
   emoji: '😊',
   color: '#FFD700',
   description: 'Feeling joyful and cheerful',
-  expressionPrompts: ['Show me your biggest smile!'],
   difficulty: 'easy',
   category: 'basic'
 };

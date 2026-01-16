@@ -8,13 +8,14 @@ import Animated, {
   withTiming,
   Easing
 } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { ThemedText } from './themed-text';
 import { getSvgComponentFromSvg } from './main-menu/assets';
 import { BearTopImage } from './main-menu/animated-components';
 import { mainMenuStyles } from './main-menu/styles';
 
 import { MusicControl } from '@/components/ui/music-control';
-import { BackButtonText } from '@/constants/theme';
+import { useBackButtonText } from '@/hooks/use-back-button-text';
 
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -81,42 +82,43 @@ const mapIconNameToSvgType = (iconName: string): string => {
   }
 };
 
-// Content data for each page
-const pageContent: { [key: string]: { emoji: string; message: string; subtitle: string; color: string } } = {
+// Content data for each page (using translation keys)
+const pageContent: { [key: string]: { emoji: string; messageKey: string; subtitleKey: string; color: string } } = {
   'Stories': {
     emoji: '📚',
-    message: 'Story Time!',
-    subtitle: 'Magical tales and adventures await you here. Let your imagination soar!',
+    messageKey: 'defaultPage.stories.message',
+    subtitleKey: 'defaultPage.stories.subtitle',
     color: '#FF6B6B'
   },
   'Sensory': {
     emoji: '🌟',
-    message: 'Feel & Explore!',
-    subtitle: 'Touch, see, hear, and discover the world around you through your senses.',
+    messageKey: 'defaultPage.sensory.message',
+    subtitleKey: 'defaultPage.sensory.subtitle',
     color: '#4ECDC4'
   },
   'Emotions': {
     emoji: '😊',
-    message: 'Happy Feelings!',
-    subtitle: 'Learn about emotions and how to express your feelings in healthy ways.',
+    messageKey: 'defaultPage.emotions.message',
+    subtitleKey: 'defaultPage.emotions.subtitle',
     color: '#45B7D1'
   },
   'Bedtime': {
     emoji: '🎵',
-    message: 'Sweet Dreams!',
-    subtitle: 'Gentle melodies and soothing sounds to help you drift off to sleep.',
+    messageKey: 'defaultPage.bedtime.message',
+    subtitleKey: 'defaultPage.bedtime.subtitle',
     color: '#96CEB4'
   },
   'Screen Time': {
     emoji: '⏰',
-    message: 'Time to Play!',
-    subtitle: 'Balance your screen time with fun activities and healthy habits.',
+    messageKey: 'defaultPage.screenTime.message',
+    subtitleKey: 'defaultPage.screenTime.subtitle',
     color: '#FFEAA7'
   }
 };
 
 export function DefaultPage({ icon, title, onBack }: DefaultPageProps) {
-
+  const { t } = useTranslation();
+  const backButtonText = useBackButtonText();
 
   // Star animation
   const starRotation = useSharedValue(0);
@@ -184,7 +186,7 @@ export function DefaultPage({ icon, title, onBack }: DefaultPageProps) {
         zIndex: 30,
       }}>
         <Pressable style={styles.backButton} onPress={onBack}>
-          <ThemedText style={styles.backButtonText}>{BackButtonText}</ThemedText>
+          <ThemedText style={styles.backButtonText}>{backButtonText}</ThemedText>
         </Pressable>
         <MusicControl
           size={24}
@@ -207,16 +209,16 @@ export function DefaultPage({ icon, title, onBack }: DefaultPageProps) {
         <ThemedText style={styles.emoji}>{content.emoji}</ThemedText>
 
         <ThemedText style={[styles.message, { color: content.color }]}>
-          {content.message}
+          {t(content.messageKey)}
         </ThemedText>
 
         <ThemedText style={styles.subtitle}>
-          {content.subtitle}
+          {t(content.subtitleKey)}
         </ThemedText>
 
         {/* Fun interactive element */}
         <Pressable style={[styles.actionButton, { backgroundColor: content.color }]} onPress={() => {}}>
-          <ThemedText style={styles.actionButtonText}>Coming Soon!</ThemedText>
+          <ThemedText style={styles.actionButtonText}>{t('defaultPage.comingSoon')}</ThemedText>
         </Pressable>
         </View>
       </View>

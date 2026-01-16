@@ -11,6 +11,7 @@ import {
   Keyboard,
   Animated,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Fonts } from '@/constants/theme';
 import type { ParentChallenge } from '@/hooks/use-parents-only-challenge';
 
@@ -35,6 +36,7 @@ export function ParentsOnlyModal({
   isInputValid,
   scaledFontSize = (size) => size,
 }: ParentsOnlyModalProps) {
+  const { t } = useTranslation();
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<TextInput>(null);
   const { width, height } = useWindowDimensions();
@@ -114,7 +116,7 @@ export function ParentsOnlyModal({
               </View>
               <View style={styles.landscapeRight}>
                 <Text style={[styles.titleCompact, { fontSize: scaledFontSize(16) }]}>
-                  Type the animal name
+                  {t('parentsOnly.typeAnimalName')}
                 </Text>
                 <View style={styles.inputRow}>
                   <TextInput
@@ -126,7 +128,7 @@ export function ParentsOnlyModal({
                     ]}
                     value={inputValue}
                     onChangeText={onInputChange}
-                    placeholder="Type here..."
+                    placeholder={t('parentsOnly.placeholder')}
                     placeholderTextColor="rgba(255, 255, 255, 0.5)"
                     autoCapitalize="none"
                     autoCorrect={false}
@@ -140,7 +142,7 @@ export function ParentsOnlyModal({
                     disabled={!isInputValid}
                   >
                     <Text style={[styles.confirmButtonText, { fontSize: scaledFontSize(14) }]}>
-                      Go
+                      {t('parentsOnly.go')}
                     </Text>
                   </Pressable>
                 </View>
@@ -149,10 +151,10 @@ export function ParentsOnlyModal({
           ) : (
             // Standard vertical layout for portrait/tablet
             <>
-              <Text style={[styles.title, { fontSize: scaledFontSize(22) }]}>Parents Only</Text>
+              <Text style={[styles.title, { fontSize: scaledFontSize(22) }]}>{t('parentsOnly.title')}</Text>
               <Text style={styles.emoji}>{challenge.emoji}</Text>
               <Text style={[styles.subtitle, { fontSize: scaledFontSize(14) }]}>
-                Type the animal name to continue
+                {t('parentsOnly.subtitle')}
               </Text>
               <TextInput
                 ref={inputRef}
@@ -163,7 +165,7 @@ export function ParentsOnlyModal({
                 ]}
                 value={inputValue}
                 onChangeText={onInputChange}
-                placeholder="Type here..."
+                placeholder={t('parentsOnly.placeholder')}
                 placeholderTextColor="rgba(255, 255, 255, 0.5)"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -177,7 +179,7 @@ export function ParentsOnlyModal({
                 disabled={!isInputValid}
               >
                 <Text style={[styles.confirmButtonText, { fontSize: scaledFontSize(16) }]}>
-                  Continue
+                  {t('parentsOnly.continue')}
                 </Text>
               </Pressable>
             </>

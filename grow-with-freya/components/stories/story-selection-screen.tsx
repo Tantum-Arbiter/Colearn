@@ -425,6 +425,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
           {filterTags.map((tag) => {
             const tagInfo = STORY_FILTER_TAGS[tag];
             const isSelected = selectedTags.has(tag);
+            const tagLabel = t(tagInfo.labelKey);
             return (
               <Pressable
                 key={tag}
@@ -436,7 +437,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
               >
                 <Text style={styles.tagEmoji}>{tagInfo.emoji}</Text>
                 <Text style={[styles.tagLabel, { fontSize: scaledFontSize(12) }]}>
-                  {tagInfo.label}
+                  {tagLabel}
                 </Text>
               </Pressable>
             );
@@ -460,10 +461,11 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
           )}
           {availableGenres.map((genre) => {
             const genreStories = filteredStories.filter(story => story.category === genre);
-            // Special heading for personalized stories
+            // Use translated genre name
+            const genreName = t(`stories.genres.${genre}`, { defaultValue: genre.charAt(0).toUpperCase() + genre.slice(1) });
             const genreHeading = genre === 'personalized'
-              ? 'Your Story'
-              : `${genre.charAt(0).toUpperCase() + genre.slice(1)} Stories`;
+              ? t('stories.filterTags.personalized', { defaultValue: 'Your Story' })
+              : t('stories.genreStories', { genre: genreName, defaultValue: `${genreName} Stories` });
 
             return (
               <View key={genre} style={{ marginBottom: 40 }}>

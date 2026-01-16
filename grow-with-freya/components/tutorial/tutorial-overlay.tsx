@@ -4,6 +4,7 @@ import { SpotlightOverlay, TutorialStep, SpotlightTarget } from './spotlight-ove
 import { getTutorialSteps } from './tutorial-content';
 import { useTutorial, TutorialId } from '@/contexts/tutorial-context';
 import { Logger } from '@/utils/logger';
+import { useTranslation } from 'react-i18next';
 
 const log = Logger.create('TutorialOverlay');
 
@@ -38,18 +39,19 @@ interface TutorialOverlayProps {
  * />
  * ```
  */
-export function TutorialOverlay({ 
-  tutorialId, 
+export function TutorialOverlay({
+  tutorialId,
   targetRefs = {},
   onStart,
   onEnd,
 }: TutorialOverlayProps) {
-  const { 
-    activeTutorial, 
-    currentStep, 
-    nextStep, 
-    previousStep, 
-    skipTutorial, 
+  const { t } = useTranslation();
+  const {
+    activeTutorial,
+    currentStep,
+    nextStep,
+    previousStep,
+    skipTutorial,
     completeTutorial,
     startTutorial,
     shouldShowTutorial,
@@ -212,9 +214,17 @@ export function TutorialOverlay({
     setTimeout(() => setHasShownOverlay(true), 0);
   }
 
+  // Translate the step keys to actual strings
   const stepWithTarget: TutorialStep = {
-    ...currentStepData,
+    id: currentStepData.id,
+    title: t(currentStepData.titleKey),
+    description: t(currentStepData.descriptionKey),
     target: currentTarget,
+    arrowDirection: currentStepData.arrowDirection,
+    tipPosition: currentStepData.tipPosition,
+    spotlightShape: currentStepData.spotlightShape,
+    spotlightBorderRadius: currentStepData.spotlightBorderRadius,
+    image: currentStepData.image,
   };
 
   return (

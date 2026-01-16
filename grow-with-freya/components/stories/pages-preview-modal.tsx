@@ -22,6 +22,7 @@ import { Story, StoryPage } from '@/types/story';
 import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { AuthenticatedImage } from '@/components/ui/authenticated-image';
+import { useTranslation } from 'react-i18next';
 
 const ANIMATION_DURATION = 300;
 
@@ -43,6 +44,7 @@ export function PagePreviewModal({
   const insets = useSafeAreaInsets();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const { scaledFontSize, scaledButtonSize } = useAccessibility();
+  const { t } = useTranslation();
 
   const isTablet = Math.max(screenWidth, screenHeight) >= 1024;
   const isLandscape = screenWidth > screenHeight;
@@ -177,16 +179,16 @@ export function PagePreviewModal({
           )}
           {isCurrentPage && (
             <View style={styles.currentPageIndicator}>
-              <Text style={styles.currentPageText}>Current</Text>
+              <Text style={styles.currentPageText}>{t('reader.current')}</Text>
             </View>
           )}
         </View>
         <Text style={[styles.pageNumber, { fontSize: scaledFontSize(12) }]}>
-          Page {actualIndex}
+          {t('reader.pageNumber', { number: actualIndex })}
         </Text>
       </Pressable>
     );
-  }, [currentPageIndex, thumbnailWidth, thumbnailHeight, containerHeight, gap, handlePageSelect, scaledFontSize]);
+  }, [currentPageIndex, thumbnailWidth, thumbnailHeight, containerHeight, gap, handlePageSelect, scaledFontSize, t]);
 
   // Early return after all hooks
   if (!visible) return null;
@@ -202,7 +204,7 @@ export function PagePreviewModal({
       <Animated.View style={[styles.modalContainer, modalAnimatedStyle, { paddingBottom: insets.bottom + 20 }]}>
         <View style={styles.handleBar} />
         <View style={styles.header}>
-          <Text style={[styles.title, { fontSize: scaledFontSize(18) }]}>Page Preview</Text>
+          <Text style={[styles.title, { fontSize: scaledFontSize(18) }]}>{t('reader.pagePreview')}</Text>
           <Pressable
             style={[styles.closeButton, { width: scaledButtonSize(36), height: scaledButtonSize(36), borderRadius: scaledButtonSize(18) }]}
             onPress={handleClose}

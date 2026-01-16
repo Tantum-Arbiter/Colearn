@@ -9,7 +9,9 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { Story } from '@/types/story';
+import { useTranslation } from 'react-i18next';
+import { Story, getLocalizedText } from '@/types/story';
+import type { SupportedLanguage } from '@/services/i18n';
 import { Fonts } from '@/constants/theme';
 import { AuthenticatedImage } from '@/components/ui/authenticated-image';
 import { Logger } from '@/utils/logger';
@@ -34,6 +36,10 @@ export const StoryThumbnail: React.FC<StoryThumbnailProps> = ({
   height = THUMBNAIL_HEIGHT,
   isVisible = true,
 }) => {
+  const { i18n } = useTranslation();
+  const currentLanguage = i18n.language as SupportedLanguage;
+  const displayTitle = getLocalizedText(story.localizedTitle, story.title, currentLanguage);
+
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
 
@@ -155,14 +161,14 @@ export const StoryThumbnail: React.FC<StoryThumbnailProps> = ({
 
         {/* Story Info */}
         <View style={styles.infoContainer}>
-          <Text 
+          <Text
             style={[
-              styles.title, 
+              styles.title,
               { color: story.isAvailable ? '#FFFFFF' : '#CCCCCC' }
-            ]} 
+            ]}
             numberOfLines={2}
           >
-            {story.title}
+            {displayTitle}
           </Text>
           
           {story.isAvailable && (

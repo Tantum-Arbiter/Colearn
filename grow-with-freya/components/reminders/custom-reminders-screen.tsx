@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { reminderService, ReminderService, CustomReminder, ReminderStats } from '../../services/reminder-service';
 import { styles } from './styles';
 import { useAccessibility } from '@/hooks/use-accessibility';
@@ -45,6 +46,7 @@ export const CustomRemindersScreen: React.FC<CustomRemindersScreenProps> = ({
   onCreateNew,
   onReminderChange,
 }) => {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
   const [reminders, setReminders] = useState<CustomReminder[]>([]);
@@ -93,12 +95,12 @@ export const CustomRemindersScreen: React.FC<CustomRemindersScreenProps> = ({
 
   const handleDeleteReminder = async (reminderId: string, title: string) => {
     Alert.alert(
-      'Delete Reminder',
-      `Are you sure you want to delete "${title}"?`,
+      t('alerts.deleteReminder.title'),
+      t('alerts.deleteReminder.message', { title }),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Delete',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             const success = await reminderService.deleteReminder(reminderId);
@@ -188,7 +190,7 @@ export const CustomRemindersScreen: React.FC<CustomRemindersScreenProps> = ({
           <Pressable onPress={onBack} style={[styles.backButton, { minHeight: scaledButtonSize(40) }]}>
             <Ionicons name="arrow-back" size={scaledButtonSize(24)} color="rgba(255, 255, 255, 0.8)" />
           </Pressable>
-          <Text style={[styles.title, { fontSize: scaledFontSize(20) }]}>Custom Reminders</Text>
+          <Text style={[styles.title, { fontSize: scaledFontSize(20) }]}>{t('reminders.title')}</Text>
           <Pressable onPress={onCreateNew} style={[styles.addButton, { minHeight: scaledButtonSize(40) }]}>
             <Ionicons name="add" size={scaledButtonSize(24)} color="rgba(255, 255, 255, 0.8)" />
           </Pressable>
@@ -199,15 +201,15 @@ export const CustomRemindersScreen: React.FC<CustomRemindersScreenProps> = ({
           <View style={[styles.statsContainer, { padding: scaledPadding(16) }]}>
             <View style={styles.statItem}>
               <Text style={[styles.statNumber, { fontSize: scaledFontSize(24) }]}>{stats.totalReminders}</Text>
-              <Text style={[styles.statLabel, { fontSize: scaledFontSize(12) }]}>Total</Text>
+              <Text style={[styles.statLabel, { fontSize: scaledFontSize(12) }]}>{t('reminders.total')}</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={[styles.statNumber, { fontSize: scaledFontSize(24) }]}>{stats.activeReminders}</Text>
-              <Text style={[styles.statLabel, { fontSize: scaledFontSize(12) }]}>Active</Text>
+              <Text style={[styles.statLabel, { fontSize: scaledFontSize(12) }]}>{t('reminders.active')}</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={[styles.statNumber, { fontSize: scaledFontSize(24) }]}>{stats.upcomingToday.length}</Text>
-              <Text style={[styles.statLabel, { fontSize: scaledFontSize(12) }]}>Today</Text>
+              <Text style={[styles.statLabel, { fontSize: scaledFontSize(12) }]}>{t('reminders.today')}</Text>
             </View>
           </View>
         )}
@@ -215,17 +217,17 @@ export const CustomRemindersScreen: React.FC<CustomRemindersScreenProps> = ({
         {/* Reminders by Day */}
         {loading ? (
           <View style={styles.loadingContainer}>
-            <Text style={[styles.loadingText, { fontSize: scaledFontSize(16) }]}>Loading reminders...</Text>
+            <Text style={[styles.loadingText, { fontSize: scaledFontSize(16) }]}>{t('reminders.loading')}</Text>
           </View>
         ) : reminders.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Ionicons name="notifications-outline" size={scaledButtonSize(64)} color="rgba(255, 255, 255, 0.3)" />
-            <Text style={[styles.emptyTitle, { fontSize: scaledFontSize(20) }]}>No Custom Reminders</Text>
+            <Text style={[styles.emptyTitle, { fontSize: scaledFontSize(20) }]}>{t('reminders.noReminders')}</Text>
             <Text style={[styles.emptyMessage, { fontSize: scaledFontSize(14) }]}>
-              Create your first reminder to get started with personalized exercise notifications.
+              {t('reminders.noRemindersHint')}
             </Text>
             <Pressable onPress={onCreateNew} style={[styles.createFirstButton, { minHeight: scaledButtonSize(48), paddingVertical: scaledPadding(12), paddingHorizontal: scaledPadding(24) }]}>
-              <Text style={[styles.createFirstButtonText, { fontSize: scaledFontSize(16) }]}>Create First Reminder</Text>
+              <Text style={[styles.createFirstButtonText, { fontSize: scaledFontSize(16) }]}>{t('reminders.createNew')}</Text>
             </Pressable>
           </View>
         ) : (
@@ -237,7 +239,7 @@ export const CustomRemindersScreen: React.FC<CustomRemindersScreenProps> = ({
               return (
                 <View key={dayOfWeek} style={styles.daySection}>
                   <Text style={[styles.dayTitle, { fontSize: scaledFontSize(16) }]}>
-                    {ReminderService.getDayName(dayOfWeek)}
+                    {t(`reminders.days.${['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][dayOfWeek]}`)}
                   </Text>
 
                   {dayReminders.map(reminder => (
@@ -271,7 +273,7 @@ export const CustomRemindersScreen: React.FC<CustomRemindersScreenProps> = ({
                               { fontSize: scaledFontSize(12) },
                               reminder.isActive ? styles.toggleButtonTextActive : styles.toggleButtonTextInactive
                             ]}>
-                              {reminder.isActive ? 'Active' : 'Inactive'}
+                              {reminder.isActive ? t('reminders.active') : t('reminders.inactive')}
                             </Text>
                           </Pressable>
 
@@ -304,6 +306,7 @@ export const CustomRemindersContent: React.FC<CustomRemindersContentProps> = ({
   refreshTrigger = 0,
   isActive = false,
 }) => {
+  const { t } = useTranslation();
   const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
   const [reminders, setReminders] = useState<CustomReminder[]>([]);
   const [stats, setStats] = useState<ReminderStats | null>(null);
@@ -334,12 +337,12 @@ export const CustomRemindersContent: React.FC<CustomRemindersContentProps> = ({
 
   const handleDeleteReminder = async (reminderId: string, title: string) => {
     Alert.alert(
-      'Delete Reminder',
-      `Are you sure you want to delete "${title}"?`,
+      t('alerts.deleteReminder.title'),
+      t('alerts.deleteReminder.message', { title }),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Delete',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             const success = await reminderService.deleteReminder(reminderId);
@@ -395,15 +398,15 @@ export const CustomRemindersContent: React.FC<CustomRemindersContentProps> = ({
           <View style={[styles.statsContainer, { padding: scaledPadding(16) }]}>
             <View style={styles.statItem}>
               <Text style={[styles.statNumber, { fontSize: scaledFontSize(24) }]}>{stats.totalReminders}</Text>
-              <Text style={[styles.statLabel, { fontSize: scaledFontSize(12) }]}>Total</Text>
+              <Text style={[styles.statLabel, { fontSize: scaledFontSize(12) }]}>{t('reminders.total')}</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={[styles.statNumber, { fontSize: scaledFontSize(24) }]}>{stats.activeReminders}</Text>
-              <Text style={[styles.statLabel, { fontSize: scaledFontSize(12) }]}>Active</Text>
+              <Text style={[styles.statLabel, { fontSize: scaledFontSize(12) }]}>{t('reminders.active')}</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={[styles.statNumber, { fontSize: scaledFontSize(24) }]}>{stats.upcomingToday.length}</Text>
-              <Text style={[styles.statLabel, { fontSize: scaledFontSize(12) }]}>Today</Text>
+              <Text style={[styles.statLabel, { fontSize: scaledFontSize(12) }]}>{t('reminders.today')}</Text>
             </View>
           </View>
         )}
@@ -411,17 +414,17 @@ export const CustomRemindersContent: React.FC<CustomRemindersContentProps> = ({
         {/* Reminders by Day */}
         {loading ? (
           <View style={styles.loadingContainer}>
-            <Text style={[styles.loadingText, { fontSize: scaledFontSize(16) }]}>Loading reminders...</Text>
+            <Text style={[styles.loadingText, { fontSize: scaledFontSize(16) }]}>{t('reminders.loading')}</Text>
           </View>
         ) : reminders.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Ionicons name="notifications-outline" size={scaledButtonSize(64)} color="rgba(255, 255, 255, 0.3)" />
-            <Text style={[styles.emptyTitle, { fontSize: scaledFontSize(20) }]}>No Custom Reminders</Text>
+            <Text style={[styles.emptyTitle, { fontSize: scaledFontSize(20) }]}>{t('reminders.noReminders')}</Text>
             <Text style={[styles.emptyMessage, { fontSize: scaledFontSize(14) }]}>
-              Create your first reminder to get started with personalized exercise notifications.
+              {t('reminders.noRemindersHint')}
             </Text>
             <Pressable onPress={onCreateNew} style={[styles.createFirstButton, { minHeight: scaledButtonSize(48), paddingVertical: scaledPadding(12), paddingHorizontal: scaledPadding(24) }]}>
-              <Text style={[styles.createFirstButtonText, { fontSize: scaledFontSize(16) }]}>Create First Reminder</Text>
+              <Text style={[styles.createFirstButtonText, { fontSize: scaledFontSize(16) }]}>{t('reminders.createNew')}</Text>
             </Pressable>
           </View>
         ) : (
@@ -433,7 +436,7 @@ export const CustomRemindersContent: React.FC<CustomRemindersContentProps> = ({
               return (
                 <View key={dayOfWeek} style={styles.daySection}>
                   <Text style={[styles.dayTitle, { fontSize: scaledFontSize(16) }]}>
-                    {ReminderService.getDayName(dayOfWeek)}
+                    {t(`reminders.days.${['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][dayOfWeek]}`)}
                   </Text>
 
                   {dayReminders.map(reminder => (
@@ -467,7 +470,7 @@ export const CustomRemindersContent: React.FC<CustomRemindersContentProps> = ({
                               { fontSize: scaledFontSize(12) },
                               reminder.isActive ? styles.toggleButtonTextActive : styles.toggleButtonTextInactive
                             ]}>
-                              {reminder.isActive ? 'Active' : 'Inactive'}
+                              {reminder.isActive ? t('reminders.active') : t('reminders.inactive')}
                             </Text>
                           </Pressable>
 

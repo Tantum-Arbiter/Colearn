@@ -20,8 +20,9 @@ import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
 import { BearTopImage } from '@/components/main-menu/animated-components';
 import { mainMenuStyles } from '@/components/main-menu/styles';
-import { Fonts, BackButtonText } from '@/constants/theme';
+import { Fonts } from '@/constants/theme';
 import { MusicControl } from '@/components/ui/music-control';
+import { useBackButtonText } from '@/hooks/use-back-button-text';
 
 interface TantrumInfoScreenProps {
   onContinue: () => void;
@@ -35,6 +36,7 @@ export function TantrumInfoScreen({ onContinue, onBack }: TantrumInfoScreenProps
   const [showHowItHelps, setShowHowItHelps] = useState(false);
   const [showSafetyGuidelines, setShowSafetyGuidelines] = useState(false);
   const [showBestPractices, setShowBestPractices] = useState(false);
+  const backButtonText = useBackButtonText();
 
   // Generate star positions for background
   const starPositions = useMemo(() => generateStarPositions(VISUAL_EFFECTS.STAR_COUNT), []);
@@ -104,7 +106,7 @@ export function TantrumInfoScreen({ onContinue, onBack }: TantrumInfoScreenProps
         zIndex: 30,
       }}>
         <Pressable style={styles.backButton} onPress={onBack}>
-          <Text style={styles.backButtonText}>{BackButtonText}</Text>
+          <Text style={styles.backButtonText}>{backButtonText}</Text>
         </Pressable>
         <View style={{ width: 24 }} />
         <MusicControl

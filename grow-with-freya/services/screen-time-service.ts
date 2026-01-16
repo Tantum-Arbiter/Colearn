@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
+import i18n from 'i18next';
 
 // WHO/AAP Guidelines for screen time
 export const SCREEN_TIME_LIMITS = {
@@ -163,7 +164,7 @@ class ScreenTimeService {
       return {
         type: 'approaching_limit',
         remainingTime,
-        message: `Only ${Math.ceil(remainingTime / 60)} minutes of screen time left today. Would you like to continue or close the app?`,
+        message: i18n.t('screenTimeWarning.approachingMessage', { minutes: Math.ceil(remainingTime / 60) }),
       };
     }
 
@@ -173,7 +174,7 @@ class ScreenTimeService {
       return {
         type: 'limit_reached',
         remainingTime: 0,
-        message: 'Daily screen time limit reached. It\'s time to close the app and try other activities!',
+        message: i18n.t('screenTimeWarning.limitReachedMessage'),
       };
     }
 

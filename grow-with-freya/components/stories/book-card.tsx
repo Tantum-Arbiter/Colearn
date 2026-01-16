@@ -8,7 +8,9 @@ import Animated, {
   withDelay,
   Easing
 } from 'react-native-reanimated';
-import { Story, STORY_TAGS } from '@/types/story';
+import { useTranslation } from 'react-i18next';
+import { Story, STORY_TAGS, getLocalizedText } from '@/types/story';
+import type { SupportedLanguage } from '@/services/i18n';
 import { Fonts } from '@/constants/theme';
 import { Logger } from '@/utils/logger';
 
@@ -32,8 +34,12 @@ const getCardWidth = () => {
 const cardWidth = getCardWidth();
 
 export function BookCard({ story, onPress, index = 0 }: BookCardProps) {
+  const { t, i18n } = useTranslation();
+  const currentLanguage = i18n.language as SupportedLanguage;
   const isPlaceholder = !story.isAvailable;
   const storyTag = story.category ? STORY_TAGS[story.category] : null;
+  const storyTagLabel = storyTag ? t(storyTag.labelKey) : '';
+  const displayTitle = getLocalizedText(story.localizedTitle, story.title, currentLanguage);
 
   // Animation values - temporarily disable animation for debugging
   const opacity = useSharedValue(1);
@@ -173,14 +179,14 @@ export function BookCard({ story, onPress, index = 0 }: BookCardProps) {
             isPlaceholder && styles.placeholderTitle
           ]}
         >
-          {story.title}
+          {displayTitle}
         </Text>
 
         {/* Tag (only for available stories) */}
         {!isPlaceholder && storyTag && (
           <View style={[styles.tagContainer, { backgroundColor: storyTag.color + '30' }]}>
             <Text style={styles.tagText}>
-              {storyTag.emoji} {storyTag.label}
+              {storyTag.emoji} {storyTagLabel}
             </Text>
           </View>
         )}

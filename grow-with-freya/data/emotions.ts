@@ -1,5 +1,11 @@
 import { Emotion, EmotionGameConfig } from '@/types/emotion';
 
+// Emotion IDs for type safety
+export type EmotionId = 'happy' | 'sad' | 'angry' | 'surprised' | 'scared' | 'excited' | 'confused' | 'proud' | 'shy' | 'loving';
+
+// Number of prompts per emotion (used for random selection)
+export const PROMPTS_PER_EMOTION = 4;
+
 export const EMOTIONS: Emotion[] = [
   // Basic emotions - easy level
   {
@@ -8,12 +14,6 @@ export const EMOTIONS: Emotion[] = [
     emoji: '😊',
     color: '#FFD700',
     description: 'Feeling joyful and cheerful',
-    expressionPrompts: [
-      'Show me your biggest smile!',
-      'Can you laugh like you heard something funny?',
-      'Make a happy face and clap your hands!',
-      'Show me how you look when you get a present!'
-    ],
     difficulty: 'easy',
     category: 'basic'
   },
@@ -23,12 +23,6 @@ export const EMOTIONS: Emotion[] = [
     emoji: '😢',
     color: '#4A90E2',
     description: 'Feeling down or unhappy',
-    expressionPrompts: [
-      'Show me a sad face',
-      'Can you make your face look like you lost your toy?',
-      'Show me how you feel when you have to say goodbye',
-      'Make a pouty face like when you\'re disappointed'
-    ],
     difficulty: 'easy',
     category: 'basic'
   },
@@ -38,12 +32,6 @@ export const EMOTIONS: Emotion[] = [
     emoji: '😠',
     color: '#FF6B6B',
     description: 'Feeling mad or frustrated',
-    expressionPrompts: [
-      'Show me an angry face',
-      'Can you scrunch up your face like you\'re mad?',
-      'Show me how you look when someone mean throws your favourite toy',
-      'Make a grumpy face with crossed arms!'
-    ],
     difficulty: 'easy',
     category: 'basic'
   },
@@ -53,12 +41,6 @@ export const EMOTIONS: Emotion[] = [
     emoji: '😲',
     color: '#FF9500',
     description: 'Feeling shocked or amazed',
-    expressionPrompts: [
-      'Show me a surprised face!',
-      'Can you open your eyes and mouth really wide?',
-      'Show me how you look when you see something amazing!',
-      'Make a face like you just saw magic!'
-    ],
     difficulty: 'easy',
     category: 'basic'
   },
@@ -68,12 +50,6 @@ export const EMOTIONS: Emotion[] = [
     emoji: '😨',
     color: '#8E44AD',
     description: 'Feeling afraid or frightened',
-    expressionPrompts: [
-      'Show me a scared face',
-      'Can you hide behind your hands like you\'re scared?',
-      'Show me how you look during a thunderstorm',
-      'Make a face like you saw something spooky!'
-    ],
     difficulty: 'medium',
     category: 'basic'
   },
@@ -83,16 +59,10 @@ export const EMOTIONS: Emotion[] = [
     emoji: '🤩',
     color: '#E74C3C',
     description: 'Feeling thrilled and energetic',
-    expressionPrompts: [
-      'Show me how excited you get!',
-      'Can you jump up and down with a big smile?',
-      'Show me your face when you\'re going somewhere fun!',
-      'Make an excited face and wave your hands!'
-    ],
     difficulty: 'medium',
     category: 'basic'
   },
-  
+
   // Complex emotions - medium/hard level
   {
     id: 'confused',
@@ -100,12 +70,6 @@ export const EMOTIONS: Emotion[] = [
     emoji: '😕',
     color: '#95A5A6',
     description: 'Feeling puzzled or uncertain',
-    expressionPrompts: [
-      'Show me a confused face',
-      'Can you scrunch your eyebrows like you\'re thinking hard?',
-      'Show me how you look when you don\'t understand something',
-      'Make a face like you\'re trying to solve a puzzle!'
-    ],
     difficulty: 'medium',
     category: 'complex'
   },
@@ -115,12 +79,6 @@ export const EMOTIONS: Emotion[] = [
     emoji: '😌',
     color: '#2ECC71',
     description: 'Feeling accomplished and confident',
-    expressionPrompts: [
-      'Show me how proud you are!',
-      'Can you stand tall and smile like you did something great?',
-      'Show me your proud face when you finish a puzzle!',
-      'Make a face like you just helped someone!'
-    ],
     difficulty: 'medium',
     category: 'complex'
   },
@@ -130,12 +88,6 @@ export const EMOTIONS: Emotion[] = [
     emoji: '😳',
     color: '#F39C12',
     description: 'Feeling bashful or timid',
-    expressionPrompts: [
-      'Show me a shy face',
-      'Can you hide your face a little bit?',
-      'Show me how you look when meeting someone new',
-      'Make a shy smile and look down!'
-    ],
     difficulty: 'medium',
     category: 'social'
   },
@@ -145,12 +97,6 @@ export const EMOTIONS: Emotion[] = [
     emoji: '🥰',
     color: '#E91E63',
     description: 'Feeling affectionate and caring',
-    expressionPrompts: [
-      'Show me your loving face!',
-      'Can you give yourself a big hug?',
-      'Show me how you look at someone you love!',
-      'Make a face like you\'re giving kisses!'
-    ],
     difficulty: 'hard',
     category: 'social'
   }
@@ -178,9 +124,22 @@ export const getRandomEmotion = (excludeIds: string[] = []): Emotion => {
   return availableEmotions[randomIndex];
 };
 
-export const getRandomPrompt = (emotion: Emotion): string => {
-  const randomIndex = Math.floor(Math.random() * emotion.expressionPrompts.length);
-  return emotion.expressionPrompts[randomIndex];
+/**
+ * Get a random prompt index for an emotion (0-3)
+ * Use with t(`emotions.prompts.${emotion.id}.${index}`) to get the translated prompt
+ */
+export const getRandomPromptIndex = (): number => {
+  return Math.floor(Math.random() * PROMPTS_PER_EMOTION);
+};
+
+/**
+ * Get the translation key for a specific emotion prompt
+ * @param emotionId The emotion ID (e.g., 'happy', 'sad')
+ * @param promptIndex The prompt index (0-3)
+ * @returns The translation key to use with t()
+ */
+export const getPromptTranslationKey = (emotionId: string, promptIndex: number): string => {
+  return `emotions.prompts.${emotionId}.${promptIndex}`;
 };
 
 export const getEmotionById = (id: string): Emotion | undefined => {

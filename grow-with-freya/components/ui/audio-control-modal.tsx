@@ -11,6 +11,7 @@ import Slider from '@react-native-community/slider';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import * as Haptics from 'expo-haptics';
 
@@ -35,6 +36,7 @@ export const AudioControlModal: React.FC<AudioControlModalProps> = ({
   onMusicVolumeChange,
   onVoiceOverVolumeChange,
 }) => {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledPadding } = useAccessibility();
 
@@ -98,7 +100,7 @@ export const AudioControlModal: React.FC<AudioControlModalProps> = ({
           {/* Header */}
           <View style={styles.header}>
             <Ionicons name="settings-outline" size={scaledFontSize(24)} color="#FFFFFF" />
-            <Text style={[styles.title, { fontSize: scaledFontSize(20) }]}>Audio Settings</Text>
+            <Text style={[styles.title, { fontSize: scaledFontSize(20) }]}>{t('audioSettings.title')}</Text>
             <Pressable onPress={handleClose} style={styles.closeButton}>
               <Ionicons name="close" size={scaledFontSize(24)} color="#FFFFFF" />
             </Pressable>
@@ -106,19 +108,19 @@ export const AudioControlModal: React.FC<AudioControlModalProps> = ({
 
           {/* Volume Sliders */}
           <VolumeSlider
-            label="Master Volume"
+            label={t('audioSettings.masterVolume')}
             icon="volume-high"
             value={masterVolume}
             onChange={onMasterVolumeChange}
           />
           <VolumeSlider
-            label="Music"
+            label={t('audioSettings.music')}
             icon="musical-notes"
             value={musicVolume}
             onChange={onMusicVolumeChange}
           />
           <VolumeSlider
-            label="Voice Over"
+            label={t('audioSettings.voiceOver')}
             icon="mic"
             value={voiceOverVolume}
             onChange={onVoiceOverVolumeChange}

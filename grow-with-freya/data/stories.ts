@@ -49,69 +49,135 @@ export const MOCK_STORIES: Story[] = [
   {
     id: 'snuggle-little-wombat',
     title: 'Snuggle Little Wombat',
+    localizedTitle: {
+      en: 'Snuggle Little Wombat',
+      pl: 'Przytulanka Mały Wombat',
+      es: 'Acurrúcate Pequeño Wombat',
+      de: 'Kuschel Kleiner Wombat',
+    },
     category: 'bedtime',
     tag: '🌙 Bedtime',
     emoji: '🐨',
     coverImage: require('../assets/stories/snuggle-little-wombat/cover/thumbnail.webp'),
     isAvailable: true,
     ageRange: '2-5',
-    duration: 9, // 8 story pages + 1 cover page
+    duration: 9,
     description: 'A gentle bedtime story about a little wombat getting ready for sleep with cozy snuggles and sweet dreams.',
-    tags: ['adventure', 'bedtime', 'calming', 'animals'], // Wombat is an adventure book
+    localizedDescription: {
+      en: 'A gentle bedtime story about a little wombat getting ready for sleep with cozy snuggles and sweet dreams.',
+      pl: 'Łagodna bajka na dobranoc o małym wombacie przygotowującym się do snu z przytulnymi uściskami i słodkimi snami.',
+      es: 'Un cuento suave para dormir sobre un pequeño wombat preparándose para dormir con abrazos acogedores y dulces sueños.',
+      de: 'Eine sanfte Gutenachtgeschichte über einen kleinen Wombat, der sich mit gemütlichen Kuscheleinheiten und süßen Träumen auf den Schlaf vorbereitet.',
+    },
+    tags: ['adventure', 'bedtime', 'calming', 'animals'],
     pages: [
       {
         id: 'snuggle-little-wombat-cover',
         pageNumber: 0,
         backgroundImage: require('../assets/stories/snuggle-little-wombat/cover/cover-large.webp'),
-        text: 'Snuggle Little Wombat\n\nA gentle bedtime story'
+        text: 'Snuggle Little Wombat\n\nA gentle bedtime story',
+        localizedText: {
+          en: 'Snuggle Little Wombat\n\nA gentle bedtime story',
+          pl: 'Przytulanka Mały Wombat\n\nŁagodna bajka na dobranoc',
+          es: 'Acurrúcate Pequeño Wombat\n\nUn cuento suave para dormir',
+          de: 'Kuschel Kleiner Wombat\n\nEine sanfte Gutenachtgeschichte',
+        },
       },
       {
         id: 'snuggle-little-wombat-1',
         pageNumber: 1,
         backgroundImage: require('../assets/stories/snuggle-little-wombat/page-1/background.webp'),
-        text: 'Wombat yawned, the sky turnt blue, time to rest, the stars peek through.'
+        text: 'Wombat yawned, the sky turnt blue, time to rest, the stars peek through.',
+        localizedText: {
+          en: 'Wombat yawned, the sky turnt blue, time to rest, the stars peek through.',
+          pl: 'Wombat ziewnął, niebo zrobiło się niebieskie, czas na odpoczynek, gwiazdy zaczęły błyszczeć.',
+          es: 'Wombat bostezó, el cielo se volvió azul, hora de descansar, las estrellas asoman.',
+          de: 'Wombat gähnte, der Himmel wurde blau, Zeit zum Ausruhen, die Sterne schauen durch.',
+        },
       },
       {
         id: 'snuggle-little-wombat-2',
         pageNumber: 2,
         backgroundImage: require('../assets/stories/snuggle-little-wombat/page-2/background.webp'),
-        text: 'Wombat stared, the night felt new, time to dream, like we must do.'
+        text: 'Wombat stared, the night felt new, time to dream, like we must do.',
+        localizedText: {
+          en: 'Wombat stared, the night felt new, time to dream, like we must do.',
+          pl: 'Wombat patrzył, noc wydawała się nowa, czas na marzenia, tak jak my musimy.',
+          es: 'Wombat miró, la noche se sentía nueva, hora de soñar, como debemos hacer.',
+          de: 'Wombat starrte, die Nacht fühlte sich neu an, Zeit zu träumen, wie wir es tun müssen.',
+        },
       },
       {
         id: 'snuggle-little-wombat-3',
         pageNumber: 3,
         backgroundImage: require('../assets/stories/snuggle-little-wombat/page-3/background.webp'),
-        text: 'Wombat walked, the stars shined through, looking for a nest, that\'s warm and new.'
+        text: 'Wombat walked, the stars shined through, looking for a nest, that\'s warm and new.',
+        localizedText: {
+          en: 'Wombat walked, the stars shined through, looking for a nest, that\'s warm and new.',
+          pl: 'Wombat szedł, gwiazdy świeciły, szukając gniazda, ciepłego i nowego.',
+          es: 'Wombat caminó, las estrellas brillaban, buscando un nido, cálido y nuevo.',
+          de: 'Wombat ging, die Sterne leuchteten durch, auf der Suche nach einem Nest, warm und neu.',
+        },
       },
       {
         id: 'snuggle-little-wombat-4',
         pageNumber: 4,
         backgroundImage: require('../assets/stories/snuggle-little-wombat/page-4/background.webp'),
-        text: 'Wombat smiled, a burrow in view, time to rest, and dream things new.'
+        text: 'Wombat smiled, a burrow in view, time to rest, and dream things new.',
+        localizedText: {
+          en: 'Wombat smiled, a burrow in view, time to rest, and dream things new.',
+          pl: 'Wombat uśmiechnął się, nora w zasięgu wzroku, czas na odpoczynek i nowe marzenia.',
+          es: 'Wombat sonrió, una madriguera a la vista, hora de descansar y soñar cosas nuevas.',
+          de: 'Wombat lächelte, ein Bau in Sicht, Zeit zum Ausruhen und neue Dinge zu träumen.',
+        },
       },
       {
         id: 'snuggle-little-wombat-5',
         pageNumber: 5,
         backgroundImage: require('../assets/stories/snuggle-little-wombat/page-5/background.webp'),
-        text: 'Wombat stopped, where soft roots grew, inside the burrow, the quietness grew.'
+        text: 'Wombat stopped, where soft roots grew, inside the burrow, the quietness grew.',
+        localizedText: {
+          en: 'Wombat stopped, where soft roots grew, inside the burrow, the quietness grew.',
+          pl: 'Wombat zatrzymał się, gdzie rosły miękkie korzenie, wewnątrz nory cisza rosła.',
+          es: 'Wombat se detuvo, donde crecían raíces suaves, dentro de la madriguera, la quietud crecía.',
+          de: 'Wombat hielt an, wo weiche Wurzeln wuchsen, im Bau wuchs die Stille.',
+        },
       },
       {
         id: 'snuggle-little-wombat-6',
         pageNumber: 6,
         backgroundImage: require('../assets/stories/snuggle-little-wombat/page-6/background.webp'),
-        text: 'Wombat nests, the night time grew, sleeping in a bed, where dreams come true.'
+        text: 'Wombat nests, the night time grew, sleeping in a bed, where dreams come true.',
+        localizedText: {
+          en: 'Wombat nests, the night time grew, sleeping in a bed, where dreams come true.',
+          pl: 'Wombat zagnieździł się, noc nadeszła, śpiąc w łóżeczku, gdzie marzenia się spełniają.',
+          es: 'Wombat anida, la noche creció, durmiendo en una cama, donde los sueños se hacen realidad.',
+          de: 'Wombat nistet, die Nachtzeit wuchs, schlafend in einem Bett, wo Träume wahr werden.',
+        },
       },
       {
         id: 'snuggle-little-wombat-7',
         pageNumber: 7,
         backgroundImage: require('../assets/stories/snuggle-little-wombat/page-7/background.webp'),
-        text: 'Wombat dreamt, with gentle cheer, hugging berries he held so dear.'
+        text: 'Wombat dreamt, with gentle cheer, hugging berries he held so dear.',
+        localizedText: {
+          en: 'Wombat dreamt, with gentle cheer, hugging berries he held so dear.',
+          pl: 'Wombat śnił, z łagodną radością, przytulając jagody, które tak kochał.',
+          es: 'Wombat soñó, con suave alegría, abrazando bayas que tanto quería.',
+          de: 'Wombat träumte, mit sanfter Freude, Beeren umarmend, die er so lieb hatte.',
+        },
       },
       {
         id: 'snuggle-little-wombat-8',
         pageNumber: 8,
         backgroundImage: require('../assets/stories/snuggle-little-wombat/page-8/background.webp'),
-        text: 'Wombat sleeps, in quiet delight, your turn - turn off the light... goodnight!'
+        text: 'Wombat sleeps, in quiet delight, your turn - turn off the light... goodnight!',
+        localizedText: {
+          en: 'Wombat sleeps, in quiet delight, your turn - turn off the light... goodnight!',
+          pl: 'Wombat śpi, w cichej radości, twoja kolej - zgaś światło... dobranoc!',
+          es: 'Wombat duerme, en tranquila alegría, tu turno - apaga la luz... ¡buenas noches!',
+          de: 'Wombat schläft, in stiller Freude, du bist dran - mach das Licht aus... gute Nacht!',
+        },
       }
     ]
   } as Story,
@@ -609,6 +675,12 @@ const INTERACTIVE_TEST_STORIES: Story[] = [
   {
     id: 'squirrels-snowman',
     title: 'The Squirrel\'s Snowman',
+    localizedTitle: {
+      en: 'The Squirrel\'s Snowman',
+      pl: 'Bałwan Wiewiórki',
+      es: 'El Muñeco de Nieve de la Ardilla',
+      de: 'Der Schneemann des Eichhörnchens',
+    },
     category: 'nature',
     tag: '🐢 Nature',
     emoji: '🎄',
@@ -617,21 +689,39 @@ const INTERACTIVE_TEST_STORIES: Story[] = [
     ageRange: '2-5',
     duration: 11,
     description: 'A delightful winter story about a squirrel and a snowman. This is not my own work, it is for proof of concept only.',
-    tags: ['calming', 'bedtime', 'nature', 'animals', 'friendship'], // Nature book
+    localizedDescription: {
+      en: 'A delightful winter story about a squirrel and a snowman.',
+      pl: 'Urocza zimowa opowieść o wiewiórce i bałwanie.',
+      es: 'Una encantadora historia de invierno sobre una ardilla y un muñeco de nieve.',
+      de: 'Eine entzückende Wintergeschichte über ein Eichhörnchen und einen Schneemann.',
+    },
+    tags: ['calming', 'bedtime', 'nature', 'animals', 'friendship'],
     pages: [
       {
         id: 'squirrels-snowman-cover',
         pageNumber: 0,
         type: 'cover',
         backgroundImage: require('../assets/stories/squirrels-snowman/cover/cover.webp'),
-        text: 'The Squirrel\'s Snowman'
+        text: 'The Squirrel\'s Snowman',
+        localizedText: {
+          en: 'The Squirrel\'s Snowman',
+          pl: 'Bałwan Wiewiórki',
+          es: 'El Muñeco de Nieve de la Ardilla',
+          de: 'Der Schneemann des Eichhörnchens',
+        },
       },
       {
         id: 'squirrels-snowman-1',
         pageNumber: 1,
         type: 'story',
         backgroundImage: require('../assets/stories/squirrels-snowman/page-1/background.webp'),
-        text: 'Squirrel puts her boots on.\nHer hat is on her head.'
+        text: 'Squirrel puts her boots on.\nHer hat is on her head.',
+        localizedText: {
+          en: 'Squirrel puts her boots on.\nHer hat is on her head.',
+          pl: 'Wiewiórka zakłada buty.\nCzapka jest na jej głowie.',
+          es: 'Ardilla se pone las botas.\nSu gorro está en su cabeza.',
+          de: 'Eichhörnchen zieht ihre Stiefel an.\nIhr Hut ist auf ihrem Kopf.',
+        },
       },
       {
         id: 'squirrels-snowman-2',
@@ -639,6 +729,12 @@ const INTERACTIVE_TEST_STORIES: Story[] = [
         type: 'story',
         backgroundImage: require('../assets/stories/squirrels-snowman/page-2/background.webp'),
         text: 'She wants to make a snowman.\nWhat\'s inside this shed?',
+        localizedText: {
+          en: 'She wants to make a snowman.\nWhat\'s inside this shed?',
+          pl: 'Chce zbudować bałwana.\nCo jest w tej szopie?',
+          es: 'Quiere hacer un muñeco de nieve.\n¿Qué hay dentro de este cobertizo?',
+          de: 'Sie will einen Schneemann bauen.\nWas ist in diesem Schuppen?',
+        },
         interactiveElements: [
           {
             id: 'door',
@@ -654,7 +750,13 @@ const INTERACTIVE_TEST_STORIES: Story[] = [
         pageNumber: 3,
         type: 'story',
         backgroundImage: require('../assets/stories/squirrels-snowman/page-3/background.webp'),
-        text: 'Squirrel\'s snowman has a head.\nNow he needs a nose.'
+        text: 'Squirrel\'s snowman has a head.\nNow he needs a nose.',
+        localizedText: {
+          en: 'Squirrel\'s snowman has a head.\nNow he needs a nose.',
+          pl: 'Bałwan Wiewiórki ma głowę.\nTeraz potrzebuje nosa.',
+          es: 'El muñeco de nieve de Ardilla tiene cabeza.\nAhora necesita una nariz.',
+          de: 'Eichhörnchens Schneemann hat einen Kopf.\nJetzt braucht er eine Nase.',
+        },
       },
       {
         id: 'squirrels-snowman-4',
@@ -662,6 +764,12 @@ const INTERACTIVE_TEST_STORIES: Story[] = [
         type: 'story',
         backgroundImage: require('../assets/stories/squirrels-snowman/page-4/background.webp'),
         text: 'Can Squirrel find a carrot?\nWhat do you suppose?',
+        localizedText: {
+          en: 'Can Squirrel find a carrot?\nWhat do you suppose?',
+          pl: 'Czy Wiewiórka znajdzie marchewkę?\nCo myślisz?',
+          es: '¿Puede Ardilla encontrar una zanahoria?\n¿Qué crees tú?',
+          de: 'Kann Eichhörnchen eine Karotte finden?\nWas denkst du?',
+        },
         interactiveElements: [
           {
             id: 'basket',
@@ -677,7 +785,13 @@ const INTERACTIVE_TEST_STORIES: Story[] = [
         pageNumber: 5,
         type: 'story',
         backgroundImage: require('../assets/stories/squirrels-snowman/page-5/background.webp'),
-        text: 'Now the snowman needs some eyes.\nSquirrel visits Mole.'
+        text: 'Now the snowman needs some eyes.\nSquirrel visits Mole.',
+        localizedText: {
+          en: 'Now the snowman needs some eyes.\nSquirrel visits Mole.',
+          pl: 'Teraz bałwan potrzebuje oczu.\nWiewiórka odwiedza Kreta.',
+          es: 'Ahora el muñeco de nieve necesita ojos.\nArdilla visita a Topo.',
+          de: 'Jetzt braucht der Schneemann Augen.\nEichhörnchen besucht Maulwurf.',
+        },
       },
       {
         id: 'squirrels-snowman-6',
@@ -685,6 +799,12 @@ const INTERACTIVE_TEST_STORIES: Story[] = [
         type: 'story',
         backgroundImage: require('../assets/stories/squirrels-snowman/page-6/background.webp'),
         text: 'They look inside a great big box\nand find some lumps of coal.',
+        localizedText: {
+          en: 'They look inside a great big box\nand find some lumps of coal.',
+          pl: 'Zaglądają do wielkiego pudła\ni znajdują kawałki węgla.',
+          es: 'Miran dentro de una caja grande\ny encuentran trozos de carbón.',
+          de: 'Sie schauen in eine große Kiste\nund finden Kohlestücke.',
+        },
         interactiveElements: [
           {
             id: 'crate',
@@ -700,7 +820,13 @@ const INTERACTIVE_TEST_STORIES: Story[] = [
         pageNumber: 7,
         type: 'story',
         backgroundImage: require('../assets/stories/squirrels-snowman/page-7/background.webp'),
-        text: 'A hat, a scarf, and twigs for arms -\nthe snowman is complete!'
+        text: 'A hat, a scarf, and twigs for arms -\nthe snowman is complete!',
+        localizedText: {
+          en: 'A hat, a scarf, and twigs for arms -\nthe snowman is complete!',
+          pl: 'Czapka, szalik i gałązki na ręce -\nbałwan jest gotowy!',
+          es: 'Un sombrero, una bufanda y ramitas para brazos -\n¡el muñeco de nieve está completo!',
+          de: 'Ein Hut, ein Schal und Zweige für Arme -\nder Schneemann ist fertig!',
+        },
       },
       {
         id: 'squirrels-snowman-8',
@@ -708,6 +834,12 @@ const INTERACTIVE_TEST_STORIES: Story[] = [
         type: 'story',
         backgroundImage: require('../assets/stories/squirrels-snowman/page-8/background.webp'),
         text: 'Squirrel\'s feeling hungry.\nWhat\'s she going to eat?',
+        localizedText: {
+          en: 'Squirrel\'s feeling hungry.\nWhat\'s she going to eat?',
+          pl: 'Wiewiórka jest głodna.\nCo zje?',
+          es: 'Ardilla tiene hambre.\n¿Qué va a comer?',
+          de: 'Eichhörnchen hat Hunger.\nWas wird sie essen?',
+        },
         interactiveElements: [
           {
             id: 'plate-cover',
@@ -723,7 +855,13 @@ const INTERACTIVE_TEST_STORIES: Story[] = [
         pageNumber: 9,
         type: 'story',
         backgroundImage: require('../assets/stories/squirrels-snowman/page-9/background.webp'),
-        text: 'Now it\'s Squirrel\'s bedtime.\nShe\'s tucked up nice and tight.'
+        text: 'Now it\'s Squirrel\'s bedtime.\nShe\'s tucked up nice and tight.',
+        localizedText: {
+          en: 'Now it\'s Squirrel\'s bedtime.\nShe\'s tucked up nice and tight.',
+          pl: 'Teraz czas spać dla Wiewiórki.\nJest ładnie otulona.',
+          es: 'Ahora es hora de dormir para Ardilla.\nEstá bien arropada.',
+          de: 'Jetzt ist Schlafenszeit für Eichhörnchen.\nSie ist schön zugedeckt.',
+        },
       },
       {
         id: 'squirrels-snowman-10',
@@ -731,6 +869,12 @@ const INTERACTIVE_TEST_STORIES: Story[] = [
         type: 'story',
         backgroundImage: require('../assets/stories/squirrels-snowman/page-10/background.webp'),
         text: 'Who\'s outside the window?\nShall we wave goodnight?',
+        localizedText: {
+          en: 'Who\'s outside the window?\nShall we wave goodnight?',
+          pl: 'Kto jest za oknem?\nPomachamy na dobranoc?',
+          es: '¿Quién está afuera de la ventana?\n¿Le decimos buenas noches?',
+          de: 'Wer ist draußen vor dem Fenster?\nSollen wir gute Nacht winken?',
+        },
         interactiveElements: [
           {
             id: 'curtains',

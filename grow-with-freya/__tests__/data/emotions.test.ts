@@ -4,8 +4,10 @@ import {
   getEmotionsByDifficulty,
   getEmotionsByCategory,
   getRandomEmotion,
-  getRandomPrompt,
-  getEmotionById
+  getRandomPromptIndex,
+  getPromptTranslationKey,
+  getEmotionById,
+  PROMPTS_PER_EMOTION
 } from '@/data/emotions';
 
 describe('Emotions Data', () => {
@@ -20,7 +22,6 @@ describe('Emotions Data', () => {
         expect(emotion).toHaveProperty('emoji');
         expect(emotion).toHaveProperty('color');
         expect(emotion).toHaveProperty('description');
-        expect(emotion).toHaveProperty('expressionPrompts');
         expect(emotion).toHaveProperty('difficulty');
         expect(emotion).toHaveProperty('category');
 
@@ -29,7 +30,6 @@ describe('Emotions Data', () => {
         expect(typeof emotion.emoji).toBe('string');
         expect(typeof emotion.color).toBe('string');
         expect(typeof emotion.description).toBe('string');
-        expect(Array.isArray(emotion.expressionPrompts)).toBe(true);
         expect(['easy', 'medium', 'hard']).toContain(emotion.difficulty);
         expect(['basic', 'complex', 'social']).toContain(emotion.category);
       });
@@ -41,14 +41,8 @@ describe('Emotions Data', () => {
       expect(uniqueIds.size).toBe(ids.length);
     });
 
-    it('should have at least one expression prompt per emotion', () => {
-      EMOTIONS.forEach(emotion => {
-        expect(emotion.expressionPrompts.length).toBeGreaterThan(0);
-        emotion.expressionPrompts.forEach(prompt => {
-          expect(typeof prompt).toBe('string');
-          expect(prompt.length).toBeGreaterThan(0);
-        });
-      });
+    it('should have PROMPTS_PER_EMOTION defined correctly', () => {
+      expect(PROMPTS_PER_EMOTION).toBe(4);
     });
   });
 
@@ -141,23 +135,33 @@ describe('Emotions Data', () => {
     });
   });
 
-  describe('getRandomPrompt', () => {
-    it('should return a random prompt from the emotion', () => {
-      const emotion = EMOTIONS[0];
-      const prompt = getRandomPrompt(emotion);
-      expect(typeof prompt).toBe('string');
-      expect(emotion.expressionPrompts).toContain(prompt);
+  describe('getRandomPromptIndex', () => {
+    it('should return a random index within valid range', () => {
+      const index = getRandomPromptIndex();
+      expect(typeof index).toBe('number');
+      expect(index).toBeGreaterThanOrEqual(0);
+      expect(index).toBeLessThan(PROMPTS_PER_EMOTION);
     });
 
-    it('should return different prompts for emotions with multiple prompts', () => {
-      const emotionWithMultiplePrompts = EMOTIONS.find(e => e.expressionPrompts.length > 1);
-      if (emotionWithMultiplePrompts) {
-        const prompts = new Set();
-        for (let i = 0; i < 10; i++) {
-          prompts.add(getRandomPrompt(emotionWithMultiplePrompts));
-        }
-        expect(prompts.size).toBeGreaterThan(1);
+    it('should return different indices over multiple calls', () => {
+      const indices = new Set();
+      for (let i = 0; i < 20; i++) {
+        indices.add(getRandomPromptIndex());
       }
+      // With 4 possible indices and 20 tries, we should get variety
+      expect(indices.size).toBeGreaterThan(1);
+    });
+  });
+
+  describe('getPromptTranslationKey', () => {
+    it('should return a valid translation key', () => {
+      const key = getPromptTranslationKey('happy', 0);
+      expect(key).toBe('emotions.prompts.happy.0');
+    });
+
+    it('should work with different emotions and indices', () => {
+      expect(getPromptTranslationKey('sad', 2)).toBe('emotions.prompts.sad.2');
+      expect(getPromptTranslationKey('angry', 3)).toBe('emotions.prompts.angry.3');
     });
   });
 

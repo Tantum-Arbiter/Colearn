@@ -94,11 +94,11 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
     // Show crash reporting consent dialog on that specific screen
     if (currentScreenData.showCrashReportingDialog) {
       Alert.alert(
-        'Enable Crash Reports?',
-        'Anonymous crash reports help us fix bugs and improve the app. No personal data is collected.\n\nYou can change this anytime in Settings.',
+        t('onboarding.crashReportingDialog.title'),
+        t('onboarding.crashReportingDialog.body'),
         [
           {
-            text: 'No Thanks',
+            text: t('onboarding.crashReportingDialog.noThanks'),
             style: 'cancel',
             onPress: () => {
               setCrashReportingEnabled(false);
@@ -107,7 +107,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
             },
           },
           {
-            text: 'Enable',
+            text: t('onboarding.crashReportingDialog.enable'),
             style: 'default',
             onPress: () => {
               setCrashReportingEnabled(true);

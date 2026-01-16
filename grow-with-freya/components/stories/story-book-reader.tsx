@@ -318,10 +318,10 @@ export function StoryBookReader({
         setIsOverwriteSession(false);
 
         Alert.alert(
-          'Recording Complete',
-          `Your voice recording for "${voiceOverName}" has been saved.`,
+          t('reader.recordingComplete'),
+          t('reader.recordingCompleteMessage', { name: voiceOverName }),
           [{
-            text: 'OK',
+            text: t('common.ok'),
             onPress: () => {
               // Return to mode selection overlay (not full exit)
               // Pass current page index so the exit animation shows the current page
@@ -567,7 +567,7 @@ export function StoryBookReader({
         if (wasMusicPlayingBeforeRecording) {
           await globalSound.play();
         }
-        Alert.alert('Permission Required', 'Microphone access is needed to record your voice.');
+        Alert.alert(t('reader.permissionRequired'), t('reader.permissionMessage'));
       }
     } catch (error) {
       log.error('Failed to start recording:', error);
@@ -575,7 +575,7 @@ export function StoryBookReader({
       if (wasMusicPlayingBeforeRecording) {
         await globalSound.play();
       }
-      Alert.alert('Recording Error', 'Failed to start recording. Please try again.');
+      Alert.alert(t('reader.recordingError'), t('reader.recordingErrorMessage'));
     }
   };
 
@@ -593,12 +593,12 @@ export function StoryBookReader({
       const existingRecording = activeVoiceOver.pageRecordings[currentPageIndex];
       if (existingRecording || tempRecordingUri) {
         Alert.alert(
-          'Overwrite Recording?',
-          'This page already has a recording. Are you sure you want to overwrite it with a new recording?',
+          t('reader.overwriteRecording'),
+          t('reader.overwriteRecordingMessage'),
           [
-            { text: 'Cancel', style: 'cancel' },
+            { text: t('reader.cancel'), style: 'cancel' },
             {
-              text: 'Overwrite',
+              text: t('reader.overwrite'),
               style: 'destructive',
               onPress: () => {
                 setTempRecordingUri(null);
@@ -695,7 +695,7 @@ export function StoryBookReader({
       vo => vo.name.toLowerCase() === normalizedName
     );
     if (existingWithSameName) {
-      Alert.alert('Name Already Exists', `A voice over named "${voiceOverName.trim()}" already exists. Please choose a different name.`);
+      Alert.alert(t('reader.nameAlreadyExists'), t('reader.nameAlreadyExistsMessage', { name: voiceOverName.trim() }));
       return;
     }
 
@@ -712,7 +712,7 @@ export function StoryBookReader({
       setIsNewVoiceOver(true);
     } catch (error) {
       log.error('Failed to create voice over:', error);
-      Alert.alert('Error', 'Failed to create voice over. Please try again.');
+      Alert.alert(t('reader.error'), t('reader.createVoiceOverError'));
     }
   };
 
@@ -1192,8 +1192,8 @@ export function StoryBookReader({
           style={[styles.transitionBackground, { backgroundColor: '#4ECDC4' }]}
         >
           <View style={styles.transitionContent}>
-            <Text style={styles.transitionTitle}>{story.title}</Text>
-            <Text style={styles.transitionSubtitle}>Preparing your story...</Text>
+            <Text style={styles.transitionTitle}>{displayTitle}</Text>
+            <Text style={styles.transitionSubtitle}>{t('common.loading', { defaultValue: 'Preparing your story...' })}</Text>
             <View style={styles.transitionIndicator}>
               <Text style={styles.transitionEmoji}>{story.emoji}</Text>
             </View>
@@ -1435,7 +1435,7 @@ export function StoryBookReader({
                 setShowPagePreview(true);
               }}
             >
-              <Text style={[styles.menuItemText, { fontSize: scaledFontSize(14) }]}>Page Preview</Text>
+              <Text style={[styles.menuItemText, { fontSize: scaledFontSize(14) }]}>{t('reader.pagePreview')}</Text>
             </Pressable>
             <View style={styles.menuDivider} />
             <Pressable
@@ -1445,7 +1445,7 @@ export function StoryBookReader({
                 setActiveSubmenu('fontSize');
               }}
             >
-              <Text style={[styles.menuItemText, { fontSize: scaledFontSize(14) }]}>Font / Button Size</Text>
+              <Text style={[styles.menuItemText, { fontSize: scaledFontSize(14) }]}>{t('reader.fontButtonSize')}</Text>
               <Text style={[styles.menuItemArrow, { fontSize: scaledFontSize(14) }]}>›</Text>
             </Pressable>
             {/* Auto-play toggle - only in narrate mode */}
@@ -1460,7 +1460,7 @@ export function StoryBookReader({
                   }}
                 >
                   <Text style={[styles.menuItemText, { fontSize: scaledFontSize(14) }]}>
-                    {narrationAutoPlay ? 'Auto-Play: On' : 'Auto-Play: Off'}
+                    {narrationAutoPlay ? t('reader.autoPlayOn') : t('reader.autoPlayOff')}
                   </Text>
                 </Pressable>
               </>
@@ -1476,7 +1476,7 @@ export function StoryBookReader({
               }}
             >
               <Text style={[styles.menuItemText, { fontSize: scaledFontSize(14) }]}>
-                {readingMode === 'read' ? 'Reading Tips' : readingMode === 'record' ? 'Recording Tips' : 'Narration Tips'}
+                {readingMode === 'read' ? t('reader.readingTips') : readingMode === 'record' ? t('reader.recordingTips') : t('reader.narrationTips')}
               </Text>
             </Pressable>
           </View>
@@ -1495,7 +1495,7 @@ export function StoryBookReader({
                 setActiveSubmenu('main');
               }}
             >
-              <Text style={[styles.settingsMenuTitle, { fontSize: scaledFontSize(14) }]}>Font / Button Size</Text>
+              <Text style={[styles.settingsMenuTitle, { fontSize: scaledFontSize(14) }]}>{t('reader.fontButtonSize')}</Text>
               <Text style={[styles.menuItemArrow, { fontSize: scaledFontSize(14) }]}>›</Text>
             </Pressable>
             <View style={styles.textSizeOptionsRow}>
@@ -1520,7 +1520,7 @@ export function StoryBookReader({
                     ]}
                     numberOfLines={1}
                   >
-                    {option.label}
+                    {t(option.labelKey)}
                   </Text>
                 </Pressable>
               ))}
@@ -1719,7 +1719,7 @@ export function StoryBookReader({
               }}
             >
               <Text style={[styles.modeButtonIcon, { fontSize: scaledFontSize(24) }]}>∞</Text>
-              <Text style={[styles.modeButtonText, { fontSize: scaledFontSize(12) }]}>Read</Text>
+              <Text style={[styles.modeButtonText, { fontSize: scaledFontSize(12) }]}>{t('reader.readMode')}</Text>
             </Pressable>
             <Pressable
               style={[
@@ -1733,7 +1733,7 @@ export function StoryBookReader({
               }}
             >
               <Text style={[styles.modeButtonIcon, { fontSize: scaledFontSize(24) }]}>●</Text>
-              <Text style={[styles.modeButtonText, { fontSize: scaledFontSize(12) }]}>Record</Text>
+              <Text style={[styles.modeButtonText, { fontSize: scaledFontSize(12) }]}>{t('reader.recordMode')}</Text>
             </Pressable>
             <Pressable
               style={[
@@ -1747,7 +1747,7 @@ export function StoryBookReader({
               }}
             >
               <Text style={[styles.modeButtonIcon, { fontSize: scaledFontSize(24) }]}>♫</Text>
-              <Text style={[styles.modeButtonText, { fontSize: scaledFontSize(12) }]}>Narrate</Text>
+              <Text style={[styles.modeButtonText, { fontSize: scaledFontSize(12) }]}>{t('reader.listenMode')}</Text>
             </Pressable>
           </View>
         )}
@@ -1811,12 +1811,12 @@ export function StoryBookReader({
                             const hasExistingRecordings = Object.keys(vo.pageRecordings).length > 0;
                             if (hasExistingRecordings) {
                               Alert.alert(
-                                'Overwrite Voice Over?',
-                                `"${vo.name}" already has ${Object.keys(vo.pageRecordings).length} page(s) recorded. Do you want to overwrite with new recordings?`,
+                                t('reader.overwriteVoiceOver'),
+                                t('reader.overwriteVoiceOverMessage', { name: vo.name, count: Object.keys(vo.pageRecordings).length }),
                                 [
-                                  { text: 'Cancel', style: 'cancel' },
+                                  { text: t('reader.cancel'), style: 'cancel' },
                                   {
-                                    text: 'Overwrite',
+                                    text: t('reader.overwrite'),
                                     style: 'destructive',
                                     onPress: () => {
                                       setCurrentVoiceOver(vo);
@@ -1841,16 +1841,16 @@ export function StoryBookReader({
                             setTimeout(() => {
                               parentsOnly.showChallenge(() => {
                                 Alert.alert(
-                                  'Delete Voice Over',
-                                  `Are you sure you want to delete "${vo.name}"?`,
+                                  t('reader.deleteVoiceOver'),
+                                  t('reader.deleteVoiceOverMessage', { name: vo.name }),
                                   [
                                     {
-                                      text: 'Cancel',
+                                      text: t('reader.cancel'),
                                       style: 'cancel',
                                       onPress: () => setShowVoiceOverNameModal(true),
                                     },
                                     {
-                                      text: 'Delete',
+                                      text: t('reader.delete'),
                                       style: 'destructive',
                                       onPress: async () => {
                                         await voiceRecordingService.deleteVoiceOver(vo.id);
@@ -1928,12 +1928,12 @@ export function StoryBookReader({
                               const hasExistingRecordings = Object.keys(vo.pageRecordings).length > 0;
                               if (hasExistingRecordings) {
                                 Alert.alert(
-                                  'Overwrite Voice Over?',
-                                  `"${vo.name}" already has ${Object.keys(vo.pageRecordings).length} page(s) recorded. Do you want to overwrite with new recordings?`,
+                                  t('reader.overwriteVoiceOver'),
+                                  t('reader.overwriteVoiceOverMessage', { name: vo.name, count: Object.keys(vo.pageRecordings).length }),
                                   [
-                                    { text: 'Cancel', style: 'cancel' },
+                                    { text: t('reader.cancel'), style: 'cancel' },
                                     {
-                                      text: 'Overwrite',
+                                      text: t('reader.overwrite'),
                                       style: 'destructive',
                                       onPress: () => {
                                         setCurrentVoiceOver(vo);
@@ -1961,16 +1961,16 @@ export function StoryBookReader({
                               setTimeout(() => {
                                 parentsOnly.showChallenge(() => {
                                   Alert.alert(
-                                    'Delete Voice Over',
-                                    `Are you sure you want to delete "${vo.name}"? This cannot be undone.`,
+                                    t('reader.deleteVoiceOver'),
+                                    t('reader.deleteVoiceOverMessageWithUndo', { name: vo.name }),
                                     [
                                       {
-                                        text: 'Cancel',
+                                        text: t('reader.cancel'),
                                         style: 'cancel',
                                         onPress: () => setShowVoiceOverNameModal(true),
                                       },
                                       {
-                                        text: 'Delete',
+                                        text: t('reader.delete'),
                                         style: 'destructive',
                                         onPress: async () => {
                                           await voiceRecordingService.deleteVoiceOver(vo.id);

@@ -21,12 +21,15 @@ export type RepeatMode = 'none' | 'one' | 'all';
 export interface MusicTrack {
   id: string;
   title: string;
+  titleKey?: string; // i18n translation key for title (e.g., 'music.tracks.tantrumAlpha.title')
   artist?: string;
+  artistKey?: string; // i18n translation key for artist (e.g., 'music.tracks.tantrumAlpha.artist')
   category: MusicCategory;
   duration: number; // in seconds
   audioSource: any; // require() path or URI
   coverImage?: ImageSourcePropType;
   description?: string;
+  descriptionKey?: string; // i18n translation key for description
   isAvailable: boolean;
   tags?: string[]; // Additional tags for filtering
   ageRange?: string;

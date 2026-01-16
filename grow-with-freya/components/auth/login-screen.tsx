@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Dimensions, Pressable, Alert, Image, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 // Debug logging - set to false for production performance
 const DEBUG_LOGS = false;
@@ -41,6 +42,7 @@ interface LoginScreenProps {
 }
 
 export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledButtonSize } = useAccessibility();
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -176,7 +178,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
         setIsGoogleLoading(false);
         setProcessedResponseId(responseId);
         console.error('Google OAuth error:', response.error);
-        Alert.alert('Sign-In Failed', 'Unable to sign in with Google. Please try again.', [{ text: 'OK' }]);
+        Alert.alert(t('login.signInFailed'), t('login.signInFailedMessage'), [{ text: t('login.ok') }]);
       } else if (response.type === 'dismiss') {
         // User cancelled the sign-in
         setIsGoogleLoading(false);
@@ -302,7 +304,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
         setLoadingPhase(null);
         if (!error.message?.includes('cancelled')) {
           console.error('Native Google Sign-In error:', error);
-          Alert.alert('Sign In Failed', error.message || 'Please try again.');
+          Alert.alert(t('login.signInFailed'), error.message || t('login.signInFailedMessage'));
         }
         return;
       }
@@ -517,10 +519,10 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
         <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
           <Animated.View style={[styles.titleContainer, titleAnimatedStyle]}>
             <ThemedText type="title" style={[styles.title, { fontSize: scaledFontSize(28) }]}>
-              Welcome to{'\n'}Grow with Freya
+              {t('login.welcomeTitle')}
             </ThemedText>
             <ThemedText style={[styles.subtitle, { fontSize: scaledFontSize(16) }]}>
-              Sign in to save your child&apos;s progress and sync across devices
+              {t('login.subtitle')}
             </ThemedText>
           </Animated.View>
         </View>
@@ -550,7 +552,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
             <View style={styles.buttonContent}>
               <FontAwesome5 name="google" size={scaledButtonSize(18)} color="#4285F4" style={styles.iconSpacing} />
               <ThemedText style={[styles.buttonText, styles.googleButtonText, { fontSize: scaledFontSize(16) }]}>
-                {isGoogleLoading ? 'Signing in...' : 'Continue with Google'}
+                {isGoogleLoading ? t('login.signingIn') : t('login.continueWithGoogle')}
               </ThemedText>
             </View>
           </Pressable>
@@ -567,7 +569,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
               <View style={styles.buttonContent}>
                 <FontAwesome5 name="apple" size={scaledButtonSize(18)} color="#FFFFFF" style={styles.iconSpacing} />
                 <ThemedText style={[styles.buttonText, styles.appleButtonText, { fontSize: scaledFontSize(16) }]}>
-                  {isAppleLoading ? 'Signing in...' : 'Continue with Apple'}
+                  {isAppleLoading ? t('login.signingIn') : t('login.continueWithApple')}
                 </ThemedText>
               </View>
             </Pressable>
@@ -579,7 +581,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
             onPress={handleSkip}
           >
             <ThemedText style={[styles.skipButtonText, { fontSize: scaledFontSize(14) }]}>
-              Continue without signing in
+              {t('login.continueWithoutSignIn')}
             </ThemedText>
           </Pressable>
         </Animated.View>
@@ -587,13 +589,13 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
         {/* Footer */}
         <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
           <View style={styles.footerTextContainer}>
-            <ThemedText style={[styles.footerText, { fontSize: scaledFontSize(12) }]}>By continuing, you agree to our </ThemedText>
+            <ThemedText style={[styles.footerText, { fontSize: scaledFontSize(12) }]}>{t('login.footerPrefix')}</ThemedText>
             <Pressable onPress={handleTermsPress} style={styles.linkPressable}>
-              <ThemedText style={[styles.legalLink, { fontSize: scaledFontSize(12) }]}>Terms & Conditions</ThemedText>
+              <ThemedText style={[styles.legalLink, { fontSize: scaledFontSize(12) }]}>{t('login.termsAndConditions')}</ThemedText>
             </Pressable>
-            <ThemedText style={[styles.footerText, { fontSize: scaledFontSize(12) }]}> and </ThemedText>
+            <ThemedText style={[styles.footerText, { fontSize: scaledFontSize(12) }]}>{t('login.and')}</ThemedText>
             <Pressable onPress={handlePrivacyPress} style={styles.linkPressable}>
-              <ThemedText style={[styles.legalLink, { fontSize: scaledFontSize(12) }]}>Privacy Policy</ThemedText>
+              <ThemedText style={[styles.legalLink, { fontSize: scaledFontSize(12) }]}>{t('login.privacyPolicy')}</ThemedText>
             </Pressable>
           </View>
         </View>

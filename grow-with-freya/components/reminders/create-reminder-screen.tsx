@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { reminderService, ReminderService, CustomReminder } from '../../services/reminder-service';
 import { styles } from './styles';
 import { useAccessibility } from '@/hooks/use-accessibility';
@@ -44,6 +45,7 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
   onBack,
   onSuccess,
 }) => {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
   const [title, setTitle] = useState('');
@@ -91,13 +93,13 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
   }));
 
   const daysOfWeek = [
-    { value: 0, label: 'Sunday', short: 'Sun' },
-    { value: 1, label: 'Monday', short: 'Mon' },
-    { value: 2, label: 'Tuesday', short: 'Tue' },
-    { value: 3, label: 'Wednesday', short: 'Wed' },
-    { value: 4, label: 'Thursday', short: 'Thu' },
-    { value: 5, label: 'Friday', short: 'Fri' },
-    { value: 6, label: 'Saturday', short: 'Sat' },
+    { value: 0, key: 'sunday', short: t('reminders.daysShort.sunday') },
+    { value: 1, key: 'monday', short: t('reminders.daysShort.monday') },
+    { value: 2, key: 'tuesday', short: t('reminders.daysShort.tuesday') },
+    { value: 3, key: 'wednesday', short: t('reminders.daysShort.wednesday') },
+    { value: 4, key: 'thursday', short: t('reminders.daysShort.thursday') },
+    { value: 5, key: 'friday', short: t('reminders.daysShort.friday') },
+    { value: 6, key: 'saturday', short: t('reminders.daysShort.saturday') },
   ];
 
   const timeOptions = [
@@ -111,61 +113,61 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
   const exerciseTemplates = [
     // App-specific templates first
     {
-      title: 'Read Interactive Book',
-      message: 'Time to explore a wonderful story together! Pick a favorite book and dive in.',
+      title: t('reminders.templates.readBook.title'),
+      message: t('reminders.templates.readBook.message'),
     },
     {
-      title: 'Do Emotion Cards',
-      message: 'Let\'s practice identifying feelings! Time for some emotion card activities.',
+      title: t('reminders.templates.emotionCards.title'),
+      message: t('reminders.templates.emotionCards.message'),
     },
     {
-      title: 'Going Out to the Park',
-      message: 'Time for some fresh air and outdoor fun! Let\'s head to the park.',
+      title: t('reminders.templates.park.title'),
+      message: t('reminders.templates.park.message'),
     },
     {
-      title: '15 Minute Buggy Stroll',
-      message: 'Perfect time for a gentle stroll! Get some fresh air and explore the neighborhood.',
+      title: t('reminders.templates.buggyStroll.title'),
+      message: t('reminders.templates.buggyStroll.message'),
     },
     // UK mum activities
     {
-      title: 'School Run',
-      message: 'Time to get ready for the school run! Gather bags, coats, and head out.',
+      title: t('reminders.templates.schoolRun.title'),
+      message: t('reminders.templates.schoolRun.message'),
     },
     {
-      title: 'Nursery Drop-off',
-      message: 'Time for nursery drop-off! Get little one ready and head out.',
+      title: t('reminders.templates.nurseryDropoff.title'),
+      message: t('reminders.templates.nurseryDropoff.message'),
     },
     {
-      title: 'Toddler Group',
-      message: 'Time for toddler group! Pack snacks and toys for a fun social session.',
+      title: t('reminders.templates.toddlerGroup.title'),
+      message: t('reminders.templates.toddlerGroup.message'),
     },
     {
-      title: 'Soft Play Visit',
-      message: 'Time for soft play! Let the children burn off some energy indoors.',
+      title: t('reminders.templates.softPlay.title'),
+      message: t('reminders.templates.softPlay.message'),
     },
     {
-      title: 'Weekly Food Shop',
-      message: 'Time for the weekly shop! Don\'t forget the shopping list and bags for life.',
+      title: t('reminders.templates.foodShop.title'),
+      message: t('reminders.templates.foodShop.message'),
     },
     {
-      title: 'Swimming Lessons',
-      message: 'Time for swimming! Pack towels, goggles, and swimming kit.',
+      title: t('reminders.templates.swimming.title'),
+      message: t('reminders.templates.swimming.message'),
     },
     {
-      title: 'Library Story Time',
-      message: 'Time for library story time! A lovely quiet activity with books and songs.',
+      title: t('reminders.templates.libraryStoryTime.title'),
+      message: t('reminders.templates.libraryStoryTime.message'),
     },
     {
-      title: 'Coffee with Friends',
-      message: 'Time to meet friends for coffee! A well-deserved break and catch-up.',
+      title: t('reminders.templates.coffeeWithFriends.title'),
+      message: t('reminders.templates.coffeeWithFriends.message'),
     },
     {
-      title: 'Bedtime Routine',
-      message: 'Time to start the bedtime routine! Bath, stories, and settling down.',
+      title: t('reminders.templates.bedtimeRoutine.title'),
+      message: t('reminders.templates.bedtimeRoutine.message'),
     },
     {
-      title: 'Morning Stretch',
-      message: 'Time for your morning stretching routine! Start your day with gentle movements.',
+      title: t('reminders.templates.morningStretch.title'),
+      message: t('reminders.templates.morningStretch.message'),
     },
   ];
 
@@ -224,11 +226,11 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
   const handleBack = () => {
     if (hasUnsavedChanges) {
       Alert.alert(
-        'Unsaved Changes',
-        'You have unsaved changes. Are you sure you want to leave without saving?',
+        t('alerts.unsavedChanges.title', { defaultValue: 'Unsaved Changes' }),
+        t('alerts.unsavedChanges.message', { defaultValue: 'You have unsaved changes. Are you sure you want to leave without saving?' }),
         [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Leave', style: 'destructive', onPress: onBack }
+          { text: t('common.cancel'), style: 'cancel' },
+          { text: t('common.yes'), style: 'destructive', onPress: onBack }
         ]
       );
     } else {
@@ -239,17 +241,17 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
   const handleCreateReminder = async () => {
     // Validation
     if (!title.trim()) {
-      Alert.alert('Missing Title', 'Please enter a title for your reminder.');
+      Alert.alert(t('alerts.missingTitle.title'), t('alerts.missingTitle.message'));
       return;
     }
 
     if (!message.trim()) {
-      Alert.alert('Missing Message', 'Please enter a message for your reminder.');
+      Alert.alert(t('alerts.missingMessage.title'), t('alerts.missingMessage.message'));
       return;
     }
 
     if (selectedDay === null) {
-      Alert.alert('Missing Day', 'Please select a day of the week for your reminder.');
+      Alert.alert(t('alerts.missingDay.title'), t('alerts.missingDay.message'));
       return;
     }
 
@@ -257,9 +259,9 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
     const timeString = formatTime(selectedTime);
     if (isTimeSlotTaken(selectedDay, timeString)) {
       Alert.alert(
-        'Time Slot Conflict',
-        `You already have a reminder set for ${ReminderService.getDayName(selectedDay)} at ${ReminderService.formatTime(timeString)}. Please choose a different time.`,
-        [{ text: 'OK' }]
+        t('alerts.timeConflict.title'),
+        t('alerts.timeConflict.message', { day: t(`reminders.days.${['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][selectedDay]}`), time: ReminderService.formatTime(timeString) }),
+        [{ text: t('common.ok') }]
       );
       return;
     }
@@ -281,7 +283,7 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
       onSuccess();
     } catch (error) {
       console.error('Failed to create reminder:', error);
-      Alert.alert('Error', 'Failed to create reminder. Please try again.');
+      Alert.alert(t('common.error'), t('alerts.createFailed.message', { defaultValue: 'Failed to create reminder. Please try again.' }));
     } finally {
       setCreating(false);
     }
@@ -325,13 +327,13 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
           <Pressable onPress={handleBack} style={[styles.backButton, { minHeight: scaledButtonSize(40) }]}>
             <Ionicons name="arrow-back" size={scaledButtonSize(24)} color="rgba(255, 255, 255, 0.8)" />
           </Pressable>
-          <Text style={[styles.title, { fontSize: scaledFontSize(20) }]}>Create Reminder</Text>
+          <Text style={[styles.title, { fontSize: scaledFontSize(20) }]}>{t('reminders.createTitle')}</Text>
           <View style={styles.headerSpacer} />
         </View>
 
         {/* Exercise Templates */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(16) }]}>Quick Templates</Text>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(16) }]}>{t('reminders.quickTemplates')}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.templatesScroll}>
             {exerciseTemplates.map((template, index) => (
               <Pressable
@@ -350,16 +352,16 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
 
         {/* Form */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(16) }]}>Reminder Details</Text>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(16) }]}>{t('reminders.reminderDetails')}</Text>
 
           {/* Title Input */}
           <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { fontSize: scaledFontSize(14) }]}>Title</Text>
+            <Text style={[styles.inputLabel, { fontSize: scaledFontSize(14) }]}>{t('reminders.titleLabel')}</Text>
             <TextInput
               style={[styles.textInput, { fontSize: scaledFontSize(16), padding: scaledPadding(12) }]}
               value={title}
               onChangeText={setTitle}
-              placeholder="Enter reminder title..."
+              placeholder={t('reminders.titlePlaceholder')}
               placeholderTextColor="rgba(255, 255, 255, 0.4)"
               maxLength={50}
             />
@@ -367,12 +369,12 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
 
           {/* Message Input */}
           <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { fontSize: scaledFontSize(14) }]}>Message</Text>
+            <Text style={[styles.inputLabel, { fontSize: scaledFontSize(14) }]}>{t('reminders.messageLabel')}</Text>
             <TextInput
               style={[styles.textInput, styles.textAreaInput, { fontSize: scaledFontSize(16), padding: scaledPadding(12) }]}
               value={message}
               onChangeText={setMessage}
-              placeholder="Enter reminder message..."
+              placeholder={t('reminders.messagePlaceholder')}
               placeholderTextColor="rgba(255, 255, 255, 0.4)"
               multiline
               numberOfLines={3}
@@ -382,7 +384,7 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
 
           {/* Day Selection */}
           <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { fontSize: scaledFontSize(14) }]}>Day of Week</Text>
+            <Text style={[styles.inputLabel, { fontSize: scaledFontSize(14) }]}>{t('reminders.dayOfWeek')}</Text>
             <View style={styles.daySelector}>
               {daysOfWeek.map(day => (
                 <Pressable
@@ -408,7 +410,7 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
 
           {/* Time Selection */}
           <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { fontSize: scaledFontSize(14) }]}>Time</Text>
+            <Text style={[styles.inputLabel, { fontSize: scaledFontSize(14) }]}>{t('reminders.timeLabel')}</Text>
             <Pressable onPress={() => setShowTimeOptions(!showTimeOptions)} style={[styles.timeButton, { minHeight: scaledButtonSize(44), paddingVertical: scaledPadding(12), paddingHorizontal: scaledPadding(16) }]}>
               <Ionicons name="time-outline" size={scaledButtonSize(20)} color="rgba(255, 255, 255, 0.8)" />
               <Text style={[styles.timeButtonText, { fontSize: scaledFontSize(16) }]}>
@@ -466,10 +468,10 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
               </View>
               <Text style={[styles.conflictHint, { fontSize: scaledFontSize(12) }]}>
                 {selectedDay !== null && isTimeSlotTaken(selectedDay, formatTime(selectedTime))
-                  ? '⚠️ This time slot is already taken for this day'
+                  ? t('reminders.timeSlotTaken')
                   : selectedDay !== null
-                    ? 'Red (!) shows conflicts for selected day. All times are available.'
-                    : 'Select a day to see time availability'}
+                    ? t('reminders.conflictHint')
+                    : t('reminders.selectDayHint')}
               </Text>
 
             </View>
@@ -494,7 +496,7 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
             style={[styles.createButton, { minHeight: scaledButtonSize(48), paddingVertical: scaledPadding(14) }, creating && styles.createButtonDisabled]}
           >
             <Text style={[styles.createButtonText, { fontSize: scaledFontSize(16) }]}>
-              {creating ? 'Creating...' : 'Create Reminder'}
+              {creating ? t('reminders.creating') : t('reminders.createButton')}
             </Text>
           </Pressable>
         </View>
@@ -512,6 +514,7 @@ export const CreateReminderContent: React.FC<CreateReminderContentProps> = ({
   refreshTrigger = 0,
   isActive = false,
 }) => {
+  const { t } = useTranslation();
   const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
@@ -535,13 +538,13 @@ export const CreateReminderContent: React.FC<CreateReminderContentProps> = ({
   }, [title, message, selectedDay]);
 
   const daysOfWeek = [
-    { value: 0, label: 'Sunday', short: 'Sun' },
-    { value: 1, label: 'Monday', short: 'Mon' },
-    { value: 2, label: 'Tuesday', short: 'Tue' },
-    { value: 3, label: 'Wednesday', short: 'Wed' },
-    { value: 4, label: 'Thursday', short: 'Thu' },
-    { value: 5, label: 'Friday', short: 'Fri' },
-    { value: 6, label: 'Saturday', short: 'Sat' },
+    { value: 0, key: 'sunday', short: t('reminders.daysShort.sunday') },
+    { value: 1, key: 'monday', short: t('reminders.daysShort.monday') },
+    { value: 2, key: 'tuesday', short: t('reminders.daysShort.tuesday') },
+    { value: 3, key: 'wednesday', short: t('reminders.daysShort.wednesday') },
+    { value: 4, key: 'thursday', short: t('reminders.daysShort.thursday') },
+    { value: 5, key: 'friday', short: t('reminders.daysShort.friday') },
+    { value: 6, key: 'saturday', short: t('reminders.daysShort.saturday') },
   ];
 
   const timeOptions = [
@@ -553,20 +556,20 @@ export const CreateReminderContent: React.FC<CreateReminderContentProps> = ({
   ];
 
   const exerciseTemplates = [
-    { title: 'Read Interactive Book', message: 'Time to explore a wonderful story together! Pick a favorite book and dive in.' },
-    { title: 'Do Emotion Cards', message: "Let's practice identifying feelings! Time for some emotion card activities." },
-    { title: 'Going Out to the Park', message: "Time for some fresh air and outdoor fun! Let's head to the park." },
-    { title: '15 Minute Buggy Stroll', message: 'Perfect time for a gentle stroll! Get some fresh air and explore the neighborhood.' },
-    { title: 'School Run', message: 'Time to get ready for the school run! Gather bags, coats, and head out.' },
-    { title: 'Nursery Drop-off', message: 'Time for nursery drop-off! Get little one ready and head out.' },
-    { title: 'Toddler Group', message: 'Time for toddler group! Pack snacks and toys for a fun social session.' },
-    { title: 'Soft Play Visit', message: 'Time for soft play! Let the children burn off some energy indoors.' },
-    { title: 'Weekly Food Shop', message: "Time for the weekly shop! Don't forget the shopping list and bags for life." },
-    { title: 'Swimming Lessons', message: 'Time for swimming! Pack towels, goggles, and swimming kit.' },
-    { title: 'Library Story Time', message: 'Time for library story time! A lovely quiet activity with books and songs.' },
-    { title: 'Coffee with Friends', message: 'Time to meet friends for coffee! A well-deserved break and catch-up.' },
-    { title: 'Bedtime Routine', message: 'Time to start the bedtime routine! Bath, stories, and settling down.' },
-    { title: 'Morning Stretch', message: 'Time for your morning stretching routine! Start your day with gentle movements.' },
+    { title: t('reminders.templates.readBook.title'), message: t('reminders.templates.readBook.message') },
+    { title: t('reminders.templates.emotionCards.title'), message: t('reminders.templates.emotionCards.message') },
+    { title: t('reminders.templates.park.title'), message: t('reminders.templates.park.message') },
+    { title: t('reminders.templates.buggyStroll.title'), message: t('reminders.templates.buggyStroll.message') },
+    { title: t('reminders.templates.schoolRun.title'), message: t('reminders.templates.schoolRun.message') },
+    { title: t('reminders.templates.nurseryDropoff.title'), message: t('reminders.templates.nurseryDropoff.message') },
+    { title: t('reminders.templates.toddlerGroup.title'), message: t('reminders.templates.toddlerGroup.message') },
+    { title: t('reminders.templates.softPlay.title'), message: t('reminders.templates.softPlay.message') },
+    { title: t('reminders.templates.foodShop.title'), message: t('reminders.templates.foodShop.message') },
+    { title: t('reminders.templates.swimming.title'), message: t('reminders.templates.swimming.message') },
+    { title: t('reminders.templates.libraryStoryTime.title'), message: t('reminders.templates.libraryStoryTime.message') },
+    { title: t('reminders.templates.coffeeWithFriends.title'), message: t('reminders.templates.coffeeWithFriends.message') },
+    { title: t('reminders.templates.bedtimeRoutine.title'), message: t('reminders.templates.bedtimeRoutine.message') },
+    { title: t('reminders.templates.morningStretch.title'), message: t('reminders.templates.morningStretch.message') },
   ];
 
   // Reload existing reminders when:
@@ -615,24 +618,24 @@ export const CreateReminderContent: React.FC<CreateReminderContentProps> = ({
 
   const handleCreateReminder = async () => {
     if (!title.trim()) {
-      Alert.alert('Missing Title', 'Please enter a title for your reminder.');
+      Alert.alert(t('alerts.missingTitle.title'), t('alerts.missingTitle.message'));
       return;
     }
     if (!message.trim()) {
-      Alert.alert('Missing Message', 'Please enter a message for your reminder.');
+      Alert.alert(t('alerts.missingMessage.title'), t('alerts.missingMessage.message'));
       return;
     }
     if (selectedDay === null) {
-      Alert.alert('Missing Day', 'Please select a day of the week for your reminder.');
+      Alert.alert(t('alerts.missingDay.title'), t('alerts.missingDay.message'));
       return;
     }
 
     const timeString = formatTime(selectedTime);
     if (isTimeSlotTaken(selectedDay, timeString)) {
       Alert.alert(
-        'Time Slot Conflict',
-        `You already have a reminder set for ${ReminderService.getDayName(selectedDay)} at ${ReminderService.formatTime(timeString)}. Please choose a different time.`,
-        [{ text: 'OK' }]
+        t('alerts.timeConflict.title'),
+        t('alerts.timeConflict.message', { day: t(`reminders.days.${['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][selectedDay]}`), time: ReminderService.formatTime(timeString) }),
+        [{ text: t('common.ok') }]
       );
       return;
     }
@@ -644,7 +647,7 @@ export const CreateReminderContent: React.FC<CreateReminderContentProps> = ({
       onSuccess();
     } catch (error) {
       console.error('Failed to create reminder:', error);
-      Alert.alert('Error', 'Failed to create reminder. Please try again.');
+      Alert.alert(t('common.error'), t('alerts.createFailed.message', { defaultValue: 'Failed to create reminder. Please try again.' }));
     } finally {
       setCreating(false);
     }
@@ -662,7 +665,7 @@ export const CreateReminderContent: React.FC<CreateReminderContentProps> = ({
         <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
           {/* Exercise Templates */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(16) }]}>Quick Templates</Text>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(16) }]}>{t('reminders.quickTemplates')}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.templatesScroll}>
             {exerciseTemplates.map((template, index) => (
               <Pressable key={index} onPress={() => handleUseTemplate(template)} style={[styles.templateCard, { padding: scaledPadding(12) }]}>
@@ -675,27 +678,27 @@ export const CreateReminderContent: React.FC<CreateReminderContentProps> = ({
 
         {/* Form */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(16) }]}>Reminder Details</Text>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(16) }]}>{t('reminders.reminderDetails')}</Text>
 
           <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { fontSize: scaledFontSize(14) }]}>Title</Text>
+            <Text style={[styles.inputLabel, { fontSize: scaledFontSize(14) }]}>{t('reminders.titleLabel')}</Text>
             <TextInput
               style={[styles.textInput, { fontSize: scaledFontSize(16), padding: scaledPadding(12) }]}
               value={title}
               onChangeText={setTitle}
-              placeholder="Enter reminder title..."
+              placeholder={t('reminders.titlePlaceholder')}
               placeholderTextColor="rgba(255, 255, 255, 0.4)"
               maxLength={50}
             />
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { fontSize: scaledFontSize(14) }]}>Message</Text>
+            <Text style={[styles.inputLabel, { fontSize: scaledFontSize(14) }]}>{t('reminders.messageLabel')}</Text>
             <TextInput
               style={[styles.textInput, styles.textAreaInput, { fontSize: scaledFontSize(16), padding: scaledPadding(12) }]}
               value={message}
               onChangeText={setMessage}
-              placeholder="Enter reminder message..."
+              placeholder={t('reminders.messagePlaceholder')}
               placeholderTextColor="rgba(255, 255, 255, 0.4)"
               multiline
               numberOfLines={3}
@@ -704,7 +707,7 @@ export const CreateReminderContent: React.FC<CreateReminderContentProps> = ({
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { fontSize: scaledFontSize(14) }]}>Day of Week</Text>
+            <Text style={[styles.inputLabel, { fontSize: scaledFontSize(14) }]}>{t('reminders.dayOfWeek')}</Text>
             <View style={styles.daySelector}>
               {daysOfWeek.map(day => (
                 <Pressable
@@ -725,7 +728,7 @@ export const CreateReminderContent: React.FC<CreateReminderContentProps> = ({
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { fontSize: scaledFontSize(14) }]}>Time</Text>
+            <Text style={[styles.inputLabel, { fontSize: scaledFontSize(14) }]}>{t('reminders.timeLabel')}</Text>
             <Pressable onPress={() => setShowTimeOptions(!showTimeOptions)} style={[styles.timeButton, { minHeight: scaledButtonSize(44), paddingVertical: scaledPadding(12), paddingHorizontal: scaledPadding(16) }]}>
               <Ionicons name="time-outline" size={scaledButtonSize(20)} color="rgba(255, 255, 255, 0.8)" />
               <Text style={[styles.timeButtonText, { fontSize: scaledFontSize(16) }]}>{ReminderService.formatTime(formatTime(selectedTime))}</Text>
@@ -765,10 +768,10 @@ export const CreateReminderContent: React.FC<CreateReminderContentProps> = ({
               </View>
               <Text style={[styles.conflictHint, { fontSize: scaledFontSize(12) }]}>
                 {selectedDay !== null && isTimeSlotTaken(selectedDay, formatTime(selectedTime))
-                  ? '⚠️ This time slot is already taken for this day'
+                  ? t('reminders.timeSlotTaken')
                   : selectedDay !== null
-                    ? 'Red (!) shows conflicts for selected day.'
-                    : 'Select a day to see time availability'}
+                    ? t('reminders.conflictHint')
+                    : t('reminders.selectDayHint')}
               </Text>
             </View>
           )}
@@ -784,7 +787,7 @@ export const CreateReminderContent: React.FC<CreateReminderContentProps> = ({
               disabled={creating}
               style={[styles.createButton, { minHeight: scaledButtonSize(48), paddingVertical: scaledPadding(14) }, creating && styles.createButtonDisabled]}
             >
-              <Text style={[styles.createButtonText, { fontSize: scaledFontSize(16) }]}>{creating ? 'Creating...' : 'Create Reminder'}</Text>
+              <Text style={[styles.createButtonText, { fontSize: scaledFontSize(16) }]}>{creating ? t('reminders.creating') : t('reminders.createButton')}</Text>
             </Pressable>
           </View>
         </View>

@@ -1,48 +1,51 @@
 import { TutorialStep } from './spotlight-overlay';
 
+// Tutorial step with translation keys instead of hardcoded text
+export interface TutorialStepWithKeys extends Omit<TutorialStep, 'title' | 'description' | 'target'> {
+  titleKey: string;
+  descriptionKey: string;
+  image?: any;
+}
+
 /**
  * Main Menu Tour - shown on first login
  * Introduces the main navigation buttons
  */
-export const MAIN_MENU_TOUR_STEPS: Omit<TutorialStep, 'target'>[] = [
+export const MAIN_MENU_TOUR_STEPS: TutorialStepWithKeys[] = [
   {
     id: 'welcome',
-    title: 'Welcome to Grow with\nFreya! 🎉',
-    description: 'Let\'s take a quick tour to help you and your child get the most out of storytime together.',
+    titleKey: 'tutorial.mainMenu.welcome.title',
+    descriptionKey: 'tutorial.mainMenu.welcome.description',
     tipPosition: 'center',
   },
   {
     id: 'stories_button',
-    title: 'Story Library 📚',
-    description: 'Tap here to explore our collection of interactive stories with beautiful illustrations and fun interactions.',
-    // No arrow needed - tip is positioned below button
+    titleKey: 'tutorial.mainMenu.stories.title',
+    descriptionKey: 'tutorial.mainMenu.stories.description',
     tipPosition: 'below',
   },
   {
     id: 'emotions_button',
-    title: 'Emotion Check-ins 💜',
-    description: 'Help your child learn about their feelings with guided emotion check-ins.',
-    // Tip positioned above the button pair with no arrow
+    titleKey: 'tutorial.mainMenu.emotions.title',
+    descriptionKey: 'tutorial.mainMenu.emotions.description',
     tipPosition: 'above',
   },
   {
     id: 'bedtime_button',
-    title: 'Calming Sounds 🌙',
-    description: 'Relaxing sounds, audio books, and lullabies to help your little one drift off to sleep - or calm down during a meltdown or tantrum.',
-    // Tip positioned above the button pair with no arrow
+    titleKey: 'tutorial.mainMenu.bedtime.title',
+    descriptionKey: 'tutorial.mainMenu.bedtime.description',
     tipPosition: 'above',
   },
   {
     id: 'settings_button',
-    title: 'Settings & Account ⚙️',
-    description: 'Your parenting control centre! Set screen time limits, create routine alerts, personalise your child\'s avatar, and manage your family\'s experience - all in one safe place.',
-    // No arrowDirection - let default logic calculate correct arrow based on button position
+    titleKey: 'tutorial.mainMenu.settings.title',
+    descriptionKey: 'tutorial.mainMenu.settings.description',
     tipPosition: 'center',
   },
   {
     id: 'sound_control',
-    title: 'Sound Controls 🔊',
-    description: 'Tap to mute/unmute background music. Long-press for volume options.',
+    titleKey: 'tutorial.mainMenu.sound.title',
+    descriptionKey: 'tutorial.mainMenu.sound.description',
     arrowDirection: 'up',
     tipPosition: 'center',
   },
@@ -52,41 +55,41 @@ export const MAIN_MENU_TOUR_STEPS: Omit<TutorialStep, 'target'>[] = [
  * Story Reader Tips - shown when opening first story
  * Parent guidance for maximising storytime
  */
-export const STORY_READER_TIPS: Omit<TutorialStep, 'target'>[] = [
+export const STORY_READER_TIPS: TutorialStepWithKeys[] = [
   {
     id: 'story_welcome',
-    title: 'Story Time Tips 📖',
-    description: 'Here are some tips to make storytime magical for you and your child!',
+    titleKey: 'tutorial.storyReader.welcome.title',
+    descriptionKey: 'tutorial.storyReader.welcome.description',
     tipPosition: 'center',
   },
   {
     id: 'interactive_elements',
-    title: 'Look for Interactions ✨',
-    description: 'Some pages have hidden surprises! Encourage your child to tap on objects that sparkle or glow. They might reveal something fun!',
+    titleKey: 'tutorial.storyReader.interactive.title',
+    descriptionKey: 'tutorial.storyReader.interactive.description',
     tipPosition: 'center',
   },
   {
     id: 'point_and_discuss',
-    title: 'Point Things Out 👆',
-    description: 'As you read, point to objects in the pictures. Ask "Can you find the...?" or "What colour is the...?" to keep your child engaged.',
+    titleKey: 'tutorial.storyReader.point.title',
+    descriptionKey: 'tutorial.storyReader.point.description',
     tipPosition: 'center',
   },
   {
     id: 'pause_and_predict',
-    title: 'Pause & Predict 🤔',
-    description: 'Before turning the page, ask "What do you think will happen next?" This builds comprehension and imagination.',
+    titleKey: 'tutorial.storyReader.pause.title',
+    descriptionKey: 'tutorial.storyReader.pause.description',
     tipPosition: 'center',
   },
   {
     id: 'voices_and_sounds',
-    title: 'Use Different Voices 🎭',
-    description: 'Make characters come alive with silly voices and sound effects. Your child will love it - and so will you!',
+    titleKey: 'tutorial.storyReader.voices.title',
+    descriptionKey: 'tutorial.storyReader.voices.description',
     tipPosition: 'center',
   },
   {
     id: 'navigate_story',
-    title: 'Navigation 📱',
-    description: 'Swipe left/right or tap the arrows to turn pages. Take your time - there\'s no rush!',
+    titleKey: 'tutorial.storyReader.navigate.title',
+    descriptionKey: 'tutorial.storyReader.navigate.description',
     tipPosition: 'center',
   },
 ];
@@ -95,38 +98,38 @@ export const STORY_READER_TIPS: Omit<TutorialStep, 'target'>[] = [
  * Emotion Cards Tips - shown on first visit to emotion cards
  * Parent guidance for using emotion cards with young children
  */
-export const EMOTION_CARDS_TIPS: Omit<TutorialStep, 'target'>[] = [
+export const EMOTION_CARDS_TIPS: TutorialStepWithKeys[] = [
   {
     id: 'emotion_cards_welcome',
-    title: 'Welcome to Emotion Cards! 🎭',
-    description: 'Ages 1-3 is a crucial time when children become aware of emotions but may not know how to express or understand them.',
+    titleKey: 'tutorial.emotionCards.welcome.title',
+    descriptionKey: 'tutorial.emotionCards.welcome.description',
     tipPosition: 'center',
   },
   {
     id: 'emotion_cards_together',
-    title: 'Work Together 👨‍👩‍👧',
-    description: 'Sit with your child and name each emotion as you see it. "Look, the bear is happy! Can you show me your happy face?"',
+    titleKey: 'tutorial.emotionCards.together.title',
+    descriptionKey: 'tutorial.emotionCards.together.description',
     tipPosition: 'center',
     image: require('@/assets/images/ui-elements/emotion-cards-tip.webp'),
   },
   {
     id: 'emotion_cards_connect',
-    title: 'Connect to Life 💡',
-    description: 'Link emotions to real experiences: "Remember when we went to the park? You felt excited just like this!"',
+    titleKey: 'tutorial.emotionCards.connect.title',
+    descriptionKey: 'tutorial.emotionCards.connect.description',
     tipPosition: 'center',
     image: require('@/assets/images/ui-elements/emotion-cards-tip.webp'),
   },
   {
     id: 'emotion_cards_scenarios',
-    title: 'Mimic Scenarios 🎭',
-    description: 'Ask your child "How would you feel or look if...?" to build their emotional vocabulary through playful mimicry.',
+    titleKey: 'tutorial.emotionCards.scenarios.title',
+    descriptionKey: 'tutorial.emotionCards.scenarios.description',
     tipPosition: 'center',
     image: require('@/assets/images/ui-elements/emotion-cards-tip.webp'),
   },
   {
     id: 'emotion_cards_themes',
-    title: 'Choose a Theme 🎨',
-    description: 'Pick from Emoji, Animals, or Bear themes. Your child might connect better with certain styles - try them all!',
+    titleKey: 'tutorial.emotionCards.themes.title',
+    descriptionKey: 'tutorial.emotionCards.themes.description',
     tipPosition: 'center',
   },
 ];
@@ -134,41 +137,41 @@ export const EMOTION_CARDS_TIPS: Omit<TutorialStep, 'target'>[] = [
 /**
  * Settings Walkthrough - shown on first settings visit
  */
-export const SETTINGS_WALKTHROUGH_STEPS: Omit<TutorialStep, 'target'>[] = [
+export const SETTINGS_WALKTHROUGH_STEPS: TutorialStepWithKeys[] = [
   {
     id: 'settings_intro',
-    title: 'Your Account Settings 👋',
-    description: 'This is your control centre! Manage your account, personalise the app, and adjust settings for your family.',
+    titleKey: 'tutorial.settings.intro.title',
+    descriptionKey: 'tutorial.settings.intro.description',
     tipPosition: 'center',
   },
   {
     id: 'login',
-    title: 'Sign In for More 🔐',
-    description: 'Create an account or sign in to sync your progress across devices, save your child\'s achievements, and unlock premium features.',
+    titleKey: 'tutorial.settings.login.title',
+    descriptionKey: 'tutorial.settings.login.description',
     tipPosition: 'center',
   },
   {
     id: 'language',
-    title: 'Change Language 🌍',
-    description: 'Tap the Language option to switch between English, Polish, Spanish, and German. Stories and the interface will update to your chosen language.',
+    titleKey: 'tutorial.settings.language.title',
+    descriptionKey: 'tutorial.settings.language.description',
     tipPosition: 'center',
   },
   {
     id: 'avatar',
-    title: 'Personalise Your Avatar 👤',
-    description: 'In the Profile section, you can change your child\'s nickname and avatar. This makes stories more personal and engaging!',
+    titleKey: 'tutorial.settings.avatar.title',
+    descriptionKey: 'tutorial.settings.avatar.description',
     tipPosition: 'center',
   },
   {
     id: 'accessibility',
-    title: 'Accessibility Options ♿',
-    description: 'Need larger text or buttons? Use the size slider to make everything easier to see and tap. Great for children who need extra visibility.',
+    titleKey: 'tutorial.settings.accessibility.title',
+    descriptionKey: 'tutorial.settings.accessibility.description',
     tipPosition: 'center',
   },
   {
     id: 'screen_time',
-    title: 'Screen Time Controls ⏱️',
-    description: 'Set healthy limits! Configure daily allowances based on your child\'s age, create custom reminders, and build healthy routines.',
+    titleKey: 'tutorial.settings.screenTime.title',
+    descriptionKey: 'tutorial.settings.screenTime.description',
     tipPosition: 'center',
   },
 ];
@@ -177,35 +180,35 @@ export const SETTINGS_WALKTHROUGH_STEPS: Omit<TutorialStep, 'target'>[] = [
  * Screen Time Tips - shown on first visit to screen time controls
  * Guides parents through screen time management features
  */
-export const SCREEN_TIME_TIPS: Omit<TutorialStep, 'target'>[] = [
+export const SCREEN_TIME_TIPS: TutorialStepWithKeys[] = [
   {
     id: 'screen_time_intro',
-    title: 'Screen Time Management ⏱️',
-    description: 'Take control of your child\'s screen time with smart limits and helpful reminders.',
+    titleKey: 'tutorial.screenTime.intro.title',
+    descriptionKey: 'tutorial.screenTime.intro.description',
     tipPosition: 'center',
   },
   {
     id: 'age_based_limits',
-    title: 'Age-Based Alerts 👶',
-    description: 'Select your child\'s age range to get recommended screen time limits. You\'ll be alerted when they approach or reach these healthy boundaries.',
+    titleKey: 'tutorial.screenTime.ageBased.title',
+    descriptionKey: 'tutorial.screenTime.ageBased.description',
     tipPosition: 'center',
   },
   {
     id: 'weekly_heatmap',
-    title: 'Weekly Activity Heatmap 📊',
-    description: 'Track daily usage at a glance! The heatmap shows your child\'s screen time each day, colour-coded based on age-specific recommendations. Green means healthy, red indicates over the limit.',
+    titleKey: 'tutorial.screenTime.heatmap.title',
+    descriptionKey: 'tutorial.screenTime.heatmap.description',
     tipPosition: 'center',
   },
   {
     id: 'custom_reminders',
-    title: 'Custom Reminders 🔔',
-    description: 'Create personalised reminders for story time, bedtime routines, or breaks. Build healthy habits that work for your family.',
+    titleKey: 'tutorial.screenTime.reminders.title',
+    descriptionKey: 'tutorial.screenTime.reminders.description',
     tipPosition: 'center',
   },
   {
     id: 'routine_building',
-    title: 'Build a Routine 📅',
-    description: 'Set up recurring alerts to establish consistent daily routines. Regular schedules help children feel secure and develop good habits.',
+    titleKey: 'tutorial.screenTime.routine.title',
+    descriptionKey: 'tutorial.screenTime.routine.description',
     tipPosition: 'center',
   },
 ];
@@ -213,18 +216,18 @@ export const SCREEN_TIME_TIPS: Omit<TutorialStep, 'target'>[] = [
 /**
  * Gesture Hints - contextual tips for specific gestures
  */
-export const GESTURE_HINTS: Record<string, Omit<TutorialStep, 'target'>> = {
+export const GESTURE_HINTS: Record<string, TutorialStepWithKeys> = {
   speaker_long_press: {
     id: 'speaker_long_press',
-    title: 'Pro Tip! 💡',
-    description: 'Long-press the speaker icon to access volume controls and sound settings.',
+    titleKey: 'tutorial.gestures.speakerLongPress.title',
+    descriptionKey: 'tutorial.gestures.speakerLongPress.description',
     arrowDirection: 'down',
     tipPosition: 'above',
   },
   story_swipe: {
     id: 'story_swipe',
-    title: 'Swipe to Turn Pages 👆',
-    description: 'Swipe left or right to navigate between pages. You can also tap the arrows.',
+    titleKey: 'tutorial.gestures.storySwipe.title',
+    descriptionKey: 'tutorial.gestures.storySwipe.description',
     tipPosition: 'center',
   },
 };
@@ -233,20 +236,20 @@ export const GESTURE_HINTS: Record<string, Omit<TutorialStep, 'target'>> = {
  * Book Mode Selection Tour - shown when opening first book
  * Introduces the reading mode options
  */
-export const BOOK_MODE_TOUR_STEPS: Omit<TutorialStep, 'target'>[] = [
+export const BOOK_MODE_TOUR_STEPS: TutorialStepWithKeys[] = [
   {
     id: 'read_button',
-    title: 'Read Mode 📖',
-    description: 'Tap here to read the story yourself with your child. Turn pages at your own pace.',
-    arrowDirection: 'up',  // Arrow points up to button above tip
-    tipPosition: 'below',  // Tip positioned below buttons on phone
+    titleKey: 'tutorial.bookMode.read.title',
+    descriptionKey: 'tutorial.bookMode.read.description',
+    arrowDirection: 'up',
+    tipPosition: 'below',
     spotlightShape: 'rounded-rect',
     spotlightBorderRadius: 16,
   },
   {
     id: 'record_button',
-    title: 'Record Mode 🎙️',
-    description: 'Record your own voice reading the story. Perfect for when you\'re away!',
+    titleKey: 'tutorial.bookMode.record.title',
+    descriptionKey: 'tutorial.bookMode.record.description',
     arrowDirection: 'up',
     tipPosition: 'below',
     spotlightShape: 'rounded-rect',
@@ -254,8 +257,8 @@ export const BOOK_MODE_TOUR_STEPS: Omit<TutorialStep, 'target'>[] = [
   },
   {
     id: 'narrate_button',
-    title: 'Narrate Mode 🎧',
-    description: 'Listen to a previously recorded voice reading the story aloud.',
+    titleKey: 'tutorial.bookMode.narrate.title',
+    descriptionKey: 'tutorial.bookMode.narrate.description',
     arrowDirection: 'up',
     tipPosition: 'below',
     spotlightShape: 'rounded-rect',
@@ -263,8 +266,8 @@ export const BOOK_MODE_TOUR_STEPS: Omit<TutorialStep, 'target'>[] = [
   },
   {
     id: 'preview_button',
-    title: 'Preview 👀',
-    description: 'See story details before starting. Tip: You can also long-press any book tile for a quick preview!',
+    titleKey: 'tutorial.bookMode.preview.title',
+    descriptionKey: 'tutorial.bookMode.preview.description',
     arrowDirection: 'up',
     tipPosition: 'below',
     spotlightShape: 'rounded-rect',
@@ -276,47 +279,47 @@ export const BOOK_MODE_TOUR_STEPS: Omit<TutorialStep, 'target'>[] = [
  * Record Mode Tutorial - shown when entering record mode for the first time
  * Explains how to record voice overs for stories
  */
-export const RECORD_MODE_TOUR_STEPS: Omit<TutorialStep, 'target'>[] = [
+export const RECORD_MODE_TOUR_STEPS: TutorialStepWithKeys[] = [
   {
     id: 'record_intro',
-    title: 'Record Your Voice 🎙️',
-    description: 'You\'re about to create something magical! Record yourself reading this story so your child can hear YOUR voice anytime.',
+    titleKey: 'tutorial.recordMode.intro.title',
+    descriptionKey: 'tutorial.recordMode.intro.description',
     tipPosition: 'center',
   },
   {
     id: 'record_button_tip',
-    title: 'Tap the Red Button 🔴',
-    description: 'Tap the red circle button at the top to start recording. Read the text at the bottom of the screen aloud - take your time and use fun voices!',
+    titleKey: 'tutorial.recordMode.button.title',
+    descriptionKey: 'tutorial.recordMode.button.description',
     tipPosition: 'center',
   },
   {
     id: 'playback_controls',
-    title: 'Listen & Re-record ↺',
-    description: 'After recording, tap ▶ to hear yourself. Not happy? Tap the orange ↺ button to re-record that page. You can perfect each page before moving on.',
+    titleKey: 'tutorial.recordMode.playback.title',
+    descriptionKey: 'tutorial.recordMode.playback.description',
     tipPosition: 'center',
   },
   {
     id: 'record_sound_tip',
-    title: 'Check Your Sound 🔊',
-    description: 'Tip: Long-press the speaker icon on the main menu to lower the background music. This helps you hear your recording playback more clearly!',
+    titleKey: 'tutorial.recordMode.sound.title',
+    descriptionKey: 'tutorial.recordMode.sound.description',
     tipPosition: 'center',
   },
   {
     id: 'record_limit',
-    title: 'Up to 3 Voices 👨‍👩‍👧',
-    description: 'Each book can have up to 3 recorded voices - perfect for mum, dad, and a grandparent! Your child can choose whose voice to listen to at storytime.',
+    titleKey: 'tutorial.recordMode.limit.title',
+    descriptionKey: 'tutorial.recordMode.limit.description',
     tipPosition: 'center',
   },
   {
     id: 'record_benefit',
-    title: 'The Power of Your Voice 💜',
-    description: 'Your voice is incredibly soothing to your child. When caregivers read stories using your recording, your little one feels safe and connected to you - even when you\'re apart.',
+    titleKey: 'tutorial.recordMode.benefit.title',
+    descriptionKey: 'tutorial.recordMode.benefit.description',
     tipPosition: 'center',
   },
   {
     id: 'record_navigation',
-    title: 'Page by Page 📖',
-    description: 'Record each page, then tap the arrow to move to the next. Your recordings are saved automatically. You can always come back to re-record any page later!',
+    titleKey: 'tutorial.recordMode.navigation.title',
+    descriptionKey: 'tutorial.recordMode.navigation.description',
     tipPosition: 'center',
   },
 ];
@@ -325,35 +328,35 @@ export const RECORD_MODE_TOUR_STEPS: Omit<TutorialStep, 'target'>[] = [
  * Narrate Mode Tutorial - shown when entering narrate mode for the first time
  * Explains how auto-playback works
  */
-export const NARRATE_MODE_TOUR_STEPS: Omit<TutorialStep, 'target'>[] = [
+export const NARRATE_MODE_TOUR_STEPS: TutorialStepWithKeys[] = [
   {
     id: 'narrate_intro',
-    title: 'Story Time Magic 🎧',
-    description: 'Sit back and enjoy! The story will be read aloud using a recorded voice - your child can listen to a familiar, loving voice anytime.',
+    titleKey: 'tutorial.narrateMode.intro.title',
+    descriptionKey: 'tutorial.narrateMode.intro.description',
     tipPosition: 'center',
   },
   {
     id: 'auto_playback',
-    title: 'Automatic Reading 📖',
-    description: 'The recording will play automatically on each page. When it finishes, the page will turn by itself after a short pause.',
+    titleKey: 'tutorial.narrateMode.autoPlayback.title',
+    descriptionKey: 'tutorial.narrateMode.autoPlayback.description',
     tipPosition: 'center',
   },
   {
     id: 'narrate_controls',
-    title: 'Playback Controls ▶️',
-    description: 'Use the controls at the top to pause, resume, or replay the current page. You can also manually turn pages using the arrows at any time.',
+    titleKey: 'tutorial.narrateMode.controls.title',
+    descriptionKey: 'tutorial.narrateMode.controls.description',
     tipPosition: 'center',
   },
   {
     id: 'narrate_sound_tip',
-    title: 'Balance Your Sound 🔊',
-    description: 'Tip: Long-press the speaker icon on the main menu to adjust the background music volume. Lower it to hear the recorded voice more clearly!',
+    titleKey: 'tutorial.narrateMode.sound.title',
+    descriptionKey: 'tutorial.narrateMode.sound.description',
     tipPosition: 'center',
   },
   {
     id: 'narrate_benefit',
-    title: 'Comfort & Connection 💜',
-    description: 'Perfect for bedtime when you\'re tired, or when grandparents or caregivers are looking after your little one. Your voice brings comfort even when you\'re not there.',
+    titleKey: 'tutorial.narrateMode.benefit.title',
+    descriptionKey: 'tutorial.narrateMode.benefit.description',
     tipPosition: 'center',
   },
 ];
@@ -362,47 +365,47 @@ export const NARRATE_MODE_TOUR_STEPS: Omit<TutorialStep, 'target'>[] = [
  * Music Tips - shown on first visit to music/sound section
  * Educates parents about binaural beats and calming sounds
  */
-export const MUSIC_TIPS: Omit<TutorialStep, 'target'>[] = [
+export const MUSIC_TIPS: TutorialStepWithKeys[] = [
   {
     id: 'music_welcome',
-    title: 'Welcome to Calming Sounds 🎵',
-    description: 'This section uses specially designed audio to help your child relax, sleep, or calm down during challenging moments.',
+    titleKey: 'tutorial.music.welcome.title',
+    descriptionKey: 'tutorial.music.welcome.description',
     tipPosition: 'center',
   },
   {
     id: 'binaural_science',
-    title: 'The Science of Sound 🧠',
-    description: 'Our tracks use binaural beats - subtle sound frequencies that can help guide the brain into calmer states. Research shows these can reduce anxiety and promote relaxation in both children and adults.',
+    titleKey: 'tutorial.music.binaural.title',
+    descriptionKey: 'tutorial.music.binaural.description',
     tipPosition: 'center',
   },
   {
     id: 'headphones_tip',
-    title: 'Use Headphones 🎧',
-    description: 'For binaural beats to work effectively, headphones are recommended. The different frequencies in each ear create the calming effect. Without headphones, your child still benefits from the soothing music!',
+    titleKey: 'tutorial.music.headphones.title',
+    descriptionKey: 'tutorial.music.headphones.description',
     tipPosition: 'center',
   },
   {
     id: 'tantrum_tip',
-    title: 'During Tantrums 😤',
-    description: 'When emotions run high, try playing our tantrum-calming tracks. The gentle frequencies can help regulate your child\'s nervous system and bring them back to a calmer state more quickly.',
+    titleKey: 'tutorial.music.tantrum.title',
+    descriptionKey: 'tutorial.music.tantrum.description',
     tipPosition: 'center',
   },
   {
     id: 'sleep_science',
-    title: 'Better Sleep 🌙',
-    description: 'Our sleep tracks use delta wave frequencies (0.5-4 Hz) that naturally occur during deep sleep. Playing these as your child falls asleep can help them drift off faster and sleep more soundly.',
+    titleKey: 'tutorial.music.sleep.title',
+    descriptionKey: 'tutorial.music.sleep.description',
     tipPosition: 'center',
   },
   {
     id: 'sleep_routine',
-    title: 'Build a Routine 💤',
-    description: 'Try playing the same calming track each night as part of your bedtime routine. Over time, your child\'s brain will associate the sounds with sleep, making bedtime easier.',
+    titleKey: 'tutorial.music.routine.title',
+    descriptionKey: 'tutorial.music.routine.description',
     tipPosition: 'center',
   },
   {
     id: 'music_stories',
-    title: 'Stories Too! 📖',
-    description: 'Don\'t forget our story section! Reading together builds vocabulary, imagination, and that precious parent-child bond. Record your voice so your child can hear YOU even when you\'re apart.',
+    titleKey: 'tutorial.music.stories.title',
+    descriptionKey: 'tutorial.music.stories.description',
     tipPosition: 'center',
   },
 ];
@@ -410,7 +413,7 @@ export const MUSIC_TIPS: Omit<TutorialStep, 'target'>[] = [
 /**
  * Get tutorial steps by ID
  */
-export function getTutorialSteps(tutorialId: string): Omit<TutorialStep, 'target'>[] {
+export function getTutorialSteps(tutorialId: string): TutorialStepWithKeys[] {
   switch (tutorialId) {
     case 'main_menu_tour':
       return MAIN_MENU_TOUR_STEPS;

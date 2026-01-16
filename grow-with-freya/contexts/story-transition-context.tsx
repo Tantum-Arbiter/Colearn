@@ -28,6 +28,7 @@ import { ParentsOnlyModal } from '@/components/ui/parents-only-modal';
 import { StoryPreviewModal } from '@/components/stories/story-preview-modal';
 import { TutorialOverlay } from '@/components/tutorial/tutorial-overlay';
 import { useTutorial } from '@/contexts/tutorial-context';
+import { useTranslation } from 'react-i18next';
 
 // Animation timing constants
 const MOVE_TO_CENTER_DURATION = 600; // Slower, smoother transition from tile to center
@@ -132,6 +133,9 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
   // Tutorial hook
   const { shouldShowTutorial, activeTutorial } = useTutorial();
+
+  // Translation hook
+  const { t } = useTranslation();
 
   // Block touches immediately when book mode tutorial should show but hasn't started yet
   const shouldBlockBookModeTouches = showModeSelection &&
@@ -1144,7 +1148,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       vo => vo.name.toLowerCase() === normalizedName
     );
     if (existingWithSameName) {
-      Alert.alert('Name Already Exists', `A voice over named "${voiceOverName.trim()}" already exists. Please choose a different name.`);
+      Alert.alert(t('storyMode.nameAlreadyExists'), t('storyMode.nameAlreadyExistsMessage', { name: voiceOverName.trim() }));
       return;
     }
 
@@ -1577,7 +1581,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                   }}
                 >
                   <Text style={[styles.modeButtonIcon, { fontSize: iconSize, marginRight: iconMarginRight }]}>∞</Text>
-                  <Text style={[styles.modeButtonText, { fontSize: textSize, textAlign: 'center' }]}>Read</Text>
+                  <Text style={[styles.modeButtonText, { fontSize: textSize, textAlign: 'center' }]}>{t('storyMode.read')}</Text>
                 </Pressable>
               </View>
 
@@ -1606,7 +1610,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                   }}
                 >
                   <Text style={[styles.modeButtonIcon, { fontSize: iconSize, marginRight: iconMarginRight }]}>●</Text>
-                  <Text style={[styles.modeButtonText, { fontSize: textSize, textAlign: 'center' }]}>Record</Text>
+                  <Text style={[styles.modeButtonText, { fontSize: textSize, textAlign: 'center' }]}>{t('storyMode.record')}</Text>
                 </Pressable>
               </View>
 
@@ -1635,7 +1639,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                   }}
                 >
                   <Text style={[styles.modeButtonIcon, { fontSize: iconSize, marginRight: iconMarginRight }]}>♫</Text>
-                  <Text style={[styles.modeButtonText, { fontSize: textSize, textAlign: 'center' }]}>Narrate</Text>
+                  <Text style={[styles.modeButtonText, { fontSize: textSize, textAlign: 'center' }]}>{t('storyMode.narrate')}</Text>
                 </Pressable>
               </View>
 
@@ -1660,7 +1664,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                   }}
                 >
                   <Text style={[styles.modeButtonIcon, { fontSize: iconSize, marginRight: iconMarginRight }]}>◉</Text>
-                  <Text style={[styles.modeButtonText, { fontSize: textSize, textAlign: 'center' }]}>Preview</Text>
+                  <Text style={[styles.modeButtonText, { fontSize: textSize, textAlign: 'center' }]}>{t('storyMode.preview')}</Text>
                 </Pressable>
               </View>
             </Animated.View>
@@ -1708,10 +1712,10 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
               >
                 <Text style={[styles.modeButtonText, { fontSize: beginTextSize }]}>
                   {selectedMode === 'record' && currentVoiceOver
-                    ? `Record as: ${currentVoiceOver.name}`
+                    ? t('storyMode.recordAs', { name: currentVoiceOver.name })
                     : selectedMode === 'narrate' && currentVoiceOver
-                    ? `Narrate as: ${currentVoiceOver.name}`
-                    : 'Tap to begin'}
+                    ? t('storyMode.narrateAs', { name: currentVoiceOver.name })
+                    : t('storyMode.tapToBegin')}
                 </Text>
               </Pressable>
             </Animated.View>
@@ -1739,12 +1743,12 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                 >
                   <Text style={styles.modalCloseButtonText}>✕</Text>
                 </Pressable>
-                <Text style={styles.modalTitle}>Record Voice Over</Text>
+                <Text style={styles.modalTitle}>{t('storyMode.recordVoiceOver')}</Text>
 
                 {/* Existing voice overs */}
                 {availableVoiceOvers.length > 0 && (
                   <>
-                    <Text style={styles.modalSubtitle}>Select existing to overwrite:</Text>
+                    <Text style={styles.modalSubtitle}>{t('storyMode.selectExisting')}</Text>
                     <ScrollView style={styles.voiceOverList} showsVerticalScrollIndicator={false}>
                       {availableVoiceOvers.map((vo) => (
                         <View key={vo.id} style={styles.voiceOverItemWithDelete}>
@@ -1760,7 +1764,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                           >
                             <Text style={styles.voiceOverItemName}>{vo.name}</Text>
                             <Text style={styles.voiceOverItemPages}>
-                              {Object.keys(vo.pageRecordings).length} pages recorded
+                              {t('storyMode.pagesRecorded', { count: Object.keys(vo.pageRecordings).length })}
                             </Text>
                           </Pressable>
                           <Pressable
@@ -1779,13 +1783,13 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                 {availableVoiceOvers.length < 3 && (
                   <>
                     <Text style={[styles.modalSubtitle, availableVoiceOvers.length > 0 && { marginTop: 16 }]}>
-                      {availableVoiceOvers.length > 0 ? 'Or create new:' : 'Enter a name:'}
+                      {availableVoiceOvers.length > 0 ? t('storyMode.orCreateNew') : t('storyMode.enterName')}
                     </Text>
                     <TextInput
                       style={styles.modalInput}
                       value={voiceOverName}
                       onChangeText={setVoiceOverName}
-                      placeholder="e.g., Mummy's Voice"
+                      placeholder={t('storyMode.enterName')}
                       placeholderTextColor="#999"
                       autoFocus={availableVoiceOvers.length === 0}
                     />
@@ -1797,7 +1801,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                       onPress={handleCreateVoiceOver}
                       disabled={!voiceOverName.trim()}
                     >
-                      <Text style={styles.modalButtonText}>Create</Text>
+                      <Text style={styles.modalButtonText}>{t('storyMode.create')}</Text>
                     </Pressable>
                   </>
                 )}
@@ -1828,10 +1832,10 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                 >
                   <Text style={styles.modalCloseButtonText}>✕</Text>
                 </Pressable>
-                <Text style={styles.modalTitle}>Select Voice Over</Text>
-                <Text style={styles.modalSubtitle}>Choose a recording to play</Text>
+                <Text style={styles.modalTitle}>{t('storyMode.selectVoiceOver')}</Text>
+                <Text style={styles.modalSubtitle}>{t('storyMode.chooseRecording')}</Text>
                 {availableVoiceOvers.length === 0 ? (
-                  <Text style={styles.noVoiceOversText}>No voice overs recorded yet</Text>
+                  <Text style={styles.noVoiceOversText}>{t('storyMode.noVoiceOvers')}</Text>
                 ) : (
                   <ScrollView style={styles.voiceOverList} showsVerticalScrollIndicator={false}>
                     {availableVoiceOvers.map((vo) => (
@@ -1845,7 +1849,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                         >
                           <Text style={styles.voiceOverItemName}>{vo.name}</Text>
                           <Text style={styles.voiceOverItemPages}>
-                            {Object.keys(vo.pageRecordings).length} pages recorded
+                            {t('storyMode.pagesRecorded', { count: Object.keys(vo.pageRecordings).length })}
                           </Text>
                         </Pressable>
                         <Pressable

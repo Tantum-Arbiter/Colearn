@@ -8,7 +8,7 @@ import { MoonBottomImage } from '@/components/main-menu/animated-components';
 import { mainMenuStyles } from '@/components/main-menu/styles';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { StarBackground } from '@/components/ui/star-background';
-import { BackButtonText } from '@/constants/theme';
+import { useBackButtonText } from '@/hooks/use-back-button-text';
 
 interface TermsConditionsScreenProps {
   onBack: () => void;
@@ -21,6 +21,7 @@ interface TermsConditionsContentProps {
 export function TermsConditionsScreen({ onBack }: TermsConditionsScreenProps) {
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledButtonSize, isTablet, contentMaxWidth } = useAccessibility();
+  const backButtonText = useBackButtonText();
 
   return (
     <View style={styles.container}>
@@ -36,7 +37,7 @@ export function TermsConditionsScreen({ onBack }: TermsConditionsScreenProps) {
         {/* Header */}
         <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50), zIndex: 50 }]}>
           <Pressable style={[styles.backButton, { minHeight: scaledButtonSize(40) }]} onPress={onBack}>
-            <Text style={[styles.backButtonText, { fontSize: scaledFontSize(16) }]}>{BackButtonText}</Text>
+            <Text style={[styles.backButtonText, { fontSize: scaledFontSize(16) }]}>{backButtonText}</Text>
           </Pressable>
           <View style={styles.titleContainer}>
             <Text style={[styles.title, { fontSize: scaledFontSize(20) }]}>Terms & Conditions</Text>

@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  Pressable, 
-  Dimensions 
+import React, { useEffect, useMemo, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Pressable,
+  Dimensions
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,9 +16,9 @@ import Animated, {
   withTiming,
   Easing
 } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
-import { BackButtonText } from '@/constants/theme';
 import { BearTopImage } from '@/components/main-menu/animated-components';
 import { mainMenuStyles } from '@/components/main-menu/styles';
 
@@ -27,6 +27,7 @@ import { MusicCategory, MusicTrack } from '@/types/music';
 import { Fonts } from '@/constants/theme';
 import { MusicControl } from '@/components/ui/music-control';
 import { SleepSequencePlayer } from '@/services/sleep-sequence-player';
+import { useBackButtonText } from '@/hooks/use-back-button-text';
 
 interface MusicSelectionScreenProps {
   onTrackSelect: (track: MusicTrack) => void;
@@ -36,12 +37,23 @@ interface MusicSelectionScreenProps {
 
 const { width: screenWidth } = Dimensions.get('window');
 
-export function MusicSelectionScreen({ 
-  onTrackSelect, 
-  onPlaylistSelect, 
-  onBack 
+export function MusicSelectionScreen({
+  onTrackSelect,
+  onPlaylistSelect,
+  onBack
 }: MusicSelectionScreenProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const backButtonText = useBackButtonText();
+
+  // Helper to get localized track text (uses translation key if available, falls back to default)
+  const getTrackTitle = useCallback((track: MusicTrack) => {
+    return track.titleKey ? t(track.titleKey) : track.title;
+  }, [t]);
+
+  const getTrackArtist = useCallback((track: MusicTrack) => {
+    return track.artistKey ? t(track.artistKey) : (track.artist || t('music.unknownArtist'));
+  }, [t]);
 
   // Generate star positions for background (same as story pages)
   const starPositions = useMemo(() => generateStarPositions(VISUAL_EFFECTS.STAR_COUNT), []);
@@ -140,7 +152,7 @@ export function MusicSelectionScreen({
       {/* Header with back button */}
       <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50), zIndex: 50 }]}>
         <Pressable style={styles.backButton} onPress={onBack}>
-          <Text style={styles.backButtonText}>{BackButtonText}</Text>
+          <Text style={styles.backButtonText}>{backButtonText}</Text>
         </Pressable>
         <View style={{ width: 24 }} />
         <MusicControl
@@ -166,11 +178,11 @@ export function MusicSelectionScreen({
                   <Text style={styles.categoryTitle}>{category.title}</Text>
                   <Text style={styles.categoryDescription}>{category.description}</Text>
                 </View>
-                <Pressable 
+                <Pressable
                   style={[styles.playAllButton, { backgroundColor: category.color }]}
                   onPress={() => handlePlaylistPress(category.id)}
                 >
-                  <Text style={styles.playAllButtonText}>Play All</Text>
+                  <Text style={styles.playAllButtonText}>{t('music.playAll')}</Text>
                 </Pressable>
               </View>
 
@@ -186,10 +198,10 @@ export function MusicSelectionScreen({
                       <Text style={styles.trackIconText}>♪</Text>
                     </View>
                     <Text style={styles.trackTitle} numberOfLines={2}>
-                      {track.title}
+                      {getTrackTitle(track)}
                     </Text>
                     <Text style={styles.trackArtist} numberOfLines={1}>
-                      {track.artist || 'Unknown Artist'}
+                      {getTrackArtist(track)}
                     </Text>
                     <Text style={styles.trackDuration}>
                       {formatDuration(track.duration)}

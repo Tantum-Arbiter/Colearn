@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../../store/app-store';
 import { MoonBottomImage } from '../main-menu/animated-components';
 import { mainMenuStyles } from '../main-menu/styles';
@@ -48,6 +49,7 @@ const generateStarPositions = () => {
 };
 
 export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
   const {
@@ -293,24 +295,19 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
   };
 
   const formatTime = (seconds: number) => {
-    if (seconds === 0) return 'No screen time recommended';
+    if (seconds === 0) return t('screenTime.noScreenTimeRecommended');
     return formatDurationCompact(seconds);
   };
 
-  const formatDayOfWeek = (day: string) => {
-    const dayMap: { [key: string]: string } = {
-      'Sunday': 'Sun',
-      'Monday': 'Mon',
-      'Tuesday': 'Tue',
-      'Wednesday': 'Wed',
-      'Thursday': 'Thu',
-      'Friday': 'Fri',
-      'Saturday': 'Sat',
-    };
-    return dayMap[day] || day.slice(0, 3);
-  };
-
-
+  const dayNames = [
+    t('screenTime.sun'),
+    t('screenTime.mon'),
+    t('screenTime.tue'),
+    t('screenTime.wed'),
+    t('screenTime.thu'),
+    t('screenTime.fri'),
+    t('screenTime.sat'),
+  ];
 
   const getUsagePercentage = (usage: number, limit: number) => {
     if (limit === 0) return 0;
@@ -318,19 +315,19 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
   };
 
   const getAgeRangeText = (ageInMonths: number) => {
-    if (ageInMonths < 24) return '18-24 months';
-    if (ageInMonths < 72) return '2-6 years old';
-    return '6+ years';
+    if (ageInMonths < 24) return t('screenTime.age18to24months');
+    if (ageInMonths < 72) return t('screenTime.age2to6years');
+    return t('screenTime.age6plus');
   };
 
   const getGuidelinesText = (ageInMonths: number) => {
     if (ageInMonths < 24) {
-      return 'WHO/AAP Guidelines: Up to 15 minutes of high-quality content with parent co-engagement.';
+      return t('screenTime.guidelines18to24');
     }
     if (ageInMonths < 72) {
-      return 'WHO/AAP Guidelines: Up to 1 hour of high-quality programming with parent involvement.';
+      return t('screenTime.guidelines2to6');
     }
-    return 'For children 6+ years, establish consistent limits on screen time and ensure it doesn\'t interfere with sleep, physical activity, and other healthy behaviors.';
+    return t('screenTime.guidelines6plus');
   };
 
   // Use local state for display (not yet saved)
@@ -381,7 +378,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
               <Ionicons name="arrow-back" size={scaledButtonSize(24)} color="rgba(255, 255, 255, 0.8)" />
             </Pressable>
             <View style={styles.titleContainer}>
-              <Text style={[styles.title, { fontSize: scaledFontSize(20) }]}>Screen Time</Text>
+              <Text style={[styles.title, { fontSize: scaledFontSize(20) }]}>{t('screenTime.title')}</Text>
             </View>
             <MusicControl size={24} color="#FFFFFF" />
           </View>
@@ -411,13 +408,13 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
           <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
           {/* Today's Usage */}
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>Today&apos;s Usage</Text>
+            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>{t('screenTime.todaysUsage')}</Text>
 
             <View style={[styles.usageCard, { padding: scaledPadding(16) }]}>
               <View style={styles.usageHeader}>
                 <View style={styles.usageTimeContainer}>
                   <Text style={[styles.usageTime, { fontSize: scaledFontSize(32) }]}>{formatTime(todayUsage)}</Text>
-                  <Text style={[styles.usageLimit, { fontSize: scaledFontSize(14) }]}>of {formatTime(dailyLimit)}</Text>
+                  <Text style={[styles.usageLimit, { fontSize: scaledFontSize(14) }]}>{t('screenTime.of')} {formatTime(dailyLimit)}</Text>
                 </View>
               </View>
 
@@ -434,18 +431,18 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
               </View>
 
               <Text style={[styles.usagePercentage, { fontSize: scaledFontSize(14) }]}>
-                {usagePercentage.toFixed(0)}% of daily limit
+                {t('screenTime.ofDailyLimit', { percentage: usagePercentage.toFixed(0) })}
               </Text>
             </View>
           </View>
 
           {/* Age Settings */}
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>Child&apos;s Age</Text>
+            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>{t('screenTime.childsAge')}</Text>
 
             <View style={styles.ageSelector}>
               <Text style={[styles.currentAge, { fontSize: scaledFontSize(16) }]}>
-                Current: {getAgeRangeText(localChildAge)}
+                {t('screenTime.current', { age: getAgeRangeText(localChildAge) })}
               </Text>
 
               <View style={styles.ageButtons}>
@@ -454,7 +451,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
                   onPress={() => handleAgeChange(20)}
                 >
                   <Text style={[styles.ageButtonText, { fontSize: scaledFontSize(14) }, localChildAge < 24 && styles.ageButtonTextActive]} numberOfLines={1} adjustsFontSizeToFit>
-                    18-24m
+                    {t('screenTime.age18to24m')}
                   </Text>
                 </Pressable>
 
@@ -463,7 +460,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
                   onPress={() => handleAgeChange(36)}
                 >
                   <Text style={[styles.ageButtonText, { fontSize: scaledFontSize(14) }, localChildAge >= 24 && localChildAge < 72 && styles.ageButtonTextActive]} numberOfLines={1} adjustsFontSizeToFit>
-                    2-6 yrs
+                    {t('screenTime.age2to6yrs')}
                   </Text>
                 </Pressable>
 
@@ -472,7 +469,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
                   onPress={() => handleAgeChange(84)}
                 >
                   <Text style={[styles.ageButtonText, { fontSize: scaledFontSize(14) }, localChildAge >= 72 && styles.ageButtonTextActive]} numberOfLines={1} adjustsFontSizeToFit>
-                    6+ yrs
+                    {t('screenTime.age6plusYrs')}
                   </Text>
                 </Pressable>
               </View>
@@ -486,18 +483,18 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
           {/* Weekly Activity Heatmap */}
           {stats && stats.heatmapData && stats.heatmapData.length > 0 && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>Weekly Activity Heatmap</Text>
+              <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>{t('screenTime.weeklyActivityHeatmap')}</Text>
 
               <View style={styles.chartContainer}>
                 <Text style={[styles.chartNote, { fontSize: scaledFontSize(14) }]}>
-                  Your child&apos;s screen time patterns by day
+                  {t('screenTime.screenTimePatterns')}
                 </Text>
 
                 {/* Heatmap */}
                 <View style={styles.heatmapContainer}>
                   {/* Daily Bar Chart */}
                   <View style={styles.dailyBarChart}>
-                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((dayName, dayIndex) => {
+                    {dayNames.map((dayName, dayIndex) => {
                       const dayData = stats.heatmapData.find(data => data.day === dayIndex);
                       const usage = dayData?.usage || 0;
                       const isOverRecommended = dayData?.isOverRecommended || false;
@@ -557,7 +554,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
 
                   {/* Legend */}
                   <View style={styles.heatmapLegend}>
-                    <Text style={[styles.heatmapLegendTitle, { fontSize: scaledFontSize(12) }]}>Screen Time Level</Text>
+                    <Text style={[styles.heatmapLegendTitle, { fontSize: scaledFontSize(12) }]}>{t('screenTime.screenTimeLevel')}</Text>
 
                     {/* Color Bar */}
                     <View style={styles.heatmapLegendColorBar}>
@@ -575,17 +572,17 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
                     <View style={styles.heatmapLabelsRow}>
                       <View style={styles.heatmapLabelContainer}>
                         <Text style={[styles.heatmapLegendLabel, { fontSize: scaledFontSize(10) }]} numberOfLines={1}>
-                          No Screen Time
+                          {t('screenTime.noScreenTime')}
                         </Text>
                       </View>
                       <View style={styles.heatmapLabelContainer}>
                         <Text style={[styles.heatmapLegendLabel, { fontSize: scaledFontSize(10) }]} numberOfLines={1}>
-                          Recommended
+                          {t('screenTime.recommended')}
                         </Text>
                       </View>
                       <View style={styles.heatmapLabelContainer}>
                         <Text style={[styles.heatmapLegendLabel, { fontSize: scaledFontSize(10) }]} numberOfLines={1}>
-                          Excessive
+                          {t('screenTime.excessive')}
                         </Text>
                       </View>
                     </View>
@@ -597,11 +594,11 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
 
           {/* Create My Schedule */}
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>Create My Schedule</Text>
+            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>{t('screenTime.createMySchedule')}</Text>
 
             <View style={styles.scheduleIntro}>
               <Text style={[styles.scheduleIntroText, { fontSize: scaledFontSize(14) }]}>
-                Set up personalized notification times for your child&apos;s screen time activities. You&apos;ll receive gentle reminders when it&apos;s time for stories, emotions, or music activities.
+                {t('screenTime.scheduleIntro')}
               </Text>
             </View>
 
@@ -609,48 +606,48 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
               style={[styles.createScheduleButton, { minHeight: scaledButtonSize(48), paddingVertical: scaledPadding(12), paddingHorizontal: scaledPadding(20) }]}
               onPress={() => setCurrentPage('custom-reminders')}
             >
-              <Text style={[styles.createScheduleButtonText, { fontSize: scaledFontSize(16) }]}>+ Create Custom Reminders</Text>
+              <Text style={[styles.createScheduleButtonText, { fontSize: scaledFontSize(16) }]}>{t('screenTime.createCustomReminders')}</Text>
             </Pressable>
 
             <View style={styles.recommendedTimes}>
-              <Text style={[styles.recommendedTimesTitle, { fontSize: scaledFontSize(16) }]}>Recommended Times</Text>
+              <Text style={[styles.recommendedTimesTitle, { fontSize: scaledFontSize(16) }]}>{t('screenTime.recommendedTimes')}</Text>
               <Text style={[styles.recommendedTimesText, { fontSize: scaledFontSize(14) }]}>
-                Based on child development research, the best times for screen activities are:
+                {t('screenTime.recommendedTimesIntro')}
               </Text>
 
               <View style={[styles.timeSlot, { paddingVertical: scaledPadding(8) }]}>
                 <Text style={[styles.timeSlotTime, { fontSize: scaledFontSize(14) }]}>9:00 AM - 10:00 AM</Text>
-                <Text style={[styles.timeSlotActivity, { fontSize: scaledFontSize(12) }]}>Morning stories & emotions</Text>
+                <Text style={[styles.timeSlotActivity, { fontSize: scaledFontSize(12) }]}>{t('screenTime.morningStoriesEmotions')}</Text>
               </View>
 
               <View style={[styles.timeSlot, { paddingVertical: scaledPadding(8) }]}>
                 <Text style={[styles.timeSlotTime, { fontSize: scaledFontSize(14) }]}>2:00 PM - 3:00 PM</Text>
-                <Text style={[styles.timeSlotActivity, { fontSize: scaledFontSize(12) }]}>Afternoon learning activities</Text>
+                <Text style={[styles.timeSlotActivity, { fontSize: scaledFontSize(12) }]}>{t('screenTime.afternoonLearning')}</Text>
               </View>
 
               <View style={[styles.timeSlot, { paddingVertical: scaledPadding(8) }]}>
                 <Text style={[styles.timeSlotTime, { fontSize: scaledFontSize(14) }]}>5:00 PM - 6:00 PM</Text>
-                <Text style={[styles.timeSlotActivity, { fontSize: scaledFontSize(12) }]}>Pre-dinner wind down music</Text>
+                <Text style={[styles.timeSlotActivity, { fontSize: scaledFontSize(12) }]}>{t('screenTime.preDinnerMusic')}</Text>
               </View>
             </View>
 
             <View style={[styles.bedtimeWarning, { padding: scaledPadding(12) }]}>
-              <Text style={[styles.bedtimeWarningTitle, { fontSize: scaledFontSize(14) }]}>Bedtime Guidelines</Text>
+              <Text style={[styles.bedtimeWarningTitle, { fontSize: scaledFontSize(14) }]}>{t('screenTime.bedtimeGuidelines')}</Text>
               <Text style={[styles.bedtimeWarningText, { fontSize: scaledFontSize(12) }]}>
-                Screen time after 7 PM can interfere with sleep quality. For best results, finish screen activities at least 1 hour before bedtime to help your child wind down naturally.
+                {t('screenTime.bedtimeWarning')}
               </Text>
             </View>
           </View>
 
           {/* Settings */}
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>Settings</Text>
+            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>{t('screenTime.settings')}</Text>
 
             <View style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}>
               <View style={styles.settingInfo}>
-                <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>Screen Time Controls</Text>
+                <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>{t('screenTime.screenTimeControls')}</Text>
                 <Text style={[styles.settingDescription, { fontSize: scaledFontSize(12) }]}>
-                  Monitor and limit daily screen time based on WHO/AAP guidelines
+                  {t('screenTime.screenTimeControlsDesc')}
                 </Text>
               </View>
               <Pressable
@@ -663,9 +660,9 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
 
             <View style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}>
               <View style={styles.settingInfo}>
-                <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>Smart Reminders</Text>
+                <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>{t('screenTime.smartReminders')}</Text>
                 <Text style={[styles.settingDescription, { fontSize: scaledFontSize(12) }]}>
-                  Receive gentle notifications for recommended activity times
+                  {t('screenTime.smartRemindersDesc')}
                 </Text>
               </View>
               <Pressable
@@ -686,11 +683,11 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
                 disabled={isSaving}
               >
                 <Text style={[styles.saveButtonText, { fontSize: scaledFontSize(16) }]}>
-                  {isSaving ? 'Saving...' : 'Save Settings'}
+                  {isSaving ? t('screenTime.saving') : t('screenTime.saveSettings')}
                 </Text>
               </Pressable>
               <Text style={[styles.saveNote, { fontSize: scaledFontSize(12) }]}>
-                Your settings will be synced across all your devices
+                {t('screenTime.settingsSyncNote')}
               </Text>
             </View>
           )}
@@ -707,6 +704,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
 
 // Content-only component for embedding in horizontal scroll
 export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: ScreenTimeContentProps) {
+  const { t } = useTranslation();
   const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
   const {
     childAgeInMonths,
@@ -759,9 +757,9 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
 
       if (permissionStatus.granted) {
         setLocalNotificationsEnabled(true);
-        Alert.alert('Notifications Enabled!', 'Don\'t forget to save your changes!');
+        Alert.alert(t('screenTime.notificationsEnabled'), t('screenTime.dontForgetToSave'));
       } else {
-        Alert.alert('Permission Required', 'Please enable notifications in your device settings.');
+        Alert.alert(t('screenTime.permissionRequired'), t('screenTime.enableNotificationsInSettings'));
       }
     } else {
       setLocalNotificationsEnabled(!localNotificationsEnabled);
@@ -776,24 +774,34 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
   // Note: handleSaveSettings removed - auto-save happens on account screen exit
 
   const formatTime = (seconds: number) => {
-    if (seconds === 0) return 'No screen time recommended';
+    if (seconds === 0) return t('screenTime.noScreenTimeRecommended');
     return formatDurationCompact(seconds);
   };
 
+  const dayNames = [
+    t('screenTime.sun'),
+    t('screenTime.mon'),
+    t('screenTime.tue'),
+    t('screenTime.wed'),
+    t('screenTime.thu'),
+    t('screenTime.fri'),
+    t('screenTime.sat'),
+  ];
+
   const getAgeRangeText = (ageInMonths: number) => {
-    if (ageInMonths < 24) return '18-24 months';
-    if (ageInMonths < 72) return '2-6 years old';
-    return '6+ years';
+    if (ageInMonths < 24) return t('screenTime.age18to24months');
+    if (ageInMonths < 72) return t('screenTime.age2to6years');
+    return t('screenTime.age6plus');
   };
 
   const getGuidelinesText = (ageInMonths: number) => {
     if (ageInMonths < 24) {
-      return 'WHO/AAP Guidelines: Up to 15 minutes of high-quality content with parent co-engagement.';
+      return t('screenTime.guidelines18to24');
     }
     if (ageInMonths < 72) {
-      return 'WHO/AAP Guidelines: Up to 1 hour of high-quality programming with parent involvement.';
+      return t('screenTime.guidelines2to6');
     }
-    return 'For children 6+ years, establish consistent limits on screen time.';
+    return t('screenTime.guidelines6plus');
   };
 
   const dailyLimit = useMemo(() => {
@@ -814,13 +822,13 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
         <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
           {/* Today's Usage */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>Today&apos;s Usage</Text>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>{t('screenTime.todaysUsage')}</Text>
 
           <View style={[styles.usageCard, { padding: scaledPadding(16) }]}>
             <View style={styles.usageHeader}>
               <View style={styles.usageTimeContainer}>
                 <Text style={[styles.usageTime, { fontSize: scaledFontSize(32) }]}>{formatTime(todayUsage)}</Text>
-                <Text style={[styles.usageLimit, { fontSize: scaledFontSize(14) }]}>of {formatTime(dailyLimit)}</Text>
+                <Text style={[styles.usageLimit, { fontSize: scaledFontSize(14) }]}>{t('screenTime.of')} {formatTime(dailyLimit)}</Text>
               </View>
             </View>
 
@@ -837,18 +845,18 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
             </View>
 
             <Text style={[styles.usagePercentage, { fontSize: scaledFontSize(14) }]}>
-              {usagePercentage.toFixed(0)}% of daily limit
+              {t('screenTime.ofDailyLimit', { percentage: usagePercentage.toFixed(0) })}
             </Text>
           </View>
         </View>
 
         {/* Age Settings */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>Child&apos;s Age</Text>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>{t('screenTime.childsAge')}</Text>
 
           <View style={styles.ageSelector}>
             <Text style={[styles.currentAge, { fontSize: scaledFontSize(16) }]}>
-              Current: {getAgeRangeText(localChildAge)}
+              {t('screenTime.current', { age: getAgeRangeText(localChildAge) })}
             </Text>
 
             <View style={styles.ageButtons}>
@@ -857,7 +865,7 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
                 onPress={() => handleAgeChange(20)}
               >
                 <Text style={[styles.ageButtonText, { fontSize: scaledFontSize(14) }, localChildAge < 24 && styles.ageButtonTextActive]} numberOfLines={1} adjustsFontSizeToFit>
-                  18-24m
+                  {t('screenTime.age18to24m')}
                 </Text>
               </Pressable>
 
@@ -866,7 +874,7 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
                 onPress={() => handleAgeChange(36)}
               >
                 <Text style={[styles.ageButtonText, { fontSize: scaledFontSize(14) }, localChildAge >= 24 && localChildAge < 72 && styles.ageButtonTextActive]} numberOfLines={1} adjustsFontSizeToFit>
-                  2-6 yrs
+                  {t('screenTime.age2to6yrs')}
                 </Text>
               </Pressable>
 
@@ -875,7 +883,7 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
                 onPress={() => handleAgeChange(84)}
               >
                 <Text style={[styles.ageButtonText, { fontSize: scaledFontSize(14) }, localChildAge >= 72 && styles.ageButtonTextActive]} numberOfLines={1} adjustsFontSizeToFit>
-                  6+ yrs
+                  {t('screenTime.age6plusYrs')}
                 </Text>
               </Pressable>
             </View>
@@ -889,18 +897,18 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
         {/* Weekly Activity Heatmap */}
         {stats && stats.heatmapData && stats.heatmapData.length > 0 && (
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>Weekly Activity Heatmap</Text>
+            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>{t('screenTime.weeklyActivityHeatmap')}</Text>
 
             <View style={styles.chartContainer}>
               <Text style={[styles.chartNote, { fontSize: scaledFontSize(14) }]}>
-                Your child&apos;s screen time patterns by day
+                {t('screenTime.screenTimePatterns')}
               </Text>
 
               {/* Heatmap */}
               <View style={styles.heatmapContainer}>
                 {/* Daily Bar Chart */}
                 <View style={styles.dailyBarChart}>
-                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((dayName, dayIndex) => {
+                  {dayNames.map((dayName, dayIndex) => {
                     const dayData = stats.heatmapData.find(data => data.day === dayIndex);
                     const usage = dayData?.usage || 0;
                     const isOverRecommended = dayData?.isOverRecommended || false;
@@ -948,7 +956,7 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
 
                 {/* Legend */}
                 <View style={styles.heatmapLegend}>
-                  <Text style={[styles.heatmapLegendTitle, { fontSize: scaledFontSize(12) }]}>Screen Time Level</Text>
+                  <Text style={[styles.heatmapLegendTitle, { fontSize: scaledFontSize(12) }]}>{t('screenTime.screenTimeLevel')}</Text>
                   <View style={styles.heatmapLegendColorBar}>
                     <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 0.2)' }]} />
                     <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 0.4)' }]} />
@@ -959,13 +967,13 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
                   </View>
                   <View style={styles.heatmapLabelsRow}>
                     <View style={styles.heatmapLabelContainer}>
-                      <Text style={[styles.heatmapLegendLabel, { fontSize: scaledFontSize(10) }]} numberOfLines={1}>No Screen Time</Text>
+                      <Text style={[styles.heatmapLegendLabel, { fontSize: scaledFontSize(10) }]} numberOfLines={1}>{t('screenTime.noScreenTime')}</Text>
                     </View>
                     <View style={styles.heatmapLabelContainer}>
-                      <Text style={[styles.heatmapLegendLabel, { fontSize: scaledFontSize(10) }]} numberOfLines={1}>Recommended</Text>
+                      <Text style={[styles.heatmapLegendLabel, { fontSize: scaledFontSize(10) }]} numberOfLines={1}>{t('screenTime.recommended')}</Text>
                     </View>
                     <View style={styles.heatmapLabelContainer}>
-                      <Text style={[styles.heatmapLegendLabel, { fontSize: scaledFontSize(10) }]} numberOfLines={1}>Excessive</Text>
+                      <Text style={[styles.heatmapLegendLabel, { fontSize: scaledFontSize(10) }]} numberOfLines={1}>{t('screenTime.excessive')}</Text>
                     </View>
                   </View>
                 </View>
@@ -976,11 +984,11 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
 
         {/* Create My Schedule */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>Create My Schedule</Text>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>{t('screenTime.createMySchedule')}</Text>
 
           <View style={styles.scheduleIntro}>
             <Text style={[styles.scheduleIntroText, { fontSize: scaledFontSize(14) }]}>
-              Set up personalized notification times for your child&apos;s screen time activities.
+              {t('screenTime.scheduleIntro')}
             </Text>
           </View>
 
@@ -989,49 +997,49 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
               style={[styles.createScheduleButton, { minHeight: scaledButtonSize(48), paddingVertical: scaledPadding(12), paddingHorizontal: scaledPadding(20) }]}
               onPress={onNavigateToReminders}
             >
-              <Text style={[styles.createScheduleButtonText, { fontSize: scaledFontSize(16) }]}>+ Create Custom Reminders</Text>
+              <Text style={[styles.createScheduleButtonText, { fontSize: scaledFontSize(16) }]}>{t('screenTime.createCustomReminders')}</Text>
             </Pressable>
           )}
 
           <View style={styles.recommendedTimes}>
-            <Text style={[styles.recommendedTimesTitle, { fontSize: scaledFontSize(16) }]}>Recommended Times</Text>
+            <Text style={[styles.recommendedTimesTitle, { fontSize: scaledFontSize(16) }]}>{t('screenTime.recommendedTimes')}</Text>
             <Text style={[styles.recommendedTimesText, { fontSize: scaledFontSize(14) }]}>
-              Based on child development research, the best times for screen activities are:
+              {t('screenTime.recommendedTimesIntro')}
             </Text>
 
             <View style={[styles.timeSlot, { paddingVertical: scaledPadding(8) }]}>
               <Text style={[styles.timeSlotTime, { fontSize: scaledFontSize(14) }]}>9:00 AM - 10:00 AM</Text>
-              <Text style={[styles.timeSlotActivity, { fontSize: scaledFontSize(12) }]}>Morning stories & emotions</Text>
+              <Text style={[styles.timeSlotActivity, { fontSize: scaledFontSize(12) }]}>{t('screenTime.morningStoriesEmotions')}</Text>
             </View>
 
             <View style={[styles.timeSlot, { paddingVertical: scaledPadding(8) }]}>
               <Text style={[styles.timeSlotTime, { fontSize: scaledFontSize(14) }]}>2:00 PM - 3:00 PM</Text>
-              <Text style={[styles.timeSlotActivity, { fontSize: scaledFontSize(12) }]}>Afternoon learning activities</Text>
+              <Text style={[styles.timeSlotActivity, { fontSize: scaledFontSize(12) }]}>{t('screenTime.afternoonLearning')}</Text>
             </View>
 
             <View style={[styles.timeSlot, { paddingVertical: scaledPadding(8) }]}>
               <Text style={[styles.timeSlotTime, { fontSize: scaledFontSize(14) }]}>5:00 PM - 6:00 PM</Text>
-              <Text style={[styles.timeSlotActivity, { fontSize: scaledFontSize(12) }]}>Pre-dinner wind down music</Text>
+              <Text style={[styles.timeSlotActivity, { fontSize: scaledFontSize(12) }]}>{t('screenTime.preDinnerMusic')}</Text>
             </View>
           </View>
 
           <View style={[styles.bedtimeWarning, { padding: scaledPadding(12) }]}>
-            <Text style={[styles.bedtimeWarningTitle, { fontSize: scaledFontSize(14) }]}>Bedtime Guidelines</Text>
+            <Text style={[styles.bedtimeWarningTitle, { fontSize: scaledFontSize(14) }]}>{t('screenTime.bedtimeGuidelines')}</Text>
             <Text style={[styles.bedtimeWarningText, { fontSize: scaledFontSize(12) }]}>
-              Screen time after 7 PM can interfere with sleep quality. For best results, finish screen activities at least 1 hour before bedtime.
+              {t('screenTime.bedtimeWarning')}
             </Text>
           </View>
         </View>
 
         {/* Settings */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>Settings</Text>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>{t('screenTime.settings')}</Text>
 
           <View style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}>
             <View style={styles.settingInfo}>
-              <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>Screen Time Controls</Text>
+              <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>{t('screenTime.screenTimeControls')}</Text>
               <Text style={[styles.settingDescription, { fontSize: scaledFontSize(12) }]}>
-                Monitor and limit daily screen time
+                {t('screenTime.monitorAndLimit')}
               </Text>
             </View>
             <Pressable
@@ -1044,9 +1052,9 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
 
           <View style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}>
             <View style={styles.settingInfo}>
-              <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>Smart Reminders</Text>
+              <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>{t('screenTime.smartReminders')}</Text>
               <Text style={[styles.settingDescription, { fontSize: scaledFontSize(12) }]}>
-                Receive gentle notifications
+                {t('screenTime.receiveGentleNotifications')}
               </Text>
             </View>
             <Pressable

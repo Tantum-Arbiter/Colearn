@@ -4,8 +4,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import { MusicControl } from './music-control';
-import { Fonts, BackButtonText } from '@/constants/theme';
+import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { useBackButtonText } from '@/hooks/use-back-button-text';
 
 const { width: screenWidth } = Dimensions.get('window');
 const isTablet = screenWidth >= 768;
@@ -35,6 +36,7 @@ export function PageHeader({
 }: PageHeaderProps) {
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledPadding, scaledButtonSize, textSizeScale } = useAccessibility();
+  const backButtonText = useBackButtonText();
 
   // Animation values for hiding/showing controls
   const backButtonTranslateX = useSharedValue(0);
@@ -102,7 +104,7 @@ export function PageHeader({
             ]}
             onPress={onBack}
           >
-            <Text style={[styles.backButtonText, { fontSize: backFontSize }]} numberOfLines={1}>{BackButtonText}</Text>
+            <Text style={[styles.backButtonText, { fontSize: backFontSize }]} numberOfLines={1}>{backButtonText}</Text>
           </Pressable>
         </Animated.View>
 

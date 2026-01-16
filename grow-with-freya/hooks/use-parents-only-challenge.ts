@@ -1,10 +1,12 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface ParentChallenge {
   emoji: string;
-  word: string;
+  word: string; // The key used for translation lookup (e.g., 'cat', 'duck')
 }
 
+// Base challenges with English word keys
 export const PARENT_CHALLENGES: ParentChallenge[] = [
   { emoji: '🐱', word: 'cat' },
   { emoji: '🦆', word: 'duck' },
@@ -24,6 +26,7 @@ export interface UseParentsOnlyChallengeReturn {
 }
 
 export function useParentsOnlyChallenge(): UseParentsOnlyChallengeReturn {
+  const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(false);
   const [challenge, setChallenge] = useState<ParentChallenge>({ emoji: '🐱', word: 'cat' });
   const [inputValue, setInputValue] = useState('');
@@ -37,7 +40,13 @@ export function useParentsOnlyChallenge(): UseParentsOnlyChallengeReturn {
     setIsVisible(true);
   }, []);
 
-  const isInputValid = inputValue.toLowerCase().trim() === challenge.word.toLowerCase();
+  // Get the translated animal name for the current challenge
+  const translatedWord = useMemo(() => {
+    return t(`parentsOnly.animals.${challenge.word}`, { defaultValue: challenge.word });
+  }, [challenge.word, t]);
+
+  // Validate input against the translated word (case-insensitive)
+  const isInputValid = inputValue.toLowerCase().trim() === translatedWord.toLowerCase();
 
   const handleSubmit = useCallback(() => {
     if (isInputValid) {

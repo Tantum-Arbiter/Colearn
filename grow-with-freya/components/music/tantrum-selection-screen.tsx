@@ -22,9 +22,10 @@ import { BearTopImage } from '@/components/main-menu/animated-components';
 import { mainMenuStyles } from '@/components/main-menu/styles';
 import { getTracksByCategory } from '@/data/music';
 import { MusicTrack } from '@/types/music';
-import { Fonts, BackButtonText } from '@/constants/theme';
+import { Fonts } from '@/constants/theme';
 import { MusicControl } from '@/components/ui/music-control';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { useBackButtonText } from '@/hooks/use-back-button-text';
 
 interface TantrumSelectionScreenProps {
   onTrackSelect: (track: MusicTrack) => void;
@@ -37,6 +38,7 @@ export function TantrumSelectionScreen({ onTrackSelect, onBack }: TantrumSelecti
   const insets = useSafeAreaInsets();
   const [showTips, setShowTips] = useState(false);
   const { scaledFontSize, scaledButtonSize, scaledPadding } = useAccessibility();
+  const backButtonText = useBackButtonText();
 
   // Get tantrum-related tracks
   const tantrumTracks = useMemo(() => {
@@ -136,7 +138,7 @@ export function TantrumSelectionScreen({ onTrackSelect, onBack }: TantrumSelecti
         zIndex: 30,
       }}>
         <Pressable style={[styles.backButton, { minHeight: scaledButtonSize(40) }]} onPress={onBack}>
-          <Text style={[styles.backButtonText, { fontSize: scaledFontSize(16) }]}>{BackButtonText}</Text>
+          <Text style={[styles.backButtonText, { fontSize: scaledFontSize(16) }]}>{backButtonText}</Text>
         </Pressable>
         <View style={{ width: 24 }} />
         <MusicControl

@@ -9,15 +9,17 @@ import Animated, {
   withTiming,
   Easing
 } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { ThemedText } from '@/components/themed-text';
 import { EmotionCard } from './emotion-card';
 import { MusicControl } from '@/components/ui/music-control';
 import { EMOTIONS } from '@/data/emotions';
 import { EmotionTheme } from '@/types/emotion';
 import { getThemeById } from '@/data/emotion-themes';
-import { Fonts, BackButtonText } from '@/constants/theme';
+import { Fonts } from '@/constants/theme';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
+import { useBackButtonText } from '@/hooks/use-back-button-text';
 
 
 interface EmotionsMenuScreenProps {
@@ -31,6 +33,8 @@ export function EmotionsMenuScreen({
   onBack,
   selectedTheme = 'emoji'
 }: EmotionsMenuScreenProps) {
+  const { t } = useTranslation();
+  const backButtonText = useBackButtonText();
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const insets = useSafeAreaInsets();
 
@@ -120,7 +124,7 @@ export function EmotionsMenuScreen({
               fontSize: 16,
               fontWeight: 'bold',
               fontFamily: Fonts.primary,
-            }}>{BackButtonText}</ThemedText>
+            }}>{backButtonText}</ThemedText>
           </Pressable>
 
           <MusicControl
@@ -131,9 +135,9 @@ export function EmotionsMenuScreen({
         </View>
 
         <View style={{ paddingHorizontal: 20, marginTop: -20 }}>
-          <ThemedText style={styles.title}>Express Yourself!</ThemedText>
+          <ThemedText style={styles.title}>{t('emotions.title')}</ThemedText>
           <ThemedText style={styles.subtitle}>
-            {themeData.name} {themeData.icon} • {themeData.description}
+            {themeData.nameKey ? t(themeData.nameKey) : themeData.name} {themeData.icon} • {themeData.descriptionKey ? t(themeData.descriptionKey) : themeData.description}
           </ThemedText>
         </View>
 

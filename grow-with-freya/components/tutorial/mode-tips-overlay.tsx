@@ -9,8 +9,8 @@ import Animated, {
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/constants/theme';
 import { useTutorial, TutorialId } from '@/contexts/tutorial-context';
-import { RECORD_MODE_TOUR_STEPS, NARRATE_MODE_TOUR_STEPS } from './tutorial-content';
-import { TutorialStep } from './spotlight-overlay';
+import { RECORD_MODE_TOUR_STEPS, NARRATE_MODE_TOUR_STEPS, TutorialStepWithKeys } from './tutorial-content';
+import { useTranslation } from 'react-i18next';
 
 interface ModeTipsOverlayProps {
   mode: 'record' | 'narrate';
@@ -19,7 +19,7 @@ interface ModeTipsOverlayProps {
   onClose?: () => void;
 }
 
-const TUTORIALS: Record<'record' | 'narrate', { id: TutorialId; steps: Omit<TutorialStep, 'target'>[] }> = {
+const TUTORIALS: Record<'record' | 'narrate', { id: TutorialId; steps: TutorialStepWithKeys[] }> = {
   record: { id: 'record_mode_tour', steps: RECORD_MODE_TOUR_STEPS },
   narrate: { id: 'narrate_mode_tour', steps: NARRATE_MODE_TOUR_STEPS },
 };
@@ -45,6 +45,7 @@ const STEP_ICONS: Record<string, string> = {
  * Mode Tips Overlay - Shows guidance for Record or Narrate mode on first use
  */
 export function ModeTipsOverlay({ mode, isActive, forceShow = false, onClose }: ModeTipsOverlayProps) {
+  const { t } = useTranslation();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const { shouldShowTutorial, completeTutorial, startTutorial, activeTutorial } = useTutorial();
   const [isVisible, setIsVisible] = useState(false);
@@ -144,8 +145,8 @@ export function ModeTipsOverlay({ mode, isActive, forceShow = false, onClose }: 
                 <Text style={styles.icon}>{STEP_ICONS[currentTip.id] || '📖'}</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.title, { marginBottom: 4 }]}>{currentTip.title}</Text>
-                <Text style={[styles.description, { marginBottom: 8 }]}>{currentTip.description}</Text>
+                <Text style={[styles.title, { marginBottom: 4 }]}>{t(currentTip.titleKey)}</Text>
+                <Text style={[styles.description, { marginBottom: 8 }]}>{t(currentTip.descriptionKey)}</Text>
                 <View style={[styles.buttonRow, { marginTop: 4 }]}>
                   <View style={styles.progressDots}>
                     {steps.map((_, i) => (
@@ -159,10 +160,10 @@ export function ModeTipsOverlay({ mode, isActive, forceShow = false, onClose }: 
                       </Pressable>
                     )}
                     <Pressable onPress={handleNext} style={[styles.navButton, styles.nextButton]}>
-                      <Text style={[styles.nextText, { fontSize: 12 }]}>{isLastStep ? 'Got it!' : 'Next'}</Text>
+                      <Text style={[styles.nextText, { fontSize: 12 }]}>{isLastStep ? t('tutorial.buttons.gotIt') : t('tutorial.buttons.next')}</Text>
                     </Pressable>
                     <Pressable onPress={handleClose} style={[styles.skipButton, { marginLeft: 8 }]}>
-                      <Text style={[styles.skipText, { fontSize: 11 }]}>Skip</Text>
+                      <Text style={[styles.skipText, { fontSize: 11 }]}>{t('tutorial.buttons.skip')}</Text>
                     </Pressable>
                   </View>
                 </View>
@@ -175,8 +176,8 @@ export function ModeTipsOverlay({ mode, isActive, forceShow = false, onClose }: 
                 <Text style={styles.icon}>{STEP_ICONS[currentTip.id] || '📖'}</Text>
               </View>
 
-              <Text style={styles.title}>{currentTip.title}</Text>
-              <Text style={styles.description}>{currentTip.description}</Text>
+              <Text style={styles.title}>{t(currentTip.titleKey)}</Text>
+              <Text style={styles.description}>{t(currentTip.descriptionKey)}</Text>
 
               <View style={styles.progressDots}>
                 {steps.map((_, i) => (
@@ -186,7 +187,7 @@ export function ModeTipsOverlay({ mode, isActive, forceShow = false, onClose }: 
 
               <View style={styles.buttonRow}>
                 <Pressable onPress={handleClose} style={styles.skipButton}>
-                  <Text style={styles.skipText}>Skip</Text>
+                  <Text style={styles.skipText}>{t('tutorial.buttons.skip')}</Text>
                 </Pressable>
 
                 <View style={styles.navButtons}>
@@ -196,7 +197,7 @@ export function ModeTipsOverlay({ mode, isActive, forceShow = false, onClose }: 
                     </Pressable>
                   )}
                   <Pressable onPress={handleNext} style={[styles.navButton, styles.nextButton]}>
-                    <Text style={styles.nextText}>{isLastStep ? 'Got it!' : 'Next'}</Text>
+                    <Text style={styles.nextText}>{isLastStep ? t('tutorial.buttons.gotIt') : t('tutorial.buttons.next')}</Text>
                     {!isLastStep && <Ionicons name="chevron-forward" size={18} color="#fff" />}
                   </Pressable>
                 </View>

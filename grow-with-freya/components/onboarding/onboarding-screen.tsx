@@ -13,10 +13,11 @@ import Animated, {
   Easing
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 
 import { ThemedText } from '../themed-text';
 import { PngIllustration } from '../ui/png-illustration';
-import { BackButtonText } from '@/constants/theme';
+import { useBackButtonText } from '@/hooks/use-back-button-text';
 
 const { width, height } = Dimensions.get('window');
 
@@ -43,7 +44,9 @@ export function OnboardingScreen({
   totalSteps,
   isTransitioning = false,
 }: OnboardingScreenProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const backButtonText = useBackButtonText();
 
   // Device-specific adjustments for Dynamic Island and notches
   const getProgressTopMargin = () => {
@@ -169,61 +172,41 @@ export function OnboardingScreen({
   const isTextOnlyScreen = currentStep === 6 || currentStep === 7 || currentStep === 8;
 
   const renderContextualContent = (step: number) => {
+    // Map step number to translation keys
     const contextualData = [
-      {
-        tagline: "✨ Stories that grow with your child",
-        benefit: "Personalized learning experiences"
-      },
-      {
-        tagline: "👨‍👩‍👧‍👦 Quality time together",
-        benefit: "Recommended by child development experts"
-      },
-      {
-        tagline: "🎭 Make it uniquely theirs",
-        benefit: "Custom avatars and personalized stories"
-      },
-      {
-        tagline: "🎙️ Your voice, their comfort",
-        benefit: "Record once, comfort them always"
-      },
-      {
-        tagline: "🔬 Bridging Psychology with Technology",
-        benefit: "Growing together, forever"
-      },
-      {
-        tagline: "",
-        benefit: "Thank you for helping us improve!"
-      },
-      {
-        tagline: "",
-        benefit: "Your data stays yours"
-      },
-      {
-        tagline: "",
-        benefit: "Anonymous crash reports help fix bugs faster"
-      }
+      { taglineKey: 'onboarding.taglines.welcome', benefitKey: 'onboarding.benefits.welcome' },
+      { taglineKey: 'onboarding.taglines.screenTime', benefitKey: 'onboarding.benefits.screenTime' },
+      { taglineKey: 'onboarding.taglines.personalize', benefitKey: 'onboarding.benefits.personalize' },
+      { taglineKey: 'onboarding.taglines.voiceRecording', benefitKey: 'onboarding.benefits.voiceRecording' },
+      { taglineKey: 'onboarding.taglines.research', benefitKey: 'onboarding.benefits.research' },
+      { taglineKey: '', benefitKey: 'onboarding.benefits.disclaimer' },
+      { taglineKey: '', benefitKey: 'onboarding.benefits.privacy' },
+      { taglineKey: '', benefitKey: 'onboarding.benefits.crashReporting' }
     ];
 
     const data = contextualData[step - 1];
     if (!data) return null;
 
+    const tagline = data.taglineKey ? t(data.taglineKey) : '';
+    const benefit = data.benefitKey ? t(data.benefitKey) : '';
+
     // Skip rendering if both tagline and benefit are empty
-    if (!data.tagline && !data.benefit) return null;
+    if (!tagline && !benefit) return null;
 
     // For text-only screens (6, 7, and 8), show larger tagline in the content area
     if (step === 6 || step === 7 || step === 8) {
       return (
         <View style={styles.textOnlyTaglineWrapper}>
-          {data.tagline ? <ThemedText style={styles.textOnlyTagline}>{data.tagline}</ThemedText> : null}
-          {data.benefit ? <ThemedText style={styles.textOnlyBenefit}>{data.benefit}</ThemedText> : null}
+          {tagline ? <ThemedText style={styles.textOnlyTagline}>{tagline}</ThemedText> : null}
+          {benefit ? <ThemedText style={styles.textOnlyBenefit}>{benefit}</ThemedText> : null}
         </View>
       );
     }
 
     return (
       <View style={styles.contextualWrapper}>
-        {data.tagline ? <ThemedText style={styles.tagline}>{data.tagline}</ThemedText> : null}
-        {data.benefit ? <ThemedText style={styles.benefit}>{data.benefit}</ThemedText> : null}
+        {tagline ? <ThemedText style={styles.tagline}>{tagline}</ThemedText> : null}
+        {benefit ? <ThemedText style={styles.benefit}>{benefit}</ThemedText> : null}
       </View>
     );
   };
@@ -438,7 +421,7 @@ export function OnboardingScreen({
               style={styles.backButton}
               onPress={handlePrevious}
             >
-              <ThemedText style={styles.backButtonText}>{BackButtonText}</ThemedText>
+              <ThemedText style={styles.backButtonText}>{backButtonText}</ThemedText>
             </Pressable>
           )}
 
@@ -457,7 +440,7 @@ export function OnboardingScreen({
         </View>
 
         <ThemedText style={styles.progressHint}>
-          {currentStep < totalSteps ? "Swipe or tap to continue" : "Ready to start your journey!"}
+          {currentStep < totalSteps ? t('onboarding.swipeOrTap') : t('onboarding.readyToStart')}
         </ThemedText>
       </Animated.View>
     </LinearGradient>

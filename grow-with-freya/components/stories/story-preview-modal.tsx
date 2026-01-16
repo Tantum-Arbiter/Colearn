@@ -16,7 +16,9 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
-import { Story, STORY_TAGS } from '@/types/story';
+import { useTranslation } from 'react-i18next';
+import { Story, STORY_TAGS, getLocalizedText } from '@/types/story';
+import type { SupportedLanguage } from '@/services/i18n';
 import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { AuthenticatedImage } from '@/components/ui/authenticated-image';
@@ -38,6 +40,12 @@ export function StoryPreviewModal({
   onReadStory,
 }: StoryPreviewModalProps) {
   const { scaledFontSize, scaledPadding, scaledButtonSize } = useAccessibility();
+  const { t, i18n } = useTranslation();
+  const currentLanguage = i18n.language as SupportedLanguage;
+
+  // Get localized content
+  const displayTitle = story ? getLocalizedText(story.localizedTitle, story.title, currentLanguage) : '';
+  const displayDescription = story ? getLocalizedText(story.localizedDescription, story.description || '', currentLanguage) : '';
 
   // Animation values for slide up/down
   const translateY = useSharedValue(screenHeight);
@@ -89,6 +97,26 @@ export function StoryPreviewModal({
 
   const tagInfo = STORY_TAGS[story.category];
   const displayTags = story.tags || [story.tag];
+
+  // Helper to translate tag names
+  const translateTag = (tag: string): string => {
+    // Try translating using filterTags (covers most common tags)
+    const normalizedTag = tag.toLowerCase().replace(/\s+/g, '');
+    const translationKey = `stories.filterTags.${normalizedTag}`;
+    const translated = t(translationKey, { defaultValue: '' });
+    // If translation exists and is not the key itself, use it
+    if (translated && translated !== translationKey) {
+      return translated;
+    }
+    // Fallback to genre translation
+    const genreKey = `stories.genres.${normalizedTag}`;
+    const genreTranslated = t(genreKey, { defaultValue: '' });
+    if (genreTranslated && genreTranslated !== genreKey) {
+      return genreTranslated;
+    }
+    // Return original tag if no translation found
+    return tag;
+  };
 
   return (
     <View style={styles.absoluteContainer} pointerEvents={visible ? 'auto' : 'none'}>
@@ -143,7 +171,7 @@ export function StoryPreviewModal({
           >
             {/* Title */}
             <Text style={[styles.title, { fontSize: scaledFontSize(24) }]}>
-              {story.title}
+              {displayTitle}
             </Text>
 
             {/* Author */}
@@ -157,17 +185,17 @@ export function StoryPreviewModal({
             <View style={styles.metaRow}>
               {story.ageRange && (
                 <View style={styles.metaItem}>
-                  <Text style={styles.metaLabel}>Audience</Text>
+                  <Text style={styles.metaLabel}>{t('storyPreview.audience')}</Text>
                   <Text style={[styles.metaValue, { fontSize: scaledFontSize(14) }]}>
-                    Ages {story.ageRange}
+                    {t('storyPreview.ages', { range: story.ageRange })}
                   </Text>
                 </View>
               )}
               {story.duration && (
                 <View style={styles.metaItem}>
-                  <Text style={styles.metaLabel}>Duration</Text>
+                  <Text style={styles.metaLabel}>{t('storyPreview.duration')}</Text>
                   <Text style={[styles.metaValue, { fontSize: scaledFontSize(14) }]}>
-                    {story.duration} min
+                    {t('storyPreview.durationMinutes', { count: story.duration })}
                   </Text>
                 </View>
               )}
@@ -175,7 +203,7 @@ export function StoryPreviewModal({
 
             {/* Tags */}
             <View style={styles.tagsContainer}>
-              <Text style={styles.sectionLabel}>Tags</Text>
+              <Text style={styles.sectionLabel}>{t('storyPreview.tags')}</Text>
               <View style={styles.tagsRow}>
                 {displayTags.map((tag, index) => (
                   <View
@@ -183,7 +211,7 @@ export function StoryPreviewModal({
                     style={[styles.tag, { backgroundColor: tagInfo?.color || '#E0E0E0' }]}
                   >
                     <Text style={[styles.tagText, { fontSize: scaledFontSize(12) }]}>
-                      {tag}
+                      {translateTag(tag)}
                     </Text>
                   </View>
                 ))}
@@ -191,11 +219,11 @@ export function StoryPreviewModal({
             </View>
 
             {/* Description */}
-            {story.description && (
+            {displayDescription && (
               <View style={styles.descriptionContainer}>
-                <Text style={styles.sectionLabel}>About this story</Text>
+                <Text style={styles.sectionLabel}>{t('storyPreview.aboutThisStory')}</Text>
                 <Text style={[styles.description, { fontSize: scaledFontSize(14) }]}>
-                  {story.description}
+                  {displayDescription}
                 </Text>
               </View>
             )}
@@ -216,7 +244,7 @@ export function StoryPreviewModal({
                 }}
               >
                 <Text style={[styles.readButtonText, { fontSize: scaledFontSize(16) }]}>
-                  View Story
+                  {t('storyPreview.readStory')}
                 </Text>
               </Pressable>
             </View>

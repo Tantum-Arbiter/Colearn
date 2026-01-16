@@ -21,15 +21,15 @@ jest.mock('@/data/emotions', () => ({
     emoji: '😊',
     color: '#FFD700',
     description: 'Feeling joyful and cheerful',
-    expressionPrompts: ['Show me your biggest smile!'],
     difficulty: 'easy',
     category: 'basic'
   })),
-  getRandomPrompt: jest.fn(() => 'Show me your biggest smile!'),
+  getRandomPromptIndex: jest.fn(() => 0),
   EMOTION_GAME_CONFIG: {
     timePerEmotion: 15,
     emotionsPerLevel: 5,
   },
+  PROMPTS_PER_EMOTION: 4,
 }));
 
 describe('EmotionsGameScreen', () => {

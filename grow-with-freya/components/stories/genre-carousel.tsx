@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, ListRenderItem, ViewToken } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Story, StoryCategory, STORY_TAGS } from '@/types/story';
 import { StoryThumbnail } from './story-thumbnail';
 import { Fonts } from '@/constants/theme';
@@ -26,8 +27,10 @@ export const GenreCarousel: React.FC<GenreCarouselProps> = ({
 }) => {
   const [viewableItems, setViewableItems] = useState<Set<string>>(new Set());
   const { scaledFontSize } = useAccessibility();
+  const { t } = useTranslation();
 
   const genreInfo = STORY_TAGS[genre];
+  const genreLabel = t(genreInfo.labelKey);
 
   // Filter stories for this genre
   const genreStories = useMemo(() => {
@@ -78,9 +81,9 @@ export const GenreCarousel: React.FC<GenreCarouselProps> = ({
       <View style={styles.header}>
         <View style={styles.titleContainer}>
           <Text style={[styles.emoji, { fontSize: scaledFontSize(20) }]}>{genreInfo.emoji}</Text>
-          <Text style={[styles.title, { fontSize: scaledFontSize(18) }]}>{genreInfo.label}</Text>
+          <Text style={[styles.title, { fontSize: scaledFontSize(18) }]}>{genreLabel}</Text>
         </View>
-        <Text style={[styles.count, { fontSize: scaledFontSize(12) }]}>{genreStories.length} stories</Text>
+        <Text style={[styles.count, { fontSize: scaledFontSize(12) }]}>{genreStories.length} {t('stories.title', { defaultValue: 'stories' }).toLowerCase()}</Text>
       </View>
 
       {/* Stories Carousel */}

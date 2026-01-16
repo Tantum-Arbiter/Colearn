@@ -7,9 +7,9 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { Fonts } from '@/constants/theme';
 import { useTutorial } from '@/contexts/tutorial-context';
-import { MUSIC_TIPS } from './tutorial-content';
 
 interface MusicTipsOverlayProps {
   forceShow?: boolean;
@@ -26,11 +26,23 @@ const STEP_ICONS: Record<string, string> = {
   'music_stories': '📖',
 };
 
+// Music tips step IDs for translation lookup
+const MUSIC_TIP_IDS = [
+  'music_welcome',
+  'binaural_science',
+  'headphones_tip',
+  'tantrum_tip',
+  'sleep_science',
+  'sleep_routine',
+  'music_stories',
+];
+
 /**
  * Music Tips Overlay - Shows parent guidance about binaural beats and calming sounds
  * Displays on first visit to the music section
  */
 export function MusicTipsOverlay({ forceShow = false, onClose }: MusicTipsOverlayProps) {
+  const { t } = useTranslation();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const { hasSeenMusic, markMusicViewed, shouldShowTutorial } = useTutorial();
   const [isMounted, setIsMounted] = useState(false);
@@ -69,7 +81,7 @@ export function MusicTipsOverlay({ forceShow = false, onClose }: MusicTipsOverla
   }, [shouldShow, forceShow, overlayOpacity, cardOpacity, cardScale]);
 
   const handleNext = () => {
-    if (currentStep < MUSIC_TIPS.length - 1) {
+    if (currentStep < MUSIC_TIP_IDS.length - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
       handleClose();
@@ -104,10 +116,15 @@ export function MusicTipsOverlay({ forceShow = false, onClose }: MusicTipsOverla
     transform: [{ scale: cardScale.value }],
   }));
 
-  const currentTip = MUSIC_TIPS[currentStep];
+  const currentTipId = MUSIC_TIP_IDS[currentStep];
+  const currentTip = {
+    id: currentTipId,
+    title: t(`musicTips.${currentTipId}.title`),
+    description: t(`musicTips.${currentTipId}.description`),
+  };
   if (!isMounted) return null;
 
-  const isLastStep = currentStep === MUSIC_TIPS.length - 1;
+  const isLastStep = currentStep === MUSIC_TIP_IDS.length - 1;
   const isFirstStep = currentStep === 0;
 
   const landscapeCardStyle = isPhoneLandscape ? {
@@ -143,7 +160,7 @@ export function MusicTipsOverlay({ forceShow = false, onClose }: MusicTipsOverla
                   <Text style={[styles.description, { marginBottom: 8 }]}>{currentTip.description}</Text>
                   <View style={[styles.buttonRow, { marginTop: 4 }]}>
                     <View style={styles.progressDots}>
-                      {MUSIC_TIPS.map((_, i) => (
+                      {MUSIC_TIP_IDS.map((_, i) => (
                         <View key={i} style={[styles.dot, i === currentStep && styles.dotActive]} />
                       ))}
                     </View>
@@ -154,10 +171,10 @@ export function MusicTipsOverlay({ forceShow = false, onClose }: MusicTipsOverla
                         </Pressable>
                       )}
                       <Pressable onPress={handleNext} style={[styles.navButton, styles.nextButton]}>
-                        <Text style={[styles.nextText, { fontSize: 12 }]}>{isLastStep ? 'Go!' : 'Next'}</Text>
+                        <Text style={[styles.nextText, { fontSize: 12 }]}>{isLastStep ? t('musicTips.go') : t('musicTips.next')}</Text>
                       </Pressable>
                       <Pressable onPress={handleClose} style={[styles.skipButton, { marginLeft: 8 }]}>
-                        <Text style={[styles.skipText, { fontSize: 11 }]}>Skip</Text>
+                        <Text style={[styles.skipText, { fontSize: 11 }]}>{t('musicTips.skip')}</Text>
                       </Pressable>
                     </View>
                   </View>
@@ -173,14 +190,14 @@ export function MusicTipsOverlay({ forceShow = false, onClose }: MusicTipsOverla
                 <Text style={styles.description}>{currentTip.description}</Text>
 
                 <View style={styles.progressDots}>
-                  {MUSIC_TIPS.map((_, i) => (
+                  {MUSIC_TIP_IDS.map((_, i) => (
                     <View key={i} style={[styles.dot, i === currentStep && styles.dotActive]} />
                   ))}
                 </View>
 
                 <View style={styles.buttonRow}>
                   <Pressable onPress={handleClose} style={styles.skipButton}>
-                    <Text style={styles.skipText}>Skip All</Text>
+                    <Text style={styles.skipText}>{t('musicTips.skipAll')}</Text>
                   </Pressable>
 
                   <View style={styles.navButtons}>
@@ -190,7 +207,7 @@ export function MusicTipsOverlay({ forceShow = false, onClose }: MusicTipsOverla
                       </Pressable>
                     )}
                     <Pressable onPress={handleNext} style={[styles.navButton, styles.nextButton]}>
-                      <Text style={styles.nextText}>{isLastStep ? 'Let\'s Go!' : 'Next'}</Text>
+                      <Text style={styles.nextText}>{isLastStep ? t('musicTips.letsGo') : t('musicTips.next')}</Text>
                       {!isLastStep && <Ionicons name="chevron-forward" size={18} color="#fff" />}
                     </Pressable>
                   </View>

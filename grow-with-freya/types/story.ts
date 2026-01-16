@@ -92,33 +92,33 @@ export type StoryFilterTag =
 export interface StoryFilterTagInfo {
   id: StoryFilterTag;
   emoji: string;
-  label: string;
+  labelKey: string;
   color: string;
 }
 
 export const STORY_FILTER_TAGS: Record<StoryFilterTag, StoryFilterTagInfo> = {
-  personalized: { id: 'personalized', emoji: '🎭', label: 'Your Story', color: '#FF69B4' },
-  calming: { id: 'calming', emoji: '🧘', label: 'Calming', color: '#4ECDC4' },
-  bedtime: { id: 'bedtime', emoji: '🌙', label: 'Bedtime', color: '#96CEB4' },
-  adventure: { id: 'adventure', emoji: '🗺️', label: 'Adventure', color: '#FF6B6B' },
-  learning: { id: 'learning', emoji: '📚', label: 'Learning', color: '#FFEAA7' },
-  music: { id: 'music', emoji: '🎵', label: 'Music', color: '#FF9F43' },
-  'family-exercises': { id: 'family-exercises', emoji: '👨‍👩‍👧', label: 'Family', color: '#45B7D1' },
-  'imagination-games': { id: 'imagination-games', emoji: '🎭', label: 'Imagination', color: '#DDA0DD' },
-  animals: { id: 'animals', emoji: '🐾', label: 'Animals', color: '#8B4513' },
-  friendship: { id: 'friendship', emoji: '🤝', label: 'Friendship', color: '#FFB6C1' },
-  nature: { id: 'nature', emoji: '🌳', label: 'Nature', color: '#228B22' },
-  fantasy: { id: 'fantasy', emoji: '✨', label: 'Fantasy', color: '#9370DB' },
-  counting: { id: 'counting', emoji: '🔢', label: 'Counting', color: '#20B2AA' },
-  emotions: { id: 'emotions', emoji: '💖', label: 'Emotions', color: '#FF69B4' },
-  silly: { id: 'silly', emoji: '🤪', label: 'Silly', color: '#FFD700' },
-  rhymes: { id: 'rhymes', emoji: '📝', label: 'Rhymes', color: '#87CEEB' },
+  personalized: { id: 'personalized', emoji: '🎭', labelKey: 'stories.filterTags.personalized', color: '#FF69B4' },
+  calming: { id: 'calming', emoji: '🧘', labelKey: 'stories.filterTags.calming', color: '#4ECDC4' },
+  bedtime: { id: 'bedtime', emoji: '🌙', labelKey: 'stories.filterTags.bedtime', color: '#96CEB4' },
+  adventure: { id: 'adventure', emoji: '🗺️', labelKey: 'stories.filterTags.adventure', color: '#FF6B6B' },
+  learning: { id: 'learning', emoji: '📚', labelKey: 'stories.filterTags.learning', color: '#FFEAA7' },
+  music: { id: 'music', emoji: '🎵', labelKey: 'stories.filterTags.music', color: '#FF9F43' },
+  'family-exercises': { id: 'family-exercises', emoji: '👨‍👩‍👧', labelKey: 'stories.filterTags.family', color: '#45B7D1' },
+  'imagination-games': { id: 'imagination-games', emoji: '🎭', labelKey: 'stories.filterTags.imagination', color: '#DDA0DD' },
+  animals: { id: 'animals', emoji: '🐾', labelKey: 'stories.filterTags.animals', color: '#8B4513' },
+  friendship: { id: 'friendship', emoji: '🤝', labelKey: 'stories.filterTags.friendship', color: '#FFB6C1' },
+  nature: { id: 'nature', emoji: '🌳', labelKey: 'stories.filterTags.nature', color: '#228B22' },
+  fantasy: { id: 'fantasy', emoji: '✨', labelKey: 'stories.filterTags.fantasy', color: '#9370DB' },
+  counting: { id: 'counting', emoji: '🔢', labelKey: 'stories.filterTags.counting', color: '#20B2AA' },
+  emotions: { id: 'emotions', emoji: '💖', labelKey: 'stories.filterTags.emotions', color: '#FF69B4' },
+  silly: { id: 'silly', emoji: '🤪', labelKey: 'stories.filterTags.silly', color: '#FFD700' },
+  rhymes: { id: 'rhymes', emoji: '📝', labelKey: 'stories.filterTags.rhymes', color: '#87CEEB' },
 };
 
 export interface StoryTag {
   category: StoryCategory;
   emoji: string;
-  label: string;
+  labelKey: string;
   color: string;
 }
 
@@ -126,61 +126,61 @@ export const STORY_TAGS: Record<StoryCategory, StoryTag> = {
   personalized: {
     category: 'personalized',
     emoji: '🎭',
-    label: 'Your Avatar, Your Story',
+    labelKey: 'stories.genres.personalized',
     color: '#FF69B4'
   },
   bedtime: {
     category: 'bedtime',
     emoji: '🌙',
-    label: 'Bedtime',
+    labelKey: 'stories.genres.bedtime',
     color: '#96CEB4'
   },
   adventure: {
     category: 'adventure',
     emoji: '🗺️',
-    label: 'Adventure',
+    labelKey: 'stories.genres.adventure',
     color: '#FF6B6B'
   },
   nature: {
     category: 'nature',
     emoji: '🐢',
-    label: 'Nature',
+    labelKey: 'stories.genres.nature',
     color: '#4ECDC4'
   },
   friendship: {
     category: 'friendship',
     emoji: '🤝',
-    label: 'Friendship',
+    labelKey: 'stories.genres.friendship',
     color: '#45B7D1'
   },
   learning: {
     category: 'learning',
     emoji: '📚',
-    label: 'Learning',
+    labelKey: 'stories.genres.learning',
     color: '#FFEAA7'
   },
   fantasy: {
     category: 'fantasy',
     emoji: '✨',
-    label: 'Fantasy',
+    labelKey: 'stories.genres.fantasy',
     color: '#DDA0DD'
   },
   music: {
     category: 'music',
     emoji: '🎵',
-    label: 'Learn Music',
+    labelKey: 'stories.genres.music',
     color: '#FF9F43'
   },
   activities: {
     category: 'activities',
     emoji: '🎲',
-    label: 'Spontaneous Activities',
+    labelKey: 'stories.genres.activities',
     color: '#6C5CE7'
   },
   growing: {
     category: 'growing',
     emoji: '🌱',
-    label: 'Growing Together',
+    labelKey: 'stories.genres.growing',
     color: '#00B894'
   }
 };

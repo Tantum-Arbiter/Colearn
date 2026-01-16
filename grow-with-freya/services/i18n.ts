@@ -1,7 +1,14 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import * as Localization from 'expo-localization';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Safe import of Localization with fallback
+let Localization: { getLocales: () => Array<{ languageCode?: string }> } | null = null;
+try {
+  Localization = require('expo-localization');
+} catch (e) {
+  console.warn('expo-localization not available, using fallback');
+}
 
 // Import translation files
 import en from '../locales/en';
@@ -41,7 +48,7 @@ export async function getStoredLanguage(): Promise<SupportedLanguage> {
   }
   
   // Detect from device locale
-  const deviceLocale = Localization.getLocales()[0]?.languageCode || 'en';
+  const deviceLocale = Localization?.getLocales()[0]?.languageCode || 'en';
   return isValidLanguage(deviceLocale) ? deviceLocale as SupportedLanguage : 'en';
 }
 

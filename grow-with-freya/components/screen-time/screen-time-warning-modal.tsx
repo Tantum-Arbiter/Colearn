@@ -10,6 +10,7 @@ import Animated, {
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 import { ScreenTimeWarning } from '../../services/screen-time-service';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -26,6 +27,7 @@ export function ScreenTimeWarningModal({
   warning,
   onDismiss,
 }: ScreenTimeWarningModalProps) {
+  const { t } = useTranslation();
   // Animation values for slide up/down
   const translateY = useSharedValue(SCREEN_HEIGHT);
   const backdropOpacity = useSharedValue(0);
@@ -91,13 +93,13 @@ export function ScreenTimeWarningModal({
   const getModalTitle = () => {
     switch (warning.type) {
       case 'approaching_limit':
-        return 'Screen Time Warning';
+        return t('screenTimeWarning.approachingLimit');
       case 'limit_reached':
-        return 'Daily Limit Reached';
+        return t('screenTimeWarning.limitReached');
       case 'daily_complete':
-        return 'Great Job Today!';
+        return t('screenTimeWarning.dailyComplete');
       default:
-        return 'Screen Time Notice';
+        return t('screenTimeWarning.notice');
     }
   };
 
@@ -144,7 +146,7 @@ export function ScreenTimeWarningModal({
             {/* WHO/AAP Guidelines Note */}
             <View style={styles.guidelinesContainer}>
               <Text style={styles.guidelinesText}>
-                📋 Following WHO & AAP recommendations for healthy screen time
+                📋 {t('screenTimeWarning.guidelines')}
               </Text>
             </View>
 
@@ -154,14 +156,14 @@ export function ScreenTimeWarningModal({
                 style={[styles.button, styles.closeButton]}
                 onPress={handleDismiss}
               >
-                <Text style={styles.closeButtonText}>Close Notification</Text>
+                <Text style={styles.closeButtonText}>{t('screenTimeWarning.closeNotification')}</Text>
               </Pressable>
             </View>
 
             {/* Educational Message */}
             <View style={styles.educationalContainer}>
               <Text style={styles.educationalText}>
-                💡 Try other activities: reading books, playing outside, or creative play!
+                💡 {t('screenTimeWarning.educationalMessage')}
               </Text>
             </View>
           </LinearGradient>

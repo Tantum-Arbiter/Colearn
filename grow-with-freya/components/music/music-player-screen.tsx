@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  Pressable, 
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
   Dimensions,
-  Alert 
+  Alert
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,6 +18,7 @@ import Animated, {
   Easing
 } from 'react-native-reanimated';
 import Slider from '@react-native-community/slider';
+import { useTranslation } from 'react-i18next';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
 import { BearTopImage } from '@/components/main-menu/animated-components';
@@ -26,9 +27,11 @@ import { mainMenuStyles } from '@/components/main-menu/styles';
 import { MusicControl } from '../ui/music-control';
 import { useMusicPlayer } from '@/hooks/use-music-player';
 import { getCategoryInfo } from '@/data/music';
-import { Fonts, BackButtonText } from '@/constants/theme';
+import { Fonts } from '@/constants/theme';
 import { SleepSequencePlayer } from '@/services/sleep-sequence-player';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { useBackButtonText } from '@/hooks/use-back-button-text';
+import { MusicTrack } from '@/types/music';
 
 interface MusicPlayerScreenProps {
   onBack: () => void;
@@ -38,8 +41,10 @@ interface MusicPlayerScreenProps {
 const _dimensions = Dimensions.get('window'); // Keep for potential future use
 
 export function MusicPlayerScreen({ onBack }: MusicPlayerScreenProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledButtonSize } = useAccessibility();
+  const backButtonText = useBackButtonText();
   const {
     currentTrack,
     currentPlaylist,
@@ -51,6 +56,15 @@ export function MusicPlayerScreen({ onBack }: MusicPlayerScreenProps) {
     seekTo,
     togglePlayPause,
   } = useMusicPlayer();
+
+  // Helper to get localized track text (uses translation key if available, falls back to default)
+  const getTrackTitle = useCallback((track: MusicTrack) => {
+    return track.titleKey ? t(track.titleKey) : track.title;
+  }, [t]);
+
+  const getTrackArtist = useCallback((track: MusicTrack) => {
+    return track.artistKey ? t(track.artistKey) : (track.artist || t('music.unknownArtist'));
+  }, [t]);
 
 
   const [sequenceStatus, setSequenceStatus] = useState<{
@@ -94,9 +108,9 @@ export function MusicPlayerScreen({ onBack }: MusicPlayerScreenProps) {
   // Show error alerts
   useEffect(() => {
     if (error) {
-      Alert.alert('Music Player Error', error, [{ text: 'OK' }]);
+      Alert.alert(t('music.playerError'), error, [{ text: t('common.ok') }]);
     }
-  }, [error]);
+  }, [error, t]);
 
   // Track sequence status for binaural beats
   useEffect(() => {
@@ -155,12 +169,12 @@ export function MusicPlayerScreen({ onBack }: MusicPlayerScreenProps) {
       >
         <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50) }]}>
           <Pressable style={styles.backButton} onPress={onBack}>
-            <Text style={styles.backButtonText}>{BackButtonText}</Text>
+            <Text style={styles.backButtonText}>{backButtonText}</Text>
           </Pressable>
         </View>
         <View style={styles.emptyState}>
-          <Text style={styles.emptyStateText}>No track selected</Text>
-          <Text style={styles.emptyStateSubtext}>Choose a song to start playing</Text>
+          <Text style={styles.emptyStateText}>{t('music.noTrackSelected')}</Text>
+          <Text style={styles.emptyStateSubtext}>{t('music.chooseASong')}</Text>
         </View>
       </LinearGradient>
     );
@@ -199,7 +213,7 @@ export function MusicPlayerScreen({ onBack }: MusicPlayerScreenProps) {
       {/* Header */}
       <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50), zIndex: 50 }]}>
         <Pressable style={[styles.backButton, { minHeight: scaledButtonSize(40) }]} onPress={onBack}>
-          <Text style={[styles.backButtonText, { fontSize: scaledFontSize(16) }]}>{BackButtonText}</Text>
+          <Text style={[styles.backButtonText, { fontSize: scaledFontSize(16) }]}>{backButtonText}</Text>
         </Pressable>
         <View style={{ width: 24 }} />
         <MusicControl size={24} color="white" />
@@ -216,20 +230,20 @@ export function MusicPlayerScreen({ onBack }: MusicPlayerScreenProps) {
 
         {/* Track Info */}
         <View style={styles.trackInfo}>
-          <Text style={[styles.trackTitle, { fontSize: scaledFontSize(24) }]}>{currentTrack.title}</Text>
-          <Text style={[styles.trackArtist, { fontSize: scaledFontSize(18) }]}>{currentTrack.artist || 'Unknown Artist'}</Text>
+          <Text style={[styles.trackTitle, { fontSize: scaledFontSize(24) }]}>{getTrackTitle(currentTrack)}</Text>
+          <Text style={[styles.trackArtist, { fontSize: scaledFontSize(18) }]}>{getTrackArtist(currentTrack)}</Text>
           {currentPlaylist && (
-            <Text style={[styles.playlistName, { fontSize: scaledFontSize(14) }]}>from {currentPlaylist.title}</Text>
+            <Text style={[styles.playlistName, { fontSize: scaledFontSize(14) }]}>{t('music.fromPlaylist', { playlist: currentPlaylist.title })}</Text>
           )}
 
           {/* Repeat Status for Tantrum Tracks */}
           {currentTrack?.subcategory === 'tantrum' && (
             <View style={styles.sequenceStatus}>
               <Text style={[styles.sequenceText, { fontSize: scaledFontSize(14) }]}>
-                Repeat {repeatCount + 1} of 3
+                {t('music.repeatCount', { current: repeatCount + 1, total: 3 })}
               </Text>
               <Text style={[styles.sequenceTime, { fontSize: scaledFontSize(12) }]}>
-                Calming session in progress
+                {t('music.calmingSession')}
               </Text>
             </View>
           )}
@@ -239,10 +253,10 @@ export function MusicPlayerScreen({ onBack }: MusicPlayerScreenProps) {
             <View style={styles.sleepCountdownContainer}>
               <View style={styles.phaseIndicator}>
                 <Text style={[styles.phaseText, { fontSize: scaledFontSize(18) }]}>
-                  {sequenceStatus.isInThetaPhase ? 'Deep Sleep Phase' : 'Relaxation Phase'}
+                  {sequenceStatus.isInThetaPhase ? t('music.deepSleepPhase') : t('music.relaxationPhase')}
                 </Text>
                 <Text style={[styles.phaseSubtext, { fontSize: scaledFontSize(14) }]}>
-                  Phase {sequenceStatus.currentPhase} of {sequenceStatus.totalPhases}
+                  {t('music.phase', { current: sequenceStatus.currentPhase, total: sequenceStatus.totalPhases })}
                 </Text>
               </View>
 
@@ -291,7 +305,7 @@ export function MusicPlayerScreen({ onBack }: MusicPlayerScreenProps) {
             <Animated.View style={playButtonAnimatedStyle}>
               <Pressable style={styles.playButton} onPress={togglePlayPause}>
                 <Text style={styles.playButtonText}>
-                  {playbackState === 'playing' ? 'Pause' : 'Play'}
+                  {playbackState === 'playing' ? t('music.pause') : t('music.play')}
                 </Text>
               </Pressable>
             </Animated.View>
@@ -301,9 +315,11 @@ export function MusicPlayerScreen({ onBack }: MusicPlayerScreenProps) {
         {/* Playback State Indicator */}
         <View style={styles.stateIndicator}>
           <Text style={styles.stateText}>
-            {playbackState === 'loading' ? 'Loading...' : 
-             playbackState === 'error' ? 'Error' : 
-             playbackState.charAt(0).toUpperCase() + playbackState.slice(1)}
+            {playbackState === 'loading' ? t('music.loading') :
+             playbackState === 'error' ? t('music.error') :
+             playbackState === 'playing' ? t('music.playing') :
+             playbackState === 'paused' ? t('music.paused') :
+             t('music.idle')}
           </Text>
         </View>
       </View>

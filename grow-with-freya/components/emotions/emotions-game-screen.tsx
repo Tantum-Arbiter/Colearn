@@ -9,17 +9,20 @@ import Animated, {
   withSequence,
   Easing,
 } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { ThemedText } from '@/components/themed-text';
 import { EmotionCard } from './emotion-card';
-import { getRandomEmotion, getRandomPrompt, EMOTION_GAME_CONFIG } from '@/data/emotions';
+import { getRandomEmotion, getRandomPromptIndex, EMOTION_GAME_CONFIG } from '@/data/emotions';
 import { Emotion, EmotionGameState, EmotionTheme } from '@/types/emotion';
-import { Fonts, BackButtonText } from '@/constants/theme';
+import { getThemeNameKey, getThemeName } from '@/data/emotion-themes';
+import { Fonts } from '@/constants/theme';
 
 import { MusicControl } from '../ui/music-control';
 import * as Haptics from 'expo-haptics';
 import { BearTopImage } from '@/components/main-menu/animated-components';
 import { mainMenuStyles } from '@/components/main-menu/styles';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { useBackButtonText } from '@/hooks/use-back-button-text';
 
 interface EmotionsGameScreenProps {
   onBack: () => void;
@@ -28,22 +31,29 @@ interface EmotionsGameScreenProps {
 }
 
 export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'emoji' }: EmotionsGameScreenProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
+  const backButtonText = useBackButtonText();
 
   // Initialize with an emotion immediately to avoid loading screen
   const initialEmotion = getRandomEmotion([]);
-  const initialPrompt = getRandomPrompt(initialEmotion);
+  const initialPromptIndex = getRandomPromptIndex();
 
   const [gameState, setGameState] = useState<EmotionGameState>({
     currentEmotion: initialEmotion,
     score: 0,
     level: 1,
     completedEmotions: [],
-    currentPrompt: initialPrompt,
+    currentPrompt: String(initialPromptIndex), // Store prompt index as string
     isGameActive: true,
     selectedTheme: selectedTheme
   });
+
+  // Get the translated prompt based on current emotion and prompt index
+  const currentPrompt = gameState.currentEmotion
+    ? t(`emotions.prompts.${gameState.currentEmotion.id}.${gameState.currentPrompt}`)
+    : '';
 
   const [timeLeft, setTimeLeft] = useState(EMOTION_GAME_CONFIG.timePerEmotion || 15);
   const [isTimerActive, setIsTimerActive] = useState(true);
@@ -184,13 +194,13 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
 
   const spinInNewEmotion = (completedEmotions: string[]) => {
     const newEmotion = getRandomEmotion(completedEmotions);
-    const prompt = getRandomPrompt(newEmotion);
+    const promptIndex = getRandomPromptIndex();
 
     // Update game state with new emotion
     setGameState(prev => ({
       ...prev,
       currentEmotion: newEmotion,
-      currentPrompt: prompt,
+      currentPrompt: String(promptIndex), // Store prompt index as string
       isGameActive: true
     }));
 
@@ -263,7 +273,7 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
       {/* Header */}
       <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50), zIndex: 50 }]}>
         <Pressable style={[styles.backButton, { minHeight: scaledButtonSize(40) }]} onPress={onBack}>
-          <ThemedText style={[styles.backButtonText, { fontSize: scaledFontSize(16) }]}>{BackButtonText}</ThemedText>
+          <ThemedText style={[styles.backButtonText, { fontSize: scaledFontSize(16) }]}>{backButtonText}</ThemedText>
         </Pressable>
 
         <View style={{ width: 24 }} />
@@ -289,7 +299,7 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
         {/* Expression prompt */}
         <Animated.View style={[styles.promptContainer, promptAnimatedStyle]}>
           <ThemedText style={[styles.promptText, { fontSize: scaledFontSize(20) }]}>
-            {gameState.currentPrompt}
+            {currentPrompt}
           </ThemedText>
         </Animated.View>
 
@@ -310,8 +320,12 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
         >
           <ThemedText style={[styles.expressionButtonText, { fontSize: scaledFontSize(18) }]}>
             {isCardAnimating
-              ? "Loading..."
-              : `I'm expressing ${gameState.currentEmotion!.name}!`
+              ? t('emotions.loading')
+              : t('emotions.expressing', {
+                  emotion: getThemeNameKey(gameState.currentEmotion!.id, selectedTheme)
+                    ? t(getThemeNameKey(gameState.currentEmotion!.id, selectedTheme)!)
+                    : getThemeName(gameState.currentEmotion!.id, selectedTheme)
+                })
             }
           </ThemedText>
         </Pressable>
@@ -319,7 +333,7 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
         {/* Progress indicator */}
         <View style={styles.progressContainer}>
           <ThemedText style={[styles.progressText, { fontSize: scaledFontSize(16) }]}>
-            Progress: {gameState.completedEmotions.length} / {EMOTION_GAME_CONFIG.emotionsPerLevel}
+            {t('emotions.progress', { completed: gameState.completedEmotions.length, total: EMOTION_GAME_CONFIG.emotionsPerLevel })}
           </ThemedText>
           <View style={styles.progressBar}>
             <View

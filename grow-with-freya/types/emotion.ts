@@ -3,13 +3,16 @@ export type EmotionTheme = 'emoji' | 'animals' | 'bear';
 export interface EmotionThemeItem {
   icon: string;
   name: string;
+  nameKey?: string; // Translation key for the name
   image?: number; // Optional image source (require() returns a number)
 }
 
 export interface EmotionThemeData {
   id: EmotionTheme;
   name: string;
+  nameKey?: string; // Translation key for the theme name
   description: string;
+  descriptionKey?: string; // Translation key for the description
   icon: string;
   themeIcon?: number; // Optional image source for theme icon (require() returns a number)
   emotions: Record<string, EmotionThemeItem>;
@@ -21,7 +24,6 @@ export interface Emotion {
   emoji: string;
   color: string;
   description: string;
-  expressionPrompts: string[];
   difficulty: 'easy' | 'medium' | 'hard';
   category: 'basic' | 'complex' | 'social';
 }

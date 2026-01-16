@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/constants/theme';
 import { useTutorial } from '@/contexts/tutorial-context';
 import { SETTINGS_WALKTHROUGH_STEPS } from './tutorial-content';
+import { useTranslation } from 'react-i18next';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -22,6 +23,7 @@ interface SettingsTipsOverlayProps {
  * Settings Tips Overlay - Shows guidance on first settings visit
  */
 export function SettingsTipsOverlay({ isActive = true }: SettingsTipsOverlayProps) {
+  const { t } = useTranslation();
   const { hasSeenSettings, markSettingsViewed, shouldShowTutorial, isLoaded } = useTutorial();
   const [isVisible, setIsVisible] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
@@ -118,8 +120,8 @@ export function SettingsTipsOverlay({ isActive = true }: SettingsTipsOverlayProp
             </Text>
           </View>
 
-          <Text style={styles.title}>{currentTip.title}</Text>
-          <Text style={styles.description}>{currentTip.description}</Text>
+          <Text style={styles.title}>{t(currentTip.titleKey)}</Text>
+          <Text style={styles.description}>{t(currentTip.descriptionKey)}</Text>
 
           <View style={styles.progressDots}>
             {SETTINGS_WALKTHROUGH_STEPS.map((_, i) => (
@@ -132,7 +134,7 @@ export function SettingsTipsOverlay({ isActive = true }: SettingsTipsOverlayProp
 
           <View style={styles.buttonRow}>
             <Pressable onPress={handleClose} style={styles.skipButton}>
-              <Text style={styles.skipText}>Skip All</Text>
+              <Text style={styles.skipText} numberOfLines={1} adjustsFontSizeToFit>{t('tutorial.buttons.skipAll')}</Text>
             </Pressable>
 
             <View style={styles.navButtons}>
@@ -145,7 +147,7 @@ export function SettingsTipsOverlay({ isActive = true }: SettingsTipsOverlayProp
                 onPress={handleNext}
                 style={[styles.navButton, styles.nextButton]}
               >
-                <Text style={styles.nextText}>{isLastStep ? 'Got it!' : 'Next'}</Text>
+                <Text style={styles.nextText} numberOfLines={1} adjustsFontSizeToFit>{isLastStep ? t('tutorial.buttons.gotIt') : t('tutorial.buttons.next')}</Text>
                 {!isLastStep && <Ionicons name="chevron-forward" size={18} color="#fff" />}
               </Pressable>
             </View>
@@ -156,7 +158,7 @@ export function SettingsTipsOverlay({ isActive = true }: SettingsTipsOverlayProp
   );
 }
 
-const CARD_WIDTH = Math.min(SCREEN_WIDTH - 40, 340);
+const CARD_MAX_WIDTH = Math.min(SCREEN_WIDTH - 40, 380);
 
 const styles = StyleSheet.create({
   overlay: {
@@ -164,9 +166,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.75)',
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
   },
   card: {
-    width: CARD_WIDTH,
+    width: '100%',
+    maxWidth: CARD_MAX_WIDTH,
     backgroundColor: '#fff',
     borderRadius: 20,
     padding: 24,
@@ -216,20 +220,22 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
+    flexWrap: 'wrap',
+    gap: 8,
   },
-  skipButton: { padding: 10 },
+  skipButton: { padding: 10, flexShrink: 1 },
   skipText: { fontSize: 14, fontFamily: Fonts.sans, fontWeight: '500' as const, color: '#888' },
-  navButtons: { flexDirection: 'row', gap: 8 },
+  navButtons: { flexDirection: 'row', gap: 8, flexShrink: 0 },
   navButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#4ECDC4',
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 20,
   },
-  nextButton: { minWidth: 100 },
+  nextButton: { minWidth: 80, maxWidth: 120 },
   nextText: {
     fontSize: 14,
     fontFamily: Fonts.sans,

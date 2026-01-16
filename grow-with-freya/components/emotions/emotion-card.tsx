@@ -8,9 +8,10 @@ import Animated, {
   withSequence,
   Easing,
 } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { ThemedText } from '@/components/themed-text';
 import { EmotionCardProps } from '@/types/emotion';
-import { getThemeIcon, getThemeName, getThemeImage } from '@/data/emotion-themes';
+import { getThemeIcon, getThemeNameKey, getThemeName, getThemeImage } from '@/data/emotion-themes';
 import * as Haptics from 'expo-haptics';
 import { useAccessibility } from '@/hooks/use-accessibility';
 
@@ -23,6 +24,7 @@ export function EmotionCard({
   size = 'medium',
   theme = 'emoji'
 }: EmotionCardProps) {
+  const { t } = useTranslation();
   // Accessibility scaling
   const { scaledFontSize } = useAccessibility();
 
@@ -160,7 +162,7 @@ export function EmotionCard({
 
           {/* Themed emotion name */}
           <ThemedText style={[styles.emotionName, { fontSize: scaledFontSize(config.titleSize) }]}>
-            {getThemeName(emotion.id, theme)}
+            {getThemeNameKey(emotion.id, theme) ? t(getThemeNameKey(emotion.id, theme)!) : getThemeName(emotion.id, theme)}
           </ThemedText>
         </LinearGradient>
       </Pressable>

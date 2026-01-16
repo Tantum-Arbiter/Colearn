@@ -9,14 +9,16 @@ import Animated, {
   withTiming,
   Easing
 } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import { ThemedText } from '@/components/themed-text';
 import { MusicControl } from '@/components/ui/music-control';
-import { EmotionTheme } from '@/types/emotion';
+import { EmotionTheme, EmotionThemeData } from '@/types/emotion';
 import { getAllThemes, getThemeById } from '@/data/emotion-themes';
-import { Fonts, BackButtonText } from '@/constants/theme';
+import { Fonts } from '@/constants/theme';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { useBackButtonText } from '@/hooks/use-back-button-text';
 
 interface ThemeSelectionScreenProps {
   onThemeSelected: (theme: EmotionTheme) => void;
@@ -29,10 +31,12 @@ export function ThemeSelectionScreen({
   onBack,
   selectedTheme = 'emoji'
 }: ThemeSelectionScreenProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [currentTheme, setCurrentTheme] = useState<EmotionTheme>(selectedTheme);
   const themes = getAllThemes();
   const { scaledFontSize, scaledButtonSize, scaledPadding } = useAccessibility();
+  const backButtonText = useBackButtonText();
 
   const handleThemePress = (themeId: EmotionTheme) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -76,7 +80,7 @@ export function ThemeSelectionScreen({
               fontSize: scaledFontSize(16),
               fontWeight: 'bold',
               fontFamily: Fonts.primary,
-            }}>{BackButtonText}</ThemedText>
+            }}>{backButtonText}</ThemedText>
           </Pressable>
 
           <MusicControl
@@ -102,6 +106,7 @@ export function ThemeSelectionScreen({
               isSelected={currentTheme === theme.id}
               onPress={() => handleThemePress(theme.id)}
               animationDelay={index * 150}
+              t={t}
             />
           ))}
         </View>
@@ -128,13 +133,14 @@ export function ThemeSelectionScreen({
 }
 
 interface ThemeCardProps {
-  theme: any;
+  theme: EmotionThemeData;
   isSelected: boolean;
   onPress: () => void;
   animationDelay: number;
+  t: (key: string) => string;
 }
 
-function ThemeCard({ theme, isSelected, onPress, animationDelay }: ThemeCardProps) {
+function ThemeCard({ theme, isSelected, onPress, animationDelay, t }: ThemeCardProps) {
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.8);
   const translateY = useSharedValue(30);
@@ -206,12 +212,12 @@ function ThemeCard({ theme, isSelected, onPress, animationDelay }: ThemeCardProp
           
           {/* Theme Name */}
           <ThemedText style={[styles.themeName, isSelected && styles.themeNameSelected]}>
-            {theme.name}
+            {theme.nameKey ? t(theme.nameKey) : theme.name}
           </ThemedText>
-          
+
           {/* Theme Description */}
           <ThemedText style={[styles.themeDescription, isSelected && styles.themeDescriptionSelected]}>
-            {theme.description}
+            {theme.descriptionKey ? t(theme.descriptionKey) : theme.description}
           </ThemedText>
         </LinearGradient>
       </Pressable>

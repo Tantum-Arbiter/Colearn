@@ -31,11 +31,12 @@ export interface AccessibilityScale {
 }
 
 // Text size scale options: 0.85, 1.0, 1.15, 1.3
+// Use labelKey for i18n translation - components should use t(option.labelKey)
 export const TEXT_SIZE_OPTIONS = [
-  { label: 'Small', value: 0.85 },
-  { label: 'Default', value: 1.0 },
-  { label: 'Large', value: 1.15 },
-  { label: 'X Large', value: 1.3 },
+  { labelKey: 'common.small', value: 0.85 },
+  { labelKey: 'common.default', value: 1.0 },
+  { labelKey: 'common.large', value: 1.15 },
+  { labelKey: 'common.extraLarge', value: 1.3 },
 ];
 
 export function useAccessibility(): AccessibilityScale {

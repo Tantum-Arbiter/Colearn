@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/constants/theme';
 import { useTutorial } from '@/contexts/tutorial-context';
 import { STORY_READER_TIPS } from './tutorial-content';
+import { useTranslation } from 'react-i18next';
 
 interface StoryTipsOverlayProps {
   storyId: string;
@@ -23,6 +24,7 @@ interface StoryTipsOverlayProps {
  * Displays a series of slides about how to maximize story time
  */
 export function StoryTipsOverlay({ storyId, forceShow = false, onClose }: StoryTipsOverlayProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const { hasSeenFirstStory, markFirstStoryViewed, shouldShowTutorial } = useTutorial();
@@ -154,8 +156,8 @@ export function StoryTipsOverlay({ storyId, forceShow = false, onClose }: StoryT
                   </Text>
                 </View>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.title, { marginBottom: 4 }]}>{currentTip.title}</Text>
-                <Text style={[styles.description, { marginBottom: 8 }]}>{currentTip.description}</Text>
+                <Text style={[styles.title, { marginBottom: 4 }]}>{t(currentTip.titleKey)}</Text>
+                <Text style={[styles.description, { marginBottom: 8 }]}>{t(currentTip.descriptionKey)}</Text>
                 <View style={[styles.buttonRow, { marginTop: 4 }]}>
                   <View style={styles.progressDots}>
                     {STORY_READER_TIPS.map((_, i) => (
@@ -169,10 +171,10 @@ export function StoryTipsOverlay({ storyId, forceShow = false, onClose }: StoryT
                       </Pressable>
                     )}
                     <Pressable onPress={handleNext} style={[styles.navButton, styles.nextButton]}>
-                      <Text style={[styles.nextText, { fontSize: 12 }]}>{isLastStep ? 'Go!' : 'Next'}</Text>
+                      <Text style={[styles.nextText, { fontSize: 12 }]}>{isLastStep ? t('tutorial.buttons.go') : t('tutorial.buttons.next')}</Text>
                     </Pressable>
                     <Pressable onPress={handleClose} style={[styles.skipButton, { marginLeft: 8 }]}>
-                      <Text style={[styles.skipText, { fontSize: 11 }]}>Skip</Text>
+                      <Text style={[styles.skipText, { fontSize: 11 }]}>{t('tutorial.buttons.skip')}</Text>
                     </Pressable>
                   </View>
                 </View>
@@ -192,8 +194,8 @@ export function StoryTipsOverlay({ storyId, forceShow = false, onClose }: StoryT
                 </Text>
               </View>
 
-              <Text style={styles.title}>{currentTip.title}</Text>
-              <Text style={styles.description}>{currentTip.description}</Text>
+              <Text style={styles.title}>{t(currentTip.titleKey)}</Text>
+              <Text style={styles.description}>{t(currentTip.descriptionKey)}</Text>
 
               <View style={styles.progressDots}>
                 {STORY_READER_TIPS.map((_, i) => (
@@ -203,7 +205,7 @@ export function StoryTipsOverlay({ storyId, forceShow = false, onClose }: StoryT
 
               <View style={styles.buttonRow}>
                 <Pressable onPress={handleClose} style={styles.skipButton}>
-                  <Text style={styles.skipText}>Skip All</Text>
+                  <Text style={styles.skipText}>{t('tutorial.buttons.skipAll')}</Text>
                 </Pressable>
 
                 <View style={styles.navButtons}>
@@ -213,7 +215,7 @@ export function StoryTipsOverlay({ storyId, forceShow = false, onClose }: StoryT
                     </Pressable>
                   )}
                   <Pressable onPress={handleNext} style={[styles.navButton, styles.nextButton]}>
-                    <Text style={styles.nextText}>{isLastStep ? 'Start Reading!' : 'Next'}</Text>
+                    <Text style={styles.nextText}>{isLastStep ? t('tutorial.buttons.startReading') : t('tutorial.buttons.next')}</Text>
                     {!isLastStep && <Ionicons name="chevron-forward" size={18} color="#fff" />}
                   </Pressable>
                 </View>
