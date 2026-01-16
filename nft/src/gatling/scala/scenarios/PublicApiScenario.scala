@@ -26,11 +26,17 @@ object PublicApiScenario {
   val testCategory = sys.env.getOrElse("TEST_CATEGORY", "bedtime")
   val testAssetPath = sys.env.getOrElse("TEST_ASSET_PATH", "stories/images/test.png")
 
-  // Load test configuration - keep low for local Docker testing
-  // With 12+ scenarios in parallel: actual RPS ≈ usersPerSec × number_of_scenarios
-  val testDuration = sys.props.getOrElse("NFT_DURATION_MINUTES", "2").toInt minutes
-  val usersPerSec = sys.props.getOrElse("NFT_USERS_PER_SEC", "2").toDouble  // 2 × 12 = ~24 RPS total
-  val rampDuration = sys.props.getOrElse("NFT_RAMP_SECONDS", "15").toInt seconds
+  // Load test configuration
+  // Ramp: 30s to 10 TPS -> Hold: 4:30 at 100 TPS -> Ramp down: 10s
+  val warmupDuration = 30 seconds
+  val warmupRps = 10
+  val peakDuration = (4 minutes) + (30 seconds)  // 4:30
+  val peakRps = 100
+  val cooldownDuration = 10 seconds
+
+  // Total test duration for injection (must cover full throttle)
+  val testDuration = warmupDuration + peakDuration + cooldownDuration
+  val usersPerSec = peakRps.toDouble  // Inject enough users to sustain peak
 
   // Common headers
   val jsonHeaders = Map(
@@ -54,6 +60,14 @@ object PublicApiScenario {
   // Status Endpoints (Health Checks)
   // ============================================
 
+  // Common throttle pattern: 30s warmup to 10 TPS -> 4:30 at 100 TPS -> 10s cooldown
+  def standardThrottle = Seq(
+    reachRps(warmupRps) in warmupDuration,
+    reachRps(peakRps) in (10 seconds),  // Quick ramp to peak
+    holdFor(peakDuration),
+    reachRps(0) in cooldownDuration
+  )
+
   val root_status_scenario = scenario("GET / - Root Status")
     .exec(
       http("root_status")
@@ -61,11 +75,7 @@ object PublicApiScenario {
         .check(status.is(200))
     )
     .inject(constantUsersPerSec(usersPerSec) during testDuration)
-    .throttle(
-      reachRps(usersPerSec.toInt) in rampDuration,
-      holdFor(testDuration),
-      reachRps(0) in rampDuration
-    )
+    .throttle(standardThrottle: _*)
 
   val auth_status_scenario = scenario("GET /auth/status - Auth Service Status")
     .exec(
@@ -74,11 +84,7 @@ object PublicApiScenario {
         .check(status.is(200))
     )
     .inject(constantUsersPerSec(usersPerSec) during testDuration)
-    .throttle(
-      reachRps(usersPerSec.toInt) in rampDuration,
-      holdFor(testDuration),
-      reachRps(0) in rampDuration
-    )
+    .throttle(standardThrottle: _*)
 
   // ============================================
   // Stories Endpoints (All /api/** require auth)
@@ -92,11 +98,7 @@ object PublicApiScenario {
         .check(status.is(200))
     )
     .inject(constantUsersPerSec(usersPerSec) during testDuration)
-    .throttle(
-      reachRps(usersPerSec.toInt) in rampDuration,
-      holdFor(testDuration),
-      reachRps(0) in rampDuration
-    )
+    .throttle(standardThrottle: _*)
 
   val get_story_by_id_scenario = scenario("GET /api/stories/{storyId} - Get Story by ID")
     .exec(
@@ -106,11 +108,7 @@ object PublicApiScenario {
         .check(status.in(200, 404))
     )
     .inject(constantUsersPerSec(usersPerSec) during testDuration)
-    .throttle(
-      reachRps(usersPerSec.toInt) in rampDuration,
-      holdFor(testDuration),
-      reachRps(0) in rampDuration
-    )
+    .throttle(standardThrottle: _*)
 
   val get_stories_version_scenario = scenario("GET /api/stories/version - Get Content Version")
     .exec(
@@ -120,11 +118,7 @@ object PublicApiScenario {
         .check(status.is(200))
     )
     .inject(constantUsersPerSec(usersPerSec) during testDuration)
-    .throttle(
-      reachRps(usersPerSec.toInt) in rampDuration,
-      holdFor(testDuration),
-      reachRps(0) in rampDuration
-    )
+    .throttle(standardThrottle: _*)
 
   val get_stories_by_category_scenario = scenario("GET /api/stories/category/{category} - Get Stories by Category")
     .exec(
@@ -134,11 +128,7 @@ object PublicApiScenario {
         .check(status.in(200, 404))
     )
     .inject(constantUsersPerSec(usersPerSec) during testDuration)
-    .throttle(
-      reachRps(usersPerSec.toInt) in rampDuration,
-      holdFor(testDuration),
-      reachRps(0) in rampDuration
-    )
+    .throttle(standardThrottle: _*)
 
   val sync_stories_scenario = scenario("POST /api/stories/sync - Sync Stories")
     .exec(
@@ -149,11 +139,7 @@ object PublicApiScenario {
         .check(status.in(200, 204, 500))
     )
     .inject(constantUsersPerSec(usersPerSec) during testDuration)
-    .throttle(
-      reachRps(usersPerSec.toInt) in rampDuration,
-      holdFor(testDuration),
-      reachRps(0) in rampDuration
-    )
+    .throttle(standardThrottle: _*)
 
   // ============================================
   // Assets Endpoints (All /api/** require auth)
@@ -170,11 +156,7 @@ object PublicApiScenario {
         .check(status.is(200))
     )
     .inject(constantUsersPerSec(usersPerSec) during testDuration)
-    .throttle(
-      reachRps(usersPerSec.toInt) in rampDuration,
-      holdFor(testDuration),
-      reachRps(0) in rampDuration
-    )
+    .throttle(standardThrottle: _*)
 
   val sync_assets_scenario = scenario("POST /api/assets/sync - Sync Assets")
     .exec(
@@ -185,11 +167,7 @@ object PublicApiScenario {
         .check(status.in(200, 204, 500))
     )
     .inject(constantUsersPerSec(usersPerSec) during testDuration)
-    .throttle(
-      reachRps(usersPerSec.toInt) in rampDuration,
-      holdFor(testDuration),
-      reachRps(0) in rampDuration
-    )
+    .throttle(standardThrottle: _*)
 
   // ============================================
   // Profile Endpoints - DISABLED for NFT
