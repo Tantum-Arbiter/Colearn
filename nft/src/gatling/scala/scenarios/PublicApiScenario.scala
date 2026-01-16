@@ -32,11 +32,15 @@ object PublicApiScenario {
     "User-Agent" -> "GrowWithFreya-NFT/1.0 (Gatling Load Test)"
   )
 
+  // Authenticated API headers (require device info for /api/** endpoints)
   val authHeaders = Map(
     "Content-Type" -> "application/json",
     "Accept" -> "application/json",
     "Authorization" -> s"Bearer $bearerToken",
-    "User-Agent" -> "GrowWithFreya-NFT/1.0 (Gatling Load Test)"
+    "User-Agent" -> "GrowWithFreya-NFT/1.0 (Gatling Load Test)",
+    "X-Device-ID" -> "nft-load-test-device",
+    "X-Client-Platform" -> "ios",
+    "X-Client-Version" -> "1.0.0"
   )
 
   // ============================================
