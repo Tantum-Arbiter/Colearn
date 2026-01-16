@@ -1,6 +1,7 @@
 package scenarios
 
 import io.gatling.core.Predef._
+import io.gatling.core.structure.{PopulationBuilder, ScenarioBuilder}
 import io.gatling.http.Predef._
 import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
@@ -62,79 +63,86 @@ object PublicApiScenario {
   // Status Endpoints (Health Checks)
   // ============================================
 
-  // Injection pattern matching throttle: ramp with load to avoid backlog
-  def standardInjection = Seq(
-    rampUsersPerSec(0).to(warmupRps) during warmupDuration,
-    rampUsersPerSec(warmupRps).to(peakRps) during rampToPeakDuration,
-    constantUsersPerSec(peakRps) during peakDuration,
-    rampUsersPerSec(peakRps).to(0) during cooldownDuration
+  // Injection pattern: ramp warmup -> ramp to peak -> hold peak -> ramp down
+  def injectLoad(scn: ScenarioBuilder): PopulationBuilder = scn.inject(
+    rampUsersPerSec(0).to(warmupRps).during(warmupDuration),
+    rampUsersPerSec(warmupRps).to(peakRps).during(rampToPeakDuration),
+    constantUsersPerSec(peakRps).during(peakDuration),
+    rampUsersPerSec(peakRps).to(0).during(cooldownDuration)
   )
 
-  val root_status_scenario = scenario("GET / - Root Status")
-    .exec(
-      http("root_status")
-        .get("/")
-        .check(status.is(200))
-    )
-    .inject(standardInjection: _*)
+  val root_status_scenario = injectLoad(
+    scenario("GET / - Root Status")
+      .exec(
+        http("root_status")
+          .get("/")
+          .check(status.is(200))
+      )
+  )
 
-  val auth_status_scenario = scenario("GET /auth/status - Auth Service Status")
-    .exec(
-      http("auth_status")
-        .get("/auth/status")
-        .check(status.is(200))
-    )
-    .inject(standardInjection: _*)
+  val auth_status_scenario = injectLoad(
+    scenario("GET /auth/status - Auth Service Status")
+      .exec(
+        http("auth_status")
+          .get("/auth/status")
+          .check(status.is(200))
+      )
+  )
 
   // ============================================
   // Stories Endpoints (All /api/** require auth)
   // ============================================
 
-  val get_all_stories_scenario = scenario("GET /api/stories - Get All Stories")
-    .exec(
-      http("get_all_stories")
-        .get("/api/stories")
-        .headers(authHeaders)
-        .check(status.is(200))
-    )
-    .inject(standardInjection: _*)
+  val get_all_stories_scenario = injectLoad(
+    scenario("GET /api/stories - Get All Stories")
+      .exec(
+        http("get_all_stories")
+          .get("/api/stories")
+          .headers(authHeaders)
+          .check(status.is(200))
+      )
+  )
 
-  val get_story_by_id_scenario = scenario("GET /api/stories/{storyId} - Get Story by ID")
-    .exec(
-      http("get_story_by_id")
-        .get(s"/api/stories/$testStoryId")
-        .headers(authHeaders)
-        .check(status.in(200, 404))
-    )
-    .inject(standardInjection: _*)
+  val get_story_by_id_scenario = injectLoad(
+    scenario("GET /api/stories/{storyId} - Get Story by ID")
+      .exec(
+        http("get_story_by_id")
+          .get(s"/api/stories/$testStoryId")
+          .headers(authHeaders)
+          .check(status.in(200, 404))
+      )
+  )
 
-  val get_stories_version_scenario = scenario("GET /api/stories/version - Get Content Version")
-    .exec(
-      http("get_stories_version")
-        .get("/api/stories/version")
-        .headers(authHeaders)
-        .check(status.is(200))
-    )
-    .inject(standardInjection: _*)
+  val get_stories_version_scenario = injectLoad(
+    scenario("GET /api/stories/version - Get Content Version")
+      .exec(
+        http("get_stories_version")
+          .get("/api/stories/version")
+          .headers(authHeaders)
+          .check(status.is(200))
+      )
+  )
 
-  val get_stories_by_category_scenario = scenario("GET /api/stories/category/{category} - Get Stories by Category")
-    .exec(
-      http("get_stories_by_category")
-        .get(s"/api/stories/category/$testCategory")
-        .headers(authHeaders)
-        .check(status.in(200, 404))
-    )
-    .inject(standardInjection: _*)
+  val get_stories_by_category_scenario = injectLoad(
+    scenario("GET /api/stories/category/{category} - Get Stories by Category")
+      .exec(
+        http("get_stories_by_category")
+          .get(s"/api/stories/category/$testCategory")
+          .headers(authHeaders)
+          .check(status.in(200, 404))
+      )
+  )
 
-  val sync_stories_scenario = scenario("POST /api/stories/sync - Sync Stories")
-    .exec(
-      http("sync_stories")
-        .post("/api/stories/sync")
-        .headers(authHeaders)
-        .body(StringBody("""{"clientVersion": 0, "storyChecksums": {}, "lastSyncTimestamp": 0}"""))
-        .check(status.in(200, 204, 500))
-    )
-    .inject(standardInjection: _*)
+  val sync_stories_scenario = injectLoad(
+    scenario("POST /api/stories/sync - Sync Stories")
+      .exec(
+        http("sync_stories")
+          .post("/api/stories/sync")
+          .headers(authHeaders)
+          .body(StringBody("""{"clientVersion": 0, "storyChecksums": {}, "lastSyncTimestamp": 0}"""))
+          .check(status.in(200, 204, 500))
+      )
+  )
 
   // ============================================
   // Assets Endpoints (All /api/** require auth)
@@ -143,24 +151,26 @@ object PublicApiScenario {
   // NOTE: get_asset_url requires GCS credentials for signed URLs - skip in local NFT testing
   // val get_asset_url_scenario = ...
 
-  val get_assets_version_scenario = scenario("GET /api/assets/version - Get Asset Version")
-    .exec(
-      http("get_assets_version")
-        .get("/api/assets/version")
-        .headers(authHeaders)
-        .check(status.is(200))
-    )
-    .inject(standardInjection: _*)
+  val get_assets_version_scenario = injectLoad(
+    scenario("GET /api/assets/version - Get Asset Version")
+      .exec(
+        http("get_assets_version")
+          .get("/api/assets/version")
+          .headers(authHeaders)
+          .check(status.is(200))
+      )
+  )
 
-  val sync_assets_scenario = scenario("POST /api/assets/sync - Sync Assets")
-    .exec(
-      http("sync_assets")
-        .post("/api/assets/sync")
-        .headers(authHeaders)
-        .body(StringBody("""{"clientVersion": 0, "assetChecksums": {}, "lastSyncTimestamp": 0}"""))
-        .check(status.in(200, 204, 500))
-    )
-    .inject(standardInjection: _*)
+  val sync_assets_scenario = injectLoad(
+    scenario("POST /api/assets/sync - Sync Assets")
+      .exec(
+        http("sync_assets")
+          .post("/api/assets/sync")
+          .headers(authHeaders)
+          .body(StringBody("""{"clientVersion": 0, "assetChecksums": {}, "lastSyncTimestamp": 0}"""))
+          .check(status.in(200, 204, 500))
+      )
+  )
 
   // ============================================
   // Profile Endpoints - DISABLED for NFT
