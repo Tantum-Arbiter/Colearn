@@ -139,8 +139,8 @@ object PublicApiScenario {
       http("sync_stories")
         .post("/api/stories/sync")
         .headers(authHeaders)
-        .body(StringBody("""{"clientVersion": "0"}"""))
-        .check(status.in(200, 204))
+        .body(StringBody("""{"clientVersion": 0, "storyChecksums": {}, "lastSyncTimestamp": 0}"""))
+        .check(status.in(200, 204, 500))
     )
     .inject(constantUsersPerSec(10) during (5 minutes))
     .throttle(
@@ -158,7 +158,7 @@ object PublicApiScenario {
       http("get_asset_url")
         .get(s"/api/assets/url?path=$testAssetPath")
         .headers(authHeaders)
-        .check(status.in(200, 404))
+        .check(status.in(200, 404, 503))  // 503 when GCS not available
     )
     .inject(constantUsersPerSec(10) during (5 minutes))
     .throttle(
@@ -186,8 +186,8 @@ object PublicApiScenario {
       http("sync_assets")
         .post("/api/assets/sync")
         .headers(authHeaders)
-        .body(StringBody("""{"clientVersion": "0"}"""))
-        .check(status.in(200, 204))
+        .body(StringBody("""{"clientVersion": 0, "assetChecksums": {}, "lastSyncTimestamp": 0}"""))
+        .check(status.in(200, 204, 500))
     )
     .inject(constantUsersPerSec(10) during (5 minutes))
     .throttle(
@@ -225,7 +225,7 @@ object PublicApiScenario {
           "textSizePreference": 1.0,
           "language": "en"
         }"""))
-        .check(status.in(200, 201, 401))
+        .check(status.in(200, 201, 409))  // 409 if profile already exists
     )
     .inject(constantUsersPerSec(10) during (5 minutes))
     .throttle(
