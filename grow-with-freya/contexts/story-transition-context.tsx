@@ -1505,6 +1505,40 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
             </Animated.View>
           )}
 
+          {/* Tap on book cover to begin - positioned on top of the book */}
+          {/* Only enabled when no modals are open */}
+          {showModeSelection && targetBookPosition && !showVoiceOverNameModal && !showVoiceOverSelectModal && !showPreviewModal && (
+            <Pressable
+              style={{
+                position: 'absolute',
+                left: targetBookPosition.x,
+                top: targetBookPosition.y,
+                width: targetBookPosition.width,
+                height: targetBookPosition.height,
+                borderRadius: bookBorderRadius,
+                zIndex: 60, // Above bookContainer (50) but below buttons (100)
+              }}
+              onPress={() => {
+                // Handle each mode appropriately
+                if (selectedMode === 'read') {
+                  selectModeAndBegin(selectedMode);
+                } else if (selectedMode === 'record') {
+                  if (currentVoiceOver) {
+                    selectModeAndBegin(selectedMode);
+                  } else {
+                    setShowVoiceOverNameModal(true);
+                  }
+                } else if (selectedMode === 'narrate') {
+                  if (currentVoiceOver) {
+                    selectModeAndBegin(selectedMode);
+                  } else {
+                    setShowVoiceOverSelectModal(true);
+                  }
+                }
+              }}
+            />
+          )}
+
 
 
           {/* Mode selection buttons - positioned BELOW the book for phone portrait, LEFT for tablet */}
@@ -1647,6 +1681,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                 <Pressable
                   style={[
                     styles.modeButton,
+                    showPreviewModal && styles.modeButtonSelected,
                     {
                       flexDirection: buttonFlexDirection,
                       alignItems: 'center',
