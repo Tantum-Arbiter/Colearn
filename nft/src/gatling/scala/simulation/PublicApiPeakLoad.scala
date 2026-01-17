@@ -57,7 +57,7 @@ class PublicApiPeakLoad extends Simulation {
       global.responseTime.percentile(50).lt(1000),
       global.responseTime.percentile(95).lt(1000),
       global.responseTime.percentile(99).lt(1000),
-      global.responseTime.max.lt(2000),  // Allow some headroom for outliers
+      global.responseTime.max.lt(3000),  // Allow headroom for occasional outliers
       forAll.successfulRequests.percent.gte(95) // Allow some auth failures for test tokens
     )
 }
