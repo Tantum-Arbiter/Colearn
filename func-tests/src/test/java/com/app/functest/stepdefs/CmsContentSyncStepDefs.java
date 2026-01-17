@@ -101,6 +101,22 @@ public class CmsContentSyncStepDefs extends BaseStepDefs {
         }
     }
 
+    @Given("I seed {int} CMS snowman stories to GCP Firestore")
+    public void iSeedCmsSnowmanStoriesToGcpFirestore(int count) throws Exception {
+        logger.info("Seeding {} CMS snowman stories to GCP Firestore", count);
+        for (int i = 1; i <= count; i++) {
+            String storyId = "cms-test-" + i + "-snowman-squirrel";
+            // Skip if already seeded in this test run
+            if (seededGcpStories.contains(storyId)) {
+                logger.info("CMS snowman story {} already seeded, skipping", storyId);
+                continue;
+            }
+            JsonNode story = loadTestStory(storyId);
+            seedStoryToFirestore(story);
+            seededGcpStories.add(storyId);
+        }
+    }
+
     @Given("I seed additional story {string} to the emulator")
     public void iSeedAdditionalStoryToTheEmulator(String storyId) throws Exception {
         // Create a new story with the given ID
