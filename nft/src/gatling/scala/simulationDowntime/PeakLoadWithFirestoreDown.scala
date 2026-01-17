@@ -14,21 +14,24 @@ import scala.language.postfixOps
  * The service should return appropriate error codes (503, 500) rather than crashing.
  *
  * This simulation:
- * 1. Starts the load test
+ * 1. Starts the load test (15 sec ramp up)
  * 2. Runs a script that stops the Firestore container for 45 seconds
  * 3. Brings Firestore back up
- * 4. Continues the load test
+ * 4. Continues the load test (recovery phase)
  *
  * Expected behavior:
  * - During Firestore downtime: 503 Service Unavailable or 500 errors
  * - After Firestore recovery: Normal 200 responses
  * - No crashes or connection hangs
  *
- * Run with:
- *   ./gradlew gatlingRun-simulationDowntime.PeakLoadWithFirestoreDown
+ * Prerequisites:
+ *   1. Start services: docker-compose up -d firestore gateway-service
+ *   2. Run from host (NOT inside container) so script can access docker:
+ *      cd nft && GATEWAY_BASE_URL=http://localhost:8080 ./gradlew gatlingRun-simulationDowntime.PeakLoadWithFirestoreDown
  */
 class PeakLoadWithFirestoreDown extends Simulation {
-  val host = sys.env.getOrElse("GATEWAY_BASE_URL", "http://gateway-nft:8080")
+  // Default to localhost since this runs from host machine (not in container)
+  val host = sys.env.getOrElse("GATEWAY_BASE_URL", "http://localhost:8080")
 
   val httpProtocol = http
     .baseUrl(host)
