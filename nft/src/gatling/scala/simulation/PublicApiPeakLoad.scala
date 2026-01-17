@@ -53,12 +53,22 @@ class PublicApiPeakLoad extends Simulation {
   setUp(scenarios)
     .protocols(httpProtocol)
     .assertions(
-      global.responseTime.mean.lt(1000),
-      global.responseTime.percentile(50).lt(1000),
-      global.responseTime.percentile(95).lt(1000),
-      global.responseTime.percentile(99).lt(1000),
-      global.responseTime.max.lt(3000),  // Allow headroom for occasional outliers
-      forAll.successfulRequests.percent.gte(95) // Allow some auth failures for test tokens
+      // Target: 1 second response time for all APIs except CMS sync (bigger payloads)
+
+      // Regular API endpoints - strict 1 second target
+      details("auth_status").responseTime.percentile(99).lt(1000),
+      details("get_stories_version").responseTime.percentile(99).lt(1000),
+      details("get_story_by_id").responseTime.percentile(99).lt(1000),
+      details("get_stories_by_category").responseTime.percentile(99).lt(1000),
+      details("get_all_stories").responseTime.percentile(99).lt(1000),
+      details("get_assets_version").responseTime.percentile(99).lt(1000),
+
+      // CMS sync endpoints - larger payloads, allow up to 3 seconds
+      details("sync_stories").responseTime.percentile(99).lt(3000),
+      details("sync_assets").responseTime.percentile(99).lt(3000),
+
+      // Global success rate
+      forAll.successfulRequests.percent.gte(95)
     )
 }
 

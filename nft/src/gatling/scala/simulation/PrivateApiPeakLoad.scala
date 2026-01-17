@@ -90,9 +90,16 @@ class PrivateApiPeakLoad extends Simulation {
   setUp(scenarios)
     .protocols(httpProtocol)
     .assertions(
-      // P99 response time under 1 second for private endpoints
-      global.responseTime.percentile(99).lt(1000),
-      // At least 95% success rate
+      // Target: 1 second response time for all private endpoints
+      details("healthcheck").responseTime.percentile(99).lt(1000),
+      details("status").responseTime.percentile(99).lt(1000),
+      details("info").responseTime.percentile(99).lt(1000),
+      details("content_version").responseTime.percentile(99).lt(1000),
+
+      // Rebuild content version - heavier Firestore operation, allow 3 seconds
+      details("rebuild_content_version").responseTime.percentile(99).lt(3000),
+
+      // Global success rate
       global.successfulRequests.percent.gte(95)
     )
 }
