@@ -231,8 +231,9 @@ function AppContent() {
         setCurrentPage('main');
       } else {
         // Skip auth check if we just completed a fresh login
+        // The flag is cleared by a timeout in handleLoginSuccess, not here
         if (justLoggedInRef.current) {
-          justLoggedInRef.current = false;
+          log.info('[Auth] Skipping auth check - justLoggedIn flag is set');
           setCurrentView('app');
           setCurrentPage('main');
           return;
@@ -323,11 +324,19 @@ function AppContent() {
           return;
         }
 
+        // Skip if we just logged in - avoid race condition on Android
+        // where AppState changes during login flow
+        if (justLoggedInRef.current) {
+          log.info('[AppState] Skipping auth check - just logged in');
+          return;
+        }
+
         // App became active - check if tokens need refresh
         const isAuthenticated = await ApiClient.isAuthenticated();
 
         if (!isAuthenticated && hasCompletedOnboarding) {
           // Tokens expired and couldn't be refreshed - show login
+          log.info('[AppState] Not authenticated after resume - redirecting to login');
           setShowLoginAfterOnboarding(true);
           setCurrentView('login');
         } else if (isAuthenticated) {
@@ -434,8 +443,17 @@ function AppContent() {
   const justLoggedInRef = useRef(false);
 
   const handleLoginSuccess = () => {
-    // Mark that we just logged in - skip the next auth check
+    // Mark that we just logged in - skip auth checks for a few seconds
+    // This prevents race conditions on Android where AppState changes during login
     justLoggedInRef.current = true;
+    log.info('[Auth] Login successful - setting justLoggedIn flag');
+
+    // Clear the flag after 10 seconds to allow normal auth checks
+    setTimeout(() => {
+      justLoggedInRef.current = false;
+      log.info('[Auth] Cleared justLoggedIn flag after timeout');
+    }, 10000);
+
     setShowLoginAfterOnboarding(false);
     setCurrentView('app');
     setCurrentPage('main');
