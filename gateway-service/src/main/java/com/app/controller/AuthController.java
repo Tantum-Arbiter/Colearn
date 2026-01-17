@@ -95,8 +95,6 @@ public class AuthController {
                 );
             }
 
-            logger.info("Google authentication attempt");
-
             // Test-simulation hooks for Google OAuth
             if (flags != null) {
                 if (flags.isMaintenanceMode()) {
@@ -154,13 +152,6 @@ public class AuthController {
             String deviceType = extractDeviceType(httpRequest);
             String platform = extractPlatform(httpRequest);
             String appVersion = httpRequest.getHeader("X-App-Version");
-
-            // Debug logging for header extraction
-            logger.info("Google auth - Raw headers: X-Device-Type={}, X-Client-Platform={}, User-Agent={}",
-                httpRequest.getHeader("X-Device-Type"),
-                httpRequest.getHeader("X-Client-Platform"),
-                httpRequest.getHeader("User-Agent"));
-            logger.info("Google auth - Extracted values: deviceType={}, platform={}", deviceType, platform);
 
             UserSession session = sessionService.createSession(
                 user.getId(), refreshToken, deviceId, deviceType, platform, appVersion
@@ -236,8 +227,6 @@ public class AuthController {
             if (request.getIdToken() == null || request.getIdToken().trim().isEmpty()) {
                 throw com.app.exception.ValidationException.missingRequiredField("idToken");
             }
-
-            logger.info("Apple authentication attempt");
 
             // Test-simulation: maintenance mode
             if (flags != null && flags.isMaintenanceMode()) {
@@ -360,8 +349,6 @@ public class AuthController {
                 throw com.app.exception.ValidationException.missingRequiredField("refreshToken");
             }
 
-            logger.info("Token refresh attempt");
-
             // Validate refresh token and get session from database
             Optional<UserSession> sessionOpt = sessionService.getSessionByRefreshToken(request.getRefreshToken()).join();
             if (sessionOpt.isEmpty()) {
@@ -409,9 +396,6 @@ public class AuthController {
             // Include profile data if available (for automatic cross-device sync)
             if (profileOpt.isPresent()) {
                 response.setProfile(profileOpt.get());
-                logger.debug("Including profile data in token refresh response for user: {}", user.getId());
-            } else {
-                logger.debug("No profile found for user: {} - client will need to create one", user.getId());
             }
 
             // Record successful token refresh metrics
@@ -479,8 +463,6 @@ public class AuthController {
             }
 
             // Revoke session in database
-            logger.info("Token revocation requested");
-
             Optional<UserSession> revokedSession = sessionService.revokeSessionByRefreshToken(request.getRefreshToken()).join();
 
             Map<String, Object> response = new HashMap<>();
@@ -498,7 +480,6 @@ public class AuthController {
                 applicationMetricsService.decrementActiveSessions();
             } else {
                 response.put("message", "Token was already invalid or expired");
-                logger.info("Token revocation requested for invalid/expired token");
 
                 // Record revocation attempt for invalid token
                 applicationMetricsService.recordTokenRevocation(deviceType, platform, "invalid_token", true);

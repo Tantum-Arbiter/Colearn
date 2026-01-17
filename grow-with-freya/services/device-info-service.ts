@@ -196,7 +196,6 @@ export class DeviceInfoService {
       'X-Device-Brand': this.getBrand(),
       'X-Device-Manufacturer': this.getManufacturer(),
     };
-    console.log('[DeviceInfoService] Headers being sent:', JSON.stringify(headers, null, 2));
     return headers;
   }
 }
