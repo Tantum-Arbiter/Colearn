@@ -155,6 +155,13 @@ public class AuthController {
             String platform = extractPlatform(httpRequest);
             String appVersion = httpRequest.getHeader("X-App-Version");
 
+            // Debug logging for header extraction
+            logger.info("Google auth - Raw headers: X-Device-Type={}, X-Client-Platform={}, User-Agent={}",
+                httpRequest.getHeader("X-Device-Type"),
+                httpRequest.getHeader("X-Client-Platform"),
+                httpRequest.getHeader("User-Agent"));
+            logger.info("Google auth - Extracted values: deviceType={}, platform={}", deviceType, platform);
+
             UserSession session = sessionService.createSession(
                 user.getId(), refreshToken, deviceId, deviceType, platform, appVersion
             ).join();
@@ -729,9 +736,16 @@ public class AuthController {
     }
 
     /**
-     * Extract device type from user agent
+     * Extract device type from headers (prefers explicit header over User-Agent parsing)
      */
     private String extractDeviceType(HttpServletRequest request) {
+        // First check explicit header from mobile app
+        String deviceType = request.getHeader("X-Device-Type");
+        if (deviceType != null && !deviceType.trim().isEmpty()) {
+            return deviceType.toLowerCase();
+        }
+
+        // Fall back to User-Agent parsing
         String userAgent = request.getHeader("User-Agent");
         if (userAgent == null) {
             return "unknown";
@@ -755,25 +769,32 @@ public class AuthController {
     }
 
     /**
-     * Extract platform from headers
+     * Extract platform from headers (prefers explicit header over User-Agent parsing)
      */
     private String extractPlatform(HttpServletRequest request) {
-        String platform = request.getHeader("X-Platform");
+        // First check explicit headers from mobile app
+        String platform = request.getHeader("X-Client-Platform");
+        if (platform != null && !platform.trim().isEmpty()) {
+            return platform.toLowerCase();
+        }
+        // Also check legacy header
+        platform = request.getHeader("X-Platform");
         if (platform != null && !platform.trim().isEmpty()) {
             return platform.toLowerCase();
         }
 
+        // Fall back to User-Agent parsing
         String userAgent = request.getHeader("User-Agent");
         if (userAgent == null) {
             return "unknown";
         }
 
-        userAgent = userAgent.toLowerCase(); //remove later, not needed and is AI generated - we can just return the string, this contain check does f all
+        userAgent = userAgent.toLowerCase();
         if (userAgent.contains("android")) {
             return "android";
         } else if (userAgent.contains("ios") || userAgent.contains("iphone") || userAgent.contains("ipad")) {
             return "ios";
-        } else if (userAgent.contains("windows")) { //shouldn't happen but best to keep just in case we see web access.
+        } else if (userAgent.contains("windows")) {
             return "windows";
         } else if (userAgent.contains("mac")) {
             return "macos";

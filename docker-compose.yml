@@ -89,7 +89,7 @@ services:
       gateway-service:
         condition: service_healthy
     environment:
-      BACKEND_URL_GATEWAY_SERVICE: http://gateway-service:8080
+      GATEWAY_BASE_URL: http://gateway-service:8080
     volumes:
       - ./func-tests/build/reports:/app/build/reports
 

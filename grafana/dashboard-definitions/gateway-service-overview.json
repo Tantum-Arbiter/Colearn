@@ -18,6 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
+  "id": 1,
   "links": [],
   "panels": [
     {
@@ -721,8 +722,8 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum by (platform) (increase(app_platforms_count[$__range])) or vector(0)",
-          "legendFormat": "{{platform}}",
+          "expr": "sum by (provider) (increase(app_authentication_total[$__range])) or vector(0)",
+          "legendFormat": "{{label_name}}",
           "range": true,
           "refId": "A"
         }
@@ -801,113 +802,6 @@
       ],
       "title": "Active Sessions",
       "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "P1809F7CD0C75ACF3"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 3,
-        "x": 18,
-        "y": 9
-      },
-      "id": 26,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.3.1",
-      "targets": [
-        {
-          "editorMode": "code",
-          "expr": "rate(app_users_created[5m]) or vector(0)",
-          "legendFormat": "Users Created",
-          "range": true,
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "P1809F7CD0C75ACF3"
-          },
-          "editorMode": "code",
-          "expr": "rate(app_users_logins[5m]) or vector(0)\n",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "User Logins",
-          "range": true,
-          "refId": "B"
-        }
-      ],
-      "title": "User Sign Up/Logins",
-      "type": "timeseries"
     },
     {
       "collapsed": false,
@@ -2354,5 +2248,6 @@
   "timepicker": {},
   "timezone": "browser",
   "title": "Grow with Freya - Mission Control",
-  "version": 0
+  "uid": "fb98be87-5376-4ea5-9d9d-92cc63699db0",
+  "version": 1
 }

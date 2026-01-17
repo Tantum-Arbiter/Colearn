@@ -174,9 +174,17 @@ public class ApplicationMetricsService {
     }
 
     /**
-     * Extract device type from user agent
+     * Extract device type from headers or user agent
+     * Prefers explicit X-Device-Type header from mobile app
      */
     private String extractDeviceType(HttpServletRequest request) {
+        // First check explicit header from mobile app
+        String deviceType = request.getHeader("X-Device-Type");
+        if (deviceType != null && !deviceType.trim().isEmpty()) {
+            return deviceType.toLowerCase();
+        }
+
+        // Fall back to User-Agent parsing
         String userAgent = request.getHeader("User-Agent");
         if (userAgent == null) {
             return "unknown";
@@ -198,14 +206,21 @@ public class ApplicationMetricsService {
     }
 
     /**
-     * Extract platform from headers
+     * Extract platform from headers or user agent
+     * Prefers explicit X-Client-Platform header from mobile app
      */
     private String extractPlatform(HttpServletRequest request) {
-        String platform = request.getHeader("X-Platform");
+        // Check explicit headers from mobile app (X-Client-Platform or X-Platform)
+        String platform = request.getHeader("X-Client-Platform");
+        if (platform != null && !platform.trim().isEmpty()) {
+            return platform.toLowerCase();
+        }
+        platform = request.getHeader("X-Platform");
         if (platform != null && !platform.trim().isEmpty()) {
             return platform.toLowerCase();
         }
 
+        // Fall back to User-Agent parsing
         String userAgent = request.getHeader("User-Agent");
         if (userAgent == null) {
             return "unknown";

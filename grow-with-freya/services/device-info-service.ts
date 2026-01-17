@@ -186,15 +186,18 @@ export class DeviceInfoService {
    * Only includes COPPA-compliant, non-PII data
    */
   static getDeviceHeaders(): Record<string, string> {
-    return {
+    const headers = {
       'X-Device-ID': this.getDeviceId(),
       'X-Device-Type': this.getDeviceType(),
       'X-Client-Platform': this.getPlatform(),
-      'X-App-Version': this.getAppVersion(),
+      'X-Client-Version': this.getAppVersion(),  // Server requires X-Client-Version
+      'X-App-Version': this.getAppVersion(),     // Also send X-App-Version for backwards compatibility
       'X-OS-Version': this.getOsVersion(),
       'X-Device-Brand': this.getBrand(),
       'X-Device-Manufacturer': this.getManufacturer(),
     };
+    console.log('[DeviceInfoService] Headers being sent:', JSON.stringify(headers, null, 2));
+    return headers;
   }
 }
 
