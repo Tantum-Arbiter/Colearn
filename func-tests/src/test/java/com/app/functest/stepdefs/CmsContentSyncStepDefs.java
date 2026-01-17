@@ -92,6 +92,15 @@ public class CmsContentSyncStepDefs extends BaseStepDefs {
         seedStoryToFirestore(story);
     }
 
+    @Given("I seed {int} CMS snowman stories to the local Firestore emulator")
+    public void iSeedCmsSnowmanStoriesToTheLocalFirestoreEmulator(int count) throws Exception {
+        logger.info("Seeding {} CMS snowman stories to Firestore emulator", count);
+        for (int i = 1; i <= count; i++) {
+            JsonNode story = loadTestStory("cms-test-" + i + "-snowman-squirrel");
+            seedStoryToFirestore(story);
+        }
+    }
+
     @Given("I seed additional story {string} to the emulator")
     public void iSeedAdditionalStoryToTheEmulator(String storyId) throws Exception {
         // Create a new story with the given ID
