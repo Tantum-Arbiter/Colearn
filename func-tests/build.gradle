@@ -120,13 +120,13 @@ tasks.register('cucumberTest', JavaExec) {
 
     // Support tag filtering via CUCUMBER_TAGS environment variable
     // Example: CUCUMBER_TAGS="@gcp-dev and not @emulator-only"
-    // Default: exclude @ignore, @gcp-func-only, @gcp, @gcs-required, and @emulator-only
+    // Default: exclude @ignore, @gcs-required, and @emulator-only
     def cucumberTags = System.getenv('CUCUMBER_TAGS')
     if (cucumberTags != null && !cucumberTags.isEmpty()) {
         baseArgs += ['--tags', cucumberTags]
     } else {
-        // Default: exclude tests that require real GCP/GCS, emulator, or are marked to ignore
-        baseArgs += ['--tags', 'not @ignore and not @gcp-func-only and not @gcp and not @gcs-required and not @emulator-only']
+        // Default: exclude tests that require GCS, emulators, or are marked to ignore
+        baseArgs += ['--tags', 'not @ignore and not @gcs-required and not @emulator-only']
     }
 
     baseArgs += ['src/test/resources/features']
