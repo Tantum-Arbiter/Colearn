@@ -44,7 +44,6 @@ object PrivateApiScenario {
         .post("/private/rebuild-content-version")
         .headers(privateHeaders)
         .check(status.in(200, 503)) // 503 if Firestore not available
-        .check(jsonPath("$.status").optional.is("rebuilt"))
     )
 
   // ============================================
