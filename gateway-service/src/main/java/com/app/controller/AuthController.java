@@ -80,13 +80,16 @@ public class AuthController {
     @PostMapping(value = "/google", consumes = "application/json", produces = "application/json")
     public ResponseEntity<?> authenticateWithGoogle(@RequestBody GoogleAuthRequest request, HttpServletRequest httpRequest) {
         long startTime = System.currentTimeMillis();
+        logger.info("[User Journey Flow 1] Step 1: Google sign-in request received");
         try {
             // Validate request
             if (request == null) {
+                logger.warn("[User Journey Flow 1] Step 1 FAILED: Request body is null");
                 throw com.app.exception.ValidationException.missingRequiredField("body");
             }
 
             if (request.getIdToken() == null || request.getIdToken().trim().isEmpty()) {
+                logger.warn("[User Journey Flow 1] Step 1 FAILED: ID token is missing");
                 // Align message with functional test expectation
                 throw new com.app.exception.ValidationException(
                         com.app.exception.ErrorCode.MISSING_REQUIRED_FIELD,
@@ -94,6 +97,7 @@ public class AuthController {
                         "idToken"
                 );
             }
+            logger.info("[User Journey Flow 1] Step 2: ID token received, validating with Google...");
 
             // Test-simulation hooks for Google OAuth
             if (flags != null) {
@@ -121,9 +125,11 @@ public class AuthController {
 
             // Validate Google ID token (audience validated server-side)
             DecodedJWT decodedJWT = jwtConfig.validateGoogleIdToken(request.getIdToken());
+            logger.info("[User Journey Flow 1] Step 3: Google ID token validated successfully");
 
             // Optional nonce validation (supports raw or SHA-256(base64url) forms)
             if (!validateNonceIfPresent(decodedJWT, request.getNonce())) {
+                logger.warn("[User Journey Flow 1] Step 3 FAILED: Nonce validation failed");
                 throw new com.app.exception.AuthenticationException(
                         com.app.exception.ErrorCode.INVALID_TOKEN,
                         "Nonce validation failed",
@@ -134,13 +140,16 @@ public class AuthController {
 
             // Extract providerId from token (no PII needed)
             String providerId = decodedJWT.getSubject();
+            logger.info("[User Journey Flow 1] Step 4: Looking up or creating user in database...");
 
             // Get or create user in database (PII-free)
             User user = userService.getOrCreateUser("google", providerId).join();
+            logger.info("[User Journey Flow 1] Step 5: User found/created, userId={}", user.getId());
 
             // Generate our own tokens (PII-free)
             String accessToken = jwtConfig.generateAccessToken(user.getId(), "google");
             String refreshToken = jwtConfig.generateRefreshToken(user.getId());
+            logger.info("[User Journey Flow 1] Step 6: JWT tokens generated (access + refresh)");
 
             // Simulate Firebase errors if configured
             if (flags != null && flags.getFirebaseStatus() != null && flags.getFirebaseStatus() >= 500) {
@@ -152,10 +161,12 @@ public class AuthController {
             String deviceType = extractDeviceType(httpRequest);
             String platform = extractPlatform(httpRequest);
             String appVersion = httpRequest.getHeader("X-App-Version");
+            logger.info("[User Journey Flow 1] Step 7: Creating session, device={}, platform={}", deviceType, platform);
 
             UserSession session = sessionService.createSession(
                 user.getId(), refreshToken, deviceId, deviceType, platform, appVersion
             ).join();
+            logger.info("[User Journey Flow 1] Step 8: Session created, sessionId={}", session.getId());
 
             // Create response
             AuthResponse response = new AuthResponse();
@@ -164,7 +175,7 @@ public class AuthController {
             response.setTokens(createTokenResponse(accessToken, refreshToken));
             response.setMessage("Google authentication successful");
 
-            logger.info("Google authentication successful for user ID: {}", user.getId());
+            logger.info("[User Journey Flow 1] Step 9: Google sign-in COMPLETE for userId={}", user.getId());
 
             // Log successful authentication for security monitoring
             securityMonitoringService.logSuccessfulAuthentication(user.getId(), "google");
@@ -334,6 +345,7 @@ public class AuthController {
         long startTime = System.currentTimeMillis();
         String deviceType = "unknown";
         String platform = "unknown";
+        logger.info("[User Journey Flow 2] Step 1: Token refresh request received (user returning after inactivity)");
 
         try {
             // Extract device info early for metrics
@@ -342,16 +354,20 @@ public class AuthController {
 
             // Validate request
             if (request == null) {
+                logger.warn("[User Journey Flow 2] Step 1 FAILED: Request body is null");
                 throw com.app.exception.ValidationException.missingRequiredField("body");
             }
 
             if (request.getRefreshToken() == null || request.getRefreshToken().trim().isEmpty()) {
+                logger.warn("[User Journey Flow 2] Step 1 FAILED: Refresh token is missing");
                 throw com.app.exception.ValidationException.missingRequiredField("refreshToken");
             }
+            logger.info("[User Journey Flow 2] Step 2: Refresh token received, looking up session...");
 
             // Validate refresh token and get session from database
             Optional<UserSession> sessionOpt = sessionService.getSessionByRefreshToken(request.getRefreshToken()).join();
             if (sessionOpt.isEmpty()) {
+                logger.warn("[User Journey Flow 2] Step 2 FAILED: Session not found for refresh token");
                 throw new com.app.exception.AuthenticationException(
                         com.app.exception.ErrorCode.INVALID_REFRESH_TOKEN,
                         "Invalid refresh token"
@@ -359,16 +375,20 @@ public class AuthController {
             }
 
             UserSession session = sessionOpt.get();
+            logger.info("[User Journey Flow 2] Step 3: Session found, checking if token is still valid...");
             if (!session.isValid()) {
+                logger.warn("[User Journey Flow 2] Step 3 FAILED: Session expired or revoked, user needs to re-authenticate");
                 throw new com.app.exception.AuthenticationException(
                         com.app.exception.ErrorCode.INVALID_REFRESH_TOKEN,
                         "Expired or revoked refresh token"
                 );
             }
+            logger.info("[User Journey Flow 2] Step 4: Token is still valid, fetching user...");
 
             // Get user from database
             Optional<User> userOpt = userService.getUserById(session.getUserId()).join();
             if (userOpt.isEmpty()) {
+                logger.warn("[User Journey Flow 2] Step 4 FAILED: User not found");
                 throw new com.app.exception.AuthenticationException(
                         com.app.exception.ErrorCode.INVALID_REFRESH_TOKEN,
                         "User not found"
@@ -376,13 +396,16 @@ public class AuthController {
             }
 
             User user = userOpt.get();
+            logger.info("[User Journey Flow 2] Step 5: User found, generating new tokens...");
 
             // Generate new tokens (PII-free)
             String newAccessToken = jwtConfig.generateAccessToken(user.getId(), user.getProvider());
             String newRefreshToken = jwtConfig.generateRefreshToken(user.getId());
+            logger.info("[User Journey Flow 2] Step 6: New JWT tokens generated, updating session...");
 
             // Update session with new refresh token
             sessionService.validateAndRefreshSession(request.getRefreshToken(), newRefreshToken).join();
+            logger.info("[User Journey Flow 2] Step 7: Session refreshed with new token");
 
             // Fetch user profile for automatic sync
             Optional<UserProfile> profileOpt = userProfileRepository.findByUserId(user.getId()).join();
@@ -396,6 +419,7 @@ public class AuthController {
             // Include profile data if available (for automatic cross-device sync)
             if (profileOpt.isPresent()) {
                 response.setProfile(profileOpt.get());
+                logger.info("[User Journey Flow 2] Step 8: Profile data included for sync");
             }
 
             // Record successful token refresh metrics
@@ -403,7 +427,7 @@ public class AuthController {
             applicationMetricsService.recordTokenRefresh(user.getProvider(), deviceType, platform, true, processingTime);
             securityMonitoringService.logTokenRefresh(user.getId());
 
-            logger.info("Token refresh successful for user: {}", user.getId());
+            logger.info("[User Journey Flow 2] Step 9: Token refresh COMPLETE for userId={}, processingTime={}ms", user.getId(), processingTime);
             return ResponseEntity.ok(response);
 
         } catch (JWTVerificationException e) {

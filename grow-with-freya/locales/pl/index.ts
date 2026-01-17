@@ -760,6 +760,7 @@ export default {
       skipAll: 'Pomiń wszystko',
       skipTour: 'Pomiń wycieczkę',
       gotIt: 'Rozumiem!',
+      go: 'Start!',
       letsGo: 'Zaczynamy!',
       done: 'Gotowe',
       startReading: 'Zacznij czytać',

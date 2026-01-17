@@ -773,6 +773,7 @@ export default {
       skipAll: 'Skip All',
       skipTour: 'Skip tour',
       gotIt: 'Got it!',
+      go: 'Go!',
       letsGo: "Let's Go!",
       done: 'Done',
       startReading: 'Start Reading',

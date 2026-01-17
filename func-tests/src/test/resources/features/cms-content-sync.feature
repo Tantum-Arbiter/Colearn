@@ -290,3 +290,51 @@ Feature: CMS Content Sync and Delta Sync Testing
     Then the response status code should be 200
     And the response should contain field "id" with value "cms-test-3-squirrel-snowman"
 
+  # ============================================================================
+  # CONTENT VERSION REBUILD TESTS
+  # ============================================================================
+
+  @local @docker @emulator-only @content-version
+  Scenario: Rebuild content version from actual stories in Firestore
+    Given I seed 5 test stories to the local Firestore emulator
+    When I make a POST request to "/private/rebuild-content-version"
+    Then the response status code should be 200
+    And the response should contain field "status" with value "rebuilt"
+    And the response should contain field "version"
+    And the response should contain field "totalStories"
+    And the response field "totalStories" should equal 5
+    And the response should contain field "storyIds"
+
+  @local @docker @emulator-only @content-version
+  Scenario: Rebuild content version detects and reports removed stories
+    Given I seed 5 test stories to the local Firestore emulator
+    And I have performed an initial sync
+    When I delete story "test-story-3" from Firestore
+    And I make a POST request to "/private/rebuild-content-version"
+    Then the response status code should be 200
+    And the response should contain field "status" with value "rebuilt"
+    And the response field "totalStories" should equal 4
+    And the response should contain field "removedStoryIds"
+    And the response field "removedStoryIds" should contain "test-story-3"
+
+  @local @docker @emulator-only @content-version @delta-sync
+  Scenario: Delta sync works correctly after content version rebuild
+    Given I seed 5 test stories to the local Firestore emulator
+    And I have performed an initial sync
+    When I delete story "test-story-2" from Firestore
+    And I make a POST request to "/private/rebuild-content-version"
+    Then the response status code should be 200
+    And the response field "totalStories" should equal 4
+    When I have a sync request with previous checksums
+    And I make a POST request to "/api/stories/sync" with the sync request
+    Then the response status code should be 200
+    And the sync response should indicate story "test-story-2" was deleted
+
+  @gcp-dev @content-version
+  Scenario: GCP rebuild content version endpoint is accessible
+    When I make a POST request to "/private/rebuild-content-version"
+    Then the response status code should be 200
+    And the response should contain field "status" with value "rebuilt"
+    And the response should contain field "version"
+    And the response should contain field "totalStories"
+

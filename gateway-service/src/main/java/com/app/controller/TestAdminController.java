@@ -713,6 +713,130 @@ public class TestAdminController {
     }
 
     /**
+     * Rebuild the content_versions document from actual stories in Firestore.
+     * This fixes the mismatch when stories are manually deleted from Firestore
+     * but the content_versions document still references them.
+     *
+     * Call this endpoint after manually modifying stories in Firestore.
+     */
+    @PostMapping("/rebuild-content-version")
+    public ResponseEntity<Map<String, Object>> rebuildContentVersion() {
+        if (firestore == null) {
+            return ResponseEntity.status(503).body(Map.of("error", "Firestore not available"));
+        }
+
+        try {
+            logger.info("Rebuilding content version from actual stories in Firestore...");
+
+            // Get all stories from Firestore
+            var storiesSnapshot = firestore.collection("stories").get().get();
+            Map<String, String> storyChecksums = new HashMap<>();
+            List<String> storyIds = new ArrayList<>();
+
+            for (var doc : storiesSnapshot.getDocuments()) {
+                Story story = doc.toObject(Story.class);
+                if (story != null && story.getId() != null) {
+                    String checksum = calculateStoryChecksum(story);
+                    storyChecksums.put(story.getId(), checksum);
+                    storyIds.add(story.getId());
+                    logger.debug("Found story: {} with checksum: {}", story.getId(), checksum);
+                }
+            }
+
+            // Get current content version to preserve version number continuity
+            var docRef = firestore.collection("content_versions").document("current");
+            var doc = docRef.get().get();
+
+            int newVersion = 1;
+            List<String> removedStoryIds = new ArrayList<>();
+
+            if (doc.exists()) {
+                ContentVersion existing = doc.toObject(ContentVersion.class);
+                if (existing != null) {
+                    newVersion = existing.getVersion() + 1;
+
+                    // Find stories that were in the old version but not in the new one
+                    if (existing.getStoryChecksums() != null) {
+                        for (String oldStoryId : existing.getStoryChecksums().keySet()) {
+                            if (!storyChecksums.containsKey(oldStoryId)) {
+                                removedStoryIds.add(oldStoryId);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Create new content version
+            ContentVersion contentVersion = new ContentVersion();
+            contentVersion.setId("current");
+            contentVersion.setVersion(newVersion);
+            contentVersion.setLastUpdated(Instant.now());
+            contentVersion.setStoryChecksums(storyChecksums);
+            contentVersion.setTotalStories(storyChecksums.size());
+
+            // Save to Firestore
+            docRef.set(contentVersion).get();
+
+            logger.info("Rebuilt content version: version={}, totalStories={}, removedStories={}",
+                    newVersion, storyChecksums.size(), removedStoryIds);
+
+            Map<String, Object> resp = new HashMap<>();
+            resp.put("status", "rebuilt");
+            resp.put("version", newVersion);
+            resp.put("totalStories", storyChecksums.size());
+            resp.put("storyIds", storyIds);
+            resp.put("removedStoryIds", removedStoryIds);
+            return ResponseEntity.ok(resp);
+        } catch (Exception e) {
+            logger.error("Failed to rebuild content version", e);
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Delete a story from Firestore for testing purposes.
+     * Also removes the story from the content_versions document.
+     */
+    @PostMapping("/delete/story/{storyId}")
+    public ResponseEntity<Map<String, Object>> deleteStory(@org.springframework.web.bind.annotation.PathVariable String storyId) {
+        if (firestore == null) {
+            return ResponseEntity.status(503).body(Map.of("error", "Firestore not available"));
+        }
+
+        try {
+            logger.info("Deleting story: {}", storyId);
+
+            // Delete story from Firestore
+            firestore.collection("stories").document(storyId).delete().get();
+
+            // Remove from content_versions
+            var docRef = firestore.collection("content_versions").document("current");
+            var doc = docRef.get().get();
+
+            if (doc.exists()) {
+                ContentVersion contentVersion = doc.toObject(ContentVersion.class);
+                if (contentVersion != null && contentVersion.getStoryChecksums() != null) {
+                    contentVersion.getStoryChecksums().remove(storyId);
+                    contentVersion.setTotalStories(contentVersion.getStoryChecksums().size());
+                    contentVersion.setVersion(contentVersion.getVersion() + 1);
+                    contentVersion.setLastUpdated(Instant.now());
+                    docRef.set(contentVersion).get();
+                }
+            }
+
+            logger.info("Deleted story: {}", storyId);
+
+            Map<String, Object> resp = new HashMap<>();
+            resp.put("status", "deleted");
+            resp.put("storyId", storyId);
+            return ResponseEntity.ok(resp);
+        } catch (Exception e) {
+            logger.error("Failed to delete story: {}", storyId, e);
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
      * Create a test user in Firestore (test profile only)
      */
     @PostMapping("/test/create-user")
