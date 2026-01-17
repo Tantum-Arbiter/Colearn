@@ -245,10 +245,10 @@ export default {
     loading: 'Cargando...',
     progress: 'Progreso: {{completed}} / {{total}}',
     instructions: {
-      step1: 'Mira la imagen',
-      step2: '¡Haz la misma cara!',
-      step3: 'Muéstrame feliz, triste o tonto',
-      step4: '¡Aprendamos juntos sobre los sentimientos!',
+      step1: '👀 Mira y reacciona a la emoción juntos',
+      step2: '🤪 Haz la cara - ¡exagera y sé tonto!',
+      step3: '🔄 Túrnense para copiarse',
+      step4: '🎭 Celebra cada intento - se trata de conexión, no de perfección',
     },
     themes: {
       emoji: {

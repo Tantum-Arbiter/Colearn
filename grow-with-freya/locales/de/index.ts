@@ -245,10 +245,10 @@ export default {
     loading: 'Laden...',
     progress: 'Fortschritt: {{completed}} / {{total}}',
     instructions: {
-      step1: 'Schau dir das Bild an',
-      step2: 'Mach das gleiche Gesicht!',
-      step3: 'Zeig mir fröhlich, traurig oder albern',
-      step4: 'Lass uns gemeinsam Gefühle lernen!',
+      step1: '👀 Schaut euch die Emotion gemeinsam an und reagiert darauf',
+      step2: '🤪 Macht das Gesicht - übertreibt und seid albern!',
+      step3: '🔄 Wechselt euch beim Nachmachen ab',
+      step4: '🎭 Feiert jeden Versuch - es geht um Verbindung, nicht um Perfektion',
     },
     themes: {
       emoji: {

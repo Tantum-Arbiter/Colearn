@@ -173,10 +173,10 @@ export function EmotionsUnifiedScreen({ onStartGame, onBack }: EmotionsUnifiedSc
               </ThemedText>
               {showHowToPlay && (
                 <ThemedText style={[styles.instructions, { fontSize: scaledFontSize(14), marginTop: scaledPadding(10) }]}>
-                  • {t('emotions.instructions.step1')}{'\n'}
-                  • {t('emotions.instructions.step2')}{'\n'}
-                  • {t('emotions.instructions.step3')}{'\n'}
-                  • {t('emotions.instructions.step4')}
+                  {t('emotions.instructions.step1')}{'\n'}
+                  {t('emotions.instructions.step2')}{'\n'}
+                  {t('emotions.instructions.step3')}{'\n'}
+                  {t('emotions.instructions.step4')}
                 </ThemedText>
               )}
             </LinearGradient>

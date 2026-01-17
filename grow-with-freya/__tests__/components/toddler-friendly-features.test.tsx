@@ -42,11 +42,11 @@ describe('Toddler-Friendly Features', () => {
       // Expand instructions
       fireEvent.press(getByText('How to Play ▶'));
 
-      // Check for simple, toddler-friendly language
-      expect(getByText('Look at the picture')).toBeTruthy();
-      expect(getByText('Make the same face!')).toBeTruthy();
-      expect(getByText('Show me happy, sad, or silly')).toBeTruthy();
-      expect(getByText('Let\'s learn about feelings together!')).toBeTruthy();
+      // Check for parent-engaging, encouraging language
+      expect(getByText(/Look and react to the emotion together/)).toBeTruthy();
+      expect(getByText(/Make the face - exaggerate and be silly/)).toBeTruthy();
+      expect(getByText(/Take turns copying each other/)).toBeTruthy();
+      expect(getByText(/Celebrate every attempt/)).toBeTruthy();
     });
 
     it('avoids complex terminology in favor of simple words', () => {
@@ -313,7 +313,7 @@ describe('Toddler-Friendly Features', () => {
 
       // Expand instructions for more positive language
       fireEvent.press(getByText('How to Play ▶'));
-      expect(getByText('Let\'s learn about feelings together!')).toBeTruthy();
+      expect(getByText(/Celebrate every attempt - it's about connection, not perfection/)).toBeTruthy();
     });
 
     it('focuses on play and learning rather than testing', () => {
