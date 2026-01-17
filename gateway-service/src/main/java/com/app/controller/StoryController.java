@@ -6,6 +6,7 @@ import com.app.exception.ErrorCode;
 import com.app.exception.ErrorResponse;
 import com.app.model.ContentVersion;
 import com.app.model.Story;
+import com.app.service.ApplicationMetricsService;
 import com.app.service.StoryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,10 +28,12 @@ public class StoryController {
     private static final Logger logger = LoggerFactory.getLogger(StoryController.class);
 
     private final StoryService storyService;
+    private final ApplicationMetricsService metricsService;
 
     @Autowired
-    public StoryController(StoryService storyService) {
+    public StoryController(StoryService storyService, ApplicationMetricsService metricsService) {
         this.storyService = storyService;
+        this.metricsService = metricsService;
     }
 
     @GetMapping
@@ -79,6 +82,7 @@ public class StoryController {
 
     @PostMapping("/sync")
     public ResponseEntity<?> syncStories(@RequestBody StorySyncRequest request) {
+        long startTime = System.currentTimeMillis();
         logger.info("[CMS] POST /api/stories/sync - Sync request received");
 
         // Validate required fields
@@ -95,8 +99,9 @@ public class StoryController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
 
+        int storiesRequested = request.getStoryChecksums().size();
         logger.info("[CMS] POST /api/stories/sync - Client version: {}, Client has {} cached stories",
-                request.getClientVersion(), request.getStoryChecksums().size());
+                request.getClientVersion(), storiesRequested);
 
         if (!request.getStoryChecksums().isEmpty()) {
             logger.info("[CMS]   -> Client cached story IDs: {}", request.getStoryChecksums().keySet());
@@ -112,6 +117,10 @@ public class StoryController {
             response.setStoryChecksums(serverVersion.getStoryChecksums());
             response.setTotalStories(serverVersion.getTotalStories());
             response.setLastUpdated(serverVersion.getLastUpdated().toEpochMilli());
+
+            // Record story sync metrics
+            long durationMs = System.currentTimeMillis() - startTime;
+            metricsService.recordStorySync(storiesRequested, storiesToSync.size(), durationMs);
 
             logger.info("[CMS] POST /api/stories/sync - Response: serverVersion={}, updatedStories={}, totalStories={}",
                     response.getServerVersion(),

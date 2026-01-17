@@ -26,6 +26,7 @@ services:
     networks:
       - default-network
 
+  # Single gateway for normal dev and func-tests
   gateway-service:
     build: gateway-service
     ports:
@@ -38,17 +39,43 @@ services:
     env_file:
       - gateway-service/.env
     environment:
-      SPRING_PROFILES_ACTIVE: dev
+      SPRING_PROFILES_ACTIVE: dev,test
       FIREBASE_EMULATOR_HOST: firestore
       FIREBASE_EMULATOR_PORT: 8080
     depends_on:
       firestore:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://gateway-service:8080/private/healthcheck"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/private/healthcheck"]
       interval: 5s
       timeout: 3s
       retries: 20
+
+  # ========================================
+  # NFT Load Testing (2 replicas via deploy)
+  # ========================================
+  gateway-nft:
+    build: gateway-service
+    profiles:
+      - nft
+    networks:
+      - default-network
+    env_file:
+      - gateway-service/.env
+    environment:
+      SPRING_PROFILES_ACTIVE: dev,test,nft  # nft profile disables rate limiting
+      FIREBASE_EMULATOR_HOST: firestore
+      FIREBASE_EMULATOR_PORT: 8080
+    depends_on:
+      firestore:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/private/healthcheck"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    deploy:
+      replicas: 2
 
   func-tests:
     build:
@@ -62,7 +89,7 @@ services:
       gateway-service:
         condition: service_healthy
     environment:
-      BACKEND_URL_GATEWAY_SERVICE: http://gateway-service:8080
+      GATEWAY_BASE_URL: http://gateway-service:8080
     volumes:
       - ./func-tests/build/reports:/app/build/reports
 
@@ -73,57 +100,65 @@ services:
       - nft
     image: nft:latest
     depends_on:
-      gateway-service:
+      gateway-nft:
         condition: service_healthy
     environment:
-      BACKEND_URL_GATEWAY_SERVICE: http://gateway-service:8080
+      GATEWAY_BASE_URL: http://gateway-nft:8080
     networks:
       - default-network
+    volumes:
+      - ./nft/build/reports:/app/build/reports
 
   prometheus:
     image: prom/prometheus
     ports:
       - '9090:9090'
     user: root
-    # links:
-    #   - alertmanager
+    depends_on:
+      - alertmanager
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock  # For service discovery
       - ./prometheus:/etc/prometheus
     extra_hosts:
-      - 'host.docker.internal:host-gateway' 
+      - 'host.docker.internal:host-gateway'
     command:
       - '--config.file=/etc/prometheus/prometheus-dev.yml'
+      - '--web.enable-lifecycle'  # Enable /-/reload endpoint
     restart: always
     networks:
       - default-network
-  
-  # alertmanager: # Note to sell, will do this later once deployed to cloud / can sensible store email to send messages to.
-  #   image: prom/alertmanager
-  #   ports:
-  #     - '9093:9093'
-  #   volumes:
-  #     - ./alertmanager:/etc/alertmanager
-  #   command:
-  #     - '--config.file=/etc/alertmanager/alertmanager.yml'
-  #   restart: always
-  
-  # grafana:
-  #   image: grafana/grafana-enterprise
-  #   ports:
-  #     - '3000:3000'
-  #   depends_on:
-  #     - prometheus
-  #   environment:
-  #     #      - GF_SERVER_ROOT_URL=http://my.grafana.server/
-  #     #      - GF_INSTALL_PLUGINS=grafana-clock-panel
-  #     - GF_INSTALL_PLUGINS=grafana-piechart-panel
-  #   volumes:
-  #     - './grafana/datasources:/etc/grafana/provisioning/datasources'
-  #     - './grafana/dashboards/dashboards.yml:/etc/grafana/provisioning/dashboards/main.yml'
-  #     - './grafana/dashboard-backup/:/var/lib/grafana/dashboards'
-  #   networks:
-  #     - default-network
+
+  alertmanager:
+    image: prom/alertmanager
+    ports:
+      - '9093:9093'
+    volumes:
+      - ./alertmanager:/etc/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=http://localhost:9093'
+    restart: always
+    networks:
+      - default-network
+
+  grafana:
+    image: grafana/grafana-enterprise
+    ports:
+      - '3000:3000'
+    depends_on:
+      - prometheus
+    environment:
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+      - GF_SECURITY_ADMIN_PASSWORD=admin  # Default login: admin/admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - './grafana/datasources:/etc/grafana/provisioning/datasources'
+      - './grafana/dashboards/dashboards.yml:/etc/grafana/provisioning/dashboards/main.yml'
+      - './grafana/dashboard-definitions:/var/lib/grafana/dashboards'
+    networks:
+      - default-network
+    restart: always
   
 networks:
   default-network:

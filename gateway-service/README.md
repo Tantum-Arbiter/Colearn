@@ -27,7 +27,12 @@ The Gateway Service exposes the following APIs:
 - `GET /private/prometheus`: Prometheus metrics endpoint.
 
 ## Authentication APIs
-_TBD_
+- `POST /auth/google`: Google OAuth authentication (requires real Google OAuth ID token)
+- `POST /auth/apple`: Apple OAuth authentication (requires real Apple OAuth ID token)
+- `POST /auth/firebase`: Firebase authentication - test/gcp-dev only (requires real Firebase ID token)
+- `POST /auth/refresh`: Refresh access token (requires valid refresh token)
+- `POST /auth/revoke`: Revoke refresh token / logout (requires valid refresh token)
+- `GET /auth/status`: Auth service status check
 
 ## User Content APIs
 _Upload / get data from CMS TBD_

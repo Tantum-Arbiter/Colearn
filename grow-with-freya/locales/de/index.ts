@@ -101,6 +101,11 @@ export default {
     grayscaleHint: 'Für den Schwarz-Weiß-Modus verwenden Sie die Barrierefreiheitseinstellungen Ihres Geräts:',
     grayscaleIos: 'Einstellungen → Bedienungshilfen → Anzeige & Textgröße → Farbfilter → Graustufen',
     grayscaleAndroid: 'Einstellungen → Bedienungshilfen → Farbanpassung → Graustufen',
+    blueLight: 'Blaulichtfilter (Nachtmodus)',
+    blueLightHint: 'Reduzieren Sie blaues Licht, damit Ihr Kind besser schlafen kann. Aktivieren Sie den Nachtmodus Ihres Geräts:',
+    blueLightIos: 'Einstellungen → Anzeige & Helligkeit → Night Shift → Einschalten',
+    blueLightAndroid: 'Einstellungen → Anzeige → Nachtlicht (oder Augenkomfort) → Einschalten',
+    blueLightBenefit: 'Blaues Licht von Bildschirmen kann den Schlaf beeinträchtigen. Das Einschalten des Nachtmodus am Abend hilft dem Gehirn Ihres Kindes, sich auf das Schlafengehen vorzubereiten, indem stimulierende blaue Wellenlängen reduziert werden.',
   },
 
   // Story selection

@@ -95,8 +95,6 @@ public class AuthController {
                 );
             }
 
-            logger.info("Google authentication attempt");
-
             // Test-simulation hooks for Google OAuth
             if (flags != null) {
                 if (flags.isMaintenanceMode()) {
@@ -230,8 +228,6 @@ public class AuthController {
                 throw com.app.exception.ValidationException.missingRequiredField("idToken");
             }
 
-            logger.info("Apple authentication attempt");
-
             // Test-simulation: maintenance mode
             if (flags != null && flags.isMaintenanceMode()) {
                 throw new GatewayException(ErrorCode.MAINTENANCE_MODE, "System is in maintenance mode");
@@ -353,8 +349,6 @@ public class AuthController {
                 throw com.app.exception.ValidationException.missingRequiredField("refreshToken");
             }
 
-            logger.info("Token refresh attempt");
-
             // Validate refresh token and get session from database
             Optional<UserSession> sessionOpt = sessionService.getSessionByRefreshToken(request.getRefreshToken()).join();
             if (sessionOpt.isEmpty()) {
@@ -402,9 +396,6 @@ public class AuthController {
             // Include profile data if available (for automatic cross-device sync)
             if (profileOpt.isPresent()) {
                 response.setProfile(profileOpt.get());
-                logger.debug("Including profile data in token refresh response for user: {}", user.getId());
-            } else {
-                logger.debug("No profile found for user: {} - client will need to create one", user.getId());
             }
 
             // Record successful token refresh metrics
@@ -472,8 +463,6 @@ public class AuthController {
             }
 
             // Revoke session in database
-            logger.info("Token revocation requested");
-
             Optional<UserSession> revokedSession = sessionService.revokeSessionByRefreshToken(request.getRefreshToken()).join();
 
             Map<String, Object> response = new HashMap<>();
@@ -491,7 +480,6 @@ public class AuthController {
                 applicationMetricsService.decrementActiveSessions();
             } else {
                 response.put("message", "Token was already invalid or expired");
-                logger.info("Token revocation requested for invalid/expired token");
 
                 // Record revocation attempt for invalid token
                 applicationMetricsService.recordTokenRevocation(deviceType, platform, "invalid_token", true);
@@ -729,9 +717,16 @@ public class AuthController {
     }
 
     /**
-     * Extract device type from user agent
+     * Extract device type from headers (prefers explicit header over User-Agent parsing)
      */
     private String extractDeviceType(HttpServletRequest request) {
+        // First check explicit header from mobile app
+        String deviceType = request.getHeader("X-Device-Type");
+        if (deviceType != null && !deviceType.trim().isEmpty()) {
+            return deviceType.toLowerCase();
+        }
+
+        // Fall back to User-Agent parsing
         String userAgent = request.getHeader("User-Agent");
         if (userAgent == null) {
             return "unknown";
@@ -755,25 +750,32 @@ public class AuthController {
     }
 
     /**
-     * Extract platform from headers
+     * Extract platform from headers (prefers explicit header over User-Agent parsing)
      */
     private String extractPlatform(HttpServletRequest request) {
-        String platform = request.getHeader("X-Platform");
+        // First check explicit headers from mobile app
+        String platform = request.getHeader("X-Client-Platform");
+        if (platform != null && !platform.trim().isEmpty()) {
+            return platform.toLowerCase();
+        }
+        // Also check legacy header
+        platform = request.getHeader("X-Platform");
         if (platform != null && !platform.trim().isEmpty()) {
             return platform.toLowerCase();
         }
 
+        // Fall back to User-Agent parsing
         String userAgent = request.getHeader("User-Agent");
         if (userAgent == null) {
             return "unknown";
         }
 
-        userAgent = userAgent.toLowerCase(); //remove later, not needed and is AI generated - we can just return the string, this contain check does f all
+        userAgent = userAgent.toLowerCase();
         if (userAgent.contains("android")) {
             return "android";
         } else if (userAgent.contains("ios") || userAgent.contains("iphone") || userAgent.contains("ipad")) {
             return "ios";
-        } else if (userAgent.contains("windows")) { //shouldn't happen but best to keep just in case we see web access.
+        } else if (userAgent.contains("windows")) {
             return "windows";
         } else if (userAgent.contains("mac")) {
             return "macos";

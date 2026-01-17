@@ -44,22 +44,23 @@ class MetricsFilterTest {
     void testDoFilter_SuccessfulRequest() throws IOException, ServletException {
         // Given
         when(mockRequest.getRequestURI()).thenReturn("/api/content");
+        when(mockRequest.getMethod()).thenReturn("GET");
         when(mockResponse.getStatus()).thenReturn(200);
 
         // When
         metricsFilter.doFilter(mockRequest, mockResponse, mockFilterChain);
 
-        // Then
-        verify(mockFilterChain).doFilter(mockRequest, mockResponse);
+        // Then - filter chain receives wrapped response
+        verify(mockFilterChain).doFilter(eq(mockRequest), any(HttpServletResponse.class));
         verify(mockMetricsService).incrementActiveConnections();
         verify(mockMetricsService).decrementActiveConnections();
-        
+
         ArgumentCaptor<HttpServletRequest> requestCaptor = ArgumentCaptor.forClass(HttpServletRequest.class);
         ArgumentCaptor<Integer> statusCaptor = ArgumentCaptor.forClass(Integer.class);
         ArgumentCaptor<Long> timeCaptor = ArgumentCaptor.forClass(Long.class);
-        
+
         verify(mockMetricsService).recordRequest(requestCaptor.capture(), statusCaptor.capture(), timeCaptor.capture());
-        
+
         assertEquals(mockRequest, requestCaptor.getValue());
         assertEquals(200, statusCaptor.getValue());
         assertTrue(timeCaptor.getValue() >= 0);
@@ -99,10 +100,11 @@ class MetricsFilterTest {
     void testDoFilter_HandlesException() throws IOException, ServletException {
         // Given
         when(mockRequest.getRequestURI()).thenReturn("/api/content");
+        when(mockRequest.getMethod()).thenReturn("GET");
         when(mockResponse.getStatus()).thenReturn(500);
-        
+
         RuntimeException testException = new RuntimeException("Test exception");
-        doThrow(testException).when(mockFilterChain).doFilter(mockRequest, mockResponse);
+        doThrow(testException).when(mockFilterChain).doFilter(eq(mockRequest), any(HttpServletResponse.class));
 
         // When & Then
         assertThrows(RuntimeException.class, () -> {
@@ -112,13 +114,13 @@ class MetricsFilterTest {
         // Verify metrics were still recorded
         verify(mockMetricsService).incrementActiveConnections();
         verify(mockMetricsService).decrementActiveConnections();
-        
+
         ArgumentCaptor<HttpServletRequest> requestCaptor = ArgumentCaptor.forClass(HttpServletRequest.class);
         ArgumentCaptor<String> errorTypeCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> errorCodeCaptor = ArgumentCaptor.forClass(String.class);
-        
+
         verify(mockMetricsService).recordError(requestCaptor.capture(), errorTypeCaptor.capture(), errorCodeCaptor.capture());
-        
+
         assertEquals(mockRequest, requestCaptor.getValue());
         assertEquals("RuntimeException", errorTypeCaptor.getValue());
         assertEquals("INTERNAL_ERROR", errorCodeCaptor.getValue());
@@ -144,13 +146,14 @@ class MetricsFilterTest {
     void testDoFilter_MeasuresResponseTime() throws IOException, ServletException {
         // Given
         when(mockRequest.getRequestURI()).thenReturn("/api/slow-endpoint");
+        when(mockRequest.getMethod()).thenReturn("GET");
         when(mockResponse.getStatus()).thenReturn(200);
-        
+
         // Simulate slow processing
         doAnswer(invocation -> {
             Thread.sleep(100); // 100ms delay
             return null;
-        }).when(mockFilterChain).doFilter(mockRequest, mockResponse);
+        }).when(mockFilterChain).doFilter(eq(mockRequest), any(HttpServletResponse.class));
 
         // When
         long startTime = System.currentTimeMillis();
@@ -160,7 +163,7 @@ class MetricsFilterTest {
         // Then
         ArgumentCaptor<Long> timeCaptor = ArgumentCaptor.forClass(Long.class);
         verify(mockMetricsService).recordRequest(eq(mockRequest), eq(200), timeCaptor.capture());
-        
+
         long recordedTime = timeCaptor.getValue();
         assertTrue(recordedTime >= 100, "Recorded time should be at least 100ms");
         assertTrue(recordedTime <= (endTime - startTime + 10), "Recorded time should be reasonable");
@@ -170,10 +173,11 @@ class MetricsFilterTest {
     void testDoFilter_HandlesIOException() throws IOException, ServletException {
         // Given
         when(mockRequest.getRequestURI()).thenReturn("/api/content");
+        when(mockRequest.getMethod()).thenReturn("GET");
         when(mockResponse.getStatus()).thenReturn(500);
-        
+
         IOException testException = new IOException("Network error");
-        doThrow(testException).when(mockFilterChain).doFilter(mockRequest, mockResponse);
+        doThrow(testException).when(mockFilterChain).doFilter(eq(mockRequest), any(HttpServletResponse.class));
 
         // When & Then
         assertThrows(IOException.class, () -> {
@@ -182,7 +186,7 @@ class MetricsFilterTest {
 
         // Verify error was recorded
         verify(mockMetricsService).recordError(mockRequest, "IOException", "INTERNAL_ERROR");
-        
+
         // Verify connection tracking
         verify(mockMetricsService).incrementActiveConnections();
         verify(mockMetricsService).decrementActiveConnections();
@@ -192,10 +196,11 @@ class MetricsFilterTest {
     void testDoFilter_HandlesServletException() throws IOException, ServletException {
         // Given
         when(mockRequest.getRequestURI()).thenReturn("/api/content");
+        when(mockRequest.getMethod()).thenReturn("GET");
         when(mockResponse.getStatus()).thenReturn(500);
-        
+
         ServletException testException = new ServletException("Servlet error");
-        doThrow(testException).when(mockFilterChain).doFilter(mockRequest, mockResponse);
+        doThrow(testException).when(mockFilterChain).doFilter(eq(mockRequest), any(HttpServletResponse.class));
 
         // When & Then
         assertThrows(ServletException.class, () -> {
@@ -204,7 +209,7 @@ class MetricsFilterTest {
 
         // Verify error was recorded
         verify(mockMetricsService).recordError(mockRequest, "ServletException", "INTERNAL_ERROR");
-        
+
         // Verify connection tracking
         verify(mockMetricsService).incrementActiveConnections();
         verify(mockMetricsService).decrementActiveConnections();
@@ -214,6 +219,7 @@ class MetricsFilterTest {
     void testDoFilter_MultipleRequests() throws IOException, ServletException {
         // Given
         when(mockRequest.getRequestURI()).thenReturn("/api/content");
+        when(mockRequest.getMethod()).thenReturn("GET");
         when(mockResponse.getStatus()).thenReturn(200);
 
         // When - process multiple requests
@@ -221,8 +227,8 @@ class MetricsFilterTest {
         metricsFilter.doFilter(mockRequest, mockResponse, mockFilterChain);
         metricsFilter.doFilter(mockRequest, mockResponse, mockFilterChain);
 
-        // Then
-        verify(mockFilterChain, times(3)).doFilter(mockRequest, mockResponse);
+        // Then - filter chain receives wrapped response
+        verify(mockFilterChain, times(3)).doFilter(eq(mockRequest), any(HttpServletResponse.class));
         verify(mockMetricsService, times(3)).incrementActiveConnections();
         verify(mockMetricsService, times(3)).decrementActiveConnections();
         verify(mockMetricsService, times(3)).recordRequest(eq(mockRequest), eq(200), anyLong());
@@ -232,6 +238,7 @@ class MetricsFilterTest {
     void testDoFilter_DifferentStatusCodes() throws IOException, ServletException {
         // Given
         when(mockRequest.getRequestURI()).thenReturn("/api/content");
+        when(mockRequest.getMethod()).thenReturn("GET");
 
         // Test 200 OK
         when(mockResponse.getStatus()).thenReturn(200);

@@ -101,6 +101,11 @@ export default {
     grayscaleHint: 'Dla trybu czarno-białego użyj wbudowanych ustawień dostępności urządzenia:',
     grayscaleIos: 'Ustawienia → Dostępność → Wyświetlacz i rozmiar tekstu → Filtry kolorów → Skala szarości',
     grayscaleAndroid: 'Ustawienia → Dostępność → Dostosowanie kolorów → Skala szarości',
+    blueLight: 'Filtr niebieskiego światła (tryb nocny)',
+    blueLightHint: 'Zmniejsz niebieskie światło, aby pomóc dziecku lepiej spać. Włącz tryb nocny na urządzeniu:',
+    blueLightIos: 'Ustawienia → Wyświetlacz i jasność → Night Shift → Włącz',
+    blueLightAndroid: 'Ustawienia → Wyświetlacz → Światło nocne (lub Ochrona wzroku) → Włącz',
+    blueLightBenefit: 'Niebieskie światło z ekranów może wpływać na sen. Włączenie trybu nocnego wieczorem pomaga mózgowi dziecka przygotować się do snu poprzez zmniejszenie stymulującego niebieskiego światła.',
   },
 
   // Story selection

@@ -516,6 +516,19 @@ public class AuthenticationStepDefs extends BaseStepDefs {
         // Ensure WireMock client points at the Docker service host before registering stubs
         ensureWireMockConfigured();
 
+        // Skip WireMock stub registration if WireMock is not available
+        // This allows running tests that don't require WireMock (e.g., @metrics tests)
+        try {
+            registerWireMockStubs();
+        } catch (Exception e) {
+            // WireMock not available - skip stub registration
+            // Tests that require WireMock will fail at the step level
+            System.out.println("WireMock not available, skipping conditional stubs: " + e.getMessage());
+        }
+    }
+
+    private void registerWireMockStubs() {
+
         // Invalid email format on profile update
         scenarioStubs.add(
             WireMock.stubFor(

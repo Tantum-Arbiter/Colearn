@@ -1,11 +1,13 @@
 package com.app.security;
 
+import com.app.service.ApplicationMetricsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.lang.NonNull;
@@ -32,6 +34,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class RateLimitingFilter extends OncePerRequestFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(RateLimitingFilter.class);
+
+    private final ApplicationMetricsService metricsService;
+
+    @Autowired
+    public RateLimitingFilter(ApplicationMetricsService metricsService) {
+        this.metricsService = metricsService;
+    }
 
     // Rate limiting configuration from application properties
     @Value("${rate-limiting.default-requests-per-minute:60}")
@@ -84,6 +93,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         // Check rate limit
         if (!isRequestAllowed(compositeKey, rateLimit)) {
             logger.warn("Rate limit exceeded for client: {} on path: {}", clientKey, requestPath);
+
+            // Record rate limit exceeded metric
+            metricsService.recordRateLimitExceeded(requestPath, clientKey);
 
             // Set rate limit headers
             response.setHeader("X-RateLimit-Limit", String.valueOf(rateLimit));
@@ -156,10 +168,13 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         // Add rate limit headers to successful requests
         ClientRateData rateData = clientRateData.get(compositeKey);
         if (rateData != null) {
+            int remaining = Math.max(0, rateLimit - rateData.getRequestCount());
             response.setHeader("X-RateLimit-Limit", String.valueOf(rateLimit));
-            response.setHeader("X-RateLimit-Remaining",
-                String.valueOf(Math.max(0, rateLimit - rateData.getRequestCount())));
+            response.setHeader("X-RateLimit-Remaining", String.valueOf(remaining));
             response.setHeader("X-RateLimit-Reset", String.valueOf(getResetTime()));
+
+            // Update rate limit remaining metric
+            metricsService.updateRateLimitRemaining(requestPath, remaining);
         }
 
         // Periodic cleanup of old entries

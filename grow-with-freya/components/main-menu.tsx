@@ -328,7 +328,6 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
         <MoonImage />
       </View>
 
-
       <View style={[legacyStyles.topButtons, { paddingTop: insets.top + getResponsiveSize(20) }]}>
         {/* Account/Settings Button */}
         <View ref={settingsButtonRef} style={legacyStyles.accountButtonContainer}>

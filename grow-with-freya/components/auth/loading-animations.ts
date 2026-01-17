@@ -47,21 +47,22 @@ export function useLoadingCircleAnimation() {
 
 /**
  * Custom hook for checkmark completion animation
- * Shows checkmark when loading completes
+ * Shows checkmark when loading completes - no fade, appears immediately
  */
 export function useCheckmarkAnimation() {
   const checkmarkOpacity = useSharedValue(0);
 
   const playCheckmarkEffect = (onComplete?: () => void) => {
-    // Fade in checkmark
-    checkmarkOpacity.value = withTiming(1, {
-      duration: 400,
-      easing: Easing.out(Easing.cubic),
-    }, (finished) => {
-      if (finished && onComplete) {
+    // Show checkmark immediately (no fade) and call onComplete after a short delay
+    // to let the Lottie animation play
+    checkmarkOpacity.value = 1;
+
+    // Small delay to let the checkmark Lottie animation be visible before scrolling out
+    if (onComplete) {
+      setTimeout(() => {
         runOnJS(onComplete)();
-      }
-    });
+      }, 600);
+    }
   };
 
   const checkmarkAnimatedStyle = useAnimatedStyle(() => ({

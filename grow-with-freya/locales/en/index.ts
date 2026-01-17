@@ -101,6 +101,11 @@ export default {
     grayscaleHint: 'For black & white mode, use your device\'s built-in accessibility settings:',
     grayscaleIos: 'Settings → Accessibility → Display & Text Size → Color Filters → Grayscale',
     grayscaleAndroid: 'Settings → Accessibility → Color adjustment → Grayscale',
+    blueLight: 'Blue Light Filter (Night Mode)',
+    blueLightHint: 'Reduce blue light to help your child sleep better. Enable your device\'s night mode:',
+    blueLightIos: 'Settings → Display & Brightness → Night Shift → Turn on',
+    blueLightAndroid: 'Settings → Display → Night Light (or Eye Comfort) → Turn on',
+    blueLightBenefit: 'Blue light from screens can affect sleep. Turning on night mode in the evening helps your child\'s brain prepare for bedtime by reducing stimulating blue wavelengths.',
   },
 
   // Story selection

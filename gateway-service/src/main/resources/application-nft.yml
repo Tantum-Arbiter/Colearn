@@ -1,0 +1,43 @@
+# NFT (Non-Functional Testing) Profile
+# Extends test profile but disables rate limiting for load testing
+
+# Disable rate limiting entirely for NFT
+app:
+  security:
+    rate-limit:
+      enabled: false
+
+# Keep rate limits very high as fallback (in case enabled flag is ignored)
+rate-limiting:
+  default-requests-per-minute: 100000
+  auth-requests-per-minute: 100000
+  api-requests-per-minute: 100000
+  cleanup-interval-minutes: 1
+
+# Feature flags - disable rate limiting
+features:
+  rate-limiting: false
+  security-monitoring: false  # Reduce overhead during load testing
+  audit-logging: false  # Reduce overhead during load testing
+  request-validation: true
+  metrics-collection: true
+  health-checks: true
+
+# Performance tuning for high load
+performance:
+  async:
+    core-pool-size: 10
+    max-pool-size: 50
+    queue-capacity: 500
+  connection:
+    default-timeout-seconds: 5
+  inbound:
+    request-timeout-seconds: 60
+
+# Logging - reduce verbosity for performance
+logging:
+  level:
+    root: WARN
+    com.app: INFO
+    com.app.security.RateLimitingFilter: DEBUG  # Log that rate limiting is disabled
+

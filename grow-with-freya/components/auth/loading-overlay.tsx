@@ -128,11 +128,12 @@ export function LoadingOverlay({ phase, onPulseComplete, onClose, onContinueOffl
         // Delay main menu transition slightly after sound plays
         setTimeout(() => {
           // Animate window out to the left (same as login screen)
+          // No fade - just scroll out like the wholesome window
           windowTranslateX.value = withTiming(-width, {
             duration: 1400,
             easing: Easing.out(Easing.cubic),
           });
-          // Fade out the dark overlay
+          // Also animate the overlay out to the left (scroll, not fade)
           overlayOpacity.value = withTiming(0, {
             duration: 1400,
             easing: Easing.out(Easing.cubic),

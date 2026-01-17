@@ -692,4 +692,429 @@ class ApplicationMetricsServiceTest {
         assertNotNull(counter);
         assertEquals(1.0, counter.count());
     }
+
+    // ==================== Cache Metrics Tests ====================
+
+    @Test
+    void testRecordCacheHit_HappyPath() {
+        // When
+        metricsService.recordCacheHit("jwks");
+
+        // Then
+        Counter counter = meterRegistry.find("app.cache.hits")
+                .tag("cache", "jwks")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    @Test
+    void testRecordCacheHit_MultipleCaches() {
+        // When
+        metricsService.recordCacheHit("jwks");
+        metricsService.recordCacheHit("rate-limiting");
+        metricsService.recordCacheHit("jwks");
+
+        // Then
+        Counter jwksCounter = meterRegistry.find("app.cache.hits")
+                .tag("cache", "jwks")
+                .counter();
+        assertNotNull(jwksCounter);
+        assertEquals(2.0, jwksCounter.count());
+
+        Counter rateLimitCounter = meterRegistry.find("app.cache.hits")
+                .tag("cache", "rate-limiting")
+                .counter();
+        assertNotNull(rateLimitCounter);
+        assertEquals(1.0, rateLimitCounter.count());
+    }
+
+    @Test
+    void testRecordCacheHit_NullCacheName() {
+        // When - null cache name should default to "unknown"
+        metricsService.recordCacheHit(null);
+
+        // Then
+        Counter counter = meterRegistry.find("app.cache.hits")
+                .tag("cache", "unknown")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    @Test
+    void testRecordCacheMiss_HappyPath() {
+        // When
+        metricsService.recordCacheMiss("public-keys");
+
+        // Then
+        Counter counter = meterRegistry.find("app.cache.misses")
+                .tag("cache", "public-keys")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    @Test
+    void testRecordCacheMiss_NullCacheName() {
+        // When
+        metricsService.recordCacheMiss(null);
+
+        // Then
+        Counter counter = meterRegistry.find("app.cache.misses")
+                .tag("cache", "unknown")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    @Test
+    void testRecordCacheEviction_HappyPath() {
+        // When
+        metricsService.recordCacheEviction("jwks", "expired");
+
+        // Then
+        Counter counter = meterRegistry.find("app.cache.evictions")
+                .tag("cache", "jwks")
+                .tag("reason", "expired")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    @Test
+    void testRecordCacheEviction_DifferentReasons() {
+        // When
+        metricsService.recordCacheEviction("jwks", "expired");
+        metricsService.recordCacheEviction("jwks", "size_limit");
+        metricsService.recordCacheEviction("jwks", "manual");
+
+        // Then
+        Counter expiredCounter = meterRegistry.find("app.cache.evictions")
+                .tag("cache", "jwks")
+                .tag("reason", "expired")
+                .counter();
+        assertNotNull(expiredCounter);
+        assertEquals(1.0, expiredCounter.count());
+
+        Counter sizeLimitCounter = meterRegistry.find("app.cache.evictions")
+                .tag("cache", "jwks")
+                .tag("reason", "size_limit")
+                .counter();
+        assertNotNull(sizeLimitCounter);
+        assertEquals(1.0, sizeLimitCounter.count());
+    }
+
+    @Test
+    void testRecordCacheEviction_NullValues() {
+        // When
+        metricsService.recordCacheEviction(null, null);
+
+        // Then
+        Counter counter = meterRegistry.find("app.cache.evictions")
+                .tag("cache", "unknown")
+                .tag("reason", "unknown")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    // ==================== Rate Limiting Metrics Tests ====================
+
+    @Test
+    void testRecordRateLimitExceeded_HappyPath() {
+        // When
+        metricsService.recordRateLimitExceeded("/api/auth/login", "ip:192.168.1.1");
+
+        // Then
+        Counter counter = meterRegistry.find("app.rate_limit.exceeded")
+                .tag("endpoint", "/api/auth/login")
+                .tag("client_key", "ip:192.168.1.1")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    @Test
+    void testRecordRateLimitExceeded_NullValues() {
+        // When
+        metricsService.recordRateLimitExceeded(null, null);
+
+        // Then
+        Counter counter = meterRegistry.find("app.rate_limit.exceeded")
+                .tag("endpoint", "unknown")
+                .tag("client_key", "unknown")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    @Test
+    void testUpdateRateLimitRemaining_HappyPath() {
+        // When
+        metricsService.updateRateLimitRemaining("/api/stories", 45);
+
+        // Then
+        Gauge gauge = meterRegistry.find("app.rate_limit.remaining")
+                .tag("endpoint", "/api/stories")
+                .gauge();
+        assertNotNull(gauge);
+        assertEquals(45.0, gauge.value());
+    }
+
+    @Test
+    void testUpdateRateLimitRemaining_UpdatesExistingGauge() {
+        // When
+        metricsService.updateRateLimitRemaining("/api/stories", 50);
+        metricsService.updateRateLimitRemaining("/api/stories", 25);
+
+        // Then
+        Gauge gauge = meterRegistry.find("app.rate_limit.remaining")
+                .tag("endpoint", "/api/stories")
+                .gauge();
+        assertNotNull(gauge);
+        assertEquals(25.0, gauge.value());
+    }
+
+    // ==================== Token Validation Metrics Tests ====================
+
+    @Test
+    void testRecordTokenValidation_Success() {
+        // When
+        metricsService.recordTokenValidation("success");
+
+        // Then
+        Counter counter = meterRegistry.find("app.token.validation.total")
+                .tag("result", "success")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    @Test
+    void testRecordTokenValidation_Expired() {
+        // When
+        metricsService.recordTokenValidation("expired");
+
+        // Then
+        Counter counter = meterRegistry.find("app.token.validation.total")
+                .tag("result", "expired")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    @Test
+    void testRecordTokenValidation_Invalid() {
+        // When
+        metricsService.recordTokenValidation("invalid");
+
+        // Then
+        Counter counter = meterRegistry.find("app.token.validation.total")
+                .tag("result", "invalid")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    @Test
+    void testRecordTokenValidation_Malformed() {
+        // When
+        metricsService.recordTokenValidation("malformed");
+
+        // Then
+        Counter counter = meterRegistry.find("app.token.validation.total")
+                .tag("result", "malformed")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    @Test
+    void testRecordTokenValidation_NullResult() {
+        // When
+        metricsService.recordTokenValidation(null);
+
+        // Then
+        Counter counter = meterRegistry.find("app.token.validation.total")
+                .tag("result", "unknown")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    @Test
+    void testRecordTokenValidation_WithTokenType() {
+        // When
+        metricsService.recordTokenValidation("success", "access");
+
+        // Then
+        Counter counter = meterRegistry.find("app.token.validation.total")
+                .tag("result", "success")
+                .tag("token_type", "access")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    @Test
+    void testRecordTokenValidation_WithNullTokenType() {
+        // When
+        metricsService.recordTokenValidation("success", null);
+
+        // Then
+        Counter counter = meterRegistry.find("app.token.validation.total")
+                .tag("result", "success")
+                .tag("token_type", "unknown")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    // ==================== Story Sync Metrics Tests ====================
+
+    @Test
+    void testRecordStorySync_HappyPath() {
+        // When
+        metricsService.recordStorySync(10, 3, 250);
+
+        // Then
+        Counter counter = meterRegistry.find("app.stories.sync.requests")
+                .tag("stories_returned", "1-5")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+
+        Timer timer = meterRegistry.find("app.stories.sync.duration").timer();
+        assertNotNull(timer);
+        assertEquals(1, timer.count());
+    }
+
+    @Test
+    void testRecordStorySync_ZeroStoriesReturned() {
+        // When
+        metricsService.recordStorySync(5, 0, 100);
+
+        // Then
+        Counter counter = meterRegistry.find("app.stories.sync.requests")
+                .tag("stories_returned", "0")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    @Test
+    void testRecordStorySync_ManyStoriesReturned() {
+        // When
+        metricsService.recordStorySync(100, 75, 500);
+
+        // Then
+        Counter counter = meterRegistry.find("app.stories.sync.requests")
+                .tag("stories_returned", "50+")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    @Test
+    void testRecordStorySync_MediumStoriesReturned() {
+        // When
+        metricsService.recordStorySync(50, 25, 300);
+
+        // Then
+        Counter counter = meterRegistry.find("app.stories.sync.requests")
+                .tag("stories_returned", "11-50")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    // ==================== Response Size Metrics Tests ====================
+
+    @Test
+    void testRecordResponseSize_HappyPath() {
+        // When
+        metricsService.recordResponseSize("/api/stories", "GET", 1024);
+
+        // Then
+        io.micrometer.core.instrument.DistributionSummary summary =
+                meterRegistry.find("app.response.size.bytes")
+                .tag("endpoint", "/api/stories")
+                .tag("method", "GET")
+                .summary();
+        assertNotNull(summary);
+        assertEquals(1, summary.count());
+        assertEquals(1024.0, summary.totalAmount());
+    }
+
+    @Test
+    void testRecordResponseSize_LargeResponse() {
+        // When
+        metricsService.recordResponseSize("/api/stories/sync", "POST", 1048576); // 1MB
+
+        // Then
+        io.micrometer.core.instrument.DistributionSummary summary =
+                meterRegistry.find("app.response.size.bytes")
+                .tag("endpoint", "/api/stories/sync")
+                .tag("method", "POST")
+                .summary();
+        assertNotNull(summary);
+        assertEquals(1, summary.count());
+        assertEquals(1048576.0, summary.totalAmount());
+    }
+
+    @Test
+    void testRecordResponseSize_NullValues() {
+        // When
+        metricsService.recordResponseSize(null, null, 512);
+
+        // Then
+        io.micrometer.core.instrument.DistributionSummary summary =
+                meterRegistry.find("app.response.size.bytes")
+                .tag("endpoint", "unknown")
+                .tag("method", "unknown")
+                .summary();
+        assertNotNull(summary);
+        assertEquals(1, summary.count());
+    }
+
+    // ==================== Startup Metrics Tests ====================
+
+    @Test
+    void testRecordStartupTime_HappyPath() {
+        // When
+        metricsService.recordStartupTime(5000);
+
+        // Then
+        Gauge gauge = meterRegistry.find("app.startup.time").gauge();
+        assertNotNull(gauge);
+        assertEquals(5000.0, gauge.value());
+    }
+
+    @Test
+    void testRecordStartupTime_UpdatesValue() {
+        // When
+        metricsService.recordStartupTime(3000);
+        metricsService.recordStartupTime(4500);
+
+        // Then
+        Gauge gauge = meterRegistry.find("app.startup.time").gauge();
+        assertNotNull(gauge);
+        assertEquals(4500.0, gauge.value());
+    }
+
+    @Test
+    void testGetStartupTime() {
+        // When
+        metricsService.recordStartupTime(7500);
+
+        // Then
+        assertEquals(7500, metricsService.getStartupTime());
+    }
+
+    @Test
+    void testGetStartupTime_BeforeRecording() {
+        // Then - should return 0 before any startup time is recorded
+        assertEquals(0, metricsService.getStartupTime());
+    }
 }
