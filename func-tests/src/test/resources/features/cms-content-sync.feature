@@ -315,7 +315,7 @@ Feature: CMS Content Sync and Delta Sync Testing
     And the response should contain field "status" with value "rebuilt"
     And the response field "totalStories" should equal 4
     And the response should contain field "removedStoryIds"
-    And the response field "removedStoryIds" should contain "test-story-3"
+    And the response list field "removedStoryIds" should contain "test-story-3"
 
   @local @docker @emulator-only @content-version @delta-sync
   Scenario: Delta sync works correctly after content version rebuild

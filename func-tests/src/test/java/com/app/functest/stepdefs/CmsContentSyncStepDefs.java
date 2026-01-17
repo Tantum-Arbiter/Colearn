@@ -910,8 +910,8 @@ public class CmsContentSyncStepDefs extends BaseStepDefs {
         modifiedStories.remove(storyId);
     }
 
-    @Then("the response field {string} should contain {string}")
-    public void theResponseFieldShouldContain(String fieldName, String expectedValue) {
+    @Then("the response list field {string} should contain {string}")
+    public void theResponseListFieldShouldContain(String fieldName, String expectedValue) {
         List<String> values = lastResponse.jsonPath().getList(fieldName);
         assertThat("Field " + fieldName + " should contain " + expectedValue,
                 values, hasItem(expectedValue));
