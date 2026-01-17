@@ -369,7 +369,7 @@ export function OnboardingScreen({
             styles.title,
             // Step 7: "Your Privacy" should be one line
             currentStep === 7 && styles.titleSingleLine
-          ]}>
+          ]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>
             {title}
           </ThemedText>
           <ThemedText style={styles.body}>
@@ -507,6 +507,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     color: '#2E8B8B',
     lineHeight: 32,
+    width: '100%',
   },
   titleSingleLine: {
     // Ensure title fits on one line (e.g., "Your Privacy")
