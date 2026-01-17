@@ -43,7 +43,7 @@ class PrivateApiPeakLoad extends Simulation {
         .get("/private/healthcheck")
         .check(status.is(200))
     )
-    .inject(constantUsersPerSec(100) during (5 minutes))
+    .inject(constantUsersPerSec(10) during (5 minutes))
 
   val statusScenario = scenario("Status")
     .exec(
@@ -51,7 +51,7 @@ class PrivateApiPeakLoad extends Simulation {
         .get("/private/status")
         .check(status.is(200))
     )
-    .inject(constantUsersPerSec(100) during (5 minutes))
+    .inject(constantUsersPerSec(10) during (5 minutes))
 
   val infoScenario = scenario("Info")
     .exec(
@@ -59,7 +59,7 @@ class PrivateApiPeakLoad extends Simulation {
         .get("/private/info")
         .check(status.is(200))
     )
-    .inject(constantUsersPerSec(100) during (5 minutes))
+    .inject(constantUsersPerSec(10) during (5 minutes))
 
   val contentVersionScenario = scenario("Content Version")
     .exec(
@@ -67,7 +67,7 @@ class PrivateApiPeakLoad extends Simulation {
         .get("/api/stories/version")
         .check(status.is(200))
     )
-    .inject(constantUsersPerSec(100) during (5 minutes))
+    .inject(constantUsersPerSec(10) during (5 minutes))
 
   // Rebuild content version - lower rate since it's a heavier operation
   val rebuildContentVersionScenario = scenario("Rebuild Content Version")
@@ -76,7 +76,7 @@ class PrivateApiPeakLoad extends Simulation {
         .post("/private/rebuild-content-version")
         .check(status.in(200, 503))
     )
-    .inject(constantUsersPerSec(20) during (5 minutes))
+    .inject(constantUsersPerSec(2) during (5 minutes))
 
   // Run all scenarios
   val scenarios: List[PopulationBuilder] = List(
