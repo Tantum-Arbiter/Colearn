@@ -80,6 +80,14 @@ spring:
         enabled: true
       db:
         enabled: false
+    # Push custom metrics to Google Cloud Monitoring (for Grafana Cloud integration)
+    # Cloud Run automatically sets GOOGLE_CLOUD_PROJECT env var
+    stackdriver:
+      metrics:
+        export:
+          enabled: true
+          project-id: ${GOOGLE_CLOUD_PROJECT}
+          step: 60s
 
 # JWT Configuration
 jwt:

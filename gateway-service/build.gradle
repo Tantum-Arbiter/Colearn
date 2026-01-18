@@ -90,6 +90,7 @@ dependencies {
 
 	// Monitoring
 	implementation 'io.micrometer:micrometer-registry-prometheus'
+	implementation 'io.micrometer:micrometer-registry-stackdriver:1.12.0'
 
 	// Resilience4j for circuit breakers, time limiters and metrics
 	implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.1.0'
