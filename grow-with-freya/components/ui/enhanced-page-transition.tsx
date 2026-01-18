@@ -96,29 +96,38 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   };
 
   // Update animation values when screen height changes (orientation change)
+  // Use withTiming to animate the transition smoothly instead of jumping
   useEffect(() => {
+    const animationConfig = {
+      duration: 300,
+      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+    };
+
     // Update positions for inactive pages when screen height changes
     if (currentPage !== 'main') {
-      mainTranslateY.value = currentPage === 'account' ? screenHeight : -screenHeight;
+      mainTranslateY.value = withTiming(
+        currentPage === 'account' ? screenHeight : -screenHeight,
+        animationConfig
+      );
     }
     if (currentPage !== 'stories') {
-      storiesTranslateY.value = screenHeight;
+      storiesTranslateY.value = withTiming(screenHeight, animationConfig);
     }
     if (currentPage !== 'sensory') {
-      sensoryTranslateY.value = screenHeight;
+      sensoryTranslateY.value = withTiming(screenHeight, animationConfig);
     }
     if (currentPage !== 'emotions') {
-      emotionsTranslateY.value = screenHeight;
+      emotionsTranslateY.value = withTiming(screenHeight, animationConfig);
     }
     if (currentPage !== 'bedtime') {
-      bedtimeTranslateY.value = screenHeight;
+      bedtimeTranslateY.value = withTiming(screenHeight, animationConfig);
     }
     if (currentPage !== 'screen_time') {
-      screenTimeTranslateY.value = screenHeight;
+      screenTimeTranslateY.value = withTiming(screenHeight, animationConfig);
     }
     if (currentPage !== 'account') {
-      // Account page slides down from top - force cache refresh
-      accountTranslateY.value = -screenHeight;
+      // Account page slides down from top
+      accountTranslateY.value = withTiming(-screenHeight, animationConfig);
     }
   }, [screenHeight]);
 
