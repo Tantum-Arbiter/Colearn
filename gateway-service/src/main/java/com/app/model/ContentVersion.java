@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.cloud.Timestamp;
+import com.google.cloud.firestore.annotation.Exclude;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -90,7 +91,9 @@ public class ContentVersion {
 
     /**
      * Returns lastUpdated as ISO string for JSON serialization
+     * Excluded from Firestore serialization as this is a computed property
      */
+    @Exclude
     @JsonProperty("lastUpdated")
     public String getLastUpdatedIso() {
         return lastUpdated != null ? lastUpdated.toDate().toInstant().toString() : null;
