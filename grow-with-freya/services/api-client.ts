@@ -280,7 +280,21 @@ export class ApiClient {
    * Sync custom reminders to backend
    */
   static async syncReminders(reminders: any[]): Promise<void> {
-    const profile = await this.getProfile();
+    let profile;
+    try {
+      profile = await this.getProfile();
+    } catch (error: any) {
+      // If profile doesn't exist (404), create a new one with just the reminders
+      if (error.message?.includes('404')) {
+        console.log('[ApiClient] No profile found - creating new profile with reminders');
+        await this.updateProfile({
+          schedule: { customReminders: reminders },
+        });
+        return;
+      }
+      throw error;
+    }
+
     const schedule = profile.schedule || {};
     schedule.customReminders = reminders;
 

@@ -700,6 +700,12 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     exitCardWidth.value = originalCardPosition.width;
     exitCardHeight.value = originalCardPosition.height;
 
+    // Set current screen dimensions in shared values for exit animation
+    // This ensures the animated style uses the correct (current) screen dimensions
+    // rather than potentially stale React state captured in the worklet closure
+    exitScreenWidth.value = currentWidth;
+    exitScreenHeight.value = currentHeight;
+
     // Use ORIGINAL card position as base (same as opening animation)
     // This way animating transitionX/Y/Scale to 0/0/1 returns to original position
     // Set ref IMMEDIATELY (synchronous) so renderPageImage uses correct page on first render
@@ -1030,21 +1036,30 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const exitCardWidth = useSharedValue(0);
   const exitCardHeight = useSharedValue(0);
 
+  // Store screen dimensions in shared values for exit animation (React state can be stale in worklets)
+  const exitScreenWidth = useSharedValue(screenWidth);
+  const exitScreenHeight = useSharedValue(screenHeight);
+
   // Animated style for book expansion to full screen
   // IMPORTANT: This must include ALL transforms (position + scale) because
   // React Native style arrays don't merge transforms - they replace them.
   const bookExpansionAnimatedStyle = useAnimatedStyle(() => {
     const isExiting = isExitAnimatingShared.value === 1;
 
-    // During EXIT: Use shared values for the exit card position (not React state)
-    // The book starts at FULL SCREEN and shrinks to CENTERED BOOK size (not tile size)
+    // During EXIT: Use shared values for the exit card position AND screen dimensions
+    // React state can be stale in worklets, so we use shared values that are updated
+    // at the start of startExitAnimation to ensure correct centering
     if (isExiting && exitCardWidth.value > 0) {
       // bookExpansion: 1 = full screen, 0 = centered book size (same as opening animation)
       // transitionScale.value holds the scale from tile to centered book
 
+      // Use shared values for screen dimensions (set at start of exit animation)
+      const currentScreenWidth = exitScreenWidth.value;
+      const currentScreenHeight = exitScreenHeight.value;
+
       // Calculate full screen scale based on original card size
-      const scaleToFillX = screenWidth / exitCardWidth.value;
-      const scaleToFillY = screenHeight / exitCardHeight.value;
+      const scaleToFillX = currentScreenWidth / exitCardWidth.value;
+      const scaleToFillY = currentScreenHeight / exitCardHeight.value;
       const scaleToFill = Math.max(scaleToFillX, scaleToFillY);
 
       // Current scale: interpolate from CENTERED BOOK scale to full-screen scale
@@ -1055,9 +1070,9 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       const cardCenterX = exitCardX.value + exitCardWidth.value / 2;
       const cardCenterY = exitCardY.value + exitCardHeight.value / 2;
 
-      // The center of the screen
-      const screenCenterX = screenWidth / 2;
-      const screenCenterY = screenHeight / 2;
+      // The center of the screen (using shared values for current dimensions)
+      const screenCenterX = currentScreenWidth / 2;
+      const screenCenterY = currentScreenHeight / 2;
 
       // How much to move to center the card on screen
       const moveToScreenCenterX = screenCenterX - cardCenterX;
