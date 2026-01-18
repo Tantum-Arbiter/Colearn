@@ -80,14 +80,12 @@ spring:
         enabled: true
       db:
         enabled: false
-    # Push custom metrics to Google Cloud Monitoring (for Grafana Cloud integration)
-    # Cloud Run automatically sets GOOGLE_CLOUD_PROJECT env var
+    # Disable Stackdriver - Cloud Run has network restrictions that prevent reaching monitoring.googleapis.com
+    # Metrics are available via Prometheus endpoint instead
     stackdriver:
       metrics:
         export:
-          enabled: true
-          project-id: ${GOOGLE_CLOUD_PROJECT}
-          step: 60s
+          enabled: false
 
 # JWT Configuration
 jwt:
