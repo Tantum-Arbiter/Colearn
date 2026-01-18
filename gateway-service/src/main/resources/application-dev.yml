@@ -58,11 +58,6 @@ management:
     metrics:
       export:
         enabled: true
-  # Disable Stackdriver in dev (only enabled in prod profile)
-  stackdriver:
-    metrics:
-      export:
-        enabled: false
   metrics:
     tags:
       application: grow-with-freya-gateway

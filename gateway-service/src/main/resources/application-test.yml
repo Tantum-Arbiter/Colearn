@@ -3,13 +3,6 @@
 server:
   shutdown: graceful
 
-# Disable Stackdriver in test (only enabled in prod profile)
-management:
-  stackdriver:
-    metrics:
-      export:
-        enabled: false
-
 spring:
   lifecycle:
     timeout-per-shutdown-phase: 5s

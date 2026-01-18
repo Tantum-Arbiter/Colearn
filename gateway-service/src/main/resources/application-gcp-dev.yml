@@ -108,12 +108,6 @@ management:
     health:
       show-details: always
       show-components: always
-  # Disable Stackdriver - Cloud Run has network restrictions that prevent reaching monitoring.googleapis.com
-  # Metrics are available via Prometheus endpoint instead
-  stackdriver:
-    metrics:
-      export:
-        enabled: false
   metrics:
     export:
       prometheus:
