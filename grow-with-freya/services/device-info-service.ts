@@ -108,7 +108,8 @@ export class DeviceInfoService {
   }
 
   /**
-   * Get device type: phone, tablet, desktop, tv, or unknown
+   * Get device type: mobile, tablet, desktop, tv, or unknown
+   * Note: "mobile" is used instead of "phone" for consistency with metrics
    */
   static getDeviceType(): string {
     if (!Device.deviceType) {
@@ -117,7 +118,7 @@ export class DeviceInfoService {
 
     switch (Device.deviceType) {
       case Device.DeviceType.PHONE:
-        return 'phone';
+        return 'mobile';
       case Device.DeviceType.TABLET:
         return 'tablet';
       case Device.DeviceType.DESKTOP:
