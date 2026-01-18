@@ -38,18 +38,19 @@ public class StoryController {
 
     @GetMapping
     public ResponseEntity<List<Story>> getAllStories() {
-        logger.info("[CMS] GET /api/stories - Request received for all stories");
+        logger.info("[User Journey Flow 3] Step 1: CMS call - GET /api/stories - Fetching all stories");
         try {
             List<Story> stories = storyService.getAllAvailableStories().join();
-            logger.info("[CMS] GET /api/stories - Returning {} stories", stories.size());
+            logger.info("[User Journey Flow 3] Step 2: CMS response - Returning {} stories", stories.size());
             stories.forEach(story -> {
                 int pageCount = story.getPages() != null ? story.getPages().size() : 0;
-                logger.info("[CMS]   -> Story: id={}, title='{}', category={}, pages={}, premium={}",
+                logger.info("[User Journey Flow 3]   -> Story: id={}, title='{}', category={}, pages={}, premium={}",
                         story.getId(), story.getTitle(), story.getCategory(), pageCount, story.isPremium());
             });
+            logger.info("[User Journey Flow 3] Step 3: CMS call COMPLETE - {} stories returned", stories.size());
             return ResponseEntity.ok(stories);
         } catch (CompletionException e) {
-            logger.error("[CMS] GET /api/stories - Error getting all stories", e.getCause());
+            logger.error("[User Journey Flow 3] FAILED: Error getting all stories", e.getCause());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -83,11 +84,11 @@ public class StoryController {
     @PostMapping("/sync")
     public ResponseEntity<?> syncStories(@RequestBody StorySyncRequest request) {
         long startTime = System.currentTimeMillis();
-        logger.info("[CMS] POST /api/stories/sync - Sync request received");
+        logger.info("[User Journey Flow 4] Step 1: Delta sync request received - POST /api/stories/sync");
 
         // Validate required fields
         if (request.getClientVersion() == null || request.getStoryChecksums() == null || request.getLastSyncTimestamp() == null) {
-            logger.warn("[CMS] POST /api/stories/sync - Missing required fields in request");
+            logger.warn("[User Journey Flow 4] Step 1 FAILED: Missing required fields in request");
             ErrorResponse errorResponse = new ErrorResponse();
             errorResponse.setSuccess(false);
             errorResponse.setErrorCode(ErrorCode.MISSING_REQUIRED_FIELD.getCode());
@@ -100,15 +101,20 @@ public class StoryController {
         }
 
         int storiesRequested = request.getStoryChecksums().size();
-        logger.info("[CMS] POST /api/stories/sync - Client version: {}, Client has {} cached stories",
+        logger.info("[User Journey Flow 4] Step 2: Client version={}, client has {} cached stories",
                 request.getClientVersion(), storiesRequested);
 
         if (!request.getStoryChecksums().isEmpty()) {
-            logger.info("[CMS]   -> Client cached story IDs: {}", request.getStoryChecksums().keySet());
+            logger.info("[User Journey Flow 4]   -> Client cached story IDs: {}", request.getStoryChecksums().keySet());
         }
 
         try {
+            logger.info("[User Journey Flow 4] Step 3: Fetching server content version from Firestore...");
             ContentVersion serverVersion = storyService.getCurrentContentVersion().join();
+            logger.info("[User Journey Flow 4] Step 4: Server version={}, totalStories={}",
+                    serverVersion.getVersion(), serverVersion.getTotalStories());
+
+            logger.info("[User Journey Flow 4] Step 5: Comparing checksums to detect changes...");
             List<Story> storiesToSync = storyService.getStoriesToSync(request.getStoryChecksums()).join();
 
             StorySyncResponse response = new StorySyncResponse();
@@ -122,32 +128,23 @@ public class StoryController {
             long durationMs = System.currentTimeMillis() - startTime;
             metricsService.recordStorySync(storiesRequested, storiesToSync.size(), durationMs);
 
-            logger.info("[CMS] POST /api/stories/sync - Response: serverVersion={}, updatedStories={}, totalStories={}",
-                    response.getServerVersion(),
-                    response.getUpdatedStories(),
-                    response.getTotalStories());
+            if (storiesToSync.isEmpty()) {
+                logger.info("[User Journey Flow 4] Step 6: No changes detected - client is up to date");
+            } else {
+                logger.info("[User Journey Flow 4] Step 6: {} stories need syncing (new/modified/deleted)", storiesToSync.size());
+                storiesToSync.forEach(story -> {
+                    int pageCount = story.getPages() != null ? story.getPages().size() : 0;
+                    logger.info("[User Journey Flow 4]   -> Syncing story: id={}, title='{}', pages={}",
+                            story.getId(), story.getTitle(), pageCount);
+                });
+            }
 
-            storiesToSync.forEach(story -> {
-                int pageCount = story.getPages() != null ? story.getPages().size() : 0;
-                logger.info("[CMS]   -> Syncing story: id={}, title='{}', pages={}",
-                        story.getId(), story.getTitle(), pageCount);
-                if (story.getPages() != null && !story.getPages().isEmpty()) {
-                    story.getPages().forEach(page -> {
-                        int interactiveCount = page.getInteractiveElements() != null ? page.getInteractiveElements().size() : 0;
-                        logger.info("[CMS]       -> Page {}: image={}, interactiveElements={}",
-                                page.getPageNumber(), page.getBackgroundImage(), interactiveCount);
-                        if (page.getInteractiveElements() != null) {
-                            page.getInteractiveElements().forEach(el ->
-                                logger.info("[CMS]           -> Element: id={}, type={}, image={}",
-                                        el.getId(), el.getType(), el.getImage()));
-                        }
-                    });
-                }
-            });
+            logger.info("[User Journey Flow 4] Step 7: Delta sync COMPLETE - serverVersion={}, updatedStories={}, totalStories={}, durationMs={}",
+                    response.getServerVersion(), response.getUpdatedStories(), response.getTotalStories(), durationMs);
 
             return ResponseEntity.ok(response);
         } catch (CompletionException e) {
-            logger.error("[CMS] POST /api/stories/sync - Error syncing stories", e.getCause());
+            logger.error("[User Journey Flow 4] FAILED: Error syncing stories", e.getCause());
             ErrorResponse errorResponse = new ErrorResponse();
             errorResponse.setSuccess(false);
             errorResponse.setErrorCode(ErrorCode.INTERNAL_SERVER_ERROR.getCode());

@@ -87,9 +87,10 @@ export class AuthService {
    */
   static async completeGoogleSignIn(idToken: string): Promise<AuthResponse> {
     const url = `${GATEWAY_URL}/auth/google`;
-    console.log('[AuthService] Google sign-in calling:', url);
+    console.log('[User Journey Flow 1] Step 1: Google ID token received, sending to backend...');
 
     try {
+      console.log('[User Journey Flow 1] Step 2: Calling backend /auth/google');
       const authResponse = await fetchWithTimeout(url, {
         method: 'POST',
         headers: {
@@ -99,17 +100,19 @@ export class AuthService {
         body: JSON.stringify({ idToken }),
       });
 
-      console.log('[AuthService] Google sign-in response status:', authResponse.status);
+      console.log('[User Journey Flow 1] Step 3: Backend response status:', authResponse.status);
 
       if (!authResponse.ok) {
         const errorText = await authResponse.text();
-        console.error('[AuthService] Google sign-in failed:', errorText);
+        console.error('[User Journey Flow 1] Step 3 FAILED: Backend auth failed:', errorText);
         throw new Error(`Authentication failed: ${errorText}`);
       }
 
-      return await authResponse.json();
+      const result = await authResponse.json();
+      console.log('[User Journey Flow 1] Step 4: Backend auth successful, tokens received');
+      return result;
     } catch (error) {
-      console.error('[AuthService] Google sign-in error:', error);
+      console.error('[User Journey Flow 1] FAILED: Google sign-in error:', error);
       throw error;
     }
   }
@@ -252,6 +255,9 @@ export class AuthService {
    * Refresh access token using refresh token
    */
   static async refreshToken(refreshToken: string): Promise<AuthResponse> {
+    console.log('[User Journey Flow 2] Step 1: User returning after inactivity, refreshing token...');
+    console.log('[User Journey Flow 2] Step 2: Calling backend /auth/refresh');
+
     const response = await fetch(`${GATEWAY_URL}/auth/refresh`, {
       method: 'POST',
       headers: {
@@ -260,11 +266,16 @@ export class AuthService {
       body: JSON.stringify({ refreshToken }),
     });
 
+    console.log('[User Journey Flow 2] Step 3: Backend response status:', response.status);
+
     if (!response.ok) {
+      console.error('[User Journey Flow 2] Step 3 FAILED: Token refresh failed, user needs to re-authenticate');
       throw new Error('Token refresh failed');
     }
 
-    return await response.json();
+    const result = await response.json();
+    console.log('[User Journey Flow 2] Step 4: Token refresh successful, new tokens received');
+    return result;
   }
 
   /**

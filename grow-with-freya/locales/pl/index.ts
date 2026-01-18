@@ -245,10 +245,10 @@ export default {
     loading: 'Ładowanie...',
     progress: 'Postęp: {{completed}} / {{total}}',
     instructions: {
-      step1: 'Spójrz na obrazek',
-      step2: 'Zrób taką samą minę!',
-      step3: 'Pokaż radość, smutek lub wygłupy',
-      step4: 'Razem poznajemy uczucia!',
+      step1: '👀 Spójrzcie razem i zareagujcie na emocję',
+      step2: '🤪 Zrób minę - przesadzaj i bądź głupiutki!',
+      step3: '🔄 Na zmianę się naśladujcie',
+      step4: '🎭 Świętujcie każdą próbę - chodzi o więź, nie o perfekcję',
     },
     themes: {
       emoji: {
@@ -760,6 +760,7 @@ export default {
       skipAll: 'Pomiń wszystko',
       skipTour: 'Pomiń wycieczkę',
       gotIt: 'Rozumiem!',
+      go: 'Start!',
       letsGo: 'Zaczynamy!',
       done: 'Gotowe',
       startReading: 'Zacznij czytać',

@@ -152,10 +152,10 @@ describe('EmotionsUnifiedScreen', () => {
       expect(getByText('How to Play ▼')).toBeTruthy();
 
       // Instructions should be visible
-      expect(getByText('Look at the picture')).toBeTruthy();
-      expect(getByText('Make the same face!')).toBeTruthy();
-      expect(getByText('Show me happy, sad, or silly')).toBeTruthy();
-      expect(getByText('Let\'s learn about feelings together!')).toBeTruthy();
+      expect(getByText(/Look and react to the emotion together/)).toBeTruthy();
+      expect(getByText(/Make the face - exaggerate and be silly/)).toBeTruthy();
+      expect(getByText(/Take turns copying each other/)).toBeTruthy();
+      expect(getByText(/Celebrate every attempt/)).toBeTruthy();
     });
 
     it('collapses when pressed again', () => {
@@ -221,11 +221,11 @@ describe('EmotionsUnifiedScreen', () => {
       // Expand instructions
       fireEvent.press(getByText('How to Play ▶'));
 
-      // Check for simple, encouraging language
-      expect(getByText('Look at the picture')).toBeTruthy();
-      expect(getByText('Make the same face!')).toBeTruthy();
-      expect(getByText('Show me happy, sad, or silly')).toBeTruthy();
-      expect(getByText('Let\'s learn about feelings together!')).toBeTruthy();
+      // Check for parent-engaging, encouraging language
+      expect(getByText(/Look and react to the emotion together/)).toBeTruthy();
+      expect(getByText(/Make the face - exaggerate and be silly/)).toBeTruthy();
+      expect(getByText(/Take turns copying each other/)).toBeTruthy();
+      expect(getByText(/Celebrate every attempt/)).toBeTruthy();
     });
 
     it('has clean button text without emojis', () => {

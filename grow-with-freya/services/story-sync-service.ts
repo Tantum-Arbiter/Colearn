@@ -104,16 +104,20 @@ export class StorySyncService {
    */
   static async isSyncNeeded(): Promise<boolean> {
     try {
+      log.info('[User Journey Flow 4] Step 1: Checking if CMS sync is needed...');
       const localMetadata = await this.getLocalSyncMetadata();
 
       // If no local data, sync is needed
       if (!localMetadata) {
-        log.debug('No local data, sync needed');
+        log.info('[User Journey Flow 4] Step 2: No local data found, initial sync needed');
         return true;
       }
+      log.info('[User Journey Flow 4] Step 2: Local data found, version=' + localMetadata.version + ', stories=' + (localMetadata.stories?.length || 0));
 
       // Get server version
+      log.info('[User Journey Flow 4] Step 3: Fetching server content version...');
       const serverVersion = await this.getContentVersion();
+      log.info('[User Journey Flow 4] Step 4: Server version=' + serverVersion.version + ', totalStories=' + serverVersion.totalStories);
 
       // Check 1: Version number increased (new content added)
       const versionIncreased = serverVersion.version > localMetadata.version;
@@ -131,21 +135,18 @@ export class StorySyncService {
 
       const syncNeeded = versionIncreased || storyCountChanged || hasDeletedStories;
 
-      log.debug('Sync check:', {
-        localVersion: localMetadata.version,
-        serverVersion: serverVersion.version,
-        localStoryCount,
-        serverStoryCount,
-        deletedStories: deletedStories.length > 0 ? deletedStories : 'none',
-        syncNeeded,
-        reason: versionIncreased ? 'version_increased' :
+      const reason = versionIncreased ? 'version_increased' :
                 storyCountChanged ? 'story_count_changed' :
-                hasDeletedStories ? 'stories_deleted' : 'up_to_date'
-      });
+                hasDeletedStories ? 'stories_deleted' : 'up_to_date';
+
+      log.info('[User Journey Flow 4] Step 5: Sync check result - syncNeeded=' + syncNeeded + ', reason=' + reason);
+      if (hasDeletedStories) {
+        log.info('[User Journey Flow 4]   -> Deleted stories detected:', deletedStories);
+      }
 
       return syncNeeded;
     } catch (error) {
-      log.error('Error checking sync status:', error);
+      log.error('[User Journey Flow 4] FAILED: Error checking sync status:', error);
       // On error, assume sync is needed
       return true;
     }
@@ -171,7 +172,8 @@ export class StorySyncService {
       const localMetadata = await this.getLocalSyncMetadata();
       const isInitialSync = !localMetadata || localMetadata.version === 0;
 
-      log.info(`Starting ${isInitialSync ? 'initial' : 'delta'} sync...`);
+      log.info(`[User Journey Flow 4] Step 6: Starting ${isInitialSync ? 'INITIAL' : 'DELTA'} sync...`);
+      log.info(`[User Journey Flow 4] Step 7: Building sync request with clientVersion=${localMetadata?.version || 0}, cachedStories=${Object.keys(localMetadata?.storyChecksums || {}).length}`);
 
       // Build sync request
       const syncRequest: StorySyncRequest = {
@@ -183,12 +185,13 @@ export class StorySyncService {
       const requestPayload = JSON.stringify(syncRequest);
 
       // Call sync endpoint
+      log.info('[User Journey Flow 4] Step 8: Calling backend POST /api/stories/sync...');
       const syncResponse = await ApiClient.request<StorySyncResponse>('/api/stories/sync', {
         method: 'POST',
         body: requestPayload
       });
 
-      log.info(`Sync complete: ${syncResponse.updatedStories} updated, ${syncResponse.totalStories} total stories`);
+      log.info(`[User Journey Flow 4] Step 9: Backend response - serverVersion=${syncResponse.serverVersion}, updatedStories=${syncResponse.updatedStories}, totalStories=${syncResponse.totalStories}`);
 
       // Resolve asset URLs for all stories
       if (syncResponse.stories && syncResponse.stories.length > 0) {
@@ -242,7 +245,7 @@ export class StorySyncService {
       // Check for deleted stories
       const deletedStories = existingStories.filter(s => !serverStoryIds.has(s.id));
       if (deletedStories.length > 0) {
-        log.info(`Removed ${deletedStories.length} deleted stories:`, deletedStories.map(s => s.id));
+        log.info(`[User Journey Flow 4] Step 10: Detected ${deletedStories.length} DELETED stories:`, deletedStories.map(s => s.id));
       }
 
       // Combine unchanged + updated stories
@@ -256,13 +259,14 @@ export class StorySyncService {
         stories: allStories
       };
 
+      log.info(`[User Journey Flow 4] Step 11: Saving updated metadata - version=${syncResponse.serverVersion}, stories=${allStories.length}`);
       await this.saveSyncMetadata(newMetadata);
 
-      log.debug(`Cached ${allStories.length} stories (version ${syncResponse.serverVersion})`);
+      log.info(`[User Journey Flow 4] Step 12: Delta sync COMPLETE - cached ${allStories.length} stories, updated=${syncResponse.updatedStories}, deleted=${deletedStories.length}`);
 
       return allStories;
     } catch (error) {
-      log.error('Sync failed:', error);
+      log.error('[User Journey Flow 4] FAILED: Sync error:', error);
       throw error;
     }
   }
@@ -349,6 +353,7 @@ export class StorySyncService {
   static async clearCache(): Promise<void> {
     try {
       await AsyncStorage.removeItem(STORAGE_KEY);
+      await AsyncStorage.removeItem('cached_cover_paths');
       log.debug('Cache cleared');
     } catch (error) {
       log.error('Error clearing cache:', error);

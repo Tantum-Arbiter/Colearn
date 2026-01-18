@@ -67,6 +67,30 @@ const StoryCard = memo(function StoryCard({
   const cardRef = useRef<View>(null);
   const displayTitle = getLocalizedText(story.localizedTitle, story.title, language);
 
+  // Track previous hidden state to detect when card becomes visible again
+  const wasHiddenRef = useRef(isHidden);
+  const fadeOpacity = useSharedValue(isHidden ? 0 : 1);
+
+  // Fade in when transitioning from hidden to visible (Android fix)
+  useEffect(() => {
+    if (wasHiddenRef.current && !isHidden) {
+      // Was hidden, now visible - fade in
+      fadeOpacity.value = 0;
+      fadeOpacity.value = withTiming(1, {
+        duration: 300,
+        easing: Easing.out(Easing.cubic),
+      });
+    } else if (isHidden) {
+      // Becoming hidden - instant
+      fadeOpacity.value = 0;
+    }
+    wasHiddenRef.current = isHidden;
+  }, [isHidden]);
+
+  const fadeAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: fadeOpacity.value,
+  }));
+
   const handlePress = useCallback(() => {
     // Pass the ref to onPress so the parent can measure position
     onPress(story, cardRef);
@@ -88,7 +112,7 @@ const StoryCard = memo(function StoryCard({
   }
 
   return (
-    <View ref={cardRef} collapsable={false}>
+    <Animated.View ref={cardRef} collapsable={false} style={fadeAnimatedStyle}>
       <Pressable
         onPress={handlePress}
         onLongPress={handleLongPress}
@@ -123,7 +147,7 @@ const StoryCard = memo(function StoryCard({
           <Text style={styles.cardTitle} numberOfLines={2}>{displayTitle}</Text>
         </View>
       </Pressable>
-    </View>
+    </Animated.View>
   );
 });
 

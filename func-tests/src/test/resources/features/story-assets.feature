@@ -167,7 +167,7 @@ Feature: Story Asset Delivery with Signed URLs
     Then the response status code should be 400
     And the response should have field "errorCode"
 
-  @security @path-validation
+  @security @path-validation @gcs-required
   Scenario Outline: Valid asset paths are accepted
     When I make a GET request to "/api/assets/url?path=<path>"
     Then the response status code should be 200 or 404

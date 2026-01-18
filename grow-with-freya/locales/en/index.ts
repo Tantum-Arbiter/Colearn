@@ -248,10 +248,10 @@ export default {
     loading: 'Loading...',
     progress: 'Progress: {{completed}} / {{total}}',
     instructions: {
-      step1: 'Look at the picture',
-      step2: 'Make the same face!',
-      step3: 'Show me happy, sad, or silly',
-      step4: "Let's learn about feelings together!",
+      step1: '👀 Look and react to the emotion together',
+      step2: '🤪 Make the face - exaggerate and be silly!',
+      step3: '🔄 Take turns copying each other',
+      step4: "🎭 Celebrate every attempt - it's about connection, not perfection",
     },
     // Theme names and descriptions
     themes: {
@@ -773,6 +773,7 @@ export default {
       skipAll: 'Skip All',
       skipTour: 'Skip tour',
       gotIt: 'Got it!',
+      go: 'Go!',
       letsGo: "Let's Go!",
       done: 'Done',
       startReading: 'Start Reading',

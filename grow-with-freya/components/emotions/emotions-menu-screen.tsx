@@ -181,10 +181,10 @@ export function EmotionsMenuScreen({
         {showHowToPlay && (
           <View style={styles.howToPlayContent}>
             <ThemedText style={styles.howToPlayText}>
-              • Look at the emotion card{'\n'}
-              • Read the expression prompt{'\n'}
-              • Show that emotion with your face!{'\n'}
-              • Have fun learning about feelings
+              👀 Look and react to the emotion together{'\n'}
+              🤪 Make the face - exaggerate and be silly!{'\n'}
+              🔄 Take turns copying each other{'\n'}
+              🎭 Celebrate every attempt - it&apos;s about connection, not perfection
             </ThemedText>
           </View>
         )}
