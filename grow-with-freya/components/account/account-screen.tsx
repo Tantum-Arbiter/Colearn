@@ -553,7 +553,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
                   key={option.value}
                   style={[
                     styles.textSizeButton,
-                    { minHeight: scaledButtonSize(40), paddingHorizontal: scaledPadding(12), paddingVertical: scaledPadding(8) },
+                    { minHeight: 40, paddingHorizontal: 10, paddingVertical: 8 },
                     textSizeScale === option.value && styles.textSizeButtonSelected,
                   ]}
                   onPress={() => {
@@ -565,10 +565,9 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
                     style={[
                       styles.textSizeButtonText,
                       textSizeScale === option.value && styles.textSizeButtonTextSelected,
-                      { fontSize: scaledFontSize(14) * option.value },
+                      { fontSize: 12 },
                     ]}
                     numberOfLines={1}
-                    adjustsFontSizeToFit
                   >
                     {t(option.labelKey)}
                   </Text>
