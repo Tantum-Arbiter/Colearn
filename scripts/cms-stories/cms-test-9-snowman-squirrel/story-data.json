@@ -2,8 +2,8 @@
   "id": "cms-test-9-snowman-squirrel",
   "title": "CMS Test 9 - Snowman Squirrel",
   "category": "nature",
-  "tag": "\ud83d\udc22 Nature",
-  "emoji": "\ud83d\udc3f\ufe0f",
+  "tag": "🐢 Nature",
+  "emoji": "🐿️",
   "coverImage": "assets/stories/cms-test-9-snowman-squirrel/cover/cms-test-9-snowman-squirrel-thumbnail.webp",
   "isAvailable": true,
   "ageRange": "2-5",
@@ -31,7 +31,13 @@
       "pageNumber": 1,
       "type": "story",
       "backgroundImage": "assets/stories/cms-test-9-snowman-squirrel/page-1/cms-test-9-snowman-squirrel-page-1.webp",
-      "text": "Squirrel puts her boots on.\nHer hat is on her head."
+      "text": "nico says bye\nHer hat is on her head.",
+      "localizedText": {
+        "en": "nico says bye\nHer hat is on her head.",
+        "pl": "nico mówi pa\nCzapka jest na jej głowie.",
+        "es": "nico dice adios\nSu sombrero está en su cabeza.",
+        "de": "nico sagt tschüss\nSein Hut ist auf dem Kopf."
+      }
     },
     {
       "id": "cms-test-9-page-2",
@@ -171,5 +177,6 @@
         }
       ]
     }
-  ]
+  ],
+  "version": 5
 }

@@ -198,7 +198,7 @@ export const CustomRemindersScreen: React.FC<CustomRemindersScreenProps> = ({
 
         {/* Stats */}
         {stats && (
-          <View style={[styles.statsContainer, { padding: scaledPadding(16) }]}>
+          <View style={[styles.statsContainer, { padding: scaledPadding(16), marginBottom: scaledPadding(20), marginTop: scaledPadding(16) }]}>
             <View style={styles.statItem}>
               <Text style={[styles.statNumber, { fontSize: scaledFontSize(24) }]}>{stats.totalReminders}</Text>
               <Text style={[styles.statLabel, { fontSize: scaledFontSize(12) }]}>{t('reminders.total')}</Text>
@@ -395,7 +395,7 @@ export const CustomRemindersContent: React.FC<CustomRemindersContentProps> = ({
         <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
           {/* Stats */}
         {stats && (
-          <View style={[styles.statsContainer, { padding: scaledPadding(16) }]}>
+          <View style={[styles.statsContainer, { padding: scaledPadding(16), marginBottom: scaledPadding(20), marginTop: scaledPadding(16) }]}>
             <View style={styles.statItem}>
               <Text style={[styles.statNumber, { fontSize: scaledFontSize(24) }]}>{stats.totalReminders}</Text>
               <Text style={[styles.statLabel, { fontSize: scaledFontSize(12) }]}>{t('reminders.total')}</Text>

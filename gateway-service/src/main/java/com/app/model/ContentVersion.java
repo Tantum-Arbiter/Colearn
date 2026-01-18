@@ -1,9 +1,11 @@
 package com.app.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.cloud.Timestamp;
+import com.google.cloud.firestore.annotation.Exclude;
 
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -21,8 +23,8 @@ public class ContentVersion {
     @JsonProperty("version")
     private int version; // Incremented on any story change
 
-    @JsonProperty("lastUpdated")
-    private Instant lastUpdated;
+    @JsonIgnore // Firestore handles this natively, Jackson serialization uses getLastUpdatedIso()
+    private Timestamp lastUpdated;
 
     @JsonProperty("storyChecksums")
     private Map<String, String> storyChecksums; // storyId -> SHA-256 checksum
@@ -34,7 +36,7 @@ public class ContentVersion {
     public ContentVersion() {
         this.id = "current";
         this.version = 1;
-        this.lastUpdated = Instant.now();
+        this.lastUpdated = Timestamp.now();
         this.storyChecksums = new HashMap<>();
         this.totalStories = 0;
     }
@@ -42,7 +44,7 @@ public class ContentVersion {
     // Helper methods
     public void incrementVersion() {
         this.version++;
-        this.lastUpdated = Instant.now();
+        this.lastUpdated = Timestamp.now();
     }
 
     public void updateStoryChecksum(String storyId, String checksum) {
@@ -79,12 +81,22 @@ public class ContentVersion {
         this.version = version;
     }
 
-    public Instant getLastUpdated() {
+    public Timestamp getLastUpdated() {
         return lastUpdated;
     }
 
-    public void setLastUpdated(Instant lastUpdated) {
+    public void setLastUpdated(Timestamp lastUpdated) {
         this.lastUpdated = lastUpdated;
+    }
+
+    /**
+     * Returns lastUpdated as ISO string for JSON serialization
+     * Excluded from Firestore serialization as this is a computed property
+     */
+    @Exclude
+    @JsonProperty("lastUpdated")
+    public String getLastUpdatedIso() {
+        return lastUpdated != null ? lastUpdated.toDate().toInstant().toString() : null;
     }
 
     public Map<String, String> getStoryChecksums() {

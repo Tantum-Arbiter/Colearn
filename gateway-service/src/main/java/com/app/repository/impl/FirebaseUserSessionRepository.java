@@ -109,12 +109,12 @@ public class FirebaseUserSessionRepository implements UserSessionRepository {
     @Override
     public CompletableFuture<List<UserSession>> findActiveSessionsByUserId(String userId) {
         logger.debug("Finding active sessions for user: {}", userId);
-        
+
         return CompletableFuture.supplyAsync(() -> {
             try {
                 Query query = firestore.collection(COLLECTION_NAME)
                         .whereEqualTo("userId", userId)
-                        .whereEqualTo("active", true);
+                        .whereEqualTo("isActive", true);
 
                 ApiFuture<QuerySnapshot> future = query.get();
                 QuerySnapshot querySnapshot = future.get();
@@ -232,7 +232,7 @@ public class FirebaseUserSessionRepository implements UserSessionRepository {
                 
                 Instant now = Instant.now();
                 ApiFuture<WriteResult> future = docRef.update(
-                        "active", false,
+                        "isActive", false,
                         "revokedAt", now
                 );
 
@@ -366,7 +366,7 @@ public class FirebaseUserSessionRepository implements UserSessionRepository {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 Query query = firestore.collection(COLLECTION_NAME)
-                        .whereEqualTo("active", true);
+                        .whereEqualTo("isActive", true);
 
                 ApiFuture<QuerySnapshot> future = query.get();
                 QuerySnapshot querySnapshot = future.get();
@@ -393,7 +393,7 @@ public class FirebaseUserSessionRepository implements UserSessionRepository {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 Query query = firestore.collection(COLLECTION_NAME)
-                        .whereEqualTo("active", true);
+                        .whereEqualTo("isActive", true);
 
                 ApiFuture<QuerySnapshot> future = query.get();
                 QuerySnapshot querySnapshot = future.get();
@@ -423,7 +423,7 @@ public class FirebaseUserSessionRepository implements UserSessionRepository {
                 Instant expirationThreshold = now.plusSeconds(withinMinutes * 60L);
 
                 Query query = firestore.collection(COLLECTION_NAME)
-                        .whereEqualTo("active", true)
+                        .whereEqualTo("isActive", true)
                         .whereLessThanOrEqualTo("expiresAt", expirationThreshold)
                         .whereGreaterThan("expiresAt", now);
 

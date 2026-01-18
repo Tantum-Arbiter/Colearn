@@ -96,8 +96,10 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   };
 
   // Update animation values when screen height changes (orientation change)
+  // Set values immediately without animation to prevent visual glitches
   useEffect(() => {
     // Update positions for inactive pages when screen height changes
+    // Use direct assignment (no withTiming) to avoid animation during orientation change
     if (currentPage !== 'main') {
       mainTranslateY.value = currentPage === 'account' ? screenHeight : -screenHeight;
     }
@@ -117,7 +119,7 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
       screenTimeTranslateY.value = screenHeight;
     }
     if (currentPage !== 'account') {
-      // Account page slides down from top - force cache refresh
+      // Account page slides down from top
       accountTranslateY.value = -screenHeight;
     }
   }, [screenHeight]);
@@ -204,6 +206,7 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    overflow: 'hidden', // Prevent pages from showing outside bounds during orientation changes
   },
   page: {
     position: 'absolute',

@@ -20,9 +20,15 @@ const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'apt-icon-472307-b7';
 const UPLOAD_MODE = process.env.UPLOAD_MODE || 'cms-only'; // 'cms-only', 'bundled', or 'all'
 const DRY_RUN = process.env.DRY_RUN === 'true';
 const FORCE_UPLOAD = process.env.FORCE_UPLOAD === 'true'; // Force re-upload all stories, ignoring checksums
+const FIRESTORE_EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST; // e.g., 'localhost:8082'
 
 // Initialize Firebase Admin
 function getServiceAccountCredentials() {
+  // If using emulator, no credentials needed
+  if (FIRESTORE_EMULATOR_HOST) {
+    return null;
+  }
+
   // Option 1: Base64-encoded JSON (for CI/CD)
   if (SERVICE_ACCOUNT_JSON) {
     try {
@@ -51,21 +57,35 @@ function getServiceAccountCredentials() {
 
   console.error('❌ Error: No service account credentials provided');
   console.log('Usage:');
-  console.log('  Local: FIREBASE_SERVICE_ACCOUNT_KEY_PATH=/path/to/key.json node upload-stories-to-firestore.js');
-  console.log('  CI/CD: GCP_SA_KEY=<base64-json> node upload-stories-to-firestore.js');
+  console.log('  Emulator: FIRESTORE_EMULATOR_HOST=localhost:8082 node upload-stories-to-firestore.js');
+  console.log('  Local:    FIREBASE_SERVICE_ACCOUNT_KEY_PATH=/path/to/key.json node upload-stories-to-firestore.js');
+  console.log('  CI/CD:    GCP_SA_KEY=<base64-json> node upload-stories-to-firestore.js');
   process.exit(1);
 }
 
 const serviceAccount = getServiceAccountCredentials();
 
-// Log which service account is being used (for debugging)
-console.log(`🔐 Using service account: ${serviceAccount.client_email}`);
-console.log(`📁 Project ID: ${PROJECT_ID}`);
+// Initialize Firebase Admin based on environment
+if (FIRESTORE_EMULATOR_HOST) {
+  console.log(`🔧 Using Firestore Emulator: ${FIRESTORE_EMULATOR_HOST}`);
+  console.log(`📁 Project ID: ${PROJECT_ID}`);
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  projectId: PROJECT_ID
-});
+  // Set the emulator host for the Firebase Admin SDK
+  process.env.FIRESTORE_EMULATOR_HOST = FIRESTORE_EMULATOR_HOST;
+
+  admin.initializeApp({
+    projectId: PROJECT_ID
+  });
+} else {
+  // Log which service account is being used (for debugging)
+  console.log(`🔐 Using service account: ${serviceAccount.client_email}`);
+  console.log(`📁 Project ID: ${PROJECT_ID}`);
+
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+    projectId: PROJECT_ID
+  });
+}
 
 const db = admin.firestore();
 

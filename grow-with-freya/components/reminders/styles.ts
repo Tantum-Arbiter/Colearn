@@ -53,14 +53,18 @@ export const styles = StyleSheet.create({
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    flexWrap: 'wrap',
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 16,
     padding: 20,
     marginBottom: 20,
+    gap: 8,
   },
 
   statItem: {
     alignItems: 'center',
+    minWidth: 70,
+    flex: 1,
   },
 
   statNumber: {

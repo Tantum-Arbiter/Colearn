@@ -59,13 +59,20 @@ public class Story {
     private List<StoryPage> pages;
 
     @JsonProperty("isPremium")
-    private boolean isPremium;
+    private boolean premium;
 
     @JsonProperty("author")
     private String author;
 
     @JsonProperty("tags")
     private List<String> tags;
+
+    // Fields that may exist in Firestore documents but aren't used by the app
+    @JsonProperty("_usageType")
+    private String usageType;
+
+    @JsonProperty("_disclaimer")
+    private String disclaimer;
 
     @JsonProperty("createdAt")
     private Instant createdAt;
@@ -84,7 +91,7 @@ public class Story {
         this.pages = new ArrayList<>();
         this.tags = new ArrayList<>();
         this.available = true;
-        this.isPremium = false;
+        this.premium = false;
         this.version = 1;
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
@@ -233,11 +240,16 @@ public class Story {
     }
 
     public boolean isPremium() {
-        return isPremium;
+        return premium;
     }
 
+    public void setIsPremium(boolean isPremium) {
+        this.premium = isPremium;
+    }
+
+    // Alias setter for Firestore compatibility
     public void setPremium(boolean premium) {
-        isPremium = premium;
+        this.premium = premium;
     }
 
     public String getAuthor() {
@@ -286,6 +298,33 @@ public class Story {
 
     public void setChecksum(String checksum) {
         this.checksum = checksum;
+    }
+
+    // Firestore metadata fields (not used by app but need getters/setters for mapping)
+    public String getUsageType() {
+        return usageType;
+    }
+
+    public void setUsageType(String usageType) {
+        this.usageType = usageType;
+    }
+
+    // Alias with underscore prefix for Firestore
+    public void set_usageType(String usageType) {
+        this.usageType = usageType;
+    }
+
+    public String getDisclaimer() {
+        return disclaimer;
+    }
+
+    public void setDisclaimer(String disclaimer) {
+        this.disclaimer = disclaimer;
+    }
+
+    // Alias with underscore prefix for Firestore
+    public void set_disclaimer(String disclaimer) {
+        this.disclaimer = disclaimer;
     }
 
     @Override

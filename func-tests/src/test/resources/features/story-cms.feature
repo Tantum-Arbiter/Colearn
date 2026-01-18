@@ -23,6 +23,18 @@ Feature: Story CMS and Delta-Sync
     And the response should contain field "totalStories"
     And the response should contain field "lastUpdated"
 
+  @smoke
+  Scenario: Get content version with clientVersion query param
+    When I make a GET request to "/api/stories/version?clientVersion=1"
+    Then the response status code should be 200
+    And the response should contain field "version"
+    And the response should contain field "totalStories"
+
+  @smoke
+  Scenario: Get content version with invalid clientVersion returns bad request
+    When I make a GET request to "/api/stories/version?clientVersion=abc"
+    Then the response status code should be 400
+
   @delta-sync @emulator-only
   Scenario: Initial sync with no client data
     Given I have a sync request with no client checksums
@@ -63,6 +75,8 @@ Feature: Story CMS and Delta-Sync
   Scenario: Get non-existent story
     When I make a GET request to "/api/stories/non-existent-story"
     Then the response status code should be 404
+    And the response should have field "errorCode" with value "GTW-100"
+    And the response should have field "success" with value "false"
 
   @story-retrieval @emulator-only
   Scenario: Get stories by category
@@ -157,6 +171,8 @@ Feature: Story CMS and Delta-Sync
   Scenario: Sync with invalid request body
     When I make a POST request to "/api/stories/sync" with invalid JSON
     Then the response status code should be 400
+    And the response should have field "errorCode" with value "GTW-106"
+    And the response should have field "success" with value "false"
 
   @error-handling
   Scenario: Sync with malformed checksums
@@ -183,9 +199,10 @@ Feature: Story CMS and Delta-Sync
       """
       {}
       """
-    Then the response status code should be 500
-    And the response should have field "errorCode"
-    And the response should have field "error"
+    Then the response status code should be 400
+    And the response should have field "errorCode" with value "GTW-101"
+    And the response should have field "error" with value "Required field is missing"
+    And the response should have field "success" with value "false"
 
   @error-handling @emulator-only
   Scenario: Sync request with null checksums
@@ -197,7 +214,9 @@ Feature: Story CMS and Delta-Sync
         "lastSyncTimestamp": 0
       }
       """
-    Then the response status code should be 500
+    Then the response status code should be 400
+    And the response should have field "errorCode" with value "GTW-101"
+    And the response should have field "success" with value "false"
 
   @error-handling @emulator-only
   Scenario: Get all stories with missing required headers

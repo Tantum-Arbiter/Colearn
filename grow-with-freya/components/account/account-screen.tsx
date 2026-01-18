@@ -13,8 +13,6 @@ import { TermsConditionsContent } from './terms-conditions-screen';
 import { PrivacyPolicyContent } from './privacy-policy-screen';
 import { ScreenTimeContent } from '../screen-time/screen-time-screen';
 import { CustomRemindersContent, CreateReminderContent } from '../reminders';
-import { NotificationDebugScreen } from '../debug/notification-debug-screen';
-import { AudioDebugScreen } from '../debug/audio-debug-screen';
 import ScreenTimeService from '../../services/screen-time-service';
 import { useScreenTime } from '../screen-time/screen-time-provider';
 import { formatDurationCompact } from '../../utils/time-formatting';
@@ -23,7 +21,6 @@ import { ApiClient } from '../../services/api-client';
 import { reminderService } from '../../services/reminder-service';
 import { StorySyncService } from '../../services/story-sync-service';
 import { AssetSyncService } from '../../services/asset-sync-service';
-import * as Sentry from '@sentry/react-native';
 import { TEXT_SIZE_OPTIONS, useAccessibility } from '../../hooks/use-accessibility';
 import { SettingsTipsOverlay } from '../tutorial/settings-tips-overlay';
 import { ScreenTimeTipsOverlay } from '../tutorial/screen-time-tips-overlay';
@@ -74,9 +71,6 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
     setShowLanguageOverlay(false);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   }, []);
-
-  // For debug screens that still use conditional rendering
-  const [debugView, setDebugView] = useState<'none' | 'notification-debug' | 'audio-debug'>('none');
 
   // Track reminder changes for the screen time content
   const [reminderChangeCounter, setReminderChangeCounter] = useState(0);
@@ -347,15 +341,6 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
     }
   };
 
-  // Handle navigation for debug views (still use conditional rendering)
-  if (debugView === 'notification-debug') {
-    return <NotificationDebugScreen onBack={() => setDebugView('none')} />;
-  }
-
-  if (debugView === 'audio-debug') {
-    return <AudioDebugScreen onBack={() => setDebugView('none')} />;
-  }
-
   // Handle back based on current view - respects navigation hierarchy
   const handleBack = async () => {
     // If leaving the account screen entirely (from main) and have unsaved changes, auto-save
@@ -568,7 +553,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
                   key={option.value}
                   style={[
                     styles.textSizeButton,
-                    { minHeight: scaledButtonSize(40), paddingHorizontal: scaledPadding(12), paddingVertical: scaledPadding(8) },
+                    { minHeight: 40, paddingHorizontal: 10, paddingVertical: 8 },
                     textSizeScale === option.value && styles.textSizeButtonSelected,
                   ]}
                   onPress={() => {
@@ -580,10 +565,9 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
                     style={[
                       styles.textSizeButtonText,
                       textSizeScale === option.value && styles.textSizeButtonTextSelected,
-                      { fontSize: scaledFontSize(14) * option.value },
+                      { fontSize: 12 },
                     ]}
                     numberOfLines={1}
-                    adjustsFontSizeToFit
                   >
                     {t(option.labelKey)}
                   </Text>
@@ -722,47 +706,10 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
 
             <Pressable
               style={[styles.button, { paddingVertical: scaledPadding(12), minHeight: scaledButtonSize(44) }]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setDebugView('notification-debug');
-              }}
-            >
-              <Text style={[styles.buttonText, { fontSize: scaledFontSize(16) }]}>
-                Notification Debug
-              </Text>
-            </Pressable>
-
-            <Pressable
-              style={[styles.button, { paddingVertical: scaledPadding(12), minHeight: scaledButtonSize(44) }]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setDebugView('audio-debug');
-              }}
-            >
-              <Text style={[styles.buttonText, { fontSize: scaledFontSize(16) }]}>
-                Audio Debug
-              </Text>
-            </Pressable>
-
-            <Pressable
-              style={[styles.button, { paddingVertical: scaledPadding(12), minHeight: scaledButtonSize(44) }]}
               onPress={handleResetTodayUsage}
             >
               <Text style={[styles.buttonText, { fontSize: scaledFontSize(16) }]}>
                 Reset Today&apos;s Screen Time ({formatDurationCompact(todayUsage)})
-              </Text>
-            </Pressable>
-
-            <Pressable
-              style={[styles.button, { paddingVertical: scaledPadding(12), minHeight: scaledButtonSize(44) }]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                Sentry.captureException(new Error('Test crash from Developer Options'));
-                Alert.alert('Sentry Test', 'Test error sent to Sentry!');
-              }}
-            >
-              <Text style={[styles.buttonText, { fontSize: scaledFontSize(16) }]}>
-                Test Sentry Crash
               </Text>
             </Pressable>
 

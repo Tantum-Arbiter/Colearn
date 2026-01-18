@@ -1,7 +1,9 @@
 package com.app.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.cloud.firestore.annotation.Exclude;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -138,6 +140,8 @@ public class UserProfile {
      * Validate profile data
      * @return true if profile is valid, false otherwise
      */
+    @Exclude
+    @JsonIgnore
     public boolean isValid() {
         // userId is required
         if (userId == null || userId.trim().isEmpty()) {

@@ -122,6 +122,10 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
             await StorySyncService.prefetchStories();
             DEBUG_LOGS && console.log('[LoginScreen] Story metadata synced');
 
+            // Invalidate in-memory cache AFTER successful sync so fresh stories are loaded
+            // This ensures we don't lose cached stories if sync fails
+            StoryLoader.invalidateCache();
+
             // Pre-populate StoryLoader cache for instant story list display
             // This ensures stories don't "disappear" when navigating between screens
             await StoryLoader.getStories();
@@ -283,6 +287,8 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
 
         try {
           await StorySyncService.prefetchStories();
+          // Invalidate in-memory cache AFTER successful sync
+          StoryLoader.invalidateCache();
           await StoryLoader.getStories();
           await StorySyncService.prefetchCoverImages();
         } catch (error) {
@@ -383,6 +389,9 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
         DEBUG_LOGS && console.log('[LoginScreen] Prefetching story metadata...');
         await StorySyncService.prefetchStories();
         DEBUG_LOGS && console.log('[LoginScreen] Story metadata synced');
+
+        // Invalidate in-memory cache AFTER successful sync
+        StoryLoader.invalidateCache();
 
         // Pre-populate StoryLoader cache for instant story list display
         await StoryLoader.getStories();

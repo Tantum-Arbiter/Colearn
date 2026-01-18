@@ -86,11 +86,15 @@ export class StorySyncService {
 
   /**
    * Get current content version from backend
+   * @param clientVersion Optional client version to send for metrics tracking
    */
-  static async getContentVersion(): Promise<ContentVersion> {
+  static async getContentVersion(clientVersion?: number): Promise<ContentVersion> {
     try {
       log.debug('Fetching content version from backend...');
-      const response = await ApiClient.request<ContentVersion>('/api/stories/version');
+      const url = clientVersion !== undefined
+        ? `/api/stories/version?clientVersion=${clientVersion}`
+        : '/api/stories/version';
+      const response = await ApiClient.request<ContentVersion>(url);
       log.debug('Content version:', response);
       return response;
     } catch (error) {
@@ -114,9 +118,9 @@ export class StorySyncService {
       }
       log.info('[User Journey Flow 4] Step 2: Local data found, version=' + localMetadata.version + ', stories=' + (localMetadata.stories?.length || 0));
 
-      // Get server version
+      // Get server version (pass client version for metrics tracking)
       log.info('[User Journey Flow 4] Step 3: Fetching server content version...');
-      const serverVersion = await this.getContentVersion();
+      const serverVersion = await this.getContentVersion(localMetadata.version);
       log.info('[User Journey Flow 4] Step 4: Server version=' + serverVersion.version + ', totalStories=' + serverVersion.totalStories);
 
       // Check 1: Version number increased (new content added)

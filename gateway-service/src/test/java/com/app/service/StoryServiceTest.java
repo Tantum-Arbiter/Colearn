@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.google.cloud.Timestamp;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -103,7 +104,7 @@ class StoryServiceTest {
         testContentVersion = new ContentVersion();
         testContentVersion.setId("current");
         testContentVersion.setVersion(1);
-        testContentVersion.setLastUpdated(Instant.now());
+        testContentVersion.setLastUpdated(Timestamp.now());
         testContentVersion.setTotalStories(2);
 
         Map<String, String> checksums = new HashMap<>();
