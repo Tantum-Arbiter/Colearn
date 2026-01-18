@@ -127,11 +127,11 @@ public class FirebaseUserRepository implements UserRepository {
     @Override
     public CompletableFuture<List<User>> findAllActive() {
         logger.debug("Finding all active users");
-        
+
         return CompletableFuture.supplyAsync(() -> {
             try {
                 Query query = firestore.collection(COLLECTION_NAME)
-                        .whereEqualTo("active", true);
+                        .whereEqualTo("isActive", true);
 
                 ApiFuture<QuerySnapshot> future = query.get();
                 QuerySnapshot querySnapshot = future.get();
@@ -263,7 +263,7 @@ public class FirebaseUserRepository implements UserRepository {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 Query query = firestore.collection(COLLECTION_NAME)
-                        .whereEqualTo("active", true);
+                        .whereEqualTo("isActive", true);
 
                 ApiFuture<QuerySnapshot> future = query.get();
                 QuerySnapshot querySnapshot = future.get();

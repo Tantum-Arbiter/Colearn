@@ -229,7 +229,7 @@ class FirebaseUserSessionRepositoryTest {
 
         when(firestore.collection("user_sessions")).thenReturn(collectionReference);
         when(collectionReference.whereEqualTo("userId", testSession.getUserId())).thenReturn(query);
-        when(query.whereEqualTo("active", true)).thenReturn(query);
+        when(query.whereEqualTo("isActive", true)).thenReturn(query);
         when(query.get()).thenReturn(querySnapshotFuture);
         when(querySnapshotFuture.get()).thenReturn(querySnapshot);
         when(querySnapshot.getDocuments()).thenReturn(documents);
@@ -242,11 +242,11 @@ class FirebaseUserSessionRepositoryTest {
         assertNotNull(sessions);
         assertEquals(1, sessions.size());
         assertEquals(testSession.getId(), sessions.get(0).getId());
-        
+
         // Verify Firestore interactions
         verify(firestore).collection("user_sessions");
         verify(collectionReference).whereEqualTo("userId", testSession.getUserId());
-        verify(query).whereEqualTo("active", true);
+        verify(query).whereEqualTo("isActive", true);
         verify(query).get();
     }
 
@@ -255,7 +255,7 @@ class FirebaseUserSessionRepositoryTest {
         // Arrange
         when(firestore.collection("user_sessions")).thenReturn(collectionReference);
         when(collectionReference.document(testSession.getId())).thenReturn(documentReference);
-        when(documentReference.update(eq("active"), eq(false), eq("revokedAt"), any(Instant.class))).thenReturn(writeResultFuture);
+        when(documentReference.update(eq("isActive"), eq(false), eq("revokedAt"), any(Instant.class))).thenReturn(writeResultFuture);
         when(writeResultFuture.get()).thenReturn(writeResult);
 
         // Mock for findById call after revocation
@@ -271,7 +271,7 @@ class FirebaseUserSessionRepositoryTest {
         // Assert
         verify(firestore, times(2)).collection("user_sessions"); // Called in revokeSession and findById
         verify(collectionReference, times(2)).document(testSession.getId()); // Called in revokeSession and findById
-        verify(documentReference).update(eq("active"), eq(false), eq("revokedAt"), any(Instant.class));
+        verify(documentReference).update(eq("isActive"), eq(false), eq("revokedAt"), any(Instant.class));
         verify(documentReference).get(); // Called in findById
     }
 
@@ -311,7 +311,7 @@ class FirebaseUserSessionRepositoryTest {
 
         when(firestore.collection("user_sessions")).thenReturn(collectionReference);
         when(collectionReference.whereEqualTo("userId", testSession.getUserId())).thenReturn(query);
-        when(query.whereEqualTo("active", true)).thenReturn(query);
+        when(query.whereEqualTo("isActive", true)).thenReturn(query);
         when(query.get()).thenReturn(querySnapshotFuture);
         when(querySnapshotFuture.get()).thenReturn(querySnapshot);
         when(querySnapshot.getDocuments()).thenReturn(documents);
