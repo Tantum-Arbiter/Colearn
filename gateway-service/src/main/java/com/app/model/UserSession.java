@@ -1,7 +1,9 @@
 package com.app.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.cloud.firestore.annotation.Exclude;
 
 
 import java.time.Instant;
@@ -182,15 +184,21 @@ public class UserSession {
         this.metadata = metadata;
     }
 
-    // Helper methods
+    // Helper methods - excluded from Firestore serialization (computed properties)
+    @Exclude
+    @JsonIgnore
     public boolean isExpired() {
         return expiresAt != null && Instant.now().isAfter(expiresAt);
     }
 
+    @Exclude
+    @JsonIgnore
     public boolean isRevoked() {
         return revokedAt != null;
     }
 
+    @Exclude
+    @JsonIgnore
     public boolean isValid() {
         return isActive && !isExpired() && !isRevoked();
     }
@@ -212,6 +220,8 @@ public class UserSession {
         }
     }
 
+    @Exclude
+    @JsonIgnore
     public long getTimeUntilExpiry() {
         if (expiresAt == null) return Long.MAX_VALUE;
         return expiresAt.getEpochSecond() - Instant.now().getEpochSecond();
