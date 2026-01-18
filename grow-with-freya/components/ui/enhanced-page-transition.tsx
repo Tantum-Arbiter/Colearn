@@ -96,38 +96,31 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   };
 
   // Update animation values when screen height changes (orientation change)
-  // Use withTiming to animate the transition smoothly instead of jumping
+  // Set values immediately without animation to prevent visual glitches
   useEffect(() => {
-    const animationConfig = {
-      duration: 300,
-      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-    };
-
     // Update positions for inactive pages when screen height changes
+    // Use direct assignment (no withTiming) to avoid animation during orientation change
     if (currentPage !== 'main') {
-      mainTranslateY.value = withTiming(
-        currentPage === 'account' ? screenHeight : -screenHeight,
-        animationConfig
-      );
+      mainTranslateY.value = currentPage === 'account' ? screenHeight : -screenHeight;
     }
     if (currentPage !== 'stories') {
-      storiesTranslateY.value = withTiming(screenHeight, animationConfig);
+      storiesTranslateY.value = screenHeight;
     }
     if (currentPage !== 'sensory') {
-      sensoryTranslateY.value = withTiming(screenHeight, animationConfig);
+      sensoryTranslateY.value = screenHeight;
     }
     if (currentPage !== 'emotions') {
-      emotionsTranslateY.value = withTiming(screenHeight, animationConfig);
+      emotionsTranslateY.value = screenHeight;
     }
     if (currentPage !== 'bedtime') {
-      bedtimeTranslateY.value = withTiming(screenHeight, animationConfig);
+      bedtimeTranslateY.value = screenHeight;
     }
     if (currentPage !== 'screen_time') {
-      screenTimeTranslateY.value = withTiming(screenHeight, animationConfig);
+      screenTimeTranslateY.value = screenHeight;
     }
     if (currentPage !== 'account') {
       // Account page slides down from top
-      accountTranslateY.value = withTiming(-screenHeight, animationConfig);
+      accountTranslateY.value = -screenHeight;
     }
   }, [screenHeight]);
 
@@ -213,6 +206,7 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    overflow: 'hidden', // Prevent pages from showing outside bounds during orientation changes
   },
   page: {
     position: 'absolute',
