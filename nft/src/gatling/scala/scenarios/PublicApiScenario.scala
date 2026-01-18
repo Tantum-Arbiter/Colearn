@@ -13,7 +13,7 @@ import scala.language.postfixOps
  * Some endpoints require authentication via Bearer token.
  *
  * Environment variables:
- * - BEARER_TOKEN: Valid JWT access token for authenticated endpoints
+ * - BEARER_TOKEN: Valid JWT token for authentication
  * - TEST_STORY_ID: Story ID for single story fetch test
  * - TEST_CATEGORY: Category for category filter test
  * - TEST_ASSET_PATH: Asset path for signed URL test
@@ -21,33 +21,37 @@ import scala.language.postfixOps
 object PublicApiScenario {
 
   // Configuration from system properties (passed via -D) or environment
+  // Default token must be recognized by the gateway's test profile security filter
+  // (see JwtAuthenticationFilter.isAcceptedFakeToken - accepts "valid-*" or "gateway-access-token*")
   val bearerToken = sys.props.getOrElse("BEARER_TOKEN",
-    sys.env.getOrElse("BEARER_TOKEN", "test-bearer-token"))
-  val testStoryId = sys.env.getOrElse("TEST_STORY_ID", "story-001")
+    sys.env.getOrElse("BEARER_TOKEN", "gateway-access-token"))
+  val testStoryId = sys.env.getOrElse("TEST_STORY_ID", "test-story-1")
   val testCategory = sys.env.getOrElse("TEST_CATEGORY", "bedtime")
   val testAssetPath = sys.env.getOrElse("TEST_ASSET_PATH", "stories/images/test.png")
 
   // Load test configuration
-  // 10 concurrent users constant throughout test, distributed across 8 scenarios
+  // 100 concurrent users across all scenarios
   val numScenarios = 8
-  val totalUsers = 10
-  val usersPerScenario = Math.max(1, totalUsers / numScenarios)  // ~1 user per scenario
+  val totalUsers = 100
+  val usersPerScenario = Math.max(1, totalUsers / numScenarios)  // ~12-13 users per scenario
   val testDuration = 5 minutes
 
   // Common headers
   val jsonHeaders = Map(
     "Content-Type" -> "application/json",
     "Accept" -> "application/json",
-    "User-Agent" -> "GrowWithFreya-NFT/1.0 (Gatling Load Test)"
+    "User-Agent" -> "GrowWithFreya/1.0.0 (ios; mobile)"
   )
 
-  // Authenticated API headers (require device info for /api/** endpoints)
+  // Authenticated API headers - static like the original working code
+  // Device info is included for metrics parsing
   val authHeaders = Map(
     "Content-Type" -> "application/json",
     "Accept" -> "application/json",
     "Authorization" -> s"Bearer $bearerToken",
-    "User-Agent" -> "GrowWithFreya-NFT/1.0 (Gatling Load Test)",
+    "User-Agent" -> "GrowWithFreya/1.0.0 (ios; mobile)",
     "X-Device-ID" -> "nft-load-test-device",
+    "X-Device-Type" -> "mobile",
     "X-Client-Platform" -> "ios",
     "X-Client-Version" -> "1.0.0"
   )

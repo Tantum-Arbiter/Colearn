@@ -60,6 +60,8 @@ services:
       - nft
     networks:
       - default-network
+    labels:
+      prometheus-scrape: "true"
     env_file:
       - gateway-service/.env
     environment:

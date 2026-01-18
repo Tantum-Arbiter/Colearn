@@ -55,9 +55,13 @@ public class MetricsFilter implements Filter {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-        // Skip metrics collection for actuator endpoints to avoid noise
+        // Skip metrics collection for actuator/health/metrics endpoints to avoid noise
         String requestURI = httpRequest.getRequestURI();
-        if (requestURI.startsWith("/actuator") || requestURI.startsWith("/private")) {
+        if (requestURI.startsWith("/actuator") ||
+            requestURI.startsWith("/private") ||
+            requestURI.startsWith("/health") ||
+            requestURI.startsWith("/metrics") ||
+            requestURI.startsWith("/prometheus")) {
             chain.doFilter(request, response);
             return;
         }

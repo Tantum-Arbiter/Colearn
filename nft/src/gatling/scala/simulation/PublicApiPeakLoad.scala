@@ -23,13 +23,14 @@ import scala.language.postfixOps
  *   TEST_ASSET_PATH - Asset path for signed URL test
  */
 class PublicApiPeakLoad extends Simulation {
-  
+
   val host = sys.env.getOrElse("GATEWAY_BASE_URL", "http://localhost:8080")
 
   val httpProtocol = http
     .baseUrl(host)
     .acceptHeader("application/json")
     .contentTypeHeader("application/json")
+    .userAgentHeader("GrowWithFreya/1.0.0 (NFT Load Test)")
 
   // All public API scenarios
   val scenarios: List[PopulationBuilder] = List(
@@ -76,13 +77,14 @@ class PublicApiPeakLoad extends Simulation {
  * Lighter simulation for quick smoke tests
  */
 class PublicApiSmokeTest extends Simulation {
-  
+
   val host = sys.env.getOrElse("GATEWAY_BASE_URL", "http://localhost:8080")
 
   val httpProtocol = http
     .baseUrl(host)
     .acceptHeader("application/json")
     .contentTypeHeader("application/json")
+    .userAgentHeader("GrowWithFreya/1.0.0 (NFT Smoke Test)")
 
   // Just status and basic story endpoints for quick validation
   val scenarios: List[PopulationBuilder] = List(

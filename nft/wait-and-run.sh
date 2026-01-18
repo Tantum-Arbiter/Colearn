@@ -27,6 +27,16 @@ until curl -sf "$GATEWAY_URL/private/healthcheck" > /dev/null 2>&1; do
 done
 echo "✓ Gateway is healthy"
 
+# Seed test data to Firestore (reset test mode to ensure data exists)
+echo ""
+echo "Seeding test data to Firestore..."
+RESET_RESPONSE=$(curl -s -X POST "$GATEWAY_URL/private/test-mode/reset" \
+    -H "Content-Type: application/json" \
+    -H "X-Device-Type: mobile" \
+    -H "X-Client-Platform: ios" 2>&1)
+echo "Reset response: $RESET_RESPONSE"
+echo "✓ Test data seeded"
+
 # Get auth token using mock Google OAuth (accepted in dev/test mode)
 echo ""
 echo "Authenticating with mock Google OAuth..."
@@ -34,6 +44,7 @@ AUTH_RESPONSE=$(curl -s -X POST "$GATEWAY_URL/auth/google" \
     -H "Content-Type: application/json" \
     -H "User-Agent: GrowWithFreya-NFT/1.0 (Gatling Load Test)" \
     -H "X-Device-ID: nft-load-test-device" \
+    -H "X-Device-Type: mobile" \
     -H "X-Client-Platform: ios" \
     -H "X-Client-Version: 1.0.0" \
     -d '{"idToken": "mock-id-token-nft-load-test"}' 2>&1)

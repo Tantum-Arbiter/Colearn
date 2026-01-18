@@ -80,10 +80,14 @@ public class JwtConfig {
     private final Map<String, RSAPublicKey> publicKeyCache = new ConcurrentHashMap<>();
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final com.app.service.ApplicationMetricsService metricsService;
 
-    public JwtConfig(Environment environment, @Qualifier("defaultRestTemplate") RestTemplate restTemplate) {
+    public JwtConfig(Environment environment,
+                     @Qualifier("defaultRestTemplate") RestTemplate restTemplate,
+                     com.app.service.ApplicationMetricsService metricsService) {
         this.environment = environment;
         this.restTemplate = restTemplate;
+        this.metricsService = metricsService;
     }
 
     @Bean
@@ -332,8 +336,10 @@ public class JwtConfig {
     private RSAPublicKey getGooglePublicKey(String keyId) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
         String cacheKey = "google_" + keyId;
         if (publicKeyCache.containsKey(cacheKey)) {
+            metricsService.recordCacheHit("public-keys");
             return publicKeyCache.get(cacheKey);
         }
+        metricsService.recordCacheMiss("public-keys");
         String response = restTemplate.getForObject(GOOGLE_CERTS_URL, String.class);
         JsonNode keysNode = objectMapper.readTree(response);
         JsonNode keys = keysNode.get("keys");
@@ -350,8 +356,10 @@ public class JwtConfig {
     private RSAPublicKey getApplePublicKey(String keyId) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
         String cacheKey = "apple_" + keyId;
         if (publicKeyCache.containsKey(cacheKey)) {
+            metricsService.recordCacheHit("public-keys");
             return publicKeyCache.get(cacheKey);
         }
+        metricsService.recordCacheMiss("public-keys");
         String response = restTemplate.getForObject(APPLE_KEYS_URL, String.class);
         JsonNode keysNode = objectMapper.readTree(response);
         JsonNode keys = keysNode.get("keys");
@@ -368,8 +376,10 @@ public class JwtConfig {
     private RSAPublicKey getFirebasePublicKey(String keyId) throws IOException, java.security.cert.CertificateException {
         String cacheKey = "firebase_" + keyId;
         if (publicKeyCache.containsKey(cacheKey)) {
+            metricsService.recordCacheHit("public-keys");
             return publicKeyCache.get(cacheKey);
         }
+        metricsService.recordCacheMiss("public-keys");
         // Firebase returns a JSON object with kid:x509cert pairs (not JWKS format)
         String response = restTemplate.getForObject(FIREBASE_KEYS_URL, String.class);
         JsonNode keysNode = objectMapper.readTree(response);
