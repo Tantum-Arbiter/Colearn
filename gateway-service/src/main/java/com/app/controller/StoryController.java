@@ -43,7 +43,7 @@ public class StoryController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Story>> getAllStories() {
+    public ResponseEntity<?> getAllStories() {
         String reqId = getRequestId();
         logger.info("[Stories] [reqId={}] GET /api/stories - Fetching all stories", reqId);
         try {
@@ -58,13 +58,15 @@ public class StoryController {
             }
             return ResponseEntity.ok(stories);
         } catch (CompletionException e) {
-            logger.error("[Stories] [reqId={}] FAILED: Error fetching all stories - {}", reqId, e.getCause() != null ? e.getCause().getMessage() : e.getMessage(), e.getCause());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            Throwable cause = e.getCause() != null ? e.getCause() : e;
+            logger.error("[Stories] [reqId={}] FAILED: Error fetching all stories - {}", reqId, cause.getMessage(), cause);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse(ErrorCode.FIREBASE_SERVICE_ERROR, "Failed to fetch stories: " + cause.getMessage(), "/api/stories", reqId));
         }
     }
 
     @GetMapping("/{storyId}")
-    public ResponseEntity<Story> getStoryById(@PathVariable String storyId) {
+    public ResponseEntity<?> getStoryById(@PathVariable String storyId) {
         String reqId = getRequestId();
         logger.info("[Stories] [reqId={}] GET /api/stories/{} - Request received", reqId, storyId);
         try {
@@ -77,11 +79,14 @@ public class StoryController {
                 return ResponseEntity.ok(story);
             } else {
                 logger.warn("[Stories] [reqId={}] GET /api/stories/{} - NOT FOUND", reqId, storyId);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(createErrorResponse(ErrorCode.INVALID_REQUEST, "Story not found: " + storyId, "/api/stories/" + storyId, reqId));
             }
         } catch (CompletionException e) {
-            logger.error("[Stories] [reqId={}] GET /api/stories/{} - Error: {}", reqId, storyId, e.getCause() != null ? e.getCause().getMessage() : e.getMessage(), e.getCause());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            Throwable cause = e.getCause() != null ? e.getCause() : e;
+            logger.error("[Stories] [reqId={}] GET /api/stories/{} - Error: {}", reqId, storyId, cause.getMessage(), cause);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse(ErrorCode.FIREBASE_SERVICE_ERROR, "Failed to fetch story: " + cause.getMessage(), "/api/stories/" + storyId, reqId));
         }
     }
 
@@ -153,7 +158,7 @@ public class StoryController {
     }
 
     @GetMapping("/version")
-    public ResponseEntity<ContentVersion> getContentVersion(
+    public ResponseEntity<?> getContentVersion(
             @RequestParam(required = false) Integer clientVersion) {
         String reqId = getRequestId();
         logger.info("[Stories] [reqId={}] GET /api/stories/version - clientVersion={}", reqId, clientVersion);
@@ -174,12 +179,13 @@ public class StoryController {
         } catch (CompletionException e) {
             Throwable cause = e.getCause() != null ? e.getCause() : e;
             logger.error("[Stories] [reqId={}] GET /api/stories/version - FAILED: {}", reqId, cause.getMessage(), cause);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse(ErrorCode.FIREBASE_SERVICE_ERROR, "Failed to fetch content version: " + cause.getMessage(), "/api/stories/version", reqId));
         }
     }
 
     @GetMapping("/category/{category}")
-    public ResponseEntity<List<Story>> getStoriesByCategory(@PathVariable String category) {
+    public ResponseEntity<?> getStoriesByCategory(@PathVariable String category) {
         String reqId = getRequestId();
         logger.info("[Stories] [reqId={}] GET /api/stories/category/{} - Request received", reqId, category);
         try {
@@ -189,8 +195,21 @@ public class StoryController {
         } catch (CompletionException e) {
             Throwable cause = e.getCause() != null ? e.getCause() : e;
             logger.error("[Stories] [reqId={}] GET /api/stories/category/{} - FAILED: {}", reqId, category, cause.getMessage(), cause);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse(ErrorCode.FIREBASE_SERVICE_ERROR, "Failed to fetch stories by category: " + cause.getMessage(), "/api/stories/category/" + category, reqId));
         }
+    }
+
+    private ErrorResponse createErrorResponse(ErrorCode errorCode, String message, String path, String requestId) {
+        ErrorResponse response = new ErrorResponse();
+        response.setSuccess(false);
+        response.setErrorCode(errorCode.getCode());
+        response.setError(errorCode.getDefaultMessage());
+        response.setMessage(message);
+        response.setPath(path);
+        response.setTimestamp(Instant.now().toString());
+        response.setRequestId(requestId);
+        return response;
     }
 }
 

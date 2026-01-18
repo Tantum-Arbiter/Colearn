@@ -314,21 +314,71 @@ All error responses follow this structure:
 ```json
 {
   "success": false,
-  "errorCode": "ERROR_CODE",
-  "error": "Human readable error",
-  "message": "Detailed message",
+  "errorCode": "GTW-XXX",
+  "error": "Short error type",
+  "message": "Detailed human-readable message",
   "path": "/api/endpoint",
-  "timestamp": "2026-01-18T12:30:00Z",
-  "requestId": "uuid"
+  "timestamp": "2026-01-18T12:30:00.000Z",
+  "requestId": "uuid",
+  "details": { "field": "value" }
 }
 ```
 
-**Common Error Codes:**
-| Code | HTTP Status | Description |
-|------|-------------|-------------|
-| `MISSING_REQUIRED_FIELD` | 400/500 | Required field not provided |
-| `INVALID_TOKEN` | 401 | Token is invalid or expired |
-| `UNAUTHORIZED` | 401 | Authentication required |
-| `FORBIDDEN` | 403 | Access denied |
-| `NOT_FOUND` | 404 | Resource not found |
-| `INTERNAL_SERVER_ERROR` | 500 | Server error |
+## Error Codes Reference
+
+Error codes follow the format `GTW-XXX` where the number range indicates the category:
+
+### Authentication & Authorization (GTW-001 to GTW-099)
+| Code | HTTP | Description |
+|------|------|-------------|
+| `GTW-001` | 401 | Authentication failed |
+| `GTW-002` | 401 | Invalid or expired token |
+| `GTW-003` | 401 | Invalid Google ID token |
+| `GTW-004` | 401 | Invalid Apple ID token |
+| `GTW-005` | 401 | Token has expired |
+| `GTW-006` | 401 | Invalid or expired refresh token |
+| `GTW-007` | 401 | Unauthorized access to resource |
+| `GTW-008` | 401 | Insufficient permissions |
+
+### Validation & Request Errors (GTW-100 to GTW-199)
+| Code | HTTP | Description |
+|------|------|-------------|
+| `GTW-100` | 400 | Invalid request format |
+| `GTW-101` | 400 | Required field is missing |
+| `GTW-102` | 400 | Request body is invalid |
+| `GTW-103` | 400 | Invalid parameter value |
+| `GTW-105` | 415 | Unsupported media type |
+| `GTW-106` | 400 | Malformed JSON in request body |
+| `GTW-109` | 400 | Field validation failed |
+| `GTW-113` | 400 | Invalid nickname |
+| `GTW-114` | 400 | Invalid avatar type |
+
+### Downstream Service Errors (GTW-200 to GTW-299)
+| Code | HTTP | Description |
+|------|------|-------------|
+| `GTW-200` | 502 | Downstream service error |
+| `GTW-201` | 502 | Firebase service unavailable |
+| `GTW-204` | 504 | Downstream service timeout |
+| `GTW-209` | 503 | Circuit breaker is open |
+
+### Rate Limiting & Security (GTW-300 to GTW-399)
+| Code | HTTP | Description |
+|------|------|-------------|
+| `GTW-300` | 429 | Rate limit exceeded |
+| `GTW-301` | 429 | Too many requests |
+
+### User Management Errors (GTW-400 to GTW-499)
+| Code | HTTP | Description |
+|------|------|-------------|
+| `GTW-400` | 404 | User not found |
+| `GTW-402` | 409 | Failed to update profile |
+| `GTW-411` | 404 | User profile not found |
+
+### System Errors (GTW-500 to GTW-599)
+| Code | HTTP | Description |
+|------|------|-------------|
+| `GTW-500` | 500 | Internal server error |
+| `GTW-501` | 500 | Database operation failed |
+| `GTW-503` | 503 | Service temporarily unavailable |
+| `GTW-504` | 504 | Request timeout |
+| `GTW-506` | 503 | System is in maintenance mode |

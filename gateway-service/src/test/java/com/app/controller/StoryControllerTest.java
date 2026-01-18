@@ -155,7 +155,9 @@ class StoryControllerTest {
 
         // Act & Assert
         mockMvc.perform(get("/api/stories"))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.errorCode").value("GTW-201"))
+                .andExpect(jsonPath("$.success").value(false));
 
         verify(storyService, times(1)).getAllAvailableStories();
     }
@@ -225,7 +227,9 @@ class StoryControllerTest {
 
         // Act & Assert
         mockMvc.perform(get("/api/stories/non-existent"))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value("GTW-100"))
+                .andExpect(jsonPath("$.success").value(false));
 
         verify(storyService, times(1)).getStoryById("non-existent");
     }
@@ -238,7 +242,9 @@ class StoryControllerTest {
 
         // Act & Assert
         mockMvc.perform(get("/api/stories/story-1"))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.errorCode").value("GTW-201"))
+                .andExpect(jsonPath("$.success").value(false));
 
         verify(storyService, times(1)).getStoryById("story-1");
     }
@@ -283,7 +289,9 @@ class StoryControllerTest {
 
         // Act & Assert
         mockMvc.perform(get("/api/stories/category/bedtime"))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.errorCode").value("GTW-201"))
+                .andExpect(jsonPath("$.success").value(false));
 
         verify(storyService, times(1)).getStoriesByCategory("bedtime");
     }
@@ -314,7 +322,9 @@ class StoryControllerTest {
 
         // Act & Assert
         mockMvc.perform(get("/api/stories/version"))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.errorCode").value("GTW-201"))
+                .andExpect(jsonPath("$.success").value(false));
 
         verify(storyService, times(1)).getCurrentContentVersion();
     }
@@ -487,7 +497,9 @@ class StoryControllerTest {
         mockMvc.perform(post("/api/stories/sync")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalidJson))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("GTW-101"))
+                .andExpect(jsonPath("$.success").value(false));
     }
 
     @Test
@@ -505,7 +517,9 @@ class StoryControllerTest {
         mockMvc.perform(post("/api/stories/sync")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.errorCode").value("GTW-500"))
+                .andExpect(jsonPath("$.success").value(false));
 
         verify(storyService, times(1)).getCurrentContentVersion();
     }
