@@ -21,12 +21,14 @@ interface AnimatedPageProps {
   pageComponent: React.ReactNode;
   isActive: boolean;
   animationValue: SharedValue<number>;
+  opacityValue: SharedValue<number>;
 }
 
 // Memoized page component to prevent unnecessary re-renders
-const AnimatedPage: React.FC<AnimatedPageProps> = memo(function AnimatedPage({ pageKey, pageComponent, isActive, animationValue }) {
+const AnimatedPage: React.FC<AnimatedPageProps> = memo(function AnimatedPage({ pageKey, pageComponent, isActive, animationValue, opacityValue }) {
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: animationValue.value }],
+    opacity: opacityValue.value,
   }));
 
   return (
@@ -83,6 +85,15 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   const screenTimeTranslateY = useSharedValue(currentPage === 'screen_time' ? 0 : screenHeight);
   const accountTranslateY = useSharedValue(currentPage === 'account' ? 0 : -screenHeight);
 
+  // Opacity values to hide inactive pages during orientation changes
+  const mainOpacity = useSharedValue(currentPage === 'main' ? 1 : 0);
+  const storiesOpacity = useSharedValue(currentPage === 'stories' ? 1 : 0);
+  const sensoryOpacity = useSharedValue(currentPage === 'sensory' ? 1 : 0);
+  const emotionsOpacity = useSharedValue(currentPage === 'emotions' ? 1 : 0);
+  const bedtimeOpacity = useSharedValue(currentPage === 'bedtime' ? 1 : 0);
+  const screenTimeOpacity = useSharedValue(currentPage === 'screen_time' ? 1 : 0);
+  const accountOpacity = useSharedValue(currentPage === 'account' ? 1 : 0);
+
   // Map page keys to their animation values
   // Page animations mapping - force cache refresh
   const pageAnimations: Record<string, any> = {
@@ -93,6 +104,16 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
     bedtime: bedtimeTranslateY,
     'screen_time': screenTimeTranslateY,
     account: accountTranslateY,
+  };
+
+  const pageOpacities: Record<string, any> = {
+    main: mainOpacity,
+    stories: storiesOpacity,
+    sensory: sensoryOpacity,
+    emotions: emotionsOpacity,
+    bedtime: bedtimeOpacity,
+    'screen_time': screenTimeOpacity,
+    account: accountOpacity,
   };
 
   // Update animation values when screen height changes (orientation change)
@@ -135,12 +156,14 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
     if (currentPage === 'account') {
       // Account page: main menu slides down (positive translateY)
       mainTranslateY.value = withTiming(screenHeight, animationConfig);
+      mainOpacity.value = withTiming(0, animationConfig);
     } else {
       // Other pages: main menu slides up when not active (negative translateY)
       mainTranslateY.value = withTiming(
         currentPage === 'main' ? 0 : -screenHeight,
         animationConfig
       );
+      mainOpacity.value = withTiming(currentPage === 'main' ? 1 : 0, animationConfig);
     }
 
     // Animate all other pages
@@ -148,32 +171,38 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
       currentPage === 'stories' ? 0 : screenHeight,
       animationConfig
     );
+    storiesOpacity.value = withTiming(currentPage === 'stories' ? 1 : 0, animationConfig);
 
     sensoryTranslateY.value = withTiming(
       currentPage === 'sensory' ? 0 : screenHeight,
       animationConfig
     );
+    sensoryOpacity.value = withTiming(currentPage === 'sensory' ? 1 : 0, animationConfig);
 
     emotionsTranslateY.value = withTiming(
       currentPage === 'emotions' ? 0 : screenHeight,
       animationConfig
     );
+    emotionsOpacity.value = withTiming(currentPage === 'emotions' ? 1 : 0, animationConfig);
 
     bedtimeTranslateY.value = withTiming(
       currentPage === 'bedtime' ? 0 : screenHeight,
       animationConfig
     );
+    bedtimeOpacity.value = withTiming(currentPage === 'bedtime' ? 1 : 0, animationConfig);
 
     screenTimeTranslateY.value = withTiming(
       currentPage === 'screen_time' ? 0 : screenHeight,
       animationConfig
     );
+    screenTimeOpacity.value = withTiming(currentPage === 'screen_time' ? 1 : 0, animationConfig);
 
     // Account page slides down from top
     accountTranslateY.value = withTiming(
       currentPage === 'account' ? 0 : -screenHeight,
       animationConfig
     );
+    accountOpacity.value = withTiming(currentPage === 'account' ? 1 : 0, animationConfig);
   }, [currentPage, duration]);
 
   return (
@@ -196,6 +225,7 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
             pageComponent={pageComponent}
             isActive={isActive}
             animationValue={pageAnimations[pageKey]}
+            opacityValue={pageOpacities[pageKey]}
           />
         );
       })}
