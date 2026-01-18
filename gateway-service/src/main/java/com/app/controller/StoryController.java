@@ -10,6 +10,7 @@ import com.app.service.ApplicationMetricsService;
 import com.app.service.StoryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,59 +37,64 @@ public class StoryController {
         this.metricsService = metricsService;
     }
 
+    private String getRequestId() {
+        String requestId = MDC.get("requestId");
+        return requestId != null ? requestId : "unknown";
+    }
+
     @GetMapping
     public ResponseEntity<List<Story>> getAllStories() {
-        logger.info("[User Journey Flow 3] Step 1: CMS call - GET /api/stories - Fetching all stories");
+        String reqId = getRequestId();
+        logger.info("[Stories] [reqId={}] GET /api/stories - Fetching all stories", reqId);
         try {
             List<Story> stories = storyService.getAllAvailableStories().join();
-            logger.info("[User Journey Flow 3] Step 2: CMS response - Returning {} stories", stories.size());
-            stories.forEach(story -> {
-                int pageCount = story.getPages() != null ? story.getPages().size() : 0;
-                logger.info("[User Journey Flow 3]   -> Story: id={}, title='{}', category={}, pages={}, premium={}",
-                        story.getId(), story.getTitle(), story.getCategory(), pageCount, story.isPremium());
-            });
-            logger.info("[User Journey Flow 3] Step 3: CMS call COMPLETE - {} stories returned", stories.size());
+            logger.info("[Stories] [reqId={}] Returning {} stories", reqId, stories.size());
+            if (logger.isDebugEnabled()) {
+                stories.forEach(story -> {
+                    int pageCount = story.getPages() != null ? story.getPages().size() : 0;
+                    logger.debug("[Stories] [reqId={}]   -> id={}, title='{}', category={}, pages={}, premium={}",
+                            reqId, story.getId(), story.getTitle(), story.getCategory(), pageCount, story.isPremium());
+                });
+            }
             return ResponseEntity.ok(stories);
         } catch (CompletionException e) {
-            logger.error("[User Journey Flow 3] FAILED: Error getting all stories", e.getCause());
+            logger.error("[Stories] [reqId={}] FAILED: Error fetching all stories - {}", reqId, e.getCause() != null ? e.getCause().getMessage() : e.getMessage(), e.getCause());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
     @GetMapping("/{storyId}")
     public ResponseEntity<Story> getStoryById(@PathVariable String storyId) {
-        logger.info("[CMS] GET /api/stories/{} - Request received", storyId);
+        String reqId = getRequestId();
+        logger.info("[Stories] [reqId={}] GET /api/stories/{} - Request received", reqId, storyId);
         try {
             Optional<Story> storyOpt = storyService.getStoryById(storyId).join();
             if (storyOpt.isPresent()) {
                 Story story = storyOpt.get();
                 int pageCount = story.getPages() != null ? story.getPages().size() : 0;
-                logger.info("[CMS] GET /api/stories/{} - Found: title='{}', pages={}, coverImage={}",
-                        storyId, story.getTitle(), pageCount, story.getCoverImage());
-                if (story.getPages() != null) {
-                    story.getPages().forEach(page ->
-                        logger.info("[CMS]   -> Page {}: backgroundImage={}",
-                                page.getPageNumber(), page.getBackgroundImage()));
-                }
+                logger.info("[Stories] [reqId={}] GET /api/stories/{} - Found: title='{}', pages={}",
+                        reqId, storyId, story.getTitle(), pageCount);
                 return ResponseEntity.ok(story);
             } else {
-                logger.warn("[CMS] GET /api/stories/{} - Story NOT FOUND", storyId);
+                logger.warn("[Stories] [reqId={}] GET /api/stories/{} - NOT FOUND", reqId, storyId);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
             }
         } catch (CompletionException e) {
-            logger.error("[CMS] GET /api/stories/{} - Error", storyId, e.getCause());
+            logger.error("[Stories] [reqId={}] GET /api/stories/{} - Error: {}", reqId, storyId, e.getCause() != null ? e.getCause().getMessage() : e.getMessage(), e.getCause());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
     @PostMapping("/sync")
     public ResponseEntity<?> syncStories(@RequestBody StorySyncRequest request) {
+        String reqId = getRequestId();
         long startTime = System.currentTimeMillis();
-        logger.info("[User Journey Flow 4] Step 1: Delta sync request received - POST /api/stories/sync");
+        logger.info("[Sync] [reqId={}] POST /api/stories/sync - Delta sync request received", reqId);
 
         // Validate required fields
         if (request.getClientVersion() == null || request.getStoryChecksums() == null || request.getLastSyncTimestamp() == null) {
-            logger.warn("[User Journey Flow 4] Step 1 FAILED: Missing required fields in request");
+            logger.warn("[Sync] [reqId={}] Validation failed - missing required fields (clientVersion={}, storyChecksums={}, lastSyncTimestamp={})",
+                    reqId, request.getClientVersion() != null, request.getStoryChecksums() != null, request.getLastSyncTimestamp() != null);
             ErrorResponse errorResponse = new ErrorResponse();
             errorResponse.setSuccess(false);
             errorResponse.setErrorCode(ErrorCode.MISSING_REQUIRED_FIELD.getCode());
@@ -96,25 +102,17 @@ public class StoryController {
             errorResponse.setMessage("Missing required fields: clientVersion, storyChecksums, or lastSyncTimestamp");
             errorResponse.setPath("/api/stories/sync");
             errorResponse.setTimestamp(Instant.now().toString());
-            errorResponse.setRequestId(UUID.randomUUID().toString());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+            errorResponse.setRequestId(reqId);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         }
 
-        int storiesRequested = request.getStoryChecksums().size();
-        logger.info("[User Journey Flow 4] Step 2: Client version={}, client has {} cached stories",
-                request.getClientVersion(), storiesRequested);
-
-        if (!request.getStoryChecksums().isEmpty()) {
-            logger.info("[User Journey Flow 4]   -> Client cached story IDs: {}", request.getStoryChecksums().keySet());
-        }
+        int clientStoriesCount = request.getStoryChecksums().size();
+        logger.info("[Sync] [reqId={}] Client state: version={}, cachedStories={}", reqId, request.getClientVersion(), clientStoriesCount);
 
         try {
-            logger.info("[User Journey Flow 4] Step 3: Fetching server content version from Firestore...");
             ContentVersion serverVersion = storyService.getCurrentContentVersion().join();
-            logger.info("[User Journey Flow 4] Step 4: Server version={}, totalStories={}",
-                    serverVersion.getVersion(), serverVersion.getTotalStories());
+            logger.info("[Sync] [reqId={}] Server state: version={}, totalStories={}", reqId, serverVersion.getVersion(), serverVersion.getTotalStories());
 
-            logger.info("[User Journey Flow 4] Step 5: Comparing checksums to detect changes...");
             List<Story> storiesToSync = storyService.getStoriesToSync(request.getStoryChecksums()).join();
 
             StorySyncResponse response = new StorySyncResponse();
@@ -122,66 +120,75 @@ public class StoryController {
             response.setStories(storiesToSync);
             response.setStoryChecksums(serverVersion.getStoryChecksums());
             response.setTotalStories(serverVersion.getTotalStories());
-            response.setLastUpdated(serverVersion.getLastUpdated().toEpochMilli());
+            response.setLastUpdated(serverVersion.getLastUpdated().toDate().getTime());
 
-            // Record story sync metrics
             long durationMs = System.currentTimeMillis() - startTime;
-            metricsService.recordStorySync(storiesRequested, storiesToSync.size(), durationMs);
+            metricsService.recordStorySync(clientStoriesCount, storiesToSync.size(), durationMs);
 
             if (storiesToSync.isEmpty()) {
-                logger.info("[User Journey Flow 4] Step 6: No changes detected - client is up to date");
+                logger.info("[Sync] [reqId={}] COMPLETE - No changes, client up-to-date, durationMs={}", reqId, durationMs);
             } else {
-                logger.info("[User Journey Flow 4] Step 6: {} stories need syncing (new/modified/deleted)", storiesToSync.size());
-                storiesToSync.forEach(story -> {
-                    int pageCount = story.getPages() != null ? story.getPages().size() : 0;
-                    logger.info("[User Journey Flow 4]   -> Syncing story: id={}, title='{}', pages={}",
-                            story.getId(), story.getTitle(), pageCount);
-                });
+                logger.info("[Sync] [reqId={}] COMPLETE - Syncing {} stories, serverVersion={}, durationMs={}",
+                        reqId, storiesToSync.size(), response.getServerVersion(), durationMs);
+                if (logger.isDebugEnabled()) {
+                    storiesToSync.forEach(story -> logger.debug("[Sync] [reqId={}]   -> id={}, title='{}'", reqId, story.getId(), story.getTitle()));
+                }
             }
-
-            logger.info("[User Journey Flow 4] Step 7: Delta sync COMPLETE - serverVersion={}, updatedStories={}, totalStories={}, durationMs={}",
-                    response.getServerVersion(), response.getUpdatedStories(), response.getTotalStories(), durationMs);
 
             return ResponseEntity.ok(response);
         } catch (CompletionException e) {
-            logger.error("[User Journey Flow 4] FAILED: Error syncing stories", e.getCause());
+            long durationMs = System.currentTimeMillis() - startTime;
+            Throwable cause = e.getCause() != null ? e.getCause() : e;
+            logger.error("[Sync] [reqId={}] FAILED - Error syncing stories after {}ms: {}", reqId, durationMs, cause.getMessage(), cause);
             ErrorResponse errorResponse = new ErrorResponse();
             errorResponse.setSuccess(false);
             errorResponse.setErrorCode(ErrorCode.INTERNAL_SERVER_ERROR.getCode());
             errorResponse.setError(ErrorCode.INTERNAL_SERVER_ERROR.getDefaultMessage());
-            errorResponse.setMessage("Error syncing stories");
+            errorResponse.setMessage("Error syncing stories: " + cause.getMessage());
             errorResponse.setPath("/api/stories/sync");
             errorResponse.setTimestamp(Instant.now().toString());
-            errorResponse.setRequestId(UUID.randomUUID().toString());
+            errorResponse.setRequestId(reqId);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 
     @GetMapping("/version")
-    public ResponseEntity<ContentVersion> getContentVersion() {
-        logger.info("[CMS] GET /api/stories/version - Request received");
+    public ResponseEntity<ContentVersion> getContentVersion(
+            @RequestParam(required = false) Integer clientVersion) {
+        String reqId = getRequestId();
+        logger.info("[Stories] [reqId={}] GET /api/stories/version - clientVersion={}", reqId, clientVersion);
         try {
             ContentVersion version = storyService.getCurrentContentVersion().join();
-            logger.info("[CMS] GET /api/stories/version - Version: {}, totalStories: {}",
-                    version.getVersion(), version.getTotalStories());
+
+            boolean clientUpToDate = clientVersion != null && clientVersion.equals(version.getVersion());
+            if (clientUpToDate) {
+                metricsService.recordStorySyncSkipped();
+                logger.info("[Stories] [reqId={}] Version check: serverVersion={}, clientVersion={}, upToDate=true (sync skipped)",
+                        reqId, version.getVersion(), clientVersion);
+            } else {
+                logger.info("[Stories] [reqId={}] Version check: serverVersion={}, clientVersion={}, upToDate=false",
+                        reqId, version.getVersion(), clientVersion);
+            }
+
             return ResponseEntity.ok(version);
         } catch (CompletionException e) {
-            logger.error("[CMS] GET /api/stories/version - Error", e.getCause());
+            Throwable cause = e.getCause() != null ? e.getCause() : e;
+            logger.error("[Stories] [reqId={}] GET /api/stories/version - FAILED: {}", reqId, cause.getMessage(), cause);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
     @GetMapping("/category/{category}")
     public ResponseEntity<List<Story>> getStoriesByCategory(@PathVariable String category) {
-        logger.info("[CMS] GET /api/stories/category/{} - Request received", category);
+        String reqId = getRequestId();
+        logger.info("[Stories] [reqId={}] GET /api/stories/category/{} - Request received", reqId, category);
         try {
             List<Story> stories = storyService.getStoriesByCategory(category).join();
-            logger.info("[CMS] GET /api/stories/category/{} - Found {} stories", category, stories.size());
-            stories.forEach(story ->
-                logger.info("[CMS]   -> Story: id={}, title='{}'", story.getId(), story.getTitle()));
+            logger.info("[Stories] [reqId={}] GET /api/stories/category/{} - Found {} stories", reqId, category, stories.size());
             return ResponseEntity.ok(stories);
         } catch (CompletionException e) {
-            logger.error("[CMS] GET /api/stories/category/{} - Error", category, e.getCause());
+            Throwable cause = e.getCause() != null ? e.getCause() : e;
+            logger.error("[Stories] [reqId={}] GET /api/stories/category/{} - FAILED: {}", reqId, category, cause.getMessage(), cause);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

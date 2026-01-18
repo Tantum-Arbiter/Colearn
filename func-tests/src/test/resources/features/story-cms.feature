@@ -23,6 +23,18 @@ Feature: Story CMS and Delta-Sync
     And the response should contain field "totalStories"
     And the response should contain field "lastUpdated"
 
+  @smoke
+  Scenario: Get content version with clientVersion query param
+    When I make a GET request to "/api/stories/version?clientVersion=1"
+    Then the response status code should be 200
+    And the response should contain field "version"
+    And the response should contain field "totalStories"
+
+  @smoke
+  Scenario: Get content version with invalid clientVersion returns bad request
+    When I make a GET request to "/api/stories/version?clientVersion=abc"
+    Then the response status code should be 400
+
   @delta-sync @emulator-only
   Scenario: Initial sync with no client data
     Given I have a sync request with no client checksums

@@ -5,6 +5,7 @@ import com.app.model.ContentVersion;
 import com.app.model.InteractiveElement;
 import com.app.model.Story;
 import com.app.model.StoryPage;
+import com.app.service.ApplicationMetricsService;
 import com.app.service.GatewayServiceApplication;
 import com.app.service.StoryService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,7 +19,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.Instant;
+import com.google.cloud.Timestamp;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -37,6 +38,9 @@ class StoryControllerTest {
 
     @MockBean
     private StoryService storyService;
+
+    @MockBean
+    private ApplicationMetricsService metricsService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -101,7 +105,7 @@ class StoryControllerTest {
         testContentVersion = new ContentVersion();
         testContentVersion.setId("current");
         testContentVersion.setVersion(1);
-        testContentVersion.setLastUpdated(Instant.now());
+        testContentVersion.setLastUpdated(Timestamp.now());
         testContentVersion.setTotalStories(2);
         Map<String, String> checksums = new HashMap<>();
         checksums.put("story-1", "checksum1");
@@ -316,6 +320,79 @@ class StoryControllerTest {
     }
 
     @Test
+    void getCurrentContentVersion_WithClientVersion_MatchingVersion_RecordsSkippedMetric() throws Exception {
+        // Arrange - client version matches server version
+        when(storyService.getCurrentContentVersion())
+                .thenReturn(CompletableFuture.completedFuture(testContentVersion));
+
+        // Act & Assert
+        mockMvc.perform(get("/api/stories/version")
+                        .param("clientVersion", "1"))  // matches testContentVersion.version
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.version").value(1));
+
+        verify(storyService, times(1)).getCurrentContentVersion();
+        verify(metricsService, times(1)).recordStorySyncSkipped();
+    }
+
+    @Test
+    void getCurrentContentVersion_WithClientVersion_DifferentVersion_NoSkippedMetric() throws Exception {
+        // Arrange - client version is older than server version
+        when(storyService.getCurrentContentVersion())
+                .thenReturn(CompletableFuture.completedFuture(testContentVersion));
+
+        // Act & Assert
+        mockMvc.perform(get("/api/stories/version")
+                        .param("clientVersion", "0"))  // older than testContentVersion.version (1)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.version").value(1));
+
+        verify(storyService, times(1)).getCurrentContentVersion();
+        verify(metricsService, never()).recordStorySyncSkipped();
+    }
+
+    @Test
+    void getCurrentContentVersion_WithoutClientVersion_NoSkippedMetric() throws Exception {
+        // Arrange - no client version provided
+        when(storyService.getCurrentContentVersion())
+                .thenReturn(CompletableFuture.completedFuture(testContentVersion));
+
+        // Act & Assert
+        mockMvc.perform(get("/api/stories/version"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.version").value(1));
+
+        verify(storyService, times(1)).getCurrentContentVersion();
+        verify(metricsService, never()).recordStorySyncSkipped();
+    }
+
+    @Test
+    void getCurrentContentVersion_WithInvalidClientVersion_BadRequest() throws Exception {
+        // Act & Assert - non-numeric clientVersion should fail validation
+        mockMvc.perform(get("/api/stories/version")
+                        .param("clientVersion", "not-a-number"))
+                .andExpect(status().isBadRequest());
+
+        verify(storyService, never()).getCurrentContentVersion();
+    }
+
+    @Test
+    void getCurrentContentVersion_WithNegativeClientVersion_Success() throws Exception {
+        // Negative version is technically valid (just means very old client)
+        when(storyService.getCurrentContentVersion())
+                .thenReturn(CompletableFuture.completedFuture(testContentVersion));
+
+        // Act & Assert
+        mockMvc.perform(get("/api/stories/version")
+                        .param("clientVersion", "-1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.version").value(1));
+
+        verify(storyService, times(1)).getCurrentContentVersion();
+        verify(metricsService, never()).recordStorySyncSkipped();
+    }
+
+    @Test
     void syncStories_InitialSync_NoClientChecksums() throws Exception {
         // Arrange
         StorySyncRequest request = new StorySyncRequest();
@@ -406,11 +483,11 @@ class StoryControllerTest {
         // Arrange - Invalid request with null fields
         String invalidJson = "{}";
 
-        // Act & Assert - Expect 500 error due to missing fields
+        // Act & Assert - Expect 400 Bad Request for missing required fields
         mockMvc.perform(post("/api/stories/sync")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalidJson))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test

@@ -192,7 +192,7 @@ public class TestAdminController {
             ContentVersion contentVersion = new ContentVersion();
             contentVersion.setId("current");
             contentVersion.setVersion(1);
-            contentVersion.setLastUpdated(Instant.now());
+            contentVersion.setLastUpdated(com.google.cloud.Timestamp.now());
             contentVersion.setStoryChecksums(storyChecksums);
             contentVersion.setTotalStories(testStories.size());
 
@@ -703,7 +703,7 @@ public class TestAdminController {
             storyChecksums.put(storyId, checksum);
             contentVersion.setStoryChecksums(storyChecksums);
             contentVersion.setTotalStories(storyChecksums.size());
-            contentVersion.setLastUpdated(Instant.now());
+            contentVersion.setLastUpdated(com.google.cloud.Timestamp.now());
             contentVersion.setVersion(contentVersion.getVersion() + 1);
 
             docRef.set(contentVersion).get();
@@ -770,7 +770,7 @@ public class TestAdminController {
             ContentVersion contentVersion = new ContentVersion();
             contentVersion.setId("current");
             contentVersion.setVersion(newVersion);
-            contentVersion.setLastUpdated(Instant.now());
+            contentVersion.setLastUpdated(com.google.cloud.Timestamp.now());
             contentVersion.setStoryChecksums(storyChecksums);
             contentVersion.setTotalStories(storyChecksums.size());
 
@@ -819,7 +819,7 @@ public class TestAdminController {
                     contentVersion.getStoryChecksums().remove(storyId);
                     contentVersion.setTotalStories(contentVersion.getStoryChecksums().size());
                     contentVersion.setVersion(contentVersion.getVersion() + 1);
-                    contentVersion.setLastUpdated(Instant.now());
+                    contentVersion.setLastUpdated(com.google.cloud.Timestamp.now());
                     docRef.set(contentVersion).get();
                 }
             }

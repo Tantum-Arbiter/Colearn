@@ -46,10 +46,13 @@ public class FirebaseContentVersionRepository implements ContentVersionRepositor
                 DocumentSnapshot document = future.get();
 
                 long duration = System.currentTimeMillis() - startTime;
+                logger.debug("[Firestore] Document check: exists={}, id={}, durationMs={}", document.exists(), document.getId(), duration);
 
                 if (document.exists()) {
                     ContentVersion version = document.toObject(ContentVersion.class);
-                    logger.debug("Content version found: version={}", version.getVersion());
+                    logger.debug("[Firestore] Content version loaded: version={}, totalStories={}, checksumCount={}",
+                            version.getVersion(), version.getTotalStories(),
+                            version.getStoryChecksums() != null ? version.getStoryChecksums().size() : 0);
                     metricsService.recordFirestoreOperation(COLLECTION_NAME, "getCurrent", true, duration);
                     return Optional.of(version);
                 } else {

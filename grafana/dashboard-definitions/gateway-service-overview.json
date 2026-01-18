@@ -358,7 +358,8 @@
                 "value": 5
               }
             ]
-          }
+          },
+          "unit": "percent"
         },
         "overrides": []
       },
@@ -1448,7 +1449,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum(rate(app_stories_sync_requests_total[5m])) or vector(0)",
+          "expr": "sum(app_stories_sync_requests_total) or vector(0)",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -1955,6 +1956,9 @@
           "color": {
             "mode": "thresholds"
           },
+          "custom": {
+            "neutral": -1
+          },
           "mappings": [],
           "thresholds": {
             "mode": "percentage",
@@ -1964,7 +1968,8 @@
                 "value": 0
               }
             ]
-          }
+          },
+          "unit": "percent"
         },
         "overrides": []
       },
@@ -2026,7 +2031,8 @@
                 "value": 0
               }
             ]
-          }
+          },
+          "unit": "percent"
         },
         "overrides": []
       },
@@ -2060,7 +2066,7 @@
             "uid": "P1809F7CD0C75ACF3"
           },
           "editorMode": "code",
-          "expr": "sum(rate(app_stories_sync_requests_total{stories_returned=\"0\"}[1h])) / sum(rate(app_stories_sync_requests_total[1h])) * 100 or vector(0)\n",
+          "expr": "sum(app_stories_sync_requests_total{stories_returned=\"0\"}) / sum(app_stories_sync_requests_total) * 100",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -2122,7 +2128,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum by (stories_returned) (increase(app_stories_sync_requests_total[1h])) or vector(0)",
+          "expr": "sum by (stories_returned) (app_stories_sync_requests_total)",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -2537,7 +2543,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum(rate(app_stories_sync_duration_seconds_bucket[5m])) by (le)) * 1000 or vector(0)\n",
+          "expr": "(app_stories_sync_duration_seconds_sum / app_stories_sync_duration_seconds_count) * 1000 or vector(0)",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"

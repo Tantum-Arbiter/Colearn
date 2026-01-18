@@ -1140,6 +1140,19 @@ public class ApplicationMetricsService {
         return "50+";
     }
 
+    /**
+     * Record when a client skips sync because it's already up-to-date
+     * This happens when client version matches server version
+     */
+    public void recordStorySyncSkipped() {
+        Counter.builder("app.stories.sync.skipped")
+                .description("Number of sync requests skipped because client is up-to-date")
+                .register(meterRegistry)
+                .increment();
+
+        logger.debug("Story sync skipped metric recorded");
+    }
+
     // --- Response Size Metrics ---
 
     /**

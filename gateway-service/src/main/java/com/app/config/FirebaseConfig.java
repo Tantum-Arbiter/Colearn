@@ -116,13 +116,14 @@ public class FirebaseConfig {
     @Bean
     @Profile("test")
     public Firestore testFirestore() {
-        logger.info("Creating test Firestore client with emulator");
+        String testProjectId = projectId != null && !projectId.trim().isEmpty() ? projectId : "test-project";
+        logger.info("Creating test Firestore client with emulator for project: {}", testProjectId);
 
         String testEmulatorHost = emulatorHost != null ? emulatorHost : "localhost";
         int testEmulatorPort = emulatorPort > 0 ? emulatorPort : 8080;
 
         FirestoreOptions options = FirestoreOptions.newBuilder()
-                .setProjectId("test-project")
+                .setProjectId(testProjectId)
                 .setEmulatorHost(testEmulatorHost + ":" + testEmulatorPort)
                 .setCredentials(getTestCredentials())
                 .build();

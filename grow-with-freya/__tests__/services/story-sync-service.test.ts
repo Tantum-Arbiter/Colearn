@@ -126,7 +126,7 @@ describe('StorySyncService', () => {
   });
 
   describe('getContentVersion', () => {
-    it('should fetch content version from API', async () => {
+    it('should fetch content version from API without clientVersion', async () => {
       const mockVersion: ContentVersion = {
         version: 2,
         lastUpdated: Date.now(),
@@ -140,6 +140,38 @@ describe('StorySyncService', () => {
 
       expect(result).toEqual(mockVersion);
       expect(ApiClient.request).toHaveBeenCalledWith('/api/stories/version');
+    });
+
+    it('should include clientVersion query param when provided', async () => {
+      const mockVersion: ContentVersion = {
+        version: 2,
+        lastUpdated: Date.now(),
+        storyChecksums: { 'story-1': 'checksum-1', 'story-2': 'checksum-2' },
+        totalStories: 2
+      };
+
+      (ApiClient.request as jest.Mock).mockResolvedValue(mockVersion);
+
+      const result = await StorySyncService.getContentVersion(1);
+
+      expect(result).toEqual(mockVersion);
+      expect(ApiClient.request).toHaveBeenCalledWith('/api/stories/version?clientVersion=1');
+    });
+
+    it('should include clientVersion=0 when provided as zero', async () => {
+      const mockVersion: ContentVersion = {
+        version: 1,
+        lastUpdated: Date.now(),
+        storyChecksums: {},
+        totalStories: 0
+      };
+
+      (ApiClient.request as jest.Mock).mockResolvedValue(mockVersion);
+
+      const result = await StorySyncService.getContentVersion(0);
+
+      expect(result).toEqual(mockVersion);
+      expect(ApiClient.request).toHaveBeenCalledWith('/api/stories/version?clientVersion=0');
     });
 
     it('should throw error if API call fails', async () => {
