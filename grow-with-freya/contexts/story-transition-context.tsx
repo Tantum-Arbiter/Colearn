@@ -419,9 +419,16 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
         // Animate book to center of landscape screen
         const cardCenterX = cardPosition.x + cardPosition.width / 2;
         const cardCenterY = cardPosition.y + cardPosition.height / 2;
-        transitionX.value = withTiming(targetCenterX - cardCenterX, { duration: 200, easing: Easing.out(Easing.cubic) });
-        transitionY.value = withTiming(targetCenterY - cardCenterY, { duration: 200, easing: Easing.out(Easing.cubic) });
+        const landscapeMoveX = targetCenterX - cardCenterX;
+        const landscapeMoveY = targetCenterY - cardCenterY;
+
+        transitionX.value = withTiming(landscapeMoveX, { duration: 200, easing: Easing.out(Easing.cubic) });
+        transitionY.value = withTiming(landscapeMoveY, { duration: 200, easing: Easing.out(Easing.cubic) });
         transitionScale.value = withTiming(targetScale, { duration: 200, easing: Easing.out(Easing.cubic) });
+
+        // UPDATE opening transform ref with LANDSCAPE values
+        // This is critical for exit animation to use the correct centering values
+        openingTransformRef.current = { moveX: landscapeMoveX, moveY: landscapeMoveY, scale: targetScale };
 
         // Wait for position animation
         await new Promise(resolve => setTimeout(resolve, 200));
@@ -716,22 +723,23 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     setIsTransitioning(true);
 
     // Delay before starting animations to let React render with correct initial state
-    const SETTLE_DELAY = 100;
+    const SETTLE_DELAY = 50;
 
-    // Quickly fade overlay from fully opaque (1) to normal level (0.92)
-    // This happens immediately so there's no white flash
+    // Quickly fade overlay from fully opaque (1) to slightly transparent
+    // so the book shrink animation is visible
     setTimeout(() => {
-      overlayOpacity.value = withTiming(0.92, {
-        duration: 50,
+      overlayOpacity.value = withTiming(0.85, {
+        duration: 100,
         easing: Easing.out(Easing.quad)
       });
     }, 16); // After first frame
 
     // Phase 1: Shrink from full screen to centered book size (with curved corners)
     setTimeout(() => {
+      console.log('Starting shrink animation from full screen to book size');
       bookExpansion.value = withTiming(0, {
         duration: SHRINK_DURATION,
-        easing: Easing.inOut(Easing.cubic)
+        easing: Easing.out(Easing.cubic)  // Ease out for more natural deceleration
       });
     }, SETTLE_DELAY);
 
