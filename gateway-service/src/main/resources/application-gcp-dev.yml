@@ -108,6 +108,14 @@ management:
     health:
       show-details: always
       show-components: always
+  # Push custom metrics to Google Cloud Monitoring (for Grafana Cloud integration)
+  # Cloud Run automatically sets GOOGLE_CLOUD_PROJECT env var
+  stackdriver:
+    metrics:
+      export:
+        enabled: true
+        project-id: ${GOOGLE_CLOUD_PROJECT:apt-icon-472307-b7}
+        step: 60s
   metrics:
     export:
       prometheus:
