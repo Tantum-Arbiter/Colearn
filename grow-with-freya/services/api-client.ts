@@ -284,10 +284,13 @@ export class ApiClient {
     try {
       profile = await this.getProfile();
     } catch (error: any) {
-      // If profile doesn't exist (404), create a new one with just the reminders
+      // If profile doesn't exist (404), create a new one with default values and reminders
       if (error.message?.includes('404')) {
         console.log('[ApiClient] No profile found - creating new profile with reminders');
         await this.updateProfile({
+          nickname: 'User',
+          avatarType: 'boy',
+          avatarId: 'default',
           schedule: { customReminders: reminders },
         });
         return;
