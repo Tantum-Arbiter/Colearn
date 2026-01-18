@@ -258,8 +258,12 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
 
   // Load stories - instant if cached, async if first load
   useEffect(() => {
-    // If we already have cached stories, no need to load again
-    if (StoryLoader.getCachedStories()) {
+    // If we already have cached stories, use them immediately
+    const cachedStories = StoryLoader.getCachedStories();
+    if (cachedStories && cachedStories.length > 0) {
+      // Always update state with cached stories - fixes race condition where
+      // initial state was ALL_STORIES but cache was populated during auth flow
+      setStories(cachedStories);
       setIsLoadingStories(false);
       return;
     }
