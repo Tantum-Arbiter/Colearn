@@ -115,6 +115,10 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   // Track if we rotated to landscape for the current transition (to rotate back on cancel/exit)
   const wasRotatedForTransition = useRef(false);
 
+  // Store opening animation transform values so exit/cancel can use the EXACT same values
+  // This prevents position mismatch when the book returns to the carousel
+  const openingTransformRef = useRef<{ moveX: number; moveY: number; scale: number } | null>(null);
+
   // Voice over state for record/narrate mode selection
   const [availableVoiceOvers, setAvailableVoiceOvers] = useState<VoiceOver[]>([]);
   const [currentVoiceOver, setCurrentVoiceOver] = useState<VoiceOver | null>(null);
@@ -267,6 +271,10 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     // How much to move the center
     const moveX = targetCenterX - currentCenterX;
     const moveY = targetCenterY - currentCenterY;
+
+    // Store opening animation values so exit/cancel can reuse the EXACT same values
+    // This prevents position mismatch when the book returns to carousel
+    openingTransformRef.current = { moveX, moveY, scale: targetScale };
 
     // Calculate final book position (after animation) for positioning close button
     const scaledWidth = cardLayout.width * targetScale;
@@ -524,16 +532,12 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       // Step 4: Wait for layout to settle
       await new Promise(resolve => setTimeout(resolve, 150));
 
-      // Step 5: Get portrait dimensions and calculate centered position
-      const dims = Dimensions.get('window');
-      const targetWidth = dims.width * 0.55;
-      const targetScale = targetWidth / originalCardPosition.width;
-      const targetCenterX = dims.width / 2;
-      const targetCenterY = (dims.height / 2) - 30;
-      const cardCenterX = originalCardPosition.x + originalCardPosition.width / 2;
-      const cardCenterY = originalCardPosition.y + originalCardPosition.height / 2;
-      const moveX = targetCenterX - cardCenterX;
-      const moveY = targetCenterY - cardCenterY;
+      // Step 5: Use STORED opening animation values (exact same as when opened)
+      // This ensures the book returns to the EXACT position it was at when opened
+      const storedTransform = openingTransformRef.current;
+      const moveX = storedTransform?.moveX ?? 0;
+      const moveY = storedTransform?.moveY ?? 0;
+      const targetScale = storedTransform?.scale ?? 1;
 
       // Step 6: Set cardPosition to original and position book at center
       setCardPosition(originalCardPosition);
@@ -588,6 +592,8 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     setIsExpandingToReader(false);
     // Reset rotation tracking
     wasRotatedForTransition.current = false;
+    // Clear stored opening transform values
+    openingTransformRef.current = null;
     // Reset cancel animation flag
     setIsCancelAnimating(false);
   };
@@ -651,26 +657,21 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     const COVER_FLIP_DURATION = 300;   // Flip to close cover
     const RETURN_DURATION = 600;       // Smooth return to tile position
 
-    // Calculate the SAME values as startTransition uses for the CURRENT orientation
-    // Target book size: 55% of screen width (for landscape/tablet)
-    const targetWidth = currentWidth * 0.55;
-    const targetScale = targetWidth / originalCardPosition.width;
+    // Use STORED opening animation values (exact same as when opened)
+    // This ensures the book returns to the EXACT position it was at when opened
+    const storedTransform = openingTransformRef.current;
+    const moveX = storedTransform?.moveX ?? 0;
+    const moveY = storedTransform?.moveY ?? 0;
+    const targetScale = storedTransform?.scale ?? 1;
 
-    // Calculate center positions for CURRENT orientation
-    const targetCenterX = currentWidth / 2;
-    const targetCenterY = (currentHeight / 2) - 30;
-
-    // Current center position of original card (for the opening animation match)
-    const currentCenterX = originalCardPosition.x + originalCardPosition.width / 2;
-    const currentCenterY = originalCardPosition.y + originalCardPosition.height / 2;
-
-    // How much to move the center (same as startTransition calculates)
-    const moveX = targetCenterX - currentCenterX;
-    const moveY = targetCenterY - currentCenterY;
-
-    // Calculate final book position for targetBookPosition
+    // Calculate final book position for targetBookPosition using stored values
     const scaledWidth = originalCardPosition.width * targetScale;
     const scaledHeight = originalCardPosition.height * targetScale;
+    // For centered position, use stored moveX/moveY to derive the target position
+    const cardCenterX = originalCardPosition.x + originalCardPosition.width / 2;
+    const cardCenterY = originalCardPosition.y + originalCardPosition.height / 2;
+    const targetCenterX = cardCenterX + moveX;
+    const targetCenterY = cardCenterY + moveY;
     const targetBookX = targetCenterX - scaledWidth / 2;
     const targetBookY = targetCenterY - scaledHeight / 2;
 
