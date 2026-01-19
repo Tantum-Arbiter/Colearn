@@ -5,13 +5,11 @@ on:
     branches: [main]
     paths:
       - 'scripts/cms-stories/**'
-      - 'grow-with-freya/assets/stories/**/story-data.json'
       - 'scripts/story-schema.json'
   pull_request:
     branches: [main]
     paths:
       - 'scripts/cms-stories/**'
-      - 'grow-with-freya/assets/stories/**/story-data.json'
       - 'scripts/story-schema.json'
   workflow_dispatch:
     inputs:
@@ -56,16 +54,6 @@ jobs:
         run: |
           echo "Validating CMS stories..."
           for file in scripts/cms-stories/*/story-data.json; do
-            if [ -f "$file" ]; then
-              echo "  Validating: $file"
-              ajv validate -s scripts/story-schema.json -d "$file" --strict=false
-            fi
-          done
-
-      - name: Validate bundled stories
-        run: |
-          echo "Validating bundled stories..."
-          for file in grow-with-freya/assets/stories/*/story-data.json; do
             if [ -f "$file" ]; then
               echo "  Validating: $file"
               ajv validate -s scripts/story-schema.json -d "$file" --strict=false
