@@ -259,9 +259,11 @@ public class AuthController {
 
             // Extract providerId from token (no PII needed)
             String providerId = decodedJWT.getSubject();
+            logger.info("Apple authentication - providerId extracted from token: {}", providerId);
 
             // Get or create user in database (PII-free)
             User user = userService.getOrCreateUser("apple", providerId).join();
+            logger.info("Apple authentication - user retrieved/created with ID: {}", user.getId());
 
             // Generate our own tokens (PII-free)
             String accessToken = jwtConfig.generateAccessToken(user.getId(), "apple");
