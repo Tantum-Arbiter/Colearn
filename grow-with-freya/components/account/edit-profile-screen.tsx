@@ -29,7 +29,7 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
   const [avatarType, setAvatarType] = useState<'boy' | 'girl'>(userAvatarType || 'girl');
   const [avatarId, setAvatarId] = useState(userAvatarId || 'girl_1');
 
-  const handleSave = async (shouldNavigateBack: boolean = true) => {
+  const handleSave = (shouldNavigateBack: boolean = true) => {
     if (!nickname.trim()) {
       Alert.alert(t('common.error'), t('profile.enterNickname'));
       return;
@@ -298,7 +298,7 @@ export function EditProfileContent({ paddingTop = 0, onSaveComplete }: EditProfi
   const [avatarType, setAvatarType] = useState<'boy' | 'girl'>(userAvatarType || 'girl');
   const [avatarId, setAvatarId] = useState(userAvatarId || 'girl_1');
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!nickname.trim()) {
       Alert.alert(t('common.error'), t('profile.enterNickname'));
       return;
