@@ -1013,13 +1013,13 @@ export function StoryBookReader({
 
     return (
       <Animated.View style={[animatedStyle]}>
-        <View style={{ flexDirection: 'column' }}>
+        <View style={{ flexDirection: 'column', alignItems: 'center' }}>
           {lines.map((line, lineIdx) => {
             // Split each line by whitespace but keep the whitespace
             const words = line.split(/(\s+)/);
 
             return (
-              <View key={`line-${lineIdx}`} style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+              <View key={`line-${lineIdx}`} style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' }}>
                 {words.map((word) => {
                   const isWhitespace = /^\s+$/.test(word);
                   // Check if this specific word at this index is highlighted
