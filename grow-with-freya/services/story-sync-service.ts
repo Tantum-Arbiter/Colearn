@@ -359,12 +359,23 @@ export class StorySyncService {
         if (storiesWithLocalized.length > 0) {
           log.debug(`Found ${storiesWithLocalized.length}/${stories.length} stories with localized content`);
           storiesWithLocalized.slice(0, 2).forEach(story => {
+            const pagesWithLocalized = story.pages?.filter(p => p.localizedText) || [];
             log.debug(`Story ${story.id}:`, {
               hasLocalizedTitle: !!story.localizedTitle,
-              pagesWithLocalizedText: story.pages?.filter(p => p.localizedText).length || 0,
+              pagesWithLocalizedText: pagesWithLocalized.length,
               totalPages: story.pages?.length || 0
             });
+            // Log first page with localized text to verify structure
+            if (pagesWithLocalized.length > 0) {
+              const firstPage = pagesWithLocalized[0];
+              log.debug(`  First localized page (${firstPage.id}):`, {
+                hasJapanese: !!firstPage.localizedText?.ja,
+                localizedTextKeys: firstPage.localizedText ? Object.keys(firstPage.localizedText) : []
+              });
+            }
           });
+        } else {
+          log.warn(`No stories with localized content found in ${stories.length} stories`);
         }
       }
 

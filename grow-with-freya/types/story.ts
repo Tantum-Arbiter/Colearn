@@ -87,7 +87,15 @@ export function getLocalizedText(
 ): string {
   if (!localized) return fallback;
   if (!language) return localized.en || fallback;
-  return localized[language] || localized.en || fallback;
+
+  const result = localized[language] || localized.en || fallback;
+
+  // Debug: Log if we're falling back to English when a different language was requested
+  if (language && language !== 'en' && localized[language] === undefined && localized.en) {
+    // Silently fall back to English - this is expected behavior
+  }
+
+  return result;
 }
 
 export type StoryCategory = 'personalized' | 'bedtime' | 'adventure' | 'nature' | 'friendship' | 'learning' | 'fantasy' | 'music' | 'activities' | 'growing';

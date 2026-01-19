@@ -69,6 +69,12 @@ export function StoryBookReader({
       const pagesWithLocalized = story.pages.filter(p => p.localizedText);
       if (pagesWithLocalized.length > 0) {
         log.debug(`Story ${story.id} has ${pagesWithLocalized.length}/${story.pages.length} pages with localizedText`);
+        // Log first page's localized text to verify structure
+        const firstPageWithLocalized = pagesWithLocalized[0];
+        if (firstPageWithLocalized?.localizedText) {
+          log.debug(`First page (${firstPageWithLocalized.id}) localizedText keys:`, Object.keys(firstPageWithLocalized.localizedText));
+          log.debug(`Japanese text available: ${!!firstPageWithLocalized.localizedText.ja}`);
+        }
       } else {
         log.warn(`Story ${story.id} has NO pages with localizedText - only fallback text available`);
       }
