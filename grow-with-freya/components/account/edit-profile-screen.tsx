@@ -58,6 +58,22 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
     onBack();
   };
 
+  const handleBack = () => {
+    // Check if there are any unsaved changes
+    const hasChanges =
+      nickname !== (userNickname || '') ||
+      avatarType !== (userAvatarType || 'girl') ||
+      avatarId !== (userAvatarId || 'girl_1');
+
+    if (hasChanges) {
+      // Save changes before going back
+      handleSave();
+    } else {
+      // No changes, just go back
+      onBack();
+    }
+  };
+
   const handleAvatarTypeChange = (type: 'boy' | 'girl') => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setAvatarType(type);
@@ -67,7 +83,7 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50) }]}>
-        <Pressable style={[styles.backButton, { minHeight: scaledButtonSize(40) }]} onPress={onBack}>
+        <Pressable style={[styles.backButton, { minHeight: scaledButtonSize(40) }]} onPress={handleBack}>
           <Text style={[styles.backButtonText, { fontSize: scaledFontSize(16) }]}>{backButtonText}</Text>
         </Pressable>
         <View style={styles.titleContainer}>
