@@ -1,0 +1,127 @@
+// Part 2: Translations for CMS Test titles and other stories
+
+const TRANSLATIONS_PART2 = {
+  "CMS Test 2\nSnowman Squirrel": {
+    "pl": "CMS Test 2\nWiewiórka i Bałwan",
+    "es": "CMS Test 2\nLa Ardilla y el Muñeco de Nieve",
+    "de": "CMS Test 2\nDas Eichhörnchen und der Schneemann",
+    "fr": "CMS Test 2\nL'Écureuil et le Bonhomme de Neige",
+    "it": "CMS Test 2\nLo Scoiattolo e l'Uomo di Neve",
+    "pt": "CMS Test 2\nO Esquilo e o Boneco de Neve",
+    "ja": "CMS Test 2\nリスと雪だるま",
+    "ar": "CMS Test 2\nالسنجاب ورجل الثلج",
+    "tr": "CMS Test 2\nSincap ve Kardan Adam",
+    "nl": "CMS Test 2\nDe Eekhoorn en de Sneeuwman",
+    "da": "CMS Test 2\nEgernet og Snemanden",
+    "la": "CMS Test 2\nSciurus et Homo Niveus",
+    "zh": "CMS Test 2\n松鼠和雪人"
+  },
+  "CMS Test 3\nSnowman Squirrel": {
+    "pl": "CMS Test 3\nWiewiórka i Bałwan",
+    "es": "CMS Test 3\nLa Ardilla y el Muñeco de Nieve",
+    "de": "CMS Test 3\nDas Eichhörnchen und der Schneemann",
+    "fr": "CMS Test 3\nL'Écureuil et le Bonhomme de Neige",
+    "it": "CMS Test 3\nLo Scoiattolo e l'Uomo di Neve",
+    "pt": "CMS Test 3\nO Esquilo e o Boneco de Neve",
+    "ja": "CMS Test 3\nリスと雪だるま",
+    "ar": "CMS Test 3\nالسنجاب ورجل الثلج",
+    "tr": "CMS Test 3\nSincap ve Kardan Adam",
+    "nl": "CMS Test 3\nDe Eekhoorn en de Sneeuwman",
+    "da": "CMS Test 3\nEgernet og Snemanden",
+    "la": "CMS Test 3\nSciurus et Homo Niveus",
+    "zh": "CMS Test 3\n松鼠和雪人"
+  },
+  "CMS Test 4\nSnowman Squirrel": {
+    "pl": "CMS Test 4\nWiewiórka i Bałwan",
+    "es": "CMS Test 4\nLa Ardilla y el Muñeco de Nieve",
+    "de": "CMS Test 4\nDas Eichhörnchen und der Schneemann",
+    "fr": "CMS Test 4\nL'Écureuil et le Bonhomme de Neige",
+    "it": "CMS Test 4\nLo Scoiattolo e l'Uomo di Neve",
+    "pt": "CMS Test 4\nO Esquilo e o Boneco de Neve",
+    "ja": "CMS Test 4\nリスと雪だるま",
+    "ar": "CMS Test 4\nالسنجاب ورجل الثلج",
+    "tr": "CMS Test 4\nSincap ve Kardan Adam",
+    "nl": "CMS Test 4\nDe Eekhoorn en de Sneeuwman",
+    "da": "CMS Test 4\nEgernet og Snemanden",
+    "la": "CMS Test 4\nSciurus et Homo Niveus",
+    "zh": "CMS Test 4\n松鼠和雪人"
+  },
+  "CMS Test 5\nSnowman Squirrel": {
+    "pl": "CMS Test 5\nWiewiórka i Bałwan",
+    "es": "CMS Test 5\nLa Ardilla y el Muñeco de Nieve",
+    "de": "CMS Test 5\nDas Eichhörnchen und der Schneemann",
+    "fr": "CMS Test 5\nL'Écureuil et le Bonhomme de Neige",
+    "it": "CMS Test 5\nLo Scoiattolo e l'Uomo di Neve",
+    "pt": "CMS Test 5\nO Esquilo e o Boneco de Neve",
+    "ja": "CMS Test 5\nリスと雪だるま",
+    "ar": "CMS Test 5\nالسنجاب ورجل الثلج",
+    "tr": "CMS Test 5\nSincap ve Kardan Adam",
+    "nl": "CMS Test 5\nDe Eekhoorn en de Sneeuwman",
+    "da": "CMS Test 5\nEgernet og Snemanden",
+    "la": "CMS Test 5\nSciurus et Homo Niveus",
+    "zh": "CMS Test 5\n松鼠和雪人"
+  },
+  "CMS Test 6\nSnowman Squirrel": {
+    "pl": "CMS Test 6\nWiewiórka i Bałwan",
+    "es": "CMS Test 6\nLa Ardilla y el Muñeco de Nieve",
+    "de": "CMS Test 6\nDas Eichhörnchen und der Schneemann",
+    "fr": "CMS Test 6\nL'Écureuil et le Bonhomme de Neige",
+    "it": "CMS Test 6\nLo Scoiattolo e l'Uomo di Neve",
+    "pt": "CMS Test 6\nO Esquilo e o Boneco de Neve",
+    "ja": "CMS Test 6\nリスと雪だるま",
+    "ar": "CMS Test 6\nالسنجاب ورجل الثلج",
+    "tr": "CMS Test 6\nSincap ve Kardan Adam",
+    "nl": "CMS Test 6\nDe Eekhoorn en de Sneeuwman",
+    "da": "CMS Test 6\nEgernet og Snemanden",
+    "la": "CMS Test 6\nSciurus et Homo Niveus",
+    "zh": "CMS Test 6\n松鼠和雪人"
+  },
+  "CMS Test 7\nSnowman Squirrel": {
+    "pl": "CMS Test 7\nWiewiórka i Bałwan",
+    "es": "CMS Test 7\nLa Ardilla y el Muñeco de Nieve",
+    "de": "CMS Test 7\nDas Eichhörnchen und der Schneemann",
+    "fr": "CMS Test 7\nL'Écureuil et le Bonhomme de Neige",
+    "it": "CMS Test 7\nLo Scoiattolo e l'Uomo di Neve",
+    "pt": "CMS Test 7\nO Esquilo e o Boneco de Neve",
+    "ja": "CMS Test 7\nリスと雪だるま",
+    "ar": "CMS Test 7\nالسنجاب ورجل الثلج",
+    "tr": "CMS Test 7\nSincap ve Kardan Adam",
+    "nl": "CMS Test 7\nDe Eekhoorn en de Sneeuwman",
+    "da": "CMS Test 7\nEgernet og Snemanden",
+    "la": "CMS Test 7\nSciurus et Homo Niveus",
+    "zh": "CMS Test 7\n松鼠和雪人"
+  },
+  "CMS Test 8\nSnowman Squirrel": {
+    "pl": "CMS Test 8\nWiewiórka i Bałwan",
+    "es": "CMS Test 8\nLa Ardilla y el Muñeco de Nieve",
+    "de": "CMS Test 8\nDas Eichhörnchen und der Schneemann",
+    "fr": "CMS Test 8\nL'Écureuil et le Bonhomme de Neige",
+    "it": "CMS Test 8\nLo Scoiattolo e l'Uomo di Neve",
+    "pt": "CMS Test 8\nO Esquilo e o Boneco de Neve",
+    "ja": "CMS Test 8\nリスと雪だるま",
+    "ar": "CMS Test 8\nالسنجاب ورجل الثلج",
+    "tr": "CMS Test 8\nSincap ve Kardan Adam",
+    "nl": "CMS Test 8\nDe Eekhoorn en de Sneeuwman",
+    "da": "CMS Test 8\nEgernet og Snemanden",
+    "la": "CMS Test 8\nSciurus et Homo Niveus",
+    "zh": "CMS Test 8\n松鼠和雪人"
+  },
+  "CMS Test 9\nSnowman Squirrel": {
+    "pl": "CMS Test 9\nWiewiórka i Bałwan",
+    "es": "CMS Test 9\nLa Ardilla y el Muñeco de Nieve",
+    "de": "CMS Test 9\nDas Eichhörnchen und der Schneemann",
+    "fr": "CMS Test 9\nL'Écureuil et le Bonhomme de Neige",
+    "it": "CMS Test 9\nLo Scoiattolo e l'Uomo di Neve",
+    "pt": "CMS Test 9\nO Esquilo e o Boneco de Neve",
+    "ja": "CMS Test 9\nリスと雪だるま",
+    "ar": "CMS Test 9\nالسنجاب ورجل الثلج",
+    "tr": "CMS Test 9\nSincap ve Kardan Adam",
+    "nl": "CMS Test 9\nDe Eekhoorn en de Sneeuwman",
+    "da": "CMS Test 9\nEgernet og Snemanden",
+    "la": "CMS Test 9\nSciurus et Homo Niveus",
+    "zh": "CMS Test 9\n松鼠和雪人"
+  }
+};
+
+module.exports = TRANSLATIONS_PART2;
+

@@ -78,19 +78,19 @@
       "text": "Winter arrived with snow so white, covering the forest in a blanket of pure delight.\n",
       "localizedText": {
         "en": "Winter arrived with snow so white, covering the forest in a blanket of pure delight.\n",
-        "pl": "Zima przybyła ze śniegiem tak białym, pokrywając las kocem czystej radości.\n",
+        "pl": "Zima przybyła ze śniegiem tak białym, pokrywając las kołdrą czystej radości.\n",
         "es": "El invierno llegó con nieve tan blanca, cubriendo el bosque con una manta de pura alegría.\n",
         "de": "Der Winter kam mit so weißem Schnee und bedeckte den Wald mit einer Decke reiner Freude.\n",
         "fr": "L'hiver est arrivé avec de la neige si blanche, couvrant la forêt d'une couverture de pur délice.\n",
         "it": "L'inverno arrivò con neve così bianca, coprendo la foresta con una coperta di pura gioia.\n",
-        "pt": "O inverno chegou com neve tão branca, cobrindo a floresta com um manto de pura alegria.\n",
-        "ja": "冬が到来し、白い雪で覆われ、森を純粋な喜びの毛布で覆いました。 ",
+        "pt": "O inverno chegou com neve tão branca, cobrindo a floresta com um cobertor de pura alegria.\n",
+        "ja": "冬が到来し、雪は非常に白く、森を純粋な喜びの毛布で覆いました。\n",
         "ar": "وصل الشتاء مع ثلج أبيض جداً، يغطي الغابة ببطانية من السعادة الخالصة.\n",
         "tr": "Kış çok beyaz karla geldi, ormanı saf sevinç battaniyesiyle kapladı.\n",
-        "nl": "Winter kwam met zo witte sneeuw, bedekt het bos met een deken van pure vreugde.\n",
+        "nl": "De winter kwam met zo witte sneeuw, bedekt het bos met een deken van pure vreugde.\n",
         "da": "Vinteren kom med så hvidt snefald, der dækkede skoven med et tæppe af ren glæde.\n",
         "la": "Hiems venit cum nive tam alba, silvam tegit tegmine puri delectamenti.\n",
-        "zh": "冬天到来，白雪皑皑，用纯粹的喜悦毯子覆盖了森林。 "
+        "zh": "冬天来临，雪白如玉，用纯粹的喜悦毛毯覆盖了森林。\n"
       }
     },
     {
@@ -166,19 +166,19 @@
       "text": "The squirrels circled around the snowman, amazed by this new friend they had found.\n",
       "localizedText": {
         "en": "The squirrels circled around the snowman, amazed by this new friend they had found.\n",
-        "pl": "Wiewiórki krążyły wokół bałwana, zdumione nowym przyjacielem, którego znalazły.\n",
+        "pl": "Wiewiórki krążyły wokół bałwana, zdumione tym nowym przyjacielem, którego znalazły.\n",
         "es": "Las ardillas rodearon al muñeco de nieve, asombradas por este nuevo amigo que habían encontrado.\n",
         "de": "Die Eichhörnchen umkreisten den Schneemann, erstaunt über diesen neuen Freund, den sie gefunden hatten.\n",
         "fr": "Les écureuils ont tourné autour du bonhomme de neige, émerveillés par ce nouvel ami qu'ils avaient trouvé.\n",
-        "it": "Gli scoiattoli giravano intorno all'uomo di neve, stupiti da questo nuovo amico che avevano trovato.\n",
+        "it": "Gli scoiattoli giravano intorno al pupazzo di neve, stupiti da questo nuovo amico che avevano trovato.\n",
         "pt": "Os esquilos circulavam ao redor do boneco de neve, maravilhados com este novo amigo que haviam encontrado.\n",
-        "ja": "リスは雪だるまの周りを回り、彼らが見つけた新しい友人に驚きました。 ",
+        "ja": "リスは雪だるまの周りを回り、彼らが見つけたこの新しい友人に驚きました。\n",
         "ar": "دارت السناجب حول رجل الثلج، مذهولة بهذا الصديق الجديد الذي وجدوه.\n",
         "tr": "Sincaplar kardan adamın etrafında döndüler, buldukları bu yeni arkadaştan hayran kaldılar.\n",
         "nl": "De eekhoorns cirkelden rond de sneeuwman, verbaasd over deze nieuwe vriend die ze hadden gevonden.\n",
         "da": "Egernene cirklede omkring snemanden, forbløffet over denne nye ven, de havde fundet.\n",
-        "la": "Sciuri circum hominem niveum circumibant, mirati amicum novum quem invenerant.\n",
-        "zh": "松鼠们围着雪人转圈，对他们找到的这个新朋友感到惊奇。 "
+        "la": "Sciuri circum hominem niveum circumibant, stupefacti hoc novo amico quem invenerant.\n",
+        "zh": "松鼠围绕雪人转圈，对他们找到的这个新朋友感到惊奇。\n"
       }
     },
     {
@@ -210,19 +210,19 @@
       "text": "The squirrels brought acorns and pine cones to decorate their snowman friend.\n",
       "localizedText": {
         "en": "The squirrels brought acorns and pine cones to decorate their snowman friend.\n",
-        "pl": "Wiewiórki przyniosły żołędzie i szyszki, aby ozdobić swojego przyjaciela bałwana.\n",
+        "pl": "Wiewiórki przyniosły żołędzie i szyszki do dekoracji swojego przyjaciela bałwana.\n",
         "es": "Las ardillas trajeron bellotas y piñas para decorar a su amigo muñeco de nieve.\n",
-        "de": "Die Eichhörnchen brachten Eicheln und Tannenzapfen, um ihren Schneemann-Freund zu schmücken.\n",
+        "de": "Die Eichhörnchen brachten Eicheln und Tannenzapfen, um ihren Schneemann-Freund zu dekorieren.\n",
         "fr": "Les écureuils ont apporté des glands et des pommes de pin pour décorer leur ami bonhomme de neige.\n",
-        "it": "Gli scoiattoli hanno portato ghiande e pigne per decorare il loro amico uomo di neve.\n",
+        "it": "Gli scoiattoli hanno portato ghiande e pigne per decorare il loro amico pupazzo di neve.\n",
         "pt": "Os esquilos trouxeram bolotas e pinhas para decorar seu amigo boneco de neve.\n",
-        "ja": "リスはドングリと松ぼっくりを持ってきて、雪だるまの友人を飾りました。 ",
-        "ar": "أحضرت السناجب الجوز والصنوبر لتزيين صديقهم رجل الثلج.\n",
-        "tr": "Sincaplar meşe palamutları ve çam kozalaklarını getirerek kardan adam arkadaşlarını süslediler.\n",
-        "nl": "De eekhoorns brachten eikels en dennenappels om hun sneeuwmanvriend te versieren.\n",
-        "da": "Egernene bragte agern og kogler for at dekorere deres snemand-ven.\n",
-        "la": "Sciuri glandes et coni pineos attulere ut amicum hominem niveum ornent.\n",
-        "zh": "松鼠们带来了橡子和松果来装饰他们的雪人朋友。 "
+        "ja": "リスはドングリと松ぼっくりを持ってきて、雪だるまの友人を飾りました。\n",
+        "ar": "أحضرت السناجب جوزات البلوط والصنوبر لتزيين صديقهم رجل الثلج.\n",
+        "tr": "Sincaplar kardan adam arkadaşlarını süslemek için meşe palamudu ve çam kozalakları getirdiler.\n",
+        "nl": "De eekhoorns brachten eikels en dennenappels om hun sneeuwman-vriend te versieren.\n",
+        "da": "Egernene bragte agern og kogler for at dekorere deres sneman-ven.\n",
+        "la": "Sciuri glandes et coni pini attulere ut amicum hominem niveum ornent.\n",
+        "zh": "松鼠带来了橡子和松果来装饰他们的雪人朋友。\n"
       }
     },
     {
@@ -236,15 +236,15 @@
         "es": "Cuando el sol comenzó a ponerse, el muñeco de nieve brillaba con una luz dorada mágica.\n",
         "de": "Als die Sonne unterging, leuchtete der Schneemann mit einem magischen goldenen Licht.\n",
         "fr": "Alors que le soleil commençait à se coucher, le bonhomme de neige brillait d'une lumière dorée magique.\n",
-        "it": "Mentre il sole iniziava a tramontare, l'uomo di neve brillava di una luce dorata magica.\n",
+        "it": "Mentre il sole iniziava a tramontare, il pupazzo di neve brillava di una luce dorata magica.\n",
         "pt": "Quando o sol começou a se pôr, o boneco de neve brilhava com uma luz dourada mágica.\n",
-        "ja": "太陽が沈み始めると、雪だるまは魔法の金色の光で輝きました。 ",
+        "ja": "太陽が沈み始めると、雪だるまは魔法の金色の光で輝きました。\n",
         "ar": "عندما بدأت الشمس بالغروب، أضاء رجل الثلج بضوء ذهبي سحري.\n",
-        "tr": "Güneş batmaya başladığında, kardan adam sihirli altın ışıkla parlıyor.\n",
+        "tr": "Güneş batmaya başladığında, kardan adam sihirli altın ışıkla parlıyordu.\n",
         "nl": "Toen de zon onderging, gloeide de sneeuwman met een magisch gouden licht.\n",
         "da": "Da solen begyndte at gå ned, glødede snemanden med et magisk gyldent lys.\n",
         "la": "Cum sol occidere coepisset, homo niveus luce aurea magica lucebat.\n",
-        "zh": "当太阳开始落下时，雪人闪烁着魔法般的金色光芒。 "
+        "zh": "当太阳开始落下时，雪人闪烁着魔幻的金色光芒。\n"
       }
     },
     {

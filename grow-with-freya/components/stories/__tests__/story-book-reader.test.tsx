@@ -351,3 +351,71 @@ describe('StoryBookReader Scroll Indicators', () => {
     expect(queryByText('↑')).toBeNull();
   });
 });
+
+describe('StoryBookReader Text Rendering with Newlines', () => {
+  const mockOnExit = jest.fn();
+
+  it('renders text with newlines correctly', () => {
+    // Story with text containing newline characters
+    const storyWithNewlines: Story = {
+      id: 'newline-story',
+      title: 'Newline Story',
+      category: 'bedtime',
+      tag: '🌙 Bedtime',
+      emoji: '🌙',
+      isAvailable: true,
+      pages: [
+        {
+          id: 'cover',
+          pageNumber: 0,
+          text: 'Cover Title\n\nSubtitle',
+          backgroundImage: 'cover-bg.webp',
+        },
+        {
+          id: 'page1',
+          pageNumber: 1,
+          text: 'First sentence.\nSecond sentence.\nThird sentence.',
+          backgroundImage: 'page1-bg.webp',
+        },
+      ],
+    };
+
+    const result = render(
+      <StoryBookReader story={storyWithNewlines} onExit={mockOnExit} skipCoverPage={true} />
+    );
+    expect(result).toBeTruthy();
+    // Verify that the component renders without crashing
+    expect(() => result.toJSON()).not.toThrow();
+  });
+
+  it('renders text with localized newlines correctly', () => {
+    // Story with localized text containing newline characters
+    const storyWithLocalizedNewlines: Story = {
+      id: 'localized-newline-story',
+      title: 'Localized Newline Story',
+      category: 'bedtime',
+      tag: '🌙 Bedtime',
+      emoji: '🌙',
+      isAvailable: true,
+      pages: [
+        {
+          id: 'page1',
+          pageNumber: 1,
+          text: 'English text.\nMore English.',
+          localizedText: {
+            en: 'English text.\nMore English.',
+            pl: 'Tekst polski.\nWięcej polskiego.',
+            es: 'Texto español.\nMás español.',
+          },
+          backgroundImage: 'page1-bg.webp',
+        },
+      ],
+    };
+
+    const result = render(
+      <StoryBookReader story={storyWithLocalizedNewlines} onExit={mockOnExit} skipCoverPage={true} />
+    );
+    expect(result).toBeTruthy();
+    expect(() => result.toJSON()).not.toThrow();
+  });
+});
