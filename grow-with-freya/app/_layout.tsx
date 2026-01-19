@@ -1,27 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
-import { AppState, AppStateStatus, Dimensions, View, Platform, ActivityIndicator, StyleSheet } from 'react-native';
+import { AppState, AppStateStatus, Dimensions, View, Platform, ActivityIndicator, StyleSheet, DevSettings } from 'react-native';
 import * as ScreenOrientation from 'expo-screen-orientation';
-import { DevSettings } from 'react-native';
 
 import 'react-native-reanimated';
 // Initialize i18n service - must be imported before components that use translations
 import '@/services/i18n';
-
-// On Android in dev mode, disable Fast Refresh to prevent ExoPlayer threading errors
-// ExoPlayer callbacks fire on background threads which crash during Fast Refresh
-if (__DEV__ && Platform.OS === 'android') {
-  try {
-    // DevSettings is available in dev mode but has incomplete TypeScript types
-    const devSettings = DevSettings as { setHotLoadingEnabled?: (enabled: boolean) => void };
-    if (devSettings && devSettings.setHotLoadingEnabled) {
-      devSettings.setHotLoadingEnabled(false);
-    }
-  } catch {
-    // Ignore if DevSettings is not available
-  }
-}
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAppStore } from '@/store/app-store';
@@ -54,6 +39,20 @@ import { updateSentryConsent } from '@/services/sentry-service';
 import '@/services/notification-service';
 // Import reminder service to trigger initialization and reschedule notifications on app startup
 import { reminderService } from '@/services/reminder-service';
+
+// On Android in dev mode, disable Fast Refresh to prevent ExoPlayer threading errors
+// ExoPlayer callbacks fire on background threads which crash during Fast Refresh
+if (__DEV__ && Platform.OS === 'android') {
+  try {
+    // DevSettings is available in dev mode but has incomplete TypeScript types
+    const devSettings = DevSettings as { setHotLoadingEnabled?: (enabled: boolean) => void };
+    if (devSettings && devSettings.setHotLoadingEnabled) {
+      devSettings.setHotLoadingEnabled(false);
+    }
+  } catch {
+    // Ignore if DevSettings is not available
+  }
+}
 
 const log = Logger.create('Layout');
 

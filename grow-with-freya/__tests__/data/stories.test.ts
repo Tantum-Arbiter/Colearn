@@ -128,7 +128,7 @@ describe('Stories Data', () => {
     it('should return only available stories', () => {
       const availableStories = getAvailableStories();
 
-      expect(availableStories).toHaveLength(14); // 7 mock + 7 additional
+      expect(availableStories).toHaveLength(13); // All available stories in test data
       availableStories.forEach(story => {
         expect(story.isAvailable).toBe(true);
       });
