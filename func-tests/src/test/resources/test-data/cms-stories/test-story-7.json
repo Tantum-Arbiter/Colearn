@@ -11,7 +11,9 @@
   "description": "Test story 7 for CMS functional testing.",
   "isPremium": false,
   "author": "Test Author",
-  "tags": ["test"],
+  "tags": [
+    "test"
+  ],
   "version": 1,
   "checksum": "test-checksum-7-v1",
   "pages": [

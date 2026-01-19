@@ -15,16 +15,36 @@ import en from '../locales/en';
 import pl from '../locales/pl';
 import es from '../locales/es';
 import de from '../locales/de';
+import fr from '../locales/fr';
+import it from '../locales/it';
+import pt from '../locales/pt';
+import ja from '../locales/ja';
+import ar from '../locales/ar';
+import tr from '../locales/tr';
+import nl from '../locales/nl';
+import da from '../locales/da';
+import la from '../locales/la';
+import zh from '../locales/zh';
 
 const LANGUAGE_STORAGE_KEY = '@app_language';
 
-export type SupportedLanguage = 'en' | 'pl' | 'es' | 'de';
+export type SupportedLanguage = 'en' | 'pl' | 'es' | 'de' | 'fr' | 'it' | 'pt' | 'ja' | 'ar' | 'tr' | 'nl' | 'da' | 'la' | 'zh';
 
 export const SUPPORTED_LANGUAGES: { code: SupportedLanguage; name: string; flag: string; nativeName: string }[] = [
   { code: 'en', name: 'English', flag: '🇬🇧', nativeName: 'English' },
   { code: 'pl', name: 'Polish', flag: '🇵🇱', nativeName: 'Polski' },
   { code: 'es', name: 'Spanish', flag: '🇪🇸', nativeName: 'Español' },
   { code: 'de', name: 'German', flag: '🇩🇪', nativeName: 'Deutsch' },
+  { code: 'fr', name: 'French', flag: '🇫🇷', nativeName: 'Français' },
+  { code: 'it', name: 'Italian', flag: '🇮🇹', nativeName: 'Italiano' },
+  { code: 'pt', name: 'Portuguese', flag: '🇵🇹', nativeName: 'Português' },
+  { code: 'ja', name: 'Japanese', flag: '🇯🇵', nativeName: '日本語' },
+  { code: 'ar', name: 'Arabic', flag: '🇸🇦', nativeName: 'العربية' },
+  { code: 'tr', name: 'Turkish', flag: '🇹🇷', nativeName: 'Türkçe' },
+  { code: 'nl', name: 'Dutch', flag: '🇳🇱', nativeName: 'Nederlands' },
+  { code: 'da', name: 'Danish', flag: '🇩🇰', nativeName: 'Dansk' },
+  { code: 'la', name: 'Latin', flag: '🏛️', nativeName: 'Latīna' },
+  { code: 'zh', name: 'Chinese', flag: '🇨🇳', nativeName: '简体中文' },
 ];
 
 const resources = {
@@ -32,6 +52,16 @@ const resources = {
   pl: { translation: pl },
   es: { translation: es },
   de: { translation: de },
+  fr: { translation: fr },
+  it: { translation: it },
+  pt: { translation: pt },
+  ja: { translation: ja },
+  ar: { translation: ar },
+  tr: { translation: tr },
+  nl: { translation: nl },
+  da: { translation: da },
+  la: { translation: la },
+  zh: { translation: zh },
 };
 
 /**

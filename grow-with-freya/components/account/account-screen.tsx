@@ -789,26 +789,32 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
               <Text style={[styles.languageModalTitle, { fontSize: scaledFontSize(18) }]}>
                 {t('account.selectLanguage')}
               </Text>
-              {SUPPORTED_LANGUAGES.map((lang) => (
-                <Pressable
-                  key={lang.code}
-                  style={[
-                    styles.languageOption,
-                    currentLanguage === lang.code && styles.languageOptionSelected,
-                  ]}
-                  onPress={() => handleLanguageChange(lang.code)}
-                >
-                  <Text style={[styles.languageFlag, { fontSize: scaledFontSize(24) }]}>
-                    {lang.flag}
-                  </Text>
-                  <Text style={[styles.languageName, { fontSize: scaledFontSize(16) }]}>
-                    {lang.nativeName}
-                  </Text>
-                  {currentLanguage === lang.code && (
-                    <Text style={[styles.languageCheck, { fontSize: scaledFontSize(18) }]}>✓</Text>
-                  )}
-                </Pressable>
-              ))}
+              <ScrollView
+                style={styles.languageScrollView}
+                showsVerticalScrollIndicator={true}
+                scrollIndicatorInsets={{ right: 4 }}
+              >
+                {SUPPORTED_LANGUAGES.map((lang) => (
+                  <Pressable
+                    key={lang.code}
+                    style={[
+                      styles.languageOption,
+                      currentLanguage === lang.code && styles.languageOptionSelected,
+                    ]}
+                    onPress={() => handleLanguageChange(lang.code)}
+                  >
+                    <Text style={[styles.languageFlag, { fontSize: scaledFontSize(24) }]}>
+                      {lang.flag}
+                    </Text>
+                    <Text style={[styles.languageName, { fontSize: scaledFontSize(16) }]}>
+                      {lang.nativeName}
+                    </Text>
+                    {currentLanguage === lang.code && (
+                      <Text style={[styles.languageCheck, { fontSize: scaledFontSize(18) }]}>✓</Text>
+                    )}
+                  </Pressable>
+                ))}
+              </ScrollView>
             </Pressable>
           </Pressable>
         )}
@@ -1042,10 +1048,15 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(30, 30, 60, 0.95)',
     borderRadius: 20,
     padding: 20,
-    width: '80%',
-    maxWidth: 300,
+    width: '85%',
+    maxWidth: 350,
+    maxHeight: '70%',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
+    flexDirection: 'column',
+  },
+  languageScrollView: {
+    maxHeight: 400,
   },
   languageModalTitle: {
     color: '#FFFFFF',

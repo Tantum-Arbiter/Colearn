@@ -128,51 +128,103 @@ export function ParentsOnlyModal({
           {isPhoneLandscape ? (
             // Compact horizontal layout for phone landscape
             <View style={styles.landscapeLayout}>
-              <View style={styles.landscapeLeft}>
-                <Text style={styles.emojiCompact}>{challenge.emoji}</Text>
-              </View>
-              <View style={styles.landscapeRight}>
-                <Text style={[styles.titleCompact, { fontSize: scaledFontSize(16) }]}>
-                  {t('parentsOnly.typeAnimalName')}
-                </Text>
-                <View style={styles.inputRow}>
-                  <TextInput
-                    ref={inputRef}
-                    style={[
-                      styles.inputCompact,
-                      { fontSize: scaledFontSize(16) },
-                      isFocused && styles.inputFocused,
-                    ]}
-                    value={inputValue}
-                    onChangeText={onInputChange}
-                    placeholder={t('parentsOnly.placeholder')}
-                    placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    onSubmitEditing={onSubmit}
-                    onFocus={() => setIsFocused(true)}
-                    onBlur={() => setIsFocused(false)}
-                  />
-                  <Pressable
-                    style={[styles.confirmButtonCompact, !isInputValid && styles.buttonDisabled]}
-                    onPress={onSubmit}
-                    disabled={!isInputValid}
-                  >
-                    <Text style={[styles.confirmButtonText, { fontSize: scaledFontSize(14) }]}>
-                      {t('parentsOnly.go')}
+              {challenge.type === 'emoji' ? (
+                <>
+                  <View style={styles.landscapeLeft}>
+                    <Text style={styles.emojiCompact}>{challenge.emoji}</Text>
+                  </View>
+                  <View style={styles.landscapeRight}>
+                    <Text style={[styles.titleCompact, { fontSize: scaledFontSize(16) }]}>
+                      {t('parentsOnly.typeAnimalName')}
                     </Text>
-                  </Pressable>
+                    <View style={styles.inputRow}>
+                      <TextInput
+                        ref={inputRef}
+                        style={[
+                          styles.inputCompact,
+                          { fontSize: scaledFontSize(16) },
+                          isFocused && styles.inputFocused,
+                        ]}
+                        value={inputValue}
+                        onChangeText={onInputChange}
+                        placeholder={t('parentsOnly.placeholder')}
+                        placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        onSubmitEditing={onSubmit}
+                        onFocus={() => setIsFocused(true)}
+                        onBlur={() => setIsFocused(false)}
+                      />
+                      <Pressable
+                        style={[styles.confirmButtonCompact, !isInputValid && styles.buttonDisabled]}
+                        onPress={onSubmit}
+                        disabled={!isInputValid}
+                      >
+                        <Text style={[styles.confirmButtonText, { fontSize: scaledFontSize(14) }]}>
+                          {t('parentsOnly.go')}
+                        </Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                </>
+              ) : (
+                <View style={styles.landscapeRight}>
+                  <Text style={[styles.titleCompact, { fontSize: scaledFontSize(16) }]}>
+                    {t('parentsOnly.solveMath')}
+                  </Text>
+                  <Text style={[styles.mathProblemCompact, { fontSize: scaledFontSize(18) }]}>
+                    {challenge.num1} {challenge.operation === '*' ? 'x' : challenge.operation} {challenge.num2} = ?
+                  </Text>
+                  <View style={styles.inputRow}>
+                    <TextInput
+                      ref={inputRef}
+                      style={[
+                        styles.inputCompact,
+                        { fontSize: scaledFontSize(16) },
+                        isFocused && styles.inputFocused,
+                      ]}
+                      value={inputValue}
+                      onChangeText={onInputChange}
+                      placeholder={t('parentsOnly.placeholder')}
+                      placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                      onSubmitEditing={onSubmit}
+                      onFocus={() => setIsFocused(true)}
+                      onBlur={() => setIsFocused(false)}
+                    />
+                    <Pressable
+                      style={[styles.confirmButtonCompact, !isInputValid && styles.buttonDisabled]}
+                      onPress={onSubmit}
+                      disabled={!isInputValid}
+                    >
+                      <Text style={[styles.confirmButtonText, { fontSize: scaledFontSize(14) }]}>
+                        {t('parentsOnly.go')}
+                      </Text>
+                    </Pressable>
+                  </View>
                 </View>
-              </View>
+              )}
             </View>
           ) : (
             // Standard vertical layout for portrait/tablet
             <>
               <Text style={[styles.title, { fontSize: scaledFontSize(22) }]}>{t('parentsOnly.title')}</Text>
-              <Text style={styles.emoji}>{challenge.emoji}</Text>
-              <Text style={[styles.subtitle, { fontSize: scaledFontSize(14) }]}>
-                {t('parentsOnly.subtitle')}
-              </Text>
+              {challenge.type === 'emoji' ? (
+                <>
+                  <Text style={styles.emoji}>{challenge.emoji}</Text>
+                  <Text style={[styles.subtitle, { fontSize: scaledFontSize(14) }]}>
+                    {t('parentsOnly.subtitle')}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Text style={[styles.mathProblem, { fontSize: scaledFontSize(32) }]}>
+                    {challenge.num1} {challenge.operation === '*' ? 'x' : challenge.operation} {challenge.num2} = ?
+                  </Text>
+                  <Text style={[styles.subtitle, { fontSize: scaledFontSize(14) }]}>
+                    {t('parentsOnly.mathSubtitle')}
+                  </Text>
+                </>
+              )}
               <TextInput
                 ref={inputRef}
                 style={[
@@ -263,6 +315,14 @@ const styles = StyleSheet.create({
     fontSize: 64,
     marginBottom: 16,
   },
+  mathProblem: {
+    fontSize: 32,
+    fontFamily: Fonts.sans,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
   subtitle: {
     fontSize: 14,
     fontFamily: Fonts.sans,
@@ -326,6 +386,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
     marginBottom: 8,
+  },
+  mathProblemCompact: {
+    fontSize: 18,
+    fontFamily: Fonts.sans,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 12,
+    textAlign: 'center',
   },
   inputRow: {
     flexDirection: 'row',

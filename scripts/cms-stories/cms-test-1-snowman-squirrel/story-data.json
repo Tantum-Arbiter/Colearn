@@ -5,7 +5,17 @@
     "en": "Snowman Squirrel",
     "pl": "Wiewiórka i Bałwan",
     "es": "La Ardilla y el Muñeco de Nieve",
-    "de": "Das Eichhörnchen und der Schneemann"
+    "de": "Das Eichhörnchen und der Schneemann",
+    "fr": "L'Écureuil et le Bonhomme de Neige",
+    "it": "Lo Scoiattolo e l'Uomo di Neve",
+    "pt": "O Esquilo e o Boneco de Neve",
+    "ja": "リスと雪だるま",
+    "ar": "السنجاب ورجل الثلج",
+    "tr": "Sincap ve Kardan Adam",
+    "nl": "De Eekhoorn en de Sneeuwpop",
+    "da": "Egernet og Snemanden",
+    "la": "Sciurus et Homo Niveus",
+    "zh": "松鼠和雪人"
   },
   "category": "nature",
   "tag": "🐢 Nature",
@@ -19,7 +29,17 @@
     "en": "A delightful winter story about a squirrel who builds a snowman.",
     "pl": "Urocza zimowa opowieść o wiewiórce, która buduje bałwana.",
     "es": "Una encantadora historia de invierno sobre una ardilla que construye un muñeco de nieve.",
-    "de": "Eine entzückende Wintergeschichte über ein Eichhörnchen, das einen Schneemann baut."
+    "de": "Eine entzückende Wintergeschichte über ein Eichhörnchen, das einen Schneemann baut.",
+    "fr": "Une délicieuse histoire d'hiver sur un écureuil qui construit un bonhomme de neige.",
+    "it": "Una deliziosa storia invernale su uno scoiattolo che costruisce un uomo di neve.",
+    "pt": "Uma deliciosa história de inverno sobre um esquilo que constrói um boneco de neve.",
+    "ja": "雪だるまを作るリスについての楽しい冬の物語。",
+    "ar": "قصة شتوية رائعة عن سنجاب يبني رجل ثلج.",
+    "tr": "Kardan adam yapan bir sincap hakkında hoş bir kış hikayesi.",
+    "nl": "Een heerlijk winterverhaal over een eekhoorn die een sneeuwpop bouwt.",
+    "da": "En dejlig vinterhistorie om et egern, der bygger en snemand.",
+    "la": "Fabula hiemalis delectabilis de sciuro qui hominem niveum aedificat.",
+    "zh": "关于一只松鼠建造雪人的令人愉快的冬季故事。"
   },
   "isPremium": true,
   "author": "Freya Stories",
@@ -41,7 +61,17 @@
         "en": "Snowman Squirrel",
         "pl": "Wiewiórka i Bałwan",
         "es": "La Ardilla y el Muñeco de Nieve",
-        "de": "Das Eichhörnchen und der Schneemann"
+        "de": "Das Eichhörnchen und der Schneemann",
+        "fr": "L'Écureuil et le Bonhomme de Neige",
+        "it": "Lo Scoiattolo e l'Uomo di Neve",
+        "pt": "O Esquilo e o Boneco de Neve",
+        "ja": "リスと雪だるま",
+        "ar": "السنجاب ورجل الثلج",
+        "tr": "Sincap ve Kardan Adam",
+        "nl": "De Eekhoorn en de Sneeuwpop",
+        "da": "Egernet og Snemanden",
+        "la": "Sciurus et Homo Niveus",
+        "zh": "松鼠和雪人"
       }
     },
     {
@@ -54,7 +84,17 @@
         "en": "Squirrel puts her boots on.\nHer hat is on her head.",
         "pl": "Wiewiórka zakłada buty.\nCzapka jest na jej głowie.",
         "es": "La ardilla se pone las botas.\nSu sombrero está en su cabeza.",
-        "de": "Das Eichhörnchen zieht seine Stiefel an.\nSein Hut ist auf dem Kopf."
+        "de": "Das Eichhörnchen zieht seine Stiefel an.\nSein Hut ist auf dem Kopf.",
+        "fr": "L'écureuil met ses bottes.\nSon chapeau est sur sa tête.",
+        "it": "Lo scoiattolo indossa gli stivali.\nIl suo cappello è sulla sua testa.",
+        "pt": "O esquilo coloca suas botas.\nSeu chapéu está em sua cabeça.",
+        "ja": "リスはブーツを履きます。\n彼女の帽子は彼女の頭の上にあります。",
+        "ar": "ترتدي السنجاب حذاءها.\nقبعتها على رأسها.",
+        "tr": "Sincap çizmelerini giyiyor.\nŞapkası başında.",
+        "nl": "De eekhoorn trekt haar laarzen aan.\nHaar hoed zit op haar hoofd.",
+        "da": "Egernet tager sine støvler på.\nHendes hat er på hendes hoved.",
+        "la": "Sciurus calceos suos induit.\nPileus eius in capite eius est.",
+        "zh": "松鼠穿上了靴子。\n她的帽子在她的头上。"
       }
     },
     {
@@ -67,7 +107,17 @@
         "en": "She wants to make a snowman.\nWhat's inside this shed?",
         "pl": "Chce zbudować bałwana.\nCo jest w tej szopie?",
         "es": "Ella quiere hacer un muñeco de nieve.\n¿Qué hay dentro de este cobertizo?",
-        "de": "Sie möchte einen Schneemann bauen.\nWas ist in diesem Schuppen?"
+        "de": "Sie möchte einen Schneemann bauen.\nWas ist in diesem Schuppen?",
+        "fr": "She wants to make a snowman.\nWhat's inside this shed?",
+        "it": "She wants to make a snowman.\nWhat's inside this shed?",
+        "pt": "She wants to make a snowman.\nWhat's inside this shed?",
+        "ja": "She wants to make a snowman.\nWhat's inside this shed?",
+        "ar": "She wants to make a snowman.\nWhat's inside this shed?",
+        "tr": "She wants to make a snowman.\nWhat's inside this shed?",
+        "nl": "She wants to make a snowman.\nWhat's inside this shed?",
+        "da": "She wants to make a snowman.\nWhat's inside this shed?",
+        "la": "She wants to make a snowman.\nWhat's inside this shed?",
+        "zh": "She wants to make a snowman.\nWhat's inside this shed?"
       },
       "interactiveElements": [
         {

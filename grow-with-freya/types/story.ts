@@ -7,6 +7,16 @@ export interface LocalizedText {
   pl?: string;
   es?: string;
   de?: string;
+  fr?: string;
+  it?: string;
+  pt?: string;
+  ja?: string;
+  ar?: string;
+  tr?: string;
+  nl?: string;
+  da?: string;
+  la?: string;
+  zh?: string;
 }
 
 // Interactive element types for story pages

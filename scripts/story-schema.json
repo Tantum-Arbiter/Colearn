@@ -56,7 +56,17 @@
         "en": { "type": "string" },
         "pl": { "type": "string" },
         "es": { "type": "string" },
-        "de": { "type": "string" }
+        "de": { "type": "string" },
+        "fr": { "type": "string" },
+        "it": { "type": "string" },
+        "pt": { "type": "string" },
+        "ja": { "type": "string" },
+        "ar": { "type": "string" },
+        "tr": { "type": "string" },
+        "nl": { "type": "string" },
+        "da": { "type": "string" },
+        "la": { "type": "string" },
+        "zh": { "type": "string" }
       }
     },
     "localizedDescription": {
@@ -66,7 +76,17 @@
         "en": { "type": "string" },
         "pl": { "type": "string" },
         "es": { "type": "string" },
-        "de": { "type": "string" }
+        "de": { "type": "string" },
+        "fr": { "type": "string" },
+        "it": { "type": "string" },
+        "pt": { "type": "string" },
+        "ja": { "type": "string" },
+        "ar": { "type": "string" },
+        "tr": { "type": "string" },
+        "nl": { "type": "string" },
+        "da": { "type": "string" },
+        "la": { "type": "string" },
+        "zh": { "type": "string" }
       }
     },
     "isPremium": {
@@ -118,7 +138,17 @@
               "en": { "type": "string" },
               "pl": { "type": "string" },
               "es": { "type": "string" },
-              "de": { "type": "string" }
+              "de": { "type": "string" },
+              "fr": { "type": "string" },
+              "it": { "type": "string" },
+              "pt": { "type": "string" },
+              "ja": { "type": "string" },
+              "ar": { "type": "string" },
+              "tr": { "type": "string" },
+              "nl": { "type": "string" },
+              "da": { "type": "string" },
+              "la": { "type": "string" },
+              "zh": { "type": "string" }
             }
           },
           "backgroundImage": {

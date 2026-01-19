@@ -11,7 +11,10 @@
   "description": "Test story 1 for CMS functional testing.",
   "isPremium": false,
   "author": "Test Author",
-  "tags": ["test", "adventure"],
+  "tags": [
+    "test",
+    "adventure"
+  ],
   "version": 1,
   "checksum": "test-checksum-1",
   "pages": [
@@ -40,8 +43,14 @@
           "id": "door",
           "type": "reveal",
           "image": "assets/stories/cms-squirrels-snowman/page-2/door-open.webp",
-          "position": { "x": 0.481, "y": 0.337 },
-          "size": { "width": 0.273, "height": 0.301 }
+          "position": {
+            "x": 0.481,
+            "y": 0.337
+          },
+          "size": {
+            "width": 0.273,
+            "height": 0.301
+          }
         }
       ]
     },
@@ -68,4 +77,3 @@
     }
   ]
 }
-

@@ -11,7 +11,10 @@
   "description": "Test story 6 for CMS functional testing.",
   "isPremium": false,
   "author": "Test Author",
-  "tags": ["test", "adventure"],
+  "tags": [
+    "test",
+    "adventure"
+  ],
   "version": 1,
   "checksum": "test-checksum-6-v1",
   "pages": [

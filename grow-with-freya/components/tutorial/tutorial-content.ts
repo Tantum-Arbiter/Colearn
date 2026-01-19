@@ -92,6 +92,18 @@ export const STORY_READER_TIPS: TutorialStepWithKeys[] = [
     descriptionKey: 'tutorial.storyReader.navigate.description',
     tipPosition: 'center',
   },
+  {
+    id: 'tap_words_highlight',
+    titleKey: 'tutorial.storyReader.tapWords.title',
+    descriptionKey: 'tutorial.storyReader.tapWords.description',
+    tipPosition: 'center',
+  },
+  {
+    id: 'compare_languages',
+    titleKey: 'tutorial.storyReader.compareLanguages.title',
+    descriptionKey: 'tutorial.storyReader.compareLanguages.description',
+    tipPosition: 'center',
+  },
 ];
 
 /**

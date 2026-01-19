@@ -27,14 +27,34 @@ const ORIGINAL = {
     en: 'Snowman Squirrel',
     pl: 'Wiewiórka i Bałwan',
     es: 'La Ardilla y el Muñeco de Nieve',
-    de: 'Das Eichhörnchen und der Schneemann'
+    de: 'Das Eichhörnchen und der Schneemann',
+    fr: 'L\'Écureuil et le Bonhomme de Neige',
+    it: 'Lo Scoiattolo e l\'Uomo di Neve',
+    pt: 'O Esquilo e o Boneco de Neve',
+    ja: 'リスと雪だるま',
+    ar: 'السنجاب ورجل الثلج',
+    tr: 'Sincap ve Kardan Adam',
+    nl: 'De Eekhoorn en de Sneeuwpop',
+    da: 'Egernet og Snemanden',
+    la: 'Sciurus et Homo Niveus',
+    zh: '松鼠和雪人'
   },
   page1Text: 'Squirrel puts her boots on.\nHer hat is on her head.',
   page1LocalizedText: {
     en: 'Squirrel puts her boots on.\nHer hat is on her head.',
     pl: 'Wiewiórka zakłada buty.\nCzapka jest na jej głowie.',
     es: 'La ardilla se pone las botas.\nSu sombrero está en su cabeza.',
-    de: 'Das Eichhörnchen zieht seine Stiefel an.\nSein Hut ist auf dem Kopf.'
+    de: 'Das Eichhörnchen zieht seine Stiefel an.\nSein Hut ist auf dem Kopf.',
+    fr: 'L\'écureuil met ses bottes.\nSon chapeau est sur sa tête.',
+    it: 'Lo scoiattolo indossa gli stivali.\nIl suo cappello è sulla sua testa.',
+    pt: 'O esquilo coloca suas botas.\nSeu chapéu está em sua cabeça.',
+    ja: 'リスはブーツを履きます。\n彼女の帽子は彼女の頭の上にあります。',
+    ar: 'ترتدي السنجاب حذاءها.\nقبعتها على رأسها.',
+    tr: 'Sincap çizmelerini giyiyor.\nŞapkası başında.',
+    nl: 'De eekhoorn trekt haar laarzen aan.\nHaar hoed zit op haar hoofd.',
+    da: 'Egernet tager sine støvler på.\nHendes hat er på hendes hoved.',
+    la: 'Sciurus calceos suos induit.\nPileus eius in capite eius est.',
+    zh: '松鼠穿上了靴子。\n她的帽子在她的头上。'
   }
 };
 
@@ -71,7 +91,17 @@ function applyModification() {
     en: 'nico says hi\nHer hat is on her head.',
     pl: 'nico mówi cześć\nCzapka jest na jej głowie.',
     es: 'nico dice hola\nSu sombrero está en su cabeza.',
-    de: 'nico sagt hallo\nSein Hut ist auf dem Kopf.'
+    de: 'nico sagt hallo\nSein Hut ist auf dem Kopf.',
+    fr: 'nico dit bonjour\nSon chapeau est sur sa tête.',
+    it: 'nico dice ciao\nIl suo cappello è sulla sua testa.',
+    pt: 'nico diz olá\nSeu chapéu está em sua cabeça.',
+    ja: 'nicoはこんにちはと言います。\n彼女の帽子は彼女の頭の上にあります。',
+    ar: 'nico يقول مرحبا.\nقبعتها على رأسها.',
+    tr: 'nico merhaba diyor.\nŞapkası başında.',
+    nl: 'nico zegt hallo.\nHaar hoed zit op haar hoofd.',
+    da: 'nico siger hej.\nHendes hat er på hendes hoved.',
+    la: 'nico salve dicit.\nPileus eius in capite eius est.',
+    zh: 'nico说你好。\n她的帽子在她的头上。'
   };
 
   // Bump version

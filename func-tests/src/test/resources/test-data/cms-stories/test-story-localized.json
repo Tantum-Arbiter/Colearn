@@ -5,7 +5,17 @@
     "en": "The Friendly Squirrel",
     "pl": "Przyjazna Wiewiórka",
     "es": "La Ardilla Amigable",
-    "de": "Das freundliche Eichhörnchen"
+    "de": "Das freundliche Eichhörnchen",
+    "fr": "The Friendly Squirrel",
+    "it": "The Friendly Squirrel",
+    "pt": "The Friendly Squirrel",
+    "ja": "The Friendly Squirrel",
+    "ar": "The Friendly Squirrel",
+    "tr": "The Friendly Squirrel",
+    "nl": "The Friendly Squirrel",
+    "da": "The Friendly Squirrel",
+    "la": "The Friendly Squirrel",
+    "zh": "The Friendly Squirrel"
   },
   "category": "nature",
   "tag": "🐿️ Nature",
@@ -19,11 +29,25 @@
     "en": "A story about a friendly squirrel who loves to share.",
     "pl": "Opowieść o przyjaznej wiewiórce, która uwielbia się dzielić.",
     "es": "Una historia sobre una ardilla amigable a la que le encanta compartir.",
-    "de": "Eine Geschichte über ein freundliches Eichhörnchen, das gerne teilt."
+    "de": "Eine Geschichte über ein freundliches Eichhörnchen, das gerne teilt.",
+    "fr": "A story about a friendly squirrel who loves to share.",
+    "it": "A story about a friendly squirrel who loves to share.",
+    "pt": "A story about a friendly squirrel who loves to share.",
+    "ja": "A story about a friendly squirrel who loves to share.",
+    "ar": "A story about a friendly squirrel who loves to share.",
+    "tr": "A story about a friendly squirrel who loves to share.",
+    "nl": "A story about a friendly squirrel who loves to share.",
+    "da": "A story about a friendly squirrel who loves to share.",
+    "la": "A story about a friendly squirrel who loves to share.",
+    "zh": "A story about a friendly squirrel who loves to share."
   },
   "isPremium": false,
   "author": "Test Author",
-  "tags": ["nature", "animals", "friendship"],
+  "tags": [
+    "nature",
+    "animals",
+    "friendship"
+  ],
   "version": 1,
   "pages": [
     {
@@ -36,7 +60,17 @@
         "en": "The Friendly Squirrel\n\nA Story About Sharing",
         "pl": "Przyjazna Wiewiórka\n\nOpowieść o Dzieleniu się",
         "es": "La Ardilla Amigable\n\nUna Historia Sobre Compartir",
-        "de": "Das freundliche Eichhörnchen\n\nEine Geschichte über das Teilen"
+        "de": "Das freundliche Eichhörnchen\n\nEine Geschichte über das Teilen",
+        "fr": "The Friendly Squirrel\n\nA Story About Sharing",
+        "it": "The Friendly Squirrel\n\nA Story About Sharing",
+        "pt": "The Friendly Squirrel\n\nA Story About Sharing",
+        "ja": "The Friendly Squirrel\n\nA Story About Sharing",
+        "ar": "The Friendly Squirrel\n\nA Story About Sharing",
+        "tr": "The Friendly Squirrel\n\nA Story About Sharing",
+        "nl": "The Friendly Squirrel\n\nA Story About Sharing",
+        "da": "The Friendly Squirrel\n\nA Story About Sharing",
+        "la": "The Friendly Squirrel\n\nA Story About Sharing",
+        "zh": "The Friendly Squirrel\n\nA Story About Sharing"
       }
     },
     {
@@ -49,7 +83,17 @@
         "en": "Once upon a time, there was a friendly little squirrel named Sammy.",
         "pl": "Dawno, dawno temu żyła sobie przyjazna mała wiewiórka o imieniu Sammy.",
         "es": "Había una vez una pequeña ardilla amigable llamada Sammy.",
-        "de": "Es war einmal ein freundliches kleines Eichhörnchen namens Sammy."
+        "de": "Es war einmal ein freundliches kleines Eichhörnchen namens Sammy.",
+        "fr": "Once upon a time, there was a friendly little squirrel named Sammy.",
+        "it": "Once upon a time, there was a friendly little squirrel named Sammy.",
+        "pt": "Once upon a time, there was a friendly little squirrel named Sammy.",
+        "ja": "Once upon a time, there was a friendly little squirrel named Sammy.",
+        "ar": "Once upon a time, there was a friendly little squirrel named Sammy.",
+        "tr": "Once upon a time, there was a friendly little squirrel named Sammy.",
+        "nl": "Once upon a time, there was a friendly little squirrel named Sammy.",
+        "da": "Once upon a time, there was a friendly little squirrel named Sammy.",
+        "la": "Once upon a time, there was a friendly little squirrel named Sammy.",
+        "zh": "Once upon a time, there was a friendly little squirrel named Sammy."
       }
     },
     {
@@ -62,7 +106,17 @@
         "en": "Sammy loved to collect acorns in the autumn forest.",
         "pl": "Sammy uwielbiał zbierać żołędzie w jesiennym lesie.",
         "es": "A Sammy le encantaba recolectar bellotas en el bosque de otoño.",
-        "de": "Sammy liebte es, im Herbstwald Eicheln zu sammeln."
+        "de": "Sammy liebte es, im Herbstwald Eicheln zu sammeln.",
+        "fr": "Sammy loved to collect acorns in the autumn forest.",
+        "it": "Sammy loved to collect acorns in the autumn forest.",
+        "pt": "Sammy loved to collect acorns in the autumn forest.",
+        "ja": "Sammy loved to collect acorns in the autumn forest.",
+        "ar": "Sammy loved to collect acorns in the autumn forest.",
+        "tr": "Sammy loved to collect acorns in the autumn forest.",
+        "nl": "Sammy loved to collect acorns in the autumn forest.",
+        "da": "Sammy loved to collect acorns in the autumn forest.",
+        "la": "Sammy loved to collect acorns in the autumn forest.",
+        "zh": "Sammy loved to collect acorns in the autumn forest."
       }
     },
     {
@@ -75,7 +129,17 @@
         "en": "One day, Sammy met a hungry rabbit who had no food.",
         "pl": "Pewnego dnia Sammy spotkał głodnego królika, który nie miał jedzenia.",
         "es": "Un día, Sammy conoció a un conejo hambriento que no tenía comida.",
-        "de": "Eines Tages traf Sammy einen hungrigen Hasen, der kein Essen hatte."
+        "de": "Eines Tages traf Sammy einen hungrigen Hasen, der kein Essen hatte.",
+        "fr": "One day, Sammy met a hungry rabbit who had no food.",
+        "it": "One day, Sammy met a hungry rabbit who had no food.",
+        "pt": "One day, Sammy met a hungry rabbit who had no food.",
+        "ja": "One day, Sammy met a hungry rabbit who had no food.",
+        "ar": "One day, Sammy met a hungry rabbit who had no food.",
+        "tr": "One day, Sammy met a hungry rabbit who had no food.",
+        "nl": "One day, Sammy met a hungry rabbit who had no food.",
+        "da": "One day, Sammy met a hungry rabbit who had no food.",
+        "la": "One day, Sammy met a hungry rabbit who had no food.",
+        "zh": "One day, Sammy met a hungry rabbit who had no food."
       }
     },
     {
@@ -88,7 +152,17 @@
         "en": "\"Here, take some of my acorns,\" said Sammy with a smile.",
         "pl": "\"Proszę, weź trochę moich żołędzi\" — powiedział Sammy z uśmiechem.",
         "es": "\"Aquí, toma algunas de mis bellotas\" — dijo Sammy con una sonrisa.",
-        "de": "\"Hier, nimm ein paar von meinen Eicheln\" — sagte Sammy mit einem Lächeln."
+        "de": "\"Hier, nimm ein paar von meinen Eicheln\" — sagte Sammy mit einem Lächeln.",
+        "fr": "\"Here, take some of my acorns,\" said Sammy with a smile.",
+        "it": "\"Here, take some of my acorns,\" said Sammy with a smile.",
+        "pt": "\"Here, take some of my acorns,\" said Sammy with a smile.",
+        "ja": "\"Here, take some of my acorns,\" said Sammy with a smile.",
+        "ar": "\"Here, take some of my acorns,\" said Sammy with a smile.",
+        "tr": "\"Here, take some of my acorns,\" said Sammy with a smile.",
+        "nl": "\"Here, take some of my acorns,\" said Sammy with a smile.",
+        "da": "\"Here, take some of my acorns,\" said Sammy with a smile.",
+        "la": "\"Here, take some of my acorns,\" said Sammy with a smile.",
+        "zh": "\"Here, take some of my acorns,\" said Sammy with a smile."
       }
     },
     {
@@ -101,7 +175,17 @@
         "en": "The rabbit was so happy! They became the best of friends.",
         "pl": "Królik był taki szczęśliwy! Zostali najlepszymi przyjaciółmi.",
         "es": "¡El conejo estaba muy feliz! Se convirtieron en los mejores amigos.",
-        "de": "Der Hase war so glücklich! Sie wurden die besten Freunde."
+        "de": "Der Hase war so glücklich! Sie wurden die besten Freunde.",
+        "fr": "The rabbit was so happy! They became the best of friends.",
+        "it": "The rabbit was so happy! They became the best of friends.",
+        "pt": "The rabbit was so happy! They became the best of friends.",
+        "ja": "The rabbit was so happy! They became the best of friends.",
+        "ar": "The rabbit was so happy! They became the best of friends.",
+        "tr": "The rabbit was so happy! They became the best of friends.",
+        "nl": "The rabbit was so happy! They became the best of friends.",
+        "da": "The rabbit was so happy! They became the best of friends.",
+        "la": "The rabbit was so happy! They became the best of friends.",
+        "zh": "The rabbit was so happy! They became the best of friends."
       }
     },
     {
@@ -114,9 +198,18 @@
         "en": "Sharing makes everyone happy. The End.",
         "pl": "Dzielenie się sprawia, że wszyscy są szczęśliwi. Koniec.",
         "es": "Compartir hace feliz a todos. Fin.",
-        "de": "Teilen macht alle glücklich. Ende."
+        "de": "Teilen macht alle glücklich. Ende.",
+        "fr": "Sharing makes everyone happy. The End.",
+        "it": "Sharing makes everyone happy. The End.",
+        "pt": "Sharing makes everyone happy. The End.",
+        "ja": "Sharing makes everyone happy. The End.",
+        "ar": "Sharing makes everyone happy. The End.",
+        "tr": "Sharing makes everyone happy. The End.",
+        "nl": "Sharing makes everyone happy. The End.",
+        "da": "Sharing makes everyone happy. The End.",
+        "la": "Sharing makes everyone happy. The End.",
+        "zh": "Sharing makes everyone happy. The End."
       }
     }
   ]
 }
-

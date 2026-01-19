@@ -11,7 +11,11 @@
   "description": "A delightful winter story about a squirrel who builds a snowman.",
   "isPremium": true,
   "author": "Freya Stories",
-  "tags": ["nature", "winter", "friendship"],
+  "tags": [
+    "nature",
+    "winter",
+    "friendship"
+  ],
   "_disclaimer": "IMPORTANT: This content is NOT original work. It is used solely for proof-of-concept and technical demonstration purposes to showcase the app's adaptability to modern interactive book formats. All rights belong to the original copyright holders. This content must NOT be used in production or distributed commercially.",
   "_attribution": "Third-party content used for demonstration purposes only",
   "_usageType": "proof-of-concept",
@@ -42,8 +46,14 @@
           "id": "door",
           "type": "reveal",
           "image": "assets/stories/squirrels-snowman/page-2/door-open.webp",
-          "position": { "x": 0.481, "y": 0.337 },
-          "size": { "width": 0.273, "height": 0.301 }
+          "position": {
+            "x": 0.481,
+            "y": 0.337
+          },
+          "size": {
+            "width": 0.273,
+            "height": 0.301
+          }
         }
       ]
     },
@@ -65,8 +75,14 @@
           "id": "basket",
           "type": "reveal",
           "image": "assets/stories/squirrels-snowman/page-4/props/page-4-basket-open.webp",
-          "position": { "x": 0.475, "y": 0.478 },
-          "size": { "width": 0.183, "height": 0.230 }
+          "position": {
+            "x": 0.475,
+            "y": 0.478
+          },
+          "size": {
+            "width": 0.183,
+            "height": 0.23
+          }
         }
       ]
     },
@@ -88,8 +104,14 @@
           "id": "crate",
           "type": "reveal",
           "image": "assets/stories/squirrels-snowman/page-6/props/page-6-basket-open.webp",
-          "position": { "x": 0.348, "y": 0.433 },
-          "size": { "width": 0.308, "height": 0.280 }
+          "position": {
+            "x": 0.348,
+            "y": 0.433
+          },
+          "size": {
+            "width": 0.308,
+            "height": 0.28
+          }
         }
       ]
     },
@@ -111,8 +133,14 @@
           "id": "food-cover",
           "type": "reveal",
           "image": "assets/stories/squirrels-snowman/page-8/props/page-8-food-cover-open.webp",
-          "position": { "x": 0.254, "y": 0.460 },
-          "size": { "width": 0.212, "height": 0.158 }
+          "position": {
+            "x": 0.254,
+            "y": 0.46
+          },
+          "size": {
+            "width": 0.212,
+            "height": 0.158
+          }
         }
       ]
     },
@@ -134,11 +162,16 @@
           "id": "curtains",
           "type": "reveal",
           "image": "assets/stories/squirrels-snowman/page-10/props/page-10-curtains-open.webp",
-          "position": { "x": 0.279, "y": 0.286 },
-          "size": { "width": 0.451, "height": 0.291 }
+          "position": {
+            "x": 0.279,
+            "y": 0.286
+          },
+          "size": {
+            "width": 0.451,
+            "height": 0.291
+          }
         }
       ]
     }
   ]
 }
-

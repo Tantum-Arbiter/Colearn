@@ -138,6 +138,12 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
             {t('profile.saveChanges')}
           </Text>
         </Pressable>
+
+        <View style={[styles.comingSoonContainer, { marginTop: scaledPadding(30) }]}>
+          <Text style={[styles.comingSoonText, { fontSize: scaledFontSize(14) }]}>
+            {t('profile.comingSoon')}
+          </Text>
+        </View>
         </View>
       </ScrollView>
     </View>
@@ -243,6 +249,21 @@ const styles = StyleSheet.create({
     color: '#4A90E2',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  comingSoonContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+  },
+  comingSoonText: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 14,
+    fontStyle: 'italic',
+    textAlign: 'center',
   },
 });
 
@@ -356,6 +377,12 @@ export function EditProfileContent({ paddingTop = 0, onSaveComplete }: EditProfi
               {t('profile.saveChanges')}
             </Text>
           </Pressable>
+
+          <View style={[styles.comingSoonContainer, { marginTop: scaledPadding(30) }]}>
+            <Text style={[styles.comingSoonText, { fontSize: scaledFontSize(14) }]}>
+              {t('profile.comingSoon')}
+            </Text>
+          </View>
         </View>
       </ScrollView>
     </View>
