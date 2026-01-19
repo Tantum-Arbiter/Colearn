@@ -68,7 +68,7 @@ export const MOCK_STORIES: Story[] = [
     category: 'bedtime',
     tag: '🌙 Bedtime',
     emoji: '🐨',
-    coverImage: require('../assets/stories/snuggle-little-wombat/cover/thumbnail.webp'),
+    coverImage: require('../assets/stories/snuggle-little-wombat/cover/cover-large.webp'),
     isAvailable: true,
     ageRange: '2-5',
     duration: 9,
