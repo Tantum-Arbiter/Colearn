@@ -20,7 +20,7 @@
   "category": "bedtime",
   "tag": "🌙 Bedtime",
   "emoji": "🐨",
-  "coverImage": "assets/stories/snuggle-little-wombat/cover/thumbnail.webp",
+  "coverImage": "assets/stories/snuggle-little-wombat/cover/cover-large.webp",
   "isAvailable": true,
   "ageRange": "2-5",
   "duration": 8,
@@ -51,7 +51,23 @@
       "id": "snuggle-little-wombat-cover",
       "pageNumber": 0,
       "backgroundImage": "assets/stories/snuggle-little-wombat/cover/cover-large.webp",
-      "text": "Snuggle Little Wombat"
+      "text": "Snuggle Little Wombat",
+      "localizedText": {
+        "en": "Snuggle Little Wombat",
+        "pl": "Przytulanka Mały Wombat",
+        "es": "Acurrúcate Pequeño Wombat",
+        "de": "Kuschel Kleiner Wombat",
+        "fr": "Câlin Petit Wombat",
+        "it": "Abbraccia Piccolo Wombat",
+        "pt": "Abraço Pequeno Wombat",
+        "ja": "ウォンバットを抱きしめる",
+        "ar": "احتضن الومبت الصغير",
+        "tr": "Küçük Wombat'ı Sarıl",
+        "nl": "Knuffel Kleine Wombat",
+        "da": "Knus Lille Wombat",
+        "la": "Amplexus Parvus Wombatus",
+        "zh": "拥抱小袋熊"
+      }
     },
     {
       "id": "snuggle-little-wombat-1",

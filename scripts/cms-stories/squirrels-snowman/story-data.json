@@ -53,7 +53,23 @@
       "id": "squirrels-snowman-cover",
       "pageNumber": 0,
       "backgroundImage": "assets/stories/squirrels-snowman/cover/cover.webp",
-      "text": "Squirrels and the Snowman"
+      "text": "Squirrels and the Snowman",
+      "localizedText": {
+        "en": "Squirrels and the Snowman",
+        "pl": "Wiewiórki i Bałwan",
+        "es": "Ardillas y el Muñeco de Nieve",
+        "de": "Eichhörnchen und der Schneemann",
+        "fr": "Écureuils et le Bonhomme de Neige",
+        "it": "Scoiattoli e l'Uomo di Neve",
+        "pt": "Esquilos e o Boneco de Neve",
+        "ja": "リスと雪だるま",
+        "ar": "السناجب ورجل الثلج",
+        "tr": "Sincaplar ve Kardan Adam",
+        "nl": "Eekhoorns en de Sneeuwman",
+        "da": "Egern og Snemanden",
+        "la": "Sciuri et Homo Niveus",
+        "zh": "松鼠和雪人"
+      }
     },
     {
       "id": "squirrels-snowman-1",
