@@ -34,7 +34,7 @@ class BackgroundSaveServiceClass {
    * The save will be retried automatically if it fails.
    */
   async queueProfileSave(data: ProfileUpdateData): Promise<void> {
-    console.log('[BackgroundSave] Queueing profile save...');
+    console.log('[BackgroundSave] Queueing profile save...', JSON.stringify(data));
 
     const pendingSave: PendingSave = {
       id: Date.now().toString(),
@@ -45,6 +45,7 @@ class BackgroundSaveServiceClass {
 
     // Add to pending saves
     await this.addPendingSave(pendingSave);
+    console.log('[BackgroundSave] Profile save queued with ID:', pendingSave.id);
 
     // Start processing queue
     this.processQueue();
@@ -63,9 +64,11 @@ class BackgroundSaveServiceClass {
 
     try {
       const pendingSaves = await this.getPendingSaves();
+      console.log('[BackgroundSave] getPendingSaves returned:', pendingSaves.length, 'saves');
 
       if (pendingSaves.length === 0) {
         console.log('[BackgroundSave] No pending saves');
+        this.isProcessing = false;
         return;
       }
 
