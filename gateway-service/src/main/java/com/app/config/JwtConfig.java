@@ -219,12 +219,16 @@ public class JwtConfig {
             // Log the audience values for debugging
             String tokenAudience = decodedHeader.getAudience() != null && !decodedHeader.getAudience().isEmpty()
                 ? decodedHeader.getAudience().get(0) : "null";
-            logger.debug("Apple ID token validation - Expected audiences: {} or {}, Token audience: {}",
+            logger.info("Apple ID token validation - Expected audiences: {} or {}, Token audience: {}",
                 appleClientId, appleExpoClientId, tokenAudience);
 
             // Determine which audience to validate against
             String expectedAudience = tokenAudience.equals(appleExpoClientId) ? appleExpoClientId : appleClientId;
-            logger.debug("Using expected audience: {}", expectedAudience);
+            logger.info("Using expected audience: {}", expectedAudience);
+
+            // Log the subject claim for debugging
+            String subject = decodedHeader.getSubject();
+            logger.info("Apple ID token subject (sub claim): {}", subject);
 
             RSAPublicKey publicKey = getApplePublicKey(keyId);
             Algorithm algorithm = Algorithm.RSA256(publicKey, null);
