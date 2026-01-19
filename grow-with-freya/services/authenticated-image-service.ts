@@ -461,6 +461,7 @@ export class AuthenticatedImageService {
 
   /**
    * Delete a file from the cache
+   * Silently ignores if file doesn't exist (already deleted or never existed)
    */
   private static async deleteFile(filePath: string): Promise<void> {
     try {
@@ -468,8 +469,10 @@ export class AuthenticatedImageService {
       if (fileInfo.exists) {
         await FileSystem.deleteAsync(filePath);
       }
+      // File doesn't exist - that's fine, nothing to delete
     } catch (error) {
-      log.error(`Error deleting file:`, error);
+      // Silently ignore errors - file may have been deleted by system or already gone
+      // This is not critical to the app's functionality
     }
   }
 
