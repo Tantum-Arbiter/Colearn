@@ -794,7 +794,7 @@ const INTERACTIVE_TEST_STORIES: Story[] = [
     category: 'nature',
     tag: '🐢 Nature',
     emoji: '🎄',
-    coverImage: require('../assets/stories/squirrels-snowman/cover/thumbnail.webp'),
+    coverImage: require('../assets/stories/squirrels-snowman/cover/cover.webp'),
     isAvailable: true,
     ageRange: '2-5',
     duration: 11,
