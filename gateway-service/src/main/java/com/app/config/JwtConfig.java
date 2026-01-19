@@ -223,14 +223,8 @@ public class JwtConfig {
                 appleClientId, appleExpoClientId, tokenAudience);
 
             // Determine which audience to validate against
-            String expectedAudience;
-            if (tokenAudience.equals(appleExpoClientId)) {
-                expectedAudience = appleExpoClientId;
-            } else if (tokenAudience.equals(appleClientId)) {
-                expectedAudience = appleClientId;
-            } else {
-                throw new JWTVerificationException("Token audience '" + tokenAudience + "' does not match any known Apple client ID");
-            }
+            // Note: Expo Go uses 'host.exp.Exponent' as the audience, while production uses the actual bundle ID
+            String expectedAudience = tokenAudience.equals(appleExpoClientId) ? appleExpoClientId : appleClientId;
             logger.info("Using expected audience: {}", expectedAudience);
 
             // Log the subject claim for debugging
