@@ -199,22 +199,32 @@ export class StorySyncService {
 
       // Resolve asset URLs for all stories
       if (syncResponse.stories && syncResponse.stories.length > 0) {
-        syncResponse.stories = syncResponse.stories.map(story => ({
-          ...story,
-          coverImage: resolveAssetUrl(story.coverImage as string | undefined),
-          pages: story.pages?.map(page => ({
-            ...page,
-            backgroundImage: resolveAssetUrl(page.backgroundImage) as string | undefined,
-            characterImage: resolveAssetUrl(page.characterImage) as string | undefined,
-            interactiveElements: page.interactiveElements?.map(element => {
-              const resolvedImage = resolveAssetUrl(element.image);
-              return {
-                ...element,
-                image: (resolvedImage !== undefined ? resolvedImage : element.image) as string | number,
-              };
-            }),
-          }))
-        })) as Story[];
+        syncResponse.stories = syncResponse.stories.map(story => {
+          // Debug: Log if story has localized content
+          if (story.localizedTitle || story.pages?.some(p => p.localizedText)) {
+            log.debug(`Story ${story.id} has localized content:`, {
+              hasLocalizedTitle: !!story.localizedTitle,
+              pagesWithLocalizedText: story.pages?.filter(p => p.localizedText).length || 0
+            });
+          }
+
+          return {
+            ...story,
+            coverImage: resolveAssetUrl(story.coverImage as string | undefined),
+            pages: story.pages?.map(page => ({
+              ...page,
+              backgroundImage: resolveAssetUrl(page.backgroundImage) as string | undefined,
+              characterImage: resolveAssetUrl(page.characterImage) as string | undefined,
+              interactiveElements: page.interactiveElements?.map(element => {
+                const resolvedImage = resolveAssetUrl(element.image);
+                return {
+                  ...element,
+                  image: (resolvedImage !== undefined ? resolvedImage : element.image) as string | number,
+                };
+              }),
+            }))
+          };
+        }) as Story[];
 
         // Invalidate cached images for updated stories
         // This ensures fresh images are downloaded if content changed on the server
@@ -342,6 +352,22 @@ export class StorySyncService {
     try {
       const metadata = await this.getLocalSyncMetadata();
       const stories = metadata?.stories || [];
+
+      // Debug: Log localized content in stories
+      if (stories.length > 0) {
+        const storiesWithLocalized = stories.filter(s => s.localizedTitle || s.pages?.some(p => p.localizedText));
+        if (storiesWithLocalized.length > 0) {
+          log.debug(`Found ${storiesWithLocalized.length}/${stories.length} stories with localized content`);
+          storiesWithLocalized.slice(0, 2).forEach(story => {
+            log.debug(`Story ${story.id}:`, {
+              hasLocalizedTitle: !!story.localizedTitle,
+              pagesWithLocalizedText: story.pages?.filter(p => p.localizedText).length || 0,
+              totalPages: story.pages?.length || 0
+            });
+          });
+        }
+      }
+
       // Ensure all asset URLs are resolved
       return this.resolveStoriesAssetUrls(stories);
     } catch (error) {

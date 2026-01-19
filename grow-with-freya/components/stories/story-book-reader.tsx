@@ -62,6 +62,18 @@ export function StoryBookReader({
   const { i18n, t } = useTranslation();
   const currentLanguage = i18n.language as SupportedLanguage;
   const displayTitle = getLocalizedText(story.localizedTitle, story.title, currentLanguage);
+
+  // Debug: Log story localization info
+  useEffect(() => {
+    if (story.pages && story.pages.length > 0) {
+      const pagesWithLocalized = story.pages.filter(p => p.localizedText);
+      if (pagesWithLocalized.length > 0) {
+        log.debug(`Story ${story.id} has ${pagesWithLocalized.length}/${story.pages.length} pages with localizedText`);
+      } else {
+        log.warn(`Story ${story.id} has NO pages with localizedText - only fallback text available`);
+      }
+    }
+  }, [story.id, story.pages]);
   // Start from page 1 if skipping cover, otherwise start from cover (page 0)
   const [currentPageIndex, setCurrentPageIndex] = useState(skipCoverPage ? 1 : 0);
   const [previousPageIndex, setPreviousPageIndex] = useState<number | null>(null); // For crossfade
