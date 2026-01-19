@@ -601,6 +601,7 @@ public class AuthController {
 
     public static class AppleAuthRequest {
         private String idToken;
+        private String authorizationCode;
         private String clientId;
         private String nonce;
         private DeviceInfo deviceInfo;
@@ -609,6 +610,8 @@ public class AuthController {
         // Getters and setters
         public String getIdToken() { return idToken; }
         public void setIdToken(String idToken) { this.idToken = idToken; }
+        public String getAuthorizationCode() { return authorizationCode; }
+        public void setAuthorizationCode(String authorizationCode) { this.authorizationCode = authorizationCode; }
         public String getClientId() { return clientId; }
         public void setClientId(String clientId) { this.clientId = clientId; }
         public String getNonce() { return nonce; }
