@@ -376,13 +376,16 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
 
       // Move to syncing phase
       setLoadingPhase('syncing');
+      console.log('[LoginScreen] Apple sign-in complete, starting profile sync...');
 
       try {
+        console.log('[LoginScreen] Calling ApiClient.getProfile()...');
         const profile = await ApiClient.getProfile();
+        console.log('[LoginScreen] Profile retrieved:', JSON.stringify(profile, null, 2));
         await ProfileSyncService.fullSync(profile);
-        DEBUG_LOGS && console.log('[LoginScreen] Profile synced');
-      } catch {
-        DEBUG_LOGS && console.log('[LoginScreen] No profile found, user may need to create one');
+        console.log('[LoginScreen] Profile synced');
+      } catch (error) {
+        console.log('[LoginScreen] Profile sync error:', error);
       }
 
       try {
