@@ -265,12 +265,21 @@ export class AuthenticatedImageService {
         );
 
         if (downloadResult.status === 200) {
-          // Add to memory cache for instant subsequent lookups
-          this.memoryCache.set(remoteUrl, cachedPath);
-          return cachedPath;
+          // Validate the downloaded file before using it
+          const isValid = await this.validateCachedFile(cachedPath);
+          if (isValid) {
+            // Add to memory cache for instant subsequent lookups
+            this.memoryCache.set(remoteUrl, cachedPath);
+            return cachedPath;
+          } else {
+            log.warn(`Alternative path downloaded but failed validation: ${altUrl}`);
+            // Delete the invalid file and continue to next alternative
+            await this.deleteFile(cachedPath);
+          }
         }
-      } catch {
+      } catch (error) {
         // Silently continue to next alternative
+        log.debug(`Failed to try alternative path: ${altUrl}`, error);
         continue;
       }
     }
@@ -422,6 +431,7 @@ export class AuthenticatedImageService {
 
       const size = (fileInfo as any).size || 0;
       if (size < MIN_VALID_FILE_SIZE) {
+        log.warn(`Cached file too small (${size} bytes): ${filePath}`);
         return false;
       }
 
@@ -442,6 +452,7 @@ export class AuthenticatedImageService {
         // Check for WebP format
         if (filePath.endsWith('.webp')) {
           if (header !== WEBP_MAGIC || webpMarker !== WEBP_MAGIC_OFFSET_4) {
+            log.warn(`Invalid WebP header for: ${filePath} (header: ${header}, marker: ${webpMarker})`);
             return false;
           }
         }
