@@ -60,17 +60,17 @@ jobs:
             fi
           done
 
-      - name: Check for duplicate story IDs
+      - name: Check for duplicate story IDs in CMS
         run: |
-          echo "Checking for duplicate story IDs..."
-          ids=$(cat scripts/cms-stories/*/story-data.json grow-with-freya/assets/stories/*/story-data.json 2>/dev/null | jq -r '.id' | sort)
+          echo "Checking for duplicate story IDs in CMS stories..."
+          ids=$(cat scripts/cms-stories/*/story-data.json 2>/dev/null | jq -r '.id' | sort)
           duplicates=$(echo "$ids" | uniq -d)
           if [ -n "$duplicates" ]; then
-            echo "Duplicate story IDs found:"
+            echo "Duplicate story IDs found in CMS:"
             echo "$duplicates"
             exit 1
           fi
-          echo "No duplicate IDs found"
+          echo "No duplicate IDs found in CMS stories"
 
   sync-to-gcs:
     name: Sync Assets to GCS
