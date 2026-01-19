@@ -48,6 +48,12 @@
   ],
   "pages": [
     {
+      "id": "snuggle-little-wombat-cover",
+      "pageNumber": 0,
+      "backgroundImage": "assets/stories/snuggle-little-wombat/cover/cover-large.webp",
+      "text": "Snuggle Little Wombat"
+    },
+    {
       "id": "snuggle-little-wombat-1",
       "pageNumber": 1,
       "backgroundImage": "assets/stories/snuggle-little-wombat/page-1/background.webp",

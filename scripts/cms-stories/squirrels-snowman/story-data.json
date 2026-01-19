@@ -50,6 +50,12 @@
   ],
   "pages": [
     {
+      "id": "squirrels-snowman-cover",
+      "pageNumber": 0,
+      "backgroundImage": "assets/stories/squirrels-snowman/cover/cover.webp",
+      "text": "Squirrels and the Snowman"
+    },
+    {
       "id": "squirrels-snowman-1",
       "pageNumber": 1,
       "backgroundImage": "assets/stories/squirrels-snowman/page-1/background.webp",
