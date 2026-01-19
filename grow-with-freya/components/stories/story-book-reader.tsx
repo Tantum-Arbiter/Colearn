@@ -17,6 +17,7 @@ import * as ScreenOrientation from 'expo-screen-orientation';
 import { useTranslation } from 'react-i18next';
 import { Story, StoryPage, STORY_TAGS, InteractiveElement, getLocalizedText } from '@/types/story';
 import type { SupportedLanguage } from '@/services/i18n';
+import { SUPPORTED_LANGUAGES } from '@/services/i18n';
 import { InteractiveElementComponent } from './interactive-element';
 import { Fonts } from '@/constants/theme';
 import { useStoryTransition } from '@/contexts/story-transition-context';
@@ -72,10 +73,18 @@ export function StoryBookReader({
 
   const [preloadedPages, setPreloadedPages] = useState<Set<number>>(new Set());
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
-  const [activeSubmenu, setActiveSubmenu] = useState<'main' | 'fontSize' | null>(null);
+  const [activeSubmenu, setActiveSubmenu] = useState<'main' | 'fontSize' | 'compareLanguage' | null>(null);
   const [showPagePreview, setShowPagePreview] = useState(false);
   const [showTipsOverlay, setShowTipsOverlay] = useState(false);
   const [readingMode, setReadingMode] = useState<'read' | 'record' | 'narrate'>(initialMode);
+
+  // Compare language feature
+  const [isCompareLanguageEnabled, setIsCompareLanguageEnabled] = useState(false);
+  const [sessionLanguage, setSessionLanguage] = useState<SupportedLanguage>(currentLanguage); // Language for white box (current session)
+  const [compareLanguage, setCompareLanguage] = useState<SupportedLanguage>(currentLanguage); // Language for blue box (compare)
+  const [highlightedWordBlue, setHighlightedWordBlue] = useState<{ word: string; index: number } | null>(null); // Word highlighted in blue box
+  const [highlightedWordWhite, setHighlightedWordWhite] = useState<{ word: string; index: number } | null>(null); // Word highlighted in white box
+  const [showCompareLanguageModal, setShowCompareLanguageModal] = useState(false); // Modal for compare language selection on phones
 
   // Voice recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -968,6 +977,66 @@ export function StoryBookReader({
     return <View style={StyleSheet.absoluteFill}>{imageContent}</View>;
   };
 
+  // Function to render text with word highlighting
+  const renderTextWithHighlight = (
+    text: string,
+    fontSize: number,
+    lineHeight: number,
+    baseStyle: any,
+    animatedStyle: any,
+    boxType: 'blue' | 'white'
+  ) => {
+    const words = text.split(/(\s+)/); // Split by whitespace but keep the whitespace
+    const highlightedWord = boxType === 'blue' ? highlightedWordBlue : highlightedWordWhite;
+    const setHighlightedWord = boxType === 'blue' ? setHighlightedWordBlue : setHighlightedWordWhite;
+
+    return (
+      <Animated.View style={[animatedStyle]}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+          {words.map((word, index) => {
+            const isWhitespace = /^\s+$/.test(word);
+            // Check if this specific word at this index is highlighted
+            const isHighlighted = !isWhitespace && highlightedWord?.index === index && highlightedWord?.word === word;
+
+            return (
+              <Pressable
+                key={`${boxType}-${index}-${word}`}
+                onPress={() => {
+                  if (!isWhitespace) {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    // Toggle highlight - only in this box, using index as unique identifier
+                    if (highlightedWord?.index === index && highlightedWord?.word === word) {
+                      setHighlightedWord(null);
+                    } else {
+                      setHighlightedWord({ word, index });
+                    }
+                  }
+                }}
+                disabled={isWhitespace}
+              >
+                <Text
+                  style={[
+                    baseStyle,
+                    {
+                      fontSize: fontSize,
+                      lineHeight: lineHeight,
+                      backgroundColor: isHighlighted ? '#1e3a8a' : 'transparent',
+                      color: isHighlighted ? '#ffffff' : undefined,
+                      paddingHorizontal: isHighlighted ? 4 : 0,
+                      borderRadius: isHighlighted ? 4 : 0,
+                    }
+                  ]}
+                >
+                  {word}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </Animated.View>
+    );
+  };
+
   // Function to render page content
   const renderPageContent = (page: any, isNextPage = false) => {
     if (!page) return null;
@@ -1448,6 +1517,19 @@ export function StoryBookReader({
               <Text style={[styles.menuItemText, { fontSize: scaledFontSize(14) }]}>{t('reader.fontButtonSize')}</Text>
               <Text style={[styles.menuItemArrow, { fontSize: scaledFontSize(14) }]}>›</Text>
             </Pressable>
+            <View style={styles.menuDivider} />
+            <Pressable
+              style={styles.menuItem}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setShowSettingsMenu(false);
+                setActiveSubmenu(null);
+                setShowCompareLanguageModal(true);
+              }}
+            >
+              <Text style={[styles.menuItemText, { fontSize: scaledFontSize(14) }]}>{t('reader.compareLanguage')}</Text>
+              <Text style={[styles.menuItemArrow, { fontSize: scaledFontSize(14) }]}>›</Text>
+            </Pressable>
             {/* Auto-play toggle - only in narrate mode */}
             {readingMode === 'narrate' && (
               <>
@@ -1528,6 +1610,8 @@ export function StoryBookReader({
           </View>
         )}
 
+        {/* Settings Menu Dropdown - Compare Language Options - REMOVED (using modal instead) */}
+
         {/* Simple Single Page - Just Like Cover Tap */}
         <View style={styles.pageContent}>
           {renderPageContent(currentPage)}
@@ -1554,7 +1638,7 @@ export function StoryBookReader({
             readingMode === 'record' && styles.navigationRowRecordMode
           ]}>
           {/* Previous Button - Left Side */}
-          <Animated.View style={leftButtonAnimatedStyle}>
+          <Animated.View style={[leftButtonAnimatedStyle]}>
             <Pressable
               style={[
                 styles.navButton,
@@ -1581,7 +1665,7 @@ export function StoryBookReader({
           </Animated.View>
 
           {/* Story Text Box - Center - Scrollable for accessibility */}
-          <Animated.View style={[styles.centerTextContainer, textBoxAnimatedStyle]}>
+          <Animated.View style={[styles.centerTextContainer, textBoxAnimatedStyle, isCompareLanguageEnabled && styles.centerTextContainerCompare, !isTablet && { maxWidth: '68%' }]}>
             {(() => {
               // Tablet gets larger base font for better readability
               // iPad base sizes are significantly larger to compensate for 2-line limit
@@ -1590,52 +1674,104 @@ export function StoryBookReader({
                 : (isTablet ? 26 : 16);
               const fontSize = scaledFontSize(baseFontSize);
               const lineHeight = fontSize * 1.5;
-              // 2 lines on all devices - enforced for consistent reading experience
-              const maxLines = 2;
+              // In compare mode, show all text; otherwise limit to 2 lines
+              const maxLines = isCompareLanguageEnabled ? 999 : 2;
               const verticalPadding = 30;
-              const fixedTextBoxHeight = (lineHeight * maxLines) + verticalPadding;
+              const fixedTextBoxHeight = isCompareLanguageEnabled
+                ? undefined // Let content determine height in compare mode
+                : (lineHeight * maxLines) + verticalPadding;
 
               return (
                 <View style={[
-                  styles.centerTextBox,
-                  {
-                    height: fixedTextBoxHeight,
-                    minHeight: fixedTextBoxHeight,
-                    maxHeight: fixedTextBoxHeight,
-                  }
+                  isCompareLanguageEnabled && styles.compareLanguageContainer
                 ]}>
-                  <ScrollView
-                    key={`text-scroll-${story.id}-${currentPageIndex}-${textSizeScale}`}
-                    ref={textScrollViewRef}
-                    showsVerticalScrollIndicator={true}
-                    indicatorStyle="black"
-                    scrollEventThrottle={16}
-                    bounces={false}
-                    nestedScrollEnabled={true}
-                    scrollEnabled={true}
-                  >
-                    {/* Only the text fades, not the text box */}
-                    <Animated.Text
-                      style={[
-                        currentPage?.pageNumber === 0 ? styles.coverText : styles.storyText,
-                        {
-                          fontSize: fontSize,
-                          lineHeight: lineHeight,
-                          paddingRight: 15,
-                        },
-                        textAnimatedStyle
-                      ]}
+                  {/* Compare Language Text Box - Above (only when enabled) */}
+                  {isCompareLanguageEnabled && (
+                    <View style={[
+                      styles.centerTextBox,
+                      styles.compareLanguageTextBox,
+                      {
+                        height: 'auto',
+                        minHeight: undefined,
+                        maxHeight: undefined,
+                      }
+                    ]}>
+                      <ScrollView
+                        key={`compare-text-scroll-${story.id}-${currentPageIndex}-${textSizeScale}-${compareLanguage}`}
+                        showsVerticalScrollIndicator={true}
+                        indicatorStyle="black"
+                        scrollEventThrottle={16}
+                        bounces={false}
+                        nestedScrollEnabled={true}
+                        scrollEnabled={true}
+                      >
+                        <View style={{ paddingRight: 15 }}>
+                          {renderTextWithHighlight(
+                            getLocalizedText(currentPage?.localizedText, currentPage?.text, compareLanguage) || '',
+                            fontSize,
+                            lineHeight,
+                            currentPage?.pageNumber === 0 ? styles.coverText : styles.storyText,
+                            textAnimatedStyle,
+                            'blue'
+                          )}
+                        </View>
+                      </ScrollView>
+                      <Text style={[styles.compareLanguageLabel, { fontSize: scaledFontSize(10) }]}>
+                        {SUPPORTED_LANGUAGES.find(l => l.code === compareLanguage)?.nativeName}
+                      </Text>
+                    </View>
+                  )}
+
+                  {/* Original Language Text Box - Below */}
+                  <View style={[
+                    styles.centerTextBox,
+                    isCompareLanguageEnabled && styles.originalLanguageTextBox,
+                    isCompareLanguageEnabled ? {
+                      height: 'auto',
+                      minHeight: undefined,
+                      maxHeight: undefined,
+                    } : fixedTextBoxHeight ? {
+                      height: fixedTextBoxHeight,
+                      minHeight: fixedTextBoxHeight,
+                      maxHeight: fixedTextBoxHeight,
+                    } : {
+                      minHeight: 80,
+                    }
+                  ]}>
+                    <ScrollView
+                      key={`text-scroll-${story.id}-${currentPageIndex}-${textSizeScale}`}
+                      ref={textScrollViewRef}
+                      showsVerticalScrollIndicator={true}
+                      indicatorStyle="black"
+                      scrollEventThrottle={16}
+                      bounces={false}
+                      nestedScrollEnabled={true}
+                      scrollEnabled={true}
                     >
-                      {currentPage ? getLocalizedText(currentPage.localizedText, currentPage.text, currentLanguage) : ''}
-                    </Animated.Text>
-                  </ScrollView>
+                      <View style={{ paddingRight: 15 }}>
+                        {renderTextWithHighlight(
+                          getLocalizedText(currentPage?.localizedText, currentPage?.text, isCompareLanguageEnabled ? sessionLanguage : currentLanguage) || '',
+                          fontSize,
+                          lineHeight,
+                          currentPage?.pageNumber === 0 ? styles.coverText : styles.storyText,
+                          textAnimatedStyle,
+                          'white'
+                        )}
+                      </View>
+                    </ScrollView>
+                    {isCompareLanguageEnabled && (
+                      <Text style={[styles.compareLanguageLabel, { fontSize: scaledFontSize(10) }]}>
+                        {SUPPORTED_LANGUAGES.find(l => l.code === sessionLanguage)?.nativeName}
+                      </Text>
+                    )}
+                  </View>
                 </View>
               );
             })()}
           </Animated.View>
 
           {/* Next Button - Right Side */}
-          <Animated.View style={rightButtonAnimatedStyle}>
+          <Animated.View style={[rightButtonAnimatedStyle]}>
             <Pressable
               style={[
                 styles.navButton,
@@ -2134,6 +2270,127 @@ export function StoryBookReader({
         forceShow={showTipsOverlay && readingMode === 'narrate'}
         onClose={() => setShowTipsOverlay(false)}
       />
+
+      {/* Compare Languages Modal - Phone and Tablet */}
+      <Modal
+        visible={showCompareLanguageModal}
+        transparent
+        animationType={isTablet ? 'fade' : 'slide'}
+        onRequestClose={() => setShowCompareLanguageModal(false)}
+        supportedOrientations={['portrait', 'landscape']}
+      >
+        <View style={[styles.compareLanguageModalOverlay, (isTablet || (screenWidth > screenHeight)) && { justifyContent: 'center', alignItems: 'center' }]}>
+          <Pressable
+            style={styles.compareLanguageModalBackdrop}
+            onPress={() => setShowCompareLanguageModal(false)}
+          />
+          <View style={[styles.compareLanguageModalContent, isTablet && styles.compareLanguageModalContentTablet]}>
+            {/* Header */}
+            <View style={styles.compareLanguageModalHeader}>
+              <Text style={[styles.compareLanguageModalTitle, { fontSize: scaledFontSize(16) }]}>
+                {t('reader.compareLanguage')}
+              </Text>
+              <Pressable
+                style={styles.compareLanguageModalCloseButton}
+                onPress={() => setShowCompareLanguageModal(false)}
+              >
+                <Text style={styles.compareLanguageModalCloseButtonText}>✕</Text>
+              </Pressable>
+            </View>
+
+            {/* Scrollable Content */}
+            <ScrollView
+              style={styles.compareLanguageModalScroll}
+              showsVerticalScrollIndicator={true}
+              bounces={false}
+            >
+              {/* Toggle Compare Language */}
+              <View style={styles.compareLanguageModalToggleSection}>
+                <Pressable
+                  style={styles.compareLanguageModalToggle}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setIsCompareLanguageEnabled(prev => !prev);
+                  }}
+                >
+                  <Text style={[styles.compareLanguageModalToggleText, { fontSize: scaledFontSize(14) }]}>
+                    {isCompareLanguageEnabled ? t('reader.compareLanguageOn') : t('reader.compareLanguageOff')}
+                  </Text>
+                  <Text style={[styles.compareLanguageModalToggleCheckmark, { fontSize: scaledFontSize(16) }]}>
+                    {isCompareLanguageEnabled ? '✓' : ''}
+                  </Text>
+                </Pressable>
+              </View>
+
+              {/* Language Selection - always show */}
+              <View style={styles.compareLanguageModalDivider} />
+              <Text style={[styles.compareLanguageModalLabel, { fontSize: scaledFontSize(12) }]}>
+                {t('reader.selectCompareLanguage')}
+              </Text>
+
+              {/* Shared Language Pool - Grid Layout */}
+              <View style={styles.compareLanguageModalLanguageList}>
+              {SUPPORTED_LANGUAGES.map((langObj) => {
+                const lang = langObj.code;
+                const langName = langObj.nativeName;
+                const langFlag = langObj.flag;
+                const isSessionSelected = sessionLanguage === lang;
+                const isCompareSelected = compareLanguage === lang;
+
+                return (
+                  <Pressable
+                    key={`lang-${lang}`}
+                    style={[
+                      styles.compareLanguageModalLanguageItem,
+                      isSessionSelected && styles.compareLanguageModalLanguageItemSelectedWhite,
+                      isCompareSelected && styles.compareLanguageModalLanguageItemSelectedBlue,
+                    ]}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      // If already selected in white box, move to blue box
+                      if (isSessionSelected) {
+                        setSessionLanguage(currentLanguage);
+                        setCompareLanguage(lang as SupportedLanguage);
+                      }
+                      // If already selected in blue box, move to white box
+                      else if (isCompareSelected) {
+                        setCompareLanguage(currentLanguage);
+                        setSessionLanguage(lang as SupportedLanguage);
+                      }
+                      // If not selected, add to white box first
+                      else {
+                        setSessionLanguage(lang as SupportedLanguage);
+                      }
+                    }}
+                  >
+                    <Text style={[styles.compareLanguageModalLanguageFlag, { fontSize: scaledFontSize((isSessionSelected || isCompareSelected) ? (isTablet ? 33.6 : 26) : (isTablet ? 24 : 18)) }]}>
+                      {langFlag}
+                    </Text>
+                    <Text style={[styles.compareLanguageModalLanguageName, { fontSize: scaledFontSize(isTablet ? 13 : 11) }, (isSessionSelected || isCompareSelected) && styles.compareLanguageModalLanguageNameSelected]}>
+                      {langName}
+                    </Text>
+
+                  </Pressable>
+                );
+              })}
+              </View>
+            </ScrollView>
+
+            {/* Confirm Button */}
+            <Pressable
+              style={styles.compareLanguageModalConfirmButton}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                setShowCompareLanguageModal(false);
+              }}
+            >
+              <Text style={[styles.compareLanguageModalConfirmButtonText, { fontSize: scaledFontSize(14) }]}>
+                {t('reader.done')}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </Animated.View>
   );
 }
@@ -2334,6 +2591,62 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '700',
   },
+  languageSelectionLabel: {
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontWeight: '600',
+    marginTop: 8,
+    marginBottom: 8,
+    marginLeft: 4,
+  },
+  languageSubLabel: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontWeight: '500',
+    marginTop: 8,
+    marginBottom: 6,
+    marginLeft: 4,
+  },
+  languageSelectionGrid: {
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'space-around',
+    marginTop: 8,
+  },
+  languageOption: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 50,
+  },
+  languageOptionSelectedWhite: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderColor: 'rgba(255, 255, 255, 1)',
+  },
+  languageOptionSelectedBlue: {
+    backgroundColor: 'rgba(200, 220, 255, 0.85)',
+    borderColor: 'rgba(100, 150, 200, 0.8)',
+  },
+  languageOptionText: {
+    fontSize: 24,
+    marginBottom: 4,
+  },
+  languageOptionLabel: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontWeight: '600',
+    fontSize: 11,
+  },
+  languageOptionLabelSelectedWhite: {
+    color: '#333333',
+    fontWeight: '700',
+  },
+  languageOptionLabelSelectedBlue: {
+    color: '#333333',
+    fontWeight: '700',
+  },
   // Transition screen styles
   transitionContainer: {
     flex: 1,
@@ -2508,8 +2821,6 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     minHeight: 80,
     width: '100%',
-    minWidth: 200,
-    maxWidth: 700,
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: 'rgba(0, 0, 0, 0.1)',
@@ -2519,6 +2830,37 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 4,
     position: 'relative',
+  },
+  centerTextContainerCompare: {
+    // Keep same max-width as normal for proper centering
+  },
+  compareLanguageContainer: {
+    gap: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  compareLanguageTextBox: {
+    backgroundColor: 'rgba(200, 220, 255, 0.85)',
+    borderColor: 'rgba(100, 150, 200, 0.3)',
+  },
+  originalLanguageTextBox: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+  },
+  compareLanguageLabel: {
+    fontSize: 10,
+    fontFamily: Fonts.sans,
+    color: 'rgba(0, 0, 0, 0.5)',
+    textAlign: 'right',
+    marginTop: 4,
+    marginRight: 8,
+    fontStyle: 'italic',
+  },
+  highlightedWord: {
+    backgroundColor: '#1e3a8a',
+    color: '#ffffff',
+    paddingHorizontal: 4,
+    borderRadius: 4,
   },
 
   // Legacy text styles (for compatibility)
@@ -3215,5 +3557,211 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sans,
     color: '#999',
     fontStyle: 'italic',
+  },
+
+  // Compare Languages Modal Styles (Phone and Tablet)
+  compareLanguageModalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  compareLanguageModalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  compareLanguageModalContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+    maxHeight: '85%',
+    height: 500,
+    maxWidth: 600,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+    flexDirection: 'column',
+  },
+  compareLanguageModalContentTablet: {
+    borderRadius: 24,
+    maxHeight: '80%',
+    width: '80%',
+    maxWidth: 600,
+    alignSelf: 'center',
+  },
+  compareLanguageModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  compareLanguageModalTitle: {
+    fontFamily: Fonts.sans,
+    fontWeight: '600',
+    color: '#333333',
+    flex: 1,
+  },
+  compareLanguageModalCloseButton: {
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  compareLanguageModalCloseButtonText: {
+    fontSize: 18,
+    color: '#333333',
+    fontWeight: '600',
+  },
+  compareLanguageModalScroll: {
+    flex: 1,
+    marginBottom: 12,
+  },
+  compareLanguageModalToggleSection: {
+    marginBottom: 12,
+  },
+  compareLanguageModalToggle: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    backgroundColor: 'rgba(78, 205, 196, 0.1)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(78, 205, 196, 0.3)',
+  },
+  compareLanguageModalToggleText: {
+    fontFamily: Fonts.sans,
+    fontWeight: '500',
+    color: '#333333',
+  },
+  compareLanguageModalToggleCheckmark: {
+    color: '#4ECDC4',
+    fontWeight: 'bold',
+  },
+  compareLanguageModalDivider: {
+    height: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    marginVertical: 12,
+  },
+  compareLanguageModalLabel: {
+    fontFamily: Fonts.sans,
+    fontWeight: '500',
+    color: '#666666',
+    marginBottom: 12,
+    marginTop: 4,
+  },
+  compareLanguageModalSubLabel: {
+    fontFamily: Fonts.sans,
+    fontWeight: '500',
+    color: '#333333',
+    marginBottom: 8,
+  },
+  compareLanguageModalLanguageList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 12,
+    width: '100%',
+    justifyContent: 'space-between',
+  },
+  compareLanguageModalLanguageItem: {
+    width: '31%',
+    aspectRatio: 1,
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+    gap: 4,
+  },
+  compareLanguageModalLanguageItemSelectedWhite: {
+    backgroundColor: '#D4AF37',
+    borderColor: '#B8860B',
+    borderWidth: 3,
+  },
+  compareLanguageModalLanguageItemSelectedBlue: {
+    backgroundColor: 'rgba(200, 220, 255, 0.9)',
+    borderColor: '#4ECDC4',
+    borderWidth: 3,
+  },
+  compareLanguageModalLanguageFlag: {
+    fontWeight: '600',
+  },
+  compareLanguageModalLanguageName: {
+    fontFamily: Fonts.sans,
+    fontWeight: '500',
+    color: '#333333',
+    textAlign: 'center',
+  },
+  compareLanguageModalLanguageNameSelected: {
+    color: '#000000',
+    fontWeight: '700',
+  },
+  compareLanguageModalLanguageCheckmark: {
+    color: '#4ECDC4',
+    fontWeight: 'bold',
+  },
+  compareLanguageModalLanguageSelectionIndicators: {
+    flexDirection: 'row',
+    gap: 4,
+    marginTop: 4,
+  },
+  compareLanguageModalSelectionBadgeWhite: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#D4AF37',
+    borderWidth: 2,
+    borderRadius: 8,
+    paddingVertical: 3,
+    paddingHorizontal: 6,
+  },
+  compareLanguageModalSelectionBadgeBlue: {
+    backgroundColor: '#4ECDC4',
+    borderColor: '#4ECDC4',
+    borderWidth: 2,
+    borderRadius: 8,
+    paddingVertical: 3,
+    paddingHorizontal: 6,
+  },
+  compareLanguageModalSelectionBadgeText: {
+    fontFamily: Fonts.sans,
+    fontWeight: '600',
+    color: '#333333',
+    textAlign: 'center',
+  },
+  compareLanguageModalConfirmButton: {
+    backgroundColor: '#4ECDC4',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  compareLanguageModalConfirmButtonText: {
+    fontFamily: Fonts.sans,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 });

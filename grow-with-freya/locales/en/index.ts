@@ -166,6 +166,13 @@ export default {
     pageNumber: 'Page {{number}}',
     current: 'Current',
     fontButtonSize: 'Font / Button Size',
+    compareLanguage: 'Compare Languages',
+    compareLanguageOn: 'Compare Languages: On',
+    compareLanguageOff: 'Compare Languages: Off',
+    selectCompareLanguage: 'Choose languages to read, compare or record.',
+    selectFirstLanguage: 'First language (white box):',
+    selectSecondLanguage: 'Second language (blue box):',
+    done: 'Done',
     autoPlayOn: 'Auto-Play: On',
     autoPlayOff: 'Auto-Play: Off',
     readingTips: 'Reading Tips',
@@ -671,6 +678,7 @@ export default {
     boy: '👦 Boy',
     girl: '👧 Girl',
     saveChanges: 'Save Changes',
+    comingSoon: '✨ More profile customization options coming soon - still in development!',
   },
 
   // Onboarding
@@ -877,6 +885,14 @@ export default {
         title: 'Easy Navigation 📚',
         description: 'Swipe left or right to turn pages. Tap the menu button for more options.',
       },
+      tapWords: {
+        title: 'Tap Words to Focus 👆',
+        description: 'Tap any word in the story to highlight it! This helps focus attention and makes reading more interactive and engaging.',
+      },
+      compareLanguages: {
+        title: 'Compare Languages 🌍',
+        description: 'Use the menu to enable "Compare Languages" and view the story in two languages side-by-side. Perfect for multilingual families learning together!',
+      },
     },
     // Book Mode Tips - keys match tutorial.bookMode.* in tutorial-content.ts
     bookMode: {
@@ -1064,6 +1080,8 @@ export default {
     title: 'Parents Only',
     typeAnimalName: 'Type the animal name',
     subtitle: 'Type the animal name to continue',
+    solveMath: 'Solve the math problem',
+    mathSubtitle: 'Enter the answer to continue',
     placeholder: 'Type here...',
     go: 'Go',
     continue: 'Continue',

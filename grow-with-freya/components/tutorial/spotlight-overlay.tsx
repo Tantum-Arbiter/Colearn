@@ -55,7 +55,7 @@ interface SpotlightOverlayProps {
   skipAnimation?: boolean;
 }
 
-const TIP_WIDTH = 280; // Smaller width for less intrusive tips
+const TIP_WIDTH = 320; // Width for tips - increased to accommodate longer translations
 const PULSE_RING_SIZE = 20; // Extra size for pulsing ring
 
 // Pulsing ring component for focus indication
@@ -629,9 +629,9 @@ export function SpotlightOverlay({
                 )}
                 <Pressable
                   onPress={isLastStep ? onComplete : onNext}
-                  style={[styles.navButton, styles.nextButton, { paddingHorizontal: 12, paddingVertical: 6, maxWidth: 120 }]}
+                  style={[styles.navButton, styles.nextButton, { paddingHorizontal: 12, paddingVertical: 6, maxWidth: 150, flexShrink: 1 }]}
                 >
-                  <Text style={[styles.nextText, { fontSize: 12 }]} numberOfLines={1} adjustsFontSizeToFit>{isLastStep ? t('tutorial.buttons.done') : t('tutorial.buttons.next')}</Text>
+                  <Text style={[styles.nextText, { fontSize: 12, flexShrink: 1 }]} numberOfLines={1} adjustsFontSizeToFit>{isLastStep ? t('tutorial.buttons.done') : t('tutorial.buttons.next')}</Text>
                 </Pressable>
                 <Pressable onPress={onSkip} style={[styles.skipButton, { marginLeft: 4 }]}>
                   <Text style={[styles.skipText, { fontSize: 11 }]} numberOfLines={1} adjustsFontSizeToFit>{t('tutorial.buttons.skip')}</Text>
@@ -774,6 +774,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    flexShrink: 1,
   },
   navButton: {
     flexDirection: 'row',
@@ -783,6 +784,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 25,
+    flexShrink: 1,
   },
   nextButton: {
     backgroundColor: '#4ECDC4',
@@ -798,6 +800,7 @@ const styles = StyleSheet.create({
     marginRight: 4,
     includeFontPadding: false,
     textAlignVertical: 'center',
+    flexShrink: 1,
   },
 });
 

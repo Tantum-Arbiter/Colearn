@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, Pressable, useWindowDimensions, ScrollView } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -37,7 +37,9 @@ export function StoryTipsOverlay({ storyId, forceShow = false, onClose }: StoryT
   const cardScale = useSharedValue(0.9);
 
   // Dynamic card width based on current screen dimensions
-  const cardWidth = Math.min(screenWidth - 40, 340);
+  // On tablet, allow wider cards to accommodate longer text in other languages
+  const isTablet = Math.min(screenWidth, screenHeight) >= 600;
+  const cardWidth = isTablet ? Math.min(screenWidth - 40, 500) : Math.min(screenWidth - 40, 340);
   // Check if we're on a phone in landscape
   const isPhoneLandscape = Math.min(screenWidth, screenHeight) < 600 && screenWidth > screenHeight;
 
@@ -142,6 +144,12 @@ export function StoryTipsOverlay({ storyId, forceShow = false, onClose }: StoryT
       {isVisible && currentTip && (
         <View style={styles.cardContainer} pointerEvents="box-none">
           <Animated.View style={[styles.card, landscapeCardStyle, animatedCardStyle]}>
+            <ScrollView
+              style={styles.scrollContent}
+              contentContainerStyle={styles.scrollContentContainer}
+              scrollEnabled={true}
+              showsVerticalScrollIndicator={false}
+            >
             {isPhoneLandscape ? (
               // Landscape layout: icon on left, content on right
               <>
@@ -153,6 +161,8 @@ export function StoryTipsOverlay({ storyId, forceShow = false, onClose }: StoryT
                     {currentTip.id === 'pause_and_predict' && '🤔'}
                     {currentTip.id === 'voices_and_sounds' && '🎭'}
                     {currentTip.id === 'navigate_story' && '📱'}
+                    {currentTip.id === 'tap_words_highlight' && '👆'}
+                    {currentTip.id === 'compare_languages' && '🌍'}
                   </Text>
                 </View>
               <View style={{ flex: 1 }}>
@@ -191,6 +201,8 @@ export function StoryTipsOverlay({ storyId, forceShow = false, onClose }: StoryT
                   {currentTip.id === 'pause_and_predict' && '🤔'}
                   {currentTip.id === 'voices_and_sounds' && '🎭'}
                   {currentTip.id === 'navigate_story' && '📱'}
+                  {currentTip.id === 'tap_words_highlight' && '👆'}
+                  {currentTip.id === 'compare_languages' && '🌍'}
                 </Text>
               </View>
 
@@ -222,6 +234,7 @@ export function StoryTipsOverlay({ storyId, forceShow = false, onClose }: StoryT
               </View>
             </>
           )}
+            </ScrollView>
           </Animated.View>
         </View>
       )}
@@ -254,6 +267,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 16,
     elevation: 12,
+    maxHeight: '90%', // Allow card to grow but not exceed 90% of screen
+  },
+  scrollContent: {
+    width: '100%',
+  },
+  scrollContentContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   iconContainer: {
     width: 80,
@@ -317,6 +339,7 @@ const styles = StyleSheet.create({
   navButtons: {
     flexDirection: 'row',
     gap: 8,
+    flexShrink: 1,
   },
   navButton: {
     flexDirection: 'row',
@@ -326,6 +349,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,
+    flexShrink: 1,
   },
   nextButton: {
     minWidth: 100,
@@ -333,6 +357,7 @@ const styles = StyleSheet.create({
   nextText: {
     fontSize: 14,
     fontFamily: Fonts.sans,
+    flexShrink: 1,
     fontWeight: '700' as const,
     color: '#fff',
     marginRight: 4,
