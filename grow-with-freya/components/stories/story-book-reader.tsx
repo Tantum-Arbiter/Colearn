@@ -998,50 +998,67 @@ export function StoryBookReader({
     animatedStyle: any,
     boxType: 'blue' | 'white'
   ) => {
-    const words = text.split(/(\s+)/); // Split by whitespace but keep the whitespace
     const highlightedWord = boxType === 'blue' ? highlightedWordBlue : highlightedWordWhite;
     const setHighlightedWord = boxType === 'blue' ? setHighlightedWordBlue : setHighlightedWordWhite;
 
+    // Split by newlines first to preserve line breaks
+    const lines = text.split('\n');
+    let wordIndex = 0; // Global word index across all lines
+
     return (
       <Animated.View style={[animatedStyle]}>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-          {words.map((word, index) => {
-            const isWhitespace = /^\s+$/.test(word);
-            // Check if this specific word at this index is highlighted
-            const isHighlighted = !isWhitespace && highlightedWord?.index === index && highlightedWord?.word === word;
+        <View style={{ flexDirection: 'column' }}>
+          {lines.map((line, lineIdx) => {
+            // Split each line by whitespace but keep the whitespace
+            const words = line.split(/(\s+)/);
 
             return (
-              <Pressable
-                key={`${boxType}-${index}-${word}`}
-                onPress={() => {
+              <View key={`line-${lineIdx}`} style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                {words.map((word) => {
+                  const isWhitespace = /^\s+$/.test(word);
+                  // Check if this specific word at this index is highlighted
+                  const isHighlighted = !isWhitespace && highlightedWord?.index === wordIndex && highlightedWord?.word === word;
+
+                  const currentWordIndex = wordIndex;
                   if (!isWhitespace) {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    // Toggle highlight - only in this box, using index as unique identifier
-                    if (highlightedWord?.index === index && highlightedWord?.word === word) {
-                      setHighlightedWord(null);
-                    } else {
-                      setHighlightedWord({ word, index });
-                    }
+                    wordIndex++;
                   }
-                }}
-                disabled={isWhitespace}
-              >
-                <Text
-                  style={[
-                    baseStyle,
-                    {
-                      fontSize: fontSize,
-                      lineHeight: lineHeight,
-                      backgroundColor: isHighlighted ? '#1e3a8a' : 'transparent',
-                      color: isHighlighted ? '#ffffff' : undefined,
-                      paddingHorizontal: isHighlighted ? 4 : 0,
-                      borderRadius: isHighlighted ? 4 : 0,
-                    }
-                  ]}
-                >
-                  {word}
-                </Text>
-              </Pressable>
+
+                  return (
+                    <Pressable
+                      key={`${boxType}-${currentWordIndex}-${word}`}
+                      onPress={() => {
+                        if (!isWhitespace) {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          // Toggle highlight - only in this box, using index as unique identifier
+                          if (highlightedWord?.index === currentWordIndex && highlightedWord?.word === word) {
+                            setHighlightedWord(null);
+                          } else {
+                            setHighlightedWord({ word, index: currentWordIndex });
+                          }
+                        }
+                      }}
+                      disabled={isWhitespace}
+                    >
+                      <Text
+                        style={[
+                          baseStyle,
+                          {
+                            fontSize: fontSize,
+                            lineHeight: lineHeight,
+                            backgroundColor: isHighlighted ? '#1e3a8a' : 'transparent',
+                            color: isHighlighted ? '#ffffff' : undefined,
+                            paddingHorizontal: isHighlighted ? 4 : 0,
+                            borderRadius: isHighlighted ? 4 : 0,
+                          }
+                        ]}
+                      >
+                        {word}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
             );
           })}
         </View>
@@ -1717,7 +1734,7 @@ export function StoryBookReader({
                         nestedScrollEnabled={true}
                         scrollEnabled={true}
                       >
-                        <View style={{ paddingRight: 15 }}>
+                        <View style={{ paddingRight: 15, alignItems: 'center' }}>
                           {renderTextWithHighlight(
                             getLocalizedText(currentPage?.localizedText, currentPage?.text, compareLanguage) || '',
                             fontSize,
@@ -1760,7 +1777,7 @@ export function StoryBookReader({
                       nestedScrollEnabled={true}
                       scrollEnabled={true}
                     >
-                      <View style={{ paddingRight: 15 }}>
+                      <View style={{ paddingRight: 15, alignItems: 'center' }}>
                         {renderTextWithHighlight(
                           getLocalizedText(currentPage?.localizedText, currentPage?.text, isCompareLanguageEnabled ? sessionLanguage : currentLanguage) || '',
                           fontSize,
@@ -2834,6 +2851,7 @@ const styles = StyleSheet.create({
     minHeight: 80,
     width: '100%',
     justifyContent: 'center',
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(0, 0, 0, 0.1)',
     shadowColor: '#000',
