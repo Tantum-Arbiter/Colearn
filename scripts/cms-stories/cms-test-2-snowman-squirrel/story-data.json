@@ -24,14 +24,46 @@
       "pageNumber": 0,
       "type": "cover",
       "backgroundImage": "assets/stories/cms-test-2-snowman-squirrel/cover/cms-test-2-snowman-squirrel-cover.webp",
-      "text": "CMS Test 2\nSnowman Squirrel"
+      "text": "CMS Test 2\nSnowman Squirrel",
+      "localizedText": {
+        "en": "CMS Test 2\nSnowman Squirrel",
+        "pl": "CMS Test 2\nSnowman Squirrel",
+        "es": "CMS Test 2\nSnowman Squirrel",
+        "de": "CMS Test 2\nSnowman Squirrel",
+        "fr": "CMS Test 2\nSnowman Squirrel",
+        "it": "CMS Test 2\nSnowman Squirrel",
+        "pt": "CMS Test 2\nSnowman Squirrel",
+        "ja": "CMS Test 2\nSnowman Squirrel",
+        "ar": "CMS Test 2\nSnowman Squirrel",
+        "tr": "CMS Test 2\nSnowman Squirrel",
+        "nl": "CMS Test 2\nSnowman Squirrel",
+        "da": "CMS Test 2\nSnowman Squirrel",
+        "la": "CMS Test 2\nSnowman Squirrel",
+        "zh": "CMS Test 2\nSnowman Squirrel"
+      }
     },
     {
       "id": "cms-test-2-page-1",
       "pageNumber": 1,
       "type": "story",
       "backgroundImage": "assets/stories/cms-test-2-snowman-squirrel/page-1/cms-test-2-snowman-squirrel-page-1.webp",
-      "text": "Squirrel puts her boots on.\nHer hat is on her head."
+      "text": "Squirrel puts her boots on.\nHer hat is on her head.",
+      "localizedText": {
+        "en": "Squirrel puts her boots on.\nHer hat is on her head.",
+        "pl": "Squirrel puts her boots on.\nHer hat is on her head.",
+        "es": "Squirrel puts her boots on.\nHer hat is on her head.",
+        "de": "Squirrel puts her boots on.\nHer hat is on her head.",
+        "fr": "Squirrel puts her boots on.\nHer hat is on her head.",
+        "it": "Squirrel puts her boots on.\nHer hat is on her head.",
+        "pt": "Squirrel puts her boots on.\nHer hat is on her head.",
+        "ja": "Squirrel puts her boots on.\nHer hat is on her head.",
+        "ar": "Squirrel puts her boots on.\nHer hat is on her head.",
+        "tr": "Squirrel puts her boots on.\nHer hat is on her head.",
+        "nl": "Squirrel puts her boots on.\nHer hat is on her head.",
+        "da": "Squirrel puts her boots on.\nHer hat is on her head.",
+        "la": "Squirrel puts her boots on.\nHer hat is on her head.",
+        "zh": "Squirrel puts her boots on.\nHer hat is on her head."
+      }
     },
     {
       "id": "cms-test-2-page-2",
@@ -53,14 +85,46 @@
             "height": 0.301
           }
         }
-      ]
+      ],
+      "localizedText": {
+        "en": "She wants to make a snowman.\nWhat's inside this shed?",
+        "pl": "She wants to make a snowman.\nWhat's inside this shed?",
+        "es": "She wants to make a snowman.\nWhat's inside this shed?",
+        "de": "She wants to make a snowman.\nWhat's inside this shed?",
+        "fr": "She wants to make a snowman.\nWhat's inside this shed?",
+        "it": "She wants to make a snowman.\nWhat's inside this shed?",
+        "pt": "She wants to make a snowman.\nWhat's inside this shed?",
+        "ja": "She wants to make a snowman.\nWhat's inside this shed?",
+        "ar": "She wants to make a snowman.\nWhat's inside this shed?",
+        "tr": "She wants to make a snowman.\nWhat's inside this shed?",
+        "nl": "She wants to make a snowman.\nWhat's inside this shed?",
+        "da": "She wants to make a snowman.\nWhat's inside this shed?",
+        "la": "She wants to make a snowman.\nWhat's inside this shed?",
+        "zh": "She wants to make a snowman.\nWhat's inside this shed?"
+      }
     },
     {
       "id": "cms-test-2-page-3",
       "pageNumber": 3,
       "type": "story",
       "backgroundImage": "assets/stories/cms-test-2-snowman-squirrel/page-3/cms-test-2-snowman-squirrel-page-3.webp",
-      "text": "Squirrel's snowman has a head.\nNow he needs a nose."
+      "text": "Squirrel's snowman has a head.\nNow he needs a nose.",
+      "localizedText": {
+        "en": "Squirrel's snowman has a head.\nNow he needs a nose.",
+        "pl": "Squirrel's snowman has a head.\nNow he needs a nose.",
+        "es": "Squirrel's snowman has a head.\nNow he needs a nose.",
+        "de": "Squirrel's snowman has a head.\nNow he needs a nose.",
+        "fr": "Squirrel's snowman has a head.\nNow he needs a nose.",
+        "it": "Squirrel's snowman has a head.\nNow he needs a nose.",
+        "pt": "Squirrel's snowman has a head.\nNow he needs a nose.",
+        "ja": "Squirrel's snowman has a head.\nNow he needs a nose.",
+        "ar": "Squirrel's snowman has a head.\nNow he needs a nose.",
+        "tr": "Squirrel's snowman has a head.\nNow he needs a nose.",
+        "nl": "Squirrel's snowman has a head.\nNow he needs a nose.",
+        "da": "Squirrel's snowman has a head.\nNow he needs a nose.",
+        "la": "Squirrel's snowman has a head.\nNow he needs a nose.",
+        "zh": "Squirrel's snowman has a head.\nNow he needs a nose."
+      }
     },
     {
       "id": "cms-test-2-page-4",
@@ -82,14 +146,46 @@
             "height": 0.23
           }
         }
-      ]
+      ],
+      "localizedText": {
+        "en": "Can Squirrel find a carrot?\nWhat do you suppose?",
+        "pl": "Can Squirrel find a carrot?\nWhat do you suppose?",
+        "es": "Can Squirrel find a carrot?\nWhat do you suppose?",
+        "de": "Can Squirrel find a carrot?\nWhat do you suppose?",
+        "fr": "Can Squirrel find a carrot?\nWhat do you suppose?",
+        "it": "Can Squirrel find a carrot?\nWhat do you suppose?",
+        "pt": "Can Squirrel find a carrot?\nWhat do you suppose?",
+        "ja": "Can Squirrel find a carrot?\nWhat do you suppose?",
+        "ar": "Can Squirrel find a carrot?\nWhat do you suppose?",
+        "tr": "Can Squirrel find a carrot?\nWhat do you suppose?",
+        "nl": "Can Squirrel find a carrot?\nWhat do you suppose?",
+        "da": "Can Squirrel find a carrot?\nWhat do you suppose?",
+        "la": "Can Squirrel find a carrot?\nWhat do you suppose?",
+        "zh": "Can Squirrel find a carrot?\nWhat do you suppose?"
+      }
     },
     {
       "id": "cms-test-2-page-5",
       "pageNumber": 5,
       "type": "story",
       "backgroundImage": "assets/stories/cms-test-2-snowman-squirrel/page-5/cms-test-2-snowman-squirrel-page-5.webp",
-      "text": "Now the snowman needs some eyes.\nSquirrel visits Mole."
+      "text": "Now the snowman needs some eyes.\nSquirrel visits Mole.",
+      "localizedText": {
+        "en": "Now the snowman needs some eyes.\nSquirrel visits Mole.",
+        "pl": "Now the snowman needs some eyes.\nSquirrel visits Mole.",
+        "es": "Now the snowman needs some eyes.\nSquirrel visits Mole.",
+        "de": "Now the snowman needs some eyes.\nSquirrel visits Mole.",
+        "fr": "Now the snowman needs some eyes.\nSquirrel visits Mole.",
+        "it": "Now the snowman needs some eyes.\nSquirrel visits Mole.",
+        "pt": "Now the snowman needs some eyes.\nSquirrel visits Mole.",
+        "ja": "Now the snowman needs some eyes.\nSquirrel visits Mole.",
+        "ar": "Now the snowman needs some eyes.\nSquirrel visits Mole.",
+        "tr": "Now the snowman needs some eyes.\nSquirrel visits Mole.",
+        "nl": "Now the snowman needs some eyes.\nSquirrel visits Mole.",
+        "da": "Now the snowman needs some eyes.\nSquirrel visits Mole.",
+        "la": "Now the snowman needs some eyes.\nSquirrel visits Mole.",
+        "zh": "Now the snowman needs some eyes.\nSquirrel visits Mole."
+      }
     },
     {
       "id": "cms-test-2-page-6",
@@ -111,14 +207,46 @@
             "height": 0.28
           }
         }
-      ]
+      ],
+      "localizedText": {
+        "en": "They look inside a great big box\nand find some lumps of coal.",
+        "pl": "They look inside a great big box\nand find some lumps of coal.",
+        "es": "They look inside a great big box\nand find some lumps of coal.",
+        "de": "They look inside a great big box\nand find some lumps of coal.",
+        "fr": "They look inside a great big box\nand find some lumps of coal.",
+        "it": "They look inside a great big box\nand find some lumps of coal.",
+        "pt": "They look inside a great big box\nand find some lumps of coal.",
+        "ja": "They look inside a great big box\nand find some lumps of coal.",
+        "ar": "They look inside a great big box\nand find some lumps of coal.",
+        "tr": "They look inside a great big box\nand find some lumps of coal.",
+        "nl": "They look inside a great big box\nand find some lumps of coal.",
+        "da": "They look inside a great big box\nand find some lumps of coal.",
+        "la": "They look inside a great big box\nand find some lumps of coal.",
+        "zh": "They look inside a great big box\nand find some lumps of coal."
+      }
     },
     {
       "id": "cms-test-2-page-7",
       "pageNumber": 7,
       "type": "story",
       "backgroundImage": "assets/stories/cms-test-2-snowman-squirrel/page-7/cms-test-2-snowman-squirrel-page-7.webp",
-      "text": "A hat, a scarf, and twigs for arms -\nthe snowman is complete!"
+      "text": "A hat, a scarf, and twigs for arms -\nthe snowman is complete!",
+      "localizedText": {
+        "en": "A hat, a scarf, and twigs for arms -\nthe snowman is complete!",
+        "pl": "A hat, a scarf, and twigs for arms -\nthe snowman is complete!",
+        "es": "A hat, a scarf, and twigs for arms -\nthe snowman is complete!",
+        "de": "A hat, a scarf, and twigs for arms -\nthe snowman is complete!",
+        "fr": "A hat, a scarf, and twigs for arms -\nthe snowman is complete!",
+        "it": "A hat, a scarf, and twigs for arms -\nthe snowman is complete!",
+        "pt": "A hat, a scarf, and twigs for arms -\nthe snowman is complete!",
+        "ja": "A hat, a scarf, and twigs for arms -\nthe snowman is complete!",
+        "ar": "A hat, a scarf, and twigs for arms -\nthe snowman is complete!",
+        "tr": "A hat, a scarf, and twigs for arms -\nthe snowman is complete!",
+        "nl": "A hat, a scarf, and twigs for arms -\nthe snowman is complete!",
+        "da": "A hat, a scarf, and twigs for arms -\nthe snowman is complete!",
+        "la": "A hat, a scarf, and twigs for arms -\nthe snowman is complete!",
+        "zh": "A hat, a scarf, and twigs for arms -\nthe snowman is complete!"
+      }
     },
     {
       "id": "cms-test-2-page-8",
@@ -140,14 +268,46 @@
             "height": 0.158
           }
         }
-      ]
+      ],
+      "localizedText": {
+        "en": "Squirrel's feeling hungry.\nWhat's she going to eat?",
+        "pl": "Squirrel's feeling hungry.\nWhat's she going to eat?",
+        "es": "Squirrel's feeling hungry.\nWhat's she going to eat?",
+        "de": "Squirrel's feeling hungry.\nWhat's she going to eat?",
+        "fr": "Squirrel's feeling hungry.\nWhat's she going to eat?",
+        "it": "Squirrel's feeling hungry.\nWhat's she going to eat?",
+        "pt": "Squirrel's feeling hungry.\nWhat's she going to eat?",
+        "ja": "Squirrel's feeling hungry.\nWhat's she going to eat?",
+        "ar": "Squirrel's feeling hungry.\nWhat's she going to eat?",
+        "tr": "Squirrel's feeling hungry.\nWhat's she going to eat?",
+        "nl": "Squirrel's feeling hungry.\nWhat's she going to eat?",
+        "da": "Squirrel's feeling hungry.\nWhat's she going to eat?",
+        "la": "Squirrel's feeling hungry.\nWhat's she going to eat?",
+        "zh": "Squirrel's feeling hungry.\nWhat's she going to eat?"
+      }
     },
     {
       "id": "cms-test-2-page-9",
       "pageNumber": 9,
       "type": "story",
       "backgroundImage": "assets/stories/cms-test-2-snowman-squirrel/page-9/cms-test-2-snowman-squirrel-page-9.webp",
-      "text": "Now it's Squirrel's bedtime.\nShe's tucked up nice and tight."
+      "text": "Now it's Squirrel's bedtime.\nShe's tucked up nice and tight.",
+      "localizedText": {
+        "en": "Now it's Squirrel's bedtime.\nShe's tucked up nice and tight.",
+        "pl": "Now it's Squirrel's bedtime.\nShe's tucked up nice and tight.",
+        "es": "Now it's Squirrel's bedtime.\nShe's tucked up nice and tight.",
+        "de": "Now it's Squirrel's bedtime.\nShe's tucked up nice and tight.",
+        "fr": "Now it's Squirrel's bedtime.\nShe's tucked up nice and tight.",
+        "it": "Now it's Squirrel's bedtime.\nShe's tucked up nice and tight.",
+        "pt": "Now it's Squirrel's bedtime.\nShe's tucked up nice and tight.",
+        "ja": "Now it's Squirrel's bedtime.\nShe's tucked up nice and tight.",
+        "ar": "Now it's Squirrel's bedtime.\nShe's tucked up nice and tight.",
+        "tr": "Now it's Squirrel's bedtime.\nShe's tucked up nice and tight.",
+        "nl": "Now it's Squirrel's bedtime.\nShe's tucked up nice and tight.",
+        "da": "Now it's Squirrel's bedtime.\nShe's tucked up nice and tight.",
+        "la": "Now it's Squirrel's bedtime.\nShe's tucked up nice and tight.",
+        "zh": "Now it's Squirrel's bedtime.\nShe's tucked up nice and tight."
+      }
     },
     {
       "id": "cms-test-2-page-10",
@@ -169,7 +329,23 @@
             "height": 0.291
           }
         }
-      ]
+      ],
+      "localizedText": {
+        "en": "Who's outside the window?\nShall we wave goodnight?",
+        "pl": "Who's outside the window?\nShall we wave goodnight?",
+        "es": "Who's outside the window?\nShall we wave goodnight?",
+        "de": "Who's outside the window?\nShall we wave goodnight?",
+        "fr": "Who's outside the window?\nShall we wave goodnight?",
+        "it": "Who's outside the window?\nShall we wave goodnight?",
+        "pt": "Who's outside the window?\nShall we wave goodnight?",
+        "ja": "Who's outside the window?\nShall we wave goodnight?",
+        "ar": "Who's outside the window?\nShall we wave goodnight?",
+        "tr": "Who's outside the window?\nShall we wave goodnight?",
+        "nl": "Who's outside the window?\nShall we wave goodnight?",
+        "da": "Who's outside the window?\nShall we wave goodnight?",
+        "la": "Who's outside the window?\nShall we wave goodnight?",
+        "zh": "Who's outside the window?\nShall we wave goodnight?"
+      }
     }
   ]
 }
