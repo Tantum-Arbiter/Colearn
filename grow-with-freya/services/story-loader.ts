@@ -81,12 +81,25 @@ export class StoryLoader {
       const cmsStories = await StorySyncService.getLocalStories();
 
       if (cmsStories && cmsStories.length > 0) {
+        // Create a map of CMS stories by ID for quick lookup
+        const cmsStoriesMap = new Map(cmsStories.map(s => [s.id, s]));
+
+        // Replace bundled stories with CMS versions if available (CMS has localized content)
+        const updatedBundledStories = bundledStories.map(bundledStory => {
+          const cmsVersion = cmsStoriesMap.get(bundledStory.id);
+          if (cmsVersion) {
+            log.debug(`Using CMS version of bundled story: ${bundledStory.id}`);
+            return cmsVersion;
+          }
+          return bundledStory;
+        });
+
         // Find CMS-only stories (not in bundled)
         const cmsOnlyStories = cmsStories.filter(s => !bundledIds.has(s.id));
 
-        // Combine: all bundled + CMS-only stories
-        const allStories = [...bundledStories, ...cmsOnlyStories];
-        log.debug(`Combined: ${bundledStories.length} bundled + ${cmsOnlyStories.length} CMS-only = ${allStories.length} total`);
+        // Combine: updated bundled stories + CMS-only stories
+        const allStories = [...updatedBundledStories, ...cmsOnlyStories];
+        log.debug(`Combined: ${updatedBundledStories.length} bundled (${cmsStories.filter(s => bundledIds.has(s.id)).length} from CMS) + ${cmsOnlyStories.length} CMS-only = ${allStories.length} total`);
         return allStories;
       }
 
