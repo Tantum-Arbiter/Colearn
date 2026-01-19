@@ -302,13 +302,33 @@ public class TestAdminController {
             "The Sleepy Bear",
             "Śpiący Miś",
             "El Oso Dormido",
-            "Der schläfrige Bär"
+            "Der schläfrige Bär",
+            "L'Ours Endormi",
+            "L'Orso Assonnato",
+            "O Urso Sonolento",
+            "眠いクマ",
+            "الدب النعسان",
+            "Uyku Ayısı",
+            "De Slaperige Beer",
+            "Den Søvnige Bjørn",
+            "Ursus Somnolentus",
+            "困倦的熊"
         ));
         story1.setLocalizedDescription(new LocalizedText(
             "A cozy bedtime story about a sleepy bear",
             "Przytulna historia na dobranoc o śpiącym misiu",
             "Un cuento acogedor para dormir sobre un oso dormido",
-            "Eine gemütliche Gute-Nacht-Geschichte über einen schläfrigen Bären"
+            "Eine gemütliche Gute-Nacht-Geschichte über einen schläfrigen Bären",
+            "Une histoire de coucher confortable sur un ours endormi",
+            "Una storia della buonanotte accogliente su un orso assonnato",
+            "Uma história aconchegante de dormir sobre um urso sonolento",
+            "眠いクマについての居心地の良い就寝時の物語",
+            "قصة نوم مريحة عن دب نعسان",
+            "Uyku Ayısı hakkında rahat bir uyku saati hikayesi",
+            "Een gezellig slaapverhaal over een slaperige beer",
+            "En hyggelig godnathistorie om en søvnig bjørn",
+            "Fabula somni cozy de urso somnolento",
+            "关于一只困倦的熊的舒适睡前故事"
         ));
 
         // Create pages with localized text
@@ -317,7 +337,17 @@ public class TestAdminController {
             "Once upon a time, there was a sleepy bear.",
             "Dawno, dawno temu żył sobie śpiący miś.",
             "Había una vez un oso muy dormido.",
-            "Es war einmal ein schläfriger Bär."
+            "Es war einmal ein schläfriger Bär.",
+            "Il y avait une fois un ours très endormi.",
+            "C'era una volta un orso molto assonnato.",
+            "Era uma vez um urso muito sonolento.",
+            "昔々、とても眠いクマがいました。",
+            "كان هناك ذات مرة دب نعسان جداً.",
+            "Bir zamanlar çok uyku ayısı vardı.",
+            "Er was eens een erg slaperige beer.",
+            "Der var engang en meget søvnig bjørn.",
+            "Olim erat ursus valde somnolentus.",
+            "从前有一只非常困倦的熊。"
         ));
 
         StoryPage page2 = new StoryPage("page-1-2", 2, "The bear yawned and stretched.");
@@ -326,7 +356,17 @@ public class TestAdminController {
             "The bear yawned and stretched.",
             "Miś ziewnął i przeciągnął się.",
             "El oso bostezó y se estiró.",
-            "Der Bär gähnte und streckte sich."
+            "Der Bär gähnte und streckte sich.",
+            "L'ours a bâillé et s'est étiré.",
+            "L'orso ha sbadigliato e si è allungato.",
+            "O urso bocejou e se espreguiçou.",
+            "クマはあくびをして伸びをしました。",
+            "تثاءب الدب وتمدد.",
+            "Ayı esnedi ve uzandı.",
+            "De beer geeuwde en rekte zich uit.",
+            "Bjørnen gjalp og strakte sig.",
+            "Ursus oscitavit et se extendit.",
+            "熊打了个哈欠，伸了个懒腰。"
         ));
 
         // Add interactive element to page 2 for functional tests
@@ -340,7 +380,17 @@ public class TestAdminController {
             "Time for bed, said the bear.",
             "Pora spać, powiedział miś.",
             "Es hora de dormir, dijo el oso.",
-            "Zeit für's Bett, sagte der Bär."
+            "Zeit für's Bett, sagte der Bär.",
+            "C'est l'heure du lit, dit l'ours.",
+            "È ora di andare a letto, disse l'orso.",
+            "É hora de dormir, disse o urso.",
+            "寝る時間だ、とクマは言いました。",
+            "حان وقت النوم، قال الدب.",
+            "Yatış zamanı, dedi ayı.",
+            "Tijd voor bed, zei de beer.",
+            "Tid til at gå i seng, sagde bjørnen.",
+            "Tempus cubile, inquit ursus.",
+            "该睡觉了，熊说。"
         ));
 
         story1.setPages(List.of(page1, page2, page3));
@@ -445,6 +495,16 @@ public class TestAdminController {
         if (map.get("pl") != null) lt.setPl((String) map.get("pl"));
         if (map.get("es") != null) lt.setEs((String) map.get("es"));
         if (map.get("de") != null) lt.setDe((String) map.get("de"));
+        if (map.get("fr") != null) lt.setFr((String) map.get("fr"));
+        if (map.get("it") != null) lt.setIt((String) map.get("it"));
+        if (map.get("pt") != null) lt.setPt((String) map.get("pt"));
+        if (map.get("ja") != null) lt.setJa((String) map.get("ja"));
+        if (map.get("ar") != null) lt.setAr((String) map.get("ar"));
+        if (map.get("tr") != null) lt.setTr((String) map.get("tr"));
+        if (map.get("nl") != null) lt.setNl((String) map.get("nl"));
+        if (map.get("da") != null) lt.setDa((String) map.get("da"));
+        if (map.get("la") != null) lt.setLa((String) map.get("la"));
+        if (map.get("zh") != null) lt.setZh((String) map.get("zh"));
         return lt;
     }
 
