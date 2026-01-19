@@ -153,7 +153,7 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
 
         <Pressable
           style={[styles.saveButton, { minHeight: scaledButtonSize(50), padding: scaledPadding(15) }]}
-          onPress={handleSave}
+          onPress={() => handleSave()}
         >
           <Text style={[styles.saveButtonText, { fontSize: scaledFontSize(18) }]}>
             {t('profile.saveChanges')}

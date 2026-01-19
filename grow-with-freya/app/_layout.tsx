@@ -49,8 +49,17 @@ import { StoryTransitionProvider, useStoryTransition } from '@/contexts/story-tr
 import { GlobalSoundProvider } from '@/contexts/global-sound-context';
 import { TutorialProvider } from '@/contexts/tutorial-context';
 import { updateSentryConsent } from '@/services/sentry-service';
+// Import notification service early to register notification handler
+// This ensures notifications are handled properly even when app is in background
+import '@/services/notification-service';
+// Import reminder service to trigger initialization and reschedule notifications on app startup
+import { reminderService } from '@/services/reminder-service';
 
 const log = Logger.create('Layout');
+
+// Force initialization of reminder service (loads reminders and reschedules notifications)
+// This is a no-op reference to ensure the singleton is created at app startup
+void reminderService;
 
 // Note: Sentry is now initialized conditionally based on user consent
 // See sentry-service.ts for the implementation

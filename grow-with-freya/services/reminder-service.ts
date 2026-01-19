@@ -40,7 +40,7 @@ export class ReminderService {
     return ReminderService.instance;
   }
 
-  // Load reminders from storage
+  // Load reminders from storage and reschedule notifications
   private async loadReminders(): Promise<void> {
     try {
       const stored = await AsyncStorage.getItem(REMINDERS_STORAGE_KEY);
@@ -48,6 +48,11 @@ export class ReminderService {
         this.reminders = JSON.parse(stored);
         this.savedReminders = JSON.parse(JSON.stringify(this.reminders)); // Deep copy
         this.lastSyncedReminders = JSON.parse(JSON.stringify(this.reminders)); // Deep copy
+
+        // Reschedule all active notifications on app startup
+        // iOS may have cleared scheduled notifications, so we need to reschedule
+        console.log('[ReminderService] Loaded reminders, rescheduling notifications...');
+        await this.rescheduleAllNotifications();
       }
     } catch (error) {
       console.error('Failed to load reminders:', error);
