@@ -116,25 +116,31 @@ async function getAssetChecksums() {
 
 /**
  * Update Firestore with asset checksums
+ * Increments version number on each update for proper delta-sync
  */
 async function updateAssetVersion(assetChecksums, totalAssets, totalSizeBytes) {
   console.log('\nUpdating Firestore asset_versions/current...');
 
-  const assetVersion = {
-    id: 'current',
-    version: 1,
-    lastUpdated: admin.firestore.Timestamp.now(),
-    assetChecksums: assetChecksums,
-    totalAssets: totalAssets,
-    totalSizeBytes: totalSizeBytes,
-  };
-
   try {
+    // Read current version to increment it
+    const currentDoc = await firestore.collection('asset_versions').doc('current').get();
+    const currentVersion = currentDoc.exists ? (currentDoc.data().version || 0) : 0;
+    const newVersion = currentVersion + 1;
+
+    const assetVersion = {
+      id: 'current',
+      version: newVersion,
+      lastUpdated: admin.firestore.Timestamp.now(),
+      assetChecksums: assetChecksums,
+      totalAssets: totalAssets,
+      totalSizeBytes: totalSizeBytes,
+    };
+
     await firestore.collection('asset_versions').doc('current').set(assetVersion);
     console.log('✓ Asset version updated successfully');
     console.log(`  - Total assets: ${totalAssets}`);
     console.log(`  - Total size: ${(totalSizeBytes / 1024 / 1024).toFixed(2)} MB`);
-    console.log(`  - Version: ${assetVersion.version}`);
+    console.log(`  - Version: ${currentVersion} → ${newVersion}`);
   } catch (error) {
     console.error('Error updating asset version:', error);
     throw error;

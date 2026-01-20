@@ -11,11 +11,17 @@ import java.util.Map;
 /**
  * Response DTO for story sync endpoint
  * Returns stories that need to be updated and current version info
+ *
+ * Includes asset version to allow mobile app to check both versions in one call.
+ * This prevents the edge case where assets change but stories don't.
  */
 public class StorySyncResponse {
 
     @JsonProperty("serverVersion")
     private int serverVersion;
+
+    @JsonProperty("assetVersion")
+    private int assetVersion;
 
     @JsonProperty("stories")
     private List<Story> stories;
@@ -35,6 +41,7 @@ public class StorySyncResponse {
     public StorySyncResponse() {
         this.stories = new ArrayList<>();
         this.storyChecksums = new HashMap<>();
+        this.assetVersion = 0;
     }
 
     public int getServerVersion() {
@@ -43,6 +50,14 @@ public class StorySyncResponse {
 
     public void setServerVersion(int serverVersion) {
         this.serverVersion = serverVersion;
+    }
+
+    public int getAssetVersion() {
+        return assetVersion;
+    }
+
+    public void setAssetVersion(int assetVersion) {
+        this.assetVersion = assetVersion;
     }
 
     public List<Story> getStories() {

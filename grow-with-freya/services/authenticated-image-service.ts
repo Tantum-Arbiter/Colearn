@@ -366,7 +366,7 @@ export class AuthenticatedImageService {
       if (!forceUpdate) {
         const cachedInfo = await FileSystem.getInfoAsync(cachedPath);
         if (cachedInfo.exists) {
-          console.log(`[AuthImageService] Asset already cached: ${assetPath}`);
+          log.debug(`Asset already cached: ${assetPath}`);
           // Add to memory cache if remoteUrl provided
           if (remoteUrl) {
             this.memoryCache.set(remoteUrl, cachedPath);
@@ -375,7 +375,7 @@ export class AuthenticatedImageService {
         }
       } else {
         // Force update: delete existing file and clear from memory cache
-        console.log(`[AuthImageService] Force updating asset: ${assetPath}`);
+        log.debug(`Force updating asset: ${assetPath}`);
         this.memoryCache.delete(remoteUrl || assetPath);
         await this.deleteFile(cachedPath);
       }

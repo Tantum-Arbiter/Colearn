@@ -223,8 +223,17 @@ export const InteractiveElementComponent: React.FC<InteractiveElementProps> = ({
   const isLocalImage = typeof element.image === 'number';
   const imageUri = typeof element.image === 'string' ? element.image : '';
 
+  // Check if it's a local file path (cached CMS asset) vs remote API URL
+  const isLocalFilePath = imageUri.startsWith('file://');
+  const isRemoteApiUrl = imageUri.includes('api.colearnwithfreya.co.uk');
+
   // Render the appropriate image component based on source type
   const renderPropImage = () => {
+    // Debug log to understand what image URL we're getting
+    if (__DEV__) {
+      log.debug(`Rendering prop image: type=${typeof element.image}, isLocal=${isLocalImage}, isFile=${isLocalFilePath}, isRemote=${isRemoteApiUrl}, uri="${imageUri.substring(0, 80)}..."`);
+    }
+
     if (isLocalImage) {
       // Local bundled image (require() returns a number)
       return (
@@ -236,8 +245,8 @@ export const InteractiveElementComponent: React.FC<InteractiveElementProps> = ({
           cachePolicy="memory-disk"
         />
       );
-    } else if (imageUri) {
-      // Remote CMS image URL
+    } else if (imageUri && isRemoteApiUrl) {
+      // Remote CMS image URL - needs authenticated download
       return (
         <AuthenticatedImage
           uri={imageUri}
@@ -245,6 +254,20 @@ export const InteractiveElementComponent: React.FC<InteractiveElementProps> = ({
           resizeMode="contain"
           fallbackEmoji="✨"
           showLoadingIndicator={false}
+        />
+      );
+    } else if (imageUri) {
+      // Local file path (cached) or other URL - use regular Image
+      return (
+        <Image
+          source={{ uri: imageUri }}
+          style={styles.propImage}
+          contentFit="contain"
+          transition={0}
+          cachePolicy="memory-disk"
+          onError={(error) => {
+            log.error(`Prop image error for ${element.id}:`, JSON.stringify(error));
+          }}
         />
       );
     }

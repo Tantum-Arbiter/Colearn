@@ -21,6 +21,9 @@ import { ApiClient } from '../../services/api-client';
 import { reminderService } from '../../services/reminder-service';
 import { StorySyncService } from '../../services/story-sync-service';
 import { AssetSyncService } from '../../services/asset-sync-service';
+import { VersionManager } from '../../services/version-manager';
+import { CacheManager } from '../../services/cache-manager';
+import { StoryLoader } from '../../services/story-loader';
 import { TEXT_SIZE_OPTIONS, useAccessibility } from '../../hooks/use-accessibility';
 import { SettingsTipsOverlay } from '../tutorial/settings-tips-overlay';
 import { ScreenTimeTipsOverlay } from '../tutorial/screen-time-tips-overlay';
@@ -291,34 +294,59 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
           text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
-            // Reset all state to initial values (instant)
+            console.log('[Reset] Clearing all app data...');
+
+            // Clear cache FIRST (blocking) - this must complete before navigation
+            // Otherwise the sync will start before the cache is cleared
+            try {
+              // Clear version metadata so sync knows to re-download everything
+              await VersionManager.clearLocalVersion();
+              console.log('[Reset] Version metadata cleared');
+
+              // Clear ContentSyncService cache (stories and assets)
+              await CacheManager.clearAll();
+              console.log('[Reset] CacheManager cleared');
+
+              // Clear legacy sync service caches
+              await StorySyncService.clearCache();
+              await AssetSyncService.clearCache();
+              console.log('[Reset] Legacy caches cleared');
+
+              // IMPORTANT: Clear in-memory cache so old stories don't show
+              // This must be called because JS memory isn't cleared on navigation
+              StoryLoader.invalidateCache();
+              console.log('[Reset] StoryLoader in-memory cache cleared');
+            } catch (error) {
+              console.error('[Reset] Error clearing caches:', error);
+            }
+
+            // Reset all state to initial values
             setOnboardingComplete(false);
             setLoginComplete(false);
             setShowLoginAfterOnboarding(false);
             setAppReady(false);
 
-            // Immediately set app ready to trigger navigation
+            // Clear user profile (nickname, avatar, etc.)
+            clearUserProfile();
+            console.log('[Reset] User profile cleared');
+
+            // Set app ready to trigger navigation
             setTimeout(() => {
               setAppReady(true);
             }, 100);
 
-            // Clear everything in background (non-blocking)
-            // This includes auth tokens, persisted storage, story cache, asset cache, and tutorials
+            // Clear remaining items in background (non-blocking)
             ApiClient.logout().catch(error => {
               console.error('Background logout error:', error);
             });
             clearPersistedStorage().catch(error => {
               console.error('Background storage clear error:', error);
             });
-            StorySyncService.clearCache().catch(error => {
-              console.error('Background story cache clear error:', error);
-            });
-            AssetSyncService.clearCache().catch(error => {
-              console.error('Background asset cache clear error:', error);
-            });
             resetAllTutorials().catch(error => {
               console.error('Background tutorial reset error:', error);
             });
+
+            console.log('[Reset] App reset complete');
           },
         },
       ]

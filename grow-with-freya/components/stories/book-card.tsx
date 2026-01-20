@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { Story, STORY_TAGS, getLocalizedText } from '@/types/story';
 import type { SupportedLanguage } from '@/services/i18n';
 import { Fonts } from '@/constants/theme';
+import { AuthenticatedImage } from '@/components/ui/authenticated-image';
 import { Logger } from '@/utils/logger';
 
 const log = Logger.create('BookCard');
@@ -161,11 +162,21 @@ export function BookCard({ story, onPress, index = 0 }: BookCardProps) {
           {isPlaceholder ? (
             <Text style={styles.placeholderIcon}>📚</Text>
           ) : story.coverImage ? (
-            <Image
-              source={typeof story.coverImage === 'string' ? { uri: story.coverImage } : story.coverImage}
-              style={styles.coverImage}
-              resizeMode="cover"
-            />
+            // Use AuthenticatedImage for CMS URLs (api.colearnwithfreya.co.uk)
+            typeof story.coverImage === 'string' && story.coverImage.includes('api.colearnwithfreya.co.uk') ? (
+              <AuthenticatedImage
+                uri={story.coverImage}
+                style={styles.coverImage}
+                resizeMode="cover"
+                fallbackEmoji={story.emoji}
+              />
+            ) : (
+              <Image
+                source={typeof story.coverImage === 'string' ? { uri: story.coverImage } : story.coverImage}
+                style={styles.coverImage}
+                resizeMode="cover"
+              />
+            )
           ) : (
             <Text style={styles.storyEmoji}>{story.emoji}</Text>
           )}

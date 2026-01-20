@@ -39,10 +39,10 @@ const isDev = typeof __DEV__ !== 'undefined'
 
 const isTest = process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined;
 
-// Default config: suppress debug logs for performance, show info+ only
-// Set minLevel to 'debug' temporarily when debugging specific issues
+// Default config: show info+ logs for user journey visibility
+// Set minLevel to 'debug' for even more verbose output when debugging
 const defaultConfig: LoggerConfig = {
-  minLevel: 'warn', // Only show warnings and errors by default for performance
+  minLevel: isDev ? 'info' : 'warn', // Show info logs in dev for sync journey visibility
   enabled: !isTest, // Disable logging in tests by default
 };
 

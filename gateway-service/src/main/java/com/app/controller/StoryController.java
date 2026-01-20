@@ -1,12 +1,15 @@
 package com.app.controller;
 
+import com.app.dto.ContentVersionResponse;
 import com.app.dto.StorySyncRequest;
 import com.app.dto.StorySyncResponse;
 import com.app.exception.ErrorCode;
 import com.app.exception.ErrorResponse;
+import com.app.model.AssetVersion;
 import com.app.model.ContentVersion;
 import com.app.model.Story;
 import com.app.service.ApplicationMetricsService;
+import com.app.service.AssetService;
 import com.app.service.StoryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,11 +32,13 @@ public class StoryController {
     private static final Logger logger = LoggerFactory.getLogger(StoryController.class);
 
     private final StoryService storyService;
+    private final AssetService assetService;
     private final ApplicationMetricsService metricsService;
 
     @Autowired
-    public StoryController(StoryService storyService, ApplicationMetricsService metricsService) {
+    public StoryController(StoryService storyService, AssetService assetService, ApplicationMetricsService metricsService) {
         this.storyService = storyService;
+        this.assetService = assetService;
         this.metricsService = metricsService;
     }
 
@@ -116,12 +121,15 @@ public class StoryController {
 
         try {
             ContentVersion serverVersion = storyService.getCurrentContentVersion().join();
-            logger.info("[Sync] [reqId={}] Server state: version={}, totalStories={}", reqId, serverVersion.getVersion(), serverVersion.getTotalStories());
+            AssetVersion assetVersion = assetService.getCurrentAssetVersion().join();
+            logger.info("[Sync] [reqId={}] Server state: storyVersion={}, assetVersion={}, totalStories={}",
+                    reqId, serverVersion.getVersion(), assetVersion.getVersion(), serverVersion.getTotalStories());
 
             List<Story> storiesToSync = storyService.getStoriesToSync(request.getStoryChecksums()).join();
 
             StorySyncResponse response = new StorySyncResponse();
             response.setServerVersion(serverVersion.getVersion());
+            response.setAssetVersion(assetVersion.getVersion());
             response.setStories(storiesToSync);
             response.setStoryChecksums(serverVersion.getStoryChecksums());
             response.setTotalStories(serverVersion.getTotalStories());
@@ -133,8 +141,8 @@ public class StoryController {
             if (storiesToSync.isEmpty()) {
                 logger.info("[Sync] [reqId={}] COMPLETE - No changes, client up-to-date, durationMs={}", reqId, durationMs);
             } else {
-                logger.info("[Sync] [reqId={}] COMPLETE - Syncing {} stories, serverVersion={}, durationMs={}",
-                        reqId, storiesToSync.size(), response.getServerVersion(), durationMs);
+                logger.info("[Sync] [reqId={}] COMPLETE - Syncing {} stories, serverVersion={}, assetVersion={}, durationMs={}",
+                        reqId, storiesToSync.size(), response.getServerVersion(), response.getAssetVersion(), durationMs);
                 if (logger.isDebugEnabled()) {
                     storiesToSync.forEach(story -> logger.debug("[Sync] [reqId={}]   -> id={}, title='{}'", reqId, story.getId(), story.getTitle()));
                 }
@@ -163,19 +171,29 @@ public class StoryController {
         String reqId = getRequestId();
         logger.info("[Stories] [reqId={}] GET /api/stories/version - clientVersion={}", reqId, clientVersion);
         try {
-            ContentVersion version = storyService.getCurrentContentVersion().join();
+            ContentVersion storyVersion = storyService.getCurrentContentVersion().join();
+            AssetVersion assetVersionData = assetService.getCurrentAssetVersion().join();
 
-            boolean clientUpToDate = clientVersion != null && clientVersion.equals(version.getVersion());
+            // Build unified response with both story and asset versions
+            ContentVersionResponse response = new ContentVersionResponse();
+            response.setId("current");
+            response.setVersion(storyVersion.getVersion());
+            response.setAssetVersion(assetVersionData.getVersion());
+            response.setLastUpdated(storyVersion.getLastUpdated().toDate().getTime());
+            response.setStoryChecksums(storyVersion.getStoryChecksums());
+            response.setTotalStories(storyVersion.getTotalStories());
+
+            boolean clientUpToDate = clientVersion != null && clientVersion.equals(storyVersion.getVersion());
             if (clientUpToDate) {
                 metricsService.recordStorySyncSkipped();
-                logger.info("[Stories] [reqId={}] Version check: serverVersion={}, clientVersion={}, upToDate=true (sync skipped)",
-                        reqId, version.getVersion(), clientVersion);
+                logger.info("[Stories] [reqId={}] Version check: storyVersion={}, assetVersion={}, clientVersion={}, upToDate=true (sync skipped)",
+                        reqId, storyVersion.getVersion(), assetVersionData.getVersion(), clientVersion);
             } else {
-                logger.info("[Stories] [reqId={}] Version check: serverVersion={}, clientVersion={}, upToDate=false",
-                        reqId, version.getVersion(), clientVersion);
+                logger.info("[Stories] [reqId={}] Version check: storyVersion={}, assetVersion={}, clientVersion={}, upToDate=false",
+                        reqId, storyVersion.getVersion(), assetVersionData.getVersion(), clientVersion);
             }
 
-            return ResponseEntity.ok(version);
+            return ResponseEntity.ok(response);
         } catch (CompletionException e) {
             Throwable cause = e.getCause() != null ? e.getCause() : e;
             logger.error("[Stories] [reqId={}] GET /api/stories/version - FAILED: {}", reqId, cause.getMessage(), cause);

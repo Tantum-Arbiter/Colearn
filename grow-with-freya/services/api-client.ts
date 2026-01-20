@@ -2,9 +2,15 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { SecureStorage } from './secure-storage';
 import { DeviceInfoService } from './device-info-service';
+import { Logger } from '@/utils/logger';
+
+const log = Logger.create('ApiClient');
 
 const extra = Constants.expoConfig?.extra || {};
 const GATEWAY_URL = extra.gatewayUrl || process.env.EXPO_PUBLIC_GATEWAY_URL || 'http://localhost:8080';
+
+// Default request timeout in milliseconds (30 seconds)
+const DEFAULT_TIMEOUT_MS = 30000;
 
 interface TokenPayload {
   exp: number;
@@ -148,14 +154,16 @@ export class ApiClient {
 
   /**
    * Make an authenticated API request with automatic token refresh
+   * Includes timeout to prevent hanging on slow/dead connections
    */
   static async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    timeoutMs: number = DEFAULT_TIMEOUT_MS
   ): Promise<T> {
     // Ensure we have a valid token
     const accessToken = await this.ensureValidToken();
-    
+
     if (!accessToken) {
       throw new Error('Not authenticated - please login');
     }
@@ -168,54 +176,87 @@ export class ApiClient {
       'Authorization': `Bearer ${accessToken}`,
     };
 
-    // Make the request
-    const response = await fetch(`${GATEWAY_URL}${endpoint}`, {
-      ...options,
-      headers,
-    });
+    // Create abort controller for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    const requestStartTime = Date.now();
+    const method = options.method || 'GET';
 
-    // If we get a 401, try to refresh and retry once
-    if (response.status === 401) {
-      try {
-        // Force refresh the token
-        await this.performTokenRefresh();
+    log.debug(`[API Request] ${method} ${endpoint}`);
 
-        // Retry the request with new token
-        const newAccessToken = await SecureStorage.getAccessToken();
-        if (!newAccessToken) {
-          throw new Error('Token refresh failed');
+    try {
+      // Make the request with timeout
+      const response = await fetch(`${GATEWAY_URL}${endpoint}`, {
+        ...options,
+        headers,
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      const durationMs = Date.now() - requestStartTime;
+      log.debug(`[API Response] ${response.status} in ${durationMs}ms`);
+
+      // If we get a 401, try to refresh and retry once
+      if (response.status === 401) {
+        try {
+          // Force refresh the token
+          await this.performTokenRefresh();
+
+          // Retry the request with new token (with new timeout)
+          const retryController = new AbortController();
+          const retryTimeoutId = setTimeout(() => retryController.abort(), timeoutMs);
+
+          try {
+            const newAccessToken = await SecureStorage.getAccessToken();
+            if (!newAccessToken) {
+              throw new Error('Token refresh failed');
+            }
+
+            const retryResponse = await fetch(`${GATEWAY_URL}${endpoint}`, {
+              ...options,
+              headers: {
+                ...headers,
+                'Authorization': `Bearer ${newAccessToken}`,
+              },
+              signal: retryController.signal,
+            });
+            clearTimeout(retryTimeoutId);
+
+            if (!retryResponse.ok) {
+              throw new Error(`API request failed: ${retryResponse.status}`);
+            }
+
+            return await retryResponse.json();
+          } finally {
+            clearTimeout(retryTimeoutId);
+          }
+        } catch (error: any) {
+          // Only clear auth for actual auth failures, not network/other errors
+          if (error.message?.includes('Token refresh failed') ||
+              error.message?.includes('No refresh token')) {
+            await SecureStorage.clearAuthData();
+            throw new Error('Authentication failed - please login again');
+          }
+          // For other errors (network, etc), just throw without clearing auth
+          throw error;
         }
-
-        const retryResponse = await fetch(`${GATEWAY_URL}${endpoint}`, {
-          ...options,
-          headers: {
-            ...headers,
-            'Authorization': `Bearer ${newAccessToken}`,
-          },
-        });
-
-        if (!retryResponse.ok) {
-          throw new Error(`API request failed: ${retryResponse.status}`);
-        }
-
-        return await retryResponse.json();
-      } catch (error: any) {
-        // Only clear auth for actual auth failures, not network/other errors
-        if (error.message?.includes('Token refresh failed') ||
-            error.message?.includes('No refresh token')) {
-          await SecureStorage.clearAuthData();
-          throw new Error('Authentication failed - please login again');
-        }
-        // For other errors (network, etc), just throw without clearing auth
-        throw error;
       }
-    }
 
-    if (!response.ok) {
-      throw new Error(`API request failed: ${response.status}`);
-    }
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`);
+      }
 
-    return await response.json();
+      return await response.json();
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      const durationMs = Date.now() - requestStartTime;
+      // Convert abort error to a more descriptive timeout error
+      if (error.name === 'AbortError') {
+        log.warn(`[API Timeout] TIMEOUT after ${durationMs}ms: ${endpoint}`);
+        throw new Error(`Request timeout after ${timeoutMs}ms: ${endpoint}`);
+      }
+      log.warn(`[API Error] FAILED after ${durationMs}ms: ${error.message || error}`);
+      throw error;
+    }
   }
 
   /**

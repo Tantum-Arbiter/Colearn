@@ -21,17 +21,14 @@ import * as Google from 'expo-auth-session/providers/google';
 import { ThemedText } from '../themed-text';
 import { TermsConditionsScreen } from '../account/terms-conditions-screen';
 import { PrivacyPolicyScreen } from '../account/privacy-policy-screen';
-import { LoadingOverlay, type LoadingPhase } from './loading-overlay';
 import { MainMenu } from '../main-menu';
 import { AuthService } from '@/services/auth-service';
 import { SecureStorage } from '@/services/secure-storage';
-import { ApiClient } from '@/services/api-client';
-import { ProfileSyncService } from '@/services/profile-sync-service';
-import { StorySyncService } from '@/services/story-sync-service';
-import { StoryLoader } from '@/services/story-loader';
-import { AssetSyncService } from '@/services/asset-sync-service';
 import { useAppStore } from '@/store/app-store';
 import { useAccessibility } from '@/hooks/use-accessibility';
+
+// NOTE: Profile/Story/Asset sync is now handled by ContentSyncService in StartupLoadingScreen
+// LoginScreen only handles authentication and token storage
 
 const { width } = Dimensions.get('window');
 
@@ -50,8 +47,6 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [currentView, setCurrentView] = useState<'main' | 'terms' | 'privacy'>('main');
   const [processedResponseId, setProcessedResponseId] = useState<string | null>(null);
-  const [loadingPhase, setLoadingPhase] = useState<LoadingPhase | null>(null);
-  const [showLoadingOverlay, setShowLoadingOverlay] = useState(false);
 
   const { setGuestMode } = useAppStore();
 
@@ -82,10 +77,6 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
 
       if (response.type === 'success' && response.authentication?.idToken) {
         try {
-          // Show loading overlay for authentication
-          setShowLoadingOverlay(true);
-          setLoadingPhase('authenticating');
-
           const result = await AuthService.completeGoogleSignIn(response.authentication.idToken);
 
           DEBUG_LOGS && console.log('[LoginScreen] Storing tokens...');
@@ -102,74 +93,10 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
           setIsGoogleLoading(false);
           setProcessedResponseId(responseId);
 
-          // Wait 2 seconds before moving to syncing phase
-          // This gives the user time to see the "Signing in..." message
-          await new Promise(resolve => setTimeout(resolve, 2000));
-
-          // Move to syncing phase
-          setLoadingPhase('syncing');
-
-          // Sync profile and stories
-          try {
-            const profile = await ApiClient.getProfile();
-            await ProfileSyncService.fullSync(profile);
-            DEBUG_LOGS && console.log('[LoginScreen] Profile synced');
-          } catch (error: any) {
-            // 404 means profile doesn't exist yet - this is normal for new users
-            const errorMessage = error?.message || '';
-            if (errorMessage.includes('404') || errorMessage.includes('not found')) {
-              DEBUG_LOGS && console.log('[LoginScreen] No profile found yet - user may need to create one');
-            } else {
-              DEBUG_LOGS && console.log('[LoginScreen] Profile sync error:', error);
-            }
-          }
-
-          try {
-            await StorySyncService.prefetchStories();
-            DEBUG_LOGS && console.log('[LoginScreen] Story metadata synced');
-
-            // Invalidate in-memory cache AFTER successful sync so fresh stories are loaded
-            // This ensures we don't lose cached stories if sync fails
-            StoryLoader.invalidateCache();
-
-            // Pre-populate StoryLoader cache for instant story list display
-            // This ensures stories don't "disappear" when navigating between screens
-            await StoryLoader.getStories();
-            DEBUG_LOGS && console.log('[LoginScreen] StoryLoader cache populated');
-
-            // Prefetch cover images to ensure smooth story selection screen
-            try {
-              await StorySyncService.prefetchCoverImages();
-              DEBUG_LOGS && console.log('[LoginScreen] Cover images prefetched');
-
-              // If stories were removed (assets no longer available on CMS), refresh the cache
-              if (StorySyncService.lastPrefetchRemovedStories) {
-                DEBUG_LOGS && console.log('[LoginScreen] Stories removed due to unavailable assets, refreshing cache');
-                StoryLoader.invalidateCache();
-                await StoryLoader.getStories();
-              }
-            } catch (imageError) {
-              console.error('[LoginScreen] Cover image prefetch failed:', imageError);
-              // Continue anyway - images will be downloaded on-demand
-            }
-
-            // Prefetch other assets in background
-            try {
-              await AssetSyncService.prefetchAssets();
-              DEBUG_LOGS && console.log('[LoginScreen] Assets prefetched');
-            } catch (assetError) {
-              console.error('[LoginScreen] Asset prefetch failed:', assetError);
-              // Continue anyway - assets will be downloaded on-demand
-            }
-
-            // CMS call completed successfully - hide loading overlay to show checkmark
-            setShowLoadingOverlay(false);
-          } catch (syncError) {
-            console.error('[LoginScreen] Story sync failed:', syncError);
-            // Show sync error message but allow app to continue in offline mode
-            setLoadingPhase('sync-error');
-            // User will manually close the error overlay
-          }
+          // Authentication complete - go directly to StartupLoadingScreen
+          // ContentSyncService will handle all sync operations there
+          console.log('[LoginScreen] Google sign-in complete, tokens stored');
+          onSuccess();
         } catch (error: any) {
           setIsGoogleLoading(false);
           setProcessedResponseId(responseId);
@@ -180,9 +107,10 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
                            error.message?.includes('timeout') ||
                            error.name === 'AbortError';
 
-          // Show appropriate error in overlay - user will manually close
-          setShowLoadingOverlay(true);
-          setLoadingPhase(isTimeout ? 'timeout-error' : 'auth-error');
+          // Show error alert
+          const errorTitle = isTimeout ? t('login.connectionTimeout') : t('login.signInFailed');
+          const errorMessage = isTimeout ? t('login.connectionTimeoutMessage') : t('login.signInFailedMessage');
+          Alert.alert(errorTitle, errorMessage, [{ text: t('login.ok') }]);
         }
       } else if (response.type === 'error') {
         setIsGoogleLoading(false);
@@ -257,12 +185,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
     // On Android, use native Google Sign-In if available
     if (Platform.OS === 'android' && AuthService.isNativeGoogleSignInAvailable()) {
       try {
-        // Don't show loading overlay yet - wait for user to complete Google sign-in
         const result = await AuthService.signInWithGoogleNative();
-
-        // User completed sign-in - now show loading overlay
-        setShowLoadingOverlay(true);
-        setLoadingPhase('authenticating');
 
         DEBUG_LOGS && console.log('[LoginScreen] Storing tokens...');
         await SecureStorage.storeTokens(
@@ -276,44 +199,12 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
         setGuestMode(false);
         setIsGoogleLoading(false);
 
-        // Wait 2 seconds before moving to syncing phase
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        // Move to syncing phase
-        setLoadingPhase('syncing');
-
-        // Sync profile and stories (same as iOS flow)
-        try {
-          const profile = await ApiClient.getProfile();
-          await ProfileSyncService.fullSync(profile);
-          DEBUG_LOGS && console.log('[LoginScreen] Profile synced');
-        } catch {
-          DEBUG_LOGS && console.log('[LoginScreen] Profile sync deferred');
-        }
-
-        try {
-          await StorySyncService.prefetchStories();
-          // Invalidate in-memory cache AFTER successful sync
-          StoryLoader.invalidateCache();
-          await StoryLoader.getStories();
-          await StorySyncService.prefetchCoverImages();
-        } catch (error) {
-          console.error('[LoginScreen] Sync error:', error);
-        }
-
-        try {
-          await AssetSyncService.prefetchAssets();
-        } catch {
-          DEBUG_LOGS && console.log('[LoginScreen] Asset prefetch deferred');
-        }
-
-        // Let LoadingOverlay handle checkmark, sound, and transition (same as iOS)
-        setShowLoadingOverlay(false);
+        // Authentication complete - go directly to StartupLoadingScreen
+        console.log('[LoginScreen] Native Google sign-in complete, tokens stored');
+        onSuccess();
         return;
       } catch (error: any) {
         setIsGoogleLoading(false);
-        setShowLoadingOverlay(false);
-        setLoadingPhase(null);
         if (!error.message?.includes('cancelled')) {
           console.error('Native Google Sign-In error:', error);
           Alert.alert(t('login.signInFailed'), error.message || t('login.signInFailedMessage'));
@@ -360,14 +251,9 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
     }
 
     setIsAppleLoading(true);
-    // Don't show loading overlay yet - wait for user to confirm in Apple dialog
 
     try {
       const result = await AuthService.signInWithApple();
-
-      // Only show loading overlay after user has confirmed sign-in
-      setShowLoadingOverlay(true);
-      setLoadingPhase('authenticating');
 
       await SecureStorage.storeTokens(
         result.tokens.accessToken,
@@ -379,72 +265,10 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
       setGuestMode(false);
 
       setIsAppleLoading(false);
+      console.log('[LoginScreen] Apple sign-in complete, tokens stored');
 
-      // Move to syncing phase
-      setLoadingPhase('syncing');
-      console.log('[LoginScreen] Apple sign-in complete, starting profile sync...');
-
-      try {
-        console.log('[LoginScreen] Calling ApiClient.getProfile()...');
-        const profile = await ApiClient.getProfile();
-        console.log('[LoginScreen] Profile retrieved:', JSON.stringify(profile, null, 2));
-        await ProfileSyncService.fullSync(profile);
-        console.log('[LoginScreen] Profile synced');
-      } catch (error: any) {
-        // 404 means profile doesn't exist yet - this is normal for new users
-        const errorMessage = error?.message || '';
-        if (errorMessage.includes('404') || errorMessage.includes('not found')) {
-          console.log('[LoginScreen] No profile found yet - user may need to create one');
-        } else {
-          console.log('[LoginScreen] Profile sync error:', error);
-        }
-      }
-
-      try {
-        DEBUG_LOGS && console.log('[LoginScreen] Prefetching story metadata...');
-        await StorySyncService.prefetchStories();
-        DEBUG_LOGS && console.log('[LoginScreen] Story metadata synced');
-
-        // Invalidate in-memory cache AFTER successful sync
-        StoryLoader.invalidateCache();
-
-        // Pre-populate StoryLoader cache for instant story list display
-        await StoryLoader.getStories();
-        DEBUG_LOGS && console.log('[LoginScreen] StoryLoader cache populated');
-
-        // Prefetch cover images to ensure smooth story selection screen
-        try {
-          await StorySyncService.prefetchCoverImages();
-          DEBUG_LOGS && console.log('[LoginScreen] Cover images prefetched');
-
-          // If stories were removed (assets no longer available on CMS), refresh the cache
-          if (StorySyncService.lastPrefetchRemovedStories) {
-            DEBUG_LOGS && console.log('[LoginScreen] Stories removed due to unavailable assets, refreshing cache');
-            StoryLoader.invalidateCache();
-            await StoryLoader.getStories();
-          }
-        } catch (imageError) {
-          console.error('[LoginScreen] Cover image prefetch failed:', imageError);
-          // Continue anyway - images will be downloaded on-demand
-        }
-
-        // Prefetch other assets in background
-        try {
-          await AssetSyncService.prefetchAssets();
-          DEBUG_LOGS && console.log('[LoginScreen] Assets prefetched');
-        } catch (assetError) {
-          console.error('[LoginScreen] Asset prefetch failed:', assetError);
-          // Continue anyway - assets will be downloaded on-demand
-        }
-
-        // CMS call completed successfully - hide loading overlay to show checkmark
-        setShowLoadingOverlay(false);
-      } catch (syncError) {
-        console.error('[LoginScreen] Story sync failed:', syncError);
-        // Show sync error message but allow app to continue in offline mode
-        setLoadingPhase('sync-error');
-        // User will manually close the error overlay
-      }
+      // Authentication complete - go directly to StartupLoadingScreen
+      onSuccess();
     } catch (error: any) {
       setIsAppleLoading(false);
       console.error('Apple sign-in error:', error);
@@ -458,7 +282,6 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
 
       if (isCancelled) {
         DEBUG_LOGS && console.log('[LoginScreen] Apple sign-in cancelled by user');
-        setShowLoadingOverlay(false);
         return;
       }
 
@@ -467,9 +290,10 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
                        error.message?.includes('timeout') ||
                        error.name === 'AbortError';
 
-      // Show appropriate error in overlay - user will manually close
-      setShowLoadingOverlay(true);
-      setLoadingPhase(isTimeout ? 'timeout-error' : 'auth-error');
+      // Show error alert
+      const errorTitle = isTimeout ? t('login.connectionTimeout') : t('login.signInFailed');
+      const errorMessage = isTimeout ? t('login.connectionTimeoutMessage') : t('login.signInFailedMessage');
+      Alert.alert(errorTitle, errorMessage, [{ text: t('login.ok') }]);
     }
   };
 
@@ -633,22 +457,6 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
           <MainMenu onNavigate={onNavigate || (() => {})} isActive={true} disableTutorial={true} />
         </Animated.View>
       )}
-
-      {/* Loading Overlay */}
-      <LoadingOverlay
-        phase={showLoadingOverlay ? loadingPhase : null}
-        onPulseComplete={() => transitionToMainMenu(onSuccess)}
-        onClose={() => {
-          setShowLoadingOverlay(false);
-          setLoadingPhase(null);
-        }}
-        onContinueOffline={() => {
-          // Set guest mode and continue without signing in
-          setGuestMode(true);
-          DEBUG_LOGS && console.log('[LoginScreen] Continuing offline after timeout');
-          transitionToMainMenu(onSkip || onSuccess);
-        }}
-      />
     </Animated.View>
   );
 }

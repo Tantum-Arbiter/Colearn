@@ -1,5 +1,8 @@
 import { useAppStore } from '@/store/app-store';
 import { reminderService } from './reminder-service';
+import { Logger } from '@/utils/logger';
+
+const log = Logger.create('ProfileSyncService');
 
 /**
  * Service for syncing user profile data across devices
@@ -12,7 +15,7 @@ export class ProfileSyncService {
    */
   static async syncProfileData(profile: any): Promise<void> {
     if (!profile) {
-      console.log('[ProfileSync] No profile data to sync');
+      log.info('[User Journey Flow 3: Profile Sync] No profile data to sync');
       return;
     }
 
@@ -23,35 +26,36 @@ export class ProfileSyncService {
       setChildAge,
     } = useAppStore.getState();
 
-    console.log('[ProfileSync] Syncing profile data:', JSON.stringify(profile, null, 2));
+    log.info('[User Journey Flow 3: Profile Sync] Step 1/4: Syncing profile data...');
+    log.debug(`Profile data: ${JSON.stringify(profile, null, 2)}`);
 
     // Sync profile (nickname, avatar)
     if (profile.nickname && profile.avatarType && profile.avatarId) {
       setUserProfile(profile.nickname, profile.avatarType, profile.avatarId);
-      console.log('[ProfileSync] Profile synced:', profile.nickname);
+      log.info(`[User Journey Flow 3: Profile Sync] Step 2/4: Profile synced - nickname: ${profile.nickname}`);
     }
 
     // Sync notification settings
     if (profile.notifications) {
-      console.log('[ProfileSync] Notifications data:', profile.notifications);
+      log.debug(`Notifications data: ${JSON.stringify(profile.notifications)}`);
 
       if (typeof profile.notifications.screenTimeEnabled === 'boolean') {
         setScreenTimeEnabled(profile.notifications.screenTimeEnabled);
-        console.log('[ProfileSync] Screen time enabled:', profile.notifications.screenTimeEnabled);
+        log.debug(`Screen time enabled: ${profile.notifications.screenTimeEnabled}`);
       }
 
       if (typeof profile.notifications.smartRemindersEnabled === 'boolean') {
         setNotificationsEnabled(profile.notifications.smartRemindersEnabled);
-        console.log('[ProfileSync] Smart reminders enabled:', profile.notifications.smartRemindersEnabled);
+        log.debug(`Smart reminders enabled: ${profile.notifications.smartRemindersEnabled}`);
       }
     } else {
-      console.log('[ProfileSync] No notifications data in profile');
+      log.debug('No notifications data in profile');
     }
 
     // Sync child age from profile
     if (profile.schedule?.childAgeRange) {
       const ageRange = profile.schedule.childAgeRange;
-      console.log('[ProfileSync] Child age range:', ageRange);
+      log.debug(`Child age range: ${ageRange}`);
 
       let ageInMonths = 24; // Default
       if (ageRange === '18-24m') {
@@ -63,12 +67,12 @@ export class ProfileSyncService {
       }
 
       setChildAge(ageInMonths);
-      console.log('[ProfileSync] Child age set to:', ageInMonths, 'months');
+      log.debug(`Child age set to: ${ageInMonths} months`);
     } else {
-      console.log('[ProfileSync] No schedule/childAgeRange data in profile');
+      log.debug('No schedule/childAgeRange data in profile');
     }
 
-    console.log('[ProfileSync] Settings synced from profile');
+    log.info('[User Journey Flow 3: Profile Sync] Step 3/4: Settings synced from profile');
   }
 
   /**
@@ -77,9 +81,9 @@ export class ProfileSyncService {
   static async syncReminders(): Promise<void> {
     try {
       await reminderService.syncFromBackend();
-      console.log('[ProfileSync] Reminders synced from backend');
+      log.info('[User Journey Flow 3: Profile Sync] Step 4/4: Reminders synced from backend');
     } catch (error) {
-      console.log('[ProfileSync] Failed to sync reminders:', error);
+      log.warn('[User Journey Flow 3: Profile Sync] Failed to sync reminders:', error);
     }
   }
 
@@ -88,7 +92,7 @@ export class ProfileSyncService {
    * Called on login and token refresh
    */
   static async fullSync(profile?: any): Promise<void> {
-    console.log('[ProfileSync] Starting full sync...');
+    log.info('[User Journey Flow 3: Profile Sync] ========== SYNC STARTED ==========');
 
     if (profile) {
       await this.syncProfileData(profile);
@@ -96,7 +100,7 @@ export class ProfileSyncService {
 
     await this.syncReminders();
 
-    console.log('[ProfileSync] Full sync complete');
+    log.info('[User Journey Flow 3: Profile Sync] ========== SYNC COMPLETE ==========');
   }
 }
 

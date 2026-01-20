@@ -116,6 +116,50 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup gcloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Validate assets exist in GCS before Firestore update
+        run: |
+          echo "Validating all story assets exist in GCS..."
+          MISSING_ASSETS=0
+
+          for story_dir in scripts/cms-stories/*/; do
+            if [ -d "$story_dir" ]; then
+              story_name=$(basename "$story_dir")
+
+              # Check for required assets in GCS
+              for asset in "$story_dir"*.{png,jpg,jpeg,mp3,webp,gif} 2>/dev/null; do
+                if [ -f "$asset" ]; then
+                  asset_name=$(basename "$asset")
+                  gcs_path="gs://colearnwithfreya-assets/stories/${story_name}/${asset_name}"
+
+                  if ! gsutil -q stat "$gcs_path" 2>/dev/null; then
+                    echo "❌ MISSING: $gcs_path"
+                    MISSING_ASSETS=$((MISSING_ASSETS + 1))
+                  else
+                    echo "✅ Found: $gcs_path"
+                  fi
+                fi
+              done
+            fi
+          done
+
+          if [ $MISSING_ASSETS -gt 0 ]; then
+            echo ""
+            echo "❌ ERROR: $MISSING_ASSETS assets are missing from GCS!"
+            echo "The GCS sync may have failed. Aborting Firestore update."
+            exit 1
+          fi
+
+          echo ""
+          echo "✅ All assets verified in GCS. Safe to update Firestore."
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
-import { AppState, AppStateStatus, Dimensions, View, Platform, ActivityIndicator, StyleSheet, DevSettings } from 'react-native';
+import { AppState, AppStateStatus, Dimensions, View, Platform, DevSettings } from 'react-native';
 import * as ScreenOrientation from 'expo-screen-orientation';
 
 import 'react-native-reanimated';
@@ -19,9 +19,6 @@ import { AccountScreen } from '@/components/account/account-screen';
 import { MainMenu } from '@/components/main-menu';
 import { ApiClient } from '@/services/api-client';
 import { backgroundSaveService } from '@/services/background-save-service';
-import { StorySyncService } from '@/services/story-sync-service';
-import { StoryLoader } from '@/services/story-loader';
-import { AssetSyncService } from '@/services/asset-sync-service';
 import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
 import { StoryBookReader } from '@/components/stories/story-book-reader';
 import { MusicScreen } from '@/components/music';
@@ -34,6 +31,7 @@ import { StoryTransitionProvider, useStoryTransition } from '@/contexts/story-tr
 import { GlobalSoundProvider } from '@/contexts/global-sound-context';
 import { TutorialProvider } from '@/contexts/tutorial-context';
 import { updateSentryConsent } from '@/services/sentry-service';
+import { StartupLoadingScreen } from '@/components/startup-loading-screen';
 // Import notification service early to register notification handler
 // This ensures notifications are handled properly even when app is in background
 import '@/services/notification-service';
@@ -134,6 +132,9 @@ function AppContent() {
   const [storyBeingRead, setStoryBeingRead] = useState<Story | null>(null);
   const [showStoryReader, setShowStoryReader] = useState(false);
 
+  // Track if sync is in progress to prevent premature navigation
+  const syncInProgressRef = useRef(false);
+
   // Debug current view changes (disabled for performance)
   // useEffect(() => {
   //   console.log('Current view changed to:', currentView);
@@ -229,6 +230,14 @@ function AppContent() {
         return;
       }
 
+      // Don't interfere with the loading screen - it handles its own transition
+      // This prevents race conditions where the auth check fires during sync
+      // Use both state and ref checks for maximum safety
+      if (currentView === 'loading' || syncInProgressRef.current) {
+        log.debug('[Auth] Sync in progress - skipping auth check');
+        return;
+      }
+
       if (showLoginAfterOnboarding) {
         setCurrentView('login');
       } else if (!hasCompletedOnboarding) {
@@ -238,12 +247,11 @@ function AppContent() {
         setCurrentView('app');
         setCurrentPage('main');
       } else {
-        // Skip auth check if we just completed a fresh login
-        // The flag is cleared by a timeout in handleLoginSuccess, not here
-        if (justLoggedInRef.current) {
-          log.info('[Auth] Skipping auth check - justLoggedIn flag is set');
-          setCurrentView('app');
-          setCurrentPage('main');
+        // If we just logged in or sync is in progress, don't interfere
+        // The StartupLoadingScreen will call onComplete() when sync finishes
+        if (justLoggedInRef.current || syncInProgressRef.current) {
+          log.info('[Auth] Skipping auth check - login/sync in progress, waiting for sync');
+          // Don't change view - StartupLoadingScreen handles the transition
           return;
         }
 
@@ -253,7 +261,7 @@ function AppContent() {
           const authPromise = ApiClient.isAuthenticated();
           const timeoutPromise = new Promise<boolean>((resolve) => {
             setTimeout(() => {
-              log.warn('Authentication check timeout - assuming not authenticated');
+              log.warn('[Layout] Authentication check timeout - assuming not authenticated');
               resolve(false);
             }, 5000);
           });
@@ -265,45 +273,9 @@ function AppContent() {
             setShowLoginAfterOnboarding(true);
             setCurrentView('login');
           } else {
-            // User is authenticated - show loading screen while prefetching
+            // User is authenticated - show loading screen with sync animation
+            // StartupLoadingScreen handles the sync and transitions to main menu on complete
             setCurrentView('loading');
-
-            // Prefetch stories and assets before showing app
-            try {
-              await StorySyncService.prefetchStories();
-
-              // Pre-populate StoryLoader cache for instant story list display
-              await StoryLoader.getStories();
-
-              // Prefetch cover images to ensure they're cached before showing story selection
-              try {
-                await StorySyncService.prefetchCoverImages();
-
-                // If stories were removed (assets no longer available on CMS), refresh the cache
-                if (StorySyncService.lastPrefetchRemovedStories) {
-                  StoryLoader.invalidateCache();
-                  await StoryLoader.getStories();
-                }
-              } catch (imageError) {
-                log.error('Cover image prefetch failed:', imageError);
-                // Continue anyway - images will be downloaded on-demand
-              }
-            } catch (syncError) {
-              log.error('Story prefetch failed, will use offline mode:', syncError);
-              // Continue anyway - app will use cached stories or local fallback
-            }
-
-            // Prefetch other assets in background (non-blocking)
-            try {
-              await AssetSyncService.prefetchAssets();
-            } catch (assetError) {
-              log.error('Asset prefetch failed, will download on-demand:', assetError);
-              // Continue anyway - app will download assets on-demand
-            }
-
-            // Now go to app
-            setCurrentView('app');
-            setCurrentPage('main');
           }
         } catch (error) {
           log.error('Authentication check error:', error);
@@ -332,10 +304,10 @@ function AppContent() {
           return;
         }
 
-        // Skip if we just logged in - avoid race condition on Android
-        // where AppState changes during login flow
-        if (justLoggedInRef.current) {
-          log.info('[AppState] Skipping auth check - just logged in');
+        // Skip if we just logged in or sync is in progress
+        // Avoid race conditions where AppState changes during login/sync flow
+        if (justLoggedInRef.current || syncInProgressRef.current) {
+          log.info('[AppState] Skipping auth check - login/sync in progress');
           return;
         }
 
@@ -381,8 +353,8 @@ function AppContent() {
 
   // Sync view with page changes (but don't interfere with onboarding/login flow or story reader)
   useEffect(() => {
-    // Don't sync if we're in onboarding, login, or splash views
-    if (currentView === 'splash' || currentView === 'onboarding' || currentView === 'login') {
+    // Don't interfere with these views - they manage their own transitions
+    if (currentView === 'splash' || currentView === 'onboarding' || currentView === 'login' || currentView === 'loading') {
       return;
     }
 
@@ -451,20 +423,16 @@ function AppContent() {
   const justLoggedInRef = useRef(false);
 
   const handleLoginSuccess = () => {
-    // Mark that we just logged in - skip auth checks for a few seconds
+    // Mark that we just logged in and sync is starting
     // This prevents race conditions on Android where AppState changes during login
     justLoggedInRef.current = true;
-    log.info('[Auth] Login successful - setting justLoggedIn flag');
-
-    // Clear the flag after 10 seconds to allow normal auth checks
-    setTimeout(() => {
-      justLoggedInRef.current = false;
-      log.info('[Auth] Cleared justLoggedIn flag after timeout');
-    }, 10000);
+    syncInProgressRef.current = true;
+    log.info('[Auth] Login successful - starting sync');
 
     setShowLoginAfterOnboarding(false);
-    setCurrentView('app');
-    setCurrentPage('main');
+    // Show StartupLoadingScreen which runs ContentSyncService for full sync
+    // The loading screen's onComplete will clear both flags
+    setCurrentView('loading');
   };
 
   const handleLoginSkip = () => {
@@ -531,12 +499,21 @@ function AppContent() {
     return <LoginScreen onSuccess={handleLoginSuccess} onSkip={handleLoginSkip} />;
   }
 
-  // Loading screen shown during prefetch after app restart
+  // Loading screen shown during content sync after app restart
+  // Shows spinning circle → checkmark animation, then transitions to main menu
   if (currentView === 'loading') {
+    // Set ref immediately when loading screen renders
+    syncInProgressRef.current = true;
     return (
-      <View style={loadingStyles.container}>
-        <ActivityIndicator size="large" color="#4ECDC4" />
-      </View>
+      <StartupLoadingScreen
+        onComplete={() => {
+          syncInProgressRef.current = false;
+          justLoggedInRef.current = false; // Clear login flag now that sync is done
+          log.info('[Layout] Sync complete - transitioning to main menu');
+          setCurrentView('app');
+          setCurrentPage('main');
+        }}
+      />
     );
   }
 
@@ -590,12 +567,3 @@ function AppContent() {
   return <MainMenu onNavigate={handleMainMenuNavigate} />;
 }
 
-// Styles for the loading screen
-const loadingStyles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#1a1a2e', // Dark purple background matching app theme
-  },
-});

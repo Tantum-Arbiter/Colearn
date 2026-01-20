@@ -1,4 +1,5 @@
 import { Story } from '@/types/story';
+import { CacheManager } from './cache-manager';
 import { StorySyncService } from './story-sync-service';
 import { ALL_STORIES, getAvailableStories } from '@/data/stories';
 import { Logger } from '@/utils/logger';
@@ -77,29 +78,30 @@ export class StoryLoader {
       const bundledIds = new Set(bundledStories.map(s => s.id));
       log.debug(`Bundled stories: ${bundledStories.length}`);
 
-      // Get CMS stories (includes both synced bundled stories and CMS-only stories)
-      const cmsStories = await StorySyncService.getLocalStories();
+      // Get CMS stories from CacheManager with URLs resolved to local cached paths
+      // This ensures images load from local cache instead of making network requests
+      const cmsStories = await CacheManager.getStoriesWithResolvedUrls();
 
       if (cmsStories && cmsStories.length > 0) {
         // Create a map of CMS stories by ID for quick lookup
         const cmsStoriesMap = new Map(cmsStories.map(s => [s.id, s]));
 
-        // Replace bundled stories with CMS versions if available (CMS has localized content)
+        // Merge bundled stories with CMS versions - keep bundled assets but take CMS localization
         const updatedBundledStories = bundledStories.map(bundledStory => {
           const cmsVersion = cmsStoriesMap.get(bundledStory.id);
           if (cmsVersion) {
-            log.debug(`Using CMS version of bundled story: ${bundledStory.id}`);
-            return cmsVersion;
+            log.debug(`Merging CMS localization into bundled story: ${bundledStory.id}`);
+            return this.mergeBundledWithCms(bundledStory, cmsVersion);
           }
           return bundledStory;
         });
 
-        // Find CMS-only stories (not in bundled)
+        // Find CMS-only stories (not in bundled) - these use resolved cached paths
         const cmsOnlyStories = cmsStories.filter(s => !bundledIds.has(s.id));
 
         // Combine: updated bundled stories + CMS-only stories
         const allStories = [...updatedBundledStories, ...cmsOnlyStories];
-        log.debug(`Combined: ${updatedBundledStories.length} bundled (${cmsStories.filter(s => bundledIds.has(s.id)).length} from CMS) + ${cmsOnlyStories.length} CMS-only = ${allStories.length} total`);
+        log.debug(`Combined: ${updatedBundledStories.length} bundled (${cmsStories.filter(s => bundledIds.has(s.id)).length} merged) + ${cmsOnlyStories.length} CMS-only = ${allStories.length} total`);
         return allStories;
       }
 
@@ -199,7 +201,8 @@ export class StoryLoader {
    */
   static async getCmsStories(): Promise<Story[]> {
     try {
-      const cmsStories = await StorySyncService.getLocalStories();
+      // Get stories from CacheManager with resolved URLs for display
+      const cmsStories = await CacheManager.getStoriesWithResolvedUrls();
       if (!cmsStories || cmsStories.length === 0) {
         return [];
       }
@@ -221,6 +224,54 @@ export class StoryLoader {
     const cmsStories = await this.getCmsStories();
     const cms = cmsStories.length;
     return { local, cms, total: local + cms };
+  }
+
+  /**
+   * Merge bundled story with CMS version
+   *
+   * Strategy:
+   * - Keep bundled assets (require() references work offline)
+   * - Take localized text from CMS (more up-to-date translations)
+   * - Take other metadata from CMS if available
+   *
+   * This ensures bundled stories always work with their local assets
+   * while getting fresh translations from the CMS.
+   */
+  private static mergeBundledWithCms(bundled: Story, cms: Story): Story {
+    // Start with bundled story as base (preserves require() asset references)
+    const merged: Story = { ...bundled };
+
+    // Take localized titles from CMS if available
+    if (cms.localizedTitle) {
+      merged.localizedTitle = cms.localizedTitle;
+    }
+
+    // Take localized description from CMS if available
+    if (cms.localizedDescription) {
+      merged.localizedDescription = cms.localizedDescription;
+    }
+
+    // Merge pages - keep bundled assets, take CMS localized text
+    if (bundled.pages && cms.pages) {
+      merged.pages = bundled.pages.map((bundledPage, index) => {
+        const cmsPage = cms.pages?.find(p => p.id === bundledPage.id) || cms.pages?.[index];
+
+        if (!cmsPage) {
+          return bundledPage;
+        }
+
+        // Keep bundled page assets, merge CMS localized text
+        return {
+          ...bundledPage,
+          // Take localized text from CMS
+          localizedText: cmsPage.localizedText || bundledPage.localizedText,
+          // Keep bundled asset references (backgroundImage, characterImage, etc.)
+        };
+      });
+    }
+
+    log.debug(`Merged story ${bundled.id}: bundled assets + CMS localization`);
+    return merged;
   }
 }
 
