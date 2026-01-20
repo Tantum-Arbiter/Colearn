@@ -107,7 +107,7 @@ export const EMOTION_GAME_CONFIG: EmotionGameConfig = {
   pointsPerCorrect: 10,
   pointsForStreak: 5,
   maxLevel: 5,
-  timePerEmotion: 15 // 15 seconds per emotion
+  timePerEmotion: 60 // 60 seconds per emotion
 };
 
 export const getEmotionsByDifficulty = (difficulty: 'easy' | 'medium' | 'hard'): Emotion[] => {

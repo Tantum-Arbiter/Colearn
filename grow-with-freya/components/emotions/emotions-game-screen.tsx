@@ -55,7 +55,7 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
     ? t(`emotions.prompts.${gameState.currentEmotion.id}.${gameState.currentPrompt}`)
     : '';
 
-  const [timeLeft, setTimeLeft] = useState(EMOTION_GAME_CONFIG.timePerEmotion || 15);
+  const [timeLeft, setTimeLeft] = useState(EMOTION_GAME_CONFIG.timePerEmotion || 60);
   const [isTimerActive, setIsTimerActive] = useState(true);
   const [isCardAnimating, setIsCardAnimating] = useState(true);
 
@@ -66,6 +66,9 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
   const cardScale = useSharedValue(0);
   const cardRotation = useSharedValue(360);
   const promptOpacity = useSharedValue(0);
+
+  // Content fade-out animation for game completion
+  const contentOpacity = useSharedValue(1);
 
   // Run screen fade-in and card spin-in animation on mount
   useEffect(() => {
@@ -140,7 +143,7 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
     } else {
       // For incorrect answers, just try again with same emotion
       setGameState(prev => ({ ...prev, isGameActive: true }));
-      setTimeLeft(EMOTION_GAME_CONFIG.timePerEmotion || 15);
+      setTimeLeft(EMOTION_GAME_CONFIG.timePerEmotion || 60);
       setIsTimerActive(true);
     }
   };
@@ -181,10 +184,8 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
       }
 
       if (newCompletedEmotions.length >= EMOTION_GAME_CONFIG.emotionsPerLevel) {
-        // Level complete - show final progress for a moment before completing
-        setTimeout(() => {
-          onGameComplete();
-        }, 1500); // Give user time to see 5/5 progress
+        // Level complete - trigger Good Job animation
+        triggerGoodJobAnimation();
       } else {
         // Spin in new emotion
         spinInNewEmotion(newCompletedEmotions);
@@ -205,7 +206,7 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
     }));
 
     // Reset timer
-    setTimeLeft(EMOTION_GAME_CONFIG.timePerEmotion || 15);
+    setTimeLeft(EMOTION_GAME_CONFIG.timePerEmotion || 60);
     setIsTimerActive(true);
     setIsCardAnimating(true); // Disable button presses during animation
 
@@ -242,6 +243,22 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
     handleEmotionPress(gameState.currentEmotion);
   };
 
+  const triggerGoodJobAnimation = () => {
+    // Stop the timer
+    setIsTimerActive(false);
+
+    // Fade out all game content, then transition to Express Yourself page
+    contentOpacity.value = withTiming(0, {
+      duration: 500,
+      easing: Easing.out(Easing.cubic)
+    });
+
+    // After fade out completes, go to selection screen
+    setTimeout(() => {
+      onGameComplete();
+    }, 550);
+  };
+
   // Animated styles
   const screenAnimatedStyle = useAnimatedStyle(() => ({
     opacity: screenOpacity.value,
@@ -258,6 +275,10 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
     ] as any,
   }));
 
+  const contentAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: contentOpacity.value,
+  }));
+
   return (
     <Animated.View style={[{ flex: 1 }, screenAnimatedStyle]}>
       <LinearGradient
@@ -270,94 +291,96 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
           <BearTopImage />
         </View>
 
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50), zIndex: 50 }]}>
-        <Pressable style={[styles.backButton, { minHeight: scaledButtonSize(40) }]} onPress={onBack}>
-          <ThemedText style={[styles.backButtonText, { fontSize: scaledFontSize(16) }]}>{backButtonText}</ThemedText>
-        </Pressable>
+      {/* Animated content wrapper - fades out when game completes */}
+      <Animated.View style={[{ flex: 1 }, contentAnimatedStyle]}>
+        {/* Header */}
+        <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50), zIndex: 50 }]}>
+          <Pressable style={[styles.backButton, { minHeight: scaledButtonSize(40) }]} onPress={onBack}>
+            <ThemedText style={[styles.backButtonText, { fontSize: scaledFontSize(16) }]}>{backButtonText}</ThemedText>
+          </Pressable>
 
-        <View style={{ width: 24 }} />
-        <MusicControl
-          size={24}
-          color="#FFFFFF"
-        />
-      </View>
-
-      {/* Game content */}
-      <View style={[styles.gameContent, isTablet && { maxWidth: contentMaxWidth, alignSelf: 'center', width: '100%' }]}>
-        {/* Current emotion card */}
-        <Animated.View style={[styles.emotionContainer, cardAnimatedStyle]}>
-          <EmotionCard
-            emotion={gameState.currentEmotion!}
-            onPress={() => {}}
-            size="large"
-            isSelected={false}
-            theme={selectedTheme}
+          <View style={{ width: 24 }} />
+          <MusicControl
+            size={24}
+            color="#FFFFFF"
           />
-        </Animated.View>
+        </View>
 
-        {/* Expression prompt */}
-        <Animated.View style={[styles.promptContainer, promptAnimatedStyle]}>
-          <ThemedText style={[styles.promptText, { fontSize: scaledFontSize(20) }]}>
-            {currentPrompt}
-          </ThemedText>
-        </Animated.View>
-
-        {/* Action button */}
-        <Pressable
-          style={[
-            styles.expressionButton,
-            {
-              backgroundColor: gameState.currentEmotion!.color,
-              opacity: (!gameState.isGameActive || isCardAnimating) ? 0.5 : 1,
-              minHeight: scaledButtonSize(50),
-              paddingHorizontal: scaledPadding(24),
-              paddingVertical: scaledPadding(15),
-            }
-          ]}
-          onPress={handleExpressionComplete}
-          disabled={!gameState.isGameActive || isCardAnimating}
-        >
-          <ThemedText style={[styles.expressionButtonText, { fontSize: scaledFontSize(18) }]}>
-            {isCardAnimating
-              ? t('emotions.loading')
-              : t('emotions.expressing', {
-                  emotion: getThemeNameKey(gameState.currentEmotion!.id, selectedTheme)
-                    ? t(getThemeNameKey(gameState.currentEmotion!.id, selectedTheme)!)
-                    : getThemeName(gameState.currentEmotion!.id, selectedTheme)
-                })
-            }
-          </ThemedText>
-        </Pressable>
-
-        {/* Progress indicator */}
-        <View style={styles.progressContainer}>
-          <ThemedText style={[styles.progressText, { fontSize: scaledFontSize(16) }]}>
-            {t('emotions.progress', { completed: gameState.completedEmotions.length, total: EMOTION_GAME_CONFIG.emotionsPerLevel })}
-          </ThemedText>
-          <View style={styles.progressBar}>
-            <View
-              style={[
-                styles.progressFill,
-                {
-                  width: `${(gameState.completedEmotions.length / EMOTION_GAME_CONFIG.emotionsPerLevel) * 100}%`
-                }
-              ]}
+        {/* Game content */}
+        <View style={[styles.gameContent, isTablet && { maxWidth: contentMaxWidth, alignSelf: 'center', width: '100%' }]}>
+          {/* Current emotion card */}
+          <Animated.View style={[styles.emotionContainer, cardAnimatedStyle]}>
+            <EmotionCard
+              emotion={gameState.currentEmotion!}
+              onPress={() => {}}
+              size="large"
+              isSelected={false}
+              theme={selectedTheme}
             />
+          </Animated.View>
+
+          {/* Expression prompt */}
+          <Animated.View style={[styles.promptContainer, promptAnimatedStyle]}>
+            <ThemedText style={[styles.promptText, { fontSize: scaledFontSize(20) }]}>
+              {currentPrompt}
+            </ThemedText>
+          </Animated.View>
+
+          {/* Action button */}
+          <Pressable
+            style={[
+              styles.expressionButton,
+              {
+                backgroundColor: gameState.currentEmotion!.color,
+                opacity: (!gameState.isGameActive || isCardAnimating) ? 0.5 : 1,
+                minHeight: scaledButtonSize(50),
+                paddingHorizontal: scaledPadding(24),
+                paddingVertical: scaledPadding(15),
+              }
+            ]}
+            onPress={handleExpressionComplete}
+            disabled={!gameState.isGameActive || isCardAnimating}
+          >
+            <ThemedText style={[styles.expressionButtonText, { fontSize: scaledFontSize(18) }]}>
+              {isCardAnimating
+                ? t('emotions.loading')
+                : t('emotions.expressing', {
+                    emotion: getThemeNameKey(gameState.currentEmotion!.id, selectedTheme)
+                      ? t(getThemeNameKey(gameState.currentEmotion!.id, selectedTheme)!)
+                      : getThemeName(gameState.currentEmotion!.id, selectedTheme)
+                  })
+              }
+            </ThemedText>
+          </Pressable>
+
+          {/* Progress indicator */}
+          <View style={styles.progressContainer}>
+            <ThemedText style={[styles.progressText, { fontSize: scaledFontSize(16) }]}>
+              {t('emotions.progress', { completed: gameState.completedEmotions.length, total: EMOTION_GAME_CONFIG.emotionsPerLevel })}
+            </ThemedText>
+            <View style={styles.progressBar}>
+              <View
+                style={[
+                  styles.progressFill,
+                  {
+                    width: `${(gameState.completedEmotions.length / EMOTION_GAME_CONFIG.emotionsPerLevel) * 100}%`
+                  }
+                ]}
+              />
+            </View>
+          </View>
+
+          {/* Timer countdown */}
+          <View style={styles.timerContainer}>
+            <ThemedText style={[styles.timerLabel, { fontSize: scaledFontSize(18) }]}>
+              {isTimerActive ? 'Time remaining:' : 'Ready to start!'}
+            </ThemedText>
+            <ThemedText style={[styles.timerText, { fontSize: scaledFontSize(18) }]}>
+              {isTimerActive ? `${timeLeft}s` : ''}
+            </ThemedText>
           </View>
         </View>
-
-        {/* Timer countdown */}
-        <View style={styles.timerContainer}>
-          <ThemedText style={[styles.timerLabel, { fontSize: scaledFontSize(18) }]}>
-            {isTimerActive ? 'Time remaining:' : 'Ready to start!'}
-          </ThemedText>
-          <ThemedText style={[styles.timerText, { fontSize: scaledFontSize(18) }]}>
-            {isTimerActive ? `${timeLeft}s` : ''}
-          </ThemedText>
-        </View>
-      </View>
-
+      </Animated.View>
 
       </LinearGradient>
     </Animated.View>

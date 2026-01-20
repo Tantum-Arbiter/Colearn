@@ -56,7 +56,7 @@ describe('Emotions Data', () => {
       expect(typeof EMOTION_GAME_CONFIG.timePerEmotion).toBe('number');
 
       expect(EMOTION_GAME_CONFIG.emotionsPerLevel).toBe(5);
-      expect(EMOTION_GAME_CONFIG.timePerEmotion).toBe(15);
+      expect(EMOTION_GAME_CONFIG.timePerEmotion).toBe(60);
       expect(EMOTION_GAME_CONFIG.pointsPerCorrect).toBeGreaterThan(0);
       expect(EMOTION_GAME_CONFIG.pointsForStreak).toBeGreaterThan(0);
       expect(EMOTION_GAME_CONFIG.maxLevel).toBeGreaterThan(0);
