@@ -46,7 +46,11 @@ class PublicApiPeakLoad extends Simulation {
 
     // Assets endpoints (get_asset_url requires GCS credentials - skip in local testing)
     PublicApiScenario.get_assets_version_scenario,
-    PublicApiScenario.sync_assets_scenario
+    PublicApiScenario.sync_assets_scenario,
+
+    // Batch processing endpoints (new - 95% API reduction)
+    PublicApiScenario.delta_sync_scenario,
+    PublicApiScenario.batch_urls_scenario
 
     // Profile endpoints - disabled (Firestore contention + same mock userId)
   )
@@ -54,7 +58,7 @@ class PublicApiPeakLoad extends Simulation {
   setUp(scenarios)
     .protocols(httpProtocol)
     .assertions(
-      // Target: 1 second response time for all APIs except CMS sync (bigger payloads)
+      // Target: 1 second response time for all APIs except sync/batch (bigger payloads)
 
       // Regular API endpoints - strict 1 second target
       details("auth_status").responseTime.percentile(99).lt(1000),
@@ -67,6 +71,10 @@ class PublicApiPeakLoad extends Simulation {
       // CMS sync endpoints - larger payloads, allow up to 3 seconds
       details("sync_stories").responseTime.percentile(99).lt(3000),
       details("sync_assets").responseTime.percentile(99).lt(3000),
+
+      // Batch processing endpoints - checksum comparison, allow 2 seconds
+      details("delta_sync_stories").responseTime.percentile(99).lt(2000),
+      details("batch_asset_urls").responseTime.percentile(99).lt(2000),
 
       // Global success rate
       forAll.successfulRequests.percent.gte(95)

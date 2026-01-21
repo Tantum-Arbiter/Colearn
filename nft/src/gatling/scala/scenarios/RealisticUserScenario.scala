@@ -131,6 +131,59 @@ object RealisticUserScenario {
       .check(status.in(200, 204, 500))
   ).pause(mediumThink)
 
+  // ============================================
+  // Batch Processing Actions (New - 95% API reduction)
+  // ============================================
+
+  /**
+   * Delta sync - Get only changed stories based on checksums
+   */
+  def deltaSyncStories: ChainBuilder = exec(
+    http("delta_sync_stories")
+      .post("/api/stories/delta")
+      .headers(authHeaders)
+      .body(StringBody("""{
+        "clientVersion": 1,
+        "storyChecksums": {
+          "test-story-1": "checksum1",
+          "test-story-2": "checksum2"
+        }
+      }"""))
+      .check(status.in(200, 204, 500))
+  ).pause(mediumThink)
+
+  /**
+   * Batch URL generation - Get signed URLs for multiple assets at once
+   */
+  def batchAssetUrls: ChainBuilder = exec(
+    http("batch_asset_urls")
+      .post("/api/assets/batch-urls")
+      .headers(authHeaders)
+      .body(StringBody("""{
+        "paths": [
+          "assets/stories/test-story-1/cover/cover.webp",
+          "assets/stories/test-story-1/page-1/background.webp",
+          "assets/stories/test-story-2/cover/cover.webp"
+        ]
+      }"""))
+      .check(status.in(200, 207, 500))
+  ).pause(shortThink)
+
+  /**
+   * Large batch URL request - simulates power user with many assets
+   */
+  def batchAssetUrlsLarge: ChainBuilder = exec(
+    http("batch_asset_urls_large")
+      .post("/api/assets/batch-urls")
+      .headers(authHeaders)
+      .body(StringBody(
+        s"""{
+          "paths": [${(1 to 30).map(i => s""""assets/stories/story-$i/cover.webp"""").mkString(",")}]
+        }"""
+      ))
+      .check(status.in(200, 207, 500))
+  ).pause(mediumThink)
+
   def getProfile: ChainBuilder = exec(
     http("get_profile")
       .get("/api/profile")
@@ -166,19 +219,21 @@ object RealisticUserScenario {
     .exec(getStoryById("test-story-1"))
     .exec(updateProfile)
 
-  // 2. Returning User - Comes back, syncs, reads
+  // 2. Returning User - Uses delta sync for efficient updates
   val returningUserScenario: ScenarioBuilder = scenario("User 2: Returning User")
     .exec(signIn)
     .exec(checkStoriesVersion)
-    .exec(syncStories)
+    .exec(deltaSyncStories)  // Use delta sync instead of full sync
+    .exec(batchAssetUrls)    // Batch fetch asset URLs
     .exec(getStoriesByCategory("bedtime"))
     .exec(getStoryById("test-story-2"))
 
-  // 3. Power User - Heavy usage
+  // 3. Power User - Heavy usage with batch operations
   val powerUserScenario: ScenarioBuilder = scenario("User 3: Power User")
     .exec(signIn)
-    .exec(syncStories)
+    .exec(deltaSyncStories)  // Delta sync for efficiency
     .exec(getAllStories)
+    .exec(batchAssetUrlsLarge)  // Large batch for power users
     .exec(getStoryById("test-story-1"))
     .exec(getStoryById("test-story-2"))
     .exec(getStoryById("test-story-3"))
@@ -216,15 +271,15 @@ object RealisticUserScenario {
     .pause(longThink)
     .exec(signOut)
 
-  // 8. Sync Heavy User - Lots of syncing
+  // 8. Sync Heavy User - Uses batch operations for efficiency
   val syncHeavyUserScenario: ScenarioBuilder = scenario("User 8: Sync Heavy User")
     .exec(signIn)
     .exec(checkStoriesVersion)
-    .exec(syncStories)
+    .exec(deltaSyncStories)  // Delta sync first
     .exec(checkAssetsVersion)
-    .exec(syncAssets)
-    .exec(syncStories)
-    .exec(syncAssets)
+    .exec(batchAssetUrls)    // Then batch asset URLs
+    .exec(deltaSyncStories)  // Another delta sync
+    .exec(batchAssetUrlsLarge)  // Large batch
 
   // 9. Profile Manager - Profile operations
   val profileManagerScenario: ScenarioBuilder = scenario("User 9: Profile Manager")
@@ -236,15 +291,29 @@ object RealisticUserScenario {
     .exec(updateProfile)
     .exec(getProfile)
 
-  // 10. Mixed User - Random mix of operations
+  // 10. Mixed User - Mix of old and new batch operations
   val mixedUserScenario: ScenarioBuilder = scenario("User 10: Mixed User")
     .exec(signIn)
     .exec(checkStoriesVersion)
-    .exec(getAllStories)
+    .exec(deltaSyncStories)  // New batch API
     .exec(getProfile)
+    .exec(batchAssetUrls)    // New batch API
     .exec(getStoryById("story-001"))
-    .exec(syncStories)
     .exec(updateProfile)
     .exec(refreshAuthToken)
+
+  // 11. Batch Processing User - Exclusively uses new batch APIs
+  val batchProcessingUserScenario: ScenarioBuilder = scenario("User 11: Batch Processing User")
+    .exec(signIn)
+    .exec(checkStoriesVersion)
+    .exec(deltaSyncStories)
+    .exec(checkAssetsVersion)
+    .exec(batchAssetUrls)
+    .pause(mediumThink)
+    .exec(deltaSyncStories)
+    .exec(batchAssetUrlsLarge)
+    .pause(longThink)
+    .exec(deltaSyncStories)
+    .exec(batchAssetUrls)
 }
 
