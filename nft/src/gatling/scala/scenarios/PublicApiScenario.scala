@@ -187,11 +187,11 @@ object PublicApiScenario {
           .headers(authHeaders)
           .body(StringBody("""{
             "paths": [
-              "assets/stories/test-story-1/cover/cover.webp",
-              "assets/stories/test-story-1/page-1/background.webp",
-              "assets/stories/test-story-2/cover/cover.webp",
-              "assets/stories/test-story-2/page-1/background.webp",
-              "assets/stories/test-story-3/cover/cover.webp"
+              "stories/test-story-1/cover/cover.webp",
+              "stories/test-story-1/page-1/background.webp",
+              "stories/test-story-2/cover/cover.webp",
+              "stories/test-story-2/page-1/background.webp",
+              "stories/test-story-3/cover/cover.webp"
             ]
           }"""))
           .check(status.in(200, 207, 500))  // 207 for partial success
@@ -209,7 +209,7 @@ object PublicApiScenario {
           .headers(authHeaders)
           .body(StringBody(
             s"""{
-              "paths": [${(1 to 50).map(i => s""""assets/stories/story-$i/cover.webp"""").mkString(",")}]
+              "paths": [${(1 to 50).map(i => s""""stories/story-$i/cover.webp"""").mkString(",")}]
             }"""
           ))
           .check(status.in(200, 207, 500))

@@ -154,9 +154,9 @@ object RealisticUserScenario {
       .headers(authHeaders)
       .body(StringBody("""{
         "paths": [
-          "assets/stories/test-story-1/cover/cover.webp",
-          "assets/stories/test-story-1/page-1/background.webp",
-          "assets/stories/test-story-2/cover/cover.webp"
+          "stories/test-story-1/cover/cover.webp",
+          "stories/test-story-1/page-1/background.webp",
+          "stories/test-story-2/cover/cover.webp"
         ]
       }"""))
       .check(status.in(200, 207, 500))
@@ -171,7 +171,7 @@ object RealisticUserScenario {
       .headers(authHeaders)
       .body(StringBody(
         s"""{
-          "paths": [${(1 to 30).map(i => s""""assets/stories/story-$i/cover.webp"""").mkString(",")}]
+          "paths": [${(1 to 30).map(i => s""""stories/story-$i/cover.webp"""").mkString(",")}]
         }"""
       ))
       .check(status.in(200, 207, 500))
