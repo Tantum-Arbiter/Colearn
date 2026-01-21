@@ -200,8 +200,8 @@ Feature: Story CMS and Delta-Sync
       {}
       """
     Then the response status code should be 400
-    And the response should have field "errorCode" with value "GTW-101"
-    And the response should have field "error" with value "Required field is missing"
+    And the response should have field "errorCode" with value "GTW-109"
+    And the response should have field "error" with value "Field validation failed"
     And the response should have field "success" with value "false"
 
   @error-handling @emulator-only

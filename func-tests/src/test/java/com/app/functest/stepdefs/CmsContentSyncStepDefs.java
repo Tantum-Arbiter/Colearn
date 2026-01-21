@@ -179,17 +179,16 @@ public class CmsContentSyncStepDefs extends BaseStepDefs {
 
     @Given("I have performed an initial sync")
     public void iHavePerformedAnInitialSync() {
-        // Perform initial sync and store checksums
+        // Perform initial sync using delta endpoint and store checksums
         syncRequest = new HashMap<>();
         syncRequest.put("clientVersion", 0);
         syncRequest.put("storyChecksums", new HashMap<String, String>());
-        syncRequest.put("lastSyncTimestamp", 0L);
 
         Response response = applyAuthenticatedHeaders(given())
                 .contentType("application/json")
                 .body(mapToJson(syncRequest))
                 .when()
-                .post("/api/stories/sync");
+                .post("/api/stories/delta");
 
         assertThat("Initial sync should succeed", response.getStatusCode(), equalTo(200));
 
@@ -466,13 +465,12 @@ public class CmsContentSyncStepDefs extends BaseStepDefs {
             Map<String, Object> request = new HashMap<>();
             request.put("clientVersion", 0);
             request.put("storyChecksums", new HashMap<String, String>());
-            request.put("lastSyncTimestamp", 0L);
 
             Response response = applyAuthenticatedHeaders(given())
                     .contentType("application/json")
                     .body(mapToJson(request))
                     .when()
-                    .post("/api/stories/sync");
+                    .post("/api/stories/delta");
 
             consecutiveSyncResponses.add(response);
             logger.info("Sync request {} completed with status {}", i + 1, response.getStatusCode());
