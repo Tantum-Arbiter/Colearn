@@ -3,9 +3,6 @@ import { View, StyleSheet, Dimensions, Pressable, Alert, Image, Platform } from 
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-
-// Debug logging - set to false for production performance
-const DEBUG_LOGS = false;
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -26,6 +23,9 @@ import { AuthService } from '@/services/auth-service';
 import { SecureStorage } from '@/services/secure-storage';
 import { useAppStore } from '@/store/app-store';
 import { useAccessibility } from '@/hooks/use-accessibility';
+
+// Debug logging - set to false for production performance
+const DEBUG_LOGS = false;
 
 // NOTE: Profile/Story/Asset sync is now handled by BatchSyncService in StartupLoadingScreen
 // LoginScreen only handles authentication and token storage

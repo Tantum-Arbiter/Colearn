@@ -278,17 +278,16 @@ describe('Batch Sync Integration Flow', () => {
       // All assets need downloading (110 total: 10 covers + 100 page backgrounds)
       mockCacheManager.hasAsset.mockResolvedValue(false);
 
-      // Batch URLs - should be 3 batches (110 / 50 = 3 batches)
+      // Batch URLs - should be 2 batches (110 / 100 = 2 batches)
       mockApiClient.request
-        .mockResolvedValueOnce({ urls: Array(50).fill({ path: 'p', signedUrl: 'u' }), failed: [] })
-        .mockResolvedValueOnce({ urls: Array(50).fill({ path: 'p', signedUrl: 'u' }), failed: [] })
+        .mockResolvedValueOnce({ urls: Array(100).fill({ path: 'p', signedUrl: 'u' }), failed: [] })
         .mockResolvedValueOnce({ urls: Array(10).fill({ path: 'p', signedUrl: 'u' }), failed: [] });
 
       const stats = await BatchSyncService.performBatchSync();
 
-      // 1 version + 1 delta + 3 batch URL requests = 5 API calls
+      // 1 version + 1 delta + 2 batch URL requests = 4 API calls
       // Instead of: 1 version + 10 stories + 110 assets = 121 API calls
-      expect(stats.apiCalls).toBe(5);
+      expect(stats.apiCalls).toBe(4);
       expect(stats.storiesUpdated).toBe(10);
       expect(stats.assetsDownloaded).toBe(110);
     });
@@ -527,46 +526,46 @@ describe('Batch Sync Integration Flow', () => {
 
   // ==================== EDGE CASE INTEGRATION TESTS ====================
   describe('Edge Cases - Boundary Conditions', () => {
-    it('should handle exactly 50 assets (single batch boundary)', async () => {
+    it('should handle exactly 100 assets (single batch boundary)', async () => {
       mockVersionManager.checkVersions.mockResolvedValue({
         needsStorySync: true,
         needsAssetSync: true,
         localVersion: null,
-        serverVersion: { stories: 50, assets: 50, lastUpdated: new Date().toISOString() },
+        serverVersion: { stories: 100, assets: 100, lastUpdated: new Date().toISOString() },
       });
 
-      // Create story with exactly 50 assets
+      // Create story with exactly 100 assets
       const story: Story = {
-        id: 'fifty-assets',
-        title: 'Fifty Assets Story',
-        checksum: 'fifty123',
+        id: 'hundred-assets',
+        title: 'Hundred Assets Story',
+        checksum: 'hundred123',
         category: 'adventure',
         tag: 'adventure',
         emoji: '📖',
         isAvailable: true,
-        pages: Array.from({ length: 50 }, (_, i) => ({
+        pages: Array.from({ length: 100 }, (_, i) => ({
           id: `page-${i}`,
           pageNumber: i + 1,
-          backgroundImage: `stories/fifty-assets/bg${i}.webp`,
+          backgroundImage: `stories/hundred-assets/bg${i}.webp`,
           text: `Page ${i}`,
         })),
       };
 
       mockApiClient.request.mockResolvedValueOnce({
-        serverVersion: 50,
-        assetVersion: 50,
+        serverVersion: 100,
+        assetVersion: 100,
         stories: [story],
         deletedStoryIds: [],
-        storyChecksums: { 'fifty-assets': 'fifty123' },
+        storyChecksums: { 'hundred-assets': 'hundred123' },
         totalStories: 1,
         updatedCount: 1,
         lastUpdated: Date.now(),
       } as DeltaSyncResponse);
 
       mockCacheManager.hasAsset.mockResolvedValue(false);
-      // Exactly 1 batch (50 assets = 50 max per batch)
+      // Exactly 1 batch (100 assets = 100 max per batch)
       mockApiClient.request.mockResolvedValueOnce({
-        urls: Array(50).fill({ path: 'p', signedUrl: 'u' }),
+        urls: Array(100).fill({ path: 'p', signedUrl: 'u' }),
         failed: [],
       });
 
@@ -576,45 +575,45 @@ describe('Batch Sync Integration Flow', () => {
       expect(stats.apiCalls).toBe(3);
     });
 
-    it('should handle 51 assets (boundary requiring 2 batches)', async () => {
+    it('should handle 101 assets (boundary requiring 2 batches)', async () => {
       mockVersionManager.checkVersions.mockResolvedValue({
         needsStorySync: true,
         needsAssetSync: true,
         localVersion: null,
-        serverVersion: { stories: 51, assets: 51, lastUpdated: new Date().toISOString() },
+        serverVersion: { stories: 101, assets: 101, lastUpdated: new Date().toISOString() },
       });
 
       const story: Story = {
-        id: 'fifty-one-assets',
-        title: 'Fifty One Assets Story',
-        checksum: 'fiftyone123',
+        id: 'hundred-one-assets',
+        title: 'Hundred One Assets Story',
+        checksum: 'hundredone123',
         category: 'adventure',
         tag: 'adventure',
         emoji: '📖',
         isAvailable: true,
-        pages: Array.from({ length: 51 }, (_, i) => ({
+        pages: Array.from({ length: 101 }, (_, i) => ({
           id: `page-${i}`,
           pageNumber: i + 1,
-          backgroundImage: `stories/fifty-one-assets/bg${i}.webp`,
+          backgroundImage: `stories/hundred-one-assets/bg${i}.webp`,
           text: `Page ${i}`,
         })),
       };
 
       mockApiClient.request.mockResolvedValueOnce({
-        serverVersion: 51,
-        assetVersion: 51,
+        serverVersion: 101,
+        assetVersion: 101,
         stories: [story],
         deletedStoryIds: [],
-        storyChecksums: { 'fifty-one-assets': 'fiftyone123' },
+        storyChecksums: { 'hundred-one-assets': 'hundredone123' },
         totalStories: 1,
         updatedCount: 1,
         lastUpdated: Date.now(),
       } as DeltaSyncResponse);
 
       mockCacheManager.hasAsset.mockResolvedValue(false);
-      // 2 batches (50 + 1)
+      // 2 batches (100 + 1)
       mockApiClient.request
-        .mockResolvedValueOnce({ urls: Array(50).fill({ path: 'p', signedUrl: 'u' }), failed: [] })
+        .mockResolvedValueOnce({ urls: Array(100).fill({ path: 'p', signedUrl: 'u' }), failed: [] })
         .mockResolvedValueOnce({ urls: Array(1).fill({ path: 'p', signedUrl: 'u' }), failed: [] });
 
       const stats = await BatchSyncService.performBatchSync();
