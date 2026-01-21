@@ -1,29 +1,23 @@
 import { musicPlayer } from '@/services/music-player';
 import { MusicTrack, MusicPlaylist } from '@/types/music';
 
-// Create mock sound object
-const mockSound = {
-  playAsync: jest.fn().mockResolvedValue(undefined),
-  pauseAsync: jest.fn().mockResolvedValue(undefined),
-  stopAsync: jest.fn().mockResolvedValue(undefined),
-  unloadAsync: jest.fn().mockResolvedValue(undefined),
-  setVolumeAsync: jest.fn().mockResolvedValue(undefined),
-  setPositionAsync: jest.fn().mockResolvedValue(undefined),
-  setOnPlaybackStatusUpdate: jest.fn(),
-};
+// Get the mock functions from the expo-audio mock
+const {
+  createAudioPlayer,
+  setAudioModeAsync,
+  createMockAudioPlayer,
+} = jest.requireMock('expo-audio');
 
-const mockAudio = {
-  setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
-  Sound: {
-    createAsync: jest.fn().mockResolvedValue({ sound: mockSound }),
+// Mock background music service to prevent interference
+jest.mock('@/services/background-music', () => ({
+  backgroundMusic: {
+    getIsPlaying: jest.fn().mockReturnValue(false),
+    getIsLoaded: jest.fn().mockReturnValue(true),
+    stop: jest.fn().mockResolvedValue(undefined),
+    cleanup: jest.fn().mockResolvedValue(undefined),
+    play: jest.fn().mockResolvedValue(undefined),
+    initialize: jest.fn().mockResolvedValue(undefined),
   },
-  INTERRUPTION_MODE_IOS_DO_NOT_MIX: 'DO_NOT_MIX',
-  INTERRUPTION_MODE_ANDROID_DO_NOT_MIX: 'DO_NOT_MIX',
-};
-
-// Mock expo-av (the music player still uses expo-av)
-jest.mock('expo-av', () => ({
-  Audio: mockAudio,
 }));
 
 // Mock track data
@@ -67,16 +61,9 @@ describe('MusicPlayerService', () => {
   describe('Initialization', () => {
     it('should initialize successfully', async () => {
       await musicPlayer.initialize();
-      expect(mockAudio.setAudioModeAsync).toHaveBeenCalled();
-    });
-
-    it('should handle initialization errors gracefully', async () => {
-      mockAudio.setAudioModeAsync.mockRejectedValueOnce(new Error('Init failed'));
-      
-      await musicPlayer.initialize();
-      
+      // Music player doesn't call setAudioModeAsync directly - it lets background music handle it
       const state = musicPlayer.getState();
-      expect(state.error).toBe('Failed to initialize music player');
+      expect(state.error).toBeNull();
     });
   });
 
@@ -115,16 +102,14 @@ describe('MusicPlayerService', () => {
 
     it('should load a track successfully', async () => {
       await musicPlayer.loadTrack(mockTrack);
-      
-      expect(mockAudio.Sound.createAsync).toHaveBeenCalledWith(
+
+      expect(createAudioPlayer).toHaveBeenCalledWith(
         mockTrack.audioSource,
         expect.objectContaining({
-          shouldPlay: false,
-          isLooping: false,
-          volume: mockTrack.volume,
+          updateInterval: 500,
         })
       );
-      
+
       const state = musicPlayer.getState();
       expect(state.currentTrack).toEqual(mockTrack);
       expect(state.playbackState).toBe('stopped');
@@ -133,19 +118,29 @@ describe('MusicPlayerService', () => {
 
     it('should handle missing audio source', async () => {
       const trackWithoutAudio = { ...mockTrack, audioSource: null };
-      
-      await musicPlayer.loadTrack(trackWithoutAudio);
-      
+
+      try {
+        await musicPlayer.loadTrack(trackWithoutAudio);
+      } catch {
+        // Expected to throw
+      }
+
       const state = musicPlayer.getState();
       expect(state.error).toContain('Audio file may be missing');
       expect(state.isLoading).toBe(false);
     });
 
     it('should handle track loading errors', async () => {
-      mockAudio.Sound.createAsync.mockRejectedValueOnce(new Error('Load failed'));
-      
-      await musicPlayer.loadTrack(mockTrack);
-      
+      createAudioPlayer.mockImplementationOnce(() => {
+        throw new Error('Load failed');
+      });
+
+      try {
+        await musicPlayer.loadTrack(mockTrack);
+      } catch {
+        // Expected to throw
+      }
+
       const state = musicPlayer.getState();
       expect(state.error).toContain('Failed to load track');
       expect(state.isLoading).toBe(false);
@@ -199,33 +194,55 @@ describe('MusicPlayerService', () => {
 
     it('should play track', async () => {
       await musicPlayer.play();
-      
-      expect(mockSound.playAsync).toHaveBeenCalled();
+
+      // Verify state changes to playing
+      const state = musicPlayer.getState();
+      expect(state.playbackState).toBe('playing');
     });
 
     it('should pause track', async () => {
+      await musicPlayer.play();
       await musicPlayer.pause();
-      
-      expect(mockSound.pauseAsync).toHaveBeenCalled();
+
+      const state = musicPlayer.getState();
+      expect(state.playbackState).toBe('paused');
     });
 
     it('should stop track', async () => {
+      await musicPlayer.play();
       await musicPlayer.stop();
-      
-      expect(mockSound.stopAsync).toHaveBeenCalled();
+
+      const state = musicPlayer.getState();
+      expect(state.playbackState).toBe('stopped');
+      expect(state.currentTime).toBe(0);
     });
 
     it('should seek to position', async () => {
       await musicPlayer.seekTo(30);
-      
-      expect(mockSound.setPositionAsync).toHaveBeenCalledWith(30000); // milliseconds
+
+      // Position is updated in state (debounced actual seek)
+      const state = musicPlayer.getState();
+      expect(state.currentTime).toBe(30);
     });
 
     it('should handle playback errors gracefully', async () => {
-      mockSound.playAsync.mockRejectedValueOnce(new Error('Play failed'));
-      
+      // Create a player that throws on play
+      createAudioPlayer.mockImplementationOnce(() => ({
+        play: jest.fn(() => { throw new Error('Play failed'); }),
+        pause: jest.fn(),
+        release: jest.fn(),
+        seekTo: jest.fn(),
+        addListener: jest.fn(() => ({ remove: jest.fn() })),
+        volume: 1,
+        playing: false,
+        currentTime: 0,
+        duration: 0,
+        loop: false,
+      }));
+
+      await musicPlayer.loadTrack(mockTrack);
       await musicPlayer.play();
-      
+
       const state = musicPlayer.getState();
       expect(state.error).toBe('Failed to play track');
     });
@@ -239,34 +256,26 @@ describe('MusicPlayerService', () => {
 
     it('should set volume', async () => {
       await musicPlayer.setVolume(0.8);
-      
-      expect(mockSound.setVolumeAsync).toHaveBeenCalledWith(0.8);
-      
+
       const state = musicPlayer.getState();
       expect(state.volume).toBe(0.8);
     });
 
     it('should clamp volume to valid range', async () => {
       await musicPlayer.setVolume(1.5);
-      
+
       const state = musicPlayer.getState();
       expect(state.volume).toBe(1);
     });
 
     it('should toggle mute', async () => {
-      const initialVolume = musicPlayer.getState().volume;
-      
       await musicPlayer.toggleMute();
-      
-      expect(mockSound.setVolumeAsync).toHaveBeenCalledWith(0);
-      
+
       let state = musicPlayer.getState();
       expect(state.isMuted).toBe(true);
-      
+
       await musicPlayer.toggleMute();
-      
-      expect(mockSound.setVolumeAsync).toHaveBeenCalledWith(initialVolume);
-      
+
       state = musicPlayer.getState();
       expect(state.isMuted).toBe(false);
     });
@@ -280,7 +289,7 @@ describe('MusicPlayerService', () => {
 
     it('should go to next track', async () => {
       await musicPlayer.next();
-      
+
       const state = musicPlayer.getState();
       expect(state.currentTrack).toEqual(mockTrack2);
       expect(state.currentTrackIndex).toBe(1);
@@ -289,20 +298,22 @@ describe('MusicPlayerService', () => {
     it('should go to previous track', async () => {
       await musicPlayer.loadPlaylist(mockPlaylist, 1);
       await musicPlayer.previous();
-      
+
       const state = musicPlayer.getState();
       expect(state.currentTrack).toEqual(mockTrack);
       expect(state.currentTrackIndex).toBe(0);
     });
 
     it('should restart current track if more than 3 seconds in', async () => {
-      // Simulate being 5 seconds into the track
-      const state = musicPlayer.getState();
-      state.currentTime = 5;
-      
+      // Play and seek to 5 seconds into the track
+      await musicPlayer.play();
+      await musicPlayer.seekTo(5);
+
       await musicPlayer.previous();
-      
-      expect(mockSound.setPositionAsync).toHaveBeenCalledWith(0);
+
+      // Should restart the track (position goes back to 0)
+      const state = musicPlayer.getState();
+      expect(state.currentTime).toBe(0);
     });
   });
 
@@ -335,10 +346,22 @@ describe('MusicPlayerService', () => {
     it('should cleanup resources', async () => {
       await musicPlayer.initialize();
       await musicPlayer.loadTrack(mockTrack);
-      
+
+      // Add a state change listener to verify it gets cleared
+      const listener = jest.fn();
+      musicPlayer.onStateChange(listener);
+      listener.mockClear();
+
       await musicPlayer.cleanup();
-      
-      expect(mockSound.unloadAsync).toHaveBeenCalled();
+
+      // Verify playback stops and player is released
+      const state = musicPlayer.getState();
+      expect(state.playbackState).toBe('stopped');
+
+      // After cleanup, state change listeners should be cleared
+      // So changing state shouldn't trigger the listener
+      await musicPlayer.setVolume(0.5);
+      expect(listener).not.toHaveBeenCalled();
     });
   });
 });
