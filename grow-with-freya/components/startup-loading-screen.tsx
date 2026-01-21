@@ -12,7 +12,7 @@ import * as Haptics from 'expo-haptics';
 import { createAudioPlayer, AudioPlayer } from 'expo-audio';
 
 import { useLoadingCircleAnimation, useCheckmarkAnimation, useTextFadeAnimation } from './auth/loading-animations';
-import { ContentSyncService, SyncProgress } from '@/services/content-sync-service';
+import { BatchSyncService, BatchSyncProgress } from '@/services/batch-sync-service';
 import { CacheManager } from '@/services/cache-manager';
 import { StoryLoader } from '@/services/story-loader';
 import { ApiClient } from '@/services/api-client';
@@ -104,32 +104,35 @@ export function StartupLoadingScreen({ onComplete, onError }: StartupLoadingScre
           log.warn(`Removed ${cacheValidation.removed} corrupted files from cache`);
         }
 
-        log.info('Starting content sync...');
+        log.info('Starting batch sync...');
 
-        const result = await ContentSyncService.sync((progress: SyncProgress) => {
+        const stats = await BatchSyncService.performBatchSync((progress: BatchSyncProgress) => {
           // Update progress percentage
           setProgressPercent(progress.progress);
 
           // Update status text based on sync phase
           switch (progress.phase) {
-            case 'authenticating':
-              setStatusText('Connecting...');
-              setDetailText('');
-              break;
-            case 'checking':
+            case 'version-check':
               setStatusText('Checking for updates...');
               setDetailText('');
               break;
-            case 'syncing-stories':
-              setStatusText('Loading stories...');
+            case 'fetching-delta':
+              setStatusText('Fetching updates...');
               setDetailText('');
               break;
-            case 'syncing-assets':
-              // Show clean progress like "Downloading 45/176 assets..."
+            case 'batch-urls':
+              setStatusText('Preparing downloads...');
+              if (progress.detail?.currentBatch && progress.detail?.totalBatches) {
+                setDetailText(`Batch ${progress.detail.currentBatch}/${progress.detail.totalBatches}`);
+              } else {
+                setDetailText('');
+              }
+              break;
+            case 'downloading':
+              // Show progress like "Downloading 45/176 assets..."
               setStatusText(progress.message || 'Downloading content...');
-              // Show current story name as context
-              if (progress.detail?.itemName) {
-                setDetailText(progress.detail.itemName);
+              if (progress.detail?.assetName) {
+                setDetailText(progress.detail.assetName);
               } else {
                 setDetailText('');
               }
@@ -144,8 +147,15 @@ export function StartupLoadingScreen({ onComplete, onError }: StartupLoadingScre
               break;
           }
         });
-        
-        log.info('Sync complete:', result);
+
+        log.info('Batch sync complete:', {
+          storiesUpdated: stats.storiesUpdated,
+          storiesDeleted: stats.storiesDeleted,
+          assetsDownloaded: stats.assetsDownloaded,
+          assetsFailed: stats.assetsFailed,
+          apiCalls: stats.apiCalls,
+          durationMs: stats.durationMs,
+        });
 
         // Invalidate and pre-populate StoryLoader cache BEFORE transitioning to main menu
         // This ensures stories are immediately available when story selection screen loads

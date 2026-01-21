@@ -27,7 +27,7 @@ import { SecureStorage } from '@/services/secure-storage';
 import { useAppStore } from '@/store/app-store';
 import { useAccessibility } from '@/hooks/use-accessibility';
 
-// NOTE: Profile/Story/Asset sync is now handled by ContentSyncService in StartupLoadingScreen
+// NOTE: Profile/Story/Asset sync is now handled by BatchSyncService in StartupLoadingScreen
 // LoginScreen only handles authentication and token storage
 
 const { width } = Dimensions.get('window');
@@ -94,7 +94,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
           setProcessedResponseId(responseId);
 
           // Authentication complete - go directly to StartupLoadingScreen
-          // ContentSyncService will handle all sync operations there
+          // BatchSyncService will handle all sync operations there
           console.log('[LoginScreen] Google sign-in complete, tokens stored');
           onSuccess();
         } catch (error: any) {

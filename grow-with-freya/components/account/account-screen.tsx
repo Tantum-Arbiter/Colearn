@@ -303,7 +303,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
               await VersionManager.clearLocalVersion();
               console.log('[Reset] Version metadata cleared');
 
-              // Clear ContentSyncService cache (stories and assets)
+              // Clear BatchSyncService cache (stories and assets)
               await CacheManager.clearAll();
               console.log('[Reset] CacheManager cleared');
 

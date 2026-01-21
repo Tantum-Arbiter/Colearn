@@ -2,7 +2,6 @@ package com.app.service;
 
 import com.app.config.GcsConfig.GcsProperties;
 import com.app.config.UrlGenerationStrategy;
-import com.app.dto.AssetSyncResponse.AssetInfo;
 import com.app.exception.AssetUrlGenerationException;
 import com.app.exception.InvalidAssetPathException;
 import com.app.model.AssetVersion;
@@ -17,7 +16,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -162,66 +160,6 @@ class AssetServiceTest {
         assertNotNull(result);
         assertEquals("current", result.getId());
         assertEquals(1, result.getVersion());
-    }
-
-    @Test
-    void getAssetsToSync_NoClientChecksums_ReturnsAllAssets() throws Exception {
-        when(assetVersionRepository.getCurrent())
-                .thenReturn(CompletableFuture.completedFuture(Optional.of(testAssetVersion)));
-
-        when(urlStrategy.generateUrl(anyString(), eq("test-bucket")))
-                .thenReturn("https://storage.googleapis.com/signed-url");
-
-        Map<String, String> clientChecksums = new HashMap<>();
-        List<AssetInfo> result = assetService.getAssetsToSync(clientChecksums).get();
-
-        assertEquals(3, result.size());
-        verify(urlStrategy, times(3)).generateUrl(anyString(), eq("test-bucket"));
-    }
-
-    @Test
-    void getAssetsToSync_MatchingChecksums_ReturnsEmpty() throws Exception {
-        when(assetVersionRepository.getCurrent())
-                .thenReturn(CompletableFuture.completedFuture(Optional.of(testAssetVersion)));
-
-        Map<String, String> clientChecksums = new HashMap<>();
-        clientChecksums.put("stories/story-1/cover.webp", "abc123");
-        clientChecksums.put("stories/story-1/page-1/background.webp", "def456");
-        clientChecksums.put("stories/story-2/cover.webp", "ghi789");
-
-        List<AssetInfo> result = assetService.getAssetsToSync(clientChecksums).get();
-
-        assertEquals(0, result.size());
-        verify(urlStrategy, never()).generateUrl(anyString(), anyString());
-    }
-
-    @Test
-    void getAssetsToSync_OutdatedChecksums_ReturnsChangedAssets() throws Exception {
-        when(assetVersionRepository.getCurrent())
-                .thenReturn(CompletableFuture.completedFuture(Optional.of(testAssetVersion)));
-
-        when(urlStrategy.generateUrl(anyString(), eq("test-bucket")))
-                .thenReturn("https://storage.googleapis.com/signed-url");
-
-        Map<String, String> clientChecksums = new HashMap<>();
-        clientChecksums.put("stories/story-1/cover.webp", "outdated-checksum");
-        clientChecksums.put("stories/story-1/page-1/background.webp", "def456");
-
-        List<AssetInfo> result = assetService.getAssetsToSync(clientChecksums).get();
-
-        assertEquals(2, result.size());
-        verify(urlStrategy, times(2)).generateUrl(anyString(), eq("test-bucket"));
-    }
-
-    @Test
-    void getAssetsToSync_NoAssetVersion_ReturnsEmptyList() throws Exception {
-        when(assetVersionRepository.getCurrent())
-                .thenReturn(CompletableFuture.completedFuture(Optional.empty()));
-
-        List<AssetInfo> result = assetService.getAssetsToSync(new HashMap<>()).get();
-
-        assertEquals(0, result.size());
-        verify(urlStrategy, never()).generateUrl(anyString(), anyString());
     }
 
     @Test

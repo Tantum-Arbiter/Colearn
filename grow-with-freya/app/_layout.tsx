@@ -430,7 +430,7 @@ function AppContent() {
     log.info('[Auth] Login successful - starting sync');
 
     setShowLoginAfterOnboarding(false);
-    // Show StartupLoadingScreen which runs ContentSyncService for full sync
+    // Show StartupLoadingScreen which runs BatchSyncService for efficient batch sync
     // The loading screen's onComplete will clear both flags
     setCurrentView('loading');
   };

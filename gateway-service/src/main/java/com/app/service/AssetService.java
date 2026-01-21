@@ -2,7 +2,6 @@ package com.app.service;
 
 import com.app.config.GcsConfig.GcsProperties;
 import com.app.config.UrlGenerationStrategy;
-import com.app.dto.AssetSyncResponse.AssetInfo;
 import com.app.exception.AssetUrlGenerationException;
 import com.app.exception.InvalidAssetPathException;
 import com.app.model.AssetVersion;
@@ -14,13 +13,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 
 @Service
 public class AssetService {
@@ -146,42 +142,6 @@ public class AssetService {
         logger.debug("Getting current asset version");
         return assetVersionRepository.getCurrent()
                 .thenApply(opt -> opt.orElse(new AssetVersion()));
-    }
-
-    /**
-     * Get assets that need to be synced based on client's checksums.
-     * Returns signed URLs for changed or new assets.
-     * Uses a dedicated thread pool for URL generation to avoid blocking the common ForkJoin pool.
-     */
-    public CompletableFuture<List<AssetInfo>> getAssetsToSync(Map<String, String> clientChecksums) {
-        logger.debug("Getting assets to sync. Client has {} assets", clientChecksums.size());
-
-        return assetVersionRepository.getCurrent()
-                .thenApplyAsync(versionOpt -> {
-                    if (versionOpt.isEmpty()) {
-                        logger.debug("No asset version found, returning empty list");
-                        return List.<AssetInfo>of();
-                    }
-
-                    AssetVersion serverVersion = versionOpt.get();
-                    Map<String, String> serverChecksums = serverVersion.getAssetChecksums();
-
-                    // Find assets that are new or have changed
-                    return serverChecksums.entrySet().stream()
-                            .filter(entry -> {
-                                String assetPath = entry.getKey();
-                                String serverChecksum = entry.getValue();
-                                String clientChecksum = clientChecksums.get(assetPath);
-                                return clientChecksum == null || !clientChecksum.equals(serverChecksum);
-                            })
-                            .map(entry -> {
-                                String assetPath = entry.getKey();
-                                String checksum = entry.getValue();
-                                String signedUrl = generateSignedUrl(assetPath);
-                                return new AssetInfo(assetPath, signedUrl, checksum);
-                            })
-                            .collect(Collectors.toList());
-                }, urlGenerationExecutor);
     }
 
     /**
