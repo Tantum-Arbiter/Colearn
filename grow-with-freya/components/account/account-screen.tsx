@@ -20,7 +20,6 @@ import { EditProfileContent } from './edit-profile-screen';
 import { ApiClient } from '../../services/api-client';
 import { reminderService } from '../../services/reminder-service';
 import { StorySyncService } from '../../services/story-sync-service';
-import { AuthenticatedImageService } from '../../services/authenticated-image-service';
 import { VersionManager } from '../../services/version-manager';
 import { CacheManager } from '../../services/cache-manager';
 import { StoryLoader } from '../../services/story-loader';
@@ -307,10 +306,9 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
               await CacheManager.clearAll();
               console.log('[Reset] CacheManager cleared');
 
-              // Clear legacy sync service caches
+              // Clear legacy sync service cache
               await StorySyncService.clearCache();
-              await AuthenticatedImageService.clearCache();
-              console.log('[Reset] Legacy caches cleared');
+              console.log('[Reset] Legacy cache cleared');
 
               // IMPORTANT: Clear in-memory cache so old stories don't show
               // This must be called because JS memory isn't cleared on navigation

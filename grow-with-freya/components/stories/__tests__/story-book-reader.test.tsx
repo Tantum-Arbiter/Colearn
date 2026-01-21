@@ -91,13 +91,7 @@ jest.mock('@/components/ui/parents-only-modal', () => ({
   ParentsOnlyModal: () => null,
 }));
 
-jest.mock('@/components/ui/authenticated-image', () => ({
-  AuthenticatedImage: ({ testID, ...props }: any) => {
-    const React = require('react');
-    const { View } = require('react-native');
-    return React.createElement(View, { testID, ...props });
-  },
-}));
+// AuthenticatedImage removed - all images now load from local cache after batch sync
 
 jest.mock('@/utils/logger', () => ({
   Logger: {

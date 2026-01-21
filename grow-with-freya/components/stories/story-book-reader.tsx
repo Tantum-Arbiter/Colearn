@@ -30,7 +30,7 @@ import * as Haptics from 'expo-haptics';
 import { voiceRecordingService, VoiceOver } from '@/services/voice-recording-service';
 import { useVoiceRecording } from '@/hooks/use-voice-recording';
 import { useGlobalSound } from '@/contexts/global-sound-context';
-import { AuthenticatedImage } from '@/components/ui/authenticated-image';
+// All story images are loaded from local cache after batch sync - no authenticated fetching needed
 import { Logger } from '@/utils/logger';
 import { PagePreviewModal } from './pages-preview-modal';
 import { StoryTipsOverlay } from '@/components/tutorial/story-tips-overlay';
@@ -922,60 +922,34 @@ export function StoryBookReader({
     const baseScale = isTablet ? 1.35 : 1.8;
     const imageScale = isCoverPage ? baseScale * 0.99 : baseScale;
 
+    // All images are loaded from local cache after batch sync - no authenticated fetching needed
     const imageContent = (
       <>
-        {typeof page.backgroundImage === 'string' && page.backgroundImage.includes('api.colearnwithfreya.co.uk') ? (
-          <AuthenticatedImage
-            uri={page.backgroundImage}
-            style={[
-              styles.backgroundImageStyle,
-              { width: '100%', height: '100%', transform: [{ scale: imageScale }] }
-            ]}
-            resizeMode="contain"
-            transition={0}
-            onError={(error) => {
-              log.error(`Page ${page.pageNumber}: Background image error:`, error);
-            }}
-          />
-        ) : (
+        <Image
+          source={typeof page.backgroundImage === 'string' ? { uri: page.backgroundImage } : page.backgroundImage}
+          style={[
+            styles.backgroundImageStyle,
+            { width: '100%', height: '100%', transform: [{ scale: imageScale }] }
+          ]}
+          contentFit="contain"
+          transition={0}
+          cachePolicy="memory-disk"
+          onError={(error) => {
+            log.error(`Page ${page.pageNumber}: Background image error:`, JSON.stringify(error));
+          }}
+        />
+        {/* Character overlay */}
+        {page.characterImage && (
           <Image
-            source={typeof page.backgroundImage === 'string' ? { uri: page.backgroundImage } : page.backgroundImage}
-            style={[
-              styles.backgroundImageStyle,
-              { width: '100%', height: '100%', transform: [{ scale: imageScale }] }
-            ]}
+            source={typeof page.characterImage === 'string' ? { uri: page.characterImage } : page.characterImage}
+            style={styles.characterImage}
             contentFit="contain"
             transition={0}
             cachePolicy="memory-disk"
             onError={(error) => {
-              log.error(`Page ${page.pageNumber}: Background image error:`, JSON.stringify(error));
+              log.error(`Page ${page.pageNumber}: Character image error:`, JSON.stringify(error));
             }}
           />
-        )}
-        {/* Character overlay */}
-        {page.characterImage && (
-          typeof page.characterImage === 'string' && page.characterImage.includes('api.colearnwithfreya.co.uk') ? (
-            <AuthenticatedImage
-              uri={page.characterImage}
-              style={styles.characterImage}
-              resizeMode="contain"
-              transition={0}
-              onError={(error) => {
-                log.error(`Page ${page.pageNumber}: Character image error:`, error);
-              }}
-            />
-          ) : (
-            <Image
-              source={typeof page.characterImage === 'string' ? { uri: page.characterImage } : page.characterImage}
-              style={styles.characterImage}
-              contentFit="contain"
-              transition={0}
-              cachePolicy="memory-disk"
-              onError={(error) => {
-                log.error(`Page ${page.pageNumber}: Character image error:`, JSON.stringify(error));
-              }}
-            />
-          )
         )}
       </>
     );

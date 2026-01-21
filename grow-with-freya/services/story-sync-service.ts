@@ -8,7 +8,6 @@ import {
 } from '../types/story';
 import { ApiClient } from './api-client';
 import Constants from 'expo-constants';
-import { AuthenticatedImageService } from './authenticated-image-service';
 import { Logger } from '../utils/logger';
 
 const log = Logger.create('StorySyncService');
@@ -226,21 +225,8 @@ export class StorySyncService {
           };
         }) as Story[];
 
-        // Invalidate cached images for updated stories
-        // This ensures fresh images are downloaded if content changed on the server
-        const existingStories = localMetadata?.stories || [];
-
-        for (const story of syncResponse.stories) {
-          // Get the old version of this story to find cached image URLs
-          const oldStory = existingStories.find(s => s.id === story.id);
-          if (oldStory) {
-            const urlsToInvalidate = this.extractImageUrls(oldStory);
-            if (urlsToInvalidate.length > 0) {
-              log.debug(`Invalidating ${urlsToInvalidate.length} cached images for: ${story.id}`);
-              await AuthenticatedImageService.invalidateCacheForUrls(urlsToInvalidate);
-            }
-          }
-        }
+        // Note: Cache invalidation is now handled by BatchSyncService and CacheManager
+        // which use a unified cache strategy for all story assets
       }
 
       // Merge updated stories with existing stories
@@ -431,51 +417,26 @@ export class StorySyncService {
   static lastPrefetchRemovedStories = false;
 
   /**
-   * Prefetch all story cover images to ensure they're cached before showing the story selection screen
-   * This should be called after prefetchStories() to ensure smooth UX
-   * Returns a map of storyId -> cachedCoverPath for instant display
-   *
-   * IMPORTANT: Stories whose covers fail to load are removed from local cache
-   * This handles the case where a story was removed from CMS but still exists locally
-   * Check StorySyncService.lastPrefetchRemovedStories to see if stories were removed
+   * Get cover image paths for all stories
+   * Note: With the unified cache architecture, all assets are downloaded by BatchSyncService
+   * during sync. This method now just returns the cover image paths from local stories.
+   * Returns a map of storyId -> coverImagePath for instant display
    */
   static async prefetchCoverImages(): Promise<Map<string, string>> {
     const cachedPaths = new Map<string, string>();
-    const failedStoryIds: string[] = [];
     this.lastPrefetchRemovedStories = false;
 
     try {
       const stories = await this.getLocalStories();
       const storiesWithCovers = stories.filter(s => typeof s.coverImage === 'string' && s.coverImage);
 
-      log.debug(`Prefetching ${storiesWithCovers.length} cover images...`);
+      log.debug(`Getting ${storiesWithCovers.length} cover image paths...`);
 
-      // Download all cover images in parallel
-      const downloadPromises = storiesWithCovers.map(async (story) => {
-        try {
-          const url = story.coverImage as string;
-          const cachedPath = await AuthenticatedImageService.getImageUri(url);
-          if (cachedPath) {
-            cachedPaths.set(story.id, cachedPath);
-            return { storyId: story.id, success: true };
-          }
-          log.warn(`Cover not available: ${story.id}`);
-          failedStoryIds.push(story.id);
-          return { storyId: story.id, success: false };
-        } catch (error) {
-          log.warn(`Failed to cache cover: ${story.id}`, error);
-          failedStoryIds.push(story.id);
-          return { storyId: story.id, success: false };
-        }
-      });
-
-      const results = await Promise.all(downloadPromises);
-      const successCount = results.filter(r => r.success).length;
-
-      if (failedStoryIds.length > 0) {
-        log.info(`Cover prefetch: ${successCount}/${storiesWithCovers.length} cached, removing ${failedStoryIds.length} unavailable`);
-        await this.removeStoriesFromCache(failedStoryIds);
-        this.lastPrefetchRemovedStories = true;
+      // All cover images are already downloaded by BatchSyncService
+      // Just map the cover image paths from local stories
+      for (const story of storiesWithCovers) {
+        const coverPath = story.coverImage as string;
+        cachedPaths.set(story.id, coverPath);
       }
 
       // Store the cached paths for quick lookup
@@ -483,7 +444,7 @@ export class StorySyncService {
 
       return cachedPaths;
     } catch (error) {
-      log.error('Cover image prefetch failed:', error);
+      log.error('Cover image path lookup failed:', error);
       return cachedPaths;
     }
   }

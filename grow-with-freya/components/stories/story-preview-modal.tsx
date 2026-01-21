@@ -24,7 +24,7 @@ import { Story, STORY_TAGS, getLocalizedText } from '@/types/story';
 import type { SupportedLanguage } from '@/services/i18n';
 import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
-import { AuthenticatedImage } from '@/components/ui/authenticated-image';
+// All story images are loaded from local cache after batch sync - no authenticated fetching needed
 import { useAppStore } from '@/store/app-store';
 
 interface StoryPreviewModalProps {
@@ -175,24 +175,16 @@ export function StoryPreviewModal({
             </Animated.Text>
           </Pressable>
 
-          {/* Cover Image */}
+          {/* Cover Image - loaded from local cache after batch sync */}
           <View style={styles.coverContainer}>
             {story.coverImage ? (
-              typeof story.coverImage === 'string' && story.coverImage.includes('api.colearnwithfreya.co.uk') ? (
-                <AuthenticatedImage
-                  uri={story.coverImage}
-                  style={styles.coverImage}
-                  resizeMode="cover"
-                />
-              ) : (
-                <Image
-                  source={typeof story.coverImage === 'string' ? { uri: story.coverImage } : story.coverImage}
-                  style={styles.coverImage}
-                  contentFit="cover"
-                  transition={0}
-                  cachePolicy="memory-disk"
-                />
-              )
+              <Image
+                source={typeof story.coverImage === 'string' ? { uri: story.coverImage } : story.coverImage}
+                style={styles.coverImage}
+                contentFit="cover"
+                transition={0}
+                cachePolicy="memory-disk"
+              />
             ) : (
               <View style={[styles.coverImage, styles.placeholderCover]}>
                 <Text style={{ fontSize: 64 }}>{story.emoji}</Text>

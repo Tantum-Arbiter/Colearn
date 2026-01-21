@@ -22,7 +22,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { InteractiveElement as InteractiveElementType } from '@/types/story';
-import { AuthenticatedImage } from '@/components/ui/authenticated-image';
+// All story images are loaded from local cache after batch sync - no authenticated fetching needed
 
 interface InteractiveElementProps {
   element: InteractiveElementType;
@@ -219,21 +219,12 @@ export const InteractiveElementComponent: React.FC<InteractiveElementProps> = ({
     transform: [{ scale: propScale.value }],
   }));
 
-  // Determine if image is a local require() or a remote URL string
+  // Determine if image is a local require() or a URL string
   const isLocalImage = typeof element.image === 'number';
   const imageUri = typeof element.image === 'string' ? element.image : '';
 
-  // Check if it's a local file path (cached CMS asset) vs remote API URL
-  const isLocalFilePath = imageUri.startsWith('file://');
-  const isRemoteApiUrl = imageUri.includes('api.colearnwithfreya.co.uk');
-
-  // Render the appropriate image component based on source type
+  // All prop images are loaded from local cache after batch sync - no authenticated fetching needed
   const renderPropImage = () => {
-    // Debug log to understand what image URL we're getting
-    if (__DEV__) {
-      log.debug(`Rendering prop image: type=${typeof element.image}, isLocal=${isLocalImage}, isFile=${isLocalFilePath}, isRemote=${isRemoteApiUrl}, uri="${imageUri.substring(0, 80)}..."`);
-    }
-
     if (isLocalImage) {
       // Local bundled image (require() returns a number)
       return (
@@ -245,19 +236,8 @@ export const InteractiveElementComponent: React.FC<InteractiveElementProps> = ({
           cachePolicy="memory-disk"
         />
       );
-    } else if (imageUri && isRemoteApiUrl) {
-      // Remote CMS image URL - needs authenticated download
-      return (
-        <AuthenticatedImage
-          uri={imageUri}
-          style={styles.propImage}
-          resizeMode="contain"
-          fallbackEmoji="✨"
-          showLoadingIndicator={false}
-        />
-      );
     } else if (imageUri) {
-      // Local file path (cached) or other URL - use regular Image
+      // URL string (local cache path or other) - use regular Image
       return (
         <Image
           source={{ uri: imageUri }}

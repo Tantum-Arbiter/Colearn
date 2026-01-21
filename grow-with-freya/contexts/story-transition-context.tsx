@@ -19,7 +19,7 @@ import Animated, {
   interpolate,
 } from 'react-native-reanimated';
 import { Story } from '@/types/story';
-import { AuthenticatedImage } from '@/components/ui/authenticated-image';
+// All story images are loaded from local cache after batch sync - no authenticated fetching needed
 import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { voiceRecordingService, VoiceOver } from '@/services/voice-recording-service';
@@ -1279,21 +1279,9 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
   // Render the cover image for the selected story
   // Note: No borderRadius on images - parent container handles clipping with overflow: hidden
+  // All images are loaded from local cache after batch sync
   const renderCoverImage = () => {
     if (!selectedStory?.coverImage || !cardPosition) return null;
-
-    const isCmsImage = typeof selectedStory.coverImage === 'string' &&
-      selectedStory.coverImage.includes('api.colearnwithfreya.co.uk');
-
-    if (isCmsImage) {
-      return (
-        <AuthenticatedImage
-          uri={selectedStory.coverImage as string}
-          style={{ width: '100%', height: '100%' }}
-          resizeMode="cover"
-        />
-      );
-    }
 
     return (
       <ExpoImage
@@ -1311,6 +1299,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   // Render a page image (revealed when cover flips open, or during exit)
   // pageIndex defaults to 1 (first content page) for opening, or exitPageIndex for exiting
   // Note: No borderRadius on images - parent container handles clipping with overflow: hidden
+  // All images are loaded from local cache after batch sync
   const renderPageImage = (pageIndex?: number) => {
     if (!selectedStory?.pages || selectedStory.pages.length < 2 || !cardPosition) return null;
 
@@ -1333,19 +1322,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
         }}>
           <Text style={{ fontSize: 48 }}>{selectedStory.emoji}</Text>
         </View>
-      );
-    }
-
-    const isCmsImage = typeof imageSource === 'string' &&
-      imageSource.includes('api.colearnwithfreya.co.uk');
-
-    if (isCmsImage) {
-      return (
-        <AuthenticatedImage
-          uri={imageSource as string}
-          style={{ width: '100%', height: '100%' }}
-          resizeMode="cover"
-        />
       );
     }
 

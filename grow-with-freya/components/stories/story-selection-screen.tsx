@@ -1,8 +1,7 @@
-import React, { useCallback, useRef, useEffect, useMemo, useState, memo, useLayoutEffect } from 'react';
+import React, { useCallback, useRef, useEffect, useMemo, useState, memo } from 'react';
 import { View, Text, ScrollView, StyleSheet, Dimensions, FlatList, Pressable, ListRenderItem, findNodeHandle, UIManager } from 'react-native';
 import { Image } from 'expo-image';
-import { AuthenticatedImage } from '@/components/ui/authenticated-image';
-import { AuthenticatedImageService } from '@/services/authenticated-image-service';
+// All story images are loaded from local cache after batch sync - no authenticated fetching needed
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -119,23 +118,16 @@ const StoryCard = memo(function StoryCard({
         delayLongPress={400}
         style={styles.cardPressable}
       >
+        {/* Cover Image - loaded from local cache after batch sync */}
         <View style={[styles.card, { width: cardWidth, height: cardHeight, borderRadius }]}>
           {story.coverImage ? (
-            typeof story.coverImage === 'string' && story.coverImage.includes('api.colearnwithfreya.co.uk') ? (
-              <AuthenticatedImage
-                uri={story.coverImage}
-                style={[styles.coverImage, { width: cardWidth, height: cardHeight, borderRadius }]}
-                resizeMode="cover"
-              />
-            ) : (
-              <Image
-                source={typeof story.coverImage === 'string' ? { uri: story.coverImage } : story.coverImage}
-                style={[styles.coverImage, { width: cardWidth, height: cardHeight, borderRadius }]}
-                contentFit="cover"
-                transition={0} // Prevent flicker on remount - works on iOS and Android
-                cachePolicy="memory-disk" // Use aggressive caching
-              />
-            )
+            <Image
+              source={typeof story.coverImage === 'string' ? { uri: story.coverImage } : story.coverImage}
+              style={[styles.coverImage, { width: cardWidth, height: cardHeight, borderRadius }]}
+              contentFit="cover"
+              transition={0} // Prevent flicker on remount - works on iOS and Android
+              cachePolicy="memory-disk" // Use aggressive caching
+            />
           ) : (
             <View style={[styles.placeholderContainer, { width: cardWidth, height: cardHeight, borderRadius }]}>
               <Text style={{ fontSize: emojiFontSize }}>{story.emoji}</Text>
@@ -238,23 +230,8 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     previewCardRef.current = null;
   }, []);
 
-  // Warm the memory cache for CMS story cover images BEFORE first render
-  // This ensures images display instantly without flicker on screen remount
-  useLayoutEffect(() => {
-    const warmCache = async () => {
-      const cmsUrls = stories
-        .map(s => s.coverImage)
-        .filter((img): img is string =>
-          typeof img === 'string' && img.includes('api.colearnwithfreya.co.uk')
-        );
-
-      if (cmsUrls.length > 0) {
-        await AuthenticatedImageService.warmMemoryCache(cmsUrls);
-      }
-    };
-
-    warmCache();
-  }, [stories]);
+  // All story images are loaded from local cache after batch sync
+  // No need for warm cache - images are already local file paths
 
   // Load stories - instant if cached, async if first load
   useEffect(() => {
