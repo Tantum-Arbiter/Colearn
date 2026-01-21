@@ -177,7 +177,7 @@ object PublicApiScenario {
 
   /**
    * Batch URL generation endpoint - returns signed URLs for multiple assets.
-   * Reduces API calls from N to ceil(N/50).
+   * Reduces API calls from N to ceil(N/100).
    */
   val batch_urls_scenario = injectLoad(
     scenario("POST /api/assets/batch-urls - Batch Asset URLs")
@@ -199,17 +199,17 @@ object PublicApiScenario {
   )
 
   /**
-   * Large batch URL request - tests max capacity (50 paths)
+   * Large batch URL request - tests max capacity (100 paths)
    */
   val batch_urls_large_scenario = injectLoad(
-    scenario("POST /api/assets/batch-urls - Large Batch (50 paths)")
+    scenario("POST /api/assets/batch-urls - Large Batch (100 paths)")
       .exec(
         http("batch_asset_urls_large")
           .post("/api/assets/batch-urls")
           .headers(authHeaders)
           .body(StringBody(
             s"""{
-              "paths": [${(1 to 50).map(i => s""""stories/story-$i/cover.webp"""").mkString(",")}]
+              "paths": [${(1 to 100).map(i => s""""stories/story-$i/cover.webp"""").mkString(",")}]
             }"""
           ))
           .check(status.in(200, 207, 500))

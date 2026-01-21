@@ -710,8 +710,8 @@ describe('BatchSyncService', () => {
     });
 
     it('should handle large number of batches correctly', async () => {
-      // Create 120 unique assets (should be 3 batches at 50 per batch)
-      const assetPaths = Array.from({ length: 120 }, (_, i) => `stories/batch/asset${i}.webp`);
+      // Create 250 unique assets (should be 3 batches at 100 per batch)
+      const assetPaths = Array.from({ length: 250 }, (_, i) => `stories/batch/asset${i}.webp`);
       const storyWithManyAssets: Story = {
         id: 'many-assets',
         title: 'Many Assets',
@@ -730,14 +730,14 @@ describe('BatchSyncService', () => {
 
       mockVersionManager.checkVersions.mockResolvedValue({
         localVersion: null,
-        serverVersion: { stories: 1, assets: 120, lastUpdated: new Date().toISOString() },
+        serverVersion: { stories: 1, assets: 250, lastUpdated: new Date().toISOString() },
         needsStorySync: true,
         needsAssetSync: true,
       });
       mockCacheManager.getStories.mockResolvedValue([]);
       mockApiClient.request.mockResolvedValueOnce({
         serverVersion: 1,
-        assetVersion: 120,
+        assetVersion: 250,
         stories: [storyWithManyAssets],
         deletedStoryIds: [],
         storyChecksums: { 'many-assets': 'many123' },
@@ -747,11 +747,11 @@ describe('BatchSyncService', () => {
       });
       mockCacheManager.hasAsset.mockResolvedValue(false);
 
-      // 3 batch URL responses
+      // 3 batch URL responses (100 + 100 + 50 = 250 assets)
       mockApiClient.request
-        .mockResolvedValueOnce({ urls: Array(50).fill({ path: 'p', signedUrl: 'u' }), failed: [] })
-        .mockResolvedValueOnce({ urls: Array(50).fill({ path: 'p', signedUrl: 'u' }), failed: [] })
-        .mockResolvedValueOnce({ urls: Array(20).fill({ path: 'p', signedUrl: 'u' }), failed: [] });
+        .mockResolvedValueOnce({ urls: Array(100).fill({ path: 'p', signedUrl: 'u' }), failed: [] })
+        .mockResolvedValueOnce({ urls: Array(100).fill({ path: 'p', signedUrl: 'u' }), failed: [] })
+        .mockResolvedValueOnce({ urls: Array(50).fill({ path: 'p', signedUrl: 'u' }), failed: [] });
 
       mockCacheManager.downloadAndCacheAsset.mockResolvedValue('/local/path');
       mockCacheManager.updateStories.mockResolvedValue();
@@ -761,7 +761,7 @@ describe('BatchSyncService', () => {
 
       // 1 version + 1 delta + 3 batch URLs = 5 API calls
       expect(stats.apiCalls).toBe(5);
-      expect(stats.assetsDownloaded).toBe(120);
+      expect(stats.assetsDownloaded).toBe(250);
     });
 
     it('should handle mix of successful and failed URL generations', async () => {

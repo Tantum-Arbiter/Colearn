@@ -59,7 +59,7 @@ class BatchApiPeakLoad extends Simulation {
       details("batch_asset_urls").responseTime.percentile(95).lt(1000),
       details("batch_asset_urls").responseTime.mean.lt(500),
 
-      // Large batch URLs (50 paths) - allow more time for GCS
+      // Large batch URLs (100 paths) - allow more time for GCS
       details("batch_asset_urls_large").responseTime.percentile(99).lt(3000),
       details("batch_asset_urls_large").responseTime.percentile(95).lt(2000),
 

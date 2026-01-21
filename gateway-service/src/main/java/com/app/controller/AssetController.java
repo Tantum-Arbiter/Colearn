@@ -64,9 +64,9 @@ public class AssetController {
      * Generate signed URLs for multiple assets in a single request.
      * This is the primary endpoint for asset URL generation.
      *
-     * Optimized for batch operations - reduces API calls from N to ceil(N/50).
+     * Optimized for batch operations - reduces API calls from N to ceil(N/100).
      *
-     * @param request Contains list of asset paths (max 50 per request)
+     * @param request Contains list of asset paths (max 100 per request)
      * @return BatchUrlsResponse with signed URLs and any failed paths
      */
     @PostMapping("/batch-urls")

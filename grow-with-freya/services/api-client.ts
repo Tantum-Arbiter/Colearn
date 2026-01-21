@@ -429,9 +429,9 @@ export class ApiClient {
 
   /**
    * Get batch signed URLs for multiple assets
-   * Reduces API calls from N to ceil(N/50)
+   * Reduces API calls from N to ceil(N/100)
    *
-   * @param paths - Array of asset paths (max 50 per request)
+   * @param paths - Array of asset paths (max 100 per request)
    * @returns Object with signed URLs and any failed paths
    */
   static async getBatchSignedUrls(paths: string[]): Promise<{

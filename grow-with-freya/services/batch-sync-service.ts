@@ -6,8 +6,8 @@ import { Logger } from '@/utils/logger';
 
 const log = Logger.create('BatchSyncService');
 
-// Batch size for URL requests (max 50 per batch)
-const BATCH_URL_SIZE = 50;
+// Batch size for URL requests (max 100 per batch - doubled from 50 for faster sync)
+const BATCH_URL_SIZE = 100;
 // Concurrent download limit
 const CONCURRENT_DOWNLOADS = 5;
 
@@ -81,7 +81,7 @@ export type BatchSyncProgressCallback = (progress: BatchSyncProgress) => void;
  * Key optimizations:
  * 1. Single version check instead of per-story checks
  * 2. Delta sync - only fetch changed stories
- * 3. Batch URL signing - 50 URLs per request instead of 1
+ * 3. Batch URL signing - 100 URLs per request instead of 1
  * 4. Parallel asset downloads with concurrency limit
  * 
  * API Call Flow:
