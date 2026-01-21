@@ -144,17 +144,18 @@ export class BatchSyncService {
       errors: [],
     };
 
-    log.info('[Batch Sync] ========== BATCH SYNC STARTED ==========');
+    log.info('[User Journey Flow 4: Batch Sync] ========== BATCH SYNC STARTED ==========');
 
     try {
       // Phase 1: Version check (1 API call)
+      log.info('[User Journey Flow 4: Batch Sync] Step 1/8: Checking content versions...');
       onProgress?.({ phase: 'version-check', progress: 5, message: 'Checking for updates...' });
-      
+
       const versionCheck = await VersionManager.checkVersions();
       stats.apiCalls++;
 
       if (!versionCheck.serverVersion) {
-        log.info('[Batch Sync] Offline - using cached content');
+        log.info('[User Journey Flow 4: Batch Sync] Step 2/8: OFFLINE - using cached content');
         stats.fromCache = true;
         stats.endTime = Date.now();
         stats.durationMs = stats.endTime - stats.startTime;
@@ -164,17 +165,18 @@ export class BatchSyncService {
 
       // Check if sync is needed
       if (!versionCheck.needsStorySync && !versionCheck.needsAssetSync) {
-        log.info('[Batch Sync] Already up to date - no sync needed');
+        log.info('[User Journey Flow 4: Batch Sync] Step 2/8: Already up to date - no sync needed');
         stats.endTime = Date.now();
         stats.durationMs = stats.endTime - stats.startTime;
         onProgress?.({ phase: 'complete', progress: 100, message: 'Already up to date' });
         return stats;
       }
 
-      log.info(`[Batch Sync] Local: stories=${versionCheck.localVersion?.stories || 0}, assets=${versionCheck.localVersion?.assets || 0}`);
-      log.info(`[Batch Sync] Server: stories=${versionCheck.serverVersion.stories}, assets=${versionCheck.serverVersion.assets}`);
+      log.info(`[User Journey Flow 4: Batch Sync] Step 2/8: Sync needed - local(stories=${versionCheck.localVersion?.stories || 0}, assets=${versionCheck.localVersion?.assets || 0})`);
+      log.info(`[User Journey Flow 4: Batch Sync] Step 2/8: Sync needed - server(stories=${versionCheck.serverVersion.stories}, assets=${versionCheck.serverVersion.assets})`);
 
       // Phase 2: Fetch delta content (1 API call)
+      log.info('[User Journey Flow 4: Batch Sync] Step 3/8: Fetching delta content from POST /api/stories/delta...');
       onProgress?.({ phase: 'fetching-delta', progress: 15, message: 'Fetching updates...' });
 
       const deltaResult = await this.fetchDeltaContent(versionCheck);
@@ -182,27 +184,28 @@ export class BatchSyncService {
       stats.storiesUpdated = deltaResult.stories.length;
       stats.storiesDeleted = deltaResult.deletedStoryIds.length;
 
-      log.info(`[Batch Sync] Delta: ${deltaResult.stories.length} new/updated, ${deltaResult.deletedStoryIds.length} deleted`);
+      log.info(`[User Journey Flow 4: Batch Sync] Step 3/8: Delta result - ${deltaResult.stories.length} new/updated stories, ${deltaResult.deletedStoryIds.length} deleted`);
 
       // Handle deletions
       if (deltaResult.deletedStoryIds.length > 0) {
+        log.info(`[User Journey Flow 4: Batch Sync] Step 4/8: Removing ${deltaResult.deletedStoryIds.length} deleted stories from cache: ${deltaResult.deletedStoryIds.join(', ')}`);
         await CacheManager.removeStories(deltaResult.deletedStoryIds);
-        log.info(`[Batch Sync] Removed ${deltaResult.deletedStoryIds.length} deleted stories`);
       }
 
       // Phase 3: Extract all asset paths from new/updated stories
       const assetPaths = this.extractAssetPaths(deltaResult.stories);
       stats.totalAssets = assetPaths.length;
-      log.info(`[Batch Sync] Total assets to sync: ${assetPaths.length}`);
+      log.info(`[User Journey Flow 4: Batch Sync] Step 5/8: Extracted ${assetPaths.length} total assets from updated stories`);
 
       if (assetPaths.length > 0) {
         // Filter out already cached assets
         const uncachedPaths = await this.filterUncachedAssets(assetPaths);
         stats.assetsSkipped = assetPaths.length - uncachedPaths.length;
-        log.info(`[Batch Sync] Assets to download: ${uncachedPaths.length} (${stats.assetsSkipped} already cached)`);
+        log.info(`[User Journey Flow 4: Batch Sync] Step 5/8: ${uncachedPaths.length} assets need download, ${stats.assetsSkipped} already cached`);
 
         if (uncachedPaths.length > 0) {
           // Phase 4: Get batch signed URLs
+          log.info(`[User Journey Flow 4: Batch Sync] Step 6/8: Fetching batch URLs from POST /api/assets/batch-urls...`);
           onProgress?.({ phase: 'batch-urls', progress: 25, message: 'Preparing downloads...' });
 
           const batchUrlResult = await this.getBatchSignedUrls(uncachedPaths);
@@ -210,12 +213,13 @@ export class BatchSyncService {
           stats.assetsFailed += batchUrlResult.failed.length;
 
           if (batchUrlResult.failed.length > 0) {
-            log.warn(`[Batch Sync] Failed to get URLs for ${batchUrlResult.failed.length} assets`);
+            log.warn(`[User Journey Flow 4: Batch Sync] Step 6/8: Failed to get URLs for ${batchUrlResult.failed.length} assets`);
             stats.errors.push(`Failed to get URLs for ${batchUrlResult.failed.length} assets`);
           }
 
           // Phase 5: Download assets in parallel batches
           if (batchUrlResult.urls.length > 0) {
+            log.info(`[User Journey Flow 4: Batch Sync] Step 7/8: Downloading ${batchUrlResult.urls.length} assets to local cache...`);
             const downloadResult = await this.downloadAssetsInBatches(
               batchUrlResult.urls,
               (current, total) => {
@@ -232,6 +236,7 @@ export class BatchSyncService {
             stats.assetsFailed += downloadResult.failed;
             stats.bytesDownloaded = downloadResult.bytesDownloaded;
             stats.errors.push(...downloadResult.errors);
+            log.info(`[User Journey Flow 4: Batch Sync] Step 7/8: Downloaded ${downloadResult.downloaded} assets (${this.formatBytes(downloadResult.bytesDownloaded)}), ${downloadResult.failed} failed`);
           }
         }
       }
@@ -239,7 +244,7 @@ export class BatchSyncService {
       // Phase 6: Save stories to cache
       if (deltaResult.stories.length > 0) {
         await CacheManager.updateStories(deltaResult.stories);
-        log.info(`[Batch Sync] Saved ${deltaResult.stories.length} stories to cache`);
+        log.info(`[User Journey Flow 4: Batch Sync] Step 8/8: Saved ${deltaResult.stories.length} stories to unified cache`);
       }
 
       // Update local version
@@ -251,11 +256,10 @@ export class BatchSyncService {
       stats.endTime = Date.now();
       stats.durationMs = stats.endTime - stats.startTime;
 
-      log.info('[Batch Sync] ========== BATCH SYNC COMPLETE ==========');
-      log.info(`[Batch Sync] Duration: ${stats.durationMs}ms`);
-      log.info(`[Batch Sync] API Calls: ${stats.apiCalls}`);
-      log.info(`[Batch Sync] Stories: ${stats.storiesUpdated} updated, ${stats.storiesDeleted} deleted`);
-      log.info(`[Batch Sync] Assets: ${stats.assetsDownloaded} downloaded, ${stats.assetsSkipped} cached, ${stats.assetsFailed} failed`);
+      log.info('[User Journey Flow 4: Batch Sync] ========== BATCH SYNC COMPLETE ==========');
+      log.info(`[User Journey Flow 4: Batch Sync] Duration: ${stats.durationMs}ms, API Calls: ${stats.apiCalls}`);
+      log.info(`[User Journey Flow 4: Batch Sync] Stories: ${stats.storiesUpdated} updated, ${stats.storiesDeleted} deleted`);
+      log.info(`[User Journey Flow 4: Batch Sync] Assets: ${stats.assetsDownloaded} downloaded (${this.formatBytes(stats.bytesDownloaded)}), ${stats.assetsSkipped} cached, ${stats.assetsFailed} failed`);
 
       onProgress?.({ phase: 'complete', progress: 100, message: 'Sync complete' });
       return stats;
@@ -265,10 +269,21 @@ export class BatchSyncService {
       stats.errors.push(errorMsg);
       stats.endTime = Date.now();
       stats.durationMs = stats.endTime - stats.startTime;
-      log.error('[Batch Sync] ========== BATCH SYNC FAILED ==========');
-      log.error(`[Batch Sync] Error: ${errorMsg}`);
+      log.error('[User Journey Flow 4: Batch Sync] ========== BATCH SYNC FAILED ==========');
+      log.error(`[User Journey Flow 4: Batch Sync] Error: ${errorMsg}`);
       throw error;
     }
+  }
+
+  /**
+   * Helper to format bytes to human readable string
+   */
+  private static formatBytes(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
   /**
