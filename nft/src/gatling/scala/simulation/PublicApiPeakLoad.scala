@@ -66,11 +66,8 @@ class PublicApiPeakLoad extends Simulation {
       details("get_all_stories").responseTime.percentile(99).lt(1000),
       details("get_assets_version").responseTime.percentile(99).lt(1000),
 
-      // CMS sync endpoints - larger payloads, allow up to 3 seconds
-      details("sync_stories").responseTime.percentile(99).lt(3000),
-      details("sync_assets").responseTime.percentile(99).lt(3000),
-
       // Batch processing endpoints - checksum comparison, allow 2 seconds
+      // Note: sync_stories and sync_assets removed - endpoints no longer exist
       details("delta_sync_stories").responseTime.percentile(99).lt(2000),
       details("batch_asset_urls").responseTime.percentile(99).lt(2000),
 
