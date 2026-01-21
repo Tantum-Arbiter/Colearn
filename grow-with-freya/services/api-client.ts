@@ -424,6 +424,70 @@ export class ApiClient {
     // Clear local storage
     await SecureStorage.clearAuthData();
   }
+
+  // ============ BATCH SYNC ENDPOINTS ============
+
+  /**
+   * Get batch signed URLs for multiple assets
+   * Reduces API calls from N to ceil(N/50)
+   *
+   * @param paths - Array of asset paths (max 50 per request)
+   * @returns Object with signed URLs and any failed paths
+   */
+  static async getBatchSignedUrls(paths: string[]): Promise<{
+    urls: Array<{ path: string; signedUrl: string; expiresAt: number }>;
+    failed: string[];
+  }> {
+    return this.request('/api/assets/batch-urls', {
+      method: 'POST',
+      body: JSON.stringify({ paths }),
+    });
+  }
+
+  /**
+   * Fetch delta content (only changed stories since last sync)
+   *
+   * @param clientVersion - Client's current version number
+   * @param storyChecksums - Map of storyId -> checksum for change detection
+   * @returns Delta response with new/updated stories and deleted IDs
+   */
+  static async getDeltaContent(
+    clientVersion: number,
+    storyChecksums: Record<string, string>
+  ): Promise<{
+    serverVersion: number;
+    assetVersion: number;
+    stories: any[];
+    deletedStoryIds: string[];
+    storyChecksums: Record<string, string>;
+    totalStories: number;
+    updatedCount: number;
+    lastUpdated: number;
+  }> {
+    return this.request('/api/stories/delta', {
+      method: 'POST',
+      body: JSON.stringify({
+        clientVersion,
+        storyChecksums,
+      }),
+    });
+  }
+
+  /**
+   * Get content version from server
+   * Used for quick version check before sync
+   *
+   * @returns Server's current content version
+   */
+  static async getContentVersion(): Promise<{
+    id: string;
+    version: number;
+    assetVersion: number;
+    lastUpdated: number;
+    storyChecksums: Record<string, string>;
+    totalStories: number;
+  }> {
+    // Use short timeout for version check - fail fast if server is slow
+    return this.request('/api/stories/version', { method: 'GET' }, 5000);
+  }
 }
-
-

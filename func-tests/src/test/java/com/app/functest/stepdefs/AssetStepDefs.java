@@ -7,7 +7,6 @@ import io.restassured.response.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,8 +45,8 @@ public class AssetStepDefs extends BaseStepDefs {
         assetSyncRequest = new HashMap<>();
         assetSyncRequest.put("clientVersion", versionResponse.jsonPath().getInt("version"));
         assetSyncRequest.put("assetChecksums", serverChecksums);
-        String lastUpdatedStr = versionResponse.jsonPath().getString("lastUpdated");
-        long lastSyncTimestamp = lastUpdatedStr != null ? Instant.parse(lastUpdatedStr).toEpochMilli() : 0L;
+        Object lastUpdatedValue = versionResponse.jsonPath().get("lastUpdated");
+        long lastSyncTimestamp = parseLastUpdated(lastUpdatedValue);
         assetSyncRequest.put("lastSyncTimestamp", lastSyncTimestamp);
     }
 
@@ -65,7 +64,16 @@ public class AssetStepDefs extends BaseStepDefs {
 
     @Given("assets exist in the system")
     public void assetsExistInTheSystem() {
-        // Assets are seeded via /private/reset endpoint
+        // Force re-seed assets to ensure they exist
+        Response resetResponse = given()
+                .when()
+                .post("/private/reset?force=true");
+
+        if (resetResponse.getStatusCode() == 200) {
+            log.info("Force reset completed - assets should be seeded");
+        } else {
+            log.warn("Force reset failed: {}", resetResponse.getBody().asString());
+        }
     }
 
     @Given("I have an asset sync request with {int} matching checksums")
@@ -88,8 +96,8 @@ public class AssetStepDefs extends BaseStepDefs {
         assetSyncRequest = new HashMap<>();
         assetSyncRequest.put("clientVersion", versionResponse.jsonPath().getInt("version"));
         assetSyncRequest.put("assetChecksums", serverChecksums);
-        String lastUpdatedStr = versionResponse.jsonPath().getString("lastUpdated");
-        long lastSyncTimestamp = lastUpdatedStr != null ? Instant.parse(lastUpdatedStr).toEpochMilli() : 0L;
+        Object lastUpdatedValue = versionResponse.jsonPath().get("lastUpdated");
+        long lastSyncTimestamp = parseLastUpdated(lastUpdatedValue);
         assetSyncRequest.put("lastSyncTimestamp", lastSyncTimestamp);
     }
 

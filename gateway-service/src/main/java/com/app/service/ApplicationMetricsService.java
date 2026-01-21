@@ -1207,4 +1207,100 @@ public class ApplicationMetricsService {
         return startupTimeMs.get();
     }
 
+    // --- Batch Sync Metrics ---
+
+    /**
+     * Record batch URL generation request
+     * @param urlsRequested Number of URLs requested
+     * @param urlsGenerated Number of URLs successfully generated
+     * @param urlsFailed Number of URLs that failed to generate
+     * @param durationMs Duration of the batch operation in milliseconds
+     */
+    public void recordBatchUrlGeneration(int urlsRequested, int urlsGenerated, int urlsFailed, long durationMs) {
+        Counter.builder("app.batch.urls.requests")
+                .tags("result", urlsFailed == 0 ? "success" : "partial")
+                .description("Number of batch URL generation requests")
+                .register(meterRegistry)
+                .increment();
+
+        Counter.builder("app.batch.urls.generated")
+                .description("Total number of URLs generated in batch requests")
+                .register(meterRegistry)
+                .increment(urlsGenerated);
+
+        if (urlsFailed > 0) {
+            Counter.builder("app.batch.urls.failed")
+                    .description("Total number of URLs that failed to generate")
+                    .register(meterRegistry)
+                    .increment(urlsFailed);
+        }
+
+        Timer.builder("app.batch.urls.duration")
+                .description("Duration of batch URL generation operations")
+                .register(meterRegistry)
+                .record(durationMs, TimeUnit.MILLISECONDS);
+
+        logger.debug("Batch URL generation metric recorded: requested={}, generated={}, failed={}, duration={}ms",
+                urlsRequested, urlsGenerated, urlsFailed, durationMs);
+    }
+
+    /**
+     * Record delta sync request
+     * @param clientVersion Client's content version
+     * @param serverVersion Server's content version
+     * @param storiesUpdated Number of stories that need updating
+     * @param storiesDeleted Number of stories that were deleted
+     * @param durationMs Duration of the delta sync operation in milliseconds
+     */
+    public void recordDeltaSync(int clientVersion, int serverVersion, int storiesUpdated, int storiesDeleted, long durationMs) {
+        boolean isUpToDate = storiesUpdated == 0 && storiesDeleted == 0;
+
+        Counter.builder("app.delta.sync.requests")
+                .tags("result", isUpToDate ? "up_to_date" : "needs_update")
+                .description("Number of delta sync requests")
+                .register(meterRegistry)
+                .increment();
+
+        if (!isUpToDate) {
+            Counter.builder("app.delta.sync.stories.updated")
+                    .tags("count_category", categorizeCount(storiesUpdated))
+                    .description("Number of stories updated in delta sync")
+                    .register(meterRegistry)
+                    .increment(storiesUpdated);
+
+            if (storiesDeleted > 0) {
+                Counter.builder("app.delta.sync.stories.deleted")
+                        .description("Number of stories deleted in delta sync")
+                        .register(meterRegistry)
+                        .increment(storiesDeleted);
+            }
+        }
+
+        Timer.builder("app.delta.sync.duration")
+                .description("Duration of delta sync operations")
+                .register(meterRegistry)
+                .record(durationMs, TimeUnit.MILLISECONDS);
+
+        logger.debug("Delta sync metric recorded: clientVersion={}, serverVersion={}, updated={}, deleted={}, duration={}ms",
+                clientVersion, serverVersion, storiesUpdated, storiesDeleted, durationMs);
+    }
+
+    /**
+     * Record API call reduction achieved by batch processing
+     * @param traditionalCalls Number of API calls that would have been made without batching
+     * @param batchedCalls Number of API calls actually made with batching
+     */
+    public void recordApiCallReduction(int traditionalCalls, int batchedCalls) {
+        int callsSaved = traditionalCalls - batchedCalls;
+        double reductionPercent = traditionalCalls > 0 ? (callsSaved * 100.0 / traditionalCalls) : 0;
+
+        Counter.builder("app.batch.calls.saved")
+                .description("Number of API calls saved by batch processing")
+                .register(meterRegistry)
+                .increment(callsSaved);
+
+        logger.debug("API call reduction recorded: traditional={}, batched={}, saved={}, reduction={}%",
+                traditionalCalls, batchedCalls, callsSaved, String.format("%.1f", reductionPercent));
+    }
+
 }

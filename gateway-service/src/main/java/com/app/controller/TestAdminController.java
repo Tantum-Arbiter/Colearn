@@ -86,9 +86,15 @@ public class TestAdminController {
 
     /**
      * Reset server-side state that can affect cross-scenario behavior.
+     * Use ?force=true to clear and re-seed CMS data even if already seeded this JVM run.
+     * Use ?clearOnly=true to clear CMS data without seeding (for tests that seed their own data).
      */
     @PostMapping("/reset")
-    public ResponseEntity<Map<String, Object>> reset() {
+    public ResponseEntity<Map<String, Object>> reset(
+            @org.springframework.web.bind.annotation.RequestParam(name = "force", required = false) String forceParam,
+            @org.springframework.web.bind.annotation.RequestParam(name = "clearOnly", required = false) String clearOnlyParam) {
+        boolean force = "true".equalsIgnoreCase(forceParam);
+        boolean clearOnly = "true".equalsIgnoreCase(clearOnlyParam);
         try {
             rateLimitingFilter.resetForTests();
             flags.reset();
@@ -102,19 +108,30 @@ public class TestAdminController {
                 logger.warn("Failed to reset circuit breakers: {}", ex.getMessage());
             }
 
-            // Seed test stories/assets ONCE per JVM run to avoid excessive Firestore ops (~30 writes)
-            // User data is NOT cleared so it persists for inspection
-            if (firestore != null && !firestoreSeeded) {
+            // Handle CMS data based on parameters
+            boolean shouldClearAndSeed = firestore != null && (force || !firestoreSeeded);
+            boolean shouldClearOnly = firestore != null && clearOnly;
+
+            if (shouldClearOnly) {
                 try {
-                    clearCmsCollections();
+                    // When clearOnly, only clear stories/content_versions, preserve asset_versions
+                    clearCmsCollections(true);
+                    logger.info("Cleared CMS story collections (clearOnly=true)");
+                } catch (Exception ex) {
+                    logger.warn("Failed to clear Firestore data: {}", ex.getMessage());
+                }
+            } else if (shouldClearAndSeed) {
+                try {
+                    // Clear all CMS collections including assets
+                    clearCmsCollections(false);
                     seedTestStories();
                     seedTestAssets();
                     firestoreSeeded = true;
-                    logger.info("Cleared CMS data and seeded test stories/assets (first reset this run)");
+                    logger.info("Cleared CMS data and seeded test stories/assets (force={}, firestoreSeeded={})", force, firestoreSeeded);
                 } catch (Exception ex) {
                     logger.warn("Failed to clear/seed Firestore data: {}", ex.getMessage());
                 }
-            } else if (firestoreSeeded) {
+            } else {
                 logger.debug("Skipping Firestore seeding (already done this run)");
             }
 
@@ -131,10 +148,10 @@ public class TestAdminController {
     }
 
     /**
-     * Clear CMS collections (stories, content_versions, asset_versions) for test data refresh.
-     * User data (users, user_profiles, user_sessions) is NOT cleared so it persists for inspection.
+     * Clear CMS collections for test data refresh.
+     * @param storiesOnly if true, only clear stories and content_versions (preserve asset_versions)
      */
-    private void clearCmsCollections() {
+    private void clearCmsCollections(boolean storiesOnly) {
         try {
             int storiesDeleted = 0;
             int contentVersionsDeleted = 0;
@@ -160,13 +177,15 @@ public class TestAdminController {
                 }
             }
 
-            // Clear asset_versions collection
-            for (var docRef : firestore.collection("asset_versions").listDocuments()) {
-                try {
-                    docRef.delete().get();
-                    assetVersionsDeleted++;
-                } catch (Exception e) {
-                    logger.warn("Failed to delete asset_versions document: {}", e.getMessage());
+            // Clear asset_versions collection (unless storiesOnly)
+            if (!storiesOnly) {
+                for (var docRef : firestore.collection("asset_versions").listDocuments()) {
+                    try {
+                        docRef.delete().get();
+                        assetVersionsDeleted++;
+                    } catch (Exception e) {
+                        logger.warn("Failed to delete asset_versions document: {}", e.getMessage());
+                    }
                 }
             }
 
@@ -205,66 +224,77 @@ public class TestAdminController {
     }
 
     private void seedTestAssets() {
-        if (storage == null || gcsProperties == null) {
-            logger.warn("Storage or GcsProperties not available, skipping asset seeding");
-            return;
+        // Define test assets
+        List<String[]> testAssets = List.of(
+            new String[]{"stories/test-story-1/cover.webp", "image/webp"},
+            new String[]{"stories/test-story-1/page-1/background.webp", "image/webp"},
+            new String[]{"stories/test-story-1/page-2/background.webp", "image/webp"},
+            new String[]{"stories/test-story-2/cover.webp", "image/webp"},
+            new String[]{"stories/test-story-2/page-1/background.webp", "image/webp"},
+            new String[]{"stories/test-story-3/cover.webp", "image/webp"}
+        );
+
+        Map<String, String> assetChecksums = new HashMap<>();
+
+        // Generate checksums for all assets (needed for Firestore even if GCS fails)
+        for (String[] asset : testAssets) {
+            String path = asset[0];
+            byte[] content = ("Test asset content for " + path).getBytes(StandardCharsets.UTF_8);
+            String checksum = calculateAssetChecksum(content);
+            assetChecksums.put(path, checksum);
         }
 
-        try {
-            String bucket = gcsProperties.bucketName();
-            Map<String, String> assetChecksums = new HashMap<>();
-
-            // Create test bucket if it doesn't exist (for emulator)
+        // Try to seed to GCS if storage is available (optional - may fail in emulator)
+        if (storage != null && gcsProperties != null) {
             try {
-                if (storage.get(bucket) == null) {
-                    storage.create(com.google.cloud.storage.BucketInfo.of(bucket));
-                    logger.info("Created test bucket: {}", bucket);
+                String bucket = gcsProperties.bucketName();
+
+                // Create test bucket if it doesn't exist (for emulator)
+                try {
+                    if (storage.get(bucket) == null) {
+                        storage.create(com.google.cloud.storage.BucketInfo.of(bucket));
+                        logger.info("Created test bucket: {}", bucket);
+                    }
+                } catch (Exception e) {
+                    logger.debug("Bucket might already exist: {}", e.getMessage());
                 }
+
+                for (String[] asset : testAssets) {
+                    String path = asset[0];
+                    String contentType = asset[1];
+                    byte[] content = ("Test asset content for " + path).getBytes(StandardCharsets.UTF_8);
+
+                    BlobId blobId = BlobId.of(bucket, path);
+                    BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
+                            .setContentType(contentType)
+                            .build();
+
+                    storage.create(blobInfo, content);
+                    logger.debug("Seeded asset to bucket '{}' with path '{}'", bucket, path);
+                }
+                logger.info("Seeded {} test assets to GCS bucket", testAssets.size());
             } catch (Exception e) {
-                logger.debug("Bucket might already exist: {}", e.getMessage());
+                logger.warn("Failed to seed assets to GCS (continuing with Firestore seeding): {}", e.getMessage());
             }
+        } else {
+            logger.debug("Storage not available, skipping GCS upload");
+        }
 
-            // Seed test assets for each story
-            List<String[]> testAssets = List.of(
-                new String[]{"stories/test-story-1/cover.webp", "image/webp"},
-                new String[]{"stories/test-story-1/page-1/background.webp", "image/webp"},
-                new String[]{"stories/test-story-1/page-2/background.webp", "image/webp"},
-                new String[]{"stories/test-story-2/cover.webp", "image/webp"},
-                new String[]{"stories/test-story-2/page-1/background.webp", "image/webp"},
-                new String[]{"stories/test-story-3/cover.webp", "image/webp"}
-            );
+        // Always save asset version to Firestore (even if GCS upload failed)
+        if (firestore != null) {
+            try {
+                AssetVersion assetVersion = new AssetVersion();
+                assetVersion.setId("current");
+                assetVersion.setVersion(1);
+                assetVersion.setLastUpdated(Instant.now());
+                assetVersion.setAssetChecksums(assetChecksums);
+                assetVersion.setTotalAssets(testAssets.size());
 
-            for (String[] asset : testAssets) {
-                String path = asset[0];
-                String contentType = asset[1];
-
-                // Create dummy content
-                byte[] content = ("Test asset content for " + path).getBytes(StandardCharsets.UTF_8);
-                String checksum = calculateAssetChecksum(content);
-
-                BlobId blobId = BlobId.of(bucket, path);
-                BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
-                        .setContentType(contentType)
-                        .build();
-
-                storage.create(blobInfo, content);
-                logger.debug("Seeded asset to bucket '{}' with path '{}'", bucket, path);
-                assetChecksums.put(path, checksum);
+                firestore.collection("asset_versions").document("current").set(assetVersion).get();
+                logger.info("Seeded asset_versions document with {} assets", testAssets.size());
+            } catch (Exception e) {
+                logger.error("Error seeding asset_versions to Firestore", e);
             }
-
-            // Save asset version to Firestore
-            AssetVersion assetVersion = new AssetVersion();
-            assetVersion.setId("current");
-            assetVersion.setVersion(1);
-            assetVersion.setLastUpdated(Instant.now());
-            assetVersion.setAssetChecksums(assetChecksums);
-            assetVersion.setTotalAssets(testAssets.size());
-
-            firestore.collection("asset_versions").document("current").set(assetVersion).get();
-
-            logger.info("Seeded {} test assets and asset version", testAssets.size());
-        } catch (Exception e) {
-            logger.error("Error seeding test assets", e);
         }
     }
 

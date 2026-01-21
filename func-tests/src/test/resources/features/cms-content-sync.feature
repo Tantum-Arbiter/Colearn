@@ -319,7 +319,8 @@ Feature: CMS Content Sync and Delta Sync Testing
 
   @local @docker @emulator-only @content-version @delta-sync
   Scenario: Delta sync works correctly after content version rebuild
-    Given I seed 5 test stories to the local Firestore emulator
+    Given I force reset the gateway state
+    And I seed 5 test stories to the local Firestore emulator
     And I have performed an initial sync
     When I delete story "test-story-2" from Firestore
     And I make a POST request to "/private/rebuild-content-version"

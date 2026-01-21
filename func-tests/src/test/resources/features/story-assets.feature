@@ -32,7 +32,8 @@ Feature: Story Asset Delivery with Signed URLs
 
   @delta-sync @emulator-only
   Scenario: Initial asset sync with no client data
-    Given I have an asset sync request with no client checksums
+    Given assets exist in the system
+    And I have an asset sync request with no client checksums
     When I make a POST request to "/api/assets/sync" with the asset sync request
     Then the response status code should be 200
     And the response should contain field "serverVersion"
@@ -50,7 +51,8 @@ Feature: Story Asset Delivery with Signed URLs
 
   @delta-sync @emulator-only
   Scenario: Asset sync with outdated checksums
-    Given I have an asset sync request with outdated checksums
+    Given assets exist in the system
+    And I have an asset sync request with outdated checksums
     When I make a POST request to "/api/assets/sync" with the asset sync request
     Then the response status code should be 200
     And the response field "updatedCount" should be greater than 0

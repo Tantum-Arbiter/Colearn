@@ -1,11 +1,13 @@
 package com.app.controller;
 
 import com.app.dto.StorySyncRequest;
+import com.app.model.AssetVersion;
 import com.app.model.ContentVersion;
 import com.app.model.InteractiveElement;
 import com.app.model.Story;
 import com.app.model.StoryPage;
 import com.app.service.ApplicationMetricsService;
+import com.app.service.AssetService;
 import com.app.service.GatewayServiceApplication;
 import com.app.service.StoryService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,6 +22,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.google.cloud.Timestamp;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -40,6 +43,9 @@ class StoryControllerTest {
     private StoryService storyService;
 
     @MockBean
+    private AssetService assetService;
+
+    @MockBean
     private ApplicationMetricsService metricsService;
 
     @Autowired
@@ -48,6 +54,7 @@ class StoryControllerTest {
     private Story testStory1;
     private Story testStory2;
     private ContentVersion testContentVersion;
+    private AssetVersion testAssetVersion;
 
     @BeforeEach
     void setUp() {
@@ -111,6 +118,21 @@ class StoryControllerTest {
         checksums.put("story-1", "checksum1");
         checksums.put("story-2", "checksum2");
         testContentVersion.setStoryChecksums(checksums);
+
+        // Create test asset version
+        testAssetVersion = new AssetVersion();
+        testAssetVersion.setId("current");
+        testAssetVersion.setVersion(1);
+        testAssetVersion.setLastUpdated(Instant.now());
+        testAssetVersion.setTotalAssets(2);
+        Map<String, String> assetChecksums = new HashMap<>();
+        assetChecksums.put("assets/story-1/image.webp", "asset-checksum1");
+        assetChecksums.put("assets/story-2/image.webp", "asset-checksum2");
+        testAssetVersion.setAssetChecksums(assetChecksums);
+
+        // Default mock for assetService.getCurrentAssetVersion() - used by most tests
+        when(assetService.getCurrentAssetVersion())
+                .thenReturn(CompletableFuture.completedFuture(testAssetVersion));
     }
 
     @Test

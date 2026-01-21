@@ -1,6 +1,8 @@
 package com.app.controller;
 
 import com.app.dto.ContentVersionResponse;
+import com.app.dto.DeltaSyncRequest;
+import com.app.dto.DeltaSyncResponse;
 import com.app.dto.StorySyncRequest;
 import com.app.dto.StorySyncResponse;
 import com.app.exception.ErrorCode;
@@ -11,6 +13,7 @@ import com.app.model.Story;
 import com.app.service.ApplicationMetricsService;
 import com.app.service.AssetService;
 import com.app.service.StoryService;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -20,8 +23,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletionException;
 
@@ -215,6 +221,96 @@ public class StoryController {
             logger.error("[Stories] [reqId={}] GET /api/stories/category/{} - FAILED: {}", reqId, category, cause.getMessage(), cause);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse(ErrorCode.FIREBASE_SERVICE_ERROR, "Failed to fetch stories by category: " + cause.getMessage(), "/api/stories/category/" + category, reqId));
+        }
+    }
+
+    /**
+     * Delta sync endpoint for batch processing.
+     * Returns only changed/new stories and IDs of deleted stories.
+     *
+     * This is the key endpoint for reducing API calls during sync.
+     * Instead of fetching all stories, client sends checksums and gets only changes.
+     *
+     * @param request Contains clientVersion and storyChecksums
+     * @return DeltaSyncResponse with changed stories and deleted story IDs
+     */
+    @PostMapping("/delta")
+    public ResponseEntity<?> getDeltaContent(@Valid @RequestBody DeltaSyncRequest request) {
+        String reqId = getRequestId();
+        long startTime = System.currentTimeMillis();
+        int clientStoriesCount = request.getStoryChecksums() != null ? request.getStoryChecksums().size() : 0;
+
+        logger.info("[Delta] [reqId={}] POST /api/stories/delta - clientVersion={}, clientStories={}",
+                reqId, request.getClientVersion(), clientStoriesCount);
+
+        try {
+            // Get current server version
+            ContentVersion serverVersion = storyService.getCurrentContentVersion().join();
+            AssetVersion assetVersion = assetService.getCurrentAssetVersion().join();
+
+            // Check if client is up to date
+            if (request.getClientVersion() != null && request.getClientVersion() >= serverVersion.getVersion()) {
+                logger.info("[Delta] [reqId={}] Client is up to date (clientVersion={}, serverVersion={})",
+                        reqId, request.getClientVersion(), serverVersion.getVersion());
+
+                DeltaSyncResponse response = new DeltaSyncResponse();
+                response.setServerVersion(serverVersion.getVersion());
+                response.setAssetVersion(assetVersion.getVersion());
+                response.setStories(new ArrayList<>());
+                response.setDeletedStoryIds(new ArrayList<>());
+                response.setStoryChecksums(serverVersion.getStoryChecksums());
+                response.setTotalStories(serverVersion.getTotalStories());
+                response.setLastUpdated(serverVersion.getLastUpdated().toDate().getTime());
+
+                long durationMs = System.currentTimeMillis() - startTime;
+                logger.info("[Delta] [reqId={}] COMPLETE - No changes needed, durationMs={}", reqId, durationMs);
+                return ResponseEntity.ok(response);
+            }
+
+            // Get stories that need to be synced
+            List<Story> storiesToSync = storyService.getStoriesToSync(request.getStoryChecksums()).join();
+
+            // Find deleted stories (stories client has but server doesn't)
+            List<String> deletedStoryIds = new ArrayList<>();
+            if (request.getStoryChecksums() != null && !request.getStoryChecksums().isEmpty()) {
+                Set<String> serverStoryIds = serverVersion.getStoryChecksums().keySet();
+                for (String clientStoryId : request.getStoryChecksums().keySet()) {
+                    if (!serverStoryIds.contains(clientStoryId)) {
+                        deletedStoryIds.add(clientStoryId);
+                    }
+                }
+            }
+
+            // Build response
+            DeltaSyncResponse response = new DeltaSyncResponse();
+            response.setServerVersion(serverVersion.getVersion());
+            response.setAssetVersion(assetVersion.getVersion());
+            response.setStories(storiesToSync);
+            response.setDeletedStoryIds(deletedStoryIds);
+            response.setStoryChecksums(serverVersion.getStoryChecksums());
+            response.setTotalStories(serverVersion.getTotalStories());
+            response.setLastUpdated(serverVersion.getLastUpdated().toDate().getTime());
+
+            long durationMs = System.currentTimeMillis() - startTime;
+            metricsService.recordStorySync(clientStoriesCount, storiesToSync.size(), durationMs);
+            metricsService.recordDeltaSync(
+                    request.getClientVersion() != null ? request.getClientVersion() : 0,
+                    serverVersion.getVersion(),
+                    storiesToSync.size(),
+                    deletedStoryIds.size(),
+                    durationMs);
+
+            logger.info("[Delta] [reqId={}] COMPLETE - updatedStories={}, deletedStories={}, durationMs={}",
+                    reqId, storiesToSync.size(), deletedStoryIds.size(), durationMs);
+
+            return ResponseEntity.ok(response);
+        } catch (CompletionException e) {
+            Throwable cause = e.getCause() != null ? e.getCause() : e;
+            logger.error("[Delta] [reqId={}] FAILED: {}", reqId, cause.getMessage(), cause);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse(ErrorCode.FIREBASE_SERVICE_ERROR,
+                            "Failed to get delta content: " + cause.getMessage(),
+                            "/api/stories/delta", reqId));
         }
     }
 

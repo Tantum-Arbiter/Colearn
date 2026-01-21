@@ -1121,4 +1121,494 @@ class ApplicationMetricsServiceTest {
         // Then - should return 0 before any startup time is recorded
         assertEquals(0, metricsService.getStartupTime());
     }
+
+    // ==================== Batch URL Generation Metrics Tests ====================
+
+    @Test
+    void testRecordBatchUrlGeneration_HappyPath_AllSuccess() {
+        // When - all URLs generated successfully
+        metricsService.recordBatchUrlGeneration(50, 50, 0, 250);
+
+        // Then
+        Counter requestCounter = meterRegistry.find("app.batch.urls.requests")
+                .tag("result", "success")
+                .counter();
+        assertNotNull(requestCounter);
+        assertEquals(1.0, requestCounter.count());
+
+        Counter generatedCounter = meterRegistry.find("app.batch.urls.generated").counter();
+        assertNotNull(generatedCounter);
+        assertEquals(50.0, generatedCounter.count());
+
+        Timer timer = meterRegistry.find("app.batch.urls.duration").timer();
+        assertNotNull(timer);
+        assertEquals(1, timer.count());
+        assertTrue(timer.totalTime(java.util.concurrent.TimeUnit.MILLISECONDS) >= 250);
+
+        // No failed counter should exist
+        Counter failedCounter = meterRegistry.find("app.batch.urls.failed").counter();
+        assertNull(failedCounter);
+    }
+
+    @Test
+    void testRecordBatchUrlGeneration_SadPath_PartialFailure() {
+        // When - some URLs failed to generate
+        metricsService.recordBatchUrlGeneration(50, 45, 5, 300);
+
+        // Then
+        Counter requestCounter = meterRegistry.find("app.batch.urls.requests")
+                .tag("result", "partial")
+                .counter();
+        assertNotNull(requestCounter);
+        assertEquals(1.0, requestCounter.count());
+
+        Counter generatedCounter = meterRegistry.find("app.batch.urls.generated").counter();
+        assertNotNull(generatedCounter);
+        assertEquals(45.0, generatedCounter.count());
+
+        Counter failedCounter = meterRegistry.find("app.batch.urls.failed").counter();
+        assertNotNull(failedCounter);
+        assertEquals(5.0, failedCounter.count());
+    }
+
+    @Test
+    void testRecordBatchUrlGeneration_SadPath_AllFailed() {
+        // When - all URLs failed
+        metricsService.recordBatchUrlGeneration(10, 0, 10, 100);
+
+        // Then
+        Counter requestCounter = meterRegistry.find("app.batch.urls.requests")
+                .tag("result", "partial")
+                .counter();
+        assertNotNull(requestCounter);
+        assertEquals(1.0, requestCounter.count());
+
+        Counter failedCounter = meterRegistry.find("app.batch.urls.failed").counter();
+        assertNotNull(failedCounter);
+        assertEquals(10.0, failedCounter.count());
+    }
+
+    @Test
+    void testRecordBatchUrlGeneration_EdgeCase_SingleUrl() {
+        // When - single URL requested
+        metricsService.recordBatchUrlGeneration(1, 1, 0, 50);
+
+        // Then
+        Counter generatedCounter = meterRegistry.find("app.batch.urls.generated").counter();
+        assertNotNull(generatedCounter);
+        assertEquals(1.0, generatedCounter.count());
+    }
+
+    @Test
+    void testRecordBatchUrlGeneration_EdgeCase_LargeBatch() {
+        // When - large batch (200 URLs)
+        metricsService.recordBatchUrlGeneration(200, 198, 2, 1500);
+
+        // Then
+        Counter generatedCounter = meterRegistry.find("app.batch.urls.generated").counter();
+        assertNotNull(generatedCounter);
+        assertEquals(198.0, generatedCounter.count());
+
+        Counter failedCounter = meterRegistry.find("app.batch.urls.failed").counter();
+        assertNotNull(failedCounter);
+        assertEquals(2.0, failedCounter.count());
+    }
+
+    @Test
+    void testRecordBatchUrlGeneration_EdgeCase_ZeroUrls() {
+        // When - zero URLs requested (edge case)
+        metricsService.recordBatchUrlGeneration(0, 0, 0, 10);
+
+        // Then - still records the request
+        Counter requestCounter = meterRegistry.find("app.batch.urls.requests")
+                .tag("result", "success")
+                .counter();
+        assertNotNull(requestCounter);
+        assertEquals(1.0, requestCounter.count());
+    }
+
+    @Test
+    void testRecordBatchUrlGeneration_MultipleBatches() {
+        // When - multiple batch requests
+        metricsService.recordBatchUrlGeneration(50, 50, 0, 200);
+        metricsService.recordBatchUrlGeneration(50, 48, 2, 250);
+        metricsService.recordBatchUrlGeneration(50, 50, 0, 180);
+
+        // Then - counters accumulate
+        Counter generatedCounter = meterRegistry.find("app.batch.urls.generated").counter();
+        assertNotNull(generatedCounter);
+        assertEquals(148.0, generatedCounter.count()); // 50 + 48 + 50
+
+        Timer timer = meterRegistry.find("app.batch.urls.duration").timer();
+        assertNotNull(timer);
+        assertEquals(3, timer.count());
+    }
+
+    // ==================== Delta Sync Metrics Tests ====================
+
+    @Test
+    void testRecordDeltaSync_HappyPath_NeedsUpdate() {
+        // When - client needs updates
+        metricsService.recordDeltaSync(5, 10, 15, 0, 350);
+
+        // Then
+        Counter requestCounter = meterRegistry.find("app.delta.sync.requests")
+                .tag("result", "needs_update")
+                .counter();
+        assertNotNull(requestCounter);
+        assertEquals(1.0, requestCounter.count());
+
+        Counter updatedCounter = meterRegistry.find("app.delta.sync.stories.updated").counter();
+        assertNotNull(updatedCounter);
+        assertEquals(15.0, updatedCounter.count());
+
+        Timer timer = meterRegistry.find("app.delta.sync.duration").timer();
+        assertNotNull(timer);
+        assertEquals(1, timer.count());
+    }
+
+    @Test
+    void testRecordDeltaSync_HappyPath_UpToDate() {
+        // When - client is up to date
+        metricsService.recordDeltaSync(10, 10, 0, 0, 50);
+
+        // Then
+        Counter requestCounter = meterRegistry.find("app.delta.sync.requests")
+                .tag("result", "up_to_date")
+                .counter();
+        assertNotNull(requestCounter);
+        assertEquals(1.0, requestCounter.count());
+
+        // No updated stories counter when up to date
+        Counter updatedCounter = meterRegistry.find("app.delta.sync.stories.updated").counter();
+        assertNull(updatedCounter);
+    }
+
+    @Test
+    void testRecordDeltaSync_SadPath_WithDeletions() {
+        // When - stories were deleted
+        metricsService.recordDeltaSync(5, 8, 3, 2, 200);
+
+        // Then
+        Counter requestCounter = meterRegistry.find("app.delta.sync.requests")
+                .tag("result", "needs_update")
+                .counter();
+        assertNotNull(requestCounter);
+        assertEquals(1.0, requestCounter.count());
+
+        Counter deletedCounter = meterRegistry.find("app.delta.sync.stories.deleted").counter();
+        assertNotNull(deletedCounter);
+        assertEquals(2.0, deletedCounter.count());
+    }
+
+    @Test
+    void testRecordDeltaSync_EdgeCase_OnlyDeletions() {
+        // When - only deletions, no updates
+        metricsService.recordDeltaSync(5, 5, 0, 3, 100);
+
+        // Then - still needs_update because deletions exist
+        Counter requestCounter = meterRegistry.find("app.delta.sync.requests")
+                .tag("result", "needs_update")
+                .counter();
+        assertNotNull(requestCounter);
+        assertEquals(1.0, requestCounter.count());
+
+        Counter deletedCounter = meterRegistry.find("app.delta.sync.stories.deleted").counter();
+        assertNotNull(deletedCounter);
+        assertEquals(3.0, deletedCounter.count());
+    }
+
+    @Test
+    void testRecordDeltaSync_EdgeCase_ClientAhead() {
+        // When - client version is ahead of server (unusual but possible)
+        metricsService.recordDeltaSync(15, 10, 0, 0, 30);
+
+        // Then - treated as up to date
+        Counter requestCounter = meterRegistry.find("app.delta.sync.requests")
+                .tag("result", "up_to_date")
+                .counter();
+        assertNotNull(requestCounter);
+        assertEquals(1.0, requestCounter.count());
+    }
+
+    @Test
+    void testRecordDeltaSync_EdgeCase_LargeUpdate() {
+        // When - large number of stories updated (50+)
+        metricsService.recordDeltaSync(0, 100, 75, 5, 2000);
+
+        // Then
+        Counter updatedCounter = meterRegistry.find("app.delta.sync.stories.updated")
+                .tag("count_category", "50+")
+                .counter();
+        assertNotNull(updatedCounter);
+        assertEquals(75.0, updatedCounter.count());
+    }
+
+    @Test
+    void testRecordDeltaSync_EdgeCase_FewUpdates() {
+        // When - few stories updated (1-5)
+        metricsService.recordDeltaSync(0, 5, 3, 0, 150);
+
+        // Then
+        Counter updatedCounter = meterRegistry.find("app.delta.sync.stories.updated")
+                .tag("count_category", "1-5")
+                .counter();
+        assertNotNull(updatedCounter);
+        assertEquals(3.0, updatedCounter.count());
+    }
+
+    // ==================== API Call Reduction Metrics Tests ====================
+
+    @Test
+    void testRecordApiCallReduction_HappyPath_95PercentReduction() {
+        // When - 95% reduction (typical batch processing goal)
+        metricsService.recordApiCallReduction(180, 9);
+
+        // Then
+        Counter savedCounter = meterRegistry.find("app.batch.calls.saved").counter();
+        assertNotNull(savedCounter);
+        assertEquals(171.0, savedCounter.count()); // 180 - 9 = 171 saved
+    }
+
+    @Test
+    void testRecordApiCallReduction_HappyPath_50PercentReduction() {
+        // When - 50% reduction
+        metricsService.recordApiCallReduction(100, 50);
+
+        // Then
+        Counter savedCounter = meterRegistry.find("app.batch.calls.saved").counter();
+        assertNotNull(savedCounter);
+        assertEquals(50.0, savedCounter.count());
+    }
+
+    @Test
+    void testRecordApiCallReduction_EdgeCase_NoReduction() {
+        // When - no reduction (same number of calls)
+        metricsService.recordApiCallReduction(10, 10);
+
+        // Then
+        Counter savedCounter = meterRegistry.find("app.batch.calls.saved").counter();
+        assertNotNull(savedCounter);
+        assertEquals(0.0, savedCounter.count());
+    }
+
+    @Test
+    void testRecordApiCallReduction_EdgeCase_ZeroCalls() {
+        // When - zero traditional calls
+        metricsService.recordApiCallReduction(0, 0);
+
+        // Then - no calls saved but no error
+        Counter savedCounter = meterRegistry.find("app.batch.calls.saved").counter();
+        assertNotNull(savedCounter);
+        assertEquals(0.0, savedCounter.count());
+    }
+
+    @Test
+    void testRecordApiCallReduction_MultipleRecordings() {
+        // When - multiple recordings accumulate
+        metricsService.recordApiCallReduction(100, 5);  // 95 saved
+        metricsService.recordApiCallReduction(50, 3);   // 47 saved
+        metricsService.recordApiCallReduction(30, 2);   // 28 saved
+
+        // Then
+        Counter savedCounter = meterRegistry.find("app.batch.calls.saved").counter();
+        assertNotNull(savedCounter);
+        assertEquals(170.0, savedCounter.count()); // 95 + 47 + 28
+    }
+
+    // ==================== Asset Sync Metrics Tests ====================
+
+    @Test
+    void testRecordAssetSync_HappyPath() {
+        // When
+        metricsService.recordAssetSync(20, 15, 300);
+
+        // Then
+        Counter counter = meterRegistry.find("app.assets.sync.requests").counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+
+        Timer timer = meterRegistry.find("app.assets.sync.duration").timer();
+        assertNotNull(timer);
+        assertEquals(1, timer.count());
+        assertTrue(timer.totalTime(java.util.concurrent.TimeUnit.MILLISECONDS) >= 300);
+    }
+
+    @Test
+    void testRecordAssetSync_EdgeCase_NoAssetsReturned() {
+        // When - all assets already cached
+        metricsService.recordAssetSync(20, 0, 50);
+
+        // Then
+        Counter counter = meterRegistry.find("app.assets.sync.requests").counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    @Test
+    void testRecordAssetSync_EdgeCase_AllAssetsReturned() {
+        // When - full sync (no cached assets)
+        metricsService.recordAssetSync(50, 50, 500);
+
+        // Then
+        Counter counter = meterRegistry.find("app.assets.sync.requests").counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    @Test
+    void testRecordAssetSync_EdgeCase_ZeroAssets() {
+        // When - no assets in system
+        metricsService.recordAssetSync(0, 0, 10);
+
+        // Then
+        Counter counter = meterRegistry.find("app.assets.sync.requests").counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    // ==================== GCS Operation Metrics Tests ====================
+
+    @Test
+    void testRecordGcsOperation_HappyPath_UploadSuccess() {
+        // When
+        metricsService.recordGcsOperation("upload", true, 500);
+
+        // Then
+        Counter counter = meterRegistry.find("app.gcs.operations")
+                .tag("operation", "upload")
+                .tag("status", "success")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+
+        Timer timer = meterRegistry.find("app.gcs.operation.duration")
+                .tag("operation", "upload")
+                .tag("status", "success")
+                .timer();
+        assertNotNull(timer);
+        assertEquals(1, timer.count());
+    }
+
+    @Test
+    void testRecordGcsOperation_HappyPath_DownloadSuccess() {
+        // When
+        metricsService.recordGcsOperation("download", true, 200);
+
+        // Then
+        Counter counter = meterRegistry.find("app.gcs.operations")
+                .tag("operation", "download")
+                .tag("status", "success")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    @Test
+    void testRecordGcsOperation_HappyPath_SignUrlSuccess() {
+        // When
+        metricsService.recordGcsOperation("sign_url", true, 50);
+
+        // Then
+        Counter counter = meterRegistry.find("app.gcs.operations")
+                .tag("operation", "sign_url")
+                .tag("status", "success")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    @Test
+    void testRecordGcsOperation_SadPath_UploadError() {
+        // When
+        metricsService.recordGcsOperation("upload", false, 1000);
+
+        // Then
+        Counter counter = meterRegistry.find("app.gcs.operations")
+                .tag("operation", "upload")
+                .tag("status", "error")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    @Test
+    void testRecordGcsOperation_SadPath_DownloadError() {
+        // When
+        metricsService.recordGcsOperation("download", false, 5000);
+
+        // Then
+        Counter counter = meterRegistry.find("app.gcs.operations")
+                .tag("operation", "download")
+                .tag("status", "error")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+
+        Timer timer = meterRegistry.find("app.gcs.operation.duration")
+                .tag("operation", "download")
+                .tag("status", "error")
+                .timer();
+        assertNotNull(timer);
+        assertTrue(timer.totalTime(java.util.concurrent.TimeUnit.MILLISECONDS) >= 5000);
+    }
+
+    @Test
+    void testRecordGcsOperation_EdgeCase_NullOperation() {
+        // When
+        metricsService.recordGcsOperation(null, true, 100);
+
+        // Then - defaults to "unknown"
+        Counter counter = meterRegistry.find("app.gcs.operations")
+                .tag("operation", "unknown")
+                .tag("status", "success")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    @Test
+    void testRecordGcsOperation_EdgeCase_BatchSignUrl() {
+        // When - batch signing multiple URLs
+        metricsService.recordGcsOperation("batch_sign_url", true, 250);
+
+        // Then
+        Counter counter = meterRegistry.find("app.gcs.operations")
+                .tag("operation", "batch_sign_url")
+                .tag("status", "success")
+                .counter();
+        assertNotNull(counter);
+        assertEquals(1.0, counter.count());
+    }
+
+    @Test
+    void testRecordGcsOperation_MultipleOperations() {
+        // When - mix of operations
+        metricsService.recordGcsOperation("upload", true, 100);
+        metricsService.recordGcsOperation("upload", true, 150);
+        metricsService.recordGcsOperation("upload", false, 500);
+        metricsService.recordGcsOperation("download", true, 200);
+
+        // Then
+        Counter uploadSuccessCounter = meterRegistry.find("app.gcs.operations")
+                .tag("operation", "upload")
+                .tag("status", "success")
+                .counter();
+        assertNotNull(uploadSuccessCounter);
+        assertEquals(2.0, uploadSuccessCounter.count());
+
+        Counter uploadErrorCounter = meterRegistry.find("app.gcs.operations")
+                .tag("operation", "upload")
+                .tag("status", "error")
+                .counter();
+        assertNotNull(uploadErrorCounter);
+        assertEquals(1.0, uploadErrorCounter.count());
+
+        Counter downloadCounter = meterRegistry.find("app.gcs.operations")
+                .tag("operation", "download")
+                .tag("status", "success")
+                .counter();
+        assertNotNull(downloadCounter);
+        assertEquals(1.0, downloadCounter.count());
+    }
 }

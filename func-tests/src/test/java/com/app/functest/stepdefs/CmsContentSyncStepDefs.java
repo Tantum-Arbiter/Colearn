@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
-import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -58,6 +57,20 @@ public class CmsContentSyncStepDefs extends BaseStepDefs {
         }
     }
 
+    @Given("I force reset the gateway state")
+    public void iForceResetTheGatewayState() {
+        logger.info("Force resetting gateway state to clear all CMS data");
+        Response resetResponse = given()
+                .when()
+                .post("/private/reset?force=true");
+
+        if (resetResponse.getStatusCode() == 200) {
+            logger.info("Force reset completed successfully");
+        } else {
+            logger.warn("Force reset returned status {}: {}", resetResponse.getStatusCode(), resetResponse.getBody().asString());
+        }
+    }
+
     /**
      * Seed a story to Firestore via the gateway's private seeding endpoint
      */
@@ -78,7 +91,19 @@ public class CmsContentSyncStepDefs extends BaseStepDefs {
 
     @Given("I seed {int} test stories to the local Firestore emulator")
     public void iSeedTestStoriesToTheLocalFirestoreEmulator(int count) throws Exception {
-        logger.info("Seeding {} test stories to Firestore emulator", count);
+        logger.info("Clearing CMS data and seeding {} test stories to Firestore emulator", count);
+
+        // Clear existing CMS data first to ensure deterministic story count
+        Response clearResponse = given()
+                .when()
+                .post("/private/reset?clearOnly=true");
+
+        if (clearResponse.getStatusCode() == 200) {
+            logger.info("Cleared CMS collections before seeding");
+        } else {
+            logger.warn("Failed to clear CMS collections: {}", clearResponse.getBody().asString());
+        }
+
         for (int i = 1; i <= count; i++) {
             JsonNode story = loadTestStory("test-story-" + i);
             seedStoryToFirestore(story);
@@ -662,8 +687,8 @@ public class CmsContentSyncStepDefs extends BaseStepDefs {
         syncRequest = new HashMap<>();
         syncRequest.put("clientVersion", versionResponse.jsonPath().getInt("version"));
         syncRequest.put("storyChecksums", serverChecksums);
-        String lastUpdatedStr = versionResponse.jsonPath().getString("lastUpdated");
-        long lastSyncTimestamp = lastUpdatedStr != null ? Instant.parse(lastUpdatedStr).toEpochMilli() : 0L;
+        Object lastUpdatedValue = versionResponse.jsonPath().get("lastUpdated");
+        long lastSyncTimestamp = parseLastUpdated(lastUpdatedValue);
         syncRequest.put("lastSyncTimestamp", lastSyncTimestamp);
     }
 

@@ -668,6 +668,104 @@ export class CacheManager {
     };
   }
 
+  // ============ BATCH SYNC HELPERS ============
+
+  /**
+   * Get comprehensive cache metadata for batch sync operations
+   * Includes both story and asset metadata
+   */
+  static async getCacheMetadata(): Promise<{
+    storyVersion: number;
+    assetVersion: number;
+    storyCount: number;
+    assetCount: number;
+    totalSizeBytes: number;
+    lastUpdated: string | null;
+    storyChecksums: Record<string, string>;
+  }> {
+    const storyMetadata = await this.getStoryMetadata();
+    const stories = await this.getStories();
+    const checksums = await this.getAssetChecksums();
+    const size = await this.getCacheSize();
+
+    // Build story checksums map
+    const storyChecksums: Record<string, string> = {};
+    for (const story of stories) {
+      if (story.checksum) {
+        storyChecksums[story.id] = story.checksum;
+      }
+    }
+
+    return {
+      storyVersion: storyMetadata?.version || 0,
+      assetVersion: 0, // Asset version tracked separately by VersionManager
+      storyCount: stories.length,
+      assetCount: Object.keys(checksums).length,
+      totalSizeBytes: size,
+      lastUpdated: storyMetadata?.lastUpdated || null,
+      storyChecksums,
+    };
+  }
+
+  /**
+   * Check multiple assets at once for batch sync optimization
+   * Returns map of path -> isCached
+   */
+  static async checkAssetsExist(assetPaths: string[]): Promise<Map<string, boolean>> {
+    const results = new Map<string, boolean>();
+
+    // Check in parallel for better performance
+    const checks = await Promise.all(
+      assetPaths.map(async (path) => {
+        const exists = await this.hasAsset(path);
+        return { path, exists };
+      })
+    );
+
+    for (const { path, exists } of checks) {
+      results.set(path, exists);
+    }
+
+    return results;
+  }
+
+  /**
+   * Get list of cached asset paths
+   * Used to determine what's already cached vs what needs downloading
+   */
+  static async getCachedAssetPaths(): Promise<string[]> {
+    await this.initialize();
+
+    try {
+      const files = await this.getAllFilesRecursive(ASSETS_DIR);
+      // Convert absolute paths to relative asset paths
+      return files.map(file => file.replace(ASSETS_DIR, ''));
+    } catch (error) {
+      log.error('Error getting cached asset paths:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Save multiple stories in a single batch operation
+   * More efficient than calling updateStories() multiple times
+   */
+  static async batchSaveStories(stories: Story[]): Promise<void> {
+    if (stories.length === 0) return;
+
+    const existing = await this.getStories();
+    const existingMap = new Map(existing.map(s => [s.id, s]));
+
+    // Merge all updates
+    for (const story of stories) {
+      existingMap.set(story.id, story);
+    }
+
+    // Save all at once
+    await this.saveStories(Array.from(existingMap.values()));
+    log.info(`Batch saved ${stories.length} stories`);
+  }
+
   // ============ INTEGRITY VALIDATION ============
 
   /**
