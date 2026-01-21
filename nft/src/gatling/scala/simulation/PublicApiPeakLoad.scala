@@ -47,7 +47,6 @@ class PublicApiPeakLoad extends Simulation {
     PublicApiScenario.get_assets_version_scenario,
 
     // Batch processing endpoints (delta sync replaces old /api/stories/sync)
-    PublicApiScenario.delta_sync_stories_scenario,
     PublicApiScenario.delta_sync_scenario,
     PublicApiScenario.batch_urls_scenario
 

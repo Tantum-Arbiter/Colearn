@@ -127,16 +127,8 @@ object PublicApiScenario {
       )
   )
 
-  val delta_sync_stories_scenario = injectLoad(
-    scenario("POST /api/stories/delta - Delta Sync Stories")
-      .exec(
-        http("delta_sync_stories")
-          .post("/api/stories/delta")
-          .headers(authHeaders)
-          .body(StringBody("""{"clientVersion": 0, "storyChecksums": {}}"""))
-          .check(status.in(200, 204, 500))
-      )
-  )
+  // Note: delta_sync_stories_scenario was removed - use delta_sync_scenario in Batch Processing section
+  // The old /api/stories/sync was replaced by /api/stories/delta
 
   // ============================================
   // Assets Endpoints (All /api/** require auth)
