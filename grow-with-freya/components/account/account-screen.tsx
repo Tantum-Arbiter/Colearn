@@ -20,7 +20,7 @@ import { EditProfileContent } from './edit-profile-screen';
 import { ApiClient } from '../../services/api-client';
 import { reminderService } from '../../services/reminder-service';
 import { StorySyncService } from '../../services/story-sync-service';
-import { AssetSyncService } from '../../services/asset-sync-service';
+import { AuthenticatedImageService } from '../../services/authenticated-image-service';
 import { VersionManager } from '../../services/version-manager';
 import { CacheManager } from '../../services/cache-manager';
 import { StoryLoader } from '../../services/story-loader';
@@ -309,7 +309,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
 
               // Clear legacy sync service caches
               await StorySyncService.clearCache();
-              await AssetSyncService.clearCache();
+              await AuthenticatedImageService.clearCache();
               console.log('[Reset] Legacy caches cleared');
 
               // IMPORTANT: Clear in-memory cache so old stories don't show

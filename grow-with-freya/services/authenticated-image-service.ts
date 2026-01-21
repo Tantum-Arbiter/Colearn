@@ -1,13 +1,8 @@
-import { ApiClient } from './api-client';
 import * as FileSystem from 'expo-file-system/legacy';
 import { Logger } from '@/utils/logger';
+import { BatchSyncService } from './batch-sync-service';
 
 const log = Logger.create('AuthImageService');
-
-interface SignedUrlResponse {
-  path: string;
-  signedUrl: string;
-}
 
 // Minimum valid image file size in bytes (100 bytes - a valid image should be larger)
 const MIN_VALID_FILE_SIZE = 100;
@@ -169,12 +164,10 @@ export class AuthenticatedImageService {
         return null;
       }
 
-      // Get signed URL from backend
-      let signedUrlResponse: SignedUrlResponse | null = null;
+      // Get signed URL from backend using batch endpoint
+      let signedUrl: string | null = null;
       try {
-        signedUrlResponse = await ApiClient.request<SignedUrlResponse>(
-          `/api/assets/url?path=${encodeURIComponent(assetPath)}`
-        );
+        signedUrl = await BatchSyncService.getSignedUrl(assetPath);
       } catch (apiCallError) {
         // If auth fails and we have a cached file, use it instead of erroring
         if (hasAnyCache) {
@@ -183,7 +176,7 @@ export class AuthenticatedImageService {
         return null;
       }
 
-      if (!signedUrlResponse || !signedUrlResponse.signedUrl) {
+      if (!signedUrl) {
         // If no signed URL but we have cache, use it
         if (hasAnyCache) {
           return cachedPath;
@@ -194,7 +187,7 @@ export class AuthenticatedImageService {
 
       // Download using the signed URL (no auth needed, URL is pre-signed)
       const downloadResult = await FileSystem.downloadAsync(
-        signedUrlResponse.signedUrl,
+        signedUrl,
         cachedPath
       );
 
@@ -253,14 +246,11 @@ export class AuthenticatedImageService {
         const altAssetPath = this.extractAssetPath(altUrl);
         if (!altAssetPath) continue;
 
-        const signedUrlResponse = await ApiClient.request<SignedUrlResponse>(
-          `/api/assets/url?path=${encodeURIComponent(altAssetPath)}`
-        );
-
-        if (!signedUrlResponse?.signedUrl) continue;
+        const signedUrl = await BatchSyncService.getSignedUrl(altAssetPath);
+        if (!signedUrl) continue;
 
         const downloadResult = await FileSystem.downloadAsync(
-          signedUrlResponse.signedUrl,
+          signedUrl,
           cachedPath
         );
 
@@ -346,7 +336,7 @@ export class AuthenticatedImageService {
 
   /**
    * Download and cache an asset from a signed URL
-   * Used by AssetSyncService for prefetching
+   * Used by BatchSyncService for prefetching
    * Also populates the memory cache for instant subsequent lookups
    * @param forceUpdate - If true, re-downloads even if file exists (for delta sync updates)
    */

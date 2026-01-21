@@ -366,6 +366,34 @@ export class BatchSyncService {
   }
 
   /**
+   * Get a signed URL for a single asset path
+   * Uses the batch endpoint but for a single item
+   * @param assetPath The asset path (e.g., "stories/story-1/cover.webp")
+   * @returns The signed URL or null if not found
+   */
+  public static async getSignedUrl(assetPath: string): Promise<string | null> {
+    try {
+      const response = await ApiClient.request<BatchUrlsResponse>('/api/assets/batch-urls', {
+        method: 'POST',
+        body: JSON.stringify({ paths: [assetPath] }),
+      });
+
+      if (response.urls.length > 0) {
+        return response.urls[0].signedUrl;
+      }
+
+      if (response.failed.length > 0) {
+        log.warn(`[Batch Sync] Failed to get signed URL for: ${assetPath}`);
+      }
+
+      return null;
+    } catch (error) {
+      log.error(`[Batch Sync] Error getting signed URL for ${assetPath}:`, error);
+      return null;
+    }
+  }
+
+  /**
    * Get batch signed URLs for multiple assets
    * Batches requests into groups of BATCH_URL_SIZE (50) to reduce API calls
    */
