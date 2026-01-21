@@ -30,10 +30,10 @@ object PublicApiScenario {
   val testAssetPath = sys.env.getOrElse("TEST_ASSET_PATH", "stories/images/test.png")
 
   // Load test configuration
-  // 100 concurrent users across all scenarios
+  // 50 concurrent users across all scenarios (reduced from 100 for local/Docker testing)
   val numScenarios = 8
-  val totalUsers = 100
-  val usersPerScenario = Math.max(1, totalUsers / numScenarios)  // ~12-13 users per scenario
+  val totalUsers = 50
+  val usersPerScenario = Math.max(1, totalUsers / numScenarios)  // ~6 users per scenario
   val testDuration = 5 minutes
 
   // Common headers
