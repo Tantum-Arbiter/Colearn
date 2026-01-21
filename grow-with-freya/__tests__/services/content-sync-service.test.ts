@@ -429,7 +429,7 @@ describe('ContentSyncService', () => {
 
         const storyWithAssets: Story = {
           ...createMockStory('1', 'Story With Assets'),
-          coverImageUrl: 'https://storage.example.com/stories/1/cover.webp',
+          coverImage: 'https://storage.example.com/stories/1/cover.webp',
         };
 
         mockApiClient.request.mockResolvedValue({

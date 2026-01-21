@@ -40,6 +40,7 @@ const createMockStory = (id: string, title: string, assetCount: number = 2): Sto
   coverImage: `assets/stories/${id}/cover.webp`,
   pages: Array.from({ length: assetCount }, (_, i) => ({
     id: `page-${i}`,
+    pageNumber: i + 1,
     backgroundImage: `assets/stories/${id}/bg${i}.webp`,
     text: `Page ${i} text`,
   })),
@@ -539,8 +540,13 @@ describe('Batch Sync Integration Flow', () => {
         id: 'fifty-assets',
         title: 'Fifty Assets Story',
         checksum: 'fifty123',
+        category: 'adventure',
+        tag: 'adventure',
+        emoji: '📖',
+        isAvailable: true,
         pages: Array.from({ length: 50 }, (_, i) => ({
           id: `page-${i}`,
+          pageNumber: i + 1,
           backgroundImage: `stories/fifty-assets/bg${i}.webp`,
           text: `Page ${i}`,
         })),
@@ -582,8 +588,13 @@ describe('Batch Sync Integration Flow', () => {
         id: 'fifty-one-assets',
         title: 'Fifty One Assets Story',
         checksum: 'fiftyone123',
+        category: 'adventure',
+        tag: 'adventure',
+        emoji: '📖',
+        isAvailable: true,
         pages: Array.from({ length: 51 }, (_, i) => ({
           id: `page-${i}`,
+          pageNumber: i + 1,
           backgroundImage: `stories/fifty-one-assets/bg${i}.webp`,
           text: `Page ${i}`,
         })),
@@ -646,9 +657,9 @@ describe('Batch Sync Integration Flow', () => {
         serverVersion: { stories: 2, assets: 0, lastUpdated: new Date().toISOString() },
       });
 
-      const textOnlyStories = [
-        { id: '1', title: 'Text Story 1', checksum: 'c1', pages: [{ id: 'p1', text: 'Text only' }] },
-        { id: '2', title: 'Text Story 2', checksum: 'c2', pages: [{ id: 'p1', text: 'Also text' }] },
+      const textOnlyStories: Story[] = [
+        { id: '1', title: 'Text Story 1', checksum: 'c1', category: 'adventure', tag: 'adventure', emoji: '📖', isAvailable: true, pages: [{ id: 'p1', pageNumber: 1, text: 'Text only' }] },
+        { id: '2', title: 'Text Story 2', checksum: 'c2', category: 'adventure', tag: 'adventure', emoji: '📖', isAvailable: true, pages: [{ id: 'p1', pageNumber: 1, text: 'Also text' }] },
       ];
 
       mockApiClient.request.mockResolvedValueOnce({

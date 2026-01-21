@@ -9,6 +9,48 @@ jest.mock('@react-native-async-storage/async-storage');
 const mockFileSystem = FileSystem as jest.Mocked<typeof FileSystem>;
 const mockAsyncStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
 
+// Type for FileInfo that exists (file or directory)
+type FileInfoExists = {
+  exists: true;
+  uri: string;
+  size: number;
+  isDirectory: boolean;
+  modificationTime: number;
+  md5?: string;
+};
+
+// Type for FileInfo that doesn't exist
+type FileInfoMissing = {
+  exists: false;
+  uri: string;
+  isDirectory: false;
+};
+
+type MockFileInfo = FileInfoExists | FileInfoMissing;
+
+// Helper functions to create properly typed FileInfo mocks
+const createFileInfo = (overrides: Partial<Omit<FileInfoExists, 'exists'>> = {}): MockFileInfo => ({
+  exists: true,
+  isDirectory: overrides.isDirectory ?? false,
+  uri: overrides.uri ?? '',
+  size: overrides.size ?? 1024,
+  modificationTime: overrides.modificationTime ?? Date.now(),
+});
+
+const createDirInfo = (uri: string = ''): MockFileInfo => ({
+  exists: true,
+  isDirectory: true,
+  uri,
+  size: 0,
+  modificationTime: Date.now(),
+});
+
+const createMissingInfo = (): MockFileInfo => ({
+  exists: false,
+  isDirectory: false,
+  uri: '',
+});
+
 // Mock story factory
 const createMockStory = (id: string, title: string): Story => ({
   id,
@@ -25,36 +67,36 @@ describe('CacheManager', () => {
     jest.clearAllMocks();
     // Reset initialized state
     (CacheManager as any).initialized = false;
-    
+
     // Default mock implementations
-    mockFileSystem.getInfoAsync.mockResolvedValue({ exists: true, isDirectory: true, uri: '' });
+    mockFileSystem.getInfoAsync.mockResolvedValue(createDirInfo());
     mockFileSystem.makeDirectoryAsync.mockResolvedValue();
-    mockFileSystem.documentDirectory = 'file://docs/';
+    (mockFileSystem as any).documentDirectory = 'file://docs/';
   });
 
   describe('initialize', () => {
     it('should create cache directories if they do not exist', async () => {
-      mockFileSystem.getInfoAsync.mockResolvedValue({ exists: false, isDirectory: false, uri: '' });
-      
+      mockFileSystem.getInfoAsync.mockResolvedValue(createMissingInfo());
+
       await CacheManager.initialize();
-      
+
       expect(mockFileSystem.makeDirectoryAsync).toHaveBeenCalledTimes(2);
     });
 
     it('should not create directories if they already exist', async () => {
-      mockFileSystem.getInfoAsync.mockResolvedValue({ exists: true, isDirectory: true, uri: '' });
-      
+      mockFileSystem.getInfoAsync.mockResolvedValue(createDirInfo());
+
       await CacheManager.initialize();
-      
+
       expect(mockFileSystem.makeDirectoryAsync).not.toHaveBeenCalled();
     });
 
     it('should only initialize once', async () => {
-      mockFileSystem.getInfoAsync.mockResolvedValue({ exists: false, isDirectory: false, uri: '' });
-      
+      mockFileSystem.getInfoAsync.mockResolvedValue(createMissingInfo());
+
       await CacheManager.initialize();
       await CacheManager.initialize();
-      
+
       // Only 2 calls (for 2 directories), not 4
       expect(mockFileSystem.makeDirectoryAsync).toHaveBeenCalledTimes(2);
     });
@@ -174,7 +216,7 @@ describe('CacheManager', () => {
   describe('Asset Cache', () => {
     describe('getAssetUri', () => {
       it('should return local URI when asset is cached', async () => {
-        mockFileSystem.getInfoAsync.mockResolvedValue({ exists: true, isDirectory: false, uri: 'file://docs/content_cache/assets/test.png' });
+        mockFileSystem.getInfoAsync.mockResolvedValue(createFileInfo({ uri: 'file://docs/content_cache/assets/test.png' }));
 
         const result = await CacheManager.getAssetUri('test.png');
 
@@ -183,9 +225,9 @@ describe('CacheManager', () => {
 
       it('should return null when asset is not cached', async () => {
         mockFileSystem.getInfoAsync
-          .mockResolvedValueOnce({ exists: true, isDirectory: true, uri: '' }) // Cache dir
-          .mockResolvedValueOnce({ exists: true, isDirectory: true, uri: '' }) // Assets dir
-          .mockResolvedValueOnce({ exists: false, isDirectory: false, uri: '' }); // Asset file
+          .mockResolvedValueOnce(createDirInfo()) // Cache dir
+          .mockResolvedValueOnce(createDirInfo()) // Assets dir
+          .mockResolvedValueOnce(createMissingInfo()); // Asset file
 
         const result = await CacheManager.getAssetUri('missing.png');
 
@@ -195,7 +237,7 @@ describe('CacheManager', () => {
 
     describe('hasAsset', () => {
       it('should return true when asset exists', async () => {
-        mockFileSystem.getInfoAsync.mockResolvedValue({ exists: true, isDirectory: false, uri: '' });
+        mockFileSystem.getInfoAsync.mockResolvedValue(createFileInfo());
 
         const result = await CacheManager.hasAsset('test.png');
 
@@ -204,9 +246,9 @@ describe('CacheManager', () => {
 
       it('should return false when asset does not exist', async () => {
         mockFileSystem.getInfoAsync
-          .mockResolvedValueOnce({ exists: true, isDirectory: true, uri: '' })
-          .mockResolvedValueOnce({ exists: true, isDirectory: true, uri: '' })
-          .mockResolvedValueOnce({ exists: false, isDirectory: false, uri: '' });
+          .mockResolvedValueOnce(createDirInfo())
+          .mockResolvedValueOnce(createDirInfo())
+          .mockResolvedValueOnce(createMissingInfo());
 
         const result = await CacheManager.hasAsset('missing.png');
 
@@ -254,7 +296,7 @@ describe('CacheManager', () => {
       it('should clear all cached data', async () => {
         // Mock multiRemove - it may not exist in the mock by default
         (mockAsyncStorage as any).multiRemove = jest.fn().mockResolvedValue(undefined);
-        mockFileSystem.getInfoAsync.mockResolvedValue({ exists: true, isDirectory: true, uri: '' });
+        mockFileSystem.getInfoAsync.mockResolvedValue(createDirInfo());
         mockFileSystem.deleteAsync.mockResolvedValue();
 
         await CacheManager.clearAll();
@@ -270,7 +312,7 @@ describe('CacheManager', () => {
         mockAsyncStorage.getItem
           .mockResolvedValueOnce(JSON.stringify(stories)) // Stories
           .mockResolvedValueOnce(JSON.stringify({ lastUpdated: '2024-01-15' })); // Metadata
-        mockFileSystem.getInfoAsync.mockResolvedValue({ exists: true, size: 1024, isDirectory: true, uri: '' });
+        mockFileSystem.getInfoAsync.mockResolvedValue(createFileInfo({ isDirectory: true }));
 
         const stats = await CacheManager.getStats();
 
@@ -281,12 +323,7 @@ describe('CacheManager', () => {
 
     describe('validateAssetIntegrity', () => {
       it('should return valid for existing file with content', async () => {
-        mockFileSystem.getInfoAsync.mockResolvedValue({
-          exists: true,
-          size: 1024,
-          isDirectory: false,
-          uri: 'file://path/asset.png'
-        });
+        mockFileSystem.getInfoAsync.mockResolvedValue(createFileInfo({ uri: 'file://path/asset.png' }));
 
         const result = await CacheManager.validateAssetIntegrity('stories/1/cover.png');
 
@@ -295,11 +332,7 @@ describe('CacheManager', () => {
       });
 
       it('should return invalid for non-existent file', async () => {
-        mockFileSystem.getInfoAsync.mockResolvedValue({
-          exists: false,
-          isDirectory: false,
-          uri: ''
-        });
+        mockFileSystem.getInfoAsync.mockResolvedValue(createMissingInfo());
 
         const result = await CacheManager.validateAssetIntegrity('stories/1/missing.png');
 
@@ -308,12 +341,7 @@ describe('CacheManager', () => {
       });
 
       it('should return invalid for empty file (0 bytes)', async () => {
-        mockFileSystem.getInfoAsync.mockResolvedValue({
-          exists: true,
-          size: 0,
-          isDirectory: false,
-          uri: 'file://path/empty.png'
-        });
+        mockFileSystem.getInfoAsync.mockResolvedValue(createFileInfo({ size: 0, uri: 'file://path/empty.png' }));
 
         const result = await CacheManager.validateAssetIntegrity('stories/1/empty.png');
 
@@ -342,12 +370,7 @@ describe('CacheManager', () => {
         };
 
         mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify([storyWithAssets]));
-        mockFileSystem.getInfoAsync.mockResolvedValue({
-          exists: true,
-          size: 1024,
-          isDirectory: false,
-          uri: 'file://path'
-        });
+        mockFileSystem.getInfoAsync.mockResolvedValue(createFileInfo({ uri: 'file://path' }));
 
         const result = await CacheManager.validateAllAssets();
 
@@ -370,10 +393,10 @@ describe('CacheManager', () => {
         // Mock getInfoAsync to return different results based on call order
         // Initialize calls (cache dir + assets dir) + cover (valid) + page1 (missing)
         mockFileSystem.getInfoAsync
-          .mockResolvedValueOnce({ exists: true, isDirectory: true, uri: '' }) // cache dir check
-          .mockResolvedValueOnce({ exists: true, isDirectory: true, uri: '' }) // assets dir check
-          .mockResolvedValueOnce({ exists: true, size: 1024, isDirectory: false, uri: '' }) // cover - valid
-          .mockResolvedValueOnce({ exists: false, isDirectory: false, uri: '' }); // page1 - missing
+          .mockResolvedValueOnce(createDirInfo()) // cache dir check
+          .mockResolvedValueOnce(createDirInfo()) // assets dir check
+          .mockResolvedValueOnce(createFileInfo()) // cover - valid
+          .mockResolvedValueOnce(createMissingInfo()); // page1 - missing
 
         const result = await CacheManager.validateAllAssets();
 
@@ -386,7 +409,7 @@ describe('CacheManager', () => {
 
     describe('removeCorruptedAssets', () => {
       it('should remove specified corrupted assets', async () => {
-        mockFileSystem.getInfoAsync.mockResolvedValue({ exists: true, isDirectory: false, uri: '' });
+        mockFileSystem.getInfoAsync.mockResolvedValue(createFileInfo());
         mockFileSystem.deleteAsync.mockResolvedValue();
 
         const removed = await CacheManager.removeCorruptedAssets([
@@ -399,7 +422,7 @@ describe('CacheManager', () => {
       });
 
       it('should continue removing even if some fail', async () => {
-        mockFileSystem.getInfoAsync.mockResolvedValue({ exists: true, isDirectory: false, uri: '' });
+        mockFileSystem.getInfoAsync.mockResolvedValue(createFileInfo());
         mockFileSystem.deleteAsync
           .mockRejectedValueOnce(new Error('Permission denied'))
           .mockResolvedValueOnce();
@@ -430,7 +453,7 @@ describe('CacheManager', () => {
           coverImage: 'stories/story-1/cover.webp',
         };
         mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify([story]));
-        mockFileSystem.getInfoAsync.mockResolvedValue({ exists: true, isDirectory: false, uri: '' });
+        mockFileSystem.getInfoAsync.mockResolvedValue(createFileInfo());
 
         const result = await CacheManager.getStoriesWithResolvedUrls();
 
@@ -443,7 +466,7 @@ describe('CacheManager', () => {
           coverImage: 'stories/story-1/cover.webp',
         };
         mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify([story]));
-        mockFileSystem.getInfoAsync.mockResolvedValue({ exists: false, isDirectory: false, uri: '' });
+        mockFileSystem.getInfoAsync.mockResolvedValue(createMissingInfo());
 
         const result = await CacheManager.getStoriesWithResolvedUrls();
 
@@ -456,7 +479,7 @@ describe('CacheManager', () => {
           coverImage: 'https://api.colearnwithfreya.co.uk/api/assets/stories/story-1/cover.webp',
         };
         mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify([story]));
-        mockFileSystem.getInfoAsync.mockResolvedValue({ exists: true, isDirectory: false, uri: '' });
+        mockFileSystem.getInfoAsync.mockResolvedValue(createFileInfo());
 
         const result = await CacheManager.getStoriesWithResolvedUrls();
 
@@ -469,7 +492,7 @@ describe('CacheManager', () => {
           coverImage: 'assets/stories/story-1/cover.webp',
         };
         mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify([story]));
-        mockFileSystem.getInfoAsync.mockResolvedValue({ exists: true, isDirectory: false, uri: '' });
+        mockFileSystem.getInfoAsync.mockResolvedValue(createFileInfo());
 
         const result = await CacheManager.getStoriesWithResolvedUrls();
 
@@ -515,7 +538,7 @@ describe('CacheManager', () => {
           ],
         };
         mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify([story]));
-        mockFileSystem.getInfoAsync.mockResolvedValue({ exists: true, isDirectory: false, uri: '' });
+        mockFileSystem.getInfoAsync.mockResolvedValue(createFileInfo());
 
         const result = await CacheManager.getStoriesWithResolvedUrls();
 
@@ -530,7 +553,7 @@ describe('CacheManager', () => {
           ],
         };
         mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify([story]));
-        mockFileSystem.getInfoAsync.mockResolvedValue({ exists: true, isDirectory: false, uri: '' });
+        mockFileSystem.getInfoAsync.mockResolvedValue(createFileInfo());
 
         const result = await CacheManager.getStoriesWithResolvedUrls();
 
@@ -558,7 +581,7 @@ describe('CacheManager', () => {
           ],
         };
         mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify([story]));
-        mockFileSystem.getInfoAsync.mockResolvedValue({ exists: true, isDirectory: false, uri: '' });
+        mockFileSystem.getInfoAsync.mockResolvedValue(createFileInfo());
 
         const result = await CacheManager.getStoriesWithResolvedUrls();
 
@@ -635,7 +658,7 @@ describe('CacheManager', () => {
           // No pages property
         };
         mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify([story]));
-        mockFileSystem.getInfoAsync.mockResolvedValue({ exists: true, isDirectory: false, uri: '' });
+        mockFileSystem.getInfoAsync.mockResolvedValue(createFileInfo());
 
         const result = await CacheManager.getStoriesWithResolvedUrls();
 
@@ -690,7 +713,7 @@ describe('CacheManager', () => {
           coverImage: 'stories/story-1/cover.webp',
         };
         mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify([story]));
-        mockFileSystem.getInfoAsync.mockResolvedValue({ exists: true, isDirectory: false, uri: '' });
+        mockFileSystem.getInfoAsync.mockResolvedValue(createFileInfo());
 
         const result = await CacheManager.getStories();
 
@@ -706,7 +729,7 @@ describe('CacheManager', () => {
           coverImage: 'stories/story-1/cover.webp',
         };
         mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify([story]));
-        mockFileSystem.getInfoAsync.mockResolvedValue({ exists: true, isDirectory: false, uri: '' });
+        mockFileSystem.getInfoAsync.mockResolvedValue(createFileInfo());
 
         const result = await CacheManager.getStoriesWithResolvedUrls();
 

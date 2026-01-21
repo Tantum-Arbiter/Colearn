@@ -21,14 +21,19 @@ const mockStory: Story = {
   title: 'Test Story',
   coverImage: 'assets/stories/story-1/cover.webp',
   checksum: 'abc123',
+  category: 'adventure',
+  tag: 'adventure',
+  emoji: '🗺️',
+  isAvailable: true,
   pages: [
     {
       id: 'page-1',
+      pageNumber: 1,
       backgroundImage: 'assets/stories/story-1/bg1.webp',
       characterImage: 'assets/stories/story-1/char1.webp',
       text: 'Test page',
       interactiveElements: [
-        { id: 'elem-1', type: 'button', image: 'assets/stories/story-1/btn.webp' },
+        { id: 'elem-1', type: 'reveal', image: 'assets/stories/story-1/btn.webp', position: { x: 0.5, y: 0.5 }, size: { width: 0.1, height: 0.1 } },
       ],
     },
   ],
@@ -317,7 +322,11 @@ describe('BatchSyncService', () => {
         id: 'text-only-story',
         title: 'Text Only Story',
         checksum: 'xyz789',
-        pages: [{ id: 'page-1', text: 'Just text, no images' }],
+        category: 'adventure',
+        tag: 'adventure',
+        emoji: '📖',
+        isAvailable: true,
+        pages: [{ id: 'page-1', pageNumber: 1, text: 'Just text, no images' }],
       };
 
       mockVersionManager.checkVersions.mockResolvedValue({
@@ -510,8 +519,12 @@ describe('BatchSyncService', () => {
         title: 'Local Story',
         coverImage: 'local:bundled-cover.webp',
         checksum: 'local123',
+        category: 'adventure',
+        tag: 'adventure',
+        emoji: '📖',
+        isAvailable: true,
         pages: [
-          { id: 'page-1', backgroundImage: 'local:bundled-bg.webp', text: 'Text' },
+          { id: 'page-1', pageNumber: 1, backgroundImage: 'local:bundled-bg.webp', text: 'Text' },
         ],
       };
 
@@ -547,6 +560,10 @@ describe('BatchSyncService', () => {
         title: 'Prefixed Story',
         coverImage: 'assets/stories/prefixed-story/cover.webp',
         checksum: 'prefix123',
+        category: 'adventure',
+        tag: 'adventure',
+        emoji: '📖',
+        isAvailable: true,
         pages: [],
       };
 
@@ -588,14 +605,19 @@ describe('BatchSyncService', () => {
         title: 'Interactive Story',
         coverImage: 'stories/interactive/cover.webp',
         checksum: 'int123',
+        category: 'adventure',
+        tag: 'adventure',
+        emoji: '📖',
+        isAvailable: true,
         pages: [
           {
             id: 'page-1',
+            pageNumber: 1,
             backgroundImage: 'stories/interactive/bg.webp',
             text: 'Interactive page',
             interactiveElements: [
-              { id: 'btn1', type: 'button', image: 'stories/interactive/btn1.webp' },
-              { id: 'btn2', type: 'button', image: 'stories/interactive/btn2.webp' },
+              { id: 'btn1', type: 'reveal', image: 'stories/interactive/btn1.webp', position: { x: 0.5, y: 0.5 }, size: { width: 0.1, height: 0.1 } },
+              { id: 'btn2', type: 'reveal', image: 'stories/interactive/btn2.webp', position: { x: 0.6, y: 0.5 }, size: { width: 0.1, height: 0.1 } },
             ],
           },
         ],
@@ -644,9 +666,13 @@ describe('BatchSyncService', () => {
         title: 'Duplicate Story',
         coverImage: 'stories/dup/shared.webp',
         checksum: 'dup123',
+        category: 'adventure',
+        tag: 'adventure',
+        emoji: '📖',
+        isAvailable: true,
         pages: [
-          { id: 'page-1', backgroundImage: 'stories/dup/shared.webp', text: 'Uses same image' },
-          { id: 'page-2', backgroundImage: 'stories/dup/shared.webp', text: 'Also uses same' },
+          { id: 'page-1', pageNumber: 1, backgroundImage: 'stories/dup/shared.webp', text: 'Uses same image' },
+          { id: 'page-2', pageNumber: 2, backgroundImage: 'stories/dup/shared.webp', text: 'Also uses same' },
         ],
       };
 
@@ -690,8 +716,13 @@ describe('BatchSyncService', () => {
         id: 'many-assets',
         title: 'Many Assets',
         checksum: 'many123',
+        category: 'adventure',
+        tag: 'adventure',
+        emoji: '📖',
+        isAvailable: true,
         pages: assetPaths.map((path, i) => ({
           id: `page-${i}`,
+          pageNumber: i + 1,
           backgroundImage: path,
           text: `Page ${i}`,
         })),

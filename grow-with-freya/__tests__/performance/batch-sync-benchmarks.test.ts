@@ -39,6 +39,7 @@ const createMockStory = (id: string, assetsPerPage: number = 2, pageCount: numbe
   coverImage: `assets/stories/${id}/cover.webp`,
   pages: Array.from({ length: pageCount }, (_, i) => ({
     id: `page-${i}`,
+    pageNumber: i + 1,
     backgroundImage: `assets/stories/${id}/bg${i}.webp`,
     characterImage: assetsPerPage > 1 ? `assets/stories/${id}/char${i}.webp` : undefined,
     text: `Page ${i} text`,

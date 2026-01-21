@@ -129,6 +129,7 @@ describe('StorySyncService', () => {
     it('should fetch content version from API without clientVersion', async () => {
       const mockVersion: ContentVersion = {
         version: 2,
+        assetVersion: 2,
         lastUpdated: Date.now(),
         storyChecksums: { 'story-1': 'checksum-1', 'story-2': 'checksum-2' },
         totalStories: 2
@@ -145,6 +146,7 @@ describe('StorySyncService', () => {
     it('should include clientVersion query param when provided', async () => {
       const mockVersion: ContentVersion = {
         version: 2,
+        assetVersion: 2,
         lastUpdated: Date.now(),
         storyChecksums: { 'story-1': 'checksum-1', 'story-2': 'checksum-2' },
         totalStories: 2
@@ -161,6 +163,7 @@ describe('StorySyncService', () => {
     it('should include clientVersion=0 when provided as zero', async () => {
       const mockVersion: ContentVersion = {
         version: 1,
+        assetVersion: 1,
         lastUpdated: Date.now(),
         storyChecksums: {},
         totalStories: 0
@@ -200,6 +203,7 @@ describe('StorySyncService', () => {
 
       const serverVersion: ContentVersion = {
         version: 2,
+        assetVersion: 2,
         lastUpdated: Date.now(),
         storyChecksums: {},
         totalStories: 0
@@ -223,6 +227,7 @@ describe('StorySyncService', () => {
 
       const serverVersion: ContentVersion = {
         version: 2,
+        assetVersion: 2,
         lastUpdated: Date.now(),
         storyChecksums: {},
         totalStories: 0
@@ -250,6 +255,7 @@ describe('StorySyncService', () => {
       // Mock API response with relative paths
       const apiResponse: StorySyncResponse = {
         serverVersion: 1,
+        assetVersion: 1,
         stories: [
           {
             id: 'story-1',
@@ -323,6 +329,7 @@ describe('StorySyncService', () => {
       // Mock API response with relative paths for updated story
       const apiResponse: StorySyncResponse = {
         serverVersion: 2,
+        assetVersion: 2,
         stories: [{
           id: 'story-2',
           title: 'Test Story 2',
@@ -360,6 +367,7 @@ describe('StorySyncService', () => {
       // Mock API response with relative paths
       const apiResponse: StorySyncResponse = {
         serverVersion: 1,
+        assetVersion: 1,
         stories: [{
           id: 'story-1',
           title: 'Test Story 1',
@@ -405,6 +413,7 @@ describe('StorySyncService', () => {
       // Mock API response with relative paths (service will resolve them)
       const apiResponse: StorySyncResponse = {
         serverVersion: 1,
+        assetVersion: 1,
         stories: [{
           id: 'story-1',
           title: 'Test Story 1',
@@ -451,6 +460,7 @@ describe('StorySyncService', () => {
 
       const serverVersion: ContentVersion = {
         version: 1,
+        assetVersion: 1,
         lastUpdated: Date.now(),
         storyChecksums: { 'story-1': 'checksum-1' },
         totalStories: 1
