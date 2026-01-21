@@ -133,15 +133,15 @@ jobs:
             if [ -d "$story_dir" ]; then
               story_name=$(basename "$story_dir")
 
-              # Check for required assets in GCS
-              for asset in "$story_dir"*.{png,jpg,jpeg,mp3,webp,gif} 2>/dev/null; do
+              # Check for required assets in GCS using find (avoid glob syntax issues)
+              find "$story_dir" -maxdepth 1 -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.mp3" -o -name "*.webp" -o -name "*.gif" \) 2>/dev/null | while read asset; do
                 if [ -f "$asset" ]; then
                   asset_name=$(basename "$asset")
                   gcs_path="gs://colearnwithfreya-assets/stories/${story_name}/${asset_name}"
 
                   if ! gsutil -q stat "$gcs_path" 2>/dev/null; then
                     echo "❌ MISSING: $gcs_path"
-                    MISSING_ASSETS=$((MISSING_ASSETS + 1))
+                    echo "1" >> /tmp/missing_assets_count
                   else
                     echo "✅ Found: $gcs_path"
                   fi
@@ -150,7 +150,13 @@ jobs:
             fi
           done
 
-          if [ $MISSING_ASSETS -gt 0 ]; then
+          # Count missing assets from temp file
+          if [ -f /tmp/missing_assets_count ]; then
+            MISSING_ASSETS=$(wc -l < /tmp/missing_assets_count)
+            rm -f /tmp/missing_assets_count
+          fi
+
+          if [ "$MISSING_ASSETS" -gt 0 ]; then
             echo ""
             echo "❌ ERROR: $MISSING_ASSETS assets are missing from GCS!"
             echo "The GCS sync may have failed. Aborting Firestore update."
