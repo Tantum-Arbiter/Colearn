@@ -42,7 +42,7 @@ class PeakLoadWithFirestoreDown extends Simulation {
   val scenarios: List[PopulationBuilder] = List(
     PublicApiScenario.get_all_stories_scenario,
     PublicApiScenario.get_stories_version_scenario,
-    PublicApiScenario.sync_stories_scenario
+    PublicApiScenario.delta_sync_stories_scenario
   )
 
   // Run the failure simulation script in the background

@@ -2,13 +2,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   Story,
   StorySyncRequest,
-  StorySyncResponse,
   StorySyncMetadata,
   ContentVersion
 } from '../types/story';
 import { ApiClient } from './api-client';
 import Constants from 'expo-constants';
 import { Logger } from '../utils/logger';
+import { DeltaSyncResponse } from './batch-sync-service';
 
 const log = Logger.create('StorySyncService');
 
@@ -178,23 +178,22 @@ export class StorySyncService {
       log.info(`[User Journey Flow 4: Story Sync] Step 6/12: Starting ${isInitialSync ? 'INITIAL' : 'DELTA'} sync...`);
       log.info(`[User Journey Flow 4: Story Sync] Step 7/12: Building sync request with clientVersion=${localMetadata?.version || 0}, cachedStories=${Object.keys(localMetadata?.storyChecksums || {}).length}`);
 
-      // Build sync request
-      const syncRequest: StorySyncRequest = {
+      // Build delta sync request (simplified from old sync request)
+      const deltaRequest = {
         clientVersion: localMetadata?.version || 0,
-        storyChecksums: localMetadata?.storyChecksums || {},
-        lastSyncTimestamp: localMetadata?.lastSyncTimestamp || 0
+        storyChecksums: localMetadata?.storyChecksums || {}
       };
 
-      const requestPayload = JSON.stringify(syncRequest);
+      const requestPayload = JSON.stringify(deltaRequest);
 
-      // Call sync endpoint
-      log.info('[User Journey Flow 4: Story Sync] Step 8/12: Calling backend POST /api/stories/sync...');
-      const syncResponse = await ApiClient.request<StorySyncResponse>('/api/stories/sync', {
+      // Call delta endpoint (replaces deprecated /api/stories/sync)
+      log.info('[User Journey Flow 4: Story Sync] Step 8/12: Calling backend POST /api/stories/delta...');
+      const syncResponse = await ApiClient.request<DeltaSyncResponse>('/api/stories/delta', {
         method: 'POST',
         body: requestPayload
       });
 
-      log.info(`[User Journey Flow 4: Story Sync] Step 9/12: Backend response - serverVersion=${syncResponse.serverVersion}, updatedStories=${syncResponse.updatedStories}, totalStories=${syncResponse.totalStories}`);
+      log.info(`[User Journey Flow 4: Story Sync] Step 9/12: Backend response - serverVersion=${syncResponse.serverVersion}, updatedStories=${syncResponse.stories.length}, deletedStories=${syncResponse.deletedStoryIds?.length || 0}, totalStories=${syncResponse.totalStories}`);
 
       // Resolve asset URLs for all stories
       if (syncResponse.stories && syncResponse.stories.length > 0) {
@@ -233,19 +232,17 @@ export class StorySyncService {
       const existingStories = localMetadata?.stories || [];
       const updatedStoryIds = new Set(syncResponse.stories.map(s => s.id));
 
-      // Get set of story IDs that still exist on the server
-      const serverStoryIds = new Set(Object.keys(syncResponse.storyChecksums || {}));
+      // Use deletedStoryIds from delta response (explicitly provided by server)
+      const deletedStoryIds = new Set(syncResponse.deletedStoryIds || []);
 
-      // Keep existing stories that weren't updated AND still exist on the server
-      // This handles deletions: if a story was deleted from CMS, it won't be in serverStoryIds
+      // Keep existing stories that weren't updated AND weren't deleted
       const unchangedStories = existingStories.filter(s =>
-        !updatedStoryIds.has(s.id) && serverStoryIds.has(s.id)
+        !updatedStoryIds.has(s.id) && !deletedStoryIds.has(s.id)
       );
 
-      // Check for deleted stories
-      const deletedStories = existingStories.filter(s => !serverStoryIds.has(s.id));
-      if (deletedStories.length > 0) {
-        log.info(`[User Journey Flow 4: Story Sync] Step 10/12: Detected ${deletedStories.length} DELETED stories:`, deletedStories.map(s => s.id));
+      // Log deleted stories
+      if (deletedStoryIds.size > 0) {
+        log.info(`[User Journey Flow 4: Story Sync] Step 10/12: Removed ${deletedStoryIds.size} DELETED stories:`, Array.from(deletedStoryIds));
       }
 
       // Combine unchanged + updated stories
@@ -262,7 +259,7 @@ export class StorySyncService {
       log.info(`[User Journey Flow 4: Story Sync] Step 11/12: Saving updated metadata - version=${syncResponse.serverVersion}, stories=${allStories.length}`);
       await this.saveSyncMetadata(newMetadata);
 
-      log.info(`[User Journey Flow 4: Story Sync] Step 12/12: Delta sync COMPLETE - cached ${allStories.length} stories, updated=${syncResponse.updatedStories}, deleted=${deletedStories.length}`);
+      log.info(`[User Journey Flow 4: Story Sync] Step 12/12: Delta sync COMPLETE - cached ${allStories.length} stories, updated=${syncResponse.stories.length}, deleted=${deletedStoryIds.size}`);
 
       return allStories;
     } catch (error) {

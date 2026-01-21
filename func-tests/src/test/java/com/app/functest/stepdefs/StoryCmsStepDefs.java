@@ -83,18 +83,17 @@ public class StoryCmsStepDefs extends BaseStepDefs {
 
     @When("device {string} makes a sync request")
     public void deviceMakesASyncRequest(String deviceId) {
-        // Initialize sync request with no checksums
+        // Initialize delta sync request (no lastSyncTimestamp needed for delta endpoint)
         syncRequest = new HashMap<>();
         syncRequest.put("clientVersion", 0);
         syncRequest.put("storyChecksums", new HashMap<String, String>());
-        syncRequest.put("lastSyncTimestamp", 0L);
 
-        // Make the POST request
+        // Make the POST request to delta endpoint
         lastResponse = applyAuthenticatedHeaders(given())
                 .contentType("application/json")
                 .body(mapToJson(syncRequest))
                 .when()
-                .post("/api/stories/sync");
+                .post("/api/stories/delta");
     }
 
     @When("I make a GET request to the story endpoint")

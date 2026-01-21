@@ -1,11 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StorySyncService } from '../../services/story-sync-service';
 import { ApiClient } from '../../services/api-client';
-import { 
-  Story, 
-  StorySyncResponse, 
+import {
+  Story,
   ContentVersion,
-  StorySyncMetadata 
+  StorySyncMetadata
 } from '../../types/story';
 
 jest.mock('@react-native-async-storage/async-storage');
@@ -252,8 +251,8 @@ describe('StorySyncService', () => {
 
   describe('syncStories', () => {
     it('should perform initial sync when no local data exists', async () => {
-      // Mock API response with relative paths
-      const apiResponse: StorySyncResponse = {
+      // Mock API response with DeltaSyncResponse format
+      const apiResponse = {
         serverVersion: 1,
         assetVersion: 1,
         stories: [
@@ -295,9 +294,10 @@ describe('StorySyncService', () => {
             pages: []
           }
         ],
+        deletedStoryIds: [],
         storyChecksums: { 'story-1': 'checksum-1', 'story-2': 'checksum-2' },
         totalStories: 2,
-        updatedStories: 2,
+        updatedCount: 2,
         lastUpdated: Date.now()
       };
 
@@ -308,12 +308,12 @@ describe('StorySyncService', () => {
 
       expect(result).toHaveLength(2);
       expect(result).toEqual([mockStory1, mockStory2]);
-      expect(ApiClient.request).toHaveBeenCalledWith('/api/stories/sync', {
+      // Now uses /api/stories/delta endpoint instead of /api/stories/sync
+      expect(ApiClient.request).toHaveBeenCalledWith('/api/stories/delta', {
         method: 'POST',
         body: JSON.stringify({
           clientVersion: 0,
-          storyChecksums: {},
-          lastSyncTimestamp: 0
+          storyChecksums: {}
         })
       });
     });
@@ -326,8 +326,8 @@ describe('StorySyncService', () => {
         stories: [mockStory1]
       };
 
-      // Mock API response with relative paths for updated story
-      const apiResponse: StorySyncResponse = {
+      // Mock API response with DeltaSyncResponse format
+      const apiResponse = {
         serverVersion: 2,
         assetVersion: 2,
         stories: [{
@@ -345,9 +345,10 @@ describe('StorySyncService', () => {
           checksum: 'checksum-2-updated',
           pages: []
         }],
+        deletedStoryIds: [],
         storyChecksums: { 'story-1': 'checksum-1', 'story-2': 'checksum-2-updated' },
         totalStories: 2,
-        updatedStories: 1,
+        updatedCount: 1,
         lastUpdated: Date.now()
       };
 
@@ -364,8 +365,8 @@ describe('StorySyncService', () => {
     });
 
     it('should save updated metadata after sync', async () => {
-      // Mock API response with relative paths
-      const apiResponse: StorySyncResponse = {
+      // Mock API response with DeltaSyncResponse format
+      const apiResponse = {
         serverVersion: 1,
         assetVersion: 1,
         stories: [{
@@ -390,9 +391,10 @@ describe('StorySyncService', () => {
             }
           ]
         }],
+        deletedStoryIds: [],
         storyChecksums: { 'story-1': 'checksum-1' },
         totalStories: 1,
-        updatedStories: 1,
+        updatedCount: 1,
         lastUpdated: Date.now()
       };
 
@@ -410,8 +412,8 @@ describe('StorySyncService', () => {
 
   describe('prefetchStories', () => {
     it('should sync when sync is needed', async () => {
-      // Mock API response with relative paths (service will resolve them)
-      const apiResponse: StorySyncResponse = {
+      // Mock API response with DeltaSyncResponse format
+      const apiResponse = {
         serverVersion: 1,
         assetVersion: 1,
         stories: [{
@@ -436,9 +438,10 @@ describe('StorySyncService', () => {
             }
           ]
         }],
+        deletedStoryIds: [],
         storyChecksums: { 'story-1': 'checksum-1' },
         totalStories: 1,
-        updatedStories: 1,
+        updatedCount: 1,
         lastUpdated: Date.now()
       };
 

@@ -88,10 +88,10 @@ object RealisticUserScenario {
   ).pause(shortThink)
 
   def syncStories: ChainBuilder = exec(
-    http("sync_stories")
-      .post("/api/stories/sync")
+    http("delta_sync_stories")
+      .post("/api/stories/delta")
       .headers(authHeaders)
-      .body(StringBody("""{"clientVersion": 0, "storyChecksums": {}, "lastSyncTimestamp": 0}"""))
+      .body(StringBody("""{"clientVersion": 0, "storyChecksums": {}}"""))
       .check(status.in(200, 204, 500))
   ).pause(mediumThink)
 
@@ -123,12 +123,13 @@ object RealisticUserScenario {
       .check(status.is(200))
   ).pause(shortThink)
 
-  def syncAssets: ChainBuilder = exec(
-    http("sync_assets")
-      .post("/api/assets/sync")
+  // Note: /api/assets/sync was removed - use batch-urls endpoint instead
+  def batchAssetUrls: ChainBuilder = exec(
+    http("batch_asset_urls")
+      .post("/api/assets/batch-urls")
       .headers(authHeaders)
-      .body(StringBody("""{"clientVersion": 0, "assetChecksums": {}, "lastSyncTimestamp": 0}"""))
-      .check(status.in(200, 204, 500))
+      .body(StringBody("""{"paths": ["assets/stories/test/cover.webp", "assets/stories/test/page1.webp"]}"""))
+      .check(status.in(200, 400, 500))
   ).pause(mediumThink)
 
   // ============================================

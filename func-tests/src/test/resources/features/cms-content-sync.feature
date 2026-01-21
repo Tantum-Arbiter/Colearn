@@ -48,9 +48,9 @@ Feature: CMS Content Sync and Delta Sync Testing
   Scenario: Initial sync receives all seeded stories
     Given I seed 10 test stories to the local Firestore emulator
     And I have a sync request with no client checksums
-    When I make a POST request to "/api/stories/sync" with the sync request
+    When I make a POST request to "/api/stories/delta" with the sync request
     Then the response status code should be 200
-    And the response field "updatedStories" should be at least 10
+    And the response field "updatedCount" should be at least 10
     And the response field "totalStories" should be at least 10
 
   @local @docker @emulator-only @delta-sync
@@ -58,9 +58,9 @@ Feature: CMS Content Sync and Delta Sync Testing
     Given I seed 10 test stories to the local Firestore emulator
     And I have performed an initial sync
     And I have a sync request with current server checksums
-    When I make a POST request to "/api/stories/sync" with the sync request
+    When I make a POST request to "/api/stories/delta" with the sync request
     Then the response status code should be 200
-    And the response field "updatedStories" should equal 0
+    And the response field "updatedCount" should equal 0
 
   @local @docker @emulator-only @delta-sync
   Scenario: Delta sync detects single story update
@@ -68,9 +68,9 @@ Feature: CMS Content Sync and Delta Sync Testing
     And I have performed an initial sync
     And I update story "test-story-5" with new content version 2
     And I have a sync request with previous checksums
-    When I make a POST request to "/api/stories/sync" with the sync request
+    When I make a POST request to "/api/stories/delta" with the sync request
     Then the response status code should be 200
-    And the response field "updatedStories" should equal 1
+    And the response field "updatedCount" should equal 1
     And the response should contain updated story "test-story-5"
 
   @local @docker @emulator-only @delta-sync
@@ -79,9 +79,9 @@ Feature: CMS Content Sync and Delta Sync Testing
     And I have performed an initial sync
     And I update stories "test-story-1,test-story-3,test-story-7" with new content
     And I have a sync request with previous checksums
-    When I make a POST request to "/api/stories/sync" with the sync request
+    When I make a POST request to "/api/stories/delta" with the sync request
     Then the response status code should be 200
-    And the response field "updatedStories" should equal 3
+    And the response field "updatedCount" should equal 3
 
   @local @docker @emulator-only @delta-sync
   Scenario: Delta sync handles new story addition
@@ -89,9 +89,9 @@ Feature: CMS Content Sync and Delta Sync Testing
     And I have performed an initial sync
     And I seed additional story "test-story-new" to the emulator
     And I have a sync request with previous checksums
-    When I make a POST request to "/api/stories/sync" with the sync request
+    When I make a POST request to "/api/stories/delta" with the sync request
     Then the response status code should be 200
-    And the response field "updatedStories" should be at least 1
+    And the response field "updatedCount" should be at least 1
     And the response should contain story "test-story-new"
 
   # ============================================================================
@@ -128,7 +128,7 @@ Feature: CMS Content Sync and Delta Sync Testing
   Scenario: GCP initial sync retrieves seeded story
     Given the story "gcp-sync-test" exists in GCP Firestore
     And I have a sync request with no client checksums
-    When I make a POST request to "/api/stories/sync" with the sync request
+    When I make a POST request to "/api/stories/delta" with the sync request
     Then the response status code should be 200
     And the response should contain field "serverVersion"
     And the response should contain field "stories"
@@ -138,9 +138,9 @@ Feature: CMS Content Sync and Delta Sync Testing
   Scenario: GCP delta sync with current checksums returns no updates
     Given the story "gcp-checksum-test" exists in GCP Firestore
     And I have a sync request with current server checksums
-    When I make a POST request to "/api/stories/sync" with the sync request
+    When I make a POST request to "/api/stories/delta" with the sync request
     Then the response status code should be 200
-    And the response field "updatedStories" should equal 0
+    And the response field "updatedCount" should equal 0
 
   # ============================================================================
   # DELTA SYNC MODIFICATION TESTS - Prove delta sync detects changes
@@ -152,9 +152,9 @@ Feature: CMS Content Sync and Delta Sync Testing
     And I have performed an initial sync
     And I have a sync request with previous checksums
     When I modify story "gcp-delta-tag-test" by changing the tag to "🚀 Modified Tag"
-    And I make a POST request to "/api/stories/sync" with the sync request
+    And I make a POST request to "/api/stories/delta" with the sync request
     Then the response status code should be 200
-    And the response field "updatedStories" should be at least 1
+    And the response field "updatedCount" should be at least 1
     And the response should contain story "gcp-delta-tag-test"
 
   @gcp-dev @delta-sync @delta-modification
@@ -163,9 +163,9 @@ Feature: CMS Content Sync and Delta Sync Testing
     And I have performed an initial sync
     And I have a sync request with previous checksums
     When I modify story "gcp-delta-page-test" by adding a new page
-    And I make a POST request to "/api/stories/sync" with the sync request
+    And I make a POST request to "/api/stories/delta" with the sync request
     Then the response status code should be 200
-    And the response field "updatedStories" should be at least 1
+    And the response field "updatedCount" should be at least 1
     And the response should contain story "gcp-delta-page-test"
 
   @gcp-dev @delta-sync @delta-modification
@@ -174,9 +174,9 @@ Feature: CMS Content Sync and Delta Sync Testing
     And I have performed an initial sync
     And I have a sync request with previous checksums
     When I modify story "gcp-delta-text-test" page 1 text to "MODIFIED TEXT - Delta sync should detect this change!"
-    And I make a POST request to "/api/stories/sync" with the sync request
+    And I make a POST request to "/api/stories/delta" with the sync request
     Then the response status code should be 200
-    And the response field "updatedStories" should be at least 1
+    And the response field "updatedCount" should be at least 1
     And the response should contain story "gcp-delta-text-test"
 
   # ============================================================================
@@ -187,7 +187,7 @@ Feature: CMS Content Sync and Delta Sync Testing
   Scenario: Sync performance with 10 stories completes within timeout
     Given I seed 10 test stories to the local Firestore emulator
     And I have a sync request with no client checksums
-    When I make a POST request to "/api/stories/sync" with the sync request
+    When I make a POST request to "/api/stories/delta" with the sync request
     Then the response status code should be 200
     And the response time should be less than 3000 milliseconds
 
@@ -256,9 +256,9 @@ Feature: CMS Content Sync and Delta Sync Testing
     And I have performed an initial sync
     When I modify story "test-story-localized" localized text for language "pl" on page 1
     And I have a sync request with previous checksums
-    And I make a POST request to "/api/stories/sync" with the sync request
+    And I make a POST request to "/api/stories/delta" with the sync request
     Then the response status code should be 200
-    And the response field "updatedStories" should be at least 1
+    And the response field "updatedCount" should be at least 1
     And the response should contain story "test-story-localized"
 
   @gcp-dev @i18n
@@ -327,7 +327,7 @@ Feature: CMS Content Sync and Delta Sync Testing
     Then the response status code should be 200
     And the response field "totalStories" should equal 4
     When I have a sync request with previous checksums
-    And I make a POST request to "/api/stories/sync" with the sync request
+    And I make a POST request to "/api/stories/delta" with the sync request
     Then the response status code should be 200
     And the sync response should indicate story "test-story-2" was deleted
 

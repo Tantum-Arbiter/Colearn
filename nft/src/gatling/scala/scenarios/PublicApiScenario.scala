@@ -127,13 +127,13 @@ object PublicApiScenario {
       )
   )
 
-  val sync_stories_scenario = injectLoad(
-    scenario("POST /api/stories/sync - Sync Stories")
+  val delta_sync_stories_scenario = injectLoad(
+    scenario("POST /api/stories/delta - Delta Sync Stories")
       .exec(
-        http("sync_stories")
-          .post("/api/stories/sync")
+        http("delta_sync_stories")
+          .post("/api/stories/delta")
           .headers(authHeaders)
-          .body(StringBody("""{"clientVersion": 0, "storyChecksums": {}, "lastSyncTimestamp": 0}"""))
+          .body(StringBody("""{"clientVersion": 0, "storyChecksums": {}}"""))
           .check(status.in(200, 204, 500))
       )
   )
@@ -155,16 +155,8 @@ object PublicApiScenario {
       )
   )
 
-  val sync_assets_scenario = injectLoad(
-    scenario("POST /api/assets/sync - Sync Assets")
-      .exec(
-        http("sync_assets")
-          .post("/api/assets/sync")
-          .headers(authHeaders)
-          .body(StringBody("""{"clientVersion": 0, "assetChecksums": {}, "lastSyncTimestamp": 0}"""))
-          .check(status.in(200, 204, 500))
-      )
-  )
+  // Note: sync_assets_scenario was removed - /api/assets/sync endpoint no longer exists
+  // Use batch_urls_scenario below instead for asset URL generation
 
   // ============================================
   // Batch Processing Endpoints (New - 95% API reduction)

@@ -38,27 +38,27 @@ Feature: Story CMS and Delta-Sync
   @delta-sync @emulator-only
   Scenario: Initial sync with no client data
     Given I have a sync request with no client checksums
-    When I make a POST request to "/api/stories/sync" with the sync request
+    When I make a POST request to "/api/stories/delta" with the sync request
     Then the response status code should be 200
     And the response should contain field "serverVersion"
     And the response should contain field "stories"
     And the response should contain field "storyChecksums"
     And the response should contain field "totalStories"
-    And the response field "updatedStories" should be greater than 0
+    And the response field "updatedCount" should be greater than 0
 
   @delta-sync @emulator-only
   Scenario: Delta sync with matching checksums
     Given I have a sync request with current server checksums
-    When I make a POST request to "/api/stories/sync" with the sync request
+    When I make a POST request to "/api/stories/delta" with the sync request
     Then the response status code should be 200
-    And the response field "updatedStories" should equal 0
+    And the response field "updatedCount" should equal 0
 
   @delta-sync @emulator-only
   Scenario: Delta sync with outdated checksums
     Given I have a sync request with outdated checksums
-    When I make a POST request to "/api/stories/sync" with the sync request
+    When I make a POST request to "/api/stories/delta" with the sync request
     Then the response status code should be 200
-    And the response field "updatedStories" should be greater than 0
+    And the response field "updatedCount" should be greater than 0
     And the response should contain updated stories only
 
   @story-retrieval @emulator-only
@@ -90,10 +90,10 @@ Feature: Story CMS and Delta-Sync
   Scenario: Sync performance with dataset
     Given 3 stories exist in the system
     And I have a sync request with 0 matching checksums
-    When I make a POST request to "/api/stories/sync" with the sync request
+    When I make a POST request to "/api/stories/delta" with the sync request
     Then the response status code should be 200
     And the response time should be less than 2000 milliseconds
-    And the response field "updatedStories" should be greater than 2
+    And the response field "updatedCount" should be greater than 2
 
   @delta-sync @cross-device @emulator-only
   Scenario: Multiple devices sync independently
@@ -169,7 +169,7 @@ Feature: Story CMS and Delta-Sync
 
   @error-handling
   Scenario: Sync with invalid request body
-    When I make a POST request to "/api/stories/sync" with invalid JSON
+    When I make a POST request to "/api/stories/delta" with invalid JSON
     Then the response status code should be 400
     And the response should have field "errorCode" with value "GTW-106"
     And the response should have field "success" with value "false"
@@ -177,7 +177,7 @@ Feature: Story CMS and Delta-Sync
   @error-handling
   Scenario: Sync with malformed checksums
     Given I have a sync request with malformed checksums
-    When I make a POST request to "/api/stories/sync" with the sync request
+    When I make a POST request to "/api/stories/delta" with the sync request
     Then the response status code should be 400 or 200
     And if status is 200 then response should handle gracefully
 
@@ -195,7 +195,7 @@ Feature: Story CMS and Delta-Sync
 
   @error-handling
   Scenario: Sync request missing required fields
-    When I make a POST request to "/api/stories/sync" with body:
+    When I make a POST request to "/api/stories/delta" with body:
       """
       {}
       """
@@ -206,12 +206,11 @@ Feature: Story CMS and Delta-Sync
 
   @error-handling @emulator-only
   Scenario: Sync request with null checksums
-    When I make a POST request to "/api/stories/sync" with body:
+    When I make a POST request to "/api/stories/delta" with body:
       """
       {
         "clientVersion": 1,
-        "storyChecksums": null,
-        "lastSyncTimestamp": 0
+        "storyChecksums": null
       }
       """
     Then the response status code should be 400
@@ -228,7 +227,7 @@ Feature: Story CMS and Delta-Sync
   @error-handling @emulator-only
   Scenario: Sync stories with missing X-Client-Platform header
     Given I have a sync request with no client checksums
-    When I make a POST request to "/api/stories/sync" without X-Client-Platform header
+    When I make a POST request to "/api/stories/delta" without X-Client-Platform header
     Then the response status code should be 400
     And the response should have field "errorCode" with value "GTW-101"
 

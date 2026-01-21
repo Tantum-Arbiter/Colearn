@@ -42,13 +42,12 @@ class PublicApiPeakLoad extends Simulation {
     PublicApiScenario.get_story_by_id_scenario,
     PublicApiScenario.get_stories_version_scenario,
     PublicApiScenario.get_stories_by_category_scenario,
-    PublicApiScenario.sync_stories_scenario,
 
     // Assets endpoints (get_asset_url requires GCS credentials - skip in local testing)
     PublicApiScenario.get_assets_version_scenario,
-    PublicApiScenario.sync_assets_scenario,
 
-    // Batch processing endpoints (new - 95% API reduction)
+    // Batch processing endpoints (delta sync replaces old /api/stories/sync)
+    PublicApiScenario.delta_sync_stories_scenario,
     PublicApiScenario.delta_sync_scenario,
     PublicApiScenario.batch_urls_scenario
 
