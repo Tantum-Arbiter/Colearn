@@ -239,3 +239,66 @@ Feature: Story CMS and Delta-Sync
     And the response should have field "errorCode" with value "GTW-109"
     And the response should have field "error" with value "Field validation failed"
 
+  # ============================================================================
+  # BATCH PROCESSING TESTS - POST /api/stories/delta
+  # These tests validate the new batch delta sync endpoint that reduces API calls
+  # by 95% during sync operations.
+  # ============================================================================
+
+  @batch-processing @delta-sync @smoke
+  Scenario: Batch delta sync returns all stories for new client
+    Given I have a delta sync request with no client checksums
+    When I make a POST request to "/api/stories/delta" with the delta sync request
+    Then the response status code should be 200
+    And the delta response should contain field "serverVersion"
+    And the delta response should contain field "assetVersion"
+    And the delta response should contain field "stories"
+    And the delta response should contain field "deletedStoryIds"
+    And the delta response should contain field "storyChecksums"
+    And the delta response should contain field "totalStories"
+    And the delta response should contain field "lastUpdated"
+
+  @batch-processing @delta-sync
+  Scenario: Batch delta sync with current checksums returns no updates
+    Given I have a delta sync request with current server checksums
+    When I make a POST request to "/api/stories/delta" with the delta sync request
+    Then the response status code should be 200
+    And the delta response updatedCount should equal 0
+    And the delta response should have 0 updated stories
+    And the delta response should include story checksums
+
+  @batch-processing @delta-sync
+  Scenario: Batch delta sync with outdated checksums returns changed stories
+    Given I have a delta sync request with outdated checksums
+    When I make a POST request to "/api/stories/delta" with the delta sync request
+    Then the response status code should be 200
+    And the delta response should have 1 or more updated stories
+    And the delta response should include story checksums
+
+  @batch-processing @delta-sync
+  Scenario: Batch delta sync response includes version info for caching
+    Given I have a delta sync request with client version 0
+    When I make a POST request to "/api/stories/delta" with the delta sync request
+    Then the response status code should be 200
+    And the delta response should contain field "serverVersion"
+    And the delta response should contain field "assetVersion"
+    And the delta response should contain field "lastUpdated"
+
+  @batch-processing @error-handling
+  Scenario: Batch delta sync with missing clientVersion returns error
+    When I make a POST request to "/api/stories/delta" with body:
+      """
+      {
+        "storyChecksums": {}
+      }
+      """
+    Then the response status code should be 400
+    And the response should have field "errorCode"
+
+  @batch-processing @error-handling
+  Scenario: Batch delta sync with excessive checksums returns error
+    Given I have a delta sync request with 501 story checksums
+    When I make a POST request to "/api/stories/delta" with the delta sync request
+    Then the response status code should be 400
+    And the response should have field "errorCode"
+

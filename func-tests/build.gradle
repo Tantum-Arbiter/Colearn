@@ -118,10 +118,10 @@ tasks.register('cucumberTest', JavaExec) {
             '--glue', 'com.app.functest.config'
     ]
 
-    // Support tag filtering via CUCUMBER_TAGS environment variable
+    // Support tag filtering via CUCUMBER_TAGS or CUCUMBER_FILTER_TAGS environment variable
     // Example: CUCUMBER_TAGS="@gcp-dev and not @emulator-only"
     // Default: exclude @ignore, @gcs-required, and @emulator-only
-    def cucumberTags = System.getenv('CUCUMBER_TAGS')
+    def cucumberTags = System.getenv('CUCUMBER_TAGS') ?: System.getenv('CUCUMBER_FILTER_TAGS')
     if (cucumberTags != null && !cucumberTags.isEmpty()) {
         baseArgs += ['--tags', cucumberTags]
     } else {

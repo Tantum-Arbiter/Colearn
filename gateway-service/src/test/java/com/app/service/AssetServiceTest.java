@@ -1,13 +1,13 @@
 package com.app.service;
 
 import com.app.config.GcsConfig.GcsProperties;
+import com.app.config.UrlGenerationStrategy;
 import com.app.dto.AssetSyncResponse.AssetInfo;
 import com.app.exception.AssetUrlGenerationException;
 import com.app.exception.InvalidAssetPathException;
 import com.app.model.AssetVersion;
 import com.app.repository.AssetVersionRepository;
 import com.google.cloud.storage.BlobId;
-import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,14 +15,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.net.URL;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -33,6 +31,9 @@ class AssetServiceTest {
 
     @Mock
     private Storage storage;
+
+    @Mock
+    private UrlGenerationStrategy urlStrategy;
 
     @Mock
     private AssetVersionRepository assetVersionRepository;
@@ -48,7 +49,11 @@ class AssetServiceTest {
     void setUp() {
         // GcsProperties(bucketName, signedUrlDurationMinutes, cdnHost, emulatorHost)
         gcsProperties = new GcsProperties("test-bucket", 60, null, null);
-        assetService = new AssetService(storage, gcsProperties, assetVersionRepository, metricsService);
+
+        // Mock the strategy name for logging
+        when(urlStrategy.getStrategyName()).thenReturn("mock");
+
+        assetService = new AssetService(storage, gcsProperties, urlStrategy, assetVersionRepository, metricsService);
 
         testAssetVersion = new AssetVersion();
         testAssetVersion.setId("current");
@@ -63,28 +68,24 @@ class AssetServiceTest {
     }
 
     @Test
-    void generateSignedUrl_ProductionMode_CallsStorageWithCorrectParameters() throws Exception {
+    void generateSignedUrl_CallsUrlStrategy() {
         String assetPath = "stories/story-1/cover.webp";
-        URL mockUrl = new URL("https://storage.googleapis.com/test-bucket/stories/story-1/cover.webp?X-Goog-Signature=abc");
+        String mockUrl = "https://storage.googleapis.com/test-bucket/stories/story-1/cover.webp?X-Goog-Signature=abc";
 
-        when(storage.signUrl(any(BlobInfo.class), anyLong(), any(TimeUnit.class), any()))
-                .thenReturn(mockUrl);
+        when(urlStrategy.generateUrl(assetPath, "test-bucket")).thenReturn(mockUrl);
 
         String result = assetService.generateSignedUrl(assetPath);
 
-        // Verify storage.signUrl was called with correct parameters
-        verify(storage).signUrl(argThat(blobInfo ->
-                "test-bucket".equals(blobInfo.getBucket()) && assetPath.equals(blobInfo.getName())),
-                eq(60L), eq(TimeUnit.MINUTES), any());
-
-        assertEquals(mockUrl.toString(), result);
+        // Verify urlStrategy.generateUrl was called with correct parameters
+        verify(urlStrategy).generateUrl(assetPath, "test-bucket");
+        assertEquals(mockUrl, result);
         verify(metricsService).recordGcsOperation(eq("signUrl"), eq(true), anyLong());
     }
 
     @Test
-    void generateSignedUrl_WhenStorageThrows_RecordsFailureMetric() {
+    void generateSignedUrl_WhenStrategyThrows_RecordsFailureMetric() {
         String assetPath = "stories/story-1/cover.webp";
-        when(storage.signUrl(any(), anyLong(), any(), any()))
+        when(urlStrategy.generateUrl(anyString(), anyString()))
                 .thenThrow(new RuntimeException("GCS error"));
 
         assertThrows(AssetUrlGenerationException.class, () -> assetService.generateSignedUrl(assetPath));
@@ -99,7 +100,7 @@ class AssetServiceTest {
                 () -> assetService.generateSignedUrl(maliciousPath));
 
         assertTrue(exception.getMessage().contains("Path traversal"));
-        verify(storage, never()).signUrl(any(), anyLong(), any(), any());
+        verify(urlStrategy, never()).generateUrl(anyString(), anyString());
     }
 
     @Test
@@ -110,7 +111,7 @@ class AssetServiceTest {
                 () -> assetService.generateSignedUrl(absolutePath));
 
         assertTrue(exception.getMessage().contains("Absolute paths"));
-        verify(storage, never()).signUrl(any(), anyLong(), any(), any());
+        verify(urlStrategy, never()).generateUrl(anyString(), anyString());
     }
 
     @Test
@@ -121,21 +122,21 @@ class AssetServiceTest {
                 () -> assetService.generateSignedUrl(invalidPath));
 
         assertTrue(exception.getMessage().contains("must start with one of"));
-        verify(storage, never()).signUrl(any(), anyLong(), any(), any());
+        verify(urlStrategy, never()).generateUrl(anyString(), anyString());
     }
 
     @Test
     void generateSignedUrl_WithNullPath_ThrowsInvalidAssetPathException() {
         assertThrows(InvalidAssetPathException.class,
                 () -> assetService.generateSignedUrl(null));
-        verify(storage, never()).signUrl(any(), anyLong(), any(), any());
+        verify(urlStrategy, never()).generateUrl(anyString(), anyString());
     }
 
     @Test
     void generateSignedUrl_WithEmptyPath_ThrowsInvalidAssetPathException() {
         assertThrows(InvalidAssetPathException.class,
                 () -> assetService.generateSignedUrl(""));
-        verify(storage, never()).signUrl(any(), anyLong(), any(), any());
+        verify(urlStrategy, never()).generateUrl(anyString(), anyString());
     }
 
     @Test
@@ -167,15 +168,15 @@ class AssetServiceTest {
     void getAssetsToSync_NoClientChecksums_ReturnsAllAssets() throws Exception {
         when(assetVersionRepository.getCurrent())
                 .thenReturn(CompletableFuture.completedFuture(Optional.of(testAssetVersion)));
-        
-        URL mockUrl = new URL("https://storage.googleapis.com/signed-url");
-        when(storage.signUrl(any(), anyLong(), any(), any())).thenReturn(mockUrl);
+
+        when(urlStrategy.generateUrl(anyString(), eq("test-bucket")))
+                .thenReturn("https://storage.googleapis.com/signed-url");
 
         Map<String, String> clientChecksums = new HashMap<>();
         List<AssetInfo> result = assetService.getAssetsToSync(clientChecksums).get();
 
         assertEquals(3, result.size());
-        verify(storage, times(3)).signUrl(any(), anyLong(), any(), any());
+        verify(urlStrategy, times(3)).generateUrl(anyString(), eq("test-bucket"));
     }
 
     @Test
@@ -191,16 +192,16 @@ class AssetServiceTest {
         List<AssetInfo> result = assetService.getAssetsToSync(clientChecksums).get();
 
         assertEquals(0, result.size());
-        verify(storage, never()).signUrl(any(), anyLong(), any(), any());
+        verify(urlStrategy, never()).generateUrl(anyString(), anyString());
     }
 
     @Test
     void getAssetsToSync_OutdatedChecksums_ReturnsChangedAssets() throws Exception {
         when(assetVersionRepository.getCurrent())
                 .thenReturn(CompletableFuture.completedFuture(Optional.of(testAssetVersion)));
-        
-        URL mockUrl = new URL("https://storage.googleapis.com/signed-url");
-        when(storage.signUrl(any(), anyLong(), any(), any())).thenReturn(mockUrl);
+
+        when(urlStrategy.generateUrl(anyString(), eq("test-bucket")))
+                .thenReturn("https://storage.googleapis.com/signed-url");
 
         Map<String, String> clientChecksums = new HashMap<>();
         clientChecksums.put("stories/story-1/cover.webp", "outdated-checksum");
@@ -209,7 +210,7 @@ class AssetServiceTest {
         List<AssetInfo> result = assetService.getAssetsToSync(clientChecksums).get();
 
         assertEquals(2, result.size());
-        verify(storage, times(2)).signUrl(any(), anyLong(), any(), any());
+        verify(urlStrategy, times(2)).generateUrl(anyString(), eq("test-bucket"));
     }
 
     @Test
@@ -220,7 +221,7 @@ class AssetServiceTest {
         List<AssetInfo> result = assetService.getAssetsToSync(new HashMap<>()).get();
 
         assertEquals(0, result.size());
-        verify(storage, never()).signUrl(any(), anyLong(), any(), any());
+        verify(urlStrategy, never()).generateUrl(anyString(), anyString());
     }
 
     @Test

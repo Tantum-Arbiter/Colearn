@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -16,14 +17,23 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * Google Cloud Storage Configuration for Asset Delivery.
- * Supports both emulator mode (for testing) and production mode.
+ *
+ * Uses Spring profiles to select the appropriate configuration:
+ * - 'emulator' profile: Connects to fake-gcs-server for local testing
+ * - default: Connects to production GCS with credentials
+ *
+ * Environment variables are handled by Spring property resolution:
+ * - GCS_PROJECT_ID -> gcs.project-id
+ * - GCS_BUCKET -> gcs.bucket
+ * - GCS_EMULATOR_HOST -> gcs.emulator-host
+ * - GCS_CDN_HOST -> gcs.cdn-host
  */
 @Configuration
 public class GcsConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(GcsConfig.class);
 
-    @Value("${gcs.project-id:#{null}}")
+    @Value("${gcs.project-id:test-project}")
     private String projectId;
 
     @Value("${gcs.bucket:colearnwithfreya-assets}")
@@ -41,35 +51,30 @@ public class GcsConfig {
     @Value("${gcs.service-account-key:#{null}}")
     private String serviceAccountKey;
 
+    /**
+     * Storage bean for emulator profile.
+     * Connects to fake-gcs-server without credentials.
+     */
     @Bean
-    public Storage storage() {
-        // Check for emulator host from environment variable first (Docker), then config
-        String emulatorUrl = System.getenv("GCS_EMULATOR_HOST");
-        if (emulatorUrl == null || emulatorUrl.isEmpty()) {
-            emulatorUrl = emulatorHost;
-        }
-
-        if (emulatorUrl != null && !emulatorUrl.isEmpty()) {
-            return createEmulatorStorage(emulatorUrl);
-        } else {
-            return createProductionStorage();
-        }
-    }
-
-    private Storage createEmulatorStorage(String emulatorUrl) {
-        logger.info("Using GCS emulator at {}", emulatorUrl);
-
-        String effectiveProjectId = projectId != null ? projectId : "test-project";
+    @Profile("emulator")
+    public Storage emulatorStorage() {
+        logger.info("Using GCS emulator at {}", emulatorHost);
 
         return StorageOptions.newBuilder()
-                .setHost(emulatorUrl)
-                .setProjectId(effectiveProjectId)
+                .setHost(emulatorHost)
+                .setProjectId(projectId)
                 .setCredentials(NoCredentials.getInstance())
                 .build()
                 .getService();
     }
 
-    private Storage createProductionStorage() {
+    /**
+     * Storage bean for production (non-emulator) profile.
+     * Uses service account key or Application Default Credentials.
+     */
+    @Bean
+    @Profile("!emulator")
+    public Storage productionStorage() {
         logger.info("Creating production GCS client for project: {}", projectId);
 
         try {
@@ -96,24 +101,21 @@ public class GcsConfig {
         }
     }
 
+    /**
+     * GCS properties bean - uses Spring property injection (no System.getenv()).
+     * Spring automatically resolves environment variables via relaxed binding:
+     * GCS_BUCKET -> gcs.bucket, GCS_CDN_HOST -> gcs.cdn-host, etc.
+     */
     @Bean
     public GcsProperties gcsProperties() {
-        // Centralize all environment variable lookups here
-        String effectiveBucket = System.getenv("GCS_BUCKET");
-        if (effectiveBucket == null || effectiveBucket.isEmpty()) {
-            effectiveBucket = bucketName;
-        }
-        String effectiveCdnHost = System.getenv("GCS_CDN_HOST");
-        if (effectiveCdnHost == null || effectiveCdnHost.isEmpty()) {
-            effectiveCdnHost = cdnHost;
-        }
-        String effectiveEmulatorHost = System.getenv("GCS_EMULATOR_HOST");
-        if (effectiveEmulatorHost == null || effectiveEmulatorHost.isEmpty()) {
-            effectiveEmulatorHost = emulatorHost;
-        }
-        return new GcsProperties(effectiveBucket, signedUrlDurationMinutes, effectiveCdnHost, effectiveEmulatorHost);
+        logger.info("GCS configuration: bucket={}, cdnHost={}, emulatorHost={}",
+                bucketName, cdnHost, emulatorHost);
+        return new GcsProperties(bucketName, signedUrlDurationMinutes, cdnHost, emulatorHost);
     }
 
+    /**
+     * GCS properties record for dependency injection.
+     */
     public record GcsProperties(String bucketName, int signedUrlDurationMinutes, String cdnHost, String emulatorHost) {
         public boolean hasCdnHost() {
             return cdnHost != null && !cdnHost.isEmpty();
