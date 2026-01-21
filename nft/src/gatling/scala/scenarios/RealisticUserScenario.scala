@@ -122,15 +122,7 @@ object RealisticUserScenario {
       .headers(authHeaders)
       .check(status.is(200))
   ).pause(shortThink)
-
-  // Note: /api/assets/sync was removed - use batch-urls endpoint instead
-  def batchAssetUrls: ChainBuilder = exec(
-    http("batch_asset_urls")
-      .post("/api/assets/batch-urls")
-      .headers(authHeaders)
-      .body(StringBody("""{"paths": ["assets/stories/test/cover.webp", "assets/stories/test/page1.webp"]}"""))
-      .check(status.in(200, 400, 500))
-  ).pause(mediumThink)
+  // Note: /api/assets/sync was removed - use batchAssetUrls in Batch Processing section below
 
   // ============================================
   // Batch Processing Actions (New - 95% API reduction)
@@ -215,7 +207,7 @@ object RealisticUserScenario {
     .exec(healthCheck)
     .exec(signIn)
     .exec(syncStories)
-    .exec(syncAssets)
+    .exec(batchAssetUrls)  // Replaced syncAssets (endpoint removed)
     .exec(getAllStories)
     .exec(getStoryById("test-story-1"))
     .exec(updateProfile)
@@ -239,7 +231,7 @@ object RealisticUserScenario {
     .exec(getStoryById("test-story-2"))
     .exec(getStoryById("test-story-3"))
     .exec(getStoriesByCategory("adventure"))
-    .exec(syncAssets)
+    .exec(batchAssetUrls)  // Replaced syncAssets (endpoint removed)
 
   // 4. Settings User - Focuses on profile/settings
   val settingsUserScenario: ScenarioBuilder = scenario("User 4: Settings User")
