@@ -71,7 +71,7 @@ Feature: Story Asset Delivery with Signed URLs
 
   @batch-processing @error-handling
   Scenario: Batch URL request exceeding max paths returns error
-    Given I have a batch URL request with 51 paths exceeding limit
+    Given I have a batch URL request with 101 paths exceeding limit
     When I make a POST request to "/api/assets/batch-urls" with the batch URL request
     Then the response status code should be 400
     And the response should have field "errorCode"
