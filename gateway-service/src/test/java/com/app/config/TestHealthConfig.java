@@ -59,8 +59,8 @@ public class TestHealthConfig {
 
     @Bean
     @Primary
-    public GcsHealthIndicator gcsHealthIndicator(Storage storage, GcsConfig.GcsProperties gcsProperties) {
-        return new GcsHealthIndicator(storage, gcsProperties);
+    public GcsHealthIndicator gcsHealthIndicator(GcsConfig.GcsProperties gcsProperties) {
+        return new GcsHealthIndicator(gcsProperties);
     }
 }
 

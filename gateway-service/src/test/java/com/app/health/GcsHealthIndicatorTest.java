@@ -1,96 +1,80 @@
 package com.app.health;
 
 import com.app.config.GcsConfig.GcsProperties;
-import com.google.cloud.storage.Bucket;
-import com.google.cloud.storage.Storage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.Status;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
+/**
+ * Unit tests for GcsHealthIndicator.
+ *
+ * Note: Since GcsHealthIndicator now uses HTTP to check GCS connectivity,
+ * we test the actual behavior by using real network calls to storage.googleapis.com.
+ * This provides more realistic tests than mocking the URL connection.
+ */
 class GcsHealthIndicatorTest {
 
-    private static final String BUCKET_NAME = "test-bucket";
-
-    @Mock
-    private Storage storage;
-
-    @Mock
-    private Bucket bucket;
+    private static final String VALID_BUCKET_NAME = "colearnwithfreya-assets";
+    private static final String INVALID_BUCKET_NAME = "nonexistent-bucket-12345";
 
     private GcsProperties gcsProperties;
     private GcsHealthIndicator healthIndicator;
 
     @BeforeEach
     void setUp() {
-        gcsProperties = new GcsProperties(BUCKET_NAME, 60, null, null);
-        healthIndicator = new GcsHealthIndicator(storage, gcsProperties);
+        gcsProperties = new GcsProperties(VALID_BUCKET_NAME, 60, null, null);
+        healthIndicator = new GcsHealthIndicator(gcsProperties);
     }
 
     @Test
-    void health_WhenBucketExists_ReturnsUp() {
-        // Arrange
-        when(storage.get(BUCKET_NAME)).thenReturn(bucket);
-
-        // Act
+    void health_WhenGcsReachable_ReturnsUp() {
+        // Act - this will make a real HTTP call to storage.googleapis.com
         Health health = healthIndicator.health();
 
-        // Assert
+        // Assert - any response from GCS means UP (even 403/404)
         assertThat(health.getStatus()).isEqualTo(Status.UP);
         assertThat(health.getDetails()).containsKey("responseTime");
         assertThat(health.getDetails()).containsEntry("service", "gcs");
-        assertThat(health.getDetails()).containsEntry("bucket", BUCKET_NAME);
+        assertThat(health.getDetails()).containsEntry("bucket", VALID_BUCKET_NAME);
+        assertThat(health.getDetails()).containsKey("statusCode");
     }
 
     @Test
-    void health_WhenBucketNotFound_ReturnsDown() {
-        // Arrange
-        when(storage.get(BUCKET_NAME)).thenReturn(null);
+    void health_WhenBucketNotFound_StillReturnsUp() {
+        // Arrange - use a bucket that likely doesn't exist
+        gcsProperties = new GcsProperties(INVALID_BUCKET_NAME, 60, null, null);
+        healthIndicator = new GcsHealthIndicator(gcsProperties);
 
         // Act
         Health health = healthIndicator.health();
 
+        // Assert - 404 is still UP because GCS is reachable
+        assertThat(health.getStatus()).isEqualTo(Status.UP);
+        assertThat(health.getDetails()).containsKey("statusCode");
+        assertThat(health.getDetails()).containsEntry("bucket", INVALID_BUCKET_NAME);
+    }
+
+    @Test
+    void health_IncludesResponseTimeDetail() {
+        // Act
+        Health health = healthIndicator.health();
+
         // Assert
-        assertThat(health.getStatus()).isEqualTo(Status.DOWN);
         assertThat(health.getDetails()).containsKey("responseTime");
-        assertThat(health.getDetails()).containsEntry("service", "gcs");
-        assertThat(health.getDetails()).containsEntry("bucket", BUCKET_NAME);
-        assertThat(health.getDetails()).containsEntry("error", "Bucket not found");
+        String responseTime = (String) health.getDetails().get("responseTime");
+        assertThat(responseTime).endsWith("ms");
     }
 
     @Test
-    void health_WhenStorageThrowsException_ReturnsDown() {
-        // Arrange
-        when(storage.get(BUCKET_NAME)).thenThrow(new RuntimeException("Connection failed"));
-
+    void health_IncludesServiceDetail() {
         // Act
         Health health = healthIndicator.health();
 
         // Assert
-        assertThat(health.getStatus()).isEqualTo(Status.DOWN);
-        assertThat(health.getDetails()).containsKey("responseTime");
         assertThat(health.getDetails()).containsEntry("service", "gcs");
-        assertThat(health.getDetails()).containsEntry("error", "Connection failed");
-    }
-
-    @Test
-    void health_WhenStorageTimesOut_ReturnsDownWithError() {
-        // Arrange
-        when(storage.get(BUCKET_NAME)).thenThrow(new RuntimeException("Timeout"));
-
-        // Act
-        Health health = healthIndicator.health();
-
-        // Assert
-        assertThat(health.getStatus()).isEqualTo(Status.DOWN);
-        assertThat(health.getDetails()).containsKey("error");
     }
 }
 

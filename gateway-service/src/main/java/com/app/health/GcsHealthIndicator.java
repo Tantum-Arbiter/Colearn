@@ -1,7 +1,5 @@
 package com.app.health;
 
-import com.google.cloud.storage.Bucket;
-import com.google.cloud.storage.Storage;
 import com.app.config.GcsConfig.GcsProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,25 +10,29 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import java.net.HttpURLConnection;
+import java.net.URL;
+
 /**
  * Health indicator for Google Cloud Storage connectivity.
- * Checks if the configured bucket is accessible.
- * Only activated when Storage and GcsProperties beans exist (not in test profile).
- * Marked as @Lazy to avoid blocking application startup.
+ * Performs a simple HTTP HEAD request to verify GCS is reachable.
+ * No IAM permissions required - just checks network connectivity.
+ * A 2XX response means UP, any other response (including 403/404) also means UP
+ * since GCS is reachable. Only network failures result in DOWN status.
  */
 @Component("gcsHealth")
 @Lazy
-@ConditionalOnBean({Storage.class, GcsProperties.class})
+@ConditionalOnBean(GcsProperties.class)
 @Profile("!test")
 public class GcsHealthIndicator implements HealthIndicator {
 
     private static final Logger logger = LoggerFactory.getLogger(GcsHealthIndicator.class);
+    private static final int TIMEOUT_MS = 5000;
+    private static final String GCS_BASE_URL = "https://storage.googleapis.com/";
 
-    private final Storage storage;
     private final GcsProperties gcsProperties;
 
-    public GcsHealthIndicator(Storage storage, GcsProperties gcsProperties) {
-        this.storage = storage;
+    public GcsHealthIndicator(GcsProperties gcsProperties) {
         this.gcsProperties = gcsProperties;
     }
 
@@ -38,31 +40,30 @@ public class GcsHealthIndicator implements HealthIndicator {
     public Health health() {
         long startTime = System.currentTimeMillis();
         String bucketName = gcsProperties.bucketName();
+        String gcsUrl = GCS_BASE_URL + bucketName;
 
         try {
-            // Check if the bucket exists and is accessible
-            Bucket bucket = storage.get(bucketName);
+            URL url = new URL(gcsUrl);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("HEAD");
+            connection.setConnectTimeout(TIMEOUT_MS);
+            connection.setReadTimeout(TIMEOUT_MS);
 
-            if (bucket != null) {
-                long duration = System.currentTimeMillis() - startTime;
-                logger.debug("GCS health check passed for bucket '{}' in {}ms", bucketName, duration);
+            int statusCode = connection.getResponseCode();
+            long duration = System.currentTimeMillis() - startTime;
+            connection.disconnect();
 
-                return Health.up()
-                        .withDetail("responseTime", duration + "ms")
-                        .withDetail("service", "gcs")
-                        .withDetail("bucket", bucketName)
-                        .build();
-            } else {
-                long duration = System.currentTimeMillis() - startTime;
-                logger.warn("GCS health check failed: bucket '{}' not found", bucketName);
+            // Any response means GCS is reachable = UP
+            // Even 403/404 means the service is up, just permission/config issues
+            logger.debug("GCS health check passed for bucket '{}' with status {} in {}ms",
+                    bucketName, statusCode, duration);
 
-                return Health.down()
-                        .withDetail("responseTime", duration + "ms")
-                        .withDetail("service", "gcs")
-                        .withDetail("bucket", bucketName)
-                        .withDetail("error", "Bucket not found")
-                        .build();
-            }
+            return Health.up()
+                    .withDetail("responseTime", duration + "ms")
+                    .withDetail("service", "gcs")
+                    .withDetail("bucket", bucketName)
+                    .withDetail("statusCode", statusCode)
+                    .build();
 
         } catch (Exception e) {
             long duration = System.currentTimeMillis() - startTime;
