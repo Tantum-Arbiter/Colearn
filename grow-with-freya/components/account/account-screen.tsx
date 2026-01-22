@@ -370,32 +370,31 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
   };
 
   // Handle back based on current view - respects navigation hierarchy
-  const handleBack = async () => {
+  const handleBack = () => {
     // If leaving the account screen entirely (from main) and have unsaved changes, auto-save
     if (currentView === 'main' && hasUnsavedChanges) {
-      try {
-        // Auto-save: commit reminder changes locally
-        if (reminderService.hasUnsavedChanges()) {
-          await reminderService.commitChanges();
-        }
-
-        // Sync to backend if signed in
-        const isAuthenticated = await ApiClient.isAuthenticated();
-        if (isAuthenticated) {
-          try {
-            await reminderService.syncToBackend();
-            console.log('[AccountScreen] Auto-saved reminders to backend');
-          } catch (syncError) {
-            console.log('[AccountScreen] Failed to sync to backend (saved locally):', syncError);
-          }
-        }
-
-        setHasUnsavedChanges(false);
-      } catch (error) {
-        console.error('[AccountScreen] Failed to auto-save:', error);
-        // Still exit even if save fails - data is preserved locally
+      // Save locally first (sync, non-blocking for UI)
+      if (reminderService.hasUnsavedChanges()) {
+        reminderService.commitChanges().catch(error => {
+          console.error('[AccountScreen] Failed to commit changes locally:', error);
+        });
       }
 
+      // Sync to backend in background (fire and forget - don't block navigation)
+      // This prevents UI freezing when tokens need to be refreshed
+      (async () => {
+        try {
+          const isAuthenticated = await ApiClient.isAuthenticated();
+          if (isAuthenticated) {
+            await reminderService.syncToBackend();
+            console.log('[AccountScreen] Auto-saved reminders to backend');
+          }
+        } catch (syncError) {
+          console.log('[AccountScreen] Failed to sync to backend (saved locally):', syncError);
+        }
+      })();
+
+      setHasUnsavedChanges(false);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       onBack();
       return;
@@ -731,42 +730,6 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
             <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>
               Developer Options
             </Text>
-
-            <Pressable
-              style={[styles.button, { paddingVertical: scaledPadding(12), minHeight: scaledButtonSize(44) }]}
-              onPress={async () => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-                // Check permissions first
-                const { status } = await Notifications.getPermissionsAsync();
-                if (status !== 'granted') {
-                  const { status: newStatus } = await Notifications.requestPermissionsAsync();
-                  if (newStatus !== 'granted') {
-                    Alert.alert('Permission Required', 'Please enable notifications to test this feature.');
-                    return;
-                  }
-                }
-
-                // Schedule notification in 5 seconds
-                await Notifications.scheduleNotificationAsync({
-                  content: {
-                    title: 'Test Notification 🔔',
-                    body: 'This is a test notification from Developer Options!',
-                    sound: true,
-                  },
-                  trigger: {
-                    type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-                    seconds: 5,
-                  },
-                });
-
-                Alert.alert('Notification Scheduled', 'A test notification will appear in 5 seconds.');
-              }}
-            >
-              <Text style={[styles.buttonText, { fontSize: scaledFontSize(16) }]}>
-                Test Notification (5s)
-              </Text>
-            </Pressable>
 
             <Pressable
               style={[styles.button, { paddingVertical: scaledPadding(12), minHeight: scaledButtonSize(44) }]}

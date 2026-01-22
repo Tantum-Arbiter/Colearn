@@ -12,6 +12,9 @@ const GATEWAY_URL = extra.gatewayUrl || process.env.EXPO_PUBLIC_GATEWAY_URL || '
 // Default request timeout in milliseconds (30 seconds)
 const DEFAULT_TIMEOUT_MS = 30000;
 
+// Timeout for token refresh operations (10 seconds)
+const TOKEN_REFRESH_TIMEOUT_MS = 10000;
+
 interface TokenPayload {
   exp: number;
   sub: string;
@@ -106,6 +109,7 @@ export class ApiClient {
   /**
    * Perform the actual token refresh
    * Returns profile data if available for automatic sync
+   * Includes timeout to prevent hanging on slow/dead connections
    */
   private static async performTokenRefresh(): Promise<any> {
     const refreshToken = await SecureStorage.getRefreshToken();
@@ -114,6 +118,10 @@ export class ApiClient {
       console.log('[ApiClient] No refresh token - login required');
       throw new Error('No refresh token available');
     }
+
+    // Create abort controller for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), TOKEN_REFRESH_TIMEOUT_MS);
 
     try {
       const response = await fetch(`${GATEWAY_URL}/auth/refresh`, {
@@ -124,7 +132,9 @@ export class ApiClient {
           'User-Agent': `GrowWithFreya/${DeviceInfoService.getAppVersion()} (${Platform.OS === 'ios' ? 'iOS' : 'Android'})`,
         },
         body: JSON.stringify({ refreshToken }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         console.log(`[ApiClient] Token refresh failed: ${response.status}`);
@@ -143,6 +153,14 @@ export class ApiClient {
       // Return profile data if available (for automatic sync)
       return data.profile || null;
     } catch (error: any) {
+      clearTimeout(timeoutId);
+
+      // Convert abort error to a more descriptive timeout error
+      if (error.name === 'AbortError') {
+        console.log(`[ApiClient] Token refresh timeout after ${TOKEN_REFRESH_TIMEOUT_MS}ms`);
+        throw new Error('Token refresh timeout - please try again');
+      }
+
       // Only clear auth for actual token issues, not network errors
       if (error.message?.includes('No refresh token') ||
           error.message?.includes('Token refresh failed')) {

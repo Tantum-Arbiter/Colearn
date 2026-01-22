@@ -458,7 +458,8 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
         </ScrollView>
 
         {/* Stories Carousels */}
-        <ScrollView style={{ flex: 1 }}>
+        {/* Disable scrolling when a story is selected to prevent position drift */}
+        <ScrollView style={{ flex: 1 }} scrollEnabled={!isTransitioning && !shouldShowStoryReader && !isExpandingToReader}>
           {availableGenres.length === 0 && selectedTags.size > 0 && (
             <View style={styles.noResultsContainer}>
               <Text style={styles.noResultsText}>
@@ -504,6 +505,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
                 snapToInterval={ITEM_WIDTH}
                 snapToAlignment="start"
                 contentContainerStyle={styles.carouselContent}
+                scrollEnabled={!isTransitioning && !shouldShowStoryReader && !isExpandingToReader}
               />
             </View>
           )}
@@ -551,6 +553,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
                   snapToInterval={ITEM_WIDTH}
                   snapToAlignment="start"
                   contentContainerStyle={styles.carouselContent}
+                  scrollEnabled={!isTransitioning && !shouldShowStoryReader && !isExpandingToReader}
                 />
               </View>
             );
