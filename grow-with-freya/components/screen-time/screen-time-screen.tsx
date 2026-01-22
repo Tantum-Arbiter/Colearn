@@ -499,28 +499,39 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
                       const usage = dayData?.usage || 0;
 
                       // Get age-appropriate daily limit for proper scaling (use local age for immediate feedback)
-                      const dailyLimit = localChildAge < 24 ? 15 * 60 : // 15 minutes in seconds for 18-24 months
-                                       localChildAge < 72 ? 60 * 60 : // 60 minutes in seconds for 2-6 years
-                                       120 * 60; // 120 minutes in seconds for 6+ years
+                      // 18-24 months: 15 min, 2-6 years: 60 min, 6+ years: 120 min
+                      const dailyLimit = localChildAge < 24 ? 15 * 60 :
+                                       localChildAge < 72 ? 60 * 60 :
+                                       120 * 60;
 
-                      // Recalculate isOverRecommended using localChildAge for immediate UI feedback
-                      const isOverRecommended = dailyLimit > 0 && usage > dailyLimit;
+                      // Calculate percentage of limit used (can exceed 100%)
+                      const usagePercentage = dailyLimit > 0 ? (usage / dailyLimit) * 100 : 0;
 
-                      // Calculate fill percentage based on daily limit (0-100%)
-                      const fillPercentage = dailyLimit > 0 ? Math.min((usage / dailyLimit) * 100, 100) : 0;
-
-                      // Color based on usage and age-appropriate recommendations
+                      // 5 color thresholds evenly distributed:
+                      // 0-25%: Teal light, 25-50%: Teal medium, 50-75%: Teal bright (recommended)
+                      // 75-100%: Amber (approaching limit), >100%: Red (over limit)
                       let backgroundColor: string;
                       if (usage === 0) {
-                        backgroundColor = 'rgba(255, 255, 255, 0.05)'; // Very light background for no usage
-                      } else if (isOverRecommended) {
-                        // Orange/amber for excessive usage (single shade)
+                        backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                      } else if (usagePercentage > 100) {
+                        // Over limit - Red
+                        backgroundColor = 'rgba(239, 68, 68, 1.0)';
+                      } else if (usagePercentage > 75) {
+                        // 75-100% - Amber (approaching limit)
                         backgroundColor = 'rgba(255, 159, 67, 0.85)';
+                      } else if (usagePercentage > 50) {
+                        // 50-75% - Teal bright (recommended zone)
+                        backgroundColor = 'rgba(78, 205, 196, 1.0)';
+                      } else if (usagePercentage > 25) {
+                        // 25-50% - Teal medium
+                        backgroundColor = 'rgba(78, 205, 196, 0.6)';
                       } else {
-                        // Teal gradient for recommended usage (light to bright based on fill)
-                        const opacity = Math.max(fillPercentage / 100, 0.2);
-                        backgroundColor = `rgba(78, 205, 196, ${opacity})`;
+                        // 0-25% - Teal light
+                        backgroundColor = 'rgba(78, 205, 196, 0.3)';
                       }
+
+                      // Calculate fill percentage for bar height (capped at 100% for display)
+                      const fillPercentage = Math.min(usagePercentage, 100);
 
                       // All bars are the same height (100px), but fill based on usage
                       const barFillHeight = Math.max(4, (fillPercentage / 100) * 100); // Minimum 4px for visibility
@@ -559,12 +570,12 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
                   <View style={styles.heatmapLegend}>
                     <Text style={[styles.heatmapLegendTitle, { fontSize: scaledFontSize(12) }]}>{t('screenTime.screenTimeLevel')}</Text>
 
-                    {/* Color Bar - 5 cells: 3 teal (recommended range) + 2 orange (over limit) */}
+                    {/* Color Bar - 5 cells: 0-25%, 25-50%, 50-75% (recommended), 75-100% (amber), >100% (red) */}
                     <View style={styles.heatmapLegendColorBar}>
                       <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 0.3)' }]} />
                       <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 0.6)' }]} />
                       <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 1.0)' }]} />
-                      <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(255, 159, 67, 0.7)' }]} />
+                      <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(255, 159, 67, 0.85)' }]} />
                       <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(239, 68, 68, 1.0)' }]} />
                     </View>
 
@@ -918,27 +929,39 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
                     const usage = dayData?.usage || 0;
 
                     // Get age-appropriate daily limit for proper scaling
+                    // 18-24 months: 15 min, 2-6 years: 60 min, 6+ years: 120 min
                     const ageBasedLimit = localChildAge < 24 ? 15 * 60 :
                                      localChildAge < 72 ? 60 * 60 :
                                      120 * 60;
 
-                    // Recalculate isOverRecommended using localChildAge for immediate UI feedback
-                    const isOverRecommended = ageBasedLimit > 0 && usage > ageBasedLimit;
+                    // Calculate percentage of limit used (can exceed 100%)
+                    const usagePercentage = ageBasedLimit > 0 ? (usage / ageBasedLimit) * 100 : 0;
 
-                    const fillPercentage = ageBasedLimit > 0 ? Math.min((usage / ageBasedLimit) * 100, 100) : 0;
-
+                    // 5 color thresholds evenly distributed:
+                    // 0-25%: Teal light, 25-50%: Teal medium, 50-75%: Teal bright (recommended)
+                    // 75-100%: Amber (approaching limit), >100%: Red (over limit)
                     let backgroundColor: string;
                     if (usage === 0) {
                       backgroundColor = 'rgba(255, 255, 255, 0.05)';
-                    } else if (isOverRecommended) {
-                      // Orange/amber for excessive usage (single shade)
+                    } else if (usagePercentage > 100) {
+                      // Over limit - Red
+                      backgroundColor = 'rgba(239, 68, 68, 1.0)';
+                    } else if (usagePercentage > 75) {
+                      // 75-100% - Amber (approaching limit)
                       backgroundColor = 'rgba(255, 159, 67, 0.85)';
+                    } else if (usagePercentage > 50) {
+                      // 50-75% - Teal bright (recommended zone)
+                      backgroundColor = 'rgba(78, 205, 196, 1.0)';
+                    } else if (usagePercentage > 25) {
+                      // 25-50% - Teal medium
+                      backgroundColor = 'rgba(78, 205, 196, 0.6)';
                     } else {
-                      // Teal gradient for recommended usage (light to bright based on fill)
-                      const opacity = Math.max(fillPercentage / 100, 0.2);
-                      backgroundColor = `rgba(78, 205, 196, ${opacity})`;
+                      // 0-25% - Teal light
+                      backgroundColor = 'rgba(78, 205, 196, 0.3)';
                     }
 
+                    // Calculate fill percentage for bar height (capped at 100% for display)
+                    const fillPercentage = Math.min(usagePercentage, 100);
                     const barFillHeight = Math.max(4, (fillPercentage / 100) * 100);
 
                     return (
@@ -965,14 +988,14 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
                   })}
                 </View>
 
-                {/* Legend - 5 cells: 3 teal (recommended range) + 2 orange (over limit) */}
+                {/* Legend - 5 cells: 0-25%, 25-50%, 50-75% (recommended), 75-100% (amber), >100% (red) */}
                 <View style={styles.heatmapLegend}>
                   <Text style={[styles.heatmapLegendTitle, { fontSize: scaledFontSize(12) }]}>{t('screenTime.screenTimeLevel')}</Text>
                   <View style={styles.heatmapLegendColorBar}>
                     <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 0.3)' }]} />
                     <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 0.6)' }]} />
                     <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 1.0)' }]} />
-                    <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(255, 159, 67, 0.7)' }]} />
+                    <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(255, 159, 67, 0.85)' }]} />
                     <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(239, 68, 68, 1.0)' }]} />
                   </View>
                   {/* Arrow pointing to middle (recommended) cell */}
