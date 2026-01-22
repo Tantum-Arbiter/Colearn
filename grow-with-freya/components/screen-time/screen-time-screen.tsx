@@ -497,12 +497,14 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
                     {dayNames.map((dayName, dayIndex) => {
                       const dayData = stats.heatmapData.find(data => data.day === dayIndex);
                       const usage = dayData?.usage || 0;
-                      const isOverRecommended = dayData?.isOverRecommended || false;
 
                       // Get age-appropriate daily limit for proper scaling (use local age for immediate feedback)
                       const dailyLimit = localChildAge < 24 ? 15 * 60 : // 15 minutes in seconds for 18-24 months
                                        localChildAge < 72 ? 60 * 60 : // 60 minutes in seconds for 2-6 years
                                        120 * 60; // 120 minutes in seconds for 6+ years
+
+                      // Recalculate isOverRecommended using localChildAge for immediate UI feedback
+                      const isOverRecommended = dailyLimit > 0 && usage > dailyLimit;
 
                       // Calculate fill percentage based on daily limit (0-100%)
                       const fillPercentage = dailyLimit > 0 ? Math.min((usage / dailyLimit) * 100, 100) : 0;
@@ -512,11 +514,12 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
                       if (usage === 0) {
                         backgroundColor = 'rgba(255, 255, 255, 0.05)'; // Very light background for no usage
                       } else if (isOverRecommended) {
-                        // Red for excessive usage
-                        backgroundColor = `rgba(255, 99, 71, ${Math.max(fillPercentage / 100, 0.3)})`;
+                        // Orange/amber for excessive usage (single shade)
+                        backgroundColor = 'rgba(255, 159, 67, 0.85)';
                       } else {
-                        // Light blue to bright blue for recommended usage
-                        backgroundColor = `rgba(78, 205, 196, ${Math.max(fillPercentage / 100, 0.2)})`;
+                        // Teal gradient for recommended usage (light to bright based on fill)
+                        const opacity = Math.max(fillPercentage / 100, 0.2);
+                        backgroundColor = `rgba(78, 205, 196, ${opacity})`;
                       }
 
                       // All bars are the same height (100px), but fill based on usage
@@ -556,16 +559,12 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
                   <View style={styles.heatmapLegend}>
                     <Text style={[styles.heatmapLegendTitle, { fontSize: scaledFontSize(12) }]}>{t('screenTime.screenTimeLevel')}</Text>
 
-                    {/* Color Bar */}
+                    {/* Color Bar - 4 cells: 3 teal (recommended range) + 1 orange (over limit) */}
                     <View style={styles.heatmapLegendColorBar}>
-                      {/* All color cells in a row */}
-                      <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 0.2)' }]} />
-                      <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 0.4)' }]} />
+                      <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 0.3)' }]} />
+                      <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 0.6)' }]} />
                       <View style={[styles.heatmapLegendCell, styles.heatmapRecommendedCell, { backgroundColor: 'rgba(78, 205, 196, 1.0)' }]} />
-                      <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(255, 99, 71, 0.6)' }]} />
-                      <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(255, 99, 71, 0.8)' }]} />
-                      <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(255, 99, 71, 1.0)' }]} />
-
+                      <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(255, 159, 67, 0.85)' }]} />
                     </View>
 
                     {/* Labels Row - Separate from color bar */}
@@ -582,7 +581,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
                       </View>
                       <View style={styles.heatmapLabelContainer}>
                         <Text style={[styles.heatmapLegendLabel, { fontSize: scaledFontSize(10) }]} numberOfLines={1}>
-                          {t('screenTime.excessive')}
+                          {t('screenTime.overLimit')}
                         </Text>
                       </View>
                     </View>
@@ -911,21 +910,27 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
                   {dayNames.map((dayName, dayIndex) => {
                     const dayData = stats.heatmapData.find(data => data.day === dayIndex);
                     const usage = dayData?.usage || 0;
-                    const isOverRecommended = dayData?.isOverRecommended || false;
 
                     // Get age-appropriate daily limit for proper scaling
                     const ageBasedLimit = localChildAge < 24 ? 15 * 60 :
                                      localChildAge < 72 ? 60 * 60 :
                                      120 * 60;
+
+                    // Recalculate isOverRecommended using localChildAge for immediate UI feedback
+                    const isOverRecommended = ageBasedLimit > 0 && usage > ageBasedLimit;
+
                     const fillPercentage = ageBasedLimit > 0 ? Math.min((usage / ageBasedLimit) * 100, 100) : 0;
 
                     let backgroundColor: string;
                     if (usage === 0) {
                       backgroundColor = 'rgba(255, 255, 255, 0.05)';
                     } else if (isOverRecommended) {
-                      backgroundColor = `rgba(255, 99, 71, ${Math.max(fillPercentage / 100, 0.3)})`;
+                      // Orange/amber for excessive usage (single shade)
+                      backgroundColor = 'rgba(255, 159, 67, 0.85)';
                     } else {
-                      backgroundColor = `rgba(78, 205, 196, ${Math.max(fillPercentage / 100, 0.2)})`;
+                      // Teal gradient for recommended usage (light to bright based on fill)
+                      const opacity = Math.max(fillPercentage / 100, 0.2);
+                      backgroundColor = `rgba(78, 205, 196, ${opacity})`;
                     }
 
                     const barFillHeight = Math.max(4, (fillPercentage / 100) * 100);
@@ -954,16 +959,14 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
                   })}
                 </View>
 
-                {/* Legend */}
+                {/* Legend - 4 cells: 3 teal (recommended range) + 1 orange (over limit) */}
                 <View style={styles.heatmapLegend}>
                   <Text style={[styles.heatmapLegendTitle, { fontSize: scaledFontSize(12) }]}>{t('screenTime.screenTimeLevel')}</Text>
                   <View style={styles.heatmapLegendColorBar}>
-                    <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 0.2)' }]} />
-                    <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 0.4)' }]} />
+                    <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 0.3)' }]} />
+                    <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 0.6)' }]} />
                     <View style={[styles.heatmapLegendCell, styles.heatmapRecommendedCell, { backgroundColor: 'rgba(78, 205, 196, 1.0)' }]} />
-                    <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(255, 99, 71, 0.6)' }]} />
-                    <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(255, 99, 71, 0.8)' }]} />
-                    <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(255, 99, 71, 1.0)' }]} />
+                    <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(255, 159, 67, 0.85)' }]} />
                   </View>
                   <View style={styles.heatmapLabelsRow}>
                     <View style={styles.heatmapLabelContainer}>
@@ -973,7 +976,7 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
                       <Text style={[styles.heatmapLegendLabel, { fontSize: scaledFontSize(10) }]} numberOfLines={1}>{t('screenTime.recommended')}</Text>
                     </View>
                     <View style={styles.heatmapLabelContainer}>
-                      <Text style={[styles.heatmapLegendLabel, { fontSize: scaledFontSize(10) }]} numberOfLines={1}>{t('screenTime.excessive')}</Text>
+                      <Text style={[styles.heatmapLegendLabel, { fontSize: scaledFontSize(10) }]} numberOfLines={1}>{t('screenTime.overLimit')}</Text>
                     </View>
                   </View>
                 </View>

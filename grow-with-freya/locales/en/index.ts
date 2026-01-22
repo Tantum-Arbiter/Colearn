@@ -506,6 +506,7 @@ export default {
     noScreenTime: 'No Screen Time',
     recommended: 'Recommended',
     excessive: 'Excessive',
+    overLimit: 'Over Limit',
     createMySchedule: 'Create My Schedule',
     scheduleIntro: "Set up personalized notification times for your child's screen time activities. You'll receive gentle reminders when it's time for stories, emotions, or music activities.",
     scheduleIntroShort: "Set up personalized notification times for your child's screen time activities.",
