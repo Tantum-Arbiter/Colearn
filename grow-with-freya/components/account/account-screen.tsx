@@ -28,6 +28,7 @@ import { SettingsTipsOverlay } from '../tutorial/settings-tips-overlay';
 import { ScreenTimeTipsOverlay } from '../tutorial/screen-time-tips-overlay';
 import { useTutorial } from '../../contexts/tutorial-context';
 import { SUPPORTED_LANGUAGES, setStoredLanguage, type SupportedLanguage } from '../../services/i18n';
+import * as Notifications from 'expo-notifications';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -729,6 +730,42 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
             <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>
               Developer Options
             </Text>
+
+            <Pressable
+              style={[styles.button, { paddingVertical: scaledPadding(12), minHeight: scaledButtonSize(44) }]}
+              onPress={async () => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+                // Check permissions first
+                const { status } = await Notifications.getPermissionsAsync();
+                if (status !== 'granted') {
+                  const { status: newStatus } = await Notifications.requestPermissionsAsync();
+                  if (newStatus !== 'granted') {
+                    Alert.alert('Permission Required', 'Please enable notifications to test this feature.');
+                    return;
+                  }
+                }
+
+                // Schedule notification in 5 seconds
+                await Notifications.scheduleNotificationAsync({
+                  content: {
+                    title: 'Test Notification 🔔',
+                    body: 'This is a test notification from Developer Options!',
+                    sound: true,
+                  },
+                  trigger: {
+                    type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+                    seconds: 5,
+                  },
+                });
+
+                Alert.alert('Notification Scheduled', 'A test notification will appear in 5 seconds.');
+              }}
+            >
+              <Text style={[styles.buttonText, { fontSize: scaledFontSize(16) }]}>
+                Test Notification (5s)
+              </Text>
+            </Pressable>
 
             <Pressable
               style={[styles.button, { paddingVertical: scaledPadding(12), minHeight: scaledButtonSize(44) }]}
