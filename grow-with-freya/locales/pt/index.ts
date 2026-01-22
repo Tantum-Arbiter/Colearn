@@ -78,6 +78,8 @@ export default {
     privacyPolicy: 'Política de Privacidade',
     signInFailed: 'Falha ao entrar',
     signInFailedMessage: 'Não foi possível entrar com Google. Tente novamente.',
+    connectionTimeout: 'Tempo de conexão esgotado',
+    connectionTimeoutMessage: 'O login expirou. Verifique sua conexão e tente novamente.',
     ok: 'OK',
   },
   menu: {

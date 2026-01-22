@@ -78,6 +78,8 @@ export default {
     privacyPolicy: 'プライバシーポリシー',
     signInFailed: 'ログインに失敗しました',
     signInFailedMessage: 'Googleでのログインに失敗しました。もう一度お試しください。',
+    connectionTimeout: '接続がタイムアウトしました',
+    connectionTimeoutMessage: 'ログインがタイムアウトしました。接続を確認してもう一度お試しください。',
     ok: 'OK',
   },
   menu: {

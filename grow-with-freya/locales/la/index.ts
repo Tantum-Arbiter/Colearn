@@ -78,6 +78,8 @@ export default {
     privacyPolicy: 'Politica Privatae',
     signInFailed: 'Intrare Defecit',
     signInFailedMessage: 'Non potui cum Google intrare. Iterum conare.',
+    connectionTimeout: 'Conexio Exspiravit',
+    connectionTimeoutMessage: 'Intrare exspiravit. Conexionem tuam confirma et iterum conare.',
     ok: 'Ita',
   },
   menu: {

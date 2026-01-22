@@ -78,6 +78,8 @@ export default {
     privacyPolicy: 'Privacybeleid',
     signInFailed: 'Inloggen Mislukt',
     signInFailedMessage: 'Kon niet inloggen met Google. Probeer het opnieuw.',
+    connectionTimeout: 'Verbinding Time-out',
+    connectionTimeoutMessage: 'Inloggen verlopen. Controleer je verbinding en probeer het opnieuw.',
     ok: 'Oké',
   },
   menu: {

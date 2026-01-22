@@ -78,6 +78,8 @@ export default {
     privacyPolicy: 'Gizlilik Politikası',
     signInFailed: 'Giriş Başarısız',
     signInFailedMessage: 'Google ile giriş yapılamadı. Lütfen tekrar deneyin.',
+    connectionTimeout: 'Bağlantı Zaman Aşımı',
+    connectionTimeoutMessage: 'Giriş zaman aşımına uğradı. Bağlantınızı kontrol edin ve tekrar deneyin.',
     ok: 'Tamam',
   },
   menu: {

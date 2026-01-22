@@ -83,6 +83,8 @@ export default {
     privacyPolicy: 'Política de privacidad',
     signInFailed: 'Error de inicio de sesión',
     signInFailedMessage: 'No se pudo iniciar sesión con Google. Por favor, inténtalo de nuevo.',
+    connectionTimeout: 'Tiempo de conexión agotado',
+    connectionTimeoutMessage: 'El inicio de sesión ha expirado. Por favor, verifica tu conexión e inténtalo de nuevo.',
     ok: 'OK',
   },
 

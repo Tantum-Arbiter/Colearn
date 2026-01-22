@@ -78,6 +78,8 @@ export default {
     privacyPolicy: 'Privatlivspolitik',
     signInFailed: 'Login mislykkedes',
     signInFailedMessage: 'Kunne ikke logge ind med Google. Prøv igen.',
+    connectionTimeout: 'Forbindelse timeout',
+    connectionTimeoutMessage: 'Login udløb. Kontroller din forbindelse og prøv igen.',
     ok: 'OK',
   },
   menu: {

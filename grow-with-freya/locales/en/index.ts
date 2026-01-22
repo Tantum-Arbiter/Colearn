@@ -83,6 +83,8 @@ export default {
     privacyPolicy: 'Privacy Policy',
     signInFailed: 'Sign-In Failed',
     signInFailedMessage: 'Unable to sign in with Google. Please try again.',
+    connectionTimeout: 'Connection Timed Out',
+    connectionTimeoutMessage: 'Login timed out. Please check your connection and try again.',
     ok: 'OK',
   },
 

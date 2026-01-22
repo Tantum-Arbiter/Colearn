@@ -78,6 +78,8 @@ export default {
     privacyPolicy: '隐私政策',
     signInFailed: '登录失败',
     signInFailedMessage: '无法使用Google登录。请重试。',
+    connectionTimeout: '连接超时',
+    connectionTimeoutMessage: '登录超时。请检查您的网络连接并重试。',
     ok: '确定',
   },
   menu: {
