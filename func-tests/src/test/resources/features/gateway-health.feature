@@ -12,6 +12,24 @@ Feature: Gateway Service Health
     And the response JSON field "status" should be "UP"
     And the response time should be less than 1000 milliseconds
 
+  @smoke
+  Scenario: Health check endpoint includes downstream service status
+    Given the gateway service is healthy
+    When I make a GET request to "/private/healthcheck"
+    Then the response status code should be 200
+    And the response JSON field "status" should be "UP"
+    And the response JSON field "downstreams.firestore.status" should be "UP"
+    And the response JSON field "downstreams.gcs.status" should be "UP"
+
+  @smoke
+  Scenario: Actuator health endpoint includes downstream service status
+    Given the gateway service is healthy
+    When I make a GET request to "/actuator/health"
+    Then the response status code should be 200
+    And the response JSON field "status" should be "UP"
+    And the response JSON field "downstreams.firestore.status" should be "UP"
+    And the response JSON field "downstreams.gcs.status" should be "UP"
+
   @performance
   Scenario: Metrics endpoint is accessible
     Given the gateway service is healthy
