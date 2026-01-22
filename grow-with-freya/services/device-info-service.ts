@@ -156,7 +156,7 @@ export class DeviceInfoService {
     if (manifest2Version) {
       return manifest2Version;
     }
-    return '1.0.1';
+    return '1.1.0';
   }
 
   /**

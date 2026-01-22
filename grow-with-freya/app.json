@@ -2,7 +2,7 @@
   "expo": {
     "name": "grow-with-freya",
     "slug": "grow-with-freya",
-    "version": "1.0.2",
+    "version": "1.1.0",
     "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "growwithfreya",
