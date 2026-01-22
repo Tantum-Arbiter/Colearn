@@ -104,6 +104,8 @@ jobs:
             --memory 1Gi \
             --cpu 1 \
             --timeout 300 \
+            --cpu-boost \
+            --startup-cpu-boost \
             --set-env-vars "SPRING_PROFILES_ACTIVE=gcp-dev,FIREBASE_PROJECT_ID=${{ env.PROJECT_ID }},GCS_PROJECT_ID=${{ env.PROJECT_ID }},GCS_BUCKET=colearnwithfreya-assets,BACKEND_URL_GATEWAY_SERVICE=${{ secrets.BACKEND_URL_GATEWAY_SERVICE }},APPLE_CLIENT_ID=com.growwithfreya.app,GOOGLE_CLIENT_ID=1086096096900-87c1000b1fj4557md3h1cbr882a4cr9m.apps.googleusercontent.com,GOOGLE_IOS_CLIENT_ID=1086096096900-377j71ktgif6t78evg63218cj9de2cjs.apps.googleusercontent.com,GOOGLE_ANDROID_CLIENT_ID=1086096096900-id6lrdbdp8s892kbl002km69318ptp94.apps.googleusercontent.com"
 
   run-functional-tests:

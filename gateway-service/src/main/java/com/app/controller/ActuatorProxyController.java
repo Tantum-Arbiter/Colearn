@@ -27,17 +27,17 @@ public class ActuatorProxyController {
 
     private final InfoEndpoint infoEndpoint;
     private final ObjectProvider<PrometheusMeterRegistry> prometheusRegistryProvider;
-    private final FirestoreHealthIndicator firestoreHealthIndicator;
-    private final GcsHealthIndicator gcsHealthIndicator;
+    private final ObjectProvider<FirestoreHealthIndicator> firestoreHealthIndicatorProvider;
+    private final ObjectProvider<GcsHealthIndicator> gcsHealthIndicatorProvider;
 
     public ActuatorProxyController(InfoEndpoint infoEndpoint,
                                    ObjectProvider<PrometheusMeterRegistry> prometheusRegistryProvider,
-                                   FirestoreHealthIndicator firestoreHealthIndicator,
-                                   GcsHealthIndicator gcsHealthIndicator) {
+                                   ObjectProvider<FirestoreHealthIndicator> firestoreHealthIndicatorProvider,
+                                   ObjectProvider<GcsHealthIndicator> gcsHealthIndicatorProvider) {
         this.infoEndpoint = infoEndpoint;
         this.prometheusRegistryProvider = prometheusRegistryProvider;
-        this.firestoreHealthIndicator = firestoreHealthIndicator;
-        this.gcsHealthIndicator = gcsHealthIndicator;
+        this.firestoreHealthIndicatorProvider = firestoreHealthIndicatorProvider;
+        this.gcsHealthIndicatorProvider = gcsHealthIndicatorProvider;
     }
 
     @GetMapping("/info")
@@ -50,18 +50,25 @@ public class ActuatorProxyController {
     public ResponseEntity<Map<String, Object>> health() {
         Map<String, Object> resp = new LinkedHashMap<>();
 
-        // Check downstream services
-        Health firestoreHealth = firestoreHealthIndicator.health();
-        Health gcsHealth = gcsHealthIndicator.health();
+        // Check downstream services (may be null if not configured)
+        FirestoreHealthIndicator firestoreIndicator = firestoreHealthIndicatorProvider.getIfAvailable();
+        GcsHealthIndicator gcsIndicator = gcsHealthIndicatorProvider.getIfAvailable();
+
+        Health firestoreHealth = firestoreIndicator != null
+                ? firestoreIndicator.health()
+                : Health.unknown().withDetail("reason", "Firestore health indicator not available").build();
+        Health gcsHealth = gcsIndicator != null
+                ? gcsIndicator.health()
+                : Health.unknown().withDetail("reason", "GCS health indicator not available").build();
 
         // Build downstream status map
         Map<String, Object> downstreams = new LinkedHashMap<>();
         downstreams.put("firestore", buildHealthDetails(firestoreHealth));
         downstreams.put("gcs", buildHealthDetails(gcsHealth));
 
-        // Determine overall status - DOWN if any downstream is DOWN
-        boolean allUp = firestoreHealth.getStatus().equals(Status.UP)
-                && gcsHealth.getStatus().equals(Status.UP);
+        // Determine overall status - DOWN if any downstream is DOWN, UNKNOWN counts as UP for startup
+        boolean allUp = (firestoreHealth.getStatus().equals(Status.UP) || firestoreHealth.getStatus().equals(Status.UNKNOWN))
+                && (gcsHealth.getStatus().equals(Status.UP) || gcsHealth.getStatus().equals(Status.UNKNOWN));
 
         String overallStatus = allUp ? "UP" : "DOWN";
 

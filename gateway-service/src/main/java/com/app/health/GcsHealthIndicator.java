@@ -7,13 +7,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
  * Health indicator for Google Cloud Storage connectivity.
  * Checks if the configured bucket is accessible.
+ * Only activated when Storage and GcsProperties beans exist (not in test profile).
+ * Marked as @Lazy to avoid blocking application startup.
  */
 @Component("gcs")
+@Lazy
+@ConditionalOnBean({Storage.class, GcsProperties.class})
+@Profile("!test")
 public class GcsHealthIndicator implements HealthIndicator {
 
     private static final Logger logger = LoggerFactory.getLogger(GcsHealthIndicator.class);

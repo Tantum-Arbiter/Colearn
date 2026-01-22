@@ -5,6 +5,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.TimeUnit;
@@ -12,8 +15,13 @@ import java.util.concurrent.TimeUnit;
 /**
  * Health indicator for Firestore connectivity.
  * Performs a simple read operation to verify the connection is working.
+ * Only activated when a Firestore bean exists (not in test profile).
+ * Marked as @Lazy to avoid blocking application startup.
  */
 @Component("firestore")
+@Lazy
+@ConditionalOnBean(Firestore.class)
+@Profile("!test")
 public class FirestoreHealthIndicator implements HealthIndicator {
 
     private static final Logger logger = LoggerFactory.getLogger(FirestoreHealthIndicator.class);
