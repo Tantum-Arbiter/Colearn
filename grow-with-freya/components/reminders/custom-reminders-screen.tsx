@@ -354,6 +354,50 @@ export const CustomRemindersContent: React.FC<CustomRemindersContentProps> = ({
   const [reminders, setReminders] = useState<CustomReminder[]>([]);
   const [stats, setStats] = useState<ReminderStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
+
+  // Check and request notification permissions when screen becomes active
+  useEffect(() => {
+    if (!isActive) return;
+
+    const checkAndRequestPermissions = async () => {
+      const notificationService = NotificationService.getInstance();
+      const currentStatus = await notificationService.getPermissionStatus();
+
+      if (!currentStatus.granted) {
+        // Request permission
+        const result = await notificationService.requestPermissions();
+        setPermissionGranted(result.granted);
+
+        if (!result.granted) {
+          // Show alert explaining why permissions are needed
+          Alert.alert(
+            t('reminders.permissionRequired.title', { defaultValue: 'Notifications Required' }),
+            t('reminders.permissionRequired.message', {
+              defaultValue: 'To receive reminders, please enable notifications for this app in your device settings.'
+            }),
+            [
+              { text: t('common.cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
+              {
+                text: t('common.openSettings', { defaultValue: 'Open Settings' }),
+                onPress: () => {
+                  if (Platform.OS === 'ios') {
+                    Linking.openURL('app-settings:');
+                  } else {
+                    Linking.openSettings();
+                  }
+                }
+              }
+            ]
+          );
+        }
+      } else {
+        setPermissionGranted(true);
+      }
+    };
+
+    checkAndRequestPermissions();
+  }, [isActive, t]);
 
   // Reload reminders when becoming active or when refreshTrigger changes
   useEffect(() => {
