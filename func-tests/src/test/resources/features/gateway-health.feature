@@ -27,8 +27,8 @@ Feature: Gateway Service Health
     When I make a GET request to "/actuator/health"
     Then the response status code should be 200
     And the response JSON field "status" should be "UP"
-    And the response JSON field "downstreams.firestore.status" should be "UP"
-    And the response JSON field "downstreams.gcs.status" should be "UP"
+    And the response JSON field "components.firestore.status" should be "UP"
+    And the response JSON field "components.gcs.status" should be "UP"
 
   @performance
   Scenario: Metrics endpoint is accessible
