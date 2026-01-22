@@ -559,15 +559,21 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
                   <View style={styles.heatmapLegend}>
                     <Text style={[styles.heatmapLegendTitle, { fontSize: scaledFontSize(12) }]}>{t('screenTime.screenTimeLevel')}</Text>
 
-                    {/* Color Bar - 4 cells: 3 teal (recommended range) + 1 orange (over limit) */}
+                    {/* Color Bar - 5 cells: 3 teal (recommended range) + 2 orange (over limit) */}
                     <View style={styles.heatmapLegendColorBar}>
                       <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 0.3)' }]} />
                       <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 0.6)' }]} />
-                      <View style={[styles.heatmapLegendCell, styles.heatmapRecommendedCell, { backgroundColor: 'rgba(78, 205, 196, 1.0)' }]} />
-                      <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(255, 159, 67, 0.85)' }]} />
+                      <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 1.0)' }]} />
+                      <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(255, 159, 67, 0.7)' }]} />
+                      <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(255, 159, 67, 1.0)' }]} />
                     </View>
 
-                    {/* Labels Row - Separate from color bar */}
+                    {/* Arrow pointing to middle (recommended) cell */}
+                    <View style={styles.heatmapArrowContainer}>
+                      <Text style={[styles.heatmapArrow, { fontSize: scaledFontSize(12) }]}>▲</Text>
+                    </View>
+
+                    {/* Labels Row */}
                     <View style={styles.heatmapLabelsRow}>
                       <View style={styles.heatmapLabelContainer}>
                         <Text style={[styles.heatmapLegendLabel, { fontSize: scaledFontSize(10) }]} numberOfLines={1}>
@@ -959,14 +965,19 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
                   })}
                 </View>
 
-                {/* Legend - 4 cells: 3 teal (recommended range) + 1 orange (over limit) */}
+                {/* Legend - 5 cells: 3 teal (recommended range) + 2 orange (over limit) */}
                 <View style={styles.heatmapLegend}>
                   <Text style={[styles.heatmapLegendTitle, { fontSize: scaledFontSize(12) }]}>{t('screenTime.screenTimeLevel')}</Text>
                   <View style={styles.heatmapLegendColorBar}>
                     <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 0.3)' }]} />
                     <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 0.6)' }]} />
-                    <View style={[styles.heatmapLegendCell, styles.heatmapRecommendedCell, { backgroundColor: 'rgba(78, 205, 196, 1.0)' }]} />
-                    <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(255, 159, 67, 0.85)' }]} />
+                    <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 1.0)' }]} />
+                    <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(255, 159, 67, 0.7)' }]} />
+                    <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(255, 159, 67, 1.0)' }]} />
+                  </View>
+                  {/* Arrow pointing to middle (recommended) cell */}
+                  <View style={styles.heatmapArrowContainer}>
+                    <Text style={[styles.heatmapArrow, { fontSize: scaledFontSize(12) }]}>▲</Text>
                   </View>
                   <View style={styles.heatmapLabelsRow}>
                     <View style={styles.heatmapLabelContainer}>
