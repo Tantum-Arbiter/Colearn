@@ -21,6 +21,7 @@ import { ApiClient } from '../../services/api-client';
 import { reminderService } from '../../services/reminder-service';
 import { StorySyncService } from '../../services/story-sync-service';
 import { VersionManager } from '../../services/version-manager';
+import { DeviceInfoService } from '../../services/device-info-service';
 import { CacheManager } from '../../services/cache-manager';
 import { StoryLoader } from '../../services/story-loader';
 import { TEXT_SIZE_OPTIONS, useAccessibility } from '../../hooks/use-accessibility';
@@ -478,7 +479,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
                 {t('common.version')}
               </Text>
               <Text style={[styles.settingValue, { fontSize: scaledFontSize(16) }]}>
-                1.0.0
+                {DeviceInfoService.getAppVersion()}
               </Text>
             </View>
 

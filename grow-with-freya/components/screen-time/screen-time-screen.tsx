@@ -565,7 +565,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
                       <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 0.6)' }]} />
                       <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 1.0)' }]} />
                       <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(255, 159, 67, 0.7)' }]} />
-                      <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(255, 159, 67, 1.0)' }]} />
+                      <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(239, 68, 68, 1.0)' }]} />
                     </View>
 
                     {/* Arrow pointing to middle (recommended) cell */}
@@ -973,7 +973,7 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
                     <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 0.6)' }]} />
                     <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 1.0)' }]} />
                     <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(255, 159, 67, 0.7)' }]} />
-                    <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(255, 159, 67, 1.0)' }]} />
+                    <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(239, 68, 68, 1.0)' }]} />
                   </View>
                   {/* Arrow pointing to middle (recommended) cell */}
                   <View style={styles.heatmapArrowContainer}>
