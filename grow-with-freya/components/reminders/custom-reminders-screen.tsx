@@ -6,7 +6,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming } fr
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { reminderService, ReminderService, CustomReminder, ReminderStats } from '../../services/reminder-service';
-import { NotificationService } from '../../services/notification-service';
+import NotificationService from '../../services/notification-service';
 import { styles } from './styles';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { StarBackground } from '@/components/ui/star-background';
