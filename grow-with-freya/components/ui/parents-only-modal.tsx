@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  Modal,
   View,
   Text,
   TextInput,
@@ -106,16 +105,16 @@ export function ParentsOnlyModal({
     paddingTop: StatusBar.currentHeight || 0,
   } : {};
 
+  // Early return if not visible - using conditional rendering instead of Modal
+  // to avoid iOS crash during orientation changes
+  if (!visible) {
+    return null;
+  }
+
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-      supportedOrientations={['portrait', 'landscape']}
-      statusBarTranslucent={Platform.OS === 'android'}
-    >
-      <View style={[styles.modalOverlay, fullScreenStyle]}>
+    <View style={[styles.absoluteContainer, fullScreenStyle]}>
+      <Pressable style={styles.backdrop} onPress={onClose} />
+      <View style={[styles.modalOverlay, fullScreenStyle]} pointerEvents="box-none">
         <Animated.View style={[
           styles.content,
           isPhoneLandscape && styles.contentLandscape,
@@ -255,14 +254,30 @@ export function ParentsOnlyModal({
           )}
         </Animated.View>
       </View>
-    </Modal>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  // Absolute container to replace Modal - avoids iOS crash during orientation changes
+  absoluteContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 3000, // Above other modals in story-transition-context
+  },
+  backdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+  },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,

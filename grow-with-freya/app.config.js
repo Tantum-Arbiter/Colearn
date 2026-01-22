@@ -87,6 +87,12 @@ export default {
           }
         }
       ],
+      [
+        'expo-audio',
+        {
+          microphonePermission: 'Allow $(PRODUCT_NAME) to access your microphone to record story narrations.'
+        }
+      ],
     ],
     experiments: {
       typedRoutes: true,

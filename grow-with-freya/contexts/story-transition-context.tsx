@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { Dimensions, Image, StyleSheet, View, Text, Pressable, Modal, TextInput, KeyboardAvoidingView, Platform, Alert, ScrollView } from 'react-native';
+import { Dimensions, Image, StyleSheet, View, Text, Pressable, TextInput, KeyboardAvoidingView, Platform, Alert, ScrollView } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -1757,33 +1757,131 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
             );
           })()}
 
-          {/* Voice Over Name Modal (for Record mode) */}
-          <Modal
-            visible={showVoiceOverNameModal}
-            transparent
-            animationType="fade"
-            onRequestClose={() => setShowVoiceOverNameModal(false)}
-          >
-            <KeyboardAvoidingView
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-              style={styles.modalOverlay}
-            >
-              <View style={styles.modalContent}>
-                <Pressable
-                  style={styles.modalCloseButton}
-                  onPress={() => {
-                    setShowVoiceOverNameModal(false);
-                    setVoiceOverName('');
-                  }}
-                >
-                  <Text style={styles.modalCloseButtonText}>✕</Text>
-                </Pressable>
-                <Text style={styles.modalTitle}>{t('storyMode.recordVoiceOver')}</Text>
+          {/* Voice Over Name Modal (for Record mode) - Using absolute positioning to avoid iOS crash during orientation changes */}
+          {showVoiceOverNameModal && (
+            <View style={styles.absoluteModalContainer}>
+              <Pressable
+                style={styles.absoluteModalBackdrop}
+                onPress={() => {
+                  setShowVoiceOverNameModal(false);
+                  setVoiceOverName('');
+                }}
+              />
+              <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={styles.absoluteModalCentered}
+                pointerEvents="box-none"
+              >
+                <View style={styles.modalContent}>
+                  <Pressable
+                    style={styles.modalCloseButton}
+                    onPress={() => {
+                      setShowVoiceOverNameModal(false);
+                      setVoiceOverName('');
+                    }}
+                  >
+                    <Text style={styles.modalCloseButtonText}>✕</Text>
+                  </Pressable>
+                  <Text style={styles.modalTitle}>{t('storyMode.recordVoiceOver')}</Text>
 
-                {/* Existing voice overs */}
-                {availableVoiceOvers.length > 0 && (
-                  <>
-                    <Text style={styles.modalSubtitle}>{t('storyMode.selectExisting')}</Text>
+                  {/* Existing voice overs */}
+                  {availableVoiceOvers.length > 0 && (
+                    <>
+                      <Text style={styles.modalSubtitle}>{t('storyMode.selectExisting')}</Text>
+                      <ScrollView style={styles.voiceOverList} showsVerticalScrollIndicator={false}>
+                        {availableVoiceOvers.map((vo) => (
+                          <View key={vo.id} style={styles.voiceOverItemWithDelete}>
+                            <Pressable
+                              style={[
+                                styles.voiceOverItemSelectable,
+                                currentVoiceOver?.id === vo.id && styles.voiceOverItemSelected,
+                              ]}
+                              onPress={() => {
+                                setCurrentVoiceOver(vo);
+                                setShowVoiceOverNameModal(false);
+                              }}
+                            >
+                              <Text style={styles.voiceOverItemName}>{vo.name}</Text>
+                              <Text style={styles.voiceOverItemPages}>
+                                {t('storyMode.pagesRecorded', { count: Object.keys(vo.pageRecordings).length })}
+                              </Text>
+                            </Pressable>
+                            <Pressable
+                              style={styles.deleteButton}
+                              onPress={() => handleDeleteVoiceOver(vo)}
+                            >
+                              <Text style={styles.deleteButtonText}>✕</Text>
+                            </Pressable>
+                          </View>
+                        ))}
+                      </ScrollView>
+                    </>
+                  )}
+
+                  {/* Create new section */}
+                  {availableVoiceOvers.length < 3 && (
+                    <>
+                      <Text style={[styles.modalSubtitle, availableVoiceOvers.length > 0 && { marginTop: 16 }]}>
+                        {availableVoiceOvers.length > 0 ? t('storyMode.orCreateNew') : t('storyMode.enterName')}
+                      </Text>
+                      <TextInput
+                        style={styles.modalInput}
+                        value={voiceOverName}
+                        onChangeText={setVoiceOverName}
+                        placeholder={t('storyMode.enterName')}
+                        placeholderTextColor="#999"
+                        autoFocus={availableVoiceOvers.length === 0}
+                      />
+                      <Pressable
+                        style={[
+                          styles.modalButton,
+                          !voiceOverName.trim() && styles.modalButtonDisabled,
+                        ]}
+                        onPress={handleCreateVoiceOver}
+                        disabled={!voiceOverName.trim()}
+                      >
+                        <Text style={styles.modalButtonText}>{t('storyMode.create')}</Text>
+                      </Pressable>
+                    </>
+                  )}
+                  {availableVoiceOvers.length >= 3 && (
+                    <Text style={styles.maxVoiceOversText}>Maximum of 3 voice overs reached</Text>
+                  )}
+                </View>
+              </KeyboardAvoidingView>
+            </View>
+          )}
+
+          {/* Voice Over Selection Modal (for Narrate mode) - Using absolute positioning to avoid iOS crash during orientation changes */}
+          {showVoiceOverSelectModal && (
+            <View style={styles.absoluteModalContainer}>
+              <Pressable
+                style={styles.absoluteModalBackdrop}
+                onPress={() => {
+                  setShowVoiceOverSelectModal(false);
+                  if (!currentVoiceOver) {
+                    setSelectedMode('read'); // Reset to read if no voice over selected
+                  }
+                }}
+              />
+              <View style={styles.absoluteModalCentered} pointerEvents="box-none">
+                <View style={styles.modalContent}>
+                  <Pressable
+                    style={styles.modalCloseButton}
+                    onPress={() => {
+                      setShowVoiceOverSelectModal(false);
+                      if (!currentVoiceOver) {
+                        setSelectedMode('read'); // Reset to read if no voice over selected
+                      }
+                    }}
+                  >
+                    <Text style={styles.modalCloseButtonText}>✕</Text>
+                  </Pressable>
+                  <Text style={styles.modalTitle}>{t('storyMode.selectVoiceOver')}</Text>
+                  <Text style={styles.modalSubtitle}>{t('storyMode.chooseRecording')}</Text>
+                  {availableVoiceOvers.length === 0 ? (
+                    <Text style={styles.noVoiceOversText}>{t('storyMode.noVoiceOvers')}</Text>
+                  ) : (
                     <ScrollView style={styles.voiceOverList} showsVerticalScrollIndicator={false}>
                       {availableVoiceOvers.map((vo) => (
                         <View key={vo.id} style={styles.voiceOverItemWithDelete}>
@@ -1792,10 +1890,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                               styles.voiceOverItemSelectable,
                               currentVoiceOver?.id === vo.id && styles.voiceOverItemSelected,
                             ]}
-                            onPress={() => {
-                              setCurrentVoiceOver(vo);
-                              setShowVoiceOverNameModal(false);
-                            }}
+                            onPress={() => handleSelectVoiceOver(vo)}
                           >
                             <Text style={styles.voiceOverItemName}>{vo.name}</Text>
                             <Text style={styles.voiceOverItemPages}>
@@ -1811,95 +1906,11 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                         </View>
                       ))}
                     </ScrollView>
-                  </>
-                )}
-
-                {/* Create new section */}
-                {availableVoiceOvers.length < 3 && (
-                  <>
-                    <Text style={[styles.modalSubtitle, availableVoiceOvers.length > 0 && { marginTop: 16 }]}>
-                      {availableVoiceOvers.length > 0 ? t('storyMode.orCreateNew') : t('storyMode.enterName')}
-                    </Text>
-                    <TextInput
-                      style={styles.modalInput}
-                      value={voiceOverName}
-                      onChangeText={setVoiceOverName}
-                      placeholder={t('storyMode.enterName')}
-                      placeholderTextColor="#999"
-                      autoFocus={availableVoiceOvers.length === 0}
-                    />
-                    <Pressable
-                      style={[
-                        styles.modalButton,
-                        !voiceOverName.trim() && styles.modalButtonDisabled,
-                      ]}
-                      onPress={handleCreateVoiceOver}
-                      disabled={!voiceOverName.trim()}
-                    >
-                      <Text style={styles.modalButtonText}>{t('storyMode.create')}</Text>
-                    </Pressable>
-                  </>
-                )}
-                {availableVoiceOvers.length >= 3 && (
-                  <Text style={styles.maxVoiceOversText}>Maximum of 3 voice overs reached</Text>
-                )}
-              </View>
-            </KeyboardAvoidingView>
-          </Modal>
-
-          {/* Voice Over Selection Modal (for Narrate mode) */}
-          <Modal
-            visible={showVoiceOverSelectModal}
-            transparent
-            animationType="fade"
-            onRequestClose={() => setShowVoiceOverSelectModal(false)}
-          >
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalContent}>
-                <Pressable
-                  style={styles.modalCloseButton}
-                  onPress={() => {
-                    setShowVoiceOverSelectModal(false);
-                    if (!currentVoiceOver) {
-                      setSelectedMode('read'); // Reset to read if no voice over selected
-                    }
-                  }}
-                >
-                  <Text style={styles.modalCloseButtonText}>✕</Text>
-                </Pressable>
-                <Text style={styles.modalTitle}>{t('storyMode.selectVoiceOver')}</Text>
-                <Text style={styles.modalSubtitle}>{t('storyMode.chooseRecording')}</Text>
-                {availableVoiceOvers.length === 0 ? (
-                  <Text style={styles.noVoiceOversText}>{t('storyMode.noVoiceOvers')}</Text>
-                ) : (
-                  <ScrollView style={styles.voiceOverList} showsVerticalScrollIndicator={false}>
-                    {availableVoiceOvers.map((vo) => (
-                      <View key={vo.id} style={styles.voiceOverItemWithDelete}>
-                        <Pressable
-                          style={[
-                            styles.voiceOverItemSelectable,
-                            currentVoiceOver?.id === vo.id && styles.voiceOverItemSelected,
-                          ]}
-                          onPress={() => handleSelectVoiceOver(vo)}
-                        >
-                          <Text style={styles.voiceOverItemName}>{vo.name}</Text>
-                          <Text style={styles.voiceOverItemPages}>
-                            {t('storyMode.pagesRecorded', { count: Object.keys(vo.pageRecordings).length })}
-                          </Text>
-                        </Pressable>
-                        <Pressable
-                          style={styles.deleteButton}
-                          onPress={() => handleDeleteVoiceOver(vo)}
-                        >
-                          <Text style={styles.deleteButtonText}>✕</Text>
-                        </Pressable>
-                      </View>
-                    ))}
-                  </ScrollView>
-                )}
+                  )}
+                </View>
               </View>
             </View>
-          </Modal>
+          )}
 
           {/* Parents Only Modal for delete confirmation */}
           <ParentsOnlyModal
@@ -1953,6 +1964,28 @@ const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 1000,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  // Absolute-positioned modal styles to avoid iOS crash during orientation changes
+  absoluteModalContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 2000, // Above all other content including overlay
+  },
+  absoluteModalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+  },
+  absoluteModalCentered: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },

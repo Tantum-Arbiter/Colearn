@@ -1,9 +1,9 @@
 import { useCallback, useRef, useState, useEffect } from 'react';
 import {
   useAudioRecorder,
-  RecordingPresets,
   setAudioModeAsync,
   AudioModule,
+  RecordingPresets,
 } from 'expo-audio';
 
 export interface RecordingResult {
@@ -21,17 +21,17 @@ export interface UseVoiceRecordingReturn {
 
 /**
  * Hook for voice recording using expo-audio.
- * This replaces the recording functionality from voice-recording-service
- * since expo-audio requires hook-based recording.
+ * Uses the useAudioRecorder hook which handles lifecycle management.
  */
 export function useVoiceRecording(): UseVoiceRecordingReturn {
+  // Use the standard useAudioRecorder hook for proper lifecycle management
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const recordingStartTime = useRef<number>(0);
   const durationInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Cleanup on unmount
+  // Cleanup interval on unmount
   useEffect(() => {
     return () => {
       if (durationInterval.current) {
@@ -84,7 +84,7 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
       console.error('Failed to start recording:', error);
       return false;
     }
-  }, [audioRecorder, requestPermissions]);
+  }, [requestPermissions, audioRecorder]);
 
   const stopRecording = useCallback(async (): Promise<RecordingResult | null> => {
     if (!isRecording) {
@@ -118,7 +118,7 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
       console.error('Failed to stop recording:', error);
       return null;
     }
-  }, [audioRecorder, isRecording]);
+  }, [isRecording, audioRecorder]);
 
   return {
     isRecording,
