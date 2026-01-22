@@ -562,7 +562,6 @@ export const CreateReminderContent: React.FC<CreateReminderContentProps> = ({
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
-  const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
   const getDefaultTime = () => {
     const defaultTime = new Date();
     defaultTime.setHours(9, 0, 0, 0);
@@ -576,48 +575,7 @@ export const CreateReminderContent: React.FC<CreateReminderContentProps> = ({
   const [existingReminders, setExistingReminders] = useState<CustomReminder[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  // Check and request notification permissions when screen becomes active
-  useEffect(() => {
-    if (!isActive) return;
-
-    const checkAndRequestPermissions = async () => {
-      const notificationService = NotificationService.getInstance();
-      const currentStatus = await notificationService.getPermissionStatus();
-
-      if (!currentStatus.granted) {
-        // Request permission
-        const result = await notificationService.requestPermissions();
-        setPermissionGranted(result.granted);
-
-        if (!result.granted) {
-          // Show alert explaining why permissions are needed
-          Alert.alert(
-            t('reminders.permissionRequired.title', { defaultValue: 'Notifications Required' }),
-            t('reminders.permissionRequired.message', {
-              defaultValue: 'To receive reminders, please enable notifications for this app in your device settings.'
-            }),
-            [
-              { text: t('common.cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
-              {
-                text: t('common.openSettings', { defaultValue: 'Open Settings' }),
-                onPress: () => {
-                  if (Platform.OS === 'ios') {
-                    Linking.openURL('app-settings:');
-                  } else {
-                    Linking.openSettings();
-                  }
-                }
-              }
-            ]
-          );
-        }
-      } else {
-        setPermissionGranted(true);
-      }
-    };
-
-    checkAndRequestPermissions();
-  }, [isActive, t]);
+  // Permission check is now done in CustomRemindersContent when user enters the reminders section
 
   useEffect(() => {
     const changed = title.trim() !== '' || message.trim() !== '' || selectedDay !== null;
