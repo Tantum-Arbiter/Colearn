@@ -186,12 +186,63 @@ export class ReminderService {
     };
   }
 
+  // Calculate seconds until next occurrence of a specific day and time
+  private getSecondsUntilNextOccurrence(dayOfWeek: number, hours: number, minutes: number): number {
+    const now = new Date();
+    const target = new Date();
+
+    // Set target time
+    target.setHours(hours, minutes, 0, 0);
+
+    // Calculate days until target day
+    const currentDay = now.getDay(); // 0-6 (Sunday = 0)
+    let daysUntil = dayOfWeek - currentDay;
+
+    // If target day is today, check if time has passed
+    if (daysUntil === 0) {
+      if (target <= now) {
+        // Time has passed today, schedule for next week
+        daysUntil = 7;
+      }
+    } else if (daysUntil < 0) {
+      // Target day is earlier in the week, schedule for next week
+      daysUntil += 7;
+    }
+
+    target.setDate(now.getDate() + daysUntil);
+
+    const seconds = Math.floor((target.getTime() - now.getTime()) / 1000);
+    return Math.max(seconds, 1); // Ensure at least 1 second
+  }
+
   // Schedule notifications for a reminder (main + 30min advance)
+  // Uses TIME_INTERVAL trigger which works reliably on both iOS and Android
+  // CALENDAR trigger is broken in Expo SDK 52 (fires immediately on iOS, not supported on Android)
   private async scheduleNotification(reminder: CustomReminder): Promise<string | null> {
     try {
       const [hours, minutes] = reminder.time.split(':').map(Number);
 
-      // Schedule main notification
+      // Calculate seconds until the main notification
+      const secondsUntilMain = this.getSecondsUntilNextOccurrence(reminder.dayOfWeek, hours, minutes);
+
+      // Calculate seconds until the advance notification (30 minutes before main)
+      // Subtract 30 minutes (1800 seconds) from the main notification time
+      let advanceHours = hours;
+      let advanceMinutes = minutes - 30;
+      if (advanceMinutes < 0) {
+        advanceMinutes += 60;
+        advanceHours -= 1;
+        if (advanceHours < 0) {
+          advanceHours = 23;
+        }
+      }
+      const secondsUntilAdvance = this.getSecondsUntilNextOccurrence(reminder.dayOfWeek, advanceHours, advanceMinutes);
+
+      console.log(`[ReminderService] Scheduling reminder for ${ReminderService.getDayName(reminder.dayOfWeek)} at ${reminder.time}`);
+      console.log(`[ReminderService] Main notification in ${secondsUntilMain} seconds`);
+      console.log(`[ReminderService] Advance notification in ${secondsUntilAdvance} seconds`);
+
+      // Schedule main notification using TIME_INTERVAL (works on both iOS and Android)
       const notificationId = await Notifications.scheduleNotificationAsync({
         content: {
           title: reminder.title,
@@ -199,19 +250,13 @@ export class ReminderService {
           sound: 'default',
         },
         trigger: {
-          type: SchedulableTriggerInputTypes.CALENDAR,
-          weekday: reminder.dayOfWeek + 1, // Expo uses 1-7 (Sunday = 1)
-          hour: hours,
-          minute: minutes,
-          repeats: true,
+          type: SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds: secondsUntilMain,
+          repeats: false, // We'll reschedule after each occurrence
         },
       });
 
       // Schedule 30-minute advance notification
-      const advanceTime = new Date();
-      advanceTime.setHours(hours, minutes, 0, 0);
-      advanceTime.setMinutes(advanceTime.getMinutes() - 30);
-
       const advanceNotificationId = await Notifications.scheduleNotificationAsync({
         content: {
           title: `Upcoming: ${reminder.title}`,
@@ -219,11 +264,9 @@ export class ReminderService {
           sound: 'default',
         },
         trigger: {
-          type: SchedulableTriggerInputTypes.CALENDAR,
-          weekday: reminder.dayOfWeek + 1,
-          hour: advanceTime.getHours(),
-          minute: advanceTime.getMinutes(),
-          repeats: true,
+          type: SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds: secondsUntilAdvance,
+          repeats: false, // We'll reschedule after each occurrence
         },
       });
 
