@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, ScrollView, Pressable, TextInput, Alert, Dimensions } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Alert, Dimensions, Linking, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -7,6 +7,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming } fr
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { reminderService, ReminderService, CustomReminder } from '../../services/reminder-service';
+import { NotificationService } from '../../services/notification-service';
 import { styles } from './styles';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { StarBackground } from '@/components/ui/star-background';
@@ -51,6 +52,7 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
   const getDefaultTime = () => {
     const defaultTime = new Date();
     defaultTime.setHours(9, 0, 0, 0); // Default to 9:00 AM
@@ -69,6 +71,47 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
 
   // Track unsaved changes
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Check and request notification permissions on mount
+  useEffect(() => {
+    const checkAndRequestPermissions = async () => {
+      const notificationService = NotificationService.getInstance();
+      const currentStatus = await notificationService.getPermissionStatus();
+
+      if (!currentStatus.granted) {
+        // Request permission
+        const result = await notificationService.requestPermissions();
+        setPermissionGranted(result.granted);
+
+        if (!result.granted) {
+          // Show alert explaining why permissions are needed
+          Alert.alert(
+            t('reminders.permissionRequired.title', { defaultValue: 'Notifications Required' }),
+            t('reminders.permissionRequired.message', {
+              defaultValue: 'To receive reminders, please enable notifications for this app in your device settings.'
+            }),
+            [
+              { text: t('common.cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
+              {
+                text: t('common.openSettings', { defaultValue: 'Open Settings' }),
+                onPress: () => {
+                  if (Platform.OS === 'ios') {
+                    Linking.openURL('app-settings:');
+                  } else {
+                    Linking.openSettings();
+                  }
+                }
+              }
+            ]
+          );
+        }
+      } else {
+        setPermissionGranted(true);
+      }
+    };
+
+    checkAndRequestPermissions();
+  }, [t]);
 
   // Update unsaved changes flag whenever form fields change
   useEffect(() => {

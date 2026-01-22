@@ -27,6 +27,7 @@ export default {
     medium: 'Medium',
     large: 'Large',
     extraLarge: 'Extra Large',
+    openSettings: 'Open Settings',
   },
 
   // Alerts
@@ -550,6 +551,10 @@ export default {
     creating: 'Creating...',
     noReminders: 'No Custom Reminders',
     noRemindersHint: 'Create your first reminder to get started with personalized exercise notifications.',
+    permissionRequired: {
+      title: 'Notifications Required',
+      message: 'To receive reminders, please enable notifications for this app in your device settings.',
+    },
     total: 'Total',
     today: 'Today',
     loading: 'Loading reminders...',

@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, ScrollView, Pressable, Alert, Dimensions } from 'react-native';
+import { View, Text, ScrollView, Pressable, Alert, Dimensions, Linking, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { reminderService, ReminderService, CustomReminder, ReminderStats } from '../../services/reminder-service';
+import { NotificationService } from '../../services/notification-service';
 import { styles } from './styles';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { StarBackground } from '@/components/ui/star-background';
@@ -52,10 +53,52 @@ export const CustomRemindersScreen: React.FC<CustomRemindersScreenProps> = ({
   const [reminders, setReminders] = useState<CustomReminder[]>([]);
   const [stats, setStats] = useState<ReminderStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
 
   // Star animation
   const starOpacity = useSharedValue(0.4);
   const stars = useMemo(() => generateStarPositions(), []);
+
+  // Check and request notification permissions on mount
+  useEffect(() => {
+    const checkAndRequestPermissions = async () => {
+      const notificationService = NotificationService.getInstance();
+      const currentStatus = await notificationService.getPermissionStatus();
+
+      if (!currentStatus.granted) {
+        // Request permission
+        const result = await notificationService.requestPermissions();
+        setPermissionGranted(result.granted);
+
+        if (!result.granted) {
+          // Show alert explaining why permissions are needed
+          Alert.alert(
+            t('reminders.permissionRequired.title', { defaultValue: 'Notifications Required' }),
+            t('reminders.permissionRequired.message', {
+              defaultValue: 'To receive reminders, please enable notifications for this app in your device settings.'
+            }),
+            [
+              { text: t('common.cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
+              {
+                text: t('common.openSettings', { defaultValue: 'Open Settings' }),
+                onPress: () => {
+                  if (Platform.OS === 'ios') {
+                    Linking.openURL('app-settings:');
+                  } else {
+                    Linking.openSettings();
+                  }
+                }
+              }
+            ]
+          );
+        }
+      } else {
+        setPermissionGranted(true);
+      }
+    };
+
+    checkAndRequestPermissions();
+  }, [t]);
 
   useEffect(() => {
     loadReminders();
