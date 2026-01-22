@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
  * Only activated when a Firestore bean exists (not in test profile).
  * Marked as @Lazy to avoid blocking application startup.
  */
-@Component("firestore")
+@Component("firestoreHealth")
 @Lazy
 @ConditionalOnBean(Firestore.class)
 @Profile("!test")

@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
  * Only activated when Storage and GcsProperties beans exist (not in test profile).
  * Marked as @Lazy to avoid blocking application startup.
  */
-@Component("gcs")
+@Component("gcsHealth")
 @Lazy
 @ConditionalOnBean({Storage.class, GcsProperties.class})
 @Profile("!test")
