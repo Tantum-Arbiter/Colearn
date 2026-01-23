@@ -1,5 +1,5 @@
-const IS_DEV = process.env.NODE_ENV === 'development';
-const IS_PREVIEW = process.env.NODE_ENV === 'staging';
+const IS_DEV = process.env.EXPO_PUBLIC_APP_ENV === 'development';
+const IS_PREVIEW = process.env.EXPO_PUBLIC_APP_ENV === 'staging';
 
 export default {
   expo: {

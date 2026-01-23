@@ -9,7 +9,7 @@
       "distribution": "internal",
       "channel": "development",
       "env": {
-        "NODE_ENV": "development",
+        "EXPO_PUBLIC_APP_ENV": "development",
         "EXPO_PUBLIC_GATEWAY_URL": "https://api.colearnwithfreya.co.uk",
         "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "1086096096900-377j71ktgif6t78evg63218cj9de2cjs.apps.googleusercontent.com",
         "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "1086096096900-id6lrdbdp8s892kbl002km69318ptp94.apps.googleusercontent.com",
@@ -29,7 +29,7 @@
       "distribution": "internal",
       "channel": "development",
       "env": {
-        "NODE_ENV": "development",
+        "EXPO_PUBLIC_APP_ENV": "development",
         "EXPO_PUBLIC_GATEWAY_URL": "http://localhost:8080",
         "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "1086096096900-377j71ktgif6t78evg63218cj9de2cjs.apps.googleusercontent.com",
         "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "1086096096900-id6lrdbdp8s892kbl002km69318ptp94.apps.googleusercontent.com",
@@ -48,7 +48,7 @@
       "distribution": "internal",
       "channel": "preview",
       "env": {
-        "NODE_ENV": "staging",
+        "EXPO_PUBLIC_APP_ENV": "staging",
         "EXPO_PUBLIC_GATEWAY_URL": "https://api.colearnwithfreya.co.uk",
         "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "1086096096900-377j71ktgif6t78evg63218cj9de2cjs.apps.googleusercontent.com",
         "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "1086096096900-id6lrdbdp8s892kbl002km69318ptp94.apps.googleusercontent.com",
@@ -66,7 +66,7 @@
       "autoIncrement": true,
       "channel": "production",
       "env": {
-        "NODE_ENV": "production",
+        "EXPO_PUBLIC_APP_ENV": "production",
         "EXPO_PUBLIC_GATEWAY_URL": "https://api.colearnwithfreya.co.uk",
         "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "1086096096900-377j71ktgif6t78evg63218cj9de2cjs.apps.googleusercontent.com",
         "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "1086096096900-id6lrdbdp8s892kbl002km69318ptp94.apps.googleusercontent.com",
