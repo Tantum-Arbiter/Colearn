@@ -2487,9 +2487,9 @@
   integrity sha512-+Fj43pSMwJs4KRrH/938Uf+uAELIgVBmQzg/q1YG10djyfA3TnrU8N8XzqCh/okZdszqBQTZf96idMfE5lnwTA==
 
 "@sinclair/typebox@^0.34.0":
-  version "0.34.47"
-  resolved "https://registry.yarnpkg.com/@sinclair/typebox/-/typebox-0.34.47.tgz#61b684d8a20d2890b9f1f7b0d4f76b4b39f5bc0d"
-  integrity sha512-ZGIBQ+XDvO5JQku9wmwtabcVTHJsgSWAHYtVuM9pBNNR5E88v6Jcj/llpmsjivig5X8A8HHOb4/mbEKPS5EvAw==
+  version "0.34.48"
+  resolved "https://registry.yarnpkg.com/@sinclair/typebox/-/typebox-0.34.48.tgz#75b0ead87e59e1adbd6dccdc42bad4fddee73b59"
+  integrity sha512-kKJTNuK3AQOrgjjotVxMrCn1sUJwM76wMszfq1kdU4uYVJjvEWuFQ6HgvLt4Xz3fSmZlTOxJ/Ie13KnIcWQXFA==
 
 "@sinonjs/commons@^3.0.0":
   version "3.0.1"
@@ -3591,9 +3591,9 @@ camelcase@^6.2.0:
   integrity sha512-Gmy6FhYlCY7uOElZUSbxo2UCDH8owEk996gkbrpsgGtrJLM3J7jGxl9Ic7Qwwj4ivOE5AWZWRMecDdF7hqGjFA==
 
 caniuse-lite@^1.0.30001759:
-  version "1.0.30001765"
-  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001765.tgz#4a78d8a797fd4124ebaab2043df942eb091648ee"
-  integrity sha512-LWcNtSyZrakjECqmpP4qdg0MMGdN368D7X8XvvAqOcqMv0RxnlqVKZl2V6/mBR68oYMxOZPLw/gO7DuisMHUvQ==
+  version "1.0.30001766"
+  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001766.tgz#b6f6b55cb25a2d888d9393104d14751c6a7d6f7a"
+  integrity sha512-4C0lfJ0/YPjJQHagaE9x2Elb69CIqEPZeG0anQt9SIvIoOH4a4uaRl73IavyO+0qZh6MDLH//DrXThEYKHkmYA==
 
 chalk@^2.0.1, chalk@^2.4.2:
   version "2.4.2"
