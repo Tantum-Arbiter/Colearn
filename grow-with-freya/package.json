@@ -121,7 +121,7 @@
     "lint-staged": "^15.2.10",
     "prettier": "^3.6.2",
     "react-native-web": "^0.21.1",
-    "react-test-renderer": "^19.1.0",
+    "react-test-renderer": "19.1.0",
     "typescript": "~5.9.2"
   },
   "optionalDependencies": {
