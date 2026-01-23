@@ -45,7 +45,7 @@
     "release:prepare": "npm run ci:setup && npm run build:web",
     "postversion": "npm run update:app-version",
     "update:app-version": "node scripts/update-app-version.js",
-    "prepare": "cd .. && husky install",
+    "prepare": "cd .. && husky install || true",
     "pre-commit": "lint-staged",
     "validate": "npm run type-check && npm run lint && npm run test:ci"
   },
