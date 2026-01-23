@@ -5,6 +5,7 @@
   },
   "build": {
     "development": {
+      "npm": {},
       "developmentClient": true,
       "distribution": "internal",
       "channel": "development",
@@ -25,6 +26,7 @@
       }
     },
     "development-local": {
+      "npm": {},
       "developmentClient": true,
       "distribution": "internal",
       "channel": "development",
@@ -45,6 +47,7 @@
       }
     },
     "preview": {
+      "npm": {},
       "distribution": "internal",
       "channel": "preview",
       "env": {
@@ -63,6 +66,7 @@
       }
     },
     "production": {
+      "npm": {},
       "autoIncrement": true,
       "channel": "production",
       "env": {
