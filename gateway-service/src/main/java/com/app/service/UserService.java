@@ -16,9 +16,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-/**
- * Service layer for User management with business logic
- */
 @Service
 public class UserService {
 
@@ -33,23 +30,17 @@ public class UserService {
         this.metricsService = metricsService;
     }
 
-    /**
-     * Create a new user from OAuth authentication
-     * PII-free: only provider and providerId are stored
-     */
     public CompletableFuture<User> createUser(String provider, String providerId) {
         logger.info("Creating new user with provider: {}", provider);
 
         return CompletableFuture.supplyAsync(() -> {
             try {
-                // Check if user already exists by provider+providerId
                 Optional<User> existingUser = userRepository.findByProviderAndProviderId(provider, providerId).join();
                 if (existingUser.isPresent()) {
                     logger.warn("User already exists with provider: {} and providerId: {}", provider, providerId);
                     throw new IllegalArgumentException("User already exists with this provider");
                 }
 
-                // Create new user (PII-free)
                 User user = new User();
                 user.setId(UUID.randomUUID().toString());
                 user.setProvider(provider);
@@ -58,14 +49,9 @@ public class UserService {
                 user.setCreatedAt(Instant.now());
                 user.setUpdatedAt(Instant.now());
                 user.updateLastLogin();
-
-                // Set default preferences
                 user.setPreferences(createDefaultPreferences());
 
-                // Save user
                 User savedUser = userRepository.save(user).join();
-
-                // Record metrics
                 metricsService.recordUserCreated(provider);
 
                 logger.info("User created successfully: {}", savedUser.getId());
@@ -78,10 +64,6 @@ public class UserService {
             }
         });
     }
-
-    /**
-     * Get user by ID
-     */
     public CompletableFuture<Optional<User>> getUserById(String userId) {
         logger.debug("Getting user by ID: {}", userId);
         
@@ -95,11 +77,6 @@ public class UserService {
                     return userOpt;
                 });
     }
-
-    /**
-     * Get or create user from OAuth authentication
-     * PII-free: only provider and providerId are used for lookup/creation
-     */
     public CompletableFuture<User> getOrCreateUser(String provider, String providerId) {
         logger.debug("Getting or creating user with provider: {}", provider);
 
@@ -107,7 +84,6 @@ public class UserService {
                 .thenCompose(userOpt -> {
                     if (userOpt.isPresent()) {
                         User existingUser = userOpt.get();
-                        // Update last login
                         existingUser.updateLastLogin();
 
                         return userRepository.save(existingUser)
@@ -116,7 +92,6 @@ public class UserService {
                                     return savedUser;
                                 });
                     } else {
-                        // Create new user
                         return createUser(provider, providerId)
                                 .thenApply(newUser -> {
                                     metricsService.recordUserLogin(provider, "new");
@@ -125,10 +100,6 @@ public class UserService {
                     }
                 });
     }
-
-    /**
-     * Update user preferences
-     */
     public CompletableFuture<User> updateUserPreferences(String userId, UserDTOs.UpdateUserPreferencesRequest request) {
         logger.debug("Updating preferences for user: {}", userId);
         
@@ -143,8 +114,6 @@ public class UserService {
                     if (preferences == null) {
                         preferences = createDefaultPreferences();
                     }
-                    
-                    // Update preferences from request
                     updatePreferencesFromRequest(preferences, request);
                     user.setPreferences(preferences);
                     user.setUpdatedAt(Instant.now());
@@ -157,10 +126,6 @@ public class UserService {
                             });
                 });
     }
-
-    /**
-     * Add child profile to user
-     */
     public CompletableFuture<User> addChildProfile(String userId, UserDTOs.CreateChildProfileRequest request) {
         logger.debug("Adding child profile for user: {}", userId);
         
@@ -171,8 +136,6 @@ public class UserService {
                     }
                     
                     User user = userOpt.get();
-                    
-                    // Create child profile
                     ChildProfile child = new ChildProfile();
                     child.setId(UUID.randomUUID().toString());
                     child.setName(request.getName());
@@ -180,8 +143,6 @@ public class UserService {
                     child.setAgeRange(request.getAgeRange());
                     child.setActive(true);
                     child.setCreatedAt(Instant.now());
-
-                    // Add child to user
                     user.addChild(child);
                     user.setUpdatedAt(Instant.now());
                     
@@ -192,11 +153,7 @@ public class UserService {
                             });
                 });
     }
-
-    /**
-     * Update child profile
-     */
-    public CompletableFuture<User> updateChildProfile(String userId, String childId, 
+    public CompletableFuture<User> updateChildProfile(String userId, String childId,
                                                     UserDTOs.UpdateChildProfileRequest request) {
         logger.debug("Updating child profile {} for user: {}", childId, userId);
         
@@ -211,8 +168,6 @@ public class UserService {
                     if (child == null) {
                         throw new IllegalArgumentException("Child not found: " + childId);
                     }
-                    
-                    // Update child profile
                     if (request.getName() != null) {
                         child.setName(request.getName());
                     }
@@ -232,10 +187,6 @@ public class UserService {
                             });
                 });
     }
-
-    /**
-     * Remove child profile
-     */
     public CompletableFuture<User> removeChildProfile(String userId, String childId) {
         logger.debug("Removing child profile {} for user: {}", childId, userId);
         
@@ -260,10 +211,6 @@ public class UserService {
                             });
                 });
     }
-
-    /**
-     * Deactivate user account
-     */
     public CompletableFuture<User> deactivateUser(String userId) {
         logger.info("Deactivating user: {}", userId);
         
@@ -273,10 +220,6 @@ public class UserService {
                     return user;
                 });
     }
-
-    /**
-     * Get all active users (admin function)
-     */
     public CompletableFuture<List<User>> getAllActiveUsers() {
         logger.debug("Getting all active users");
         
@@ -286,39 +229,30 @@ public class UserService {
                     return users;
                 });
     }
-
-    /**
-     * Count active users
-     */
     public CompletableFuture<Long> countActiveUsers() {
         logger.debug("Counting active users");
         
         return userRepository.countActiveUsers();
     }
 
-    // Helper methods
-
     private UserPreferences createDefaultPreferences() {
         UserPreferences preferences = new UserPreferences();
         preferences.setLanguage("en");
         preferences.setTimezone("UTC");
         preferences.setTheme("light");
-        
-        // Set default notification preferences
+
         UserPreferences.NotificationPreferences notifications = new UserPreferences.NotificationPreferences();
         notifications.setPushEnabled(true);
         notifications.setEmailEnabled(true);
         notifications.setReminderEnabled(true);
         preferences.setNotifications(notifications);
-        
-        // Set default screen time preferences
+
         UserPreferences.ScreenTimePreferences screenTime = new UserPreferences.ScreenTimePreferences();
         screenTime.setDailyLimitMinutes(120); // 2 hours
         screenTime.setWarningMinutes(15);
         screenTime.setBedtimeEnabled(false);
         preferences.setScreenTime(screenTime);
-        
-        // Set default audio preferences
+
         UserPreferences.AudioPreferences audio = new UserPreferences.AudioPreferences();
         audio.setMusicVolume(0.6);
         audio.setEffectsVolume(0.8);
@@ -326,8 +260,7 @@ public class UserService {
         audio.setBackgroundMusicEnabled(true);
         audio.setSoundEffectsEnabled(true);
         preferences.setAudio(audio);
-        
-        // Set default privacy preferences
+
         UserPreferences.PrivacyPreferences privacy = new UserPreferences.PrivacyPreferences();
         privacy.setDataCollectionEnabled(true);
         privacy.setAnalyticsEnabled(true);
@@ -348,20 +281,6 @@ public class UserService {
         if (request.getTheme() != null) {
             preferences.setTheme(request.getTheme());
         }
-        
-        // Update nested preferences if provided
-        // Note: In a real implementation, you'd want more sophisticated merging logic
-        if (request.getNotifications() != null) {
-            // Update notification preferences from map
-        }
-        if (request.getScreenTime() != null) {
-            // Update screen time preferences from map
-        }
-        if (request.getAudio() != null) {
-            // Update audio preferences from map
-        }
-        if (request.getPrivacy() != null) {
-            // Update privacy preferences from map
-        }
+        // TODO: implement nested preferences merging
     }
 }

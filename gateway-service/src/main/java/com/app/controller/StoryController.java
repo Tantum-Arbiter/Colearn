@@ -108,7 +108,6 @@ public class StoryController {
             ContentVersion storyVersion = storyService.getCurrentContentVersion().join();
             AssetVersion assetVersionData = assetService.getCurrentAssetVersion().join();
 
-            // Build unified response with both story and asset versions
             ContentVersionResponse response = new ContentVersionResponse();
             response.setId("current");
             response.setVersion(storyVersion.getVersion());
@@ -152,16 +151,6 @@ public class StoryController {
         }
     }
 
-    /**
-     * Delta sync endpoint for batch processing.
-     * Returns only changed/new stories and IDs of deleted stories.
-     *
-     * This is the key endpoint for reducing API calls during sync.
-     * Instead of fetching all stories, client sends checksums and gets only changes.
-     *
-     * @param request Contains clientVersion and storyChecksums
-     * @return DeltaSyncResponse with changed stories and deleted story IDs
-     */
     @PostMapping("/delta")
     public ResponseEntity<?> getDeltaContent(@Valid @RequestBody DeltaSyncRequest request) {
         String reqId = getRequestId();
@@ -172,11 +161,9 @@ public class StoryController {
                 reqId, request.getClientVersion(), clientStoriesCount);
 
         try {
-            // Get current server version
             ContentVersion serverVersion = storyService.getCurrentContentVersion().join();
             AssetVersion assetVersion = assetService.getCurrentAssetVersion().join();
 
-            // Check if client is up to date
             if (request.getClientVersion() != null && request.getClientVersion() >= serverVersion.getVersion()) {
                 logger.info("[Delta] [reqId={}] Client is up to date (clientVersion={}, serverVersion={})",
                         reqId, request.getClientVersion(), serverVersion.getVersion());
@@ -195,10 +182,7 @@ public class StoryController {
                 return ResponseEntity.ok(response);
             }
 
-            // Get stories that need to be synced
             List<Story> storiesToSync = storyService.getStoriesToSync(request.getStoryChecksums()).join();
-
-            // Find deleted stories (stories client has but server doesn't)
             List<String> deletedStoryIds = new ArrayList<>();
             if (request.getStoryChecksums() != null && !request.getStoryChecksums().isEmpty()) {
                 Set<String> serverStoryIds = serverVersion.getStoryChecksums().keySet();
@@ -209,7 +193,6 @@ public class StoryController {
                 }
             }
 
-            // Build response
             DeltaSyncResponse response = new DeltaSyncResponse();
             response.setServerVersion(serverVersion.getVersion());
             response.setAssetVersion(assetVersion.getVersion());

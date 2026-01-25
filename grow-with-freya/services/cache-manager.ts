@@ -30,21 +30,9 @@ export interface AssetCacheEntry {
   cachedAt: string;
 }
 
-/**
- * CacheManager - Single source of truth for all cached content
- * 
- * Responsibilities:
- * - Store and retrieve stories from cache
- * - Store and retrieve assets from file system cache
- * - Track cache metadata (size, count, version)
- * - Provide cache statistics
- */
 export class CacheManager {
   private static initialized = false;
 
-  /**
-   * Initialize the cache directories
-   */
   static async initialize(): Promise<void> {
     if (this.initialized) return;
 
@@ -70,15 +58,8 @@ export class CacheManager {
     }
   }
 
-  // ============ DISK SPACE ============
+  private static MIN_FREE_SPACE_BYTES = 50 * 1024 * 1024; // 50 MB
 
-  // Minimum free space required before downloading (50 MB)
-  private static MIN_FREE_SPACE_BYTES = 50 * 1024 * 1024;
-
-  /**
-   * Get available free disk space in bytes
-   * Returns null if unable to determine (e.g., platform doesn't support it)
-   */
   static async getFreeDiskSpace(): Promise<number | null> {
     try {
       const info = await FileSystem.getFreeDiskStorageAsync();
@@ -89,11 +70,6 @@ export class CacheManager {
     }
   }
 
-  /**
-   * Check if there's enough disk space for a download
-   * @param requiredBytes - Estimated bytes needed for download
-   * @returns true if enough space, false if not enough, null if unable to determine
-   */
   static async hasEnoughDiskSpace(requiredBytes: number): Promise<boolean | null> {
     const freeSpace = await this.getFreeDiskSpace();
     if (freeSpace === null) {
@@ -103,11 +79,6 @@ export class CacheManager {
     return freeSpace >= (requiredBytes + this.MIN_FREE_SPACE_BYTES);
   }
 
-  /**
-   * Check if there's enough disk space before starting a sync
-   * Logs a warning if space is low, throws error if critically low
-   * @param estimatedBytes - Estimated total download size in bytes
-   */
   static async checkDiskSpaceForSync(estimatedBytes: number): Promise<void> {
     const freeSpace = await this.getFreeDiskSpace();
     if (freeSpace === null) {
@@ -135,17 +106,10 @@ export class CacheManager {
     }
   }
 
-  // ============ CACHE VALIDATION ============
-
-  // Magic bytes for common image formats
   private static readonly WEBP_MAGIC = [0x52, 0x49, 0x46, 0x46]; // "RIFF"
   private static readonly PNG_MAGIC = [0x89, 0x50, 0x4E, 0x47];  // "\x89PNG"
   private static readonly JPEG_MAGIC = [0xFF, 0xD8, 0xFF];        // JPEG SOI marker
 
-  /**
-   * Validate that a cached file has the correct format based on extension.
-   * Returns true if valid, false if corrupted.
-   */
   static async validateCachedFile(localUri: string): Promise<{ valid: boolean; reason?: string }> {
     try {
       const info = await FileSystem.getInfoAsync(localUri);
@@ -205,10 +169,6 @@ export class CacheManager {
     return true;
   }
 
-  /**
-   * Scan the cache directory and remove any corrupted files.
-   * Returns the number of files removed.
-   */
   static async validateAndCleanCache(): Promise<{ scanned: number; removed: number; errors: string[] }> {
     const result = { scanned: 0, removed: 0, errors: [] as string[] };
 
@@ -256,9 +216,6 @@ export class CacheManager {
     }
   }
 
-  /**
-   * Get all files in a directory recursively
-   */
   private static async getAllFilesRecursive(dir: string): Promise<string[]> {
     const files: string[] = [];
 
@@ -283,14 +240,7 @@ export class CacheManager {
     return files;
   }
 
-  // ============ STORY CACHE ============
-
-  /**
-   * Get all cached stories (raw, without URL resolution)
-   *
-   * NOTE: For display purposes, use StoryLoader.getStories() which resolves
-   * asset URLs to local cached paths. This method returns raw data for sync purposes.
-   */
+  // Use StoryLoader.getStories() for display - this returns raw data for sync
   static async getStories(): Promise<Story[]> {
     try {
       const data = await AsyncStorage.getItem(STORAGE_KEYS.STORY_CACHE);
@@ -307,10 +257,6 @@ export class CacheManager {
     }
   }
 
-  /**
-   * Get all cached stories with asset URLs resolved to local paths
-   * Use this for display purposes to load images from local cache
-   */
   static async getStoriesWithResolvedUrls(): Promise<Story[]> {
     const stories = await this.getStories();
     const resolvedStories = await Promise.all(
@@ -320,10 +266,6 @@ export class CacheManager {
     return resolvedStories;
   }
 
-  /**
-   * Resolve all asset URLs in a story to local cached file paths
-   * This converts CMS URLs like "https://api.../assets/stories/..." to "file:///...content_cache/assets/..."
-   */
   private static async resolveStoryAssetUrls(story: Story): Promise<Story> {
     const resolved = { ...story };
 
@@ -368,16 +310,6 @@ export class CacheManager {
     return resolved;
   }
 
-  /**
-   * Resolve a single asset URL to local cached path if available
-   *
-   * Handles URLs like:
-   * - "https://api.colearnwithfreya.co.uk/api/assets/stories/story-1/cover.webp"
-   * - "assets/stories/story-1/cover.webp"
-   * - "stories/story-1/cover.webp"
-   *
-   * Returns local file:// path if cached, otherwise returns original URL
-   */
   private static async resolveAssetUrl(url: string): Promise<string> {
     if (!url) return url;
 
@@ -426,17 +358,11 @@ export class CacheManager {
     return url;
   }
 
-  /**
-   * Get a single story by ID
-   */
   static async getStory(storyId: string): Promise<Story | null> {
     const stories = await this.getStories();
     return stories.find(s => s.id === storyId) || null;
   }
 
-  /**
-   * Save stories to cache (replaces all)
-   */
   static async saveStories(stories: Story[]): Promise<void> {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.STORY_CACHE, JSON.stringify(stories));
@@ -457,9 +383,6 @@ export class CacheManager {
     }
   }
 
-  /**
-   * Update or add stories (merge with existing)
-   */
   static async updateStories(updatedStories: Story[]): Promise<void> {
     const existing = await this.getStories();
     const existingMap = new Map(existing.map(s => [s.id, s]));
@@ -472,9 +395,6 @@ export class CacheManager {
     await this.saveStories(Array.from(existingMap.values()));
   }
 
-  /**
-   * Remove stories by ID
-   */
   static async removeStories(storyIds: string[]): Promise<void> {
     const existing = await this.getStories();
     const idsToRemove = new Set(storyIds);
@@ -483,9 +403,6 @@ export class CacheManager {
     log.debug(`Removed ${storyIds.length} stories from cache`);
   }
 
-  /**
-   * Get story cache metadata
-   */
   static async getStoryMetadata(): Promise<CacheMetadata | null> {
     try {
       const data = await AsyncStorage.getItem(STORAGE_KEYS.STORY_METADATA);
@@ -496,11 +413,6 @@ export class CacheManager {
     }
   }
 
-  // ============ ASSET CACHE ============
-
-  /**
-   * Get the local URI for a cached asset
-   */
   static async getAssetUri(assetPath: string): Promise<string | null> {
     await this.initialize();
 
@@ -513,9 +425,6 @@ export class CacheManager {
     return null;
   }
 
-  /**
-   * Save an asset to the cache
-   */
   static async saveAsset(assetPath: string, data: string, checksum?: string): Promise<string> {
     await this.initialize();
 
@@ -536,9 +445,6 @@ export class CacheManager {
     return localPath;
   }
 
-  /**
-   * Download and cache an asset from a URL
-   */
   static async downloadAndCacheAsset(
     url: string,
     assetPath: string,
@@ -566,17 +472,11 @@ export class CacheManager {
     return localPath;
   }
 
-  /**
-   * Check if an asset is cached
-   */
   static async hasAsset(assetPath: string): Promise<boolean> {
     const uri = await this.getAssetUri(assetPath);
     return uri !== null;
   }
 
-  /**
-   * Remove a cached asset
-   */
   static async removeAsset(assetPath: string): Promise<void> {
     const localPath = this.getLocalAssetPath(assetPath);
     const info = await FileSystem.getInfoAsync(localPath);
@@ -587,13 +487,7 @@ export class CacheManager {
     }
   }
 
-  /**
-   * Get local file path for an asset
-   *
-   * Note: CMS sends paths like "assets/stories/story-1/cover.webp"
-   * But we store files in ASSETS_DIR which is "content_cache/assets/"
-   * So we need to strip the "assets/" prefix to avoid double "assets/"
-   */
+  // Strips "assets/" prefix since ASSETS_DIR already contains it
   private static getLocalAssetPath(assetPath: string): string {
     // Strip leading slashes
     let normalizedPath = assetPath.replace(/^\/+/, '');
@@ -606,11 +500,6 @@ export class CacheManager {
     return `${ASSETS_DIR}${normalizedPath}`;
   }
 
-  // ============ CACHE MANAGEMENT ============
-
-  /**
-   * Get total cache size in bytes
-   */
   static async getCacheSize(): Promise<number> {
     await this.initialize();
 
@@ -623,9 +512,6 @@ export class CacheManager {
     }
   }
 
-  /**
-   * Clear all cached content
-   */
   static async clearAll(): Promise<void> {
     try {
       // Clear AsyncStorage items
@@ -649,9 +535,6 @@ export class CacheManager {
     }
   }
 
-  /**
-   * Get cache statistics
-   */
   static async getStats(): Promise<{
     storyCount: number;
     cacheSize: number;
@@ -668,12 +551,6 @@ export class CacheManager {
     };
   }
 
-  // ============ BATCH SYNC HELPERS ============
-
-  /**
-   * Get comprehensive cache metadata for batch sync operations
-   * Includes both story and asset metadata
-   */
   static async getCacheMetadata(): Promise<{
     storyVersion: number;
     assetVersion: number;
@@ -707,10 +584,6 @@ export class CacheManager {
     };
   }
 
-  /**
-   * Check multiple assets at once for batch sync optimization
-   * Returns map of path -> isCached
-   */
   static async checkAssetsExist(assetPaths: string[]): Promise<Map<string, boolean>> {
     const results = new Map<string, boolean>();
 
@@ -729,10 +602,6 @@ export class CacheManager {
     return results;
   }
 
-  /**
-   * Get list of cached asset paths
-   * Used to determine what's already cached vs what needs downloading
-   */
   static async getCachedAssetPaths(): Promise<string[]> {
     await this.initialize();
 
@@ -746,10 +615,6 @@ export class CacheManager {
     }
   }
 
-  /**
-   * Save multiple stories in a single batch operation
-   * More efficient than calling updateStories() multiple times
-   */
   static async batchSaveStories(stories: Story[]): Promise<void> {
     if (stories.length === 0) return;
 
@@ -766,11 +631,6 @@ export class CacheManager {
     log.info(`Batch saved ${stories.length} stories`);
   }
 
-  // ============ INTEGRITY VALIDATION ============
-
-  /**
-   * Store expected checksum for an asset
-   */
   static async setAssetChecksum(assetPath: string, checksum: string): Promise<void> {
     try {
       const checksums = await this.getAssetChecksums();
@@ -781,9 +641,6 @@ export class CacheManager {
     }
   }
 
-  /**
-   * Get all stored asset checksums
-   */
   private static async getAssetChecksums(): Promise<Record<string, string>> {
     try {
       const data = await AsyncStorage.getItem(STORAGE_KEYS.ASSET_CHECKSUMS);
@@ -794,11 +651,7 @@ export class CacheManager {
     }
   }
 
-  /**
-   * Validate a cached asset's integrity using file size check
-   * Note: Full checksum validation would require reading the file and hashing,
-   * which is expensive. For now, we check if file exists and has non-zero size.
-   */
+  // Validates file exists and has non-zero size
   static async validateAssetIntegrity(assetPath: string): Promise<{
     valid: boolean;
     reason?: string;
@@ -823,9 +676,6 @@ export class CacheManager {
     }
   }
 
-  /**
-   * Validate all cached assets and report any corrupted ones
-   */
   static async validateAllAssets(): Promise<{
     totalAssets: number;
     validAssets: number;
@@ -881,9 +731,6 @@ export class CacheManager {
     return { totalAssets, validAssets, corruptedAssets };
   }
 
-  /**
-   * Remove corrupted assets from cache so they can be re-downloaded
-   */
   static async removeCorruptedAssets(assetPaths: string[]): Promise<number> {
     let removed = 0;
 

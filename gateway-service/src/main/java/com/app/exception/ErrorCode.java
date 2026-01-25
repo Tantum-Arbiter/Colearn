@@ -1,16 +1,5 @@
 package com.app.exception;
 
-/**
- * Centralized error code registry for the Gateway Service
- * 
- * Error Code Format: GTW-XXX
- * - GTW-001 to GTW-099: Authentication & Authorization errors
- * - GTW-100 to GTW-199: Validation & Request errors  
- * - GTW-200 to GTW-299: Downstream service errors
- * - GTW-300 to GTW-399: Rate limiting & Security errors
- * - GTW-400 to GTW-499: User management errors
- * - GTW-500 to GTW-599: System & Infrastructure errors
- */
 public enum ErrorCode {
     
     // Authentication & Authorization (GTW-001 to GTW-099)
@@ -125,9 +114,6 @@ public enum ErrorCode {
         return defaultMessage;
     }
     
-    /**
-     * Get error code by string value
-     */
     public static ErrorCode fromCode(String code) {
         for (ErrorCode errorCode : values()) {
             if (errorCode.getCode().equals(code)) {
@@ -137,48 +123,30 @@ public enum ErrorCode {
         throw new IllegalArgumentException("Unknown error code: " + code);
     }
     
-    /**
-     * Check if error code represents a client error (4xx)
-     */
     public boolean isClientError() {
         return code.compareTo("GTW-200") < 0;
     }
     
-    /**
-     * Check if error code represents a server error (5xx)
-     */
     public boolean isServerError() {
         return code.compareTo("GTW-500") >= 0;
     }
     
-    /**
-     * Check if error code represents a downstream service error
-     */
     public boolean isDownstreamError() {
         return code.compareTo("GTW-200") >= 0 && code.compareTo("GTW-300") < 0;
     }
     
-    /**
-     * Get HTTP status code based on error type
-     */
     public int getHttpStatusCode() {
         if (code.compareTo("GTW-100") < 0) {
-            // Authentication errors -> 401
             return 401;
         } else if (code.compareTo("GTW-200") < 0) {
-            // Validation errors -> 400
             return 400;
         } else if (code.compareTo("GTW-300") < 0) {
-            // Downstream errors -> 502/503
             return isTimeout() ? 504 : 502;
         } else if (code.compareTo("GTW-400") < 0) {
-            // Rate limiting/Security -> 429/403
             return isRateLimit() ? 429 : 403;
         } else if (code.compareTo("GTW-500") < 0) {
-            // User management -> 404/409
             return isNotFound() ? 404 : 409;
         } else {
-            // System errors -> 500/503
             return isServiceUnavailable() ? 503 : 500;
         }
     }

@@ -6,10 +6,6 @@ import com.google.cloud.firestore.annotation.PropertyName;
 
 import java.util.Objects;
 
-/**
- * Represents an interactive element (prop) on a story page
- * These are tappable areas that reveal hidden content
- */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class InteractiveElement {
 
@@ -19,11 +15,11 @@ public class InteractiveElement {
 
     @JsonProperty("type")
     @PropertyName("type")
-    private String type; // "reveal", "toggle", "drag"
+    private String type;
 
     @JsonProperty("image")
     @PropertyName("image")
-    private String image; // Asset path to the prop image
+    private String image;
 
     @JsonProperty("position")
     @PropertyName("position")
@@ -35,18 +31,17 @@ public class InteractiveElement {
 
     @JsonProperty("hitArea")
     @PropertyName("hitArea")
-    private HitArea hitArea; // Optional custom hit area
+    private HitArea hitArea;
 
-    // Nested classes for position and size
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Position {
         @JsonProperty("x")
         @PropertyName("x")
-        private double x; // Normalized 0-1
+        private double x;
 
         @JsonProperty("y")
         @PropertyName("y")
-        private double y; // Normalized 0-1
+        private double y;
 
         public Position() {}
 
@@ -69,11 +64,11 @@ public class InteractiveElement {
     public static class Size {
         @JsonProperty("width")
         @PropertyName("width")
-        private double width; // Normalized 0-1
+        private double width;
 
         @JsonProperty("height")
         @PropertyName("height")
-        private double height; // Normalized 0-1
+        private double height;
 
         public Size() {}
 
@@ -130,7 +125,6 @@ public class InteractiveElement {
         public void setHeight(double height) { this.height = height; }
     }
 
-    // Constructors
     public InteractiveElement() {}
 
     public InteractiveElement(String id, String type, String image) {
@@ -139,7 +133,6 @@ public class InteractiveElement {
         this.image = image;
     }
 
-    // Getters and Setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 

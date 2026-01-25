@@ -1,9 +1,5 @@
 import { Image } from 'react-native';
 
-/**
- * Critical images that should be preloaded immediately when the app starts
- * These images are essential for smooth user experience
- */
 const CRITICAL_IMAGES = [
   require('../assets/images/ui-elements/bear-bottom-screen.webp'),
   require('../assets/images/ui-elements/bear-top-screen.webp'),
@@ -12,18 +8,10 @@ const CRITICAL_IMAGES = [
   // Add other critical images here as needed
 ];
 
-/**
- * Secondary images that can be preloaded after critical images
- * These improve performance but aren't essential for initial load
- */
 const SECONDARY_IMAGES: any[] = [
   // Add secondary images here - avoid large images during startup
 ];
 
-/**
- * Onboarding images - only preloaded when onboarding starts
- * Separated to avoid impacting app startup performance
- */
 const ONBOARDING_IMAGES = [
   require('../assets/images/illustrations/welcome-family.webp'),
   require('../assets/images/illustrations/screen-time-family.webp'),
@@ -39,9 +27,6 @@ interface PreloadResult {
   totalCount: number;
 }
 
-/**
- * Preload a single image asset
- */
 async function preloadImage(source: any): Promise<void> {
   try {
     // For bundled assets (require), they're already available
@@ -68,10 +53,6 @@ async function preloadImage(source: any): Promise<void> {
   }
 }
 
-/**
- * Preload critical images that are essential for app performance
- * This should be called during app initialization
- */
 export async function preloadCriticalImages(): Promise<PreloadResult> {
   const errors: Error[] = [];
   let loadedCount = 0;
@@ -105,10 +86,6 @@ export async function preloadCriticalImages(): Promise<PreloadResult> {
   };
 }
 
-/**
- * Preload secondary images in the background
- * This can be called after the app has loaded to improve performance
- */
 export async function preloadSecondaryImages(): Promise<PreloadResult> {
   const errors: Error[] = [];
   let loadedCount = 0;
@@ -151,10 +128,6 @@ export async function preloadSecondaryImages(): Promise<PreloadResult> {
   };
 }
 
-/**
- * Preload onboarding images when onboarding starts
- * Separated from startup preloading to avoid performance impact
- */
 export async function preloadOnboardingImages(): Promise<PreloadResult> {
   const errors: Error[] = [];
   let loadedCount = 0;
@@ -197,9 +170,6 @@ export async function preloadOnboardingImages(): Promise<PreloadResult> {
   };
 }
 
-/**
- * Preload all images (critical first, then secondary)
- */
 export async function preloadAllImages(): Promise<{
   critical: PreloadResult;
   secondary: PreloadResult;
@@ -210,18 +180,12 @@ export async function preloadAllImages(): Promise<{
   return { critical, secondary };
 }
 
-/**
- * Clear image cache (useful for development/testing)
- */
 export function clearImageCache(): void {
   // React Native doesn't provide a direct way to clear image cache
   // This is mainly for development purposes
   console.log('Image cache clear requested (not implemented in React Native)');
 }
 
-/**
- * Get preload statistics
- */
 export function getPreloadStats(): {
   criticalCount: number;
   secondaryCount: number;

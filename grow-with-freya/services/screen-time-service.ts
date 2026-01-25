@@ -64,7 +64,6 @@ class ScreenTimeService {
     return ScreenTimeService.instance;
   }
 
-  // Get age-appropriate daily limit based on child's age
   getDailyLimit(ageInMonths: number): number {
     if (ageInMonths < 24) {
       return SCREEN_TIME_LIMITS.MONTHS_18_24;
@@ -75,7 +74,6 @@ class ScreenTimeService {
     }
   }
 
-  // Start a new screen time session
   async startSession(activity: 'story' | 'emotions' | 'music', childAgeInMonths: number = 24): Promise<void> {
     if (this.currentSession) {
       await this.endSession();
@@ -94,7 +92,6 @@ class ScreenTimeService {
     this.startWarningMonitor(childAgeInMonths);
   }
 
-  // End the current session
   async endSession(): Promise<void> {
     if (!this.currentSession) return;
 
@@ -109,13 +106,11 @@ class ScreenTimeService {
     this.stopWarningMonitor();
   }
 
-  // Get current session duration in seconds
   getCurrentSessionDuration(): number {
     if (!this.currentSession) return 0;
     return Math.floor((Date.now() - this.currentSession.startTime) / 1000);
   }
 
-  // Get today's total usage in seconds
   async getTodayUsage(): Promise<number> {
     const today = new Date().toISOString().split('T')[0];
     const sessions = await this.getSessionsForDate(today);
@@ -124,7 +119,6 @@ class ScreenTimeService {
     return sessions.reduce((total, session) => total + session.duration, 0) + currentDuration;
   }
 
-  // Get screen time statistics
   async getScreenTimeStats(childAgeInMonths: number = 24): Promise<ScreenTimeStats> {
     const todayUsage = await this.getTodayUsage();
     const weeklyUsage = await this.getWeeklyUsage();
@@ -141,7 +135,6 @@ class ScreenTimeService {
     };
   }
 
-  // Check if user should receive a warning
   async checkForWarnings(childAgeInMonths: number): Promise<ScreenTimeWarning | null> {
     const dailyLimit = this.getDailyLimit(childAgeInMonths);
     const todayUsage = await this.getTodayUsage();
@@ -181,22 +174,18 @@ class ScreenTimeService {
     return null;
   }
 
-  // Register callback for warnings
   onWarning(callback: (warning: ScreenTimeWarning) => void): void {
     this.warningCallbacks.push(callback);
   }
 
-  // Remove warning callback
   removeWarningCallback(callback: (warning: ScreenTimeWarning) => void): void {
     this.warningCallbacks = this.warningCallbacks.filter(cb => cb !== callback);
   }
 
-  // Reset warning date (for testing purposes)
   resetWarningDate(): void {
     this.lastWarningDate = null;
   }
 
-  // Reset today's usage (for development purposes)
   async resetTodayUsage(): Promise<void> {
     try {
       const today = new Date().toISOString().split('T')[0];
@@ -233,7 +222,6 @@ class ScreenTimeService {
     }
   }
 
-  // Check if it's a new day and reset daily data if needed
   async checkAndResetDailyData(): Promise<void> {
     try {
       const today = new Date().toISOString().split('T')[0];
@@ -249,7 +237,6 @@ class ScreenTimeService {
     }
   }
 
-  // Private methods
   private async saveSession(session: ScreenTimeSession): Promise<void> {
     try {
       const existingSessions = await this.getAllSessions();

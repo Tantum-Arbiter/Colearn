@@ -4,11 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Map;
 
-/**
- * Response DTO for version check endpoint.
- * Combines story and asset versions for unified version tracking.
- * This prevents edge cases where assets change but stories don't.
- */
 public class ContentVersionResponse {
 
     @JsonProperty("id")
@@ -33,7 +28,6 @@ public class ContentVersionResponse {
         this.id = "current";
     }
 
-    // Getters and Setters
     public String getId() {
         return id;
     }

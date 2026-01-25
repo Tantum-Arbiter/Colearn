@@ -17,9 +17,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-/**
- * Firebase Firestore implementation of UserRepository
- */
 @Repository
 public class FirebaseUserRepository implements UserRepository {
 
@@ -50,15 +47,12 @@ public class FirebaseUserRepository implements UserRepository {
                 WriteResult result = future.get();
                 logger.debug("User saved successfully: {} at {}", user.getId(), result.getUpdateTime());
 
-                // Record metrics
                 long duration = System.currentTimeMillis() - startTime;
                 metricsService.recordFirestoreOperation(COLLECTION_NAME, "save", true, duration);
 
                 return user;
             } catch (Exception e) {
                 logger.error("Error saving user: {}", user.getId(), e);
-
-                // Record error metrics
                 long duration = System.currentTimeMillis() - startTime;
                 metricsService.recordFirestoreOperation(COLLECTION_NAME, "save", false, duration);
                 metricsService.recordFirestoreError(COLLECTION_NAME, "save", e.getClass().getSimpleName());
@@ -196,9 +190,7 @@ public class FirebaseUserRepository implements UserRepository {
                 
                 WriteResult result = future.get();
                 logger.debug("Last login updated for user: {} at {}", userId, result.getUpdateTime());
-                
-                // Return updated user
-                return findById(userId).join().orElseThrow(() -> 
+                return findById(userId).join().orElseThrow(() ->
                         new RuntimeException("User not found after update: " + userId));
                 
             } catch (Exception e) {
@@ -224,9 +216,7 @@ public class FirebaseUserRepository implements UserRepository {
                 
                 WriteResult result = future.get();
                 logger.debug("User deactivated: {} at {}", userId, result.getUpdateTime());
-                
-                // Return updated user
-                return findById(userId).join().orElseThrow(() -> 
+                return findById(userId).join().orElseThrow(() ->
                         new RuntimeException("User not found after deactivation: " + userId));
                 
             } catch (Exception e) {
@@ -294,8 +284,6 @@ public class FirebaseUserRepository implements UserRepository {
 
                 WriteResult result = future.get();
                 logger.debug("Preferences updated for user: {} at {}", userId, result.getUpdateTime());
-
-                // Return updated user
                 return findById(userId).join().orElseThrow(() ->
                         new RuntimeException("User not found after preferences update: " + userId));
 
@@ -322,8 +310,6 @@ public class FirebaseUserRepository implements UserRepository {
 
                 WriteResult result = future.get();
                 logger.debug("Child added to user: {} at {}", userId, result.getUpdateTime());
-
-                // Return updated user
                 return findById(userId).join().orElseThrow(() ->
                         new RuntimeException("User not found after adding child: " + userId));
 
@@ -340,14 +326,9 @@ public class FirebaseUserRepository implements UserRepository {
 
         return CompletableFuture.supplyAsync(() -> {
             try {
-                // First get the user to find the child to remove
                 User user = findById(userId).join().orElseThrow(() ->
                         new RuntimeException("User not found: " + userId));
-
-                // Find and remove the child
                 user.removeChild(childId);
-
-                // Save the updated user
                 return save(user).join();
 
             } catch (Exception e) {
@@ -363,15 +344,10 @@ public class FirebaseUserRepository implements UserRepository {
 
         return CompletableFuture.supplyAsync(() -> {
             try {
-                // First get the user
                 User user = findById(userId).join().orElseThrow(() ->
                         new RuntimeException("User not found: " + userId));
-
-                // Remove old child and add updated one
                 user.removeChild(childId);
                 user.addChild((com.app.model.ChildProfile) childProfile);
-
-                // Save the updated user
                 return save(user).join();
 
             } catch (Exception e) {

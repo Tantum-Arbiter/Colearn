@@ -8,15 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Response DTO for delta sync endpoint.
- * Returns only changed/new stories and IDs of deleted stories.
- * 
- * This enables efficient batch sync by:
- * 1. Only returning stories that have changed (based on checksum comparison)
- * 2. Including deleted story IDs so client can remove them from cache
- * 3. Providing all version info in one response
- */
 public class DeltaSyncResponse {
 
     @JsonProperty("serverVersion")

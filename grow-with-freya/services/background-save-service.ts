@@ -20,19 +20,10 @@ interface ProfileUpdateData {
   schedule?: any;
 }
 
-/**
- * Background Save Service
- * Handles saving profile data in the background with automatic retry on failure.
- * This allows users to continue using the app without waiting for API calls.
- */
 class BackgroundSaveServiceClass {
   private isProcessing = false;
   private retryTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
-  /**
-   * Queue a profile update to be saved in the background.
-   * The save will be retried automatically if it fails.
-   */
   async queueProfileSave(data: ProfileUpdateData): Promise<void> {
     console.log('[BackgroundSave] Queueing profile save...', JSON.stringify(data));
 
@@ -51,9 +42,6 @@ class BackgroundSaveServiceClass {
     this.processQueue();
   }
 
-  /**
-   * Process all pending saves in the queue
-   */
   private async processQueue(): Promise<void> {
     if (this.isProcessing) {
       console.log('[BackgroundSave] Already processing queue, skipping...');
@@ -124,9 +112,6 @@ class BackgroundSaveServiceClass {
     }
   }
 
-  /**
-   * Get all pending saves from storage
-   */
   private async getPendingSaves(): Promise<PendingSave[]> {
     try {
       const json = await AsyncStorage.getItem(PENDING_SAVES_KEY);
@@ -137,18 +122,12 @@ class BackgroundSaveServiceClass {
     }
   }
 
-  /**
-   * Add a pending save to storage
-   */
   private async addPendingSave(save: PendingSave): Promise<void> {
     const saves = await this.getPendingSaves();
     saves.push(save);
     await AsyncStorage.setItem(PENDING_SAVES_KEY, JSON.stringify(saves));
   }
 
-  /**
-   * Update an existing pending save
-   */
   private async updatePendingSave(save: PendingSave): Promise<void> {
     const saves = await this.getPendingSaves();
     const index = saves.findIndex(s => s.id === save.id);
@@ -158,41 +137,26 @@ class BackgroundSaveServiceClass {
     }
   }
 
-  /**
-   * Remove a pending save by ID
-   */
   private async removePendingSave(id: string): Promise<void> {
     const saves = await this.getPendingSaves();
     const filtered = saves.filter(s => s.id !== id);
     await AsyncStorage.setItem(PENDING_SAVES_KEY, JSON.stringify(filtered));
   }
 
-  /**
-   * Clear all pending saves
-   */
   private async clearPendingSaves(): Promise<void> {
     await AsyncStorage.removeItem(PENDING_SAVES_KEY);
   }
 
-  /**
-   * Check if there are any pending saves
-   */
   async hasPendingSaves(): Promise<boolean> {
     const saves = await this.getPendingSaves();
     return saves.length > 0;
   }
 
-  /**
-   * Retry any pending saves (call on app resume or network reconnect)
-   */
   async retryPendingSaves(): Promise<void> {
     console.log('[BackgroundSave] Retrying pending saves...');
     this.processQueue();
   }
 
-  /**
-   * Cancel any pending retries (call on logout)
-   */
   cancelPendingRetries(): void {
     if (this.retryTimeoutId) {
       clearTimeout(this.retryTimeoutId);

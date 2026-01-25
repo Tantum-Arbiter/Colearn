@@ -9,10 +9,6 @@ import org.springframework.stereotype.Component;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
-/**
- * URL generation strategy for local development with fake-gcs-server.
- * Active when 'emulator' profile is enabled.
- */
 @Component
 @Profile("emulator")
 public class EmulatorUrlStrategy implements UrlGenerationStrategy {

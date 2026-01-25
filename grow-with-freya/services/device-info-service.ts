@@ -5,25 +5,6 @@ import Constants from 'expo-constants';
 
 const DEVICE_ID_KEY = 'device_unique_id';
 
-/**
- * COPPA-Compliant Device Information Service
- *
- * This service collects ONLY the minimum device data required for:
- * - Session management (anonymous device ID)
- * - UX optimization (phone vs tablet)
- * - App functionality (platform)
- * - Debugging (app version, OS version, brand, manufacturer)
- *
- * We do NOT collect:
- * - Device model name (fingerprinting risk)
- * - Device name (often contains user's real name)
- * - Location, advertising IDs, or any PII
- */
-
-/**
- * Generate a UUID v4 without external dependencies
- * Uses crypto.getRandomValues when available, falls back to Math.random
- */
 function generateUUID(): string {
   // Use crypto.getRandomValues if available (React Native supports this)
   if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
@@ -49,18 +30,10 @@ function generateUUID(): string {
   });
 }
 
-/**
- * Device information service for collecting device metadata
- * Used for session tracking and analytics
- */
 export class DeviceInfoService {
   private static deviceId: string | null = null;
   private static isInitialized = false;
 
-  /**
-   * Initialize the device info service
-   * Should be called early in app startup
-   */
   static async initialize(): Promise<void> {
     if (this.isInitialized) return;
     
@@ -75,10 +48,6 @@ export class DeviceInfoService {
     }
   }
 
-  /**
-   * Get or create a persistent device ID
-   * Stored in SecureStore so it survives app reinstalls on iOS
-   */
   private static async getOrCreateDeviceId(): Promise<string> {
     try {
       const existingId = await SecureStore.getItemAsync(DEVICE_ID_KEY);
@@ -96,9 +65,6 @@ export class DeviceInfoService {
     }
   }
 
-  /**
-   * Get the device ID (must call initialize first)
-   */
   static getDeviceId(): string {
     if (!this.deviceId) {
       console.warn('DeviceInfoService not initialized, returning placeholder');
@@ -107,10 +73,6 @@ export class DeviceInfoService {
     return this.deviceId;
   }
 
-  /**
-   * Get device type: mobile, tablet, desktop, tv, or unknown
-   * Note: "mobile" is used instead of "phone" for consistency with metrics
-   */
   static getDeviceType(): string {
     if (!Device.deviceType) {
       return 'unknown';
@@ -130,17 +92,10 @@ export class DeviceInfoService {
     }
   }
 
-  /**
-   * Get platform: ios, android, or web
-   */
   static getPlatform(): string {
     return Platform.OS;
   }
 
-  /**
-   * Get app version from Constants
-   * Tries multiple sources for compatibility with different Expo environments
-   */
   static getAppVersion(): string {
     // expoConfig is the primary source in modern Expo
     if (Constants.expoConfig?.version) {
@@ -159,33 +114,18 @@ export class DeviceInfoService {
     return '1.1.0';
   }
 
-  /**
-   * Get OS version (useful for debugging compatibility issues)
-   */
   static getOsVersion(): string {
     return Device.osVersion || 'Unknown';
   }
 
-  /**
-   * Get device brand (e.g., "Apple", "Samsung")
-   * Useful for debugging device-specific issues
-   */
   static getBrand(): string {
     return Device.brand || 'Unknown';
   }
 
-  /**
-   * Get device manufacturer (e.g., "Apple", "Samsung")
-   * Useful for debugging device-specific issues
-   */
   static getManufacturer(): string {
     return Device.manufacturer || 'Unknown';
   }
 
-  /**
-   * Get all device info as an object for API headers
-   * Only includes COPPA-compliant, non-PII data
-   */
   static getDeviceHeaders(): Record<string, string> {
     const headers = {
       'X-Device-ID': this.getDeviceId(),

@@ -23,7 +23,6 @@ public class AssetService {
 
     private static final Logger logger = LoggerFactory.getLogger(AssetService.class);
 
-    // Allowed path prefixes for asset paths
     private static final Set<String> ALLOWED_PREFIXES = Set.of(
             "stories/",
             "audio/",
@@ -37,7 +36,6 @@ public class AssetService {
     private final AssetVersionRepository assetVersionRepository;
     private final ApplicationMetricsService metricsService;
 
-    // Dedicated executor for async URL generation to avoid blocking ForkJoinPool
     private final Executor urlGenerationExecutor;
 
     @Autowired
@@ -62,35 +60,23 @@ public class AssetService {
         logger.info("Asset service initialized with URL strategy: {}", urlStrategy.getStrategyName());
     }
 
-    /**
-     * Validate an asset path for security.
-     * Checks for path traversal attacks and ensures path is within allowed prefixes.
-     *
-     * @param assetPath the path to validate
-     * @throws InvalidAssetPathException if the path is invalid or potentially malicious
-     */
     public void validateAssetPath(String assetPath) {
         if (assetPath == null || assetPath.isBlank()) {
             throw new InvalidAssetPathException(assetPath, "Path cannot be null or empty");
         }
 
-        // Check for path traversal sequences
         if (assetPath.contains("..")) {
             throw new InvalidAssetPathException(assetPath, "Path traversal sequences are not allowed");
         }
 
-        // Check for absolute paths
         if (assetPath.startsWith("/")) {
             throw new InvalidAssetPathException(assetPath, "Absolute paths are not allowed");
         }
 
-        // Check for null bytes (could be used to bypass validation)
-        // Check both actual null bytes and URL-encoded null bytes that may not have been decoded
         if (assetPath.contains("\0") || assetPath.contains("%00") || assetPath.contains("%2500")) {
             throw new InvalidAssetPathException(assetPath, "Null bytes are not allowed in path");
         }
 
-        // Ensure path starts with an allowed prefix
         boolean hasValidPrefix = ALLOWED_PREFIXES.stream()
                 .anyMatch(assetPath::startsWith);
         if (!hasValidPrefix) {
@@ -99,20 +85,7 @@ public class AssetService {
         }
     }
 
-    /**
-     * Generate a URL for accessing an asset.
-     * Uses the injected UrlGenerationStrategy based on active Spring profile:
-     * - 'emulator' profile: returns direct URL to fake-gcs-server
-     * - 'cdn' profile: returns Cloudflare-proxied URL (caches at edge)
-     * - default: returns V4 signed URL directly to GCS
-     *
-     * @param assetPath the path to the asset (must start with allowed prefix)
-     * @return the URL for accessing the asset
-     * @throws InvalidAssetPathException if the path is invalid
-     * @throws AssetUrlGenerationException if URL generation fails
-     */
     public String generateSignedUrl(String assetPath) {
-        // Validate path before generating URL
         validateAssetPath(assetPath);
 
         long startTime = System.currentTimeMillis();
@@ -125,7 +98,6 @@ public class AssetService {
 
             return url;
         } catch (InvalidAssetPathException e) {
-            // Re-throw validation exceptions as-is
             throw e;
         } catch (Exception e) {
             long duration = System.currentTimeMillis() - startTime;
@@ -135,18 +107,12 @@ public class AssetService {
         }
     }
 
-    /**
-     * Get current asset version for delta-sync.
-     */
     public CompletableFuture<AssetVersion> getCurrentAssetVersion() {
         logger.debug("Getting current asset version");
         return assetVersionRepository.getCurrent()
                 .thenApply(opt -> opt.orElse(new AssetVersion()));
     }
 
-    /**
-     * Check if an asset exists in the bucket.
-     */
     public boolean assetExists(String assetPath) {
         try {
             BlobId blobId = BlobId.of(gcsProperties.bucketName(), assetPath);

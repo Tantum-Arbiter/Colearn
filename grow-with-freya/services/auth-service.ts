@@ -85,15 +85,10 @@ export class AuthService {
     expoClientId: GOOGLE_WEB_CLIENT_ID,
   };
 
-  /**
-   * Complete Google sign-in by sending the ID token to the backend
-   */
   static async completeGoogleSignIn(idToken: string): Promise<AuthResponse> {
     const url = `${GATEWAY_URL}/auth/google`;
-    log.info('[User Journey Flow 1: Google Sign-In] Step 1/4: Google ID token received, sending to backend...');
 
     try {
-      log.info('[User Journey Flow 1: Google Sign-In] Step 2/4: Calling backend /auth/google');
       const authResponse = await fetchWithTimeout(url, {
         method: 'POST',
         headers: {
@@ -103,26 +98,19 @@ export class AuthService {
         body: JSON.stringify({ idToken }),
       });
 
-      log.info(`[User Journey Flow 1: Google Sign-In] Step 3/4: Backend response status: ${authResponse.status}`);
-
       if (!authResponse.ok) {
         const errorText = await authResponse.text();
-        log.error(`[User Journey Flow 1: Google Sign-In] Step 3/4 FAILED: Backend auth failed: ${errorText}`);
+        log.error(`Google auth failed: ${errorText}`);
         throw new Error(`Authentication failed: ${errorText}`);
       }
 
-      const result = await authResponse.json();
-      log.info('[User Journey Flow 1: Google Sign-In] Step 4/4: Backend auth successful, tokens received');
-      return result;
+      return await authResponse.json();
     } catch (error) {
-      log.error('[User Journey Flow 1: Google Sign-In] FAILED: Google sign-in error:', error);
+      log.error('Google sign-in error:', error);
       throw error;
     }
   }
 
-  /**
-   * Get Google OAuth configuration for useAuthRequest hook
-   */
   static getGoogleConfig() {
     const config: Record<string, string | undefined> = {
       iosClientId: this.googleConfig.iosClientId,
@@ -134,22 +122,15 @@ export class AuthService {
     if (Platform.OS === 'ios') {
       config.redirectUri = this.getIosRedirectUri();
     }
-    // Android will use native Google Sign-In (no redirect URI needed)
 
     DEBUG_LOGS && log.debug(`Google config: ${JSON.stringify(config, null, 2)}`);
     return config;
   }
 
-  /**
-   * Check if native Google Sign-In is available (Android only)
-   */
   static isNativeGoogleSignInAvailable(): boolean {
     return Platform.OS === 'android' && GoogleSignin !== null;
   }
 
-  /**
-   * Initialize native Google Sign-In for Android
-   */
   static configureNativeGoogleSignIn(): void {
     if (!this.isNativeGoogleSignInAvailable()) return;
 
@@ -160,10 +141,6 @@ export class AuthService {
     DEBUG_LOGS && log.debug('Native Google Sign-In configured');
   }
 
-  /**
-   * Sign in with Google using native SDK (Android only)
-   * Returns the auth response from the backend
-   */
   static async signInWithGoogleNative(): Promise<AuthResponse> {
     if (!this.isNativeGoogleSignInAvailable()) {
       throw new Error('Native Google Sign-In is not available');
@@ -172,16 +149,12 @@ export class AuthService {
     try {
       await GoogleSignin.hasPlayServices();
       const response = await GoogleSignin.signIn();
-
-      // Get the ID token
       const idToken = response.data?.idToken;
       if (!idToken) {
         throw new Error('No ID token received from Google Sign-In');
       }
 
       DEBUG_LOGS && log.debug('Native Google Sign-In successful, completing with backend...');
-
-      // Complete sign-in with backend
       return await this.completeGoogleSignIn(idToken);
     } catch (error: any) {
       if (statusCodes) {
@@ -209,9 +182,6 @@ export class AuthService {
         ],
       });
 
-      log.info('[User Journey Flow 1: Apple Sign-In] Step 1/4: Apple credential received, sending to backend...');
-      log.info('[User Journey Flow 1: Apple Sign-In] Step 2/4: Calling backend /auth/apple');
-
       const authResponse = await fetchWithTimeout(url, {
         method: 'POST',
         headers: {
@@ -227,28 +197,22 @@ export class AuthService {
         }),
       });
 
-      log.info(`[User Journey Flow 1: Apple Sign-In] Step 3/4: Backend response status: ${authResponse.status}`);
-
       if (!authResponse.ok) {
         const errorText = await authResponse.text();
-        log.error(`[User Journey Flow 1: Apple Sign-In] Step 3/4 FAILED: Backend auth failed: ${errorText}`);
+        log.error(`Apple auth failed: ${errorText}`);
         throw new Error(`Authentication failed: ${errorText}`);
       }
 
-      log.info('[User Journey Flow 1: Apple Sign-In] Step 4/4: Backend auth successful, tokens received');
       return await authResponse.json();
     } catch (error: any) {
       if (error.code === 'ERR_CANCELED') {
         throw new Error('Apple sign-in was cancelled');
       }
-      log.error('[User Journey Flow 1: Apple Sign-In] FAILED: Apple sign-in error:', error);
+      log.error('Apple sign-in error:', error);
       throw error;
     }
   }
 
-  /**
-   * Check if Apple Sign-In is available
-   */
   static async isAppleSignInAvailable(): Promise<boolean> {
     if (Platform.OS !== 'ios') {
       return false;
@@ -256,13 +220,7 @@ export class AuthService {
     return await AppleAuthentication.isAvailableAsync();
   }
 
-  /**
-   * Refresh access token using refresh token
-   */
   static async refreshToken(refreshToken: string): Promise<AuthResponse> {
-    log.info('[User Journey Flow 2: Token Refresh] Step 1/4: User returning after inactivity, refreshing token...');
-    log.info('[User Journey Flow 2: Token Refresh] Step 2/4: Calling backend /auth/refresh');
-
     const response = await fetch(`${GATEWAY_URL}/auth/refresh`, {
       method: 'POST',
       headers: {
@@ -271,21 +229,14 @@ export class AuthService {
       body: JSON.stringify({ refreshToken }),
     });
 
-    log.info(`[User Journey Flow 2: Token Refresh] Step 3/4: Backend response status: ${response.status}`);
-
     if (!response.ok) {
-      log.error('[User Journey Flow 2: Token Refresh] Step 3/4 FAILED: Token refresh failed, user needs to re-authenticate');
+      log.error('Token refresh failed');
       throw new Error('Token refresh failed');
     }
 
-    const result = await response.json();
-    log.info('[User Journey Flow 2: Token Refresh] Step 4/4: Token refresh successful, new tokens received');
-    return result;
+    return await response.json();
   }
 
-  /**
-   * Sign out
-   */
   static async signOut(refreshToken: string): Promise<void> {
     await fetch(`${GATEWAY_URL}/auth/revoke`, {
       method: 'POST',

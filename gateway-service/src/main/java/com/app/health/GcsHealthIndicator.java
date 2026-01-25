@@ -13,13 +13,6 @@ import org.springframework.stereotype.Component;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-/**
- * Health indicator for Google Cloud Storage connectivity.
- * Performs a simple HTTP HEAD request to verify GCS is reachable.
- * No IAM permissions required - just checks network connectivity.
- * A 2XX response means UP, any other response (including 403/404) also means UP
- * since GCS is reachable. Only network failures result in DOWN status.
- */
 @Component("gcsHealth")
 @Lazy
 @ConditionalOnBean(GcsProperties.class)
@@ -53,8 +46,6 @@ public class GcsHealthIndicator implements HealthIndicator {
             long duration = System.currentTimeMillis() - startTime;
             connection.disconnect();
 
-            // Any response means GCS is reachable = UP
-            // Even 403/404 means the service is up, just permission/config issues
             logger.debug("GCS health check passed for bucket '{}' with status {} in {}ms",
                     bucketName, statusCode, duration);
 

@@ -22,10 +22,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 
-/**
- * Firebase Configuration for Firestore Database Integration
- * Supports both service account key and Application Default Credentials (ADC)
- */
 @Configuration
 public class FirebaseConfig {
 
@@ -46,9 +42,6 @@ public class FirebaseConfig {
     @Value("${firebase.emulator.port:8080}")
     private int emulatorPort;
 
-    /**
-     * Initialize Firebase App for production and development
-     */
     @Bean
     @Profile("!test")
     public FirebaseApp firebaseApp() throws IOException {
@@ -58,17 +51,14 @@ public class FirebaseConfig {
             FirebaseOptions.Builder optionsBuilder = FirebaseOptions.builder()
                     .setProjectId(projectId);
 
-            // Check if using emulator - if so, use test credentials
             if (emulatorHost != null && !emulatorHost.trim().isEmpty()) {
                 logger.info("Using Firestore emulator - initializing with test credentials");
                 optionsBuilder.setCredentials(getTestCredentials());
             } else {
-                // Configure production credentials
                 GoogleCredentials credentials = getGoogleCredentials();
                 optionsBuilder.setCredentials(credentials);
             }
 
-            // Set database URL if provided
             if (databaseUrl != null && !databaseUrl.trim().isEmpty()) {
                 optionsBuilder.setDatabaseUrl(databaseUrl);
             }
@@ -84,19 +74,13 @@ public class FirebaseConfig {
         }
     }
 
-    /**
-     * Firestore client bean for production and development
-     */
     @Bean
     @Profile("!test")
     public Firestore firestore(FirebaseApp firebaseApp) {
         logger.info("Creating Firestore client");
 
-        // Check if emulator is configured
         if (emulatorHost != null && !emulatorHost.trim().isEmpty()) {
             logger.info("Using Firestore emulator at {}:{}", emulatorHost, emulatorPort);
-
-            // Configure Firestore to use emulator (plaintext)
             FirestoreOptions options = FirestoreOptions.newBuilder()
                     .setProjectId(projectId)
                     .setEmulatorHost(emulatorHost + ":" + emulatorPort)
@@ -105,14 +89,10 @@ public class FirebaseConfig {
 
             return options.getService();
         } else {
-            // Use production Firestore
             return FirestoreClient.getFirestore(firebaseApp);
         }
     }
 
-    /**
-     * Test Firestore client bean for testing with emulator
-     */
     @Bean
     @Profile("test")
     public Firestore testFirestore() {
@@ -131,19 +111,14 @@ public class FirebaseConfig {
         return options.getService();
     }
 
-    /**
-     * Get Google credentials based on configuration
-     */
     private GoogleCredentials getGoogleCredentials() {
         try {
             if (serviceAccountKey != null && !serviceAccountKey.trim().isEmpty()) {
-                // Use service account key from environment variable
                 logger.info("Using service account key from configuration");
                 InputStream serviceAccountStream = new ByteArrayInputStream(
                         serviceAccountKey.getBytes(StandardCharsets.UTF_8));
                 return GoogleCredentials.fromStream(serviceAccountStream);
             } else {
-                // Use Application Default Credentials (ADC)
                 logger.info("Using Application Default Credentials");
                 return GoogleCredentials.getApplicationDefault();
             }
@@ -153,9 +128,6 @@ public class FirebaseConfig {
         }
     }
 
-    /**
-     * Get test credentials for emulator
-     */
     private GoogleCredentials getTestCredentials() {
         AccessToken token = new AccessToken("emulator-token", new Date(System.currentTimeMillis() + 3600_000));
         return GoogleCredentials.create(token);

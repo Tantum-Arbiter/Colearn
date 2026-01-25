@@ -5,10 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Request DTO for story sync endpoint
- * Client sends their current story checksums to get delta updates
- */
 public class StorySyncRequest {
 
     @JsonProperty("clientVersion")

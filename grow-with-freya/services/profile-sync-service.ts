@@ -4,15 +4,7 @@ import { Logger } from '@/utils/logger';
 
 const log = Logger.create('ProfileSyncService');
 
-/**
- * Service for syncing user profile data across devices
- * Handles automatic sync on login and token refresh
- */
 export class ProfileSyncService {
-  /**
-   * Sync profile data to app store
-   * This is called on login and token refresh to keep data in sync
-   */
   static async syncProfileData(profile: any): Promise<void> {
     if (!profile) {
       log.info('[User Journey Flow 3: Profile Sync] No profile data to sync');
@@ -75,9 +67,6 @@ export class ProfileSyncService {
     log.info('[User Journey Flow 3: Profile Sync] Step 3/4: Settings synced from profile');
   }
 
-  /**
-   * Sync reminders from backend
-   */
   static async syncReminders(): Promise<void> {
     try {
       await reminderService.syncFromBackend();
@@ -87,10 +76,6 @@ export class ProfileSyncService {
     }
   }
 
-  /**
-   * Full sync - profile data and reminders
-   * Called on login and token refresh
-   */
   static async fullSync(profile?: any): Promise<void> {
     log.info('[User Journey Flow 3: Profile Sync] ========== SYNC STARTED ==========');
 

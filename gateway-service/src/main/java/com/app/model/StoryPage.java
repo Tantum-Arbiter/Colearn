@@ -8,10 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * Represents a single page in a story
- * Contains text and references to visual assets (stored in iOS/Android asset packs)
- */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class StoryPage {
 
@@ -25,7 +21,7 @@ public class StoryPage {
 
     @JsonProperty("type")
     @PropertyName("type")
-    private String type; // e.g., "cover", "story"
+    private String type;
 
     @JsonProperty("text")
     @PropertyName("text")
@@ -33,21 +29,20 @@ public class StoryPage {
 
     @JsonProperty("localizedText")
     @PropertyName("localizedText")
-    private LocalizedText localizedText; // Localized page text
+    private LocalizedText localizedText;
 
     @JsonProperty("backgroundImage")
     @PropertyName("backgroundImage")
-    private String backgroundImage; // Asset path reference (not URL)
+    private String backgroundImage;
 
     @JsonProperty("characterImage")
     @PropertyName("characterImage")
-    private String characterImage; // Asset path reference (not URL)
+    private String characterImage;
 
     @JsonProperty("interactiveElements")
     @PropertyName("interactiveElements")
-    private List<InteractiveElement> interactiveElements; // Optional interactive props
+    private List<InteractiveElement> interactiveElements;
 
-    // Constructors
     public StoryPage() {
         this.interactiveElements = new ArrayList<>();
     }
@@ -59,7 +54,6 @@ public class StoryPage {
         this.text = text;
     }
 
-    // Getters and Setters
     public String getId() {
         return id;
     }
@@ -100,9 +94,6 @@ public class StoryPage {
         this.localizedText = localizedText;
     }
 
-    /**
-     * Get text for a specific language, falling back to English or the default text
-     */
     public String getTextForLanguage(String languageCode) {
         if (localizedText != null) {
             String localized = localizedText.getText(languageCode);

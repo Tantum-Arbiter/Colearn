@@ -3,29 +3,17 @@ package com.app.testing;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-/**
- * Test-only simulation flags to steer gateway behavior during functional tests.
- * Available in 'test' profile (local/Docker) and 'gcp-dev' profile (GCP functional tests).
- */
 @Component
 @Profile({"test", "gcp-dev"})
 public class TestSimulationFlags {
-    // Downstream simulation
-    private Integer googleOauthStatus; // e.g., 503
-    private Long googleOauthDelayMs;   // artificial delay
-    private Integer firebaseStatus;    // e.g., 500
-
-    // Timeouts
-    private Long gatewayTimeoutMs;     // outbound downstream timeout simulation
-    private Long inboundTimeoutMs;     // inbound request timeout simulation
-
-    // Circuit breakers / maintenance
+    private Integer googleOauthStatus;
+    private Long googleOauthDelayMs;
+    private Integer firebaseStatus;
+    private Long gatewayTimeoutMs;
+    private Long inboundTimeoutMs;
     private boolean maintenanceMode;
     private boolean circuitOpenGoogle;
-
     private boolean overloaded;
-
-    // Rate limiting overrides
     private Integer authRateLimitPerMinute;
     private Integer apiRateLimitPerMinute;
 
@@ -43,7 +31,6 @@ public class TestSimulationFlags {
         apiRateLimitPerMinute = null;
     }
 
-    // Getters / setters
     public Integer getGoogleOauthStatus() { return googleOauthStatus; }
     public void setGoogleOauthStatus(Integer googleOauthStatus) { this.googleOauthStatus = googleOauthStatus; }
 

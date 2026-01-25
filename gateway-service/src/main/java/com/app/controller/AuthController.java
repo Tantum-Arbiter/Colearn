@@ -30,10 +30,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-/**
- * Authentication Controller
- * Handles OAuth token validation and JWT token generation
- */
 @RestController
 @RequestMapping("/auth")
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -47,7 +43,7 @@ public class AuthController {
     private final UserService userService;
     private final SessionService sessionService;
     private final UserProfileRepository userProfileRepository;
-    private final TestSimulationFlags flags; // may be null outside test profile
+    private final TestSimulationFlags flags;
 
     public AuthController(JwtConfig jwtConfig, SecurityMonitoringService securityMonitoringService,
                          ApplicationMetricsService applicationMetricsService, UserService userService,
@@ -62,10 +58,6 @@ public class AuthController {
         this.flags = flagsProvider != null ? flagsProvider.getIfAvailable() : null;
     }
 
-    /**
-     * Simple status endpoint for CORS preflight and connectivity checks
-     * Returns minimal info - no sensitive data
-     */
     @GetMapping(value = "/status", produces = "application/json")
     public ResponseEntity<Map<String, Object>> status() {
         return ResponseEntity.ok(Map.of(
@@ -74,32 +66,22 @@ public class AuthController {
         ));
     }
 
-    /**
-     * Authenticate with Google ID token
-     */
     @PostMapping(value = "/google", consumes = "application/json", produces = "application/json")
     public ResponseEntity<?> authenticateWithGoogle(@RequestBody GoogleAuthRequest request, HttpServletRequest httpRequest) {
         long startTime = System.currentTimeMillis();
-        logger.info("[User Journey Flow 1] Step 1: Google sign-in request received");
         try {
-            // Validate request
             if (request == null) {
-                logger.warn("[User Journey Flow 1] Step 1 FAILED: Request body is null");
                 throw com.app.exception.ValidationException.missingRequiredField("body");
             }
 
             if (request.getIdToken() == null || request.getIdToken().trim().isEmpty()) {
-                logger.warn("[User Journey Flow 1] Step 1 FAILED: ID token is missing");
-                // Align message with functional test expectation
                 throw new com.app.exception.ValidationException(
                         com.app.exception.ErrorCode.MISSING_REQUIRED_FIELD,
                         "ID token is required",
                         "idToken"
                 );
             }
-            logger.info("[User Journey Flow 1] Step 2: ID token received, validating with Google...");
 
-            // Test-simulation hooks for Google OAuth
             if (flags != null) {
                 if (flags.isMaintenanceMode()) {
                     throw new GatewayException(ErrorCode.MAINTENANCE_MODE, "System is in maintenance mode");
@@ -123,13 +105,9 @@ public class AuthController {
                 }
             }
 
-            // Validate Google ID token (audience validated server-side)
             DecodedJWT decodedJWT = jwtConfig.validateGoogleIdToken(request.getIdToken());
-            logger.info("[User Journey Flow 1] Step 3: Google ID token validated successfully");
 
-            // Optional nonce validation (supports raw or SHA-256(base64url) forms)
             if (!validateNonceIfPresent(decodedJWT, request.getNonce())) {
-                logger.warn("[User Journey Flow 1] Step 3 FAILED: Nonce validation failed");
                 throw new com.app.exception.AuthenticationException(
                         com.app.exception.ErrorCode.INVALID_TOKEN,
                         "Nonce validation failed",
@@ -138,49 +116,34 @@ public class AuthController {
                 );
             }
 
-            // Extract providerId from token (no PII needed)
             String providerId = decodedJWT.getSubject();
-            logger.info("[User Journey Flow 1] Step 4: Looking up or creating user in database...");
-
-            // Get or create user in database (PII-free)
             User user = userService.getOrCreateUser("google", providerId).join();
-            logger.info("[User Journey Flow 1] Step 5: User found/created, userId={}", user.getId());
 
-            // Generate our own tokens (PII-free)
             String accessToken = jwtConfig.generateAccessToken(user.getId(), "google");
             String refreshToken = jwtConfig.generateRefreshToken(user.getId());
-            logger.info("[User Journey Flow 1] Step 6: JWT tokens generated (access + refresh)");
 
-            // Simulate Firebase errors if configured
             if (flags != null && flags.getFirebaseStatus() != null && flags.getFirebaseStatus() >= 500) {
                 throw DownstreamServiceException.firebaseError("Firebase service error: status=" + flags.getFirebaseStatus(), null);
             }
 
-            // Create session in database
             String deviceId = httpRequest.getHeader("X-Device-ID");
             String deviceType = extractDeviceType(httpRequest);
             String platform = extractPlatform(httpRequest);
             String appVersion = httpRequest.getHeader("X-App-Version");
-            logger.info("[User Journey Flow 1] Step 7: Creating session, device={}, platform={}", deviceType, platform);
 
             UserSession session = sessionService.createSession(
                 user.getId(), refreshToken, deviceId, deviceType, platform, appVersion
             ).join();
-            logger.info("[User Journey Flow 1] Step 8: Session created, sessionId={}", session.getId());
 
-            // Create response
             AuthResponse response = new AuthResponse();
             response.setSuccess(true);
             response.setUser(createUserProfileFromUser(user));
             response.setTokens(createTokenResponse(accessToken, refreshToken));
             response.setMessage("Google authentication successful");
 
-            logger.info("[User Journey Flow 1] Step 9: Google sign-in COMPLETE for userId={}", user.getId());
-
-            // Log successful authentication for security monitoring
+            logger.info("Google sign-in successful for userId={}", user.getId());
             securityMonitoringService.logSuccessfulAuthentication(user.getId(), "google");
 
-            // Record authentication metrics
             long processingTime = System.currentTimeMillis() - startTime;
             applicationMetricsService.recordAuthentication("google", deviceType, platform, appVersion, true, processingTime);
 
@@ -188,11 +151,8 @@ public class AuthController {
 
         } catch (JWTVerificationException e) {
             logger.warn("Google authentication failed: {}", e.getMessage());
-
-            // Log failed authentication for security monitoring
             securityMonitoringService.logFailedAuthentication("google");
 
-            // Record failed authentication metrics
             long processingTime = System.currentTimeMillis() - startTime;
             String deviceType = extractDeviceType(httpRequest);
             String platform = extractPlatform(httpRequest);
@@ -204,33 +164,21 @@ public class AuthController {
                 throw com.app.exception.AuthenticationException.expiredToken("id_token");
             }
             throw new com.app.exception.AuthenticationException(
-                    com.app.exception.ErrorCode.INVALID_GOOGLE_TOKEN,
-                    msg,
-                    e,
-                    "google",
-                    "id_token"
-            );
+                    com.app.exception.ErrorCode.INVALID_GOOGLE_TOKEN, msg, e, "google", "id_token");
         } catch (java.util.concurrent.CompletionException e) {
             Throwable cause = e.getCause() != null ? e.getCause() : e;
             throw com.app.exception.DownstreamServiceException.firebaseError("Authentication storage error", cause);
-        } catch (com.app.exception.DownstreamServiceException e) {
-            throw e;
         } catch (com.app.exception.GatewayException e) {
-            // Preserve specific error codes/status for validation/auth/downstream cases
             throw e;
         } catch (Exception e) {
             throw new com.app.exception.GatewayException(com.app.exception.ErrorCode.INTERNAL_SERVER_ERROR, "Authentication failed", e);
         }
     }
 
-    /**
-     * Authenticate with Apple ID token
-     */
     @PostMapping(value = "/apple", consumes = "application/json", produces = "application/json")
     public ResponseEntity<?> authenticateWithApple(@RequestBody AppleAuthRequest request, HttpServletRequest httpRequest) {
         long startTime = System.currentTimeMillis();
         try {
-            // Validate request
             if (request == null) {
                 throw com.app.exception.ValidationException.missingRequiredField("body");
             }
@@ -239,42 +187,27 @@ public class AuthController {
                 throw com.app.exception.ValidationException.missingRequiredField("idToken");
             }
 
-            // Test-simulation: maintenance mode
             if (flags != null && flags.isMaintenanceMode()) {
                 throw new GatewayException(ErrorCode.MAINTENANCE_MODE, "System is in maintenance mode");
             }
 
-            // Validate Apple ID token (audience validated server-side)
             DecodedJWT decodedJWT = jwtConfig.validateAppleIdToken(request.getIdToken());
 
-            // Optional nonce validation
             if (!validateNonceIfPresent(decodedJWT, request.getNonce())) {
                 throw new com.app.exception.AuthenticationException(
-                        com.app.exception.ErrorCode.INVALID_TOKEN,
-                        "Nonce validation failed",
-                        "apple",
-                        "id_token"
-                );
+                        com.app.exception.ErrorCode.INVALID_TOKEN, "Nonce validation failed", "apple", "id_token");
             }
 
-            // Extract providerId from token (no PII needed)
             String providerId = decodedJWT.getSubject();
-            logger.info("Apple authentication - providerId extracted from token: {}", providerId);
-
-            // Get or create user in database (PII-free)
             User user = userService.getOrCreateUser("apple", providerId).join();
-            logger.info("Apple authentication - user retrieved/created with ID: {}", user.getId());
 
-            // Generate our own tokens (PII-free)
             String accessToken = jwtConfig.generateAccessToken(user.getId(), "apple");
             String refreshToken = jwtConfig.generateRefreshToken(user.getId());
 
-            // Simulate Firebase errors if configured
             if (flags != null && flags.getFirebaseStatus() != null && flags.getFirebaseStatus() >= 500) {
                 throw DownstreamServiceException.firebaseError("Firebase service error: status=" + flags.getFirebaseStatus(), null);
             }
 
-            // Create session in database
             String deviceId = httpRequest.getHeader("X-Device-ID");
             String deviceType = extractDeviceType(httpRequest);
             String platform = extractPlatform(httpRequest);
@@ -284,19 +217,15 @@ public class AuthController {
                 user.getId(), refreshToken, deviceId, deviceType, platform, appVersion
             ).join();
 
-            // Create response
             AuthResponse response = new AuthResponse();
             response.setSuccess(true);
             response.setUser(createUserProfileFromUser(user));
             response.setTokens(createTokenResponse(accessToken, refreshToken));
             response.setMessage("Apple authentication successful");
 
-            logger.info("Apple authentication successful for user ID: {}", user.getId());
-
-            // Log successful authentication for security monitoring
+            logger.info("Apple sign-in successful for userId={}", user.getId());
             securityMonitoringService.logSuccessfulAuthentication(user.getId(), "apple");
 
-            // Record authentication metrics
             long processingTime = System.currentTimeMillis() - startTime;
             applicationMetricsService.recordAuthentication("apple", deviceType, platform, appVersion, true, processingTime);
 
@@ -304,11 +233,8 @@ public class AuthController {
 
         } catch (JWTVerificationException e) {
             logger.warn("Apple authentication failed: {}", e.getMessage());
-
-            // Log failed authentication for security monitoring
             securityMonitoringService.logFailedAuthentication("apple");
 
-            // Record failed authentication metrics
             long processingTime = System.currentTimeMillis() - startTime;
             String deviceType = extractDeviceType(httpRequest);
             String platform = extractPlatform(httpRequest);
@@ -320,120 +246,77 @@ public class AuthController {
                 throw com.app.exception.AuthenticationException.expiredToken("id_token");
             }
             throw new com.app.exception.AuthenticationException(
-                    com.app.exception.ErrorCode.INVALID_APPLE_TOKEN,
-                    msg,
-                    e,
-                    "apple",
-                    "id_token"
-            );
+                    com.app.exception.ErrorCode.INVALID_APPLE_TOKEN, msg, e, "apple", "id_token");
         } catch (java.util.concurrent.CompletionException e) {
             Throwable cause = e.getCause() != null ? e.getCause() : e;
             throw com.app.exception.DownstreamServiceException.firebaseError("Authentication storage error", cause);
-        } catch (com.app.exception.DownstreamServiceException e) {
-            throw e;
         } catch (com.app.exception.GatewayException e) {
-            // Preserve specific error codes/status for validation/auth/downstream cases
             throw e;
         } catch (Exception e) {
             throw new com.app.exception.GatewayException(com.app.exception.ErrorCode.INTERNAL_SERVER_ERROR, "Authentication failed", e);
         }
     }
-
-    /**
-     * Refresh access token
-     */
     @PostMapping(value = "/refresh", consumes = "application/json", produces = "application/json")
     public ResponseEntity<?> refreshToken(@RequestBody TokenRefreshRequest request, HttpServletRequest httpRequest) {
         long startTime = System.currentTimeMillis();
         String deviceType = "unknown";
         String platform = "unknown";
-        logger.info("[User Journey Flow 2] Step 1: Token refresh request received (user returning after inactivity)");
 
         try {
-            // Extract device info early for metrics
             deviceType = extractDeviceType(httpRequest);
             platform = extractPlatform(httpRequest);
 
-            // Validate request
             if (request == null) {
-                logger.warn("[User Journey Flow 2] Step 1 FAILED: Request body is null");
                 throw com.app.exception.ValidationException.missingRequiredField("body");
             }
 
             if (request.getRefreshToken() == null || request.getRefreshToken().trim().isEmpty()) {
-                logger.warn("[User Journey Flow 2] Step 1 FAILED: Refresh token is missing");
                 throw com.app.exception.ValidationException.missingRequiredField("refreshToken");
             }
-            logger.info("[User Journey Flow 2] Step 2: Refresh token received, looking up session...");
 
-            // Validate refresh token and get session from database
             Optional<UserSession> sessionOpt = sessionService.getSessionByRefreshToken(request.getRefreshToken()).join();
             if (sessionOpt.isEmpty()) {
-                logger.warn("[User Journey Flow 2] Step 2 FAILED: Session not found for refresh token");
                 throw new com.app.exception.AuthenticationException(
-                        com.app.exception.ErrorCode.INVALID_REFRESH_TOKEN,
-                        "Invalid refresh token"
-                );
+                        com.app.exception.ErrorCode.INVALID_REFRESH_TOKEN, "Invalid refresh token");
             }
 
             UserSession session = sessionOpt.get();
-            logger.info("[User Journey Flow 2] Step 3: Session found, checking if token is still valid...");
             if (!session.isValid()) {
-                logger.warn("[User Journey Flow 2] Step 3 FAILED: Session expired or revoked, user needs to re-authenticate");
                 throw new com.app.exception.AuthenticationException(
-                        com.app.exception.ErrorCode.INVALID_REFRESH_TOKEN,
-                        "Expired or revoked refresh token"
-                );
+                        com.app.exception.ErrorCode.INVALID_REFRESH_TOKEN, "Expired or revoked refresh token");
             }
-            logger.info("[User Journey Flow 2] Step 4: Token is still valid, fetching user...");
 
-            // Get user from database
             Optional<User> userOpt = userService.getUserById(session.getUserId()).join();
             if (userOpt.isEmpty()) {
-                logger.warn("[User Journey Flow 2] Step 4 FAILED: User not found");
                 throw new com.app.exception.AuthenticationException(
-                        com.app.exception.ErrorCode.INVALID_REFRESH_TOKEN,
-                        "User not found"
-                );
+                        com.app.exception.ErrorCode.INVALID_REFRESH_TOKEN, "User not found");
             }
 
             User user = userOpt.get();
-            logger.info("[User Journey Flow 2] Step 5: User found, generating new tokens...");
-
-            // Generate new tokens (PII-free)
             String newAccessToken = jwtConfig.generateAccessToken(user.getId(), user.getProvider());
             String newRefreshToken = jwtConfig.generateRefreshToken(user.getId());
-            logger.info("[User Journey Flow 2] Step 6: New JWT tokens generated, updating session...");
 
-            // Update session with new refresh token
             sessionService.validateAndRefreshSession(request.getRefreshToken(), newRefreshToken).join();
-            logger.info("[User Journey Flow 2] Step 7: Session refreshed with new token");
 
-            // Fetch user profile for automatic sync
             Optional<UserProfile> profileOpt = userProfileRepository.findByUserId(user.getId()).join();
 
-            // Create response
             TokenRefreshResponse response = new TokenRefreshResponse();
             response.setSuccess(true);
             response.setTokens(createTokenResponse(newAccessToken, newRefreshToken));
             response.setMessage("Token refresh successful");
 
-            // Include profile data if available (for automatic cross-device sync)
             if (profileOpt.isPresent()) {
                 response.setProfile(profileOpt.get());
-                logger.info("[User Journey Flow 2] Step 8: Profile data included for sync");
             }
 
-            // Record successful token refresh metrics
             long processingTime = System.currentTimeMillis() - startTime;
             applicationMetricsService.recordTokenRefresh(user.getProvider(), deviceType, platform, true, processingTime);
             securityMonitoringService.logTokenRefresh(user.getId());
 
-            logger.info("[User Journey Flow 2] Step 9: Token refresh COMPLETE for userId={}, processingTime={}ms", user.getId(), processingTime);
+            logger.info("Token refresh successful for userId={}", user.getId());
             return ResponseEntity.ok(response);
 
         } catch (JWTVerificationException e) {
-            // Record failed token refresh metrics
             long processingTime = System.currentTimeMillis() - startTime;
             applicationMetricsService.recordTokenRefresh("unknown", deviceType, platform, false, processingTime);
 
@@ -443,43 +326,27 @@ public class AuthController {
                 throw com.app.exception.AuthenticationException.expiredToken("refresh_token");
             }
             throw new com.app.exception.AuthenticationException(
-                    com.app.exception.ErrorCode.INVALID_REFRESH_TOKEN,
-                    msg,
-                    e,
-                    null,
-                    "refresh_token"
-            );
+                    com.app.exception.ErrorCode.INVALID_REFRESH_TOKEN, msg, e, null, "refresh_token");
         } catch (java.util.concurrent.CompletionException e) {
-            // Record failed token refresh metrics
             long processingTime = System.currentTimeMillis() - startTime;
             applicationMetricsService.recordTokenRefresh("unknown", deviceType, platform, false, processingTime);
-
             Throwable cause = e.getCause() != null ? e.getCause() : e;
             throw com.app.exception.DownstreamServiceException.firebaseError("Session store error", cause);
-        } catch (com.app.exception.DownstreamServiceException e) {
-            throw e;
         } catch (com.app.exception.GatewayException e) {
-            // Preserve specific 4xx/5xx mapping from our domain exceptions
             throw e;
         } catch (Exception e) {
-            // Record failed token refresh metrics
             long processingTime = System.currentTimeMillis() - startTime;
             applicationMetricsService.recordTokenRefresh("unknown", deviceType, platform, false, processingTime);
-
             throw new com.app.exception.GatewayException(com.app.exception.ErrorCode.INTERNAL_SERVER_ERROR, "Token refresh failed", e);
         }
     }
 
-    /**
-     * Revoke tokens (logout)
-     */
     @PostMapping(value = "/revoke", consumes = "application/json", produces = "application/json")
     public ResponseEntity<?> revokeTokens(@RequestBody TokenRevokeRequest request, HttpServletRequest httpRequest) {
         String deviceType = extractDeviceType(httpRequest);
         String platform = extractPlatform(httpRequest);
 
         try {
-            // Validate request
             if (request == null) {
                 throw com.app.exception.ValidationException.missingRequiredField("body");
             }
@@ -488,7 +355,6 @@ public class AuthController {
                 throw com.app.exception.ValidationException.missingRequiredField("refreshToken");
             }
 
-            // Revoke session in database
             Optional<UserSession> revokedSession = sessionService.revokeSessionByRefreshToken(request.getRefreshToken()).join();
 
             Map<String, Object> response = new HashMap<>();
@@ -496,43 +362,28 @@ public class AuthController {
 
             if (revokedSession.isPresent()) {
                 response.put("message", "Tokens revoked successfully");
-                logger.info("Session revoked for user: {}", revokedSession.get().getUserId());
-
-                // Record successful token revocation metrics
+                logger.info("Session revoked for userId={}", revokedSession.get().getUserId());
                 applicationMetricsService.recordTokenRevocation(deviceType, platform, "user_logout", true);
                 securityMonitoringService.logTokenRevocation(revokedSession.get().getUserId(), "user_logout");
-
-                // Decrement active sessions
                 applicationMetricsService.decrementActiveSessions();
             } else {
                 response.put("message", "Token was already invalid or expired");
-
-                // Record revocation attempt for invalid token
                 applicationMetricsService.recordTokenRevocation(deviceType, platform, "invalid_token", true);
             }
 
             return ResponseEntity.ok(response);
 
         } catch (java.util.concurrent.CompletionException e) {
-            // Record failed token revocation metrics
             applicationMetricsService.recordTokenRevocation(deviceType, platform, "error", false);
-
             Throwable cause = e.getCause() != null ? e.getCause() : e;
             throw com.app.exception.DownstreamServiceException.firebaseError("Session store error", cause);
-        } catch (com.app.exception.DownstreamServiceException e) {
-            throw e;
         } catch (com.app.exception.GatewayException e) {
-            // Preserve specific 4xx/5xx mapping from our domain exceptions
             throw e;
         } catch (Exception e) {
-            // Record failed token revocation metrics
             applicationMetricsService.recordTokenRevocation(deviceType, platform, "error", false);
-
             throw new com.app.exception.GatewayException(com.app.exception.ErrorCode.INTERNAL_SERVER_ERROR, "Token revocation failed", e);
         }
     }
-
-    // Helper methods
 
     private UserInfo createUserProfileFromUser(User user) {
         UserInfo profile = new UserInfo();
@@ -576,9 +427,6 @@ public class AuthController {
     }
 
 
-
-    // Request/Response DTOs
-
     public static class GoogleAuthRequest {
         private String idToken;
         private String clientId;
@@ -586,7 +434,6 @@ public class AuthController {
         private DeviceInfo deviceInfo;
         private UserInfo userInfo;
 
-        // Getters and setters
         public String getIdToken() { return idToken; }
         public void setIdToken(String idToken) { this.idToken = idToken; }
         public String getClientId() { return clientId; }
@@ -607,7 +454,6 @@ public class AuthController {
         private DeviceInfo deviceInfo;
         private UserInfo userInfo;
 
-        // Getters and setters
         public String getIdToken() { return idToken; }
         public void setIdToken(String idToken) { this.idToken = idToken; }
         public String getAuthorizationCode() { return authorizationCode; }
@@ -624,14 +470,12 @@ public class AuthController {
 
     public static class TokenRefreshRequest {
         private String refreshToken;
-
         public String getRefreshToken() { return refreshToken; }
         public void setRefreshToken(String refreshToken) { this.refreshToken = refreshToken; }
     }
 
     public static class TokenRevokeRequest {
         private String refreshToken;
-
         public String getRefreshToken() { return refreshToken; }
         public void setRefreshToken(String refreshToken) { this.refreshToken = refreshToken; }
     }
@@ -642,7 +486,6 @@ public class AuthController {
         private JWTTokens tokens;
         private String message;
 
-        // Getters and setters
         public boolean isSuccess() { return success; }
         public void setSuccess(boolean success) { this.success = success; }
         public UserInfo getUser() { return user; }
@@ -657,9 +500,8 @@ public class AuthController {
         private boolean success;
         private JWTTokens tokens;
         private String message;
-        private com.app.model.UserProfile profile; // Include profile data for automatic sync
+        private com.app.model.UserProfile profile;
 
-        // Getters and setters
         public boolean isSuccess() { return success; }
         public void setSuccess(boolean success) { this.success = success; }
         public JWTTokens getTokens() { return tokens; }
@@ -670,7 +512,6 @@ public class AuthController {
         public void setProfile(com.app.model.UserProfile profile) { this.profile = profile; }
     }
 
-    // Supporting DTOs (PII-free)
     public static class UserInfo {
         private String id;
         private String provider;
@@ -678,7 +519,6 @@ public class AuthController {
         private String createdAt;
         private String updatedAt;
 
-        // Getters and setters
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
         public String getProvider() { return provider; }
@@ -698,7 +538,6 @@ public class AuthController {
         private String tokenType;
         private String[] scope;
 
-        // Getters and setters
         public String getAccessToken() { return accessToken; }
         public void setAccessToken(String accessToken) { this.accessToken = accessToken; }
         public String getRefreshToken() { return refreshToken; }
@@ -717,7 +556,6 @@ public class AuthController {
         private String osVersion;
         private String appVersion;
 
-        // Getters and setters
         public String getDeviceId() { return deviceId; }
         public void setDeviceId(String deviceId) { this.deviceId = deviceId; }
         public String getPlatform() { return platform; }
@@ -728,41 +566,30 @@ public class AuthController {
         public void setAppVersion(String appVersion) { this.appVersion = appVersion; }
     }
 
-    /**
-     * Extract client IP address from request
-     */
     private String getClientIpAddress(HttpServletRequest request) {
         String xForwardedFor = request.getHeader("X-Forwarded-For");
         if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
             return xForwardedFor.split(",")[0].trim();
         }
-
         String xRealIp = request.getHeader("X-Real-IP");
         if (xRealIp != null && !xRealIp.isEmpty()) {
             return xRealIp;
         }
-
         return request.getRemoteAddr();
     }
 
-    /**
-     * Extract device type from headers (prefers explicit header over User-Agent parsing)
-     */
     private String extractDeviceType(HttpServletRequest request) {
-        // First check explicit header from mobile app
         String deviceType = request.getHeader("X-Device-Type");
         if (deviceType != null && !deviceType.trim().isEmpty()) {
             return deviceType.toLowerCase();
         }
 
-        // Fall back to User-Agent parsing
         String userAgent = request.getHeader("User-Agent");
         if (userAgent == null) {
             return "unknown";
         }
 
         userAgent = userAgent.toLowerCase();
-
         if (userAgent.contains("bot") || userAgent.contains("crawler") || userAgent.contains("spider")) {
             return "bot";
         } else if (userAgent.contains("mobile") || userAgent.contains("android") ||
@@ -773,27 +600,20 @@ public class AuthController {
         } else if (userAgent.contains("windows") || userAgent.contains("macintosh") ||
                    userAgent.contains("linux")) {
             return "desktop";
-        } else {
-            return "unknown";
         }
+        return "unknown";
     }
 
-    /**
-     * Extract platform from headers (prefers explicit header over User-Agent parsing)
-     */
     private String extractPlatform(HttpServletRequest request) {
-        // First check explicit headers from mobile app
         String platform = request.getHeader("X-Client-Platform");
         if (platform != null && !platform.trim().isEmpty()) {
             return platform.toLowerCase();
         }
-        // Also check legacy header
         platform = request.getHeader("X-Platform");
         if (platform != null && !platform.trim().isEmpty()) {
             return platform.toLowerCase();
         }
 
-        // Fall back to User-Agent parsing
         String userAgent = request.getHeader("User-Agent");
         if (userAgent == null) {
             return "unknown";
@@ -810,8 +630,7 @@ public class AuthController {
             return "macos";
         } else if (userAgent.contains("linux")) {
             return "linux";
-        } else {
-            return userAgent;
         }
+        return userAgent;
     }
 }

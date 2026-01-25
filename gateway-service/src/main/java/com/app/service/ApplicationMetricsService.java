@@ -16,10 +16,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Pattern;
 import java.util.Map;
 
-/**
- * Application Metrics Service
- * Captures custom metrics for application responses with device type and useful information
- */
 @Service
 public class ApplicationMetricsService {
 
@@ -27,16 +23,12 @@ public class ApplicationMetricsService {
 
     private final MeterRegistry meterRegistry;
 
-    // Dynamic counters and timers are created on-demand using builders
-
-    // Gauges for active sessions and connections
     private final AtomicLong activeSessions = new AtomicLong(0);
     private final AtomicLong activeConnections = new AtomicLong(0);
     private final ConcurrentHashMap<String, AtomicLong> deviceTypeCounters = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, AtomicLong> platformCounters = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, AtomicLong> appVersionCounters = new ConcurrentHashMap<>();
 
-    // Device type patterns for user agent parsing
     private static final Pattern MOBILE_PATTERN = Pattern.compile("(?i)mobile|android|iphone|ipod|blackberry|windows phone");
     private static final Pattern TABLET_PATTERN = Pattern.compile("(?i)tablet|ipad|kindle|silk");
     private static final Pattern DESKTOP_PATTERN = Pattern.compile("(?i)windows|macintosh|linux|x11");
@@ -45,7 +37,6 @@ public class ApplicationMetricsService {
     public ApplicationMetricsService(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
 
-        // Initialize gauges
         Gauge.builder("app.sessions.active", activeSessions, AtomicLong::doubleValue)
                 .description("Number of active sessions")
                 .register(meterRegistry);
@@ -55,9 +46,6 @@ public class ApplicationMetricsService {
                 .register(meterRegistry);
     }
 
-    /**
-     * Record a request with device and platform information
-     */
     public void recordRequest(HttpServletRequest request, int statusCode, long responseTimeMs) {
         String deviceType = extractDeviceType(request);
         String platform = extractPlatform(request);
@@ -81,13 +69,11 @@ public class ApplicationMetricsService {
                 .register(meterRegistry)
                 .increment();
 
-        // Record response time
         Timer.builder("app.response.time")
                 .tags(tags)
                 .register(meterRegistry)
                 .record(responseTimeMs, TimeUnit.MILLISECONDS);
 
-        // Update device type counters
         updateDeviceTypeCounter(deviceType);
         updatePlatformCounter(platform);
         if (appVersion != null) {
@@ -98,9 +84,6 @@ public class ApplicationMetricsService {
                     deviceType, platform, appVersion, endpoint, statusCode, responseTimeMs);
     }
 
-    /**
-     * Record authentication attempt
-     */
     public void recordAuthentication(String provider, String deviceType, String platform,
                                    String appVersion, boolean successful, long processingTimeMs) {
         String safeProvider = provider != null ? provider : "unknown";
@@ -130,9 +113,6 @@ public class ApplicationMetricsService {
         }
     }
 
-    /**
-     * Record error with context
-     */
     public void recordError(HttpServletRequest request, String errorType, String errorCode) {
         String deviceType = extractDeviceType(request);
         String platform = extractPlatform(request);
@@ -152,9 +132,6 @@ public class ApplicationMetricsService {
                 .increment();
     }
 
-    /**
-     * Record rate limit violation
-     */
     public void recordRateLimitViolation(HttpServletRequest request, String limitType) {
         String deviceType = extractDeviceType(request);
         String platform = extractPlatform(request);
@@ -173,18 +150,12 @@ public class ApplicationMetricsService {
                 .increment();
     }
 
-    /**
-     * Extract device type from headers or user agent
-     * Prefers explicit X-Device-Type header from mobile app
-     */
     private String extractDeviceType(HttpServletRequest request) {
-        // First check explicit header from mobile app
         String deviceType = request.getHeader("X-Device-Type");
         if (deviceType != null && !deviceType.trim().isEmpty()) {
             return deviceType.toLowerCase();
         }
 
-        // Fall back to User-Agent parsing
         String userAgent = request.getHeader("User-Agent");
         if (userAgent == null) {
             return "unknown";
@@ -205,12 +176,7 @@ public class ApplicationMetricsService {
         }
     }
 
-    /**
-     * Extract platform from headers or user agent
-     * Prefers explicit X-Client-Platform header from mobile app
-     */
     private String extractPlatform(HttpServletRequest request) {
-        // Check explicit headers from mobile app (X-Client-Platform or X-Platform)
         String platform = request.getHeader("X-Client-Platform");
         if (platform != null && !platform.trim().isEmpty()) {
             return platform.toLowerCase();
@@ -220,7 +186,6 @@ public class ApplicationMetricsService {
             return platform.toLowerCase();
         }
 
-        // Fall back to User-Agent parsing
         String userAgent = request.getHeader("User-Agent");
         if (userAgent == null) {
             return "unknown";
@@ -242,37 +207,23 @@ public class ApplicationMetricsService {
         }
     }
 
-    /**
-     * Extract app version from headers
-     */
     private String extractAppVersion(HttpServletRequest request) {
         return request.getHeader("X-App-Version");
     }
 
-    /**
-     * Sanitize endpoint for metrics (remove IDs and sensitive data)
-     */
     private String sanitizeEndpoint(String uri) {
         if (uri == null) {
             return "unknown";
         }
-
-        // Replace UUIDs and numeric IDs with placeholders
         return uri.replaceAll("/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", "/{uuid}")
                  .replaceAll("/\\d+", "/{id}")
-                 .replaceAll("\\?.*", ""); // Remove query parameters
+                 .replaceAll("\\?.*", "");
     }
 
-    /**
-     * Get status code class (2xx, 4xx, 5xx)
-     */
     private String getStatusClass(int statusCode) {
         return statusCode / 100 + "xx";
     }
 
-    /**
-     * Update device type counter
-     */
     private void updateDeviceTypeCounter(String deviceType) {
         deviceTypeCounters.computeIfAbsent(deviceType, k -> {
             AtomicLong counter = new AtomicLong(0);
@@ -284,9 +235,6 @@ public class ApplicationMetricsService {
         }).incrementAndGet();
     }
 
-    /**
-     * Update platform counter
-     */
     private void updatePlatformCounter(String platform) {
         platformCounters.computeIfAbsent(platform, k -> {
             AtomicLong counter = new AtomicLong(0);
@@ -298,9 +246,6 @@ public class ApplicationMetricsService {
         }).incrementAndGet();
     }
 
-    /**
-     * Update app version counter
-     */
     private void updateAppVersionCounter(String appVersion) {
         appVersionCounters.computeIfAbsent(appVersion, k -> {
             AtomicLong counter = new AtomicLong(0);
@@ -312,9 +257,6 @@ public class ApplicationMetricsService {
         }).incrementAndGet();
     }
 
-    /**
-     * Session management
-     */
     public void incrementActiveSessions() {
         activeSessions.incrementAndGet();
     }
@@ -331,9 +273,6 @@ public class ApplicationMetricsService {
         activeConnections.decrementAndGet();
     }
 
-    /**
-     * Get current metrics summary
-     */
     public Map<String, Object> getMetricsSummary() {
         Map<String, Object> summary = new ConcurrentHashMap<>();
         summary.put("active_sessions", activeSessions.get());
@@ -352,8 +291,6 @@ public class ApplicationMetricsService {
                     e -> e.getValue().get())));
         return summary;
     }
-
-    // User Management Metrics
 
     public void recordUserCreated(String provider) {
         String safeProvider = provider != null ? provider : "unknown";
@@ -429,8 +366,6 @@ public class ApplicationMetricsService {
     }
 
 
-
-    // Session Management Metrics
 
     public void recordSessionCreated(String deviceType, String platform) {
         String safeDeviceType = deviceType != null ? deviceType : "unknown";
@@ -547,8 +482,6 @@ public class ApplicationMetricsService {
         logger.debug("Expiring sessions query metric recorded: {} sessions expiring within {} minutes", resultCount, withinMinutes);
     }
 
-    // Firebase/Firestore Metrics
-
     public void recordFirestoreOperation(String collection, String operation, boolean success, long durationMs) {
         String safeCollection = collection != null ? collection : "unknown";
         String safeOperation = operation != null ? operation : "unknown";
@@ -646,24 +579,17 @@ public class ApplicationMetricsService {
                 operation, status, collection, batchSize, success ? "success" : "error", durationMs);
     }
 
-    // --- Circuit Breaker metrics ---
-
     private final Map<String, AtomicLong> circuitBreakerStateCounters = new ConcurrentHashMap<>();
 
-    /**
-     * Record circuit breaker state - creates a gauge per state (OPEN, HALF_OPEN, CLOSED)
-     */
     public void recordCircuitBreakerState(String name, String state) {
         String safeName = name != null ? name : "unknown";
         String safeState = state != null ? state : "unknown";
         String gaugeKey = safeName + "_" + safeState;
 
-        // Reset all states for this circuit breaker to 0
         circuitBreakerStateCounters.entrySet().stream()
                 .filter(entry -> entry.getKey().startsWith(safeName + "_"))
                 .forEach(entry -> entry.getValue().set(0));
 
-        // Set the current state to 1
         circuitBreakerStateCounters.computeIfAbsent(gaugeKey, k -> {
             AtomicLong counter = new AtomicLong(0);
             Gauge.builder("app.circuitbreaker.state", counter, AtomicLong::doubleValue)
@@ -677,9 +603,6 @@ public class ApplicationMetricsService {
         logger.debug("Circuit breaker state recorded: {} is now {}", safeName, safeState);
     }
 
-    /**
-     * Record circuit breaker call outcomes
-     */
     public void recordCircuitBreakerCall(String name, String outcome) {
         String safeName = name != null ? name : "unknown";
         String safeOutcome = outcome != null ? outcome : "unknown";
@@ -691,11 +614,6 @@ public class ApplicationMetricsService {
                 .increment();
     }
 
-    // --- Sad Case / Error Rate Metrics ---
-
-    /**
-     * Record authentication failure with detailed error information
-     */
     public void recordAuthenticationFailure(String provider, String deviceType, String platform, String errorType, String errorCode) {
         String safeProvider = provider != null ? provider : "unknown";
         String safeDeviceType = deviceType != null ? deviceType : "unknown";
@@ -720,9 +638,6 @@ public class ApplicationMetricsService {
                     safeProvider, safeErrorType, safeErrorCode);
     }
 
-    /**
-     * Record token refresh failure
-     */
     public void recordTokenRefreshFailure(String provider, String deviceType, String platform, String errorType) {
         String safeProvider = provider != null ? provider : "unknown";
         String safeDeviceType = deviceType != null ? deviceType : "unknown";
@@ -744,9 +659,6 @@ public class ApplicationMetricsService {
         logger.debug("Token refresh failure recorded: provider={}, error_type={}", safeProvider, safeErrorType);
     }
 
-    /**
-     * Record Firestore operation failure with error details
-     */
     public void recordFirestoreFailure(String collection, String operation, String errorType, long durationMs) {
         String safeCollection = collection != null ? collection : "unknown";
         String safeOperation = operation != null ? operation : "unknown";
@@ -773,9 +685,6 @@ public class ApplicationMetricsService {
                     safeOperation, safeErrorType, safeCollection, safeErrorType, durationMs);
     }
 
-    /**
-     * Record profile operation failure
-     */
     public void recordProfileOperationFailure(String operation, String errorType) {
         String safeOperation = operation != null ? operation : "unknown";
         String safeErrorType = errorType != null ? errorType : "unknown";
@@ -793,9 +702,6 @@ public class ApplicationMetricsService {
         logger.debug("Profile operation failure recorded: operation={}, error_type={}", safeOperation, safeErrorType);
     }
 
-    /**
-     * Record session operation failure
-     */
     public void recordSessionOperationFailure(String operation, String errorType) {
         String safeOperation = operation != null ? operation : "unknown";
         String safeErrorType = errorType != null ? errorType : "unknown";
@@ -813,11 +719,6 @@ public class ApplicationMetricsService {
         logger.debug("Session operation failure recorded: operation={}, error_type={}", safeOperation, safeErrorType);
     }
 
-    // --- Token Operation Metrics ---
-
-    /**
-     * Record token refresh operation
-     */
     public void recordTokenRefresh(String provider, String deviceType, String platform, boolean successful, long processingTimeMs) {
         String safeProvider = provider != null ? provider : "unknown";
         String safeDeviceType = deviceType != null ? deviceType : "unknown";
@@ -845,9 +746,6 @@ public class ApplicationMetricsService {
                     safeProvider, safePlatform, successful ? "success" : "failure", processingTimeMs);
     }
 
-    /**
-     * Record token revocation (logout)
-     */
     public void recordTokenRevocation(String deviceType, String platform, String reason, boolean successful) {
         String safeDeviceType = deviceType != null ? deviceType : "unknown";
         String safePlatform = platform != null ? platform : "unknown";
@@ -869,11 +767,6 @@ public class ApplicationMetricsService {
                     safeDeviceType, safePlatform, safeReason, successful ? "success" : "failure");
     }
 
-    // --- User Profile Metrics ---
-
-    /**
-     * Record profile creation
-     */
     public void recordProfileCreated(String userId, boolean successful, long processingTimeMs) {
         String safeUserId = userId != null ? userId : "unknown";
         Tags tags = Tags.of(
@@ -897,10 +790,6 @@ public class ApplicationMetricsService {
         logger.debug("Profile creation metric recorded: user={} - {} ({}ms)",
                     safeUserId, successful ? "success" : "failure", processingTimeMs);
     }
-
-    /**
-     * Record profile update
-     */
     public void recordProfileUpdated(String userId, boolean successful, long processingTimeMs) {
         String safeUserId = userId != null ? userId : "unknown";
         Tags tags = Tags.of(
@@ -924,10 +813,6 @@ public class ApplicationMetricsService {
         logger.debug("Profile update metric recorded: user={} - {} ({}ms)",
                     safeUserId, successful ? "success" : "failure", processingTimeMs);
     }
-
-    /**
-     * Record profile retrieval
-     */
     public void recordProfileRetrieved(String userId, boolean found, long processingTimeMs) {
         String safeUserId = userId != null ? userId : "unknown";
         Tags tags = Tags.of(
@@ -951,8 +836,6 @@ public class ApplicationMetricsService {
         logger.debug("Profile retrieval metric recorded: user={} - {} ({}ms)",
                     safeUserId, found ? "found" : "not_found", processingTimeMs);
     }
-
-    // --- GCS / Asset Metrics ---
 
     public void recordGcsOperation(String operation, boolean success, long durationMs) {
         String safeOperation = operation != null ? operation : "unknown";
@@ -988,12 +871,6 @@ public class ApplicationMetricsService {
                 assetsRequested, assetsReturned, durationMs);
     }
 
-    // --- Caching Metrics ---
-
-    /**
-     * Record a cache hit
-     * @param cacheName Name of the cache (e.g., "jwks", "rate-limiting", "public-keys")
-     */
     public void recordCacheHit(String cacheName) {
         String safeCacheName = cacheName != null ? cacheName : "unknown";
         Counter.builder("app.cache.hits")
@@ -1004,10 +881,6 @@ public class ApplicationMetricsService {
         logger.debug("Cache hit recorded for cache: {}", safeCacheName);
     }
 
-    /**
-     * Record a cache miss
-     * @param cacheName Name of the cache (e.g., "jwks", "rate-limiting", "public-keys")
-     */
     public void recordCacheMiss(String cacheName) {
         String safeCacheName = cacheName != null ? cacheName : "unknown";
         Counter.builder("app.cache.misses")
@@ -1018,11 +891,6 @@ public class ApplicationMetricsService {
         logger.debug("Cache miss recorded for cache: {}", safeCacheName);
     }
 
-    /**
-     * Record a cache eviction
-     * @param cacheName Name of the cache (e.g., "jwks", "rate-limiting", "public-keys")
-     * @param reason Reason for eviction (e.g., "expired", "size_limit", "manual")
-     */
     public void recordCacheEviction(String cacheName, String reason) {
         String safeCacheName = cacheName != null ? cacheName : "unknown";
         String safeReason = reason != null ? reason : "unknown";
@@ -1034,13 +902,6 @@ public class ApplicationMetricsService {
         logger.debug("Cache eviction recorded for cache: {}, reason: {}", safeCacheName, safeReason);
     }
 
-    // --- Rate Limiting Metrics ---
-
-    /**
-     * Record when rate limit is exceeded (client blocked)
-     * @param endpoint The endpoint being rate limited
-     * @param clientKey Anonymized client identifier
-     */
     public void recordRateLimitExceeded(String endpoint, String clientKey) {
         String safeEndpoint = endpoint != null ? sanitizeEndpoint(endpoint) : "unknown";
         String safeClientKey = clientKey != null ? clientKey : "unknown";
@@ -1054,11 +915,6 @@ public class ApplicationMetricsService {
 
     private final ConcurrentHashMap<String, AtomicLong> rateLimitRemainingGauges = new ConcurrentHashMap<>();
 
-    /**
-     * Update the remaining rate limit for a client/endpoint combination
-     * @param endpoint The endpoint
-     * @param remaining Number of requests remaining in the window
-     */
     public void updateRateLimitRemaining(String endpoint, int remaining) {
         String safeEndpoint = endpoint != null ? sanitizeEndpoint(endpoint) : "unknown";
         String gaugeKey = safeEndpoint;
@@ -1073,12 +929,6 @@ public class ApplicationMetricsService {
         }).set(remaining);
     }
 
-    // --- Token Validation Metrics ---
-
-    /**
-     * Record token validation result
-     * @param result The validation result: "success", "expired", "invalid", "malformed"
-     */
     public void recordTokenValidation(String result) {
         String safeResult = result != null ? result : "unknown";
         Counter.builder("app.token.validation.total")
@@ -1089,11 +939,6 @@ public class ApplicationMetricsService {
         logger.debug("Token validation recorded with result: {}", safeResult);
     }
 
-    /**
-     * Record token validation with additional context
-     * @param result The validation result: "success", "expired", "invalid", "malformed"
-     * @param tokenType Type of token: "access", "refresh", "id_token"
-     */
     public void recordTokenValidation(String result, String tokenType) {
         String safeResult = result != null ? result : "unknown";
         String safeTokenType = tokenType != null ? tokenType : "unknown";
@@ -1105,14 +950,6 @@ public class ApplicationMetricsService {
         logger.debug("Token validation recorded with result: {}, type: {}", safeResult, safeTokenType);
     }
 
-    // --- Content Sync Metrics ---
-
-    /**
-     * Record story sync request
-     * @param storiesRequested Number of stories client requested to check
-     * @param storiesReturned Number of stories returned (changed/new)
-     * @param durationMs Duration of the sync operation in milliseconds
-     */
     public void recordStorySync(int storiesRequested, int storiesReturned, long durationMs) {
         Counter.builder("app.stories.sync.requests")
                 .tags("stories_returned", categorizeCount(storiesReturned))
@@ -1129,9 +966,6 @@ public class ApplicationMetricsService {
                 storiesRequested, storiesReturned, durationMs);
     }
 
-    /**
-     * Categorize count for metrics to avoid high cardinality
-     */
     private String categorizeCount(int count) {
         if (count == 0) return "0";
         if (count <= 5) return "1-5";
@@ -1140,10 +974,6 @@ public class ApplicationMetricsService {
         return "50+";
     }
 
-    /**
-     * Record when a client skips sync because it's already up-to-date
-     * This happens when client version matches server version
-     */
     public void recordStorySyncSkipped() {
         Counter.builder("app.stories.sync.skipped")
                 .description("Number of sync requests skipped because client is up-to-date")
@@ -1153,14 +983,6 @@ public class ApplicationMetricsService {
         logger.debug("Story sync skipped metric recorded");
     }
 
-    // --- Response Size Metrics ---
-
-    /**
-     * Record response size for bandwidth monitoring
-     * @param endpoint The request endpoint
-     * @param method HTTP method
-     * @param sizeBytes Response size in bytes
-     */
     public void recordResponseSize(String endpoint, String method, long sizeBytes) {
         String safeEndpoint = endpoint != null ? sanitizeEndpoint(endpoint) : "unknown";
         String safeMethod = method != null ? method : "unknown";
@@ -1177,18 +999,11 @@ public class ApplicationMetricsService {
                 safeEndpoint, safeMethod, sizeBytes);
     }
 
-    // --- Startup Metrics ---
-
     private final AtomicLong startupTimeMs = new AtomicLong(0);
 
-    /**
-     * Record application startup time
-     * @param startupTimeMillis Time taken to start the application in milliseconds
-     */
     public void recordStartupTime(long startupTimeMillis) {
         startupTimeMs.set(startupTimeMillis);
 
-        // Create gauge if not already registered
         if (meterRegistry.find("app.startup.time").gauge() == null) {
             Gauge.builder("app.startup.time", startupTimeMs, AtomicLong::doubleValue)
                     .description("Application startup time in milliseconds")
@@ -1199,23 +1014,10 @@ public class ApplicationMetricsService {
         logger.info("Application startup time recorded: {}ms", startupTimeMillis);
     }
 
-    /**
-     * Get the recorded startup time
-     * @return Startup time in milliseconds
-     */
     public long getStartupTime() {
         return startupTimeMs.get();
     }
 
-    // --- Batch Sync Metrics ---
-
-    /**
-     * Record batch URL generation request
-     * @param urlsRequested Number of URLs requested
-     * @param urlsGenerated Number of URLs successfully generated
-     * @param urlsFailed Number of URLs that failed to generate
-     * @param durationMs Duration of the batch operation in milliseconds
-     */
     public void recordBatchUrlGeneration(int urlsRequested, int urlsGenerated, int urlsFailed, long durationMs) {
         Counter.builder("app.batch.urls.requests")
                 .tags("result", urlsFailed == 0 ? "success" : "partial")
@@ -1244,14 +1046,6 @@ public class ApplicationMetricsService {
                 urlsRequested, urlsGenerated, urlsFailed, durationMs);
     }
 
-    /**
-     * Record delta sync request
-     * @param clientVersion Client's content version
-     * @param serverVersion Server's content version
-     * @param storiesUpdated Number of stories that need updating
-     * @param storiesDeleted Number of stories that were deleted
-     * @param durationMs Duration of the delta sync operation in milliseconds
-     */
     public void recordDeltaSync(int clientVersion, int serverVersion, int storiesUpdated, int storiesDeleted, long durationMs) {
         boolean isUpToDate = storiesUpdated == 0 && storiesDeleted == 0;
 
@@ -1285,11 +1079,6 @@ public class ApplicationMetricsService {
                 clientVersion, serverVersion, storiesUpdated, storiesDeleted, durationMs);
     }
 
-    /**
-     * Record API call reduction achieved by batch processing
-     * @param traditionalCalls Number of API calls that would have been made without batching
-     * @param batchedCalls Number of API calls actually made with batching
-     */
     public void recordApiCallReduction(int traditionalCalls, int batchedCalls) {
         int callsSaved = traditionalCalls - batchedCalls;
         double reductionPercent = traditionalCalls > 0 ? (callsSaved * 100.0 / traditionalCalls) : 0;

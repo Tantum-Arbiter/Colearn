@@ -15,10 +15,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * Metrics Controller
- * Exposes custom application metrics
- */
 @RestController
 @RequestMapping("/actuator/custom")
 public class MetricsController {
@@ -35,31 +31,16 @@ public class MetricsController {
         this.meterRegistry = meterRegistry;
     }
 
-    /**
-     * Get application metrics summary
-     */
     @GetMapping("/metrics")
     public ResponseEntity<Map<String, Object>> getApplicationMetrics() {
         Map<String, Object> metrics = new HashMap<>();
-        
-        // Application metrics
         metrics.put("application", applicationMetricsService.getMetricsSummary());
-        
-        // Security metrics
         metrics.put("security", securityMonitoringService.getSecurityMetrics());
-        
-        // System metrics
         metrics.put("system", getSystemMetrics());
-        
-        // Timestamp
         metrics.put("timestamp", Instant.now().toString());
-        
         return ResponseEntity.ok(metrics);
     }
 
-    /**
-     * Get device and platform statistics
-     */
     @GetMapping("/devices")
     public ResponseEntity<Map<String, Object>> getDeviceMetrics() {
         Map<String, Object> deviceMetrics = new HashMap<>();
@@ -73,14 +54,9 @@ public class MetricsController {
         return ResponseEntity.ok(deviceMetrics);
     }
 
-    /**
-     * Get request statistics
-     */
     @GetMapping("/requests")
     public ResponseEntity<Map<String, Object>> getRequestMetrics() {
         Map<String, Object> requestMetrics = new HashMap<>();
-        
-        // Get request-related meters
         Map<String, Double> requests = meterRegistry.getMeters().stream()
                 .filter(meter -> meter.getId().getName().startsWith("app.requests"))
                 .collect(Collectors.toMap(
@@ -101,9 +77,6 @@ public class MetricsController {
         return ResponseEntity.ok(requestMetrics);
     }
 
-    /**
-     * Get authentication statistics
-     */
     @GetMapping("/authentication")
     public ResponseEntity<Map<String, Object>> getAuthenticationMetrics() {
         Map<String, Object> authMetrics = new HashMap<>();
@@ -130,9 +103,6 @@ public class MetricsController {
         return ResponseEntity.ok(authMetrics);
     }
 
-    /**
-     * Get error statistics
-     */
     @GetMapping("/errors")
     public ResponseEntity<Map<String, Object>> getErrorMetrics() {
         Map<String, Object> errorMetrics = new HashMap<>();
@@ -157,9 +127,6 @@ public class MetricsController {
         return ResponseEntity.ok(errorMetrics);
     }
 
-    /**
-     * Get performance statistics
-     */
     @GetMapping("/performance")
     public ResponseEntity<Map<String, Object>> getPerformanceMetrics() {
         Map<String, Object> performanceMetrics = new HashMap<>();
@@ -191,13 +158,8 @@ public class MetricsController {
         return ResponseEntity.ok(performanceMetrics);
     }
 
-    /**
-     * Get system metrics
-     */
     private Map<String, Object> getSystemMetrics() {
         Map<String, Object> systemMetrics = new HashMap<>();
-        
-        // JVM metrics
         Runtime runtime = Runtime.getRuntime();
         systemMetrics.put("jvm_memory_used", runtime.totalMemory() - runtime.freeMemory());
         systemMetrics.put("jvm_memory_free", runtime.freeMemory());
@@ -205,7 +167,6 @@ public class MetricsController {
         systemMetrics.put("jvm_memory_max", runtime.maxMemory());
         systemMetrics.put("jvm_processors", runtime.availableProcessors());
         
-        // System properties
         systemMetrics.put("java_version", System.getProperty("java.version"));
         systemMetrics.put("os_name", System.getProperty("os.name"));
         systemMetrics.put("os_arch", System.getProperty("os.arch"));
@@ -213,15 +174,10 @@ public class MetricsController {
         return systemMetrics;
     }
 
-    /**
-     * Health check for metrics system
-     */
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> getMetricsHealth() {
         Map<String, Object> health = new HashMap<>();
-        
         try {
-            // Check if metrics are being collected
             long meterCount = meterRegistry.getMeters().size();
             Map<String, Object> summary = applicationMetricsService.getMetricsSummary();
             

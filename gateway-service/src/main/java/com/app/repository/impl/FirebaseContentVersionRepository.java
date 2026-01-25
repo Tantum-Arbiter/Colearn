@@ -13,10 +13,6 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-/**
- * Firebase Firestore implementation of ContentVersionRepository
- * Uses singleton pattern with document ID "current"
- */
 @Repository
 public class FirebaseContentVersionRepository implements ContentVersionRepository {
 
@@ -104,14 +100,10 @@ public class FirebaseContentVersionRepository implements ContentVersionRepositor
         return CompletableFuture.supplyAsync(() -> {
             long startTime = System.currentTimeMillis();
             try {
-                // Get current version or create new one
                 Optional<ContentVersion> currentOpt = getCurrent().join();
                 ContentVersion version = currentOpt.orElse(new ContentVersion());
-
-                // Update checksum
                 version.updateStoryChecksum(storyId, checksum);
 
-                // Save updated version
                 DocumentReference docRef = firestore.collection(COLLECTION_NAME).document(CURRENT_DOC_ID);
                 ApiFuture<WriteResult> future = docRef.set(version);
 
@@ -138,7 +130,6 @@ public class FirebaseContentVersionRepository implements ContentVersionRepositor
         return CompletableFuture.supplyAsync(() -> {
             long startTime = System.currentTimeMillis();
             try {
-                // Get current version
                 Optional<ContentVersion> currentOpt = getCurrent().join();
                 if (currentOpt.isEmpty()) {
                     logger.warn("No content version found when trying to remove story checksum: {}", storyId);
@@ -148,7 +139,6 @@ public class FirebaseContentVersionRepository implements ContentVersionRepositor
                 ContentVersion version = currentOpt.get();
                 version.removeStoryChecksum(storyId);
 
-                // Save updated version
                 DocumentReference docRef = firestore.collection(COLLECTION_NAME).document(CURRENT_DOC_ID);
                 ApiFuture<WriteResult> future = docRef.set(version);
 

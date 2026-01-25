@@ -10,10 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Child profile model for Firebase Firestore
- * Represents a child's profile within a parent's account
- */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ChildProfile {
 
@@ -24,10 +20,10 @@ public class ChildProfile {
     private String name;
 
     @JsonProperty("avatar")
-    private String avatar; // "boy" or "girl" or custom avatar URL
+    private String avatar;
 
     @JsonProperty("ageRange")
-    private String ageRange; // e.g., "2-3", "4-5", "6+"
+    private String ageRange;
 
     @JsonProperty("isActive")
     private boolean isActive = true;
@@ -48,17 +44,11 @@ public class ChildProfile {
     private ScreenTimeData screenTime;
 
     @JsonProperty("favorites")
-    private List<String> favorites = new ArrayList<>(); // Story IDs
+    private List<String> favorites = new ArrayList<>();
 
-    /**
-     * COPPA COMPLIANCE WARNING: This field must NOT contain any PII.
-     * Only store anonymous, non-identifying technical data if needed.
-     * Currently unused - kept for future extensibility.
-     */
     @JsonProperty("metadata")
     private Map<String, Object> metadata = new HashMap<>();
 
-    // Default constructor
     public ChildProfile() {
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
@@ -67,7 +57,6 @@ public class ChildProfile {
         this.screenTime = new ScreenTimeData();
     }
 
-    // Constructor for new child
     public ChildProfile(String id, String name, String avatar) {
         this();
         this.id = id;
@@ -75,7 +64,6 @@ public class ChildProfile {
         this.avatar = avatar;
     }
 
-    // Getters and Setters
     public String getId() {
         return id;
     }
@@ -176,7 +164,6 @@ public class ChildProfile {
         this.metadata = metadata;
     }
 
-    // Helper methods
     public void addFavorite(String storyId) {
         if (this.favorites == null) {
             this.favorites = new ArrayList<>();
@@ -198,7 +185,6 @@ public class ChildProfile {
         return this.favorites != null && this.favorites.contains(storyId);
     }
 
-    // Nested classes
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ChildPreferences {
         @JsonProperty("favoriteColors")
@@ -208,7 +194,7 @@ public class ChildProfile {
         private List<String> favoriteAnimals = new ArrayList<>();
 
         @JsonProperty("difficultyLevel")
-        private String difficultyLevel = "beginner"; // "beginner", "intermediate", "advanced"
+        private String difficultyLevel = "beginner";
 
         @JsonProperty("autoplayEnabled")
         private boolean autoplayEnabled = true;
@@ -216,7 +202,6 @@ public class ChildProfile {
         @JsonProperty("subtitlesEnabled")
         private boolean subtitlesEnabled = false;
 
-        // Getters and Setters
         public List<String> getFavoriteColors() { return favoriteColors; }
         public void setFavoriteColors(List<String> favoriteColors) { this.favoriteColors = favoriteColors; }
 
@@ -256,7 +241,6 @@ public class ChildProfile {
         @JsonProperty("lastActivityAt")
         private Instant lastActivityAt;
 
-        // Getters and Setters
         public int getStoriesCompleted() { return storiesCompleted; }
         public void setStoriesCompleted(int storiesCompleted) { this.storiesCompleted = storiesCompleted; }
 
@@ -278,7 +262,6 @@ public class ChildProfile {
         public Instant getLastActivityAt() { return lastActivityAt; }
         public void setLastActivityAt(Instant lastActivityAt) { this.lastActivityAt = lastActivityAt; }
 
-        // Helper methods
         public void completeStory(String storyId) {
             if (completedStories == null) {
                 completedStories = new HashMap<>();
@@ -312,7 +295,6 @@ public class ChildProfile {
         @JsonProperty("sessions")
         private List<SessionData> sessions = new ArrayList<>();
 
-        // Getters and Setters
         public int getTodayMinutes() { return todayMinutes; }
         public void setTodayMinutes(int todayMinutes) { this.todayMinutes = todayMinutes; }
 
@@ -343,7 +325,6 @@ public class ChildProfile {
         @JsonProperty("activities")
         private List<String> activities = new ArrayList<>();
 
-        // Getters and Setters
         public Instant getStartTime() { return startTime; }
         public void setStartTime(Instant startTime) { this.startTime = startTime; }
 

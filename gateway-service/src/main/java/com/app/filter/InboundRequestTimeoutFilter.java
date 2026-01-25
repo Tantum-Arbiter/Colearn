@@ -24,10 +24,6 @@ import java.time.Instant;
 import java.util.UUID;
 import java.util.concurrent.*;
 
-/**
- * Enforces a global inbound request processing timeout.
- * Uses a small thread hand-off to enforce max processing time and returns GTW-504 on expiry.
- */
 @Component
 @Profile("!test")
 @Order(2) // after RequestIdFilter and MetricsFilter
@@ -40,7 +36,6 @@ public class InboundRequestTimeoutFilter extends OncePerRequestFilter {
     private final ObjectProvider<TestSimulationFlags> flagsProvider; // test-profile only, may be null
     private final ObjectMapper objectMapper;
 
-    // Wrap executor with DelegatingSecurityContextExecutorService to propagate SecurityContext
     private final ExecutorService executor = new DelegatingSecurityContextExecutorService(
         Executors.newCachedThreadPool(r -> {
             Thread t = new Thread(r, "gw-inbound-timeout");
@@ -80,7 +75,6 @@ public class InboundRequestTimeoutFilter extends OncePerRequestFilter {
             task.get(thresholdMs, TimeUnit.MILLISECONDS);
         } catch (java.util.concurrent.TimeoutException e) {
             task.cancel(true);
-            // If nothing written yet, send 504 with GTW-504
             if (!response.isCommitted()) {
                 String requestId = extractRequestId(request);
                 logger.error("Inbound request timeout [requestId={}, method={}, path={}, thresholdMs={}]",
@@ -88,7 +82,6 @@ public class InboundRequestTimeoutFilter extends OncePerRequestFilter {
                 writeTimeoutResponse(response, request, requestId);
             }
         } catch (ExecutionException ee) {
-            // Bubble up underlying exception to standard handlers
             Throwable cause = ee.getCause() != null ? ee.getCause() : ee;
             if (cause instanceof ServletException se) throw se;
             if (cause instanceof IOException ioe) throw ioe;

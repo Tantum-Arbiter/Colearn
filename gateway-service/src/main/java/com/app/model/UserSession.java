@@ -10,15 +10,11 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * User session model for Firebase Firestore
- * Tracks active user sessions and refresh tokens
- */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class UserSession {
 
     @JsonProperty("id")
-    private String id; // Session ID
+    private String id;
 
     @JsonProperty("userId")
     private String userId;
@@ -30,10 +26,10 @@ public class UserSession {
     private String deviceId;
 
     @JsonProperty("deviceType")
-    private String deviceType; // "mobile", "tablet", "desktop"
+    private String deviceType;
 
     @JsonProperty("platform")
-    private String platform; // "ios", "android", "web"
+    private String platform;
 
     @JsonProperty("appVersion")
     private String appVersion;
@@ -53,33 +49,23 @@ public class UserSession {
     @JsonProperty("revokedAt")
     private Instant revokedAt;
 
-    /**
-     * COPPA COMPLIANCE WARNING: This field must NOT contain any PII.
-     * Only store anonymous, non-identifying technical data if needed.
-     * Currently unused - kept for future extensibility.
-     */
     @JsonProperty("metadata")
     private Map<String, Object> metadata = new HashMap<>();
 
-    // Default constructor
     public UserSession() {
         this.createdAt = Instant.now();
         this.lastAccessedAt = Instant.now();
     }
 
-    // Constructor for new session
     public UserSession(String id, String userId, String refreshToken, String deviceId) {
         this();
         this.id = id;
         this.userId = userId;
         this.refreshToken = refreshToken;
         this.deviceId = deviceId;
-
-        // Set expiration to 7 days from now (default refresh token expiry)
         this.expiresAt = Instant.now().plusSeconds(7 * 24 * 60 * 60);
     }
 
-    // Getters and Setters
     public String getId() {
         return id;
     }
@@ -184,7 +170,6 @@ public class UserSession {
         this.metadata = metadata;
     }
 
-    // Helper methods - excluded from Firestore serialization (computed properties)
     @Exclude
     @JsonIgnore
     public boolean isExpired() {

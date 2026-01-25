@@ -5,10 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Response DTO for batch URL generation endpoint.
- * Returns signed URLs for requested assets and lists any that failed.
- */
 public class BatchUrlsResponse {
 
     @JsonProperty("urls")
@@ -46,9 +42,6 @@ public class BatchUrlsResponse {
         this.failed.add(path);
     }
 
-    /**
-     * Individual URL entry with path, signed URL, and expiration time.
-     */
     public static class UrlEntry {
         @JsonProperty("path")
         private String path;

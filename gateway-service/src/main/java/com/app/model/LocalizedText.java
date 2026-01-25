@@ -6,14 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-/**
- * Represents localized text content for stories.
- * Stores translations for multiple languages.
- *
- * Supported languages: en (English), pl (Polish), es (Spanish), de (German),
- * fr (French), it (Italian), pt (Portuguese), ja (Japanese), ar (Arabic),
- * tr (Turkish), nl (Dutch), da (Danish), la (Latin), zh (Simplified Chinese)
- */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class LocalizedText {
 
@@ -59,15 +51,12 @@ public class LocalizedText {
     @JsonProperty("zh")
     private String zh;
 
-    // Default constructor
     public LocalizedText() {}
 
-    // Constructor with English only (fallback)
     public LocalizedText(String en) {
         this.en = en;
     }
 
-    // Constructor with all languages
     public LocalizedText(String en, String pl, String es, String de, String fr, String it,
                          String pt, String ja, String ar, String tr, String nl, String da,
                          String la, String zh) {
@@ -87,13 +76,6 @@ public class LocalizedText {
         this.zh = zh;
     }
 
-    /**
-     * Get text for the specified language code.
-     * Falls back to English if the requested language is not available.
-     *
-     * @param languageCode ISO 639-1 language code (e.g., "en", "pl", "es", "de", "fr", "it", etc.)
-     * @return The localized text, or English fallback, or null if no text available
-     */
     public String getText(String languageCode) {
         if (languageCode == null) {
             return en;
@@ -132,9 +114,6 @@ public class LocalizedText {
         }
     }
 
-    /**
-     * Convert to a Map for Firestore storage
-     */
     public Map<String, String> toMap() {
         Map<String, String> map = new HashMap<>();
         if (en != null) map.put("en", en);
@@ -154,9 +133,6 @@ public class LocalizedText {
         return map;
     }
 
-    /**
-     * Create from a Map (from Firestore)
-     */
     public static LocalizedText fromMap(Map<String, String> map) {
         if (map == null) return null;
         LocalizedText text = new LocalizedText();
@@ -177,7 +153,6 @@ public class LocalizedText {
         return text;
     }
 
-    // Getters and Setters
     public String getEn() { return en; }
     public void setEn(String en) { this.en = en; }
 

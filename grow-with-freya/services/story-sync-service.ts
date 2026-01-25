@@ -17,11 +17,6 @@ const STORAGE_KEY = 'story_sync_metadata';
 const extra = Constants.expoConfig?.extra || {};
 const GATEWAY_URL = extra.gatewayUrl || process.env.EXPO_PUBLIC_GATEWAY_URL || 'http://localhost:8080';
 
-/**
- * Convert relative asset paths to absolute URLs
- * If the path is already a full URL, return as-is
- * If the path is a number (require() result), return as-is for local images
- */
 function resolveAssetUrl(path: string | number | undefined): string | number | undefined {
   if (path === undefined || path === null) return undefined;
 
@@ -44,15 +39,8 @@ function resolveAssetUrl(path: string | number | undefined): string | number | u
   return `${GATEWAY_URL}/${path}`;
 }
 
-/**
- * Service for syncing story metadata from backend with delta-sync
- * Visual assets (images, audio) remain in local asset packs
- */
 export class StorySyncService {
   
-  /**
-   * Get locally stored sync metadata
-   */
   static async getLocalSyncMetadata(): Promise<StorySyncMetadata | null> {
     try {
       const data = await AsyncStorage.getItem(STORAGE_KEY);
@@ -66,9 +54,6 @@ export class StorySyncService {
     }
   }
 
-  /**
-   * Save sync metadata to local storage
-   */
   static async saveSyncMetadata(metadata: StorySyncMetadata): Promise<void> {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(metadata));
@@ -83,10 +68,6 @@ export class StorySyncService {
     }
   }
 
-  /**
-   * Get current content version from backend
-   * @param clientVersion Optional client version to send for metrics tracking
-   */
   static async getContentVersion(clientVersion?: number): Promise<ContentVersion> {
     try {
       log.debug('Fetching content version from backend...');
@@ -102,9 +83,6 @@ export class StorySyncService {
     }
   }
 
-  /**
-   * Check if sync is needed by comparing local and server versions
-   */
   static async isSyncNeeded(): Promise<boolean> {
     try {
       log.info('[User Journey Flow 4: Story Sync] Step 1/12: Checking if CMS sync is needed...');
@@ -155,9 +133,6 @@ export class StorySyncService {
     }
   }
 
-  /**
-   * Helper to format bytes to human readable string
-   */
   private static formatBytes(bytes: number): string {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -166,10 +141,6 @@ export class StorySyncService {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
-  /**
-   * Perform delta-sync with backend
-   * Only downloads stories that have changed
-   */
   static async syncStories(): Promise<Story[]> {
     try {
       const localMetadata = await this.getLocalSyncMetadata();
@@ -268,10 +239,6 @@ export class StorySyncService {
     }
   }
 
-  /**
-   * Resolve asset URLs in stories
-   * Ensures all image URLs are absolute, not relative
-   */
   private static resolveStoriesAssetUrls(stories: Story[]): Story[] {
     return stories.map(story => ({
       ...story,
@@ -291,10 +258,6 @@ export class StorySyncService {
     })) as Story[];
   }
 
-  /**
-   * Prefetch stories on login
-   * Performs initial sync or delta-sync based on local state
-   */
   static async prefetchStories(): Promise<Story[]> {
     try {
       log.debug('Prefetching stories...');
@@ -326,11 +289,6 @@ export class StorySyncService {
     }
   }
 
-  /**
-   * Get locally cached stories
-   * Returns empty array if no cache exists
-   * Ensures all asset URLs are resolved to absolute URLs
-   */
   static async getLocalStories(): Promise<Story[]> {
     try {
       const metadata = await this.getLocalSyncMetadata();
@@ -370,10 +328,6 @@ export class StorySyncService {
     }
   }
 
-  /**
-   * Clear local story cache
-   * Useful for testing or forcing a full re-sync
-   */
   static async clearCache(): Promise<void> {
     try {
       await AsyncStorage.removeItem(STORAGE_KEY);
@@ -385,9 +339,6 @@ export class StorySyncService {
     }
   }
 
-  /**
-   * Get sync status information
-   */
   static async getSyncStatus(): Promise<{
     hasLocalData: boolean;
     localVersion: number;
@@ -408,17 +359,8 @@ export class StorySyncService {
     };
   }
 
-  /**
-   * Result of prefetching cover images
-   */
   static lastPrefetchRemovedStories = false;
 
-  /**
-   * Get cover image paths for all stories
-   * Note: With the unified cache architecture, all assets are downloaded by BatchSyncService
-   * during sync. This method now just returns the cover image paths from local stories.
-   * Returns a map of storyId -> coverImagePath for instant display
-   */
   static async prefetchCoverImages(): Promise<Map<string, string>> {
     const cachedPaths = new Map<string, string>();
     this.lastPrefetchRemovedStories = false;
@@ -446,10 +388,6 @@ export class StorySyncService {
     }
   }
 
-  /**
-   * Remove stories from local cache
-   * Called when story assets are no longer available on the server
-   */
   private static async removeStoriesFromCache(storyIds: string[]): Promise<void> {
     try {
       const metadata = await this.getLocalSyncMetadata();
@@ -475,9 +413,6 @@ export class StorySyncService {
     }
   }
 
-  /**
-   * Save cached cover paths to AsyncStorage for instant access
-   */
   private static async saveCachedCoverPaths(paths: Map<string, string>): Promise<void> {
     try {
       const obj = Object.fromEntries(paths);
@@ -487,10 +422,6 @@ export class StorySyncService {
     }
   }
 
-  /**
-   * Get cached cover path for a story
-   * Returns the local file path if cached, otherwise the remote URL
-   */
   static async getCachedCoverPath(storyId: string, remoteUrl: string): Promise<string> {
     try {
       const data = await AsyncStorage.getItem('cached_cover_paths');
@@ -511,9 +442,6 @@ export class StorySyncService {
     return remoteUrl;
   }
 
-  /**
-   * Get all cached cover paths
-   */
   static async getAllCachedCoverPaths(): Promise<Record<string, string>> {
     try {
       const data = await AsyncStorage.getItem('cached_cover_paths');
@@ -526,10 +454,6 @@ export class StorySyncService {
     return {};
   }
 
-  /**
-   * Extract all image URLs from a story
-   * Used for cache invalidation when a story is updated
-   */
   private static extractImageUrls(story: Story): string[] {
     const urls: string[] = [];
 

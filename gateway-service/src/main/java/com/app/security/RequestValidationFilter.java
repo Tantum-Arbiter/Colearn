@@ -28,10 +28,6 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.UUID;
 
-/**
- * Request Validation Filter
- * Validates incoming requests for security threats and malicious patterns
- */
 @Component
 public class RequestValidationFilter extends OncePerRequestFilter {
 
@@ -48,9 +44,7 @@ public class RequestValidationFilter extends OncePerRequestFilter {
     }
 
 
-    // Suspicious patterns to detect
     private static final List<Pattern> SUSPICIOUS_PATTERNS = Arrays.asList(
-        // SQL Injection patterns (tightened to avoid false positives on plain English words like "update" or path segments like "/delete")
         Pattern.compile("(?i).*\\bunion\\b\\s+\\bselect\\b.*"),
         Pattern.compile("(?i).*\\bselect\\b\\s+.+\\bfrom\\b.*"),
         Pattern.compile("(?i).*\\binsert\\b\\s+\\binto\\b\\s+.+"),
@@ -59,54 +53,31 @@ public class RequestValidationFilter extends OncePerRequestFilter {
         Pattern.compile("(?i).*\\bdrop\\b\\s+(table|database|schema)\\b.*"),
         Pattern.compile("(?i).*\\balter\\b\\s+(table|database)\\b.*"),
         Pattern.compile("(?i).*\\bexec(ute)?\\b\\s+.+"),
-        // Common boolean-based SQLi e.g. 1' OR '1'='1 or OR 1=1
         Pattern.compile("(?i).*(\\bor\\b\\s*\\d+\\s*=\\s*\\d+).*"),
         Pattern.compile("(?i).*(\\bor\\b\\s*'[^']*'\\s*=\\s*'[^']*').*"),
-        // SQL comment-based injection like admin'-- (only when preceded by a quote to avoid false positives on JWT tokens)
         Pattern.compile("(?i).*'\\s*--.*"),
-        // SQL comment tokens only when they appear in suspicious contexts (not in base64/JWT tokens)
-        // This pattern looks for -- or # followed by SQL keywords or at end of line after suspicious chars
         Pattern.compile("(?i).*(--|#)\\s*(select|union|drop|delete|insert|update|from|where|exec).*"),
         Pattern.compile("(?i).*(/\\*|\\*/).*"),
-
-        // XSS patterns
         Pattern.compile("(?i).*(script|javascript|vbscript|onload|onerror|onclick).*"),
         Pattern.compile("(?i).*(<|>|&lt;|&gt;|%3C|%3E).*"),
         Pattern.compile("(?i).*(<script|</script|<iframe|</iframe|<object|</object).*"),
         Pattern.compile("(?i).*(alert\\(|confirm\\(|prompt\\().*"),
-
-        // Path traversal patterns
         Pattern.compile(".*(\\.\\.[\\\\/]|[\\\\/]\\.\\.[\\\\/]|\\.\\.%2f|%2f\\.\\.%2f).*"),
-
-        // Command injection patterns (exclude single '&' to avoid false positives like 'Jack & Jill')
         Pattern.compile("(?i).*(;|\\||`|\\$\\(|\\$\\{).*"),
-        // Explicitly catch logical AND operator used in command chaining (e.g., '&& rm -rf /')
         Pattern.compile(".*&&.*"),
-        // Explicit 'rm -rf' destructive command pattern
         Pattern.compile("(?i).*\\brm\\s+-rf\\b.*")
-        // Note: LDAP injection detection is handled contextually for 'filter' parameters
     );
 
-    // Maximum request size (1MB) to align with integration test expectations
     private static final long MAX_REQUEST_SIZE = 1 * 1024 * 1024;
-
-    // Maximum request size for asset/story sync endpoints (600KB)
-    // This allows ~10000 checksums (the DTO limit) but rejects excessive requests early
-    // Each checksum entry is ~55 bytes, so 10000 entries ≈ 550KB
     private static final long MAX_SYNC_REQUEST_SIZE = 600 * 1024;
-
-    // Rate limiting (simple implementation)
     private static final int MAX_REQUESTS_PER_MINUTE = 100;
 
-    // Master toggle to enable/disable the entire filter (gcp-dev can disable since Cloudflare WAF handles security)
     @Value("${app.security.request-validation.enabled:true}")
     private boolean filterEnabled = true;
 
-    // Toggle for inspecting JSON request bodies (test profile can disable)
     @Value("${app.security.request-validation.inspect-body:true}")
     private boolean inspectBodyEnabled = true;
 
-    // Toggle for validating headers for suspicious patterns (gcp-dev can disable to allow GCP infrastructure headers)
     @Value("${app.security.request-validation.validate-headers:true}")
     private boolean validateHeadersEnabled = true;
 

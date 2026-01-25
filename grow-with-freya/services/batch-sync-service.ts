@@ -11,9 +11,6 @@ const BATCH_URL_SIZE = 100;
 // Concurrent download limit
 const CONCURRENT_DOWNLOADS = 5;
 
-/**
- * Response from POST /api/assets/batch-urls endpoint
- */
 export interface BatchUrlsResponse {
   urls: Array<{
     path: string;
@@ -23,9 +20,6 @@ export interface BatchUrlsResponse {
   failed: string[]; // Paths that failed to generate URLs
 }
 
-/**
- * Response from GET /api/stories/delta endpoint
- */
 export interface DeltaSyncResponse {
   serverVersion: number;
   assetVersion: number;
@@ -37,9 +31,6 @@ export interface DeltaSyncResponse {
   lastUpdated: number;
 }
 
-/**
- * Sync statistics for monitoring
- */
 export interface BatchSyncStats {
   startTime: number;
   endTime: number;
@@ -57,9 +48,6 @@ export interface BatchSyncStats {
   errors: string[];
 }
 
-/**
- * Progress callback for batch sync
- */
 export interface BatchSyncProgress {
   phase: 'version-check' | 'fetching-delta' | 'batch-urls' | 'downloading' | 'complete' | 'skipped';
   progress: number; // 0-100
@@ -75,19 +63,6 @@ export interface BatchSyncProgress {
 
 export type BatchSyncProgressCallback = (progress: BatchSyncProgress) => void;
 
-/**
- * BatchSyncService - High-performance batch sync with 95%+ API call reduction
- * 
- * Key optimizations:
- * 1. Single version check instead of per-story checks
- * 2. Delta sync - only fetch changed stories
- * 3. Batch URL signing - 100 URLs per request instead of 1
- * 4. Parallel asset downloads with concurrency limit
- * 
- * API Call Flow:
- * Before: Version + Story1 + Story2 + ... + Asset1 + Asset2 + ... = 180+ calls
- * After:  Version + Delta + BatchURLs (×N) = 3-6 calls (95%+ reduction)
- */
 export class BatchSyncService {
   
   // Sync lock to prevent concurrent sync operations
@@ -121,9 +96,6 @@ export class BatchSyncService {
     }
   }
 
-  /**
-   * Internal batch sync implementation
-   */
   private static async executeBatchSync(
     onProgress?: BatchSyncProgressCallback
   ): Promise<BatchSyncStats> {
@@ -275,9 +247,6 @@ export class BatchSyncService {
     }
   }
 
-  /**
-   * Helper to format bytes to human readable string
-   */
   private static formatBytes(bytes: number): string {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -286,10 +255,6 @@ export class BatchSyncService {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
-  /**
-   * Fetch delta content from server
-   * Only returns stories that have changed since last sync
-   */
   private static async fetchDeltaContent(
     versionCheck: VersionCheckResult
   ): Promise<DeltaSyncResponse> {
@@ -317,10 +282,6 @@ export class BatchSyncService {
     return response;
   }
 
-  /**
-   * Extract all asset paths from stories
-   * Returns normalized paths (without "assets/" prefix for GCS compatibility)
-   */
   private static extractAssetPaths(stories: Story[]): string[] {
     const assets: Set<string> = new Set();
 
@@ -354,9 +315,6 @@ export class BatchSyncService {
     return Array.from(assets);
   }
 
-  /**
-   * Normalize asset path for GCS (remove "assets/" prefix if present)
-   */
   private static normalizePath(path: string): string {
     if (path.startsWith('assets/')) {
       return path.substring(7);
@@ -364,9 +322,6 @@ export class BatchSyncService {
     return path;
   }
 
-  /**
-   * Filter out assets that are already cached
-   */
   private static async filterUncachedAssets(assetPaths: string[]): Promise<string[]> {
     const uncached: string[] = [];
 
@@ -380,10 +335,6 @@ export class BatchSyncService {
     return uncached;
   }
 
-  /**
-   * Get batch signed URLs for multiple assets
-   * Batches requests into groups of BATCH_URL_SIZE (50) to reduce API calls
-   */
   private static async getBatchSignedUrls(
     assetPaths: string[]
   ): Promise<{ urls: Array<{ path: string; signedUrl: string }>; failed: string[]; apiCalls: number }> {
@@ -422,9 +373,6 @@ export class BatchSyncService {
     return { urls: allUrls, failed: allFailed, apiCalls };
   }
 
-  /**
-   * Download assets in parallel with concurrency limit
-   */
   private static async downloadAssetsInBatches(
     urls: Array<{ path: string; signedUrl: string }>,
     onProgress?: (current: number, total: number) => void
@@ -481,16 +429,10 @@ export class BatchSyncService {
     return { downloaded, failed, bytesDownloaded, errors };
   }
 
-  /**
-   * Check if a sync is currently in progress
-   */
   static isSyncInProgress(): boolean {
     return this.isSyncing;
   }
 
-  /**
-   * Quick check if sync is needed (without performing sync)
-   */
   static async isSyncNeeded(): Promise<boolean> {
     const versionCheck = await VersionManager.checkVersions();
     return versionCheck.needsStorySync || versionCheck.needsAssetSync;

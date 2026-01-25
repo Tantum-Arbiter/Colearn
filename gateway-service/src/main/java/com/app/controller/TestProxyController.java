@@ -29,11 +29,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
-/**
- * Test-only proxy controller that forwards specific API groups to WireMock.
- * This lets functional tests hit the gateway base URL while responses are
- * served by WireMock mappings.
- */
 @RestController
 @Profile("test")
 public class TestProxyController {
@@ -70,16 +65,13 @@ public class TestProxyController {
     public ResponseEntity<String> authMe(HttpServletRequest request) {
         String auth = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (auth != null && auth.startsWith("Bearer valid-")) {
-            // Trigger provider userinfo call in WireMock so tests can verify it
             try {
                 HttpHeaders headers = new HttpHeaders();
                 headers.set(HttpHeaders.AUTHORIZATION, auth);
                 headers.set("X-Request-Id", resolveRequestId(request));
                 RequestEntity<Void> req = new RequestEntity<>(headers, HttpMethod.GET, URI.create(wiremockBaseUrl + "/oauth2/v2/userinfo"));
                 defaultRestTemplate.exchange(req, String.class);
-            } catch (Exception ignored) {
-                // ignore errors from mock call; we only need the side effect for verification
-            }
+            } catch (Exception ignored) { }
             String json = "{\"id\":\"user-123\",\"email\":\"test.user@example.com\",\"name\":\"Test User\",\"provider\":\"google\"}";
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(json);
         }
@@ -111,7 +103,6 @@ public class TestProxyController {
         }
 
 
-        // Test override: if tests mark the system as overloaded, short-circuit with 503 for the specific path
         TestSimulationFlags simFlags = flagsProvider != null ? flagsProvider.getIfAvailable() : null;
         if (simFlags != null && simFlags.isOverloaded() && method == HttpMethod.GET && "/api/users/profile".equals(originalPath)) {
             String body = "{\"success\":false,\"errorCode\":\"GTW-509\",\"error\":\"System is currently overloaded\"}";
@@ -121,12 +112,10 @@ public class TestProxyController {
         }
 
         HttpHeaders headers = new HttpHeaders();
-        // Copy selected headers that matter for mappings and auth
         copyHeader(request, headers, HttpHeaders.AUTHORIZATION);
         copyHeader(request, headers, HttpHeaders.CONTENT_TYPE);
         copyHeader(request, headers, HttpHeaders.ACCEPT);
         copyHeader(request, headers, "X-Test-Scenario");
-        // Ensure request ID is always present and propagated downstream
         headers.set("X-Request-Id", resolveRequestId(request));
 
         byte[] requestBody = null;
@@ -134,7 +123,6 @@ public class TestProxyController {
             try {
                 requestBody = StreamUtils.copyToByteArray(request.getInputStream());
             } catch (IllegalStateException ise) {
-                // Fallback when another filter already consumed the reader
                 StringBuilder sb = new StringBuilder();
                 try (java.io.BufferedReader br = request.getReader()) {
                     char[] buf = new char[1024];
@@ -151,9 +139,7 @@ public class TestProxyController {
         RequestEntity<byte[]> reqEntity = new RequestEntity<>(requestBody, headers, method, URI.create(targetUrl));
         logger.debug("Proxying {} {} -> {}", method, originalPath, targetUrl);
 
-        // Resolve per-request timeout (test flags override if present)
         Duration timeout = resolveTimeout();
-        // Use the injected RestTemplate (preconfigured per profile) instead of building a new one
         RestTemplate rt = client;
 
         CircuitBreaker cb = circuitBreakerRegistry.circuitBreaker(breakerName);
@@ -208,17 +194,14 @@ public class TestProxyController {
             }
 
             if (cause instanceof CallNotPermittedException cnp) {
-                // Propagate the Resilience4j exception so the GlobalExceptionHandler maps it to 503/GTW-209
                 throw cnp;
             }
 
             if (cause instanceof java.util.concurrent.TimeoutException) {
                 TestSimulationFlags flags = flagsProvider != null ? flagsProvider.getIfAvailable() : null;
                 if (flags != null && flags.getGatewayTimeoutMs() != null && flags.getGatewayTimeoutMs() > 0) {
-                    // Treat as gateway-level timeout (GTW-504)
                     throw new TimeoutException("Timeout after " + elapsed + "ms calling " + serviceName + " " + originalPath);
                 }
-                // Treat as downstream timeout (GTW-204)
                 throw DownstreamServiceException.timeout(serviceName, originalPath, elapsed);
             }
 
@@ -230,7 +213,6 @@ public class TestProxyController {
                 throw DownstreamServiceException.timeout(serviceName, originalPath, elapsed);
             }
 
-            // Unknown exception - map to generic downstream service error (502)
             throw new DownstreamServiceException(
                     com.app.exception.ErrorCode.SERVICE_TEMPORARILY_UNAVAILABLE,
                     "Downstream call failed: " + cause.getClass().getSimpleName(),
@@ -267,8 +249,6 @@ public class TestProxyController {
 
     private void copyHeader(HttpServletRequest request, String name) {
         String value = request.getHeader(name);
-        if (value != null) {
-            // Non-standard header passthrough
-        }
+        if (value != null) { }
     }
 }

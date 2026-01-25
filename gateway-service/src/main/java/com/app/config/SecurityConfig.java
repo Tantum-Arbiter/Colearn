@@ -33,20 +33,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Security Configuration
- * Enterprise-grade security with JWT authentication and CORS
- */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
 
-    /**
-     * Configure SecurityContext to use MODE_INHERITABLETHREADLOCAL
-     * This ensures the security context is propagated to child threads (e.g., async request processing)
-     */
     @PostConstruct
     public void init() {
         SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
@@ -94,12 +86,10 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // Use Environment.getActiveProfiles() for reliable profile detection
         String[] activeProfiles = environment.getActiveProfiles();
         String profilesStr = String.join(",", activeProfiles);
         logger.info("SecurityConfig initializing with activeProfiles=[{}]", profilesStr);
 
-        // Check if any active profile contains "dev" or "test"
         boolean isTestOrDevProfile = false;
         boolean isProdProfile = false;
         for (String profile : activeProfiles) {
@@ -112,83 +102,51 @@ public class SecurityConfig {
             }
         }
 
-        // Default to prod-like security if no profiles are active
         if (activeProfiles.length == 0) {
-            logger.warn("No active profiles detected - defaulting to production security (blocking /private/**)");
+            logger.warn("No active profiles - defaulting to production security");
             isProdProfile = true;
         }
 
-        logger.info("SecurityConfig profile detection: isTestOrDevProfile={}, isProdProfile={}", isTestOrDevProfile, isProdProfile);
+        logger.debug("Profile detection: isTestOrDev={}, isProd={}", isTestOrDevProfile, isProdProfile);
 
-        // Final decision: allow private endpoints only if dev/test and NOT prod
         final boolean allowPrivateEndpoints = isTestOrDevProfile && !isProdProfile;
-        logger.info("SecurityConfig decision: allowPrivateEndpoints={}", allowPrivateEndpoints);
+        logger.info("allowPrivateEndpoints={}", allowPrivateEndpoints);
 
         http
-            // Disable CSRF for stateless API
             .csrf(csrf -> csrf.disable())
-
-            // Configure CORS
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-            // Stateless session management
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-            // Disable anonymous authentication so missing/invalid JWT yields 401 (not 403)
             .anonymous(anon -> anon.disable())
-
-            // Disable form login and HTTP basic
             .formLogin(form -> form.disable())
             .httpBasic(basic -> basic.disable())
-
-            // Configure authorization rules
             .authorizeHttpRequests(auth -> {
-                // Internal/private endpoints
-                // In test/dev profiles: accessible for functional testing and debugging
-                // In production: blocked from external clients (use GCP IAP or VPC for internal access)
                 if (allowPrivateEndpoints) {
-                    logger.info("Non-prod profile - allowing access to /private/**, /actuator/**, /health/**");
+                    logger.info("Non-prod: allowing /private/**, /actuator/**, /health/**");
                     auth.requestMatchers("/private/**").permitAll();
                     auth.requestMatchers("/actuator/**").permitAll();
                     auth.requestMatchers("/health/**").permitAll();
                 } else {
-                    logger.info("Production profile - blocking access to /private/**, /actuator/**, /health/**");
+                    logger.info("Prod: blocking /private/**, /actuator/**, /health/**");
                     auth.requestMatchers("/private/**").denyAll();
                     auth.requestMatchers("/actuator/**").denyAll();
                     auth.requestMatchers("/health/**").denyAll();
                 }
-
-                // Auth endpoints - accessible for login flow
-                // Protected by client validation filter + rate limiting
                 auth.requestMatchers("/auth/**").permitAll();
-
-                // Root endpoint - minimal info only
                 auth.requestMatchers("/").permitAll();
-
-                // Protected API endpoints - require valid JWT
                 auth.requestMatchers("/api/**").authenticated();
-
-                // All other requests denied
                 auth.anyRequest().denyAll();
             })
-
-            // Add metrics first so we record even when security short-circuits
             .addFilterBefore(metricsFilter, UsernamePasswordAuthenticationFilter.class)
-            // Add security filters in order
             .addFilterBefore(securityHeadersFilter, UsernamePasswordAuthenticationFilter.class)
-            // Validate requests first, then apply rate limiting
             .addFilterBefore(requestValidationFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-
-            // Exception handling to return standardized JSON for 401/403
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint((request, response, authEx) -> {
                     try {
                         String authHeader = request.getHeader("Authorization");
                         boolean malformedAuth = authHeader != null && !authHeader.startsWith("Bearer ");
 
-                        // Prefer specific auth error code set by filters
                         Object attr = request.getAttribute("AUTH_ERROR_CODE");
                         ErrorCode code = attr instanceof ErrorCode
                                 ? (ErrorCode) attr
@@ -238,8 +196,6 @@ public class SecurityConfig {
                     }
                 })
             )
-
-            // Security headers
             .headers(headers -> headers
                 .frameOptions(frameOptions -> frameOptions.deny())
                 .contentTypeOptions(Customizer.withDefaults())
@@ -252,7 +208,6 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // Prevent duplicate registration of MetricsFilter as a servlet filter
     @Bean
     public FilterRegistrationBean<MetricsFilter> metricsFilterRegistration(MetricsFilter filter) {
         FilterRegistrationBean<MetricsFilter> registration = new FilterRegistrationBean<>(filter);
@@ -262,24 +217,13 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        logger.info("Configuring CORS with origins from application.yml");
+        logger.debug("Configuring CORS with origins: {}", allowedOrigins);
 
         CorsConfiguration configuration = new CorsConfiguration();
-
-        // Use origins from application.yml (environment-specific)
         configuration.setAllowedOriginPatterns(allowedOrigins);
-        logger.info("CORS allowed origins: {}", allowedOrigins);
-
-        // Use methods from application.yml
         configuration.setAllowedMethods(allowedMethods);
-
-        // Use headers from application.yml
         configuration.setAllowedHeaders(allowedHeaders);
-
-        // Use credentials setting from application.yml
         configuration.setAllowCredentials(allowCredentials);
-
-        // Use max age from application.yml
         configuration.setMaxAge(maxAge);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

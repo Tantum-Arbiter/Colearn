@@ -9,17 +9,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * Security Monitoring Service
- * Tracks security events and provides monitoring capabilities
- */
 @Service
 public class SecurityMonitoringService {
 
     private static final Logger logger = LoggerFactory.getLogger(SecurityMonitoringService.class);
     private static final Logger auditLogger = LoggerFactory.getLogger("AUDIT");
 
-    // Security event counters
     private final AtomicLong successfulLogins = new AtomicLong(0);
     private final AtomicLong failedLogins = new AtomicLong(0);
     private final AtomicLong suspiciousRequests = new AtomicLong(0);
@@ -27,9 +22,6 @@ public class SecurityMonitoringService {
     private final AtomicLong tokenRefreshes = new AtomicLong(0);
     private final AtomicLong tokenRevocations = new AtomicLong(0);
 
-    /**
-     * Log successful authentication
-     */
     public void logSuccessfulAuthentication(String userId, String provider) {
         successfulLogins.incrementAndGet();
 
@@ -42,9 +34,6 @@ public class SecurityMonitoringService {
         auditLogger.info("Authentication successful: {}", auditData);
     }
 
-    /**
-     * Log failed authentication attempt
-     */
     public void logFailedAuthentication(String reason) {
         failedLogins.incrementAndGet();
 
@@ -56,9 +45,6 @@ public class SecurityMonitoringService {
         auditLogger.warn("Authentication failed: {}", auditData);
     }
 
-    /**
-     * Log suspicious request
-     */
     public void logSuspiciousRequest(String requestUri, String reason) {
         suspiciousRequests.incrementAndGet();
 
@@ -71,9 +57,6 @@ public class SecurityMonitoringService {
         auditLogger.warn("Suspicious request detected: {}", auditData);
     }
 
-    /**
-     * Log rate limit violation
-     */
     public void logRateLimitViolation(String clientKey, String requestUri) {
         rateLimitViolations.incrementAndGet();
 
@@ -86,9 +69,6 @@ public class SecurityMonitoringService {
         auditLogger.warn("Rate limit violation: {}", auditData);
     }
 
-    /**
-     * Log token refresh
-     */
     public void logTokenRefresh(String userId) {
         tokenRefreshes.incrementAndGet();
 
@@ -100,9 +80,6 @@ public class SecurityMonitoringService {
         auditLogger.info("Token refreshed: {}", auditData);
     }
 
-    /**
-     * Log token revocation
-     */
     public void logTokenRevocation(String userId, String reason) {
         tokenRevocations.incrementAndGet();
 
@@ -115,9 +92,6 @@ public class SecurityMonitoringService {
         auditLogger.info("Token revoked: {}", auditData);
     }
 
-    /**
-     * Get security metrics
-     */
     public Map<String, Object> getSecurityMetrics() {
         Map<String, Object> metrics = new HashMap<>();
         metrics.put("successfulLogins", successfulLogins.get());

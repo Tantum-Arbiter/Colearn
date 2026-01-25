@@ -9,13 +9,6 @@ import org.springframework.stereotype.Component;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
-/**
- * URL generation strategy for Cloudflare CDN.
- * Active when 'cdn' profile is enabled.
- * 
- * Cloudflare caches assets at edge locations, reducing GCS egress costs
- * and improving latency for global users.
- */
 @Component
 @Profile("cdn")
 public class CdnUrlStrategy implements UrlGenerationStrategy {

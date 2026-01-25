@@ -52,7 +52,6 @@ public class PrivateEndpointsController {
     public ResponseEntity<Map<String, Object>> healthcheck() {
         Map<String, Object> resp = new LinkedHashMap<>();
 
-        // Check downstream services (may be null if not configured)
         FirestoreHealthIndicator firestoreIndicator = firestoreHealthIndicatorProvider.getIfAvailable();
         GcsHealthIndicator gcsIndicator = gcsHealthIndicatorProvider.getIfAvailable();
 
@@ -63,12 +62,10 @@ public class PrivateEndpointsController {
                 ? gcsIndicator.health()
                 : Health.unknown().withDetail("reason", "GCS health indicator not available").build();
 
-        // Build downstream status map
         Map<String, Object> downstreams = new LinkedHashMap<>();
         downstreams.put("firestore", buildHealthDetails(firestoreHealth));
         downstreams.put("gcs", buildHealthDetails(gcsHealth));
 
-        // Determine overall status - DOWN if any downstream is DOWN, UNKNOWN counts as UP for startup
         boolean allUp = (firestoreHealth.getStatus().equals(Status.UP) || firestoreHealth.getStatus().equals(Status.UNKNOWN))
                 && (gcsHealth.getStatus().equals(Status.UP) || gcsHealth.getStatus().equals(Status.UNKNOWN));
 
@@ -77,7 +74,6 @@ public class PrivateEndpointsController {
         resp.put("status", overallStatus);
         resp.put("downstreams", downstreams);
 
-        // Return 503 if any downstream is down
         if (!allUp) {
             return ResponseEntity.status(503).body(resp);
         }
@@ -103,7 +99,6 @@ public class PrivateEndpointsController {
 
     @GetMapping(value = "/metrics", produces = MediaType.TEXT_PLAIN_VALUE)
     public ResponseEntity<String> metrics() {
-        // Use the endpoint to list metric names and render as plain text for test expectations
         Set<String> set = metricsEndpoint.listNames().getNames();
         String body = String.join("\n", set);
         return ResponseEntity.ok(body);

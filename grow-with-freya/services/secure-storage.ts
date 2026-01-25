@@ -1,18 +1,11 @@
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
-/**
- * Secure storage service for sensitive data like authentication tokens
- * Uses expo-secure-store which provides encrypted storage on both iOS and Android
- */
 export class SecureStorage {
   private static readonly ACCESS_TOKEN_KEY = 'auth_access_token';
   private static readonly REFRESH_TOKEN_KEY = 'auth_refresh_token';
   private static readonly USER_DATA_KEY = 'auth_user_data';
 
-  /**
-   * Store authentication tokens securely
-   */
   static async storeTokens(accessToken: string, refreshToken: string): Promise<void> {
     try {
       await Promise.all([
@@ -25,9 +18,6 @@ export class SecureStorage {
     }
   }
 
-  /**
-   * Get access token from secure storage
-   */
   static async getAccessToken(): Promise<string | null> {
     try {
       return await SecureStore.getItemAsync(this.ACCESS_TOKEN_KEY);
@@ -37,9 +27,6 @@ export class SecureStorage {
     }
   }
 
-  /**
-   * Get refresh token from secure storage
-   */
   static async getRefreshToken(): Promise<string | null> {
     try {
       return await SecureStore.getItemAsync(this.REFRESH_TOKEN_KEY);
@@ -49,9 +36,6 @@ export class SecureStorage {
     }
   }
 
-  /**
-   * Store user data securely
-   */
   static async storeUserData(userData: {
     id: string;
     email: string;
@@ -66,9 +50,6 @@ export class SecureStorage {
     }
   }
 
-  /**
-   * Get user data from secure storage
-   */
   static async getUserData(): Promise<{
     id: string;
     email: string;
@@ -84,9 +65,6 @@ export class SecureStorage {
     }
   }
 
-  /**
-   * Clear all authentication data (logout)
-   */
   static async clearAuthData(): Promise<void> {
     try {
       await Promise.all([
@@ -100,9 +78,6 @@ export class SecureStorage {
     }
   }
 
-  /**
-   * Check if user is authenticated (has valid tokens)
-   */
   static async isAuthenticated(): Promise<boolean> {
     try {
       const accessToken = await this.getAccessToken();

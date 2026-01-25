@@ -5,9 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Map;
 
-/**
- * Standardized error response format for the Gateway Service
- */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ErrorResponse {
     
@@ -42,8 +39,6 @@ public class ErrorResponse {
         this.error = error;
         this.message = message;
     }
-    
-    // Getters and Setters
     
     public boolean isSuccess() {
         return success;

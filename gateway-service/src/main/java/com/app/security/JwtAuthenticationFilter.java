@@ -23,10 +23,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * JWT Authentication Filter
- * Validates JWT tokens and sets authentication context
- */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -55,13 +51,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        // Respect skip logic even when tests call doFilterInternal() directly
         if (shouldNotFilter(request)) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // If an authenticated context already exists, do not attempt to re-authenticate
         if (SecurityContextHolder.getContext().getAuthentication() != null &&
             SecurityContextHolder.getContext().getAuthentication().isAuthenticated()) {
             filterChain.doFilter(request, response);
@@ -75,12 +69,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 validateAndSetAuthentication(request, token);
             }
         } catch (com.auth0.jwt.exceptions.TokenExpiredException te) {
-            // Mark request with specific auth error for entry point to render GTW-005
             request.setAttribute("AUTH_ERROR_CODE", com.app.exception.ErrorCode.TOKEN_EXPIRED);
             recordTokenValidationMetric("expired");
             logger.warn("Expired JWT token: {}", te.getMessage());
         } catch (com.auth0.jwt.exceptions.JWTVerificationException ve) {
-            // Mark invalid token so entry point can render GTW-002
             request.setAttribute("AUTH_ERROR_CODE", com.app.exception.ErrorCode.INVALID_TOKEN);
             recordTokenValidationMetric("invalid");
             logger.warn("Invalid JWT token: {}", ve.getMessage());
@@ -92,20 +84,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    /**
-     * Record token validation metric if metrics service is available
-     */
     private void recordTokenValidationMetric(String result) {
         if (metricsService != null) {
             metricsService.recordTokenValidation(result);
         }
     }
 
-    /**
-     * Extract JWT token from Authorization header.
-     * When running behind IAM-authenticated Cloud Run, the Authorization header contains
-     * the IAM identity token. In this case, check X-Forwarded-Authorization for the app token.
-     */
     private String extractTokenFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
 
@@ -115,27 +99,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return null;
             }
 
-            // Check if this looks like a Google IAM identity token (starts with "eyJ" and contains google.com issuer)
-            // IAM tokens have issuer "https://accounts.google.com" - our gateway tokens have our own issuer
             if (isGoogleIamToken(token)) {
-                // IAM token detected - check X-Forwarded-Authorization for the actual app token
                 String forwardedAuth = request.getHeader("X-Forwarded-Authorization");
                 if (forwardedAuth != null && forwardedAuth.startsWith("Bearer ")) {
                     String appToken = forwardedAuth.substring(7);
                     if (appToken != null && !appToken.trim().isEmpty()) {
-                        logger.debug("Using X-Forwarded-Authorization for app-level auth (IAM token in Authorization)");
                         return appToken;
                     }
                 }
-                // No app token in X-Forwarded-Authorization, return null (unauthenticated at app level)
-                logger.debug("IAM token detected but no X-Forwarded-Authorization - proceeding unauthenticated at app level");
                 return null;
             }
 
             return token;
         }
 
-        // Also check X-Forwarded-Authorization as fallback (for flexibility)
         String forwardedAuth = request.getHeader("X-Forwarded-Authorization");
         if (forwardedAuth != null && forwardedAuth.startsWith("Bearer ")) {
             String token = forwardedAuth.substring(7);
@@ -147,13 +124,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return null;
     }
 
-    /**
-     * Check if a token looks like a Google IAM identity token.
-     * Google IAM tokens are JWTs with issuer "https://accounts.google.com".
-     */
     private boolean isGoogleIamToken(String token) {
         try {
-            // Quick check: decode the payload without verification to check issuer
             String[] parts = token.split("\\.");
             if (parts.length != 3) {
                 return false;
@@ -165,9 +137,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 
-    /**
-     * Validate token and set authentication context
-     */
     private void validateAndSetAuthentication(HttpServletRequest request, String token) {
         boolean testProfile = isTestProfile();
         boolean acceptedFake = isAcceptedFakeToken(token);
@@ -176,15 +145,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
         try {
-            // Validate our own JWT access token
             DecodedJWT decodedJWT = jwtConfig.validateAccessToken(token);
-
-            // Extract user information (PII-free - no email)
             String userId = decodedJWT.getSubject();
             String provider = decodedJWT.getClaim("provider").asString();
 
             if (userId != null) {
-                // Create authentication token
                 List<SimpleGrantedAuthority> authorities = Collections.singletonList(
                     new SimpleGrantedAuthority("ROLE_USER")
                 );
@@ -192,7 +157,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(userId, null, authorities);
 
-                // Set additional details (PII-free)
                 UserAuthenticationDetails details = new UserAuthenticationDetails();
                 details.setUserId(userId);
                 details.setProvider(provider);
@@ -202,18 +166,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 details.setUserAgent(request.getHeader("User-Agent"));
 
                 authentication.setDetails(details);
-
-                // Set authentication in security context
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-
-                // Record successful token validation
                 recordTokenValidationMetric("success");
                 logger.debug("JWT authentication successful for user: {}", userId);
             }
 
         } catch (JWTVerificationException e) {
             logger.warn("Invalid JWT token: {}", e.getMessage());
-            // Determine if this is an expired token or invalid token
             String errorMessage = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
             if (errorMessage.contains("expired")) {
                 recordTokenValidationMetric("expired");
@@ -221,7 +180,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 recordTokenValidationMetric("invalid");
             }
             if (testProfile && isExpiredTestToken(token)) {
-                // mark specific expired token condition used by functional tests
                 request.setAttribute("AUTH_ERROR_CODE", com.app.exception.ErrorCode.TOKEN_EXPIRED);
             } else if (testProfile && acceptedFake) {
                 setAuthenticationFromFakeToken(request, token);
@@ -237,9 +195,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 
-    /**
-     * Get client IP address from request
-     */
     private String getClientIpAddress(HttpServletRequest request) {
         String xForwardedFor = request.getHeader("X-Forwarded-For");
         if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
@@ -254,7 +209,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return request.getRemoteAddr();
     }
 
-    // --- Test helpers to enable functional tests without full JWT issuance ---
     private boolean isTestProfile() {
         try {
             if (environment != null && environment.acceptsProfiles(Profiles.of("test"))) {
@@ -294,29 +248,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         authentication.setDetails(details);
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // Record synthetic session and cache metrics for NFT visibility
         if (metricsService != null) {
             metricsService.incrementActiveSessions();
             metricsService.recordSessionAccess(deviceType != null ? deviceType : "mobile",
                                                platform != null ? platform : "ios");
-            // Simulate cache hit for fake token validation (token was "cached" as valid)
             metricsService.recordCacheHit("fake-token-validation");
         }
 
         logger.debug("Test authentication set for user: {}", userId);
     }
 
-
-    /**
-     * Skip JWT validation for public endpoints
-     */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
         if (path == null) {
-            return false; // no path info; proceed with filter
+            return false;
         }
-        // Public endpoints that don't require authentication
         return path.startsWith("/auth/") ||
                path.startsWith("/health") ||
                path.startsWith("/actuator/") ||
@@ -325,9 +272,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                path.startsWith("/public/");
     }
 
-    /**
-     * Custom authentication details to store additional user information (PII-free)
-     */
     public static class UserAuthenticationDetails extends WebAuthenticationDetailsSource {
         private String userId;
         private String provider;
@@ -336,7 +280,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         private String ipAddress;
         private String userAgent;
 
-        // Getters and setters
         public String getUserId() { return userId; }
         public void setUserId(String userId) { this.userId = userId; }
 

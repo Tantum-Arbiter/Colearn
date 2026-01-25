@@ -43,18 +43,12 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
-/**
- * Test-only admin endpoints to control server state during functional tests.
- * Available in 'test' profile (local/Docker) and 'gcp-dev' profile (GCP functional tests).
- */
 @RestController
 @RequestMapping("/private")
 @Profile({"test", "gcp-dev"})
 public class TestAdminController {
 
     private static final Logger logger = LoggerFactory.getLogger(TestAdminController.class);
-
-    // Track if Firestore has been seeded this JVM run (to avoid excessive Firestore ops)
     private static volatile boolean firestoreSeeded = false;
 
     private final RateLimitingFilter rateLimitingFilter;
@@ -84,11 +78,6 @@ public class TestAdminController {
         this.circuitBreakerRegistry = circuitBreakerRegistry;
     }
 
-    /**
-     * Reset server-side state that can affect cross-scenario behavior.
-     * Use ?force=true to clear and re-seed CMS data even if already seeded this JVM run.
-     * Use ?clearOnly=true to clear CMS data without seeding (for tests that seed their own data).
-     */
     @PostMapping("/reset")
     public ResponseEntity<Map<String, Object>> reset(
             @org.springframework.web.bind.annotation.RequestParam(name = "force", required = false) String forceParam,
@@ -147,10 +136,6 @@ public class TestAdminController {
         }
     }
 
-    /**
-     * Clear CMS collections for test data refresh.
-     * @param storiesOnly if true, only clear stories and content_versions (preserve asset_versions)
-     */
     private void clearCmsCollections(boolean storiesOnly) {
         try {
             int storiesDeleted = 0;
@@ -461,10 +446,6 @@ public class TestAdminController {
         return stories;
     }
 
-    /**
-     * Calculate SHA-256 checksum of story content
-     * Includes localized text for i18n support
-     */
     private String calculateStoryChecksum(Story story) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -500,14 +481,10 @@ public class TestAdminController {
         }
     }
 
-    /**
-     * Serialize LocalizedText to a consistent string for checksum calculation
-     */
     private String serializeLocalizedText(LocalizedText localizedText) {
         if (localizedText == null) {
             return "";
         }
-        // Use a consistent order for languages to ensure deterministic checksums
         StringBuilder sb = new StringBuilder();
         if (localizedText.getEn() != null) sb.append("en:").append(localizedText.getEn()).append("|");
         if (localizedText.getPl() != null) sb.append("pl:").append(localizedText.getPl()).append("|");
@@ -516,9 +493,6 @@ public class TestAdminController {
         return sb.toString();
     }
 
-    /**
-     * Parse a Map into a LocalizedText object for story seeding
-     */
     private LocalizedText parseLocalizedText(Map<?, ?> map) {
         LocalizedText lt = new LocalizedText();
         if (map.get("en") != null) lt.setEn((String) map.get("en"));
@@ -538,9 +512,6 @@ public class TestAdminController {
         return lt;
     }
 
-    /**
-     * Set simulation flags for this JVM (test profile only).
-     */
     @PostMapping("/flags")
     public ResponseEntity<Map<String, Object>> setFlags(@RequestBody Map<String, Object> body) {
         if (body == null) body = new HashMap<>();
@@ -620,10 +591,6 @@ public class TestAdminController {
         };
     }
 
-    /**
-     * Seed a single story to Firestore for functional testing.
-     * This allows tests to seed specific story data without resetting all state.
-     */
     @PostMapping("/seed/story")
     public ResponseEntity<Map<String, Object>> seedStory(@RequestBody Map<String, Object> storyData) {
         if (firestore == null) {
@@ -636,7 +603,6 @@ public class TestAdminController {
                 return ResponseEntity.badRequest().body(Map.of("error", "Story id is required"));
             }
 
-            // Create Story object from the request data
             Story story = new Story();
             story.setId(storyId);
             story.setTitle((String) storyData.get("title"));
@@ -664,17 +630,12 @@ public class TestAdminController {
                 story.setTags(tagsList.stream().map(Object::toString).toList());
             }
 
-            // Parse localized title
             if (storyData.get("localizedTitle") instanceof Map<?, ?> localizedTitleMap) {
                 story.setLocalizedTitle(parseLocalizedText(localizedTitleMap));
             }
-
-            // Parse localized description
             if (storyData.get("localizedDescription") instanceof Map<?, ?> localizedDescMap) {
                 story.setLocalizedDescription(parseLocalizedText(localizedDescMap));
             }
-
-            // Parse pages
             if (storyData.get("pages") instanceof List<?> pagesList) {
                 List<StoryPage> pages = new ArrayList<>();
                 for (Object pageObj : pagesList) {
@@ -689,7 +650,6 @@ public class TestAdminController {
                         page.setBackgroundImage((String) pageMap.get("backgroundImage"));
                         page.setCharacterImage((String) pageMap.get("characterImage"));
 
-                        // Parse localized text for the page
                         if (pageMap.get("localizedText") instanceof Map<?, ?> localizedTextMap) {
                             page.setLocalizedText(parseLocalizedText(localizedTextMap));
                         }
@@ -747,10 +707,7 @@ public class TestAdminController {
             }
             story.setChecksum(checksum);
 
-            // Save story to Firestore
             firestore.collection("stories").document(storyId).set(story).get();
-
-            // Update content version with new story checksum
             updateContentVersionWithStory(storyId, checksum);
 
             logger.info("Seeded story: {} with checksum: {}", storyId, checksum);
@@ -766,9 +723,6 @@ public class TestAdminController {
         }
     }
 
-    /**
-     * Update the content version document with a new or updated story checksum.
-     */
     private void updateContentVersionWithStory(String storyId, String checksum) {
         try {
             var docRef = firestore.collection("content_versions").document("current");
@@ -802,13 +756,6 @@ public class TestAdminController {
         }
     }
 
-    /**
-     * Rebuild the content_versions document from actual stories in Firestore.
-     * This fixes the mismatch when stories are manually deleted from Firestore
-     * but the content_versions document still references them.
-     *
-     * Call this endpoint after manually modifying stories in Firestore.
-     */
     @PostMapping("/rebuild-content-version")
     public ResponseEntity<Map<String, Object>> rebuildContentVersion() {
         if (firestore == null) {
@@ -883,10 +830,6 @@ public class TestAdminController {
         }
     }
 
-    /**
-     * Delete a story from Firestore for testing purposes.
-     * Also removes the story from the content_versions document.
-     */
     @PostMapping("/delete/story/{storyId}")
     public ResponseEntity<Map<String, Object>> deleteStory(@org.springframework.web.bind.annotation.PathVariable String storyId) {
         if (firestore == null) {
@@ -895,11 +838,7 @@ public class TestAdminController {
 
         try {
             logger.info("Deleting story: {}", storyId);
-
-            // Delete story from Firestore
             firestore.collection("stories").document(storyId).delete().get();
-
-            // Remove from content_versions
             var docRef = firestore.collection("content_versions").document("current");
             var doc = docRef.get().get();
 
@@ -926,9 +865,6 @@ public class TestAdminController {
         }
     }
 
-    /**
-     * Create a test user in Firestore (test profile only)
-     */
     @PostMapping("/test/create-user")
     public ResponseEntity<Map<String, Object>> createTestUser(@RequestBody Map<String, Object> body) {
         if (firestore == null) {
@@ -940,7 +876,6 @@ public class TestAdminController {
             String provider = (String) body.get("provider");
             String providerId = (String) body.get("providerId");
 
-            // Create user directly in Firestore (PII-free - no email/name)
             User user = new User();
             user.setId(userId != null ? userId : UUID.randomUUID().toString());
             user.setProvider(provider);
@@ -950,7 +885,6 @@ public class TestAdminController {
             user.setUpdatedAt(Instant.now());
             user.updateLastLogin();
 
-            // Save directly to Firestore
             firestore.collection("users").document(user.getId()).set(user).get();
 
             Map<String, Object> resp = new HashMap<>();
@@ -963,9 +897,6 @@ public class TestAdminController {
         }
     }
 
-    /**
-     * Create a test session in Firestore (test profile only)
-     */
     @PostMapping("/test/create-session")
     public ResponseEntity<Map<String, Object>> createTestSession(@RequestBody Map<String, Object> body) {
         if (sessionService == null) {

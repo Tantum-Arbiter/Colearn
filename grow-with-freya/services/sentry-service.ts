@@ -2,10 +2,7 @@ import * as Sentry from '@sentry/react-native';
 
 let isInitialized = false;
 
-/**
- * Initialize Sentry crash reporting.
- * Should only be called after user has given consent.
- */
+// Only call after user consent
 export function initializeSentry(): void {
   if (isInitialized) {
     console.log('[Sentry] Already initialized, skipping');
@@ -36,10 +33,6 @@ export function initializeSentry(): void {
   console.log('[Sentry] Crash reporting initialized');
 }
 
-/**
- * Disable Sentry crash reporting.
- * Called when user revokes consent in settings.
- */
 export function disableSentry(): void {
   if (!isInitialized) {
     console.log('[Sentry] Not initialized, nothing to disable');
@@ -55,17 +48,10 @@ export function disableSentry(): void {
   console.log('[Sentry] Crash reporting disabled');
 }
 
-/**
- * Check if Sentry is currently initialized.
- */
 export function isSentryInitialized(): boolean {
   return isInitialized;
 }
 
-/**
- * Update Sentry state based on user consent.
- * Call this when consent changes (settings toggle or onboarding).
- */
 export function updateSentryConsent(enabled: boolean): void {
   if (enabled && !isInitialized) {
     initializeSentry();

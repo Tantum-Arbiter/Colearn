@@ -2,10 +2,6 @@ package com.app.exception;
 
 import java.util.Map;
 
-/**
- * Exception thrown when an invalid asset path is provided.
- * This includes path traversal attempts, invalid characters, or disallowed prefixes.
- */
 public class InvalidAssetPathException extends GatewayException {
 
     private final String assetPath;

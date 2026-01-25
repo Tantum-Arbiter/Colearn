@@ -12,12 +12,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.concurrent.TimeUnit;
 
-/**
- * Health indicator for Firestore connectivity.
- * Performs a simple read operation to verify the connection is working.
- * Only activated when a Firestore bean exists (not in test profile).
- * Marked as @Lazy to avoid blocking application startup.
- */
 @Component("firestoreHealth")
 @Lazy
 @ConditionalOnBean(Firestore.class)
@@ -37,8 +31,6 @@ public class FirestoreHealthIndicator implements HealthIndicator {
     public Health health() {
         long startTime = System.currentTimeMillis();
         try {
-            // Perform a lightweight operation to check connectivity
-            // listCollections() is a quick metadata operation that verifies the connection
             firestore.listCollections()
                     .iterator()
                     .hasNext(); // Just need to check if we can iterate

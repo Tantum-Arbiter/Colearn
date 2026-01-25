@@ -9,11 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * Represents a story with metadata and pages
- * Visual assets (images, audio) are stored in iOS/Android asset packs
- * This model contains only metadata and text content
- */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Story {
 
@@ -24,31 +19,30 @@ public class Story {
     private String title;
 
     @JsonProperty("category")
-    private String category; // bedtime, adventure, friendship, etc.
+    private String category;
 
     @JsonProperty("tag")
-    private String tag; // Display tag like "🌙 Bedtime"
+    private String tag;
 
     @JsonProperty("emoji")
     private String emoji;
 
     @JsonProperty("coverImage")
-    private String coverImage; // Asset path reference
+    private String coverImage;
 
     @JsonProperty("isAvailable")
     @PropertyName("isAvailable")
     private boolean available;
 
     @JsonProperty("ageRange")
-    private String ageRange; // e.g., "2-5"
+    private String ageRange;
 
     @JsonProperty("duration")
-    private Integer duration; // Number of pages
+    private Integer duration;
 
     @JsonProperty("description")
     private String description;
 
-    // Localized content fields (for multi-language support)
     @JsonProperty("localizedTitle")
     private LocalizedText localizedTitle;
 
@@ -67,7 +61,6 @@ public class Story {
     @JsonProperty("tags")
     private List<String> tags;
 
-    // Fields that may exist in Firestore documents but aren't used by the app
     @JsonProperty("_usageType")
     private String usageType;
 
@@ -81,12 +74,11 @@ public class Story {
     private Instant updatedAt;
 
     @JsonProperty("version")
-    private int version; // For delta-sync
+    private int version;
 
     @JsonProperty("checksum")
-    private String checksum; // SHA-256 hash of content for delta-sync
+    private String checksum;
 
-    // Constructors
     public Story() {
         this.pages = new ArrayList<>();
         this.tags = new ArrayList<>();
@@ -104,13 +96,11 @@ public class Story {
         this.category = category;
     }
 
-    // Helper methods
     public void updateTimestamp() {
         this.updatedAt = Instant.now();
         this.version++;
     }
 
-    // Getters and Setters
     public String getId() {
         return id;
     }
@@ -209,9 +199,6 @@ public class Story {
         this.localizedDescription = localizedDescription;
     }
 
-    /**
-     * Get title for a specific language, falling back to English or the default title
-     */
     public String getTitleForLanguage(String languageCode) {
         if (localizedTitle != null) {
             String localized = localizedTitle.getText(languageCode);
@@ -220,9 +207,6 @@ public class Story {
         return title;
     }
 
-    /**
-     * Get description for a specific language, falling back to English or the default description
-     */
     public String getDescriptionForLanguage(String languageCode) {
         if (localizedDescription != null) {
             String localized = localizedDescription.getText(languageCode);
@@ -247,7 +231,6 @@ public class Story {
         this.premium = isPremium;
     }
 
-    // Alias setter for Firestore compatibility
     public void setPremium(boolean premium) {
         this.premium = premium;
     }
@@ -300,7 +283,6 @@ public class Story {
         this.checksum = checksum;
     }
 
-    // Firestore metadata fields (not used by app but need getters/setters for mapping)
     public String getUsageType() {
         return usageType;
     }
@@ -309,7 +291,6 @@ public class Story {
         this.usageType = usageType;
     }
 
-    // Alias with underscore prefix for Firestore
     public void set_usageType(String usageType) {
         this.usageType = usageType;
     }
@@ -322,7 +303,6 @@ public class Story {
         this.disclaimer = disclaimer;
     }
 
-    // Alias with underscore prefix for Firestore
     public void set_disclaimer(String disclaimer) {
         this.disclaimer = disclaimer;
     }

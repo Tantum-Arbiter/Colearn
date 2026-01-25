@@ -8,13 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Response DTO for story sync endpoint
- * Returns stories that need to be updated and current version info
- *
- * Includes asset version to allow mobile app to check both versions in one call.
- * This prevents the edge case where assets change but stories don't.
- */
 public class StorySyncResponse {
 
     @JsonProperty("serverVersion")

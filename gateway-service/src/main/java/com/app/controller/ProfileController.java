@@ -19,10 +19,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Profile Controller
- * Handles user profile operations (non-PII preferences and settings)
- */
 @RestController
 @RequestMapping("/api")
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -40,10 +36,6 @@ public class ProfileController {
         this.metricsService = metricsService;
     }
 
-    /**
-     * Get user profile
-     * GET /api/profile
-     */
     @GetMapping("/profile")
     public ResponseEntity<?> getProfile() {
         long startTime = System.currentTimeMillis();
@@ -58,14 +50,11 @@ public class ProfileController {
             Optional<UserProfile> profileOpt = userProfileRepository.findByUserId(userId).join();
 
             if (profileOpt.isEmpty()) {
-                // Record profile not found
                 long processingTime = System.currentTimeMillis() - startTime;
                 metricsService.recordProfileRetrieved(userId, false, processingTime);
-
                 throw new GatewayException(ErrorCode.PROFILE_NOT_FOUND, "User profile not found");
             }
 
-            // Record successful profile retrieval
             long processingTime = System.currentTimeMillis() - startTime;
             metricsService.recordProfileRetrieved(userId, true, processingTime);
 
@@ -74,19 +63,13 @@ public class ProfileController {
         } catch (GatewayException e) {
             throw e;
         } catch (Exception e) {
-            // Record failed profile retrieval
             long processingTime = System.currentTimeMillis() - startTime;
             metricsService.recordProfileRetrieved(userId, false, processingTime);
-
             logger.error("Error getting profile for user: {}", userId, e);
             throw new GatewayException(ErrorCode.DATABASE_ERROR, "Failed to retrieve profile", e);
         }
     }
 
-    /**
-     * Delete user profile
-     * DELETE /api/profile
-     */
     @DeleteMapping("/profile")
     public ResponseEntity<?> deleteProfile() {
         String userId = getAuthenticatedUserId();
@@ -118,10 +101,6 @@ public class ProfileController {
         }
     }
 
-    /**
-     * Create or update user profile
-     * POST /api/profile
-     */
     @PostMapping("/profile")
     public ResponseEntity<?> saveProfile(@RequestBody Map<String, Object> requestBody) {
         long startTime = System.currentTimeMillis();
@@ -144,25 +123,20 @@ public class ProfileController {
                 validateProfile(profile);
                 profile = userProfileRepository.update(profile).join();
 
-                // Record successful profile update
                 long processingTime = System.currentTimeMillis() - startTime;
                 metricsService.recordProfileUpdated(userId, true, processingTime);
-
                 return ResponseEntity.ok(profile);
             } else {
                 profile = createProfileFromRequest(userId, requestBody);
                 validateProfile(profile);
                 profile = userProfileRepository.save(profile).join();
 
-                // Record successful profile creation
                 long processingTime = System.currentTimeMillis() - startTime;
                 metricsService.recordProfileCreated(userId, true, processingTime);
-
                 return ResponseEntity.status(HttpStatus.CREATED).body(profile);
             }
 
         } catch (GatewayException e) {
-            // Record failed operation
             long processingTime = System.currentTimeMillis() - startTime;
             Optional<UserProfile> existingProfileOpt = userProfileRepository.findByUserId(userId).join();
             if (existingProfileOpt.isPresent()) {
@@ -173,7 +147,6 @@ public class ProfileController {
 
             throw e;
         } catch (Exception e) {
-            // Record failed operation
             long processingTime = System.currentTimeMillis() - startTime;
             try {
                 Optional<UserProfile> existingProfileOpt = userProfileRepository.findByUserId(userId).join();
@@ -225,7 +198,6 @@ public class ProfileController {
     }
 
     private UserProfile createProfileFromRequest(String userId, Map<String, Object> requestBody) {
-        // Validate required fields first
         if (!requestBody.containsKey("nickname") || requestBody.get("nickname") == null) {
             throw new ValidationException(ErrorCode.INVALID_NICKNAME, "Nickname is required");
         }
@@ -320,7 +292,6 @@ public class ProfileController {
             throw new ValidationException(ErrorCode.INVALID_AVATAR_TYPE, "Avatar type must be 'boy' or 'girl'");
         }
 
-        // avatarId is optional, but if provided it must not be empty
         if (profile.getAvatarId() != null && profile.getAvatarId().trim().isEmpty()) {
             throw new ValidationException(ErrorCode.INVALID_AVATAR_ID, "Avatar ID cannot be empty");
         }

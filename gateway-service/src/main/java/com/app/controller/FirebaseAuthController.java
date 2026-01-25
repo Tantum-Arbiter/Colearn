@@ -20,13 +20,6 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-/**
- * Firebase Authentication Controller - ONLY available in test and gcp-dev profiles.
- * This controller enables functional tests to authenticate using Firebase ID tokens
- * in GCP environments where WireMock is not available.
- * 
- * Production environments will NOT have this endpoint (returns 404).
- */
 @RestController
 @RequestMapping("/auth")
 @Profile({"test", "gcp-dev"})

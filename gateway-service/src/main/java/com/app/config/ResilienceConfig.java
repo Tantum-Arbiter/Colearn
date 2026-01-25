@@ -28,17 +28,14 @@ public class ResilienceConfig {
 
     @PostConstruct
     public void init() {
-        // Ensure instances exist
         CircuitBreaker defaultCb = circuitBreakerRegistry.circuitBreaker("default");
 
-        // Bind Micrometer metrics for all circuit breakers
         try {
             TaggedCircuitBreakerMetrics.ofCircuitBreakerRegistry(circuitBreakerRegistry).bindTo(meterRegistry);
         } catch (Exception e) {
             logger.warn("Failed to bind Resilience4j metrics: {}", e.getMessage());
         }
 
-        // Register event listeners -> custom app metrics
         registerListeners(defaultCb);
     }
 

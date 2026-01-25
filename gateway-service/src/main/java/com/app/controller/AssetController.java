@@ -40,10 +40,6 @@ public class AssetController {
         this.metricsService = metricsService;
     }
 
-    /**
-     * Get the current asset version.
-     * Used by clients to check if they need to sync assets.
-     */
     @GetMapping("/version")
     public ResponseEntity<AssetVersion> getAssetVersion() {
         String reqId = MDC.get("requestId");
@@ -60,15 +56,6 @@ public class AssetController {
         }
     }
 
-    /**
-     * Generate signed URLs for multiple assets in a single request.
-     * This is the primary endpoint for asset URL generation.
-     *
-     * Optimized for batch operations - reduces API calls from N to ceil(N/100).
-     *
-     * @param request Contains list of asset paths (max 100 per request)
-     * @return BatchUrlsResponse with signed URLs and any failed paths
-     */
     @PostMapping("/batch-urls")
     public ResponseEntity<?> getBatchSignedUrls(@Valid @RequestBody BatchUrlsRequest request) {
         String reqId = MDC.get("requestId");
@@ -88,9 +75,6 @@ public class AssetController {
         }
 
         BatchUrlsResponse response = new BatchUrlsResponse();
-
-        // Calculate expiration time (use same duration as single URL generation)
-        // Default to 60 minutes if not configured
         long expiresAt = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(60);
 
         for (String path : request.getPaths()) {
@@ -110,8 +94,6 @@ public class AssetController {
         }
 
         long durationMs = System.currentTimeMillis() - startTime;
-
-        // Record batch metrics
         metricsService.recordBatchUrlGeneration(
                 pathCount,
                 response.getUrls().size(),

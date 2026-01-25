@@ -15,9 +15,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-/**
- * Firebase Firestore implementation of UserSessionRepository
- */
 @Repository
 public class FirebaseUserSessionRepository implements UserSessionRepository {
 
@@ -122,7 +119,6 @@ public class FirebaseUserSessionRepository implements UserSessionRepository {
                 List<UserSession> sessions = new ArrayList<>();
                 for (DocumentSnapshot document : querySnapshot.getDocuments()) {
                     UserSession session = document.toObject(UserSession.class);
-                    // Additional check for expiration
                     if (session != null && session.isValid()) {
                         sessions.add(session);
                     }
@@ -210,9 +206,7 @@ public class FirebaseUserSessionRepository implements UserSessionRepository {
                 
                 WriteResult result = future.get();
                 logger.debug("Last accessed updated for session: {} at {}", sessionId, result.getUpdateTime());
-                
-                // Return updated session
-                return findById(sessionId).join().orElseThrow(() -> 
+                return findById(sessionId).join().orElseThrow(() ->
                         new RuntimeException("Session not found after update: " + sessionId));
                 
             } catch (Exception e) {
@@ -238,9 +232,7 @@ public class FirebaseUserSessionRepository implements UserSessionRepository {
 
                 WriteResult result = future.get();
                 logger.debug("Session revoked: {} at {}", sessionId, result.getUpdateTime());
-                
-                // Return updated session
-                return findById(sessionId).join().orElseThrow(() -> 
+                return findById(sessionId).join().orElseThrow(() ->
                         new RuntimeException("Session not found after revocation: " + sessionId));
                 
             } catch (Exception e) {
@@ -256,10 +248,7 @@ public class FirebaseUserSessionRepository implements UserSessionRepository {
         
         return CompletableFuture.supplyAsync(() -> {
             try {
-                // First find all active sessions for the user
                 List<UserSession> activeSessions = findActiveSessionsByUserId(userId).join();
-                
-                // Revoke each session
                 List<UserSession> revokedSessions = new ArrayList<>();
                 for (UserSession session : activeSessions) {
                     UserSession revokedSession = revokeSession(session.getId()).join();
@@ -281,10 +270,7 @@ public class FirebaseUserSessionRepository implements UserSessionRepository {
         
         return CompletableFuture.supplyAsync(() -> {
             try {
-                // First find all sessions for the device
                 List<UserSession> deviceSessions = findSessionsByDeviceId(deviceId).join();
-                
-                // Revoke each active session
                 List<UserSession> revokedSessions = new ArrayList<>();
                 for (UserSession session : deviceSessions) {
                     if (session.isActive()) {
@@ -371,7 +357,6 @@ public class FirebaseUserSessionRepository implements UserSessionRepository {
                 ApiFuture<QuerySnapshot> future = query.get();
                 QuerySnapshot querySnapshot = future.get();
 
-                // Filter out expired sessions
                 long count = querySnapshot.getDocuments().stream()
                         .map(doc -> doc.toObject(UserSession.class))
                         .filter(session -> session != null && session.isValid())
@@ -398,7 +383,6 @@ public class FirebaseUserSessionRepository implements UserSessionRepository {
                 ApiFuture<QuerySnapshot> future = query.get();
                 QuerySnapshot querySnapshot = future.get();
 
-                // Filter out expired sessions and return valid ones
                 List<UserSession> sessions = querySnapshot.getDocuments().stream()
                         .map(doc -> doc.toObject(UserSession.class))
                         .filter(session -> session != null && session.isValid())
@@ -453,11 +437,8 @@ public class FirebaseUserSessionRepository implements UserSessionRepository {
 
         return CompletableFuture.supplyAsync(() -> {
             try {
-                // First get the current session
                 UserSession session = findById(sessionId).join().orElseThrow(() ->
                         new RuntimeException("Session not found: " + sessionId));
-
-                // Calculate new expiration time
                 Instant newExpiresAt = session.getExpiresAt().plusSeconds(additionalSeconds);
 
                 DocumentReference docRef = firestore.collection(COLLECTION_NAME).document(sessionId);
@@ -469,8 +450,6 @@ public class FirebaseUserSessionRepository implements UserSessionRepository {
 
                 WriteResult result = future.get();
                 logger.debug("Session extended: {} until {} at {}", sessionId, newExpiresAt, result.getUpdateTime());
-
-                // Return updated session
                 return findById(sessionId).join().orElseThrow(() ->
                         new RuntimeException("Session not found after extension: " + sessionId));
 
@@ -496,8 +475,6 @@ public class FirebaseUserSessionRepository implements UserSessionRepository {
 
                 WriteResult result = future.get();
                 logger.debug("Refresh token updated for session: {} at {}", sessionId, result.getUpdateTime());
-
-                // Return updated session
                 return findById(sessionId).join().orElseThrow(() ->
                         new RuntimeException("Session not found after refresh token update: " + sessionId));
 

@@ -28,10 +28,6 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * JWT Configuration for validating Google and Apple ID tokens
- * Enterprise-grade token validation with public key caching
- */
 @Configuration
 public class JwtConfig {
 
@@ -62,21 +58,15 @@ public class JwtConfig {
     @Value("${apple.oauth.expo-client-id:host.exp.Exponent}")
     private String appleExpoClientId;
 
-    // Google OAuth2 endpoints
     private static final String GOOGLE_CERTS_URL = "https://www.googleapis.com/oauth2/v3/certs";
     private static final String GOOGLE_ISSUER = "https://accounts.google.com";
-
-    // Apple OAuth2 endpoints
     private static final String APPLE_KEYS_URL = "https://appleid.apple.com/auth/keys";
     private static final String APPLE_ISSUER = "https://appleid.apple.com";
-
-    // Firebase endpoints (for functional testing in gcp-dev)
     private static final String FIREBASE_KEYS_URL = "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com";
 
     @Value("${firebase.project-id:}")
     private String firebaseProjectId;
 
-    // Cache for public keys
     private final Map<String, RSAPublicKey> publicKeyCache = new ConcurrentHashMap<>();
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -102,11 +92,7 @@ public class JwtConfig {
                 .build();
     }
 
-    /**
-     * Validate Google ID token using server-owned audience (ignore any client-provided value)
-     */
     public DecodedJWT validateGoogleIdToken(String idToken) throws JWTVerificationException {
-        // In test profile, bypass real JWKS verification and drive behavior from the token string
         if (environment != null && environment.acceptsProfiles(Profiles.of("test"))) {
             if (idToken == null || idToken.isBlank()) {
                 throw new JWTVerificationException("Invalid Google ID token: empty");
@@ -118,14 +104,11 @@ public class JwtConfig {
             if (lower.contains("invalid")) {
                 throw new JWTVerificationException("Invalid Google ID token");
             }
-            // Extract a unique identifier from the mock token for test isolation
-            // Format: "mock-id-token-{timestamp}" -> use "google-{timestamp}" as providerId
             String subject = "test-google-user";
             if (idToken.startsWith("mock-id-token-")) {
                 String timestamp = idToken.substring("mock-id-token-".length());
                 subject = "google-" + timestamp;
             }
-            // Create a simple signed JWT so downstream code can read claims if needed
             String fake = JWT.create()
                     .withIssuer(GOOGLE_ISSUER)
                     .withSubject(subject)
@@ -142,11 +125,9 @@ public class JwtConfig {
                 throw new JWTVerificationException("Missing key ID in token header");
             }
 
-            // Get the token's audience to determine which client ID to validate against
             String tokenAudience = decodedHeader.getAudience() != null && !decodedHeader.getAudience().isEmpty()
                 ? decodedHeader.getAudience().get(0) : null;
 
-            // Validate that the audience is one of our known client IDs
             String expectedAudience = determineGoogleAudience(tokenAudience);
             if (expectedAudience == null) {
                 throw new JWTVerificationException("The Claim 'aud' value doesn't contain the required audience.");
@@ -164,14 +145,10 @@ public class JwtConfig {
         }
     }
 
-    /**
-     * Determine which Google client ID to use for audience validation
-     */
     private String determineGoogleAudience(String tokenAudience) {
         if (tokenAudience == null) {
             return null;
         }
-        // Check against all valid Google client IDs
         if (tokenAudience.equals(googleClientId)) {
             return googleClientId;
         }
@@ -184,11 +161,7 @@ public class JwtConfig {
         return null;
     }
 
-    /**
-     * Validate Apple ID token using server-owned audience (ignore any client-provided value)
-     */
     public DecodedJWT validateAppleIdToken(String idToken) throws JWTVerificationException {
-        // In test profile, bypass real JWKS verification and drive behavior from the token string
         if (environment != null && environment.acceptsProfiles(Profiles.of("test"))) {
             if (idToken == null || idToken.isBlank()) {
                 throw new JWTVerificationException("Invalid Apple ID token: empty");
@@ -216,20 +189,12 @@ public class JwtConfig {
                 throw new JWTVerificationException("Missing key ID in token header");
             }
 
-            // Log the audience values for debugging
             String tokenAudience = decodedHeader.getAudience() != null && !decodedHeader.getAudience().isEmpty()
                 ? decodedHeader.getAudience().get(0) : "null";
-            logger.info("Apple ID token validation - Expected audiences: {} or {}, Token audience: {}",
+            logger.debug("Apple ID token validation - Expected: {} or {}, Got: {}",
                 appleClientId, appleExpoClientId, tokenAudience);
 
-            // Determine which audience to validate against
-            // Note: Expo Go uses 'host.exp.Exponent' as the audience, while production uses the actual bundle ID
             String expectedAudience = tokenAudience.equals(appleExpoClientId) ? appleExpoClientId : appleClientId;
-            logger.info("Using expected audience: {}", expectedAudience);
-
-            // Log the subject claim for debugging
-            String subject = decodedHeader.getSubject();
-            logger.info("Apple ID token subject (sub claim): {}", subject);
 
             RSAPublicKey publicKey = getApplePublicKey(keyId);
             Algorithm algorithm = Algorithm.RSA256(publicKey, null);
@@ -243,12 +208,6 @@ public class JwtConfig {
         }
     }
 
-    /**
-     * Validate Firebase ID token (for functional testing in test/gcp-dev profiles only).
-     * Firebase ID tokens use RS256 algorithm with Google's public keys.
-     * Issuer: https://securetoken.google.com/{PROJECT_ID}
-     * Audience: {PROJECT_ID}
-     */
     public DecodedJWT validateFirebaseIdToken(String idToken) throws JWTVerificationException {
         if (firebaseProjectId == null || firebaseProjectId.isBlank()) {
             throw new JWTVerificationException("Firebase project ID not configured");
@@ -256,7 +215,6 @@ public class JwtConfig {
 
         String firebaseIssuer = "https://securetoken.google.com/" + firebaseProjectId;
 
-        // In test profile, bypass real JWKS verification
         if (environment != null && environment.acceptsProfiles(Profiles.of("test"))) {
             if (idToken == null || idToken.isBlank()) {
                 throw new JWTVerificationException("Invalid Firebase ID token: empty");
@@ -297,9 +255,6 @@ public class JwtConfig {
         }
     }
 
-    /**
-     * Generate our own JWT access token (PII-free)
-     */
     public String generateAccessToken(String userId, String provider) {
         return JWT.create()
                 .withIssuer("grow-with-freya-gateway")
@@ -311,9 +266,6 @@ public class JwtConfig {
                 .sign(jwtAlgorithm());
     }
 
-    /**
-     * Generate refresh token
-     */
     public String generateRefreshToken(String userId) {
         return JWT.create()
                 .withIssuer("grow-with-freya-gateway")
@@ -324,9 +276,6 @@ public class JwtConfig {
                 .sign(jwtAlgorithm());
     }
 
-    /**
-     * Validate our own JWT token
-     */
     public DecodedJWT validateAccessToken(String token) throws JWTVerificationException {
         DecodedJWT decodedJWT = jwtVerifier().verify(token);
         String tokenType = decodedJWT.getClaim("type").asString();
@@ -335,8 +284,6 @@ public class JwtConfig {
         }
         return decodedJWT;
     }
-
-    // Private helper methods
 
     private RSAPublicKey getGooglePublicKey(String keyId) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
         String cacheKey = "google_" + keyId;
@@ -385,7 +332,6 @@ public class JwtConfig {
             return publicKeyCache.get(cacheKey);
         }
         metricsService.recordCacheMiss("public-keys");
-        // Firebase returns a JSON object with kid:x509cert pairs (not JWKS format)
         String response = restTemplate.getForObject(FIREBASE_KEYS_URL, String.class);
         JsonNode keysNode = objectMapper.readTree(response);
         if (keysNode.has(keyId)) {
@@ -421,7 +367,6 @@ public class JwtConfig {
         return (RSAPublicKey) factory.generatePublic(spec);
     }
 
-    // Getters for configuration values
     public int getJwtExpirationInSeconds() {
         return jwtExpirationInSeconds;
     }

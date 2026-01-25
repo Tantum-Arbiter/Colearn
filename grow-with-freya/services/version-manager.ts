@@ -21,11 +21,6 @@ export interface VersionCheckResult {
   serverVersion: ContentVersion | null;
 }
 
-/**
- * Response from /api/stories/version endpoint
- * This matches the ContentVersionResponse DTO in the gateway
- * Includes both story and asset versions for unified tracking
- */
 interface ServerVersionResponse {
   id: string;           // Always "current"
   version: number;      // Story version - incremented on any story change
@@ -35,23 +30,8 @@ interface ServerVersionResponse {
   totalStories: number;
 }
 
-/**
- * VersionManager - Handles version checking and comparison
- *
- * Responsibilities:
- * - Store and retrieve local content versions
- * - Check server versions via /api/stories/version
- * - Compare versions to determine if sync is needed
- *
- * The version is managed by the Gateway API:
- * - When CMS uploads stories → Gateway increments version
- * - Mobile app checks version → Gateway returns current version
- */
 export class VersionManager {
 
-  /**
-   * Get locally stored content version
-   */
   static async getLocalVersion(): Promise<ContentVersion | null> {
     try {
       const data = await AsyncStorage.getItem(STORAGE_KEYS.CONTENT_VERSION);
@@ -66,9 +46,6 @@ export class VersionManager {
     }
   }
 
-  /**
-   * Save local content version
-   */
   static async saveLocalVersion(version: ContentVersion): Promise<void> {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.CONTENT_VERSION, JSON.stringify(version));
@@ -79,15 +56,6 @@ export class VersionManager {
     }
   }
 
-  /**
-   * Get server content version from /api/stories/version
-   * Returns null if offline or request fails
-   *
-   * The Gateway manages this version:
-   * - CMS upload → StoryService.saveStory() → ContentVersion.incrementVersion()
-   * - Asset upload → AssetService → AssetVersion.incrementVersion()
-   * - This ensures the mobile app always sees the latest versions for both
-   */
   static async getServerVersion(): Promise<ContentVersion | null> {
     try {
       // Use short timeout for version check - this is just a quick check
@@ -116,9 +84,6 @@ export class VersionManager {
     }
   }
 
-  /**
-   * Check if sync is needed by comparing local and server versions
-   */
   static async checkVersions(): Promise<VersionCheckResult> {
     const localVersion = await this.getLocalVersion();
     const serverVersion = await this.getServerVersion();
@@ -160,9 +125,6 @@ export class VersionManager {
     };
   }
 
-  /**
-   * Update local version after successful sync
-   */
   static async updateLocalVersion(updates: Partial<ContentVersion>): Promise<void> {
     const current = await this.getLocalVersion() || {
       stories: 0,
@@ -179,9 +141,6 @@ export class VersionManager {
     await this.saveLocalVersion(updated);
   }
 
-  /**
-   * Clear local version (for testing or reset)
-   */
   static async clearLocalVersion(): Promise<void> {
     try {
       await AsyncStorage.removeItem(STORAGE_KEYS.CONTENT_VERSION);

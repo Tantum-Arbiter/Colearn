@@ -15,19 +15,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-/**
- * Google Cloud Storage Configuration for Asset Delivery.
- *
- * Uses Spring profiles to select the appropriate configuration:
- * - 'emulator' profile: Connects to fake-gcs-server for local testing
- * - default: Connects to production GCS with credentials
- *
- * Environment variables are handled by Spring property resolution:
- * - GCS_PROJECT_ID -> gcs.project-id
- * - GCS_BUCKET -> gcs.bucket
- * - GCS_EMULATOR_HOST -> gcs.emulator-host
- * - GCS_CDN_HOST -> gcs.cdn-host
- */
 @Configuration
 public class GcsConfig {
 
@@ -51,10 +38,6 @@ public class GcsConfig {
     @Value("${gcs.service-account-key:#{null}}")
     private String serviceAccountKey;
 
-    /**
-     * Storage bean for emulator profile.
-     * Connects to fake-gcs-server without credentials.
-     */
     @Bean
     @Profile("emulator")
     public Storage emulatorStorage() {
@@ -68,10 +51,6 @@ public class GcsConfig {
                 .getService();
     }
 
-    /**
-     * Storage bean for production (non-emulator) profile.
-     * Uses service account key or Application Default Credentials.
-     */
     @Bean
     @Profile("!emulator")
     public Storage productionStorage() {
@@ -101,11 +80,6 @@ public class GcsConfig {
         }
     }
 
-    /**
-     * GCS properties bean - uses Spring property injection (no System.getenv()).
-     * Spring automatically resolves environment variables via relaxed binding:
-     * GCS_BUCKET -> gcs.bucket, GCS_CDN_HOST -> gcs.cdn-host, etc.
-     */
     @Bean
     public GcsProperties gcsProperties() {
         logger.info("GCS configuration: bucket={}, cdnHost={}, emulatorHost={}",
@@ -113,9 +87,6 @@ public class GcsConfig {
         return new GcsProperties(bucketName, signedUrlDurationMinutes, cdnHost, emulatorHost);
     }
 
-    /**
-     * GCS properties record for dependency injection.
-     */
     public record GcsProperties(String bucketName, int signedUrlDurationMinutes, String cdnHost, String emulatorHost) {
         public boolean hasCdnHost() {
             return cdnHost != null && !cdnHost.isEmpty();

@@ -12,12 +12,6 @@ import org.springframework.stereotype.Component;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
-/**
- * URL generation strategy for production GCS signed URLs.
- * Active when neither 'emulator' nor 'cdn' profile is enabled.
- * 
- * Generates V4 signed URLs that provide time-limited access to private GCS objects.
- */
 @Component
 @Profile("!emulator & !cdn")
 public class ProductionUrlStrategy implements UrlGenerationStrategy {
