@@ -4,7 +4,6 @@ import {
   withRepeat,
   withTiming,
   Easing,
-  runOnJS,
   cancelAnimation,
 } from 'react-native-reanimated';
 
@@ -54,22 +53,27 @@ export function useCheckmarkAnimation() {
 
   const playCheckmarkEffect = (onComplete?: () => void) => {
     // Show checkmark immediately (no fade) and call onComplete after a short delay
-    // to let the Lottie animation play
     checkmarkOpacity.value = 1;
 
-    // Small delay to let the checkmark Lottie animation be visible before scrolling out
+    // Call onComplete directly - do NOT use runOnJS from setTimeout
+    // runOnJS should only be called from worklet context, not from JS thread
     if (onComplete) {
       setTimeout(() => {
-        runOnJS(onComplete)();
+        onComplete();
       }, 600);
     }
+  };
+
+  const reset = () => {
+    cancelAnimation(checkmarkOpacity);
+    checkmarkOpacity.value = 0;
   };
 
   const checkmarkAnimatedStyle = useAnimatedStyle(() => ({
     opacity: checkmarkOpacity.value,
   }));
 
-  return { checkmarkOpacity, playCheckmarkEffect, checkmarkAnimatedStyle };
+  return { checkmarkOpacity, playCheckmarkEffect, checkmarkAnimatedStyle, reset };
 }
 
 /**

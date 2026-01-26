@@ -5,6 +5,7 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   Easing,
+  cancelAnimation,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import LottieView from 'lottie-react-native';
@@ -54,6 +55,9 @@ export function StartupLoadingScreen({ onComplete, onError }: StartupLoadingScre
   const checkmarkAnim = useCheckmarkAnimation();
   const textFadeAnim = useTextFadeAnimation();
 
+  // Track if component is mounted to prevent callbacks after unmount
+  const isMountedRef = useRef(true);
+
   // Play success sound
   const playSuccessSound = async () => {
     try {
@@ -68,9 +72,16 @@ export function StartupLoadingScreen({ onComplete, onError }: StartupLoadingScre
     }
   };
 
-  // Cleanup on unmount
+  // Cleanup on unmount - cancel all animations to prevent display link crashes
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
+      isMountedRef.current = false;
+      // Cancel all Reanimated animations to prevent native crashes
+      cancelAnimation(screenOpacity);
+      loadingCircleAnim.stopAnimation();
+      checkmarkAnim.reset();
+      // Release audio player
       if (playerRef.current) {
         playerRef.current.release();
       }
@@ -173,6 +184,9 @@ export function StartupLoadingScreen({ onComplete, onError }: StartupLoadingScre
         await playSuccessSound();
 
         checkmarkAnim.playCheckmarkEffect(() => {
+          // Check if component is still mounted before proceeding
+          if (!isMountedRef.current) return;
+
           // Fade out screen then call onComplete
           screenOpacity.value = withTiming(0, {
             duration: 400,
@@ -180,10 +194,13 @@ export function StartupLoadingScreen({ onComplete, onError }: StartupLoadingScre
           });
 
           setTimeout(() => {
-            onComplete();
+            // Check mounted again before calling onComplete
+            if (isMountedRef.current) {
+              onComplete();
+            }
           }, 450);
         });
-        
+
       } catch (error) {
         log.error('Sync failed:', error);
         // Even on error, continue to main menu (bundled stories are always available)
@@ -196,7 +213,10 @@ export function StartupLoadingScreen({ onComplete, onError }: StartupLoadingScre
         log.info('StoryLoader cache populated with bundled stories (offline fallback)');
 
         setTimeout(() => {
-          onComplete();
+          // Check mounted before calling onComplete
+          if (isMountedRef.current) {
+            onComplete();
+          }
         }, 1000);
       }
     };
