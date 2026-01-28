@@ -57,6 +57,10 @@ interface StoryTransitionContextType {
   onReturnToModeSelectionCallback: (() => void) | null;
   setOnReturnToModeSelectionCallback: (callback: (() => void) | null) => void;
 
+  // Callback when transition is cancelled - the _layout listens to restore view state
+  onCancelCallback: (() => void) | null;
+  setOnCancelCallback: (callback: (() => void) | null) => void;
+
   // Card position and size for animation
   cardPosition: { x: number; y: number; width: number; height: number } | null;
 
@@ -106,6 +110,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const [shouldShowStoryReader, setShouldShowStoryReader] = useState(false);
   const [onBeginCallback, setOnBeginCallback] = useState<(() => void) | null>(null);
   const [onReturnToModeSelectionCallback, setOnReturnToModeSelectionCallback] = useState<(() => void) | null>(null);
+  const [onCancelCallback, setOnCancelCallback] = useState<(() => void) | null>(null);
   const [isExitAnimating, setIsExitAnimating] = useState(false);
   // Track when we're animating the cancel transition - blocks touches during animation
   const [isCancelAnimating, setIsCancelAnimating] = useState(false);
@@ -603,6 +608,10 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     openingTransformRef.current = null;
     // Reset cancel animation flag
     setIsCancelAnimating(false);
+    // Notify _layout that transition was cancelled so it can restore view state
+    if (onCancelCallback) {
+      onCancelCallback();
+    }
   };
 
   const completeTransition = () => {
@@ -853,17 +862,36 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
     console.log('Returning to mode selection from reader');
 
+    // Get CURRENT screen dimensions - we're returning from story reader which is in landscape
+    // Don't use screenDimensions state as it may have stale portrait values
+    const currentDims = Dimensions.get('window');
+    const currentScreenWidth = currentDims.width;
+    const currentScreenHeight = currentDims.height;
+    const isCurrentLandscape = currentScreenWidth > currentScreenHeight;
+    const isPhoneLandscape = isPhone && isCurrentLandscape;
+    console.log('returnToModeSelection using dimensions:', currentDims, 'isPhoneLandscape:', isPhoneLandscape, 'isPhone:', isPhone);
+
+    // IMPORTANT: Update screenDimensions state so the button rendering uses current landscape values
+    // Without this, buttons would use stale portrait dimensions and get wrong sizing
+    setScreenDimensions(currentDims);
+
     // Animation timing (reverse of selectModeAndBegin)
     const SHRINK_DURATION = 200;        // Shrink from full screen to book size
     const HOLD_AFTER_SHRINK = 100;      // Brief pause before flipping
     const COVER_FLIP_DURATION = 200;    // Flip cover back
     const BUTTONS_DELAY = 50;           // Delay before showing buttons
 
-    // Calculate the centered position (same as startTransition)
-    const targetWidth = screenWidth * 0.55;
+    // Calculate the centered position using CURRENT dimensions (landscape)
+    // For phone landscape: use 35% of width - balanced size for phone screens
+    // For tablet: use 55% of width
+    const targetWidthPercent = isPhoneLandscape ? 0.35 : 0.55;
+    const targetWidth = currentScreenWidth * targetWidthPercent;
     const targetScale = targetWidth / originalCardPosition.width;
-    const targetCenterX = screenWidth / 2;
-    const targetCenterY = (screenHeight / 2) - 30;
+    // For phone landscape: shift book slightly right to make room for buttons on left
+    // Buttons take ~80px on left, so center book in remaining space (center at ~55%)
+    const targetCenterX = isPhoneLandscape ? currentScreenWidth * 0.55 : currentScreenWidth / 2;
+    // For phone landscape: center vertically
+    const targetCenterY = (currentScreenHeight / 2) - (isPhoneLandscape ? 0 : 30);
     const currentCenterX = originalCardPosition.x + originalCardPosition.width / 2;
     const currentCenterY = originalCardPosition.y + originalCardPosition.height / 2;
     const moveX = targetCenterX - currentCenterX;
@@ -896,6 +924,11 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     exitCardY.value = originalCardPosition.y;
     exitCardWidth.value = originalCardPosition.width;
     exitCardHeight.value = originalCardPosition.height;
+
+    // Set current screen dimensions in shared values for the animated style
+    // This is critical - bookExpansionAnimatedStyle uses these to calculate correct centering
+    exitScreenWidth.value = currentScreenWidth;
+    exitScreenHeight.value = currentScreenHeight;
 
     // Set page index for renderPageImage - show the current page during the shrink animation
     exitPageIndexRef.current = currentPageIndex ?? 1;
@@ -1261,6 +1294,8 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     setOnBeginCallback,
     onReturnToModeSelectionCallback,
     setOnReturnToModeSelectionCallback,
+    onCancelCallback,
+    setOnCancelCallback,
     cardPosition,
     startTransition,
     selectModeAndBegin,
@@ -1378,12 +1413,31 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
           {/* X Close button - top left of book */}
           {/* Stays visible when preview modal is showing, but dimmed by overlay */}
           {showModeSelection && targetBookPosition && (() => {
-            // Phone portrait mode: standard close button size
+            // Determine layout mode for close button sizing
             const isPhonePortrait = isPhone && !isLandscape;
-            const closeButtonSize = isPhonePortrait ? scaledButtonSize(36) : scaledButtonSize(44);
+            const isPhoneLandscape = isPhone && isLandscape;
+
+            let closeButtonSize: number;
+            let closeButtonOffset: number;
+            let closeIconSize: number;
+
+            if (isPhonePortrait) {
+              closeButtonSize = scaledButtonSize(36);
+              closeButtonOffset = scaledButtonSize(8);
+              closeIconSize = scaledFontSize(16);
+            } else if (isPhoneLandscape) {
+              // Phone landscape: compact but tappable close button
+              closeButtonSize = scaledButtonSize(28);
+              closeButtonOffset = scaledButtonSize(6);
+              closeIconSize = scaledFontSize(14);
+            } else {
+              // Tablet
+              closeButtonSize = scaledButtonSize(44);
+              closeButtonOffset = scaledButtonSize(12);
+              closeIconSize = scaledFontSize(20);
+            }
+
             const closeButtonRadius = closeButtonSize / 2;
-            const closeButtonOffset = isPhonePortrait ? scaledButtonSize(8) : scaledButtonSize(12);
-            const closeIconSize = isPhonePortrait ? scaledFontSize(16) : scaledFontSize(20);
 
             // Hide close button completely when preview modal is showing to avoid z-index conflicts
             if (showPreviewModal) return null;
@@ -1541,31 +1595,72 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
 
 
-          {/* Mode selection buttons - positioned BELOW the book for phone portrait, LEFT for tablet */}
+          {/* Mode selection buttons - positioned BELOW the book for phone portrait, LEFT for tablet/phone landscape */}
           {showModeSelection && targetBookPosition && (() => {
-            // Phone portrait mode: buttons below the book in a horizontal row
+            // Determine layout mode: phone portrait, phone landscape, or tablet
             const isPhonePortrait = isPhone && !isLandscape;
+            const isPhoneLandscape = isPhone && isLandscape;
 
-            // Sizing for phone portrait mode - boxed buttons with icon on top, text below
-            // Tablet keeps horizontal button layout (icon and text side by side)
-            // Use fixed width for phone to ensure consistent button sizes
-            const buttonWidth = isPhonePortrait ? scaledButtonSize(68) : scaledButtonSize(140);
-            const buttonPaddingV = isPhonePortrait ? scaledPadding(10) : scaledPadding(12);
-            const buttonPaddingH = isPhonePortrait ? scaledPadding(6) : scaledPadding(20);
-            const buttonRadius = isPhonePortrait ? scaledButtonSize(14) : scaledButtonSize(20);
-            const iconSize = isPhonePortrait ? scaledFontSize(22) : scaledFontSize(22);
-            const textSize = isPhonePortrait ? scaledFontSize(10) : scaledFontSize(18);
-            const buttonGap = isPhonePortrait ? scaledPadding(3) : scaledPadding(8);
-            const containerGap = isPhonePortrait ? 8 : 20;
-            const containerMargin = isPhonePortrait ? 20 : 20;
-            // Only add margin to icon on tablet (row layout) - phone column layout uses gap instead
-            const iconMarginRight = isPhonePortrait ? 0 : 10;
+            // Sizing based on device and orientation
+            // Phone portrait: small boxed buttons with icon on top, text below
+            // Phone landscape: compact buttons to fit beside the book
+            // Tablet: larger horizontal buttons (icon beside text)
+            let buttonWidth: number;
+            let buttonPaddingV: number;
+            let buttonPaddingH: number;
+            let buttonRadius: number;
+            let iconSize: number;
+            let textSize: number;
+            let buttonGap: number;
+            let containerGap: number;
+            let containerMargin: number;
+            let iconMarginRight: number;
+            let buttonFlexDirection: 'row' | 'column';
 
-            // Button layout: column for phone (icon on top), row for tablet (icon beside text)
-            const buttonFlexDirection = isPhonePortrait ? 'column' as const : 'row' as const;
+            if (isPhonePortrait) {
+              // Phone portrait: boxed buttons below the book
+              buttonWidth = scaledButtonSize(68);
+              buttonPaddingV = scaledPadding(10);
+              buttonPaddingH = scaledPadding(6);
+              buttonRadius = scaledButtonSize(14);
+              iconSize = scaledFontSize(22);
+              textSize = scaledFontSize(10);
+              buttonGap = scaledPadding(3);
+              containerGap = 8;
+              containerMargin = 20;
+              iconMarginRight = 0;
+              buttonFlexDirection = 'column';
+            } else if (isPhoneLandscape) {
+              // Phone landscape: compact but readable buttons
+              // Use column layout (icon on top) to save horizontal space
+              buttonWidth = scaledButtonSize(52);
+              buttonPaddingV = scaledPadding(6);
+              buttonPaddingH = scaledPadding(4);
+              buttonRadius = scaledButtonSize(10);
+              iconSize = scaledFontSize(18);
+              textSize = scaledFontSize(9);
+              buttonGap = scaledPadding(2);
+              containerGap = 6;
+              containerMargin = 16;  // More margin from left edge
+              iconMarginRight = 0;
+              buttonFlexDirection = 'column'; // Stack icon on top of text to save width
+            } else {
+              // Tablet: larger buttons
+              buttonWidth = scaledButtonSize(140);
+              buttonPaddingV = scaledPadding(12);
+              buttonPaddingH = scaledPadding(20);
+              buttonRadius = scaledButtonSize(20);
+              iconSize = scaledFontSize(22);
+              textSize = scaledFontSize(18);
+              buttonGap = scaledPadding(8);
+              containerGap = 20;
+              containerMargin = 20;
+              iconMarginRight = 10;
+              buttonFlexDirection = 'row';
+            }
 
             // For phone portrait: position buttons horizontally below the book, centered on screen
-            // For tablet: position buttons vertically to the left of the book
+            // For tablet/phone landscape: position buttons vertically to the left of the book
             const buttonContainerStyle = isPhonePortrait
               ? {
                   // Horizontal layout below the book, centered
@@ -1577,8 +1672,18 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                   alignItems: 'center' as const,
                   gap: containerGap,
                 }
+              : isPhoneLandscape
+              ? {
+                  // Phone landscape: position buttons just to the left of the book
+                  // Use 'right' positioning relative to book's left edge
+                  right: screenWidth - targetBookPosition.x + containerMargin,
+                  top: targetBookPosition.y,
+                  height: targetBookPosition.height,
+                  justifyContent: 'center' as const,
+                  gap: containerGap,
+                }
               : {
-                  // Vertical layout to the left of the book (tablet)
+                  // Tablet: position buttons to the left of the book
                   right: screenWidth - targetBookPosition.x + containerMargin,
                   top: targetBookPosition.y,
                   height: targetBookPosition.height,
@@ -1708,13 +1813,37 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
           {/* Tap to begin button (bottom center with padding) */}
           {showModeSelection && (() => {
-            // Phone portrait mode: slightly smaller begin button
+            // Determine layout mode for begin button sizing
             const isPhonePortrait = isPhone && !isLandscape;
-            const beginButtonRadius = isPhonePortrait ? scaledButtonSize(18) : scaledButtonSize(20);
-            const beginButtonPaddingV = isPhonePortrait ? scaledPadding(10) : scaledPadding(12);
-            const beginButtonPaddingH = isPhonePortrait ? scaledPadding(20) : scaledPadding(24);
-            const beginTextSize = isPhonePortrait ? scaledFontSize(16) : scaledFontSize(18);
-            const bottomPadding = isPhonePortrait ? Math.max(insets.bottom + 16, 24) : insets.bottom + 20;
+            const isPhoneLandscape = isPhone && isLandscape;
+
+            let beginButtonRadius: number;
+            let beginButtonPaddingV: number;
+            let beginButtonPaddingH: number;
+            let beginTextSize: number;
+            let bottomPadding: number;
+
+            if (isPhonePortrait) {
+              beginButtonRadius = scaledButtonSize(18);
+              beginButtonPaddingV = scaledPadding(10);
+              beginButtonPaddingH = scaledPadding(20);
+              beginTextSize = scaledFontSize(16);
+              bottomPadding = Math.max(insets.bottom + 16, 24);
+            } else if (isPhoneLandscape) {
+              // Phone landscape: compact but readable begin button
+              beginButtonRadius = scaledButtonSize(14);
+              beginButtonPaddingV = scaledPadding(8);
+              beginButtonPaddingH = scaledPadding(16);
+              beginTextSize = scaledFontSize(14);
+              bottomPadding = Math.max(insets.bottom + 8, 12);
+            } else {
+              // Tablet
+              beginButtonRadius = scaledButtonSize(20);
+              beginButtonPaddingV = scaledPadding(12);
+              beginButtonPaddingH = scaledPadding(24);
+              beginTextSize = scaledFontSize(18);
+              bottomPadding = insets.bottom + 20;
+            }
 
             return (
             <Animated.View

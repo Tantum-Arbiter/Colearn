@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
-import { AppState, AppStateStatus, Dimensions, View, Platform, DevSettings } from 'react-native';
+import { AppState, AppStateStatus, Dimensions, View, Platform, DevSettings, Alert } from 'react-native';
 import * as ScreenOrientation from 'expo-screen-orientation';
 
 import 'react-native-reanimated';
@@ -32,7 +32,6 @@ import { GlobalSoundProvider } from '@/contexts/global-sound-context';
 import { TutorialProvider } from '@/contexts/tutorial-context';
 import { updateSentryConsent } from '@/services/sentry-service';
 import { StartupLoadingScreen } from '@/components/startup-loading-screen';
-import { AuthCheckingScreen } from '@/components/auth/auth-checking-screen';
 // Import notification service early to register notification handler
 // This ensures notifications are handled properly even when app is in background
 import '@/services/notification-service';
@@ -88,7 +87,8 @@ function AppContent() {
     selectedMode: transitionMode,
     selectedVoiceOver: transitionVoiceOver,
     setOnBeginCallback,
-    setOnReturnToModeSelectionCallback
+    setOnReturnToModeSelectionCallback,
+    setOnCancelCallback
   } = useStoryTransition();
 
   const colorScheme = useColorScheme();
@@ -123,7 +123,7 @@ function AppContent() {
   // Track if we've already started background music to prevent auto-restart after manual pause
   const [hasStartedBackgroundMusic, setHasStartedBackgroundMusic] = useState(false);
 
-  type AppView = 'splash' | 'onboarding' | 'login' | 'loading' | 'checking-auth' | 'app' | 'main' | 'stories' | 'story-reader' | 'account';
+  type AppView = 'splash' | 'onboarding' | 'login' | 'loading' | 'app' | 'main' | 'stories' | 'story-reader' | 'account';
   type PageKey = 'main' | 'stories' | 'story-reader' | 'emotions' | 'bedtime' | 'account';
 
   const [currentView, setCurrentView] = useState<AppView>('splash');
@@ -136,8 +136,7 @@ function AppContent() {
   // Track if sync is in progress to prevent premature navigation
   const syncInProgressRef = useRef(false);
 
-  // Track the previous view before checking auth (to restore if auth succeeds)
-  const previousViewRef = useRef<AppView>('app');
+
 
   // Debug current view changes (disabled for performance)
   // useEffect(() => {
@@ -295,6 +294,7 @@ function AppContent() {
   }, [isAppReady, hasHydrated, hasCompletedOnboarding, showLoginAfterOnboarding, isGuestMode]);
 
   // Refresh tokens when app comes back from background (skip for guest mode)
+  // Token refresh happens in background - no blocking loading screen
   useEffect(() => {
     const handleAppStateChange = async (nextAppState: AppStateStatus) => {
       if (nextAppState === 'active') {
@@ -316,49 +316,62 @@ function AppContent() {
         }
 
         // Skip if we're not in the app view (e.g., already on login, splash, onboarding)
-        // Only show auth checking screen when we're resuming from actual app usage
         if (currentView !== 'app' && currentView !== 'story-reader') {
           return;
         }
 
-        // Store current view so we can restore it after successful auth check
-        previousViewRef.current = currentView;
-
-        // Show loading screen while checking authentication
-        log.info('[AppState] Checking authentication after resume...');
-        setCurrentView('checking-auth');
+        // Perform token refresh in the background (non-blocking)
+        log.info('[AppState] Checking authentication in background...');
 
         try {
           // App became active - check if tokens need refresh
           const isAuthenticated = await ApiClient.isAuthenticated();
 
           if (!isAuthenticated && hasCompletedOnboarding) {
-            // Tokens expired and couldn't be refreshed - show login
-            log.info('[AppState] Not authenticated after resume - redirecting to login');
-            setShowLoginAfterOnboarding(true);
-            setCurrentView('login');
+            // Tokens expired and couldn't be refreshed - prompt user with options
+            log.info('[AppState] Session expired - prompting user');
+            Alert.alert(
+              'Session Expired',
+              'Your session has expired. Would you like to sign in again to sync your data?',
+              [
+                {
+                  text: 'Continue Offline',
+                  style: 'cancel',
+                  onPress: () => {
+                    // Switch to guest mode - changes won't be saved to server
+                    log.info('[AppState] User chose to continue offline');
+                    setGuestMode(true);
+                    // Clear auth data since we're going to guest mode
+                    ApiClient.logout().catch(e => log.error('Logout error:', e));
+                  },
+                },
+                {
+                  text: 'Sign In',
+                  onPress: () => {
+                    log.info('[AppState] User chose to sign in');
+                    setShowLoginAfterOnboarding(true);
+                    setCurrentView('login');
+                  },
+                },
+              ],
+              { cancelable: false }
+            );
           } else if (isAuthenticated) {
-            // Auth successful - restore previous view
-            log.info('[AppState] Authentication valid - restoring app view');
-            setCurrentView(previousViewRef.current);
-            // Retry any pending background saves now that we're authenticated
+            // Auth successful - retry any pending background saves
+            log.info('[AppState] Authentication valid');
             backgroundSaveService.retryPendingSaves();
-          } else {
-            // Edge case: not authenticated but no onboarding completed
-            // Just restore previous view
-            setCurrentView(previousViewRef.current);
           }
+          // If not authenticated and no onboarding completed, do nothing
         } catch (error) {
-          // On any unexpected error, restore previous view to prevent getting stuck
+          // On unexpected error, just log it - don't disrupt user experience
           log.error('[AppState] Error checking authentication:', error);
-          setCurrentView(previousViewRef.current);
         }
       }
     };
 
     const subscription = AppState.addEventListener('change', handleAppStateChange);
     return () => subscription?.remove();
-  }, [hasHydrated, hasCompletedOnboarding, isGuestMode, setShowLoginAfterOnboarding, currentView]);
+  }, [hasHydrated, hasCompletedOnboarding, isGuestMode, setShowLoginAfterOnboarding, setGuestMode, currentView]);
 
   // Start background music when main menu loads (after sign in or app restart)
   useEffect(() => {
@@ -431,8 +444,10 @@ function AppContent() {
     const handleReturnToModeSelection = () => {
       // Hide the story reader but keep the story selected
       setShowStoryReader(false);
-      setCurrentView('app');
-      // Ensure we're on the stories page (not main menu)
+      // DON'T change currentView here - keep it as 'story-reader' to maintain landscape orientation
+      // The mode selection overlay is still showing in landscape, and changing to 'app' would
+      // trigger the portrait lock in the orientation useEffect
+      // currentView will be set to 'app' when the user actually exits (cancelTransition or selectModeAndBegin)
       setCurrentPage('stories');
       // Don't clear storyBeingRead - we'll need it if they choose to read again
     };
@@ -443,6 +458,23 @@ function AppContent() {
       setOnReturnToModeSelectionCallback(null);
     };
   }, [setOnReturnToModeSelectionCallback]);
+
+  // Register callback for when transition is cancelled (user taps X on mode selection)
+  useEffect(() => {
+    const handleCancel = () => {
+      // Restore view state to 'app' when transition is cancelled
+      // This is needed because we keep currentView as 'story-reader' during mode selection
+      // to maintain landscape orientation
+      setCurrentView('app');
+      setCurrentPage('stories');
+    };
+
+    setOnCancelCallback(() => () => handleCancel());
+
+    return () => {
+      setOnCancelCallback(null);
+    };
+  }, [setOnCancelCallback]);
 
   const handleOnboardingComplete = () => {
     setOnboardingComplete(true);
@@ -545,12 +577,6 @@ function AppContent() {
         }}
       />
     );
-  }
-
-  // Auth checking screen shown when app resumes from background
-  // Shows spinning circle while verifying/refreshing tokens
-  if (currentView === 'checking-auth') {
-    return <AuthCheckingScreen />;
   }
 
   // Handle main app navigation with story reader overlay
