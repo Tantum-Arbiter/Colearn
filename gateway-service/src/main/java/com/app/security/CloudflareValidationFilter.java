@@ -16,12 +16,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Set;
 
-/**
- * Validates that requests come through Cloudflare proxy.
- * Checks for Cloudflare-specific headers that are only present when traffic routes through CF.
- *
- * Active in 'prod' and 'gcp-dev' profiles - allows functional tests via user-agent bypass.
- */
 @Component
 @Profile({"prod", "gcp-dev"})
 @Order(1)

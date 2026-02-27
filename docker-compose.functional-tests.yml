@@ -97,7 +97,8 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - SPRING_PROFILES_ACTIVE=test
+      # Use test,emulator profiles: 'test' for general test config, 'emulator' for GCS URL strategy
+      - SPRING_PROFILES_ACTIVE=test,emulator
       - FIREBASE_PROJECT_ID=colean-func-test
       - GOOGLE_OAUTH_CLIENT_ID=test-client-id
       - GOOGLE_OAUTH_CLIENT_SECRET=test-client-secret
@@ -143,7 +144,8 @@ services:
       - gw-tests
 
     environment:
-      - SPRING_PROFILES_ACTIVE=test
+      # Use test,emulator profiles for GCS URL strategy
+      - SPRING_PROFILES_ACTIVE=test,emulator
       - FIREBASE_PROJECT_ID=test-project
       - FIREBASE_EMULATOR_HOST=firestore-emulator
       - FIREBASE_EMULATOR_PORT=8080

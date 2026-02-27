@@ -5,6 +5,15 @@ module.exports = function (api) {
       ['babel-preset-expo', { jsxRuntime: 'automatic' }]
     ],
     plugins: [
+      [
+        'module-resolver',
+        {
+          root: ['./'],
+          alias: {
+            '@': './',
+          },
+        },
+      ],
       'react-native-reanimated/plugin',
     ],
     env: {
@@ -13,6 +22,15 @@ module.exports = function (api) {
           ['babel-preset-expo', { jsxRuntime: 'automatic' }]
         ],
         plugins: [
+          [
+            'module-resolver',
+            {
+              root: ['./'],
+              alias: {
+                '@': './',
+              },
+            },
+          ],
           'react-native-reanimated/plugin',
         ],
       },

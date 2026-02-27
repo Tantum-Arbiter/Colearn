@@ -9,13 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * User entity model for Firebase Firestore
- * Represents a parent/guardian user in the Grow with Freya app
- *
- * PII-free design: No email, name, or personally identifying information is stored.
- * User identification relies on provider + providerId for cross-device sync.
- */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class User {
 
@@ -23,10 +16,10 @@ public class User {
     private String id;
 
     @JsonProperty("provider")
-    private String provider; // "google", "apple"
+    private String provider;
 
     @JsonProperty("providerId")
-    private String providerId; // OAuth provider's user ID (opaque identifier)
+    private String providerId;
 
     @JsonProperty("isActive")
     private boolean isActive = true;
@@ -46,22 +39,15 @@ public class User {
     @JsonProperty("children")
     private List<ChildProfile> children = new ArrayList<>();
 
-    /**
-     * COPPA COMPLIANCE WARNING: This field must NOT contain any PII.
-     * Only store anonymous, non-identifying technical data if needed.
-     * Currently unused - kept for future extensibility.
-     */
     @JsonProperty("metadata")
     private Map<String, Object> metadata = new HashMap<>();
 
-    // Default constructor for Firebase
     public User() {
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
         this.preferences = new UserPreferences();
     }
 
-    // Constructor for new user creation
     public User(String id, String provider, String providerId) {
         this();
         this.id = id;
@@ -70,7 +56,6 @@ public class User {
         this.lastLoginAt = Instant.now();
     }
 
-    // Getters and Setters
     public String getId() {
         return id;
     }
@@ -151,7 +136,6 @@ public class User {
         this.metadata = metadata;
     }
 
-    // Helper methods
     public void updateLastLogin() {
         this.lastLoginAt = Instant.now();
         this.updatedAt = Instant.now();

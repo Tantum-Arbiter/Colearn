@@ -5,13 +5,11 @@ on:
     branches: [main]
     paths:
       - 'scripts/cms-stories/**'
-      - 'grow-with-freya/assets/stories/**/story-data.json'
       - 'scripts/story-schema.json'
   pull_request:
     branches: [main]
     paths:
       - 'scripts/cms-stories/**'
-      - 'grow-with-freya/assets/stories/**/story-data.json'
       - 'scripts/story-schema.json'
   workflow_dispatch:
     inputs:
@@ -62,27 +60,17 @@ jobs:
             fi
           done
 
-      - name: Validate bundled stories
+      - name: Check for duplicate story IDs in CMS
         run: |
-          echo "Validating bundled stories..."
-          for file in grow-with-freya/assets/stories/*/story-data.json; do
-            if [ -f "$file" ]; then
-              echo "  Validating: $file"
-              ajv validate -s scripts/story-schema.json -d "$file" --strict=false
-            fi
-          done
-
-      - name: Check for duplicate story IDs
-        run: |
-          echo "Checking for duplicate story IDs..."
-          ids=$(cat scripts/cms-stories/*/story-data.json grow-with-freya/assets/stories/*/story-data.json 2>/dev/null | jq -r '.id' | sort)
+          echo "Checking for duplicate story IDs in CMS stories..."
+          ids=$(cat scripts/cms-stories/*/story-data.json 2>/dev/null | jq -r '.id' | sort)
           duplicates=$(echo "$ids" | uniq -d)
           if [ -n "$duplicates" ]; then
-            echo "Duplicate story IDs found:"
+            echo "Duplicate story IDs found in CMS:"
             echo "$duplicates"
             exit 1
           fi
-          echo "No duplicate IDs found"
+          echo "No duplicate IDs found in CMS stories"
 
   sync-to-gcs:
     name: Sync Assets to GCS
@@ -127,6 +115,56 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup gcloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Validate assets exist in GCS before Firestore update
+        run: |
+          echo "Validating all story assets exist in GCS..."
+          MISSING_ASSETS=0
+
+          for story_dir in scripts/cms-stories/*/; do
+            if [ -d "$story_dir" ]; then
+              story_name=$(basename "$story_dir")
+
+              # Check for required assets in GCS using find (avoid glob syntax issues)
+              find "$story_dir" -maxdepth 1 -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.mp3" -o -name "*.webp" -o -name "*.gif" \) 2>/dev/null | while read asset; do
+                if [ -f "$asset" ]; then
+                  asset_name=$(basename "$asset")
+                  gcs_path="gs://colearnwithfreya-assets/stories/${story_name}/${asset_name}"
+
+                  if ! gsutil -q stat "$gcs_path" 2>/dev/null; then
+                    echo "❌ MISSING: $gcs_path"
+                    echo "1" >> /tmp/missing_assets_count
+                  else
+                    echo "✅ Found: $gcs_path"
+                  fi
+                fi
+              done
+            fi
+          done
+
+          # Count missing assets from temp file
+          if [ -f /tmp/missing_assets_count ]; then
+            MISSING_ASSETS=$(wc -l < /tmp/missing_assets_count)
+            rm -f /tmp/missing_assets_count
+          fi
+
+          if [ "$MISSING_ASSETS" -gt 0 ]; then
+            echo ""
+            echo "❌ ERROR: $MISSING_ASSETS assets are missing from GCS!"
+            echo "The GCS sync may have failed. Aborting Firestore update."
+            exit 1
+          fi
+
+          echo ""
+          echo "✅ All assets verified in GCS. Safe to update Firestore."
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

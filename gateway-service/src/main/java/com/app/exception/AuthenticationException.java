@@ -2,9 +2,6 @@ package com.app.exception;
 
 import java.util.Map;
 
-/**
- * Exception for authentication-related errors
- */
 public class AuthenticationException extends GatewayException {
     
     private final String provider;
@@ -50,30 +47,18 @@ public class AuthenticationException extends GatewayException {
         return tokenType;
     }
     
-    /**
-     * Create Google authentication exception
-     */
     public static AuthenticationException googleAuthFailed(String message, Throwable cause) {
         return new AuthenticationException(ErrorCode.INVALID_GOOGLE_TOKEN, message, cause, "google", "id_token");
     }
     
-    /**
-     * Create Apple authentication exception
-     */
     public static AuthenticationException appleAuthFailed(String message, Throwable cause) {
         return new AuthenticationException(ErrorCode.INVALID_APPLE_TOKEN, message, cause, "apple", "id_token");
     }
     
-    /**
-     * Create invalid token exception
-     */
     public static AuthenticationException invalidToken(String tokenType) {
         return new AuthenticationException(ErrorCode.INVALID_TOKEN, "Invalid " + tokenType, null, tokenType);
     }
     
-    /**
-     * Create expired token exception
-     */
     public static AuthenticationException expiredToken(String tokenType) {
         return new AuthenticationException(ErrorCode.TOKEN_EXPIRED, "Token has expired", null, tokenType);
     }

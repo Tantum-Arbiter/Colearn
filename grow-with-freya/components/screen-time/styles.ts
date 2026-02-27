@@ -368,8 +368,20 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
+    marginBottom: 2,
     paddingHorizontal: 10,
+  },
+
+  heatmapArrowContainer: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+
+  heatmapArrow: {
+    color: 'rgba(78, 205, 196, 1.0)',
+    fontSize: 12,
+    lineHeight: 14,
   },
 
   heatmapLabelsRow: {
@@ -377,7 +389,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 10,
-    marginTop: 4,
+    marginTop: 0,
   },
 
   heatmapLabelContainer: {

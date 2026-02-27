@@ -7,14 +7,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Data Transfer Objects for User Management
- */
 public class UserDTOs {
 
-    /**
-     * User profile response DTO
-     */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class UserProfileResponse {
         @JsonProperty("id")
@@ -85,9 +79,6 @@ public class UserDTOs {
         public void setPreferences(UserPreferencesResponse preferences) { this.preferences = preferences; }
     }
 
-    /**
-     * Child profile response DTO
-     */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ChildProfileResponse {
         @JsonProperty("id")
@@ -152,9 +143,6 @@ public class UserDTOs {
         public void setFavorites(List<String> favorites) { this.favorites = favorites; }
     }
 
-    /**
-     * Child progress response DTO
-     */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ChildProgressResponse {
         @JsonProperty("storiesCompleted")
@@ -195,9 +183,6 @@ public class UserDTOs {
         public void setLastActivityAt(Instant lastActivityAt) { this.lastActivityAt = lastActivityAt; }
     }
 
-    /**
-     * Screen time response DTO
-     */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ScreenTimeResponse {
         @JsonProperty("todayMinutes")
@@ -232,9 +217,6 @@ public class UserDTOs {
         public void setRemainingMinutes(int remainingMinutes) { this.remainingMinutes = remainingMinutes; }
     }
 
-    /**
-     * User preferences response DTO
-     */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class UserPreferencesResponse {
         @JsonProperty("language")
@@ -281,7 +263,6 @@ public class UserDTOs {
         public void setPrivacy(PrivacyPreferencesResponse privacy) { this.privacy = privacy; }
     }
 
-    // Nested preference response DTOs
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class NotificationPreferencesResponse {
         @JsonProperty("pushEnabled")
@@ -388,11 +369,6 @@ public class UserDTOs {
         public void setPersonalizedContentEnabled(boolean personalizedContentEnabled) { this.personalizedContentEnabled = personalizedContentEnabled; }
     }
 
-    // Request DTOs
-
-    /**
-     * Create child profile request DTO
-     */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class CreateChildProfileRequest {
         @JsonProperty("name")
@@ -415,9 +391,6 @@ public class UserDTOs {
         public void setAgeRange(String ageRange) { this.ageRange = ageRange; }
     }
 
-    /**
-     * Update user preferences request DTO
-     */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class UpdateUserPreferencesRequest {
         @JsonProperty("language")
@@ -464,9 +437,6 @@ public class UserDTOs {
         public void setPrivacy(Map<String, Object> privacy) { this.privacy = privacy; }
     }
 
-    /**
-     * Update child profile request DTO
-     */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class UpdateChildProfileRequest {
         @JsonProperty("name")
@@ -495,9 +465,6 @@ public class UserDTOs {
         public void setPreferences(Map<String, Object> preferences) { this.preferences = preferences; }
     }
 
-    /**
-     * Record screen time request DTO
-     */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class RecordScreenTimeRequest {
         @JsonProperty("childId")

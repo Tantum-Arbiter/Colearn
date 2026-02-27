@@ -1,11 +1,12 @@
 package com.app.controller;
 
-import com.app.dto.StorySyncRequest;
+import com.app.model.AssetVersion;
 import com.app.model.ContentVersion;
 import com.app.model.InteractiveElement;
 import com.app.model.Story;
 import com.app.model.StoryPage;
 import com.app.service.ApplicationMetricsService;
+import com.app.service.AssetService;
 import com.app.service.GatewayServiceApplication;
 import com.app.service.StoryService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,6 +21,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.google.cloud.Timestamp;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -40,6 +42,9 @@ class StoryControllerTest {
     private StoryService storyService;
 
     @MockBean
+    private AssetService assetService;
+
+    @MockBean
     private ApplicationMetricsService metricsService;
 
     @Autowired
@@ -48,6 +53,7 @@ class StoryControllerTest {
     private Story testStory1;
     private Story testStory2;
     private ContentVersion testContentVersion;
+    private AssetVersion testAssetVersion;
 
     @BeforeEach
     void setUp() {
@@ -111,6 +117,21 @@ class StoryControllerTest {
         checksums.put("story-1", "checksum1");
         checksums.put("story-2", "checksum2");
         testContentVersion.setStoryChecksums(checksums);
+
+        // Create test asset version
+        testAssetVersion = new AssetVersion();
+        testAssetVersion.setId("current");
+        testAssetVersion.setVersion(1);
+        testAssetVersion.setLastUpdated(Instant.now());
+        testAssetVersion.setTotalAssets(2);
+        Map<String, String> assetChecksums = new HashMap<>();
+        assetChecksums.put("assets/story-1/image.webp", "asset-checksum1");
+        assetChecksums.put("assets/story-2/image.webp", "asset-checksum2");
+        testAssetVersion.setAssetChecksums(assetChecksums);
+
+        // Default mock for assetService.getCurrentAssetVersion() - used by most tests
+        when(assetService.getCurrentAssetVersion())
+                .thenReturn(CompletableFuture.completedFuture(testAssetVersion));
     }
 
     @Test
@@ -402,125 +423,6 @@ class StoryControllerTest {
         verify(metricsService, never()).recordStorySyncSkipped();
     }
 
-    @Test
-    void syncStories_InitialSync_NoClientChecksums() throws Exception {
-        // Arrange
-        StorySyncRequest request = new StorySyncRequest();
-        request.setClientVersion(0);
-        request.setStoryChecksums(new HashMap<>());
-        request.setLastSyncTimestamp(0L);
-
-        List<Story> storiesToSync = Arrays.asList(testStory1, testStory2);
-        when(storyService.getStoriesToSync(anyMap()))
-                .thenReturn(CompletableFuture.completedFuture(storiesToSync));
-        when(storyService.getCurrentContentVersion())
-                .thenReturn(CompletableFuture.completedFuture(testContentVersion));
-
-        // Act & Assert
-        mockMvc.perform(post("/api/stories/sync")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.serverVersion").value(1))
-                .andExpect(jsonPath("$.updatedStories").value(2))
-                .andExpect(jsonPath("$.totalStories").value(2))
-                .andExpect(jsonPath("$.stories").isArray())
-                .andExpect(jsonPath("$.stories.length()").value(2));
-
-        verify(storyService, times(1)).getStoriesToSync(anyMap());
-        verify(storyService, times(1)).getCurrentContentVersion();
-    }
-
-    @Test
-    void syncStories_DeltaSync_MatchingChecksums() throws Exception {
-        // Arrange
-        StorySyncRequest request = new StorySyncRequest();
-        request.setClientVersion(1);
-        request.setStoryChecksums(testContentVersion.getStoryChecksums());
-        request.setLastSyncTimestamp(System.currentTimeMillis());
-
-        when(storyService.getStoriesToSync(anyMap()))
-                .thenReturn(CompletableFuture.completedFuture(Collections.emptyList()));
-        when(storyService.getCurrentContentVersion())
-                .thenReturn(CompletableFuture.completedFuture(testContentVersion));
-
-        // Act & Assert
-        mockMvc.perform(post("/api/stories/sync")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.serverVersion").value(1))
-                .andExpect(jsonPath("$.updatedStories").value(0))
-                .andExpect(jsonPath("$.stories").isArray())
-                .andExpect(jsonPath("$.stories.length()").value(0));
-
-        verify(storyService, times(1)).getStoriesToSync(anyMap());
-        verify(storyService, times(1)).getCurrentContentVersion();
-    }
-
-    @Test
-    void syncStories_DeltaSync_OutdatedChecksums() throws Exception {
-        // Arrange
-        Map<String, String> outdatedChecksums = new HashMap<>();
-        outdatedChecksums.put("story-1", "old-checksum");
-
-        StorySyncRequest request = new StorySyncRequest();
-        request.setClientVersion(0);
-        request.setStoryChecksums(outdatedChecksums);
-        request.setLastSyncTimestamp(System.currentTimeMillis() - 86400000L);
-
-        when(storyService.getStoriesToSync(anyMap()))
-                .thenReturn(CompletableFuture.completedFuture(Arrays.asList(testStory1)));
-        when(storyService.getCurrentContentVersion())
-                .thenReturn(CompletableFuture.completedFuture(testContentVersion));
-
-        // Act & Assert
-        mockMvc.perform(post("/api/stories/sync")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.serverVersion").value(1))
-                .andExpect(jsonPath("$.updatedStories").value(1))
-                .andExpect(jsonPath("$.stories").isArray())
-                .andExpect(jsonPath("$.stories.length()").value(1));
-
-        verify(storyService, times(1)).getStoriesToSync(anyMap());
-        verify(storyService, times(1)).getCurrentContentVersion();
-    }
-
-    @Test
-    void syncStories_InvalidRequest_MissingFields() throws Exception {
-        // Arrange - Invalid request with null fields
-        String invalidJson = "{}";
-
-        // Act & Assert - Expect 400 Bad Request for missing required fields
-        mockMvc.perform(post("/api/stories/sync")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(invalidJson))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errorCode").value("GTW-101"))
-                .andExpect(jsonPath("$.success").value(false));
-    }
-
-    @Test
-    void syncStories_ServiceError() throws Exception {
-        // Arrange
-        StorySyncRequest request = new StorySyncRequest();
-        request.setClientVersion(0);
-        request.setStoryChecksums(new HashMap<>());
-        request.setLastSyncTimestamp(0L);
-
-        when(storyService.getCurrentContentVersion())
-                .thenReturn(CompletableFuture.failedFuture(new RuntimeException("Database error")));
-
-        // Act & Assert
-        mockMvc.perform(post("/api/stories/sync")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.errorCode").value("GTW-500"))
-                .andExpect(jsonPath("$.success").value(false));
-
-        verify(storyService, times(1)).getCurrentContentVersion();
-    }
+    // Tests for /api/stories/sync endpoint were removed when the endpoint was deprecated
+    // in favor of /api/stories/delta batch endpoint. See delta tests above.
 }

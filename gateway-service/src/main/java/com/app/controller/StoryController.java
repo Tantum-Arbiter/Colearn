@@ -1,13 +1,17 @@
 package com.app.controller;
 
-import com.app.dto.StorySyncRequest;
-import com.app.dto.StorySyncResponse;
+import com.app.dto.ContentVersionResponse;
+import com.app.dto.DeltaSyncRequest;
+import com.app.dto.DeltaSyncResponse;
 import com.app.exception.ErrorCode;
 import com.app.exception.ErrorResponse;
+import com.app.model.AssetVersion;
 import com.app.model.ContentVersion;
 import com.app.model.Story;
 import com.app.service.ApplicationMetricsService;
+import com.app.service.AssetService;
 import com.app.service.StoryService;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -17,8 +21,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletionException;
 
@@ -29,11 +36,13 @@ public class StoryController {
     private static final Logger logger = LoggerFactory.getLogger(StoryController.class);
 
     private final StoryService storyService;
+    private final AssetService assetService;
     private final ApplicationMetricsService metricsService;
 
     @Autowired
-    public StoryController(StoryService storyService, ApplicationMetricsService metricsService) {
+    public StoryController(StoryService storyService, AssetService assetService, ApplicationMetricsService metricsService) {
         this.storyService = storyService;
+        this.assetService = assetService;
         this.metricsService = metricsService;
     }
 
@@ -90,92 +99,34 @@ public class StoryController {
         }
     }
 
-    @PostMapping("/sync")
-    public ResponseEntity<?> syncStories(@RequestBody StorySyncRequest request) {
-        String reqId = getRequestId();
-        long startTime = System.currentTimeMillis();
-        logger.info("[Sync] [reqId={}] POST /api/stories/sync - Delta sync request received", reqId);
-
-        // Validate required fields
-        if (request.getClientVersion() == null || request.getStoryChecksums() == null || request.getLastSyncTimestamp() == null) {
-            logger.warn("[Sync] [reqId={}] Validation failed - missing required fields (clientVersion={}, storyChecksums={}, lastSyncTimestamp={})",
-                    reqId, request.getClientVersion() != null, request.getStoryChecksums() != null, request.getLastSyncTimestamp() != null);
-            ErrorResponse errorResponse = new ErrorResponse();
-            errorResponse.setSuccess(false);
-            errorResponse.setErrorCode(ErrorCode.MISSING_REQUIRED_FIELD.getCode());
-            errorResponse.setError(ErrorCode.MISSING_REQUIRED_FIELD.getDefaultMessage());
-            errorResponse.setMessage("Missing required fields: clientVersion, storyChecksums, or lastSyncTimestamp");
-            errorResponse.setPath("/api/stories/sync");
-            errorResponse.setTimestamp(Instant.now().toString());
-            errorResponse.setRequestId(reqId);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-        }
-
-        int clientStoriesCount = request.getStoryChecksums().size();
-        logger.info("[Sync] [reqId={}] Client state: version={}, cachedStories={}", reqId, request.getClientVersion(), clientStoriesCount);
-
-        try {
-            ContentVersion serverVersion = storyService.getCurrentContentVersion().join();
-            logger.info("[Sync] [reqId={}] Server state: version={}, totalStories={}", reqId, serverVersion.getVersion(), serverVersion.getTotalStories());
-
-            List<Story> storiesToSync = storyService.getStoriesToSync(request.getStoryChecksums()).join();
-
-            StorySyncResponse response = new StorySyncResponse();
-            response.setServerVersion(serverVersion.getVersion());
-            response.setStories(storiesToSync);
-            response.setStoryChecksums(serverVersion.getStoryChecksums());
-            response.setTotalStories(serverVersion.getTotalStories());
-            response.setLastUpdated(serverVersion.getLastUpdated().toDate().getTime());
-
-            long durationMs = System.currentTimeMillis() - startTime;
-            metricsService.recordStorySync(clientStoriesCount, storiesToSync.size(), durationMs);
-
-            if (storiesToSync.isEmpty()) {
-                logger.info("[Sync] [reqId={}] COMPLETE - No changes, client up-to-date, durationMs={}", reqId, durationMs);
-            } else {
-                logger.info("[Sync] [reqId={}] COMPLETE - Syncing {} stories, serverVersion={}, durationMs={}",
-                        reqId, storiesToSync.size(), response.getServerVersion(), durationMs);
-                if (logger.isDebugEnabled()) {
-                    storiesToSync.forEach(story -> logger.debug("[Sync] [reqId={}]   -> id={}, title='{}'", reqId, story.getId(), story.getTitle()));
-                }
-            }
-
-            return ResponseEntity.ok(response);
-        } catch (CompletionException e) {
-            long durationMs = System.currentTimeMillis() - startTime;
-            Throwable cause = e.getCause() != null ? e.getCause() : e;
-            logger.error("[Sync] [reqId={}] FAILED - Error syncing stories after {}ms: {}", reqId, durationMs, cause.getMessage(), cause);
-            ErrorResponse errorResponse = new ErrorResponse();
-            errorResponse.setSuccess(false);
-            errorResponse.setErrorCode(ErrorCode.INTERNAL_SERVER_ERROR.getCode());
-            errorResponse.setError(ErrorCode.INTERNAL_SERVER_ERROR.getDefaultMessage());
-            errorResponse.setMessage("Error syncing stories: " + cause.getMessage());
-            errorResponse.setPath("/api/stories/sync");
-            errorResponse.setTimestamp(Instant.now().toString());
-            errorResponse.setRequestId(reqId);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-        }
-    }
-
     @GetMapping("/version")
     public ResponseEntity<?> getContentVersion(
             @RequestParam(required = false) Integer clientVersion) {
         String reqId = getRequestId();
         logger.info("[Stories] [reqId={}] GET /api/stories/version - clientVersion={}", reqId, clientVersion);
         try {
-            ContentVersion version = storyService.getCurrentContentVersion().join();
+            ContentVersion storyVersion = storyService.getCurrentContentVersion().join();
+            AssetVersion assetVersionData = assetService.getCurrentAssetVersion().join();
 
-            boolean clientUpToDate = clientVersion != null && clientVersion.equals(version.getVersion());
+            ContentVersionResponse response = new ContentVersionResponse();
+            response.setId("current");
+            response.setVersion(storyVersion.getVersion());
+            response.setAssetVersion(assetVersionData.getVersion());
+            response.setLastUpdated(storyVersion.getLastUpdated().toDate().getTime());
+            response.setStoryChecksums(storyVersion.getStoryChecksums());
+            response.setTotalStories(storyVersion.getTotalStories());
+
+            boolean clientUpToDate = clientVersion != null && clientVersion.equals(storyVersion.getVersion());
             if (clientUpToDate) {
                 metricsService.recordStorySyncSkipped();
-                logger.info("[Stories] [reqId={}] Version check: serverVersion={}, clientVersion={}, upToDate=true (sync skipped)",
-                        reqId, version.getVersion(), clientVersion);
+                logger.info("[Stories] [reqId={}] Version check: storyVersion={}, assetVersion={}, clientVersion={}, upToDate=true (sync skipped)",
+                        reqId, storyVersion.getVersion(), assetVersionData.getVersion(), clientVersion);
             } else {
-                logger.info("[Stories] [reqId={}] Version check: serverVersion={}, clientVersion={}, upToDate=false",
-                        reqId, version.getVersion(), clientVersion);
+                logger.info("[Stories] [reqId={}] Version check: storyVersion={}, assetVersion={}, clientVersion={}, upToDate=false",
+                        reqId, storyVersion.getVersion(), assetVersionData.getVersion(), clientVersion);
             }
 
-            return ResponseEntity.ok(version);
+            return ResponseEntity.ok(response);
         } catch (CompletionException e) {
             Throwable cause = e.getCause() != null ? e.getCause() : e;
             logger.error("[Stories] [reqId={}] GET /api/stories/version - FAILED: {}", reqId, cause.getMessage(), cause);
@@ -197,6 +148,80 @@ public class StoryController {
             logger.error("[Stories] [reqId={}] GET /api/stories/category/{} - FAILED: {}", reqId, category, cause.getMessage(), cause);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse(ErrorCode.FIREBASE_SERVICE_ERROR, "Failed to fetch stories by category: " + cause.getMessage(), "/api/stories/category/" + category, reqId));
+        }
+    }
+
+    @PostMapping("/delta")
+    public ResponseEntity<?> getDeltaContent(@Valid @RequestBody DeltaSyncRequest request) {
+        String reqId = getRequestId();
+        long startTime = System.currentTimeMillis();
+        int clientStoriesCount = request.getStoryChecksums() != null ? request.getStoryChecksums().size() : 0;
+
+        logger.info("[Delta] [reqId={}] POST /api/stories/delta - clientVersion={}, clientStories={}",
+                reqId, request.getClientVersion(), clientStoriesCount);
+
+        try {
+            ContentVersion serverVersion = storyService.getCurrentContentVersion().join();
+            AssetVersion assetVersion = assetService.getCurrentAssetVersion().join();
+
+            if (request.getClientVersion() != null && request.getClientVersion() >= serverVersion.getVersion()) {
+                logger.info("[Delta] [reqId={}] Client is up to date (clientVersion={}, serverVersion={})",
+                        reqId, request.getClientVersion(), serverVersion.getVersion());
+
+                DeltaSyncResponse response = new DeltaSyncResponse();
+                response.setServerVersion(serverVersion.getVersion());
+                response.setAssetVersion(assetVersion.getVersion());
+                response.setStories(new ArrayList<>());
+                response.setDeletedStoryIds(new ArrayList<>());
+                response.setStoryChecksums(serverVersion.getStoryChecksums());
+                response.setTotalStories(serverVersion.getTotalStories());
+                response.setLastUpdated(serverVersion.getLastUpdated().toDate().getTime());
+
+                long durationMs = System.currentTimeMillis() - startTime;
+                logger.info("[Delta] [reqId={}] COMPLETE - No changes needed, durationMs={}", reqId, durationMs);
+                return ResponseEntity.ok(response);
+            }
+
+            List<Story> storiesToSync = storyService.getStoriesToSync(request.getStoryChecksums()).join();
+            List<String> deletedStoryIds = new ArrayList<>();
+            if (request.getStoryChecksums() != null && !request.getStoryChecksums().isEmpty()) {
+                Set<String> serverStoryIds = serverVersion.getStoryChecksums().keySet();
+                for (String clientStoryId : request.getStoryChecksums().keySet()) {
+                    if (!serverStoryIds.contains(clientStoryId)) {
+                        deletedStoryIds.add(clientStoryId);
+                    }
+                }
+            }
+
+            DeltaSyncResponse response = new DeltaSyncResponse();
+            response.setServerVersion(serverVersion.getVersion());
+            response.setAssetVersion(assetVersion.getVersion());
+            response.setStories(storiesToSync);
+            response.setDeletedStoryIds(deletedStoryIds);
+            response.setStoryChecksums(serverVersion.getStoryChecksums());
+            response.setTotalStories(serverVersion.getTotalStories());
+            response.setLastUpdated(serverVersion.getLastUpdated().toDate().getTime());
+
+            long durationMs = System.currentTimeMillis() - startTime;
+            metricsService.recordStorySync(clientStoriesCount, storiesToSync.size(), durationMs);
+            metricsService.recordDeltaSync(
+                    request.getClientVersion() != null ? request.getClientVersion() : 0,
+                    serverVersion.getVersion(),
+                    storiesToSync.size(),
+                    deletedStoryIds.size(),
+                    durationMs);
+
+            logger.info("[Delta] [reqId={}] COMPLETE - updatedStories={}, deletedStories={}, durationMs={}",
+                    reqId, storiesToSync.size(), deletedStoryIds.size(), durationMs);
+
+            return ResponseEntity.ok(response);
+        } catch (CompletionException e) {
+            Throwable cause = e.getCause() != null ? e.getCause() : e;
+            logger.error("[Delta] [reqId={}] FAILED: {}", reqId, cause.getMessage(), cause);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse(ErrorCode.FIREBASE_SERVICE_ERROR,
+                            "Failed to get delta content: " + cause.getMessage(),
+                            "/api/stories/delta", reqId));
         }
     }
 

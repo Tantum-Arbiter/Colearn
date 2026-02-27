@@ -29,7 +29,7 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
   const [avatarType, setAvatarType] = useState<'boy' | 'girl'>(userAvatarType || 'girl');
   const [avatarId, setAvatarId] = useState(userAvatarId || 'girl_1');
 
-  const handleSave = async () => {
+  const handleSave = (shouldNavigateBack: boolean = true) => {
     if (!nickname.trim()) {
       Alert.alert(t('common.error'), t('profile.enterNickname'));
       return;
@@ -47,6 +47,7 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
 
     if (!isGuestMode) {
       // Queue the API call to run in the background with retry
+      console.log('[EditProfile] Queueing profile save:', { nickname: nickname.trim(), avatarType, avatarId });
       backgroundSaveService.queueProfileSave({
         nickname: nickname.trim(),
         avatarType,
@@ -55,7 +56,27 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
     }
 
     // Navigate back immediately - no waiting for API
-    onBack();
+    if (shouldNavigateBack) {
+      onBack();
+    }
+  };
+
+  const handleBack = () => {
+    // Check if there are any unsaved changes
+    const hasChanges =
+      nickname !== (userNickname || '') ||
+      avatarType !== (userAvatarType || 'girl') ||
+      avatarId !== (userAvatarId || 'girl_1');
+
+    console.log('[EditProfile] handleBack - hasChanges:', hasChanges, { nickname, userNickname, avatarType, userAvatarType, avatarId, userAvatarId });
+
+    if (hasChanges) {
+      // Save changes before going back (pass true to navigate back)
+      handleSave(true);
+    } else {
+      // No changes, just go back
+      onBack();
+    }
   };
 
   const handleAvatarTypeChange = (type: 'boy' | 'girl') => {
@@ -67,7 +88,7 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50) }]}>
-        <Pressable style={[styles.backButton, { minHeight: scaledButtonSize(40) }]} onPress={onBack}>
+        <Pressable style={[styles.backButton, { minHeight: scaledButtonSize(40) }]} onPress={handleBack}>
           <Text style={[styles.backButtonText, { fontSize: scaledFontSize(16) }]}>{backButtonText}</Text>
         </Pressable>
         <View style={styles.titleContainer}>
@@ -132,7 +153,7 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
 
         <Pressable
           style={[styles.saveButton, { minHeight: scaledButtonSize(50), padding: scaledPadding(15) }]}
-          onPress={handleSave}
+          onPress={() => handleSave()}
         >
           <Text style={[styles.saveButtonText, { fontSize: scaledFontSize(18) }]}>
             {t('profile.saveChanges')}
@@ -277,7 +298,7 @@ export function EditProfileContent({ paddingTop = 0, onSaveComplete }: EditProfi
   const [avatarType, setAvatarType] = useState<'boy' | 'girl'>(userAvatarType || 'girl');
   const [avatarId, setAvatarId] = useState(userAvatarId || 'girl_1');
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!nickname.trim()) {
       Alert.alert(t('common.error'), t('profile.enterNickname'));
       return;

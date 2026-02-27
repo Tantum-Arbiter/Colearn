@@ -43,18 +43,12 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
-/**
- * Test-only admin endpoints to control server state during functional tests.
- * Available in 'test' profile (local/Docker) and 'gcp-dev' profile (GCP functional tests).
- */
 @RestController
 @RequestMapping("/private")
 @Profile({"test", "gcp-dev"})
 public class TestAdminController {
 
     private static final Logger logger = LoggerFactory.getLogger(TestAdminController.class);
-
-    // Track if Firestore has been seeded this JVM run (to avoid excessive Firestore ops)
     private static volatile boolean firestoreSeeded = false;
 
     private final RateLimitingFilter rateLimitingFilter;
@@ -84,11 +78,12 @@ public class TestAdminController {
         this.circuitBreakerRegistry = circuitBreakerRegistry;
     }
 
-    /**
-     * Reset server-side state that can affect cross-scenario behavior.
-     */
     @PostMapping("/reset")
-    public ResponseEntity<Map<String, Object>> reset() {
+    public ResponseEntity<Map<String, Object>> reset(
+            @org.springframework.web.bind.annotation.RequestParam(name = "force", required = false) String forceParam,
+            @org.springframework.web.bind.annotation.RequestParam(name = "clearOnly", required = false) String clearOnlyParam) {
+        boolean force = "true".equalsIgnoreCase(forceParam);
+        boolean clearOnly = "true".equalsIgnoreCase(clearOnlyParam);
         try {
             rateLimitingFilter.resetForTests();
             flags.reset();
@@ -102,19 +97,30 @@ public class TestAdminController {
                 logger.warn("Failed to reset circuit breakers: {}", ex.getMessage());
             }
 
-            // Seed test stories/assets ONCE per JVM run to avoid excessive Firestore ops (~30 writes)
-            // User data is NOT cleared so it persists for inspection
-            if (firestore != null && !firestoreSeeded) {
+            // Handle CMS data based on parameters
+            boolean shouldClearAndSeed = firestore != null && (force || !firestoreSeeded);
+            boolean shouldClearOnly = firestore != null && clearOnly;
+
+            if (shouldClearOnly) {
                 try {
-                    clearCmsCollections();
+                    // When clearOnly, only clear stories/content_versions, preserve asset_versions
+                    clearCmsCollections(true);
+                    logger.info("Cleared CMS story collections (clearOnly=true)");
+                } catch (Exception ex) {
+                    logger.warn("Failed to clear Firestore data: {}", ex.getMessage());
+                }
+            } else if (shouldClearAndSeed) {
+                try {
+                    // Clear all CMS collections including assets
+                    clearCmsCollections(false);
                     seedTestStories();
                     seedTestAssets();
                     firestoreSeeded = true;
-                    logger.info("Cleared CMS data and seeded test stories/assets (first reset this run)");
+                    logger.info("Cleared CMS data and seeded test stories/assets (force={}, firestoreSeeded={})", force, firestoreSeeded);
                 } catch (Exception ex) {
                     logger.warn("Failed to clear/seed Firestore data: {}", ex.getMessage());
                 }
-            } else if (firestoreSeeded) {
+            } else {
                 logger.debug("Skipping Firestore seeding (already done this run)");
             }
 
@@ -130,11 +136,7 @@ public class TestAdminController {
         }
     }
 
-    /**
-     * Clear CMS collections (stories, content_versions, asset_versions) for test data refresh.
-     * User data (users, user_profiles, user_sessions) is NOT cleared so it persists for inspection.
-     */
-    private void clearCmsCollections() {
+    private void clearCmsCollections(boolean storiesOnly) {
         try {
             int storiesDeleted = 0;
             int contentVersionsDeleted = 0;
@@ -160,13 +162,15 @@ public class TestAdminController {
                 }
             }
 
-            // Clear asset_versions collection
-            for (var docRef : firestore.collection("asset_versions").listDocuments()) {
-                try {
-                    docRef.delete().get();
-                    assetVersionsDeleted++;
-                } catch (Exception e) {
-                    logger.warn("Failed to delete asset_versions document: {}", e.getMessage());
+            // Clear asset_versions collection (unless storiesOnly)
+            if (!storiesOnly) {
+                for (var docRef : firestore.collection("asset_versions").listDocuments()) {
+                    try {
+                        docRef.delete().get();
+                        assetVersionsDeleted++;
+                    } catch (Exception e) {
+                        logger.warn("Failed to delete asset_versions document: {}", e.getMessage());
+                    }
                 }
             }
 
@@ -205,66 +209,77 @@ public class TestAdminController {
     }
 
     private void seedTestAssets() {
-        if (storage == null || gcsProperties == null) {
-            logger.warn("Storage or GcsProperties not available, skipping asset seeding");
-            return;
+        // Define test assets
+        List<String[]> testAssets = List.of(
+            new String[]{"stories/test-story-1/cover.webp", "image/webp"},
+            new String[]{"stories/test-story-1/page-1/background.webp", "image/webp"},
+            new String[]{"stories/test-story-1/page-2/background.webp", "image/webp"},
+            new String[]{"stories/test-story-2/cover.webp", "image/webp"},
+            new String[]{"stories/test-story-2/page-1/background.webp", "image/webp"},
+            new String[]{"stories/test-story-3/cover.webp", "image/webp"}
+        );
+
+        Map<String, String> assetChecksums = new HashMap<>();
+
+        // Generate checksums for all assets (needed for Firestore even if GCS fails)
+        for (String[] asset : testAssets) {
+            String path = asset[0];
+            byte[] content = ("Test asset content for " + path).getBytes(StandardCharsets.UTF_8);
+            String checksum = calculateAssetChecksum(content);
+            assetChecksums.put(path, checksum);
         }
 
-        try {
-            String bucket = gcsProperties.bucketName();
-            Map<String, String> assetChecksums = new HashMap<>();
-
-            // Create test bucket if it doesn't exist (for emulator)
+        // Try to seed to GCS if storage is available (optional - may fail in emulator)
+        if (storage != null && gcsProperties != null) {
             try {
-                if (storage.get(bucket) == null) {
-                    storage.create(com.google.cloud.storage.BucketInfo.of(bucket));
-                    logger.info("Created test bucket: {}", bucket);
+                String bucket = gcsProperties.bucketName();
+
+                // Create test bucket if it doesn't exist (for emulator)
+                try {
+                    if (storage.get(bucket) == null) {
+                        storage.create(com.google.cloud.storage.BucketInfo.of(bucket));
+                        logger.info("Created test bucket: {}", bucket);
+                    }
+                } catch (Exception e) {
+                    logger.debug("Bucket might already exist: {}", e.getMessage());
                 }
+
+                for (String[] asset : testAssets) {
+                    String path = asset[0];
+                    String contentType = asset[1];
+                    byte[] content = ("Test asset content for " + path).getBytes(StandardCharsets.UTF_8);
+
+                    BlobId blobId = BlobId.of(bucket, path);
+                    BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
+                            .setContentType(contentType)
+                            .build();
+
+                    storage.create(blobInfo, content);
+                    logger.debug("Seeded asset to bucket '{}' with path '{}'", bucket, path);
+                }
+                logger.info("Seeded {} test assets to GCS bucket", testAssets.size());
             } catch (Exception e) {
-                logger.debug("Bucket might already exist: {}", e.getMessage());
+                logger.warn("Failed to seed assets to GCS (continuing with Firestore seeding): {}", e.getMessage());
             }
+        } else {
+            logger.debug("Storage not available, skipping GCS upload");
+        }
 
-            // Seed test assets for each story
-            List<String[]> testAssets = List.of(
-                new String[]{"stories/test-story-1/cover.webp", "image/webp"},
-                new String[]{"stories/test-story-1/page-1/background.webp", "image/webp"},
-                new String[]{"stories/test-story-1/page-2/background.webp", "image/webp"},
-                new String[]{"stories/test-story-2/cover.webp", "image/webp"},
-                new String[]{"stories/test-story-2/page-1/background.webp", "image/webp"},
-                new String[]{"stories/test-story-3/cover.webp", "image/webp"}
-            );
+        // Always save asset version to Firestore (even if GCS upload failed)
+        if (firestore != null) {
+            try {
+                AssetVersion assetVersion = new AssetVersion();
+                assetVersion.setId("current");
+                assetVersion.setVersion(1);
+                assetVersion.setLastUpdated(Instant.now());
+                assetVersion.setAssetChecksums(assetChecksums);
+                assetVersion.setTotalAssets(testAssets.size());
 
-            for (String[] asset : testAssets) {
-                String path = asset[0];
-                String contentType = asset[1];
-
-                // Create dummy content
-                byte[] content = ("Test asset content for " + path).getBytes(StandardCharsets.UTF_8);
-                String checksum = calculateAssetChecksum(content);
-
-                BlobId blobId = BlobId.of(bucket, path);
-                BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
-                        .setContentType(contentType)
-                        .build();
-
-                storage.create(blobInfo, content);
-                logger.debug("Seeded asset to bucket '{}' with path '{}'", bucket, path);
-                assetChecksums.put(path, checksum);
+                firestore.collection("asset_versions").document("current").set(assetVersion).get();
+                logger.info("Seeded asset_versions document with {} assets", testAssets.size());
+            } catch (Exception e) {
+                logger.error("Error seeding asset_versions to Firestore", e);
             }
-
-            // Save asset version to Firestore
-            AssetVersion assetVersion = new AssetVersion();
-            assetVersion.setId("current");
-            assetVersion.setVersion(1);
-            assetVersion.setLastUpdated(Instant.now());
-            assetVersion.setAssetChecksums(assetChecksums);
-            assetVersion.setTotalAssets(testAssets.size());
-
-            firestore.collection("asset_versions").document("current").set(assetVersion).get();
-
-            logger.info("Seeded {} test assets and asset version", testAssets.size());
-        } catch (Exception e) {
-            logger.error("Error seeding test assets", e);
         }
     }
 
@@ -431,10 +446,6 @@ public class TestAdminController {
         return stories;
     }
 
-    /**
-     * Calculate SHA-256 checksum of story content
-     * Includes localized text for i18n support
-     */
     private String calculateStoryChecksum(Story story) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -470,14 +481,10 @@ public class TestAdminController {
         }
     }
 
-    /**
-     * Serialize LocalizedText to a consistent string for checksum calculation
-     */
     private String serializeLocalizedText(LocalizedText localizedText) {
         if (localizedText == null) {
             return "";
         }
-        // Use a consistent order for languages to ensure deterministic checksums
         StringBuilder sb = new StringBuilder();
         if (localizedText.getEn() != null) sb.append("en:").append(localizedText.getEn()).append("|");
         if (localizedText.getPl() != null) sb.append("pl:").append(localizedText.getPl()).append("|");
@@ -486,9 +493,6 @@ public class TestAdminController {
         return sb.toString();
     }
 
-    /**
-     * Parse a Map into a LocalizedText object for story seeding
-     */
     private LocalizedText parseLocalizedText(Map<?, ?> map) {
         LocalizedText lt = new LocalizedText();
         if (map.get("en") != null) lt.setEn((String) map.get("en"));
@@ -508,9 +512,6 @@ public class TestAdminController {
         return lt;
     }
 
-    /**
-     * Set simulation flags for this JVM (test profile only).
-     */
     @PostMapping("/flags")
     public ResponseEntity<Map<String, Object>> setFlags(@RequestBody Map<String, Object> body) {
         if (body == null) body = new HashMap<>();
@@ -590,10 +591,6 @@ public class TestAdminController {
         };
     }
 
-    /**
-     * Seed a single story to Firestore for functional testing.
-     * This allows tests to seed specific story data without resetting all state.
-     */
     @PostMapping("/seed/story")
     public ResponseEntity<Map<String, Object>> seedStory(@RequestBody Map<String, Object> storyData) {
         if (firestore == null) {
@@ -606,7 +603,6 @@ public class TestAdminController {
                 return ResponseEntity.badRequest().body(Map.of("error", "Story id is required"));
             }
 
-            // Create Story object from the request data
             Story story = new Story();
             story.setId(storyId);
             story.setTitle((String) storyData.get("title"));
@@ -634,17 +630,12 @@ public class TestAdminController {
                 story.setTags(tagsList.stream().map(Object::toString).toList());
             }
 
-            // Parse localized title
             if (storyData.get("localizedTitle") instanceof Map<?, ?> localizedTitleMap) {
                 story.setLocalizedTitle(parseLocalizedText(localizedTitleMap));
             }
-
-            // Parse localized description
             if (storyData.get("localizedDescription") instanceof Map<?, ?> localizedDescMap) {
                 story.setLocalizedDescription(parseLocalizedText(localizedDescMap));
             }
-
-            // Parse pages
             if (storyData.get("pages") instanceof List<?> pagesList) {
                 List<StoryPage> pages = new ArrayList<>();
                 for (Object pageObj : pagesList) {
@@ -659,7 +650,6 @@ public class TestAdminController {
                         page.setBackgroundImage((String) pageMap.get("backgroundImage"));
                         page.setCharacterImage((String) pageMap.get("characterImage"));
 
-                        // Parse localized text for the page
                         if (pageMap.get("localizedText") instanceof Map<?, ?> localizedTextMap) {
                             page.setLocalizedText(parseLocalizedText(localizedTextMap));
                         }
@@ -717,10 +707,7 @@ public class TestAdminController {
             }
             story.setChecksum(checksum);
 
-            // Save story to Firestore
             firestore.collection("stories").document(storyId).set(story).get();
-
-            // Update content version with new story checksum
             updateContentVersionWithStory(storyId, checksum);
 
             logger.info("Seeded story: {} with checksum: {}", storyId, checksum);
@@ -736,9 +723,6 @@ public class TestAdminController {
         }
     }
 
-    /**
-     * Update the content version document with a new or updated story checksum.
-     */
     private void updateContentVersionWithStory(String storyId, String checksum) {
         try {
             var docRef = firestore.collection("content_versions").document("current");
@@ -772,13 +756,6 @@ public class TestAdminController {
         }
     }
 
-    /**
-     * Rebuild the content_versions document from actual stories in Firestore.
-     * This fixes the mismatch when stories are manually deleted from Firestore
-     * but the content_versions document still references them.
-     *
-     * Call this endpoint after manually modifying stories in Firestore.
-     */
     @PostMapping("/rebuild-content-version")
     public ResponseEntity<Map<String, Object>> rebuildContentVersion() {
         if (firestore == null) {
@@ -853,10 +830,6 @@ public class TestAdminController {
         }
     }
 
-    /**
-     * Delete a story from Firestore for testing purposes.
-     * Also removes the story from the content_versions document.
-     */
     @PostMapping("/delete/story/{storyId}")
     public ResponseEntity<Map<String, Object>> deleteStory(@org.springframework.web.bind.annotation.PathVariable String storyId) {
         if (firestore == null) {
@@ -865,11 +838,7 @@ public class TestAdminController {
 
         try {
             logger.info("Deleting story: {}", storyId);
-
-            // Delete story from Firestore
             firestore.collection("stories").document(storyId).delete().get();
-
-            // Remove from content_versions
             var docRef = firestore.collection("content_versions").document("current");
             var doc = docRef.get().get();
 
@@ -896,9 +865,6 @@ public class TestAdminController {
         }
     }
 
-    /**
-     * Create a test user in Firestore (test profile only)
-     */
     @PostMapping("/test/create-user")
     public ResponseEntity<Map<String, Object>> createTestUser(@RequestBody Map<String, Object> body) {
         if (firestore == null) {
@@ -910,7 +876,6 @@ public class TestAdminController {
             String provider = (String) body.get("provider");
             String providerId = (String) body.get("providerId");
 
-            // Create user directly in Firestore (PII-free - no email/name)
             User user = new User();
             user.setId(userId != null ? userId : UUID.randomUUID().toString());
             user.setProvider(provider);
@@ -920,7 +885,6 @@ public class TestAdminController {
             user.setUpdatedAt(Instant.now());
             user.updateLastLogin();
 
-            // Save directly to Firestore
             firestore.collection("users").document(user.getId()).set(user).get();
 
             Map<String, Object> resp = new HashMap<>();
@@ -933,9 +897,6 @@ public class TestAdminController {
         }
     }
 
-    /**
-     * Create a test session in Firestore (test profile only)
-     */
     @PostMapping("/test/create-session")
     public ResponseEntity<Map<String, Object>> createTestSession(@RequestBody Map<String, Object> body) {
         if (sessionService == null) {

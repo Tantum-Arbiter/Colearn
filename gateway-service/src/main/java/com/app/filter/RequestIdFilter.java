@@ -12,13 +12,6 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.util.UUID;
 
-/**
- * Ensures every incoming request has a UUID request ID and exposes it downstream.
- * - Reads X-Request-Id from the inbound request if present and valid UUID
- * - Otherwise generates a new UUID v4
- * - Stores it as request attribute "requestId" for server-side access
- * - Adds X-Request-Id to the HTTP response headers
- */
 @Component
 @Order(0) // Must run before other filters (e.g., metrics)
 public class RequestIdFilter implements Filter {
@@ -40,13 +33,8 @@ public class RequestIdFilter implements Filter {
         String incoming = httpReq.getHeader(HEADER_REQUEST_ID);
         String requestId = validateUuid(incoming) ? incoming : UUID.randomUUID().toString();
 
-        // Expose for server-side components
         httpReq.setAttribute(ATTR_REQUEST_ID, requestId);
-
-        // Make it available to the client in the response
         httpResp.setHeader(HEADER_REQUEST_ID, requestId);
-
-        // Add to MDC for logs
         MDC.put("requestId", requestId);
         try {
             chain.doFilter(request, response);

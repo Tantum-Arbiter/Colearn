@@ -150,6 +150,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 20,
+    elevation: 20, // Android requires elevation for proper z-ordering
   },
   headerContainer: {
     position: 'absolute',
@@ -159,6 +160,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     zIndex: 30,
+    elevation: 30, // Android requires elevation for proper z-ordering
   },
   backButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
@@ -186,6 +188,7 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: 20,
     zIndex: 25,
+    elevation: 25, // Android requires elevation for proper z-ordering
     alignItems: 'center',
   },
   title: {

@@ -27,9 +27,6 @@ class BackgroundMusicService {
   private isMuted: boolean = false; // Track if user has muted the music
   private statusListener: { remove: () => void } | null = null;
 
-  /**
-   * Initialize and load the background music
-   */
   async initialize(): Promise<void> {
     // Prevent multiple initializations
     if (this.isLoaded || this.isInitializing) {
@@ -94,10 +91,6 @@ class BackgroundMusicService {
     }
   }
 
-  /**
-   * Start playing background music
-   * This also clears the muted flag since user is explicitly requesting playback
-   */
   async play(): Promise<void> {
     DEBUG_LOGS && console.log(`[BGMusic] play() called - player #${this.playerId}, isLoaded: ${this.isLoaded}, isPlaying: ${this.isPlaying}`);
 
@@ -146,9 +139,6 @@ class BackgroundMusicService {
     }
   }
 
-  /**
-   * Pause background music (does NOT set muted flag - use mute() to persist across tracks)
-   */
   async pause(): Promise<void> {
     if (!this.isLoaded || !this.player) {
       DEBUG_LOGS && console.log('Background music not loaded, cannot pause');
@@ -180,9 +170,6 @@ class BackgroundMusicService {
     }
   }
 
-  /**
-   * Stop background music (resets to beginning)
-   */
   async stop(): Promise<void> {
     if (!this.isLoaded || !this.player) {
       return;
@@ -199,10 +186,6 @@ class BackgroundMusicService {
     }
   }
 
-  /**
-   * Mute background music - this persists across track changes
-   * When muted, new tracks won't auto-play when the current track finishes
-   */
   async mute(): Promise<void> {
     DEBUG_LOGS && console.log('Muting background music (persists across tracks)');
     this.isMuted = true;
@@ -210,9 +193,6 @@ class BackgroundMusicService {
     this.notifyStateChange();
   }
 
-  /**
-   * Unmute background music and optionally resume playing
-   */
   async unmute(resumePlayback: boolean = true): Promise<void> {
     console.log(`Unmuting background music (resumePlayback: ${resumePlayback})`);
     this.isMuted = false;
@@ -222,16 +202,10 @@ class BackgroundMusicService {
     this.notifyStateChange();
   }
 
-  /**
-   * Check if music is muted (persists across tracks)
-   */
   getIsMuted(): boolean {
     return this.isMuted;
   }
 
-  /**
-   * Set volume (0.0 to 1.0)
-   */
   async setVolume(volume: number): Promise<void> {
     const newVolume = Math.max(0, Math.min(1, volume));
     this.volume = newVolume;
@@ -250,16 +224,10 @@ class BackgroundMusicService {
     this.notifyVolumeChange(newVolume);
   }
 
-  /**
-   * Get current volume
-   */
   getVolume(): number {
     return this.volume;
   }
 
-  /**
-   * Register a callback for state changes
-   */
   onStateChange(callback: () => void): () => void {
     this.stateChangeCallbacks.push(callback);
     // Return unsubscribe function
@@ -271,9 +239,6 @@ class BackgroundMusicService {
     };
   }
 
-  /**
-   * Register a callback for volume changes
-   */
   onVolumeChange(callback: (volume: number) => void): () => void {
     this.volumeChangeCallbacks.push(callback);
     // Return unsubscribe function
@@ -285,9 +250,6 @@ class BackgroundMusicService {
     };
   }
 
-  /**
-   * Notify all registered callbacks of state changes
-   */
   private notifyStateChange(): void {
     this.stateChangeCallbacks.forEach(callback => {
       try {
@@ -298,9 +260,6 @@ class BackgroundMusicService {
     });
   }
 
-  /**
-   * Notify all registered callbacks of volume changes
-   */
   private notifyVolumeChange(volume: number): void {
     this.volumeChangeCallbacks.forEach(callback => {
       try {
@@ -311,23 +270,14 @@ class BackgroundMusicService {
     });
   }
 
-  /**
-   * Check if music is currently playing
-   */
   getIsPlaying(): boolean {
     return this.isPlaying;
   }
 
-  /**
-   * Check if music is loaded and ready
-   */
   getIsLoaded(): boolean {
     return this.isLoaded;
   }
 
-  /**
-   * Fade in the music gradually
-   */
   async fadeIn(duration: number = 2000): Promise<void> {
     if (!this.isLoaded || !this.player) {
       return;
@@ -381,9 +331,6 @@ class BackgroundMusicService {
     }
   }
 
-  /**
-   * Fade out the music gradually
-   */
   async fadeOut(duration: number = 2000): Promise<void> {
     if (!this.isLoaded || !this.player || !this.isPlaying) {
       return;
@@ -454,9 +401,6 @@ class BackgroundMusicService {
     });
   }
 
-  /**
-   * Clean up resources
-   */
   async cleanup(): Promise<void> {
     // Clear any fade operations
     if (this.fadeTimer) {
@@ -486,9 +430,6 @@ class BackgroundMusicService {
     }
   }
 
-  /**
-   * Handle playback status updates
-   */
   private onPlaybackStatusUpdate = (status: { playing: boolean; error?: string }) => {
     try {
       // Only update isPlaying if it's different from current state

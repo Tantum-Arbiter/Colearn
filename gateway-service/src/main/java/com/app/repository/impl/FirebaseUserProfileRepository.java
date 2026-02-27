@@ -13,10 +13,6 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-/**
- * Firebase Firestore implementation of UserProfileRepository
- * Handles non-PII user preferences and settings
- */
 @Repository
 public class FirebaseUserProfileRepository implements UserProfileRepository {
 

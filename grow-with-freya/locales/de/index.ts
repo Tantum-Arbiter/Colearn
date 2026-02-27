@@ -83,6 +83,8 @@ export default {
     privacyPolicy: 'Datenschutzrichtlinie',
     signInFailed: 'Anmeldung fehlgeschlagen',
     signInFailedMessage: 'Anmeldung mit Google nicht möglich. Bitte versuche es erneut.',
+    connectionTimeout: 'Verbindungszeitüberschreitung',
+    connectionTimeoutMessage: 'Anmeldung abgelaufen. Bitte überprüfe deine Verbindung und versuche es erneut.',
     ok: 'OK',
   },
 

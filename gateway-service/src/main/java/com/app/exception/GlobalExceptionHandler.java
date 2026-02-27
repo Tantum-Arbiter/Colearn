@@ -27,10 +27,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
-/**
- * Global exception handler for the Gateway Service
- * Provides consistent error responses with custom error codes
- */
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -42,34 +38,24 @@ public class GlobalExceptionHandler {
         this.metricsService = metricsService;
     }
 
-    /**
-     * Handle custom Gateway exceptions
-     */
     @ExceptionHandler(GatewayException.class)
     public ResponseEntity<ErrorResponse> handleGatewayException(GatewayException ex,
                                                                HttpServletRequest request) {
         String requestId = generateRequestId();
 
-        // Log the error (no stack traces in logs)
         if (ex.getErrorCode().isServerError() || ex.getErrorCode().isDownstreamError()) {
             logger.error("Gateway error [requestId={}, code={}, method={}, path={}]: {}", requestId, ex.getErrorCode().getCode(), request.getMethod(), request.getRequestURI(), ex.getMessage());
         } else {
             logger.warn("Gateway error [requestId={}, code={}, method={}, path={}]: {}", requestId, ex.getErrorCode().getCode(), request.getMethod(), request.getRequestURI(), ex.getMessage());
         }
 
-        // Record metrics
         recordErrorMetrics(request, ex.getErrorCode(), ex.getClass().getSimpleName());
-
-        // Create error response
         ErrorResponse errorResponse = createErrorResponse(ex.getErrorCode(), ex.getEffectiveMessage(),
             request.getRequestURI(), requestId, ex.getDetails());
 
         return ResponseEntity.status(ex.getHttpStatusCode()).body(errorResponse);
     }
 
-    /**
-     * Handle JWT verification exceptions
-     */
     @ExceptionHandler(JWTVerificationException.class)
     public ResponseEntity<ErrorResponse> handleJWTVerificationException(JWTVerificationException ex,
                                                                         HttpServletRequest request) {
@@ -84,9 +70,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
     }
 
-    /**
-     * Handle validation exceptions
-     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException ex,
                                                                   HttpServletRequest request) {
@@ -105,9 +88,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
-    /**
-     * Handle constraint violation exceptions
-     */
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> handleConstraintViolationException(ConstraintViolationException ex,
                                                                            HttpServletRequest request) {
@@ -126,9 +106,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
-    /**
-     * Handle missing request parameter exceptions
-     */
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ErrorResponse> handleMissingParameterException(MissingServletRequestParameterException ex,
                                                                         HttpServletRequest request) {
@@ -148,9 +125,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
-    /**
-     * Handle method argument type mismatch exceptions
-     */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponse> handleTypeMismatchException(MethodArgumentTypeMismatchException ex,
                                                                     HttpServletRequest request) {
@@ -171,9 +145,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
-    /**
-     * Handle HTTP message not readable exceptions (malformed JSON)
-     */
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleMessageNotReadableException(HttpMessageNotReadableException ex,
                                                                           HttpServletRequest request) {
@@ -188,9 +159,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
-    /**
-     * Handle unsupported media type exceptions
-     */
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
     public ResponseEntity<ErrorResponse> handleUnsupportedMediaTypeException(HttpMediaTypeNotSupportedException ex,
                                                                             HttpServletRequest request) {
@@ -210,9 +178,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(errorResponse);
     }
 
-    /**
-     * Handle method not supported exceptions
-     */
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ErrorResponse> handleMethodNotSupportedException(HttpRequestMethodNotSupportedException ex,
                                                                           HttpServletRequest request) {
@@ -232,9 +197,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(errorResponse);
     }
 
-    /**
-     * Handle file upload size exceeded exceptions
-     */
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ErrorResponse> handleMaxUploadSizeException(MaxUploadSizeExceededException ex,
                                                                      HttpServletRequest request) {
@@ -252,13 +214,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(errorResponse);
     }
 
-    /**
-     * Handle timeout exceptions
-     */
-
-    /**
-     * Handle circuit breaker open exceptions
-     */
     @ExceptionHandler(io.github.resilience4j.circuitbreaker.CallNotPermittedException.class)
     public ResponseEntity<ErrorResponse> handleCircuitBreakerOpen(io.github.resilience4j.circuitbreaker.CallNotPermittedException ex,
                                                                   HttpServletRequest request) {
@@ -302,9 +257,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT).body(errorResponse);
     }
 
-    /**
-     * Handle 404 for missing handler/resource (Spring 6+)
-     */
     @org.springframework.web.bind.annotation.ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
     public ResponseEntity<ErrorResponse> handleNoResourceFound(
             org.springframework.web.servlet.resource.NoResourceFoundException ex,
@@ -312,7 +264,6 @@ public class GlobalExceptionHandler {
         String requestId = generateRequestId();
         logger.warn("Resource not found [requestId={}, method={}, path={}]", requestId, request.getMethod(), request.getRequestURI());
 
-        // Use a generic validation error code; tests only assert the HTTP status
         ErrorResponse errorResponse = createErrorResponse(
                 ErrorCode.INVALID_REQUEST,
                 "Resource not found",
@@ -323,9 +274,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
 
-    /**
-     * Handle 404 for missing handler (legacy)
-     */
     @org.springframework.web.bind.annotation.ExceptionHandler(org.springframework.web.servlet.NoHandlerFoundException.class)
     public ResponseEntity<ErrorResponse> handleNoHandlerFound(
             org.springframework.web.servlet.NoHandlerFoundException ex,
@@ -343,9 +291,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
 
-    /**
-     * Handle all other exceptions
-     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex, HttpServletRequest request) {
         String requestId = generateRequestId();

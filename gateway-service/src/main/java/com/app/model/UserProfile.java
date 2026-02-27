@@ -9,11 +9,6 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * User profile model for Firebase Firestore
- * Stores non-PII user preferences and settings that sync across devices
- * Separate from User model to maintain privacy compliance
- */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class UserProfile {
 
@@ -24,10 +19,10 @@ public class UserProfile {
     private String nickname;
 
     @JsonProperty("avatarType")
-    private String avatarType; // "boy" or "girl"
+    private String avatarType;
 
     @JsonProperty("avatarId")
-    private String avatarId; // e.g., "boy_1", "girl_2"
+    private String avatarId;
 
     @JsonProperty("notifications")
     private Map<String, Object> notifications = new HashMap<>();
@@ -44,7 +39,6 @@ public class UserProfile {
     @JsonProperty("version")
     private int version = 1;
 
-    // Default constructor
     public UserProfile() {
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
@@ -52,13 +46,11 @@ public class UserProfile {
         this.schedule = createDefaultSchedule();
     }
 
-    // Constructor with userId
     public UserProfile(String userId) {
         this();
         this.userId = userId;
     }
 
-    // Getters and Setters
     public String getUserId() {
         return userId;
     }
@@ -131,50 +123,31 @@ public class UserProfile {
         this.version = version;
     }
 
-    // Helper methods
     public void updateTimestamp() {
         this.updatedAt = Instant.now();
     }
 
-    /**
-     * Validate profile data
-     * @return true if profile is valid, false otherwise
-     */
     @Exclude
     @JsonIgnore
     public boolean isValid() {
-        // userId is required
         if (userId == null || userId.trim().isEmpty()) {
             return false;
         }
-
-        // nickname is required and must be 1-20 characters
         if (nickname == null || nickname.trim().isEmpty() || nickname.length() > 20) {
             return false;
         }
-
-        // avatarType must be "boy" or "girl"
         if (avatarType == null || (!avatarType.equals("boy") && !avatarType.equals("girl"))) {
             return false;
         }
-
-        // avatarId is required
         if (avatarId == null || avatarId.trim().isEmpty()) {
             return false;
         }
-
-        // notifications and schedule must not be null
         if (notifications == null || schedule == null) {
             return false;
         }
-
         return true;
     }
 
-    /**
-     * Create default notifications structure
-     * @return Map with default notification settings
-     */
     public static Map<String, Object> createDefaultNotifications() {
         Map<String, Object> notifications = new HashMap<>();
         notifications.put("enabled", true);
@@ -186,10 +159,6 @@ public class UserProfile {
         return notifications;
     }
 
-    /**
-     * Create default schedule structure
-     * @return Empty map (user must configure schedule)
-     */
     public static Map<String, Object> createDefaultSchedule() {
         return new HashMap<>();
     }

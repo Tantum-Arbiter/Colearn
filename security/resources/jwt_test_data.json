@@ -1,0 +1,31 @@
+{
+    "expired_token": {
+        "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0LXVzZXItaWQiLCJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJleHAiOjE2MDAwMDAwMDB9.sV3EJwPz1tYkchY5AoLC5aEm0yKfqpCvKTCTuLaMKLM",
+        "description": "Token with expiration in the past (2020-09-13)"
+    },
+    "jwt_tampering": {
+        "invalid_signature_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbi11c2VyIiwicm9sZSI6ImFkbWluIiwiZXhwIjo5OTk5OTk5OTk5fQ.invalid_signature_here",
+        "description": "Token with tampered payload and invalid signature"
+    },
+    "none_algorithm_token": {
+        "jwt": "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJhZG1pbiJ9.",
+        "description": "Token using 'none' algorithm - should be rejected"
+    },
+    "valid_token": {
+        "jwt": null,
+        "description": "Placeholder for a valid token during testing - must be obtained dynamically"
+    },
+    "test_payloads": {
+        "admin_role": {
+            "sub": "test-user-id",
+            "email": "test@example.com",
+            "role": "admin"
+        },
+        "regular_user": {
+            "sub": "test-user-id",
+            "email": "user@example.com",
+            "role": "user"
+        }
+    }
+}
+

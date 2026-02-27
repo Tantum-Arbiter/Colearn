@@ -1,18 +1,18 @@
 package com.app.controller;
 
-import com.app.dto.AssetSyncRequest;
-import com.app.dto.AssetSyncResponse;
-import com.app.dto.AssetSyncResponse.AssetInfo;
+import com.app.dto.BatchUrlsRequest;
+import com.app.dto.BatchUrlsResponse;
 import com.app.exception.AssetUrlGenerationException;
 import com.app.exception.ErrorCode;
 import com.app.exception.ErrorResponse;
 import com.app.exception.InvalidAssetPathException;
 import com.app.model.AssetVersion;
 import com.app.service.AssetService;
+import com.app.service.ApplicationMetricsService;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,9 +20,9 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/api/assets")
@@ -32,85 +32,78 @@ public class AssetController {
     private static final Logger logger = LoggerFactory.getLogger(AssetController.class);
 
     private final AssetService assetService;
+    private final ApplicationMetricsService metricsService;
 
     @Autowired
-    public AssetController(AssetService assetService) {
+    public AssetController(AssetService assetService, ApplicationMetricsService metricsService) {
         this.assetService = assetService;
-    }
-
-    @GetMapping("/url")
-    public ResponseEntity<?> getSignedUrl(
-            @RequestParam @NotBlank(message = "path parameter is required") String path) {
-        logger.debug("GET /api/assets/url - Generating signed URL for: {}", path);
-
-        try {
-            String signedUrl = assetService.generateSignedUrl(path);
-            return ResponseEntity.ok(new SignedUrlResponse(path, signedUrl));
-        } catch (InvalidAssetPathException e) {
-            logger.warn("Invalid asset path requested: {} - {}", path, e.getReason());
-            ErrorResponse error = createErrorResponse(e.getEffectiveMessage(), "/api/assets/url",
-                    ErrorCode.INVALID_PARAMETER);
-            return ResponseEntity.badRequest().body(error);
-        } catch (AssetUrlGenerationException e) {
-            logger.error("Error generating signed URL for: {}", path, e);
-            ErrorResponse error = createErrorResponse("Failed to generate signed URL", "/api/assets/url",
-                    ErrorCode.STORAGE_UNAVAILABLE);
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(error);
-        } catch (Exception e) {
-            logger.error("Unexpected error generating signed URL for: {}", path, e);
-            ErrorResponse error = createErrorResponse("Failed to generate signed URL", "/api/assets/url",
-                    ErrorCode.INTERNAL_SERVER_ERROR);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-        }
+        this.metricsService = metricsService;
     }
 
     @GetMapping("/version")
     public ResponseEntity<AssetVersion> getAssetVersion() {
-        logger.debug("GET /api/assets/version - Getting asset version");
+        String reqId = MDC.get("requestId");
+        if (reqId == null) reqId = UUID.randomUUID().toString();
+
+        logger.debug("[AssetVersion] [reqId={}] GET /api/assets/version", reqId);
         try {
             AssetVersion version = assetService.getCurrentAssetVersion().join();
-            logger.debug("Asset version: {}", version.getVersion());
+            logger.debug("[AssetVersion] [reqId={}] Current version: {}", reqId, version.getVersion());
             return ResponseEntity.ok(version);
         } catch (CompletionException e) {
-            logger.error("Error getting asset version", e.getCause());
+            logger.error("[AssetVersion] [reqId={}] Error getting asset version", reqId, e.getCause());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
-    @PostMapping("/sync")
-    public ResponseEntity<?> syncAssets(@Valid @RequestBody AssetSyncRequest request) {
-        logger.debug("POST /api/assets/sync - Client version: {}, Client has {} assets",
-                request.getClientVersion(), request.getAssetChecksums().size());
+    @PostMapping("/batch-urls")
+    public ResponseEntity<?> getBatchSignedUrls(@Valid @RequestBody BatchUrlsRequest request) {
+        String reqId = MDC.get("requestId");
+        if (reqId == null) reqId = UUID.randomUUID().toString();
 
-        // Explicit size validation for asset checksums (belt-and-suspenders with @Size annotation)
-        if (request.getAssetChecksums() != null && request.getAssetChecksums().size() > AssetSyncRequest.MAX_ASSET_CHECKSUMS) {
-            logger.warn("Asset sync request exceeds maximum checksums: {} > {}",
-                    request.getAssetChecksums().size(), AssetSyncRequest.MAX_ASSET_CHECKSUMS);
+        long startTime = System.currentTimeMillis();
+        int pathCount = request.getPaths() != null ? request.getPaths().size() : 0;
+        logger.info("[BatchUrls] [reqId={}] POST /api/assets/batch-urls - Generating {} signed URLs", reqId, pathCount);
+
+        // Validate request size
+        if (pathCount > BatchUrlsRequest.MAX_PATHS) {
+            logger.warn("[BatchUrls] [reqId={}] Request exceeds max paths: {} > {}", reqId, pathCount, BatchUrlsRequest.MAX_PATHS);
             ErrorResponse error = createErrorResponse(
-                    "assetChecksums cannot exceed " + AssetSyncRequest.MAX_ASSET_CHECKSUMS + " entries",
-                    "/api/assets/sync", ErrorCode.FIELD_VALIDATION_FAILED);
+                    "paths cannot exceed " + BatchUrlsRequest.MAX_PATHS + " entries",
+                    "/api/assets/batch-urls", ErrorCode.FIELD_VALIDATION_FAILED);
             return ResponseEntity.badRequest().body(error);
         }
 
-        try {
-            AssetVersion serverVersion = assetService.getCurrentAssetVersion().join();
-            List<AssetInfo> assetsToSync = assetService.getAssetsToSync(request.getAssetChecksums()).join();
+        BatchUrlsResponse response = new BatchUrlsResponse();
+        long expiresAt = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(60);
 
-            AssetSyncResponse response = new AssetSyncResponse();
-            response.setServerVersion(serverVersion.getVersion());
-            response.setUpdatedAssets(assetsToSync);
-            response.setAssetChecksums(serverVersion.getAssetChecksums());
-            response.setTotalAssets(serverVersion.getTotalAssets());
-            response.setLastUpdated(serverVersion.getLastUpdated().toEpochMilli());
-
-            logger.debug("Returning {} assets to sync", assetsToSync.size());
-            return ResponseEntity.ok(response);
-        } catch (CompletionException e) {
-            logger.error("Error syncing assets", e.getCause());
-            ErrorResponse error = createErrorResponse("Failed to sync assets", "/api/assets/sync",
-                    ErrorCode.INTERNAL_SERVER_ERROR);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        for (String path : request.getPaths()) {
+            try {
+                String signedUrl = assetService.generateSignedUrl(path);
+                response.addUrl(path, signedUrl, expiresAt);
+            } catch (InvalidAssetPathException e) {
+                logger.warn("[BatchUrls] [reqId={}] Invalid path: {} - {}", reqId, path, e.getReason());
+                response.addFailed(path);
+            } catch (AssetUrlGenerationException e) {
+                logger.error("[BatchUrls] [reqId={}] Failed to generate URL for: {}", reqId, path, e);
+                response.addFailed(path);
+            } catch (Exception e) {
+                logger.error("[BatchUrls] [reqId={}] Unexpected error for path: {}", reqId, path, e);
+                response.addFailed(path);
+            }
         }
+
+        long durationMs = System.currentTimeMillis() - startTime;
+        metricsService.recordBatchUrlGeneration(
+                pathCount,
+                response.getUrls().size(),
+                response.getFailed().size(),
+                durationMs);
+
+        logger.info("[BatchUrls] [reqId={}] COMPLETE - Generated {} URLs, {} failed, durationMs={}",
+                reqId, response.getUrls().size(), response.getFailed().size(), durationMs);
+
+        return ResponseEntity.ok(response);
     }
 
     private ErrorResponse createErrorResponse(String message, String path, ErrorCode errorCode) {
@@ -124,7 +117,5 @@ public class AssetController {
         error.setRequestId(UUID.randomUUID().toString());
         return error;
     }
-
-    public record SignedUrlResponse(String path, String signedUrl) {}
 }
 

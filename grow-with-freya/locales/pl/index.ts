@@ -83,6 +83,8 @@ export default {
     privacyPolicy: 'Politykę prywatności',
     signInFailed: 'Logowanie nie powiodło się',
     signInFailedMessage: 'Nie udało się zalogować przez Google. Spróbuj ponownie.',
+    connectionTimeout: 'Przekroczono limit czasu połączenia',
+    connectionTimeoutMessage: 'Logowanie wygasło. Sprawdź połączenie i spróbuj ponownie.',
     ok: 'OK',
   },
 

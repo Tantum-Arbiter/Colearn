@@ -69,7 +69,7 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
     };
 
     updateUsage();
-    const interval = setInterval(updateUsage, 1000); // Update every 1 second for real-time tracking
+    const interval = setInterval(updateUsage, 50000); // Update every 50 seconds - reduces battery/CPU usage
 
     return () => clearInterval(interval);
   }, [screenTimeEnabled]);

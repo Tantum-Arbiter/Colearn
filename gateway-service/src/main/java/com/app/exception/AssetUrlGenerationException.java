@@ -1,9 +1,5 @@
 package com.app.exception;
 
-/**
- * Exception thrown when asset URL generation fails.
- * This includes signed URL generation, CDN URL generation, or emulator URL generation.
- */
 public class AssetUrlGenerationException extends GatewayException {
 
     private final String assetPath;

@@ -20,12 +20,16 @@ import { EditProfileContent } from './edit-profile-screen';
 import { ApiClient } from '../../services/api-client';
 import { reminderService } from '../../services/reminder-service';
 import { StorySyncService } from '../../services/story-sync-service';
-import { AssetSyncService } from '../../services/asset-sync-service';
+import { VersionManager } from '../../services/version-manager';
+import { DeviceInfoService } from '../../services/device-info-service';
+import { CacheManager } from '../../services/cache-manager';
+import { StoryLoader } from '../../services/story-loader';
 import { TEXT_SIZE_OPTIONS, useAccessibility } from '../../hooks/use-accessibility';
 import { SettingsTipsOverlay } from '../tutorial/settings-tips-overlay';
 import { ScreenTimeTipsOverlay } from '../tutorial/screen-time-tips-overlay';
 import { useTutorial } from '../../contexts/tutorial-context';
 import { SUPPORTED_LANGUAGES, setStoredLanguage, type SupportedLanguage } from '../../services/i18n';
+import * as Notifications from 'expo-notifications';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -291,34 +295,58 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
           text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
-            // Reset all state to initial values (instant)
+            console.log('[Reset] Clearing all app data...');
+
+            // Clear cache FIRST (blocking) - this must complete before navigation
+            // Otherwise the sync will start before the cache is cleared
+            try {
+              // Clear version metadata so sync knows to re-download everything
+              await VersionManager.clearLocalVersion();
+              console.log('[Reset] Version metadata cleared');
+
+              // Clear BatchSyncService cache (stories and assets)
+              await CacheManager.clearAll();
+              console.log('[Reset] CacheManager cleared');
+
+              // Clear legacy sync service cache
+              await StorySyncService.clearCache();
+              console.log('[Reset] Legacy cache cleared');
+
+              // IMPORTANT: Clear in-memory cache so old stories don't show
+              // This must be called because JS memory isn't cleared on navigation
+              StoryLoader.invalidateCache();
+              console.log('[Reset] StoryLoader in-memory cache cleared');
+            } catch (error) {
+              console.error('[Reset] Error clearing caches:', error);
+            }
+
+            // Reset all state to initial values
             setOnboardingComplete(false);
             setLoginComplete(false);
             setShowLoginAfterOnboarding(false);
             setAppReady(false);
 
-            // Immediately set app ready to trigger navigation
+            // Clear user profile (nickname, avatar, etc.)
+            clearUserProfile();
+            console.log('[Reset] User profile cleared');
+
+            // Set app ready to trigger navigation
             setTimeout(() => {
               setAppReady(true);
             }, 100);
 
-            // Clear everything in background (non-blocking)
-            // This includes auth tokens, persisted storage, story cache, asset cache, and tutorials
+            // Clear remaining items in background (non-blocking)
             ApiClient.logout().catch(error => {
               console.error('Background logout error:', error);
             });
             clearPersistedStorage().catch(error => {
               console.error('Background storage clear error:', error);
             });
-            StorySyncService.clearCache().catch(error => {
-              console.error('Background story cache clear error:', error);
-            });
-            AssetSyncService.clearCache().catch(error => {
-              console.error('Background asset cache clear error:', error);
-            });
             resetAllTutorials().catch(error => {
               console.error('Background tutorial reset error:', error);
             });
+
+            console.log('[Reset] App reset complete');
           },
         },
       ]
@@ -342,32 +370,31 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
   };
 
   // Handle back based on current view - respects navigation hierarchy
-  const handleBack = async () => {
+  const handleBack = () => {
     // If leaving the account screen entirely (from main) and have unsaved changes, auto-save
     if (currentView === 'main' && hasUnsavedChanges) {
-      try {
-        // Auto-save: commit reminder changes locally
-        if (reminderService.hasUnsavedChanges()) {
-          await reminderService.commitChanges();
-        }
-
-        // Sync to backend if signed in
-        const isAuthenticated = await ApiClient.isAuthenticated();
-        if (isAuthenticated) {
-          try {
-            await reminderService.syncToBackend();
-            console.log('[AccountScreen] Auto-saved reminders to backend');
-          } catch (syncError) {
-            console.log('[AccountScreen] Failed to sync to backend (saved locally):', syncError);
-          }
-        }
-
-        setHasUnsavedChanges(false);
-      } catch (error) {
-        console.error('[AccountScreen] Failed to auto-save:', error);
-        // Still exit even if save fails - data is preserved locally
+      // Save locally first (sync, non-blocking for UI)
+      if (reminderService.hasUnsavedChanges()) {
+        reminderService.commitChanges().catch(error => {
+          console.error('[AccountScreen] Failed to commit changes locally:', error);
+        });
       }
 
+      // Sync to backend in background (fire and forget - don't block navigation)
+      // This prevents UI freezing when tokens need to be refreshed
+      (async () => {
+        try {
+          const isAuthenticated = await ApiClient.isAuthenticated();
+          if (isAuthenticated) {
+            await reminderService.syncToBackend();
+            console.log('[AccountScreen] Auto-saved reminders to backend');
+          }
+        } catch (syncError) {
+          console.log('[AccountScreen] Failed to sync to backend (saved locally):', syncError);
+        }
+      })();
+
+      setHasUnsavedChanges(false);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       onBack();
       return;
@@ -451,7 +478,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
                 {t('common.version')}
               </Text>
               <Text style={[styles.settingValue, { fontSize: scaledFontSize(16) }]}>
-                1.0.0
+                {DeviceInfoService.getAppVersion()}
               </Text>
             </View>
 

@@ -218,5 +218,38 @@ public abstract class BaseStepDefs {
     protected static void resetCleanupState() {
         cleanupPerformed = false;
     }
+
+    /**
+     * Parse lastUpdated field which can be either epoch milliseconds (long) or ISO-8601 string.
+     * Returns the epoch milliseconds.
+     *
+     * @param lastUpdatedValue The value from JSON response (can be Long or String)
+     * @return epoch milliseconds, or 0 if null/unparseable
+     */
+    protected static long parseLastUpdated(Object lastUpdatedValue) {
+        if (lastUpdatedValue == null) {
+            return 0L;
+        }
+        if (lastUpdatedValue instanceof Number) {
+            return ((Number) lastUpdatedValue).longValue();
+        }
+        String str = lastUpdatedValue.toString();
+        if (str.isBlank()) {
+            return 0L;
+        }
+        // Try parsing as numeric (epoch millis)
+        try {
+            return Long.parseLong(str);
+        } catch (NumberFormatException ignored) {
+            // Fall through to ISO-8601 parsing
+        }
+        // Try parsing as ISO-8601
+        try {
+            return java.time.Instant.parse(str).toEpochMilli();
+        } catch (java.time.format.DateTimeParseException e) {
+            logger.warn("Failed to parse lastUpdated: {}", str);
+            return 0L;
+        }
+    }
 }
 

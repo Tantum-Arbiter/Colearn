@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Modal, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, Pressable, useWindowDimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -126,8 +126,13 @@ export function ModeTipsOverlay({ mode, isActive, forceShow = false, onClose }: 
     width: cardWidth,
   };
 
+  // Use conditional rendering instead of Modal to avoid iOS crashes during orientation changes
+  if (!isVisible) {
+    return null;
+  }
+
   return (
-    <Modal transparent visible={isVisible} animationType="none" statusBarTranslucent>
+    <View style={styles.absoluteContainer}>
       {/* Main container */}
       <View style={styles.overlay}>
         {/* Invisible touch-blocking layer - blocks ALL touches immediately on mount */}
@@ -206,11 +211,19 @@ export function ModeTipsOverlay({ mode, isActive, forceShow = false, onClose }: 
           )}
           </Animated.View>
       </View>
-    </Modal>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  absoluteContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 4000, // Above all other modals
+  },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.75)',

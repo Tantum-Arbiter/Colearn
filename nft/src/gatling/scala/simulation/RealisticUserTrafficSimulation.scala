@@ -50,7 +50,7 @@ class RealisticUserTrafficSimulation extends Simulation {
   // Total test duration
   val totalDuration = rampUpDuration + holdDuration + rampDownDuration
 
-  // All 10 user personas with their respective behaviors
+  // All 11 user personas with their respective behaviors
   // Each persona ramps up, holds, then ramps down
   val scenarios: List[PopulationBuilder] = List(
     RealisticUserScenario.newUserScenario.inject(
@@ -102,6 +102,12 @@ class RealisticUserTrafficSimulation extends Simulation {
       rampUsersPerSec(0).to(usersPerPersona).during(rampUpDuration),
       constantUsersPerSec(usersPerPersona).during(holdDuration),
       rampUsersPerSec(usersPerPersona).to(0).during(rampDownDuration)
+    ),
+    // New: Batch processing focused user
+    RealisticUserScenario.batchProcessingUserScenario.inject(
+      rampUsersPerSec(0).to(usersPerPersona).during(rampUpDuration),
+      constantUsersPerSec(usersPerPersona).during(holdDuration),
+      rampUsersPerSec(usersPerPersona).to(0).during(rampDownDuration)
     )
   )
 
@@ -117,7 +123,11 @@ class RealisticUserTrafficSimulation extends Simulation {
       // Per-endpoint assertions for critical paths
       details("sync_stories").responseTime.percentile(99).lt(3000),      // Sync can be slower
       details("get_all_stories").responseTime.percentile(99).lt(1500),
-      details("health_check").responseTime.percentile(99).lt(500)
+      details("health_check").responseTime.percentile(99).lt(500),
+
+      // Batch processing endpoints
+      details("delta_sync_stories").responseTime.percentile(99).lt(2000),
+      details("batch_asset_urls").responseTime.percentile(99).lt(2000)
     )
 }
 

@@ -83,6 +83,8 @@ export default {
     privacyPolicy: 'Politique de confidentialité',
     signInFailed: 'Échec de la connexion',
     signInFailedMessage: 'Impossible de se connecter avec Google. Veuillez réessayer.',
+    connectionTimeout: 'Délai de connexion dépassé',
+    connectionTimeoutMessage: 'La connexion a expiré. Veuillez vérifier votre connexion et réessayer.',
     ok: 'OK',
   },
 

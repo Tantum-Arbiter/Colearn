@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { Story, STORY_TAGS, getLocalizedText } from '@/types/story';
 import type { SupportedLanguage } from '@/services/i18n';
 import { Fonts } from '@/constants/theme';
+// All story images are loaded from local cache after batch sync - no authenticated fetching needed
 import { Logger } from '@/utils/logger';
 
 const log = Logger.create('BookCard');
@@ -158,6 +159,7 @@ export function BookCard({ story, onPress, index = 0 }: BookCardProps) {
           styles.imageContainer,
           isPlaceholder && styles.placeholderImageContainer
         ]}>
+          {/* All images are loaded from local cache after batch sync */}
           {isPlaceholder ? (
             <Text style={styles.placeholderIcon}>📚</Text>
           ) : story.coverImage ? (

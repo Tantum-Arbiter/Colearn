@@ -21,7 +21,7 @@ import * as Haptics from 'expo-haptics';
 import { Story, StoryPage } from '@/types/story';
 import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
-import { AuthenticatedImage } from '@/components/ui/authenticated-image';
+// All story images are loaded from local cache after batch sync - no authenticated fetching needed
 import { useTranslation } from 'react-i18next';
 
 const ANIMATION_DURATION = 300;
@@ -152,9 +152,8 @@ export function PagePreviewModal({
   const renderItem = useCallback(({ item: page, index }: { item: StoryPage; index: number }) => {
     const actualIndex = index + 1; // +1 because we skipped cover
     const isCurrentPage = actualIndex === currentPageIndex;
+    // All images are loaded from local cache after batch sync
     const imageSource = page.backgroundImage || page.characterImage;
-    const isCmsImage = typeof imageSource === 'string' &&
-      imageSource.includes('api.colearnwithfreya.co.uk');
 
     return (
       <Pressable
@@ -167,11 +166,7 @@ export function PagePreviewModal({
           isCurrentPage && styles.thumbnailCurrent,
         ]}>
           {imageSource ? (
-            isCmsImage ? (
-              <AuthenticatedImage uri={imageSource as string} style={styles.thumbnailImage} resizeMode="cover" transition={150} />
-            ) : (
-              <Image source={typeof imageSource === 'string' ? { uri: imageSource } : imageSource} style={styles.thumbnailImage} contentFit="cover" transition={150} />
-            )
+            <Image source={typeof imageSource === 'string' ? { uri: imageSource } : imageSource} style={styles.thumbnailImage} contentFit="cover" transition={150} />
           ) : (
             <View style={styles.placeholderThumbnail}>
               <Text style={styles.placeholderEmoji}>{story.emoji}</Text>

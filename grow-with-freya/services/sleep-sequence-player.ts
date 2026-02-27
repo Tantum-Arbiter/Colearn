@@ -1,10 +1,7 @@
 import { MusicTrack } from '@/types/music';
 import { MusicPlayerService } from './music-player';
 
-/**
- * Service for handling sleep sequence progression
- * Automatically transitions between Alpha → Beta → Theta phases
- */
+// Automatically transitions between Alpha → Beta → Theta phases
 export class SleepSequencePlayer {
   private static instance: SleepSequencePlayer | null = null;
   private musicPlayer: MusicPlayerService;
@@ -27,9 +24,6 @@ export class SleepSequencePlayer {
     return SleepSequencePlayer.instance;
   }
 
-  /**
-   * Start the sleep sequence with automatic progression
-   */
   public async startSleepSequence(
     sequenceTracks: MusicTrack[],
     onPhaseChange?: (phase: MusicTrack, phaseNumber: number) => void,
@@ -53,9 +47,6 @@ export class SleepSequencePlayer {
     }
   }
 
-  /**
-   * Play the current phase and set timer for next phase
-   */
   private async playCurrentPhase(): Promise<void> {
     if (!this.isSequenceActive || this.currentPhaseIndex >= this.currentSequence.length) {
       this.completeSequence();
@@ -90,9 +81,6 @@ export class SleepSequencePlayer {
     }
   }
 
-  /**
-   * Move to the next phase in the sequence
-   */
   private async nextPhase(): Promise<void> {
     if (!this.isSequenceActive) return;
 
@@ -106,9 +94,6 @@ export class SleepSequencePlayer {
     }
   }
 
-  /**
-   * Complete the sequence
-   */
   private async completeSequence(): Promise<void> {
     console.log('Sleep sequence completed');
     this.isSequenceActive = false;
@@ -122,9 +107,6 @@ export class SleepSequencePlayer {
     }
   }
 
-  /**
-   * Stop the sequence manually
-   */
   public async stopSequence(): Promise<void> {
     console.log('Stopping sleep sequence');
     this.isSequenceActive = false;
@@ -135,9 +117,6 @@ export class SleepSequencePlayer {
     await this.musicPlayer.clearTrack();
   }
 
-  /**
-   * Pause the current sequence
-   */
   public async pauseSequence(): Promise<void> {
     if (this.isSequenceActive) {
       await this.musicPlayer.pause();
@@ -145,9 +124,6 @@ export class SleepSequencePlayer {
     }
   }
 
-  /**
-   * Resume the current sequence
-   */
   public async resumeSequence(): Promise<void> {
     if (this.isSequenceActive) {
       await this.musicPlayer.play();
@@ -167,9 +143,6 @@ export class SleepSequencePlayer {
     }
   }
 
-  /**
-   * Skip to next phase manually
-   */
   public async skipToNextPhase(): Promise<void> {
     if (this.isSequenceActive && this.currentPhaseIndex < this.currentSequence.length - 1) {
       this.clearTimer();
@@ -178,9 +151,6 @@ export class SleepSequencePlayer {
     }
   }
 
-  /**
-   * Skip to previous phase manually
-   */
   public async skipToPreviousPhase(): Promise<void> {
     if (this.isSequenceActive && this.currentPhaseIndex > 0) {
       this.clearTimer();
@@ -189,9 +159,6 @@ export class SleepSequencePlayer {
     }
   }
 
-  /**
-   * Get current sequence status with enhanced timing information
-   */
   public getSequenceStatus(): {
     isActive: boolean;
     currentPhase: number;
@@ -243,9 +210,6 @@ export class SleepSequencePlayer {
     };
   }
 
-  /**
-   * Clear the phase timer
-   */
   private clearTimer(): void {
     if (this.phaseTimer) {
       clearTimeout(this.phaseTimer);
@@ -253,9 +217,6 @@ export class SleepSequencePlayer {
     }
   }
 
-  /**
-   * Cleanup resources
-   */
   public cleanup(): void {
     this.stopSequence();
     this.currentSequence = [];

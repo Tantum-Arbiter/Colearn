@@ -3,6 +3,9 @@ import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { DeviceInfoService } from './device-info-service';
+import { Logger } from '@/utils/logger';
+
+const log = Logger.create('AuthService');
 
 // Debug logging - set to false for production performance
 const DEBUG_LOGS = false;
@@ -16,7 +19,7 @@ if (Platform.OS === 'android') {
     GoogleSignin = googleSignIn.GoogleSignin;
     statusCodes = googleSignIn.statusCodes;
   } catch {
-    DEBUG_LOGS && DEBUG_LOGS && console.log('[AuthService] Native Google Sign-In not available');
+    log.debug('Native Google Sign-In not available');
   }
 }
 
@@ -26,7 +29,7 @@ const extra = Constants.expoConfig?.extra || {};
 const GATEWAY_URL = extra.gatewayUrl || process.env.EXPO_PUBLIC_GATEWAY_URL || 'http://localhost:8080';
 const AUTH_TIMEOUT_MS = 3000; // 3 second timeout for sign-in
 
-console.log('[AuthService] Gateway URL configured:', GATEWAY_URL);
+log.info(`Gateway URL configured: ${GATEWAY_URL}`);
 
 const GOOGLE_IOS_CLIENT_ID = extra.googleIosClientId || process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 const GOOGLE_ANDROID_CLIENT_ID = extra.googleAndroidClientId || process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
@@ -82,15 +85,10 @@ export class AuthService {
     expoClientId: GOOGLE_WEB_CLIENT_ID,
   };
 
-  /**
-   * Complete Google sign-in by sending the ID token to the backend
-   */
   static async completeGoogleSignIn(idToken: string): Promise<AuthResponse> {
     const url = `${GATEWAY_URL}/auth/google`;
-    console.log('[User Journey Flow 1] Step 1: Google ID token received, sending to backend...');
 
     try {
-      console.log('[User Journey Flow 1] Step 2: Calling backend /auth/google');
       const authResponse = await fetchWithTimeout(url, {
         method: 'POST',
         headers: {
@@ -100,26 +98,19 @@ export class AuthService {
         body: JSON.stringify({ idToken }),
       });
 
-      console.log('[User Journey Flow 1] Step 3: Backend response status:', authResponse.status);
-
       if (!authResponse.ok) {
         const errorText = await authResponse.text();
-        console.error('[User Journey Flow 1] Step 3 FAILED: Backend auth failed:', errorText);
+        log.error(`Google auth failed: ${errorText}`);
         throw new Error(`Authentication failed: ${errorText}`);
       }
 
-      const result = await authResponse.json();
-      console.log('[User Journey Flow 1] Step 4: Backend auth successful, tokens received');
-      return result;
+      return await authResponse.json();
     } catch (error) {
-      console.error('[User Journey Flow 1] FAILED: Google sign-in error:', error);
+      log.error('Google sign-in error:', error);
       throw error;
     }
   }
 
-  /**
-   * Get Google OAuth configuration for useAuthRequest hook
-   */
   static getGoogleConfig() {
     const config: Record<string, string | undefined> = {
       iosClientId: this.googleConfig.iosClientId,
@@ -131,22 +122,15 @@ export class AuthService {
     if (Platform.OS === 'ios') {
       config.redirectUri = this.getIosRedirectUri();
     }
-    // Android will use native Google Sign-In (no redirect URI needed)
 
-    DEBUG_LOGS && console.log('[AuthService] Google config:', JSON.stringify(config, null, 2));
+    DEBUG_LOGS && log.debug(`Google config: ${JSON.stringify(config, null, 2)}`);
     return config;
   }
 
-  /**
-   * Check if native Google Sign-In is available (Android only)
-   */
   static isNativeGoogleSignInAvailable(): boolean {
     return Platform.OS === 'android' && GoogleSignin !== null;
   }
 
-  /**
-   * Initialize native Google Sign-In for Android
-   */
   static configureNativeGoogleSignIn(): void {
     if (!this.isNativeGoogleSignInAvailable()) return;
 
@@ -154,13 +138,9 @@ export class AuthService {
       webClientId: GOOGLE_WEB_CLIENT_ID,
       offlineAccess: false,
     });
-    DEBUG_LOGS && console.log('[AuthService] Native Google Sign-In configured');
+    DEBUG_LOGS && log.debug('Native Google Sign-In configured');
   }
 
-  /**
-   * Sign in with Google using native SDK (Android only)
-   * Returns the auth response from the backend
-   */
   static async signInWithGoogleNative(): Promise<AuthResponse> {
     if (!this.isNativeGoogleSignInAvailable()) {
       throw new Error('Native Google Sign-In is not available');
@@ -169,16 +149,12 @@ export class AuthService {
     try {
       await GoogleSignin.hasPlayServices();
       const response = await GoogleSignin.signIn();
-
-      // Get the ID token
       const idToken = response.data?.idToken;
       if (!idToken) {
         throw new Error('No ID token received from Google Sign-In');
       }
 
-      DEBUG_LOGS && console.log('[AuthService] Native Google Sign-In successful, completing with backend...');
-
-      // Complete sign-in with backend
+      DEBUG_LOGS && log.debug('Native Google Sign-In successful, completing with backend...');
       return await this.completeGoogleSignIn(idToken);
     } catch (error: any) {
       if (statusCodes) {
@@ -190,7 +166,7 @@ export class AuthService {
           throw new Error('Google Play Services is not available');
         }
       }
-      console.error('[AuthService] Native Google Sign-In error:', error);
+      log.error('Native Google Sign-In error:', error);
       throw error;
     }
   }
@@ -205,8 +181,6 @@ export class AuthService {
           AppleAuthentication.AppleAuthenticationScope.EMAIL,
         ],
       });
-
-      console.log('[AuthService] Apple sign-in calling:', url);
 
       const authResponse = await fetchWithTimeout(url, {
         method: 'POST',
@@ -223,11 +197,9 @@ export class AuthService {
         }),
       });
 
-      console.log('[AuthService] Apple sign-in response status:', authResponse.status);
-
       if (!authResponse.ok) {
         const errorText = await authResponse.text();
-        console.error('[AuthService] Apple sign-in failed:', errorText);
+        log.error(`Apple auth failed: ${errorText}`);
         throw new Error(`Authentication failed: ${errorText}`);
       }
 
@@ -236,14 +208,11 @@ export class AuthService {
       if (error.code === 'ERR_CANCELED') {
         throw new Error('Apple sign-in was cancelled');
       }
-      console.error('[AuthService] Apple sign-in error:', error);
+      log.error('Apple sign-in error:', error);
       throw error;
     }
   }
 
-  /**
-   * Check if Apple Sign-In is available
-   */
   static async isAppleSignInAvailable(): Promise<boolean> {
     if (Platform.OS !== 'ios') {
       return false;
@@ -251,13 +220,7 @@ export class AuthService {
     return await AppleAuthentication.isAvailableAsync();
   }
 
-  /**
-   * Refresh access token using refresh token
-   */
   static async refreshToken(refreshToken: string): Promise<AuthResponse> {
-    console.log('[User Journey Flow 2] Step 1: User returning after inactivity, refreshing token...');
-    console.log('[User Journey Flow 2] Step 2: Calling backend /auth/refresh');
-
     const response = await fetch(`${GATEWAY_URL}/auth/refresh`, {
       method: 'POST',
       headers: {
@@ -266,21 +229,14 @@ export class AuthService {
       body: JSON.stringify({ refreshToken }),
     });
 
-    console.log('[User Journey Flow 2] Step 3: Backend response status:', response.status);
-
     if (!response.ok) {
-      console.error('[User Journey Flow 2] Step 3 FAILED: Token refresh failed, user needs to re-authenticate');
+      log.error('Token refresh failed');
       throw new Error('Token refresh failed');
     }
 
-    const result = await response.json();
-    console.log('[User Journey Flow 2] Step 4: Token refresh successful, new tokens received');
-    return result;
+    return await response.json();
   }
 
-  /**
-   * Sign out
-   */
   static async signOut(refreshToken: string): Promise<void> {
     await fetch(`${GATEWAY_URL}/auth/revoke`, {
       method: 'POST',

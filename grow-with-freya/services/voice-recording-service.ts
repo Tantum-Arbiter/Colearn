@@ -26,17 +26,7 @@ export interface VoiceOverMetadata {
   voiceOvers: VoiceOver[];
 }
 
-/**
- * Voice Recording Service
- *
- * Handles file management, metadata storage, and playback for voice recordings.
- *
- * NOTE: Recording functionality has been moved to the useVoiceRecording hook
- * since expo-audio only supports hook-based recording. Components should use
- * the hook for recording and this service for file/metadata management.
- *
- * @see hooks/use-voice-recording.ts for recording functionality
- */
+// Recording via useVoiceRecording hook; this handles file/metadata management
 class VoiceRecordingService {
   private recordingsDir: Directory | null = null;
 

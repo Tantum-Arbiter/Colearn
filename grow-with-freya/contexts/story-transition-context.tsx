@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { Dimensions, Image, StyleSheet, View, Text, Pressable, Modal, TextInput, KeyboardAvoidingView, Platform, Alert, ScrollView } from 'react-native';
+import { Dimensions, Image, StyleSheet, View, Text, Pressable, TextInput, KeyboardAvoidingView, Platform, Alert, ScrollView } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -19,7 +19,7 @@ import Animated, {
   interpolate,
 } from 'react-native-reanimated';
 import { Story } from '@/types/story';
-import { AuthenticatedImage } from '@/components/ui/authenticated-image';
+// All story images are loaded from local cache after batch sync - no authenticated fetching needed
 import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { voiceRecordingService, VoiceOver } from '@/services/voice-recording-service';
@@ -56,6 +56,10 @@ interface StoryTransitionContextType {
   // Callback when returning to mode selection - the _layout listens to hide story reader
   onReturnToModeSelectionCallback: (() => void) | null;
   setOnReturnToModeSelectionCallback: (callback: (() => void) | null) => void;
+
+  // Callback when transition is cancelled - the _layout listens to restore view state
+  onCancelCallback: (() => void) | null;
+  setOnCancelCallback: (callback: (() => void) | null) => void;
 
   // Card position and size for animation
   cardPosition: { x: number; y: number; width: number; height: number } | null;
@@ -106,6 +110,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const [shouldShowStoryReader, setShouldShowStoryReader] = useState(false);
   const [onBeginCallback, setOnBeginCallback] = useState<(() => void) | null>(null);
   const [onReturnToModeSelectionCallback, setOnReturnToModeSelectionCallback] = useState<(() => void) | null>(null);
+  const [onCancelCallback, setOnCancelCallback] = useState<(() => void) | null>(null);
   const [isExitAnimating, setIsExitAnimating] = useState(false);
   // Track when we're animating the cancel transition - blocks touches during animation
   const [isCancelAnimating, setIsCancelAnimating] = useState(false);
@@ -603,6 +608,10 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     openingTransformRef.current = null;
     // Reset cancel animation flag
     setIsCancelAnimating(false);
+    // Notify _layout that transition was cancelled so it can restore view state
+    if (onCancelCallback) {
+      onCancelCallback();
+    }
   };
 
   const completeTransition = () => {
@@ -853,17 +862,36 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
     console.log('Returning to mode selection from reader');
 
+    // Get CURRENT screen dimensions - we're returning from story reader which is in landscape
+    // Don't use screenDimensions state as it may have stale portrait values
+    const currentDims = Dimensions.get('window');
+    const currentScreenWidth = currentDims.width;
+    const currentScreenHeight = currentDims.height;
+    const isCurrentLandscape = currentScreenWidth > currentScreenHeight;
+    const isPhoneLandscape = isPhone && isCurrentLandscape;
+    console.log('returnToModeSelection using dimensions:', currentDims, 'isPhoneLandscape:', isPhoneLandscape, 'isPhone:', isPhone);
+
+    // IMPORTANT: Update screenDimensions state so the button rendering uses current landscape values
+    // Without this, buttons would use stale portrait dimensions and get wrong sizing
+    setScreenDimensions(currentDims);
+
     // Animation timing (reverse of selectModeAndBegin)
     const SHRINK_DURATION = 200;        // Shrink from full screen to book size
     const HOLD_AFTER_SHRINK = 100;      // Brief pause before flipping
     const COVER_FLIP_DURATION = 200;    // Flip cover back
     const BUTTONS_DELAY = 50;           // Delay before showing buttons
 
-    // Calculate the centered position (same as startTransition)
-    const targetWidth = screenWidth * 0.55;
+    // Calculate the centered position using CURRENT dimensions (landscape)
+    // For phone landscape: use 35% of width - balanced size for phone screens
+    // For tablet: use 55% of width
+    const targetWidthPercent = isPhoneLandscape ? 0.35 : 0.55;
+    const targetWidth = currentScreenWidth * targetWidthPercent;
     const targetScale = targetWidth / originalCardPosition.width;
-    const targetCenterX = screenWidth / 2;
-    const targetCenterY = (screenHeight / 2) - 30;
+    // For phone landscape: shift book slightly right to make room for buttons on left
+    // Buttons take ~80px on left, so center book in remaining space (center at ~55%)
+    const targetCenterX = isPhoneLandscape ? currentScreenWidth * 0.55 : currentScreenWidth / 2;
+    // For phone landscape: center vertically
+    const targetCenterY = (currentScreenHeight / 2) - (isPhoneLandscape ? 0 : 30);
     const currentCenterX = originalCardPosition.x + originalCardPosition.width / 2;
     const currentCenterY = originalCardPosition.y + originalCardPosition.height / 2;
     const moveX = targetCenterX - currentCenterX;
@@ -896,6 +924,11 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     exitCardY.value = originalCardPosition.y;
     exitCardWidth.value = originalCardPosition.width;
     exitCardHeight.value = originalCardPosition.height;
+
+    // Set current screen dimensions in shared values for the animated style
+    // This is critical - bookExpansionAnimatedStyle uses these to calculate correct centering
+    exitScreenWidth.value = currentScreenWidth;
+    exitScreenHeight.value = currentScreenHeight;
 
     // Set page index for renderPageImage - show the current page during the shrink animation
     exitPageIndexRef.current = currentPageIndex ?? 1;
@@ -1261,6 +1294,8 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     setOnBeginCallback,
     onReturnToModeSelectionCallback,
     setOnReturnToModeSelectionCallback,
+    onCancelCallback,
+    setOnCancelCallback,
     cardPosition,
     startTransition,
     selectModeAndBegin,
@@ -1279,21 +1314,9 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
   // Render the cover image for the selected story
   // Note: No borderRadius on images - parent container handles clipping with overflow: hidden
+  // All images are loaded from local cache after batch sync
   const renderCoverImage = () => {
     if (!selectedStory?.coverImage || !cardPosition) return null;
-
-    const isCmsImage = typeof selectedStory.coverImage === 'string' &&
-      selectedStory.coverImage.includes('api.colearnwithfreya.co.uk');
-
-    if (isCmsImage) {
-      return (
-        <AuthenticatedImage
-          uri={selectedStory.coverImage as string}
-          style={{ width: '100%', height: '100%' }}
-          resizeMode="cover"
-        />
-      );
-    }
 
     return (
       <ExpoImage
@@ -1311,6 +1334,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   // Render a page image (revealed when cover flips open, or during exit)
   // pageIndex defaults to 1 (first content page) for opening, or exitPageIndex for exiting
   // Note: No borderRadius on images - parent container handles clipping with overflow: hidden
+  // All images are loaded from local cache after batch sync
   const renderPageImage = (pageIndex?: number) => {
     if (!selectedStory?.pages || selectedStory.pages.length < 2 || !cardPosition) return null;
 
@@ -1333,19 +1357,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
         }}>
           <Text style={{ fontSize: 48 }}>{selectedStory.emoji}</Text>
         </View>
-      );
-    }
-
-    const isCmsImage = typeof imageSource === 'string' &&
-      imageSource.includes('api.colearnwithfreya.co.uk');
-
-    if (isCmsImage) {
-      return (
-        <AuthenticatedImage
-          uri={imageSource as string}
-          style={{ width: '100%', height: '100%' }}
-          resizeMode="cover"
-        />
       );
     }
 
@@ -1402,12 +1413,31 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
           {/* X Close button - top left of book */}
           {/* Stays visible when preview modal is showing, but dimmed by overlay */}
           {showModeSelection && targetBookPosition && (() => {
-            // Phone portrait mode: standard close button size
+            // Determine layout mode for close button sizing
             const isPhonePortrait = isPhone && !isLandscape;
-            const closeButtonSize = isPhonePortrait ? scaledButtonSize(36) : scaledButtonSize(44);
+            const isPhoneLandscape = isPhone && isLandscape;
+
+            let closeButtonSize: number;
+            let closeButtonOffset: number;
+            let closeIconSize: number;
+
+            if (isPhonePortrait) {
+              closeButtonSize = scaledButtonSize(36);
+              closeButtonOffset = scaledButtonSize(8);
+              closeIconSize = scaledFontSize(16);
+            } else if (isPhoneLandscape) {
+              // Phone landscape: compact but tappable close button
+              closeButtonSize = scaledButtonSize(28);
+              closeButtonOffset = scaledButtonSize(6);
+              closeIconSize = scaledFontSize(14);
+            } else {
+              // Tablet
+              closeButtonSize = scaledButtonSize(44);
+              closeButtonOffset = scaledButtonSize(12);
+              closeIconSize = scaledFontSize(20);
+            }
+
             const closeButtonRadius = closeButtonSize / 2;
-            const closeButtonOffset = isPhonePortrait ? scaledButtonSize(8) : scaledButtonSize(12);
-            const closeIconSize = isPhonePortrait ? scaledFontSize(16) : scaledFontSize(20);
 
             // Hide close button completely when preview modal is showing to avoid z-index conflicts
             if (showPreviewModal) return null;
@@ -1565,31 +1595,72 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
 
 
-          {/* Mode selection buttons - positioned BELOW the book for phone portrait, LEFT for tablet */}
+          {/* Mode selection buttons - positioned BELOW the book for phone portrait, LEFT for tablet/phone landscape */}
           {showModeSelection && targetBookPosition && (() => {
-            // Phone portrait mode: buttons below the book in a horizontal row
+            // Determine layout mode: phone portrait, phone landscape, or tablet
             const isPhonePortrait = isPhone && !isLandscape;
+            const isPhoneLandscape = isPhone && isLandscape;
 
-            // Sizing for phone portrait mode - boxed buttons with icon on top, text below
-            // Tablet keeps horizontal button layout (icon and text side by side)
-            // Use fixed width for phone to ensure consistent button sizes
-            const buttonWidth = isPhonePortrait ? scaledButtonSize(68) : scaledButtonSize(140);
-            const buttonPaddingV = isPhonePortrait ? scaledPadding(10) : scaledPadding(12);
-            const buttonPaddingH = isPhonePortrait ? scaledPadding(6) : scaledPadding(20);
-            const buttonRadius = isPhonePortrait ? scaledButtonSize(14) : scaledButtonSize(20);
-            const iconSize = isPhonePortrait ? scaledFontSize(22) : scaledFontSize(22);
-            const textSize = isPhonePortrait ? scaledFontSize(10) : scaledFontSize(18);
-            const buttonGap = isPhonePortrait ? scaledPadding(3) : scaledPadding(8);
-            const containerGap = isPhonePortrait ? 8 : 20;
-            const containerMargin = isPhonePortrait ? 20 : 20;
-            // Only add margin to icon on tablet (row layout) - phone column layout uses gap instead
-            const iconMarginRight = isPhonePortrait ? 0 : 10;
+            // Sizing based on device and orientation
+            // Phone portrait: small boxed buttons with icon on top, text below
+            // Phone landscape: compact buttons to fit beside the book
+            // Tablet: larger horizontal buttons (icon beside text)
+            let buttonWidth: number;
+            let buttonPaddingV: number;
+            let buttonPaddingH: number;
+            let buttonRadius: number;
+            let iconSize: number;
+            let textSize: number;
+            let buttonGap: number;
+            let containerGap: number;
+            let containerMargin: number;
+            let iconMarginRight: number;
+            let buttonFlexDirection: 'row' | 'column';
 
-            // Button layout: column for phone (icon on top), row for tablet (icon beside text)
-            const buttonFlexDirection = isPhonePortrait ? 'column' as const : 'row' as const;
+            if (isPhonePortrait) {
+              // Phone portrait: boxed buttons below the book
+              buttonWidth = scaledButtonSize(68);
+              buttonPaddingV = scaledPadding(10);
+              buttonPaddingH = scaledPadding(6);
+              buttonRadius = scaledButtonSize(14);
+              iconSize = scaledFontSize(22);
+              textSize = scaledFontSize(10);
+              buttonGap = scaledPadding(3);
+              containerGap = 8;
+              containerMargin = 20;
+              iconMarginRight = 0;
+              buttonFlexDirection = 'column';
+            } else if (isPhoneLandscape) {
+              // Phone landscape: compact but readable buttons
+              // Use column layout (icon on top) to save horizontal space
+              buttonWidth = scaledButtonSize(52);
+              buttonPaddingV = scaledPadding(6);
+              buttonPaddingH = scaledPadding(4);
+              buttonRadius = scaledButtonSize(10);
+              iconSize = scaledFontSize(18);
+              textSize = scaledFontSize(9);
+              buttonGap = scaledPadding(2);
+              containerGap = 6;
+              containerMargin = 16;  // More margin from left edge
+              iconMarginRight = 0;
+              buttonFlexDirection = 'column'; // Stack icon on top of text to save width
+            } else {
+              // Tablet: larger buttons
+              buttonWidth = scaledButtonSize(140);
+              buttonPaddingV = scaledPadding(12);
+              buttonPaddingH = scaledPadding(20);
+              buttonRadius = scaledButtonSize(20);
+              iconSize = scaledFontSize(22);
+              textSize = scaledFontSize(18);
+              buttonGap = scaledPadding(8);
+              containerGap = 20;
+              containerMargin = 20;
+              iconMarginRight = 10;
+              buttonFlexDirection = 'row';
+            }
 
             // For phone portrait: position buttons horizontally below the book, centered on screen
-            // For tablet: position buttons vertically to the left of the book
+            // For tablet/phone landscape: position buttons vertically to the left of the book
             const buttonContainerStyle = isPhonePortrait
               ? {
                   // Horizontal layout below the book, centered
@@ -1601,8 +1672,18 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                   alignItems: 'center' as const,
                   gap: containerGap,
                 }
+              : isPhoneLandscape
+              ? {
+                  // Phone landscape: position buttons just to the left of the book
+                  // Use 'right' positioning relative to book's left edge
+                  right: screenWidth - targetBookPosition.x + containerMargin,
+                  top: targetBookPosition.y,
+                  height: targetBookPosition.height,
+                  justifyContent: 'center' as const,
+                  gap: containerGap,
+                }
               : {
-                  // Vertical layout to the left of the book (tablet)
+                  // Tablet: position buttons to the left of the book
                   right: screenWidth - targetBookPosition.x + containerMargin,
                   top: targetBookPosition.y,
                   height: targetBookPosition.height,
@@ -1732,13 +1813,37 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
           {/* Tap to begin button (bottom center with padding) */}
           {showModeSelection && (() => {
-            // Phone portrait mode: slightly smaller begin button
+            // Determine layout mode for begin button sizing
             const isPhonePortrait = isPhone && !isLandscape;
-            const beginButtonRadius = isPhonePortrait ? scaledButtonSize(18) : scaledButtonSize(20);
-            const beginButtonPaddingV = isPhonePortrait ? scaledPadding(10) : scaledPadding(12);
-            const beginButtonPaddingH = isPhonePortrait ? scaledPadding(20) : scaledPadding(24);
-            const beginTextSize = isPhonePortrait ? scaledFontSize(16) : scaledFontSize(18);
-            const bottomPadding = isPhonePortrait ? Math.max(insets.bottom + 16, 24) : insets.bottom + 20;
+            const isPhoneLandscape = isPhone && isLandscape;
+
+            let beginButtonRadius: number;
+            let beginButtonPaddingV: number;
+            let beginButtonPaddingH: number;
+            let beginTextSize: number;
+            let bottomPadding: number;
+
+            if (isPhonePortrait) {
+              beginButtonRadius = scaledButtonSize(18);
+              beginButtonPaddingV = scaledPadding(10);
+              beginButtonPaddingH = scaledPadding(20);
+              beginTextSize = scaledFontSize(16);
+              bottomPadding = Math.max(insets.bottom + 16, 24);
+            } else if (isPhoneLandscape) {
+              // Phone landscape: compact but readable begin button
+              beginButtonRadius = scaledButtonSize(14);
+              beginButtonPaddingV = scaledPadding(8);
+              beginButtonPaddingH = scaledPadding(16);
+              beginTextSize = scaledFontSize(14);
+              bottomPadding = Math.max(insets.bottom + 8, 12);
+            } else {
+              // Tablet
+              beginButtonRadius = scaledButtonSize(20);
+              beginButtonPaddingV = scaledPadding(12);
+              beginButtonPaddingH = scaledPadding(24);
+              beginTextSize = scaledFontSize(18);
+              bottomPadding = insets.bottom + 20;
+            }
 
             return (
             <Animated.View
@@ -1781,33 +1886,131 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
             );
           })()}
 
-          {/* Voice Over Name Modal (for Record mode) */}
-          <Modal
-            visible={showVoiceOverNameModal}
-            transparent
-            animationType="fade"
-            onRequestClose={() => setShowVoiceOverNameModal(false)}
-          >
-            <KeyboardAvoidingView
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-              style={styles.modalOverlay}
-            >
-              <View style={styles.modalContent}>
-                <Pressable
-                  style={styles.modalCloseButton}
-                  onPress={() => {
-                    setShowVoiceOverNameModal(false);
-                    setVoiceOverName('');
-                  }}
-                >
-                  <Text style={styles.modalCloseButtonText}>✕</Text>
-                </Pressable>
-                <Text style={styles.modalTitle}>{t('storyMode.recordVoiceOver')}</Text>
+          {/* Voice Over Name Modal (for Record mode) - Using absolute positioning to avoid iOS crash during orientation changes */}
+          {showVoiceOverNameModal && (
+            <View style={styles.absoluteModalContainer}>
+              <Pressable
+                style={styles.absoluteModalBackdrop}
+                onPress={() => {
+                  setShowVoiceOverNameModal(false);
+                  setVoiceOverName('');
+                }}
+              />
+              <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={styles.absoluteModalCentered}
+                pointerEvents="box-none"
+              >
+                <View style={styles.modalContent}>
+                  <Pressable
+                    style={styles.modalCloseButton}
+                    onPress={() => {
+                      setShowVoiceOverNameModal(false);
+                      setVoiceOverName('');
+                    }}
+                  >
+                    <Text style={styles.modalCloseButtonText}>✕</Text>
+                  </Pressable>
+                  <Text style={styles.modalTitle}>{t('storyMode.recordVoiceOver')}</Text>
 
-                {/* Existing voice overs */}
-                {availableVoiceOvers.length > 0 && (
-                  <>
-                    <Text style={styles.modalSubtitle}>{t('storyMode.selectExisting')}</Text>
+                  {/* Existing voice overs */}
+                  {availableVoiceOvers.length > 0 && (
+                    <>
+                      <Text style={styles.modalSubtitle}>{t('storyMode.selectExisting')}</Text>
+                      <ScrollView style={styles.voiceOverList} showsVerticalScrollIndicator={false}>
+                        {availableVoiceOvers.map((vo) => (
+                          <View key={vo.id} style={styles.voiceOverItemWithDelete}>
+                            <Pressable
+                              style={[
+                                styles.voiceOverItemSelectable,
+                                currentVoiceOver?.id === vo.id && styles.voiceOverItemSelected,
+                              ]}
+                              onPress={() => {
+                                setCurrentVoiceOver(vo);
+                                setShowVoiceOverNameModal(false);
+                              }}
+                            >
+                              <Text style={styles.voiceOverItemName}>{vo.name}</Text>
+                              <Text style={styles.voiceOverItemPages}>
+                                {t('storyMode.pagesRecorded', { count: Object.keys(vo.pageRecordings).length })}
+                              </Text>
+                            </Pressable>
+                            <Pressable
+                              style={styles.deleteButton}
+                              onPress={() => handleDeleteVoiceOver(vo)}
+                            >
+                              <Text style={styles.deleteButtonText}>✕</Text>
+                            </Pressable>
+                          </View>
+                        ))}
+                      </ScrollView>
+                    </>
+                  )}
+
+                  {/* Create new section */}
+                  {availableVoiceOvers.length < 3 && (
+                    <>
+                      <Text style={[styles.modalSubtitle, availableVoiceOvers.length > 0 && { marginTop: 16 }]}>
+                        {availableVoiceOvers.length > 0 ? t('storyMode.orCreateNew') : t('storyMode.enterName')}
+                      </Text>
+                      <TextInput
+                        style={styles.modalInput}
+                        value={voiceOverName}
+                        onChangeText={setVoiceOverName}
+                        placeholder={t('storyMode.enterName')}
+                        placeholderTextColor="#999"
+                        autoFocus={availableVoiceOvers.length === 0}
+                      />
+                      <Pressable
+                        style={[
+                          styles.modalButton,
+                          !voiceOverName.trim() && styles.modalButtonDisabled,
+                        ]}
+                        onPress={handleCreateVoiceOver}
+                        disabled={!voiceOverName.trim()}
+                      >
+                        <Text style={styles.modalButtonText}>{t('storyMode.create')}</Text>
+                      </Pressable>
+                    </>
+                  )}
+                  {availableVoiceOvers.length >= 3 && (
+                    <Text style={styles.maxVoiceOversText}>Maximum of 3 voice overs reached</Text>
+                  )}
+                </View>
+              </KeyboardAvoidingView>
+            </View>
+          )}
+
+          {/* Voice Over Selection Modal (for Narrate mode) - Using absolute positioning to avoid iOS crash during orientation changes */}
+          {showVoiceOverSelectModal && (
+            <View style={styles.absoluteModalContainer}>
+              <Pressable
+                style={styles.absoluteModalBackdrop}
+                onPress={() => {
+                  setShowVoiceOverSelectModal(false);
+                  if (!currentVoiceOver) {
+                    setSelectedMode('read'); // Reset to read if no voice over selected
+                  }
+                }}
+              />
+              <View style={styles.absoluteModalCentered} pointerEvents="box-none">
+                <View style={styles.modalContent}>
+                  <Pressable
+                    style={styles.modalCloseButton}
+                    onPress={() => {
+                      setShowVoiceOverSelectModal(false);
+                      if (!currentVoiceOver) {
+                        setSelectedMode('read'); // Reset to read if no voice over selected
+                      }
+                    }}
+                  >
+                    <Text style={styles.modalCloseButtonText}>✕</Text>
+                  </Pressable>
+                  <Text style={styles.modalTitle}>{t('storyMode.selectVoiceOver')}</Text>
+                  <Text style={styles.modalSubtitle}>{t('storyMode.chooseRecording')}</Text>
+                  {availableVoiceOvers.length === 0 ? (
+                    <Text style={styles.noVoiceOversText}>{t('storyMode.noVoiceOvers')}</Text>
+                  ) : (
                     <ScrollView style={styles.voiceOverList} showsVerticalScrollIndicator={false}>
                       {availableVoiceOvers.map((vo) => (
                         <View key={vo.id} style={styles.voiceOverItemWithDelete}>
@@ -1816,10 +2019,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                               styles.voiceOverItemSelectable,
                               currentVoiceOver?.id === vo.id && styles.voiceOverItemSelected,
                             ]}
-                            onPress={() => {
-                              setCurrentVoiceOver(vo);
-                              setShowVoiceOverNameModal(false);
-                            }}
+                            onPress={() => handleSelectVoiceOver(vo)}
                           >
                             <Text style={styles.voiceOverItemName}>{vo.name}</Text>
                             <Text style={styles.voiceOverItemPages}>
@@ -1835,95 +2035,11 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                         </View>
                       ))}
                     </ScrollView>
-                  </>
-                )}
-
-                {/* Create new section */}
-                {availableVoiceOvers.length < 3 && (
-                  <>
-                    <Text style={[styles.modalSubtitle, availableVoiceOvers.length > 0 && { marginTop: 16 }]}>
-                      {availableVoiceOvers.length > 0 ? t('storyMode.orCreateNew') : t('storyMode.enterName')}
-                    </Text>
-                    <TextInput
-                      style={styles.modalInput}
-                      value={voiceOverName}
-                      onChangeText={setVoiceOverName}
-                      placeholder={t('storyMode.enterName')}
-                      placeholderTextColor="#999"
-                      autoFocus={availableVoiceOvers.length === 0}
-                    />
-                    <Pressable
-                      style={[
-                        styles.modalButton,
-                        !voiceOverName.trim() && styles.modalButtonDisabled,
-                      ]}
-                      onPress={handleCreateVoiceOver}
-                      disabled={!voiceOverName.trim()}
-                    >
-                      <Text style={styles.modalButtonText}>{t('storyMode.create')}</Text>
-                    </Pressable>
-                  </>
-                )}
-                {availableVoiceOvers.length >= 3 && (
-                  <Text style={styles.maxVoiceOversText}>Maximum of 3 voice overs reached</Text>
-                )}
-              </View>
-            </KeyboardAvoidingView>
-          </Modal>
-
-          {/* Voice Over Selection Modal (for Narrate mode) */}
-          <Modal
-            visible={showVoiceOverSelectModal}
-            transparent
-            animationType="fade"
-            onRequestClose={() => setShowVoiceOverSelectModal(false)}
-          >
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalContent}>
-                <Pressable
-                  style={styles.modalCloseButton}
-                  onPress={() => {
-                    setShowVoiceOverSelectModal(false);
-                    if (!currentVoiceOver) {
-                      setSelectedMode('read'); // Reset to read if no voice over selected
-                    }
-                  }}
-                >
-                  <Text style={styles.modalCloseButtonText}>✕</Text>
-                </Pressable>
-                <Text style={styles.modalTitle}>{t('storyMode.selectVoiceOver')}</Text>
-                <Text style={styles.modalSubtitle}>{t('storyMode.chooseRecording')}</Text>
-                {availableVoiceOvers.length === 0 ? (
-                  <Text style={styles.noVoiceOversText}>{t('storyMode.noVoiceOvers')}</Text>
-                ) : (
-                  <ScrollView style={styles.voiceOverList} showsVerticalScrollIndicator={false}>
-                    {availableVoiceOvers.map((vo) => (
-                      <View key={vo.id} style={styles.voiceOverItemWithDelete}>
-                        <Pressable
-                          style={[
-                            styles.voiceOverItemSelectable,
-                            currentVoiceOver?.id === vo.id && styles.voiceOverItemSelected,
-                          ]}
-                          onPress={() => handleSelectVoiceOver(vo)}
-                        >
-                          <Text style={styles.voiceOverItemName}>{vo.name}</Text>
-                          <Text style={styles.voiceOverItemPages}>
-                            {t('storyMode.pagesRecorded', { count: Object.keys(vo.pageRecordings).length })}
-                          </Text>
-                        </Pressable>
-                        <Pressable
-                          style={styles.deleteButton}
-                          onPress={() => handleDeleteVoiceOver(vo)}
-                        >
-                          <Text style={styles.deleteButtonText}>✕</Text>
-                        </Pressable>
-                      </View>
-                    ))}
-                  </ScrollView>
-                )}
+                  )}
+                </View>
               </View>
             </View>
-          </Modal>
+          )}
 
           {/* Parents Only Modal for delete confirmation */}
           <ParentsOnlyModal
@@ -1977,6 +2093,28 @@ const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 1000,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  // Absolute-positioned modal styles to avoid iOS crash during orientation changes
+  absoluteModalContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 2000, // Above all other content including overlay
+  },
+  absoluteModalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+  },
+  absoluteModalCentered: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },

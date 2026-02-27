@@ -27,6 +27,7 @@ export default {
     medium: 'Medium',
     large: 'Large',
     extraLarge: 'Extra Large',
+    openSettings: 'Open Settings',
   },
 
   // Alerts
@@ -83,6 +84,8 @@ export default {
     privacyPolicy: 'Privacy Policy',
     signInFailed: 'Sign-In Failed',
     signInFailedMessage: 'Unable to sign in with Google. Please try again.',
+    connectionTimeout: 'Connection Timed Out',
+    connectionTimeoutMessage: 'Login timed out. Please check your connection and try again.',
     ok: 'OK',
   },
 
@@ -503,6 +506,7 @@ export default {
     noScreenTime: 'No Screen Time',
     recommended: 'Recommended',
     excessive: 'Excessive',
+    overLimit: 'Over Limit',
     createMySchedule: 'Create My Schedule',
     scheduleIntro: "Set up personalized notification times for your child's screen time activities. You'll receive gentle reminders when it's time for stories, emotions, or music activities.",
     scheduleIntroShort: "Set up personalized notification times for your child's screen time activities.",
@@ -548,6 +552,10 @@ export default {
     creating: 'Creating...',
     noReminders: 'No Custom Reminders',
     noRemindersHint: 'Create your first reminder to get started with personalized exercise notifications.',
+    permissionRequired: {
+      title: 'Notifications Required',
+      message: 'To receive reminders, please enable notifications for this app in your device settings.',
+    },
     total: 'Total',
     today: 'Today',
     loading: 'Loading reminders...',

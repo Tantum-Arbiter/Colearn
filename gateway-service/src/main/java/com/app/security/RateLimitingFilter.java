@@ -26,10 +26,6 @@ import com.app.exception.ErrorCode;
 import com.app.exception.ErrorResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-/**
- * Rate Limiting Filter
- * Implements sliding window rate limiting to prevent abuse
- */
 @Component
 public class RateLimitingFilter extends OncePerRequestFilter {
 
@@ -42,7 +38,6 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         this.metricsService = metricsService;
     }
 
-    // Rate limiting configuration from application properties
     @Value("${rate-limiting.default-requests-per-minute:60}")
     private int defaultRequestsPerMinute;
 
@@ -52,17 +47,12 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     @Value("${rate-limiting.api-requests-per-minute:60}")
     private int apiRequestsPerMinute;
 
-    // Test overrides (can be set via TestSimulationFlags)
     private volatile Integer overrideAuthPerMinute;
     private volatile Integer overrideApiPerMinute;
 
-    // Window size in milliseconds (1 minute)
     private static final long WINDOW_SIZE_MS = 60 * 1000;
-
-    // Cleanup interval (5 minutes)
     private static final long CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
 
-    // Storage for rate limiting data
     private final ConcurrentHashMap<String, ClientRateData> clientRateData = new ConcurrentHashMap<>();
     private volatile long lastCleanupTime = System.currentTimeMillis();
 
@@ -76,7 +66,6 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
-        // Allow disabling rate limiting in test profile
         if (!rateLimitingEnabled) {
             filterChain.doFilter(request, response);
             return;
@@ -86,23 +75,18 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         String requestPath = request.getRequestURI();
         String category = getCategory(requestPath);
         String compositeKey = getCompositeKey(clientKey, category);
-
-        // Determine rate limit based on endpoint
         int rateLimit = getRateLimit(requestPath);
 
-        // Check rate limit
         if (!isRequestAllowed(compositeKey, rateLimit)) {
             logger.warn("Rate limit exceeded for client: {} on path: {}", clientKey, requestPath);
 
             // Record rate limit exceeded metric
             metricsService.recordRateLimitExceeded(requestPath, clientKey);
 
-            // Set rate limit headers
             response.setHeader("X-RateLimit-Limit", String.valueOf(rateLimit));
             response.setHeader("X-RateLimit-Remaining", "0");
             response.setHeader("X-RateLimit-Reset", String.valueOf(getResetTime()));
 
-            // Determine whether this is brute-force on auth endpoints (invalid token spam)
             boolean isAuthCategory = "auth".equals(category);
             boolean bruteForce = false;
             if (isAuthCategory) {
@@ -130,7 +114,6 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                     ? "Multiple failed authentication attempts detected"
                     : "Too many requests. Please try again later.";
 
-            // Return with standardized error body
             response.setStatus(statusToReturn);
             response.setContentType("application/json");
             response.setHeader("Retry-After", String.valueOf(WINDOW_SIZE_MS / 1000));
@@ -157,7 +140,6 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
                 response.getWriter().write(new ObjectMapper().writeValueAsString(err));
             } catch (Exception writeEx) {
-                // Fallback minimal body
                 String ec = (isAuthCategory && bruteForce) ? "GTW-304" : ("api".equals(category) ? "GTW-301" : "GTW-300");
                 String er = (isAuthCategory && bruteForce) ? "Brute force attack detected" : "Rate limit exceeded";
                 response.getWriter().write("{\"success\":false,\"errorCode\":\"" + ec + "\",\"error\":\"" + er + "\"}");
@@ -165,51 +147,36 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             return;
         }
 
-        // Add rate limit headers to successful requests
         ClientRateData rateData = clientRateData.get(compositeKey);
         if (rateData != null) {
             int remaining = Math.max(0, rateLimit - rateData.getRequestCount());
             response.setHeader("X-RateLimit-Limit", String.valueOf(rateLimit));
             response.setHeader("X-RateLimit-Remaining", String.valueOf(remaining));
             response.setHeader("X-RateLimit-Reset", String.valueOf(getResetTime()));
-
-            // Update rate limit remaining metric
             metricsService.updateRateLimitRemaining(requestPath, remaining);
         }
 
-        // Periodic cleanup of old entries
         performCleanupIfNeeded();
 
         filterChain.doFilter(request, response);
     }
 
     private String getClientKey(HttpServletRequest request) {
-        // Try to get authenticated user ID first
         String userId = getUserId(request);
         if (userId != null) {
             return "user:" + userId;
         }
-
-        // Fall back to IP address
         String ipAddress = getClientIpAddress(request);
         return "ip:" + ipAddress;
     }
 
     private String getUserId(HttpServletRequest request) {
-        // Prefer authenticated security context if present
         var context = org.springframework.security.core.context.SecurityContextHolder.getContext();
         if (context != null && context.getAuthentication() != null && context.getAuthentication().isAuthenticated()) {
             Object principal = context.getAuthentication().getPrincipal();
             if (principal instanceof String s && !s.isEmpty()) {
                 return s;
             }
-        }
-
-        // Fallback: extract from Authorization header if needed (not implemented here)
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            // In this simplified filter we don't decode JWTs; return null to use IP-based limiting
-            return null;
         }
         return null;
     }
@@ -261,15 +228,10 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             k -> new ClientRateData());
 
         synchronized (rateData) {
-            // Clean up old requests outside the current window
             rateData.cleanupOldRequests(currentTime - WINDOW_SIZE_MS);
-
-            // Check if we're within the rate limit
             if (rateData.getRequestCount() >= rateLimit) {
                 return false;
             }
-
-            // Add current request
             rateData.addRequest(currentTime);
             return true;
         }
@@ -284,8 +246,6 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
         if (currentTime - lastCleanupTime > CLEANUP_INTERVAL_MS) {
             lastCleanupTime = currentTime;
-
-            // Remove entries that haven't been used recently
             long cutoffTime = currentTime - (2 * WINDOW_SIZE_MS);
 
             clientRateData.entrySet().removeIf(entry -> {
@@ -306,12 +266,10 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         if (path == null) {
             return false;
         }
-        // Skip CORS preflight requests entirely
         String method = request.getMethod();
         if (method != null && "OPTIONS".equalsIgnoreCase(method)) {
             return true;
         }
-        // Skip rate limiting for health checks, actuator, private endpoints and static resources
         return path.startsWith("/health") ||
                path.startsWith("/actuator/") ||
                path.startsWith("/private/") ||
@@ -319,7 +277,6 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                path.equals("/");
     }
 
-    // Test-only helpers to avoid cross-test interference from shared rate limiting state
     public void resetForTests() {
         clientRateData.clear();
         lastCleanupTime = System.currentTimeMillis();
@@ -332,15 +289,11 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         this.overrideApiPerMinute = apiPerMinute;
     }
 
-    /**
-     * Data structure to track client request rates
-     */
     private static class ClientRateData {
         private final ConcurrentHashMap<Long, AtomicInteger> requestCounts = new ConcurrentHashMap<>();
         private volatile long lastRequestTime = 0;
 
         public void addRequest(long timestamp) {
-            // Round timestamp to seconds for bucketing
             long bucket = timestamp / 1000;
             requestCounts.computeIfAbsent(bucket, k -> new AtomicInteger(0)).incrementAndGet();
             lastRequestTime = timestamp;

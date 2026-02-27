@@ -2,14 +2,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   Story,
   StorySyncRequest,
-  StorySyncResponse,
   StorySyncMetadata,
   ContentVersion
 } from '../types/story';
 import { ApiClient } from './api-client';
 import Constants from 'expo-constants';
-import { AuthenticatedImageService } from './authenticated-image-service';
 import { Logger } from '../utils/logger';
+import { DeltaSyncResponse } from './batch-sync-service';
 
 const log = Logger.create('StorySyncService');
 
@@ -18,11 +17,6 @@ const STORAGE_KEY = 'story_sync_metadata';
 const extra = Constants.expoConfig?.extra || {};
 const GATEWAY_URL = extra.gatewayUrl || process.env.EXPO_PUBLIC_GATEWAY_URL || 'http://localhost:8080';
 
-/**
- * Convert relative asset paths to absolute URLs
- * If the path is already a full URL, return as-is
- * If the path is a number (require() result), return as-is for local images
- */
 function resolveAssetUrl(path: string | number | undefined): string | number | undefined {
   if (path === undefined || path === null) return undefined;
 
@@ -45,15 +39,8 @@ function resolveAssetUrl(path: string | number | undefined): string | number | u
   return `${GATEWAY_URL}/${path}`;
 }
 
-/**
- * Service for syncing story metadata from backend with delta-sync
- * Visual assets (images, audio) remain in local asset packs
- */
 export class StorySyncService {
   
-  /**
-   * Get locally stored sync metadata
-   */
   static async getLocalSyncMetadata(): Promise<StorySyncMetadata | null> {
     try {
       const data = await AsyncStorage.getItem(STORAGE_KEY);
@@ -67,9 +54,6 @@ export class StorySyncService {
     }
   }
 
-  /**
-   * Save sync metadata to local storage
-   */
   static async saveSyncMetadata(metadata: StorySyncMetadata): Promise<void> {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(metadata));
@@ -84,10 +68,6 @@ export class StorySyncService {
     }
   }
 
-  /**
-   * Get current content version from backend
-   * @param clientVersion Optional client version to send for metrics tracking
-   */
   static async getContentVersion(clientVersion?: number): Promise<ContentVersion> {
     try {
       log.debug('Fetching content version from backend...');
@@ -103,25 +83,22 @@ export class StorySyncService {
     }
   }
 
-  /**
-   * Check if sync is needed by comparing local and server versions
-   */
   static async isSyncNeeded(): Promise<boolean> {
     try {
-      log.info('[User Journey Flow 4] Step 1: Checking if CMS sync is needed...');
+      log.info('[User Journey Flow 4: Story Sync] Step 1/12: Checking if CMS sync is needed...');
       const localMetadata = await this.getLocalSyncMetadata();
 
       // If no local data, sync is needed
       if (!localMetadata) {
-        log.info('[User Journey Flow 4] Step 2: No local data found, initial sync needed');
+        log.info('[User Journey Flow 4: Story Sync] Step 2/12: No local data found, initial sync needed');
         return true;
       }
-      log.info('[User Journey Flow 4] Step 2: Local data found, version=' + localMetadata.version + ', stories=' + (localMetadata.stories?.length || 0));
+      log.info(`[User Journey Flow 4: Story Sync] Step 2/12: Local data found, version=${localMetadata.version}, stories=${localMetadata.stories?.length || 0}`);
 
       // Get server version (pass client version for metrics tracking)
-      log.info('[User Journey Flow 4] Step 3: Fetching server content version...');
+      log.info('[User Journey Flow 4: Story Sync] Step 3/12: Fetching server content version...');
       const serverVersion = await this.getContentVersion(localMetadata.version);
-      log.info('[User Journey Flow 4] Step 4: Server version=' + serverVersion.version + ', totalStories=' + serverVersion.totalStories);
+      log.info(`[User Journey Flow 4: Story Sync] Step 4/12: Server version=${serverVersion.version}, totalStories=${serverVersion.totalStories}`);
 
       // Check 1: Version number increased (new content added)
       const versionIncreased = serverVersion.version > localMetadata.version;
@@ -143,22 +120,19 @@ export class StorySyncService {
                 storyCountChanged ? 'story_count_changed' :
                 hasDeletedStories ? 'stories_deleted' : 'up_to_date';
 
-      log.info('[User Journey Flow 4] Step 5: Sync check result - syncNeeded=' + syncNeeded + ', reason=' + reason);
+      log.info(`[User Journey Flow 4: Story Sync] Step 5/12: Sync check result - syncNeeded=${syncNeeded}, reason=${reason}`);
       if (hasDeletedStories) {
-        log.info('[User Journey Flow 4]   -> Deleted stories detected:', deletedStories);
+        log.info('[User Journey Flow 4: Story Sync]   -> Deleted stories detected:', deletedStories);
       }
 
       return syncNeeded;
     } catch (error) {
-      log.error('[User Journey Flow 4] FAILED: Error checking sync status:', error);
+      log.error('[User Journey Flow 4: Story Sync] FAILED: Error checking sync status:', error);
       // On error, assume sync is needed
       return true;
     }
   }
 
-  /**
-   * Helper to format bytes to human readable string
-   */
   private static formatBytes(bytes: number): string {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -167,89 +141,79 @@ export class StorySyncService {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
-  /**
-   * Perform delta-sync with backend
-   * Only downloads stories that have changed
-   */
   static async syncStories(): Promise<Story[]> {
     try {
       const localMetadata = await this.getLocalSyncMetadata();
       const isInitialSync = !localMetadata || localMetadata.version === 0;
 
-      log.info(`[User Journey Flow 4] Step 6: Starting ${isInitialSync ? 'INITIAL' : 'DELTA'} sync...`);
-      log.info(`[User Journey Flow 4] Step 7: Building sync request with clientVersion=${localMetadata?.version || 0}, cachedStories=${Object.keys(localMetadata?.storyChecksums || {}).length}`);
+      log.info(`[User Journey Flow 4: Story Sync] Step 6/12: Starting ${isInitialSync ? 'INITIAL' : 'DELTA'} sync...`);
+      log.info(`[User Journey Flow 4: Story Sync] Step 7/12: Building sync request with clientVersion=${localMetadata?.version || 0}, cachedStories=${Object.keys(localMetadata?.storyChecksums || {}).length}`);
 
-      // Build sync request
-      const syncRequest: StorySyncRequest = {
+      // Build delta sync request (simplified from old sync request)
+      const deltaRequest = {
         clientVersion: localMetadata?.version || 0,
-        storyChecksums: localMetadata?.storyChecksums || {},
-        lastSyncTimestamp: localMetadata?.lastSyncTimestamp || 0
+        storyChecksums: localMetadata?.storyChecksums || {}
       };
 
-      const requestPayload = JSON.stringify(syncRequest);
+      const requestPayload = JSON.stringify(deltaRequest);
 
-      // Call sync endpoint
-      log.info('[User Journey Flow 4] Step 8: Calling backend POST /api/stories/sync...');
-      const syncResponse = await ApiClient.request<StorySyncResponse>('/api/stories/sync', {
+      // Call delta endpoint (replaces deprecated /api/stories/sync)
+      log.info('[User Journey Flow 4: Story Sync] Step 8/12: Calling backend POST /api/stories/delta...');
+      const syncResponse = await ApiClient.request<DeltaSyncResponse>('/api/stories/delta', {
         method: 'POST',
         body: requestPayload
       });
 
-      log.info(`[User Journey Flow 4] Step 9: Backend response - serverVersion=${syncResponse.serverVersion}, updatedStories=${syncResponse.updatedStories}, totalStories=${syncResponse.totalStories}`);
+      log.info(`[User Journey Flow 4: Story Sync] Step 9/12: Backend response - serverVersion=${syncResponse.serverVersion}, updatedStories=${syncResponse.stories.length}, deletedStories=${syncResponse.deletedStoryIds?.length || 0}, totalStories=${syncResponse.totalStories}`);
 
       // Resolve asset URLs for all stories
       if (syncResponse.stories && syncResponse.stories.length > 0) {
-        syncResponse.stories = syncResponse.stories.map(story => ({
-          ...story,
-          coverImage: resolveAssetUrl(story.coverImage as string | undefined),
-          pages: story.pages?.map(page => ({
-            ...page,
-            backgroundImage: resolveAssetUrl(page.backgroundImage) as string | undefined,
-            characterImage: resolveAssetUrl(page.characterImage) as string | undefined,
-            interactiveElements: page.interactiveElements?.map(element => {
-              const resolvedImage = resolveAssetUrl(element.image);
-              return {
-                ...element,
-                image: (resolvedImage !== undefined ? resolvedImage : element.image) as string | number,
-              };
-            }),
-          }))
-        })) as Story[];
-
-        // Invalidate cached images for updated stories
-        // This ensures fresh images are downloaded if content changed on the server
-        const existingStories = localMetadata?.stories || [];
-
-        for (const story of syncResponse.stories) {
-          // Get the old version of this story to find cached image URLs
-          const oldStory = existingStories.find(s => s.id === story.id);
-          if (oldStory) {
-            const urlsToInvalidate = this.extractImageUrls(oldStory);
-            if (urlsToInvalidate.length > 0) {
-              log.debug(`Invalidating ${urlsToInvalidate.length} cached images for: ${story.id}`);
-              await AuthenticatedImageService.invalidateCacheForUrls(urlsToInvalidate);
-            }
+        syncResponse.stories = syncResponse.stories.map(story => {
+          // Debug: Log if story has localized content
+          if (story.localizedTitle || story.pages?.some(p => p.localizedText)) {
+            log.debug(`Story ${story.id} has localized content:`, {
+              hasLocalizedTitle: !!story.localizedTitle,
+              pagesWithLocalizedText: story.pages?.filter(p => p.localizedText).length || 0
+            });
           }
-        }
+
+          return {
+            ...story,
+            coverImage: resolveAssetUrl(story.coverImage as string | undefined),
+            pages: story.pages?.map(page => ({
+              ...page,
+              backgroundImage: resolveAssetUrl(page.backgroundImage) as string | undefined,
+              characterImage: resolveAssetUrl(page.characterImage) as string | undefined,
+              interactiveElements: page.interactiveElements?.map(element => {
+                const resolvedImage = resolveAssetUrl(element.image);
+                return {
+                  ...element,
+                  image: (resolvedImage !== undefined ? resolvedImage : element.image) as string | number,
+                };
+              }),
+            }))
+          };
+        }) as Story[];
+
+        // Note: Cache invalidation is now handled by BatchSyncService and CacheManager
+        // which use a unified cache strategy for all story assets
       }
 
       // Merge updated stories with existing stories
       const existingStories = localMetadata?.stories || [];
       const updatedStoryIds = new Set(syncResponse.stories.map(s => s.id));
 
-      // Get set of story IDs that still exist on the server
-      const serverStoryIds = new Set(Object.keys(syncResponse.storyChecksums || {}));
+      // Use deletedStoryIds from delta response (explicitly provided by server)
+      const deletedStoryIds = new Set(syncResponse.deletedStoryIds || []);
 
-      // Keep existing stories that weren't updated AND still exist on the server
-      // This handles deletions: if a story was deleted from CMS, it won't be in serverStoryIds
+      // Keep existing stories that weren't updated AND weren't deleted
       const unchangedStories = existingStories.filter(s =>
-        !updatedStoryIds.has(s.id) && serverStoryIds.has(s.id)
+        !updatedStoryIds.has(s.id) && !deletedStoryIds.has(s.id)
       );
 
-      // Check for deleted stories
-      const deletedStories = existingStories.filter(s => !serverStoryIds.has(s.id));
-      if (deletedStories.length > 0) {
-        log.info(`[User Journey Flow 4] Step 10: Detected ${deletedStories.length} DELETED stories:`, deletedStories.map(s => s.id));
+      // Log deleted stories
+      if (deletedStoryIds.size > 0) {
+        log.info(`[User Journey Flow 4: Story Sync] Step 10/12: Removed ${deletedStoryIds.size} DELETED stories:`, Array.from(deletedStoryIds));
       }
 
       // Combine unchanged + updated stories
@@ -263,22 +227,18 @@ export class StorySyncService {
         stories: allStories
       };
 
-      log.info(`[User Journey Flow 4] Step 11: Saving updated metadata - version=${syncResponse.serverVersion}, stories=${allStories.length}`);
+      log.info(`[User Journey Flow 4: Story Sync] Step 11/12: Saving updated metadata - version=${syncResponse.serverVersion}, stories=${allStories.length}`);
       await this.saveSyncMetadata(newMetadata);
 
-      log.info(`[User Journey Flow 4] Step 12: Delta sync COMPLETE - cached ${allStories.length} stories, updated=${syncResponse.updatedStories}, deleted=${deletedStories.length}`);
+      log.info(`[User Journey Flow 4: Story Sync] Step 12/12: Delta sync COMPLETE - cached ${allStories.length} stories, updated=${syncResponse.stories.length}, deleted=${deletedStoryIds.size}`);
 
       return allStories;
     } catch (error) {
-      log.error('[User Journey Flow 4] FAILED: Sync error:', error);
+      log.error('[User Journey Flow 4: Story Sync] FAILED: Sync error:', error);
       throw error;
     }
   }
 
-  /**
-   * Resolve asset URLs in stories
-   * Ensures all image URLs are absolute, not relative
-   */
   private static resolveStoriesAssetUrls(stories: Story[]): Story[] {
     return stories.map(story => ({
       ...story,
@@ -298,10 +258,6 @@ export class StorySyncService {
     })) as Story[];
   }
 
-  /**
-   * Prefetch stories on login
-   * Performs initial sync or delta-sync based on local state
-   */
   static async prefetchStories(): Promise<Story[]> {
     try {
       log.debug('Prefetching stories...');
@@ -333,15 +289,37 @@ export class StorySyncService {
     }
   }
 
-  /**
-   * Get locally cached stories
-   * Returns empty array if no cache exists
-   * Ensures all asset URLs are resolved to absolute URLs
-   */
   static async getLocalStories(): Promise<Story[]> {
     try {
       const metadata = await this.getLocalSyncMetadata();
       const stories = metadata?.stories || [];
+
+      // Debug: Log localized content in stories
+      if (stories.length > 0) {
+        const storiesWithLocalized = stories.filter(s => s.localizedTitle || s.pages?.some(p => p.localizedText));
+        if (storiesWithLocalized.length > 0) {
+          log.debug(`Found ${storiesWithLocalized.length}/${stories.length} stories with localized content`);
+          storiesWithLocalized.slice(0, 2).forEach(story => {
+            const pagesWithLocalized = story.pages?.filter(p => p.localizedText) || [];
+            log.debug(`Story ${story.id}:`, {
+              hasLocalizedTitle: !!story.localizedTitle,
+              pagesWithLocalizedText: pagesWithLocalized.length,
+              totalPages: story.pages?.length || 0
+            });
+            // Log first page with localized text to verify structure
+            if (pagesWithLocalized.length > 0) {
+              const firstPage = pagesWithLocalized[0];
+              log.debug(`  First localized page (${firstPage.id}):`, {
+                hasJapanese: !!firstPage.localizedText?.ja,
+                localizedTextKeys: firstPage.localizedText ? Object.keys(firstPage.localizedText) : []
+              });
+            }
+          });
+        } else {
+          log.warn(`No stories with localized content found in ${stories.length} stories`);
+        }
+      }
+
       // Ensure all asset URLs are resolved
       return this.resolveStoriesAssetUrls(stories);
     } catch (error) {
@@ -350,10 +328,6 @@ export class StorySyncService {
     }
   }
 
-  /**
-   * Clear local story cache
-   * Useful for testing or forcing a full re-sync
-   */
   static async clearCache(): Promise<void> {
     try {
       await AsyncStorage.removeItem(STORAGE_KEY);
@@ -365,9 +339,6 @@ export class StorySyncService {
     }
   }
 
-  /**
-   * Get sync status information
-   */
   static async getSyncStatus(): Promise<{
     hasLocalData: boolean;
     localVersion: number;
@@ -388,57 +359,23 @@ export class StorySyncService {
     };
   }
 
-  /**
-   * Result of prefetching cover images
-   */
   static lastPrefetchRemovedStories = false;
 
-  /**
-   * Prefetch all story cover images to ensure they're cached before showing the story selection screen
-   * This should be called after prefetchStories() to ensure smooth UX
-   * Returns a map of storyId -> cachedCoverPath for instant display
-   *
-   * IMPORTANT: Stories whose covers fail to load are removed from local cache
-   * This handles the case where a story was removed from CMS but still exists locally
-   * Check StorySyncService.lastPrefetchRemovedStories to see if stories were removed
-   */
   static async prefetchCoverImages(): Promise<Map<string, string>> {
     const cachedPaths = new Map<string, string>();
-    const failedStoryIds: string[] = [];
     this.lastPrefetchRemovedStories = false;
 
     try {
       const stories = await this.getLocalStories();
       const storiesWithCovers = stories.filter(s => typeof s.coverImage === 'string' && s.coverImage);
 
-      log.debug(`Prefetching ${storiesWithCovers.length} cover images...`);
+      log.debug(`Getting ${storiesWithCovers.length} cover image paths...`);
 
-      // Download all cover images in parallel
-      const downloadPromises = storiesWithCovers.map(async (story) => {
-        try {
-          const url = story.coverImage as string;
-          const cachedPath = await AuthenticatedImageService.getImageUri(url);
-          if (cachedPath) {
-            cachedPaths.set(story.id, cachedPath);
-            return { storyId: story.id, success: true };
-          }
-          log.warn(`Cover not available: ${story.id}`);
-          failedStoryIds.push(story.id);
-          return { storyId: story.id, success: false };
-        } catch (error) {
-          log.warn(`Failed to cache cover: ${story.id}`, error);
-          failedStoryIds.push(story.id);
-          return { storyId: story.id, success: false };
-        }
-      });
-
-      const results = await Promise.all(downloadPromises);
-      const successCount = results.filter(r => r.success).length;
-
-      if (failedStoryIds.length > 0) {
-        log.info(`Cover prefetch: ${successCount}/${storiesWithCovers.length} cached, removing ${failedStoryIds.length} unavailable`);
-        await this.removeStoriesFromCache(failedStoryIds);
-        this.lastPrefetchRemovedStories = true;
+      // All cover images are already downloaded by BatchSyncService
+      // Just map the cover image paths from local stories
+      for (const story of storiesWithCovers) {
+        const coverPath = story.coverImage as string;
+        cachedPaths.set(story.id, coverPath);
       }
 
       // Store the cached paths for quick lookup
@@ -446,15 +383,11 @@ export class StorySyncService {
 
       return cachedPaths;
     } catch (error) {
-      log.error('Cover image prefetch failed:', error);
+      log.error('Cover image path lookup failed:', error);
       return cachedPaths;
     }
   }
 
-  /**
-   * Remove stories from local cache
-   * Called when story assets are no longer available on the server
-   */
   private static async removeStoriesFromCache(storyIds: string[]): Promise<void> {
     try {
       const metadata = await this.getLocalSyncMetadata();
@@ -480,9 +413,6 @@ export class StorySyncService {
     }
   }
 
-  /**
-   * Save cached cover paths to AsyncStorage for instant access
-   */
   private static async saveCachedCoverPaths(paths: Map<string, string>): Promise<void> {
     try {
       const obj = Object.fromEntries(paths);
@@ -492,10 +422,6 @@ export class StorySyncService {
     }
   }
 
-  /**
-   * Get cached cover path for a story
-   * Returns the local file path if cached, otherwise the remote URL
-   */
   static async getCachedCoverPath(storyId: string, remoteUrl: string): Promise<string> {
     try {
       const data = await AsyncStorage.getItem('cached_cover_paths');
@@ -516,9 +442,6 @@ export class StorySyncService {
     return remoteUrl;
   }
 
-  /**
-   * Get all cached cover paths
-   */
   static async getAllCachedCoverPaths(): Promise<Record<string, string>> {
     try {
       const data = await AsyncStorage.getItem('cached_cover_paths');
@@ -531,10 +454,6 @@ export class StorySyncService {
     return {};
   }
 
-  /**
-   * Extract all image URLs from a story
-   * Used for cache invalidation when a story is updated
-   */
   private static extractImageUrls(story: Story): string[] {
     const urls: string[] = [];
 

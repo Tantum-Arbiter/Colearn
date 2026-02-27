@@ -11,10 +11,6 @@ import { backgroundMusic } from './background-music';
 // Debug logging - set to false for production performance
 const DEBUG_LOGS = false;
 
-/**
- * Music Player Service
- * Handles playback of individual music tracks and playlists
- */
 export class MusicPlayerService implements MusicService {
   private static instance: MusicPlayerService | null = null;
   private player: AudioPlayer | null = null;

@@ -8,11 +8,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-/**
- * Tracks asset versions for delta-sync.
- * Stores checksums of all assets to enable efficient sync.
- * Uses singleton pattern with id="current".
- */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AssetVersion {
 
@@ -26,7 +21,7 @@ public class AssetVersion {
     private Instant lastUpdated;
 
     @JsonProperty("assetChecksums")
-    private Map<String, String> assetChecksums; // assetPath -> SHA-256 checksum
+    private Map<String, String> assetChecksums;
 
     @JsonProperty("totalAssets")
     private int totalAssets;
@@ -65,7 +60,6 @@ public class AssetVersion {
         return existingChecksum == null || !existingChecksum.equals(checksum);
     }
 
-    // Getters and Setters
     public String getId() {
         return id;
     }

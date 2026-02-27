@@ -78,6 +78,8 @@ export default {
     privacyPolicy: 'سياسة الخصوصية',
     signInFailed: 'فشل تسجيل الدخول',
     signInFailedMessage: 'فشل تسجيل الدخول مع Google. يرجى المحاولة مرة أخرى.',
+    connectionTimeout: 'انتهت مهلة الاتصال',
+    connectionTimeoutMessage: 'انتهت مهلة تسجيل الدخول. يرجى التحقق من اتصالك والمحاولة مرة أخرى.',
     ok: 'حسناً',
   },
   menu: {

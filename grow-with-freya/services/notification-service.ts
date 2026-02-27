@@ -31,7 +31,6 @@ class NotificationService {
     return NotificationService.instance;
   }
 
-  // Request notification permissions
   async requestPermissions(): Promise<NotificationPermissionStatus> {
     if (!Device.isDevice) {
       console.warn('Notifications only work on physical devices');
@@ -59,7 +58,6 @@ class NotificationService {
     return this.permissionStatus;
   }
 
-  // Get current permission status
   async getPermissionStatus(): Promise<NotificationPermissionStatus> {
     if (this.permissionStatus) {
       return this.permissionStatus;
@@ -75,7 +73,6 @@ class NotificationService {
     return this.permissionStatus;
   }
 
-  // Schedule daily reminders based on recommended schedule
   async scheduleRecommendedReminders(schedule: ScheduleRecommendation[]): Promise<void> {
     const permissionStatus = await this.getPermissionStatus();
     if (!permissionStatus.granted) {
@@ -92,7 +89,6 @@ class NotificationService {
     }
   }
 
-  // Schedule a single recommendation notification
   private async scheduleRecommendationNotification(recommendation: ScheduleRecommendation): Promise<void> {
     const [hours, minutes] = recommendation.time.split(':').map(Number);
     
@@ -121,7 +117,6 @@ class NotificationService {
     }
   }
 
-  // Send immediate screen time warning notification
   async sendScreenTimeWarning(message: string, type: 'warning' | 'limit_reached'): Promise<void> {
     const permissionStatus = await this.getPermissionStatus();
     if (!permissionStatus.granted) {
@@ -146,7 +141,6 @@ class NotificationService {
     }
   }
 
-  // Cancel all scheduled notifications
   async cancelAllScheduledNotifications(): Promise<void> {
     try {
       await Notifications.cancelAllScheduledNotificationsAsync();
@@ -155,7 +149,6 @@ class NotificationService {
     }
   }
 
-  // Get all scheduled notifications (for debugging)
   async getScheduledNotifications(): Promise<Notifications.NotificationRequest[]> {
     try {
       return await Notifications.getAllScheduledNotificationsAsync();
@@ -165,7 +158,6 @@ class NotificationService {
     }
   }
 
-  // Set up notification categories (for iOS)
   async setupNotificationCategories(): Promise<void> {
     if (Platform.OS === 'ios') {
       await Notifications.setNotificationCategoryAsync('screen-time-reminder', [
@@ -204,7 +196,6 @@ class NotificationService {
     }
   }
 
-  // Handle notification responses
   setupNotificationResponseHandler(): void {
     Notifications.addNotificationResponseReceivedListener(response => {
       const { actionIdentifier, notification } = response;
@@ -224,7 +215,6 @@ class NotificationService {
     });
   }
 
-  // Schedule a delayed reminder
   private async scheduleDelayedReminder(): Promise<void> {
     const content: Notifications.NotificationContentInput = {
       title: 'Reminder: Time for Grow with Freya! 🌟',
@@ -248,7 +238,6 @@ class NotificationService {
     }
   }
 
-  // Generate appropriate notification message based on activity
   private getNotificationMessage(recommendation: ScheduleRecommendation): string {
     const activityMessages = {
       story: `Time for a ${recommendation.duration}-minute story adventure! 📚`,

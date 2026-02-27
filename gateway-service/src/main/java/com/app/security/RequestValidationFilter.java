@@ -28,10 +28,6 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.UUID;
 
-/**
- * Request Validation Filter
- * Validates incoming requests for security threats and malicious patterns
- */
 @Component
 public class RequestValidationFilter extends OncePerRequestFilter {
 
@@ -48,9 +44,7 @@ public class RequestValidationFilter extends OncePerRequestFilter {
     }
 
 
-    // Suspicious patterns to detect
     private static final List<Pattern> SUSPICIOUS_PATTERNS = Arrays.asList(
-        // SQL Injection patterns (tightened to avoid false positives on plain English words like "update" or path segments like "/delete")
         Pattern.compile("(?i).*\\bunion\\b\\s+\\bselect\\b.*"),
         Pattern.compile("(?i).*\\bselect\\b\\s+.+\\bfrom\\b.*"),
         Pattern.compile("(?i).*\\binsert\\b\\s+\\binto\\b\\s+.+"),
@@ -59,54 +53,31 @@ public class RequestValidationFilter extends OncePerRequestFilter {
         Pattern.compile("(?i).*\\bdrop\\b\\s+(table|database|schema)\\b.*"),
         Pattern.compile("(?i).*\\balter\\b\\s+(table|database)\\b.*"),
         Pattern.compile("(?i).*\\bexec(ute)?\\b\\s+.+"),
-        // Common boolean-based SQLi e.g. 1' OR '1'='1 or OR 1=1
         Pattern.compile("(?i).*(\\bor\\b\\s*\\d+\\s*=\\s*\\d+).*"),
         Pattern.compile("(?i).*(\\bor\\b\\s*'[^']*'\\s*=\\s*'[^']*').*"),
-        // SQL comment-based injection like admin'-- (only when preceded by a quote to avoid false positives on JWT tokens)
         Pattern.compile("(?i).*'\\s*--.*"),
-        // SQL comment tokens only when they appear in suspicious contexts (not in base64/JWT tokens)
-        // This pattern looks for -- or # followed by SQL keywords or at end of line after suspicious chars
         Pattern.compile("(?i).*(--|#)\\s*(select|union|drop|delete|insert|update|from|where|exec).*"),
         Pattern.compile("(?i).*(/\\*|\\*/).*"),
-
-        // XSS patterns
         Pattern.compile("(?i).*(script|javascript|vbscript|onload|onerror|onclick).*"),
         Pattern.compile("(?i).*(<|>|&lt;|&gt;|%3C|%3E).*"),
         Pattern.compile("(?i).*(<script|</script|<iframe|</iframe|<object|</object).*"),
         Pattern.compile("(?i).*(alert\\(|confirm\\(|prompt\\().*"),
-
-        // Path traversal patterns
         Pattern.compile(".*(\\.\\.[\\\\/]|[\\\\/]\\.\\.[\\\\/]|\\.\\.%2f|%2f\\.\\.%2f).*"),
-
-        // Command injection patterns (exclude single '&' to avoid false positives like 'Jack & Jill')
         Pattern.compile("(?i).*(;|\\||`|\\$\\(|\\$\\{).*"),
-        // Explicitly catch logical AND operator used in command chaining (e.g., '&& rm -rf /')
         Pattern.compile(".*&&.*"),
-        // Explicit 'rm -rf' destructive command pattern
         Pattern.compile("(?i).*\\brm\\s+-rf\\b.*")
-        // Note: LDAP injection detection is handled contextually for 'filter' parameters
     );
 
-    // Maximum request size (1MB) to align with integration test expectations
     private static final long MAX_REQUEST_SIZE = 1 * 1024 * 1024;
-
-    // Maximum request size for asset/story sync endpoints (600KB)
-    // This allows ~10000 checksums (the DTO limit) but rejects excessive requests early
-    // Each checksum entry is ~55 bytes, so 10000 entries ≈ 550KB
     private static final long MAX_SYNC_REQUEST_SIZE = 600 * 1024;
-
-    // Rate limiting (simple implementation)
     private static final int MAX_REQUESTS_PER_MINUTE = 100;
 
-    // Master toggle to enable/disable the entire filter (gcp-dev can disable since Cloudflare WAF handles security)
     @Value("${app.security.request-validation.enabled:true}")
     private boolean filterEnabled = true;
 
-    // Toggle for inspecting JSON request bodies (test profile can disable)
     @Value("${app.security.request-validation.inspect-body:true}")
     private boolean inspectBodyEnabled = true;
 
-    // Toggle for validating headers for suspicious patterns (gcp-dev can disable to allow GCP infrastructure headers)
     @Value("${app.security.request-validation.validate-headers:true}")
     private boolean validateHeadersEnabled = true;
 
@@ -150,7 +121,7 @@ public class RequestValidationFilter extends OncePerRequestFilter {
 
             // Validate request size
             String uri = request.getRequestURI();
-            boolean isSyncEndpoint = uri != null && (uri.endsWith("/assets/sync") || uri.endsWith("/stories/sync"));
+            boolean isBatchEndpoint = uri != null && (uri.endsWith("/assets/batch-urls") || uri.endsWith("/stories/delta"));
             if (!validateRequestSize(request)) {
                 logger.warn("Request size too large from IP: {}", getClientIpAddress(request));
 
@@ -158,10 +129,10 @@ public class RequestValidationFilter extends OncePerRequestFilter {
                 request.getRequestURI();
                 request.getQueryString();
 
-                // For sync endpoints, return 400 (bad request - too many checksums) instead of 413
-                if (isSyncEndpoint) {
+                // For batch endpoints, return 400 (bad request - too many items) instead of 413
+                if (isBatchEndpoint) {
                     writeError(response, HttpServletResponse.SC_BAD_REQUEST, ErrorCode.REQUEST_VALIDATION_FAILED,
-                            "Request contains too many checksums", request, Map.of("reason", "excessive_checksums"));
+                            "Request contains too many items", request, Map.of("reason", "excessive_items"));
                 } else {
                     writeError(response, HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE, ErrorCode.REQUEST_TOO_LARGE,
                             "Request payload too large", request, null);
@@ -250,19 +221,19 @@ public class RequestValidationFilter extends OncePerRequestFilter {
                 CachedBodyHttpServletRequest wrapped = new CachedBodyHttpServletRequest(request);
                 String body = new String(wrapped.getCachedBody(), StandardCharsets.UTF_8);
 
-                // For sync endpoints, validate checksum count early before expensive processing
-                if (isSyncEndpoint && !body.isEmpty()) {
-                    int checksumCount = countJsonMapEntries(body, "assetChecksums", "storyChecksums");
-                    if (checksumCount > 10000) {
-                        logger.warn("Sync request with excessive checksums ({}) from IP: {}", checksumCount, getClientIpAddress(request));
+                // For batch endpoints, validate item count early before expensive processing
+                if (isBatchEndpoint && !body.isEmpty()) {
+                    int itemCount = countJsonMapEntries(body, "paths", "storyChecksums");
+                    if (itemCount > 10000) {
+                        logger.warn("Batch request with excessive items ({}) from IP: {}", itemCount, getClientIpAddress(request));
                         writeError(response, HttpServletResponse.SC_BAD_REQUEST, ErrorCode.REQUEST_VALIDATION_FAILED,
-                                "Request contains too many checksums (max: 10000)", request, Map.of("reason", "excessive_checksums", "count", checksumCount));
+                                "Request contains too many items (max: 10000)", request, Map.of("reason", "excessive_items", "count", itemCount));
                         return;
                     }
                 }
 
                 // Skip expensive regex pattern matching on large bodies (>100KB) to avoid performance issues
-                // Large JSON payloads (like sync requests) are validated by their structure/schema, not patterns
+                // Large JSON payloads (like batch requests) are validated by their structure/schema, not patterns
                 boolean skipPatternMatching = body.length() > 100 * 1024;
                 if (!body.isEmpty() && !skipPatternMatching && containsSuspiciousPattern(body)) {
                     logger.warn("Suspicious request body detected from IP: {}", getClientIpAddress(request));
@@ -276,13 +247,13 @@ public class RequestValidationFilter extends OncePerRequestFilter {
                 CachedBodyHttpServletRequest wrapped = new CachedBodyHttpServletRequest(request);
                 String body = new String(wrapped.getCachedBody(), StandardCharsets.UTF_8);
 
-                // For sync endpoints, validate checksum count early before expensive processing
-                if (isSyncEndpoint && !body.isEmpty()) {
-                    int checksumCount = countJsonMapEntries(body, "assetChecksums", "storyChecksums");
-                    if (checksumCount > 10000) {
-                        logger.warn("Sync request with excessive checksums ({}) from IP: {}", checksumCount, getClientIpAddress(request));
+                // For batch endpoints, validate item count early before expensive processing
+                if (isBatchEndpoint && !body.isEmpty()) {
+                    int itemCount = countJsonMapEntries(body, "paths", "storyChecksums");
+                    if (itemCount > 10000) {
+                        logger.warn("Batch request with excessive items ({}) from IP: {}", itemCount, getClientIpAddress(request));
                         writeError(response, HttpServletResponse.SC_BAD_REQUEST, ErrorCode.REQUEST_VALIDATION_FAILED,
-                                "Request contains too many checksums (max: 10000)", request, Map.of("reason", "excessive_checksums", "count", checksumCount));
+                                "Request contains too many items (max: 10000)", request, Map.of("reason", "excessive_items", "count", itemCount));
                         return;
                     }
                 }
@@ -319,9 +290,9 @@ public class RequestValidationFilter extends OncePerRequestFilter {
         // Use servlet API getContentLength() to align with tests
         int contentLength = request.getContentLength();
         if (contentLength >= 0) {
-            // Apply stricter limit for sync endpoints to reject excessive checksums early
+            // Apply stricter limit for batch endpoints to reject excessive items early
             String uri = request.getRequestURI();
-            if (uri != null && (uri.endsWith("/assets/sync") || uri.endsWith("/stories/sync"))) {
+            if (uri != null && (uri.endsWith("/assets/batch-urls") || uri.endsWith("/stories/delta"))) {
                 return contentLength <= MAX_SYNC_REQUEST_SIZE;
             }
             return contentLength <= MAX_REQUEST_SIZE;

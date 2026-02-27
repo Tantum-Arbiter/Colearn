@@ -16,10 +16,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-/**
- * Firebase Firestore implementation of StoryRepository
- * Handles story metadata storage and retrieval
- */
 @Repository
 public class FirebaseStoryRepository implements StoryRepository {
 

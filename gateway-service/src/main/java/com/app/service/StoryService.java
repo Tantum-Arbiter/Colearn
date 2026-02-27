@@ -17,9 +17,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-/**
- * Service for story operations and delta-sync logic
- */
 @Service
 public class StoryService {
 
@@ -34,65 +31,44 @@ public class StoryService {
         this.contentVersionRepository = contentVersionRepository;
     }
 
-    /**
-     * Get all available stories
-     */
     public CompletableFuture<List<Story>> getAllAvailableStories() {
         logger.debug("Getting all available stories");
         return storyRepository.findAvailable();
     }
 
-    /**
-     * Get story by ID
-     */
     public CompletableFuture<Optional<Story>> getStoryById(String storyId) {
         logger.debug("Getting story by ID: {}", storyId);
         return storyRepository.findById(storyId);
     }
 
-    /**
-     * Get stories by category
-     */
     public CompletableFuture<List<Story>> getStoriesByCategory(String category) {
         logger.debug("Getting stories by category: {}", category);
         return storyRepository.findByCategory(category);
     }
 
-    /**
-     * Get current content version for delta-sync
-     */
     public CompletableFuture<ContentVersion> getCurrentContentVersion() {
         logger.debug("Getting current content version");
         return contentVersionRepository.getCurrent()
                 .thenApply(opt -> opt.orElse(new ContentVersion()));
     }
 
-    /**
-     * Get stories that need to be synced based on client's checksums
-     * @param clientChecksums Map of storyId -> checksum from client
-     * @return List of stories that have changed or are new
-     */
     public CompletableFuture<List<Story>> getStoriesToSync(Map<String, String> clientChecksums) {
         logger.debug("Getting stories to sync. Client has {} stories", clientChecksums.size());
 
         return contentVersionRepository.getCurrent()
                 .thenCompose(versionOpt -> {
                     if (versionOpt.isEmpty()) {
-                        logger.debug("No content version found, returning all available stories");
                         return storyRepository.findAvailable();
                     }
 
                     ContentVersion serverVersion = versionOpt.get();
                     Map<String, String> serverChecksums = serverVersion.getStoryChecksums();
 
-                    // Find stories that are new or have changed
                     List<String> storiesToFetch = serverChecksums.entrySet().stream()
                             .filter(entry -> {
                                 String storyId = entry.getKey();
                                 String serverChecksum = entry.getValue();
                                 String clientChecksum = clientChecksums.get(storyId);
-
-                                // Include if client doesn't have it or checksum differs
                                 return clientChecksum == null || !clientChecksum.equals(serverChecksum);
                             })
                             .map(Map.Entry::getKey)
@@ -100,7 +76,6 @@ public class StoryService {
 
                     logger.debug("Found {} stories to sync", storiesToFetch.size());
 
-                    // Fetch all changed stories
                     List<CompletableFuture<Optional<Story>>> futures = storiesToFetch.stream()
                             .map(storyRepository::findById)
                             .collect(Collectors.toList());
@@ -114,43 +89,28 @@ public class StoryService {
                 });
     }
 
-    /**
-     * Save story and update content version
-     */
     public CompletableFuture<Story> saveStory(Story story) {
         logger.debug("Saving story: {}", story.getId());
 
         return storyRepository.save(story)
                 .thenCompose(savedStory -> {
-                    // Calculate checksum
                     String checksum = calculateStoryChecksum(savedStory);
-
-                    // Update content version
                     return contentVersionRepository.updateStoryChecksum(savedStory.getId(), checksum)
                             .thenApply(v -> savedStory);
                 });
     }
 
-    /**
-     * Update story and update content version
-     */
     public CompletableFuture<Story> updateStory(Story story) {
         logger.debug("Updating story: {}", story.getId());
 
         return storyRepository.update(story)
                 .thenCompose(updatedStory -> {
-                    // Calculate new checksum
                     String checksum = calculateStoryChecksum(updatedStory);
-
-                    // Update content version
                     return contentVersionRepository.updateStoryChecksum(updatedStory.getId(), checksum)
                             .thenApply(v -> updatedStory);
                 });
     }
 
-    /**
-     * Delete story and update content version
-     */
     public CompletableFuture<Void> deleteStory(String storyId) {
         logger.debug("Deleting story: {}", storyId);
 
@@ -159,16 +119,9 @@ public class StoryService {
                 .thenApply(v -> null);
     }
 
-    /**
-     * Calculate SHA-256 checksum of story content
-     * Used for delta-sync to detect changes
-     * Includes localized text for i18n support
-     */
     private String calculateStoryChecksum(Story story) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-
-            // Include all relevant story fields in checksum
             StringBuilder content = new StringBuilder();
             content.append(story.getId());
             content.append(story.getTitle());
@@ -178,7 +131,6 @@ public class StoryService {
             content.append(serializeLocalizedText(story.getLocalizedDescription()));
             content.append(story.getVersion());
 
-            // Include page content (including localized text)
             if (story.getPages() != null) {
                 story.getPages().forEach(page -> {
                     content.append(page.getId());
@@ -189,8 +141,6 @@ public class StoryService {
             }
 
             byte[] hash = digest.digest(content.toString().getBytes(StandardCharsets.UTF_8));
-
-            // Convert to hex string
             StringBuilder hexString = new StringBuilder();
             for (byte b : hash) {
                 String hex = Integer.toHexString(0xff & b);
@@ -205,14 +155,10 @@ public class StoryService {
         }
     }
 
-    /**
-     * Serialize LocalizedText to a consistent string for checksum calculation
-     */
     private String serializeLocalizedText(com.app.model.LocalizedText localizedText) {
         if (localizedText == null) {
             return "";
         }
-        // Use a consistent order for languages to ensure deterministic checksums
         StringBuilder sb = new StringBuilder();
         if (localizedText.getEn() != null) sb.append("en:").append(localizedText.getEn()).append("|");
         if (localizedText.getPl() != null) sb.append("pl:").append(localizedText.getPl()).append("|");

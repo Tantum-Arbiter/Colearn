@@ -1,5 +1,6 @@
 package com.app.controller;
 
+import com.app.config.TestHealthConfig;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeAll;
@@ -7,6 +8,7 @@ import org.junit.jupiter.api.Assumptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -20,6 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = com.app.service.GatewayServiceApplication.class)
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
+@Import(TestHealthConfig.class)
 public class PrivateEndpointsControllerTest {
 
     @Autowired
@@ -39,6 +42,18 @@ public class PrivateEndpointsControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("UP"));
+    }
+
+    @Test
+    public void getHealthcheck_ShouldIncludeDownstreamStatus() throws Exception {
+        this.mockMvc.perform(get("/private/healthcheck"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.downstreams").exists())
+                .andExpect(jsonPath("$.downstreams.firestore").exists())
+                .andExpect(jsonPath("$.downstreams.firestore.status").value("UP"))
+                .andExpect(jsonPath("$.downstreams.gcs").exists())
+                .andExpect(jsonPath("$.downstreams.gcs.status").value("UP"));
     }
 
     @Test

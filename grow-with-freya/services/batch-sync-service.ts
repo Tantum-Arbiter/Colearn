@@ -1,0 +1,440 @@
+import { VersionManager, ContentVersion, VersionCheckResult } from './version-manager';
+import { CacheManager } from './cache-manager';
+import { ApiClient } from './api-client';
+import { Story } from '../types/story';
+import { Logger } from '@/utils/logger';
+
+const log = Logger.create('BatchSyncService');
+
+// Batch size for URL requests (max 100 per batch - doubled from 50 for faster sync)
+const BATCH_URL_SIZE = 100;
+// Concurrent download limit
+const CONCURRENT_DOWNLOADS = 5;
+
+export interface BatchUrlsResponse {
+  urls: Array<{
+    path: string;
+    signedUrl: string;
+    expiresAt: number;
+  }>;
+  failed: string[]; // Paths that failed to generate URLs
+}
+
+export interface DeltaSyncResponse {
+  serverVersion: number;
+  assetVersion: number;
+  stories: Story[];
+  deletedStoryIds: string[];
+  storyChecksums: Record<string, string>;
+  totalStories: number;
+  updatedCount: number;
+  lastUpdated: number;
+}
+
+export interface BatchSyncStats {
+  startTime: number;
+  endTime: number;
+  durationMs: number;
+  apiCalls: number;
+  storiesUpdated: number;
+  storiesDeleted: number;
+  assetsDownloaded: number;
+  assetsSkipped: number;
+  assetsFailed: number;
+  totalAssets: number;
+  bytesDownloaded: number;
+  fromCache: boolean;
+  wasSkipped: boolean;
+  errors: string[];
+}
+
+export interface BatchSyncProgress {
+  phase: 'version-check' | 'fetching-delta' | 'batch-urls' | 'downloading' | 'complete' | 'skipped';
+  progress: number; // 0-100
+  message: string;
+  detail?: {
+    currentBatch?: number;
+    totalBatches?: number;
+    currentAsset?: number;
+    totalAssets?: number;
+    assetName?: string;
+  };
+}
+
+export type BatchSyncProgressCallback = (progress: BatchSyncProgress) => void;
+
+export class BatchSyncService {
+  
+  // Sync lock to prevent concurrent sync operations
+  private static isSyncing = false;
+  private static syncPromise: Promise<BatchSyncStats> | null = null;
+
+  /**
+   * Perform a batch sync with optimized API calls
+   * 
+   * Returns immediately if another sync is in progress
+   */
+  static async performBatchSync(
+    onProgress?: BatchSyncProgressCallback
+  ): Promise<BatchSyncStats> {
+    // Check if sync is already in progress
+    if (this.isSyncing && this.syncPromise) {
+      log.info('[Batch Sync] Another sync in progress, waiting...');
+      onProgress?.({ phase: 'skipped', progress: 0, message: 'Sync already in progress' });
+      return this.syncPromise;
+    }
+
+    // Acquire sync lock
+    this.isSyncing = true;
+    this.syncPromise = this.executeBatchSync(onProgress);
+
+    try {
+      return await this.syncPromise;
+    } finally {
+      this.isSyncing = false;
+      this.syncPromise = null;
+    }
+  }
+
+  private static async executeBatchSync(
+    onProgress?: BatchSyncProgressCallback
+  ): Promise<BatchSyncStats> {
+    const stats: BatchSyncStats = {
+      startTime: Date.now(),
+      endTime: 0,
+      durationMs: 0,
+      apiCalls: 0,
+      storiesUpdated: 0,
+      storiesDeleted: 0,
+      assetsDownloaded: 0,
+      assetsSkipped: 0,
+      assetsFailed: 0,
+      totalAssets: 0,
+      bytesDownloaded: 0,
+      fromCache: false,
+      wasSkipped: false,
+      errors: [],
+    };
+
+    log.info('[User Journey Flow 4: Batch Sync] ========== BATCH SYNC STARTED ==========');
+
+    try {
+      // Phase 1: Version check (1 API call)
+      log.info('[User Journey Flow 4: Batch Sync] Step 1/8: Checking content versions...');
+      onProgress?.({ phase: 'version-check', progress: 5, message: 'Checking for updates...' });
+
+      const versionCheck = await VersionManager.checkVersions();
+      stats.apiCalls++;
+
+      if (!versionCheck.serverVersion) {
+        log.info('[User Journey Flow 4: Batch Sync] Step 2/8: OFFLINE - using cached content');
+        stats.fromCache = true;
+        stats.endTime = Date.now();
+        stats.durationMs = stats.endTime - stats.startTime;
+        onProgress?.({ phase: 'complete', progress: 100, message: 'Using cached content' });
+        return stats;
+      }
+
+      // Check if sync is needed
+      if (!versionCheck.needsStorySync && !versionCheck.needsAssetSync) {
+        log.info('[User Journey Flow 4: Batch Sync] Step 2/8: Already up to date - no sync needed');
+        stats.endTime = Date.now();
+        stats.durationMs = stats.endTime - stats.startTime;
+        onProgress?.({ phase: 'complete', progress: 100, message: 'Already up to date' });
+        return stats;
+      }
+
+      log.info(`[User Journey Flow 4: Batch Sync] Step 2/8: Sync needed - local(stories=${versionCheck.localVersion?.stories || 0}, assets=${versionCheck.localVersion?.assets || 0})`);
+      log.info(`[User Journey Flow 4: Batch Sync] Step 2/8: Sync needed - server(stories=${versionCheck.serverVersion.stories}, assets=${versionCheck.serverVersion.assets})`);
+
+      // Phase 2: Fetch delta content (1 API call)
+      log.info('[User Journey Flow 4: Batch Sync] Step 3/8: Fetching delta content from POST /api/stories/delta...');
+      onProgress?.({ phase: 'fetching-delta', progress: 15, message: 'Fetching updates...' });
+
+      const deltaResult = await this.fetchDeltaContent(versionCheck);
+      stats.apiCalls++;
+      stats.storiesUpdated = deltaResult.stories.length;
+      stats.storiesDeleted = deltaResult.deletedStoryIds.length;
+
+      log.info(`[User Journey Flow 4: Batch Sync] Step 3/8: Delta result - ${deltaResult.stories.length} new/updated stories, ${deltaResult.deletedStoryIds.length} deleted`);
+
+      // Handle deletions
+      if (deltaResult.deletedStoryIds.length > 0) {
+        log.info(`[User Journey Flow 4: Batch Sync] Step 4/8: Removing ${deltaResult.deletedStoryIds.length} deleted stories from cache: ${deltaResult.deletedStoryIds.join(', ')}`);
+        await CacheManager.removeStories(deltaResult.deletedStoryIds);
+      }
+
+      // Phase 3: Extract all asset paths from new/updated stories
+      const assetPaths = this.extractAssetPaths(deltaResult.stories);
+      stats.totalAssets = assetPaths.length;
+      log.info(`[User Journey Flow 4: Batch Sync] Step 5/8: Extracted ${assetPaths.length} total assets from updated stories`);
+
+      if (assetPaths.length > 0) {
+        // Filter out already cached assets
+        const uncachedPaths = await this.filterUncachedAssets(assetPaths);
+        stats.assetsSkipped = assetPaths.length - uncachedPaths.length;
+        log.info(`[User Journey Flow 4: Batch Sync] Step 5/8: ${uncachedPaths.length} assets need download, ${stats.assetsSkipped} already cached`);
+
+        if (uncachedPaths.length > 0) {
+          // Phase 4: Get batch signed URLs
+          log.info(`[User Journey Flow 4: Batch Sync] Step 6/8: Fetching batch URLs from POST /api/assets/batch-urls...`);
+          onProgress?.({ phase: 'batch-urls', progress: 25, message: 'Preparing downloads...' });
+
+          const batchUrlResult = await this.getBatchSignedUrls(uncachedPaths);
+          stats.apiCalls += batchUrlResult.apiCalls;
+          stats.assetsFailed += batchUrlResult.failed.length;
+
+          if (batchUrlResult.failed.length > 0) {
+            log.warn(`[User Journey Flow 4: Batch Sync] Step 6/8: Failed to get URLs for ${batchUrlResult.failed.length} assets`);
+            stats.errors.push(`Failed to get URLs for ${batchUrlResult.failed.length} assets`);
+          }
+
+          // Phase 5: Download assets in parallel batches
+          if (batchUrlResult.urls.length > 0) {
+            log.info(`[User Journey Flow 4: Batch Sync] Step 7/8: Downloading ${batchUrlResult.urls.length} assets to local cache...`);
+            const downloadResult = await this.downloadAssetsInBatches(
+              batchUrlResult.urls,
+              (current, total) => {
+                const progress = 30 + Math.floor((current / total) * 65);
+                onProgress?.({
+                  phase: 'downloading',
+                  progress,
+                  message: `Downloading assets (${current}/${total})...`,
+                  detail: { currentAsset: current, totalAssets: total },
+                });
+              }
+            );
+            stats.assetsDownloaded = downloadResult.downloaded;
+            stats.assetsFailed += downloadResult.failed;
+            stats.bytesDownloaded = downloadResult.bytesDownloaded;
+            stats.errors.push(...downloadResult.errors);
+            log.info(`[User Journey Flow 4: Batch Sync] Step 7/8: Downloaded ${downloadResult.downloaded} assets (${this.formatBytes(downloadResult.bytesDownloaded)}), ${downloadResult.failed} failed`);
+          }
+        }
+      }
+
+      // Phase 6: Save stories to cache
+      if (deltaResult.stories.length > 0) {
+        await CacheManager.updateStories(deltaResult.stories);
+        log.info(`[User Journey Flow 4: Batch Sync] Step 8/8: Saved ${deltaResult.stories.length} stories to unified cache`);
+      }
+
+      // Update local version
+      await VersionManager.updateLocalVersion({
+        stories: versionCheck.serverVersion.stories,
+        assets: versionCheck.serverVersion.assets,
+      });
+
+      stats.endTime = Date.now();
+      stats.durationMs = stats.endTime - stats.startTime;
+
+      log.info('[User Journey Flow 4: Batch Sync] ========== BATCH SYNC COMPLETE ==========');
+      log.info(`[User Journey Flow 4: Batch Sync] Duration: ${stats.durationMs}ms, API Calls: ${stats.apiCalls}`);
+      log.info(`[User Journey Flow 4: Batch Sync] Stories: ${stats.storiesUpdated} updated, ${stats.storiesDeleted} deleted`);
+      log.info(`[User Journey Flow 4: Batch Sync] Assets: ${stats.assetsDownloaded} downloaded (${this.formatBytes(stats.bytesDownloaded)}), ${stats.assetsSkipped} cached, ${stats.assetsFailed} failed`);
+
+      onProgress?.({ phase: 'complete', progress: 100, message: 'Sync complete' });
+      return stats;
+
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      stats.errors.push(errorMsg);
+      stats.endTime = Date.now();
+      stats.durationMs = stats.endTime - stats.startTime;
+      log.error('[User Journey Flow 4: Batch Sync] ========== BATCH SYNC FAILED ==========');
+      log.error(`[User Journey Flow 4: Batch Sync] Error: ${errorMsg}`);
+      throw error;
+    }
+  }
+
+  private static formatBytes(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  private static async fetchDeltaContent(
+    versionCheck: VersionCheckResult
+  ): Promise<DeltaSyncResponse> {
+    const localVersion = versionCheck.localVersion?.stories || 0;
+
+    // Get current story checksums from cache
+    const cachedStories = await CacheManager.getStories();
+    const checksums: Record<string, string> = {};
+    for (const story of cachedStories) {
+      if (story.checksum) {
+        checksums[story.id] = story.checksum;
+      }
+    }
+
+    log.info(`[Batch Sync] Fetching delta from version ${localVersion} with ${Object.keys(checksums).length} cached stories`);
+
+    const response = await ApiClient.request<DeltaSyncResponse>('/api/stories/delta', {
+      method: 'POST',
+      body: JSON.stringify({
+        clientVersion: localVersion,
+        storyChecksums: checksums,
+      }),
+    });
+
+    return response;
+  }
+
+  private static extractAssetPaths(stories: Story[]): string[] {
+    const assets: Set<string> = new Set();
+
+    for (const story of stories) {
+      // Cover image
+      if (story.coverImage && typeof story.coverImage === 'string' && !story.coverImage.startsWith('local:')) {
+        assets.add(this.normalizePath(story.coverImage));
+      }
+
+      // Page images
+      if (story.pages) {
+        for (const page of story.pages) {
+          if (page.backgroundImage && !page.backgroundImage.startsWith('local:')) {
+            assets.add(this.normalizePath(page.backgroundImage));
+          }
+          if (page.characterImage && !page.characterImage.startsWith('local:')) {
+            assets.add(this.normalizePath(page.characterImage));
+          }
+          // Interactive elements
+          if (page.interactiveElements) {
+            for (const element of page.interactiveElements) {
+              if (element.image && typeof element.image === 'string' && !element.image.startsWith('local:')) {
+                assets.add(this.normalizePath(element.image));
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return Array.from(assets);
+  }
+
+  private static normalizePath(path: string): string {
+    if (path.startsWith('assets/')) {
+      return path.substring(7);
+    }
+    return path;
+  }
+
+  private static async filterUncachedAssets(assetPaths: string[]): Promise<string[]> {
+    const uncached: string[] = [];
+
+    for (const path of assetPaths) {
+      const isCached = await CacheManager.hasAsset(path);
+      if (!isCached) {
+        uncached.push(path);
+      }
+    }
+
+    return uncached;
+  }
+
+  private static async getBatchSignedUrls(
+    assetPaths: string[]
+  ): Promise<{ urls: Array<{ path: string; signedUrl: string }>; failed: string[]; apiCalls: number }> {
+    const allUrls: Array<{ path: string; signedUrl: string }> = [];
+    const allFailed: string[] = [];
+    let apiCalls = 0;
+
+    // Split into batches of BATCH_URL_SIZE
+    const batches: string[][] = [];
+    for (let i = 0; i < assetPaths.length; i += BATCH_URL_SIZE) {
+      batches.push(assetPaths.slice(i, i + BATCH_URL_SIZE));
+    }
+
+    log.info(`[Batch Sync] Requesting URLs in ${batches.length} batches (${BATCH_URL_SIZE} per batch)`);
+
+    for (let i = 0; i < batches.length; i++) {
+      const batch = batches[i];
+      try {
+        log.debug(`[Batch Sync] Batch ${i + 1}/${batches.length}: ${batch.length} assets`);
+
+        const response = await ApiClient.request<BatchUrlsResponse>('/api/assets/batch-urls', {
+          method: 'POST',
+          body: JSON.stringify({ paths: batch }),
+        });
+        apiCalls++;
+
+        allUrls.push(...response.urls);
+        allFailed.push(...response.failed);
+      } catch (error) {
+        log.error(`[Batch Sync] Batch ${i + 1} failed:`, error);
+        allFailed.push(...batch);
+        apiCalls++;
+      }
+    }
+
+    return { urls: allUrls, failed: allFailed, apiCalls };
+  }
+
+  private static async downloadAssetsInBatches(
+    urls: Array<{ path: string; signedUrl: string }>,
+    onProgress?: (current: number, total: number) => void
+  ): Promise<{ downloaded: number; failed: number; bytesDownloaded: number; errors: string[] }> {
+    let downloaded = 0;
+    let failed = 0;
+    let bytesDownloaded = 0;
+    const errors: string[] = [];
+    const total = urls.length;
+
+    // Process in chunks of CONCURRENT_DOWNLOADS
+    for (let i = 0; i < urls.length; i += CONCURRENT_DOWNLOADS) {
+      const chunk = urls.slice(i, i + CONCURRENT_DOWNLOADS);
+
+      const results = await Promise.allSettled(
+        chunk.map(async ({ path, signedUrl }) => {
+          try {
+            const localPath = await CacheManager.downloadAndCacheAsset(signedUrl, path);
+            // Try to get file size for stats
+            try {
+              const FileSystem = await import('expo-file-system/legacy');
+              const info = await FileSystem.getInfoAsync(localPath);
+              if (info.exists && 'size' in info) {
+                bytesDownloaded += info.size || 0;
+              }
+            } catch {
+              // Ignore size tracking errors
+            }
+            return { success: true, path };
+          } catch (error) {
+            const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+            return { success: false, path, error: errorMsg };
+          }
+        })
+      );
+
+      for (const result of results) {
+        if (result.status === 'fulfilled') {
+          if (result.value.success) {
+            downloaded++;
+          } else {
+            failed++;
+            errors.push(`${result.value.path}: ${result.value.error}`);
+          }
+        } else {
+          failed++;
+          errors.push(`Download failed: ${result.reason}`);
+        }
+      }
+
+      onProgress?.(Math.min(i + chunk.length, total), total);
+    }
+
+    return { downloaded, failed, bytesDownloaded, errors };
+  }
+
+  static isSyncInProgress(): boolean {
+    return this.isSyncing;
+  }
+
+  static async isSyncNeeded(): Promise<boolean> {
+    const versionCheck = await VersionManager.checkVersions();
+    return versionCheck.needsStorySync || versionCheck.needsAssetSync;
+  }
+}

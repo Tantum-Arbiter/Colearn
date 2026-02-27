@@ -3,9 +3,6 @@ package com.app.exception;
 import java.time.Instant;
 import java.util.Map;
 
-/**
- * Base exception class for all Gateway Service exceptions
- */
 public class GatewayException extends RuntimeException {
     
     private final ErrorCode errorCode;

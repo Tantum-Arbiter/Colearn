@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, Dimensions, StatusBar, ImageBackground, ScrollView, Modal, TextInput, Alert, KeyboardAvoidingView, Platform, useWindowDimensions, Image as RNImage, AppState } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Dimensions, StatusBar, ImageBackground, ScrollView, TextInput, Alert, KeyboardAvoidingView, Platform, useWindowDimensions, Image as RNImage, AppState } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -30,7 +30,7 @@ import * as Haptics from 'expo-haptics';
 import { voiceRecordingService, VoiceOver } from '@/services/voice-recording-service';
 import { useVoiceRecording } from '@/hooks/use-voice-recording';
 import { useGlobalSound } from '@/contexts/global-sound-context';
-import { AuthenticatedImage } from '@/components/ui/authenticated-image';
+// All story images are loaded from local cache after batch sync - no authenticated fetching needed
 import { Logger } from '@/utils/logger';
 import { PagePreviewModal } from './pages-preview-modal';
 import { StoryTipsOverlay } from '@/components/tutorial/story-tips-overlay';
@@ -62,6 +62,24 @@ export function StoryBookReader({
   const { i18n, t } = useTranslation();
   const currentLanguage = i18n.language as SupportedLanguage;
   const displayTitle = getLocalizedText(story.localizedTitle, story.title, currentLanguage);
+
+  // Debug: Log story localization info
+  useEffect(() => {
+    if (story.pages && story.pages.length > 0) {
+      const pagesWithLocalized = story.pages.filter(p => p.localizedText);
+      if (pagesWithLocalized.length > 0) {
+        log.debug(`Story ${story.id} has ${pagesWithLocalized.length}/${story.pages.length} pages with localizedText`);
+        // Log first page's localized text to verify structure
+        const firstPageWithLocalized = pagesWithLocalized[0];
+        if (firstPageWithLocalized?.localizedText) {
+          log.debug(`First page (${firstPageWithLocalized.id}) localizedText keys:`, Object.keys(firstPageWithLocalized.localizedText));
+          log.debug(`Japanese text available: ${!!firstPageWithLocalized.localizedText.ja}`);
+        }
+      } else {
+        log.warn(`Story ${story.id} has NO pages with localizedText - only fallback text available`);
+      }
+    }
+  }, [story.id, story.pages]);
   // Start from page 1 if skipping cover, otherwise start from cover (page 0)
   const [currentPageIndex, setCurrentPageIndex] = useState(skipCoverPage ? 1 : 0);
   const [previousPageIndex, setPreviousPageIndex] = useState<number | null>(null); // For crossfade
@@ -113,9 +131,10 @@ export function StoryBookReader({
   // Parents Only modal - using shared hook
   const parentsOnly = useParentsOnlyChallenge();
 
-  // Background music control for recording
+  // Background music control for recording and narration
   const globalSound = useGlobalSound();
   const [wasMusicPlayingBeforeRecording, setWasMusicPlayingBeforeRecording] = useState(false);
+  const [wasMusicPlayingBeforeNarration, setWasMusicPlayingBeforeNarration] = useState(false);
 
   // Voice recording hook (expo-audio requires hook-based recording)
   const voiceRecording = useVoiceRecording();
@@ -332,6 +351,9 @@ export function StoryBookReader({
           [{
             text: t('common.ok'),
             onPress: () => {
+              // Mark that we're exiting - prevents cleanup effect from restoring portrait orientation
+              // The mode selection overlay should stay in landscape
+              isExitingRef.current = true;
               // Return to mode selection overlay (not full exit)
               // Pass current page index so the exit animation shows the current page
               returnToModeSelection(() => {
@@ -372,6 +394,12 @@ export function StoryBookReader({
         } catch (audioError) {
           log.warn('Failed to stop playback audio on exit:', audioError);
         }
+      }
+
+      // Resume background music if it was paused for narration
+      if (wasMusicPlayingBeforeNarration) {
+        globalSound.play();
+        setWasMusicPlayingBeforeNarration(false);
       }
 
       // Start the exit animation FIRST while still in landscape
@@ -729,7 +757,13 @@ export function StoryBookReader({
     if (!currentRecordingUri) return;
 
     if (playbackPlayer) {
-      playbackPlayer.release();
+      try {
+        playbackPlayer.pause();
+        playbackPlayer.release();
+      } catch (e) {
+        // Ignore errors during cleanup
+      }
+      setPlaybackPlayer(null);
     }
 
     const player = await voiceRecordingService.playRecording(currentRecordingUri);
@@ -746,32 +780,50 @@ export function StoryBookReader({
 
   const handleStopPlayback = async () => {
     if (playbackPlayer) {
-      playbackPlayer.pause();
-      playbackPlayer.seekTo(0);
+      try {
+        playbackPlayer.pause();
+        playbackPlayer.seekTo(0);
+      } catch (e) {
+        // Ignore errors
+      }
       setIsPlaying(false);
     }
   };
 
   const handlePauseNarration = async () => {
     if (playbackPlayer) {
-      playbackPlayer.pause();
+      try {
+        playbackPlayer.pause();
+      } catch (e) {
+        // Ignore errors
+      }
       setIsPlaying(false);
     }
   };
 
   const handleResumeNarration = async () => {
     if (playbackPlayer) {
-      playbackPlayer.play();
-      setIsPlaying(true);
+      try {
+        playbackPlayer.play();
+        setIsPlaying(true);
+      } catch (e) {
+        // Player may have been released, ignore
+        setIsPlaying(false);
+      }
     }
   };
 
   const handleReplayNarration = async () => {
     if (playbackPlayer) {
-      playbackPlayer.seekTo(0);
-      playbackPlayer.play();
-      setIsPlaying(true);
-      setNarrationProgress(0);
+      try {
+        playbackPlayer.seekTo(0);
+        playbackPlayer.play();
+        setIsPlaying(true);
+        setNarrationProgress(0);
+      } catch (e) {
+        // Player may have been released, ignore
+        setIsPlaying(false);
+      }
     }
   };
 
@@ -792,9 +844,27 @@ export function StoryBookReader({
       return;
     }
 
+    let currentPlayer: import('expo-audio').AudioPlayer | null = null;
+    let isMounted = true;
+    let didPauseMusic = false;
+
     const playNarration = async () => {
+      // Release any existing player first
       if (playbackPlayer) {
-        playbackPlayer.release();
+        try {
+          playbackPlayer.pause();
+          playbackPlayer.release();
+        } catch (e) {
+          // Ignore errors during cleanup
+        }
+        setPlaybackPlayer(null);
+      }
+
+      // Pause background music before playing narration to avoid audio conflicts
+      if (globalSound.isPlaying) {
+        setWasMusicPlayingBeforeNarration(true);
+        didPauseMusic = true;
+        await globalSound.pause();
       }
 
       // Set duration from the recorded page info
@@ -802,10 +872,13 @@ export function StoryBookReader({
       setNarrationProgress(0);
 
       const player = await voiceRecordingService.playRecording(pageRecording.uri);
-      if (player) {
+      if (player && isMounted) {
+        currentPlayer = player;
         setPlaybackPlayer(player);
         setIsPlaying(true);
         player.addListener('playbackStatusUpdate', (status) => {
+          if (!isMounted) return;
+
           // Update progress
           const positionSec = status.currentTime || 0;
           const durationSec = status.duration || 1;
@@ -821,6 +894,13 @@ export function StoryBookReader({
             }
           }
         });
+      } else if (player) {
+        // Component unmounted before player was ready, release it
+        player.release();
+        // Resume music if we paused it but player failed
+        if (didPauseMusic) {
+          globalSound.play();
+        }
       }
     };
 
@@ -829,7 +909,19 @@ export function StoryBookReader({
       playNarration();
     }, 2000);
 
-    return () => clearTimeout(delayTimer);
+    return () => {
+      isMounted = false;
+      clearTimeout(delayTimer);
+      // Clean up the player created in this effect
+      if (currentPlayer) {
+        try {
+          currentPlayer.pause();
+          currentPlayer.release();
+        } catch (e) {
+          // Ignore errors during cleanup
+        }
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPageIndex, readingMode, selectedVoiceOver, narrationAutoPlay]);
 
@@ -839,6 +931,15 @@ export function StoryBookReader({
       setShowVoiceOverSelectModal(true);
     }
   }, [readingMode, availableVoiceOvers, selectedVoiceOver]);
+
+  // Resume background music when leaving narrate mode
+  useEffect(() => {
+    if (readingMode !== 'narrate' && wasMusicPlayingBeforeNarration) {
+      globalSound.play();
+      setWasMusicPlayingBeforeNarration(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [readingMode]);
 
   // Auto-advance to next page after narration finishes (2 second delay) - only if auto-play is enabled
   useEffect(() => {
@@ -904,60 +1005,34 @@ export function StoryBookReader({
     const baseScale = isTablet ? 1.35 : 1.8;
     const imageScale = isCoverPage ? baseScale * 0.99 : baseScale;
 
+    // All images are loaded from local cache after batch sync - no authenticated fetching needed
     const imageContent = (
       <>
-        {typeof page.backgroundImage === 'string' && page.backgroundImage.includes('api.colearnwithfreya.co.uk') ? (
-          <AuthenticatedImage
-            uri={page.backgroundImage}
-            style={[
-              styles.backgroundImageStyle,
-              { width: '100%', height: '100%', transform: [{ scale: imageScale }] }
-            ]}
-            resizeMode="contain"
-            transition={0}
-            onError={(error) => {
-              log.error(`Page ${page.pageNumber}: Background image error:`, error);
-            }}
-          />
-        ) : (
+        <Image
+          source={typeof page.backgroundImage === 'string' ? { uri: page.backgroundImage } : page.backgroundImage}
+          style={[
+            styles.backgroundImageStyle,
+            { width: '100%', height: '100%', transform: [{ scale: imageScale }] }
+          ]}
+          contentFit="contain"
+          transition={0}
+          cachePolicy="memory-disk"
+          onError={(error) => {
+            log.error(`Page ${page.pageNumber}: Background image error:`, JSON.stringify(error));
+          }}
+        />
+        {/* Character overlay */}
+        {page.characterImage && (
           <Image
-            source={typeof page.backgroundImage === 'string' ? { uri: page.backgroundImage } : page.backgroundImage}
-            style={[
-              styles.backgroundImageStyle,
-              { width: '100%', height: '100%', transform: [{ scale: imageScale }] }
-            ]}
+            source={typeof page.characterImage === 'string' ? { uri: page.characterImage } : page.characterImage}
+            style={styles.characterImage}
             contentFit="contain"
             transition={0}
             cachePolicy="memory-disk"
             onError={(error) => {
-              log.error(`Page ${page.pageNumber}: Background image error:`, JSON.stringify(error));
+              log.error(`Page ${page.pageNumber}: Character image error:`, JSON.stringify(error));
             }}
           />
-        )}
-        {/* Character overlay */}
-        {page.characterImage && (
-          typeof page.characterImage === 'string' && page.characterImage.includes('api.colearnwithfreya.co.uk') ? (
-            <AuthenticatedImage
-              uri={page.characterImage}
-              style={styles.characterImage}
-              resizeMode="contain"
-              transition={0}
-              onError={(error) => {
-                log.error(`Page ${page.pageNumber}: Character image error:`, error);
-              }}
-            />
-          ) : (
-            <Image
-              source={typeof page.characterImage === 'string' ? { uri: page.characterImage } : page.characterImage}
-              style={styles.characterImage}
-              contentFit="contain"
-              transition={0}
-              cachePolicy="memory-disk"
-              onError={(error) => {
-                log.error(`Page ${page.pageNumber}: Character image error:`, JSON.stringify(error));
-              }}
-            />
-          )
         )}
       </>
     );
@@ -986,50 +1061,67 @@ export function StoryBookReader({
     animatedStyle: any,
     boxType: 'blue' | 'white'
   ) => {
-    const words = text.split(/(\s+)/); // Split by whitespace but keep the whitespace
     const highlightedWord = boxType === 'blue' ? highlightedWordBlue : highlightedWordWhite;
     const setHighlightedWord = boxType === 'blue' ? setHighlightedWordBlue : setHighlightedWordWhite;
 
+    // Split by newlines first to preserve line breaks
+    const lines = text.split('\n');
+    let wordIndex = 0; // Global word index across all lines
+
     return (
       <Animated.View style={[animatedStyle]}>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-          {words.map((word, index) => {
-            const isWhitespace = /^\s+$/.test(word);
-            // Check if this specific word at this index is highlighted
-            const isHighlighted = !isWhitespace && highlightedWord?.index === index && highlightedWord?.word === word;
+        <View style={{ flexDirection: 'column', alignItems: 'center' }}>
+          {lines.map((line, lineIdx) => {
+            // Split each line by whitespace but keep the whitespace
+            const words = line.split(/(\s+)/);
 
             return (
-              <Pressable
-                key={`${boxType}-${index}-${word}`}
-                onPress={() => {
+              <View key={`line-${lineIdx}`} style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' }}>
+                {words.map((word) => {
+                  const isWhitespace = /^\s+$/.test(word);
+                  // Check if this specific word at this index is highlighted
+                  const isHighlighted = !isWhitespace && highlightedWord?.index === wordIndex && highlightedWord?.word === word;
+
+                  const currentWordIndex = wordIndex;
                   if (!isWhitespace) {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    // Toggle highlight - only in this box, using index as unique identifier
-                    if (highlightedWord?.index === index && highlightedWord?.word === word) {
-                      setHighlightedWord(null);
-                    } else {
-                      setHighlightedWord({ word, index });
-                    }
+                    wordIndex++;
                   }
-                }}
-                disabled={isWhitespace}
-              >
-                <Text
-                  style={[
-                    baseStyle,
-                    {
-                      fontSize: fontSize,
-                      lineHeight: lineHeight,
-                      backgroundColor: isHighlighted ? '#1e3a8a' : 'transparent',
-                      color: isHighlighted ? '#ffffff' : undefined,
-                      paddingHorizontal: isHighlighted ? 4 : 0,
-                      borderRadius: isHighlighted ? 4 : 0,
-                    }
-                  ]}
-                >
-                  {word}
-                </Text>
-              </Pressable>
+
+                  return (
+                    <Pressable
+                      key={`${boxType}-${currentWordIndex}-${word}`}
+                      onPress={() => {
+                        if (!isWhitespace) {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          // Toggle highlight - only in this box, using index as unique identifier
+                          if (highlightedWord?.index === currentWordIndex && highlightedWord?.word === word) {
+                            setHighlightedWord(null);
+                          } else {
+                            setHighlightedWord({ word, index: currentWordIndex });
+                          }
+                        }
+                      }}
+                      disabled={isWhitespace}
+                    >
+                      <Text
+                        style={[
+                          baseStyle,
+                          {
+                            fontSize: fontSize,
+                            lineHeight: lineHeight,
+                            backgroundColor: isHighlighted ? '#1e3a8a' : 'transparent',
+                            color: isHighlighted ? '#ffffff' : undefined,
+                            paddingHorizontal: isHighlighted ? 4 : 0,
+                            borderRadius: isHighlighted ? 4 : 0,
+                          }
+                        ]}
+                      >
+                        {word}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
             );
           })}
         </View>
@@ -1705,7 +1797,7 @@ export function StoryBookReader({
                         nestedScrollEnabled={true}
                         scrollEnabled={true}
                       >
-                        <View style={{ paddingRight: 15 }}>
+                        <View style={{ paddingRight: 15, alignItems: 'center' }}>
                           {renderTextWithHighlight(
                             getLocalizedText(currentPage?.localizedText, currentPage?.text, compareLanguage) || '',
                             fontSize,
@@ -1748,7 +1840,7 @@ export function StoryBookReader({
                       nestedScrollEnabled={true}
                       scrollEnabled={true}
                     >
-                      <View style={{ paddingRight: 15 }}>
+                      <View style={{ paddingRight: 15, alignItems: 'center' }}>
                         {renderTextWithHighlight(
                           getLocalizedText(currentPage?.localizedText, currentPage?.text, isCompareLanguageEnabled ? sessionLanguage : currentLanguage) || '',
                           fontSize,
@@ -1891,19 +1983,22 @@ export function StoryBookReader({
         </View>
       </View>
 
-      {/* Voice Over Name Modal */}
-      <Modal
-        visible={showVoiceOverNameModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowVoiceOverNameModal(false)}
-        supportedOrientations={['portrait', 'landscape']}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalOverlay}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
-        >
+      {/* Voice Over Name Modal - Using absolute View instead of Modal to prevent iOS crash */}
+      {showVoiceOverNameModal && (
+        <View style={styles.absoluteModalContainer}>
+          <Pressable
+            style={styles.absoluteModalBackdrop}
+            onPress={() => {
+              setShowVoiceOverNameModal(false);
+              setVoiceOverName('');
+            }}
+          />
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.modalOverlay}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
+            pointerEvents="box-none"
+          >
           <View style={[
             styles.modalContent,
             isPhoneLandscape && styles.modalContentLandscape,
@@ -2174,18 +2269,21 @@ export function StoryBookReader({
             )}
           </View>
         </KeyboardAvoidingView>
-      </Modal>
+      </View>
+      )}
 
-      {/* Voice Over Selection Modal */}
-      <Modal
-        visible={showVoiceOverSelectModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowVoiceOverSelectModal(false)}
-        supportedOrientations={['portrait', 'landscape']}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+      {/* Voice Over Selection Modal - Using absolute View instead of Modal to prevent iOS crash */}
+      {showVoiceOverSelectModal && (
+        <View style={styles.absoluteModalContainer}>
+          <Pressable
+            style={styles.absoluteModalBackdrop}
+            onPress={() => {
+              setShowVoiceOverSelectModal(false);
+              setReadingMode('read');
+            }}
+          />
+          <View style={styles.modalOverlay} pointerEvents="box-none">
+            <View style={styles.modalContent}>
             <Pressable
               style={styles.modalCloseButton}
               onPress={() => {
@@ -2217,7 +2315,8 @@ export function StoryBookReader({
             )}
           </View>
         </View>
-      </Modal>
+      </View>
+      )}
 
       {/* Parents Only Challenge Modal */}
       <ParentsOnlyModal
@@ -2271,19 +2370,14 @@ export function StoryBookReader({
         onClose={() => setShowTipsOverlay(false)}
       />
 
-      {/* Compare Languages Modal - Phone and Tablet */}
-      <Modal
-        visible={showCompareLanguageModal}
-        transparent
-        animationType={isTablet ? 'fade' : 'slide'}
-        onRequestClose={() => setShowCompareLanguageModal(false)}
-        supportedOrientations={['portrait', 'landscape']}
-      >
-        <View style={[styles.compareLanguageModalOverlay, (isTablet || (screenWidth > screenHeight)) && { justifyContent: 'center', alignItems: 'center' }]}>
+      {/* Compare Languages Modal - Using absolute View instead of Modal to prevent iOS crash */}
+      {showCompareLanguageModal && (
+        <View style={styles.absoluteModalContainer}>
           <Pressable
-            style={styles.compareLanguageModalBackdrop}
+            style={styles.absoluteModalBackdrop}
             onPress={() => setShowCompareLanguageModal(false)}
           />
+          <View style={[styles.compareLanguageModalOverlay, (isTablet || (screenWidth > screenHeight)) && { justifyContent: 'center', alignItems: 'center' }]} pointerEvents="box-none">
           <View style={[styles.compareLanguageModalContent, isTablet && styles.compareLanguageModalContentTablet]}>
             {/* Header */}
             <View style={styles.compareLanguageModalHeader}>
@@ -2390,7 +2484,8 @@ export function StoryBookReader({
             </Pressable>
           </View>
         </View>
-      </Modal>
+      </View>
+      )}
     </Animated.View>
   );
 }
@@ -2822,6 +2917,7 @@ const styles = StyleSheet.create({
     minHeight: 80,
     width: '100%',
     justifyContent: 'center',
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(0, 0, 0, 0.1)',
     shadowColor: '#000',
@@ -3124,11 +3220,11 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: 'rgba(200, 200, 200, 0.85)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
+    borderColor: 'rgba(150, 150, 150, 0.8)',
   },
   recordButtonInner: {
     width: 28,
@@ -3157,13 +3253,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   recordingTimer: {
-    color: '#FFFFFF',
+    color: '#333333',
     fontFamily: Fonts.sans,
     fontSize: 14,
     fontWeight: '600',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowColor: 'rgba(255, 255, 255, 0.8)',
     textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    textShadowRadius: 3,
   },
   playbackControlsContainer: {
     flexDirection: 'row',
@@ -3282,10 +3378,26 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
   },
+  // Absolute modal container styles - replaces native Modal to prevent iOS crash
+  absoluteModalContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 2000,
+  },
+  absoluteModalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+  },
   // Modal styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,

@@ -8,10 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * User preferences model for Firebase Firestore
- * Contains all user-configurable settings and preferences
- */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class UserPreferences {
 
@@ -42,7 +38,6 @@ public class UserPreferences {
     @JsonProperty("customSettings")
     private Map<String, Object> customSettings = new HashMap<>();
 
-    // Default constructor
     public UserPreferences() {
         this.notifications = new NotificationPreferences();
         this.screenTime = new ScreenTimePreferences();
@@ -51,7 +46,6 @@ public class UserPreferences {
         this.parentalControls = new ParentalControlPreferences();
     }
 
-    // Getters and Setters
     public NotificationPreferences getNotifications() {
         return notifications;
     }
@@ -124,7 +118,6 @@ public class UserPreferences {
         this.customSettings = customSettings;
     }
 
-    // Nested preference classes
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class NotificationPreferences {
         @JsonProperty("pushEnabled")
@@ -139,7 +132,6 @@ public class UserPreferences {
         @JsonProperty("quietHours")
         private QuietHours quietHours = new QuietHours();
 
-        // Getters and Setters
         public boolean isPushEnabled() { return pushEnabled; }
         public void setPushEnabled(boolean pushEnabled) { this.pushEnabled = pushEnabled; }
 
@@ -164,7 +156,6 @@ public class UserPreferences {
         @JsonProperty("endTime")
         private String endTime = "08:00";
 
-        // Getters and Setters
         public boolean isEnabled() { return enabled; }
         public void setEnabled(boolean enabled) { this.enabled = enabled; }
 
@@ -178,10 +169,10 @@ public class UserPreferences {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ScreenTimePreferences {
         @JsonProperty("dailyLimitMinutes")
-        private int dailyLimitMinutes = 120; // 2 hours default
+        private int dailyLimitMinutes = 120;
 
         @JsonProperty("warningMinutes")
-        private int warningMinutes = 15; // 15 minutes before limit
+        private int warningMinutes = 15;
 
         @JsonProperty("bedtimeEnabled")
         private boolean bedtimeEnabled = false;
@@ -192,7 +183,6 @@ public class UserPreferences {
         @JsonProperty("bedtimeEnd")
         private String bedtimeEnd = "07:00";
 
-        // Getters and Setters
         public int getDailyLimitMinutes() { return dailyLimitMinutes; }
         public void setDailyLimitMinutes(int dailyLimitMinutes) { this.dailyLimitMinutes = dailyLimitMinutes; }
 
@@ -226,7 +216,6 @@ public class UserPreferences {
         @JsonProperty("soundEffectsEnabled")
         private boolean soundEffectsEnabled = true;
 
-        // Getters and Setters
         public double getMusicVolume() { return musicVolume; }
         public void setMusicVolume(double musicVolume) { this.musicVolume = musicVolume; }
 
@@ -257,7 +246,6 @@ public class UserPreferences {
         @JsonProperty("personalizedContentEnabled")
         private boolean personalizedContentEnabled = true;
 
-        // Getters and Setters
         public boolean isDataCollectionEnabled() { return dataCollectionEnabled; }
         public void setDataCollectionEnabled(boolean dataCollectionEnabled) { this.dataCollectionEnabled = dataCollectionEnabled; }
 
@@ -285,15 +273,12 @@ public class UserPreferences {
         @JsonProperty("requireParentApproval")
         private boolean requireParentApproval = false;
 
-        // Constructor
         public ParentalControlPreferences() {
-            // Default allowed age ranges
             allowedAgeRanges.add("2-3");
             allowedAgeRanges.add("3-4");
             allowedAgeRanges.add("4-5");
         }
 
-        // Getters and Setters
         public boolean isContentFilterEnabled() { return contentFilterEnabled; }
         public void setContentFilterEnabled(boolean contentFilterEnabled) { this.contentFilterEnabled = contentFilterEnabled; }
 

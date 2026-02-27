@@ -13,7 +13,6 @@ import { useTranslation } from 'react-i18next';
 import { Story, getLocalizedText } from '@/types/story';
 import type { SupportedLanguage } from '@/services/i18n';
 import { Fonts } from '@/constants/theme';
-import { AuthenticatedImage } from '@/components/ui/authenticated-image';
 import { Logger } from '@/utils/logger';
 
 const log = Logger.create('StoryThumbnail');
@@ -88,8 +87,8 @@ export const StoryThumbnail: React.FC<StoryThumbnailProps> = ({
     opacity: opacity.value,
   }));
 
-  const isCmsImage = typeof story.coverImage === 'string' && story.coverImage.includes('api.colearnwithfreya.co.uk');
-
+  // All story images (CMS or local) should be resolved to local paths by StoryLoader
+  // Just use regular Image component - no need for authenticated fetching
   const getCoverImageSource = (): ImageSourcePropType | null => {
     if (!story.coverImage) {
       return null;
@@ -113,38 +112,23 @@ export const StoryThumbnail: React.FC<StoryThumbnailProps> = ({
         onPress={handlePress}
         disabled={!story.isAvailable}
       >
-        {/* Cover Image */}
+        {/* Cover Image - loaded from local cache after batch sync */}
         <View style={styles.imageContainer}>
           {coverImageSource && !imageError ? (
-            isCmsImage ? (
-              <AuthenticatedImage
-                uri={story.coverImage as string}
-                style={styles.coverImage}
-                resizeMode="cover"
-                onLoad={() => {
-                  setImageLoaded(true);
-                }}
-                onError={(error) => {
-                  log.error(`${story.id}: CMS image load error:`, error);
-                  setImageError(true);
-                }}
-              />
-            ) : (
-              <Image
-                source={coverImageSource}
-                style={styles.coverImage}
-                onLoad={() => {
-                  setImageLoaded(true);
-                }}
-                onError={(error) => {
-                  log.error(`${story.id}: Image load error:`, JSON.stringify(error));
-                  setImageError(true);
-                }}
-                contentFit="cover"
-                transition={0}
-                cachePolicy="memory-disk"
-              />
-            )
+            <Image
+              source={coverImageSource}
+              style={styles.coverImage}
+              onLoad={() => {
+                setImageLoaded(true);
+              }}
+              onError={(error) => {
+                log.error(`${story.id}: Image load error:`, JSON.stringify(error));
+                setImageError(true);
+              }}
+              contentFit="cover"
+              transition={0}
+              cachePolicy="memory-disk"
+            />
           ) : (
             <View style={[styles.placeholderImage, { backgroundColor: story.isAvailable ? '#E8F4FD' : '#F5F5F5' }]}>
               <Text style={styles.placeholderEmoji}>{story.emoji}</Text>

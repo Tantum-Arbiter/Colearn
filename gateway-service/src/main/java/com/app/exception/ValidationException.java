@@ -3,9 +3,6 @@ package com.app.exception;
 import java.util.Map;
 import java.util.HashMap;
 
-/**
- * Exception for validation-related errors
- */
 public class ValidationException extends GatewayException {
     
     private final String fieldName;
@@ -66,48 +63,30 @@ public class ValidationException extends GatewayException {
         return validationRule;
     }
     
-    /**
-     * Create missing required field exception
-     */
     public static ValidationException missingRequiredField(String fieldName) {
         return new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD, 
             "Required field '" + fieldName + "' is missing", fieldName, null, "required");
     }
     
-    /**
-     * Create invalid parameter exception
-     */
     public static ValidationException invalidParameter(String paramName, Object value, String expectedFormat) {
         return new ValidationException(ErrorCode.INVALID_PARAMETER, 
             "Invalid parameter '" + paramName + "': " + value, paramName, value, expectedFormat);
     }
     
-    /**
-     * Create invalid email format exception
-     */
     public static ValidationException invalidEmailFormat(String email) {
         return new ValidationException(ErrorCode.INVALID_EMAIL_FORMAT, 
             "Invalid email format: " + email, "email", email, "email_format");
     }
     
-    /**
-     * Create invalid date format exception
-     */
     public static ValidationException invalidDateFormat(String date, String expectedFormat) {
         return new ValidationException(ErrorCode.INVALID_DATE_FORMAT, 
             "Invalid date format: " + date + ", expected: " + expectedFormat, "date", date, expectedFormat);
     }
     
-    /**
-     * Create malformed JSON exception
-     */
     public static ValidationException malformedJson(String message) {
         return new ValidationException(ErrorCode.MALFORMED_JSON, "Malformed JSON: " + message);
     }
     
-    /**
-     * Create request too large exception
-     */
     public static ValidationException requestTooLarge(long size, long maxSize) {
         Map<String, Object> details = new HashMap<>();
         details.put("size", size);

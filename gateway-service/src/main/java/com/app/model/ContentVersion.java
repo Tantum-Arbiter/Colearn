@@ -10,29 +10,24 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-/**
- * Tracks content versions for delta-sync
- * Stores checksums of all stories to enable efficient sync
- */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ContentVersion {
 
     @JsonProperty("id")
-    private String id; // Always "current" for singleton pattern
+    private String id;
 
     @JsonProperty("version")
-    private int version; // Incremented on any story change
+    private int version;
 
-    @JsonIgnore // Firestore handles this natively, Jackson serialization uses getLastUpdatedIso()
+    @JsonIgnore
     private Timestamp lastUpdated;
 
     @JsonProperty("storyChecksums")
-    private Map<String, String> storyChecksums; // storyId -> SHA-256 checksum
+    private Map<String, String> storyChecksums;
 
     @JsonProperty("totalStories")
     private int totalStories;
 
-    // Constructors
     public ContentVersion() {
         this.id = "current";
         this.version = 1;
@@ -41,7 +36,6 @@ public class ContentVersion {
         this.totalStories = 0;
     }
 
-    // Helper methods
     public void incrementVersion() {
         this.version++;
         this.lastUpdated = Timestamp.now();
@@ -64,7 +58,6 @@ public class ContentVersion {
         return existingChecksum == null || !existingChecksum.equals(checksum);
     }
 
-    // Getters and Setters
     public String getId() {
         return id;
     }
@@ -89,10 +82,6 @@ public class ContentVersion {
         this.lastUpdated = lastUpdated;
     }
 
-    /**
-     * Returns lastUpdated as ISO string for JSON serialization
-     * Excluded from Firestore serialization as this is a computed property
-     */
     @Exclude
     @JsonProperty("lastUpdated")
     public String getLastUpdatedIso() {

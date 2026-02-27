@@ -64,9 +64,6 @@ const resources = {
   zh: { translation: zh },
 };
 
-/**
- * Get the stored language preference or detect from device
- */
 export async function getStoredLanguage(): Promise<SupportedLanguage> {
   try {
     const stored = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
@@ -82,9 +79,6 @@ export async function getStoredLanguage(): Promise<SupportedLanguage> {
   return isValidLanguage(deviceLocale) ? deviceLocale as SupportedLanguage : 'en';
 }
 
-/**
- * Save language preference
- */
 export async function setStoredLanguage(language: SupportedLanguage): Promise<void> {
   try {
     await AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, language);
@@ -98,9 +92,6 @@ function isValidLanguage(code: string): boolean {
   return SUPPORTED_LANGUAGES.some(lang => lang.code === code);
 }
 
-/**
- * Initialize i18n with stored/detected language
- */
 export async function initializeI18n(): Promise<void> {
   const language = await getStoredLanguage();
   

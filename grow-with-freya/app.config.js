@@ -1,11 +1,11 @@
-const IS_DEV = process.env.NODE_ENV === 'development';
-const IS_PREVIEW = process.env.NODE_ENV === 'staging';
+const IS_DEV = process.env.EXPO_PUBLIC_APP_ENV === 'development';
+const IS_PREVIEW = process.env.EXPO_PUBLIC_APP_ENV === 'staging';
 
 export default {
   expo: {
     name: IS_DEV ? 'Grow with Freya (Dev)' : IS_PREVIEW ? 'Grow with Freya (Preview)' : 'Grow with Freya',
     slug: 'grow-with-freya',
-    version: '1.0.1',
+    version: '1.1.0',
     orientation: 'default',
     icon: './assets/images/icon.png',
     scheme: 'growwithfreya',
@@ -85,6 +85,12 @@ export default {
           dark: {
             backgroundColor: '#2E8B8B'
           }
+        }
+      ],
+      [
+        'expo-audio',
+        {
+          microphonePermission: 'Allow $(PRODUCT_NAME) to access your microphone to record story narrations.'
         }
       ],
     ],

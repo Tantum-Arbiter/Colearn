@@ -41,8 +41,11 @@ export const TEXT_SIZE_OPTIONS = [
 
 export function useAccessibility(): AccessibilityScale {
   const textSizeScale = useAppStore((state) => state.textSizeScale);
-  const { width: screenWidth } = useWindowDimensions();
-  const isTablet = screenWidth >= 768;
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  // Use the SHORTER dimension to detect tablet - this is consistent regardless of orientation
+  // A phone in landscape still has a short dimension < 768, while tablets have short dimension >= 768
+  const shortDimension = Math.min(screenWidth, screenHeight);
+  const isTablet = shortDimension >= 768;
 
   return useMemo(() => {
     // Apply tablet scale multiplier on top of user preference
@@ -101,8 +104,10 @@ function getIsTablet(): boolean {
   // This is a fallback for non-hook contexts - uses initial dimensions
   // For reactive updates, always use the useAccessibility hook
   const { Dimensions } = require('react-native');
-  const { width } = Dimensions.get('window');
-  return width >= 768;
+  const { width, height } = Dimensions.get('window');
+  // Use the SHORTER dimension to detect tablet - consistent regardless of orientation
+  const shortDimension = Math.min(width, height);
+  return shortDimension >= 768;
 }
 
 // Export a utility function for getting scaled size without the hook

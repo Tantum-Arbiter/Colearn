@@ -48,6 +48,28 @@
   ],
   "pages": [
     {
+      "id": "snuggle-little-wombat-cover",
+      "pageNumber": 0,
+      "backgroundImage": "assets/stories/snuggle-little-wombat/cover/thumbnail.webp",
+      "text": "Snuggle Little Wombat",
+      "localizedText": {
+        "en": "Snuggle Little Wombat",
+        "pl": "Przytul Małego Wombata",
+        "es": "Acurruca al Pequeño Wombat",
+        "de": "Kuschel Kleiner Wombat",
+        "fr": "Câlin Petit Wombat",
+        "it": "Coccola Piccolo Wombat",
+        "pt": "Abraço Pequeno Wombat",
+        "ja": "かわいいウォンバットを抱きしめる",
+        "ar": "احتضن الومبت الصغير",
+        "tr": "Sevimli Küçük Wombat'ı Sarıl",
+        "nl": "Knuffel Kleine Wombat",
+        "da": "Knus Lille Wombat",
+        "la": "Amplexus Parvus Wombatus",
+        "zh": "拥抱小袋熊"
+      }
+    },
+    {
       "id": "snuggle-little-wombat-1",
       "pageNumber": 1,
       "backgroundImage": "assets/stories/snuggle-little-wombat/page-1/background.webp",

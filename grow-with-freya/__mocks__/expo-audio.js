@@ -3,58 +3,67 @@
  * Provides mock audio player and recording functionality
  */
 
-const mockAudioPlayer = {
-  play: jest.fn().mockResolvedValue(undefined),
-  pause: jest.fn().mockResolvedValue(undefined),
-  stop: jest.fn().mockResolvedValue(undefined),
-  remove: jest.fn().mockResolvedValue(undefined),
-  seekTo: jest.fn().mockResolvedValue(undefined),
-  setPlaybackRate: jest.fn().mockResolvedValue(undefined),
+// Store listeners for testing
+const listeners = new Map();
+
+const createMockAudioPlayer = () => ({
+  play: jest.fn(),
+  pause: jest.fn(),
+  release: jest.fn(),
+  seekTo: jest.fn(),
+  addListener: jest.fn((event, callback) => {
+    if (!listeners.has(event)) {
+      listeners.set(event, []);
+    }
+    listeners.get(event).push(callback);
+    return { remove: jest.fn() };
+  }),
   volume: 1,
-  isPlaying: false,
-  currentStatus: 'idle',
-  duration: 0,
+  playing: false,
   currentTime: 0,
-  isLoaded: true,
-  isMuted: false,
+  duration: 0,
   loop: false,
-  playbackRate: 1,
-  shouldCorrectPitch: true,
-};
+  muted: false,
+  rate: 1,
+});
+
+const mockAudioPlayer = createMockAudioPlayer();
 
 const mockRecording = {
   prepareToRecordAsync: jest.fn().mockResolvedValue(undefined),
-  startAsync: jest.fn().mockResolvedValue(undefined),
-  stopAndUnloadAsync: jest.fn().mockResolvedValue(undefined),
-  pauseAsync: jest.fn().mockResolvedValue(undefined),
-  getStatusAsync: jest.fn().mockResolvedValue({
-    isRecording: false,
-    durationMillis: 0,
-    canRecord: true,
-    isDoneRecording: false,
+  record: jest.fn(),
+  stop: jest.fn().mockResolvedValue(undefined),
+  pause: jest.fn().mockResolvedValue(undefined),
+  uri: 'file://mock-recording.m4a',
+  addListener: jest.fn((event, callback) => {
+    return { remove: jest.fn() };
   }),
-  getURI: jest.fn().mockReturnValue('file://mock-recording.m4a'),
 };
 
 const useAudioPlayer = jest.fn((source, options) => {
   return {
-    ...mockAudioPlayer,
+    ...createMockAudioPlayer(),
     source,
     ...options,
   };
 });
 
-const useAudioRecorder = jest.fn((options) => {
+const useAudioRecorder = jest.fn((preset) => {
   return {
     ...mockRecording,
-    ...options,
+    preset,
   };
+});
+
+const createAudioPlayer = jest.fn((source, options) => {
+  const player = createMockAudioPlayer();
+  return player;
 });
 
 const setAudioModeAsync = jest.fn().mockResolvedValue(undefined);
 
 const AudioPlayer = jest.fn().mockImplementation((source, options) => ({
-  ...mockAudioPlayer,
+  ...createMockAudioPlayer(),
   source,
   ...options,
 }));
@@ -85,14 +94,22 @@ const RecordingPresets = {
   },
 };
 
+const AudioModule = {
+  requestRecordingPermissionsAsync: jest.fn().mockResolvedValue({ granted: true }),
+};
+
 module.exports = {
   useAudioPlayer,
   useAudioRecorder,
+  createAudioPlayer,
   setAudioModeAsync,
   AudioPlayer,
   Recording,
   RecordingPresets,
+  AudioModule,
   mockAudioPlayer,
   mockRecording,
+  createMockAudioPlayer,
+  listeners,
 };
 

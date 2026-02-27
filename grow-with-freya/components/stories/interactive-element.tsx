@@ -22,7 +22,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { InteractiveElement as InteractiveElementType } from '@/types/story';
-import { AuthenticatedImage } from '@/components/ui/authenticated-image';
+// All story images are loaded from local cache after batch sync - no authenticated fetching needed
 
 interface InteractiveElementProps {
   element: InteractiveElementType;
@@ -219,11 +219,11 @@ export const InteractiveElementComponent: React.FC<InteractiveElementProps> = ({
     transform: [{ scale: propScale.value }],
   }));
 
-  // Determine if image is a local require() or a remote URL string
+  // Determine if image is a local require() or a URL string
   const isLocalImage = typeof element.image === 'number';
   const imageUri = typeof element.image === 'string' ? element.image : '';
 
-  // Render the appropriate image component based on source type
+  // All prop images are loaded from local cache after batch sync - no authenticated fetching needed
   const renderPropImage = () => {
     if (isLocalImage) {
       // Local bundled image (require() returns a number)
@@ -237,14 +237,17 @@ export const InteractiveElementComponent: React.FC<InteractiveElementProps> = ({
         />
       );
     } else if (imageUri) {
-      // Remote CMS image URL
+      // URL string (local cache path or other) - use regular Image
       return (
-        <AuthenticatedImage
-          uri={imageUri}
+        <Image
+          source={{ uri: imageUri }}
           style={styles.propImage}
-          resizeMode="contain"
-          fallbackEmoji="✨"
-          showLoadingIndicator={false}
+          contentFit="contain"
+          transition={0}
+          cachePolicy="memory-disk"
+          onError={(error) => {
+            log.error(`Prop image error for ${element.id}:`, JSON.stringify(error));
+          }}
         />
       );
     }

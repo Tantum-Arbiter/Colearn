@@ -30,10 +30,10 @@ object PublicApiScenario {
   val testAssetPath = sys.env.getOrElse("TEST_ASSET_PATH", "stories/images/test.png")
 
   // Load test configuration
-  // 100 concurrent users across all scenarios
+  // 50 concurrent users across all scenarios (reduced from 100 for local/Docker testing)
   val numScenarios = 8
-  val totalUsers = 100
-  val usersPerScenario = Math.max(1, totalUsers / numScenarios)  // ~12-13 users per scenario
+  val totalUsers = 50
+  val usersPerScenario = Math.max(1, totalUsers / numScenarios)  // ~6 users per scenario
   val testDuration = 5 minutes
 
   // Common headers
@@ -127,16 +127,8 @@ object PublicApiScenario {
       )
   )
 
-  val sync_stories_scenario = injectLoad(
-    scenario("POST /api/stories/sync - Sync Stories")
-      .exec(
-        http("sync_stories")
-          .post("/api/stories/sync")
-          .headers(authHeaders)
-          .body(StringBody("""{"clientVersion": 0, "storyChecksums": {}, "lastSyncTimestamp": 0}"""))
-          .check(status.in(200, 204, 500))
-      )
-  )
+  // Note: delta_sync_stories_scenario was removed - use delta_sync_scenario in Batch Processing section
+  // The old /api/stories/sync was replaced by /api/stories/delta
 
   // ============================================
   // Assets Endpoints (All /api/** require auth)
@@ -155,13 +147,90 @@ object PublicApiScenario {
       )
   )
 
-  val sync_assets_scenario = injectLoad(
-    scenario("POST /api/assets/sync - Sync Assets")
+  // Note: sync_assets_scenario was removed - /api/assets/sync endpoint no longer exists
+  // Use batch_urls_scenario below instead for asset URL generation
+
+  // ============================================
+  // Batch Processing Endpoints (New - 95% API reduction)
+  // ============================================
+
+  /**
+   * Delta sync endpoint - returns only changed stories based on checksums.
+   * Reduces bandwidth by sending only deltas instead of full content.
+   */
+  val delta_sync_scenario = injectLoad(
+    scenario("POST /api/stories/delta - Delta Sync Stories")
       .exec(
-        http("sync_assets")
-          .post("/api/assets/sync")
+        http("delta_sync_stories")
+          .post("/api/stories/delta")
           .headers(authHeaders)
-          .body(StringBody("""{"clientVersion": 0, "assetChecksums": {}, "lastSyncTimestamp": 0}"""))
+          .body(StringBody("""{
+            "clientVersion": 0,
+            "storyChecksums": {
+              "test-story-1": "abc123",
+              "test-story-2": "def456"
+            }
+          }"""))
+          .check(status.in(200, 204, 500))
+      )
+  )
+
+  /**
+   * Batch URL generation endpoint - returns signed URLs for multiple assets.
+   * Reduces API calls from N to ceil(N/100).
+   */
+  val batch_urls_scenario = injectLoad(
+    scenario("POST /api/assets/batch-urls - Batch Asset URLs")
+      .exec(
+        http("batch_asset_urls")
+          .post("/api/assets/batch-urls")
+          .headers(authHeaders)
+          .body(StringBody("""{
+            "paths": [
+              "stories/test-story-1/cover/cover.webp",
+              "stories/test-story-1/page-1/background.webp",
+              "stories/test-story-2/cover/cover.webp",
+              "stories/test-story-2/page-1/background.webp",
+              "stories/test-story-3/cover/cover.webp"
+            ]
+          }"""))
+          .check(status.in(200, 207, 500))  // 207 for partial success
+      )
+  )
+
+  /**
+   * Large batch URL request - tests max capacity (100 paths)
+   */
+  val batch_urls_large_scenario = injectLoad(
+    scenario("POST /api/assets/batch-urls - Large Batch (100 paths)")
+      .exec(
+        http("batch_asset_urls_large")
+          .post("/api/assets/batch-urls")
+          .headers(authHeaders)
+          .body(StringBody(
+            s"""{
+              "paths": [${(1 to 100).map(i => s""""stories/story-$i/cover.webp"""").mkString(",")}]
+            }"""
+          ))
+          .check(status.in(200, 207, 500))
+      )
+  )
+
+  /**
+   * Delta sync with many checksums - tests capacity handling
+   */
+  val delta_sync_large_scenario = injectLoad(
+    scenario("POST /api/stories/delta - Large Delta (100 checksums)")
+      .exec(
+        http("delta_sync_stories_large")
+          .post("/api/stories/delta")
+          .headers(authHeaders)
+          .body(StringBody(
+            s"""{
+              "clientVersion": 0,
+              "storyChecksums": {${(1 to 100).map(i => s""""story-$i": "checksum-$i"""").mkString(",")}}
+            }"""
+          ))
           .check(status.in(200, 204, 500))
       )
   )

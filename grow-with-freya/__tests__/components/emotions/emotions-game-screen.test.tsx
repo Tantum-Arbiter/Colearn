@@ -26,7 +26,7 @@ jest.mock('@/data/emotions', () => ({
   })),
   getRandomPromptIndex: jest.fn(() => 0),
   EMOTION_GAME_CONFIG: {
-    timePerEmotion: 15,
+    timePerEmotion: 60,
     emotionsPerLevel: 5,
   },
   PROMPTS_PER_EMOTION: 4,

@@ -17,7 +17,7 @@ module.exports = {
     '/__tests__/components/music/tantrum-selection-screen.test.tsx',
     '/__tests__/components/music/tantrum-info-screen.test.tsx',
     '/__tests__/components/music/music-main-menu.test.tsx',
-    '/__tests__/services/music-player.test.ts',
+    // '/__tests__/services/music-player.test.ts', // Re-enabled after migrating to expo-audio
     '/__tests__/hooks/use-music-player.test.tsx',
     '/__tests__/components/emotions/emotions-unified-screen.test.tsx',
     '/__tests__/components/star-background-consistency.test.tsx',

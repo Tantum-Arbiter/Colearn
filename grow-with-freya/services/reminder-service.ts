@@ -40,7 +40,6 @@ export class ReminderService {
     return ReminderService.instance;
   }
 
-  // Load reminders from storage
   private async loadReminders(): Promise<void> {
     try {
       const stored = await AsyncStorage.getItem(REMINDERS_STORAGE_KEY);
@@ -48,6 +47,11 @@ export class ReminderService {
         this.reminders = JSON.parse(stored);
         this.savedReminders = JSON.parse(JSON.stringify(this.reminders)); // Deep copy
         this.lastSyncedReminders = JSON.parse(JSON.stringify(this.reminders)); // Deep copy
+
+        // Reschedule all active notifications on app startup
+        // iOS may have cleared scheduled notifications, so we need to reschedule
+        console.log('[ReminderService] Loaded reminders, rescheduling notifications...');
+        await this.rescheduleAllNotifications();
       }
     } catch (error) {
       console.error('Failed to load reminders:', error);
@@ -55,7 +59,6 @@ export class ReminderService {
     }
   }
 
-  // Save reminders to storage
   private async saveReminders(): Promise<void> {
     try {
       await AsyncStorage.setItem(REMINDERS_STORAGE_KEY, JSON.stringify(this.reminders));
@@ -64,7 +67,6 @@ export class ReminderService {
     }
   }
 
-  // Create a new reminder
   async createReminder(
     title: string,
     message: string,
@@ -95,7 +97,6 @@ export class ReminderService {
     return reminder;
   }
 
-  // Delete a reminder
   async deleteReminder(reminderId: string): Promise<boolean> {
     const reminderIndex = this.reminders.findIndex(r => r.id === reminderId);
     if (reminderIndex === -1) {
@@ -121,7 +122,6 @@ export class ReminderService {
     return true;
   }
 
-  // Toggle reminder active state
   async toggleReminder(reminderId: string): Promise<boolean> {
     const reminder = this.reminders.find(r => r.id === reminderId);
     if (!reminder) {
@@ -155,18 +155,15 @@ export class ReminderService {
     return true;
   }
 
-  // Get all reminders (from in-memory state, not AsyncStorage)
   async getAllReminders(): Promise<CustomReminder[]> {
     console.log('[ReminderService] getAllReminders() called. Current state:', this.reminders.map(r => ({ id: r.id, title: r.title, isActive: r.isActive })));
     return [...this.reminders];
   }
 
-  // Get reminders for a specific day
   async getRemindersForDay(dayOfWeek: number): Promise<CustomReminder[]> {
     return this.reminders.filter(r => r.dayOfWeek === dayOfWeek && r.isActive);
   }
 
-  // Get reminder statistics
   async getReminderStats(): Promise<ReminderStats> {
     
     const today = new Date().getDay();
@@ -181,12 +178,60 @@ export class ReminderService {
     };
   }
 
-  // Schedule notifications for a reminder (main + 30min advance)
+  private getSecondsUntilNextOccurrence(dayOfWeek: number, hours: number, minutes: number): number {
+    const now = new Date();
+    const target = new Date();
+
+    // Set target time
+    target.setHours(hours, minutes, 0, 0);
+
+    // Calculate days until target day
+    const currentDay = now.getDay(); // 0-6 (Sunday = 0)
+    let daysUntil = dayOfWeek - currentDay;
+
+    // If target day is today, check if time has passed
+    if (daysUntil === 0) {
+      if (target <= now) {
+        // Time has passed today, schedule for next week
+        daysUntil = 7;
+      }
+    } else if (daysUntil < 0) {
+      // Target day is earlier in the week, schedule for next week
+      daysUntil += 7;
+    }
+
+    target.setDate(now.getDate() + daysUntil);
+
+    const seconds = Math.floor((target.getTime() - now.getTime()) / 1000);
+    return Math.max(seconds, 1); // Ensure at least 1 second
+  }
+
+  // Uses TIME_INTERVAL trigger (CALENDAR trigger broken in Expo SDK 52)
   private async scheduleNotification(reminder: CustomReminder): Promise<string | null> {
     try {
       const [hours, minutes] = reminder.time.split(':').map(Number);
 
-      // Schedule main notification
+      // Calculate seconds until the main notification
+      const secondsUntilMain = this.getSecondsUntilNextOccurrence(reminder.dayOfWeek, hours, minutes);
+
+      // Calculate seconds until the advance notification (30 minutes before main)
+      // Subtract 30 minutes (1800 seconds) from the main notification time
+      let advanceHours = hours;
+      let advanceMinutes = minutes - 30;
+      if (advanceMinutes < 0) {
+        advanceMinutes += 60;
+        advanceHours -= 1;
+        if (advanceHours < 0) {
+          advanceHours = 23;
+        }
+      }
+      const secondsUntilAdvance = this.getSecondsUntilNextOccurrence(reminder.dayOfWeek, advanceHours, advanceMinutes);
+
+      console.log(`[ReminderService] Scheduling reminder for ${ReminderService.getDayName(reminder.dayOfWeek)} at ${reminder.time}`);
+      console.log(`[ReminderService] Main notification in ${secondsUntilMain} seconds`);
+      console.log(`[ReminderService] Advance notification in ${secondsUntilAdvance} seconds`);
+
+      // Schedule main notification using TIME_INTERVAL (works on both iOS and Android)
       const notificationId = await Notifications.scheduleNotificationAsync({
         content: {
           title: reminder.title,
@@ -194,19 +239,13 @@ export class ReminderService {
           sound: 'default',
         },
         trigger: {
-          type: SchedulableTriggerInputTypes.CALENDAR,
-          weekday: reminder.dayOfWeek + 1, // Expo uses 1-7 (Sunday = 1)
-          hour: hours,
-          minute: minutes,
-          repeats: true,
+          type: SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds: secondsUntilMain,
+          repeats: false, // We'll reschedule after each occurrence
         },
       });
 
       // Schedule 30-minute advance notification
-      const advanceTime = new Date();
-      advanceTime.setHours(hours, minutes, 0, 0);
-      advanceTime.setMinutes(advanceTime.getMinutes() - 30);
-
       const advanceNotificationId = await Notifications.scheduleNotificationAsync({
         content: {
           title: `Upcoming: ${reminder.title}`,
@@ -214,11 +253,9 @@ export class ReminderService {
           sound: 'default',
         },
         trigger: {
-          type: SchedulableTriggerInputTypes.CALENDAR,
-          weekday: reminder.dayOfWeek + 1,
-          hour: advanceTime.getHours(),
-          minute: advanceTime.getMinutes(),
-          repeats: true,
+          type: SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds: secondsUntilAdvance,
+          repeats: false, // We'll reschedule after each occurrence
         },
       });
 
@@ -234,19 +271,16 @@ export class ReminderService {
     }
   }
 
-  // Get day name from day number
   static getDayName(dayOfWeek: number): string {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     return days[dayOfWeek] || 'Unknown';
   }
 
-  // Get short day name from day number
   static getShortDayName(dayOfWeek: number): string {
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     return days[dayOfWeek] || 'Unknown';
   }
 
-  // Format time for display
   static formatTime(time: string): string {
     const [hours, minutes] = time.split(':').map(Number);
     const period = hours >= 12 ? 'PM' : 'AM';
@@ -254,7 +288,6 @@ export class ReminderService {
     return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
   }
 
-  // Check if reminders have unsaved changes (compared to last saved state)
   hasUnsavedChanges(): boolean {
     // Compare current reminders with last saved state (not synced state)
     if (this.reminders.length !== this.savedReminders.length) {
@@ -288,21 +321,18 @@ export class ReminderService {
     return false;
   }
 
-  // Revert unsaved changes (restore from last saved state)
   async revertChanges(): Promise<void> {
     this.reminders = JSON.parse(JSON.stringify(this.savedReminders));
     await this.rescheduleAllNotifications();
     console.log('[ReminderService] Reverted to last saved state');
   }
 
-  // Commit changes to AsyncStorage (but not backend yet)
   async commitChanges(): Promise<void> {
     await this.saveReminders();
     this.savedReminders = JSON.parse(JSON.stringify(this.reminders));
     console.log('[ReminderService] Changes committed to local storage');
   }
 
-  // Sync reminders to backend (called manually from Screen Time page)
   async syncToBackend(): Promise<void> {
     try {
       // Only sync if user is authenticated
@@ -330,7 +360,6 @@ export class ReminderService {
     }
   }
 
-  // Pull reminders from backend and merge with local
   async syncFromBackend(): Promise<void> {
     try {
       const isAuthenticated = await ApiClient.isAuthenticated();
@@ -364,7 +393,6 @@ export class ReminderService {
     }
   }
 
-  // Reschedule all notifications (useful after sync)
   private async rescheduleAllNotifications(): Promise<void> {
     for (const reminder of this.reminders) {
       if (reminder.isActive) {
@@ -386,7 +414,6 @@ export class ReminderService {
     await this.saveReminders();
   }
 
-  // Clear all reminders (for logout)
   async clearAllReminders(): Promise<void> {
     this.reminders = [];
     this.savedReminders = [];

@@ -87,7 +87,15 @@ export function getLocalizedText(
 ): string {
   if (!localized) return fallback;
   if (!language) return localized.en || fallback;
-  return localized[language] || localized.en || fallback;
+
+  const result = localized[language] || localized.en || fallback;
+
+  // Debug: Log if we're falling back to English when a different language was requested
+  if (language && language !== 'en' && localized[language] === undefined && localized.en) {
+    // Silently fall back to English - this is expected behavior
+  }
+
+  return result;
 }
 
 export type StoryCategory = 'personalized' | 'bedtime' | 'adventure' | 'nature' | 'friendship' | 'learning' | 'fantasy' | 'music' | 'activities' | 'growing';
@@ -197,8 +205,9 @@ export const STORY_TAGS: Record<StoryCategory, StoryTag> = {
 
 // Content version tracking for delta-sync
 export interface ContentVersion {
-  version: number;
-  lastUpdated: number; // Timestamp in milliseconds
+  version: number;           // Story/content version
+  assetVersion: number;      // Asset version (tracked separately by CMS)
+  lastUpdated: number;       // Timestamp in milliseconds
   storyChecksums: Record<string, string>; // storyId -> checksum
   totalStories: number;
 }
@@ -213,6 +222,7 @@ export interface StorySyncRequest {
 // Story sync response (received from backend)
 export interface StorySyncResponse {
   serverVersion: number;
+  assetVersion: number; // Server's current asset version for unified version tracking
   stories: Story[]; // Only changed/new stories
   storyChecksums: Record<string, string>; // All current checksums
   totalStories: number;

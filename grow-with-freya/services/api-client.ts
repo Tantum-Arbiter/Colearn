@@ -2,9 +2,15 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { SecureStorage } from './secure-storage';
 import { DeviceInfoService } from './device-info-service';
+import { Logger } from '@/utils/logger';
+
+const log = Logger.create('ApiClient');
 
 const extra = Constants.expoConfig?.extra || {};
 const GATEWAY_URL = extra.gatewayUrl || process.env.EXPO_PUBLIC_GATEWAY_URL || 'http://localhost:8080';
+
+const DEFAULT_TIMEOUT_MS = 30000;
+const TOKEN_REFRESH_TIMEOUT_MS = 10000;
 
 interface TokenPayload {
   exp: number;
@@ -18,9 +24,6 @@ export class ApiClient {
   private static isRefreshing = false;
   private static refreshPromise: Promise<any> | null = null;
 
-  /**
-   * Decode JWT token to get payload
-   */
   private static decodeToken(token: string): TokenPayload | null {
     try {
       const parts = token.split('.');
@@ -35,9 +38,6 @@ export class ApiClient {
     }
   }
 
-  /**
-   * Check if token is expired or will expire soon (within 5 minutes)
-   */
   private static isTokenExpired(token: string, bufferSeconds: number = 300): boolean {
     const payload = this.decodeToken(token);
     if (!payload || !payload.exp) {
@@ -51,27 +51,16 @@ export class ApiClient {
     return isExpired;
   }
 
-  /**
-   * Refresh access token if needed
-   */
   private static async ensureValidToken(): Promise<string | null> {
     const accessToken = await SecureStorage.getAccessToken();
-
-    // If no access token, return null (user needs to login)
     if (!accessToken) {
       return null;
     }
-
-    // If token is still valid, return it
     if (!this.isTokenExpired(accessToken)) {
       return accessToken;
     }
-
-    // Token is expired or expiring soon, refresh it
-    // If already refreshing, wait for that to complete
     if (this.isRefreshing && this.refreshPromise) {
       const profile = await this.refreshPromise;
-      // Sync profile data if available
       if (profile) {
         const { ProfileSyncService } = await import('./profile-sync-service');
         await ProfileSyncService.syncProfileData(profile);
@@ -79,13 +68,11 @@ export class ApiClient {
       return await SecureStorage.getAccessToken();
     }
 
-    // Start refresh process
     this.isRefreshing = true;
     this.refreshPromise = this.performTokenRefresh();
 
     try {
       const profile = await this.refreshPromise;
-      // Sync profile data if available
       if (profile) {
         const { ProfileSyncService } = await import('./profile-sync-service');
         await ProfileSyncService.syncProfileData(profile);
@@ -97,10 +84,6 @@ export class ApiClient {
     }
   }
 
-  /**
-   * Perform the actual token refresh
-   * Returns profile data if available for automatic sync
-   */
   private static async performTokenRefresh(): Promise<any> {
     const refreshToken = await SecureStorage.getRefreshToken();
 
@@ -108,6 +91,8 @@ export class ApiClient {
       console.log('[ApiClient] No refresh token - login required');
       throw new Error('No refresh token available');
     }
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), TOKEN_REFRESH_TIMEOUT_MS);
 
     try {
       const response = await fetch(`${GATEWAY_URL}/auth/refresh`, {
@@ -118,7 +103,9 @@ export class ApiClient {
           'User-Agent': `GrowWithFreya/${DeviceInfoService.getAppVersion()} (${Platform.OS === 'ios' ? 'iOS' : 'Android'})`,
         },
         body: JSON.stringify({ refreshToken }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         console.log(`[ApiClient] Token refresh failed: ${response.status}`);
@@ -127,17 +114,17 @@ export class ApiClient {
       }
 
       const data = await response.json();
-
-      // Store new tokens
       await SecureStorage.storeTokens(
         data.tokens.accessToken,
         data.tokens.refreshToken
       );
-
-      // Return profile data if available (for automatic sync)
       return data.profile || null;
     } catch (error: any) {
-      // Only clear auth for actual token issues, not network errors
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        console.log(`[ApiClient] Token refresh timeout after ${TOKEN_REFRESH_TIMEOUT_MS}ms`);
+        throw new Error('Token refresh timeout - please try again');
+      }
       if (error.message?.includes('No refresh token') ||
           error.message?.includes('Token refresh failed')) {
         await SecureStorage.clearAuthData();
@@ -146,82 +133,96 @@ export class ApiClient {
     }
   }
 
-  /**
-   * Make an authenticated API request with automatic token refresh
-   */
   static async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    timeoutMs: number = DEFAULT_TIMEOUT_MS
   ): Promise<T> {
-    // Ensure we have a valid token
     const accessToken = await this.ensureValidToken();
-    
+
     if (!accessToken) {
       throw new Error('Not authenticated - please login');
     }
-
-    // Add authorization header with device info
     const headers = {
       'Content-Type': 'application/json',
       ...DeviceInfoService.getDeviceHeaders(),
       ...options.headers,
       'Authorization': `Bearer ${accessToken}`,
     };
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    const requestStartTime = Date.now();
+    const method = options.method || 'GET';
 
-    // Make the request
-    const response = await fetch(`${GATEWAY_URL}${endpoint}`, {
-      ...options,
-      headers,
-    });
+    log.debug(`[API Request] ${method} ${endpoint}`);
 
-    // If we get a 401, try to refresh and retry once
-    if (response.status === 401) {
-      try {
-        // Force refresh the token
-        await this.performTokenRefresh();
+    try {
+      const response = await fetch(`${GATEWAY_URL}${endpoint}`, {
+        ...options,
+        headers,
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      const durationMs = Date.now() - requestStartTime;
+      log.debug(`[API Response] ${response.status} in ${durationMs}ms`);
 
-        // Retry the request with new token
-        const newAccessToken = await SecureStorage.getAccessToken();
-        if (!newAccessToken) {
-          throw new Error('Token refresh failed');
+      if (response.status === 401) {
+        try {
+          await this.performTokenRefresh();
+          const retryController = new AbortController();
+          const retryTimeoutId = setTimeout(() => retryController.abort(), timeoutMs);
+
+          try {
+            const newAccessToken = await SecureStorage.getAccessToken();
+            if (!newAccessToken) {
+              throw new Error('Token refresh failed');
+            }
+
+            const retryResponse = await fetch(`${GATEWAY_URL}${endpoint}`, {
+              ...options,
+              headers: {
+                ...headers,
+                'Authorization': `Bearer ${newAccessToken}`,
+              },
+              signal: retryController.signal,
+            });
+            clearTimeout(retryTimeoutId);
+
+            if (!retryResponse.ok) {
+              throw new Error(`API request failed: ${retryResponse.status}`);
+            }
+
+            return await retryResponse.json();
+          } finally {
+            clearTimeout(retryTimeoutId);
+          }
+        } catch (error: any) {
+          if (error.message?.includes('Token refresh failed') ||
+              error.message?.includes('No refresh token')) {
+            await SecureStorage.clearAuthData();
+            throw new Error('Authentication failed - please login again');
+          }
+          throw error;
         }
-
-        const retryResponse = await fetch(`${GATEWAY_URL}${endpoint}`, {
-          ...options,
-          headers: {
-            ...headers,
-            'Authorization': `Bearer ${newAccessToken}`,
-          },
-        });
-
-        if (!retryResponse.ok) {
-          throw new Error(`API request failed: ${retryResponse.status}`);
-        }
-
-        return await retryResponse.json();
-      } catch (error: any) {
-        // Only clear auth for actual auth failures, not network/other errors
-        if (error.message?.includes('Token refresh failed') ||
-            error.message?.includes('No refresh token')) {
-          await SecureStorage.clearAuthData();
-          throw new Error('Authentication failed - please login again');
-        }
-        // For other errors (network, etc), just throw without clearing auth
-        throw error;
       }
-    }
 
-    if (!response.ok) {
-      throw new Error(`API request failed: ${response.status}`);
-    }
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`);
+      }
 
-    return await response.json();
+      return await response.json();
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      const durationMs = Date.now() - requestStartTime;
+      if (error.name === 'AbortError') {
+        log.warn(`[API Timeout] TIMEOUT after ${durationMs}ms: ${endpoint}`);
+        throw new Error(`Request timeout after ${timeoutMs}ms: ${endpoint}`);
+      }
+      log.warn(`[API Error] FAILED after ${durationMs}ms: ${error.message || error}`);
+      throw error;
+    }
   }
 
-  /**
-   * Public method to refresh the access token
-   * Used by services that need to ensure token validity
-   */
   static async refreshToken(): Promise<void> {
     try {
       await this.performTokenRefresh();
@@ -231,9 +232,6 @@ export class ApiClient {
     }
   }
 
-  /**
-   * Get user profile
-   */
   static async getProfile(): Promise<{
     userId: string;
     nickname: string;
@@ -250,9 +248,6 @@ export class ApiClient {
     });
   }
 
-  /**
-   * Update user profile
-   */
   static async updateProfile(data: {
     nickname: string;
     avatarType: 'boy' | 'girl';
@@ -276,15 +271,11 @@ export class ApiClient {
     });
   }
 
-  /**
-   * Sync custom reminders to backend
-   */
   static async syncReminders(reminders: any[]): Promise<void> {
     let profile;
     try {
       profile = await this.getProfile();
     } catch (error: any) {
-      // If profile doesn't exist (404), create a new one with default values and reminders
       if (error.message?.includes('404')) {
         console.log('[ApiClient] No profile found - creating new profile with reminders');
         await this.updateProfile({
@@ -300,26 +291,20 @@ export class ApiClient {
 
     const schedule = profile.schedule || {};
     schedule.customReminders = reminders;
-
-    // Preserve ALL existing profile fields when updating reminders
     await this.updateProfile({
       nickname: profile.nickname,
       avatarType: profile.avatarType,
       avatarId: profile.avatarId,
-      notifications: profile.notifications || {}, // Preserve notifications
+      notifications: profile.notifications || {},
       schedule,
     });
   }
 
-  /**
-   * Get custom reminders from backend
-   */
   static async getReminders(): Promise<any[]> {
     try {
       const profile = await this.getProfile();
       return profile.schedule?.customReminders || [];
     } catch (error: any) {
-      // If profile doesn't exist (404), return empty array
       if (error.message?.includes('404')) {
         console.log('[ApiClient] No profile found - returning empty reminders');
         return [];
@@ -328,9 +313,6 @@ export class ApiClient {
     }
   }
 
-  /**
-   * Check if user has valid authentication
-   */
   static async isAuthenticated(): Promise<boolean> {
     const accessToken = await SecureStorage.getAccessToken();
     const refreshToken = await SecureStorage.getRefreshToken();
@@ -339,14 +321,11 @@ export class ApiClient {
       console.log('[ApiClient] No tokens - not authenticated');
       return false;
     }
-
-    // If access token is valid, we're authenticated
     if (!this.isTokenExpired(accessToken)) {
       console.log('[ApiClient] Token valid - authenticated');
       return true;
     }
 
-    // Try to refresh the token
     try {
       console.log('[ApiClient] Token expired - refreshing...');
       await this.ensureValidToken();
@@ -358,15 +337,10 @@ export class ApiClient {
     }
   }
 
-  /**
-   * Logout - revoke tokens and clear local storage
-   */
   static async logout(): Promise<void> {
     const refreshToken = await SecureStorage.getRefreshToken();
-
     if (refreshToken) {
       try {
-        // Revoke tokens on backend
         await fetch(`${GATEWAY_URL}/auth/revoke`, {
           method: 'POST',
           headers: {
@@ -376,13 +350,51 @@ export class ApiClient {
         });
       } catch (error) {
         console.error('Failed to revoke tokens on backend:', error);
-        // Continue with local cleanup even if backend call fails
       }
     }
-
-    // Clear local storage
     await SecureStorage.clearAuthData();
   }
+
+  static async getBatchSignedUrls(paths: string[]): Promise<{
+    urls: Array<{ path: string; signedUrl: string; expiresAt: number }>;
+    failed: string[];
+  }> {
+    return this.request('/api/assets/batch-urls', {
+      method: 'POST',
+      body: JSON.stringify({ paths }),
+    });
+  }
+
+  static async getDeltaContent(
+    clientVersion: number,
+    storyChecksums: Record<string, string>
+  ): Promise<{
+    serverVersion: number;
+    assetVersion: number;
+    stories: any[];
+    deletedStoryIds: string[];
+    storyChecksums: Record<string, string>;
+    totalStories: number;
+    updatedCount: number;
+    lastUpdated: number;
+  }> {
+    return this.request('/api/stories/delta', {
+      method: 'POST',
+      body: JSON.stringify({
+        clientVersion,
+        storyChecksums,
+      }),
+    });
+  }
+
+  static async getContentVersion(): Promise<{
+    id: string;
+    version: number;
+    assetVersion: number;
+    lastUpdated: number;
+    storyChecksums: Record<string, string>;
+    totalStories: number;
+  }> {
+    return this.request('/api/stories/version', { method: 'GET' }, 5000);
+  }
 }
-
-

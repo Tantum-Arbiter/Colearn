@@ -3,9 +3,6 @@ package com.app.exception;
 import java.util.Map;
 import java.util.HashMap;
 
-/**
- * Exception for rate limiting and security-related errors
- */
 public class RateLimitException extends GatewayException {
     
     private final String clientKey;
@@ -61,25 +58,16 @@ public class RateLimitException extends GatewayException {
         return resetTimeSeconds;
     }
     
-    /**
-     * Create authentication rate limit exception
-     */
     public static RateLimitException authRateLimit(String clientKey, int currentCount, int maxAllowed, long resetTime) {
         return new RateLimitException(ErrorCode.RATE_LIMIT_EXCEEDED, clientKey, "AUTH_RATE_LIMIT", 
             currentCount, maxAllowed, resetTime);
     }
     
-    /**
-     * Create API rate limit exception
-     */
     public static RateLimitException apiRateLimit(String clientKey, int currentCount, int maxAllowed, long resetTime) {
         return new RateLimitException(ErrorCode.TOO_MANY_REQUESTS, clientKey, "API_RATE_LIMIT", 
             currentCount, maxAllowed, resetTime);
     }
     
-    /**
-     * Create brute force detection exception
-     */
     public static RateLimitException bruteForceDetected(String clientKey, int attemptCount) {
         return new RateLimitException(ErrorCode.BRUTE_FORCE_DETECTED, clientKey, "BRUTE_FORCE_PROTECTION", 
             attemptCount, 5, 3600); // 1 hour lockout

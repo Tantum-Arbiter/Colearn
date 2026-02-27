@@ -83,6 +83,8 @@ export default {
     privacyPolicy: 'Informativa sulla privacy',
     signInFailed: 'Accesso non riuscito',
     signInFailedMessage: 'Impossibile accedere con Google. Riprova.',
+    connectionTimeout: 'Timeout connessione',
+    connectionTimeoutMessage: 'Accesso scaduto. Controlla la tua connessione e riprova.',
     ok: 'OK',
   },
 
