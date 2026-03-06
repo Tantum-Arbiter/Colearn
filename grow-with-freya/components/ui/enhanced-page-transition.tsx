@@ -78,8 +78,6 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   );
   const storiesTranslateY = useSharedValue(currentPage === 'stories' ? 0 : screenHeight);
   const sensoryTranslateY = useSharedValue(currentPage === 'sensory' ? 0 : screenHeight);
-  const emotionsTranslateY = useSharedValue(currentPage === 'emotions' ? 0 : screenHeight);
-  const bedtimeTranslateY = useSharedValue(currentPage === 'bedtime' ? 0 : screenHeight);
   const screenTimeTranslateY = useSharedValue(currentPage === 'screen_time' ? 0 : screenHeight);
   const accountTranslateY = useSharedValue(currentPage === 'account' ? 0 : -screenHeight);
 
@@ -89,8 +87,6 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
     main: mainTranslateY,
     stories: storiesTranslateY,
     sensory: sensoryTranslateY,
-    emotions: emotionsTranslateY,
-    bedtime: bedtimeTranslateY,
     'screen_time': screenTimeTranslateY,
     account: accountTranslateY,
   };
@@ -108,12 +104,6 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
     }
     if (currentPage !== 'sensory') {
       sensoryTranslateY.value = screenHeight;
-    }
-    if (currentPage !== 'emotions') {
-      emotionsTranslateY.value = screenHeight;
-    }
-    if (currentPage !== 'bedtime') {
-      bedtimeTranslateY.value = screenHeight;
     }
     if (currentPage !== 'screen_time') {
       screenTimeTranslateY.value = screenHeight;
@@ -151,16 +141,6 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
 
     sensoryTranslateY.value = withTiming(
       currentPage === 'sensory' ? 0 : screenHeight,
-      animationConfig
-    );
-
-    emotionsTranslateY.value = withTiming(
-      currentPage === 'emotions' ? 0 : screenHeight,
-      animationConfig
-    );
-
-    bedtimeTranslateY.value = withTiming(
-      currentPage === 'bedtime' ? 0 : screenHeight,
       animationConfig
     );
 

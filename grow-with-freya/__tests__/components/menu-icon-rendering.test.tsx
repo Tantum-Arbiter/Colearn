@@ -7,8 +7,6 @@ import { getSvgComponentFromSvg } from '../../components/main-menu/assets';
 jest.mock('../../components/main-menu/svg-components', () => ({
   StoriesSvg: ({ width, height, opacity }: any) => `MockStoriesSvg-${width}x${height}-${opacity}`,
   SensorySvg: ({ width, height, opacity }: any) => `MockSensorySvg-${width}x${height}-${opacity}`,
-  EmotionsSvg: ({ width, height, opacity }: any) => `MockEmotionsSvg-${width}x${height}-${opacity}`,
-  BedtimeSvg: ({ width, height, opacity }: any) => `MockBedtimeSvg-${width}x${height}-${opacity}`,
   ScreentimeSvg: ({ width, height, opacity }: any) => `MockScreentimeSvg-${width}x${height}-${opacity}`,
   CloudSvg: ({ width, height, opacity }: any) => `MockCloudSvg-${width}x${height}-${opacity}`,
   BearSvg: ({ width, height, opacity }: any) => `MockBearSvg-${width}x${height}-${opacity}`,
@@ -30,18 +28,6 @@ describe('MenuIcon Icon Rendering Tests', () => {
 
     it('should resolve sensory icon to SensorySvg component', () => {
       const SvgComponent = getSvgComponentFromSvg('sensory');
-      expect(SvgComponent).toBeDefined();
-      expect(typeof SvgComponent).toBe('function');
-    });
-
-    it('should resolve emotions icon to EmotionsSvg component', () => {
-      const SvgComponent = getSvgComponentFromSvg('emotions');
-      expect(SvgComponent).toBeDefined();
-      expect(typeof SvgComponent).toBe('function');
-    });
-
-    it('should resolve bedtime icon to BedtimeSvg component', () => {
-      const SvgComponent = getSvgComponentFromSvg('bedtime');
       expect(SvgComponent).toBeDefined();
       expect(typeof SvgComponent).toBe('function');
     });
@@ -93,34 +79,6 @@ describe('MenuIcon Icon Rendering Tests', () => {
         <MenuIcon
           icon="sensory-icon"
           label="Sensory"
-          status="inactive"
-          onPress={mockOnPress}
-        />
-      );
-
-      expect(toJSON()).toBeTruthy();
-      expect(toJSON()).toMatchSnapshot();
-    });
-
-    it('should render emotions icon without errors', () => {
-      const { toJSON } = render(
-        <MenuIcon
-          icon="emotions-icon"
-          label="Emotions"
-          status="inactive"
-          onPress={mockOnPress}
-        />
-      );
-
-      expect(toJSON()).toBeTruthy();
-      expect(toJSON()).toMatchSnapshot();
-    });
-
-    it('should render bedtime icon without errors', () => {
-      const { toJSON } = render(
-        <MenuIcon
-          icon="bedtime-icon"
-          label="Bedtime"
           status="inactive"
           onPress={mockOnPress}
         />
@@ -194,8 +152,8 @@ describe('MenuIcon Icon Rendering Tests', () => {
 
   describe('Icon Component Function Validation', () => {
     it('should ensure all icon components are functions', () => {
-      const iconTypes = ['stories', 'sensory', 'emotions', 'bedtime', 'screentime', 'cloud', 'balloon'];
-      
+      const iconTypes = ['stories', 'sensory', 'screentime', 'cloud', 'balloon'];
+
       iconTypes.forEach(iconType => {
         const SvgComponent = getSvgComponentFromSvg(iconType as any);
         expect(typeof SvgComponent).toBe('function');
@@ -204,8 +162,8 @@ describe('MenuIcon Icon Rendering Tests', () => {
     });
 
     it('should ensure icon components can be instantiated', () => {
-      const iconTypes = ['stories', 'sensory', 'emotions', 'bedtime', 'screentime'];
-      
+      const iconTypes = ['stories', 'sensory', 'screentime'];
+
       iconTypes.forEach(iconType => {
         const SvgComponent = getSvgComponentFromSvg(iconType as any);
         expect(() => {

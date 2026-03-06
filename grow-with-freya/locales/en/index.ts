@@ -92,8 +92,8 @@ export default {
   // Main menu
   menu: {
     stories: 'Stories',
-    emotions: 'Emotions',
-    calming: 'Calming',
+    musicStories: 'Music Stories',
+    animatedStories: 'Animated Stories',
   },
 
   // Accessibility settings
@@ -241,230 +241,7 @@ export default {
     wellDone: 'Well Done!',
     readAnother: 'Read Another Story',
     rereadStory: 'Read Again',
-    bedtimeMusic: 'Bedtime Music',
     backToMenu: 'Back to Menu',
-  },
-
-  // Emotions screen
-  emotions: {
-    title: 'Express Yourself!',
-    subtitle: 'Choose your style and learn about emotions',
-    pickYourStyle: 'Pick Your Style',
-    howToPlay: 'How to Play',
-    howToPlayExpanded: 'How to Play ▼',
-    howToPlayCollapsed: 'How to Play ▶',
-    expressWithTheme: 'Express with {{theme}}!',
-    expressing: "I'm expressing {{emotion}}!",
-    loading: 'Loading...',
-    progress: 'Progress: {{completed}} / {{total}}',
-    instructions: {
-      step1: '👀 Look and react to the emotion together',
-      step2: '🤪 Make the face - exaggerate and be silly!',
-      step3: '🔄 Take turns copying each other',
-      step4: "🎭 Celebrate every attempt - it's about connection, not perfection",
-    },
-    // Theme names and descriptions
-    themes: {
-      emoji: {
-        name: 'Emoji',
-        description: 'Express emotions with fun emoji faces',
-      },
-      animals: {
-        name: 'Animals',
-        description: 'Learn emotions through cute animal friends',
-      },
-      bear: {
-        name: 'Bear',
-        description: 'Learn emotions with our friendly bear',
-      },
-    },
-    // Emoji theme emotion names
-    emoji: {
-      happy: 'Happy',
-      sad: 'Sad',
-      angry: 'Angry',
-      surprised: 'Surprised',
-      scared: 'Scared',
-      excited: 'Excited',
-      confused: 'Confused',
-      proud: 'Proud',
-      shy: 'Shy',
-      loving: 'Loving',
-    },
-    // Animals theme emotion names
-    animals: {
-      happy: 'Happy Bunny',
-      sad: 'Sad Kitty',
-      angry: 'Angry Dog',
-      surprised: 'Surprised Chick',
-      scared: 'Scared Raccoon',
-      excited: 'Excited Fox',
-      confused: 'Confused Elephant',
-      proud: 'Proud Bear',
-      shy: 'Shy Sloth',
-      loving: 'Loving Panda',
-    },
-    // Bear theme emotion names
-    bear: {
-      happy: 'Happy Bear',
-      sad: 'Sad Bear',
-      angry: 'Angry Bear',
-      surprised: 'Surprised Bear',
-      scared: 'Scared Bear',
-      excited: 'Excited Bear',
-      confused: 'Confused Bear',
-      proud: 'Proud Bear',
-      shy: 'Shy Bear',
-      loving: 'Loving Bear',
-    },
-    // Expression prompts for each emotion
-    prompts: {
-      happy: [
-        'Show me your biggest smile!',
-        'Can you laugh like you heard something funny?',
-        'Make a happy face and clap your hands!',
-        'Show me how you look when you get a present!',
-      ],
-      sad: [
-        'Show me a sad face',
-        'Can you make your face look like you lost your toy?',
-        'Show me how you feel when you have to say goodbye',
-        "Make a pouty face like when you're disappointed",
-      ],
-      angry: [
-        'Show me an angry face',
-        "Can you scrunch up your face like you're mad?",
-        "Show me how you look when someone mean throws your favourite toy",
-        'Make a grumpy face with crossed arms!',
-      ],
-      surprised: [
-        'Show me a surprised face!',
-        'Can you open your eyes and mouth really wide?',
-        'Show me how you look when you see something amazing!',
-        'Make a face like you just saw magic!',
-      ],
-      scared: [
-        'Show me a scared face',
-        "Can you hide behind your hands like you're scared?",
-        'Show me how you look during a thunderstorm',
-        'Make a face like you saw something spooky!',
-      ],
-      excited: [
-        'Show me how excited you get!',
-        'Can you jump up and down with a big smile?',
-        "Show me your face when you're going somewhere fun!",
-        'Make an excited face and wave your hands!',
-      ],
-      confused: [
-        'Show me a confused face',
-        "Can you scrunch your eyebrows like you're thinking hard?",
-        "Show me how you look when you don't understand something",
-        "Make a face like you're trying to solve a puzzle!",
-      ],
-      proud: [
-        'Show me how proud you are!',
-        'Can you stand tall and smile like you did something great?',
-        'Show me your proud face when you finish a puzzle!',
-        'Make a face like you just helped someone!',
-      ],
-      shy: [
-        'Show me a shy face',
-        'Can you hide your face a little bit?',
-        'Show me how you look when meeting someone new',
-        'Make a shy smile and look down!',
-      ],
-      loving: [
-        'Show me your loving face!',
-        'Can you give yourself a big hug?',
-        'Show me how you look at someone you love!',
-        "Make a face like you're giving kisses!",
-      ],
-    },
-  },
-
-  // Music/Calming screen
-  music: {
-    title: 'Calming',
-    subtitle: 'Choose a track to play',
-    tantrums: 'Tantrums',
-    tantrumsDescription: 'Calming music to help during difficult moments',
-    sleep: 'Sleep',
-    sleepDescription: 'Gentle sounds for peaceful sleep',
-    unknownArtist: 'Unknown Artist',
-    playAll: 'Play All',
-    calmingSession: 'Calming session in progress',
-    playerError: 'Music Player Error',
-    noTrackSelected: 'No track selected',
-    chooseASong: 'Choose a song to start playing',
-    fromPlaylist: 'from {{playlist}}',
-    repeatCount: 'Repeat {{current}}/{{total}}',
-    phase: 'Phase {{current}} of {{total}}',
-    play: 'Play',
-    pause: 'Pause',
-    loading: 'Loading...',
-    error: 'Error',
-    playing: 'Playing',
-    paused: 'Paused',
-    idle: 'Idle',
-    deepSleepPhase: 'Deep Sleep Phase',
-    relaxationPhase: 'Relaxation Phase',
-    comingSoon: 'Coming Soon',
-    looping: 'Looping',
-    // Tag labels
-    tags: {
-      calming: 'Calming',
-      bedtime: 'Bedtime',
-      stories: 'Stories',
-    },
-    // Track titles and descriptions
-    tracks: {
-      tantrumAlpha: {
-        title: 'Tantrum Calming (10Hz)',
-        artist: 'Binaural Beats',
-        description: 'Alpha waves for calming during tantrums. Use with headphones for best effect.',
-      },
-      sleepAlpha: {
-        title: 'Getting to Sleep (10Hz)',
-        artist: 'Binaural Beats',
-        description: 'Alpha waves to help transition from awake to drowsy. First phase of sleep sequence.',
-      },
-      sleepTheta: {
-        title: 'Getting into Deep Sleep (6Hz)',
-        artist: 'Binaural Beats',
-        description: 'Theta waves to deepen sleep. Second phase of sleep sequence.',
-      },
-      sleepSequence: {
-        title: 'Full Sleep Sequence',
-        artist: 'Binaural Beats',
-        description: 'Complete sleep progression: Getting to Sleep → Getting into Deep Sleep.',
-      },
-      // Audiobooks
-      bearsBirthdayParty: {
-        title: "Bear's Birthday Party",
-        artist: 'Bedtime Story',
-        description: 'A heartwarming tale about a bear celebrating a special birthday.',
-      },
-      damselElephant: {
-        title: 'Damsel the Elephant',
-        artist: 'Bedtime Story',
-        description: 'Join Damsel the elephant on a gentle adventure.',
-      },
-      jimmyMouse: {
-        title: 'Jimmy Mouse and the City Slickers',
-        artist: 'Bedtime Story',
-        description: 'A little mouse discovers the big city.',
-      },
-      newYearJungle: {
-        title: 'New Year in the Jungle',
-        artist: 'Bedtime Story',
-        description: 'The jungle animals celebrate a new year together.',
-      },
-      snowWhite: {
-        title: 'Snow White',
-        artist: 'Bedtime Story',
-        description: 'The classic fairy tale of Snow White, perfect for bedtime.',
-      },
-    },
   },
 
   // Screen time
@@ -594,10 +371,6 @@ export default {
       readBook: {
         title: 'Read Interactive Book',
         message: 'Time to explore a wonderful story together! Pick a favorite book and dive in.',
-      },
-      emotionCards: {
-        title: 'Do Emotion Cards',
-        message: "Let's practice identifying feelings! Time for some emotion card activities.",
       },
       park: {
         title: 'Going Out to the Park',
@@ -776,10 +549,6 @@ export default {
     welcomeDescription: "Let's take a quick tour to help you and your child get the most out of storytime together.",
     storiesTitle: 'Story Library 📚',
     storiesDescription: 'Tap here to explore our collection of interactive stories with beautiful illustrations and fun interactions.',
-    emotionsTitle: 'Emotion Explorer 😊',
-    emotionsDescription: 'Help your child learn about emotions through fun matching games with emojis and characters.',
-    calmingTitle: 'Calming Corner 🎵',
-    calmingDescription: 'Access soothing music and sounds designed to help during difficult moments or bedtime.',
     skip: 'Skip',
     gotIt: 'Got it!',
     // Button translations for tutorial overlays
@@ -804,14 +573,6 @@ export default {
         title: 'Story Library 📚',
         description: 'Tap here to explore our collection of interactive stories with beautiful illustrations and fun interactions.',
       },
-      emotions: {
-        title: 'Emotion Explorer 😊',
-        description: 'Help your child learn about emotions through fun matching games with emojis and characters.',
-      },
-      bedtime: {
-        title: 'Calming Corner 🎵',
-        description: 'Access soothing music and sounds designed to help during difficult moments or bedtime.',
-      },
       settings: {
         title: 'Settings ⚙️',
         description: 'Customise the app to work best for your family.',
@@ -819,29 +580,6 @@ export default {
       sound: {
         title: 'Sound Control 🔊',
         description: 'Tap here to control background music and sound effects.',
-      },
-    },
-    // Emotion Cards Tips
-    emotionCards: {
-      welcome: {
-        title: 'Welcome to Emotion Cards! 🎭',
-        description: 'Help your child learn to recognise and express emotions through fun, interactive cards.',
-      },
-      together: {
-        title: 'Play Together 👨‍👩‍👧',
-        description: 'Sit with your child and take turns flipping cards. Make the emotions together - it\'s more fun!',
-      },
-      connect: {
-        title: 'Make Connections 💬',
-        description: 'Ask questions like "When did you feel this way?" to help your child understand their emotions.',
-      },
-      scenarios: {
-        title: 'Create Scenarios 🎭',
-        description: 'Act out situations that might cause each emotion. "How would you feel if your toy broke?"',
-      },
-      themes: {
-        title: 'Try Different Themes 🎨',
-        description: 'Switch between emoji, animal, and bear themes to keep it fresh and engaging!',
       },
     },
     // Screen Time Tips - keys match tutorial.screenTime.* in tutorial-content.ts
@@ -1013,74 +751,6 @@ export default {
         description: 'Swipe left or right to turn pages quickly.',
       },
     },
-    // Music Tips - keys match tutorial.music.* in tutorial-content.ts
-    music: {
-      welcome: {
-        title: 'Welcome to Calming Sounds 🎵',
-        description: 'This section uses specially designed audio to help your child relax, sleep, or calm down during challenging moments.',
-      },
-      binaural: {
-        title: 'The Science of Sound 🧠',
-        description: 'Our tracks use binaural beats - subtle sound frequencies that can help guide the brain into calmer states.',
-      },
-      headphones: {
-        title: 'Use Headphones 🎧',
-        description: 'For binaural beats to work effectively, headphones are recommended. Different frequencies in each ear create the calming effect.',
-      },
-      tantrum: {
-        title: 'During Meltdowns 😢',
-        description: 'These sounds can help during difficult moments. Stay calm yourself, and let the music work its magic.',
-      },
-      sleep: {
-        title: 'Sleep Science 💤',
-        description: 'Our sleep tracks gradually slow brainwave patterns, helping your child drift off naturally.',
-      },
-      routine: {
-        title: 'Build a Routine 🌙',
-        description: 'Playing the same calming sounds each night can signal to your child that it\'s time for sleep.',
-      },
-      stories: {
-        title: 'Stories Too! 📖',
-        description: 'Don\'t forget to check out our story section for bedtime reading!',
-      },
-    },
-  },
-
-  // Music Tips Overlay
-  musicTips: {
-    next: 'Next',
-    go: 'Go!',
-    letsGo: "Let's Go!",
-    skip: 'Skip',
-    skipAll: 'Skip All',
-    music_welcome: {
-      title: 'Welcome to Calming Sounds 🎵',
-      description: 'This section uses specially designed audio to help your child relax, sleep, or calm down during challenging moments.',
-    },
-    binaural_science: {
-      title: 'The Science of Sound 🧠',
-      description: 'Our tracks use binaural beats - subtle sound frequencies that can help guide the brain into calmer states. Research shows these can reduce anxiety and promote relaxation in both children and adults.',
-    },
-    headphones_tip: {
-      title: 'Use Headphones 🎧',
-      description: 'For binaural beats to work effectively, headphones are recommended. The different frequencies in each ear create the calming effect. Without headphones, your child still benefits from the soothing music!',
-    },
-    tantrum_tip: {
-      title: 'During Tantrums 😤',
-      description: "When emotions run high, try playing our tantrum-calming tracks. The gentle frequencies can help regulate your child's nervous system and bring them back to a calmer state more quickly.",
-    },
-    sleep_science: {
-      title: 'Better Sleep 🌙',
-      description: 'Our sleep tracks use delta wave frequencies (0.5-4 Hz) that naturally occur during deep sleep. Playing these as your child falls asleep can help them drift off faster and sleep more soundly.',
-    },
-    sleep_routine: {
-      title: 'Build a Routine 💤',
-      description: "Try playing the same calming track each night as part of your bedtime routine. Over time, your child's brain will associate the sounds with sleep, making bedtime easier.",
-    },
-    music_stories: {
-      title: 'Stories Too! 📖',
-      description: "Don't forget our story section! Reading together builds vocabulary, imagination, and that precious parent-child bond. Record your voice so your child can hear YOU even when you're apart.",
-    },
   },
 
   // Parents only modal
@@ -1133,14 +803,6 @@ export default {
     sensory: {
       message: 'Feel & Explore!',
       subtitle: 'Touch, see, hear, and discover the world around you through your senses.',
-    },
-    emotions: {
-      message: 'Happy Feelings!',
-      subtitle: 'Learn about emotions and how to express your feelings in healthy ways.',
-    },
-    bedtime: {
-      message: 'Sweet Dreams!',
-      subtitle: 'Gentle melodies and soothing sounds to help you drift off to sleep.',
     },
     screenTime: {
       message: 'Time to Play!',

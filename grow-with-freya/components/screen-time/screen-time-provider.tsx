@@ -7,9 +7,9 @@ import { ScreenTimeWarningModal } from './screen-time-warning-modal';
 
 interface ScreenTimeContextType {
   isTracking: boolean;
-  currentActivity: 'story' | 'emotions' | 'music' | null;
+  currentActivity: 'story' | null;
   todayUsage: number;
-  startActivity: (activity: 'story' | 'emotions' | 'music') => Promise<void>;
+  startActivity: (activity: 'story') => Promise<void>;
   endActivity: () => Promise<void>;
   showWarning: (warning: ScreenTimeWarning) => void;
   refreshUsage: () => Promise<void>;
@@ -30,7 +30,7 @@ interface ScreenTimeProviderProps {
 }
 
 // Screens where screen time tracking should be paused (passive listening, not active use)
-const EXEMPT_SCREENS = ['bedtime', 'music', 'sleep', 'music-player'];
+const EXEMPT_SCREENS = ['sleep'];
 
 export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
   const {
@@ -41,7 +41,7 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
   } = useAppStore();
 
   const [isTracking, setIsTracking] = useState(false);
-  const [currentActivity, setCurrentActivity] = useState<'story' | 'emotions' | 'music' | null>(null);
+  const [currentActivity, setCurrentActivity] = useState<'story' | null>(null);
   const [todayUsage, setTodayUsage] = useState(0);
   const [currentWarning, setCurrentWarning] = useState<ScreenTimeWarning | null>(null);
   const [showWarningModal, setShowWarningModal] = useState(false);
@@ -157,7 +157,7 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
     handleExemptScreenChange();
   }, [isOnExemptScreen, isTracking, isPausedForExemptScreen, screenTimeEnabled, childAgeInMonths, currentScreen]);
 
-  const startActivity = useCallback(async (activity: 'story' | 'emotions' | 'music') => {
+  const startActivity = useCallback(async (activity: 'story') => {
     if (!screenTimeEnabled) return;
 
     try {

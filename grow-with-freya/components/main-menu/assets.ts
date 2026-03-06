@@ -4,8 +4,6 @@ import {
   CloudSvg,
   StoriesSvg,
   SensorySvg,
-  EmotionsSvg,
-  BedtimeSvg,
   ScreentimeSvg,
 } from './svg-components';
 
@@ -22,21 +20,15 @@ export const SVG_PATHS = {
   cloud: 'ui-elements/background-cloud-1.svg',
   stories: 'menu-icons/stories-icon.svg',
   sensory: 'menu-icons/sensory-icon.svg',
-  emotions: 'menu-icons/emotions-icon.svg',
-  bedtime: 'menu-icons/bedtime-icon.svg',
   screentime: 'menu-icons/screentime-icon.svg',
 } as const;
 
 const ICON_SVG_MAP = {
   'stories-icon': 'stories',
   'sensory-icon': 'sensory',
-  'emotions-icon': 'emotions',
-  'bedtime-icon': 'bedtime',
   'screentime-icon': 'screentime',
   'storybook': 'stories',
   'sparkle_hand': 'sensory',
-  'smiley_face': 'emotions',
-  'music_note': 'bedtime',
   'clock': 'screentime',
 } as const;
 
@@ -138,8 +130,6 @@ export const getSvgAsset = (svgType: string) => {
     case 'balloon': return SVG_PATHS.cloud; // Backward compatibility - balloon maps to cloud
     case 'stories': return SVG_PATHS.stories;
     case 'sensory': return SVG_PATHS.sensory;
-    case 'emotions': return SVG_PATHS.emotions;
-    case 'bedtime': return SVG_PATHS.bedtime;
     case 'screentime': return SVG_PATHS.screentime;
     default: return SVG_PATHS.stories;
   }
@@ -158,10 +148,6 @@ export const getSvgComponentFromSvg = (svgType: keyof typeof SVG_PATHS | 'balloo
       return StoriesSvg;
     case 'sensory':
       return SensorySvg;
-    case 'emotions':
-      return EmotionsSvg;
-    case 'bedtime':
-      return BedtimeSvg;
     case 'screentime':
       return ScreentimeSvg;
     default:

@@ -84,8 +84,8 @@ export default {
   },
   menu: {
     stories: 'Fabulae',
-    emotions: 'Affectiones',
-    calming: 'Tranquillans',
+    musicStories: 'Fabulae Musicae',
+    animatedStories: 'Fabulae Animatae',
   },
   accessibility: {
     title: 'Accessibilitas',
@@ -218,218 +218,7 @@ export default {
     wellDone: 'Bene Factum!',
     readAnother: 'Legere Aliam Fabulam',
     rereadStory: 'Iterum Legere Fabulam',
-    bedtimeMusic: 'Musica Temporis Somni',
     backToMenu: 'Redire ad Menu',
-  },
-  emotions: {
-    title: 'Exprime Te Ipsum!',
-    subtitle: 'Elige Stilum Tuum et Disce Affectiones',
-    pickYourStyle: 'Elige Stilum Tuum',
-    howToPlay: 'Quomodo Ludere',
-    howToPlayExpanded: 'Quomodo Ludere▼',
-    howToPlayCollapsed: 'Quomodo Ludere▶',
-    expressWithTheme: 'Exprime {{emotion}} cum {{theme}}!',
-    expressing: 'Exprimam {{emotion}}!',
-    loading: 'Onerans...',
-    progress: 'Progressus: {{completed}}/{{total}}',
-    instructions: {
-      step1: '👀 Vide Affectiones et Responde Simul',
-      step2: '🤪 Fac Facies - Exaggera et Esto Stultus!',
-      step3: '🔄 Imita Invicem et Accipe Vices',
-      step4: '🎭 Celebra Omnem Conatum - Connexio Magis Quam Perfectio Importat',
-    },
-    themes: {
-      emoji: {
-        name: 'Emojis',
-        description: 'Exprime Affectiones cum Iocosis Faciebus Emoji',
-      },
-      animals: {
-        name: 'Animalia',
-        description: 'Disce Affectiones per Dulces Amicos Animales',
-      },
-      bear: {
-        name: 'Ursus',
-        description: 'Disce Affectiones cum Amico Urso',
-      },
-    },
-    emoji: {
-      happy: 'Laetus',
-      sad: 'Tristis',
-      angry: 'Iratus',
-      surprised: 'Admiratus',
-      scared: 'Timidus',
-      excited: 'Excitatus',
-      confused: 'Confusus',
-      proud: 'Superbus',
-      shy: 'Pudibundus',
-      loving: 'Amans',
-    },
-    animals: {
-      happy: 'Laetus Cuniculus',
-      sad: 'Tristis Felis',
-      angry: 'Iratus Canis',
-      surprised: 'Admiratus Gallus',
-      scared: 'Timidus Procyon',
-      excited: 'Excitatus Vulpes',
-      confused: 'Confusus Elephas',
-      proud: 'Superbus Ursus',
-      shy: 'Pudibundus Bradypus',
-      loving: 'Amans Panda',
-    },
-    bear: {
-      happy: 'Laetus Ursus',
-      sad: 'Tristis Ursus',
-      angry: 'Iratus Ursus',
-      surprised: 'Admiratus Ursus',
-      scared: 'Timidus Ursus',
-      excited: 'Excitatus Ursus',
-      confused: 'Confusus Ursus',
-      proud: 'Superbus Ursus',
-      shy: 'Pudibundus Ursus',
-      loving: 'Amans Ursus',
-    },
-    prompts: {
-      happy: [
-        'Ostende Maximam Tuam Risum!',
-        'Potesne Ridere Quasi Aliquid Iocosus Audiveris?',
-        'Fac Laetam Faciem et Plaudite Manibus!',
-        'Ostende Faciem Quam Facis Cum Donum Accipis!',
-      ],
-      sad: [
-        'Ostende Tristem Faciem',
-        'Potesne Os Trahere Quasi Ludibrium Tuum Amisisti?',
-        'Ostende Quomodo Te Sentis Cum Vale Dicere Debeas',
-        'Fac Deceptam Faciem',
-      ],
-      angry: [
-        'Ostende Iratam Faciem',
-        'Potesne Os Trahere Quasi Iratus Sis?',
-        'Ostende Faciem Quam Facis Cum Aliquis Malum Facit et Ludibrium Tuum Praefectum Iacit',
-        'Fac Tractam et Murmurientem Faciem!',
-      ],
-      surprised: [
-        'Ostende Admiratam Faciem!',
-        'Potesne Oculos et Os Aperire?',
-        'Ostende Faciem Quam Facis Cum Aliquid Mirabile Vides!',
-        'Fac Faciem Quasi Spectra Vidisti!',
-      ],
-      scared: [
-        'Ostende Timidam Faciem',
-        'Potesne Te Post Manus Abscondere Quasi Timidus Sis?',
-        'Ostende Quomodo Te Sentis Sub Tempestate',
-        'Fac Faciem Quasi Aliquid Terribile Vidisti!',
-      ],
-      excited: [
-        'Ostende Excitatam Faciem!',
-        'Potesne Saltare Su et Deorsum cum Magno Risu?',
-        'Ostende Faciem Quam Facis Cum Ad Aliquid Iocosus Ire Debeas!',
-        'Fac Excitatam Faciem et Agita Manus!',
-      ],
-      confused: [
-        'Ostende Confusam Faciem',
-        'Potesne Os Trahere Quasi Profunde Cogites?',
-        'Ostende Faciem Quam Facis Cum Aliquid Non Intellegas',
-        'Fac Faciem Quasi Aenigma Solvas!',
-      ],
-      proud: [
-        'Ostende Superbam Faciem!',
-        'Potesne Recte Stare et Ridere Quasi Aliquid Mirabile Feceris?',
-        'Ostende Superbam Faciem Quam Facis Cum Aenigma Solveris!',
-        'Fac Faciem Quasi Aliquem Adiuveris!',
-      ],
-      shy: [
-        'Ostende Pudibundam Faciem',
-        'Potesne Faciem Tuam Paulum Abscondere?',
-        'Ostende Faciem Quam Facis Cum Aliquem Novum Convenias',
-        'Fac Pudibundum Risum et Aspice Deorsum!',
-      ],
-      loving: [
-        'Ostende Amantem Faciem!',
-        'Potesne Te Magnum Amplexum Dare?',
-        'Ostende Faciem Quam Facis Cum Aliquem Quem Amas Aspicis!',
-        'Fac Faciem Quasi Osculum Dares!',
-      ],
-    },
-  },
-  music: {
-    title: 'Tranquillatio',
-    subtitle: 'Elige Numerum ut Ludifices',
-    tantrums: 'Irae Pueriles',
-    tantrumsDescription: 'Musica Tranquillans Utilis in Temporibus Difficilibus',
-    sleep: 'Somnus',
-    sleepDescription: 'Soni Molles ad Somnum Pacificum',
-    unknownArtist: 'Artifex Ignotus',
-    playAll: 'Ludifica Omnia',
-    calmingSession: 'Sessio Tranquillationis in Cursu',
-    playerError: 'Error Ludificatoris Musicae',
-    noTrackSelected: 'Nullus Numerus Electus',
-    chooseASong: 'Elige Numerum ut Ludificatio Incipiat',
-    fromPlaylist: 'Ex {{playlist}}',
-    repeatCount: 'Repete {{current}}/{{total}}',
-    phase: 'Fase {{current}}/{{total}}',
-    play: 'Ludifica',
-    pause: 'Pausa',
-    loading: 'Onerans...',
-    error: 'Error',
-    playing: 'Ludificans',
-    paused: 'Pausatum',
-    idle: 'Inactivum',
-    deepSleepPhase: 'Fase Somni Profundi',
-    relaxationPhase: 'Fase Tranquillationis',
-    comingSoon: 'Mox Veniet',
-    looping: 'Repetens',
-    tags: {
-      calming: 'Tranquillans',
-      bedtime: 'Tempus Somni',
-      stories: 'Fabulae',
-    },
-    tracks: {
-      tantrumAlpha: {
-        title: 'Irae Pueriles Tranquillatio (10Hz)',
-        artist: 'Pulsus Binaurales',
-        description: 'Undae Alfa ad Tranquillationem in Irarum Puerilium. Usa Aures Capitis pro Optimo Effectu.',
-      },
-      sleepAlpha: {
-        title: 'Glide in Somnum (10Hz)',
-        artist: 'Pulsus Binaurales',
-        description: 'Undae Alfa Quae Adiuvant Transitionem ex Vigili ad Somnolentum. Prima Fase Sequentiae Somni.',
-      },
-      sleepTheta: {
-        title: 'Ingressus Somni Profundi (6Hz)',
-        artist: 'Pulsus Binaurales',
-        description: 'Undae Theta ad Somnum Profundum. Secunda Fase Sequentiae Somni.',
-      },
-      sleepSequence: {
-        title: 'Sequentia Somni Completa',
-        artist: 'Pulsus Binaurales',
-        description: 'Progressus Somni Completus: Glide in Somnum → Ingressus Somni Profundi.',
-      },
-      bearsBirthdayParty: {
-        title: 'Festivitas Natalis Ursi',
-        artist: 'Canticum Somni',
-        description: 'Fabula Commota de Urso Qui Festivitatem Natalem Specialem Celebrat.',
-      },
-      damselElephant: {
-        title: 'Domina Elephas',
-        artist: 'Canticum Somni',
-        description: 'Iunge Adventuram Dulcem cum Domina Elephante.',
-      },
-      jimmyMouse: {
-        title: 'Iacobus Mus et Urbanus',
-        artist: 'Canticum Somni',
-        description: 'Mus Parvus Urbem Magnam Detegit.',
-      },
-      newYearJungle: {
-        title: 'Annus Novus in Silva',
-        artist: 'Canticum Somni',
-        description: 'Animalia Silvae Annum Novum Simul Celebrant.',
-      },
-      snowWhite: {
-        title: 'Nix Alba',
-        artist: 'Canticum Somni',
-        description: 'Fabula Classica Nicis Albae - Perfecta ad Tempus Somni.',
-      },
-    },
   },
   screenTime: {
     title: 'Tempus Ostensionis',
@@ -550,10 +339,6 @@ export default {
       readBook: {
         title: 'Legere Librum Interactivum',
         message: 'Tempus est Fabulam Mirabilem Detegere! Elige Librum Tuum Praefectum et Immerge Te.',
-      },
-      emotionCards: {
-        title: 'Fac Cartas Affectionum',
-        message: 'Lasciviam Affectionum Exerceamus! Tempus est Activitatis Cartarum Affectionum.',
       },
       park: {
         title: 'Adi ad Hortum',
@@ -721,10 +506,6 @@ export default {
     welcomeDescription: 'Faciamus Celerem Circumductionem ut Te et Filium Tuum Adiuvemus Tempus Legendi Maxime Uti.',
     storiesTitle: 'Bibliotheca Fabulae 📚',
     storiesDescription: 'Tange Hic ut Collectionem Fabulae Interactivae cum Pulchris Imaginationibus et Iocosis Interactionibus Explores.',
-    emotionsTitle: 'Explorator Affectionum 😊',
-    emotionsDescription: 'Filium Tuum Adiuva Affectiones Discere per Iocosam Ludum Comparationis cum Emojis et Characteribus.',
-    calmingTitle: 'Angulus Tranquillationis 🎵',
-    calmingDescription: 'Accipe Musicam Tranquillam et Sonos Designatos ut Filium Tuum Adiuves in Temporibus Difficilibus et Tempore Somni.',
     skip: 'Praeterire',
     gotIt: 'Intellexi!',
     buttons: {
@@ -747,14 +528,6 @@ export default {
         title: 'Bibliotheca Fabulae 📚',
         description: 'Tange Hic ut Collectionem Fabulae Interactivae cum Pulchris Imaginationibus et Iocosis Interactionibus Explores.',
       },
-      emotions: {
-        title: 'Explorator Affectionum 😊',
-        description: 'Filium Tuum Adiuva Affectiones Discere per Iocosam Ludum Comparationis cum Emojis et Characteribus.',
-      },
-      bedtime: {
-        title: 'Angulus Tranquillationis 🎵',
-        description: 'Accipe Musicam Tranquillam et Sonos Designatos ut Filium Tuum Adiuves in Temporibus Difficilibus et Tempore Somni.',
-      },
       settings: {
         title: 'Constitutiones ⚙️',
         description: 'Customiza Applicationem ut Optima pro Tua Familia Operetur.',
@@ -762,28 +535,6 @@ export default {
       sound: {
         title: 'Moderatio Soni 🔊',
         description: 'Tange Hic ut Musicam Fundalem et Effectus Soni Modereres.',
-      },
-    },
-    emotionCards: {
-      welcome: {
-        title: 'Salve in Cartas Affectionum! 🎭',
-        description: 'Filium Tuum Adiuva Affectiones Recognoscere et Exprimere per Cartas Interactivas et Iocosas.',
-      },
-      together: {
-        title: 'Luda Simul 👨‍👩‍👧',
-        description: 'Sede cum Filio Tuo et Cartas Vices Vertite. Facies Simul Fac - Magis Iocosus Est!',
-      },
-      connect: {
-        title: 'Connexionem Fac 💬',
-        description: 'Quaestiones Sicut "Quando Te Sic Sensisti?" Pone ut Filium Tuum Affectiones Intellegere Adiuves.',
-      },
-      scenarios: {
-        title: 'Scenaria Fac 🎭',
-        description: 'Situationes Luda Quae Unumquodque Affectionem Possunt Excitare. "Quomodo Te Sensisse Si Ludibrium Tuum Fractum Esset?"',
-      },
-      themes: {
-        title: 'Varia Themata Proba 🎨',
-        description: 'Inter Emojis, Animalia et Themata Ursi Varia. Res Recentes et Interessantes Tene!',
       },
     },
     screenTime: {
@@ -948,71 +699,6 @@ export default {
         description: 'Trahe Sinistram vel Dextram ut Paginas Celeriter Vertas.',
       },
     },
-    music: {
-      welcome: {
-        title: 'Salve in Sonos Tranquillationis 🎵',
-        description: 'Hoc Sectio Speciale cum Sono Designata Est ut Filium Tuum Adiuvet Tranquillari, Dormire vel Tranquillari in Temporibus Difficilibus.',
-      },
-      binaural: {
-        title: 'Scientia Soni 🧠',
-        description: 'Nostri Numeri Pulsus Binaurales Usant - Subtiles Frequentiae Soni Quae Cerebrum ad Statum Tranquilliorem Ducere Adiuvant.',
-      },
-      headphones: {
-        title: 'Aures Capitis Usa 🎧',
-        description: 'Aures Capitis Usa Commendamus ut Pulsus Binaurales Efficaciter Operentur. Diversae Frequentiae in Unoquoque Aure Effectum Tranquillationis Creant.',
-      },
-      tantrum: {
-        title: 'In Irarum Puerilium 😢',
-        description: 'Hi Soni in Temporibus Difficilibus Adiuvare Possunt. Te Tranquilla et Musicam Suam Magiam Facere Sinite.',
-      },
-      sleep: {
-        title: 'Scientia Somni 💤',
-        description: 'Nostri Numeri Somni Exempla Undae Cerebri Gradatim Tardant, Filium Tuum Naturaliter Dormire Adiuvando.',
-      },
-      routine: {
-        title: 'Routinam Aedifica 🌙',
-        description: 'Eundem Sonum Tranquillum Unaquaque Nocte Ludificare Proba Ut Pars Consuetudinis Temporis Somni Tui.',
-      },
-      stories: {
-        title: 'Fabulae Etiam! 📖',
-        description: 'Sectionem Fabulae Temporis Somni Legendi Ne Obliviscaris!',
-      },
-    },
-  },
-  musicTips: {
-    next: 'Sequens',
-    go: 'Adi!',
-    letsGo: 'Eamus!',
-    skip: 'Praeterire',
-    skipAll: 'Omnia Praeterire',
-    music_welcome: {
-      title: 'Salve in Sonos Tranquillationis 🎵',
-      description: 'Hoc Sectio Speciale cum Sono Designata Est ut Filium Tuum Adiuvet Tranquillari, Dormire vel Tranquillari in Temporibus Difficilibus.',
-    },
-    binaural_science: {
-      title: 'Scientia Soni 🧠',
-      description: 'Nostri Numeri Pulsus Binaurales Usant - Subtiles Frequentiae Soni Quae Cerebrum ad Statum Tranquilliorem Ducere Adiuvant. Investigatio Ostendit Haec Anxietatem Reducere et Tranquillationem Promovere Possunt in Pueris et Adultis.',
-    },
-    headphones_tip: {
-      title: 'Aures Capitis Usa 🎧',
-      description: 'Aures Capitis Usa Commendamus ut Pulsus Binaurales Efficaciter Operentur. Diversae Frequentiae in Unoquoque Aure Effectum Tranquillationis Creant. Etiam Sine Auribus Capitis, Filius Tuus Musicam Tranquillam Beneficio Habere Poterit!',
-    },
-    tantrum_tip: {
-      title: 'In Irarum Puerilium 😤',
-      description: 'Cum Affectiones Explodunt, Numerum Tranquillationis Irarum Puerilium Ludificare Proba. Frequentiae Molles Nervum Filii Tui Systemam Regulare et Celerius ad Statum Tranquilliorem Redire Adiuvare Possunt.',
-    },
-    sleep_science: {
-      title: 'Somnus Melior 🌙',
-      description: 'Nostri Numeri Somni Frequentias Delta (0,5-4 Hz) Usant. Hae Naturaliter Sub Somno Profundo Occurrunt. Cum Filius Tuus Dormit, Ludificatio Eorum Celerius Dormire et Profundius Dormire Adiuvare Potest.',
-    },
-    sleep_routine: {
-      title: 'Routinam Aedifica 💤',
-      description: 'Eundem Sonum Tranquillum Unaquaque Nocte Ludificare Proba Ut Pars Consuetudinis Temporis Somni Tui. Tempore, Cerebrum Filii Tui Sonum cum Somno Associabit, Tempus Somni Facilius Faciendo.',
-    },
-    music_stories: {
-      title: 'Fabulae Etiam! 📖',
-      description: 'Sectionem Fabulae Ne Obliviscaris! Legendum Simul Vocabularium, Imaginationem et Connexionem Parentum-Puerorum Pretiosam Aedificat. Tuam Vocem Recordare ut Filius Tuus Te Audire Possit Etiam Cum Absis.',
-    },
   },
   parentsOnly: {
     title: 'Solum Parentibus',
@@ -1056,14 +742,6 @@ export default {
     sensory: {
       message: 'Sentire et Explorare!',
       subtitle: 'Tange, Vide, Audi et Mundum Circa Te per Tuos Sensus Detege.',
-    },
-    emotions: {
-      message: 'Affectiones Laetae!',
-      subtitle: 'Affectiones Disce et Modos Sanos Tuorum Affectionum Exprimendi Detege.',
-    },
-    bedtime: {
-      message: 'Somnia Dulcia!',
-      subtitle: 'Melodiae Dulces et Soni Tranquilli ut Te Dormire Adiuvent.',
     },
     screenTime: {
       message: 'Tempus Ludi!',

@@ -189,7 +189,7 @@ interface VerticalPageTransitionProps {
  * MultiPageTransition provides vertical scroll transitions between multiple pages
  * Extends the stories transition pattern to all navigation destinations
  */
-type PageKey = 'main' | 'stories' | 'sensory' | 'emotions' | 'bedtime' | 'screen_time' | 'settings';
+type PageKey = 'main' | 'stories' | 'sensory' | 'screen_time' | 'settings';
 
 interface MultiPageTransitionProps {
   currentPage: PageKey;
@@ -262,8 +262,6 @@ export const MultiPageTransition: React.FC<MultiPageTransitionProps> = ({
     main: useSharedValue(currentPage === 'main' ? 0 : -SCREEN_HEIGHT),
     stories: useSharedValue(currentPage === 'stories' ? 0 : SCREEN_HEIGHT),
     sensory: useSharedValue(currentPage === 'sensory' ? 0 : SCREEN_HEIGHT),
-    emotions: useSharedValue(currentPage === 'emotions' ? 0 : SCREEN_HEIGHT),
-    bedtime: useSharedValue(currentPage === 'bedtime' ? 0 : SCREEN_HEIGHT),
     screen_time: useSharedValue(currentPage === 'screen_time' ? 0 : SCREEN_HEIGHT),
     settings: useSharedValue(currentPage === 'settings' ? 0 : SCREEN_HEIGHT),
   };

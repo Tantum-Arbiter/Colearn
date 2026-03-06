@@ -84,8 +84,8 @@ export default {
   },
   menu: {
     stories: '故事',
-    emotions: '情感',
-    calming: '放松',
+    musicStories: '音乐故事',
+    animatedStories: '动画故事',
   },
   accessibility: {
     title: '无障碍',
@@ -218,218 +218,7 @@ export default {
     wellDone: '做得很好！',
     readAnother: '阅读另一个故事',
     rereadStory: '重新阅读故事',
-    bedtimeMusic: '睡前音乐',
     backToMenu: '返回菜单',
-  },
-  emotions: {
-    title: '表达自己！',
-    subtitle: '选择您的风格并学习情感',
-    pickYourStyle: '选择您的风格',
-    howToPlay: '如何玩',
-    howToPlayExpanded: '如何玩▼',
-    howToPlayCollapsed: '如何玩▶',
-    expressWithTheme: '用{{theme}}表达{{emotion}}！',
-    expressing: '我在表达{{emotion}}！',
-    loading: '加载中...',
-    progress: '进度：{{completed}}/{{total}}',
-    instructions: {
-      step1: '👀 看情感并一起回应',
-      step2: '🤪 做鬼脸 - 夸大其词并变得傻',
-      step3: '🔄 互相模仿并轮流',
-      step4: '🎭 庆祝每一次尝试 - 连接比完美更重要',
-    },
-    themes: {
-      emoji: {
-        name: '表情符号',
-        description: '用有趣的表情符号脸表达情感',
-      },
-      animals: {
-        name: '动物',
-        description: '通过可爱的动物朋友学习情感',
-      },
-      bear: {
-        name: '熊',
-        description: '与友好的熊学习情感',
-      },
-    },
-    emoji: {
-      happy: '开心',
-      sad: '伤心',
-      angry: '生气',
-      surprised: '惊讶',
-      scared: '害怕',
-      excited: '兴奋',
-      confused: '困惑',
-      proud: '骄傲',
-      shy: '害羞',
-      loving: '充满爱',
-    },
-    animals: {
-      happy: '开心的兔子',
-      sad: '伤心的猫',
-      angry: '生气的狗',
-      surprised: '惊讶的鸡',
-      scared: '害怕的浣熊',
-      excited: '兴奋的狐狸',
-      confused: '困惑的大象',
-      proud: '骄傲的熊',
-      shy: '害羞的树懒',
-      loving: '充满爱的熊猫',
-    },
-    bear: {
-      happy: '开心的熊',
-      sad: '伤心的熊',
-      angry: '生气的熊',
-      surprised: '惊讶的熊',
-      scared: '害怕的熊',
-      excited: '兴奋的熊',
-      confused: '困惑的熊',
-      proud: '骄傲的熊',
-      shy: '害羞的熊',
-      loving: '充满爱的熊',
-    },
-    prompts: {
-      happy: [
-        '展示你最大的笑容！',
-        '你能像听到有趣的东西一样笑吗？',
-        '做一个开心的脸并拍手！',
-        '展示你收到礼物时的脸！',
-      ],
-      sad: [
-        '展示伤心的脸',
-        '你能像失去玩具一样撅嘴吗？',
-        '展示你必须说再见时的感受',
-        '做一个失望的脸',
-      ],
-      angry: [
-        '展示生气的脸',
-        '你能像生气一样撅嘴吗？',
-        '展示当有人做坏事并扔掉你最喜欢的玩具时的脸',
-        '做一个紧绷和嘟囔的脸！',
-      ],
-      surprised: [
-        '展示惊讶的脸！',
-        '你能睁大眼睛和嘴巴吗？',
-        '展示你看到令人惊奇的东西时的脸！',
-        '做一个像看到幽灵一样的脸！',
-      ],
-      scared: [
-        '展示害怕的脸',
-        '你能像害怕一样躲在手后面吗？',
-        '展示你在暴风雨中的感受',
-        '做一个像看到可怕东西一样的脸！',
-      ],
-      excited: [
-        '展示兴奋的脸！',
-        '你能跳上跳下并带着大笑容吗？',
-        '展示你要去做有趣的事情时的脸！',
-        '做一个兴奋的脸并挥动你的手！',
-      ],
-      confused: [
-        '展示困惑的脸',
-        '你能像深思熟虑一样撅嘴吗？',
-        '展示你不理解某事时的脸',
-        '做一个像在解谜一样的脸！',
-      ],
-      proud: [
-        '展示骄傲的脸！',
-        '你能挺直身体并像做了令人惊奇的事情一样微笑吗？',
-        '展示你解开谜题时的骄傲脸！',
-        '做一个像帮助了某人一样的脸！',
-      ],
-      shy: [
-        '展示害羞的脸',
-        '你能把脸藏一点吗？',
-        '展示你遇到新人时的脸',
-        '做一个害羞的笑容并向下看！',
-      ],
-      loving: [
-        '展示充满爱的脸！',
-        '你能给自己一个大拥抱吗？',
-        '展示你看着你爱的人时的脸！',
-        '做一个像在亲吻一样的脸！',
-      ],
-    },
-  },
-  music: {
-    title: '放松',
-    subtitle: '选择一首歌曲进行播放',
-    tantrums: '发脾气',
-    tantrumsDescription: '有用的舒缓音乐在困难时刻',
-    sleep: '睡眠',
-    sleepDescription: '温和的声音促进安宁睡眠',
-    unknownArtist: '未知艺术家',
-    playAll: '全部播放',
-    calmingSession: '放松课程进行中',
-    playerError: '音乐播放器错误',
-    noTrackSelected: '未选择曲目',
-    chooseASong: '选择一首歌曲开始播放',
-    fromPlaylist: '来自{{playlist}}',
-    repeatCount: '重复{{current}}/{{total}}',
-    phase: '阶段{{current}}/{{total}}',
-    play: '播放',
-    pause: '暂停',
-    loading: '加载中...',
-    error: '错误',
-    playing: '正在播放',
-    paused: '已暂停',
-    idle: '空闲',
-    deepSleepPhase: '深度睡眠阶段',
-    relaxationPhase: '放松阶段',
-    comingSoon: '即将推出',
-    looping: '循环',
-    tags: {
-      calming: '舒缓',
-      bedtime: '睡前',
-      stories: '故事',
-    },
-    tracks: {
-      tantrumAlpha: {
-        title: '发脾气舒缓（10Hz）',
-        artist: '双耳节拍',
-        description: '用于在发脾气时舒缓的阿尔法波。使用耳机以获得最佳效果。',
-      },
-      sleepAlpha: {
-        title: '滑入睡眠（10Hz）',
-        artist: '双耳节拍',
-        description: '帮助从清醒过渡到困倦的阿尔法波。睡眠序列的第一阶段。',
-      },
-      sleepTheta: {
-        title: '进入深度睡眠（6Hz）',
-        artist: '双耳节拍',
-        description: '用于加深睡眠的θ波。睡眠序列的第二阶段。',
-      },
-      sleepSequence: {
-        title: '完整睡眠序列',
-        artist: '双耳节拍',
-        description: '完整睡眠进程：滑入睡眠→进入深度睡眠。',
-      },
-      bearsBirthdayParty: {
-        title: '熊的生日派对',
-        artist: '摇篮曲',
-        description: '一个关于熊庆祝特殊生日的感人故事。',
-      },
-      damselElephant: {
-        title: '象小姐',
-        artist: '摇篮曲',
-        description: '加入象小姐的甜蜜冒险。',
-      },
-      jimmyMouse: {
-        title: '吉米鼠和城市人',
-        artist: '摇篮曲',
-        description: '一只小老鼠发现了一座大城市。',
-      },
-      newYearJungle: {
-        title: '丛林中的新年',
-        artist: '摇篮曲',
-        description: '丛林动物一起庆祝新年。',
-      },
-      snowWhite: {
-        title: '白雪公主',
-        artist: '摇篮曲',
-        description: '白雪公主的经典故事 - 完美的睡前故事。',
-      },
-    },
   },
   screenTime: {
     title: '屏幕时间',
@@ -550,10 +339,6 @@ export default {
       readBook: {
         title: '阅读互动书籍',
         message: '是时候发现一个精彩的故事了！选择您最喜欢的书籍并沉浸其中。',
-      },
-      emotionCards: {
-        title: '制作情感卡',
-        message: '让我们练习情感识别！是时候进行情感卡活动了。',
       },
       park: {
         title: '去公园',
@@ -721,10 +506,6 @@ export default {
     welcomeDescription: '让我们进行快速导览，帮助您和孩子充分利用阅读时间。',
     storiesTitle: '故事库 📚',
     storiesDescription: '点击此处探索包含精美插图和有趣互动的互动故事集合。',
-    emotionsTitle: '情感探险家 😊',
-    emotionsDescription: '通过带有表情符号和角色的有趣匹配游戏帮助孩子学习情感。',
-    calmingTitle: '放松角 🎵',
-    calmingDescription: '获取旨在帮助孩子在困难时刻和睡前放松的舒缓音乐和声音。',
     skip: '跳过',
     gotIt: '明白了！',
     buttons: {
@@ -747,14 +528,6 @@ export default {
         title: '故事库 📚',
         description: '点击此处探索包含精美插图和有趣互动的互动故事集合。',
       },
-      emotions: {
-        title: '情感探险家 😊',
-        description: '通过带有表情符号和角色的有趣匹配游戏帮助孩子学习情感。',
-      },
-      bedtime: {
-        title: '放松角 🎵',
-        description: '获取旨在帮助孩子在困难时刻和睡前放松的舒缓音乐和声音。',
-      },
       settings: {
         title: '设置 ⚙️',
         description: '自定义应用以最适合您的家庭。',
@@ -762,28 +535,6 @@ export default {
       sound: {
         title: '声音控制 🔊',
         description: '点击此处管理背景音乐和音效。',
-      },
-    },
-    emotionCards: {
-      welcome: {
-        title: '欢迎来到情感卡! 🎭',
-        description: '通过互动和有趣的卡帮助孩子识别和表达情感。',
-      },
-      together: {
-        title: '一起玩 👨‍👩‍👧',
-        description: '与孩子坐在一起并轮流翻卡。一起做鬼脸 - 更有趣！',
-      },
-      connect: {
-        title: '建立联系 💬',
-        description: '提出"你什么时候感到这样？"之类的问题来帮助孩子理解情感。',
-      },
-      scenarios: {
-        title: '创建场景 🎭',
-        description: '表演可能触发每种情感的情况。"如果你的玩具坏了你会怎样感受？"',
-      },
-      themes: {
-        title: '尝试不同的主题 🎨',
-        description: '在表情符号、动物和熊主题之间切换以保持新鲜和有趣！',
       },
     },
     screenTime: {
@@ -948,71 +699,6 @@ export default {
         description: '向左或向右滑动以快速翻页。',
       },
     },
-    music: {
-      welcome: {
-        title: '欢迎来到放松声音 🎵',
-        description: '此部分专门设计有声音，以帮助孩子在困难时刻和睡前放松、睡眠或平静。',
-      },
-      binaural: {
-        title: '声音科学 🧠',
-        description: '我们的曲目使用双耳节拍 - 微妙的声音频率，帮助引导大脑进入更平静的状态。',
-      },
-      headphones: {
-        title: '使用耳机 🎧',
-        description: '我们建议使用耳机以使双耳节拍有效工作。每只耳朵中的不同频率会产生平静效果。',
-      },
-      tantrum: {
-        title: '在发脾气期间 😢',
-        description: '这些声音可以在困难时刻帮助。平静自己并让音乐发挥其魔力。',
-      },
-      sleep: {
-        title: '睡眠科学 💤',
-        description: '我们的睡眠曲目逐渐减缓脑波模式，帮助孩子自然入睡。',
-      },
-      routine: {
-        title: '建立常规 🌙',
-        description: '尝试每晚播放相同的舒缓声音作为睡前常规的一部分。',
-      },
-      stories: {
-        title: '故事也是！ 📖',
-        description: '别忘了睡前阅读的故事部分！',
-      },
-    },
-  },
-  musicTips: {
-    next: '下一个',
-    go: '去！',
-    letsGo: '让我们去！',
-    skip: '跳过',
-    skipAll: '全部跳过',
-    music_welcome: {
-      title: '欢迎来到放松声音 🎵',
-      description: '此部分专门设计有声音，以帮助孩子在困难时刻和睡前放松、睡眠或平静。',
-    },
-    binaural_science: {
-      title: '声音科学 🧠',
-      description: '我们的曲目使用双耳节拍 - 微妙的声音频率，帮助引导大脑进入更平静的状态。研究表明这些可以减少焦虑并促进儿童和成人的放松。',
-    },
-    headphones_tip: {
-      title: '使用耳机 🎧',
-      description: '我们建议使用耳机以使双耳节拍有效工作。每只耳朵中的不同频率会产生平静效果。即使没有耳机，孩子也会从舒缓的音乐中受益！',
-    },
-    tantrum_tip: {
-      title: '在发脾气期间 😤',
-      description: '当情绪爆发时，尝试播放发脾气平静曲目。温和的频率可以帮助孩子的神经系统调节并更快地回到更平静的状态。',
-    },
-    sleep_science: {
-      title: '更好的睡眠 🌙',
-      description: '我们的睡眠曲目使用δ频率（0.5-4 Hz）。这些在深度睡眠期间自然发生。当孩子睡觉时，播放它们可以帮助更快入睡并睡得更深。',
-    },
-    sleep_routine: {
-      title: '建立常规 💤',
-      description: '尝试每晚播放相同的舒缓声音作为睡前常规的一部分。随着时间的推移，孩子的大脑会将声音与睡眠联系起来，使睡前时间更容易。',
-    },
-    music_stories: {
-      title: '故事也是！ 📖',
-      description: '别忘了故事部分！一起阅读可以建立词汇、想象力和宝贵的亲子联系。录制您的声音，以便孩子即使您不在也能听到您。',
-    },
   },
   parentsOnly: {
     title: '仅限家长',
@@ -1056,14 +742,6 @@ export default {
     sensory: {
       message: '感受和探索！',
       subtitle: '通过你的感官触摸、看、听和发现你周围的世界。',
-    },
-    emotions: {
-      message: '快乐的情感！',
-      subtitle: '学习情感并发现表达你的感受的健康方式。',
-    },
-    bedtime: {
-      message: '甜蜜的梦！',
-      subtitle: '甜蜜的旋律和舒缓的声音帮助你入睡。',
     },
     screenTime: {
       message: '游戏时间！',

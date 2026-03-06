@@ -84,8 +84,8 @@ export default {
   },
   menu: {
     stories: 'Verhalen',
-    emotions: 'Emoties',
-    calming: 'Kalmering',
+    musicStories: 'Muziekverhalen',
+    animatedStories: 'Animatieverhalen',
   },
   accessibility: {
     title: 'Toegankelijkheid',
@@ -218,218 +218,7 @@ export default {
     wellDone: 'Goed Gedaan!',
     readAnother: 'Lees Ander Verhaal',
     rereadStory: 'Lees Verhaal Opnieuw',
-    bedtimeMusic: 'Slaaptijdmuziek',
     backToMenu: 'Terug naar Menu',
-  },
-  emotions: {
-    title: 'Druk jezelf uit!',
-    subtitle: 'Kies je stijl en leer emoties',
-    pickYourStyle: 'Kies Je Stijl',
-    howToPlay: 'Hoe te Spelen',
-    howToPlayExpanded: 'Hoe te Spelen▼',
-    howToPlayCollapsed: 'Hoe te Spelen▶',
-    expressWithTheme: 'Druk {{emotion}} uit met {{theme}}!',
-    expressing: 'Ik druk {{emotion}} uit!',
-    loading: 'Laden...',
-    progress: 'Voortgang: {{completed}}/{{total}}',
-    instructions: {
-      step1: '👀 Zie emoties en reageer samen',
-      step2: '🤪 Maak gezichten - overdrijf en wees gek!',
-      step3: '🔄 Imiteer elkaar en neem beurten',
-      step4: '🎭 Vier elke poging - verbinding is belangrijker dan perfectie',
-    },
-    themes: {
-      emoji: {
-        name: 'Emoji\'s',
-        description: 'Druk emoties uit met grappige emoji-gezichten',
-      },
-      animals: {
-        name: 'Dieren',
-        description: 'Leer emoties via schattige dierenvrienden',
-      },
-      bear: {
-        name: 'Beer',
-        description: 'Leer emoties met een vriendelijke beer',
-      },
-    },
-    emoji: {
-      happy: 'Blij',
-      sad: 'Verdrietig',
-      angry: 'Boos',
-      surprised: 'Verrast',
-      scared: 'Bang',
-      excited: 'Opgewonden',
-      confused: 'Verward',
-      proud: 'Trots',
-      shy: 'Verlegen',
-      loving: 'Liefdevol',
-    },
-    animals: {
-      happy: 'Blij Konijn',
-      sad: 'Verdrietige Kat',
-      angry: 'Boze Hond',
-      surprised: 'Verraste Kuiken',
-      scared: 'Bange Wasbeer',
-      excited: 'Opgewonden Vos',
-      confused: 'Verwarde Olifant',
-      proud: 'Trotse Beer',
-      shy: 'Verlegen Luiaard',
-      loving: 'Liefdeloze Panda',
-    },
-    bear: {
-      happy: 'Blije Beer',
-      sad: 'Verdrietige Beer',
-      angry: 'Boze Beer',
-      surprised: 'Verraste Beer',
-      scared: 'Bange Beer',
-      excited: 'Opgewonden Beer',
-      confused: 'Verwarde Beer',
-      proud: 'Trotse Beer',
-      shy: 'Verlegen Beer',
-      loving: 'Liefdeloze Beer',
-    },
-    prompts: {
-      happy: [
-        'Toon je grootste glimlach!',
-        'Kun je lachen alsof je iets grappigs hebt gehoord?',
-        'Maak een blij gezicht en klap in je handen!',
-        'Toon het gezicht dat je maakt als je een cadeau krijgt!',
-      ],
-      sad: [
-        'Toon een verdrietig gezicht',
-        'Kun je pruilen alsof je je speelgoed bent kwijtgeraakt?',
-        'Toon hoe je je voelt als je afscheid moet nemen',
-        'Maak een teleurgesteld gezicht',
-      ],
-      angry: [
-        'Toon een boos gezicht',
-        'Kun je pruilen alsof je boos bent?',
-        'Toon het gezicht dat je maakt als iemand iets gemeens doet en je favoriete speelgoed weggooit',
-        'Maak een pruil- en bromgezicht!',
-      ],
-      surprised: [
-        'Toon een verrast gezicht!',
-        'Kun je je ogen en mond openmaken?',
-        'Toon het gezicht dat je maakt als je iets geweldigs ziet!',
-        'Maak een gezicht alsof je een spook hebt gezien!',
-      ],
-      scared: [
-        'Toon een bang gezicht',
-        'Kun je je achter je handen verstoppen alsof je bang bent?',
-        'Toon hoe je je voelt tijdens een storm',
-        'Maak een gezicht alsof je iets enge hebt gezien!',
-      ],
-      excited: [
-        'Toon een opgewonden gezicht!',
-        'Kun je met een grote glimlach op en neer springen?',
-        'Toon het gezicht dat je maakt als je naar iets leuks gaat!',
-        'Maak een opgewonden gezicht en zwaai met je handen!',
-      ],
-      confused: [
-        'Toon een verward gezicht',
-        'Kun je pruilen alsof je diep nadenkt?',
-        'Toon het gezicht dat je maakt als je iets niet begrijpt',
-        'Maak een gezicht alsof je een puzzel oplost!',
-      ],
-      proud: [
-        'Toon een trots gezicht!',
-        'Kun je rechtop staan en glimlachen alsof je iets geweldigs hebt gedaan?',
-        'Toon het trotse gezicht dat je maakt als je een puzzel hebt opgelost!',
-        'Maak een gezicht alsof je iemand hebt geholpen!',
-      ],
-      shy: [
-        'Toon een verlegen gezicht',
-        'Kun je je gezicht een beetje verbergen?',
-        'Toon het gezicht dat je maakt als je iemand nieuws ontmoet',
-        'Maak een verlegen glimlach en kijk omlaag!',
-      ],
-      loving: [
-        'Toon een liefdevol gezicht!',
-        'Kun je jezelf een grote knuffel geven?',
-        'Toon het gezicht dat je maakt als je naar iemand van wie je houdt kijkt!',
-        'Maak een gezicht alsof je een kus geeft!',
-      ],
-    },
-  },
-  music: {
-    title: 'Ontspanning',
-    subtitle: 'Kies een nummer om af te spelen',
-    tantrums: 'Driftbuien',
-    tantrumsDescription: 'Kalmerende muziek die nuttig is tijdens moeilijke momenten',
-    sleep: 'Slaap',
-    sleepDescription: 'Zachte geluiden voor vredige slaap',
-    unknownArtist: 'Onbekende Artiest',
-    playAll: 'Alles Afspelen',
-    calmingSession: 'Ontspanningssessie Bezig',
-    playerError: 'Muziekspeler Fout',
-    noTrackSelected: 'Geen Nummer Geselecteerd',
-    chooseASong: 'Kies een nummer om af te spelen',
-    fromPlaylist: 'Van {{playlist}}',
-    repeatCount: 'Herhaal {{current}}/{{total}}',
-    phase: 'Fase {{current}}/{{total}}',
-    play: 'Afspelen',
-    pause: 'Pauze',
-    loading: 'Laden...',
-    error: 'Fout',
-    playing: 'Afspelen',
-    paused: 'Gepauzeerd',
-    idle: 'Inactief',
-    deepSleepPhase: 'Diepe Slaapfase',
-    relaxationPhase: 'Ontspanningsfase',
-    comingSoon: 'Binnenkort',
-    looping: 'Herhalen',
-    tags: {
-      calming: 'Kalmering',
-      bedtime: 'Slaaptijd',
-      stories: 'Verhalen',
-    },
-    tracks: {
-      tantrumAlpha: {
-        title: 'Driftbui Kalmering (10Hz)',
-        artist: 'Binaurale Beats',
-        description: 'Alfagolven voor kalmering tijdens driftbuien. Gebruik koptelefoon voor beste resultaten.',
-      },
-      sleepAlpha: {
-        title: 'Afdrijven naar Slaap (10Hz)',
-        artist: 'Binaurale Beats',
-        description: 'Alfagolven die helpen bij de overgang van wakker naar slaperig. Eerste fase van slaapvolgorde.',
-      },
-      sleepTheta: {
-        title: 'Ingang Diepe Slaap (6Hz)',
-        artist: 'Binaurale Beats',
-        description: 'Thetagolven om slaap te verdiepen. Tweede fase van slaapvolgorde.',
-      },
-      sleepSequence: {
-        title: 'Volledige Slaapvolgorde',
-        artist: 'Binaurale Beats',
-        description: 'Volledige slaapvoortgang: Afdrijven naar Slaap → Ingang Diepe Slaap.',
-      },
-      bearsBirthdayParty: {
-        title: 'Verjaardagsfeest van de Beer',
-        artist: 'Slaapliedje',
-        description: 'Een ontroerend verhaal over een beer die een speciaal verjaardagsfeest viert.',
-      },
-      damselElephant: {
-        title: 'Juffrouw Olifant',
-        artist: 'Slaapliedje',
-        description: 'Sluit je aan bij een zoet avontuur met Juffrouw Olifant.',
-      },
-      jimmyMouse: {
-        title: 'Jimmy Muis en de Stadsman',
-        artist: 'Slaapliedje',
-        description: 'Een kleine muis ontdekt een grote stad.',
-      },
-      newYearJungle: {
-        title: 'Nieuwjaar in de Jungle',
-        artist: 'Slaapliedje',
-        description: 'Junglediertjes vieren samen Nieuwjaar.',
-      },
-      snowWhite: {
-        title: 'Sneeuwwitje',
-        artist: 'Slaapliedje',
-        description: 'Het klassieke verhaal van Sneeuwwitje - perfect voor slaaptijd.',
-      },
-    },
   },
   screenTime: {
     title: 'Schermtijd',
@@ -550,10 +339,6 @@ export default {
       readBook: {
         title: 'Lees Interactief Boek',
         message: 'Tijd om een geweldig verhaal te ontdekken! Kies je favoriete boek en dompel jezelf onder.',
-      },
-      emotionCards: {
-        title: 'Maak Emotikaarten',
-        message: 'Laten we emotieherkenning oefenen! Tijd voor emotikaarten activiteit.',
       },
       park: {
         title: 'Ga naar Park',
@@ -721,10 +506,6 @@ export default {
     welcomeDescription: 'Laten we een snelle rondleiding doen om jou en je kind te helpen het meeste uit leestijd te halen.',
     storiesTitle: 'Verhalenbibliotheek 📚',
     storiesDescription: 'Tik hier om een verzameling interactieve verhalen met mooie illustraties en leuke interacties te verkennen.',
-    emotionsTitle: 'Emotieverkenner 😊',
-    emotionsDescription: 'Help je kind emoties leren door een leuk matchingspel met emoji\'s en karakters.',
-    calmingTitle: 'Ontspanningshoek 🎵',
-    calmingDescription: 'Krijg toegang tot kalmerende muziek en geluiden ontworpen om je kind te helpen tijdens moeilijke momenten en slaaptijd.',
     skip: 'Overslaan',
     gotIt: 'Begrepen!',
     buttons: {
@@ -747,14 +528,6 @@ export default {
         title: 'Verhalenbibliotheek 📚',
         description: 'Tik hier om een verzameling interactieve verhalen met mooie illustraties en leuke interacties te verkennen.',
       },
-      emotions: {
-        title: 'Emotieverkenner 😊',
-        description: 'Help je kind emoties leren door een leuk matchingspel met emoji\'s en karakters.',
-      },
-      bedtime: {
-        title: 'Ontspanningshoek 🎵',
-        description: 'Krijg toegang tot kalmerende muziek en geluiden ontworpen om je kind te helpen tijdens moeilijke momenten en slaaptijd.',
-      },
       settings: {
         title: 'Instellingen ⚙️',
         description: 'Pas de app aan zodat deze het beste voor je gezin werkt.',
@@ -762,28 +535,6 @@ export default {
       sound: {
         title: 'Geluidsbediening 🔊',
         description: 'Tik hier om achtergrondmuziek en geluidseffecten te beheren.',
-      },
-    },
-    emotionCards: {
-      welcome: {
-        title: 'Welkom bij Emotikaarten! 🎭',
-        description: 'Help je kind emoties herkennen en uitdrukken door interactieve en leuke kaarten.',
-      },
-      together: {
-        title: 'Speel Samen 👨‍👩‍👧',
-        description: 'Zit bij je kind en draai om beurten kaarten. Maak samen gezichten - het is meer plezier!',
-      },
-      connect: {
-        title: 'Maak Verbinding 💬',
-        description: 'Stel vragen zoals "Wanneer voelde je je zo?" om je kind te helpen emoties te begrijpen.',
-      },
-      scenarios: {
-        title: 'Maak Scenario\'s 🎭',
-        description: 'Speel situaties na die elke emotie kunnen triggeren. "Hoe zou je je voelen als je speelgoed brak?"',
-      },
-      themes: {
-        title: 'Probeer Verschillende Thema\'s 🎨',
-        description: 'Wissel tussen emoji\'s, dieren en beer thema\'s om dingen vers en interessant te houden!',
       },
     },
     screenTime: {
@@ -948,71 +699,6 @@ export default {
         description: 'Veeg naar links of rechts om pagina\'s snel om te draaien.',
       },
     },
-    music: {
-      welcome: {
-        title: 'Welkom bij Ontspanningsgeluiden 🎵',
-        description: 'Deze sectie is speciaal ontworpen met geluid om je kind te helpen ontspannen, slapen of kalmeren tijdens moeilijke momenten.',
-      },
-      binaural: {
-        title: 'Geluidswetenschappen 🧠',
-        description: 'Onze nummers gebruiken binaurale beats - subtiele geluidsfrequenties die helpen de hersenen naar een kalmer staat te leiden.',
-      },
-      headphones: {
-        title: 'Gebruik Koptelefoon 🎧',
-        description: 'We raden aan koptelefoon te gebruiken zodat binaurale beats effectief werken. Verschillende frequenties in elk oor creëren het kalmeringseffect.',
-      },
-      tantrum: {
-        title: 'Tijdens Driftbui 😢',
-        description: 'Deze geluiden kunnen helpen tijdens moeilijke momenten. Kalmeer jezelf en laat de muziek zijn magie doen.',
-      },
-      sleep: {
-        title: 'Slaapwetenschappen 💤',
-        description: 'Onze slaapnummers vertragen hersengoflf patronen geleidelijk, wat je kind helpt natuurlijk in slaap te vallen.',
-      },
-      routine: {
-        title: 'Bouw Routine op 🌙',
-        description: 'Probeer elke nacht hetzelfde kalmerende geluid af te spelen als onderdeel van je slaaptijdroutine.',
-      },
-      stories: {
-        title: 'Verhalen ook! 📖',
-        description: 'Vergeet niet de verhalensectie voor slaaptijdlezen!',
-      },
-    },
-  },
-  musicTips: {
-    next: 'Volgende',
-    go: 'Gaan!',
-    letsGo: 'Laten we Gaan!',
-    skip: 'Overslaan',
-    skipAll: 'Alles Overslaan',
-    music_welcome: {
-      title: 'Welkom bij Ontspanningsgeluiden 🎵',
-      description: 'Deze sectie is speciaal ontworpen met geluid om je kind te helpen ontspannen, slapen of kalmeren tijdens moeilijke momenten.',
-    },
-    binaural_science: {
-      title: 'Geluidswetenschappen 🧠',
-      description: 'Onze nummers gebruiken binaurale beats - subtiele geluidsfrequenties die helpen de hersenen naar een kalmer staat te leiden. Onderzoek toont aan dat deze angst kunnen verminderen en ontspanning kunnen bevorderen bij zowel kinderen als volwassenen.',
-    },
-    headphones_tip: {
-      title: 'Gebruik Koptelefoon 🎧',
-      description: 'We raden aan koptelefoon te gebruiken zodat binaurale beats effectief werken. Verschillende frequenties in elk oor creëren het kalmeringseffect. Zelfs zonder koptelefoon zal je kind baat hebben bij de kalmerende muziek!',
-    },
-    tantrum_tip: {
-      title: 'Tijdens Driftbui 😤',
-      description: 'Wanneer emoties exploderen, probeer het driftbui kalmeringsnummer af te spelen. Zachte frequenties kunnen je kind\'s zenuwstelsel helpen reguleren en sneller naar een kalmer staat terugkeren.',
-    },
-    sleep_science: {
-      title: 'Beter Slapen 🌙',
-      description: 'Onze slaapnummers gebruiken deltagoflf frequenties (0,5-4 Hz). Deze treden natuurlijk op tijdens diepe slaap. Wanneer je kind slaapt, kan het afspelen ervan helpen sneller in slaap te vallen en dieper te slapen.',
-    },
-    sleep_routine: {
-      title: 'Bouw Routine op 💤',
-      description: 'Probeer elke nacht hetzelfde kalmerende geluid af te spelen als onderdeel van je slaaptijdroutine. Na verloop van tijd zal je kind\'s hersenen het geluid associëren met slaap, waardoor slaaptijd gemakkelijker wordt.',
-    },
-    music_stories: {
-      title: 'Verhalen ook! 📖',
-      description: 'Vergeet niet de verhalensectie! Samen lezen bouwt woordenschat, verbeelding en waardevolle ouder-kind binding op. Neem je stem op zodat je kind je kan horen zelfs als je weg bent.',
-    },
   },
   parentsOnly: {
     title: 'Alleen voor Ouders',
@@ -1056,14 +742,6 @@ export default {
     sensory: {
       message: 'Voel en Verken!',
       subtitle: 'Raak, zie, luister en ontdek de wereld om je heen door je zintuigen.',
-    },
-    emotions: {
-      message: 'Gelukkige Emoties!',
-      subtitle: 'Leer emoties en ontdek gezonde manieren om je gevoelens uit te drukken.',
-    },
-    bedtime: {
-      message: 'Zoete Dromen!',
-      subtitle: 'Zoete melodieën en kalmerende geluiden om je te helpen in slaap te vallen.',
     },
     screenTime: {
       message: 'Speeltijd!',

@@ -84,8 +84,8 @@ export default {
   },
   menu: {
     stories: 'Hikayeler',
-    emotions: 'Duygular',
-    calming: 'Sakinleştirici',
+    musicStories: 'Müzik Hikayeleri',
+    animatedStories: 'Animasyonlu Hikayeler',
   },
   accessibility: {
     title: 'Erişilebilirlik',
@@ -218,218 +218,7 @@ export default {
     wellDone: 'Çok İyi!',
     readAnother: 'Başka Bir Hikaye Oku',
     rereadStory: 'Hikayeyi Yeniden Oku',
-    bedtimeMusic: 'Uyku Saati Müziği',
     backToMenu: 'Menüye Dön',
-  },
-  emotions: {
-    title: 'Kendinizi İfade Edin!',
-    subtitle: 'Stilinizi seçin ve duyguları öğrenin',
-    pickYourStyle: 'Stilinizi Seçin',
-    howToPlay: 'Nasıl Oynanır',
-    howToPlayExpanded: 'Nasıl Oynanır▼',
-    howToPlayCollapsed: 'Nasıl Oynanır▶',
-    expressWithTheme: '{{emotion}} duygusunu {{theme}} ile ifade edin!',
-    expressing: '{{emotion}} duygusunu ifade ediyorum!',
-    loading: 'Yükleniyor...',
-    progress: 'İlerleme: {{completed}}/{{total}}',
-    instructions: {
-      step1: '👀 Duyguları görün ve birlikte tepki verin',
-      step2: '🤪 Yüz yapın - abartılı ve aptalca olun!',
-      step3: '🔄 Birbirinizi taklit edin ve sırayla yapın',
-      step4: '🎭 Her girişimi kutlayın - mükemmellik değil bağlantı önemli',
-    },
-    themes: {
-      emoji: {
-        name: 'Emojiler',
-        description: 'Eğlenceli emoji yüzleriyle duyguları ifade edin',
-      },
-      animals: {
-        name: 'Hayvanlar',
-        description: 'Sevimli hayvan arkadaşları aracılığıyla duyguları öğrenin',
-      },
-      bear: {
-        name: 'Ayı',
-        description: 'Dostça bir ayıyla duyguları öğrenin',
-      },
-    },
-    emoji: {
-      happy: 'Mutlu',
-      sad: 'Üzgün',
-      angry: 'Kızgın',
-      surprised: 'Şaşkın',
-      scared: 'Korkmuş',
-      excited: 'Heyecanlı',
-      confused: 'Kafası Karışık',
-      proud: 'Gururlu',
-      shy: 'Utangaç',
-      loving: 'Sevgi Dolu',
-    },
-    animals: {
-      happy: 'Mutlu Tavşan',
-      sad: 'Üzgün Kedi',
-      angry: 'Kızgın Köpek',
-      surprised: 'Şaşkın Civciv',
-      scared: 'Korkmuş Rakun',
-      excited: 'Heyecanlı Tilki',
-      confused: 'Kafası Karışık Fil',
-      proud: 'Gururlu Ayı',
-      shy: 'Utangaç Tembel Hayvan',
-      loving: 'Sevgi Dolu Panda',
-    },
-    bear: {
-      happy: 'Mutlu Ayı',
-      sad: 'Üzgün Ayı',
-      angry: 'Kızgın Ayı',
-      surprised: 'Şaşkın Ayı',
-      scared: 'Korkmuş Ayı',
-      excited: 'Heyecanlı Ayı',
-      confused: 'Kafası Karışık Ayı',
-      proud: 'Gururlu Ayı',
-      shy: 'Utangaç Ayı',
-      loving: 'Sevgi Dolu Ayı',
-    },
-    prompts: {
-      happy: [
-        'En büyük gülümsemeyi göster!',
-        'Komik bir şey duymuş gibi gülüp gülebilir misin?',
-        'Mutlu bir yüz yap ve alkış tut!',
-        'Hediye aldığında yaptığın yüzü göster!',
-      ],
-      sad: [
-        'Üzgün bir yüz göster',
-        'Oyuncağını kaybetmiş gibi somurtabilir misin?',
-        'Veda etmek zorunda kaldığında hissettiğini göster',
-        'Hayal kırıklığına uğramış gibi bir yüz yap',
-      ],
-      angry: [
-        'Kızgın bir yüz göster',
-        'Kızgın gibi somurtabilir misin?',
-        'Birisi kötü bir şey yaptığında ve sevdiğin oyuncağını attığında yaptığın yüzü göster',
-        'Somurtan ve mırıldanan bir yüz yap!',
-      ],
-      surprised: [
-        'Şaşkın bir yüz göster!',
-        'Gözlerini ve ağzını açabilir misin?',
-        'Harika bir şey gördüğünde yaptığın yüzü göster!',
-        'Bir hayalet gördüğün gibi bir yüz yap!',
-      ],
-      scared: [
-        'Korkmuş bir yüz göster',
-        'Ellerinin arkasına saklanabilir misin korkmuş gibi?',
-        'Fırtına sırasında yaptığın yüzü göster',
-        'Korkutucu bir şey gördüğün gibi bir yüz yap!',
-      ],
-      excited: [
-        'Heyecanlı bir yüz göster!',
-        'Büyük bir gülümsemeyle yukarı aşağı zıplayabilir misin?',
-        'Eğlenceli bir yere giderken yaptığın yüzü göster!',
-        'Heyecanlı bir yüz yap ve ellerini salla!',
-      ],
-      confused: [
-        'Kafası karışık bir yüz göster',
-        'Çok düşünüyor gibi somurtabilir misin?',
-        'Bir şey anlamadığında yaptığın yüzü göster',
-        'Bir bulmaca çözerken yaptığın gibi bir yüz yap!',
-      ],
-      proud: [
-        'Gururlu bir yüz göster!',
-        'Harika bir şey yaptığın gibi dik durup gülümseyebilir misin?',
-        'Bulmacayı tamamladığında yaptığın gururlu yüzü göster!',
-        'Birini yardım etmiş gibi bir yüz yap!',
-      ],
-      shy: [
-        'Utangaç bir yüz göster',
-        'Yüzünü biraz saklayabilir misin?',
-        'Yeni birini tanıştığında yaptığın yüzü göster',
-        'Utangaç bir gülümseme yap ve aşağıya bak!',
-      ],
-      loving: [
-        'Sevgi dolu bir yüz göster!',
-        'Kendine büyük bir sarılma verebilir misin?',
-        'Sevdiğin birini izlerken yaptığın yüzü göster!',
-        'Öpücük veriyormuş gibi bir yüz yap!',
-      ],
-    },
-  },
-  music: {
-    title: 'Rahatlatma',
-    subtitle: 'Oynatmak için bir parça seçin',
-    tantrums: 'Öfke Nöbetleri',
-    tantrumsDescription: 'Zor zamanlar sırasında yardımcı olan sakinleştirici müzik',
-    sleep: 'Uyku',
-    sleepDescription: 'Huzurlu uyku için yumuşak sesler',
-    unknownArtist: 'Bilinmeyen Sanatçı',
-    playAll: 'Tümünü Oynat',
-    calmingSession: 'Rahatlatma Oturumu Devam Ediyor',
-    playerError: 'Müzik Oynatıcı Hatası',
-    noTrackSelected: 'Parça Seçilmedi',
-    chooseASong: 'Oynatmaya başlamak için bir şarkı seçin',
-    fromPlaylist: '{{playlist}} Çalma Listesinden',
-    repeatCount: 'Tekrar {{current}}/{{total}}',
-    phase: 'Aşama {{current}}/{{total}}',
-    play: 'Oynat',
-    pause: 'Duraklat',
-    loading: 'Yükleniyor...',
-    error: 'Hata',
-    playing: 'Oynatılıyor',
-    paused: 'Duraklatıldı',
-    idle: 'Boşta',
-    deepSleepPhase: 'Derin Uyku Aşaması',
-    relaxationPhase: 'Rahatlatma Aşaması',
-    comingSoon: 'Yakında',
-    looping: 'Döngü',
-    tags: {
-      calming: 'Sakinleştirici',
-      bedtime: 'Uyku Saati',
-      stories: 'Hikayeler',
-    },
-    tracks: {
-      tantrumAlpha: {
-        title: 'Öfke Nöbeti Sakinliği (10Hz)',
-        artist: 'Çift Frekanslı Atımlar',
-        description: 'Öfke nöbetleri sırasında sakinlik için alfa dalgaları. En iyi sonuçlar için kulaklık kullanın.',
-      },
-      sleepAlpha: {
-        title: 'Uyku Yolculuğu (10Hz)',
-        artist: 'Çift Frekanslı Atımlar',
-        description: 'Uyanıklıktan uyuklama geçişine yardımcı olan alfa dalgaları. Uyku dizisinin ilk aşaması.',
-      },
-      sleepTheta: {
-        title: 'Derin Uyku Girişi (6Hz)',
-        artist: 'Çift Frekanslı Atımlar',
-        description: 'Uyku derinleştirmek için teta dalgaları. Uyku dizisinin ikinci aşaması.',
-      },
-      sleepSequence: {
-        title: 'Tam Uyku Dizisi',
-        artist: 'Çift Frekanslı Atımlar',
-        description: 'Tam uyku ilerlemesi: Uyku Yolculuğu → Derin Uyku Girişi.',
-      },
-      bearsBirthdayParty: {
-        title: 'Ayının Doğum Günü Partisi',
-        artist: 'Ninni',
-        description: 'Özel bir doğum günü kutlaması hakkında etkileyici bir hikaye.',
-      },
-      damselElephant: {
-        title: 'Hanım Fil',
-        artist: 'Ninni',
-        description: 'Hanım Fil ile tatlı bir maceraya katılın.',
-      },
-      jimmyMouse: {
-        title: 'Jimmy Fare ve Şehir Adamı',
-        artist: 'Ninni',
-        description: 'Küçük bir fare büyük bir şehri keşfediyor.',
-      },
-      newYearJungle: {
-        title: 'Ormanda Yeni Yıl',
-        artist: 'Ninni',
-        description: 'Orman hayvanları birlikte Yeni Yılı kutluyor.',
-      },
-      snowWhite: {
-        title: 'Kar Beyazı',
-        artist: 'Ninni',
-        description: 'Kar Beyazı\'nın klasik hikayesi - uyku saati için mükemmel.',
-      },
-    },
   },
   screenTime: {
     title: 'Ekran Süresi',
@@ -550,10 +339,6 @@ export default {
       readBook: {
         title: 'Etkileşimli Kitap Oku',
         message: 'Harika bir hikayeyi keşfetme zamanı! Favori kitabını seç ve dalmaya başla.',
-      },
-      emotionCards: {
-        title: 'Duygu Kartları Oluştur',
-        message: 'Duyguları tanımayı pratik yapalım! Duygu kartları aktivitesi zamanı.',
       },
       park: {
         title: 'Parka Git',
@@ -721,10 +506,6 @@ export default {
     welcomeDescription: 'Siz ve çocuğunuzun okuma zamanından en iyi şekilde yararlanmanıza yardımcı olmak için hızlı bir tur alalım.',
     storiesTitle: 'Hikaye Kütüphanesi 📚',
     storiesDescription: 'Güzel illüstrasyonlar ve eğlenceli etkileşimler içeren etkileşimli hikayeler koleksiyonunu keşfetmek için buraya dokunun.',
-    emotionsTitle: 'Duygu Kaşifi 😊',
-    emotionsDescription: 'Çocuğunuzun emojiler ve karakterler kullanarak eğlenceli bir eşleştirme oyunu aracılığıyla duyguları öğrenmesine yardımcı olun.',
-    calmingTitle: 'Rahatlatma Köşesi 🎵',
-    calmingDescription: 'Çocuğunuzun zor zamanlar ve uyku saati sırasında yardımcı olmak için tasarlanmış rahatlatma müziği ve seslerine erişin.',
     skip: 'Atla',
     gotIt: 'Anladım!',
     buttons: {
@@ -747,14 +528,6 @@ export default {
         title: 'Hikaye Kütüphanesi 📚',
         description: 'Güzel illüstrasyonlar ve eğlenceli etkileşimler içeren etkileşimli hikayeler koleksiyonunu keşfetmek için buraya dokunun.',
       },
-      emotions: {
-        title: 'Duygu Kaşifi 😊',
-        description: 'Çocuğunuzun emojiler ve karakterler kullanarak eğlenceli bir eşleştirme oyunu aracılığıyla duyguları öğrenmesine yardımcı olun.',
-      },
-      bedtime: {
-        title: 'Rahatlatma Köşesi 🎵',
-        description: 'Çocuğunuzun zor zamanlar ve uyku saati sırasında yardımcı olmak için tasarlanmış rahatlatma müziği ve seslerine erişin.',
-      },
       settings: {
         title: 'Ayarlar ⚙️',
         description: 'Uygulamayı aileniz için en iyi şekilde çalışacak şekilde özelleştirin.',
@@ -762,28 +535,6 @@ export default {
       sound: {
         title: 'Ses Kontrolü 🔊',
         description: 'Arka plan müziği ve ses efektlerini kontrol etmek için buraya dokunun.',
-      },
-    },
-    emotionCards: {
-      welcome: {
-        title: 'Duygu Kartlarına Hoş Geldiniz! 🎭',
-        description: 'Çocuğunuzun etkileşimli ve eğlenceli kartlar aracılığıyla duyguları tanımayı ve ifade etmeyi öğrenmesine yardımcı olun.',
-      },
-      together: {
-        title: 'Birlikte Oyna 👨‍👩‍👧',
-        description: 'Çocuğunuzla oturun ve kartları çevirmeyi sırayla yapın. Birlikte yüzler yapın - daha eğlenceli!',
-      },
-      connect: {
-        title: 'Bağlantı Kurun 💬',
-        description: 'Çocuğunuzun duyguları anlamasına yardımcı olmak için "Ne zaman bunu hissettin?" gibi sorular sorun.',
-      },
-      scenarios: {
-        title: 'Senaryolar Oluşturun 🎭',
-        description: 'Her duyguyu tetikleyebilecek durumları canlandırın. "Oyuncağın kırılırsa nasıl hissedersin?"',
-      },
-      themes: {
-        title: 'Farklı Temalar Deneyin 🎨',
-        description: 'Emojiler, hayvanlar ve ayı temaları arasında geçiş yaparak işleri taze ve ilgi çekici tutun!',
       },
     },
     screenTime: {
@@ -948,71 +699,6 @@ export default {
         description: 'Sayfaları hızlı bir şekilde çevirmek için sola veya sağa kaydırın.',
       },
     },
-    music: {
-      welcome: {
-        title: 'Rahatlatma Seslerine Hoş Geldiniz 🎵',
-        description: 'Bu bölüm, çocuğunuzun rahatlamasına, uyumasına veya zor zamanlar sırasında sakinleşmesine yardımcı olmak için özel olarak ses kullanılarak tasarlanmıştır.',
-      },
-      binaural: {
-        title: 'Ses Bilimi 🧠',
-        description: 'Parçalarımız çift frekanslı atımları kullanır - beynin daha sakin bir duruma yönlendirilmesine yardımcı olan ince ses frekansları.',
-      },
-      headphones: {
-        title: 'Kulaklık Kullanın 🎧',
-        description: 'Çift frekanslı atımların etkili bir şekilde çalışması için kulaklık kullanmanızı öneririz. Her kulakta farklı frekanslar sakinlik etkisi yaratır.',
-      },
-      tantrum: {
-        title: 'Öfke Nöbeti Sırasında 😢',
-        description: 'Bu sesler zor zamanlar sırasında yardımcı olabilir. Kendinizi rahatlatın ve müziğin sihirli işini yapmasına izin verin.',
-      },
-      sleep: {
-        title: 'Uyku Bilimi 💤',
-        description: 'Uyku parçalarımız beyin dalgası düzenlerini kademeli olarak yavaşlatır, çocuğunuzun doğal olarak uyumasına yardımcı olur.',
-      },
-      routine: {
-        title: 'Rutin Oluşturun 🌙',
-        description: 'Uyku saati rutininin bir parçası olarak her gece aynı rahatlatma sesini oynatmayı deneyin.',
-      },
-      stories: {
-        title: 'Hikayeler de! 📖',
-        description: 'Uyku saati okuma için hikayeler bölümünü unutmayın!',
-      },
-    },
-  },
-  musicTips: {
-    next: 'İleri',
-    go: 'Hadi!',
-    letsGo: 'Gidelim!',
-    skip: 'Atla',
-    skipAll: 'Tümünü Atla',
-    music_welcome: {
-      title: 'Rahatlatma Seslerine Hoş Geldiniz 🎵',
-      description: 'Bu bölüm, çocuğunuzun rahatlamasına, uyumasına veya zor zamanlar sırasında sakinleşmesine yardımcı olmak için özel olarak ses kullanılarak tasarlanmıştır.',
-    },
-    binaural_science: {
-      title: 'Ses Bilimi 🧠',
-      description: 'Parçalarımız çift frekanslı atımları kullanır - beynin daha sakin bir duruma yönlendirilmesine yardımcı olan ince ses frekansları. Araştırma, bunların çocuklar ve yetişkinler için kaygıyı azaltabileceğini ve rahatlamayı destekleyebileceğini göstermektedir.',
-    },
-    headphones_tip: {
-      title: 'Kulaklık Kullanın 🎧',
-      description: 'Çift frekanslı atımların etkili bir şekilde çalışması için kulaklık kullanmanızı öneririz. Her kulakta farklı frekanslar sakinlik etkisi yaratır. Kulaklık olmadan bile, çocuğunuz rahatlatma müziğinden faydalanacaktır!',
-    },
-    tantrum_tip: {
-      title: 'Öfke Nöbeti Sırasında 😤',
-      description: 'Duygular patladığında, öfke nöbeti sakinlik parçasını oynatmayı deneyin. Yumuşak frekanslar çocuğunuzun sinir sistemini düzenlemesine ve daha hızlı sakin bir duruma dönmesine yardımcı olabilir.',
-    },
-    sleep_science: {
-      title: 'Daha İyi Uyku 🌙',
-      description: 'Uyku parçalarımız delta dalgası frekanslarını (0,5-4 Hz) kullanır. Bunlar doğal olarak derin uyku sırasında oluşur. Çocuğunuz uyurken oynatıldığında, daha hızlı uyumasına ve daha derin uyumasına yardımcı olabilir.',
-    },
-    sleep_routine: {
-      title: 'Rutin Oluşturun 💤',
-      description: 'Uyku saati rutininin bir parçası olarak her gece aynı rahatlatma sesini oynatmayı deneyin. Zamanla, çocuğunuzun beyni sesi uyku ile ilişkilendirecek ve uyku saatini daha kolay hale getirecektir.',
-    },
-    music_stories: {
-      title: 'Hikayeler de! 📖',
-      description: 'Hikayeler bölümünü unutmayın! Birlikte okumak kelime dağarcığını, hayal gücünü ve değerli ebeveyn-çocuk bağlantısını oluşturur. Sesinizi kaydedin, böylece çocuğunuz uzakta olduğunuzda bile sizi dinleyebilir.',
-    },
   },
   parentsOnly: {
     title: 'Sadece Ebeveynler İçin',
@@ -1056,14 +742,6 @@ export default {
     sensory: {
       message: 'Hisset ve Keşfet!',
       subtitle: 'Etrafındaki dünyayı dokunarak, görerek, dinleyerek ve keşfederek hisset.',
-    },
-    emotions: {
-      message: 'Mutlu Duygular!',
-      subtitle: 'Duyguları öğren ve duygularını ifade etmenin sağlıklı yollarını keşfet.',
-    },
-    bedtime: {
-      message: 'Tatlı Rüyalar!',
-      subtitle: 'Tatlı melodiler ve rahatlatma sesleri uyumanıza yardımcı olmak için.',
     },
     screenTime: {
       message: 'Oyun Zamanı!',

@@ -91,8 +91,8 @@ export default {
   // Main menu
   menu: {
     stories: 'Storie',
-    emotions: 'Emozioni',
-    calming: 'Calma',
+    musicStories: 'Storie Musicali',
+    animatedStories: 'Storie Animate',
   },
 
   // Accessibility settings
@@ -237,222 +237,7 @@ export default {
     wellDone: 'Bravissimo!',
     readAnother: 'Leggi un\'altra storia',
     rereadStory: 'Rileggi',
-    bedtimeMusic: 'Musica per la nanna',
     backToMenu: 'Torna al menu',
-  },
-
-  // Emotions screen
-  emotions: {
-    title: 'Esprimi te stesso!',
-    subtitle: 'Scegli il tuo stile e impara le emozioni',
-    pickYourStyle: 'Scegli il tuo stile',
-    howToPlay: 'Come giocare',
-    howToPlayExpanded: 'Come giocare ▼',
-    howToPlayCollapsed: 'Come giocare ▶',
-    expressWithTheme: 'Esprimi {{emotion}} con {{theme}}!',
-    expressing: 'Sto esprimendo {{emotion}}!',
-    loading: 'Caricamento...',
-    progress: 'Progresso: {{completed}} / {{total}}',
-    instructions: {
-      step1: '👀 Guarda e reagisci all\'emozione insieme',
-      step2: '🤪 Fai la faccia - esagera e sii sciocco!',
-      step3: '🔄 Alternatevi a copiarvi',
-      step4: '🎭 Celebra ogni tentativo - è una questione di connessione, non di perfezione',
-    },
-    themes: {
-      emoji: {
-        name: 'Emoji',
-        description: 'Esprimi le emozioni con divertenti faccine emoji',
-      },
-      animals: {
-        name: 'Animali',
-        description: 'Impara le emozioni attraverso simpatici amici animali',
-      },
-      bear: {
-        name: 'Orso',
-        description: 'Impara le emozioni con il nostro amichevole orso',
-      },
-    },
-    emoji: {
-      happy: 'Felice',
-      sad: 'Triste',
-      angry: 'Arrabbiato',
-      surprised: 'Sorpreso',
-      scared: 'Spaventato',
-      excited: 'Eccitato',
-      confused: 'Confuso',
-      proud: 'Orgoglioso',
-      shy: 'Timido',
-      loving: 'Amorevole',
-    },
-    animals: {
-      happy: 'Coniglio felice',
-      sad: 'Gattino triste',
-      angry: 'Cane arrabbiato',
-      surprised: 'Pulcino sorpreso',
-      scared: 'Procione spaventato',
-      excited: 'Volpe eccitata',
-      confused: 'Elefante confuso',
-      proud: 'Orso orgoglioso',
-      shy: 'Bradipo timido',
-      loving: 'Panda amorevole',
-    },
-    bear: {
-      happy: 'Orso felice',
-      sad: 'Orso triste',
-      angry: 'Orso arrabbiato',
-      surprised: 'Orso sorpreso',
-      scared: 'Orso spaventato',
-      excited: 'Orso eccitato',
-      confused: 'Orso confuso',
-      proud: 'Orso orgoglioso',
-      shy: 'Orso timido',
-      loving: 'Orso amorevole',
-    },
-    prompts: {
-      happy: [
-        'Mostrami il tuo sorriso più grande!',
-        'Puoi ridere come se avessi sentito qualcosa di divertente?',
-        'Fai una faccia felice e batti le mani!',
-        'Mostrami come appari quando ricevi un regalo!',
-      ],
-      sad: [
-        'Mostrami una faccia triste',
-        'Puoi fare una faccia come se avessi perso il tuo giocattolo?',
-        'Mostrami come ti senti quando devi dire addio',
-        'Fai una faccia imbronciata come quando sei deluso',
-      ],
-      angry: [
-        'Mostrami una faccia arrabbiata',
-        'Puoi arricciare la faccia come se fossi arrabbiato?',
-        'Mostrami come appari quando qualcuno di cattivo butta il tuo giocattolo preferito',
-        'Fai una faccia burbanzosa con le braccia incrociate!',
-      ],
-      surprised: [
-        'Mostrami una faccia sorpresa!',
-        'Puoi aprire gli occhi e la bocca molto larghi?',
-        'Mostrami come appari quando vedi qualcosa di straordinario!',
-        'Fai una faccia come se avessi appena visto la magia!',
-      ],
-      scared: [
-        'Mostrami una faccia spaventata',
-        'Puoi nasconderti dietro le mani come se avessi paura?',
-        'Mostrami come appari durante un temporale',
-        'Fai una faccia come se avessi visto qualcosa di spettrale!',
-      ],
-      excited: [
-        'Mostrami come sei eccitato!',
-        'Puoi saltare su e giù con un grande sorriso?',
-        'Mostrami la tua faccia quando stai andando da qualche parte di divertente!',
-        'Fai una faccia eccitata e agita le mani!',
-      ],
-      confused: [
-        'Mostrami una faccia confusa',
-        'Puoi aggrottare le sopracciglia come se stessi pensando duramente?',
-        'Mostrami come appari quando non capisci qualcosa',
-        'Fai una faccia come se stessi risolvendo un puzzle!',
-      ],
-      proud: [
-        'Mostrami come sei orgoglioso!',
-        'Puoi stare in piedi dritto e sorridere come se avessi fatto qualcosa di grande?',
-        'Mostrami la tua faccia orgogliosa quando finisci un puzzle!',
-        'Fai una faccia come se avessi appena aiutato qualcuno!',
-      ],
-      shy: [
-        'Mostrami una faccia timida',
-        'Puoi nasconderti un po\' la faccia?',
-        'Mostrami come appari quando incontri qualcuno di nuovo',
-        'Fai un sorriso timido e guarda verso il basso!',
-      ],
-      loving: [
-        'Mostrami la tua faccia amorevole!',
-        'Puoi darti un grande abbraccio?',
-        'Mostrami come guardi qualcuno che ami!',
-        'Fai una faccia come se stessi dando baci!',
-      ],
-    },
-  },
-
-  // Music/Calming screen
-  music: {
-    title: 'Calma',
-    subtitle: 'Scegli una traccia da riprodurre',
-    tantrums: 'Capricci',
-    tantrumsDescription: 'Musica calmante per aiutare durante i momenti difficili',
-    sleep: 'Sonno',
-    sleepDescription: 'Suoni dolci per un sonno tranquillo',
-    unknownArtist: 'Artista sconosciuto',
-    playAll: 'Riproduci tutto',
-    calmingSession: 'Sessione di calma in corso',
-    playerError: 'Errore del lettore musicale',
-    noTrackSelected: 'Nessuna traccia selezionata',
-    chooseASong: 'Scegli una canzone per iniziare a riprodurre',
-    fromPlaylist: 'da {{playlist}}',
-    repeatCount: 'Ripeti {{current}}/{{total}}',
-    phase: 'Fase {{current}} di {{total}}',
-    play: 'Riproduci',
-    pause: 'Pausa',
-    loading: 'Caricamento...',
-    error: 'Errore',
-    playing: 'Riproduzione in corso',
-    paused: 'In pausa',
-    idle: 'Inattivo',
-    deepSleepPhase: 'Fase di sonno profondo',
-    relaxationPhase: 'Fase di rilassamento',
-    comingSoon: 'Prossimamente',
-    looping: 'Ciclo',
-    tags: {
-      calming: 'Calma',
-      bedtime: 'Ora della nanna',
-      stories: 'Storie',
-    },
-    tracks: {
-      tantrumAlpha: {
-        title: 'Calma dei capricci (10Hz)',
-        artist: 'Battimenti binaurali',
-        description: 'Onde alfa per la calma durante i capricci. Usa con le cuffie per il miglior effetto.',
-      },
-      sleepAlpha: {
-        title: 'Addormentarsi (10Hz)',
-        artist: 'Battimenti binaurali',
-        description: 'Onde alfa per aiutare la transizione da sveglio a assonnato. Prima fase della sequenza del sonno.',
-      },
-      sleepTheta: {
-        title: 'Entrare nel sonno profondo (6Hz)',
-        artist: 'Battimenti binaurali',
-        description: 'Onde theta per approfondire il sonno. Seconda fase della sequenza del sonno.',
-      },
-      sleepSequence: {
-        title: 'Sequenza di sonno completa',
-        artist: 'Battimenti binaurali',
-        description: 'Progressione completa del sonno: Addormentarsi → Entrare nel sonno profondo.',
-      },
-      bearsBirthdayParty: {
-        title: 'Festa di compleanno dell\'orso',
-        artist: 'Fiaba della buonanotte',
-        description: 'Una storia toccante su un orso che celebra un compleanno speciale.',
-      },
-      damselElephant: {
-        title: 'Damsel l\'elefante',
-        artist: 'Fiaba della buonanotte',
-        description: 'Unisciti a Damsel l\'elefante in una dolce avventura.',
-      },
-      jimmyMouse: {
-        title: 'Jimmy il topo e i cittadini',
-        artist: 'Fiaba della buonanotte',
-        description: 'Un piccolo topo scopre la grande città.',
-      },
-      newYearJungle: {
-        title: 'Capodanno nella giungla',
-        artist: 'Fiaba della buonanotte',
-        description: 'Gli animali della giungla celebrano un nuovo anno insieme.',
-      },
-      snowWhite: {
-        title: 'Biancaneve',
-        artist: 'Fiaba della buonanotte',
-        description: 'La classica fiaba di Biancaneve, perfetta per l\'ora della nanna.',
-      },
-    },
   },
 
   // Screen time
@@ -577,10 +362,6 @@ export default {
       readBook: {
         title: 'Leggi un libro interattivo',
         message: 'È ora di esplorare una storia meravigliosa insieme! Scegli un libro preferito e immergiti.',
-      },
-      emotionCards: {
-        title: 'Fai carte delle emozioni',
-        message: 'Pratichiamo l\'identificazione dei sentimenti! È ora di attività con carte delle emozioni.',
       },
       park: {
         title: 'Andare al parco',
@@ -756,10 +537,6 @@ export default {
     welcomeDescription: 'Facciamo un tour veloce per aiutarti te e tuo figlio a ottenere il massimo dal tempo di lettura insieme.',
     storiesTitle: 'Libreria di storie 📚',
     storiesDescription: 'Tocca qui per esplorare la nostra collezione di storie interattive con bellissime illustrazioni e interazioni divertenti.',
-    emotionsTitle: 'Esploratore di emozioni 😊',
-    emotionsDescription: 'Aiuta tuo figlio a imparare le emozioni attraverso divertenti giochi di abbinamento con emoji e personaggi.',
-    calmingTitle: 'Angolo di calma 🎵',
-    calmingDescription: 'Accedi a musica e suoni calmanti progettati per aiutare durante i momenti difficili o l\'ora della nanna.',
     skip: 'Salta',
     gotIt: 'Capito!',
     buttons: {
@@ -782,14 +559,6 @@ export default {
         title: 'Libreria di storie 📚',
         description: 'Tocca qui per esplorare la nostra collezione di storie interattive con bellissime illustrazioni e interazioni divertenti.',
       },
-      emotions: {
-        title: 'Esploratore di emozioni 😊',
-        description: 'Aiuta tuo figlio a imparare le emozioni attraverso divertenti giochi di abbinamento con emoji e personaggi.',
-      },
-      bedtime: {
-        title: 'Angolo di calma 🎵',
-        description: 'Accedi a musica e suoni calmanti progettati per aiutare durante i momenti difficili o l\'ora della nanna.',
-      },
       settings: {
         title: 'Impostazioni ⚙️',
         description: 'Personalizza l\'app per funzionare al meglio per la tua famiglia.',
@@ -797,28 +566,6 @@ export default {
       sound: {
         title: 'Controllo del suono 🔊',
         description: 'Tocca qui per controllare la musica di sottofondo e gli effetti sonori.',
-      },
-    },
-    emotionCards: {
-      welcome: {
-        title: 'Benvenuto nelle carte delle emozioni! 🎭',
-        description: 'Aiuta tuo figlio a imparare a riconoscere ed esprimere le emozioni attraverso carte interattive e divertenti.',
-      },
-      together: {
-        title: 'Gioca insieme 👨‍👩‍👧',
-        description: 'Siediti con tuo figlio e alternatevi a capovolgere le carte. Fai le emozioni insieme - è più divertente!',
-      },
-      connect: {
-        title: 'Fai connessioni 💬',
-        description: 'Fai domande come "Quando hai provato questo?" per aiutare tuo figlio a comprendere le sue emozioni.',
-      },
-      scenarios: {
-        title: 'Crea scenari 🎭',
-        description: 'Recita situazioni che potrebbero causare ogni emozione. "Come ti sentiresti se il tuo giocattolo si rompesse?"',
-      },
-      themes: {
-        title: 'Prova diversi temi 🎨',
-        description: 'Passa tra i temi emoji, animale e orso per mantenerlo fresco e coinvolgente!',
       },
     },
     screenTime: {
@@ -983,73 +730,6 @@ export default {
         description: 'Scorri a sinistra o a destra per girare rapidamente le pagine.',
       },
     },
-    music: {
-      welcome: {
-        title: 'Benvenuto nei suoni calmanti 🎵',
-        description: 'Questa sezione utilizza audio appositamente progettato per aiutare tuo figlio a rilassarsi, dormire o calmarsi durante i momenti difficili.',
-      },
-      binaural: {
-        title: 'La scienza del suono 🧠',
-        description: 'Le nostre tracce utilizzano battimenti binaurali - sottili frequenze sonore che possono aiutare a guidare il cervello verso stati più calmi.',
-      },
-      headphones: {
-        title: 'Usa le cuffie 🎧',
-        description: 'Affinché i battimenti binaurali funzionino efficacemente, si consigliano le cuffie. Le diverse frequenze in ogni orecchio creano l\'effetto calmante.',
-      },
-      tantrum: {
-        title: 'Durante i capricci 😢',
-        description: 'Questi suoni possono aiutare durante i momenti difficili. Rimani calmo tu stesso e lascia che la musica faccia la sua magia.',
-      },
-      sleep: {
-        title: 'Scienza del sonno 💤',
-        description: 'Le nostre tracce di sonno rallentano gradualmente i modelli di onde cerebrali, aiutando tuo figlio ad addormentarsi naturalmente.',
-      },
-      routine: {
-        title: 'Costruisci una routine 🌙',
-        description: 'Riprodurre gli stessi suoni calmanti ogni notte può segnalare a tuo figlio che è ora di dormire.',
-      },
-      stories: {
-        title: 'Storie anche! 📖',
-        description: 'Non dimenticare la nostra sezione storie per la lettura della buonanotte!',
-      },
-    },
-  },
-
-  // Music Tips Overlay
-  musicTips: {
-    next: 'Avanti',
-    go: 'Vai!',
-    letsGo: 'Andiamo!',
-    skip: 'Salta',
-    skipAll: 'Salta tutto',
-    music_welcome: {
-      title: 'Benvenuto nei suoni calmanti 🎵',
-      description: 'Questa sezione utilizza audio appositamente progettato per aiutare tuo figlio a rilassarsi, dormire o calmarsi durante i momenti difficili.',
-    },
-    binaural_science: {
-      title: 'La scienza del suono 🧠',
-      description: 'Le nostre tracce utilizzano battimenti binaurali - sottili frequenze sonore che possono aiutare a guidare il cervello verso stati più calmi. La ricerca mostra che questi possono ridurre l\'ansia e promuovere il rilassamento sia nei bambini che negli adulti.',
-    },
-    headphones_tip: {
-      title: 'Usa le cuffie 🎧',
-      description: 'Affinché i battimenti binaurali funzionino efficacemente, si consigliano le cuffie. Le diverse frequenze in ogni orecchio creano l\'effetto calmante. Senza cuffie, tuo figlio beneficia comunque della musica calmante!',
-    },
-    tantrum_tip: {
-      title: 'Durante i capricci 😤',
-      description: 'Quando le emozioni si scatenano, prova a riprodurre le nostre tracce di calma dei capricci. Le frequenze dolci possono aiutare a regolare il sistema nervoso di tuo figlio e riportarlo a uno stato più calmo più velocemente.',
-    },
-    sleep_science: {
-      title: 'Miglior sonno 🌙',
-      description: 'Le nostre tracce di sonno utilizzano frequenze di onde delta (0,5-4 Hz) che si verificano naturalmente durante il sonno profondo. Riprodurre questi mentre tuo figlio si addormenta può aiutarlo ad addormentarsi più velocemente e dormire più profondamente.',
-    },
-    sleep_routine: {
-      title: 'Costruisci una routine 💤',
-      description: 'Prova a riprodurre la stessa traccia calmante ogni notte come parte della tua routine della buonanotte. Nel tempo, il cervello di tuo figlio associerà i suoni al sonno, rendendo l\'ora della nanna più facile.',
-    },
-    music_stories: {
-      title: 'Storie anche! 📖',
-      description: 'Non dimenticare la nostra sezione storie! Leggere insieme costruisce il vocabolario, l\'immaginazione e quel prezioso legame genitore-figlio. Registra la tua voce in modo che tuo figlio possa sentirti anche quando siete separati.',
-    },
   },
 
   // Parents only modal
@@ -1101,14 +781,6 @@ export default {
     sensory: {
       message: 'Senti ed esplora!',
       subtitle: 'Tocca, vedi, ascolta e scopri il mondo intorno a te attraverso i tuoi sensi.',
-    },
-    emotions: {
-      message: 'Sentimenti felici!',
-      subtitle: 'Impara le emozioni e come esprimere i tuoi sentimenti in modo sano.',
-    },
-    bedtime: {
-      message: 'Dolci sogni!',
-      subtitle: 'Melodie dolci e suoni calmanti per aiutarti ad addormentarti.',
     },
     screenTime: {
       message: 'Tempo di giocare!',

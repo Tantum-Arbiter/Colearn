@@ -21,8 +21,6 @@ import { ApiClient } from '@/services/api-client';
 import { backgroundSaveService } from '@/services/background-save-service';
 import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
 import { StoryBookReader } from '@/components/stories/story-book-reader';
-import { MusicScreen } from '@/components/music';
-import { EmotionsScreen } from '@/components/emotions';
 import { ScreenTimeProvider } from '@/components/screen-time/screen-time-provider';
 import { Story } from '@/types/story';
 import { preloadCriticalImages, preloadSecondaryImages } from '@/services/image-preloader';
@@ -124,7 +122,7 @@ function AppContent() {
   const [hasStartedBackgroundMusic, setHasStartedBackgroundMusic] = useState(false);
 
   type AppView = 'splash' | 'onboarding' | 'login' | 'loading' | 'app' | 'main' | 'stories' | 'story-reader' | 'account';
-  type PageKey = 'main' | 'stories' | 'story-reader' | 'emotions' | 'bedtime' | 'account';
+  type PageKey = 'main' | 'stories' | 'story-reader' | 'account';
 
   const [currentView, setCurrentView] = useState<AppView>('splash');
   const [currentPage, setCurrentPage] = useState<PageKey>('main');
@@ -508,10 +506,12 @@ function AppContent() {
 
   const handleMainMenuNavigate = (destination: string) => {
     // Map destination strings to PageKey types
+    // Note: music-stories and animated-stories currently route to stories
+    // until their dedicated screens are implemented
     const destinationMap: Record<string, PageKey> = {
       'stories': 'stories',
-      'emotions': 'emotions',
-      'bedtime': 'bedtime',
+      'music-stories': 'stories',  // TODO: Create dedicated music stories screen
+      'animated-stories': 'stories',  // TODO: Create dedicated animated stories screen
       'account': 'account'
     };
 
@@ -595,10 +595,6 @@ function AppContent() {
               selectedStory={selectedStory}
               onBack={handleBackToMainMenu}
             />,
-
-            emotions: <EmotionsScreen onBack={handleBackToMainMenu} />,
-            bedtime: <MusicScreen onBack={handleBackToMainMenu} isActive={currentPage === 'bedtime'} />,
-
             account: <AccountScreen onBack={handleAccountBack} isActive={currentPage === 'account'} />,
           }}
           duration={500}

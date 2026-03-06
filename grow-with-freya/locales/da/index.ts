@@ -84,8 +84,8 @@ export default {
   },
   menu: {
     stories: 'Historier',
-    emotions: 'Følelser',
-    calming: 'Beroligende',
+    musicStories: 'Musikhistorier',
+    animatedStories: 'Animerede Historier',
   },
   accessibility: {
     title: 'Tilgængelighed',
@@ -218,218 +218,7 @@ export default {
     wellDone: 'Godt gået!',
     readAnother: 'Læs anden historie',
     rereadStory: 'Genlæs historie',
-    bedtimeMusic: 'Sengetidsmusik',
     backToMenu: 'Tilbage til menu',
-  },
-  emotions: {
-    title: 'Udtryk dig selv!',
-    subtitle: 'Vælg din stil og lær følelser',
-    pickYourStyle: 'Vælg din stil',
-    howToPlay: 'Sådan spilles',
-    howToPlayExpanded: 'Sådan spilles▼',
-    howToPlayCollapsed: 'Sådan spilles▶',
-    expressWithTheme: 'Udtryk {{emotion}} med {{theme}}!',
-    expressing: 'Jeg udtrykker {{emotion}}!',
-    loading: 'Indlæser...',
-    progress: 'Fremskridt: {{completed}}/{{total}}',
-    instructions: {
-      step1: '👀 Se følelser og reagér sammen',
-      step2: '🤪 Lav ansigter - overdrive og vær tosset!',
-      step3: '🔄 Efterlign hinanden og tag ture',
-      step4: '🎭 Fejr hvert forsøg - forbindelse er vigtigere end perfektion',
-    },
-    themes: {
-      emoji: {
-        name: 'Emojis',
-        description: 'Udtryk følelser med sjove emoji-ansigter',
-      },
-      animals: {
-        name: 'Dyr',
-        description: 'Lær følelser gennem søde dyrevenner',
-      },
-      bear: {
-        name: 'Bjørn',
-        description: 'Lær følelser med en venlig bjørn',
-      },
-    },
-    emoji: {
-      happy: 'Glad',
-      sad: 'Trist',
-      angry: 'Vred',
-      surprised: 'Overrasket',
-      scared: 'Bange',
-      excited: 'Begejstret',
-      confused: 'Forvirret',
-      proud: 'Stolt',
-      shy: 'Genert',
-      loving: 'Kærlig',
-    },
-    animals: {
-      happy: 'Glad kanin',
-      sad: 'Trist kat',
-      angry: 'Vred hund',
-      surprised: 'Overrasket kylling',
-      scared: 'Bange vaskebjørn',
-      excited: 'Begejstret ræv',
-      confused: 'Forvirret elefant',
-      proud: 'Stolt bjørn',
-      shy: 'Genert dovendyr',
-      loving: 'Kærlig panda',
-    },
-    bear: {
-      happy: 'Glad bjørn',
-      sad: 'Trist bjørn',
-      angry: 'Vred bjørn',
-      surprised: 'Overrasket bjørn',
-      scared: 'Bange bjørn',
-      excited: 'Begejstret bjørn',
-      confused: 'Forvirret bjørn',
-      proud: 'Stolt bjørn',
-      shy: 'Genert bjørn',
-      loving: 'Kærlig bjørn',
-    },
-    prompts: {
-      happy: [
-        'Vis dit største smil!',
-        'Kan du grine som om du har hørt noget sjovt?',
-        'Lav et glad ansigt og klap i dine hænder!',
-        'Vis det ansigt du laver når du får en gave!',
-      ],
-      sad: [
-        'Vis et trist ansigt',
-        'Kan du trække på munden som om du har mistet dit legetøj?',
-        'Vis hvordan du føler dig når du skal sige farvel',
-        'Lav et skuffet ansigt',
-      ],
-      angry: [
-        'Vis et vred ansigt',
-        'Kan du trække på munden som om du er vred?',
-        'Vis det ansigt du laver når nogen gør noget forkert og smider dit yndlingslegetøj',
-        'Lav et trukket og brummende ansigt!',
-      ],
-      surprised: [
-        'Vis et overrasket ansigt!',
-        'Kan du åbne øjnene og munden?',
-        'Vis det ansigt du laver når du ser noget fantastisk!',
-        'Lav et ansigt som om du har set et spøgelse!',
-      ],
-      scared: [
-        'Vis et bange ansigt',
-        'Kan du gemme dig bag dine hænder som om du er bange?',
-        'Vis hvordan du føler dig under en storm',
-        'Lav et ansigt som om du har set noget skræmmende!',
-      ],
-      excited: [
-        'Vis et begejstret ansigt!',
-        'Kan du hoppe op og ned med et stort smil?',
-        'Vis det ansigt du laver når du skal til noget sjovt!',
-        'Lav et begejstret ansigt og vink med dine hænder!',
-      ],
-      confused: [
-        'Vis et forvirret ansigt',
-        'Kan du trække på munden som om du tænker dybt?',
-        'Vis det ansigt du laver når du ikke forstår noget',
-        'Lav et ansigt som om du løser et puslespil!',
-      ],
-      proud: [
-        'Vis et stolt ansigt!',
-        'Kan du stå opret og smile som om du har gjort noget fantastisk?',
-        'Vis det stolte ansigt du laver når du har løst et puslespil!',
-        'Lav et ansigt som om du har hjulpet nogen!',
-      ],
-      shy: [
-        'Vis et genert ansigt',
-        'Kan du gemme dit ansigt lidt?',
-        'Vis det ansigt du laver når du møder nogen nyt',
-        'Lav et genert smil og kig ned!',
-      ],
-      loving: [
-        'Vis et kærligt ansigt!',
-        'Kan du give dig selv en stor knus?',
-        'Vis det ansigt du laver når du ser på nogen du elsker!',
-        'Lav et ansigt som om du giver et kys!',
-      ],
-    },
-  },
-  music: {
-    title: 'Afslapning',
-    subtitle: 'Vælg et nummer for at afspille',
-    tantrums: 'Raseriudbrud',
-    tantrumsDescription: 'Beroligende musik, der er nyttig under vanskelige tidspunkter',
-    sleep: 'Søvn',
-    sleepDescription: 'Bløde lyde til fredelig søvn',
-    unknownArtist: 'Ukendt kunstner',
-    playAll: 'Afspil alt',
-    calmingSession: 'Afslappingssession i gang',
-    playerError: 'Musikafspiller fejl',
-    noTrackSelected: 'Intet nummer valgt',
-    chooseASong: 'Vælg et nummer for at begynde afspilning',
-    fromPlaylist: 'Fra {{playlist}}',
-    repeatCount: 'Gentag {{current}}/{{total}}',
-    phase: 'Fase {{current}}/{{total}}',
-    play: 'Afspil',
-    pause: 'Pause',
-    loading: 'Indlæser...',
-    error: 'Fejl',
-    playing: 'Afspiller',
-    paused: 'Pauseret',
-    idle: 'Inaktiv',
-    deepSleepPhase: 'Dyb søvnfase',
-    relaxationPhase: 'Afslappingsfase',
-    comingSoon: 'Kommer snart',
-    looping: 'Gentager',
-    tags: {
-      calming: 'Beroligende',
-      bedtime: 'Sengetid',
-      stories: 'Historier',
-    },
-    tracks: {
-      tantrumAlpha: {
-        title: 'Raseriudbrud beroligelse (10Hz)',
-        artist: 'Binaurale beats',
-        description: 'Alfabølger til beroligelse under raseriudbrud. Brug hovedtelefoner for bedste resultat.',
-      },
-      sleepAlpha: {
-        title: 'Glid ind i søvn (10Hz)',
-        artist: 'Binaurale beats',
-        description: 'Alfabølger der hjælper med overgangen fra vågen til søvnig. Første fase af søvnsekvens.',
-      },
-      sleepTheta: {
-        title: 'Indgang til dyb søvn (6Hz)',
-        artist: 'Binaurale beats',
-        description: 'Thetabølger for at fordybe søvnen. Anden fase af søvnsekvens.',
-      },
-      sleepSequence: {
-        title: 'Komplet søvnsekvens',
-        artist: 'Binaurale beats',
-        description: 'Komplet søvnfremskridt: Glid ind i søvn → Indgang til dyb søvn.',
-      },
-      bearsBirthdayParty: {
-        title: 'Bjørnens fødselsdagsfest',
-        artist: 'Vuggesang',
-        description: 'En rørt historie om en bjørn der fejrer en særlig fødselsdag.',
-      },
-      damselElephant: {
-        title: 'Frøken elefant',
-        artist: 'Vuggesang',
-        description: 'Slut dig til et sødt eventyr med Frøken elefant.',
-      },
-      jimmyMouse: {
-        title: 'Jimmy mus og bymannen',
-        artist: 'Vuggesang',
-        description: 'En lille mus opdager en stor by.',
-      },
-      newYearJungle: {
-        title: 'Nytår i junglen',
-        artist: 'Vuggesang',
-        description: 'Junglens dyr fejrer nytår sammen.',
-      },
-      snowWhite: {
-        title: 'Snehvide',
-        artist: 'Vuggesang',
-        description: 'Den klassiske historie om Snehvide - perfekt til sengetid.',
-      },
-    },
   },
   screenTime: {
     title: 'Skærmtid',
@@ -550,10 +339,6 @@ export default {
       readBook: {
         title: 'Læs interaktiv bog',
         message: 'Tid til at opdage en fantastisk historie! Vælg din yndlingsbok og dyk ned i den.',
-      },
-      emotionCards: {
-        title: 'Lav følelseskort',
-        message: 'Lad os øve følelsesgenkendelses! Tid til følelseskort aktivitet.',
       },
       park: {
         title: 'Gå til park',
@@ -721,10 +506,6 @@ export default {
     welcomeDescription: 'Lad os tage en hurtig rundvisning for at hjælpe dig og dit barn med at få mest ud af lesetiden.',
     storiesTitle: 'Historiebibliotek 📚',
     storiesDescription: 'Tryk her for at udforske en samling af interaktive historier med smukke illustrationer og sjove interaktioner.',
-    emotionsTitle: 'Følelsesudforskeren 😊',
-    emotionsDescription: 'Hjælp dit barn med at lære følelser gennem et sjovt matchingspil med emojis og karakterer.',
-    calmingTitle: 'Afslappingshjørne 🎵',
-    calmingDescription: 'Få adgang til beroligende musik og lyde designet til at hjælpe dit barn under vanskelige tidspunkter og sengetid.',
     skip: 'Spring over',
     gotIt: 'Forstået!',
     buttons: {
@@ -747,14 +528,6 @@ export default {
         title: 'Historiebibliotek 📚',
         description: 'Tryk her for at udforske en samling af interaktive historier med smukke illustrationer og sjove interaktioner.',
       },
-      emotions: {
-        title: 'Følelsesudforskeren 😊',
-        description: 'Hjælp dit barn med at lære følelser gennem et sjovt matchingspil med emojis og karakterer.',
-      },
-      bedtime: {
-        title: 'Afslappingshjørne 🎵',
-        description: 'Få adgang til beroligende musik og lyde designet til at hjælpe dit barn under vanskelige tidspunkter og sengetid.',
-      },
       settings: {
         title: 'Indstillinger ⚙️',
         description: 'Tilpas appen så den fungerer bedst for din familie.',
@@ -762,28 +535,6 @@ export default {
       sound: {
         title: 'Lydkontrol 🔊',
         description: 'Tryk her for at styre baggrundsmusik og lydeffekter.',
-      },
-    },
-    emotionCards: {
-      welcome: {
-        title: 'Velkommen til følelseskort! 🎭',
-        description: 'Hjælp dit barn med at genkende og udtrykke følelser gennem interaktive og sjove kort.',
-      },
-      together: {
-        title: 'Spil sammen 👨‍👩‍👧',
-        description: 'Sid med dit barn og vend kort på skift. Lav ansigter sammen - det er mere sjovt!',
-      },
-      connect: {
-        title: 'Skab forbindelse 💬',
-        description: 'Stil spørgsmål som "Hvornår følte du dig sådan?" for at hjælpe dit barn med at forstå følelser.',
-      },
-      scenarios: {
-        title: 'Opret scenarier 🎭',
-        description: 'Spil situationer der kan udløse hver følelse. "Hvordan ville du føle dig hvis dit legetøj gik i stykker?"',
-      },
-      themes: {
-        title: 'Prøv forskellige temaer 🎨',
-        description: 'Skift mellem emojis, dyr og bjørn temaer for at holde tingene friske og interessante!',
       },
     },
     screenTime: {
@@ -948,71 +699,6 @@ export default {
         description: 'Stryg til venstre eller højre for at vende sider hurtigt.',
       },
     },
-    music: {
-      welcome: {
-        title: 'Velkommen til afslappingslyde 🎵',
-        description: 'Dette afsnit er specielt designet med lyd for at hjælpe dit barn med at slappe af, sove eller blive rolig under vanskelige tidspunkter.',
-      },
-      binaural: {
-        title: 'Lydvidenskab 🧠',
-        description: 'Vores numre bruger binaurale beats - subtile lydfrekvenser der hjælper med at guide hjernen til en mere rolig tilstand.',
-      },
-      headphones: {
-        title: 'Brug hovedtelefoner 🎧',
-        description: 'Vi anbefaler at bruge hovedtelefoner så binaurale beats virker effektivt. Forskellige frekvenser i hver øre skaber kalmeringseffekten.',
-      },
-      tantrum: {
-        title: 'Under raseriudbrud 😢',
-        description: 'Disse lyde kan hjælpe under vanskelige tidspunkter. Berolig dig selv og lad musikken gøre sin magi.',
-      },
-      sleep: {
-        title: 'Søvnvidenskab 💤',
-        description: 'Vores søvnnumre bremser hjernebølgemønstre gradvist, hvilket hjælper dit barn med at falde i søvn naturligt.',
-      },
-      routine: {
-        title: 'Opbyg rutine 🌙',
-        description: 'Prøv at afspille det samme beroligende lyd hver nat som en del af din sengetidsrutine.',
-      },
-      stories: {
-        title: 'Historier også! 📖',
-        description: 'Glem ikke historieafsnittet til sengetidslæsning!',
-      },
-    },
-  },
-  musicTips: {
-    next: 'Næste',
-    go: 'Gå!',
-    letsGo: 'Lad os gå!',
-    skip: 'Spring over',
-    skipAll: 'Spring alt over',
-    music_welcome: {
-      title: 'Velkommen til afslappingslyde 🎵',
-      description: 'Dette afsnit er specielt designet med lyd for at hjælpe dit barn med at slappe af, sove eller blive rolig under vanskelige tidspunkter.',
-    },
-    binaural_science: {
-      title: 'Lydvidenskab 🧠',
-      description: 'Vores numre bruger binaurale beats - subtile lydfrekvenser der hjælper med at guide hjernen til en mere rolig tilstand. Forskning viser at disse kan reducere angst og fremme afslapning hos både børn og voksne.',
-    },
-    headphones_tip: {
-      title: 'Brug hovedtelefoner 🎧',
-      description: 'Vi anbefaler at bruge hovedtelefoner så binaurale beats virker effektivt. Forskellige frekvenser i hver øre skaber kalmeringseffekten. Selv uden hovedtelefoner vil dit barn få gavn af den beroligende musik!',
-    },
-    tantrum_tip: {
-      title: 'Under raseriudbrud 😤',
-      description: 'Når følelser eksploderer, prøv at afspille raseriudbrud kalmeringsnummeret. Bløde frekvenser kan hjælpe dit barns nervesystem med at regulere og vende tilbage til en mere rolig tilstand hurtigere.',
-    },
-    sleep_science: {
-      title: 'Bedre søvn 🌙',
-      description: 'Vores søvnnumre bruger deltafrekvenser (0,5-4 Hz). Disse forekommer naturligt under dyb søvn. Når dit barn sover, kan afspilning af dem hjælpe med at falde i søvn hurtigere og sove dybere.',
-    },
-    sleep_routine: {
-      title: 'Opbyg rutine 💤',
-      description: 'Prøv at afspille det samme beroligende lyd hver nat som en del af din sengetidsrutine. Over tid vil dit barns hjerne forbinde lyden med søvn, hvilket gør sengetid lettere.',
-    },
-    music_stories: {
-      title: 'Historier også! 📖',
-      description: 'Glem ikke historieafsnittet! Læsning sammen opbygger ordforråd, fantasi og værdifuld forældre-barn binding. Optag din stemme så dit barn kan høre dig selv når du er væk.',
-    },
   },
   parentsOnly: {
     title: 'Kun for forældre',
@@ -1056,14 +742,6 @@ export default {
     sensory: {
       message: 'Føl og udforsk!',
       subtitle: 'Rør, se, lyt og opdag verden omkring dig gennem dine sanser.',
-    },
-    emotions: {
-      message: 'Glade følelser!',
-      subtitle: 'Lær følelser og opdag sunde måder at udtrykke dine følelser på.',
-    },
-    bedtime: {
-      message: 'Søde drømme!',
-      subtitle: 'Søde melodier og beroligende lyde for at hjælpe dig med at falde i søvn.',
     },
     screenTime: {
       message: 'Legetid!',
