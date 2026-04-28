@@ -91,8 +91,8 @@ export default {
   // Main menu
   menu: {
     stories: 'Bajki',
-    musicStories: 'Bajki Muzyczne',
-    animatedStories: 'Bajki Animowane',
+    practise: 'Ćwiczenie',
+    freeplay: 'Swobodna Gra',
   },
 
   // Accessibility settings
@@ -556,8 +556,8 @@ export default {
         description: 'Zróbmy szybką wycieczkę, aby pomóc Tobie i Twojemu dziecku w pełni korzystać z czasu bajek.',
       },
       stories: {
-        title: 'Biblioteka bajek 📚',
-        description: 'Dotknij tutaj, aby odkryć naszą kolekcję interaktywnych bajek z pięknymi ilustracjami.',
+        title: 'Odkrywaj & Graj 🎵📚',
+        description: 'Przesuń karuzelę, aby odkryć Bajki, tryb Ćwiczenia do nauki muzyki na instrumentach oraz tryb Swobodnej Gry do wolnego grania na dowolnym instrumencie.',
       },
       settings: {
         title: 'Ustawienia ⚙️',

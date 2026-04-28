@@ -17,20 +17,40 @@ class JobStatus(str, Enum):
 
 
 class JobType(str, Enum):
+    """Job types for the storybook creation pipeline"""
+    # Scene-First Pipeline Jobs
+    SCENE = "scene"               # Empty scene/environment generation
+    CHARACTER_REF = "character_ref"  # Character reference sheet (isolated)
+    PROP = "prop"                 # Prop/object (isolated)
+    SCENE_COMPOSE = "scene_compose"  # Place character in scene (IP-Adapter)
+    # Legacy/Additional Jobs
     COVER = "cover"
     PAGE = "page"
     SPREAD = "spread"
     CHARACTER = "character"
-    CHARACTER_REF = "character_ref"  # Character reference sheet generation
+    CHARACTER_POSE = "character_pose"  # Character pose with IP-Adapter
+    VARIATION = "variation"  # Storyboard variation generation
+    PAGE_VARIATION = "page_variation"  # Page-specific variation
+    INPAINT = "inpaint"  # Inpainting/mirrored change
+    FULL_PAGE = "full_page"  # Full page generation
 
 
 class WorkflowType(str, Enum):
-    """ComfyUI workflow type for the render job"""
-    FULL_PAGE = "full_page"       # Single-pass full page generation
+    """ComfyUI workflow type for the render job - SCENE-FIRST PIPELINE"""
+    # Step 1: Create Scene (environment only, no characters)
+    FULL_PAGE = "full_page"       # Scene/setting generation
     BACKGROUND = "background"     # Background-only generation
+    SCENE = "scene"               # Alias for background
+    # Step 2: Create Characters (isolated on white)
     CHARACTER_REF = "character_ref"  # Character reference sheet
+    # Step 3: Create Props (isolated on white)
+    PROP = "prop"                 # Prop/object generation
+    # Step 4: Compose (place character in scene)
+    IPADAPTER = "ipadapter"       # Character-conditioned composition
+    # Step 5: Edit/Refine
     INPAINT = "inpaint"           # Subject insertion via inpainting
-    IPADAPTER = "ipadapter"       # Character-conditioned generation (SD 3.5 Large only)
+    IMG2IMG = "img2img"           # Refine/polish existing image
+    CONTROLNET = "controlnet"     # Structure-preserving restyle
 
 
 class Priority(str, Enum):
@@ -72,6 +92,9 @@ class ValidationOptions(BaseModel):
 
 
 class JobMetadata(BaseModel):
+    """Job metadata - allows extra fields for flexibility"""
+    model_config = {"extra": "allow"}  # Allow extra fields
+
     book_id: Optional[str] = None
     page_number: Optional[int] = None
     style_bible: Optional[str] = None
@@ -80,6 +103,13 @@ class JobMetadata(BaseModel):
     interactive_state: Optional[str] = None  # 'before' | 'after' for interactive pages
     layer: Optional[str] = None  # Layer type: 'background', 'subject-0', etc.
     validation: Optional[ValidationOptions] = None  # Validation settings
+    # Storyboard variation fields
+    variation_seed: Optional[int] = None
+    workspace_session: Optional[str] = None
+    workspace_date: Optional[str] = None
+    workspace_index: Optional[int] = None
+    generation_mode: Optional[str] = None
+    pose_name: Optional[str] = None
 
 
 class JobCreateRequest(BaseModel):

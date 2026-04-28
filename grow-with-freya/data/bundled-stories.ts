@@ -34,7 +34,22 @@ export const BUNDLED_STORIES: Story[] = [
     {
       id: 'snuggle-little-wombat-2',
       pageNumber: 2,
-      text: 'Page 2 text goes here...'
+      text: 'Page 2 text goes here...',
+      interactionType: 'music_challenge',
+      musicChallenge: {
+        enabled: true,
+        instrumentId: 'flute',
+        promptText: 'Play a gentle lullaby to help Wombat drift off to sleep!',
+        mode: 'guided',
+        requiredSequence: ['C', 'D', 'E', 'D', 'C'],
+        successSongId: 'wombat_lullaby_v1',
+        successStateId: 'wombat_dreaming',
+        autoPlaySuccessSong: true,
+        allowSkip: true,
+        micRequired: true,
+        fallbackAllowed: true,
+        hintLevel: 'standard',
+      },
     },
     {
       id: 'snuggle-little-wombat-3',
@@ -44,7 +59,22 @@ export const BUNDLED_STORIES: Story[] = [
     {
       id: 'snuggle-little-wombat-4',
       pageNumber: 4,
-      text: 'Page 4 text goes here...'
+      text: 'Page 4 text goes here...',
+      interactionType: 'music_challenge',
+      musicChallenge: {
+        enabled: true,
+        instrumentId: 'flute',
+        promptText: 'Play a cozy tune to help Wombat snuggle into the burrow!',
+        mode: 'guided',
+        requiredSequence: ['E', 'D', 'C', 'D', 'E', 'E', 'E'],
+        successSongId: 'wombat_burrow_v1',
+        successStateId: 'wombat_snuggled',
+        autoPlaySuccessSong: true,
+        allowSkip: true,
+        micRequired: true,
+        fallbackAllowed: true,
+        hintLevel: 'standard',
+      },
     },
     {
       id: 'snuggle-little-wombat-5',

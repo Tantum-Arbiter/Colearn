@@ -1,5 +1,8 @@
 """
 Story Renderer Configuration
+
+Optimized for SD 3.5 Medium model.
+See workflows/README.md for detailed settings documentation.
 """
 import os
 from dataclasses import dataclass
@@ -25,15 +28,28 @@ class Config:
     # Output settings
     OUTPUT_DIR: str = "./outputs"
 
-    # Default generation settings (matching user's workflow)
+    # ===========================================
+    # SD 3.5 MEDIUM OPTIMIZED DEFAULTS
+    # ===========================================
+    # These settings are tuned for sd3.5_medium_incl_clips_t5xxlfp8scaled
+    # Steps: 30-40 (35 sweet spot), CFG: 5.0-6.0 (5.5 recommended)
+    # Sampler: euler, Scheduler: sgm_uniform
+
     DEFAULT_MODEL: str = "sd3.5_medium_incl_clips_t5xxlfp8scaled"
-    DEFAULT_STEPS: int = 24
-    DEFAULT_CFG: float = 4.5
-    DEFAULT_WIDTH: int = 1024
+    DEFAULT_STEPS: int = 35  # Optimal for SD 3.5 Medium (was 24)
+    DEFAULT_CFG: float = 5.5  # Optimal for SD 3.5 Medium (was 4.5)
+    DEFAULT_SAMPLER: str = "euler"
+    DEFAULT_SCHEDULER: str = "sgm_uniform"
+    DEFAULT_WIDTH: int = 1080  # Storybook page width
     DEFAULT_HEIGHT: int = 704  # Landscape for storybook pages
 
-    # Negative prompt for children's books
-    DEFAULT_NEGATIVE_PROMPT: str = "dark horror, gore, violence, scary, text, watermark, logo, nsfw, adult content"
+    # ===========================================
+    # NEGATIVE PROMPT DEFAULTS
+    # ===========================================
+    DEFAULT_NEGATIVE_PROMPT: str = "dark horror, gore, violence, scary, text, watermark, logo, nsfw, adult content, photorealistic, 3d render"
+
+    # Character-blocking negative (for scene-only generation)
+    SCENE_NEGATIVE_ADDITIONS: str = "character, person, people, child, boy, girl, animal, creature, figure, silhouette"
 
     @property
     def comfyui_url(self) -> str:
@@ -51,7 +67,7 @@ class Config:
             JOB_QUEUE_MAX=int(os.getenv("JOB_QUEUE_MAX", "20")),
             WORKER_API_KEY=os.getenv("WORKER_API_KEY", ""),
             OUTPUT_DIR=os.getenv("OUTPUT_DIR", "./outputs"),
-            DEFAULT_MODEL=os.getenv("DEFAULT_MODEL", "sd3.5-medium-fp8"),
+            DEFAULT_MODEL=os.getenv("DEFAULT_MODEL", "sd3.5_medium_incl_clips_t5xxlfp8scaled"),
         )
 
 config = Config.from_env()

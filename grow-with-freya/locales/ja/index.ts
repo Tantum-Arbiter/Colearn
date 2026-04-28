@@ -84,8 +84,8 @@ export default {
   },
   menu: {
     stories: 'ストーリー',
-    musicStories: '音楽ストーリー',
-    animatedStories: 'アニメーション',
+    practise: '練習',
+    freeplay: 'フリープレイ',
   },
   accessibility: {
     title: 'アクセシビリティ',
@@ -525,8 +525,8 @@ export default {
         description: 'クイックツアーをして、あなたとお子さんが読書時間を最大限に活用できるようにしましょう。',
       },
       stories: {
-        title: 'ストーリーライブラリ📚',
-        description: 'ここをタップして、美しいイラストと楽しいインタラクションを備えたインタラクティブストーリーのコレクションを探索してください。',
+        title: '探索＆演奏 🎵📚',
+        description: 'カルーセルをスワイプして、ストーリー、楽器で音楽を学ぶ練習モード、自由に楽器を演奏できるフリープレイモードを見つけましょう。',
       },
       settings: {
         title: '設定⚙️',

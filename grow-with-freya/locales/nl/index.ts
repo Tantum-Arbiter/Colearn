@@ -84,8 +84,8 @@ export default {
   },
   menu: {
     stories: 'Verhalen',
-    musicStories: 'Muziekverhalen',
-    animatedStories: 'Animatieverhalen',
+    practise: 'Oefenen',
+    freeplay: 'Vrij Spelen',
   },
   accessibility: {
     title: 'Toegankelijkheid',
@@ -525,8 +525,8 @@ export default {
         description: 'Laten we een snelle rondleiding doen om jou en je kind te helpen het meeste uit leestijd te halen.',
       },
       stories: {
-        title: 'Verhalenbibliotheek 📚',
-        description: 'Tik hier om een verzameling interactieve verhalen met mooie illustraties en leuke interacties te verkennen.',
+        title: 'Ontdek & Speel 🎵📚',
+        description: 'Veeg door de carrousel om Verhalen, de Oefenmodus om muziek te leren op instrumenten, en de Vrij Spelen modus om vrij te spelen op elk instrument te ontdekken.',
       },
       settings: {
         title: 'Instellingen ⚙️',

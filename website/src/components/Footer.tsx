@@ -80,10 +80,10 @@ export default function Footer() {
             <Link href="/" className="flex items-center gap-2 mb-4">
               <img
                 src="/logo.png"
-                alt="Grow with Freya"
+                alt="earlyroots"
                 className="w-10 h-10 rounded-xl"
               />
-              <span className="font-rounded font-bold text-xl">Grow with Freya</span>
+              <span className="font-rounded font-bold text-xl">earlyroots</span>
             </Link>
             <p className="text-white/70 max-w-sm">
               {t.footer.tagline}
@@ -105,7 +105,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/#how-it-works" className="text-white/70 hover:text-white transition">
+                <Link href="/#about" className="text-white/70 hover:text-white transition">
                   {t.footer.howItWorks}
                 </Link>
               </li>
@@ -138,7 +138,7 @@ export default function Footer() {
         {/* Bottom */}
         <div className="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-white/50 text-sm">
-            © {new Date().getFullYear()} Grow with Freya. All rights reserved.
+            © {new Date().getFullYear()} earlyroots. All rights reserved.
           </p>
           <div className="flex gap-4">
             {/* Social Icons */}

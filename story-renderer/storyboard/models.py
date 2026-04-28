@@ -139,18 +139,34 @@ class CreateBookRequest(BaseModel):
     custom_preset: Optional[GenerationPreset] = None
 
 
+class GenerationMode(str, Enum):
+    """Type of content being generated"""
+    SCENE = "scene"        # Empty environment/background (full image, no characters)
+    CHARACTER = "character"  # Isolated character on transparent/simple background
+    OBJECT = "object"      # Isolated prop/object on transparent/simple background
+    SKETCH = "sketch"      # Sketch-to-image conversion
+
+
 class VariationRequest(BaseModel):
-    """Request to generate 4 variations"""
+    """Request to generate variations"""
     prompt: str
     negative_prompt: str = ""
     base_seed: Optional[int] = None  # If provided, uses seed, seed+1, seed+2, seed+3
     preset_override: Optional[Dict[str, Any]] = None
+    width: Optional[int] = None   # Override latent width (for EmptySD3LatentImage)
+    height: Optional[int] = None  # Override latent height (for EmptySD3LatentImage)
+    generation_mode: GenerationMode = GenerationMode.SCENE  # What type of content
+    character_prompt: Optional[str] = None  # Character definition to inject (only for character mode)
+    num_variations: int = 4  # Number of variations to generate (1-12)
+    pose_name: Optional[str] = None  # Name of pose for pose-based generation
 
 
 class VariationResponse(BaseModel):
     """Response with 4 variations"""
     job_ids: List[str]
     seeds: List[int]
+    workspace_session: Optional[str] = None  # Auto-save session ID
+    workspace_date: Optional[str] = None  # Date folder (YYYY-MM-DD)
 
 
 class CharacterPoseRequest(BaseModel):

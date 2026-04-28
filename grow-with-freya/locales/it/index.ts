@@ -91,8 +91,8 @@ export default {
   // Main menu
   menu: {
     stories: 'Storie',
-    musicStories: 'Storie Musicali',
-    animatedStories: 'Storie Animate',
+    practise: 'Pratica',
+    freeplay: 'Gioco Libero',
   },
 
   // Accessibility settings
@@ -556,8 +556,8 @@ export default {
         description: 'Facciamo un tour veloce per aiutarti te e tuo figlio a ottenere il massimo dal tempo di lettura insieme.',
       },
       stories: {
-        title: 'Libreria di storie 📚',
-        description: 'Tocca qui per esplorare la nostra collezione di storie interattive con bellissime illustrazioni e interazioni divertenti.',
+        title: 'Esplora & Suona 🎵📚',
+        description: 'Scorri il carosello per scoprire le Storie, la modalità Pratica per imparare la musica sugli strumenti, e la modalità Gioco Libero per suonare liberamente qualsiasi strumento.',
       },
       settings: {
         title: 'Impostazioni ⚙️',

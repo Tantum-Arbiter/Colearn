@@ -23,8 +23,8 @@ export interface CarouselMenuItem {
 
 const CAROUSEL_ITEMS: CarouselMenuItem[] = [
   { id: 'stories', icon: 'stories-icon', labelKey: 'menu.stories', destination: 'stories', emoji: '📚' },
-  { id: 'music-stories', icon: 'stories-icon', labelKey: 'menu.musicStories', destination: 'music-stories', emoji: '🎵' },
-  { id: 'animated-stories', icon: 'stories-icon', labelKey: 'menu.animatedStories', destination: 'animated-stories', emoji: '🎬' },
+  { id: 'practise', icon: 'stories-icon', labelKey: 'menu.practise', destination: 'practise', emoji: '🎵' },
+  { id: 'freeplay', icon: 'stories-icon', labelKey: 'menu.freeplay', destination: 'freeplay', emoji: '🎸' },
 ];
 
 // Coverflow configuration
@@ -102,7 +102,14 @@ export const MenuCarousel = React.memo(function MenuCarousel({
     <GestureHandlerRootView style={styles.gestureRoot}>
       <GestureDetector gesture={panGesture}>
         <View style={styles.container} testID="menu-carousel">
-          <View style={[styles.carouselContainer, { width: screenWidth * 0.9 }]}>
+          {/* storiesButtonRef highlights the entire carousel strip as a rounded-rect.
+              The Animated.View transforms aren't reflected by measureInWindow,
+              so this static container is used for the spotlight measurement. */}
+          <View
+            ref={storiesButtonRef}
+            collapsable={false}
+            style={[styles.carouselContainer, { width: screenWidth * 0.9 }]}
+          >
             {CAROUSEL_ITEMS.map((item, index) => (
               <CarouselItem
                 key={item.id}
@@ -110,7 +117,6 @@ export const MenuCarousel = React.memo(function MenuCarousel({
                 index={index}
                 rotation={rotation}
                 onPress={() => handleNavigate(item.destination, index)}
-                storiesButtonRef={index === 0 ? storiesButtonRef : undefined}
                 t={t}
               />
             ))}
@@ -129,7 +135,6 @@ interface CarouselItemProps {
   index: number;
   rotation: SharedValue<number>;
   onPress: () => void;
-  storiesButtonRef?: React.RefObject<View | null>;
   t: (key: string) => string;
 }
 
@@ -138,7 +143,6 @@ const CarouselItem = React.memo(function CarouselItem({
   index,
   rotation,
   onPress,
-  storiesButtonRef,
   t,
 }: CarouselItemProps) {
   const itemAngle = index * ANGLE_PER_ITEM;
@@ -210,18 +214,16 @@ const CarouselItem = React.memo(function CarouselItem({
 
   return (
     <Animated.View style={[styles.itemWrapper, animatedStyle]}>
-      <View ref={storiesButtonRef}>
-        <Pressable onPress={onPress} style={styles.pressable}>
-          <MenuIcon
-            icon={item.icon}
-            label={`${item.emoji || ''} ${t(item.labelKey)}`}
-            status="animated_interactive"
-            onPress={onPress}
-            isLarge={true}
-            testID={`menu-icon-${item.id}`}
-          />
-        </Pressable>
-      </View>
+      <Pressable onPress={onPress} style={styles.pressable}>
+        <MenuIcon
+          icon={item.icon}
+          label={`${item.emoji || ''} ${t(item.labelKey)}`}
+          status="animated_interactive"
+          onPress={onPress}
+          isLarge={true}
+          testID={`menu-icon-${item.id}`}
+        />
+      </Pressable>
     </Animated.View>
   );
 });

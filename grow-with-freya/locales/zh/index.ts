@@ -84,8 +84,8 @@ export default {
   },
   menu: {
     stories: '故事',
-    musicStories: '音乐故事',
-    animatedStories: '动画故事',
+    practise: '练习',
+    freeplay: '自由演奏',
   },
   accessibility: {
     title: '无障碍',
@@ -525,8 +525,8 @@ export default {
         description: '让我们进行快速导览，帮助您和孩子充分利用阅读时间。',
       },
       stories: {
-        title: '故事库 📚',
-        description: '点击此处探索包含精美插图和有趣互动的互动故事集合。',
+        title: '探索与演奏 🎵📚',
+        description: '滑动轮播以发现故事、在乐器上学习音乐的练习模式，以及自由演奏任何乐器的自由演奏模式。',
       },
       settings: {
         title: '设置 ⚙️',

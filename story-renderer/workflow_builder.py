@@ -20,93 +20,88 @@ from config import config
 
 
 # ============================================================
-# WORKFLOW TYPE: full_page (storybook_full_page_slots_api.json)
+# WORKFLOW TYPE: full_page (SETTING ONLY - no characters)
 # ============================================================
 
-FULL_PAGE_POSITIVE = """Create one cohesive premium children's storybook illustration in a soft painterly picture-book style.
+FULL_PAGE_POSITIVE = """Create a premium children's storybook scene illustration.
 
 STYLE:
 {style}
 
-BACKGROUND:
-{background}
+SETTING:
+{setting}
 
-MAIN CHARACTER:
-Exactly one main character: {main_character}
+ATMOSPHERE:
+{atmosphere}
 
-SECONDARY CHARACTER:
-Exactly one secondary character: {secondary_character}
-
-ANIMAL:
-Exactly one animal: {animal}
-
-OBJECTS AND PROPS:
-{objects}
-
-COMPOSITION:
-{composition}
-
-STRICT SCENE RULES:
-- all subjects must appear as separate, fully formed individuals
-- do not merge characters with animals
-- do not merge animals with objects
-- each subject must have exactly one head and one body unless explicitly specified otherwise
-- keep all limbs natural and anatomically correct for the illustration style
-- keep clear spacing between subjects
-- maintain consistent scale, lighting, perspective, and color harmony across the whole page
-- keep the image clean, readable, and suitable for a premium children's picture book
-- no text, no watermark, no logo"""
-
-FULL_PAGE_NEGATIVE = """photorealistic, 3d render, gritty realism, horror, gore, scary, two heads, multiple heads, extra head, three ears, extra ears, fused bodies, conjoined characters, merged animal, merged subject, duplicate character, duplicate animal, extra arms, extra legs, extra fingers, extra eyes, extra tail, malformed hands, malformed paws, distorted anatomy, broken limbs, incorrect proportions, mutation, deformed, cropped subject, cut off head, cut off feet, blurry, muddy colors, washed out image, cluttered composition, random background characters, unreadable scene, text, watermark, logo"""
-
-
-# ============================================================
-# WORKFLOW TYPE: background (storybook_background_only_api.json)
-# ============================================================
-
-BACKGROUND_POSITIVE = """Create a premium children's picture-book background only.
-
-STYLE:
-{style}
-
-BACKGROUND:
-{background}
+PROPS AND DETAILS:
+{props}
 
 COMPOSITION:
 {composition}
 
 RULES:
-- background only
-- no main character
-- no secondary character
-- no foreground animal
-- no hero props unless they are background dressing only
-- leave clean readable open space for later subject placement
-- maintain beautiful lighting, depth, and a polished storybook aesthetic
+- setting and environment only
+- NO characters, NO people, NO animals
+- leave clear space for character placement
+- maintain beautiful lighting, depth, and atmosphere
+- consistent with the specified art style
 - no text, no watermark, no logo"""
 
-BACKGROUND_NEGATIVE = """character, person, people, child, boy, girl, rabbit, deer, fox, hero animal, foreground creature, close-up subject, merged subject, duplicate subject, photorealistic, 3d render, text, watermark, logo"""
+FULL_PAGE_NEGATIVE = """character, person, people, child, boy, girl, animal, creature, figure, rabbit, deer, fox, bird, photorealistic, 3d render, text, watermark, logo"""
+
+
+# ============================================================
+# WORKFLOW TYPE: background (ENVIRONMENT ONLY - no characters)
+# ============================================================
+
+BACKGROUND_POSITIVE = """Create a premium children's picture-book background.
+
+STYLE:
+{style}
+
+BACKGROUND:
+{background}
+
+LIGHTING:
+{lighting}
+
+COMPOSITION:
+{composition}
+
+RULES:
+- background and environment only
+- NO characters, NO people, NO animals
+- leave clean readable open space for character placement
+- maintain beautiful lighting, depth, and atmosphere
+- consistent with the specified art style
+- no text, no watermark, no logo"""
+
+BACKGROUND_NEGATIVE = """character, person, people, child, boy, girl, animal, creature, figure, rabbit, deer, fox, bird, photorealistic, 3d render, text, watermark, logo"""
 
 
 # ============================================================
 # WORKFLOW TYPE: character_ref (storybook_character_reference_api.json)
 # ============================================================
 
-CHARACTER_REF_POSITIVE = """Create a premium children's storybook character reference image.
+CHARACTER_REF_POSITIVE = """Create a character reference sheet for a children's storybook.
 
 STYLE:
 {style}
 
 CHARACTER:
-Exactly one subject: {character}
+{character}
 
 POSE:
 {pose}
 
 BACKGROUND:
-Simple clean backdrop with minimal distractions for consistency checking.
+Plain white or neutral solid color backdrop only, NO environment, NO scene, NO landscape, NO setting, NO props, completely isolated character on empty background.
 
 RULES:
+- ONLY ONE character, no scene, no environment
+- Character isolated on plain background
+- No props, no floor details, no sky
 - exactly one subject only
 - full body visible if possible
 - clear silhouette
@@ -114,7 +109,37 @@ RULES:
 - no extra animals or background characters
 - no text, no watermark, no logo"""
 
-CHARACTER_REF_NEGATIVE = """two heads, multiple heads, extra head, three ears, extra ears, extra eyes, extra tail, duplicate subject, extra limbs, malformed anatomy, mutation, deformed, cropped body, cut off feet, cut off head, cluttered background, multiple characters, photorealistic, 3d render, text, watermark, logo"""
+CHARACTER_REF_NEGATIVE = """background, environment, scene, landscape, forest, sky, grass, floor, ground, setting, props, furniture, trees, buildings, nature, outdoor, indoor, two heads, multiple heads, extra head, three ears, extra ears, extra eyes, extra tail, duplicate subject, extra limbs, malformed anatomy, mutation, deformed, cropped body, cut off feet, cut off head, cluttered background, multiple characters, photorealistic, 3d render, text, watermark, logo"""
+
+
+# ============================================================
+# WORKFLOW TYPE: prop (ISOLATED OBJECT - no characters, no background)
+# ============================================================
+
+PROP_POSITIVE = """Create a single prop/object illustration for a children's storybook.
+
+STYLE:
+{style}
+
+OBJECT:
+{prop}
+
+DETAILS:
+{details}
+
+BACKGROUND:
+Plain white background, solid neutral color, completely empty backdrop, no environment, no scene, no shadows on ground.
+
+RULES:
+- EXACTLY ONE object/prop only
+- Object fully visible, not cropped
+- Plain white or light gray background ONLY
+- NO environment, NO scene, NO characters
+- Object isolated for easy extraction
+- Consistent with the specified art style
+- No text, no watermark, no logo"""
+
+PROP_NEGATIVE = """background, environment, scene, landscape, character, person, people, animal, hand holding, multiple objects, group, pile, collection, photorealistic, 3d render, text, watermark, logo"""
 
 
 # ============================================================
@@ -187,29 +212,29 @@ def get_model_name(model: Optional[str] = None) -> str:
 
 def build_full_page_workflow(inputs: JobInputs, prompt_data: dict) -> dict:
     """
-    Build workflow for single-pass full page generation.
-    Use for ideation and rough page thumbnails.
+    Build workflow for SETTING/SCENE generation only.
+    No characters - use this to build the environment first.
+    Optimized for SD 3.5 Medium: CFG 5.0-6.0, Steps 30-40
     """
     seed = inputs.seed if inputs.seed is not None else random.randint(0, 2**32 - 1)
     model = get_model_name(inputs.model)
 
-    # Fill in prompt template
+    # Fill in prompt template - SETTING ONLY, no characters
     full_prompt = FULL_PAGE_POSITIVE.format(
-        style=prompt_data.get("style", "soft watercolor children's book illustration"),
-        background=prompt_data.get("background", "simple scene background"),
-        main_character=prompt_data.get("main_character", "none in this scene"),
-        secondary_character=prompt_data.get("secondary_character", "none in this scene"),
-        animal=prompt_data.get("animal", "none in this scene"),
-        objects=prompt_data.get("objects", "age-appropriate props"),
-        composition=prompt_data.get("composition", "balanced child-friendly composition")
+        style=prompt_data.get("style", ""),  # REQUIRED - user must provide
+        setting=prompt_data.get("setting", prompt_data.get("background", "")),
+        atmosphere=prompt_data.get("atmosphere", "warm and inviting"),
+        props=prompt_data.get("props", prompt_data.get("objects", "")),
+        composition=prompt_data.get("composition", "open center for character placement")
     )
 
+    # SD 3.5 Medium optimized defaults
     return {
         "1": {
             "inputs": {
                 "seed": seed,
-                "steps": inputs.steps or 24,
-                "cfg": inputs.cfg or 4.5,
+                "steps": inputs.steps or 35,
+                "cfg": inputs.cfg or 5.5,
                 "sampler_name": "euler",
                 "scheduler": "sgm_uniform",
                 "denoise": 1,
@@ -260,16 +285,17 @@ def build_full_page_workflow(inputs: JobInputs, prompt_data: dict) -> dict:
 
 def build_background_workflow(inputs: JobInputs, prompt_data: dict) -> dict:
     """
-    Build workflow for background-only generation.
-    No characters or foreground subjects.
+    Build workflow for ENVIRONMENT/BACKGROUND only.
+    No characters - use this to build clean backgrounds for compositing.
     """
     seed = inputs.seed if inputs.seed is not None else random.randint(0, 2**32 - 1)
     model = get_model_name(inputs.model)
 
     full_prompt = BACKGROUND_POSITIVE.format(
-        style=prompt_data.get("style", "soft watercolor children's book illustration"),
-        background=prompt_data.get("background", "enchanted forest clearing"),
-        composition=prompt_data.get("composition", "open center for subject placement")
+        style=prompt_data.get("style", ""),  # REQUIRED - user must provide
+        background=prompt_data.get("background", ""),
+        lighting=prompt_data.get("lighting", "soft natural lighting"),
+        composition=prompt_data.get("composition", "open center for character placement")
     )
 
     return {
@@ -329,23 +355,26 @@ def build_background_workflow(inputs: JobInputs, prompt_data: dict) -> dict:
 def build_character_ref_workflow(inputs: JobInputs, prompt_data: dict) -> dict:
     """
     Build workflow for character reference sheet generation.
-    Creates a single-subject reference image for the character bible.
+    Uses the SAME style as the scene for consistency.
+    Optimized for SD 3.5 Medium: CFG 5.0-6.0, Steps 30-40
     """
     seed = inputs.seed if inputs.seed is not None else random.randint(0, 2**32 - 1)
     model = get_model_name(inputs.model)
 
+    # Character uses SAME style as scene for consistency
     full_prompt = CHARACTER_REF_POSITIVE.format(
-        style=prompt_data.get("style", "soft watercolor children's book illustration"),
-        character=prompt_data.get("character", "a friendly bunny"),
-        pose=prompt_data.get("pose", "standing, facing forward, neutral expression")
+        style=prompt_data.get("style", ""),  # REQUIRED - must match scene style
+        character=prompt_data.get("character", ""),
+        pose=prompt_data.get("pose", "standing, three-quarter view")
     )
 
+    # SD 3.5 Medium optimized defaults
     return {
         "1": {
             "inputs": {
                 "seed": seed,
-                "steps": inputs.steps or 24,
-                "cfg": inputs.cfg or 4.5,
+                "steps": inputs.steps or 35,
+                "cfg": inputs.cfg or 5.5,
                 "sampler_name": "euler",
                 "scheduler": "sgm_uniform",
                 "denoise": 1,
@@ -394,13 +423,85 @@ def build_character_ref_workflow(inputs: JobInputs, prompt_data: dict) -> dict:
     }
 
 
+def build_prop_workflow(inputs: JobInputs, prompt_data: dict) -> dict:
+    """
+    Build workflow for isolated prop/object generation.
+    Props are generated on plain white backgrounds for easy extraction.
+    """
+    seed = inputs.seed if inputs.seed is not None else random.randint(0, 2**32 - 1)
+    model = get_model_name(inputs.model)
+
+    full_prompt = PROP_POSITIVE.format(
+        style=prompt_data.get("style", ""),
+        prop=prompt_data.get("prop", prompt_data.get("object", "")),
+        details=prompt_data.get("details", "detailed, high quality")
+    )
+
+    return {
+        "1": {
+            "inputs": {
+                "seed": seed,
+                "steps": inputs.steps or 24,
+                "cfg": inputs.cfg or 5.0,
+                "sampler_name": "euler",
+                "scheduler": "sgm_uniform",
+                "denoise": 1,
+                "model": ["3", 0],
+                "positive": ["5", 0],
+                "negative": ["6", 0],
+                "latent_image": ["7", 0]
+            },
+            "class_type": "KSampler",
+            "_meta": {"title": "KSampler"}
+        },
+        "3": {
+            "inputs": {"ckpt_name": model},
+            "class_type": "CheckpointLoaderSimple",
+            "_meta": {"title": "Load Checkpoint"}
+        },
+        "4": {
+            "inputs": {"samples": ["1", 0], "vae": ["3", 2]},
+            "class_type": "VAEDecode",
+            "_meta": {"title": "VAE Decode"}
+        },
+        "5": {
+            "inputs": {"text": full_prompt, "clip": ["3", 1]},
+            "class_type": "CLIPTextEncode",
+            "_meta": {"title": "Positive Prompt"}
+        },
+        "6": {
+            "inputs": {"text": PROP_NEGATIVE, "clip": ["3", 1]},
+            "class_type": "CLIPTextEncode",
+            "_meta": {"title": "Negative Prompt"}
+        },
+        "7": {
+            "inputs": {
+                "width": 768,  # Square for props
+                "height": 768,
+                "batch_size": 1
+            },
+            "class_type": "EmptySD3LatentImage",
+            "_meta": {"title": "EmptySD3LatentImage"}
+        },
+        "8": {
+            "inputs": {"filename_prefix": "storybook_prop", "images": ["4", 0]},
+            "class_type": "SaveImage",
+            "_meta": {"title": "Save Image"}
+        }
+    }
+
+
 def build_inpaint_workflow(inputs: JobInputs, prompt_data: dict) -> dict:
     """
     Build workflow for subject insertion via inpainting.
     Requires base_image and mask_image paths in prompt_data.
 
+    This is the PRIMARY composition method for SD 3.5 Medium since
+    IP-Adapter is not available. Use this instead.
+
     The mask should be a grayscale or RGBA PNG where white = inpaint area.
     Uses ImageToMask to extract the mask channel properly for VAEEncodeForInpaint.
+    Optimized for SD 3.5 Medium: CFG 5.0-6.0, Steps 30-40
     """
     seed = inputs.seed if inputs.seed is not None else random.randint(0, 2**32 - 1)
     model = get_model_name(inputs.model)
@@ -408,10 +509,11 @@ def build_inpaint_workflow(inputs: JobInputs, prompt_data: dict) -> dict:
     base_image = prompt_data.get("base_image", "page_background.png")
     mask_image = prompt_data.get("mask_image", "mask.png")
 
+    # Inpaint uses SAME style as existing scene
     full_prompt = INPAINT_POSITIVE.format(
-        style=prompt_data.get("style", "matching the existing page style"),
-        subject=prompt_data.get("subject", "a friendly character"),
-        placement=prompt_data.get("placement", "naturally positioned in the scene")
+        style=prompt_data.get("style", ""),  # REQUIRED - must match scene style
+        subject=prompt_data.get("subject", ""),
+        placement=prompt_data.get("placement", "naturally integrated into the scene")
     )
 
     # Node structure:
@@ -473,11 +575,11 @@ def build_inpaint_workflow(inputs: JobInputs, prompt_data: dict) -> dict:
         "8": {
             "inputs": {
                 "seed": seed,
-                "steps": inputs.steps or 24,
-                "cfg": inputs.cfg or 4.5,
+                "steps": inputs.steps or 35,
+                "cfg": inputs.cfg or 5.5,
                 "sampler_name": "euler",
                 "scheduler": "sgm_uniform",
-                "denoise": prompt_data.get("denoise", 0.65),
+                "denoise": prompt_data.get("denoise", 0.85),
                 "model": ["1", 0],
                 "positive": ["5", 0],
                 "negative": ["6", 0],
@@ -493,6 +595,257 @@ def build_inpaint_workflow(inputs: JobInputs, prompt_data: dict) -> dict:
         },
         "10": {
             "inputs": {"filename_prefix": "storybook_inpaint_subject", "images": ["9", 0]},
+            "class_type": "SaveImage",
+            "_meta": {"title": "Save Image"}
+        }
+    }
+
+
+# ============================================================
+# WORKFLOW TYPE: img2img (variation/refinement from existing image)
+# ============================================================
+
+IMG2IMG_POSITIVE = """Refine this children's storybook illustration while maintaining exact composition.
+
+STYLE:
+{style}
+
+CHANGES:
+{changes}
+
+RULES:
+- maintain the exact same composition and layout
+- keep all characters in the same positions
+- preserve the color palette
+- only apply the requested style/detail changes
+- no text, no watermark, no logo"""
+
+IMG2IMG_NEGATIVE = """different composition, different layout, different characters, moved subjects, different pose, photorealistic, 3d render, text, watermark, logo"""
+
+
+def build_img2img_workflow(inputs: JobInputs, prompt_data: dict) -> dict:
+    """
+    Build workflow for img2img variations/refinements.
+
+    Use this to make small changes while preserving composition:
+    - Style refinements (denoise 0.2-0.4)
+    - Color adjustments (denoise 0.3-0.5)
+    - Detail enhancement (denoise 0.4-0.6)
+
+    Required in prompt_data:
+    - source_image: filename of image to refine
+    - denoise: strength of changes (0.0-1.0, lower = more similar)
+    """
+    seed = inputs.seed if inputs.seed is not None else random.randint(0, 2**32 - 1)
+    model = get_model_name(inputs.model)
+
+    source_image = prompt_data.get("source_image", "source.png")
+    denoise = prompt_data.get("denoise", 0.35)  # Low default for subtle changes
+
+    # Img2img uses SAME style as source image
+    full_prompt = IMG2IMG_POSITIVE.format(
+        style=prompt_data.get("style", ""),  # REQUIRED - must match scene style
+        changes=prompt_data.get("changes", "")
+    )
+
+    # Detect if using SD3 model - use optimized settings for SD 3.5 Medium
+    is_sd3 = "sd3" in model.lower()
+    scheduler = "sgm_uniform" if is_sd3 else "normal"
+    sampler = "euler" if is_sd3 else "dpmpp_2m_sde"
+    # SD 3.5 Medium optimal: CFG 5.0-6.0, Steps 30-40
+    cfg = inputs.cfg or (5.5 if is_sd3 else 7.0)
+    steps = inputs.steps or (30 if is_sd3 else 24)
+
+    return {
+        "1": {
+            "inputs": {"ckpt_name": model},
+            "class_type": "CheckpointLoaderSimple",
+            "_meta": {"title": "Load Checkpoint"}
+        },
+        "2": {
+            "inputs": {"image": source_image},
+            "class_type": "LoadImage",
+            "_meta": {"title": "Load Source Image"}
+        },
+        "3": {
+            "inputs": {"pixels": ["2", 0], "vae": ["1", 2]},
+            "class_type": "VAEEncode",
+            "_meta": {"title": "VAE Encode"}
+        },
+        "4": {
+            "inputs": {"text": full_prompt, "clip": ["1", 1]},
+            "class_type": "CLIPTextEncode",
+            "_meta": {"title": "Positive Prompt"}
+        },
+        "5": {
+            "inputs": {"text": IMG2IMG_NEGATIVE, "clip": ["1", 1]},
+            "class_type": "CLIPTextEncode",
+            "_meta": {"title": "Negative Prompt"}
+        },
+        "6": {
+            "inputs": {
+                "seed": seed,
+                "steps": steps,
+                "cfg": cfg,
+                "sampler_name": sampler,
+                "scheduler": scheduler,
+                "denoise": denoise,
+                "model": ["1", 0],
+                "positive": ["4", 0],
+                "negative": ["5", 0],
+                "latent_image": ["3", 0]
+            },
+            "class_type": "KSampler",
+            "_meta": {"title": "KSampler"}
+        },
+        "7": {
+            "inputs": {"samples": ["6", 0], "vae": ["1", 2]},
+            "class_type": "VAEDecode",
+            "_meta": {"title": "VAE Decode"}
+        },
+        "8": {
+            "inputs": {"filename_prefix": "storybook_img2img", "images": ["7", 0]},
+            "class_type": "SaveImage",
+            "_meta": {"title": "Save Image"}
+        }
+    }
+
+
+# ============================================================
+# WORKFLOW TYPE: controlnet_lineart (structure-preserving generation)
+# ============================================================
+
+CONTROLNET_POSITIVE = """Create a children's storybook illustration following the exact structure provided.
+
+STYLE:
+{style}
+
+SCENE:
+{scene}
+
+RULES:
+- follow the lineart/structure guide exactly
+- maintain all poses and positions from the reference
+- apply the art style while preserving composition
+- no text, no watermark, no logo"""
+
+CONTROLNET_NEGATIVE = """different pose, different composition, different layout, anatomical errors, extra limbs, deformed, photorealistic, 3d render, text, watermark, logo"""
+
+
+def build_controlnet_workflow(inputs: JobInputs, prompt_data: dict) -> dict:
+    """
+    Build workflow for ControlNet structure-preserving generation.
+
+    Use this when you want to:
+    - Change style while keeping exact composition
+    - Regenerate with different colors but same poses
+    - Convert sketches to full illustrations
+
+    Required in prompt_data:
+    - control_image: filename of structure reference (lineart, canny, depth)
+    - controlnet_type: "lineart", "canny", or "depth"
+    - strength: ControlNet strength (0.0-1.0, default 0.85)
+    """
+    seed = inputs.seed if inputs.seed is not None else random.randint(0, 2**32 - 1)
+    model = get_model_name(inputs.model)
+
+    control_image = prompt_data.get("control_image", "control.png")
+    controlnet_type = prompt_data.get("controlnet_type", "lineart")
+    strength = prompt_data.get("strength", 0.85)
+
+    # ControlNet uses SAME style as the scene
+    full_prompt = CONTROLNET_POSITIVE.format(
+        style=prompt_data.get("style", ""),  # REQUIRED - must match scene style
+        scene=prompt_data.get("scene", "")
+    )
+
+    # ControlNet model mapping (user needs these installed in ComfyUI)
+    controlnet_models = {
+        "lineart": "control_v11p_sd15_lineart.safetensors",
+        "canny": "control_v11p_sd15_canny.safetensors",
+        "depth": "control_v11f1p_sd15_depth.safetensors",
+        "softedge": "control_v11p_sd15_softedge.safetensors"
+    }
+    controlnet_model = controlnet_models.get(controlnet_type, controlnet_models["lineart"])
+
+    # Detect if using SD3 model - use optimized settings for SD 3.5 Medium
+    # NOTE: ControlNet is NOT available for SD 3.5 Medium (only SD 3.5 Large)
+    is_sd3 = "sd3" in model.lower()
+    latent_class = "EmptySD3LatentImage" if is_sd3 else "EmptyLatentImage"
+    scheduler = "sgm_uniform" if is_sd3 else "normal"
+    sampler = "euler" if is_sd3 else "dpmpp_2m_sde"
+    # SD 3.5 Medium optimal: CFG 5.0-6.0, Steps 30-40
+    cfg = inputs.cfg or (5.5 if is_sd3 else 7.0)
+    steps = inputs.steps or (35 if is_sd3 else 24)
+
+    return {
+        "1": {
+            "inputs": {"ckpt_name": model},
+            "class_type": "CheckpointLoaderSimple",
+            "_meta": {"title": "Load Checkpoint"}
+        },
+        "2": {
+            "inputs": {"control_net_name": controlnet_model},
+            "class_type": "ControlNetLoader",
+            "_meta": {"title": "Load ControlNet"}
+        },
+        "3": {
+            "inputs": {"image": control_image},
+            "class_type": "LoadImage",
+            "_meta": {"title": "Load Control Image"}
+        },
+        "4": {
+            "inputs": {"text": full_prompt, "clip": ["1", 1]},
+            "class_type": "CLIPTextEncode",
+            "_meta": {"title": "Positive Prompt"}
+        },
+        "5": {
+            "inputs": {"text": CONTROLNET_NEGATIVE, "clip": ["1", 1]},
+            "class_type": "CLIPTextEncode",
+            "_meta": {"title": "Negative Prompt"}
+        },
+        "6": {
+            "inputs": {
+                "strength": strength,
+                "conditioning": ["4", 0],
+                "control_net": ["2", 0],
+                "image": ["3", 0]
+            },
+            "class_type": "ControlNetApply",
+            "_meta": {"title": "Apply ControlNet"}
+        },
+        "7": {
+            "inputs": {
+                "width": inputs.width or 1024,
+                "height": inputs.height or 704,
+                "batch_size": 1
+            },
+            "class_type": latent_class,
+            "_meta": {"title": "Empty Latent"}
+        },
+        "8": {
+            "inputs": {
+                "seed": seed,
+                "steps": steps,
+                "cfg": cfg,
+                "sampler_name": sampler,
+                "scheduler": scheduler,
+                "denoise": 1.0,
+                "model": ["1", 0],
+                "positive": ["6", 0],
+                "negative": ["5", 0],
+                "latent_image": ["7", 0]
+            },
+            "class_type": "KSampler",
+            "_meta": {"title": "KSampler"}
+        },
+        "9": {
+            "inputs": {"samples": ["8", 0], "vae": ["1", 2]},
+            "class_type": "VAEDecode",
+            "_meta": {"title": "VAE Decode"}
+        },
+        "10": {
+            "inputs": {"filename_prefix": "storybook_controlnet", "images": ["9", 0]},
             "class_type": "SaveImage",
             "_meta": {"title": "Save Image"}
         }
@@ -524,23 +877,26 @@ def build_ipadapter_workflow(inputs: JobInputs, prompt_data: dict) -> dict:
     character_ref = prompt_data.get("character_ref_image", "character_ref.png")
     ipadapter_weight = prompt_data.get("ipadapter_weight", 0.75)
 
+    # IP-Adapter uses SAME style as the scene for consistency
     full_prompt = IPADAPTER_POSITIVE.format(
-        style=prompt_data.get("style", "soft watercolor children's book illustration"),
-        scene=prompt_data.get("scene", prompt_data.get("main_character", "a character in a scene")),
-        composition=prompt_data.get("composition", "centered composition, full scene visible")
+        style=prompt_data.get("style", ""),  # REQUIRED - must match scene style
+        scene=prompt_data.get("scene", ""),
+        composition=prompt_data.get("composition", "")
     )
 
     # Detect if using SD3 model (use EmptySD3LatentImage) or SDXL/SD1.5 (use EmptyLatentImage)
+    # NOTE: IP-Adapter is NOT available for SD 3.5 Medium - this workflow will fail!
+    # Use detailed prompts or Img2Img composition instead.
     is_sd3 = "sd3" in model.lower()
     latent_class = "EmptySD3LatentImage" if is_sd3 else "EmptyLatentImage"
 
-    # Use appropriate scheduler for the model type
+    # Use appropriate scheduler for the model type - SD 3.5 Medium optimal: CFG 5.0-6.0, Steps 30-40
     scheduler = "sgm_uniform" if is_sd3 else "normal"
     sampler = "euler" if is_sd3 else "dpmpp_2m_sde"
-    cfg = inputs.cfg or (4.5 if is_sd3 else 7.0)
-    steps = inputs.steps or (28 if is_sd3 else 30)
+    cfg = inputs.cfg or (5.5 if is_sd3 else 7.0)
+    steps = inputs.steps or (35 if is_sd3 else 30)
 
-    # IP-Adapter workflow (compatible with SDXL and SD3.5)
+    # IP-Adapter workflow (compatible with SDXL and SD1.5, NOT SD 3.5 Medium)
     # Node structure:
     # 1: CheckpointLoaderSimple (load model)
     # 2: CLIPTextEncode (positive prompt)
@@ -670,10 +1026,17 @@ def parse_prompt_data(prompt: str) -> dict:
     if current_key:
         result[current_key] = '\n'.join(current_lines).strip()
 
-    # If no structured format, use whole prompt as main content
+    # If no structured format, use whole prompt as the main content
+    # Do NOT hardcode style - it must come from preset/user input
     if not result:
-        result["main_character"] = prompt
-        result["style"] = "soft watercolor children's book illustration"
+        result["raw_prompt"] = prompt  # Store original for debugging
+        # Try to intelligently assign to most likely field
+        if "character" in prompt.lower() or "rabbit" in prompt.lower() or "fox" in prompt.lower():
+            result["character"] = prompt
+        elif "background" in prompt.lower() or "scene" in prompt.lower() or "forest" in prompt.lower():
+            result["setting"] = prompt
+        else:
+            result["main_content"] = prompt
 
     return result
 
@@ -682,26 +1045,42 @@ def build_workflow(inputs: JobInputs, workflow_type: str = "full_page", uploaded
     """
     Build appropriate workflow based on type.
 
+    SCENE-FIRST PIPELINE:
+    1. "scene" or "background": Empty environment (no characters)
+    2. "character_ref" or "character": Isolated character on white
+    3. "prop" or "object": Isolated prop/item on white
+    4. "ipadapter" or "compose": Place character in scene
+    5. "inpaint" or "insert": Insert element into masked area
+    6. "img2img" or "refine": Polish/adjust existing image
+    7. "controlnet" or "structure": Restyle keeping structure
+
     workflow_type options:
-    - "full_page" or "page": Single-pass full page generation
-    - "background" or "bg": Background-only generation
-    - "character_ref" or "character": Character reference sheet
+    - "full_page" or "page": Scene/setting generation (no characters)
+    - "background" or "bg" or "scene": Background-only generation
+    - "character_ref" or "character": Character reference sheet (isolated)
+    - "prop" or "object" or "item": Prop/object (isolated)
     - "inpaint" or "insert": Subject insertion via inpainting
-    - "ipadapter" or "ip_adapter": Character-conditioned page generation
+    - "ipadapter" or "ip_adapter": Character-conditioned composition
+    - "img2img" or "refine": Subtle refinement of existing image
+    - "controlnet" or "structure": Structure-preserving generation
 
     uploaded_files: dict with filenames for workflows that require uploaded images:
     - 'base_image' and 'mask_image' for inpaint workflow
     - 'character_ref_image' for ipadapter workflow
+    - 'source_image' for img2img workflow
+    - 'control_image' for controlnet workflow
     """
     prompt_data = parse_prompt_data(inputs.prompt)
     uploaded_files = uploaded_files or {}
 
     workflow_type = workflow_type.lower()
 
-    if workflow_type in ["background", "bg"]:
+    if workflow_type in ["background", "bg", "scene"]:
         return build_background_workflow(inputs, prompt_data)
     elif workflow_type in ["character_ref", "character", "ref"]:
         return build_character_ref_workflow(inputs, prompt_data)
+    elif workflow_type in ["prop", "object", "item"]:
+        return build_prop_workflow(inputs, prompt_data)
     elif workflow_type in ["inpaint", "insert"]:
         # Pass uploaded filenames to inpaint workflow
         if uploaded_files.get("base_image"):
@@ -717,6 +1096,22 @@ def build_workflow(inputs: JobInputs, workflow_type: str = "full_page", uploaded
         if hasattr(inputs, 'ipadapter_weight') and inputs.ipadapter_weight is not None:
             prompt_data["ipadapter_weight"] = inputs.ipadapter_weight
         return build_ipadapter_workflow(inputs, prompt_data)
+    elif workflow_type in ["img2img", "refine", "variation"]:
+        # Pass uploaded source image and denoise for img2img
+        if uploaded_files.get("source_image"):
+            prompt_data["source_image"] = uploaded_files["source_image"]
+        if uploaded_files.get("denoise"):
+            prompt_data["denoise"] = uploaded_files["denoise"]
+        return build_img2img_workflow(inputs, prompt_data)
+    elif workflow_type in ["controlnet", "structure", "lineart", "canny"]:
+        # Pass uploaded control image for structure-preserving generation
+        if uploaded_files.get("control_image"):
+            prompt_data["control_image"] = uploaded_files["control_image"]
+        if uploaded_files.get("controlnet_type"):
+            prompt_data["controlnet_type"] = uploaded_files["controlnet_type"]
+        if uploaded_files.get("strength"):
+            prompt_data["strength"] = uploaded_files["strength"]
+        return build_controlnet_workflow(inputs, prompt_data)
     else:  # Default: full_page
         return build_full_page_workflow(inputs, prompt_data)
 

@@ -23,7 +23,7 @@
   "coverImage": "assets/stories/snuggle-little-wombat/cover/cover-large.webp",
   "isAvailable": true,
   "ageRange": "2-5",
-  "duration": 8,
+  "duration": 9,
   "description": "A gentle bedtime story about a little wombat getting ready for sleep with cozy snuggles and sweet dreams.",
   "localizedDescription": {
     "en": "A gentle bedtime story about a little wombat getting ready for sleep with cozy snuggles and sweet dreams.",
@@ -111,6 +111,21 @@
         "da": "Wombaten stirrede, natten føltes ny, tid til at drømme, som vi skal gøre.\n",
         "la": "Wombatus intuitus est, nox nova sensit, tempus somniandi, sicut facere debemus.\n",
         "zh": "袋熊凝视着，夜晚感觉很新，是做梦的时候，就像我们必须做的那样。\n"
+      },
+      "interactionType": "music_challenge",
+      "musicChallenge": {
+        "enabled": true,
+        "instrumentId": "flute",
+        "promptText": "Play a gentle lullaby to help Wombat drift off to sleep!",
+        "mode": "guided",
+        "requiredSequence": ["C", "D", "E", "D", "C"],
+        "successSongId": "wombat_lullaby_v1",
+        "successStateId": "wombat_dreaming",
+        "autoPlaySuccessSong": true,
+        "allowSkip": true,
+        "micRequired": true,
+        "fallbackAllowed": true,
+        "hintLevel": "standard"
       }
     },
     {
@@ -155,6 +170,21 @@
         "da": "Fandt et hul, blødt og dybt, perfekt sted for wombat-søvn.\n",
         "la": "Invenit foveam, mollem et profundam, locum perfectum pro somno wombati.\n",
         "zh": "找到了一个洞穴，柔软而深，是袋熊睡眠的完美地方。\n"
+      },
+      "interactionType": "music_challenge",
+      "musicChallenge": {
+        "enabled": true,
+        "instrumentId": "flute",
+        "promptText": "Play a cozy tune to help Wombat snuggle into the burrow!",
+        "mode": "guided",
+        "requiredSequence": ["E", "D", "C", "D", "E", "E", "E"],
+        "successSongId": "wombat_burrow_v1",
+        "successStateId": "wombat_snuggled",
+        "autoPlaySuccessSong": true,
+        "allowSkip": true,
+        "micRequired": true,
+        "fallbackAllowed": true,
+        "hintLevel": "standard"
       }
     },
     {
@@ -245,5 +275,7 @@
         "zh": "甜蜜的梦，小袋熊，整晚睡得很香。结束。 "
       }
     }
-  ]
+  ],
+  "version": 1,
+  "checksum": "80b3def7cb4e03b5"
 }

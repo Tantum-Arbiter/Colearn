@@ -84,8 +84,8 @@ export default {
   },
   menu: {
     stories: 'Historier',
-    musicStories: 'Musikhistorier',
-    animatedStories: 'Animerede Historier',
+    practise: 'Øvelse',
+    freeplay: 'Fri Leg',
   },
   accessibility: {
     title: 'Tilgængelighed',
@@ -525,8 +525,8 @@ export default {
         description: 'Lad os tage en hurtig rundvisning for at hjælpe dig og dit barn med at få mest ud af lesetiden.',
       },
       stories: {
-        title: 'Historiebibliotek 📚',
-        description: 'Tryk her for at udforske en samling af interaktive historier med smukke illustrationer og sjove interaktioner.',
+        title: 'Udforsk & Spil 🎵📚',
+        description: 'Swipe gennem karrusellen for at opdage Historier, Øvelsestilstand hvor du lærer musik på instrumenter, og Fri Leg til frit at spille på ethvert instrument.',
       },
       settings: {
         title: 'Indstillinger ⚙️',

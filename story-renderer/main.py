@@ -283,7 +283,7 @@ async def gui_home():
     """Serve the GUI interface"""
     index_path = os.path.join(STATIC_DIR, "index.html")
     if os.path.exists(index_path):
-        async with aiofiles.open(index_path, 'r') as f:
+        async with aiofiles.open(index_path, 'r', encoding='utf-8') as f:
             return await f.read()
     return HTMLResponse("<h1>Story Renderer API</h1><p>GUI not found. API available at /v1/</p>")
 
@@ -293,9 +293,15 @@ async def storyboard_gui():
     """Serve the Storyboard Creator interface"""
     storyboard_path = os.path.join(STATIC_DIR, "storyboard.html")
     if os.path.exists(storyboard_path):
-        async with aiofiles.open(storyboard_path, 'r') as f:
+        async with aiofiles.open(storyboard_path, 'r', encoding='utf-8') as f:
             return await f.read()
     return HTMLResponse("<h1>Storyboard Creator</h1><p>Interface not found.</p>")
+
+
+@app.get("/favicon.ico")
+async def favicon():
+    """Return empty response for favicon to prevent 404 log spam"""
+    return Response(status_code=204)
 
 
 # Authentication dependency
@@ -380,6 +386,38 @@ async def cancel_job(job_id: str):
         await comfyui_client.cancel_prompt(job.comfyui_prompt_id)
 
     return {"job_id": job_id, "status": "cancelled"}
+
+
+@app.get("/v1/jobs/{job_id}/image", dependencies=[Depends(verify_api_key)])
+async def get_job_image(job_id: str):
+    """Get the generated image for a completed job"""
+    job = job_queue.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    if not job.outputs:
+        raise HTTPException(status_code=404, detail="Job has no outputs yet")
+
+    # Get the first output image
+    output = job.outputs[0]
+    file_path = os.path.join(config.OUTPUT_DIR, output.filename)
+
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Image file not found on disk")
+
+    async def file_stream():
+        async with aiofiles.open(file_path, "rb") as f:
+            while chunk := await f.read(8192):
+                yield chunk
+
+    return StreamingResponse(
+        file_stream(),
+        media_type="image/png",
+        headers={
+            "Content-Disposition": f"inline; filename={output.filename}",
+            "Cache-Control": "max-age=3600"
+        }
+    )
 
 
 @app.get("/v1/files/{file_id}", dependencies=[Depends(verify_api_key)])

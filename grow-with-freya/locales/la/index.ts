@@ -84,8 +84,8 @@ export default {
   },
   menu: {
     stories: 'Fabulae',
-    musicStories: 'Fabulae Musicae',
-    animatedStories: 'Fabulae Animatae',
+    practise: 'Exercitatio',
+    freeplay: 'Ludus Liber',
   },
   accessibility: {
     title: 'Accessibilitas',
@@ -525,8 +525,8 @@ export default {
         description: 'Faciamus Celerem Circumductionem ut Te et Filium Tuum Adiuvemus Tempus Legendi Maxime Uti.',
       },
       stories: {
-        title: 'Bibliotheca Fabulae 📚',
-        description: 'Tange Hic ut Collectionem Fabulae Interactivae cum Pulchris Imaginationibus et Iocosis Interactionibus Explores.',
+        title: 'Explora & Lude 🎵📚',
+        description: 'Volve per carrulum ut Fabulas, modum Exercitationis ad musicam in instrumentis discendam, et modum Ludi Liberi ad libere in quovis instrumento ludendum invenias.',
       },
       settings: {
         title: 'Constitutiones ⚙️',

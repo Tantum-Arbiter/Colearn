@@ -92,8 +92,8 @@ export default {
   // Main menu
   menu: {
     stories: 'Stories',
-    musicStories: 'Music Stories',
-    animatedStories: 'Animated Stories',
+    practise: 'Practise',
+    freeplay: 'Freeplay',
   },
 
   // Accessibility settings
@@ -181,6 +181,7 @@ export default {
     readingTips: 'Reading Tips',
     recordingTips: 'Recording Tips',
     narrationTips: 'Narration Tips',
+    musicTips: 'Music Tips',
     // Alerts
     permissionRequired: 'Permission Required',
     permissionMessage: 'Microphone access is needed to record your voice.',
@@ -570,8 +571,8 @@ export default {
         description: "Let's take a quick tour to help you and your child get the most out of storytime together.",
       },
       stories: {
-        title: 'Story Library 📚',
-        description: 'Tap here to explore our collection of interactive stories with beautiful illustrations and fun interactions.',
+        title: 'Explore & Play 🎵📚',
+        description: 'Swipe through the carousel to discover Stories, Practise mode where you learn music on instruments, and Freeplay mode to jam freely on any instrument.',
       },
       settings: {
         title: 'Settings ⚙️',
@@ -738,6 +739,33 @@ export default {
       screenTime: {
         title: 'Screen Time ⏱️',
         description: 'Set healthy limits and track daily usage.',
+      },
+    },
+    // Music Mode Tips - keys match tutorial.musicMode.* in tutorial-content.ts
+    musicMode: {
+      welcome: {
+        title: 'Music Mode 🎵',
+        description: 'Some pages in this story have music challenges! Play notes on a virtual instrument to complete them.',
+      },
+      instrument: {
+        title: 'Choose Your Story Instrument 🎹',
+        description: 'When a book with music opens, swipe through the carousel to pick your favourite instrument. Each one has unique sounds!',
+      },
+      playing: {
+        title: 'Playing Notes 🎶',
+        description: 'Press the coloured buttons to play notes. Match the sequence shown at the top to complete the challenge!',
+      },
+      sheet: {
+        title: 'Music Sheet 📋',
+        description: 'Tap the music note button (bottom left) to see all the notes you need to play. You can even preview the melody!',
+      },
+      begin: {
+        title: 'Begin Playing ▶️',
+        description: "When you arrive on a music page, tap the 'Begin Playing' button at the top to start the challenge. It opens the music sheet first so you can see what to play!",
+      },
+      change: {
+        title: 'Change Instrument 🔄',
+        description: "Want to try a different sound? Open the menu (☰) and tap 'Change Instrument' to switch anytime.",
       },
     },
     // Gesture Hints - keys match tutorial.gestures.* in tutorial-content.ts

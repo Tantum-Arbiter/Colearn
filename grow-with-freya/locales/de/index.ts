@@ -91,8 +91,8 @@ export default {
   // Main menu
   menu: {
     stories: 'Geschichten',
-    musicStories: 'Musikgeschichten',
-    animatedStories: 'Animierte Geschichten',
+    practise: 'Üben',
+    freeplay: 'Freies Spiel',
   },
 
   // Accessibility settings
@@ -556,8 +556,8 @@ export default {
         description: 'Lass uns eine kurze Tour machen, um dir und deinem Kind zu helfen, das Beste aus der Geschichtenzeit zu machen.',
       },
       stories: {
-        title: 'Geschichtenbibliothek 📚',
-        description: 'Tippe hier, um unsere Sammlung interaktiver Geschichten mit schönen Illustrationen zu entdecken.',
+        title: 'Entdecken & Spielen 🎵📚',
+        description: 'Wische durch das Karussell, um Geschichten, den Übungsmodus zum Musiklernen auf Instrumenten und den Freispielmodus zum freien Musizieren zu entdecken.',
       },
       settings: {
         title: 'Einstellungen ⚙️',

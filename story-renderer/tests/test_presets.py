@@ -28,13 +28,13 @@ class TestPresets:
     
     def test_get_preset_valid(self):
         """get_preset should return preset for valid key."""
-        preset = get_preset("friendly-dragon")
-        assert preset.name == "Friendly Dragon"
-    
+        preset = get_preset("bluey-cartoon")
+        assert preset.name == "Bluey Cartoon"
+
     def test_get_preset_invalid_returns_default(self):
-        """get_preset should return friendly-dragon for invalid key."""
+        """get_preset should return bluey-cartoon for invalid key."""
         preset = get_preset("invalid-preset-xyz")
-        assert preset.name == "Friendly Dragon"
+        assert preset.name == "Bluey Cartoon"
     
     def test_list_presets_format(self):
         """list_presets should return list of dicts with id, name, art_style."""
@@ -64,79 +64,79 @@ class TestPresets:
             assert preset.cfg <= 20.0
 
 
-class TestModernPresets:
-    """Tests for modern style presets (technical descriptions, no copyrighted references)."""
+class TestSD35MediumPresets:
+    """Tests for SD 3.5 Medium optimized presets."""
 
-    def test_australian_flat_illustration_exists(self):
-        """Australian flat illustration preset should exist."""
-        assert "australian-flat-illustration" in PRESETS
-        preset = PRESETS["australian-flat-illustration"]
+    def test_bluey_cartoon_exists(self):
+        """Bluey-style cartoon preset should exist."""
+        assert "bluey-cartoon" in PRESETS
+        preset = PRESETS["bluey-cartoon"]
         assert "australian" in preset.reference_prompt.lower()
         assert "medium:" in preset.reference_prompt.lower()
 
-    def test_textured_storybook_illustration_exists(self):
-        """Textured storybook illustration preset should exist."""
-        assert "textured-storybook-illustration" in PRESETS
-        preset = PRESETS["textured-storybook-illustration"]
-        assert "gouache" in preset.reference_prompt.lower()
+    def test_classic_oil_painting_exists(self):
+        """Classic oil painting preset should exist."""
+        assert "classic-oil-painting" in PRESETS
+        preset = PRESETS["classic-oil-painting"]
+        assert "oil painting" in preset.reference_prompt.lower()
 
-    def test_bold_preschool_flat_exists(self):
-        """Bold preschool flat preset should exist."""
-        assert "bold-preschool-flat" in PRESETS
-        preset = PRESETS["bold-preschool-flat"]
-        assert "line work:" in preset.reference_prompt.lower()
-
-    def test_cgi_action_cartoon_exists(self):
-        """CGI action cartoon preset should exist."""
-        assert "cgi-action-cartoon" in PRESETS
-        preset = PRESETS["cgi-action-cartoon"]
-        assert "3d" in preset.reference_prompt.lower()
-
-    def test_paper_cutout_geometric_exists(self):
-        """Paper cutout geometric preset should exist."""
-        assert "paper-cutout-geometric" in PRESETS
-        preset = PRESETS["paper-cutout-geometric"]
-        assert "geometric" in preset.reference_prompt.lower()
-
-    def test_polynesian_epic_adventure_exists(self):
-        """Polynesian epic adventure preset should exist."""
-        assert "polynesian-epic-adventure" in PRESETS
-        preset = PRESETS["polynesian-epic-adventure"]
-        assert "tropical" in preset.reference_prompt.lower()
-
-    def test_japanese_watercolor_fantasy_exists(self):
-        """Japanese watercolor fantasy preset should exist."""
-        assert "japanese-watercolor-fantasy" in PRESETS
-        preset = PRESETS["japanese-watercolor-fantasy"]
+    def test_watercolor_storybook_exists(self):
+        """Watercolor storybook preset should exist."""
+        assert "watercolor-storybook" in PRESETS
+        preset = PRESETS["watercolor-storybook"]
         assert "watercolor" in preset.reference_prompt.lower()
 
-    def test_cozy_british_watercolor_exists(self):
-        """Cozy British watercolor preset should exist."""
-        assert "cozy-british-watercolor" in PRESETS
+    def test_bold_graphic_exists(self):
+        """Bold graphic preset should exist."""
+        assert "bold-graphic" in PRESETS
+        preset = PRESETS["bold-graphic"]
+        assert "line work:" in preset.reference_prompt.lower()
 
-    def test_painted_paper_collage_exists(self):
-        """Painted paper collage preset should exist."""
-        assert "painted-paper-collage" in PRESETS
-        preset = PRESETS["painted-paper-collage"]
+    def test_collage_art_exists(self):
+        """Collage art preset should exist."""
+        assert "collage-art" in PRESETS
+        preset = PRESETS["collage-art"]
         assert "collage" in preset.reference_prompt.lower()
 
-    def test_classic_pencil_watercolor_exists(self):
-        """Classic pencil watercolor preset should exist."""
-        assert "classic-pencil-watercolor" in PRESETS
+    def test_soft_pastel_exists(self):
+        """Soft pastel preset should exist."""
+        assert "soft-pastel" in PRESETS
+        preset = PRESETS["soft-pastel"]
+        assert "pastel" in preset.reference_prompt.lower()
+
+    def test_whimsical_line_exists(self):
+        """Whimsical line art preset should exist."""
+        assert "whimsical-line" in PRESETS
+        preset = PRESETS["whimsical-line"]
+
+    def test_anime_cute_exists(self):
+        """Anime cute preset should exist."""
+        assert "anime-cute" in PRESETS
+        preset = PRESETS["anime-cute"]
+
+    def test_peppa_simple_exists(self):
+        """Peppa-style simple preset should exist."""
+        assert "peppa-simple" in PRESETS
+
+    def test_adventure_cartoon_exists(self):
+        """Adventure cartoon preset should exist."""
+        assert "adventure-cartoon" in PRESETS
+        preset = PRESETS["adventure-cartoon"]
+        assert "cartoon" in preset.reference_prompt.lower()
 
     def test_technical_format_consistency(self):
-        """All modern presets should follow the technical format with MEDIUM, LINE WORK, etc."""
-        modern_preset_keys = [
-            "australian-flat-illustration",
-            "textured-storybook-illustration",
-            "bold-preschool-flat",
-            "cgi-action-cartoon",
-            "paper-cutout-geometric",
-            "polynesian-epic-adventure",
-            "soft-3d-nursery",
-            "japanese-watercolor-fantasy",
+        """All SD 3.5 Medium presets should follow the technical format with MEDIUM, LINE WORK, etc."""
+        sd35_preset_keys = [
+            "bluey-cartoon",
+            "classic-oil-painting",
+            "watercolor-storybook",
+            "bold-graphic",
+            "collage-art",
+            "soft-pastel",
+            "whimsical-line",
+            "anime-cute",
         ]
-        for key in modern_preset_keys:
+        for key in sd35_preset_keys:
             preset = PRESETS[key]
             prompt_lower = preset.reference_prompt.lower()
             assert "medium:" in prompt_lower, f"{key} missing MEDIUM section"
@@ -144,24 +144,24 @@ class TestModernPresets:
             assert "shading:" in prompt_lower, f"{key} missing SHADING section"
 
 
-class TestOriginalPresets:
-    """Tests for original presets."""
-    
-    def test_friendly_dragon_exists(self):
-        assert "friendly-dragon" in PRESETS
-    
-    def test_watercolor_woodland_exists(self):
-        assert "watercolor-woodland" in PRESETS
-    
-    def test_bright_adventure_exists(self):
-        assert "bright-adventure" in PRESETS
-    
-    def test_cozy_bedtime_exists(self):
-        assert "cozy-bedtime" in PRESETS
-    
-    def test_ocean_adventure_exists(self):
-        assert "ocean-adventure" in PRESETS
-    
-    def test_space_explorer_exists(self):
-        assert "space-explorer" in PRESETS
+class TestAdditionalPresets:
+    """Tests for additional style presets."""
+
+    def test_crayon_kids_exists(self):
+        assert "crayon-kids" in PRESETS
+
+    def test_retro_disney_exists(self):
+        assert "retro-disney" in PRESETS
+
+    def test_anime_adventure_exists(self):
+        assert "anime-adventure" in PRESETS
+
+    def test_kawaii_chibi_exists(self):
+        assert "kawaii-chibi" in PRESETS
+
+    def test_retro_comic_exists(self):
+        assert "retro-comic" in PRESETS
+
+    def test_claymation_style_exists(self):
+        assert "claymation-style" in PRESETS
 

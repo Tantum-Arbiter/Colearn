@@ -23,6 +23,8 @@ export const MAIN_MENU_TOUR_STEPS: TutorialStepWithKeys[] = [
     titleKey: 'tutorial.mainMenu.stories.title',
     descriptionKey: 'tutorial.mainMenu.stories.description',
     tipPosition: 'below',
+    spotlightShape: 'rounded-rect',
+    spotlightBorderRadius: 24,
   },
   {
     id: 'settings_button',
@@ -322,6 +324,49 @@ export const NARRATE_MODE_TOUR_STEPS: TutorialStepWithKeys[] = [
 ];
 
 /**
+ * Music Mode Tutorial - shown when first reaching a music challenge page
+ * Explains instruments, note buttons, music sheet, and changing instrument
+ */
+export const MUSIC_MODE_TOUR_STEPS: TutorialStepWithKeys[] = [
+  {
+    id: 'music_welcome',
+    titleKey: 'tutorial.musicMode.welcome.title',
+    descriptionKey: 'tutorial.musicMode.welcome.description',
+    tipPosition: 'center',
+  },
+  {
+    id: 'music_instrument',
+    titleKey: 'tutorial.musicMode.instrument.title',
+    descriptionKey: 'tutorial.musicMode.instrument.description',
+    tipPosition: 'center',
+  },
+  {
+    id: 'music_playing',
+    titleKey: 'tutorial.musicMode.playing.title',
+    descriptionKey: 'tutorial.musicMode.playing.description',
+    tipPosition: 'center',
+  },
+  {
+    id: 'music_sheet',
+    titleKey: 'tutorial.musicMode.sheet.title',
+    descriptionKey: 'tutorial.musicMode.sheet.description',
+    tipPosition: 'center',
+  },
+  {
+    id: 'music_begin',
+    titleKey: 'tutorial.musicMode.begin.title',
+    descriptionKey: 'tutorial.musicMode.begin.description',
+    tipPosition: 'center',
+  },
+  {
+    id: 'music_change',
+    titleKey: 'tutorial.musicMode.change.title',
+    descriptionKey: 'tutorial.musicMode.change.description',
+    tipPosition: 'center',
+  },
+];
+
+/**
  * Get tutorial steps by ID
  */
 export function getTutorialSteps(tutorialId: string): TutorialStepWithKeys[] {
@@ -340,6 +385,8 @@ export function getTutorialSteps(tutorialId: string): TutorialStepWithKeys[] {
       return NARRATE_MODE_TOUR_STEPS;
     case 'screen_time_tips':
       return SCREEN_TIME_TIPS;
+    case 'music_mode_tour':
+      return MUSIC_MODE_TOUR_STEPS;
     default:
       return [];
   }

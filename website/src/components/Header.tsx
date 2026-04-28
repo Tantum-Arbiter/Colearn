@@ -16,7 +16,7 @@ export default function Header() {
   // Navigation items with translations
   const navItems: NavItem[] = [
     { label: t.header.features, href: '/#features', sectionId: 'features' },
-    { label: t.header.howItWorks, href: '/#how-it-works', sectionId: 'how-it-works' },
+    { label: t.header.howItWorks, href: '/#about', sectionId: 'about' },
     { label: t.header.pricing, href: '/#pricing', sectionId: 'pricing' },
     { label: t.header.faq, href: '/#faq', sectionId: 'faq' },
   ];
@@ -60,11 +60,11 @@ export default function Header() {
           <Link href="/" className="flex items-center gap-2">
             <img
               src="/logo.png"
-              alt="Grow with Freya"
+              alt="earlyroots"
               className="w-10 h-10 rounded-xl"
             />
             <span className="font-rounded font-bold text-xl text-brand-deepBlue hidden sm:block">
-              Grow with Freya
+              earlyroots
             </span>
           </Link>
 

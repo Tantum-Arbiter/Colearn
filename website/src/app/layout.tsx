@@ -6,11 +6,11 @@ import Footer from '@/components/Footer';
 import LanguageSelector from '@/components/LanguageSelector';
 
 export const metadata: Metadata = {
-  title: 'Grow with Freya | Animated Storybooks for Children',
+  title: 'earlyroots | Animated Storybooks for Children',
   description: 'Animated storybooks that bring reading to life. Discover safe, ad-free stories children love and parents trust. Start storytime today.',
   keywords: ['children stories', 'animated storybooks', 'kids reading app', 'bedtime stories', 'educational stories'],
   openGraph: {
-    title: 'Grow with Freya | Animated Storybooks for Children',
+    title: 'earlyroots | Animated Storybooks for Children',
     description: 'Animated storybooks that bring reading to life.',
     type: 'website',
   },

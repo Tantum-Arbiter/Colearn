@@ -13,8 +13,8 @@ export default function PrivacyPage() {
               Introduction
             </h2>
             <p>
-              Grow with Freya ("we", "our", or "us") is committed to protecting the privacy of children 
-              and families who use our app. This Privacy Policy explains how we collect, use, and safeguard 
+              earlyroots ("we", "our", or "us") is committed to protecting the privacy of children
+              and families who use our app. This Privacy Policy explains how we collect, use, and safeguard
               your information.
             </p>
           </section>

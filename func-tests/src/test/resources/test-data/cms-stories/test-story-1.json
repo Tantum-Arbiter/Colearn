@@ -23,14 +23,16 @@
       "pageNumber": 0,
       "type": "cover",
       "backgroundImage": "assets/stories/cms-squirrels-snowman/cover/cover.webp",
-      "text": "Test Story One\n\nThe Adventure Begins"
+      "text": "Test Story One\n\nThe Adventure Begins",
+      "interactionType": "none"
     },
     {
       "id": "test-story-1-page-1",
       "pageNumber": 1,
       "type": "story",
       "backgroundImage": "assets/stories/cms-squirrels-snowman/page-1/page-1.webp",
-      "text": "TEST STORY 1 - Page 1.\nThis is unique test content for story one."
+      "text": "TEST STORY 1 - Page 1.\nThis is unique test content for story one.",
+      "interactionType": "none"
     },
     {
       "id": "test-story-1-page-2",
@@ -38,6 +40,7 @@
       "type": "story",
       "backgroundImage": "assets/stories/cms-squirrels-snowman/page-2/page-2.webp",
       "text": "TEST STORY 1 - Page 2.\nMore unique content to verify CMS loading.",
+      "interactionType": "interactive_state_change",
       "interactiveElements": [
         {
           "id": "door",
@@ -59,21 +62,38 @@
       "pageNumber": 3,
       "type": "story",
       "backgroundImage": "assets/stories/cms-squirrels-snowman/page-3/page-3.webp",
-      "text": "TEST STORY 1 - Page 3.\nThe adventure continues with test data."
+      "text": "TEST STORY 1 - Page 3.\nGary the bear needs to move the rock. Can you play the flute to help lift it?",
+      "interactionType": "music_challenge",
+      "musicChallenge": {
+        "enabled": true,
+        "instrumentId": "flute",
+        "promptText": "Play the flute to help Gary lift the rock!",
+        "mode": "guided",
+        "requiredSequence": ["C", "D", "E", "C"],
+        "successSongId": "gary_rock_lift_theme_v1",
+        "successStateId": "rock_moved",
+        "autoPlaySuccessSong": true,
+        "allowSkip": false,
+        "micRequired": true,
+        "fallbackAllowed": true,
+        "hintLevel": "standard"
+      }
     },
     {
       "id": "test-story-1-page-4",
       "pageNumber": 4,
       "type": "story",
       "backgroundImage": "assets/stories/cms-squirrels-snowman/page-4/page-4.webp",
-      "text": "TEST STORY 1 - Page 4.\nValidating content delivery from CMS."
+      "text": "TEST STORY 1 - Page 4.\nValidating content delivery from CMS.",
+      "interactionType": "none"
     },
     {
       "id": "test-story-1-page-5",
       "pageNumber": 5,
       "type": "story",
       "backgroundImage": "assets/stories/cms-squirrels-snowman/page-5/page-5.webp",
-      "text": "TEST STORY 1 - Page 5.\nThe end of test story one."
+      "text": "TEST STORY 1 - Page 5.\nThe end of test story one.",
+      "interactionType": "none"
     }
   ]
 }

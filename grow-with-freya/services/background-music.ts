@@ -56,9 +56,11 @@ class BackgroundMusicService {
       // Set audio mode for iOS/iPad compatibility - FORCE exclusive audio control
       // This is the single source of audio mode configuration for the entire app
       await setAudioModeAsync({
+        allowsRecording: false,
         playsInSilentMode: true,
         shouldPlayInBackground: true,
         interruptionMode: 'doNotMix', // Exclusive audio - prevents multiple audio sources
+        shouldRouteThroughEarpiece: false,
       });
       DEBUG_LOGS && console.log('Audio mode configured: doNotMix for exclusive audio control');
 

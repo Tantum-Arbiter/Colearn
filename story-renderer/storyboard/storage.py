@@ -7,8 +7,9 @@ import os
 import json
 import shutil
 import logging
+import uuid
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from datetime import datetime
 
 from .models import Book, Asset, Character, Page, AssetType, CustomTheme, Project
@@ -33,6 +34,7 @@ class StorageManager:
         (self.root / "books").mkdir(parents=True, exist_ok=True)
         (self.root / "album").mkdir(parents=True, exist_ok=True)
         (self.root / "presets").mkdir(parents=True, exist_ok=True)
+        (self.root / "workspace").mkdir(parents=True, exist_ok=True)
 
     # ============================================================
     # Project Management
@@ -458,6 +460,166 @@ class StorageManager:
                 logger.warning(f"Failed to read export {json_file}: {e}")
 
         return sorted(exports, key=lambda x: x.get("created_at", ""), reverse=True)
+
+    # ============================================================
+    # Workspace (Auto-saved generations)
+    # ============================================================
+
+    def create_workspace_session(self, prompt: str, preset_name: str = "", book_id: str = "") -> Dict[str, Any]:
+        """Create a new workspace session for a generation batch"""
+        today = datetime.now().strftime("%Y-%m-%d")
+        session_id = f"gen_{uuid.uuid4().hex[:8]}"
+
+        session_dir = self.root / "workspace" / today / session_id
+        session_dir.mkdir(parents=True, exist_ok=True)
+
+        session_meta = {
+            "id": session_id,
+            "date": today,
+            "created_at": datetime.now().isoformat(),
+            "prompt": prompt,
+            "preset_name": preset_name,
+            "book_id": book_id,
+            "images": [],
+            "status": "generating"
+        }
+
+        meta_path = session_dir / "session.json"
+        with open(meta_path, "w") as f:
+            json.dump(session_meta, f, indent=2)
+
+        logger.info(f"Created workspace session: {session_id}")
+        return {"session_id": session_id, "date": today, "path": str(session_dir)}
+
+    def save_workspace_image(self, session_id: str, date: str, image_data: bytes,
+                             index: int, seed: int = 0, job_id: str = "") -> Dict[str, Any]:
+        """Save a generated image to a workspace session"""
+        session_dir = self.root / "workspace" / date / session_id
+
+        if not session_dir.exists():
+            raise ValueError(f"Session not found: {session_id}")
+
+        # Save image
+        filename = f"img_{index:03d}.png"
+        image_path = session_dir / filename
+        with open(image_path, "wb") as f:
+            f.write(image_data)
+
+        # Update session metadata
+        meta_path = session_dir / "session.json"
+        with open(meta_path) as f:
+            session_meta = json.load(f)
+
+        image_info = {
+            "filename": filename,
+            "index": index,
+            "seed": seed,
+            "job_id": job_id,
+            "saved_at": datetime.now().isoformat()
+        }
+        session_meta["images"].append(image_info)
+        session_meta["updated_at"] = datetime.now().isoformat()
+
+        with open(meta_path, "w") as f:
+            json.dump(session_meta, f, indent=2)
+
+        logger.info(f"Saved workspace image: {session_id}/{filename}")
+        return {
+            "filename": filename,
+            "path": str(image_path),
+            "session_id": session_id,
+            "url": f"/api/storyboard/workspace/{date}/{session_id}/{filename}"
+        }
+
+    def complete_workspace_session(self, session_id: str, date: str):
+        """Mark a workspace session as complete"""
+        session_dir = self.root / "workspace" / date / session_id
+        meta_path = session_dir / "session.json"
+
+        if not meta_path.exists():
+            return
+
+        with open(meta_path) as f:
+            session_meta = json.load(f)
+
+        session_meta["status"] = "complete"
+        session_meta["completed_at"] = datetime.now().isoformat()
+
+        with open(meta_path, "w") as f:
+            json.dump(session_meta, f, indent=2)
+
+    def list_workspace_dates(self) -> List[str]:
+        """List all dates that have workspace sessions"""
+        workspace_dir = self.root / "workspace"
+        if not workspace_dir.exists():
+            return []
+
+        dates = []
+        for date_dir in workspace_dir.iterdir():
+            if date_dir.is_dir() and len(date_dir.name) == 10:  # YYYY-MM-DD format
+                dates.append(date_dir.name)
+
+        return sorted(dates, reverse=True)
+
+    def list_workspace_sessions(self, date: str = None) -> List[Dict[str, Any]]:
+        """List all workspace sessions, optionally filtered by date"""
+        workspace_dir = self.root / "workspace"
+        sessions = []
+
+        if date:
+            date_dirs = [workspace_dir / date] if (workspace_dir / date).exists() else []
+        else:
+            date_dirs = [d for d in workspace_dir.iterdir() if d.is_dir()]
+
+        for date_dir in date_dirs:
+            for session_dir in date_dir.iterdir():
+                if session_dir.is_dir():
+                    meta_path = session_dir / "session.json"
+                    if meta_path.exists():
+                        try:
+                            with open(meta_path) as f:
+                                meta = json.load(f)
+                            # Add thumbnail info
+                            if meta.get("images"):
+                                first_img = meta["images"][0]["filename"]
+                                meta["thumbnail_url"] = f"/v1/storyboard/workspace/{meta['date']}/{meta['id']}/{first_img}"
+                            meta["image_count"] = len(meta.get("images", []))
+                            sessions.append(meta)
+                        except Exception as e:
+                            logger.warning(f"Failed to read session {session_dir}: {e}")
+
+        return sorted(sessions, key=lambda x: x.get("created_at", ""), reverse=True)
+
+    def get_workspace_session(self, session_id: str, date: str) -> Optional[Dict[str, Any]]:
+        """Get a specific workspace session"""
+        session_dir = self.root / "workspace" / date / session_id
+        meta_path = session_dir / "session.json"
+
+        if not meta_path.exists():
+            return None
+
+        with open(meta_path) as f:
+            meta = json.load(f)
+
+        # Add full URLs for all images
+        for img in meta.get("images", []):
+            img["url"] = f"/v1/storyboard/workspace/{date}/{session_id}/{img['filename']}"
+
+        return meta
+
+    def get_workspace_image_path(self, session_id: str, date: str, filename: str) -> Optional[Path]:
+        """Get the path to a workspace image"""
+        image_path = self.root / "workspace" / date / session_id / filename
+        return image_path if image_path.exists() else None
+
+    def delete_workspace_session(self, session_id: str, date: str) -> bool:
+        """Delete a workspace session and all its files"""
+        session_dir = self.root / "workspace" / date / session_id
+        if session_dir.exists():
+            shutil.rmtree(session_dir)
+            logger.info(f"Deleted workspace session: {session_id}")
+            return True
+        return False
 
 
 # Global storage instance

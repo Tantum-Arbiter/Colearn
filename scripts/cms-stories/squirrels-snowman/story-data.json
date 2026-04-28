@@ -23,7 +23,7 @@
   "coverImage": "assets/stories/squirrels-snowman/cover/cover.webp",
   "isAvailable": true,
   "ageRange": "3-6",
-  "duration": 10,
+  "duration": 11,
   "description": "A delightful winter adventure where playful squirrels discover a magical snowman and learn about friendship and winter fun.",
   "localizedDescription": {
     "en": "A delightful winter adventure where playful squirrels discover a magical snowman and learn about friendship and winter fun.",
@@ -291,5 +291,7 @@
         "zh": "当冬天的魔法充满空气时，松鼠们学到了即使在最寒冷的季节，友谊也能绽放。结束。 "
       }
     }
-  ]
+  ],
+  "version": 1,
+  "checksum": "edb9f6e7e90a6de7"
 }

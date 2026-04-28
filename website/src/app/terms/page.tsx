@@ -13,7 +13,7 @@ export default function TermsPage() {
               1. Acceptance of Terms
             </h2>
             <p>
-              By accessing or using Grow with Freya, you agree to be bound by these Terms & Conditions. 
+              By accessing or using earlyroots, you agree to be bound by these Terms & Conditions.
               If you do not agree to these terms, please do not use our service.
             </p>
           </section>
@@ -23,8 +23,8 @@ export default function TermsPage() {
               2. Description of Service
             </h2>
             <p>
-              Grow with Freya provides a subscription-based streaming platform featuring animated 
-              storybooks for children. Our service includes access to our library of stories, 
+              earlyroots provides a subscription-based streaming platform featuring animated
+              storybooks for children. Our service includes access to our library of stories,
               narration, and related educational content.
             </p>
           </section>
@@ -63,8 +63,8 @@ export default function TermsPage() {
               5. Content & Intellectual Property
             </h2>
             <p>
-              All content in Grow with Freya, including stories, illustrations, narration, music, 
-              and software, is owned by or licensed to us and protected by copyright and intellectual 
+              All content in earlyroots, including stories, illustrations, narration, music,
+              and software, is owned by or licensed to us and protected by copyright and intellectual
               property laws. You may not copy, distribute, or create derivative works without permission.
             </p>
           </section>
@@ -97,7 +97,7 @@ export default function TermsPage() {
               8. Limitation of Liability
             </h2>
             <p>
-              Grow with Freya is provided "as is" without warranties of any kind. We are not liable 
+              earlyroots is provided "as is" without warranties of any kind. We are not liable
               for any indirect, incidental, or consequential damages arising from your use of the service.
             </p>
           </section>

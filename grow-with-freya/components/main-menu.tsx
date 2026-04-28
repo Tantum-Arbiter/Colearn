@@ -325,6 +325,7 @@ const legacyStyles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: getResponsiveSize(20),
     paddingBottom: getResponsiveSize(20),
+    zIndex: LAYOUT.Z_INDEX.UI + 1,
   },
   musicControlContainer: {
     marginRight: getResponsiveSize(12),

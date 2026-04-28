@@ -977,5 +977,85 @@ public class CmsContentSyncStepDefs extends BaseStepDefs {
         logger.info("Sync response totalStories: {}, deleted story {} not in checksums: {}",
                 totalStories, storyId, !serverChecksums.containsKey(storyId));
     }
+
+    // =============================================
+    // Interaction type and music challenge step defs
+    // =============================================
+
+    /**
+     * Helper: find a page by its pageNumber in the last response.
+     */
+    private Map<String, Object> getPageByNumber(int pageNumber) {
+        List<Map<String, Object>> pages = lastResponse.jsonPath().getList("pages");
+        assertThat("Pages should exist", pages, notNullValue());
+        for (Map<String, Object> page : pages) {
+            Integer pn = (Integer) page.get("pageNumber");
+            if (pn != null && pn == pageNumber) {
+                return page;
+            }
+        }
+        throw new AssertionError("Page with pageNumber " + pageNumber + " not found");
+    }
+
+    @Then("page {int} should have field {string} with value {string}")
+    public void pageShouldHaveFieldWithValue(int pageNumber, String fieldName, String expectedValue) {
+        Map<String, Object> page = getPageByNumber(pageNumber);
+        Object value = page.get(fieldName);
+        assertThat("Page " + pageNumber + " field " + fieldName + " should exist", value, notNullValue());
+        assertThat("Page " + pageNumber + " field " + fieldName, String.valueOf(value), is(expectedValue));
+    }
+
+    @Then("page {int} should have field {string}")
+    public void pageShouldHaveField(int pageNumber, String fieldName) {
+        Map<String, Object> page = getPageByNumber(pageNumber);
+        assertThat("Page " + pageNumber + " should have field " + fieldName, page.get(fieldName), notNullValue());
+    }
+
+    @Then("page {int} should not have field {string}")
+    public void pageShouldNotHaveField(int pageNumber, String fieldName) {
+        Map<String, Object> page = getPageByNumber(pageNumber);
+        assertThat("Page " + pageNumber + " should NOT have field " + fieldName, page.get(fieldName), nullValue());
+    }
+
+    @SuppressWarnings("unchecked")
+    @Then("page {int} musicChallenge should have field {string} with value {string}")
+    public void pageMusicChallengeShouldHaveFieldWithValue(int pageNumber, String fieldName, String expectedValue) {
+        Map<String, Object> page = getPageByNumber(pageNumber);
+        Map<String, Object> challenge = (Map<String, Object>) page.get("musicChallenge");
+        assertThat("Page " + pageNumber + " should have musicChallenge", challenge, notNullValue());
+        Object value = challenge.get(fieldName);
+        assertThat("musicChallenge." + fieldName + " should exist", value, notNullValue());
+        assertThat("musicChallenge." + fieldName, String.valueOf(value), is(expectedValue));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Then("page {int} musicChallenge should have field {string}")
+    public void pageMusicChallengeShouldHaveField(int pageNumber, String fieldName) {
+        Map<String, Object> page = getPageByNumber(pageNumber);
+        Map<String, Object> challenge = (Map<String, Object>) page.get("musicChallenge");
+        assertThat("Page " + pageNumber + " should have musicChallenge", challenge, notNullValue());
+        assertThat("musicChallenge." + fieldName + " should exist", challenge.get(fieldName), notNullValue());
+    }
+
+    @SuppressWarnings("unchecked")
+    @Then("page {int} musicChallenge requiredSequence should be an array")
+    public void pageMusicChallengeRequiredSequenceShouldBeAnArray(int pageNumber) {
+        Map<String, Object> page = getPageByNumber(pageNumber);
+        Map<String, Object> challenge = (Map<String, Object>) page.get("musicChallenge");
+        assertThat("musicChallenge should exist", challenge, notNullValue());
+        Object seq = challenge.get("requiredSequence");
+        assertThat("requiredSequence should be a list", seq, instanceOf(List.class));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Then("page {int} musicChallenge requiredSequence should have at least {int} element")
+    public void pageMusicChallengeRequiredSequenceShouldHaveAtLeastNElements(int pageNumber, int minCount) {
+        Map<String, Object> page = getPageByNumber(pageNumber);
+        Map<String, Object> challenge = (Map<String, Object>) page.get("musicChallenge");
+        assertThat("musicChallenge should exist", challenge, notNullValue());
+        List<String> seq = (List<String>) challenge.get("requiredSequence");
+        assertThat("requiredSequence should have at least " + minCount + " elements",
+                seq.size(), greaterThanOrEqualTo(minCount));
+    }
 }
 

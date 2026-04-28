@@ -91,8 +91,8 @@ export default {
   // Main menu
   menu: {
     stories: 'Cuentos',
-    musicStories: 'Cuentos Musicales',
-    animatedStories: 'Cuentos Animados',
+    practise: 'Practicar',
+    freeplay: 'Juego Libre',
   },
 
   // Accessibility settings
@@ -556,8 +556,8 @@ export default {
         description: 'Hagamos un recorrido rápido para ayudarte a ti y a tu hijo a aprovechar al máximo la hora del cuento.',
       },
       stories: {
-        title: 'Biblioteca de cuentos 📚',
-        description: 'Toca aquí para explorar nuestra colección de cuentos interactivos con hermosas ilustraciones.',
+        title: 'Explorar y Tocar 🎵📚',
+        description: 'Desliza por el carrusel para descubrir Cuentos, el modo Practicar para aprender música con instrumentos, y el modo Juego Libre para tocar libremente cualquier instrumento.',
       },
       settings: {
         title: 'Configuración ⚙️',

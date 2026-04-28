@@ -5,6 +5,12 @@ import { AppState, AppStateStatus, Dimensions, View, Platform, DevSettings, Aler
 import * as ScreenOrientation from 'expo-screen-orientation';
 
 import 'react-native-reanimated';
+import { configureReanimatedLogger, ReanimatedLogLevel } from 'react-native-reanimated';
+
+// Disable Reanimated strict mode warnings — our shared value reads are all inside
+// useAnimatedStyle / useDerivedValue, but Reanimated's heuristic still fires false positives.
+configureReanimatedLogger({ level: ReanimatedLogLevel.warn, strict: false });
+
 // Initialize i18n service - must be imported before components that use translations
 import '@/services/i18n';
 

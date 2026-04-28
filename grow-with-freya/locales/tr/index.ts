@@ -84,8 +84,8 @@ export default {
   },
   menu: {
     stories: 'Hikayeler',
-    musicStories: 'Müzik Hikayeleri',
-    animatedStories: 'Animasyonlu Hikayeler',
+    practise: 'Alıştırma',
+    freeplay: 'Serbest Çalma',
   },
   accessibility: {
     title: 'Erişilebilirlik',
@@ -525,8 +525,8 @@ export default {
         description: 'Siz ve çocuğunuzun okuma zamanından en iyi şekilde yararlanmanıza yardımcı olmak için hızlı bir tur alalım.',
       },
       stories: {
-        title: 'Hikaye Kütüphanesi 📚',
-        description: 'Güzel illüstrasyonlar ve eğlenceli etkileşimler içeren etkileşimli hikayeler koleksiyonunu keşfetmek için buraya dokunun.',
+        title: 'Keşfet & Çal 🎵📚',
+        description: 'Hikayeleri, enstrümanlarla müzik öğrenmek için Alıştırma modunu ve herhangi bir enstrümanı özgürce çalmak için Serbest Çalma modunu keşfetmek üzere karuseli kaydırın.',
       },
       settings: {
         title: 'Ayarlar ⚙️',

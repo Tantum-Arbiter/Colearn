@@ -31,10 +31,10 @@ export default function ContactPage() {
                 General Enquiries
               </h3>
               <p className="text-gray-500 mb-2 text-sm">
-                Questions about Freya?
+                Questions about earlyroots?
               </p>
               <span className="text-primary text-sm font-medium group-hover:underline">
-                hello@growwithfreya.com
+                hello@earlyroots.com
               </span>
             </a>
 
