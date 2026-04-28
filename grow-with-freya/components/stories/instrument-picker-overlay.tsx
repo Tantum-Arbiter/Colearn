@@ -27,6 +27,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
+import { useTranslation } from 'react-i18next';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -76,6 +77,7 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
   defaultInstrumentId,
   isRotated = false,
 }: InstrumentPickerOverlayProps) {
+  const { t } = useTranslation();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   // Resolve all available instruments
   const instrumentIds = getAvailableInstrumentIds();
@@ -183,14 +185,14 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
           style={styles.closeButton}
           onPress={onClose}
           testID="instrument-picker-close-button"
-          accessibilityLabel="Close instrument picker"
+          accessibilityLabel={t('music.closeInstrumentPicker')}
         >
           <Text style={styles.closeButtonText}>✕</Text>
         </Pressable>
 
         <View style={[styles.headerSection, compactLayout && styles.headerSectionCompact]}>
-          <Text style={styles.title}>Choose Your Story Instrument</Text>
-          <Text style={styles.subtitle}>Swipe to explore, tap to select</Text>
+          <Text style={styles.title}>{t('music.chooseInstrument')}</Text>
+          <Text style={styles.subtitle}>{t('music.swipeToExplore')}</Text>
         </View>
 
         <GestureHandlerRootView style={styles.gestureRoot}>
@@ -224,9 +226,9 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
             style={styles.confirmButton}
             onPress={handleConfirmSelection}
             testID="confirm-instrument-selection-button"
-            accessibilityLabel="Confirm instrument selection"
+            accessibilityLabel={t('music.useThisInstrument')}
           >
-            <Text style={styles.confirmButtonText}>Use this instrument</Text>
+            <Text style={styles.confirmButtonText}>{t('music.useThisInstrument')}</Text>
           </Pressable>
         </View>
 

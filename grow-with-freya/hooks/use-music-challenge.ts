@@ -142,7 +142,9 @@ function generateHarderSequence(
 
 export function useMusicChallenge(
   config: MusicChallenge | undefined,
-  onComplete?: () => void
+  onComplete?: () => void,
+  /** Volume for note playback (0–1). Defaults to 1.0. */
+  noteVolume = 1.0,
 ): MusicChallengeHookResult {
   const [state, setState] = useState<MusicChallengeState>('idle');
   const [isBreathActive, setIsBreathActive] = useState(false);
@@ -207,7 +209,11 @@ export function useMusicChallenge(
   }, [config]);
 
   const start = useCallback(() => {
-    if (!config || missingAssets.length > 0) return;
+    log.debug(`Music challenge start() called: config=${!!config}, missingAssets=${missingAssets.length}, currentState=${state}`);
+    if (!config || missingAssets.length > 0) {
+      log.debug(`Music challenge start() bailed: config=${!!config}, missingAssets=[${missingAssets.join(',')}]`);
+      return;
+    }
     const seq = config.requiredSequence;
     setCurrentSequence(seq);
     setDifficultyLevel(1);
@@ -217,7 +223,7 @@ export function useMusicChallenge(
     setLastInputCorrect(null);
     setSequenceResult(null);
     log.debug(`Music challenge started: ${config.instrumentId}, sequence: ${seq.join(' ')}`);
-  }, [config, missingAssets]);
+  }, [config, missingAssets, state]);
 
   // Note samples are ~5 seconds long — no looping or crossfade needed.
   // The note plays naturally for its full duration; on release we fade out.
@@ -234,13 +240,13 @@ export function useMusicChallenge(
       }
 
       const player = createAudioPlayer(noteAudio);
-      player.volume = 1.0;
+      player.volume = noteVolume;
       notePlayersRef.current.set(note, player);
       player.play();
     } catch (err) {
       log.error('Failed to play note audio:', err);
     }
-  }, [instrument]);
+  }, [instrument, noteVolume]);
 
   // Check if the current sequence has any chord entries
   const hasChords = currentSequence.some(e => isChordEntry(e));
@@ -274,7 +280,7 @@ export function useMusicChallenge(
           if (!noteAudio) continue;
           try {
             const player = createAudioPlayer(noteAudio);
-            player.volume = 1.0;
+            player.volume = noteVolume;
             playbackPlayers.push(player);
             player.play();
           } catch {}
@@ -329,7 +335,7 @@ export function useMusicChallenge(
           songPlayerRef.current.release();
         }
         const player = createAudioPlayer(song.audio);
-        player.volume = 1.0;
+        player.volume = noteVolume;
         songPlayerRef.current = player;
         player.play();
         const duration = (song.duration || 5) * 1000;
@@ -349,7 +355,11 @@ export function useMusicChallenge(
   }, [config, song, onComplete, difficultyLevel, instrument, currentSequence, playSequenceAsAudio]);
 
   const playNote = useCallback((note: string) => {
-    if (state !== 'awaiting_input' || !instrument || !config) return;
+    log.debug(`playNote called: note=${note}, state=${state}, instrument=${!!instrument}, config=${!!config}`);
+    if (state !== 'awaiting_input' || !instrument || !config) {
+      log.debug(`playNote bailed: state=${state}, instrument=${!!instrument}, config=${!!config}`);
+      return;
+    }
 
     // Require breath to be active (or mic not required)
     if (config.micRequired && !isBreathActive) {
@@ -363,7 +373,8 @@ export function useMusicChallenge(
     // Track the held note
     activeNotesRef.current.add(note);
 
-    if (!matcherRef.current) return;
+    // Skip sequence matching for free-play modes (empty sequence)
+    if (!matcherRef.current || currentSequence.length === 0) return;
 
     if (hasChords) {
       // Chord mode: check if the current held notes satisfy the expected chord

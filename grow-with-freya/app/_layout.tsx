@@ -27,6 +27,8 @@ import { ApiClient } from '@/services/api-client';
 import { backgroundSaveService } from '@/services/background-save-service';
 import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
 import { StoryBookReader } from '@/components/stories/story-book-reader';
+import { PractiseScreen } from '@/components/music/practise-screen';
+import { FreeplayScreen } from '@/components/music/freeplay-screen';
 import { ScreenTimeProvider } from '@/components/screen-time/screen-time-provider';
 import { Story } from '@/types/story';
 import { preloadCriticalImages, preloadSecondaryImages } from '@/services/image-preloader';
@@ -128,7 +130,7 @@ function AppContent() {
   const [hasStartedBackgroundMusic, setHasStartedBackgroundMusic] = useState(false);
 
   type AppView = 'splash' | 'onboarding' | 'login' | 'loading' | 'app' | 'main' | 'stories' | 'story-reader' | 'account';
-  type PageKey = 'main' | 'stories' | 'story-reader' | 'account';
+  type PageKey = 'main' | 'stories' | 'story-reader' | 'account' | 'practise' | 'freeplay';
 
   const [currentView, setCurrentView] = useState<AppView>('splash');
   const [currentPage, setCurrentPage] = useState<PageKey>('main');
@@ -518,7 +520,9 @@ function AppContent() {
       'stories': 'stories',
       'music-stories': 'stories',  // TODO: Create dedicated music stories screen
       'animated-stories': 'stories',  // TODO: Create dedicated animated stories screen
-      'account': 'account'
+      'account': 'account',
+      'practise': 'practise',
+      'freeplay': 'freeplay',
     };
 
     const pageKey = destinationMap[destination];
@@ -601,6 +605,8 @@ function AppContent() {
               selectedStory={selectedStory}
               onBack={handleBackToMainMenu}
             />,
+            practise: <PractiseScreen onBack={handleBackToMainMenu} />,
+            freeplay: <FreeplayScreen onBack={handleBackToMainMenu} />,
             account: <AccountScreen onBack={handleAccountBack} isActive={currentPage === 'account'} />,
           }}
           duration={500}

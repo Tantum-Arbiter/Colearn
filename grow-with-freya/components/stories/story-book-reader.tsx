@@ -1714,8 +1714,8 @@ export function StoryBookReader({
       ]}>
 
 
-        {/* Top Left Controls - Exit Button (aligned with bottom back button) */}
-        {!musicUiHidden && (
+        {/* Top Left Controls - Exit Button (aligned with bottom back button) — hidden during music challenge */}
+        {!musicUiHidden && musicChallengePhase !== 'playing' && (
         <View style={[styles.topLeftControls, {
           paddingTop: Math.max(insets.top + 5, 20),
           paddingLeft: Math.max(insets.left + 5, 20)
@@ -1981,7 +1981,7 @@ export function StoryBookReader({
                   }}
                   testID="menu-change-instrument"
                 >
-                  <Text style={[styles.menuItemText, { fontSize: scaledFontSize(14) }]}>Change Instrument</Text>
+                  <Text style={[styles.menuItemText, { fontSize: scaledFontSize(14) }]}>{t('music.changeInstrument')}</Text>
                 </Pressable>
               </>
             )}

@@ -428,7 +428,8 @@ export function validateMusicChallengeAssets(
     }
   }
 
-  if (!SONGS[successSongId]) {
+  // Only validate song if a successSongId is provided (empty = practice/freeplay mode)
+  if (successSongId && !SONGS[successSongId]) {
     missing.push(`song:${successSongId}`);
   }
 
@@ -467,4 +468,380 @@ export function registerInstrument(instrument: InstrumentDefinition): void {
 export function registerSong(song: SongDefinition): void {
   SONGS[song.id] = song;
   log.debug(`Registered song: ${song.id}`);
+}
+
+// ============================================================================
+// PRACTICE SONG LIBRARY
+//
+// Songs for Practise mode — defined as note sequences only (no pre-recorded audio).
+// Each song specifies which notes to play; the instrument samples provide the sound.
+// Songs are instrument-agnostic: any instrument can play them as long as it has the
+// required notes. The UI filters songs by the selected instrument's available notes.
+// ============================================================================
+
+export type PracticeSongDifficulty = 'easy' | 'medium' | 'hard';
+export type PracticeSongCategory = 'nursery' | 'storybook' | 'forces';
+
+export interface PracticeSong {
+  id: string;
+  nameKey: string;             // i18n key under music.songs.*
+  difficulty: PracticeSongDifficulty;
+  category: PracticeSongCategory;
+  /** The note sequence to play (e.g. ['C','D','E','D','C']) */
+  sequence: string[];
+  /** Notes used in this song (derived, but stored for quick filtering) */
+  requiredNotes: string[];
+  /** Tempo hint in BPM (used for preview playback speed) */
+  bpm?: number;
+}
+
+const PRACTICE_SONGS: PracticeSong[] = [
+  // =====================================================================
+  // NURSERY RHYMES — IP-free / public domain melodies
+  // =====================================================================
+
+  // ---- Easy nursery rhymes ----
+  {
+    id: 'hot_cross_buns',
+    nameKey: 'music.songs.hotCrossBuns',
+    difficulty: 'easy',
+    category: 'nursery',
+    sequence: ['E', 'D', 'C', 'E', 'D', 'C', 'C', 'C', 'D', 'D', 'E', 'D', 'C'],
+    requiredNotes: ['C', 'D', 'E'],
+    bpm: 100,
+  },
+  {
+    id: 'rain_rain',
+    nameKey: 'music.songs.rainRain',
+    difficulty: 'easy',
+    category: 'nursery',
+    sequence: ['E', 'E', 'C', 'E', 'E', 'C', 'E', 'F', 'E', 'D', 'C', 'D', 'E'],
+    requiredNotes: ['C', 'D', 'E', 'F'],
+    bpm: 95,
+  },
+  {
+    id: 'au_clair_lune',
+    nameKey: 'music.songs.auClairLune',
+    difficulty: 'easy',
+    category: 'nursery',
+    sequence: ['C', 'C', 'C', 'D', 'E', 'D', 'C', 'E', 'D', 'D', 'C'],
+    requiredNotes: ['C', 'D', 'E'],
+    bpm: 90,
+  },
+  {
+    id: 'mary_lamb',
+    nameKey: 'music.songs.maryLamb',
+    difficulty: 'easy',
+    category: 'nursery',
+    sequence: ['E', 'D', 'C', 'D', 'E', 'E', 'E', 'D', 'D', 'D', 'E', 'G', 'G'],
+    requiredNotes: ['C', 'D', 'E', 'G'],
+    bpm: 110,
+  },
+  {
+    id: 'itsy_bitsy_spider',
+    nameKey: 'music.songs.itsyBitsySpider',
+    difficulty: 'easy',
+    category: 'nursery',
+    sequence: ['G', 'C', 'C', 'C', 'D', 'E', 'E', 'D', 'C', 'D', 'E', 'C'],
+    requiredNotes: ['C', 'D', 'E', 'G'],
+    bpm: 100,
+  },
+  {
+    id: 'row_row_boat',
+    nameKey: 'music.songs.rowRowBoat',
+    difficulty: 'easy',
+    category: 'nursery',
+    sequence: ['C', 'C', 'C', 'D', 'E', 'E', 'D', 'E', 'F', 'G'],
+    requiredNotes: ['C', 'D', 'E', 'F', 'G'],
+    bpm: 85,
+  },
+
+  // ---- Medium nursery rhymes ----
+  {
+    id: 'twinkle_star',
+    nameKey: 'music.songs.twinkleStar',
+    difficulty: 'medium',
+    category: 'nursery',
+    sequence: ['C', 'C', 'G', 'G', 'A', 'A', 'G', 'F', 'F', 'E', 'E', 'D', 'D', 'C'],
+    requiredNotes: ['C', 'D', 'E', 'F', 'G', 'A'],
+    bpm: 100,
+  },
+  {
+    id: 'ode_to_joy',
+    nameKey: 'music.songs.odeToJoy',
+    difficulty: 'medium',
+    category: 'nursery',
+    sequence: ['E', 'E', 'F', 'G', 'G', 'F', 'E', 'D', 'C', 'C', 'D', 'E', 'E', 'D', 'D'],
+    requiredNotes: ['C', 'D', 'E', 'F', 'G'],
+    bpm: 108,
+  },
+  {
+    id: 'london_bridge',
+    nameKey: 'music.songs.londonBridge',
+    difficulty: 'medium',
+    category: 'nursery',
+    sequence: ['G', 'A', 'G', 'F', 'E', 'F', 'G', 'D', 'E', 'F', 'E', 'F', 'G'],
+    requiredNotes: ['D', 'E', 'F', 'G', 'A'],
+    bpm: 112,
+  },
+  {
+    id: 'three_blind_mice',
+    nameKey: 'music.songs.threeBlindMice',
+    difficulty: 'medium',
+    category: 'nursery',
+    sequence: ['E', 'D', 'C', 'E', 'D', 'C', 'G', 'F', 'F', 'E', 'G', 'F', 'F', 'E'],
+    requiredNotes: ['C', 'D', 'E', 'F', 'G'],
+    bpm: 105,
+  },
+  {
+    id: 'humpty_dumpty',
+    nameKey: 'music.songs.humptyDumpty',
+    difficulty: 'medium',
+    category: 'nursery',
+    sequence: ['C', 'E', 'G', 'G', 'E', 'C', 'D', 'E', 'F', 'E', 'D'],
+    requiredNotes: ['C', 'D', 'E', 'F', 'G'],
+    bpm: 90,
+  },
+  {
+    id: 'jack_and_jill',
+    nameKey: 'music.songs.jackAndJill',
+    difficulty: 'medium',
+    category: 'nursery',
+    sequence: ['C', 'D', 'E', 'F', 'G', 'G', 'G', 'G', 'F', 'E', 'F', 'G', 'C'],
+    requiredNotes: ['C', 'D', 'E', 'F', 'G'],
+    bpm: 105,
+  },
+  {
+    id: 'old_macdonald',
+    nameKey: 'music.songs.oldMacdonald',
+    difficulty: 'medium',
+    category: 'nursery',
+    sequence: ['C', 'C', 'C', 'G', 'A', 'A', 'G', 'E', 'E', 'D', 'D', 'C'],
+    requiredNotes: ['C', 'D', 'E', 'G', 'A'],
+    bpm: 110,
+  },
+
+  // ---- Hard nursery rhymes ----
+  {
+    id: 'jingle_bells',
+    nameKey: 'music.songs.jingleBells',
+    difficulty: 'hard',
+    category: 'nursery',
+    sequence: ['E', 'E', 'E', 'E', 'E', 'E', 'E', 'G', 'C', 'D', 'E', 'F', 'F', 'F', 'F', 'F', 'E', 'E', 'E', 'E', 'D', 'D', 'E', 'D', 'G'],
+    requiredNotes: ['C', 'D', 'E', 'F', 'G'],
+    bpm: 120,
+  },
+  {
+    id: 'frere_jacques',
+    nameKey: 'music.songs.frereJacques',
+    difficulty: 'hard',
+    category: 'nursery',
+    sequence: ['C', 'D', 'E', 'C', 'C', 'D', 'E', 'C', 'E', 'F', 'G', 'E', 'F', 'G', 'G', 'A', 'G', 'F', 'E', 'C', 'G', 'A', 'G', 'F', 'E', 'C', 'C', 'G', 'C', 'C', 'G', 'C'],
+    requiredNotes: ['C', 'D', 'E', 'F', 'G', 'A'],
+    bpm: 120,
+  },
+  {
+    id: 'happy_birthday',
+    nameKey: 'music.songs.happyBirthday',
+    difficulty: 'hard',
+    category: 'nursery',
+    sequence: ['C', 'C', 'D', 'C', 'F', 'E', 'C', 'C', 'D', 'C', 'G', 'F', 'C', 'C', 'A', 'F', 'E', 'D'],
+    requiredNotes: ['C', 'D', 'E', 'F', 'G', 'A'],
+    bpm: 100,
+  },
+  {
+    id: 'hickory_dickory',
+    nameKey: 'music.songs.hickoryDickory',
+    difficulty: 'hard',
+    category: 'nursery',
+    sequence: ['G', 'A', 'G', 'E', 'C', 'G', 'A', 'G', 'E', 'C', 'D', 'E', 'E', 'D', 'C'],
+    requiredNotes: ['C', 'D', 'E', 'G', 'A'],
+    bpm: 115,
+  },
+
+  // =====================================================================
+  // STORYBOOK SONGS — Original compositions for storybook instrument play
+  // =====================================================================
+
+  // ---- Easy storybook songs ----
+  {
+    id: 'raindrop_song',
+    nameKey: 'music.songs.raindropSong',
+    difficulty: 'easy',
+    category: 'storybook',
+    sequence: ['E', 'E', 'D', 'D', 'C', 'C', 'D', 'E', 'E', 'D', 'D', 'C'],
+    requiredNotes: ['C', 'D', 'E'],
+    bpm: 110,
+  },
+  {
+    id: 'dreamtime_lullaby',
+    nameKey: 'music.songs.dreamtimeLullaby',
+    difficulty: 'easy',
+    category: 'storybook',
+    sequence: ['E', 'D', 'C', 'D', 'E', 'D', 'C', 'E', 'D', 'C'],
+    requiredNotes: ['C', 'D', 'E'],
+    bpm: 70,
+  },
+  {
+    id: 'ocean_waves',
+    nameKey: 'music.songs.oceanWaves',
+    difficulty: 'easy',
+    category: 'storybook',
+    sequence: ['C', 'D', 'E', 'F', 'E', 'D', 'C', 'D', 'E', 'F', 'E', 'D', 'C'],
+    requiredNotes: ['C', 'D', 'E', 'F'],
+    bpm: 80,
+  },
+
+  // ---- Medium storybook songs ----
+  {
+    id: 'forest_wander',
+    nameKey: 'music.songs.forestWander',
+    difficulty: 'medium',
+    category: 'storybook',
+    sequence: ['C', 'E', 'G', 'E', 'C', 'E', 'G', 'E', 'D', 'F', 'D', 'C'],
+    requiredNotes: ['C', 'D', 'E', 'F', 'G'],
+    bpm: 90,
+  },
+  {
+    id: 'starlight_dance',
+    nameKey: 'music.songs.starlightDance',
+    difficulty: 'medium',
+    category: 'storybook',
+    sequence: ['G', 'E', 'G', 'E', 'F', 'D', 'F', 'D', 'E', 'C', 'E', 'G', 'F', 'E', 'D', 'C'],
+    requiredNotes: ['C', 'D', 'E', 'F', 'G'],
+    bpm: 100,
+  },
+  {
+    id: 'mountain_echo',
+    nameKey: 'music.songs.mountainEcho',
+    difficulty: 'medium',
+    category: 'storybook',
+    sequence: ['C', 'D', 'E', 'F', 'G', 'G', 'F', 'E', 'D', 'C', 'E', 'G', 'E', 'C'],
+    requiredNotes: ['C', 'D', 'E', 'F', 'G'],
+    bpm: 95,
+  },
+  {
+    id: 'butterfly_flight',
+    nameKey: 'music.songs.butterflyFlight',
+    difficulty: 'medium',
+    category: 'storybook',
+    sequence: ['E', 'G', 'F', 'E', 'D', 'F', 'E', 'D', 'C', 'E', 'D', 'C', 'D', 'E', 'F', 'G'],
+    requiredNotes: ['C', 'D', 'E', 'F', 'G'],
+    bpm: 105,
+  },
+  {
+    id: 'moonbeam_waltz',
+    nameKey: 'music.songs.moonbeamWaltz',
+    difficulty: 'medium',
+    category: 'storybook',
+    sequence: ['C', 'E', 'G', 'F', 'D', 'F', 'E', 'C', 'E', 'D', 'C', 'D', 'E', 'G', 'C'],
+    requiredNotes: ['C', 'D', 'E', 'F', 'G'],
+    bpm: 85,
+  },
+
+  // ---- Hard storybook songs ----
+  {
+    id: 'sunrise_march',
+    nameKey: 'music.songs.sunriseMarch',
+    difficulty: 'hard',
+    category: 'storybook',
+    sequence: ['C', 'C', 'D', 'E', 'E', 'F', 'G', 'G', 'A', 'G', 'F', 'E', 'D', 'C', 'D', 'E', 'F', 'G', 'A'],
+    requiredNotes: ['C', 'D', 'E', 'F', 'G', 'A'],
+    bpm: 100,
+  },
+  {
+    id: 'river_journey',
+    nameKey: 'music.songs.riverJourney',
+    difficulty: 'hard',
+    category: 'storybook',
+    sequence: ['C', 'D', 'E', 'G', 'F', 'E', 'D', 'C', 'D', 'F', 'E', 'G', 'F', 'E', 'D', 'E', 'F', 'G', 'E', 'C'],
+    requiredNotes: ['C', 'D', 'E', 'F', 'G'],
+    bpm: 95,
+  },
+
+  // =====================================================================
+  // FORCES SONGS — Slow, smooth melodies representing physical forces
+  // Used in storybooks to teach push, pull, lift, lower, break, and fix.
+  // =====================================================================
+  {
+    id: 'song_of_push',
+    nameKey: 'music.songs.songOfPush',
+    difficulty: 'easy',
+    category: 'forces',
+    sequence: ['C', 'D', 'E', 'F', 'G', 'F', 'E', 'G'],
+    requiredNotes: ['C', 'D', 'E', 'F', 'G'],
+    bpm: 70,
+  },
+  {
+    id: 'song_of_pull',
+    nameKey: 'music.songs.songOfPull',
+    difficulty: 'easy',
+    category: 'forces',
+    sequence: ['G', 'F', 'E', 'D', 'C', 'D', 'E', 'C'],
+    requiredNotes: ['C', 'D', 'E', 'F', 'G'],
+    bpm: 70,
+  },
+  {
+    id: 'song_of_lift',
+    nameKey: 'music.songs.songOfLift',
+    difficulty: 'easy',
+    category: 'forces',
+    sequence: ['C', 'E', 'G', 'E', 'C', 'E', 'F', 'G'],
+    requiredNotes: ['C', 'E', 'F', 'G'],
+    bpm: 70,
+  },
+  {
+    id: 'song_of_lower',
+    nameKey: 'music.songs.songOfLower',
+    difficulty: 'easy',
+    category: 'forces',
+    sequence: ['G', 'E', 'C', 'E', 'G', 'F', 'D', 'C'],
+    requiredNotes: ['C', 'D', 'E', 'F', 'G'],
+    bpm: 70,
+  },
+  {
+    id: 'song_of_break',
+    nameKey: 'music.songs.songOfBreak',
+    difficulty: 'easy',
+    category: 'forces',
+    sequence: ['G', 'C', 'F', 'D', 'E', 'C', 'G', 'C'],
+    requiredNotes: ['C', 'D', 'E', 'F', 'G'],
+    bpm: 70,
+  },
+  {
+    id: 'song_of_fix',
+    nameKey: 'music.songs.songOfFix',
+    difficulty: 'easy',
+    category: 'forces',
+    sequence: ['C', 'D', 'E', 'F', 'E', 'D', 'E', 'C'],
+    requiredNotes: ['C', 'D', 'E', 'F'],
+    bpm: 70,
+  },
+];
+
+/**
+ * Get all practice songs that can be played with a given instrument.
+ * Filters out songs whose required notes exceed the instrument's available notes.
+ */
+export function getPracticeSongsForInstrument(instrumentId: string): PracticeSong[] {
+  const instrument = getInstrument(instrumentId);
+  if (!instrument) return [];
+  const availableNotes = new Set(Object.keys(instrument.notes));
+  return PRACTICE_SONGS.filter(song =>
+    song.requiredNotes.every(note => availableNotes.has(note))
+  );
+}
+
+/**
+ * Get a specific practice song by ID.
+ */
+export function getPracticeSong(songId: string): PracticeSong | undefined {
+  return PRACTICE_SONGS.find(s => s.id === songId);
+}
+
+/**
+ * Get all practice songs.
+ */
+export function getAllPracticeSongs(): PracticeSong[] {
+  return [...PRACTICE_SONGS];
 }

@@ -16,6 +16,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, useWindowDimensions } from 'react-native';
 import { BlurView } from 'expo-blur';
+import { useTranslation } from 'react-i18next';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -63,6 +64,7 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
   onNotePressOut,
   isRotated = false,
 }: MusicSheetOverlayProps) {
+  const { t } = useTranslation();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const overlayOpacity = useSharedValue(0);
   const slideY = useSharedValue(40);
@@ -200,7 +202,7 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
         {/* Header with title and close button */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Text style={styles.title}>♪ Music Sheet</Text>
+            <Text style={styles.title}>{t('music.musicSheet')}</Text>
             <Text style={styles.instrumentLabel}>{instrumentName}</Text>
           </View>
           <Pressable
@@ -227,7 +229,7 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
           <View style={styles.sheetSection}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionLabel}>
-                Notes to Play ({completedNoteCount}/{requiredSequence.length})
+                {t('music.notesToPlay', { completed: completedNoteCount, total: requiredSequence.length })}
               </Text>
               {/* Play/Pause preview button */}
               {(onNotePressIn || onNotePressOut) && (
@@ -242,16 +244,16 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
                     color="#FFFFFF"
                   />
                   <Text style={styles.playButtonText}>
-                    {isPlaying ? 'Pause' : 'Preview'}
+                    {isPlaying ? t('music.pause') : t('music.preview')}
                   </Text>
                 </Pressable>
               )}
             </View>
             {(onNotePressIn || onNotePressOut) && !isPlaying && (
-              <Text style={styles.sectionHint}>Tap and hold notes to hear them</Text>
+              <Text style={styles.sectionHint}>{t('music.tapAndHoldNotes')}</Text>
             )}
             {isPlaying && (
-              <Text style={styles.sectionHint}>Playing preview… tap Pause to stop</Text>
+              <Text style={styles.sectionHint}>{t('music.playingPreview')}</Text>
             )}
             <ScrollView
               horizontal
@@ -305,7 +307,7 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
           {/* Success song info */}
           {successSongName && (
             <View style={styles.songSection}>
-              <Text style={styles.songLabel}>♫ Success Song</Text>
+              <Text style={styles.songLabel}>{t('music.successSong')}</Text>
               <Text style={styles.songName}>{successSongName}</Text>
             </View>
           )}
@@ -317,7 +319,7 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
               onPress={onReadyToPlay}
               testID="ready-to-play-button"
             >
-              <Text style={styles.readyToPlayText}>♫ Ready to Play</Text>
+              <Text style={styles.readyToPlayText}>{t('music.readyToPlay')}</Text>
             </Pressable>
           )}
         </ScrollView>

@@ -11,6 +11,7 @@
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
@@ -42,6 +43,8 @@ interface MusicChallengeUIProps {
   onContinue?: () => void;
   onMusicSheet?: () => void;
   allowSkip?: boolean;
+  /** Override the "Continue Story" button label (e.g. for practise mode) */
+  continueLabel?: string;
   /** Called when the instrument rotation state changes (blow mode or manual rotate) */
   onRotationChange?: (isRotated: boolean) => void;
   /** Called when the user toggles between blow/press mode so the parent can start/stop the mic */
@@ -186,10 +189,12 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
   onContinue,
   onMusicSheet,
   allowSkip = false,
+  continueLabel,
   onRotationChange,
   onPlayModeChange,
   onVisibilityChange,
 }) => {
+  const { t } = useTranslation();
   const [playMode, setPlayMode] = useState<PlayMode>('press');
   const [manualRotated, setManualRotated] = useState(false);
   const [uiHidden, setUiHidden] = useState(false);
@@ -379,12 +384,12 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
             isRotated && styles.celebrationContainerRotated,
             isRotated ? celebrationRotatedStyle : celebrationStyle,
           ]}>
-            <Text style={[styles.celebrationText, { fontSize: celebrationFontSize }]}>Amazing!</Text>
+            <Text style={[styles.celebrationText, { fontSize: celebrationFontSize }]}>{t('music.amazing')}</Text>
             {challenge.difficultyLevel > 1 && (
-              <Text style={[styles.celebrationSubtext, { fontSize: celebrationSubtextFontSize }]}>Level {challenge.difficultyLevel} complete!</Text>
+              <Text style={[styles.celebrationSubtext, { fontSize: celebrationSubtextFontSize }]}>{t('music.levelComplete', { level: challenge.difficultyLevel })}</Text>
             )}
             {isPlayingSong && (
-              <Text style={[styles.celebrationSubtext, { fontSize: celebrationSubtextFontSize }]}>Playing your song...</Text>
+              <Text style={[styles.celebrationSubtext, { fontSize: celebrationSubtextFontSize }]}>{t('music.playingYourSong')}</Text>
             )}
           </Animated.View>
         ) : (
@@ -515,7 +520,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
                 onPress={challenge.retry}
                 testID="retry-button"
               >
-                <Text style={[styles.retryButtonText, { fontSize: scaledFontSize(15) }]}>↻ Retry</Text>
+                <Text style={[styles.retryButtonText, { fontSize: scaledFontSize(15) }]}>{t('music.retry')}</Text>
               </Pressable>
               {!challenge.isMaxDifficulty && (
                 <Pressable
@@ -524,7 +529,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
                   testID="go-harder-button"
                 >
                   <Text style={[styles.goHarderButtonText, { fontSize: scaledFontSize(15) }]}>
-                    <MaterialIcons name="trending-up" size={scaledFontSize(16)} color="#FFFFFF" /> Go Harder{challenge.difficultyLevel > 1 ? ` (Lv ${challenge.difficultyLevel + 1})` : ''}
+                    <MaterialIcons name="trending-up" size={scaledFontSize(16)} color="#FFFFFF" /> {challenge.difficultyLevel > 1 ? t('music.goHarderLevel', { level: challenge.difficultyLevel + 1 }) : t('music.goHarder')}
                   </Text>
                 </Pressable>
               )}
@@ -533,7 +538,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
                 onPress={onContinue}
                 testID="continue-story-button"
               >
-                <Text style={[styles.continueButtonText, { fontSize: scaledFontSize(15) }]}>Continue Story →</Text>
+                <Text style={[styles.continueButtonText, { fontSize: scaledFontSize(15) }]}>{continueLabel ?? t('music.continueStory')}</Text>
               </Pressable>
             </>
           ) : !uiHidden ? (
@@ -547,23 +552,23 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
                 testID="play-mode-toggle"
               >
                 <Text style={[styles.modeToggleText, { fontSize: scaledFontSize(14) }]}>
-                  {playMode === 'blow' ? '♪ Blow' : '♫ Press'}
+                  {playMode === 'blow' ? t('music.blowMode') : t('music.pressMode')}
                 </Text>
               </Pressable>
 
               {playMode === 'blow' && (
                 <Text style={[styles.blowHint, { fontSize: scaledFontSize(12) }]}>
-                  {challenge.isBreathActive ? '♪ Blowing!' : 'Blow while holding notes'}
+                  {challenge.isBreathActive ? t('music.blowing') : t('music.blowWhileHolding')}
                 </Text>
               )}
 
               {challenge.lastInputCorrect === false && (
-                <Text style={[styles.feedbackWrong, { fontSize: scaledFontSize(15) }]}>Try again!</Text>
+                <Text style={[styles.feedbackWrong, { fontSize: scaledFontSize(15) }]}>{t('music.tryAgain')}</Text>
               )}
 
               {allowSkip && (
                 <Pressable style={styles.skipButton} onPress={onSkip}>
-                  <Text style={[styles.skipButtonText, { fontSize: scaledFontSize(13) }]}>Skip →</Text>
+                  <Text style={[styles.skipButtonText, { fontSize: scaledFontSize(13) }]}>{t('music.skip')}</Text>
                 </Pressable>
               )}
             </>
@@ -571,7 +576,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
         </View>
         {isPlayingSong && (
           <View style={styles.listeningOverlay}>
-            <Text style={[styles.blowHint, { fontSize: scaledFontSize(12) }]}>Listen to your melody...</Text>
+            <Text style={[styles.blowHint, { fontSize: scaledFontSize(12) }]}>{t('music.listeningToMelody')}</Text>
           </View>
         )}
       </View>
@@ -587,7 +592,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
             style={[styles.floatingControlButton, { width: scaledButtonSize(44), height: scaledButtonSize(44), borderRadius: scaledButtonSize(22) }]}
             onPress={onMusicSheet}
             testID="music-sheet-button"
-            accessibilityLabel="Open music sheet"
+            accessibilityLabel={t('music.openMusicSheet')}
           >
             <MaterialIcons name="library-music" size={scaledFontSize(22)} color="#FFFFFF" testID="music-sheet-icon" />
           </Pressable>
@@ -607,7 +612,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
             onVisibilityChange?.(newVal);
           }}
           testID="hide-ui-button"
-          accessibilityLabel={uiHidden ? 'Show controls' : 'Hide controls'}
+          accessibilityLabel={uiHidden ? t('music.showControls') : t('music.hideControls')}
         >
           <MaterialIcons name={uiHidden ? 'visibility' : 'visibility-off'} size={scaledFontSize(22)} color="#FFFFFF" />
         </Pressable>

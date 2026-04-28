@@ -813,6 +813,99 @@ export default {
     limitReachedMessage: "Daily screen time limit reached. It's time to close the app and try other activities!",
   },
 
+  // Music challenge UI strings
+  music: {
+    // Celebration
+    amazing: 'Amazing!',
+    levelComplete: 'Level {{level}} complete!',
+    playingYourSong: 'Playing your song...',
+    listeningToMelody: 'Listen to your melody...',
+    // Buttons
+    retry: '↻ Retry',
+    goHarder: 'Increase Difficulty',
+    goHarderLevel: 'Increase Difficulty (Lv {{level}})',
+    continueStory: 'Continue Story →',
+    skip: 'Skip →',
+    // Play modes
+    blowMode: '♪ Blow',
+    pressMode: '♫ Press',
+    blowing: '♪ Blowing!',
+    blowWhileHolding: 'Blow while holding notes',
+    tryAgain: 'Try again!',
+    // Accessibility
+    openMusicSheet: 'Open music sheet',
+    showControls: 'Show controls',
+    hideControls: 'Hide controls',
+    // Music sheet overlay
+    musicSheet: '♪ Music Sheet',
+    notesToPlay: 'Notes to Play ({{completed}}/{{total}})',
+    pause: 'Pause',
+    preview: 'Preview',
+    tapAndHoldNotes: 'Tap and hold notes to hear them',
+    playingPreview: 'Playing preview… tap Pause to stop',
+    successSong: '♫ Success Song',
+    readyToPlay: '♫ Ready to Play',
+    // Instrument picker
+    chooseInstrument: 'Choose Your Instrument',
+    swipeToExplore: 'Swipe to explore, tap to select',
+    useThisInstrument: 'Use this instrument',
+    closeInstrumentPicker: 'Close instrument picker',
+    // Burger menu
+    changeInstrument: 'Change Instrument',
+    // Practise mode
+    songLibrary: 'Song Library',
+    backToLibrary: 'Back to Library',
+    backToMenu: 'Back',
+    noSongsAvailable: 'No songs available for this instrument',
+    // Freeplay mode
+    freeplayPrompt: 'Free Play — tap any note!',
+    // Difficulty labels
+    difficulty: {
+      easy: 'Easy',
+      medium: 'Medium',
+      hard: 'Hard',
+    },
+    // Song names
+    songs: {
+      // Nursery rhymes (IP-free, public domain)
+      hotCrossBuns: 'Hot Cross Buns',
+      rainRain: 'Rain Rain Go Away',
+      auClairLune: 'Au Clair de la Lune',
+      maryLamb: 'Mary Had a Little Lamb',
+      itsyBitsySpider: 'Itsy Bitsy Spider',
+      rowRowBoat: 'Row Row Row Your Boat',
+      twinkleStar: 'Twinkle Twinkle Little Star',
+      odeToJoy: 'Ode to Joy',
+      londonBridge: 'London Bridge',
+      threeBlindMice: 'Three Blind Mice',
+      humptyDumpty: 'Humpty Dumpty',
+      jackAndJill: 'Jack and Jill',
+      oldMacdonald: 'Old MacDonald',
+      jingleBells: 'Jingle Bells',
+      frereJacques: 'Frère Jacques',
+      happyBirthday: 'Happy Birthday',
+      hickoryDickory: 'Hickory Dickory Dock',
+      // Storybook songs (original compositions)
+      raindropSong: 'Raindrop Song',
+      dreamtimeLullaby: 'Dreamtime Lullaby',
+      oceanWaves: 'Ocean Waves',
+      forestWander: 'Forest Wander',
+      starlightDance: 'Starlight Dance',
+      mountainEcho: 'Mountain Echo',
+      butterflyFlight: 'Butterfly Flight',
+      moonbeamWaltz: 'Moonbeam Waltz',
+      sunriseMarch: 'Sunrise March',
+      riverJourney: 'River Journey',
+      // Forces songs
+      songOfPush: 'Song of Push',
+      songOfPull: 'Song of Pull',
+      songOfLift: 'Song of Lift',
+      songOfLower: 'Song of Lower',
+      songOfBreak: 'Song of Break',
+      songOfFix: 'Song of Fix',
+    },
+  },
+
   // Audio settings modal
   audioSettings: {
     title: 'Audio Settings',
