@@ -104,8 +104,123 @@ When generating new songs, models should:
 
 ---
 
+## Storybook Tags & Labels
+
+Every storybook has two classification systems: a **category** (primary genre) and **filter tags** (multiple descriptors).
+
+### Categories (`StoryCategory`)
+
+The primary genre of a story. Each story has exactly one category.
+
+| Category | Emoji | Description |
+|----------|-------|-------------|
+| `personalized` | 🎭 | AI-generated stories tailored to the child |
+| `bedtime` | 🌙 | Calming stories for winding down |
+| `adventure` | 🗺️ | Exciting journeys and quests |
+| `nature` | 🐢 | Animals, plants, and the natural world |
+| `friendship` | 🤝 | Social skills and relationships |
+| `learning` | 📚 | Counting, alphabet, colours, shapes |
+| `fantasy` | ✨ | Magical worlds and mythical creatures |
+| `music` | 🎵 | Music-themed stories with instrument challenges |
+| `activities` | 🎲 | Spontaneous physical activities |
+| `growing` | 🌱 | Emotional growth and family |
+
+Defined in: `types/story.ts` → `StoryCategory`
+CMS field: `category` (string enum)
+
+### Filter Tags (`StoryFilterTag`)
+
+Multiple tags can be applied to any story for cross-genre filtering.
+
+| Tag | Emoji | Colour | Use For |
+|-----|-------|--------|---------|
+| `personalized` | 🎭 | #FF69B4 | AI-personalised content |
+| `calming` | 🧘 | #4ECDC4 | Relaxation, mindfulness |
+| `bedtime` | 🌙 | #96CEB4 | Sleep-time stories |
+| `adventure` | 🗺️ | #FF6B6B | Action and exploration |
+| `learning` | 📚 | #FFEAA7 | Educational content |
+| `music` | 🎵 | #FF9F43 | Music interaction pages |
+| `family-exercises` | 👨‍👩‍👧 | #45B7D1 | Activities for parent+child |
+| `imagination-games` | 🎭 | #DDA0DD | Creative play and pretend |
+| `animals` | 🐾 | #8B4513 | Animal characters/themes |
+| `friendship` | 🤝 | #FFB6C1 | Making and keeping friends |
+| `nature` | 🌳 | #228B22 | Outdoor, environment |
+| `fantasy` | ✨ | #9370DB | Magic and mythical |
+| `counting` | 🔢 | #20B2AA | Numbers and counting |
+| `emotions` | 💖 | #FF69B4 | Feelings and emotional literacy |
+| `silly` | 🤪 | #FFD700 | Humour and silliness |
+| `rhymes` | 📝 | #87CEEB | Rhyming and wordplay |
+
+Defined in: `types/story.ts` → `StoryFilterTag`, `STORY_FILTER_TAGS`
+CMS field: `tags` (string array)
+
+### Music Challenge Page Fields
+
+When a storybook page includes a music interaction, add these fields to the page object:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `interactionType` | `'music_challenge'` | Activates the music UI |
+| `musicChallenge.enabled` | `boolean` | Toggle challenge on/off |
+| `musicChallenge.instrumentId` | `string` | Instrument to use (e.g. `'flute'`) |
+| `musicChallenge.promptText` | `string` | Narrative prompt shown to child |
+| `musicChallenge.mode` | `'guided'` \| `'free_play_optional'` | Challenge mode |
+| `musicChallenge.requiredSequence` | `string[]` | Notes to play (e.g. `['C','D','E']`) |
+| `musicChallenge.successSongId` | `string` | Song asset to play on success |
+| `musicChallenge.successStateId` | `string?` | Optional page state change |
+| `musicChallenge.autoPlaySuccessSong` | `boolean` | Auto-play success melody |
+| `musicChallenge.allowSkip` | `boolean` | Let child skip the challenge |
+| `musicChallenge.micRequired` | `boolean` | Require microphone |
+| `musicChallenge.fallbackAllowed` | `boolean` | Show on-screen blow button |
+| `musicChallenge.hintLevel` | `'none'` \| `'minimal'` \| `'standard'` \| `'verbose'` | Hint verbosity |
+
+---
+
 ## Supported Locales
 
-All song names are translated in: English (en), Arabic (ar), Danish (da), German (de), Spanish (es), French (fr), Italian (it), Japanese (ja), Latin (la), Dutch (nl), Polish (pl), Portuguese (pt), Turkish (tr), Chinese (zh).
+All song names and story content are translated across **14 locales**:
 
-Song name translations live in `locales/{lang}/index.ts` under `music.songs.*`.
+| Code | Language | Script Direction |
+|------|----------|-----------------|
+| `en` | English | LTR (fallback) |
+| `ar` | Arabic | RTL |
+| `da` | Danish | LTR |
+| `de` | German | LTR |
+| `es` | Spanish | LTR |
+| `fr` | French | LTR |
+| `it` | Italian | LTR |
+| `ja` | Japanese | LTR |
+| `la` | Latin | LTR |
+| `nl` | Dutch | LTR |
+| `pl` | Polish | LTR |
+| `pt` | Portuguese | LTR |
+| `tr` | Turkish | LTR |
+| `zh` | Chinese | LTR |
+
+### Where to Update Language
+
+| Content | File(s) | Key Path |
+|---------|---------|----------|
+| Song names | `locales/{lang}/index.ts` | `music.songs.*` |
+| Music UI strings | `locales/{lang}/index.ts` | `music.*` (e.g. `music.goHarder`, `music.backToLibrary`) |
+| Story titles | `data/stories.ts` or CMS | `localizedTitle.*` on the Story object |
+| Story descriptions | `data/stories.ts` or CMS | `localizedDescription.*` on the Story object |
+| Page text | `data/bundled-stories.ts` or CMS | `localizedText.*` on the StoryPage object |
+| Genre labels | `locales/{lang}/index.ts` | `stories.genres.*` |
+| Filter tag labels | `locales/{lang}/index.ts` | `stories.filterTags.*` |
+
+### CMS Language Updates
+
+For stories managed via CMS (Firestore), localized fields use the `LocalizedText` interface:
+
+```typescript
+interface LocalizedText {
+  en: string;   // Required — always the fallback
+  pl?: string;  es?: string;  de?: string;  fr?: string;
+  it?: string;  pt?: string;  ja?: string;  ar?: string;
+  tr?: string;  nl?: string;  da?: string;  la?: string;
+  zh?: string;
+}
+```
+
+Set `localizedTitle`, `localizedDescription`, and per-page `localizedText` in the CMS document. The app calls `getLocalizedText()` (from `types/story.ts`) to resolve the correct language with automatic English fallback.
