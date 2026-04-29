@@ -67,7 +67,7 @@ describe('InstrumentPickerOverlay', () => {
     it('should render content when visible is true', () => {
       const { json } = renderVisible();
       expect(json).not.toBeNull();
-      expect(treeContainsText(json, 'Choose Your Instrument')).toBe(true);
+      expect(treeContainsText(json, 'music.chooseInstrument')).toBe(true);
     });
 
     it('should not render when visible is false', () => {
@@ -95,21 +95,21 @@ describe('InstrumentPickerOverlay', () => {
   });
 
   describe('title and subtitle', () => {
-    it('should show "Choose Your Instrument" title', () => {
+    it('should show chooseInstrument title', () => {
       const { json } = renderVisible();
-      expect(treeContainsText(json, 'Choose Your Instrument')).toBe(true);
+      expect(treeContainsText(json, 'music.chooseInstrument')).toBe(true);
     });
 
     it('should show subtitle text', () => {
       const { json } = renderVisible();
-      expect(treeContainsText(json, 'Swipe to explore, tap to select')).toBe(true);
+      expect(treeContainsText(json, 'music.swipeToExplore')).toBe(true);
     });
   });
 
   describe('close and rotation support', () => {
     it('should render a close button', () => {
       const { getByLabelText } = renderVisible();
-      expect(getByLabelText('Close instrument picker')).toBeTruthy();
+      expect(getByLabelText('music.closeInstrumentPicker')).toBeTruthy();
     });
 
     it('should accept onClose and isRotated props without error', () => {
@@ -120,7 +120,7 @@ describe('InstrumentPickerOverlay', () => {
   describe('subtitle text', () => {
     it('should render the tap-to-select subtitle', () => {
       const { json } = renderVisible();
-      expect(treeContainsText(json, 'tap to select')).toBe(true);
+      expect(treeContainsText(json, 'music.swipeToExplore')).toBe(true);
     });
   });
 
@@ -154,7 +154,7 @@ describe('InstrumentPickerOverlay', () => {
       const onSelect = jest.fn();
       const { getByLabelText } = renderVisible({ onSelect });
 
-      fireEvent.press(getByLabelText('Confirm instrument selection'));
+      fireEvent.press(getByLabelText('music.useThisInstrument'));
 
       expect(onSelect).toHaveBeenCalledWith('flute');
     });
@@ -163,7 +163,7 @@ describe('InstrumentPickerOverlay', () => {
       const onSelect = jest.fn();
       const { getByLabelText } = renderVisible({ defaultInstrumentId: 'trumpet', onSelect });
 
-      fireEvent.press(getByLabelText('Confirm instrument selection'));
+      fireEvent.press(getByLabelText('music.useThisInstrument'));
 
       expect(onSelect).toHaveBeenCalledWith('trumpet');
     });

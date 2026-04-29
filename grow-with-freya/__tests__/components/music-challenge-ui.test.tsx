@@ -51,7 +51,7 @@ describe('MusicChallengeUI', () => {
       />
     );
 
-    expect(getByLabelText('Open music sheet')).toBeTruthy();
+    expect(getByLabelText('music.openMusicSheet')).toBeTruthy();
   });
 
   it('calls onMusicSheet when the music sheet button is pressed', () => {
@@ -67,7 +67,7 @@ describe('MusicChallengeUI', () => {
       />
     );
 
-    fireEvent.press(getByLabelText('Open music sheet'));
+    fireEvent.press(getByLabelText('music.openMusicSheet'));
     expect(onMusicSheet).toHaveBeenCalledTimes(1);
   });
 });

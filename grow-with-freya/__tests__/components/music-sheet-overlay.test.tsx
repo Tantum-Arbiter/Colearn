@@ -79,9 +79,9 @@ describe('MusicSheetOverlay', () => {
   });
 
   describe('header', () => {
-    it('should display "Music Sheet" title', () => {
+    it('should display music sheet title', () => {
       const { json } = renderOverlay();
-      expect(treeContainsText(json, 'Music Sheet')).toBe(true);
+      expect(treeContainsText(json, 'music.musicSheet')).toBe(true);
     });
 
     it('should display the instrument name', () => {
@@ -184,12 +184,12 @@ describe('MusicSheetOverlay', () => {
     it('should display success song name when provided', () => {
       const { json } = renderOverlay({ successSongName: 'Gary Lifts the Rock' });
       expect(treeContainsText(json, 'Gary Lifts the Rock')).toBe(true);
-      expect(treeContainsText(json, 'Success Song')).toBe(true);
+      expect(treeContainsText(json, 'music.successSong')).toBe(true);
     });
 
     it('should not show song section when not provided', () => {
       const { json } = renderOverlay({ successSongName: undefined });
-      expect(treeContainsText(json, 'Success Song')).toBe(false);
+      expect(treeContainsText(json, 'music.successSong')).toBe(false);
     });
   });
 
