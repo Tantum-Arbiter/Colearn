@@ -156,7 +156,13 @@ function formatStoryData(data) {
 function calculateChecksum(story) {
   const content = JSON.stringify({
     title: story.title,
-    pages: story.pages?.map(p => ({ text: p.text, type: p.type })),
+    pages: story.pages?.map(p => ({
+      text: p.text,
+      type: p.type,
+      interactionType: p.interactionType,
+      interactiveElements: p.interactiveElements,
+      musicChallenge: p.musicChallenge,
+    })),
   });
   return crypto.createHash('sha256').update(content).digest('hex').substring(0, 16);
 }

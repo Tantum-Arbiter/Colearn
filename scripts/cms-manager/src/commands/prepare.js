@@ -130,7 +130,15 @@ function formatStoryData(data) {
   formatted.duration = formatted.pages?.length ?? formatted.duration;
 
   const checksum = crypto.createHash('sha256')
-    .update(JSON.stringify({ title: formatted.title, pages: formatted.pages?.map(p => ({ text: p.text })) }))
+    .update(JSON.stringify({
+      title: formatted.title,
+      pages: formatted.pages?.map(p => ({
+        text: p.text,
+        interactionType: p.interactionType,
+        interactiveElements: p.interactiveElements,
+        musicChallenge: p.musicChallenge,
+      })),
+    }))
     .digest('hex').substring(0, 16);
   formatted.checksum = checksum;
 

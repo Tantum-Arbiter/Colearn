@@ -110,9 +110,13 @@ function calculateStoryChecksum(story) {
       const interactiveStr = p.interactiveElements
         ? JSON.stringify(p.interactiveElements)
         : '';
+      // Include music challenge in checksum
+      const musicStr = p.musicChallenge
+        ? JSON.stringify(p.musicChallenge)
+        : '';
       // Include localized text in checksum
       const localizedTextStr = serializeLocalized(p.localizedText);
-      return `${p.id}${p.text}${localizedTextStr}${p.pageNumber}${p.backgroundImage || ''}${interactiveStr}`;
+      return `${p.id}${p.text}${localizedTextStr}${p.pageNumber}${p.backgroundImage || ''}${interactiveStr}${p.interactionType || ''}${musicStr}`;
     })
   ].join('');
 

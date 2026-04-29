@@ -158,6 +158,87 @@
           "characterImage": {
             "type": "string",
             "description": "Asset path reference"
+          },
+          "interactionType": {
+            "type": "string",
+            "enum": ["none", "interactive_state_change", "music_challenge"],
+            "description": "Interaction type for this page"
+          },
+          "interactiveElements": {
+            "type": "array",
+            "description": "Interactive elements (reveal, toggle, drag) on this page",
+            "items": {
+              "type": "object",
+              "required": ["id", "type", "image", "position", "size"],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": ["reveal", "toggle", "drag"]
+                },
+                "image": {
+                  "type": "string",
+                  "description": "Asset path for the interactive element image"
+                },
+                "position": {
+                  "type": "object",
+                  "required": ["x", "y"],
+                  "properties": {
+                    "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                    "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                  }
+                },
+                "size": {
+                  "type": "object",
+                  "required": ["width", "height"],
+                  "properties": {
+                    "width": { "type": "number", "minimum": 0, "maximum": 1 },
+                    "height": { "type": "number", "minimum": 0, "maximum": 1 }
+                  }
+                },
+                "hitArea": {
+                  "type": "object",
+                  "properties": {
+                    "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                    "y": { "type": "number", "minimum": 0, "maximum": 1 },
+                    "width": { "type": "number", "minimum": 0, "maximum": 1 },
+                    "height": { "type": "number", "minimum": 0, "maximum": 1 }
+                  }
+                }
+              }
+            }
+          },
+          "musicChallenge": {
+            "type": "object",
+            "description": "Music challenge configuration for this page",
+            "required": ["enabled", "instrumentId", "promptText", "mode", "requiredSequence", "successSongId", "autoPlaySuccessSong", "allowSkip", "micRequired", "fallbackAllowed", "hintLevel"],
+            "properties": {
+              "enabled": { "type": "boolean" },
+              "instrumentId": { "type": "string", "description": "References a registered instrument asset" },
+              "promptText": { "type": "string", "description": "Narrative prompt for the music challenge" },
+              "mode": {
+                "type": "string",
+                "enum": ["guided", "free_play_optional"]
+              },
+              "requiredSequence": {
+                "type": "array",
+                "items": { "type": "string" },
+                "minItems": 1,
+                "description": "Note sequence the child must play"
+              },
+              "successSongId": { "type": "string", "description": "References a registered song asset" },
+              "successStateId": { "type": "string", "description": "Optional page state change on success" },
+              "autoPlaySuccessSong": { "type": "boolean" },
+              "allowSkip": { "type": "boolean" },
+              "micRequired": { "type": "boolean" },
+              "fallbackAllowed": { "type": "boolean" },
+              "hintLevel": {
+                "type": "string",
+                "enum": ["none", "minimal", "standard", "verbose"]
+              }
+            }
           }
         }
       }

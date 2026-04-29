@@ -1,0 +1,467 @@
+{
+  "id": "music-story-1",
+  "title": "Music Story One - Flute & Recorder",
+  "localizedTitle": {
+    "en": "Music Story One - Flute & Recorder",
+    "pl": "Historia Muzyczna Jeden - Flet i Flet Prosty",
+    "es": "Historia Musical Uno - Flauta y Grabadora",
+    "de": "Musikgeschichte Eins - Floete und Blockfloete",
+    "fr": "Histoire Musicale Un - Flute et Flute a bec",
+    "it": "Storia Musicale Uno - Flauto e Flauto Dolce",
+    "pt": "Historia Musical Um - Flauta e Gravador",
+    "ja": "ミュージックストーリー1 - フルートとリコーダー",
+    "ar": "قصة موسيقية واحد - الناي والمسجل",
+    "tr": "Muzik Hikayesi Bir - Flut ve Blok Flut",
+    "nl": "Muziekverhaal Een - Fluit en Blokfluit",
+    "da": "Musikhistorie Et - Floejte og Blokfloejte",
+    "la": "Fabula Musica Prima - Tibia et Fistula",
+    "zh": "音乐故事一 - 长笛与竖笛"
+  },
+  "category": "music",
+  "tag": "🎵 Music",
+  "emoji": "🎵",
+  "coverImage": "assets/stories/music-story-1/cover/cover.webp",
+  "isAvailable": true,
+  "ageRange": "2-5",
+  "duration": 11,
+  "description": "Music integration story 1. Music challenges on pages 2, 3, 4, 5 with interactive element coexistence on pages 2 and 4. Uses Flute and Recorder.",
+  "localizedDescription": {
+    "en": "A musical adventure where squirrels explore winter with flute and recorder challenges.",
+    "pl": "Muzyczna przygoda, w ktorej wiewiorki odkrywaja zime z wyzwaniami na flecie i flecie prostym.",
+    "es": "Una aventura musical donde las ardillas exploran el invierno con desafios de flauta y grabadora.",
+    "de": "Ein musikalisches Abenteuer, in dem Eichhoernchen den Winter mit Floeten- und Blockfloetenherausforderungen erkunden.",
+    "fr": "Une aventure musicale ou les ecureuils explorent l hiver avec des defis de flute et de flute a bec.",
+    "it": "Un avventura musicale in cui gli scoiattoli esplorano l inverno con sfide di flauto e flauto dolce.",
+    "pt": "Uma aventura musical onde esquilos exploram o inverno com desafios de flauta e gravador.",
+    "ja": "リスがフルートとリコーダーの挑戦で冬を探索する音楽の冒険。",
+    "ar": "مغامرة موسيقية حيث تستكشف السناجب الشتاء مع تحديات الناي والمسجل.",
+    "tr": "Sincaplarin flut ve blok flut meydan okumalariyla kisi kesfettigi muziksel bir macera.",
+    "nl": "Een muzikaal avontuur waar eekhoorns de winter verkennen met fluit- en blokfluituitdagingen.",
+    "da": "Et musikalsk eventyr, hvor egern udforsker vinteren med floejte- og blokfloejteudfordringer.",
+    "la": "Aventura musica ubi sciuri hiemem cum tibia et fistula provocationibus explorant.",
+    "zh": "松鼠用长笛和竖笛挑战探索冬天的音乐冒险。"
+  },
+  "isPremium": false,
+  "author": "Freya Stories",
+  "tags": [
+    "music",
+    "adventure",
+    "animals"
+  ],
+  "version": 1,
+  "checksum": "music-story-1-checksum",
+  "pages": [
+    {
+      "id": "music-story-1-cover",
+      "pageNumber": 0,
+      "type": "cover",
+      "backgroundImage": "assets/stories/music-story-1/cover/cover.webp",
+      "text": "Music Story One\n\nFlute & Recorder",
+      "interactionType": "none",
+      "localizedText": {
+        "en": "Squirrels and the Snowman",
+        "pl": "Wiewiórki i Bałwan",
+        "es": "Ardillas y el Muñeco de Nieve",
+        "de": "Eichhörnchen und der Schneemann",
+        "fr": "Écureuils et le Bonhomme de Neige",
+        "it": "Scoiattoli e l'Uomo di Neve",
+        "pt": "Esquilos e o Boneco de Neve",
+        "ja": "リスと雪だるま",
+        "ar": "السناجب ورجل الثلج",
+        "tr": "Sincaplar ve Kardan Adam",
+        "nl": "Eekhoorns en de Sneeuwman",
+        "da": "Egern og Snemanden",
+        "la": "Sciuri et Homo Niveus",
+        "zh": "松鼠和雪人"
+      }
+    },
+    {
+      "id": "music-story-1-page-1",
+      "pageNumber": 1,
+      "type": "story",
+      "backgroundImage": "assets/stories/music-story-1/page-1/background.webp",
+      "text": "Winter arrived with snow so white, covering the forest in a blanket of pure delight.",
+      "interactionType": "none",
+      "localizedText": {
+        "en": "Winter arrived with snow so white, covering the forest in a blanket of pure delight.\n",
+        "pl": "Zima przybyła ze śniegiem tak białym, pokrywając las kołdrą czystej radości.\n",
+        "es": "El invierno llegó con nieve tan blanca, cubriendo el bosque con una manta de pura alegría.\n",
+        "de": "Der Winter kam mit so weißem Schnee und bedeckte den Wald mit einer Decke reiner Freude.\n",
+        "fr": "L'hiver est arrivé avec de la neige si blanche, couvrant la forêt d'une couverture de pur délice.\n",
+        "it": "L'inverno arrivò con neve così bianca, coprendo la foresta con una coperta di pura gioia.\n",
+        "pt": "O inverno chegou com neve tão branca, cobrindo a floresta com um cobertor de pura alegria.\n",
+        "ja": "冬が到来し、雪は非常に白く、森を純粋な喜びの毛布で覆いました。\n",
+        "ar": "وصل الشتاء مع ثلج أبيض جداً، يغطي الغابة ببطانية من السعادة الخالصة.\n",
+        "tr": "Kış çok beyaz karla geldi, ormanı saf sevinç battaniyesiyle kapladı.\n",
+        "nl": "De winter kwam met zo witte sneeuw, bedekt het bos met een deken van pure vreugde.\n",
+        "da": "Vinteren kom med så hvidt snefald, der dækkede skoven med et tæppe af ren glæde.\n",
+        "la": "Hiems venit cum nive tam alba, silvam tegit tegmine puri delectamenti.\n",
+        "zh": "冬天来临，雪白如玉，用纯粹的喜悦毛毯覆盖了森林。\n"
+      }
+    },
+    {
+      "id": "music-story-1-page-2",
+      "pageNumber": 2,
+      "type": "story",
+      "backgroundImage": "assets/stories/music-story-1/page-2/background.webp",
+      "text": "Three little squirrels peeked out from their cozy tree home. Play the flute to help them explore!",
+      "interactionType": "music_challenge",
+      "interactiveElements": [
+        {
+          "id": "door",
+          "type": "reveal",
+          "image": "assets/stories/music-story-1/page-2/props/door-open.webp",
+          "position": {
+            "x": 0.481,
+            "y": 0.337
+          },
+          "size": {
+            "width": 0.273,
+            "height": 0.301
+          }
+        }
+      ],
+      "musicChallenge": {
+        "enabled": true,
+        "instrumentId": "flute",
+        "promptText": "Play the flute to help the squirrels explore!",
+        "mode": "guided",
+        "requiredSequence": [
+          "C",
+          "D",
+          "E",
+          "C"
+        ],
+        "successSongId": "wombat_lullaby_v1",
+        "successStateId": "door_opened",
+        "autoPlaySuccessSong": true,
+        "allowSkip": false,
+        "micRequired": true,
+        "fallbackAllowed": true,
+        "hintLevel": "standard"
+      },
+      "localizedText": {
+        "en": "Three little squirrels peeked out from their cozy tree home, excited to explore the snowy wonderland.\n",
+        "pl": "Trzy małe wiewiórki wyglądały z ich przytulnego domu na drzewie, podekscytowane, aby zbadać śnieżny kraj czarów.\n",
+        "es": "Tres pequeñas ardillas asomaron la cabeza desde su acogedor hogar en el árbol, emocionadas de explorar el país de las maravillas nevado.\n",
+        "de": "Drei kleine Eichhörnchen schauten aus ihrem gemütlichen Baumhaus heraus, aufgeregt, das verschneite Wunderland zu erkunden.\n",
+        "fr": "Trois petits écureuils ont jeté un coup d'œil hors de leur maison d'arbre douillette, excités d'explorer le pays des merveilles enneigé.\n",
+        "it": "Tre piccoli scoiattoli hanno sbirciato dalla loro accogliente casa sull'albero, entusiasti di esplorare il paese delle meraviglie innevato.\n",
+        "pt": "Três pequenos esquilos espiaram de sua aconchegante casa na árvore, ansiosos para explorar o país das maravilhas nevado.\n",
+        "ja": "3匹の小さなリスが居心地の良い木の家から覗き出し、雪の不思議の国を探索することに興奮しました。 ",
+        "ar": "أطلت ثلاث سناجب صغيرة من منزلهم المريح على الشجرة، متحمسة لاستكشاف بلاد العجائب الثلجية.\n",
+        "tr": "Üç küçük sincap, rahat ağaç evlerinden baktılar, karlı harika diyarı keşfetmek için heyecanlıydılar.\n",
+        "nl": "Drie kleine eekhoorns keken uit hun gezellige boomhuis, opgewonden om het sneeuwachtige wonderland te verkennen.\n",
+        "da": "Tre små egern kiggede ud fra deres hyggelige træhjem, begejstrede for at udforske det snedækkede eventyrland.\n",
+        "la": "Tres sciuri parvi ex domo arboris iucunda prospexerunt, laeti terram mirabilem nivatam explorare.\n",
+        "zh": "三只小松鼠从舒适的树屋里探出头来，兴奋地探索雪白的仙境。 "
+      }
+    },
+    {
+      "id": "music-story-1-page-3",
+      "pageNumber": 3,
+      "type": "story",
+      "backgroundImage": "assets/stories/music-story-1/page-3/background.webp",
+      "text": "They scampered down the frosted branches. Play the flute as they leave prints in the snow!",
+      "interactionType": "music_challenge",
+      "musicChallenge": {
+        "enabled": true,
+        "instrumentId": "flute",
+        "promptText": "Play the flute as the squirrels scamper!",
+        "mode": "guided",
+        "requiredSequence": [
+          "E",
+          "D",
+          "C"
+        ],
+        "successSongId": "wombat_lullaby_v1",
+        "autoPlaySuccessSong": true,
+        "allowSkip": false,
+        "micRequired": true,
+        "fallbackAllowed": true,
+        "hintLevel": "standard"
+      },
+      "localizedText": {
+        "en": "They scampered down the frosted branches, their tiny paws leaving prints in the fresh snow.\n",
+        "pl": "Pędzili w dół oszrononych gałęzi, ich małe łapki zostawiały ślady na świeżym śniegu.\n",
+        "es": "Corrieron por las ramas escarchadas, sus pequeñas patas dejaban huellas en la nieve fresca.\n",
+        "de": "Sie huschten die gefrorenen Äste hinunter, ihre winzigen Pfoten hinterließen Spuren im frischen Schnee.\n",
+        "fr": "Ils ont dégringolé les branches givrées, leurs petites pattes laissant des empreintes dans la neige fraîche.\n",
+        "it": "Scapparono giù per i rami gelati, le loro piccole zampe lasciavano impronte nella neve fresca.\n",
+        "pt": "Eles correram pelos galhos congelados, suas pequenas patas deixando pegadas na neve fresca.\n",
+        "ja": "彼らは霜で覆われた枝を駆け下り、小さな足が新しい雪に足跡を残しました。 ",
+        "ar": "اندفعوا لأسفل الفروع المتجمدة، تاركين آثار أقدامهم الصغيرة في الثلج الطازج.\n",
+        "tr": "Donmuş dallardan aşağı koştular, küçük pençeleri taze karın içinde izler bıraktı.\n",
+        "nl": "Ze renden de bevroren takken af, hun kleine poten lieten sporen in de verse sneeuw achter.\n",
+        "da": "De løb ned ad de frosne grene, deres små poter efterlod aftryk i den friske sne.\n",
+        "la": "Praecipites descenderunt per ramos gelatos, pedes parvi eorum vestigia in nive recenti reliquere.\n",
+        "zh": "他们沿着结霜的树枝跑下来，小爪子在新雪上留下足迹。 "
+      }
+    },
+    {
+      "id": "music-story-1-page-4",
+      "pageNumber": 4,
+      "type": "story",
+      "backgroundImage": "assets/stories/music-story-1/page-4/background.webp",
+      "text": "Suddenly, they spotted something amazing! Play the recorder to reveal the snowman!",
+      "interactionType": "music_challenge",
+      "interactiveElements": [
+        {
+          "id": "basket",
+          "type": "reveal",
+          "image": "assets/stories/music-story-1/page-4/props/basket-open.webp",
+          "position": {
+            "x": 0.475,
+            "y": 0.478
+          },
+          "size": {
+            "width": 0.183,
+            "height": 0.23
+          }
+        }
+      ],
+      "musicChallenge": {
+        "enabled": true,
+        "instrumentId": "recorder",
+        "promptText": "Play the recorder to reveal the snowman!",
+        "mode": "guided",
+        "requiredSequence": [
+          "C",
+          "E",
+          "G",
+          "C"
+        ],
+        "successSongId": "wombat_burrow_v1",
+        "successStateId": "snowman_revealed",
+        "autoPlaySuccessSong": true,
+        "allowSkip": false,
+        "micRequired": true,
+        "fallbackAllowed": true,
+        "hintLevel": "standard"
+      },
+      "localizedText": {
+        "en": "Suddenly, they spotted something amazing - a tall snowman with a carrot nose and coal eyes! ",
+        "pl": "Nagle zauważyli coś niesamowitego - wysokiego bałwana z marchewkowym nosem i węglowymi oczami! ",
+        "es": "¡De repente, vieron algo asombroso - un muñeco de nieve alto con nariz de zanahoria y ojos de carbón! ",
+        "de": "Plötzlich entdeckten sie etwas Erstaunliches - einen großen Schneemann mit einer Karottennase und Kohleaugen! ",
+        "fr": "Soudain, ils ont aperçu quelque chose d'incroyable - un grand bonhomme de neige avec un nez de carotte et des yeux de charbon! ",
+        "it": "All'improvviso, hanno visto qualcosa di straordinario - un grande uomo di neve con un naso di carota e occhi di carbone! ",
+        "pt": "De repente, eles avistaram algo incrível - um boneco de neve alto com nariz de cenoura e olhos de carvão! ",
+        "ja": "突然、彼らは素晴らしいものを発見しました-ニンジンの鼻と石炭の目を持つ背の高い雪だるま！ ",
+        "ar": "فجأة، رأوا شيئاً مذهلاً - رجل ثلج طويل بأنف جزرة وعيون فحم! ",
+        "tr": "Aniden, harika bir şey gördüler - havuç burunlu ve kömür gözlü uzun bir kardan adam! ",
+        "nl": "Plotseling zagen ze iets verbazingwekkends - een grote sneeuwman met een wortelneus en kolenogen! ",
+        "da": "Pludselig så de noget fantastisk - en høj snemand med en gulerodsnæse og kulører! ",
+        "la": "Subito, viderunt aliquid mirum - hominem niveum altum cum naso pastinacae et oculis carbonum! ",
+        "zh": "突然，他们发现了一些令人惊奇的东西——一个高大的雪人，有胡萝卜鼻子和煤炭眼睛！ "
+      }
+    },
+    {
+      "id": "music-story-1-page-5",
+      "pageNumber": 5,
+      "type": "story",
+      "backgroundImage": "assets/stories/music-story-1/page-5/background.webp",
+      "text": "The squirrels circled around the snowman. Play the recorder freely to celebrate!",
+      "interactionType": "music_challenge",
+      "musicChallenge": {
+        "enabled": true,
+        "instrumentId": "recorder",
+        "promptText": "Play the recorder freely to celebrate!",
+        "mode": "free_play_optional",
+        "requiredSequence": [
+          "G",
+          "E",
+          "C",
+          "D"
+        ],
+        "successSongId": "wombat_burrow_v1",
+        "autoPlaySuccessSong": false,
+        "allowSkip": true,
+        "micRequired": false,
+        "fallbackAllowed": true,
+        "hintLevel": "minimal"
+      },
+      "localizedText": {
+        "en": "The squirrels circled around the snowman, amazed by this new friend they had found.\n",
+        "pl": "Wiewiórki krążyły wokół bałwana, zdumione tym nowym przyjacielem, którego znalazły.\n",
+        "es": "Las ardillas rodearon al muñeco de nieve, asombradas por este nuevo amigo que habían encontrado.\n",
+        "de": "Die Eichhörnchen umkreisten den Schneemann, erstaunt über diesen neuen Freund, den sie gefunden hatten.\n",
+        "fr": "Les écureuils ont tourné autour du bonhomme de neige, émerveillés par ce nouvel ami qu'ils avaient trouvé.\n",
+        "it": "Gli scoiattoli giravano intorno al pupazzo di neve, stupiti da questo nuovo amico che avevano trovato.\n",
+        "pt": "Os esquilos circulavam ao redor do boneco de neve, maravilhados com este novo amigo que haviam encontrado.\n",
+        "ja": "リスは雪だるまの周りを回り、彼らが見つけたこの新しい友人に驚きました。\n",
+        "ar": "دارت السناجب حول رجل الثلج، مذهولة بهذا الصديق الجديد الذي وجدوه.\n",
+        "tr": "Sincaplar kardan adamın etrafında döndüler, buldukları bu yeni arkadaştan hayran kaldılar.\n",
+        "nl": "De eekhoorns cirkelden rond de sneeuwman, verbaasd over deze nieuwe vriend die ze hadden gevonden.\n",
+        "da": "Egernene cirklede omkring snemanden, forbløffet over denne nye ven, de havde fundet.\n",
+        "la": "Sciuri circum hominem niveum circumibant, stupefacti hoc novo amico quem invenerant.\n",
+        "zh": "松鼠围绕雪人转圈，对他们找到的这个新朋友感到惊奇。\n"
+      }
+    },
+    {
+      "id": "music-story-1-page-6",
+      "pageNumber": 6,
+      "type": "story",
+      "backgroundImage": "assets/stories/music-story-1/page-6/background.webp",
+      "text": "They played games around the snowman, sliding on the ice and rolling in the snow.",
+      "interactionType": "interactive_state_change",
+      "interactiveElements": [
+        {
+          "id": "crate",
+          "type": "reveal",
+          "image": "assets/stories/music-story-1/page-6/props/basket-open.webp",
+          "position": {
+            "x": 0.348,
+            "y": 0.433
+          },
+          "size": {
+            "width": 0.308,
+            "height": 0.28
+          }
+        }
+      ],
+      "localizedText": {
+        "en": "They played games around the snowman, sliding on the ice and rolling in the snow.\n",
+        "pl": "Grali w gry wokół bałwana, ślizgając się po lodzie i turlając się w śniegu.\n",
+        "es": "Jugaban juegos alrededor del muñeco de nieve, deslizándose sobre el hielo y rodando en la nieve.\n",
+        "de": "Sie spielten Spiele um den Schneemann herum, rutschten auf dem Eis und wälzten sich im Schnee.\n",
+        "fr": "Ils jouaient à des jeux autour du bonhomme de neige, glissant sur la glace et se roulant dans la neige.\n",
+        "it": "Giocavano a giochi intorno all'uomo di neve, scivolando sul ghiaccio e rotolando nella neve.\n",
+        "pt": "Eles jogavam jogos ao redor do boneco de neve, deslizando no gelo e rolando na neve.\n",
+        "ja": "彼らは雪だるまの周りでゲームをしました、氷の上を滑り、雪の中を転がりました。 ",
+        "ar": "لعبوا ألعاباً حول رجل الثلج، ينزلقون على الجليد ويتدحرجون في الثلج.\n",
+        "tr": "Kardan adamın etrafında oyunlar oynadılar, buzda kaydılar ve karın içinde yuvarlandılar.\n",
+        "nl": "Ze speelden spellen rond de sneeuwman, gleden op het ijs en rolden in de sneeuw.\n",
+        "da": "De spillede spil omkring snemanden, glider på isen og ruller i sneen.\n",
+        "la": "Ludos circa hominem niveum lusere, in glacie labi et in nive volutari.\n",
+        "zh": "他们在雪人周围玩游戏，在冰上滑行，在雪中翻滚。 "
+      }
+    },
+    {
+      "id": "music-story-1-page-7",
+      "pageNumber": 7,
+      "type": "story",
+      "backgroundImage": "assets/stories/music-story-1/page-7/background.webp",
+      "text": "The squirrels brought acorns and pine cones to decorate their snowman friend.",
+      "interactionType": "none",
+      "localizedText": {
+        "en": "The squirrels brought acorns and pine cones to decorate their snowman friend.\n",
+        "pl": "Wiewiórki przyniosły żołędzie i szyszki do dekoracji swojego przyjaciela bałwana.\n",
+        "es": "Las ardillas trajeron bellotas y piñas para decorar a su amigo muñeco de nieve.\n",
+        "de": "Die Eichhörnchen brachten Eicheln und Tannenzapfen, um ihren Schneemann-Freund zu dekorieren.\n",
+        "fr": "Les écureuils ont apporté des glands et des pommes de pin pour décorer leur ami bonhomme de neige.\n",
+        "it": "Gli scoiattoli hanno portato ghiande e pigne per decorare il loro amico pupazzo di neve.\n",
+        "pt": "Os esquilos trouxeram bolotas e pinhas para decorar seu amigo boneco de neve.\n",
+        "ja": "リスはドングリと松ぼっくりを持ってきて、雪だるまの友人を飾りました。\n",
+        "ar": "أحضرت السناجب جوزات البلوط والصنوبر لتزيين صديقهم رجل الثلج.\n",
+        "tr": "Sincaplar kardan adam arkadaşlarını süslemek için meşe palamudu ve çam kozalakları getirdiler.\n",
+        "nl": "De eekhoorns brachten eikels en dennenappels om hun sneeuwman-vriend te versieren.\n",
+        "da": "Egernene bragte agern og kogler for at dekorere deres sneman-ven.\n",
+        "la": "Sciuri glandes et coni pini attulere ut amicum hominem niveum ornent.\n",
+        "zh": "松鼠带来了橡子和松果来装饰他们的雪人朋友。\n"
+      }
+    },
+    {
+      "id": "music-story-1-page-8",
+      "pageNumber": 8,
+      "type": "story",
+      "backgroundImage": "assets/stories/music-story-1/page-8/background.webp",
+      "text": "As the sun began to set, the snowman glowed with a magical golden light.",
+      "interactionType": "interactive_state_change",
+      "interactiveElements": [
+        {
+          "id": "food-cover",
+          "type": "reveal",
+          "image": "assets/stories/music-story-1/page-8/props/food-cover-open.webp",
+          "position": {
+            "x": 0.254,
+            "y": 0.46
+          },
+          "size": {
+            "width": 0.212,
+            "height": 0.158
+          }
+        }
+      ],
+      "localizedText": {
+        "en": "As the sun began to set, the snowman glowed with a magical golden light.\n",
+        "pl": "Gdy słońce zaczęło zachodzić, bałwan świecił magicznym złotym światłem.\n",
+        "es": "Cuando el sol comenzó a ponerse, el muñeco de nieve brillaba con una luz dorada mágica.\n",
+        "de": "Als die Sonne unterging, leuchtete der Schneemann mit einem magischen goldenen Licht.\n",
+        "fr": "Alors que le soleil commençait à se coucher, le bonhomme de neige brillait d'une lumière dorée magique.\n",
+        "it": "Mentre il sole iniziava a tramontare, il pupazzo di neve brillava di una luce dorata magica.\n",
+        "pt": "Quando o sol começou a se pôr, o boneco de neve brilhava com uma luz dourada mágica.\n",
+        "ja": "太陽が沈み始めると、雪だるまは魔法の金色の光で輝きました。\n",
+        "ar": "عندما بدأت الشمس بالغروب، أضاء رجل الثلج بضوء ذهبي سحري.\n",
+        "tr": "Güneş batmaya başladığında, kardan adam sihirli altın ışıkla parlıyordu.\n",
+        "nl": "Toen de zon onderging, gloeide de sneeuwman met een magisch gouden licht.\n",
+        "da": "Da solen begyndte at gå ned, glødede snemanden med et magisk gyldent lys.\n",
+        "la": "Cum sol occidere coepisset, homo niveus luce aurea magica lucebat.\n",
+        "zh": "当太阳开始落下时，雪人闪烁着魔幻的金色光芒。\n"
+      }
+    },
+    {
+      "id": "music-story-1-page-9",
+      "pageNumber": 9,
+      "type": "story",
+      "backgroundImage": "assets/stories/music-story-1/page-9/background.webp",
+      "text": "The squirrels huddled close, grateful for their new winter friend and the memories they made together.",
+      "interactionType": "none",
+      "localizedText": {
+        "en": "The squirrels huddled close, grateful for their new winter friend and the memories they made together.\n",
+        "pl": "Wiewiórki przytulały się blisko, wdzięczne za nowego zimowego przyjaciela i wspomnienia, które razem stworzyli.\n",
+        "es": "Las ardillas se acurrucaron juntas, agradecidas por su nuevo amigo invernal y los recuerdos que hicieron juntos.\n",
+        "de": "Die Eichhörnchen kuscheln sich zusammen, dankbar für ihren neuen Winterfreund und die Erinnerungen, die sie zusammen machten.\n",
+        "fr": "Les écureuils se sont blottis ensemble, reconnaissants pour leur nouvel ami hivernal et les souvenirs qu'ils ont créés ensemble.\n",
+        "it": "Gli scoiattoli si rannicchiarono insieme, grati per il loro nuovo amico invernale e i ricordi che hanno creato insieme.\n",
+        "pt": "Os esquilos se abraçaram, gratos por seu novo amigo de inverno e pelas memórias que criaram juntos.\n",
+        "ja": "リスは身を寄せ合い、新しい冬の友人と一緒に作った思い出に感謝しました。 ",
+        "ar": "تجمعت السناجب معاً، ممتنة لصديقهم الشتوي الجديد والذكريات التي صنعوها معاً.\n",
+        "tr": "Sincaplar yakın bir şekilde kucaklaştılar, yeni kış arkadaşlarından ve birlikte yaptıkları anılardan minnettar.\n",
+        "nl": "De eekhoorns kropen dicht tegen elkaar aan, dankbaar voor hun nieuwe wintervriend en de herinneringen die ze samen maakten.\n",
+        "da": "Egernene krydsede tæt sammen, taknemlige for deres nye vinterkammerat og de minder, de skabte sammen.\n",
+        "la": "Sciuri propinqui se tenuerunt, grati pro amico hiemali novo et memoriae quae simul fecerunt.\n",
+        "zh": "松鼠们紧紧地靠在一起，感谢他们的新冬季朋友和他们一起创造的回忆。 "
+      }
+    },
+    {
+      "id": "music-story-1-page-10",
+      "pageNumber": 10,
+      "type": "story",
+      "backgroundImage": "assets/stories/music-story-1/page-10/background.webp",
+      "text": "As winter's magic filled the air, the squirrels learned that friendship can bloom even in the coldest season.\nThe End.",
+      "interactionType": "interactive_state_change",
+      "interactiveElements": [
+        {
+          "id": "curtains",
+          "type": "reveal",
+          "image": "assets/stories/music-story-1/page-10/props/curtains-open.webp",
+          "position": {
+            "x": 0.279,
+            "y": 0.286
+          },
+          "size": {
+            "width": 0.451,
+            "height": 0.291
+          }
+        }
+      ],
+      "localizedText": {
+        "en": "As winter's magic filled the air, the squirrels learned that friendship can bloom even in the coldest season.\nThe End.\n",
+        "pl": "Gdy magia zimy wypełniła powietrze, wiewiórki nauczyły się, że przyjaźń może rozkwitnąć nawet w najzimniejszej porze roku.\nKoniec.\n",
+        "es": "Cuando la magia del invierno llenó el aire, las ardillas aprendieron que la amistad puede florecer incluso en la estación más fría.\nEl Fin.\n",
+        "de": "Als die Magie des Winters die Luft erfüllte, lernten die Eichhörnchen, dass Freundschaft auch in der kältesten Jahreszeit erblühen kann.\nDas Ende.\n",
+        "fr": "Alors que la magia de l'hiver remplissait l'air, les écureuils ont appris que l'amitié peut s'épanouir même dans la saison la plus froide.\nLa Fin.\n",
+        "it": "Mentre la magia dell'inverno riempiva l'aria, gli scoiattoli impararono che l'amicizia può fiorire anche nella stagione più fredda.\nFine.\n",
+        "pt": "Enquanto a magia do inverno preenchia o ar, os esquilos aprenderam que a amizade pode florescer até mesmo na estação mais fria.\nO Fim.\n",
+        "ja": "冬の魔法が空気を満たしたとき、リスは最も寒い季節でさえ友情が咲くことができることを学びました。終わり。 ",
+        "ar": "عندما ملأت سحر الشتاء الهواء، تعلمت السناجب أن الصداقة يمكن أن تزدهر حتى في أبرد موسم.\nالنهاية.\n",
+        "tr": "Kışın büyüsü havayı doldurduğunda, sincaplar en soğuk mevsimde bile dostluğun çiçek açabileceğini öğrendiler.\nSonu.\n",
+        "nl": "Toen de magie van de winter de lucht vulde, leerden de eekhoorns dat vriendschap zelfs in het koudste seizoen kan bloeien.\nHet Einde.\n",
+        "da": "Da vintrens magi fyldte luften, lærte egernene, at venskab kan blomstre selv i den koldeste årstid.\nSlutningen.\n",
+        "la": "Cum magia hiemalis aera impleret, sciuri didici amicitiam etiam in frigidissima temperie florere posse.\nFinis.\n",
+        "zh": "当冬天的魔法充满空气时，松鼠们学到了即使在最寒冷的季节，友谊也能绽放。结束。 "
+      }
+    }
+  ]
+}
