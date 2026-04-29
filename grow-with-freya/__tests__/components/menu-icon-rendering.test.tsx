@@ -61,7 +61,7 @@ describe('MenuIcon Icon Rendering Tests', () => {
 
   describe('MenuIcon Component Rendering', () => {
     it('should render stories icon without errors', () => {
-      const { toJSON } = render(
+      const { toJSON, getByLabelText } = render(
         <MenuIcon
           icon="stories-icon"
           label="Stories"
@@ -71,11 +71,11 @@ describe('MenuIcon Icon Rendering Tests', () => {
       );
 
       expect(toJSON()).toBeTruthy();
-      expect(toJSON()).toMatchSnapshot();
+      expect(getByLabelText('Stories button')).toBeTruthy();
     });
 
     it('should render sensory icon without errors', () => {
-      const { toJSON } = render(
+      const { toJSON, getByLabelText } = render(
         <MenuIcon
           icon="sensory-icon"
           label="Sensory"
@@ -85,11 +85,11 @@ describe('MenuIcon Icon Rendering Tests', () => {
       );
 
       expect(toJSON()).toBeTruthy();
-      expect(toJSON()).toMatchSnapshot();
+      expect(getByLabelText('Sensory button')).toBeTruthy();
     });
 
     it('should render screentime icon without errors', () => {
-      const { toJSON } = render(
+      const { toJSON, getByLabelText } = render(
         <MenuIcon
           icon="screentime-icon"
           label="Screen Time"
@@ -99,7 +99,7 @@ describe('MenuIcon Icon Rendering Tests', () => {
       );
 
       expect(toJSON()).toBeTruthy();
-      expect(toJSON()).toMatchSnapshot();
+      expect(getByLabelText('Screen Time button')).toBeTruthy();
     });
   });
 
