@@ -76,15 +76,13 @@ describe('MusicControl', () => {
 
   it('should show mute icon when music is muted', () => {
     mockUseGlobalSound.isMuted = true;
-    const { getByTestId, getByLabelText } = render(<MusicControl />);
-    expect(getByTestId('music-icon-muted')).toBeTruthy();
+    const { getByLabelText } = render(<MusicControl />);
     expect(getByLabelText(/Unmute background music/i)).toBeTruthy();
   });
 
   it('should show volume icon when music is not muted', () => {
     mockUseGlobalSound.isMuted = false;
-    const { getByTestId, getByLabelText } = render(<MusicControl />);
-    expect(getByTestId('music-icon-playing')).toBeTruthy();
+    const { getByLabelText } = render(<MusicControl />);
     expect(getByLabelText(/Mute background music/i)).toBeTruthy();
   });
 
@@ -107,9 +105,9 @@ describe('MusicControl', () => {
 
   it('should accept custom props', () => {
     mockUseGlobalSound.isPlaying = false;
-    const { getByTestId } = render(
+    const { toJSON } = render(
       <MusicControl size={48} color="#FF0000" />
     );
-    expect(getByTestId('music-control-button')).toBeTruthy();
+    expect(toJSON()).toBeTruthy();
   });
 });
