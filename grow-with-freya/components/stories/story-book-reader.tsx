@@ -23,7 +23,6 @@ import { InteractiveElementComponent } from './interactive-element';
 import { MusicChallengeUI } from './music-challenge-ui';
 import { InstrumentPickerOverlay } from './instrument-picker-overlay';
 import { MusicSheetOverlay } from './music-sheet-overlay';
-import { getInstrumentSong } from '@/services/music-asset-registry';
 import { useMusicChallenge } from '@/hooks/use-music-challenge';
 import { useBreathDetector } from '@/hooks/use-breath-detector';
 import { getInstrument } from '@/services/music-asset-registry';
@@ -217,12 +216,9 @@ export function StoryBookReader({
     return instrumentId ? getInstrument(instrumentId) : undefined;
   }, [selectedInstrumentId, currentMusicChallenge?.instrumentId]);
 
-  // Resolve success song name for the music sheet — matched to selected instrument
-  const successSongName = useMemo(() => {
-    const songId = currentMusicChallenge?.successSongId;
-    const instrumentId = selectedInstrumentId || currentMusicChallenge?.instrumentId;
-    return songId ? getInstrumentSong(songId, instrumentId)?.displayName : undefined;
-  }, [currentMusicChallenge?.successSongId, selectedInstrumentId, currentMusicChallenge?.instrumentId]);
+  // Success song name — no longer used since completion plays back the user's
+  // sequence note-by-note rather than a pre-recorded track.
+  const successSongName = undefined;
 
   // Music challenge hook
   const musicChallenge = useMusicChallenge(
