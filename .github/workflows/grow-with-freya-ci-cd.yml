@@ -31,8 +31,6 @@ jobs:
     defaults:
       run:
         working-directory: ${{ env.WORKING_DIRECTORY }}
-    outputs:
-      coverage-threshold: ${{ steps.coverage-check.outputs.threshold-met }}
 
     steps:
       - name: Checkout code
@@ -54,52 +52,13 @@ jobs:
         run: npm run lint
 
       - name: Run tests with coverage
-        run: npm run test:ci
         id: test_run
-        continue-on-error: true
+        run: npm run test:ci
         env:
           CI: true
           NODE_ENV: test
           NODE_OPTIONS: '--max-old-space-size=4096'
 
-      - name: Update snapshots if tests failed due to snapshot mismatches
-        if: steps.test_run.outcome == 'failure'
-        id: snapshot_update
-        run: |
-          echo "Tests failed, checking if it's due to snapshot mismatches..."
-          npm run test:ci -- --updateSnapshot
-          echo "Snapshots updated, running tests again..."
-          npm run test:ci
-        env:
-          CI: true
-          NODE_ENV: test
-          NODE_OPTIONS: '--max-old-space-size=4096'
-
-      - name: Fail job if tests still fail after snapshot update
-        if: steps.test_run.outcome == 'failure' && steps.snapshot_update.outcome == 'failure'
-        run: |
-          echo "Tests failed even after snapshot update"
-          exit 1
-
-      - name: Check coverage thresholds
-        id: coverage-check
-        run: |
-          # Check if coverage meets minimum thresholds
-          if npm run test:coverage -- --passWithNoTests; then
-            echo "threshold-met=true" >> $GITHUB_OUTPUT
-          else
-            echo "threshold-met=false" >> $GITHUB_OUTPUT
-            echo "Coverage thresholds not met, but continuing..."
-          fi
-        continue-on-error: true
-
-      - name: Cache test results
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.WORKING_DIRECTORY }}/coverage
-          key: test-results-${{ github.sha }}
-          restore-keys: |
-            test-results-
 
   # Job 2: TypeScript Type Checking
   type-check:
