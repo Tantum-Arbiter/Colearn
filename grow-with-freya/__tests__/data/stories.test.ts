@@ -9,8 +9,8 @@ import { Story, STORY_TAGS } from '@/types/story';
 
 describe('Stories Data', () => {
   describe('MOCK_STORIES', () => {
-    it('should have exactly 7 stories', () => {
-      expect(MOCK_STORIES).toHaveLength(7);
+    it('should have exactly 1 story (Snuggle Little Wombat)', () => {
+      expect(MOCK_STORIES).toHaveLength(1);
     });
 
     it('should have all available stories', () => {
@@ -100,7 +100,7 @@ describe('Stories Data', () => {
       expect(ALL_STORIES.length).toBeGreaterThan(0);
     });
 
-    it('should contain all mock, additional, and placeholder stories', () => {
+    it('should contain all mock and placeholder stories', () => {
       const available = ALL_STORIES.filter(story => story.isAvailable);
       const unavailable = ALL_STORIES.filter(story => !story.isAvailable);
 
@@ -128,7 +128,7 @@ describe('Stories Data', () => {
     it('should return only available stories', () => {
       const availableStories = getAvailableStories();
 
-      expect(availableStories).toHaveLength(13); // All available stories in test data
+      expect(availableStories).toHaveLength(1); // Only Snuggle Little Wombat is available
       availableStories.forEach(story => {
         expect(story.isAvailable).toBe(true);
       });
@@ -152,19 +152,19 @@ describe('Stories Data', () => {
       expect(availableStories).toContain(randomStory);
     });
 
-    it('should return different stories on multiple calls', () => {
+    it('should return the same story when only one is available', () => {
       const stories = new Set();
-      
-      // Call multiple times to increase chance of getting different stories
-      for (let i = 0; i < 20; i++) {
+
+      // Call multiple times
+      for (let i = 0; i < 5; i++) {
         const story = getRandomStory();
         if (story) {
           stories.add(story.id);
         }
       }
-      
-      // Should get at least 2 different stories in 20 attempts
-      expect(stories.size).toBeGreaterThanOrEqual(2);
+
+      // Only one available story, so only one unique ID
+      expect(stories.size).toBe(1);
     });
 
     it('should handle edge case with no available stories', () => {
@@ -185,13 +185,13 @@ describe('Stories Data', () => {
   });
 
   describe('Story Categories', () => {
-    it('should cover all story categories', () => {
+    it('should have valid story categories', () => {
       const categoriesInStories = new Set(MOCK_STORIES.map(story => story.category));
       const availableCategories = Object.keys(STORY_TAGS);
-      
-      // Should have stories from multiple categories
-      expect(categoriesInStories.size).toBeGreaterThan(1);
-      
+
+      // Should have at least one category
+      expect(categoriesInStories.size).toBeGreaterThanOrEqual(1);
+
       // All story categories should be valid
       categoriesInStories.forEach(category => {
         expect(availableCategories).toContain(category);

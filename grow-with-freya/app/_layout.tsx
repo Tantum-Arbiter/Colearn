@@ -6,14 +6,11 @@ import * as ScreenOrientation from 'expo-screen-orientation';
 
 import 'react-native-reanimated';
 import { configureReanimatedLogger, ReanimatedLogLevel } from 'react-native-reanimated';
-
-// Disable Reanimated strict mode warnings — our shared value reads are all inside
-// useAnimatedStyle / useDerivedValue, but Reanimated's heuristic still fires false positives.
-configureReanimatedLogger({ level: ReanimatedLogLevel.warn, strict: false });
-
 // Initialize i18n service - must be imported before components that use translations
 import '@/services/i18n';
-
+// Import notification service early to register notification handler
+// This ensures notifications are handled properly even when app is in background
+import '@/services/notification-service';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAppStore } from '@/store/app-store';
 import { Logger } from '@/utils/logger';
@@ -38,11 +35,12 @@ import { GlobalSoundProvider } from '@/contexts/global-sound-context';
 import { TutorialProvider } from '@/contexts/tutorial-context';
 import { updateSentryConsent } from '@/services/sentry-service';
 import { StartupLoadingScreen } from '@/components/startup-loading-screen';
-// Import notification service early to register notification handler
-// This ensures notifications are handled properly even when app is in background
-import '@/services/notification-service';
 // Import reminder service to trigger initialization and reschedule notifications on app startup
 import { reminderService } from '@/services/reminder-service';
+
+// Disable Reanimated strict mode warnings — our shared value reads are all inside
+// useAnimatedStyle / useDerivedValue, but Reanimated's heuristic still fires false positives.
+configureReanimatedLogger({ level: ReanimatedLogLevel.warn, strict: false });
 
 // On Android in dev mode, disable Fast Refresh to prevent ExoPlayer threading errors
 // ExoPlayer callbacks fire on background threads which crash during Fast Refresh
