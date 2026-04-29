@@ -5,7 +5,7 @@
  * 
  * This script:
  * 1. Lists all assets in the GCS bucket
- * 2. Calculates SHA-256 checksums for each asset
+ * 2. Reads MD5 checksums from GCS object metadata (no file downloads)
  * 3. Updates Firestore asset_versions/current with checksums
  * 
  * Usage:
@@ -18,7 +18,6 @@
 
 const admin = require('firebase-admin');
 const { Storage } = require('@google-cloud/storage');
-const crypto = require('crypto');
 
 // Parse GCP service account key
 let gcpKey;
@@ -62,18 +61,15 @@ const storage = new Storage({
 });
 
 /**
- * Calculate SHA-256 checksum of a buffer
- */
-function calculateChecksum(buffer) {
-  return crypto.createHash('sha256').update(buffer).digest('hex');
-}
-
-/**
- * List all assets in the GCS bucket and calculate checksums
+ * List all assets in the GCS bucket and read checksums from GCS object metadata.
+ *
+ * GCS automatically computes and stores an MD5 hash for every uploaded object.
+ * We read this from file.metadata.md5Hash instead of downloading the entire file,
+ * which scales to thousands of assets without downloading gigabytes of data.
  */
 async function getAssetChecksums() {
-  console.log('Listing assets from GCS bucket...');
-  
+  console.log('Listing assets from GCS bucket (using metadata checksums)...');
+
   const bucket = storage.bucket('colearnwithfreya-assets');
   const assetChecksums = {};
   let totalAssets = 0;
@@ -81,24 +77,32 @@ async function getAssetChecksums() {
 
   try {
     const [files] = await bucket.getFiles({ prefix: 'stories/' });
-    
-    console.log(`Found ${files.length} assets in bucket`);
+
+    console.log(`Found ${files.length} objects in bucket`);
 
     for (const file of files) {
       try {
-        // Download file content
-        const [content] = await file.download();
-        
-        // Calculate checksum
-        const checksum = calculateChecksum(content);
+        // Skip directory markers (zero-byte objects ending with /)
+        if (file.name.endsWith('/')) continue;
+
         const path = file.name;
         const size = parseInt(file.metadata.size, 10) || 0;
+
+        // Use GCS's built-in MD5 hash from object metadata (no file download needed)
+        const md5Hash = file.metadata.md5Hash;
+        if (!md5Hash) {
+          console.warn(`  ⚠️  No md5Hash for ${path}, skipping`);
+          continue;
+        }
+
+        // GCS returns md5Hash as base64 — convert to hex for consistency
+        const checksum = Buffer.from(md5Hash, 'base64').toString('hex');
 
         assetChecksums[path] = checksum;
         totalAssets++;
         totalSizeBytes += size;
 
-        if (totalAssets % 10 === 0) {
+        if (totalAssets % 50 === 0) {
           console.log(`  Processed ${totalAssets} assets...`);
         }
       } catch (error) {
@@ -106,7 +110,7 @@ async function getAssetChecksums() {
       }
     }
 
-    console.log(`\nProcessed ${totalAssets} assets total`);
+    console.log(`\nProcessed ${totalAssets} assets total (zero bytes downloaded)`);
     return { assetChecksums, totalAssets, totalSizeBytes };
   } catch (error) {
     console.error('Error listing assets from bucket:', error);

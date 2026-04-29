@@ -1113,6 +1113,81 @@
         }
       ],
       "assetCount": 17
+    },
+    {
+      "storyId": "music-story-1",
+      "storyDataPath": "cms-stories/music-story-1/story-data.json",
+      "assets": [
+        { "localPath": "cms-stories/music-story-1/cover/cover.webp", "gcsPath": "assets/stories/music-story-1/cover/cover.webp" },
+        { "localPath": "cms-stories/music-story-1/cover/thumbnail.webp", "gcsPath": "assets/stories/music-story-1/cover/thumbnail.webp" },
+        { "localPath": "cms-stories/music-story-1/page-1/background.webp", "gcsPath": "assets/stories/music-story-1/page-1/background.webp" },
+        { "localPath": "cms-stories/music-story-1/page-2/background.webp", "gcsPath": "assets/stories/music-story-1/page-2/background.webp" },
+        { "localPath": "cms-stories/music-story-1/page-2/props/door-open.webp", "gcsPath": "assets/stories/music-story-1/page-2/props/door-open.webp" },
+        { "localPath": "cms-stories/music-story-1/page-3/background.webp", "gcsPath": "assets/stories/music-story-1/page-3/background.webp" },
+        { "localPath": "cms-stories/music-story-1/page-4/background.webp", "gcsPath": "assets/stories/music-story-1/page-4/background.webp" },
+        { "localPath": "cms-stories/music-story-1/page-4/props/basket-open.webp", "gcsPath": "assets/stories/music-story-1/page-4/props/basket-open.webp" },
+        { "localPath": "cms-stories/music-story-1/page-5/background.webp", "gcsPath": "assets/stories/music-story-1/page-5/background.webp" },
+        { "localPath": "cms-stories/music-story-1/page-6/background.webp", "gcsPath": "assets/stories/music-story-1/page-6/background.webp" },
+        { "localPath": "cms-stories/music-story-1/page-6/props/basket-open.webp", "gcsPath": "assets/stories/music-story-1/page-6/props/basket-open.webp" },
+        { "localPath": "cms-stories/music-story-1/page-7/background.webp", "gcsPath": "assets/stories/music-story-1/page-7/background.webp" },
+        { "localPath": "cms-stories/music-story-1/page-8/background.webp", "gcsPath": "assets/stories/music-story-1/page-8/background.webp" },
+        { "localPath": "cms-stories/music-story-1/page-8/props/food-cover-open.webp", "gcsPath": "assets/stories/music-story-1/page-8/props/food-cover-open.webp" },
+        { "localPath": "cms-stories/music-story-1/page-9/background.webp", "gcsPath": "assets/stories/music-story-1/page-9/background.webp" },
+        { "localPath": "cms-stories/music-story-1/page-10/background.webp", "gcsPath": "assets/stories/music-story-1/page-10/background.webp" },
+        { "localPath": "cms-stories/music-story-1/page-10/props/curtains-open.webp", "gcsPath": "assets/stories/music-story-1/page-10/props/curtains-open.webp" }
+      ],
+      "assetCount": 17,
+      "note": "Music challenges on pages 2, 3, 4, 5. Unique assets for end-to-end GCS testing."
+    },
+    {
+      "storyId": "music-story-2",
+      "storyDataPath": "cms-stories/music-story-2/story-data.json",
+      "assets": [
+        { "localPath": "cms-stories/music-story-2/cover/cover.webp", "gcsPath": "assets/stories/music-story-2/cover/cover.webp" },
+        { "localPath": "cms-stories/music-story-2/cover/thumbnail.webp", "gcsPath": "assets/stories/music-story-2/cover/thumbnail.webp" },
+        { "localPath": "cms-stories/music-story-2/page-1/background.webp", "gcsPath": "assets/stories/music-story-2/page-1/background.webp" },
+        { "localPath": "cms-stories/music-story-2/page-2/background.webp", "gcsPath": "assets/stories/music-story-2/page-2/background.webp" },
+        { "localPath": "cms-stories/music-story-2/page-2/props/door-open.webp", "gcsPath": "assets/stories/music-story-2/page-2/props/door-open.webp" },
+        { "localPath": "cms-stories/music-story-2/page-3/background.webp", "gcsPath": "assets/stories/music-story-2/page-3/background.webp" },
+        { "localPath": "cms-stories/music-story-2/page-4/background.webp", "gcsPath": "assets/stories/music-story-2/page-4/background.webp" },
+        { "localPath": "cms-stories/music-story-2/page-4/props/basket-open.webp", "gcsPath": "assets/stories/music-story-2/page-4/props/basket-open.webp" },
+        { "localPath": "cms-stories/music-story-2/page-5/background.webp", "gcsPath": "assets/stories/music-story-2/page-5/background.webp" },
+        { "localPath": "cms-stories/music-story-2/page-6/background.webp", "gcsPath": "assets/stories/music-story-2/page-6/background.webp" },
+        { "localPath": "cms-stories/music-story-2/page-6/props/basket-open.webp", "gcsPath": "assets/stories/music-story-2/page-6/props/basket-open.webp" },
+        { "localPath": "cms-stories/music-story-2/page-7/background.webp", "gcsPath": "assets/stories/music-story-2/page-7/background.webp" },
+        { "localPath": "cms-stories/music-story-2/page-8/background.webp", "gcsPath": "assets/stories/music-story-2/page-8/background.webp" },
+        { "localPath": "cms-stories/music-story-2/page-8/props/food-cover-open.webp", "gcsPath": "assets/stories/music-story-2/page-8/props/food-cover-open.webp" },
+        { "localPath": "cms-stories/music-story-2/page-9/background.webp", "gcsPath": "assets/stories/music-story-2/page-9/background.webp" },
+        { "localPath": "cms-stories/music-story-2/page-10/background.webp", "gcsPath": "assets/stories/music-story-2/page-10/background.webp" },
+        { "localPath": "cms-stories/music-story-2/page-10/props/curtains-open.webp", "gcsPath": "assets/stories/music-story-2/page-10/props/curtains-open.webp" }
+      ],
+      "assetCount": 17,
+      "note": "Music challenges on pages 1, 2, 4. Unique assets for end-to-end GCS testing."
+    },
+    {
+      "storyId": "music-story-3",
+      "storyDataPath": "cms-stories/music-story-3/story-data.json",
+      "assets": [
+        { "localPath": "cms-stories/music-story-3/cover/cover.webp", "gcsPath": "assets/stories/music-story-3/cover/cover.webp" },
+        { "localPath": "cms-stories/music-story-3/cover/thumbnail.webp", "gcsPath": "assets/stories/music-story-3/cover/thumbnail.webp" },
+        { "localPath": "cms-stories/music-story-3/page-1/background.webp", "gcsPath": "assets/stories/music-story-3/page-1/background.webp" },
+        { "localPath": "cms-stories/music-story-3/page-2/background.webp", "gcsPath": "assets/stories/music-story-3/page-2/background.webp" },
+        { "localPath": "cms-stories/music-story-3/page-2/props/door-open.webp", "gcsPath": "assets/stories/music-story-3/page-2/props/door-open.webp" },
+        { "localPath": "cms-stories/music-story-3/page-3/background.webp", "gcsPath": "assets/stories/music-story-3/page-3/background.webp" },
+        { "localPath": "cms-stories/music-story-3/page-4/background.webp", "gcsPath": "assets/stories/music-story-3/page-4/background.webp" },
+        { "localPath": "cms-stories/music-story-3/page-4/props/basket-open.webp", "gcsPath": "assets/stories/music-story-3/page-4/props/basket-open.webp" },
+        { "localPath": "cms-stories/music-story-3/page-5/background.webp", "gcsPath": "assets/stories/music-story-3/page-5/background.webp" },
+        { "localPath": "cms-stories/music-story-3/page-6/background.webp", "gcsPath": "assets/stories/music-story-3/page-6/background.webp" },
+        { "localPath": "cms-stories/music-story-3/page-6/props/basket-open.webp", "gcsPath": "assets/stories/music-story-3/page-6/props/basket-open.webp" },
+        { "localPath": "cms-stories/music-story-3/page-7/background.webp", "gcsPath": "assets/stories/music-story-3/page-7/background.webp" },
+        { "localPath": "cms-stories/music-story-3/page-8/background.webp", "gcsPath": "assets/stories/music-story-3/page-8/background.webp" },
+        { "localPath": "cms-stories/music-story-3/page-8/props/food-cover-open.webp", "gcsPath": "assets/stories/music-story-3/page-8/props/food-cover-open.webp" },
+        { "localPath": "cms-stories/music-story-3/page-9/background.webp", "gcsPath": "assets/stories/music-story-3/page-9/background.webp" },
+        { "localPath": "cms-stories/music-story-3/page-10/background.webp", "gcsPath": "assets/stories/music-story-3/page-10/background.webp" },
+        { "localPath": "cms-stories/music-story-3/page-10/props/curtains-open.webp", "gcsPath": "assets/stories/music-story-3/page-10/props/curtains-open.webp" }
+      ],
+      "assetCount": 17,
+      "note": "Music challenges on pages 2 and 10. Unique assets for end-to-end GCS testing."
     }
   ]
 }

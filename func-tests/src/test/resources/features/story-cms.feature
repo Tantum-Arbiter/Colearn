@@ -226,6 +226,163 @@ Feature: Story CMS and Delta-Sync
     And page 1 should not have field "musicChallenge"
     And page 4 should not have field "musicChallenge"
 
+  # =============================================
+  # MUSIC STORY 1 - Challenges on pages 2, 3, 4, 5
+  # =============================================
+
+  @story-pages @music-challenge @emulator-only
+  Scenario: Music-story-1 has music challenges on pages 2, 3, 4, and 5
+    Given I seed test story "music-story-1" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/music-story-1"
+    Then the response status code should be 200
+    And page 2 should have field "musicChallenge"
+    And page 2 musicChallenge should have field "enabled" with value "true"
+    And page 2 musicChallenge should have field "instrumentId" with value "flute"
+    And page 2 musicChallenge should have field "mode" with value "guided"
+    And page 3 should have field "musicChallenge"
+    And page 3 musicChallenge should have field "instrumentId" with value "flute"
+    And page 4 should have field "musicChallenge"
+    And page 4 musicChallenge should have field "instrumentId" with value "recorder"
+    And page 5 should have field "musicChallenge"
+    And page 5 musicChallenge should have field "instrumentId" with value "recorder"
+    And page 5 musicChallenge should have field "mode" with value "free_play_optional"
+
+  @story-pages @music-challenge @interactive-elements @emulator-only
+  Scenario: Music-story-1 pages 2 and 4 have both interactiveElements and musicChallenge
+    Given I seed test story "music-story-1" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/music-story-1"
+    Then the response status code should be 200
+    And page 2 should have field "interactiveElements"
+    And page 2 interactiveElements should be an array
+    And page 2 should have field "musicChallenge"
+    And page 2 should have field "interactionType" with value "music_challenge"
+    And page 4 should have field "interactiveElements"
+    And page 4 interactiveElements should be an array
+    And page 4 should have field "musicChallenge"
+    And page 4 should have field "interactionType" with value "music_challenge"
+
+  @story-pages @music-challenge @emulator-only
+  Scenario: Music-story-1 non-music pages do not have musicChallenge
+    Given I seed test story "music-story-1" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/music-story-1"
+    Then the response status code should be 200
+    And page 1 should not have field "musicChallenge"
+    And page 6 should not have field "musicChallenge"
+    And page 7 should not have field "musicChallenge"
+    And page 8 should not have field "musicChallenge"
+    And page 9 should not have field "musicChallenge"
+    And page 10 should not have field "musicChallenge"
+
+  @story-pages @music-challenge @emulator-only
+  Scenario: Music-story-1 required sequences are valid note arrays
+    Given I seed test story "music-story-1" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/music-story-1"
+    Then the response status code should be 200
+    And page 2 musicChallenge requiredSequence should be an array
+    And page 2 musicChallenge requiredSequence should have at least 1 element
+    And page 3 musicChallenge requiredSequence should be an array
+    And page 4 musicChallenge requiredSequence should be an array
+    And page 5 musicChallenge requiredSequence should be an array
+
+  # =============================================
+  # MUSIC STORY 2 - Challenges on pages 1, 2, 4
+  # =============================================
+
+  @story-pages @music-challenge @emulator-only
+  Scenario: Music-story-2 has music challenges on pages 1, 2, and 4
+    Given I seed test story "music-story-2" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/music-story-2"
+    Then the response status code should be 200
+    And page 1 should have field "musicChallenge"
+    And page 1 musicChallenge should have field "enabled" with value "true"
+    And page 1 musicChallenge should have field "instrumentId" with value "trumpet"
+    And page 1 musicChallenge should have field "mode" with value "guided"
+    And page 2 should have field "musicChallenge"
+    And page 2 musicChallenge should have field "instrumentId" with value "trumpet"
+    And page 4 should have field "musicChallenge"
+    And page 4 musicChallenge should have field "instrumentId" with value "trumpet"
+    And page 4 musicChallenge should have field "allowSkip" with value "true"
+
+  @story-pages @music-challenge @interactive-elements @emulator-only
+  Scenario: Music-story-2 pages 2 and 4 have both interactiveElements and musicChallenge
+    Given I seed test story "music-story-2" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/music-story-2"
+    Then the response status code should be 200
+    And page 2 should have field "interactiveElements"
+    And page 2 should have field "musicChallenge"
+    And page 2 should have field "interactionType" with value "music_challenge"
+    And page 4 should have field "interactiveElements"
+    And page 4 should have field "musicChallenge"
+    And page 4 should have field "interactionType" with value "music_challenge"
+
+  @story-pages @music-challenge @emulator-only
+  Scenario: Music-story-2 non-music pages do not have musicChallenge
+    Given I seed test story "music-story-2" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/music-story-2"
+    Then the response status code should be 200
+    And page 3 should not have field "musicChallenge"
+    And page 5 should not have field "musicChallenge"
+    And page 6 should not have field "musicChallenge"
+    And page 7 should not have field "musicChallenge"
+    And page 8 should not have field "musicChallenge"
+    And page 9 should not have field "musicChallenge"
+    And page 10 should not have field "musicChallenge"
+
+  # =============================================
+  # MUSIC STORY 3 - Challenges on pages 2 and 10
+  # =============================================
+
+  @story-pages @music-challenge @emulator-only
+  Scenario: Music-story-3 has music challenges on pages 2 and 10
+    Given I seed test story "music-story-3" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/music-story-3"
+    Then the response status code should be 200
+    And page 2 should have field "musicChallenge"
+    And page 2 musicChallenge should have field "enabled" with value "true"
+    And page 2 musicChallenge should have field "instrumentId" with value "ocarina"
+    And page 2 musicChallenge should have field "mode" with value "guided"
+    And page 10 should have field "musicChallenge"
+    And page 10 musicChallenge should have field "instrumentId" with value "ocarina"
+    And page 10 musicChallenge should have field "mode" with value "free_play_optional"
+    And page 10 musicChallenge should have field "allowSkip" with value "true"
+
+  @story-pages @music-challenge @interactive-elements @emulator-only
+  Scenario: Music-story-3 pages 2 and 10 have both interactiveElements and musicChallenge
+    Given I seed test story "music-story-3" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/music-story-3"
+    Then the response status code should be 200
+    And page 2 should have field "interactiveElements"
+    And page 2 interactiveElements should be an array
+    And page 2 should have field "musicChallenge"
+    And page 10 should have field "interactiveElements"
+    And page 10 interactiveElements should be an array
+    And page 10 should have field "musicChallenge"
+    And page 10 should have field "interactionType" with value "music_challenge"
+
+  @story-pages @music-challenge @emulator-only
+  Scenario: Music-story-3 non-music pages do not have musicChallenge
+    Given I seed test story "music-story-3" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/music-story-3"
+    Then the response status code should be 200
+    And page 1 should not have field "musicChallenge"
+    And page 3 should not have field "musicChallenge"
+    And page 4 should not have field "musicChallenge"
+    And page 5 should not have field "musicChallenge"
+    And page 6 should not have field "musicChallenge"
+    And page 7 should not have field "musicChallenge"
+    And page 8 should not have field "musicChallenge"
+    And page 9 should not have field "musicChallenge"
+
   @error-handling
   Scenario: Sync with invalid request body
     When I make a POST request to "/api/stories/delta" with invalid JSON
