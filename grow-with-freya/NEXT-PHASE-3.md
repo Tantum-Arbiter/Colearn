@@ -362,6 +362,79 @@ no download capability. Signing in (even without subscribing) unlocks catalog br
 
 ---
 
+## 3. Testing Subscriptions (Sandbox & License Testing)
+
+### Apple — Sandbox Test Accounts
+
+Apple provides dedicated sandbox accounts for testing in-app purchases without real charges.
+
+1. Go to [App Store Connect](https://appstoreconnect.apple.com) → Users and Access → Sandbox → Testers
+2. Create a sandbox tester (use a throwaway email — doesn't need to be a real inbox)
+3. On the test device: Settings → App Store → sign out of your real Apple ID
+4. When the app triggers a purchase, iOS prompts sign-in — use the sandbox account
+5. All purchases are free and instant
+6. Subscriptions auto-renew on an accelerated schedule:
+   - Weekly → every 3 minutes
+   - Monthly → every 5 minutes
+   - Yearly → every 1 hour
+
+**Important:** Never sign into the main App Store with a sandbox account — only use it when the in-app purchase dialog appears.
+
+### Google — License Testers
+
+Google uses real Google accounts but bypasses payment for designated testers.
+
+1. Go to [Google Play Console](https://play.google.com/console) → Settings → License testing
+2. Add your Gmail (or any tester's Gmail) to the license testers list
+3. Those accounts get all purchases for free with test card options
+4. Subscriptions also renew on an accelerated schedule (monthly → every 5 minutes)
+
+### RevenueCat Sandbox Integration
+
+RevenueCat automatically detects sandbox transactions and separates them in the dashboard.
+
+```typescript
+// Enable during development for detailed purchase flow logging
+Purchases.setLogLevel(LOG_LEVEL.DEBUG);
+
+// Test the "Ask to Buy" parental approval flow (relevant for children's app)
+Purchases.setSimulatesAskToBuyInSandbox(true);
+```
+
+- Sandbox purchases appear separately in the RevenueCat dashboard
+- Debug logs show the full purchase flow: offering → product → transaction → entitlement
+- No special code paths needed — sandbox accounts go through the real purchase flow, Apple/Google just don't charge money
+
+### Debug Menu (Recommended)
+
+Add a hidden debug menu (e.g. long-press on the settings icon or version number) that displays:
+
+- Current RevenueCat customer ID
+- Active entitlements and their expiry dates
+- Current subscription tier (Free / Basic / Premium)
+- A "Restore Purchases" button
+- Sandbox vs production indicator
+
+This avoids needing to check the RevenueCat dashboard during device testing. The debug menu should only be visible in development builds (`__DEV__`) or behind a hidden gesture.
+
+### Typical Development Testing Flow
+
+```
+Development build on physical device
+  → App launches with RevenueCat SDK
+  → Sign in with sandbox (iOS) or license tester (Android) account
+  → Browse catalog → tap "Subscribe"
+  → Purchase completes instantly (free)
+  → RevenueCat reports entitlement as active
+  → App unlocks paid content
+  → Subscription auto-renews every 5 min → test renewal handling
+  → Cancel subscription → test grace period / downgrade to free tier
+```
+
+No code bypass or mock accounts are needed. The sandbox system tests the real integration end-to-end.
+
+---
+
 ## Related Documentation
 
 | Document | Scope |

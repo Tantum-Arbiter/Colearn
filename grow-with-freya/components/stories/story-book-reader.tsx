@@ -1447,7 +1447,7 @@ export function StoryBookReader({
                 <MusicChallengeUI
                   challenge={musicChallenge}
                   promptText={page.musicChallenge.promptText}
-                  requiredSequence={page.musicChallenge.requiredSequence}
+                  requiredSequence={page.musicChallenge.requiredSequence ?? musicChallenge.currentSequence}
                   noteLayout={getInstrument(selectedInstrumentId || page.musicChallenge.instrumentId)?.noteLayout ?? []}
                   showBreathButton={breathDetector.useFallback || !page.musicChallenge.micRequired}
                   onSkip={() => {
@@ -2755,7 +2755,7 @@ export function StoryBookReader({
               <MusicChallengeUI
                 challenge={musicChallenge}
                 promptText={currentMusicChallenge.promptText}
-                requiredSequence={currentMusicChallenge.requiredSequence}
+                requiredSequence={currentMusicChallenge.requiredSequence ?? musicChallenge.currentSequence}
                 noteLayout={getInstrument(currentMusicChallenge.instrumentId)?.noteLayout ?? []}
                 showBreathButton={breathDetector.useFallback || !currentMusicChallenge.micRequired}
                 onSkip={() => musicChallenge.skip()}
@@ -2918,7 +2918,7 @@ export function StoryBookReader({
       <MusicSheetOverlay
         visible={showMusicSheet}
         onClose={handleCloseMusicSheet}
-        requiredSequence={musicChallenge.currentSequence.length > 0 ? musicChallenge.currentSequence : (currentMusicChallenge?.requiredSequence ?? [])}
+        requiredSequence={musicChallenge.currentSequence.length > 0 ? musicChallenge.currentSequence : (currentMusicChallenge?.requiredSequence ?? musicChallenge.currentSequence)}
         noteLayout={currentInstrumentDef?.noteLayout ?? []}
         completedNoteCount={musicChallenge.currentNoteIndex}
         instrumentName={currentInstrumentDef?.displayName ?? 'Unknown'}

@@ -56,6 +56,7 @@ export default {
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
       permissions: [
+        'RECORD_AUDIO',
         'MODIFY_AUDIO_SETTINGS',
         'WAKE_LOCK',
         'POST_NOTIFICATIONS',

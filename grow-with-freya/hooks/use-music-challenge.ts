@@ -14,7 +14,7 @@ import { Logger } from '@/utils/logger';
 import { SequenceMatcher, SequenceMatchResult, isChordEntry, parseChordEntry } from '@/services/sequence-matcher';
 import {
   getInstrument,
-  getInstrumentSong,
+  getPracticeSong,
   validateMusicChallengeAssets,
   InstrumentDefinition,
 } from '@/services/music-asset-registry';
@@ -158,30 +158,41 @@ export function useMusicChallenge(
   const matcherRef = useRef<SequenceMatcher | null>(null);
   // Map of note → AudioPlayer so multiple notes can play simultaneously
   const notePlayersRef = useRef<Map<string, AudioPlayer>>(new Map());
-  const songPlayerRef = useRef<AudioPlayer | null>(null);
+
   // Track currently held notes for chord matching
   const activeNotesRef = useRef<Set<string>>(new Set());
 
-  // Resolve assets — song is matched to the user's selected instrument
+  // Resolve instrument assets
   const instrument = (config ? getInstrument(config.instrumentId) : null) ?? null;
-  const song = config
-    ? getInstrumentSong(config.successSongId, config.instrumentId)
-    : null;
+
+  // Resolve the note sequence: explicit requiredSequence takes priority, then songId lookup
+  const resolvedSequence = (() => {
+    if (config?.requiredSequence && config.requiredSequence.length > 0) {
+      return config.requiredSequence;
+    }
+    if (config?.songId) {
+      const song = getPracticeSong(config.songId);
+      return song?.sequence ?? [];
+    }
+    return [];
+  })();
 
   // Validate assets on mount
   useEffect(() => {
     if (config?.enabled) {
       const missing = validateMusicChallengeAssets(
         config.instrumentId,
-        config.requiredSequence,
-        config.successSongId
+        resolvedSequence,
       );
+      if (config.songId && !getPracticeSong(config.songId)) {
+        missing.push(`song:${config.songId}`);
+      }
       setMissingAssets(missing);
       if (missing.length > 0) {
         setState('error');
       }
     }
-  }, [config?.instrumentId, config?.successSongId, config?.enabled]);
+  }, [config?.instrumentId, config?.enabled, config?.songId]);
 
   // Helper to release all active note players
   const releaseAllNotePlayers = useCallback(() => {
@@ -195,10 +206,6 @@ export function useMusicChallenge(
   useEffect(() => {
     if (!config) {
       releaseAllNotePlayers();
-      if (songPlayerRef.current) {
-        songPlayerRef.current.release();
-        songPlayerRef.current = null;
-      }
       matcherRef.current = null;
       if (state !== 'idle') {
         setState('idle');
@@ -214,7 +221,11 @@ export function useMusicChallenge(
       log.debug(`Music challenge start() bailed: config=${!!config}, missingAssets=[${missingAssets.join(',')}]`);
       return;
     }
-    const seq = config.requiredSequence;
+    const seq = resolvedSequence;
+    if (seq.length === 0) {
+      log.warn('Music challenge start() bailed: no sequence (neither requiredSequence nor songId resolved)');
+      return;
+    }
     setCurrentSequence(seq);
     setDifficultyLevel(1);
     matcherRef.current = new SequenceMatcher(seq);
@@ -223,7 +234,7 @@ export function useMusicChallenge(
     setLastInputCorrect(null);
     setSequenceResult(null);
     log.debug(`Music challenge started: ${config.instrumentId}, sequence: ${seq.join(' ')}`);
-  }, [config, missingAssets, state]);
+  }, [config, missingAssets, state, resolvedSequence]);
 
   // Note samples are ~5 seconds long — no looping or crossfade needed.
   // The note plays naturally for its full duration; on release we fade out.
@@ -309,15 +320,16 @@ export function useMusicChallenge(
     };
   }, [instrument]);
 
-  /** Handle sequence completion — plays success song or note-by-note playback */
+  /** Handle sequence completion — plays the completed sequence back note-by-note */
   const handleSequenceComplete = useCallback(() => {
     activeNotesRef.current.clear();
     setState('sequence_complete');
     log.debug(`Sequence completed! (difficulty ${difficultyLevel})`);
 
-    if (difficultyLevel > 1 && instrument) {
-      // For harder levels: play back the sequence note-by-note using instrument samples
-      // This syncs with the UI playback visualization highlighting each entry
+    if (instrument && currentSequence.length > 0) {
+      // Play back the sequence note-by-note using the instrument's own samples.
+      // This ensures the celebration melody always matches what the user just played,
+      // regardless of difficulty level. The UI highlights each note in sync.
       setState('playing_success_song');
       const cleanupPlayback = playSequenceAsAudio(currentSequence);
       const noteMs = 500;
@@ -327,32 +339,11 @@ export function useMusicChallenge(
         setState('completed');
         onComplete?.();
       }, totalMs);
-    } else if (config?.autoPlaySuccessSong && song) {
-      // Level 1: play the pre-recorded success song
-      setState('playing_success_song');
-      try {
-        if (songPlayerRef.current) {
-          songPlayerRef.current.release();
-        }
-        const player = createAudioPlayer(song.audio);
-        player.volume = noteVolume;
-        songPlayerRef.current = player;
-        player.play();
-        const duration = (song.duration || 5) * 1000;
-        setTimeout(() => {
-          setState('completed');
-          onComplete?.();
-        }, duration);
-      } catch (err) {
-        log.error('Failed to play success song:', err);
-        setState('completed');
-        onComplete?.();
-      }
     } else {
       setState('completed');
       onComplete?.();
     }
-  }, [config, song, onComplete, difficultyLevel, instrument, currentSequence, playSequenceAsAudio]);
+  }, [onComplete, difficultyLevel, instrument, currentSequence, playSequenceAsAudio]);
 
   const playNote = useCallback((note: string) => {
     log.debug(`playNote called: note=${note}, state=${state}, instrument=${!!instrument}, config=${!!config}`);
@@ -465,10 +456,6 @@ export function useMusicChallenge(
 
   const cleanup = useCallback(() => {
     releaseAllNotePlayers();
-    if (songPlayerRef.current) {
-      songPlayerRef.current.release();
-      songPlayerRef.current = null;
-    }
     matcherRef.current = null;
     activeNotesRef.current.clear();
     setState('idle');
@@ -483,9 +470,6 @@ export function useMusicChallenge(
         try { player.release(); } catch {}
       });
       notePlayersRef.current.clear();
-      if (songPlayerRef.current) {
-        songPlayerRef.current.release();
-      }
     };
   }, []);
 
@@ -494,7 +478,7 @@ export function useMusicChallenge(
     instrument,
     sequenceProgress: sequenceResult?.progress ?? 0,
     currentNoteIndex: sequenceResult?.currentIndex ?? 0,
-    totalNotes: currentSequence.length || (config?.requiredSequence.length ?? 0),
+    totalNotes: currentSequence.length || resolvedSequence.length,
     nextExpectedNote: matcherRef.current?.getNextExpectedNote() ?? null,
     isBreathActive,
     lastInputCorrect,

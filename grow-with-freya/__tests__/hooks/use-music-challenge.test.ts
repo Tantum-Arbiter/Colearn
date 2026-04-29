@@ -42,18 +42,7 @@ jest.mock('@/services/music-asset-registry', () => ({
     }
     return undefined;
   }),
-  getSong: jest.fn((id: string) => {
-    if (id === 'test_song') {
-      return { id: 'test_song', displayName: 'Test Song', audio: 99, duration: 2 };
-    }
-    return undefined;
-  }),
-  getInstrumentSong: jest.fn((baseSongId: string, _instrumentId?: string) => {
-    if (baseSongId === 'test_song') {
-      return { id: 'test_song', displayName: 'Test Song', audio: 99, duration: 2 };
-    }
-    return undefined;
-  }),
+
   validateMusicChallengeAssets: jest.fn(() => []),
 }));
 
@@ -120,6 +109,7 @@ describe('useMusicChallenge', () => {
   });
 
   it('should complete the challenge when full sequence is played', () => {
+    jest.useFakeTimers();
     const onComplete = jest.fn();
     const { result } = renderHook(() =>
       useMusicChallenge(createTestConfig(), onComplete)
@@ -130,9 +120,15 @@ describe('useMusicChallenge', () => {
     act(() => result.current.playNote('D'));
     act(() => result.current.playNote('E'));
 
+    // After completing the sequence, the hook plays back the notes before
+    // transitioning to 'completed'. Advance timers to skip the playback.
+    expect(result.current.state).toBe('playing_success_song');
+    act(() => jest.runAllTimers());
+
     expect(result.current.isComplete).toBe(true);
     expect(result.current.state).toBe('completed');
     expect(onComplete).toHaveBeenCalledTimes(1);
+    jest.useRealTimers();
   });
 
   it('should increment failedAttempts on wrong note', () => {

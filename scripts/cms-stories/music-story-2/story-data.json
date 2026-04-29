@@ -87,12 +87,7 @@
         "instrumentId": "trumpet",
         "promptText": "Play the trumpet to welcome winter!",
         "mode": "guided",
-        "requiredSequence": [
-          "C",
-          "E",
-          "G"
-        ],
-        "successSongId": "wombat_lullaby_v1",
+        "songId": "song_of_lift",
         "autoPlaySuccessSong": true,
         "allowSkip": false,
         "micRequired": true,
@@ -143,13 +138,7 @@
         "instrumentId": "trumpet",
         "promptText": "Play the trumpet to cheer on the squirrels!",
         "mode": "guided",
-        "requiredSequence": [
-          "C",
-          "D",
-          "E",
-          "G"
-        ],
-        "successSongId": "wombat_lullaby_v1",
+        "songId": "hot_cross_buns",
         "successStateId": "door_opened",
         "autoPlaySuccessSong": true,
         "allowSkip": false,
@@ -225,14 +214,7 @@
         "instrumentId": "trumpet",
         "promptText": "Play the trumpet to celebrate the discovery!",
         "mode": "guided",
-        "requiredSequence": [
-          "G",
-          "E",
-          "C",
-          "E",
-          "G"
-        ],
-        "successSongId": "wombat_burrow_v1",
+        "songId": "starlight_dance",
         "successStateId": "snowman_found",
         "autoPlaySuccessSong": true,
         "allowSkip": true,

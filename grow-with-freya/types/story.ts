@@ -51,8 +51,11 @@ export interface MusicChallenge {
   instrumentId: string; // References local instrument asset, e.g., "flute_basic"
   promptText: string; // Narrative prompt, e.g., "Play the flute to help Gary!"
   mode: MusicChallengeMode;
-  requiredSequence: string[]; // Note sequence, e.g., ["C", "D", "E", "C"]
-  successSongId: string; // References local song asset, e.g., "gary_rock_lift_theme_v1"
+  /** Optional song ID referencing a practice song in the registry (e.g., "hot_cross_buns") */
+  songId?: string;
+  /** Explicit note sequence. If omitted, resolved from songId at runtime. */
+  requiredSequence?: string[]; // Note sequence, e.g., ["C", "D", "E", "C"]
+  successSongId?: string; // Legacy — kept for backward compat, no longer used
   successStateId?: string; // Optional page state change on success, e.g., "rock_moved"
   autoPlaySuccessSong: boolean;
   allowSkip: boolean;

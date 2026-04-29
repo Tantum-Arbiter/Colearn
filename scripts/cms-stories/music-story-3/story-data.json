@@ -125,13 +125,7 @@
         "instrumentId": "ocarina",
         "promptText": "Play the ocarina to open the way!",
         "mode": "guided",
-        "requiredSequence": [
-          "C",
-          "D",
-          "E",
-          "G"
-        ],
-        "successSongId": "wombat_lullaby_v1",
+        "songId": "ocean_waves",
         "successStateId": "shed_opened",
         "autoPlaySuccessSong": true,
         "allowSkip": false,
@@ -396,14 +390,7 @@
         "instrumentId": "ocarina",
         "promptText": "Play the ocarina to wave goodnight!",
         "mode": "free_play_optional",
-        "requiredSequence": [
-          "E",
-          "D",
-          "C",
-          "D",
-          "E"
-        ],
-        "successSongId": "wombat_burrow_v1",
+        "songId": "dreamtime_lullaby",
         "successStateId": "goodnight_waved",
         "autoPlaySuccessSong": true,
         "allowSkip": true,
