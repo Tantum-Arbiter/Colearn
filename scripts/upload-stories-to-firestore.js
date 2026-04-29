@@ -226,15 +226,29 @@ async function uploadStories(stories) {
   } else {
     console.log(`\n📤 Uploading ${changedStories.length} changed stories...`);
 
-    const batch = db.batch();
-    for (const story of changedStories) {
-      const storyRef = db.collection('stories').doc(story.id);
-      batch.set(storyRef, story);
-      const isNew = !currentChecksums[story.id];
-      console.log(`  ➡️  ${story.id}: ${story.title} (${isNew ? 'NEW' : 'CHANGED'})`);
+    // Firestore has a 500-operation limit per batch.
+    // Chunk into batches of 400 to stay safely under the limit.
+    const BATCH_CHUNK_SIZE = 400;
+    const chunks = [];
+    for (let i = 0; i < changedStories.length; i += BATCH_CHUNK_SIZE) {
+      chunks.push(changedStories.slice(i, i + BATCH_CHUNK_SIZE));
     }
 
-    await batch.commit();
+    console.log(`  📦 Split into ${chunks.length} batch(es) of up to ${BATCH_CHUNK_SIZE}`);
+
+    for (let c = 0; c < chunks.length; c++) {
+      const chunk = chunks[c];
+      const batch = db.batch();
+      for (const story of chunk) {
+        const storyRef = db.collection('stories').doc(story.id);
+        batch.set(storyRef, story);
+        const isNew = !currentChecksums[story.id];
+        console.log(`  ➡️  ${story.id}: ${story.title} (${isNew ? 'NEW' : 'CHANGED'})`);
+      }
+      await batch.commit();
+      console.log(`  ✅ Batch ${c + 1}/${chunks.length} committed (${chunk.length} stories)`);
+    }
+
     console.log(`✅ Successfully uploaded ${changedStories.length} stories`);
     console.log(`💰 Saved ${unchangedStories.length} writes (delta-sync)`);
   }
@@ -268,12 +282,17 @@ async function deleteOrphanedStories(validStoryIds) {
     return orphanedIds;
   }
 
-  // Delete in batches
-  const batch = db.batch();
-  for (const id of orphanedIds) {
-    batch.delete(db.collection('stories').doc(id));
+  // Delete in batches, chunked to stay under 500-operation Firestore limit
+  const BATCH_CHUNK_SIZE = 400;
+  for (let i = 0; i < orphanedIds.length; i += BATCH_CHUNK_SIZE) {
+    const chunk = orphanedIds.slice(i, i + BATCH_CHUNK_SIZE);
+    const batch = db.batch();
+    for (const id of chunk) {
+      batch.delete(db.collection('stories').doc(id));
+    }
+    await batch.commit();
+    console.log(`  ✅ Deleted batch ${Math.floor(i / BATCH_CHUNK_SIZE) + 1} (${chunk.length} stories)`);
   }
-  await batch.commit();
 
   console.log(`  ✅ Deleted ${orphanedIds.length} orphaned stories`);
   return orphanedIds;
