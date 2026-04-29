@@ -76,14 +76,14 @@ describe('MusicControl', () => {
 
   it('should show mute icon when music is muted', () => {
     mockUseGlobalSound.isMuted = true;
-    const rendered = render(<MusicControl />);
-    expect(rendered.toJSON()).toMatchSnapshot();
+    const { getByLabelText } = render(<MusicControl />);
+    expect(getByLabelText(/Unmute background music/i)).toBeTruthy();
   });
 
   it('should show volume icon when music is not muted', () => {
     mockUseGlobalSound.isMuted = false;
-    const rendered = render(<MusicControl />);
-    expect(rendered.toJSON()).toMatchSnapshot();
+    const { getByLabelText } = render(<MusicControl />);
+    expect(getByLabelText(/Mute background music/i)).toBeTruthy();
   });
 
   it('should call toggleMute when pressed', () => {
@@ -105,11 +105,9 @@ describe('MusicControl', () => {
 
   it('should accept custom props', () => {
     mockUseGlobalSound.isPlaying = false;
-    const rendered = render(
+    const { toJSON } = render(
       <MusicControl size={48} color="#FF0000" />
     );
-    expect(rendered.toJSON()).toMatchSnapshot();
-    // Note: Testing custom props is limited with current mock setup
-    // The size and color props are passed to the mock but not easily testable
+    expect(toJSON()).toBeTruthy();
   });
 });

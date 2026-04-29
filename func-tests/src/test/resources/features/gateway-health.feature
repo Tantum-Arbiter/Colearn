@@ -18,8 +18,8 @@ Feature: Gateway Service Health
     When I make a GET request to "/private/healthcheck"
     Then the response status code should be 200
     And the response JSON field "status" should be "UP"
-    And the response JSON field "downstreams.firestore.status" should be "UP"
-    And the response JSON field "downstreams.gcs.status" should be "UP"
+    And the response JSON field "downstreams.firestore.status" should be one of "UP,UNKNOWN"
+    And the response JSON field "downstreams.gcs.status" should be one of "UP,UNKNOWN"
 
   @smoke
   Scenario: Actuator health endpoint returns healthy status

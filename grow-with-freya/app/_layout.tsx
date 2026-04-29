@@ -5,9 +5,12 @@ import { AppState, AppStateStatus, Dimensions, View, Platform, DevSettings, Aler
 import * as ScreenOrientation from 'expo-screen-orientation';
 
 import 'react-native-reanimated';
+import { configureReanimatedLogger, ReanimatedLogLevel } from 'react-native-reanimated';
 // Initialize i18n service - must be imported before components that use translations
 import '@/services/i18n';
-
+// Import notification service early to register notification handler
+// This ensures notifications are handled properly even when app is in background
+import '@/services/notification-service';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAppStore } from '@/store/app-store';
 import { Logger } from '@/utils/logger';
@@ -21,8 +24,8 @@ import { ApiClient } from '@/services/api-client';
 import { backgroundSaveService } from '@/services/background-save-service';
 import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
 import { StoryBookReader } from '@/components/stories/story-book-reader';
-import { MusicScreen } from '@/components/music';
-import { EmotionsScreen } from '@/components/emotions';
+import { PractiseScreen } from '@/components/music/practise-screen';
+import { FreeplayScreen } from '@/components/music/freeplay-screen';
 import { ScreenTimeProvider } from '@/components/screen-time/screen-time-provider';
 import { Story } from '@/types/story';
 import { preloadCriticalImages, preloadSecondaryImages } from '@/services/image-preloader';
@@ -32,11 +35,12 @@ import { GlobalSoundProvider } from '@/contexts/global-sound-context';
 import { TutorialProvider } from '@/contexts/tutorial-context';
 import { updateSentryConsent } from '@/services/sentry-service';
 import { StartupLoadingScreen } from '@/components/startup-loading-screen';
-// Import notification service early to register notification handler
-// This ensures notifications are handled properly even when app is in background
-import '@/services/notification-service';
 // Import reminder service to trigger initialization and reschedule notifications on app startup
 import { reminderService } from '@/services/reminder-service';
+
+// Disable Reanimated strict mode warnings — our shared value reads are all inside
+// useAnimatedStyle / useDerivedValue, but Reanimated's heuristic still fires false positives.
+configureReanimatedLogger({ level: ReanimatedLogLevel.warn, strict: false });
 
 // On Android in dev mode, disable Fast Refresh to prevent ExoPlayer threading errors
 // ExoPlayer callbacks fire on background threads which crash during Fast Refresh
@@ -124,7 +128,7 @@ function AppContent() {
   const [hasStartedBackgroundMusic, setHasStartedBackgroundMusic] = useState(false);
 
   type AppView = 'splash' | 'onboarding' | 'login' | 'loading' | 'app' | 'main' | 'stories' | 'story-reader' | 'account';
-  type PageKey = 'main' | 'stories' | 'story-reader' | 'emotions' | 'bedtime' | 'account';
+  type PageKey = 'main' | 'stories' | 'story-reader' | 'account' | 'practise' | 'freeplay';
 
   const [currentView, setCurrentView] = useState<AppView>('splash');
   const [currentPage, setCurrentPage] = useState<PageKey>('main');
@@ -508,11 +512,15 @@ function AppContent() {
 
   const handleMainMenuNavigate = (destination: string) => {
     // Map destination strings to PageKey types
+    // Note: music-stories and animated-stories currently route to stories
+    // until their dedicated screens are implemented
     const destinationMap: Record<string, PageKey> = {
       'stories': 'stories',
-      'emotions': 'emotions',
-      'bedtime': 'bedtime',
-      'account': 'account'
+      'music-stories': 'stories',  // TODO: Create dedicated music stories screen
+      'animated-stories': 'stories',  // TODO: Create dedicated animated stories screen
+      'account': 'account',
+      'practise': 'practise',
+      'freeplay': 'freeplay',
     };
 
     const pageKey = destinationMap[destination];
@@ -595,10 +603,8 @@ function AppContent() {
               selectedStory={selectedStory}
               onBack={handleBackToMainMenu}
             />,
-
-            emotions: <EmotionsScreen onBack={handleBackToMainMenu} />,
-            bedtime: <MusicScreen onBack={handleBackToMainMenu} isActive={currentPage === 'bedtime'} />,
-
+            practise: <PractiseScreen onBack={handleBackToMainMenu} />,
+            freeplay: <FreeplayScreen onBack={handleBackToMainMenu} />,
             account: <AccountScreen onBack={handleAccountBack} isActive={currentPage === 'account'} />,
           }}
           duration={500}

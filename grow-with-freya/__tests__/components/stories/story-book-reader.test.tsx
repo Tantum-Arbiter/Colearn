@@ -20,6 +20,19 @@ jest.mock('@/contexts/story-transition-context', () => ({
   })),
 }));
 
+jest.mock('@/hooks/use-breath-detector', () => ({
+  useBreathDetector: () => ({
+    isListening: false,
+    useFallback: true,
+    micPermissionGranted: false,
+    isPreparing: false,
+    startListening: jest.fn(),
+    stopListening: jest.fn(),
+    ensurePlaybackMode: jest.fn(() => Promise.resolve()),
+    setUseFallback: jest.fn(),
+  }),
+}));
+
 // Reanimated is mocked globally in jest.setup.js
 
 const mockStory: Story = {

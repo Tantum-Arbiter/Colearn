@@ -203,25 +203,7 @@ public class StoryCmsStepDefs extends BaseStepDefs {
     }
 
     // Interactive Elements step definitions
-
-    @Then("page {int} should have field {string}")
-    public void pageShouldHaveField(int pageNumber, String fieldName) {
-        List<Map<String, Object>> pages = lastResponse.jsonPath().getList("pages");
-        assertThat("Pages should not be null", pages, notNullValue());
-
-        // Find page by pageNumber (0-indexed in array, but pageNumber field may differ)
-        Map<String, Object> targetPage = null;
-        for (Map<String, Object> page : pages) {
-            Integer pn = (Integer) page.get("pageNumber");
-            if (pn != null && pn == pageNumber) {
-                targetPage = page;
-                break;
-            }
-        }
-        assertThat("Page " + pageNumber + " should exist", targetPage, notNullValue());
-        assertThat("Page " + pageNumber + " should have field: " + fieldName,
-                targetPage.get(fieldName), notNullValue());
-    }
+    // Note: "page {int} should have field {string}" step is defined in CmsContentSyncStepDefs
 
     @Then("page {int} interactiveElements should be an array")
     public void pageInteractiveElementsShouldBeAnArray(int pageNumber) {

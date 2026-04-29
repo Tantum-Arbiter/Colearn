@@ -60,15 +60,7 @@ describe('MainMenu', () => {
     expect(result.toJSON()).toBeTruthy();
   });
 
-  it('handles icon press and swaps to center', async () => {
-    const result = render(<MainMenu onNavigate={mockOnNavigate} />);
-
-    // Test that the component renders without crashing
-    // Note: Icon swapping requires pressing on the icon images, not text
-    expect(result.toJSON()).toBeTruthy();
-  });
-
-  it('handles center icon press and navigates', async () => {
+  it('handles stories button press and navigates', async () => {
     const result = render(<MainMenu onNavigate={mockOnNavigate} />);
 
     // Test that the component renders without crashing
@@ -97,19 +89,17 @@ describe('MainMenu', () => {
     expect(() => render(<MainMenu onNavigate={mockOnNavigate} />)).not.toThrow();
   });
 
-  it('maintains menu order state correctly', async () => {
+  it('renders single stories button', async () => {
     const { root } = render(<MainMenu onNavigate={mockOnNavigate} />);
 
-    // Test that the component maintains state without crashing
-    // Note: Icon swapping requires pressing on the icon images, not text
+    // Test that the component renders the single stories button
     expect(root).toBeTruthy();
   });
 
-  it('handles rapid icon presses without errors', async () => {
+  it('handles stories button press without errors', async () => {
     const { root } = render(<MainMenu onNavigate={mockOnNavigate} />);
 
-    // Test that the component handles rapid interactions without crashing
-    // Note: Icon pressing requires interacting with image elements, not text
+    // Test that the component handles button press without crashing
     expect(root).toBeTruthy();
   });
 

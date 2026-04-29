@@ -24,18 +24,15 @@ describe('MainMenu Component', () => {
     expect(result).toBeTruthy();
   });
 
-  it('should render all menu icons', () => {
+  it('should render stories menu icon in carousel', () => {
     const { getByLabelText } = render(
       <ScreenTimeProvider>
         <MainMenu onNavigate={mockOnNavigate} />
       </ScreenTimeProvider>
     );
 
-    // Labels now use i18n keys (mock returns keys directly)
-    expect(getByLabelText('menu.stories button')).toBeTruthy();
-    expect(getByLabelText('menu.emotions button')).toBeTruthy();
-    expect(getByLabelText('menu.calming button')).toBeTruthy();
-    // Note: Screen Time button may not be visible in test environment
+    // Stories button exists in the carousel with emoji prefix
+    expect(getByLabelText('📚 menu.stories button')).toBeTruthy();
   });
 
   it('should handle navigation when stories button is pressed', () => {
@@ -45,24 +42,10 @@ describe('MainMenu Component', () => {
       </ScreenTimeProvider>
     );
 
-    const storiesButton = getByLabelText('menu.stories button');
+    const storiesButton = getByLabelText('📚 menu.stories button');
     fireEvent.press(storiesButton);
 
     expect(mockOnNavigate).toHaveBeenCalledWith('stories');
-  });
-
-  it('should handle menu icon swapping', () => {
-    const { getByLabelText } = render(
-      <ScreenTimeProvider>
-        <MainMenu onNavigate={mockOnNavigate} />
-      </ScreenTimeProvider>
-    );
-
-    const emotionsButton = getByLabelText('menu.emotions button');
-    fireEvent.press(emotionsButton);
-
-    // Should not crash when swapping icons
-    expect(emotionsButton).toBeTruthy();
   });
 
   it('should render background elements', () => {

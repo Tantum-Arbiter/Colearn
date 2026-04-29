@@ -62,19 +62,11 @@ const mapIconNameToSvgType = (iconName: string): string => {
       return 'stories';
     case 'sensory-icon':
       return 'sensory';
-    case 'emotions-icon':
-      return 'emotions';
-    case 'bedtime-icon':
-      return 'bedtime';
     case 'screentime-icon':
     case 'clock':
       return 'screentime';
     case 'brain':
       return 'sensory';
-    case 'heart':
-      return 'emotions';
-    case 'moon':
-      return 'bedtime';
     case 'gear':
       return 'stories'; // fallback for settings
     default:
@@ -95,18 +87,6 @@ const pageContent: { [key: string]: { emoji: string; messageKey: string; subtitl
     messageKey: 'defaultPage.sensory.message',
     subtitleKey: 'defaultPage.sensory.subtitle',
     color: '#4ECDC4'
-  },
-  'Emotions': {
-    emoji: '😊',
-    messageKey: 'defaultPage.emotions.message',
-    subtitleKey: 'defaultPage.emotions.subtitle',
-    color: '#45B7D1'
-  },
-  'Bedtime': {
-    emoji: '🎵',
-    messageKey: 'defaultPage.bedtime.message',
-    subtitleKey: 'defaultPage.bedtime.subtitle',
-    color: '#96CEB4'
   },
   'Screen Time': {
     emoji: '⏰',

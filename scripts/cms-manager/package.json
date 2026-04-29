@@ -1,0 +1,35 @@
+{
+  "name": "@earlyroots/cms-manager",
+  "version": "1.0.0",
+  "description": "Local CMS management tool for validating, formatting, and preparing story content for Firestore/GCS",
+  "type": "module",
+  "main": "src/index.js",
+  "bin": {
+    "cms": "src/index.js"
+  },
+  "scripts": {
+    "cms": "node src/index.js",
+    "validate": "node src/index.js validate",
+    "format": "node src/index.js format",
+    "prepare": "node src/index.js prepare",
+    "import": "node src/index.js import",
+    "list": "node src/index.js list"
+  },
+  "keywords": [
+    "cms",
+    "firestore",
+    "gcs",
+    "stories"
+  ],
+  "author": "earlyroots",
+  "license": "MIT",
+  "dependencies": {
+    "ajv": "^8.12.0",
+    "ajv-formats": "^2.1.1",
+    "chalk": "^5.3.0",
+    "commander": "^11.1.0",
+    "glob": "^10.3.10",
+    "inquirer": "^9.2.12"
+  }
+}
+

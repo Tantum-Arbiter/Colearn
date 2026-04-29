@@ -7,7 +7,7 @@
   "coverImage": "assets/stories/cms-test-9-snowman-squirrel/cover/cms-test-9-snowman-squirrel-thumbnail.webp",
   "isAvailable": true,
   "ageRange": "2-5",
-  "duration": 10,
+  "duration": 11,
   "description": "CMS Test Story 9 - A delightful winter story about a squirrel who builds a snowman.",
   "isPremium": true,
   "author": "Freya Stories",
@@ -348,5 +348,6 @@
       }
     }
   ],
-  "version": 5
+  "version": 5,
+  "checksum": "db30ab95486225d8"
 }

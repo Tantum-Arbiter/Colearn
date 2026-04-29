@@ -3,8 +3,6 @@ import { SvgProps } from 'react-native-svg';
 
 import StoriesIcon from '../../assets/images/menu-icons/stories-icon.svg';
 import SensoryIcon from '../../assets/images/menu-icons/sensory-icon.svg';
-import EmotionsIcon from '../../assets/images/menu-icons/emotions-icon.svg';
-import BedtimeIcon from '../../assets/images/menu-icons/bedtime-icon.svg';
 import ScreentimeIcon from '../../assets/images/menu-icons/screentime-icon.svg';
 import Cloud1Icon from '../../assets/images/ui-elements/background-cloud-1.svg';
 import Cloud2Icon from '../../assets/images/ui-elements/background-cloud-2.svg';
@@ -25,8 +23,6 @@ interface SvgComponentProps {
 const SVG_COMPONENTS: Record<string, React.ComponentType<SvgProps>> = {
   'menu-icons/stories-icon.svg': StoriesIcon,
   'menu-icons/sensory-icon.svg': SensoryIcon,
-  'menu-icons/emotions-icon.svg': EmotionsIcon,
-  'menu-icons/bedtime-icon.svg': BedtimeIcon,
   'menu-icons/screentime-icon.svg': ScreentimeIcon,
   'ui-elements/background-cloud-1.svg': Cloud1Icon,
   'ui-elements/background-cloud-2.svg': Cloud2Icon,
@@ -75,16 +71,6 @@ export const StoriesSvg = React.memo(function StoriesSvg({
   );
 });
 
-export const EmotionsSvg = React.memo(function EmotionsSvg({
-  width = ICON_DIMENSIONS.medium.width,
-  height = ICON_DIMENSIONS.medium.height,
-  opacity = 1
-}: SvgComponentProps) {
-  return (
-    <EmotionsIcon width={width} height={height} opacity={opacity} />
-  );
-});
-
 export const SensorySvg = React.memo(function SensorySvg({
   width = ICON_DIMENSIONS.medium.width,
   height = ICON_DIMENSIONS.medium.height,
@@ -92,16 +78,6 @@ export const SensorySvg = React.memo(function SensorySvg({
 }: SvgComponentProps) {
   return (
     <SensoryIcon width={width} height={height} opacity={opacity} />
-  );
-});
-
-export const BedtimeSvg = React.memo(function BedtimeSvg({
-  width = ICON_DIMENSIONS.medium.width,
-  height = ICON_DIMENSIONS.medium.height,
-  opacity = 1
-}: SvgComponentProps) {
-  return (
-    <BedtimeIcon width={width} height={height} opacity={opacity} />
   );
 });
 

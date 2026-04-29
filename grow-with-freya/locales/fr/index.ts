@@ -91,8 +91,8 @@ export default {
   // Main menu
   menu: {
     stories: 'Histoires',
-    emotions: 'Émotions',
-    calming: 'Apaisement',
+    practise: 'Pratique',
+    freeplay: 'Jeu Libre',
   },
 
   // Accessibility settings
@@ -178,6 +178,7 @@ export default {
     readingTips: 'Conseils de lecture',
     recordingTips: 'Conseils d\'enregistrement',
     narrationTips: 'Conseils de narration',
+    musicTips: 'Conseils musicaux',
     permissionRequired: 'Permission requise',
     permissionMessage: 'L\'accès au microphone est nécessaire pour enregistrer votre voix.',
     recordingError: 'Erreur d\'enregistrement',
@@ -237,222 +238,7 @@ export default {
     wellDone: 'Bien joué !',
     readAnother: 'Lire une autre histoire',
     rereadStory: 'Relire',
-    bedtimeMusic: 'Musique de coucher',
     backToMenu: 'Retour au menu',
-  },
-
-  // Emotions screen
-  emotions: {
-    title: 'Exprimez-vous !',
-    subtitle: 'Choisissez votre style et apprenez les émotions',
-    pickYourStyle: 'Choisissez votre style',
-    howToPlay: 'Comment jouer',
-    howToPlayExpanded: 'Comment jouer ▼',
-    howToPlayCollapsed: 'Comment jouer ▶',
-    expressWithTheme: 'Exprimez-vous avec {{theme}} !',
-    expressing: 'J\'exprime {{emotion}} !',
-    loading: 'Chargement...',
-    progress: 'Progression : {{completed}} / {{total}}',
-    instructions: {
-      step1: '👀 Regardez et réagissez à l\'émotion ensemble',
-      step2: '🤪 Faites la grimace - exagérez et soyez amusant !',
-      step3: '🔄 Prenez des tours pour vous copier',
-      step4: '🎭 Célébrez chaque tentative - c\'est une question de connexion, pas de perfection',
-    },
-    themes: {
-      emoji: {
-        name: 'Emoji',
-        description: 'Exprimez les émotions avec des visages emoji amusants',
-      },
-      animals: {
-        name: 'Animaux',
-        description: 'Apprenez les émotions à travers des amis animaux mignons',
-      },
-      bear: {
-        name: 'Ours',
-        description: 'Apprenez les émotions avec notre ours amical',
-      },
-    },
-    emoji: {
-      happy: 'Heureux',
-      sad: 'Triste',
-      angry: 'En colère',
-      surprised: 'Surpris',
-      scared: 'Effrayé',
-      excited: 'Excité',
-      confused: 'Confus',
-      proud: 'Fier',
-      shy: 'Timide',
-      loving: 'Aimant',
-    },
-    animals: {
-      happy: 'Lapin heureux',
-      sad: 'Chaton triste',
-      angry: 'Chien en colère',
-      surprised: 'Poussin surpris',
-      scared: 'Raton laveur effrayé',
-      excited: 'Renard excité',
-      confused: 'Éléphant confus',
-      proud: 'Ours fier',
-      shy: 'Paresseux timide',
-      loving: 'Panda aimant',
-    },
-    bear: {
-      happy: 'Ours heureux',
-      sad: 'Ours triste',
-      angry: 'Ours en colère',
-      surprised: 'Ours surpris',
-      scared: 'Ours effrayé',
-      excited: 'Ours excité',
-      confused: 'Ours confus',
-      proud: 'Ours fier',
-      shy: 'Ours timide',
-      loving: 'Ours aimant',
-    },
-    prompts: {
-      happy: [
-        'Montrez-moi votre plus grand sourire !',
-        'Pouvez-vous rire comme si vous aviez entendu quelque chose de drôle ?',
-        'Faites une grimace heureuse et applaudissez !',
-        'Montrez-moi comment vous regardez quand vous recevez un cadeau !',
-      ],
-      sad: [
-        'Montrez-moi une grimace triste',
-        'Pouvez-vous faire une grimace comme si vous aviez perdu votre jouet ?',
-        'Montrez-moi comment vous vous sentez quand vous devez dire au revoir',
-        'Faites une grimace boudeuse comme quand vous êtes déçu',
-      ],
-      angry: [
-        'Montrez-moi une grimace en colère',
-        'Pouvez-vous froncer le visage comme si vous étiez fâché ?',
-        'Montrez-moi comment vous regardez quand quelqu\'un de méchant jette votre jouet préféré',
-        'Faites une grimace grognon avec les bras croisés !',
-      ],
-      surprised: [
-        'Montrez-moi une grimace surprise !',
-        'Pouvez-vous ouvrir les yeux et la bouche très grand ?',
-        'Montrez-moi comment vous regardez quand vous voyez quelque chose d\'incroyable !',
-        'Faites une grimace comme si vous veniez de voir de la magie !',
-      ],
-      scared: [
-        'Montrez-moi une grimace effrayée',
-        'Pouvez-vous vous cacher derrière vos mains comme si vous aviez peur ?',
-        'Montrez-moi comment vous regardez pendant un orage',
-        'Faites une grimace comme si vous aviez vu quelque chose de spooky !',
-      ],
-      excited: [
-        'Montrez-moi comment vous êtes excité !',
-        'Pouvez-vous sauter de haut en bas avec un grand sourire ?',
-        'Montrez-moi votre grimace quand vous allez quelque part d\'amusant !',
-        'Faites une grimace excitée et agitez les mains !',
-      ],
-      confused: [
-        'Montrez-moi une grimace confuse',
-        'Pouvez-vous froncer les sourcils comme si vous réfléchissiez dur ?',
-        'Montrez-moi comment vous regardez quand vous ne comprenez pas quelque chose',
-        'Faites une grimace comme si vous essayiez de résoudre un puzzle !',
-      ],
-      proud: [
-        'Montrez-moi comment vous êtes fier !',
-        'Pouvez-vous vous tenir droit et sourire comme si vous aviez fait quelque chose de bien ?',
-        'Montrez-moi votre grimace fière quand vous terminez un puzzle !',
-        'Faites une grimace comme si vous veniez d\'aider quelqu\'un !',
-      ],
-      shy: [
-        'Montrez-moi une grimace timide',
-        'Pouvez-vous vous cacher un peu le visage ?',
-        'Montrez-moi comment vous regardez quand vous rencontrez quelqu\'un de nouveau',
-        'Faites un sourire timide et regardez vers le bas !',
-      ],
-      loving: [
-        'Montrez-moi votre grimace aimante !',
-        'Pouvez-vous vous faire un gros câlin ?',
-        'Montrez-moi comment vous regardez quelqu\'un que vous aimez !',
-        'Faites une grimace comme si vous donniez des bisous !',
-      ],
-    },
-  },
-
-  // Music/Calming screen
-  music: {
-    title: 'Apaisement',
-    subtitle: 'Choisissez une piste à lire',
-    tantrums: 'Crises',
-    tantrumsDescription: 'Musique apaisante pour aider pendant les moments difficiles',
-    sleep: 'Sommeil',
-    sleepDescription: 'Sons doux pour un sommeil paisible',
-    unknownArtist: 'Artiste inconnu',
-    playAll: 'Tout lire',
-    calmingSession: 'Session d\'apaisement en cours',
-    playerError: 'Erreur du lecteur musical',
-    noTrackSelected: 'Aucune piste sélectionnée',
-    chooseASong: 'Choisissez une chanson pour commencer à lire',
-    fromPlaylist: 'de {{playlist}}',
-    repeatCount: 'Répétition {{current}}/{{total}}',
-    phase: 'Phase {{current}} sur {{total}}',
-    play: 'Lire',
-    pause: 'Pause',
-    loading: 'Chargement...',
-    error: 'Erreur',
-    playing: 'Lecture en cours',
-    paused: 'En pause',
-    idle: 'Inactif',
-    deepSleepPhase: 'Phase de sommeil profond',
-    relaxationPhase: 'Phase de relaxation',
-    comingSoon: 'À venir',
-    looping: 'Boucle',
-    tags: {
-      calming: 'Apaisant',
-      bedtime: 'Heure du coucher',
-      stories: 'Histoires',
-    },
-    tracks: {
-      tantrumAlpha: {
-        title: 'Apaisement des crises (10Hz)',
-        artist: 'Battements binauraux',
-        description: 'Ondes alpha pour l\'apaisement pendant les crises. Utilisez avec des écouteurs pour un meilleur effet.',
-      },
-      sleepAlpha: {
-        title: 'S\'endormir (10Hz)',
-        artist: 'Battements binauraux',
-        description: 'Ondes alpha pour aider à la transition de l\'éveil à la somnolence. Première phase de la séquence de sommeil.',
-      },
-      sleepTheta: {
-        title: 'Entrer dans un sommeil profond (6Hz)',
-        artist: 'Battements binauraux',
-        description: 'Ondes thêta pour approfondir le sommeil. Deuxième phase de la séquence de sommeil.',
-      },
-      sleepSequence: {
-        title: 'Séquence de sommeil complète',
-        artist: 'Battements binauraux',
-        description: 'Progression complète du sommeil : S\'endormir → Entrer dans un sommeil profond.',
-      },
-      bearsBirthdayParty: {
-        title: 'Fête d\'anniversaire de l\'ours',
-        artist: 'Histoire de coucher',
-        description: 'Un conte touchant sur un ours qui célèbre un anniversaire spécial.',
-      },
-      damselElephant: {
-        title: 'Damsel l\'éléphant',
-        artist: 'Histoire de coucher',
-        description: 'Rejoignez Damsel l\'éléphant dans une douce aventure.',
-      },
-      jimmyMouse: {
-        title: 'Jimmy la souris et les citadins',
-        artist: 'Histoire de coucher',
-        description: 'Une petite souris découvre la grande ville.',
-      },
-      newYearJungle: {
-        title: 'Nouvelle année dans la jungle',
-        artist: 'Histoire de coucher',
-        description: 'Les animaux de la jungle célèbrent une nouvelle année ensemble.',
-      },
-      snowWhite: {
-        title: 'Blanche-Neige',
-        artist: 'Histoire de coucher',
-        description: 'Le conte de fées classique de Blanche-Neige, parfait pour l\'heure du coucher.',
-      },
-    },
   },
 
   // Screen time
@@ -577,10 +363,6 @@ export default {
       readBook: {
         title: 'Lire un livre interactif',
         message: 'C\'est l\'heure d\'explorer une histoire merveilleuse ensemble ! Choisissez un livre préféré et plongez-y.',
-      },
-      emotionCards: {
-        title: 'Faire des cartes d\'émotions',
-        message: 'Pratiquons l\'identification des sentiments ! C\'est l\'heure des activités de cartes d\'émotions.',
       },
       park: {
         title: 'Aller au parc',
@@ -756,10 +538,6 @@ export default {
     welcomeDescription: 'Faisons une visite rapide pour vous aider, vous et votre enfant, à tirer le meilleur parti du temps de lecture ensemble.',
     storiesTitle: 'Bibliothèque d\'histoires 📚',
     storiesDescription: 'Appuyez ici pour explorer notre collection d\'histoires interactives avec de belles illustrations et des interactions amusantes.',
-    emotionsTitle: 'Explorateur d\'émotions 😊',
-    emotionsDescription: 'Aidez votre enfant à apprendre les émotions à travers des jeux d\'appariement amusants avec des emojis et des personnages.',
-    calmingTitle: 'Coin d\'apaisement 🎵',
-    calmingDescription: 'Accédez à une musique et des sons apaisants conçus pour aider pendant les moments difficiles ou l\'heure du coucher.',
     skip: 'Ignorer',
     gotIt: 'Compris !',
     buttons: {
@@ -779,16 +557,8 @@ export default {
         description: 'Faisons une visite rapide pour vous aider, vous et votre enfant, à tirer le meilleur parti du temps de lecture ensemble.',
       },
       stories: {
-        title: 'Bibliothèque d\'histoires 📚',
-        description: 'Appuyez ici pour explorer notre collection d\'histoires interactives avec de belles illustrations et des interactions amusantes.',
-      },
-      emotions: {
-        title: 'Explorateur d\'émotions 😊',
-        description: 'Aidez votre enfant à apprendre les émotions à travers des jeux d\'appariement amusants avec des emojis et des personnages.',
-      },
-      bedtime: {
-        title: 'Coin d\'apaisement 🎵',
-        description: 'Accédez à une musique et des sons apaisants conçus pour aider pendant les moments difficiles ou l\'heure du coucher.',
+        title: 'Explorer & Jouer 🎵📚',
+        description: 'Faites défiler le carrousel pour découvrir les Histoires, le mode Pratique pour apprendre la musique sur des instruments, et le mode Jeu Libre pour jouer librement de n\'importe quel instrument.',
       },
       settings: {
         title: 'Paramètres ⚙️',
@@ -797,28 +567,6 @@ export default {
       sound: {
         title: 'Contrôle du son 🔊',
         description: 'Appuyez ici pour contrôler la musique de fond et les effets sonores.',
-      },
-    },
-    emotionCards: {
-      welcome: {
-        title: 'Bienvenue dans les cartes d\'émotions ! 🎭',
-        description: 'Aidez votre enfant à apprendre à reconnaître et exprimer les émotions à travers des cartes interactives et amusantes.',
-      },
-      together: {
-        title: 'Jouer ensemble 👨‍👩‍👧',
-        description: 'Asseyez-vous avec votre enfant et prenez des tours pour retourner les cartes. Faites les émotions ensemble - c\'est plus amusant !',
-      },
-      connect: {
-        title: 'Faire des connexions 💬',
-        description: 'Posez des questions comme « Quand as-tu ressenti cela ? » pour aider votre enfant à comprendre ses émotions.',
-      },
-      scenarios: {
-        title: 'Créer des scénarios 🎭',
-        description: 'Jouez des situations qui pourraient causer chaque émotion. « Comment te sentirais-tu si ton jouet se cassait ? »',
-      },
-      themes: {
-        title: 'Essayer différents thèmes 🎨',
-        description: 'Basculez entre les thèmes emoji, animal et ours pour le garder frais et engageant !',
       },
     },
     screenTime: {
@@ -983,73 +731,6 @@ export default {
         description: 'Glissez vers la gauche ou la droite pour tourner rapidement les pages.',
       },
     },
-    music: {
-      welcome: {
-        title: 'Bienvenue dans les sons apaisants 🎵',
-        description: 'Cette section utilise l\'audio spécialement conçu pour aider votre enfant à se détendre, dormir ou se calmer pendant les moments difficiles.',
-      },
-      binaural: {
-        title: 'La science du son 🧠',
-        description: 'Nos pistes utilisent des battements binauraux - des fréquences sonores subtiles qui peuvent aider à guider le cerveau vers des états plus calmes.',
-      },
-      headphones: {
-        title: 'Utilisez des écouteurs 🎧',
-        description: 'Pour que les battements binauraux fonctionnent efficacement, les écouteurs sont recommandés. Les différentes fréquences dans chaque oreille créent l\'effet apaisant.',
-      },
-      tantrum: {
-        title: 'Pendant les crises 😢',
-        description: 'Ces sons peuvent aider pendant les moments difficiles. Restez calme vous-même et laissez la musique faire sa magie.',
-      },
-      sleep: {
-        title: 'Science du sommeil 💤',
-        description: 'Nos pistes de sommeil ralentissent progressivement les modèles d\'ondes cérébrales, aidant votre enfant à s\'endormir naturellement.',
-      },
-      routine: {
-        title: 'Construire une routine 🌙',
-        description: 'Jouer les mêmes sons apaisants chaque nuit peut signaler à votre enfant qu\'il est temps de dormir.',
-      },
-      stories: {
-        title: 'Des histoires aussi ! 📖',
-        description: 'N\'oubliez pas de consulter notre section histoires pour la lecture au coucher !',
-      },
-    },
-  },
-
-  // Music Tips Overlay
-  musicTips: {
-    next: 'Suivant',
-    go: 'Aller !',
-    letsGo: 'Allons-y !',
-    skip: 'Ignorer',
-    skipAll: 'Ignorer tout',
-    music_welcome: {
-      title: 'Bienvenue dans les sons apaisants 🎵',
-      description: 'Cette section utilise l\'audio spécialement conçu pour aider votre enfant à se détendre, dormir ou se calmer pendant les moments difficiles.',
-    },
-    binaural_science: {
-      title: 'La science du son 🧠',
-      description: 'Nos pistes utilisent des battements binauraux - des fréquences sonores subtiles qui peuvent aider à guider le cerveau vers des états plus calmes. La recherche montre que ceux-ci peuvent réduire l\'anxiété et favoriser la relaxation chez les enfants et les adultes.',
-    },
-    headphones_tip: {
-      title: 'Utilisez des écouteurs 🎧',
-      description: 'Pour que les battements binauraux fonctionnent efficacement, les écouteurs sont recommandés. Les différentes fréquences dans chaque oreille créent l\'effet apaisant. Sans écouteurs, votre enfant bénéficie toujours de la musique apaisante !',
-    },
-    tantrum_tip: {
-      title: 'Pendant les crises 😤',
-      description: 'Quand les émotions montent, essayez de jouer nos pistes de calme des crises. Les fréquences douces peuvent aider à réguler le système nerveux de votre enfant et le ramener à un état plus calme plus rapidement.',
-    },
-    sleep_science: {
-      title: 'Meilleur sommeil 🌙',
-      description: 'Nos pistes de sommeil utilisent des fréquences d\'ondes delta (0,5-4 Hz) qui se produisent naturellement pendant le sommeil profond. Jouer ceux-ci alors que votre enfant s\'endort peut l\'aider à s\'endormir plus vite et à dormir plus profondément.',
-    },
-    sleep_routine: {
-      title: 'Construire une routine 💤',
-      description: 'Essayez de jouer la même piste apaisante chaque nuit dans le cadre de votre routine de coucher. Au fil du temps, le cerveau de votre enfant associera les sons au sommeil, ce qui rendra l\'heure du coucher plus facile.',
-    },
-    music_stories: {
-      title: 'Des histoires aussi ! 📖',
-      description: 'N\'oubliez pas notre section histoires ! Lire ensemble renforce le vocabulaire, l\'imagination et ce précieux lien parent-enfant. Enregistrez votre voix pour que votre enfant puisse vous entendre même quand vous êtes séparé.',
-    },
   },
 
   // Parents only modal
@@ -1083,6 +764,81 @@ export default {
     limitReachedMessage: 'Limite de temps d\'écran quotidienne atteinte. C\'est l\'heure de fermer l\'application et d\'essayer d\'autres activités !',
   },
 
+  // Music challenge UI strings
+  music: {
+    amazing: 'Incroyable !',
+    levelComplete: 'Niveau {{level}} terminé !',
+    playingYourSong: 'Lecture de votre chanson...',
+    listeningToMelody: 'Écoutez votre mélodie...',
+    retry: '↻ Réessayer',
+    goHarder: 'Augmenter la difficulté',
+    goHarderLevel: 'Augmenter la difficulté (Nv {{level}})',
+    continueStory: 'Continuer l\'histoire →',
+    skip: 'Passer →',
+    blowMode: '♪ Souffler',
+    pressMode: '♫ Appuyer',
+    blowing: '♪ Souffle !',
+    blowWhileHolding: 'Soufflez en maintenant les notes',
+    tryAgain: 'Réessayez !',
+    openMusicSheet: 'Ouvrir la partition',
+    showControls: 'Afficher les contrôles',
+    hideControls: 'Masquer les contrôles',
+    musicSheet: '♪ Partition',
+    notesToPlay: 'Notes à jouer ({{completed}}/{{total}})',
+    pause: 'Pause',
+    preview: 'Aperçu',
+    tapAndHoldNotes: 'Appuyez et maintenez les notes pour les entendre',
+    playingPreview: 'Aperçu en cours… appuyez sur Pause pour arrêter',
+    successSong: '♫ Chanson de réussite',
+    readyToPlay: '♫ Prêt à jouer',
+    chooseInstrument: 'Choisissez votre instrument',
+    swipeToExplore: 'Glissez pour explorer, appuyez pour sélectionner',
+    useThisInstrument: 'Utiliser cet instrument',
+    closeInstrumentPicker: 'Fermer le sélecteur d\'instruments',
+    changeInstrument: 'Changer d\'instrument',
+    songLibrary: 'Bibliothèque de chansons',
+    backToLibrary: 'Retour à la bibliothèque',
+    backToMenu: 'Retour',
+    noSongsAvailable: 'Aucune chanson disponible pour cet instrument',
+    freeplayPrompt: 'Jeu libre — appuyez sur n\'importe quelle note !',
+    difficulty: { easy: 'Facile', medium: 'Moyen', hard: 'Difficile' },
+    songs: {
+      hotCrossBuns: 'Petits pains chauds',
+      rainRain: 'Pluie, pluie, va-t-en',
+      auClairLune: 'Au clair de la lune',
+      maryLamb: 'Marie avait un petit agneau',
+      itsyBitsySpider: 'L\'araignée Gipsy',
+      rowRowBoat: 'Rame, rame ton bateau',
+      twinkleStar: 'Ah ! vous dirai-je, maman',
+      odeToJoy: 'Ode à la joie',
+      londonBridge: 'Le pont de Londres',
+      threeBlindMice: 'Trois souris aveugles',
+      humptyDumpty: 'Humpty Dumpty',
+      jackAndJill: 'Jacques et Jeanne',
+      oldMacdonald: 'Le vieux MacDonald',
+      jingleBells: 'Vive le vent',
+      frereJacques: 'Frère Jacques',
+      happyBirthday: 'Joyeux anniversaire',
+      hickoryDickory: 'Hickory Dickory Dock',
+      raindropSong: 'Chanson de goutte de pluie',
+      dreamtimeLullaby: 'Berceuse du pays des rêves',
+      oceanWaves: 'Vagues de l\'océan',
+      forestWander: 'Promenade en forêt',
+      starlightDance: 'Danse des étoiles',
+      mountainEcho: 'Écho de la montagne',
+      butterflyFlight: 'Vol du papillon',
+      moonbeamWaltz: 'Valse du clair de lune',
+      sunriseMarch: 'Marche du lever de soleil',
+      riverJourney: 'Voyage de la rivière',
+      songOfPush: 'Chanson de la poussée',
+      songOfPull: 'Chanson de la traction',
+      songOfLift: 'Chanson du soulèvement',
+      songOfLower: 'Chanson de l\'abaissement',
+      songOfBreak: 'Chanson de la rupture',
+      songOfFix: 'Chanson de la réparation',
+    },
+  },
+
   // Audio settings modal
   audioSettings: {
     title: 'Paramètres audio',
@@ -1101,14 +857,6 @@ export default {
     sensory: {
       message: 'Sentir et explorer !',
       subtitle: 'Touchez, voyez, écoutez et découvrez le monde qui vous entoure à travers vos sens.',
-    },
-    emotions: {
-      message: 'Sentiments heureux !',
-      subtitle: 'Apprenez les émotions et comment exprimer vos sentiments de manière saine.',
-    },
-    bedtime: {
-      message: 'Beaux rêves !',
-      subtitle: 'Des mélodies douces et des sons apaisants pour vous aider à vous endormir.',
     },
     screenTime: {
       message: 'Temps de jouer !',

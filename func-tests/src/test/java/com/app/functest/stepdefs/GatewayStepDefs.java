@@ -420,6 +420,22 @@ public class GatewayStepDefs extends BaseStepDefs {
         lastResponse.then().body(fieldPath, equalTo(expectedValue));
     }
 
+    @Then("the response JSON field {string} should be one of {string}")
+    public void theResponseJsonFieldShouldBeOneOf(String fieldPath, String commaSeparatedValues) {
+        assertNotNull(lastResponse, "No response received");
+        String actual = lastResponse.jsonPath().getString(fieldPath);
+        String[] allowed = commaSeparatedValues.split(",");
+        boolean matched = false;
+        for (String val : allowed) {
+            if (val.trim().equals(actual)) {
+                matched = true;
+                break;
+            }
+        }
+        org.junit.jupiter.api.Assertions.assertTrue(matched,
+                "Expected '" + fieldPath + "' to be one of [" + commaSeparatedValues + "] but was '" + actual + "'");
+    }
+
     @Then("the response JSON field {string} should be {int}")
     public void theResponseJsonFieldShouldBeInt(String fieldPath, int expectedValue) {
         assertNotNull(lastResponse, "No response received");

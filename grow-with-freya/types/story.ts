@@ -41,6 +41,29 @@ export interface InteractiveElement {
   hitArea?: InteractiveElementPosition & InteractiveElementSize; // Optional custom hit area
 }
 
+// Music challenge interaction types
+export type MusicChallengeMode = 'guided' | 'free_play_optional';
+export type MusicHintLevel = 'none' | 'minimal' | 'standard' | 'verbose';
+
+// Music challenge configuration for a story page
+export interface MusicChallenge {
+  enabled: boolean;
+  instrumentId: string; // References local instrument asset, e.g., "flute_basic"
+  promptText: string; // Narrative prompt, e.g., "Play the flute to help Gary!"
+  mode: MusicChallengeMode;
+  requiredSequence: string[]; // Note sequence, e.g., ["C", "D", "E", "C"]
+  successSongId: string; // References local song asset, e.g., "gary_rock_lift_theme_v1"
+  successStateId?: string; // Optional page state change on success, e.g., "rock_moved"
+  autoPlaySuccessSong: boolean;
+  allowSkip: boolean;
+  micRequired: boolean;
+  fallbackAllowed: boolean; // Allow on-screen blow button if mic unavailable
+  hintLevel: MusicHintLevel;
+}
+
+// Page interaction types (extends beyond simple interactive elements)
+export type PageInteractionType = 'none' | 'interactive_state_change' | 'music_challenge';
+
 export interface StoryPage {
   id: string;
   pageNumber: number;
@@ -50,6 +73,10 @@ export interface StoryPage {
   text: string; // Story text for this page
   localizedText?: LocalizedText; // Translated page text
   interactiveElements?: InteractiveElement[]; // Optional interactive props for this page
+
+  // Music challenge support
+  interactionType?: PageInteractionType; // Defaults to 'none' if not set
+  musicChallenge?: MusicChallenge; // Present when interactionType === 'music_challenge'
 }
 
 export interface Story {

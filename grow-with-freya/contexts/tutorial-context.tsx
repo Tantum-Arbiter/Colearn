@@ -12,14 +12,13 @@ const TUTORIAL_STORAGE_KEY = '@tutorial_state';
 export type TutorialId =
   | 'main_menu_tour'
   | 'story_reader_tips'
-  | 'emotion_cards_tips'
   | 'settings_walkthrough'
   | 'gesture_hints'
   | 'book_mode_tour'
   | 'record_mode_tour'
   | 'narrate_mode_tour'
-  | 'music_tips'
-  | 'screen_time_tips';
+  | 'screen_time_tips'
+  | 'music_mode_tour';
 
 /**
  * Persisted tutorial state
@@ -28,8 +27,6 @@ interface TutorialState {
   completedTutorials: TutorialId[];
   hasSeenFirstStory: boolean;
   hasSeenSettings: boolean;
-  hasSeenEmotionCards: boolean;
-  hasSeenMusic: boolean;
   hasSeenScreenTime: boolean;
   lastResetTimestamp: number;
 }
@@ -38,8 +35,6 @@ const DEFAULT_STATE: TutorialState = {
   completedTutorials: [],
   hasSeenFirstStory: false,
   hasSeenSettings: false,
-  hasSeenEmotionCards: false,
-  hasSeenMusic: false,
   hasSeenScreenTime: false,
   lastResetTimestamp: 0,
 };
@@ -50,8 +45,6 @@ interface TutorialContextType {
   completedTutorials: TutorialId[];
   hasSeenFirstStory: boolean;
   hasSeenSettings: boolean;
-  hasSeenEmotionCards: boolean;
-  hasSeenMusic: boolean;
   hasSeenScreenTime: boolean;
   lastResetTimestamp: number;
 
@@ -70,8 +63,6 @@ interface TutorialContextType {
   shouldShowTutorial: (tutorialId: TutorialId) => boolean;
   markFirstStoryViewed: () => void;
   markSettingsViewed: () => void;
-  markEmotionCardsViewed: () => void;
-  markMusicViewed: () => void;
   markScreenTimeViewed: () => void;
 
   // Reset (for settings)
@@ -180,20 +171,6 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
     }
   }, [state, persistState]);
 
-  const markEmotionCardsViewed = useCallback(() => {
-    if (!state.hasSeenEmotionCards) {
-      const newState = { ...state, hasSeenEmotionCards: true };
-      persistState(newState);
-    }
-  }, [state, persistState]);
-
-  const markMusicViewed = useCallback(() => {
-    if (!state.hasSeenMusic) {
-      const newState = { ...state, hasSeenMusic: true };
-      persistState(newState);
-    }
-  }, [state, persistState]);
-
   const markScreenTimeViewed = useCallback(() => {
     if (!state.hasSeenScreenTime) {
       const newState = { ...state, hasSeenScreenTime: true };
@@ -215,8 +192,6 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
     completedTutorials: state.completedTutorials,
     hasSeenFirstStory: state.hasSeenFirstStory,
     hasSeenSettings: state.hasSeenSettings,
-    hasSeenEmotionCards: state.hasSeenEmotionCards,
-    hasSeenMusic: state.hasSeenMusic,
     hasSeenScreenTime: state.hasSeenScreenTime,
     lastResetTimestamp: state.lastResetTimestamp,
     activeTutorial,
@@ -229,8 +204,6 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
     shouldShowTutorial,
     markFirstStoryViewed,
     markSettingsViewed,
-    markEmotionCardsViewed,
-    markMusicViewed,
     markScreenTimeViewed,
     resetAllTutorials,
   };

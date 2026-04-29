@@ -167,6 +167,65 @@ Feature: Story CMS and Delta-Sync
     And page 2 first interactive element size.width should be between 0 and 1
     And page 2 first interactive element size.height should be between 0 and 1
 
+  # =============================================
+  # INTERACTION TYPES AND MUSIC CHALLENGE
+  # =============================================
+
+  @story-pages @interaction-type @emulator-only
+  Scenario: Story pages declare their interaction type
+    Given I seed test story "test-story-1" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/test-story-1"
+    Then the response status code should be 200
+    And page 1 should have field "interactionType" with value "none"
+    And page 2 should have field "interactionType" with value "interactive_state_change"
+    And page 3 should have field "interactionType" with value "music_challenge"
+    And page 4 should have field "interactionType" with value "none"
+
+  @story-pages @music-challenge @emulator-only
+  Scenario: Music challenge page includes required metadata
+    Given I seed test story "test-story-1" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/test-story-1"
+    Then the response status code should be 200
+    And page 3 should have field "musicChallenge"
+    And page 3 musicChallenge should have field "enabled" with value "true"
+    And page 3 musicChallenge should have field "instrumentId" with value "flute"
+    And page 3 musicChallenge should have field "promptText"
+    And page 3 musicChallenge should have field "mode" with value "guided"
+    And page 3 musicChallenge should have field "successSongId" with value "gary_rock_lift_theme_v1"
+    And page 3 musicChallenge should have field "successStateId" with value "rock_moved"
+
+  @story-pages @music-challenge @emulator-only
+  Scenario: Music challenge required sequence is a valid note array
+    Given I seed test story "test-story-1" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/test-story-1"
+    Then the response status code should be 200
+    And page 3 musicChallenge requiredSequence should be an array
+    And page 3 musicChallenge requiredSequence should have at least 1 element
+
+  @story-pages @music-challenge @emulator-only
+  Scenario: Music challenge includes behavior configuration
+    Given I seed test story "test-story-1" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/test-story-1"
+    Then the response status code should be 200
+    And page 3 musicChallenge should have field "autoPlaySuccessSong" with value "true"
+    And page 3 musicChallenge should have field "allowSkip" with value "false"
+    And page 3 musicChallenge should have field "micRequired" with value "true"
+    And page 3 musicChallenge should have field "fallbackAllowed" with value "true"
+    And page 3 musicChallenge should have field "hintLevel" with value "standard"
+
+  @story-pages @music-challenge @emulator-only
+  Scenario: Non-music pages do not include musicChallenge
+    Given I seed test story "test-story-1" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/test-story-1"
+    Then the response status code should be 200
+    And page 1 should not have field "musicChallenge"
+    And page 4 should not have field "musicChallenge"
+
   @error-handling
   Scenario: Sync with invalid request body
     When I make a POST request to "/api/stories/delta" with invalid JSON

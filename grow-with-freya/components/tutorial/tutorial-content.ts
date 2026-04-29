@@ -23,18 +23,8 @@ export const MAIN_MENU_TOUR_STEPS: TutorialStepWithKeys[] = [
     titleKey: 'tutorial.mainMenu.stories.title',
     descriptionKey: 'tutorial.mainMenu.stories.description',
     tipPosition: 'below',
-  },
-  {
-    id: 'emotions_button',
-    titleKey: 'tutorial.mainMenu.emotions.title',
-    descriptionKey: 'tutorial.mainMenu.emotions.description',
-    tipPosition: 'above',
-  },
-  {
-    id: 'bedtime_button',
-    titleKey: 'tutorial.mainMenu.bedtime.title',
-    descriptionKey: 'tutorial.mainMenu.bedtime.description',
-    tipPosition: 'above',
+    spotlightShape: 'rounded-rect',
+    spotlightBorderRadius: 24,
   },
   {
     id: 'settings_button',
@@ -102,46 +92,6 @@ export const STORY_READER_TIPS: TutorialStepWithKeys[] = [
     id: 'compare_languages',
     titleKey: 'tutorial.storyReader.compareLanguages.title',
     descriptionKey: 'tutorial.storyReader.compareLanguages.description',
-    tipPosition: 'center',
-  },
-];
-
-/**
- * Emotion Cards Tips - shown on first visit to emotion cards
- * Parent guidance for using emotion cards with young children
- */
-export const EMOTION_CARDS_TIPS: TutorialStepWithKeys[] = [
-  {
-    id: 'emotion_cards_welcome',
-    titleKey: 'tutorial.emotionCards.welcome.title',
-    descriptionKey: 'tutorial.emotionCards.welcome.description',
-    tipPosition: 'center',
-  },
-  {
-    id: 'emotion_cards_together',
-    titleKey: 'tutorial.emotionCards.together.title',
-    descriptionKey: 'tutorial.emotionCards.together.description',
-    tipPosition: 'center',
-    image: require('@/assets/images/ui-elements/emotion-cards-tip.webp'),
-  },
-  {
-    id: 'emotion_cards_connect',
-    titleKey: 'tutorial.emotionCards.connect.title',
-    descriptionKey: 'tutorial.emotionCards.connect.description',
-    tipPosition: 'center',
-    image: require('@/assets/images/ui-elements/emotion-cards-tip.webp'),
-  },
-  {
-    id: 'emotion_cards_scenarios',
-    titleKey: 'tutorial.emotionCards.scenarios.title',
-    descriptionKey: 'tutorial.emotionCards.scenarios.description',
-    tipPosition: 'center',
-    image: require('@/assets/images/ui-elements/emotion-cards-tip.webp'),
-  },
-  {
-    id: 'emotion_cards_themes',
-    titleKey: 'tutorial.emotionCards.themes.title',
-    descriptionKey: 'tutorial.emotionCards.themes.description',
     tipPosition: 'center',
   },
 ];
@@ -374,50 +324,44 @@ export const NARRATE_MODE_TOUR_STEPS: TutorialStepWithKeys[] = [
 ];
 
 /**
- * Music Tips - shown on first visit to music/sound section
- * Educates parents about binaural beats and calming sounds
+ * Music Mode Tutorial - shown when first reaching a music challenge page
+ * Explains instruments, note buttons, music sheet, and changing instrument
  */
-export const MUSIC_TIPS: TutorialStepWithKeys[] = [
+export const MUSIC_MODE_TOUR_STEPS: TutorialStepWithKeys[] = [
   {
     id: 'music_welcome',
-    titleKey: 'tutorial.music.welcome.title',
-    descriptionKey: 'tutorial.music.welcome.description',
+    titleKey: 'tutorial.musicMode.welcome.title',
+    descriptionKey: 'tutorial.musicMode.welcome.description',
     tipPosition: 'center',
   },
   {
-    id: 'binaural_science',
-    titleKey: 'tutorial.music.binaural.title',
-    descriptionKey: 'tutorial.music.binaural.description',
+    id: 'music_instrument',
+    titleKey: 'tutorial.musicMode.instrument.title',
+    descriptionKey: 'tutorial.musicMode.instrument.description',
     tipPosition: 'center',
   },
   {
-    id: 'headphones_tip',
-    titleKey: 'tutorial.music.headphones.title',
-    descriptionKey: 'tutorial.music.headphones.description',
+    id: 'music_playing',
+    titleKey: 'tutorial.musicMode.playing.title',
+    descriptionKey: 'tutorial.musicMode.playing.description',
     tipPosition: 'center',
   },
   {
-    id: 'tantrum_tip',
-    titleKey: 'tutorial.music.tantrum.title',
-    descriptionKey: 'tutorial.music.tantrum.description',
+    id: 'music_sheet',
+    titleKey: 'tutorial.musicMode.sheet.title',
+    descriptionKey: 'tutorial.musicMode.sheet.description',
     tipPosition: 'center',
   },
   {
-    id: 'sleep_science',
-    titleKey: 'tutorial.music.sleep.title',
-    descriptionKey: 'tutorial.music.sleep.description',
+    id: 'music_begin',
+    titleKey: 'tutorial.musicMode.begin.title',
+    descriptionKey: 'tutorial.musicMode.begin.description',
     tipPosition: 'center',
   },
   {
-    id: 'sleep_routine',
-    titleKey: 'tutorial.music.routine.title',
-    descriptionKey: 'tutorial.music.routine.description',
-    tipPosition: 'center',
-  },
-  {
-    id: 'music_stories',
-    titleKey: 'tutorial.music.stories.title',
-    descriptionKey: 'tutorial.music.stories.description',
+    id: 'music_change',
+    titleKey: 'tutorial.musicMode.change.title',
+    descriptionKey: 'tutorial.musicMode.change.description',
     tipPosition: 'center',
   },
 ];
@@ -431,8 +375,6 @@ export function getTutorialSteps(tutorialId: string): TutorialStepWithKeys[] {
       return MAIN_MENU_TOUR_STEPS;
     case 'story_reader_tips':
       return STORY_READER_TIPS;
-    case 'emotion_cards_tips':
-      return EMOTION_CARDS_TIPS;
     case 'settings_walkthrough':
       return SETTINGS_WALKTHROUGH_STEPS;
     case 'book_mode_tour':
@@ -441,10 +383,10 @@ export function getTutorialSteps(tutorialId: string): TutorialStepWithKeys[] {
       return RECORD_MODE_TOUR_STEPS;
     case 'narrate_mode_tour':
       return NARRATE_MODE_TOUR_STEPS;
-    case 'music_tips':
-      return MUSIC_TIPS;
     case 'screen_time_tips':
       return SCREEN_TIME_TIPS;
+    case 'music_mode_tour':
+      return MUSIC_MODE_TOUR_STEPS;
     default:
       return [];
   }

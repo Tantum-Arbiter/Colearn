@@ -41,9 +41,9 @@ export const LAYOUT = {
   get TOP_ROW_MARGIN_BOTTOM() { return getResponsiveLayoutSize(20); },
   get ICON_SIZE_SMALL() { return getResponsiveLayoutSize(48); },
   get ICON_SIZE_MEDIUM() { return getResponsiveLayoutSize(58); },
-  get ICON_SIZE_LARGE() { return getResponsiveLayoutSize(70); },
-  get MENU_ICON_SIZE() { return getResponsiveLayoutSize(90); },
-  get LARGE_MENU_ICON_SIZE() { return getResponsiveLayoutSize(110); },
+  get ICON_SIZE_LARGE() { return getResponsiveLayoutSize(85); }, // Increased for crisp carousel rendering
+  get MENU_ICON_SIZE() { return getResponsiveLayoutSize(105); }, // Increased for carousel
+  get LARGE_MENU_ICON_SIZE() { return getResponsiveLayoutSize(130); }, // Increased for carousel
   Z_INDEX: {
     BACKGROUND: 0,
     BEAR: 1, // Behind everything except background
@@ -100,8 +100,8 @@ export interface MenuItemData {
 
 export const DEFAULT_MENU_ITEMS: MenuItemData[] = [
   { icon: 'stories-icon', labelKey: 'menu.stories', destination: 'stories' },
-  { icon: 'emotions-icon', labelKey: 'menu.emotions', destination: 'emotions' },
-  { icon: 'bedtime-icon', labelKey: 'menu.calming', destination: 'bedtime' },
+  { icon: 'practise-icon', labelKey: 'menu.practise', destination: 'practise' },
+  { icon: 'freeplay-icon', labelKey: 'menu.freeplay', destination: 'freeplay' },
 ] as const;
 
 export type IconStatus = 'animated_interactive' | 'inactive';

@@ -2,9 +2,9 @@ import { useCallback, useRef, useState, useEffect } from 'react';
 import {
   useAudioRecorder,
   setAudioModeAsync,
-  AudioModule,
   RecordingPresets,
 } from 'expo-audio';
+import { useMicPermission } from './use-mic-permission';
 
 export interface RecordingResult {
   uri: string;
@@ -22,8 +22,15 @@ export interface UseVoiceRecordingReturn {
 /**
  * Hook for voice recording using expo-audio.
  * Uses the useAudioRecorder hook which handles lifecycle management.
+ *
+ * Mic permission is managed via the shared useMicPermission hook,
+ * so permission is only requested ONCE across the entire app session
+ * (shared with useBreathDetector in music challenge mode).
  */
 export function useVoiceRecording(): UseVoiceRecordingReturn {
+  // Shared mic permission — same singleton as useBreathDetector
+  const micPermission = useMicPermission();
+
   // Use the standard useAudioRecorder hook for proper lifecycle management
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const [isRecording, setIsRecording] = useState(false);
@@ -41,20 +48,21 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
   }, []);
 
   const requestPermissions = useCallback(async (): Promise<boolean> => {
-    try {
-      const { granted } = await AudioModule.requestRecordingPermissionsAsync();
-      return granted;
-    } catch (error) {
-      console.error('Failed to request audio permissions:', error);
-      return false;
-    }
-  }, []);
+    const result = await micPermission.requestPermission();
+    return result === 'granted';
+  }, [micPermission]);
 
   const startRecording = useCallback(async (): Promise<boolean> => {
     try {
-      const hasPermission = await requestPermissions();
-      if (!hasPermission) {
-        console.warn('Microphone permission not granted');
+      // Use shared permission — only prompts if not yet resolved
+      if (micPermission.isUndetermined) {
+        const result = await micPermission.requestPermission();
+        if (result !== 'granted') {
+          console.warn('Microphone permission not granted');
+          return false;
+        }
+      } else if (micPermission.isDenied) {
+        console.warn('Microphone permission denied');
         return false;
       }
 
@@ -84,7 +92,7 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
       console.error('Failed to start recording:', error);
       return false;
     }
-  }, [requestPermissions, audioRecorder]);
+  }, [micPermission, audioRecorder]);
 
   const stopRecording = useCallback(async (): Promise<RecordingResult | null> => {
     if (!isRecording) {

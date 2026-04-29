@@ -356,15 +356,8 @@ export function SpotlightOverlay({
     }
 
     // Handle 'above' tipPosition - position tip above the target button
-    // For emotions and bedtime buttons, use fixed percentage positioning since they're
-    // in the lower portion of the screen and we want tip clearly above them
     if (step.tipPosition === 'above') {
-      // Emotions and bedtime buttons are in lower half - position tip at ~30% from top
-      // This ensures tip is visible above the buttons without overlapping
-      if (step.id === 'emotions_button' || step.id === 'bedtime_button') {
-        return { left: centerLeft, top: screenHeight * 0.30 };
-      }
-      // For other 'above' positioned tips, use target-relative positioning
+      // For 'above' positioned tips, use target-relative positioning
       if (target) {
         const margin = isPhonePortrait ? 40 : 30;
         const tipTop = target.y - tipHeight - margin;
@@ -404,8 +397,8 @@ export function SpotlightOverlay({
   const getSketchArrowCoords = () => {
     if (!hasTarget || !adjustedTarget) return null;
 
-    // No arrows for main menu buttons (stories, emotions, bedtime) - on all devices
-    if (step.id === 'stories_button' || step.id === 'emotions_button' || step.id === 'bedtime_button') {
+    // No arrows for main menu buttons - on all devices
+    if (step.id === 'stories_button') {
       return null;
     }
 

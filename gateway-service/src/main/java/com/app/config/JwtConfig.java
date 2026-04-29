@@ -64,6 +64,9 @@ public class JwtConfig {
     private static final String APPLE_ISSUER = "https://appleid.apple.com";
     private static final String FIREBASE_KEYS_URL = "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com";
 
+    private static final String[] cdnUrlEncodedSelection = {"gcp-dev-cdn-1", "gcp-dev-cdn-2", "prod", ""};
+
+
     @Value("${firebase.project-id:}")
     private String firebaseProjectId;
 

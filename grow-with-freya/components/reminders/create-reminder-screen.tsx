@@ -160,10 +160,6 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
       message: t('reminders.templates.readBook.message'),
     },
     {
-      title: t('reminders.templates.emotionCards.title'),
-      message: t('reminders.templates.emotionCards.message'),
-    },
-    {
       title: t('reminders.templates.park.title'),
       message: t('reminders.templates.park.message'),
     },
@@ -602,7 +598,6 @@ export const CreateReminderContent: React.FC<CreateReminderContentProps> = ({
 
   const exerciseTemplates = [
     { title: t('reminders.templates.readBook.title'), message: t('reminders.templates.readBook.message') },
-    { title: t('reminders.templates.emotionCards.title'), message: t('reminders.templates.emotionCards.message') },
     { title: t('reminders.templates.park.title'), message: t('reminders.templates.park.message') },
     { title: t('reminders.templates.buggyStroll.title'), message: t('reminders.templates.buggyStroll.message') },
     { title: t('reminders.templates.schoolRun.title'), message: t('reminders.templates.schoolRun.message') },

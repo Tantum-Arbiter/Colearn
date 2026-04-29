@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { View, Pressable, StyleSheet, InteractionManager } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
@@ -9,7 +9,6 @@ import Animated, {
   Easing as ReanimatedEasing,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTranslation } from 'react-i18next';
 
 import { useAppStore } from '@/store/app-store';
 import { MusicControl } from '@/components/ui/music-control';
@@ -21,13 +20,11 @@ import { TutorialOverlay } from '@/components/tutorial';
 
 import { ErrorBoundary } from './error-boundary';
 import {
-  performanceLogger,
-  useSafeState,
   animationLimiter
 } from './main-menu/performance-utils';
 
 import {
-  MenuIcon,
+  MenuCarousel,
   Cloud1,
   Cloud2,
 
@@ -36,7 +33,6 @@ import {
   ANIMATION_TIMINGS,
   LAYOUT,
   VISUAL_EFFECTS,
-  DEFAULT_MENU_ITEMS,
   getScreenDimensions,
   ASSET_DIMENSIONS,
 
@@ -45,7 +41,6 @@ import {
 } from './main-menu/index';
 
 import { createCloudAnimationNew } from './main-menu/cloud-animations';
-import type { MenuItemData } from './main-menu/index';
 
 // PERFORMANCE: Generate star positions once at module level to prevent recalculation on every mount
 // This is safe because star positions are random and don't need to change between mounts
@@ -60,7 +55,6 @@ interface MainMenuProps {
 function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProps) {
   const insets = useSafeAreaInsets();
   const { scaledButtonSize, scaledFontSize } = useAccessibility();
-  const { t } = useTranslation();
 
 
 
@@ -72,9 +66,6 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
 
   // Get store action for saving animation state on unmount
   const updateBackgroundAnimationState = useAppStore((state) => state.updateBackgroundAnimationState);
-
-  // Safe state management to prevent updates on unmounted components
-  const [menuItems] = useSafeState(DEFAULT_MENU_ITEMS);
 
   // Animation values with cleanup - always start clouds from off-screen positions
   const starRotation = useSharedValue(0);
@@ -94,35 +85,16 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
   // Animation cancellation flag
   const animationsCancelled = useRef(false);
 
-  // Safe menu state management
-  const [menuOrder, setMenuOrder] = useSafeState<MenuItemData[]>(menuItems);
-  const [lastSwapTime, setLastSwapTime] = useSafeState<number>(0);
-  const [newlySelectedItem, setNewlySelectedItem] = useSafeState<string | null>(null);
-
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Tutorial target refs - using refs that get populated when buttons render
   const storiesButtonRef = useRef<View>(null);
-  const emotionsButtonRef = useRef<View>(null);
-  const bedtimeButtonRef = useRef<View>(null);
   const musicControlRef = useRef<View>(null);
   const settingsButtonRef = useRef<View>(null);
-
-  // Helper to get the correct ref for a menu item destination
-  const getRefForDestination = (destination: string): React.RefObject<View | null> | undefined => {
-    switch (destination) {
-      case 'stories': return storiesButtonRef;
-      case 'emotions': return emotionsButtonRef;
-      case 'bedtime': return bedtimeButtonRef;
-      default: return undefined;
-    }
-  };
 
   // Build tutorial target refs map - maps step IDs to refs
   const tutorialTargetRefs = useMemo(() => ({
     'stories_button': storiesButtonRef,
-    'emotions_button': emotionsButtonRef,
-    'bedtime_button': bedtimeButtonRef,
     'settings_button': settingsButtonRef,
     'sound_control': musicControlRef,
   }), []);
@@ -174,55 +146,6 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // PERFORMANCE: Empty dependency array to prevent re-renders
-
-  // Performance-optimized icon press handler with debouncing and error handling
-  const handleIconPressInternal = useCallback((selectedItem: MenuItemData) => {
-    const endTimer = performanceLogger.startTimer('icon-press');
-
-    try {
-      const centerItem = menuOrder[0];
-      const currentTime = Date.now();
-
-      if (selectedItem.destination === centerItem.destination) {
-        // Use external navigation for all center items to get scroll transition
-        onNavigate(selectedItem.destination);
-      } else {
-        if (currentTime - lastSwapTime < 100) {
-          return; // Ignore rapid taps
-        }
-
-        const clickedIndex = menuOrder.findIndex(item => item.destination === selectedItem.destination);
-
-        if (clickedIndex > 0) {
-          setLastSwapTime(currentTime);
-
-          const newOrder = [...menuOrder];
-          [newOrder[0], newOrder[clickedIndex]] = [newOrder[clickedIndex], newOrder[0]];
-
-          setMenuOrder(newOrder);
-          setNewlySelectedItem(selectedItem.destination);
-
-          if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-          }
-          timeoutRef.current = setTimeout(() => {
-            setNewlySelectedItem(null);
-            // Removed endMenuAnimation - was blocking functionality
-          }, 1000);
-        }
-      }
-    } catch (error) {
-      console.error('Error in handleIconPress:', error);
-    } finally {
-      endTimer();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [menuOrder, lastSwapTime, onNavigate]);
-
-  const handleIconPress = handleIconPressInternal;
-
-
-
 
   // Start cloud animations once on mount - they run continuously
   // PERFORMANCE: Use InteractionManager to defer animations until after scroll transitions complete
@@ -359,73 +282,10 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
 
 
       <View style={legacyStyles.menuContainer}>
-        <View style={mainMenuStyles.centerIcon}>
-          <MenuIcon
-            key={`center-${menuOrder[0].destination}`}
-            icon={menuOrder[0].icon}
-            label={t(menuOrder[0].labelKey)}
-            status="animated_interactive"
-            onPress={() => handleIconPress(menuOrder[0])}
-            isLarge={true}
-            triggerSelectionAnimation={newlySelectedItem === menuOrder[0].destination}
-            testID={`menu-icon-${menuOrder[0].destination}`}
-            iconRef={getRefForDestination(menuOrder[0].destination)}
-          />
-        </View>
-
-        <View style={mainMenuStyles.menuContainer}>
-
-          <View style={mainMenuStyles.topRow}>
-            {menuOrder[1] && (
-              <MenuIcon
-                key={`top-left-${menuOrder[1].destination}`}
-                icon={menuOrder[1].icon}
-                label={t(menuOrder[1].labelKey)}
-                status="inactive"
-                onPress={() => handleIconPress(menuOrder[1])}
-                testID={`menu-icon-${menuOrder[1].destination}`}
-                iconRef={getRefForDestination(menuOrder[1].destination)}
-              />
-            )}
-            {menuOrder[2] && (
-              <MenuIcon
-                key={`top-right-${menuOrder[2].destination}`}
-                icon={menuOrder[2].icon}
-                label={t(menuOrder[2].labelKey)}
-                status="inactive"
-                onPress={() => handleIconPress(menuOrder[2])}
-                testID={`menu-icon-${menuOrder[2].destination}`}
-                iconRef={getRefForDestination(menuOrder[2].destination)}
-              />
-            )}
-          </View>
-
-          {/* Bottom row - only show if we have more than 3 items */}
-          {menuOrder.length > 3 && (
-            <View style={mainMenuStyles.bottomRow}>
-              {menuOrder[3] && (
-                <MenuIcon
-                  key={`bottom-left-${menuOrder[3].destination}`}
-                  icon={menuOrder[3].icon}
-                  label={t(menuOrder[3].labelKey)}
-                  status="inactive"
-                  onPress={() => handleIconPress(menuOrder[3])}
-                  testID={`menu-icon-${menuOrder[3].destination}`}
-                />
-              )}
-              {menuOrder[4] && (
-                <MenuIcon
-                  key={`bottom-right-${menuOrder[4].destination}`}
-                  icon={menuOrder[4].icon}
-                  label={t(menuOrder[4].labelKey)}
-                  status="inactive"
-                  onPress={() => handleIconPress(menuOrder[4])}
-                  testID={`menu-icon-${menuOrder[4].destination}`}
-                />
-              )}
-            </View>
-          )}
-        </View>
+        <MenuCarousel
+          onNavigate={onNavigate}
+          storiesButtonRef={storiesButtonRef}
+        />
       </View>
 
       {/* Parents Only Challenge Modal */}
@@ -465,6 +325,7 @@ const legacyStyles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: getResponsiveSize(20),
     paddingBottom: getResponsiveSize(20),
+    zIndex: LAYOUT.Z_INDEX.UI + 1,
   },
   musicControlContainer: {
     marginRight: getResponsiveSize(12),
@@ -496,11 +357,9 @@ const legacyStyles = StyleSheet.create({
     elevation: 6,
   },
   menuContainer: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: getResponsiveSize(20),
-    paddingTop: getResponsiveSize(20),
   },
 });
 

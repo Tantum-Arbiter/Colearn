@@ -33,30 +33,6 @@ describe('DefaultPage', () => {
     expect(result.toJSON()).toBeTruthy();
   });
 
-  it('renders emotions page correctly', () => {
-    const result = render(
-      <DefaultPage
-        icon="emotions-icon"
-        title="Emotions"
-        onBack={mockOnBack}
-      />
-    );
-
-    expect(result.toJSON()).toBeTruthy();
-  });
-
-  it('renders bedtime page correctly', () => {
-    const result = render(
-      <DefaultPage
-        icon="bedtime-icon"
-        title="Bedtime"
-        onBack={mockOnBack}
-      />
-    );
-
-    expect(result.toJSON()).toBeTruthy();
-  });
-
   it('renders screen time page correctly', () => {
     const result = render(
       <DefaultPage
@@ -100,8 +76,6 @@ describe('DefaultPage', () => {
     const testCases = [
       { icon: 'stories-icon', title: 'Stories', expectedContent: 'Story Time!' },
       { icon: 'sensory-icon', title: 'Sensory', expectedContent: 'Feel & Explore!' },
-      { icon: 'emotions-icon', title: 'Emotions', expectedContent: 'Happy Feelings!' },
-      { icon: 'bedtime-icon', title: 'Bedtime', expectedContent: 'Sweet Dreams!' },
       { icon: 'screentime-icon', title: 'Screen Time', expectedContent: 'Time to Play!' },
     ];
 
@@ -161,7 +135,7 @@ describe('DefaultPage', () => {
     const pageTypes = [
       { icon: 'stories-icon', title: 'Stories' },
       { icon: 'sensory-icon', title: 'Sensory' },
-      { icon: 'emotions-icon', title: 'Emotions' },
+      { icon: 'screentime-icon', title: 'Screen Time' },
     ];
 
     pageTypes.forEach(({ icon, title }) => {

@@ -83,6 +83,19 @@ jest.mock('@/contexts/global-sound-context', () => ({
   }),
 }));
 
+jest.mock('@/hooks/use-breath-detector', () => ({
+  useBreathDetector: () => ({
+    isListening: false,
+    useFallback: true,
+    micPermissionGranted: false,
+    isPreparing: false,
+    startListening: jest.fn(),
+    stopListening: jest.fn(),
+    ensurePlaybackMode: jest.fn(() => Promise.resolve()),
+    setUseFallback: jest.fn(),
+  }),
+}));
+
 jest.mock('@/components/ui/music-control', () => ({
   MusicControl: () => null,
 }));
@@ -141,6 +154,43 @@ const mockStory: Story = {
   ],
 };
 
+const mockStoryWithMusicChallenge: Story = {
+  ...mockStory,
+  pages: [
+    ...(mockStory.pages || []),
+    {
+      id: 'music-page',
+      pageNumber: 3,
+      type: 'story',
+      text: 'Play the tune!',
+      backgroundImage: 'music-page.jpg',
+      interactionType: 'music_challenge',
+      musicChallenge: {
+        enabled: true,
+        instrumentId: 'flute',
+        promptText: 'Play the flute!',
+        requiredSequence: ['C', 'D', 'E'],
+        successSongId: 'test-song',
+        autoPlaySuccessSong: false,
+        allowSkip: true,
+        micRequired: false,
+        fallbackAllowed: true,
+        mode: 'guided',
+        hintLevel: 'standard',
+      },
+    } as any,
+  ],
+};
+
+function extractNodeText(node: any): string {
+  if (node == null) return '';
+  if (typeof node === 'string') return node;
+  if (Array.isArray(node.children)) {
+    return node.children.map(extractNodeText).join('');
+  }
+  return '';
+}
+
 describe('StoryBookReader', () => {
   const mockOnExit = jest.fn();
 
@@ -173,6 +223,30 @@ describe('StoryBookReader', () => {
     const result = render(<StoryBookReader story={storyWithEmptyPages} onExit={mockOnExit} />);
     expect(result).toBeTruthy();
     expect(() => result.toJSON()).not.toThrow();
+  });
+
+  it('does not auto-open the instrument picker for stories with music challenges', () => {
+    const { queryByTestId } = render(
+      <StoryBookReader story={mockStoryWithMusicChallenge} onExit={mockOnExit} />
+    );
+
+    expect(queryByTestId('instrument-picker-overlay')).toBeNull();
+  });
+
+  it('does not show change instrument in the settings menu', () => {
+    const { getByText, queryByTestId, UNSAFE_root } = render(
+      <StoryBookReader story={mockStoryWithMusicChallenge} onExit={mockOnExit} />
+    );
+
+    const settingsButton = UNSAFE_root.findAll((node: any) => (
+      typeof node.props?.onPress === 'function'
+      && extractNodeText(node).includes('☰')
+    ))[0];
+
+    fireEvent.press(settingsButton);
+
+    expect(extractNodeText(UNSAFE_root)).toContain('reader.pagePreview');
+    expect(queryByTestId('menu-change-instrument')).toBeNull();
   });
 });
 

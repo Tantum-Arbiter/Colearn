@@ -2,7 +2,7 @@ import { useEffect, useCallback } from 'react';
 import { useScreenTime } from '../components/screen-time';
 
 interface UseScreenTimeTrackingOptions {
-  activity: 'story' | 'emotions' | 'music';
+  activity: 'story';
   autoStart?: boolean;
   autoEnd?: boolean;
 }

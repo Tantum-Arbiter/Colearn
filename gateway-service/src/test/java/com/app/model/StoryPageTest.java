@@ -232,5 +232,131 @@ class StoryPageTest {
         // Null language should return English
         assertEquals("English text", storyPage.getTextForLanguage(null));
     }
+
+    // =============================================
+    // Interaction type and music challenge tests
+    // =============================================
+
+    @Test
+    @DisplayName("Should default to null interactionType (treated as 'none' by clients)")
+    void testInteractionTypeDefaultsToNull() {
+        StoryPage page = new StoryPage();
+        assertNull(page.getInteractionType());
+    }
+
+    @Test
+    @DisplayName("Should set and get interactionType 'none' for static pages")
+    void testInteractionTypeNone() {
+        storyPage.setInteractionType("none");
+        assertEquals("none", storyPage.getInteractionType());
+    }
+
+    @Test
+    @DisplayName("Should set and get interactionType 'interactive_state_change'")
+    void testInteractionTypeInteractiveStateChange() {
+        storyPage.setInteractionType("interactive_state_change");
+        assertEquals("interactive_state_change", storyPage.getInteractionType());
+    }
+
+    @Test
+    @DisplayName("Should set and get interactionType 'music_challenge'")
+    void testInteractionTypeMusicChallenge() {
+        storyPage.setInteractionType("music_challenge");
+        assertEquals("music_challenge", storyPage.getInteractionType());
+    }
+
+    @Test
+    @DisplayName("Should default to null musicChallenge")
+    void testMusicChallengeDefaultsToNull() {
+        StoryPage page = new StoryPage();
+        assertNull(page.getMusicChallenge());
+    }
+
+    @Test
+    @DisplayName("Should set and get musicChallenge")
+    void testMusicChallengeGetterSetter() {
+        MusicChallenge challenge = new MusicChallenge();
+        challenge.setInstrumentId("flute");
+        challenge.setPromptText("Play the flute!");
+        challenge.setRequiredSequence(Arrays.asList("C", "D", "E"));
+        challenge.setSuccessSongId("test_song_v1");
+
+        storyPage.setInteractionType("music_challenge");
+        storyPage.setMusicChallenge(challenge);
+
+        assertNotNull(storyPage.getMusicChallenge());
+        assertEquals("flute", storyPage.getMusicChallenge().getInstrumentId());
+        assertEquals("Play the flute!", storyPage.getMusicChallenge().getPromptText());
+        assertEquals(3, storyPage.getMusicChallenge().getRequiredSequence().size());
+        assertEquals("test_song_v1", storyPage.getMusicChallenge().getSuccessSongId());
+    }
+
+    @Test
+    @DisplayName("Static page should have no musicChallenge and interactionType 'none'")
+    void testStaticPageStructure() {
+        StoryPage staticPage = new StoryPage("static-page", 1, "A calm story scene.");
+        staticPage.setInteractionType("none");
+
+        assertEquals("none", staticPage.getInteractionType());
+        assertNull(staticPage.getMusicChallenge());
+    }
+
+    @Test
+    @DisplayName("Interactive page can also have musicChallenge for a specific page")
+    void testInteractivePageWithMusicChallenge() {
+        // An interactive page that ALSO has a music challenge
+        InteractiveElement element = new InteractiveElement("rock", "reveal", "rock-moved.webp");
+        element.setPosition(new InteractiveElement.Position(0.5, 0.5));
+        element.setSize(new InteractiveElement.Size(0.3, 0.3));
+        storyPage.setInteractiveElements(Arrays.asList(element));
+
+        // This page uses music_challenge as its primary interaction
+        storyPage.setInteractionType("music_challenge");
+
+        MusicChallenge challenge = new MusicChallenge();
+        challenge.setInstrumentId("trumpet");
+        challenge.setPromptText("Gary needs to wake the dragon. Play the trumpet!");
+        challenge.setRequiredSequence(Arrays.asList("C", "D", "E", "C"));
+        challenge.setSuccessSongId("gary_rock_lift_theme_v1");
+        challenge.setSuccessStateId("rock_moved");
+        storyPage.setMusicChallenge(challenge);
+
+        // Verify both interactive elements AND music challenge coexist
+        assertEquals("music_challenge", storyPage.getInteractionType());
+        assertNotNull(storyPage.getInteractiveElements());
+        assertEquals(1, storyPage.getInteractiveElements().size());
+        assertNotNull(storyPage.getMusicChallenge());
+        assertEquals("trumpet", storyPage.getMusicChallenge().getInstrumentId());
+        assertEquals("rock_moved", storyPage.getMusicChallenge().getSuccessStateId());
+    }
+
+    @Test
+    @DisplayName("Should handle null musicChallenge on non-music page")
+    void testNullMusicChallengeOnNonMusicPage() {
+        storyPage.setInteractionType("interactive_state_change");
+        storyPage.setMusicChallenge(null);
+        assertNull(storyPage.getMusicChallenge());
+        assertEquals("interactive_state_change", storyPage.getInteractionType());
+    }
+
+    @Test
+    @DisplayName("Should accept any valid instrumentId configured via CMS")
+    void testDifferentInstrumentIds() {
+        // CMS can configure any of the 6 supported instruments
+        String[] instruments = { "flute", "recorder", "ocarina", "trumpet", "clarinet", "saxophone" };
+        for (String instrumentId : instruments) {
+            MusicChallenge challenge = new MusicChallenge();
+            challenge.setInstrumentId(instrumentId);
+            challenge.setRequiredSequence(Arrays.asList("C", "D"));
+            challenge.setSuccessSongId("test_song");
+
+            StoryPage page = new StoryPage();
+            page.setInteractionType("music_challenge");
+            page.setMusicChallenge(challenge);
+
+            assertEquals("music_challenge", page.getInteractionType());
+            assertEquals(instrumentId, page.getMusicChallenge().getInstrumentId());
+        }
+    }
 }
 

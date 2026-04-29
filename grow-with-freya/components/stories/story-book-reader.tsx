@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { View, Text, StyleSheet, Pressable, Dimensions, StatusBar, ImageBackground, ScrollView, TextInput, Alert, KeyboardAvoidingView, Platform, useWindowDimensions, Image as RNImage, AppState } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
@@ -15,10 +16,24 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { useTranslation } from 'react-i18next';
-import { Story, StoryPage, STORY_TAGS, InteractiveElement, getLocalizedText } from '@/types/story';
+import { Story, StoryPage, STORY_TAGS, InteractiveElement, getLocalizedText, MusicChallenge } from '@/types/story';
 import type { SupportedLanguage } from '@/services/i18n';
 import { SUPPORTED_LANGUAGES } from '@/services/i18n';
 import { InteractiveElementComponent } from './interactive-element';
+import { MusicChallengeUI } from './music-challenge-ui';
+import { InstrumentPickerOverlay } from './instrument-picker-overlay';
+import { MusicSheetOverlay } from './music-sheet-overlay';
+import { getInstrumentSong } from '@/services/music-asset-registry';
+import { useMusicChallenge } from '@/hooks/use-music-challenge';
+import { useBreathDetector } from '@/hooks/use-breath-detector';
+import { getInstrument } from '@/services/music-asset-registry';
+import {
+  trackMusicPageViewed,
+  trackMusicModeOpened,
+  trackChallengeCompleted,
+  trackAssetError,
+  trackFallbackModeUsed,
+} from '@/services/music-analytics';
 import { Fonts } from '@/constants/theme';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 import { MusicControl } from '../ui/music-control';
@@ -35,6 +50,7 @@ import { Logger } from '@/utils/logger';
 import { PagePreviewModal } from './pages-preview-modal';
 import { StoryTipsOverlay } from '@/components/tutorial/story-tips-overlay';
 import { ModeTipsOverlay } from '@/components/tutorial/mode-tips-overlay';
+import { MusicTipsOverlay } from '@/components/tutorial/music-tips-overlay';
 
 const log = Logger.create('StoryBookReader');
 
@@ -90,6 +106,7 @@ export function StoryBookReader({
   const isExitingRef = useRef(false); // Ref for cleanup to check if exit animation handles rotation
 
   const [preloadedPages, setPreloadedPages] = useState<Set<number>>(new Set());
+  const [musicUiHidden, setMusicUiHidden] = useState(false);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<'main' | 'fontSize' | 'compareLanguage' | null>(null);
   const [showPagePreview, setShowPagePreview] = useState(false);
@@ -138,6 +155,262 @@ export function StoryBookReader({
 
   // Voice recording hook (expo-audio requires hook-based recording)
   const voiceRecording = useVoiceRecording();
+
+  // Music challenge state
+  const [showMusicMode, setShowMusicMode] = useState(false);
+  const [musicChallengeCompleted, setMusicChallengeCompleted] = useState<Record<number, boolean>>({});
+  // Music challenge phase: idle → preview (music sheet) → playing (instrument UI)
+  const [musicChallengePhase, setMusicChallengePhase] = useState<'idle' | 'preview' | 'playing'>('idle');
+  // Track the background music volume while preview/playing overlays are active.
+  const preMusicChallengeVolumeRef = useRef<number | null>(null);
+  const musicVolumeFadeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const musicVolumeFadeIdRef = useRef(0);
+
+  const [selectedInstrumentId, setSelectedInstrumentId] = useState<string | null>(null);
+  const [showInstrumentPicker, setShowInstrumentPicker] = useState(false);
+  const [showMusicSheet, setShowMusicSheet] = useState(false);
+  // Track whether the instrument UI is currently rotated (blow mode / manual rotate)
+  const [instrumentIsRotated, setInstrumentIsRotated] = useState(false);
+
+  // Get the CMS default instrument for the first music page (used as carousel default)
+  const cmsDefaultInstrumentId = useMemo(() => {
+    const firstMusicPage = story.pages?.find(p => p.interactionType === 'music_challenge');
+    return firstMusicPage?.musicChallenge?.instrumentId;
+  }, [story.pages]);
+
+  // Whether this story contains any music challenge pages
+  const hasMusicChallenge = useMemo(() => {
+    return story.pages?.some(p => p.interactionType === 'music_challenge' && p.musicChallenge?.enabled) ?? false;
+  }, [story.pages]);
+
+  // Handle instrument picker selection
+  const handleInstrumentSelected = useCallback((instrumentId: string) => {
+    setSelectedInstrumentId(instrumentId);
+    setShowInstrumentPicker(false);
+  }, []);
+
+  const handleCloseInstrumentPicker = useCallback(() => {
+    setShowInstrumentPicker(false);
+  }, []);
+
+  // Toggle music sheet overlay
+  const handleToggleMusicSheet = useCallback(() => {
+    setShowMusicSheet(prev => !prev);
+  }, []);
+
+  // Get current page's music challenge config, with user's instrument selection applied
+  const currentMusicChallenge = useMemo(() => {
+    const page = (story.pages || [])[currentPageIndex];
+    const cmsChallengeConfig = page?.musicChallenge;
+    if (!cmsChallengeConfig || !selectedInstrumentId) return cmsChallengeConfig;
+    return { ...cmsChallengeConfig, instrumentId: selectedInstrumentId };
+  }, [story.pages, currentPageIndex, selectedInstrumentId]);
+
+  const isMusicChallengePage = useMemo(() => {
+    const page = (story.pages || [])[currentPageIndex];
+    return page?.interactionType === 'music_challenge' && currentMusicChallenge?.enabled;
+  }, [story.pages, currentPageIndex, currentMusicChallenge?.enabled]);
+
+  // Resolve the current instrument's display name for the music sheet
+  const currentInstrumentDef = useMemo(() => {
+    const instrumentId = selectedInstrumentId || currentMusicChallenge?.instrumentId;
+    return instrumentId ? getInstrument(instrumentId) : undefined;
+  }, [selectedInstrumentId, currentMusicChallenge?.instrumentId]);
+
+  // Resolve success song name for the music sheet — matched to selected instrument
+  const successSongName = useMemo(() => {
+    const songId = currentMusicChallenge?.successSongId;
+    const instrumentId = selectedInstrumentId || currentMusicChallenge?.instrumentId;
+    return songId ? getInstrumentSong(songId, instrumentId)?.displayName : undefined;
+  }, [currentMusicChallenge?.successSongId, selectedInstrumentId, currentMusicChallenge?.instrumentId]);
+
+  // Music challenge hook
+  const musicChallenge = useMusicChallenge(
+    isMusicChallengePage ? currentMusicChallenge : undefined,
+    () => {
+      // On challenge completion
+      setMusicChallengeCompleted(prev => ({ ...prev, [currentPageIndex]: true }));
+      if (currentPage && currentMusicChallenge) {
+        trackChallengeCompleted(
+          story.id,
+          currentPage.id,
+          currentMusicChallenge.instrumentId,
+          musicChallenge.failedAttempts
+        );
+      }
+    }
+  );
+
+  // Breath detector for mic-based blow detection
+  const breathDetector = useBreathDetector({
+    enabled: isMusicChallengePage && (currentMusicChallenge?.micRequired ?? true),
+  });
+
+  // Sync breath detector state to music challenge
+  useEffect(() => {
+    if (isMusicChallengePage) {
+      musicChallenge.setBreathActive(breathDetector.isBreathActive);
+    }
+  }, [breathDetector.isBreathActive, isMusicChallengePage]);
+
+  // Auto-open instrument picker when the story loads (before the first page appears)
+  useEffect(() => {
+    if (hasMusicChallenge) {
+      setShowInstrumentPicker(true);
+    }
+  }, [story.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Reset music challenge phase, rotation, and UI visibility when navigating to a new page
+  useEffect(() => {
+    setMusicChallengePhase('idle');
+    setInstrumentIsRotated(false);
+    setMusicUiHidden(false);
+  }, [currentPageIndex]);
+
+  // Track music page views (but don't auto-start the challenge)
+  useEffect(() => {
+    if (isMusicChallengePage && currentMusicChallenge && currentPage) {
+      trackMusicPageViewed(story.id, currentPage.id, currentMusicChallenge.instrumentId);
+
+      if (musicChallenge.missingAssets.length > 0) {
+        trackAssetError(story.id, currentPage.id, musicChallenge.missingAssets);
+      }
+
+      if (breathDetector.useFallback) {
+        trackFallbackModeUsed(
+          story.id,
+          currentPage.id,
+          breathDetector.hasPermission === false ? 'permission_denied' : 'mic_unavailable'
+        );
+      }
+    }
+    return () => {
+      if (isMusicChallengePage) {
+        breathDetector.stopListening();
+      }
+    };
+  }, [currentPageIndex, isMusicChallengePage]);
+
+  const clearMusicVolumeFade = useCallback(() => {
+    if (musicVolumeFadeTimerRef.current) {
+      clearInterval(musicVolumeFadeTimerRef.current);
+      musicVolumeFadeTimerRef.current = null;
+    }
+  }, []);
+
+  const fadeMusicVolumeTo = useCallback((targetVolume: number, duration = 300, onComplete?: () => void) => {
+    clearMusicVolumeFade();
+    musicVolumeFadeIdRef.current += 1;
+    const fadeId = musicVolumeFadeIdRef.current;
+    const startVolume = globalSound.volume;
+    const clampedTarget = Math.max(0, Math.min(1, targetVolume));
+
+    if (Math.abs(startVolume - clampedTarget) < 0.001) {
+      void globalSound.setVolume(clampedTarget);
+      onComplete?.();
+      return;
+    }
+
+    const steps = 6;
+    const intervalMs = Math.max(16, Math.round(duration / steps));
+    let step = 0;
+
+    musicVolumeFadeTimerRef.current = setInterval(() => {
+      if (fadeId !== musicVolumeFadeIdRef.current) {
+        clearMusicVolumeFade();
+        return;
+      }
+
+      step += 1;
+      const progress = step / steps;
+      const nextVolume = startVolume + ((clampedTarget - startVolume) * progress);
+      void globalSound.setVolume(nextVolume);
+
+      if (step >= steps) {
+        clearMusicVolumeFade();
+        void globalSound.setVolume(clampedTarget);
+        onComplete?.();
+      }
+    }, intervalMs);
+  }, [clearMusicVolumeFade, globalSound]);
+
+  // Step 1: User taps "Begin Playing" → show music sheet preview with faded background
+  const handleBeginMusicChallenge = useCallback(() => {
+    const openChallengePreview = async () => {
+      if (!isMusicChallengePage || !currentMusicChallenge) return;
+
+      await breathDetector.ensurePlaybackMode();
+
+      const baseVolume = preMusicChallengeVolumeRef.current ?? globalSound.volume;
+      preMusicChallengeVolumeRef.current = baseVolume;
+      fadeMusicVolumeTo(0.1);
+
+      setMusicChallengePhase('preview');
+      setShowMusicSheet(true);
+    };
+
+    void openChallengePreview();
+  }, [
+    breathDetector,
+    currentMusicChallenge,
+    fadeMusicVolumeTo,
+    globalSound.volume,
+    isMusicChallengePage,
+  ]);
+
+  // Step 2: User taps "Ready to Play" on the music sheet → close sheet, show instrument UI
+  const handleReadyToPlay = useCallback(() => {
+    setShowMusicSheet(false);
+    setMusicChallengePhase('playing');
+
+    // Always (re)start the challenge — handles first play, retry, and revisit
+    musicChallenge.start();
+    // Don't start the breath detector here — the default play mode is "press",
+    // which doesn't need the microphone.  Starting the recorder puts iOS into
+    // playAndRecord mode and reduces speaker volume significantly.
+    // The breath detector is started/stopped via handlePlayModeChange instead.
+  }, [musicChallenge, currentMusicChallenge, breathDetector]);
+
+  // Handle play-mode changes from MusicChallengeUI.
+  // In "blow" mode we need the mic → start the breath detector (playAndRecord session).
+  // In "press" mode we don't need the mic → stop the detector and restore full-volume
+  // playback session so instrument notes are loud.
+  const handlePlayModeChange = useCallback(async (mode: 'blow' | 'press') => {
+    if (mode === 'blow' && currentMusicChallenge?.micRequired && currentMusicChallenge?.fallbackAllowed !== false) {
+      breathDetector.startListening();
+    } else {
+      await breathDetector.stopListening();
+      await breathDetector.ensurePlaybackMode();
+    }
+  }, [breathDetector, currentMusicChallenge]);
+
+  // Restore background music volume when leaving music challenge
+  const restoreMusicVolume = useCallback(() => {
+    const restoreVolume = preMusicChallengeVolumeRef.current;
+    if (restoreVolume !== null) {
+      fadeMusicVolumeTo(restoreVolume, 300, () => {
+        if (preMusicChallengeVolumeRef.current === restoreVolume) {
+          preMusicChallengeVolumeRef.current = null;
+        }
+      });
+    }
+  }, [fadeMusicVolumeTo]);
+
+  useEffect(() => {
+    return () => {
+      clearMusicVolumeFade();
+    };
+  }, [clearMusicVolumeFade]);
+
+  const handleCloseMusicSheet = useCallback(() => {
+    setShowMusicSheet(false);
+    // If we were in preview phase (music sheet shown before instrument),
+    // reset back to idle so the "Begin Playing" button reappears.
+    if (musicChallengePhase === 'preview') {
+      setMusicChallengePhase('idle');
+      restoreMusicVolume();
+    }
+  }, [musicChallengePhase, restoreMusicVolume]);
 
   // Accessibility scaling
   const { scaledFontSize, scaledButtonSize, textSizeScale } = useAccessibility();
@@ -395,6 +668,9 @@ export function StoryBookReader({
           log.warn('Failed to stop playback audio on exit:', audioError);
         }
       }
+
+      // Restore background music volume if reduced for music challenge
+      restoreMusicVolume();
 
       // Resume background music if it was paused for narration
       if (wasMusicPlayingBeforeNarration) {
@@ -1164,6 +1440,36 @@ export function StoryBookReader({
               </>
             )}
 
+            {/* Music Challenge: instrument UI (only in 'playing' phase) */}
+            {!isNextPage && page.interactionType === 'music_challenge' && page.musicChallenge?.enabled && musicChallengePhase === 'playing' && (
+              <View style={styles.musicChallengeOverlay}>
+                <BlurView intensity={40} style={StyleSheet.absoluteFill} tint="dark" />
+                <MusicChallengeUI
+                  challenge={musicChallenge}
+                  promptText={page.musicChallenge.promptText}
+                  requiredSequence={page.musicChallenge.requiredSequence}
+                  noteLayout={getInstrument(selectedInstrumentId || page.musicChallenge.instrumentId)?.noteLayout ?? []}
+                  showBreathButton={breathDetector.useFallback || !page.musicChallenge.micRequired}
+                  onSkip={() => {
+                    musicChallenge.skip();
+                    setMusicChallengePhase('idle');
+                    restoreMusicVolume();
+                  }}
+                  onContinue={() => {
+                    musicChallenge.cleanup();
+                    breathDetector.stopListening();
+                    setMusicChallengePhase('idle');
+                    restoreMusicVolume();
+                  }}
+                  onMusicSheet={handleToggleMusicSheet}
+                  allowSkip={page.musicChallenge.allowSkip}
+                  onRotationChange={setInstrumentIsRotated}
+                  onPlayModeChange={handlePlayModeChange}
+                  onVisibilityChange={setMusicUiHidden}
+                />
+              </View>
+            )}
+
             {/* Page indicator overlay - Top Left, after exit button (hide on cover page and next page) */}
             {!isNextPage && page.pageNumber > 0 && (
               <View style={[styles.pageIndicatorOverlay, {
@@ -1187,6 +1493,15 @@ export function StoryBookReader({
   
   const handleNextPage = async () => {
     if (isTransitioning) return;
+
+    // Cleanup music challenge state when leaving page (always allow navigation)
+    if (isMusicChallengePage) {
+      musicChallenge.cleanup();
+      breathDetector.stopListening();
+      setMusicChallengePhase('idle');
+      setShowMusicSheet(false);
+      restoreMusicVolume();
+    }
 
     // In record mode, save the current recording before moving to next page
     if (readingMode === 'record' && tempRecordingUri) {
@@ -1248,6 +1563,15 @@ export function StoryBookReader({
   const handlePreviousPage = async () => {
     // Disable going back to cover page (page 0) - stop at page 1
     if (isTransitioning || currentPageIndex <= 1) return;
+
+    // Cleanup music challenge state when leaving page
+    if (isMusicChallengePage) {
+      musicChallenge.cleanup();
+      breathDetector.stopListening();
+      setMusicChallengePhase('idle');
+      setShowMusicSheet(false);
+      restoreMusicVolume();
+    }
 
     // In record mode, save the current recording before moving to previous page
     if (readingMode === 'record' && tempRecordingUri) {
@@ -1390,7 +1714,8 @@ export function StoryBookReader({
       ]}>
 
 
-        {/* Top Left Controls - Exit Button (aligned with bottom back button) */}
+        {/* Top Left Controls - Exit Button (aligned with bottom back button) — hidden during music challenge */}
+        {!musicUiHidden && musicChallengePhase !== 'playing' && (
         <View style={[styles.topLeftControls, {
           paddingTop: Math.max(insets.top + 5, 20),
           paddingLeft: Math.max(insets.left + 5, 20)
@@ -1411,6 +1736,7 @@ export function StoryBookReader({
             <Text style={[styles.exitButtonText, { fontSize: scaledFontSize(20) }]}>✕</Text>
           </Pressable>
         </View>
+        )}
 
         {/* Recording Controls - Top Center (only visible in record mode on story pages) */}
         {readingMode === 'record' && currentPageIndex > 0 && (
@@ -1540,6 +1866,7 @@ export function StoryBookReader({
         )}
 
         {/* Top Right Controls - Sound and Settings (aligned with bottom next button) */}
+        {!musicUiHidden && (
         <View style={[styles.topRightControls, {
           paddingTop: Math.max(insets.top + 5, 20),
           paddingRight: Math.max(insets.right + 5, 20)
@@ -1569,6 +1896,7 @@ export function StoryBookReader({
             <Text style={[styles.settingsButtonText, { fontSize: scaledFontSize(28), marginTop: 2 }]}>☰</Text>
           </Pressable>
         </View>
+        )}
 
         {/* Settings Menu Overlay - closes menu when tapping outside */}
         {showSettingsMenu && (
@@ -1639,6 +1967,24 @@ export function StoryBookReader({
                 </Pressable>
               </>
             )}
+            {/* Change Instrument — only show on music challenge page in landscape (not rotated to portrait) */}
+            {isMusicChallengePage && !instrumentIsRotated && (
+              <>
+                <View style={styles.menuDivider} />
+                <Pressable
+                  style={styles.menuItem}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setShowSettingsMenu(false);
+                    setActiveSubmenu(null);
+                    setShowInstrumentPicker(true);
+                  }}
+                  testID="menu-change-instrument"
+                >
+                  <Text style={[styles.menuItemText, { fontSize: scaledFontSize(14) }]}>{t('music.changeInstrument')}</Text>
+                </Pressable>
+              </>
+            )}
             <View style={styles.menuDivider} />
             <Pressable
               style={styles.menuItem}
@@ -1650,7 +1996,9 @@ export function StoryBookReader({
               }}
             >
               <Text style={[styles.menuItemText, { fontSize: scaledFontSize(14) }]}>
-                {readingMode === 'read' ? t('reader.readingTips') : readingMode === 'record' ? t('reader.recordingTips') : t('reader.narrationTips')}
+                {isMusicChallengePage && musicChallengePhase === 'playing'
+                  ? t('reader.musicTips')
+                  : readingMode === 'read' ? t('reader.readingTips') : readingMode === 'record' ? t('reader.recordingTips') : t('reader.narrationTips')}
               </Text>
             </Pressable>
           </View>
@@ -2346,7 +2694,8 @@ export function StoryBookReader({
       />
 
       {/* Story Tips Overlay - shown on first story in READ mode only, or when triggered from menu */}
-      {readingMode === 'read' && (
+      {/* Hidden while instrument picker is open so it doesn't interfere with selection */}
+      {readingMode === 'read' && !showInstrumentPicker && (
         <StoryTipsOverlay
           storyId={story.id}
           forceShow={showTipsOverlay}
@@ -2369,6 +2718,69 @@ export function StoryBookReader({
         forceShow={showTipsOverlay && readingMode === 'narrate'}
         onClose={() => setShowTipsOverlay(false)}
       />
+
+      {/* Music Mode Tips - shown on first music challenge page, or when triggered from menu */}
+      <MusicTipsOverlay
+        isActive={!!isMusicChallengePage && musicChallengePhase === 'playing'}
+        forceShow={showTipsOverlay && isMusicChallengePage && musicChallengePhase === 'playing'}
+        onClose={() => setShowTipsOverlay(false)}
+      />
+
+      {/* Music Mode Overlay - Full screen instrument free play or guided challenge */}
+      {showMusicMode && (
+        <View style={styles.absoluteModalContainer}>
+          <Pressable
+            style={styles.absoluteModalBackdrop}
+            onPress={() => {
+              setShowMusicMode(false);
+              breathDetector.stopListening();
+              restoreMusicVolume();
+            }}
+          />
+          <View style={styles.musicModeOverlay}>
+            <View style={styles.musicModeHeader}>
+              <Text style={styles.musicModeTitle}>♪ Music Mode</Text>
+              <Pressable
+                style={styles.musicModeCloseButton}
+                onPress={() => {
+                  setShowMusicMode(false);
+                  breathDetector.stopListening();
+                  restoreMusicVolume();
+                }}
+              >
+                <Text style={styles.musicModeCloseText}>✕</Text>
+              </Pressable>
+            </View>
+            {isMusicChallengePage && currentMusicChallenge ? (
+              <MusicChallengeUI
+                challenge={musicChallenge}
+                promptText={currentMusicChallenge.promptText}
+                requiredSequence={currentMusicChallenge.requiredSequence}
+                noteLayout={getInstrument(currentMusicChallenge.instrumentId)?.noteLayout ?? []}
+                showBreathButton={breathDetector.useFallback || !currentMusicChallenge.micRequired}
+                onSkip={() => musicChallenge.skip()}
+                onContinue={() => {
+                  setShowMusicMode(false);
+                  musicChallenge.cleanup();
+                  breathDetector.stopListening();
+                  restoreMusicVolume();
+                }}
+                onMusicSheet={handleToggleMusicSheet}
+                allowSkip={currentMusicChallenge.allowSkip}
+                onRotationChange={setInstrumentIsRotated}
+                onPlayModeChange={handlePlayModeChange}
+                onVisibilityChange={setMusicUiHidden}
+              />
+            ) : (
+              <View style={styles.musicModeFreePlay}>
+                <Text style={styles.musicModeFreePlayText}>
+                  ♫ No music challenge on this page.{'\n'}Free play coming soon!
+                </Text>
+              </View>
+            )}
+          </View>
+        </View>
+      )}
 
       {/* Compare Languages Modal - Using absolute View instead of Modal to prevent iOS crash */}
       {showCompareLanguageModal && (
@@ -2486,6 +2898,46 @@ export function StoryBookReader({
         </View>
       </View>
       )}
+
+      {/* "Begin Playing" — top center, aligned with nav buttons */}
+      {isMusicChallengePage && !showMusicSheet && !showInstrumentPicker && musicChallengePhase === 'idle' && (
+        <View style={[styles.beginPlayingButton, { paddingTop: Math.max(insets.top + 5, 20) }]}>
+          <Pressable
+            style={styles.beginPlayingButtonInner}
+            onPress={handleBeginMusicChallenge}
+            testID="begin-music-challenge-button"
+          >
+            <Text style={styles.beginPlayingButtonText}>♪ Begin Playing</Text>
+          </Pressable>
+        </View>
+      )}
+
+      {/* Music Sheet button is now inside MusicChallengeUI bottom section */}
+
+      {/* Music Sheet Overlay — shows note sequence for the current music challenge page */}
+      <MusicSheetOverlay
+        visible={showMusicSheet}
+        onClose={handleCloseMusicSheet}
+        requiredSequence={musicChallenge.currentSequence.length > 0 ? musicChallenge.currentSequence : (currentMusicChallenge?.requiredSequence ?? [])}
+        noteLayout={currentInstrumentDef?.noteLayout ?? []}
+        completedNoteCount={musicChallenge.currentNoteIndex}
+        instrumentName={currentInstrumentDef?.displayName ?? 'Unknown'}
+        promptText={currentMusicChallenge?.promptText}
+        successSongName={successSongName}
+        onReadyToPlay={musicChallengePhase === 'preview' ? handleReadyToPlay : undefined}
+        onNotePressIn={musicChallenge.previewNote}
+        onNotePressOut={musicChallenge.stopNote}
+        isRotated={musicChallengePhase === 'playing' && instrumentIsRotated}
+      />
+
+      {/* Instrument Picker Overlay — opened only from music challenge controls */}
+      <InstrumentPickerOverlay
+        visible={showInstrumentPicker}
+        onSelect={handleInstrumentSelected}
+        onClose={handleCloseInstrumentPicker}
+        defaultInstrumentId={selectedInstrumentId || cmsDefaultInstrumentId}
+        isRotated={instrumentIsRotated}
+      />
     </Animated.View>
   );
 }
@@ -2514,6 +2966,65 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     zIndex: 1, // Ensure overlay appears on top
+  },
+  musicChallengeOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    zIndex: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+
+  musicModeOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(30, 30, 60, 0.95)',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    maxHeight: '80%',
+    zIndex: 200,
+  },
+  musicModeHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  musicModeTitle: {
+    color: '#FFFFFF',
+    fontSize: 22,
+    fontWeight: '700',
+  },
+  musicModeCloseButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  musicModeCloseText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  musicModeFreePlay: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  musicModeFreePlayText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    textAlign: 'center',
+    opacity: 0.7,
+    lineHeight: 24,
   },
   nextPageOverlay: {
     position: 'absolute',
@@ -3875,5 +4386,52 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sans,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  // "Begin Playing" — top center, aligned with exit/settings buttons
+  beginPlayingButton: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    paddingTop: 16,
+    zIndex: 100,
+  },
+  beginPlayingButtonInner: {
+    backgroundColor: 'rgba(80, 60, 140, 0.85)',
+    borderRadius: 24,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  beginPlayingButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  // Floating "Music Sheet" button — bottom right (during playing)
+  playSongButton: {
+    position: 'absolute',
+    bottom: 100,
+    right: 20,
+    backgroundColor: 'rgba(80, 60, 140, 0.85)',
+    borderRadius: 24,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    zIndex: 40,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  playSongButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

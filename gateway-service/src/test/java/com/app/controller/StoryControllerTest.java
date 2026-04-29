@@ -3,6 +3,7 @@ package com.app.controller;
 import com.app.model.AssetVersion;
 import com.app.model.ContentVersion;
 import com.app.model.InteractiveElement;
+import com.app.model.MusicChallenge;
 import com.app.model.Story;
 import com.app.model.StoryPage;
 import com.app.service.ApplicationMetricsService;
@@ -69,25 +70,50 @@ class StoryControllerTest {
         testStory1.setVersion(1);
         testStory1.setChecksum("checksum1");
 
-        // Page without interactive elements
+        // Page 1: Static page (no interaction)
         StoryPage page1 = new StoryPage();
         page1.setId("story-1-page-1");
         page1.setPageNumber(1);
         page1.setText("Once upon a time...");
+        page1.setInteractionType("none");
 
-        // Page with interactive elements
+        // Page 2: Interactive page (state change with interactive elements)
         StoryPage page2 = new StoryPage();
         page2.setId("story-1-page-2");
         page2.setPageNumber(2);
         page2.setText("What's inside this shed?");
         page2.setBackgroundImage("assets/stories/story-1/page-2/page-2.webp");
+        page2.setInteractionType("interactive_state_change");
 
         InteractiveElement doorElement = new InteractiveElement("door", "reveal", "assets/stories/story-1/page-2/door-open.webp");
         doorElement.setPosition(new InteractiveElement.Position(0.481, 0.337));
         doorElement.setSize(new InteractiveElement.Size(0.273, 0.301));
         page2.setInteractiveElements(Arrays.asList(doorElement));
 
-        testStory1.setPages(Arrays.asList(page1, page2));
+        // Page 3: Music challenge page
+        StoryPage page3 = new StoryPage();
+        page3.setId("story-1-page-3");
+        page3.setPageNumber(3);
+        page3.setText("Gary the bear needs to move the rock. Can you play the flute to help lift it?");
+        page3.setBackgroundImage("assets/stories/story-1/page-3/page-3.webp");
+        page3.setInteractionType("music_challenge");
+
+        MusicChallenge challenge = new MusicChallenge();
+        challenge.setEnabled(true);
+        challenge.setInstrumentId("flute");
+        challenge.setPromptText("Play the flute to help Gary!");
+        challenge.setMode("guided");
+        challenge.setRequiredSequence(Arrays.asList("C", "D", "E", "C"));
+        challenge.setSuccessSongId("gary_rock_lift_theme_v1");
+        challenge.setSuccessStateId("rock_moved");
+        challenge.setAutoPlaySuccessSong(true);
+        challenge.setAllowSkip(false);
+        challenge.setMicRequired(true);
+        challenge.setFallbackAllowed(true);
+        challenge.setHintLevel("standard");
+        page3.setMusicChallenge(challenge);
+
+        testStory1.setPages(Arrays.asList(page1, page2, page3));
 
         // Create test story 2
         testStory2 = new Story();
@@ -196,7 +222,7 @@ class StoryControllerTest {
                 .andExpect(jsonPath("$.title").value("The Sleepy Forest"))
                 .andExpect(jsonPath("$.category").value("bedtime"))
                 .andExpect(jsonPath("$.pages").isArray())
-                .andExpect(jsonPath("$.pages.length()").value(2));
+                .andExpect(jsonPath("$.pages.length()").value(3));
 
         verify(storyService, times(1)).getStoryById("story-1");
     }
@@ -236,6 +262,58 @@ class StoryControllerTest {
                 .andExpect(jsonPath("$.pages[0].id").value("story-1-page-1"))
                 .andExpect(jsonPath("$.pages[0].interactiveElements").isArray())
                 .andExpect(jsonPath("$.pages[0].interactiveElements.length()").value(0));
+
+        verify(storyService, times(1)).getStoryById("story-1");
+    }
+
+    @Test
+    void getStoryById_IncludesInteractionType() throws Exception {
+        // Arrange
+        when(storyService.getStoryById("story-1"))
+                .thenReturn(CompletableFuture.completedFuture(Optional.of(testStory1)));
+
+        // Act & Assert - Verify interactionType is present on each page
+        mockMvc.perform(get("/api/stories/story-1"))
+                .andExpect(status().isOk())
+                // Page 1: static (none)
+                .andExpect(jsonPath("$.pages[0].interactionType").value("none"))
+                .andExpect(jsonPath("$.pages[0].musicChallenge").doesNotExist())
+                // Page 2: interactive_state_change
+                .andExpect(jsonPath("$.pages[1].interactionType").value("interactive_state_change"))
+                .andExpect(jsonPath("$.pages[1].musicChallenge").doesNotExist())
+                // Page 3: music_challenge
+                .andExpect(jsonPath("$.pages[2].interactionType").value("music_challenge"))
+                .andExpect(jsonPath("$.pages[2].musicChallenge").exists());
+
+        verify(storyService, times(1)).getStoryById("story-1");
+    }
+
+    @Test
+    void getStoryById_IncludesMusicChallengeMetadata() throws Exception {
+        // Arrange
+        when(storyService.getStoryById("story-1"))
+                .thenReturn(CompletableFuture.completedFuture(Optional.of(testStory1)));
+
+        // Act & Assert - Verify all music challenge fields on page 3
+        mockMvc.perform(get("/api/stories/story-1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pages[2].musicChallenge.enabled").value(true))
+                .andExpect(jsonPath("$.pages[2].musicChallenge.instrumentId").value("flute"))
+                .andExpect(jsonPath("$.pages[2].musicChallenge.promptText").value("Play the flute to help Gary!"))
+                .andExpect(jsonPath("$.pages[2].musicChallenge.mode").value("guided"))
+                .andExpect(jsonPath("$.pages[2].musicChallenge.requiredSequence").isArray())
+                .andExpect(jsonPath("$.pages[2].musicChallenge.requiredSequence.length()").value(4))
+                .andExpect(jsonPath("$.pages[2].musicChallenge.requiredSequence[0]").value("C"))
+                .andExpect(jsonPath("$.pages[2].musicChallenge.requiredSequence[1]").value("D"))
+                .andExpect(jsonPath("$.pages[2].musicChallenge.requiredSequence[2]").value("E"))
+                .andExpect(jsonPath("$.pages[2].musicChallenge.requiredSequence[3]").value("C"))
+                .andExpect(jsonPath("$.pages[2].musicChallenge.successSongId").value("gary_rock_lift_theme_v1"))
+                .andExpect(jsonPath("$.pages[2].musicChallenge.successStateId").value("rock_moved"))
+                .andExpect(jsonPath("$.pages[2].musicChallenge.autoPlaySuccessSong").value(true))
+                .andExpect(jsonPath("$.pages[2].musicChallenge.allowSkip").value(false))
+                .andExpect(jsonPath("$.pages[2].musicChallenge.micRequired").value(true))
+                .andExpect(jsonPath("$.pages[2].musicChallenge.fallbackAllowed").value(true))
+                .andExpect(jsonPath("$.pages[2].musicChallenge.hintLevel").value("standard"));
 
         verify(storyService, times(1)).getStoryById("story-1");
     }

@@ -30,11 +30,11 @@ interface TutorialOverlayProps {
  * 
  * Usage:
  * ```tsx
- * <TutorialOverlay 
+ * <TutorialOverlay
  *   tutorialId="main_menu_tour"
  *   targetRefs={{
  *     'stories_button': storiesButtonRef,
- *     'emotions_button': emotionsButtonRef,
+ *     'settings_button': settingsButtonRef,
  *   }}
  * />
  * ```

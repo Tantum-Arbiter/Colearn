@@ -1,0 +1,1118 @@
+{
+  "generatedAt": "2026-03-07T11:37:49.966Z",
+  "stories": [
+    {
+      "storyId": "cms-test-1-snowman-squirrel",
+      "storyDataPath": "cms-stories/cms-test-1-snowman-squirrel/story-data.json",
+      "assets": [
+        {
+          "localPath": "cms-stories/cms-test-1-snowman-squirrel/page-9/cms-test-1-snowman-squirrel-page-9.webp",
+          "gcsPath": "assets/stories/cms-test-1-snowman-squirrel/page-9/cms-test-1-snowman-squirrel-page-9.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-1-snowman-squirrel/page-7/cms-test-1-snowman-squirrel-page-7.webp",
+          "gcsPath": "assets/stories/cms-test-1-snowman-squirrel/page-7/cms-test-1-snowman-squirrel-page-7.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-1-snowman-squirrel/page-6/cms-test-1-snowman-squirrel-page-6.webp",
+          "gcsPath": "assets/stories/cms-test-1-snowman-squirrel/page-6/cms-test-1-snowman-squirrel-page-6.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-1-snowman-squirrel/page-8/curtains-open.webp",
+          "gcsPath": "assets/stories/cms-test-1-snowman-squirrel/page-8/curtains-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-1-snowman-squirrel/page-8/cms-test-1-snowman-squirrel-page-8.webp",
+          "gcsPath": "assets/stories/cms-test-1-snowman-squirrel/page-8/cms-test-1-snowman-squirrel-page-8.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-1-snowman-squirrel/page-8/background.webp",
+          "gcsPath": "assets/stories/cms-test-1-snowman-squirrel/page-8/background.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-1-snowman-squirrel/page-5/cms-test-1-snowman-squirrel-page-5.webp",
+          "gcsPath": "assets/stories/cms-test-1-snowman-squirrel/page-5/cms-test-1-snowman-squirrel-page-5.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-1-snowman-squirrel/page-4/cms-test-1-snowman-squirrel-page-4.webp",
+          "gcsPath": "assets/stories/cms-test-1-snowman-squirrel/page-4/cms-test-1-snowman-squirrel-page-4.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-1-snowman-squirrel/page-3/cms-test-1-snowman-squirrel-page-3.webp",
+          "gcsPath": "assets/stories/cms-test-1-snowman-squirrel/page-3/cms-test-1-snowman-squirrel-page-3.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-1-snowman-squirrel/page-2/cms-test-1-snowman-squirrel-page-2.webp",
+          "gcsPath": "assets/stories/cms-test-1-snowman-squirrel/page-2/cms-test-1-snowman-squirrel-page-2.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-1-snowman-squirrel/page-10/cms-test-1-snowman-squirrel-page-10.webp",
+          "gcsPath": "assets/stories/cms-test-1-snowman-squirrel/page-10/cms-test-1-snowman-squirrel-page-10.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-1-snowman-squirrel/page-1/cms-test-1-snowman-squirrel-page-1.webp",
+          "gcsPath": "assets/stories/cms-test-1-snowman-squirrel/page-1/cms-test-1-snowman-squirrel-page-1.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-1-snowman-squirrel/cover/cms-test-1-snowman-squirrel-thumbnail.webp",
+          "gcsPath": "assets/stories/cms-test-1-snowman-squirrel/cover/cms-test-1-snowman-squirrel-thumbnail.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-1-snowman-squirrel/cover/cms-test-1-snowman-squirrel-cover.webp",
+          "gcsPath": "assets/stories/cms-test-1-snowman-squirrel/cover/cms-test-1-snowman-squirrel-cover.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-1-snowman-squirrel/page-6/props/cms-test-1-snowman-squirrel-page-6-basket-open.webp",
+          "gcsPath": "assets/stories/cms-test-1-snowman-squirrel/page-6/props/cms-test-1-snowman-squirrel-page-6-basket-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-1-snowman-squirrel/page-8/props/cms-test-1-snowman-squirrel-page-8-food-cover-open.webp",
+          "gcsPath": "assets/stories/cms-test-1-snowman-squirrel/page-8/props/cms-test-1-snowman-squirrel-page-8-food-cover-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-1-snowman-squirrel/page-4/props/cms-test-1-snowman-squirrel-page-4-basket-open.webp",
+          "gcsPath": "assets/stories/cms-test-1-snowman-squirrel/page-4/props/cms-test-1-snowman-squirrel-page-4-basket-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-1-snowman-squirrel/page-2/props/cms-test-1-snowman-squirrel-door-open.webp",
+          "gcsPath": "assets/stories/cms-test-1-snowman-squirrel/page-2/props/cms-test-1-snowman-squirrel-door-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-1-snowman-squirrel/page-10/props/cms-test-1-snowman-squirrel-page-10-curtains-open.webp",
+          "gcsPath": "assets/stories/cms-test-1-snowman-squirrel/page-10/props/cms-test-1-snowman-squirrel-page-10-curtains-open.webp"
+        }
+      ],
+      "assetCount": 19
+    },
+    {
+      "storyId": "cms-test-10-snowman-squirrel",
+      "storyDataPath": "cms-stories/cms-test-10-snowman-squirrel/story-data.json",
+      "assets": [
+        {
+          "localPath": "cms-stories/cms-test-10-snowman-squirrel/page-9/cms-test-10-snowman-squirrel-page-9.webp",
+          "gcsPath": "assets/stories/cms-test-10-snowman-squirrel/page-9/cms-test-10-snowman-squirrel-page-9.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-10-snowman-squirrel/page-8/cms-test-10-snowman-squirrel-page-8.webp",
+          "gcsPath": "assets/stories/cms-test-10-snowman-squirrel/page-8/cms-test-10-snowman-squirrel-page-8.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-10-snowman-squirrel/page-7/cms-test-10-snowman-squirrel-page-7.webp",
+          "gcsPath": "assets/stories/cms-test-10-snowman-squirrel/page-7/cms-test-10-snowman-squirrel-page-7.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-10-snowman-squirrel/page-6/cms-test-10-snowman-squirrel-page-6.webp",
+          "gcsPath": "assets/stories/cms-test-10-snowman-squirrel/page-6/cms-test-10-snowman-squirrel-page-6.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-10-snowman-squirrel/page-4/cms-test-10-snowman-squirrel-page-4.webp",
+          "gcsPath": "assets/stories/cms-test-10-snowman-squirrel/page-4/cms-test-10-snowman-squirrel-page-4.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-10-snowman-squirrel/page-3/cms-test-10-snowman-squirrel-page-3.webp",
+          "gcsPath": "assets/stories/cms-test-10-snowman-squirrel/page-3/cms-test-10-snowman-squirrel-page-3.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-10-snowman-squirrel/page-5/cms-test-10-snowman-squirrel-page-5.webp",
+          "gcsPath": "assets/stories/cms-test-10-snowman-squirrel/page-5/cms-test-10-snowman-squirrel-page-5.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-10-snowman-squirrel/page-2/cms-test-10-snowman-squirrel-page-2.webp",
+          "gcsPath": "assets/stories/cms-test-10-snowman-squirrel/page-2/cms-test-10-snowman-squirrel-page-2.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-10-snowman-squirrel/page-10/cms-test-10-snowman-squirrel-page-10.webp",
+          "gcsPath": "assets/stories/cms-test-10-snowman-squirrel/page-10/cms-test-10-snowman-squirrel-page-10.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-10-snowman-squirrel/cover/cms-test-10-snowman-squirrel-thumbnail.webp",
+          "gcsPath": "assets/stories/cms-test-10-snowman-squirrel/cover/cms-test-10-snowman-squirrel-thumbnail.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-10-snowman-squirrel/cover/cms-test-10-snowman-squirrel-cover.webp",
+          "gcsPath": "assets/stories/cms-test-10-snowman-squirrel/cover/cms-test-10-snowman-squirrel-cover.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-10-snowman-squirrel/page-1/cms-test-10-snowman-squirrel-page-1.webp",
+          "gcsPath": "assets/stories/cms-test-10-snowman-squirrel/page-1/cms-test-10-snowman-squirrel-page-1.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-10-snowman-squirrel/page-6/props/cms-test-10-snowman-squirrel-page-6-basket-open.webp",
+          "gcsPath": "assets/stories/cms-test-10-snowman-squirrel/page-6/props/cms-test-10-snowman-squirrel-page-6-basket-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-10-snowman-squirrel/page-8/props/cms-test-10-snowman-squirrel-page-8-food-cover-open.webp",
+          "gcsPath": "assets/stories/cms-test-10-snowman-squirrel/page-8/props/cms-test-10-snowman-squirrel-page-8-food-cover-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-10-snowman-squirrel/page-4/props/cms-test-10-snowman-squirrel-page-4-basket-open.webp",
+          "gcsPath": "assets/stories/cms-test-10-snowman-squirrel/page-4/props/cms-test-10-snowman-squirrel-page-4-basket-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-10-snowman-squirrel/page-10/props/cms-test-10-snowman-squirrel-page-10-curtains-open.webp",
+          "gcsPath": "assets/stories/cms-test-10-snowman-squirrel/page-10/props/cms-test-10-snowman-squirrel-page-10-curtains-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-10-snowman-squirrel/page-2/props/cms-test-10-snowman-squirrel-door-open.webp",
+          "gcsPath": "assets/stories/cms-test-10-snowman-squirrel/page-2/props/cms-test-10-snowman-squirrel-door-open.webp"
+        }
+      ],
+      "assetCount": 17
+    },
+    {
+      "storyId": "cms-test-11-snowman-squirrel",
+      "storyDataPath": "cms-stories/cms-test-11-snowman-squirrel/story-data.json",
+      "assets": [
+        {
+          "localPath": "cms-stories/cms-test-11-snowman-squirrel/page-9/cms-test-11-snowman-squirrel-page-9.webp",
+          "gcsPath": "assets/stories/cms-test-11-snowman-squirrel/page-9/cms-test-11-snowman-squirrel-page-9.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-11-snowman-squirrel/page-8/cms-test-11-snowman-squirrel-page-8.webp",
+          "gcsPath": "assets/stories/cms-test-11-snowman-squirrel/page-8/cms-test-11-snowman-squirrel-page-8.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-11-snowman-squirrel/page-7/cms-test-11-snowman-squirrel-page-7.webp",
+          "gcsPath": "assets/stories/cms-test-11-snowman-squirrel/page-7/cms-test-11-snowman-squirrel-page-7.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-11-snowman-squirrel/page-6/cms-test-11-snowman-squirrel-page-6.webp",
+          "gcsPath": "assets/stories/cms-test-11-snowman-squirrel/page-6/cms-test-11-snowman-squirrel-page-6.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-11-snowman-squirrel/page-5/cms-test-11-snowman-squirrel-page-5.webp",
+          "gcsPath": "assets/stories/cms-test-11-snowman-squirrel/page-5/cms-test-11-snowman-squirrel-page-5.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-11-snowman-squirrel/page-3/cms-test-11-snowman-squirrel-page-3.webp",
+          "gcsPath": "assets/stories/cms-test-11-snowman-squirrel/page-3/cms-test-11-snowman-squirrel-page-3.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-11-snowman-squirrel/page-4/cms-test-11-snowman-squirrel-page-4.webp",
+          "gcsPath": "assets/stories/cms-test-11-snowman-squirrel/page-4/cms-test-11-snowman-squirrel-page-4.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-11-snowman-squirrel/page-2/cms-test-11-snowman-squirrel-page-2.webp",
+          "gcsPath": "assets/stories/cms-test-11-snowman-squirrel/page-2/cms-test-11-snowman-squirrel-page-2.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-11-snowman-squirrel/page-1/cms-test-11-snowman-squirrel-page-1.webp",
+          "gcsPath": "assets/stories/cms-test-11-snowman-squirrel/page-1/cms-test-11-snowman-squirrel-page-1.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-11-snowman-squirrel/page-10/cms-test-11-snowman-squirrel-page-10.webp",
+          "gcsPath": "assets/stories/cms-test-11-snowman-squirrel/page-10/cms-test-11-snowman-squirrel-page-10.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-11-snowman-squirrel/cover/cms-test-11-snowman-squirrel-thumbnail.webp",
+          "gcsPath": "assets/stories/cms-test-11-snowman-squirrel/cover/cms-test-11-snowman-squirrel-thumbnail.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-11-snowman-squirrel/cover/cms-test-11-snowman-squirrel-cover.webp",
+          "gcsPath": "assets/stories/cms-test-11-snowman-squirrel/cover/cms-test-11-snowman-squirrel-cover.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-11-snowman-squirrel/page-8/props/cms-test-11-snowman-squirrel-page-8-food-cover-open.webp",
+          "gcsPath": "assets/stories/cms-test-11-snowman-squirrel/page-8/props/cms-test-11-snowman-squirrel-page-8-food-cover-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-11-snowman-squirrel/page-6/props/cms-test-11-snowman-squirrel-page-6-basket-open.webp",
+          "gcsPath": "assets/stories/cms-test-11-snowman-squirrel/page-6/props/cms-test-11-snowman-squirrel-page-6-basket-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-11-snowman-squirrel/page-4/props/cms-test-11-snowman-squirrel-page-4-basket-open.webp",
+          "gcsPath": "assets/stories/cms-test-11-snowman-squirrel/page-4/props/cms-test-11-snowman-squirrel-page-4-basket-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-11-snowman-squirrel/page-10/props/cms-test-11-snowman-squirrel-page-10-curtains-open.webp",
+          "gcsPath": "assets/stories/cms-test-11-snowman-squirrel/page-10/props/cms-test-11-snowman-squirrel-page-10-curtains-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-11-snowman-squirrel/page-2/props/cms-test-11-snowman-squirrel-door-open.webp",
+          "gcsPath": "assets/stories/cms-test-11-snowman-squirrel/page-2/props/cms-test-11-snowman-squirrel-door-open.webp"
+        }
+      ],
+      "assetCount": 17
+    },
+    {
+      "storyId": "cms-test-12-snowman-squirrel",
+      "storyDataPath": "cms-stories/cms-test-12-snowman-squirrel/story-data.json",
+      "assets": [
+        {
+          "localPath": "cms-stories/cms-test-12-snowman-squirrel/page-9/cms-test-12-snowman-squirrel-page-9.webp",
+          "gcsPath": "assets/stories/cms-test-12-snowman-squirrel/page-9/cms-test-12-snowman-squirrel-page-9.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-12-snowman-squirrel/page-7/cms-test-12-snowman-squirrel-page-7.webp",
+          "gcsPath": "assets/stories/cms-test-12-snowman-squirrel/page-7/cms-test-12-snowman-squirrel-page-7.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-12-snowman-squirrel/page-8/cms-test-12-snowman-squirrel-page-8.webp",
+          "gcsPath": "assets/stories/cms-test-12-snowman-squirrel/page-8/cms-test-12-snowman-squirrel-page-8.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-12-snowman-squirrel/page-6/cms-test-12-snowman-squirrel-page-6.webp",
+          "gcsPath": "assets/stories/cms-test-12-snowman-squirrel/page-6/cms-test-12-snowman-squirrel-page-6.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-12-snowman-squirrel/page-5/cms-test-12-snowman-squirrel-page-5.webp",
+          "gcsPath": "assets/stories/cms-test-12-snowman-squirrel/page-5/cms-test-12-snowman-squirrel-page-5.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-12-snowman-squirrel/page-3/cms-test-12-snowman-squirrel-page-3.webp",
+          "gcsPath": "assets/stories/cms-test-12-snowman-squirrel/page-3/cms-test-12-snowman-squirrel-page-3.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-12-snowman-squirrel/page-4/cms-test-12-snowman-squirrel-page-4.webp",
+          "gcsPath": "assets/stories/cms-test-12-snowman-squirrel/page-4/cms-test-12-snowman-squirrel-page-4.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-12-snowman-squirrel/page-2/cms-test-12-snowman-squirrel-page-2.webp",
+          "gcsPath": "assets/stories/cms-test-12-snowman-squirrel/page-2/cms-test-12-snowman-squirrel-page-2.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-12-snowman-squirrel/page-1/cms-test-12-snowman-squirrel-page-1.webp",
+          "gcsPath": "assets/stories/cms-test-12-snowman-squirrel/page-1/cms-test-12-snowman-squirrel-page-1.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-12-snowman-squirrel/cover/cms-test-12-snowman-squirrel-thumbnail.webp",
+          "gcsPath": "assets/stories/cms-test-12-snowman-squirrel/cover/cms-test-12-snowman-squirrel-thumbnail.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-12-snowman-squirrel/cover/cms-test-12-snowman-squirrel-cover.webp",
+          "gcsPath": "assets/stories/cms-test-12-snowman-squirrel/cover/cms-test-12-snowman-squirrel-cover.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-12-snowman-squirrel/page-10/cms-test-12-snowman-squirrel-page-10.webp",
+          "gcsPath": "assets/stories/cms-test-12-snowman-squirrel/page-10/cms-test-12-snowman-squirrel-page-10.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-12-snowman-squirrel/page-6/props/cms-test-12-snowman-squirrel-page-6-basket-open.webp",
+          "gcsPath": "assets/stories/cms-test-12-snowman-squirrel/page-6/props/cms-test-12-snowman-squirrel-page-6-basket-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-12-snowman-squirrel/page-8/props/cms-test-12-snowman-squirrel-page-8-food-cover-open.webp",
+          "gcsPath": "assets/stories/cms-test-12-snowman-squirrel/page-8/props/cms-test-12-snowman-squirrel-page-8-food-cover-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-12-snowman-squirrel/page-4/props/cms-test-12-snowman-squirrel-page-4-basket-open.webp",
+          "gcsPath": "assets/stories/cms-test-12-snowman-squirrel/page-4/props/cms-test-12-snowman-squirrel-page-4-basket-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-12-snowman-squirrel/page-2/props/cms-test-12-snowman-squirrel-door-open.webp",
+          "gcsPath": "assets/stories/cms-test-12-snowman-squirrel/page-2/props/cms-test-12-snowman-squirrel-door-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-12-snowman-squirrel/page-10/props/cms-test-12-snowman-squirrel-page-10-curtains-open.webp",
+          "gcsPath": "assets/stories/cms-test-12-snowman-squirrel/page-10/props/cms-test-12-snowman-squirrel-page-10-curtains-open.webp"
+        }
+      ],
+      "assetCount": 17
+    },
+    {
+      "storyId": "cms-test-13-snowman-squirrel",
+      "storyDataPath": "cms-stories/cms-test-13-snowman-squirrel/story-data.json",
+      "assets": [
+        {
+          "localPath": "cms-stories/cms-test-13-snowman-squirrel/page-9/cms-test-13-snowman-squirrel-page-9.webp",
+          "gcsPath": "assets/stories/cms-test-13-snowman-squirrel/page-9/cms-test-13-snowman-squirrel-page-9.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-13-snowman-squirrel/page-8/cms-test-13-snowman-squirrel-page-8.webp",
+          "gcsPath": "assets/stories/cms-test-13-snowman-squirrel/page-8/cms-test-13-snowman-squirrel-page-8.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-13-snowman-squirrel/page-7/cms-test-13-snowman-squirrel-page-7.webp",
+          "gcsPath": "assets/stories/cms-test-13-snowman-squirrel/page-7/cms-test-13-snowman-squirrel-page-7.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-13-snowman-squirrel/page-6/cms-test-13-snowman-squirrel-page-6.webp",
+          "gcsPath": "assets/stories/cms-test-13-snowman-squirrel/page-6/cms-test-13-snowman-squirrel-page-6.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-13-snowman-squirrel/page-5/cms-test-13-snowman-squirrel-page-5.webp",
+          "gcsPath": "assets/stories/cms-test-13-snowman-squirrel/page-5/cms-test-13-snowman-squirrel-page-5.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-13-snowman-squirrel/page-4/cms-test-13-snowman-squirrel-page-4.webp",
+          "gcsPath": "assets/stories/cms-test-13-snowman-squirrel/page-4/cms-test-13-snowman-squirrel-page-4.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-13-snowman-squirrel/page-3/cms-test-13-snowman-squirrel-page-3.webp",
+          "gcsPath": "assets/stories/cms-test-13-snowman-squirrel/page-3/cms-test-13-snowman-squirrel-page-3.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-13-snowman-squirrel/page-10/cms-test-13-snowman-squirrel-page-10.webp",
+          "gcsPath": "assets/stories/cms-test-13-snowman-squirrel/page-10/cms-test-13-snowman-squirrel-page-10.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-13-snowman-squirrel/page-2/cms-test-13-snowman-squirrel-page-2.webp",
+          "gcsPath": "assets/stories/cms-test-13-snowman-squirrel/page-2/cms-test-13-snowman-squirrel-page-2.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-13-snowman-squirrel/page-1/cms-test-13-snowman-squirrel-page-1.webp",
+          "gcsPath": "assets/stories/cms-test-13-snowman-squirrel/page-1/cms-test-13-snowman-squirrel-page-1.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-13-snowman-squirrel/cover/cms-test-13-snowman-squirrel-thumbnail.webp",
+          "gcsPath": "assets/stories/cms-test-13-snowman-squirrel/cover/cms-test-13-snowman-squirrel-thumbnail.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-13-snowman-squirrel/cover/cms-test-13-snowman-squirrel-cover.webp",
+          "gcsPath": "assets/stories/cms-test-13-snowman-squirrel/cover/cms-test-13-snowman-squirrel-cover.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-13-snowman-squirrel/page-8/props/cms-test-13-snowman-squirrel-page-8-food-cover-open.webp",
+          "gcsPath": "assets/stories/cms-test-13-snowman-squirrel/page-8/props/cms-test-13-snowman-squirrel-page-8-food-cover-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-13-snowman-squirrel/page-6/props/cms-test-13-snowman-squirrel-page-6-basket-open.webp",
+          "gcsPath": "assets/stories/cms-test-13-snowman-squirrel/page-6/props/cms-test-13-snowman-squirrel-page-6-basket-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-13-snowman-squirrel/page-4/props/cms-test-13-snowman-squirrel-page-4-basket-open.webp",
+          "gcsPath": "assets/stories/cms-test-13-snowman-squirrel/page-4/props/cms-test-13-snowman-squirrel-page-4-basket-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-13-snowman-squirrel/page-10/props/cms-test-13-snowman-squirrel-page-10-curtains-open.webp",
+          "gcsPath": "assets/stories/cms-test-13-snowman-squirrel/page-10/props/cms-test-13-snowman-squirrel-page-10-curtains-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-13-snowman-squirrel/page-2/props/cms-test-13-snowman-squirrel-door-open.webp",
+          "gcsPath": "assets/stories/cms-test-13-snowman-squirrel/page-2/props/cms-test-13-snowman-squirrel-door-open.webp"
+        }
+      ],
+      "assetCount": 17
+    },
+    {
+      "storyId": "cms-test-2-snowman-squirrel",
+      "storyDataPath": "cms-stories/cms-test-2-snowman-squirrel/story-data.json",
+      "assets": [
+        {
+          "localPath": "cms-stories/cms-test-2-snowman-squirrel/page-9/cms-test-2-snowman-squirrel-page-9.webp",
+          "gcsPath": "assets/stories/cms-test-2-snowman-squirrel/page-9/cms-test-2-snowman-squirrel-page-9.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-2-snowman-squirrel/page-8/cms-test-2-snowman-squirrel-page-8.webp",
+          "gcsPath": "assets/stories/cms-test-2-snowman-squirrel/page-8/cms-test-2-snowman-squirrel-page-8.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-2-snowman-squirrel/page-7/cms-test-2-snowman-squirrel-page-7.webp",
+          "gcsPath": "assets/stories/cms-test-2-snowman-squirrel/page-7/cms-test-2-snowman-squirrel-page-7.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-2-snowman-squirrel/page-6/cms-test-2-snowman-squirrel-page-6.webp",
+          "gcsPath": "assets/stories/cms-test-2-snowman-squirrel/page-6/cms-test-2-snowman-squirrel-page-6.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-2-snowman-squirrel/page-4/cms-test-2-snowman-squirrel-page-4.webp",
+          "gcsPath": "assets/stories/cms-test-2-snowman-squirrel/page-4/cms-test-2-snowman-squirrel-page-4.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-2-snowman-squirrel/page-3/cms-test-2-snowman-squirrel-page-3.webp",
+          "gcsPath": "assets/stories/cms-test-2-snowman-squirrel/page-3/cms-test-2-snowman-squirrel-page-3.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-2-snowman-squirrel/page-5/cms-test-2-snowman-squirrel-page-5.webp",
+          "gcsPath": "assets/stories/cms-test-2-snowman-squirrel/page-5/cms-test-2-snowman-squirrel-page-5.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-2-snowman-squirrel/page-10/cms-test-2-snowman-squirrel-page-10.webp",
+          "gcsPath": "assets/stories/cms-test-2-snowman-squirrel/page-10/cms-test-2-snowman-squirrel-page-10.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-2-snowman-squirrel/page-1/cms-test-2-snowman-squirrel-page-1.webp",
+          "gcsPath": "assets/stories/cms-test-2-snowman-squirrel/page-1/cms-test-2-snowman-squirrel-page-1.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-2-snowman-squirrel/page-2/cms-test-2-snowman-squirrel-page-2.webp",
+          "gcsPath": "assets/stories/cms-test-2-snowman-squirrel/page-2/cms-test-2-snowman-squirrel-page-2.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-2-snowman-squirrel/cover/cms-test-2-snowman-squirrel-thumbnail.webp",
+          "gcsPath": "assets/stories/cms-test-2-snowman-squirrel/cover/cms-test-2-snowman-squirrel-thumbnail.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-2-snowman-squirrel/cover/cms-test-2-snowman-squirrel-cover.webp",
+          "gcsPath": "assets/stories/cms-test-2-snowman-squirrel/cover/cms-test-2-snowman-squirrel-cover.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-2-snowman-squirrel/page-4/props/cms-test-2-snowman-squirrel-page-4-basket-open.webp",
+          "gcsPath": "assets/stories/cms-test-2-snowman-squirrel/page-4/props/cms-test-2-snowman-squirrel-page-4-basket-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-2-snowman-squirrel/page-6/props/cms-test-2-snowman-squirrel-page-6-basket-open.webp",
+          "gcsPath": "assets/stories/cms-test-2-snowman-squirrel/page-6/props/cms-test-2-snowman-squirrel-page-6-basket-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-2-snowman-squirrel/page-8/props/cms-test-2-snowman-squirrel-page-8-food-cover-open.webp",
+          "gcsPath": "assets/stories/cms-test-2-snowman-squirrel/page-8/props/cms-test-2-snowman-squirrel-page-8-food-cover-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-2-snowman-squirrel/page-10/props/cms-test-2-snowman-squirrel-page-10-curtains-open.webp",
+          "gcsPath": "assets/stories/cms-test-2-snowman-squirrel/page-10/props/cms-test-2-snowman-squirrel-page-10-curtains-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-2-snowman-squirrel/page-2/props/cms-test-2-snowman-squirrel-door-open.webp",
+          "gcsPath": "assets/stories/cms-test-2-snowman-squirrel/page-2/props/cms-test-2-snowman-squirrel-door-open.webp"
+        }
+      ],
+      "assetCount": 17
+    },
+    {
+      "storyId": "cms-test-3-snowman-squirrel",
+      "storyDataPath": "cms-stories/cms-test-3-snowman-squirrel/story-data.json",
+      "assets": [
+        {
+          "localPath": "cms-stories/cms-test-3-snowman-squirrel/page-9/cms-test-3-snowman-squirrel-page-9.webp",
+          "gcsPath": "assets/stories/cms-test-3-snowman-squirrel/page-9/cms-test-3-snowman-squirrel-page-9.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-3-snowman-squirrel/page-8/cms-test-3-snowman-squirrel-page-8.webp",
+          "gcsPath": "assets/stories/cms-test-3-snowman-squirrel/page-8/cms-test-3-snowman-squirrel-page-8.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-3-snowman-squirrel/page-7/cms-test-3-snowman-squirrel-page-7.webp",
+          "gcsPath": "assets/stories/cms-test-3-snowman-squirrel/page-7/cms-test-3-snowman-squirrel-page-7.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-3-snowman-squirrel/page-6/cms-test-3-snowman-squirrel-page-6.webp",
+          "gcsPath": "assets/stories/cms-test-3-snowman-squirrel/page-6/cms-test-3-snowman-squirrel-page-6.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-3-snowman-squirrel/page-5/cms-test-3-snowman-squirrel-page-5.webp",
+          "gcsPath": "assets/stories/cms-test-3-snowman-squirrel/page-5/cms-test-3-snowman-squirrel-page-5.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-3-snowman-squirrel/page-3/cms-test-3-snowman-squirrel-page-3.webp",
+          "gcsPath": "assets/stories/cms-test-3-snowman-squirrel/page-3/cms-test-3-snowman-squirrel-page-3.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-3-snowman-squirrel/page-4/cms-test-3-snowman-squirrel-page-4.webp",
+          "gcsPath": "assets/stories/cms-test-3-snowman-squirrel/page-4/cms-test-3-snowman-squirrel-page-4.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-3-snowman-squirrel/page-2/cms-test-3-snowman-squirrel-page-2.webp",
+          "gcsPath": "assets/stories/cms-test-3-snowman-squirrel/page-2/cms-test-3-snowman-squirrel-page-2.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-3-snowman-squirrel/page-10/cms-test-3-snowman-squirrel-page-10.webp",
+          "gcsPath": "assets/stories/cms-test-3-snowman-squirrel/page-10/cms-test-3-snowman-squirrel-page-10.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-3-snowman-squirrel/page-1/cms-test-3-snowman-squirrel-page-1.webp",
+          "gcsPath": "assets/stories/cms-test-3-snowman-squirrel/page-1/cms-test-3-snowman-squirrel-page-1.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-3-snowman-squirrel/cover/cms-test-3-snowman-squirrel-thumbnail.webp",
+          "gcsPath": "assets/stories/cms-test-3-snowman-squirrel/cover/cms-test-3-snowman-squirrel-thumbnail.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-3-snowman-squirrel/cover/cms-test-3-snowman-squirrel-cover.webp",
+          "gcsPath": "assets/stories/cms-test-3-snowman-squirrel/cover/cms-test-3-snowman-squirrel-cover.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-3-snowman-squirrel/page-8/props/cms-test-3-snowman-squirrel-page-8-food-cover-open.webp",
+          "gcsPath": "assets/stories/cms-test-3-snowman-squirrel/page-8/props/cms-test-3-snowman-squirrel-page-8-food-cover-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-3-snowman-squirrel/page-6/props/cms-test-3-snowman-squirrel-page-6-basket-open.webp",
+          "gcsPath": "assets/stories/cms-test-3-snowman-squirrel/page-6/props/cms-test-3-snowman-squirrel-page-6-basket-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-3-snowman-squirrel/page-4/props/cms-test-3-snowman-squirrel-page-4-basket-open.webp",
+          "gcsPath": "assets/stories/cms-test-3-snowman-squirrel/page-4/props/cms-test-3-snowman-squirrel-page-4-basket-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-3-snowman-squirrel/page-2/props/cms-test-3-snowman-squirrel-door-open.webp",
+          "gcsPath": "assets/stories/cms-test-3-snowman-squirrel/page-2/props/cms-test-3-snowman-squirrel-door-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-3-snowman-squirrel/page-10/props/cms-test-3-snowman-squirrel-page-10-curtains-open.webp",
+          "gcsPath": "assets/stories/cms-test-3-snowman-squirrel/page-10/props/cms-test-3-snowman-squirrel-page-10-curtains-open.webp"
+        }
+      ],
+      "assetCount": 17
+    },
+    {
+      "storyId": "cms-test-4-snowman-squirrel",
+      "storyDataPath": "cms-stories/cms-test-4-snowman-squirrel/story-data.json",
+      "assets": [
+        {
+          "localPath": "cms-stories/cms-test-4-snowman-squirrel/page-7/cms-test-4-snowman-squirrel-page-7.webp",
+          "gcsPath": "assets/stories/cms-test-4-snowman-squirrel/page-7/cms-test-4-snowman-squirrel-page-7.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-4-snowman-squirrel/page-9/cms-test-4-snowman-squirrel-page-9.webp",
+          "gcsPath": "assets/stories/cms-test-4-snowman-squirrel/page-9/cms-test-4-snowman-squirrel-page-9.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-4-snowman-squirrel/page-8/cms-test-4-snowman-squirrel-page-8.webp",
+          "gcsPath": "assets/stories/cms-test-4-snowman-squirrel/page-8/cms-test-4-snowman-squirrel-page-8.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-4-snowman-squirrel/page-6/cms-test-4-snowman-squirrel-page-6.webp",
+          "gcsPath": "assets/stories/cms-test-4-snowman-squirrel/page-6/cms-test-4-snowman-squirrel-page-6.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-4-snowman-squirrel/page-5/cms-test-4-snowman-squirrel-page-5.webp",
+          "gcsPath": "assets/stories/cms-test-4-snowman-squirrel/page-5/cms-test-4-snowman-squirrel-page-5.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-4-snowman-squirrel/page-4/cms-test-4-snowman-squirrel-page-4.webp",
+          "gcsPath": "assets/stories/cms-test-4-snowman-squirrel/page-4/cms-test-4-snowman-squirrel-page-4.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-4-snowman-squirrel/page-2/cms-test-4-snowman-squirrel-page-2.webp",
+          "gcsPath": "assets/stories/cms-test-4-snowman-squirrel/page-2/cms-test-4-snowman-squirrel-page-2.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-4-snowman-squirrel/page-3/cms-test-4-snowman-squirrel-page-3.webp",
+          "gcsPath": "assets/stories/cms-test-4-snowman-squirrel/page-3/cms-test-4-snowman-squirrel-page-3.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-4-snowman-squirrel/page-10/cms-test-4-snowman-squirrel-page-10.webp",
+          "gcsPath": "assets/stories/cms-test-4-snowman-squirrel/page-10/cms-test-4-snowman-squirrel-page-10.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-4-snowman-squirrel/page-1/cms-test-4-snowman-squirrel-page-1.webp",
+          "gcsPath": "assets/stories/cms-test-4-snowman-squirrel/page-1/cms-test-4-snowman-squirrel-page-1.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-4-snowman-squirrel/page-8/props/cms-test-4-snowman-squirrel-page-8-food-cover-open.webp",
+          "gcsPath": "assets/stories/cms-test-4-snowman-squirrel/page-8/props/cms-test-4-snowman-squirrel-page-8-food-cover-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-4-snowman-squirrel/page-6/props/cms-test-4-snowman-squirrel-page-6-basket-open.webp",
+          "gcsPath": "assets/stories/cms-test-4-snowman-squirrel/page-6/props/cms-test-4-snowman-squirrel-page-6-basket-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-4-snowman-squirrel/cover/cms-test-4-snowman-squirrel-thumbnail.webp",
+          "gcsPath": "assets/stories/cms-test-4-snowman-squirrel/cover/cms-test-4-snowman-squirrel-thumbnail.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-4-snowman-squirrel/cover/cms-test-4-snowman-squirrel-cover.webp",
+          "gcsPath": "assets/stories/cms-test-4-snowman-squirrel/cover/cms-test-4-snowman-squirrel-cover.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-4-snowman-squirrel/page-4/props/cms-test-4-snowman-squirrel-page-4-basket-open.webp",
+          "gcsPath": "assets/stories/cms-test-4-snowman-squirrel/page-4/props/cms-test-4-snowman-squirrel-page-4-basket-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-4-snowman-squirrel/page-2/props/cms-test-4-snowman-squirrel-door-open.webp",
+          "gcsPath": "assets/stories/cms-test-4-snowman-squirrel/page-2/props/cms-test-4-snowman-squirrel-door-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-4-snowman-squirrel/page-10/props/cms-test-4-snowman-squirrel-page-10-curtains-open.webp",
+          "gcsPath": "assets/stories/cms-test-4-snowman-squirrel/page-10/props/cms-test-4-snowman-squirrel-page-10-curtains-open.webp"
+        }
+      ],
+      "assetCount": 17
+    },
+    {
+      "storyId": "cms-test-5-snowman-squirrel",
+      "storyDataPath": "cms-stories/cms-test-5-snowman-squirrel/story-data.json",
+      "assets": [
+        {
+          "localPath": "cms-stories/cms-test-5-snowman-squirrel/page-7/cms-test-5-snowman-squirrel-page-7.webp",
+          "gcsPath": "assets/stories/cms-test-5-snowman-squirrel/page-7/cms-test-5-snowman-squirrel-page-7.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-5-snowman-squirrel/page-6/cms-test-5-snowman-squirrel-page-6.webp",
+          "gcsPath": "assets/stories/cms-test-5-snowman-squirrel/page-6/cms-test-5-snowman-squirrel-page-6.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-5-snowman-squirrel/page-9/cms-test-5-snowman-squirrel-page-9.webp",
+          "gcsPath": "assets/stories/cms-test-5-snowman-squirrel/page-9/cms-test-5-snowman-squirrel-page-9.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-5-snowman-squirrel/page-5/cms-test-5-snowman-squirrel-page-5.webp",
+          "gcsPath": "assets/stories/cms-test-5-snowman-squirrel/page-5/cms-test-5-snowman-squirrel-page-5.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-5-snowman-squirrel/page-3/cms-test-5-snowman-squirrel-page-3.webp",
+          "gcsPath": "assets/stories/cms-test-5-snowman-squirrel/page-3/cms-test-5-snowman-squirrel-page-3.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-5-snowman-squirrel/page-8/cms-test-5-snowman-squirrel-page-8.webp",
+          "gcsPath": "assets/stories/cms-test-5-snowman-squirrel/page-8/cms-test-5-snowman-squirrel-page-8.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-5-snowman-squirrel/page-4/cms-test-5-snowman-squirrel-page-4.webp",
+          "gcsPath": "assets/stories/cms-test-5-snowman-squirrel/page-4/cms-test-5-snowman-squirrel-page-4.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-5-snowman-squirrel/page-10/cms-test-5-snowman-squirrel-page-10.webp",
+          "gcsPath": "assets/stories/cms-test-5-snowman-squirrel/page-10/cms-test-5-snowman-squirrel-page-10.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-5-snowman-squirrel/page-2/cms-test-5-snowman-squirrel-page-2.webp",
+          "gcsPath": "assets/stories/cms-test-5-snowman-squirrel/page-2/cms-test-5-snowman-squirrel-page-2.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-5-snowman-squirrel/page-1/cms-test-5-snowman-squirrel-page-1.webp",
+          "gcsPath": "assets/stories/cms-test-5-snowman-squirrel/page-1/cms-test-5-snowman-squirrel-page-1.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-5-snowman-squirrel/cover/cms-test-5-snowman-squirrel-thumbnail.webp",
+          "gcsPath": "assets/stories/cms-test-5-snowman-squirrel/cover/cms-test-5-snowman-squirrel-thumbnail.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-5-snowman-squirrel/cover/cms-test-5-snowman-squirrel-cover.webp",
+          "gcsPath": "assets/stories/cms-test-5-snowman-squirrel/cover/cms-test-5-snowman-squirrel-cover.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-5-snowman-squirrel/page-6/props/cms-test-5-snowman-squirrel-page-6-basket-open.webp",
+          "gcsPath": "assets/stories/cms-test-5-snowman-squirrel/page-6/props/cms-test-5-snowman-squirrel-page-6-basket-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-5-snowman-squirrel/page-4/props/cms-test-5-snowman-squirrel-page-4-basket-open.webp",
+          "gcsPath": "assets/stories/cms-test-5-snowman-squirrel/page-4/props/cms-test-5-snowman-squirrel-page-4-basket-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-5-snowman-squirrel/page-2/props/cms-test-5-snowman-squirrel-door-open.webp",
+          "gcsPath": "assets/stories/cms-test-5-snowman-squirrel/page-2/props/cms-test-5-snowman-squirrel-door-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-5-snowman-squirrel/page-8/props/cms-test-5-snowman-squirrel-page-8-food-cover-open.webp",
+          "gcsPath": "assets/stories/cms-test-5-snowman-squirrel/page-8/props/cms-test-5-snowman-squirrel-page-8-food-cover-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-5-snowman-squirrel/page-10/props/cms-test-5-snowman-squirrel-page-10-curtains-open.webp",
+          "gcsPath": "assets/stories/cms-test-5-snowman-squirrel/page-10/props/cms-test-5-snowman-squirrel-page-10-curtains-open.webp"
+        }
+      ],
+      "assetCount": 17
+    },
+    {
+      "storyId": "cms-test-6-snowman-squirrel",
+      "storyDataPath": "cms-stories/cms-test-6-snowman-squirrel/story-data.json",
+      "assets": [
+        {
+          "localPath": "cms-stories/cms-test-6-snowman-squirrel/page-9/cms-test-6-snowman-squirrel-page-9.webp",
+          "gcsPath": "assets/stories/cms-test-6-snowman-squirrel/page-9/cms-test-6-snowman-squirrel-page-9.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-6-snowman-squirrel/page-7/cms-test-6-snowman-squirrel-page-7.webp",
+          "gcsPath": "assets/stories/cms-test-6-snowman-squirrel/page-7/cms-test-6-snowman-squirrel-page-7.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-6-snowman-squirrel/page-8/cms-test-6-snowman-squirrel-page-8.webp",
+          "gcsPath": "assets/stories/cms-test-6-snowman-squirrel/page-8/cms-test-6-snowman-squirrel-page-8.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-6-snowman-squirrel/page-6/cms-test-6-snowman-squirrel-page-6.webp",
+          "gcsPath": "assets/stories/cms-test-6-snowman-squirrel/page-6/cms-test-6-snowman-squirrel-page-6.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-6-snowman-squirrel/page-5/cms-test-6-snowman-squirrel-page-5.webp",
+          "gcsPath": "assets/stories/cms-test-6-snowman-squirrel/page-5/cms-test-6-snowman-squirrel-page-5.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-6-snowman-squirrel/page-3/cms-test-6-snowman-squirrel-page-3.webp",
+          "gcsPath": "assets/stories/cms-test-6-snowman-squirrel/page-3/cms-test-6-snowman-squirrel-page-3.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-6-snowman-squirrel/page-4/cms-test-6-snowman-squirrel-page-4.webp",
+          "gcsPath": "assets/stories/cms-test-6-snowman-squirrel/page-4/cms-test-6-snowman-squirrel-page-4.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-6-snowman-squirrel/page-2/cms-test-6-snowman-squirrel-page-2.webp",
+          "gcsPath": "assets/stories/cms-test-6-snowman-squirrel/page-2/cms-test-6-snowman-squirrel-page-2.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-6-snowman-squirrel/page-10/cms-test-6-snowman-squirrel-page-10.webp",
+          "gcsPath": "assets/stories/cms-test-6-snowman-squirrel/page-10/cms-test-6-snowman-squirrel-page-10.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-6-snowman-squirrel/cover/cms-test-6-snowman-squirrel-thumbnail.webp",
+          "gcsPath": "assets/stories/cms-test-6-snowman-squirrel/cover/cms-test-6-snowman-squirrel-thumbnail.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-6-snowman-squirrel/cover/cms-test-6-snowman-squirrel-cover.webp",
+          "gcsPath": "assets/stories/cms-test-6-snowman-squirrel/cover/cms-test-6-snowman-squirrel-cover.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-6-snowman-squirrel/page-1/cms-test-6-snowman-squirrel-page-1.webp",
+          "gcsPath": "assets/stories/cms-test-6-snowman-squirrel/page-1/cms-test-6-snowman-squirrel-page-1.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-6-snowman-squirrel/page-8/props/cms-test-6-snowman-squirrel-page-8-food-cover-open.webp",
+          "gcsPath": "assets/stories/cms-test-6-snowman-squirrel/page-8/props/cms-test-6-snowman-squirrel-page-8-food-cover-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-6-snowman-squirrel/page-6/props/cms-test-6-snowman-squirrel-page-6-basket-open.webp",
+          "gcsPath": "assets/stories/cms-test-6-snowman-squirrel/page-6/props/cms-test-6-snowman-squirrel-page-6-basket-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-6-snowman-squirrel/page-4/props/cms-test-6-snowman-squirrel-page-4-basket-open.webp",
+          "gcsPath": "assets/stories/cms-test-6-snowman-squirrel/page-4/props/cms-test-6-snowman-squirrel-page-4-basket-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-6-snowman-squirrel/page-10/props/cms-test-6-snowman-squirrel-page-10-curtains-open.webp",
+          "gcsPath": "assets/stories/cms-test-6-snowman-squirrel/page-10/props/cms-test-6-snowman-squirrel-page-10-curtains-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-6-snowman-squirrel/page-2/props/cms-test-6-snowman-squirrel-door-open.webp",
+          "gcsPath": "assets/stories/cms-test-6-snowman-squirrel/page-2/props/cms-test-6-snowman-squirrel-door-open.webp"
+        }
+      ],
+      "assetCount": 17
+    },
+    {
+      "storyId": "cms-test-7-snowman-squirrel",
+      "storyDataPath": "cms-stories/cms-test-7-snowman-squirrel/story-data.json",
+      "assets": [
+        {
+          "localPath": "cms-stories/cms-test-7-snowman-squirrel/page-8/cms-test-7-snowman-squirrel-page-8.webp",
+          "gcsPath": "assets/stories/cms-test-7-snowman-squirrel/page-8/cms-test-7-snowman-squirrel-page-8.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-7-snowman-squirrel/page-9/cms-test-7-snowman-squirrel-page-9.webp",
+          "gcsPath": "assets/stories/cms-test-7-snowman-squirrel/page-9/cms-test-7-snowman-squirrel-page-9.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-7-snowman-squirrel/page-7/cms-test-7-snowman-squirrel-page-7.webp",
+          "gcsPath": "assets/stories/cms-test-7-snowman-squirrel/page-7/cms-test-7-snowman-squirrel-page-7.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-7-snowman-squirrel/page-6/cms-test-7-snowman-squirrel-page-6.webp",
+          "gcsPath": "assets/stories/cms-test-7-snowman-squirrel/page-6/cms-test-7-snowman-squirrel-page-6.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-7-snowman-squirrel/page-5/cms-test-7-snowman-squirrel-page-5.webp",
+          "gcsPath": "assets/stories/cms-test-7-snowman-squirrel/page-5/cms-test-7-snowman-squirrel-page-5.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-7-snowman-squirrel/page-3/cms-test-7-snowman-squirrel-page-3.webp",
+          "gcsPath": "assets/stories/cms-test-7-snowman-squirrel/page-3/cms-test-7-snowman-squirrel-page-3.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-7-snowman-squirrel/page-4/cms-test-7-snowman-squirrel-page-4.webp",
+          "gcsPath": "assets/stories/cms-test-7-snowman-squirrel/page-4/cms-test-7-snowman-squirrel-page-4.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-7-snowman-squirrel/page-2/cms-test-7-snowman-squirrel-page-2.webp",
+          "gcsPath": "assets/stories/cms-test-7-snowman-squirrel/page-2/cms-test-7-snowman-squirrel-page-2.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-7-snowman-squirrel/page-1/cms-test-7-snowman-squirrel-page-1.webp",
+          "gcsPath": "assets/stories/cms-test-7-snowman-squirrel/page-1/cms-test-7-snowman-squirrel-page-1.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-7-snowman-squirrel/cover/cms-test-7-snowman-squirrel-thumbnail.webp",
+          "gcsPath": "assets/stories/cms-test-7-snowman-squirrel/cover/cms-test-7-snowman-squirrel-thumbnail.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-7-snowman-squirrel/cover/cms-test-7-snowman-squirrel-cover.webp",
+          "gcsPath": "assets/stories/cms-test-7-snowman-squirrel/cover/cms-test-7-snowman-squirrel-cover.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-7-snowman-squirrel/page-8/props/cms-test-7-snowman-squirrel-page-8-food-cover-open.webp",
+          "gcsPath": "assets/stories/cms-test-7-snowman-squirrel/page-8/props/cms-test-7-snowman-squirrel-page-8-food-cover-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-7-snowman-squirrel/page-10/cms-test-7-snowman-squirrel-page-10.webp",
+          "gcsPath": "assets/stories/cms-test-7-snowman-squirrel/page-10/cms-test-7-snowman-squirrel-page-10.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-7-snowman-squirrel/page-6/props/cms-test-7-snowman-squirrel-page-6-basket-open.webp",
+          "gcsPath": "assets/stories/cms-test-7-snowman-squirrel/page-6/props/cms-test-7-snowman-squirrel-page-6-basket-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-7-snowman-squirrel/page-4/props/cms-test-7-snowman-squirrel-page-4-basket-open.webp",
+          "gcsPath": "assets/stories/cms-test-7-snowman-squirrel/page-4/props/cms-test-7-snowman-squirrel-page-4-basket-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-7-snowman-squirrel/page-2/props/cms-test-7-snowman-squirrel-door-open.webp",
+          "gcsPath": "assets/stories/cms-test-7-snowman-squirrel/page-2/props/cms-test-7-snowman-squirrel-door-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-7-snowman-squirrel/page-10/props/cms-test-7-snowman-squirrel-page-10-curtains-open.webp",
+          "gcsPath": "assets/stories/cms-test-7-snowman-squirrel/page-10/props/cms-test-7-snowman-squirrel-page-10-curtains-open.webp"
+        }
+      ],
+      "assetCount": 17
+    },
+    {
+      "storyId": "cms-test-8-snowman-squirrel",
+      "storyDataPath": "cms-stories/cms-test-8-snowman-squirrel/story-data.json",
+      "assets": [
+        {
+          "localPath": "cms-stories/cms-test-8-snowman-squirrel/page-9/cms-test-8-snowman-squirrel-page-9.webp",
+          "gcsPath": "assets/stories/cms-test-8-snowman-squirrel/page-9/cms-test-8-snowman-squirrel-page-9.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-8-snowman-squirrel/page-7/cms-test-8-snowman-squirrel-page-7.webp",
+          "gcsPath": "assets/stories/cms-test-8-snowman-squirrel/page-7/cms-test-8-snowman-squirrel-page-7.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-8-snowman-squirrel/page-8/cms-test-8-snowman-squirrel-page-8.webp",
+          "gcsPath": "assets/stories/cms-test-8-snowman-squirrel/page-8/cms-test-8-snowman-squirrel-page-8.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-8-snowman-squirrel/page-6/cms-test-8-snowman-squirrel-page-6.webp",
+          "gcsPath": "assets/stories/cms-test-8-snowman-squirrel/page-6/cms-test-8-snowman-squirrel-page-6.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-8-snowman-squirrel/page-5/cms-test-8-snowman-squirrel-page-5.webp",
+          "gcsPath": "assets/stories/cms-test-8-snowman-squirrel/page-5/cms-test-8-snowman-squirrel-page-5.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-8-snowman-squirrel/page-4/cms-test-8-snowman-squirrel-page-4.webp",
+          "gcsPath": "assets/stories/cms-test-8-snowman-squirrel/page-4/cms-test-8-snowman-squirrel-page-4.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-8-snowman-squirrel/page-2/cms-test-8-snowman-squirrel-page-2.webp",
+          "gcsPath": "assets/stories/cms-test-8-snowman-squirrel/page-2/cms-test-8-snowman-squirrel-page-2.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-8-snowman-squirrel/page-10/cms-test-8-snowman-squirrel-page-10.webp",
+          "gcsPath": "assets/stories/cms-test-8-snowman-squirrel/page-10/cms-test-8-snowman-squirrel-page-10.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-8-snowman-squirrel/page-3/cms-test-8-snowman-squirrel-page-3.webp",
+          "gcsPath": "assets/stories/cms-test-8-snowman-squirrel/page-3/cms-test-8-snowman-squirrel-page-3.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-8-snowman-squirrel/page-1/cms-test-8-snowman-squirrel-page-1.webp",
+          "gcsPath": "assets/stories/cms-test-8-snowman-squirrel/page-1/cms-test-8-snowman-squirrel-page-1.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-8-snowman-squirrel/page-8/props/cms-test-8-snowman-squirrel-page-8-food-cover-open.webp",
+          "gcsPath": "assets/stories/cms-test-8-snowman-squirrel/page-8/props/cms-test-8-snowman-squirrel-page-8-food-cover-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-8-snowman-squirrel/cover/cms-test-8-snowman-squirrel-thumbnail.webp",
+          "gcsPath": "assets/stories/cms-test-8-snowman-squirrel/cover/cms-test-8-snowman-squirrel-thumbnail.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-8-snowman-squirrel/cover/cms-test-8-snowman-squirrel-cover.webp",
+          "gcsPath": "assets/stories/cms-test-8-snowman-squirrel/cover/cms-test-8-snowman-squirrel-cover.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-8-snowman-squirrel/page-4/props/cms-test-8-snowman-squirrel-page-4-basket-open.webp",
+          "gcsPath": "assets/stories/cms-test-8-snowman-squirrel/page-4/props/cms-test-8-snowman-squirrel-page-4-basket-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-8-snowman-squirrel/page-6/props/cms-test-8-snowman-squirrel-page-6-basket-open.webp",
+          "gcsPath": "assets/stories/cms-test-8-snowman-squirrel/page-6/props/cms-test-8-snowman-squirrel-page-6-basket-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-8-snowman-squirrel/page-2/props/cms-test-8-snowman-squirrel-door-open.webp",
+          "gcsPath": "assets/stories/cms-test-8-snowman-squirrel/page-2/props/cms-test-8-snowman-squirrel-door-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-8-snowman-squirrel/page-10/props/cms-test-8-snowman-squirrel-page-10-curtains-open.webp",
+          "gcsPath": "assets/stories/cms-test-8-snowman-squirrel/page-10/props/cms-test-8-snowman-squirrel-page-10-curtains-open.webp"
+        }
+      ],
+      "assetCount": 17
+    },
+    {
+      "storyId": "cms-test-9-snowman-squirrel",
+      "storyDataPath": "cms-stories/cms-test-9-snowman-squirrel/story-data.json",
+      "assets": [
+        {
+          "localPath": "cms-stories/cms-test-9-snowman-squirrel/page-9/cms-test-9-snowman-squirrel-page-9.webp",
+          "gcsPath": "assets/stories/cms-test-9-snowman-squirrel/page-9/cms-test-9-snowman-squirrel-page-9.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-9-snowman-squirrel/page-8/cms-test-9-snowman-squirrel-page-8.webp",
+          "gcsPath": "assets/stories/cms-test-9-snowman-squirrel/page-8/cms-test-9-snowman-squirrel-page-8.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-9-snowman-squirrel/page-7/cms-test-9-snowman-squirrel-page-7.webp",
+          "gcsPath": "assets/stories/cms-test-9-snowman-squirrel/page-7/cms-test-9-snowman-squirrel-page-7.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-9-snowman-squirrel/page-6/cms-test-9-snowman-squirrel-page-6.webp",
+          "gcsPath": "assets/stories/cms-test-9-snowman-squirrel/page-6/cms-test-9-snowman-squirrel-page-6.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-9-snowman-squirrel/page-5/cms-test-9-snowman-squirrel-page-5.webp",
+          "gcsPath": "assets/stories/cms-test-9-snowman-squirrel/page-5/cms-test-9-snowman-squirrel-page-5.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-9-snowman-squirrel/page-4/cms-test-9-snowman-squirrel-page-4.webp",
+          "gcsPath": "assets/stories/cms-test-9-snowman-squirrel/page-4/cms-test-9-snowman-squirrel-page-4.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-9-snowman-squirrel/page-3/cms-test-9-snowman-squirrel-page-3.webp",
+          "gcsPath": "assets/stories/cms-test-9-snowman-squirrel/page-3/cms-test-9-snowman-squirrel-page-3.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-9-snowman-squirrel/page-2/cms-test-9-snowman-squirrel-page-2.webp",
+          "gcsPath": "assets/stories/cms-test-9-snowman-squirrel/page-2/cms-test-9-snowman-squirrel-page-2.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-9-snowman-squirrel/page-1/cms-test-9-snowman-squirrel-page-1.webp",
+          "gcsPath": "assets/stories/cms-test-9-snowman-squirrel/page-1/cms-test-9-snowman-squirrel-page-1.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-9-snowman-squirrel/page-10/cms-test-9-snowman-squirrel-page-10.webp",
+          "gcsPath": "assets/stories/cms-test-9-snowman-squirrel/page-10/cms-test-9-snowman-squirrel-page-10.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-9-snowman-squirrel/page-8/props/cms-test-9-snowman-squirrel-page-8-food-cover-open.webp",
+          "gcsPath": "assets/stories/cms-test-9-snowman-squirrel/page-8/props/cms-test-9-snowman-squirrel-page-8-food-cover-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-9-snowman-squirrel/cover/cms-test-9-snowman-squirrel-thumbnail.webp",
+          "gcsPath": "assets/stories/cms-test-9-snowman-squirrel/cover/cms-test-9-snowman-squirrel-thumbnail.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-9-snowman-squirrel/cover/cms-test-9-snowman-squirrel-cover.webp",
+          "gcsPath": "assets/stories/cms-test-9-snowman-squirrel/cover/cms-test-9-snowman-squirrel-cover.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-9-snowman-squirrel/page-6/props/cms-test-9-snowman-squirrel-page-6-basket-open.webp",
+          "gcsPath": "assets/stories/cms-test-9-snowman-squirrel/page-6/props/cms-test-9-snowman-squirrel-page-6-basket-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-9-snowman-squirrel/page-4/props/cms-test-9-snowman-squirrel-page-4-basket-open.webp",
+          "gcsPath": "assets/stories/cms-test-9-snowman-squirrel/page-4/props/cms-test-9-snowman-squirrel-page-4-basket-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-9-snowman-squirrel/page-2/props/cms-test-9-snowman-squirrel-door-open.webp",
+          "gcsPath": "assets/stories/cms-test-9-snowman-squirrel/page-2/props/cms-test-9-snowman-squirrel-door-open.webp"
+        },
+        {
+          "localPath": "cms-stories/cms-test-9-snowman-squirrel/page-10/props/cms-test-9-snowman-squirrel-page-10-curtains-open.webp",
+          "gcsPath": "assets/stories/cms-test-9-snowman-squirrel/page-10/props/cms-test-9-snowman-squirrel-page-10-curtains-open.webp"
+        }
+      ],
+      "assetCount": 17
+    },
+    {
+      "storyId": "snuggle-little-wombat",
+      "storyDataPath": "cms-stories/snuggle-little-wombat/story-data.json",
+      "assets": [
+        {
+          "localPath": "cms-stories/snuggle-little-wombat/page-8/background.webp",
+          "gcsPath": "assets/stories/snuggle-little-wombat/page-8/background.webp"
+        },
+        {
+          "localPath": "cms-stories/snuggle-little-wombat/page-6/background.webp",
+          "gcsPath": "assets/stories/snuggle-little-wombat/page-6/background.webp"
+        },
+        {
+          "localPath": "cms-stories/snuggle-little-wombat/page-5/background.webp",
+          "gcsPath": "assets/stories/snuggle-little-wombat/page-5/background.webp"
+        },
+        {
+          "localPath": "cms-stories/snuggle-little-wombat/page-7/background.webp",
+          "gcsPath": "assets/stories/snuggle-little-wombat/page-7/background.webp"
+        },
+        {
+          "localPath": "cms-stories/snuggle-little-wombat/page-4/background.webp",
+          "gcsPath": "assets/stories/snuggle-little-wombat/page-4/background.webp"
+        },
+        {
+          "localPath": "cms-stories/snuggle-little-wombat/page-2/background.webp",
+          "gcsPath": "assets/stories/snuggle-little-wombat/page-2/background.webp"
+        },
+        {
+          "localPath": "cms-stories/snuggle-little-wombat/page-3/background.webp",
+          "gcsPath": "assets/stories/snuggle-little-wombat/page-3/background.webp"
+        },
+        {
+          "localPath": "cms-stories/snuggle-little-wombat/page-1/background.webp",
+          "gcsPath": "assets/stories/snuggle-little-wombat/page-1/background.webp"
+        },
+        {
+          "localPath": "cms-stories/snuggle-little-wombat/cover/thumbnail.webp",
+          "gcsPath": "assets/stories/snuggle-little-wombat/cover/thumbnail.webp"
+        },
+        {
+          "localPath": "cms-stories/snuggle-little-wombat/cover/cover-large.webp",
+          "gcsPath": "assets/stories/snuggle-little-wombat/cover/cover-large.webp"
+        },
+        {
+          "localPath": "cms-stories/snuggle-little-wombat/characters/wombat.webp",
+          "gcsPath": "assets/stories/snuggle-little-wombat/characters/wombat.webp"
+        },
+        {
+          "localPath": "cms-stories/snuggle-little-wombat/characters/mama-wombat.webp",
+          "gcsPath": "assets/stories/snuggle-little-wombat/characters/mama-wombat.webp"
+        }
+      ],
+      "assetCount": 12
+    },
+    {
+      "storyId": "squirrels-snowman",
+      "storyDataPath": "cms-stories/squirrels-snowman/story-data.json",
+      "assets": [
+        {
+          "localPath": "cms-stories/squirrels-snowman/page-9/background.webp",
+          "gcsPath": "assets/stories/squirrels-snowman/page-9/background.webp"
+        },
+        {
+          "localPath": "cms-stories/squirrels-snowman/page-7/background.webp",
+          "gcsPath": "assets/stories/squirrels-snowman/page-7/background.webp"
+        },
+        {
+          "localPath": "cms-stories/squirrels-snowman/page-8/background.webp",
+          "gcsPath": "assets/stories/squirrels-snowman/page-8/background.webp"
+        },
+        {
+          "localPath": "cms-stories/squirrels-snowman/page-6/background.webp",
+          "gcsPath": "assets/stories/squirrels-snowman/page-6/background.webp"
+        },
+        {
+          "localPath": "cms-stories/squirrels-snowman/page-5/background.webp",
+          "gcsPath": "assets/stories/squirrels-snowman/page-5/background.webp"
+        },
+        {
+          "localPath": "cms-stories/squirrels-snowman/page-2/background.webp",
+          "gcsPath": "assets/stories/squirrels-snowman/page-2/background.webp"
+        },
+        {
+          "localPath": "cms-stories/squirrels-snowman/page-4/background.webp",
+          "gcsPath": "assets/stories/squirrels-snowman/page-4/background.webp"
+        },
+        {
+          "localPath": "cms-stories/squirrels-snowman/page-3/background.webp",
+          "gcsPath": "assets/stories/squirrels-snowman/page-3/background.webp"
+        },
+        {
+          "localPath": "cms-stories/squirrels-snowman/page-10/background.webp",
+          "gcsPath": "assets/stories/squirrels-snowman/page-10/background.webp"
+        },
+        {
+          "localPath": "cms-stories/squirrels-snowman/page-1/background.webp",
+          "gcsPath": "assets/stories/squirrels-snowman/page-1/background.webp"
+        },
+        {
+          "localPath": "cms-stories/squirrels-snowman/cover/thumbnail.webp",
+          "gcsPath": "assets/stories/squirrels-snowman/cover/thumbnail.webp"
+        },
+        {
+          "localPath": "cms-stories/squirrels-snowman/cover/cover.webp",
+          "gcsPath": "assets/stories/squirrels-snowman/cover/cover.webp"
+        },
+        {
+          "localPath": "cms-stories/squirrels-snowman/page-8/props/food-cover-open.webp",
+          "gcsPath": "assets/stories/squirrels-snowman/page-8/props/food-cover-open.webp"
+        },
+        {
+          "localPath": "cms-stories/squirrels-snowman/page-6/props/basket-open.webp",
+          "gcsPath": "assets/stories/squirrels-snowman/page-6/props/basket-open.webp"
+        },
+        {
+          "localPath": "cms-stories/squirrels-snowman/page-2/props/door-open.webp",
+          "gcsPath": "assets/stories/squirrels-snowman/page-2/props/door-open.webp"
+        },
+        {
+          "localPath": "cms-stories/squirrels-snowman/page-4/props/basket-open.webp",
+          "gcsPath": "assets/stories/squirrels-snowman/page-4/props/basket-open.webp"
+        },
+        {
+          "localPath": "cms-stories/squirrels-snowman/page-10/props/curtains-open.webp",
+          "gcsPath": "assets/stories/squirrels-snowman/page-10/props/curtains-open.webp"
+        }
+      ],
+      "assetCount": 17
+    }
+  ]
+}

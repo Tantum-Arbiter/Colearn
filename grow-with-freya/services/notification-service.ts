@@ -239,11 +239,9 @@ class NotificationService {
   }
 
   private getNotificationMessage(recommendation: ScheduleRecommendation): string {
-    const activityMessages = {
+    const activityMessages: Record<string, string> = {
       story: `Time for a ${recommendation.duration}-minute story adventure! 📚`,
-      emotions: `Let's explore emotions together for ${recommendation.duration} minutes! 😊`,
       sensory: `Time for ${recommendation.duration} minutes of sensory play! 🧠`,
-      music: `Relax with ${recommendation.duration} minutes of calming music! 🎵`,
     };
 
     return activityMessages[recommendation.activity] || 'Time for some learning fun!';

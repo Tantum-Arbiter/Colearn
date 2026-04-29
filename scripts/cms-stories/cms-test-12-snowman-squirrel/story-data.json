@@ -7,7 +7,7 @@
   "coverImage": "assets/stories/cms-test-12-snowman-squirrel/cover/cms-test-12-snowman-squirrel-thumbnail.webp",
   "isAvailable": true,
   "ageRange": "2-5",
-  "duration": 10,
+  "duration": 11,
   "description": "CMS Test Story 12 - A delightful winter story about a squirrel who builds a snowman.",
   "isPremium": true,
   "author": "Freya Stories",
@@ -347,5 +347,7 @@
         "zh": "谁在窗外?\n我们挥手说晚安吗?"
       }
     }
-  ]
+  ],
+  "version": 1,
+  "checksum": "4e1483c5f13c463b"
 }

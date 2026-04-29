@@ -78,9 +78,9 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   );
   const storiesTranslateY = useSharedValue(currentPage === 'stories' ? 0 : screenHeight);
   const sensoryTranslateY = useSharedValue(currentPage === 'sensory' ? 0 : screenHeight);
-  const emotionsTranslateY = useSharedValue(currentPage === 'emotions' ? 0 : screenHeight);
-  const bedtimeTranslateY = useSharedValue(currentPage === 'bedtime' ? 0 : screenHeight);
   const screenTimeTranslateY = useSharedValue(currentPage === 'screen_time' ? 0 : screenHeight);
+  const practiseTranslateY = useSharedValue(currentPage === 'practise' ? 0 : screenHeight);
+  const freeplayTranslateY = useSharedValue(currentPage === 'freeplay' ? 0 : screenHeight);
   const accountTranslateY = useSharedValue(currentPage === 'account' ? 0 : -screenHeight);
 
   // Map page keys to their animation values
@@ -89,9 +89,9 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
     main: mainTranslateY,
     stories: storiesTranslateY,
     sensory: sensoryTranslateY,
-    emotions: emotionsTranslateY,
-    bedtime: bedtimeTranslateY,
     'screen_time': screenTimeTranslateY,
+    practise: practiseTranslateY,
+    freeplay: freeplayTranslateY,
     account: accountTranslateY,
   };
 
@@ -109,14 +109,14 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
     if (currentPage !== 'sensory') {
       sensoryTranslateY.value = screenHeight;
     }
-    if (currentPage !== 'emotions') {
-      emotionsTranslateY.value = screenHeight;
-    }
-    if (currentPage !== 'bedtime') {
-      bedtimeTranslateY.value = screenHeight;
-    }
     if (currentPage !== 'screen_time') {
       screenTimeTranslateY.value = screenHeight;
+    }
+    if (currentPage !== 'practise') {
+      practiseTranslateY.value = screenHeight;
+    }
+    if (currentPage !== 'freeplay') {
+      freeplayTranslateY.value = screenHeight;
     }
     if (currentPage !== 'account') {
       // Account page slides down from top
@@ -154,18 +154,18 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
       animationConfig
     );
 
-    emotionsTranslateY.value = withTiming(
-      currentPage === 'emotions' ? 0 : screenHeight,
-      animationConfig
-    );
-
-    bedtimeTranslateY.value = withTiming(
-      currentPage === 'bedtime' ? 0 : screenHeight,
-      animationConfig
-    );
-
     screenTimeTranslateY.value = withTiming(
       currentPage === 'screen_time' ? 0 : screenHeight,
+      animationConfig
+    );
+
+    practiseTranslateY.value = withTiming(
+      currentPage === 'practise' ? 0 : screenHeight,
+      animationConfig
+    );
+
+    freeplayTranslateY.value = withTiming(
+      currentPage === 'freeplay' ? 0 : screenHeight,
       animationConfig
     );
 

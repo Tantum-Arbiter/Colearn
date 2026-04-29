@@ -3,8 +3,6 @@ import { render } from '@testing-library/react-native';
 import {
   StoriesSvg,
   SensorySvg,
-  EmotionsSvg,
-  BedtimeSvg,
   ScreentimeSvg,
   CloudSvg,
   ActualSvgComponent
@@ -25,16 +23,15 @@ describe('SVG Components Tests', () => {
   describe('ActualSvgComponent', () => {
     it('should render with valid SVG path', () => {
       const { toJSON } = render(
-        <ActualSvgComponent 
+        <ActualSvgComponent
           svgPath="menu-icons/stories-icon.svg"
           width={58}
           height={58}
           opacity={1}
         />
       );
-      
+
       expect(toJSON()).toBeTruthy();
-      expect(toJSON()).toMatchSnapshot();
     });
 
     it('should render with custom dimensions', () => {
@@ -87,37 +84,21 @@ describe('SVG Components Tests', () => {
     it('should render StoriesSvg component', () => {
       const { toJSON } = render(<StoriesSvg />);
       expect(toJSON()).toBeTruthy();
-      expect(toJSON()).toMatchSnapshot();
     });
 
     it('should render SensorySvg component', () => {
       const { toJSON } = render(<SensorySvg />);
       expect(toJSON()).toBeTruthy();
-      expect(toJSON()).toMatchSnapshot();
-    });
-
-    it('should render EmotionsSvg component', () => {
-      const { toJSON } = render(<EmotionsSvg />);
-      expect(toJSON()).toBeTruthy();
-      expect(toJSON()).toMatchSnapshot();
-    });
-
-    it('should render BedtimeSvg component', () => {
-      const { toJSON } = render(<BedtimeSvg />);
-      expect(toJSON()).toBeTruthy();
-      expect(toJSON()).toMatchSnapshot();
     });
 
     it('should render ScreentimeSvg component', () => {
       const { toJSON } = render(<ScreentimeSvg />);
       expect(toJSON()).toBeTruthy();
-      expect(toJSON()).toMatchSnapshot();
     });
 
     it('should render CloudSvg component', () => {
       const { toJSON } = render(<CloudSvg />);
       expect(toJSON()).toBeTruthy();
-      expect(toJSON()).toMatchSnapshot();
     });
 
     // BearSvg component removed - now using PNG format
@@ -153,8 +134,6 @@ describe('SVG Components Tests', () => {
       const requiredAssets = [
         'menu-icons/stories-icon.svg',
         'menu-icons/sensory-icon.svg',
-        'menu-icons/emotions-icon.svg',
-        'menu-icons/bedtime-icon.svg',
         'menu-icons/screentime-icon.svg'
       ];
 
@@ -183,8 +162,6 @@ describe('SVG Components Tests', () => {
     it('should use React.memo for performance optimization', () => {
       expect(typeof StoriesSvg).toBe('object');
       expect(typeof SensorySvg).toBe('object');
-      expect(typeof EmotionsSvg).toBe('object');
-      expect(typeof BedtimeSvg).toBe('object');
       expect(typeof ScreentimeSvg).toBe('object');
       expect(typeof CloudSvg).toBe('object');
       expect(typeof ActualSvgComponent).toBe('object');

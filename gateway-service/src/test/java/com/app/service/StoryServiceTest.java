@@ -2,6 +2,7 @@ package com.app.service;
 
 import com.app.model.ContentVersion;
 import com.app.model.InteractiveElement;
+import com.app.model.MusicChallenge;
 import com.app.model.Story;
 import com.app.model.StoryPage;
 import com.app.repository.ContentVersionRepository;
@@ -55,26 +56,46 @@ class StoryServiceTest {
         testStory1.setCreatedAt(Instant.now());
         testStory1.setUpdatedAt(Instant.now());
 
-        // Add pages to story 1 (with interactive elements)
+        // Add pages to story 1 (covering all interaction types)
         List<StoryPage> pages1 = new ArrayList<>();
+
+        // Page 1: Static page (no interaction)
         StoryPage page1 = new StoryPage();
         page1.setId("page-1");
         page1.setPageNumber(1);
         page1.setText("Once upon a time in a sleepy forest...");
+        page1.setInteractionType("none");
         pages1.add(page1);
 
-        // Page with interactive element
+        // Page 2: Interactive page (state change)
         StoryPage page2 = new StoryPage();
         page2.setId("page-2");
         page2.setPageNumber(2);
         page2.setText("What's inside this shed?");
         page2.setBackgroundImage("assets/stories/story-1/page-2/page-2.webp");
+        page2.setInteractionType("interactive_state_change");
 
         InteractiveElement doorElement = new InteractiveElement("door", "reveal", "assets/stories/story-1/page-2/door-open.webp");
         doorElement.setPosition(new InteractiveElement.Position(0.481, 0.337));
         doorElement.setSize(new InteractiveElement.Size(0.273, 0.301));
         page2.setInteractiveElements(Arrays.asList(doorElement));
         pages1.add(page2);
+
+        // Page 3: Music challenge page
+        StoryPage page3 = new StoryPage();
+        page3.setId("page-3");
+        page3.setPageNumber(3);
+        page3.setText("Gary the bear needs to move the rock.");
+        page3.setInteractionType("music_challenge");
+
+        MusicChallenge challenge = new MusicChallenge();
+        challenge.setInstrumentId("flute");
+        challenge.setPromptText("Play the flute to help Gary!");
+        challenge.setRequiredSequence(Arrays.asList("C", "D", "E", "C"));
+        challenge.setSuccessSongId("gary_rock_lift_theme_v1");
+        challenge.setSuccessStateId("rock_moved");
+        page3.setMusicChallenge(challenge);
+        pages1.add(page3);
 
         testStory1.setPages(pages1);
 
@@ -501,17 +522,21 @@ class StoryServiceTest {
         assertTrue(resultStory.isPresent());
 
         Story story = resultStory.get();
-        assertEquals(2, story.getPages().size());
+        assertEquals(3, story.getPages().size());
 
-        // Verify page without interactive elements
+        // Verify page 1: static (no interaction)
         StoryPage page1 = story.getPages().get(0);
+        assertEquals("none", page1.getInteractionType());
         assertNotNull(page1.getInteractiveElements());
         assertTrue(page1.getInteractiveElements().isEmpty());
+        assertNull(page1.getMusicChallenge());
 
-        // Verify page with interactive elements
+        // Verify page 2: interactive state change
         StoryPage page2 = story.getPages().get(1);
+        assertEquals("interactive_state_change", page2.getInteractionType());
         assertNotNull(page2.getInteractiveElements());
         assertEquals(1, page2.getInteractiveElements().size());
+        assertNull(page2.getMusicChallenge());
 
         InteractiveElement element = page2.getInteractiveElements().get(0);
         assertEquals("door", element.getId());
@@ -523,6 +548,17 @@ class StoryServiceTest {
         assertNotNull(element.getSize());
         assertEquals(0.273, element.getSize().getWidth(), 0.001);
         assertEquals(0.301, element.getSize().getHeight(), 0.001);
+
+        // Verify page 3: music challenge
+        StoryPage page3Retrieved = story.getPages().get(2);
+        assertEquals("music_challenge", page3Retrieved.getInteractionType());
+        assertNotNull(page3Retrieved.getMusicChallenge());
+        assertEquals("flute", page3Retrieved.getMusicChallenge().getInstrumentId());
+        assertEquals("Play the flute to help Gary!", page3Retrieved.getMusicChallenge().getPromptText());
+        assertEquals(4, page3Retrieved.getMusicChallenge().getRequiredSequence().size());
+        assertEquals(Arrays.asList("C", "D", "E", "C"), page3Retrieved.getMusicChallenge().getRequiredSequence());
+        assertEquals("gary_rock_lift_theme_v1", page3Retrieved.getMusicChallenge().getSuccessSongId());
+        assertEquals("rock_moved", page3Retrieved.getMusicChallenge().getSuccessStateId());
 
         verify(storyRepository, times(1)).findById("story-1");
     }
@@ -541,12 +577,21 @@ class StoryServiceTest {
         // Assert
         assertNotNull(result);
         Story savedStory = result.get();
-        assertEquals(2, savedStory.getPages().size());
+        assertEquals(3, savedStory.getPages().size());
+
+        // Verify interactive elements preserved
         assertNotNull(savedStory.getPages().get(1).getInteractiveElements());
         assertEquals(1, savedStory.getPages().get(1).getInteractiveElements().size());
 
+        // Verify music challenge preserved
+        StoryPage musicPage = savedStory.getPages().get(2);
+        assertEquals("music_challenge", musicPage.getInteractionType());
+        assertNotNull(musicPage.getMusicChallenge());
+        assertEquals("flute", musicPage.getMusicChallenge().getInstrumentId());
+        assertEquals(4, musicPage.getMusicChallenge().getRequiredSequence().size());
+
         verify(storyRepository, times(1)).save(testStory1);
-        // Checksum should include interactive elements data
+        // Checksum should include interactive elements and music challenge data
         verify(contentVersionRepository, times(1)).updateStoryChecksum(eq("story-1"), anyString());
     }
 }

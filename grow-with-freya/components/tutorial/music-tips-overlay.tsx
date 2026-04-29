@@ -7,81 +7,66 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import { useTranslation } from 'react-i18next';
 import { Fonts } from '@/constants/theme';
 import { useTutorial } from '@/contexts/tutorial-context';
+import { MUSIC_MODE_TOUR_STEPS } from './tutorial-content';
+import { useTranslation } from 'react-i18next';
 
 interface MusicTipsOverlayProps {
+  /** Whether the music challenge page is currently active */
+  isActive: boolean;
+  /** Force-show the overlay (e.g., from burger menu "Music Tips") */
   forceShow?: boolean;
+  /** Called when the overlay is dismissed */
   onClose?: () => void;
 }
 
 const STEP_ICONS: Record<string, string> = {
   'music_welcome': '🎵',
-  'binaural_science': '🧠',
-  'headphones_tip': '🎧',
-  'tantrum_tip': '😤',
-  'sleep_science': '🌙',
-  'sleep_routine': '💤',
-  'music_stories': '📖',
+  'music_instrument': '🎹',
+  'music_playing': '🎶',
+  'music_sheet': '📋',
+  'music_begin': '▶️',
+  'music_change': '🔄',
 };
 
-// Music tips step IDs for translation lookup
-const MUSIC_TIP_IDS = [
-  'music_welcome',
-  'binaural_science',
-  'headphones_tip',
-  'tantrum_tip',
-  'sleep_science',
-  'sleep_routine',
-  'music_stories',
-];
+const TUTORIAL_ID = 'music_mode_tour' as const;
 
 /**
- * Music Tips Overlay - Shows parent guidance about binaural beats and calming sounds
- * Displays on first visit to the music section
+ * Music Tips Overlay - Shows guidance for Music Mode on first use
+ * Follows the same pattern as ModeTipsOverlay.
  */
-export function MusicTipsOverlay({ forceShow = false, onClose }: MusicTipsOverlayProps) {
+export function MusicTipsOverlay({ isActive, forceShow = false, onClose }: MusicTipsOverlayProps) {
   const { t } = useTranslation();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
-  const { hasSeenMusic, markMusicViewed, shouldShowTutorial } = useTutorial();
-  const [isMounted, setIsMounted] = useState(false);
+  const { shouldShowTutorial, completeTutorial, startTutorial, activeTutorial } = useTutorial();
   const [isVisible, setIsVisible] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
 
-  const overlayOpacity = useSharedValue(0);
-  const cardOpacity = useSharedValue(0);
-  const cardScale = useSharedValue(0.9);
+  const opacity = useSharedValue(0);
+  const scale = useSharedValue(0.9);
+
+  const steps = MUSIC_MODE_TOUR_STEPS;
 
   const cardWidth = Math.min(screenWidth - 40, 340);
   const isPhoneLandscape = Math.min(screenWidth, screenHeight) < 600 && screenWidth > screenHeight;
 
-  const shouldShow = !hasSeenMusic && shouldShowTutorial('music_tips');
+  const shouldShow = isActive && shouldShowTutorial(TUTORIAL_ID) && activeTutorial === null;
 
   useEffect(() => {
-    if (forceShow) {
-      setIsMounted(true);
+    if (forceShow || shouldShow) {
+      if (!forceShow) {
+        startTutorial(TUTORIAL_ID);
+      }
       setIsVisible(true);
       setCurrentStep(0);
-      overlayOpacity.value = withTiming(1, { duration: 300 });
-      cardOpacity.value = withTiming(1, { duration: 300 });
-      cardScale.value = withSpring(1, { damping: 20, stiffness: 200 });
-    } else if (shouldShow) {
-      setIsMounted(true);
-      overlayOpacity.value = withTiming(0.5, { duration: 300 });
-
-      const timer = setTimeout(() => {
-        setIsVisible(true);
-        overlayOpacity.value = withTiming(1, { duration: 300 });
-        cardOpacity.value = withTiming(1, { duration: 300 });
-        cardScale.value = withSpring(1, { damping: 20, stiffness: 200 });
-      }, 800);
-      return () => clearTimeout(timer);
+      opacity.value = withTiming(1, { duration: 300 });
+      scale.value = withSpring(1, { damping: 15 });
     }
-  }, [shouldShow, forceShow, overlayOpacity, cardOpacity, cardScale]);
+  }, [shouldShow, opacity, scale, startTutorial, forceShow]);
 
   const handleNext = () => {
-    if (currentStep < MUSIC_TIP_IDS.length - 1) {
+    if (currentStep < steps.length - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
       handleClose();
@@ -95,36 +80,25 @@ export function MusicTipsOverlay({ forceShow = false, onClose }: MusicTipsOverla
   };
 
   const handleClose = () => {
-    cardOpacity.value = withTiming(0, { duration: 200 });
-    overlayOpacity.value = withTiming(0, { duration: 200 });
+    opacity.value = withTiming(0, { duration: 200 });
     setTimeout(() => {
       setIsVisible(false);
-      setIsMounted(false);
       if (!forceShow) {
-        markMusicViewed();
+        completeTutorial();
       }
       onClose?.();
     }, 200);
   };
 
-  const animatedOverlayStyle = useAnimatedStyle(() => ({
-    opacity: overlayOpacity.value,
-  }));
-
   const animatedCardStyle = useAnimatedStyle(() => ({
-    opacity: cardOpacity.value,
-    transform: [{ scale: cardScale.value }],
+    opacity: opacity.value,
+    transform: [{ scale: scale.value }],
   }));
 
-  const currentTipId = MUSIC_TIP_IDS[currentStep];
-  const currentTip = {
-    id: currentTipId,
-    title: t(`musicTips.${currentTipId}.title`),
-    description: t(`musicTips.${currentTipId}.description`),
-  };
-  if (!isMounted) return null;
+  if (!isVisible) return null;
 
-  const isLastStep = currentStep === MUSIC_TIP_IDS.length - 1;
+  const currentTip = steps[currentStep];
+  const isLastStep = currentStep === steps.length - 1;
   const isFirstStep = currentStep === 0;
 
   const landscapeCardStyle = isPhoneLandscape ? {
@@ -137,101 +111,97 @@ export function MusicTipsOverlay({ forceShow = false, onClose }: MusicTipsOverla
   };
 
   return (
-    <View style={styles.overlayContainer} pointerEvents="box-none">
-      <Animated.View style={[styles.overlay, animatedOverlayStyle]} pointerEvents="auto">
+    <View style={styles.absoluteContainer}>
+      <View style={styles.overlay}>
         <Pressable
           style={StyleSheet.absoluteFill}
           onPress={() => {}}
           onPressIn={() => {}}
           onPressOut={() => {}}
         />
-      </Animated.View>
-
-      {isVisible && currentTip && (
-        <View style={styles.cardContainer} pointerEvents="box-none">
-          <Animated.View style={[styles.card, landscapeCardStyle, animatedCardStyle]}>
-            {isPhoneLandscape ? (
-              <>
-                <View style={[styles.iconContainer, { marginBottom: 0, marginRight: 16 }]}>
-                  <Text style={styles.icon}>{STEP_ICONS[currentTip.id] || '🎵'}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.title, { marginBottom: 4 }]}>{currentTip.title}</Text>
-                  <Text style={[styles.description, { marginBottom: 8 }]}>{currentTip.description}</Text>
-                  <View style={[styles.buttonRow, { marginTop: 4 }]}>
-                    <View style={styles.progressDots}>
-                      {MUSIC_TIP_IDS.map((_, i) => (
-                        <View key={i} style={[styles.dot, i === currentStep && styles.dotActive]} />
-                      ))}
-                    </View>
-                    <View style={styles.navButtons}>
-                      {!isFirstStep && (
-                        <Pressable onPress={handlePrevious} style={styles.navButton}>
-                          <Ionicons name="chevron-back" size={18} color="#fff" />
-                        </Pressable>
-                      )}
-                      <Pressable onPress={handleNext} style={[styles.navButton, styles.nextButton]}>
-                        <Text style={[styles.nextText, { fontSize: 12 }]}>{isLastStep ? t('musicTips.go') : t('musicTips.next')}</Text>
-                      </Pressable>
-                      <Pressable onPress={handleClose} style={[styles.skipButton, { marginLeft: 8 }]}>
-                        <Text style={[styles.skipText, { fontSize: 11 }]}>{t('musicTips.skip')}</Text>
-                      </Pressable>
-                    </View>
+        <Animated.View style={[styles.card, landscapeCardStyle, animatedCardStyle]}>
+          {isPhoneLandscape ? (
+            <>
+              <View style={[styles.iconContainer, { marginBottom: 0, marginRight: 16 }]}>
+                <Text style={styles.icon}>{STEP_ICONS[currentTip.id] || '🎵'}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.title, { marginBottom: 4 }]}>{t(currentTip.titleKey)}</Text>
+                <Text style={[styles.description, { marginBottom: 8 }]}>{t(currentTip.descriptionKey)}</Text>
+                <View style={[styles.buttonRow, { marginTop: 4 }]}>
+                  <View style={styles.progressDots}>
+                    {steps.map((_, i) => (
+                      <View key={i} style={[styles.dot, i === currentStep && styles.dotActive]} />
+                    ))}
                   </View>
-                </View>
-              </>
-            ) : (
-              <>
-                <View style={styles.iconContainer}>
-                  <Text style={styles.icon}>{STEP_ICONS[currentTip.id] || '🎵'}</Text>
-                </View>
-
-                <Text style={styles.title}>{currentTip.title}</Text>
-                <Text style={styles.description}>{currentTip.description}</Text>
-
-                <View style={styles.progressDots}>
-                  {MUSIC_TIP_IDS.map((_, i) => (
-                    <View key={i} style={[styles.dot, i === currentStep && styles.dotActive]} />
-                  ))}
-                </View>
-
-                <View style={styles.buttonRow}>
-                  <Pressable onPress={handleClose} style={styles.skipButton}>
-                    <Text style={styles.skipText}>{t('musicTips.skipAll')}</Text>
-                  </Pressable>
-
                   <View style={styles.navButtons}>
                     {!isFirstStep && (
                       <Pressable onPress={handlePrevious} style={styles.navButton}>
-                        <Ionicons name="chevron-back" size={20} color="#fff" />
+                        <Ionicons name="chevron-back" size={18} color="#fff" />
                       </Pressable>
                     )}
                     <Pressable onPress={handleNext} style={[styles.navButton, styles.nextButton]}>
-                      <Text style={styles.nextText}>{isLastStep ? t('musicTips.letsGo') : t('musicTips.next')}</Text>
-                      {!isLastStep && <Ionicons name="chevron-forward" size={18} color="#fff" />}
+                      <Text style={[styles.nextText, { fontSize: 12 }]}>{isLastStep ? t('tutorial.buttons.gotIt') : t('tutorial.buttons.next')}</Text>
+                    </Pressable>
+                    <Pressable onPress={handleClose} style={[styles.skipButton, { marginLeft: 8 }]}>
+                      <Text style={[styles.skipText, { fontSize: 11 }]}>{t('tutorial.buttons.skip')}</Text>
                     </Pressable>
                   </View>
                 </View>
-              </>
-            )}
-          </Animated.View>
-        </View>
-      )}
+              </View>
+            </>
+          ) : (
+            <>
+              <View style={styles.iconContainer}>
+                <Text style={styles.icon}>{STEP_ICONS[currentTip.id] || '🎵'}</Text>
+              </View>
+
+              <Text style={styles.title}>{t(currentTip.titleKey)}</Text>
+              <Text style={styles.description}>{t(currentTip.descriptionKey)}</Text>
+
+              <View style={styles.progressDots}>
+                {steps.map((_, i) => (
+                  <View key={i} style={[styles.dot, i === currentStep && styles.dotActive]} />
+                ))}
+              </View>
+
+              <View style={styles.buttonRow}>
+                <Pressable onPress={handleClose} style={styles.skipButton}>
+                  <Text style={styles.skipText}>{t('tutorial.buttons.skip')}</Text>
+                </Pressable>
+
+                <View style={styles.navButtons}>
+                  {!isFirstStep && (
+                    <Pressable onPress={handlePrevious} style={styles.navButton}>
+                      <Ionicons name="chevron-back" size={20} color="#fff" />
+                    </Pressable>
+                  )}
+                  <Pressable onPress={handleNext} style={[styles.navButton, styles.nextButton]}>
+                    <Text style={styles.nextText}>{isLastStep ? t('tutorial.buttons.gotIt') : t('tutorial.buttons.next')}</Text>
+                    {!isLastStep && <Ionicons name="chevron-forward" size={18} color="#fff" />}
+                  </Pressable>
+                </View>
+              </View>
+            </>
+          )}
+        </Animated.View>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  overlayContainer: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 9999,
+  absoluteContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 4000,
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.75)',
-  },
-  cardContainer: {
-    ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -250,7 +220,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#E8F4F8',
+    backgroundColor: '#F0F0FF',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
@@ -329,4 +299,3 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
 });
-
