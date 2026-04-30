@@ -148,6 +148,9 @@ export function useMusicChallenge(
 ): MusicChallengeHookResult {
   const [state, setState] = useState<MusicChallengeState>('idle');
   const [isBreathActive, setIsBreathActive] = useState(false);
+  // Ref mirror so playNote always reads the latest value without stale closures
+  const isBreathActiveRef = useRef(false);
+  useEffect(() => { isBreathActiveRef.current = isBreathActive; }, [isBreathActive]);
   const [lastInputCorrect, setLastInputCorrect] = useState<boolean | null>(null);
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [sequenceResult, setSequenceResult] = useState<SequenceMatchResult | null>(null);
@@ -355,8 +358,10 @@ export function useMusicChallenge(
     // Always play the note sound so the child gets audio feedback on press
     playNoteAudio(note);
 
-    // Only count the note toward the sequence if breath is detected (or mic not required)
-    if (config.micRequired && !isBreathActive) {
+    // Only count the note toward the sequence if breath is detected (or mic not required).
+    // Read from ref to avoid stale closure — breath state toggles every ~100ms and
+    // the press event may fire between polls.
+    if (config.micRequired && !isBreathActiveRef.current) {
       log.debug('Note pressed without breath — sound played but not counted');
       return;
     }
@@ -387,7 +392,7 @@ export function useMusicChallenge(
         handleSequenceComplete();
       }
     }
-  }, [state, instrument, config, isBreathActive, hasChords, handleSequenceComplete, playNoteAudio]);
+  }, [state, instrument, config, hasChords, handleSequenceComplete, playNoteAudio]);
 
   const previewNote = useCallback((note: string) => {
     playNoteAudio(note);
