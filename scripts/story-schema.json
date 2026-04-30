@@ -213,7 +213,7 @@
           "musicChallenge": {
             "type": "object",
             "description": "Music challenge configuration for this page",
-            "required": ["enabled", "instrumentId", "promptText", "mode", "requiredSequence", "successSongId", "autoPlaySuccessSong", "allowSkip", "micRequired", "fallbackAllowed", "hintLevel"],
+            "required": ["enabled", "instrumentId", "promptText", "mode", "autoPlaySuccessSong", "allowSkip", "micRequired", "fallbackAllowed", "hintLevel"],
             "properties": {
               "enabled": { "type": "boolean" },
               "instrumentId": { "type": "string", "description": "References a registered instrument asset" },
@@ -222,13 +222,13 @@
                 "type": "string",
                 "enum": ["guided", "free_play_optional"]
               },
+              "songId": { "type": "string", "description": "References a practice song by ID from the song registry (preferred over requiredSequence)" },
               "requiredSequence": {
                 "type": "array",
                 "items": { "type": "string" },
-                "minItems": 1,
-                "description": "Note sequence the child must play"
+                "description": "Explicit note sequence (optional if songId is provided)"
               },
-              "successSongId": { "type": "string", "description": "References a registered song asset" },
+              "successSongId": { "type": "string", "description": "Legacy — no longer used" },
               "successStateId": { "type": "string", "description": "Optional page state change on success" },
               "autoPlaySuccessSong": { "type": "boolean" },
               "allowSkip": { "type": "boolean" },

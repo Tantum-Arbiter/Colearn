@@ -32,13 +32,17 @@ public class MusicChallenge {
     @PropertyName("mode")
     private String mode; // "guided" or "free_play_optional"
 
+    @JsonProperty("songId")
+    @PropertyName("songId")
+    private String songId; // References a practice song in the client-side registry
+
     @JsonProperty("requiredSequence")
     @PropertyName("requiredSequence")
-    private List<String> requiredSequence;
+    private List<String> requiredSequence; // Optional if songId is provided
 
     @JsonProperty("successSongId")
     @PropertyName("successSongId")
-    private String successSongId;
+    private String successSongId; // Legacy — kept for backward compat
 
     @JsonProperty("successStateId")
     @PropertyName("successStateId")
@@ -97,6 +101,11 @@ public class MusicChallenge {
     @PropertyName("mode")
     public void setMode(String mode) { this.mode = mode; }
 
+    @PropertyName("songId")
+    public String getSongId() { return songId; }
+    @PropertyName("songId")
+    public void setSongId(String songId) { this.songId = songId; }
+
     @PropertyName("requiredSequence")
     public List<String> getRequiredSequence() { return requiredSequence; }
     @PropertyName("requiredSequence")
@@ -145,13 +154,14 @@ public class MusicChallenge {
         MusicChallenge that = (MusicChallenge) o;
         return enabled == that.enabled &&
                 Objects.equals(instrumentId, that.instrumentId) &&
+                Objects.equals(songId, that.songId) &&
                 Objects.equals(successSongId, that.successSongId) &&
                 Objects.equals(requiredSequence, that.requiredSequence);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(enabled, instrumentId, successSongId, requiredSequence);
+        return Objects.hash(enabled, instrumentId, songId, successSongId, requiredSequence);
     }
 
     @Override
@@ -160,8 +170,8 @@ public class MusicChallenge {
                 "enabled=" + enabled +
                 ", instrumentId='" + instrumentId + '\'' +
                 ", mode='" + mode + '\'' +
+                ", songId='" + songId + '\'' +
                 ", requiredSequence=" + requiredSequence +
-                ", successSongId='" + successSongId + '\'' +
                 '}';
     }
 }

@@ -115,6 +115,11 @@ export function useBreathDetector(
       // Enable recording mode, but explicitly keep playback routed to speaker.
       // On iOS, play-and-record sessions can otherwise get sent to the receiver/earpiece.
       await setAudioModeAsync(RECORDING_AUDIO_MODE);
+      // prepareToRecordAsync() is required on Android — MediaRecorder must be
+      // prepared before start(). Without this, record() silently fails and
+      // metering stays at -160 (silence). iOS is more forgiving but we call
+      // it on both platforms for consistency.
+      await recorder.prepareToRecordAsync();
       recorder.record();
       setIsListening(true);
       log.debug('Breath detector started listening');

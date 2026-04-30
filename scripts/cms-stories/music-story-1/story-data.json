@@ -126,13 +126,7 @@
         "instrumentId": "flute",
         "promptText": "Play the flute to help the squirrels explore!",
         "mode": "guided",
-        "requiredSequence": [
-          "C",
-          "D",
-          "E",
-          "C"
-        ],
-        "successSongId": "wombat_lullaby_v1",
+        "songId": "hot_cross_buns",
         "successStateId": "door_opened",
         "autoPlaySuccessSong": true,
         "allowSkip": false,
@@ -169,12 +163,7 @@
         "instrumentId": "flute",
         "promptText": "Play the flute as the squirrels scamper!",
         "mode": "guided",
-        "requiredSequence": [
-          "E",
-          "D",
-          "C"
-        ],
-        "successSongId": "wombat_lullaby_v1",
+        "songId": "raindrop_song",
         "autoPlaySuccessSong": true,
         "allowSkip": false,
         "micRequired": true,
@@ -225,13 +214,7 @@
         "instrumentId": "recorder",
         "promptText": "Play the recorder to reveal the snowman!",
         "mode": "guided",
-        "requiredSequence": [
-          "C",
-          "E",
-          "G",
-          "C"
-        ],
-        "successSongId": "wombat_burrow_v1",
+        "songId": "forest_wander",
         "successStateId": "snowman_revealed",
         "autoPlaySuccessSong": true,
         "allowSkip": false,
@@ -268,13 +251,7 @@
         "instrumentId": "recorder",
         "promptText": "Play the recorder freely to celebrate!",
         "mode": "free_play_optional",
-        "requiredSequence": [
-          "G",
-          "E",
-          "C",
-          "D"
-        ],
-        "successSongId": "wombat_burrow_v1",
+        "songId": "mountain_echo",
         "autoPlaySuccessSong": false,
         "allowSkip": true,
         "micRequired": false,

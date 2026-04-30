@@ -1,15 +1,17 @@
 /**
  * LocalMusicAssetRegistry
  *
- * Registry for locally bundled music assets: instruments, note samples, and success songs.
+ * Registry for locally bundled music assets: instruments and note samples.
  * All music assets are local on-device — CMS metadata only references stable asset IDs.
  *
  * Supported instruments: flute, recorder, ocarina, trumpet, clarinet, saxophone
  *
  * Asset directory structure:
  *   assets/music/instruments/{instrumentId}.png       — instrument image
- *   assets/music/notes/{instrumentFamily}/{note}.mp3  — individual note samples
- *   assets/music/songs/{songId}.mp3                   — success/celebration songs
+ *   assets/music/notes/{instrumentFamily}/{note}.wav  — individual note samples
+ *
+ * Success melodies are played back note-by-note using the instrument's own samples
+ * after a music challenge is completed — no pre-recorded song files needed.
  *
  * Stories configure which instrument to use via:
  *   - CMS metadata: page.musicChallenge.instrumentId (e.g., "flute")
@@ -48,13 +50,7 @@ export interface NoteLayoutItem {
   icon?: string; // Optional icon identifier for themed rendering
 }
 
-// Song definition
-export interface SongDefinition {
-  id: string;
-  displayName: string;
-  audio: number; // require() result for local audio
-  duration?: number; // Duration in seconds (optional, used for completion timer)
-}
+
 
 // ============================================================================
 // INSTRUMENT REGISTRY
@@ -208,113 +204,7 @@ const INSTRUMENTS: Record<string, InstrumentDefinition> = {
   },
 };
 
-// ============================================================================
-// SONG REGISTRY
-//
-// Songs are celebration tracks played after a challenge is completed.
-// To add a song: place the MP3 in assets/music/songs/ and add an entry here.
-// ============================================================================
 
-const SONGS: Record<string, SongDefinition> = {
-  // Uncomment and add require() when asset files exist:
-  // gary_rock_lift_theme_v1: {
-  //   id: 'gary_rock_lift_theme_v1',
-  //   displayName: 'Gary Lifts the Rock',
-  //   audio: require('@/assets/music/songs/gary_rock_lift_theme_v1.mp3'),
-  //   duration: 15,
-  // },
-  // Flute versions (default — base ID used when no instrument match found)
-  wombat_lullaby_v1: {
-    id: 'wombat_lullaby_v1',
-    displayName: 'Wombat Lullaby',
-    audio: require('@/assets/music/songs/wombat_lullaby_flute_v1.wav'),
-    duration: 10,
-  },
-  // Flute explicit match (for getInstrumentSong('wombat_lullaby_v1', 'flute'))
-  wombat_lullaby_flute_v1: {
-    id: 'wombat_lullaby_flute_v1',
-    displayName: 'Wombat Lullaby (Flute)',
-    audio: require('@/assets/music/songs/wombat_lullaby_flute_v1.wav'),
-    duration: 10,
-  },
-  wombat_burrow_v1: {
-    id: 'wombat_burrow_v1',
-    displayName: 'Wombat Burrow Song',
-    audio: require('@/assets/music/songs/wombat_burrow_flute_v1.wav'),
-    duration: 14,
-  },
-  wombat_burrow_flute_v1: {
-    id: 'wombat_burrow_flute_v1',
-    displayName: 'Wombat Burrow Song (Flute)',
-    audio: require('@/assets/music/songs/wombat_burrow_flute_v1.wav'),
-    duration: 14,
-  },
-  // Recorder versions
-  wombat_lullaby_recorder_v1: {
-    id: 'wombat_lullaby_recorder_v1',
-    displayName: 'Wombat Lullaby (Recorder)',
-    audio: require('@/assets/music/songs/wombat_lullaby_recorder_v1.wav'),
-    duration: 10,
-  },
-  wombat_burrow_recorder_v1: {
-    id: 'wombat_burrow_recorder_v1',
-    displayName: 'Wombat Burrow Song (Recorder)',
-    audio: require('@/assets/music/songs/wombat_burrow_recorder_v1.wav'),
-    duration: 14,
-  },
-  // Ocarina versions
-  wombat_lullaby_ocarina_v1: {
-    id: 'wombat_lullaby_ocarina_v1',
-    displayName: 'Wombat Lullaby (Ocarina)',
-    audio: require('@/assets/music/songs/wombat_lullaby_ocarina_v1.wav'),
-    duration: 10,
-  },
-  wombat_burrow_ocarina_v1: {
-    id: 'wombat_burrow_ocarina_v1',
-    displayName: 'Wombat Burrow Song (Ocarina)',
-    audio: require('@/assets/music/songs/wombat_burrow_ocarina_v1.wav'),
-    duration: 14,
-  },
-  // Trumpet versions
-  wombat_lullaby_trumpet_v1: {
-    id: 'wombat_lullaby_trumpet_v1',
-    displayName: 'Wombat Lullaby (Trumpet)',
-    audio: require('@/assets/music/songs/wombat_lullaby_trumpet_v1.wav'),
-    duration: 10,
-  },
-  wombat_burrow_trumpet_v1: {
-    id: 'wombat_burrow_trumpet_v1',
-    displayName: 'Wombat Burrow Song (Trumpet)',
-    audio: require('@/assets/music/songs/wombat_burrow_trumpet_v1.wav'),
-    duration: 14,
-  },
-  // Clarinet versions
-  wombat_lullaby_clarinet_v1: {
-    id: 'wombat_lullaby_clarinet_v1',
-    displayName: 'Wombat Lullaby (Clarinet)',
-    audio: require('@/assets/music/songs/wombat_lullaby_clarinet_v1.wav'),
-    duration: 10,
-  },
-  wombat_burrow_clarinet_v1: {
-    id: 'wombat_burrow_clarinet_v1',
-    displayName: 'Wombat Burrow Song (Clarinet)',
-    audio: require('@/assets/music/songs/wombat_burrow_clarinet_v1.wav'),
-    duration: 14,
-  },
-  // Saxophone versions
-  wombat_lullaby_saxophone_v1: {
-    id: 'wombat_lullaby_saxophone_v1',
-    displayName: 'Wombat Lullaby (Saxophone)',
-    audio: require('@/assets/music/songs/wombat_lullaby_saxophone_v1.wav'),
-    duration: 10,
-  },
-  wombat_burrow_saxophone_v1: {
-    id: 'wombat_burrow_saxophone_v1',
-    displayName: 'Wombat Burrow Song (Saxophone)',
-    audio: require('@/assets/music/songs/wombat_burrow_saxophone_v1.wav'),
-    duration: 14,
-  },
-};
 
 // Backward compatibility aliases (old ID → new ID)
 // The original implementation used "flute_basic" — now simplified to "flute".
@@ -350,68 +240,16 @@ export function getInstrumentsByFamily(family: InstrumentFamily): InstrumentDefi
 }
 
 /**
- * Get a song definition by ID.
- * Returns undefined if the song is not registered.
- */
-export function getSong(songId: string): SongDefinition | undefined {
-  const song = SONGS[songId];
-  if (!song) {
-    log.warn(`Song not found: ${songId}`);
-  }
-  return song;
-}
-
-/**
- * Resolve an instrument-matched song.
- *
- * Given a base song ID (e.g. "wombat_lullaby_v1") and the user's selected instrument
- * (e.g. "trumpet"), tries to find a song registered as "{base}_{instrument}" first
- * (e.g. "wombat_lullaby_trumpet_v1"). Falls back to the base song ID if no
- * instrument-specific version exists.
- *
- * This allows the success song to match the instrument the user picked in the
- * carousel (or changed via the burger menu).
- *
- * Song ID convention:
- *   base:       wombat_lullaby_v1         (flute default, or generic)
- *   matched:    wombat_lullaby_trumpet_v1 (instrument-specific version)
- *
- * The naming pattern splits the base ID at the last "_v" to insert the instrument:
- *   "wombat_lullaby_v1" → "wombat_lullaby" + "v1" → "wombat_lullaby_{instrument}_v1"
- */
-export function getInstrumentSong(
-  baseSongId: string,
-  instrumentId: string | undefined,
-): SongDefinition | undefined {
-  if (!instrumentId) return getSong(baseSongId);
-
-  // Build instrument-specific ID: split at last "_v" to insert instrument before version
-  const versionSplit = baseSongId.lastIndexOf('_v');
-  let instrumentSongId: string;
-  if (versionSplit > 0) {
-    const prefix = baseSongId.substring(0, versionSplit);
-    const suffix = baseSongId.substring(versionSplit + 1); // e.g. "v1"
-    instrumentSongId = `${prefix}_${instrumentId}_${suffix}`;
-  } else {
-    instrumentSongId = `${baseSongId}_${instrumentId}`;
-  }
-
-  // Try instrument-specific first, fall back to base
-  const matched = SONGS[instrumentSongId];
-  if (matched) {
-    return matched;
-  }
-  return getSong(baseSongId);
-}
-
-/**
  * Validate that all assets referenced by a music challenge config exist locally.
  * Returns a list of missing asset IDs (empty = all valid).
+ *
+ * Note: Only validates instrument and note assets. Success songs are no longer
+ * pre-recorded — the app plays back the requiredSequence note-by-note using the
+ * instrument's own samples after challenge completion.
  */
 export function validateMusicChallengeAssets(
   instrumentId: string,
   requiredSequence: string[],
-  successSongId: string
 ): string[] {
   const missing: string[] = [];
 
@@ -426,11 +264,6 @@ export function validateMusicChallengeAssets(
         missing.push(`note:${instrumentId}/${note}`);
       }
     }
-  }
-
-  // Only validate song if a successSongId is provided (empty = practice/freeplay mode)
-  if (successSongId && !SONGS[successSongId]) {
-    missing.push(`song:${successSongId}`);
   }
 
   if (missing.length > 0) {
@@ -448,26 +281,11 @@ export function getAvailableInstrumentIds(): string[] {
 }
 
 /**
- * Get all registered song IDs.
- */
-export function getAvailableSongIds(): string[] {
-  return Object.keys(SONGS);
-}
-
-/**
  * Register a new instrument at runtime (for testing or dynamic loading).
  */
 export function registerInstrument(instrument: InstrumentDefinition): void {
   INSTRUMENTS[instrument.id] = instrument;
   log.debug(`Registered instrument: ${instrument.id}`);
-}
-
-/**
- * Register a new song at runtime (for testing or dynamic loading).
- */
-export function registerSong(song: SongDefinition): void {
-  SONGS[song.id] = song;
-  log.debug(`Registered song: ${song.id}`);
 }
 
 // ============================================================================

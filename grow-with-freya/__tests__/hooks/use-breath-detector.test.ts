@@ -3,7 +3,7 @@ jest.mock('@/utils/logger', () => ({
 }));
 
 jest.mock('expo-audio', () => {
-  const mockRecorder = { record: jest.fn(), stop: jest.fn() };
+  const mockRecorder = { prepareToRecordAsync: jest.fn(() => Promise.resolve()), record: jest.fn(), stop: jest.fn() };
   const mockSetAudioModeAsync = jest.fn(() => Promise.resolve());
 
   return {
