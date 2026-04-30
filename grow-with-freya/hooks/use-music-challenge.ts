@@ -352,14 +352,14 @@ export function useMusicChallenge(
       return;
     }
 
-    // Require breath to be active (or mic not required)
+    // Always play the note sound so the child gets audio feedback on press
+    playNoteAudio(note);
+
+    // Only count the note toward the sequence if breath is detected (or mic not required)
     if (config.micRequired && !isBreathActive) {
-      log.debug('Note pressed without breath — ignored');
+      log.debug('Note pressed without breath — sound played but not counted');
       return;
     }
-
-    // Play note audio
-    playNoteAudio(note);
 
     // Track the held note
     activeNotesRef.current.add(note);
