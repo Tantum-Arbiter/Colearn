@@ -164,6 +164,11 @@ export function useMusicChallenge(
 
   // Track currently held notes for chord matching
   const activeNotesRef = useRef<Set<string>>(new Set());
+  // Notes pressed while breath was not yet active — pending processing
+  const pendingNotesRef = useRef<string[]>([]);
+  // Ambient breath sound — plays the base note softly when blowing without pressing buttons
+  const ambientPlayerRef = useRef<AudioPlayer | null>(null);
+  const AMBIENT_VOLUME = 0.25;
 
   // Resolve instrument assets
   const instrument = (config ? getInstrument(config.instrumentId) : null) ?? null;
@@ -225,18 +230,16 @@ export function useMusicChallenge(
       return;
     }
     const seq = resolvedSequence;
-    if (seq.length === 0) {
-      log.warn('Music challenge start() bailed: no sequence (neither requiredSequence nor songId resolved)');
-      return;
-    }
+    // For freeplay mode (empty sequence), we still transition to awaiting_input
+    // so playNote() works — there's just no sequence matcher to check against.
     setCurrentSequence(seq);
     setDifficultyLevel(1);
-    matcherRef.current = new SequenceMatcher(seq);
+    matcherRef.current = seq.length > 0 ? new SequenceMatcher(seq) : null;
     activeNotesRef.current.clear();
     setState('awaiting_input');
     setLastInputCorrect(null);
     setSequenceResult(null);
-    log.debug(`Music challenge started: ${config.instrumentId}, sequence: ${seq.join(' ')}`);
+    log.debug(`Music challenge started: ${config.instrumentId}, sequence: ${seq.length > 0 ? seq.join(' ') : '(freeplay)'}`);
   }, [config, missingAssets, state, resolvedSequence]);
 
   // Note samples are ~5 seconds long — no looping or crossfade needed.
@@ -261,6 +264,65 @@ export function useMusicChallenge(
       log.error('Failed to play note audio:', err);
     }
   }, [instrument, noteVolume]);
+
+  // --- Ambient breath sound ---
+  // When blowing without pressing any note button, play the instrument's base
+  // note (first in noteLayout, typically C) at low volume so the child gets
+  // audible feedback that the mic is working and the instrument is "alive".
+  const startAmbientSound = useCallback(() => {
+    if (!instrument) return;
+    // Use the first available note as the ambient tone
+    const baseNote = Object.keys(instrument.notes)[0];
+    const noteAudio = baseNote ? instrument.notes[baseNote] : null;
+    if (!noteAudio) return;
+    // Don't double-start
+    if (ambientPlayerRef.current) return;
+    try {
+      const player = createAudioPlayer(noteAudio);
+      player.volume = AMBIENT_VOLUME;
+      ambientPlayerRef.current = player;
+      player.play();
+      log.debug('Ambient breath sound started');
+    } catch (err) {
+      log.error('Failed to start ambient breath sound:', err);
+    }
+  }, [instrument, AMBIENT_VOLUME]);
+
+  const stopAmbientSound = useCallback(() => {
+    const player = ambientPlayerRef.current;
+    if (!player) return;
+    ambientPlayerRef.current = null;
+    // Quick fade out (~150ms)
+    const fadeSteps = 5;
+    const fadeInterval = 30;
+    let step = 0;
+    const startVol = player.volume ?? AMBIENT_VOLUME;
+    const fade = setInterval(() => {
+      step++;
+      try { player.volume = startVol * (1 - step / fadeSteps); } catch {}
+      if (step >= fadeSteps) {
+        clearInterval(fade);
+        try { player.pause(); } catch {}
+        try { player.release(); } catch {}
+      }
+    }, fadeInterval);
+    log.debug('Ambient breath sound stopped');
+  }, [AMBIENT_VOLUME]);
+
+  // Manage ambient sound: play when breath active + no notes held, stop otherwise
+  useEffect(() => {
+    if (
+      isBreathActive &&
+      state === 'awaiting_input' &&
+      activeNotesRef.current.size === 0 &&
+      pendingNotesRef.current.length === 0 &&
+      config?.micRequired
+    ) {
+      startAmbientSound();
+    } else {
+      stopAmbientSound();
+    }
+  }, [isBreathActive, state, config?.micRequired, startAmbientSound, stopAmbientSound]);
 
   // Check if the current sequence has any chord entries
   const hasChords = currentSequence.some(e => isChordEntry(e));
@@ -348,32 +410,15 @@ export function useMusicChallenge(
     }
   }, [onComplete, difficultyLevel, instrument, currentSequence, playSequenceAsAudio]);
 
-  const playNote = useCallback((note: string) => {
-    log.debug(`playNote called: note=${note}, state=${state}, instrument=${!!instrument}, config=${!!config}`);
-    if (state !== 'awaiting_input' || !instrument || !config) {
-      log.debug(`playNote bailed: state=${state}, instrument=${!!instrument}, config=${!!config}`);
-      return;
-    }
-
-    // Always play the note sound so the child gets audio feedback on press
-    playNoteAudio(note);
-
-    // Only count the note toward the sequence if breath is detected (or mic not required).
-    // Read from ref to avoid stale closure — breath state toggles every ~100ms and
-    // the press event may fire between polls.
-    if (config.micRequired && !isBreathActiveRef.current) {
-      log.debug('Note pressed without breath — sound played but not counted');
-      return;
-    }
-
-    // Track the held note
-    activeNotesRef.current.add(note);
-
-    // Skip sequence matching for free-play modes (empty sequence)
+  /**
+   * Process a note (or chord) against the sequence matcher.
+   * Separated from playNote so it can be called both on press (if breath active)
+   * and when breath activates while notes are already held.
+   */
+  const processNoteForSequence = useCallback((note: string) => {
     if (!matcherRef.current || currentSequence.length === 0) return;
 
     if (hasChords) {
-      // Chord mode: check if the current held notes satisfy the expected chord
       const result = matcherRef.current.processChord(activeNotesRef.current);
       setSequenceResult(result);
       setLastInputCorrect(result.lastInputCorrect);
@@ -381,7 +426,6 @@ export function useMusicChallenge(
         handleSequenceComplete();
       }
     } else {
-      // Single-note mode: exact ordered match (original behavior)
       const result = matcherRef.current.processNote(note);
       setSequenceResult(result);
       setLastInputCorrect(result.lastInputCorrect);
@@ -392,15 +436,60 @@ export function useMusicChallenge(
         handleSequenceComplete();
       }
     }
-  }, [state, instrument, config, hasChords, handleSequenceComplete, playNoteAudio]);
+  }, [currentSequence, hasChords, handleSequenceComplete]);
+
+  const playNote = useCallback((note: string) => {
+    log.debug(`playNote called: note=${note}, state=${state}, instrument=${!!instrument}, config=${!!config}`);
+    if (state !== 'awaiting_input' || !instrument || !config) {
+      log.debug(`playNote bailed: state=${state}, instrument=${!!instrument}, config=${!!config}`);
+      return;
+    }
+
+    // Always track the held note (regardless of breath)
+    activeNotesRef.current.add(note);
+    // Stop ambient breath sound — a real note is being played
+    stopAmbientSound();
+
+    if (!config.micRequired || isBreathActiveRef.current) {
+      // Breath active (or mic not required) → play sound + process sequence
+      playNoteAudio(note);
+      processNoteForSequence(note);
+    } else {
+      // No breath yet — silently queue, will play + process when breath arrives
+      pendingNotesRef.current.push(note);
+      log.debug('Note held without breath — queued silently');
+    }
+  }, [state, instrument, config, playNoteAudio, processNoteForSequence]);
+
+  // When breath activates while notes are held down → play and process them
+  useEffect(() => {
+    if (
+      isBreathActive &&
+      pendingNotesRef.current.length > 0 &&
+      state === 'awaiting_input' &&
+      matcherRef.current
+    ) {
+      log.debug(`Breath detected with ${pendingNotesRef.current.length} pending note(s)`);
+      const pending = [...pendingNotesRef.current];
+      pendingNotesRef.current = [];
+      for (const note of pending) {
+        // Only activate notes still held down
+        if (activeNotesRef.current.has(note)) {
+          playNoteAudio(note);
+          processNoteForSequence(note);
+        }
+      }
+    }
+  }, [isBreathActive, state, processNoteForSequence, playNoteAudio]);
 
   const previewNote = useCallback((note: string) => {
     playNoteAudio(note);
   }, [playNoteAudio]);
 
   const stopNote = useCallback((note: string) => {
-    // Remove from active notes (for chord tracking)
+    // Remove from active and pending notes
     activeNotesRef.current.delete(note);
+    pendingNotesRef.current = pendingNotesRef.current.filter(n => n !== note);
 
     // Dampen the note on release — fade out over ~200ms then release.
     const player = notePlayersRef.current.get(note);
@@ -420,7 +509,12 @@ export function useMusicChallenge(
         }
       }, fadeInterval);
     }
-  }, []);
+
+    // If all notes released while still blowing → restart ambient breath sound
+    if (activeNotesRef.current.size === 0 && isBreathActiveRef.current && config?.micRequired) {
+      startAmbientSound();
+    }
+  }, [config?.micRequired, startAmbientSound]);
 
   const retry = useCallback(() => {
     matcherRef.current?.reset();
@@ -461,12 +555,13 @@ export function useMusicChallenge(
 
   const cleanup = useCallback(() => {
     releaseAllNotePlayers();
+    stopAmbientSound();
     matcherRef.current = null;
     activeNotesRef.current.clear();
     setState('idle');
     setDifficultyLevel(1);
     setCurrentSequence([]);
-  }, [releaseAllNotePlayers]);
+  }, [releaseAllNotePlayers, stopAmbientSound]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -475,6 +570,10 @@ export function useMusicChallenge(
         try { player.release(); } catch {}
       });
       notePlayersRef.current.clear();
+      if (ambientPlayerRef.current) {
+        try { ambientPlayerRef.current.release(); } catch {}
+        ambientPlayerRef.current = null;
+      }
     };
   }, []);
 

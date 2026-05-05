@@ -27,6 +27,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import Animated, {
   useSharedValue,
@@ -79,6 +80,7 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
 }: InstrumentPickerOverlayProps) {
   const { t } = useTranslation();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   // Resolve all available instruments
   const instrumentIds = getAvailableInstrumentIds();
   const instruments: InstrumentDefinition[] = instrumentIds
@@ -182,7 +184,10 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
         },
       ]}>
         <Pressable
-          style={styles.closeButton}
+          style={[styles.closeButton, {
+            top: Math.max(insets.top + 5, 20),
+            right: Math.max(insets.right + 5, 20),
+          }]}
           onPress={onClose}
           testID="instrument-picker-close-button"
           accessibilityLabel={t('music.closeInstrumentPicker')}
@@ -394,8 +399,7 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     position: 'absolute',
-    top: 28,
-    right: 28,
+    // top and right are set dynamically via safe area insets
     width: 40,
     height: 40,
     borderRadius: 20,
