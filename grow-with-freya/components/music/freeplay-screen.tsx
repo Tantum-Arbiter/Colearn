@@ -62,6 +62,7 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
   const [musicUiHidden, setMusicUiHidden] = useState(false);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [isLandscapeReady, setIsLandscapeReady] = useState(false);
+  const [instrumentIsRotated, setInstrumentIsRotated] = useState(false);
   const isExitingRef = useRef(false);
 
   // Freeplay config: free_play_optional mode, empty sequence, no mic required
@@ -197,6 +198,7 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
     breathDetector.stopListening();
     setShowSettingsMenu(false);
     setMusicUiHidden(false);
+    setInstrumentIsRotated(false);
     restoreMusicVolume();
     await restorePortrait();
     setSelectedInstrumentId(null);
@@ -303,7 +305,7 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
           allowSkip={false}
           onSkip={handleBack}
           onContinue={handleBack}
-          onRotationChange={() => {}}
+          onRotationChange={setInstrumentIsRotated}
           onPlayModeChange={(mode: PlayMode) => {
             if (mode === 'blow') {
               breathDetector.startListening();
@@ -368,16 +370,19 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
           top: Math.max(insets.top + 5, 20) + scaledButtonSize(50) + 10,
           right: Math.max(insets.right + 5, 20),
         }]}>
-          <Pressable
-            style={styles.menuItem}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setShowSettingsMenu(false);
-              handleChangeInstrument();
-            }}
-          >
-            <Text style={[styles.menuItemText, { fontSize: scaledFontSize(14) }]}>{t('music.changeInstrument')}</Text>
-          </Pressable>
+          {/* Hide Change Instrument when rotated (blow mode) — matches storybook reader */}
+          {!instrumentIsRotated && (
+            <Pressable
+              style={styles.menuItem}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setShowSettingsMenu(false);
+                handleChangeInstrument();
+              }}
+            >
+              <Text style={[styles.menuItemText, { fontSize: scaledFontSize(14) }]}>{t('music.changeInstrument')}</Text>
+            </Pressable>
+          )}
         </View>
       )}
     </View>
