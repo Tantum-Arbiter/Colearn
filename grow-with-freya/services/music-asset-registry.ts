@@ -147,13 +147,17 @@ const INSTRUMENTS: Record<string, InstrumentDefinition> = {
       D: require('@/assets/music/notes/trumpet/D.wav'),
       E: require('@/assets/music/notes/trumpet/E.wav'),
       F: require('@/assets/music/notes/trumpet/F.wav'),
+      G: require('@/assets/music/notes/trumpet/G.wav'),
+      A: require('@/assets/music/notes/trumpet/A.wav'),
     },
-    noteCount: 4,
+    noteCount: 6,
     noteLayout: [
       { note: 'C', label: '🛡️', color: '#FFA000', icon: 'shield' },
       { note: 'D', label: '⚔️', color: '#F4511E', icon: 'sword' },
       { note: 'E', label: '👑', color: '#FFD600', icon: 'crown' },
       { note: 'F', label: '🏰', color: '#6D4C41', icon: 'castle' },
+      { note: 'G', label: '🐉', color: '#D32F2F', icon: 'dragon' },
+      { note: 'A', label: '🔥', color: '#FF6F00', icon: 'fire' },
     ],
   },
 

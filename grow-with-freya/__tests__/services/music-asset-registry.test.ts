@@ -24,7 +24,7 @@ const EXPECTED_INSTRUMENTS = [
   { id: 'flute', family: 'flute', displayName: 'Magic Flute', noteCount: 6 },
   { id: 'recorder', family: 'recorder', displayName: 'Woodland Recorder', noteCount: 5 },
   { id: 'ocarina', family: 'ocarina', displayName: 'Enchanted Ocarina', noteCount: 5 },
-  { id: 'trumpet', family: 'trumpet', displayName: 'Golden Trumpet', noteCount: 4 },
+  { id: 'trumpet', family: 'trumpet', displayName: 'Golden Trumpet', noteCount: 6 },
   { id: 'clarinet', family: 'clarinet', displayName: 'Jazzy Clarinet', noteCount: 5 },
   { id: 'saxophone', family: 'saxophone', displayName: 'Sunshine Saxophone', noteCount: 5 },
 ];
