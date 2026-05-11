@@ -18,7 +18,6 @@ import {
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import Animated, {
@@ -35,6 +34,7 @@ import { InstrumentPickerOverlay } from '@/components/stories/instrument-picker-
 import { MusicChallengeUI } from '@/components/stories/music-challenge-ui';
 import { MusicSheetOverlay } from '@/components/stories/music-sheet-overlay';
 import { MusicControl } from '@/components/ui/music-control';
+import { PageHeader } from '@/components/ui/page-header';
 import { BearTopImage } from '@/components/main-menu/animated-components';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
@@ -79,7 +79,7 @@ const DIFFICULTY_STARS: Record<PracticeSongDifficulty, string> = {
 export function PractiseScreen({ onBack }: PractiseScreenProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const { scaledFontSize, scaledButtonSize, scaledPadding } = useAccessibility();
+  const { scaledFontSize, scaledButtonSize, scaledPadding, textSizeScale } = useAccessibility();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
   // Phase state
@@ -576,44 +576,24 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
 
   // ---- Render: Song library phase ----
   const songFontSize = scaledFontSize(18);
-  const titleFontSize = scaledFontSize(28);
   const previewFontSize = scaledFontSize(13);
   const diffBadgeFontSize = scaledFontSize(12);
-  const backBtnSize = scaledButtonSize(40);
 
   return (
     <View style={styles.container}>
       {renderStoriesBackground()}
 
-      {/* Header — padding matches story instrument mode controls */}
-      <View style={[styles.songHeader, { paddingTop: Math.max(insets.top + 5, 20) }]}>
-        <Pressable
-          style={[styles.backButton, { width: backBtnSize, height: backBtnSize }]}
-          onPress={handleBack}
-          accessibilityLabel={t('music.backToMenu')}
-        >
-          <Text style={{ fontSize: scaledFontSize(20), color: '#FFFFFF' }}>←</Text>
-        </Pressable>
-        <Text style={[styles.songTitle, { fontSize: titleFontSize }]}>
-          {t('music.songLibrary')}
-        </Text>
-        <Pressable
-          style={[styles.backButton, { width: backBtnSize, height: backBtnSize }]}
-          onPress={handleChangeInstrument}
-          accessibilityLabel={t('music.changeInstrument')}
-        >
-          <MaterialIcons name="music-note" size={scaledFontSize(20)} color="#FFFFFF" />
-        </Pressable>
-      </View>
+      {/* Shared page header — matches story selection screen */}
+      <PageHeader
+        title={t('music.songLibrary')}
+        onBack={handleBack}
+        subtitle={instrumentDef?.displayName}
+        rightActionIcon="musical-note"
+        onRightAction={handleChangeInstrument}
+      />
 
-      {/* Instrument indicator */}
-      {instrumentDef && (
-        <Text style={[styles.instrumentLabel, { fontSize: scaledFontSize(14) }]}>
-          {instrumentDef.displayName}
-        </Text>
-      )}
-
-      {/* Song list */}
+      {/* Song list — padded below the header like story selection */}
+      <View style={{ flex: 1, paddingTop: insets.top + 180 + (textSizeScale - 1) * 60, zIndex: 10 }}>
       <FlatList
         data={availableSongs}
         keyExtractor={(item) => item.id}
@@ -673,6 +653,7 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
           </Text>
         }
       />
+      </View>
     </View>
   );
 }
@@ -682,35 +663,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#1E3A8A',
   },
-  songHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingBottom: 8,
-    zIndex: 10,
-  },
-  backButton: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  songTitle: {
-    color: '#fff',
-    fontFamily: Fonts.primary,
-    fontWeight: 'bold',
-    textShadowColor: 'rgba(0,0,0,0.5)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-  },
-  instrumentLabel: {
-    color: 'rgba(255,255,255,0.7)',
-    fontFamily: Fonts.primary,
-    textAlign: 'center',
-    marginBottom: 8,
-    zIndex: 10,
-  },
+
   songList: {
     paddingHorizontal: 20,
     paddingTop: 8,
