@@ -142,8 +142,9 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
   const audioSessionControl = useMemo(() => ({
     pauseForPlayback: breathDetector.pauseForPlayback,
     resumeRecording: breathDetector.resumeRecording,
+    ensurePlaybackMode: breathDetector.ensurePlaybackMode,
     isListening: breathDetector.isListening,
-  }), [breathDetector.pauseForPlayback, breathDetector.resumeRecording, breathDetector.isListening]);
+  }), [breathDetector.pauseForPlayback, breathDetector.resumeRecording, breathDetector.ensurePlaybackMode, breathDetector.isListening]);
 
   const musicChallenge = useMusicChallenge(musicChallengeConfig, undefined, 0.4, audioSessionControl);
 

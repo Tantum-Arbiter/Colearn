@@ -235,8 +235,9 @@ export function StoryBookReader({
   const audioSessionControl = useMemo(() => ({
     pauseForPlayback: breathDetector.pauseForPlayback,
     resumeRecording: breathDetector.resumeRecording,
+    ensurePlaybackMode: breathDetector.ensurePlaybackMode,
     isListening: breathDetector.isListening,
-  }), [breathDetector.pauseForPlayback, breathDetector.resumeRecording, breathDetector.isListening]);
+  }), [breathDetector.pauseForPlayback, breathDetector.resumeRecording, breathDetector.ensurePlaybackMode, breathDetector.isListening]);
 
   // Music challenge hook
   const musicChallenge = useMusicChallenge(

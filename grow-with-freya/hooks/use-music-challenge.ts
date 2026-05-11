@@ -149,6 +149,10 @@ function generateHarderSequence(
 export interface AudioSessionControl {
   pauseForPlayback: () => Promise<void>;
   resumeRecording: () => void;
+  /** Ensure the iOS audio session is in playback-only mode (no recording).
+   *  Call before playing notes to avoid the first note being silenced
+   *  by a stale playAndRecord session from useAudioRecorder. */
+  ensurePlaybackMode: () => Promise<void>;
   /** Whether the recorder is currently listening (mic active) */
   isListening: boolean;
 }
@@ -162,9 +166,17 @@ export function useMusicChallenge(
   audioSessionControl?: AudioSessionControl,
 ): MusicChallengeHookResult {
   const [state, setState] = useState<MusicChallengeState>('idle');
-  const [isBreathActive, setIsBreathActive] = useState(false);
-  // Ref mirror so playNote always reads the latest value without stale closures
+  const [isBreathActive, setIsBreathActiveRaw] = useState(false);
+  // Ref mirror so playNote always reads the latest value without stale closures.
+  // Updated both via setBreathActive (immediate) and useEffect (sync from state)
+  // to avoid a one-render-cycle delay when MusicChallengeUI sets breathActive(true)
+  // on mount in press mode — without the immediate ref update, playNote would see
+  // false for the first frame and silently queue notes instead of playing them.
   const isBreathActiveRef = useRef(false);
+  const setIsBreathActive = useCallback((active: boolean) => {
+    isBreathActiveRef.current = active;   // Immediate — no render-cycle lag
+    setIsBreathActiveRaw(active);         // Also update state for re-renders
+  }, []);
   useEffect(() => { isBreathActiveRef.current = isBreathActive; }, [isBreathActive]);
   const [lastInputCorrect, setLastInputCorrect] = useState<boolean | null>(null);
   const [failedAttempts, setFailedAttempts] = useState(0);
@@ -252,6 +264,14 @@ export function useMusicChallenge(
     if (!config || missingAssets.length > 0) {
       log.debug(`Music challenge start() bailed: config=${!!config}, missingAssets=[${missingAssets.join(',')}]`);
       return;
+    }
+    // Ensure the iOS audio session is in playback mode before accepting input.
+    // On mount, useAudioRecorder (breath detector) may leave the session in
+    // playAndRecord mode. Without this, the first note played in press mode
+    // can be silenced because the session hasn't been restored yet.
+    const ctrl = audioSessionRef.current;
+    if (ctrl) {
+      void ctrl.ensurePlaybackMode();
     }
     const seq = resolvedSequence;
     // For freeplay mode (empty sequence), we still transition to awaiting_input
@@ -576,7 +596,15 @@ export function useMusicChallenge(
   }, [isBreathActive, state, config, processNoteForSequence, playNoteAudio, ensurePlaybackSession]);
 
   const previewNote = useCallback((note: string) => {
-    playNoteAudio(note);
+    // Ensure the audio session is in playback mode before playing.
+    // On iOS, useAudioRecorder's creation can leave the session in
+    // playAndRecord mode, which may silence the very first player.play().
+    const ctrl = audioSessionRef.current;
+    if (ctrl) {
+      void ctrl.ensurePlaybackMode().then(() => playNoteAudio(note));
+    } else {
+      playNoteAudio(note);
+    }
   }, [playNoteAudio]);
 
   // Fade out and release a single audio player over ~200ms.
