@@ -51,6 +51,8 @@ interface MusicChallengeUIProps {
   onPlayModeChange?: (mode: PlayMode) => void;
   /** Called when the user toggles the hide/show UI button */
   onVisibilityChange?: (hidden: boolean) => void;
+  /** Override safe-area insets (e.g. when the component is rendered inside a CSS-rotated container) */
+  insetsOverride?: { top: number; bottom: number; left: number; right: number };
 }
 
 /** Individual note button with its own bounce animation */
@@ -193,6 +195,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
   onRotationChange,
   onPlayModeChange,
   onVisibilityChange,
+  insetsOverride,
 }) => {
   const { t } = useTranslation();
   const [playMode, setPlayMode] = useState<PlayMode>('press');
@@ -200,7 +203,8 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
   const [uiHidden, setUiHidden] = useState(false);
   const activeNotesRef = useRef<Set<string>>(new Set());
   const { scaledFontSize, scaledButtonSize } = useAccessibility();
-  const insets = useSafeAreaInsets();
+  const systemInsets = useSafeAreaInsets();
+  const insets = insetsOverride ?? systemInsets;
 
   // Celebration animation values
   const celebrationScale = useSharedValue(0);
@@ -292,6 +296,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
 
   // The active sequence — use currentSequence from hook when available (for Go Harder levels)
   const activeSequence = challenge.currentSequence?.length > 0 ? challenge.currentSequence : requiredSequence;
+  const hasSequence = activeSequence.length > 0;
 
   // Song playback: highlight each note in sequence in time with the audio playback.
   // Holds highlight for the full note duration, then moves directly to the next note.
@@ -376,8 +381,9 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Top section: prompt OR celebration */}
-      <View style={styles.topSection}>
+      {/* Top section: prompt OR celebration.
+          When there's no sequence (freeplay), use equal flex so the instrument is centered. */}
+      <View style={[styles.topSection, !hasSequence && { flex: 1 }]}>
         {showCelebration ? (
           <Animated.View style={[
             styles.celebrationContainer,
@@ -455,10 +461,11 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
         </View>
       </View>
 
-      {/* Sequence dots — hidden when UI is toggled off */}
+      {/* Sequence dots — hidden when UI is toggled off or sequence is empty */}
       {/* Sequence dots — use currentSequence from challenge when available (for Go Harder levels) */}
       {(() => {
         const displaySeq = challenge.currentSequence?.length > 0 ? challenge.currentSequence : requiredSequence;
+        if (displaySeq.length === 0) return null;
         return (
           <View style={styles.sequenceContainer}>
             <View style={styles.sequenceRow}>
@@ -556,11 +563,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
                 </Text>
               </Pressable>
 
-              {playMode === 'blow' && (
-                <Text style={[styles.blowHint, { fontSize: scaledFontSize(12) }]}>
-                  {challenge.isBreathActive ? t('music.blowing') : t('music.blowWhileHolding')}
-                </Text>
-              )}
+
 
               {challenge.lastInputCorrect === false && (
                 <Text style={[styles.feedbackWrong, { fontSize: scaledFontSize(15) }]}>{t('music.tryAgain')}</Text>

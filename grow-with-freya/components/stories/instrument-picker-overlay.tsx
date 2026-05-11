@@ -69,6 +69,10 @@ interface InstrumentPickerOverlayProps {
   defaultInstrumentId?: string;
   /** Whether the picker should rotate into portrait orientation */
   isRotated?: boolean;
+  /** Optional: restrict to specific instrument IDs (e.g., only those that can play a song) */
+  filterInstrumentIds?: string[];
+  /** If true, the built-in blur/dark backdrop is hidden (caller provides its own) */
+  hideBackdrop?: boolean;
 }
 
 export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverlay({
@@ -77,12 +81,14 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
   onClose,
   defaultInstrumentId,
   isRotated = false,
+  filterInstrumentIds,
+  hideBackdrop = false,
 }: InstrumentPickerOverlayProps) {
   const { t } = useTranslation();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  // Resolve all available instruments
-  const instrumentIds = getAvailableInstrumentIds();
+  // Resolve all available instruments, optionally filtered
+  const instrumentIds = filterInstrumentIds ?? getAvailableInstrumentIds();
   const instruments: InstrumentDefinition[] = instrumentIds
     .map(id => getInstrument(id))
     .filter((i): i is InstrumentDefinition => i !== undefined);
@@ -170,7 +176,7 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
       style={[styles.overlay, overlayAnimatedStyle]}
       testID="instrument-picker-overlay"
     >
-      <BlurView intensity={40} style={StyleSheet.absoluteFill} tint="dark" />
+      {!hideBackdrop && <BlurView intensity={40} style={StyleSheet.absoluteFill} tint="dark" />}
       <View style={[
         styles.content,
         {

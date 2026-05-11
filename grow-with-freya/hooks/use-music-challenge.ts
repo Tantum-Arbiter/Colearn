@@ -52,6 +52,8 @@ export interface MusicChallengeHookResult {
   isMaxDifficulty: boolean;
   /** The currently active required sequence (may differ from config when difficulty > 1) */
   currentSequence: string[];
+  /** The resolved sequence from config (requiredSequence or songId lookup), available before start() */
+  resolvedSequence: string[];
 
   // Actions
   start: () => void;
@@ -140,16 +142,41 @@ function generateHarderSequence(
   });
 }
 
+/** Optional callbacks for switching the iOS audio session between
+ *  playAndRecord (mic active, quiet speaker) and playback-only (full volume).
+ *  When provided, the hook automatically pauses the recorder before playing
+ *  notes in blow mode and resumes it when all notes are released. */
+export interface AudioSessionControl {
+  pauseForPlayback: () => Promise<void>;
+  resumeRecording: () => void;
+  /** Ensure the iOS audio session is in playback-only mode (no recording).
+   *  Call before playing notes to avoid the first note being silenced
+   *  by a stale playAndRecord session from useAudioRecorder. */
+  ensurePlaybackMode: () => Promise<void>;
+  /** Whether the recorder is currently listening (mic active) */
+  isListening: boolean;
+}
+
 export function useMusicChallenge(
   config: MusicChallenge | undefined,
   onComplete?: () => void,
   /** Volume for note playback (0–1). Defaults to 1.0. */
   noteVolume = 1.0,
+  /** Audio session switching for blow mode full-volume playback */
+  audioSessionControl?: AudioSessionControl,
 ): MusicChallengeHookResult {
   const [state, setState] = useState<MusicChallengeState>('idle');
-  const [isBreathActive, setIsBreathActive] = useState(false);
-  // Ref mirror so playNote always reads the latest value without stale closures
+  const [isBreathActive, setIsBreathActiveRaw] = useState(false);
+  // Ref mirror so playNote always reads the latest value without stale closures.
+  // Updated both via setBreathActive (immediate) and useEffect (sync from state)
+  // to avoid a one-render-cycle delay when MusicChallengeUI sets breathActive(true)
+  // on mount in press mode — without the immediate ref update, playNote would see
+  // false for the first frame and silently queue notes instead of playing them.
   const isBreathActiveRef = useRef(false);
+  const setIsBreathActive = useCallback((active: boolean) => {
+    isBreathActiveRef.current = active;   // Immediate — no render-cycle lag
+    setIsBreathActiveRaw(active);         // Also update state for re-renders
+  }, []);
   useEffect(() => { isBreathActiveRef.current = isBreathActive; }, [isBreathActive]);
   const [lastInputCorrect, setLastInputCorrect] = useState<boolean | null>(null);
   const [failedAttempts, setFailedAttempts] = useState(0);
@@ -161,6 +188,8 @@ export function useMusicChallenge(
   const matcherRef = useRef<SequenceMatcher | null>(null);
   // Map of note → AudioPlayer so multiple notes can play simultaneously
   const notePlayersRef = useRef<Map<string, AudioPlayer>>(new Map());
+  // Track when each note started playing (for minimum tap duration)
+  const noteStartTimeRef = useRef<Map<string, number>>(new Map());
 
   // Track currently held notes for chord matching
   const activeNotesRef = useRef<Set<string>>(new Set());
@@ -169,6 +198,13 @@ export function useMusicChallenge(
   // Ambient breath sound — plays the base note softly when blowing without pressing buttons
   const ambientPlayerRef = useRef<AudioPlayer | null>(null);
   const AMBIENT_VOLUME = 0.25;
+
+  // Audio session switching state for blow mode full-volume playback
+  const blowActiveCountRef = useRef(0);
+  const isRecorderPausedRef = useRef(false);
+  // Keep a ref to audioSessionControl so callbacks always read the latest value
+  const audioSessionRef = useRef(audioSessionControl);
+  useEffect(() => { audioSessionRef.current = audioSessionControl; }, [audioSessionControl]);
 
   // Resolve instrument assets
   const instrument = (config ? getInstrument(config.instrumentId) : null) ?? null;
@@ -229,6 +265,14 @@ export function useMusicChallenge(
       log.debug(`Music challenge start() bailed: config=${!!config}, missingAssets=[${missingAssets.join(',')}]`);
       return;
     }
+    // Ensure the iOS audio session is in playback mode before accepting input.
+    // On mount, useAudioRecorder (breath detector) may leave the session in
+    // playAndRecord mode. Without this, the first note played in press mode
+    // can be silenced because the session hasn't been restored yet.
+    const ctrl = audioSessionRef.current;
+    if (ctrl) {
+      void ctrl.ensurePlaybackMode();
+    }
     const seq = resolvedSequence;
     // For freeplay mode (empty sequence), we still transition to awaiting_input
     // so playNote() works — there's just no sequence matcher to check against.
@@ -242,8 +286,10 @@ export function useMusicChallenge(
     log.debug(`Music challenge started: ${config.instrumentId}, sequence: ${seq.length > 0 ? seq.join(' ') : '(freeplay)'}`);
   }, [config, missingAssets, state, resolvedSequence]);
 
-  // Note samples are ~5 seconds long — no looping or crossfade needed.
-  // The note plays naturally for its full duration; on release we fade out.
+  // Play a note sample. The note sustains indefinitely by restarting playback
+  // when the sample ends (via a playbackStatusUpdate listener). This is more
+  // reliable than player.loop across different expo-audio versions and sample
+  // durations. The note only stops when stopNote fades it out.
   const playNoteAudio = useCallback((note: string) => {
     if (!instrument) return;
 
@@ -259,35 +305,30 @@ export function useMusicChallenge(
       const player = createAudioPlayer(noteAudio);
       player.volume = noteVolume;
       notePlayersRef.current.set(note, player);
+
+      // Restart when playback ends so the note sustains as long as the
+      // button is held. If the player has already been removed from
+      // notePlayersRef (stopNote was called), don't restart.
+      const subscription = player.addListener('playbackStatusUpdate', (status: { playing: boolean }) => {
+        if (!status.playing && notePlayersRef.current.get(note) === player) {
+          try {
+            player.seekTo(0);
+            player.play();
+          } catch {}
+        }
+      });
+      // Store the subscription cleanup so stopNote can remove it
+      (player as any).__loopSub = subscription;
+
+      noteStartTimeRef.current.set(note, Date.now());
       player.play();
     } catch (err) {
       log.error('Failed to play note audio:', err);
     }
   }, [instrument, noteVolume]);
 
-  // --- Ambient breath sound ---
-  // When blowing without pressing any note button, play the instrument's base
-  // note (first in noteLayout, typically C) at low volume so the child gets
-  // audible feedback that the mic is working and the instrument is "alive".
-  const startAmbientSound = useCallback(() => {
-    if (!instrument) return;
-    // Use the first available note as the ambient tone
-    const baseNote = Object.keys(instrument.notes)[0];
-    const noteAudio = baseNote ? instrument.notes[baseNote] : null;
-    if (!noteAudio) return;
-    // Don't double-start
-    if (ambientPlayerRef.current) return;
-    try {
-      const player = createAudioPlayer(noteAudio);
-      player.volume = AMBIENT_VOLUME;
-      ambientPlayerRef.current = player;
-      player.play();
-      log.debug('Ambient breath sound started');
-    } catch (err) {
-      log.error('Failed to start ambient breath sound:', err);
-    }
-  }, [instrument, AMBIENT_VOLUME]);
-
+  // --- Ambient breath sound cleanup ---
+  // Stop any ambient breath sound that may be playing.
   const stopAmbientSound = useCallback(() => {
     const player = ambientPlayerRef.current;
     if (!player) return;
@@ -309,20 +350,12 @@ export function useMusicChallenge(
     log.debug('Ambient breath sound stopped');
   }, [AMBIENT_VOLUME]);
 
-  // Manage ambient sound: play when breath active + no notes held, stop otherwise
+  // Stop ambient sound when breath stops or state changes away from awaiting_input
   useEffect(() => {
-    if (
-      isBreathActive &&
-      state === 'awaiting_input' &&
-      activeNotesRef.current.size === 0 &&
-      pendingNotesRef.current.length === 0 &&
-      config?.micRequired
-    ) {
-      startAmbientSound();
-    } else {
+    if (!isBreathActive || state !== 'awaiting_input') {
       stopAmbientSound();
     }
-  }, [isBreathActive, state, config?.micRequired, startAmbientSound, stopAmbientSound]);
+  }, [isBreathActive, state, stopAmbientSound]);
 
   // Check if the current sequence has any chord entries
   const hasChords = currentSequence.some(e => isChordEntry(e));
@@ -385,30 +418,61 @@ export function useMusicChallenge(
     };
   }, [instrument]);
 
-  /** Handle sequence completion — plays the completed sequence back note-by-note */
+  /** Handle sequence completion — plays the full song back note-by-note */
   const handleSequenceComplete = useCallback(() => {
     activeNotesRef.current.clear();
     setState('sequence_complete');
     log.debug(`Sequence completed! (difficulty ${difficultyLevel})`);
 
-    if (instrument && currentSequence.length > 0) {
-      // Play back the sequence note-by-note using the instrument's own samples.
-      // This ensures the celebration melody always matches what the user just played,
-      // regardless of difficulty level. The UI highlights each note in sync.
+    // Always play the full original song on completion (resolvedSequence),
+    // not just the current difficulty sequence. This gives the child the
+    // full extended celebration melody while "Amazing!" is displayed.
+    const successSequence = resolvedSequence.length > 0 ? resolvedSequence : currentSequence;
+
+    if (instrument && successSequence.length > 0) {
       setState('playing_success_song');
-      const cleanupPlayback = playSequenceAsAudio(currentSequence);
-      const noteMs = 500;
-      const totalMs = currentSequence.length * noteMs + 500; // extra 500ms buffer
-      setTimeout(() => {
-        cleanupPlayback?.();
-        setState('completed');
-        onComplete?.();
-      }, totalMs);
+
+      // If the recorder is active (blow mode), pause it first so the
+      // success song plays at full speaker volume instead of the quieter
+      // playAndRecord session.
+      const startPlayback = () => {
+        const cleanupPlayback = playSequenceAsAudio(successSequence);
+        const noteMs = 500;
+        const gapMs = 100;
+        // Calculate total time including extra gaps for repeated consecutive notes
+        let totalMs = 500; // buffer at end
+        for (let i = 0; i < successSequence.length; i++) {
+          totalMs += noteMs;
+          if (i > 0 && successSequence[i] === successSequence[i - 1]) {
+            totalMs += gapMs;
+          }
+        }
+        setTimeout(() => {
+          cleanupPlayback?.();
+          // Resume recording if it was paused
+          if (blowActiveCountRef.current <= 0 && isRecorderPausedRef.current) {
+            isRecorderPausedRef.current = false;
+            audioSessionRef.current?.resumeRecording();
+          }
+          setState('completed');
+          onComplete?.();
+        }, totalMs);
+      };
+
+      // Clear blow-mode state and pause recorder for full-volume playback
+      blowActiveCountRef.current = 0;
+      const ctrl = audioSessionRef.current;
+      if (ctrl && ctrl.isListening && !isRecorderPausedRef.current) {
+        isRecorderPausedRef.current = true;
+        void ctrl.pauseForPlayback().then(startPlayback);
+      } else {
+        startPlayback();
+      }
     } else {
       setState('completed');
       onComplete?.();
     }
-  }, [onComplete, difficultyLevel, instrument, currentSequence, playSequenceAsAudio]);
+  }, [onComplete, difficultyLevel, instrument, currentSequence, resolvedSequence, playSequenceAsAudio]);
 
   /**
    * Process a note (or chord) against the sequence matcher.
@@ -438,6 +502,33 @@ export function useMusicChallenge(
     }
   }, [currentSequence, hasChords, handleSequenceComplete]);
 
+  // Helper: ensure the iOS audio session is in playback-only mode (full volume)
+  // before playing a note in blow mode. If already paused, resolves immediately.
+  const ensurePlaybackSession = useCallback(async () => {
+    const ctrl = audioSessionRef.current;
+    if (!ctrl || !ctrl.isListening || isRecorderPausedRef.current) return;
+    isRecorderPausedRef.current = true;
+    await ctrl.pauseForPlayback();
+  }, []);
+
+  // Helper: resume recording when all blow-mode notes are released.
+  const maybeResumeRecording = useCallback(() => {
+    if (blowActiveCountRef.current <= 0 && isRecorderPausedRef.current) {
+      isRecorderPausedRef.current = false;
+      blowActiveCountRef.current = 0;
+      audioSessionRef.current?.resumeRecording();
+    }
+  }, []);
+
+  // Maximum sustain duration for blow-mode notes (ms). Since the iOS audio
+  // session can't simultaneously record from the mic at full speaker volume,
+  // we keep the session in playback mode while notes play and instead enforce
+  // a max sustain: notes auto-fade after this duration even if the key is
+  // still held, simulating the natural breath limit of a wind instrument.
+  // Pressing the key again while still blowing re-triggers the note.
+  const BLOW_MAX_SUSTAIN_MS = 3000;
+  const blowSustainTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
   const playNote = useCallback((note: string) => {
     log.debug(`playNote called: note=${note}, state=${state}, instrument=${!!instrument}, config=${!!config}`);
     if (state !== 'awaiting_input' || !instrument || !config) {
@@ -447,74 +538,194 @@ export function useMusicChallenge(
 
     // Always track the held note (regardless of breath)
     activeNotesRef.current.add(note);
-    // Stop ambient breath sound — a real note is being played
-    stopAmbientSound();
 
     if (!config.micRequired || isBreathActiveRef.current) {
-      // Breath active (or mic not required) → play sound + process sequence
+      // In blow mode with audioSessionControl → pause recorder for full volume first
+      if (config.micRequired && audioSessionRef.current?.isListening) {
+        blowActiveCountRef.current++;
+        void ensurePlaybackSession().then(() => {
+          playNoteAudio(note);
+          processNoteForSequence(note);
+          // Start a max-sustain timer: auto-fade after BLOW_MAX_SUSTAIN_MS
+          // so the note doesn't ring forever while the session is paused.
+          startBlowSustainTimer(note);
+        });
+        return;
+      }
+      // Press mode or no session control — play immediately
       playNoteAudio(note);
       processNoteForSequence(note);
     } else {
-      // No breath yet — silently queue, will play + process when breath arrives
+      // No breath yet — silently queue; will play + process when breath arrives
       pendingNotesRef.current.push(note);
-      log.debug('Note held without breath — queued silently');
+      log.debug('Note pressed without breath — queued silently');
     }
-  }, [state, instrument, config, playNoteAudio, processNoteForSequence]);
+  }, [state, instrument, config, playNoteAudio, processNoteForSequence, ensurePlaybackSession]);
 
-  // When breath activates while notes are held down → play and process them
+  // When breath activates while notes are held down → play and process them.
+  // Also handles session switching for blow mode full-volume playback.
   useEffect(() => {
     if (
       isBreathActive &&
       pendingNotesRef.current.length > 0 &&
-      state === 'awaiting_input' &&
-      matcherRef.current
+      state === 'awaiting_input'
     ) {
       log.debug(`Breath detected with ${pendingNotesRef.current.length} pending note(s)`);
       const pending = [...pendingNotesRef.current];
       pendingNotesRef.current = [];
-      for (const note of pending) {
-        // Only activate notes still held down
-        if (activeNotesRef.current.has(note)) {
+      const notesToPlay = pending.filter(n => activeNotesRef.current.has(n));
+      if (notesToPlay.length === 0) return;
+
+      if (config?.micRequired && audioSessionRef.current?.isListening) {
+        // Blow mode: pause recorder for full volume, then play all pending notes
+        blowActiveCountRef.current += notesToPlay.length;
+        void ensurePlaybackSession().then(() => {
+          for (const note of notesToPlay) {
+            playNoteAudio(note);
+            processNoteForSequence(note);
+            startBlowSustainTimer(note);
+          }
+        });
+      } else {
+        for (const note of notesToPlay) {
           playNoteAudio(note);
           processNoteForSequence(note);
         }
       }
     }
-  }, [isBreathActive, state, processNoteForSequence, playNoteAudio]);
+  }, [isBreathActive, state, config, processNoteForSequence, playNoteAudio, ensurePlaybackSession]);
 
   const previewNote = useCallback((note: string) => {
-    playNoteAudio(note);
+    // Ensure the audio session is in playback mode before playing.
+    // On iOS, useAudioRecorder's creation can leave the session in
+    // playAndRecord mode, which may silence the very first player.play().
+    const ctrl = audioSessionRef.current;
+    if (ctrl) {
+      void ctrl.ensurePlaybackMode().then(() => playNoteAudio(note));
+    } else {
+      playNoteAudio(note);
+    }
   }, [playNoteAudio]);
+
+  // Fade out and release a single audio player over ~200ms.
+  // Also removes the loop listener so the sample doesn't restart during fade.
+  const fadeOutPlayer = useCallback((player: AudioPlayer) => {
+    // Remove the loop-restart listener first
+    try { (player as any).__loopSub?.remove(); } catch {}
+
+    const fadeSteps = 5;
+    const fadeInterval = 40; // ms per step → ~200ms total fade
+    let step = 0;
+    const startVolume = player.volume ?? 1;
+    const fade = setInterval(() => {
+      step++;
+      try { player.volume = startVolume * (1 - step / fadeSteps); } catch {}
+      if (step >= fadeSteps) {
+        clearInterval(fade);
+        try { player.pause(); } catch {}
+        try { player.release(); } catch {}
+      }
+    }, fadeInterval);
+  }, []);
+
+  // Start a sustain timer for a blow-mode note. When it expires, the note
+  // fades out and the recorder resumes (same as if the key was released).
+  const startBlowSustainTimer = useCallback((note: string) => {
+    // Clear any existing timer for this note (e.g. re-triggered)
+    const existing = blowSustainTimersRef.current.get(note);
+    if (existing) clearTimeout(existing);
+
+    const timer = setTimeout(() => {
+      blowSustainTimersRef.current.delete(note);
+      log.debug(`Blow sustain timeout for ${note} — auto-fading`);
+      // Fade out the note player
+      const player = notePlayersRef.current.get(note);
+      if (player) {
+        notePlayersRef.current.delete(note);
+        fadeOutPlayer(player);
+      }
+      noteStartTimeRef.current.delete(note);
+      activeNotesRef.current.delete(note);
+      // Decrement blow count and resume recording if all notes done
+      if (blowActiveCountRef.current > 0) {
+        blowActiveCountRef.current = Math.max(0, blowActiveCountRef.current - 1);
+        maybeResumeRecording();
+      }
+    }, BLOW_MAX_SUSTAIN_MS);
+    blowSustainTimersRef.current.set(note, timer);
+  }, [fadeOutPlayer, maybeResumeRecording]);
+
+  // Clear all sustain timers (for cleanup / breath stop)
+  const clearAllBlowSustainTimers = useCallback(() => {
+    for (const timer of blowSustainTimersRef.current.values()) {
+      clearTimeout(timer);
+    }
+    blowSustainTimersRef.current.clear();
+  }, []);
+
+  // Minimum audible duration for a note tap (ms). If the user releases
+  // a note faster than this, we delay the fade-out so the tap is always heard.
+  const MIN_TAP_DURATION_MS = 120;
 
   const stopNote = useCallback((note: string) => {
     // Remove from active and pending notes
     activeNotesRef.current.delete(note);
     pendingNotesRef.current = pendingNotesRef.current.filter(n => n !== note);
-
-    // Dampen the note on release — fade out over ~200ms then release.
-    const player = notePlayersRef.current.get(note);
-    if (player) {
-      const fadeSteps = 5;
-      const fadeInterval = 40; // ms per step → ~200ms total fade
-      let step = 0;
-      const startVolume = player.volume ?? 1;
-      const fade = setInterval(() => {
-        step++;
-        try { player.volume = startVolume * (1 - step / fadeSteps); } catch {}
-        if (step >= fadeSteps) {
-          clearInterval(fade);
-          try { player.pause(); } catch {}
-          try { player.release(); } catch {}
-          notePlayersRef.current.delete(note);
-        }
-      }, fadeInterval);
+    // Cancel any blow-sustain timer for this note (key released before timeout)
+    const sustainTimer = blowSustainTimersRef.current.get(note);
+    if (sustainTimer) {
+      clearTimeout(sustainTimer);
+      blowSustainTimersRef.current.delete(note);
     }
 
-    // If all notes released while still blowing → restart ambient breath sound
-    if (activeNotesRef.current.size === 0 && isBreathActiveRef.current && config?.micRequired) {
-      startAmbientSound();
+    const doStop = () => {
+      // Dampen the note on release — fade out over ~200ms then release.
+      const player = notePlayersRef.current.get(note);
+      if (player) {
+        notePlayersRef.current.delete(note);
+        fadeOutPlayer(player);
+      }
+      noteStartTimeRef.current.delete(note);
+
+      // In blow mode, decrement active count and resume recording when all released
+      if (config?.micRequired && blowActiveCountRef.current > 0) {
+        blowActiveCountRef.current = Math.max(0, blowActiveCountRef.current - 1);
+        maybeResumeRecording();
+      }
+    };
+
+    // Ensure the note plays for at least MIN_TAP_DURATION_MS so quick taps
+    // are always audible. If the note hasn't been held long enough, delay.
+    const startTime = noteStartTimeRef.current.get(note);
+    if (startTime) {
+      const elapsed = Date.now() - startTime;
+      if (elapsed < MIN_TAP_DURATION_MS) {
+        setTimeout(doStop, MIN_TAP_DURATION_MS - elapsed);
+        return;
+      }
     }
-  }, [config?.micRequired, startAmbientSound]);
+    doStop();
+  }, [fadeOutPlayer, config, maybeResumeRecording]);
+
+  // In blow mode (micRequired), fade out ALL active notes when breath stops.
+  // Notes should only sustain while the user is actively blowing + holding
+  // the button. When blowing stops, notes fade out even if button is still held.
+  // The breath detector already debounces deactivation (250ms), so this won't
+  // fire on brief metering dips.
+  useEffect(() => {
+    if (!isBreathActive && config?.micRequired && notePlayersRef.current.size > 0) {
+      log.debug('Breath stopped — fading out all active note players');
+      for (const [note, player] of notePlayersRef.current) {
+        notePlayersRef.current.delete(note);
+        fadeOutPlayer(player);
+      }
+      // Clear all sustain timers — notes are being stopped by breath-off
+      clearAllBlowSustainTimers();
+      // Reset blow-mode session state and resume recording
+      blowActiveCountRef.current = 0;
+      maybeResumeRecording();
+    }
+  }, [isBreathActive, config, fadeOutPlayer, clearAllBlowSustainTimers, maybeResumeRecording]);
 
   const retry = useCallback(() => {
     matcherRef.current?.reset();
@@ -554,25 +765,42 @@ export function useMusicChallenge(
   }, [instrument, config, difficultyLevel]);
 
   const cleanup = useCallback(() => {
-    releaseAllNotePlayers();
-    stopAmbientSound();
-    matcherRef.current = null;
-    activeNotesRef.current.clear();
-    setState('idle');
-    setDifficultyLevel(1);
-    setCurrentSequence([]);
-  }, [releaseAllNotePlayers, stopAmbientSound]);
+    log.debug('cleanup() called');
+    try {
+      releaseAllNotePlayers();
+      stopAmbientSound();
+      clearAllBlowSustainTimers();
+      matcherRef.current = null;
+      activeNotesRef.current.clear();
+      setState('idle');
+      setDifficultyLevel(1);
+      setCurrentSequence([]);
+      log.debug('cleanup() completed');
+    } catch (err) {
+      log.error('cleanup() error:', err);
+    }
+  }, [releaseAllNotePlayers, stopAmbientSound, clearAllBlowSustainTimers]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      notePlayersRef.current.forEach(player => {
-        try { player.release(); } catch {}
-      });
-      notePlayersRef.current.clear();
-      if (ambientPlayerRef.current) {
-        try { ambientPlayerRef.current.release(); } catch {}
-        ambientPlayerRef.current = null;
+      log.debug('useMusicChallenge unmounting — releasing resources');
+      try {
+        notePlayersRef.current.forEach(player => {
+          try { player.release(); } catch {}
+        });
+        notePlayersRef.current.clear();
+        if (ambientPlayerRef.current) {
+          try { ambientPlayerRef.current.release(); } catch {}
+          ambientPlayerRef.current = null;
+        }
+        for (const timer of blowSustainTimersRef.current.values()) {
+          clearTimeout(timer);
+        }
+        blowSustainTimersRef.current.clear();
+        noteStartTimeRef.current.clear();
+      } catch (err) {
+        log.error('useMusicChallenge unmount cleanup error:', err);
       }
     };
   }, []);
@@ -593,6 +821,7 @@ export function useMusicChallenge(
     difficultyLevel,
     isMaxDifficulty: difficultyLevel >= MAX_DIFFICULTY,
     currentSequence,
+    resolvedSequence,
 
     start,
     playNote,

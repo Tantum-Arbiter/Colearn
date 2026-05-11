@@ -12,13 +12,13 @@ import {
   Text,
   StyleSheet,
   Pressable,
+  useWindowDimensions,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
-import * as ScreenOrientation from 'expo-screen-orientation';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -56,14 +56,40 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledButtonSize } = useAccessibility();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
   const [selectedInstrumentId, setSelectedInstrumentId] = useState<string | null>(null);
   const [showPicker, setShowPicker] = useState(true);
+  // Keeps the picker overlay mounted during its fade-out animation
+  const [showPickerOverlay, setShowPickerOverlay] = useState(true);
   const [musicUiHidden, setMusicUiHidden] = useState(false);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
-  const [isLandscapeReady, setIsLandscapeReady] = useState(false);
   const [instrumentIsRotated, setInstrumentIsRotated] = useState(false);
-  const isExitingRef = useRef(false);
+
+  // Remap portrait safe-area insets for the 90° CSS-rotated container.
+  // Inside the rotated view: top←left, bottom←right, left←bottom, right←top
+  const rotatedInsets = useMemo(() => ({
+    top: insets.left,
+    bottom: insets.right,
+    left: insets.bottom,
+    right: insets.top,
+  }), [insets.top, insets.bottom, insets.left, insets.right]);
+
+  // Fade animations for crossfade between picker and instrument
+  const pickerOpacity = useSharedValue(1);
+  const instrumentContentOpacity = useSharedValue(0);
+  const pickerAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: pickerOpacity.value,
+  }));
+  // Rotated instrument overlay — fades in over the static blur
+  const instrumentOverlayAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: instrumentContentOpacity.value,
+    left: (screenWidth - screenHeight) / 2,
+    top: (screenHeight - screenWidth) / 2,
+    width: screenHeight,
+    height: screenWidth,
+    transform: [{ rotate: '90deg' }],
+  }));
 
   // Freeplay config: free_play_optional mode, empty sequence, no mic required
   const freeplayConfig = useMemo<MusicChallenge | undefined>(() => {
@@ -77,17 +103,38 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
       successSongId: '',
       autoPlaySuccessSong: false,
       allowSkip: true,
-      micRequired: false,
+      micRequired: true,           // Needed so blow mode gates notes behind breath detection
       fallbackAllowed: true,
       hintLevel: 'none',
     };
   }, [selectedInstrumentId]);
 
-  const musicChallenge = useMusicChallenge(freeplayConfig, undefined, 0.4);
-
   const breathDetector = useBreathDetector({
     enabled: !!selectedInstrumentId && !showPicker,
   });
+
+  // Audio session control — lets useMusicChallenge pause/resume the recorder
+  // internally so notes always play at full speaker volume in blow mode.
+  const audioSessionControl = useMemo(() => ({
+    pauseForPlayback: breathDetector.pauseForPlayback,
+    resumeRecording: breathDetector.resumeRecording,
+    ensurePlaybackMode: breathDetector.ensurePlaybackMode,
+    isListening: breathDetector.isListening,
+  }), [breathDetector.pauseForPlayback, breathDetector.resumeRecording, breathDetector.ensurePlaybackMode, breathDetector.isListening]);
+
+  const musicChallenge = useMusicChallenge(freeplayConfig, undefined, 0.4, audioSessionControl);
+
+  // Track the current play mode so we only sync breath state in blow mode.
+  const currentPlayModeRef = useRef<'blow' | 'press'>('press');
+
+  // Sync breath detector state to music challenge (matches story-book-reader).
+  // Only in blow mode — in press mode, MusicChallengeUI sets breathActive(true)
+  // permanently, and we must not overwrite it with the mic's false signal.
+  useEffect(() => {
+    if (selectedInstrumentId && !showPicker && currentPlayModeRef.current === 'blow') {
+      musicChallenge.setBreathActive(breathDetector.isBreathActive);
+    }
+  }, [breathDetector.isBreathActive, selectedInstrumentId, showPicker]);
 
   // Background music volume fade (mirror story-book-reader behaviour)
   const globalSound = useGlobalSound();
@@ -140,25 +187,37 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
 
   useEffect(() => () => clearMusicFade(), [clearMusicFade]);
 
+  // Duck background music as soon as the freeplay screen opens (picker visible).
+  // Save the original volume so we can restore it when leaving.
+  useEffect(() => {
+    const baseVol = preMusicVolumeRef.current ?? globalSound.volume;
+    preMusicVolumeRef.current = baseVol;
+    fadeMusicVolumeTo(0.1, 500);
+    // Restore volume on unmount (safety net)
+    return () => {
+      const vol = preMusicVolumeRef.current;
+      if (vol !== null) {
+        void globalSound.setVolume(vol);
+        preMusicVolumeRef.current = null;
+      }
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const instrumentDef = useMemo(() =>
     selectedInstrumentId ? getInstrument(selectedInstrumentId) : null,
   [selectedInstrumentId]);
 
-  // Lock to landscape when playing, restore portrait when leaving
+  // Fade the instrument overlay in when picker is hidden (playing)
   const isPlaying = !showPicker && !!selectedInstrumentId;
   useEffect(() => {
     if (isPlaying) {
-      isExitingRef.current = false;
-      setIsLandscapeReady(false);
-      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE)
-        .then(() => setIsLandscapeReady(true))
-        .catch(() => setIsLandscapeReady(true));
+      instrumentContentOpacity.value = 0;
+      // Slight delay so the picker fade-out completes first
+      const timer = setTimeout(() => {
+        instrumentContentOpacity.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.ease) });
+      }, 200);
+      return () => clearTimeout(timer);
     }
-    return () => {
-      if (isPlaying && !isExitingRef.current) {
-        ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
-      }
-    };
   }, [isPlaying]);
 
   // Auto-start the music challenge when playing and config is ready
@@ -177,37 +236,51 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
     }
   }, [isPlaying, freeplayConfig]);
 
-  const restorePortrait = useCallback(async () => {
-    isExitingRef.current = true;
-    try {
-      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-    } catch {}
-  }, []);
-
   const handleInstrumentSelect = useCallback((instrumentId: string) => {
-    // Save current bg music volume and fade to 0.1 (matches story-book-reader)
-    const baseVol = preMusicVolumeRef.current ?? globalSound.volume;
-    preMusicVolumeRef.current = baseVol;
-    fadeMusicVolumeTo(0.1);
+    // Fade background music to silence for instrument playing (matches story mode)
+    fadeMusicVolumeTo(0, 1000);
     setSelectedInstrumentId(instrumentId);
     setShowPicker(false);
-  }, [globalSound.volume, fadeMusicVolumeTo]);
+    // Fade out the picker overlay, then unmount it after the animation
+    pickerOpacity.value = withTiming(0, { duration: 500, easing: Easing.out(Easing.ease) });
+    setTimeout(() => setShowPickerOverlay(false), 550);
+  }, [pickerOpacity, fadeMusicVolumeTo]);
 
-  const handleChangeInstrument = useCallback(async () => {
+  const handleChangeInstrument = useCallback(() => {
     musicChallenge.cleanup();
     breathDetector.stopListening();
     setShowSettingsMenu(false);
     setMusicUiHidden(false);
     setInstrumentIsRotated(false);
-    restoreMusicVolume();
-    await restorePortrait();
-    setSelectedInstrumentId(null);
-    setShowPicker(true);
-  }, [musicChallenge, breathDetector, restorePortrait, restoreMusicVolume]);
+    // Raise volume back to ducked level (0.1) while on picker, not full restore
+    fadeMusicVolumeTo(0.1, 300);
+    // Fade out the instrument first, then show the picker after the fade completes
+    instrumentContentOpacity.value = withTiming(0, { duration: 500, easing: Easing.out(Easing.ease) });
+    setTimeout(() => {
+      setSelectedInstrumentId(null);
+      pickerOpacity.value = 1;
+      setShowPickerOverlay(true);
+      setShowPicker(true);
+    }, 550);
+  }, [musicChallenge, breathDetector, fadeMusicVolumeTo, instrumentContentOpacity, pickerOpacity]);
 
-  const handleBack = useCallback(async () => {
+  // Handle play-mode changes from MusicChallengeUI (matches story-book-reader).
+  // In "blow" mode we need the mic → start the breath detector.
+  // In "press" mode we don't need the mic → stop the detector and restore
+  // full-volume playback session so instrument notes are loud.
+  const handlePlayModeChange = useCallback(async (mode: 'blow' | 'press') => {
+    currentPlayModeRef.current = mode;
+    if (mode === 'blow') {
+      breathDetector.startListening();
+    } else {
+      await breathDetector.stopListening();
+      await breathDetector.ensurePlaybackMode();
+    }
+  }, [breathDetector]);
+
+  const handleBack = useCallback(() => {
     if (!showPicker && selectedInstrumentId) {
-      await handleChangeInstrument();
+      handleChangeInstrument();
     } else {
       musicChallenge.cleanup();
       breathDetector.stopListening();
@@ -264,126 +337,121 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
     </>
   );
 
-  // ---- Instrument picker ----
-  if (showPicker || !selectedInstrumentId || !instrumentDef) {
-    return (
-      <View style={styles.container}>
-        {renderStoriesBackground()}
-        <InstrumentPickerOverlay
-          visible
-          onSelect={handleInstrumentSelect}
-          onClose={onBack}
-        />
-      </View>
-    );
-  }
-
-  // ---- Freeplay UI ----
-  // Wait for landscape orientation before rendering instrument UI
-  if (!isLandscapeReady) {
-    return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <LinearGradient colors={['#4ECDC4', '#3B82F6', '#1E3A8A']} style={StyleSheet.absoluteFill} />
-      </View>
-    );
-  }
+  // ---- Single render tree ----
+  // Background is always visible. The picker overlay (with its own blur) sits on top
+  // and fades out on selection. The instrument blur + rotated content fades in underneath.
+  const showInstrumentUI = !!selectedInstrumentId && !!instrumentDef;
 
   return (
     <View style={styles.container}>
-      {/* Background behind the blur — same as stories page */}
+      {/* Background — always visible, never fades */}
       {renderStoriesBackground()}
 
-      {/* Overlay exactly matching story-book-reader's musicChallengeOverlay */}
-      <View style={styles.musicChallengeOverlay}>
+      {/* Static blur overlay — always mounted, never fades.
+          pointerEvents="none" so touches pass through to the rotated instrument view. */}
+      <View style={styles.musicChallengeOverlay} pointerEvents="none">
         <BlurView intensity={40} style={StyleSheet.absoluteFill} tint="dark" />
-        <MusicChallengeUI
-          challenge={musicChallenge}
-          promptText={t('music.freeplayPrompt')}
-          requiredSequence={[]}
-          noteLayout={instrumentDef.noteLayout}
-          showBreathButton={false}
-          allowSkip={false}
-          onSkip={handleBack}
-          onContinue={handleBack}
-          onRotationChange={setInstrumentIsRotated}
-          onPlayModeChange={(mode: PlayMode) => {
-            if (mode === 'blow') {
-              breathDetector.startListening();
-            } else {
-              breathDetector.stopListening();
-            }
-          }}
-          onVisibilityChange={setMusicUiHidden}
-        />
       </View>
 
-      {/* Top Left Controls — Exit (✕) button, matching story-book-reader */}
-      {!musicUiHidden && (
-        <View style={[styles.topLeftControls, {
-          paddingTop: Math.max(insets.top + 5, 20),
-          paddingLeft: Math.max(insets.left + 5, 20),
-        }]}>
-          <Pressable
-            style={[styles.exitButton, {
-              width: scaledButtonSize(50),
-              height: scaledButtonSize(50),
-              borderRadius: scaledButtonSize(25),
-            }]}
-            onPress={handleChangeInstrument}
-          >
-            <Text style={[styles.exitButtonText, { fontSize: scaledFontSize(20) }]}>✕</Text>
-          </Pressable>
-        </View>
+      {/* Instrument rotated content — renders when instrument selected, fades in/out */}
+      {showInstrumentUI && (
+          <Animated.View style={[styles.musicChallengeOverlayRotated, instrumentOverlayAnimatedStyle]}>
+            <MusicChallengeUI
+              challenge={musicChallenge}
+              promptText={t('music.freeplayPrompt')}
+              requiredSequence={[]}
+              noteLayout={instrumentDef!.noteLayout}
+              showBreathButton={breathDetector.useFallback}
+              allowSkip={false}
+              onSkip={handleBack}
+              onContinue={handleBack}
+              onRotationChange={setInstrumentIsRotated}
+              onPlayModeChange={handlePlayModeChange}
+              onVisibilityChange={setMusicUiHidden}
+              insetsOverride={rotatedInsets}
+            />
+
+            {/* Top Left Controls — Exit (✕) button */}
+            {!musicUiHidden && (
+              <View style={[styles.topLeftControls, {
+                paddingTop: Math.max(rotatedInsets.top + 5, 20),
+                paddingLeft: Math.max(rotatedInsets.left + 5, 20),
+              }]}>
+                <Pressable
+                  style={[styles.exitButton, {
+                    width: scaledButtonSize(50),
+                    height: scaledButtonSize(50),
+                    borderRadius: scaledButtonSize(25),
+                  }]}
+                  onPress={handleChangeInstrument}
+                >
+                  <Text style={[styles.exitButtonText, { fontSize: scaledFontSize(20) }]}>✕</Text>
+                </Pressable>
+              </View>
+            )}
+
+            {/* Top Right Controls — Sound + Burger menu */}
+            {!musicUiHidden && (
+              <View style={[styles.topRightControls, {
+                paddingTop: Math.max(rotatedInsets.top + 5, 20),
+                paddingRight: Math.max(rotatedInsets.right + 5, 20),
+              }]}>
+                <MusicControl size={28} variant="story" />
+                <Pressable
+                  style={[styles.settingsButton, {
+                    width: scaledButtonSize(50),
+                    height: scaledButtonSize(50),
+                    borderRadius: scaledButtonSize(25),
+                  }]}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setShowSettingsMenu(prev => !prev);
+                  }}
+                >
+                  <Text style={[styles.settingsButtonText, { fontSize: scaledFontSize(28), marginTop: 2 }]}>☰</Text>
+                </Pressable>
+              </View>
+            )}
+
+            {/* Settings overlay — tap outside to close */}
+            {showSettingsMenu && (
+              <Pressable style={styles.settingsOverlay} onPress={() => setShowSettingsMenu(false)} />
+            )}
+
+            {/* Settings dropdown menu */}
+            {showSettingsMenu && (
+              <View style={[styles.settingsMenu, {
+                top: Math.max(rotatedInsets.top + 5, 20) + scaledButtonSize(50) + 10,
+                right: Math.max(rotatedInsets.right + 5, 20),
+              }]}>
+                {!instrumentIsRotated && (
+                  <Pressable
+                    style={styles.menuItem}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setShowSettingsMenu(false);
+                      handleChangeInstrument();
+                    }}
+                  >
+                    <Text style={[styles.menuItemText, { fontSize: scaledFontSize(14) }]}>{t('music.changeInstrument')}</Text>
+                  </Pressable>
+                )}
+              </View>
+            )}
+          </Animated.View>
       )}
 
-      {/* Top Right Controls — Sound + Burger menu, matching story-book-reader */}
-      {!musicUiHidden && (
-        <View style={[styles.topRightControls, {
-          paddingTop: Math.max(insets.top + 5, 20),
-          paddingRight: Math.max(insets.right + 5, 20),
-        }]}>
-          <MusicControl size={28} variant="story" />
-          <Pressable
-            style={[styles.settingsButton, {
-              width: scaledButtonSize(50),
-              height: scaledButtonSize(50),
-              borderRadius: scaledButtonSize(25),
-            }]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setShowSettingsMenu(prev => !prev);
-            }}
-          >
-            <Text style={[styles.settingsButtonText, { fontSize: scaledFontSize(28), marginTop: 2 }]}>☰</Text>
-          </Pressable>
-        </View>
-      )}
-
-      {/* Settings overlay — tap outside to close */}
-      {showSettingsMenu && (
-        <Pressable style={styles.settingsOverlay} onPress={() => setShowSettingsMenu(false)} />
-      )}
-
-      {/* Settings dropdown menu */}
-      {showSettingsMenu && (
-        <View style={[styles.settingsMenu, {
-          top: Math.max(insets.top + 5, 20) + scaledButtonSize(50) + 10,
-          right: Math.max(insets.right + 5, 20),
-        }]}>
-          {/* Hide Change Instrument when rotated (blow mode) — matches storybook reader */}
-          {!instrumentIsRotated && (
-            <Pressable
-              style={styles.menuItem}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setShowSettingsMenu(false);
-                handleChangeInstrument();
-              }}
-            >
-              <Text style={[styles.menuItemText, { fontSize: scaledFontSize(14) }]}>{t('music.changeInstrument')}</Text>
-            </Pressable>
-          )}
-        </View>
+      {/* Instrument picker — sits on top of blur (no own backdrop).
+          Fades out when an instrument is selected; stays mounted briefly during fade. */}
+      {showPickerOverlay && (
+        <Animated.View style={[StyleSheet.absoluteFill, { zIndex: 20 }, pickerAnimatedStyle]}>
+          <InstrumentPickerOverlay
+            visible
+            onSelect={handleInstrumentSelect}
+            onClose={handleBack}
+            hideBackdrop
+          />
+        </Animated.View>
       )}
     </View>
   );
@@ -404,6 +472,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+  // Rotated overlay — CSS rotation 90° to simulate landscape in portrait mode.
+  // Positioning (left/top) and dimensions (width/height) are set by the animated style.
+  musicChallengeOverlayRotated: {
+    position: 'absolute',
+    zIndex: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
   },
   // ---- Story-reader-matching controls ----
   topLeftControls: {

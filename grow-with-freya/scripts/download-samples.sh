@@ -71,10 +71,10 @@ for note in C D E F G; do
 done
 echo ""
 
-# === TRUMPET (C5, D5, E5, F5) — using Philharmonia trombone (similar brass timbre) ===
+# === TRUMPET (C5, D5, E5, F5, G5, A5) — using Philharmonia trombone (similar brass timbre) ===
 echo "🎺 Trumpet (using trombone samples — similar brass timbre)..."
 mkdir -p "$NOTES_DIR/trumpet"
-for note in C D E F; do
+for note in C D E F G A; do
   download_and_convert "trombone" "$note" "5" "forte" "$NOTES_DIR/trumpet"
 done
 echo ""
@@ -141,7 +141,7 @@ echo "Philharmonia Orchestra (CC BY-SA 3.0):"
 echo "  Flute:     $(ls "$NOTES_DIR/flute/"*.wav 2>/dev/null | wc -l | tr -d ' ') files"
 echo "  Clarinet:  $(ls "$NOTES_DIR/clarinet/"*.wav 2>/dev/null | wc -l | tr -d ' ') files"
 echo "  Saxophone: $(ls "$NOTES_DIR/saxophone/"*.wav 2>/dev/null | wc -l | tr -d ' ') files"
-echo "  Trumpet:   $(ls "$NOTES_DIR/trumpet/"*.wav 2>/dev/null | wc -l | tr -d ' ') files (trombone samples)"
+echo "  Trumpet:   $(ls "$NOTES_DIR/trumpet/"*.wav 2>/dev/null | wc -l | tr -d ' ') files (trombone samples for brass timbre)"
 echo ""
 echo "VCSL (CC0):"
 echo "  Recorder:  $(ls "$NOTES_DIR/recorder/"*.wav 2>/dev/null | wc -l | tr -d ' ') files"
@@ -149,4 +149,4 @@ echo ""
 echo "VCSL + FreePats (CC0):"
 echo "  Ocarina:   $(ls "$NOTES_DIR/ocarina/"*.wav 2>/dev/null | wc -l | tr -d ' ') files"
 echo ""
-echo "Done! All 30 samples downloaded."
+echo "Done! All 32 samples downloaded."

@@ -12,7 +12,6 @@ import Animated, {
   withSequence,
   withSpring,
   Easing,
-  runOnJS,
 } from 'react-native-reanimated';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { useTranslation } from 'react-i18next';
@@ -170,6 +169,11 @@ export function StoryBookReader({
   const [showMusicSheet, setShowMusicSheet] = useState(false);
   // Track whether the instrument UI is currently rotated (blow mode / manual rotate)
   const [instrumentIsRotated, setInstrumentIsRotated] = useState(false);
+  // Animation shared value for sliding the music practice overlay down on close
+  const musicPracticeSlideY = useSharedValue(0);
+  const musicPracticeOpacity = useSharedValue(1);
+  // Track the current play mode for blow/press coordination.
+  const currentPlayModeRef = useRef<'blow' | 'press'>('press');
 
   // Get the CMS default instrument for the first music page (used as carousel default)
   const cmsDefaultInstrumentId = useMemo(() => {
@@ -220,6 +224,21 @@ export function StoryBookReader({
   // sequence note-by-note rather than a pre-recorded track.
   const successSongName = undefined;
 
+  // Breath detector for mic-based blow detection (must be before useMusicChallenge
+  // so we can pass audioSessionControl for full-volume blow mode playback)
+  const breathDetector = useBreathDetector({
+    enabled: isMusicChallengePage && (currentMusicChallenge?.micRequired ?? true),
+  });
+
+  // Audio session control — lets useMusicChallenge pause/resume the recorder
+  // internally so notes always play at full speaker volume in blow mode.
+  const audioSessionControl = useMemo(() => ({
+    pauseForPlayback: breathDetector.pauseForPlayback,
+    resumeRecording: breathDetector.resumeRecording,
+    ensurePlaybackMode: breathDetector.ensurePlaybackMode,
+    isListening: breathDetector.isListening,
+  }), [breathDetector.pauseForPlayback, breathDetector.resumeRecording, breathDetector.ensurePlaybackMode, breathDetector.isListening]);
+
   // Music challenge hook
   const musicChallenge = useMusicChallenge(
     isMusicChallengePage ? currentMusicChallenge : undefined,
@@ -234,17 +253,16 @@ export function StoryBookReader({
           musicChallenge.failedAttempts
         );
       }
-    }
+    },
+    1.0, // noteVolume
+    audioSessionControl,
   );
 
-  // Breath detector for mic-based blow detection
-  const breathDetector = useBreathDetector({
-    enabled: isMusicChallengePage && (currentMusicChallenge?.micRequired ?? true),
-  });
-
-  // Sync breath detector state to music challenge
+  // Sync breath detector state to music challenge.
+  // Only in blow mode — in press mode, MusicChallengeUI sets breathActive(true)
+  // permanently, and we must not overwrite it with the mic's false signal.
   useEffect(() => {
-    if (isMusicChallengePage) {
+    if (isMusicChallengePage && currentPlayModeRef.current === 'blow') {
       musicChallenge.setBreathActive(breathDetector.isBreathActive);
     }
   }, [breathDetector.isBreathActive, isMusicChallengePage]);
@@ -331,15 +349,17 @@ export function StoryBookReader({
   }, [clearMusicVolumeFade, globalSound]);
 
   // Step 1: User taps "Begin Playing" → show music sheet preview with faded background
+  // Duck the background music so the music sheet feels immersive.
   const handleBeginMusicChallenge = useCallback(() => {
     const openChallengePreview = async () => {
       if (!isMusicChallengePage || !currentMusicChallenge) return;
 
       await breathDetector.ensurePlaybackMode();
 
+      // Save current volume and duck background music when the sheet opens
       const baseVolume = preMusicChallengeVolumeRef.current ?? globalSound.volume;
       preMusicChallengeVolumeRef.current = baseVolume;
-      fadeMusicVolumeTo(0.1);
+      fadeMusicVolumeTo(0.1, 500);
 
       setMusicChallengePhase('preview');
       setShowMusicSheet(true);
@@ -349,15 +369,24 @@ export function StoryBookReader({
   }, [
     breathDetector,
     currentMusicChallenge,
-    fadeMusicVolumeTo,
-    globalSound.volume,
     isMusicChallengePage,
+    globalSound.volume,
+    fadeMusicVolumeTo,
   ]);
 
   // Step 2: User taps "Ready to Play" on the music sheet → close sheet, show instrument UI
+  // Fade background music the rest of the way to 0 (already ducked to 0.1 from step 1)
   const handleReadyToPlay = useCallback(() => {
     setShowMusicSheet(false);
+    // Reset animation values before showing the overlay (they may be left
+    // off-screen from a previous closeMusicPractice animation)
+    musicPracticeSlideY.value = 0;
+    musicPracticeOpacity.value = 1;
     setMusicChallengePhase('playing');
+
+    // Fade background music to silence for instrument practice
+    // preMusicChallengeVolumeRef was already saved in handleBeginMusicChallenge
+    fadeMusicVolumeTo(0, 1000);
 
     // Always (re)start the challenge — handles first play, retry, and revisit
     musicChallenge.start();
@@ -365,13 +394,14 @@ export function StoryBookReader({
     // which doesn't need the microphone.  Starting the recorder puts iOS into
     // playAndRecord mode and reduces speaker volume significantly.
     // The breath detector is started/stopped via handlePlayModeChange instead.
-  }, [musicChallenge, currentMusicChallenge, breathDetector]);
+  }, [musicChallenge, currentMusicChallenge, breathDetector, fadeMusicVolumeTo, globalSound.volume]);
 
   // Handle play-mode changes from MusicChallengeUI.
   // In "blow" mode we need the mic → start the breath detector (playAndRecord session).
   // In "press" mode we don't need the mic → stop the detector and restore full-volume
   // playback session so instrument notes are loud.
   const handlePlayModeChange = useCallback(async (mode: 'blow' | 'press') => {
+    currentPlayModeRef.current = mode;
     if (mode === 'blow' && currentMusicChallenge?.micRequired && currentMusicChallenge?.fallbackAllowed !== false) {
       breathDetector.startListening();
     } else {
@@ -407,6 +437,55 @@ export function StoryBookReader({
       restoreMusicVolume();
     }
   }, [musicChallengePhase, restoreMusicVolume]);
+
+  // Track whether the component is still mounted so deferred runOnJS callbacks
+  // from closeMusicPractice don't run after unmount (which causes crashes).
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
+
+  // Animate the music practice overlay down off screen, then reset state.
+  // Uses setTimeout instead of runOnJS inside the withTiming callback to avoid
+  // native crashes — runOnJS with inline anonymous functions in worklet callbacks
+  // can crash the Reanimated UI thread (no JS logs appear).
+  const closeMusicPractice = useCallback((opts?: { cleanup?: boolean; stopBreath?: boolean; resetUiHidden?: boolean }) => {
+    log.debug('closeMusicPractice called', opts);
+    const screenH = Dimensions.get('window').height;
+    const ANIM_DURATION = 300;
+    musicPracticeOpacity.value = withTiming(0, { duration: ANIM_DURATION });
+    musicPracticeSlideY.value = withTiming(
+      screenH,
+      { duration: ANIM_DURATION, easing: Easing.in(Easing.cubic) },
+    );
+
+    // Run cleanup on the JS thread after animation completes
+    setTimeout(() => {
+      if (!isMountedRef.current || isExitingRef.current) {
+        log.debug('closeMusicPractice cleanup skipped — unmounted or exiting');
+        return;
+      }
+      log.debug('closeMusicPractice cleanup executing');
+      try {
+        if (opts?.cleanup) { musicChallenge.cleanup(); }
+        if (opts?.stopBreath) { breathDetector.stopListening().catch(() => {}); }
+        if (opts?.resetUiHidden) { setMusicUiHidden(false); }
+        restoreMusicVolume();
+        // Set phase to idle LAST — this unmounts the overlay.
+        // Animation values stay off-screen; they're reset in handleReadyToPlay
+        // before the overlay is shown again, preventing any flash.
+        setMusicChallengePhase('idle');
+      } catch (err) {
+        log.warn('closeMusicPractice cleanup error:', err);
+      }
+    }, ANIM_DURATION + 50); // slightly longer than animation to ensure it's finished
+  }, [musicChallenge, breathDetector, restoreMusicVolume, musicPracticeSlideY, musicPracticeOpacity]);
+
+  const musicPracticeAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: musicPracticeOpacity.value,
+    transform: [{ translateY: musicPracticeSlideY.value }],
+  }));
 
   // Accessibility scaling
   const { scaledFontSize, scaledButtonSize, textSizeScale } = useAccessibility();
@@ -649,10 +728,26 @@ export function StoryBookReader({
   const handleExit = async () => {
     // Prevent double-tap on exit/close button
     if (isExiting) return;
+    log.debug('handleExit called');
     setIsExiting(true);
     isExitingRef.current = true; // Mark that exit animation will handle rotation
 
     try {
+      // Clean up music challenge resources before exiting — this ensures
+      // note players, sustain timers, and breath detector are stopped
+      // even if the user exits mid-challenge or right after closing practice.
+      // Only clean up if we're actually in a music state (not already idle)
+      // to avoid double-cleanup which can crash native audio modules.
+      try {
+        log.debug(`handleExit: musicChallengePhase=${musicChallengePhase}, cleaning up music`);
+        musicChallenge.cleanup();
+        // stopListening is async — fire-and-forget but catch errors.
+        // The unmount cleanup will also stop the recorder as a safety net.
+        breathDetector.stopListening().catch(() => {});
+      } catch (musicErr) {
+        log.warn('handleExit: music cleanup error:', musicErr);
+      }
+
       // Stop any playing narration/recording audio immediately
       if (playbackPlayer) {
         try {
@@ -1438,24 +1533,20 @@ export function StoryBookReader({
 
             {/* Music Challenge: instrument UI (only in 'playing' phase) */}
             {!isNextPage && page.interactionType === 'music_challenge' && page.musicChallenge?.enabled && musicChallengePhase === 'playing' && (
-              <View style={styles.musicChallengeOverlay}>
+              <Animated.View style={[styles.musicChallengeOverlay, musicPracticeAnimatedStyle]}>
                 <BlurView intensity={40} style={StyleSheet.absoluteFill} tint="dark" />
                 <MusicChallengeUI
                   challenge={musicChallenge}
                   promptText={page.musicChallenge.promptText}
-                  requiredSequence={page.musicChallenge.requiredSequence ?? musicChallenge.currentSequence}
+                  requiredSequence={musicChallenge.currentSequence.length > 0 ? musicChallenge.currentSequence : ((page.musicChallenge.requiredSequence?.length ?? 0) > 0 ? page.musicChallenge.requiredSequence! : musicChallenge.resolvedSequence)}
                   noteLayout={getInstrument(selectedInstrumentId || page.musicChallenge.instrumentId)?.noteLayout ?? []}
                   showBreathButton={breathDetector.useFallback || !page.musicChallenge.micRequired}
                   onSkip={() => {
                     musicChallenge.skip();
-                    setMusicChallengePhase('idle');
-                    restoreMusicVolume();
+                    closeMusicPractice();
                   }}
                   onContinue={() => {
-                    musicChallenge.cleanup();
-                    breathDetector.stopListening();
-                    setMusicChallengePhase('idle');
-                    restoreMusicVolume();
+                    closeMusicPractice({ cleanup: true, stopBreath: true });
                   }}
                   onMusicSheet={handleToggleMusicSheet}
                   allowSkip={page.musicChallenge.allowSkip}
@@ -1463,7 +1554,7 @@ export function StoryBookReader({
                   onPlayModeChange={handlePlayModeChange}
                   onVisibilityChange={setMusicUiHidden}
                 />
-              </View>
+              </Animated.View>
             )}
 
             {/* Page indicator overlay - Top Left, after exit button (hide on cover page and next page) */}
@@ -1710,8 +1801,10 @@ export function StoryBookReader({
       ]}>
 
 
-        {/* Top Left Controls - Exit Button (aligned with bottom back button) — hidden during music challenge */}
-        {!musicUiHidden && musicChallengePhase !== 'playing' && (
+        {/* Top Left Controls - Exit Button (aligned with bottom back button) */}
+        {/* During music challenge playing: X closes the challenge overlay and returns to story page */}
+        {/* Otherwise: X exits the story entirely */}
+        {!musicUiHidden && (
         <View style={[styles.topLeftControls, {
           paddingTop: Math.max(insets.top + 5, 20),
           paddingLeft: Math.max(insets.left + 5, 20)
@@ -1726,8 +1819,10 @@ export function StoryBookReader({
                 opacity: isExiting ? 0.5 : 1,
               }
             ]}
-            onPress={handleExit}
-            disabled={isExiting}
+            onPress={musicChallengePhase === 'playing' ? () => {
+              closeMusicPractice({ cleanup: true, stopBreath: true, resetUiHidden: true });
+            } : handleExit}
+            disabled={musicChallengePhase !== 'playing' && isExiting}
           >
             <Text style={[styles.exitButtonText, { fontSize: scaledFontSize(20) }]}>✕</Text>
           </Pressable>
@@ -2751,7 +2846,7 @@ export function StoryBookReader({
               <MusicChallengeUI
                 challenge={musicChallenge}
                 promptText={currentMusicChallenge.promptText}
-                requiredSequence={currentMusicChallenge.requiredSequence ?? musicChallenge.currentSequence}
+                requiredSequence={musicChallenge.currentSequence.length > 0 ? musicChallenge.currentSequence : ((currentMusicChallenge.requiredSequence?.length ?? 0) > 0 ? currentMusicChallenge.requiredSequence! : musicChallenge.resolvedSequence)}
                 noteLayout={getInstrument(currentMusicChallenge.instrumentId)?.noteLayout ?? []}
                 showBreathButton={breathDetector.useFallback || !currentMusicChallenge.micRequired}
                 onSkip={() => musicChallenge.skip()}
@@ -2897,7 +2992,7 @@ export function StoryBookReader({
 
       {/* "Begin Playing" — top center, aligned with nav buttons */}
       {isMusicChallengePage && !showMusicSheet && !showInstrumentPicker && musicChallengePhase === 'idle' && (
-        <View style={[styles.beginPlayingButton, { paddingTop: Math.max(insets.top + 5, 20) }]}>
+        <View style={[styles.beginPlayingButton, { paddingTop: Math.max(insets.top + 5, 20) }]} pointerEvents="box-none">
           <Pressable
             style={styles.beginPlayingButtonInner}
             onPress={handleBeginMusicChallenge}
@@ -2914,7 +3009,7 @@ export function StoryBookReader({
       <MusicSheetOverlay
         visible={showMusicSheet}
         onClose={handleCloseMusicSheet}
-        requiredSequence={musicChallenge.currentSequence.length > 0 ? musicChallenge.currentSequence : (currentMusicChallenge?.requiredSequence ?? musicChallenge.currentSequence)}
+        requiredSequence={musicChallenge.currentSequence.length > 0 ? musicChallenge.currentSequence : ((currentMusicChallenge?.requiredSequence?.length ?? 0) > 0 ? currentMusicChallenge!.requiredSequence! : musicChallenge.resolvedSequence)}
         noteLayout={currentInstrumentDef?.noteLayout ?? []}
         completedNoteCount={musicChallenge.currentNoteIndex}
         instrumentName={currentInstrumentDef?.displayName ?? 'Unknown'}

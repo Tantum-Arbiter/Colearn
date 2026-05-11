@@ -22,6 +22,7 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   Easing,
+  runOnJS,
 } from 'react-native-reanimated';
 import { MaterialIcons } from '@expo/vector-icons';
 import { NoteLayoutItem } from '@/services/music-asset-registry';
@@ -48,6 +49,8 @@ interface MusicSheetOverlayProps {
   onNotePressOut?: (note: string) => void;
   /** Whether the instrument is currently rotated (blow mode / manual rotate) */
   isRotated?: boolean;
+  /** When true, closing the overlay fades out instead of sliding down */
+  fadeOutOnly?: boolean;
 }
 
 export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
@@ -63,11 +66,14 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
   onNotePressIn,
   onNotePressOut,
   isRotated = false,
+  fadeOutOnly = false,
 }: MusicSheetOverlayProps) {
   const { t } = useTranslation();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const overlayOpacity = useSharedValue(0);
-  const slideY = useSharedValue(40);
+  const slideY = useSharedValue(screenHeight);
+  // Keep overlay rendered during close animation
+  const [isRendered, setIsRendered] = useState(false);
 
   // Playback preview state
   const [isPlaying, setIsPlaying] = useState(false);
@@ -164,13 +170,36 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
 
   useEffect(() => {
     if (visible) {
+      setIsRendered(true);
       overlayOpacity.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.ease) });
       slideY.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.ease) });
-    } else {
-      overlayOpacity.value = withTiming(0, { duration: 200 });
-      slideY.value = withTiming(40, { duration: 200 });
+    } else if (isRendered) {
+      if (fadeOutOnly) {
+        // Fade out only (no slide) — used when transitioning to instrument view
+        overlayOpacity.value = withTiming(
+          0,
+          { duration: 300, easing: Easing.in(Easing.ease) },
+          (finished) => {
+            if (finished) {
+              runOnJS(setIsRendered)(false);
+            }
+          }
+        );
+      } else {
+        // Slide down off screen, then unmount
+        overlayOpacity.value = withTiming(0, { duration: 300 });
+        slideY.value = withTiming(
+          screenHeight,
+          { duration: 300, easing: Easing.in(Easing.cubic) },
+          (finished) => {
+            if (finished) {
+              runOnJS(setIsRendered)(false);
+            }
+          }
+        );
+      }
     }
-  }, [visible, overlayOpacity, slideY]);
+  }, [visible]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: overlayOpacity.value,
@@ -181,7 +210,7 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
   const noteMap = new Map<string, NoteLayoutItem>();
   noteLayout.forEach(item => noteMap.set(item.note, item));
 
-  if (!visible) return null;
+  if (!isRendered && !visible) return null;
 
   return (
     <Animated.View
