@@ -53,6 +53,14 @@ describe('useBreathDetector audio mode', () => {
   it('restores playback mode for speaker output on stop', async () => {
     const { result } = renderHook(() => useBreathDetector());
 
+    // Must start listening first so isListening is true,
+    // otherwise stopListening early-returns without calling recorder.stop()
+    await act(async () => {
+      await result.current.startListening();
+    });
+
+    jest.clearAllMocks();
+
     await act(async () => {
       await result.current.stopListening();
     });
