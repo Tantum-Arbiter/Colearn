@@ -73,15 +73,19 @@ export function GlobalSoundProvider({ children }: GlobalSoundProviderProps) {
 
   // Use the mute/unmute methods from backgroundMusic hook
   // These properly persist muted state across track changes
-  const toggleMute = async () => {
-    if (backgroundMusic.isMuted) {
-      // Unmute: resume playback
-      await backgroundMusic.unmute();
-    } else {
-      // Mute: pause and prevent auto-advance to next track
-      await backgroundMusic.mute();
+  const toggleMute = useCallback(async () => {
+    try {
+      if (backgroundMusic.isMuted) {
+        // Unmute: resume playback
+        await backgroundMusic.unmute();
+      } else {
+        // Mute: pause and prevent auto-advance to next track
+        await backgroundMusic.mute();
+      }
+    } catch (error) {
+      console.warn('Failed to toggle mute:', error);
     }
-  };
+  }, [backgroundMusic.isMuted, backgroundMusic.mute, backgroundMusic.unmute]);
 
   // Calculate effective volume for music (master * music)
   const getEffectiveMusicVolume = useCallback(() => {
@@ -157,10 +161,34 @@ export function GlobalSoundProvider({ children }: GlobalSoundProviderProps) {
   );
 }
 
+// Safe fallback so components never crash if context is temporarily undefined
+// (e.g., during hot-reload or rapid re-mount cycles).
+const NOOP_ASYNC = async () => {};
+const NOOP = () => {};
+const SAFE_FALLBACK: GlobalSoundContextType = {
+  isMuted: false,
+  volume: 0.18,
+  isPlaying: false,
+  isLoaded: false,
+  masterVolume: 1,
+  musicVolume: 1,
+  voiceOverVolume: 1,
+  toggleMute: NOOP,
+  setVolume: NOOP_ASYNC as any,
+  play: NOOP_ASYNC,
+  pause: NOOP_ASYNC,
+  stop: NOOP_ASYNC,
+  setMasterVolume: NOOP,
+  setMusicVolume: NOOP,
+  setVoiceOverVolume: NOOP,
+  getEffectiveVolume: () => 1,
+};
+
 export function useGlobalSound(): GlobalSoundContextType {
   const context = useContext(GlobalSoundContext);
   if (context === undefined) {
-    throw new Error('useGlobalSound must be used within a GlobalSoundProvider');
+    console.warn('useGlobalSound called outside GlobalSoundProvider — using safe fallback');
+    return SAFE_FALLBACK;
   }
   return context;
 }

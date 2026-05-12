@@ -690,6 +690,33 @@ export default {
         description: '设置健康限制并监控每日使用。',
       },
     },
+    // Music Mode Tips - keys match tutorial.musicMode.* in tutorial-content.ts
+    musicMode: {
+      welcome: {
+        title: '音乐模式 🎵',
+        description: '这个故事的某些页面有音乐挑战！在虚拟乐器上演奏音符来完成它们。',
+      },
+      instrument: {
+        title: '选择你的乐器 🎹',
+        description: '当打开一本有音乐的书时，滑动轮播图选择你最喜欢的乐器。每种乐器都有独特的声音！',
+      },
+      playing: {
+        title: '演奏音符 🎶',
+        description: '按下彩色按钮来演奏音符。按照顶部显示的序列来完成挑战！',
+      },
+      sheet: {
+        title: '乐谱 📋',
+        description: '点击音符按钮（左下角）查看所有需要演奏的音符。你甚至可以预览旋律！',
+      },
+      begin: {
+        title: '开始演奏 ▶️',
+        description: '当你到达音乐页面时，点击顶部的"开始演奏"按钮来启动挑战。它会先打开乐谱，让你看到要演奏什么！',
+      },
+      change: {
+        title: '更换乐器 🔄',
+        description: '想试试不同的声音？打开菜单（☰）并点击"更换乐器"随时更换。',
+      },
+    },
     gestures: {
       speakerLongPress: {
         title: '长按提示 👆',

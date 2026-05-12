@@ -616,6 +616,15 @@ export default {
       accessibility: { title: 'Dostępność ♿', description: 'Dostosuj rozmiar tekstu.' },
       screenTime: { title: 'Czas Ekranowy ⏱️', description: 'Ustaw zdrowe limity.' },
     },
+    // Music Mode Tips - keys match tutorial.musicMode.* in tutorial-content.ts
+    musicMode: {
+      welcome: { title: 'Tryb Muzyczny 🎵', description: 'Niektóre strony tej historii mają wyzwania muzyczne! Graj nuty na wirtualnym instrumencie, aby je ukończyć.' },
+      instrument: { title: 'Wybierz Swój Instrument 🎹', description: 'Gdy otwiera się książka z muzyką, przewiń karuzelę, aby wybrać swój ulubiony instrument. Każdy ma unikalne brzmienie!' },
+      playing: { title: 'Granie Nut 🎶', description: 'Naciskaj kolorowe przyciski, aby grać nuty. Powtórz sekwencję pokazaną na górze, aby ukończyć wyzwanie!' },
+      sheet: { title: 'Partytura Muzyczna 📋', description: 'Dotknij przycisku nuty muzycznej (lewy dolny róg), aby zobaczyć wszystkie nuty do zagrania. Możesz też posłuchać podglądu melodii!' },
+      begin: { title: 'Zacznij Grać ▶️', description: 'Gdy dotrzesz na stronę muzyczną, dotknij przycisku \'Zacznij Grać\' na górze, aby rozpocząć wyzwanie. Najpierw otwiera partyturę, abyś zobaczył, co zagrać!' },
+      change: { title: 'Zmień Instrument 🔄', description: 'Chcesz wypróbować inny dźwięk? Otwórz menu (☰) i dotknij \'Zmień Instrument\', aby zmienić w dowolnym momencie.' },
+    },
     gestures: {
       speakerLongPress: { title: 'Przytrzymaj 👆', description: 'Przytrzymaj głośnik, aby uzyskać więcej opcji.' },
       storySwipe: { title: 'Przesuń do Nawigacji 👆', description: 'Przesuń, aby szybko przewracać strony.' },

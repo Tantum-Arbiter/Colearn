@@ -146,7 +146,14 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
     isListening: breathDetector.isListening,
   }), [breathDetector.pauseForPlayback, breathDetector.resumeRecording, breathDetector.ensurePlaybackMode, breathDetector.isListening]);
 
-  const musicChallenge = useMusicChallenge(musicChallengeConfig, undefined, 0.4, audioSessionControl);
+  // Background music & note volume (must be before useMusicChallenge)
+  const globalSound = useGlobalSound();
+
+  // Compute effective note volume: base volume * master * mute.
+  // Updates live when the user toggles mute or adjusts the master slider.
+  const effectiveNoteVolume = globalSound?.isMuted ? 0 : 0.4 * (globalSound?.masterVolume ?? 1);
+
+  const musicChallenge = useMusicChallenge(musicChallengeConfig, undefined, effectiveNoteVolume, audioSessionControl);
 
   // Track the current play mode so we only sync breath state in blow mode.
   const currentPlayModeRef = useRef<'blow' | 'press'>('press');
@@ -159,9 +166,6 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
       musicChallenge.setBreathActive(breathDetector.isBreathActive);
     }
   }, [breathDetector.isBreathActive, phase]);
-
-  // Background music volume fade (mirror story-book-reader behaviour)
-  const globalSound = useGlobalSound();
   const preMusicVolumeRef = useRef<number | null>(null);
   const musicFadeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const musicFadeIdRef = useRef(0);
@@ -243,6 +247,15 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
   // We use a ref to hold the latest start function to avoid stale closures
   const musicChallengeRef = useRef(musicChallenge);
   musicChallengeRef.current = musicChallenge;
+
+  // Proactively restore the iOS audio session to playback-only mode as soon as
+  // we enter the playing phase. useAudioRecorder (breath detector) may have left
+  // the session in playAndRecord mode which silences the first note played.
+  useEffect(() => {
+    if (phase === 'playing') {
+      void breathDetector.ensurePlaybackMode();
+    }
+  }, [phase]);
 
   useEffect(() => {
     if (phase === 'playing' && musicChallengeConfig) {
@@ -443,8 +456,8 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
                 rotated bottom ← insets.right (usually 0) */}
           {!musicUiHidden && (
             <View style={[styles.topLeftControls, {
-              paddingTop: Math.max(insets.left + 5, 20),
-              paddingLeft: Math.max(insets.bottom + 5, 20),
+              paddingTop: Math.max(insets.left + 20, 20),
+              paddingLeft: Math.max(insets.bottom + 20, 20),
             }]}>
               <Pressable
                 style={[styles.exitButton, {
@@ -462,8 +475,8 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
           {/* Top Right Controls — Sound + Burger menu, matching freeplay/story layout */}
           {!musicUiHidden && (
             <View style={[styles.topRightControls, {
-              paddingTop: Math.max(insets.left + 5, 20),
-              paddingRight: Math.max(insets.top + 5, 20),
+              paddingTop: Math.max(insets.left + 20, 20),
+              paddingRight: Math.max(insets.top + 20, 20),
             }]}>
               <MusicControl size={28} variant="story" />
               <Pressable
@@ -490,8 +503,8 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
           {/* Settings dropdown menu */}
           {showSettingsMenu && (
             <View style={[styles.settingsMenu, {
-              top: Math.max(insets.left + 5, 20) + scaledButtonSize(50) + 10,
-              right: Math.max(insets.top + 5, 20),
+              top: Math.max(insets.left + 20, 20) + scaledButtonSize(50) + 10,
+              right: Math.max(insets.top + 20, 20),
             }]}>
               {/* Change Instrument (only when not rotated) */}
               {!instrumentIsRotated && (
@@ -522,18 +535,21 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
             </View>
           )}
 
-          <MusicSheetOverlay
-            visible={showMusicSheet}
-            onClose={() => setShowMusicSheet(false)}
-            requiredSequence={selectedSong.sequence}
-            noteLayout={instrumentDef.noteLayout}
-            completedNoteCount={musicChallenge.currentNoteIndex}
-            instrumentName={instrumentDef.displayName}
-            onNotePressIn={(note) => musicChallenge.previewNote(note)}
-            onNotePressOut={(note) => musicChallenge.stopNote(note)}
-            isRotated={instrumentIsRotated}
-          />
         </Animated.View>
+
+        {/* Music Sheet Overlay — rendered outside the rotated parent so it
+            always displays in portrait orientation without rotation hacks. */}
+        <MusicSheetOverlay
+          visible={showMusicSheet}
+          onClose={() => setShowMusicSheet(false)}
+          requiredSequence={selectedSong.sequence}
+          noteLayout={instrumentDef.noteLayout}
+          completedNoteCount={musicChallenge.currentNoteIndex}
+          instrumentName={instrumentDef.displayName}
+          onNotePressIn={(note) => musicChallenge.previewNote(note)}
+          onNotePressOut={(note) => musicChallenge.stopNote(note)}
+          bpm={selectedSong.bpm}
+        />
       </View>
     );
   }
@@ -570,6 +586,7 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
           onNotePressIn={(note) => musicChallenge.previewNote(note)}
           onNotePressOut={(note) => musicChallenge.stopNote(note)}
           fadeOutOnly
+          bpm={selectedSong.bpm}
         />
       </View>
     );

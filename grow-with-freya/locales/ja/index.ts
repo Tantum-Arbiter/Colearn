@@ -690,6 +690,33 @@ export default {
         description: '健全な制限を設定し、毎日の使用を監視します。',
       },
     },
+    // Music Mode Tips - keys match tutorial.musicMode.* in tutorial-content.ts
+    musicMode: {
+      welcome: {
+        title: 'ミュージックモード 🎵',
+        description: 'この物語のいくつかのページには音楽チャレンジがあります！仮想楽器でノートを演奏して完成させましょう。',
+      },
+      instrument: {
+        title: '楽器を選ぼう 🎹',
+        description: '音楽付きの本が開いたら、カルーセルをスワイプしてお気に入りの楽器を選んでください。それぞれユニークな音があります！',
+      },
+      playing: {
+        title: 'ノートを演奏 🎶',
+        description: 'カラフルなボタンを押してノートを演奏しましょう。上に表示されたシーケンスに合わせてチャレンジを完成させましょう！',
+      },
+      sheet: {
+        title: '楽譜 📋',
+        description: '音符ボタン（左下）をタップして、演奏する必要があるすべてのノートを確認できます。メロディーのプレビューも聴けます！',
+      },
+      begin: {
+        title: '演奏を開始 ▶️',
+        description: '音楽ページに到着したら、上の「演奏を開始」ボタンをタップしてチャレンジを始めましょう。まず楽譜が開くので、何を演奏するか確認できます！',
+      },
+      change: {
+        title: '楽器を変更 🔄',
+        description: '別の音を試したいですか？メニュー（☰）を開いて「楽器を変更」をタップすれば、いつでも変更できます。',
+      },
+    },
     gestures: {
       speakerLongPress: {
         title: 'ロングプレスチップ👆',

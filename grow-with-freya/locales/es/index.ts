@@ -616,6 +616,15 @@ export default {
       accessibility: { title: 'Accesibilidad ♿', description: 'Ajusta el tamaño del texto.' },
       screenTime: { title: 'Tiempo de Pantalla ⏱️', description: 'Establece límites saludables.' },
     },
+    // Music Mode Tips - keys match tutorial.musicMode.* in tutorial-content.ts
+    musicMode: {
+      welcome: { title: 'Modo Música 🎵', description: '¡Algunas páginas de esta historia tienen desafíos musicales! Toca notas en un instrumento virtual para completarlos.' },
+      instrument: { title: 'Elige Tu Instrumento 🎹', description: 'Cuando se abre un libro con música, desliza el carrusel para elegir tu instrumento favorito. ¡Cada uno tiene sonidos únicos!' },
+      playing: { title: 'Tocar Notas 🎶', description: '¡Presiona los botones de colores para tocar notas. Sigue la secuencia mostrada arriba para completar el desafío!' },
+      sheet: { title: 'Partitura Musical 📋', description: '¡Toca el botón de nota musical (abajo a la izquierda) para ver todas las notas que necesitas tocar. ¡Incluso puedes escuchar una vista previa de la melodía!' },
+      begin: { title: 'Comenzar a Tocar ▶️', description: 'Cuando llegues a una página musical, toca el botón \'Comenzar a Tocar\' en la parte superior para iniciar el desafío. ¡Primero abre la partitura para que puedas ver qué tocar!' },
+      change: { title: 'Cambiar Instrumento 🔄', description: '¿Quieres probar un sonido diferente? Abre el menú (☰) y toca \'Cambiar Instrumento\' para cambiar en cualquier momento.' },
+    },
     gestures: {
       speakerLongPress: { title: 'Mantén Presionado 👆', description: 'Mantén presionado el altavoz para más opciones.' },
       storySwipe: { title: 'Desliza para Navegar 👆', description: 'Desliza para pasar páginas rápidamente.' },

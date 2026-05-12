@@ -54,6 +54,8 @@ export interface MusicChallengeHookResult {
   currentSequence: string[];
   /** The resolved sequence from config (requiredSequence or songId lookup), available before start() */
   resolvedSequence: string[];
+  /** Resolved BPM for playback timing (from song or default 120) */
+  resolvedBpm: number;
 
   // Actions
   start: () => void;
@@ -191,6 +193,17 @@ export function useMusicChallenge(
   // Track when each note started playing (for minimum tap duration)
   const noteStartTimeRef = useRef<Map<string, number>>(new Map());
 
+  // Keep a ref for noteVolume so playNoteAudio always reads the latest value
+  // and update all currently-playing note players when volume changes.
+  const noteVolumeRef = useRef(noteVolume);
+  useEffect(() => {
+    noteVolumeRef.current = noteVolume;
+    // Update all currently-playing note players to reflect the new volume
+    notePlayersRef.current.forEach((player) => {
+      try { player.volume = noteVolume; } catch {}
+    });
+  }, [noteVolume]);
+
   // Track currently held notes for chord matching
   const activeNotesRef = useRef<Set<string>>(new Set());
   // Notes pressed while breath was not yet active — pending processing
@@ -209,17 +222,16 @@ export function useMusicChallenge(
   // Resolve instrument assets
   const instrument = (config ? getInstrument(config.instrumentId) : null) ?? null;
 
-  // Resolve the note sequence: explicit requiredSequence takes priority, then songId lookup
+  // Resolve the note sequence and BPM: explicit requiredSequence takes priority, then songId lookup
+  const resolvedSong = config?.songId ? getPracticeSong(config.songId) : undefined;
   const resolvedSequence = (() => {
     if (config?.requiredSequence && config.requiredSequence.length > 0) {
       return config.requiredSequence;
     }
-    if (config?.songId) {
-      const song = getPracticeSong(config.songId);
-      return song?.sequence ?? [];
-    }
-    return [];
+    return resolvedSong?.sequence ?? [];
   })();
+  // BPM for playback timing — defaults to 120 when no song is referenced
+  const resolvedBpm = resolvedSong?.bpm ?? 120;
 
   // Validate assets on mount
   useEffect(() => {
@@ -265,25 +277,33 @@ export function useMusicChallenge(
       log.debug(`Music challenge start() bailed: config=${!!config}, missingAssets=[${missingAssets.join(',')}]`);
       return;
     }
+
+    const finishStart = () => {
+      const seq = resolvedSequence;
+      // For freeplay mode (empty sequence), we still transition to awaiting_input
+      // so playNote() works — there's just no sequence matcher to check against.
+      setCurrentSequence(seq);
+      setDifficultyLevel(1);
+      matcherRef.current = seq.length > 0 ? new SequenceMatcher(seq) : null;
+      activeNotesRef.current.clear();
+      setState('awaiting_input');
+      setLastInputCorrect(null);
+      setSequenceResult(null);
+      log.debug(`Music challenge started: ${config.instrumentId}, sequence: ${seq.length > 0 ? seq.join(' ') : '(freeplay)'}`);
+    };
+
     // Ensure the iOS audio session is in playback mode before accepting input.
     // On mount, useAudioRecorder (breath detector) may leave the session in
     // playAndRecord mode. Without this, the first note played in press mode
     // can be silenced because the session hasn't been restored yet.
+    // We await the session switch so that the state doesn't transition to
+    // 'awaiting_input' before the audio session is confirmed ready.
     const ctrl = audioSessionRef.current;
     if (ctrl) {
-      void ctrl.ensurePlaybackMode();
+      void ctrl.ensurePlaybackMode().then(finishStart);
+    } else {
+      finishStart();
     }
-    const seq = resolvedSequence;
-    // For freeplay mode (empty sequence), we still transition to awaiting_input
-    // so playNote() works — there's just no sequence matcher to check against.
-    setCurrentSequence(seq);
-    setDifficultyLevel(1);
-    matcherRef.current = seq.length > 0 ? new SequenceMatcher(seq) : null;
-    activeNotesRef.current.clear();
-    setState('awaiting_input');
-    setLastInputCorrect(null);
-    setSequenceResult(null);
-    log.debug(`Music challenge started: ${config.instrumentId}, sequence: ${seq.length > 0 ? seq.join(' ') : '(freeplay)'}`);
   }, [config, missingAssets, state, resolvedSequence]);
 
   // Play a note sample. The note sustains indefinitely by restarting playback
@@ -303,7 +323,7 @@ export function useMusicChallenge(
       }
 
       const player = createAudioPlayer(noteAudio);
-      player.volume = noteVolume;
+      player.volume = noteVolumeRef.current;
       notePlayersRef.current.set(note, player);
 
       // Restart when playback ends so the note sustains as long as the
@@ -325,7 +345,7 @@ export function useMusicChallenge(
     } catch (err) {
       log.error('Failed to play note audio:', err);
     }
-  }, [instrument, noteVolume]);
+  }, [instrument]);
 
   // --- Ambient breath sound cleanup ---
   // Stop any ambient breath sound that may be playing.
@@ -369,7 +389,7 @@ export function useMusicChallenge(
    */
   const playSequenceAsAudio = useCallback((sequence: string[]) => {
     if (!instrument) return;
-    const noteMs = 500;
+    const noteMs = Math.round(60000 / Math.max(resolvedBpm, 30));
     const gapMs = 100;
     let cancelled = false;
     const playbackPlayers: AudioPlayer[] = [];
@@ -389,7 +409,7 @@ export function useMusicChallenge(
           if (!noteAudio) continue;
           try {
             const player = createAudioPlayer(noteAudio);
-            player.volume = noteVolume;
+            player.volume = noteVolumeRef.current;
             playbackPlayers.push(player);
             player.play();
           } catch {}
@@ -416,7 +436,7 @@ export function useMusicChallenge(
         try { p.release(); } catch {}
       }
     };
-  }, [instrument]);
+  }, [instrument, resolvedBpm]);
 
   /** Handle sequence completion — plays the full song back note-by-note */
   const handleSequenceComplete = useCallback(() => {
@@ -437,10 +457,10 @@ export function useMusicChallenge(
       // playAndRecord session.
       const startPlayback = () => {
         const cleanupPlayback = playSequenceAsAudio(successSequence);
-        const noteMs = 500;
+        const noteMs = Math.round(60000 / Math.max(resolvedBpm, 30));
         const gapMs = 100;
         // Calculate total time including extra gaps for repeated consecutive notes
-        let totalMs = 500; // buffer at end
+        let totalMs = noteMs; // buffer at end
         for (let i = 0; i < successSequence.length; i++) {
           totalMs += noteMs;
           if (i > 0 && successSequence[i] === successSequence[i - 1]) {
@@ -472,7 +492,7 @@ export function useMusicChallenge(
       setState('completed');
       onComplete?.();
     }
-  }, [onComplete, difficultyLevel, instrument, currentSequence, resolvedSequence, playSequenceAsAudio]);
+  }, [onComplete, difficultyLevel, instrument, currentSequence, resolvedSequence, playSequenceAsAudio, resolvedBpm]);
 
   /**
    * Process a note (or chord) against the sequence matcher.
@@ -552,9 +572,19 @@ export function useMusicChallenge(
         });
         return;
       }
-      // Press mode or no session control — play immediately
-      playNoteAudio(note);
-      processNoteForSequence(note);
+      // Press mode or no session control — ensure playback audio session
+      // is active before playing. On first use, useAudioRecorder may have
+      // left the iOS session in playAndRecord mode (quiet/silent speaker).
+      const ctrl = audioSessionRef.current;
+      if (ctrl) {
+        void ctrl.ensurePlaybackMode().then(() => {
+          playNoteAudio(note);
+          processNoteForSequence(note);
+        });
+      } else {
+        playNoteAudio(note);
+        processNoteForSequence(note);
+      }
     } else {
       // No breath yet — silently queue; will play + process when breath arrives
       pendingNotesRef.current.push(note);
@@ -822,6 +852,7 @@ export function useMusicChallenge(
     isMaxDifficulty: difficultyLevel >= MAX_DIFFICULTY,
     currentSequence,
     resolvedSequence,
+    resolvedBpm,
 
     start,
     playNote,

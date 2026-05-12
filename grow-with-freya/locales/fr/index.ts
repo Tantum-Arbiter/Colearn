@@ -721,6 +721,33 @@ export default {
         description: 'Définissez des limites saines et suivez l\'utilisation quotidienne.',
       },
     },
+    // Music Mode Tips - keys match tutorial.musicMode.* in tutorial-content.ts
+    musicMode: {
+      welcome: {
+        title: 'Mode Musique 🎵',
+        description: 'Certaines pages de cette histoire ont des défis musicaux ! Jouez des notes sur un instrument virtuel pour les compléter.',
+      },
+      instrument: {
+        title: 'Choisissez Votre Instrument 🎹',
+        description: 'Lorsqu\'un livre avec de la musique s\'ouvre, faites défiler le carrousel pour choisir votre instrument préféré. Chacun a des sons uniques !',
+      },
+      playing: {
+        title: 'Jouer des Notes 🎶',
+        description: 'Appuyez sur les boutons colorés pour jouer des notes. Suivez la séquence affichée en haut pour compléter le défi !',
+      },
+      sheet: {
+        title: 'Partition Musicale 📋',
+        description: 'Appuyez sur le bouton de note de musique (en bas à gauche) pour voir toutes les notes à jouer. Vous pouvez même prévisualiser la mélodie !',
+      },
+      begin: {
+        title: 'Commencer à Jouer ▶️',
+        description: 'Lorsque vous arrivez sur une page musicale, appuyez sur le bouton \'Commencer à Jouer\' en haut pour démarrer le défi. Il ouvre d\'abord la partition pour que vous puissiez voir quoi jouer !',
+      },
+      change: {
+        title: 'Changer d\'Instrument 🔄',
+        description: 'Envie d\'essayer un son différent ? Ouvrez le menu (☰) et appuyez sur \'Changer d\'Instrument\' pour changer à tout moment.',
+      },
+    },
     gestures: {
       speakerLongPress: {
         title: 'Conseil d\'appui long 👆',

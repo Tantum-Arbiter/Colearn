@@ -690,6 +690,33 @@ export default {
         description: 'Sæt sunde grænser og overvåg daglig brug.',
       },
     },
+    // Music Mode Tips - keys match tutorial.musicMode.* in tutorial-content.ts
+    musicMode: {
+      welcome: {
+        title: 'Musiktilstand 🎵',
+        description: 'Nogle sider i denne historie har musikudfordringer! Spil noder på et virtuelt instrument for at fuldføre dem.',
+      },
+      instrument: {
+        title: 'Vælg Dit Instrument 🎹',
+        description: 'Når en bog med musik åbnes, stryg gennem karrusellen for at vælge dit yndlingsinstrument. Hvert har unikke lyde!',
+      },
+      playing: {
+        title: 'Spil Noder 🎶',
+        description: 'Tryk på de farvede knapper for at spille noder. Følg sekvensen vist øverst for at fuldføre udfordringen!',
+      },
+      sheet: {
+        title: 'Nodeark 📋',
+        description: 'Tryk på nodeknappen (nederst til venstre) for at se alle de noder, du skal spille. Du kan endda forhåndsvise melodien!',
+      },
+      begin: {
+        title: 'Begynd at Spille ▶️',
+        description: 'Når du ankommer til en musikside, tryk på \'Begynd at Spille\' knappen øverst for at starte udfordringen. Den åbner først nodearket, så du kan se, hvad du skal spille!',
+      },
+      change: {
+        title: 'Skift Instrument 🔄',
+        description: 'Vil du prøve en anden lyd? Åbn menuen (☰) og tryk på \'Skift Instrument\' for at skifte når som helst.',
+      },
+    },
     gestures: {
       speakerLongPress: {
         title: 'Langt tryk tip 👆',

@@ -690,6 +690,33 @@ export default {
         description: 'Limites Sanos Constitue et Usum Diurnum Observa.',
       },
     },
+    // Music Mode Tips - keys match tutorial.musicMode.* in tutorial-content.ts
+    musicMode: {
+      welcome: {
+        title: 'Modus Musicae 🎵',
+        description: 'Aliquae paginae huius fabulae provocationes musicas habent! Notas in instrumento virtuali lude ut eas compleas.',
+      },
+      instrument: {
+        title: 'Elige Instrumentum Tuum 🎹',
+        description: 'Cum liber cum musica aperitur, per carrousel trahe ut instrumentum tuum dilectum eligas. Unumquodque sonos singulares habet!',
+      },
+      playing: {
+        title: 'Notas Ludere 🎶',
+        description: 'Preme bottones coloratos ut notas ludas. Sequentiam in summo monstratam sequere ut provocationem compleas!',
+      },
+      sheet: {
+        title: 'Charta Musicae 📋',
+        description: 'Tange bottonem notae musicalis (sinistro inferiore) ut omnes notas quas ludere debes videas. Melodiam etiam praevidere potes!',
+      },
+      begin: {
+        title: 'Incipe Ludere ▶️',
+        description: 'Cum ad paginam musicam pervenias, tange bottonem \'Incipe Ludere\' in summo ut provocationem incipias. Primum chartam musicae aperit ut videas quid ludas!',
+      },
+      change: {
+        title: 'Muta Instrumentum 🔄',
+        description: 'Vis sonum diversum temptare? Aperi menu (☰) et tange \'Muta Instrumentum\' ut quovis tempore mutes.',
+      },
+    },
     gestures: {
       speakerLongPress: {
         title: 'Longum Tactum Consilium 👆',

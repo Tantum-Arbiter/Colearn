@@ -690,6 +690,33 @@ export default {
         description: 'Defina limites saudáveis e monitore o uso diário.',
       },
     },
+    // Music Mode Tips - keys match tutorial.musicMode.* in tutorial-content.ts
+    musicMode: {
+      welcome: {
+        title: 'Modo Música 🎵',
+        description: 'Algumas páginas desta história têm desafios musicais! Toque notas num instrumento virtual para completá-los.',
+      },
+      instrument: {
+        title: 'Escolha o Seu Instrumento 🎹',
+        description: 'Quando um livro com música abre, deslize pelo carrossel para escolher o seu instrumento favorito. Cada um tem sons únicos!',
+      },
+      playing: {
+        title: 'Tocar Notas 🎶',
+        description: 'Pressione os botões coloridos para tocar notas. Siga a sequência mostrada no topo para completar o desafio!',
+      },
+      sheet: {
+        title: 'Partitura Musical 📋',
+        description: 'Toque no botão de nota musical (canto inferior esquerdo) para ver todas as notas que precisa tocar. Pode até ouvir uma pré-visualização da melodia!',
+      },
+      begin: {
+        title: 'Começar a Tocar ▶️',
+        description: 'Quando chegar a uma página musical, toque no botão \'Começar a Tocar\' no topo para iniciar o desafio. Abre primeiro a partitura para que possa ver o que tocar!',
+      },
+      change: {
+        title: 'Mudar de Instrumento 🔄',
+        description: 'Quer experimentar um som diferente? Abra o menu (☰) e toque em \'Mudar de Instrumento\' para trocar a qualquer momento.',
+      },
+    },
     gestures: {
       speakerLongPress: {
         title: 'Dica de pressão longa 👆',

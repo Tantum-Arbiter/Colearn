@@ -40,6 +40,7 @@ import Animated, {
   Extrapolation,
   Easing,
   SharedValue,
+  runOnJS,
 } from 'react-native-reanimated';
 import {
   Gesture,
@@ -135,35 +136,55 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
     onSelect(instrument.id);
   }, [getCenteredIndexFromRotation, instruments, normalizedDefaultIndex, onSelect, rotation]);
 
-  const handleItemPress = useCallback((index: number) => {
-    const centeredIdx = getCenteredIndexFromRotation(rotation.value);
-    if (index === centeredIdx) {
-      handleConfirmSelection();
-    } else {
-      // Tapping a side instrument → rotate it to center
-      const targetRotation = -index * anglePerItem;
-      rotation.value = withSpring(targetRotation, { damping: 15, stiffness: 100 });
-    }
-  }, [anglePerItem, getCenteredIndexFromRotation, handleConfirmSelection, rotation]);
+  // Navigate one item left or right
+  const goToNeighbor = useCallback((direction: -1 | 1) => {
+    const currentSnapped = Math.round(rotation.value / anglePerItem) * anglePerItem;
+    const target = currentSnapped + direction * anglePerItem;
+    rotation.value = withSpring(target, { damping: 28, stiffness: 150 });
+  }, [anglePerItem, rotation]);
 
-  // Pan gesture for swiping
+  // Tap gesture — tapping the centered instrument confirms the selection
+  const tapGesture = useMemo(() => Gesture.Tap()
+    .onEnd(() => {
+      runOnJS(handleConfirmSelection)();
+    }), [handleConfirmSelection]);
+
+  // Pan gesture for swiping — clamped to move at most one item per swipe.
   const panGesture = useMemo(() => Gesture.Pan()
     .onStart(() => {
       gestureStartRotation.value = rotation.value;
     })
     .onUpdate((event) => {
-      rotation.value = gestureStartRotation.value + event.translationX * 0.3;
+      // Dampen drag so it feels controlled (max half an item of visual drag)
+      const drag = event.translationX * 0.15;
+      const maxDrag = anglePerItem * 0.6;
+      const clamped = Math.max(-maxDrag, Math.min(maxDrag, drag));
+      rotation.value = gestureStartRotation.value + clamped;
     })
     .onEnd((event) => {
-      const velocity = event.velocityX * 0.001;
-      const projected = rotation.value + velocity * 50;
-      const snapped = Math.round(projected / anglePerItem) * anglePerItem;
-      rotation.value = withSpring(snapped, {
-        damping: 15,
-        stiffness: 100,
-        velocity,
+      // Snap exactly one item in the swipe direction (or stay if drag was tiny)
+      const startSnapped = Math.round(gestureStartRotation.value / anglePerItem) * anglePerItem;
+      const delta = rotation.value - gestureStartRotation.value;
+      const velocityHint = event.velocityX;
+      let step = 0;
+      // Move one item if drag or velocity is significant enough
+      if (delta > anglePerItem * 0.15 || velocityHint > 200) {
+        step = 1; // swipe right → next item (positive rotation)
+      } else if (delta < -anglePerItem * 0.15 || velocityHint < -200) {
+        step = -1; // swipe left → previous item (negative rotation)
+      }
+      const target = startSnapped + step * anglePerItem;
+      rotation.value = withSpring(target, {
+        damping: 28,
+        stiffness: 150,
       });
     }), [anglePerItem, gestureStartRotation, rotation]);
+
+  // Compose: tap fires on quick taps, pan fires on drags — they don't conflict
+  const composedGesture = useMemo(
+    () => Gesture.Race(tapGesture, panGesture),
+    [tapGesture, panGesture],
+  );
 
   const overlayAnimatedStyle = useAnimatedStyle(() => ({
     opacity: overlayOpacity.value,
@@ -191,8 +212,8 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
       ]}>
         <Pressable
           style={[styles.closeButton, {
-            top: Math.max(insets.top + 5, 20),
-            right: Math.max(insets.right + 5, 20),
+            top: Math.max(insets.top + 20, 20),
+            right: Math.max(insets.right + 20, 20),
           }]}
           onPress={onClose}
           testID="instrument-picker-close-button"
@@ -206,31 +227,51 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
           <Text style={styles.subtitle}>{t('music.swipeToExplore')}</Text>
         </View>
 
-        <GestureHandlerRootView style={styles.gestureRoot}>
-          <GestureDetector gesture={panGesture}>
-            <View
-              style={[
-                styles.carouselContainer,
-                compactLayout && styles.carouselContainerCompact,
-                { width: carouselWidth, height: carouselHeight },
-              ]}
-              testID="instrument-picker-carousel"
-            >
-              <Animated.View style={styles.carousel}>
-                {instruments.map((instrument, index) => (
-                  <CarouselItem
-                    key={instrument.id}
-                    instrument={instrument}
-                    index={index}
-                    anglePerItem={anglePerItem}
-                    rotation={rotation}
-                    onPress={() => handleItemPress(index)}
-                  />
-                ))}
-              </Animated.View>
-            </View>
-          </GestureDetector>
-        </GestureHandlerRootView>
+        {/* Carousel with left/right arrow buttons */}
+        <View style={styles.carouselWithArrows}>
+          {/* Left arrow */}
+          <Pressable
+            style={styles.arrowButton}
+            onPress={() => goToNeighbor(1)}
+            accessibilityLabel={t('music.previousInstrument', { defaultValue: 'Previous instrument' })}
+          >
+            <Text style={styles.arrowText}>‹</Text>
+          </Pressable>
+
+          <GestureHandlerRootView style={styles.gestureRoot}>
+            <GestureDetector gesture={composedGesture}>
+              <View
+                style={[
+                  styles.carouselContainer,
+                  compactLayout && styles.carouselContainerCompact,
+                  { width: carouselWidth, height: carouselHeight },
+                ]}
+                testID="instrument-picker-carousel"
+              >
+                <Animated.View style={styles.carousel}>
+                  {instruments.map((instrument, index) => (
+                    <CarouselItem
+                      key={instrument.id}
+                      instrument={instrument}
+                      index={index}
+                      anglePerItem={anglePerItem}
+                      rotation={rotation}
+                    />
+                  ))}
+                </Animated.View>
+              </View>
+            </GestureDetector>
+          </GestureHandlerRootView>
+
+          {/* Right arrow */}
+          <Pressable
+            style={styles.arrowButton}
+            onPress={() => goToNeighbor(-1)}
+            accessibilityLabel={t('music.nextInstrument', { defaultValue: 'Next instrument' })}
+          >
+            <Text style={styles.arrowText}>›</Text>
+          </Pressable>
+        </View>
 
         <View style={[styles.footerSection, compactLayout && styles.footerSectionCompact]}>
           <Pressable
@@ -257,7 +298,6 @@ interface CarouselItemProps {
   index: number;
   anglePerItem: number;
   rotation: SharedValue<number>;
-  onPress: () => void;
 }
 
 function CarouselItem({
@@ -265,7 +305,6 @@ function CarouselItem({
   index,
   anglePerItem,
   rotation,
-  onPress,
 }: CarouselItemProps) {
   // Pulsing ring animation — always running, only visible when centered
   const pulseScale = useSharedValue(1);
@@ -355,8 +394,10 @@ function CarouselItem({
       {/* Pulsing ring behind the image */}
       <Animated.View style={[styles.pulsingRing, animatedRingStyle]} />
 
-      {/* Instrument image or placeholder */}
-      <Pressable onPress={onPress} style={styles.itemPressable} testID={`instrument-${instrument.id}`}>
+      {/* Instrument image or placeholder — no touch handler here;
+          taps are detected by the parent pan gesture (tiny drag = tap → confirm).
+          Navigation is done via the arrow buttons or swiping. */}
+      <View style={styles.itemPressable} testID={`instrument-${instrument.id}`}>
         {hasImage ? (
           <Image source={instrument.image} style={styles.instrumentImage} resizeMode="contain" />
         ) : (
@@ -364,7 +405,7 @@ function CarouselItem({
             <Text style={styles.placeholderEmoji}>{instrument.noteLayout[0]?.label || '🎵'}</Text>
           </View>
         )}
-      </Pressable>
+      </View>
 
       {/* Name + description — visible when centered */}
       <Animated.View style={[styles.itemLabel, animatedLabelStyle]}>
@@ -435,9 +476,29 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     textAlign: 'center',
   },
-  gestureRoot: {
+  carouselWithArrows: {
     flex: 1,
-    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  arrowButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  arrowText: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 32,
+    fontWeight: '300',
+    marginTop: -2,
+  },
+  gestureRoot: {
     alignItems: 'center',
     justifyContent: 'center',
   },

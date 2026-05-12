@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
-import { AppState, AppStateStatus, Dimensions, View, Platform, DevSettings, Alert } from 'react-native';
+import { AppState, AppStateStatus, BackHandler, Dimensions, View, Platform, DevSettings, Alert } from 'react-native';
 import * as ScreenOrientation from 'expo-screen-orientation';
 
 import 'react-native-reanimated';
@@ -556,6 +556,35 @@ function AppContent() {
     // Start thumbnail expansion animation first, then transition to story reader
     // The SimpleStoryScreen will handle the expansion animation and call handleStoryTransitionComplete
   };
+
+  // Android hardware back button support
+  // Story reader and account screen handle their own back button internally;
+  // this handles top-level page navigation (stories/practise/freeplay → main menu).
+  // On the main menu, returns false to allow default Android behavior (exit/minimize app).
+  const handleHardwareBack = useCallback(() => {
+    // Story reader handles its own back button - don't interfere
+    if (showStoryReader && storyBeingRead) return false;
+
+    // If on a sub-page, go back to main menu
+    if (currentPage !== 'main') {
+      // Account screen handles its own internal back navigation
+      // Only handle the top-level back here for non-account pages
+      if (currentPage === 'account') return false;
+      handleBackToMainMenu();
+      return true;
+    }
+
+    // On main menu - let Android handle it (exit/minimize app)
+    return false;
+  }, [currentPage, showStoryReader, storyBeingRead]);
+
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    if (currentView !== 'app' && currentView !== 'story-reader') return;
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', handleHardwareBack);
+    return () => subscription.remove();
+  }, [currentView, handleHardwareBack]);
 
   if (currentView === 'splash') {
     return <AppSplashScreen />;

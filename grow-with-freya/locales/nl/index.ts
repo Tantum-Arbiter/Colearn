@@ -690,6 +690,33 @@ export default {
         description: 'Stel gezonde limieten in en monitor dagelijks gebruik.',
       },
     },
+    // Music Mode Tips - keys match tutorial.musicMode.* in tutorial-content.ts
+    musicMode: {
+      welcome: {
+        title: 'Muziekmodus 🎵',
+        description: 'Sommige pagina\'s in dit verhaal hebben muziekuitdagingen! Speel noten op een virtueel instrument om ze te voltooien.',
+      },
+      instrument: {
+        title: 'Kies Je Instrument 🎹',
+        description: 'Wanneer een boek met muziek opent, veeg door de carrousel om je favoriete instrument te kiezen. Elk heeft unieke klanken!',
+      },
+      playing: {
+        title: 'Noten Spelen 🎶',
+        description: 'Druk op de gekleurde knoppen om noten te spelen. Volg de reeks bovenaan om de uitdaging te voltooien!',
+      },
+      sheet: {
+        title: 'Muziekblad 📋',
+        description: 'Tik op de nootknop (linksonder) om alle noten te zien die je moet spelen. Je kunt zelfs een voorbeeld van de melodie beluisteren!',
+      },
+      begin: {
+        title: 'Begin met Spelen ▶️',
+        description: 'Wanneer je op een muziekpagina aankomt, tik op de \'Begin met Spelen\' knop bovenaan om de uitdaging te starten. Het opent eerst het muziekblad zodat je kunt zien wat je moet spelen!',
+      },
+      change: {
+        title: 'Instrument Wisselen 🔄',
+        description: 'Wil je een ander geluid proberen? Open het menu (☰) en tik op \'Instrument Wisselen\' om op elk moment te wisselen.',
+      },
+    },
     gestures: {
       speakerLongPress: {
         title: 'Lange Druk Tip 👆',

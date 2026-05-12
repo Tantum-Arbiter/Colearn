@@ -5,7 +5,7 @@ import {
   Pressable,
   StyleSheet,
   ScrollView,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { Image } from 'expo-image';
 import Animated, {
@@ -34,7 +34,6 @@ interface StoryPreviewModalProps {
   onReadStory?: (story: Story) => void;
 }
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const ANIMATION_DURATION = 300;
 
 export function StoryPreviewModal({
@@ -45,6 +44,7 @@ export function StoryPreviewModal({
 }: StoryPreviewModalProps) {
   const { scaledFontSize, scaledPadding, scaledButtonSize } = useAccessibility();
   const { t, i18n } = useTranslation();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const currentLanguage = i18n.language as SupportedLanguage;
 
   // Favorites state from store
@@ -151,17 +151,27 @@ export function StoryPreviewModal({
   return (
     <View style={styles.absoluteContainer} pointerEvents={visible ? 'auto' : 'none'}>
       {/* Backdrop - tap to close */}
-      <Pressable style={StyleSheet.absoluteFill} onPress={handleClose}>
-        <Animated.View style={[styles.backdrop, backdropAnimatedStyle]}>
+      <Animated.View style={[styles.backdrop, backdropAnimatedStyle]} pointerEvents={visible ? 'auto' : 'none'}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={handleClose}>
           <BlurView intensity={20} style={StyleSheet.absoluteFill} tint="dark" />
-        </Animated.View>
-      </Pressable>
+        </Pressable>
+      </Animated.View>
 
       {/* Modal Content - slides up from bottom */}
-      <Animated.View style={[styles.modalWrapper, modalAnimatedStyle]}>
-        <Pressable
-          style={[styles.modalContent, { maxHeight: screenHeight * 0.75 }]}
-          onPress={(e) => e.stopPropagation()}
+      <Animated.View style={[styles.modalWrapper, modalAnimatedStyle]} pointerEvents="box-none">
+        {(() => {
+          // Calculate explicit scroll area height so the modal keeps its natural size.
+          // Cover image: aspectRatio 4/3 based on modal width (capped at maxWidth 400).
+          const modalWidth = Math.min(screenWidth * 0.85, 400);
+          const coverHeight = modalWidth * (3 / 4);
+          const buttonRowHeight = 62; // padding 16*2 + button paddingVertical 14 + ~2
+          const modalMaxHeight = screenHeight * 0.75;
+          // Remaining space for the scrollable text area
+          const scrollMaxHeight = modalMaxHeight - coverHeight - buttonRowHeight;
+
+          return (
+        <View
+          style={[styles.modalContent, { maxHeight: modalMaxHeight, width: modalWidth }]}
         >
           {/* X Close Button - top left */}
           <Pressable style={styles.xCloseButton} onPress={handleClose}>
@@ -193,7 +203,7 @@ export function StoryPreviewModal({
           </View>
 
           <ScrollView
-            style={styles.contentScroll}
+            style={[styles.contentScroll, { maxHeight: scrollMaxHeight }]}
             showsVerticalScrollIndicator={true}
             nestedScrollEnabled={true}
             scrollEnabled={true}
@@ -258,7 +268,7 @@ export function StoryPreviewModal({
             )}
           </ScrollView>
 
-          {/* Action Buttons - only show if Read Story is available */}
+          {/* Action Buttons - outside ScrollView so they stay fixed at the bottom */}
           {story.isAvailable && onReadStory && (
             <View style={styles.buttonRow}>
               <Pressable
@@ -278,7 +288,9 @@ export function StoryPreviewModal({
               </Pressable>
             </View>
           )}
-        </Pressable>
+        </View>
+          );
+        })()}
       </Animated.View>
     </View>
   );
@@ -299,7 +311,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    width: screenWidth * 0.85,
     maxWidth: 400,
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
@@ -370,7 +381,6 @@ const styles = StyleSheet.create({
   },
   contentScroll: {
     padding: 20,
-    maxHeight: 400, // Increased for XL text accessibility
   },
   title: {
     fontFamily: Fonts.primary,

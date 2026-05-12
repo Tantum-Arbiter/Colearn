@@ -55,8 +55,8 @@ export const MenuCarousel = React.memo(function MenuCarousel({
     // Rotate to center the pressed item
     const targetRotation = -index * ANGLE_PER_ITEM;
     rotation.value = withSpring(targetRotation, {
-      damping: 15,
-      stiffness: 100,
+      damping: 26,
+      stiffness: 120,
     });
   }, [rotation]);
 
@@ -92,8 +92,8 @@ export const MenuCarousel = React.memo(function MenuCarousel({
       const snappedRotation = Math.round(projectedRotation / ANGLE_PER_ITEM) * ANGLE_PER_ITEM;
 
       rotation.value = withSpring(snappedRotation, {
-        damping: 15,
-        stiffness: 100,
+        damping: 26,
+        stiffness: 120,
         velocity: velocity,
       });
     });

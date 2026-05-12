@@ -304,7 +304,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
   // user can see the transition.
   useEffect(() => {
     if (isPlayingSong && activeSequence.length > 0) {
-      const noteMs = 500;
+      const noteMs = Math.round(60000 / Math.max(challenge.resolvedBpm, 30));
       const gapMs = 100;
       let cancelled = false;
       let tick = 0;
@@ -349,7 +349,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
       setPlaybackIndex(-1);
       setPlaybackTick(0);
     }
-  }, [isPlayingSong, activeSequence]);
+  }, [isPlayingSong, activeSequence, challenge.resolvedBpm]);
 
   const togglePlayMode = useCallback(() => {
     setPlayMode(prev => {
@@ -588,7 +588,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
       {onMusicSheet && !uiHidden && (
         <Animated.View style={[
           styles.floatingControlsWrapper,
-          { bottom: Math.max(insets.bottom + 5, 20), left: Math.max(insets.left + 5, 20) },
+          { bottom: Math.max(insets.bottom + 20, 20), left: Math.max(insets.left + 20, 20) },
           instrumentRotationStyle,
         ]}>
           <Pressable
@@ -605,7 +605,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
       {/* Hide/Unhide button — bottom right, aligned with burger menu */}
       <View style={[
         styles.floatingControlsWrapper,
-        { bottom: Math.max(insets.bottom + 5, 20), right: Math.max(insets.right + 5, 20) },
+        { bottom: Math.max(insets.bottom + 20, 20), right: Math.max(insets.right + 20, 20) },
       ]}>
         <Pressable
           style={[styles.floatingControlButton, { width: scaledButtonSize(44), height: scaledButtonSize(44), borderRadius: scaledButtonSize(22) }]}

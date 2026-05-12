@@ -616,6 +616,15 @@ export default {
       accessibility: { title: 'Barrierefreiheit ♿', description: 'Passe die Textgröße an.' },
       screenTime: { title: 'Bildschirmzeit ⏱️', description: 'Setze gesunde Limits.' },
     },
+    // Music Mode Tips - keys match tutorial.musicMode.* in tutorial-content.ts
+    musicMode: {
+      welcome: { title: 'Musikmodus 🎵', description: 'Einige Seiten dieser Geschichte haben Musik-Herausforderungen! Spiele Noten auf einem virtuellen Instrument, um sie abzuschließen.' },
+      instrument: { title: 'Wähle Dein Instrument 🎹', description: 'Wenn ein Buch mit Musik geöffnet wird, wische durch das Karussell, um dein Lieblingsinstrument zu wählen. Jedes hat einzigartige Klänge!' },
+      playing: { title: 'Noten Spielen 🎶', description: 'Drücke die farbigen Knöpfe, um Noten zu spielen. Folge der oben angezeigten Sequenz, um die Herausforderung abzuschließen!' },
+      sheet: { title: 'Notenblatt 📋', description: 'Tippe auf den Notenschlüssel-Knopf (unten links), um alle zu spielenden Noten zu sehen. Du kannst dir sogar eine Vorschau der Melodie anhören!' },
+      begin: { title: 'Spielen Beginnen ▶️', description: 'Wenn du auf einer Musikseite ankommst, tippe oben auf \'Spielen Beginnen\', um die Herausforderung zu starten. Es öffnet zuerst das Notenblatt, damit du siehst, was du spielen musst!' },
+      change: { title: 'Instrument Wechseln 🔄', description: 'Möchtest du einen anderen Klang ausprobieren? Öffne das Menü (☰) und tippe auf \'Instrument Wechseln\', um jederzeit zu wechseln.' },
+    },
     gestures: {
       speakerLongPress: { title: 'Lang Drücken 👆', description: 'Drücke lang auf den Lautsprecher für mehr Optionen.' },
       storySwipe: { title: 'Wischen zum Navigieren 👆', description: 'Wische, um schnell Seiten umzublättern.' },

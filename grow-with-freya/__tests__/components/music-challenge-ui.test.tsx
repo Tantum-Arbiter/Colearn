@@ -26,6 +26,7 @@ const baseChallenge = {
   goHarder: jest.fn(),
   difficultyLevel: 1,
   currentSequence: [],
+  resolvedBpm: 120,
 } as any;
 
 const noteLayout = [

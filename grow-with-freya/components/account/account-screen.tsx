@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet, Dimensions, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, Dimensions, Alert, BackHandler, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -368,6 +368,19 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
       console.error('Failed to reset today\'s usage:', error);
     }
   };
+
+  // Android hardware back button support
+  useEffect(() => {
+    if (Platform.OS !== 'android' || !isActive) return;
+
+    const onBackPress = () => {
+      handleBack();
+      return true;
+    };
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => subscription.remove();
+  }, [currentView, hasUnsavedChanges, isActive]);
 
   // Handle back based on current view - respects navigation hierarchy
   const handleBack = () => {

@@ -690,6 +690,33 @@ export default {
         description: 'Sağlıklı sınırlar belirleyin ve günlük kullanımı izleyin.',
       },
     },
+    // Music Mode Tips - keys match tutorial.musicMode.* in tutorial-content.ts
+    musicMode: {
+      welcome: {
+        title: 'Müzik Modu 🎵',
+        description: 'Bu hikayenin bazı sayfalarında müzik meydan okumaları var! Sanal bir enstrümanda notalar çalarak tamamlayın.',
+      },
+      instrument: {
+        title: 'Enstrümanınızı Seçin 🎹',
+        description: 'Müzikli bir kitap açıldığında, en sevdiğiniz enstrümanı seçmek için karuseli kaydırın. Her birinin benzersiz sesleri var!',
+      },
+      playing: {
+        title: 'Nota Çalma 🎶',
+        description: 'Nota çalmak için renkli düğmelere basın. Meydan okumayı tamamlamak için üstte gösterilen sırayı takip edin!',
+      },
+      sheet: {
+        title: 'Müzik Sayfası 📋',
+        description: 'Çalmanız gereken tüm notaları görmek için nota düğmesine (sol alt) dokunun. Melodinin önizlemesini bile dinleyebilirsiniz!',
+      },
+      begin: {
+        title: 'Çalmaya Başla ▶️',
+        description: 'Bir müzik sayfasına geldiğinizde, meydan okumayı başlatmak için üstteki \'Çalmaya Başla\' düğmesine dokunun. Önce müzik sayfasını açar, böylece ne çalacağınızı görebilirsiniz!',
+      },
+      change: {
+        title: 'Enstrüman Değiştir 🔄',
+        description: 'Farklı bir ses denemek ister misiniz? Menüyü (☰) açın ve istediğiniz zaman değiştirmek için \'Enstrüman Değiştir\'e dokunun.',
+      },
+    },
     gestures: {
       speakerLongPress: {
         title: 'Uzun Basma İpucu 👆',
