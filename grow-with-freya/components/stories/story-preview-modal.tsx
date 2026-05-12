@@ -121,9 +121,9 @@ export function StoryPreviewModal({
     toggleFavoriteStory(story.id);
   }, [story, toggleFavoriteStory, starScale]);
 
-  // Don't render if not visible and no story
-  if (!visible && !story) return null;
-  if (!story) return null;
+  // Don't render when not visible — prevents the modal from peeking into view
+  // after orientation changes (translateY shared value can become stale)
+  if (!visible || !story) return null;
 
   const tagInfo = STORY_TAGS[story.category];
   const displayTags = story.tags || [story.tag];

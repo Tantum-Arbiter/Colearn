@@ -198,8 +198,14 @@ export function StoryBookReader({
   }, []);
 
   const handleCloseInstrumentPicker = useCallback(() => {
-    setShowInstrumentPicker(false);
-  }, []);
+    if (readingMode === 'read') {
+      // In read mode, closing the instrument picker closes the book entirely
+      setShowInstrumentPicker(false);
+      handleExitRef.current();
+    } else {
+      setShowInstrumentPicker(false);
+    }
+  }, [readingMode]);
 
   // Toggle music sheet overlay
   const handleToggleMusicSheet = useCallback(() => {

@@ -12,6 +12,7 @@ import Animated, {
   runOnJS,
   SharedValue,
   FadeIn,
+  FadeOut,
   SlideInDown,
   SlideInLeft,
   SlideOutDown,
@@ -177,6 +178,10 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const transitionOpacity = useSharedValue(1);
   const overlayOpacity = useSharedValue(0);
 
+  // Background image slide animation (children art texture)
+  // Slides down from above viewport on entry, slides back up on exit
+  const backgroundSlideY = useSharedValue(-screenHeight);
+
   // Book page flip and expansion animation values
   const pageFlipProgress = useSharedValue(0); // 0 = closed, 1 = open (cover rotated away)
   const bookExpansion = useSharedValue(0); // 0 = book size, 1 = full screen
@@ -310,6 +315,12 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       easing: Easing.out(Easing.cubic)
     });
 
+    // Slide the children-art background image down into view (much slower for a dramatic reveal)
+    backgroundSlideY.value = withTiming(0, {
+      duration: MOVE_TO_CENTER_DURATION * 2.5,
+      easing: Easing.out(Easing.cubic)
+    });
+
     // Show mode selection buttons after animation completes
     if (showButtons) {
       setTimeout(() => {
@@ -329,6 +340,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     transitionY.value = 0;
     transitionOpacity.value = 1;
     overlayOpacity.value = 0;
+    backgroundSlideY.value = -screenHeight; // Start above viewport
 
     // Reset ALL state that could affect rendering
     setIsExitAnimating(false);
@@ -520,7 +532,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     }
   };
 
-  // User cancels (taps X)
+  // User cancels (taps X) — book slides down, then background slides up
   const cancelTransition = async () => {
     console.log('Cancelling story transition');
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -534,53 +546,47 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     // Step 2: Wait for button exit animations to complete
     await new Promise(resolve => setTimeout(resolve, 280));
 
-    // If we rotated for this transition, rotate back first then animate
+    // If we rotated for this transition, rotate back to portrait first
     if (wasRotatedForTransition.current && originalCardPosition) {
       console.log('Cancelling with rotation - rotating to portrait');
-
-      // Step 3: Rotate back to portrait
       await returnToPortrait();
-
-      // Step 4: Wait for layout to settle
       await new Promise(resolve => setTimeout(resolve, 150));
-
-      // Step 5: Use STORED opening animation values (exact same as when opened)
-      // This ensures the book returns to the EXACT position it was at when opened
-      const storedTransform = openingTransformRef.current;
-      const moveX = storedTransform?.moveX ?? 0;
-      const moveY = storedTransform?.moveY ?? 0;
-      const targetScale = storedTransform?.scale ?? 1;
-
-      // Step 6: Set cardPosition to original and position book at center
-      setCardPosition(originalCardPosition);
-      transitionX.value = moveX;
-      transitionY.value = moveY;
-      transitionScale.value = targetScale;
-      overlayOpacity.value = 1;
-
-      // Step 7: Wait for state to apply
-      await new Promise(resolve => setTimeout(resolve, 50));
-
-      // Step 8: Animate book back to tile position and fade out
-      transitionX.value = withTiming(0, { duration: 400, easing: Easing.out(Easing.cubic) });
-      transitionY.value = withTiming(0, { duration: 400, easing: Easing.out(Easing.cubic) });
-      transitionScale.value = withTiming(1, { duration: 400, easing: Easing.out(Easing.cubic) });
-      overlayOpacity.value = withTiming(0, { duration: 400, easing: Easing.out(Easing.quad) }, () => {
-        runOnJS(resetTransition)();
-      });
-      return;
     }
 
-    // Standard cancel (no rotation) - animate back and fade out
-    transitionX.value = withTiming(0, { duration: 400, easing: Easing.out(Easing.cubic) });
-    transitionY.value = withTiming(0, { duration: 400, easing: Easing.out(Easing.cubic) });
-    transitionScale.value = withTiming(1, { duration: 400, easing: Easing.out(Easing.cubic) });
-    overlayOpacity.value = withTiming(0, { duration: 400, easing: Easing.out(Easing.quad) }, () => {
-      runOnJS(resetTransition)();
+    const SLIDE_DURATION = 400;
+    const currentHeight = Dimensions.get('window').height;
+
+    // Slide book down off screen
+    transitionY.value = withTiming(currentHeight + 200, {
+      duration: SLIDE_DURATION,
+      easing: Easing.in(Easing.cubic)
     });
+
+    // Wait for book to slide out, then slide background up
+    setTimeout(() => {
+      transitionOpacity.value = 0; // Hide the animated book (already off-screen)
+
+      backgroundSlideY.value = withTiming(-currentHeight, {
+        duration: SLIDE_DURATION,
+        easing: Easing.in(Easing.cubic)
+      });
+      overlayOpacity.value = withTiming(0, {
+        duration: SLIDE_DURATION,
+        easing: Easing.out(Easing.quad)
+      });
+
+      // Complete — resetTransition will clear selectedStoryId and unmount overlay
+      setTimeout(() => {
+        resetTransition();
+      }, SLIDE_DURATION + 50);
+    }, SLIDE_DURATION);
   };
 
   const resetTransition = () => {
+    // First: unmount the overlay by clearing state
+    // Do NOT reset shared values here — they run on the UI thread immediately,
+    // but React re-render is async. If we reset transitionX/Y/Scale to 0 now,
+    // the book would snap back to its tile position for 1 frame before the overlay unmounts.
     setIsTransitioning(false);
     setSelectedStoryId(null);
     setSelectedStory(null);
@@ -590,18 +596,8 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     setCurrentVoiceOver(null);
     setAvailableVoiceOvers([]);
     setVoiceOverName('');
-    transitionScale.value = 1;
-    transitionX.value = 0;
-    transitionY.value = 0;
-    transitionOpacity.value = 1;
-    overlayOpacity.value = 0;
-    // Reset page flip and expansion values
-    pageFlipProgress.value = 0;
-    bookExpansion.value = 0;
-    bookRotation.value = 0;
-    isExitAnimatingShared.value = 0;
-    isExpandingOrExitingShared.value = 0;
     setIsExpandingToReader(false);
+    setShowPreviewModal(false);
     // Reset rotation tracking
     wasRotatedForTransition.current = false;
     // Clear stored opening transform values
@@ -612,6 +608,26 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     if (onCancelCallback) {
       onCancelCallback();
     }
+
+    // Reset shared values AFTER React has unmounted the overlay (next frame)
+    // This prevents the 1-frame snap-back where the book jumps to tile position
+    setTimeout(() => {
+      transitionScale.value = 1;
+      transitionX.value = 0;
+      transitionY.value = 0;
+      transitionOpacity.value = 1;
+      overlayOpacity.value = 0;
+      backgroundSlideY.value = -screenHeight;
+      pageFlipProgress.value = 0;
+      bookExpansion.value = 0;
+      bookRotation.value = 0;
+      isExitAnimatingShared.value = 0;
+      isExpandingOrExitingShared.value = 0;
+      exitCardX.value = 0;
+      exitCardY.value = 0;
+      exitCardWidth.value = 0;
+      exitCardHeight.value = 0;
+    }, 50);
   };
 
   const completeTransition = () => {
@@ -636,6 +652,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       overlayOpacity.value = 0;
       pageFlipProgress.value = 0;
       bookExpansion.value = 0;
+      backgroundSlideY.value = -screenHeight;
     }, 50);
   };
 
@@ -699,10 +716,21 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     };
 
     // SET ALL ANIMATION VALUES FIRST - before any state changes
-    // Start positioned at CENTER (where the open book was) using the SAME transform values as opening end state
-    transitionX.value = moveX;          // Same X offset as end of opening animation
-    transitionY.value = moveY;          // Same Y offset as end of opening animation
-    transitionScale.value = targetScale; // Same scale as end of opening animation
+    // For phones in landscape, use landscape screen center so the book stays centered
+    // during shrink (otherwise it drifts to the portrait center position).
+    // For tablets/portrait, use the stored opening values.
+    if (needsRotation) {
+      // Center the book on the landscape screen at the same scale as the original selection view
+      const cardCX = originalCardPosition.x + originalCardPosition.width / 2;
+      const cardCY = originalCardPosition.y + originalCardPosition.height / 2;
+      transitionX.value = currentWidth / 2 - cardCX;
+      transitionY.value = currentHeight / 2 - cardCY;
+      transitionScale.value = targetScale; // Same scale as when the book was originally selected
+    } else {
+      transitionX.value = moveX;          // Same X offset as end of opening animation
+      transitionY.value = moveY;          // Same Y offset as end of opening animation
+      transitionScale.value = targetScale; // Same scale as end of opening animation
+    }
     transitionOpacity.value = 1;
     pageFlipProgress.value = 1;         // Cover is open (current page visible)
     bookExpansion.value = 1;            // Start at FULL SCREEN
@@ -755,52 +783,92 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     // If we need to rotate (phone in landscape): shrink, close cover, fade to black, rotate, fade in
     // The carousel isn't visible in landscape, so we use the overlay as a transition screen
     if (needsRotation) {
-      console.log('Phone exit: using rotation flow with black screen transition');
+      console.log('Phone exit: shrink in landscape, close cover, rotate to portrait, then slide out');
+
+      // Mirrored timing from selectModeAndBegin opening animation
+      const ROTATION_WAIT = 300;           // Same as ROTATION_DURATION in opening
+      const REPOSITION_DURATION = 200;     // Same as opening reposition (200ms)
+      const REPOSITION_SETTLE = 200;       // Same as opening settle wait
+
       // Wait for shrink to complete
       await new Promise(resolve => setTimeout(resolve, SETTLE_DELAY + SHRINK_DURATION + HOLD_AFTER_SHRINK));
 
-      // Phase 2: Close the cover (still in landscape)
+      // Phase 2: Close the cover (still in landscape) — reverse of opening's cover flip
       pageFlipProgress.value = withTiming(0, {
         duration: COVER_FLIP_DURATION,
         easing: Easing.inOut(Easing.cubic)
       });
       await new Promise(resolve => setTimeout(resolve, COVER_FLIP_DURATION + 100));
 
-      // Disable bookExpansionAnimatedStyle
-      exitCardWidth.value = 0;
-      exitCardHeight.value = 0;
+      // Phase 3: Fade overlay — same as opening's overlay fade (reversed: we fade IN)
+      overlayOpacity.value = withTiming(0.9, {
+        duration: 150,
+        easing: Easing.out(Easing.cubic)
+      });
+      await new Promise(resolve => setTimeout(resolve, 150));
 
-      // Phase 3: Fade to full black overlay (hide the book, keep overlay dark)
-      // This creates a clean transition screen for the rotation
-      overlayOpacity.value = withTiming(1, { duration: 300 }); // Ensure overlay is fully opaque
-      transitionOpacity.value = withTiming(0, { duration: 300 }); // Fade out the book
-      await new Promise(resolve => setTimeout(resolve, 350));
-
-      // Phase 4: Rotate screen to portrait (user sees black screen)
+      // Phase 4: Rotate to portrait — reverse of opening's rotate to landscape
       try {
         await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-        // Wait for rotation to fully settle
-        await new Promise(resolve => setTimeout(resolve, 400));
+        await new Promise(resolve => setTimeout(resolve, ROTATION_WAIT));
       } catch (error) {
         console.warn('Failed to rotate to portrait during exit:', error);
       }
 
-      // Update dimensions after rotation
       const portraitDims = Dimensions.get('window');
+      const portraitW = portraitDims.width;
+      const portraitH = portraitDims.height;
       setScreenDimensions(portraitDims);
 
-      // Wait for layout to update
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Phase 5: Animate book to portrait center — reverse of opening's landscape reposition
+      // Same duration (200ms) and easing as the opening animation
+      const cardCX = originalCardPosition.x + originalCardPosition.width / 2;
+      const cardCY = originalCardPosition.y + originalCardPosition.height / 2;
+      const portraitTargetWidth = portraitW * 0.75;
+      const portraitScale = portraitTargetWidth / originalCardPosition.width;
+      const portraitCenterX = portraitW / 2;
+      const portraitCenterY = portraitH * 0.32;
 
-      // Phase 5: Fade out overlay to reveal carousel in portrait
-      overlayOpacity.value = withTiming(0, { duration: 400 });
-      await new Promise(resolve => setTimeout(resolve, 450));
+      exitCardWidth.value = 0;
+      exitCardHeight.value = 0;
+      bookExpansion.value = 0;
+      pageFlipProgress.value = 0;
 
-      // Complete the animation
+      transitionX.value = withTiming(portraitCenterX - cardCX, {
+        duration: REPOSITION_DURATION,
+        easing: Easing.out(Easing.cubic)
+      });
+      transitionY.value = withTiming(portraitCenterY - cardCY, {
+        duration: REPOSITION_DURATION,
+        easing: Easing.out(Easing.cubic)
+      });
+      transitionScale.value = withTiming(portraitScale, {
+        duration: REPOSITION_DURATION,
+        easing: Easing.out(Easing.cubic)
+      });
+      await new Promise(resolve => setTimeout(resolve, REPOSITION_DURATION + REPOSITION_SETTLE));
+
+      // Phase 6: Slide book down off screen
+      const SLIDE_DURATION = 400;
+      const currentMoveY = portraitCenterY - cardCY;
+      transitionY.value = withTiming(currentMoveY + portraitH + 200, {
+        duration: SLIDE_DURATION,
+        easing: Easing.in(Easing.cubic)
+      });
+      await new Promise(resolve => setTimeout(resolve, SLIDE_DURATION));
+
+      // Phase 7: Slide background up to reveal menu
+      transitionOpacity.value = 0;
+      backgroundSlideY.value = withTiming(-portraitH, { duration: SLIDE_DURATION, easing: Easing.in(Easing.cubic) });
+      overlayOpacity.value = withTiming(0, { duration: SLIDE_DURATION, easing: Easing.out(Easing.quad) });
+      await new Promise(resolve => setTimeout(resolve, SLIDE_DURATION + 50));
+
       finishExitAnimation(onComplete);
     } else {
       // TABLET or already portrait: Original flow - no rotation needed
       console.log('Tablet/portrait exit: using non-rotation flow');
+      const SLIDE_DOWN_DURATION = 500; // Book slides down off screen
+
       // Phase 2: Close the cover
       setTimeout(() => {
         pageFlipProgress.value = withTiming(0, {
@@ -809,41 +877,43 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
         });
       }, SETTLE_DELAY + SHRINK_DURATION + HOLD_AFTER_SHRINK);
 
-      // Phase 3: Return to original position - exact reverse of opening animation
+      // Phase 3: Hold briefly at the selection view (centered book, cover closed)
+      const HOLD_AT_SELECTION = 300; // Let user see the selection view before slide-out
+      const phase3Start = SETTLE_DELAY + SHRINK_DURATION + HOLD_AFTER_SHRINK + COVER_FLIP_DURATION + HOLD_AT_SELECTION;
+
+      // Phase 4: Slide the book down off screen
       setTimeout(() => {
-        transitionX.value = withTiming(0, {
-          duration: RETURN_DURATION,
-          easing: Easing.out(Easing.cubic)
+        const slideTarget = currentHeight + 200; // Well below viewport
+        transitionY.value = withTiming(moveY + slideTarget, {
+          duration: SLIDE_DOWN_DURATION,
+          easing: Easing.in(Easing.cubic)
         });
-        transitionY.value = withTiming(0, {
-          duration: RETURN_DURATION,
-          easing: Easing.out(Easing.cubic)
-        });
-        transitionScale.value = withTiming(1, {
-          duration: RETURN_DURATION,
-          easing: Easing.out(Easing.cubic)
-        });
+      }, phase3Start);
+
+      // Phase 5: After book slides out, fade overlay away (no background slide in portrait/tablet)
+      setTimeout(() => {
+        transitionOpacity.value = 0; // Hide animated book (already off-screen)
+
         overlayOpacity.value = withTiming(0, {
-          duration: RETURN_DURATION,
+          duration: SLIDE_DOWN_DURATION,
           easing: Easing.out(Easing.quad)
         });
-      }, SETTLE_DELAY + SHRINK_DURATION + HOLD_AFTER_SHRINK + COVER_FLIP_DURATION);
+        backgroundSlideY.value = withTiming(-currentHeight, {
+          duration: SLIDE_DOWN_DURATION,
+          easing: Easing.out(Easing.quad)
+        });
+      }, phase3Start + SLIDE_DOWN_DURATION);
 
       // Complete the animation
       setTimeout(() => {
         finishExitAnimation(onComplete);
-      }, SETTLE_DELAY + SHRINK_DURATION + HOLD_AFTER_SHRINK + COVER_FLIP_DURATION + RETURN_DURATION + 50);
+      }, phase3Start + SLIDE_DOWN_DURATION * 2 + 50);
     }
   };
 
   const finishExitAnimation = (onComplete: () => void) => {
-    isExitAnimatingShared.value = 0;
-    isExpandingOrExitingShared.value = 0;
-    exitCardX.value = 0;
-    exitCardY.value = 0;
-    exitCardWidth.value = 0;
-    exitCardHeight.value = 0;
-    bookRotation.value = 0; // Ensure rotation is reset
+    // Don't reset shared values here — resetTransition defers them to avoid snap-back.
+    // Just clear React state to unmount the overlay.
     setIsExitAnimating(false);
     exitPageIndexRef.current = null;
     resetTransition();
@@ -996,6 +1066,12 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const overlayAnimatedStyle = useAnimatedStyle(() => {
     return {
       opacity: overlayOpacity.value,
+    };
+  });
+
+  const backgroundSlideAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateY: backgroundSlideY.value }],
     };
   });
 
@@ -1382,6 +1458,19 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
           {/* Shadow overlay background */}
           <Animated.View style={[styles.shadowOverlay, overlayAnimatedStyle]} />
 
+          {/* Children art background image — slides down on entry, up on exit */}
+          {/* Sits on top of shadow overlay with low opacity for subtle texture */}
+          <Animated.View
+            style={[styles.backgroundImageContainer, backgroundSlideAnimatedStyle]}
+            pointerEvents="none"
+          >
+            <Image
+              source={require('../assets/images/ui-elements/background-home.png')}
+              style={styles.backgroundImage}
+              resizeMode="repeat"
+            />
+          </Animated.View>
+
           {/* Tap anywhere to begin overlay - sits above shadow but below buttons */}
           {/* Disabled when any modal is open */}
           {showModeSelection && !showVoiceOverNameModal && !showVoiceOverSelectModal && !showPreviewModal && (
@@ -1538,9 +1627,11 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
           {/* High-resolution cover overlay - appears after animation completes */}
           {/* This is positioned at the actual target position (no scaling) for crisp rendering */}
+          {/* FadeOut prevents snap when mode selection hides (e.g. cancel or begin) */}
           {showModeSelection && targetBookPosition && cardPosition && !isExpandingToReader && (
             <Animated.View
               entering={FadeIn.duration(150)}
+              exiting={FadeOut.duration(200)}
               style={{
                 position: 'absolute',
                 left: targetBookPosition.x,
@@ -2121,6 +2212,17 @@ const styles = StyleSheet.create({
   shadowOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.92)',
+  },
+  backgroundImageContainer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0, // Above shadow, below buttons/book
+    overflow: 'hidden',
+    backgroundColor: '#1E3A8A', // Deep blue base matching brand gradient
+  },
+  backgroundImage: {
+    width: '200%',
+    height: '200%',
+    opacity: 0.12, // Subtle texture over the solid background
   },
   tapAnywhereOverlay: {
     ...StyleSheet.absoluteFillObject,
