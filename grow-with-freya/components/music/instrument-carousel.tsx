@@ -6,10 +6,10 @@
  * All sizes scale with the accessibility text-size setting (small / default / large / xl).
  */
 
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, Image } from 'react-native';
 import Animated, {
-  useSharedValue, useAnimatedStyle, withSpring, withRepeat, withSequence,
+  useSharedValue, useAnimatedStyle, withRepeat, withSequence,
   withTiming, interpolate, Extrapolation, Easing, SharedValue, runOnJS,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -46,8 +46,16 @@ export const InstrumentCarousel = React.memo(function InstrumentCarousel({ selec
   const rotation = useSharedValue(targetRotation);
   const gestureStart = useSharedValue(0);
 
+  // Refs so gesture worklets can read the latest values without being in
+  // useMemo deps. Changing useMemo deps recreates the Gesture objects which
+  // crashes react-native-gesture-handler when the native recognizers are active.
+  const selectedIdRef = useRef(selectedInstrumentId);
+  selectedIdRef.current = selectedInstrumentId;
+  const onSelectRef = useRef(onSelect);
+  onSelectRef.current = onSelect;
+
   useEffect(() => {
-    rotation.value = withSpring(targetRotation, { damping: 28, stiffness: 150 });
+    rotation.value = withTiming(targetRotation, { duration: 300, easing: Easing.out(Easing.ease) });
   }, [targetRotation]);
 
   const getCenteredIndex = useCallback((r: number) => {
@@ -57,21 +65,17 @@ export const InstrumentCarousel = React.memo(function InstrumentCarousel({ selec
 
   const selectFromRotation = useCallback((target: number) => {
     const inst = instruments[getCenteredIndex(target)];
-    if (inst) onSelect(inst.id);
-  }, [getCenteredIndex, instruments, onSelect]);
+    if (inst) onSelectRef.current(inst.id);
+  }, [getCenteredIndex, instruments]);
 
   const goToNeighbor = useCallback((dir: -1 | 1) => {
     const snapped = Math.round(rotation.value / anglePerItem) * anglePerItem;
     const target = snapped + dir * anglePerItem;
-    rotation.value = withSpring(target, { damping: 28, stiffness: 150 });
+    rotation.value = withTiming(target, { duration: 300, easing: Easing.out(Easing.ease) });
     selectFromRotation(target);
   }, [anglePerItem, rotation, selectFromRotation]);
 
-  const tap = useMemo(() => Gesture.Tap().onEnd(() => {
-    const inst = instruments[getCenteredIndex(rotation.value)];
-    if (inst && inst.id !== selectedInstrumentId) runOnJS(onSelect)(inst.id);
-  }), [getCenteredIndex, instruments, selectedInstrumentId, onSelect, rotation]);
-
+  // Tap disabled — selection is driven only by the arrows and pan gesture.
   const pan = useMemo(() => Gesture.Pan()
     .onStart(() => { gestureStart.value = rotation.value; })
     .onUpdate(e => {
@@ -85,11 +89,9 @@ export const InstrumentCarousel = React.memo(function InstrumentCarousel({ selec
       if (d > anglePerItem * 0.15 || e.velocityX > 200) step = 1;
       else if (d < -anglePerItem * 0.15 || e.velocityX < -200) step = -1;
       const target = ss + step * anglePerItem;
-      rotation.value = withSpring(target, { damping: 28, stiffness: 150 });
+      rotation.value = withTiming(target, { duration: 300, easing: Easing.out(Easing.ease) });
       runOnJS(selectFromRotation)(target);
     }), [anglePerItem, gestureStart, rotation, selectFromRotation]);
-
-  const composed = useMemo(() => Gesture.Race(tap, pan), [tap, pan]);
   if (instruments.length === 0) return null;
 
   const arrowSize = scaledButtonSize(36);
@@ -105,7 +107,7 @@ export const InstrumentCarousel = React.memo(function InstrumentCarousel({ selec
       </Pressable>
       {/* Carousel */}
       <GestureHandlerRootView style={st.gesture}>
-        <GestureDetector gesture={composed}>
+        <GestureDetector gesture={pan}>
           <View style={[st.cContainer, { height: carouselHeight }]}>
             <Animated.View style={st.carousel}>
               {instruments.map((inst, i) => (

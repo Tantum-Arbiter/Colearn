@@ -192,6 +192,11 @@ export function useMusicChallenge(
   const notePlayersRef = useRef<Map<string, AudioPlayer>>(new Map());
   // Track when each note started playing (for minimum tap duration)
   const noteStartTimeRef = useRef<Map<string, number>>(new Map());
+  // Track active fade-out intervals so they can be cancelled during cleanup,
+  // preventing native crashes from accessing deallocated AudioPlayer memory.
+  const fadeIntervalsRef = useRef<Set<ReturnType<typeof setInterval>>>(new Set());
+  // Track delayed stopNote timers (MIN_TAP_DURATION_MS) so they can be cancelled.
+  const delayedStopTimersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
 
   // Keep a ref for noteVolume so playNoteAudio always reads the latest value
   // and update all currently-playing note players when volume changes.
@@ -250,12 +255,36 @@ export function useMusicChallenge(
     }
   }, [config?.instrumentId, config?.enabled, config?.songId]);
 
-  // Helper to release all active note players
+  // Helper to release all active note players.
+  // Removes loop subscriptions BEFORE releasing to prevent native crashes
+  // from stale listeners accessing deallocated player memory.
+  // Also cancels any in-flight fade-out intervals and delayed stop timers
+  // so they don't access deallocated native AudioPlayer memory.
   const releaseAllNotePlayers = useCallback(() => {
+    // Cancel all delayed stopNote timers first — they would try to fade-out
+    // players that we are about to release immediately.
+    for (const timer of delayedStopTimersRef.current) {
+      clearTimeout(timer);
+    }
+    delayedStopTimersRef.current.clear();
+
+    // Cancel all in-flight fade-out intervals — they access player.volume /
+    // player.pause() / player.release() on players we are about to release.
+    for (const interval of fadeIntervalsRef.current) {
+      clearInterval(interval);
+    }
+    fadeIntervalsRef.current.clear();
+
     notePlayersRef.current.forEach(player => {
-      try { player.release(); } catch {}
+      try { (player as any).__loopSub?.remove(); } catch {}
     });
+    // Clear the map BEFORE releasing so status-update listeners see
+    // the player is gone and bail out of their restart logic.
+    const players = [...notePlayersRef.current.values()];
     notePlayersRef.current.clear();
+    for (const player of players) {
+      try { player.release(); } catch {}
+    }
   }, []);
 
   // Auto-cleanup when config becomes undefined (navigated away from music page)
@@ -319,6 +348,10 @@ export function useMusicChallenge(
     try {
       const existing = notePlayersRef.current.get(note);
       if (existing) {
+        // Remove loop subscription and map entry BEFORE releasing to prevent
+        // the status listener from restarting playback on a released player.
+        try { (existing as any).__loopSub?.remove(); } catch {}
+        notePlayersRef.current.delete(note);
         try { existing.release(); } catch {}
       }
 
@@ -363,10 +396,12 @@ export function useMusicChallenge(
       try { player.volume = startVol * (1 - step / fadeSteps); } catch {}
       if (step >= fadeSteps) {
         clearInterval(fade);
+        fadeIntervalsRef.current.delete(fade);
         try { player.pause(); } catch {}
         try { player.release(); } catch {}
       }
     }, fadeInterval);
+    fadeIntervalsRef.current.add(fade);
     log.debug('Ambient breath sound stopped');
   }, [AMBIENT_VOLUME]);
 
@@ -652,10 +687,12 @@ export function useMusicChallenge(
       try { player.volume = startVolume * (1 - step / fadeSteps); } catch {}
       if (step >= fadeSteps) {
         clearInterval(fade);
+        fadeIntervalsRef.current.delete(fade);
         try { player.pause(); } catch {}
         try { player.release(); } catch {}
       }
     }, fadeInterval);
+    fadeIntervalsRef.current.add(fade);
   }, []);
 
   // Start a sustain timer for a blow-mode note. When it expires, the note
@@ -730,7 +767,11 @@ export function useMusicChallenge(
     if (startTime) {
       const elapsed = Date.now() - startTime;
       if (elapsed < MIN_TAP_DURATION_MS) {
-        setTimeout(doStop, MIN_TAP_DURATION_MS - elapsed);
+        const timer = setTimeout(() => {
+          delayedStopTimersRef.current.delete(timer);
+          doStop();
+        }, MIN_TAP_DURATION_MS - elapsed);
+        delayedStopTimersRef.current.add(timer);
         return;
       }
     }
@@ -816,10 +857,26 @@ export function useMusicChallenge(
     return () => {
       log.debug('useMusicChallenge unmounting — releasing resources');
       try {
+        // Cancel delayed stopNote timers and fade-out intervals FIRST so they
+        // don't fire after we release the native players below.
+        for (const timer of delayedStopTimersRef.current) {
+          clearTimeout(timer);
+        }
+        delayedStopTimersRef.current.clear();
+        for (const interval of fadeIntervalsRef.current) {
+          clearInterval(interval);
+        }
+        fadeIntervalsRef.current.clear();
+
+        // Remove loop subscriptions before releasing to prevent native crashes
         notePlayersRef.current.forEach(player => {
-          try { player.release(); } catch {}
+          try { (player as any).__loopSub?.remove(); } catch {}
         });
+        const players = [...notePlayersRef.current.values()];
         notePlayersRef.current.clear();
+        for (const player of players) {
+          try { player.release(); } catch {}
+        }
         if (ambientPlayerRef.current) {
           try { ambientPlayerRef.current.release(); } catch {}
           ambientPlayerRef.current = null;

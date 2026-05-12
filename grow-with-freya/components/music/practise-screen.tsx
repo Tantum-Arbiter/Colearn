@@ -22,8 +22,6 @@ import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import Animated, {
-  FadeIn,
-  FadeOut,
   useSharedValue,
   useAnimatedStyle,
   withRepeat,
@@ -160,6 +158,11 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
 
   const musicChallenge = useMusicChallenge(musicChallengeConfig, undefined, effectiveNoteVolume, audioSessionControl);
 
+  // Stable ref so callbacks can access the latest musicChallenge without
+  // adding it to useCallback deps (it's a new object every render).
+  const musicChallengeRef = useRef(musicChallenge);
+  musicChallengeRef.current = musicChallenge;
+
   // Track the current play mode so we only sync breath state in blow mode.
   const currentPlayModeRef = useRef<'blow' | 'press'>('press');
 
@@ -230,9 +233,25 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
     selectedInstrumentId ? getPracticeSongsForInstrument(selectedInstrumentId) : [],
   [selectedInstrumentId]);
 
+  // Ref mirrors so the carousel callback can read the latest values without
+  // adding state to useCallback deps (which would destabilise the gesture handlers).
+  const selectedInstrumentIdRef = useRef(selectedInstrumentId);
+  selectedInstrumentIdRef.current = selectedInstrumentId;
+
   // Handlers
-  // Quick-switch instrument from the inline carousel
+  // Quick-switch instrument from the inline carousel.
+  // This callback MUST have an empty dep array so the carousel's gesture
+  // handlers (useMemo'd Gesture objects) stay referentially stable. Any dep
+  // change recreates onSelect → recreates Gesture.Race → crashes
+  // react-native-gesture-handler on the native side.
   const handleInlineInstrumentChange = useCallback((instrumentId: string) => {
+    // Ignore if the same instrument is already selected — the carousel pan/arrow
+    // handlers can fire onSelect even when the centered item hasn't changed.
+    if (instrumentId === selectedInstrumentIdRef.current) return;
+
+    // Clean up any lingering audio resources (note players, fade-out intervals,
+    // delayed stop timers) from the previous instrument before switching.
+    musicChallengeRef.current.cleanup();
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSelectedInstrumentId(instrumentId);
     setSelectedSong(null);
@@ -249,11 +268,6 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
       return () => clearTimeout(timer);
     }
   }, [phase]);
-
-  // Auto-start the music challenge when we enter the playing phase and config is ready
-  // We use a ref to hold the latest start function to avoid stale closures
-  const musicChallengeRef = useRef(musicChallenge);
-  musicChallengeRef.current = musicChallenge;
 
   // Proactively restore the iOS audio session to playback-only mode as soon as
   // we enter the playing phase. useAudioRecorder (breath detector) may have left
@@ -304,6 +318,11 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
 
   // User closes the music sheet without playing → go back to song list
   const handleCloseMusicSheet = useCallback(() => {
+    // Clean up audio resources (preview note players, fade-out intervals, loop
+    // listeners) before changing state.  Without this, stale AudioPlayer
+    // references from the preview can survive until the next instrument /
+    // song selection and cause a native crash when accessed after deallocation.
+    musicChallengeRef.current.cleanup();
     setShowMusicSheet(false);
     setSelectedSong(null);
     restoreMusicVolume();
@@ -335,19 +354,22 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
     setPhase('songs');
   }, [musicChallenge, breathDetector, restoreMusicVolume]);
 
-  // Return to song library from playing phase (used by settings menu "Change Instrument")
+  // Return to song library from playing/preview phase (used by settings menu "Change Instrument")
   const handleChangeInstrument = useCallback(() => {
-    if (phase === 'playing') {
-      musicChallenge.cleanup();
-      breathDetector.stopListening();
-      setShowMusicSheet(false);
-      setShowSettingsMenu(false);
-      setMusicUiHidden(false);
+    // Always clean up audio resources regardless of current phase to prevent
+    // native crashes from stale AudioPlayer references during instrument switch.
+    musicChallenge.cleanup();
+    breathDetector.stopListening();
+    setShowMusicSheet(false);
+    setShowSettingsMenu(false);
+    setMusicUiHidden(false);
+    instrumentContentOpacity.value = 0;
+    if (phase === 'playing' || phase === 'preview') {
       restoreMusicVolume();
     }
     setSelectedSong(null);
     setPhase('songs');
-  }, [phase, musicChallenge, breathDetector, restoreMusicVolume]);
+  }, [phase, musicChallenge, breathDetector, restoreMusicVolume, instrumentContentOpacity]);
 
   const handleBack = useCallback(() => {
     if (phase === 'playing') {
@@ -607,49 +629,47 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
           { paddingBottom: insets.bottom + 20 },
         ]}
         renderItem={({ item }) => (
-          <Animated.View entering={FadeIn.duration(300)} exiting={FadeOut.duration(200)}>
-            <Pressable
-              style={({ pressed }) => [
-                styles.songCard,
-                pressed && styles.songCardPressed,
-              ]}
-              onPress={() => handleSongSelect(item)}
-            >
-              <View style={styles.songCardHeader}>
-                <Text style={[styles.songName, { fontSize: songFontSize }]}>
-                  {t(item.nameKey)}
+          <Pressable
+            style={({ pressed }) => [
+              styles.songCard,
+              pressed && styles.songCardPressed,
+            ]}
+            onPress={() => handleSongSelect(item)}
+          >
+            <View style={styles.songCardHeader}>
+              <Text style={[styles.songName, { fontSize: songFontSize }]}>
+                {t(item.nameKey)}
+              </Text>
+              <View style={[styles.diffBadge, { backgroundColor: DIFFICULTY_COLORS[item.difficulty] }]}>
+                <Text style={[styles.diffBadgeText, { fontSize: diffBadgeFontSize }]}>
+                  {DIFFICULTY_STARS[item.difficulty]} {t(`music.difficulty.${item.difficulty}`)}
                 </Text>
-                <View style={[styles.diffBadge, { backgroundColor: DIFFICULTY_COLORS[item.difficulty] }]}>
-                  <Text style={[styles.diffBadgeText, { fontSize: diffBadgeFontSize }]}>
-                    {DIFFICULTY_STARS[item.difficulty]} {t(`music.difficulty.${item.difficulty}`)}
+              </View>
+            </View>
+            {/* Note preview */}
+            <View style={styles.notePreview}>
+              {item.sequence.slice(0, 16).map((note, i) => (
+                <View
+                  key={`${note}-${i}`}
+                  style={[
+                    styles.previewNote,
+                    {
+                      backgroundColor: instrumentDef?.noteLayout.find(n => n.note === note)?.color ?? '#888',
+                    },
+                  ]}
+                >
+                  <Text style={[styles.previewNoteText, { fontSize: previewFontSize }]}>
+                    {note}
                   </Text>
                 </View>
-              </View>
-              {/* Note preview */}
-              <View style={styles.notePreview}>
-                {item.sequence.slice(0, 16).map((note, i) => (
-                  <View
-                    key={`${note}-${i}`}
-                    style={[
-                      styles.previewNote,
-                      {
-                        backgroundColor: instrumentDef?.noteLayout.find(n => n.note === note)?.color ?? '#888',
-                      },
-                    ]}
-                  >
-                    <Text style={[styles.previewNoteText, { fontSize: previewFontSize }]}>
-                      {note}
-                    </Text>
-                  </View>
-                ))}
-                {item.sequence.length > 16 && (
-                  <Text style={[styles.moreNotes, { fontSize: previewFontSize }]}>
-                    +{item.sequence.length - 16}
-                  </Text>
-                )}
-              </View>
-            </Pressable>
-          </Animated.View>
+              ))}
+              {item.sequence.length > 16 && (
+                <Text style={[styles.moreNotes, { fontSize: previewFontSize }]}>
+                  +{item.sequence.length - 16}
+                </Text>
+              )}
+            </View>
+          </Pressable>
         )}
         ListEmptyComponent={
           <Text style={[styles.emptyText, { fontSize: songFontSize }]}>

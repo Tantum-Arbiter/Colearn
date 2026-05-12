@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet, ScrollView, Image, useWindowDimensions } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS,
@@ -14,21 +14,52 @@ import { TermsConditionsContent } from '@/components/account/terms-conditions-sc
 type PlanId = 'monthly_basic' | 'monthly_premium' | 'yearly';
 interface Plan { id: PlanId; name: string; price: string; period: string; details: string[]; badge?: string; originalPrice?: string; }
 
-const PLANS: Plan[] = [
-  { id: 'monthly_basic', name: 'Basic', price: '£5.99', period: '/month',
-    details: ['All stories unlocked', 'Download up to 50 books', 'Limited songs access', 'Sync across various devices'] },
-  { id: 'monthly_premium', name: 'Premium', price: '£9.99', period: '/month', badge: 'Most Recommended',
-    details: ['All stories unlocked', 'Download up to 100 books', 'All songs in practice mode', 'All instruments unlocked'] },
-  { id: 'yearly', name: 'Annual', price: '£89.98', period: '/year', badge: '25% Off', originalPrice: '£119.88',
-    details: ['Everything in Premium', 'Save 25% vs monthly'] },
-];
+// --- Multi-currency pricing (Apple App Store tiers for US, EU, UK) ---
+type CurrencyKey = 'USD' | 'GBP' | 'EUR';
+interface CurrencyPricing { symbol: string; basic: string; premium: string; annual: string; annualOriginal: string; }
+
+const PRICING: Record<CurrencyKey, CurrencyPricing> = {
+  USD: { symbol: '$', basic: '$5.99', premium: '$9.99', annual: '$89.99', annualOriginal: '$119.88' },
+  GBP: { symbol: '£', basic: '£5.99', premium: '£9.99', annual: '£89.99', annualOriginal: '£119.88' },
+  EUR: { symbol: '€', basic: '€6.99', premium: '€10.99', annual: '€98.99', annualOriginal: '€131.88' },
+};
+
+/** Detect currency from device locale via expo-localization */
+function getDeviceCurrency(): CurrencyKey {
+  try {
+    const Localization = require('expo-localization');
+    const locales = Localization.getLocales?.();
+    if (locales && locales.length > 0) {
+      const { currencyCode, regionCode } = locales[0];
+      if (currencyCode === 'EUR' || currencyCode === 'GBP' || currencyCode === 'USD') return currencyCode;
+      // Map region to currency for common EU/UK/US regions
+      if (regionCode === 'GB') return 'GBP';
+      if (regionCode === 'US') return 'USD';
+      const euRegions = ['AT','BE','CY','EE','FI','FR','DE','GR','IE','IT','LV','LT','LU','MT','NL','PT','SK','SI','ES','HR'];
+      if (euRegions.includes(regionCode ?? '')) return 'EUR';
+    }
+  } catch {}
+  return 'USD'; // Default to USD
+}
+
+function buildPlans(currency: CurrencyKey): Plan[] {
+  const p = PRICING[currency];
+  return [
+    { id: 'monthly_basic', name: 'Basic', price: p.basic, period: '/month',
+      details: ['All stories unlocked', 'Download up to 50 books', 'Limited songs access', 'Sync across various devices'] },
+    { id: 'monthly_premium', name: 'Premium', price: p.premium, period: '/month', badge: 'Most Recommended',
+      details: ['All stories unlocked', 'Download up to 100 books', 'All songs in practice mode', 'All instruments unlocked'] },
+    { id: 'yearly', name: 'Annual', price: p.annual, period: '/year', badge: '25% Off', originalPrice: p.annualOriginal,
+      details: ['Everything in Premium', 'Save 25% vs monthly'] },
+  ];
+}
 
 const USP_POINTS: { icon: keyof typeof Ionicons.glyphMap; text: string }[] = [
   { icon: 'book-outline', text: 'Stories crafted to support child development' },
   { icon: 'checkmark-circle-outline', text: 'Age-appropriate content reviewed by educators' },
   { icon: 'musical-notes-outline', text: 'Interactive music & instrument practice' },
   { icon: 'shield-checkmark-outline', text: 'No ads, ever — safe for little ones' },
-  { icon: 'globe-outline', text: 'Available in 13 languages' },
+  { icon: 'globe-outline', text: 'Available in 14 languages' },
 ];
 
 const ANIM_MS = 350;
@@ -39,6 +70,7 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
   const insets = useSafeAreaInsets();
   const { width: screenW, height: screenH } = useWindowDimensions();
   const [selectedPlan, setSelectedPlan] = useState<PlanId>('monthly_premium');
+  const plans = useMemo(() => buildPlans(getDeviceCurrency()), []);
   const [legalPage, setLegalPage] = useState<'privacy' | 'terms' | null>(null);
   const translateY = useSharedValue(screenH);
   const backdropOpacity = useSharedValue(0);
@@ -125,8 +157,8 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
             <Text style={st.closeTxt}>✕</Text>
           </Pressable>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={st.scroll}>
-            <Text style={st.header}>5 days for free +</Text>
-            <Text style={st.sub}>Choose your plan after the trial</Text>
+            <Text style={st.header}>Unlock a Plan</Text>
+            <Text style={st.sub}>Choose the plan that works best for your family</Text>
             <View style={st.uspBox}>
               {USP_POINTS.map((u, i) => (
                 <View key={i} style={st.uspRow}>
@@ -135,7 +167,7 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
                 </View>
               ))}
             </View>
-            {PLANS.map(renderPlan)}
+            {plans.map(renderPlan)}
           </ScrollView>
           <Pressable style={st.subBtn} onPress={() => {}}>
             <LinearGradient colors={['#F59E0B', '#D97706']} style={st.subBtnInner}>
