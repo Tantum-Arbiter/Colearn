@@ -14,6 +14,7 @@ import Animated, {
   Easing
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { ALL_STORIES } from '@/data/stories';
 import { Story, StoryCategory, StoryFilterTag, STORY_FILTER_TAGS, getLocalizedText } from '@/types/story';
@@ -30,6 +31,26 @@ import { PageHeader } from '@/components/ui/page-header';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { StoryPreviewModal } from './story-preview-modal';
 import type { SupportedLanguage } from '@/services/i18n';
+
+// White Ionicons icon for each filter tag (replaces coloured emojis)
+const TAG_ICONS: Record<StoryFilterTag, keyof typeof Ionicons.glyphMap> = {
+  personalized: 'person-outline',
+  calming: 'leaf-outline',
+  bedtime: 'moon-outline',
+  adventure: 'compass-outline',
+  learning: 'book-outline',
+  music: 'musical-notes-outline',
+  'family-exercises': 'people-outline',
+  'imagination-games': 'color-palette-outline',
+  animals: 'paw-outline',
+  friendship: 'heart-outline',
+  nature: 'flower-outline',
+  fantasy: 'sparkles-outline',
+  counting: 'calculator-outline',
+  emotions: 'happy-outline',
+  silly: 'happy-outline',
+  rhymes: 'chatbubble-ellipses-outline',
+};
 
 // Constants for card dimensions - defined once, not on every render
 const CARD_WIDTH = 160;
@@ -497,7 +518,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
                 ]}
                 onPress={() => handleTagPress(tag)}
               >
-                <Text style={styles.tagEmoji}>{tagInfo.emoji}</Text>
+                <Ionicons name={TAG_ICONS[tag]} size={14} color="#FFFFFF" style={styles.tagIcon} />
                 <Text style={[styles.tagLabel, { fontSize: scaledFontSize(12) }]}>
                   {tagLabel}
                 </Text>
@@ -681,8 +702,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     gap: 4,
   },
-  tagEmoji: {
-    fontSize: 14,
+  tagIcon: {
+    marginRight: 2,
   },
   tagLabel: {
     color: 'white',

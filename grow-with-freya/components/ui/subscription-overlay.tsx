@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { Fonts } from '@/constants/theme';
 import { PrivacyPolicyContent } from '@/components/account/privacy-policy-screen';
 import { TermsConditionsContent } from '@/components/account/terms-conditions-screen';
@@ -42,24 +43,23 @@ function getDeviceCurrency(): CurrencyKey {
   return 'USD'; // Default to USD
 }
 
-function buildPlans(currency: CurrencyKey): Plan[] {
+function buildPlans(currency: CurrencyKey, t: (key: string) => string): Plan[] {
   const p = PRICING[currency];
   return [
-    { id: 'monthly_basic', name: 'Basic', price: p.basic, period: '/month',
-      details: ['All stories unlocked', 'Download up to 50 books', 'Limited songs access', 'Sync across various devices'] },
-    { id: 'monthly_premium', name: 'Premium', price: p.premium, period: '/month', badge: 'Most Recommended',
-      details: ['All stories unlocked', 'Download up to 100 books', 'All songs in practice mode', 'All instruments unlocked'] },
-    { id: 'yearly', name: 'Annual', price: p.annual, period: '/year', badge: '25% Off', originalPrice: p.annualOriginal,
-      details: ['Everything in Premium', 'Save 25% vs monthly'] },
+    { id: 'monthly_basic', name: t('subscription.planBasic'), price: p.basic, period: t('subscription.perMonth'),
+      details: [t('subscription.detailAllStories'), t('subscription.detailDownload50'), t('subscription.detailLimitedSongs'), t('subscription.detailSyncDevices')] },
+    { id: 'monthly_premium', name: t('subscription.planPremium'), price: p.premium, period: t('subscription.perMonth'), badge: t('subscription.mostRecommended'),
+      details: [t('subscription.detailAllStories'), t('subscription.detailDownload100'), t('subscription.detailAllSongs'), t('subscription.detailAllInstruments')] },
+    { id: 'yearly', name: t('subscription.planAnnual'), price: p.annual, period: t('subscription.perYear'), badge: t('subscription.percentOff'), originalPrice: p.annualOriginal,
+      details: [t('subscription.detailEverythingPremium'), t('subscription.detailSave25')] },
   ];
 }
 
-const USP_POINTS: { icon: keyof typeof Ionicons.glyphMap; text: string }[] = [
-  { icon: 'book-outline', text: 'Stories crafted to support child development' },
-  { icon: 'checkmark-circle-outline', text: 'Age-appropriate content reviewed by educators' },
-  { icon: 'musical-notes-outline', text: 'Interactive music & instrument practice' },
-  { icon: 'shield-checkmark-outline', text: 'No ads, ever — safe for little ones' },
-  { icon: 'globe-outline', text: 'Available in 14 languages' },
+const USP_ICONS: (keyof typeof Ionicons.glyphMap)[] = [
+  'book-outline', 'checkmark-circle-outline', 'musical-notes-outline', 'shield-checkmark-outline', 'globe-outline',
+];
+const USP_KEYS = [
+  'subscription.uspStories', 'subscription.uspEducators', 'subscription.uspMusic', 'subscription.uspNoAds', 'subscription.uspLanguages',
 ];
 
 const ANIM_MS = 350;
@@ -67,10 +67,11 @@ const ANIM_MS = 350;
 interface Props { visible: boolean; onClose: () => void; }
 
 export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ visible, onClose }: Props) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { width: screenW, height: screenH } = useWindowDimensions();
   const [selectedPlan, setSelectedPlan] = useState<PlanId>('monthly_premium');
-  const plans = useMemo(() => buildPlans(getDeviceCurrency()), []);
+  const plans = useMemo(() => buildPlans(getDeviceCurrency(), t), [t]);
   const [legalPage, setLegalPage] = useState<'privacy' | 'terms' | null>(null);
   const translateY = useSharedValue(screenH);
   const backdropOpacity = useSharedValue(0);
@@ -157,13 +158,13 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
             <Text style={st.closeTxt}>✕</Text>
           </Pressable>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={st.scroll}>
-            <Text style={st.header}>Unlock a Plan</Text>
-            <Text style={st.sub}>Choose the plan that works best for your family</Text>
+            <Text style={st.header}>{t('subscription.unlockPlan')}</Text>
+            <Text style={st.sub}>{t('subscription.choosePlan')}</Text>
             <View style={st.uspBox}>
-              {USP_POINTS.map((u, i) => (
+              {USP_ICONS.map((icon, i) => (
                 <View key={i} style={st.uspRow}>
-                  <Ionicons name={u.icon} size={16} color="#fff" style={{ marginRight: 8, marginTop: 1 }} />
-                  <Text style={st.uspText}>{u.text}</Text>
+                  <Ionicons name={icon} size={16} color="#fff" style={{ marginRight: 8, marginTop: 1 }} />
+                  <Text style={st.uspText}>{t(USP_KEYS[i])}</Text>
                 </View>
               ))}
             </View>
@@ -171,16 +172,16 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
           </ScrollView>
           <Pressable style={st.subBtn} onPress={() => {}}>
             <LinearGradient colors={['#F59E0B', '#D97706']} style={st.subBtnInner}>
-              <Text style={st.subBtnText}>Subscribe</Text>
+              <Text style={st.subBtnText}>{t('subscription.subscribe')}</Text>
             </LinearGradient>
           </Pressable>
           <View style={st.legalRow}>
             <Pressable onPress={() => openLegal('privacy')}>
-              <Text style={st.legalLink}>Privacy Policy</Text>
+              <Text style={st.legalLink}>{t('subscription.privacyPolicy')}</Text>
             </Pressable>
             <Text style={st.legalDot}>·</Text>
             <Pressable onPress={() => openLegal('terms')}>
-              <Text style={st.legalLink}>Terms & Conditions</Text>
+              <Text style={st.legalLink}>{t('subscription.termsAndConditions')}</Text>
             </Pressable>
           </View>
         </LinearGradient>

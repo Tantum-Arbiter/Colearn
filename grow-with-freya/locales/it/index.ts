@@ -866,6 +866,36 @@ export default {
     voiceOver: 'Voce',
   },
 
+  // Subscription overlay
+  subscription: {
+    unlockPlan: 'Sblocca un piano',
+    choosePlan: 'Scegli il piano più adatto alla tua famiglia',
+    subscribe: 'Abbonati',
+    privacyPolicy: 'Informativa sulla privacy',
+    termsAndConditions: 'Termini e condizioni',
+    planBasic: 'Base',
+    planPremium: 'Premium',
+    planAnnual: 'Annuale',
+    perMonth: '/mese',
+    perYear: '/anno',
+    mostRecommended: 'Il più consigliato',
+    percentOff: '25% di sconto',
+    uspStories: 'Storie create per sostenere lo sviluppo del bambino',
+    uspEducators: 'Contenuti adatti all\'età, verificati da educatori',
+    uspMusic: 'Musica interattiva e pratica strumentale',
+    uspNoAds: 'Nessuna pubblicità — sicuro per i piccoli',
+    uspLanguages: 'Disponibile in 14 lingue',
+    detailAllStories: 'Tutte le storie sbloccate',
+    detailDownload50: 'Scarica fino a 50 libri',
+    detailLimitedSongs: 'Accesso limitato alle canzoni',
+    detailSyncDevices: 'Sincronizzazione su più dispositivi',
+    detailDownload100: 'Scarica fino a 100 libri',
+    detailAllSongs: 'Tutte le canzoni in modalità pratica',
+    detailAllInstruments: 'Tutti gli strumenti sbloccati',
+    detailEverythingPremium: 'Tutto ciò che è incluso in Premium',
+    detailSave25: 'Risparmia il 25% rispetto al mensile',
+  },
+
   // Default page content
   defaultPage: {
     comingSoon: 'Prossimamente!',

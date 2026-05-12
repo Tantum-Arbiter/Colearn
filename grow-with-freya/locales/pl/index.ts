@@ -737,6 +737,36 @@ export default {
     voiceOver: 'Narracja',
   },
 
+  // Subscription overlay
+  subscription: {
+    unlockPlan: 'Odblokuj plan',
+    choosePlan: 'Wybierz plan, który najlepiej pasuje do Twojej rodziny',
+    subscribe: 'Subskrybuj',
+    privacyPolicy: 'Polityka prywatności',
+    termsAndConditions: 'Regulamin',
+    planBasic: 'Podstawowy',
+    planPremium: 'Premium',
+    planAnnual: 'Roczny',
+    perMonth: '/miesiąc',
+    perYear: '/rok',
+    mostRecommended: 'Najbardziej polecany',
+    percentOff: '25% taniej',
+    uspStories: 'Opowieści wspierające rozwój dziecka',
+    uspEducators: 'Treści dostosowane do wieku, recenzowane przez pedagogów',
+    uspMusic: 'Interaktywna muzyka i ćwiczenia instrumentalne',
+    uspNoAds: 'Bez reklam — bezpieczne dla maluchów',
+    uspLanguages: 'Dostępne w 14 językach',
+    detailAllStories: 'Wszystkie opowieści odblokowane',
+    detailDownload50: 'Pobierz do 50 książek',
+    detailLimitedSongs: 'Ograniczony dostęp do piosenek',
+    detailSyncDevices: 'Synchronizacja na wielu urządzeniach',
+    detailDownload100: 'Pobierz do 100 książek',
+    detailAllSongs: 'Wszystkie piosenki w trybie ćwiczeń',
+    detailAllInstruments: 'Wszystkie instrumenty odblokowane',
+    detailEverythingPremium: 'Wszystko z planu Premium',
+    detailSave25: 'Oszczędź 25% w porównaniu z miesięcznym',
+  },
+
   // Default page content
   defaultPage: {
     comingSoon: 'Wkrótce!',

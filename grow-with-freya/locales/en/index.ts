@@ -906,6 +906,43 @@ export default {
     voiceOver: 'Voice Over',
   },
 
+  // Subscription overlay
+  subscription: {
+    unlockPlan: 'Unlock a Plan',
+    choosePlan: 'Choose the plan that works best for your family',
+    subscribe: 'Subscribe',
+    privacyPolicy: 'Privacy Policy',
+    termsAndConditions: 'Terms & Conditions',
+    // Plan names
+    planBasic: 'Basic',
+    planPremium: 'Premium',
+    planAnnual: 'Annual',
+    // Periods
+    perMonth: '/month',
+    perYear: '/year',
+    // Badges
+    mostRecommended: 'Most Recommended',
+    percentOff: '25% Off',
+    // USP points
+    uspStories: 'Stories crafted to support child development',
+    uspEducators: 'Age-appropriate content reviewed by educators',
+    uspMusic: 'Interactive music & instrument practice',
+    uspNoAds: 'No ads, ever — safe for little ones',
+    uspLanguages: 'Available in 14 languages',
+    // Plan details — Basic
+    detailAllStories: 'All stories unlocked',
+    detailDownload50: 'Download up to 50 books',
+    detailLimitedSongs: 'Limited songs access',
+    detailSyncDevices: 'Sync across various devices',
+    // Plan details — Premium
+    detailDownload100: 'Download up to 100 books',
+    detailAllSongs: 'All songs in practice mode',
+    detailAllInstruments: 'All instruments unlocked',
+    // Plan details — Annual
+    detailEverythingPremium: 'Everything in Premium',
+    detailSave25: 'Save 25% vs monthly',
+  },
+
   // Default page content
   defaultPage: {
     comingSoon: 'Coming Soon!',

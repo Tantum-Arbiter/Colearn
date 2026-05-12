@@ -65,8 +65,7 @@ const MEMOIZED_ACCOUNT_STAR_POSITIONS = generateStarPositions();
 export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
   const { i18n, t } = useTranslation();
   const [currentView, setCurrentView] = useState<SlideView>('main');
-  const [showGrayscaleInfo, setShowGrayscaleInfo] = useState(false);
-  const [showBlueLightInfo, setShowBlueLightInfo] = useState(false);
+
   const [showLanguageOverlay, setShowLanguageOverlay] = useState(false);
   const currentLanguage = i18n.language as SupportedLanguage;
 
@@ -619,66 +618,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
             <Text style={[styles.accessibilityHint, { fontSize: scaledFontSize(12) }]} numberOfLines={2} adjustsFontSizeToFit>
               {t('accessibility.textSizeHint')}</Text>
 
-            <Pressable
-              style={styles.grayscaleInfoBox}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setShowGrayscaleInfo(!showGrayscaleInfo);
-              }}
-            >
-              <Text style={[
-                styles.grayscaleInfoTitle,
-                showGrayscaleInfo && styles.grayscaleInfoTitleExpanded,
-                { fontSize: scaledFontSize(14) }
-              ]}>
-                {t('accessibility.grayscale')} {showGrayscaleInfo ? '▼' : '▶'}
-              </Text>
-              {showGrayscaleInfo && (
-                <>
-                  <Text style={[styles.grayscaleInfoText, { fontSize: scaledFontSize(12) }]}>
-                    {t('accessibility.grayscaleHint')}
-                  </Text>
-                  <Text style={[styles.grayscaleInfoPath, { fontSize: scaledFontSize(11) }]}>
-                    <Text style={styles.platformBold}>iOS:</Text> {t('accessibility.grayscaleIos')}
-                  </Text>
-                  <Text style={[styles.grayscaleInfoPath, { fontSize: scaledFontSize(11) }]}>
-                    <Text style={styles.platformBold}>Android:</Text> {t('accessibility.grayscaleAndroid')}
-                  </Text>
-                </>
-              )}
-            </Pressable>
 
-            <Pressable
-              style={styles.grayscaleInfoBox}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setShowBlueLightInfo(!showBlueLightInfo);
-              }}
-            >
-              <Text style={[
-                styles.grayscaleInfoTitle,
-                showBlueLightInfo && styles.grayscaleInfoTitleExpanded,
-                { fontSize: scaledFontSize(14) }
-              ]}>
-                {t('accessibility.blueLight')} {showBlueLightInfo ? '▼' : '▶'}
-              </Text>
-              {showBlueLightInfo && (
-                <>
-                  <Text style={[styles.grayscaleInfoText, { fontSize: scaledFontSize(12) }]}>
-                    {t('accessibility.blueLightHint')}
-                  </Text>
-                  <Text style={[styles.grayscaleInfoPath, { fontSize: scaledFontSize(11) }]}>
-                    <Text style={styles.platformBold}>iOS:</Text> {t('accessibility.blueLightIos')}
-                  </Text>
-                  <Text style={[styles.grayscaleInfoPath, { fontSize: scaledFontSize(11) }]}>
-                    <Text style={styles.platformBold}>Android:</Text> {t('accessibility.blueLightAndroid')}
-                  </Text>
-                  <Text style={[styles.blueLightBenefitText, { fontSize: scaledFontSize(11), marginTop: 8 }]}>
-                    💡 {t('accessibility.blueLightBenefit')}
-                  </Text>
-                </>
-              )}
-            </Pressable>
           </View>
 
           {/* Privacy & Legal */}
@@ -1035,45 +975,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontStyle: 'italic',
   },
-  grayscaleInfoBox: {
-    marginTop: 16,
-    paddingVertical: 14,
-    paddingHorizontal: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-  },
-  grayscaleInfoTitle: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-    textAlign: 'left',
-  },
-  grayscaleInfoTitleExpanded: {
-    marginBottom: 8,
-  },
-  grayscaleInfoText: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: 8,
-    lineHeight: 18,
-  },
-  grayscaleInfoPath: {
-    color: 'rgba(255, 255, 255, 0.6)',
-    fontStyle: 'italic',
-    marginBottom: 4,
-    lineHeight: 16,
-  },
-  platformBold: {
-    fontWeight: 'bold',
-    fontStyle: 'normal',
-    color: '#FFFFFF',
-  },
-  blueLightBenefitText: {
-    color: 'rgba(255, 255, 255, 0.85)',
-    lineHeight: 16,
-    fontStyle: 'italic',
-  },
+
   languageOverlay: {
     position: 'absolute',
     top: 0,
