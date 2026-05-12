@@ -581,6 +581,14 @@ export function StoryBookReader({
   // Accessibility scaling
   const { scaledFontSize, scaledButtonSize, textSizeScale } = useAccessibility();
   const setTextSizeScale = useAppStore((state) => state.setTextSizeScale);
+  const markStoryAsRead = useAppStore((state) => state.markStoryAsRead);
+  const recordReadingSession = useAppStore((state) => state.recordReadingSession);
+
+  // Mark story as read and record the reading session (for streak tracking)
+  useEffect(() => {
+    markStoryAsRead(story.id);
+    recordReadingSession();
+  }, [story.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset scroll position and flash indicators when page or story changes
   useEffect(() => {

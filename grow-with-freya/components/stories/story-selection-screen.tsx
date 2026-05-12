@@ -9,6 +9,8 @@ import Animated, {
   useAnimatedStyle,
   withRepeat,
   withTiming,
+  withDelay,
+  withSequence,
   Easing
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -48,6 +50,7 @@ interface StoryCardProps {
   borderRadius: number;
   emojiFontSize: number;
   isHidden?: boolean; // Hide when this card is being animated in the transition overlay
+  isUnread?: boolean; // Show shimmer effect for unread stories
   language: SupportedLanguage;
 }
 
@@ -61,6 +64,7 @@ const StoryCard = memo(function StoryCard({
   borderRadius,
   emojiFontSize,
   isHidden,
+  isUnread,
   language,
 }: StoryCardProps) {
   const cardRef = useRef<View>(null);
@@ -69,6 +73,30 @@ const StoryCard = memo(function StoryCard({
   // Track previous hidden state to detect when card becomes visible again
   const wasHiddenRef = useRef(isHidden);
   const fadeOpacity = useSharedValue(isHidden ? 0 : 1);
+
+  // Shimmer animation for unread stories — slides a highlight across the card periodically
+  const shimmerTranslate = useSharedValue(-cardWidth);
+
+  useEffect(() => {
+    if (isUnread && !isHidden) {
+      // Periodic shimmer: slide across, pause 3s, repeat
+      shimmerTranslate.value = -cardWidth;
+      shimmerTranslate.value = withRepeat(
+        withSequence(
+          withTiming(cardWidth * 1.5, { duration: 800, easing: Easing.inOut(Easing.ease) }),
+          withDelay(3000, withTiming(-cardWidth, { duration: 0 }))
+        ),
+        -1,
+        false
+      );
+    } else {
+      shimmerTranslate.value = -cardWidth;
+    }
+  }, [isUnread, isHidden, cardWidth]);
+
+  const shimmerAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: shimmerTranslate.value }],
+  }));
 
   // Fade in when transitioning from hidden to visible (Android fix)
   useEffect(() => {
@@ -133,6 +161,25 @@ const StoryCard = memo(function StoryCard({
               <Text style={{ fontSize: emojiFontSize }}>{story.emoji}</Text>
             </View>
           )}
+
+          {/* Shimmer overlay for unread stories */}
+          {isUnread && (
+            <Animated.View
+              style={[
+                styles.shimmerOverlay,
+                { borderRadius },
+                shimmerAnimatedStyle,
+              ]}
+              pointerEvents="none"
+            >
+              <LinearGradient
+                colors={['transparent', 'rgba(255,255,255,0.45)', 'transparent']}
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
+                style={styles.shimmerGradient}
+              />
+            </Animated.View>
+          )}
         </View>
         {/* Story title below the cover */}
         <View style={[styles.cardTitleContainer, { width: cardWidth }]}>
@@ -174,8 +221,9 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   const [isLoadingStories, setIsLoadingStories] = useState(!StoryLoader.getCachedStories());
   const [selectedTags, setSelectedTags] = useState<Set<StoryFilterTag>>(new Set());
 
-  // Get favorite story IDs from store
+  // Get favorite and read story IDs from store
   const favoriteStoryIds = useAppStore((state) => state.favoriteStoryIds);
+  const readStoryIds = useAppStore((state) => state.readStoryIds);
 
   // Filter stories based on selected tags (OR logic - match any selected tag)
   const filteredStories = useMemo(() => {
@@ -376,9 +424,10 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       borderRadius={scaledBorderRadius}
       emojiFontSize={scaledEmojiFontSize}
       isHidden={(isTransitioning || shouldShowStoryReader || isExpandingToReader) && selectedStoryId === story.id}
+      isUnread={story.isAvailable && !readStoryIds.includes(story.id)}
       language={currentLanguage}
     />
-  ), [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader, currentLanguage]);
+  ), [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader, currentLanguage, readStoryIds]);
 
   // Memoized key extractor
   const keyExtractor = useCallback((story: Story) => story.id, []);
@@ -661,5 +710,17 @@ const styles = StyleSheet.create({
     color: 'white',
     fontFamily: Fonts.rounded,
     fontWeight: '600',
+  },
+  shimmerOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    width: '60%',
+    overflow: 'hidden',
+  },
+  shimmerGradient: {
+    flex: 1,
+    width: '100%',
   },
 });
