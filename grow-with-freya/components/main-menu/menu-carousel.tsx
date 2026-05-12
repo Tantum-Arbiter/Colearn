@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { View, StyleSheet, Pressable, Text, Image, ImageSourcePropType } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { getScreenDimensions } from './constants';
@@ -17,6 +17,11 @@ import { useAccessibility } from '@/hooks/use-accessibility';
 const SLIDE_IN_DURATION = 400; // ms per strip
 const SLIDE_IN_STAGGER = 120; // ms between each strip
 const SLIDE_IN_DISTANCE = 300; // px from below
+
+// Module-level debounce to prevent double slide-in animation on rapid remount
+// (e.g. React Strict Mode double-mount or brief currentView toggle after login)
+let lastCarouselMountTime = 0;
+const CAROUSEL_DEBOUNCE_MS = 1500;
 
 export interface CarouselMenuItem {
   id: string;
@@ -52,6 +57,16 @@ export const MenuCarousel = React.memo(function MenuCarousel({
   const stripHeight = isTablet ? 168 : 136;
   const gap = isTablet ? 14 : 10;
 
+  // Decide on mount whether to animate or skip (debounce rapid remounts)
+  const shouldAnimate = useMemo(() => {
+    const now = Date.now();
+    if (now - lastCarouselMountTime < CAROUSEL_DEBOUNCE_MS) {
+      return false; // Recently animated — skip to avoid double slide-in
+    }
+    lastCarouselMountTime = now;
+    return true;
+  }, []);
+
   return (
     <View
       collapsable={false}
@@ -72,6 +87,7 @@ export const MenuCarousel = React.memo(function MenuCarousel({
           slideIndex={index}
           isLast={index === MENU_ITEMS.length - 1}
           onSlideComplete={onLoadComplete}
+          shouldAnimate={shouldAnimate}
         />
       ))}
     </View>
@@ -95,6 +111,8 @@ interface StripButtonProps {
   isLast: boolean;
   /** Called when the last strip finishes its slide-in */
   onSlideComplete?: () => void;
+  /** Whether to animate the slide-in (false = appear instantly) */
+  shouldAnimate: boolean;
 }
 
 const StripButton = React.memo(function StripButton({
@@ -109,16 +127,28 @@ const StripButton = React.memo(function StripButton({
   slideIndex,
   isLast,
   onSlideComplete,
+  shouldAnimate,
 }: StripButtonProps) {
   const pressScale = useSharedValue(1);
-  const slideY = useSharedValue(SLIDE_IN_DISTANCE);
-  const slideOpacity = useSharedValue(0);
+  const slideY = useSharedValue(shouldAnimate ? SLIDE_IN_DISTANCE : 0);
+  const slideOpacity = useSharedValue(shouldAnimate ? 0 : 1);
   const hasSlid = useRef(false);
 
   // Run slide-in animation on mount
   useEffect(() => {
     if (hasSlid.current) return;
     hasSlid.current = true;
+
+    if (!shouldAnimate) {
+      // Rapid remount — skip animation, show immediately
+      slideY.value = 0;
+      slideOpacity.value = 1;
+      if (isLast && onSlideComplete) {
+        onSlideComplete();
+      }
+      return;
+    }
+
     const delay = slideIndex * SLIDE_IN_STAGGER;
 
     slideOpacity.value = withDelay(delay,
