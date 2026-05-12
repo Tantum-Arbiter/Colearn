@@ -19,8 +19,8 @@ import {
   mainMenuStyles,
   generateStarPositions
 } from '@/components/main-menu/index';
+import { Ionicons } from '@expo/vector-icons';
 import { MusicControl } from '@/components/ui/music-control';
-import { useBackButtonText } from '@/hooks/use-back-button-text';
 
 interface SettingsScreenProps {
   onBack: () => void;
@@ -29,7 +29,6 @@ interface SettingsScreenProps {
 export function SettingsScreen({ onBack }: SettingsScreenProps) {
   const insets = useSafeAreaInsets();
   const { setOnboardingComplete, setAppReady } = useAppStore();
-  const backButtonText = useBackButtonText();
 
   // Star animation
   const starRotation = useSharedValue(0);
@@ -128,9 +127,11 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
         <Pressable
           style={{
             backgroundColor: 'rgba(255, 255, 255, 0.3)',
-            paddingHorizontal: 16,
-            paddingVertical: 8,
+            width: 40,
+            height: 40,
             borderRadius: 20,
+            justifyContent: 'center',
+            alignItems: 'center',
             zIndex: 30,
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 2 },
@@ -140,14 +141,7 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
           }}
           onPress={handleBack}
         >
-          <ThemedText style={{
-            color: 'white',
-            fontSize: 16,
-            fontWeight: 'bold',
-            textShadowColor: 'rgba(0, 0, 0, 0.5)',
-            textShadowOffset: { width: 0, height: 1 },
-            textShadowRadius: 2,
-          }}>{backButtonText}</ThemedText>
+          <Ionicons name="home" size={20} color="#FFFFFF" />
         </Pressable>
 
         <MusicControl

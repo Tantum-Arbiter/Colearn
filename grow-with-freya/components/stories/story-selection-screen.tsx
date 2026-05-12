@@ -423,10 +423,10 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       ))}
 
       {/* Shared page header component */}
-      <PageHeader title="Stories" onBack={handleBackToMenu} hideControls={isTransitioning} />
+      <PageHeader title="Stories" onBack={handleBackToMenu} hideControls={isTransitioning} useHomeIcon />
 
       {/* Content container with flex: 1 for proper layout - dynamic padding for scaled text */}
-      <View style={{ flex: 1, paddingTop: insets.top + 180 + (textSizeScale - 1) * 60, zIndex: 10 }}>
+      <View style={{ flex: 1, paddingTop: insets.top + 90 + (textSizeScale - 1) * 40, zIndex: 10 }}>
 
         {/* Tag Filters */}
         <ScrollView

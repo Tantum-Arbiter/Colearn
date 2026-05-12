@@ -557,8 +557,16 @@ export default {
         description: 'Faisons une visite rapide pour vous aider, vous et votre enfant, à tirer le meilleur parti du temps de lecture ensemble.',
       },
       stories: {
-        title: 'Explorer & Jouer 🎵📚',
-        description: 'Faites défiler le carrousel pour découvrir les Histoires, le mode Pratique pour apprendre la musique sur des instruments, et le mode Jeu Libre pour jouer librement de n\'importe quel instrument.',
+        title: 'Histoires 📚',
+        description: 'Explorez notre collection d\'histoires interactives avec de belles illustrations et des interactions amusantes.',
+      },
+      practise: {
+        title: 'Pratique 🎵',
+        description: 'Apprenez à jouer des chansons sur différents instruments. Suivez le rythme et développez vos compétences musicales !',
+      },
+      freeplay: {
+        title: 'Jeu Libre 🎹',
+        description: 'Jouez librement de n\'importe quel instrument — pas de règles, juste du plaisir ! Expérimentez avec les sons et créez votre propre musique.',
       },
       settings: {
         title: 'Paramètres ⚙️',

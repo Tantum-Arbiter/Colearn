@@ -1,4 +1,3 @@
-export { MenuIcon } from './menu-icon';
 export { MenuCarousel } from './menu-carousel';
 export type { CarouselMenuItem } from './menu-carousel';
 export {
@@ -12,7 +11,6 @@ export {
 
 export {
   CloudSvg,
-  StoriesSvg,
 } from './svg-components';
 
 export {

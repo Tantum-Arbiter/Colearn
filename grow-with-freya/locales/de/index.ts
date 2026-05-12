@@ -557,8 +557,16 @@ export default {
         description: 'Lass uns eine kurze Tour machen, um dir und deinem Kind zu helfen, das Beste aus der Geschichtenzeit zu machen.',
       },
       stories: {
-        title: 'Entdecken & Spielen 🎵📚',
-        description: 'Wische durch das Karussell, um Geschichten, den Übungsmodus zum Musiklernen auf Instrumenten und den Freispielmodus zum freien Musizieren zu entdecken.',
+        title: 'Geschichten 📚',
+        description: 'Entdecke unsere Sammlung interaktiver Geschichten mit wunderschönen Illustrationen und lustigen Interaktionen.',
+      },
+      practise: {
+        title: 'Üben 🎵',
+        description: 'Lerne Lieder auf verschiedenen Instrumenten zu spielen. Folge mit und baue deine musikalischen Fähigkeiten auf!',
+      },
+      freeplay: {
+        title: 'Freies Spiel 🎹',
+        description: 'Spiele frei auf jedem Instrument — keine Regeln, nur Spaß! Experimentiere mit Klängen und kreiere deine eigene Musik.',
       },
       settings: {
         title: 'Einstellungen ⚙️',

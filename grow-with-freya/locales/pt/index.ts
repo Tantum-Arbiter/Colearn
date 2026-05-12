@@ -526,8 +526,16 @@ export default {
         description: 'Vamos fazer um tour rápido para ajudá-lo a você e seu filho a aproveitar ao máximo o tempo de leitura juntos.',
       },
       stories: {
-        title: 'Explorar & Tocar 🎵📚',
-        description: 'Deslize pelo carrossel para descobrir Histórias, o modo Praticar para aprender música em instrumentos, e o modo Jogo Livre para tocar livremente qualquer instrumento.',
+        title: 'Histórias 📚',
+        description: 'Explore a nossa coleção de histórias interativas com belas ilustrações e interações divertidas.',
+      },
+      practise: {
+        title: 'Praticar 🎵',
+        description: 'Aprenda a tocar músicas em diferentes instrumentos. Acompanhe e desenvolva as suas competências musicais!',
+      },
+      freeplay: {
+        title: 'Jogo Livre 🎹',
+        description: 'Toque livremente qualquer instrumento — sem regras, só diversão! Experimente sons e crie a sua própria música.',
       },
       settings: {
         title: 'Configurações ⚙️',

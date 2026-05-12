@@ -557,8 +557,16 @@ export default {
         description: 'Zróbmy szybką wycieczkę, aby pomóc Tobie i Twojemu dziecku w pełni korzystać z czasu bajek.',
       },
       stories: {
-        title: 'Odkrywaj & Graj 🎵📚',
-        description: 'Przesuń karuzelę, aby odkryć Bajki, tryb Ćwiczenia do nauki muzyki na instrumentach oraz tryb Swobodnej Gry do wolnego grania na dowolnym instrumencie.',
+        title: 'Bajki 📚',
+        description: 'Odkryj naszą kolekcję interaktywnych bajek z pięknymi ilustracjami i zabawnymi interakcjami.',
+      },
+      practise: {
+        title: 'Ćwiczenie 🎵',
+        description: 'Naucz się grać piosenki na różnych instrumentach. Podążaj za melodią i rozwijaj swoje umiejętności muzyczne!',
+      },
+      freeplay: {
+        title: 'Swobodna Gra 🎹',
+        description: 'Graj swobodnie na dowolnym instrumencie — bez zasad, tylko zabawa! Eksperymentuj z dźwiękami i twórz własną muzykę.',
       },
       settings: {
         title: 'Ustawienia ⚙️',

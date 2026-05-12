@@ -27,6 +27,22 @@ export const MAIN_MENU_TOUR_STEPS: TutorialStepWithKeys[] = [
     spotlightBorderRadius: 24,
   },
   {
+    id: 'practise_button',
+    titleKey: 'tutorial.mainMenu.practise.title',
+    descriptionKey: 'tutorial.mainMenu.practise.description',
+    tipPosition: 'below',
+    spotlightShape: 'rounded-rect',
+    spotlightBorderRadius: 24,
+  },
+  {
+    id: 'freeplay_button',
+    titleKey: 'tutorial.mainMenu.freeplay.title',
+    descriptionKey: 'tutorial.mainMenu.freeplay.description',
+    tipPosition: 'below',
+    spotlightShape: 'rounded-rect',
+    spotlightBorderRadius: 24,
+  },
+  {
     id: 'settings_button',
     titleKey: 'tutorial.mainMenu.settings.title',
     descriptionKey: 'tutorial.mainMenu.settings.description',

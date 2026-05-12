@@ -73,10 +73,13 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const isLandscape = screenWidth > screenHeight;
-  const overlayOpacity = useSharedValue(0);
-  const slideY = useSharedValue(screenHeight);
+  // Initialise shared values based on the initial `visible` prop so that when
+  // the component mounts already-visible (e.g. practise preview phase) the
+  // overlay is shown immediately without relying on the useEffect animation.
+  const overlayOpacity = useSharedValue(visible ? 1 : 0);
+  const slideY = useSharedValue(visible ? 0 : screenHeight);
   // Keep overlay rendered during close animation
-  const [isRendered, setIsRendered] = useState(false);
+  const [isRendered, setIsRendered] = useState(visible);
 
   // Carousel state (landscape only)
   const carouselRef = useRef<ScrollView>(null);
@@ -181,9 +184,18 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
     };
   }, []);
 
+  // Track whether this is the initial mount so we can skip redundant animations.
+  const isFirstRenderRef = useRef(true);
+
   useEffect(() => {
     if (visible) {
       setIsRendered(true);
+      // Skip animation on first mount if already initialised to visible
+      if (isFirstRenderRef.current && overlayOpacity.value === 1) {
+        isFirstRenderRef.current = false;
+        return;
+      }
+      isFirstRenderRef.current = false;
       overlayOpacity.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.ease) });
       slideY.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.ease) });
     } else if (isRendered) {
@@ -218,6 +230,12 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
     opacity: overlayOpacity.value,
     transform: [{ translateY: slideY.value }],
   }));
+
+  // Calculate max height for the ScrollView so it doesn't collapse to 0.
+  // The container is content-sized (window mode), so the ScrollView cannot use
+  // flex: 1. Instead we give it an explicit maxHeight based on the screen,
+  // reserving space for header (~70px), button (~60px), and safe-area insets.
+  const scrollMaxHeight = screenHeight * 0.85 - 70 - 60 - insets.top - insets.bottom;
 
   // Build a lookup from note name → layout item for quick access
   const noteMap = new Map<string, NoteLayoutItem>();
@@ -454,7 +472,7 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
             <ScrollView
               showsVerticalScrollIndicator={true}
               bounces={false}
-              style={styles.scrollView}
+              style={[styles.scrollView, { maxHeight: scrollMaxHeight }]}
               contentContainerStyle={styles.scrollContent}
             >
               {promptText && (
@@ -523,9 +541,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     paddingTop: 16,
     paddingHorizontal: 20,
-    maxHeight: '95%',
-    flexShrink: 1,
-    // Ensure the container can flex so the inner ScrollView gets space to scroll
+    maxHeight: '85%',
     overflow: 'hidden',
   },
   containerLandscape: {
@@ -536,11 +552,12 @@ const styles = StyleSheet.create({
     maxHeight: '94%',
   },
   scrollView: {
-    flex: 1,
+    // Do NOT use flex: 1 here — the parent container is content-sized (no
+    // explicit height), so flex: 1 would collapse the ScrollView to 0 height.
+    // Instead we omit flex and apply a calculated maxHeight inline (see render).
   },
   scrollContent: {
     paddingBottom: 20,
-    flexGrow: 1,
   },
   header: {
     flexDirection: 'row',

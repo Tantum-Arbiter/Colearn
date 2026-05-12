@@ -1455,17 +1455,15 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       {/* Keep blocking touches during cancel animation to prevent taps passing through to elements below */}
       {isTransitioning && cardPosition && selectedStory && (
         <View style={styles.overlay} pointerEvents={(showModeSelection || isCancelAnimating) ? 'auto' : 'none'}>
-          {/* Shadow overlay background */}
-          <Animated.View style={[styles.shadowOverlay, overlayAnimatedStyle]} />
-
-          {/* Children art background image — slides down on entry, up on exit */}
-          {/* Sits on top of shadow overlay with low opacity for subtle texture */}
+          {/* Children art background image — slides down on entry, up on exit.
+              No overlay opacity — stays fully opaque so the background is always
+              full colour while sliding in/out. */}
           <Animated.View
             style={[styles.backgroundImageContainer, backgroundSlideAnimatedStyle]}
             pointerEvents="none"
           >
             <Image
-              source={require('../assets/images/ui-elements/background-home.png')}
+              source={require('../assets/images/ui-elements/background-home.webp')}
               style={styles.backgroundImage}
               resizeMode="repeat"
             />
@@ -2209,20 +2207,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  shadowOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.92)',
-  },
   backgroundImageContainer: {
     ...StyleSheet.absoluteFillObject,
-    zIndex: 0, // Above shadow, below buttons/book
+    zIndex: 0, // Below buttons/book
     overflow: 'hidden',
     backgroundColor: '#1E3A8A', // Deep blue base matching brand gradient
   },
   backgroundImage: {
     width: '200%',
     height: '200%',
-    opacity: 0.12, // Subtle texture over the solid background
+    opacity: 0.25, // Subtle texture on deep blue base
   },
   tapAnywhereOverlay: {
     ...StyleSheet.absoluteFillObject,

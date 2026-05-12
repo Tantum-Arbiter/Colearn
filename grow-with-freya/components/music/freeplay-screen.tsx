@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
@@ -398,7 +399,7 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
                   }]}
                   onPress={handleChangeInstrument}
                 >
-                  <Text style={[styles.exitButtonText, { fontSize: scaledFontSize(20) }]}>✕</Text>
+                  <Ionicons name="home" size={scaledFontSize(20)} color="#333333" />
                 </Pressable>
               </View>
             )}
@@ -484,7 +485,7 @@ const styles = StyleSheet.create({
     zIndex: 15,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
   },
   // Rotated overlay — CSS rotation 90° to simulate landscape in portrait mode.
   // Positioning (left/top) and dimensions (width/height) are set by the animated style.

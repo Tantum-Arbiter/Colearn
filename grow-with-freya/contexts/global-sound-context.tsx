@@ -49,6 +49,11 @@ export function GlobalSoundProvider({ children }: GlobalSoundProviderProps) {
   const [masterVolume, setMasterVolumeState] = useState(1.0);
   const [musicVolume, setMusicVolumeState] = useState(1.0);
   const [voiceOverVolume, setVoiceOverVolumeState] = useState(1.0);
+  // Track whether saved volume settings have been loaded from storage.
+  // Until this is true, we must NOT push the default 1.0×1.0 effective volume
+  // to the background music service — that would briefly play at full volume
+  // before the real (lower) saved values arrive from AsyncStorage.
+  const [volumeSettingsLoaded, setVolumeSettingsLoaded] = useState(false);
 
   // Load saved volume settings on mount
   useEffect(() => {
@@ -66,6 +71,7 @@ export function GlobalSoundProvider({ children }: GlobalSoundProviderProps) {
       } catch (error) {
         console.warn('Failed to load volume settings:', error);
       }
+      setVolumeSettingsLoaded(true);
     };
 
     loadVolumeSettings();
@@ -92,11 +98,14 @@ export function GlobalSoundProvider({ children }: GlobalSoundProviderProps) {
     return masterVolume * musicVolume;
   }, [masterVolume, musicVolume]);
 
-  // Update background music volume when master or music volume changes
+  // Update background music volume when master or music volume changes.
+  // Skip until saved settings are loaded to avoid a loud spike on startup
+  // (defaults are 1.0×1.0 = full volume until AsyncStorage values arrive).
   useEffect(() => {
+    if (!volumeSettingsLoaded) return;
     const effectiveVolume = getEffectiveMusicVolume();
     backgroundMusic.setVolume(effectiveVolume);
-  }, [masterVolume, musicVolume, backgroundMusic.setVolume, getEffectiveMusicVolume]);
+  }, [volumeSettingsLoaded, masterVolume, musicVolume, backgroundMusic.setVolume, getEffectiveMusicVolume]);
 
   // Volume setters with persistence
   const setMasterVolume = useCallback(async (volume: number) => {

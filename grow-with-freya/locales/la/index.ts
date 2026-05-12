@@ -526,8 +526,16 @@ export default {
         description: 'Faciamus Celerem Circumductionem ut Te et Filium Tuum Adiuvemus Tempus Legendi Maxime Uti.',
       },
       stories: {
-        title: 'Explora & Lude 🎵📚',
-        description: 'Volve per carrulum ut Fabulas, modum Exercitationis ad musicam in instrumentis discendam, et modum Ludi Liberi ad libere in quovis instrumento ludendum invenias.',
+        title: 'Fabulae 📚',
+        description: 'Explora collectionem nostram fabularum interactivarum cum pulchris illustrationibus et iucundis interactionibus.',
+      },
+      practise: {
+        title: 'Exercitatio 🎵',
+        description: 'Disce cantiones in diversis instrumentis ludere. Sequere et artes musicas tuas aedifica!',
+      },
+      freeplay: {
+        title: 'Ludus Liber 🎹',
+        description: 'Libere lude in quovis instrumento — sine regulis, solum gaudium! Experimenta cum sonis et tuam musicam crea.',
       },
       settings: {
         title: 'Constitutiones ⚙️',

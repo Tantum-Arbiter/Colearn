@@ -32,7 +32,7 @@ export const generateStarPositions = (count: number = VISUAL_EFFECTS.STAR_COUNT)
       id: i,
       left: randomLeft * (screenWidth - 20) + 10, // 10px margin from edges
       top: randomTop * starAreaHeight + 20, // 20px margin from top
-      opacity: 0.3 + randomOpacity * 0.4, // Random opacity between 0.3-0.7
+      opacity: 0.5 + randomOpacity * 0.4, // Random opacity between 0.5-0.9
       size: VISUAL_EFFECTS.STAR_SIZE, // Add size property
     });
   }

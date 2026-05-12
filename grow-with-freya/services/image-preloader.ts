@@ -5,7 +5,9 @@ const CRITICAL_IMAGES = [
   require('../assets/images/ui-elements/bear-top-screen.webp'),
   require('../assets/images/ui-elements/moon-top-screen.webp'),
   require('../assets/images/ui-elements/moon-bottom-screen.webp'),
-  // Add other critical images here as needed
+  require('../assets/images/menu-icons/stories-strip.webp'),
+  require('../assets/images/menu-icons/practise-strip.webp'),
+  require('../assets/images/menu-icons/freeplay-strip.webp'),
 ];
 
 const SECONDARY_IMAGES: any[] = [

@@ -557,8 +557,16 @@ export default {
         description: 'Facciamo un tour veloce per aiutarti te e tuo figlio a ottenere il massimo dal tempo di lettura insieme.',
       },
       stories: {
-        title: 'Esplora & Suona 🎵📚',
-        description: 'Scorri il carosello per scoprire le Storie, la modalità Pratica per imparare la musica sugli strumenti, e la modalità Gioco Libero per suonare liberamente qualsiasi strumento.',
+        title: 'Storie 📚',
+        description: 'Esplora la nostra collezione di storie interattive con bellissime illustrazioni e interazioni divertenti.',
+      },
+      practise: {
+        title: 'Pratica 🎵',
+        description: 'Impara a suonare canzoni su diversi strumenti. Segui il ritmo e sviluppa le tue abilità musicali!',
+      },
+      freeplay: {
+        title: 'Gioco Libero 🎹',
+        description: 'Suona liberamente qualsiasi strumento — niente regole, solo divertimento! Sperimenta con i suoni e crea la tua musica.',
       },
       settings: {
         title: 'Impostazioni ⚙️',

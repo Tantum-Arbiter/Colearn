@@ -526,8 +526,16 @@ export default {
         description: '让我们进行快速导览，帮助您和孩子充分利用阅读时间。',
       },
       stories: {
-        title: '探索与演奏 🎵📚',
-        description: '滑动轮播以发现故事、在乐器上学习音乐的练习模式，以及自由演奏任何乐器的自由演奏模式。',
+        title: '故事 📚',
+        description: '探索我们的互动故事系列，拥有精美的插图和有趣的互动体验。',
+      },
+      practise: {
+        title: '练习 🎵',
+        description: '学习在不同乐器上演奏歌曲。跟着节奏，提升你的音乐技能！',
+      },
+      freeplay: {
+        title: '自由演奏 🎹',
+        description: '在任何乐器上自由演奏——没有规则，只有乐趣！尝试各种声音，创作属于你的音乐。',
       },
       settings: {
         title: '设置 ⚙️',

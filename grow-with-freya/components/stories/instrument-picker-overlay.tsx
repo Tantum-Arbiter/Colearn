@@ -47,6 +47,7 @@ import {
   GestureDetector,
   GestureHandlerRootView,
 } from 'react-native-gesture-handler';
+import { Ionicons } from '@expo/vector-icons';
 import {
   getAvailableInstrumentIds,
   getInstrument,
@@ -194,7 +195,7 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
 
   return (
     <Animated.View
-      style={[styles.overlay, overlayAnimatedStyle]}
+      style={[styles.overlay, hideBackdrop && styles.overlayTransparent, overlayAnimatedStyle]}
       testID="instrument-picker-overlay"
     >
       {!hideBackdrop && <BlurView intensity={40} style={StyleSheet.absoluteFill} tint="dark" />}
@@ -213,13 +214,13 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
         <Pressable
           style={[styles.closeButton, {
             top: Math.max(insets.top + 20, 20),
-            right: Math.max(insets.right + 20, 20),
+            left: Math.max(insets.left + 20, 20),
           }]}
           onPress={onClose}
           testID="instrument-picker-close-button"
           accessibilityLabel={t('music.closeInstrumentPicker')}
         >
-          <Text style={styles.closeButtonText}>✕</Text>
+          <Ionicons name="home" size={20} color="#FFFFFF" />
         </Pressable>
 
         <View style={[styles.headerSection, compactLayout && styles.headerSectionCompact]}>
@@ -428,6 +429,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.85)',
   },
+  overlayTransparent: {
+    backgroundColor: 'transparent',
+  },
   content: {
     flex: 1,
     justifyContent: 'flex-start',
@@ -446,7 +450,7 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     position: 'absolute',
-    // top and right are set dynamically via safe area insets
+    // top and left are set dynamically via safe area insets
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -499,6 +503,7 @@ const styles = StyleSheet.create({
     marginTop: -2,
   },
   gestureRoot: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },

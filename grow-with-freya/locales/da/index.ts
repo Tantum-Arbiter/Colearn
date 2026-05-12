@@ -526,8 +526,16 @@ export default {
         description: 'Lad os tage en hurtig rundvisning for at hjælpe dig og dit barn med at få mest ud af lesetiden.',
       },
       stories: {
-        title: 'Udforsk & Spil 🎵📚',
-        description: 'Swipe gennem karrusellen for at opdage Historier, Øvelsestilstand hvor du lærer musik på instrumenter, og Fri Leg til frit at spille på ethvert instrument.',
+        title: 'Historier 📚',
+        description: 'Udforsk vores samling af interaktive historier med smukke illustrationer og sjove interaktioner.',
+      },
+      practise: {
+        title: 'Øvelse 🎵',
+        description: 'Lær at spille sange på forskellige instrumenter. Følg med og opbyg dine musikalske færdigheder!',
+      },
+      freeplay: {
+        title: 'Fri Leg 🎹',
+        description: 'Spil frit på ethvert instrument — ingen regler, bare sjov! Eksperimenter med lyde og skab din egen musik.',
       },
       settings: {
         title: 'Indstillinger ⚙️',

@@ -526,8 +526,16 @@ export default {
         description: 'Siz ve çocuğunuzun okuma zamanından en iyi şekilde yararlanmanıza yardımcı olmak için hızlı bir tur alalım.',
       },
       stories: {
-        title: 'Keşfet & Çal 🎵📚',
-        description: 'Hikayeleri, enstrümanlarla müzik öğrenmek için Alıştırma modunu ve herhangi bir enstrümanı özgürce çalmak için Serbest Çalma modunu keşfetmek üzere karuseli kaydırın.',
+        title: 'Hikayeler 📚',
+        description: 'Güzel çizimler ve eğlenceli etkileşimlerle dolu interaktif hikaye koleksiyonumuzu keşfedin.',
+      },
+      practise: {
+        title: 'Alıştırma 🎵',
+        description: 'Farklı enstrümanlarda şarkı çalmayı öğrenin. Takip edin ve müzik becerilerinizi geliştirin!',
+      },
+      freeplay: {
+        title: 'Serbest Çalma 🎹',
+        description: 'Herhangi bir enstrümanı özgürce çalın — kural yok, sadece eğlence! Seslerle deney yapın ve kendi müziğinizi yaratın.',
       },
       settings: {
         title: 'Ayarlar ⚙️',

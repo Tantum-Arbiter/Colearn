@@ -88,7 +88,9 @@ export function useCriticalImagePreloader(): PreloadResult {
     require('../assets/images/ui-elements/bear-top-screen.webp'),
     require('../assets/images/ui-elements/moon-top-screen.webp'),
     require('../assets/images/ui-elements/moon-bottom-screen.webp'),
-    // Add other critical images here
+    require('../assets/images/menu-icons/stories-strip.webp'),
+    require('../assets/images/menu-icons/practise-strip.webp'),
+    require('../assets/images/menu-icons/freeplay-strip.webp'),
   ];
 
   return useImagePreloader(criticalImages, { priority: 'high', timeout: 5000 });
@@ -104,6 +106,9 @@ export async function preloadCriticalImages(): Promise<void> {
     require('../assets/images/ui-elements/bear-top-screen.webp'),
     require('../assets/images/ui-elements/moon-top-screen.webp'),
     require('../assets/images/ui-elements/moon-bottom-screen.webp'),
+    require('../assets/images/menu-icons/stories-strip.webp'),
+    require('../assets/images/menu-icons/practise-strip.webp'),
+    require('../assets/images/menu-icons/freeplay-strip.webp'),
   ];
 
   const preloadPromises = criticalImages.map((source) => {

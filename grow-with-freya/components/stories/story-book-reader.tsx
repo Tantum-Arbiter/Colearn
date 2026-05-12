@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { View, Text, StyleSheet, Pressable, Dimensions, StatusBar, ImageBackground, ScrollView, TextInput, Alert, KeyboardAvoidingView, Platform, BackHandler, useWindowDimensions, Image as RNImage, AppState } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -1945,14 +1946,13 @@ export function StoryBookReader({
 
   return (
     <Animated.View style={[styles.container, exitAnimatedStyle, storyAnimatedStyle, bookOpeningAnimatedStyle]}>
-      <View style={[
-        styles.background,
-        {
-          backgroundColor: !isTablet && currentPage?.backgroundImage
-            ? 'transparent'
-            : '#4ECDC4' // Calming teal background
-        }
-      ]}>
+      <View style={styles.background}>
+        {/* Gradient background — matches story selection screen so the exit
+            animation doesn't reveal a transparent/white gap behind the reader */}
+        <LinearGradient
+          colors={['#4ECDC4', '#3B82F6', '#1E3A8A']}
+          style={StyleSheet.absoluteFill}
+        />
 
 
         {/* Top Left Controls - Exit Button (aligned with bottom back button) */}
@@ -1978,7 +1978,7 @@ export function StoryBookReader({
             } : handleExit}
             disabled={musicChallengePhase !== 'playing' && isExiting}
           >
-            <Text style={[styles.exitButtonText, { fontSize: scaledFontSize(20) }]}>✕</Text>
+            <Ionicons name="home" size={scaledFontSize(20)} color="#333333" />
           </Pressable>
         </View>
         )}

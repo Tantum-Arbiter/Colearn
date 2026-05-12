@@ -470,10 +470,11 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
           rightActionIcon={currentView === 'custom-reminders' ? 'add' : undefined}
           onRightAction={currentView === 'custom-reminders' ? () => navigateToSlide('create-reminder') : undefined}
           headerBackgroundColor="#1E3A8A"
+          useHomeIcon
         />
 
         {/* Content container - z-index 10 to be above moon (z-index 1) */}
-        <View style={{ flex: 1, paddingTop: insets.top + 140 + (textSizeScale - 1) * 60, zIndex: 10 }}>
+        <View style={{ flex: 1, paddingTop: insets.top + 90 + (textSizeScale - 1) * 40, zIndex: 10 }}>
           {/* Main Account Page - always rendered as base layer */}
               <ScrollView
                 style={styles.scrollView}
@@ -770,7 +771,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
         {/* Screen Time Page */}
         <Animated.View style={[styles.overlayPage, screenTimeStyle]}>
           <ScreenTimeContent
-            paddingTop={insets.top + 140 + (textSizeScale - 1) * 60 + 10}
+            paddingTop={insets.top + 90 + (textSizeScale - 1) * 40 + 10}
             onNavigateToReminders={() => navigateToSlide('custom-reminders')}
           />
           <ScreenTimeTipsOverlay isActive={currentView === 'screen-time'} />
@@ -779,7 +780,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
         {/* Custom Reminders Page */}
         <Animated.View style={[styles.overlayPage, customRemindersStyle]}>
           <CustomRemindersContent
-            paddingTop={insets.top + 140 + (textSizeScale - 1) * 60 + 10}
+            paddingTop={insets.top + 90 + (textSizeScale - 1) * 40 + 10}
             onCreateNew={() => navigateToSlide('create-reminder')}
             onReminderChange={() => setReminderChangeCounter(prev => prev + 1)}
             refreshTrigger={reminderChangeCounter}
@@ -790,7 +791,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
         {/* Create Reminder Page */}
         <Animated.View style={[styles.overlayPage, createReminderStyle]}>
           <CreateReminderContent
-            paddingTop={insets.top + 140 + (textSizeScale - 1) * 60 + 10}
+            paddingTop={insets.top + 90 + (textSizeScale - 1) * 40 + 10}
             onBack={() => navigateBack('create-reminder', 'custom-reminders')}
             onSuccess={() => {
               setReminderChangeCounter(prev => prev + 1);
@@ -803,17 +804,17 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
 
         {/* Edit Profile Page */}
         <Animated.View style={[styles.overlayPage, editProfileStyle]}>
-          <EditProfileContent paddingTop={insets.top + 140 + (textSizeScale - 1) * 60 + 10} onSaveComplete={navigateToMain} />
+          <EditProfileContent paddingTop={insets.top + 90 + (textSizeScale - 1) * 40 + 10} onSaveComplete={navigateToMain} />
         </Animated.View>
 
         {/* Terms & Conditions Page */}
         <Animated.View style={[styles.overlayPage, termsStyle]}>
-          <TermsConditionsContent paddingTop={insets.top + 140 + (textSizeScale - 1) * 60 + 10} />
+          <TermsConditionsContent paddingTop={insets.top + 90 + (textSizeScale - 1) * 40 + 10} />
         </Animated.View>
 
         {/* Privacy Policy Page */}
         <Animated.View style={[styles.overlayPage, privacyStyle]}>
-          <PrivacyPolicyContent paddingTop={insets.top + 140 + (textSizeScale - 1) * 60 + 10} />
+          <PrivacyPolicyContent paddingTop={insets.top + 90 + (textSizeScale - 1) * 40 + 10} />
         </Animated.View>
 
         {/* Language Selection Overlay */}

@@ -526,8 +526,16 @@ export default {
         description: 'Laten we een snelle rondleiding doen om jou en je kind te helpen het meeste uit leestijd te halen.',
       },
       stories: {
-        title: 'Ontdek & Speel 🎵📚',
-        description: 'Veeg door de carrousel om Verhalen, de Oefenmodus om muziek te leren op instrumenten, en de Vrij Spelen modus om vrij te spelen op elk instrument te ontdekken.',
+        title: 'Verhalen 📚',
+        description: 'Ontdek onze collectie interactieve verhalen met prachtige illustraties en leuke interacties.',
+      },
+      practise: {
+        title: 'Oefenen 🎵',
+        description: 'Leer liedjes spelen op verschillende instrumenten. Volg mee en bouw je muzikale vaardigheden op!',
+      },
+      freeplay: {
+        title: 'Vrij Spelen 🎹',
+        description: 'Speel vrij op elk instrument — geen regels, alleen plezier! Experimenteer met geluiden en maak je eigen muziek.',
       },
       settings: {
         title: 'Instellingen ⚙️',

@@ -571,8 +571,16 @@ export default {
         description: "Let's take a quick tour to help you and your child get the most out of storytime together.",
       },
       stories: {
-        title: 'Explore & Play 🎵📚',
-        description: 'Swipe through the carousel to discover Stories, Practise mode where you learn music on instruments, and Freeplay mode to jam freely on any instrument.',
+        title: 'Stories 📚',
+        description: 'Explore our collection of interactive stories with beautiful illustrations and fun interactions.',
+      },
+      practise: {
+        title: 'Practise 🎵',
+        description: 'Learn to play songs on different instruments. Follow along and build your musical skills!',
+      },
+      freeplay: {
+        title: 'Freeplay 🎹',
+        description: 'Jam freely on any instrument — no rules, just fun! Experiment with sounds and create your own music.',
       },
       settings: {
         title: 'Settings ⚙️',
