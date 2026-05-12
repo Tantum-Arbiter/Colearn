@@ -467,44 +467,33 @@ export default {
     readyToStart: '¡Listo para comenzar tu viaje!',
     screens: {
       welcome: {
-        title: '¡Bienvenido!',
-        body: 'Ayuda al desarrollo temprano de tu hijo con nuestras historias y actividades',
+        title: 'Historias que crecen\ncon tu hijo',
+        body: 'Historias interactivas con música, instrumentos y narración — diseñadas para despertar la imaginación y apoyar el desarrollo temprano.',
         button: 'Siguiente',
       },
-      screenTime: {
-        title: 'Por qué limitamos el tiempo de pantalla',
-        body: 'Animamos a los padres a usar esta aplicación junto con su hijo.',
+      howItWorks: {
+        title: 'Cómo funciona',
+        body: 'Todo lo que tu hijo necesita para jugar de forma creativa y responsable con la pantalla.',
         button: 'Siguiente',
+        features: {
+          stories: '📚  Historias interactivas',
+          storiesDesc: 'Cuentos bellamente ilustrados con narración página a página',
+          music: '🎵  Música e instrumentos',
+          musicDesc: 'Aprende ritmo y melodía con sonidos de instrumentos reales',
+          voice: '🎙️  Tu voz',
+          voiceDesc: 'Graba narraciones para que tu hijo te escuche — incluso a distancia',
+        },
       },
-      personalize: {
-        title: '¡Hagámoslo sobre ellos!',
-        body: '¿Cuál es tu nombre? ¡Personaliza la experiencia ingresando tu nombre y creando un avatar!',
-        button: 'Siguiente',
-      },
-      voiceRecording: {
-        title: '¡Graba tu voz!',
-        body: 'Narra tus historias con tu voz. Consuela a tu hijo mientras no estás.',
-        button: 'Siguiente',
-      },
-      research: {
-        title: '¡Respaldado por investigación!',
-        body: 'Esta aplicación se desarrolla como parte de un estudio de maestría sobre desarrollo infantil, explorando cómo los ejercicios digitales pueden apoyar una relación saludable entre padres e hijos. La investigación sugiere que el compromiso conjunto y las sesiones cortas proporcionan los mayores beneficios.',
-        button: 'Siguiente',
-      },
-      disclaimer: {
-        title: 'Por favor nota',
-        body: 'Esta aplicación está en desarrollo activo. Algunas funciones pueden no funcionar - por favor toma capturas de pantalla de los problemas.\n\nEl backend duerme cuando no se usa. Si el inicio de sesión falla, espera 30 segundos. La carga de historias varía según la red.\n\nEl contenido incluye obras originales, historias generadas por IA y libros infantiles usados para investigación educativa.',
+      family: {
+        title: 'Hecho para familias',
+        body: 'Diseñado para sesiones cortas y significativas juntos. La investigación muestra que la participación conjunta y el uso breve ofrecen los mayores beneficios.',
         button: 'Siguiente',
       },
       privacy: {
-        title: 'Tu privacidad',
-        body: 'Tus datos están seguros. No se recopila ni almacena información personal.\n\nIniciar sesión a través de Google o Apple es seguro y seudonimizado - solo recibimos un identificador anónimo, no tu correo electrónico.\n\nLa sincronización de sesiones entre dispositivos es completamente anónima. Todos los datos siguen las mejores prácticas de seguridad con cifrado.\n\nEsta aplicación está diseñada con principios de privacidad primero para ti y tu familia.',
-        button: 'Siguiente',
-      },
-      crashReporting: {
-        title: 'Ayúdanos a mejorar',
-        body: '¿Te gustaría ayudarnos a mejorar la aplicación compartiendo informes de errores anónimos?\n\nLos informes de errores nos ayudan a identificar y solucionar problemas rápidamente. Solo contienen información técnica sobre lo que salió mal - sin datos personales, fotos ni contenido.\n\nPuedes cambiar esta configuración en cualquier momento en Ajustes.',
-        button: 'Comencemos…',
+        title: 'Privacidad y comenzar',
+        body: 'Tus datos están seguros y seudonimizados. No se recoge información personal — el inicio de sesión usa solo un identificador anónimo.\n\nAyúdanos a mejorar compartiendo informes de fallos anónimos (puedes cambiarlo en Ajustes).',
+        button: '¡Empecemos!',
+        showCrashReportingDialog: 'true',
       },
     },
     crashReportingDialog: {
@@ -514,21 +503,16 @@ export default {
       enable: 'Habilitar',
     },
     taglines: {
-      welcome: '✨ Historias que crecen con tu hijo',
-      screenTime: '👨‍👩‍👧‍👦 Tiempo de calidad juntos',
-      personalize: '🎭 Hazlo únicamente suyo',
-      voiceRecording: '🎙️ Tu voz, su consuelo',
-      research: '🔬 Conectando psicología con tecnología',
+      welcome: '✨ Despierta la imaginación jugando',
+      howItWorks: '🌟 Tres formas de explorar',
+      family: '👨‍👩‍👧‍👦 Tiempo juntos, beneficios reales',
+      privacy: '🔒 Privacidad primero, siempre',
     },
     benefits: {
-      welcome: 'Experiencias de aprendizaje personalizadas',
-      screenTime: 'Recomendado por expertos en desarrollo infantil',
-      personalize: 'Avatares personalizados e historias personalizadas',
-      voiceRecording: 'Graba una vez, consuela siempre',
-      research: 'Creciendo juntos, por siempre',
-      disclaimer: '¡Gracias por ayudarnos a mejorar!',
+      welcome: 'Respaldado por investigación en desarrollo infantil',
+      howItWorks: 'Historias · Música · Voz — todo en una app',
+      family: 'Recomendado por expertos en desarrollo infantil',
       privacy: 'Tus datos son tuyos',
-      crashReporting: 'Los informes de errores anónimos ayudan a corregir errores más rápido',
     },
   },
 

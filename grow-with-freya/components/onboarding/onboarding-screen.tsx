@@ -168,20 +168,18 @@ export function OnboardingScreen({
     transform: [{ translateY: buttonTranslateY.value }],
   }));
 
-  // Steps 6, 7, and 8 are text-only screens (no illustration)
-  const isTextOnlyScreen = currentStep === 6 || currentStep === 7 || currentStep === 8;
+  // Step 2 (How It Works) uses a feature list instead of an illustration
+  const isFeatureListScreen = currentStep === 2;
+  // Step 4 (Privacy) is text-only (no illustration)
+  const isTextOnlyScreen = currentStep === 4;
 
   const renderContextualContent = (step: number) => {
-    // Map step number to translation keys
+    // Map step number to translation keys (4 screens)
     const contextualData = [
       { taglineKey: 'onboarding.taglines.welcome', benefitKey: 'onboarding.benefits.welcome' },
-      { taglineKey: 'onboarding.taglines.screenTime', benefitKey: 'onboarding.benefits.screenTime' },
-      { taglineKey: 'onboarding.taglines.personalize', benefitKey: 'onboarding.benefits.personalize' },
-      { taglineKey: 'onboarding.taglines.voiceRecording', benefitKey: 'onboarding.benefits.voiceRecording' },
-      { taglineKey: 'onboarding.taglines.research', benefitKey: 'onboarding.benefits.research' },
-      { taglineKey: '', benefitKey: 'onboarding.benefits.disclaimer' },
-      { taglineKey: '', benefitKey: 'onboarding.benefits.privacy' },
-      { taglineKey: '', benefitKey: 'onboarding.benefits.crashReporting' }
+      { taglineKey: 'onboarding.taglines.howItWorks', benefitKey: 'onboarding.benefits.howItWorks' },
+      { taglineKey: 'onboarding.taglines.family', benefitKey: 'onboarding.benefits.family' },
+      { taglineKey: 'onboarding.taglines.privacy', benefitKey: 'onboarding.benefits.privacy' },
     ];
 
     const data = contextualData[step - 1];
@@ -190,18 +188,7 @@ export function OnboardingScreen({
     const tagline = data.taglineKey ? t(data.taglineKey) : '';
     const benefit = data.benefitKey ? t(data.benefitKey) : '';
 
-    // Skip rendering if both tagline and benefit are empty
     if (!tagline && !benefit) return null;
-
-    // For text-only screens (6, 7, and 8), show larger tagline in the content area
-    if (step === 6 || step === 7 || step === 8) {
-      return (
-        <View style={styles.textOnlyTaglineWrapper}>
-          {tagline ? <ThemedText style={styles.textOnlyTagline}>{tagline}</ThemedText> : null}
-          {benefit ? <ThemedText style={styles.textOnlyBenefit}>{benefit}</ThemedText> : null}
-        </View>
-      );
-    }
 
     return (
       <View style={styles.contextualWrapper}>
@@ -211,28 +198,37 @@ export function OnboardingScreen({
     );
   };
 
-  const renderDecorativeElements = (step: number) => {
-    const decorativeElements = [
-      ['�', '🌟', '�', '🦄', '�', '🧸'],
-      ['�', '🍎', '�', '�', '☀️', '�'],
-      ['🎨', '🦋', '�', '�', '🎪', '�'],
-      ['🎵', '�', '�', '🎶', '�', '⭐'],
-      ['�', '🌱', '�', '🌻', '🎓', '�'],
+  // Feature list for "How It Works" screen (step 2)
+  const renderFeatureList = () => {
+    const features = [
+      { label: t('onboarding.screens.howItWorks.features.stories'), desc: t('onboarding.screens.howItWorks.features.storiesDesc') },
+      { label: t('onboarding.screens.howItWorks.features.music'), desc: t('onboarding.screens.howItWorks.features.musicDesc') },
+      { label: t('onboarding.screens.howItWorks.features.voice'), desc: t('onboarding.screens.howItWorks.features.voiceDesc') },
     ];
+    return (
+      <View style={styles.featureList}>
+        {features.map((f, i) => (
+          <Animated.View
+            key={i}
+            entering={FadeInUp.delay(400 + i * 150).duration(500)}
+            style={styles.featureRow}
+          >
+            <ThemedText style={styles.featureLabel}>{f.label}</ThemedText>
+            <ThemedText style={styles.featureDesc}>{f.desc}</ThemedText>
+          </Animated.View>
+        ))}
+      </View>
+    );
+  };
 
+  const renderDecorativeElements = (step: number) => {
     const isTablet = width >= 768;
-
-    if (!isTablet) {
-      return [];
-    }
+    if (!isTablet) return [];
 
     const kidFriendlyElements = [
-      ['🐻', '🌟', '🎈', '🦄'],
-      ['👶', '🍎', '🌸', '🐰'],
-      ['🎨', '🦋', '🌺', '🐱'],
-      ['🎵', '🐸', '🌙', '🎶'],
-      ['📚', '🌱', '🐝', '🌻'],
-      ['📋', '🔧', '📱', '💡'],
+      ['🐻', '⭐', '🎈', '🦄'],
+      ['📚', '🎵', '🎙️', '⭐'],
+      ['👨‍👩‍👧‍👦', '🌱', '💛', '🌻'],
       ['🔒', '🛡️', '✅', '💚'],
     ];
 
@@ -266,6 +262,7 @@ export function OnboardingScreen({
       );
     });
   };
+
 
   const renderFloatingElements = () => {
     const isTablet = width >= 768;
@@ -313,13 +310,9 @@ export function OnboardingScreen({
   const renderIllustration = (content: string) => {
     const illustrationMap: { [key: string]: string } = {
       'family reading together': 'family-reading',
-      'parent hugging two children': 'screen-time-family',
-      'two children avatars (Tina and Bruno)': 'tina-bruno',
-      'adult holding phone speaking': 'voice-recording',
+      'how-it-works': 'tina-bruno',
       'parent hugging child': 'research-backed',
-      'disclaimer': 'research-backed', // Reuse research-backed for now
-      'privacy': 'research-backed', // Reuse research-backed for privacy screen
-      'crash-reporting': 'research-backed', // Reuse research-backed for crash reporting screen
+      'privacy': 'research-backed',
     };
 
     const pngName = illustrationMap[content] || 'tina-bruno';
@@ -365,31 +358,27 @@ export function OnboardingScreen({
             isTextOnlyScreen && styles.textContainerExpanded
           ]}
         >
-          <ThemedText type="title" style={[
-            styles.title,
-            // Step 7: "Your Privacy" should be one line
-            currentStep === 7 && styles.titleSingleLine
-          ]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>
+          <ThemedText type="title" style={styles.title} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>
             {title}
           </ThemedText>
           <ThemedText style={styles.body}>
             {body}
           </ThemedText>
 
+          {isFeatureListScreen && renderFeatureList()}
+
           <View style={styles.contextualContent}>
             {renderContextualContent(currentStep)}
           </View>
         </Animated.View>
 
-        {!isTextOnlyScreen && (
+        {!isTextOnlyScreen && !isFeatureListScreen && (
           <Animated.View
             key={isAndroid ? `illustration-${currentStep}` : undefined}
             entering={isAndroid ? ZoomIn.delay(300).duration(600) : undefined}
             style={[
               styles.illustrationContainer,
-              !isAndroid && imageAnimatedStyle, // iOS uses useAnimatedStyle, Android uses entering
-              // Step 5 needs image raised to center between text and buttons
-              currentStep === 5 && styles.illustrationContainerStep5
+              !isAndroid && imageAnimatedStyle,
             ]}
           >
             <View style={styles.decorativeBackground}>
@@ -509,10 +498,6 @@ const styles = StyleSheet.create({
     lineHeight: 32,
     width: '100%',
   },
-  titleSingleLine: {
-    // Ensure title fits on one line (e.g., "Your Privacy")
-    fontSize: 24,
-  },
   body: {
     fontSize: 16,
     textAlign: 'center',
@@ -540,23 +525,33 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontStyle: 'italic',
   },
-  // Text-only screen styles (for steps 6 and 7)
-  textOnlyTaglineWrapper: {
-    alignItems: 'center',
-    gap: 12,
-    marginTop: 30,
+  // Feature list styles (How It Works screen)
+  featureList: {
+    marginTop: 24,
+    gap: 16,
+    width: '100%',
+    paddingHorizontal: 8,
   },
-  textOnlyTagline: {
-    fontSize: 28,
-    fontWeight: 'bold',
+  featureRow: {
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  featureLabel: {
+    fontSize: 17,
+    fontWeight: '700',
     color: '#2E8B8B',
-    textAlign: 'center',
+    marginBottom: 4,
   },
-  textOnlyBenefit: {
-    fontSize: 16,
+  featureDesc: {
+    fontSize: 14,
     color: '#5A5A5A',
-    textAlign: 'center',
-    fontStyle: 'italic',
+    lineHeight: 20,
   },
   illustrationContainer: {
     justifyContent: 'center',
@@ -566,10 +561,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     width: '100%',
   },
-  illustrationContainerStep5: {
-    // Raise image to center between "Growing together forever" text and buttons
-    marginTop: -30,
-  },
+
   decorativeBackground: {
     position: 'absolute',
     top: 0,

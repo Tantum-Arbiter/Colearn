@@ -474,47 +474,36 @@ export default {
     startExploring: 'Start Exploring',
     swipeOrTap: 'Swipe or tap to continue',
     readyToStart: 'Ready to start your journey!',
-    // Screen content
+    // Screen content — 4 focused screens
     screens: {
       welcome: {
-        title: 'Welcome!',
-        body: "Help your child's early development with our stories and activities",
+        title: 'Stories That Grow\nWith Your Child',
+        body: 'Interactive stories with music, instruments and narration — designed to spark imagination and support early development.',
         button: 'Next',
       },
-      screenTime: {
-        title: 'Why we limit screen time',
-        body: 'We encourage parents to use this app together with their child.',
+      howItWorks: {
+        title: 'How It Works',
+        body: 'Everything your child needs for creative, screen-smart play.',
         button: 'Next',
+        features: {
+          stories: '📚  Interactive Stories',
+          storiesDesc: 'Beautifully illustrated tales with page-by-page narration',
+          music: '🎵  Music & Instruments',
+          musicDesc: 'Learn rhythm and melody with real instrument sounds',
+          voice: '🎙️  Your Voice',
+          voiceDesc: 'Record narrations so your child hears you — even apart',
+        },
       },
-      personalize: {
-        title: 'Lets make it about them!',
-        body: "What's your name? Personalize the experience by entering your name and creating an avatar!",
-        button: 'Next',
-      },
-      voiceRecording: {
-        title: 'Record your voice!',
-        body: "Narrate your stories with your voice. Comfort your child whilst you're not there.",
-        button: 'Next',
-      },
-      research: {
-        title: 'Backed by Research!',
-        body: 'This app is developed as part of a Masters degree study on child development, exploring how digital exercises can support a healthy parent-child relationship. Research suggests co-engagement and short usage sessions provide the greatest benefits.',
-        button: 'Next',
-      },
-      disclaimer: {
-        title: 'Please Note',
-        body: "This app is in active development. Some features may not work - please screenshot issues with a timestamp.\n\nThe backend sleeps when unused. If sign-in fails, wait 30 seconds. Story loading varies by network.\n\nStory content includes original works, AI-generated stories, and children's books used for educational research.",
+      family: {
+        title: 'Made for Families',
+        body: 'Designed for short, meaningful sessions together. Research shows co-engagement and brief usage give the greatest benefits for early development.',
         button: 'Next',
       },
       privacy: {
-        title: 'Your Privacy',
-        body: "Your data is secure. No personal information is collected or stored.\n\nSigning in via Google or Apple is safe and pseudonymized - we only receive an anonymous identifier, not your email or personal details.\n\nSession syncing across devices is fully anonymized. All data follows best security practices with encryption in transit and at rest.\n\nThis app is designed with privacy-first principles for you and your family.",
-        button: 'Next',
-      },
-      crashReporting: {
-        title: 'Help Us Improve',
-        body: "Would you like to help us improve the app by sharing anonymous crash reports?\n\nCrash reports help us identify and fix issues quickly. They contain only technical information about what went wrong - no personal data, photos, or content.\n\nYou can change this setting anytime in Settings.",
-        button: "Let's begin…",
+        title: 'Privacy & Getting Started',
+        body: 'Your data is secure and pseudonymised. No personal information is collected — sign-in uses only an anonymous identifier.\n\nHelp us improve by sharing anonymous crash reports (you can change this anytime in Settings).',
+        button: "Let's begin!",
+        showCrashReportingDialog: 'true',
       },
     },
     // Crash reporting dialog
@@ -526,21 +515,16 @@ export default {
     },
     // Taglines for each screen
     taglines: {
-      welcome: '✨ Stories that grow with your child',
-      screenTime: '👨‍👩‍👧‍👦 Quality time together',
-      personalize: '🎭 Make it uniquely theirs',
-      voiceRecording: '🎙️ Your voice, their comfort',
-      research: '🔬 Bridging Psychology with Technology',
+      welcome: '✨ Spark imagination through play',
+      howItWorks: '🌟 Three ways to explore',
+      family: '👨‍👩‍👧‍👦 Quality time, real benefits',
+      privacy: '🔒 Privacy-first, always',
     },
     benefits: {
-      welcome: 'Personalized learning experiences',
-      screenTime: 'Recommended by child development experts',
-      personalize: 'Custom avatars and personalized stories',
-      voiceRecording: 'Record once, comfort them always',
-      research: 'Growing together, forever',
-      disclaimer: 'Thank you for helping us improve!',
+      welcome: 'Backed by child development research',
+      howItWorks: 'Stories · Music · Voice — all in one app',
+      family: 'Recommended by child development experts',
       privacy: 'Your data stays yours',
-      crashReporting: 'Anonymous crash reports help fix bugs faster',
     },
   },
 
