@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useEffect, useMemo, useState, memo } from 'react';
-import { View, Text, ScrollView, StyleSheet, Dimensions, FlatList, Pressable, ListRenderItem, findNodeHandle, UIManager, Alert, LayoutAnimation, Platform, InteractionManager } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Dimensions, FlatList, Pressable, ListRenderItem, UIManager, Alert, Platform, InteractionManager } from 'react-native';
 import { Image } from 'expo-image';
 // All story images are loaded from local cache after batch sync - no authenticated fetching needed
 import { LinearGradient } from 'expo-linear-gradient';
@@ -33,7 +33,7 @@ import { useStoryTransition } from '@/contexts/story-transition-context';
 import { PageHeader } from '@/components/ui/page-header';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { StoryPreviewModal } from './story-preview-modal';
-import { CatalogStoryCard, CardPosition } from './catalog-story-card';
+import { CatalogStoryCard } from './catalog-story-card';
 import { StoryDownloadService } from '@/services/story-download-service';
 import type { SupportedLanguage } from '@/services/i18n';
 
@@ -321,28 +321,6 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   // Track the most recently downloaded story for expansion animation
   const [newlyDownloadedId, setNewlyDownloadedId] = useState<string | null>(null);
 
-  // Floating card state for slide-to-position animation
-  const [floatingCard, setFloatingCard] = useState<{
-    storyId: string;
-    thumbnailUrl?: string;
-    sourcePosition: CardPosition;
-  } | null>(null);
-
-  // Floating card animated values
-  const floatingX = useSharedValue(0);
-  const floatingY = useSharedValue(0);
-  const floatingOpacity = useSharedValue(0);
-  const floatingScale = useSharedValue(1);
-
-  const floatingCardStyle = useAnimatedStyle(() => ({
-    position: 'absolute' as const,
-    left: floatingX.value,
-    top: floatingY.value,
-    opacity: floatingOpacity.value,
-    transform: [{ scale: floatingScale.value }],
-    zIndex: 1000,
-  }));
-
   // Union type for items in genre carousels: either a downloaded story or a catalog entry
   type StoryDisplayItem = { type: 'story'; data: Story } | { type: 'catalog'; data: CatalogEntry };
 
@@ -497,41 +475,6 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       unsubscribe();
     };
   }, []);
-
-  // Called by CatalogStoryCard when download animation starts — creates floating card
-  const handleDownloadAnimationStart = useCallback((storyId: string, sourcePosition: CardPosition, thumbnailUrl?: string) => {
-    // Position the floating card at the source
-    floatingX.value = sourcePosition.x;
-    floatingY.value = sourcePosition.y;
-    floatingOpacity.value = 1;
-    floatingScale.value = 1;
-
-    setFloatingCard({ storyId, thumbnailUrl, sourcePosition });
-
-    // After a brief delay (to let the catalog card start collapsing),
-    // slide the floating card upward/left to approximate the target position.
-    // The target is roughly the left edge of the same row since downloaded
-    // stories come before catalog entries.
-    const targetX = 20; // carouselContent paddingHorizontal
-    // Move to the same Y (same row) — just slide left
-    const targetY = sourcePosition.y;
-
-    setTimeout(() => {
-      floatingX.value = withTiming(targetX, { duration: 450, easing: Easing.inOut(Easing.ease) });
-      floatingY.value = withTiming(targetY, { duration: 450, easing: Easing.inOut(Easing.ease) });
-      floatingScale.value = withSequence(
-        withTiming(1.05, { duration: 150 }),
-        withTiming(1, { duration: 300 })
-      );
-    }, 100);
-
-    // Fade out the floating card as the real StoryCard expands into place
-    setTimeout(() => {
-      floatingOpacity.value = withTiming(0, { duration: 250 });
-      // Clean up state after animation
-      setTimeout(() => setFloatingCard(null), 300);
-    }, 550);
-  }, [floatingX, floatingY, floatingOpacity, floatingScale]);
 
   // When a catalog story finishes downloading, refresh both stories list and catalog
   const handleCatalogDownloadComplete = useCallback(async (storyId: string) => {
@@ -731,11 +674,10 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
         borderRadius={scaledBorderRadius}
         language={currentLanguage}
         onDownloadComplete={handleCatalogDownloadComplete}
-        onDownloadAnimationStart={handleDownloadAnimationStart}
         onLongPress={handleCatalogPreview}
       />
     );
-  }, [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader, currentLanguage, readStoryIds, deletingStoryId, handleImplodeComplete, handleCatalogDownloadComplete, handleDownloadAnimationStart, handleCatalogPreview, newlyDownloadedId]);
+  }, [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader, currentLanguage, readStoryIds, deletingStoryId, handleImplodeComplete, handleCatalogDownloadComplete, handleCatalogPreview, newlyDownloadedId]);
 
   // Memoized render function for story cards (favorites only — pure Story[])
   const renderStoryCard: ListRenderItem<Story> = useCallback(({ item: story }) => (
@@ -936,27 +878,6 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
           })}
         </ScrollView>
       </View>
-
-      {/* Floating card overlay — slides from catalog position to downloaded position */}
-      {floatingCard && (
-        <Animated.View style={[floatingCardStyle, { width: scaledCardW, height: scaledCardH, borderRadius: scaledBorderRadius, overflow: 'hidden' }]} pointerEvents="none">
-          {floatingCard.thumbnailUrl ? (
-            <Image
-              source={{ uri: floatingCard.thumbnailUrl, cacheKey: `float-${floatingCard.storyId}` }}
-              style={{ width: scaledCardW, height: scaledCardH, borderRadius: scaledBorderRadius }}
-              contentFit="cover"
-              transition={0}
-              cachePolicy="memory-disk"
-            />
-          ) : (
-            <View style={{ width: scaledCardW, height: scaledCardH, borderRadius: scaledBorderRadius, backgroundColor: '#999', justifyContent: 'center', alignItems: 'center' }}>
-              <Text style={{ fontSize: 36, opacity: 0.5 }}>📖</Text>
-            </View>
-          )}
-          {/* Subtle shadow/glow to show it's floating */}
-          <View style={{ ...StyleSheet.absoluteFillObject, borderRadius: scaledBorderRadius, borderWidth: 2, borderColor: 'rgba(78, 205, 196, 0.6)' }} />
-        </Animated.View>
-      )}
 
       {/* Story Preview Modal */}
       <StoryPreviewModal
