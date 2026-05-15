@@ -42,31 +42,42 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
 
   const handlePress = useCallback(async () => {
     if (downloading) return;
+    console.log(`[CatalogStoryCard] Download pressed for ${entry.storyId}`);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setDownloading(true);
 
-    const result = await StoryDownloadService.downloadStory(
-      entry.storyId,
-      entry,
-      (p) => {
-        setProgress(p);
-        progressWidth.value = withTiming(p.progress, { duration: 200 });
-      }
-    );
+    try {
+      const result = await StoryDownloadService.downloadStory(
+        entry.storyId,
+        entry,
+        (p) => {
+          console.log(`[CatalogStoryCard] Progress: ${p.phase} ${p.progress}% - ${p.message}`);
+          setProgress(p);
+          progressWidth.value = withTiming(p.progress, { duration: 200 });
+        }
+      );
 
-    if (result.success) {
-      onDownloadComplete?.(entry.storyId);
-    } else {
-      // Reset on failure so user can retry
+      if (result.success) {
+        console.log(`[CatalogStoryCard] Download complete for ${entry.storyId}`);
+        onDownloadComplete?.(entry.storyId);
+      } else {
+        // Reset on failure so user can retry
+        setDownloading(false);
+        setProgress(null);
+        progressWidth.value = 0;
+        console.warn(`[CatalogStoryCard] Download failed for ${entry.storyId}: ${result.error}`);
+        Alert.alert(
+          'Download Failed',
+          result.error || 'Something went wrong. Please try again.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (err) {
       setDownloading(false);
       setProgress(null);
       progressWidth.value = 0;
-      console.warn(`[CatalogStoryCard] Download failed for ${entry.storyId}: ${result.error}`);
-      Alert.alert(
-        'Download Failed',
-        result.error || 'Something went wrong. Please try again.',
-        [{ text: 'OK' }]
-      );
+      console.error(`[CatalogStoryCard] Download error for ${entry.storyId}:`, err);
+      Alert.alert('Download Failed', 'An unexpected error occurred. Please try again.', [{ text: 'OK' }]);
     }
   }, [downloading, entry, onDownloadComplete, progressWidth]);
 
@@ -91,6 +102,8 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
             contentFit="cover"
             transition={200}
             cachePolicy="memory-disk"
+            onError={(e) => console.warn(`[CatalogCard] Image failed for ${entry.storyId}:`, e)}
+            onLoad={() => console.log(`[CatalogCard] Image loaded for ${entry.storyId}`)}
           />
         ) : (
           <View style={[cardStyles.placeholder, { width: cardWidth, height: cardHeight, borderRadius }]}>
@@ -167,7 +180,7 @@ const cardStyles = StyleSheet.create({
   },
   greyOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
   },
   iconContainer: {
     ...StyleSheet.absoluteFillObject,

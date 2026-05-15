@@ -516,16 +516,35 @@ function AppContent() {
   const justLoggedInRef = useRef(false);
 
   const handleLoginSuccess = () => {
-    // Mark that we just logged in and sync is starting
-    // This prevents race conditions on Android where AppState changes during login
+    // Mark that we just logged in — go straight to main menu, sync in background
     justLoggedInRef.current = true;
     syncInProgressRef.current = true;
-    log.info('[Auth] Login successful - starting sync');
+    log.info('[Auth] Login successful — going to main menu, syncing in background');
 
     setShowLoginAfterOnboarding(false);
-    // Show StartupLoadingScreen which runs BatchSyncService for efficient batch sync
-    // The loading screen's onComplete will clear both flags
-    setCurrentView('loading');
+    setCurrentView('app');
+    setCurrentPage('main');
+
+    // Background sync — no blocking loading screen
+    (async () => {
+      try {
+        log.info('[Layout] Post-login background sync starting...');
+        try {
+          const profile = await ApiClient.getProfile();
+          await ProfileSyncService.fullSync(profile);
+        } catch (e) { log.warn('[Layout] Background profile sync skipped:', e); }
+        await CacheManager.validateAndCleanCache();
+        await BatchSyncService.performBatchSync();
+        StoryLoader.invalidateCache();
+        await StoryLoader.getStories();
+        log.info('[Layout] Post-login background sync complete');
+      } catch (e) {
+        log.warn('[Layout] Post-login background sync failed (non-critical):', e);
+      } finally {
+        syncInProgressRef.current = false;
+        justLoggedInRef.current = false;
+      }
+    })();
   };
 
   const handleLoginSkip = () => {
