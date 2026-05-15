@@ -78,7 +78,8 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
         entry.storyId,
         entry,
         (p) => {
-          progressValue.value = withTiming(p.progress, { duration: 250, easing: Easing.out(Easing.ease) });
+          // Longer duration + linear easing = smooth continuous fill between discrete progress jumps
+          progressValue.value = withTiming(p.progress, { duration: 800, easing: Easing.linear });
         }
       );
 
