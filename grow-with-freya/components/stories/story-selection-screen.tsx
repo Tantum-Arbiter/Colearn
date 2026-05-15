@@ -17,10 +17,11 @@ import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { ALL_STORIES } from '@/data/stories';
-import { Story, StoryCategory, StoryFilterTag, STORY_FILTER_TAGS, getLocalizedText } from '@/types/story';
+import { Story, StoryCategory, StoryFilterTag, STORY_FILTER_TAGS, CatalogEntry, getLocalizedText } from '@/types/story';
 import { Fonts } from '@/constants/theme';
 import { useAppStore } from '@/store/app-store';
 import { StoryLoader } from '@/services/story-loader';
+import { CatalogService } from '@/services/catalog-service';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
 import { BearTopImage } from '@/components/main-menu/animated-components';
@@ -30,6 +31,7 @@ import { useStoryTransition } from '@/contexts/story-transition-context';
 import { PageHeader } from '@/components/ui/page-header';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { StoryPreviewModal } from './story-preview-modal';
+import { CatalogStoryCard } from './catalog-story-card';
 import type { SupportedLanguage } from '@/services/i18n';
 
 // White Ionicons icon for each filter tag (replaces coloured emojis)
@@ -242,6 +244,9 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   const [isLoadingStories, setIsLoadingStories] = useState(!StoryLoader.getCachedStories());
   const [selectedTags, setSelectedTags] = useState<Set<StoryFilterTag>>(new Set());
 
+  // Catalog entries (not-yet-downloaded stories) for browse/discovery
+  const [catalogEntries, setCatalogEntries] = useState<CatalogEntry[]>([]);
+
   // Get favorite and read story IDs from store
   const favoriteStoryIds = useAppStore((state) => state.favoriteStoryIds);
   const readStoryIds = useAppStore((state) => state.readStoryIds);
@@ -331,6 +336,33 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     }, 600); // Wait for page transition (500ms + 100ms buffer)
 
     return () => clearTimeout(timeoutId);
+  }, []);
+
+  // Load catalog entries for not-yet-downloaded stories
+  useEffect(() => {
+    const loadCatalog = async () => {
+      try {
+        const entries = await CatalogService.getCatalog();
+        setCatalogEntries(entries);
+      } catch {
+        // No catalog available yet — that's fine
+      }
+    };
+    loadCatalog();
+  }, []);
+
+  // When a catalog story finishes downloading, refresh both stories list and catalog
+  const handleCatalogDownloadComplete = useCallback(async (_storyId: string) => {
+    try {
+      // Refresh the downloaded stories list
+      const loadedStories = await StoryLoader.getStories();
+      setStories(loadedStories);
+      // Refresh catalog (entry was removed by StoryDownloadService)
+      const entries = await CatalogService.getCatalog();
+      setCatalogEntries(entries);
+    } catch {
+      // Best-effort refresh
+    }
   }, []);
 
   // Generate star positions for background
@@ -628,6 +660,60 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
               </View>
             );
           })}
+
+          {/* More Stories — catalog entries not yet downloaded */}
+          {catalogEntries.length > 0 && (
+            <View style={{ marginBottom: 40 }}>
+              <Text style={{
+                color: '#FFFFFF',
+                fontSize: 24,
+                fontWeight: 'bold',
+                textAlign: 'center',
+                marginBottom: 6,
+                textShadowColor: 'rgba(0, 0, 0, 0.9)',
+                textShadowOffset: { width: 0, height: 3 },
+                textShadowRadius: 6,
+              }}>
+                📥 {t('stories.moreStories', { defaultValue: 'More Stories' })}
+              </Text>
+              <Text style={{
+                color: 'rgba(255, 255, 255, 0.6)',
+                fontSize: 13,
+                textAlign: 'center',
+                marginBottom: 15,
+                fontFamily: Fonts.rounded,
+              }}>
+                {t('stories.tapToDownload', { defaultValue: 'Tap to download' })}
+              </Text>
+
+              <FlatList
+                data={catalogEntries}
+                renderItem={({ item }) => (
+                  <CatalogStoryCard
+                    entry={item}
+                    cardWidth={scaledCardW}
+                    cardHeight={scaledCardH}
+                    borderRadius={scaledBorderRadius}
+                    language={currentLanguage}
+                    onDownloadComplete={handleCatalogDownloadComplete}
+                  />
+                )}
+                keyExtractor={(item) => item.storyId}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                removeClippedSubviews={true}
+                maxToRenderPerBatch={5}
+                windowSize={7}
+                initialNumToRender={3}
+                updateCellsBatchingPeriod={50}
+                decelerationRate="fast"
+                snapToInterval={ITEM_WIDTH}
+                snapToAlignment="start"
+                contentContainerStyle={styles.carouselContent}
+                scrollEnabled={!isTransitioning && !shouldShowStoryReader && !isExpandingToReader}
+              />
+            </View>
+          )}
         </ScrollView>
       </View>
 

@@ -24,6 +24,8 @@ export interface DownloadProgress {
   detail?: {
     currentAsset?: number;
     totalAssets?: number;
+    bytesDownloaded?: number;
+    totalBytes?: number;
   };
 }
 
@@ -137,13 +139,15 @@ export class StoryDownloadService {
           onProgress?.({ phase: 'downloading-assets', progress: 40, message: 'Downloading assets...' });
           const downloadResult = await AssetDownloadUtils.downloadAssetsInBatches(
             urlResult.urls,
-            (current, total) => {
+            (current, total, bytesDownloaded, totalBytes) => {
               const progress = 40 + Math.floor((current / total) * 45);
+              const bytesFmt = AssetDownloadUtils.formatBytes(bytesDownloaded);
+              const totalFmt = totalBytes > 0 ? AssetDownloadUtils.formatBytes(totalBytes) : '?';
               onProgress?.({
                 phase: 'downloading-assets',
                 progress,
-                message: `Downloading assets (${current}/${total})...`,
-                detail: { currentAsset: current, totalAssets: total },
+                message: `${bytesFmt} / ${totalFmt}`,
+                detail: { currentAsset: current, totalAssets: total, bytesDownloaded, totalBytes },
               });
             }
           );

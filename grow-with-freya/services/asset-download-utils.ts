@@ -124,11 +124,13 @@ export class AssetDownloadUtils {
 
   /**
    * Download assets in parallel chunks of CONCURRENT_DOWNLOADS.
-   * Reports progress via optional callback.
+   * Reports progress via optional callback with byte-level tracking.
+   *
+   * @param onProgress - callback(currentAsset, totalAssets, bytesDownloaded, estimatedTotalBytes)
    */
   static async downloadAssetsInBatches(
     urls: Array<{ path: string; signedUrl: string }>,
-    onProgress?: (current: number, total: number) => void
+    onProgress?: (current: number, total: number, bytesDownloaded: number, totalBytes: number) => void
   ): Promise<{ downloaded: number; failed: number; bytesDownloaded: number; errors: string[] }> {
     let downloaded = 0;
     let failed = 0;
@@ -143,19 +145,20 @@ export class AssetDownloadUtils {
         chunk.map(async ({ path, signedUrl }) => {
           try {
             const localPath = await CacheManager.downloadAndCacheAsset(signedUrl, path);
+            let fileSize = 0;
             try {
               const FileSystem = await import('expo-file-system/legacy');
               const info = await FileSystem.getInfoAsync(localPath);
               if (info.exists && 'size' in info) {
-                bytesDownloaded += info.size || 0;
+                fileSize = info.size || 0;
               }
             } catch {
               // Ignore size tracking errors
             }
-            return { success: true, path };
+            return { success: true, path, size: fileSize };
           } catch (error) {
             const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-            return { success: false, path, error: errorMsg };
+            return { success: false, path, error: errorMsg, size: 0 };
           }
         })
       );
@@ -164,6 +167,7 @@ export class AssetDownloadUtils {
         if (result.status === 'fulfilled') {
           if (result.value.success) {
             downloaded++;
+            bytesDownloaded += result.value.size;
           } else {
             failed++;
             errors.push(`${result.value.path}: ${result.value.error}`);
@@ -174,7 +178,13 @@ export class AssetDownloadUtils {
         }
       }
 
-      onProgress?.(Math.min(i + chunk.length, total), total);
+      // Estimate total bytes based on average bytes per asset so far
+      const completed = downloaded + failed;
+      const estimatedTotalBytes = completed > 0
+        ? Math.round((bytesDownloaded / downloaded) * total)
+        : 0;
+
+      onProgress?.(Math.min(i + chunk.length, total), total, bytesDownloaded, estimatedTotalBytes);
     }
 
     return { downloaded, failed, bytesDownloaded, errors };

@@ -1,4 +1,4 @@
-import { StoryDownloadService, DownloadResult } from '../../services/story-download-service';
+import { StoryDownloadService, DownloadResult, DownloadProgress } from '../../services/story-download-service';
 import { StoryAccessService } from '../../services/story-access-service';
 import { CatalogService } from '../../services/catalog-service';
 import { AssetDownloadUtils } from '../../services/asset-download-utils';
@@ -382,5 +382,58 @@ describe('StoryDownloadService', () => {
     expect(phases).toContain('fetching-story');
     expect(phases).toContain('saving');
     expect(phases).toContain('complete');
+  });
+
+  it('should report bytesDownloaded and totalBytes in progress detail', async () => {
+    mockApiClient.request.mockResolvedValueOnce(mockStory);
+    mockAssetUtils.extractAssetPaths.mockReturnValue(['cover.webp', 'bg1.webp']);
+    mockAssetUtils.filterUncachedAssets.mockResolvedValue(['cover.webp', 'bg1.webp']);
+    mockAssetUtils.getBatchSignedUrls.mockResolvedValue({
+      urls: [
+        { path: 'cover.webp', signedUrl: 'https://url1' },
+        { path: 'bg1.webp', signedUrl: 'https://url2' },
+      ],
+      failed: [],
+      apiCalls: 1,
+    });
+    // Simulate downloadAssetsInBatches calling the onProgress callback with byte info
+    mockAssetUtils.downloadAssetsInBatches.mockImplementation(async (urls, onProgress) => {
+      // Simulate progress: first asset done (512 bytes), estimated total ~1024
+      onProgress?.(1, 2, 512, 1024);
+      // All done (1024 bytes)
+      onProgress?.(2, 2, 1024, 1024);
+      return { downloaded: 2, failed: 0, bytesDownloaded: 1024, errors: [] };
+    });
+    mockAssetUtils.formatBytes
+      .mockReturnValueOnce('512 Bytes')
+      .mockReturnValueOnce('1 KB')
+      .mockReturnValueOnce('1 KB')
+      .mockReturnValueOnce('1 KB');
+    mockCacheManager.updateStories.mockResolvedValue();
+
+    const progressUpdates: DownloadProgress[] = [];
+    const result = await StoryDownloadService.downloadStory('free-story', freeCatalogEntry, (progress) => {
+      progressUpdates.push({ ...progress });
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.bytesDownloaded).toBe(1024);
+
+    // Find the downloading-assets progress updates with byte detail
+    const assetPhases = progressUpdates.filter(p => p.phase === 'downloading-assets' && p.detail);
+    expect(assetPhases.length).toBeGreaterThanOrEqual(2);
+
+    // First progress update: partial download
+    expect(assetPhases[0].detail!.bytesDownloaded).toBe(512);
+    expect(assetPhases[0].detail!.totalBytes).toBe(1024);
+    expect(assetPhases[0].detail!.currentAsset).toBe(1);
+    expect(assetPhases[0].detail!.totalAssets).toBe(2);
+
+    // Final progress update: all done
+    const lastAssetPhase = assetPhases[assetPhases.length - 1];
+    expect(lastAssetPhase.detail!.bytesDownloaded).toBe(1024);
+    expect(lastAssetPhase.detail!.totalBytes).toBe(1024);
+    expect(lastAssetPhase.detail!.currentAsset).toBe(2);
+    expect(lastAssetPhase.detail!.totalAssets).toBe(2);
   });
 });
