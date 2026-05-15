@@ -1,5 +1,6 @@
 package com.app.service;
 
+import com.app.dto.CatalogEntry;
 import com.app.model.ContentVersion;
 import com.app.model.Story;
 import com.app.repository.ContentVersionRepository;
@@ -11,9 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -117,6 +116,53 @@ public class StoryService {
         return storyRepository.delete(storyId)
                 .thenCompose(v -> contentVersionRepository.removeStoryChecksum(storyId))
                 .thenApply(v -> null);
+    }
+
+    /**
+     * Get catalog entries for stories the client hasn't downloaded.
+     * Returns lightweight metadata for stories whose IDs are NOT in clientStoryIds.
+     *
+     * @param clientStoryIds set of story IDs the client already has downloaded
+     * @param serverChecksums all server story checksums (used to identify full catalog)
+     * @return list of catalog entries for stories the client hasn't downloaded
+     */
+    public CompletableFuture<List<CatalogEntry>> getCatalogEntries(
+            Set<String> clientStoryIds, Map<String, String> serverChecksums,
+            java.util.function.Function<String, String> thumbnailUrlGenerator) {
+
+        // Find story IDs that the client does NOT have
+        List<String> catalogStoryIds = serverChecksums.keySet().stream()
+                .filter(id -> !clientStoryIds.contains(id))
+                .collect(Collectors.toList());
+
+        if (catalogStoryIds.isEmpty()) {
+            logger.debug("Client has all stories, no catalog entries needed");
+            return CompletableFuture.completedFuture(Collections.emptyList());
+        }
+
+        logger.debug("Building catalog for {} stories client doesn't have", catalogStoryIds.size());
+
+        // Fetch stories for the catalog
+        List<CompletableFuture<Optional<Story>>> futures = catalogStoryIds.stream()
+                .map(storyRepository::findById)
+                .collect(Collectors.toList());
+
+        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+                .thenApply(v -> futures.stream()
+                        .map(CompletableFuture::join)
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .filter(Story::isAvailable)
+                        .map(story -> {
+                            String thumbnailUrl = null;
+                            try {
+                                thumbnailUrl = thumbnailUrlGenerator.apply(story.getCoverImage());
+                            } catch (Exception e) {
+                                logger.warn("Failed to generate thumbnail URL for story: {}", story.getId(), e);
+                            }
+                            return CatalogEntry.fromStory(story, thumbnailUrl);
+                        })
+                        .collect(Collectors.toList()));
     }
 
     private String calculateStoryChecksum(Story story) {

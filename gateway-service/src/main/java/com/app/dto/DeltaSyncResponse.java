@@ -1,6 +1,7 @@
 package com.app.dto;
 
 import com.app.model.Story;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
@@ -33,6 +34,10 @@ public class DeltaSyncResponse {
 
     @JsonProperty("lastUpdated")
     private long lastUpdated;
+
+    @JsonProperty("catalog")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private List<CatalogEntry> catalog;
 
     public DeltaSyncResponse() {
         this.stories = new ArrayList<>();
@@ -103,6 +108,14 @@ public class DeltaSyncResponse {
 
     public void setLastUpdated(long lastUpdated) {
         this.lastUpdated = lastUpdated;
+    }
+
+    public List<CatalogEntry> getCatalog() {
+        return catalog;
+    }
+
+    public void setCatalog(List<CatalogEntry> catalog) {
+        this.catalog = catalog;
     }
 }
 

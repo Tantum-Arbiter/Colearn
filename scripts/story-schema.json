@@ -93,6 +93,16 @@
       "type": "boolean",
       "default": false
     },
+    "isFree": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the story is free to download without subscription"
+    },
+    "isReferralReward": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the story is unlocked via share/referral"
+    },
     "author": {
       "type": "string"
     },

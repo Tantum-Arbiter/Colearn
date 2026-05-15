@@ -55,6 +55,14 @@ public class Story {
     @JsonProperty("isPremium")
     private boolean premium;
 
+    @JsonProperty("isFree")
+    @PropertyName("isFree")
+    private boolean free;
+
+    @JsonProperty("isReferralReward")
+    @PropertyName("isReferralReward")
+    private boolean referralReward;
+
     @JsonProperty("author")
     private String author;
 
@@ -84,6 +92,8 @@ public class Story {
         this.tags = new ArrayList<>();
         this.available = true;
         this.premium = false;
+        this.free = false;
+        this.referralReward = false;
         this.version = 1;
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
@@ -233,6 +243,34 @@ public class Story {
 
     public void setPremium(boolean premium) {
         this.premium = premium;
+    }
+
+    @PropertyName("isFree")
+    public boolean isFree() {
+        return free;
+    }
+
+    @PropertyName("isFree")
+    public void setFree(boolean free) {
+        this.free = free;
+    }
+
+    public void setIsFree(boolean isFree) {
+        this.free = isFree;
+    }
+
+    @PropertyName("isReferralReward")
+    public boolean isReferralReward() {
+        return referralReward;
+    }
+
+    @PropertyName("isReferralReward")
+    public void setReferralReward(boolean referralReward) {
+        this.referralReward = referralReward;
+    }
+
+    public void setIsReferralReward(boolean isReferralReward) {
+        this.referralReward = isReferralReward;
     }
 
     public String getAuthor() {

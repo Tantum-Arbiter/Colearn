@@ -22,12 +22,15 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletionException;
+
+import com.app.dto.CatalogEntry;
 
 @RestController
 @RequestMapping("/api/stories")
@@ -168,6 +171,20 @@ public class StoryController {
                 logger.info("[Delta] [reqId={}] Client is up to date (clientVersion={}, serverVersion={})",
                         reqId, request.getClientVersion(), serverVersion.getVersion());
 
+                // Even when stories are up to date, build catalog for discovery
+                Set<String> clientStoryIds = request.getStoryChecksums() != null
+                        ? request.getStoryChecksums().keySet()
+                        : new HashSet<>();
+                List<CatalogEntry> catalog = storyService.getCatalogEntries(
+                        clientStoryIds,
+                        serverVersion.getStoryChecksums(),
+                        coverImage -> {
+                            if (coverImage == null || coverImage.isBlank()) return null;
+                            String thumbnailPath = coverImage.startsWith("stories/") ? coverImage : "stories/" + coverImage;
+                            return assetService.generateSignedUrl(thumbnailPath);
+                        }
+                ).join();
+
                 DeltaSyncResponse response = new DeltaSyncResponse();
                 response.setServerVersion(serverVersion.getVersion());
                 response.setAssetVersion(assetVersion.getVersion());
@@ -176,9 +193,10 @@ public class StoryController {
                 response.setStoryChecksums(serverVersion.getStoryChecksums());
                 response.setTotalStories(serverVersion.getTotalStories());
                 response.setLastUpdated(serverVersion.getLastUpdated().toDate().getTime());
+                response.setCatalog(catalog);
 
                 long durationMs = System.currentTimeMillis() - startTime;
-                logger.info("[Delta] [reqId={}] COMPLETE - No changes needed, durationMs={}", reqId, durationMs);
+                logger.info("[Delta] [reqId={}] COMPLETE - No changes needed, catalogEntries={}, durationMs={}", reqId, catalog.size(), durationMs);
                 return ResponseEntity.ok(response);
             }
 
@@ -193,6 +211,20 @@ public class StoryController {
                 }
             }
 
+            // Build catalog for stories the client hasn't downloaded
+            Set<String> clientStoryIds = request.getStoryChecksums() != null
+                    ? request.getStoryChecksums().keySet()
+                    : new HashSet<>();
+            List<CatalogEntry> catalog = storyService.getCatalogEntries(
+                    clientStoryIds,
+                    serverVersion.getStoryChecksums(),
+                    coverImage -> {
+                        if (coverImage == null || coverImage.isBlank()) return null;
+                        String thumbnailPath = coverImage.startsWith("stories/") ? coverImage : "stories/" + coverImage;
+                        return assetService.generateSignedUrl(thumbnailPath);
+                    }
+            ).join();
+
             DeltaSyncResponse response = new DeltaSyncResponse();
             response.setServerVersion(serverVersion.getVersion());
             response.setAssetVersion(assetVersion.getVersion());
@@ -201,6 +233,7 @@ public class StoryController {
             response.setStoryChecksums(serverVersion.getStoryChecksums());
             response.setTotalStories(serverVersion.getTotalStories());
             response.setLastUpdated(serverVersion.getLastUpdated().toDate().getTime());
+            response.setCatalog(catalog);
 
             long durationMs = System.currentTimeMillis() - startTime;
             metricsService.recordStorySync(clientStoriesCount, storiesToSync.size(), durationMs);
@@ -211,8 +244,8 @@ public class StoryController {
                     deletedStoryIds.size(),
                     durationMs);
 
-            logger.info("[Delta] [reqId={}] COMPLETE - updatedStories={}, deletedStories={}, durationMs={}",
-                    reqId, storiesToSync.size(), deletedStoryIds.size(), durationMs);
+            logger.info("[Delta] [reqId={}] COMPLETE - updatedStories={}, deletedStories={}, catalogEntries={}, durationMs={}",
+                    reqId, storiesToSync.size(), deletedStoryIds.size(), catalog.size(), durationMs);
 
             return ResponseEntity.ok(response);
         } catch (CompletionException e) {
@@ -222,6 +255,41 @@ public class StoryController {
                     .body(createErrorResponse(ErrorCode.FIREBASE_SERVICE_ERROR,
                             "Failed to get delta content: " + cause.getMessage(),
                             "/api/stories/delta", reqId));
+        }
+    }
+
+    /**
+     * Download endpoint — returns the full story with signed asset URLs for on-demand download.
+     */
+    @GetMapping("/{storyId}/download")
+    public ResponseEntity<?> downloadStory(@PathVariable String storyId) {
+        String reqId = getRequestId();
+        logger.info("[Download] [reqId={}] GET /api/stories/{}/download - Request received", reqId, storyId);
+        try {
+            Optional<Story> storyOpt = storyService.getStoryById(storyId).join();
+            if (storyOpt.isEmpty()) {
+                logger.warn("[Download] [reqId={}] Story not found: {}", reqId, storyId);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(createErrorResponse(ErrorCode.INVALID_REQUEST, "Story not found: " + storyId, "/api/stories/" + storyId + "/download", reqId));
+            }
+
+            Story story = storyOpt.get();
+            if (!story.isAvailable()) {
+                logger.warn("[Download] [reqId={}] Story not available: {}", reqId, storyId);
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(createErrorResponse(ErrorCode.INVALID_REQUEST, "Story not available for download: " + storyId, "/api/stories/" + storyId + "/download", reqId));
+            }
+
+            logger.info("[Download] [reqId={}] Returning story: {}, pages={}", reqId, storyId,
+                    story.getPages() != null ? story.getPages().size() : 0);
+            return ResponseEntity.ok(story);
+        } catch (CompletionException e) {
+            Throwable cause = e.getCause() != null ? e.getCause() : e;
+            logger.error("[Download] [reqId={}] FAILED: {}", reqId, cause.getMessage(), cause);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse(ErrorCode.FIREBASE_SERVICE_ERROR,
+                            "Failed to download story: " + cause.getMessage(),
+                            "/api/stories/" + storyId + "/download", reqId));
         }
     }
 
