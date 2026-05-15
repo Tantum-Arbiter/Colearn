@@ -40,6 +40,7 @@ import { BatchSyncService } from '@/services/batch-sync-service';
 import { CacheManager } from '@/services/cache-manager';
 import { StoryLoader } from '@/services/story-loader';
 import { ProfileSyncService } from '@/services/profile-sync-service';
+import { VersionManager } from '@/services/version-manager';
 // Import reminder service to trigger initialization and reschedule notifications on app startup
 import { reminderService } from '@/services/reminder-service';
 
@@ -277,39 +278,51 @@ function AppContent() {
             setShowLoginAfterOnboarding(true);
             setCurrentView('login');
           } else {
-            // Tokens exist — go straight to main menu, sync silently in background.
-            // Bundled stories are always available immediately; metadata sync runs async.
-            setCurrentView('app');
-            setCurrentPage('main');
+            // Tokens exist — check if this is the first-ever sync
+            const localVersion = await VersionManager.getLocalVersion();
+            const isFirstSync = !localVersion;
+            log.info(`[Layout] First sync: ${isFirstSync}, localVersion: ${localVersion?.stories ?? 'none'}`);
 
-            // Background sync — no loading screen for returning users
-            (async () => {
-              try {
-                log.info('[Layout] Background sync starting...');
-                // Ensure token is valid (refresh if expired) — now in background, no timeout risk
+            if (isFirstSync) {
+              // First install — show loading screen until sync completes
+              // so thumbnails and catalog are ready before the user sees them
+              log.info('[Layout] First sync detected — showing loading screen');
+              setCurrentView('loading');
+            } else {
+              // Returning user — instant main menu with cached thumbnails (via stable cacheKey).
+              // Background sync refreshes signed URLs silently.
+              setCurrentView('app');
+              setCurrentPage('main');
+
+              // Background sync — no loading screen for returning users
+              (async () => {
                 try {
-                  const isValid = await ApiClient.isAuthenticated();
-                  if (!isValid) {
-                    log.warn('[Layout] Token refresh failed during background sync — user may need to re-login');
-                  }
-                } catch (e) { log.warn('[Layout] Background token validation skipped:', e); }
-                // Sync profile
-                try {
-                  const profile = await ApiClient.getProfile();
-                  await ProfileSyncService.fullSync(profile);
-                } catch (e) { log.warn('[Layout] Background profile sync skipped:', e); }
-                // Validate cache
-                await CacheManager.validateAndCleanCache();
-                // Metadata sync
-                await BatchSyncService.performBatchSync();
-                // Refresh story loader cache
-                StoryLoader.invalidateCache();
-                await StoryLoader.getStories();
-                log.info('[Layout] Background sync complete');
-              } catch (e) {
-                log.warn('[Layout] Background sync failed (non-critical):', e);
-              }
-            })();
+                  log.info('[Layout] Background sync starting...');
+                  // Ensure token is valid (refresh if expired) — in background, no timeout risk
+                  try {
+                    const isValid = await ApiClient.isAuthenticated();
+                    if (!isValid) {
+                      log.warn('[Layout] Token refresh failed during background sync — user may need to re-login');
+                    }
+                  } catch (e) { log.warn('[Layout] Background token validation skipped:', e); }
+                  // Sync profile
+                  try {
+                    const profile = await ApiClient.getProfile();
+                    await ProfileSyncService.fullSync(profile);
+                  } catch (e) { log.warn('[Layout] Background profile sync skipped:', e); }
+                  // Validate cache
+                  await CacheManager.validateAndCleanCache();
+                  // Metadata sync
+                  await BatchSyncService.performBatchSync();
+                  // Refresh story loader cache
+                  StoryLoader.invalidateCache();
+                  await StoryLoader.getStories();
+                  log.info('[Layout] Background sync complete');
+                } catch (e) {
+                  log.warn('[Layout] Background sync failed (non-critical):', e);
+                }
+              })();
+            }
           }
         } catch (error) {
           log.error('Authentication check error:', error);
@@ -516,35 +529,14 @@ function AppContent() {
   const justLoggedInRef = useRef(false);
 
   const handleLoginSuccess = () => {
-    // Mark that we just logged in — go straight to main menu, sync in background
+    // First-time login — show loading screen so catalog + thumbnails are ready
+    // before the user sees the story selection screen
     justLoggedInRef.current = true;
     syncInProgressRef.current = true;
-    log.info('[Auth] Login successful — going to main menu, syncing in background');
+    log.info('[Auth] Login successful — showing loading screen for first sync');
 
     setShowLoginAfterOnboarding(false);
-    setCurrentView('app');
-    setCurrentPage('main');
-
-    // Background sync — no blocking loading screen
-    (async () => {
-      try {
-        log.info('[Layout] Post-login background sync starting...');
-        try {
-          const profile = await ApiClient.getProfile();
-          await ProfileSyncService.fullSync(profile);
-        } catch (e) { log.warn('[Layout] Background profile sync skipped:', e); }
-        await CacheManager.validateAndCleanCache();
-        await BatchSyncService.performBatchSync();
-        StoryLoader.invalidateCache();
-        await StoryLoader.getStories();
-        log.info('[Layout] Post-login background sync complete');
-      } catch (e) {
-        log.warn('[Layout] Post-login background sync failed (non-critical):', e);
-      } finally {
-        syncInProgressRef.current = false;
-        justLoggedInRef.current = false;
-      }
-    })();
+    setCurrentView('loading');
   };
 
   const handleLoginSkip = () => {

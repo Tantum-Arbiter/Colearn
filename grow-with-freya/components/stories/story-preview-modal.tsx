@@ -189,7 +189,7 @@ export function StoryPreviewModal({
           <View style={styles.coverContainer}>
             {story.coverImage ? (
               <Image
-                source={typeof story.coverImage === 'string' ? { uri: story.coverImage } : story.coverImage}
+                source={typeof story.coverImage === 'string' ? { uri: story.coverImage, cacheKey: `preview-thumb-${story.id}` } : story.coverImage}
                 style={styles.coverImage}
                 contentFit="cover"
                 transition={0}

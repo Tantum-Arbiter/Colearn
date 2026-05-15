@@ -97,7 +97,7 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
         {/* Thumbnail image */}
         {entry.thumbnailUrl ? (
           <Image
-            source={{ uri: entry.thumbnailUrl }}
+            source={{ uri: entry.thumbnailUrl, cacheKey: `catalog-thumb-${entry.storyId}` }}
             style={[cardStyles.coverImage, { width: cardWidth, height: cardHeight, borderRadius }]}
             contentFit="cover"
             transition={200}
