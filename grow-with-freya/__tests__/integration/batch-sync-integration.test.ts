@@ -138,7 +138,7 @@ describe('Batch Sync Integration Flow (On-Demand Model)', () => {
   });
 
   describe('Returning User Flow', () => {
-    it('should skip sync when already up to date', async () => {
+    it('should skip sync when already up to date but still refresh catalog', async () => {
       mockVersionManager.checkVersions.mockResolvedValue({
         needsStorySync: false,
         needsAssetSync: false,
@@ -146,13 +146,24 @@ describe('Batch Sync Integration Flow (On-Demand Model)', () => {
         serverVersion: { stories: 5, assets: 3, lastUpdated: new Date().toISOString() },
       });
 
+      const catalog = [{ storyId: 'cat-1', title: 'Cat Story', category: 'adventure', emoji: '🐱', thumbnailUrl: 'https://thumb', isFree: true, isReferralReward: false, isPremium: false }];
+      mockApiClient.request.mockResolvedValueOnce({
+        serverVersion: 5,
+        assetVersion: 3,
+        stories: [],
+        deletedStoryIds: [],
+        storyChecksums: {},
+        catalog,
+      });
+
       const stats = await BatchSyncService.performBatchSync();
 
-      // Only version check, no other API calls
-      expect(stats.apiCalls).toBe(1);
+      // Version check + delta call for catalog refresh (signed URLs expire)
+      expect(stats.apiCalls).toBe(2);
       expect(stats.storiesUpdated).toBe(0);
       expect(stats.assetsDownloaded).toBe(0);
-      expect(mockApiClient.request).not.toHaveBeenCalled();
+      // Catalog should be refreshed with fresh signed URLs
+      expect(mockCatalogService.updateCatalog).toHaveBeenCalledWith(catalog);
     });
 
     it('should sync new CMS stories to catalog only (no asset downloads)', async () => {

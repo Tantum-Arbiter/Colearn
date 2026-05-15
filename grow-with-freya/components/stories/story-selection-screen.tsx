@@ -357,6 +357,8 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   // When a catalog story finishes downloading, refresh both stories list and catalog
   const handleCatalogDownloadComplete = useCallback(async (_storyId: string) => {
     try {
+      // Invalidate StoryLoader cache so it picks up the newly downloaded story
+      StoryLoader.invalidateCache();
       // Refresh the downloaded stories list
       const loadedStories = await StoryLoader.getStories();
       setStories(loadedStories);

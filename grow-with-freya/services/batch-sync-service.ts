@@ -129,7 +129,19 @@ export class BatchSyncService {
 
       // Check if sync is needed
       if (!versionCheck.needsStorySync && !versionCheck.needsAssetSync) {
-        log.info('[User Journey Flow 4: Batch Sync] Step 1/5: Already up to date - no sync needed');
+        log.info('[User Journey Flow 4: Batch Sync] Step 1/5: Stories up to date — refreshing catalog for fresh signed URLs...');
+        // Stories are up to date, but we still need to call delta to get fresh catalog
+        // entries with valid signed thumbnail URLs (they expire after 1 hour)
+        try {
+          const deltaResult = await this.fetchDeltaContent(versionCheck);
+          stats.apiCalls++;
+          if (deltaResult.catalog && deltaResult.catalog.length > 0) {
+            await CatalogService.updateCatalog(deltaResult.catalog);
+            log.info(`[User Journey Flow 4: Batch Sync] Catalog refreshed with ${deltaResult.catalog.length} entries (fresh signed URLs)`);
+          }
+        } catch (e) {
+          log.warn('[User Journey Flow 4: Batch Sync] Catalog refresh failed (non-critical):', e);
+        }
         stats.endTime = Date.now();
         stats.durationMs = stats.endTime - stats.startTime;
         onProgress?.({ phase: 'complete', progress: 100, message: 'Already up to date' });
