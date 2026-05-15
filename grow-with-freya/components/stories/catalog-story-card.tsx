@@ -19,6 +19,8 @@ interface CatalogStoryCardProps {
   borderRadius: number;
   language: SupportedLanguage;
   onDownloadComplete?: (storyId: string) => void;
+  /** Index of this entry among catalog entries in its genre row (0 = first, no slide needed) */
+  catalogIndexInGenre?: number;
   onLongPress?: (entry: CatalogEntry) => void;
 }
 
@@ -29,6 +31,7 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
   borderRadius,
   language,
   onDownloadComplete,
+  catalogIndexInGenre = 0,
   onLongPress,
 }: CatalogStoryCardProps) {
   const displayTitle = getLocalizedText(entry.localizedTitle, entry.title, language);
@@ -127,21 +130,27 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         setComplete(true);
 
-        // 7. After reveal, shrink card behind the row then collapse width
+        // 7. After reveal, transition out based on whether the card changes position
         setTimeout(() => {
-          // Scale down and fade — card dips "behind" the carousel
-          cardScale.value = withTiming(0.6, { duration: 250, easing: Easing.in(Easing.ease) });
-          overlayOpacity.value = withTiming(0.5, { duration: 250 });
+          if (catalogIndexInGenre > 0) {
+            // Card moves left — scale down, fade, then collapse width so siblings slide across
+            cardScale.value = withTiming(0.6, { duration: 250, easing: Easing.in(Easing.ease) });
+            overlayOpacity.value = withTiming(0.5, { duration: 250 });
 
-          // Then collapse width so siblings slide across to fill the gap
-          collapseWidth.value = withDelay(200, withTiming(0, {
-            duration: 300,
-            easing: Easing.inOut(Easing.ease),
-          }, (finished) => {
-            if (finished && onDownloadComplete) {
-              runOnJS(onDownloadComplete)(entry.storyId);
+            collapseWidth.value = withDelay(200, withTiming(0, {
+              duration: 300,
+              easing: Easing.inOut(Easing.ease),
+            }, (finished) => {
+              if (finished && onDownloadComplete) {
+                runOnJS(onDownloadComplete)(entry.storyId);
+              }
+            }));
+          } else {
+            // Card stays in same position — just notify immediately (seamless swap)
+            if (onDownloadComplete) {
+              onDownloadComplete(entry.storyId);
             }
-          }));
+          }
         }, 1300);
       } else {
         setDownloading(false);
@@ -155,7 +164,7 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
       ringOpacity.value = withTiming(0, { duration: 200 });
       Alert.alert('Download Failed', 'An unexpected error occurred. Please try again.', [{ text: 'OK' }]);
     }
-  }, [downloading, complete, entry, onDownloadComplete, progressValue, ringOpacity, ringScale, checkOpacity, checkScale, overlayOpacity, cardScale, collapseWidth]);
+  }, [downloading, complete, entry, onDownloadComplete, catalogIndexInGenre, progressValue, ringOpacity, ringScale, checkOpacity, checkScale, overlayOpacity, cardScale, collapseWidth]);
 
   const handleLongPress = useCallback(() => {
     if (downloading) return;

@@ -80,6 +80,7 @@ interface StoryCardProps {
   isDeleting?: boolean; // Trigger implode animation when deleting
   onDeleteAnimationComplete?: () => void; // Called after implode animation finishes
   isNewlyDownloaded?: boolean; // Animate expand into place when first appearing after download
+  downloadSlideOffset?: number; // Number of positions the card moved left (0 = no animation)
   language: SupportedLanguage;
 }
 
@@ -97,6 +98,7 @@ const StoryCard = memo(function StoryCard({
   isDeleting,
   onDeleteAnimationComplete,
   isNewlyDownloaded,
+  downloadSlideOffset = 0,
   language,
 }: StoryCardProps) {
   const cardRef = useRef<View>(null);
@@ -110,9 +112,12 @@ const StoryCard = memo(function StoryCard({
   // 1. Scale implodes to 0 (the "pop" effect)
   // 2. Container width collapses to 0 so remaining cards slide across
   // Also used for expansion when isNewlyDownloaded — starts at 0 and expands to full
-  const deleteScale = useSharedValue(isNewlyDownloaded ? 0.8 : 1);
-  const deleteOpacity = useSharedValue(isNewlyDownloaded ? 0 : 1);
-  const deleteWidth = useSharedValue(isNewlyDownloaded ? 0 : cardWidth + CARD_MARGIN);
+  const needsDownloadAnimation = isNewlyDownloaded && downloadSlideOffset > 0;
+  const deleteScale = useSharedValue(needsDownloadAnimation ? 0.8 : 1);
+  const deleteOpacity = useSharedValue(needsDownloadAnimation ? 0 : 1);
+  const deleteWidth = useSharedValue(needsDownloadAnimation ? 0 : cardWidth + CARD_MARGIN);
+  // Slide offset: card slides from right (positive translateX) to its final position (0)
+  const slideTranslateX = useSharedValue(needsDownloadAnimation ? downloadSlideOffset * ITEM_WIDTH : 0);
 
   useEffect(() => {
     if (isDeleting) {
@@ -137,15 +142,20 @@ const StoryCard = memo(function StoryCard({
     }
   }, [isDeleting]);
 
-  // Expansion animation for newly downloaded stories — width expands from 0, card fades/scales in
+  // Expansion + slide animation for newly downloaded stories
   useEffect(() => {
-    if (isNewlyDownloaded) {
+    if (isNewlyDownloaded && downloadSlideOffset > 0) {
       // Expand width first so siblings push out
       deleteWidth.value = withTiming(cardWidth + CARD_MARGIN, {
         duration: 350,
         easing: Easing.out(Easing.ease),
       });
-      // Then fade and scale the card in
+      // Slide from right to left (from old catalog position to new story position)
+      slideTranslateX.value = withDelay(100, withTiming(0, {
+        duration: 400,
+        easing: Easing.out(Easing.cubic),
+      }));
+      // Fade and scale the card in
       deleteOpacity.value = withDelay(150, withTiming(1, { duration: 250 }));
       deleteScale.value = withDelay(150, withSpring(1, { damping: 14, stiffness: 200 }));
     }
@@ -192,11 +202,16 @@ const StoryCard = memo(function StoryCard({
   }, [isHidden]);
 
   const fadeAnimatedStyle = useAnimatedStyle(() => {
+    const transforms: { scale?: number; translateX?: number }[] = [{ scale: deleteScale.value }];
+    // Add slide translateX when actively sliding from catalog position
+    if (slideTranslateX.value !== 0) {
+      transforms.push({ translateX: slideTranslateX.value });
+    }
     const base: Record<string, unknown> = {
       opacity: fadeOpacity.value * deleteOpacity.value,
-      transform: [{ scale: deleteScale.value }],
+      transform: transforms,
     };
-    // Only constrain width when actively collapsing (during delete phase 2)
+    // Only constrain width when actively collapsing/expanding
     if (deleteWidth.value < cardWidth + CARD_MARGIN) {
       base.width = deleteWidth.value;
       base.overflow = 'hidden';
@@ -320,6 +335,8 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
 
   // Track the most recently downloaded story for expansion animation
   const [newlyDownloadedId, setNewlyDownloadedId] = useState<string | null>(null);
+  // How many positions the newly downloaded story moved left (0 = same position, skip animation)
+  const [downloadSlideOffset, setDownloadSlideOffset] = useState(0);
 
   // Union type for items in genre carousels: either a downloaded story or a catalog entry
   type StoryDisplayItem = { type: 'story'; data: Story } | { type: 'catalog'; data: CatalogEntry };
@@ -479,10 +496,25 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   // When a catalog story finishes downloading, refresh both stories list and catalog
   const handleCatalogDownloadComplete = useCallback(async (storyId: string) => {
     try {
+      // Calculate how many positions the item will move left.
+      // In each genre row: downloaded stories come first, then catalog entries.
+      // The downloaded item was at: (# downloaded in genre) + (catalog index within genre)
+      // It will move to: (# downloaded in genre) — i.e., it shifts left by its catalog index.
+      // If catalogIndex === 0, position doesn't change — skip animation.
+      const entry = catalogEntries.find(e => e.storyId === storyId);
+      let offset = 0;
+      if (entry) {
+        const genre = entry.category;
+        const catalogInGenre = catalogEntries.filter(e => e.category === genre);
+        const catalogIndex = catalogInGenre.findIndex(e => e.storyId === storyId);
+        offset = catalogIndex > 0 ? catalogIndex : 0;
+      }
+      setDownloadSlideOffset(offset);
+
       // Invalidate StoryLoader cache so it picks up the newly downloaded story
       StoryLoader.invalidateCache();
 
-      // Mark as newly downloaded so StoryCard plays expansion animation
+      // Mark as newly downloaded so StoryCard plays expansion animation (only if position changes)
       setNewlyDownloadedId(storyId);
 
       // Refresh the downloaded stories list
@@ -493,11 +525,15 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       setCatalogEntries(entries);
 
       // Clear the newly downloaded flag after the expansion animation completes
-      setTimeout(() => setNewlyDownloadedId(null), 800);
+      const animDuration = offset > 0 ? 800 : 100;
+      setTimeout(() => {
+        setNewlyDownloadedId(null);
+        setDownloadSlideOffset(0);
+      }, animDuration);
     } catch {
       // Best-effort refresh
     }
-  }, []);
+  }, [catalogEntries]);
 
   // Generate star positions for background
   const starPositions = useMemo(() => generateStarPositions(VISUAL_EFFECTS.STAR_COUNT), []);
@@ -643,6 +679,21 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     setIsPreviewVisible(true);
   }, []);
 
+  // Pre-compute catalog index within each genre for each catalog entry
+  const catalogIndexMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    Object.values(genreItems).forEach(items => {
+      let catalogIdx = 0;
+      items.forEach(item => {
+        if (item.type === 'catalog') {
+          map[item.data.storyId] = catalogIdx;
+          catalogIdx++;
+        }
+      });
+    });
+    return map;
+  }, [genreItems]);
+
   // Render a single display item (downloaded story or catalog entry)
   const renderDisplayItem: ListRenderItem<StoryDisplayItem> = useCallback(({ item }) => {
     if (item.type === 'story') {
@@ -661,11 +712,13 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
           isDeleting={deletingStoryId === story.id}
           onDeleteAnimationComplete={handleImplodeComplete}
           isNewlyDownloaded={newlyDownloadedId === story.id}
+          downloadSlideOffset={newlyDownloadedId === story.id ? downloadSlideOffset : 0}
           language={currentLanguage}
         />
       );
     }
     // Catalog entry — show download card with long-press for preview
+    const catalogIdx = catalogIndexMap[item.data.storyId] ?? 0;
     return (
       <CatalogStoryCard
         entry={item.data}
@@ -674,10 +727,11 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
         borderRadius={scaledBorderRadius}
         language={currentLanguage}
         onDownloadComplete={handleCatalogDownloadComplete}
+        catalogIndexInGenre={catalogIdx}
         onLongPress={handleCatalogPreview}
       />
     );
-  }, [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader, currentLanguage, readStoryIds, deletingStoryId, handleImplodeComplete, handleCatalogDownloadComplete, handleCatalogPreview, newlyDownloadedId]);
+  }, [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader, currentLanguage, readStoryIds, deletingStoryId, handleImplodeComplete, handleCatalogDownloadComplete, handleCatalogPreview, newlyDownloadedId, downloadSlideOffset, catalogIndexMap]);
 
   // Memoized render function for story cards (favorites only — pure Story[])
   const renderStoryCard: ListRenderItem<Story> = useCallback(({ item: story }) => (
