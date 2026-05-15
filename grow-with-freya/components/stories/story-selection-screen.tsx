@@ -520,10 +520,13 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
           StoryLoader.getStories(),
           CatalogService.getCatalog(),
         ]);
-        // Clear swap state BEFORE updating data so swapTranslateX resets to 0 instantly
-        setBubbleSwap(null);
+        // Update data and clear swap state together in the same batch.
+        // React 18 batches these, so genreItems recomputes with the new data
+        // and bubbleSwap=null simultaneously — no intermediate frame where
+        // swapTranslateX resets but old data still renders (which caused the gap).
         setStories(loadedStories);
         setCatalogEntries(entries);
+        setBubbleSwap(null);
       } catch {
         // Best-effort
         setBubbleSwap(null);
