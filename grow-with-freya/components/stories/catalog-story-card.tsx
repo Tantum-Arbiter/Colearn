@@ -1,4 +1,4 @@
-import React, { memo, useState, useCallback } from 'react';
+import React, { memo, useState, useCallback, useRef } from 'react';
 import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,6 +12,13 @@ import type { SupportedLanguage } from '@/services/i18n';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
+export interface CardPosition {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 interface CatalogStoryCardProps {
   entry: CatalogEntry;
   cardWidth: number;
@@ -19,6 +26,7 @@ interface CatalogStoryCardProps {
   borderRadius: number;
   language: SupportedLanguage;
   onDownloadComplete?: (storyId: string) => void;
+  onDownloadAnimationStart?: (storyId: string, sourcePosition: CardPosition, thumbnailUrl?: string) => void;
   onLongPress?: (entry: CatalogEntry) => void;
 }
 
@@ -29,8 +37,10 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
   borderRadius,
   language,
   onDownloadComplete,
+  onDownloadAnimationStart,
   onLongPress,
 }: CatalogStoryCardProps) {
+  const cardRef = useRef<View>(null);
   const displayTitle = getLocalizedText(entry.localizedTitle, entry.title, language);
   const [downloading, setDownloading] = useState(false);
   const [complete, setComplete] = useState(false);
@@ -127,19 +137,29 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         setComplete(true);
 
-        // 7. After reveal animation, collapse the card width so siblings shuffle across
-        // Then notify parent to swap catalog entry → downloaded story card
-        const triggerCollapse = () => {
-          collapseWidth.value = withTiming(0, {
-            duration: 300,
-            easing: Easing.inOut(Easing.ease),
-          }, (finished) => {
-            if (finished && onDownloadComplete) {
-              runOnJS(onDownloadComplete)(entry.storyId);
-            }
-          });
+        // 7. After reveal animation, measure position and start the slide animation
+        const triggerSlideAndCollapse = () => {
+          // Measure this card's screen position for the floating overlay
+          if (cardRef.current && onDownloadAnimationStart) {
+            cardRef.current.measure((_x, _y, width, height, pageX, pageY) => {
+              onDownloadAnimationStart(entry.storyId, { x: pageX, y: pageY, width, height }, entry.thumbnailUrl);
+            });
+          }
+
+          // Collapse the card width so siblings shuffle across
+          // Small delay to let the parent capture position first
+          setTimeout(() => {
+            collapseWidth.value = withTiming(0, {
+              duration: 300,
+              easing: Easing.inOut(Easing.ease),
+            }, (finished) => {
+              if (finished && onDownloadComplete) {
+                runOnJS(onDownloadComplete)(entry.storyId);
+              }
+            });
+          }, 50);
         };
-        setTimeout(triggerCollapse, 1300);
+        setTimeout(triggerSlideAndCollapse, 1300);
       } else {
         setDownloading(false);
         progressValue.value = withTiming(0, { duration: 200 });
@@ -152,7 +172,7 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
       ringOpacity.value = withTiming(0, { duration: 200 });
       Alert.alert('Download Failed', 'An unexpected error occurred. Please try again.', [{ text: 'OK' }]);
     }
-  }, [downloading, complete, entry, onDownloadComplete, progressValue, ringOpacity, ringScale, checkOpacity, checkScale, overlayOpacity, cardScale, collapseWidth]);
+  }, [downloading, complete, entry, onDownloadComplete, onDownloadAnimationStart, progressValue, ringOpacity, ringScale, checkOpacity, checkScale, overlayOpacity, cardScale, collapseWidth]);
 
   const handleLongPress = useCallback(() => {
     if (downloading) return;
@@ -161,7 +181,7 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
 
   return (
     <Animated.View style={collapseStyle}>
-    <Pressable onPress={handlePress} onLongPress={handleLongPress} delayLongPress={400} style={cardStyles.pressable}>
+    <Pressable ref={cardRef} onPress={handlePress} onLongPress={handleLongPress} delayLongPress={400} style={cardStyles.pressable}>
       <Animated.View style={[cardStyles.card, { width: cardWidth, height: cardHeight, borderRadius }, cardAnimStyle]}>
         {/* Thumbnail image */}
         {entry.thumbnailUrl ? (
