@@ -2,7 +2,7 @@ import React, { memo, useState, useCallback } from 'react';
 import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { useAnimatedStyle, useAnimatedProps, useSharedValue, withTiming, withSequence, withDelay, Easing } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useAnimatedProps, useSharedValue, withTiming, withSpring, withSequence, withDelay, Easing } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { CatalogEntry, getLocalizedText } from '@/types/story';
@@ -36,10 +36,13 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
   const [complete, setComplete] = useState(false);
 
   // Animated values
-  const progressValue = useSharedValue(0);   // 0-100
-  const overlayOpacity = useSharedValue(1);  // grey overlay fade
-  const checkOpacity = useSharedValue(0);    // checkmark fade-in
-  const ringOpacity = useSharedValue(0);     // progress ring visibility
+  const progressValue = useSharedValue(0);     // 0-100 ring progress
+  const overlayOpacity = useSharedValue(1);    // dark overlay
+  const ringOpacity = useSharedValue(0);       // progress ring visibility
+  const ringScale = useSharedValue(1);         // ring scale on completion
+  const checkOpacity = useSharedValue(0);      // checkmark
+  const checkScale = useSharedValue(0.5);      // checkmark scale
+  const cardScale = useSharedValue(1);         // card pop on reveal
 
   // Circular progress ring constants
   const RING_SIZE = 48;
@@ -52,23 +55,27 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
     strokeDashoffset: RING_CIRCUMFERENCE * (1 - progressValue.value / 100),
   }));
 
-  // Card reveal: overlay shrinks from top as progress fills from bottom
-  const revealStyle = useAnimatedStyle(() => ({
-    height: `${100 - progressValue.value}%`,
+  // Overlay stays full during download, fades on completion
+  const overlayStyle = useAnimatedStyle(() => ({
     opacity: overlayOpacity.value,
   }));
 
-  const ringFadeStyle = useAnimatedStyle(() => ({
+  const ringContainerStyle = useAnimatedStyle(() => ({
     opacity: ringOpacity.value,
+    transform: [{ scale: ringScale.value }],
   }));
 
   const checkmarkStyle = useAnimatedStyle(() => ({
     opacity: checkOpacity.value,
+    transform: [{ scale: checkScale.value }],
+  }));
+
+  const cardAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: cardScale.value }],
   }));
 
   const handlePress = useCallback(async () => {
     if (downloading || complete) return;
-    console.log(`[CatalogStoryCard] Download pressed for ${entry.storyId}`);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setDownloading(true);
     ringOpacity.value = withTiming(1, { duration: 200 });
@@ -78,37 +85,51 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
         entry.storyId,
         entry,
         (p) => {
-          // Longer duration + linear easing = smooth continuous fill between discrete progress jumps
           progressValue.value = withTiming(p.progress, { duration: 800, easing: Easing.linear });
         }
       );
 
       if (result.success) {
-        // Finish reveal, show checkmark, then notify parent
-        progressValue.value = withTiming(100, { duration: 200 });
-        ringOpacity.value = withTiming(0, { duration: 200 });
-        checkOpacity.value = withSequence(
-          withTiming(1, { duration: 250 }),
-          withDelay(600, withTiming(0, { duration: 250 }))
-        );
-        overlayOpacity.value = withDelay(200, withTiming(0, { duration: 300 }));
+        // 1. Complete the ring
+        progressValue.value = withTiming(100, { duration: 300, easing: Easing.out(Easing.ease) });
+
+        // 2. Ring scales up and fades out
+        ringScale.value = withDelay(300, withTiming(1.8, { duration: 350, easing: Easing.out(Easing.ease) }));
+        ringOpacity.value = withDelay(300, withTiming(0, { duration: 350 }));
+
+        // 3. Checkmark pops in with spring
+        checkOpacity.value = withDelay(400, withTiming(1, { duration: 200 }));
+        checkScale.value = withDelay(400, withSpring(1, { damping: 12, stiffness: 200 }));
+
+        // 4. Overlay fades out to reveal the full-colour thumbnail
+        overlayOpacity.value = withDelay(500, withTiming(0, { duration: 500, easing: Easing.out(Easing.ease) }));
+
+        // 5. Subtle card pop to punctuate the reveal
+        cardScale.value = withDelay(600, withSequence(
+          withSpring(1.04, { damping: 15, stiffness: 300 }),
+          withSpring(1, { damping: 15, stiffness: 300 })
+        ));
+
+        // 6. Checkmark fades out
+        checkOpacity.value = withDelay(900, withTiming(0, { duration: 300 }));
+        checkScale.value = withDelay(900, withTiming(1.3, { duration: 300 }));
+
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         setComplete(true);
-        setTimeout(() => onDownloadComplete?.(entry.storyId), 1100);
+        setTimeout(() => onDownloadComplete?.(entry.storyId), 1300);
       } else {
         setDownloading(false);
         progressValue.value = withTiming(0, { duration: 200 });
         ringOpacity.value = withTiming(0, { duration: 200 });
-        overlayOpacity.value = withTiming(1, { duration: 200 });
         Alert.alert('Download Failed', result.error || 'Something went wrong. Please try again.', [{ text: 'OK' }]);
       }
     } catch (err) {
       setDownloading(false);
       progressValue.value = withTiming(0, { duration: 200 });
       ringOpacity.value = withTiming(0, { duration: 200 });
-      overlayOpacity.value = withTiming(1, { duration: 200 });
       Alert.alert('Download Failed', 'An unexpected error occurred. Please try again.', [{ text: 'OK' }]);
     }
-  }, [downloading, complete, entry, onDownloadComplete, progressValue, ringOpacity, checkOpacity, overlayOpacity]);
+  }, [downloading, complete, entry, onDownloadComplete, progressValue, ringOpacity, ringScale, checkOpacity, checkScale, overlayOpacity, cardScale]);
 
   const handleLongPress = useCallback(() => {
     if (downloading) return;
@@ -117,7 +138,7 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
 
   return (
     <Pressable onPress={handlePress} onLongPress={handleLongPress} delayLongPress={400} style={cardStyles.pressable}>
-      <View style={[cardStyles.card, { width: cardWidth, height: cardHeight, borderRadius }]}>
+      <Animated.View style={[cardStyles.card, { width: cardWidth, height: cardHeight, borderRadius }, cardAnimStyle]}>
         {/* Thumbnail image */}
         {entry.thumbnailUrl ? (
           <Image
@@ -134,12 +155,8 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
           </View>
         )}
 
-        {/* Grey overlay — shrinks from top to reveal thumbnail as download progresses */}
-        {!complete && (
-          <Animated.View
-            style={[cardStyles.greyOverlay, { borderRadius }, downloading ? revealStyle : undefined]}
-          />
-        )}
+        {/* Dark overlay — stays full during download, fades on completion reveal */}
+        <Animated.View style={[cardStyles.darkOverlay, { borderRadius }, overlayStyle]} />
 
         {/* Download icon (before downloading) */}
         {!downloading && !complete && (
@@ -151,33 +168,29 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
         )}
 
         {/* Circular progress ring (during download) */}
-        {downloading && !complete && (
-          <Animated.View style={[cardStyles.iconContainer, ringFadeStyle]}>
-            <View style={cardStyles.ringContainer}>
-              <Svg width={RING_SIZE} height={RING_SIZE} style={{ transform: [{ rotate: '-90deg' }] }}>
-                {/* Background track */}
-                <Circle
-                  cx={RING_SIZE / 2}
-                  cy={RING_SIZE / 2}
-                  r={RING_RADIUS}
-                  stroke="rgba(255, 255, 255, 0.25)"
-                  strokeWidth={RING_STROKE}
-                  fill="rgba(0, 0, 0, 0.4)"
-                />
-                {/* Animated progress arc */}
-                <AnimatedCircle
-                  cx={RING_SIZE / 2}
-                  cy={RING_SIZE / 2}
-                  r={RING_RADIUS}
-                  stroke="#4ECDC4"
-                  strokeWidth={RING_STROKE}
-                  fill="transparent"
-                  strokeDasharray={RING_CIRCUMFERENCE}
-                  animatedProps={animatedCircleProps}
-                  strokeLinecap="round"
-                />
-              </Svg>
-            </View>
+        {downloading && (
+          <Animated.View style={[cardStyles.iconContainer, ringContainerStyle]}>
+            <Svg width={RING_SIZE} height={RING_SIZE} style={{ transform: [{ rotate: '-90deg' }] }}>
+              <Circle
+                cx={RING_SIZE / 2}
+                cy={RING_SIZE / 2}
+                r={RING_RADIUS}
+                stroke="rgba(255, 255, 255, 0.2)"
+                strokeWidth={RING_STROKE}
+                fill="rgba(0, 0, 0, 0.3)"
+              />
+              <AnimatedCircle
+                cx={RING_SIZE / 2}
+                cy={RING_SIZE / 2}
+                r={RING_RADIUS}
+                stroke="#4ECDC4"
+                strokeWidth={RING_STROKE}
+                fill="transparent"
+                strokeDasharray={RING_CIRCUMFERENCE}
+                animatedProps={animatedCircleProps}
+                strokeLinecap="round"
+              />
+            </Svg>
           </Animated.View>
         )}
 
@@ -196,7 +209,7 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
             <Text style={cardStyles.freeBadgeText}>FREE</Text>
           </View>
         )}
-      </View>
+      </Animated.View>
 
       {/* Title below the card */}
       <View style={[cardStyles.titleContainer, { width: cardWidth }]}>
@@ -231,12 +244,8 @@ const cardStyles = StyleSheet.create({
     fontSize: 36,
     opacity: 0.5,
   },
-  greyOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '100%',
+  darkOverlay: {
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.35)',
   },
   iconContainer: {
@@ -254,12 +263,7 @@ const cardStyles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'rgba(255, 255, 255, 0.5)',
   },
-  ringContainer: {
-    width: 48,
-    height: 48,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+
   checkCircle: {
     width: 44,
     height: 44,
