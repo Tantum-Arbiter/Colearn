@@ -103,9 +103,12 @@ const StoryCard = memo(function StoryCard({
   const wasHiddenRef = useRef(isHidden);
   const fadeOpacity = useSharedValue(isHidden ? 0 : 1);
 
-  // Implode animation for deletion
+  // Implode animation for deletion — two phases:
+  // 1. Scale implodes to 0 (the "pop" effect)
+  // 2. Container width collapses to 0 so remaining cards slide across
   const deleteScale = useSharedValue(1);
   const deleteOpacity = useSharedValue(1);
+  const deleteWidth = useSharedValue(cardWidth + CARD_MARGIN);
 
   useEffect(() => {
     if (isDeleting) {
@@ -114,8 +117,16 @@ const StoryCard = memo(function StoryCard({
         duration: 350,
         easing: Easing.in(Easing.back(1.5)),
       }, (finished) => {
-        if (finished && onDeleteAnimationComplete) {
-          runOnJS(onDeleteAnimationComplete)();
+        if (finished) {
+          // Phase 2: Collapse container width so siblings slide across
+          deleteWidth.value = withTiming(0, {
+            duration: 300,
+            easing: Easing.inOut(Easing.ease),
+          }, (finished2) => {
+            if (finished2 && onDeleteAnimationComplete) {
+              runOnJS(onDeleteAnimationComplete)();
+            }
+          });
         }
       });
       deleteOpacity.value = withDelay(200, withTiming(0, { duration: 150 }));
@@ -165,6 +176,8 @@ const StoryCard = memo(function StoryCard({
   const fadeAnimatedStyle = useAnimatedStyle(() => ({
     opacity: fadeOpacity.value * deleteOpacity.value,
     transform: [{ scale: deleteScale.value }],
+    width: deleteWidth.value,
+    overflow: 'hidden' as const,
   }));
 
   const handlePress = useCallback(() => {
@@ -360,7 +373,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     );
   }, [t]);
 
-  // Called when the implode animation finishes
+  // Called when the implode + collapse animation finishes
   const handleImplodeComplete = useCallback(async () => {
     if (!deletingStoryId) return;
     const storyId = deletingStoryId;
@@ -368,20 +381,6 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     const success = await StoryDownloadService.deleteStory(storyId);
     if (success) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      // LayoutAnimation with spring for smooth horizontal slide of remaining cards
-      LayoutAnimation.configureNext({
-        duration: 350,
-        update: {
-          type: LayoutAnimation.Types.spring,
-          springDamping: 0.85,
-          property: LayoutAnimation.Properties.scaleXY,
-        },
-        delete: {
-          type: LayoutAnimation.Types.easeOut,
-          duration: 200,
-          property: LayoutAnimation.Properties.opacity,
-        },
-      });
       StoryLoader.invalidateCache();
       const loadedStories = await StoryLoader.getStories();
       setStories(loadedStories);
