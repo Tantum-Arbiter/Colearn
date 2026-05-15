@@ -122,6 +122,7 @@ export function StartupLoadingScreen({ onComplete, onError }: StartupLoadingScre
           setProgressPercent(progress.progress);
 
           // Update status text based on sync phase
+          // Note: No download phases — assets are downloaded on-demand when user taps a story
           switch (progress.phase) {
             case 'version-check':
               setStatusText('Checking for updates...');
@@ -131,22 +132,9 @@ export function StartupLoadingScreen({ onComplete, onError }: StartupLoadingScre
               setStatusText('Fetching updates...');
               setDetailText('');
               break;
-            case 'batch-urls':
-              setStatusText('Preparing downloads...');
-              if (progress.detail?.currentBatch && progress.detail?.totalBatches) {
-                setDetailText(`Batch ${progress.detail.currentBatch}/${progress.detail.totalBatches}`);
-              } else {
-                setDetailText('');
-              }
-              break;
-            case 'downloading':
-              // Show progress like "Downloading 45/176 assets..."
-              setStatusText(progress.message || 'Downloading content...');
-              if (progress.detail?.assetName) {
-                setDetailText(progress.detail.assetName);
-              } else {
-                setDetailText('');
-              }
+            case 'saving':
+              setStatusText('Updating stories...');
+              setDetailText('');
               break;
             case 'complete':
               setStatusText('Ready!');

@@ -1,17 +1,18 @@
 /**
- * Integration tests for the Batch Sync Flow
+ * Integration tests for the Batch Sync Flow (On-Demand Model)
  *
- * These tests verify the complete batch sync flow including:
+ * These tests verify the metadata-only batch sync flow:
  * - Version checking
  * - Delta content fetching
- * - Batch URL signing
- * - Parallel asset downloads
- * - Cache persistence
+ * - Catalog updates for CMS-only stories (on-demand download)
+ * - Cache updates for bundled story localizations only
+ * - NO asset downloads at startup
  */
 
 import { BatchSyncService, BatchSyncStats, BatchSyncProgress, DeltaSyncResponse } from '../../services/batch-sync-service';
 import { VersionManager, VersionCheckResult } from '../../services/version-manager';
 import { CacheManager } from '../../services/cache-manager';
+import { CatalogService } from '../../services/catalog-service';
 import { ApiClient } from '../../services/api-client';
 import { Story } from '../../types/story';
 
@@ -19,12 +20,21 @@ import { Story } from '../../types/story';
 jest.mock('../../services/version-manager');
 jest.mock('../../services/cache-manager');
 jest.mock('../../services/api-client');
+jest.mock('../../services/catalog-service');
 jest.mock('expo-file-system/legacy', () => ({
   getInfoAsync: jest.fn().mockResolvedValue({ exists: true, size: 1024 }),
 }));
 
+// Mock ALL_STORIES to include a bundled story for testing
+jest.mock('../../data/stories', () => ({
+  ALL_STORIES: [
+    { id: 'snuggle-little-wombat', title: 'Snuggle Little Wombat', category: 'bedtime' },
+  ],
+}));
+
 const mockVersionManager = VersionManager as jest.Mocked<typeof VersionManager>;
 const mockCacheManager = CacheManager as jest.Mocked<typeof CacheManager>;
+const mockCatalogService = CatalogService as jest.Mocked<typeof CatalogService>;
 const mockApiClient = ApiClient as jest.Mocked<typeof ApiClient>;
 
 // Mock story factory
@@ -46,7 +56,7 @@ const createMockStory = (id: string, title: string, assetCount: number = 2): Sto
   })),
 });
 
-describe('Batch Sync Integration Flow', () => {
+describe('Batch Sync Integration Flow (On-Demand Model)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Reset sync lock
@@ -60,16 +70,14 @@ describe('Batch Sync Integration Flow', () => {
     mockCacheManager.saveStories.mockResolvedValue();
     mockCacheManager.updateStories.mockResolvedValue();
     mockCacheManager.removeStories.mockResolvedValue();
-    mockCacheManager.hasAsset.mockResolvedValue(false);
-    mockCacheManager.downloadAndCacheAsset.mockResolvedValue('/local/path');
+    mockCatalogService.updateCatalog.mockResolvedValue();
     mockVersionManager.getLocalVersion.mockResolvedValue(null);
     mockVersionManager.saveLocalVersion.mockResolvedValue();
     mockVersionManager.updateLocalVersion.mockResolvedValue();
   });
 
   describe('First-time User Flow', () => {
-    it('should perform full batch sync on first launch', async () => {
-      // First-time user: no local version, server has content
+    it('should sync metadata only on first launch (no asset downloads)', async () => {
       mockVersionManager.checkVersions.mockResolvedValue({
         needsStorySync: true,
         needsAssetSync: true,
@@ -82,7 +90,11 @@ describe('Batch Sync Integration Flow', () => {
         createMockStory('2', 'Story 2', 2),
       ];
 
-      // Delta response
+      const catalog = [
+        { storyId: '1', title: 'Story 1', category: 'adventure', emoji: '📖', thumbnailUrl: 'https://thumb1', isFree: true, isReferralReward: false, isPremium: false },
+        { storyId: '2', title: 'Story 2', category: 'adventure', emoji: '📖', thumbnailUrl: 'https://thumb2', isFree: false, isReferralReward: false, isPremium: true },
+      ];
+
       mockApiClient.request.mockResolvedValueOnce({
         serverVersion: 5,
         assetVersion: 3,
@@ -92,43 +104,32 @@ describe('Batch Sync Integration Flow', () => {
         totalStories: 2,
         updatedCount: 2,
         lastUpdated: Date.now(),
+        catalog,
       } as DeltaSyncResponse);
-
-      // Batch URLs response (8 assets: 2 covers + 3 + 2 page backgrounds)
-      mockApiClient.request.mockResolvedValueOnce({
-        urls: [
-          { path: 'stories/1/cover.webp', signedUrl: 'https://url1' },
-          { path: 'stories/1/bg0.webp', signedUrl: 'https://url2' },
-          { path: 'stories/1/bg1.webp', signedUrl: 'https://url3' },
-          { path: 'stories/1/bg2.webp', signedUrl: 'https://url4' },
-          { path: 'stories/2/cover.webp', signedUrl: 'https://url5' },
-          { path: 'stories/2/bg0.webp', signedUrl: 'https://url6' },
-          { path: 'stories/2/bg1.webp', signedUrl: 'https://url7' },
-        ],
-        failed: [],
-      });
 
       const progressLog: BatchSyncProgress[] = [];
       const stats = await BatchSyncService.performBatchSync((progress) => {
         progressLog.push(progress);
       });
 
-      // Verify API call reduction: 1 version + 1 delta + 1 batch URLs = 3 calls
-      // Instead of: 1 version + 2 stories + 7 assets = 10 calls
-      expect(stats.apiCalls).toBe(3);
+      // On-demand model: 1 version + 1 delta = 2 API calls (no batch URLs, no downloads)
+      expect(stats.apiCalls).toBe(2);
       expect(stats.storiesUpdated).toBe(2);
-      expect(stats.assetsDownloaded).toBe(7);
+      expect(stats.assetsDownloaded).toBe(0); // No downloads at startup
 
-      // Verify progress phases
+      // Verify progress phases — no download phases
       const phases = progressLog.map(p => p.phase);
       expect(phases).toContain('version-check');
       expect(phases).toContain('fetching-delta');
-      expect(phases).toContain('batch-urls');
-      expect(phases).toContain('downloading');
+      expect(phases).toContain('saving');
       expect(phases).toContain('complete');
+      expect(phases).not.toContain('batch-urls');
+      expect(phases).not.toContain('downloading');
 
-      // Verify cache was updated
-      expect(mockCacheManager.updateStories).toHaveBeenCalledWith(stories);
+      // CMS-only stories should NOT be saved to cache
+      expect(mockCacheManager.updateStories).not.toHaveBeenCalled();
+      // Catalog should be updated for on-demand discovery
+      expect(mockCatalogService.updateCatalog).toHaveBeenCalledWith(catalog);
       expect(mockVersionManager.updateLocalVersion).toHaveBeenCalledWith({
         stories: 5,
         assets: 3,
@@ -154,7 +155,7 @@ describe('Batch Sync Integration Flow', () => {
       expect(mockApiClient.request).not.toHaveBeenCalled();
     });
 
-    it('should only download new assets when some are cached', async () => {
+    it('should sync new CMS stories to catalog only (no asset downloads)', async () => {
       mockVersionManager.checkVersions.mockResolvedValue({
         needsStorySync: true,
         needsAssetSync: true,
@@ -163,6 +164,8 @@ describe('Batch Sync Integration Flow', () => {
       });
 
       const newStory = createMockStory('3', 'New Story', 2);
+      const catalog = [{ storyId: '3', title: 'New Story', category: 'adventure', emoji: '📖', thumbnailUrl: 'https://thumb', isFree: true, isReferralReward: false, isPremium: false }];
+
       mockApiClient.request.mockResolvedValueOnce({
         serverVersion: 5,
         assetVersion: 3,
@@ -172,26 +175,18 @@ describe('Batch Sync Integration Flow', () => {
         totalStories: 3,
         updatedCount: 1,
         lastUpdated: Date.now(),
+        catalog,
       } as DeltaSyncResponse);
-
-      // Some assets already cached
-      mockCacheManager.hasAsset
-        .mockResolvedValueOnce(true)  // cover already cached
-        .mockResolvedValueOnce(false) // bg0 needs download
-        .mockResolvedValueOnce(false); // bg1 needs download
-
-      mockApiClient.request.mockResolvedValueOnce({
-        urls: [
-          { path: 'stories/3/bg0.webp', signedUrl: 'https://url1' },
-          { path: 'stories/3/bg1.webp', signedUrl: 'https://url2' },
-        ],
-        failed: [],
-      });
 
       const stats = await BatchSyncService.performBatchSync();
 
-      expect(stats.assetsSkipped).toBe(1); // Cover was cached
-      expect(stats.assetsDownloaded).toBe(2); // Only new assets downloaded
+      // On-demand: no assets downloaded
+      expect(stats.assetsDownloaded).toBe(0);
+      expect(stats.apiCalls).toBe(2); // version + delta
+      // CMS story not saved to cache
+      expect(mockCacheManager.updateStories).not.toHaveBeenCalled();
+      // Catalog updated
+      expect(mockCatalogService.updateCatalog).toHaveBeenCalledWith(catalog);
     });
   });
 
@@ -251,7 +246,7 @@ describe('Batch Sync Integration Flow', () => {
   });
 
   describe('Large App Scenario', () => {
-    it('should batch URL requests for many assets', async () => {
+    it('should handle many stories efficiently with metadata-only sync', async () => {
       mockVersionManager.checkVersions.mockResolvedValue({
         needsStorySync: true,
         needsAssetSync: true,
@@ -259,10 +254,15 @@ describe('Batch Sync Integration Flow', () => {
         serverVersion: { stories: 100, assets: 50, lastUpdated: new Date().toISOString() },
       });
 
-      // Create 10 stories with 10 assets each = 100 assets
+      // Create 10 stories with 10 assets each
       const stories = Array.from({ length: 10 }, (_, i) =>
         createMockStory(`story-${i}`, `Story ${i}`, 10)
       );
+
+      const catalog = stories.map(s => ({
+        storyId: s.id, title: s.title, category: 'adventure', emoji: '📖',
+        thumbnailUrl: `https://thumb-${s.id}`, isFree: true, isReferralReward: false, isPremium: false,
+      }));
 
       mockApiClient.request.mockResolvedValueOnce({
         serverVersion: 100,
@@ -273,75 +273,22 @@ describe('Batch Sync Integration Flow', () => {
         totalStories: 10,
         updatedCount: 10,
         lastUpdated: Date.now(),
+        catalog,
       } as DeltaSyncResponse);
-
-      // All assets need downloading (110 total: 10 covers + 100 page backgrounds)
-      mockCacheManager.hasAsset.mockResolvedValue(false);
-
-      // Batch URLs - should be 2 batches (110 / 100 = 2 batches)
-      mockApiClient.request
-        .mockResolvedValueOnce({ urls: Array(100).fill({ path: 'p', signedUrl: 'u' }), failed: [] })
-        .mockResolvedValueOnce({ urls: Array(10).fill({ path: 'p', signedUrl: 'u' }), failed: [] });
 
       const stats = await BatchSyncService.performBatchSync();
 
-      // 1 version + 1 delta + 2 batch URL requests = 4 API calls
-      // Instead of: 1 version + 10 stories + 110 assets = 121 API calls
-      expect(stats.apiCalls).toBe(4);
+      // On-demand model: 1 version + 1 delta = 2 API calls (no batch URLs)
+      expect(stats.apiCalls).toBe(2);
       expect(stats.storiesUpdated).toBe(10);
-      expect(stats.assetsDownloaded).toBe(110);
-    });
-  });
-
-  describe('Error Recovery', () => {
-    it('should continue sync even with partial asset failures', async () => {
-      mockVersionManager.checkVersions.mockResolvedValue({
-        needsStorySync: true,
-        needsAssetSync: true,
-        localVersion: null,
-        serverVersion: { stories: 5, assets: 3, lastUpdated: new Date().toISOString() },
-      });
-
-      const story = createMockStory('1', 'Story 1', 3);
-      mockApiClient.request.mockResolvedValueOnce({
-        serverVersion: 5,
-        assetVersion: 3,
-        stories: [story],
-        deletedStoryIds: [],
-        storyChecksums: { '1': 'checksum-1' },
-        totalStories: 1,
-        updatedCount: 1,
-        lastUpdated: Date.now(),
-      } as DeltaSyncResponse);
-
-      mockCacheManager.hasAsset.mockResolvedValue(false);
-      mockApiClient.request.mockResolvedValueOnce({
-        urls: [
-          { path: 'stories/1/cover.webp', signedUrl: 'https://url1' },
-          { path: 'stories/1/bg0.webp', signedUrl: 'https://url2' },
-        ],
-        failed: ['stories/1/bg1.webp', 'stories/1/bg2.webp'], // 2 failed
-      });
-
-      // One download succeeds, one fails
-      mockCacheManager.downloadAndCacheAsset
-        .mockResolvedValueOnce('/local/path')
-        .mockRejectedValueOnce(new Error('Download failed'));
-
-      const stats = await BatchSyncService.performBatchSync();
-
-      // Story should still be saved despite asset failures
-      expect(mockCacheManager.updateStories).toHaveBeenCalledWith([story]);
-      expect(stats.assetsDownloaded).toBe(1);
-      expect(stats.assetsFailed).toBe(3); // 2 URL failures + 1 download failure
-      expect(stats.errors.length).toBeGreaterThan(0);
+      expect(stats.assetsDownloaded).toBe(0); // No downloads at startup
+      expect(mockCatalogService.updateCatalog).toHaveBeenCalledWith(catalog);
     });
   });
 
   // ==================== HAPPY PATH INTEGRATION TESTS ====================
-  describe('Happy Path - Complete Flows', () => {
-    it('should handle incremental update (only new stories)', async () => {
-      // User has 3 stories, server has 5 stories
+  describe('Happy Path - Complete Flows (On-Demand)', () => {
+    it('should handle incremental update with catalog entries', async () => {
       mockVersionManager.checkVersions.mockResolvedValue({
         needsStorySync: true,
         needsAssetSync: true,
@@ -365,27 +312,14 @@ describe('Batch Sync Integration Flow', () => {
         lastUpdated: Date.now(),
       } as DeltaSyncResponse);
 
-      mockCacheManager.hasAsset.mockResolvedValue(false);
-      mockApiClient.request.mockResolvedValueOnce({
-        urls: [
-          { path: 'stories/4/cover.webp', signedUrl: 'https://url1' },
-          { path: 'stories/4/bg0.webp', signedUrl: 'https://url2' },
-          { path: 'stories/4/bg1.webp', signedUrl: 'https://url3' },
-          { path: 'stories/5/cover.webp', signedUrl: 'https://url4' },
-          { path: 'stories/5/bg0.webp', signedUrl: 'https://url5' },
-          { path: 'stories/5/bg1.webp', signedUrl: 'https://url6' },
-        ],
-        failed: [],
-      });
-
       const stats = await BatchSyncService.performBatchSync();
 
       expect(stats.storiesUpdated).toBe(2);
-      expect(stats.assetsDownloaded).toBe(6);
+      expect(stats.assetsDownloaded).toBe(0); // On-demand: no downloads
       expect(stats.errors).toHaveLength(0);
     });
 
-    it('should handle story updates (existing stories modified)', async () => {
+    it('should handle bundled story updates (saved to cache)', async () => {
       mockVersionManager.checkVersions.mockResolvedValue({
         needsStorySync: true,
         needsAssetSync: false,
@@ -393,28 +327,35 @@ describe('Batch Sync Integration Flow', () => {
         serverVersion: { stories: 6, assets: 3, lastUpdated: new Date().toISOString() },
       });
 
-      // Story 1 was updated (new checksum)
-      const updatedStory = createMockStory('1', 'Updated Story 1', 2);
+      // Bundled story was updated (matches ALL_STORIES)
+      const updatedBundled: Story = {
+        id: 'snuggle-little-wombat',
+        title: 'Snuggle Little Wombat (Updated)',
+        checksum: 'new-checksum',
+        category: 'bedtime',
+        tag: 'bedtime',
+        emoji: '🐨',
+        isAvailable: true,
+        pages: [{ id: 'p1', pageNumber: 1, text: 'Updated text' }],
+      };
 
       mockApiClient.request.mockResolvedValueOnce({
         serverVersion: 6,
         assetVersion: 3,
-        stories: [updatedStory],
+        stories: [updatedBundled],
         deletedStoryIds: [],
-        storyChecksums: { '1': 'new-checksum-1' },
+        storyChecksums: { 'snuggle-little-wombat': 'new-checksum' },
         totalStories: 5,
         updatedCount: 1,
         lastUpdated: Date.now(),
       } as DeltaSyncResponse);
 
-      // Assets are same, already cached
-      mockCacheManager.hasAsset.mockResolvedValue(true);
-
       const stats = await BatchSyncService.performBatchSync();
 
       expect(stats.storiesUpdated).toBe(1);
-      expect(stats.assetsSkipped).toBe(3); // All cached
       expect(stats.assetsDownloaded).toBe(0);
+      // Bundled story update should be saved to cache
+      expect(mockCacheManager.updateStories).toHaveBeenCalledWith([updatedBundled]);
     });
 
     it('should handle mixed scenario (updates, additions, deletions)', async () => {
@@ -426,37 +367,26 @@ describe('Batch Sync Integration Flow', () => {
       });
 
       const stories = [
-        createMockStory('1', 'Updated Story 1', 1),  // Updated
-        createMockStory('6', 'New Story 6', 1),       // New
+        createMockStory('1', 'Updated Story 1', 1),
+        createMockStory('6', 'New Story 6', 1),
       ];
 
       mockApiClient.request.mockResolvedValueOnce({
         serverVersion: 7,
         assetVersion: 5,
         stories,
-        deletedStoryIds: ['3', '4'], // 2 deleted
+        deletedStoryIds: ['3', '4'],
         storyChecksums: { '1': 'new-checksum', '6': 'checksum-6' },
         totalStories: 4,
         updatedCount: 2,
         lastUpdated: Date.now(),
       } as DeltaSyncResponse);
 
-      mockCacheManager.hasAsset.mockResolvedValue(false);
-      mockApiClient.request.mockResolvedValueOnce({
-        urls: [
-          { path: 'stories/1/cover.webp', signedUrl: 'https://url1' },
-          { path: 'stories/1/bg0.webp', signedUrl: 'https://url2' },
-          { path: 'stories/6/cover.webp', signedUrl: 'https://url3' },
-          { path: 'stories/6/bg0.webp', signedUrl: 'https://url4' },
-        ],
-        failed: [],
-      });
-
       const stats = await BatchSyncService.performBatchSync();
 
       expect(stats.storiesUpdated).toBe(2);
       expect(stats.storiesDeleted).toBe(2);
-      expect(stats.assetsDownloaded).toBe(4);
+      expect(stats.assetsDownloaded).toBe(0); // On-demand
       expect(mockCacheManager.removeStories).toHaveBeenCalledWith(['3', '4']);
     });
   });
@@ -476,7 +406,7 @@ describe('Batch Sync Integration Flow', () => {
       await expect(BatchSyncService.performBatchSync()).rejects.toThrow('Server error: 500');
     });
 
-    it('should handle timeout during batch URL fetch', async () => {
+    it('should handle catalog update failure gracefully', async () => {
       mockVersionManager.checkVersions.mockResolvedValue({
         needsStorySync: true,
         needsAssetSync: true,
@@ -493,16 +423,13 @@ describe('Batch Sync Integration Flow', () => {
         totalStories: 1,
         updatedCount: 1,
         lastUpdated: Date.now(),
+        catalog: [{ storyId: '1', title: 'Story 1', category: 'adventure', emoji: '📖', thumbnailUrl: 'https://thumb', isFree: true, isReferralReward: false, isPremium: false }],
       } as DeltaSyncResponse);
 
-      mockCacheManager.hasAsset.mockResolvedValue(false);
-      mockApiClient.request.mockRejectedValueOnce(new Error('Request timeout'));
+      mockCatalogService.updateCatalog.mockRejectedValueOnce(new Error('Catalog save failed'));
 
-      const stats = await BatchSyncService.performBatchSync();
-
-      // Should still save story but mark assets as failed
-      expect(mockCacheManager.updateStories).toHaveBeenCalled();
-      expect(stats.assetsFailed).toBeGreaterThan(0);
+      // Should throw since catalog update failure is an error
+      await expect(BatchSyncService.performBatchSync()).rejects.toThrow('Catalog save failed');
     });
 
     it('should throw error on malformed response from delta endpoint', async () => {
@@ -513,115 +440,16 @@ describe('Batch Sync Integration Flow', () => {
         serverVersion: { stories: 5, assets: 3, lastUpdated: new Date().toISOString() },
       });
 
-      // Malformed response (missing required fields)
       mockApiClient.request.mockResolvedValueOnce({
         serverVersion: 5,
-        // Missing: stories, assetVersion, etc.
       } as any);
 
-      // Should throw because stories is undefined
       await expect(BatchSyncService.performBatchSync()).rejects.toThrow();
     });
   });
 
   // ==================== EDGE CASE INTEGRATION TESTS ====================
-  describe('Edge Cases - Boundary Conditions', () => {
-    it('should handle exactly 100 assets (single batch boundary)', async () => {
-      mockVersionManager.checkVersions.mockResolvedValue({
-        needsStorySync: true,
-        needsAssetSync: true,
-        localVersion: null,
-        serverVersion: { stories: 100, assets: 100, lastUpdated: new Date().toISOString() },
-      });
-
-      // Create story with exactly 100 assets
-      const story: Story = {
-        id: 'hundred-assets',
-        title: 'Hundred Assets Story',
-        checksum: 'hundred123',
-        category: 'adventure',
-        tag: 'adventure',
-        emoji: '📖',
-        isAvailable: true,
-        pages: Array.from({ length: 100 }, (_, i) => ({
-          id: `page-${i}`,
-          pageNumber: i + 1,
-          backgroundImage: `stories/hundred-assets/bg${i}.webp`,
-          text: `Page ${i}`,
-        })),
-      };
-
-      mockApiClient.request.mockResolvedValueOnce({
-        serverVersion: 100,
-        assetVersion: 100,
-        stories: [story],
-        deletedStoryIds: [],
-        storyChecksums: { 'hundred-assets': 'hundred123' },
-        totalStories: 1,
-        updatedCount: 1,
-        lastUpdated: Date.now(),
-      } as DeltaSyncResponse);
-
-      mockCacheManager.hasAsset.mockResolvedValue(false);
-      // Exactly 1 batch (100 assets = 100 max per batch)
-      mockApiClient.request.mockResolvedValueOnce({
-        urls: Array(100).fill({ path: 'p', signedUrl: 'u' }),
-        failed: [],
-      });
-
-      const stats = await BatchSyncService.performBatchSync();
-
-      // 1 version + 1 delta + 1 batch URL = 3 API calls
-      expect(stats.apiCalls).toBe(3);
-    });
-
-    it('should handle 101 assets (boundary requiring 2 batches)', async () => {
-      mockVersionManager.checkVersions.mockResolvedValue({
-        needsStorySync: true,
-        needsAssetSync: true,
-        localVersion: null,
-        serverVersion: { stories: 101, assets: 101, lastUpdated: new Date().toISOString() },
-      });
-
-      const story: Story = {
-        id: 'hundred-one-assets',
-        title: 'Hundred One Assets Story',
-        checksum: 'hundredone123',
-        category: 'adventure',
-        tag: 'adventure',
-        emoji: '📖',
-        isAvailable: true,
-        pages: Array.from({ length: 101 }, (_, i) => ({
-          id: `page-${i}`,
-          pageNumber: i + 1,
-          backgroundImage: `stories/hundred-one-assets/bg${i}.webp`,
-          text: `Page ${i}`,
-        })),
-      };
-
-      mockApiClient.request.mockResolvedValueOnce({
-        serverVersion: 101,
-        assetVersion: 101,
-        stories: [story],
-        deletedStoryIds: [],
-        storyChecksums: { 'hundred-one-assets': 'hundredone123' },
-        totalStories: 1,
-        updatedCount: 1,
-        lastUpdated: Date.now(),
-      } as DeltaSyncResponse);
-
-      mockCacheManager.hasAsset.mockResolvedValue(false);
-      // 2 batches (100 + 1)
-      mockApiClient.request
-        .mockResolvedValueOnce({ urls: Array(100).fill({ path: 'p', signedUrl: 'u' }), failed: [] })
-        .mockResolvedValueOnce({ urls: Array(1).fill({ path: 'p', signedUrl: 'u' }), failed: [] });
-
-      const stats = await BatchSyncService.performBatchSync();
-
-      // 1 version + 1 delta + 2 batch URLs = 4 API calls
-      expect(stats.apiCalls).toBe(4);
-    });
-
+  describe('Edge Cases - Boundary Conditions (On-Demand)', () => {
     it('should handle sync when all stories are deleted', async () => {
       mockVersionManager.checkVersions.mockResolvedValue({
         needsStorySync: true,
@@ -648,7 +476,7 @@ describe('Batch Sync Integration Flow', () => {
       expect(mockCacheManager.removeStories).toHaveBeenCalledWith(['1', '2', '3', '4', '5']);
     });
 
-    it('should handle sync with 0 total assets in new stories', async () => {
+    it('should handle sync with text-only stories (no assets)', async () => {
       mockVersionManager.checkVersions.mockResolvedValue({
         needsStorySync: true,
         needsAssetSync: false,
@@ -675,11 +503,45 @@ describe('Batch Sync Integration Flow', () => {
       const stats = await BatchSyncService.performBatchSync();
 
       expect(stats.storiesUpdated).toBe(2);
-      expect(stats.totalAssets).toBe(0);
       expect(stats.assetsDownloaded).toBe(0);
-      // No batch URL request should be made
       expect(mockApiClient.request).toHaveBeenCalledTimes(1); // Only delta
+    });
+
+    it('should handle many stories with only catalog updates', async () => {
+      mockVersionManager.checkVersions.mockResolvedValue({
+        needsStorySync: true,
+        needsAssetSync: true,
+        localVersion: null,
+        serverVersion: { stories: 100, assets: 100, lastUpdated: new Date().toISOString() },
+      });
+
+      const stories = Array.from({ length: 50 }, (_, i) =>
+        createMockStory(`story-${i}`, `Story ${i}`, 10)
+      );
+      const catalog = stories.map(s => ({
+        storyId: s.id, title: s.title, category: 'adventure', emoji: '📖',
+        thumbnailUrl: `https://thumb-${s.id}`, isFree: true, isReferralReward: false, isPremium: false,
+      }));
+
+      mockApiClient.request.mockResolvedValueOnce({
+        serverVersion: 100,
+        assetVersion: 100,
+        stories,
+        deletedStoryIds: [],
+        storyChecksums: Object.fromEntries(stories.map(s => [s.id, s.checksum!])),
+        totalStories: 50,
+        updatedCount: 50,
+        lastUpdated: Date.now(),
+        catalog,
+      } as DeltaSyncResponse);
+
+      const stats = await BatchSyncService.performBatchSync();
+
+      // On-demand: 1 version + 1 delta = 2 API calls regardless of story/asset count
+      expect(stats.apiCalls).toBe(2);
+      expect(stats.storiesUpdated).toBe(50);
+      expect(stats.assetsDownloaded).toBe(0);
+      expect(mockCatalogService.updateCatalog).toHaveBeenCalledWith(catalog);
     });
   });
 });
-
