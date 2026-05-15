@@ -14,9 +14,9 @@ import * as Haptics from 'expo-haptics';
 import { useAccessibility } from '@/hooks/use-accessibility';
 
 // Slide-in animation config
-const SLIDE_IN_DURATION = 400; // ms per strip
-const SLIDE_IN_STAGGER = 120; // ms between each strip
-const SLIDE_IN_DISTANCE = 300; // px from below
+const SLIDE_IN_DURATION = 280; // ms per strip
+const SLIDE_IN_STAGGER = 80; // ms between each strip
+const SLIDE_IN_DISTANCE = 200; // px from below
 
 // Module-level debounce to prevent double slide-in animation on rapid remount
 // (e.g. React Strict Mode double-mount or brief currentView toggle after login)

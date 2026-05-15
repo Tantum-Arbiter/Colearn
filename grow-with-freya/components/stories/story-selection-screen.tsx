@@ -368,10 +368,20 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     const success = await StoryDownloadService.deleteStory(storyId);
     if (success) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      // LayoutAnimation for smooth carousel slide
-      LayoutAnimation.configureNext(
-        LayoutAnimation.create(300, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity)
-      );
+      // LayoutAnimation with spring for smooth horizontal slide of remaining cards
+      LayoutAnimation.configureNext({
+        duration: 350,
+        update: {
+          type: LayoutAnimation.Types.spring,
+          springDamping: 0.85,
+          property: LayoutAnimation.Properties.scaleXY,
+        },
+        delete: {
+          type: LayoutAnimation.Types.easeOut,
+          duration: 200,
+          property: LayoutAnimation.Properties.opacity,
+        },
+      });
       StoryLoader.invalidateCache();
       const loadedStories = await StoryLoader.getStories();
       setStories(loadedStories);
@@ -442,9 +452,14 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
 
       // LayoutAnimation so the card smoothly slides from its catalog
       // position into its new downloaded position in the carousel
-      LayoutAnimation.configureNext(
-        LayoutAnimation.create(350, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity)
-      );
+      LayoutAnimation.configureNext({
+        duration: 350,
+        update: {
+          type: LayoutAnimation.Types.spring,
+          springDamping: 0.85,
+          property: LayoutAnimation.Properties.scaleXY,
+        },
+      });
 
       // Refresh the downloaded stories list
       const loadedStories = await StoryLoader.getStories();
@@ -772,10 +787,10 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 getItemLayout={getItemLayout}
-                removeClippedSubviews={true}
-                maxToRenderPerBatch={5}
-                windowSize={7}
-                initialNumToRender={3}
+                removeClippedSubviews={false}
+                maxToRenderPerBatch={8}
+                windowSize={11}
+                initialNumToRender={6}
                 updateCellsBatchingPeriod={50}
                 decelerationRate="fast"
                 snapToInterval={ITEM_WIDTH}
@@ -818,10 +833,10 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   getItemLayout={getItemLayout}
-                  removeClippedSubviews={true}
-                  maxToRenderPerBatch={5}
-                  windowSize={7}
-                  initialNumToRender={3}
+                  removeClippedSubviews={false}
+                  maxToRenderPerBatch={8}
+                  windowSize={11}
+                  initialNumToRender={6}
                   updateCellsBatchingPeriod={50}
                   decelerationRate="fast"
                   snapToInterval={ITEM_WIDTH}

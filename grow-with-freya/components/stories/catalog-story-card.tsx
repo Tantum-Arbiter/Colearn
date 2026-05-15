@@ -143,7 +143,7 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
             source={{ uri: entry.thumbnailUrl, cacheKey: `catalog-thumb-${entry.storyId}` }}
             style={[cardStyles.coverImage, { width: cardWidth, height: cardHeight, borderRadius }]}
             contentFit="cover"
-            transition={200}
+            transition={0}
             cachePolicy="memory-disk"
             onError={(e) => console.warn(`[CatalogCard] Image failed for ${entry.storyId}:`, e)}
           />
