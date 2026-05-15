@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useEffect, useMemo, useState, memo } from 'react';
-import { View, Text, ScrollView, StyleSheet, Dimensions, FlatList, Pressable, ListRenderItem, findNodeHandle, UIManager, Alert } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Dimensions, FlatList, Pressable, ListRenderItem, findNodeHandle, UIManager, Alert, LayoutAnimation, Platform } from 'react-native';
 import { Image } from 'expo-image';
 // All story images are loaded from local cache after batch sync - no authenticated fetching needed
 import { LinearGradient } from 'expo-linear-gradient';
@@ -11,6 +11,7 @@ import Animated, {
   withTiming,
   withDelay,
   withSequence,
+  runOnJS,
   Easing
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -75,6 +76,8 @@ interface StoryCardProps {
   emojiFontSize: number;
   isHidden?: boolean; // Hide when this card is being animated in the transition overlay
   isUnread?: boolean; // Show shimmer effect for unread stories
+  isDeleting?: boolean; // Trigger implode animation when deleting
+  onDeleteAnimationComplete?: () => void; // Called after implode animation finishes
   language: SupportedLanguage;
 }
 
@@ -89,6 +92,8 @@ const StoryCard = memo(function StoryCard({
   emojiFontSize,
   isHidden,
   isUnread,
+  isDeleting,
+  onDeleteAnimationComplete,
   language,
 }: StoryCardProps) {
   const cardRef = useRef<View>(null);
@@ -97,6 +102,25 @@ const StoryCard = memo(function StoryCard({
   // Track previous hidden state to detect when card becomes visible again
   const wasHiddenRef = useRef(isHidden);
   const fadeOpacity = useSharedValue(isHidden ? 0 : 1);
+
+  // Implode animation for deletion
+  const deleteScale = useSharedValue(1);
+  const deleteOpacity = useSharedValue(1);
+
+  useEffect(() => {
+    if (isDeleting) {
+      // Phase 1: Quick shrink to 0 with overshoot
+      deleteScale.value = withTiming(0, {
+        duration: 350,
+        easing: Easing.in(Easing.back(1.5)),
+      }, (finished) => {
+        if (finished && onDeleteAnimationComplete) {
+          runOnJS(onDeleteAnimationComplete)();
+        }
+      });
+      deleteOpacity.value = withDelay(200, withTiming(0, { duration: 150 }));
+    }
+  }, [isDeleting]);
 
   // Shimmer animation for unread stories — slides a highlight across the card periodically
   const shimmerTranslate = useSharedValue(-cardWidth);
@@ -139,7 +163,8 @@ const StoryCard = memo(function StoryCard({
   }, [isHidden]);
 
   const fadeAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: fadeOpacity.value,
+    opacity: fadeOpacity.value * deleteOpacity.value,
+    transform: [{ scale: deleteScale.value }],
   }));
 
   const handlePress = useCallback(() => {
@@ -216,6 +241,11 @@ const StoryCard = memo(function StoryCard({
 
 const { width: screenWidth } = Dimensions.get('window');
 
+// Enable LayoutAnimation on Android for smooth carousel reflow on delete
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
 export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProps) {
   const insets = useSafeAreaInsets();
   const { requestReturnToMainMenu } = useAppStore();
@@ -247,6 +277,9 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
 
   // Catalog entries (not-yet-downloaded stories) merged into genre rows
   const [catalogEntries, setCatalogEntries] = useState<CatalogEntry[]>([]);
+
+  // Story currently being deleted (implode animation in progress)
+  const [deletingStoryId, setDeletingStoryId] = useState<string | null>(null);
 
   // Union type for items in genre carousels: either a downloaded story or a catalog entry
   type StoryDisplayItem = { type: 'story'; data: Story } | { type: 'catalog'; data: CatalogEntry };
@@ -318,22 +351,35 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
         {
           text: t('common.delete'),
           style: 'destructive',
-          onPress: async () => {
-            const success = await StoryDownloadService.deleteStory(story.id);
-            if (success) {
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              // Refresh both stories list and catalog
-              StoryLoader.invalidateCache();
-              const loadedStories = await StoryLoader.getStories();
-              setStories(loadedStories);
-              const entries = await CatalogService.getCatalog();
-              setCatalogEntries(entries);
-            }
+          onPress: () => {
+            // Start the implode animation — actual deletion happens in onImplodeComplete
+            setDeletingStoryId(story.id);
           },
         },
       ]
     );
   }, [t]);
+
+  // Called when the implode animation finishes
+  const handleImplodeComplete = useCallback(async () => {
+    if (!deletingStoryId) return;
+    const storyId = deletingStoryId;
+
+    const success = await StoryDownloadService.deleteStory(storyId);
+    if (success) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      // LayoutAnimation for smooth carousel slide
+      LayoutAnimation.configureNext(
+        LayoutAnimation.create(300, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity)
+      );
+      StoryLoader.invalidateCache();
+      const loadedStories = await StoryLoader.getStories();
+      setStories(loadedStories);
+      const entries = await CatalogService.getCatalog();
+      setCatalogEntries(entries);
+    }
+    setDeletingStoryId(null);
+  }, [deletingStoryId]);
 
   // All story images are loaded from local cache after batch sync
   // No need for warm cache - images are already local file paths
@@ -563,6 +609,8 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
           emojiFontSize={scaledEmojiFontSize}
           isHidden={(isTransitioning || shouldShowStoryReader || isExpandingToReader) && selectedStoryId === story.id}
           isUnread={story.isAvailable && !readStoryIds.includes(story.id)}
+          isDeleting={deletingStoryId === story.id}
+          onDeleteAnimationComplete={handleImplodeComplete}
           language={currentLanguage}
         />
       );
@@ -579,7 +627,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
         onLongPress={handleCatalogPreview}
       />
     );
-  }, [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader, currentLanguage, readStoryIds, handleCatalogDownloadComplete, handleCatalogPreview]);
+  }, [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader, currentLanguage, readStoryIds, deletingStoryId, handleImplodeComplete, handleCatalogDownloadComplete, handleCatalogPreview]);
 
   // Memoized render function for story cards (favorites only — pure Story[])
   const renderStoryCard: ListRenderItem<Story> = useCallback(({ item: story }) => (
@@ -593,9 +641,11 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       emojiFontSize={scaledEmojiFontSize}
       isHidden={(isTransitioning || shouldShowStoryReader || isExpandingToReader) && selectedStoryId === story.id}
       isUnread={story.isAvailable && !readStoryIds.includes(story.id)}
+      isDeleting={deletingStoryId === story.id}
+      onDeleteAnimationComplete={handleImplodeComplete}
       language={currentLanguage}
     />
-  ), [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader, currentLanguage, readStoryIds]);
+  ), [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader, currentLanguage, readStoryIds, deletingStoryId, handleImplodeComplete]);
 
   // Key extractors
   const keyExtractor = useCallback((story: Story) => story.id, []);
