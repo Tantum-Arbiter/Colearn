@@ -213,6 +213,8 @@ export default {
     tags: 'タグ',
     readStory: 'ストーリーを読む',
     aboutThisStory: 'このストーリーについて',
+    removeFromDevice: '削除',
+    removeConfirm: '"{{title}}"をこのデバイスから削除しますか？いつでも再ダウンロードできます。',
   },
   completion: {
     theEnd: '終わり',

@@ -230,6 +230,8 @@ export default {
     tags: 'Étiquettes',
     readStory: 'Lire l\'histoire',
     aboutThisStory: 'À propos de cette histoire',
+    removeFromDevice: 'Supprimer',
+    removeConfirm: 'Supprimer "{{title}}" de cet appareil ? Vous pouvez le retélécharger à tout moment.',
   },
 
   // Story completion

@@ -213,6 +213,8 @@ export default {
     tags: 'Tags',
     readStory: 'Ler história',
     aboutThisStory: 'Sobre esta história',
+    removeFromDevice: 'Remover',
+    removeConfirm: 'Remover "{{title}}" deste dispositivo? Pode transferir novamente a qualquer momento.',
   },
   completion: {
     theEnd: 'Fim',

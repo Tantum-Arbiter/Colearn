@@ -213,6 +213,8 @@ export default {
     tags: 'Etiketler',
     readStory: 'Hikayeyi Oku',
     aboutThisStory: 'Bu Hikaye Hakkında',
+    removeFromDevice: 'Kaldır',
+    removeConfirm: '"{{title}}" bu cihazdan kaldırılsın mı? İstediğiniz zaman tekrar indirebilirsiniz.',
   },
   completion: {
     theEnd: 'Son',

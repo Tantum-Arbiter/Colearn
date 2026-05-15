@@ -230,6 +230,8 @@ export default {
     tags: 'Etiquetas',
     readStory: 'Leer cuento',
     aboutThisStory: 'Sobre este cuento',
+    removeFromDevice: 'Eliminar',
+    removeConfirm: '¿Eliminar "{{title}}" de este dispositivo? Puedes descargarlo de nuevo en cualquier momento.',
   },
 
   // Story completion

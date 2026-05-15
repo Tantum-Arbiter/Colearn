@@ -213,6 +213,8 @@ export default {
     tags: '标签',
     readStory: '阅读故事',
     aboutThisStory: '关于这个故事',
+    removeFromDevice: '移除',
+    removeConfirm: '从此设备移除"{{title}}"？您可以随时重新下载。',
   },
   completion: {
     theEnd: '结束',

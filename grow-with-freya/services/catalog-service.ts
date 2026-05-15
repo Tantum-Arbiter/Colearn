@@ -124,6 +124,19 @@ export class CatalogService {
   }
 
   /**
+   * Add a single entry to the catalog (e.g. when a story is deleted from cache).
+   * If the storyId already exists, it's replaced.
+   */
+  static async addEntry(entry: CatalogEntry): Promise<void> {
+    const entries = await this.getCatalog();
+    const filtered = entries.filter(e => e.storyId !== entry.storyId);
+    filtered.push(entry);
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    log.debug(`Added ${entry.storyId} to catalog (now ${filtered.length} entries)`);
+    this.notifyListeners();
+  }
+
+  /**
    * Get available categories from the current catalog.
    */
   static async getCategories(): Promise<StoryCategory[]> {

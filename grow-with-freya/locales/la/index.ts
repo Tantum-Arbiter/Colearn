@@ -213,6 +213,8 @@ export default {
     tags: 'Signa',
     readStory: 'Legere Fabulam',
     aboutThisStory: 'De Hac Fabula',
+    removeFromDevice: 'Remove',
+    removeConfirm: 'Remove "{{title}}" ab hoc instrumento? Iterum descendere potes.',
   },
   completion: {
     theEnd: 'Finis',

@@ -234,6 +234,8 @@ export default {
     tags: 'Tags',
     readStory: 'Read Story',
     aboutThisStory: 'About this story',
+    removeFromDevice: 'Remove',
+    removeConfirm: 'Remove "{{title}}" from this device? You can download it again anytime.',
   },
 
   // Story completion

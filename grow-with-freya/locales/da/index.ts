@@ -213,6 +213,8 @@ export default {
     tags: 'Tags',
     readStory: 'Læs historie',
     aboutThisStory: 'Om denne historie',
+    removeFromDevice: 'Fjern',
+    removeConfirm: 'Fjern "{{title}}" fra denne enhed? Du kan downloade den igen når som helst.',
   },
   completion: {
     theEnd: 'Slutningen',

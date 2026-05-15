@@ -213,6 +213,8 @@ export default {
     tags: 'الوسوم',
     readStory: 'اقرأ القصة',
     aboutThisStory: 'حول هذه القصة',
+    removeFromDevice: 'إزالة',
+    removeConfirm: 'إزالة "{{title}}" من هذا الجهاز؟ يمكنك تحميلها مرة أخرى في أي وقت.',
   },
   completion: {
     theEnd: 'النهاية',

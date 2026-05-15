@@ -203,4 +203,49 @@ export class StoryDownloadService {
     const story = await CacheManager.getStory(storyId);
     return story !== null;
   }
+
+  /**
+   * Delete a downloaded story from local cache and re-add it to the catalog
+   * so the user can re-download it later.
+   */
+  static async deleteStory(storyId: string): Promise<boolean> {
+    try {
+      // Get the story before removing so we can build a catalog entry
+      const story = await CacheManager.getStory(storyId);
+      if (!story) {
+        log.warn(`Cannot delete story ${storyId}: not found in cache`);
+        return false;
+      }
+
+      // Remove from local story cache
+      await CacheManager.removeStories([storyId]);
+
+      // Re-add to catalog as a downloadable entry (no thumbnailUrl — next sync will populate it)
+      const catalogEntry: CatalogEntry = {
+        storyId: story.id,
+        title: story.title,
+        localizedTitle: story.localizedTitle,
+        description: story.description,
+        localizedDescription: story.localizedDescription,
+        category: story.category,
+        tag: story.tag,
+        tags: story.tags,
+        emoji: story.emoji,
+        thumbnailUrl: typeof story.coverImage === 'string' ? story.coverImage : undefined,
+        isFree: story.isFree ?? false,
+        isPremium: story.isPremium ?? false,
+        isReferralReward: story.isReferralReward ?? false,
+        ageRange: story.ageRange,
+        duration: story.duration,
+      };
+
+      await CatalogService.addEntry(catalogEntry);
+
+      log.info(`Story ${storyId} deleted from cache and returned to catalog`);
+      return true;
+    } catch (error) {
+      log.error(`Failed to delete story ${storyId}:`, error);
+      return false;
+    }
+  }
 }

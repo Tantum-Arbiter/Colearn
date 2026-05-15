@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useEffect, useMemo, useState, memo } from 'react';
-import { View, Text, ScrollView, StyleSheet, Dimensions, FlatList, Pressable, ListRenderItem, findNodeHandle, UIManager } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Dimensions, FlatList, Pressable, ListRenderItem, findNodeHandle, UIManager, Alert } from 'react-native';
 import { Image } from 'expo-image';
 // All story images are loaded from local cache after batch sync - no authenticated fetching needed
 import { LinearGradient } from 'expo-linear-gradient';
@@ -32,6 +32,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { StoryPreviewModal } from './story-preview-modal';
 import { CatalogStoryCard } from './catalog-story-card';
+import { StoryDownloadService } from '@/services/story-download-service';
 import type { SupportedLanguage } from '@/services/i18n';
 
 // White Ionicons icon for each filter tag (replaces coloured emojis)
@@ -306,6 +307,33 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     setPreviewStory(null);
     previewCardRef.current = null;
   }, []);
+
+  // Delete a downloaded story from cache and revert to catalog entry
+  const handleDeleteStory = useCallback(async (story: Story) => {
+    Alert.alert(
+      t('storyPreview.removeFromDevice'),
+      t('storyPreview.removeConfirm', { title: story.title }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
+          style: 'destructive',
+          onPress: async () => {
+            const success = await StoryDownloadService.deleteStory(story.id);
+            if (success) {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              // Refresh both stories list and catalog
+              StoryLoader.invalidateCache();
+              const loadedStories = await StoryLoader.getStories();
+              setStories(loadedStories);
+              const entries = await CatalogService.getCatalog();
+              setCatalogEntries(entries);
+            }
+          },
+        },
+      ]
+    );
+  }, [t]);
 
   // All story images are loaded from local cache after batch sync
   // No need for warm cache - images are already local file paths
@@ -756,6 +784,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
         visible={isPreviewVisible}
         onClose={handleClosePreview}
         onReadStory={(story) => handleStoryPress(story)}
+        onDeleteStory={previewStory?.isAvailable ? handleDeleteStory : undefined}
       />
     </LinearGradient>
   );

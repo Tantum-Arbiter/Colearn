@@ -213,6 +213,8 @@ export default {
     tags: 'Tags',
     readStory: 'Lees Verhaal',
     aboutThisStory: 'Over Dit Verhaal',
+    removeFromDevice: 'Verwijderen',
+    removeConfirm: '"{{title}}" van dit apparaat verwijderen? Je kunt het op elk moment opnieuw downloaden.',
   },
   completion: {
     theEnd: 'Het Einde',

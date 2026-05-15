@@ -32,6 +32,7 @@ interface StoryPreviewModalProps {
   visible: boolean;
   onClose: () => void;
   onReadStory?: (story: Story) => void;
+  onDeleteStory?: (story: Story) => void;
 }
 
 const ANIMATION_DURATION = 300;
@@ -41,6 +42,7 @@ export function StoryPreviewModal({
   visible,
   onClose,
   onReadStory,
+  onDeleteStory,
 }: StoryPreviewModalProps) {
   const { scaledFontSize, scaledPadding, scaledButtonSize } = useAccessibility();
   const { t, i18n } = useTranslation();
@@ -269,23 +271,38 @@ export function StoryPreviewModal({
           </ScrollView>
 
           {/* Action Buttons - outside ScrollView so they stay fixed at the bottom */}
-          {story.isAvailable && onReadStory && (
+          {story.isAvailable && (onReadStory || onDeleteStory) && (
             <View style={styles.buttonRow}>
-              <Pressable
-                style={[styles.readButton, { flex: 1 }]}
-                onPress={() => {
-                  // Start the story transition FIRST (before closing modal)
-                  // This ensures the card ref is still available for measuring position
-                  // The transition overlay will cover this modal anyway
-                  onReadStory(story);
-                  // Then close the modal (with a small delay to let transition start)
-                  setTimeout(() => handleClose(), 50);
-                }}
-              >
-                <Text style={[styles.readButtonText, { fontSize: scaledFontSize(16) }]}>
-                  {t('storyPreview.readStory')}
-                </Text>
-              </Pressable>
+              {onDeleteStory && (
+                <Pressable
+                  style={[styles.deleteButton]}
+                  onPress={() => {
+                    onDeleteStory(story);
+                    handleClose();
+                  }}
+                >
+                  <Text style={[styles.deleteButtonText, { fontSize: scaledFontSize(14) }]}>
+                    {t('storyPreview.removeFromDevice')}
+                  </Text>
+                </Pressable>
+              )}
+              {onReadStory && (
+                <Pressable
+                  style={[styles.readButton, { flex: 1 }]}
+                  onPress={() => {
+                    // Start the story transition FIRST (before closing modal)
+                    // This ensures the card ref is still available for measuring position
+                    // The transition overlay will cover this modal anyway
+                    onReadStory(story);
+                    // Then close the modal (with a small delay to let transition start)
+                    setTimeout(() => handleClose(), 50);
+                  }}
+                >
+                  <Text style={[styles.readButtonText, { fontSize: scaledFontSize(16) }]}>
+                    {t('storyPreview.readStory')}
+                  </Text>
+                </Pressable>
+              )}
             </View>
           )}
         </View>
@@ -477,6 +494,19 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sans,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  deleteButton: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: '#F0F0F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteButtonText: {
+    fontFamily: Fonts.sans,
+    fontWeight: '600',
+    color: '#E17055',
   },
 });
 

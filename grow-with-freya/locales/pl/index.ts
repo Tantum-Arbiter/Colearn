@@ -230,6 +230,8 @@ export default {
     tags: 'Tagi',
     readStory: 'Czytaj bajkę',
     aboutThisStory: 'O tej bajce',
+    removeFromDevice: 'Usuń',
+    removeConfirm: 'Usunąć "{{title}}" z tego urządzenia? Możesz pobrać ponownie w każdej chwili.',
   },
 
   // Story completion
