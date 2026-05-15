@@ -515,14 +515,19 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     const finishTimer = setTimeout(async () => {
       try {
         StoryLoader.invalidateCache();
-        const loadedStories = await StoryLoader.getStories();
+        // Fetch both in parallel, then update all state together to avoid intermediate renders
+        const [loadedStories, entries] = await Promise.all([
+          StoryLoader.getStories(),
+          CatalogService.getCatalog(),
+        ]);
+        // Clear swap state BEFORE updating data so swapTranslateX resets to 0 instantly
+        setBubbleSwap(null);
         setStories(loadedStories);
-        const entries = await CatalogService.getCatalog();
         setCatalogEntries(entries);
       } catch {
         // Best-effort
+        setBubbleSwap(null);
       }
-      setBubbleSwap(null);
     }, 250);
     return () => clearTimeout(finishTimer);
   }, [bubbleSwap]);
@@ -740,8 +745,10 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
 
   // Key extractors
   const keyExtractor = useCallback((story: Story) => story.id, []);
+  // Use the same key for both story and catalog items so FlatList reuses the slot
+  // instead of unmounting/remounting (which causes a visible flash on data refresh)
   const displayItemKeyExtractor = useCallback((item: StoryDisplayItem) =>
-    item.type === 'story' ? item.data.id : `catalog-${item.data.storyId}`, []);
+    item.type === 'story' ? item.data.id : item.data.storyId, []);
 
   // Memoized getItemLayout for fast scrolling
   const getItemLayout = useCallback((_data: any, index: number) => ({

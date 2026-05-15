@@ -78,11 +78,16 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
   }));
 
   // Animate swap translateX when prop changes (bubble-swap effect)
+  // Snap instantly to 0 (reset) to avoid visible snap-back; animate only non-zero values
   useEffect(() => {
-    swapTx.value = withTiming(swapTranslateX, {
-      duration: 280,
-      easing: Easing.inOut(Easing.ease),
-    });
+    if (swapTranslateX === 0) {
+      swapTx.value = 0; // instant snap — no animation artifact on data refresh
+    } else {
+      swapTx.value = withTiming(swapTranslateX, {
+        duration: 280,
+        easing: Easing.inOut(Easing.ease),
+      });
+    }
   }, [swapTranslateX]);
 
   // Wrapper style for collapse + swap animation
