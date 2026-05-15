@@ -341,7 +341,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     return () => clearTimeout(timeoutId);
   }, []);
 
-  // Load catalog entries for not-yet-downloaded stories
+  // Load catalog entries for not-yet-downloaded stories, and re-load when catalog is refreshed
   useEffect(() => {
     const loadCatalog = async () => {
       try {
@@ -352,6 +352,12 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       }
     };
     loadCatalog();
+
+    // Subscribe to catalog updates (e.g. after background sync refreshes signed URLs)
+    const unsubscribe = CatalogService.onCatalogUpdated(() => {
+      loadCatalog();
+    });
+    return unsubscribe;
   }, []);
 
   // When a catalog story finishes downloading, refresh both stories list and catalog

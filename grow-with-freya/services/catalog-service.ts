@@ -24,6 +24,19 @@ export interface CatalogFilter {
  */
 export class CatalogService {
 
+  // Simple listener pattern so the UI can react to catalog updates
+  private static listeners: Set<() => void> = new Set();
+
+  /** Subscribe to catalog changes. Returns an unsubscribe function. */
+  static onCatalogUpdated(listener: () => void): () => void {
+    this.listeners.add(listener);
+    return () => { this.listeners.delete(listener); };
+  }
+
+  private static notifyListeners(): void {
+    this.listeners.forEach(fn => { try { fn(); } catch {} });
+  }
+
   /**
    * Replace the entire catalog with fresh data from a delta sync response.
    */
@@ -31,6 +44,7 @@ export class CatalogService {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
       log.info(`Catalog updated with ${entries.length} entries`);
+      this.notifyListeners();
     } catch (error) {
       log.error('Failed to save catalog:', error);
       throw error;

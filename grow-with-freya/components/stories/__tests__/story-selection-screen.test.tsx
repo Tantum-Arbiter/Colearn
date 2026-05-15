@@ -46,6 +46,7 @@ jest.mock('@/services/catalog-service', () => ({
     getCatalog: (...args: any[]) => mockGetCatalog(...args),
     updateCatalog: jest.fn().mockResolvedValue(undefined),
     removeEntry: jest.fn().mockResolvedValue(undefined),
+    onCatalogUpdated: jest.fn(() => jest.fn()), // returns unsubscribe function
   },
 }));
 
