@@ -2,7 +2,7 @@ import React, { memo, useState, useCallback } from 'react';
 import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { useAnimatedStyle, useAnimatedProps, useSharedValue, withTiming, withSpring, withSequence, withDelay, Easing } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useAnimatedProps, useSharedValue, withTiming, withSpring, withSequence, withDelay, Easing, runOnJS } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { CatalogEntry, getLocalizedText } from '@/types/story';
@@ -43,6 +43,7 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
   const checkOpacity = useSharedValue(0);      // checkmark
   const checkScale = useSharedValue(0.5);      // checkmark scale
   const cardScale = useSharedValue(1);         // card pop on reveal
+  const collapseWidth = useSharedValue(cardWidth + 15); // width including margin for collapse
 
   // Circular progress ring constants
   const RING_SIZE = 48;
@@ -71,6 +72,17 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
   const cardAnimStyle = useAnimatedStyle(() => ({
     transform: [{ scale: cardScale.value }],
   }));
+
+  // Wrapper style for collapse animation after download completes
+  const collapseStyle = useAnimatedStyle(() => {
+    if (collapseWidth.value < cardWidth + 15) {
+      return {
+        width: collapseWidth.value,
+        overflow: 'hidden' as const,
+      };
+    }
+    return {};
+  });
 
   const handlePress = useCallback(async () => {
     if (downloading || complete) return;
@@ -114,7 +126,20 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
 
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         setComplete(true);
-        setTimeout(() => onDownloadComplete?.(entry.storyId), 1300);
+
+        // 7. After reveal animation, collapse the card width so siblings shuffle across
+        // Then notify parent to swap catalog entry → downloaded story card
+        const triggerCollapse = () => {
+          collapseWidth.value = withTiming(0, {
+            duration: 300,
+            easing: Easing.inOut(Easing.ease),
+          }, (finished) => {
+            if (finished && onDownloadComplete) {
+              runOnJS(onDownloadComplete)(entry.storyId);
+            }
+          });
+        };
+        setTimeout(triggerCollapse, 1300);
       } else {
         setDownloading(false);
         progressValue.value = withTiming(0, { duration: 200 });
@@ -127,7 +152,7 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
       ringOpacity.value = withTiming(0, { duration: 200 });
       Alert.alert('Download Failed', 'An unexpected error occurred. Please try again.', [{ text: 'OK' }]);
     }
-  }, [downloading, complete, entry, onDownloadComplete, progressValue, ringOpacity, ringScale, checkOpacity, checkScale, overlayOpacity, cardScale]);
+  }, [downloading, complete, entry, onDownloadComplete, progressValue, ringOpacity, ringScale, checkOpacity, checkScale, overlayOpacity, cardScale, collapseWidth]);
 
   const handleLongPress = useCallback(() => {
     if (downloading) return;
@@ -135,6 +160,7 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
   }, [downloading, entry, onLongPress]);
 
   return (
+    <Animated.View style={collapseStyle}>
     <Pressable onPress={handlePress} onLongPress={handleLongPress} delayLongPress={400} style={cardStyles.pressable}>
       <Animated.View style={[cardStyles.card, { width: cardWidth, height: cardHeight, borderRadius }, cardAnimStyle]}>
         {/* Thumbnail image */}
@@ -214,6 +240,7 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
         <Text style={cardStyles.title} numberOfLines={2}>{displayTitle}</Text>
       </View>
     </Pressable>
+    </Animated.View>
   );
 });
 

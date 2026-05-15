@@ -12,7 +12,8 @@ import Animated, {
   withDelay,
   withSequence,
   runOnJS,
-  Easing
+  Easing,
+  withSpring
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
@@ -78,6 +79,7 @@ interface StoryCardProps {
   isUnread?: boolean; // Show shimmer effect for unread stories
   isDeleting?: boolean; // Trigger implode animation when deleting
   onDeleteAnimationComplete?: () => void; // Called after implode animation finishes
+  isNewlyDownloaded?: boolean; // Animate expand into place when first appearing after download
   language: SupportedLanguage;
 }
 
@@ -94,6 +96,7 @@ const StoryCard = memo(function StoryCard({
   isUnread,
   isDeleting,
   onDeleteAnimationComplete,
+  isNewlyDownloaded,
   language,
 }: StoryCardProps) {
   const cardRef = useRef<View>(null);
@@ -106,9 +109,10 @@ const StoryCard = memo(function StoryCard({
   // Implode animation for deletion — two phases:
   // 1. Scale implodes to 0 (the "pop" effect)
   // 2. Container width collapses to 0 so remaining cards slide across
-  const deleteScale = useSharedValue(1);
-  const deleteOpacity = useSharedValue(1);
-  const deleteWidth = useSharedValue(cardWidth + CARD_MARGIN);
+  // Also used for expansion when isNewlyDownloaded — starts at 0 and expands to full
+  const deleteScale = useSharedValue(isNewlyDownloaded ? 0.8 : 1);
+  const deleteOpacity = useSharedValue(isNewlyDownloaded ? 0 : 1);
+  const deleteWidth = useSharedValue(isNewlyDownloaded ? 0 : cardWidth + CARD_MARGIN);
 
   useEffect(() => {
     if (isDeleting) {
@@ -132,6 +136,20 @@ const StoryCard = memo(function StoryCard({
       deleteOpacity.value = withDelay(200, withTiming(0, { duration: 150 }));
     }
   }, [isDeleting]);
+
+  // Expansion animation for newly downloaded stories — width expands from 0, card fades/scales in
+  useEffect(() => {
+    if (isNewlyDownloaded) {
+      // Expand width first so siblings push out
+      deleteWidth.value = withTiming(cardWidth + CARD_MARGIN, {
+        duration: 350,
+        easing: Easing.out(Easing.ease),
+      });
+      // Then fade and scale the card in
+      deleteOpacity.value = withDelay(150, withTiming(1, { duration: 250 }));
+      deleteScale.value = withDelay(150, withSpring(1, { damping: 14, stiffness: 200 }));
+    }
+  }, [isNewlyDownloaded]);
 
   // Shimmer animation for unread stories — slides a highlight across the card periodically
   const shimmerTranslate = useSharedValue(-cardWidth);
@@ -300,6 +318,9 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   // Story currently being deleted (implode animation in progress)
   const [deletingStoryId, setDeletingStoryId] = useState<string | null>(null);
 
+  // Track the most recently downloaded story for expansion animation
+  const [newlyDownloadedId, setNewlyDownloadedId] = useState<string | null>(null);
+
   // Union type for items in genre carousels: either a downloaded story or a catalog entry
   type StoryDisplayItem = { type: 'story'; data: Story } | { type: 'catalog'; data: CatalogEntry };
 
@@ -456,21 +477,13 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   }, []);
 
   // When a catalog story finishes downloading, refresh both stories list and catalog
-  const handleCatalogDownloadComplete = useCallback(async (_storyId: string) => {
+  const handleCatalogDownloadComplete = useCallback(async (storyId: string) => {
     try {
       // Invalidate StoryLoader cache so it picks up the newly downloaded story
       StoryLoader.invalidateCache();
 
-      // LayoutAnimation so the card smoothly slides from its catalog
-      // position into its new downloaded position in the carousel
-      LayoutAnimation.configureNext({
-        duration: 350,
-        update: {
-          type: LayoutAnimation.Types.spring,
-          springDamping: 0.85,
-          property: LayoutAnimation.Properties.scaleXY,
-        },
-      });
+      // Mark as newly downloaded so StoryCard plays expansion animation
+      setNewlyDownloadedId(storyId);
 
       // Refresh the downloaded stories list
       const loadedStories = await StoryLoader.getStories();
@@ -478,6 +491,9 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       // Refresh catalog (entry was removed by StoryDownloadService)
       const entries = await CatalogService.getCatalog();
       setCatalogEntries(entries);
+
+      // Clear the newly downloaded flag after the expansion animation completes
+      setTimeout(() => setNewlyDownloadedId(null), 800);
     } catch {
       // Best-effort refresh
     }
@@ -644,6 +660,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
           isUnread={story.isAvailable && !readStoryIds.includes(story.id)}
           isDeleting={deletingStoryId === story.id}
           onDeleteAnimationComplete={handleImplodeComplete}
+          isNewlyDownloaded={newlyDownloadedId === story.id}
           language={currentLanguage}
         />
       );
@@ -660,7 +677,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
         onLongPress={handleCatalogPreview}
       />
     );
-  }, [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader, currentLanguage, readStoryIds, deletingStoryId, handleImplodeComplete, handleCatalogDownloadComplete, handleCatalogPreview]);
+  }, [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader, currentLanguage, readStoryIds, deletingStoryId, handleImplodeComplete, handleCatalogDownloadComplete, handleCatalogPreview, newlyDownloadedId]);
 
   // Memoized render function for story cards (favorites only — pure Story[])
   const renderStoryCard: ListRenderItem<Story> = useCallback(({ item: story }) => (
@@ -676,9 +693,10 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       isUnread={story.isAvailable && !readStoryIds.includes(story.id)}
       isDeleting={deletingStoryId === story.id}
       onDeleteAnimationComplete={handleImplodeComplete}
+      isNewlyDownloaded={newlyDownloadedId === story.id}
       language={currentLanguage}
     />
-  ), [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader, currentLanguage, readStoryIds, deletingStoryId, handleImplodeComplete]);
+  ), [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader, currentLanguage, readStoryIds, deletingStoryId, handleImplodeComplete, newlyDownloadedId]);
 
   // Key extractors
   const keyExtractor = useCallback((story: Story) => story.id, []);
