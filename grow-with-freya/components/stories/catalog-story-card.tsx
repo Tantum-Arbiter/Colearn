@@ -1,4 +1,4 @@
-import React, { memo, useState, useCallback } from 'react';
+import React, { memo, useState, useCallback, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,8 +19,8 @@ interface CatalogStoryCardProps {
   borderRadius: number;
   language: SupportedLanguage;
   onDownloadComplete?: (storyId: string) => void;
-  /** Index of this entry among catalog entries in its genre row (0 = first, no slide needed) */
-  catalogIndexInGenre?: number;
+  /** Pixel offset for bubble-swap animation (negative = move left, positive = shift right) */
+  swapTranslateX?: number;
   onLongPress?: (entry: CatalogEntry) => void;
 }
 
@@ -31,7 +31,7 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
   borderRadius,
   language,
   onDownloadComplete,
-  catalogIndexInGenre = 0,
+  swapTranslateX = 0,
   onLongPress,
 }: CatalogStoryCardProps) {
   const displayTitle = getLocalizedText(entry.localizedTitle, entry.title, language);
@@ -47,6 +47,7 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
   const checkScale = useSharedValue(0.5);      // checkmark scale
   const cardScale = useSharedValue(1);         // card pop on reveal
   const collapseWidth = useSharedValue(cardWidth + 15); // width including margin for collapse
+  const swapTx = useSharedValue(0);            // bubble-swap translateX
 
   // Circular progress ring constants
   const RING_SIZE = 48;
@@ -76,15 +77,26 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
     transform: [{ scale: cardScale.value }],
   }));
 
-  // Wrapper style for collapse animation after download completes
+  // Animate swap translateX when prop changes (bubble-swap effect)
+  useEffect(() => {
+    swapTx.value = withTiming(swapTranslateX, {
+      duration: 280,
+      easing: Easing.inOut(Easing.ease),
+    });
+  }, [swapTranslateX]);
+
+  // Wrapper style for collapse + swap animation
   const collapseStyle = useAnimatedStyle(() => {
+    const style: Record<string, unknown> = {};
     if (collapseWidth.value < cardWidth + 15) {
-      return {
-        width: collapseWidth.value,
-        overflow: 'hidden' as const,
-      };
+      style.width = collapseWidth.value;
+      style.overflow = 'hidden';
     }
-    return {};
+    if (swapTx.value !== 0) {
+      style.transform = [{ translateX: swapTx.value }];
+      style.zIndex = swapTx.value < 0 ? 10 : 1; // Downloaded card on top during swap
+    }
+    return style;
   });
 
   const handlePress = useCallback(async () => {
@@ -130,26 +142,10 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         setComplete(true);
 
-        // 7. After reveal, transition out based on whether the card changes position
+        // 7. After reveal, notify parent to start bubble-swap (or seamless swap)
         setTimeout(() => {
-          if (catalogIndexInGenre > 0) {
-            // Card moves left — scale down, fade, then collapse width so siblings slide across
-            cardScale.value = withTiming(0.6, { duration: 250, easing: Easing.in(Easing.ease) });
-            overlayOpacity.value = withTiming(0.5, { duration: 250 });
-
-            collapseWidth.value = withDelay(200, withTiming(0, {
-              duration: 300,
-              easing: Easing.inOut(Easing.ease),
-            }, (finished) => {
-              if (finished && onDownloadComplete) {
-                runOnJS(onDownloadComplete)(entry.storyId);
-              }
-            }));
-          } else {
-            // Card stays in same position — just notify immediately (seamless swap)
-            if (onDownloadComplete) {
-              onDownloadComplete(entry.storyId);
-            }
+          if (onDownloadComplete) {
+            onDownloadComplete(entry.storyId);
           }
         }, 1300);
       } else {
@@ -164,7 +160,7 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
       ringOpacity.value = withTiming(0, { duration: 200 });
       Alert.alert('Download Failed', 'An unexpected error occurred. Please try again.', [{ text: 'OK' }]);
     }
-  }, [downloading, complete, entry, onDownloadComplete, catalogIndexInGenre, progressValue, ringOpacity, ringScale, checkOpacity, checkScale, overlayOpacity, cardScale, collapseWidth]);
+  }, [downloading, complete, entry, onDownloadComplete, progressValue, ringOpacity, ringScale, checkOpacity, checkScale, overlayOpacity, cardScale, collapseWidth]);
 
   const handleLongPress = useCallback(() => {
     if (downloading) return;
