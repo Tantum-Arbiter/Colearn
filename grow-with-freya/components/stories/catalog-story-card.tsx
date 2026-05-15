@@ -91,32 +91,30 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
 
       if (result.success) {
         // 1. Complete the ring
-        progressValue.value = withTiming(100, { duration: 300, easing: Easing.out(Easing.ease) });
+        progressValue.value = withTiming(100, { duration: 250, easing: Easing.out(Easing.ease) });
 
-        // 2. Ring scales up and fades out
-        ringScale.value = withDelay(300, withTiming(1.8, { duration: 350, easing: Easing.out(Easing.ease) }));
-        ringOpacity.value = withDelay(300, withTiming(0, { duration: 350 }));
+        // 2. "Bubble pop" — ring rapidly inflates and vanishes
+        ringScale.value = withDelay(250, withTiming(3, { duration: 250, easing: Easing.out(Easing.ease) }));
+        ringOpacity.value = withDelay(250, withTiming(0, { duration: 200 }));
 
-        // 3. Checkmark pops in with spring
-        checkOpacity.value = withDelay(400, withTiming(1, { duration: 200 }));
-        checkScale.value = withDelay(400, withSpring(1, { damping: 12, stiffness: 200 }));
+        // 3. Overlay pops away — fast ease-out like a bubble bursting
+        overlayOpacity.value = withDelay(350, withTiming(0, { duration: 300, easing: Easing.out(Easing.ease) }));
 
-        // 4. Overlay fades out to reveal the full-colour thumbnail
-        overlayOpacity.value = withDelay(500, withTiming(0, { duration: 500, easing: Easing.out(Easing.ease) }));
-
-        // 5. Subtle card pop to punctuate the reveal
-        cardScale.value = withDelay(600, withSequence(
-          withSpring(1.04, { damping: 15, stiffness: 300 }),
-          withSpring(1, { damping: 15, stiffness: 300 })
+        // 4. Card bounces outward then settles — the "pop"
+        cardScale.value = withDelay(350, withSequence(
+          withSpring(1.08, { damping: 8, stiffness: 400 }),
+          withSpring(1, { damping: 12, stiffness: 200 })
         ));
 
-        // 6. Checkmark fades out
-        checkOpacity.value = withDelay(900, withTiming(0, { duration: 300 }));
-        checkScale.value = withDelay(900, withTiming(1.3, { duration: 300 }));
+        // 5. Quick checkmark flash
+        checkOpacity.value = withDelay(400, withTiming(1, { duration: 150 }));
+        checkScale.value = withDelay(400, withSpring(1, { damping: 8, stiffness: 350 }));
+        checkOpacity.value = withDelay(850, withTiming(0, { duration: 250 }));
+        checkScale.value = withDelay(850, withTiming(1.4, { duration: 250 }));
 
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         setComplete(true);
-        setTimeout(() => onDownloadComplete?.(entry.storyId), 1300);
+        setTimeout(() => onDownloadComplete?.(entry.storyId), 1200);
       } else {
         setDownloading(false);
         progressValue.value = withTiming(0, { duration: 200 });
