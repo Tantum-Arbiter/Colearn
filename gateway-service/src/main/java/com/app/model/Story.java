@@ -2,6 +2,7 @@ package com.app.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.cloud.firestore.annotation.Exclude;
 import com.google.cloud.firestore.annotation.PropertyName;
 
 import java.time.Instant;
@@ -255,6 +256,7 @@ public class Story {
         this.free = free;
     }
 
+    @Exclude
     public void setIsFree(boolean isFree) {
         this.free = isFree;
     }
@@ -269,6 +271,7 @@ public class Story {
         this.referralReward = referralReward;
     }
 
+    @Exclude
     public void setIsReferralReward(boolean isReferralReward) {
         this.referralReward = isReferralReward;
     }
