@@ -21,6 +21,7 @@ import { LoginScreen } from '@/components/auth/login-screen';
 import { AccountScreen } from '@/components/account/account-screen';
 import { MainMenu } from '@/components/main-menu';
 import { ApiClient } from '@/services/api-client';
+import { SecureStorage } from '@/services/secure-storage';
 import { backgroundSaveService } from '@/services/background-save-service';
 import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
 import { StoryBookReader } from '@/components/stories/story-book-reader';
@@ -266,25 +267,17 @@ function AppContent() {
           return;
         }
 
-        // Only check authentication when not in guest mode
+        // Fast local token check — no network, no timeout risk
         try {
-          // Add timeout to prevent hanging
-          const authPromise = ApiClient.isAuthenticated();
-          const timeoutPromise = new Promise<boolean>((resolve) => {
-            setTimeout(() => {
-              log.warn('[Layout] Authentication check timeout - assuming not authenticated');
-              resolve(false);
-            }, 5000);
-          });
+          const hasTokens = await SecureStorage.isAuthenticated();
+          log.info(`[Layout] Fast local auth check: hasTokens=${hasTokens}`);
 
-          const isAuthenticated = await Promise.race([authPromise, timeoutPromise]);
-
-          if (!isAuthenticated) {
-            // User has completed onboarding but is not authenticated - show login screen
+          if (!hasTokens) {
+            // No tokens stored — user needs to log in
             setShowLoginAfterOnboarding(true);
             setCurrentView('login');
           } else {
-            // User is authenticated — go straight to main menu, sync silently in background.
+            // Tokens exist — go straight to main menu, sync silently in background.
             // Bundled stories are always available immediately; metadata sync runs async.
             setCurrentView('app');
             setCurrentPage('main');
@@ -293,6 +286,13 @@ function AppContent() {
             (async () => {
               try {
                 log.info('[Layout] Background sync starting...');
+                // Ensure token is valid (refresh if expired) — now in background, no timeout risk
+                try {
+                  const isValid = await ApiClient.isAuthenticated();
+                  if (!isValid) {
+                    log.warn('[Layout] Token refresh failed during background sync — user may need to re-login');
+                  }
+                } catch (e) { log.warn('[Layout] Background token validation skipped:', e); }
                 // Sync profile
                 try {
                   const profile = await ApiClient.getProfile();
