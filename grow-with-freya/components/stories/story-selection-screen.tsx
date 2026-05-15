@@ -745,10 +745,8 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
 
   // Key extractors
   const keyExtractor = useCallback((story: Story) => story.id, []);
-  // Use the same key for both story and catalog items so FlatList reuses the slot
-  // instead of unmounting/remounting (which causes a visible flash on data refresh)
   const displayItemKeyExtractor = useCallback((item: StoryDisplayItem) =>
-    item.type === 'story' ? item.data.id : item.data.storyId, []);
+    item.type === 'story' ? item.data.id : `catalog-${item.data.storyId}`, []);
 
   // Memoized getItemLayout for fast scrolling
   const getItemLayout = useCallback((_data: any, index: number) => ({
