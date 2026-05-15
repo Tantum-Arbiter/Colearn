@@ -1,6 +1,7 @@
 import { Story } from '@/types/story';
 import { CacheManager } from './cache-manager';
 import { StorySyncService } from './story-sync-service';
+import { StoryDownloadService } from './story-download-service';
 import { ALL_STORIES, getAvailableStories } from '@/data/stories';
 import { Logger } from '@/utils/logger';
 
@@ -45,10 +46,11 @@ export class StoryLoader {
 
   private static async loadStoriesInternal(): Promise<Story[]> {
     try {
-      // Start with bundled stories (always available)
-      const bundledStories = [...ALL_STORIES];
+      // Start with bundled stories, excluding any the user has "deleted"
+      const hiddenIds = await StoryDownloadService.getHiddenBundledStoryIds();
+      const bundledStories = ALL_STORIES.filter(s => !hiddenIds.has(s.id));
       const bundledIds = new Set(bundledStories.map(s => s.id));
-      log.debug(`Bundled stories: ${bundledStories.length}`);
+      log.debug(`Bundled stories: ${bundledStories.length} (${hiddenIds.size} hidden)`);
 
       // Get CMS stories from CacheManager with URLs resolved to local cached paths
       // This ensures images load from local cache instead of making network requests

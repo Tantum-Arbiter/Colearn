@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CacheManager } from './cache-manager';
 import { ApiClient } from './api-client';
 import { AssetDownloadUtils } from './asset-download-utils';
@@ -7,6 +8,13 @@ import { Story, CatalogEntry } from '../types/story';
 import { Logger } from '@/utils/logger';
 
 const log = Logger.create('StoryDownloadService');
+
+/**
+ * Key for storing IDs of bundled stories the user has "deleted".
+ * These stories are excluded from StoryLoader results and shown
+ * as catalog entries instead.
+ */
+const HIDDEN_BUNDLED_KEY = '@hidden_bundled_stories';
 
 export type DownloadPhase =
   | 'access-check'
@@ -164,6 +172,9 @@ export class StoryDownloadService {
       // Remove from catalog (it's now a downloaded story)
       await CatalogService.removeEntry(storyId);
 
+      // If this was a previously hidden bundled story, un-hide it
+      await this.unhideBundledStory(storyId);
+
       // Record download for analytics/limits
       await StoryAccessService.recordDownload();
 
@@ -207,36 +218,51 @@ export class StoryDownloadService {
   /**
    * Delete a downloaded story from local cache and re-add it to the catalog
    * so the user can re-download it later.
+   *
+   * For bundled stories (shipped with the app), also marks the story as
+   * "hidden" so StoryLoader excludes it from the stories list.
    */
   static async deleteStory(storyId: string): Promise<boolean> {
     try {
       // Get the story before removing so we can build a catalog entry
       const story = await CacheManager.getStory(storyId);
-      if (!story) {
-        log.warn(`Cannot delete story ${storyId}: not found in cache`);
+
+      // For bundled stories the CacheManager may not have them, so also
+      // check ALL_STORIES from the static bundle
+      const { ALL_STORIES } = require('../data/stories');
+      const bundledStory = ALL_STORIES.find((s: Story) => s.id === storyId);
+      const storyData: Story | undefined = story ?? bundledStory;
+
+      if (!storyData) {
+        log.warn(`Cannot delete story ${storyId}: not found in cache or bundle`);
         return false;
       }
 
-      // Remove from local story cache
+      // Remove from local story cache (no-op if not in cache)
       await CacheManager.removeStories([storyId]);
 
-      // Re-add to catalog as a downloadable entry (no thumbnailUrl — next sync will populate it)
+      // If this is a bundled story, mark it as hidden so StoryLoader skips it
+      if (bundledStory) {
+        await this.hideBundledStory(storyId);
+      }
+
+      // Re-add to catalog as a downloadable entry
       const catalogEntry: CatalogEntry = {
-        storyId: story.id,
-        title: story.title,
-        localizedTitle: story.localizedTitle,
-        description: story.description,
-        localizedDescription: story.localizedDescription,
-        category: story.category,
-        tag: story.tag,
-        tags: story.tags,
-        emoji: story.emoji,
-        thumbnailUrl: typeof story.coverImage === 'string' ? story.coverImage : undefined,
-        isFree: story.isFree ?? false,
-        isPremium: story.isPremium ?? false,
-        isReferralReward: story.isReferralReward ?? false,
-        ageRange: story.ageRange,
-        duration: story.duration,
+        storyId: storyData.id,
+        title: storyData.title,
+        localizedTitle: storyData.localizedTitle,
+        description: storyData.description,
+        localizedDescription: storyData.localizedDescription,
+        category: storyData.category,
+        tag: storyData.tag,
+        tags: storyData.tags,
+        emoji: storyData.emoji,
+        thumbnailUrl: typeof storyData.coverImage === 'string' ? storyData.coverImage : undefined,
+        isFree: storyData.isFree ?? false,
+        isPremium: storyData.isPremium ?? false,
+        isReferralReward: storyData.isReferralReward ?? false,
+        ageRange: storyData.ageRange,
+        duration: storyData.duration,
       };
 
       await CatalogService.addEntry(catalogEntry);
@@ -246,6 +272,43 @@ export class StoryDownloadService {
     } catch (error) {
       log.error(`Failed to delete story ${storyId}:`, error);
       return false;
+    }
+  }
+
+  // ─── Hidden bundled stories ───────────────────────────────────────
+
+  /**
+   * Get the set of bundled story IDs the user has "deleted".
+   */
+  static async getHiddenBundledStoryIds(): Promise<Set<string>> {
+    try {
+      const data = await AsyncStorage.getItem(HIDDEN_BUNDLED_KEY);
+      if (!data) return new Set();
+      return new Set(JSON.parse(data) as string[]);
+    } catch (error) {
+      log.error('Failed to read hidden bundled stories:', error);
+      return new Set();
+    }
+  }
+
+  /**
+   * Mark a bundled story as hidden (user "deleted" it).
+   */
+  static async hideBundledStory(storyId: string): Promise<void> {
+    const hidden = await this.getHiddenBundledStoryIds();
+    hidden.add(storyId);
+    await AsyncStorage.setItem(HIDDEN_BUNDLED_KEY, JSON.stringify([...hidden]));
+    log.debug(`Bundled story ${storyId} marked as hidden`);
+  }
+
+  /**
+   * Un-hide a bundled story (user re-downloaded it).
+   */
+  static async unhideBundledStory(storyId: string): Promise<void> {
+    const hidden = await this.getHiddenBundledStoryIds();
+    if (hidden.delete(storyId)) {
+      await AsyncStorage.setItem(HIDDEN_BUNDLED_KEY, JSON.stringify([...hidden]));
+      log.debug(`Bundled story ${storyId} un-hidden`);
     }
   }
 }
