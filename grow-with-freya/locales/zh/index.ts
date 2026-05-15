@@ -215,6 +215,7 @@ export default {
     aboutThisStory: '关于这个故事',
     removeFromDevice: '移除',
     removeConfirm: '从此设备移除"{{title}}"？您可以随时重新下载。',
+    preInstalledNotice: '此故事随应用预装。无法移除，且不计入下载限额。',
   },
   completion: {
     theEnd: '结束',

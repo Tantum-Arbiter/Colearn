@@ -215,6 +215,7 @@ export default {
     aboutThisStory: 'حول هذه القصة',
     removeFromDevice: 'إزالة',
     removeConfirm: 'إزالة "{{title}}" من هذا الجهاز؟ يمكنك تحميلها مرة أخرى في أي وقت.',
+    preInstalledNotice: 'هذه القصة مثبتة مسبقاً مع التطبيق. لا يمكن إزالتها ولا تُحتسب ضمن حد التنزيلات.',
   },
   completion: {
     theEnd: 'النهاية',

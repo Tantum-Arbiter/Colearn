@@ -236,6 +236,7 @@ export default {
     aboutThisStory: 'About this story',
     removeFromDevice: 'Remove',
     removeConfirm: 'Remove "{{title}}" from this device? You can download it again anytime.',
+    preInstalledNotice: 'This story comes pre-installed with the app. It cannot be removed and does not count towards your download limit.',
   },
 
   // Story completion

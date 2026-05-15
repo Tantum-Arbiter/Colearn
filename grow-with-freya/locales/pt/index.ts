@@ -215,6 +215,7 @@ export default {
     aboutThisStory: 'Sobre esta história',
     removeFromDevice: 'Remover',
     removeConfirm: 'Remover "{{title}}" deste dispositivo? Pode transferir novamente a qualquer momento.',
+    preInstalledNotice: 'Esta história vem pré-instalada com a app. Não pode ser removida e não conta para o seu limite de transferências.',
   },
   completion: {
     theEnd: 'Fim',

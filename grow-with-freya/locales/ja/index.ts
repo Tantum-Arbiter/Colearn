@@ -215,6 +215,7 @@ export default {
     aboutThisStory: 'このストーリーについて',
     removeFromDevice: '削除',
     removeConfirm: '"{{title}}"をこのデバイスから削除しますか？いつでも再ダウンロードできます。',
+    preInstalledNotice: 'この物語はアプリにプリインストールされています。削除できず、ダウンロード制限にはカウントされません。',
   },
   completion: {
     theEnd: '終わり',

@@ -215,6 +215,7 @@ export default {
     aboutThisStory: 'Over Dit Verhaal',
     removeFromDevice: 'Verwijderen',
     removeConfirm: '"{{title}}" van dit apparaat verwijderen? Je kunt het op elk moment opnieuw downloaden.',
+    preInstalledNotice: 'Dit verhaal is vooraf geïnstalleerd met de app. Het kan niet worden verwijderd en telt niet mee voor je downloadlimiet.',
   },
   completion: {
     theEnd: 'Het Einde',

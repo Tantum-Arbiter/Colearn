@@ -232,6 +232,7 @@ export default {
     aboutThisStory: 'Über diese Geschichte',
     removeFromDevice: 'Entfernen',
     removeConfirm: '"{{title}}" von diesem Gerät entfernen? Du kannst es jederzeit erneut herunterladen.',
+    preInstalledNotice: 'Diese Geschichte ist mit der App vorinstalliert. Sie kann nicht entfernt werden und zählt nicht zu deinem Download-Limit.',
   },
 
   // Story completion

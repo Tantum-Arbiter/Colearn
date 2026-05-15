@@ -439,6 +439,13 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     try {
       // Invalidate StoryLoader cache so it picks up the newly downloaded story
       StoryLoader.invalidateCache();
+
+      // LayoutAnimation so the card smoothly slides from its catalog
+      // position into its new downloaded position in the carousel
+      LayoutAnimation.configureNext(
+        LayoutAnimation.create(350, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity)
+      );
+
       // Refresh the downloaded stories list
       const loadedStories = await StoryLoader.getStories();
       setStories(loadedStories);
@@ -834,7 +841,8 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
         visible={isPreviewVisible}
         onClose={handleClosePreview}
         onReadStory={(story) => handleStoryPress(story)}
-        onDeleteStory={previewStory?.isAvailable ? handleDeleteStory : undefined}
+        onDeleteStory={previewStory?.isAvailable && !StoryLoader.isLocalStory(previewStory.id) ? handleDeleteStory : undefined}
+        isPreInstalled={previewStory ? StoryLoader.isLocalStory(previewStory.id) : false}
       />
     </LinearGradient>
   );

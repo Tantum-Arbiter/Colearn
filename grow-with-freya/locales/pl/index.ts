@@ -232,6 +232,7 @@ export default {
     aboutThisStory: 'O tej bajce',
     removeFromDevice: 'Usuń',
     removeConfirm: 'Usunąć "{{title}}" z tego urządzenia? Możesz pobrać ponownie w każdej chwili.',
+    preInstalledNotice: 'Ta historia jest preinstalowana z aplikacją. Nie można jej usunąć i nie wlicza się do limitu pobrań.',
   },
 
   // Story completion

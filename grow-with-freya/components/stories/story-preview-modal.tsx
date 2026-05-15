@@ -33,6 +33,7 @@ interface StoryPreviewModalProps {
   onClose: () => void;
   onReadStory?: (story: Story) => void;
   onDeleteStory?: (story: Story) => void;
+  isPreInstalled?: boolean;
 }
 
 const ANIMATION_DURATION = 300;
@@ -43,6 +44,7 @@ export function StoryPreviewModal({
   onClose,
   onReadStory,
   onDeleteStory,
+  isPreInstalled,
 }: StoryPreviewModalProps) {
   const { scaledFontSize, scaledPadding, scaledButtonSize } = useAccessibility();
   const { t, i18n } = useTranslation();
@@ -265,6 +267,16 @@ export function StoryPreviewModal({
                 <Text style={styles.sectionLabel}>{t('storyPreview.aboutThisStory')}</Text>
                 <Text style={[styles.description, { fontSize: scaledFontSize(14) }]}>
                   {displayDescription}
+                </Text>
+              </View>
+            )}
+
+            {/* Pre-installed notice */}
+            {isPreInstalled && story.isAvailable && (
+              <View style={styles.preInstalledNotice}>
+                <Text style={[styles.preInstalledIcon]}>📦</Text>
+                <Text style={[styles.preInstalledText, { fontSize: scaledFontSize(12) }]}>
+                  {t('storyPreview.preInstalledNotice')}
                 </Text>
               </View>
             )}
@@ -507,6 +519,25 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sans,
     fontWeight: '600',
     color: '#E17055',
+  },
+  preInstalledNotice: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#F0F7FF',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 8,
+    gap: 8,
+  },
+  preInstalledIcon: {
+    fontSize: 16,
+    marginTop: 1,
+  },
+  preInstalledText: {
+    flex: 1,
+    fontFamily: Fonts.sans,
+    color: '#4A6FA5',
+    lineHeight: 18,
   },
 });
 

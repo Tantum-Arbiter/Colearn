@@ -215,6 +215,7 @@ export default {
     aboutThisStory: 'Bu Hikaye Hakkında',
     removeFromDevice: 'Kaldır',
     removeConfirm: '"{{title}}" bu cihazdan kaldırılsın mı? İstediğiniz zaman tekrar indirebilirsiniz.',
+    preInstalledNotice: 'Bu hikaye uygulamayla birlikte önceden yüklenmiştir. Kaldırılamaz ve indirme limitinize dahil edilmez.',
   },
   completion: {
     theEnd: 'Son',

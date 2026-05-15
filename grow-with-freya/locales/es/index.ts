@@ -232,6 +232,7 @@ export default {
     aboutThisStory: 'Sobre este cuento',
     removeFromDevice: 'Eliminar',
     removeConfirm: '¿Eliminar "{{title}}" de este dispositivo? Puedes descargarlo de nuevo en cualquier momento.',
+    preInstalledNotice: 'Este cuento viene preinstalado con la app. No se puede eliminar y no cuenta para tu límite de descargas.',
   },
 
   // Story completion

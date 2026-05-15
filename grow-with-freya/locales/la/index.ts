@@ -215,6 +215,7 @@ export default {
     aboutThisStory: 'De Hac Fabula',
     removeFromDevice: 'Remove',
     removeConfirm: 'Remove "{{title}}" ab hoc instrumento? Iterum descendere potes.',
+    preInstalledNotice: 'Haec fabula cum applicatione praeinstallata est. Removeri non potest nec ad limitem descensuum numeratur.',
   },
   completion: {
     theEnd: 'Finis',
