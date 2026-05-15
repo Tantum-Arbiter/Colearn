@@ -1,5 +1,5 @@
 import React, { memo, useState, useCallback } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -61,6 +61,12 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
       setDownloading(false);
       setProgress(null);
       progressWidth.value = 0;
+      console.warn(`[CatalogStoryCard] Download failed for ${entry.storyId}: ${result.error}`);
+      Alert.alert(
+        'Download Failed',
+        result.error || 'Something went wrong. Please try again.',
+        [{ text: 'OK' }]
+      );
     }
   }, [downloading, entry, onDownloadComplete, progressWidth]);
 

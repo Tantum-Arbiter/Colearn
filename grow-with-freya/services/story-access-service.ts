@@ -76,9 +76,9 @@ export class StoryAccessService {
    * TODO: Replace with real IAP / RevenueCat check when subscription is implemented.
    */
   static async hasActiveSubscription(): Promise<boolean> {
-    // For now, always returns false — subscription is not yet implemented.
-    // When implemented, this will check RevenueCat / StoreKit entitlements.
-    return false;
+    // All stories are downloadable until subscription/IAP is implemented.
+    // When ready, this will check RevenueCat / StoreKit entitlements.
+    return true;
   }
 
   // ──────────────────────────────────────────────

@@ -102,16 +102,14 @@ describe('StoryAccessService', () => {
     expect(result.allowed).toBe(true);
   });
 
-  it('should deny premium stories without subscription', async () => {
+  it('should allow premium stories (subscription placeholder returns true)', async () => {
     const result = await StoryAccessService.canDownload(premiumCatalogEntry);
-    expect(result.allowed).toBe(false);
-    expect(result.reason).toBe('subscription_required');
+    expect(result.allowed).toBe(true);
   });
 
-  it('should deny referral stories without unlock or subscription', async () => {
+  it('should allow referral stories (subscription placeholder returns true)', async () => {
     const result = await StoryAccessService.canDownload(referralCatalogEntry);
-    expect(result.allowed).toBe(false);
-    expect(result.reason).toBe('referral_required');
+    expect(result.allowed).toBe(true);
   });
 
   it('should allow referral stories after granting unlock', async () => {
@@ -275,12 +273,16 @@ describe('StoryDownloadService', () => {
     );
   });
 
-  it('should deny download of premium story without subscription', async () => {
+  it('should allow download of premium story (subscription placeholder returns true)', async () => {
+    // With subscription always returning true, premium stories should download
+    mockApiClient.request.mockResolvedValueOnce(mockStory);
+    mockAssetUtils.extractAssetPaths.mockReturnValue([]);
+    mockAssetUtils.filterUncachedAssets.mockResolvedValue([]);
+    mockCacheManager.updateStories.mockResolvedValue();
+
     const result = await StoryDownloadService.downloadStory('premium-story', premiumCatalogEntry);
-    expect(result.success).toBe(false);
-    expect(result.error).toBe('subscription_required');
-    // Should not call API
-    expect(mockApiClient.request).not.toHaveBeenCalled();
+    expect(result.success).toBe(true);
+    expect(mockApiClient.request).toHaveBeenCalled();
   });
 
   it('should handle API errors gracefully', async () => {

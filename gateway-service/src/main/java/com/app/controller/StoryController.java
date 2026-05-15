@@ -180,7 +180,14 @@ public class StoryController {
                         serverVersion.getStoryChecksums(),
                         coverImage -> {
                             if (coverImage == null || coverImage.isBlank()) return null;
-                            String thumbnailPath = coverImage.startsWith("stories/") ? coverImage : "stories/" + coverImage;
+                            // coverImage may be "assets/stories/X/cover.webp" or "stories/X/cover.webp"
+                            String thumbnailPath = coverImage;
+                            if (thumbnailPath.startsWith("assets/")) {
+                                thumbnailPath = thumbnailPath.substring("assets/".length());
+                            }
+                            if (!thumbnailPath.startsWith("stories/")) {
+                                thumbnailPath = "stories/" + thumbnailPath;
+                            }
                             return assetService.generateSignedUrl(thumbnailPath);
                         }
                 ).join();
@@ -220,7 +227,14 @@ public class StoryController {
                     serverVersion.getStoryChecksums(),
                     coverImage -> {
                         if (coverImage == null || coverImage.isBlank()) return null;
-                        String thumbnailPath = coverImage.startsWith("stories/") ? coverImage : "stories/" + coverImage;
+                        // coverImage may be "assets/stories/X/cover.webp" or "stories/X/cover.webp"
+                        String thumbnailPath = coverImage;
+                        if (thumbnailPath.startsWith("assets/")) {
+                            thumbnailPath = thumbnailPath.substring("assets/".length());
+                        }
+                        if (!thumbnailPath.startsWith("stories/")) {
+                            thumbnailPath = "stories/" + thumbnailPath;
+                        }
                         return assetService.generateSignedUrl(thumbnailPath);
                     }
             ).join();
