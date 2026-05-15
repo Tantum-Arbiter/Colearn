@@ -31,8 +31,8 @@ describe('MainMenu Component', () => {
       </ScreenTimeProvider>
     );
 
-    // Stories button exists in the carousel with emoji prefix
-    expect(getByLabelText('📚 menu.stories button')).toBeTruthy();
+    // Stories button exists in the carousel
+    expect(getByLabelText('menu.stories button')).toBeTruthy();
   });
 
   it('should handle navigation when stories button is pressed', () => {
@@ -42,7 +42,7 @@ describe('MainMenu Component', () => {
       </ScreenTimeProvider>
     );
 
-    const storiesButton = getByLabelText('📚 menu.stories button');
+    const storiesButton = getByLabelText('menu.stories button');
     fireEvent.press(storiesButton);
 
     expect(mockOnNavigate).toHaveBeenCalledWith('stories');

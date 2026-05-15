@@ -58,9 +58,14 @@ jest.mock('@/hooks/use-parents-only-challenge', () => ({
 }));
 
 jest.mock('@/store/app-store', () => ({
-  useAppStore: () => ({
-    setTextSizeScale: jest.fn(),
-  }),
+  useAppStore: (selector?: (state: any) => any) => {
+    const state = {
+      setTextSizeScale: jest.fn(),
+      markStoryAsRead: jest.fn(),
+      recordReadingSession: jest.fn(),
+    };
+    return selector ? selector(state) : state;
+  },
 }));
 
 jest.mock('@/services/voice-recording-service', () => ({

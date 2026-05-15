@@ -5,11 +5,11 @@ import { getSvgComponentFromSvg } from '../../components/main-menu/assets';
 
 // Mock the SVG components to avoid rendering issues in tests
 jest.mock('../../components/main-menu/svg-components', () => ({
-  StoriesSvg: ({ width, height, opacity }: any) => `MockStoriesSvg-${width}x${height}-${opacity}`,
-  SensorySvg: ({ width, height, opacity }: any) => `MockSensorySvg-${width}x${height}-${opacity}`,
-  ScreentimeSvg: ({ width, height, opacity }: any) => `MockScreentimeSvg-${width}x${height}-${opacity}`,
   CloudSvg: ({ width, height, opacity }: any) => `MockCloudSvg-${width}x${height}-${opacity}`,
-  BearSvg: ({ width, height, opacity }: any) => `MockBearSvg-${width}x${height}-${opacity}`,
+  FreyaRocketSvg: ({ width, height, opacity }: any) => `MockFreyaRocketSvg-${width}x${height}-${opacity}`,
+  FreyaRocketRightSvg: ({ width, height, opacity }: any) => `MockFreyaRocketRightSvg-${width}x${height}-${opacity}`,
+  Cloud1Svg: ({ width, height, opacity }: any) => `MockCloud1Svg-${width}x${height}-${opacity}`,
+  Cloud2Svg: ({ width, height, opacity }: any) => `MockCloud2Svg-${width}x${height}-${opacity}`,
 }));
 
 describe('MenuIcon Icon Rendering Tests', () => {
@@ -20,24 +20,6 @@ describe('MenuIcon Icon Rendering Tests', () => {
   });
 
   describe('SVG Component Resolution', () => {
-    it('should resolve stories icon to StoriesSvg component', () => {
-      const SvgComponent = getSvgComponentFromSvg('stories');
-      expect(SvgComponent).toBeDefined();
-      expect(typeof SvgComponent).toBe('function');
-    });
-
-    it('should resolve sensory icon to SensorySvg component', () => {
-      const SvgComponent = getSvgComponentFromSvg('sensory');
-      expect(SvgComponent).toBeDefined();
-      expect(typeof SvgComponent).toBe('function');
-    });
-
-    it('should resolve screentime icon to ScreentimeSvg component', () => {
-      const SvgComponent = getSvgComponentFromSvg('screentime');
-      expect(SvgComponent).toBeDefined();
-      expect(typeof SvgComponent).toBe('function');
-    });
-
     it('should resolve cloud icon to CloudSvg component', () => {
       const SvgComponent = getSvgComponentFromSvg('cloud');
       expect(SvgComponent).toBeDefined();
@@ -52,7 +34,7 @@ describe('MenuIcon Icon Rendering Tests', () => {
       expect(SvgComponent).toBe(getSvgComponentFromSvg('cloud'));
     });
 
-    it('should fallback to StoriesSvg for unknown icon types', () => {
+    it('should fallback to CloudSvg for unknown icon types', () => {
       const SvgComponent = getSvgComponentFromSvg('unknown' as any);
       expect(SvgComponent).toBeDefined();
       expect(typeof SvgComponent).toBe('function');
@@ -74,32 +56,18 @@ describe('MenuIcon Icon Rendering Tests', () => {
       expect(getByLabelText('Stories button')).toBeTruthy();
     });
 
-    it('should render sensory icon without errors', () => {
+    it('should render with animated_interactive status without errors', () => {
       const { toJSON, getByLabelText } = render(
         <MenuIcon
-          icon="sensory-icon"
-          label="Sensory"
-          status="inactive"
+          icon="stories-icon"
+          label="Stories"
+          status="animated_interactive"
           onPress={mockOnPress}
         />
       );
 
       expect(toJSON()).toBeTruthy();
-      expect(getByLabelText('Sensory button')).toBeTruthy();
-    });
-
-    it('should render screentime icon without errors', () => {
-      const { toJSON, getByLabelText } = render(
-        <MenuIcon
-          icon="screentime-icon"
-          label="Screen Time"
-          status="inactive"
-          onPress={mockOnPress}
-        />
-      );
-
-      expect(toJSON()).toBeTruthy();
-      expect(getByLabelText('Screen Time button')).toBeTruthy();
+      expect(getByLabelText('Stories button')).toBeTruthy();
     });
   });
 
@@ -113,10 +81,9 @@ describe('MenuIcon Icon Rendering Tests', () => {
           onPress={mockOnPress}
         />
       );
-      
+
       const rendered = toJSON();
       expect(rendered).toBeTruthy();
-      // The icon should be present in the rendered output
       expect(JSON.stringify(rendered)).toContain('Mock');
     });
 
@@ -129,10 +96,9 @@ describe('MenuIcon Icon Rendering Tests', () => {
           onPress={mockOnPress}
         />
       );
-      
+
       const rendered = toJSON();
       expect(rendered).toBeTruthy();
-      // The icon should be present in the rendered output
       expect(JSON.stringify(rendered)).toContain('Mock');
     });
 
@@ -152,26 +118,21 @@ describe('MenuIcon Icon Rendering Tests', () => {
 
   describe('Icon Component Function Validation', () => {
     it('should ensure all icon components are functions', () => {
-      const iconTypes = ['stories', 'sensory', 'screentime', 'cloud', 'balloon'];
+      const iconTypes: Array<'cloud' | 'balloon'> = ['cloud', 'balloon'];
 
       iconTypes.forEach(iconType => {
-        const SvgComponent = getSvgComponentFromSvg(iconType as any);
+        const SvgComponent = getSvgComponentFromSvg(iconType);
         expect(typeof SvgComponent).toBe('function');
-        expect(SvgComponent.name).toBeTruthy(); // Should have a component name
+        expect(SvgComponent.name).toBeTruthy();
       });
     });
 
     it('should ensure icon components can be instantiated', () => {
-      const iconTypes = ['stories', 'sensory', 'screentime'];
-
-      iconTypes.forEach(iconType => {
-        const SvgComponent = getSvgComponentFromSvg(iconType as any);
-        expect(() => {
-          // Test that the component can be created without throwing
-          const element = React.createElement(SvgComponent, { width: 58, height: 58, opacity: 1 });
-          expect(element).toBeTruthy();
-        }).not.toThrow();
-      });
+      const SvgComponent = getSvgComponentFromSvg('cloud');
+      expect(() => {
+        const element = React.createElement(SvgComponent, { width: 58, height: 58, opacity: 1 });
+        expect(element).toBeTruthy();
+      }).not.toThrow();
     });
   });
 });
