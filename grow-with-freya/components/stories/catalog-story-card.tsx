@@ -2,13 +2,15 @@ import React, { memo, useState, useCallback } from 'react';
 import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useAnimatedProps, useSharedValue, withTiming, withSequence, withDelay, Easing } from 'react-native-reanimated';
+import Svg, { Circle } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { CatalogEntry, getLocalizedText } from '@/types/story';
 import { StoryDownloadService, DownloadProgress } from '@/services/story-download-service';
-import { AssetDownloadUtils } from '@/services/asset-download-utils';
 import { Fonts } from '@/constants/theme';
 import type { SupportedLanguage } from '@/services/i18n';
+
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 interface CatalogStoryCardProps {
   entry: CatalogEntry;
@@ -31,60 +33,81 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
 }: CatalogStoryCardProps) {
   const displayTitle = getLocalizedText(entry.localizedTitle, entry.title, language);
   const [downloading, setDownloading] = useState(false);
-  const [progress, setProgress] = useState<DownloadProgress | null>(null);
+  const [complete, setComplete] = useState(false);
 
-  // Animated progress bar width
-  const progressWidth = useSharedValue(0);
+  // Animated values
+  const progressValue = useSharedValue(0);   // 0-100
+  const overlayOpacity = useSharedValue(1);  // grey overlay fade
+  const checkOpacity = useSharedValue(0);    // checkmark fade-in
+  const ringOpacity = useSharedValue(0);     // progress ring visibility
 
-  const progressBarStyle = useAnimatedStyle(() => ({
-    width: `${progressWidth.value}%`,
+  // Circular progress ring constants
+  const RING_SIZE = 48;
+  const RING_STROKE = 3.5;
+  const RING_RADIUS = (RING_SIZE - RING_STROKE) / 2;
+  const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+
+  // Animated props for the SVG circle stroke
+  const animatedCircleProps = useAnimatedProps(() => ({
+    strokeDashoffset: RING_CIRCUMFERENCE * (1 - progressValue.value / 100),
+  }));
+
+  // Card reveal: overlay shrinks from top as progress fills from bottom
+  const revealStyle = useAnimatedStyle(() => ({
+    height: `${100 - progressValue.value}%`,
+    opacity: overlayOpacity.value,
+  }));
+
+  const ringFadeStyle = useAnimatedStyle(() => ({
+    opacity: ringOpacity.value,
+  }));
+
+  const checkmarkStyle = useAnimatedStyle(() => ({
+    opacity: checkOpacity.value,
   }));
 
   const handlePress = useCallback(async () => {
-    if (downloading) return;
+    if (downloading || complete) return;
     console.log(`[CatalogStoryCard] Download pressed for ${entry.storyId}`);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setDownloading(true);
+    ringOpacity.value = withTiming(1, { duration: 200 });
 
     try {
       const result = await StoryDownloadService.downloadStory(
         entry.storyId,
         entry,
         (p) => {
-          console.log(`[CatalogStoryCard] Progress: ${p.phase} ${p.progress}% - ${p.message}`);
-          setProgress(p);
-          progressWidth.value = withTiming(p.progress, { duration: 200 });
+          progressValue.value = withTiming(p.progress, { duration: 250, easing: Easing.out(Easing.ease) });
         }
       );
 
       if (result.success) {
-        console.log(`[CatalogStoryCard] Download complete for ${entry.storyId}`);
-        onDownloadComplete?.(entry.storyId);
-      } else {
-        // Reset on failure so user can retry
-        setDownloading(false);
-        setProgress(null);
-        progressWidth.value = 0;
-        console.warn(`[CatalogStoryCard] Download failed for ${entry.storyId}: ${result.error}`);
-        Alert.alert(
-          'Download Failed',
-          result.error || 'Something went wrong. Please try again.',
-          [{ text: 'OK' }]
+        // Finish reveal, show checkmark, then notify parent
+        progressValue.value = withTiming(100, { duration: 200 });
+        ringOpacity.value = withTiming(0, { duration: 200 });
+        checkOpacity.value = withSequence(
+          withTiming(1, { duration: 250 }),
+          withDelay(600, withTiming(0, { duration: 250 }))
         );
+        overlayOpacity.value = withDelay(200, withTiming(0, { duration: 300 }));
+        setComplete(true);
+        setTimeout(() => onDownloadComplete?.(entry.storyId), 1100);
+      } else {
+        setDownloading(false);
+        progressValue.value = withTiming(0, { duration: 200 });
+        ringOpacity.value = withTiming(0, { duration: 200 });
+        overlayOpacity.value = withTiming(1, { duration: 200 });
+        Alert.alert('Download Failed', result.error || 'Something went wrong. Please try again.', [{ text: 'OK' }]);
       }
     } catch (err) {
       setDownloading(false);
-      setProgress(null);
-      progressWidth.value = 0;
-      console.error(`[CatalogStoryCard] Download error for ${entry.storyId}:`, err);
+      progressValue.value = withTiming(0, { duration: 200 });
+      ringOpacity.value = withTiming(0, { duration: 200 });
+      overlayOpacity.value = withTiming(1, { duration: 200 });
       Alert.alert('Download Failed', 'An unexpected error occurred. Please try again.', [{ text: 'OK' }]);
     }
-  }, [downloading, entry, onDownloadComplete, progressWidth]);
-
-  const showProgressBar = downloading && progress && progress.phase !== 'complete' && progress.phase !== 'failed';
-  const bytesMsg = progress?.detail?.bytesDownloaded !== undefined
-    ? `${AssetDownloadUtils.formatBytes(progress.detail.bytesDownloaded)}${progress.detail.totalBytes ? ` / ${AssetDownloadUtils.formatBytes(progress.detail.totalBytes)}` : ''}`
-    : progress?.message;
+  }, [downloading, complete, entry, onDownloadComplete, progressValue, ringOpacity, checkOpacity, overlayOpacity]);
 
   const handleLongPress = useCallback(() => {
     if (downloading) return;
@@ -103,7 +126,6 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
             transition={200}
             cachePolicy="memory-disk"
             onError={(e) => console.warn(`[CatalogCard] Image failed for ${entry.storyId}:`, e)}
-            onLoad={() => console.log(`[CatalogCard] Image loaded for ${entry.storyId}`)}
           />
         ) : (
           <View style={[cardStyles.placeholder, { width: cardWidth, height: cardHeight, borderRadius }]}>
@@ -111,34 +133,64 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
           </View>
         )}
 
-        {/* Grey overlay to indicate not-downloaded */}
-        {!downloading && (
-          <View style={[cardStyles.greyOverlay, { borderRadius }]} />
+        {/* Grey overlay — shrinks from top to reveal thumbnail as download progresses */}
+        {!complete && (
+          <Animated.View
+            style={[cardStyles.greyOverlay, { borderRadius }, downloading ? revealStyle : undefined]}
+          />
         )}
 
-        {/* Download icon centred on card (only when not downloading) */}
-        {!downloading && (
+        {/* Download icon (before downloading) */}
+        {!downloading && !complete && (
           <View style={cardStyles.iconContainer}>
             <View style={cardStyles.iconCircle}>
-              <Ionicons name="cloud-download-outline" size={24} color="#FFFFFF" />
+              <Ionicons name="cloud-download-outline" size={22} color="#FFFFFF" />
             </View>
           </View>
         )}
 
-        {/* Progress bar overlay at bottom */}
-        {showProgressBar && (
-          <View style={[cardStyles.progressContainer, { borderBottomLeftRadius: borderRadius, borderBottomRightRadius: borderRadius }]}>
-            <View style={cardStyles.progressTrack}>
-              <Animated.View style={[cardStyles.progressFill, progressBarStyle]} />
+        {/* Circular progress ring (during download) */}
+        {downloading && !complete && (
+          <Animated.View style={[cardStyles.iconContainer, ringFadeStyle]}>
+            <View style={cardStyles.ringContainer}>
+              <Svg width={RING_SIZE} height={RING_SIZE} style={{ transform: [{ rotate: '-90deg' }] }}>
+                {/* Background track */}
+                <Circle
+                  cx={RING_SIZE / 2}
+                  cy={RING_SIZE / 2}
+                  r={RING_RADIUS}
+                  stroke="rgba(255, 255, 255, 0.25)"
+                  strokeWidth={RING_STROKE}
+                  fill="rgba(0, 0, 0, 0.4)"
+                />
+                {/* Animated progress arc */}
+                <AnimatedCircle
+                  cx={RING_SIZE / 2}
+                  cy={RING_SIZE / 2}
+                  r={RING_RADIUS}
+                  stroke="#4ECDC4"
+                  strokeWidth={RING_STROKE}
+                  fill="transparent"
+                  strokeDasharray={RING_CIRCUMFERENCE}
+                  animatedProps={animatedCircleProps}
+                  strokeLinecap="round"
+                />
+              </Svg>
             </View>
-            <Text style={cardStyles.progressText} numberOfLines={1}>
-              {progress.phase === 'downloading-assets' ? bytesMsg : progress.message}
-            </Text>
-          </View>
+          </Animated.View>
+        )}
+
+        {/* Checkmark on completion */}
+        {complete && (
+          <Animated.View style={[cardStyles.iconContainer, checkmarkStyle]}>
+            <View style={cardStyles.checkCircle}>
+              <Ionicons name="checkmark" size={26} color="#FFFFFF" />
+            </View>
+          </Animated.View>
         )}
 
         {/* Free badge */}
-        {entry.isFree && !downloading && (
+        {entry.isFree && !downloading && !complete && (
           <View style={cardStyles.freeBadge}>
             <Text style={cardStyles.freeBadgeText}>FREE</Text>
           </View>
@@ -179,8 +231,12 @@ const cardStyles = StyleSheet.create({
     opacity: 0.5,
   },
   greyOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '100%',
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
   },
   iconContainer: {
     ...StyleSheet.absoluteFillObject,
@@ -191,38 +247,25 @@ const cardStyles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
+    borderColor: 'rgba(255, 255, 255, 0.5)',
   },
-  progressContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    paddingHorizontal: 6,
-    paddingVertical: 4,
+  ringContainer: {
+    width: 48,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  progressTrack: {
-    height: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#4ECDC4',
-    borderRadius: 2,
-  },
-  progressText: {
-    color: '#FFFFFF',
-    fontSize: 8,
-    fontFamily: Fonts.rounded,
-    textAlign: 'center',
-    marginTop: 2,
+  checkCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(78, 205, 196, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   freeBadge: {
     position: 'absolute',
