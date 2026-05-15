@@ -9,15 +9,19 @@ import Animated, {
   useAnimatedStyle,
   withRepeat,
   withTiming,
+  withDelay,
+  withSequence,
   Easing
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { ALL_STORIES } from '@/data/stories';
-import { Story, StoryCategory, StoryFilterTag, STORY_FILTER_TAGS, getLocalizedText } from '@/types/story';
+import { Story, StoryCategory, StoryFilterTag, STORY_FILTER_TAGS, CatalogEntry, getLocalizedText } from '@/types/story';
 import { Fonts } from '@/constants/theme';
 import { useAppStore } from '@/store/app-store';
 import { StoryLoader } from '@/services/story-loader';
+import { CatalogService } from '@/services/catalog-service';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
 import { BearTopImage } from '@/components/main-menu/animated-components';
@@ -27,7 +31,28 @@ import { useStoryTransition } from '@/contexts/story-transition-context';
 import { PageHeader } from '@/components/ui/page-header';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { StoryPreviewModal } from './story-preview-modal';
+import { CatalogStoryCard } from './catalog-story-card';
 import type { SupportedLanguage } from '@/services/i18n';
+
+// White Ionicons icon for each filter tag (replaces coloured emojis)
+const TAG_ICONS: Record<StoryFilterTag, keyof typeof Ionicons.glyphMap> = {
+  personalized: 'person-outline',
+  calming: 'leaf-outline',
+  bedtime: 'moon-outline',
+  adventure: 'compass-outline',
+  learning: 'book-outline',
+  music: 'musical-notes-outline',
+  'family-exercises': 'people-outline',
+  'imagination-games': 'color-palette-outline',
+  animals: 'paw-outline',
+  friendship: 'heart-outline',
+  nature: 'flower-outline',
+  fantasy: 'sparkles-outline',
+  counting: 'calculator-outline',
+  emotions: 'happy-outline',
+  silly: 'happy-outline',
+  rhymes: 'chatbubble-ellipses-outline',
+};
 
 // Constants for card dimensions - defined once, not on every render
 const CARD_WIDTH = 160;
@@ -48,6 +73,7 @@ interface StoryCardProps {
   borderRadius: number;
   emojiFontSize: number;
   isHidden?: boolean; // Hide when this card is being animated in the transition overlay
+  isUnread?: boolean; // Show shimmer effect for unread stories
   language: SupportedLanguage;
 }
 
@@ -61,6 +87,7 @@ const StoryCard = memo(function StoryCard({
   borderRadius,
   emojiFontSize,
   isHidden,
+  isUnread,
   language,
 }: StoryCardProps) {
   const cardRef = useRef<View>(null);
@@ -69,6 +96,30 @@ const StoryCard = memo(function StoryCard({
   // Track previous hidden state to detect when card becomes visible again
   const wasHiddenRef = useRef(isHidden);
   const fadeOpacity = useSharedValue(isHidden ? 0 : 1);
+
+  // Shimmer animation for unread stories — slides a highlight across the card periodically
+  const shimmerTranslate = useSharedValue(-cardWidth);
+
+  useEffect(() => {
+    if (isUnread && !isHidden) {
+      // Periodic shimmer: slide across, pause 3s, repeat
+      shimmerTranslate.value = -cardWidth;
+      shimmerTranslate.value = withRepeat(
+        withSequence(
+          withTiming(cardWidth * 1.5, { duration: 800, easing: Easing.inOut(Easing.ease) }),
+          withDelay(3000, withTiming(-cardWidth, { duration: 0 }))
+        ),
+        -1,
+        false
+      );
+    } else {
+      shimmerTranslate.value = -cardWidth;
+    }
+  }, [isUnread, isHidden, cardWidth]);
+
+  const shimmerAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: shimmerTranslate.value }],
+  }));
 
   // Fade in when transitioning from hidden to visible (Android fix)
   useEffect(() => {
@@ -133,6 +184,25 @@ const StoryCard = memo(function StoryCard({
               <Text style={{ fontSize: emojiFontSize }}>{story.emoji}</Text>
             </View>
           )}
+
+          {/* Shimmer overlay for unread stories */}
+          {isUnread && (
+            <Animated.View
+              style={[
+                styles.shimmerOverlay,
+                { borderRadius },
+                shimmerAnimatedStyle,
+              ]}
+              pointerEvents="none"
+            >
+              <LinearGradient
+                colors={['transparent', 'rgba(255,255,255,0.45)', 'transparent']}
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
+                style={styles.shimmerGradient}
+              />
+            </Animated.View>
+          )}
         </View>
         {/* Story title below the cover */}
         <View style={[styles.cardTitleContainer, { width: cardWidth }]}>
@@ -174,8 +244,12 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   const [isLoadingStories, setIsLoadingStories] = useState(!StoryLoader.getCachedStories());
   const [selectedTags, setSelectedTags] = useState<Set<StoryFilterTag>>(new Set());
 
-  // Get favorite story IDs from store
+  // Catalog entries (not-yet-downloaded stories) for browse/discovery
+  const [catalogEntries, setCatalogEntries] = useState<CatalogEntry[]>([]);
+
+  // Get favorite and read story IDs from store
   const favoriteStoryIds = useAppStore((state) => state.favoriteStoryIds);
+  const readStoryIds = useAppStore((state) => state.readStoryIds);
 
   // Filter stories based on selected tags (OR logic - match any selected tag)
   const filteredStories = useMemo(() => {
@@ -262,6 +336,33 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     }, 600); // Wait for page transition (500ms + 100ms buffer)
 
     return () => clearTimeout(timeoutId);
+  }, []);
+
+  // Load catalog entries for not-yet-downloaded stories
+  useEffect(() => {
+    const loadCatalog = async () => {
+      try {
+        const entries = await CatalogService.getCatalog();
+        setCatalogEntries(entries);
+      } catch {
+        // No catalog available yet — that's fine
+      }
+    };
+    loadCatalog();
+  }, []);
+
+  // When a catalog story finishes downloading, refresh both stories list and catalog
+  const handleCatalogDownloadComplete = useCallback(async (_storyId: string) => {
+    try {
+      // Refresh the downloaded stories list
+      const loadedStories = await StoryLoader.getStories();
+      setStories(loadedStories);
+      // Refresh catalog (entry was removed by StoryDownloadService)
+      const entries = await CatalogService.getCatalog();
+      setCatalogEntries(entries);
+    } catch {
+      // Best-effort refresh
+    }
   }, []);
 
   // Generate star positions for background
@@ -376,9 +477,10 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       borderRadius={scaledBorderRadius}
       emojiFontSize={scaledEmojiFontSize}
       isHidden={(isTransitioning || shouldShowStoryReader || isExpandingToReader) && selectedStoryId === story.id}
+      isUnread={story.isAvailable && !readStoryIds.includes(story.id)}
       language={currentLanguage}
     />
-  ), [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader, currentLanguage]);
+  ), [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader, currentLanguage, readStoryIds]);
 
   // Memoized key extractor
   const keyExtractor = useCallback((story: Story) => story.id, []);
@@ -423,10 +525,10 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       ))}
 
       {/* Shared page header component */}
-      <PageHeader title="Stories" onBack={handleBackToMenu} hideControls={isTransitioning} />
+      <PageHeader title="Stories" onBack={handleBackToMenu} hideControls={isTransitioning} useHomeIcon />
 
       {/* Content container with flex: 1 for proper layout - dynamic padding for scaled text */}
-      <View style={{ flex: 1, paddingTop: insets.top + 180 + (textSizeScale - 1) * 60, zIndex: 10 }}>
+      <View style={{ flex: 1, paddingTop: insets.top + 90 + (textSizeScale - 1) * 40, zIndex: 10 }}>
 
         {/* Tag Filters */}
         <ScrollView
@@ -448,7 +550,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
                 ]}
                 onPress={() => handleTagPress(tag)}
               >
-                <Text style={styles.tagEmoji}>{tagInfo.emoji}</Text>
+                <Ionicons name={TAG_ICONS[tag]} size={14} color="#FFFFFF" style={styles.tagIcon} />
                 <Text style={[styles.tagLabel, { fontSize: scaledFontSize(12) }]}>
                   {tagLabel}
                 </Text>
@@ -558,6 +660,60 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
               </View>
             );
           })}
+
+          {/* More Stories — catalog entries not yet downloaded */}
+          {catalogEntries.length > 0 && (
+            <View style={{ marginBottom: 40 }}>
+              <Text style={{
+                color: '#FFFFFF',
+                fontSize: 24,
+                fontWeight: 'bold',
+                textAlign: 'center',
+                marginBottom: 6,
+                textShadowColor: 'rgba(0, 0, 0, 0.9)',
+                textShadowOffset: { width: 0, height: 3 },
+                textShadowRadius: 6,
+              }}>
+                📥 {t('stories.moreStories', { defaultValue: 'More Stories' })}
+              </Text>
+              <Text style={{
+                color: 'rgba(255, 255, 255, 0.6)',
+                fontSize: 13,
+                textAlign: 'center',
+                marginBottom: 15,
+                fontFamily: Fonts.rounded,
+              }}>
+                {t('stories.tapToDownload', { defaultValue: 'Tap to download' })}
+              </Text>
+
+              <FlatList
+                data={catalogEntries}
+                renderItem={({ item }) => (
+                  <CatalogStoryCard
+                    entry={item}
+                    cardWidth={scaledCardW}
+                    cardHeight={scaledCardH}
+                    borderRadius={scaledBorderRadius}
+                    language={currentLanguage}
+                    onDownloadComplete={handleCatalogDownloadComplete}
+                  />
+                )}
+                keyExtractor={(item) => item.storyId}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                removeClippedSubviews={true}
+                maxToRenderPerBatch={5}
+                windowSize={7}
+                initialNumToRender={3}
+                updateCellsBatchingPeriod={50}
+                decelerationRate="fast"
+                snapToInterval={ITEM_WIDTH}
+                snapToAlignment="start"
+                contentContainerStyle={styles.carouselContent}
+                scrollEnabled={!isTransitioning && !shouldShowStoryReader && !isExpandingToReader}
+              />
+            </View>
+          )}
         </ScrollView>
       </View>
 
@@ -632,8 +788,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     gap: 4,
   },
-  tagEmoji: {
-    fontSize: 14,
+  tagIcon: {
+    marginRight: 2,
   },
   tagLabel: {
     color: 'white',
@@ -661,5 +817,17 @@ const styles = StyleSheet.create({
     color: 'white',
     fontFamily: Fonts.rounded,
     fontWeight: '600',
+  },
+  shimmerOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    width: '60%',
+    overflow: 'hidden',
+  },
+  shimmerGradient: {
+    flex: 1,
+    width: '100%',
   },
 });

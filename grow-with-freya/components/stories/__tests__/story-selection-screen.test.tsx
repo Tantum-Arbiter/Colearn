@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { render, waitFor, act } from '@testing-library/react-native';
 import { StorySelectionScreen } from '../story-selection-screen';
 import { ScreenTimeProvider } from '../../screen-time/screen-time-provider';
 
@@ -39,7 +39,31 @@ jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));
 
+// Mock CatalogService for the "More Stories" section
+const mockGetCatalog = jest.fn();
+jest.mock('@/services/catalog-service', () => ({
+  CatalogService: {
+    getCatalog: (...args: any[]) => mockGetCatalog(...args),
+    updateCatalog: jest.fn().mockResolvedValue(undefined),
+    removeEntry: jest.fn().mockResolvedValue(undefined),
+  },
+}));
+
+// Mock StoryDownloadService used by CatalogStoryCard
+jest.mock('@/services/story-download-service', () => ({
+  StoryDownloadService: {
+    downloadStory: jest.fn().mockResolvedValue({ success: true, storyId: 'test', assetsDownloaded: 0, assetsFailed: 0, bytesDownloaded: 0, durationMs: 100 }),
+    isDownloading: jest.fn(() => false),
+    isDownloaded: jest.fn().mockResolvedValue(false),
+  },
+}));
+
 describe('StorySelectionScreen', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockGetCatalog.mockResolvedValue([]);
+  });
+
   it('renders without crashing', () => {
     const result = render(
       <ScreenTimeProvider>
@@ -57,6 +81,62 @@ describe('StorySelectionScreen', () => {
         <StorySelectionScreen onStorySelect={mockOnStorySelect} />
       </ScreenTimeProvider>
     );
+    expect(result).toBeTruthy();
+    expect(() => result.toJSON()).not.toThrow();
+  });
+
+  it('loads catalog entries on mount', async () => {
+    mockGetCatalog.mockResolvedValue([
+      { storyId: 'catalog-1', title: 'Catalog Story', category: 'adventure', emoji: '🌟', isFree: true, isReferralReward: false, isPremium: false },
+    ]);
+
+    const result = render(
+      <ScreenTimeProvider>
+        <StorySelectionScreen />
+      </ScreenTimeProvider>
+    );
+
+    // Verify CatalogService.getCatalog() was called during mount
+    await waitFor(() => {
+      expect(mockGetCatalog).toHaveBeenCalled();
+    });
+
+    // Component should still render without crashing after catalog loads
+    expect(result).toBeTruthy();
+    expect(() => result.toJSON()).not.toThrow();
+  });
+
+  it('handles empty catalog gracefully', async () => {
+    mockGetCatalog.mockResolvedValue([]);
+
+    const result = render(
+      <ScreenTimeProvider>
+        <StorySelectionScreen />
+      </ScreenTimeProvider>
+    );
+
+    await waitFor(() => {
+      expect(mockGetCatalog).toHaveBeenCalled();
+    });
+
+    expect(result).toBeTruthy();
+    expect(() => result.toJSON()).not.toThrow();
+  });
+
+  it('handles catalog load failure gracefully', async () => {
+    mockGetCatalog.mockRejectedValue(new Error('Network error'));
+
+    const result = render(
+      <ScreenTimeProvider>
+        <StorySelectionScreen />
+      </ScreenTimeProvider>
+    );
+
+    await waitFor(() => {
+      expect(mockGetCatalog).toHaveBeenCalled();
+    });
+
+    // Component should not crash when catalog fails to load
     expect(result).toBeTruthy();
     expect(() => result.toJSON()).not.toThrow();
   });

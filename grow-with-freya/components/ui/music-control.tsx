@@ -13,6 +13,13 @@ interface MusicControlProps {
   showBackground?: boolean;
   /** Use story page styling (white bg, dark icon) vs menu styling (grey bg, white icon) */
   variant?: 'story' | 'menu';
+  /**
+   * If provided, the AudioControlModal will NOT be rendered inside MusicControl.
+   * Instead, the parent is responsible for rendering it (useful inside complex
+   * view hierarchies like story-book-reader where absolute positioning is
+   * constrained by parent containers).
+   */
+  onAudioModalChange?: (visible: boolean) => void;
 }
 
 export const MusicControl: React.FC<MusicControlProps> = ({
@@ -21,6 +28,7 @@ export const MusicControl: React.FC<MusicControlProps> = ({
   style,
   showBackground = true,
   variant = 'menu', // Default to menu styling for backwards compatibility
+  onAudioModalChange,
 }) => {
   const {
     isMuted,
@@ -38,13 +46,17 @@ export const MusicControl: React.FC<MusicControlProps> = ({
 
   const handlePress = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    toggleMute();
+    void toggleMute();
   }, [toggleMute]);
 
   const handleLongPress = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setShowAudioModal(true);
-  }, []);
+    if (onAudioModalChange) {
+      onAudioModalChange(true);
+    } else {
+      setShowAudioModal(true);
+    }
+  }, [onAudioModalChange]);
 
   const scaledIconSize = scaledButtonSize(size);
   const backgroundSize = scaledButtonSize(48);
@@ -103,16 +115,19 @@ export const MusicControl: React.FC<MusicControlProps> = ({
         </Pressable>
       </View>
 
-      <AudioControlModal
-        visible={showAudioModal}
-        onClose={() => setShowAudioModal(false)}
-        masterVolume={masterVolume}
-        musicVolume={musicVolume}
-        voiceOverVolume={voiceOverVolume}
-        onMasterVolumeChange={setMasterVolume}
-        onMusicVolumeChange={setMusicVolume}
-        onVoiceOverVolumeChange={setVoiceOverVolume}
-      />
+      {/* Only render the modal internally when the parent doesn't handle it */}
+      {!onAudioModalChange && (
+        <AudioControlModal
+          visible={showAudioModal}
+          onClose={() => setShowAudioModal(false)}
+          masterVolume={masterVolume}
+          musicVolume={musicVolume}
+          voiceOverVolume={voiceOverVolume}
+          onMasterVolumeChange={setMasterVolume}
+          onMusicVolumeChange={setMusicVolume}
+          onVoiceOverVolumeChange={setVoiceOverVolume}
+        />
+      )}
     </>
   );
 };

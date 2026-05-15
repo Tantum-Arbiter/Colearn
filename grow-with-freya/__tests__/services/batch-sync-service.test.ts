@@ -48,6 +48,18 @@ const mockDeltaResponse: DeltaSyncResponse = {
   totalStories: 1,
   updatedCount: 1,
   lastUpdated: Date.now(),
+  catalog: [
+    {
+      storyId: 'story-2',
+      title: 'Catalog Story',
+      category: 'bedtime',
+      emoji: '🌙',
+      thumbnailUrl: 'https://storage.googleapis.com/signed-thumbnail',
+      isFree: true,
+      isReferralReward: false,
+      isPremium: false,
+    },
+  ],
 };
 
 describe('BatchSyncService', () => {

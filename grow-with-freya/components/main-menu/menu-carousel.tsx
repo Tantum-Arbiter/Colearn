@@ -1,257 +1,258 @@
-import React, { useCallback } from 'react';
-import { View, StyleSheet, Pressable } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { View, StyleSheet, Pressable, Text, Image, ImageSourcePropType } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { MenuIcon } from './menu-icon';
 import { getScreenDimensions } from './constants';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
-  interpolate,
-  Extrapolation,
-  SharedValue,
+  withSequence,
+  withTiming,
+  withDelay,
+  Easing,
 } from 'react-native-reanimated';
-import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import * as Haptics from 'expo-haptics';
+import { useAccessibility } from '@/hooks/use-accessibility';
+
+// Slide-in animation config
+const SLIDE_IN_DURATION = 400; // ms per strip
+const SLIDE_IN_STAGGER = 120; // ms between each strip
+const SLIDE_IN_DISTANCE = 300; // px from below
+
+// Module-level debounce to prevent double slide-in animation on rapid remount
+// (e.g. React Strict Mode double-mount or brief currentView toggle after login)
+let lastCarouselMountTime = 0;
+const CAROUSEL_DEBOUNCE_MS = 1500;
 
 export interface CarouselMenuItem {
   id: string;
-  icon: string;
   labelKey: string;
   destination: string;
-  emoji?: string;
+  image: ImageSourcePropType;
 }
 
-const CAROUSEL_ITEMS: CarouselMenuItem[] = [
-  { id: 'stories', icon: 'stories-icon', labelKey: 'menu.stories', destination: 'stories', emoji: '📚' },
-  { id: 'practise', icon: 'stories-icon', labelKey: 'menu.practise', destination: 'practise', emoji: '🎵' },
-  { id: 'freeplay', icon: 'stories-icon', labelKey: 'menu.freeplay', destination: 'freeplay', emoji: '🎸' },
+const MENU_ITEMS: CarouselMenuItem[] = [
+  { id: 'stories', labelKey: 'menu.stories', destination: 'stories', image: require('../../assets/images/menu-icons/stories-strip.webp') },
+  { id: 'practise', labelKey: 'menu.practise', destination: 'practise', image: require('../../assets/images/menu-icons/practise-strip.webp') },
+  { id: 'freeplay', labelKey: 'menu.freeplay', destination: 'freeplay', image: require('../../assets/images/menu-icons/freeplay-strip.webp') },
 ];
-
-// Coverflow configuration
-const ITEM_COUNT = CAROUSEL_ITEMS.length;
-const ANGLE_PER_ITEM = 360 / ITEM_COUNT; // 120 degrees between items
-const RADIUS = 160; // Distance from center for side items
-const CENTER_SCALE = 1.0; // No scaling = crisp rendering
-const SIDE_SCALE = 0.52; // Smaller side items (relative to center)
-const SIDE_OPACITY = 0.7;
 
 interface MenuCarouselProps {
   onNavigate: (destination: string) => void;
-  storiesButtonRef?: React.RefObject<View | null>;
+  /** Per-button refs for tutorial spotlights keyed by menu item id */
+  buttonRefs?: Record<string, React.RefObject<View | null>>;
+  /** Called once when all strip slide-in animations have finished */
+  onLoadComplete?: () => void;
 }
 
 export const MenuCarousel = React.memo(function MenuCarousel({
   onNavigate,
-  storiesButtonRef,
+  buttonRefs,
+  onLoadComplete,
 }: MenuCarouselProps) {
   const { t } = useTranslation();
+  const { scaledFontSize, isTablet } = useAccessibility();
   const { width: screenWidth } = getScreenDimensions();
 
-  // Current rotation angle (0 = first item centered)
-  const rotation = useSharedValue(0);
-  const gestureStartRotation = useSharedValue(0);
+  const stripWidth = Math.min(screenWidth * 0.88, isTablet ? 520 : 400);
+  const stripHeight = isTablet ? 168 : 136;
+  const gap = isTablet ? 14 : 10;
 
-  const handlePress = useCallback((index: number) => {
-    // Rotate to center the pressed item
-    const targetRotation = -index * ANGLE_PER_ITEM;
-    rotation.value = withSpring(targetRotation, {
-      damping: 15,
-      stiffness: 100,
-    });
-  }, [rotation]);
-
-  const handleNavigate = useCallback((destination: string, index: number) => {
-    // Calculate which item is currently centered
-    const normalizedRotation = ((rotation.value % 360) + 360) % 360;
-    const centeredIndex = Math.round(normalizedRotation / ANGLE_PER_ITEM) % ITEM_COUNT;
-    const actualCenteredIndex = (ITEM_COUNT - centeredIndex) % ITEM_COUNT;
-
-    if (index === actualCenteredIndex) {
-      // Item is centered, navigate
-      onNavigate(destination);
-    } else {
-      // Rotate to center this item first
-      handlePress(index);
+  // Decide on mount whether to animate or skip (debounce rapid remounts)
+  const shouldAnimate = useMemo(() => {
+    const now = Date.now();
+    if (now - lastCarouselMountTime < CAROUSEL_DEBOUNCE_MS) {
+      return false; // Recently animated — skip to avoid double slide-in
     }
-  }, [rotation.value, onNavigate, handlePress]);
-
-  // Gesture for swiping
-  const panGesture = Gesture.Pan()
-    .onStart(() => {
-      gestureStartRotation.value = rotation.value;
-    })
-    .onUpdate((event) => {
-      // Swipe sensitivity - convert horizontal movement to rotation
-      const swipeSensitivity = 0.3;
-      rotation.value = gestureStartRotation.value + event.translationX * swipeSensitivity;
-    })
-    .onEnd((event) => {
-      // Snap to nearest item
-      const velocity = event.velocityX * 0.001;
-      const projectedRotation = rotation.value + velocity * 50;
-      const snappedRotation = Math.round(projectedRotation / ANGLE_PER_ITEM) * ANGLE_PER_ITEM;
-
-      rotation.value = withSpring(snappedRotation, {
-        damping: 15,
-        stiffness: 100,
-        velocity: velocity,
-      });
-    });
+    lastCarouselMountTime = now;
+    return true;
+  }, []);
 
   return (
-    <GestureHandlerRootView style={styles.gestureRoot}>
-      <GestureDetector gesture={panGesture}>
-        <View style={styles.container} testID="menu-carousel">
-          {/* storiesButtonRef highlights the entire carousel strip as a rounded-rect.
-              The Animated.View transforms aren't reflected by measureInWindow,
-              so this static container is used for the spotlight measurement. */}
-          <View
-            ref={storiesButtonRef}
-            collapsable={false}
-            style={[styles.carouselContainer, { width: screenWidth * 0.9 }]}
-          >
-            {CAROUSEL_ITEMS.map((item, index) => (
-              <CarouselItem
-                key={item.id}
-                item={item}
-                index={index}
-                rotation={rotation}
-                onPress={() => handleNavigate(item.destination, index)}
-                t={t}
-              />
-            ))}
-          </View>
-        </View>
-      </GestureDetector>
-    </GestureHandlerRootView>
+    <View
+      collapsable={false}
+      style={styles.container}
+      testID="menu-carousel"
+    >
+      {MENU_ITEMS.map((item, index) => (
+        <StripButton
+          key={item.id}
+          item={item}
+          onPress={() => onNavigate(item.destination)}
+          label={t(item.labelKey)}
+          stripWidth={stripWidth}
+          stripHeight={stripHeight}
+          gap={gap}
+          scaledFontSize={scaledFontSize}
+          buttonRef={buttonRefs?.[item.id]}
+          slideIndex={index}
+          isLast={index === MENU_ITEMS.length - 1}
+          onSlideComplete={onLoadComplete}
+          shouldAnimate={shouldAnimate}
+        />
+      ))}
+    </View>
   );
 });
 
+// --- Individual strip button ---
 
-
-// Individual carousel item with 3D transforms
-interface CarouselItemProps {
+interface StripButtonProps {
   item: CarouselMenuItem;
-  index: number;
-  rotation: SharedValue<number>;
   onPress: () => void;
-  t: (key: string) => string;
+  label: string;
+  stripWidth: number;
+  stripHeight: number;
+  gap: number;
+  scaledFontSize: (base: number) => number;
+  buttonRef?: React.RefObject<View | null>;
+  /** Index in the menu list — drives stagger delay */
+  slideIndex: number;
+  /** Whether this is the last strip (fires onSlideComplete) */
+  isLast: boolean;
+  /** Called when the last strip finishes its slide-in */
+  onSlideComplete?: () => void;
+  /** Whether to animate the slide-in (false = appear instantly) */
+  shouldAnimate: boolean;
 }
 
-const CarouselItem = React.memo(function CarouselItem({
+const StripButton = React.memo(function StripButton({
   item,
-  index,
-  rotation,
   onPress,
-  t,
-}: CarouselItemProps) {
-  const itemAngle = index * ANGLE_PER_ITEM;
+  label,
+  stripWidth,
+  stripHeight,
+  gap,
+  scaledFontSize,
+  buttonRef,
+  slideIndex,
+  isLast,
+  onSlideComplete,
+  shouldAnimate,
+}: StripButtonProps) {
+  const pressScale = useSharedValue(1);
+  const slideY = useSharedValue(shouldAnimate ? SLIDE_IN_DISTANCE : 0);
+  const slideOpacity = useSharedValue(shouldAnimate ? 0 : 1);
+  const hasSlid = useRef(false);
 
-  const animatedStyle = useAnimatedStyle(() => {
-    // Calculate the item's current angle relative to center (0 degrees = front)
-    const currentAngle = (rotation.value + itemAngle + 360) % 360;
+  // Run slide-in animation on mount
+  useEffect(() => {
+    if (hasSlid.current) return;
+    hasSlid.current = true;
 
-    // Normalize to -180 to 180 range
-    const normalizedAngle = currentAngle > 180 ? currentAngle - 360 : currentAngle;
+    if (!shouldAnimate) {
+      // Rapid remount — skip animation, show immediately
+      slideY.value = 0;
+      slideOpacity.value = 1;
+      if (isLast && onSlideComplete) {
+        onSlideComplete();
+      }
+      return;
+    }
 
-    // Calculate position on the circular path
-    // Items at 0 degrees are in front, items at +/-120 are on the sides
-    const angleRad = (normalizedAngle * Math.PI) / 180;
+    const delay = slideIndex * SLIDE_IN_STAGGER;
 
-    // X position: items move left/right based on their angle
-    const translateX = Math.sin(angleRad) * RADIUS;
+    slideOpacity.value = withDelay(delay,
+      withTiming(1, { duration: SLIDE_IN_DURATION * 0.6, easing: Easing.out(Easing.cubic) }));
 
-    // Z depth simulation using scale and translateY
-    // Items in front (0 deg) are larger, items on sides are smaller and slightly back
-    const depth = Math.cos(angleRad);
-    const scale = interpolate(
-      depth,
-      [-1, 0, 1],
-      [SIDE_SCALE * 0.5, SIDE_SCALE, CENTER_SCALE],
-      Extrapolation.CLAMP
+    const slideAnimation = withTiming(0, { duration: SLIDE_IN_DURATION, easing: Easing.out(Easing.cubic) });
+    slideY.value = withDelay(delay, slideAnimation);
+
+    // Fire onLoadComplete after the last strip finishes
+    if (isLast && onSlideComplete) {
+      const totalDuration = delay + SLIDE_IN_DURATION + 50; // small buffer
+      const timer = setTimeout(() => {
+        onSlideComplete();
+      }, totalDuration);
+      return () => clearTimeout(timer);
+    }
+  }, []);  // eslint-disable-line react-hooks/exhaustive-deps
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pressScale.value }, { translateY: slideY.value }],
+    opacity: slideOpacity.value,
+  }));
+
+  const handlePress = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    pressScale.value = withSequence(
+      withTiming(0.95, { duration: 60, easing: Easing.out(Easing.cubic) }),
+      withTiming(1.02, { duration: 100, easing: Easing.out(Easing.cubic) }),
+      withTiming(1, { duration: 80, easing: Easing.out(Easing.cubic) }),
     );
 
-    // Y position: slight arc effect - side items move up slightly
-    const translateY = interpolate(
-      depth,
-      [-1, 0, 1],
-      [30, 15, 0],
-      Extrapolation.CLAMP
-    );
-
-    // Opacity: front items are fully visible, side items are dimmer
-    const opacity = interpolate(
-      depth,
-      [-1, 0, 1],
-      [0, SIDE_OPACITY, 1],
-      Extrapolation.CLAMP
-    );
-
-    // Z-index simulation: items in front should be on top
-    // Using translateY as a proxy since React Native doesn't support zIndex in transforms
-    const zIndex = Math.round(depth * 100) + 100;
-
-    // Slight rotation for 3D effect - items rotate away from center
-    const rotateY = interpolate(
-      normalizedAngle,
-      [-180, -90, 0, 90, 180],
-      [90, 45, 0, -45, -90],
-      Extrapolation.CLAMP
-    );
-
-    return {
-      transform: [
-        { translateX },
-        { translateY },
-        { scale },
-        { perspective: 800 },
-        { rotateY: `${rotateY}deg` },
-      ],
-      opacity,
-      zIndex,
-    };
-  });
+    onPress();
+  }, [onPress, pressScale]);
 
   return (
-    <Animated.View style={[styles.itemWrapper, animatedStyle]}>
-      <Pressable onPress={onPress} style={styles.pressable}>
-        <MenuIcon
-          icon={item.icon}
-          label={`${item.emoji || ''} ${t(item.labelKey)}`}
-          status="animated_interactive"
-          onPress={onPress}
-          isLarge={true}
-          testID={`menu-icon-${item.id}`}
+    <Animated.View ref={buttonRef} collapsable={false} style={[{ marginBottom: gap, width: stripWidth }, animatedStyle]}>
+      <Pressable
+        onPress={handlePress}
+        style={({ pressed }) => [
+          styles.strip,
+          { height: stripHeight, borderRadius: stripHeight * 0.2 },
+          pressed && styles.stripPressed,
+        ]}
+        testID={`menu-icon-${item.id}`}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={`${label} button`}
+      >
+        <Image
+          source={item.image}
+          style={[
+            styles.stripImage,
+            { borderRadius: stripHeight * 0.2 },
+            item.id === 'freeplay' && { transform: [{ scale: 1.25 }] },
+          ]}
+          resizeMode="cover"
+          fadeDuration={0}
         />
+        <View style={styles.textOverlay}>
+          <Text style={[styles.label, { fontSize: scaledFontSize(32) }]}>
+            {label}
+          </Text>
+        </View>
       </Pressable>
     </Animated.View>
   );
 });
 
 const styles = StyleSheet.create({
-  gestureRoot: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   container: {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  carouselContainer: {
+  strip: {
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.35)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.45,
+    shadowRadius: 12,
+    elevation: 10,
+  },
+  stripPressed: {
+    opacity: 0.85,
+  },
+  stripImage: {
+    ...StyleSheet.absoluteFillObject,
     width: '100%',
-    aspectRatio: 1.5, // Maintains consistent proportions across screen sizes
-    maxHeight: 350,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
+    height: '100%',
   },
-  itemWrapper: {
-    position: 'absolute',
-    alignItems: 'center',
+  textOverlay: {
+    ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
   },
-  pressable: {
-    alignItems: 'center',
-    justifyContent: 'center',
+  label: {
+    color: '#FFFFFF',
+    fontWeight: '900',
+    textShadowColor: 'rgba(0, 0, 0, 0.9)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
+    letterSpacing: 1.5,
   },
 });

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, Dimensions, StatusBar, ImageBackground, ScrollView, TextInput, Alert, KeyboardAvoidingView, Platform, useWindowDimensions, Image as RNImage, AppState } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Dimensions, StatusBar, ImageBackground, ScrollView, TextInput, Alert, KeyboardAvoidingView, Platform, BackHandler, useWindowDimensions, Image as RNImage, AppState } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -35,6 +36,7 @@ import {
 import { Fonts } from '@/constants/theme';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 import { MusicControl } from '../ui/music-control';
+import { AudioControlModal } from '../ui/audio-control-modal';
 import { ParentsOnlyModal } from '../ui/parents-only-modal';
 import { useAppStore } from '@/store/app-store';
 import { useAccessibility, TEXT_SIZE_OPTIONS } from '@/hooks/use-accessibility';
@@ -143,13 +145,17 @@ export function StoryBookReader({
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const textScrollViewRef = useRef<ScrollView>(null);
 
+  // Audio control modal - rendered at root level to avoid iOS crash with absolute positioning
+  const [showAudioControlModal, setShowAudioControlModal] = useState(false);
+
   // Parents Only modal - using shared hook
   const parentsOnly = useParentsOnlyChallenge();
 
   // Background music control for recording and narration
   const globalSound = useGlobalSound();
   const [wasMusicPlayingBeforeRecording, setWasMusicPlayingBeforeRecording] = useState(false);
-  const [wasMusicPlayingBeforeNarration, setWasMusicPlayingBeforeNarration] = useState(false);
+  // Ref to track music-paused-for-playback state (avoids stale closure in didJustFinish callbacks)
+  const musicPausedForPlaybackRef = useRef(false);
 
   // Voice recording hook (expo-audio requires hook-based recording)
   const voiceRecording = useVoiceRecording();
@@ -193,8 +199,14 @@ export function StoryBookReader({
   }, []);
 
   const handleCloseInstrumentPicker = useCallback(() => {
-    setShowInstrumentPicker(false);
-  }, []);
+    if (readingMode === 'read') {
+      // In read mode, closing the instrument picker closes the book entirely
+      setShowInstrumentPicker(false);
+      handleExitRef.current();
+    } else {
+      setShowInstrumentPicker(false);
+    }
+  }, [readingMode]);
 
   // Toggle music sheet overlay
   const handleToggleMusicSheet = useCallback(() => {
@@ -239,6 +251,10 @@ export function StoryBookReader({
     isListening: breathDetector.isListening,
   }), [breathDetector.pauseForPlayback, breathDetector.resumeRecording, breathDetector.ensurePlaybackMode, breathDetector.isListening]);
 
+  // Compute effective note volume: base volume * master * mute.
+  // Updates live when the user toggles mute or adjusts the master slider.
+  const effectiveNoteVolume = globalSound?.isMuted ? 0 : 1.0 * (globalSound?.masterVolume ?? 1);
+
   // Music challenge hook
   const musicChallenge = useMusicChallenge(
     isMusicChallengePage ? currentMusicChallenge : undefined,
@@ -254,7 +270,7 @@ export function StoryBookReader({
         );
       }
     },
-    1.0, // noteVolume
+    effectiveNoteVolume,
     audioSessionControl,
   );
 
@@ -268,8 +284,9 @@ export function StoryBookReader({
   }, [breathDetector.isBreathActive, isMusicChallengePage]);
 
   // Auto-open instrument picker when the story loads (before the first page appears)
+  // Skip in record mode — user is recording voice, not playing music
   useEffect(() => {
-    if (hasMusicChallenge) {
+    if (hasMusicChallenge && readingMode !== 'record') {
       setShowInstrumentPicker(true);
     }
   }, [story.id]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -354,6 +371,18 @@ export function StoryBookReader({
     const openChallengePreview = async () => {
       if (!isMusicChallengePage || !currentMusicChallenge) return;
 
+      // Stop any playing narration first (in narrate mode)
+      if (playbackPlayer) {
+        try {
+          playbackPlayer.pause();
+          playbackPlayer.release();
+        } catch (e) {
+          // Ignore errors during cleanup
+        }
+        setPlaybackPlayer(null);
+        setIsPlaying(false);
+      }
+
       await breathDetector.ensurePlaybackMode();
 
       // Save current volume and duck background music when the sheet opens
@@ -372,6 +401,7 @@ export function StoryBookReader({
     isMusicChallengePage,
     globalSound.volume,
     fadeMusicVolumeTo,
+    playbackPlayer,
   ]);
 
   // Step 2: User taps "Ready to Play" on the music sheet → close sheet, show instrument UI
@@ -446,6 +476,67 @@ export function StoryBookReader({
     return () => { isMountedRef.current = false; };
   }, []);
 
+  // Android hardware back button — refs for functions defined later in the component
+  const handleExitRef = useRef<() => void>(() => {});
+  const handlePreviousPageRef = useRef<() => void>(() => {});
+  const closeMusicPracticeRef = useRef<(opts?: { cleanup?: boolean; stopBreath?: boolean; resetUiHidden?: boolean }) => void>(() => {});
+  const handleCloseMusicSheetRef = useRef<() => void>(() => {});
+
+  // Android hardware back button support
+  // Priority: dismiss overlays → close music practice → go to previous page → exit story
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+
+    const onBackPress = () => {
+      // 1. Close any open overlay first
+      if (showSettingsMenu) {
+        setShowSettingsMenu(false);
+        setActiveSubmenu(null);
+        return true;
+      }
+      if (showPagePreview) {
+        setShowPagePreview(false);
+        return true;
+      }
+      if (showTipsOverlay) {
+        setShowTipsOverlay(false);
+        return true;
+      }
+      if (showMusicSheet) {
+        handleCloseMusicSheetRef.current();
+        return true;
+      }
+      if (showInstrumentPicker) {
+        setShowInstrumentPicker(false);
+        return true;
+      }
+
+      // 2. If in music challenge playing phase, close the music practice
+      if (musicChallengePhase === 'playing') {
+        closeMusicPracticeRef.current({ cleanup: true, stopBreath: true, resetUiHidden: true });
+        return true;
+      }
+
+      // 3. If not on the first page, go to previous page
+      if (currentPageIndex > 1) {
+        handlePreviousPageRef.current();
+        return true;
+      }
+
+      // 4. Exit the story reader
+      if (!isExiting) {
+        handleExitRef.current();
+      }
+      return true;
+    };
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => subscription.remove();
+  }, [
+    showSettingsMenu, showPagePreview, showTipsOverlay, showMusicSheet,
+    showInstrumentPicker, musicChallengePhase, currentPageIndex, isExiting,
+  ]);
+
   // Animate the music practice overlay down off screen, then reset state.
   // Uses setTimeout instead of runOnJS inside the withTiming callback to avoid
   // native crashes — runOnJS with inline anonymous functions in worklet callbacks
@@ -490,6 +581,14 @@ export function StoryBookReader({
   // Accessibility scaling
   const { scaledFontSize, scaledButtonSize, textSizeScale } = useAccessibility();
   const setTextSizeScale = useAppStore((state) => state.setTextSizeScale);
+  const markStoryAsRead = useAppStore((state) => state.markStoryAsRead);
+  const recordReadingSession = useAppStore((state) => state.recordReadingSession);
+
+  // Mark story as read and record the reading session (for streak tracking)
+  useEffect(() => {
+    markStoryAsRead(story.id);
+    recordReadingSession();
+  }, [story.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset scroll position and flash indicators when page or story changes
   useEffect(() => {
@@ -763,12 +862,6 @@ export function StoryBookReader({
       // Restore background music volume if reduced for music challenge
       restoreMusicVolume();
 
-      // Resume background music if it was paused for narration
-      if (wasMusicPlayingBeforeNarration) {
-        globalSound.play();
-        setWasMusicPlayingBeforeNarration(false);
-      }
-
       // Start the exit animation FIRST while still in landscape
       // The shrink animation will happen, then we rotate, then cover closes and returns to tile
       // This prevents the weird visual effect of rotating before shrinking
@@ -916,7 +1009,11 @@ export function StoryBookReader({
     // Stop any current playback
     setIsPlaying(false);
     if (playbackPlayer) {
-      playbackPlayer.pause();
+      try {
+        playbackPlayer.pause();
+      } catch (e) {
+        // Player may already have been released by narration auto-play cleanup
+      }
     }
 
     // In record mode, check if there's an existing recording for this page
@@ -1133,6 +1230,14 @@ export function StoryBookReader({
       setPlaybackPlayer(null);
     }
 
+    // Pause background music so the recording playback is clearly audible
+    if (globalSound.isPlaying) {
+      musicPausedForPlaybackRef.current = true;
+      await globalSound.pause();
+    } else {
+      musicPausedForPlaybackRef.current = false;
+    }
+
     const player = await voiceRecordingService.playRecording(currentRecordingUri);
     if (player) {
       setPlaybackPlayer(player);
@@ -1140,6 +1245,11 @@ export function StoryBookReader({
       player.addListener('playbackStatusUpdate', (status) => {
         if (status.didJustFinish) {
           setIsPlaying(false);
+          // Resume background music when playback finishes (uses ref to avoid stale closure)
+          if (musicPausedForPlaybackRef.current) {
+            musicPausedForPlaybackRef.current = false;
+            globalSound.play();
+          }
         }
       });
     }
@@ -1155,6 +1265,11 @@ export function StoryBookReader({
       }
       setIsPlaying(false);
     }
+    // Resume background music when stopping playback
+    if (musicPausedForPlaybackRef.current) {
+      musicPausedForPlaybackRef.current = false;
+      await globalSound.play();
+    }
   };
 
   const handlePauseNarration = async () => {
@@ -1168,29 +1283,88 @@ export function StoryBookReader({
     }
   };
 
+  // Helper: create a fresh narration player for the current page
+  const createNarrationPlayer = async (): Promise<boolean> => {
+    const pageRecording = selectedVoiceOver?.pageRecordings[currentPageIndex];
+    if (!pageRecording) return false;
+
+    // Release any existing player
+    if (playbackPlayer) {
+      try {
+        playbackPlayer.pause();
+        playbackPlayer.release();
+      } catch (e) { /* already released */ }
+      setPlaybackPlayer(null);
+    }
+
+    const player = await voiceRecordingService.playRecording(pageRecording.uri);
+    if (player) {
+      setPlaybackPlayer(player);
+      setIsPlaying(true);
+      setNarrationDuration(pageRecording.duration || 0);
+      setNarrationProgress(0);
+      player.addListener('playbackStatusUpdate', (status) => {
+        const positionSec = status.currentTime || 0;
+        const durationSec = status.duration || 1;
+        setNarrationProgress(positionSec);
+        setNarrationDuration(durationSec);
+        if (status.didJustFinish) {
+          setIsPlaying(false);
+          setNarrationProgress(0);
+        }
+      });
+      return true;
+    }
+    return false;
+  };
+
   const handleResumeNarration = async () => {
+    // If narration already finished (!isPlaying), treat play button as replay
+    if (!isPlaying) {
+      // Create a fresh player to replay from the beginning
+      const success = await createNarrationPlayer();
+      if (!success) {
+        setIsPlaying(false);
+      }
+      return;
+    }
+
+    // Try to resume existing player (was paused mid-playback)
     if (playbackPlayer) {
       try {
         playbackPlayer.play();
         setIsPlaying(true);
+        return;
       } catch (e) {
-        // Player may have been released, ignore
-        setIsPlaying(false);
+        // Player was released — fall through to create a new one
       }
+    }
+
+    // Create a fresh player (player was released)
+    const success = await createNarrationPlayer();
+    if (!success) {
+      setIsPlaying(false);
     }
   };
 
   const handleReplayNarration = async () => {
+    // Try to seek and replay on existing player
     if (playbackPlayer) {
       try {
         playbackPlayer.seekTo(0);
         playbackPlayer.play();
         setIsPlaying(true);
         setNarrationProgress(0);
+        return;
       } catch (e) {
-        // Player may have been released, ignore
-        setIsPlaying(false);
+        // Player was released — fall through to create a new one
       }
+    }
+
+    // Create a fresh player (player was released after narration finished)
+    const success = await createNarrationPlayer();
+    if (!success) {
+      setIsPlaying(false);
     }
   };
 
@@ -1201,8 +1375,9 @@ export function StoryBookReader({
   };
 
   // Narrate mode: auto-play recording when page changes (if auto-play is enabled)
+  // Don't start narration while instrument picker is visible — wait until user confirms
   useEffect(() => {
-    if (readingMode !== 'narrate' || !selectedVoiceOver || currentPageIndex === 0 || !narrationAutoPlay) {
+    if (readingMode !== 'narrate' || !selectedVoiceOver || currentPageIndex === 0 || !narrationAutoPlay || showInstrumentPicker) {
       return;
     }
 
@@ -1213,7 +1388,6 @@ export function StoryBookReader({
 
     let currentPlayer: import('expo-audio').AudioPlayer | null = null;
     let isMounted = true;
-    let didPauseMusic = false;
 
     const playNarration = async () => {
       // Release any existing player first
@@ -1225,13 +1399,6 @@ export function StoryBookReader({
           // Ignore errors during cleanup
         }
         setPlaybackPlayer(null);
-      }
-
-      // Pause background music before playing narration to avoid audio conflicts
-      if (globalSound.isPlaying) {
-        setWasMusicPlayingBeforeNarration(true);
-        didPauseMusic = true;
-        await globalSound.pause();
       }
 
       // Set duration from the recorded page info
@@ -1264,10 +1431,6 @@ export function StoryBookReader({
       } else if (player) {
         // Component unmounted before player was ready, release it
         player.release();
-        // Resume music if we paused it but player failed
-        if (didPauseMusic) {
-          globalSound.play();
-        }
       }
     };
 
@@ -1290,7 +1453,7 @@ export function StoryBookReader({
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPageIndex, readingMode, selectedVoiceOver, narrationAutoPlay]);
+  }, [currentPageIndex, readingMode, selectedVoiceOver, narrationAutoPlay, showInstrumentPicker]);
 
   // Show voice over selection when entering narrate mode
   useEffect(() => {
@@ -1299,18 +1462,12 @@ export function StoryBookReader({
     }
   }, [readingMode, availableVoiceOvers, selectedVoiceOver]);
 
-  // Resume background music when leaving narrate mode
-  useEffect(() => {
-    if (readingMode !== 'narrate' && wasMusicPlayingBeforeNarration) {
-      globalSound.play();
-      setWasMusicPlayingBeforeNarration(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [readingMode]);
+
 
   // Auto-advance to next page after narration finishes (2 second delay) - only if auto-play is enabled
+  // Don't auto-advance on music challenge pages — wait for user to interact with Begin Playing
   useEffect(() => {
-    if (shouldAutoAdvance && readingMode === 'narrate' && currentPageIndex < pages.length - 1 && narrationAutoPlay) {
+    if (shouldAutoAdvance && readingMode === 'narrate' && currentPageIndex < pages.length - 1 && narrationAutoPlay && !isMusicChallengePage) {
       const advanceTimer = setTimeout(() => {
         setShouldAutoAdvance(false);
         handleNextPage();
@@ -1321,7 +1478,7 @@ export function StoryBookReader({
       setShouldAutoAdvance(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shouldAutoAdvance, narrationAutoPlay]);
+  }, [shouldAutoAdvance, narrationAutoPlay, isMusicChallengePage]);
 
   // Animate UI elements when page preview opens/closes
   useEffect(() => {
@@ -1560,8 +1717,8 @@ export function StoryBookReader({
             {/* Page indicator overlay - Top Left, after exit button (hide on cover page and next page) */}
             {!isNextPage && page.pageNumber > 0 && (
               <View style={[styles.pageIndicatorOverlay, {
-                top: Math.max(insets.top + 5, 20) + scaledButtonSize(50) / 2 - scaledButtonSize(16),
-                left: Math.max(insets.left + 5, 20) + scaledButtonSize(50) + 12,
+                top: Math.max(insets.top + 20, 20) + scaledButtonSize(50) / 2 - scaledButtonSize(16),
+                left: Math.max(insets.left + 20, 20) + scaledButtonSize(50) + 12,
                 height: scaledButtonSize(32),
                 minWidth: scaledButtonSize(50),
                 paddingHorizontal: scaledButtonSize(12),
@@ -1711,6 +1868,12 @@ export function StoryBookReader({
     });
   };
   
+  // Keep Android back button refs in sync with the latest function references
+  handleExitRef.current = handleExit;
+  handlePreviousPageRef.current = handlePreviousPage;
+  closeMusicPracticeRef.current = closeMusicPractice;
+  handleCloseMusicSheetRef.current = handleCloseMusicSheet;
+
   // Animated style for image (fades in only)
   const imageAnimatedStyle = useAnimatedStyle(() => ({
     opacity: imageOpacity.value,
@@ -1791,14 +1954,13 @@ export function StoryBookReader({
 
   return (
     <Animated.View style={[styles.container, exitAnimatedStyle, storyAnimatedStyle, bookOpeningAnimatedStyle]}>
-      <View style={[
-        styles.background,
-        {
-          backgroundColor: !isTablet && currentPage?.backgroundImage
-            ? 'transparent'
-            : '#4ECDC4' // Calming teal background
-        }
-      ]}>
+      <View style={styles.background}>
+        {/* Gradient background — matches story selection screen so the exit
+            animation doesn't reveal a transparent/white gap behind the reader */}
+        <LinearGradient
+          colors={['#4ECDC4', '#3B82F6', '#1E3A8A']}
+          style={StyleSheet.absoluteFill}
+        />
 
 
         {/* Top Left Controls - Exit Button (aligned with bottom back button) */}
@@ -1806,8 +1968,8 @@ export function StoryBookReader({
         {/* Otherwise: X exits the story entirely */}
         {!musicUiHidden && (
         <View style={[styles.topLeftControls, {
-          paddingTop: Math.max(insets.top + 5, 20),
-          paddingLeft: Math.max(insets.left + 5, 20)
+          paddingTop: Math.max(insets.top + 20, 20),
+          paddingLeft: Math.max(insets.left + 20, 20)
         }]}>
           <Pressable
             style={[
@@ -1824,7 +1986,7 @@ export function StoryBookReader({
             } : handleExit}
             disabled={musicChallengePhase !== 'playing' && isExiting}
           >
-            <Text style={[styles.exitButtonText, { fontSize: scaledFontSize(20) }]}>✕</Text>
+            <Ionicons name="home" size={scaledFontSize(20)} color="#333333" />
           </Pressable>
         </View>
         )}
@@ -1832,7 +1994,7 @@ export function StoryBookReader({
         {/* Recording Controls - Top Center (only visible in record mode on story pages) */}
         {readingMode === 'record' && currentPageIndex > 0 && (
           <View style={[styles.recordingControlsContainer, {
-            paddingTop: Math.max(insets.top + 5, 20),
+            paddingTop: Math.max(insets.top + 20, 20),
           }]}>
             {!isRecording && !currentRecordingUri && (
               <Pressable
@@ -1899,7 +2061,7 @@ export function StoryBookReader({
         {/* Narration Playback Controls - Top Center (only visible in narrate mode on story pages) */}
         {readingMode === 'narrate' && currentPageIndex > 0 && selectedVoiceOver && (
           <View style={[styles.narrationControlsContainer, {
-            paddingTop: Math.max(insets.top + 5, 20),
+            paddingTop: Math.max(insets.top + 20, 20),
           }]}>
             <View style={[styles.narrationPlaybackContainer, {
               paddingVertical: scaledButtonSize(6),
@@ -1953,16 +2115,27 @@ export function StoryBookReader({
                 <Text style={[styles.narrationReplayIcon, { fontSize: scaledFontSize(16) }]}>↻</Text>
               </Pressable>
             </View>
+
+            {/* "Begin Playing" button below narration controls on music challenge pages */}
+            {isMusicChallengePage && !showMusicSheet && !showInstrumentPicker && musicChallengePhase === 'idle' && (
+              <Pressable
+                style={[styles.beginPlayingButtonInner, { marginTop: 10 }]}
+                onPress={handleBeginMusicChallenge}
+                testID="begin-music-challenge-button-narrate"
+              >
+                <Text style={styles.beginPlayingButtonText}>♪ Begin Playing</Text>
+              </Pressable>
+            )}
           </View>
         )}
 
         {/* Top Right Controls - Sound and Settings (aligned with bottom next button) */}
         {!musicUiHidden && (
         <View style={[styles.topRightControls, {
-          paddingTop: Math.max(insets.top + 5, 20),
-          paddingRight: Math.max(insets.right + 5, 20)
+          paddingTop: Math.max(insets.top + 20, 20),
+          paddingRight: Math.max(insets.right + 20, 20)
         }]}>
-          <MusicControl size={28} variant="story" />
+          <MusicControl size={28} variant="story" onAudioModalChange={setShowAudioControlModal} />
           {/* Settings/Burger Menu Button */}
           <Pressable
             style={[
@@ -2003,8 +2176,8 @@ export function StoryBookReader({
         {/* Settings Menu Dropdown - Main Menu */}
         {showSettingsMenu && activeSubmenu === 'main' && (
           <View style={[styles.settingsMenu, {
-            top: Math.max(insets.top + 5, 20) + scaledButtonSize(50) + 10,
-            right: Math.max(insets.right + 5, 20),
+            top: Math.max(insets.top + 20, 20) + scaledButtonSize(50) + 10,
+            right: Math.max(insets.right + 20, 20),
           }]}>
             <Pressable
               style={styles.menuItem}
@@ -2098,8 +2271,8 @@ export function StoryBookReader({
         {/* Settings Menu Dropdown - Font Size Options */}
         {showSettingsMenu && activeSubmenu === 'fontSize' && (
           <View style={[styles.settingsMenu, {
-            top: Math.max(insets.top + 5, 20) + scaledButtonSize(50) + 10,
-            right: Math.max(insets.right + 5, 20),
+            top: Math.max(insets.top + 20, 20) + scaledButtonSize(50) + 10,
+            right: Math.max(insets.right + 20, 20),
           }]}>
             <Pressable
               style={styles.submenuHeader}
@@ -2157,9 +2330,9 @@ export function StoryBookReader({
             styles.bottomUIPanel,
             readingMode === 'record' && styles.bottomUIPanelRecordMode,
             {
-              paddingLeft: Math.max(insets.left + 5, 20),
-              paddingRight: Math.max(insets.right + 5, 20),
-              paddingBottom: Math.max(insets.bottom + 5, 20),
+              paddingLeft: Math.max(insets.left + 20, 20),
+              paddingRight: Math.max(insets.right + 20, 20),
+              paddingBottom: Math.max(insets.bottom + 20, 20),
             }
           ]}>
 
@@ -2772,6 +2945,20 @@ export function StoryBookReader({
         scaledFontSize={scaledFontSize}
       />
 
+      {/* Audio Control Modal - rendered at root level with absolute positioning
+           to prevent iOS crash from native Modal inside complex view hierarchy */}
+      <AudioControlModal
+        visible={showAudioControlModal}
+        onClose={() => setShowAudioControlModal(false)}
+        masterVolume={globalSound.masterVolume}
+        musicVolume={globalSound.musicVolume}
+        voiceOverVolume={globalSound.voiceOverVolume}
+        onMasterVolumeChange={globalSound.setMasterVolume}
+        onMusicVolumeChange={globalSound.setMusicVolume}
+        onVoiceOverVolumeChange={globalSound.setVoiceOverVolume}
+        useAbsolutePositioning
+      />
+
       {/* Page Preview Modal */}
       <PagePreviewModal
         story={story}
@@ -2991,8 +3178,9 @@ export function StoryBookReader({
       )}
 
       {/* "Begin Playing" — top center, aligned with nav buttons */}
-      {isMusicChallengePage && !showMusicSheet && !showInstrumentPicker && musicChallengePhase === 'idle' && (
-        <View style={[styles.beginPlayingButton, { paddingTop: Math.max(insets.top + 5, 20) }]} pointerEvents="box-none">
+      {/* Hidden in record mode (no music) and narrate mode (shown below narration controls instead) */}
+      {isMusicChallengePage && !showMusicSheet && !showInstrumentPicker && musicChallengePhase === 'idle' && readingMode !== 'record' && readingMode !== 'narrate' && (
+        <View style={[styles.beginPlayingButton, { paddingTop: Math.max(insets.top + 20, 20) }]} pointerEvents="box-none">
           <Pressable
             style={styles.beginPlayingButtonInner}
             onPress={handleBeginMusicChallenge}
@@ -3018,7 +3206,7 @@ export function StoryBookReader({
         onReadyToPlay={musicChallengePhase === 'preview' ? handleReadyToPlay : undefined}
         onNotePressIn={musicChallenge.previewNote}
         onNotePressOut={musicChallenge.stopNote}
-        isRotated={musicChallengePhase === 'playing' && instrumentIsRotated}
+
       />
 
       {/* Instrument Picker Overlay — opened only from music challenge controls */}

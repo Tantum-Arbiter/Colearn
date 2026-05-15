@@ -43,6 +43,15 @@ export interface AppState {
   // Story favorites
   favoriteStoryIds: string[]; // Array of story IDs that user has favorited
 
+  // Story read tracking
+  readStoryIds: string[]; // Array of story IDs that user has opened/read
+
+  // Reading streak gamification
+  readingStreak: number; // Current consecutive-day streak
+  longestStreak: number; // All-time best streak
+  lastReadDate: string | null; // ISO date string (YYYY-MM-DD) of last reading session
+  totalStoriesRead: number; // Lifetime count of stories opened
+
   // Background animation state persistence
   backgroundAnimationState: {
     cloudFloat1: number;
@@ -74,6 +83,8 @@ export interface AppState {
   setTextSizeScale: (scale: number) => void;
   toggleFavoriteStory: (storyId: string) => void;
   isStoryFavorited: (storyId: string) => boolean;
+  markStoryAsRead: (storyId: string) => void;
+  recordReadingSession: () => void; // Call when a story is opened to update streak
 
   updateBackgroundAnimationState: (state: {
     cloudFloat1: number;
@@ -108,6 +119,11 @@ export const useAppStore = create<AppState>()(
       crashReportingEnabled: false, // Default to disabled until user consents
       textSizeScale: 1.0, // Default to normal size
       favoriteStoryIds: [], // Start with no favorites
+      readStoryIds: [], // Start with no read stories
+      readingStreak: 0,
+      longestStreak: 0,
+      lastReadDate: null,
+      totalStoriesRead: 0,
 
       backgroundAnimationState: {
         cloudFloat1: -200,
@@ -164,6 +180,32 @@ export const useAppStore = create<AppState>()(
         // we need to access it differently. This will be used via useAppStore.getState()
         return false; // Placeholder - actual check is done via selector
       },
+      markStoryAsRead: (storyId) => set((state) => {
+        if (state.readStoryIds.includes(storyId)) {
+          return state; // Already marked as read
+        }
+        return { readStoryIds: [...state.readStoryIds, storyId] };
+      }),
+      recordReadingSession: () => set((state) => {
+        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+        if (state.lastReadDate === today) {
+          // Already recorded today — just increment total
+          return { totalStoriesRead: state.totalStoriesRead + 1 };
+        }
+
+        // Check if yesterday was the last read date (streak continues)
+        const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+        const isConsecutive = state.lastReadDate === yesterday;
+        const newStreak = isConsecutive ? state.readingStreak + 1 : 1;
+        const newLongest = Math.max(newStreak, state.longestStreak);
+
+        return {
+          readingStreak: newStreak,
+          longestStreak: newLongest,
+          lastReadDate: today,
+          totalStoriesRead: state.totalStoriesRead + 1,
+        };
+      }),
 
       requestReturnToMainMenu: () => set((state) => {
         // Prevent multiple rapid requests
@@ -204,6 +246,11 @@ export const useAppStore = create<AppState>()(
         crashReportingEnabled: state.crashReportingEnabled,
         textSizeScale: state.textSizeScale,
         favoriteStoryIds: state.favoriteStoryIds,
+        readStoryIds: state.readStoryIds,
+        readingStreak: state.readingStreak,
+        longestStreak: state.longestStreak,
+        lastReadDate: state.lastReadDate,
+        totalStoriesRead: state.totalStoriesRead,
         backgroundAnimationState: state.backgroundAnimationState,
       }),
       onRehydrateStorage: () => (state, error) => {

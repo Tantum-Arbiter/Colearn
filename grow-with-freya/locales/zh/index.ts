@@ -438,44 +438,33 @@ export default {
     readyToStart: '您已准备好开始您的旅程！',
     screens: {
       welcome: {
-        title: '欢迎！',
-        body: '通过故事和活动支持孩子的早期发展',
-        button: '下一个',
+        title: '与孩子一起\n成长的故事',
+        body: '配有音乐、乐器和叙述的互动故事——激发想象力，支持早期发展。',
+        button: '下一步',
       },
-      screenTime: {
-        title: '为什么要限制屏幕时间',
-        body: '我们建议与孩子一起使用此应用。',
-        button: '下一个',
+      howItWorks: {
+        title: '使用方法',
+        body: '您的孩子创造性游戏所需的一切。',
+        button: '下一步',
+        features: {
+          stories: '📚  互动故事',
+          storiesDesc: '精美插图的故事，逐页叙述',
+          music: '🎵  音乐与乐器',
+          musicDesc: '用真实乐器声音学习节奏和旋律',
+          voice: '🎙️  您的声音',
+          voiceDesc: '录制叙述，让孩子即使不在身边也能听到您',
+        },
       },
-      personalize: {
-        title: '让我们个性化！',
-        body: '你叫什么名字？输入您的名字并创建头像以个性化您的体验！',
-        button: '下一个',
-      },
-      voiceRecording: {
-        title: '录制您的声音！',
-        body: '用您的声音讲述故事。当您不在时安慰孩子。',
-        button: '下一个',
-      },
-      research: {
-        title: '由研究支持！',
-        body: '此应用是儿童发展硕士研究的一部分，探索数字参与如何支持健康的亲子关系。研究表明共同参与和短会话可提供最大益处。',
-        button: '下一个',
-      },
-      disclaimer: {
-        title: '免责声明',
-        body: '此应用正在积极开发中。某些功能可能无法正常工作 - 请截图问题并附上时间戳。\n\n后端服务器在未使用时处于休眠状态。如果登录失败，请等待30秒。故事加载取决于网络。\n\n故事内容包括原创作品、AI生成的故事和教育研究中使用的儿童书籍。',
-        button: '下一个',
+      family: {
+        title: '为家庭打造',
+        body: '专为有意义的短暂亲子时光设计。研究表明，共同参与和短时使用能带来最大益处。',
+        button: '下一步',
       },
       privacy: {
-        title: '您的隐私',
-        body: '您的数据是安全的。我们不收集或存储个人信息。\n\n通过Google或Apple登录是安全且匿名的 - 我们只收到匿名ID，没有电子邮件或个人详情。\n\n跨设备会话同步完全匿名。所有数据跟踪遵循安全最佳实践，传输和存储时进行加密。\n\n此应用采用隐私优先原则为您和您的家人设计。',
-        button: '下一个',
-      },
-      crashReporting: {
-        title: '帮助我们改进',
-        body: '您能通过分享匿名崩溃报告来帮助我们改进应用吗？\n\n崩溃报告帮助快速识别和修复问题。它们仅包含有关出错的技术信息 - 没有个人数据、图像或内容。\n\n您可以随时在设置中更改此设置。',
-        button: '让我们开始...',
+        title: '隐私与开始',
+        body: '您的数据安全且经过假名化处理。不收集个人信息——登录仅使用匿名标识符。\n\n分享匿名崩溃报告帮助我们改进（您可以在设置中随时更改）。',
+        button: '开始吧！',
+        showCrashReportingDialog: 'true',
       },
     },
     crashReportingDialog: {
@@ -485,21 +474,16 @@ export default {
       enable: '启用',
     },
     taglines: {
-      welcome: '✨ 随孩子成长的故事',
-      screenTime: '👨‍👩‍👧‍👦 一起的优质时光',
-      personalize: '🎭 使其独特',
-      voiceRecording: '🎙️ 您的声音，他们的舒适',
-      research: '🔬 心理学与技术相连',
+      welcome: '✨ 通过游戏激发想象力',
+      howItWorks: '🌟 三种探索方式',
+      family: '👨‍👩‍👧‍👦 共度时光，真实收益',
+      privacy: '🔒 隐私优先',
     },
     benefits: {
-      welcome: '个性化学习体验',
-      screenTime: '儿童发展专家推荐',
-      personalize: '自定义头像和个性化故事',
-      voiceRecording: '录制一次，永远安慰',
-      research: '一起成长，永远',
-      disclaimer: '感谢您帮助我们改进！',
-      privacy: '您的数据是您的',
-      crashReporting: '匿名崩溃报告帮助更快修复错误',
+      welcome: '基于儿童发展研究',
+      howItWorks: '故事 · 音乐 · 声音 — 一个应用全搞定',
+      family: '儿童发展专家推荐',
+      privacy: '您的数据属于您',
     },
   },
   tutorial: {
@@ -526,8 +510,16 @@ export default {
         description: '让我们进行快速导览，帮助您和孩子充分利用阅读时间。',
       },
       stories: {
-        title: '探索与演奏 🎵📚',
-        description: '滑动轮播以发现故事、在乐器上学习音乐的练习模式，以及自由演奏任何乐器的自由演奏模式。',
+        title: '故事 📚',
+        description: '探索我们的互动故事系列，拥有精美的插图和有趣的互动体验。',
+      },
+      practise: {
+        title: '练习 🎵',
+        description: '学习在不同乐器上演奏歌曲。跟着节奏，提升你的音乐技能！',
+      },
+      freeplay: {
+        title: '自由演奏 🎹',
+        description: '在任何乐器上自由演奏——没有规则，只有乐趣！尝试各种声音，创作属于你的音乐。',
       },
       settings: {
         title: '设置 ⚙️',
@@ -690,6 +682,33 @@ export default {
         description: '设置健康限制并监控每日使用。',
       },
     },
+    // Music Mode Tips - keys match tutorial.musicMode.* in tutorial-content.ts
+    musicMode: {
+      welcome: {
+        title: '音乐模式 🎵',
+        description: '这个故事的某些页面有音乐挑战！在虚拟乐器上演奏音符来完成它们。',
+      },
+      instrument: {
+        title: '选择你的乐器 🎹',
+        description: '当打开一本有音乐的书时，滑动轮播图选择你最喜欢的乐器。每种乐器都有独特的声音！',
+      },
+      playing: {
+        title: '演奏音符 🎶',
+        description: '按下彩色按钮来演奏音符。按照顶部显示的序列来完成挑战！',
+      },
+      sheet: {
+        title: '乐谱 📋',
+        description: '点击音符按钮（左下角）查看所有需要演奏的音符。你甚至可以预览旋律！',
+      },
+      begin: {
+        title: '开始演奏 ▶️',
+        description: '当你到达音乐页面时，点击顶部的"开始演奏"按钮来启动挑战。它会先打开乐谱，让你看到要演奏什么！',
+      },
+      change: {
+        title: '更换乐器 🔄',
+        description: '想试试不同的声音？打开菜单（☰）并点击"更换乐器"随时更换。',
+      },
+    },
     gestures: {
       speakerLongPress: {
         title: '长按提示 👆',
@@ -809,6 +828,36 @@ export default {
     music: '音乐',
     voiceOver: '语音',
   },
+  // Subscription overlay
+  subscription: {
+    unlockPlan: '解锁套餐',
+    choosePlan: '选择最适合您家庭的套餐',
+    subscribe: '订阅',
+    privacyPolicy: '隐私政策',
+    termsAndConditions: '条款与条件',
+    planBasic: '基础版',
+    planPremium: '高级版',
+    planAnnual: '年度版',
+    perMonth: '/月',
+    perYear: '/年',
+    mostRecommended: '最推荐',
+    percentOff: '减25%',
+    uspStories: '精心打造以支持儿童成长的故事',
+    uspEducators: '经教育专家审核的适龄内容',
+    uspMusic: '互动音乐与乐器练习',
+    uspNoAds: '无广告——对孩子安全',
+    uspLanguages: '支持14种语言',
+    detailAllStories: '所有故事解锁',
+    detailDownload50: '下载多达50本书',
+    detailLimitedSongs: '有限歌曲访问',
+    detailSyncDevices: '多设备同步',
+    detailDownload100: '下载多达100本书',
+    detailAllSongs: '练习模式中的所有歌曲',
+    detailAllInstruments: '所有乐器解锁',
+    detailEverythingPremium: '高级版全部功能',
+    detailSave25: '与月度相比节省25%',
+  },
+
   defaultPage: {
     comingSoon: '即将推出！',
     stories: {

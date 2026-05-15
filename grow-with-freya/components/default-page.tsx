@@ -10,7 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 import { ThemedText } from './themed-text';
-import { getSvgComponentFromSvg } from './main-menu/assets';
+
 import { BearTopImage } from './main-menu/animated-components';
 import { mainMenuStyles } from './main-menu/styles';
 
@@ -55,24 +55,6 @@ interface DefaultPageProps {
   onBack: () => void;
 }
 
-// Map icon names from menu items to SVG component types
-const mapIconNameToSvgType = (iconName: string): string => {
-  switch (iconName) {
-    case 'stories-icon':
-      return 'stories';
-    case 'sensory-icon':
-      return 'sensory';
-    case 'screentime-icon':
-    case 'clock':
-      return 'screentime';
-    case 'brain':
-      return 'sensory';
-    case 'gear':
-      return 'stories'; // fallback for settings
-    default:
-      return 'stories'; // fallback
-  }
-};
 
 // Content data for each page (using translation keys)
 const pageContent: { [key: string]: { emoji: string; messageKey: string; subtitleKey: string; color: string } } = {
@@ -115,8 +97,7 @@ export function DefaultPage({ icon, title, onBack }: DefaultPageProps) {
   const content = useMemo(() => {
     return pageContent[title] || pageContent['Stories'];
   }, [title]);
-  const svgType = mapIconNameToSvgType(icon);
-  const SvgComponent = getSvgComponentFromSvg(svgType as any);
+
 
   // Start star rotation animation on mount
   useEffect(() => {
@@ -179,11 +160,6 @@ export function DefaultPage({ icon, title, onBack }: DefaultPageProps) {
       <View style={{ flex: 1, paddingTop: 140, zIndex: 10 }}>
         <View style={styles.content}>
         <ThemedText style={styles.title}>{title}</ThemedText>
-
-        {/* SVG Icon */}
-        <View style={styles.iconContainer}>
-          <SvgComponent width={120} height={120} />
-        </View>
 
         {/* Large emoji */}
         <ThemedText style={styles.emoji}>{content.emoji}</ThemedText>

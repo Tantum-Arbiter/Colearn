@@ -36,6 +36,7 @@ jest.mock('@/hooks/use-accessibility', () => ({
   useAccessibility: () => ({
     scaledFontSize: (size: number) => size,
     scaledButtonSize: (size: number) => size,
+    scaledPadding: (size: number) => size,
     textSizeScale: 1,
   }),
   TEXT_SIZE_OPTIONS: [
@@ -57,9 +58,14 @@ jest.mock('@/hooks/use-parents-only-challenge', () => ({
 }));
 
 jest.mock('@/store/app-store', () => ({
-  useAppStore: () => ({
-    setTextSizeScale: jest.fn(),
-  }),
+  useAppStore: (selector?: (state: any) => any) => {
+    const state = {
+      setTextSizeScale: jest.fn(),
+      markStoryAsRead: jest.fn(),
+      recordReadingSession: jest.fn(),
+    };
+    return selector ? selector(state) : state;
+  },
 }));
 
 jest.mock('@/services/voice-recording-service', () => ({
@@ -98,6 +104,10 @@ jest.mock('@/hooks/use-breath-detector', () => ({
 
 jest.mock('@/components/ui/music-control', () => ({
   MusicControl: () => null,
+}));
+
+jest.mock('@/components/ui/audio-control-modal', () => ({
+  AudioControlModal: () => null,
 }));
 
 jest.mock('@/components/ui/parents-only-modal', () => ({

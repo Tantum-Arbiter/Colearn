@@ -438,44 +438,33 @@ export default {
     readyToStart: 'Paratus Es Tuam Viam Incipere!',
     screens: {
       welcome: {
-        title: 'Salve!',
-        body: 'Evolutionem Puerum Tuorum Iuvenem Adiuva per Fabulas et Activitates',
-        button: 'Sequens',
+        title: 'Fabulae quae crescunt\ncum infante tuo',
+        body: 'Fabulae interactivae cum musica, instrumentis et narratione — ad imaginationem excitandam et progressum praematurum sustinendum.',
+        button: 'Proxime',
       },
-      screenTime: {
-        title: 'Cur Tempus Ostentionis Limitare',
-        body: 'Commendamus Hanc Applicationem cum Puero Tuo Uti.',
-        button: 'Sequens',
+      howItWorks: {
+        title: 'Quomodo operatur',
+        body: 'Omnia quae infans tuus ad ludum creativum necessitat.',
+        button: 'Proxime',
+        features: {
+          stories: '📚  Fabulae interactivae',
+          storiesDesc: 'Fabulae pulchre illustratae cum narratione pagina per paginam',
+          music: '🎵  Musica et instrumenta',
+          musicDesc: 'Disce rhythmum et melodiam cum veris sonis instrumentorum',
+          voice: '🎙️  Vox tua',
+          voiceDesc: 'Narra fabulas ut infans tuus te audiat — etiam procul',
+        },
       },
-      personalize: {
-        title: 'Faciamus Personalem!',
-        body: 'Quod Est Nomen Tuum? Nomen Tuum Intra et Avatarem Crea ut Tuam Experientiam Customizes!',
-        button: 'Sequens',
-      },
-      voiceRecording: {
-        title: 'Recordare Tuam Vocem!',
-        body: 'Fabulas Cum Tua Voce Narra. Filium Tuum Tranquilla Cum Absis.',
-        button: 'Sequens',
-      },
-      research: {
-        title: 'Investigatione Sustentatum!',
-        body: 'Haec Applicatio Pars Investigationis Magistralis in Evolutione Puerorum Est, Explorando Quomodo Engagement Digitale Relationes Parentum-Puerorum Sanas Sustentare Possit. Investigatio Ostendit Engagement Commune et Sessiones Breves Maxima Beneficia Praebere.',
-        button: 'Sequens',
-      },
-      disclaimer: {
-        title: 'Renuntiatio',
-        body: 'Haec Applicatio Activam Evolutionem Habet. Aliquae Functiones Fortasse Non Operantur - Imagines Problematum cum Temporibus Capta Fac.\n\nServitor Backend Dormit Cum Non Usus. Si Intrare Defecit, 30 Secundas Exspecta. Fabulae Onerans Reti Pendet.\n\nContentus Fabulae Includunt Opera Originalia, Fabulas Artificialiter Generatas et Libros Puerorum in Investigatione Educationis Usatos.',
-        button: 'Sequens',
+      family: {
+        title: 'Pro familiis factum',
+        body: 'Designatum pro sessionibus brevibus et significantibus simul. Investigatio ostendit co-participationem et usum brevem maxima beneficia praebere.',
+        button: 'Proxime',
       },
       privacy: {
-        title: 'Tua Privata',
-        body: 'Tuae Notitiae Tutae Sunt. Notitias Personales Non Colligimus vel Servamus.\n\nIntrare per Google vel Apple Tutum et Anonymum Est - Solum Anonymum ID Accipimus, Non Epistulam vel Notitias Personales.\n\nSessionis Synchronizatio Inter Apparatus Omnino Anonyma Est. Omnes Notitiae Vestigia Optimas Practicus Securitatis Sequuntur cum Encryptione in Transitu et Servando.\n\nHaec Applicatio cum Principio Privatae-Primo Designata Est pro Te et Tua Familia.',
-        button: 'Sequens',
-      },
-      crashReporting: {
-        title: 'Adiuva Nos Meliorem Fieri',
-        body: 'Potesne Nobis Applicationem Meliorem Facere Relationes Collapsus Anonymas Mittendo?\n\nRelationes Collapsus Problemata Celeriter Identificare et Reficere Adiuvant. Solum Notitias Technicum de Quod Malum Fecit Continent - Nullae Notitiae Personales, Imagines vel Contentus.\n\nHanc Constitutionem in Constitutionibus Quolibet Tempore Mutare Potes.',
-        button: 'Incipere Licebit...',
+        title: 'Privatio et initium',
+        body: 'Data tua secura et pseudonymizata sunt. Nulla informatio personalis colligitur — accessus solum identificatorem anonymum utitur.\n\nAdiuva nos meliorare communicando relationes anonymas de defectis (potes hoc mutare in Optionibus).',
+        button: 'Incipiamus!',
+        showCrashReportingDialog: 'true',
       },
     },
     crashReportingDialog: {
@@ -485,21 +474,16 @@ export default {
       enable: 'Activa',
     },
     taglines: {
-      welcome: '✨ Fabulae Quae Cum Puero Tuo Crescunt',
-      screenTime: '👨‍👩‍👧‍👦 Tempus Qualitatis Simul',
-      personalize: '🎭 Fac Unicum',
-      voiceRecording: '🎙️ Tua Vox, Eorum Commoditas',
-      research: '🔬 Psychologia Technologiae Connexa',
+      welcome: '✨ Imaginationem per ludum excita',
+      howItWorks: '🌟 Tres modi explorandi',
+      family: '👨‍👩‍👧‍👦 Tempus simul, vera beneficia',
+      privacy: '🔒 Privatio primum, semper',
     },
     benefits: {
-      welcome: 'Experientia Doctrinae Personalis',
-      screenTime: 'Expertis Evolutionis Puerorum Commendatum',
-      personalize: 'Avatarem Customizatum et Fabulas Personales',
-      voiceRecording: 'Recordare Semel, Semper Tranquilla',
-      research: 'Crescere Simul, Semper',
-      disclaimer: 'Gratias Quod Nobis Meliorem Fieri Adiuvas!',
-      privacy: 'Tuae Notitiae Tuae Sunt',
-      crashReporting: 'Relationes Collapsus Anonymae Errores Celerius Reficere Adiuvant',
+      welcome: 'Investigatione progressus infantilis fultum',
+      howItWorks: 'Fabulae · Musica · Vox — omnia in una applicatione',
+      family: 'Commendatum ab expertis progressus infantilis',
+      privacy: 'Data tua manent tua',
     },
   },
   tutorial: {
@@ -526,8 +510,16 @@ export default {
         description: 'Faciamus Celerem Circumductionem ut Te et Filium Tuum Adiuvemus Tempus Legendi Maxime Uti.',
       },
       stories: {
-        title: 'Explora & Lude 🎵📚',
-        description: 'Volve per carrulum ut Fabulas, modum Exercitationis ad musicam in instrumentis discendam, et modum Ludi Liberi ad libere in quovis instrumento ludendum invenias.',
+        title: 'Fabulae 📚',
+        description: 'Explora collectionem nostram fabularum interactivarum cum pulchris illustrationibus et iucundis interactionibus.',
+      },
+      practise: {
+        title: 'Exercitatio 🎵',
+        description: 'Disce cantiones in diversis instrumentis ludere. Sequere et artes musicas tuas aedifica!',
+      },
+      freeplay: {
+        title: 'Ludus Liber 🎹',
+        description: 'Libere lude in quovis instrumento — sine regulis, solum gaudium! Experimenta cum sonis et tuam musicam crea.',
       },
       settings: {
         title: 'Constitutiones ⚙️',
@@ -690,6 +682,33 @@ export default {
         description: 'Limites Sanos Constitue et Usum Diurnum Observa.',
       },
     },
+    // Music Mode Tips - keys match tutorial.musicMode.* in tutorial-content.ts
+    musicMode: {
+      welcome: {
+        title: 'Modus Musicae 🎵',
+        description: 'Aliquae paginae huius fabulae provocationes musicas habent! Notas in instrumento virtuali lude ut eas compleas.',
+      },
+      instrument: {
+        title: 'Elige Instrumentum Tuum 🎹',
+        description: 'Cum liber cum musica aperitur, per carrousel trahe ut instrumentum tuum dilectum eligas. Unumquodque sonos singulares habet!',
+      },
+      playing: {
+        title: 'Notas Ludere 🎶',
+        description: 'Preme bottones coloratos ut notas ludas. Sequentiam in summo monstratam sequere ut provocationem compleas!',
+      },
+      sheet: {
+        title: 'Charta Musicae 📋',
+        description: 'Tange bottonem notae musicalis (sinistro inferiore) ut omnes notas quas ludere debes videas. Melodiam etiam praevidere potes!',
+      },
+      begin: {
+        title: 'Incipe Ludere ▶️',
+        description: 'Cum ad paginam musicam pervenias, tange bottonem \'Incipe Ludere\' in summo ut provocationem incipias. Primum chartam musicae aperit ut videas quid ludas!',
+      },
+      change: {
+        title: 'Muta Instrumentum 🔄',
+        description: 'Vis sonum diversum temptare? Aperi menu (☰) et tange \'Muta Instrumentum\' ut quovis tempore mutes.',
+      },
+    },
     gestures: {
       speakerLongPress: {
         title: 'Longum Tactum Consilium 👆',
@@ -809,6 +828,36 @@ export default {
     music: 'Musica',
     voiceOver: 'Vox',
   },
+  // Subscription overlay
+  subscription: {
+    unlockPlan: 'Consilium Reclude',
+    choosePlan: 'Elige consilium optimum familiae tuae',
+    subscribe: 'Subscribere',
+    privacyPolicy: 'Lex Secreti',
+    termsAndConditions: 'Conditiones et Termini',
+    planBasic: 'Basicum',
+    planPremium: 'Premium',
+    planAnnual: 'Annuum',
+    perMonth: '/mensem',
+    perYear: '/annum',
+    mostRecommended: 'Maxime commendatum',
+    percentOff: '25% reductio',
+    uspStories: 'Fabulae ad infantium progressum sustinendum',
+    uspEducators: 'Contenta aetati apta, a magistris recognita',
+    uspMusic: 'Musica interactiva et exercitatio instrumentorum',
+    uspNoAds: 'Sine nuntiis — tutum pro parvis',
+    uspLanguages: 'In 14 linguis praesto',
+    detailAllStories: 'Omnes fabulae reclusae',
+    detailDownload50: 'Usque ad 50 libros transfer',
+    detailLimitedSongs: 'Aditus limitatus ad carmina',
+    detailSyncDevices: 'Synchronizatio per varia instrumenta',
+    detailDownload100: 'Usque ad 100 libros transfer',
+    detailAllSongs: 'Omnia carmina in modo exercitationis',
+    detailAllInstruments: 'Omnia instrumenta reclusa',
+    detailEverythingPremium: 'Omnia ex Premium',
+    detailSave25: 'Serva 25% comparate cum mensili',
+  },
+
   defaultPage: {
     comingSoon: 'Mox Veniet!',
     stories: {

@@ -438,68 +438,52 @@ export default {
     readyToStart: 'Je bent klaar om je reis te beginnen!',
     screens: {
       welcome: {
-        title: 'Welkom!',
-        body: 'Ondersteun de vroege ontwikkeling van je kind door verhalen en activiteiten',
+        title: 'Verhalen die groeien\nmet je kind',
+        body: 'Interactieve verhalen met muziek, instrumenten en vertelling — ontworpen om verbeelding te stimuleren en vroege ontwikkeling te ondersteunen.',
         button: 'Volgende',
       },
-      screenTime: {
-        title: 'Waarom Schermtijd Beperken',
-        body: 'We raden aan deze app samen met je kind te gebruiken.',
+      howItWorks: {
+        title: 'Hoe het werkt',
+        body: 'Alles wat je kind nodig heeft voor creatief, schermbewust spelen.',
         button: 'Volgende',
+        features: {
+          stories: '📚  Interactieve verhalen',
+          storiesDesc: 'Prachtig geïllustreerde verhalen met pagina-voor-pagina vertelling',
+          music: '🎵  Muziek en instrumenten',
+          musicDesc: 'Leer ritme en melodie met echte instrumentgeluiden',
+          voice: '🎙️  Jouw stem',
+          voiceDesc: 'Neem vertellingen op zodat je kind je hoort — zelfs op afstand',
+        },
       },
-      personalize: {
-        title: 'Laten we het Personaliseren!',
-        body: 'Wat is je naam? Voer je naam in en maak een avatar om je ervaring aan te passen!',
-        button: 'Volgende',
-      },
-      voiceRecording: {
-        title: 'Neem je Stem op!',
-        body: 'Vertel verhalen met je stem. Stel je kind gerust als je weg bent.',
-        button: 'Volgende',
-      },
-      research: {
-        title: 'Ondersteund door Onderzoek!',
-        body: 'Deze app is ontwikkeld als onderdeel van masteronderzoek naar kinderontwikkeling, onderzoekend hoe digitale betrokkenheid gezonde ouder-kind relaties kan ondersteunen. Onderzoek toont aan dat gezamenlijke betrokkenheid en korte sessies maximaal voordeel opleveren.',
-        button: 'Volgende',
-      },
-      disclaimer: {
-        title: 'Disclaimer',
-        body: 'Deze app is actief in ontwikkeling. Sommige functies werken mogelijk niet - maak schermafbeeldingen van problemen met timestamps.\n\nBackendserver is in slaapstand wanneer niet in gebruik. Als inloggen mislukt, wacht 30 seconden. Verhaalladen is afhankelijk van netwerk.\n\nVerhalinhoud bevat originele werken, door AI gegenereerde verhalen en kinderboeken gebruikt in onderwijsonderzoek.',
+      family: {
+        title: 'Gemaakt voor gezinnen',
+        body: 'Ontworpen voor korte, betekenisvolle sessies samen. Onderzoek toont aan dat gezamenlijke betrokkenheid en kort gebruik de grootste voordelen bieden.',
         button: 'Volgende',
       },
       privacy: {
-        title: 'Je Privacy',
-        body: 'Je gegevens zijn veilig. We verzamelen of slaan geen persoonlijke informatie op.\n\nInloggen via Google of Apple is veilig en anoniem - we ontvangen alleen een anonieme ID, geen e-mail of persoonlijke details.\n\nSessiesynchronisatie tussen apparaten is volledig anoniem. Alle gegevenssporen volgen beveiligingsbest practices met versleuteling in transit en opslag.\n\nDeze app is ontworpen met privacy-first principe voor jou en je gezin.',
-        button: 'Volgende',
-      },
-      crashReporting: {
-        title: 'Help ons Verbeteren',
-        body: 'Kun je ons helpen de app te verbeteren door anonieme crashrapporten te delen?\n\nCrashrapporten helpen problemen snel te identificeren en op te lossen. Ze bevatten alleen technische informatie over wat fout ging - geen persoonlijke gegevens, afbeeldingen of inhoud.\n\nJe kunt deze instelling op elk moment in Instellingen wijzigen.',
-        button: 'Laten we Beginnen...',
+        title: 'Privacy en aan de slag',
+        body: 'Je gegevens zijn veilig en gepseudonimiseerd. Er worden geen persoonlijke gegevens verzameld — inloggen gebruikt alleen een anonieme identificatie.\n\nHelp ons verbeteren door anonieme crashrapporten te delen (je kunt dit wijzigen in Instellingen).',
+        button: 'Laten we beginnen!',
+        showCrashReportingDialog: 'true',
       },
     },
     crashReportingDialog: {
-      title: 'Wil je Crashrapporten Inschakelen?',
+      title: 'Crashrapporten inschakelen?',
       body: 'Anonieme crashrapporten helpen bugs te repareren en de app te verbeteren. Er worden geen persoonlijke gegevens verzameld.\n\nJe kunt dit op elk moment in Instellingen wijzigen.',
-      noThanks: 'Nee, Dank je',
+      noThanks: 'Nee bedankt',
       enable: 'Inschakelen',
     },
     taglines: {
-      welcome: '✨ Verhalen die Groeien met je Kind',
-      screenTime: '👨‍👩‍👧‍👦 Kwaliteitstijd Samen',
-      personalize: '🎭 Maak het Uniek',
-      voiceRecording: '🎙️ Je Stem, Hun Comfort',
-      research: '🔬 Psychologie Verbonden met Technologie',
+      welcome: '✨ Verbeelding aanwakkeren door spel',
+      howItWorks: '🌟 Drie manieren om te ontdekken',
+      family: '👨‍👩‍👧‍👦 Tijd samen, echte voordelen',
+      privacy: '🔒 Privacy staat voorop',
     },
     benefits: {
-      welcome: 'Gepersonaliseerde Leerervaring',
-      screenTime: 'Aanbevolen door Experts in Kinderontwikkeling',
-      personalize: 'Aangepaste Avatar en Gepersonaliseerde Verhalen',
-      voiceRecording: 'Neem Eenmaal op, Troost Altijd',
-      research: 'Groeien Samen, Voor Altijd',
-      disclaimer: 'Dank je dat je ons Helpt Verbeteren!',
-      privacy: 'Je Gegevens zijn van Jou',
-      crashReporting: 'Anonieme Crashrapporten Helpen Bugs Sneller te Repareren',
+      welcome: 'Gebaseerd op onderzoek naar kinderontwikkeling',
+      howItWorks: 'Verhalen · Muziek · Stem — alles in één app',
+      family: 'Aanbevolen door experts in kinderontwikkeling',
+      privacy: 'Je gegevens blijven van jou',
     },
   },
   tutorial: {
@@ -526,8 +510,16 @@ export default {
         description: 'Laten we een snelle rondleiding doen om jou en je kind te helpen het meeste uit leestijd te halen.',
       },
       stories: {
-        title: 'Ontdek & Speel 🎵📚',
-        description: 'Veeg door de carrousel om Verhalen, de Oefenmodus om muziek te leren op instrumenten, en de Vrij Spelen modus om vrij te spelen op elk instrument te ontdekken.',
+        title: 'Verhalen 📚',
+        description: 'Ontdek onze collectie interactieve verhalen met prachtige illustraties en leuke interacties.',
+      },
+      practise: {
+        title: 'Oefenen 🎵',
+        description: 'Leer liedjes spelen op verschillende instrumenten. Volg mee en bouw je muzikale vaardigheden op!',
+      },
+      freeplay: {
+        title: 'Vrij Spelen 🎹',
+        description: 'Speel vrij op elk instrument — geen regels, alleen plezier! Experimenteer met geluiden en maak je eigen muziek.',
       },
       settings: {
         title: 'Instellingen ⚙️',
@@ -690,6 +682,33 @@ export default {
         description: 'Stel gezonde limieten in en monitor dagelijks gebruik.',
       },
     },
+    // Music Mode Tips - keys match tutorial.musicMode.* in tutorial-content.ts
+    musicMode: {
+      welcome: {
+        title: 'Muziekmodus 🎵',
+        description: 'Sommige pagina\'s in dit verhaal hebben muziekuitdagingen! Speel noten op een virtueel instrument om ze te voltooien.',
+      },
+      instrument: {
+        title: 'Kies Je Instrument 🎹',
+        description: 'Wanneer een boek met muziek opent, veeg door de carrousel om je favoriete instrument te kiezen. Elk heeft unieke klanken!',
+      },
+      playing: {
+        title: 'Noten Spelen 🎶',
+        description: 'Druk op de gekleurde knoppen om noten te spelen. Volg de reeks bovenaan om de uitdaging te voltooien!',
+      },
+      sheet: {
+        title: 'Muziekblad 📋',
+        description: 'Tik op de nootknop (linksonder) om alle noten te zien die je moet spelen. Je kunt zelfs een voorbeeld van de melodie beluisteren!',
+      },
+      begin: {
+        title: 'Begin met Spelen ▶️',
+        description: 'Wanneer je op een muziekpagina aankomt, tik op de \'Begin met Spelen\' knop bovenaan om de uitdaging te starten. Het opent eerst het muziekblad zodat je kunt zien wat je moet spelen!',
+      },
+      change: {
+        title: 'Instrument Wisselen 🔄',
+        description: 'Wil je een ander geluid proberen? Open het menu (☰) en tik op \'Instrument Wisselen\' om op elk moment te wisselen.',
+      },
+    },
     gestures: {
       speakerLongPress: {
         title: 'Lange Druk Tip 👆',
@@ -809,6 +828,36 @@ export default {
     music: 'Muziek',
     voiceOver: 'Stem',
   },
+  // Subscription overlay
+  subscription: {
+    unlockPlan: 'Ontgrendel een abonnement',
+    choosePlan: 'Kies het abonnement dat het beste bij je gezin past',
+    subscribe: 'Abonneren',
+    privacyPolicy: 'Privacybeleid',
+    termsAndConditions: 'Algemene voorwaarden',
+    planBasic: 'Basis',
+    planPremium: 'Premium',
+    planAnnual: 'Jaarlijks',
+    perMonth: '/maand',
+    perYear: '/jaar',
+    mostRecommended: 'Meest aanbevolen',
+    percentOff: '25% korting',
+    uspStories: 'Verhalen die de ontwikkeling van kinderen ondersteunen',
+    uspEducators: 'Leeftijdsgeschikte inhoud, beoordeeld door pedagogen',
+    uspMusic: 'Interactieve muziek en instrumentoefeningen',
+    uspNoAds: 'Geen advertenties — veilig voor kleintjes',
+    uspLanguages: 'Beschikbaar in 14 talen',
+    detailAllStories: 'Alle verhalen ontgrendeld',
+    detailDownload50: 'Download tot 50 boeken',
+    detailLimitedSongs: 'Beperkte toegang tot liedjes',
+    detailSyncDevices: 'Synchronisatie op meerdere apparaten',
+    detailDownload100: 'Download tot 100 boeken',
+    detailAllSongs: 'Alle liedjes in oefenmodus',
+    detailAllInstruments: 'Alle instrumenten ontgrendeld',
+    detailEverythingPremium: 'Alles uit Premium',
+    detailSave25: 'Bespaar 25% ten opzichte van maandelijks',
+  },
+
   defaultPage: {
     comingSoon: 'Binnenkort!',
     stories: {

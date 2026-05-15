@@ -13,8 +13,8 @@
  * - Animates in/out with fade + slide
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, useWindowDimensions } from 'react-native';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { View, Text, StyleSheet, Pressable, ScrollView, useWindowDimensions, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useTranslation } from 'react-i18next';
 import Animated, {
@@ -24,8 +24,9 @@ import Animated, {
   Easing,
   runOnJS,
 } from 'react-native-reanimated';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { NoteLayoutItem } from '@/services/music-asset-registry';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface MusicSheetOverlayProps {
   visible: boolean;
@@ -47,10 +48,10 @@ interface MusicSheetOverlayProps {
   /** Optional note preview handlers for UX */
   onNotePressIn?: (note: string) => void;
   onNotePressOut?: (note: string) => void;
-  /** Whether the instrument is currently rotated (blow mode / manual rotate) */
-  isRotated?: boolean;
   /** When true, closing the overlay fades out instead of sliding down */
   fadeOutOnly?: boolean;
+  /** Tempo hint in BPM — controls preview playback speed (default: 120) */
+  bpm?: number;
 }
 
 export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
@@ -65,15 +66,24 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
   onReadyToPlay,
   onNotePressIn,
   onNotePressOut,
-  isRotated = false,
   fadeOutOnly = false,
+  bpm = 120,
 }: MusicSheetOverlayProps) {
   const { t } = useTranslation();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
-  const overlayOpacity = useSharedValue(0);
-  const slideY = useSharedValue(screenHeight);
+  const insets = useSafeAreaInsets();
+  const isLandscape = screenWidth > screenHeight;
+  // Initialise shared values based on the initial `visible` prop so that when
+  // the component mounts already-visible (e.g. practise preview phase) the
+  // overlay is shown immediately without relying on the useEffect animation.
+  const overlayOpacity = useSharedValue(visible ? 1 : 0);
+  const slideY = useSharedValue(visible ? 0 : screenHeight);
   // Keep overlay rendered during close animation
-  const [isRendered, setIsRendered] = useState(false);
+  const [isRendered, setIsRendered] = useState(visible);
+
+  // Carousel state (landscape only)
+  const carouselRef = useRef<ScrollView>(null);
+  const [currentPage, setCurrentPage] = useState(0);
 
   // Playback preview state
   const [isPlaying, setIsPlaying] = useState(false);
@@ -123,6 +133,8 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
       onNotePressOut?.(prevNote);
     }
 
+    // Derive note duration from BPM (one beat per note)
+    const noteMs = Math.round(60000 / Math.max(bpm, 30));
     // Brief gap if same note repeats, otherwise play immediately
     const gapMs = note === prevNote ? 100 : 0;
 
@@ -136,9 +148,9 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
       playbackTimerRef.current = setTimeout(() => {
         if (!isPlayingRef.current) return;
         playStep(idx + 1);
-      }, 500);
+      }, noteMs);
     }, gapMs);
-  }, [requiredSequence, onNotePressIn, onNotePressOut, stopPlayback]);
+  }, [requiredSequence, onNotePressIn, onNotePressOut, stopPlayback, bpm]);
 
   // Toggle play/pause
   const togglePlayback = useCallback(() => {
@@ -151,26 +163,39 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
     }
   }, [isPlaying, stopPlayback, playStep]);
 
+  // Keep a ref to stopPlayback so the unmount cleanup always calls the
+  // latest version (avoids stale closures capturing old onNotePressOut).
+  const stopPlaybackRef = useRef(stopPlayback);
+  stopPlaybackRef.current = stopPlayback;
+
   // Stop playback when overlay closes or sequence changes
   useEffect(() => {
     if (!visible) {
-      stopPlayback();
+      stopPlaybackRef.current();
     }
-  }, [visible, stopPlayback]);
+  }, [visible]);
 
-  // Cleanup on unmount — ensure no dangling timers or held notes
+  // Cleanup on unmount — ensure no dangling timers AND release held notes.
+  // Uses the ref so we always call the latest stopPlayback (with current
+  // onNotePressOut and requiredSequence) rather than a stale closure.
   useEffect(() => {
     return () => {
-      isPlayingRef.current = false;
-      if (playbackTimerRef.current) {
-        clearTimeout(playbackTimerRef.current);
-      }
+      stopPlaybackRef.current();
     };
   }, []);
+
+  // Track whether this is the initial mount so we can skip redundant animations.
+  const isFirstRenderRef = useRef(true);
 
   useEffect(() => {
     if (visible) {
       setIsRendered(true);
+      // Skip animation on first mount if already initialised to visible
+      if (isFirstRenderRef.current && overlayOpacity.value === 1) {
+        isFirstRenderRef.current = false;
+        return;
+      }
+      isFirstRenderRef.current = false;
       overlayOpacity.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.ease) });
       slideY.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.ease) });
     } else if (isRendered) {
@@ -206,11 +231,119 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
     transform: [{ translateY: slideY.value }],
   }));
 
+  // Calculate max height for the ScrollView so it doesn't collapse to 0.
+  // The container is content-sized (window mode), so the ScrollView cannot use
+  // flex: 1. Instead we give it an explicit maxHeight based on the screen,
+  // reserving space for header (~70px), button (~60px), and safe-area insets.
+  const scrollMaxHeight = screenHeight * 0.85 - 70 - 60 - insets.top - insets.bottom;
+
   // Build a lookup from note name → layout item for quick access
   const noteMap = new Map<string, NoteLayoutItem>();
   noteLayout.forEach(item => noteMap.set(item.note, item));
 
+  // Landscape carousel: calculate how many notes fit per page
+  const circleSize = isLandscape ? LANDSCAPE_NOTE_SIZE : NOTE_CIRCLE_SIZE;
+  const noteGap = 8;
+  // Container width for landscape carousel (card takes ~75% of screen, minus padding + arrow buttons)
+  const cardWidth = isLandscape ? Math.min(screenWidth * 0.75, 640) : screenWidth * 0.9;
+  const carouselPadding = 20; // horizontal padding inside card
+  const arrowWidth = 36; // width of each arrow button
+  const availableWidth = cardWidth - (carouselPadding * 2) - (arrowWidth * 2) - 16; // 16 = gap between arrows and notes
+  const notesPerPage = isLandscape
+    ? Math.max(1, Math.floor((availableWidth + noteGap) / (circleSize + noteGap)))
+    : requiredSequence.length; // portrait shows all in grid
+
+  const pages = useMemo(() => {
+    if (!isLandscape) return [requiredSequence];
+    const result: string[][] = [];
+    for (let i = 0; i < requiredSequence.length; i += notesPerPage) {
+      result.push(requiredSequence.slice(i, i + notesPerPage));
+    }
+    return result;
+  }, [requiredSequence, notesPerPage, isLandscape]);
+
+  const totalPages = pages.length;
+
+  // Auto-scroll carousel to follow playback
+  useEffect(() => {
+    if (!isLandscape || !isPlaying || playbackIndex < 0) return;
+    const targetPage = Math.floor(playbackIndex / notesPerPage);
+    if (targetPage !== currentPage) {
+      setCurrentPage(targetPage);
+      carouselRef.current?.scrollTo({ x: targetPage * availableWidth, animated: true });
+    }
+  }, [playbackIndex, isLandscape, isPlaying, notesPerPage, currentPage, availableWidth]);
+
+  const handleCarouselScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetX = e.nativeEvent.contentOffset.x;
+    const page = Math.round(offsetX / availableWidth);
+    setCurrentPage(page);
+  }, [availableWidth]);
+
+  const goToPage = useCallback((page: number) => {
+    const clamped = Math.max(0, Math.min(page, totalPages - 1));
+    setCurrentPage(clamped);
+    carouselRef.current?.scrollTo({ x: clamped * availableWidth, animated: true });
+  }, [totalPages, availableWidth]);
+
   if (!isRendered && !visible) return null;
+
+  // Render a single note circle
+  const renderNote = (note: string, index: number) => {
+    const layout = noteMap.get(note);
+    const isCompleted = index < completedNoteCount;
+    const isCurrent = index === completedNoteCount && !isPlaying;
+    const isPlaybackHighlight = isPlaying && index === playbackIndex;
+    const noteColor = layout?.color || '#888';
+
+    return (
+      <View key={`${note}-${index}`} style={[styles.noteGridItem, isLandscape && styles.noteGridItemLandscape]}>
+        <View
+          style={[
+            styles.noteCircle,
+            isLandscape && styles.noteCircleLandscape,
+            {
+              backgroundColor: (isCompleted || isPlaybackHighlight) ? noteColor : 'transparent',
+              borderColor: noteColor,
+              borderWidth: 3,
+            },
+            (isCurrent || isPlaybackHighlight) && styles.noteCircleCurrent,
+          ]}
+          onTouchStart={() => { if (!isPlaying) onNotePressIn?.(note); }}
+          onTouchEnd={() => { if (!isPlaying) onNotePressOut?.(note); }}
+          onTouchCancel={() => { if (!isPlaying) onNotePressOut?.(note); }}
+          testID={`music-sheet-note-${index}`}
+        >
+          <Text style={[
+            styles.noteLetter,
+            isLandscape && styles.noteLetterLandscape,
+            (isCompleted || isPlaybackHighlight) && styles.noteLetterCompleted,
+          ]}>
+            {note}
+          </Text>
+        </View>
+        <Text style={styles.noteIndex}>{index + 1}</Text>
+      </View>
+    );
+  };
+
+  // Play/pause button (shared between portrait & landscape)
+  const playPauseButton = (onNotePressIn || onNotePressOut) ? (
+    <Pressable
+      style={[styles.playButton, isPlaying && styles.playButtonActive]}
+      onPress={togglePlayback}
+      testID="music-sheet-play-button"
+    >
+      <MaterialIcons
+        name={isPlaying ? 'pause' : 'play-arrow'}
+        size={isLandscape ? 16 : 20}
+        color="#FFFFFF"
+      />
+      <Text style={[styles.playButtonText, isLandscape && { fontSize: 11 }]}>
+        {isPlaying ? t('music.pause') : t('music.preview')}
+      </Text>
+    </Pressable>
+  ) : null;
 
   return (
     <Animated.View
@@ -221,21 +354,22 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
 
       <View style={[
         styles.container,
-        isRotated && {
-          transform: [{ rotate: '-90deg' }],
-          width: screenHeight * 0.85,
-          maxWidth: screenHeight * 0.85,
-          maxHeight: screenWidth * 0.8,
-        },
+        isLandscape && [styles.containerLandscape, { maxWidth: cardWidth }],
       ]}>
         {/* Header with title and close button */}
-        <View style={styles.header}>
+        <View style={[styles.header, isLandscape && styles.headerLandscape]}>
           <View style={styles.headerLeft}>
-            <Text style={styles.title}>{t('music.musicSheet')}</Text>
-            <Text style={styles.instrumentLabel}>{instrumentName}</Text>
+            <Text style={[styles.title, isLandscape && styles.titleLandscape]}>
+              {t('music.musicSheet')}
+            </Text>
+            {!isLandscape && (
+              <Text style={styles.instrumentLabel}>{instrumentName}</Text>
+            )}
           </View>
+          {/* Play button in header for landscape */}
+          {isLandscape && playPauseButton}
           <Pressable
-            style={styles.closeButton}
+            style={[styles.closeButton, isLandscape && styles.closeButtonLandscape]}
             onPress={onClose}
             testID="music-sheet-close-button"
           >
@@ -243,115 +377,143 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
           </Pressable>
         </View>
 
-        {/* Scrollable body so "Ready to Play" is always reachable */}
-        <ScrollView
-          showsVerticalScrollIndicator={true}
-          bounces={false}
-          contentContainerStyle={styles.scrollContent}
-        >
-          {/* Prompt text */}
-          {promptText && (
-            <Text style={styles.promptText}>{promptText}</Text>
-          )}
+        {isLandscape ? (
+          /* ========== LANDSCAPE: Horizontal paging carousel ========== */
+          <>
+            {/* Hint text */}
+            {(onNotePressIn || onNotePressOut) && !isPlaying && (
+              <Text style={[styles.sectionHint, styles.sectionHintLandscape]}>{t('music.tapAndHoldNotes')}</Text>
+            )}
+            {isPlaying && (
+              <Text style={[styles.sectionHint, styles.sectionHintLandscape]}>{t('music.playingPreview')}</Text>
+            )}
 
-          {/* Note sequence — horizontal scrollable row */}
-          <View style={styles.sheetSection}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionLabel}>
-                {t('music.notesToPlay', { completed: completedNoteCount, total: requiredSequence.length })}
-              </Text>
-              {/* Play/Pause preview button */}
-              {(onNotePressIn || onNotePressOut) && (
-                <Pressable
-                  style={[styles.playButton, isPlaying && styles.playButtonActive]}
-                  onPress={togglePlayback}
-                  testID="music-sheet-play-button"
-                >
-                  <MaterialIcons
-                    name={isPlaying ? 'pause' : 'play-arrow'}
-                    size={20}
-                    color="#FFFFFF"
+            {/* Carousel row: arrow – notes – arrow */}
+            <View style={styles.carouselRow}>
+              {/* Left arrow */}
+              <Pressable
+                style={[styles.carouselArrow, currentPage === 0 && styles.carouselArrowDisabled]}
+                onPress={() => goToPage(currentPage - 1)}
+                disabled={currentPage === 0}
+              >
+                <Ionicons name="chevron-back" size={24} color={currentPage === 0 ? 'rgba(255,255,255,0.2)' : '#FFFFFF'} />
+              </Pressable>
+
+              {/* Paging ScrollView */}
+              <ScrollView
+                ref={carouselRef}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                bounces={false}
+                onMomentumScrollEnd={handleCarouselScroll}
+                style={[styles.carouselScroll, { width: availableWidth }]}
+                contentContainerStyle={styles.carouselContent}
+              >
+                {pages.map((pageNotes, pageIdx) => (
+                  <View
+                    key={`page-${pageIdx}`}
+                    style={[styles.carouselPage, { width: availableWidth }]}
+                  >
+                    {pageNotes.map((note, noteIdx) => {
+                      const globalIdx = pageIdx * notesPerPage + noteIdx;
+                      return renderNote(note, globalIdx);
+                    })}
+                  </View>
+                ))}
+              </ScrollView>
+
+              {/* Right arrow */}
+              <Pressable
+                style={[styles.carouselArrow, currentPage >= totalPages - 1 && styles.carouselArrowDisabled]}
+                onPress={() => goToPage(currentPage + 1)}
+                disabled={currentPage >= totalPages - 1}
+              >
+                <Ionicons name="chevron-forward" size={24} color={currentPage >= totalPages - 1 ? 'rgba(255,255,255,0.2)' : '#FFFFFF'} />
+              </Pressable>
+            </View>
+
+            {/* Page indicator dots */}
+            {totalPages > 1 && (
+              <View style={styles.pageIndicator}>
+                {pages.map((_, i) => (
+                  <View
+                    key={`dot-${i}`}
+                    style={[styles.pageDot, i === currentPage && styles.pageDotActive]}
                   />
-                  <Text style={styles.playButtonText}>
-                    {isPlaying ? t('music.pause') : t('music.preview')}
+                ))}
+              </View>
+            )}
+
+            {/* Bottom row: song info + ready button */}
+            <View style={styles.landscapeBottomRow}>
+              {successSongName && (
+                <View style={[styles.songSection, styles.songSectionLandscape]}>
+                  <Text style={styles.songLabel}>{t('music.successSong')}</Text>
+                  <Text style={styles.songName}>{successSongName}</Text>
+                </View>
+              )}
+              {onReadyToPlay && (
+                <Pressable
+                  style={[styles.readyToPlayButton, styles.readyToPlayButtonLandscape]}
+                  onPress={onReadyToPlay}
+                  testID="ready-to-play-button"
+                >
+                  <Text style={[styles.readyToPlayText, styles.readyToPlayTextLandscape]}>
+                    {t('music.readyToPlay')}
                   </Text>
                 </Pressable>
               )}
             </View>
-            {(onNotePressIn || onNotePressOut) && !isPlaying && (
-              <Text style={styles.sectionHint}>{t('music.tapAndHoldNotes')}</Text>
-            )}
-            {isPlaying && (
-              <Text style={styles.sectionHint}>{t('music.playingPreview')}</Text>
-            )}
+          </>
+        ) : (
+          /* ========== PORTRAIT: Original wrapping grid in vertical scroll ========== */
+          <>
             <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.noteRow}
+              showsVerticalScrollIndicator={true}
+              bounces={false}
+              style={[styles.scrollView, { maxHeight: scrollMaxHeight }]}
+              contentContainerStyle={styles.scrollContent}
             >
-              {requiredSequence.map((note, index) => {
-                const layout = noteMap.get(note);
-                const isCompleted = index < completedNoteCount;
-                const isCurrent = index === completedNoteCount && !isPlaying;
-                const isPlaybackHighlight = isPlaying && index === playbackIndex;
-                const noteColor = layout?.color || '#888';
+              {promptText && (
+                <Text style={styles.promptText}>{promptText}</Text>
+              )}
 
-                return (
-                  <View key={`${note}-${index}`} style={styles.noteWrapper}>
-                    {/* Connection line between notes */}
-                    {index > 0 && (
-                      <View style={[
-                        styles.noteLine,
-                        (isCompleted || (isPlaying && index <= playbackIndex)) && styles.noteLineCompleted,
-                      ]} />
-                    )}
-                    <View
-                      style={[
-                        styles.noteCircle,
-                        {
-                          backgroundColor: (isCompleted || isPlaybackHighlight) ? noteColor : 'transparent',
-                          borderColor: noteColor,
-                          borderWidth: 3,
-                        },
-                        (isCurrent || isPlaybackHighlight) && styles.noteCircleCurrent,
-                      ]}
-                      onTouchStart={() => { if (!isPlaying) onNotePressIn?.(note); }}
-                      onTouchEnd={() => { if (!isPlaying) onNotePressOut?.(note); }}
-                      onTouchCancel={() => { if (!isPlaying) onNotePressOut?.(note); }}
-                      testID={`music-sheet-note-${index}`}
-                    >
-                      <Text style={[
-                        styles.noteLetter,
-                        (isCompleted || isPlaybackHighlight) && styles.noteLetterCompleted,
-                      ]}>
-                        {note}
-                      </Text>
-                    </View>
-                  </View>
-                );
-              })}
+              <View style={styles.sheetSection}>
+                <View style={styles.sectionHeader}>
+                  {playPauseButton}
+                </View>
+                {(onNotePressIn || onNotePressOut) && !isPlaying && (
+                  <Text style={styles.sectionHint}>{t('music.tapAndHoldNotes')}</Text>
+                )}
+                {isPlaying && (
+                  <Text style={styles.sectionHint}>{t('music.playingPreview')}</Text>
+                )}
+                <View style={styles.noteGrid}>
+                  {requiredSequence.map((note, index) => renderNote(note, index))}
+                </View>
+              </View>
+
+              {successSongName && (
+                <View style={styles.songSection}>
+                  <Text style={styles.songLabel}>{t('music.successSong')}</Text>
+                  <Text style={styles.songName}>{successSongName}</Text>
+                </View>
+              )}
             </ScrollView>
-          </View>
 
-          {/* Success song info */}
-          {successSongName && (
-            <View style={styles.songSection}>
-              <Text style={styles.songLabel}>{t('music.successSong')}</Text>
-              <Text style={styles.songName}>{successSongName}</Text>
-            </View>
-          )}
-
-          {/* Ready to Play button — shown in preview mode */}
-          {onReadyToPlay && (
-            <Pressable
-              style={styles.readyToPlayButton}
-              onPress={onReadyToPlay}
-              testID="ready-to-play-button"
-            >
-              <Text style={styles.readyToPlayText}>{t('music.readyToPlay')}</Text>
-            </Pressable>
-          )}
-        </ScrollView>
+            {/* Ready button fixed at the bottom, outside ScrollView */}
+            {onReadyToPlay && (
+              <Pressable
+                style={styles.readyToPlayButton}
+                onPress={onReadyToPlay}
+                testID="ready-to-play-button"
+              >
+                <Text style={styles.readyToPlayText}>{t('music.readyToPlay')}</Text>
+              </Pressable>
+            )}
+          </>
+        )}
       </View>
     </Animated.View>
   );
@@ -362,11 +524,12 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
 // ============================================================================
 
 const NOTE_CIRCLE_SIZE = 56;
+const LANDSCAPE_NOTE_SIZE = 50;
 
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    zIndex: 150, // Below burger menu (z-index 200+) so menu can appear on top
+    zIndex: 150,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
@@ -378,18 +541,33 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     paddingTop: 16,
     paddingHorizontal: 20,
-    maxHeight: '95%',
-    flexShrink: 1,
+    maxHeight: '85%',
+    overflow: 'hidden',
+  },
+  containerLandscape: {
+    width: '75%',
+    paddingTop: 14,
+    paddingHorizontal: 20,
+    paddingBottom: 14,
+    maxHeight: '94%',
+  },
+  scrollView: {
+    // Do NOT use flex: 1 here — the parent container is content-sized (no
+    // explicit height), so flex: 1 would collapse the ScrollView to 0 height.
+    // Instead we omit flex and apply a calculated maxHeight inline (see render).
   },
   scrollContent: {
     paddingBottom: 20,
-    flexGrow: 0,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 10,
+  },
+  headerLandscape: {
+    alignItems: 'center',
+    marginBottom: 8,
   },
   headerLeft: {
     flex: 1,
@@ -398,6 +576,9 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 22,
     fontWeight: '800',
+  },
+  titleLandscape: {
+    fontSize: 18,
   },
   instrumentLabel: {
     color: 'rgba(255, 255, 255, 0.6)',
@@ -413,6 +594,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 12,
+  },
+  closeButtonLandscape: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    marginLeft: 8,
   },
   closeButtonText: {
     color: '#FFFFFF',
@@ -433,14 +620,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
-  },
-  sectionLabel: {
-    color: 'rgba(255, 255, 255, 0.5)',
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 0,
   },
   playButton: {
     flexDirection: 'row',
@@ -464,24 +643,31 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginBottom: 12,
   },
-  noteRow: {
+  sectionHintLandscape: {
+    fontSize: 11,
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  noteGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    paddingVertical: 4,
+    gap: 8,
+  },
+  noteGridItem: {
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 4,
+    marginBottom: 4,
   },
-  noteWrapper: {
-    alignItems: 'center',
-    flexDirection: 'row',
+  noteGridItemLandscape: {
+    marginBottom: 0,
+    marginHorizontal: 4,
   },
-  noteLine: {
-    width: 16,
-    height: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    marginHorizontal: 2,
-  },
-  noteLineCompleted: {
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+  noteIndex: {
+    color: 'rgba(255, 255, 255, 0.35)',
+    fontSize: 10,
+    fontWeight: '600',
+    marginTop: 2,
   },
   noteCircle: {
     width: NOTE_CIRCLE_SIZE,
@@ -490,6 +676,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  noteCircleLandscape: {
+    width: LANDSCAPE_NOTE_SIZE,
+    height: LANDSCAPE_NOTE_SIZE,
+    borderRadius: LANDSCAPE_NOTE_SIZE / 2,
+  },
   noteCircleCurrent: {
     shadowColor: '#FFFFFF',
     shadowOffset: { width: 0, height: 0 },
@@ -497,21 +688,84 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
   },
-
   noteLetter: {
     fontSize: 18,
     fontWeight: '800',
     color: '#999',
   },
+  noteLetterLandscape: {
+    fontSize: 16,
+  },
   noteLetterCompleted: {
     color: '#FFFFFF',
   },
+
+  // Landscape carousel
+  carouselRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 8,
+  },
+  carouselArrow: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  carouselArrowDisabled: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  carouselScroll: {
+    flexGrow: 0,
+    marginHorizontal: 8,
+  },
+  carouselContent: {
+    alignItems: 'center',
+  },
+  carouselPage: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pageIndicator: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 6,
+    gap: 6,
+  },
+  pageDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  pageDotActive: {
+    backgroundColor: '#FFFFFF',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  landscapeBottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
+    gap: 12,
+  },
+
   songSection: {
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 12,
     padding: 12,
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  songSectionLandscape: {
+    padding: 8,
+    flex: 1,
   },
   songLabel: {
     color: 'rgba(255, 255, 255, 0.6)',
@@ -531,6 +785,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     alignSelf: 'center',
     marginTop: 10,
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -539,11 +794,19 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'rgba(255, 255, 255, 0.25)',
   },
+  readyToPlayButtonLandscape: {
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    marginTop: 0,
+  },
   readyToPlayText: {
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '700',
     textAlign: 'center',
+  },
+  readyToPlayTextLandscape: {
+    fontSize: 14,
   },
 });
 

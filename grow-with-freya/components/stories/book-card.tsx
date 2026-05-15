@@ -1,11 +1,10 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet, Dimensions, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withDelay,
   Easing
 } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
@@ -106,36 +105,16 @@ export function BookCard({ story, onPress, index = 0 }: BookCardProps) {
     ],
   }), [opacity, scale, translateY, pressScale, isPlaceholder]);
 
-  // Fallback style for when animations don't work
-  const fallbackStyle = {
-    opacity: 1,
-    transform: [{ scale: 1 }, { translateY: 0 }],
-  };
-
   return (
     <Animated.View
       testID={`book-card-${story.id}`}
-      style={[
-        animatedStyle,
-        {
-          backgroundColor: isPlaceholder ? 'red' : 'blue',
-          margin: 2,
-          minHeight: 200,
-          minWidth: 150,
-          borderWidth: 3,
-          borderColor: isPlaceholder ? 'darkred' : 'darkblue'
-        }
-      ]}
+      style={animatedStyle}
     >
       <Pressable
         testID={`book-card-pressable-${story.id}`}
         style={[
           styles.card,
-          {
-            width: cardWidth,
-            backgroundColor: isPlaceholder ? 'pink' : 'lightblue',
-            minHeight: 180
-          },
+          { width: cardWidth },
           isPlaceholder && styles.placeholderCard
         ]}
         onPress={handlePress}

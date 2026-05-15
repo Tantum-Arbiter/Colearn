@@ -1,5 +1,6 @@
 package com.app.service;
 
+import com.app.dto.CatalogEntry;
 import com.app.model.ContentVersion;
 import com.app.model.InteractiveElement;
 import com.app.model.MusicChallenge;
@@ -593,6 +594,185 @@ class StoryServiceTest {
         verify(storyRepository, times(1)).save(testStory1);
         // Checksum should include interactive elements and music challenge data
         verify(contentVersionRepository, times(1)).updateStoryChecksum(eq("story-1"), anyString());
+    }
+
+    // ==================== getCatalogEntries Tests ====================
+
+    @Test
+    void getCatalogEntries_ClientHasNoStories_ReturnsAllAsCatalog() throws Exception {
+        // Arrange
+        testStory1.setCoverImage("stories/story-1/cover.webp");
+        testStory2.setCoverImage("stories/story-2/cover.webp");
+
+        when(storyRepository.findById("story-1"))
+                .thenReturn(CompletableFuture.completedFuture(Optional.of(testStory1)));
+        when(storyRepository.findById("story-2"))
+                .thenReturn(CompletableFuture.completedFuture(Optional.of(testStory2)));
+
+        Map<String, String> serverChecksums = new HashMap<>();
+        serverChecksums.put("story-1", "checksum1");
+        serverChecksums.put("story-2", "checksum2");
+
+        // Act
+        List<CatalogEntry> catalog = storyService.getCatalogEntries(
+                new HashSet<>(), serverChecksums,
+                coverImage -> "https://signed-url/" + coverImage
+        ).get();
+
+        // Assert
+        assertEquals(2, catalog.size());
+        verify(storyRepository, times(1)).findById("story-1");
+        verify(storyRepository, times(1)).findById("story-2");
+    }
+
+    @Test
+    void getCatalogEntries_ClientHasAllStories_ReturnsEmptyCatalog() throws Exception {
+        // Arrange
+        Map<String, String> serverChecksums = new HashMap<>();
+        serverChecksums.put("story-1", "checksum1");
+        serverChecksums.put("story-2", "checksum2");
+
+        Set<String> clientStoryIds = new HashSet<>(Arrays.asList("story-1", "story-2"));
+
+        // Act
+        List<CatalogEntry> catalog = storyService.getCatalogEntries(
+                clientStoryIds, serverChecksums,
+                coverImage -> "https://signed-url/" + coverImage
+        ).get();
+
+        // Assert
+        assertEquals(0, catalog.size());
+        verify(storyRepository, never()).findById(anyString());
+    }
+
+    @Test
+    void getCatalogEntries_ClientHasSomeStories_ReturnsOnlyMissing() throws Exception {
+        // Arrange
+        testStory2.setCoverImage("stories/story-2/cover.webp");
+
+        when(storyRepository.findById("story-2"))
+                .thenReturn(CompletableFuture.completedFuture(Optional.of(testStory2)));
+
+        Map<String, String> serverChecksums = new HashMap<>();
+        serverChecksums.put("story-1", "checksum1");
+        serverChecksums.put("story-2", "checksum2");
+
+        Set<String> clientStoryIds = new HashSet<>(Collections.singletonList("story-1"));
+
+        // Act
+        List<CatalogEntry> catalog = storyService.getCatalogEntries(
+                clientStoryIds, serverChecksums,
+                coverImage -> "https://signed-url/" + coverImage
+        ).get();
+
+        // Assert
+        assertEquals(1, catalog.size());
+        assertEquals("story-2", catalog.get(0).getStoryId());
+        assertEquals("The Happy Day", catalog.get(0).getTitle());
+        verify(storyRepository, never()).findById("story-1"); // Client already has this
+        verify(storyRepository, times(1)).findById("story-2");
+    }
+
+    @Test
+    void getCatalogEntries_UnavailableStory_ExcludedFromCatalog() throws Exception {
+        // Arrange
+        Story unavailableStory = new Story();
+        unavailableStory.setId("story-unavail");
+        unavailableStory.setTitle("Unavailable");
+        unavailableStory.setAvailable(false);
+
+        when(storyRepository.findById("story-unavail"))
+                .thenReturn(CompletableFuture.completedFuture(Optional.of(unavailableStory)));
+
+        Map<String, String> serverChecksums = new HashMap<>();
+        serverChecksums.put("story-unavail", "checksum-u");
+
+        // Act
+        List<CatalogEntry> catalog = storyService.getCatalogEntries(
+                new HashSet<>(), serverChecksums,
+                coverImage -> "https://signed-url/" + coverImage
+        ).get();
+
+        // Assert
+        assertEquals(0, catalog.size());
+    }
+
+    @Test
+    void getCatalogEntries_ThumbnailUrlFailure_StillReturnsCatalogEntry() throws Exception {
+        // Arrange
+        testStory1.setCoverImage("stories/story-1/cover.webp");
+
+        when(storyRepository.findById("story-1"))
+                .thenReturn(CompletableFuture.completedFuture(Optional.of(testStory1)));
+
+        Map<String, String> serverChecksums = new HashMap<>();
+        serverChecksums.put("story-1", "checksum1");
+
+        // Act - thumbnail URL generator throws
+        List<CatalogEntry> catalog = storyService.getCatalogEntries(
+                new HashSet<>(), serverChecksums,
+                coverImage -> { throw new RuntimeException("GCS down"); }
+        ).get();
+
+        // Assert - entry still returned, just with null thumbnailUrl
+        assertEquals(1, catalog.size());
+        assertEquals("story-1", catalog.get(0).getStoryId());
+        assertNull(catalog.get(0).getThumbnailUrl());
+    }
+
+    @Test
+    void getCatalogEntries_PreservesMonetisationFlags() throws Exception {
+        // Arrange
+        testStory1.setCoverImage("stories/story-1/cover.webp");
+        testStory1.setFree(true);
+        testStory1.setReferralReward(false);
+        testStory1.setPremium(false);
+
+        when(storyRepository.findById("story-1"))
+                .thenReturn(CompletableFuture.completedFuture(Optional.of(testStory1)));
+
+        Map<String, String> serverChecksums = new HashMap<>();
+        serverChecksums.put("story-1", "checksum1");
+
+        // Act
+        List<CatalogEntry> catalog = storyService.getCatalogEntries(
+                new HashSet<>(), serverChecksums,
+                coverImage -> "https://signed-url/" + coverImage
+        ).get();
+
+        // Assert
+        assertEquals(1, catalog.size());
+        assertTrue(catalog.get(0).isFree());
+        assertFalse(catalog.get(0).isReferralReward());
+        assertFalse(catalog.get(0).isPremium());
+    }
+
+    // ==================== isFree / isReferralReward Tests ====================
+
+    @Test
+    void storyModel_isFree_DefaultsFalse() {
+        Story story = new Story();
+        assertFalse(story.isFree());
+    }
+
+    @Test
+    void storyModel_isReferralReward_DefaultsFalse() {
+        Story story = new Story();
+        assertFalse(story.isReferralReward());
+    }
+
+    @Test
+    void storyModel_setFree_SetsCorrectly() {
+        Story story = new Story();
+        story.setFree(true);
+        assertTrue(story.isFree());
+    }
+
+    @Test
+    void storyModel_setReferralReward_SetsCorrectly() {
+        Story story = new Story();
+        story.setReferralReward(true);
+        assertTrue(story.isReferralReward());
     }
 }
 

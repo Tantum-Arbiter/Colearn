@@ -1,11 +1,14 @@
-import React, { useEffect, useRef, useMemo } from 'react';
-import { View, Pressable, StyleSheet, InteractionManager } from 'react-native';
+import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react';
+import { View, Text, Pressable, StyleSheet, InteractionManager } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   cancelAnimation,
   withTiming,
+  withRepeat,
+  withSequence,
+  interpolate,
   Easing as ReanimatedEasing,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,6 +20,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
 import { TutorialOverlay } from '@/components/tutorial';
+import { SubscriptionOverlay } from '@/components/ui/subscription-overlay';
 
 import { ErrorBoundary } from './error-boundary';
 import {
@@ -56,7 +60,42 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
   const insets = useSafeAreaInsets();
   const { scaledButtonSize, scaledFontSize } = useAccessibility();
 
+  // Subscription overlay state
+  const [showSubscription, setShowSubscription] = useState(false);
 
+  // Unlock button animations — gentle pulse + shimmer
+  const unlockPulse = useSharedValue(1);
+  const unlockShimmer = useSharedValue(0);
+
+  useEffect(() => {
+    // Gentle scale pulse
+    unlockPulse.value = withRepeat(
+      withSequence(
+        withTiming(1.05, { duration: 1200, easing: ReanimatedEasing.inOut(ReanimatedEasing.ease) }),
+        withTiming(1, { duration: 1200, easing: ReanimatedEasing.inOut(ReanimatedEasing.ease) }),
+      ),
+      -1, true
+    );
+    // Shimmer sweep every 3s
+    unlockShimmer.value = withRepeat(
+      withTiming(1, { duration: 2000, easing: ReanimatedEasing.inOut(ReanimatedEasing.ease) }),
+      -1, false
+    );
+  }, []);
+
+  const unlockBtnAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: unlockPulse.value }],
+  }));
+
+  const unlockShimmerStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(unlockShimmer.value, [0, 0.3, 0.5, 0.7, 1], [0, 0, 0.35, 0, 0]),
+  }));
+
+  // Track when the menu carousel slide-in animation has finished
+  const [carouselReady, setCarouselReady] = useState(false);
+  const handleCarouselLoadComplete = useCallback(() => {
+    setCarouselReady(true);
+  }, []);
 
   // Parents Only modal - using shared hook
   const parentsOnly = useParentsOnlyChallenge();
@@ -78,6 +117,18 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
     containerOpacity.value = withTiming(1, { duration: 500, easing: ReanimatedEasing.out(ReanimatedEasing.cubic) });
   }, [containerOpacity]);
 
+  // Star twinkle rotation (matches story selection / practise screens)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      starRotation.value = withRepeat(
+        withTiming(360, { duration: 20000, easing: ReanimatedEasing.linear }),
+        -1,
+        false,
+      );
+    }, 300);
+    return () => clearTimeout(timeoutId);
+  }, []);
+
   const containerAnimatedStyle = useAnimatedStyle(() => ({
     opacity: containerOpacity.value,
   }));
@@ -89,12 +140,23 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
 
   // Tutorial target refs - using refs that get populated when buttons render
   const storiesButtonRef = useRef<View>(null);
+  const practiseButtonRef = useRef<View>(null);
+  const freeplayButtonRef = useRef<View>(null);
   const musicControlRef = useRef<View>(null);
   const settingsButtonRef = useRef<View>(null);
+
+  // Per-button refs for the carousel strip buttons (keyed by menu item id)
+  const carouselButtonRefs = useMemo(() => ({
+    stories: storiesButtonRef,
+    practise: practiseButtonRef,
+    freeplay: freeplayButtonRef,
+  }), []);
 
   // Build tutorial target refs map - maps step IDs to refs
   const tutorialTargetRefs = useMemo(() => ({
     'stories_button': storiesButtonRef,
+    'practise_button': practiseButtonRef,
+    'freeplay_button': freeplayButtonRef,
     'settings_button': settingsButtonRef,
     'sound_control': musicControlRef,
   }), []);
@@ -284,9 +346,34 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
       <View style={legacyStyles.menuContainer}>
         <MenuCarousel
           onNavigate={onNavigate}
-          storiesButtonRef={storiesButtonRef}
+          buttonRefs={carouselButtonRefs}
+          onLoadComplete={handleCarouselLoadComplete}
         />
       </View>
+
+      {/* Unlock a Plan tab — fixed to very bottom */}
+      <View style={[legacyStyles.unlockBtnContainer, { bottom: 0 }]}>
+        <Animated.View style={unlockBtnAnimStyle}>
+          <Pressable onPress={() => setShowSubscription(true)} style={legacyStyles.unlockBtn}>
+            <LinearGradient
+              colors={['#FBBF24', '#F59E0B', '#D97706']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={legacyStyles.unlockBtnGradient}
+            >
+              <Text style={[legacyStyles.unlockBtnText, { fontSize: scaledFontSize(15) }]}>Unlock a Plan</Text>
+              {/* Shimmer overlay */}
+              <Animated.View style={[legacyStyles.unlockShimmer, unlockShimmerStyle]} />
+            </LinearGradient>
+          </Pressable>
+        </Animated.View>
+      </View>
+
+      {/* Subscription Overlay */}
+      <SubscriptionOverlay
+        visible={showSubscription}
+        onClose={() => setShowSubscription(false)}
+      />
 
       {/* Parents Only Challenge Modal */}
       <ParentsOnlyModal
@@ -300,8 +387,8 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
         scaledFontSize={scaledFontSize}
       />
 
-        {/* Main Menu Tutorial - shown on first login, but not during login transition */}
-        {!disableTutorial && (
+        {/* Main Menu Tutorial - shown after carousel slide-in completes, not during login transition */}
+        {!disableTutorial && carouselReady && (
           <TutorialOverlay
             tutorialId="main_menu_tour"
             targetRefs={tutorialTargetRefs}
@@ -360,6 +447,47 @@ const legacyStyles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  unlockBtnContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: LAYOUT.Z_INDEX.UI + 2,
+  },
+  unlockBtn: {
+    borderTopLeftRadius: getResponsiveSize(18),
+    borderTopRightRadius: getResponsiveSize(18),
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
+    elevation: 10,
+    overflow: 'hidden' as const,
+  },
+  unlockBtnGradient: {
+    paddingHorizontal: getResponsiveSize(36),
+    paddingVertical: getResponsiveSize(14),
+    borderTopLeftRadius: getResponsiveSize(18),
+    borderTopRightRadius: getResponsiveSize(18),
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  unlockBtnText: {
+    color: '#fff',
+    fontWeight: '800' as const,
+    letterSpacing: 0.5,
+    textShadowColor: 'rgba(0,0,0,0.25)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  unlockShimmer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,255,255,1)',
+    borderTopLeftRadius: getResponsiveSize(18),
+    borderTopRightRadius: getResponsiveSize(18),
   },
 });
 

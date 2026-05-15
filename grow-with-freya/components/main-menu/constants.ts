@@ -71,7 +71,7 @@ export const VISUAL_EFFECTS = {
   CLOUD_OPACITY: 0.8, // Backward compatibility
   ROCKET_OPACITY: 0.9,
   BEAR_OPACITY: 0.8,
-  STAR_BASE_OPACITY: 0.4,
+  STAR_BASE_OPACITY: 0.6,
   GLOW_BASE_OPACITY: 0.7,
   GLOW_INACTIVE_OPACITY: 0.3,
   GLOW_MULTIPLIER: 0.9,
@@ -86,9 +86,9 @@ export const VISUAL_EFFECTS = {
   SHIMMER_MULTIPLIER: 0.7,
   GLOW_COLOR: '#FFFF00',
   GRADIENT_COLORS: ['#1E3A8A', '#3B82F6', '#4ECDC4'],
-  STAR_COUNT: 15,
-  get STAR_SIZE() { return getResponsiveLayoutSize(3); },
-  get STAR_BORDER_RADIUS() { return getResponsiveLayoutSize(1.5); },
+  STAR_COUNT: 25,
+  get STAR_SIZE() { return getResponsiveLayoutSize(4); },
+  get STAR_BORDER_RADIUS() { return getResponsiveLayoutSize(2); },
   STAR_AREA_HEIGHT_RATIO: 0.6,
 } as const;
 

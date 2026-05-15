@@ -54,6 +54,8 @@ export interface MusicChallengeHookResult {
   currentSequence: string[];
   /** The resolved sequence from config (requiredSequence or songId lookup), available before start() */
   resolvedSequence: string[];
+  /** Resolved BPM for playback timing (from song or default 120) */
+  resolvedBpm: number;
 
   // Actions
   start: () => void;
@@ -190,6 +192,22 @@ export function useMusicChallenge(
   const notePlayersRef = useRef<Map<string, AudioPlayer>>(new Map());
   // Track when each note started playing (for minimum tap duration)
   const noteStartTimeRef = useRef<Map<string, number>>(new Map());
+  // Track active fade-out intervals so they can be cancelled during cleanup,
+  // preventing native crashes from accessing deallocated AudioPlayer memory.
+  const fadeIntervalsRef = useRef<Set<ReturnType<typeof setInterval>>>(new Set());
+  // Track delayed stopNote timers (MIN_TAP_DURATION_MS) so they can be cancelled.
+  const delayedStopTimersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+
+  // Keep a ref for noteVolume so playNoteAudio always reads the latest value
+  // and update all currently-playing note players when volume changes.
+  const noteVolumeRef = useRef(noteVolume);
+  useEffect(() => {
+    noteVolumeRef.current = noteVolume;
+    // Update all currently-playing note players to reflect the new volume
+    notePlayersRef.current.forEach((player) => {
+      try { player.volume = noteVolume; } catch {}
+    });
+  }, [noteVolume]);
 
   // Track currently held notes for chord matching
   const activeNotesRef = useRef<Set<string>>(new Set());
@@ -209,17 +227,16 @@ export function useMusicChallenge(
   // Resolve instrument assets
   const instrument = (config ? getInstrument(config.instrumentId) : null) ?? null;
 
-  // Resolve the note sequence: explicit requiredSequence takes priority, then songId lookup
+  // Resolve the note sequence and BPM: explicit requiredSequence takes priority, then songId lookup
+  const resolvedSong = config?.songId ? getPracticeSong(config.songId) : undefined;
   const resolvedSequence = (() => {
     if (config?.requiredSequence && config.requiredSequence.length > 0) {
       return config.requiredSequence;
     }
-    if (config?.songId) {
-      const song = getPracticeSong(config.songId);
-      return song?.sequence ?? [];
-    }
-    return [];
+    return resolvedSong?.sequence ?? [];
   })();
+  // BPM for playback timing — defaults to 120 when no song is referenced
+  const resolvedBpm = resolvedSong?.bpm ?? 120;
 
   // Validate assets on mount
   useEffect(() => {
@@ -238,12 +255,36 @@ export function useMusicChallenge(
     }
   }, [config?.instrumentId, config?.enabled, config?.songId]);
 
-  // Helper to release all active note players
+  // Helper to release all active note players.
+  // Removes loop subscriptions BEFORE releasing to prevent native crashes
+  // from stale listeners accessing deallocated player memory.
+  // Also cancels any in-flight fade-out intervals and delayed stop timers
+  // so they don't access deallocated native AudioPlayer memory.
   const releaseAllNotePlayers = useCallback(() => {
+    // Cancel all delayed stopNote timers first — they would try to fade-out
+    // players that we are about to release immediately.
+    for (const timer of delayedStopTimersRef.current) {
+      clearTimeout(timer);
+    }
+    delayedStopTimersRef.current.clear();
+
+    // Cancel all in-flight fade-out intervals — they access player.volume /
+    // player.pause() / player.release() on players we are about to release.
+    for (const interval of fadeIntervalsRef.current) {
+      clearInterval(interval);
+    }
+    fadeIntervalsRef.current.clear();
+
     notePlayersRef.current.forEach(player => {
-      try { player.release(); } catch {}
+      try { (player as any).__loopSub?.remove(); } catch {}
     });
+    // Clear the map BEFORE releasing so status-update listeners see
+    // the player is gone and bail out of their restart logic.
+    const players = [...notePlayersRef.current.values()];
     notePlayersRef.current.clear();
+    for (const player of players) {
+      try { player.release(); } catch {}
+    }
   }, []);
 
   // Auto-cleanup when config becomes undefined (navigated away from music page)
@@ -265,25 +306,33 @@ export function useMusicChallenge(
       log.debug(`Music challenge start() bailed: config=${!!config}, missingAssets=[${missingAssets.join(',')}]`);
       return;
     }
+
+    const finishStart = () => {
+      const seq = resolvedSequence;
+      // For freeplay mode (empty sequence), we still transition to awaiting_input
+      // so playNote() works — there's just no sequence matcher to check against.
+      setCurrentSequence(seq);
+      setDifficultyLevel(1);
+      matcherRef.current = seq.length > 0 ? new SequenceMatcher(seq) : null;
+      activeNotesRef.current.clear();
+      setState('awaiting_input');
+      setLastInputCorrect(null);
+      setSequenceResult(null);
+      log.debug(`Music challenge started: ${config.instrumentId}, sequence: ${seq.length > 0 ? seq.join(' ') : '(freeplay)'}`);
+    };
+
     // Ensure the iOS audio session is in playback mode before accepting input.
     // On mount, useAudioRecorder (breath detector) may leave the session in
     // playAndRecord mode. Without this, the first note played in press mode
     // can be silenced because the session hasn't been restored yet.
+    // We await the session switch so that the state doesn't transition to
+    // 'awaiting_input' before the audio session is confirmed ready.
     const ctrl = audioSessionRef.current;
     if (ctrl) {
-      void ctrl.ensurePlaybackMode();
+      void ctrl.ensurePlaybackMode().then(finishStart);
+    } else {
+      finishStart();
     }
-    const seq = resolvedSequence;
-    // For freeplay mode (empty sequence), we still transition to awaiting_input
-    // so playNote() works — there's just no sequence matcher to check against.
-    setCurrentSequence(seq);
-    setDifficultyLevel(1);
-    matcherRef.current = seq.length > 0 ? new SequenceMatcher(seq) : null;
-    activeNotesRef.current.clear();
-    setState('awaiting_input');
-    setLastInputCorrect(null);
-    setSequenceResult(null);
-    log.debug(`Music challenge started: ${config.instrumentId}, sequence: ${seq.length > 0 ? seq.join(' ') : '(freeplay)'}`);
   }, [config, missingAssets, state, resolvedSequence]);
 
   // Play a note sample. The note sustains indefinitely by restarting playback
@@ -299,11 +348,15 @@ export function useMusicChallenge(
     try {
       const existing = notePlayersRef.current.get(note);
       if (existing) {
+        // Remove loop subscription and map entry BEFORE releasing to prevent
+        // the status listener from restarting playback on a released player.
+        try { (existing as any).__loopSub?.remove(); } catch {}
+        notePlayersRef.current.delete(note);
         try { existing.release(); } catch {}
       }
 
       const player = createAudioPlayer(noteAudio);
-      player.volume = noteVolume;
+      player.volume = noteVolumeRef.current;
       notePlayersRef.current.set(note, player);
 
       // Restart when playback ends so the note sustains as long as the
@@ -325,7 +378,7 @@ export function useMusicChallenge(
     } catch (err) {
       log.error('Failed to play note audio:', err);
     }
-  }, [instrument, noteVolume]);
+  }, [instrument]);
 
   // --- Ambient breath sound cleanup ---
   // Stop any ambient breath sound that may be playing.
@@ -343,10 +396,12 @@ export function useMusicChallenge(
       try { player.volume = startVol * (1 - step / fadeSteps); } catch {}
       if (step >= fadeSteps) {
         clearInterval(fade);
+        fadeIntervalsRef.current.delete(fade);
         try { player.pause(); } catch {}
         try { player.release(); } catch {}
       }
     }, fadeInterval);
+    fadeIntervalsRef.current.add(fade);
     log.debug('Ambient breath sound stopped');
   }, [AMBIENT_VOLUME]);
 
@@ -369,7 +424,7 @@ export function useMusicChallenge(
    */
   const playSequenceAsAudio = useCallback((sequence: string[]) => {
     if (!instrument) return;
-    const noteMs = 500;
+    const noteMs = Math.round(60000 / Math.max(resolvedBpm, 30));
     const gapMs = 100;
     let cancelled = false;
     const playbackPlayers: AudioPlayer[] = [];
@@ -389,7 +444,7 @@ export function useMusicChallenge(
           if (!noteAudio) continue;
           try {
             const player = createAudioPlayer(noteAudio);
-            player.volume = noteVolume;
+            player.volume = noteVolumeRef.current;
             playbackPlayers.push(player);
             player.play();
           } catch {}
@@ -416,7 +471,7 @@ export function useMusicChallenge(
         try { p.release(); } catch {}
       }
     };
-  }, [instrument]);
+  }, [instrument, resolvedBpm]);
 
   /** Handle sequence completion — plays the full song back note-by-note */
   const handleSequenceComplete = useCallback(() => {
@@ -437,10 +492,10 @@ export function useMusicChallenge(
       // playAndRecord session.
       const startPlayback = () => {
         const cleanupPlayback = playSequenceAsAudio(successSequence);
-        const noteMs = 500;
+        const noteMs = Math.round(60000 / Math.max(resolvedBpm, 30));
         const gapMs = 100;
         // Calculate total time including extra gaps for repeated consecutive notes
-        let totalMs = 500; // buffer at end
+        let totalMs = noteMs; // buffer at end
         for (let i = 0; i < successSequence.length; i++) {
           totalMs += noteMs;
           if (i > 0 && successSequence[i] === successSequence[i - 1]) {
@@ -472,7 +527,7 @@ export function useMusicChallenge(
       setState('completed');
       onComplete?.();
     }
-  }, [onComplete, difficultyLevel, instrument, currentSequence, resolvedSequence, playSequenceAsAudio]);
+  }, [onComplete, difficultyLevel, instrument, currentSequence, resolvedSequence, playSequenceAsAudio, resolvedBpm]);
 
   /**
    * Process a note (or chord) against the sequence matcher.
@@ -552,9 +607,19 @@ export function useMusicChallenge(
         });
         return;
       }
-      // Press mode or no session control — play immediately
-      playNoteAudio(note);
-      processNoteForSequence(note);
+      // Press mode or no session control — ensure playback audio session
+      // is active before playing. On first use, useAudioRecorder may have
+      // left the iOS session in playAndRecord mode (quiet/silent speaker).
+      const ctrl = audioSessionRef.current;
+      if (ctrl) {
+        void ctrl.ensurePlaybackMode().then(() => {
+          playNoteAudio(note);
+          processNoteForSequence(note);
+        });
+      } else {
+        playNoteAudio(note);
+        processNoteForSequence(note);
+      }
     } else {
       // No breath yet — silently queue; will play + process when breath arrives
       pendingNotesRef.current.push(note);
@@ -622,10 +687,12 @@ export function useMusicChallenge(
       try { player.volume = startVolume * (1 - step / fadeSteps); } catch {}
       if (step >= fadeSteps) {
         clearInterval(fade);
+        fadeIntervalsRef.current.delete(fade);
         try { player.pause(); } catch {}
         try { player.release(); } catch {}
       }
     }, fadeInterval);
+    fadeIntervalsRef.current.add(fade);
   }, []);
 
   // Start a sustain timer for a blow-mode note. When it expires, the note
@@ -700,7 +767,11 @@ export function useMusicChallenge(
     if (startTime) {
       const elapsed = Date.now() - startTime;
       if (elapsed < MIN_TAP_DURATION_MS) {
-        setTimeout(doStop, MIN_TAP_DURATION_MS - elapsed);
+        const timer = setTimeout(() => {
+          delayedStopTimersRef.current.delete(timer);
+          doStop();
+        }, MIN_TAP_DURATION_MS - elapsed);
+        delayedStopTimersRef.current.add(timer);
         return;
       }
     }
@@ -786,10 +857,26 @@ export function useMusicChallenge(
     return () => {
       log.debug('useMusicChallenge unmounting — releasing resources');
       try {
+        // Cancel delayed stopNote timers and fade-out intervals FIRST so they
+        // don't fire after we release the native players below.
+        for (const timer of delayedStopTimersRef.current) {
+          clearTimeout(timer);
+        }
+        delayedStopTimersRef.current.clear();
+        for (const interval of fadeIntervalsRef.current) {
+          clearInterval(interval);
+        }
+        fadeIntervalsRef.current.clear();
+
+        // Remove loop subscriptions before releasing to prevent native crashes
         notePlayersRef.current.forEach(player => {
-          try { player.release(); } catch {}
+          try { (player as any).__loopSub?.remove(); } catch {}
         });
+        const players = [...notePlayersRef.current.values()];
         notePlayersRef.current.clear();
+        for (const player of players) {
+          try { player.release(); } catch {}
+        }
         if (ambientPlayerRef.current) {
           try { ambientPlayerRef.current.release(); } catch {}
           ambientPlayerRef.current = null;
@@ -822,6 +909,7 @@ export function useMusicChallenge(
     isMaxDifficulty: difficultyLevel >= MAX_DIFFICULTY,
     currentSequence,
     resolvedSequence,
+    resolvedBpm,
 
     start,
     playNote,

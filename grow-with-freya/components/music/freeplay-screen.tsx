@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
@@ -122,7 +123,14 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
     isListening: breathDetector.isListening,
   }), [breathDetector.pauseForPlayback, breathDetector.resumeRecording, breathDetector.ensurePlaybackMode, breathDetector.isListening]);
 
-  const musicChallenge = useMusicChallenge(freeplayConfig, undefined, 0.4, audioSessionControl);
+  // Background music & note volume (must be before useMusicChallenge)
+  const globalSound = useGlobalSound();
+
+  // Compute effective note volume: base volume * master * mute.
+  // Updates live when the user toggles mute or adjusts the master slider.
+  const effectiveNoteVolume = globalSound?.isMuted ? 0 : 0.4 * (globalSound?.masterVolume ?? 1);
+
+  const musicChallenge = useMusicChallenge(freeplayConfig, undefined, effectiveNoteVolume, audioSessionControl);
 
   // Track the current play mode so we only sync breath state in blow mode.
   const currentPlayModeRef = useRef<'blow' | 'press'>('press');
@@ -135,9 +143,6 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
       musicChallenge.setBreathActive(breathDetector.isBreathActive);
     }
   }, [breathDetector.isBreathActive, selectedInstrumentId, showPicker]);
-
-  // Background music volume fade (mirror story-book-reader behaviour)
-  const globalSound = useGlobalSound();
   const preMusicVolumeRef = useRef<number | null>(null);
   const musicFadeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const musicFadeIdRef = useRef(0);
@@ -223,6 +228,15 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
   // Auto-start the music challenge when playing and config is ready
   const musicChallengeRef = useRef(musicChallenge);
   musicChallengeRef.current = musicChallenge;
+
+  // Proactively restore the iOS audio session to playback-only mode as soon as
+  // the instrument is selected. useAudioRecorder (breath detector) may have left
+  // the session in playAndRecord mode which silences the first note played.
+  useEffect(() => {
+    if (isPlaying) {
+      void breathDetector.ensurePlaybackMode();
+    }
+  }, [isPlaying]);
 
   useEffect(() => {
     if (isPlaying && freeplayConfig) {
@@ -374,8 +388,8 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
             {/* Top Left Controls — Exit (✕) button */}
             {!musicUiHidden && (
               <View style={[styles.topLeftControls, {
-                paddingTop: Math.max(rotatedInsets.top + 5, 20),
-                paddingLeft: Math.max(rotatedInsets.left + 5, 20),
+                paddingTop: Math.max(rotatedInsets.top + 20, 20),
+                paddingLeft: Math.max(rotatedInsets.left + 20, 20),
               }]}>
                 <Pressable
                   style={[styles.exitButton, {
@@ -385,7 +399,7 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
                   }]}
                   onPress={handleChangeInstrument}
                 >
-                  <Text style={[styles.exitButtonText, { fontSize: scaledFontSize(20) }]}>✕</Text>
+                  <Ionicons name="home" size={scaledFontSize(20)} color="#333333" />
                 </Pressable>
               </View>
             )}
@@ -393,8 +407,8 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
             {/* Top Right Controls — Sound + Burger menu */}
             {!musicUiHidden && (
               <View style={[styles.topRightControls, {
-                paddingTop: Math.max(rotatedInsets.top + 5, 20),
-                paddingRight: Math.max(rotatedInsets.right + 5, 20),
+                paddingTop: Math.max(rotatedInsets.top + 20, 20),
+                paddingRight: Math.max(rotatedInsets.right + 20, 20),
               }]}>
                 <MusicControl size={28} variant="story" />
                 <Pressable
@@ -421,8 +435,8 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
             {/* Settings dropdown menu */}
             {showSettingsMenu && (
               <View style={[styles.settingsMenu, {
-                top: Math.max(rotatedInsets.top + 5, 20) + scaledButtonSize(50) + 10,
-                right: Math.max(rotatedInsets.right + 5, 20),
+                top: Math.max(rotatedInsets.top + 20, 20) + scaledButtonSize(50) + 10,
+                right: Math.max(rotatedInsets.right + 20, 20),
               }]}>
                 {!instrumentIsRotated && (
                   <Pressable
@@ -471,7 +485,7 @@ const styles = StyleSheet.create({
     zIndex: 15,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
   },
   // Rotated overlay — CSS rotation 90° to simulate landscape in portrait mode.
   // Positioning (left/top) and dimensions (width/height) are set by the animated style.

@@ -438,44 +438,33 @@ export default {
     readyToStart: 'Du er klar til at begynde din rejse!',
     screens: {
       welcome: {
-        title: 'Velkommen!',
-        body: 'Understøt dit barns tidlige udvikling gennem historier og aktiviteter',
+        title: 'Historier der vokser\nmed dit barn',
+        body: 'Interaktive historier med musik, instrumenter og fortælling — designet til at tænde fantasien og støtte tidlig udvikling.',
         button: 'Næste',
       },
-      screenTime: {
-        title: 'Hvorfor begrænse skærmtid',
-        body: 'Vi anbefaler at bruge denne app sammen med dit barn.',
+      howItWorks: {
+        title: 'Sådan virker det',
+        body: 'Alt hvad dit barn har brug for til kreativ, skærmbevidst leg.',
         button: 'Næste',
+        features: {
+          stories: '📚  Interaktive historier',
+          storiesDesc: 'Smukt illustrerede fortællinger med side-for-side fortælling',
+          music: '🎵  Musik & instrumenter',
+          musicDesc: 'Lær rytme og melodi med ægte instrumentlyde',
+          voice: '🎙️  Din stemme',
+          voiceDesc: 'Optag fortællinger så dit barn hører dig — selv på afstand',
+        },
       },
-      personalize: {
-        title: 'Lad os gøre det personligt!',
-        body: 'Hvad er dit navn? Angiv dit navn og opret en avatar for at personalisere din oplevelse!',
-        button: 'Næste',
-      },
-      voiceRecording: {
-        title: 'Optag din stemme!',
-        body: 'Fortæl historier med din stemme. Berolig dit barn når du er væk.',
-        button: 'Næste',
-      },
-      research: {
-        title: 'Understøttet af forskning!',
-        body: 'Denne app er udviklet som en del af mastergrad forskning i børnenes udvikling, der udforsker hvordan digital engagement kan understøtte sunde forældre-barn relationer. Forskning viser at fælles engagement og korte sessioner giver maksimal fordel.',
-        button: 'Næste',
-      },
-      disclaimer: {
-        title: 'Ansvarsfraskrivelse',
-        body: 'Denne app er under aktiv udvikling. Nogle funktioner virker muligvis ikke - tag skærmbilleder af problemer med tidsstempler.\n\nBackend-server er i dvale når den ikke bruges. Hvis login mislykkes, vent 30 sekunder. Historieindlæsning afhænger af netværk.\n\nHistorieindhold inkluderer originale værker, AI-genererede historier og børnebøger brugt i uddannelsesforskning.',
+      family: {
+        title: 'Lavet til familier',
+        body: 'Designet til korte, meningsfulde sessioner sammen. Forskning viser at fælles engagement og kort brug giver de største fordele.',
         button: 'Næste',
       },
       privacy: {
-        title: 'Dit privatliv',
-        body: 'Dine data er sikre. Vi indsamler eller gemmer ikke personlige oplysninger.\n\nLogin via Google eller Apple er sikkert og anonymt - vi modtager kun et anonymt ID, ikke e-mail eller personlige detaljer.\n\nSessionssynkronisering på tværs af enheder er fuldstændig anonym. Alle dataspor følger sikkerhedsbedste praksis med kryptering under transit og opbevaring.\n\nDenne app er designet med privatlivs-først princip for dig og din familie.',
-        button: 'Næste',
-      },
-      crashReporting: {
-        title: 'Hjælp os med at forbedre',
-        body: 'Kan du hjælpe os med at forbedre appen ved at dele anonyme nedbrudrapporter?\n\nNedbrudrapporter hjælper med at identificere og reparere problemer hurtigt. De indeholder kun teknisk information om hvad der gik galt - ingen personlige data, billeder eller indhold.\n\nDu kan ændre denne indstilling i Indstillinger på ethvert tidspunkt.',
-        button: 'Lad os komme i gang...',
+        title: 'Privatliv og start',
+        body: 'Dine data er sikre og pseudonymiserede. Ingen personlige oplysninger indsamles — login bruger kun en anonym identifikator.\n\nHjælp os med at forbedre ved at dele anonyme fejlrapporter (du kan ændre dette i Indstillinger).',
+        button: 'Lad os begynde!',
+        showCrashReportingDialog: 'true',
       },
     },
     crashReportingDialog: {
@@ -485,21 +474,16 @@ export default {
       enable: 'Aktivér',
     },
     taglines: {
-      welcome: '✨ Historier der vokser med dit barn',
-      screenTime: '👨‍👩‍👧‍👦 Kvalitetstid sammen',
-      personalize: '🎭 Gør det unikt',
-      voiceRecording: '🎙️ Din stemme, deres komfort',
-      research: '🔬 Psykologi forbundet med teknologi',
+      welcome: '✨ Tænd fantasien gennem leg',
+      howItWorks: '🌟 Tre måder at udforske',
+      family: '👨‍👩‍👧‍👦 Tid sammen, ægte fordele',
+      privacy: '🔒 Privatliv først, altid',
     },
     benefits: {
-      welcome: 'Personaliseret læringsoplevelse',
-      screenTime: 'Anbefalet af børneudviklingseksperter',
-      personalize: 'Brugerdefineret avatar og personaliserede historier',
-      voiceRecording: 'Optag en gang, trøst altid',
-      research: 'Voks sammen, for altid',
-      disclaimer: 'Tak fordi du hjælper os med at forbedre!',
-      privacy: 'Dine data er dine',
-      crashReporting: 'Anonyme nedbrudrapporter hjælper med at reparere fejl hurtigere',
+      welcome: 'Understøttet af forskning i børneudvikling',
+      howItWorks: 'Historier · Musik · Stemme — alt i én app',
+      family: 'Anbefalet af eksperter i børneudvikling',
+      privacy: 'Dine data forbliver dine',
     },
   },
   tutorial: {
@@ -526,8 +510,16 @@ export default {
         description: 'Lad os tage en hurtig rundvisning for at hjælpe dig og dit barn med at få mest ud af lesetiden.',
       },
       stories: {
-        title: 'Udforsk & Spil 🎵📚',
-        description: 'Swipe gennem karrusellen for at opdage Historier, Øvelsestilstand hvor du lærer musik på instrumenter, og Fri Leg til frit at spille på ethvert instrument.',
+        title: 'Historier 📚',
+        description: 'Udforsk vores samling af interaktive historier med smukke illustrationer og sjove interaktioner.',
+      },
+      practise: {
+        title: 'Øvelse 🎵',
+        description: 'Lær at spille sange på forskellige instrumenter. Følg med og opbyg dine musikalske færdigheder!',
+      },
+      freeplay: {
+        title: 'Fri Leg 🎹',
+        description: 'Spil frit på ethvert instrument — ingen regler, bare sjov! Eksperimenter med lyde og skab din egen musik.',
       },
       settings: {
         title: 'Indstillinger ⚙️',
@@ -690,6 +682,33 @@ export default {
         description: 'Sæt sunde grænser og overvåg daglig brug.',
       },
     },
+    // Music Mode Tips - keys match tutorial.musicMode.* in tutorial-content.ts
+    musicMode: {
+      welcome: {
+        title: 'Musiktilstand 🎵',
+        description: 'Nogle sider i denne historie har musikudfordringer! Spil noder på et virtuelt instrument for at fuldføre dem.',
+      },
+      instrument: {
+        title: 'Vælg Dit Instrument 🎹',
+        description: 'Når en bog med musik åbnes, stryg gennem karrusellen for at vælge dit yndlingsinstrument. Hvert har unikke lyde!',
+      },
+      playing: {
+        title: 'Spil Noder 🎶',
+        description: 'Tryk på de farvede knapper for at spille noder. Følg sekvensen vist øverst for at fuldføre udfordringen!',
+      },
+      sheet: {
+        title: 'Nodeark 📋',
+        description: 'Tryk på nodeknappen (nederst til venstre) for at se alle de noder, du skal spille. Du kan endda forhåndsvise melodien!',
+      },
+      begin: {
+        title: 'Begynd at Spille ▶️',
+        description: 'Når du ankommer til en musikside, tryk på \'Begynd at Spille\' knappen øverst for at starte udfordringen. Den åbner først nodearket, så du kan se, hvad du skal spille!',
+      },
+      change: {
+        title: 'Skift Instrument 🔄',
+        description: 'Vil du prøve en anden lyd? Åbn menuen (☰) og tryk på \'Skift Instrument\' for at skifte når som helst.',
+      },
+    },
     gestures: {
       speakerLongPress: {
         title: 'Langt tryk tip 👆',
@@ -809,6 +828,36 @@ export default {
     music: 'Musik',
     voiceOver: 'Stemme',
   },
+  // Subscription overlay
+  subscription: {
+    unlockPlan: 'Lås op for en plan',
+    choosePlan: 'Vælg den plan, der passer bedst til din familie',
+    subscribe: 'Abonner',
+    privacyPolicy: 'Privatlivspolitik',
+    termsAndConditions: 'Vilkår og betingelser',
+    planBasic: 'Basis',
+    planPremium: 'Premium',
+    planAnnual: 'Årlig',
+    perMonth: '/måned',
+    perYear: '/år',
+    mostRecommended: 'Mest anbefalet',
+    percentOff: '25% rabat',
+    uspStories: 'Historier skabt til at støtte børns udvikling',
+    uspEducators: 'Alderspassende indhold gennemgået af pædagoger',
+    uspMusic: 'Interaktiv musik og instrumentøvelse',
+    uspNoAds: 'Ingen reklamer — sikkert for de små',
+    uspLanguages: 'Tilgængelig på 14 sprog',
+    detailAllStories: 'Alle historier låst op',
+    detailDownload50: 'Download op til 50 bøger',
+    detailLimitedSongs: 'Begrænset adgang til sange',
+    detailSyncDevices: 'Synkronisering på flere enheder',
+    detailDownload100: 'Download op til 100 bøger',
+    detailAllSongs: 'Alle sange i øvelsestilstand',
+    detailAllInstruments: 'Alle instrumenter låst op',
+    detailEverythingPremium: 'Alt fra Premium',
+    detailSave25: 'Spar 25% i forhold til månedligt',
+  },
+
   defaultPage: {
     comingSoon: 'Kommer snart!',
     stories: {

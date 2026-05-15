@@ -22,6 +22,8 @@ interface PageHeaderProps {
   headerBackgroundColor?: string;
   /** When true, hides the back button and music control with animations */
   hideControls?: boolean;
+  /** When true, shows a home icon instead of the text back button */
+  useHomeIcon?: boolean;
 }
 
 export function PageHeader({
@@ -33,6 +35,7 @@ export function PageHeader({
   onRightAction,
   headerBackgroundColor,
   hideControls = false,
+  useHomeIcon = false,
 }: PageHeaderProps) {
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledPadding, scaledButtonSize, textSizeScale } = useAccessibility();
@@ -71,8 +74,8 @@ export function PageHeader({
   const subtitleFontSize = scaledFontSize(isTablet ? 18 : 16);
   const musicIconSize = scaledButtonSize(isTablet ? 28 : 24);
 
-  // Dynamic title container position - accounts for scaled text
-  const titleContainerTop = insets.top + 80 + (textSizeScale - 1) * 20;
+  // Dynamic title container position - aligned with header row
+  const titleContainerTop = insets.top + 20;
   // Dynamic subtitle margin - more space when text is larger
   const subtitleMarginTop = 8 + (textSizeScale - 1) * 8;
 
@@ -81,7 +84,7 @@ export function PageHeader({
   const backButtonHeight = musicBackgroundSize;
 
   // Calculate the full header height (from top to where content starts)
-  const headerHeight = insets.top + 140 + (textSizeScale - 1) * 60;
+  const headerHeight = insets.top + 80 + (textSizeScale - 1) * 40;
 
   return (
     <>
@@ -95,20 +98,28 @@ export function PageHeader({
         <Animated.View style={backButtonAnimatedStyle}>
           <Pressable
             style={[
-              styles.backButton,
-              {
-                paddingHorizontal: backButtonPaddingH,
-                height: backButtonHeight,
-                justifyContent: 'center',
-              }
+              useHomeIcon ? styles.homeButton : styles.backButton,
+              useHomeIcon
+                ? { width: scaledButtonSize(48), height: scaledButtonSize(48) }
+                : { paddingHorizontal: backButtonPaddingH, height: backButtonHeight, justifyContent: 'center' },
             ]}
             onPress={onBack}
           >
-            <Text style={[styles.backButtonText, { fontSize: backFontSize }]} numberOfLines={1}>{backButtonText}</Text>
+            {useHomeIcon ? (
+              <Ionicons name="home" size={scaledButtonSize(22)} color="#FFFFFF" />
+            ) : (
+              <Text style={[styles.backButtonText, { fontSize: backFontSize }]} numberOfLines={1}>{backButtonText}</Text>
+            )}
           </Pressable>
         </Animated.View>
 
-        <Animated.View style={[styles.rightControls, rightControlsAnimatedStyle]}>
+        <Animated.View style={[isTablet ? styles.rightControls : styles.rightControlsPhone, rightControlsAnimatedStyle]}>
+          {showMusicControl && (
+            <MusicControl
+              size={musicIconSize}
+              color="#FFFFFF"
+            />
+          )}
           {rightActionIcon && onRightAction && (
             <Pressable
               style={[
@@ -123,17 +134,11 @@ export function PageHeader({
               <Ionicons name={rightActionIcon} size={musicIconSize} color="#FFFFFF" />
             </Pressable>
           )}
-          {showMusicControl && (
-            <MusicControl
-              size={musicIconSize}
-              color="#FFFFFF"
-            />
-          )}
         </Animated.View>
       </View>
 
-      {/* Title - positioned below header */}
-      <View style={[styles.titleContainer, { top: titleContainerTop }]}>
+      {/* Title - aligned with header row */}
+      <View style={[styles.titleContainer, { top: titleContainerTop, height: musicBackgroundSize }]}>
         <Text style={[styles.title, { fontSize: titleFontSize }]}>{title}</Text>
         {subtitle && (
           <Text style={[styles.subtitle, { fontSize: subtitleFontSize, marginTop: subtitleMarginTop }]}>{subtitle}</Text>
@@ -166,6 +171,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: 20,
   },
+  homeButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   backButtonText: {
     color: 'white',
     fontWeight: 'bold',
@@ -175,6 +186,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+  },
+  rightControlsPhone: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 8,
   },
   rightActionButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
@@ -190,6 +206,7 @@ const styles = StyleSheet.create({
     zIndex: 25,
     elevation: 25, // Android requires elevation for proper z-ordering
     alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     color: 'white',

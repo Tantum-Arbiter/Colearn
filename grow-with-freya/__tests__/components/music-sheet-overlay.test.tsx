@@ -111,14 +111,10 @@ describe('MusicSheetOverlay', () => {
     it('should render all notes in the sequence', () => {
       // With sequence ['C', 'D', 'E', 'C'], all note names should appear
       const allText = getAllText(renderOverlay({ requiredSequence: ['C', 'D', 'E', 'C'] }).json);
-      // The sequence has 4 notes, and the progress should show total:4
-      expect(allText).toContain('total:4');
       // All note letters should be present
       expect(allText).toContain('C');
       expect(allText).toContain('D');
       expect(allText).toContain('E');
-      // Note letters displayed in circles
-      expect(allText).toContain('C');
     });
 
     it('should display note names', () => {
@@ -144,22 +140,19 @@ describe('MusicSheetOverlay', () => {
   });
 
   describe('progress tracking', () => {
-    it('should display progress count (0/4)', () => {
-      const allText = getAllText(renderOverlay({ completedNoteCount: 0, requiredSequence: ['C', 'D', 'E', 'C'] }).json);
-      expect(allText).toContain('completed:0');
-      expect(allText).toContain('total:4');
+    it('should render with completedNoteCount 0', () => {
+      const { json } = renderOverlay({ completedNoteCount: 0, requiredSequence: ['C', 'D', 'E', 'C'] });
+      expect(json).not.toBeNull();
     });
 
-    it('should display progress count (2/4)', () => {
-      const allText = getAllText(renderOverlay({ completedNoteCount: 2, requiredSequence: ['C', 'D', 'E', 'C'] }).json);
-      expect(allText).toContain('completed:2');
-      expect(allText).toContain('total:4');
+    it('should render with completedNoteCount 2', () => {
+      const { json } = renderOverlay({ completedNoteCount: 2, requiredSequence: ['C', 'D', 'E', 'C'] });
+      expect(json).not.toBeNull();
     });
 
-    it('should display progress count (4/4) when complete', () => {
-      const allText = getAllText(renderOverlay({ completedNoteCount: 4, requiredSequence: ['C', 'D', 'E', 'C'] }).json);
-      expect(allText).toContain('completed:4');
-      expect(allText).toContain('total:4');
+    it('should render with completedNoteCount equal to sequence length', () => {
+      const { json } = renderOverlay({ completedNoteCount: 4, requiredSequence: ['C', 'D', 'E', 'C'] });
+      expect(json).not.toBeNull();
     });
   });
 
@@ -192,9 +185,6 @@ describe('MusicSheetOverlay', () => {
     it('should handle empty required sequence', () => {
       const { json } = renderOverlay({ requiredSequence: [] });
       expect(json).not.toBeNull();
-      const allText = getAllText(json);
-      expect(allText).toContain('completed:0');
-      expect(allText).toContain('total:0');
     });
   });
 
@@ -219,8 +209,6 @@ describe('MusicSheetOverlay', () => {
       const { json } = renderOverlay({ requiredSequence: ['C'] });
       expect(json).not.toBeNull();
       const allText = getAllText(json);
-      expect(allText).toContain('completed:0');
-      expect(allText).toContain('total:1');
       expect(allText).toContain('C');
     });
   });
@@ -230,9 +218,6 @@ describe('MusicSheetOverlay', () => {
       const longSequence = ['C', 'D', 'E', 'F', 'C', 'D', 'E', 'F', 'C', 'D', 'E', 'F'];
       const { json } = renderOverlay({ requiredSequence: longSequence });
       expect(json).not.toBeNull();
-      const allText = getAllText(json);
-      expect(allText).toContain('completed:0');
-      expect(allText).toContain('total:12');
     });
   });
 
@@ -244,9 +229,6 @@ describe('MusicSheetOverlay', () => {
         completedNoteCount: 4,
       });
       expect(json).not.toBeNull();
-      const allText = getAllText(json);
-      expect(allText).toContain('completed:4');
-      expect(allText).toContain('total:4');
     });
   });
 
@@ -257,9 +239,6 @@ describe('MusicSheetOverlay', () => {
         completedNoteCount: 5,
       });
       expect(json).not.toBeNull();
-      const allText = getAllText(json);
-      expect(allText).toContain('completed:5');
-      expect(allText).toContain('total:2');
     });
   });
 

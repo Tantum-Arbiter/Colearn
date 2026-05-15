@@ -2,9 +2,6 @@
 import { getScreenDimensions } from './constants';
 import {
   CloudSvg,
-  StoriesSvg,
-  SensorySvg,
-  ScreentimeSvg,
 } from './svg-components';
 
 export const WEBP_ASSETS = {
@@ -18,22 +15,10 @@ export const WEBP_ASSETS = {
 
 export const SVG_PATHS = {
   cloud: 'ui-elements/background-cloud-1.svg',
-  stories: 'menu-icons/stories-icon.svg',
-  sensory: 'menu-icons/sensory-icon.svg',
-  screentime: 'menu-icons/screentime-icon.svg',
-} as const;
-
-const ICON_SVG_MAP = {
-  'stories-icon': 'stories',
-  'sensory-icon': 'sensory',
-  'screentime-icon': 'screentime',
-  'storybook': 'stories',
-  'sparkle_hand': 'sensory',
-  'clock': 'screentime',
 } as const;
 
 export const getIconSvgType = (iconType: string): keyof typeof SVG_PATHS => {
-  return ICON_SVG_MAP[iconType as keyof typeof ICON_SVG_MAP] || 'stories';
+  return 'cloud';
 };
 
 export const getSvgPath = (svgType: keyof typeof SVG_PATHS) => {
@@ -125,14 +110,7 @@ export const ASSET_DIMENSIONS = {
 } as const;
 
 export const getSvgAsset = (svgType: string) => {
-  switch (svgType) {
-    case 'cloud': return SVG_PATHS.cloud;
-    case 'balloon': return SVG_PATHS.cloud; // Backward compatibility - balloon maps to cloud
-    case 'stories': return SVG_PATHS.stories;
-    case 'sensory': return SVG_PATHS.sensory;
-    case 'screentime': return SVG_PATHS.screentime;
-    default: return SVG_PATHS.stories;
-  }
+  return SVG_PATHS.cloud;
 };
 
 export const getSvgAssetFromPath = (svgType: keyof typeof SVG_PATHS) => {
@@ -140,20 +118,7 @@ export const getSvgAssetFromPath = (svgType: keyof typeof SVG_PATHS) => {
 };
 
 export const getSvgComponentFromSvg = (svgType: keyof typeof SVG_PATHS | 'balloon') => {
-  switch (svgType) {
-    case 'cloud':
-    case 'balloon': // Backward compatibility - balloon maps to cloud
-      return CloudSvg;
-    case 'stories':
-      return StoriesSvg;
-    case 'sensory':
-      return SensorySvg;
-    case 'screentime':
-      return ScreentimeSvg;
-    default:
-      return StoriesSvg;
-  }
+  return CloudSvg;
 };
-
 
 export const getSvgComponent = getSvgComponentFromSvg;

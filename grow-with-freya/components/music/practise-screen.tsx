@@ -17,12 +17,11 @@ import {
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import Animated, {
-  FadeIn,
-  FadeOut,
   useSharedValue,
   useAnimatedStyle,
   withRepeat,
@@ -30,9 +29,10 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 
-import { InstrumentPickerOverlay } from '@/components/stories/instrument-picker-overlay';
+
 import { MusicChallengeUI } from '@/components/stories/music-challenge-ui';
 import { MusicSheetOverlay } from '@/components/stories/music-sheet-overlay';
+import { InstrumentCarousel } from '@/components/music/instrument-carousel';
 import { MusicControl } from '@/components/ui/music-control';
 import { PageHeader } from '@/components/ui/page-header';
 import { BearTopImage } from '@/components/main-menu/animated-components';
@@ -44,6 +44,7 @@ import { useMusicChallenge } from '@/hooks/use-music-challenge';
 import { useBreathDetector } from '@/hooks/use-breath-detector';
 import {
   getInstrument,
+  getAvailableInstrumentIds,
   getPracticeSongsForInstrument,
 } from '@/services/music-asset-registry';
 import type { PracticeSong, PracticeSongDifficulty } from '@/services/music-asset-registry';
@@ -57,8 +58,8 @@ const STAR_POSITIONS = generateStarPositions(VISUAL_EFFECTS.STAR_COUNT);
 type PlayMode = 'blow' | 'press';
 
 // Phases of the practise screen
-// instrument → songs → preview (music sheet) → playing (instrument UI)
-type PractisePhase = 'instrument' | 'songs' | 'preview' | 'playing';
+// songs → preview (music sheet) → playing (instrument UI)
+type PractisePhase = 'songs' | 'preview' | 'playing';
 
 interface PractiseScreenProps {
   onBack: () => void;
@@ -79,12 +80,14 @@ const DIFFICULTY_STARS: Record<PracticeSongDifficulty, string> = {
 export function PractiseScreen({ onBack }: PractiseScreenProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const { scaledFontSize, scaledButtonSize, scaledPadding, textSizeScale } = useAccessibility();
+  const { scaledFontSize, scaledButtonSize, textSizeScale } = useAccessibility();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
-  // Phase state
-  const [phase, setPhase] = useState<PractisePhase>('instrument');
-  const [selectedInstrumentId, setSelectedInstrumentId] = useState<string | null>(null);
+  // Phase state — start directly on songs with first instrument selected
+  const [phase, setPhase] = useState<PractisePhase>('songs');
+  const [selectedInstrumentId, setSelectedInstrumentId] = useState<string>(
+    () => getAvailableInstrumentIds()[0] ?? 'flute'
+  );
   const [selectedSong, setSelectedSong] = useState<PracticeSong | null>(null);
   const [showMusicSheet, setShowMusicSheet] = useState(false);
   const [instrumentIsRotated, setInstrumentIsRotated] = useState(false);
@@ -146,7 +149,19 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
     isListening: breathDetector.isListening,
   }), [breathDetector.pauseForPlayback, breathDetector.resumeRecording, breathDetector.ensurePlaybackMode, breathDetector.isListening]);
 
-  const musicChallenge = useMusicChallenge(musicChallengeConfig, undefined, 0.4, audioSessionControl);
+  // Background music & note volume (must be before useMusicChallenge)
+  const globalSound = useGlobalSound();
+
+  // Compute effective note volume: base volume * master * mute.
+  // Updates live when the user toggles mute or adjusts the master slider.
+  const effectiveNoteVolume = globalSound?.isMuted ? 0 : 0.4 * (globalSound?.masterVolume ?? 1);
+
+  const musicChallenge = useMusicChallenge(musicChallengeConfig, undefined, effectiveNoteVolume, audioSessionControl);
+
+  // Stable ref so callbacks can access the latest musicChallenge without
+  // adding it to useCallback deps (it's a new object every render).
+  const musicChallengeRef = useRef(musicChallenge);
+  musicChallengeRef.current = musicChallenge;
 
   // Track the current play mode so we only sync breath state in blow mode.
   const currentPlayModeRef = useRef<'blow' | 'press'>('press');
@@ -159,9 +174,6 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
       musicChallenge.setBreathActive(breathDetector.isBreathActive);
     }
   }, [breathDetector.isBreathActive, phase]);
-
-  // Background music volume fade (mirror story-book-reader behaviour)
-  const globalSound = useGlobalSound();
   const preMusicVolumeRef = useRef<number | null>(null);
   const musicFadeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const musicFadeIdRef = useRef(0);
@@ -221,10 +233,28 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
     selectedInstrumentId ? getPracticeSongsForInstrument(selectedInstrumentId) : [],
   [selectedInstrumentId]);
 
+  // Ref mirrors so the carousel callback can read the latest values without
+  // adding state to useCallback deps (which would destabilise the gesture handlers).
+  const selectedInstrumentIdRef = useRef(selectedInstrumentId);
+  selectedInstrumentIdRef.current = selectedInstrumentId;
+
   // Handlers
-  const handleInstrumentSelect = useCallback((instrumentId: string) => {
+  // Quick-switch instrument from the inline carousel.
+  // This callback MUST have an empty dep array so the carousel's gesture
+  // handlers (useMemo'd Gesture objects) stay referentially stable. Any dep
+  // change recreates onSelect → recreates Gesture.Race → crashes
+  // react-native-gesture-handler on the native side.
+  const handleInlineInstrumentChange = useCallback((instrumentId: string) => {
+    // Ignore if the same instrument is already selected — the carousel pan/arrow
+    // handlers can fire onSelect even when the centered item hasn't changed.
+    if (instrumentId === selectedInstrumentIdRef.current) return;
+
+    // Clean up any lingering audio resources (note players, fade-out intervals,
+    // delayed stop timers) from the previous instrument before switching.
+    musicChallengeRef.current.cleanup();
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSelectedInstrumentId(instrumentId);
-    setPhase('songs');
+    setSelectedSong(null);
   }, []);
 
   // Fade the instrument overlay in when entering the playing phase.
@@ -239,10 +269,14 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
     }
   }, [phase]);
 
-  // Auto-start the music challenge when we enter the playing phase and config is ready
-  // We use a ref to hold the latest start function to avoid stale closures
-  const musicChallengeRef = useRef(musicChallenge);
-  musicChallengeRef.current = musicChallenge;
+  // Proactively restore the iOS audio session to playback-only mode as soon as
+  // we enter the playing phase. useAudioRecorder (breath detector) may have left
+  // the session in playAndRecord mode which silences the first note played.
+  useEffect(() => {
+    if (phase === 'playing') {
+      void breathDetector.ensurePlaybackMode();
+    }
+  }, [phase]);
 
   useEffect(() => {
     if (phase === 'playing' && musicChallengeConfig) {
@@ -258,14 +292,20 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
   }, [phase, musicChallengeConfig]);
 
   const handleSongSelect = useCallback((song: PracticeSong) => {
-    // Save current bg music volume and duck to 0.1 (matches story-book-reader)
-    const baseVol = preMusicVolumeRef.current ?? globalSound.volume;
-    preMusicVolumeRef.current = baseVol;
-    fadeMusicVolumeTo(0.1);
+    // Always update state first so the music sheet appears even if volume
+    // ducking fails (e.g. due to stale globalSound reference).
     setSelectedSong(song);
-    // Show the music sheet first (preview phase) before entering instrument mode
     setShowMusicSheet(true);
     setPhase('preview');
+
+    // Save current bg music volume and duck to 0.1 (matches story-book-reader)
+    try {
+      const baseVol = preMusicVolumeRef.current ?? globalSound.volume;
+      preMusicVolumeRef.current = baseVol;
+      fadeMusicVolumeTo(0.1);
+    } catch (e) {
+      console.warn('Failed to duck music volume on song select:', e);
+    }
   }, [globalSound.volume, fadeMusicVolumeTo]);
 
   // User taps "Ready to Play" on the music sheet → close sheet, enter instrument mode
@@ -278,6 +318,11 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
 
   // User closes the music sheet without playing → go back to song list
   const handleCloseMusicSheet = useCallback(() => {
+    // Clean up audio resources (preview note players, fade-out intervals, loop
+    // listeners) before changing state.  Without this, stale AudioPlayer
+    // references from the preview can survive until the next instrument /
+    // song selection and cause a native crash when accessed after deallocation.
+    musicChallengeRef.current.cleanup();
     setShowMusicSheet(false);
     setSelectedSong(null);
     restoreMusicVolume();
@@ -309,42 +354,27 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
     setPhase('songs');
   }, [musicChallenge, breathDetector, restoreMusicVolume]);
 
-  // When changing instrument from the song library, remember the previous instrument
-  // so the ✕ button can go back to songs with the old instrument restored.
-  const previousInstrumentRef = useRef<string | null>(null);
-
+  // Return to song library from playing/preview phase (used by settings menu "Change Instrument")
   const handleChangeInstrument = useCallback(() => {
-    if (phase === 'playing') {
-      musicChallenge.cleanup();
-      breathDetector.stopListening();
-      setShowMusicSheet(false);
-      setShowSettingsMenu(false);
-      setMusicUiHidden(false);
+    // Always clean up audio resources regardless of current phase to prevent
+    // native crashes from stale AudioPlayer references during instrument switch.
+    musicChallenge.cleanup();
+    breathDetector.stopListening();
+    setShowMusicSheet(false);
+    setShowSettingsMenu(false);
+    setMusicUiHidden(false);
+    instrumentContentOpacity.value = 0;
+    if (phase === 'playing' || phase === 'preview') {
       restoreMusicVolume();
     }
-    previousInstrumentRef.current = selectedInstrumentId;
-    setSelectedInstrumentId(null);
     setSelectedSong(null);
-    setPhase('instrument');
-  }, [phase, musicChallenge, breathDetector, restoreMusicVolume, selectedInstrumentId]);
-
-  const handleInstrumentPickerClose = useCallback(() => {
-    const prev = previousInstrumentRef.current;
-    if (prev) {
-      // Came from song library — restore instrument and go back to songs
-      setSelectedInstrumentId(prev);
-      previousInstrumentRef.current = null;
-      setPhase('songs');
-    } else {
-      onBack();
-    }
-  }, [onBack]);
+    setPhase('songs');
+  }, [phase, musicChallenge, breathDetector, restoreMusicVolume, instrumentContentOpacity]);
 
   const handleBack = useCallback(() => {
     if (phase === 'playing') {
       handleBackToSongs();
     } else {
-      // From songs or instrument picker, go straight to main menu
       onBack();
     }
   }, [phase, handleBackToSongs, onBack]);
@@ -443,8 +473,8 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
                 rotated bottom ← insets.right (usually 0) */}
           {!musicUiHidden && (
             <View style={[styles.topLeftControls, {
-              paddingTop: Math.max(insets.left + 5, 20),
-              paddingLeft: Math.max(insets.bottom + 5, 20),
+              paddingTop: Math.max(insets.left + 20, 20),
+              paddingLeft: Math.max(insets.bottom + 20, 20),
             }]}>
               <Pressable
                 style={[styles.exitButton, {
@@ -454,7 +484,7 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
                 }]}
                 onPress={handleBackToSongs}
               >
-                <Text style={[styles.exitButtonText, { fontSize: scaledFontSize(20) }]}>✕</Text>
+                <Ionicons name="home" size={scaledFontSize(20)} color="#333333" />
               </Pressable>
             </View>
           )}
@@ -462,8 +492,8 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
           {/* Top Right Controls — Sound + Burger menu, matching freeplay/story layout */}
           {!musicUiHidden && (
             <View style={[styles.topRightControls, {
-              paddingTop: Math.max(insets.left + 5, 20),
-              paddingRight: Math.max(insets.top + 5, 20),
+              paddingTop: Math.max(insets.left + 20, 20),
+              paddingRight: Math.max(insets.top + 20, 20),
             }]}>
               <MusicControl size={28} variant="story" />
               <Pressable
@@ -490,8 +520,8 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
           {/* Settings dropdown menu */}
           {showSettingsMenu && (
             <View style={[styles.settingsMenu, {
-              top: Math.max(insets.left + 5, 20) + scaledButtonSize(50) + 10,
-              right: Math.max(insets.top + 5, 20),
+              top: Math.max(insets.left + 20, 20) + scaledButtonSize(50) + 10,
+              right: Math.max(insets.top + 20, 20),
             }]}>
               {/* Change Instrument (only when not rotated) */}
               {!instrumentIsRotated && (
@@ -522,31 +552,20 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
             </View>
           )}
 
-          <MusicSheetOverlay
-            visible={showMusicSheet}
-            onClose={() => setShowMusicSheet(false)}
-            requiredSequence={selectedSong.sequence}
-            noteLayout={instrumentDef.noteLayout}
-            completedNoteCount={musicChallenge.currentNoteIndex}
-            instrumentName={instrumentDef.displayName}
-            onNotePressIn={(note) => musicChallenge.previewNote(note)}
-            onNotePressOut={(note) => musicChallenge.stopNote(note)}
-            isRotated={instrumentIsRotated}
-          />
         </Animated.View>
-      </View>
-    );
-  }
 
-  // ---- Render: Instrument picker phase ----
-  if (phase === 'instrument') {
-    return (
-      <View style={styles.container}>
-        {renderStoriesBackground()}
-        <InstrumentPickerOverlay
-          visible
-          onSelect={handleInstrumentSelect}
-          onClose={handleInstrumentPickerClose}
+        {/* Music Sheet Overlay — rendered outside the rotated parent so it
+            always displays in portrait orientation without rotation hacks. */}
+        <MusicSheetOverlay
+          visible={showMusicSheet}
+          onClose={() => setShowMusicSheet(false)}
+          requiredSequence={selectedSong.sequence}
+          noteLayout={instrumentDef.noteLayout}
+          completedNoteCount={musicChallenge.currentNoteIndex}
+          instrumentName={instrumentDef.displayName}
+          onNotePressIn={(note) => musicChallenge.previewNote(note)}
+          onNotePressOut={(note) => musicChallenge.stopNote(note)}
+          bpm={selectedSong.bpm}
         />
       </View>
     );
@@ -559,7 +578,7 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
         {renderStoriesBackground()}
 
         <MusicSheetOverlay
-          visible={showMusicSheet}
+          visible
           onClose={handleCloseMusicSheet}
           requiredSequence={selectedSong.sequence}
           noteLayout={instrumentDef.noteLayout}
@@ -570,6 +589,7 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
           onNotePressIn={(note) => musicChallenge.previewNote(note)}
           onNotePressOut={(note) => musicChallenge.stopNote(note)}
           fadeOutOnly
+          bpm={selectedSong.bpm}
         />
       </View>
     );
@@ -588,13 +608,18 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
       <PageHeader
         title={t('music.songLibrary')}
         onBack={handleBack}
-        subtitle={instrumentDef?.displayName}
-        rightActionIcon="musical-note"
-        onRightAction={handleChangeInstrument}
+        useHomeIcon
       />
 
       {/* Song list — padded below the header like story selection */}
-      <View style={{ flex: 1, paddingTop: insets.top + 180 + (textSizeScale - 1) * 60, zIndex: 10 }}>
+      <View style={{ flex: 1, paddingTop: insets.top + 90 + (textSizeScale - 1) * 40, zIndex: 10 }}>
+
+      {/* Instrument selector — 3D coverflow carousel */}
+      <InstrumentCarousel
+        selectedInstrumentId={selectedInstrumentId}
+        onSelect={handleInlineInstrumentChange}
+      />
+
       <FlatList
         data={availableSongs}
         keyExtractor={(item) => item.id}
@@ -604,49 +629,47 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
           { paddingBottom: insets.bottom + 20 },
         ]}
         renderItem={({ item }) => (
-          <Animated.View entering={FadeIn.duration(300)} exiting={FadeOut.duration(200)}>
-            <Pressable
-              style={({ pressed }) => [
-                styles.songCard,
-                pressed && styles.songCardPressed,
-              ]}
-              onPress={() => handleSongSelect(item)}
-            >
-              <View style={styles.songCardHeader}>
-                <Text style={[styles.songName, { fontSize: songFontSize }]}>
-                  {t(item.nameKey)}
+          <Pressable
+            style={({ pressed }) => [
+              styles.songCard,
+              pressed && styles.songCardPressed,
+            ]}
+            onPress={() => handleSongSelect(item)}
+          >
+            <View style={styles.songCardHeader}>
+              <Text style={[styles.songName, { fontSize: songFontSize }]}>
+                {t(item.nameKey)}
+              </Text>
+              <View style={[styles.diffBadge, { backgroundColor: DIFFICULTY_COLORS[item.difficulty] }]}>
+                <Text style={[styles.diffBadgeText, { fontSize: diffBadgeFontSize }]}>
+                  {DIFFICULTY_STARS[item.difficulty]} {t(`music.difficulty.${item.difficulty}`)}
                 </Text>
-                <View style={[styles.diffBadge, { backgroundColor: DIFFICULTY_COLORS[item.difficulty] }]}>
-                  <Text style={[styles.diffBadgeText, { fontSize: diffBadgeFontSize }]}>
-                    {DIFFICULTY_STARS[item.difficulty]} {t(`music.difficulty.${item.difficulty}`)}
+              </View>
+            </View>
+            {/* Note preview */}
+            <View style={styles.notePreview}>
+              {item.sequence.slice(0, 16).map((note, i) => (
+                <View
+                  key={`${note}-${i}`}
+                  style={[
+                    styles.previewNote,
+                    {
+                      backgroundColor: instrumentDef?.noteLayout.find(n => n.note === note)?.color ?? '#888',
+                    },
+                  ]}
+                >
+                  <Text style={[styles.previewNoteText, { fontSize: previewFontSize }]}>
+                    {note}
                   </Text>
                 </View>
-              </View>
-              {/* Note preview */}
-              <View style={styles.notePreview}>
-                {item.sequence.slice(0, 16).map((note, i) => (
-                  <View
-                    key={`${note}-${i}`}
-                    style={[
-                      styles.previewNote,
-                      {
-                        backgroundColor: instrumentDef?.noteLayout.find(n => n.note === note)?.color ?? '#888',
-                      },
-                    ]}
-                  >
-                    <Text style={[styles.previewNoteText, { fontSize: previewFontSize }]}>
-                      {note}
-                    </Text>
-                  </View>
-                ))}
-                {item.sequence.length > 16 && (
-                  <Text style={[styles.moreNotes, { fontSize: previewFontSize }]}>
-                    +{item.sequence.length - 16}
-                  </Text>
-                )}
-              </View>
-            </Pressable>
-          </Animated.View>
+              ))}
+              {item.sequence.length > 16 && (
+                <Text style={[styles.moreNotes, { fontSize: previewFontSize }]}>
+                  +{item.sequence.length - 16}
+                </Text>
+              )}
+            </View>
+          </Pressable>
         )}
         ListEmptyComponent={
           <Text style={[styles.emptyText, { fontSize: songFontSize }]}>
@@ -680,7 +703,7 @@ const styles = StyleSheet.create({
     zIndex: 15,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
   },
   // Rotated version for the practice screen — rotated 90° to simulate landscape.
   // Positioning (left/top) and dimensions (width/height) are set by the animated style.

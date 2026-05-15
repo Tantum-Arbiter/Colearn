@@ -438,44 +438,33 @@ export default {
     readyToStart: 'Pronto para começar sua jornada!',
     screens: {
       welcome: {
-        title: 'Bem-vindo!',
-        body: 'Ajude o desenvolvimento precoce do seu filho com nossas histórias e atividades',
-        button: 'Próximo',
+        title: 'Histórias que crescem\ncom o seu filho',
+        body: 'Histórias interativas com música, instrumentos e narração — concebidas para despertar a imaginação e apoiar o desenvolvimento precoce.',
+        button: 'Seguinte',
       },
-      screenTime: {
-        title: 'Por que limitamos o tempo de tela',
-        body: 'Encorajamos os pais a usar este aplicativo com seu filho.',
-        button: 'Próximo',
+      howItWorks: {
+        title: 'Como funciona',
+        body: 'Tudo o que o seu filho precisa para brincar de forma criativa e consciente do ecrã.',
+        button: 'Seguinte',
+        features: {
+          stories: '📚  Histórias interativas',
+          storiesDesc: 'Contos lindamente ilustrados com narração página a página',
+          music: '🎵  Música e instrumentos',
+          musicDesc: 'Aprenda ritmo e melodia com sons de instrumentos reais',
+          voice: '🎙️  A sua voz',
+          voiceDesc: 'Grave narrações para o seu filho ouvir — mesmo à distância',
+        },
       },
-      personalize: {
-        title: 'Vamos tornar pessoal!',
-        body: 'Qual é o seu nome? Personalize a experiência digitando seu nome e criando um avatar!',
-        button: 'Próximo',
-      },
-      voiceRecording: {
-        title: 'Grave sua voz!',
-        body: 'Narre suas histórias com sua voz. Conforte seu filho quando você não estiver lá.',
-        button: 'Próximo',
-      },
-      research: {
-        title: 'Apoiado por pesquisa!',
-        body: 'Este aplicativo é desenvolvido como parte de um estudo de mestrado sobre desenvolvimento infantil, explorando como exercícios digitais podem apoiar um relacionamento saudável entre pais e filhos. A pesquisa sugere que o envolvimento conjunto e sessões de uso breve fornecem os maiores benefícios.',
-        button: 'Próximo',
-      },
-      disclaimer: {
-        title: 'Por favor, note',
-        body: 'Este aplicativo está em desenvolvimento ativo. Alguns recursos podem não funcionar - faça uma captura de tela dos problemas com um carimbo de data/hora.\n\nO backend entra em suspensão quando não está em uso. Se o login falhar, aguarde 30 segundos. O carregamento da história varia de acordo com a rede.\n\nO conteúdo da história inclui obras originais, histórias geradas por IA e livros infantis usados para pesquisa educacional.',
-        button: 'Próximo',
+      family: {
+        title: 'Feito para famílias',
+        body: 'Concebido para sessões curtas e significativas juntos. A investigação mostra que o envolvimento conjunto e o uso breve oferecem os maiores benefícios.',
+        button: 'Seguinte',
       },
       privacy: {
-        title: 'Sua privacidade',
-        body: 'Seus dados estão seguros. Nenhuma informação pessoal é coletada ou armazenada.\n\nO login via Google ou Apple é seguro e pseudonimizado - recebemos apenas um identificador anônimo, não seu email ou detalhes pessoais.\n\nA sincronização de sessão entre dispositivos é totalmente anonimizada. Todos os dados seguem as melhores práticas de segurança com criptografia em trânsito e em repouso.\n\nEste aplicativo é projetado com princípios de privacidade em primeiro lugar para você e sua família.',
-        button: 'Próximo',
-      },
-      crashReporting: {
-        title: 'Ajude-nos a melhorar',
-        body: 'Gostaria de nos ajudar a melhorar o aplicativo compartilhando relatórios de falha anônimos?\n\nOs relatórios de falha nos ajudam a identificar e corrigir problemas rapidamente. Eles contêm apenas informações técnicas sobre o que deu errado - nenhum dado pessoal, foto ou conteúdo.\n\nVocê pode alterar essa configuração a qualquer momento em Configurações.',
-        button: 'Vamos começar…',
+        title: 'Privacidade e começar',
+        body: 'Os seus dados estão seguros e pseudonimizados. Nenhuma informação pessoal é recolhida — o login usa apenas um identificador anónimo.\n\nAjude-nos a melhorar partilhando relatórios de falhas anónimos (pode alterar nas Definições).',
+        button: 'Vamos começar!',
+        showCrashReportingDialog: 'true',
       },
     },
     crashReportingDialog: {
@@ -485,21 +474,16 @@ export default {
       enable: 'Ativar',
     },
     taglines: {
-      welcome: '✨ Histórias que crescem com seu filho',
-      screenTime: '👨‍👩‍👧‍👦 Tempo de qualidade juntos',
-      personalize: '🎭 Torne-o único',
-      voiceRecording: '🎙️ Sua voz, seu conforto',
-      research: '🔬 Conectando psicologia à tecnologia',
+      welcome: '✨ Desperte a imaginação a brincar',
+      howItWorks: '🌟 Três formas de explorar',
+      family: '👨‍👩‍👧‍👦 Tempo juntos, benefícios reais',
+      privacy: '🔒 Privacidade em primeiro lugar',
     },
     benefits: {
-      welcome: 'Experiências de aprendizado personalizadas',
-      screenTime: 'Recomendado por especialistas em desenvolvimento infantil',
-      personalize: 'Avatares personalizados e histórias personalizadas',
-      voiceRecording: 'Grave uma vez, conforte sempre',
-      research: 'Crescer juntos, para sempre',
-      disclaimer: 'Obrigado por nos ajudar a melhorar!',
-      privacy: 'Seus dados permanecem seus',
-      crashReporting: 'Relatórios de falha anônimos ajudam a corrigir bugs mais rapidamente',
+      welcome: 'Apoiado pela investigação em desenvolvimento infantil',
+      howItWorks: 'Histórias · Música · Voz — tudo numa app',
+      family: 'Recomendado por especialistas em desenvolvimento infantil',
+      privacy: 'Os seus dados são seus',
     },
   },
   tutorial: {
@@ -526,8 +510,16 @@ export default {
         description: 'Vamos fazer um tour rápido para ajudá-lo a você e seu filho a aproveitar ao máximo o tempo de leitura juntos.',
       },
       stories: {
-        title: 'Explorar & Tocar 🎵📚',
-        description: 'Deslize pelo carrossel para descobrir Histórias, o modo Praticar para aprender música em instrumentos, e o modo Jogo Livre para tocar livremente qualquer instrumento.',
+        title: 'Histórias 📚',
+        description: 'Explore a nossa coleção de histórias interativas com belas ilustrações e interações divertidas.',
+      },
+      practise: {
+        title: 'Praticar 🎵',
+        description: 'Aprenda a tocar músicas em diferentes instrumentos. Acompanhe e desenvolva as suas competências musicais!',
+      },
+      freeplay: {
+        title: 'Jogo Livre 🎹',
+        description: 'Toque livremente qualquer instrumento — sem regras, só diversão! Experimente sons e crie a sua própria música.',
       },
       settings: {
         title: 'Configurações ⚙️',
@@ -690,6 +682,33 @@ export default {
         description: 'Defina limites saudáveis e monitore o uso diário.',
       },
     },
+    // Music Mode Tips - keys match tutorial.musicMode.* in tutorial-content.ts
+    musicMode: {
+      welcome: {
+        title: 'Modo Música 🎵',
+        description: 'Algumas páginas desta história têm desafios musicais! Toque notas num instrumento virtual para completá-los.',
+      },
+      instrument: {
+        title: 'Escolha o Seu Instrumento 🎹',
+        description: 'Quando um livro com música abre, deslize pelo carrossel para escolher o seu instrumento favorito. Cada um tem sons únicos!',
+      },
+      playing: {
+        title: 'Tocar Notas 🎶',
+        description: 'Pressione os botões coloridos para tocar notas. Siga a sequência mostrada no topo para completar o desafio!',
+      },
+      sheet: {
+        title: 'Partitura Musical 📋',
+        description: 'Toque no botão de nota musical (canto inferior esquerdo) para ver todas as notas que precisa tocar. Pode até ouvir uma pré-visualização da melodia!',
+      },
+      begin: {
+        title: 'Começar a Tocar ▶️',
+        description: 'Quando chegar a uma página musical, toque no botão \'Começar a Tocar\' no topo para iniciar o desafio. Abre primeiro a partitura para que possa ver o que tocar!',
+      },
+      change: {
+        title: 'Mudar de Instrumento 🔄',
+        description: 'Quer experimentar um som diferente? Abra o menu (☰) e toque em \'Mudar de Instrumento\' para trocar a qualquer momento.',
+      },
+    },
     gestures: {
       speakerLongPress: {
         title: 'Dica de pressão longa 👆',
@@ -809,6 +828,36 @@ export default {
     music: 'Música',
     voiceOver: 'Voz',
   },
+  // Subscription overlay
+  subscription: {
+    unlockPlan: 'Desbloquear um plano',
+    choosePlan: 'Escolha o plano que melhor se adapta à sua família',
+    subscribe: 'Assinar',
+    privacyPolicy: 'Política de privacidade',
+    termsAndConditions: 'Termos e condições',
+    planBasic: 'Básico',
+    planPremium: 'Premium',
+    planAnnual: 'Anual',
+    perMonth: '/mês',
+    perYear: '/ano',
+    mostRecommended: 'Mais recomendado',
+    percentOff: '25% de desconto',
+    uspStories: 'Histórias concebidas para apoiar o desenvolvimento infantil',
+    uspEducators: 'Conteúdo adequado à idade, revisto por educadores',
+    uspMusic: 'Música interativa e prática de instrumentos',
+    uspNoAds: 'Sem anúncios — seguro para os pequenos',
+    uspLanguages: 'Disponível em 14 idiomas',
+    detailAllStories: 'Todas as histórias desbloqueadas',
+    detailDownload50: 'Transferir até 50 livros',
+    detailLimitedSongs: 'Acesso limitado a canções',
+    detailSyncDevices: 'Sincronização em vários dispositivos',
+    detailDownload100: 'Transferir até 100 livros',
+    detailAllSongs: 'Todas as canções no modo prática',
+    detailAllInstruments: 'Todos os instrumentos desbloqueados',
+    detailEverythingPremium: 'Tudo o que está incluído no Premium',
+    detailSave25: 'Poupe 25% em relação ao mensal',
+  },
+
   defaultPage: {
     comingSoon: 'Em breve!',
     stories: {

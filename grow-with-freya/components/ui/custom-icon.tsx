@@ -14,25 +14,8 @@ export function CustomIcon({ name, size = 24, color, style, type = 'auto' }: Cus
 
   const getIconPath = (iconName: string) => {
     const iconPaths: { [key: string]: any } = {
-
-      'stories': require('@/assets/images/menu-icons/stories.svg'),
-      'storybook': require('@/assets/images/menu-icons/storybook.svg'),
-      'sparkle-hand': require('@/assets/images/menu-icons/sparkle-hand.svg'),
-      'smiley-face': require('@/assets/images/menu-icons/smiley-face.svg'),
-      'music-note': require('@/assets/images/menu-icons/music-note.svg'),
-      'clock': require('@/assets/images/menu-icons/clock.svg'),
-      'gear': require('@/assets/images/menu-icons/gear.svg'),
-      'home': require('@/assets/images/menu-icons/home.svg'),
-      'activities': require('@/assets/images/menu-icons/activities.svg'),
-      'profile': require('@/assets/images/menu-icons/profile.svg'),
-
-      // Menu icons (SVG format)
-      'stories-icon': require('@/assets/images/menu-icons/stories-icon.svg'),
-      'sensory-icon': require('@/assets/images/menu-icons/sensory-icon.svg'),
-      'screentime-icon': require('@/assets/images/menu-icons/screentime-icon.svg'),
-
-      // Characters - Only existing files
-      'blue-monster-mascot': require('@/assets/images/characters/blue-monster-mascot.svg'),
+      // Menu icons now use PNG strips in menu-carousel.tsx
+      // Legacy SVG icons have been removed
     };
 
     return iconPaths[iconName];

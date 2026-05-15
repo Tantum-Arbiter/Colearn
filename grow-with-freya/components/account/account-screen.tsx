@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet, Dimensions, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, Dimensions, Alert, BackHandler, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -65,8 +65,7 @@ const MEMOIZED_ACCOUNT_STAR_POSITIONS = generateStarPositions();
 export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
   const { i18n, t } = useTranslation();
   const [currentView, setCurrentView] = useState<SlideView>('main');
-  const [showGrayscaleInfo, setShowGrayscaleInfo] = useState(false);
-  const [showBlueLightInfo, setShowBlueLightInfo] = useState(false);
+
   const [showLanguageOverlay, setShowLanguageOverlay] = useState(false);
   const currentLanguage = i18n.language as SupportedLanguage;
 
@@ -369,6 +368,19 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
     }
   };
 
+  // Android hardware back button support
+  useEffect(() => {
+    if (Platform.OS !== 'android' || !isActive) return;
+
+    const onBackPress = () => {
+      handleBack();
+      return true;
+    };
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => subscription.remove();
+  }, [currentView, hasUnsavedChanges, isActive]);
+
   // Handle back based on current view - respects navigation hierarchy
   const handleBack = () => {
     // If leaving the account screen entirely (from main) and have unsaved changes, auto-save
@@ -457,10 +469,11 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
           rightActionIcon={currentView === 'custom-reminders' ? 'add' : undefined}
           onRightAction={currentView === 'custom-reminders' ? () => navigateToSlide('create-reminder') : undefined}
           headerBackgroundColor="#1E3A8A"
+          useHomeIcon
         />
 
         {/* Content container - z-index 10 to be above moon (z-index 1) */}
-        <View style={{ flex: 1, paddingTop: insets.top + 140 + (textSizeScale - 1) * 60, zIndex: 10 }}>
+        <View style={{ flex: 1, paddingTop: insets.top + 90 + (textSizeScale - 1) * 40, zIndex: 10 }}>
           {/* Main Account Page - always rendered as base layer */}
               <ScrollView
                 style={styles.scrollView}
@@ -605,66 +618,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
             <Text style={[styles.accessibilityHint, { fontSize: scaledFontSize(12) }]} numberOfLines={2} adjustsFontSizeToFit>
               {t('accessibility.textSizeHint')}</Text>
 
-            <Pressable
-              style={styles.grayscaleInfoBox}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setShowGrayscaleInfo(!showGrayscaleInfo);
-              }}
-            >
-              <Text style={[
-                styles.grayscaleInfoTitle,
-                showGrayscaleInfo && styles.grayscaleInfoTitleExpanded,
-                { fontSize: scaledFontSize(14) }
-              ]}>
-                {t('accessibility.grayscale')} {showGrayscaleInfo ? '▼' : '▶'}
-              </Text>
-              {showGrayscaleInfo && (
-                <>
-                  <Text style={[styles.grayscaleInfoText, { fontSize: scaledFontSize(12) }]}>
-                    {t('accessibility.grayscaleHint')}
-                  </Text>
-                  <Text style={[styles.grayscaleInfoPath, { fontSize: scaledFontSize(11) }]}>
-                    <Text style={styles.platformBold}>iOS:</Text> {t('accessibility.grayscaleIos')}
-                  </Text>
-                  <Text style={[styles.grayscaleInfoPath, { fontSize: scaledFontSize(11) }]}>
-                    <Text style={styles.platformBold}>Android:</Text> {t('accessibility.grayscaleAndroid')}
-                  </Text>
-                </>
-              )}
-            </Pressable>
 
-            <Pressable
-              style={styles.grayscaleInfoBox}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setShowBlueLightInfo(!showBlueLightInfo);
-              }}
-            >
-              <Text style={[
-                styles.grayscaleInfoTitle,
-                showBlueLightInfo && styles.grayscaleInfoTitleExpanded,
-                { fontSize: scaledFontSize(14) }
-              ]}>
-                {t('accessibility.blueLight')} {showBlueLightInfo ? '▼' : '▶'}
-              </Text>
-              {showBlueLightInfo && (
-                <>
-                  <Text style={[styles.grayscaleInfoText, { fontSize: scaledFontSize(12) }]}>
-                    {t('accessibility.blueLightHint')}
-                  </Text>
-                  <Text style={[styles.grayscaleInfoPath, { fontSize: scaledFontSize(11) }]}>
-                    <Text style={styles.platformBold}>iOS:</Text> {t('accessibility.blueLightIos')}
-                  </Text>
-                  <Text style={[styles.grayscaleInfoPath, { fontSize: scaledFontSize(11) }]}>
-                    <Text style={styles.platformBold}>Android:</Text> {t('accessibility.blueLightAndroid')}
-                  </Text>
-                  <Text style={[styles.blueLightBenefitText, { fontSize: scaledFontSize(11), marginTop: 8 }]}>
-                    💡 {t('accessibility.blueLightBenefit')}
-                  </Text>
-                </>
-              )}
-            </Pressable>
           </View>
 
           {/* Privacy & Legal */}
@@ -757,7 +711,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
         {/* Screen Time Page */}
         <Animated.View style={[styles.overlayPage, screenTimeStyle]}>
           <ScreenTimeContent
-            paddingTop={insets.top + 140 + (textSizeScale - 1) * 60 + 10}
+            paddingTop={insets.top + 90 + (textSizeScale - 1) * 40 + 10}
             onNavigateToReminders={() => navigateToSlide('custom-reminders')}
           />
           <ScreenTimeTipsOverlay isActive={currentView === 'screen-time'} />
@@ -766,7 +720,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
         {/* Custom Reminders Page */}
         <Animated.View style={[styles.overlayPage, customRemindersStyle]}>
           <CustomRemindersContent
-            paddingTop={insets.top + 140 + (textSizeScale - 1) * 60 + 10}
+            paddingTop={insets.top + 90 + (textSizeScale - 1) * 40 + 10}
             onCreateNew={() => navigateToSlide('create-reminder')}
             onReminderChange={() => setReminderChangeCounter(prev => prev + 1)}
             refreshTrigger={reminderChangeCounter}
@@ -777,7 +731,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
         {/* Create Reminder Page */}
         <Animated.View style={[styles.overlayPage, createReminderStyle]}>
           <CreateReminderContent
-            paddingTop={insets.top + 140 + (textSizeScale - 1) * 60 + 10}
+            paddingTop={insets.top + 90 + (textSizeScale - 1) * 40 + 10}
             onBack={() => navigateBack('create-reminder', 'custom-reminders')}
             onSuccess={() => {
               setReminderChangeCounter(prev => prev + 1);
@@ -790,17 +744,17 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
 
         {/* Edit Profile Page */}
         <Animated.View style={[styles.overlayPage, editProfileStyle]}>
-          <EditProfileContent paddingTop={insets.top + 140 + (textSizeScale - 1) * 60 + 10} onSaveComplete={navigateToMain} />
+          <EditProfileContent paddingTop={insets.top + 90 + (textSizeScale - 1) * 40 + 10} onSaveComplete={navigateToMain} />
         </Animated.View>
 
         {/* Terms & Conditions Page */}
         <Animated.View style={[styles.overlayPage, termsStyle]}>
-          <TermsConditionsContent paddingTop={insets.top + 140 + (textSizeScale - 1) * 60 + 10} />
+          <TermsConditionsContent paddingTop={insets.top + 90 + (textSizeScale - 1) * 40 + 10} />
         </Animated.View>
 
         {/* Privacy Policy Page */}
         <Animated.View style={[styles.overlayPage, privacyStyle]}>
-          <PrivacyPolicyContent paddingTop={insets.top + 140 + (textSizeScale - 1) * 60 + 10} />
+          <PrivacyPolicyContent paddingTop={insets.top + 90 + (textSizeScale - 1) * 40 + 10} />
         </Animated.View>
 
         {/* Language Selection Overlay */}
@@ -1021,45 +975,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontStyle: 'italic',
   },
-  grayscaleInfoBox: {
-    marginTop: 16,
-    paddingVertical: 14,
-    paddingHorizontal: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-  },
-  grayscaleInfoTitle: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-    textAlign: 'left',
-  },
-  grayscaleInfoTitleExpanded: {
-    marginBottom: 8,
-  },
-  grayscaleInfoText: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: 8,
-    lineHeight: 18,
-  },
-  grayscaleInfoPath: {
-    color: 'rgba(255, 255, 255, 0.6)',
-    fontStyle: 'italic',
-    marginBottom: 4,
-    lineHeight: 16,
-  },
-  platformBold: {
-    fontWeight: 'bold',
-    fontStyle: 'normal',
-    color: '#FFFFFF',
-  },
-  blueLightBenefitText: {
-    color: 'rgba(255, 255, 255, 0.85)',
-    lineHeight: 16,
-    fontStyle: 'italic',
-  },
+
   languageOverlay: {
     position: 'absolute',
     top: 0,

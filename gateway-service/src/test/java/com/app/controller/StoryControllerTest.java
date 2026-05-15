@@ -1,5 +1,6 @@
 package com.app.controller;
 
+import com.app.dto.CatalogEntry;
 import com.app.model.AssetVersion;
 import com.app.model.ContentVersion;
 import com.app.model.InteractiveElement;
@@ -25,6 +26,7 @@ import com.google.cloud.Timestamp;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -501,6 +503,186 @@ class StoryControllerTest {
         verify(metricsService, never()).recordStorySyncSkipped();
     }
 
-    // Tests for /api/stories/sync endpoint were removed when the endpoint was deprecated
-    // in favor of /api/stories/delta batch endpoint. See delta tests above.
+    // ==================== Delta Sync Tests ====================
+
+    @Test
+    void deltaSync_ClientUpToDate_ReturnsCatalog() throws Exception {
+        // Arrange
+        when(storyService.getCurrentContentVersion())
+                .thenReturn(CompletableFuture.completedFuture(testContentVersion));
+        when(storyService.getCatalogEntries(anySet(), anyMap(), any()))
+                .thenReturn(CompletableFuture.completedFuture(Collections.emptyList()));
+
+        String requestBody = "{\"clientVersion\":1,\"storyChecksums\":{\"story-1\":\"checksum1\",\"story-2\":\"checksum2\"}}";
+
+        // Act & Assert
+        mockMvc.perform(post("/api/stories/delta")
+                        .contentType("application/json")
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.serverVersion").value(1))
+                .andExpect(jsonPath("$.stories").isArray())
+                .andExpect(jsonPath("$.stories.length()").value(0))
+                .andExpect(jsonPath("$.catalog").isArray());
+    }
+
+    @Test
+    void deltaSync_ClientOutdated_ReturnsStoriesAndCatalog() throws Exception {
+        // Arrange
+        when(storyService.getCurrentContentVersion())
+                .thenReturn(CompletableFuture.completedFuture(testContentVersion));
+        when(storyService.getStoriesToSync(anyMap()))
+                .thenReturn(CompletableFuture.completedFuture(Arrays.asList(testStory2)));
+        when(storyService.getCatalogEntries(anySet(), anyMap(), any()))
+                .thenReturn(CompletableFuture.completedFuture(Collections.emptyList()));
+
+        // Client has story-1 (matching) but not story-2
+        String requestBody = "{\"clientVersion\":0,\"storyChecksums\":{\"story-1\":\"checksum1\"}}";
+
+        mockMvc.perform(post("/api/stories/delta")
+                        .contentType("application/json")
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.serverVersion").value(1))
+                .andExpect(jsonPath("$.stories.length()").value(1))
+                .andExpect(jsonPath("$.stories[0].id").value("story-2"))
+                .andExpect(jsonPath("$.catalog").isArray());
+    }
+
+    @Test
+    void deltaSync_EmptyClientChecksums_ReturnsAllStoriesAndEmptyCatalog() throws Exception {
+        // Arrange - client is fresh (no stories downloaded)
+        when(storyService.getCurrentContentVersion())
+                .thenReturn(CompletableFuture.completedFuture(testContentVersion));
+        when(storyService.getStoriesToSync(anyMap()))
+                .thenReturn(CompletableFuture.completedFuture(Arrays.asList(testStory1, testStory2)));
+
+        // All stories should be in the sync response, catalog should contain stories client doesn't have
+        CatalogEntry catalogEntry = new CatalogEntry();
+        catalogEntry.setStoryId("story-1");
+        catalogEntry.setTitle("The Sleepy Forest");
+        catalogEntry.setCategory("bedtime");
+
+        CatalogEntry catalogEntry2 = new CatalogEntry();
+        catalogEntry2.setStoryId("story-2");
+        catalogEntry2.setTitle("The Happy Day");
+        catalogEntry2.setCategory("emotions");
+
+        when(storyService.getCatalogEntries(anySet(), anyMap(), any()))
+                .thenReturn(CompletableFuture.completedFuture(Arrays.asList(catalogEntry, catalogEntry2)));
+
+        String requestBody = "{\"clientVersion\":0,\"storyChecksums\":{}}";
+
+        mockMvc.perform(post("/api/stories/delta")
+                        .contentType("application/json")
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stories.length()").value(2))
+                .andExpect(jsonPath("$.catalog.length()").value(2))
+                .andExpect(jsonPath("$.catalog[0].storyId").value("story-1"))
+                .andExpect(jsonPath("$.catalog[1].storyId").value("story-2"));
+    }
+
+    @Test
+    void deltaSync_ClientHasAllStories_CatalogIsEmpty() throws Exception {
+        // Arrange - client has all stories downloaded
+        when(storyService.getCurrentContentVersion())
+                .thenReturn(CompletableFuture.completedFuture(testContentVersion));
+        when(storyService.getCatalogEntries(anySet(), anyMap(), any()))
+                .thenReturn(CompletableFuture.completedFuture(Collections.emptyList()));
+
+        String requestBody = "{\"clientVersion\":1,\"storyChecksums\":{\"story-1\":\"checksum1\",\"story-2\":\"checksum2\"}}";
+
+        mockMvc.perform(post("/api/stories/delta")
+                        .contentType("application/json")
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.catalog").isArray())
+                .andExpect(jsonPath("$.catalog.length()").value(0));
+    }
+
+    @Test
+    void deltaSync_DeletedStories_IncludedInResponse() throws Exception {
+        // Arrange - server no longer has "story-3" but client does
+        when(storyService.getCurrentContentVersion())
+                .thenReturn(CompletableFuture.completedFuture(testContentVersion));
+        when(storyService.getStoriesToSync(anyMap()))
+                .thenReturn(CompletableFuture.completedFuture(Collections.emptyList()));
+        when(storyService.getCatalogEntries(anySet(), anyMap(), any()))
+                .thenReturn(CompletableFuture.completedFuture(Collections.emptyList()));
+
+        String requestBody = "{\"clientVersion\":0,\"storyChecksums\":{\"story-1\":\"checksum1\",\"story-2\":\"checksum2\",\"story-3\":\"checksum3\"}}";
+
+        mockMvc.perform(post("/api/stories/delta")
+                        .contentType("application/json")
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.deletedStoryIds").isArray())
+                .andExpect(jsonPath("$.deletedStoryIds.length()").value(1))
+                .andExpect(jsonPath("$.deletedStoryIds[0]").value("story-3"));
+    }
+
+    @Test
+    void deltaSync_ServiceError_Returns500() throws Exception {
+        when(storyService.getCurrentContentVersion())
+                .thenReturn(CompletableFuture.failedFuture(new RuntimeException("Database error")));
+
+        String requestBody = "{\"clientVersion\":0,\"storyChecksums\":{}}";
+
+        mockMvc.perform(post("/api/stories/delta")
+                        .contentType("application/json")
+                        .content(requestBody))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.errorCode").value("GTW-201"));
+    }
+
+    // ==================== Download Endpoint Tests ====================
+
+    @Test
+    void downloadStory_Found_ReturnsStory() throws Exception {
+        when(storyService.getStoryById("story-1"))
+                .thenReturn(CompletableFuture.completedFuture(Optional.of(testStory1)));
+
+        mockMvc.perform(get("/api/stories/story-1/download"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("story-1"))
+                .andExpect(jsonPath("$.title").value("The Sleepy Forest"))
+                .andExpect(jsonPath("$.pages").isArray())
+                .andExpect(jsonPath("$.pages.length()").value(3));
+    }
+
+    @Test
+    void downloadStory_NotFound_Returns404() throws Exception {
+        when(storyService.getStoryById("non-existent"))
+                .thenReturn(CompletableFuture.completedFuture(Optional.empty()));
+
+        mockMvc.perform(get("/api/stories/non-existent/download"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value("GTW-100"));
+    }
+
+    @Test
+    void downloadStory_NotAvailable_Returns403() throws Exception {
+        Story unavailableStory = new Story();
+        unavailableStory.setId("story-unavailable");
+        unavailableStory.setTitle("Unavailable Story");
+        unavailableStory.setAvailable(false);
+
+        when(storyService.getStoryById("story-unavailable"))
+                .thenReturn(CompletableFuture.completedFuture(Optional.of(unavailableStory)));
+
+        mockMvc.perform(get("/api/stories/story-unavailable/download"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.errorCode").value("GTW-100"));
+    }
+
+    @Test
+    void downloadStory_ServiceError_Returns500() throws Exception {
+        when(storyService.getStoryById("story-1"))
+                .thenReturn(CompletableFuture.failedFuture(new RuntimeException("Database error")));
+
+        mockMvc.perform(get("/api/stories/story-1/download"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.errorCode").value("GTW-201"));
+    }
 }

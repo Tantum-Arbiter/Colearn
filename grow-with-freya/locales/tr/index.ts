@@ -438,68 +438,52 @@ export default {
     readyToStart: 'Yolculuğunuza başlamaya hazırsınız!',
     screens: {
       welcome: {
-        title: 'Hoş Geldiniz!',
-        body: 'Hikayeler ve aktiviteler aracılığıyla çocuğunuzun erken gelişimini destekleyin',
+        title: 'Çocuğunuzla büyüyen\nhikayeler',
+        body: 'Müzik, enstrümanlar ve anlatımla interaktif hikayeler — hayal gücünü ateşlemek ve erken gelişimi desteklemek için tasarlandı.',
         button: 'İleri',
       },
-      screenTime: {
-        title: 'Neden Ekran Süresini Sınırlandırmalı',
-        body: 'Bu uygulamayı çocuğunuzla birlikte kullanmanızı öneririz.',
+      howItWorks: {
+        title: 'Nasıl çalışır',
+        body: 'Çocuğunuzun yaratıcı, ekran-bilinçli oyun için ihtiyacı olan her şey.',
         button: 'İleri',
+        features: {
+          stories: '📚  İnteraktif hikayeler',
+          storiesDesc: 'Sayfa sayfa anlatımlı güzel illüstrasyonlu masallar',
+          music: '🎵  Müzik ve enstrümanlar',
+          musicDesc: 'Gerçek enstrüman sesleriyle ritim ve melodi öğrenin',
+          voice: '🎙️  Sesiniz',
+          voiceDesc: 'Çocuğunuzun sizi duyması için anlatımlar kaydedin — uzaktan bile',
+        },
       },
-      personalize: {
-        title: 'Bunu Kişiselleştirelim!',
-        body: 'Adın ne? Adını gir ve deneyimini kişiselleştirmek için bir avatar oluştur!',
-        button: 'İleri',
-      },
-      voiceRecording: {
-        title: 'Sesinizi Kaydedin!',
-        body: 'Hikayeler sesli olarak anlatın. Uzakta olduğunuzda çocuğunuzu rahatlatın.',
-        button: 'İleri',
-      },
-      research: {
-        title: 'Araştırma Tarafından Desteklenen!',
-        body: 'Bu uygulama, çocuk gelişimi yüksek lisans araştırmasının bir parçası olarak geliştirilmiştir ve dijital katılımın sağlıklı ebeveyn-çocuk ilişkilerini nasıl destekleyebileceğini araştırır. Araştırma, ortak katılım ve kısa oturumların maksimum faydayı sağladığını göstermektedir.',
-        button: 'İleri',
-      },
-      disclaimer: {
-        title: 'Uyarı',
-        body: 'Bu uygulama aktif olarak geliştirilmektedir. Bazı özellikler çalışmayabilir - zaman damgaları ile sorunların ekran görüntülerini alın.\n\nArka uç sunucu kullanılmadığında uyku modundadır. Giriş başarısız olursa 30 saniye bekleyin. Hikaye yükleme ağa bağlıdır.\n\nHikaye içeriği orijinal çalışmaları, yapay zeka tarafından oluşturulan hikayeleri ve eğitim araştırmasında kullanılan çocuk kitaplarını içerir.',
+      family: {
+        title: 'Aileler için yapıldı',
+        body: 'Birlikte kısa, anlamlı oturumlar için tasarlandı. Araştırmalar ortak katılım ve kısa kullanımın en büyük faydaları sağladığını gösteriyor.',
         button: 'İleri',
       },
       privacy: {
-        title: 'Gizliliğiniz',
-        body: 'Verileriniz güvenledir. Kişisel bilgileri toplamıyor veya depolamıyoruz.\n\nGoogle veya Apple ile giriş yapma güvenli ve anonimdir - yalnızca anonim bir kimlik alırız, e-posta veya kişisel ayrıntılar değil.\n\nCihazlar arasında oturum senkronizasyonu tamamen anonimdir. Tüm veri izleri aktarım ve depolama sırasında şifreleme ile güvenlik en iyi uygulamalarını takip eder.\n\nBu uygulama, siz ve aileniz için gizlilik-ilk ilkesiyle tasarlanmıştır.',
-        button: 'İleri',
-      },
-      crashReporting: {
-        title: 'Bize Yardımcı Olun İyileştirelim',
-        body: 'Anonim çökme raporlarını paylaşarak uygulamayı iyileştirmemize yardımcı olabilir misiniz?\n\nÇökme raporları sorunları hızlı bir şekilde tanımlamaya ve düzeltmeye yardımcı olur. Yalnızca neyin yanlış gittiğine ilişkin teknik bilgiler içerir - kişisel veri, resim veya içerik yoktur.\n\nBu ayarı istediğiniz zaman Ayarlar\'da değiştirebilirsiniz.',
-        button: 'Başlayalım...',
+        title: 'Gizlilik ve başlangıç',
+        body: 'Verileriniz güvenli ve takma adlıdır. Kişisel bilgi toplanmaz — giriş yalnızca anonim bir tanımlayıcı kullanır.\n\nAnonim çökme raporlarını paylaşarak gelişmemize yardımcı olun (bunu Ayarlar\'dan değiştirebilirsiniz).',
+        button: 'Başlayalım!',
+        showCrashReportingDialog: 'true',
       },
     },
     crashReportingDialog: {
-      title: 'Çökme Raporlarını Etkinleştirmek İster misiniz?',
-      body: 'Anonim çökme raporları hataları düzeltmeye ve uygulamayı iyileştirmeye yardımcı olur. Kişisel veri toplanmaz.\n\nBunu istediğiniz zaman Ayarlar\'da değiştirebilirsiniz.',
-      noThanks: 'Hayır, Teşekkürler',
+      title: 'Çökme raporlarını etkinleştir?',
+      body: 'Anonim çökme raporları hataları düzeltmeye ve uygulamayı iyileştirmeye yardımcı olur. Kişisel veri toplanmaz.\n\nBunu istediğiniz zaman Ayarlar\'dan değiştirebilirsiniz.',
+      noThanks: 'Hayır teşekkürler',
       enable: 'Etkinleştir',
     },
     taglines: {
-      welcome: '✨ Çocuğunuzla Büyüyen Hikayeler',
-      screenTime: '👨‍👩‍👧‍👦 Kaliteli Zaman Birlikte',
-      personalize: '🎭 Bunu Benzersiz Yap',
-      voiceRecording: '🎙️ Sesiniz, Onların Rahatlığı',
-      research: '🔬 Psikolojiyi Teknoloji ile Bağlamak',
+      welcome: '✨ Oyunla hayal gücünü ateşle',
+      howItWorks: '🌟 Keşfetmenin üç yolu',
+      family: '👨‍👩‍👧‍👦 Birlikte zaman, gerçek faydalar',
+      privacy: '🔒 Gizlilik öncelikli',
     },
     benefits: {
-      welcome: 'Kişiselleştirilmiş Öğrenme Deneyimi',
-      screenTime: 'Çocuk Gelişimi Uzmanları Tarafından Önerilen',
-      personalize: 'Özel Avatar ve Kişiselleştirilmiş Hikayeler',
-      voiceRecording: 'Bir Kez Kaydedin, Her Zaman Rahatlatın',
-      research: 'Birlikte Büyüyün, Sonsuza Kadar',
-      disclaimer: 'Bize Yardımcı Olduğunuz İçin Teşekkürler!',
-      privacy: 'Verileriniz Sizindir',
-      crashReporting: 'Anonim Çökme Raporları Hataları Daha Hızlı Düzeltmeye Yardımcı Olur',
+      welcome: 'Çocuk gelişimi araştırmalarına dayalı',
+      howItWorks: 'Hikayeler · Müzik · Ses — tek uygulamada',
+      family: 'Çocuk gelişimi uzmanları tarafından önerilen',
+      privacy: 'Verileriniz sizin kalır',
     },
   },
   tutorial: {
@@ -526,8 +510,16 @@ export default {
         description: 'Siz ve çocuğunuzun okuma zamanından en iyi şekilde yararlanmanıza yardımcı olmak için hızlı bir tur alalım.',
       },
       stories: {
-        title: 'Keşfet & Çal 🎵📚',
-        description: 'Hikayeleri, enstrümanlarla müzik öğrenmek için Alıştırma modunu ve herhangi bir enstrümanı özgürce çalmak için Serbest Çalma modunu keşfetmek üzere karuseli kaydırın.',
+        title: 'Hikayeler 📚',
+        description: 'Güzel çizimler ve eğlenceli etkileşimlerle dolu interaktif hikaye koleksiyonumuzu keşfedin.',
+      },
+      practise: {
+        title: 'Alıştırma 🎵',
+        description: 'Farklı enstrümanlarda şarkı çalmayı öğrenin. Takip edin ve müzik becerilerinizi geliştirin!',
+      },
+      freeplay: {
+        title: 'Serbest Çalma 🎹',
+        description: 'Herhangi bir enstrümanı özgürce çalın — kural yok, sadece eğlence! Seslerle deney yapın ve kendi müziğinizi yaratın.',
       },
       settings: {
         title: 'Ayarlar ⚙️',
@@ -690,6 +682,33 @@ export default {
         description: 'Sağlıklı sınırlar belirleyin ve günlük kullanımı izleyin.',
       },
     },
+    // Music Mode Tips - keys match tutorial.musicMode.* in tutorial-content.ts
+    musicMode: {
+      welcome: {
+        title: 'Müzik Modu 🎵',
+        description: 'Bu hikayenin bazı sayfalarında müzik meydan okumaları var! Sanal bir enstrümanda notalar çalarak tamamlayın.',
+      },
+      instrument: {
+        title: 'Enstrümanınızı Seçin 🎹',
+        description: 'Müzikli bir kitap açıldığında, en sevdiğiniz enstrümanı seçmek için karuseli kaydırın. Her birinin benzersiz sesleri var!',
+      },
+      playing: {
+        title: 'Nota Çalma 🎶',
+        description: 'Nota çalmak için renkli düğmelere basın. Meydan okumayı tamamlamak için üstte gösterilen sırayı takip edin!',
+      },
+      sheet: {
+        title: 'Müzik Sayfası 📋',
+        description: 'Çalmanız gereken tüm notaları görmek için nota düğmesine (sol alt) dokunun. Melodinin önizlemesini bile dinleyebilirsiniz!',
+      },
+      begin: {
+        title: 'Çalmaya Başla ▶️',
+        description: 'Bir müzik sayfasına geldiğinizde, meydan okumayı başlatmak için üstteki \'Çalmaya Başla\' düğmesine dokunun. Önce müzik sayfasını açar, böylece ne çalacağınızı görebilirsiniz!',
+      },
+      change: {
+        title: 'Enstrüman Değiştir 🔄',
+        description: 'Farklı bir ses denemek ister misiniz? Menüyü (☰) açın ve istediğiniz zaman değiştirmek için \'Enstrüman Değiştir\'e dokunun.',
+      },
+    },
     gestures: {
       speakerLongPress: {
         title: 'Uzun Basma İpucu 👆',
@@ -809,6 +828,36 @@ export default {
     music: 'Müzik',
     voiceOver: 'Ses',
   },
+  // Subscription overlay
+  subscription: {
+    unlockPlan: 'Bir plan aç',
+    choosePlan: 'Ailenize en uygun planı seçin',
+    subscribe: 'Abone ol',
+    privacyPolicy: 'Gizlilik Politikası',
+    termsAndConditions: 'Şartlar ve Koşullar',
+    planBasic: 'Temel',
+    planPremium: 'Premium',
+    planAnnual: 'Yıllık',
+    perMonth: '/ay',
+    perYear: '/yıl',
+    mostRecommended: 'En çok önerilen',
+    percentOff: '%25 indirim',
+    uspStories: 'Çocuk gelişimini destekleyen hikâyeler',
+    uspEducators: 'Eğitimciler tarafından incelenen yaşa uygun içerik',
+    uspMusic: 'Etkileşimli müzik ve enstrüman pratiği',
+    uspNoAds: 'Reklam yok — küçükler için güvenli',
+    uspLanguages: '14 dilde mevcut',
+    detailAllStories: 'Tüm hikâyeler açık',
+    detailDownload50: '50 kitaba kadar indir',
+    detailLimitedSongs: 'Sınırlı şarkı erişimi',
+    detailSyncDevices: 'Birden fazla cihazda senkronizasyon',
+    detailDownload100: '100 kitaba kadar indir',
+    detailAllSongs: 'Pratik modunda tüm şarkılar',
+    detailAllInstruments: 'Tüm enstrümanlar açık',
+    detailEverythingPremium: 'Premium\'daki her şey',
+    detailSave25: 'Aylığa göre %25 tasarruf',
+  },
+
   defaultPage: {
     comingSoon: 'Yakında!',
     stories: {

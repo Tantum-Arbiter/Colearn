@@ -1,55 +1,15 @@
 import React from 'react';
-import { SvgProps } from 'react-native-svg';
 
-import StoriesIcon from '../../assets/images/menu-icons/stories-icon.svg';
-import SensoryIcon from '../../assets/images/menu-icons/sensory-icon.svg';
-import ScreentimeIcon from '../../assets/images/menu-icons/screentime-icon.svg';
 import Cloud1Icon from '../../assets/images/ui-elements/background-cloud-1.svg';
 import Cloud2Icon from '../../assets/images/ui-elements/background-cloud-2.svg';
 import FreyaRocketIcon from '../../assets/images/ui-elements/freya-rocket.svg';
 import FreyaRocketRightIcon from '../../assets/images/ui-elements/freya-rocket-right.svg';
-const ICON_DIMENSIONS = {
-  small: { width: 48, height: 48 },
-  medium: { width: 58, height: 58 },
-  large: { width: 70, height: 70 },
-};
 
 interface SvgComponentProps {
   width?: number | string;
   height?: number | string;
   opacity?: number;
 }
-
-const SVG_COMPONENTS: Record<string, React.ComponentType<SvgProps>> = {
-  'menu-icons/stories-icon.svg': StoriesIcon,
-  'menu-icons/sensory-icon.svg': SensoryIcon,
-  'menu-icons/screentime-icon.svg': ScreentimeIcon,
-  'ui-elements/background-cloud-1.svg': Cloud1Icon,
-  'ui-elements/background-cloud-2.svg': Cloud2Icon,
-  'ui-elements/freya-rocket.svg': FreyaRocketIcon,
-  'ui-elements/freya-rocket-right.svg': FreyaRocketRightIcon,
-};
-export const ActualSvgComponent = React.memo(function ActualSvgComponent({
-  svgPath,
-  width = ICON_DIMENSIONS.medium.width,
-  height = ICON_DIMENSIONS.medium.height,
-  opacity = 1
-}: SvgComponentProps & { svgPath: string }) {
-  const Component = SVG_COMPONENTS[svgPath];
-
-  if (!Component) {
-    console.warn(`SVG asset not found: ${svgPath}`);
-    return null;
-  }
-
-  return (
-    <Component
-      width={width}
-      height={height}
-      opacity={opacity}
-    />
-  );
-});
 
 export const CloudSvg = React.memo(function CloudSvg({
   width = 120,
@@ -58,36 +18,6 @@ export const CloudSvg = React.memo(function CloudSvg({
 }: SvgComponentProps) {
   return (
     <Cloud1Icon width={width} height={height} opacity={opacity} />
-  );
-});
-
-export const StoriesSvg = React.memo(function StoriesSvg({
-  width = ICON_DIMENSIONS.medium.width,
-  height = ICON_DIMENSIONS.medium.height,
-  opacity = 1
-}: SvgComponentProps) {
-  return (
-    <StoriesIcon width={width} height={height} opacity={opacity} />
-  );
-});
-
-export const SensorySvg = React.memo(function SensorySvg({
-  width = ICON_DIMENSIONS.medium.width,
-  height = ICON_DIMENSIONS.medium.height,
-  opacity = 1
-}: SvgComponentProps) {
-  return (
-    <SensoryIcon width={width} height={height} opacity={opacity} />
-  );
-});
-
-export const ScreentimeSvg = React.memo(function ScreentimeSvg({
-  width = ICON_DIMENSIONS.medium.width,
-  height = ICON_DIMENSIONS.medium.height,
-  opacity = 1
-}: SvgComponentProps) {
-  return (
-    <ScreentimeIcon width={width} height={height} opacity={opacity} />
   );
 });
 

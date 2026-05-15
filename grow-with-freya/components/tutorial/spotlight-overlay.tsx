@@ -397,8 +397,9 @@ export function SpotlightOverlay({
   const getSketchArrowCoords = () => {
     if (!hasTarget || !adjustedTarget) return null;
 
-    // No arrows for main menu buttons - on all devices
-    if (step.id === 'stories_button') {
+    // No arrows for main menu carousel buttons - on all devices
+    const menuButtons = ['stories_button', 'practise_button', 'freeplay_button'];
+    if (menuButtons.includes(step.id)) {
       return null;
     }
 

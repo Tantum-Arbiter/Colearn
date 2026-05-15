@@ -99,12 +99,34 @@ export interface Story {
 
   // Metadata for CMS and delta-sync
   isPremium?: boolean;
+  isFree?: boolean; // Whether the story is free to download
+  isReferralReward?: boolean; // Whether the story is unlocked via referral
   author?: string;
   tags?: string[];
   createdAt?: string; // ISO timestamp
   updatedAt?: string; // ISO timestamp
   version?: number; // For delta-sync
   checksum?: string; // SHA-256 checksum for delta-sync
+}
+
+/**
+ * Lightweight catalog entry for stories the client hasn't downloaded.
+ * Returned as part of the delta sync response for browse/discovery UI.
+ */
+export interface CatalogEntry {
+  storyId: string;
+  title: string;
+  localizedTitle?: LocalizedText;
+  description?: string;
+  localizedDescription?: LocalizedText;
+  category: StoryCategory;
+  emoji: string;
+  thumbnailUrl?: string; // Signed URL for cover thumbnail
+  isFree: boolean;
+  isReferralReward: boolean;
+  isPremium: boolean;
+  ageRange?: string;
+  duration?: number;
 }
 
 /**
