@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useEffect, useMemo, useState, memo } from 'react';
-import { View, Text, ScrollView, StyleSheet, Dimensions, FlatList, Pressable, ListRenderItem, findNodeHandle, UIManager, Alert, LayoutAnimation, Platform } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Dimensions, FlatList, Pressable, ListRenderItem, findNodeHandle, UIManager, Alert, LayoutAnimation, Platform, InteractionManager } from 'react-native';
 import { Image } from 'expo-image';
 // All story images are loaded from local cache after batch sync - no authenticated fetching needed
 import { LinearGradient } from 'expo-linear-gradient';
@@ -173,12 +173,18 @@ const StoryCard = memo(function StoryCard({
     wasHiddenRef.current = isHidden;
   }, [isHidden]);
 
-  const fadeAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: fadeOpacity.value * deleteOpacity.value,
-    transform: [{ scale: deleteScale.value }],
-    width: deleteWidth.value,
-    overflow: 'hidden' as const,
-  }));
+  const fadeAnimatedStyle = useAnimatedStyle(() => {
+    const base: Record<string, unknown> = {
+      opacity: fadeOpacity.value * deleteOpacity.value,
+      transform: [{ scale: deleteScale.value }],
+    };
+    // Only constrain width when actively collapsing (during delete phase 2)
+    if (deleteWidth.value < cardWidth + CARD_MARGIN) {
+      base.width = deleteWidth.value;
+      base.overflow = 'hidden';
+    }
+    return base;
+  });
 
   const handlePress = useCallback(() => {
     // Pass the ref to onPress so the parent can measure position
@@ -425,6 +431,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   }, []);
 
   // Load catalog entries for not-yet-downloaded stories, and re-load when catalog is refreshed
+  // Defer until after navigation animations to avoid jitter
   useEffect(() => {
     const loadCatalog = async () => {
       try {
@@ -434,13 +441,18 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
         // No catalog available yet — that's fine
       }
     };
-    loadCatalog();
+    const handle = InteractionManager.runAfterInteractions(() => {
+      loadCatalog();
+    });
 
     // Subscribe to catalog updates (e.g. after background sync refreshes signed URLs)
     const unsubscribe = CatalogService.onCatalogUpdated(() => {
       loadCatalog();
     });
-    return unsubscribe;
+    return () => {
+      handle.cancel();
+      unsubscribe();
+    };
   }, []);
 
   // When a catalog story finishes downloading, refresh both stories list and catalog
@@ -786,11 +798,11 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 getItemLayout={getItemLayout}
-                removeClippedSubviews={false}
-                maxToRenderPerBatch={8}
-                windowSize={11}
-                initialNumToRender={6}
-                updateCellsBatchingPeriod={50}
+                removeClippedSubviews={true}
+                maxToRenderPerBatch={4}
+                windowSize={5}
+                initialNumToRender={4}
+                updateCellsBatchingPeriod={100}
                 decelerationRate="fast"
                 snapToInterval={ITEM_WIDTH}
                 snapToAlignment="start"
@@ -832,11 +844,11 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   getItemLayout={getItemLayout}
-                  removeClippedSubviews={false}
-                  maxToRenderPerBatch={8}
-                  windowSize={11}
-                  initialNumToRender={6}
-                  updateCellsBatchingPeriod={50}
+                  removeClippedSubviews={true}
+                  maxToRenderPerBatch={4}
+                  windowSize={5}
+                  initialNumToRender={4}
+                  updateCellsBatchingPeriod={100}
                   decelerationRate="fast"
                   snapToInterval={ITEM_WIDTH}
                   snapToAlignment="start"
