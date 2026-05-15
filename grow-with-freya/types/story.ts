@@ -120,6 +120,8 @@ export interface CatalogEntry {
   description?: string;
   localizedDescription?: LocalizedText;
   category: StoryCategory;
+  tag?: string;
+  tags?: string[];
   emoji: string;
   thumbnailUrl?: string; // Signed URL for cover thumbnail
   isFree: boolean;

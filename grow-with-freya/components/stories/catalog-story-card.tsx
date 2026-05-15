@@ -17,6 +17,7 @@ interface CatalogStoryCardProps {
   borderRadius: number;
   language: SupportedLanguage;
   onDownloadComplete?: (storyId: string) => void;
+  onLongPress?: (entry: CatalogEntry) => void;
 }
 
 export const CatalogStoryCard = memo(function CatalogStoryCard({
@@ -26,6 +27,7 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
   borderRadius,
   language,
   onDownloadComplete,
+  onLongPress,
 }: CatalogStoryCardProps) {
   const displayTitle = getLocalizedText(entry.localizedTitle, entry.title, language);
   const [downloading, setDownloading] = useState(false);
@@ -67,8 +69,13 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
     ? `${AssetDownloadUtils.formatBytes(progress.detail.bytesDownloaded)}${progress.detail.totalBytes ? ` / ${AssetDownloadUtils.formatBytes(progress.detail.totalBytes)}` : ''}`
     : progress?.message;
 
+  const handleLongPress = useCallback(() => {
+    if (downloading) return;
+    onLongPress?.(entry);
+  }, [downloading, entry, onLongPress]);
+
   return (
-    <Pressable onPress={handlePress} style={cardStyles.pressable}>
+    <Pressable onPress={handlePress} onLongPress={handleLongPress} delayLongPress={400} style={cardStyles.pressable}>
       <View style={[cardStyles.card, { width: cardWidth, height: cardHeight, borderRadius }]}>
         {/* Thumbnail image */}
         {entry.thumbnailUrl ? (

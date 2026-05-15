@@ -30,6 +30,12 @@ public class CatalogEntry {
     @JsonProperty("category")
     private String category;
 
+    @JsonProperty("tag")
+    private String tag;
+
+    @JsonProperty("tags")
+    private java.util.List<String> tags;
+
     @JsonProperty("emoji")
     private String emoji;
 
@@ -65,6 +71,8 @@ public class CatalogEntry {
         entry.description = story.getDescription();
         entry.localizedDescription = story.getLocalizedDescription();
         entry.category = story.getCategory();
+        entry.tag = story.getTag();
+        entry.tags = story.getTags();
         entry.emoji = story.getEmoji();
         entry.thumbnailUrl = thumbnailUrl;
         entry.free = story.isFree();
@@ -94,6 +102,12 @@ public class CatalogEntry {
 
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
+
+    public String getTag() { return tag; }
+    public void setTag(String tag) { this.tag = tag; }
+
+    public java.util.List<String> getTags() { return tags; }
+    public void setTags(java.util.List<String> tags) { this.tags = tags; }
 
     public String getEmoji() { return emoji; }
     public void setEmoji(String emoji) { this.emoji = emoji; }

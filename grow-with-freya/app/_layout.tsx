@@ -35,6 +35,10 @@ import { GlobalSoundProvider } from '@/contexts/global-sound-context';
 import { TutorialProvider } from '@/contexts/tutorial-context';
 import { updateSentryConsent } from '@/services/sentry-service';
 import { StartupLoadingScreen } from '@/components/startup-loading-screen';
+import { BatchSyncService } from '@/services/batch-sync-service';
+import { CacheManager } from '@/services/cache-manager';
+import { StoryLoader } from '@/services/story-loader';
+import { ProfileSyncService } from '@/services/profile-sync-service';
 // Import reminder service to trigger initialization and reschedule notifications on app startup
 import { reminderService } from '@/services/reminder-service';
 
@@ -280,9 +284,32 @@ function AppContent() {
             setShowLoginAfterOnboarding(true);
             setCurrentView('login');
           } else {
-            // User is authenticated - show loading screen with sync animation
-            // StartupLoadingScreen handles the sync and transitions to main menu on complete
-            setCurrentView('loading');
+            // User is authenticated — go straight to main menu, sync silently in background.
+            // Bundled stories are always available immediately; metadata sync runs async.
+            setCurrentView('app');
+            setCurrentPage('main');
+
+            // Background sync — no loading screen for returning users
+            (async () => {
+              try {
+                log.info('[Layout] Background sync starting...');
+                // Sync profile
+                try {
+                  const profile = await ApiClient.getProfile();
+                  await ProfileSyncService.fullSync(profile);
+                } catch (e) { log.warn('[Layout] Background profile sync skipped:', e); }
+                // Validate cache
+                await CacheManager.validateAndCleanCache();
+                // Metadata sync
+                await BatchSyncService.performBatchSync();
+                // Refresh story loader cache
+                StoryLoader.invalidateCache();
+                await StoryLoader.getStories();
+                log.info('[Layout] Background sync complete');
+              } catch (e) {
+                log.warn('[Layout] Background sync failed (non-critical):', e);
+              }
+            })();
           }
         } catch (error) {
           log.error('Authentication check error:', error);

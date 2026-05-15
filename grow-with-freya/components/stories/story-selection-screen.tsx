@@ -244,8 +244,11 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   const [isLoadingStories, setIsLoadingStories] = useState(!StoryLoader.getCachedStories());
   const [selectedTags, setSelectedTags] = useState<Set<StoryFilterTag>>(new Set());
 
-  // Catalog entries (not-yet-downloaded stories) for browse/discovery
+  // Catalog entries (not-yet-downloaded stories) merged into genre rows
   const [catalogEntries, setCatalogEntries] = useState<CatalogEntry[]>([]);
+
+  // Union type for items in genre carousels: either a downloaded story or a catalog entry
+  type StoryDisplayItem = { type: 'story'; data: Story } | { type: 'catalog'; data: CatalogEntry };
 
   // Get favorite and read story IDs from store
   const favoriteStoryIds = useAppStore((state) => state.favoriteStoryIds);
@@ -400,23 +403,40 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     'learning', 'fantasy', 'music', 'activities', 'growing'
   ];
 
-  // Get organized story data from filtered stories
-  const availableGenres = useMemo(() => {
-    const genreMap: Record<string, Story[]> = {};
+  // Build unified genre map: downloaded stories + catalog entries merged per category
+  const { availableGenres, genreItems } = useMemo(() => {
+    const itemMap: Record<string, StoryDisplayItem[]> = {};
+
+    // Add downloaded stories
     filteredStories.forEach(story => {
-      if (!genreMap[story.category]) {
-        genreMap[story.category] = [];
+      const cat = story.category;
+      if (!itemMap[cat]) itemMap[cat] = [];
+      itemMap[cat].push({ type: 'story', data: story });
+    });
+
+    // Add catalog entries into their category rows
+    catalogEntries.forEach(entry => {
+      const cat = entry.category;
+      if (!itemMap[cat]) itemMap[cat] = [];
+      // Avoid duplicates (story already downloaded)
+      const isDuplicate = itemMap[cat].some(
+        item => item.type === 'story' && item.data.id === entry.storyId
+      );
+      if (!isDuplicate) {
+        itemMap[cat].push({ type: 'catalog', data: entry });
       }
-      genreMap[story.category].push(story);
     });
-    const genresWithStories = Object.keys(genreMap).filter(genre => genreMap[genre].length > 0);
-    // Sort by preferred order
-    return genresWithStories.sort((a, b) => {
-      const aIndex = GENRE_ORDER.indexOf(a as StoryCategory);
-      const bIndex = GENRE_ORDER.indexOf(b as StoryCategory);
-      return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
-    });
-  }, [filteredStories]);
+
+    const genres = Object.keys(itemMap)
+      .filter(g => itemMap[g].length > 0)
+      .sort((a, b) => {
+        const aIndex = GENRE_ORDER.indexOf(a as StoryCategory);
+        const bIndex = GENRE_ORDER.indexOf(b as StoryCategory);
+        return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
+      });
+
+    return { availableGenres: genres, genreItems: itemMap };
+  }, [filteredStories, catalogEntries]);
 
   const handleBackToMenu = useCallback(() => {
     // Debounce rapid back button presses (500ms)
@@ -466,7 +486,65 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     }
   }, [onStorySelect, startTransition]);
 
-  // Memoized render function for story cards
+  // Preview for catalog entries — build a lightweight Story-like object for the preview modal
+  const handleCatalogPreview = useCallback((entry: CatalogEntry) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const previewAsStory: Story = {
+      id: entry.storyId,
+      title: entry.title,
+      localizedTitle: entry.localizedTitle,
+      description: entry.description,
+      localizedDescription: entry.localizedDescription,
+      category: entry.category,
+      tag: entry.tag || entry.category,
+      tags: entry.tags,
+      emoji: entry.emoji,
+      coverImage: entry.thumbnailUrl,
+      isAvailable: false, // Not downloaded — prevents "Read Story" button
+      ageRange: entry.ageRange,
+      duration: entry.duration,
+      isFree: entry.isFree,
+      isPremium: entry.isPremium,
+      isReferralReward: entry.isReferralReward,
+    };
+    setPreviewStory(previewAsStory);
+    setIsPreviewVisible(true);
+  }, []);
+
+  // Render a single display item (downloaded story or catalog entry)
+  const renderDisplayItem: ListRenderItem<StoryDisplayItem> = useCallback(({ item }) => {
+    if (item.type === 'story') {
+      const story = item.data;
+      return (
+        <StoryCard
+          story={story}
+          onPress={handleStoryPress}
+          onLongPress={handleLongPress}
+          cardWidth={scaledCardW}
+          cardHeight={scaledCardH}
+          borderRadius={scaledBorderRadius}
+          emojiFontSize={scaledEmojiFontSize}
+          isHidden={(isTransitioning || shouldShowStoryReader || isExpandingToReader) && selectedStoryId === story.id}
+          isUnread={story.isAvailable && !readStoryIds.includes(story.id)}
+          language={currentLanguage}
+        />
+      );
+    }
+    // Catalog entry — show download card with long-press for preview
+    return (
+      <CatalogStoryCard
+        entry={item.data}
+        cardWidth={scaledCardW}
+        cardHeight={scaledCardH}
+        borderRadius={scaledBorderRadius}
+        language={currentLanguage}
+        onDownloadComplete={handleCatalogDownloadComplete}
+        onLongPress={handleCatalogPreview}
+      />
+    );
+  }, [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader, currentLanguage, readStoryIds, handleCatalogDownloadComplete, handleCatalogPreview]);
+
+  // Memoized render function for story cards (favorites only — pure Story[])
   const renderStoryCard: ListRenderItem<Story> = useCallback(({ item: story }) => (
     <StoryCard
       story={story}
@@ -482,8 +560,10 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     />
   ), [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader, currentLanguage, readStoryIds]);
 
-  // Memoized key extractor
+  // Key extractors
   const keyExtractor = useCallback((story: Story) => story.id, []);
+  const displayItemKeyExtractor = useCallback((item: StoryDisplayItem) =>
+    item.type === 'story' ? item.data.id : `catalog-${item.data.storyId}`, []);
 
   // Memoized getItemLayout for fast scrolling
   const getItemLayout = useCallback((_data: any, index: number) => ({
@@ -613,7 +693,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
           )}
 
           {availableGenres.map((genre) => {
-            const genreStories = filteredStories.filter(story => story.category === genre);
+            const items = genreItems[genre] || [];
             // Use translated genre name
             const genreName = t(`stories.genres.${genre}`, { defaultValue: genre.charAt(0).toUpperCase() + genre.slice(1) });
             const genreHeading = genre === 'personalized'
@@ -636,21 +716,19 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
                   {genreHeading}
                 </Text>
 
-                {/* Horizontal Carousel - Optimized for performance */}
+                {/* Horizontal Carousel — merged downloaded + catalog items */}
                 <FlatList
-                  data={genreStories}
-                  renderItem={renderStoryCard}
-                  keyExtractor={keyExtractor}
+                  data={items}
+                  renderItem={renderDisplayItem}
+                  keyExtractor={displayItemKeyExtractor}
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   getItemLayout={getItemLayout}
-                  // Performance optimizations
                   removeClippedSubviews={true}
                   maxToRenderPerBatch={5}
                   windowSize={7}
                   initialNumToRender={3}
                   updateCellsBatchingPeriod={50}
-                  // Scroll behavior
                   decelerationRate="fast"
                   snapToInterval={ITEM_WIDTH}
                   snapToAlignment="start"
@@ -660,60 +738,6 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
               </View>
             );
           })}
-
-          {/* More Stories — catalog entries not yet downloaded */}
-          {catalogEntries.length > 0 && (
-            <View style={{ marginBottom: 40 }}>
-              <Text style={{
-                color: '#FFFFFF',
-                fontSize: 24,
-                fontWeight: 'bold',
-                textAlign: 'center',
-                marginBottom: 6,
-                textShadowColor: 'rgba(0, 0, 0, 0.9)',
-                textShadowOffset: { width: 0, height: 3 },
-                textShadowRadius: 6,
-              }}>
-                📥 {t('stories.moreStories', { defaultValue: 'More Stories' })}
-              </Text>
-              <Text style={{
-                color: 'rgba(255, 255, 255, 0.6)',
-                fontSize: 13,
-                textAlign: 'center',
-                marginBottom: 15,
-                fontFamily: Fonts.rounded,
-              }}>
-                {t('stories.tapToDownload', { defaultValue: 'Tap to download' })}
-              </Text>
-
-              <FlatList
-                data={catalogEntries}
-                renderItem={({ item }) => (
-                  <CatalogStoryCard
-                    entry={item}
-                    cardWidth={scaledCardW}
-                    cardHeight={scaledCardH}
-                    borderRadius={scaledBorderRadius}
-                    language={currentLanguage}
-                    onDownloadComplete={handleCatalogDownloadComplete}
-                  />
-                )}
-                keyExtractor={(item) => item.storyId}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                removeClippedSubviews={true}
-                maxToRenderPerBatch={5}
-                windowSize={7}
-                initialNumToRender={3}
-                updateCellsBatchingPeriod={50}
-                decelerationRate="fast"
-                snapToInterval={ITEM_WIDTH}
-                snapToAlignment="start"
-                contentContainerStyle={styles.carouselContent}
-                scrollEnabled={!isTransitioning && !shouldShowStoryReader && !isExpandingToReader}
-              />
-            </View>
-          )}
         </ScrollView>
       </View>
 
