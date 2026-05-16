@@ -23,6 +23,13 @@ const SLIDE_IN_DISTANCE = 200; // px from below
 let lastCarouselMountTime = 0;
 const CAROUSEL_DEBOUNCE_MS = 1500;
 
+/** Reset the carousel debounce timer so the next mount skips animation.
+ *  Call this right before a view transition that will remount MainMenu
+ *  to prevent a second slide-in (e.g. loading → app). */
+export function suppressNextCarouselAnimation() {
+  lastCarouselMountTime = Date.now();
+}
+
 export interface CarouselMenuItem {
   id: string;
   labelKey: string;
@@ -42,12 +49,15 @@ interface MenuCarouselProps {
   buttonRefs?: Record<string, React.RefObject<View | null>>;
   /** Called once when all strip slide-in animations have finished */
   onLoadComplete?: () => void;
+  /** Extra delay (ms) before buttons start sliding in — used to coordinate with loading screen exit */
+  entranceDelay?: number;
 }
 
 export const MenuCarousel = React.memo(function MenuCarousel({
   onNavigate,
   buttonRefs,
   onLoadComplete,
+  entranceDelay = 0,
 }: MenuCarouselProps) {
   const { t } = useTranslation();
   const { scaledFontSize, isTablet } = useAccessibility();
@@ -88,6 +98,7 @@ export const MenuCarousel = React.memo(function MenuCarousel({
           isLast={index === MENU_ITEMS.length - 1}
           onSlideComplete={onLoadComplete}
           shouldAnimate={shouldAnimate}
+          entranceDelay={entranceDelay}
         />
       ))}
     </View>
@@ -113,6 +124,8 @@ interface StripButtonProps {
   onSlideComplete?: () => void;
   /** Whether to animate the slide-in (false = appear instantly) */
   shouldAnimate: boolean;
+  /** Extra delay (ms) added before slide-in starts */
+  entranceDelay?: number;
 }
 
 const StripButton = React.memo(function StripButton({
@@ -128,6 +141,7 @@ const StripButton = React.memo(function StripButton({
   isLast,
   onSlideComplete,
   shouldAnimate,
+  entranceDelay = 0,
 }: StripButtonProps) {
   const pressScale = useSharedValue(1);
   const slideY = useSharedValue(shouldAnimate ? SLIDE_IN_DISTANCE : 0);
@@ -149,7 +163,7 @@ const StripButton = React.memo(function StripButton({
       return;
     }
 
-    const delay = slideIndex * SLIDE_IN_STAGGER;
+    const delay = entranceDelay + slideIndex * SLIDE_IN_STAGGER;
 
     slideOpacity.value = withDelay(delay,
       withTiming(1, { duration: SLIDE_IN_DURATION * 0.6, easing: Easing.out(Easing.cubic) }));

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
-import { AppState, AppStateStatus, BackHandler, Dimensions, View, Platform, DevSettings, Alert } from 'react-native';
+import { AppState, AppStateStatus, BackHandler, Dimensions, View, Platform, DevSettings, Alert, StyleSheet } from 'react-native';
 import * as ScreenOrientation from 'expo-screen-orientation';
 
 import 'react-native-reanimated';
@@ -19,7 +19,8 @@ import { AppSplashScreen } from '@/components/splash-screen';
 import { OnboardingFlow } from '@/components/onboarding/onboarding-flow';
 import { LoginScreen } from '@/components/auth/login-screen';
 import { AccountScreen } from '@/components/account/account-screen';
-import { MainMenu } from '@/components/main-menu';
+import { MainMenu, suppressNextContainerFadeIn } from '@/components/main-menu';
+import { suppressNextCarouselAnimation } from '@/components/main-menu/menu-carousel';
 import { ApiClient } from '@/services/api-client';
 import { SecureStorage } from '@/services/secure-storage';
 import { backgroundSaveService } from '@/services/background-save-service';
@@ -145,6 +146,10 @@ function AppContent() {
 
   // Track if sync is in progress to prevent premature navigation
   const syncInProgressRef = useRef(false);
+  // When true, loading overlay has fully slid in — safe to mount MainMenu behind it
+  const [loadingMenuReady, setLoadingMenuReady] = useState(false);
+  // True while the loading screen is still sliding in after login — keeps login visible behind overlay
+  const [showLoginBehindLoading, setShowLoginBehindLoading] = useState(false);
 
 
 
@@ -536,6 +541,8 @@ function AppContent() {
     log.info('[Auth] Login successful — showing loading screen for first sync');
 
     setShowLoginAfterOnboarding(false);
+    // Keep login visible behind the loading overlay during slide-in
+    setShowLoginBehindLoading(true);
     setCurrentView('loading');
   };
 
@@ -632,25 +639,60 @@ function AppContent() {
     return <OnboardingFlow onComplete={handleOnboardingComplete} />;
   }
 
-  if (currentView === 'login') {
-    return <LoginScreen onSuccess={handleLoginSuccess} onSkip={handleLoginSkip} />;
-  }
-
-  // Loading screen shown during content sync after app restart
-  // Shows spinning circle → checkmark animation, then transitions to main menu
-  if (currentView === 'loading') {
-    // Set ref immediately when loading screen renders
-    syncInProgressRef.current = true;
+  // Login and loading views are combined so the LoginScreen instance stays mounted
+  // during the loading overlay's slide-in — preventing a flash when transitioning.
+  if (currentView === 'login' || currentView === 'loading') {
+    if (currentView === 'loading') {
+      syncInProgressRef.current = true;
+    }
     return (
-      <StartupLoadingScreen
-        onComplete={() => {
-          syncInProgressRef.current = false;
-          justLoggedInRef.current = false; // Clear login flag now that sync is done
-          log.info('[Layout] Sync complete - transitioning to main menu');
-          setCurrentView('app');
-          setCurrentPage('main');
-        }}
-      />
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <View style={{ flex: 1 }}>
+          {/* Login screen — stays mounted during both 'login' and 'loading' views.
+              During loading, it sits behind the overlay until the slide-in covers it,
+              then gets unmounted once the overlay is fully opaque (onSlideInComplete). */}
+          {(currentView === 'login' || showLoginBehindLoading) && (
+            <View style={StyleSheet.absoluteFill}>
+              <LoginScreen onSuccess={handleLoginSuccess} onSkip={handleLoginSkip} />
+            </View>
+          )}
+
+          {/* MainMenu mounted after the overlay fully covers the screen.
+              disableTutorial prevents tips appearing before the menu is revealed.
+              entranceDelay keeps carousel buttons hidden until the slide-up reveal. */}
+          {loadingMenuReady && (
+            <MainMenu
+              onNavigate={handleMainMenuNavigate}
+              isActive={false}
+              disableTutorial={true}
+              entranceDelay={500}
+            />
+          )}
+
+          {/* Loading overlay (zIndex 10) — slides down over login, then up to reveal menu */}
+          {currentView === 'loading' && (
+            <StartupLoadingScreen
+              onSlideInComplete={() => {
+                log.info('[Layout] Loading slide-in done — swapping login for main menu');
+                setShowLoginBehindLoading(false);
+                setLoadingMenuReady(true);
+              }}
+              onComplete={() => {
+                syncInProgressRef.current = false;
+                justLoggedInRef.current = false;
+                setLoadingMenuReady(false);
+                // Suppress carousel re-animation and container fade when MainMenu remounts in 'app' view
+                suppressNextCarouselAnimation();
+                suppressNextContainerFadeIn();
+                log.info('[Layout] Sync complete - transitioning to main menu');
+                setCurrentView('app');
+                setCurrentPage('main');
+              }}
+            />
+          )}
+        </View>
+        <StatusBar style="light" />
+      </ThemeProvider>
     );
   }
 

@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View, StyleSheet, Dimensions, Text } from 'react-native';
+import { useEffect, useState, useRef } from 'react';
+import { View, StyleSheet, Dimensions, Text, Image } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -7,7 +7,6 @@ import Animated, {
   Easing,
   cancelAnimation,
 } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
 import LottieView from 'lottie-react-native';
 import * as Haptics from 'expo-haptics';
 import { createAudioPlayer, AudioPlayer } from 'expo-audio';
@@ -18,17 +17,19 @@ import { CacheManager } from '@/services/cache-manager';
 import { StoryLoader } from '@/services/story-loader';
 import { ApiClient } from '@/services/api-client';
 import { ProfileSyncService } from '@/services/profile-sync-service';
-import { StarBackground } from './ui/star-background';
 import { Logger } from '@/utils/logger';
 
 const log = Logger.create('StartupLoading');
 const { width, height } = Dimensions.get('window');
 
-// Same gradient as splash screen
-const GRADIENT_COLORS = ['#1a1a2e', '#16213e', '#0f3460'] as const;
+// Slide animation durations
+const SLIDE_IN_DURATION = 900;
+const SLIDE_OUT_DURATION = 1200;
 
 interface StartupLoadingScreenProps {
   onComplete: () => void;
+  /** Called once the slide-in animation finishes — safe to mount content behind the overlay */
+  onSlideInComplete?: () => void;
   onError?: (error: string) => void;
 }
 
@@ -41,7 +42,7 @@ interface StartupLoadingScreenProps {
  * 3. Checkmark animation when complete
  * 4. Smooth transition to main menu
  */
-export function StartupLoadingScreen({ onComplete, onError }: StartupLoadingScreenProps) {
+export function StartupLoadingScreen({ onComplete, onSlideInComplete, onError }: StartupLoadingScreenProps) {
   const [statusText, setStatusText] = useState('Loading content...');
   const [detailText, setDetailText] = useState('');
   const [progressPercent, setProgressPercent] = useState(0);
@@ -49,7 +50,8 @@ export function StartupLoadingScreen({ onComplete, onError }: StartupLoadingScre
   const [syncComplete, setSyncComplete] = useState(false);
   const playerRef = useRef<AudioPlayer | null>(null);
 
-  const screenOpacity = useSharedValue(1);
+  // Slide: starts above viewport, slides down to 0, then slides back up on complete
+  const slideY = useSharedValue(-height);
 
   const loadingCircleAnim = useLoadingCircleAnimation();
   const checkmarkAnim = useCheckmarkAnimation();
@@ -77,19 +79,28 @@ export function StartupLoadingScreen({ onComplete, onError }: StartupLoadingScre
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
-      // Cancel all Reanimated animations to prevent native crashes
-      cancelAnimation(screenOpacity);
+      cancelAnimation(slideY);
       loadingCircleAnim.stopAnimation();
       checkmarkAnim.reset();
-      // Release audio player
       if (playerRef.current) {
         playerRef.current.release();
       }
     };
   }, []);
 
-  // Start sync on mount
+  // Start sync on mount — slide the background in first
   useEffect(() => {
+    // Slide background image down into view
+    slideY.value = withTiming(0, {
+      duration: SLIDE_IN_DURATION,
+      easing: Easing.out(Easing.cubic),
+    });
+
+    // Notify parent when slide-in finishes — safe to mount content behind the overlay
+    const slideInTimer = setTimeout(() => {
+      onSlideInComplete?.();
+    }, SLIDE_IN_DURATION + 50);
+
     loadingCircleAnim.startAnimation();
     textFadeAnim.startFadeIn();
     
@@ -172,39 +183,38 @@ export function StartupLoadingScreen({ onComplete, onError }: StartupLoadingScre
         await playSuccessSound();
 
         checkmarkAnim.playCheckmarkEffect(() => {
-          // Check if component is still mounted before proceeding
           if (!isMountedRef.current) return;
 
-          // Fade out screen then call onComplete
-          screenOpacity.value = withTiming(0, {
-            duration: 400,
-            easing: Easing.out(Easing.cubic),
+          // Slide up to reveal the pre-mounted main menu underneath
+          slideY.value = withTiming(-height, {
+            duration: SLIDE_OUT_DURATION,
+            easing: Easing.in(Easing.cubic),
           });
 
           setTimeout(() => {
-            // Check mounted again before calling onComplete
-            if (isMountedRef.current) {
-              onComplete();
-            }
-          }, 450);
+            if (isMountedRef.current) onComplete();
+          }, SLIDE_OUT_DURATION + 50);
         });
 
       } catch (error) {
         log.error('Sync failed:', error);
-        // Even on error, continue to main menu (bundled stories are always available)
         setStatusText('Using offline content');
         loadingCircleAnim.stopAnimation();
 
-        // Still populate StoryLoader with bundled stories for offline use
         StoryLoader.invalidateCache();
         await StoryLoader.getStories();
         log.info('StoryLoader cache populated with bundled stories (offline fallback)');
 
+        // On error, still slide up after a pause
         setTimeout(() => {
-          // Check mounted before calling onComplete
-          if (isMountedRef.current) {
-            onComplete();
-          }
+          if (!isMountedRef.current) return;
+          slideY.value = withTiming(-height, {
+            duration: SLIDE_OUT_DURATION,
+            easing: Easing.in(Easing.cubic),
+          });
+          setTimeout(() => {
+            if (isMountedRef.current) onComplete();
+          }, SLIDE_OUT_DURATION + 50);
         }, 1000);
       }
     };
@@ -212,60 +222,71 @@ export function StartupLoadingScreen({ onComplete, onError }: StartupLoadingScre
     performSync();
   }, []);
 
-  const screenAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: screenOpacity.value,
+  const slideAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: slideY.value }],
   }));
 
   return (
-    <Animated.View style={[styles.container, screenAnimatedStyle]}>
-      <LinearGradient colors={GRADIENT_COLORS} style={styles.gradient}>
-        {/* Star background for visual consistency with main menu */}
-        <StarBackground starCount={20} deferAnimation={false} />
+    <Animated.View style={[styles.container, slideAnimatedStyle]}>
+      {/* Background — dark blue base with subtle texture, matching story transition */}
+      <View style={styles.backgroundImageContainer}>
+        <Image
+          source={require('../assets/images/ui-elements/background-home.webp')}
+          style={styles.backgroundImage}
+          resizeMode="repeat"
+        />
+      </View>
 
-        <View style={styles.content}>
-          {/* Loading Circle or Checkmark */}
-          <View style={styles.animationContainer}>
-            {!showCheckmark && (
-              <Animated.View style={loadingCircleAnim.animatedStyle}>
-                <View style={styles.loadingCircle} />
-              </Animated.View>
-            )}
-            
-            {showCheckmark && (
-              <Animated.View style={checkmarkAnim.checkmarkAnimatedStyle}>
-                <LottieView
-                  source={require('@/assets/animations/right-tick.json')}
-                  autoPlay
-                  loop={false}
-                  style={styles.checkmark}
-                />
-              </Animated.View>
-            )}
-          </View>
-          
-          {/* Status Text */}
-          <Animated.View style={textFadeAnim.animatedStyle}>
-            <Text style={styles.statusText}>{statusText}</Text>
-            {detailText ? (
-              <Text style={styles.detailText}>{detailText}</Text>
-            ) : null}
-          </Animated.View>
+      <View style={styles.content}>
+        {/* Loading Circle or Checkmark */}
+        <View style={styles.animationContainer}>
+          {!showCheckmark && (
+            <Animated.View style={loadingCircleAnim.animatedStyle}>
+              <View style={styles.loadingCircle} />
+            </Animated.View>
+          )}
+
+          {showCheckmark && (
+            <Animated.View style={checkmarkAnim.checkmarkAnimatedStyle}>
+              <LottieView
+                source={require('@/assets/animations/right-tick.json')}
+                autoPlay
+                loop={false}
+                style={styles.checkmark}
+              />
+            </Animated.View>
+          )}
         </View>
-      </LinearGradient>
+
+        {/* Status Text */}
+        <Animated.View style={textFadeAnim.animatedStyle}>
+          <Text style={styles.statusText}>{statusText}</Text>
+          {detailText ? (
+            <Text style={styles.detailText}>{detailText}</Text>
+          ) : null}
+        </Animated.View>
+      </View>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 10,
   },
-  gradient: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  backgroundImageContainer: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: 'hidden',
+    backgroundColor: '#0F1D45', // Dark navy — darker than story transition for loading ambiance
+  },
+  backgroundImage: {
+    width: '200%',
+    height: '200%',
+    opacity: 0.15, // Very subtle texture on dark base
   },
   content: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -304,4 +325,3 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 });
-

@@ -20,6 +20,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
 import { TutorialOverlay } from '@/components/tutorial';
+import { useTutorial } from '@/contexts/tutorial-context';
 import { SubscriptionOverlay } from '@/components/ui/subscription-overlay';
 
 import { ErrorBoundary } from './error-boundary';
@@ -50,13 +51,25 @@ import { createCloudAnimationNew } from './main-menu/cloud-animations';
 // This is safe because star positions are random and don't need to change between mounts
 const MEMOIZED_STAR_POSITIONS = generateStarPositions();
 
+// Module-level flag to skip the container fade-in on the next mount.
+// Set by suppressNextContainerFadeIn() before a loading→app transition so the menu
+// doesn't flash from opacity 0→1 when it was already visible behind the loading overlay.
+let _skipNextFadeIn = false;
+
+/** Call before remounting MainMenu (e.g. loading → app) to prevent the 300ms opacity flash. */
+export function suppressNextContainerFadeIn() {
+  _skipNextFadeIn = true;
+}
+
 interface MainMenuProps {
   onNavigate: (destination: string) => void;
   isActive?: boolean; // Kept for API compatibility with EnhancedPageTransition
   disableTutorial?: boolean; // When true, don't show the tutorial (used during login transition)
+  /** Extra delay (ms) before carousel buttons slide in — used for loading screen reveal */
+  entranceDelay?: number;
 }
 
-function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProps) {
+function MainMenuComponent({ onNavigate, disableTutorial = false, entranceDelay = 0 }: MainMenuProps) {
   const insets = useSafeAreaInsets();
   const { scaledButtonSize, scaledFontSize } = useAccessibility();
 
@@ -97,6 +110,26 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
     setCarouselReady(true);
   }, []);
 
+  // Block navigation while the main menu tutorial is pending (first-time sign-in).
+  // This prevents the user tapping a button before the tutorial overlay mounts.
+  const { shouldShowTutorial, isLoaded: tutorialLoaded } = useTutorial();
+  const [tutorialFinished, setTutorialFinished] = useState(false);
+  const isTutorialPending = !disableTutorial && tutorialLoaded && shouldShowTutorial('main_menu_tour') && !tutorialFinished;
+
+  // Use a ref so guardedOnNavigate keeps a stable reference — avoids re-rendering
+  // MenuCarousel (React.memo) when isTutorialPending changes, which would cause a flicker.
+  const isTutorialPendingRef = useRef(isTutorialPending);
+  isTutorialPendingRef.current = isTutorialPending;
+
+  const guardedOnNavigate = useCallback((destination: string) => {
+    if (isTutorialPendingRef.current) return; // Block navigation until tutorial completes/skips
+    onNavigate(destination);
+  }, [onNavigate]);
+
+  const handleTutorialEnd = useCallback(() => {
+    setTutorialFinished(true);
+  }, []);
+
   // Parents Only modal - using shared hook
   const parentsOnly = useParentsOnlyChallenge();
 
@@ -110,12 +143,22 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
   const starRotation = useSharedValue(0);
   const cloudFloat1 = useSharedValue(LAYOUT.OFF_SCREEN_LEFT as number); // Always start from off-screen left (-200)
   const cloudFloat2 = useSharedValue(-400 as number); // Always start from off-screen left (-400)
-  const containerOpacity = useSharedValue(0); // For fade-in from splash screen
+  // Skip fade-in when behind loading overlay OR when remounting after loading→app transition
+  const skipFadeIn = useMemo(() => {
+    if (entranceDelay > 0) return true;
+    if (_skipNextFadeIn) {
+      _skipNextFadeIn = false; // consume the flag
+      return true;
+    }
+    return false;
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps — intentionally read once on mount
+  const containerOpacity = useSharedValue(skipFadeIn ? 1 : 0);
 
-  // Fade in the container on mount (smooth transition from splash)
+  // Fade in the container on mount (smooth transition from splash — skipped when behind loading overlay)
   useEffect(() => {
+    if (skipFadeIn) return; // Already visible — no fade needed
     containerOpacity.value = withTiming(1, { duration: 300, easing: ReanimatedEasing.out(ReanimatedEasing.cubic) });
-  }, [containerOpacity]);
+  }, [containerOpacity, skipFadeIn]);
 
   // Star twinkle rotation (matches story selection / practise screens)
   useEffect(() => {
@@ -318,7 +361,7 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
         <View ref={settingsButtonRef} style={legacyStyles.accountButtonContainer}>
           <Pressable
             style={legacyStyles.accountButton}
-            onPress={() => parentsOnly.showChallenge(() => onNavigate('account'))}
+            onPress={() => parentsOnly.showChallenge(() => guardedOnNavigate('account'))}
           >
             <View style={[
               legacyStyles.accountIconBackground,
@@ -345,9 +388,10 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
 
       <View style={legacyStyles.menuContainer}>
         <MenuCarousel
-          onNavigate={onNavigate}
+          onNavigate={guardedOnNavigate}
           buttonRefs={carouselButtonRefs}
           onLoadComplete={handleCarouselLoadComplete}
+          entranceDelay={entranceDelay}
         />
       </View>
 
@@ -392,6 +436,7 @@ function MainMenuComponent({ onNavigate, disableTutorial = false }: MainMenuProp
           <TutorialOverlay
             tutorialId="main_menu_tour"
             targetRefs={tutorialTargetRefs}
+            onEnd={handleTutorialEnd}
           />
         )}
       </LinearGradient>

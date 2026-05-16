@@ -1,4 +1,4 @@
-export { MenuCarousel } from './menu-carousel';
+export { MenuCarousel, suppressNextCarouselAnimation } from './menu-carousel';
 export type { CarouselMenuItem } from './menu-carousel';
 export {
   Cloud1,

@@ -90,7 +90,8 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
           // Clear guest mode since user is now authenticated
           setGuestMode(false);
 
-          setIsGoogleLoading(false);
+          // Keep isGoogleLoading=true so button stays as "Signing in..." while
+          // the loading overlay slides down over the login screen
           setProcessedResponseId(responseId);
 
           // Authentication complete - go directly to StartupLoadingScreen
@@ -197,7 +198,9 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
 
         // Clear guest mode since user is now authenticated
         setGuestMode(false);
-        setIsGoogleLoading(false);
+
+        // Keep isGoogleLoading=true so button stays as "Signing in..." while
+        // the loading overlay slides down over the login screen
 
         // Authentication complete - go directly to StartupLoadingScreen
         console.log('[LoginScreen] Native Google sign-in complete, tokens stored');
@@ -264,7 +267,8 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
       // Clear guest mode since user is now authenticated
       setGuestMode(false);
 
-      setIsAppleLoading(false);
+      // Keep isAppleLoading=true so button stays as "Signing in..." while
+      // the loading overlay slides down over the login screen
       console.log('[LoginScreen] Apple sign-in complete, tokens stored');
 
       // Authentication complete - go directly to StartupLoadingScreen
