@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useEffect, useMemo, useState, memo } from 'react';
-import { View, Text, ScrollView, StyleSheet, Dimensions, FlatList, Pressable, ListRenderItem, UIManager, Alert, Platform, InteractionManager } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Dimensions, FlatList, Pressable, ListRenderItem, UIManager, Alert, Platform, InteractionManager, Share } from 'react-native';
 import { Image } from 'expo-image';
 // All story images are loaded from local cache after batch sync - no authenticated fetching needed
 import { LinearGradient } from 'expo-linear-gradient';
@@ -597,6 +597,38 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     setShowLoginAfterOnboarding(true);
   }, [setShowLoginAfterOnboarding]);
 
+  // Share-to-unlock: open native share sheet and mark story as unlocked on completion
+  const [shareUnlockedIds, setShareUnlockedIds] = useState<Set<string>>(new Set());
+
+  // Load share-unlock state on mount
+  useEffect(() => {
+    StoryAccessService.hasCompletedShareUnlock().then(unlocked => {
+      if (unlocked) {
+        // Mark all share-to-unlock entries as unlocked
+        const ids = catalogEntries
+          .filter(e => e.isShareToUnlock)
+          .map(e => e.storyId);
+        if (ids.length > 0) setShareUnlockedIds(new Set(ids));
+      }
+    });
+  }, [catalogEntries]);
+
+  const handleShareToUnlock = useCallback(async (entry: CatalogEntry) => {
+    try {
+      const result = await Share.share({
+        message: `Check out "${entry.title}" on Grow with Freya! A magical story app for kids 🌟`,
+      });
+      if (result.action === Share.sharedAction) {
+        // User completed the share — permanently unlock
+        await StoryAccessService.completeShareUnlock();
+        setShareUnlockedIds(prev => new Set(prev).add(entry.storyId));
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+    } catch {
+      // User cancelled or share failed — do nothing
+    }
+  }, []);
+
   // When a catalog story finishes downloading, start bubble-swap animation then refresh data
   const handleCatalogDownloadComplete = useCallback(async (storyId: string) => {
     try {
@@ -940,12 +972,14 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
         swapTranslateX={swapTx}
         onLongPress={handleCatalogPreview}
         onAuthError={handleAuthError}
-        isLocked={effectiveTier === 'free' && !item.data.isFree}
+        isLocked={effectiveTier === 'free' && !item.data.isFree && !item.data.isShareToUnlock}
         onLockedPress={() => setShowSubscription(true)}
         onDownloadLimitReached={handleDownloadLimitReached}
+        isShareToUnlock={!!item.data.isShareToUnlock && !shareUnlockedIds.has(item.data.storyId)}
+        onShareToUnlock={handleShareToUnlock}
       />
     );
-  }, [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader, currentLanguage, readStoryIds, deletingStoryId, handleImplodeComplete, handleCatalogDownloadComplete, handleCatalogPreview, handleAuthError, handleDownloadLimitReached, bubbleSwap, effectiveTier]);
+  }, [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader, currentLanguage, readStoryIds, deletingStoryId, handleImplodeComplete, handleCatalogDownloadComplete, handleCatalogPreview, handleAuthError, handleDownloadLimitReached, bubbleSwap, effectiveTier, shareUnlockedIds, handleShareToUnlock]);
 
   // Memoized render function for story cards (favorites only — pure Story[])
   const renderStoryCard: ListRenderItem<Story> = useCallback(({ item: story }) => (

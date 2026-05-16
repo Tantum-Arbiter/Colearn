@@ -56,6 +56,10 @@ interface CatalogStoryCardProps {
   onLockedPress?: () => void;
   /** Called when download is blocked because the tier download limit is reached */
   onDownloadLimitReached?: (entry: CatalogEntry) => void;
+  /** Whether this story uses share-to-unlock (shows share icon instead of lock) */
+  isShareToUnlock?: boolean;
+  /** Called when user taps a share-to-unlock story — parent should open share sheet */
+  onShareToUnlock?: (entry: CatalogEntry) => void;
 }
 
 export const CatalogStoryCard = memo(function CatalogStoryCard({
@@ -71,6 +75,8 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
   isLocked = false,
   onLockedPress,
   onDownloadLimitReached,
+  isShareToUnlock = false,
+  onShareToUnlock,
 }: CatalogStoryCardProps) {
   const displayTitle = getLocalizedText(entry.localizedTitle, entry.title, language);
   const [downloading, setDownloading] = useState(false);
@@ -170,6 +176,13 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
   }, [progressValue, ringOpacity]);
 
   const handlePress = useCallback(async () => {
+    // ── Share-to-unlock story — open share sheet ──
+    if (isShareToUnlock) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      onShareToUnlock?.(entry);
+      return;
+    }
+
     // ── Locked story — show subscription overlay ──
     if (isLocked) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -385,10 +398,14 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
         {/* Dark overlay — stays full during download, fades on completion */}
         <Animated.View style={[cardStyles.darkOverlay, { borderRadius }, overlayStyle]} />
 
-        {/* Lock icon (locked story) or Download icon (unlocked, before downloading) */}
+        {/* Share / Lock / Download icon (before downloading) */}
         {!downloading && !complete && (
           <View style={cardStyles.iconContainer}>
-            {isLocked ? (
+            {isShareToUnlock ? (
+              <View style={cardStyles.shareCircle}>
+                <Ionicons name="share-outline" size={22} color="#FFFFFF" />
+              </View>
+            ) : isLocked ? (
               <View style={cardStyles.lockCircle}>
                 <Ionicons name="lock-closed" size={20} color="#FFFFFF" />
               </View>
@@ -518,6 +535,16 @@ const cardStyles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 2,
     borderColor: 'rgba(255, 200, 50, 0.7)',
+  },
+  shareCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(100, 180, 255, 0.7)',
   },
   checkCircle: {
     width: 44,

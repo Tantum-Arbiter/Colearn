@@ -130,6 +130,8 @@ export interface CatalogEntry {
   isFree: boolean;
   isReferralReward: boolean;
   isPremium: boolean;
+  /** When true, this story can be unlocked by sharing the app (one-time). */
+  isShareToUnlock?: boolean;
   ageRange?: string;
   duration?: number;
   gender?: 'boy' | 'girl' | 'unisex';

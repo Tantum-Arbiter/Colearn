@@ -15,6 +15,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import * as ScreenOrientation from 'expo-screen-orientation';
+import * as StoreReview from 'expo-store-review';
 import { useTranslation } from 'react-i18next';
 import { Story, StoryPage, STORY_TAGS, InteractiveElement, getLocalizedText, MusicChallenge } from '@/types/story';
 import type { SupportedLanguage } from '@/services/i18n';
@@ -584,12 +585,43 @@ export function StoryBookReader({
   const setTextSizeScale = useAppStore((state) => state.setTextSizeScale);
   const markStoryAsRead = useAppStore((state) => state.markStoryAsRead);
   const recordReadingSession = useAppStore((state) => state.recordReadingSession);
+  const totalStoriesRead = useAppStore((state) => state.totalStoriesRead);
+  const lastRatingPromptBookCount = useAppStore((state) => state.lastRatingPromptBookCount);
+  const setLastRatingPromptBookCount = useAppStore((state) => state.setLastRatingPromptBookCount);
 
   // Mark story as read and record the reading session (for streak tracking)
   useEffect(() => {
     markStoryAsRead(story.id);
     recordReadingSession();
   }, [story.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Prompt for app rating:
+  //   - First prompt after reading 2 books
+  //   - If dismissed, prompt again every 3 books thereafter
+  useEffect(() => {
+    // totalStoriesRead is incremented by recordReadingSession above,
+    // so by the time this effect runs the count reflects the current session.
+    const shouldPrompt =
+      (lastRatingPromptBookCount === 0 && totalStoriesRead >= 2) ||
+      (lastRatingPromptBookCount > 0 && totalStoriesRead >= lastRatingPromptBookCount + 3);
+
+    if (!shouldPrompt) return;
+
+    // Small delay so the reader UI is fully settled before the OS prompt appears
+    const timer = setTimeout(async () => {
+      try {
+        const isAvailable = await StoreReview.isAvailableAsync();
+        if (isAvailable) {
+          await StoreReview.requestReview();
+        }
+      } catch {
+        // Silently ignore — review prompt is best-effort
+      }
+      // Record that we prompted at this book count; we'll ask again in 3 more
+      setLastRatingPromptBookCount(totalStoriesRead);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [totalStoriesRead, lastRatingPromptBookCount]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset scroll position and flash indicators when page or story changes
   useEffect(() => {

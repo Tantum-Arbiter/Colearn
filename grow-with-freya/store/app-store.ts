@@ -57,6 +57,8 @@ export interface AppState {
 
   // Story read tracking
   readStoryIds: string[]; // Array of story IDs that user has opened/read
+  /** The totalStoriesRead count when we last showed the rating prompt (0 = never prompted). */
+  lastRatingPromptBookCount: number;
 
   // Reading streak gamification
   readingStreak: number; // Current consecutive-day streak
@@ -100,6 +102,7 @@ export interface AppState {
   toggleFavoriteStory: (storyId: string) => void;
   isStoryFavorited: (storyId: string) => boolean;
   markStoryAsRead: (storyId: string) => void;
+  setLastRatingPromptBookCount: (count: number) => void;
   recordReadingSession: () => void; // Call when a story is opened to update streak
 
   updateBackgroundAnimationState: (state: {
@@ -138,6 +141,7 @@ export const useAppStore = create<AppState>()(
       textSizeScale: 1.0, // Default to normal size
       favoriteStoryIds: [], // Start with no favorites
       readStoryIds: [], // Start with no read stories
+      lastRatingPromptBookCount: 0, // Never prompted for rating
       readingStreak: 0,
       longestStreak: 0,
       lastReadDate: null,
@@ -210,6 +214,7 @@ export const useAppStore = create<AppState>()(
         }
         return { readStoryIds: [...state.readStoryIds, storyId] };
       }),
+      setLastRatingPromptBookCount: (count: number) => set({ lastRatingPromptBookCount: count }),
       recordReadingSession: () => set((state) => {
         const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
         if (state.lastReadDate === today) {
@@ -272,6 +277,7 @@ export const useAppStore = create<AppState>()(
         textSizeScale: state.textSizeScale,
         favoriteStoryIds: state.favoriteStoryIds,
         readStoryIds: state.readStoryIds,
+        lastRatingPromptBookCount: state.lastRatingPromptBookCount,
         readingStreak: state.readingStreak,
         longestStreak: state.longestStreak,
         lastReadDate: state.lastReadDate,

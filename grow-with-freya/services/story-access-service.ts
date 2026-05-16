@@ -8,6 +8,7 @@ const log = Logger.create('StoryAccessService');
 const STORAGE_KEYS = {
   DOWNLOAD_COUNT: '@download_count',
   REFERRAL_UNLOCKS: '@referral_unlocks', // Set of storyIds unlocked via referral
+  SHARE_UNLOCKED: '@share_unlocked', // Has the user completed a share-to-unlock? (boolean)
 };
 
 // Download limits per tier (max stories on device at any time)
@@ -20,6 +21,7 @@ const DOWNLOAD_LIMITS: Record<SubscriptionTier, number> = {
 export type AccessDeniedReason =
   | 'subscription_required'
   | 'referral_required'
+  | 'share_required'
   | 'download_limit_reached'
   | 'not_authenticated';
 
@@ -47,6 +49,20 @@ export class StoryAccessService {
     // Free stories are always available
     if (entry.isFree) {
       return { allowed: true };
+    }
+
+    // Share-to-unlock stories — check if user has shared the app
+    if (entry.isShareToUnlock) {
+      const hasShared = await this.hasCompletedShareUnlock();
+      if (hasShared) {
+        return { allowed: true };
+      }
+      // If user also has a subscription, allow it
+      const hasSub = await this.hasActiveSubscription();
+      if (hasSub) {
+        return { allowed: true };
+      }
+      return { allowed: false, reason: 'share_required' };
     }
 
     // Referral reward stories — check if user has unlocked via referral
@@ -226,6 +242,31 @@ export class StoryAccessService {
   }
 
   // ──────────────────────────────────────────────
+  // Share-to-unlock tracking
+  // ──────────────────────────────────────────────
+
+  /**
+   * Check if the user has already completed a share-to-unlock.
+   * Once completed, this is permanent (persisted in AsyncStorage).
+   */
+  static async hasCompletedShareUnlock(): Promise<boolean> {
+    try {
+      const val = await AsyncStorage.getItem(STORAGE_KEYS.SHARE_UNLOCKED);
+      return val === 'true';
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Mark the share-to-unlock as completed (called after native share dialog is used).
+   */
+  static async completeShareUnlock(): Promise<void> {
+    await AsyncStorage.setItem(STORAGE_KEYS.SHARE_UNLOCKED, 'true');
+    log.info('Share-to-unlock completed — story permanently unlocked');
+  }
+
+  // ──────────────────────────────────────────────
   // Download count tracking (for analytics / limits)
   // ──────────────────────────────────────────────
 
@@ -258,6 +299,7 @@ export class StoryAccessService {
     await AsyncStorage.multiRemove([
       STORAGE_KEYS.DOWNLOAD_COUNT,
       STORAGE_KEYS.REFERRAL_UNLOCKS,
+      STORAGE_KEYS.SHARE_UNLOCKED,
     ]);
     log.debug('Access state cleared');
   }

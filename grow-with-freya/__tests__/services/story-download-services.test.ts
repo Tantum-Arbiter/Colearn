@@ -95,6 +95,17 @@ const referralCatalogEntry: CatalogEntry = {
   isPremium: false,
 };
 
+const shareToUnlockEntry: CatalogEntry = {
+  storyId: 'share-story',
+  title: 'Share Story',
+  category: 'friendship',
+  emoji: '🤝',
+  isFree: false,
+  isReferralReward: false,
+  isPremium: false,
+  isShareToUnlock: true,
+};
+
 const mockStory: Story = {
   id: 'free-story',
   title: 'Free Story',
@@ -299,6 +310,41 @@ describe('StoryAccessService', () => {
     await StoryAccessService.grantReferralUnlock('story-x');
     const unlocks = await StoryAccessService.getReferralUnlocks();
     expect(unlocks.filter((id: string) => id === 'story-x').length).toBe(1);
+  });
+
+  // ── Share-to-unlock tests ──────────────────────────
+
+  it('should deny share-to-unlock story before sharing', async () => {
+    mockSubscriptionTier = 'free';
+    const result = await StoryAccessService.canDownload(shareToUnlockEntry);
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toBe('share_required');
+  });
+
+  it('should allow share-to-unlock story after completing share', async () => {
+    mockSubscriptionTier = 'free';
+    await StoryAccessService.completeShareUnlock();
+    const result = await StoryAccessService.canDownload(shareToUnlockEntry);
+    expect(result.allowed).toBe(true);
+  });
+
+  it('should allow share-to-unlock story with active subscription (no share needed)', async () => {
+    mockSubscriptionTier = 'basic';
+    const result = await StoryAccessService.canDownload(shareToUnlockEntry);
+    expect(result.allowed).toBe(true);
+  });
+
+  it('should persist share-unlock across checks', async () => {
+    expect(await StoryAccessService.hasCompletedShareUnlock()).toBe(false);
+    await StoryAccessService.completeShareUnlock();
+    expect(await StoryAccessService.hasCompletedShareUnlock()).toBe(true);
+  });
+
+  it('should clear share-unlock state with clearAccessState', async () => {
+    await StoryAccessService.completeShareUnlock();
+    expect(await StoryAccessService.hasCompletedShareUnlock()).toBe(true);
+    await StoryAccessService.clearAccessState();
+    expect(await StoryAccessService.hasCompletedShareUnlock()).toBe(false);
   });
 
   it('should return correct effective tier', () => {
@@ -1202,5 +1248,70 @@ describe('Download security gate', () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toBeDefined();
+  });
+});
+
+
+// ── Rating prompt schedule logic ──────────────────────────
+// These are pure logic tests that validate the "should we prompt?" decision.
+// The actual prompt is triggered in story-book-reader via useEffect;
+// here we test the scheduling conditions in isolation.
+
+describe('Rating prompt schedule', () => {
+  /**
+   * Mirrors the condition in story-book-reader.tsx:
+   *   shouldPrompt = (last === 0 && total >= 2) || (last > 0 && total >= last + 3)
+   */
+  function shouldPromptForRating(totalStoriesRead: number, lastRatingPromptBookCount: number): boolean {
+    return (
+      (lastRatingPromptBookCount === 0 && totalStoriesRead >= 2) ||
+      (lastRatingPromptBookCount > 0 && totalStoriesRead >= lastRatingPromptBookCount + 3)
+    );
+  }
+
+  it('should not prompt before reading 2 books', () => {
+    expect(shouldPromptForRating(0, 0)).toBe(false);
+    expect(shouldPromptForRating(1, 0)).toBe(false);
+  });
+
+  it('should prompt after reading exactly 2 books', () => {
+    expect(shouldPromptForRating(2, 0)).toBe(true);
+  });
+
+  it('should prompt after reading more than 2 books (never prompted)', () => {
+    expect(shouldPromptForRating(5, 0)).toBe(true);
+  });
+
+  it('should not prompt immediately after being prompted', () => {
+    // Prompted at book 2, now on book 3
+    expect(shouldPromptForRating(3, 2)).toBe(false);
+  });
+
+  it('should not prompt 2 books after last prompt', () => {
+    // Prompted at book 2, now on book 4
+    expect(shouldPromptForRating(4, 2)).toBe(false);
+  });
+
+  it('should prompt again exactly 3 books after last prompt', () => {
+    // Prompted at book 2, now on book 5
+    expect(shouldPromptForRating(5, 2)).toBe(true);
+  });
+
+  it('should prompt again if more than 3 books since last prompt', () => {
+    // Prompted at book 2, now on book 10
+    expect(shouldPromptForRating(10, 2)).toBe(true);
+  });
+
+  it('should keep prompting every 3 books (third round)', () => {
+    // First prompt at 2, second at 5, now check at 8
+    expect(shouldPromptForRating(8, 5)).toBe(true);
+    // And then at 7 since last was 5
+    expect(shouldPromptForRating(7, 5)).toBe(false);
+  });
+
+  it('should handle large book counts', () => {
+    // Prompted at 50, check at 52 (not yet) and 53 (yes)
+    expect(shouldPromptForRating(52, 50)).toBe(false);
+    expect(shouldPromptForRating(53, 50)).toBe(true);
   });
 });
