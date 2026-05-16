@@ -59,7 +59,7 @@ import {
 // ============================================================================
 const RADIUS = 180;
 const CENTER_SCALE = 1.0;
-const SIDE_SCALE = 0.5;
+const SIDE_SCALE = 0.85;
 const SIDE_OPACITY = 0.3;
 const INSTRUMENT_IMAGE_SIZE = 120;
 
@@ -112,7 +112,7 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
   const viewportWidth = isRotated ? screenHeight : screenWidth;
   const viewportHeight = isRotated ? screenWidth : screenHeight;
   const carouselWidth = Math.min(viewportWidth * 0.92, RADIUS * 2 + INSTRUMENT_IMAGE_SIZE + 40);
-  const carouselHeight = Math.min(Math.max(viewportHeight * 0.38, 220), INSTRUMENT_IMAGE_SIZE + 140);
+  const carouselHeight = Math.min(Math.max(viewportHeight * 0.32, 200), INSTRUMENT_IMAGE_SIZE + 100);
   const compactLayout = viewportHeight < 430;
 
   const getCenteredIndexFromRotation = useCallback((rotationValue: number): number => {
@@ -442,11 +442,11 @@ const styles = StyleSheet.create({
   headerSection: {
     width: '100%',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 12,
     paddingHorizontal: 40,
   },
   headerSectionCompact: {
-    marginBottom: 16,
+    marginBottom: 8,
   },
   closeButton: {
     position: 'absolute',
@@ -458,6 +458,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 2,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   closeButtonText: {
     color: '#FFFFFF',
@@ -485,7 +492,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 0,
   },
   arrowButton: {
     width: 44,
@@ -495,6 +502,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   arrowText: {
     color: 'rgba(255, 255, 255, 0.8)',
@@ -503,25 +517,24 @@ const styles = StyleSheet.create({
     marginTop: -2,
   },
   gestureRoot: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   carouselContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 20,
+    marginVertical: 8,
   },
   carouselContainerCompact: {
-    marginVertical: 12,
+    marginVertical: 4,
   },
   footerSection: {
     width: '100%',
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: 12,
   },
   footerSectionCompact: {
-    marginTop: 14,
+    marginTop: 8,
   },
   confirmButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.16)',
@@ -529,7 +542,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 22,
     paddingVertical: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.22)',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   confirmButtonText: {
     color: '#FFFFFF',

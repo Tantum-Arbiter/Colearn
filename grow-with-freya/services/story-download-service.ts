@@ -16,6 +16,18 @@ const log = Logger.create('StoryDownloadService');
  */
 const HIDDEN_BUNDLED_KEY = '@hidden_bundled_stories';
 
+/** Maximum wall-clock time for an entire story download (2 minutes). */
+const MAX_DOWNLOAD_DURATION_MS = 2 * 60 * 1000;
+
+/** Show "Connection issue…" after this long with no progress (10 seconds). */
+const STALL_THRESHOLD_MS = 10_000;
+
+/** Auto-cancel the download after this long with no progress (20 seconds). */
+const STALL_AUTO_CANCEL_MS = 20_000;
+
+/** Stall detector polling interval. */
+const STALL_POLL_INTERVAL_MS = 3_000;
+
 export type DownloadPhase =
   | 'access-check'
   | 'fetching-story'
@@ -23,7 +35,9 @@ export type DownloadPhase =
   | 'downloading-assets'
   | 'saving'
   | 'complete'
-  | 'failed';
+  | 'failed'
+  | 'cancelled'
+  | 'stalled';
 
 export interface DownloadProgress {
   phase: DownloadPhase;
@@ -46,6 +60,10 @@ export interface DownloadResult {
   bytesDownloaded: number;
   durationMs: number;
   error?: string;
+  /** True when the user explicitly cancelled the download */
+  cancelled?: boolean;
+  /** True when some assets failed but the story itself was saved */
+  partialFailure?: boolean;
 }
 
 export type DownloadProgressCallback = (progress: DownloadProgress) => void;
@@ -58,6 +76,8 @@ export class StoryDownloadService {
 
   // Prevent concurrent downloads of the same story
   private static activeDownloads = new Map<string, Promise<DownloadResult>>();
+  // Cancellation tokens keyed by storyId
+  private static cancellationTokens = new Map<string, { cancelled: boolean }>();
 
   /**
    * Download a single story by ID. Checks access first, then fetches
@@ -79,22 +99,46 @@ export class StoryDownloadService {
       return existing;
     }
 
-    const promise = this.executeDownload(storyId, catalogEntry, onProgress);
+    const token = { cancelled: false };
+    this.cancellationTokens.set(storyId, token);
+
+    const promise = this.executeDownload(storyId, catalogEntry, onProgress, token);
     this.activeDownloads.set(storyId, promise);
 
     try {
       return await promise;
     } finally {
       this.activeDownloads.delete(storyId);
+      this.cancellationTokens.delete(storyId);
     }
+  }
+
+  /**
+   * Cancel an in-progress download. Immediately removes it from the active
+   * downloads map so a retry won't return the old stale promise.
+   */
+  static cancelDownload(storyId: string): void {
+    const token = this.cancellationTokens.get(storyId);
+    if (token) {
+      token.cancelled = true;
+      log.info(`Download cancelled for ${storyId}`);
+    }
+    // Remove from active downloads immediately so a retry starts fresh.
+    // The old promise will still resolve eventually (via timeout), but
+    // nothing will be waiting on it.
+    this.activeDownloads.delete(storyId);
+    this.cancellationTokens.delete(storyId);
   }
 
   private static async executeDownload(
     storyId: string,
     catalogEntry?: CatalogEntry,
-    onProgress?: DownloadProgressCallback
+    onProgress?: DownloadProgressCallback,
+    cancelToken?: { cancelled: boolean }
   ): Promise<DownloadResult> {
     const startTime = Date.now();
+    let lastProgressTime = Date.now();
+    let stallNotified = false;
     const result: DownloadResult = {
       success: false,
       storyId,
@@ -104,9 +148,65 @@ export class StoryDownloadService {
       durationMs: 0,
     };
 
+    /** Track whether this download was auto-cancelled by the stall detector (vs user tap). */
+    let autoTimedOut = false;
+
+    /** Check whether we should abort (cancelled or timed out). */
+    const checkAbort = () => {
+      if (cancelToken?.cancelled) {
+        throw new DownloadAbortError(
+          autoTimedOut
+            ? 'Download failed — connection lost'
+            : 'Download cancelled by user'
+        );
+      }
+      if (Date.now() - startTime > MAX_DOWNLOAD_DURATION_MS) {
+        throw new DownloadAbortError(
+          `Download timed out after ${Math.round(MAX_DOWNLOAD_DURATION_MS / 60_000)} minutes`
+        );
+      }
+    };
+
+    /** Wraps onProgress to also track stall detection. */
+    const reportProgress = (p: DownloadProgress) => {
+      lastProgressTime = Date.now();
+      stallNotified = false;
+      onProgress?.(p);
+    };
+
+    // Stall detector — fires every 3s during the download
+    let stallInterval: ReturnType<typeof setInterval> | null = setInterval(() => {
+      const stalledFor = Date.now() - lastProgressTime;
+
+      // Auto-cancel after sustained stall — stop the interval immediately
+      if (stalledFor > STALL_AUTO_CANCEL_MS && cancelToken && !cancelToken.cancelled) {
+        autoTimedOut = true;
+        cancelToken.cancelled = true;
+        if (stallInterval) { clearInterval(stallInterval); stallInterval = null; }
+        log.warn(`Auto-cancelling download for ${storyId} — no progress for ${Math.round(stalledFor / 1000)}s`);
+        onProgress?.({
+          phase: 'stalled',
+          progress: -1,
+          message: 'Connection lost',
+        });
+        return;
+      }
+
+      // Show "Connection issue…" warning
+      if (stalledFor > STALL_THRESHOLD_MS && !stallNotified) {
+        stallNotified = true;
+        onProgress?.({
+          phase: 'stalled',
+          progress: -1,
+          message: 'Connection issue…',
+        });
+      }
+    }, STALL_POLL_INTERVAL_MS);
+
     try {
       // Phase 1: Access check
-      onProgress?.({ phase: 'access-check', progress: 5, message: 'Checking access...' });
+      checkAbort();
+      reportProgress({ phase: 'access-check', progress: 5, message: 'Checking access...' });
       const entry = catalogEntry ?? await CatalogService.getEntry(storyId);
 
       if (entry) {
@@ -121,8 +221,9 @@ export class StoryDownloadService {
       // If no catalog entry, proceed anyway (admin/test download)
 
       // Phase 2: Fetch story JSON from download endpoint
+      checkAbort();
       log.info(`Downloading story ${storyId}...`);
-      onProgress?.({ phase: 'fetching-story', progress: 15, message: 'Fetching story data...' });
+      reportProgress({ phase: 'fetching-story', progress: 15, message: 'Fetching story data...' });
 
       const story = await ApiClient.request<Story>(
         `/api/stories/${encodeURIComponent(storyId)}/download`,
@@ -131,6 +232,7 @@ export class StoryDownloadService {
       result.story = story;
 
       // Phase 3: Extract asset paths and filter uncached
+      checkAbort();
       const assetPaths = AssetDownloadUtils.extractAssetPaths([story]);
       const uncachedPaths = await AssetDownloadUtils.filterUncachedAssets(assetPaths);
 
@@ -138,23 +240,26 @@ export class StoryDownloadService {
 
       if (uncachedPaths.length > 0) {
         // Phase 4: Get signed URLs
-        onProgress?.({ phase: 'fetching-urls', progress: 30, message: 'Preparing downloads...' });
+        checkAbort();
+        reportProgress({ phase: 'fetching-urls', progress: 30, message: 'Preparing downloads...' });
         const urlResult = await AssetDownloadUtils.getBatchSignedUrls(uncachedPaths);
         result.assetsFailed += urlResult.failed.length;
 
         // Phase 5: Download assets
         if (urlResult.urls.length > 0) {
-          onProgress?.({ phase: 'downloading-assets', progress: 40, message: 'Downloading assets...' });
+          checkAbort();
+          reportProgress({ phase: 'downloading-assets', progress: 40, message: 'Downloading assets...' });
           const downloadResult = await AssetDownloadUtils.downloadAssetsInBatches(
             urlResult.urls,
             (current, total, bytesDownloaded, totalBytes) => {
+              checkAbort(); // Check cancellation between batches
               const progress = 40 + Math.floor((current / total) * 45);
               const bytesFmt = AssetDownloadUtils.formatBytes(bytesDownloaded);
               const totalFmt = totalBytes > 0 ? AssetDownloadUtils.formatBytes(totalBytes) : '?';
-              onProgress?.({
+              reportProgress({
                 phase: 'downloading-assets',
                 progress,
-                message: `${bytesFmt} / ${totalFmt}`,
+                message: `Downloading ${current}/${total} — ${bytesFmt} / ${totalFmt}`,
                 detail: { currentAsset: current, totalAssets: total, bytesDownloaded, totalBytes },
               });
             }
@@ -166,7 +271,8 @@ export class StoryDownloadService {
       }
 
       // Phase 6: Save story to local cache
-      onProgress?.({ phase: 'saving', progress: 90, message: 'Saving story...' });
+      checkAbort();
+      reportProgress({ phase: 'saving', progress: 90, message: 'Saving story...' });
       await CacheManager.updateStories([story]);
 
       // Remove from catalog (it's now a downloaded story)
@@ -181,22 +287,43 @@ export class StoryDownloadService {
       result.success = true;
       result.durationMs = Date.now() - startTime;
 
+      // Flag partial failure so the UI can warn the user
+      if (result.assetsFailed > 0) {
+        result.partialFailure = true;
+        log.warn(
+          `Story ${storyId} downloaded with ${result.assetsFailed} failed assets ` +
+          `(${result.assetsDownloaded} succeeded)`
+        );
+      }
+
       log.info(
         `Story ${storyId} downloaded in ${result.durationMs}ms: ` +
         `${result.assetsDownloaded} assets (${AssetDownloadUtils.formatBytes(result.bytesDownloaded)}), ` +
         `${result.assetsFailed} failed`
       );
 
-      onProgress?.({ phase: 'complete', progress: 100, message: 'Download complete!' });
+      reportProgress({ phase: 'complete', progress: 100, message: 'Download complete!' });
       return result;
 
     } catch (error) {
+      if (error instanceof DownloadAbortError) {
+        result.cancelled = cancelToken?.cancelled ?? false;
+        result.error = error.message;
+        result.durationMs = Date.now() - startTime;
+        const phase = result.cancelled ? 'cancelled' : 'failed';
+        log.info(`Download ${phase} for ${storyId}: ${error.message}`);
+        onProgress?.({ phase, progress: 0, message: error.message });
+        return result;
+      }
+
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       result.error = errorMsg;
       result.durationMs = Date.now() - startTime;
       log.error(`Download failed for ${storyId}: ${errorMsg}`);
       onProgress?.({ phase: 'failed', progress: 0, message: `Download failed: ${errorMsg}` });
       return result;
+    } finally {
+      if (stallInterval) { clearInterval(stallInterval); stallInterval = null; }
     }
   }
 
@@ -310,5 +437,14 @@ export class StoryDownloadService {
       await AsyncStorage.setItem(HIDDEN_BUNDLED_KEY, JSON.stringify([...hidden]));
       log.debug(`Bundled story ${storyId} un-hidden`);
     }
+  }
+}
+
+
+/** Sentinel error used for cancellation and overall timeout — distinguished from real failures. */
+class DownloadAbortError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'DownloadAbortError';
   }
 }

@@ -20,6 +20,7 @@ import Animated, {
 import { BlurView } from 'expo-blur';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
+import { Ionicons } from '@expo/vector-icons';
 import { Story, STORY_TAGS, getLocalizedText } from '@/types/story';
 import type { SupportedLanguage } from '@/services/i18n';
 import { Fonts } from '@/constants/theme';
@@ -182,12 +183,14 @@ export function StoryPreviewModal({
             <Text style={styles.xCloseButtonText}>✕</Text>
           </Pressable>
 
-          {/* Favorite Star Button - top right */}
-          <Pressable style={styles.favoriteButton} onPress={handleToggleFavorite}>
-            <Animated.Text style={[styles.favoriteButtonText, starAnimatedStyle]}>
-              {isFavorited ? '⭐' : '☆'}
-            </Animated.Text>
-          </Pressable>
+          {/* Favorite Star Button - top right (only for downloaded stories) */}
+          {story.isAvailable && (
+            <Pressable style={styles.favoriteButton} onPress={handleToggleFavorite}>
+              <Animated.Text style={[styles.favoriteButtonText, starAnimatedStyle]}>
+                {isFavorited ? '⭐' : '☆'}
+              </Animated.Text>
+            </Pressable>
+          )}
 
           {/* Cover Image - loaded from local cache after batch sync */}
           <View style={styles.coverContainer}>
@@ -242,6 +245,26 @@ export function StoryPreviewModal({
                   </Text>
                 </View>
               )}
+            </View>
+
+            {/* Feature Indicators Row */}
+            <View style={styles.metaRow}>
+              <View style={styles.metaItem}>
+                <Text style={styles.metaLabel}>Musical</Text>
+                <Ionicons
+                  name={story.pages?.some(p => p.interactionType === 'music_challenge') ? 'checkmark-circle' : 'close-circle'}
+                  size={20}
+                  color={story.pages?.some(p => p.interactionType === 'music_challenge') ? '#27AE60' : '#B2BEC3'}
+                />
+              </View>
+              <View style={styles.metaItem}>
+                <Text style={styles.metaLabel}>Interactive</Text>
+                <Ionicons
+                  name={story.pages?.some(p => p.interactiveElements && p.interactiveElements.length > 0) ? 'checkmark-circle' : 'close-circle'}
+                  size={20}
+                  color={story.pages?.some(p => p.interactiveElements && p.interactiveElements.length > 0) ? '#27AE60' : '#B2BEC3'}
+                />
+              </View>
             </View>
 
             {/* Tags */}
@@ -489,6 +512,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: '#F0F0F0',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   closeButtonText: {
     fontFamily: Fonts.sans,
@@ -501,6 +531,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: '#FF6B6B',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   readButtonText: {
     fontFamily: Fonts.sans,
@@ -514,6 +551,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   deleteButtonText: {
     fontFamily: Fonts.sans,

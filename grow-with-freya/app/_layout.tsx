@@ -680,13 +680,16 @@ function AppContent() {
               onComplete={() => {
                 syncInProgressRef.current = false;
                 justLoggedInRef.current = false;
-                setLoadingMenuReady(false);
                 // Suppress carousel re-animation and container fade when MainMenu remounts in 'app' view
                 suppressNextCarouselAnimation();
                 suppressNextContainerFadeIn();
                 log.info('[Layout] Sync complete - transitioning to main menu');
                 setCurrentView('app');
                 setCurrentPage('main');
+                // Delay unmounting the loading MainMenu so the app-view MainMenu has time
+                // to mount and render its images from cache — prevents a visible flicker
+                // where strip images briefly disappear and re-decode between the two mounts.
+                setTimeout(() => setLoadingMenuReady(false), 500);
               }}
             />
           )}
@@ -716,7 +719,7 @@ function AppContent() {
             freeplay: <FreeplayScreen onBack={handleBackToMainMenu} />,
             account: <AccountScreen onBack={handleAccountBack} isActive={currentPage === 'account'} />,
           }}
-          duration={500}
+          duration={800}
         />
 
         {/* Story reader rendered on top - only loads AFTER mode selection is complete (not during transition) */}

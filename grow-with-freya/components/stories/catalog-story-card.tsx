@@ -1,8 +1,8 @@
-import React, { memo, useState, useCallback, useLayoutEffect } from 'react';
+import React, { memo, useState, useCallback, useLayoutEffect, useRef } from 'react';
 import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { useAnimatedStyle, useAnimatedProps, useSharedValue, withTiming, withSpring, withSequence, withDelay, Easing, runOnJS, cancelAnimation } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useAnimatedProps, useSharedValue, withTiming, withSpring, withSequence, withDelay, Easing, cancelAnimation } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { CatalogEntry, getLocalizedText } from '@/types/story';
@@ -11,6 +11,15 @@ import { Fonts } from '@/constants/theme';
 import type { SupportedLanguage } from '@/services/i18n';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+
+/** Format bytes into a compact human-readable string. */
+function formatBytes(bytes: number): string {
+  if (bytes <= 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
 
 /** Check if an error message indicates an authentication / login problem */
 function isAuthError(message: string): boolean {
@@ -53,6 +62,12 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
   const displayTitle = getLocalizedText(entry.localizedTitle, entry.title, language);
   const [downloading, setDownloading] = useState(false);
   const [complete, setComplete] = useState(false);
+  const [statusText, setStatusText] = useState<string | null>(null); // e.g. "Connection issue…"
+  const [downloadInfo, setDownloadInfo] = useState<string | null>(null); // e.g. "1.2 MB / 3 MB • 400 KB/s"
+
+  // Speed tracking refs (not state to avoid re-renders on every tick)
+  const lastBytesRef = useRef(0);
+  const lastSpeedTimeRef = useRef(0);
 
   // Animated values
   const progressValue = useSharedValue(0);     // 0-100 ring progress
@@ -126,92 +141,167 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
     return style;
   });
 
+  // Tracks the current download "session". Incremented on cancel so old
+  // promise resolutions are silently ignored (prevents stale state updates).
+  const downloadSessionRef = useRef(0);
+
+  /** Reset the card to its idle (not-downloading) state. */
+  const resetToIdle = useCallback(() => {
+    setDownloading(false);
+    setStatusText(null);
+    setDownloadInfo(null);
+    lastBytesRef.current = 0;
+    lastSpeedTimeRef.current = 0;
+    progressValue.value = withTiming(0, { duration: 200 });
+    ringOpacity.value = withTiming(0, { duration: 200 });
+  }, [progressValue, ringOpacity]);
+
   const handlePress = useCallback(async () => {
-    if (downloading || complete) return;
+    // ── Tap to cancel — immediate, no confirmation dialog ──
+    if (downloading) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      downloadSessionRef.current += 1; // invalidate old session
+      StoryDownloadService.cancelDownload(entry.storyId);
+      resetToIdle();
+      return;
+    }
+    if (complete) return;
+
+    // No network pre-check — start immediately, fail fast on actual error.
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const session = ++downloadSessionRef.current;
     setDownloading(true);
+    setStatusText(null);
     ringOpacity.value = withTiming(1, { duration: 200 });
 
     try {
       const result = await StoryDownloadService.downloadStory(
         entry.storyId,
         entry,
-        (p) => {
-          progressValue.value = withTiming(p.progress, { duration: 800, easing: Easing.linear });
+        (p: DownloadProgress) => {
+          // Ignore callbacks from a stale session
+          if (downloadSessionRef.current !== session) return;
+
+          if (p.phase === 'stalled') {
+            setStatusText(p.message === 'Connection lost' ? 'Connection lost…' : 'Connection issue…');
+            setDownloadInfo(null); // hide speed/size when stalled
+            return;
+          }
+
+          if (p.phase === 'downloading-assets' && p.detail) {
+            const { bytesDownloaded = 0, totalBytes = 0 } = p.detail;
+            const now = Date.now();
+
+            // Compute speed (bytes/s) from delta since last callback
+            let speedStr = '';
+            if (lastSpeedTimeRef.current > 0 && bytesDownloaded > lastBytesRef.current) {
+              const elapsed = (now - lastSpeedTimeRef.current) / 1000;
+              if (elapsed > 0) {
+                const speed = (bytesDownloaded - lastBytesRef.current) / elapsed;
+                speedStr = ` · ${formatBytes(speed)}/s`;
+              }
+            }
+            lastBytesRef.current = bytesDownloaded;
+            lastSpeedTimeRef.current = now;
+
+            const sizePart = totalBytes > 0
+              ? `${formatBytes(bytesDownloaded)} / ${formatBytes(totalBytes)}`
+              : formatBytes(bytesDownloaded);
+            setDownloadInfo(`${sizePart}${speedStr}`);
+          }
+
+          if (p.progress >= 0) {
+            setStatusText(null);
+            progressValue.value = withTiming(p.progress, { duration: 800, easing: Easing.linear });
+          }
         }
       );
 
-      if (result.success) {
-        // 1. Complete the ring
-        progressValue.value = withTiming(100, { duration: 300, easing: Easing.out(Easing.ease) });
+      // Ignore result from a stale session (user already cancelled & may have retried)
+      if (downloadSessionRef.current !== session) return;
 
-        // 2. Ring scales up and fades out
+      // ── Cancelled (user tap or auto-cancel from stall) ──
+      if (result.cancelled) {
+        resetToIdle();
+        // Show error only for auto-cancel (stall/timeout), not user-initiated
+        if (result.error && !result.error.includes('cancelled by user')) {
+          Alert.alert('Download Failed', 'Connection lost. Please check your internet and try again.', [{ text: 'OK' }]);
+        }
+        return;
+      }
+
+      if (result.success) {
+        setStatusText(null);
+        setDownloadInfo(null);
+
+        if (result.partialFailure) {
+          Alert.alert(
+            'Download Complete',
+            `Some content may be missing (${result.assetsFailed} file${result.assetsFailed === 1 ? '' : 's'} failed). ` +
+            'You can delete and re-download the story to try again.',
+            [{ text: 'OK' }],
+          );
+        }
+
+        progressValue.value = withTiming(100, { duration: 300, easing: Easing.out(Easing.ease) });
         ringScale.value = withDelay(300, withTiming(1.8, { duration: 350, easing: Easing.out(Easing.ease) }));
         ringOpacity.value = withDelay(300, withTiming(0, { duration: 350 }));
-
-        // 3. Checkmark pops in with spring
         checkOpacity.value = withDelay(400, withTiming(1, { duration: 200 }));
         checkScale.value = withDelay(400, withSpring(1, { damping: 12, stiffness: 200 }));
-
-        // 4. Overlay fades out to reveal the full-colour thumbnail
         overlayOpacity.value = withDelay(500, withTiming(0, { duration: 500, easing: Easing.out(Easing.ease) }));
-
-        // 5. Subtle card pop to punctuate the reveal
         cardScale.value = withDelay(600, withSequence(
           withSpring(1.04, { damping: 15, stiffness: 300 }),
           withSpring(1, { damping: 15, stiffness: 300 })
         ));
-
-        // 6. Checkmark fades out
         checkOpacity.value = withDelay(900, withTiming(0, { duration: 300 }));
         checkScale.value = withDelay(900, withTiming(1.3, { duration: 300 }));
-
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         setComplete(true);
 
-        // 7. After reveal, notify parent to start bubble-swap (or seamless swap)
         setTimeout(() => {
-          if (onDownloadComplete) {
-            onDownloadComplete(entry.storyId);
-          }
+          if (onDownloadComplete) onDownloadComplete(entry.storyId);
         }, 1300);
       } else {
-        setDownloading(false);
-        progressValue.value = withTiming(0, { duration: 200 });
-        ringOpacity.value = withTiming(0, { duration: 200 });
+        resetToIdle();
         const errorMsg = result.error || 'Something went wrong. Please try again.';
         if (isAuthError(errorMsg) && onAuthError) {
-          Alert.alert(
-            'Sign In Required',
-            'Please sign in to download stories.',
-            [
-              { text: 'Cancel', style: 'cancel' },
-              { text: 'Sign In', onPress: () => onAuthError() },
-            ],
-          );
+          Alert.alert('Sign In Required', 'Please sign in to download stories.', [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Sign In', onPress: () => onAuthError() },
+          ]);
         } else {
-          Alert.alert('Download Failed', errorMsg, [{ text: 'OK' }]);
+          // Detect network errors and show friendly message
+          const isNetworkError = /network|fetch|timeout|connection|internet|abort/i.test(errorMsg);
+          Alert.alert(
+            'Download Failed',
+            isNetworkError
+              ? 'Please check your internet connection and try again.'
+              : errorMsg,
+            [{ text: 'OK' }],
+          );
         }
       }
     } catch (err) {
-      setDownloading(false);
-      progressValue.value = withTiming(0, { duration: 200 });
-      ringOpacity.value = withTiming(0, { duration: 200 });
+      if (downloadSessionRef.current !== session) return;
+      resetToIdle();
       const errorMsg = err instanceof Error ? err.message : 'An unexpected error occurred.';
       if (isAuthError(errorMsg) && onAuthError) {
-        Alert.alert(
-          'Sign In Required',
-          'Please sign in to download stories.',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Sign In', onPress: () => onAuthError() },
-          ],
-        );
+        Alert.alert('Sign In Required', 'Please sign in to download stories.', [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Sign In', onPress: () => onAuthError() },
+        ]);
       } else {
-        Alert.alert('Download Failed', 'An unexpected error occurred. Please try again.', [{ text: 'OK' }]);
+        const isNetworkError = /network|fetch|timeout|connection|internet|abort/i.test(errorMsg);
+        Alert.alert(
+          'Download Failed',
+          isNetworkError
+            ? 'Please check your internet connection and try again.'
+            : 'An unexpected error occurred. Please try again.',
+          [{ text: 'OK' }],
+        );
       }
     }
-  }, [downloading, complete, entry, onDownloadComplete, onAuthError, progressValue, ringOpacity, ringScale, checkOpacity, checkScale, overlayOpacity, cardScale, collapseWidth]);
+  }, [downloading, complete, entry, onDownloadComplete, onAuthError, progressValue, ringOpacity, ringScale, checkOpacity, checkScale, overlayOpacity, cardScale, resetToIdle]);
 
   const handleLongPress = useCallback(() => {
     if (downloading) return;
@@ -250,30 +340,42 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
           </View>
         )}
 
-        {/* Circular progress ring (during download) */}
+        {/* Circular progress ring (during download) — tap to cancel */}
         {downloading && (
           <Animated.View style={[cardStyles.iconContainer, ringContainerStyle]}>
-            <Svg width={RING_SIZE} height={RING_SIZE} style={{ transform: [{ rotate: '-90deg' }] }}>
-              <Circle
-                cx={RING_SIZE / 2}
-                cy={RING_SIZE / 2}
-                r={RING_RADIUS}
-                stroke="rgba(255, 255, 255, 0.2)"
-                strokeWidth={RING_STROKE}
-                fill="rgba(0, 0, 0, 0.3)"
-              />
-              <AnimatedCircle
-                cx={RING_SIZE / 2}
-                cy={RING_SIZE / 2}
-                r={RING_RADIUS}
-                stroke="#4ECDC4"
-                strokeWidth={RING_STROKE}
-                fill="transparent"
-                strokeDasharray={RING_CIRCUMFERENCE}
-                animatedProps={animatedCircleProps}
-                strokeLinecap="round"
-              />
-            </Svg>
+            <View style={cardStyles.ringWrapper}>
+              <Svg width={RING_SIZE} height={RING_SIZE} style={{ transform: [{ rotate: '-90deg' }] }}>
+                <Circle
+                  cx={RING_SIZE / 2}
+                  cy={RING_SIZE / 2}
+                  r={RING_RADIUS}
+                  stroke="rgba(255, 255, 255, 0.2)"
+                  strokeWidth={RING_STROKE}
+                  fill="rgba(0, 0, 0, 0.3)"
+                />
+                <AnimatedCircle
+                  cx={RING_SIZE / 2}
+                  cy={RING_SIZE / 2}
+                  r={RING_RADIUS}
+                  stroke={statusText ? '#FFD93D' : '#4ECDC4'}
+                  strokeWidth={RING_STROKE}
+                  fill="transparent"
+                  strokeDasharray={RING_CIRCUMFERENCE}
+                  animatedProps={animatedCircleProps}
+                  strokeLinecap="round"
+                />
+              </Svg>
+              {/* Small stop/cancel icon centred inside the ring */}
+              <View style={cardStyles.cancelIcon}>
+                <Ionicons name="stop" size={14} color="rgba(255,255,255,0.7)" />
+              </View>
+            </View>
+            {/* Status: stall message takes priority, otherwise show speed/size */}
+            {statusText ? (
+              <Text style={cardStyles.stallText}>{statusText}</Text>
+            ) : downloadInfo ? (
+              <Text style={cardStyles.downloadInfoText} numberOfLines={1}>{downloadInfo}</Text>
+            ) : null}
           </Animated.View>
         )}
 
@@ -384,5 +486,42 @@ const cardStyles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
     minHeight: 32,
+  },
+  ringWrapper: {
+    position: 'relative',
+    width: 48,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cancelIcon: {
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  downloadInfoText: {
+    position: 'absolute',
+    bottom: 6,
+    color: 'rgba(255, 255, 255, 0.65)',
+    fontFamily: Fonts.rounded,
+    fontSize: 8,
+    fontWeight: '600',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+    paddingHorizontal: 4,
+  },
+  stallText: {
+    position: 'absolute',
+    bottom: 6,
+    color: '#FFD93D',
+    fontFamily: Fonts.rounded,
+    fontSize: 9,
+    fontWeight: '700',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
 });

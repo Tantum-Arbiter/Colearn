@@ -438,4 +438,435 @@ describe('StoryDownloadService', () => {
     expect(lastAssetPhase.detail!.currentAsset).toBe(2);
     expect(lastAssetPhase.detail!.totalAssets).toBe(2);
   });
+
+  // ─── Cancellation ───────────────────────────────────────────────
+
+  it('should cancel a download when cancelDownload is called', async () => {
+    // Make the API call hang until we cancel
+    let resolveApi: (value: any) => void;
+    const hangingPromise = new Promise((resolve) => { resolveApi = resolve; });
+    mockApiClient.request.mockReturnValueOnce(hangingPromise as any);
+
+    const phases: string[] = [];
+    const downloadPromise = StoryDownloadService.downloadStory('free-story', freeCatalogEntry, (p) => {
+      phases.push(p.phase);
+    });
+
+    // Wait a tick so the download starts
+    await new Promise(r => setTimeout(r, 10));
+
+    // Cancel
+    StoryDownloadService.cancelDownload('free-story');
+
+    // Resolve the API so the checkAbort fires
+    resolveApi!(mockStory);
+
+    const result = await downloadPromise;
+    expect(result.cancelled).toBe(true);
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('cancelled');
+  });
+
+  it('should return cancelled phase in progress when download is cancelled', async () => {
+    mockApiClient.request.mockImplementation(async () => {
+      // Cancel mid-flight
+      StoryDownloadService.cancelDownload('free-story');
+      return mockStory;
+    });
+    mockAssetUtils.extractAssetPaths.mockReturnValue([]);
+    mockAssetUtils.filterUncachedAssets.mockResolvedValue([]);
+
+    const phases: string[] = [];
+    const result = await StoryDownloadService.downloadStory('free-story', freeCatalogEntry, (p) => {
+      phases.push(p.phase);
+    });
+
+    expect(result.cancelled).toBe(true);
+    expect(phases).toContain('cancelled');
+  });
+
+  it('cancelDownload should be a no-op for unknown storyId', () => {
+    // Should not throw
+    expect(() => StoryDownloadService.cancelDownload('nonexistent')).not.toThrow();
+  });
+
+  // ─── Partial failure ────────────────────────────────────────────
+
+  it('should flag partialFailure when some assets fail', async () => {
+    mockApiClient.request.mockResolvedValueOnce(mockStory);
+    mockAssetUtils.extractAssetPaths.mockReturnValue(['a.webp', 'b.webp']);
+    mockAssetUtils.filterUncachedAssets.mockResolvedValue(['a.webp', 'b.webp']);
+    mockAssetUtils.getBatchSignedUrls.mockResolvedValue({
+      urls: [{ path: 'a.webp', signedUrl: 'https://url1' }],
+      failed: ['b.webp'],
+      apiCalls: 1,
+    });
+    mockAssetUtils.downloadAssetsInBatches.mockResolvedValue({
+      downloaded: 1,
+      failed: 0,
+      bytesDownloaded: 512,
+      errors: [],
+    });
+    mockAssetUtils.formatBytes.mockReturnValue('512 Bytes');
+    mockCacheManager.updateStories.mockResolvedValue();
+
+    const result = await StoryDownloadService.downloadStory('free-story', freeCatalogEntry);
+
+    expect(result.success).toBe(true);
+    expect(result.partialFailure).toBe(true);
+    expect(result.assetsFailed).toBe(1);
+  });
+
+  it('should NOT flag partialFailure when all assets succeed', async () => {
+    mockApiClient.request.mockResolvedValueOnce(mockStory);
+    mockAssetUtils.extractAssetPaths.mockReturnValue(['a.webp']);
+    mockAssetUtils.filterUncachedAssets.mockResolvedValue(['a.webp']);
+    mockAssetUtils.getBatchSignedUrls.mockResolvedValue({
+      urls: [{ path: 'a.webp', signedUrl: 'https://url1' }],
+      failed: [],
+      apiCalls: 1,
+    });
+    mockAssetUtils.downloadAssetsInBatches.mockResolvedValue({
+      downloaded: 1,
+      failed: 0,
+      bytesDownloaded: 1024,
+      errors: [],
+    });
+    mockAssetUtils.formatBytes.mockReturnValue('1 KB');
+    mockCacheManager.updateStories.mockResolvedValue();
+
+    const result = await StoryDownloadService.downloadStory('free-story', freeCatalogEntry);
+
+    expect(result.success).toBe(true);
+    expect(result.partialFailure).toBeUndefined();
+  });
+
+  // ─── Overall timeout ────────────────────────────────────────────
+
+  it('should fail with timeout when download exceeds MAX_DOWNLOAD_DURATION_MS', async () => {
+    const realDateNow = Date.now;
+    let callCount = 0;
+    // First few calls return real time; then jump far into the future to trigger timeout
+    jest.spyOn(Date, 'now').mockImplementation(() => {
+      callCount++;
+      if (callCount > 5) {
+        return realDateNow() + 6 * 60 * 1000; // 6 min in the future
+      }
+      return realDateNow();
+    });
+
+    mockApiClient.request.mockResolvedValueOnce(mockStory);
+    mockAssetUtils.extractAssetPaths.mockReturnValue(['a.webp']);
+    mockAssetUtils.filterUncachedAssets.mockResolvedValue(['a.webp']);
+
+    const result = await StoryDownloadService.downloadStory('free-story', freeCatalogEntry);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('timed out');
+
+    jest.spyOn(Date, 'now').mockRestore();
+  });
+
+  // ─── Stall detection ────────────────────────────────────────────
+
+  it('should emit stalled phase when no progress for STALL_THRESHOLD_MS (10s)', async () => {
+    let resolveDownload: (val: any) => void;
+
+    mockApiClient.request.mockResolvedValueOnce(mockStory);
+    mockAssetUtils.extractAssetPaths.mockReturnValue(['a.webp']);
+    mockAssetUtils.filterUncachedAssets.mockResolvedValue(['a.webp']);
+    mockAssetUtils.getBatchSignedUrls.mockResolvedValue({
+      urls: [{ path: 'a.webp', signedUrl: 'https://url1' }],
+      failed: [],
+      apiCalls: 1,
+    });
+    mockAssetUtils.formatBytes.mockReturnValue('0 Bytes');
+    mockCacheManager.updateStories.mockResolvedValue();
+
+    // downloadAssetsInBatches will hang until we resolve
+    mockAssetUtils.downloadAssetsInBatches.mockImplementation(() => {
+      return new Promise((resolve) => { resolveDownload = resolve; });
+    });
+
+    // Mock Date.now: first calls return real time, then jump 15s ahead
+    // to trigger stall (threshold is 10s) but NOT auto-cancel (threshold is 20s)
+    const baseTime = Date.now();
+    let timeOffset = 0;
+    const dateNowSpy = jest.spyOn(Date, 'now').mockImplementation(() => baseTime + timeOffset);
+
+    const phases: string[] = [];
+    const downloadPromise = StoryDownloadService.downloadStory('free-story', freeCatalogEntry, (p) => {
+      phases.push(p.phase);
+    });
+
+    // Wait for the download to reach the hanging downloadAssetsInBatches
+    await new Promise(r => setTimeout(r, 50));
+
+    // Jump time forward 15s — triggers stall warning but NOT auto-cancel
+    timeOffset = 15_000;
+
+    // Wait for the stall interval (every 3s) to fire
+    await new Promise(r => setTimeout(r, 4000));
+
+    // Resolve the download before auto-cancel kicks in
+    resolveDownload!({ downloaded: 1, failed: 0, bytesDownloaded: 100, errors: [] });
+
+    dateNowSpy.mockRestore();
+    const result = await downloadPromise;
+
+    expect(phases).toContain('stalled');
+    expect(result.success).toBe(true);
+  }, 15000);
+
+  it('should auto-cancel download after STALL_AUTO_CANCEL_MS (20s) of no progress', async () => {
+    mockApiClient.request.mockResolvedValueOnce(mockStory);
+    mockAssetUtils.extractAssetPaths.mockReturnValue(['a.webp']);
+    mockAssetUtils.filterUncachedAssets.mockResolvedValue(['a.webp']);
+    mockAssetUtils.getBatchSignedUrls.mockResolvedValue({
+      urls: [{ path: 'a.webp', signedUrl: 'https://url1' }],
+      failed: [],
+      apiCalls: 1,
+    });
+    mockAssetUtils.formatBytes.mockReturnValue('0 Bytes');
+    mockCacheManager.updateStories.mockResolvedValue();
+
+    // downloadAssetsInBatches hangs forever — simulates network drop
+    let resolveDownload: (val: any) => void;
+    mockAssetUtils.downloadAssetsInBatches.mockImplementation(() => {
+      return new Promise((resolve) => { resolveDownload = resolve; });
+    });
+
+    // Mock Date.now: jump 25s ahead to trigger auto-cancel (threshold is 20s)
+    const baseTime = Date.now();
+    let timeOffset = 0;
+    const dateNowSpy = jest.spyOn(Date, 'now').mockImplementation(() => baseTime + timeOffset);
+
+    const phases: string[] = [];
+    const messages: string[] = [];
+    const downloadPromise = StoryDownloadService.downloadStory('free-story', freeCatalogEntry, (p) => {
+      phases.push(p.phase);
+      messages.push(p.message);
+    });
+
+    await new Promise(r => setTimeout(r, 50));
+
+    // Jump time 25s — past auto-cancel threshold
+    timeOffset = 25_000;
+
+    // Wait for the stall interval (every 3s) to fire and auto-cancel
+    await new Promise(r => setTimeout(r, 4000));
+
+    // Resolve the hanging download so the promise completes
+    resolveDownload!({ downloaded: 0, failed: 1, bytesDownloaded: 0, errors: ['timeout'] });
+
+    dateNowSpy.mockRestore();
+    const result = await downloadPromise;
+
+    expect(phases).toContain('stalled');
+    expect(result.cancelled).toBe(true);
+    expect(messages).toContain('Connection lost');
+  }, 15000);
+
+  // ─── Cleanup after cancellation ─────────────────────────────────
+
+  it('should clean up cancellation token after download completes', async () => {
+    mockApiClient.request.mockResolvedValueOnce(mockStory);
+    mockAssetUtils.extractAssetPaths.mockReturnValue([]);
+    mockAssetUtils.filterUncachedAssets.mockResolvedValue([]);
+    mockCacheManager.updateStories.mockResolvedValue();
+
+    await StoryDownloadService.downloadStory('free-story', freeCatalogEntry);
+
+    // Token should be cleaned up
+    expect((StoryDownloadService as any).cancellationTokens.has('free-story')).toBe(false);
+    expect((StoryDownloadService as any).activeDownloads.has('free-story')).toBe(false);
+  });
+
+  it('should clean up cancellation token after cancelled download', async () => {
+    mockApiClient.request.mockImplementation(async () => {
+      StoryDownloadService.cancelDownload('free-story');
+      return mockStory;
+    });
+    mockAssetUtils.extractAssetPaths.mockReturnValue([]);
+    mockAssetUtils.filterUncachedAssets.mockResolvedValue([]);
+
+    await StoryDownloadService.downloadStory('free-story', freeCatalogEntry);
+
+    expect((StoryDownloadService as any).cancellationTokens.has('free-story')).toBe(false);
+    expect((StoryDownloadService as any).activeDownloads.has('free-story')).toBe(false);
+  });
+
+  it('should clean up cancellation token after failed download', async () => {
+    mockApiClient.request.mockRejectedValueOnce(new Error('Server error'));
+
+    await StoryDownloadService.downloadStory('free-story', freeCatalogEntry);
+
+    expect((StoryDownloadService as any).cancellationTokens.has('free-story')).toBe(false);
+    expect((StoryDownloadService as any).activeDownloads.has('free-story')).toBe(false);
+  });
+
+  // ─── New progress message format ───────────────────────────────
+
+  it('should include asset count in downloading-assets progress message', async () => {
+    mockApiClient.request.mockResolvedValueOnce(mockStory);
+    mockAssetUtils.extractAssetPaths.mockReturnValue(['a.webp', 'b.webp']);
+    mockAssetUtils.filterUncachedAssets.mockResolvedValue(['a.webp', 'b.webp']);
+    mockAssetUtils.getBatchSignedUrls.mockResolvedValue({
+      urls: [
+        { path: 'a.webp', signedUrl: 'https://url1' },
+        { path: 'b.webp', signedUrl: 'https://url2' },
+      ],
+      failed: [],
+      apiCalls: 1,
+    });
+    mockAssetUtils.downloadAssetsInBatches.mockImplementation(async (_urls, onProgress) => {
+      onProgress?.(1, 2, 512, 1024);
+      return { downloaded: 2, failed: 0, bytesDownloaded: 1024, errors: [] };
+    });
+    mockAssetUtils.formatBytes
+      .mockReturnValueOnce('512 Bytes')
+      .mockReturnValueOnce('1 KB');
+    mockCacheManager.updateStories.mockResolvedValue();
+
+    const messages: string[] = [];
+    await StoryDownloadService.downloadStory('free-story', freeCatalogEntry, (p) => {
+      if (p.phase === 'downloading-assets' && p.detail) {
+        messages.push(p.message);
+      }
+    });
+
+    expect(messages.length).toBeGreaterThan(0);
+    // New message format: "Downloading 1/2 — 512 Bytes / 1 KB"
+    expect(messages[0]).toMatch(/Downloading \d+\/\d+ —/);
+  });
+});
+
+// ===================== Edge cases (via StoryDownloadService orchestration) =====================
+describe('Download pipeline edge cases (via StoryDownloadService)', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    Object.keys(asyncStorageStore).forEach(k => delete asyncStorageStore[k]);
+    (StoryDownloadService as any).activeDownloads = new Map();
+    (StoryDownloadService as any).cancellationTokens = new Map();
+  });
+
+  it('should pass download errors through as assetsFailed', async () => {
+    mockApiClient.request.mockResolvedValueOnce(mockStory);
+    mockAssetUtils.extractAssetPaths.mockReturnValue(['a.webp', 'b.webp', 'c.webp']);
+    mockAssetUtils.filterUncachedAssets.mockResolvedValue(['a.webp', 'b.webp', 'c.webp']);
+    mockAssetUtils.getBatchSignedUrls.mockResolvedValue({
+      urls: [
+        { path: 'a.webp', signedUrl: 'https://url1' },
+        { path: 'b.webp', signedUrl: 'https://url2' },
+        { path: 'c.webp', signedUrl: 'https://url3' },
+      ],
+      failed: [],
+      apiCalls: 1,
+    });
+    // Simulate 2 of 3 assets failing during download
+    mockAssetUtils.downloadAssetsInBatches.mockResolvedValue({
+      downloaded: 1,
+      failed: 2,
+      bytesDownloaded: 512,
+      errors: ['b.webp: Timeout', 'c.webp: Timeout'],
+    });
+    mockAssetUtils.formatBytes.mockReturnValue('512 Bytes');
+    mockCacheManager.updateStories.mockResolvedValue();
+
+    const result = await StoryDownloadService.downloadStory('free-story', freeCatalogEntry);
+
+    expect(result.success).toBe(true);
+    expect(result.partialFailure).toBe(true);
+    expect(result.assetsFailed).toBe(2);
+    expect(result.assetsDownloaded).toBe(1);
+  });
+
+  it('should still succeed when all URL generations fail but story saves', async () => {
+    mockApiClient.request.mockResolvedValueOnce(mockStory);
+    mockAssetUtils.extractAssetPaths.mockReturnValue(['a.webp']);
+    mockAssetUtils.filterUncachedAssets.mockResolvedValue(['a.webp']);
+    mockAssetUtils.getBatchSignedUrls.mockResolvedValue({
+      urls: [],
+      failed: ['a.webp'], // All URLs failed
+      apiCalls: 1,
+    });
+    mockCacheManager.updateStories.mockResolvedValue();
+
+    const result = await StoryDownloadService.downloadStory('free-story', freeCatalogEntry);
+
+    // Story is saved but all assets failed
+    expect(result.success).toBe(true);
+    expect(result.partialFailure).toBe(true);
+    expect(result.assetsFailed).toBe(1);
+    expect(result.assetsDownloaded).toBe(0);
+    // downloadAssetsInBatches should NOT have been called (no URLs to download)
+    expect(mockAssetUtils.downloadAssetsInBatches).not.toHaveBeenCalled();
+  });
+
+  it('formatBytes should handle various sizes correctly', () => {
+    const realAssetUtils = jest.requireActual('../../services/asset-download-utils').AssetDownloadUtils;
+
+    expect(realAssetUtils.formatBytes(0)).toBe('0 Bytes');
+    expect(realAssetUtils.formatBytes(512)).toBe('512 Bytes');
+    expect(realAssetUtils.formatBytes(1024)).toBe('1 KB');
+    expect(realAssetUtils.formatBytes(1048576)).toBe('1 MB');
+    expect(realAssetUtils.formatBytes(1073741824)).toBe('1 GB');
+  });
+
+  it('should handle concurrent downloads of different stories independently', async () => {
+    const storyA = { ...mockStory, id: 'story-a' };
+    const storyB = { ...mockStory, id: 'story-b' };
+
+    mockApiClient.request
+      .mockResolvedValueOnce(storyA)
+      .mockResolvedValueOnce(storyB);
+    mockAssetUtils.extractAssetPaths.mockReturnValue([]);
+    mockAssetUtils.filterUncachedAssets.mockResolvedValue([]);
+    mockCacheManager.updateStories.mockResolvedValue();
+
+    const entryA = { ...freeCatalogEntry, storyId: 'story-a' };
+    const entryB = { ...freeCatalogEntry, storyId: 'story-b' };
+
+    const [resultA, resultB] = await Promise.all([
+      StoryDownloadService.downloadStory('story-a', entryA),
+      StoryDownloadService.downloadStory('story-b', entryB),
+    ]);
+
+    expect(resultA.success).toBe(true);
+    expect(resultA.storyId).toBe('story-a');
+    expect(resultB.success).toBe(true);
+    expect(resultB.storyId).toBe('story-b');
+    expect(mockApiClient.request).toHaveBeenCalledTimes(2);
+  });
+
+  it('should cancel one story without affecting another concurrent download', async () => {
+    const storyA = { ...mockStory, id: 'cancel-me' };
+    const storyB = { ...mockStory, id: 'keep-going' };
+
+    let resolveA: (val: any) => void;
+    mockApiClient.request
+      .mockImplementationOnce(() => new Promise(resolve => { resolveA = resolve; }))
+      .mockResolvedValueOnce(storyB);
+    mockAssetUtils.extractAssetPaths.mockReturnValue([]);
+    mockAssetUtils.filterUncachedAssets.mockResolvedValue([]);
+    mockCacheManager.updateStories.mockResolvedValue();
+
+    const entryA = { ...freeCatalogEntry, storyId: 'cancel-me' };
+    const entryB = { ...freeCatalogEntry, storyId: 'keep-going' };
+
+    const downloadA = StoryDownloadService.downloadStory('cancel-me', entryA);
+    const downloadB = StoryDownloadService.downloadStory('keep-going', entryB);
+
+    // Wait a tick, then cancel A
+    await new Promise(r => setTimeout(r, 10));
+    StoryDownloadService.cancelDownload('cancel-me');
+    resolveA!(storyA); // let A proceed so checkAbort fires
+
+    const [resultA, resultB] = await Promise.all([downloadA, downloadB]);
+
+    expect(resultA.cancelled).toBe(true);
+    expect(resultA.success).toBe(false);
+    expect(resultB.success).toBe(true);
+    expect(resultB.cancelled).toBeUndefined();
+  });
 });

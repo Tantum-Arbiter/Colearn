@@ -21,7 +21,7 @@ import { Fonts } from '@/constants/theme';
 const BASE_RADIUS = 150;
 const BASE_IMAGE_SIZE = 90;
 const CENTER_SCALE = 1.0;
-const SIDE_SCALE = 0.5;
+const SIDE_SCALE = 0.85;
 
 interface Props {
   selectedInstrumentId: string;
@@ -101,7 +101,7 @@ export const InstrumentCarousel = React.memo(function InstrumentCarousel({ selec
     <View style={[st.wrapper, { height: carouselHeight }]}>
       {/* Left arrow — positioned at image center */}
       <Pressable
-        style={[st.arrow, { width: arrowSize, height: arrowSize, borderRadius: arrowSize / 2, top: arrowTop, left: 0 }]}
+        style={[st.arrow, { width: arrowSize, height: arrowSize, borderRadius: arrowSize / 2, top: arrowTop, left: '20%' }]}
         onPress={() => goToNeighbor(1)}>
         <Text style={[st.arrowTxt, { fontSize: scaledFontSize(26) }]}>‹</Text>
       </Pressable>
@@ -121,7 +121,7 @@ export const InstrumentCarousel = React.memo(function InstrumentCarousel({ selec
       </GestureHandlerRootView>
       {/* Right arrow — positioned at image center */}
       <Pressable
-        style={[st.arrow, { width: arrowSize, height: arrowSize, borderRadius: arrowSize / 2, top: arrowTop, right: 0 }]}
+        style={[st.arrow, { width: arrowSize, height: arrowSize, borderRadius: arrowSize / 2, top: arrowTop, right: '20%' }]}
         onPress={() => goToNeighbor(-1)}>
         <Text style={[st.arrowTxt, { fontSize: scaledFontSize(26) }]}>›</Text>
       </Pressable>

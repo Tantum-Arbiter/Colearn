@@ -73,8 +73,8 @@ export const MusicControl: React.FC<MusicControlProps> = ({
   };
 
   const getBorderColor = () => {
-    // No border for menu variant to match back button styling
-    return isStoryVariant ? 'rgba(0, 0, 0, 0.1)' : 'transparent';
+    // Story pages: subtle dark border; Menu: subtle white border
+    return isStoryVariant ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.3)';
   };
 
   return (
@@ -145,5 +145,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
 });

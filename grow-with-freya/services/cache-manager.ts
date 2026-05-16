@@ -445,6 +445,9 @@ export class CacheManager {
     return localPath;
   }
 
+  /** Per-asset download timeout (ms). Kept short so stall detection kicks in quickly. */
+  static readonly ASSET_DOWNLOAD_TIMEOUT_MS = 30_000; // 30 seconds
+
   static async downloadAndCacheAsset(
     url: string,
     assetPath: string,
@@ -461,8 +464,16 @@ export class CacheManager {
       await FileSystem.makeDirectoryAsync(parentDir, { intermediates: true });
     }
 
-    // Download the file
-    const downloadResult = await FileSystem.downloadAsync(url, localPath);
+    // Download with timeout — FileSystem.downloadAsync has no built-in timeout
+    const downloadPromise = FileSystem.downloadAsync(url, localPath);
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(
+        () => reject(new Error(`Asset download timed out after ${this.ASSET_DOWNLOAD_TIMEOUT_MS / 1000}s: ${assetPath}`)),
+        this.ASSET_DOWNLOAD_TIMEOUT_MS
+      );
+    });
+
+    const downloadResult = await Promise.race([downloadPromise, timeoutPromise]);
 
     if (downloadResult.status !== 200) {
       throw new Error(`Failed to download asset: ${downloadResult.status}`);

@@ -9,6 +9,9 @@ const log = Logger.create('AssetDownloadUtils');
 export const BATCH_URL_SIZE = 100;
 // Concurrent download limit
 export const CONCURRENT_DOWNLOADS = 5;
+// Retry config for individual asset downloads
+const ASSET_MAX_RETRIES = 2;
+const ASSET_RETRY_BASE_DELAY_MS = 1000; // 1s, 2s exponential backoff
 
 export interface BatchUrlsResponse {
   urls: Array<{
@@ -143,23 +146,35 @@ export class AssetDownloadUtils {
 
       const results = await Promise.allSettled(
         chunk.map(async ({ path, signedUrl }) => {
-          try {
-            const localPath = await CacheManager.downloadAndCacheAsset(signedUrl, path);
-            let fileSize = 0;
+          // Retry loop with exponential backoff
+          let lastError = '';
+          for (let attempt = 0; attempt <= ASSET_MAX_RETRIES; attempt++) {
             try {
-              const FileSystem = await import('expo-file-system/legacy');
-              const info = await FileSystem.getInfoAsync(localPath);
-              if (info.exists && 'size' in info) {
-                fileSize = info.size || 0;
+              if (attempt > 0) {
+                const delay = ASSET_RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1);
+                log.info(`Retry ${attempt}/${ASSET_MAX_RETRIES} for ${path} after ${delay}ms`);
+                await new Promise(r => setTimeout(r, delay));
               }
-            } catch {
-              // Ignore size tracking errors
+              const localPath = await CacheManager.downloadAndCacheAsset(signedUrl, path);
+              let fileSize = 0;
+              try {
+                const FileSystem = await import('expo-file-system/legacy');
+                const info = await FileSystem.getInfoAsync(localPath);
+                if (info.exists && 'size' in info) {
+                  fileSize = info.size || 0;
+                }
+              } catch {
+                // Ignore size tracking errors
+              }
+              return { success: true, path, size: fileSize };
+            } catch (error) {
+              lastError = error instanceof Error ? error.message : 'Unknown error';
+              if (attempt === ASSET_MAX_RETRIES) {
+                return { success: false, path, error: lastError, size: 0 };
+              }
             }
-            return { success: true, path, size: fileSize };
-          } catch (error) {
-            const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-            return { success: false, path, error: errorMsg, size: 0 };
           }
+          return { success: false, path, error: lastError, size: 0 };
         })
       );
 

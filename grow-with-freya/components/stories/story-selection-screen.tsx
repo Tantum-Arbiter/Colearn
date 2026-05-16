@@ -36,6 +36,29 @@ import { CatalogStoryCard } from './catalog-story-card';
 import { StoryDownloadService } from '@/services/story-download-service';
 import type { SupportedLanguage } from '@/services/i18n';
 
+// Story experience type filters — detect from page content, not tags
+type StoryTypeFilter = 'musical' | 'interactive' | 'classic';
+
+const ALL_TYPE_FILTERS: Set<StoryTypeFilter> = new Set(['musical', 'interactive', 'classic']);
+
+const TYPE_FILTER_ACTIVE_COLOR = 'rgba(100, 140, 255, 0.25)'; // Subtle blue tint when selected
+
+const STORY_TYPE_FILTERS: { id: StoryTypeFilter; icon: keyof typeof Ionicons.glyphMap; label: string }[] = [
+  { id: 'musical',     icon: 'musical-notes-outline',   label: 'Musical' },
+  { id: 'interactive', icon: 'hand-left-outline',       label: 'Interactive' },
+  { id: 'classic',     icon: 'book-outline',            label: 'Classic' },
+];
+
+/** Does this story contain at least one music challenge page? */
+function storyHasMusic(story: Story): boolean {
+  return !!story.pages?.some(p => p.interactionType === 'music_challenge');
+}
+
+/** Does this story contain at least one page with interactive elements? */
+function storyHasInteractive(story: Story): boolean {
+  return !!story.pages?.some(p => p.interactiveElements && p.interactiveElements.length > 0);
+}
+
 // White Ionicons icon for each filter tag (replaces coloured emojis)
 const TAG_ICONS: Record<StoryFilterTag, keyof typeof Ionicons.glyphMap> = {
   personalized: 'person-outline',
@@ -57,8 +80,8 @@ const TAG_ICONS: Record<StoryFilterTag, keyof typeof Ionicons.glyphMap> = {
 };
 
 // Constants for card dimensions - defined once, not on every render
-const CARD_WIDTH = 160;
-const CARD_HEIGHT = 120;
+const CARD_WIDTH = 176;
+const CARD_HEIGHT = 132;
 const CARD_MARGIN = 15;
 const ITEM_WIDTH = CARD_WIDTH + CARD_MARGIN;
 
@@ -293,6 +316,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   const [stories, setStories] = useState<Story[]>(initialStories);
   const [isLoadingStories, setIsLoadingStories] = useState(!StoryLoader.getCachedStories());
   const [selectedTags, setSelectedTags] = useState<Set<StoryFilterTag>>(new Set());
+  const [storyTypeFilters, setStoryTypeFilters] = useState<Set<StoryTypeFilter>>(new Set(ALL_TYPE_FILTERS));
 
   // Catalog entries (not-yet-downloaded stories) merged into genre rows
   const [catalogEntries, setCatalogEntries] = useState<CatalogEntry[]>([]);
@@ -315,15 +339,36 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
 
   // Get favorite and read story IDs from store
   const favoriteStoryIds = useAppStore((state) => state.favoriteStoryIds);
+  const toggleFavoriteStory = useAppStore((state) => state.toggleFavoriteStory);
   const readStoryIds = useAppStore((state) => state.readStoryIds);
 
   // Filter stories based on selected tags (OR logic - match any selected tag)
+  // AND experience type filters (musical / interactive / classic — OR within type, AND with tags)
   const filteredStories = useMemo(() => {
-    if (selectedTags.size === 0) return stories;
-    return stories.filter(story =>
-      Array.from(selectedTags).some(tag => story.tags?.includes(tag))
-    );
-  }, [stories, selectedTags]);
+    let result = stories;
+
+    // Tag filter (OR logic)
+    if (selectedTags.size > 0) {
+      result = result.filter(story =>
+        Array.from(selectedTags).some(tag => story.tags?.includes(tag))
+      );
+    }
+
+    // Experience type filter (OR logic — show story if it matches ANY active type)
+    // Skip filtering when all types are selected (no-op)
+    if (storyTypeFilters.size < ALL_TYPE_FILTERS.size) {
+      result = result.filter(story => {
+        const hasMusic = storyHasMusic(story);
+        const hasInteractive = storyHasInteractive(story);
+        const isClassic = !hasMusic && !hasInteractive;
+        return (storyTypeFilters.has('musical') && hasMusic)
+          || (storyTypeFilters.has('interactive') && hasInteractive)
+          || (storyTypeFilters.has('classic') && isClassic);
+      });
+    }
+
+    return result;
+  }, [stories, selectedTags, storyTypeFilters]);
 
   // Get favorite stories (respects current filters)
   const favoriteStories = useMemo(() => {
@@ -347,6 +392,21 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
         newSet.add(tag);
       }
       return newSet;
+    });
+  }, []);
+
+  const handleTypeFilterPress = useCallback((type: StoryTypeFilter) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setStoryTypeFilters(prev => {
+      const next = new Set(prev);
+      if (next.has(type)) {
+        // Don't allow removing the last filter
+        if (next.size <= 1) return prev;
+        next.delete(type);
+      } else {
+        next.add(type);
+      }
+      return next;
     });
   }, []);
 
@@ -397,6 +457,10 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     const success = await StoryDownloadService.deleteStory(storyId);
     if (success) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      // Remove from favorites if it was favorited
+      if (favoriteStoryIds.includes(storyId)) {
+        toggleFavoriteStory(storyId);
+      }
       StoryLoader.invalidateCache();
       const loadedStories = await StoryLoader.getStories();
       setStories(loadedStories);
@@ -404,7 +468,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       setCatalogEntries(entries);
     }
     setDeletingStoryId(null);
-  }, [deletingStoryId]);
+  }, [deletingStoryId, favoriteStoryIds, toggleFavoriteStory]);
 
   // All story images are loaded from local cache after batch sync
   // No need for warm cache - images are already local file paths
@@ -587,17 +651,32 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     });
 
     // Add catalog entries into their category rows
-    catalogEntries.forEach(entry => {
-      const cat = entry.category;
-      if (!itemMap[cat]) itemMap[cat] = [];
-      // Avoid duplicates (story already downloaded)
-      const isDuplicate = itemMap[cat].some(
-        item => item.type === 'story' && item.data.id === entry.storyId
-      );
-      if (!isDuplicate) {
-        itemMap[cat].push({ type: 'catalog', data: entry });
+    // Catalog entries don't have page data, so we can't detect musical/interactive.
+    // When type filters are active (not all selected), hide catalog entries since
+    // we can't classify them. Tag filters still apply via entry.tags.
+    const typeFilterActive = storyTypeFilters.size < ALL_TYPE_FILTERS.size;
+    if (!typeFilterActive) {
+      let filteredCatalog = catalogEntries;
+
+      // Apply tag filter to catalog entries too
+      if (selectedTags.size > 0) {
+        filteredCatalog = filteredCatalog.filter(entry =>
+          Array.from(selectedTags).some(tag => entry.tags?.includes(tag))
+        );
       }
-    });
+
+      filteredCatalog.forEach(entry => {
+        const cat = entry.category;
+        if (!itemMap[cat]) itemMap[cat] = [];
+        // Avoid duplicates (story already downloaded)
+        const isDuplicate = itemMap[cat].some(
+          item => item.type === 'story' && item.data.id === entry.storyId
+        );
+        if (!isDuplicate) {
+          itemMap[cat].push({ type: 'catalog', data: entry });
+        }
+      });
+    }
 
     const genres = Object.keys(itemMap)
       .filter(g => itemMap[g].length > 0)
@@ -608,7 +687,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       });
 
     return { availableGenres: genres, genreItems: itemMap };
-  }, [filteredStories, catalogEntries]);
+  }, [filteredStories, catalogEntries, storyTypeFilters, selectedTags]);
 
   const handleBackToMenu = useCallback(() => {
     // Debounce rapid back button presses (500ms)
@@ -807,7 +886,38 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       {/* Content container with flex: 1 for proper layout - dynamic padding for scaled text */}
       <View style={{ flex: 1, paddingTop: insets.top + 90 + (textSizeScale - 1) * 40, zIndex: 10 }}>
 
-        {/* Tag Filters */}
+        {/* Story Type Filters — segmented row, visually distinct from theme tags */}
+        <View style={styles.typeFilterRow}>
+          {STORY_TYPE_FILTERS.map((tf) => {
+            const isActive = storyTypeFilters.has(tf.id);
+            return (
+              <View key={tf.id} style={{ flex: 1 }}>
+                <Pressable
+                  style={[
+                    styles.typeFilterButton,
+                    isActive && styles.typeFilterButtonActive,
+                  ]}
+                  onPress={() => handleTypeFilterPress(tf.id)}
+                >
+                  <Ionicons
+                    name={tf.icon}
+                    size={16}
+                    color={isActive ? '#FFFFFF' : 'rgba(255,255,255,0.7)'}
+                  />
+                  <Text style={[
+                    styles.typeFilterLabel,
+                    { fontSize: scaledFontSize(12) },
+                    isActive && styles.typeFilterLabelActive,
+                  ]}>
+                    {tf.label}
+                  </Text>
+                </Pressable>
+              </View>
+            );
+          })}
+        </View>
+
+        {/* Theme Tag Filters */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -839,14 +949,14 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
         {/* Stories Carousels */}
         {/* Disable scrolling when a story is selected to prevent position drift */}
         <ScrollView style={{ flex: 1 }} scrollEnabled={!isTransitioning && !shouldShowStoryReader && !isExpandingToReader}>
-          {availableGenres.length === 0 && selectedTags.size > 0 && (
+          {availableGenres.length === 0 && (selectedTags.size > 0 || storyTypeFilters.size < ALL_TYPE_FILTERS.size) && (
             <View style={styles.noResultsContainer}>
               <Text style={styles.noResultsText}>
                 No stories found with selected filters
               </Text>
               <Pressable
                 style={styles.clearFilterButton}
-                onPress={() => setSelectedTags(new Set())}
+                onPress={() => { setSelectedTags(new Set()); setStoryTypeFilters(new Set(ALL_TYPE_FILTERS)); }}
               >
                 <Text style={styles.clearFilterText}>Clear Filters</Text>
               </Pressable>
@@ -995,6 +1105,37 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     alignItems: 'center',
   },
+  typeFilterRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
+    paddingHorizontal: 20,
+    marginBottom: 10,
+  },
+  typeFilterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 9,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  typeFilterButtonActive: {
+    backgroundColor: TYPE_FILTER_ACTIVE_COLOR,
+    borderColor: 'rgba(255, 255, 255, 0.20)',
+  },
+  typeFilterLabel: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontFamily: Fonts.rounded,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  typeFilterLabelActive: {
+    color: '#FFFFFF',
+  },
   tagScrollView: {
     flexGrow: 0,
     marginBottom: 16,
@@ -1011,6 +1152,13 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 16,
     gap: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   tagIcon: {
     marginRight: 2,
@@ -1036,6 +1184,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   clearFilterText: {
     color: 'white',
