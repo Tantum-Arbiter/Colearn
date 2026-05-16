@@ -119,8 +119,8 @@ export async function preloadCriticalImages(): Promise<void> {
 
   try {
     await Promise.all(preloadPromises);
-    console.log('Critical images preloaded successfully');
+    // Critical images preloaded
   } catch (error) {
-    console.warn('Some critical images failed to preload:', error);
+    // Non-critical: images will be loaded on demand
   }
 }

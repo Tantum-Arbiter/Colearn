@@ -47,7 +47,7 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
 
     if (!isGuestMode) {
       // Queue the API call to run in the background with retry
-      console.log('[EditProfile] Queueing profile save:', { nickname: nickname.trim(), avatarType, avatarId });
+      // Queue the profile save in background
       backgroundSaveService.queueProfileSave({
         nickname: nickname.trim(),
         avatarType,
@@ -68,7 +68,7 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
       avatarType !== (userAvatarType || 'girl') ||
       avatarId !== (userAvatarId || 'girl_1');
 
-    console.log('[EditProfile] handleBack - hasChanges:', hasChanges, { nickname, userNickname, avatarType, userAvatarType, avatarId, userAvatarId });
+
 
     if (hasChanges) {
       // Save changes before going back (pass true to navigate back)

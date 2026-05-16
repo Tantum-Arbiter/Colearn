@@ -902,7 +902,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
 
   // Preview for catalog entries — build a lightweight Story-like object for the preview modal
   const handleCatalogPreview = useCallback((entry: CatalogEntry) => {
-    console.log(`[StorySelection] Preview catalog entry: ${entry.storyId}, thumbnailUrl: ${entry.thumbnailUrl || 'NONE'}`);
+    // Preview catalog entry
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const previewAsStory: Story = {
       id: entry.storyId,

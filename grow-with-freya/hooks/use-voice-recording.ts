@@ -5,6 +5,9 @@ import {
   RecordingPresets,
 } from 'expo-audio';
 import { useMicPermission } from './use-mic-permission';
+import { Logger } from '@/utils/logger';
+
+const log = Logger.create('Recording');
 
 export interface RecordingResult {
   uri: string;
@@ -58,11 +61,11 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
       if (micPermission.isUndetermined) {
         const result = await micPermission.requestPermission();
         if (result !== 'granted') {
-          console.warn('Microphone permission not granted');
+          log.warn('Microphone permission not granted');
           return false;
         }
       } else if (micPermission.isDenied) {
-        console.warn('Microphone permission denied');
+        log.warn('Microphone permission denied');
         return false;
       }
 
@@ -86,10 +89,10 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
         setRecordingDuration(Math.floor((Date.now() - recordingStartTime.current) / 1000));
       }, 1000);
 
-      console.log('Recording started');
+      log.debug('Recording started');
       return true;
     } catch (error) {
-      console.error('Failed to start recording:', error);
+      log.error('Failed to start recording:', error);
       return false;
     }
   }, [micPermission, audioRecorder]);
@@ -120,10 +123,10 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
         shouldPlayInBackground: true,
       });
 
-      console.log('Recording stopped:', uri);
+      log.debug('Recording stopped');
       return uri ? { uri, duration } : null;
     } catch (error) {
-      console.error('Failed to stop recording:', error);
+      log.error('Failed to stop recording:', error);
       return null;
     }
   }, [isRecording, audioRecorder]);

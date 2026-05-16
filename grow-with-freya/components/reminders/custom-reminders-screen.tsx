@@ -10,7 +10,9 @@ import NotificationService from '../../services/notification-service';
 import { styles } from './styles';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { StarBackground } from '@/components/ui/star-background';
+import { Logger } from '@/utils/logger';
 
+const log = Logger.create('Reminders');
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // Generate star positions for background
@@ -125,12 +127,12 @@ export const CustomRemindersScreen: React.FC<CustomRemindersScreenProps> = ({
         reminderService.getReminderStats(),
       ]);
 
-      console.log('[CustomRemindersScreen] Loaded reminders:', allReminders.map(r => ({ id: r.id, title: r.title, isActive: r.isActive })));
+      log.debug(`Loaded ${allReminders.length} reminders`);
 
       setReminders(allReminders);
       setStats(reminderStats);
     } catch (error) {
-      console.error('Failed to load reminders:', error);
+      log.error('Failed to load reminders:', error);
     } finally {
       setLoading(false);
     }
@@ -158,12 +160,12 @@ export const CustomRemindersScreen: React.FC<CustomRemindersScreenProps> = ({
   };
 
   const handleToggleReminder = async (reminderId: string) => {
-    console.log('[CustomRemindersScreen] Toggling reminder:', reminderId);
+    log.debug('Toggling reminder:', reminderId);
     const success = await reminderService.toggleReminder(reminderId);
     if (success) {
       // Reload reminders from service to get the authoritative state
       const updatedReminders = await reminderService.getAllReminders();
-      console.log('[CustomRemindersScreen] Reloaded state from service:', updatedReminders.map(r => ({ id: r.id, title: r.title, isActive: r.isActive })));
+      log.debug(`Reloaded ${updatedReminders.length} reminders`);
       setReminders(updatedReminders);
 
       // Reload stats to update the counts
@@ -171,7 +173,7 @@ export const CustomRemindersScreen: React.FC<CustomRemindersScreenProps> = ({
         const reminderStats = await reminderService.getReminderStats();
         setStats(reminderStats);
       } catch (error) {
-        console.error('Failed to reload reminder stats:', error);
+        log.error('Failed to reload stats:', error);
       }
 
       // Notify parent that reminders changed
@@ -416,7 +418,7 @@ export const CustomRemindersContent: React.FC<CustomRemindersContentProps> = ({
       setReminders(allReminders);
       setStats(reminderStats);
     } catch (error) {
-      console.error('Failed to load reminders:', error);
+      log.error('Failed to load reminders:', error);
     } finally {
       setLoading(false);
     }
@@ -452,7 +454,7 @@ export const CustomRemindersContent: React.FC<CustomRemindersContentProps> = ({
         const reminderStats = await reminderService.getReminderStats();
         setStats(reminderStats);
       } catch (error) {
-        console.error('Failed to reload reminder stats:', error);
+        log.error('Failed to reload stats:', error);
       }
       onReminderChange?.();
     }

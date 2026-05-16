@@ -1,19 +1,19 @@
 /**
- * Centralized logging utility with log levels.
- * 
- * Log levels:
- * - debug: Verbose operational details (only in dev mode)
- * - info: Important state changes and events
- * - warn: Potential issues or unexpected but handled states
- * - error: Errors and failures
- * 
+ * Centralized logging utility with log levels and emoji prefixes.
+ *
+ * Output format:  🔹 [Namespace] message ...args
+ *   debug  →  🔹   (blue diamond — verbose detail)
+ *   info   →  ✅   (green check  — milestone / state change)
+ *   warn   →  ⚠️   (warning sign — recoverable issue)
+ *   error  →  ❌   (red cross    — failure)
+ *
  * Usage:
  *   import { Logger } from '@/utils/logger';
- *   const log = Logger.create('MyComponent');
- *   log.debug('Detailed state:', data);
- *   log.info('User action completed');
- *   log.warn('Retrying operation');
- *   log.error('Failed to load', error);
+ *   const log = Logger.create('Sync');
+ *   log.debug('Checking cache…');
+ *   log.info('Sync complete');
+ *   log.warn('Retrying request');
+ *   log.error('Sync failed', error);
  */
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
@@ -32,9 +32,16 @@ const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {
   error: 3,
 };
 
+const LEVEL_EMOJI: Record<LogLevel, string> = {
+  debug: '🔹',
+  info:  '✅',
+  warn:  '⚠️',
+  error: '❌',
+};
+
 // Determine if we're in development mode
-const isDev = typeof __DEV__ !== 'undefined' 
-  ? __DEV__ 
+const isDev = typeof __DEV__ !== 'undefined'
+  ? __DEV__
   : process.env.NODE_ENV === 'development';
 
 const isTest = process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined;
@@ -42,7 +49,7 @@ const isTest = process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !==
 // Default config: show info+ logs for user journey visibility
 // Set minLevel to 'debug' for even more verbose output when debugging
 const defaultConfig: LoggerConfig = {
-  minLevel: isDev ? 'info' : 'warn', // Show info logs in dev for sync journey visibility
+  minLevel: isDev ? 'info' : 'warn',
   enabled: !isTest, // Disable logging in tests by default
 };
 
@@ -55,30 +62,22 @@ export class Logger {
     this.prefix = `[${namespace}]`;
   }
 
-  /**
-   * Create a logger instance for a specific namespace/component
-   */
+  /** Create a logger instance for a specific namespace/component */
   static create(namespace: string): Logger {
     return new Logger(namespace);
   }
 
-  /**
-   * Configure global logging settings
-   */
+  /** Configure global logging settings */
   static configure(config: Partial<LoggerConfig>): void {
     globalConfig = { ...globalConfig, ...config };
   }
 
-  /**
-   * Reset to default configuration
-   */
+  /** Reset to default configuration */
   static reset(): void {
     globalConfig = { ...defaultConfig };
   }
 
-  /**
-   * Enable logging in tests (useful for debugging specific tests)
-   */
+  /** Enable logging in tests (useful for debugging specific tests) */
   static enableInTests(): void {
     globalConfig.enabled = true;
   }
@@ -88,43 +87,34 @@ export class Logger {
     return LOG_LEVEL_PRIORITY[level] >= LOG_LEVEL_PRIORITY[globalConfig.minLevel];
   }
 
-  /**
-   * Debug level - verbose operational details, only shown in dev mode
-   */
+  /** Debug — verbose operational details, only shown in dev mode */
   debug(message: string, ...args: unknown[]): void {
     if (this.shouldLog('debug')) {
-      console.log(this.prefix, message, ...args);
+      console.log(LEVEL_EMOJI.debug, this.prefix, message, ...args);
     }
   }
 
-  /**
-   * Info level - important state changes and events
-   */
+  /** Info — important state changes and events */
   info(message: string, ...args: unknown[]): void {
     if (this.shouldLog('info')) {
-      console.log(this.prefix, message, ...args);
+      console.log(LEVEL_EMOJI.info, this.prefix, message, ...args);
     }
   }
 
-  /**
-   * Warn level - potential issues or unexpected but handled states
-   */
+  /** Warn — potential issues or unexpected but handled states */
   warn(message: string, ...args: unknown[]): void {
     if (this.shouldLog('warn')) {
-      console.warn(this.prefix, message, ...args);
+      console.warn(LEVEL_EMOJI.warn, this.prefix, message, ...args);
     }
   }
 
-  /**
-   * Error level - errors and failures
-   */
+  /** Error — errors and failures */
   error(message: string, ...args: unknown[]): void {
     if (this.shouldLog('error')) {
-      console.error(this.prefix, message, ...args);
+      console.error(LEVEL_EMOJI.error, this.prefix, message, ...args);
     }
   }
 }
 
 // Export a default instance for quick usage
 export const log = Logger.create('App');
-

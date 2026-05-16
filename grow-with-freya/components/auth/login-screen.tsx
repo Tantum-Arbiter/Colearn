@@ -23,6 +23,9 @@ import { AuthService } from '@/services/auth-service';
 import { SecureStorage } from '@/services/secure-storage';
 import { useAppStore } from '@/store/app-store';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { Logger } from '@/utils/logger';
+
+const log = Logger.create('Login');
 
 // Debug logging - set to false for production performance
 const DEBUG_LOGS = false;
@@ -96,12 +99,12 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
 
           // Authentication complete - go directly to StartupLoadingScreen
           // BatchSyncService will handle all sync operations there
-          console.log('[LoginScreen] Google sign-in complete, tokens stored');
+          log.info('Google sign-in complete');
           onSuccess();
         } catch (error: any) {
           setIsGoogleLoading(false);
           setProcessedResponseId(responseId);
-          console.error('Google sign-in error:', error);
+          log.error('Google sign-in error:', error);
 
           // Check for timeout error
           const isTimeout = error.message?.includes('timed out') ||
@@ -116,7 +119,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
       } else if (response.type === 'error') {
         setIsGoogleLoading(false);
         setProcessedResponseId(responseId);
-        console.error('Google OAuth error:', response.error);
+        log.error('Google OAuth error:', response.error);
         Alert.alert(t('login.signInFailed'), t('login.signInFailedMessage'), [{ text: t('login.ok') }]);
       } else if (response.type === 'dismiss') {
         // User cancelled the sign-in
@@ -203,13 +206,13 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
         // the loading overlay slides down over the login screen
 
         // Authentication complete - go directly to StartupLoadingScreen
-        console.log('[LoginScreen] Native Google sign-in complete, tokens stored');
+        log.info('Native Google sign-in complete');
         onSuccess();
         return;
       } catch (error: any) {
         setIsGoogleLoading(false);
         if (!error.message?.includes('cancelled')) {
-          console.error('Native Google Sign-In error:', error);
+          log.error('Native Google Sign-In error:', error);
           Alert.alert(t('login.signInFailed'), error.message || t('login.signInFailedMessage'));
         }
         return;
@@ -227,7 +230,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
       // If it's success, the response handler will manage the loading state
     } catch (error) {
       setIsGoogleLoading(false);
-      console.error('Google OAuth prompt error:', error);
+      log.error('Google OAuth prompt error:', error);
     }
   };
 
@@ -269,13 +272,13 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
 
       // Keep isAppleLoading=true so button stays as "Signing in..." while
       // the loading overlay slides down over the login screen
-      console.log('[LoginScreen] Apple sign-in complete, tokens stored');
+      log.info('Apple sign-in complete');
 
       // Authentication complete - go directly to StartupLoadingScreen
       onSuccess();
     } catch (error: any) {
       setIsAppleLoading(false);
-      console.error('Apple sign-in error:', error);
+      log.error('Apple sign-in error:', error);
 
       // Check for user cancellation - multiple possible error messages
       const isCancelled =

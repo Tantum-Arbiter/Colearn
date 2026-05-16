@@ -1,5 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ApiClient } from './api-client';
+import { Logger } from '@/utils/logger';
+
+const log = Logger.create('BackgroundSave');
 
 const PENDING_SAVES_KEY = 'pending-profile-saves';
 const MAX_RETRIES = 3;
@@ -25,7 +28,7 @@ class BackgroundSaveServiceClass {
   private retryTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   async queueProfileSave(data: ProfileUpdateData): Promise<void> {
-    console.log('[BackgroundSave] Queueing profile save...', JSON.stringify(data));
+    log.debug('Queueing profile save');
 
     const pendingSave: PendingSave = {
       id: Date.now().toString(),
@@ -36,7 +39,7 @@ class BackgroundSaveServiceClass {
 
     // Add to pending saves
     await this.addPendingSave(pendingSave);
-    console.log('[BackgroundSave] Profile save queued with ID:', pendingSave.id);
+    // Profile save queued
 
     // Start processing queue
     this.processQueue();
@@ -44,7 +47,7 @@ class BackgroundSaveServiceClass {
 
   private async processQueue(): Promise<void> {
     if (this.isProcessing) {
-      console.log('[BackgroundSave] Already processing queue, skipping...');
+      // Already processing
       return;
     }
 
@@ -52,15 +55,12 @@ class BackgroundSaveServiceClass {
 
     try {
       const pendingSaves = await this.getPendingSaves();
-      console.log('[BackgroundSave] getPendingSaves returned:', pendingSaves.length, 'saves');
-
       if (pendingSaves.length === 0) {
-        console.log('[BackgroundSave] No pending saves');
         this.isProcessing = false;
         return;
       }
 
-      console.log(`[BackgroundSave] Processing ${pendingSaves.length} pending save(s)...`);
+      log.debug(`Processing ${pendingSaves.length} pending save(s)`);
 
       // Process each pending save (most recent first for profile updates)
       const sortedSaves = pendingSaves.sort((a, b) => b.timestamp - a.timestamp);
@@ -72,25 +72,25 @@ class BackgroundSaveServiceClass {
         // Check if user is authenticated
         const isAuthenticated = await ApiClient.isAuthenticated();
         if (!isAuthenticated) {
-          console.log('[BackgroundSave] User not authenticated, keeping save queued');
+          log.debug('Not authenticated, keeping save queued');
           return;
         }
 
         // Attempt to save
         await ApiClient.updateProfile(mostRecent.data);
-        console.log('[BackgroundSave] Profile saved successfully!');
+        log.info('Profile saved');
 
         // Remove all pending saves (they're all superseded by this one)
         await this.clearPendingSaves();
 
       } catch (error: any) {
-        console.log('[BackgroundSave] Save failed:', error.message);
+        log.warn('Save failed:', error.message);
 
         // Increment retry count
         mostRecent.retryCount++;
 
         if (mostRecent.retryCount >= MAX_RETRIES) {
-          console.log('[BackgroundSave] Max retries reached, discarding save');
+          log.warn('Max retries reached, discarding save');
           await this.removePendingSave(mostRecent.id);
         } else {
           // Update the save with new retry count
@@ -98,7 +98,7 @@ class BackgroundSaveServiceClass {
 
           // Schedule retry with exponential backoff
           const delay = INITIAL_RETRY_DELAY_MS * Math.pow(2, mostRecent.retryCount - 1);
-          console.log(`[BackgroundSave] Scheduling retry in ${delay}ms (attempt ${mostRecent.retryCount}/${MAX_RETRIES})`);
+          log.debug(`Retry in ${delay}ms (attempt ${mostRecent.retryCount}/${MAX_RETRIES})`);
 
           this.retryTimeoutId = setTimeout(() => {
             this.processQueue();
@@ -106,7 +106,7 @@ class BackgroundSaveServiceClass {
         }
       }
     } catch (error) {
-      console.error('[BackgroundSave] Error processing queue:', error);
+      log.error('Error processing queue:', error);
     } finally {
       this.isProcessing = false;
     }
@@ -117,7 +117,7 @@ class BackgroundSaveServiceClass {
       const json = await AsyncStorage.getItem(PENDING_SAVES_KEY);
       return json ? JSON.parse(json) : [];
     } catch (error) {
-      console.error('[BackgroundSave] Error reading pending saves:', error);
+      log.error('Error reading pending saves:', error);
       return [];
     }
   }
@@ -153,7 +153,7 @@ class BackgroundSaveServiceClass {
   }
 
   async retryPendingSaves(): Promise<void> {
-    console.log('[BackgroundSave] Retrying pending saves...');
+    log.debug('Retrying pending saves');
     this.processQueue();
   }
 

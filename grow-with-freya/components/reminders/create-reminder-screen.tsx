@@ -11,7 +11,9 @@ import NotificationService from '../../services/notification-service';
 import { styles } from './styles';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { StarBackground } from '@/components/ui/star-background';
+import { Logger } from '@/utils/logger';
 
+const log = Logger.create('Reminders');
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // Generate star positions for background
@@ -226,7 +228,7 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
       const reminders = await reminderService.getAllReminders();
       setExistingReminders(reminders);
     } catch (error) {
-      console.error('Failed to load existing reminders:', error);
+      log.error('Failed to load reminders:', error);
     }
   };
 
@@ -321,7 +323,7 @@ export const CreateReminderScreen: React.FC<CreateReminderScreenProps> = ({
       // Return to reminders list - user will save on main Screen Time page
       onSuccess();
     } catch (error) {
-      console.error('Failed to create reminder:', error);
+      log.error('Failed to create reminder:', error);
       Alert.alert(t('common.error'), t('alerts.createFailed.message', { defaultValue: 'Failed to create reminder. Please try again.' }));
     } finally {
       setCreating(false);
@@ -624,10 +626,10 @@ export const CreateReminderContent: React.FC<CreateReminderContentProps> = ({
   const loadExistingReminders = async () => {
     try {
       const reminders = await reminderService.getAllReminders();
-      console.log('[CreateReminderContent] Loaded existing reminders:', reminders.length);
+      log.debug(`Loaded ${reminders.length} existing reminders`);
       setExistingReminders(reminders);
     } catch (error) {
-      console.error('Failed to load existing reminders:', error);
+      log.error('Failed to load reminders:', error);
     }
   };
 
@@ -686,7 +688,7 @@ export const CreateReminderContent: React.FC<CreateReminderContentProps> = ({
       setHasUnsavedChanges(false);
       onSuccess();
     } catch (error) {
-      console.error('Failed to create reminder:', error);
+      log.error('Failed to create reminder:', error);
       Alert.alert(t('common.error'), t('alerts.createFailed.message', { defaultValue: 'Failed to create reminder. Please try again.' }));
     } finally {
       setCreating(false);

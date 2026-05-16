@@ -78,7 +78,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
             style: 'cancel',
             onPress: () => {
               setCrashReportingEnabled(false);
-              console.log('[Onboarding] User declined crash reporting');
+              // User declined crash reporting
               proceedToNext();
             },
           },
@@ -87,7 +87,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
             style: 'default',
             onPress: () => {
               setCrashReportingEnabled(true);
-              console.log('[Onboarding] User enabled crash reporting');
+              // User enabled crash reporting
               proceedToNext();
             },
           },
@@ -118,9 +118,9 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
     const loadOnboardingImages = async () => {
       try {
         const result = await preloadOnboardingImages();
-        console.log('Onboarding images preloaded:', result);
+        // Onboarding images preloaded
       } catch (error) {
-        console.warn('Failed to preload onboarding images:', error);
+        // Non-critical: images will load on demand
       }
     };
 

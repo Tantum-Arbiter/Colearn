@@ -45,11 +45,9 @@ export function SettingsTipsOverlay({ isActive = true }: SettingsTipsOverlayProp
     }
 
     if (!hasSeenSettings && shouldShowTutorial('settings_walkthrough')) {
-      console.log('[SettingsTipsOverlay] Triggering overlay show');
       hasTriggeredRef.current = true;
 
       timerRef.current = setTimeout(() => {
-        console.log('[SettingsTipsOverlay] Setting isVisible to true');
         setIsVisible(true);
         opacity.value = withTiming(1, { duration: 300 });
         scale.value = withSpring(1, { damping: 15 });

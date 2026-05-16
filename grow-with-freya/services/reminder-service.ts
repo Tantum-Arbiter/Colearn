@@ -2,6 +2,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { SchedulableTriggerInputTypes } from 'expo-notifications';
 import { ApiClient } from './api-client';
+import { Logger } from '@/utils/logger';
+
+const log = Logger.create('Reminders');
 
 export interface CustomReminder {
   id: string;
@@ -50,11 +53,11 @@ export class ReminderService {
 
         // Reschedule all active notifications on app startup
         // iOS may have cleared scheduled notifications, so we need to reschedule
-        console.log('[ReminderService] Loaded reminders, rescheduling notifications...');
+        log.info('Loaded reminders, rescheduling notifications…');
         await this.rescheduleAllNotifications();
       }
     } catch (error) {
-      console.error('Failed to load reminders:', error);
+      log.error('Failed to load reminders:', error);
       this.reminders = [];
     }
   }
@@ -63,7 +66,7 @@ export class ReminderService {
     try {
       await AsyncStorage.setItem(REMINDERS_STORAGE_KEY, JSON.stringify(this.reminders));
     } catch (error) {
-      console.error('Failed to save reminders:', error);
+      log.error('Failed to save reminders:', error);
     }
   }
 
@@ -92,7 +95,7 @@ export class ReminderService {
     this.reminders.push(reminder);
 
     // Don't save to AsyncStorage - wait for user to click "Save Settings"
-    console.log('[ReminderService] Reminder created (not yet saved)');
+    log.debug('Reminder created (not yet saved)');
 
     return reminder;
   }
@@ -117,7 +120,7 @@ export class ReminderService {
     this.reminders.splice(reminderIndex, 1);
 
     // Don't save to AsyncStorage - wait for user to click "Save Settings"
-    console.log('[ReminderService] Reminder deleted (not yet saved)');
+    log.debug('Reminder deleted (not yet saved)');
 
     return true;
   }
@@ -130,7 +133,7 @@ export class ReminderService {
 
     const oldState = reminder.isActive;
     reminder.isActive = !reminder.isActive;
-    console.log(`[ReminderService] Toggling reminder ${reminderId}: ${oldState} -> ${reminder.isActive}`);
+    log.debug(`Toggling reminder ${reminderId}: ${oldState} → ${reminder.isActive}`);
 
     if (reminder.isActive) {
       // Re-schedule both notifications
@@ -151,12 +154,12 @@ export class ReminderService {
     }
 
     // Don't save to AsyncStorage - wait for user to click "Save Settings"
-    console.log('[ReminderService] Reminder toggled (not yet saved). Current state:', this.reminders.map(r => ({ id: r.id, isActive: r.isActive })));
+    log.debug('Reminder toggled (not yet saved)');
     return true;
   }
 
   async getAllReminders(): Promise<CustomReminder[]> {
-    console.log('[ReminderService] getAllReminders() called. Current state:', this.reminders.map(r => ({ id: r.id, title: r.title, isActive: r.isActive })));
+    log.debug(`getAllReminders: ${this.reminders.length} reminders`);
     return [...this.reminders];
   }
 
@@ -227,9 +230,7 @@ export class ReminderService {
       }
       const secondsUntilAdvance = this.getSecondsUntilNextOccurrence(reminder.dayOfWeek, advanceHours, advanceMinutes);
 
-      console.log(`[ReminderService] Scheduling reminder for ${ReminderService.getDayName(reminder.dayOfWeek)} at ${reminder.time}`);
-      console.log(`[ReminderService] Main notification in ${secondsUntilMain} seconds`);
-      console.log(`[ReminderService] Advance notification in ${secondsUntilAdvance} seconds`);
+      log.debug(`Scheduling: ${ReminderService.getDayName(reminder.dayOfWeek)} @ ${reminder.time} (main in ${secondsUntilMain}s, advance in ${secondsUntilAdvance}s)`);
 
       // Schedule main notification using TIME_INTERVAL (works on both iOS and Android)
       const notificationId = await Notifications.scheduleNotificationAsync({
@@ -266,7 +267,7 @@ export class ReminderService {
 
       return notificationId;
     } catch (error) {
-      console.error('Failed to schedule notification:', error);
+      log.error('Failed to schedule notification:', error);
       return null;
     }
   }
@@ -324,13 +325,13 @@ export class ReminderService {
   async revertChanges(): Promise<void> {
     this.reminders = JSON.parse(JSON.stringify(this.savedReminders));
     await this.rescheduleAllNotifications();
-    console.log('[ReminderService] Reverted to last saved state');
+    log.debug('Reverted to last saved state');
   }
 
   async commitChanges(): Promise<void> {
     await this.saveReminders();
     this.savedReminders = JSON.parse(JSON.stringify(this.reminders));
-    console.log('[ReminderService] Changes committed to local storage');
+    log.debug('Changes committed to local storage');
   }
 
   async syncToBackend(): Promise<void> {
@@ -338,11 +339,11 @@ export class ReminderService {
       // Only sync if user is authenticated
       const isAuthenticated = await ApiClient.isAuthenticated();
       if (!isAuthenticated) {
-        console.log('[ReminderService] Skipping backend sync - not authenticated');
+        log.debug('Skipping backend sync — not authenticated');
         return;
       }
 
-      console.log('[ReminderService] Syncing reminders to backend...');
+      log.info('Syncing reminders to backend…');
 
       // First commit to local storage
       await this.commitChanges();
@@ -353,9 +354,9 @@ export class ReminderService {
       // Update last synced state
       this.lastSyncedReminders = JSON.parse(JSON.stringify(this.reminders));
 
-      console.log('[ReminderService] Reminders synced to backend');
+      log.info('Reminders synced to backend');
     } catch (error) {
-      console.error('[ReminderService] Failed to sync reminders to backend:', error);
+      log.error('Failed to sync reminders to backend:', error);
       throw error; // Throw so Screen Time page can show error
     }
   }
@@ -364,11 +365,11 @@ export class ReminderService {
     try {
       const isAuthenticated = await ApiClient.isAuthenticated();
       if (!isAuthenticated) {
-        console.log('[ReminderService] Skipping backend pull - not authenticated');
+        log.debug('Skipping backend pull — not authenticated');
         return;
       }
 
-      console.log('[ReminderService] Pulling reminders from backend...');
+      log.debug('Pulling reminders from backend…');
       const backendReminders = await ApiClient.getReminders();
 
       if (backendReminders && backendReminders.length > 0) {
@@ -382,13 +383,13 @@ export class ReminderService {
         // Reschedule all notifications
         await this.rescheduleAllNotifications();
 
-        console.log(`[ReminderService] Pulled ${backendReminders.length} reminders from backend`);
+        log.info(`Pulled ${backendReminders.length} reminders from backend`);
       } else {
         // No reminders on backend - mark current state as synced
         this.lastSyncedReminders = JSON.parse(JSON.stringify(this.reminders));
       }
     } catch (error) {
-      console.error('[ReminderService] Failed to pull reminders from backend:', error);
+      log.warn('Failed to pull reminders from backend:', error);
       // Continue with local reminders
     }
   }

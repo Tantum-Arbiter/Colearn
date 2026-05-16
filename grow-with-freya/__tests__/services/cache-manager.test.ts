@@ -265,6 +265,8 @@ describe('CacheManager', () => {
           mimeType: 'image/png',
           md5: undefined,
         });
+        // After download, file validation checks size — mock a valid file
+        mockFileSystem.getInfoAsync.mockResolvedValue(createFileInfo({ size: 2048 }));
 
         const result = await CacheManager.downloadAndCacheAsset(
           'https://example.com/asset.png',
@@ -287,6 +289,41 @@ describe('CacheManager', () => {
         await expect(
           CacheManager.downloadAndCacheAsset('https://example.com/missing.png', 'missing.png')
         ).rejects.toThrow('Failed to download asset');
+      });
+
+      it('should reject suspiciously small image files as corrupt', async () => {
+        mockFileSystem.downloadAsync.mockResolvedValue({
+          uri: 'file://cached/asset.webp',
+          status: 200,
+          headers: {},
+          mimeType: 'image/webp',
+          md5: undefined,
+        });
+        // Simulate a tiny error response saved to disk (e.g. 66 bytes)
+        mockFileSystem.getInfoAsync.mockResolvedValue(createFileInfo({ size: 66 }));
+
+        await expect(
+          CacheManager.downloadAndCacheAsset('https://example.com/asset.webp', 'stories/asset.webp')
+        ).rejects.toThrow('too small');
+        expect(mockFileSystem.deleteAsync).toHaveBeenCalled();
+      });
+
+      it('should accept non-image files regardless of size', async () => {
+        mockFileSystem.downloadAsync.mockResolvedValue({
+          uri: 'file://cached/data.json',
+          status: 200,
+          headers: {},
+          mimeType: 'application/json',
+          md5: undefined,
+        });
+        // Small JSON file is fine
+        mockFileSystem.getInfoAsync.mockResolvedValue(createFileInfo({ size: 50 }));
+
+        const result = await CacheManager.downloadAndCacheAsset(
+          'https://example.com/data.json',
+          'stories/data.json'
+        );
+        expect(result).toContain('data.json');
       });
     });
   });

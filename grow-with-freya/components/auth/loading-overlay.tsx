@@ -71,7 +71,7 @@ export function LoadingOverlay({ phase, onPulseComplete, onClose, onContinueOffl
       playerRef.current = player;
       player.play();
     } catch (error) {
-      console.error('Error playing click sound:', error);
+      // Click sound failed - non-critical
     }
   };
 

@@ -26,7 +26,7 @@ export const createCloudAnimation = (
   if (resumeFromCurrent) {
     const currentPos = cloudValue.value;
     if (!isFinite(currentPos) || isNaN(currentPos)) {
-      console.warn('Cloud animation: Invalid current position, forcing fresh start');
+      // Invalid current position, forcing fresh start
       resumeFromCurrent = false;
     }
   }
@@ -36,20 +36,13 @@ export const createCloudAnimation = (
       // Continue from current position without resetting
       const currentPosition = cloudValue.value;
 
-      // Debug logging disabled for performance
-      const isDev = false;
-
       if (currentPosition > startPosition && currentPosition < exitPosition) {
         const remainingDistance = exitPosition - currentPosition;
         const totalDistance = exitPosition - startPosition;
         const progressRatio = remainingDistance / totalDistance;
 
         // If cloud is very close to exit (within 20% of total distance), start fresh cycle
-        // This prevents extremely slow animations when cloud is almost at the exit
         if (progressRatio < 0.2) {
-          if (isDev) {
-            console.log('Cloud very close to exit - starting fresh cycle to prevent slow animation');
-          }
           return withRepeat(
             withSequence(
               withTiming(startPosition, { duration: 0 }),
@@ -67,12 +60,6 @@ export const createCloudAnimation = (
         // This prevents extremely long durations when cloud is close to exit
         const fixedDuration = Math.min(ANIMATION_TIMINGS.CLOUD_DURATION * 0.3, 8000); // Max 8 seconds
 
-        if (isDev) {
-          console.log(`Cloud continuing smoothly: remaining=${remainingDistance}, duration=${fixedDuration} (fixed duration to prevent freezing) - CACHE_BUSTER_v2`);
-        }
-
-        // Force cache refresh
-
         return withRepeat(
           withSequence(
             withTiming(exitPosition, {
@@ -89,9 +76,6 @@ export const createCloudAnimation = (
           false
         );
       } else {
-        if (isDev) {
-          console.log('Cloud starting fresh cycle - boundary or invalid position');
-        }
         return withRepeat(
           withSequence(
             withTiming(startPosition, { duration: 0 }),

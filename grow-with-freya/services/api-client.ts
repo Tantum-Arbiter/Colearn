@@ -4,7 +4,7 @@ import { SecureStorage } from './secure-storage';
 import { DeviceInfoService } from './device-info-service';
 import { Logger } from '@/utils/logger';
 
-const log = Logger.create('ApiClient');
+const log = Logger.create('API');
 
 const extra = Constants.expoConfig?.extra || {};
 const GATEWAY_URL = extra.gatewayUrl || process.env.EXPO_PUBLIC_GATEWAY_URL || 'http://localhost:8080';
@@ -33,7 +33,7 @@ export class ApiClient {
       const payload = JSON.parse(atob(parts[1]));
       return payload;
     } catch (error) {
-      console.error('Failed to decode token:', error);
+      log.error('Failed to decode token:', error);
       return null;
     }
   }
@@ -88,7 +88,7 @@ export class ApiClient {
     const refreshToken = await SecureStorage.getRefreshToken();
 
     if (!refreshToken) {
-      console.log('[ApiClient] No refresh token - login required');
+      log.warn('No refresh token - login required');
       throw new Error('No refresh token available');
     }
     const controller = new AbortController();
@@ -108,7 +108,7 @@ export class ApiClient {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        console.log(`[ApiClient] Token refresh failed: ${response.status}`);
+        log.warn(`Token refresh failed: ${response.status}`);
         await SecureStorage.clearAuthData();
         throw new Error('Token refresh failed - please login again');
       }
@@ -122,7 +122,7 @@ export class ApiClient {
     } catch (error: any) {
       clearTimeout(timeoutId);
       if (error.name === 'AbortError') {
-        console.log(`[ApiClient] Token refresh timeout after ${TOKEN_REFRESH_TIMEOUT_MS}ms`);
+        log.warn(`Token refresh timeout after ${TOKEN_REFRESH_TIMEOUT_MS}ms`);
         throw new Error('Token refresh timeout - please try again');
       }
       if (error.message?.includes('No refresh token') ||
@@ -154,7 +154,7 @@ export class ApiClient {
     const requestStartTime = Date.now();
     const method = options.method || 'GET';
 
-    log.debug(`[API Request] ${method} ${endpoint}`);
+    log.debug(`${method} ${endpoint}`);
 
     try {
       const response = await fetch(`${GATEWAY_URL}${endpoint}`, {
@@ -164,7 +164,7 @@ export class ApiClient {
       });
       clearTimeout(timeoutId);
       const durationMs = Date.now() - requestStartTime;
-      log.debug(`[API Response] ${response.status} in ${durationMs}ms`);
+      log.debug(`${response.status} in ${durationMs}ms`);
 
       if (response.status === 401) {
         try {
@@ -215,10 +215,10 @@ export class ApiClient {
       clearTimeout(timeoutId);
       const durationMs = Date.now() - requestStartTime;
       if (error.name === 'AbortError') {
-        log.warn(`[API Timeout] TIMEOUT after ${durationMs}ms: ${endpoint}`);
+        log.warn(`Timeout after ${durationMs}ms: ${endpoint}`);
         throw new Error(`Request timeout after ${timeoutMs}ms: ${endpoint}`);
       }
-      log.warn(`[API Error] FAILED after ${durationMs}ms: ${error.message || error}`);
+      log.warn(`Failed after ${durationMs}ms: ${error.message || error}`);
       throw error;
     }
   }
@@ -227,7 +227,7 @@ export class ApiClient {
     try {
       await this.performTokenRefresh();
     } catch (error) {
-      console.error('[ApiClient] Failed to refresh token:', error);
+      log.error('Failed to refresh token:', error);
       throw error;
     }
   }
@@ -277,7 +277,7 @@ export class ApiClient {
       profile = await this.getProfile();
     } catch (error: any) {
       if (error.message?.includes('404')) {
-        console.log('[ApiClient] No profile found - creating new profile with reminders');
+        log.info('No profile found - creating new profile with reminders');
         await this.updateProfile({
           nickname: 'User',
           avatarType: 'boy',
@@ -306,7 +306,7 @@ export class ApiClient {
       return profile.schedule?.customReminders || [];
     } catch (error: any) {
       if (error.message?.includes('404')) {
-        console.log('[ApiClient] No profile found - returning empty reminders');
+        log.info('No profile found - returning empty reminders');
         return [];
       }
       throw error;
@@ -318,21 +318,20 @@ export class ApiClient {
     const refreshToken = await SecureStorage.getRefreshToken();
 
     if (!accessToken || !refreshToken) {
-      console.log('[ApiClient] No tokens - not authenticated');
+      log.debug('No tokens - not authenticated');
       return false;
     }
     if (!this.isTokenExpired(accessToken)) {
-      console.log('[ApiClient] Token valid - authenticated');
       return true;
     }
 
     try {
-      console.log('[ApiClient] Token expired - refreshing...');
+      log.debug('Token expired - refreshing...');
       await this.ensureValidToken();
-      console.log('[ApiClient] Token refresh successful');
+      log.debug('Token refreshed');
       return true;
     } catch (error) {
-      console.log('[ApiClient] Token refresh failed - login required');
+      log.warn('Token refresh failed - login required');
       return false;
     }
   }
@@ -349,7 +348,7 @@ export class ApiClient {
           body: JSON.stringify({ refreshToken }),
         });
       } catch (error) {
-        console.error('Failed to revoke tokens on backend:', error);
+        log.error('Failed to revoke tokens:', error);
       }
     }
     await SecureStorage.clearAuthData();

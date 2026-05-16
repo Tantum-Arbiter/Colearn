@@ -1,4 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import { Logger } from '@/utils/logger';
+
+const log = Logger.create('StoryTransition');
 import { Dimensions, Image, InteractionManager, StyleSheet, View, Text, Pressable, TextInput, KeyboardAvoidingView, Platform, Alert, ScrollView } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -215,7 +218,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const preloadStoryImages = (story: Story) => {
     if (!story.pages) return;
 
-    console.log('Preloading story images during transition...');
+    log.debug('Preloading story images…');
     const preloadPromises = story.pages.map((page) => {
       const promises = [];
 
@@ -255,9 +258,9 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     });
 
     Promise.all(preloadPromises).then(() => {
-      console.log('Story image preloading complete');
+      log.debug('Story images preloaded');
     }).catch((error) => {
-      console.warn('Story image preloading failed:', error);
+      log.warn('Story image preloading failed:', error);
     });
   };
 
@@ -406,7 +409,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
   // User selects a mode and taps "Begin"
   const selectModeAndBegin = async (mode: ReadingMode) => {
-    console.log('Starting story with mode:', mode);
+    log.info('Starting story, mode:', mode);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSelectedMode(mode);
 
@@ -434,7 +437,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
     // For phones in portrait: rotate to landscape before opening the book
     if (isPhone && !isLandscape && cardPosition) {
-      console.log('Phone in portrait - rotating to landscape before opening book');
+      log.debug('Rotating to landscape…');
       wasRotatedForTransition.current = true;
 
       // Fade overlay slightly to smooth the rotation
@@ -452,7 +455,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
         // Get new dimensions after rotation
         const newDims = Dimensions.get('window');
-        console.log('Rotated to landscape, new dimensions:', newDims);
+        log.debug('Landscape dims:', newDims.width, '×', newDims.height);
         setScreenDimensions(newDims);
 
         // Recalculate book position for landscape - center it for the opening animation
@@ -488,7 +491,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
         await new Promise(resolve => setTimeout(resolve, 200));
 
       } catch (error) {
-        console.warn('Failed to rotate to landscape:', error);
+        log.warn('Failed to rotate to landscape:', error);
       }
     }
 
@@ -527,7 +530,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
   // Complete transition without calling onBeginCallback (already called)
   const completeTransitionOnly = () => {
-    console.log('Story transition complete');
+    log.debug('Transition complete');
     setIsTransitioning(false);
     setShowModeSelection(false);
     setIsExpandingToReader(false);
@@ -549,7 +552,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   // Return to portrait orientation on phones
   const returnToPortrait = async () => {
     if (wasRotatedForTransition.current) {
-      console.log('Returning to portrait orientation');
+      log.debug('Returning to portrait…');
       wasRotatedForTransition.current = false;
       try {
         // Lock back to portrait (phones should stay portrait-locked)
@@ -564,14 +567,14 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
         // Note: Do NOT call unlockAsync() - phones should remain portrait-locked
       } catch (error) {
-        console.warn('Failed to return to portrait:', error);
+        log.warn('Failed to return to portrait:', error);
       }
     }
   };
 
   // User cancels (taps X) — book slides down, then background slides up
   const cancelTransition = async () => {
-    console.log('Cancelling story transition');
+    log.debug('Cancelling transition');
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     // Block touches during the entire cancel animation
@@ -585,7 +588,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
     // If we rotated for this transition, rotate back to portrait first
     if (wasRotatedForTransition.current && originalCardPosition) {
-      console.log('Cancelling with rotation - rotating to portrait');
+      log.debug('Cancel: rotating back to portrait');
       await returnToPortrait();
       await new Promise(resolve => setTimeout(resolve, 150));
     }
@@ -668,7 +671,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   };
 
   const completeTransition = () => {
-    console.log('Story transition complete');
+    log.debug('Transition complete');
     // First hide the overlay by setting isTransitioning false
     // This removes the overlay from the DOM
     setIsTransitioning(false);
@@ -719,7 +722,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     // (phone story reader forces landscape, so we need to rotate back to portrait on exit)
     const needsRotation = isActuallyPhone && isCurrentlyLandscape;
 
-    console.log('Starting exit animation - isActuallyPhone:', isActuallyPhone, 'smallerDim:', smallerDimension, 'isCurrentlyLandscape:', isCurrentlyLandscape, 'needsRotation:', needsRotation);
+    log.debug(`Exit animation: phone=${isActuallyPhone}, landscape=${isCurrentlyLandscape}, needsRotation=${needsRotation}`);
 
     // Animation timing - slowed down for smoother feel
     const SHRINK_DURATION = 350;       // Shrink from full screen to book size
@@ -810,7 +813,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
     // Phase 1: Shrink from full screen to centered book size (with curved corners)
     setTimeout(() => {
-      console.log('Starting shrink animation from full screen to book size');
+      log.debug('Shrinking to book size…');
       bookExpansion.value = withTiming(0, {
         duration: SHRINK_DURATION,
         easing: Easing.out(Easing.cubic)  // Ease out for more natural deceleration
@@ -820,7 +823,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     // If we need to rotate (phone in landscape): shrink, close cover, fade to black, rotate, fade in
     // The carousel isn't visible in landscape, so we use the overlay as a transition screen
     if (needsRotation) {
-      console.log('Phone exit: shrink in landscape, close cover, rotate to portrait, then slide out');
+      log.debug('Phone exit: landscape → portrait → slide out');
 
       // Mirrored timing from selectModeAndBegin opening animation
       const ROTATION_WAIT = 300;           // Same as ROTATION_DURATION in opening
@@ -849,7 +852,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
         await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
         await new Promise(resolve => setTimeout(resolve, ROTATION_WAIT));
       } catch (error) {
-        console.warn('Failed to rotate to portrait during exit:', error);
+        log.warn('Failed to rotate to portrait during exit:', error);
       }
 
       const portraitDims = Dimensions.get('window');
@@ -903,7 +906,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       finishExitAnimation(onComplete);
     } else {
       // TABLET or already portrait: Original flow - no rotation needed
-      console.log('Tablet/portrait exit: using non-rotation flow');
+      log.debug('Tablet/portrait exit flow');
       const SLIDE_DOWN_DURATION = 500; // Book slides down off screen
 
       // Phase 2: Close the cover
@@ -967,7 +970,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       return;
     }
 
-    console.log('Returning to mode selection from reader');
+    log.debug('Returning to mode selection');
 
     // Get CURRENT screen dimensions - we're returning from story reader which is in landscape
     // Don't use screenDimensions state as it may have stale portrait values
@@ -976,7 +979,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     const currentScreenHeight = currentDims.height;
     const isCurrentLandscape = currentScreenWidth > currentScreenHeight;
     const isPhoneLandscape = isPhone && isCurrentLandscape;
-    console.log('returnToModeSelection using dimensions:', currentDims, 'isPhoneLandscape:', isPhoneLandscape, 'isPhone:', isPhone);
+    log.debug(`Mode selection dims: ${currentDims.width}×${currentDims.height}, phone=${isPhone}, landscape=${isPhoneLandscape}`);
 
     // IMPORTANT: Update screenDimensions state so the button rendering uses current landscape values
     // Without this, buttons would use stale portrait dimensions and get wrong sizing
@@ -1302,7 +1305,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
           const voiceOvers = await voiceRecordingService.getVoiceOversForStory(selectedStory.id);
           setAvailableVoiceOvers(voiceOvers);
         } catch (error) {
-          console.error('Failed to load voice overs:', error);
+          log.error('Failed to load voice overs:', error);
         }
       };
       loadVoiceOvers();
@@ -1330,7 +1333,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       setVoiceOverName('');
       setShowVoiceOverNameModal(false);
     } catch (error) {
-      console.error('Failed to create voice over:', error);
+      log.error('Failed to create voice over:', error);
       Alert.alert('Error', 'Failed to create voice over. Please try again.');
     }
   };
@@ -1384,7 +1387,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                   if (wasNameModalOpen) setShowVoiceOverNameModal(true);
                   if (wasSelectModalOpen) setShowVoiceOverSelectModal(true);
                 } catch (error) {
-                  console.error('Failed to delete voice over:', error);
+                  log.error('Failed to delete voice over:', error);
                   Alert.alert('Error', 'Failed to delete voice over. Please try again.');
                 }
               },

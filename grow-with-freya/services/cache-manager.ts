@@ -342,12 +342,19 @@ export class CacheManager {
       return url;
     }
 
-    // Build local path and check if file exists
+    // Build local path and check if file exists AND is valid
     const localPath = `${ASSETS_DIR}${assetPath}`;
 
     try {
       const info = await FileSystem.getInfoAsync(localPath);
       if (info.exists) {
+        // Reject suspiciously small image files (likely error responses saved to disk)
+        const isImage = assetPath.match(/\.(webp|png|jpg|jpeg|gif)$/i);
+        if (isImage && 'size' in info && typeof info.size === 'number' && info.size < 100) {
+          log.warn(`Corrupt cached asset (${info.size} bytes), removing: ${assetPath}`);
+          await this.deleteFileQuietly(localPath);
+          return url; // Fall back to remote URL
+        }
         return localPath;
       }
     } catch {
@@ -473,10 +480,36 @@ export class CacheManager {
       );
     });
 
-    const downloadResult = await Promise.race([downloadPromise, timeoutPromise]);
+    let downloadResult;
+    try {
+      downloadResult = await Promise.race([downloadPromise, timeoutPromise]);
+    } catch (error) {
+      // On timeout or network error, clean up any partial file
+      await this.deleteFileQuietly(localPath);
+      throw error;
+    }
 
     if (downloadResult.status !== 200) {
-      throw new Error(`Failed to download asset: ${downloadResult.status}`);
+      // downloadAsync writes the error response body to disk — clean it up
+      await this.deleteFileQuietly(localPath);
+      throw new Error(`Failed to download asset (HTTP ${downloadResult.status}): ${assetPath}`);
+    }
+
+    // Validate the downloaded file has real content (not a tiny error page)
+    const MIN_VALID_IMAGE_BYTES = 100; // Smallest valid webp is ~100 bytes
+    try {
+      const fileInfo = await FileSystem.getInfoAsync(localPath);
+      if (fileInfo.exists && 'size' in fileInfo) {
+        if (fileInfo.size < MIN_VALID_IMAGE_BYTES && assetPath.match(/\.(webp|png|jpg|jpeg|gif)$/i)) {
+          await this.deleteFileQuietly(localPath);
+          throw new Error(`Downloaded file too small (${fileInfo.size} bytes), likely corrupt: ${assetPath}`);
+        }
+      }
+    } catch (sizeError) {
+      if (sizeError instanceof Error && sizeError.message.includes('too small')) {
+        throw sizeError;
+      }
+      // Ignore other size-check errors — file was downloaded OK
     }
 
     log.debug(`Downloaded and cached asset: ${assetPath}`);
@@ -486,6 +519,18 @@ export class CacheManager {
   static async hasAsset(assetPath: string): Promise<boolean> {
     const uri = await this.getAssetUri(assetPath);
     return uri !== null;
+  }
+
+  /** Silently delete a file — used to clean up corrupt/partial downloads. */
+  private static async deleteFileQuietly(filePath: string): Promise<void> {
+    try {
+      const info = await FileSystem.getInfoAsync(filePath);
+      if (info.exists) {
+        await FileSystem.deleteAsync(filePath, { idempotent: true });
+      }
+    } catch {
+      // Best-effort cleanup
+    }
   }
 
   static async removeAsset(assetPath: string): Promise<void> {

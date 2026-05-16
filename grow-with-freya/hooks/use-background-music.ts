@@ -1,6 +1,9 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { AppState, AppStateStatus, Platform } from 'react-native';
 import { backgroundMusic } from '@/services/background-music';
+import { Logger } from '@/utils/logger';
+
+const log = Logger.create('Music');
 
 interface BackgroundMusicState {
   isPlaying: boolean;
@@ -56,9 +59,9 @@ export function useBackgroundMusic(): BackgroundMusicState & BackgroundMusicCont
         setIsMuted(backgroundMusic.getIsMuted());
         // Sync initial playing state after initialization
         setIsPlaying(backgroundMusic.getIsPlaying());
-        console.log(`Background music hook initialized - playing: ${backgroundMusic.getIsPlaying()}`);
+        log.debug(`Initialized, playing=${backgroundMusic.getIsPlaying()}`);
       } catch (error) {
-        console.warn('Failed to initialize background music:', error);
+        log.warn('Failed to initialize:', error);
       }
     };
 
@@ -74,17 +77,14 @@ export function useBackgroundMusic(): BackgroundMusicState & BackgroundMusicCont
       const currentlyPlaying = backgroundMusic.getIsPlaying();
       const currentlyMuted = backgroundMusic.getIsMuted();
       if (currentlyPlaying !== isPlaying) {
-        console.log(`Background music state change notification: ${isPlaying} -> ${currentlyPlaying}`);
         setIsPlaying(currentlyPlaying);
       }
       if (currentlyMuted !== isMuted) {
-        console.log(`Background music muted state change: ${isMuted} -> ${currentlyMuted}`);
         setIsMuted(currentlyMuted);
       }
     });
 
     const unsubscribeVolume = backgroundMusic.onVolumeChange((newVolume) => {
-      console.log(`Background music volume change notification: ${volume} -> ${newVolume}`);
       setVolumeState(newVolume);
     });
 
@@ -106,17 +106,14 @@ export function useBackgroundMusic(): BackgroundMusicState & BackgroundMusicCont
         if (Platform.OS === 'android') {
           wasPlayingBeforeBackground.current = backgroundMusic.getIsPlaying();
           if (wasPlayingBeforeBackground.current) {
-            console.log('App backgrounded on Android - pausing music');
+            log.debug('Pausing for background');
             await backgroundMusic.pause();
           }
-        } else {
-          // On iOS, let music continue in background (better UX for quick app switches)
-          console.log('App backgrounded - music continues');
         }
       } else if (nextAppState === 'active') {
         // On Android, resume music when app becomes active if it was playing before
         if (Platform.OS === 'android' && wasPlayingBeforeBackground.current) {
-          console.log('App became active on Android - resuming music');
+          log.debug('Resuming from background');
           await backgroundMusic.play();
           wasPlayingBeforeBackground.current = false;
         }
@@ -131,7 +128,6 @@ export function useBackgroundMusic(): BackgroundMusicState & BackgroundMusicCont
   const syncState = useCallback(() => {
     const currentlyPlaying = backgroundMusic.getIsPlaying();
     if (currentlyPlaying !== isPlaying) {
-      console.log(`Background music state sync: ${isPlaying} -> ${currentlyPlaying}`);
       setIsPlaying(currentlyPlaying);
     }
   }, [isPlaying]);
@@ -151,7 +147,7 @@ export function useBackgroundMusic(): BackgroundMusicState & BackgroundMusicCont
       // Force immediate state sync after play
       syncState();
     } catch (error) {
-      console.warn('Failed to play background music:', error);
+      log.warn('Failed to play:', error);
     }
   }, [syncState]);
 
@@ -161,7 +157,7 @@ export function useBackgroundMusic(): BackgroundMusicState & BackgroundMusicCont
       // Force immediate state sync after pause
       syncState();
     } catch (error) {
-      console.warn('Failed to pause background music:', error);
+      log.warn('Failed to pause:', error);
     }
   }, [syncState]);
 
@@ -171,7 +167,7 @@ export function useBackgroundMusic(): BackgroundMusicState & BackgroundMusicCont
       // Force immediate state sync after stop
       syncState();
     } catch (error) {
-      console.warn('Failed to stop background music:', error);
+      log.warn('Failed to stop:', error);
     }
   }, [syncState]);
 
@@ -180,7 +176,7 @@ export function useBackgroundMusic(): BackgroundMusicState & BackgroundMusicCont
       await backgroundMusic.setVolume(newVolume);
       // Volume state will be updated via the volume change callback
     } catch (error) {
-      console.warn('Failed to set background music volume:', error);
+      log.warn('Failed to set volume:', error);
     }
   }, []);
 
@@ -189,7 +185,7 @@ export function useBackgroundMusic(): BackgroundMusicState & BackgroundMusicCont
       await backgroundMusic.fadeIn(duration);
       setIsPlaying(true);
     } catch (error) {
-      console.warn('Failed to fade in background music:', error);
+      log.warn('Failed to fade in:', error);
     }
   }, []);
 
@@ -198,7 +194,7 @@ export function useBackgroundMusic(): BackgroundMusicState & BackgroundMusicCont
       await backgroundMusic.fadeOut(duration);
       setIsPlaying(false);
     } catch (error) {
-      console.warn('Failed to fade out background music:', error);
+      log.warn('Failed to fade out:', error);
     }
   }, []);
 
@@ -218,7 +214,7 @@ export function useBackgroundMusic(): BackgroundMusicState & BackgroundMusicCont
       setIsMuted(true);
       setIsPlaying(false);
     } catch (error) {
-      console.warn('Failed to mute background music:', error);
+      log.warn('Failed to mute:', error);
     }
   }, []);
 
@@ -229,7 +225,7 @@ export function useBackgroundMusic(): BackgroundMusicState & BackgroundMusicCont
       // Force immediate state sync after unmute
       syncState();
     } catch (error) {
-      console.warn('Failed to unmute background music:', error);
+      log.warn('Failed to unmute:', error);
     }
   }, [syncState]);
 

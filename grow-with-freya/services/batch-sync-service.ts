@@ -6,7 +6,7 @@ import { Story, CatalogEntry } from '../types/story';
 import { ALL_STORIES } from '@/data/stories';
 import { Logger } from '@/utils/logger';
 
-const log = Logger.create('BatchSyncService');
+const log = Logger.create('Sync');
 
 // Re-export for backwards compatibility
 export type { BatchUrlsResponse } from './asset-download-utils';
@@ -71,7 +71,7 @@ export class BatchSyncService {
   ): Promise<BatchSyncStats> {
     // Check if sync is already in progress
     if (this.isSyncing && this.syncPromise) {
-      log.info('[Batch Sync] Another sync in progress, waiting...');
+      log.info('Sync already in progress, waiting…');
       onProgress?.({ phase: 'skipped', progress: 0, message: 'Sync already in progress' });
       return this.syncPromise;
     }
@@ -108,18 +108,18 @@ export class BatchSyncService {
       errors: [],
     };
 
-    log.info('[User Journey Flow 4: Batch Sync] ========== BATCH SYNC STARTED ==========');
+    log.info('━━ Batch sync started ━━');
 
     try {
       // Phase 1: Version check (1 API call)
-      log.info('[User Journey Flow 4: Batch Sync] Step 1/5: Checking content versions...');
+      log.info('Checking content versions…');
       onProgress?.({ phase: 'version-check', progress: 5, message: 'Checking for updates...' });
 
       const versionCheck = await VersionManager.checkVersions();
       stats.apiCalls++;
 
       if (!versionCheck.serverVersion) {
-        log.info('[User Journey Flow 4: Batch Sync] Step 1/5: OFFLINE - using cached content');
+        log.info('Offline — using cached content');
         stats.fromCache = true;
         stats.endTime = Date.now();
         stats.durationMs = stats.endTime - stats.startTime;
@@ -129,7 +129,7 @@ export class BatchSyncService {
 
       // Check if sync is needed
       if (!versionCheck.needsStorySync && !versionCheck.needsAssetSync) {
-        log.info('[User Journey Flow 4: Batch Sync] Step 1/5: Stories up to date — refreshing catalog for fresh signed URLs...');
+        log.info('Stories up to date — refreshing catalog URLs…');
         // Stories are up to date, but we still need to call delta to get fresh catalog
         // entries with valid signed thumbnail URLs (they expire after 1 hour)
         try {
@@ -137,10 +137,10 @@ export class BatchSyncService {
           stats.apiCalls++;
           if (deltaResult.catalog && deltaResult.catalog.length > 0) {
             await CatalogService.updateCatalog(deltaResult.catalog);
-            log.info(`[User Journey Flow 4: Batch Sync] Catalog refreshed with ${deltaResult.catalog.length} entries (fresh signed URLs)`);
+            log.info(`Catalog refreshed: ${deltaResult.catalog.length} entries`);
           }
         } catch (e) {
-          log.warn('[User Journey Flow 4: Batch Sync] Catalog refresh failed (non-critical):', e);
+          log.warn('Catalog refresh failed (non-critical):', e);
         }
         stats.endTime = Date.now();
         stats.durationMs = stats.endTime - stats.startTime;
@@ -148,11 +148,10 @@ export class BatchSyncService {
         return stats;
       }
 
-      log.info(`[User Journey Flow 4: Batch Sync] Step 1/5: Sync needed - local(stories=${versionCheck.localVersion?.stories || 0}, assets=${versionCheck.localVersion?.assets || 0})`);
-      log.info(`[User Journey Flow 4: Batch Sync] Step 1/5: Sync needed - server(stories=${versionCheck.serverVersion.stories}, assets=${versionCheck.serverVersion.assets})`);
+      log.info(`Sync needed — local v${versionCheck.localVersion?.stories || 0} → server v${versionCheck.serverVersion.stories}`);
 
       // Phase 2: Fetch delta content (1 API call) — metadata only, no asset downloads
-      log.info('[User Journey Flow 4: Batch Sync] Step 2/5: Fetching delta content from POST /api/stories/delta...');
+      log.info('Fetching delta content…');
       onProgress?.({ phase: 'fetching-delta', progress: 15, message: 'Fetching updates...' });
 
       const deltaResult = await this.fetchDeltaContent(versionCheck);
@@ -160,17 +159,16 @@ export class BatchSyncService {
       stats.storiesUpdated = deltaResult.stories.length;
       stats.storiesDeleted = deltaResult.deletedStoryIds.length;
 
-      log.info(`[User Journey Flow 4: Batch Sync] Step 3/5: Delta result - ${deltaResult.stories.length} new/updated stories, ${deltaResult.deletedStoryIds.length} deleted`);
+      log.info(`Delta: +${deltaResult.stories.length} updated, -${deltaResult.deletedStoryIds.length} deleted`);
 
       // Handle deletions
       if (deltaResult.deletedStoryIds.length > 0) {
-        log.info(`[User Journey Flow 4: Batch Sync] Step 3/5: Removing ${deltaResult.deletedStoryIds.length} deleted stories from cache: ${deltaResult.deletedStoryIds.join(', ')}`);
+        log.debug(`Removing deleted: ${deltaResult.deletedStoryIds.join(', ')}`);
         await CacheManager.removeStories(deltaResult.deletedStoryIds);
       }
 
       // Phase 3: Save only bundled story metadata updates to cache
       // CMS-only stories are NOT saved to cache — they appear in the catalog for on-demand download
-      // This avoids the slow "Preparing downloads..." phase on first sign-in
       onProgress?.({ phase: 'saving', progress: 60, message: 'Updating stories...' });
 
       const bundledIds = new Set(ALL_STORIES.map(s => s.id));
@@ -179,15 +177,15 @@ export class BatchSyncService {
 
       if (bundledUpdates.length > 0) {
         await CacheManager.updateStories(bundledUpdates);
-        log.info(`[User Journey Flow 4: Batch Sync] Step 4/5: Saved ${bundledUpdates.length} bundled story updates to cache (${cmsOnlyCount} CMS-only stories deferred to catalog)`);
-      } else {
-        log.info(`[User Journey Flow 4: Batch Sync] Step 4/5: No bundled story updates (${cmsOnlyCount} CMS-only stories in catalog)`);
+        log.info(`Saved ${bundledUpdates.length} bundled updates, ${cmsOnlyCount} CMS-only in catalog`);
+      } else if (cmsOnlyCount > 0) {
+        log.debug(`No bundled updates (${cmsOnlyCount} CMS-only in catalog)`);
       }
 
       // Persist catalog for browse/discovery UI
       if (deltaResult.catalog && deltaResult.catalog.length > 0) {
         await CatalogService.updateCatalog(deltaResult.catalog);
-        log.info(`[User Journey Flow 4: Batch Sync] Step 5/5: Catalog updated with ${deltaResult.catalog.length} entries for on-demand download`);
+        log.info(`Catalog: ${deltaResult.catalog.length} entries`);
       }
 
       // Update local version
@@ -199,10 +197,7 @@ export class BatchSyncService {
       stats.endTime = Date.now();
       stats.durationMs = stats.endTime - stats.startTime;
 
-      log.info('[User Journey Flow 4: Batch Sync] ========== BATCH SYNC COMPLETE ==========');
-      log.info(`[User Journey Flow 4: Batch Sync] Duration: ${stats.durationMs}ms, API Calls: ${stats.apiCalls}`);
-      log.info(`[User Journey Flow 4: Batch Sync] Stories: ${stats.storiesUpdated} from server, ${bundledUpdates.length} bundled updated, ${cmsOnlyCount} in catalog`);
-      log.info(`[User Journey Flow 4: Batch Sync] On-demand model: assets download only when user taps a story`);
+      log.info(`━━ Sync complete ━━ ${stats.durationMs}ms · ${stats.storiesUpdated} stories · ${stats.apiCalls} API calls`);
 
       onProgress?.({ phase: 'complete', progress: 100, message: 'Sync complete' });
       return stats;
@@ -212,8 +207,7 @@ export class BatchSyncService {
       stats.errors.push(errorMsg);
       stats.endTime = Date.now();
       stats.durationMs = stats.endTime - stats.startTime;
-      log.error('[User Journey Flow 4: Batch Sync] ========== BATCH SYNC FAILED ==========');
-      log.error(`[User Journey Flow 4: Batch Sync] Error: ${errorMsg}`);
+      log.error(`Sync failed after ${stats.durationMs}ms: ${errorMsg}`);
       throw error;
     }
   }
@@ -232,7 +226,7 @@ export class BatchSyncService {
       }
     }
 
-    log.info(`[Batch Sync] Fetching delta from version ${localVersion} with ${Object.keys(checksums).length} cached stories`);
+    log.debug(`Fetching delta from v${localVersion} (${Object.keys(checksums).length} cached)`);
 
     const response = await ApiClient.request<DeltaSyncResponse>('/api/stories/delta', {
       method: 'POST',

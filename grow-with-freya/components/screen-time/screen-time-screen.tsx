@@ -13,6 +13,9 @@ import { MusicControl } from '../ui/music-control';
 import { StarBackground } from '../ui/star-background';
 import ScreenTimeService, { ScreenTimeStats, SCREEN_TIME_LIMITS } from '../../services/screen-time-service';
 import NotificationService from '../../services/notification-service';
+import { Logger } from '@/utils/logger';
+
+const log = Logger.create('ScreenTimeScreen');
 import { useScreenTime } from './screen-time-provider';
 import { CustomRemindersScreen, CreateReminderScreen } from '../reminders';
 import { styles } from './styles';
@@ -129,7 +132,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
       const screenTimeStats = await screenTimeService.getScreenTimeStats(childAgeInMonths);
       setStats(screenTimeStats);
     } catch (error) {
-      console.error('Failed to load screen time stats:', error);
+      log.error('Failed to load stats:', error);
     } finally {
       setLoading(false);
     }
@@ -256,13 +259,13 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
 
         // Sync reminders to backend (in background, don't block)
         if (reminderService.hasUnsavedChanges()) {
-          console.log('[ScreenTimeScreen] Syncing reminders to backend...');
+          log.debug('Syncing reminders to backend…');
           reminderService.syncToBackend().catch((error: any) => {
-            console.log('[ScreenTimeScreen] Failed to sync reminders:', error);
+            log.warn('Failed to sync reminders:', error);
           });
         }
 
-        console.log('[ScreenTimeScreen] Settings queued for background sync');
+        log.debug('Settings queued for sync');
       } else {
         // Not authenticated - just commit reminders locally
         if (reminderService.hasUnsavedChanges()) {
@@ -279,7 +282,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
         'Your screen time preferences and custom reminders have been saved and synced across your devices.'
       );
     } catch (error) {
-      console.error('Failed to save settings:', error);
+      log.error('Failed to save settings:', error);
       Alert.alert(
         'Save Failed',
         'Failed to save your settings. Please try again.'
@@ -754,7 +757,7 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
       const screenTimeStats = await screenTimeService.getScreenTimeStats(childAgeInMonths);
       setStats(screenTimeStats);
     } catch (error) {
-      console.error('Failed to load screen time stats:', error);
+      log.error('Failed to load stats:', error);
     }
   };
 

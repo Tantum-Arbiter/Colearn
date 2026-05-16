@@ -52,24 +52,9 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
 
   // Debug logging for settings screen
   React.useEffect(() => {
-    const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development';
-    if (isDev) {
-      console.log('SettingsScreen mounted');
-    }
-
-    return () => {
-      if (isDev) {
-        console.log('SettingsScreen unmounted');
-      }
-    };
   }, []);
 
   const handleResetApp = () => {
-    const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development';
-    if (isDev) {
-      console.log('Settings: Reset app button pressed');
-    }
-
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setOnboardingComplete(false);
     setAppReady(false);
@@ -80,11 +65,6 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
   };
 
   const handleBack = () => {
-    const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development';
-    if (isDev) {
-      console.log('Settings: Back button pressed');
-    }
-
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onBack();
   };

@@ -1,4 +1,7 @@
 import { createAudioPlayer, setAudioModeAsync, AudioPlayer } from 'expo-audio';
+import { Logger } from '@/utils/logger';
+
+const log = Logger.create('BGMusic');
 
 // Debug logging - set to false for production performance
 const DEBUG_LOGS = false;
@@ -48,7 +51,7 @@ class BackgroundMusicService {
           this.player.pause();
           this.player.release();
         } catch (cleanupError) {
-          console.warn('Error cleaning up old player:', cleanupError);
+          log.warn('Error cleaning up old player:', cleanupError);
         }
         this.player = null;
       }
@@ -85,9 +88,7 @@ class BackgroundMusicService {
 
       DEBUG_LOGS && console.log(`[BGMusic] Player #${this.playerId} initialized successfully`);
     } catch (error) {
-      console.error('Failed to initialize background music:', error);
-      console.error('Error details:', JSON.stringify(error, null, 2));
-      console.warn('To fix this: Check that audio files exist in assets/audio/background/');
+      log.error('Failed to initialize background music:', error);
       this.isInitializing = false;
       // Don't throw - allow app to continue without music
     }
@@ -104,7 +105,7 @@ class BackgroundMusicService {
       DEBUG_LOGS && console.log('Background music not loaded - reinitializing...');
       await this.initialize();
       if (!this.isLoaded || !this.player) {
-        console.warn('Failed to reinitialize background music');
+        log.warn('Failed to reinitialize');
         return;
       }
     }
@@ -121,7 +122,7 @@ class BackgroundMusicService {
         // Only set volume if user hasn't explicitly set it (e.g., during initial app startup)
         if (!this.hasVolumeBeenSetByUser) {
           this.player.volume = this.volume;
-          console.log(`Background music started with default volume: ${this.volume}`);
+          log.debug(`Started with volume: ${this.volume}`);
         } else {
           DEBUG_LOGS && console.log('Background music started (preserving user-set volume)');
         }
@@ -132,12 +133,7 @@ class BackgroundMusicService {
         DEBUG_LOGS && console.log('Background music already playing (by flag)');
       }
     } catch (error) {
-      console.error('Failed to play background music:', error);
-      console.error('Play error details:', JSON.stringify(error, null, 2));
-      console.warn('This might be due to:');
-      console.warn('1. Invalid or corrupted audio file');
-      console.warn('2. Device audio system issues');
-      console.warn('3. Audio format not supported on this device');
+      log.error('Failed to play:', error);
     }
   }
 
@@ -156,7 +152,7 @@ class BackgroundMusicService {
 
       // Verify the pause worked by checking the actual status
       if (this.player.playing) {
-        console.warn('Background music still playing after pause attempt');
+        log.warn('Still playing after pause attempt');
         // expo-audio doesn't have a separate stop method, pause is the way to stop
         this.player.pause();
         this.isPlaying = false;
@@ -166,7 +162,7 @@ class BackgroundMusicService {
       }
       this.notifyStateChange(); // Notify state change
     } catch (error) {
-      console.warn('Failed to pause background music:', error);
+      log.warn('Failed to pause:', error);
       // Force the state to false even if pause failed
       this.isPlaying = false;
     }
@@ -184,7 +180,7 @@ class BackgroundMusicService {
       DEBUG_LOGS && console.log('Background music stopped');
       this.notifyStateChange(); // Notify state change
     } catch (error) {
-      console.warn('Failed to stop background music:', error);
+      log.warn('Failed to stop:', error);
     }
   }
 
@@ -196,7 +192,7 @@ class BackgroundMusicService {
   }
 
   async unmute(resumePlayback: boolean = true): Promise<void> {
-    console.log(`Unmuting background music (resumePlayback: ${resumePlayback})`);
+    log.debug(`Unmuting (resumePlayback: ${resumePlayback})`);
     this.isMuted = false;
     if (resumePlayback) {
       await this.play();
@@ -216,9 +212,9 @@ class BackgroundMusicService {
     if (this.isLoaded && this.player) {
       try {
         this.player.volume = newVolume;
-        console.log(`Background music volume set to ${newVolume} (user-controlled)`);
+        log.debug(`Volume: ${newVolume}`);
       } catch (error) {
-        console.warn('Failed to set background music volume:', error);
+        log.warn('Failed to set volume:', error);
       }
     }
 
@@ -257,7 +253,7 @@ class BackgroundMusicService {
       try {
         callback();
       } catch (error) {
-        console.warn('Error in background music state change callback:', error);
+        log.warn('Error in state change callback:', error);
       }
     });
   }
@@ -267,7 +263,7 @@ class BackgroundMusicService {
       try {
         callback(volume);
       } catch (error) {
-        console.warn('Error in background music volume change callback:', error);
+        log.warn('Error in volume change callback:', error);
       }
     });
   }
@@ -329,7 +325,7 @@ class BackgroundMusicService {
 
       fadeStep();
     } catch (error) {
-      console.warn('Failed to fade in background music:', error);
+      log.warn('Failed to fade in:', error);
     }
   }
 
@@ -355,7 +351,7 @@ class BackgroundMusicService {
 
         // Add a timeout to prevent hanging
         const timeoutId = setTimeout(() => {
-          console.warn('Fade out timeout - forcing completion');
+          log.warn('Fade out timeout - forcing completion');
           if (this.player && this.isLoaded) {
             this.pause().then(() => {
               if (this.player) this.player.volume = currentVolume;
@@ -390,14 +386,14 @@ class BackgroundMusicService {
             }
           } catch (stepError) {
             clearTimeout(timeoutId);
-            console.warn('Error in fade step:', stepError);
+            log.warn('Error in fade step:', stepError);
             resolve();
           }
         };
 
         fadeStep();
       } catch (error) {
-        console.warn('Failed to fade out background music:', error);
+        log.warn('Failed to fade out:', error);
         resolve(); // Resolve even on error to prevent hanging
       }
     });
@@ -427,7 +423,7 @@ class BackgroundMusicService {
         this.isInitializing = false;
         DEBUG_LOGS && console.log(`[BGMusic] Player #${this.playerId} cleaned up successfully`);
       } catch (error) {
-        console.warn('Failed to cleanup background music:', error);
+        log.warn('Failed to cleanup:', error);
       }
     }
   }
@@ -437,12 +433,12 @@ class BackgroundMusicService {
       // Only update isPlaying if it's different from current state
       // This prevents race conditions where manual pause/play calls get overridden
       if (this.isPlaying !== status.playing) {
-        console.log(`Background music status update: ${this.isPlaying} -> ${status.playing}`);
+        log.debug(`Status: ${this.isPlaying} → ${status.playing}`);
         this.isPlaying = status.playing;
       }
 
       if (status.error) {
-        console.warn('Background music playback error:', status.error);
+        log.warn('Playback error:', status.error);
         this.isPlaying = false;
 
         // Clear any fade operations on error
@@ -452,7 +448,7 @@ class BackgroundMusicService {
         }
       }
     } catch (error) {
-      console.warn('Error in playback status update:', error);
+      log.warn('Error in playback status update:', error);
       this.isPlaying = false;
     }
   };

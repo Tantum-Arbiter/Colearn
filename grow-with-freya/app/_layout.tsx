@@ -431,7 +431,7 @@ function AppContent() {
           // Start background music with a gentle fade-in
           await fadeIn(3000); // 3 second fade-in
           setHasStartedBackgroundMusic(true); // Mark that we've started music
-          console.log('[BackgroundMusic] Started playing on main menu load');
+          log.debug('Background music started');
         } catch (error) {
           log.warn('Failed to start background music:', error);
         }

@@ -1,6 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import i18n from 'i18next';
+import { Logger } from '@/utils/logger';
+
+const log = Logger.create('ScreenTime');
 
 // WHO/AAP Guidelines for screen time
 export const SCREEN_TIME_LIMITS = {
@@ -217,7 +220,7 @@ class ScreenTimeService {
       // Reset warning date for today
       this.resetWarningDate();
     } catch (error) {
-      console.error('Failed to reset today\'s usage:', error);
+      log.error('Failed to reset today\'s usage:', error);
       throw error;
     }
   }
@@ -233,7 +236,7 @@ class ScreenTimeService {
         await AsyncStorage.setItem('last_daily_reset_date', today);
       }
     } catch (error) {
-      console.error('Failed to check/reset daily data:', error);
+      log.error('Failed to check/reset daily data:', error);
     }
   }
 
@@ -243,7 +246,7 @@ class ScreenTimeService {
       const updatedSessions = [...existingSessions, session];
       await AsyncStorage.setItem('screen_time_sessions', JSON.stringify(updatedSessions));
     } catch (error) {
-      console.error('Failed to save screen time session:', error);
+      log.error('Failed to save screen time session:', error);
     }
   }
 
@@ -252,7 +255,7 @@ class ScreenTimeService {
       const sessionsJson = await AsyncStorage.getItem('screen_time_sessions');
       return sessionsJson ? JSON.parse(sessionsJson) : [];
     } catch (error) {
-      console.error('Failed to load screen time sessions:', error);
+      log.error('Failed to load screen time sessions:', error);
       return [];
     }
   }

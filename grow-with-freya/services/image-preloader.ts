@@ -1,4 +1,7 @@
 import { Image } from 'react-native';
+import { Logger } from '@/utils/logger';
+
+const log = Logger.create('Preloader');
 
 const CRITICAL_IMAGES = [
   require('../assets/images/ui-elements/bear-bottom-screen.webp'),
@@ -50,7 +53,7 @@ async function preloadImage(source: any): Promise<void> {
       await Image.prefetch(resolved.uri);
     }
   } catch (error) {
-    console.warn('Failed to preload image:', source, error);
+    // Individual preload failure — caller handles aggregation
     throw error;
   }
 }
@@ -59,26 +62,21 @@ export async function preloadCriticalImages(): Promise<PreloadResult> {
   const errors: Error[] = [];
   let loadedCount = 0;
 
-  console.log('Starting critical image preload...');
   const startTime = Date.now();
 
   const preloadPromises = CRITICAL_IMAGES.map(async (source) => {
     try {
       await preloadImage(source);
       loadedCount++;
-      console.log(`Preloaded critical image: ${JSON.stringify(source)}`);
     } catch (error) {
       errors.push(error as Error);
-      console.warn(`Failed to preload critical image: ${JSON.stringify(source)}`, error);
     }
   });
 
   await Promise.allSettled(preloadPromises);
 
-  const endTime = Date.now();
-  const duration = endTime - startTime;
-
-  console.log(`Critical image preload completed in ${duration}ms. Loaded: ${loadedCount}/${CRITICAL_IMAGES.length}`);
+  const duration = Date.now() - startTime;
+  log.debug(`Critical images: ${loadedCount}/${CRITICAL_IMAGES.length} in ${duration}ms`);
 
   return {
     success: errors.length === 0,
@@ -101,26 +99,21 @@ export async function preloadSecondaryImages(): Promise<PreloadResult> {
     };
   }
 
-  console.log('Starting secondary image preload...');
   const startTime = Date.now();
 
   const preloadPromises = SECONDARY_IMAGES.map(async (source) => {
     try {
       await preloadImage(source);
       loadedCount++;
-      console.log(`Preloaded secondary image: ${JSON.stringify(source)}`);
     } catch (error) {
       errors.push(error as Error);
-      console.warn(`Failed to preload secondary image: ${JSON.stringify(source)}`, error);
     }
   });
 
   await Promise.allSettled(preloadPromises);
 
-  const endTime = Date.now();
-  const duration = endTime - startTime;
-
-  console.log(`Secondary image preload completed in ${duration}ms. Loaded: ${loadedCount}/${SECONDARY_IMAGES.length}`);
+  const duration = Date.now() - startTime;
+  log.debug(`Secondary images: ${loadedCount}/${SECONDARY_IMAGES.length} in ${duration}ms`);
 
   return {
     success: errors.length === 0,
@@ -143,26 +136,21 @@ export async function preloadOnboardingImages(): Promise<PreloadResult> {
     };
   }
 
-  console.log('Starting onboarding image preload...');
   const startTime = Date.now();
 
   const preloadPromises = ONBOARDING_IMAGES.map(async (source) => {
     try {
       await preloadImage(source);
       loadedCount++;
-      console.log(`Preloaded onboarding image: ${JSON.stringify(source)}`);
     } catch (error) {
       errors.push(error as Error);
-      console.warn(`Failed to preload onboarding image: ${JSON.stringify(source)}`, error);
     }
   });
 
   await Promise.allSettled(preloadPromises);
 
-  const endTime = Date.now();
-  const duration = endTime - startTime;
-
-  console.log(`Onboarding image preload completed in ${duration}ms. Loaded: ${loadedCount}/${ONBOARDING_IMAGES.length}`);
+  const duration = Date.now() - startTime;
+  log.debug(`Onboarding images: ${loadedCount}/${ONBOARDING_IMAGES.length} in ${duration}ms`);
 
   return {
     success: errors.length === 0,
@@ -185,7 +173,7 @@ export async function preloadAllImages(): Promise<{
 export function clearImageCache(): void {
   // React Native doesn't provide a direct way to clear image cache
   // This is mainly for development purposes
-  console.log('Image cache clear requested (not implemented in React Native)');
+  // Not implemented in React Native
 }
 
 export function getPreloadStats(): {

@@ -1,6 +1,9 @@
 import React, { Component, ReactNode } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Logger } from '@/utils/logger';
+
+const log = Logger.create('ErrorBoundary');
 
 interface Props {
   children: ReactNode;
@@ -33,26 +36,15 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
-    
+    log.error('Caught error:', error.message);
+
     this.setState({
       error,
       errorInfo,
     });
 
-    // Call optional error handler
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
-    }
-
-    // Log to crash reporting service in production
-    const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development';
-    if (isDev) {
-      console.warn('Error caught by ErrorBoundary:', {
-        error: error.message,
-        stack: error.stack,
-        componentStack: errorInfo.componentStack,
-      });
     }
   }
 

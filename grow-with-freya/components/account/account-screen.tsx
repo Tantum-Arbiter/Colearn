@@ -28,6 +28,9 @@ import { StoryLoader } from '../../services/story-loader';
 import { TEXT_SIZE_OPTIONS, useAccessibility } from '../../hooks/use-accessibility';
 import { SettingsTipsOverlay } from '../tutorial/settings-tips-overlay';
 import { ScreenTimeTipsOverlay } from '../tutorial/screen-time-tips-overlay';
+import { Logger } from '@/utils/logger';
+
+const log = Logger.create('Account');
 import { useTutorial } from '../../contexts/tutorial-context';
 import { SUPPORTED_LANGUAGES, setStoredLanguage, type SupportedLanguage } from '../../services/i18n';
 import * as Notifications from 'expo-notifications';
@@ -157,7 +160,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
 
   // Navigate to a sub-page (slides in from right)
   const navigateToSlide = useCallback((view: SlideView) => {
-    console.log(`[AccountScreen] Navigate to ${view}`);
+    log.debug(`Navigate → ${view}`);
 
     const slideValue = getSlideValue(view);
     if (slideValue) {
@@ -168,7 +171,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
 
   // Navigate back (slides out to right)
   const navigateBack = useCallback((fromView: SlideView, toView: SlideView) => {
-    console.log(`[AccountScreen] Navigate back from ${fromView} to ${toView}`);
+    log.debug(`Navigate ${fromView} → ${toView}`);
 
     const slideValue = getSlideValue(fromView);
     if (slideValue) {
@@ -180,7 +183,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
 
   // Navigate back to main (closes all overlays)
   const navigateToMain = useCallback(() => {
-    console.log(`[AccountScreen] Navigate to main`);
+    log.debug('Navigate → main');
 
     // Slide out the current view
     const slideValue = getSlideValue(currentView);
@@ -268,13 +271,13 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
               // Note: We keep story and asset caches intact for delta sync efficiency
               // Changed assets will be detected via checksum comparison on next login
               ApiClient.logout().catch(error => {
-                console.error('Background logout error:', error);
+                log.error('Background logout error:', error);
               });
               reminderService.clearAllReminders().catch(error => {
-                console.error('Background reminder clear error:', error);
+                log.error('Background reminder clear error:', error);
               });
             } catch (error) {
-              console.error('Logout error:', error);
+              log.error('Logout error:', error);
               Alert.alert(t('common.error'), t('alerts.logout.error'));
             }
           },
@@ -298,29 +301,18 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
           text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
-            console.log('[Reset] Clearing all app data...');
+            log.info('Clearing all app data…');
 
             // Clear cache FIRST (blocking) - this must complete before navigation
             // Otherwise the sync will start before the cache is cleared
             try {
-              // Clear version metadata so sync knows to re-download everything
               await VersionManager.clearLocalVersion();
-              console.log('[Reset] Version metadata cleared');
-
-              // Clear BatchSyncService cache (stories and assets)
               await CacheManager.clearAll();
-              console.log('[Reset] CacheManager cleared');
-
-              // Clear legacy sync service cache
               await StorySyncService.clearCache();
-              console.log('[Reset] Legacy cache cleared');
-
-              // IMPORTANT: Clear in-memory cache so old stories don't show
-              // This must be called because JS memory isn't cleared on navigation
               StoryLoader.invalidateCache();
-              console.log('[Reset] StoryLoader in-memory cache cleared');
+              log.info('Caches cleared');
             } catch (error) {
-              console.error('[Reset] Error clearing caches:', error);
+              log.error('Error clearing caches:', error);
             }
 
             // Reset all state to initial values
@@ -331,7 +323,6 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
 
             // Clear user profile (nickname, avatar, etc.)
             clearUserProfile();
-            console.log('[Reset] User profile cleared');
 
             // Set app ready to trigger navigation
             setTimeout(() => {
@@ -339,17 +330,11 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
             }, 100);
 
             // Clear remaining items in background (non-blocking)
-            ApiClient.logout().catch(error => {
-              console.error('Background logout error:', error);
-            });
-            clearPersistedStorage().catch(error => {
-              console.error('Background storage clear error:', error);
-            });
-            resetAllTutorials().catch(error => {
-              console.error('Background tutorial reset error:', error);
-            });
+            ApiClient.logout().catch(error => log.error('Background logout:', error));
+            clearPersistedStorage().catch(error => log.error('Background storage clear:', error));
+            resetAllTutorials().catch(error => log.error('Background tutorial reset:', error));
 
-            console.log('[Reset] App reset complete');
+            log.info('App reset complete');
           },
         },
       ]
@@ -366,9 +351,9 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
       // Refresh the usage in the context to update the UI immediately
       await refreshUsage();
 
-      console.log('Today\'s screen time usage has been reset');
+      log.info('Screen time usage reset');
     } catch (error) {
-      console.error('Failed to reset today\'s usage:', error);
+      log.error('Failed to reset usage:', error);
     }
   };
 
@@ -392,7 +377,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
       // Save locally first (sync, non-blocking for UI)
       if (reminderService.hasUnsavedChanges()) {
         reminderService.commitChanges().catch(error => {
-          console.error('[AccountScreen] Failed to commit changes locally:', error);
+          log.error('Failed to commit changes locally:', error);
         });
       }
 
@@ -403,10 +388,10 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
           const isAuthenticated = await ApiClient.isAuthenticated();
           if (isAuthenticated) {
             await reminderService.syncToBackend();
-            console.log('[AccountScreen] Auto-saved reminders to backend');
+            log.debug('Reminders synced to backend');
           }
         } catch (syncError) {
-          console.log('[AccountScreen] Failed to sync to backend (saved locally):', syncError);
+          log.debug('Failed to sync to backend (saved locally):', syncError);
         }
       })();
 

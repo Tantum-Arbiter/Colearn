@@ -2,6 +2,9 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import { ScheduleRecommendation } from './screen-time-service';
+import { Logger } from '@/utils/logger';
+
+const log = Logger.create('Notifications');
 
 // Configure notification behavior
 Notifications.setNotificationHandler({
@@ -33,7 +36,7 @@ class NotificationService {
 
   async requestPermissions(): Promise<NotificationPermissionStatus> {
     if (!Device.isDevice) {
-      console.warn('Notifications only work on physical devices');
+      log.warn('Notifications only work on physical devices');
       return {
         granted: false,
         canAskAgain: false,
@@ -76,7 +79,7 @@ class NotificationService {
   async scheduleRecommendedReminders(schedule: ScheduleRecommendation[]): Promise<void> {
     const permissionStatus = await this.getPermissionStatus();
     if (!permissionStatus.granted) {
-      console.warn('Notification permissions not granted');
+      log.warn('Notification permissions not granted');
       return;
     }
 
@@ -113,7 +116,7 @@ class NotificationService {
         trigger,
       });
     } catch (error) {
-      console.error('Failed to schedule notification:', error);
+      log.error('Failed to schedule notification:', error);
     }
   }
 
@@ -137,7 +140,7 @@ class NotificationService {
         trigger: null, // Send immediately
       });
     } catch (error) {
-      console.error('Failed to send screen time warning:', error);
+      log.error('Failed to send screen time warning:', error);
     }
   }
 
@@ -145,7 +148,7 @@ class NotificationService {
     try {
       await Notifications.cancelAllScheduledNotificationsAsync();
     } catch (error) {
-      console.error('Failed to cancel notifications:', error);
+      log.error('Failed to cancel notifications:', error);
     }
   }
 
@@ -153,7 +156,7 @@ class NotificationService {
     try {
       return await Notifications.getAllScheduledNotificationsAsync();
     } catch (error) {
-      console.error('Failed to get scheduled notifications:', error);
+      log.error('Failed to get scheduled notifications:', error);
       return [];
     }
   }
@@ -209,7 +212,7 @@ class NotificationService {
       } else if (categoryIdentifier === 'screen-time-warning') {
         if (actionIdentifier === 'close-app') {
           // This would need to be handled by the app
-          console.log('User chose to close app from notification');
+          log.info('User chose to close app from notification');
         }
       }
     });
@@ -234,7 +237,7 @@ class NotificationService {
         trigger,
       });
     } catch (error) {
-      console.error('Failed to schedule delayed reminder:', error);
+      log.error('Failed to schedule delayed reminder:', error);
     }
   }
 

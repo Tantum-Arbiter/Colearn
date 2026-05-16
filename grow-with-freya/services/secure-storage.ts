@@ -1,5 +1,8 @@
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+import { Logger } from '@/utils/logger';
+
+const log = Logger.create('SecureStorage');
 
 export class SecureStorage {
   private static readonly ACCESS_TOKEN_KEY = 'auth_access_token';
@@ -13,7 +16,7 @@ export class SecureStorage {
         SecureStore.setItemAsync(this.REFRESH_TOKEN_KEY, refreshToken),
       ]);
     } catch (error) {
-      console.error('Failed to store tokens:', error);
+      log.error('Failed to store tokens:', error);
       throw new Error('Token storage failed');
     }
   }
@@ -22,7 +25,7 @@ export class SecureStorage {
     try {
       return await SecureStore.getItemAsync(this.ACCESS_TOKEN_KEY);
     } catch (error) {
-      console.error('Failed to retrieve access token:', error);
+      log.error('Failed to retrieve access token:', error);
       return null;
     }
   }
@@ -31,7 +34,7 @@ export class SecureStorage {
     try {
       return await SecureStore.getItemAsync(this.REFRESH_TOKEN_KEY);
     } catch (error) {
-      console.error('Failed to retrieve refresh token:', error);
+      log.error('Failed to retrieve refresh token:', error);
       return null;
     }
   }
@@ -45,7 +48,7 @@ export class SecureStorage {
     try {
       await SecureStore.setItemAsync(this.USER_DATA_KEY, JSON.stringify(userData));
     } catch (error) {
-      console.error('Failed to store user data:', error);
+      log.error('Failed to store user data:', error);
       throw new Error('User data storage failed');
     }
   }
@@ -60,7 +63,7 @@ export class SecureStorage {
       const data = await SecureStore.getItemAsync(this.USER_DATA_KEY);
       return data ? JSON.parse(data) : null;
     } catch (error) {
-      console.error('Failed to retrieve user data:', error);
+      log.error('Failed to retrieve user data:', error);
       return null;
     }
   }
@@ -73,7 +76,7 @@ export class SecureStorage {
         SecureStore.deleteItemAsync(this.USER_DATA_KEY),
       ]);
     } catch (error) {
-      console.error('Failed to clear auth data:', error);
+      log.error('Failed to clear auth data:', error);
       throw new Error('Failed to clear authentication data');
     }
   }
@@ -83,7 +86,7 @@ export class SecureStorage {
       const accessToken = await this.getAccessToken();
       return accessToken !== null;
     } catch (error) {
-      console.error('Failed to check authentication status:', error);
+      log.error('Failed to check auth status:', error);
       return false;
     }
   }

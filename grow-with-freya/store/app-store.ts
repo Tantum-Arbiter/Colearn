@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Logger } from '@/utils/logger';
+
+const log = Logger.create('Store');
 
 
 
@@ -248,9 +251,9 @@ export const useAppStore = create<AppState>()(
       clearPersistedStorage: async () => {
         try {
           await AsyncStorage.removeItem('app-storage');
-          console.log('Persisted storage cleared successfully');
+          log.info('Persisted storage cleared');
         } catch (error) {
-          console.error('Failed to clear persisted storage:', error);
+          log.error('Failed to clear persisted storage:', error);
         }
       },
     }),
@@ -286,12 +289,12 @@ export const useAppStore = create<AppState>()(
       }),
       onRehydrateStorage: () => (state, error) => {
         if (error) {
-          console.error('[AppStore] Failed to hydrate from AsyncStorage:', error);
+          log.error('Failed to hydrate:', error);
         }
         if (state) {
           // Use proper action to update state - avoids race conditions
           state.setHasHydrated(true);
-          console.log('[AppStore] Store hydrated from AsyncStorage');
+          log.debug('Store hydrated');
         }
       },
     }

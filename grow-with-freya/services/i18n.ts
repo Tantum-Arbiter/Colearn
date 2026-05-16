@@ -7,7 +7,7 @@ let Localization: { getLocales: () => Array<{ languageCode?: string }> } | null 
 try {
   Localization = require('expo-localization');
 } catch (e) {
-  console.warn('expo-localization not available, using fallback');
+  // expo-localization not available, using fallback
 }
 
 // Import translation files
@@ -65,7 +65,7 @@ export async function getStoredLanguage(): Promise<SupportedLanguage> {
       return stored as SupportedLanguage;
     }
   } catch (error) {
-    console.warn('Failed to get stored language:', error);
+    // Failed to get stored language - will use default
   }
   
   // Detect from device locale
@@ -78,7 +78,7 @@ export async function setStoredLanguage(language: SupportedLanguage): Promise<vo
     await AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, language);
     await i18n.changeLanguage(language);
   } catch (error) {
-    console.error('Failed to save language preference:', error);
+    // Failed to save language preference - non-critical
   }
 }
 

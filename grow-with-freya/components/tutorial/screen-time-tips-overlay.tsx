@@ -38,30 +38,13 @@ export function ScreenTimeTipsOverlay({ isActive = true }: ScreenTimeTipsOverlay
   const scale = useSharedValue(0.9);
 
   useEffect(() => {
-    console.log('[ScreenTimeTipsOverlay] Check:', {
-      isLoaded,
-      isActive,
-      hasTriggered: hasTriggeredRef.current,
-      hasSeenScreenTime,
-      shouldShow: shouldShowTutorial('screen_time_tips'),
-    });
-
-    if (!isLoaded || !isActive) {
-      console.log('[ScreenTimeTipsOverlay] Early return - isLoaded or isActive false');
-      return;
-    }
-
-    if (hasTriggeredRef.current) {
-      console.log('[ScreenTimeTipsOverlay] Already triggered');
-      return;
-    }
+    if (!isLoaded || !isActive) return;
+    if (hasTriggeredRef.current) return;
 
     if (!hasSeenScreenTime && shouldShowTutorial('screen_time_tips')) {
-      console.log('[ScreenTimeTipsOverlay] Triggering overlay!');
       hasTriggeredRef.current = true;
 
       timerRef.current = setTimeout(() => {
-        console.log('[ScreenTimeTipsOverlay] Setting isVisible to true');
         setIsVisible(true);
         opacity.value = withTiming(1, { duration: 300 });
         scale.value = withSpring(1, { damping: 15 });

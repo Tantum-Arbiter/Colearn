@@ -2,6 +2,9 @@ import * as SecureStore from 'expo-secure-store';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
+import { Logger } from '@/utils/logger';
+
+const log = Logger.create('DeviceInfo');
 
 const DEVICE_ID_KEY = 'device_unique_id';
 
@@ -41,7 +44,7 @@ export class DeviceInfoService {
       this.deviceId = await this.getOrCreateDeviceId();
       this.isInitialized = true;
     } catch (error) {
-      console.error('Failed to initialize DeviceInfoService:', error);
+      log.error('Failed to initialize:', error);
       // Generate a fallback device ID if secure store fails
       this.deviceId = `fallback-${generateUUID()}`;
       this.isInitialized = true;
@@ -60,14 +63,14 @@ export class DeviceInfoService {
       await SecureStore.setItemAsync(DEVICE_ID_KEY, newId);
       return newId;
     } catch (error) {
-      console.error('Failed to get/create device ID:', error);
+      log.error('Failed to get/create device ID:', error);
       throw error;
     }
   }
 
   static getDeviceId(): string {
     if (!this.deviceId) {
-      console.warn('DeviceInfoService not initialized, returning placeholder');
+      log.warn('Not initialized, returning placeholder');
       return 'not-initialized';
     }
     return this.deviceId;

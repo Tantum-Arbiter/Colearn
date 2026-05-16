@@ -4,6 +4,9 @@ import { useAppStore } from '../../store/app-store';
 import ScreenTimeService, { ScreenTimeWarning } from '../../services/screen-time-service';
 import NotificationService from '../../services/notification-service';
 import { ScreenTimeWarningModal } from './screen-time-warning-modal';
+import { Logger } from '@/utils/logger';
+
+const log = Logger.create('ScreenTime');
 
 interface ScreenTimeContextType {
   isTracking: boolean;
@@ -123,7 +126,7 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
   // BUT don't start if we're on an exempt screen (sleep/music)
   useEffect(() => {
     if (screenTimeEnabled && !isTracking && !isOnExemptScreen) {
-      console.log('Screen time: Auto-starting session on app mount');
+      log.debug('Auto-starting session');
       screenTimeService.startSession('story', childAgeInMonths).then(() => {
         setIsTracking(true);
         setCurrentActivity('story');
@@ -138,7 +141,7 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
       if (nextAppState === 'background' || nextAppState === 'inactive') {
         // App going to background, end current session
         if (isTracking) {
-          console.log('Screen time: Ending session on background');
+          log.debug('Ending session (background)');
           await screenTimeService.endSession();
           setIsTracking(false);
           setCurrentActivity(null);
@@ -147,7 +150,7 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
         // App becoming active, start a new session if screen time is enabled
         // BUT don't start if we're on an exempt screen (sleep/music)
         if (screenTimeEnabled && !isTracking && !isOnExemptScreen) {
-          console.log('Screen time: Starting session on app active');
+          log.debug('Starting session (active)');
           await screenTimeService.startSession('story', childAgeInMonths);
           setIsTracking(true);
           setCurrentActivity('story');
@@ -164,14 +167,14 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
     const handleExemptScreenChange = async () => {
       if (isOnExemptScreen && isTracking && !isPausedForExemptScreen) {
         // User navigated to sleep/music screen - pause tracking
-        console.log('Screen time: Pausing session for exempt screen:', currentScreen);
+        log.debug('Pausing for exempt screen:', currentScreen);
         await screenTimeService.endSession();
         setIsTracking(false);
         setCurrentActivity(null);
         setIsPausedForExemptScreen(true);
       } else if (!isOnExemptScreen && isPausedForExemptScreen && screenTimeEnabled) {
         // User left sleep/music screen - resume tracking
-        console.log('Screen time: Resuming session after exempt screen:', currentScreen);
+        log.debug('Resuming after exempt screen:', currentScreen);
         await screenTimeService.startSession('story', childAgeInMonths);
         setIsTracking(true);
         setCurrentActivity('story');
@@ -194,7 +197,7 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
       const usage = await screenTimeService.getTodayUsage();
       setTodayUsage(usage);
     } catch (error) {
-      console.error('Failed to start screen time session:', error);
+      log.error('Failed to start session:', error);
     }
   }, [screenTimeEnabled, childAgeInMonths]);
 
@@ -210,7 +213,7 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
       const usage = await screenTimeService.getTodayUsage();
       setTodayUsage(usage);
     } catch (error) {
-      console.error('Failed to end screen time session:', error);
+      log.error('Failed to end session:', error);
     }
   }, [screenTimeEnabled, isTracking]);
 
@@ -225,7 +228,7 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
         const usage = await screenTimeService.getTodayUsage();
         setTodayUsage(usage);
       } catch (error) {
-        console.error('Failed to refresh usage:', error);
+        log.error('Failed to refresh usage:', error);
       }
     }
   }, [screenTimeEnabled]);

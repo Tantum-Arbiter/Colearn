@@ -4,6 +4,9 @@ import {
 } from 'expo-audio';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Paths, Directory, File } from 'expo-file-system/next';
+import { Logger } from '@/utils/logger';
+
+const log = Logger.create('VoiceRecording');
 
 const VOICE_OVERS_STORAGE_KEY = '@voice_overs';
 const RECORDINGS_DIRECTORY_NAME = 'voice-recordings';
@@ -35,10 +38,10 @@ class VoiceRecordingService {
       this.recordingsDir = new Directory(Paths.document, RECORDINGS_DIRECTORY_NAME);
       if (!this.recordingsDir.exists) {
         this.recordingsDir.create();
-        console.log('Voice recordings directory created');
+        // Recordings directory created
       }
     } catch (error) {
-      console.error('Failed to initialize voice recording service:', error);
+      log.error('Failed to initialize:', error);
     }
   }
 
@@ -62,18 +65,18 @@ class VoiceRecordingService {
       try {
         if (permanentFile.exists) {
           permanentFile.delete();
-          console.log('Deleted existing recording:', targetPath);
+          // Replaced existing recording
         }
       } catch (deleteError) {
-        console.warn('Could not delete existing file:', deleteError);
+        log.warn('Could not delete existing file:', deleteError);
       }
 
       // Use move instead of copy - move replaces existing files
       tempFile.move(permanentFile);
-      console.log('Recording saved:', permanentFile.uri);
+      log.debug('Recording saved');
       return permanentFile.uri;
     } catch (error) {
-      console.error('Failed to save recording:', error);
+      log.error('Failed to save recording:', error);
       return null;
     }
   }
@@ -85,7 +88,7 @@ class VoiceRecordingService {
       const metadata: VoiceOverMetadata = JSON.parse(data);
       return metadata.voiceOvers || [];
     } catch (error) {
-      console.error('Failed to get voice overs:', error);
+      log.error('Failed to get voice overs:', error);
       return [];
     }
   }
@@ -108,7 +111,7 @@ class VoiceRecordingService {
     voiceOvers.push(voiceOver);
     await this.saveVoiceOvers(voiceOvers);
 
-    console.log('Voice over created:', voiceOver.id);
+    log.debug('Voice over created');
     return voiceOver;
   }
 
@@ -132,7 +135,7 @@ class VoiceRecordingService {
     if (voiceOver) {
       voiceOver.pageRecordings[pageIndex] = { pageIndex, uri, duration };
       await this.saveVoiceOvers(voiceOvers);
-      console.log(`Page ${pageIndex} recording added to voice over ${voiceOverId}`);
+      log.debug(`Page ${pageIndex} recording added`);
     }
   }
 
@@ -154,7 +157,7 @@ class VoiceRecordingService {
           } catch (e) {
             // Track files that failed to delete
             orphanedFiles.push(recording.uri);
-            console.warn('Failed to delete recording file:', recording.uri, e);
+            log.warn('Failed to delete recording file:', e);
           }
         }
       }
@@ -166,14 +169,14 @@ class VoiceRecordingService {
       await this.saveVoiceOvers(filtered);
 
       if (orphanedFiles.length > 0) {
-        console.warn(`Voice over ${voiceOverId} deleted but ${orphanedFiles.length} file(s) could not be removed`);
+        log.warn(`Voice over deleted but ${orphanedFiles.length} file(s) orphaned`);
       } else {
-        console.log('Voice over deleted:', voiceOverId);
+        log.debug('Voice over deleted');
       }
 
       return { success: true, orphanedFiles };
     } catch (error) {
-      console.error('Failed to delete voice over:', error);
+      log.error('Failed to delete voice over:', error);
       return { success: false, orphanedFiles };
     }
   }
@@ -189,7 +192,7 @@ class VoiceRecordingService {
       player.play();
       return player;
     } catch (error) {
-      console.error('Failed to play recording:', error);
+      log.error('Failed to play recording:', error);
       return null;
     }
   }

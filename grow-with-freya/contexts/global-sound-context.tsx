@@ -1,6 +1,9 @@
 import React, { createContext, useContext, ReactNode, useState, useCallback, useEffect } from 'react';
 import { useBackgroundMusic } from '@/hooks/use-background-music';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Logger } from '@/utils/logger';
+
+const log = Logger.create('Sound');
 
 // Storage keys for persisting volume settings
 const STORAGE_KEYS = {
@@ -69,7 +72,7 @@ export function GlobalSoundProvider({ children }: GlobalSoundProviderProps) {
         if (music !== null) setMusicVolumeState(parseFloat(music));
         if (voiceOver !== null) setVoiceOverVolumeState(parseFloat(voiceOver));
       } catch (error) {
-        console.warn('Failed to load volume settings:', error);
+        log.warn('Failed to load volume settings:', error);
       }
       setVolumeSettingsLoaded(true);
     };
@@ -89,7 +92,7 @@ export function GlobalSoundProvider({ children }: GlobalSoundProviderProps) {
         await backgroundMusic.mute();
       }
     } catch (error) {
-      console.warn('Failed to toggle mute:', error);
+      log.warn('Failed to toggle mute:', error);
     }
   }, [backgroundMusic.isMuted, backgroundMusic.mute, backgroundMusic.unmute]);
 
@@ -114,7 +117,7 @@ export function GlobalSoundProvider({ children }: GlobalSoundProviderProps) {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.MASTER_VOLUME, clampedVolume.toString());
     } catch (error) {
-      console.warn('Failed to save master volume:', error);
+      log.warn('Failed to save master volume:', error);
     }
   }, []);
 
@@ -124,7 +127,7 @@ export function GlobalSoundProvider({ children }: GlobalSoundProviderProps) {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.MUSIC_VOLUME, clampedVolume.toString());
     } catch (error) {
-      console.warn('Failed to save music volume:', error);
+      log.warn('Failed to save music volume:', error);
     }
   }, []);
 
@@ -134,7 +137,7 @@ export function GlobalSoundProvider({ children }: GlobalSoundProviderProps) {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.VOICE_OVER_VOLUME, clampedVolume.toString());
     } catch (error) {
-      console.warn('Failed to save voice over volume:', error);
+      log.warn('Failed to save voice over volume:', error);
     }
   }, []);
 
@@ -196,7 +199,7 @@ const SAFE_FALLBACK: GlobalSoundContextType = {
 export function useGlobalSound(): GlobalSoundContextType {
   const context = useContext(GlobalSoundContext);
   if (context === undefined) {
-    console.warn('useGlobalSound called outside GlobalSoundProvider — using safe fallback');
+    log.warn('useGlobalSound called outside GlobalSoundProvider — using safe fallback');
     return SAFE_FALLBACK;
   }
   return context;

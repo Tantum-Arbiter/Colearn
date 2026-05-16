@@ -141,13 +141,10 @@ export function AppSplashScreen() {
           delayTimeoutRef.current = setTimeout(resolve, 500);
         });
 
-        console.log('Splash screen complete. App state:', { hasCompletedOnboarding, hasCompletedLogin });
         setAppReady(true);
 
       } catch (e) {
-        console.warn(e);
         await SplashScreen.hideAsync();
-        console.log('Splash screen error. App state:', { hasCompletedOnboarding, hasCompletedLogin });
         setAppReady(true);
       }
     }

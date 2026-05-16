@@ -152,7 +152,7 @@ export class AssetDownloadUtils {
             try {
               if (attempt > 0) {
                 const delay = ASSET_RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1);
-                log.info(`Retry ${attempt}/${ASSET_MAX_RETRIES} for ${path} after ${delay}ms`);
+                log.info(`Retry ${attempt}/${ASSET_MAX_RETRIES} for ${path} after ${delay}ms (${lastError})`);
                 await new Promise(r => setTimeout(r, delay));
               }
               const localPath = await CacheManager.downloadAndCacheAsset(signedUrl, path);
@@ -170,6 +170,7 @@ export class AssetDownloadUtils {
             } catch (error) {
               lastError = error instanceof Error ? error.message : 'Unknown error';
               if (attempt === ASSET_MAX_RETRIES) {
+                log.error(`Failed after ${ASSET_MAX_RETRIES + 1} attempts: ${path} — ${lastError}`);
                 return { success: false, path, error: lastError, size: 0 };
               }
             }
