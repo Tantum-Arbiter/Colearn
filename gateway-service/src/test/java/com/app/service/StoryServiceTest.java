@@ -747,6 +747,60 @@ class StoryServiceTest {
         assertFalse(catalog.get(0).isPremium());
     }
 
+    @Test
+    void getCatalogEntries_PreservesGenderField() throws Exception {
+        // Arrange
+        testStory1.setCoverImage("stories/story-1/cover.webp");
+        testStory1.setGender("boy");
+
+        testStory2.setCoverImage("stories/story-2/cover.webp");
+        testStory2.setGender("girl");
+
+        when(storyRepository.findById("story-1"))
+                .thenReturn(CompletableFuture.completedFuture(Optional.of(testStory1)));
+        when(storyRepository.findById("story-2"))
+                .thenReturn(CompletableFuture.completedFuture(Optional.of(testStory2)));
+
+        Map<String, String> serverChecksums = new HashMap<>();
+        serverChecksums.put("story-1", "checksum1");
+        serverChecksums.put("story-2", "checksum2");
+
+        // Act
+        List<CatalogEntry> catalog = storyService.getCatalogEntries(
+                new HashSet<>(), serverChecksums,
+                coverImage -> "https://signed-url/" + coverImage
+        ).get();
+
+        // Assert
+        assertEquals(2, catalog.size());
+        CatalogEntry entry1 = catalog.stream().filter(e -> e.getStoryId().equals("story-1")).findFirst().orElseThrow();
+        CatalogEntry entry2 = catalog.stream().filter(e -> e.getStoryId().equals("story-2")).findFirst().orElseThrow();
+        assertEquals("boy", entry1.getGender());
+        assertEquals("girl", entry2.getGender());
+    }
+
+    @Test
+    void getCatalogEntries_DefaultGenderIsUnisex() throws Exception {
+        // Arrange - story created with default constructor (gender defaults to "unisex")
+        testStory1.setCoverImage("stories/story-1/cover.webp");
+
+        when(storyRepository.findById("story-1"))
+                .thenReturn(CompletableFuture.completedFuture(Optional.of(testStory1)));
+
+        Map<String, String> serverChecksums = new HashMap<>();
+        serverChecksums.put("story-1", "checksum1");
+
+        // Act
+        List<CatalogEntry> catalog = storyService.getCatalogEntries(
+                new HashSet<>(), serverChecksums,
+                coverImage -> "https://signed-url/" + coverImage
+        ).get();
+
+        // Assert
+        assertEquals(1, catalog.size());
+        assertEquals("unisex", catalog.get(0).getGender());
+    }
+
     // ==================== isFree / isReferralReward Tests ====================
 
     @Test

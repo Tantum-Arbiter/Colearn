@@ -699,6 +699,65 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       });
     }
 
+    // ─── Personalized "For You" row ─────────────────────────────
+    // Surfaces recommendations based on reading history + gender match.
+    // Priority: 1) Gender-matched unread stories, 2) Stories from favourite categories
+    //           3) Unread stories the user hasn't seen yet
+    const readSet = new Set(readStoryIds);
+    const personalizedItems: StoryDisplayItem[] = [];
+    const personalizedIds = new Set<string>();
+
+    // Determine the user's favourite categories from reading history
+    const categoryCounts: Record<string, number> = {};
+    filteredStories.forEach(story => {
+      if (readSet.has(story.id)) {
+        categoryCounts[story.category] = (categoryCounts[story.category] || 0) + 1;
+      }
+    });
+    const favouriteCategories = Object.entries(categoryCounts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([cat]) => cat);
+
+    // Helper to add an item (avoid duplicates)
+    const addPersonalized = (item: StoryDisplayItem) => {
+      const id = item.type === 'story' ? item.data.id : (item.data as CatalogEntry).storyId;
+      if (!personalizedIds.has(id)) {
+        personalizedIds.add(id);
+        personalizedItems.push(item);
+      }
+    };
+
+    // 1) Gender-matched unread downloaded stories
+    if (userAvatarType) {
+      filteredStories
+        .filter(s => s.gender === userAvatarType && !readSet.has(s.id))
+        .forEach(s => addPersonalized({ type: 'story', data: s }));
+    }
+
+    // 2) Unread stories from favourite categories
+    for (const cat of favouriteCategories) {
+      filteredStories
+        .filter(s => s.category === cat && !readSet.has(s.id))
+        .forEach(s => addPersonalized({ type: 'story', data: s }));
+    }
+
+    // 3) Any remaining unread downloaded stories
+    filteredStories
+      .filter(s => !readSet.has(s.id))
+      .forEach(s => addPersonalized({ type: 'story', data: s }));
+
+    // 4) Gender-matched catalog entries (not yet downloaded)
+    if (!typeFilterActive && userAvatarType) {
+      catalogEntries
+        .filter(e => e.gender === userAvatarType && !personalizedIds.has(e.storyId))
+        .forEach(e => addPersonalized({ type: 'catalog', data: e }));
+    }
+
+    // Cap at 10 items to keep the row manageable
+    if (personalizedItems.length > 0) {
+      itemMap['personalized'] = personalizedItems.slice(0, 10);
+    }
+
     const genres = Object.keys(itemMap)
       .filter(g => itemMap[g].length > 0)
       .sort((a, b) => {
@@ -708,7 +767,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       });
 
     return { availableGenres: genres, genreItems: itemMap };
-  }, [filteredStories, catalogEntries, storyTypeFilters, selectedTags, userAvatarType]);
+  }, [filteredStories, catalogEntries, storyTypeFilters, selectedTags, userAvatarType, readStoryIds]);
 
   const handleBackToMenu = useCallback(() => {
     // Debounce rapid back button presses (500ms)

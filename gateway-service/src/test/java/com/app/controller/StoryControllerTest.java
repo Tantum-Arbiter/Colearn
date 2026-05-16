@@ -602,6 +602,60 @@ class StoryControllerTest {
     }
 
     @Test
+    void deltaSync_CatalogIncludesGenderField() throws Exception {
+        // Arrange
+        when(storyService.getCurrentContentVersion())
+                .thenReturn(CompletableFuture.completedFuture(testContentVersion));
+        when(storyService.getStoriesToSync(anyMap()))
+                .thenReturn(CompletableFuture.completedFuture(Collections.emptyList()));
+
+        CatalogEntry boyEntry = new CatalogEntry();
+        boyEntry.setStoryId("story-boy");
+        boyEntry.setTitle("Boy Story");
+        boyEntry.setCategory("adventure");
+        boyEntry.setGender("boy");
+
+        CatalogEntry unisexEntry = new CatalogEntry();
+        unisexEntry.setStoryId("story-unisex");
+        unisexEntry.setTitle("Unisex Story");
+        unisexEntry.setCategory("bedtime");
+        unisexEntry.setGender("unisex");
+
+        when(storyService.getCatalogEntries(anySet(), anyMap(), any()))
+                .thenReturn(CompletableFuture.completedFuture(Arrays.asList(boyEntry, unisexEntry)));
+
+        String requestBody = "{\"clientVersion\":0,\"storyChecksums\":{\"story-1\":\"checksum1\"}}";
+
+        mockMvc.perform(post("/api/stories/delta")
+                        .contentType("application/json")
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.catalog.length()").value(2))
+                .andExpect(jsonPath("$.catalog[0].gender").value("boy"))
+                .andExpect(jsonPath("$.catalog[1].gender").value("unisex"));
+    }
+
+    @Test
+    void deltaSync_StoryIncludesGenderField() throws Exception {
+        // Arrange - verify that the gender field is serialized on Story objects in delta response
+        testStory1.setGender("girl");
+        when(storyService.getCurrentContentVersion())
+                .thenReturn(CompletableFuture.completedFuture(testContentVersion));
+        when(storyService.getStoriesToSync(anyMap()))
+                .thenReturn(CompletableFuture.completedFuture(Arrays.asList(testStory1)));
+        when(storyService.getCatalogEntries(anySet(), anyMap(), any()))
+                .thenReturn(CompletableFuture.completedFuture(Collections.emptyList()));
+
+        String requestBody = "{\"clientVersion\":0,\"storyChecksums\":{}}";
+
+        mockMvc.perform(post("/api/stories/delta")
+                        .contentType("application/json")
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stories[0].gender").value("girl"));
+    }
+
+    @Test
     void deltaSync_DeletedStories_IncludedInResponse() throws Exception {
         // Arrange - server no longer has "story-3" but client does
         when(storyService.getCurrentContentVersion())

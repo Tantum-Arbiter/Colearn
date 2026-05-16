@@ -57,6 +57,9 @@ public class CatalogEntry {
     @JsonProperty("isPremium")
     private boolean premium;
 
+    @JsonProperty("gender")
+    private String gender; // "boy", "girl", or "unisex"
+
     public CatalogEntry() {
     }
 
@@ -80,6 +83,7 @@ public class CatalogEntry {
         entry.ageRange = story.getAgeRange();
         entry.duration = story.getDuration();
         entry.premium = story.isPremium();
+        entry.gender = story.getGender();
         return entry;
     }
 
@@ -129,4 +133,7 @@ public class CatalogEntry {
 
     public boolean isPremium() { return premium; }
     public void setPremium(boolean premium) { this.premium = premium; }
+
+    public String getGender() { return gender; }
+    public void setGender(String gender) { this.gender = gender; }
 }

@@ -402,6 +402,7 @@ export class StoryDownloadService {
         isReferralReward: storyData.isReferralReward ?? false,
         ageRange: storyData.ageRange,
         duration: storyData.duration,
+        gender: storyData.gender,
       };
 
       await CatalogService.addEntry(catalogEntry);
