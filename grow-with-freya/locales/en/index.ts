@@ -28,6 +28,8 @@ export default {
     large: 'Large',
     extraLarge: 'Extra Large',
     openSettings: 'Open Settings',
+    on: 'ON',
+    off: 'OFF',
   },
 
   // Alerts
@@ -169,6 +171,7 @@ export default {
     pageNumber: 'Page {{number}}',
     current: 'Current',
     fontButtonSize: 'Font / Button Size',
+    changeLanguage: 'Change Language',
     compareLanguage: 'Compare Languages',
     compareLanguageOn: 'Compare Languages: On',
     compareLanguageOff: 'Compare Languages: Off',
@@ -312,7 +315,6 @@ export default {
     saveSettings: 'Save Settings',
     settingsSyncNote: 'Your settings will be synced across all your devices',
     notificationsEnabled: 'Notifications Enabled!',
-    dontForgetToSave: "Don't forget to save your changes!",
     permissionRequired: 'Permission Required',
     enableNotificationsInSettings: 'Please enable notifications in your device settings.',
     sun: 'Sun',

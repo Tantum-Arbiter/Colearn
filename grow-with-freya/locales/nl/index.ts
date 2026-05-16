@@ -26,6 +26,8 @@ export default {
     medium: 'Gemiddeld',
     large: 'Groot',
     extraLarge: 'Extra Groot',
+    on: 'AAN',
+    off: 'UIT',
   },
   alerts: {
     logout: {
@@ -153,6 +155,7 @@ export default {
     pageNumber: 'Pagina {{number}}',
     current: 'Huidige',
     fontButtonSize: 'Lettertype/Knopgrootte',
+    changeLanguage: 'Taal Wijzigen',
     compareLanguage: 'Talen Vergelijken',
     compareLanguageOn: 'Talen Vergelijken: Aan',
     compareLanguageOff: 'Talen Vergelijken: Uit',
@@ -286,7 +289,6 @@ export default {
     saveSettings: 'Instellingen Opslaan',
     settingsSyncNote: 'Je instellingen worden gesynchroniseerd op alle apparaten',
     notificationsEnabled: 'Meldingen Ingeschakeld!',
-    dontForgetToSave: 'Vergeet niet je wijzigingen op te slaan!',
     permissionRequired: 'Toestemming Vereist',
     enableNotificationsInSettings: 'Schakel meldingen in in je apparaatinstellingen.',
     sun: 'Zondag',

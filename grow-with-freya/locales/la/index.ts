@@ -26,6 +26,8 @@ export default {
     medium: 'Medius',
     large: 'Magnus',
     extraLarge: 'Maximus',
+    on: 'ITA',
+    off: 'NON',
   },
   alerts: {
     logout: {
@@ -153,6 +155,7 @@ export default {
     pageNumber: 'Pagina {{number}}',
     current: 'Praesens',
     fontButtonSize: 'Scriptura/Magnitudo Bottonis',
+    changeLanguage: 'Muta Linguam',
     compareLanguage: 'Compara Linguam',
     compareLanguageOn: 'Compara Linguam: Activum',
     compareLanguageOff: 'Compara Linguam: Inactivum',
@@ -286,7 +289,6 @@ export default {
     saveSettings: 'Serva Constitutiones',
     settingsSyncNote: 'Tuae Constitutiones Synchronizantur Inter Omnes Apparatus',
     notificationsEnabled: 'Notificationes Activatae!',
-    dontForgetToSave: 'Ne Obliviscaris Mutationes Tuas Servare!',
     permissionRequired: 'Permissio Necessaria',
     enableNotificationsInSettings: 'Notificationes in Constitutionibus Apparatus Tui Activa.',
     sun: 'Dies Solis',

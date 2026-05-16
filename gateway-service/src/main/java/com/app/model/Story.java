@@ -88,6 +88,9 @@ public class Story {
     @JsonProperty("checksum")
     private String checksum;
 
+    @JsonProperty("gender")
+    private String gender; // "boy", "girl", or "unisex" (defaults to "unisex")
+
     public Story() {
         this.pages = new ArrayList<>();
         this.tags = new ArrayList<>();
@@ -96,6 +99,7 @@ public class Story {
         this.free = false;
         this.referralReward = false;
         this.version = 1;
+        this.gender = "unisex";
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
     }
@@ -346,6 +350,14 @@ public class Story {
 
     public void set_disclaimer(String disclaimer) {
         this.disclaimer = disclaimer;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
     }
 
     @Override

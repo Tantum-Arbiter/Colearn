@@ -10,8 +10,8 @@ describe('i18n Service', () => {
   });
 
   describe('SUPPORTED_LANGUAGES', () => {
-    it('should have 14 supported languages', () => {
-      expect(SUPPORTED_LANGUAGES).toHaveLength(14);
+    it('should have 12 supported languages', () => {
+      expect(SUPPORTED_LANGUAGES).toHaveLength(12);
     });
 
     it('should include English', () => {
@@ -70,14 +70,6 @@ describe('i18n Service', () => {
       expect(portuguese?.nativeName).toBe('Português');
     });
 
-    it('should include Japanese', () => {
-      const japanese = SUPPORTED_LANGUAGES.find(l => l.code === 'ja');
-      expect(japanese).toBeDefined();
-      expect(japanese?.name).toBe('Japanese');
-      expect(japanese?.flag).toBe('🇯🇵');
-      expect(japanese?.nativeName).toBe('日本語');
-    });
-
     it('should include Arabic', () => {
       const arabic = SUPPORTED_LANGUAGES.find(l => l.code === 'ar');
       expect(arabic).toBeDefined();
@@ -118,14 +110,6 @@ describe('i18n Service', () => {
       expect(latin?.nativeName).toBe('Latīna');
     });
 
-    it('should include Chinese', () => {
-      const chinese = SUPPORTED_LANGUAGES.find(l => l.code === 'zh');
-      expect(chinese).toBeDefined();
-      expect(chinese?.name).toBe('Chinese');
-      expect(chinese?.flag).toBe('🇨🇳');
-      expect(chinese?.nativeName).toBe('简体中文');
-    });
-
     it('should have unique language codes', () => {
       const codes = SUPPORTED_LANGUAGES.map(l => l.code);
       const uniqueCodes = new Set(codes);
@@ -149,15 +133,13 @@ describe('i18n Service', () => {
       const fr: SupportedLanguage = 'fr';
       const it: SupportedLanguage = 'it';
       const pt: SupportedLanguage = 'pt';
-      const ja: SupportedLanguage = 'ja';
       const ar: SupportedLanguage = 'ar';
       const tr: SupportedLanguage = 'tr';
       const nl: SupportedLanguage = 'nl';
       const da: SupportedLanguage = 'da';
       const la: SupportedLanguage = 'la';
-      const zh: SupportedLanguage = 'zh';
 
-      const validCodes = ['en', 'pl', 'es', 'de', 'fr', 'it', 'pt', 'ja', 'ar', 'tr', 'nl', 'da', 'la', 'zh'];
+      const validCodes = ['en', 'pl', 'es', 'de', 'fr', 'it', 'pt', 'ar', 'tr', 'nl', 'da', 'la'];
       expect(validCodes).toContain(en);
       expect(validCodes).toContain(pl);
       expect(validCodes).toContain(es);
@@ -165,13 +147,11 @@ describe('i18n Service', () => {
       expect(validCodes).toContain(fr);
       expect(validCodes).toContain(it);
       expect(validCodes).toContain(pt);
-      expect(validCodes).toContain(ja);
       expect(validCodes).toContain(ar);
       expect(validCodes).toContain(tr);
       expect(validCodes).toContain(nl);
       expect(validCodes).toContain(da);
       expect(validCodes).toContain(la);
-      expect(validCodes).toContain(zh);
     });
   });
 
@@ -197,13 +177,11 @@ describe('i18n Service', () => {
     let fr: any;
     let italian: any;
     let pt: any;
-    let ja: any;
     let ar: any;
     let tr: any;
     let nl: any;
     let da: any;
     let la: any;
-    let zh: any;
 
     beforeAll(() => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -221,8 +199,6 @@ describe('i18n Service', () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       pt = require('@/locales/pt').default;
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      ja = require('@/locales/ja').default;
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
       ar = require('@/locales/ar').default;
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       tr = require('@/locales/tr').default;
@@ -232,8 +208,6 @@ describe('i18n Service', () => {
       da = require('@/locales/da').default;
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       la = require('@/locales/la').default;
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      zh = require('@/locales/zh').default;
     });
 
     it('should have consistent keys across languages', () => {
@@ -247,13 +221,11 @@ describe('i18n Service', () => {
       expect(Object.keys(fr)).toEqual(expect.arrayContaining(enKeys));
       expect(Object.keys(italian)).toEqual(expect.arrayContaining(enKeys));
       expect(Object.keys(pt)).toEqual(expect.arrayContaining(enKeys));
-      expect(Object.keys(ja)).toEqual(expect.arrayContaining(enKeys));
       expect(Object.keys(ar)).toEqual(expect.arrayContaining(enKeys));
       expect(Object.keys(tr)).toEqual(expect.arrayContaining(enKeys));
       expect(Object.keys(nl)).toEqual(expect.arrayContaining(enKeys));
       expect(Object.keys(da)).toEqual(expect.arrayContaining(enKeys));
       expect(Object.keys(la)).toEqual(expect.arrayContaining(enKeys));
-      expect(Object.keys(zh)).toEqual(expect.arrayContaining(enKeys));
     });
 
     it('should have common section in all languages', () => {
@@ -264,13 +236,11 @@ describe('i18n Service', () => {
       expect(fr.common).toBeDefined();
       expect(italian.common).toBeDefined();
       expect(pt.common).toBeDefined();
-      expect(ja.common).toBeDefined();
       expect(ar.common).toBeDefined();
       expect(tr.common).toBeDefined();
       expect(nl.common).toBeDefined();
       expect(da.common).toBeDefined();
       expect(la.common).toBeDefined();
-      expect(zh.common).toBeDefined();
     });
 
     it('should have menu section in all languages', () => {
@@ -281,13 +251,11 @@ describe('i18n Service', () => {
       expect(fr.menu).toBeDefined();
       expect(italian.menu).toBeDefined();
       expect(pt.menu).toBeDefined();
-      expect(ja.menu).toBeDefined();
       expect(ar.menu).toBeDefined();
       expect(tr.menu).toBeDefined();
       expect(nl.menu).toBeDefined();
       expect(da.menu).toBeDefined();
       expect(la.menu).toBeDefined();
-      expect(zh.menu).toBeDefined();
     });
   });
 });

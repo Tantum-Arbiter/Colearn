@@ -8,6 +8,7 @@ import Animated, {
   withTiming,
   withRepeat,
   withSequence,
+  withDelay,
   interpolate,
   Easing as ReanimatedEasing,
 } from 'react-native-reanimated';
@@ -69,16 +70,17 @@ interface MainMenuProps {
   entranceDelay?: number;
 }
 
-function MainMenuComponent({ onNavigate, disableTutorial = false, entranceDelay = 0 }: MainMenuProps) {
+function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entranceDelay = 0 }: MainMenuProps) {
   const insets = useSafeAreaInsets();
   const { scaledButtonSize, scaledFontSize } = useAccessibility();
 
   // Subscription overlay state
   const [showSubscription, setShowSubscription] = useState(false);
 
-  // Unlock button animations — gentle pulse + shimmer
+  // Unlock button animations — gentle pulse + shimmer + slide-out on navigate
   const unlockPulse = useSharedValue(1);
   const unlockShimmer = useSharedValue(0);
+  const unlockSlideY = useSharedValue(0);
 
   useEffect(() => {
     // Gentle scale pulse
@@ -97,12 +99,22 @@ function MainMenuComponent({ onNavigate, disableTutorial = false, entranceDelay 
   }, []);
 
   const unlockBtnAnimStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: unlockPulse.value }],
+    transform: [
+      { scale: unlockPulse.value },
+      { translateY: unlockSlideY.value },
+    ],
   }));
 
   const unlockShimmerStyle = useAnimatedStyle(() => ({
     opacity: interpolate(unlockShimmer.value, [0, 0.3, 0.5, 0.7, 1], [0, 0, 0.35, 0, 0]),
   }));
+
+  // Slide unlock button back into view after the page transition completes (800ms)
+  useEffect(() => {
+    if (isActive) {
+      unlockSlideY.value = withDelay(800, withTiming(0, { duration: 300, easing: ReanimatedEasing.out(ReanimatedEasing.ease) }));
+    }
+  }, [isActive]);
 
   // Track when the menu carousel slide-in animation has finished
   const [carouselReady, setCarouselReady] = useState(false);
@@ -123,8 +135,10 @@ function MainMenuComponent({ onNavigate, disableTutorial = false, entranceDelay 
 
   const guardedOnNavigate = useCallback((destination: string) => {
     if (isTutorialPendingRef.current) return; // Block navigation until tutorial completes/skips
+    // Slide unlock button off-screen before page transition
+    unlockSlideY.value = withTiming(100, { duration: 300, easing: ReanimatedEasing.in(ReanimatedEasing.ease) });
     onNavigate(destination);
-  }, [onNavigate]);
+  }, [onNavigate, unlockSlideY]);
 
   const handleTutorialEnd = useCallback(() => {
     setTutorialFinished(true);

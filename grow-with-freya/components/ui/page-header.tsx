@@ -24,6 +24,8 @@ interface PageHeaderProps {
   hideControls?: boolean;
   /** When true, shows a home icon instead of the text back button */
   useHomeIcon?: boolean;
+  /** When true, shows a left arrow icon instead of the text back button */
+  useBackArrow?: boolean;
 }
 
 export function PageHeader({
@@ -36,6 +38,7 @@ export function PageHeader({
   headerBackgroundColor,
   hideControls = false,
   useHomeIcon = false,
+  useBackArrow = false,
 }: PageHeaderProps) {
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledPadding, scaledButtonSize, textSizeScale } = useAccessibility();
@@ -98,8 +101,8 @@ export function PageHeader({
         <Animated.View style={backButtonAnimatedStyle}>
           <Pressable
             style={[
-              useHomeIcon ? styles.homeButton : styles.backButton,
-              useHomeIcon
+              (useHomeIcon || useBackArrow) ? styles.homeButton : styles.backButton,
+              (useHomeIcon || useBackArrow)
                 ? { width: scaledButtonSize(48), height: scaledButtonSize(48) }
                 : { paddingHorizontal: backButtonPaddingH, height: backButtonHeight, justifyContent: 'center' },
             ]}
@@ -107,6 +110,8 @@ export function PageHeader({
           >
             {useHomeIcon ? (
               <Ionicons name="home" size={scaledButtonSize(22)} color="#FFFFFF" />
+            ) : useBackArrow ? (
+              <Ionicons name="arrow-back" size={scaledButtonSize(22)} color="#FFFFFF" />
             ) : (
               <Text style={[styles.backButtonText, { fontSize: backFontSize }]} numberOfLines={1}>{backButtonText}</Text>
             )}

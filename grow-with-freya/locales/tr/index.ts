@@ -26,6 +26,8 @@ export default {
     medium: 'Orta',
     large: 'Büyük',
     extraLarge: 'Çok Büyük',
+    on: 'AÇIK',
+    off: 'KAPALI',
   },
   alerts: {
     logout: {
@@ -153,6 +155,7 @@ export default {
     pageNumber: 'Sayfa {{number}}',
     current: 'Mevcut',
     fontButtonSize: 'Yazı Tipi/Düğme Boyutu',
+    changeLanguage: 'Dili Değiştir',
     compareLanguage: 'Dilleri Karşılaştır',
     compareLanguageOn: 'Dilleri Karşılaştır: Açık',
     compareLanguageOff: 'Dilleri Karşılaştır: Kapalı',
@@ -286,7 +289,6 @@ export default {
     saveSettings: 'Ayarları Kaydet',
     settingsSyncNote: 'Ayarlarınız tüm cihazlar arasında senkronize edilecektir',
     notificationsEnabled: 'Bildirimler Etkinleştirildi!',
-    dontForgetToSave: 'Değişiklikleri Kaydetmeyi Unutmayın!',
     permissionRequired: 'İzin Gerekli',
     enableNotificationsInSettings: 'Lütfen cihazınızın ayarlarında bildirimleri etkinleştirin.',
     sun: 'Pazar',

@@ -1,10 +1,11 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet, Dimensions, Alert, BackHandler, Platform } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, Dimensions, Alert, BackHandler, Platform, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
+import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '../../store/app-store';
 import { MoonBottomImage } from '../main-menu/animated-components';
 import { mainMenuStyles } from '../main-menu/styles';
@@ -469,7 +470,8 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
           rightActionIcon={currentView === 'custom-reminders' ? 'add' : undefined}
           onRightAction={currentView === 'custom-reminders' ? () => navigateToSlide('create-reminder') : undefined}
           headerBackgroundColor="#1E3A8A"
-          useHomeIcon
+          useHomeIcon={currentView === 'main'}
+          useBackArrow={currentView !== 'main'}
         />
 
         {/* Content container - z-index 10 to be above moon (z-index 1) */}
@@ -480,229 +482,170 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
                 contentContainerStyle={[styles.content, { paddingBottom: Dimensions.get('window').height * 0.2 }, isTablet && { alignItems: 'center' }]}
               >
                 <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
-          {/* App Settings Section */}
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>
-              {t('account.settings')}
-            </Text>
 
-            <View style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}>
-              <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>
-                {t('common.version')}
-              </Text>
-              <Text style={[styles.settingValue, { fontSize: scaledFontSize(16) }]}>
-                {DeviceInfoService.getAppVersion()}
-              </Text>
-            </View>
-
+          {/* Button strips: Language, Screen Time, Edit Profile */}
+          <View style={styles.stripContainer}>
             <Pressable
-              style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}
-              onPress={isGuestMode ? handleLogin : handleLogout}
-            >
-              <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>
-                {isGuestMode ? t('common.login') : t('common.logout')}
-              </Text>
-              <Text style={[styles.settingValue, { fontSize: scaledFontSize(16) }]}>
-                →
-              </Text>
-            </Pressable>
-
-            <Pressable
-              style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}
+              style={({ pressed }) => [styles.strip, pressed && styles.stripPressed]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setShowLanguageOverlay(true);
               }}
             >
-              <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>
-                {t('account.language')}
-              </Text>
-              <Text style={[styles.settingValue, { fontSize: scaledFontSize(16) }]}>
-                {SUPPORTED_LANGUAGES.find(l => l.code === currentLanguage)?.flag} {SUPPORTED_LANGUAGES.find(l => l.code === currentLanguage)?.nativeName} →
-              </Text>
+              <Image
+                source={require('../../assets/images/ui-elements/language-button-background.webp')}
+                style={styles.stripImage}
+                resizeMode="cover"
+              />
+              <View style={styles.stripOverlay}>
+                <Text style={{ fontSize: 28, marginRight: 12 }}>{SUPPORTED_LANGUAGES.find(l => l.code === currentLanguage)?.flag || '🌐'}</Text>
+                <Text style={[styles.stripLabel, { fontSize: scaledFontSize(30) }]}>{t('account.language')}</Text>
+              </View>
             </Pressable>
 
             <Pressable
-              style={[styles.button, { paddingVertical: scaledPadding(12), minHeight: scaledButtonSize(44) }]}
+              style={({ pressed }) => [styles.strip, pressed && styles.stripPressed]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 navigateToSlide('screen-time');
               }}
             >
-              <Text style={[styles.buttonText, { fontSize: scaledFontSize(16) }]}>
-                {t('account.screenTime')}
-              </Text>
+              <Image
+                source={require('../../assets/images/ui-elements/screentime-button-background.webp')}
+                style={styles.stripImage}
+                resizeMode="cover"
+              />
+              <View style={styles.stripOverlay}>
+                <Ionicons name="time-outline" size={28} color="#FFFFFF" style={{ marginRight: 12 }} />
+                <Text style={[styles.stripLabel, { fontSize: scaledFontSize(30) }]}>{t('account.screenTime')}</Text>
+              </View>
             </Pressable>
-          </View>
-
-          {/* Profile Section */}
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>
-              {t('account.profile')}
-            </Text>
-
-            <View style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}>
-              <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>
-                {t('account.nickname')}
-              </Text>
-              <Text style={[styles.settingValue, { fontSize: scaledFontSize(16) }]}>
-                {userNickname || t('common.notSet')}
-              </Text>
-            </View>
-
-            <View style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}>
-              <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>
-                {t('account.avatarType')}
-              </Text>
-              <Text style={[styles.settingValue, { fontSize: scaledFontSize(16) }]}>
-                {userAvatarType ? (userAvatarType === 'boy' ? t('account.boy') : t('account.girl')) : t('common.notSet')}
-              </Text>
-            </View>
 
             <Pressable
-              style={[styles.button, { paddingVertical: scaledPadding(12), minHeight: scaledButtonSize(44) }]}
+              style={({ pressed }) => [styles.strip, pressed && styles.stripPressed]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 navigateToSlide('edit-profile');
               }}
             >
-              <Text style={[styles.buttonText, { fontSize: scaledFontSize(16) }]}>
-                {t('common.editProfile')}
-              </Text>
+              <Image
+                source={require('../../assets/images/ui-elements/choose-profile-button-background.webp')}
+                style={styles.stripImage}
+                resizeMode="cover"
+              />
+              <View style={styles.stripOverlay}>
+                <Ionicons name="person-outline" size={28} color="#FFFFFF" style={{ marginRight: 12 }} />
+                <Text style={[styles.stripLabel, { fontSize: scaledFontSize(30) }]}>{t('common.editProfile')}</Text>
+              </View>
             </Pressable>
           </View>
 
-          {/* Accessibility */}
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>
-              {t('accessibility.title')}
-            </Text>
-
-            <View style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}>
-              <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>
-                {t('account.textSize')}
-              </Text>
-              <Text style={[styles.settingValue, { fontSize: scaledFontSize(16) }]}>
-                {t(TEXT_SIZE_OPTIONS.find(opt => opt.value === textSizeScale)?.labelKey || 'common.default')}
-              </Text>
-            </View>
-
-            <View style={styles.textSizeOptions}>
-              {TEXT_SIZE_OPTIONS.map((option) => (
-                <Pressable
-                  key={option.value}
+          {/* Accessibility: inline text size pills */}
+          <Text style={[styles.textSizeLabel, { fontSize: scaledFontSize(13) }]}>{t('accessibility.title')}</Text>
+          <View style={styles.textSizeOptions}>
+            {TEXT_SIZE_OPTIONS.map((option) => (
+              <Pressable
+                key={option.value}
+                style={[
+                  styles.textSizeButton,
+                  textSizeScale === option.value && styles.textSizeButtonSelected,
+                ]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setTextSizeScale(option.value);
+                }}
+              >
+                <Text
                   style={[
-                    styles.textSizeButton,
-                    { minHeight: 40, paddingHorizontal: 10, paddingVertical: 8 },
-                    textSizeScale === option.value && styles.textSizeButtonSelected,
+                    styles.textSizeButtonText,
+                    textSizeScale === option.value && styles.textSizeButtonTextSelected,
+                    { fontSize: 11 },
                   ]}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setTextSizeScale(option.value);
-                  }}
+                  numberOfLines={1}
                 >
-                  <Text
-                    style={[
-                      styles.textSizeButtonText,
-                      textSizeScale === option.value && styles.textSizeButtonTextSelected,
-                      { fontSize: 12 },
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {t(option.labelKey)}
-                  </Text>
-                </Pressable>
-              ))}
+                  {t(option.labelKey)}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
+          {/* Crash Reporting Toggle */}
+          <Pressable
+            style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setCrashReportingEnabled(!crashReportingEnabled);
+            }}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.settingLabel, { fontSize: scaledFontSize(13) }]}>
+                {t('account.crashReports')}
+              </Text>
+              <Text style={[styles.settingHint, { fontSize: scaledFontSize(11) }]}>
+                {t('account.crashReportsHint')}
+              </Text>
             </View>
-
-            <Text style={[styles.accessibilityHint, { fontSize: scaledFontSize(12) }]} numberOfLines={2} adjustsFontSizeToFit>
-              {t('accessibility.textSizeHint')}</Text>
-
-
-          </View>
-
-          {/* Privacy & Legal */}
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>
-              {t('account.legal')}
-            </Text>
-
-            {/* Crash Reporting Toggle */}
-            <Pressable
-              style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setCrashReportingEnabled(!crashReportingEnabled);
-              }}
-            >
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>
-                  {t('account.crashReports')}
-                </Text>
-                <Text style={[styles.settingHint, { fontSize: scaledFontSize(12) }]}>
-                  {t('account.crashReportsHint')}
-                </Text>
-              </View>
+            <View style={[
+              styles.toggle,
+              crashReportingEnabled && styles.toggleEnabled
+            ]}>
               <View style={[
-                styles.toggle,
-                crashReportingEnabled && styles.toggleEnabled
-              ]}>
-                <View style={[
-                  styles.toggleThumb,
-                  crashReportingEnabled && styles.toggleThumbEnabled
-                ]} />
-              </View>
-            </Pressable>
+                styles.toggleThumb,
+                crashReportingEnabled && styles.toggleThumbEnabled
+              ]} />
+            </View>
+          </Pressable>
 
-            <Pressable
-              style={[styles.button, { paddingVertical: scaledPadding(12), minHeight: scaledButtonSize(44) }]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                navigateToSlide('terms');
-              }}
-            >
-              <Text style={[styles.buttonText, { fontSize: scaledFontSize(16) }]}>
-                {t('account.termsAndConditions')}
-              </Text>
-            </Pressable>
-
-            <Pressable
-              style={[styles.button, { paddingVertical: scaledPadding(12), minHeight: scaledButtonSize(44) }]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                navigateToSlide('privacy');
-              }}
-            >
-              <Text style={[styles.buttonText, { fontSize: scaledFontSize(16) }]}>
-                {t('account.privacyPolicy')}
-              </Text>
-            </Pressable>
-          </View>
+          {/* Logout — transparent pill button like home icon */}
+          <Pressable
+            style={({ pressed }) => [styles.logoutButton, pressed && { opacity: 0.6 }]}
+            onPress={isGuestMode ? handleLogin : handleLogout}
+          >
+            <Ionicons name={isGuestMode ? 'log-in-outline' : 'log-out-outline'} size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+            <Text style={[styles.logoutButtonText, { fontSize: scaledFontSize(14) }]}>
+              {isGuestMode ? t('common.login') : t('common.logout')}
+            </Text>
+          </Pressable>
 
           {/* Developer Options */}
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>
+          <View style={[styles.section, { marginTop: 16 }]}>
+            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(13) }]}>
               Developer Options
             </Text>
 
             <Pressable
-              style={[styles.button, { paddingVertical: scaledPadding(12), minHeight: scaledButtonSize(44) }]}
+              style={[styles.button, { paddingVertical: scaledPadding(10), minHeight: scaledButtonSize(40) }]}
               onPress={handleResetTodayUsage}
             >
-              <Text style={[styles.buttonText, { fontSize: scaledFontSize(16) }]}>
+              <Text style={[styles.buttonText, { fontSize: scaledFontSize(13) }]}>
                 Reset Today&apos;s Screen Time ({formatDurationCompact(todayUsage)})
               </Text>
             </Pressable>
 
             <Pressable
-              style={[styles.button, styles.resetButton, { paddingVertical: scaledPadding(12), minHeight: scaledButtonSize(44) }]}
+              style={[styles.button, styles.resetButton, { paddingVertical: scaledPadding(10), minHeight: scaledButtonSize(40) }]}
               onPress={handleResetApp}
             >
-              <Text style={[styles.buttonText, styles.resetButtonText, { fontSize: scaledFontSize(16) }]}>
+              <Text style={[styles.buttonText, styles.resetButtonText, { fontSize: scaledFontSize(13) }]}>
                 Reset App
               </Text>
             </Pressable>
           </View>
+
+          {/* Bottom: T&Cs + Privacy on one line, Version below */}
+          <View style={styles.bottomTextRow}>
+            <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); navigateToSlide('terms'); }}>
+              <Text style={[styles.bottomLink, { fontSize: scaledFontSize(12) }]}>{t('account.termsAndConditions')}</Text>
+            </Pressable>
+            <Text style={[styles.bottomSeparator, { fontSize: scaledFontSize(12) }]}>{'  |  '}</Text>
+            <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); navigateToSlide('privacy'); }}>
+              <Text style={[styles.bottomLink, { fontSize: scaledFontSize(12) }]}>{t('account.privacyPolicy')}</Text>
+            </Pressable>
+          </View>
+          <Text style={[styles.versionText, { fontSize: scaledFontSize(11) }]}>
+            {t('common.version')} {DeviceInfoService.getAppVersion()}
+          </Text>
+
                 </View>
               </ScrollView>
         </View>
@@ -815,43 +758,6 @@ const styles = StyleSheet.create({
   gradient: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    zIndex: 100,
-  },
-  backButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  backButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  titleContainer: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  title: {
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.9)',
-    textShadowOffset: { width: 0, height: 3 },
-    textShadowRadius: 8,
-  },
   scrollView: {
     flex: 1,
   },
@@ -861,20 +767,98 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#1E3A8A', // Solid background to cover main content
+    backgroundColor: '#1E3A8A',
     zIndex: 10,
   },
   content: {
     paddingHorizontal: 20,
     paddingBottom: 40,
   },
+
+  // Strip button container (vertical stack like main menu carousel)
+  stripContainer: {
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 20,
+  },
+
+  // Individual strip button (matches main menu strip style)
+  strip: {
+    width: '100%',
+    height: 110,
+    borderRadius: 14,
+    overflow: 'hidden',
+    marginBottom: 10,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.35)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.45,
+    shadowRadius: 12,
+    elevation: 10,
+  },
+  stripPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.97 }],
+  },
+  stripImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  },
+  stripOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+  },
+  stripGradient: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stripLabel: {
+    color: '#FFFFFF',
+    fontWeight: '900',
+    textShadowColor: 'rgba(0, 0, 0, 0.9)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
+    letterSpacing: 1,
+  },
+
+  // Logout — transparent pill like home icon
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 20,
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  logoutButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+
   section: {
-    marginBottom: 30,
+    marginBottom: 16,
+    width: '100%',
   },
   sectionTitle: {
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 15,
+    marginBottom: 10,
     textShadowColor: 'rgba(0, 0, 0, 0.9)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 6,
@@ -890,14 +874,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
+    width: '100%',
   },
   settingLabel: {
     color: '#FFFFFF',
     fontWeight: '500',
   },
-  settingValue: {
-    color: '#E0E0E0',
-  },
+
   button: {
     backgroundColor: 'rgba(76, 175, 80, 0.8)',
     paddingVertical: 12,
@@ -920,26 +903,6 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
-  logoutButton: {
-    backgroundColor: 'rgba(255, 152, 0, 0.8)',
-  },
-  logoutButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  loginButton: {
-    backgroundColor: 'rgba(76, 175, 80, 0.8)',
-  },
-  loginButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
   resetButton: {
     backgroundColor: 'rgba(244, 67, 54, 0.8)',
   },
@@ -950,19 +913,22 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
+  textSizeLabel: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontWeight: '600',
+    marginBottom: 6,
+  },
   textSizeOptions: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 8,
+    gap: 6,
+    marginBottom: 12,
   },
   textSizeButton: {
     flex: 1,
-    minWidth: 70,
-    paddingVertical: 12,
-    paddingHorizontal: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 6,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
@@ -980,12 +946,25 @@ const styles = StyleSheet.create({
   textSizeButtonTextSelected: {
     fontWeight: 'bold',
   },
-  accessibilityHint: {
+
+  // Bottom text links
+  bottomTextRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 24,
+  },
+  bottomLink: {
     color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 12,
-    marginTop: 12,
+    textDecorationLine: 'underline',
+  },
+  bottomSeparator: {
+    color: 'rgba(255, 255, 255, 0.4)',
+  },
+  versionText: {
+    color: 'rgba(255, 255, 255, 0.4)',
     textAlign: 'center',
-    fontStyle: 'italic',
+    marginTop: 8,
   },
 
   languageOverlay: {

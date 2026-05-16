@@ -26,6 +26,8 @@ export default {
     medium: 'Médio',
     large: 'Grande',
     extraLarge: 'Extra grande',
+    on: 'SIM',
+    off: 'NÃO',
   },
   alerts: {
     logout: {
@@ -153,6 +155,7 @@ export default {
     pageNumber: 'Página {{number}}',
     current: 'Atual',
     fontButtonSize: 'Tamanho da fonte / Botão',
+    changeLanguage: 'Mudar idioma',
     compareLanguage: 'Comparar idiomas',
     compareLanguageOn: 'Comparar idiomas: Ativado',
     compareLanguageOff: 'Comparar idiomas: Desativado',
@@ -286,7 +289,6 @@ export default {
     saveSettings: 'Salvar configurações',
     settingsSyncNote: 'Suas configurações serão sincronizadas em todos os seus dispositivos',
     notificationsEnabled: 'Notificações ativadas!',
-    dontForgetToSave: 'Não esqueça de salvar suas alterações!',
     permissionRequired: 'Permissão necessária',
     enableNotificationsInSettings: 'Ative as notificações nas configurações do seu dispositivo.',
     sun: 'Dom',

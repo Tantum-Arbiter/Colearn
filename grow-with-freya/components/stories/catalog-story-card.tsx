@@ -7,6 +7,7 @@ import Svg, { Circle } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { CatalogEntry, getLocalizedText } from '@/types/story';
 import { StoryDownloadService, DownloadProgress } from '@/services/story-download-service';
+import { ApiClient } from '@/services/api-client';
 import { Fonts } from '@/constants/theme';
 import type { SupportedLanguage } from '@/services/i18n';
 
@@ -28,8 +29,10 @@ function isAuthError(message: string): boolean {
     lower.includes('not authenticated') ||
     lower.includes('authentication failed') ||
     lower.includes('token refresh failed') ||
+    lower.includes('token refresh timeout') ||
     lower.includes('no refresh token') ||
     lower.includes('please login') ||
+    lower.includes('login required') ||
     lower.includes('not_authenticated')
   );
 }
@@ -270,8 +273,19 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
             { text: 'Sign In', onPress: () => onAuthError() },
           ]);
         } else {
-          // Detect network errors and show friendly message
+          // Detect network errors — but first check if the real problem is auth
           const isNetworkError = /network|fetch|timeout|connection|internet|abort/i.test(errorMsg);
+          if (isNetworkError && onAuthError) {
+            // Network error might be a masked auth failure (token refresh fetch failed)
+            const isAuthed = await ApiClient.isAuthenticated();
+            if (!isAuthed) {
+              Alert.alert('Sign In Required', 'Please sign in to download stories.', [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Sign In', onPress: () => onAuthError() },
+              ]);
+              return;
+            }
+          }
           Alert.alert(
             'Download Failed',
             isNetworkError
@@ -292,6 +306,16 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
         ]);
       } else {
         const isNetworkError = /network|fetch|timeout|connection|internet|abort/i.test(errorMsg);
+        if (isNetworkError && onAuthError) {
+          const isAuthed = await ApiClient.isAuthenticated();
+          if (!isAuthed) {
+            Alert.alert('Sign In Required', 'Please sign in to download stories.', [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Sign In', onPress: () => onAuthError() },
+            ]);
+            return;
+          }
+        }
         Alert.alert(
           'Download Failed',
           isNetworkError

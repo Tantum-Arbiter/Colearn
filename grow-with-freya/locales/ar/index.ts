@@ -26,6 +26,8 @@ export default {
     medium: 'متوسط',
     large: 'كبير',
     extraLarge: 'كبير جداً',
+    on: 'تشغيل',
+    off: 'إيقاف',
   },
   alerts: {
     logout: {
@@ -153,6 +155,7 @@ export default {
     pageNumber: 'الصفحة {{number}}',
     current: 'الحالي',
     fontButtonSize: 'حجم الخط/الزر',
+    changeLanguage: 'تغيير اللغة',
     compareLanguage: 'مقارنة اللغات',
     compareLanguageOn: 'مقارنة اللغات: تشغيل',
     compareLanguageOff: 'مقارنة اللغات: إيقاف',
@@ -286,7 +289,6 @@ export default {
     saveSettings: 'حفظ الإعدادات',
     settingsSyncNote: 'سيتم مزامنة إعداداتك عبر جميع الأجهزة',
     notificationsEnabled: 'تم تفعيل الإخطارات!',
-    dontForgetToSave: 'لا تنسَ حفظ التغييرات!',
     permissionRequired: 'الإذن مطلوب',
     enableNotificationsInSettings: 'يرجى تفعيل الإخطارات في إعدادات جهازك.',
     sun: 'الأحد',

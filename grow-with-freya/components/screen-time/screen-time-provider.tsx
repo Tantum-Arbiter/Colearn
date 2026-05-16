@@ -32,6 +32,10 @@ interface ScreenTimeProviderProps {
 // Screens where screen time tracking should be paused (passive listening, not active use)
 const EXEMPT_SCREENS = ['sleep'];
 
+// Immersive screens where warning modals should NOT interrupt the user.
+// Warnings are queued and shown when the user returns to a non-immersive screen.
+const IMMERSIVE_SCREENS = ['story-reader', 'practise', 'freeplay'];
+
 export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
   const {
     screenTimeEnabled,
@@ -47,6 +51,8 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
   const [showWarningModal, setShowWarningModal] = useState(false);
   // Track if we're paused due to being on an exempt screen (vs actually stopped)
   const [isPausedForExemptScreen, setIsPausedForExemptScreen] = useState(false);
+  // Queued warning that arrived during an immersive screen — shown on exit
+  const [pendingWarning, setPendingWarning] = useState<ScreenTimeWarning | null>(null);
 
   const screenTimeService = ScreenTimeService.getInstance();
   const notificationService = NotificationService.getInstance();
@@ -55,6 +61,20 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
   const isOnExemptScreen = EXEMPT_SCREENS.some(screen =>
     currentScreen?.toLowerCase().includes(screen.toLowerCase()) ?? false
   );
+
+  // Check if user is on an immersive screen where warnings should be deferred
+  const isOnImmersiveScreen = IMMERSIVE_SCREENS.some(screen =>
+    currentScreen?.toLowerCase() === screen.toLowerCase()
+  );
+
+  // When leaving an immersive screen, show any pending warning
+  useEffect(() => {
+    if (!isOnImmersiveScreen && pendingWarning) {
+      setCurrentWarning(pendingWarning);
+      setShowWarningModal(true);
+      setPendingWarning(null);
+    }
+  }, [isOnImmersiveScreen, pendingWarning]);
 
   // Update today's usage periodically and check for daily reset
   useEffect(() => {
@@ -77,10 +97,15 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
   // Set up warning callback
   useEffect(() => {
     const handleWarning = (warning: ScreenTimeWarning) => {
-      setCurrentWarning(warning);
-      setShowWarningModal(true);
-      
-      // Send notification if enabled
+      // If user is on an immersive screen, queue the warning for later
+      if (IMMERSIVE_SCREENS.some(s => currentScreen?.toLowerCase() === s.toLowerCase())) {
+        setPendingWarning(warning);
+      } else {
+        setCurrentWarning(warning);
+        setShowWarningModal(true);
+      }
+
+      // Send notification if enabled (always — notifications appear outside the app)
       if (notificationsEnabled) {
         const notificationType = warning.type === 'limit_reached' ? 'limit_reached' : 'warning';
         notificationService.sendScreenTimeWarning(warning.message, notificationType);
@@ -92,7 +117,7 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
     return () => {
       screenTimeService.removeWarningCallback(handleWarning);
     };
-  }, [notificationsEnabled]);
+  }, [notificationsEnabled, currentScreen]);
 
   // Auto-start tracking when provider mounts (app opens) and screen time is enabled
   // BUT don't start if we're on an exempt screen (sleep/music)

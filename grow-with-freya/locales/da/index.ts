@@ -26,6 +26,8 @@ export default {
     medium: 'Mellem',
     large: 'Stor',
     extraLarge: 'Ekstra stor',
+    on: 'TIL',
+    off: 'FRA',
   },
   alerts: {
     logout: {
@@ -153,6 +155,7 @@ export default {
     pageNumber: 'Side {{number}}',
     current: 'Nuværende',
     fontButtonSize: 'Skrifttype/knopstørrelse',
+    changeLanguage: 'Skift sprog',
     compareLanguage: 'Sammenlign sprog',
     compareLanguageOn: 'Sammenlign sprog: Til',
     compareLanguageOff: 'Sammenlign sprog: Fra',
@@ -286,7 +289,6 @@ export default {
     saveSettings: 'Gem indstillinger',
     settingsSyncNote: 'Dine indstillinger synkroniseres på tværs af alle enheder',
     notificationsEnabled: 'Notifikationer aktiveret!',
-    dontForgetToSave: 'Glem ikke at gemme dine ændringer!',
     permissionRequired: 'Tilladelse påkrævet',
     enableNotificationsInSettings: 'Aktivér notifikationer i din enhedsindstillinger.',
     sun: 'Søndag',

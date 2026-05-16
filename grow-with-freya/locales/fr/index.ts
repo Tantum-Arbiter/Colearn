@@ -27,6 +27,8 @@ export default {
     medium: 'Moyen',
     large: 'Grand',
     extraLarge: 'Très grand',
+    on: 'OUI',
+    off: 'NON',
   },
 
   // Alerts
@@ -166,6 +168,7 @@ export default {
     pageNumber: 'Page {{number}}',
     current: 'Actuel',
     fontButtonSize: 'Taille de la police / Bouton',
+    changeLanguage: 'Changer de langue',
     compareLanguage: 'Comparer les langues',
     compareLanguageOn: 'Comparer les langues : Activé',
     compareLanguageOff: 'Comparer les langues : Désactivé',
@@ -307,7 +310,6 @@ export default {
     saveSettings: 'Enregistrer les paramètres',
     settingsSyncNote: 'Vos paramètres seront synchronisés sur tous vos appareils',
     notificationsEnabled: 'Notifications activées !',
-    dontForgetToSave: 'N\'oubliez pas d\'enregistrer vos modifications !',
     permissionRequired: 'Permission requise',
     enableNotificationsInSettings: 'Veuillez activer les notifications dans les paramètres de votre appareil.',
     sun: 'Dim',

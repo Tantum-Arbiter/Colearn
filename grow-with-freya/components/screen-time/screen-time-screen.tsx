@@ -773,7 +773,7 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
 
       if (permissionStatus.granted) {
         setLocalNotificationsEnabled(true);
-        Alert.alert(t('screenTime.notificationsEnabled'), t('screenTime.dontForgetToSave'));
+        Alert.alert(t('screenTime.notificationsEnabled'));
       } else {
         Alert.alert(t('screenTime.permissionRequired'), t('screenTime.enableNotificationsInSettings'));
       }

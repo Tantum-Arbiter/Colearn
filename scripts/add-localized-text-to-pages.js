@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Supported languages
-const LANGUAGES = ['en', 'pl', 'es', 'de', 'fr', 'it', 'pt', 'ja', 'ar', 'tr', 'nl', 'da', 'la', 'zh'];
+const LANGUAGES = ['en', 'pl', 'es', 'de', 'fr', 'it', 'pt', 'ar', 'tr', 'nl', 'da', 'la'];
 
 // Translation service (using a simple mapping for now)
 // In production, you'd use a real translation API

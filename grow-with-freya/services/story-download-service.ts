@@ -225,10 +225,22 @@ export class StoryDownloadService {
       log.info(`Downloading story ${storyId}...`);
       reportProgress({ phase: 'fetching-story', progress: 15, message: 'Fetching story data...' });
 
-      const story = await ApiClient.request<Story>(
-        `/api/stories/${encodeURIComponent(storyId)}/download`,
-        { method: 'GET' }
-      );
+      let story: Story;
+      try {
+        story = await ApiClient.request<Story>(
+          `/api/stories/${encodeURIComponent(storyId)}/download`,
+          { method: 'GET' }
+        );
+      } catch (apiError) {
+        // If the API call fails during token refresh or auth, surface it as an
+        // auth error so the UI shows "Sign In Required" instead of "internet failed".
+        const msg = apiError instanceof Error ? apiError.message : '';
+        const isAuth = /not authenticated|authentication failed|token refresh|no refresh token|please login|login required/i.test(msg);
+        if (isAuth) {
+          throw new Error('Not authenticated - please login');
+        }
+        throw apiError; // genuine network / server error — let outer catch handle it
+      }
       result.story = story;
 
       // Phase 3: Extract asset paths and filter uncached

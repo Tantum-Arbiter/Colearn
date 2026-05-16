@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, Alert, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
@@ -114,39 +114,33 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(16) }]}>{t('profile.avatarType')}</Text>
-          <View style={styles.avatarTypeContainer}>
+          <View style={styles.avatarCardsRow}>
             <Pressable
               style={[
-                styles.avatarTypeButton,
-                { minHeight: scaledButtonSize(50), paddingHorizontal: scaledPadding(20) },
-                avatarType === 'boy' && styles.avatarTypeButtonActive
+                styles.avatarCard,
+                styles.avatarCardBoy,
+                avatarType === 'boy' && styles.avatarCardSelected,
               ]}
               onPress={() => handleAvatarTypeChange('boy')}
             >
-              <Text style={[
-                styles.avatarTypeText,
-                { fontSize: scaledFontSize(16) },
-                avatarType === 'boy' && styles.avatarTypeTextActive
-              ]}>
-                {t('profile.boy')}
-              </Text>
+              <Image source={require('../../assets/images/ui-elements/boy-avatar.webp')} style={styles.avatarImage} resizeMode="contain" />
+              <View style={[styles.radioOuter, avatarType === 'boy' && styles.radioOuterSelected]}>
+                {avatarType === 'boy' && <View style={styles.radioInner} />}
+              </View>
             </Pressable>
 
             <Pressable
               style={[
-                styles.avatarTypeButton,
-                { minHeight: scaledButtonSize(50), paddingHorizontal: scaledPadding(20) },
-                avatarType === 'girl' && styles.avatarTypeButtonActive
+                styles.avatarCard,
+                styles.avatarCardGirl,
+                avatarType === 'girl' && styles.avatarCardSelected,
               ]}
               onPress={() => handleAvatarTypeChange('girl')}
             >
-              <Text style={[
-                styles.avatarTypeText,
-                { fontSize: scaledFontSize(16) },
-                avatarType === 'girl' && styles.avatarTypeTextActive
-              ]}>
-                {t('profile.girl')}
-              </Text>
+              <Image source={require('../../assets/images/ui-elements/girl-avatar.webp')} style={styles.avatarImage} resizeMode="contain" />
+              <View style={[styles.radioOuter, avatarType === 'girl' && styles.radioOuterSelected]}>
+                {avatarType === 'girl' && <View style={styles.radioInner} />}
+              </View>
             </Pressable>
           </View>
         </View>
@@ -231,35 +225,66 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 8,
   },
-  avatarTypeContainer: {
+  // Avatar card selector (boy / girl)
+  avatarCardsRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 16,
+    marginBottom: 30,
   },
-  avatarTypeButton: {
+  avatarCard: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 12,
-    padding: 16,
+    aspectRatio: 0.9,
+    borderRadius: 20,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: 'transparent',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  avatarTypeButtonActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  avatarCardBoy: {
+    backgroundColor: '#B3D4FC',
+  },
+  avatarCardGirl: {
+    backgroundColor: '#F8C8DC',
+  },
+  avatarCardSelected: {
     borderColor: '#FFFFFF',
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
   },
-  avatarTypeText: {
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 16,
-    fontWeight: '600',
+  avatarImage: {
+    width: '80%',
+    height: undefined,
+    aspectRatio: 1.5,
+    marginBottom: 8,
   },
-  avatarTypeTextActive: {
-    color: '#FFFFFF',
+  avatarCardLabel: {
+    color: '#333',
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  radioOuter: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 3,
+    borderColor: 'rgba(0, 0, 0, 0.2)',
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioOuterSelected: {
+    borderColor: '#4A90E2',
+  },
+  radioInner: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#4A90E2',
   },
   saveButton: {
     backgroundColor: '#FFFFFF',
@@ -350,58 +375,53 @@ export function EditProfileContent({ paddingTop = 0, onSaveComplete }: EditProfi
       <StarBackground />
       <ScrollView style={styles.scrollView} contentContainerStyle={[styles.content, { paddingTop }, isTablet && { alignItems: 'center' }]}>
         <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(16) }]}>{t('profile.nickname')}</Text>
-          <TextInput
-            style={[styles.textInput, { fontSize: scaledFontSize(16), padding: scaledPadding(15) }]}
-            value={nickname}
-            onChangeText={setNickname}
-            placeholder={t('profile.nicknamePlaceholder')}
-            placeholderTextColor="rgba(255, 255, 255, 0.4)"
-            maxLength={20}
-          />
-          <Text style={[styles.helperText, { fontSize: scaledFontSize(12) }]}>{t('profile.nicknameCharacters', { count: nickname.length })}</Text>
-        </View>
 
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(16) }]}>{t('profile.avatarType')}</Text>
-          <View style={styles.avatarTypeContainer}>
+          {/* Boy / Girl avatar cards */}
+          <View style={styles.avatarCardsRow}>
             <Pressable
               style={[
-                styles.avatarTypeButton,
-                { minHeight: scaledButtonSize(50), paddingHorizontal: scaledPadding(20) },
-                avatarType === 'boy' && styles.avatarTypeButtonActive
+                styles.avatarCard,
+                styles.avatarCardBoy,
+                avatarType === 'boy' && styles.avatarCardSelected,
               ]}
               onPress={() => handleAvatarTypeChange('boy')}
             >
-              <Text style={[
-                styles.avatarTypeText,
-                { fontSize: scaledFontSize(16) },
-                avatarType === 'boy' && styles.avatarTypeTextActive
-              ]}>
-                {t('profile.boy')}
-              </Text>
+              <Image source={require('../../assets/images/ui-elements/boy-avatar.webp')} style={styles.avatarImage} resizeMode="contain" />
+              <View style={[styles.radioOuter, avatarType === 'boy' && styles.radioOuterSelected]}>
+                {avatarType === 'boy' && <View style={styles.radioInner} />}
+              </View>
             </Pressable>
 
             <Pressable
               style={[
-                styles.avatarTypeButton,
-                { minHeight: scaledButtonSize(50), paddingHorizontal: scaledPadding(20) },
-                avatarType === 'girl' && styles.avatarTypeButtonActive
+                styles.avatarCard,
+                styles.avatarCardGirl,
+                avatarType === 'girl' && styles.avatarCardSelected,
               ]}
               onPress={() => handleAvatarTypeChange('girl')}
             >
-              <Text style={[
-                styles.avatarTypeText,
-                { fontSize: scaledFontSize(16) },
-                avatarType === 'girl' && styles.avatarTypeTextActive
-              ]}>
-                {t('profile.girl')}
-              </Text>
+              <Image source={require('../../assets/images/ui-elements/girl-avatar.webp')} style={styles.avatarImage} resizeMode="contain" />
+              <View style={[styles.radioOuter, avatarType === 'girl' && styles.radioOuterSelected]}>
+                {avatarType === 'girl' && <View style={styles.radioInner} />}
+              </View>
             </Pressable>
           </View>
-        </View>
 
+          {/* Nickname input */}
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(16) }]}>{t('profile.nickname')}</Text>
+            <TextInput
+              style={[styles.textInput, { fontSize: scaledFontSize(16), padding: scaledPadding(15) }]}
+              value={nickname}
+              onChangeText={setNickname}
+              placeholder={t('profile.nicknamePlaceholder')}
+              placeholderTextColor="rgba(255, 255, 255, 0.4)"
+              maxLength={20}
+            />
+            <Text style={[styles.helperText, { fontSize: scaledFontSize(12) }]}>{t('profile.nicknameCharacters', { count: nickname.length })}</Text>
+          </View>
+
+          {/* Save button */}
           <Pressable
             style={[styles.saveButton, { minHeight: scaledButtonSize(50), padding: scaledPadding(15) }]}
             onPress={handleSave}
@@ -411,11 +431,6 @@ export function EditProfileContent({ paddingTop = 0, onSaveComplete }: EditProfi
             </Text>
           </Pressable>
 
-          <View style={[styles.comingSoonContainer, { marginTop: scaledPadding(30) }]}>
-            <Text style={[styles.comingSoonText, { fontSize: scaledFontSize(14) }]}>
-              {t('profile.comingSoon')}
-            </Text>
-          </View>
         </View>
       </ScrollView>
     </View>

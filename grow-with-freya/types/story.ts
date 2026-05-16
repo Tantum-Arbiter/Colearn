@@ -97,6 +97,9 @@ export interface Story {
   localizedDescription?: LocalizedText; // Translated descriptions
   pages?: StoryPage[]; // 8 pages for the story book
 
+  // Gender-based filtering (not shown in UI)
+  gender?: 'boy' | 'girl' | 'unisex'; // Defaults to 'unisex' if not set
+
   // Metadata for CMS and delta-sync
   isPremium?: boolean;
   isFree?: boolean; // Whether the story is free to download
@@ -129,6 +132,7 @@ export interface CatalogEntry {
   isPremium: boolean;
   ageRange?: string;
   duration?: number;
+  gender?: 'boy' | 'girl' | 'unisex';
 }
 
 /**

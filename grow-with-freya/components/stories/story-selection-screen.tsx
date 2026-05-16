@@ -341,11 +341,23 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   const favoriteStoryIds = useAppStore((state) => state.favoriteStoryIds);
   const toggleFavoriteStory = useAppStore((state) => state.toggleFavoriteStory);
   const readStoryIds = useAppStore((state) => state.readStoryIds);
+  const userAvatarType = useAppStore((state) => state.userAvatarType);
 
   // Filter stories based on selected tags (OR logic - match any selected tag)
   // AND experience type filters (musical / interactive / classic — OR within type, AND with tags)
+  // AND gender-based filtering (hidden from UI — show unisex + matching gender)
   const filteredStories = useMemo(() => {
     let result = stories;
+
+    // Gender filter — show unisex stories + stories matching the child's gender
+    // If no gender is set in profile, show everything
+    if (userAvatarType) {
+      result = result.filter(story =>
+        !story.gender ||
+        story.gender === 'unisex' ||
+        story.gender === userAvatarType
+      );
+    }
 
     // Tag filter (OR logic)
     if (selectedTags.size > 0) {
@@ -368,7 +380,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     }
 
     return result;
-  }, [stories, selectedTags, storyTypeFilters]);
+  }, [stories, selectedTags, storyTypeFilters, userAvatarType]);
 
   // Get favorite stories (respects current filters)
   const favoriteStories = useMemo(() => {
@@ -658,6 +670,15 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     if (!typeFilterActive) {
       let filteredCatalog = catalogEntries;
 
+      // Apply gender filter to catalog entries too
+      if (userAvatarType) {
+        filteredCatalog = filteredCatalog.filter(entry =>
+          !entry.gender ||
+          entry.gender === 'unisex' ||
+          entry.gender === userAvatarType
+        );
+      }
+
       // Apply tag filter to catalog entries too
       if (selectedTags.size > 0) {
         filteredCatalog = filteredCatalog.filter(entry =>
@@ -687,7 +708,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       });
 
     return { availableGenres: genres, genreItems: itemMap };
-  }, [filteredStories, catalogEntries, storyTypeFilters, selectedTags]);
+  }, [filteredStories, catalogEntries, storyTypeFilters, selectedTags, userAvatarType]);
 
   const handleBackToMenu = useCallback(() => {
     // Debounce rapid back button presses (500ms)
