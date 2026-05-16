@@ -8,6 +8,39 @@ import { render, fireEvent } from '@testing-library/react-native';
 import { MainMenu } from '@/components/main-menu';
 import { ScreenTimeProvider } from '@/components/screen-time/screen-time-provider';
 
+// Override the global app-store mock to ensure getEffectiveTier is present
+jest.mock('@/store/app-store', () => ({
+  useAppStore: jest.fn(() => ({
+    isAppReady: true,
+    hasCompletedOnboarding: true,
+    currentChildId: null,
+    currentScreen: 'main-menu',
+    isLoading: false,
+    shouldReturnToMainMenu: false,
+    subscriptionTier: 'free',
+    _devSubscriptionOverride: null,
+    getEffectiveTier: () => 'free',
+    readStoryIds: [],
+    userAvatarType: null,
+    backgroundAnimationState: {
+      cloudFloat1: 0,
+      cloudFloat2: 0,
+      rocketFloat1: 0,
+      rocketFloat2: 0,
+    },
+    setAppReady: jest.fn(),
+    setOnboardingComplete: jest.fn(),
+    setCurrentChild: jest.fn(),
+    setCurrentScreen: jest.fn(),
+    setLoading: jest.fn(),
+    setShowLoginAfterOnboarding: jest.fn(),
+    requestReturnToMainMenu: jest.fn(),
+    clearReturnToMainMenu: jest.fn(),
+    updateBackgroundAnimationState: jest.fn(),
+  })),
+  BASIC_TIER_INSTRUMENTS: ['flute', 'recorder', 'ocarina'],
+}));
+
 describe('MainMenu Component', () => {
   const mockOnNavigate = jest.fn();
 

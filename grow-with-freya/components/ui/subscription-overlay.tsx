@@ -28,6 +28,7 @@ const PRICING: Record<CurrencyKey, CurrencyPricing> = {
 /** Detect currency from device locale via expo-localization */
 function getDeviceCurrency(): CurrencyKey {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const Localization = require('expo-localization');
     const locales = Localization.getLocales?.();
     if (locales && locales.length > 0) {
@@ -82,26 +83,26 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
       translateY.value = withTiming(0, { duration: ANIM_MS, easing: Easing.out(Easing.cubic) });
       backdropOpacity.value = withTiming(1, { duration: ANIM_MS });
     }
-  }, [visible]);
+  }, [visible, backdropOpacity, translateY]);
 
   const handleClose = useCallback(() => {
     backdropOpacity.value = withTiming(0, { duration: ANIM_MS });
     translateY.value = withTiming(screenH, { duration: ANIM_MS, easing: Easing.in(Easing.cubic) }, (fin) => {
       if (fin) runOnJS(onClose)();
     });
-  }, [onClose, screenH]);
+  }, [onClose, screenH, backdropOpacity, translateY]);
 
   const openLegal = useCallback((page: 'privacy' | 'terms') => {
     setLegalPage(page);
     legalSlideX.value = screenW;
     legalSlideX.value = withTiming(0, { duration: ANIM_MS, easing: Easing.out(Easing.cubic) });
-  }, [screenW]);
+  }, [screenW, legalSlideX]);
 
   const closeLegal = useCallback(() => {
     legalSlideX.value = withTiming(screenW, { duration: ANIM_MS, easing: Easing.in(Easing.cubic) }, (fin) => {
       if (fin) runOnJS(setLegalPage)(null);
     });
-  }, [screenW]);
+  }, [screenW, legalSlideX]);
 
   const modalStyle = useAnimatedStyle(() => ({ transform: [{ translateY: translateY.value }] }));
   const bdStyle = useAnimatedStyle(() => ({ opacity: backdropOpacity.value }));

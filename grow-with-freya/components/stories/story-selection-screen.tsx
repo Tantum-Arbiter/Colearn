@@ -20,7 +20,8 @@ import { useTranslation } from 'react-i18next';
 import { ALL_STORIES } from '@/data/stories';
 import { Story, StoryCategory, StoryFilterTag, STORY_FILTER_TAGS, CatalogEntry, getLocalizedText } from '@/types/story';
 import { Fonts } from '@/constants/theme';
-import { useAppStore } from '@/store/app-store';
+import { useAppStore, type SubscriptionTier } from '@/store/app-store';
+import { SubscriptionOverlay } from '@/components/ui/subscription-overlay';
 import { StoryLoader } from '@/services/story-loader';
 import { CatalogService } from '@/services/catalog-service';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
@@ -34,6 +35,7 @@ import { useAccessibility } from '@/hooks/use-accessibility';
 import { StoryPreviewModal } from './story-preview-modal';
 import { CatalogStoryCard } from './catalog-story-card';
 import { StoryDownloadService } from '@/services/story-download-service';
+import { StoryAccessService } from '@/services/story-access-service';
 import type { SupportedLanguage } from '@/services/i18n';
 
 // Story experience type filters — detect from page content, not tags
@@ -290,7 +292,9 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProps) {
   const insets = useSafeAreaInsets();
-  const { requestReturnToMainMenu, setShowLoginAfterOnboarding } = useAppStore();
+  const { requestReturnToMainMenu, setShowLoginAfterOnboarding, getEffectiveTier } = useAppStore();
+  const effectiveTier: SubscriptionTier = getEffectiveTier();
+  const [showSubscription, setShowSubscription] = useState(false);
   const { startTransition, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader } = useStoryTransition();
   const lastCallRef = useRef<number>(0);
   const { scaledFontSize, scaledButtonSize, scaledPadding, textSizeScale } = useAccessibility();
@@ -481,6 +485,53 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     }
     setDeletingStoryId(null);
   }, [deletingStoryId, favoriteStoryIds, toggleFavoriteStory]);
+
+  // Handle download limit reached — show alert with option to delete a book or upgrade
+  const handleDownloadLimitReached = useCallback(async (_entry: CatalogEntry) => {
+    const limit = StoryAccessService.getDownloadLimit();
+    const tier = StoryAccessService.getEffectiveTier();
+    const tierLabel = tier.charAt(0).toUpperCase() + tier.slice(1);
+
+    // Find a story to suggest deleting
+    const suggestedStory = await StoryAccessService.getSuggestedStoryToDelete();
+    const suggestedTitle = suggestedStory
+      ? getLocalizedText(suggestedStory.localizedTitle, suggestedStory.title, currentLanguage)
+      : null;
+
+    const buttons: { text: string; style?: 'cancel' | 'destructive' | 'default'; onPress?: () => void }[] = [
+      { text: t('common.cancel'), style: 'cancel' },
+    ];
+
+    // Only show upgrade option if not already premium
+    if (tier !== 'premium') {
+      const nextTier = tier === 'free' ? 'Basic' : 'Premium';
+      buttons.push({
+        text: t('storyPreview.upgradePlan', { defaultValue: `Upgrade to ${nextTier}` }),
+        onPress: () => setShowSubscription(true),
+      });
+    }
+
+    // Offer to delete a specific book if we found one
+    if (suggestedStory && suggestedTitle) {
+      buttons.push({
+        text: t('storyPreview.deleteBook', { defaultValue: `Delete "${suggestedTitle}"` }),
+        style: 'destructive',
+        onPress: () => {
+          handleDeleteStory(suggestedStory);
+        },
+      });
+    }
+
+    Alert.alert(
+      t('storyPreview.downloadLimitTitle', { defaultValue: 'Download Limit Reached' }),
+      t('storyPreview.downloadLimitMessage', {
+        defaultValue: `You have ${limit} stories on your ${tierLabel} plan. Upgrade your plan to download more, or delete a book to make room.`,
+        limit,
+        tier: tierLabel,
+      }),
+      buttons,
+    );
+  }, [t, currentLanguage, handleDeleteStory]);
 
   // All story images are loaded from local cache after batch sync
   // No need for warm cache - images are already local file paths
@@ -889,9 +940,12 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
         swapTranslateX={swapTx}
         onLongPress={handleCatalogPreview}
         onAuthError={handleAuthError}
+        isLocked={effectiveTier === 'free' && !item.data.isFree}
+        onLockedPress={() => setShowSubscription(true)}
+        onDownloadLimitReached={handleDownloadLimitReached}
       />
     );
-  }, [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader, currentLanguage, readStoryIds, deletingStoryId, handleImplodeComplete, handleCatalogDownloadComplete, handleCatalogPreview, handleAuthError, bubbleSwap]);
+  }, [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader, currentLanguage, readStoryIds, deletingStoryId, handleImplodeComplete, handleCatalogDownloadComplete, handleCatalogPreview, handleAuthError, handleDownloadLimitReached, bubbleSwap, effectiveTier]);
 
   // Memoized render function for story cards (favorites only — pure Story[])
   const renderStoryCard: ListRenderItem<Story> = useCallback(({ item: story }) => (
@@ -1137,6 +1191,12 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
         onReadStory={(story) => handleStoryPress(story)}
         onDeleteStory={previewStory?.isAvailable && !StoryLoader.isLocalStory(previewStory.id) ? handleDeleteStory : undefined}
         isPreInstalled={previewStory ? StoryLoader.isLocalStory(previewStory.id) : false}
+      />
+
+      {/* Subscription Overlay — triggered from locked catalog cards */}
+      <SubscriptionOverlay
+        visible={showSubscription}
+        onClose={() => setShowSubscription(false)}
       />
     </LinearGradient>
   );

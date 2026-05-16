@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -74,7 +74,7 @@ export const SimplePageTransition: React.FC<SimplePageTransitionProps> = ({
           break;
       }
     }
-  }, [isVisible, transitionType, duration]);
+  }, [isVisible, transitionType, duration, opacity, translateX, translateY]);
 
   // Set initial positions for entering animations only once
   useEffect(() => {
@@ -116,6 +116,7 @@ export const SimplePageTransition: React.FC<SimplePageTransitionProps> = ({
       translateX.value = withTiming(0, animationConfig);
       translateY.value = withTiming(0, animationConfig);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -188,7 +189,7 @@ export const CrossFade: React.FC<CrossFadeProps> = ({
       duration,
       easing: Easing.inOut(Easing.ease),
     });
-  }, [isVisible, duration]);
+  }, [isVisible, duration, opacity]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,

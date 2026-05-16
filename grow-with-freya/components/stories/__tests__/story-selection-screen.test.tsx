@@ -11,10 +11,18 @@ jest.mock('@/data/stories', () => ({
   getRandomStory: jest.fn(() => null)
 }));
 
+const mockAppState = {
+  requestReturnToMainMenu: jest.fn(),
+  setShowLoginAfterOnboarding: jest.fn(),
+  getEffectiveTier: () => 'free' as const,
+  readStoryIds: [] as string[],
+  favoriteStoryIds: [] as string[],
+  toggleFavoriteStory: jest.fn(),
+  userAvatarType: null,
+};
 jest.mock('@/store/app-store', () => ({
-  useAppStore: () => ({
-    requestReturnToMainMenu: jest.fn(),
-  }),
+  useAppStore: (selector?: (state: any) => any) =>
+    selector ? selector(mockAppState) : mockAppState,
 }));
 
 jest.mock('@/contexts/story-transition-context', () => ({

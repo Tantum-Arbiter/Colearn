@@ -318,6 +318,19 @@ If the device is offline, the app should:
 RevenueCat's SDK handles this natively — it caches the last known entitlement state
 and only re-verifies when connectivity is available.
 
+### External Setup (Manual — Not Code)
+
+These steps must be completed before RevenueCat can be integrated in the codebase:
+
+| Task | Where | Why |
+|------|-------|-----|
+| Create App Store subscription products | [App Store Connect](https://appstoreconnect.apple.com) | `freya_basic_monthly`, `freya_premium_monthly` product IDs |
+| Create Google Play subscription products | [Google Play Console](https://play.google.com/console) | Same product IDs |
+| Create RevenueCat account + project | [RevenueCat](https://www.revenuecat.com) | Get your `appl_xxx` and `goog_xxx` API keys |
+| Link RevenueCat to both stores | RevenueCat dashboard | Shared secret (Apple), service account JSON (Google) |
+| Create Apple sandbox tester | App Store Connect → Sandbox → Testers | For free test purchases |
+| Add your Gmail as Google license tester | Play Console → Settings → License testing | For free test purchases |
+
 ### Implementation Priority
 
 | Priority | Feature | Effort |
@@ -432,6 +445,123 @@ Development build on physical device
 ```
 
 No code bypass or mock accounts are needed. The sandbox system tests the real integration end-to-end.
+
+---
+
+## 4. Account Deletion & GDPR Compliance
+
+### Why This Is Required
+
+The app collects data that constitutes PII under GDPR / UK GDPR:
+- Apple/Google provider ID (pseudonymous identifier tied to a real person)
+- Child gender and age range (personal data when combined with device ID)
+- Device ID + IP address (trackable to a household)
+- Reading history and screen time (behavioural data linked to an identifiable user)
+- Crash reports via Sentry (opt-in, `sendDefaultPii: false`)
+
+As a children's app targeting UK/EU users, GDPR Article 17 (right to erasure) and
+Apple/Google App Store policies **require** a functioning "Delete My Account" flow.
+
+### What Already Exists
+
+| Component | Status |
+|-----------|--------|
+| `DELETE /profile` (gateway) | ✅ Deletes user profile document from Firestore |
+| `UserRepository.deleteUser()` | ✅ Hard deletes user document |
+| `POST /auth/revoke` | ✅ Revokes auth tokens/sessions |
+| "Reset App" (frontend) | ✅ Clears all local data (cache, store, tokens) |
+| `clearPersistedStorage()` | ✅ Wipes AsyncStorage |
+| `clearUserProfile()` | ✅ Clears local profile state |
+
+### What Needs Building
+
+#### Backend: `DELETE /api/account` — Cascading Account Deletion
+
+A single authenticated endpoint that permanently deletes all server-side data for the
+requesting user. Must cascade across all collections:
+
+```
+DELETE /api/account
+  Auth: Bearer token (must be the account owner)
+  Response: 204 No Content
+
+  Deletes:
+  1. User document (provider, providerId, metadata, children[])
+  2. UserProfile document (nickname, avatar, preferences)
+  3. All active sessions for this userId
+  4. Any reminder data stored server-side
+  5. Audit log entry: "account_deleted" with timestamp (retain for 30 days for fraud)
+```
+
+**Important:** The endpoint must NOT require re-authentication after deletion —
+the token used to make the request is the last valid action before revocation.
+
+#### Frontend: "Delete My Account" Button
+
+Add to Account screen, below the Logout button. Flow:
+
+```
+User taps "Delete My Account"
+  → Parental gate (e.g. simple maths question or "type DELETE")
+  → Confirmation dialog:
+      "This will permanently delete your account and all data from our servers.
+       Downloaded stories will be removed. This cannot be undone."
+      [Cancel] [Delete My Account]
+  → Call DELETE /api/account
+  → On success:
+      - clearPersistedStorage()
+      - CacheManager.clearAll()
+      - clearUserProfile()
+      - Reset to onboarding screen
+  → On failure:
+      - Show error: "Could not delete account. Please try again or contact support."
+```
+
+#### Data Inventory (What Gets Deleted)
+
+| Data | Location | Deletion Method |
+|------|----------|-----------------|
+| User document | Firestore `users` collection | `UserRepository.deleteUser()` |
+| User profile | Firestore `user_profiles` collection | `UserProfileRepository.delete()` |
+| Auth sessions | Firestore `sessions` collection | `SessionService.revokeAllUserSessions()` |
+| Auth tokens | Client SecureStore | `SecureStorage.clearAuthData()` |
+| Local profile | AsyncStorage (Zustand) | `clearPersistedStorage()` |
+| Cached stories | FileSystem + AsyncStorage | `CacheManager.clearAll()` |
+| Crash reports | Sentry (external) | Auto-expire per Sentry retention policy (90 days default) |
+| Server logs | Gateway logs | Auto-rotate per log retention policy |
+
+#### Sentry Considerations
+
+- `sendDefaultPii: false` is already set ✅
+- `mobileReplayIntegration()` records screen replays — if a child's profile info is
+  visible on screen, this captures it. Consider removing replay in production or masking
+  text fields with `Sentry.setTag('maskAllText', true)`.
+- On account deletion, call `Sentry.setUser(null)` to disassociate future events.
+
+### Apple & Google Store Requirements
+
+Both stores **require** account deletion for apps with sign-in:
+
+- **Apple** (App Store Review Guideline 5.1.1(v)): Apps that support account creation
+  must also let users delete their account from within the app.
+- **Google** (User Data policy, effective Dec 2023): Apps must provide an in-app path
+  to request account deletion and a web URL for the same.
+
+The web URL requirement (Google) can be satisfied by a simple page at
+`https://colearnwithfreya.co.uk/delete-account` that links to a support email,
+or by implementing a web-based deletion form.
+
+### Implementation Priority
+
+| Priority | Task | Effort |
+|----------|------|--------|
+| P0 | `DELETE /api/account` gateway endpoint | Small |
+| P0 | "Delete My Account" button + confirmation UI | Small |
+| P0 | Cascade deletion across all Firestore collections | Medium |
+| P1 | Parental gate on deletion (prevent child from deleting) | Small |
+| P1 | Web-based deletion page (Google Play requirement) | Small |
+| P2 | Sentry replay masking / removal for production | Small |
+| P2 | Data retention audit (ensure logs rotate, no PII in long-term storage) | Small |
 
 ---
 

@@ -332,6 +332,11 @@ jest.mock('@/store/app-store', () => ({
     currentScreen: 'main-menu',
     isLoading: false,
     shouldReturnToMainMenu: false,
+    subscriptionTier: 'free',
+    _devSubscriptionOverride: null,
+    getEffectiveTier: () => 'free',
+    readStoryIds: [],
+    userAvatarType: null,
     backgroundAnimationState: {
       cloudFloat1: 0,
       cloudFloat2: 0,
@@ -343,10 +348,14 @@ jest.mock('@/store/app-store', () => ({
     setCurrentChild: jest.fn(),
     setCurrentScreen: jest.fn(),
     setLoading: jest.fn(),
+    setShowLoginAfterOnboarding: jest.fn(),
+    setSubscriptionTier: jest.fn(),
+    setDevSubscriptionOverride: jest.fn(),
     requestReturnToMainMenu: jest.fn(),
     clearReturnToMainMenu: jest.fn(),
     updateBackgroundAnimationState: jest.fn(),
   })),
+  BASIC_TIER_INSTRUMENTS: ['flute', 'recorder', 'ocarina'],
 }));
 
 // Image imports are handled by moduleNameMapper in jest.config.js

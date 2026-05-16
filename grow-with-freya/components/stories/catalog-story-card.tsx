@@ -7,6 +7,7 @@ import Svg, { Circle } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { CatalogEntry, getLocalizedText } from '@/types/story';
 import { StoryDownloadService, DownloadProgress } from '@/services/story-download-service';
+import { StoryAccessService } from '@/services/story-access-service';
 import { ApiClient } from '@/services/api-client';
 import { Fonts } from '@/constants/theme';
 import type { SupportedLanguage } from '@/services/i18n';
@@ -49,6 +50,12 @@ interface CatalogStoryCardProps {
   onLongPress?: (entry: CatalogEntry) => void;
   /** Called when download fails due to an auth error — parent should show sign-in flow */
   onAuthError?: () => void;
+  /** Whether this story is locked behind a subscription paywall */
+  isLocked?: boolean;
+  /** Called when user taps a locked story — parent should show subscription overlay */
+  onLockedPress?: () => void;
+  /** Called when download is blocked because the tier download limit is reached */
+  onDownloadLimitReached?: (entry: CatalogEntry) => void;
 }
 
 export const CatalogStoryCard = memo(function CatalogStoryCard({
@@ -61,6 +68,9 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
   swapTranslateX = 0,
   onLongPress,
   onAuthError,
+  isLocked = false,
+  onLockedPress,
+  onDownloadLimitReached,
 }: CatalogStoryCardProps) {
   const displayTitle = getLocalizedText(entry.localizedTitle, entry.title, language);
   const [downloading, setDownloading] = useState(false);
@@ -160,6 +170,13 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
   }, [progressValue, ringOpacity]);
 
   const handlePress = useCallback(async () => {
+    // ── Locked story — show subscription overlay ──
+    if (isLocked) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      onLockedPress?.();
+      return;
+    }
+
     // ── Tap to cancel — immediate, no confirmation dialog ──
     if (downloading) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -169,6 +186,19 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
       return;
     }
     if (complete) return;
+
+    // ── Check download limit before starting ──
+    try {
+      const { atLimit } = await StoryAccessService.checkDownloadLimit();
+      if (atLimit) {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        onDownloadLimitReached?.(entry);
+        return;
+      }
+    } catch (e) {
+      // If limit check fails, proceed with download anyway
+      console.warn('Download limit check failed, proceeding:', e);
+    }
 
     // No network pre-check — start immediately, fail fast on actual error.
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -325,7 +355,7 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
         );
       }
     }
-  }, [downloading, complete, entry, onDownloadComplete, onAuthError, progressValue, ringOpacity, ringScale, checkOpacity, checkScale, overlayOpacity, cardScale, resetToIdle]);
+  }, [downloading, complete, entry, isLocked, onLockedPress, onDownloadLimitReached, onDownloadComplete, onAuthError, progressValue, ringOpacity, ringScale, checkOpacity, checkScale, overlayOpacity, cardScale, resetToIdle]);
 
   const handleLongPress = useCallback(() => {
     if (downloading) return;
@@ -355,12 +385,18 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
         {/* Dark overlay — stays full during download, fades on completion */}
         <Animated.View style={[cardStyles.darkOverlay, { borderRadius }, overlayStyle]} />
 
-        {/* Download icon (before downloading) */}
+        {/* Lock icon (locked story) or Download icon (unlocked, before downloading) */}
         {!downloading && !complete && (
           <View style={cardStyles.iconContainer}>
-            <View style={cardStyles.iconCircle}>
-              <Ionicons name="cloud-download-outline" size={22} color="#FFFFFF" />
-            </View>
+            {isLocked ? (
+              <View style={cardStyles.lockCircle}>
+                <Ionicons name="lock-closed" size={20} color="#FFFFFF" />
+              </View>
+            ) : (
+              <View style={cardStyles.iconCircle}>
+                <Ionicons name="cloud-download-outline" size={22} color="#FFFFFF" />
+              </View>
+            )}
           </View>
         )}
 
@@ -472,6 +508,16 @@ const cardStyles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 2,
     borderColor: 'rgba(255, 255, 255, 0.5)',
+  },
+  lockCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 200, 50, 0.7)',
   },
   checkCircle: {
     width: 44,

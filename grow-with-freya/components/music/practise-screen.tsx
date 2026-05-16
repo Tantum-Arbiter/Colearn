@@ -51,6 +51,8 @@ import type { PracticeSong, PracticeSongDifficulty } from '@/services/music-asse
 import type { MusicChallenge } from '@/types/story';
 import { Fonts } from '@/constants/theme';
 import { useGlobalSound } from '@/contexts/global-sound-context';
+import { SubscriptionOverlay } from '@/components/ui/subscription-overlay';
+import { StoryAccessService } from '@/services/story-access-service';
 
 // Pre-generate star positions at module level (same as story selection screen)
 const STAR_POSITIONS = generateStarPositions(VISUAL_EFFECTS.STAR_COUNT);
@@ -86,12 +88,17 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
   // Phase state — start directly on songs with first instrument selected
   const [phase, setPhase] = useState<PractisePhase>('songs');
   const [selectedInstrumentId, setSelectedInstrumentId] = useState<string>(
-    () => getAvailableInstrumentIds()[0] ?? 'flute'
+    () => {
+      // Default to the first unlocked instrument (flute for basic+)
+      const ids = getAvailableInstrumentIds();
+      return ids.find(id => StoryAccessService.isInstrumentUnlocked(id)) ?? ids[0] ?? 'flute';
+    }
   );
   const [selectedSong, setSelectedSong] = useState<PracticeSong | null>(null);
   const [showMusicSheet, setShowMusicSheet] = useState(false);
   const [instrumentIsRotated, setInstrumentIsRotated] = useState(false);
   const [musicUiHidden, setMusicUiHidden] = useState(false);
+  const [showSubscription, setShowSubscription] = useState(false);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
 
   // Remap portrait safe-area insets for the 90° CSS-rotated container.
@@ -618,6 +625,7 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
       <InstrumentCarousel
         selectedInstrumentId={selectedInstrumentId}
         onSelect={handleInlineInstrumentChange}
+        onLockedPress={() => setShowSubscription(true)}
       />
 
       <FlatList
@@ -628,26 +636,41 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
           styles.songList,
           { paddingBottom: insets.bottom + 20 },
         ]}
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => {
+          const isLocked = !StoryAccessService.isSongUnlocked(index);
+          return (
           <Pressable
             style={({ pressed }) => [
               styles.songCard,
-              pressed && styles.songCardPressed,
+              isLocked && styles.songCardLocked,
+              pressed && !isLocked && styles.songCardPressed,
             ]}
-            onPress={() => handleSongSelect(item)}
+            onPress={() => {
+              if (isLocked) {
+                setShowSubscription(true);
+              } else {
+                handleSongSelect(item);
+              }
+            }}
           >
             <View style={styles.songCardHeader}>
-              <Text style={[styles.songName, { fontSize: songFontSize }]}>
+              <Text style={[styles.songName, { fontSize: songFontSize }, isLocked && styles.songNameLocked]}>
                 {t(item.nameKey)}
               </Text>
+              {isLocked ? (
+                <View style={styles.lockBadge}>
+                  <Ionicons name="lock-closed" size={14} color="#FFFFFF" />
+                </View>
+              ) : (
               <View style={[styles.diffBadge, { backgroundColor: DIFFICULTY_COLORS[item.difficulty] }]}>
                 <Text style={[styles.diffBadgeText, { fontSize: diffBadgeFontSize }]}>
                   {DIFFICULTY_STARS[item.difficulty]} {t(`music.difficulty.${item.difficulty}`)}
                 </Text>
               </View>
+              )}
             </View>
             {/* Note preview */}
-            <View style={styles.notePreview}>
+            <View style={[styles.notePreview, isLocked && { opacity: 0.35 }]}>
               {item.sequence.slice(0, 16).map((note, i) => (
                 <View
                   key={`${note}-${i}`}
@@ -670,7 +693,8 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
               )}
             </View>
           </Pressable>
-        )}
+          );
+        }}
         ListEmptyComponent={
           <Text style={[styles.emptyText, { fontSize: songFontSize }]}>
             {t('music.noSongsAvailable')}
@@ -678,6 +702,12 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
         }
       />
       </View>
+
+      {/* Subscription Overlay — triggered from locked instrument tap */}
+      <SubscriptionOverlay
+        visible={showSubscription}
+        onClose={() => setShowSubscription(false)}
+      />
     </View>
   );
 }
@@ -725,6 +755,20 @@ const styles = StyleSheet.create({
   songCardPressed: {
     backgroundColor: 'rgba(255,255,255,0.25)',
     transform: [{ scale: 0.98 }],
+  },
+  songCardLocked: {
+    opacity: 0.65,
+    borderColor: 'rgba(255,255,255,0.05)',
+  },
+  songNameLocked: {
+    opacity: 0.6,
+  },
+  lockBadge: {
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginLeft: 8,
   },
   songCardHeader: {
     flexDirection: 'row',

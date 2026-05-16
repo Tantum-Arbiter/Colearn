@@ -5,7 +5,10 @@ import { useAppStore } from '../../store/app-store';
 import { ScreenTimeProvider } from '../../components/screen-time/screen-time-provider';
 
 // Mock the store
-jest.mock('../../store/app-store');
+jest.mock('../../store/app-store', () => ({
+  useAppStore: jest.fn(),
+  BASIC_TIER_INSTRUMENTS: ['flute', 'recorder', 'ocarina'],
+}));
 const mockUseAppStore = useAppStore as jest.MockedFunction<typeof useAppStore>;
 
 // Reanimated is mocked globally in jest.setup.js
@@ -29,11 +32,15 @@ describe('Main Menu Performance Tests', () => {
       currentScreen: 'main',
       isLoading: false,
       shouldReturnToMainMenu: false,
+      subscriptionTier: 'free',
+      _devSubscriptionOverride: null,
+      getEffectiveTier: () => 'free',
       setAppReady: jest.fn(),
       setOnboardingComplete: jest.fn(),
       setCurrentChildId: jest.fn(),
       setCurrentScreen: jest.fn(),
       setLoading: jest.fn(),
+      setShowLoginAfterOnboarding: jest.fn(),
       requestReturnToMainMenu: jest.fn(),
       clearReturnToMainMenu: jest.fn(),
     });

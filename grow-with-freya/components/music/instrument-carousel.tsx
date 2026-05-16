@@ -13,7 +13,9 @@ import Animated, {
   withTiming, interpolate, Extrapolation, Easing, SharedValue, runOnJS,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Ionicons } from '@expo/vector-icons';
 import { getAvailableInstrumentIds, getInstrument, InstrumentDefinition } from '@/services/music-asset-registry';
+import { StoryAccessService } from '@/services/story-access-service';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { Fonts } from '@/constants/theme';
 
@@ -26,9 +28,11 @@ const SIDE_SCALE = 0.85;
 interface Props {
   selectedInstrumentId: string;
   onSelect: (id: string) => void;
+  /** Called when user tries to select a locked instrument */
+  onLockedPress?: () => void;
 }
 
-export const InstrumentCarousel = React.memo(function InstrumentCarousel({ selectedInstrumentId, onSelect }: Props) {
+export const InstrumentCarousel = React.memo(function InstrumentCarousel({ selectedInstrumentId, onSelect, onLockedPress }: Props) {
   const { scaledButtonSize, scaledFontSize } = useAccessibility();
   const imageSize = scaledButtonSize(BASE_IMAGE_SIZE);
   const radius = scaledButtonSize(BASE_RADIUS);
@@ -113,7 +117,9 @@ export const InstrumentCarousel = React.memo(function InstrumentCarousel({ selec
               {instruments.map((inst, i) => (
                 <CarouselItem key={inst.id} instrument={inst} index={i} anglePerItem={anglePerItem}
                   rotation={rotation} imageSize={imageSize} radius={radius}
-                  nameFontSize={scaledFontSize(16)} descFontSize={scaledFontSize(12)} />
+                  nameFontSize={scaledFontSize(16)} descFontSize={scaledFontSize(12)}
+                  isLocked={!StoryAccessService.isInstrumentUnlocked(inst.id)}
+                  onLockedPress={onLockedPress} />
               ))}
             </Animated.View>
           </View>
@@ -135,9 +141,10 @@ interface ItemProps {
   instrument: InstrumentDefinition; index: number; anglePerItem: number;
   rotation: SharedValue<number>; imageSize: number; radius: number;
   nameFontSize: number; descFontSize: number;
+  isLocked?: boolean; onLockedPress?: () => void;
 }
 
-function CarouselItem({ instrument, index, anglePerItem, rotation, imageSize, radius, nameFontSize, descFontSize }: ItemProps) {
+function CarouselItem({ instrument, index, anglePerItem, rotation, imageSize, radius, nameFontSize, descFontSize, isLocked = false, onLockedPress }: ItemProps) {
   const pulseScale = useSharedValue(1);
   const pulseOpacity = useSharedValue(0);
 
@@ -191,12 +198,23 @@ function CarouselItem({ instrument, index, anglePerItem, rotation, imageSize, ra
       <View style={{ width: imageSize, height: imageSize, justifyContent: 'center', alignItems: 'center' }}>
         {hasImage ? (
           <Image source={instrument.image}
-            style={{ width: imageSize, height: imageSize, borderRadius: imageSize / 2 }} resizeMode="contain" />
+            style={{ width: imageSize, height: imageSize, borderRadius: imageSize / 2, opacity: isLocked ? 0.5 : 1 }} resizeMode="contain" />
         ) : (
           <View style={[st.ph, { width: imageSize, height: imageSize, borderRadius: imageSize / 2,
-            backgroundColor: instrument.noteLayout[0]?.color || '#666' }]}>
+            backgroundColor: instrument.noteLayout[0]?.color || '#666', opacity: isLocked ? 0.5 : 1 }]}>
             <Text style={{ fontSize: imageSize * 0.45 }}>{instrument.noteLayout[0]?.label || '🎵'}</Text>
           </View>
+        )}
+        {/* Lock overlay for subscription-gated instruments */}
+        {isLocked && (
+          <Pressable
+            onPress={onLockedPress}
+            style={[st.lockOverlay, { width: imageSize, height: imageSize, borderRadius: imageSize / 2 }]}
+          >
+            <View style={st.lockBadge}>
+              <Ionicons name="lock-closed" size={18} color="#FFFFFF" />
+            </View>
+          </Pressable>
         )}
       </View>
       <Animated.View style={[st.label, labelStyle]}>
@@ -227,5 +245,21 @@ const st = StyleSheet.create({
   desc: {
     color: 'rgba(255,255,255,0.6)', fontWeight: '400', textAlign: 'center',
     marginTop: 3, maxWidth: 200,
+  },
+  lockOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+  },
+  lockBadge: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 200, 50, 0.7)',
   },
 });

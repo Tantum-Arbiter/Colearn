@@ -4,6 +4,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 
+// Subscription tiers
+export type SubscriptionTier = 'free' | 'basic' | 'premium';
+
+// Instruments available on each tier
+export const BASIC_TIER_INSTRUMENTS = ['flute', 'recorder', 'ocarina'] as const;
+
 export interface AppState {
   // App initialization
   isAppReady: boolean;
@@ -12,6 +18,12 @@ export interface AppState {
   hasCompletedLogin: boolean;
   showLoginAfterOnboarding: boolean;
   isGuestMode: boolean; // User continued without signing in
+
+  // Subscription
+  subscriptionTier: SubscriptionTier; // Current active subscription tier
+  /** Dev-only override: set to a tier to bypass real IAP checks during testing.
+   *  Set to null to use the real subscription tier. NOT persisted. */
+  _devSubscriptionOverride: SubscriptionTier | null;
 
   // User profile (synced from backend)
   userNickname: string | null;
@@ -81,6 +93,10 @@ export interface AppState {
   setNotificationPermissionRequested: (requested: boolean) => void;
   setCrashReportingEnabled: (enabled: boolean) => void;
   setTextSizeScale: (scale: number) => void;
+  setSubscriptionTier: (tier: SubscriptionTier) => void;
+  setDevSubscriptionOverride: (tier: SubscriptionTier | null) => void;
+  /** Returns the effective tier (dev override takes priority if set). */
+  getEffectiveTier: () => SubscriptionTier;
   toggleFavoriteStory: (storyId: string) => void;
   isStoryFavorited: (storyId: string) => boolean;
   markStoryAsRead: (storyId: string) => void;
@@ -97,7 +113,7 @@ export interface AppState {
 
 export const useAppStore = create<AppState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       // Initial state
       isAppReady: false,
       hasHydrated: false, // Will be set to true after AsyncStorage loads
@@ -105,6 +121,8 @@ export const useAppStore = create<AppState>()(
       hasCompletedLogin: false,
       showLoginAfterOnboarding: false,
       isGuestMode: false,
+      subscriptionTier: 'free' as SubscriptionTier,
+      _devSubscriptionOverride: null,
       userNickname: null,
       userAvatarType: null,
       userAvatarId: null,
@@ -165,8 +183,14 @@ export const useAppStore = create<AppState>()(
       setNotificationsEnabled: (enabled) => set({ notificationsEnabled: enabled }),
       setNotificationPermissionRequested: (requested) => set({ hasRequestedNotificationPermission: requested }),
       setCrashReportingEnabled: (enabled) => set({ crashReportingEnabled: enabled }),
-      setTextSizeScale: (scale) => set({ textSizeScale: scale }),
-      toggleFavoriteStory: (storyId) => set((state) => {
+      setSubscriptionTier: (tier: SubscriptionTier) => set({ subscriptionTier: tier }),
+      setDevSubscriptionOverride: (tier: SubscriptionTier | null) => set({ _devSubscriptionOverride: tier }),
+      getEffectiveTier: (): SubscriptionTier => {
+        const s = get();
+        return s._devSubscriptionOverride ?? s.subscriptionTier;
+      },
+      setTextSizeScale: (scale: number) => set({ textSizeScale: scale }),
+      toggleFavoriteStory: (storyId: string) => set((state) => {
         const isFavorited = state.favoriteStoryIds.includes(storyId);
         if (isFavorited) {
           return { favoriteStoryIds: state.favoriteStoryIds.filter(id => id !== storyId) };
@@ -174,13 +198,13 @@ export const useAppStore = create<AppState>()(
           return { favoriteStoryIds: [...state.favoriteStoryIds, storyId] };
         }
       }),
-      isStoryFavorited: (storyId) => {
+      isStoryFavorited: (storyId: string) => {
         // This is a selector-like function, but we need to return the value
         // For zustand, we use get() but since we're inside the store definition,
         // we need to access it differently. This will be used via useAppStore.getState()
         return false; // Placeholder - actual check is done via selector
       },
-      markStoryAsRead: (storyId) => set((state) => {
+      markStoryAsRead: (storyId: string) => set((state) => {
         if (state.readStoryIds.includes(storyId)) {
           return state; // Already marked as read
         }
@@ -215,7 +239,7 @@ export const useAppStore = create<AppState>()(
         return { shouldReturnToMainMenu: true };
       }),
       clearReturnToMainMenu: () => set({ shouldReturnToMainMenu: false }),
-      updateBackgroundAnimationState: (animationState) => set({ backgroundAnimationState: animationState }),
+      updateBackgroundAnimationState: (animationState: { cloudFloat1: number; cloudFloat2: number; rocketFloat1: number; rocketFloat2: number }) => set({ backgroundAnimationState: animationState }),
       clearPersistedStorage: async () => {
         try {
           await AsyncStorage.removeItem('app-storage');
@@ -235,6 +259,7 @@ export const useAppStore = create<AppState>()(
         hasCompletedLogin: state.hasCompletedLogin,
         showLoginAfterOnboarding: state.showLoginAfterOnboarding,
         isGuestMode: state.isGuestMode,
+        subscriptionTier: state.subscriptionTier,
         userNickname: state.userNickname,
         userAvatarType: state.userAvatarType,
         userAvatarId: state.userAvatarId,

@@ -6,7 +6,7 @@ import * as Haptics from 'expo-haptics';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
-import { useAppStore } from '../../store/app-store';
+import { useAppStore, type SubscriptionTier } from '../../store/app-store';
 import { MoonBottomImage } from '../main-menu/animated-components';
 import { mainMenuStyles } from '../main-menu/styles';
 import { PageHeader } from '../ui/page-header';
@@ -133,7 +133,10 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
     setShowLoginAfterOnboarding,
     setGuestMode,
     clearPersistedStorage,
-    clearUserProfile
+    clearUserProfile,
+    getEffectiveTier,
+    _devSubscriptionOverride,
+    setDevSubscriptionOverride,
   } = useAppStore();
 
   // Screen time context for resetting today's usage
@@ -613,6 +616,44 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
               Developer Options
             </Text>
 
+            {/* Subscription tier override */}
+            <View style={styles.devTierRow}>
+              <Text style={[styles.devTierLabel, { fontSize: scaledFontSize(12) }]}>
+                Subscription Tier
+              </Text>
+              <Text style={[styles.devTierHint, { fontSize: scaledFontSize(10) }]}>
+                {_devSubscriptionOverride
+                  ? `Override active → ${_devSubscriptionOverride}`
+                  : `Using real tier → ${getEffectiveTier()}`}
+              </Text>
+              <View style={styles.devTierButtons}>
+                {(['free', 'basic', 'premium'] as SubscriptionTier[]).map((tier) => {
+                  const isActive = getEffectiveTier() === tier;
+                  return (
+                    <Pressable
+                      key={tier}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setDevSubscriptionOverride(isActive && _devSubscriptionOverride ? null : tier);
+                      }}
+                      style={[
+                        styles.devTierPill,
+                        isActive && styles.devTierPillActive,
+                      ]}
+                    >
+                      <Text style={[
+                        styles.devTierPillText,
+                        { fontSize: scaledFontSize(12) },
+                        isActive && styles.devTierPillTextActive,
+                      ]}>
+                        {tier.charAt(0).toUpperCase() + tier.slice(1)}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+
             <Pressable
               style={[styles.button, { paddingVertical: scaledPadding(10), minHeight: scaledButtonSize(40) }]}
               onPress={handleResetTodayUsage}
@@ -912,6 +953,45 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.5)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
+  },
+  devTierRow: {
+    marginBottom: 12,
+  },
+  devTierLabel: {
+    color: '#FFFFFF',
+    fontWeight: '600' as const,
+    marginBottom: 2,
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  devTierHint: {
+    color: 'rgba(255, 255, 255, 0.55)',
+    marginBottom: 8,
+  },
+  devTierButtons: {
+    flexDirection: 'row' as const,
+    gap: 8,
+  },
+  devTierPill: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center' as const,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  devTierPillActive: {
+    backgroundColor: 'rgba(76, 175, 80, 0.7)',
+    borderColor: 'rgba(76, 175, 80, 0.9)',
+  },
+  devTierPillText: {
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontWeight: '600' as const,
+  },
+  devTierPillTextActive: {
+    color: '#FFFFFF',
   },
   textSizeLabel: {
     color: 'rgba(255, 255, 255, 0.7)',

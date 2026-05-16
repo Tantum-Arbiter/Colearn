@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { CatalogEntry } from '../types/story';
+import { CatalogEntry, Story } from '../types/story';
 import { Logger } from '@/utils/logger';
+import { useAppStore, BASIC_TIER_INSTRUMENTS, type SubscriptionTier } from '@/store/app-store';
 
 const log = Logger.create('StoryAccessService');
 
@@ -9,8 +10,12 @@ const STORAGE_KEYS = {
   REFERRAL_UNLOCKS: '@referral_unlocks', // Set of storyIds unlocked via referral
 };
 
-// Free tier limits (no subscription)
-const FREE_DOWNLOAD_LIMIT = 2; // Number of free stories available to all users
+// Download limits per tier (max stories on device at any time)
+const DOWNLOAD_LIMITS: Record<SubscriptionTier, number> = {
+  free: 2,
+  basic: 50,
+  premium: 125,
+};
 
 export type AccessDeniedReason =
   | 'subscription_required'
@@ -68,17 +73,120 @@ export class StoryAccessService {
   }
 
   // ──────────────────────────────────────────────
-  // Subscription state (placeholder — will integrate with IAP)
+  // Subscription / tier helpers
+  // ──────────────────────────────────────────────
+
+  /** Return the effective subscription tier (respects dev override). */
+  static getEffectiveTier(): SubscriptionTier {
+    return useAppStore.getState().getEffectiveTier();
+  }
+
+  /**
+   * Check if the user has an active subscription (basic or premium).
+   */
+  static async hasActiveSubscription(): Promise<boolean> {
+    const tier = this.getEffectiveTier();
+    return tier === 'basic' || tier === 'premium';
+  }
+
+  /**
+   * Check if a specific instrument is unlocked for the current tier.
+   * - Free / Basic: flute, recorder, ocarina
+   * - Premium: all instruments
+   */
+  static isInstrumentUnlocked(instrumentId: string): boolean {
+    const tier = this.getEffectiveTier();
+    if (tier === 'premium') return true;
+    return (BASIC_TIER_INSTRUMENTS as readonly string[]).includes(instrumentId);
+  }
+
+  /** Number of songs available per tier. */
+  static readonly FREE_SONG_COUNT = 3;
+  static readonly BASIC_SONG_COUNT = 10;
+
+  /**
+   * Check if a song at a given index in the practice list is unlocked.
+   * - Free tier: top 3 songs
+   * - Basic tier: top 10 songs
+   * - Premium: all songs
+   */
+  static isSongUnlocked(songIndex: number): boolean {
+    const tier = this.getEffectiveTier();
+    if (tier === 'premium') return true;
+    if (tier === 'basic') return songIndex < this.BASIC_SONG_COUNT;
+    return songIndex < this.FREE_SONG_COUNT;
+  }
+
+  // ──────────────────────────────────────────────
+  // Download limit enforcement
   // ──────────────────────────────────────────────
 
   /**
-   * Check if the user has an active subscription.
-   * TODO: Replace with real IAP / RevenueCat check when subscription is implemented.
+   * Get the download limit for the current tier.
+   * - Free: 2 stories
+   * - Basic: 50 stories
+   * - Premium: 125 stories
    */
-  static async hasActiveSubscription(): Promise<boolean> {
-    // All stories are downloadable until subscription/IAP is implemented.
-    // When ready, this will check RevenueCat / StoreKit entitlements.
-    return true;
+  static getDownloadLimit(): number {
+    return DOWNLOAD_LIMITS[this.getEffectiveTier()];
+  }
+
+  /**
+   * Get the number of stories currently on device.
+   * Uses StoryLoader's cached stories (synchronous) for instant checks.
+   * Falls back to async load if no cache is available.
+   */
+  static async getDownloadedStoryCount(): Promise<number> {
+    // Lazy import to avoid circular dependency
+    const { StoryLoader } = require('./story-loader');
+    const stories: Story[] = await StoryLoader.getStories();
+    return stories.length;
+  }
+
+  /**
+   * Synchronous version — uses StoryLoader's in-memory cache.
+   * Returns null if the cache hasn't been populated yet.
+   */
+  static getDownloadedStoryCountSync(): number | null {
+    const { StoryLoader } = require('./story-loader');
+    const cached: Story[] | null = StoryLoader.getCachedStories();
+    return cached ? cached.length : null;
+  }
+
+  /**
+   * Check whether the user has reached their download limit.
+   * Returns { atLimit, currentCount, limit } for UI messaging.
+   */
+  static async checkDownloadLimit(): Promise<{
+    atLimit: boolean;
+    currentCount: number;
+    limit: number;
+  }> {
+    const limit = this.getDownloadLimit();
+    const currentCount = await this.getDownloadedStoryCount();
+    return { atLimit: currentCount >= limit, currentCount, limit };
+  }
+
+  /**
+   * Suggest a story to delete to make room for a new download.
+   * Picks the oldest non-bundled (CMS-downloaded) story, or falls back
+   * to the last bundled story in the list.
+   */
+  static async getSuggestedStoryToDelete(): Promise<Story | null> {
+    const { StoryLoader } = require('./story-loader');
+    const { ALL_STORIES } = require('../data/stories');
+    const stories: Story[] = await StoryLoader.getStories();
+    const bundledIds = new Set((ALL_STORIES as Story[]).map((s: Story) => s.id));
+
+    // Prefer non-bundled (CMS) stories — the user downloaded these explicitly
+    // and they can re-download them later. Pick the first one (oldest download).
+    const cmsStory = stories.find((s: Story) => !bundledIds.has(s.id));
+    if (cmsStory) return cmsStory;
+
+    // Fallback: last bundled story (least likely to be actively reading)
+    if (stories.length > 0) return stories[stories.length - 1];
+
+    return null;
   }
 
   // ──────────────────────────────────────────────

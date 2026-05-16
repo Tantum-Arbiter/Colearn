@@ -10,6 +10,19 @@ jest.mock('../../services/cache-manager');
 jest.mock('../../services/api-client');
 jest.mock('../../services/asset-download-utils');
 
+// Mock app store — controls subscription tier for StoryAccessService
+let mockSubscriptionTier: 'free' | 'basic' | 'premium' = 'premium'; // default to premium so existing tests pass
+jest.mock('@/store/app-store', () => ({
+  useAppStore: {
+    getState: () => ({
+      subscriptionTier: mockSubscriptionTier,
+      _devSubscriptionOverride: null,
+      getEffectiveTier: () => mockSubscriptionTier,
+    }),
+  },
+  BASIC_TIER_INSTRUMENTS: ['flute', 'recorder', 'ocarina'],
+}));
+
 // In-memory AsyncStorage mock for CatalogService & StoryAccessService
 const asyncStorageStore: Record<string, string> = {};
 jest.mock('@react-native-async-storage/async-storage', () => ({
@@ -95,6 +108,7 @@ describe('StoryAccessService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     Object.keys(asyncStorageStore).forEach(k => delete asyncStorageStore[k]);
+    mockSubscriptionTier = 'premium'; // default to premium for most tests
   });
 
   it('should allow free stories', async () => {
@@ -102,20 +116,78 @@ describe('StoryAccessService', () => {
     expect(result.allowed).toBe(true);
   });
 
-  it('should allow premium stories (subscription placeholder returns true)', async () => {
+  it('should allow free stories even on free tier', async () => {
+    mockSubscriptionTier = 'free';
+    const result = await StoryAccessService.canDownload(freeCatalogEntry);
+    expect(result.allowed).toBe(true);
+  });
+
+  it('should allow premium stories with premium subscription', async () => {
+    mockSubscriptionTier = 'premium';
     const result = await StoryAccessService.canDownload(premiumCatalogEntry);
     expect(result.allowed).toBe(true);
   });
 
-  it('should allow referral stories (subscription placeholder returns true)', async () => {
+  it('should deny premium stories on free tier', async () => {
+    mockSubscriptionTier = 'free';
+    const result = await StoryAccessService.canDownload(premiumCatalogEntry);
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toBe('subscription_required');
+  });
+
+  it('should allow premium stories with basic subscription', async () => {
+    mockSubscriptionTier = 'basic';
+    const result = await StoryAccessService.canDownload(premiumCatalogEntry);
+    expect(result.allowed).toBe(true);
+  });
+
+  it('should allow referral stories with premium subscription', async () => {
+    mockSubscriptionTier = 'premium';
     const result = await StoryAccessService.canDownload(referralCatalogEntry);
     expect(result.allowed).toBe(true);
   });
 
+  it('should deny referral stories on free tier without unlock', async () => {
+    mockSubscriptionTier = 'free';
+    const result = await StoryAccessService.canDownload(referralCatalogEntry);
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toBe('referral_required');
+  });
+
   it('should allow referral stories after granting unlock', async () => {
+    mockSubscriptionTier = 'free';
     await StoryAccessService.grantReferralUnlock('referral-story');
     const result = await StoryAccessService.canDownload(referralCatalogEntry);
     expect(result.allowed).toBe(true);
+  });
+
+  // Instrument access tests
+  it('should unlock basic instruments on basic tier', () => {
+    mockSubscriptionTier = 'basic';
+    expect(StoryAccessService.isInstrumentUnlocked('flute')).toBe(true);
+    expect(StoryAccessService.isInstrumentUnlocked('recorder')).toBe(true);
+    expect(StoryAccessService.isInstrumentUnlocked('ocarina')).toBe(true);
+    expect(StoryAccessService.isInstrumentUnlocked('trumpet')).toBe(false);
+    expect(StoryAccessService.isInstrumentUnlocked('clarinet')).toBe(false);
+  });
+
+  it('should unlock all instruments on premium tier', () => {
+    mockSubscriptionTier = 'premium';
+    expect(StoryAccessService.isInstrumentUnlocked('flute')).toBe(true);
+    expect(StoryAccessService.isInstrumentUnlocked('trumpet')).toBe(true);
+    expect(StoryAccessService.isInstrumentUnlocked('clarinet')).toBe(true);
+  });
+
+  it('should unlock basic instruments on free tier and lock others', () => {
+    mockSubscriptionTier = 'free';
+    // Basic instruments (flute, recorder, ocarina) are available on all tiers
+    expect(StoryAccessService.isInstrumentUnlocked('flute')).toBe(true);
+    expect(StoryAccessService.isInstrumentUnlocked('recorder')).toBe(true);
+    expect(StoryAccessService.isInstrumentUnlocked('ocarina')).toBe(true);
+    // Non-basic instruments are locked on free tier
+    expect(StoryAccessService.isInstrumentUnlocked('trumpet')).toBe(false);
+    expect(StoryAccessService.isInstrumentUnlocked('clarinet')).toBe(false);
+    expect(StoryAccessService.isInstrumentUnlocked('saxophone')).toBe(false);
   });
 
   it('should track download count', async () => {
@@ -234,6 +306,7 @@ describe('StoryDownloadService', () => {
     Object.keys(asyncStorageStore).forEach(k => delete asyncStorageStore[k]);
     // Reset active downloads map
     (StoryDownloadService as any).activeDownloads = new Map();
+    mockSubscriptionTier = 'premium'; // default to premium so download tests pass
   });
 
   it('should download a free story successfully', async () => {
@@ -273,8 +346,8 @@ describe('StoryDownloadService', () => {
     );
   });
 
-  it('should allow download of premium story (subscription placeholder returns true)', async () => {
-    // With subscription always returning true, premium stories should download
+  it('should allow download of premium story with active subscription', async () => {
+    mockSubscriptionTier = 'premium';
     mockApiClient.request.mockResolvedValueOnce(mockStory);
     mockAssetUtils.extractAssetPaths.mockReturnValue([]);
     mockAssetUtils.filterUncachedAssets.mockResolvedValue([]);
@@ -283,6 +356,14 @@ describe('StoryDownloadService', () => {
     const result = await StoryDownloadService.downloadStory('premium-story', premiumCatalogEntry);
     expect(result.success).toBe(true);
     expect(mockApiClient.request).toHaveBeenCalled();
+  });
+
+  it('should deny download of premium story on free tier', async () => {
+    mockSubscriptionTier = 'free';
+
+    const result = await StoryDownloadService.downloadStory('premium-story', premiumCatalogEntry);
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('subscription_required');
   });
 
   it('should handle API errors gracefully', async () => {
@@ -748,6 +829,7 @@ describe('Download pipeline edge cases (via StoryDownloadService)', () => {
     Object.keys(asyncStorageStore).forEach(k => delete asyncStorageStore[k]);
     (StoryDownloadService as any).activeDownloads = new Map();
     (StoryDownloadService as any).cancellationTokens = new Map();
+    mockSubscriptionTier = 'premium';
   });
 
   it('should pass download errors through as assetsFailed', async () => {

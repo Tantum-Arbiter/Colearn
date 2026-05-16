@@ -4,7 +4,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withDelay,
+
   Easing,
   runOnJS,
 } from 'react-native-reanimated';
@@ -91,7 +91,7 @@ export const SmoothPageContainer: React.FC<SmoothPageContainerProps> = ({
       translateY.value = transitionType === 'slide-down' ? -50 : 50;
       scale.value = 0.95;
     }
-  }, [isActive, transitionType, duration, delay, preloadDelay, onTransitionComplete]);
+  }, [isActive, transitionType, duration, delay, preloadDelay, onTransitionComplete, opacity, translateY, scale]);
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -198,7 +198,7 @@ export const LoadingMask: React.FC<LoadingMaskProps> = ({
       duration,
       easing: Easing.inOut(Easing.ease),
     });
-  }, [isVisible, duration]);
+  }, [isVisible, duration, opacity]);
 
   const animatedStyle = useAnimatedStyle(() => {
     return {

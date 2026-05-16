@@ -14,7 +14,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useAppStore } from '@/store/app-store';
+import { useAppStore, type SubscriptionTier } from '@/store/app-store';
 import { MusicControl } from '@/components/ui/music-control';
 import { ParentsOnlyModal } from '@/components/ui/parents-only-modal';
 import { Ionicons } from '@expo/vector-icons';
@@ -74,7 +74,10 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
   const insets = useSafeAreaInsets();
   const { scaledButtonSize, scaledFontSize } = useAccessibility();
 
-  // Subscription overlay state
+  // Subscription state
+  const { getEffectiveTier } = useAppStore();
+  const effectiveTier: SubscriptionTier = getEffectiveTier();
+  const isPremium = effectiveTier === 'premium';
   const [showSubscription, setShowSubscription] = useState(false);
 
   // Unlock button animations — gentle pulse + shimmer + slide-out on navigate
@@ -165,7 +168,7 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
       return true;
     }
     return false;
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps — intentionally read once on mount
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const containerOpacity = useSharedValue(skipFadeIn ? 1 : 0);
 
   // Fade in the container on mount (smooth transition from splash — skipped when behind loading overlay)
@@ -409,23 +412,25 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
         />
       </View>
 
-      {/* Unlock a Plan tab — fixed to very bottom */}
-      <View style={[legacyStyles.unlockBtnContainer, { bottom: 0 }]}>
-        <Animated.View style={unlockBtnAnimStyle}>
-          <Pressable onPress={() => setShowSubscription(true)} style={legacyStyles.unlockBtn}>
-            <LinearGradient
-              colors={['#FBBF24', '#F59E0B', '#D97706']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={legacyStyles.unlockBtnGradient}
-            >
-              <Text style={[legacyStyles.unlockBtnText, { fontSize: scaledFontSize(15) }]}>Unlock a Plan</Text>
-              {/* Shimmer overlay */}
-              <Animated.View style={[legacyStyles.unlockShimmer, unlockShimmerStyle]} />
-            </LinearGradient>
-          </Pressable>
-        </Animated.View>
-      </View>
+      {/* Unlock a Plan tab — fixed to very bottom (hidden for premium subscribers) */}
+      {!isPremium && (
+        <View style={[legacyStyles.unlockBtnContainer, { bottom: 0 }]}>
+          <Animated.View style={unlockBtnAnimStyle}>
+            <Pressable onPress={() => setShowSubscription(true)} style={legacyStyles.unlockBtn}>
+              <LinearGradient
+                colors={['#FBBF24', '#F59E0B', '#D97706']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={legacyStyles.unlockBtnGradient}
+              >
+                <Text style={[legacyStyles.unlockBtnText, { fontSize: scaledFontSize(15) }]}>Unlock a Plan</Text>
+                {/* Shimmer overlay */}
+                <Animated.View style={[legacyStyles.unlockShimmer, unlockShimmerStyle]} />
+              </LinearGradient>
+            </Pressable>
+          </Animated.View>
+        </View>
+      )}
 
       {/* Subscription Overlay */}
       <SubscriptionOverlay
