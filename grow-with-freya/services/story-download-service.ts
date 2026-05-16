@@ -204,6 +204,16 @@ export class StoryDownloadService {
     }, STALL_POLL_INTERVAL_MS);
 
     try {
+      // Phase 0: Authentication gate — fail fast if not logged in
+      checkAbort();
+      const isAuthed = await ApiClient.isAuthenticated();
+      if (!isAuthed) {
+        result.error = 'Not authenticated - please login';
+        result.durationMs = Date.now() - startTime;
+        onProgress?.({ phase: 'failed', progress: 0, message: 'not_authenticated' });
+        return result;
+      }
+
       // Phase 1: Access check
       checkAbort();
       reportProgress({ phase: 'access-check', progress: 5, message: 'Checking access...' });

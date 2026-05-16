@@ -9,6 +9,12 @@ import { CatalogEntry, Story } from '../../types/story';
 jest.mock('../../services/cache-manager');
 jest.mock('../../services/api-client');
 jest.mock('../../services/asset-download-utils');
+jest.mock('../../services/story-loader', () => ({
+  StoryLoader: {
+    getStories: jest.fn().mockResolvedValue([]),
+    getCachedStories: jest.fn().mockReturnValue(null),
+  },
+}));
 
 // Mock app store — controls subscription tier for StoryAccessService
 let mockSubscriptionTier: 'free' | 'basic' | 'premium' = 'premium'; // default to premium so existing tests pass
@@ -52,6 +58,11 @@ jest.mock('expo-file-system/legacy', () => ({
 const mockCacheManager = CacheManager as jest.Mocked<typeof CacheManager>;
 const mockApiClient = ApiClient as jest.Mocked<typeof ApiClient>;
 const mockAssetUtils = AssetDownloadUtils as jest.Mocked<typeof AssetDownloadUtils>;
+
+// Default: user is authenticated (tests can override per-case)
+beforeEach(() => {
+  mockApiClient.isAuthenticated.mockResolvedValue(true);
+});
 
 // Test fixtures
 const freeCatalogEntry: CatalogEntry = {
@@ -190,6 +201,86 @@ describe('StoryAccessService', () => {
     expect(StoryAccessService.isInstrumentUnlocked('saxophone')).toBe(false);
   });
 
+  it('should allow referral stories with basic subscription', async () => {
+    mockSubscriptionTier = 'basic';
+    const result = await StoryAccessService.canDownload(referralCatalogEntry);
+    expect(result.allowed).toBe(true);
+  });
+
+  // Song unlock tests
+  it('should unlock top 3 songs on free tier', () => {
+    mockSubscriptionTier = 'free';
+    expect(StoryAccessService.isSongUnlocked(0)).toBe(true);
+    expect(StoryAccessService.isSongUnlocked(1)).toBe(true);
+    expect(StoryAccessService.isSongUnlocked(2)).toBe(true);
+    expect(StoryAccessService.isSongUnlocked(3)).toBe(false);
+    expect(StoryAccessService.isSongUnlocked(9)).toBe(false);
+  });
+
+  it('should unlock top 10 songs on basic tier', () => {
+    mockSubscriptionTier = 'basic';
+    expect(StoryAccessService.isSongUnlocked(0)).toBe(true);
+    expect(StoryAccessService.isSongUnlocked(9)).toBe(true);
+    expect(StoryAccessService.isSongUnlocked(10)).toBe(false);
+    expect(StoryAccessService.isSongUnlocked(20)).toBe(false);
+  });
+
+  it('should unlock all songs on premium tier', () => {
+    mockSubscriptionTier = 'premium';
+    expect(StoryAccessService.isSongUnlocked(0)).toBe(true);
+    expect(StoryAccessService.isSongUnlocked(99)).toBe(true);
+  });
+
+  // Download limit tests
+  it('should return correct download limits per tier', () => {
+    mockSubscriptionTier = 'free';
+    expect(StoryAccessService.getDownloadLimit()).toBe(2);
+    mockSubscriptionTier = 'basic';
+    expect(StoryAccessService.getDownloadLimit()).toBe(50);
+    mockSubscriptionTier = 'premium';
+    expect(StoryAccessService.getDownloadLimit()).toBe(125);
+  });
+
+  it('should detect when download limit is reached', async () => {
+    mockSubscriptionTier = 'free'; // limit = 2
+    // Mock StoryLoader to return 2 stories (at limit)
+    const StoryLoader = require('../../services/story-loader').StoryLoader;
+    StoryLoader.getStories.mockResolvedValueOnce([
+      { id: 's1', title: 'Story 1' },
+      { id: 's2', title: 'Story 2' },
+    ]);
+
+    const result = await StoryAccessService.checkDownloadLimit();
+    expect(result.atLimit).toBe(true);
+    expect(result.currentCount).toBe(2);
+    expect(result.limit).toBe(2);
+  });
+
+  it('should not be at limit when below cap', async () => {
+    mockSubscriptionTier = 'basic'; // limit = 50
+    const StoryLoader = require('../../services/story-loader').StoryLoader;
+    StoryLoader.getStories.mockResolvedValueOnce([
+      { id: 's1', title: 'Story 1' },
+    ]);
+
+    const result = await StoryAccessService.checkDownloadLimit();
+    expect(result.atLimit).toBe(false);
+    expect(result.currentCount).toBe(1);
+    expect(result.limit).toBe(50);
+  });
+
+  it('should detect limit exceeded (over cap)', async () => {
+    mockSubscriptionTier = 'free'; // limit = 2
+    const StoryLoader = require('../../services/story-loader').StoryLoader;
+    StoryLoader.getStories.mockResolvedValueOnce([
+      { id: 's1' }, { id: 's2' }, { id: 's3' }, // 3 > limit of 2
+    ]);
+
+    const result = await StoryAccessService.checkDownloadLimit();
+    expect(result.atLimit).toBe(true);
+    expect(result.currentCount).toBe(3);
+  });
+
   it('should track download count', async () => {
     const count1 = await StoryAccessService.recordDownload();
     const count2 = await StoryAccessService.recordDownload();
@@ -201,6 +292,31 @@ describe('StoryAccessService', () => {
     await StoryAccessService.clearAccessState();
     const unlocks = await StoryAccessService.getReferralUnlocks();
     expect(unlocks).toEqual([]);
+  });
+
+  it('should not duplicate referral unlocks', async () => {
+    await StoryAccessService.grantReferralUnlock('story-x');
+    await StoryAccessService.grantReferralUnlock('story-x');
+    const unlocks = await StoryAccessService.getReferralUnlocks();
+    expect(unlocks.filter((id: string) => id === 'story-x').length).toBe(1);
+  });
+
+  it('should return correct effective tier', () => {
+    mockSubscriptionTier = 'free';
+    expect(StoryAccessService.getEffectiveTier()).toBe('free');
+    mockSubscriptionTier = 'basic';
+    expect(StoryAccessService.getEffectiveTier()).toBe('basic');
+    mockSubscriptionTier = 'premium';
+    expect(StoryAccessService.getEffectiveTier()).toBe('premium');
+  });
+
+  it('should report hasActiveSubscription correctly', async () => {
+    mockSubscriptionTier = 'free';
+    expect(await StoryAccessService.hasActiveSubscription()).toBe(false);
+    mockSubscriptionTier = 'basic';
+    expect(await StoryAccessService.hasActiveSubscription()).toBe(true);
+    mockSubscriptionTier = 'premium';
+    expect(await StoryAccessService.hasActiveSubscription()).toBe(true);
   });
 });
 
@@ -950,5 +1066,141 @@ describe('Download pipeline edge cases (via StoryDownloadService)', () => {
     expect(resultA.success).toBe(false);
     expect(resultB.success).toBe(true);
     expect(resultB.cancelled).toBeUndefined();
+  });
+});
+
+// ===================== Auth gate & security tests =====================
+describe('Download security gate', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    Object.keys(asyncStorageStore).forEach(k => delete asyncStorageStore[k]);
+    (StoryDownloadService as any).activeDownloads = new Map();
+    mockSubscriptionTier = 'premium';
+  });
+
+  it('should block download when user is not authenticated', async () => {
+    mockApiClient.isAuthenticated.mockResolvedValue(false);
+
+    const result = await StoryDownloadService.downloadStory('free-story', freeCatalogEntry);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Not authenticated - please login');
+    // Should NOT have called the download API
+    expect(mockApiClient.request).not.toHaveBeenCalled();
+  });
+
+  it('should block download when user is not authenticated even for free stories', async () => {
+    mockApiClient.isAuthenticated.mockResolvedValue(false);
+
+    const result = await StoryDownloadService.downloadStory('free-story', freeCatalogEntry);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('Not authenticated');
+  });
+
+  it('should report not_authenticated phase in progress callback', async () => {
+    mockApiClient.isAuthenticated.mockResolvedValue(false);
+    const progressCalls: DownloadProgress[] = [];
+
+    await StoryDownloadService.downloadStory('free-story', freeCatalogEntry, (p) => {
+      progressCalls.push(p);
+    });
+
+    expect(progressCalls.some(p => p.message === 'not_authenticated')).toBe(true);
+  });
+
+  it('should allow download when user is authenticated', async () => {
+    mockApiClient.isAuthenticated.mockResolvedValue(true);
+    mockApiClient.request.mockResolvedValueOnce(mockStory);
+    mockAssetUtils.extractAssetPaths.mockReturnValue([]);
+    mockAssetUtils.filterUncachedAssets.mockResolvedValue([]);
+    mockCacheManager.updateStories.mockResolvedValue();
+
+    const result = await StoryDownloadService.downloadStory('free-story', freeCatalogEntry);
+
+    expect(result.success).toBe(true);
+    expect(mockApiClient.request).toHaveBeenCalled();
+  });
+
+  it('should deny download of premium story on basic tier', async () => {
+    mockApiClient.isAuthenticated.mockResolvedValue(true);
+    mockSubscriptionTier = 'basic';
+
+    // basic tier has an active subscription — premium stories are allowed with any subscription
+    mockApiClient.request.mockResolvedValueOnce(mockStory);
+    mockAssetUtils.extractAssetPaths.mockReturnValue([]);
+    mockAssetUtils.filterUncachedAssets.mockResolvedValue([]);
+    mockCacheManager.updateStories.mockResolvedValue();
+
+    const result = await StoryDownloadService.downloadStory('premium-story', premiumCatalogEntry);
+    expect(result.success).toBe(true);
+  });
+
+  it('should deny premium stories on free tier even when authenticated', async () => {
+    mockApiClient.isAuthenticated.mockResolvedValue(true);
+    mockSubscriptionTier = 'free';
+
+    const result = await StoryDownloadService.downloadStory('premium-story', premiumCatalogEntry);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('subscription_required');
+    // Auth check passes but access check blocks — no API call made
+    expect(mockApiClient.request).not.toHaveBeenCalled();
+  });
+
+  it('should block referral story on free tier without unlock and not authenticated', async () => {
+    mockApiClient.isAuthenticated.mockResolvedValue(false);
+    mockSubscriptionTier = 'free';
+
+    const result = await StoryDownloadService.downloadStory('referral-story', referralCatalogEntry);
+
+    // Auth gate fires before access check
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Not authenticated - please login');
+    expect(mockApiClient.request).not.toHaveBeenCalled();
+  });
+
+  it('should surface auth error from API 401 response', async () => {
+    mockApiClient.isAuthenticated.mockResolvedValue(true);
+    mockSubscriptionTier = 'premium';
+    mockApiClient.request.mockRejectedValueOnce(new Error('Not authenticated - please login'));
+
+    const result = await StoryDownloadService.downloadStory('free-story', freeCatalogEntry);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Not authenticated - please login');
+  });
+
+  it('should surface token refresh failure as auth error', async () => {
+    mockApiClient.isAuthenticated.mockResolvedValue(true);
+    mockSubscriptionTier = 'premium';
+    mockApiClient.request.mockRejectedValueOnce(new Error('Token refresh failed'));
+
+    const result = await StoryDownloadService.downloadStory('free-story', freeCatalogEntry);
+
+    expect(result.success).toBe(false);
+    // The service remaps token refresh failures to auth errors
+    expect(result.error).toBe('Not authenticated - please login');
+  });
+
+  it('should not call API when isAuthenticated check fails', async () => {
+    mockApiClient.isAuthenticated.mockResolvedValue(false);
+    mockSubscriptionTier = 'premium';
+
+    await StoryDownloadService.downloadStory('free-story', freeCatalogEntry);
+    await StoryDownloadService.downloadStory('premium-story', premiumCatalogEntry);
+
+    // Neither download should have reached the API
+    expect(mockApiClient.request).not.toHaveBeenCalled();
+  });
+
+  it('should handle isAuthenticated throwing an error gracefully', async () => {
+    mockApiClient.isAuthenticated.mockRejectedValue(new Error('Storage unavailable'));
+    mockSubscriptionTier = 'premium';
+
+    const result = await StoryDownloadService.downloadStory('free-story', freeCatalogEntry);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBeDefined();
   });
 });
