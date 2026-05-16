@@ -1,8 +1,8 @@
-import React, { memo, useState, useCallback, useEffect } from 'react';
+import React, { memo, useState, useCallback, useLayoutEffect } from 'react';
 import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { useAnimatedStyle, useAnimatedProps, useSharedValue, withTiming, withSpring, withSequence, withDelay, Easing, runOnJS } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useAnimatedProps, useSharedValue, withTiming, withSpring, withSequence, withDelay, Easing, runOnJS, cancelAnimation } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { CatalogEntry, getLocalizedText } from '@/types/story';
@@ -11,6 +11,19 @@ import { Fonts } from '@/constants/theme';
 import type { SupportedLanguage } from '@/services/i18n';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+
+/** Check if an error message indicates an authentication / login problem */
+function isAuthError(message: string): boolean {
+  const lower = message.toLowerCase();
+  return (
+    lower.includes('not authenticated') ||
+    lower.includes('authentication failed') ||
+    lower.includes('token refresh failed') ||
+    lower.includes('no refresh token') ||
+    lower.includes('please login') ||
+    lower.includes('not_authenticated')
+  );
+}
 
 interface CatalogStoryCardProps {
   entry: CatalogEntry;
@@ -22,6 +35,8 @@ interface CatalogStoryCardProps {
   /** Pixel offset for bubble-swap animation (negative = move left, positive = shift right) */
   swapTranslateX?: number;
   onLongPress?: (entry: CatalogEntry) => void;
+  /** Called when download fails due to an auth error — parent should show sign-in flow */
+  onAuthError?: () => void;
 }
 
 export const CatalogStoryCard = memo(function CatalogStoryCard({
@@ -33,6 +48,7 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
   onDownloadComplete,
   swapTranslateX = 0,
   onLongPress,
+  onAuthError,
 }: CatalogStoryCardProps) {
   const displayTitle = getLocalizedText(entry.localizedTitle, entry.title, language);
   const [downloading, setDownloading] = useState(false);
@@ -78,10 +94,14 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
   }));
 
   // Animate swap translateX when prop changes (bubble-swap effect)
-  // Snap instantly to 0 (reset) to avoid visible snap-back; animate only non-zero values
-  useEffect(() => {
+  // useLayoutEffect ensures the shared value update commits BEFORE the frame is painted.
+  // This prevents a one-frame gap where the FlatList has already shifted cells to new
+  // layout positions but the old translateX offset is still applied (which doubles the
+  // displacement and leaves an empty slot).
+  useLayoutEffect(() => {
     if (swapTranslateX === 0) {
-      swapTx.value = 0; // instant snap — no animation artifact on data refresh
+      cancelAnimation(swapTx);   // stop any in-flight animation immediately
+      swapTx.value = 0;          // snap before paint — no visible artifact
     } else {
       swapTx.value = withTiming(swapTranslateX, {
         duration: 280,
@@ -90,16 +110,18 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
     }
   }, [swapTranslateX]);
 
-  // Wrapper style for collapse + swap animation
+  // Wrapper style for collapse + swap animation.
+  // IMPORTANT: always include transform and zIndex so the native property set is stable.
+  // Conditionally adding/removing these properties causes a native view‑tree structural
+  // update that can desync from the value change and flash a gap for one frame.
   const collapseStyle = useAnimatedStyle(() => {
-    const style: Record<string, unknown> = {};
+    const style: Record<string, unknown> = {
+      transform: [{ translateX: swapTx.value }],
+      zIndex: swapTx.value < 0 ? 10 : 1,
+    };
     if (collapseWidth.value < cardWidth + 15) {
       style.width = collapseWidth.value;
       style.overflow = 'hidden';
-    }
-    if (swapTx.value !== 0) {
-      style.transform = [{ translateX: swapTx.value }];
-      style.zIndex = swapTx.value < 0 ? 10 : 1; // Downloaded card on top during swap
     }
     return style;
   });
@@ -157,15 +179,39 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
         setDownloading(false);
         progressValue.value = withTiming(0, { duration: 200 });
         ringOpacity.value = withTiming(0, { duration: 200 });
-        Alert.alert('Download Failed', result.error || 'Something went wrong. Please try again.', [{ text: 'OK' }]);
+        const errorMsg = result.error || 'Something went wrong. Please try again.';
+        if (isAuthError(errorMsg) && onAuthError) {
+          Alert.alert(
+            'Sign In Required',
+            'Please sign in to download stories.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Sign In', onPress: () => onAuthError() },
+            ],
+          );
+        } else {
+          Alert.alert('Download Failed', errorMsg, [{ text: 'OK' }]);
+        }
       }
     } catch (err) {
       setDownloading(false);
       progressValue.value = withTiming(0, { duration: 200 });
       ringOpacity.value = withTiming(0, { duration: 200 });
-      Alert.alert('Download Failed', 'An unexpected error occurred. Please try again.', [{ text: 'OK' }]);
+      const errorMsg = err instanceof Error ? err.message : 'An unexpected error occurred.';
+      if (isAuthError(errorMsg) && onAuthError) {
+        Alert.alert(
+          'Sign In Required',
+          'Please sign in to download stories.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Sign In', onPress: () => onAuthError() },
+          ],
+        );
+      } else {
+        Alert.alert('Download Failed', 'An unexpected error occurred. Please try again.', [{ text: 'OK' }]);
+      }
     }
-  }, [downloading, complete, entry, onDownloadComplete, progressValue, ringOpacity, ringScale, checkOpacity, checkScale, overlayOpacity, cardScale, collapseWidth]);
+  }, [downloading, complete, entry, onDownloadComplete, onAuthError, progressValue, ringOpacity, ringScale, checkOpacity, checkScale, overlayOpacity, cardScale, collapseWidth]);
 
   const handleLongPress = useCallback(() => {
     if (downloading) return;

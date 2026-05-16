@@ -267,7 +267,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProps) {
   const insets = useSafeAreaInsets();
-  const { requestReturnToMainMenu } = useAppStore();
+  const { requestReturnToMainMenu, setShowLoginAfterOnboarding } = useAppStore();
   const { startTransition, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader } = useStoryTransition();
   const lastCallRef = useRef<number>(0);
   const { scaledFontSize, scaledButtonSize, scaledPadding, textSizeScale } = useAccessibility();
@@ -464,6 +464,11 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       unsubscribe();
     };
   }, []);
+
+  // Navigate to sign-in screen when a download fails with an auth error
+  const handleAuthError = useCallback(() => {
+    setShowLoginAfterOnboarding(true);
+  }, [setShowLoginAfterOnboarding]);
 
   // When a catalog story finishes downloading, start bubble-swap animation then refresh data
   const handleCatalogDownloadComplete = useCallback(async (storyId: string) => {
@@ -724,9 +729,10 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
         onDownloadComplete={handleCatalogDownloadComplete}
         swapTranslateX={swapTx}
         onLongPress={handleCatalogPreview}
+        onAuthError={handleAuthError}
       />
     );
-  }, [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader, currentLanguage, readStoryIds, deletingStoryId, handleImplodeComplete, handleCatalogDownloadComplete, handleCatalogPreview, bubbleSwap]);
+  }, [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader, currentLanguage, readStoryIds, deletingStoryId, handleImplodeComplete, handleCatalogDownloadComplete, handleCatalogPreview, handleAuthError, bubbleSwap]);
 
   // Memoized render function for story cards (favorites only — pure Story[])
   const renderStoryCard: ListRenderItem<Story> = useCallback(({ item: story }) => (
@@ -748,8 +754,13 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
 
   // Key extractors
   const keyExtractor = useCallback((story: Story) => story.id, []);
+  // Use the same key for both story and catalog representations of the same book.
+  // The isDuplicate check in genreItems guarantees they never coexist in the same list,
+  // so keys stay unique.  Matching keys let FlatList reuse the cell when a catalog
+  // entry transitions to a downloaded story — avoiding an unmount/mount cycle that
+  // flashes a gap.
   const displayItemKeyExtractor = useCallback((item: StoryDisplayItem) =>
-    item.type === 'story' ? item.data.id : `catalog-${item.data.storyId}`, []);
+    item.type === 'story' ? item.data.id : item.data.storyId, []);
 
   // Memoized getItemLayout for fast scrolling
   const getItemLayout = useCallback((_data: any, index: number) => ({
@@ -905,12 +916,13 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
                 {/* Horizontal Carousel — merged downloaded + catalog items */}
                 <FlatList
                   data={items}
+                  extraData={bubbleSwap}
                   renderItem={renderDisplayItem}
                   keyExtractor={displayItemKeyExtractor}
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   getItemLayout={getItemLayout}
-                  removeClippedSubviews={true}
+                  removeClippedSubviews={false}
                   maxToRenderPerBatch={4}
                   windowSize={5}
                   initialNumToRender={4}
