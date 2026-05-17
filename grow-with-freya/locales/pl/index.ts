@@ -42,6 +42,14 @@ export default {
       title: 'Resetuj aplikację',
       message: 'Spowoduje to usunięcie WSZYSTKICH danych aplikacji, w tym loginu, postaci i ustawień. Czy na pewno?',
     },
+    deleteAccount: {
+      title: 'Usuń konto',
+      message: 'Spowoduje to trwałe usunięcie Twojego konta i wszystkich powiązanych danych. Tej akcji nie można cofnąć.',
+      confirm: 'Wpisz USUŃ aby potwierdzić',
+      success: 'Twoje konto zostało usunięte.',
+      error: 'Nie udało się usunąć konta. Spróbuj ponownie.',
+      deleting: 'Usuwanie konta...',
+    },
     deleteReminder: {
       title: 'Usuń przypomnienie',
       message: 'Czy na pewno chcesz usunąć "{{title}}"?',
@@ -442,6 +450,8 @@ export default {
     createAccount: 'Utwórz konto aby zapisać postępy',
     crashReports: 'Raporty o awariach',
     crashReportsHint: 'Pomóż nam naprawiać błędy wysyłając anonimowe dane o awariach',
+    deleteAccount: 'Usuń konto',
+    deleteAccountHint: 'Trwałe usunięcie konta i wszystkich danych',
   },
 
   // Profile validation and edit profile screen

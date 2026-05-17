@@ -19,6 +19,7 @@ import { useScreenTime } from '../screen-time/screen-time-provider';
 import { formatDurationCompact } from '../../utils/time-formatting';
 import { EditProfileContent } from './edit-profile-screen';
 import { ApiClient } from '../../services/api-client';
+import { SecureStorage } from '../../services/secure-storage';
 import { reminderService } from '../../services/reminder-service';
 import { StorySyncService } from '../../services/story-sync-service';
 import { VersionManager } from '../../services/version-manager';
@@ -279,6 +280,88 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
             } catch (error) {
               log.error('Logout error:', error);
               Alert.alert(t('common.error'), t('alerts.logout.error'));
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+
+  const performAccountDeletion = async () => {
+    setIsDeletingAccount(true);
+    try {
+      await ApiClient.deleteAccount();
+
+      // Clear all local data
+      clearUserProfile();
+      setLoginComplete(false);
+      setShowLoginAfterOnboarding(true);
+
+      // Clear tokens and reminders
+      await SecureStorage.clearAuthData();
+      await reminderService.clearAllReminders();
+
+      Alert.alert(t('common.success'), t('alerts.deleteAccount.success'));
+      onBack();
+    } catch (error) {
+      log.error('Account deletion error:', error);
+      Alert.alert(t('common.error'), t('alerts.deleteAccount.error'));
+    } finally {
+      setIsDeletingAccount(false);
+    }
+  };
+
+  const handleDeleteAccount = () => {
+    if (isGuestMode) return;
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+
+    Alert.alert(
+      t('alerts.deleteAccount.title'),
+      t('alerts.deleteAccount.message'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
+          style: 'destructive',
+          onPress: () => {
+            if (Platform.OS === 'ios') {
+              // iOS supports Alert.prompt for typed confirmation
+              Alert.prompt(
+                t('alerts.deleteAccount.title'),
+                t('alerts.deleteAccount.confirm'),
+                [
+                  { text: t('common.cancel'), style: 'cancel' },
+                  {
+                    text: t('common.delete'),
+                    style: 'destructive',
+                    onPress: async (input?: string) => {
+                      if (input?.trim().toUpperCase() !== 'DELETE') {
+                        Alert.alert(t('common.error'), t('alerts.deleteAccount.confirm'));
+                        return;
+                      }
+                      await performAccountDeletion();
+                    },
+                  },
+                ],
+                'plain-text'
+              );
+            } else {
+              // Android: second confirmation dialog (no prompt support)
+              Alert.alert(
+                t('alerts.deleteAccount.title'),
+                t('alerts.deleteAccount.confirm'),
+                [
+                  { text: t('common.cancel'), style: 'cancel' },
+                  {
+                    text: t('common.delete'),
+                    style: 'destructive',
+                    onPress: performAccountDeletion,
+                  },
+                ]
+              );
             }
           },
         },
@@ -595,6 +678,29 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
             </Text>
           </Pressable>
 
+          {/* Delete Account — only shown for logged-in users */}
+          {!isGuestMode && (
+            <View style={styles.deleteAccountSection}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.deleteAccountButton,
+                  pressed && { opacity: 0.6 },
+                  isDeletingAccount && { opacity: 0.4 },
+                ]}
+                onPress={handleDeleteAccount}
+                disabled={isDeletingAccount}
+              >
+                <Ionicons name="trash-outline" size={16} color="#FF4444" style={{ marginRight: 6 }} />
+                <Text style={[styles.deleteAccountButtonText, { fontSize: scaledFontSize(13) }]}>
+                  {isDeletingAccount ? t('alerts.deleteAccount.deleting') : t('account.deleteAccount')}
+                </Text>
+              </Pressable>
+              <Text style={[styles.deleteAccountHint, { fontSize: scaledFontSize(11) }]}>
+                {t('account.deleteAccountHint')}
+              </Text>
+            </View>
+          )}
+
           {/* Developer Options */}
           <View style={[styles.section, { marginTop: 16 }]}>
             <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(13) }]}>
@@ -875,6 +981,30 @@ const styles = StyleSheet.create({
   logoutButtonText: {
     color: 'white',
     fontWeight: 'bold',
+  },
+
+  // Delete Account
+  deleteAccountSection: {
+    alignItems: 'center',
+    marginTop: 24,
+    paddingTop: 16,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  deleteAccountButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  deleteAccountButtonText: {
+    color: '#FF4444',
+    fontWeight: '600',
+  },
+  deleteAccountHint: {
+    color: 'rgba(255, 255, 255, 0.4)',
+    marginTop: 4,
+    textAlign: 'center',
   },
 
   section: {

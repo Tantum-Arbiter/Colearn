@@ -1079,6 +1079,58 @@ public class ApplicationMetricsService {
                 clientVersion, serverVersion, storiesUpdated, storiesDeleted, durationMs);
     }
 
+    // ── Account Deletion Metrics ──────────────────────────────────────────
+
+    public void recordAccountDeletion(String provider, boolean successful, long durationMs) {
+        String safeProvider = provider != null ? provider : "unknown";
+        String result = successful ? "success" : "failure";
+
+        Counter.builder("app.account.deletion.total")
+                .tags("provider", safeProvider, "result", result)
+                .description("Number of account deletion operations")
+                .register(meterRegistry)
+                .increment();
+
+        Timer.builder("app.account.deletion.duration")
+                .tags("provider", safeProvider, "result", result)
+                .description("Duration of account deletion operations")
+                .register(meterRegistry)
+                .record(durationMs, TimeUnit.MILLISECONDS);
+
+        logger.info("Account deletion metric recorded: provider={}, result={}, duration={}ms",
+                safeProvider, result, durationMs);
+    }
+
+    public void recordAccountDeletionStep(String step, boolean successful, long durationMs) {
+        String safeStep = step != null ? step : "unknown";
+        String result = successful ? "success" : "failure";
+
+        Counter.builder("app.account.deletion.step")
+                .tags("step", safeStep, "result", result)
+                .description("Account deletion step outcomes")
+                .register(meterRegistry)
+                .increment();
+
+        Timer.builder("app.account.deletion.step.duration")
+                .tags("step", safeStep, "result", result)
+                .description("Duration of account deletion steps")
+                .register(meterRegistry)
+                .record(durationMs, TimeUnit.MILLISECONDS);
+
+        logger.debug("Account deletion step metric: step={}, result={}, duration={}ms",
+                safeStep, result, durationMs);
+    }
+
+    public void recordAccountDeletionSessionsRevoked(int sessionCount) {
+        Counter.builder("app.account.deletion.sessions.revoked")
+                .tags("session_count", categorizeCount(sessionCount))
+                .description("Sessions revoked during account deletion")
+                .register(meterRegistry)
+                .increment(sessionCount);
+
+        logger.debug("Account deletion sessions revoked: {}", sessionCount);
+    }
+
     public void recordApiCallReduction(int traditionalCalls, int batchedCalls) {
         int callsSaved = traditionalCalls - batchedCalls;
         double reductionPercent = traditionalCalls > 0 ? (callsSaved * 100.0 / traditionalCalls) : 0;

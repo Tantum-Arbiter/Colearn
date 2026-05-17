@@ -252,3 +252,18 @@ resilience4j:
           - java.net.SocketTimeoutException
           - java.net.ConnectException
           - org.springframework.web.client.ResourceAccessException
+      accountDeletion:
+        failure-rate-threshold: 50
+        slow-call-rate-threshold: 100
+        slow-call-duration-threshold: 5s
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 3
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 1
+        automatic-transition-from-open-to-half-open-enabled: true
+        record-exceptions:
+          - java.util.concurrent.TimeoutException
+          - java.util.concurrent.CompletionException
+          - java.net.SocketTimeoutException
+          - java.net.ConnectException

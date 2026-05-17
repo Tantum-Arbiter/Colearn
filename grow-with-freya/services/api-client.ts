@@ -336,6 +336,10 @@ export class ApiClient {
     }
   }
 
+  static async deleteAccount(): Promise<{ status: string; message: string }> {
+    return this.request('/api/account', { method: 'DELETE' });
+  }
+
   static async logout(): Promise<void> {
     const refreshToken = await SecureStorage.getRefreshToken();
     if (refreshToken) {

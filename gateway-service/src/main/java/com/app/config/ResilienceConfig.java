@@ -29,6 +29,7 @@ public class ResilienceConfig {
     @PostConstruct
     public void init() {
         CircuitBreaker defaultCb = circuitBreakerRegistry.circuitBreaker("default");
+        CircuitBreaker accountDeletionCb = circuitBreakerRegistry.circuitBreaker("accountDeletion");
 
         try {
             TaggedCircuitBreakerMetrics.ofCircuitBreakerRegistry(circuitBreakerRegistry).bindTo(meterRegistry);
@@ -37,6 +38,7 @@ public class ResilienceConfig {
         }
 
         registerListeners(defaultCb);
+        registerListeners(accountDeletionCb);
     }
 
     private void registerListeners(CircuitBreaker cb) {

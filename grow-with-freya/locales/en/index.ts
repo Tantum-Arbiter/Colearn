@@ -43,6 +43,14 @@ export default {
       title: 'Reset App',
       message: 'This will clear ALL app data including your login, character, and settings. Are you sure?',
     },
+    deleteAccount: {
+      title: 'Delete Account',
+      message: 'This will permanently delete your account and all associated data. This action cannot be undone.',
+      confirm: 'Type DELETE to confirm',
+      success: 'Your account has been deleted.',
+      error: 'Failed to delete account. Please try again.',
+      deleting: 'Deleting account...',
+    },
     deleteReminder: {
       title: 'Delete Reminder',
       message: 'Are you sure you want to delete "{{title}}"?',
@@ -451,6 +459,8 @@ export default {
     createAccount: 'Create an account to save your progress',
     crashReports: 'Crash Reports',
     crashReportsHint: 'Help us fix bugs by sending anonymous crash data',
+    deleteAccount: 'Delete Account',
+    deleteAccountHint: 'Permanently delete your account and all data',
   },
 
   // Profile validation and edit profile screen

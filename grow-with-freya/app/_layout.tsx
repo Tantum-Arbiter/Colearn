@@ -6,6 +6,7 @@ import * as ScreenOrientation from 'expo-screen-orientation';
 
 import 'react-native-reanimated';
 import { configureReanimatedLogger, ReanimatedLogLevel } from 'react-native-reanimated';
+import * as StoreReview from 'expo-store-review';
 // Initialize i18n service - must be imported before components that use translations
 import '@/services/i18n';
 // Import notification service early to register notification handler
@@ -594,6 +595,29 @@ function AppContent() {
     setSelectedStory(null);
     setCurrentView('app');
     // currentPage stays 'stories' - we never change it when entering/exiting story reader
+
+    // Prompt for app rating after returning from reader (not during the story):
+    //   - First prompt after reading 2 books
+    //   - If dismissed, prompt again every 3 books thereafter
+    const { totalStoriesRead, lastRatingPromptBookCount, setLastRatingPromptBookCount } = useAppStore.getState();
+    const shouldPrompt =
+      (lastRatingPromptBookCount === 0 && totalStoriesRead >= 2) ||
+      (lastRatingPromptBookCount > 0 && totalStoriesRead >= lastRatingPromptBookCount + 3);
+
+    if (shouldPrompt) {
+      // Small delay so the transition back to stories is settled before the OS prompt appears
+      setTimeout(async () => {
+        try {
+          const isAvailable = await StoreReview.isAvailableAsync();
+          if (isAvailable) {
+            await StoreReview.requestReview();
+          }
+        } catch {
+          // Silently ignore — review prompt is best-effort
+        }
+        setLastRatingPromptBookCount(totalStoriesRead);
+      }, 1500);
+    }
   };
 
   const handleStorySelect = (story: Story) => {

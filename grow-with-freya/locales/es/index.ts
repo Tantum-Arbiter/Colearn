@@ -42,6 +42,14 @@ export default {
       title: 'Restablecer aplicación',
       message: 'Esto eliminará TODOS los datos de la aplicación, incluyendo tu inicio de sesión, personaje y configuración. ¿Estás seguro?',
     },
+    deleteAccount: {
+      title: 'Eliminar cuenta',
+      message: 'Esto eliminará permanentemente tu cuenta y todos los datos asociados. Esta acción no se puede deshacer.',
+      confirm: 'Escribe ELIMINAR para confirmar',
+      success: 'Tu cuenta ha sido eliminada.',
+      error: 'Error al eliminar la cuenta. Por favor, inténtalo de nuevo.',
+      deleting: 'Eliminando cuenta...',
+    },
     deleteReminder: {
       title: 'Eliminar recordatorio',
       message: '¿Estás seguro de que quieres eliminar "{{title}}"?',
@@ -442,6 +450,8 @@ export default {
     createAccount: 'Crea una cuenta para guardar tu progreso',
     crashReports: 'Informes de errores',
     crashReportsHint: 'Ayúdanos a corregir errores enviando datos anónimos de fallos',
+    deleteAccount: 'Eliminar cuenta',
+    deleteAccountHint: 'Eliminar permanentemente tu cuenta y todos los datos',
   },
 
   // Profile validation and edit profile screen

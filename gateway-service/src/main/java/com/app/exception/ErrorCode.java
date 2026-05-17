@@ -82,6 +82,8 @@ public enum ErrorCode {
     PROFILE_INCOMPLETE("GTW-409", "User profile is incomplete"),
     CONCURRENT_UPDATE_CONFLICT("GTW-410", "Resource update conflict"),
     PROFILE_NOT_FOUND("GTW-411", "User profile not found"),
+    ACCOUNT_DELETION_FAILED("GTW-412", "Account deletion failed"),
+    ACCOUNT_DELETION_IN_PROGRESS("GTW-413", "Account deletion already in progress"),
 
     // System & Infrastructure errors (GTW-500 to GTW-599)
     INTERNAL_SERVER_ERROR("GTW-500", "Internal server error"),

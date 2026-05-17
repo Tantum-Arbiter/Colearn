@@ -339,6 +339,31 @@ public class FirebaseUserSessionRepository implements UserSessionRepository {
     }
 
     @Override
+    public CompletableFuture<Long> deleteAllUserSessions(String userId) {
+        logger.debug("Deleting all sessions for user: {}", userId);
+
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                List<UserSession> allSessions = findAllSessionsByUserId(userId).join();
+                long deletedCount = 0;
+
+                for (UserSession session : allSessions) {
+                    DocumentReference docRef = firestore.collection(COLLECTION_NAME).document(session.getId());
+                    ApiFuture<WriteResult> future = docRef.delete();
+                    future.get();
+                    deletedCount++;
+                }
+
+                logger.debug("Deleted {} sessions for user: {}", deletedCount, userId);
+                return deletedCount;
+            } catch (Exception e) {
+                logger.error("Error deleting all sessions for user: {}", userId, e);
+                throw new RuntimeException("Failed to delete all user sessions", e);
+            }
+        });
+    }
+
+    @Override
     public CompletableFuture<Long> countActiveSessionsByUserId(String userId) {
         logger.debug("Counting active sessions for user: {}", userId);
 

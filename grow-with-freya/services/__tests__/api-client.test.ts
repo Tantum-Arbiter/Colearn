@@ -246,4 +246,46 @@ describe('ApiClient', () => {
       expect(SecureStorage.clearAuthData).toHaveBeenCalled();
     });
   });
+
+  describe('deleteAccount', () => {
+    it('should call DELETE /api/account and return response', async () => {
+      (SecureStorage.getAccessToken as jest.Mock).mockResolvedValue(mockAccessToken);
+      (SecureStorage.getRefreshToken as jest.Mock).mockResolvedValue(mockRefreshToken);
+
+      const mockResponse = { status: 'deleted', message: 'Account deleted successfully' };
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await ApiClient.deleteAccount();
+
+      expect(result).toEqual(mockResponse);
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/account'),
+        expect.objectContaining({ method: 'DELETE' })
+      );
+    });
+
+    it('should throw on server error', async () => {
+      (SecureStorage.getAccessToken as jest.Mock).mockResolvedValue(mockAccessToken);
+      (SecureStorage.getRefreshToken as jest.Mock).mockResolvedValue(mockRefreshToken);
+
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: false,
+        status: 500,
+        json: () => Promise.resolve({ error: 'Internal Server Error' }),
+      });
+
+      await expect(ApiClient.deleteAccount()).rejects.toThrow();
+    });
+
+    it('should throw when not authenticated', async () => {
+      (SecureStorage.getAccessToken as jest.Mock).mockResolvedValue(null);
+      (SecureStorage.getRefreshToken as jest.Mock).mockResolvedValue(null);
+
+      await expect(ApiClient.deleteAccount()).rejects.toThrow('Not authenticated');
+    });
+  });
 });

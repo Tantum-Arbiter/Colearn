@@ -32,6 +32,8 @@ public interface UserSessionRepository {
 
     CompletableFuture<Void> deleteSession(String sessionId);
 
+    CompletableFuture<Long> deleteAllUserSessions(String userId);
+
     CompletableFuture<Long> countActiveSessionsByUserId(String userId);
 
     CompletableFuture<Long> countActiveSessions();
