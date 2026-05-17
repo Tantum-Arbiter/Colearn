@@ -67,14 +67,14 @@ function findNextBtn(tree: ReturnType<typeof render>) {
 }
 
 /**
- * Helper: navigate to the consent screen (step 5/5).
+ * Helper: navigate to the consent screen (step 4/4).
  * Uses fake timers to advance past the 300ms transition setTimeout.
  */
 function renderAtConsentStep(onComplete: jest.Mock) {
   jest.useFakeTimers();
   const utils = render(<OnboardingFlow onComplete={onComplete} />);
 
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 3; i++) {
     const btn = findNextBtn(utils);
     fireEvent.press(btn);
     // Wrap timer advancement in act() so React flushes state updates
@@ -95,17 +95,17 @@ describe('OnboardingFlow', () => {
     jest.useRealTimers();
   });
 
-  it('renders the first screen with step 1/5', () => {
+  it('renders the first screen with step 1/4', () => {
     const tree = render(<OnboardingFlow onComplete={mockOnComplete} />);
-    expect(toStr(tree)).toContain('Step 1 of 5');
+    expect(toStr(tree)).toContain('Step 1 of 4');
   });
 
-  it('navigates to the consent screen (step 5/5)', () => {
+  it('navigates to the consent screen (step 4/4)', () => {
     const tree = renderAtConsentStep(mockOnComplete);
-    expect(toStr(tree)).toContain('Step 5 of 5');
+    expect(toStr(tree)).toContain('Step 4 of 4');
   });
 
-  describe('Consent screen (step 5)', () => {
+  describe('Consent screen (step 4)', () => {
     it('shows all three consent checkbox labels', () => {
       const tree = renderAtConsentStep(mockOnComplete);
       const s = toStr(tree);

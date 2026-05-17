@@ -69,7 +69,6 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
   const { scaledFontSize, scaledButtonSize } = useAccessibility();
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isAppleLoading, setIsAppleLoading] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
   const [showReturningMenu, setShowReturningMenu] = useState(false);
   const [showGuestInfo, setShowGuestInfo] = useState(false);
   const [showGuestMenu, setShowGuestMenu] = useState(false);
@@ -168,8 +167,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
   const illustrationScale = useSharedValue(0.8);
   const buttonsOpacity = useSharedValue(0);
   const buttonsTranslateY = useSharedValue(30);
-  const mainMenuTranslateX = useSharedValue(width); // Start off-screen to the right
-  const loginScreenTranslateX = useSharedValue(0); // Login screen starts at 0
+
   const guestInfoSlideY = useSharedValue(-height); // Start above screen
 
   React.useEffect(() => {
@@ -186,28 +184,6 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
     buttonsTranslateY.value = withDelay(800, withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) }));
   }, [buttonsOpacity, buttonsTranslateY, containerOpacity, illustrationOpacity, illustrationScale, titleOpacity, titleTranslateY]);
 
-  const transitionToMainMenu = (callback: () => void) => {
-    if (isTransitioning) return;
-
-    setIsTransitioning(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-    // Slide MainMenu in from the right (starts immediately) - 50% slower = 1400ms
-    mainMenuTranslateX.value = withTiming(0, {
-      duration: 1400,
-      easing: Easing.out(Easing.cubic),
-    });
-
-    // Slide login screen out to the left - 50% slower = 1400ms
-    loginScreenTranslateX.value = withTiming(-width, {
-      duration: 1400,
-      easing: Easing.out(Easing.cubic),
-    }, (finished) => {
-      if (finished) {
-        runOnJS(callback)();
-      }
-    });
-  };
 
   const handleGoogleLogin = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -392,15 +368,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
     }, 300);
   };
 
-  const handleTermsPress = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setCurrentView('terms');
-  };
 
-  const handlePrivacyPress = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setCurrentView('privacy');
-  };
 
   // All hooks must be called before any early returns
   const titleAnimatedStyle = useAnimatedStyle(() => ({
@@ -423,16 +391,6 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
     transform: [{ scale: containerScale.value }],
   }));
 
-  const mainMenuAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: mainMenuTranslateX.value }],
-    // Keep opacity at 1 always - no fade in/out, just slide
-    opacity: 1,
-  }));
-
-  const loginScreenAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: loginScreenTranslateX.value }],
-  }));
-
   const guestInfoAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: guestInfoSlideY.value }],
   }));
@@ -449,7 +407,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
   return (
     <Animated.View style={[styles.container, containerAnimatedStyle]}>
       {/* Login Screen - slides out to the left */}
-      <Animated.View style={[styles.loginScreenWrapper, loginScreenAnimatedStyle]}>
+      <View style={styles.loginScreenWrapper}>
         <LinearGradient
           colors={['#1E3A8A', '#3B82F6', '#4ECDC4']}
           style={styles.gradient}
@@ -558,7 +516,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
         {/* Bottom spacer */}
         <View style={{ paddingBottom: insets.bottom + 20 }} />
       </LinearGradient>
-      </Animated.View>
+      </View>
 
       {/* Guest Info Overlay - slides down from top */}
       {showGuestInfo && (
@@ -647,12 +605,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
         </View>
       )}
 
-      {/* MainMenu slides in from the right - only for login (non-guest) transition */}
-      {isTransitioning && !showGuestInfo && (
-        <Animated.View style={[styles.mainMenuContainer, mainMenuAnimatedStyle]} pointerEvents="auto">
-          <MainMenu onNavigate={onNavigate || (() => {})} isActive={true} disableTutorial={true} />
-        </Animated.View>
-      )}
+
     </Animated.View>
   );
 }
@@ -916,7 +869,6 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.6)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
-    maxWidth: width * 0.85,
   },
   guestInfoSection: {
     width: '100%',
