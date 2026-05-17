@@ -463,17 +463,19 @@ export default {
         body: 'Alt hvad dit barn har brug for til kreativ, skærmbevidst leg.',
         button: 'Næste',
         features: {
-          stories: '📚  Interaktive historier',
+          scaffold: 'Bygget til forældre',
+          scaffoldDesc: 'Designet til at støtte et sundt forhold mellem børn og teknologi',
+          stories: 'Interaktive historier',
           storiesDesc: 'Smukt illustrerede fortællinger med side-for-side fortælling',
-          music: '🎵  Musik & instrumenter',
+          music: 'Musik & instrumenter',
           musicDesc: 'Lær rytme og melodi med ægte instrumentlyde',
-          voice: '🎙️  Din stemme',
+          voice: 'Din stemme',
           voiceDesc: 'Optag fortællinger så dit barn hører dig — selv på afstand',
         },
       },
       family: {
         title: 'Lavet til familier',
-        body: 'Designet til korte, meningsfulde sessioner sammen. Forskning viser at fælles engagement og kort brug giver de største fordele.',
+        body: 'Skærmtidsbeskyttelse, guidede sessioner og fælles legeværktøjer — designet til korte, meningsfulde øjeblikke sammen. Forskning viser at fælles engagement giver de største fordele.',
         button: 'Næste',
       },
       privacy: {
@@ -485,11 +487,20 @@ export default {
       consent: {
         title: 'Før vi begynder',
         body: 'Som forælder eller værge, læs venligst og accepter følgende:',
-        button: 'Jeg accepterer — Lad os gå!',
+        button: 'Jeg accepterer',
+        closeLabel: 'Luk',
+        dataSummary: {
+          title: 'Hvad vi indsamler og hvorfor',
+          profile: 'Visningsnavn og avatar — for at tilpasse dit barns oplevelse',
+          reading: 'Læsehistorik, favoritter og fremskridt — for at følge historier og serier',
+          screenTime: 'Skærmtidssessioner — for at hjælpe med at styre sundt forbrug',
+          device: 'Enhedstype og app-version — for at sikre at appen fungerer korrekt',
+          noSell: 'Vi sælger aldrig data og viser ikke reklamer. Du kan slette alt når som helst.',
+        },
         checkboxes: {
           privacy: 'Jeg har læst og accepterer privatlivspolitikken',
           terms: 'Jeg har læst og accepterer vilkår og betingelser',
-          data: 'Jeg giver samtykke til at earlyroots gemmer mit barns visningsnavn og avatar for at tilpasse oplevelsen',
+          data: 'Jeg giver samtykke til den dataindsamling beskrevet ovenfor for at levere og forbedre appen for mit barn',
         },
         links: {
           privacyPolicy: 'Se privatlivspolitik',
@@ -505,11 +516,11 @@ export default {
       enable: 'Aktivér',
     },
     taglines: {
-      welcome: '✨ Tænd fantasien gennem leg',
-      howItWorks: '🌟 Tre måder at udforske',
-      family: '👨‍👩‍👧‍👦 Tid sammen, ægte fordele',
-      privacy: '🔒 Privatliv først, altid',
-      consent: '✅ Et sidste skridt',
+      welcome: 'Tænd fantasien gennem leg',
+      howItWorks: '',
+      family: 'Tid sammen, ægte fordele',
+      privacy: 'Privatliv først, altid',
+      consent: 'Et sidste skridt',
     },
     benefits: {
       welcome: 'Understøttet af forskning i børneudvikling',

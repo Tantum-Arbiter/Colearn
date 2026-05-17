@@ -638,7 +638,8 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
           { paddingBottom: insets.bottom + 20 },
         ]}
         renderItem={({ item, index }) => {
-          const isLocked = !StoryAccessService.isSongUnlocked(index);
+          const isInstrumentLocked = !StoryAccessService.isInstrumentUnlocked(selectedInstrumentId);
+          const isLocked = isInstrumentLocked || !StoryAccessService.isSongUnlocked(index);
           return (
           <Pressable
             style={({ pressed }) => [

@@ -1,29 +1,88 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { render, fireEvent, act } from '@testing-library/react-native';
 import { OnboardingFlow } from '@/components/onboarding/onboarding-flow';
+
+const mockSetOnboardingComplete = jest.fn();
+const mockSetCrashReportingEnabled = jest.fn();
+const mockSetConsent = jest.fn();
 
 // Mock the app store
 jest.mock('@/store/app-store', () => ({
   useAppStore: () => ({
-    setOnboardingComplete: jest.fn(),
+    setOnboardingComplete: mockSetOnboardingComplete,
+    setCrashReportingEnabled: mockSetCrashReportingEnabled,
+    setConsent: mockSetConsent,
   }),
 }));
 
-// Mock the OnboardingScreen component
+// Mock legal content components (used inside modal)
+jest.mock('@/components/account/privacy-policy-screen', () => ({
+  PrivacyPolicyContent: () => {
+    const { View, Text } = require('react-native');
+    return <View><Text>Privacy Policy Content</Text></View>;
+  },
+}));
+
+jest.mock('@/components/account/terms-conditions-screen', () => ({
+  TermsConditionsContent: () => {
+    const { View, Text } = require('react-native');
+    return <View><Text>Terms Content</Text></View>;
+  },
+}));
+
+// Mock OnboardingScreen — passes through customContent, isNextDisabled, and
+// buttonLabel so we can test the consent checkboxes rendered by OnboardingFlow.
 jest.mock('@/components/onboarding/onboarding-screen', () => ({
-  OnboardingScreen: ({ title, onNext, currentStep, totalSteps }: any) => {
-    const { View, Text, TouchableOpacity } = require('react-native');
+  OnboardingScreen: ({ title, buttonLabel, onNext, currentStep, totalSteps, customContent, isNextDisabled }: any) => {
+    const { View, Text, Pressable } = require('react-native');
     return (
-      <View>
+      <View testID="mock-screen">
         <Text>{title}</Text>
-        <Text>{`Step ${currentStep} of ${totalSteps}`}</Text>
-        <TouchableOpacity onPress={onNext}>
-          <Text>Next</Text>
-        </TouchableOpacity>
+        <Text testID="step-indicator">{`Step ${currentStep} of ${totalSteps}`}</Text>
+        {customContent}
+        <Pressable testID="next-btn" onPress={onNext} disabled={isNextDisabled}>
+          <Text>{buttonLabel}</Text>
+        </Pressable>
       </View>
     );
   },
 }));
+
+// Silence Alert.alert for the crash reporting dialog
+jest.spyOn(require('react-native').Alert, 'alert').mockImplementation(
+  ((...args: any[]) => {
+    const buttons = args[2] as any[];
+    buttons?.[1]?.onPress?.();
+  }) as any
+);
+
+/** Serialise the rendered tree to a string for content assertions. */
+function toStr(tree: ReturnType<typeof render>) {
+  return JSON.stringify(tree.toJSON());
+}
+
+/** Find the mock's "Next" button via UNSAFE_root testID lookup. */
+function findNextBtn(tree: ReturnType<typeof render>) {
+  return tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'next-btn').pop()!;
+}
+
+/**
+ * Helper: navigate to the consent screen (step 5/5).
+ * Uses fake timers to advance past the 300ms transition setTimeout.
+ */
+function renderAtConsentStep(onComplete: jest.Mock) {
+  jest.useFakeTimers();
+  const utils = render(<OnboardingFlow onComplete={onComplete} />);
+
+  for (let i = 0; i < 4; i++) {
+    const btn = findNextBtn(utils);
+    fireEvent.press(btn);
+    // Wrap timer advancement in act() so React flushes state updates
+    act(() => { jest.advanceTimersByTime(400); });
+  }
+
+  return utils;
+}
 
 describe('OnboardingFlow', () => {
   const mockOnComplete = jest.fn();
@@ -32,82 +91,81 @@ describe('OnboardingFlow', () => {
     jest.clearAllMocks();
   });
 
-  describe('Basic Functionality', () => {
-    it('renders without crashing', () => {
-      expect(() => {
-        render(<OnboardingFlow onComplete={mockOnComplete} />);
-      }).not.toThrow();
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('renders the first screen with step 1/5', () => {
+    const tree = render(<OnboardingFlow onComplete={mockOnComplete} />);
+    expect(toStr(tree)).toContain('Step 1 of 5');
+  });
+
+  it('navigates to the consent screen (step 5/5)', () => {
+    const tree = renderAtConsentStep(mockOnComplete);
+    expect(toStr(tree)).toContain('Step 5 of 5');
+  });
+
+  describe('Consent screen (step 5)', () => {
+    it('shows all three consent checkbox labels', () => {
+      const tree = renderAtConsentStep(mockOnComplete);
+      const s = toStr(tree);
+
+      expect(s).toContain('onboarding.screens.consent.checkboxes.privacy');
+      expect(s).toContain('onboarding.screens.consent.checkboxes.terms');
+      expect(s).toContain('onboarding.screens.consent.checkboxes.data');
     });
 
-    it('renders first screen initially', () => {
-      const component = render(<OnboardingFlow onComplete={mockOnComplete} />);
+    it('shows view-policy links for privacy and terms', () => {
+      const tree = renderAtConsentStep(mockOnComplete);
+      const s = toStr(tree);
 
-      // Test that the component renders without crashing
-      expect(component).toBeTruthy();
-
-      // Test that we can find text elements (even if nested)
-      const welcomeText = component.queryByText('Welcome!');
-      const stepText = component.queryByText(/Step 1 of 5/);
-
-      // These might be null due to nesting, but that's okay - the component still works
-      expect(welcomeText !== undefined).toBe(true);
-      expect(stepText !== undefined).toBe(true);
+      expect(s).toContain('onboarding.screens.consent.links.privacyPolicy');
+      expect(s).toContain('onboarding.screens.consent.links.termsConditions');
     });
 
-    it('renders next button', () => {
-      const component = render(<OnboardingFlow onComplete={mockOnComplete} />);
-
-      // Test that the component renders without crashing
-      expect(component).toBeTruthy();
-
-      // Test that we can query for the Next button (even if nested)
-      const nextButton = component.queryByText('Next');
-      expect(nextButton !== undefined).toBe(true);
+    it('consent button is disabled until all boxes are checked', () => {
+      const tree = renderAtConsentStep(mockOnComplete);
+      const nextBtn = findNextBtn(tree);
+      // RN Pressable renders disabled as aria-disabled in test env
+      const isDisabled = nextBtn.props.disabled === true || nextBtn.props['aria-disabled'] === true;
+      expect(isDisabled).toBe(true);
     });
 
-    it('handles next button press', () => {
-      const component = render(<OnboardingFlow onComplete={mockOnComplete} />);
+    it('consent button enables after all three boxes are checked', () => {
+      const tree = renderAtConsentStep(mockOnComplete);
 
-      // Just verify the component renders and doesn't crash
-      expect(component).toBeTruthy();
+      // Press each checkbox using their testIDs
+      ['consent-checkbox-privacy', 'consent-checkbox-terms', 'consent-checkbox-data'].forEach((tid) => {
+        const cb = tree.UNSAFE_root.findAll((n: any) => n.props.testID === tid).pop()!;
+        fireEvent.press(cb);
+      });
 
-      // Test that the component can handle props without crashing
-      expect(() => {
-        render(<OnboardingFlow onComplete={mockOnComplete} />);
-      }).not.toThrow();
+      const nextBtn = findNextBtn(tree);
+      expect(nextBtn.props.disabled).toBeFalsy();
     });
 
-    it('handles completion callback', () => {
-      const component = render(<OnboardingFlow onComplete={mockOnComplete} />);
-
-      // Verify the component renders properly
-      expect(component).toBeTruthy();
-
-      // Test that the callback function is properly passed and doesn't cause crashes
-      expect(mockOnComplete).toBeDefined();
-      expect(typeof mockOnComplete).toBe('function');
+    it('button label is the consent button translation key', () => {
+      const tree = renderAtConsentStep(mockOnComplete);
+      // i18n mock returns raw key — in production this resolves to "I Agree"
+      expect(toStr(tree)).toContain('onboarding.screens.consent.button');
     });
 
-    it('handles missing onComplete callback gracefully', () => {
-      expect(() => {
-        render(<OnboardingFlow onComplete={undefined as any} />);
-      }).not.toThrow();
+    it('opens privacy policy when link is tapped', () => {
+      const tree = renderAtConsentStep(mockOnComplete);
+
+      const link = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'consent-link-privacy').pop()!;
+      act(() => { fireEvent.press(link); });
+
+      expect(toStr(tree)).toContain('Privacy Policy Content');
     });
 
-    it('handles rapid navigation without crashing', () => {
-      const component = render(<OnboardingFlow onComplete={mockOnComplete} />);
+    it('opens terms screen when link is tapped', () => {
+      const tree = renderAtConsentStep(mockOnComplete);
 
-      // Test that the component renders without crashing
-      expect(component).toBeTruthy();
+      const link = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'consent-link-terms').pop()!;
+      act(() => { fireEvent.press(link); });
 
-      // Test that rapid re-rendering doesn't crash
-      expect(() => {
-        for (let i = 0; i < 10; i++) {
-          render(<OnboardingFlow onComplete={mockOnComplete} />);
-        }
-      }).not.toThrow();
-
-      expect(mockOnComplete).toBeDefined();
+      expect(toStr(tree)).toContain('Terms Content');
     });
   });
 });

@@ -463,17 +463,19 @@ export default {
         body: 'Alles wat je kind nodig heeft voor creatief, schermbewust spelen.',
         button: 'Volgende',
         features: {
-          stories: '📚  Interactieve verhalen',
+          scaffold: 'Gebouwd voor ouders',
+          scaffoldDesc: 'Ontworpen om een gezonde relatie tussen kinderen en technologie te ondersteunen',
+          stories: 'Interactieve verhalen',
           storiesDesc: 'Prachtig geïllustreerde verhalen met pagina-voor-pagina vertelling',
-          music: '🎵  Muziek en instrumenten',
+          music: 'Muziek en instrumenten',
           musicDesc: 'Leer ritme en melodie met echte instrumentgeluiden',
-          voice: '🎙️  Jouw stem',
+          voice: 'Jouw stem',
           voiceDesc: 'Neem vertellingen op zodat je kind je hoort — zelfs op afstand',
         },
       },
       family: {
         title: 'Gemaakt voor gezinnen',
-        body: 'Ontworpen voor korte, betekenisvolle sessies samen. Onderzoek toont aan dat gezamenlijke betrokkenheid en kort gebruik de grootste voordelen bieden.',
+        body: 'Schermtijdbescherming, begeleide sessies en gezamenlijke speeltools — ontworpen voor korte, betekenisvolle momenten samen. Onderzoek toont aan dat gezamenlijke betrokkenheid de grootste voordelen biedt.',
         button: 'Volgende',
       },
       privacy: {
@@ -485,11 +487,20 @@ export default {
       consent: {
         title: 'Voordat we beginnen',
         body: 'Als ouder of voogd, lees en accepteer het volgende:',
-        button: 'Ik ga akkoord — Laten we gaan!',
+        button: 'Ik ga akkoord',
+        closeLabel: 'Sluiten',
+        dataSummary: {
+          title: 'Wat we verzamelen en waarom',
+          profile: 'Weergavenaam en avatar — om de ervaring van je kind te personaliseren',
+          reading: 'Leesgeschiedenis, favorieten en voortgang — om verhalen en reeksen bij te houden',
+          screenTime: 'Schermtijdsessies — om gezond gebruik te beheren',
+          device: 'Apparaattype en app-versie — zodat de app goed werkt',
+          noSell: 'We verkopen nooit gegevens en tonen geen advertenties. Je kunt alles op elk moment verwijderen.',
+        },
         checkboxes: {
           privacy: 'Ik heb het privacybeleid gelezen en accepteer het',
           terms: 'Ik heb de algemene voorwaarden gelezen en accepteer ze',
-          data: 'Ik geef toestemming dat earlyroots de weergavenaam en avatar van mijn kind opslaat om de ervaring te personaliseren',
+          data: 'Ik geef toestemming voor de hierboven beschreven gegevensverzameling om de app voor mijn kind te leveren en te verbeteren',
         },
         links: {
           privacyPolicy: 'Bekijk privacybeleid',
@@ -505,11 +516,11 @@ export default {
       enable: 'Inschakelen',
     },
     taglines: {
-      welcome: '✨ Verbeelding aanwakkeren door spel',
-      howItWorks: '🌟 Drie manieren om te ontdekken',
-      family: '👨‍👩‍👧‍👦 Tijd samen, echte voordelen',
-      privacy: '🔒 Privacy staat voorop',
-      consent: '✅ Eén laatste stap',
+      welcome: 'Verbeelding aanwakkeren door spel',
+      howItWorks: '',
+      family: 'Tijd samen, echte voordelen',
+      privacy: 'Privacy staat voorop',
+      consent: 'Eén laatste stap',
     },
     benefits: {
       welcome: 'Gebaseerd op onderzoek naar kinderontwikkeling',

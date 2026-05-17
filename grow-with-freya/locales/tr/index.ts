@@ -463,17 +463,19 @@ export default {
         body: 'Çocuğunuzun yaratıcı, ekran-bilinçli oyun için ihtiyacı olan her şey.',
         button: 'İleri',
         features: {
-          stories: '📚  İnteraktif hikayeler',
+          scaffold: 'Ebeveynler için tasarlandı',
+          scaffoldDesc: 'Çocuklar ve teknoloji arasında sağlıklı ilişkileri desteklemek için tasarlandı',
+          stories: 'İnteraktif hikayeler',
           storiesDesc: 'Sayfa sayfa anlatımlı güzel illüstrasyonlu masallar',
-          music: '🎵  Müzik ve enstrümanlar',
+          music: 'Müzik ve enstrümanlar',
           musicDesc: 'Gerçek enstrüman sesleriyle ritim ve melodi öğrenin',
-          voice: '🎙️  Sesiniz',
+          voice: 'Sesiniz',
           voiceDesc: 'Çocuğunuzun sizi duyması için anlatımlar kaydedin — uzaktan bile',
         },
       },
       family: {
         title: 'Aileler için yapıldı',
-        body: 'Birlikte kısa, anlamlı oturumlar için tasarlandı. Araştırmalar ortak katılım ve kısa kullanımın en büyük faydaları sağladığını gösteriyor.',
+        body: 'Ekran süresi koruması, rehberli oturumlar ve birlikte oyun araçları — birlikte kısa, anlamlı anlar için tasarlandı. Araştırmalar ortak katılımın en büyük faydaları sağladığını gösteriyor.',
         button: 'İleri',
       },
       privacy: {
@@ -485,11 +487,20 @@ export default {
       consent: {
         title: 'Başlamadan önce',
         body: 'Ebeveyn veya vasi olarak lütfen aşağıdakileri okuyun ve kabul edin:',
-        button: 'Kabul ediyorum — Başlayalım!',
+        button: 'Kabul ediyorum',
+        closeLabel: 'Kapat',
+        dataSummary: {
+          title: 'Ne topluyoruz ve neden',
+          profile: 'Görünen ad ve avatar — çocuğunuzun deneyimini kişiselleştirmek için',
+          reading: 'Okuma geçmişi, favoriler ve ilerleme — hikayeleri ve serileri takip etmek için',
+          screenTime: 'Ekran süresi oturumları — sağlıklı kullanımı yönetmeye yardımcı olmak için',
+          device: 'Cihaz türü ve uygulama sürümü — uygulamanın düzgün çalışması için',
+          noSell: 'Verileri asla satmıyoruz ve reklam göstermiyoruz. Her şeyi istediğiniz zaman silebilirsiniz.',
+        },
         checkboxes: {
           privacy: 'Gizlilik Politikasını okudum ve kabul ediyorum',
           terms: 'Şartlar ve Koşulları okudum ve kabul ediyorum',
-          data: 'Çocuğumun görünen adını ve avatarını deneyimi kişiselleştirmek için earlyroots\'un saklamasına izin veriyorum',
+          data: 'Çocuğum için uygulamayı sağlamak ve geliştirmek amacıyla yukarıda açıklanan veri toplamaya izin veriyorum',
         },
         links: {
           privacyPolicy: 'Gizlilik Politikasını Görüntüle',
@@ -505,11 +516,11 @@ export default {
       enable: 'Etkinleştir',
     },
     taglines: {
-      welcome: '✨ Oyunla hayal gücünü ateşle',
-      howItWorks: '🌟 Keşfetmenin üç yolu',
-      family: '👨‍👩‍👧‍👦 Birlikte zaman, gerçek faydalar',
-      privacy: '🔒 Gizlilik öncelikli',
-      consent: '✅ Son bir adım',
+      welcome: 'Oyunla hayal gücünü ateşle',
+      howItWorks: '',
+      family: 'Birlikte zaman, gerçek faydalar',
+      privacy: 'Gizlilik öncelikli',
+      consent: 'Son bir adım',
     },
     benefits: {
       welcome: 'Çocuk gelişimi araştırmalarına dayalı',

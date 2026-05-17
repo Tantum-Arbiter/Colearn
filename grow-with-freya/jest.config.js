@@ -29,7 +29,6 @@ module.exports = {
       '/__tests__/components/emotions/emotions-game-screen.test.tsx',
       '/__tests__/components/stories/story-book-reader.test.tsx',
       '/__tests__/visual/snapshot-regression.test.tsx',
-      '/__tests__/components/onboarding/',
       '/__tests__/services/background-music.test.ts',
       '/__tests__/hooks/use-background-music.test.tsx',
       '/__tests__/components/main-menu.test.tsx',

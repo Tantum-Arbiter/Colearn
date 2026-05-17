@@ -463,17 +463,19 @@ export default {
         body: 'Omnia quae infans tuus ad ludum creativum necessitat.',
         button: 'Proxime',
         features: {
-          stories: '📚  Fabulae interactivae',
+          scaffold: 'Pro parentibus structum',
+          scaffoldDesc: 'Designatum ad sustinendas sanas relationes inter infantes et technologiam',
+          stories: 'Fabulae interactivae',
           storiesDesc: 'Fabulae pulchre illustratae cum narratione pagina per paginam',
-          music: '🎵  Musica et instrumenta',
+          music: 'Musica et instrumenta',
           musicDesc: 'Disce rhythmum et melodiam cum veris sonis instrumentorum',
-          voice: '🎙️  Vox tua',
+          voice: 'Vox tua',
           voiceDesc: 'Narra fabulas ut infans tuus te audiat — etiam procul',
         },
       },
       family: {
         title: 'Pro familiis factum',
-        body: 'Designatum pro sessionibus brevibus et significantibus simul. Investigatio ostendit co-participationem et usum brevem maxima beneficia praebere.',
+        body: 'Protectio temporis ante screen, sessiones ductae et instrumenta ludi communis — designatum pro momentis brevibus et significantibus simul. Investigatio ostendit co-participationem maxima beneficia praebere.',
         button: 'Proxime',
       },
       privacy: {
@@ -485,11 +487,20 @@ export default {
       consent: {
         title: 'Antequam incipiamus',
         body: 'Ut parens vel custos, lege et accepta sequentia:',
-        button: 'Consentio — Incipiamus!',
+        button: 'Consentio',
+        closeLabel: 'Claudere',
+        dataSummary: {
+          title: 'Quid colligimus et cur',
+          profile: 'Nomen et imago — ad experientiam infantis tui personalem',
+          reading: 'Historia lectionis, favorita et progressus — ad fabulas et series sequendas',
+          screenTime: 'Sessiones temporis scrinii — ad usum sanum administrandum',
+          device: 'Genus machinae et versio applicationis — ut applicatio recte operetur',
+          noSell: 'Numquam data vendimus nec publicationes ostendimus. Omnia quovis tempore delere potes.',
+        },
         checkboxes: {
           privacy: 'Legi et accipio Politicam Privationis',
           terms: 'Legi et accipio Terminos et Condiciones',
-          data: 'Consentio ut earlyroots nomen et imaginem infantis mei servet ad experientiam personalem',
+          data: 'Consentio ad collectionem datorum supra descriptam ad applicationem infanti meo praebendam et meliorandam',
         },
         links: {
           privacyPolicy: 'Vide Politicam Privationis',
@@ -505,11 +516,11 @@ export default {
       enable: 'Activa',
     },
     taglines: {
-      welcome: '✨ Imaginationem per ludum excita',
-      howItWorks: '🌟 Tres modi explorandi',
-      family: '👨‍👩‍👧‍👦 Tempus simul, vera beneficia',
-      privacy: '🔒 Privatio primum, semper',
-      consent: '✅ Ultimus gradus',
+      welcome: 'Imaginationem per ludum excita',
+      howItWorks: '',
+      family: 'Tempus simul, vera beneficia',
+      privacy: 'Privatio primum, semper',
+      consent: 'Ultimus gradus',
     },
     benefits: {
       welcome: 'Investigatione progressus infantilis fultum',

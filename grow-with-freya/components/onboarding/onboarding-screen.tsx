@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, StyleSheet, Dimensions, Pressable, PanResponder, Platform } from 'react-native';
+import { View, ScrollView, StyleSheet, Dimensions, Pressable, PanResponder, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -14,6 +14,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
+import { Ionicons } from '@expo/vector-icons';
 
 import { ThemedText } from '../themed-text';
 import { PngIllustration } from '../ui/png-illustration';
@@ -206,10 +207,11 @@ export function OnboardingScreen({
 
   // Feature list for "How It Works" screen (step 2)
   const renderFeatureList = () => {
-    const features = [
-      { label: t('onboarding.screens.howItWorks.features.stories'), desc: t('onboarding.screens.howItWorks.features.storiesDesc') },
-      { label: t('onboarding.screens.howItWorks.features.music'), desc: t('onboarding.screens.howItWorks.features.musicDesc') },
-      { label: t('onboarding.screens.howItWorks.features.voice'), desc: t('onboarding.screens.howItWorks.features.voiceDesc') },
+    const features: { icon: keyof typeof Ionicons.glyphMap; label: string; desc: string }[] = [
+      { icon: 'people-outline', label: t('onboarding.screens.howItWorks.features.scaffold'), desc: t('onboarding.screens.howItWorks.features.scaffoldDesc') },
+      { icon: 'book-outline', label: t('onboarding.screens.howItWorks.features.stories'), desc: t('onboarding.screens.howItWorks.features.storiesDesc') },
+      { icon: 'musical-notes-outline', label: t('onboarding.screens.howItWorks.features.music'), desc: t('onboarding.screens.howItWorks.features.musicDesc') },
+      { icon: 'mic-outline', label: t('onboarding.screens.howItWorks.features.voice'), desc: t('onboarding.screens.howItWorks.features.voiceDesc') },
     ];
     return (
       <View style={styles.featureList}>
@@ -219,7 +221,12 @@ export function OnboardingScreen({
             entering={FadeInUp.delay(400 + i * 150).duration(500)}
             style={styles.featureRow}
           >
-            <ThemedText style={styles.featureLabel}>{f.label}</ThemedText>
+            <View style={styles.featureHeader}>
+              <View style={styles.featureIconContainer}>
+                <Ionicons name={f.icon} size={20} color="#FFFFFF" />
+              </View>
+              <ThemedText style={styles.featureLabel}>{f.label}</ThemedText>
+            </View>
             <ThemedText style={styles.featureDesc}>{f.desc}</ThemedText>
           </Animated.View>
         ))}
@@ -358,29 +365,77 @@ export function OnboardingScreen({
       </View>
 
       <View style={styles.contentContainer}>
-        <Animated.View
-          style={[
-            styles.textContainer,
-            textAnimatedStyle,
-            isTextOnlyScreen && styles.textContainerExpanded
-          ]}
-        >
-          <ThemedText type="title" style={styles.title} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>
-            {title}
-          </ThemedText>
-          <ThemedText style={styles.body}>
-            {body}
-          </ThemedText>
+        {isConsentScreen ? (
+          <Animated.View
+            style={[
+              styles.textContainer,
+              textAnimatedStyle,
+              styles.consentTextContainer,
+            ]}
+          >
+            <ThemedText type="title" style={styles.title} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>
+              {title}
+            </ThemedText>
+            <ThemedText style={styles.body}>
+              {body}
+            </ThemedText>
+            <ScrollView
+              style={styles.consentScroll}
+              contentContainerStyle={styles.consentScrollContent}
+              showsVerticalScrollIndicator={false}
+              bounces={true}
+              decelerationRate={0.985}
+            >
+              {customContent}
+            </ScrollView>
+          </Animated.View>
+        ) : isFeatureListScreen ? (
+          <Animated.View
+            style={[
+              styles.textContainer,
+              textAnimatedStyle,
+              styles.consentTextContainer,
+            ]}
+          >
+            <ThemedText type="title" style={styles.title} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>
+              {title}
+            </ThemedText>
+            <ThemedText style={styles.body}>
+              {body}
+            </ThemedText>
+            <ScrollView
+              style={styles.consentScroll}
+              contentContainerStyle={styles.consentScrollContent}
+              showsVerticalScrollIndicator={false}
+              bounces={true}
+              decelerationRate={0.985}
+            >
+              {renderFeatureList()}
+              <View style={styles.contextualContent}>
+                {renderContextualContent(currentStep)}
+              </View>
+            </ScrollView>
+          </Animated.View>
+        ) : (
+          <Animated.View
+            style={[
+              styles.textContainer,
+              textAnimatedStyle,
+              isTextOnlyScreen && styles.textContainerExpanded
+            ]}
+          >
+            <ThemedText type="title" style={styles.title} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>
+              {title}
+            </ThemedText>
+            <ThemedText style={styles.body}>
+              {body}
+            </ThemedText>
 
-          {isFeatureListScreen && renderFeatureList()}
-          {isConsentScreen && customContent}
-
-          {!isConsentScreen && (
             <View style={styles.contextualContent}>
               {renderContextualContent(currentStep)}
             </View>
-          )}
-        </Animated.View>
+          </Animated.View>
+        )}
 
         {!isTextOnlyScreen && !isFeatureListScreen && (
           <Animated.View
@@ -500,6 +555,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 0,
   },
+  consentTextContainer: {
+    flex: 1,
+    marginBottom: 0,
+  },
+  consentScroll: {
+    flex: 1,
+    width: '100%',
+  },
+  consentScrollContent: {
+    paddingBottom: 12,
+  },
   title: {
     fontSize: 26,
     fontWeight: 'bold',
@@ -538,31 +604,46 @@ const styles = StyleSheet.create({
   },
   // Feature list styles (How It Works screen)
   featureList: {
-    marginTop: 24,
-    gap: 16,
+    marginTop: 16,
+    gap: 10,
     width: '100%',
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
   },
   featureRow: {
     backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 14,
+    padding: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 6,
     elevation: 2,
   },
-  featureLabel: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#2E8B8B',
+  featureHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 4,
   },
+  featureIconContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#2E8B8B',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  featureLabel: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#2E8B8B',
+    flex: 1,
+  },
   featureDesc: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#5A5A5A',
-    lineHeight: 20,
+    lineHeight: 18,
+    paddingLeft: 36,
   },
   illustrationContainer: {
     justifyContent: 'center',

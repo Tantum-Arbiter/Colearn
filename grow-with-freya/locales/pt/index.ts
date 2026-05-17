@@ -463,17 +463,19 @@ export default {
         body: 'Tudo o que o seu filho precisa para brincar de forma criativa e consciente do ecrã.',
         button: 'Seguinte',
         features: {
-          stories: '📚  Histórias interativas',
+          scaffold: 'Feito para pais',
+          scaffoldDesc: 'Projetado para apoiar uma relação saudável entre crianças e tecnologia',
+          stories: 'Histórias interativas',
           storiesDesc: 'Contos lindamente ilustrados com narração página a página',
-          music: '🎵  Música e instrumentos',
+          music: 'Música e instrumentos',
           musicDesc: 'Aprenda ritmo e melodia com sons de instrumentos reais',
-          voice: '🎙️  A sua voz',
+          voice: 'A sua voz',
           voiceDesc: 'Grave narrações para o seu filho ouvir — mesmo à distância',
         },
       },
       family: {
         title: 'Feito para famílias',
-        body: 'Concebido para sessões curtas e significativas juntos. A investigação mostra que o envolvimento conjunto e o uso breve oferecem os maiores benefícios.',
+        body: 'Proteção de tempo de tela, sessões guiadas e ferramentas de brincadeira conjunta — concebido para momentos curtos e significativos juntos. A investigação mostra que o envolvimento conjunto oferece os maiores benefícios.',
         button: 'Seguinte',
       },
       privacy: {
@@ -485,11 +487,20 @@ export default {
       consent: {
         title: 'Antes de começar',
         body: 'Como pai ou responsável, por favor leia e aceite o seguinte:',
-        button: 'Concordo — Vamos!',
+        button: 'Concordo',
+        closeLabel: 'Fechar',
+        dataSummary: {
+          title: 'O que coletamos e por quê',
+          profile: 'Nome de exibição e avatar — para personalizar a experiência do seu filho',
+          reading: 'Histórico de leitura, favoritos e progresso — para acompanhar histórias e séries',
+          screenTime: 'Sessões de tempo de tela — para ajudar a gerenciar o uso saudável',
+          device: 'Tipo de dispositivo e versão do app — para que o app funcione corretamente',
+          noSell: 'Nunca vendemos dados nem exibimos anúncios. Você pode excluir tudo a qualquer momento.',
+        },
         checkboxes: {
           privacy: 'Li e aceito a Política de Privacidade',
           terms: 'Li e aceito os Termos e Condições',
-          data: 'Consinto que o earlyroots armazene o nome e avatar do meu filho para personalizar a experiência',
+          data: 'Consinto com a coleta de dados descrita acima para fornecer e melhorar o app para meu filho',
         },
         links: {
           privacyPolicy: 'Ver Política de Privacidade',
@@ -505,11 +516,11 @@ export default {
       enable: 'Ativar',
     },
     taglines: {
-      welcome: '✨ Desperte a imaginação a brincar',
-      howItWorks: '🌟 Três formas de explorar',
-      family: '👨‍👩‍👧‍👦 Tempo juntos, benefícios reais',
-      privacy: '🔒 Privacidade em primeiro lugar',
-      consent: '✅ Um último passo',
+      welcome: 'Desperte a imaginação a brincar',
+      howItWorks: '',
+      family: 'Tempo juntos, benefícios reais',
+      privacy: 'Privacidade em primeiro lugar',
+      consent: 'Um último passo',
     },
     benefits: {
       welcome: 'Apoiado pela investigação em desenvolvimento infantil',
