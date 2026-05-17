@@ -47,6 +47,7 @@ import { useVoiceRecording } from '@/hooks/use-voice-recording';
 import { useGlobalSound } from '@/contexts/global-sound-context';
 // All story images are loaded from local cache after batch sync - no authenticated fetching needed
 import { Logger } from '@/utils/logger';
+import { AnalyticsService } from '@/services/analytics-service';
 import { PagePreviewModal } from './pages-preview-modal';
 import { StoryTipsOverlay } from '@/components/tutorial/story-tips-overlay';
 import { ModeTipsOverlay } from '@/components/tutorial/mode-tips-overlay';
@@ -96,10 +97,26 @@ export function StoryBookReader({
       }
     }
   }, [story.id, story.pages]);
+
+  // Analytics: track story opened
+  useEffect(() => {
+    storyOpenTimeRef.current = Date.now();
+    storyCompletedRef.current = false;
+    AnalyticsService.trackStoryOpened(
+      story.id,
+      story.tags?.[0] || 'uncategorized',
+      readingMode,
+    );
+  }, [story.id]);
+
   // Start from page 1 if skipping cover, otherwise start from cover (page 0)
   const [currentPageIndex, setCurrentPageIndex] = useState(skipCoverPage ? 1 : 0);
   const [previousPageIndex, setPreviousPageIndex] = useState<number | null>(null); // For crossfade
   const [isTransitioning, setIsTransitioning] = useState(false);
+
+  // Analytics: track time spent in story reader
+  const storyOpenTimeRef = useRef(Date.now());
+  const storyCompletedRef = useRef(false);
   const [isOrientationTransitioning, setIsOrientationTransitioning] = useState(false);
   const [isLandscapeReady, setIsLandscapeReady] = useState(false);
   const [isExiting, setIsExiting] = useState(false); // Prevent double-tap on exit/close buttons
@@ -269,6 +286,7 @@ export function StoryBookReader({
           currentMusicChallenge.instrumentId,
           musicChallenge.failedAttempts
         );
+        AnalyticsService.trackMusicChallengeCompleted(story.id, currentMusicChallenge.instrumentId);
       }
     },
     effectiveNoteVolume,
@@ -814,6 +832,11 @@ export function StoryBookReader({
         return;
       }
 
+      // Analytics: track story completed
+      storyCompletedRef.current = true;
+      const durationSec = Math.floor((Date.now() - storyOpenTimeRef.current) / 1000);
+      AnalyticsService.trackStoryCompleted(story.id, durationSec, currentPageIndex + 1);
+
       // Story complete - trigger exit animation (same as pressing X button)
       handleExit();
     } catch (error) {
@@ -827,6 +850,13 @@ export function StoryBookReader({
   const handleExit = async () => {
     // Prevent double-tap on exit/close button
     if (isExiting) return;
+
+    // Analytics: track story abandoned (only if not completed)
+    if (!storyCompletedRef.current) {
+      const durationSec = Math.floor((Date.now() - storyOpenTimeRef.current) / 1000);
+      AnalyticsService.trackStoryAbandoned(story.id, currentPageIndex, durationSec);
+    }
+
     log.debug('handleExit called');
     setIsExiting(true);
     isExitingRef.current = true; // Mark that exit animation will handle rotation

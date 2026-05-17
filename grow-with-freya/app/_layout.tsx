@@ -37,6 +37,8 @@ import { StoryTransitionProvider, useStoryTransition } from '@/contexts/story-tr
 import { GlobalSoundProvider } from '@/contexts/global-sound-context';
 import { TutorialProvider } from '@/contexts/tutorial-context';
 import { updateSentryConsent } from '@/services/sentry-service';
+import { AnalyticsService } from '@/services/analytics-service';
+import i18n from '@/services/i18n';
 import { StartupLoadingScreen } from '@/components/startup-loading-screen';
 import { BatchSyncService } from '@/services/batch-sync-service';
 import { CacheManager } from '@/services/cache-manager';
@@ -119,6 +121,8 @@ function AppContent() {
     clearReturnToMainMenu
   } = useAppStore();
 
+  const { consentTimestamp } = useAppStore();
+
   // Initialize or disable Sentry based on user consent
   // This runs after store hydration and whenever consent changes
   useEffect(() => {
@@ -127,7 +131,16 @@ function AppContent() {
     }
   }, [hasHydrated, crashReportingEnabled]);
 
-
+  // Initialize analytics (consent-gated, anonymous, session-scoped)
+  useEffect(() => {
+    if (hasHydrated) {
+      const hasConsent = !!consentTimestamp;
+      AnalyticsService.initialize(i18n.language || 'en', hasConsent);
+    }
+    return () => {
+      AnalyticsService.destroy();
+    };
+  }, [hasHydrated, consentTimestamp]);
 
   // Initialize background music
   const { fadeIn, isLoaded: musicLoaded, isPlaying } = useBackgroundMusic();
