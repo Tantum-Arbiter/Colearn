@@ -13,6 +13,8 @@ export type SubscriptionTier = 'free' | 'basic' | 'premium';
 // Instruments available on each tier
 export const BASIC_TIER_INSTRUMENTS = ['flute', 'recorder', 'ocarina'] as const;
 
+export type StoryViewMode = 'carousel' | 'grid';
+
 export interface AppState {
   // App initialization
   isAppReady: boolean;
@@ -73,6 +75,9 @@ export interface AppState {
   lastReadDate: string | null; // ISO date string (YYYY-MM-DD) of last reading session
   totalStoriesRead: number; // Lifetime count of stories opened
 
+  // Story browse layout preference
+  storyViewMode: StoryViewMode;
+
   // Background animation state persistence
   backgroundAnimationState: {
     cloudFloat1: number;
@@ -112,6 +117,7 @@ export interface AppState {
   markStoryAsRead: (storyId: string) => void;
   setLastRatingPromptBookCount: (count: number) => void;
   recordReadingSession: () => void; // Call when a story is opened to update streak
+  setStoryViewMode: (mode: StoryViewMode) => void;
 
   updateBackgroundAnimationState: (state: {
     cloudFloat1: number;
@@ -156,6 +162,7 @@ export const useAppStore = create<AppState>()(
       longestStreak: 0,
       lastReadDate: null,
       totalStoriesRead: 0,
+      storyViewMode: 'carousel' as StoryViewMode,
 
       backgroundAnimationState: {
         cloudFloat1: -200,
@@ -258,6 +265,7 @@ export const useAppStore = create<AppState>()(
         return { shouldReturnToMainMenu: true };
       }),
       clearReturnToMainMenu: () => set({ shouldReturnToMainMenu: false }),
+      setStoryViewMode: (mode: StoryViewMode) => set({ storyViewMode: mode }),
       updateBackgroundAnimationState: (animationState: { cloudFloat1: number; cloudFloat2: number; rocketFloat1: number; rocketFloat2: number }) => set({ backgroundAnimationState: animationState }),
       clearPersistedStorage: async () => {
         try {
@@ -298,6 +306,7 @@ export const useAppStore = create<AppState>()(
         longestStreak: state.longestStreak,
         lastReadDate: state.lastReadDate,
         totalStoriesRead: state.totalStoriesRead,
+        storyViewMode: state.storyViewMode,
         backgroundAnimationState: state.backgroundAnimationState,
       }),
       onRehydrateStorage: () => (state, error) => {

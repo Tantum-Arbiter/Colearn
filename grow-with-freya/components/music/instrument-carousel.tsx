@@ -103,9 +103,9 @@ export const InstrumentCarousel = React.memo(function InstrumentCarousel({ selec
   const arrowTop = imageSize / 2 - arrowSize / 2;
   return (
     <View style={[st.wrapper, { height: carouselHeight }]}>
-      {/* Left arrow — positioned at image center */}
+      {/* Left arrow — flush with carousel edges */}
       <Pressable
-        style={[st.arrow, { width: arrowSize, height: arrowSize, borderRadius: arrowSize / 2, top: arrowTop, left: '20%' }]}
+        style={[st.arrow, { width: arrowSize, height: arrowSize, borderRadius: arrowSize / 2, top: arrowTop, left: 8 }]}
         onPress={() => goToNeighbor(1)}>
         <Text style={[st.arrowTxt, { fontSize: scaledFontSize(26) }]}>‹</Text>
       </Pressable>
@@ -125,9 +125,9 @@ export const InstrumentCarousel = React.memo(function InstrumentCarousel({ selec
           </View>
         </GestureDetector>
       </GestureHandlerRootView>
-      {/* Right arrow — positioned at image center */}
+      {/* Right arrow — flush with carousel edges */}
       <Pressable
-        style={[st.arrow, { width: arrowSize, height: arrowSize, borderRadius: arrowSize / 2, top: arrowTop, right: '20%' }]}
+        style={[st.arrow, { width: arrowSize, height: arrowSize, borderRadius: arrowSize / 2, top: arrowTop, right: 8 }]}
         onPress={() => goToNeighbor(-1)}>
         <Text style={[st.arrowTxt, { fontSize: scaledFontSize(26) }]}>›</Text>
       </Pressable>
@@ -166,11 +166,18 @@ function CarouselItem({ instrument, index, anglePerItem, rotation, imageSize, ra
     const x = Math.sin(th) * radius;
     const z = Math.cos(th) * radius;
     const nz = (z + radius) / (2 * radius);
+    const sc = interpolate(nz, [0, 1], [SIDE_SCALE, CENTER_SCALE], Extrapolation.CLAMP);
+    // Compensate for scale so all items share the same bottom edge (baseline).
+    // When scale < 1 the element shrinks toward its center, pushing the bottom
+    // edge up by half the lost height. Shift it back down to keep bottoms aligned.
+    // Then raise the selected (front) item above the baseline.
+    const scaleCompensation = ((1 - sc) * imageSize) / 2;
+    const raiseSelected = interpolate(nz, [0, 1], [0, -20], Extrapolation.CLAMP);
     return {
       transform: [
         { translateX: x },
-        { translateY: interpolate(nz, [0, 1], [20, 0], Extrapolation.CLAMP) },
-        { scale: interpolate(nz, [0, 1], [SIDE_SCALE, CENTER_SCALE], Extrapolation.CLAMP) },
+        { translateY: scaleCompensation + raiseSelected },
+        { scale: sc },
       ],
       opacity: interpolate(nz, [0, 0.4, 0.85, 1], [0.1, 0.3, 0.7, 1], Extrapolation.CLAMP),
       zIndex: Math.round(nz * 100),

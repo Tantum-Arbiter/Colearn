@@ -20,7 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { ALL_STORIES } from '@/data/stories';
 import { Story, StoryCategory, StoryFilterTag, STORY_FILTER_TAGS, CatalogEntry, getLocalizedText } from '@/types/story';
 import { Fonts } from '@/constants/theme';
-import { useAppStore, type SubscriptionTier } from '@/store/app-store';
+import { useAppStore, type SubscriptionTier, type StoryViewMode } from '@/store/app-store';
 import { SubscriptionOverlay } from '@/components/ui/subscription-overlay';
 import { StoryLoader } from '@/services/story-loader';
 import { CatalogService } from '@/services/catalog-service';
@@ -37,6 +37,57 @@ import { CatalogStoryCard } from './catalog-story-card';
 import { StoryDownloadService } from '@/services/story-download-service';
 import { StoryAccessService } from '@/services/story-access-service';
 import type { SupportedLanguage } from '@/services/i18n';
+import Svg, { Rect, Path } from 'react-native-svg';
+
+/** 3-card carousel icon — center card raised */
+const CarouselIcon = memo(function CarouselIcon({ size = 18, color = '#FFFFFF' }: { size?: number; color?: string }) {
+  const w = size;
+  const h = size;
+  const cardW = w * 0.24;
+  const cardH = h * 0.55;
+  const r = 1.5;
+  const gap = w * 0.06;
+  // Vertical center offset — push group down so it sits in the middle of the viewBox
+  const groupH = cardH; // tallest element (center card)
+  const yOffset = (h - groupH) / 2;
+  // Center card
+  const cx = (w - cardW) / 2;
+  const cy = yOffset;
+  // Side cards — shorter and lower
+  const sideH = cardH * 0.78;
+  const sideY = cy + (cardH - sideH);
+  const lx = cx - cardW - gap;
+  const rx = cx + cardW + gap;
+  return (
+    <Svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
+      <Rect x={lx} y={sideY} width={cardW} height={sideH} rx={r} fill={color} opacity={0.5} />
+      <Rect x={cx} y={cy} width={cardW} height={cardH} rx={r} fill={color} />
+      <Rect x={rx} y={sideY} width={cardW} height={sideH} rx={r} fill={color} opacity={0.5} />
+    </Svg>
+  );
+});
+
+/** Finger-tap icon — index finger pressing down */
+const FingerTapIcon = memo(function FingerTapIcon({ size = 16, color = '#FFFFFF' }: { size?: number; color?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      {/* Finger pointing down */}
+      <Path
+        d="M12 2C10.9 2 10 2.9 10 4V12.5L8.4 11.3C7.7 10.8 6.7 10.9 6.1 11.5C5.5 12.2 5.5 13.2 6.2 13.8L10.5 18.5C11.1 19.1 11.9 19.5 12.8 19.5H16C18.2 19.5 20 17.7 20 15.5V11C20 9.9 19.1 9 18 9C17.6 9 17.2 9.1 16.9 9.3C16.6 8.5 15.9 8 15 8C14.6 8 14.2 8.1 13.9 8.3C13.6 7.5 12.9 7 12 7V4C12 2.9 12 2 12 2Z"
+        fill={color}
+        opacity={0.9}
+      />
+      {/* Small tap ripple */}
+      <Path
+        d="M12 22C13.7 22 15 21.3 15 21"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        opacity={0.4}
+      />
+    </Svg>
+  );
+});
 
 // Story experience type filters — detect from page content, not tags
 type StoryTypeFilter = 'musical' | 'interactive' | 'classic';
@@ -47,7 +98,7 @@ const TYPE_FILTER_ACTIVE_COLOR = 'rgba(100, 140, 255, 0.25)'; // Subtle blue tin
 
 const STORY_TYPE_FILTERS: { id: StoryTypeFilter; icon: keyof typeof Ionicons.glyphMap; label: string }[] = [
   { id: 'musical',     icon: 'musical-notes-outline',   label: 'Musical' },
-  { id: 'interactive', icon: 'hand-left-outline',       label: 'Interactive' },
+  { id: 'interactive', icon: 'finger-print-outline',     label: 'Interactive' }, // icon overridden in render
   { id: 'classic',     icon: 'book-outline',            label: 'Classic' },
 ];
 
@@ -86,6 +137,12 @@ const CARD_WIDTH = 176;
 const CARD_HEIGHT = 132;
 const CARD_MARGIN = 15;
 const ITEM_WIDTH = CARD_WIDTH + CARD_MARGIN;
+
+// Grid view card dimensions — 2 columns with padding
+const GRID_PADDING = 16;
+const GRID_GAP = 12;
+const GRID_CARD_WIDTH = Math.floor((Dimensions.get('window').width - GRID_PADDING * 2 - GRID_GAP) / 2);
+const GRID_CARD_HEIGHT = Math.floor(GRID_CARD_WIDTH * 0.75); // 4:3 aspect ratio
 
 interface StorySelectionScreenProps {
   onStorySelect?: (story: Story) => void;
@@ -292,7 +349,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProps) {
   const insets = useSafeAreaInsets();
-  const { requestReturnToMainMenu, setShowLoginAfterOnboarding, getEffectiveTier } = useAppStore();
+  const { requestReturnToMainMenu, setShowLoginAfterOnboarding, getEffectiveTier, storyViewMode, setStoryViewMode } = useAppStore();
   const effectiveTier: SubscriptionTier = getEffectiveTier();
   const [showSubscription, setShowSubscription] = useState(false);
   const { startTransition, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader } = useStoryTransition();
@@ -306,6 +363,10 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   const scaledCardH = scaledButtonSize(CARD_HEIGHT);
   const scaledBorderRadius = scaledButtonSize(15);
   const scaledEmojiFontSize = scaledFontSize(48);
+
+  // Grid card sizes (no scaling — fills available width)
+  const gridCardW = GRID_CARD_WIDTH;
+  const gridCardH = GRID_CARD_HEIGHT;
 
   // Load stories from StoryLoader with instant cache support
   // If stories are already cached (from previous visit), use them immediately - no flicker
@@ -425,6 +486,21 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       return next;
     });
   }, []);
+
+  // View mode toggle (carousel ↔ grid) — instant swap with fade-in
+  const viewFadeOpacity = useSharedValue(1);
+  const viewFadeStyle = useAnimatedStyle(() => ({ opacity: viewFadeOpacity.value }));
+
+  const handleViewModeToggle = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    // Instantly swap to new layout at opacity 0, then fade in
+    viewFadeOpacity.value = 0;
+    setStoryViewMode(storyViewMode === 'carousel' ? 'grid' : 'carousel');
+    // Fade in on next frame after React re-renders the new view
+    requestAnimationFrame(() => {
+      viewFadeOpacity.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.ease) });
+    });
+  }, [storyViewMode, setStoryViewMode, viewFadeOpacity]);
 
   // Story preview modal state
   const [previewStory, setPreviewStory] = useState<Story | null>(null);
@@ -1067,11 +1143,10 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
                   ]}
                   onPress={() => handleTypeFilterPress(tf.id)}
                 >
-                  <Ionicons
-                    name={tf.icon}
-                    size={16}
-                    color={isActive ? '#FFFFFF' : 'rgba(255,255,255,0.7)'}
-                  />
+                  {tf.id === 'interactive'
+                    ? <FingerTapIcon size={16} color={isActive ? '#FFFFFF' : 'rgba(255,255,255,0.7)'} />
+                    : <Ionicons name={tf.icon} size={16} color={isActive ? '#FFFFFF' : 'rgba(255,255,255,0.7)'} />
+                  }
                   <Text style={[
                     styles.typeFilterLabel,
                     { fontSize: scaledFontSize(12) },
@@ -1083,6 +1158,18 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
               </View>
             );
           })}
+
+          {/* View mode toggle — carousel ↔ grid */}
+          <Pressable
+            onPress={handleViewModeToggle}
+            hitSlop={10}
+            style={styles.viewModeToggle}
+          >
+            {storyViewMode === 'grid'
+              ? <Ionicons name="grid-outline" size={18} color="#FFFFFF" />
+              : <CarouselIcon size={20} color="#FFFFFF" />
+            }
+          </Pressable>
         </View>
 
         {/* Theme Tag Filters */}
@@ -1114,7 +1201,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
           })}
         </ScrollView>
 
-        {/* Stories Carousels */}
+        {/* Stories — Carousel or Grid view */}
         {/* Disable scrolling when a story is selected to prevent position drift */}
         <ScrollView style={{ flex: 1 }} scrollEnabled={!isTransitioning && !shouldShowStoryReader && !isExpandingToReader}>
           {availableGenres.length === 0 && (selectedTags.size > 0 || storyTypeFilters.size < ALL_TYPE_FILTERS.size) && (
@@ -1131,89 +1218,133 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
             </View>
           )}
 
-          {/* Your Favorites Carousel - shown only if there are favorites */}
-          {favoriteStories.length > 0 && (
-            <View style={{ marginBottom: 40 }}>
-              <Text style={{
-                color: '#FFD700',
-                fontSize: 24,
-                fontWeight: 'bold',
-                textAlign: 'center',
-                marginBottom: 15,
-                textShadowColor: 'rgba(0, 0, 0, 0.9)',
-                textShadowOffset: { width: 0, height: 3 },
-                textShadowRadius: 6,
-              }}>
-                ⭐ {t('stories.yourFavorites', { defaultValue: 'Your Favorites' })}
-              </Text>
-              <FlatList
-                data={favoriteStories}
-                renderItem={renderStoryCard}
-                keyExtractor={keyExtractor}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                getItemLayout={getItemLayout}
-                removeClippedSubviews={true}
-                maxToRenderPerBatch={4}
-                windowSize={5}
-                initialNumToRender={4}
-                updateCellsBatchingPeriod={100}
-                decelerationRate="fast"
-                snapToInterval={ITEM_WIDTH}
-                snapToAlignment="start"
-                contentContainerStyle={styles.carouselContent}
-                scrollEnabled={!isTransitioning && !shouldShowStoryReader && !isExpandingToReader}
-              />
+          <Animated.View style={viewFadeStyle}>
+          {storyViewMode === 'carousel' ? (
+            <>
+              {/* Your Favorites Carousel - shown only if there are favorites */}
+              {favoriteStories.length > 0 && (
+                <View style={{ marginBottom: 40 }}>
+                  <Text style={styles.genreHeadingText}>
+                    ⭐ {t('stories.yourFavorites', { defaultValue: 'Your Favorites' })}
+                  </Text>
+                  <FlatList
+                    data={favoriteStories}
+                    renderItem={renderStoryCard}
+                    keyExtractor={keyExtractor}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    getItemLayout={getItemLayout}
+                    removeClippedSubviews={true}
+                    maxToRenderPerBatch={4}
+                    windowSize={5}
+                    initialNumToRender={4}
+                    updateCellsBatchingPeriod={100}
+                    decelerationRate="fast"
+                    snapToInterval={ITEM_WIDTH}
+                    snapToAlignment="start"
+                    contentContainerStyle={styles.carouselContent}
+                    scrollEnabled={!isTransitioning && !shouldShowStoryReader && !isExpandingToReader}
+                  />
+                </View>
+              )}
+
+              {availableGenres.map((genre) => {
+                const items = genreItems[genre] || [];
+                const genreName = t(`stories.genres.${genre}`, { defaultValue: genre.charAt(0).toUpperCase() + genre.slice(1) });
+                const genreHeading = genre === 'personalized'
+                  ? t('stories.filterTags.personalized', { defaultValue: 'Your Story' })
+                  : t('stories.genreStories', { genre: genreName, defaultValue: `${genreName} Stories` });
+
+                return (
+                  <View key={genre} style={{ marginBottom: 40 }}>
+                    <Text style={styles.genreHeadingText}>{genreHeading}</Text>
+                    <FlatList
+                      data={items}
+                      extraData={bubbleSwap}
+                      renderItem={renderDisplayItem}
+                      keyExtractor={displayItemKeyExtractor}
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      getItemLayout={getItemLayout}
+                      removeClippedSubviews={false}
+                      maxToRenderPerBatch={4}
+                      windowSize={5}
+                      initialNumToRender={4}
+                      updateCellsBatchingPeriod={100}
+                      decelerationRate="fast"
+                      snapToInterval={ITEM_WIDTH}
+                      snapToAlignment="start"
+                      contentContainerStyle={styles.carouselContent}
+                      scrollEnabled={!isTransitioning && !shouldShowStoryReader && !isExpandingToReader}
+                    />
+                  </View>
+                );
+              })}
+            </>
+          ) : (
+            /* ── GRID VIEW ── */
+            <View style={styles.gridContainer}>
+              {availableGenres.map((genre) => {
+                const items = genreItems[genre] || [];
+                const genreName = t(`stories.genres.${genre}`, { defaultValue: genre.charAt(0).toUpperCase() + genre.slice(1) });
+                const genreHeading = genre === 'personalized'
+                  ? t('stories.filterTags.personalized', { defaultValue: 'Your Story' })
+                  : t('stories.genreStories', { genre: genreName, defaultValue: `${genreName} Stories` });
+
+                return (
+                  <View key={genre}>
+                    <Text style={styles.gridGenreHeading}>{genreHeading}</Text>
+                    <View style={styles.gridRow}>
+                      {items.map((item) => {
+                        const itemKey = item.type === 'story' ? item.data.id : item.data.storyId;
+                        if (item.type === 'story') {
+                          const story = item.data;
+                          return (
+                            <View key={itemKey} style={styles.gridCell}>
+                              <StoryCard
+                                story={story}
+                                onPress={handleStoryPress}
+                                onLongPress={handleLongPress}
+                                cardWidth={gridCardW}
+                                cardHeight={gridCardH}
+                                borderRadius={scaledBorderRadius}
+                                emojiFontSize={scaledEmojiFontSize}
+                                isHidden={(isTransitioning || shouldShowStoryReader || isExpandingToReader) && selectedStoryId === story.id}
+                                isUnread={story.isAvailable && !readStoryIds.includes(story.id)}
+                                isDeleting={deletingStoryId === story.id}
+                                onDeleteAnimationComplete={handleImplodeComplete}
+                                language={currentLanguage}
+                              />
+                            </View>
+                          );
+                        }
+                        return (
+                          <View key={itemKey} style={styles.gridCell}>
+                            <CatalogStoryCard
+                              entry={item.data}
+                              cardWidth={gridCardW}
+                              cardHeight={gridCardH}
+                              borderRadius={scaledBorderRadius}
+                              language={currentLanguage}
+                              onDownloadComplete={handleCatalogDownloadComplete}
+                              onLongPress={handleCatalogPreview}
+                              onAuthError={handleAuthError}
+                              isLocked={effectiveTier === 'free' && !item.data.isFree && !item.data.isShareToUnlock}
+                              onLockedPress={() => setShowSubscription(true)}
+                              onDownloadLimitReached={handleDownloadLimitReached}
+                              isShareToUnlock={!!item.data.isShareToUnlock && !shareUnlockedIds.has(item.data.storyId)}
+                              onShareToUnlock={handleShareToUnlock}
+                            />
+                          </View>
+                        );
+                      })}
+                    </View>
+                  </View>
+                );
+              })}
             </View>
           )}
-
-          {availableGenres.map((genre) => {
-            const items = genreItems[genre] || [];
-            // Use translated genre name
-            const genreName = t(`stories.genres.${genre}`, { defaultValue: genre.charAt(0).toUpperCase() + genre.slice(1) });
-            const genreHeading = genre === 'personalized'
-              ? t('stories.filterTags.personalized', { defaultValue: 'Your Story' })
-              : t('stories.genreStories', { genre: genreName, defaultValue: `${genreName} Stories` });
-
-            return (
-              <View key={genre} style={{ marginBottom: 40 }}>
-                {/* Centered Genre Heading - Shadow only */}
-                <Text style={{
-                  color: 'white',
-                  fontSize: 24,
-                  fontWeight: 'bold',
-                  textAlign: 'center',
-                  marginBottom: 15,
-                  textShadowColor: 'rgba(0, 0, 0, 0.9)',
-                  textShadowOffset: { width: 0, height: 3 },
-                  textShadowRadius: 6,
-                }}>
-                  {genreHeading}
-                </Text>
-
-                {/* Horizontal Carousel — merged downloaded + catalog items */}
-                <FlatList
-                  data={items}
-                  extraData={bubbleSwap}
-                  renderItem={renderDisplayItem}
-                  keyExtractor={displayItemKeyExtractor}
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  getItemLayout={getItemLayout}
-                  removeClippedSubviews={false}
-                  maxToRenderPerBatch={4}
-                  windowSize={5}
-                  initialNumToRender={4}
-                  updateCellsBatchingPeriod={100}
-                  decelerationRate="fast"
-                  snapToInterval={ITEM_WIDTH}
-                  snapToAlignment="start"
-                  contentContainerStyle={styles.carouselContent}
-                  scrollEnabled={!isTransitioning && !shouldShowStoryReader && !isExpandingToReader}
-                />
-              </View>
-            );
-          })}
+          </Animated.View>
         </ScrollView>
       </View>
 
@@ -1382,5 +1513,53 @@ const styles = StyleSheet.create({
   shimmerGradient: {
     flex: 1,
     width: '100%',
+  },
+  // ── View mode toggle ──
+  viewModeToggle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  // ── Shared genre heading (extracted from inline) ──
+  genreHeadingText: {
+    color: 'white',
+    fontSize: 24,
+    fontWeight: 'bold' as const,
+    textAlign: 'center' as const,
+    marginBottom: 15,
+    textShadowColor: 'rgba(0, 0, 0, 0.9)',
+    textShadowOffset: { width: 0, height: 3 },
+    textShadowRadius: 6,
+  },
+  // ── Grid view ──
+  gridContainer: {
+    paddingHorizontal: GRID_PADDING,
+    paddingBottom: 40,
+  },
+  gridGenreHeading: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: 'bold' as const,
+    fontFamily: Fonts.rounded,
+    marginTop: 20,
+    marginBottom: 12,
+    textShadowColor: 'rgba(0, 0, 0, 0.9)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
+  gridRow: {
+    flexDirection: 'row' as const,
+    flexWrap: 'wrap' as const,
+    gap: GRID_GAP,
+  },
+  gridCell: {
+    width: GRID_CARD_WIDTH,
+    marginBottom: 8,
   },
 });
