@@ -43,6 +43,7 @@ import {
 } from '@/services/music-asset-registry';
 import type { MusicChallenge } from '@/types/story';
 import { useGlobalSound } from '@/contexts/global-sound-context';
+import { SubscriptionOverlay } from '@/components/ui/subscription-overlay';
 
 // Pre-generate star positions at module level (same as story selection screen)
 const STAR_POSITIONS = generateStarPositions(VISUAL_EFFECTS.STAR_COUNT);
@@ -66,6 +67,7 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
   const [musicUiHidden, setMusicUiHidden] = useState(false);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [instrumentIsRotated, setInstrumentIsRotated] = useState(false);
+  const [showSubscription, setShowSubscription] = useState(false);
 
   // Remap portrait safe-area insets for the 90° CSS-rotated container.
   // Inside the rotated view: top←left, bottom←right, left←bottom, right←top
@@ -465,9 +467,16 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
             onSelect={handleInstrumentSelect}
             onClose={handleBack}
             hideBackdrop
+            onLockedPress={() => setShowSubscription(true)}
           />
         </Animated.View>
       )}
+
+      {/* Subscription Overlay — triggered from locked instrument tap */}
+      <SubscriptionOverlay
+        visible={showSubscription}
+        onClose={() => setShowSubscription(false)}
+      />
     </View>
   );
 }

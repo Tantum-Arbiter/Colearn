@@ -53,6 +53,7 @@ import {
   getInstrument,
   InstrumentDefinition,
 } from '@/services/music-asset-registry';
+import { StoryAccessService } from '@/services/story-access-service';
 
 // ============================================================================
 // Carousel configuration — tuned for 6 instruments
@@ -75,6 +76,8 @@ interface InstrumentPickerOverlayProps {
   filterInstrumentIds?: string[];
   /** If true, the built-in blur/dark backdrop is hidden (caller provides its own) */
   hideBackdrop?: boolean;
+  /** Called when user tries to select a locked (subscription-gated) instrument */
+  onLockedPress?: () => void;
 }
 
 export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverlay({
@@ -85,6 +88,7 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
   isRotated = false,
   filterInstrumentIds,
   hideBackdrop = false,
+  onLockedPress,
 }: InstrumentPickerOverlayProps) {
   const { t } = useTranslation();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
@@ -134,8 +138,13 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
     const centeredIndex = getCenteredIndexFromRotation(rotation.value);
     const instrument = instruments[centeredIndex] ?? instruments[normalizedDefaultIndex] ?? instruments[0];
     if (!instrument) return;
+    // Block selection of locked instruments
+    if (!StoryAccessService.isInstrumentUnlocked(instrument.id)) {
+      onLockedPress?.();
+      return;
+    }
     onSelect(instrument.id);
-  }, [getCenteredIndexFromRotation, instruments, normalizedDefaultIndex, onSelect, rotation]);
+  }, [getCenteredIndexFromRotation, instruments, normalizedDefaultIndex, onSelect, onLockedPress, rotation]);
 
   // Navigate one item left or right
   const goToNeighbor = useCallback((direction: -1 | 1) => {
@@ -236,7 +245,7 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
             onPress={() => goToNeighbor(1)}
             accessibilityLabel={t('music.previousInstrument', { defaultValue: 'Previous instrument' })}
           >
-            <Text style={styles.arrowText}>‹</Text>
+            <Ionicons name="chevron-back" size={22} color="rgba(255, 255, 255, 0.8)" />
           </Pressable>
 
           <GestureHandlerRootView style={styles.gestureRoot}>
@@ -257,6 +266,8 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
                       index={index}
                       anglePerItem={anglePerItem}
                       rotation={rotation}
+                      isLocked={!StoryAccessService.isInstrumentUnlocked(instrument.id)}
+                      onLockedPress={onLockedPress}
                     />
                   ))}
                 </Animated.View>
@@ -270,7 +281,7 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
             onPress={() => goToNeighbor(-1)}
             accessibilityLabel={t('music.nextInstrument', { defaultValue: 'Next instrument' })}
           >
-            <Text style={styles.arrowText}>›</Text>
+            <Ionicons name="chevron-forward" size={22} color="rgba(255, 255, 255, 0.8)" />
           </Pressable>
         </View>
 
@@ -299,6 +310,8 @@ interface CarouselItemProps {
   index: number;
   anglePerItem: number;
   rotation: SharedValue<number>;
+  isLocked?: boolean;
+  onLockedPress?: () => void;
 }
 
 function CarouselItem({
@@ -306,6 +319,8 @@ function CarouselItem({
   index,
   anglePerItem,
   rotation,
+  isLocked = false,
+  onLockedPress,
 }: CarouselItemProps) {
   // Pulsing ring animation — always running, only visible when centered
   const pulseScale = useSharedValue(1);
@@ -400,11 +415,22 @@ function CarouselItem({
           Navigation is done via the arrow buttons or swiping. */}
       <View style={styles.itemPressable} testID={`instrument-${instrument.id}`}>
         {hasImage ? (
-          <Image source={instrument.image} style={styles.instrumentImage} resizeMode="contain" />
+          <Image source={instrument.image} style={[styles.instrumentImage, isLocked && { opacity: 0.5 }]} resizeMode="contain" />
         ) : (
-          <View style={[styles.instrumentPlaceholder, { backgroundColor: instrument.noteLayout[0]?.color || '#666' }]}>
+          <View style={[styles.instrumentPlaceholder, { backgroundColor: instrument.noteLayout[0]?.color || '#666' }, isLocked && { opacity: 0.5 }]}>
             <Text style={styles.placeholderEmoji}>{instrument.noteLayout[0]?.label || '🎵'}</Text>
           </View>
+        )}
+        {/* Lock overlay for subscription-gated instruments */}
+        {isLocked && (
+          <Pressable
+            onPress={onLockedPress}
+            style={styles.lockOverlay}
+          >
+            <View style={styles.lockBadge}>
+              <Ionicons name="lock-closed" size={18} color="#FFFFFF" />
+            </View>
+          </Pressable>
         )}
       </View>
 
@@ -514,9 +540,9 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.8)',
     fontSize: 32,
     fontWeight: '300',
-    marginTop: -2,
   },
   gestureRoot: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -618,5 +644,22 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 4,
     maxWidth: 200,
+  },
+  lockOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    borderRadius: INSTRUMENT_IMAGE_SIZE / 2,
+  },
+  lockBadge: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 200, 50, 0.7)',
   },
 });

@@ -57,16 +57,19 @@ jest.mock('@/hooks/use-parents-only-challenge', () => ({
   }),
 }));
 
-jest.mock('@/store/app-store', () => ({
-  useAppStore: (selector?: (state: any) => any) => {
-    const state = {
-      setTextSizeScale: jest.fn(),
-      markStoryAsRead: jest.fn(),
-      recordReadingSession: jest.fn(),
-    };
-    return selector ? selector(state) : state;
-  },
-}));
+jest.mock('@/store/app-store', () => {
+  const state = {
+    setTextSizeScale: jest.fn(),
+    markStoryAsRead: jest.fn(),
+    recordReadingSession: jest.fn(),
+    getEffectiveTier: () => 'premium' as const,
+    subscriptionTier: 'premium' as const,
+    devTierOverride: null,
+  };
+  const useAppStore = (selector?: (s: any) => any) => selector ? selector(state) : state;
+  useAppStore.getState = () => state;
+  return { useAppStore };
+});
 
 jest.mock('@/services/voice-recording-service', () => ({
   voiceRecordingService: {

@@ -38,6 +38,7 @@ import { useStoryTransition } from '@/contexts/story-transition-context';
 import { MusicControl } from '../ui/music-control';
 import { AudioControlModal } from '../ui/audio-control-modal';
 import { ParentsOnlyModal } from '../ui/parents-only-modal';
+import { SubscriptionOverlay } from '../ui/subscription-overlay';
 import { useAppStore } from '@/store/app-store';
 import { useAccessibility, TEXT_SIZE_OPTIONS } from '@/hooks/use-accessibility';
 import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
@@ -193,6 +194,7 @@ export function StoryBookReader({
   const [showMusicSheet, setShowMusicSheet] = useState(false);
   // Track whether the instrument UI is currently rotated (blow mode / manual rotate)
   const [instrumentIsRotated, setInstrumentIsRotated] = useState(false);
+  const [showSubscription, setShowSubscription] = useState(false);
   // Animation shared value for sliding the music practice overlay down on close
   const musicPracticeSlideY = useSharedValue(0);
   const musicPracticeOpacity = useSharedValue(1);
@@ -3328,6 +3330,13 @@ export function StoryBookReader({
         onClose={handleCloseInstrumentPicker}
         defaultInstrumentId={selectedInstrumentId || cmsDefaultInstrumentId}
         isRotated={instrumentIsRotated}
+        onLockedPress={() => setShowSubscription(true)}
+      />
+
+      {/* Subscription Overlay — triggered from locked instrument tap */}
+      <SubscriptionOverlay
+        visible={showSubscription}
+        onClose={() => setShowSubscription(false)}
       />
     </Animated.View>
   );
