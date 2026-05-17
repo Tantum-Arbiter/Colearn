@@ -672,6 +672,56 @@ public class AuthenticationStepDefs extends BaseStepDefs {
         );
     }
 
+    // --- Account Deletion unhappy-case WireMock stubs ---
+
+    @Given("the account deletion service returns user not found")
+    public void theAccountDeletionServiceReturnsUserNotFound() {
+        StubMapping m = WireMock.stubFor(
+            WireMock.delete(WireMock.urlPathEqualTo("/api/account"))
+                .withHeader("Authorization", WireMock.matching("Bearer valid-.*"))
+                .atPriority(1)
+                .willReturn(WireMock.aResponse()
+                    .withStatus(404)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody("""
+                        {"success":false,"errorCode":"GTW-400","error":"User not found","message":"No account found for the authenticated user"}
+                        """))
+        );
+        scenarioStubs.add(m);
+    }
+
+    @Given("the account deletion service returns deletion already in progress")
+    public void theAccountDeletionServiceReturnsDeletionAlreadyInProgress() {
+        StubMapping m = WireMock.stubFor(
+            WireMock.delete(WireMock.urlPathEqualTo("/api/account"))
+                .withHeader("Authorization", WireMock.matching("Bearer valid-.*"))
+                .atPriority(1)
+                .willReturn(WireMock.aResponse()
+                    .withStatus(409)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody("""
+                        {"success":false,"errorCode":"ACC-002","error":"Account deletion already in progress","message":"A deletion request is already being processed for this account"}
+                        """))
+        );
+        scenarioStubs.add(m);
+    }
+
+    @Given("the account deletion service returns an internal failure")
+    public void theAccountDeletionServiceReturnsAnInternalFailure() {
+        StubMapping m = WireMock.stubFor(
+            WireMock.delete(WireMock.urlPathEqualTo("/api/account"))
+                .withHeader("Authorization", WireMock.matching("Bearer valid-.*"))
+                .atPriority(1)
+                .willReturn(WireMock.aResponse()
+                    .withStatus(500)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody("""
+                        {"success":false,"errorCode":"ACC-003","error":"Account deletion failed","message":"An unexpected error occurred during account deletion"}
+                        """))
+        );
+        scenarioStubs.add(m);
+    }
+
     // Helper to defensively (re)configure WireMock target host/port
     private void ensureWireMockConfigured() {
         // Skip WireMock configuration when running against GCP (real services)

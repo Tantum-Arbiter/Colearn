@@ -85,6 +85,16 @@ public class TestProxyController {
         return forward(request, defaultRestTemplate, "default", "User Service");
     }
 
+    @RequestMapping(value = "/api/account/**", method = { RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.DELETE })
+    public ResponseEntity<byte[]> proxyAccount(HttpServletRequest request) throws IOException, TimeoutException {
+        return forward(request, defaultRestTemplate, "default", "Account Service");
+    }
+
+    @RequestMapping(value = "/api/account", method = { RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.DELETE })
+    public ResponseEntity<byte[]> proxyAccountRoot(HttpServletRequest request) throws IOException, TimeoutException {
+        return forward(request, defaultRestTemplate, "default", "Account Service");
+    }
+
     @RequestMapping(value = "/api/auth/**", method = { RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.DELETE })
     public ResponseEntity<byte[]> proxyAuth(HttpServletRequest request) throws IOException, TimeoutException {
         return forward(request, defaultRestTemplate, "default", "Auth Service");

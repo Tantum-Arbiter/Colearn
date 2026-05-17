@@ -316,6 +316,33 @@ public class GatewayStepDefs extends BaseStepDefs {
                         }
                         """))
         );
+
+        // DELETE /api/account (account deletion — success)
+        WireMock.stubFor(
+            WireMock.delete(WireMock.urlPathEqualTo("/api/account"))
+                .withHeader("Authorization", WireMock.matching("Bearer valid-.*"))
+                .willReturn(WireMock.aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody("""
+                        {
+                          "status": "deleted",
+                          "message": "Your account and all associated data have been permanently deleted."
+                        }
+                        """))
+        );
+
+        // DELETE /api/account — unauthenticated (no valid token)
+        WireMock.stubFor(
+            WireMock.delete(WireMock.urlPathEqualTo("/api/account"))
+                .atPriority(10)
+                .willReturn(WireMock.aResponse()
+                    .withStatus(401)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody("""
+                        {"success":false,"error":"Unauthorized","message":"Authentication required"}
+                        """))
+        );
     }
 
     @Given("test data is cleaned up for the current user")
@@ -394,6 +421,31 @@ public class GatewayStepDefs extends BaseStepDefs {
             .body(body)
             .when()
                 .post(endpoint);
+    }
+
+    @When("I make a DELETE request to {string}")
+    public void iMakeADeleteRequestTo(String endpoint) {
+        if (currentAuthToken != null && endpoint.startsWith("/api/")) {
+            lastResponse = applyAuthenticatedHeaders(given())
+                .when()
+                    .delete(endpoint);
+        } else {
+            lastResponse = applyDefaultClientHeaders(given())
+                .when()
+                    .delete(endpoint);
+        }
+    }
+
+    @When("I make an authenticated DELETE request to {string} with token {string}")
+    public void iMakeAnAuthenticatedDeleteRequestToWithToken(String endpoint, String token) {
+        lastResponse = given()
+            .header("X-Client-Platform", "ios")
+            .header("X-Client-Version", "1.0.0")
+            .header("X-Device-ID", "device-123")
+            .header("Authorization", "Bearer " + token)
+            .header("Content-Type", "application/json")
+            .when()
+                .delete(endpoint);
     }
 
     @Then("the response status code should be {int}")
