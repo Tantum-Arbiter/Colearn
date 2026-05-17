@@ -483,7 +483,7 @@ export default {
       consent: {
         title: '始める前に',
         body: '保護者として、以下をお読みになり同意してください：',
-        button: '同意します — 始めましょう！',
+        button: '同意します',
         checkboxes: {
           privacy: 'プライバシーポリシーを読み、同意します',
           terms: '利用規約を読み、同意します',

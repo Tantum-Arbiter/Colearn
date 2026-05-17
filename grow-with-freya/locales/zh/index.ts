@@ -483,7 +483,7 @@ export default {
       consent: {
         title: '在开始之前',
         body: '作为家长或监护人，请阅读并同意以下内容：',
-        button: '我同意 — 开始吧！',
+        button: '我同意',
         checkboxes: {
           privacy: '我已阅读并同意隐私政策',
           terms: '我已阅读并同意使用条款',

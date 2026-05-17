@@ -524,7 +524,7 @@ export default {
       consent: {
         title: 'Before We Begin',
         body: 'As a parent or guardian, please review and agree to the following:',
-        button: "I Agree — Let's Go!",
+        button: "I Agree",
         checkboxes: {
           privacy: "I have read and accept the Privacy Policy",
           terms: "I have read and accept the Terms & Conditions",
