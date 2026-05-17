@@ -139,9 +139,10 @@ export function TermsConditionsScreen({ onBack }: TermsConditionsScreenProps) {
           </View>
 
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>10. Termination</Text>
+            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>10. Termination &amp; account deletion</Text>
             <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
-              We may suspend or terminate your access if you breach these Terms or we must do so by law. You may stop using the app at any time and can request data erasure (see Privacy Policy).
+              We may suspend or terminate your access if you breach these Terms or we must do so by law. You may stop using the app at any time.{'\n\n'}
+              You can delete your account and all associated data at any time via Account → Delete Account in the app, or by emailing support@growwithfreya.com. Upon deletion, your profile, child profiles, reading history, and all server-side data are permanently removed (see Privacy Policy for retention details).
             </Text>
           </View>
 
@@ -370,9 +371,10 @@ export function TermsConditionsContent({ paddingTop = 0 }: TermsConditionsConten
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>10. Termination</Text>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>10. Termination &amp; account deletion</Text>
           <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
-            We may suspend or terminate your access if you breach these Terms or we must do so by law. You may stop using the app at any time and can request data erasure (see Privacy Policy).
+            We may suspend or terminate your access if you breach these Terms or we must do so by law. You may stop using the app at any time.{'\n\n'}
+            You can delete your account and all associated data at any time via Account → Delete Account in the app, or by emailing support@growwithfreya.com. Upon deletion, your profile, child profiles, reading history, and all server-side data are permanently removed (see Privacy Policy for retention details).
           </Text>
         </View>
 

@@ -42,6 +42,15 @@ export default {
       title: 'Réinitialiser l\'application',
       message: 'Cela effacera TOUTES les données de l\'application, y compris votre connexion, votre personnage et vos paramètres. Êtes-vous sûr ?',
     },
+    deleteAccount: {
+      title: 'Supprimer le compte',
+      message: 'Cela supprimera définitivement votre compte et toutes les données associées. Cette action est irréversible.',
+      confirm: 'Tapez SUPPRIMER pour confirmer',
+      success: 'Votre compte a été supprimé.',
+      error: 'Échec de la suppression du compte. Veuillez réessayer.',
+      sessionExpired: 'Votre session a expiré. Veuillez vous reconnecter pour supprimer votre compte.',
+      deleting: 'Suppression du compte...',
+    },
     deleteReminder: {
       title: 'Supprimer le rappel',
       message: 'Êtes-vous sûr de vouloir supprimer « {{title}} » ?',
@@ -442,6 +451,8 @@ export default {
     createAccount: 'Créez un compte pour enregistrer votre progression',
     crashReports: 'Rapports de plantage',
     crashReportsHint: 'Aidez-nous à corriger les bogues en envoyant des données de plantage anonymes',
+    deleteAccount: 'Supprimer le compte',
+    deleteAccountHint: 'Supprimer définitivement votre compte et toutes les données',
   },
 
   // Profile validation and edit profile screen
@@ -497,8 +508,23 @@ export default {
       privacy: {
         title: 'Confidentialité et démarrage',
         body: 'Vos données sont sécurisées et pseudonymisées. Aucune information personnelle n\'est collectée — la connexion utilise uniquement un identifiant anonyme.\n\nAidez-nous à nous améliorer en partageant des rapports de plantage anonymes (modifiable dans les Paramètres).',
-        button: 'C\'est parti !',
+        button: 'Suivant',
         showCrashReportingDialog: 'true',
+      },
+      consent: {
+        title: 'Avant de commencer',
+        body: 'En tant que parent ou tuteur, veuillez lire et accepter ce qui suit :',
+        button: 'J\'accepte — Allons-y !',
+        checkboxes: {
+          privacy: 'J\'ai lu et j\'accepte la Politique de confidentialité',
+          terms: 'J\'ai lu et j\'accepte les Conditions d\'utilisation',
+          data: 'J\'autorise earlyroots à stocker le pseudonyme et l\'avatar de mon enfant pour personnaliser son expérience',
+        },
+        links: {
+          privacyPolicy: 'Voir la Politique de confidentialité',
+          termsConditions: 'Voir les Conditions d\'utilisation',
+        },
+        policyVersion: '1.0',
       },
     },
     crashReportingDialog: {
@@ -512,12 +538,14 @@ export default {
       howItWorks: '🌟 Trois façons d\'explorer',
       family: '👨‍👩‍👧‍👦 Du temps ensemble, de vrais bénéfices',
       privacy: '🔒 Confidentialité d\'abord, toujours',
+      consent: '✅ Une dernière étape',
     },
     benefits: {
       welcome: 'Soutenu par la recherche en développement de l\'enfant',
       howItWorks: 'Histoires · Musique · Voix — tout en une app',
       family: 'Recommandé par des experts en développement de l\'enfant',
       privacy: 'Vos données restent les vôtres',
+      consent: 'Votre consentement protège votre famille',
     },
   },
 

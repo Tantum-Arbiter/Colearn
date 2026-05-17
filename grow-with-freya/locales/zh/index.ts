@@ -37,6 +37,15 @@ export default {
       title: '重置应用',
       message: '这将删除所有应用数据，包括登录、角色和设置。您确定吗？',
     },
+    deleteAccount: {
+      title: '删除账户',
+      message: '这将永久删除您的账户和所有相关数据。此操作无法撤消。',
+      confirm: '输入"删除"以确认',
+      success: '您的账户已被删除。',
+      error: '删除账户失败。请重试。',
+      sessionExpired: '您的会话已过期。请重新登录以删除您的账户。',
+      deleting: '正在删除账户...',
+    },
     deleteReminder: {
       title: '删除提醒',
       message: '删除"{{title}}"？',
@@ -415,6 +424,8 @@ export default {
     createAccount: '创建账户以保存进度',
     crashReports: '崩溃报告',
     crashReportsHint: '发送匿名崩溃数据以帮助我们修复错误',
+    deleteAccount: '删除账户',
+    deleteAccountHint: '永久删除您的账户和所有数据',
   },
   profile: {
     enterNickname: '输入昵称',
@@ -466,8 +477,23 @@ export default {
       privacy: {
         title: '隐私与开始',
         body: '您的数据安全且经过假名化处理。不收集个人信息——登录仅使用匿名标识符。\n\n分享匿名崩溃报告帮助我们改进（您可以在设置中随时更改）。',
-        button: '开始吧！',
+        button: '下一步',
         showCrashReportingDialog: 'true',
+      },
+      consent: {
+        title: '在开始之前',
+        body: '作为家长或监护人，请阅读并同意以下内容：',
+        button: '我同意 — 开始吧！',
+        checkboxes: {
+          privacy: '我已阅读并同意隐私政策',
+          terms: '我已阅读并同意使用条款',
+          data: '我同意earlyroots存储我孩子的显示名称和头像以个性化体验',
+        },
+        links: {
+          privacyPolicy: '查看隐私政策',
+          termsConditions: '查看使用条款',
+        },
+        policyVersion: '1.0',
       },
     },
     crashReportingDialog: {
@@ -481,12 +507,14 @@ export default {
       howItWorks: '🌟 三种探索方式',
       family: '👨‍👩‍👧‍👦 共度时光，真实收益',
       privacy: '🔒 隐私优先',
+      consent: '✅ 最后一步',
     },
     benefits: {
       welcome: '基于儿童发展研究',
       howItWorks: '故事 · 音乐 · 声音 — 一个应用全搞定',
       family: '儿童发展专家推荐',
       privacy: '您的数据属于您',
+      consent: '您的同意保护您的家庭',
     },
   },
   tutorial: {

@@ -169,6 +169,7 @@ export function PrivacyPolicyScreen({ onBack }: PrivacyPolicyScreenProps) {
               • Portability (get data in a machine-readable format){'\n'}
               • Objection (where we rely on legitimate interests){'\n'}
               • Withdraw consent (for consent-based features){'\n\n'}
+              You can also delete your account and all associated data directly in the app via Account → Delete Account. Upon deletion, your profile, child profiles, reading history, and all server-side data are permanently removed.{'\n\n'}
               You also have the right to complain to the UK ICO or your local data protection authority. UK ICO: https://ico.org.uk
             </Text>
           </View>
@@ -427,6 +428,7 @@ export function PrivacyPolicyContent({ paddingTop = 0 }: PrivacyPolicyContentPro
           <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
             You can exercise these rights by emailing privacy@growwithfreya.com:{'\n'}
             • Access, Rectification, Erasure, Restriction, Portability, Objection, Withdraw consent{'\n\n'}
+            You can also delete your account and all associated data directly in the app via Account → Delete Account.{'\n\n'}
             You also have the right to complain to the UK ICO or your local data protection authority.
           </Text>
         </View>

@@ -52,6 +52,10 @@ export interface AppState {
   // Privacy settings
   crashReportingEnabled: boolean; // User consent for Sentry crash reporting
 
+  // Parental consent (COPPA/GDPR)
+  consentTimestamp: string | null; // ISO timestamp when parent gave consent
+  consentPolicyVersion: string | null; // Version of privacy policy accepted (e.g. "1.0")
+
   // Accessibility settings
   textSizeScale: number; // 1.0 = normal, 0.8 = smaller, 1.2/1.4 = larger
 
@@ -97,6 +101,7 @@ export interface AppState {
   setNotificationsEnabled: (enabled: boolean) => void;
   setNotificationPermissionRequested: (requested: boolean) => void;
   setCrashReportingEnabled: (enabled: boolean) => void;
+  setConsent: (policyVersion: string) => void;
   setTextSizeScale: (scale: number) => void;
   setSubscriptionTier: (tier: SubscriptionTier) => void;
   setDevSubscriptionOverride: (tier: SubscriptionTier | null) => void;
@@ -141,6 +146,8 @@ export const useAppStore = create<AppState>()(
       notificationsEnabled: false,
       hasRequestedNotificationPermission: false,
       crashReportingEnabled: false, // Default to disabled until user consents
+      consentTimestamp: null,
+      consentPolicyVersion: null,
       textSizeScale: 1.0, // Default to normal size
       favoriteStoryIds: [], // Start with no favorites
       readStoryIds: [], // Start with no read stories
@@ -190,6 +197,10 @@ export const useAppStore = create<AppState>()(
       setNotificationsEnabled: (enabled) => set({ notificationsEnabled: enabled }),
       setNotificationPermissionRequested: (requested) => set({ hasRequestedNotificationPermission: requested }),
       setCrashReportingEnabled: (enabled) => set({ crashReportingEnabled: enabled }),
+      setConsent: (policyVersion) => set({
+        consentTimestamp: new Date().toISOString(),
+        consentPolicyVersion: policyVersion,
+      }),
       setSubscriptionTier: (tier: SubscriptionTier) => set({ subscriptionTier: tier }),
       setDevSubscriptionOverride: (tier: SubscriptionTier | null) => set({ _devSubscriptionOverride: tier }),
       getEffectiveTier: (): SubscriptionTier => {
@@ -277,6 +288,8 @@ export const useAppStore = create<AppState>()(
         notificationsEnabled: state.notificationsEnabled,
         hasRequestedNotificationPermission: state.hasRequestedNotificationPermission,
         crashReportingEnabled: state.crashReportingEnabled,
+        consentTimestamp: state.consentTimestamp,
+        consentPolicyVersion: state.consentPolicyVersion,
         textSizeScale: state.textSizeScale,
         favoriteStoryIds: state.favoriteStoryIds,
         readStoryIds: state.readStoryIds,

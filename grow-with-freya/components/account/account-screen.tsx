@@ -305,9 +305,39 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
 
       Alert.alert(t('common.success'), t('alerts.deleteAccount.success'));
       onBack();
-    } catch (error) {
+    } catch (error: any) {
       log.error('Account deletion error:', error);
-      Alert.alert(t('common.error'), t('alerts.deleteAccount.error'));
+
+      // Detect auth-related failures (token refresh failed, not authenticated, etc.)
+      const isAuthError = error?.message?.includes('login') ||
+        error?.message?.includes('authenticated') ||
+        error?.message?.includes('refresh') ||
+        error?.message?.includes('token');
+
+      if (isAuthError) {
+        // Tokens were already cleared by the failed refresh — update UI state to match
+        setGuestMode(true);
+        Alert.alert(
+          t('alerts.deleteAccount.title'),
+          t('alerts.deleteAccount.sessionExpired'),
+          [
+            {
+              text: t('common.cancel'),
+              style: 'cancel',
+            },
+            {
+              text: t('common.login'),
+              onPress: () => {
+                setGuestMode(false);
+                setShowLoginAfterOnboarding(true);
+                onBack();
+              },
+            },
+          ]
+        );
+      } else {
+        Alert.alert(t('common.error'), t('alerts.deleteAccount.error'));
+      }
     } finally {
       setIsDeletingAccount(false);
     }

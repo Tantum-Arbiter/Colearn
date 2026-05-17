@@ -39,6 +39,15 @@ export default {
       title: 'Reficere Applicationem',
       message: 'Hoc omnes applicationis notitias delebit, incluso intrare, characteres et constitutiones. Certusne es?',
     },
+    deleteAccount: {
+      title: 'Delere Rationem',
+      message: 'Hoc rationem tuam et omnia data associata permanenter delebit. Haec actio revocari non potest.',
+      confirm: 'Scribe DELERE ad confirmandum',
+      success: 'Ratio tua deleta est.',
+      error: 'Ratio deleri non potuit. Rursus tempta.',
+      sessionExpired: 'Sessio tua expiravit. Rursus intra ut rationem tuam deleas.',
+      deleting: 'Ratio deletur...',
+    },
     deleteReminder: {
       title: 'Delere Monitorem',
       message: 'Delere "{{title}}"?',
@@ -417,6 +426,8 @@ export default {
     createAccount: 'Crea Rationem ut Progressum Serves',
     crashReports: 'Relationes Collapsus',
     crashReportsHint: 'Mitte Notitias Collapsus Anonymas ut Nobis Errores Reficere Adiuves',
+    deleteAccount: 'Delere Rationem',
+    deleteAccountHint: 'Rationem tuam et omnia data permanenter delere',
   },
   profile: {
     enterNickname: 'Intra Cognomen',
@@ -468,8 +479,23 @@ export default {
       privacy: {
         title: 'Privatio et initium',
         body: 'Data tua secura et pseudonymizata sunt. Nulla informatio personalis colligitur — accessus solum identificatorem anonymum utitur.\n\nAdiuva nos meliorare communicando relationes anonymas de defectis (potes hoc mutare in Optionibus).',
-        button: 'Incipiamus!',
+        button: 'Sequens',
         showCrashReportingDialog: 'true',
+      },
+      consent: {
+        title: 'Antequam incipiamus',
+        body: 'Ut parens vel custos, lege et accepta sequentia:',
+        button: 'Consentio — Incipiamus!',
+        checkboxes: {
+          privacy: 'Legi et accipio Politicam Privationis',
+          terms: 'Legi et accipio Terminos et Condiciones',
+          data: 'Consentio ut earlyroots nomen et imaginem infantis mei servet ad experientiam personalem',
+        },
+        links: {
+          privacyPolicy: 'Vide Politicam Privationis',
+          termsConditions: 'Vide Terminos et Condiciones',
+        },
+        policyVersion: '1.0',
       },
     },
     crashReportingDialog: {
@@ -483,12 +509,14 @@ export default {
       howItWorks: '🌟 Tres modi explorandi',
       family: '👨‍👩‍👧‍👦 Tempus simul, vera beneficia',
       privacy: '🔒 Privatio primum, semper',
+      consent: '✅ Ultimus gradus',
     },
     benefits: {
       welcome: 'Investigatione progressus infantilis fultum',
       howItWorks: 'Fabulae · Musica · Vox — omnia in una applicatione',
       family: 'Commendatum ab expertis progressus infantilis',
       privacy: 'Data tua manent tua',
+      consent: 'Consensus tuus familiam tuam protegit',
     },
   },
   tutorial: {

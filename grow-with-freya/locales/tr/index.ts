@@ -39,6 +39,15 @@ export default {
       title: 'Uygulamayı Sıfırla',
       message: 'Bu, giriş, karakterler ve ayarlar dahil tüm uygulama verilerini silecektir. Emin misiniz?',
     },
+    deleteAccount: {
+      title: 'Hesabı Sil',
+      message: 'Bu, hesabınızı ve tüm ilişkili verileri kalıcı olarak silecektir. Bu işlem geri alınamaz.',
+      confirm: 'Onaylamak için SİL yazın',
+      success: 'Hesabınız silindi.',
+      error: 'Hesap silinemedi. Lütfen tekrar deneyin.',
+      sessionExpired: 'Oturumunuz sona erdi. Hesabınızı silmek için lütfen tekrar giriş yapın.',
+      deleting: 'Hesap siliniyor...',
+    },
     deleteReminder: {
       title: 'Hatırlatıcıyı Sil',
       message: '"{{title}}" silinsin mi?',
@@ -417,6 +426,8 @@ export default {
     createAccount: 'İlerlemeyi Kaydetmek için Hesap Oluşturun',
     crashReports: 'Çökme Raporları',
     crashReportsHint: 'Hataları düzeltmemize yardımcı olmak için anonim çökme verilerini gönderin',
+    deleteAccount: 'Hesabı Sil',
+    deleteAccountHint: 'Hesabınızı ve tüm verilerinizi kalıcı olarak silin',
   },
   profile: {
     enterNickname: 'Takma Ad Girin',
@@ -468,8 +479,23 @@ export default {
       privacy: {
         title: 'Gizlilik ve başlangıç',
         body: 'Verileriniz güvenli ve takma adlıdır. Kişisel bilgi toplanmaz — giriş yalnızca anonim bir tanımlayıcı kullanır.\n\nAnonim çökme raporlarını paylaşarak gelişmemize yardımcı olun (bunu Ayarlar\'dan değiştirebilirsiniz).',
-        button: 'Başlayalım!',
+        button: 'İleri',
         showCrashReportingDialog: 'true',
+      },
+      consent: {
+        title: 'Başlamadan önce',
+        body: 'Ebeveyn veya vasi olarak lütfen aşağıdakileri okuyun ve kabul edin:',
+        button: 'Kabul ediyorum — Başlayalım!',
+        checkboxes: {
+          privacy: 'Gizlilik Politikasını okudum ve kabul ediyorum',
+          terms: 'Şartlar ve Koşulları okudum ve kabul ediyorum',
+          data: 'Çocuğumun görünen adını ve avatarını deneyimi kişiselleştirmek için earlyroots\'un saklamasına izin veriyorum',
+        },
+        links: {
+          privacyPolicy: 'Gizlilik Politikasını Görüntüle',
+          termsConditions: 'Şartlar ve Koşulları Görüntüle',
+        },
+        policyVersion: '1.0',
       },
     },
     crashReportingDialog: {
@@ -483,12 +509,14 @@ export default {
       howItWorks: '🌟 Keşfetmenin üç yolu',
       family: '👨‍👩‍👧‍👦 Birlikte zaman, gerçek faydalar',
       privacy: '🔒 Gizlilik öncelikli',
+      consent: '✅ Son bir adım',
     },
     benefits: {
       welcome: 'Çocuk gelişimi araştırmalarına dayalı',
       howItWorks: 'Hikayeler · Müzik · Ses — tek uygulamada',
       family: 'Çocuk gelişimi uzmanları tarafından önerilen',
       privacy: 'Verileriniz sizin kalır',
+      consent: 'Onayınız ailenizi korur',
     },
   },
   tutorial: {

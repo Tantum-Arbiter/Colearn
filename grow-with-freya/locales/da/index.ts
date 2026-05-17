@@ -39,6 +39,15 @@ export default {
       title: 'Nulstil app',
       message: 'Dette sletter alle app-data, herunder login, karakterer og indstillinger. Er du sikker?',
     },
+    deleteAccount: {
+      title: 'Slet konto',
+      message: 'Dette sletter permanent din konto og alle tilknyttede data. Denne handling kan ikke fortrydes.',
+      confirm: 'Skriv SLET for at bekræfte',
+      success: 'Din konto er blevet slettet.',
+      error: 'Kunne ikke slette kontoen. Prøv venligst igen.',
+      sessionExpired: 'Din session er udløbet. Log venligst ind igen for at slette din konto.',
+      deleting: 'Sletter konto...',
+    },
     deleteReminder: {
       title: 'Slet påmindelse',
       message: 'Slet "{{title}}"?',
@@ -417,6 +426,8 @@ export default {
     createAccount: 'Opret konto for at gemme fremskridt',
     crashReports: 'Nedbrudrapporter',
     crashReportsHint: 'Send anonym nedbruddata for at hjælpe os med at reparere fejl',
+    deleteAccount: 'Slet konto',
+    deleteAccountHint: 'Slet permanent din konto og alle data',
   },
   profile: {
     enterNickname: 'Angiv kaldenavn',
@@ -468,8 +479,23 @@ export default {
       privacy: {
         title: 'Privatliv og start',
         body: 'Dine data er sikre og pseudonymiserede. Ingen personlige oplysninger indsamles — login bruger kun en anonym identifikator.\n\nHjælp os med at forbedre ved at dele anonyme fejlrapporter (du kan ændre dette i Indstillinger).',
-        button: 'Lad os begynde!',
+        button: 'Næste',
         showCrashReportingDialog: 'true',
+      },
+      consent: {
+        title: 'Før vi begynder',
+        body: 'Som forælder eller værge, læs venligst og accepter følgende:',
+        button: 'Jeg accepterer — Lad os gå!',
+        checkboxes: {
+          privacy: 'Jeg har læst og accepterer privatlivspolitikken',
+          terms: 'Jeg har læst og accepterer vilkår og betingelser',
+          data: 'Jeg giver samtykke til at earlyroots gemmer mit barns visningsnavn og avatar for at tilpasse oplevelsen',
+        },
+        links: {
+          privacyPolicy: 'Se privatlivspolitik',
+          termsConditions: 'Se vilkår og betingelser',
+        },
+        policyVersion: '1.0',
       },
     },
     crashReportingDialog: {
@@ -483,12 +509,14 @@ export default {
       howItWorks: '🌟 Tre måder at udforske',
       family: '👨‍👩‍👧‍👦 Tid sammen, ægte fordele',
       privacy: '🔒 Privatliv først, altid',
+      consent: '✅ Et sidste skridt',
     },
     benefits: {
       welcome: 'Understøttet af forskning i børneudvikling',
       howItWorks: 'Historier · Musik · Stemme — alt i én app',
       family: 'Anbefalet af eksperter i børneudvikling',
       privacy: 'Dine data forbliver dine',
+      consent: 'Dit samtykke beskytter din familie',
     },
   },
   tutorial: {

@@ -48,6 +48,7 @@ export default {
       confirm: 'Escribe ELIMINAR para confirmar',
       success: 'Tu cuenta ha sido eliminada.',
       error: 'Error al eliminar la cuenta. Por favor, inténtalo de nuevo.',
+      sessionExpired: 'Tu sesión ha expirado. Por favor, inicia sesión de nuevo para eliminar tu cuenta.',
       deleting: 'Eliminando cuenta...',
     },
     deleteReminder: {
@@ -507,8 +508,23 @@ export default {
       privacy: {
         title: 'Privacidad y comenzar',
         body: 'Tus datos están seguros y seudonimizados. No se recoge información personal — el inicio de sesión usa solo un identificador anónimo.\n\nAyúdanos a mejorar compartiendo informes de fallos anónimos (puedes cambiarlo en Ajustes).',
-        button: '¡Empecemos!',
+        button: 'Siguiente',
         showCrashReportingDialog: 'true',
+      },
+      consent: {
+        title: 'Antes de empezar',
+        body: 'Como padre o tutor, por favor revisa y acepta lo siguiente:',
+        button: 'Acepto — ¡Vamos!',
+        checkboxes: {
+          privacy: 'He leído y acepto la Política de Privacidad',
+          terms: 'He leído y acepto los Términos y Condiciones',
+          data: 'Consiento que earlyroots almacene el nombre y avatar de mi hijo/a para personalizar su experiencia',
+        },
+        links: {
+          privacyPolicy: 'Ver Política de Privacidad',
+          termsConditions: 'Ver Términos y Condiciones',
+        },
+        policyVersion: '1.0',
       },
     },
     crashReportingDialog: {
@@ -522,12 +538,14 @@ export default {
       howItWorks: '🌟 Tres formas de explorar',
       family: '👨‍👩‍👧‍👦 Tiempo juntos, beneficios reales',
       privacy: '🔒 Privacidad primero, siempre',
+      consent: '✅ Un último paso',
     },
     benefits: {
       welcome: 'Respaldado por investigación en desarrollo infantil',
       howItWorks: 'Historias · Música · Voz — todo en una app',
       family: 'Recomendado por expertos en desarrollo infantil',
       privacy: 'Tus datos son tuyos',
+      consent: 'Tu consentimiento protege a tu familia',
     },
   },
 

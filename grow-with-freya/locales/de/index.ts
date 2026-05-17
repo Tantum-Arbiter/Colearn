@@ -42,6 +42,15 @@ export default {
       title: 'App zurücksetzen',
       message: 'Dies löscht ALLE App-Daten einschließlich deiner Anmeldung, deines Charakters und deiner Einstellungen. Bist du sicher?',
     },
+    deleteAccount: {
+      title: 'Konto löschen',
+      message: 'Dies löscht dauerhaft dein Konto und alle zugehörigen Daten. Diese Aktion kann nicht rückgängig gemacht werden.',
+      confirm: 'Gib LÖSCHEN ein, um zu bestätigen',
+      success: 'Dein Konto wurde gelöscht.',
+      error: 'Konto konnte nicht gelöscht werden. Bitte versuche es erneut.',
+      sessionExpired: 'Deine Sitzung ist abgelaufen. Bitte melde dich erneut an, um dein Konto zu löschen.',
+      deleting: 'Konto wird gelöscht...',
+    },
     deleteReminder: {
       title: 'Erinnerung löschen',
       message: 'Bist du sicher, dass du "{{title}}" löschen möchtest?',
@@ -442,6 +451,8 @@ export default {
     createAccount: 'Erstelle ein Konto um deinen Fortschritt zu speichern',
     crashReports: 'Absturzberichte',
     crashReportsHint: 'Hilf uns Fehler zu beheben, indem du anonyme Absturzdaten sendest',
+    deleteAccount: 'Konto löschen',
+    deleteAccountHint: 'Konto und alle Daten dauerhaft löschen',
   },
 
   // Profile validation and edit profile screen
@@ -497,8 +508,23 @@ export default {
       privacy: {
         title: 'Datenschutz & Loslegen',
         body: 'Deine Daten sind sicher und pseudonymisiert. Es werden keine persönlichen Daten erfasst — die Anmeldung verwendet nur eine anonyme Kennung.\n\nHilf uns, die App zu verbessern, indem du anonyme Absturzberichte teilst (du kannst dies jederzeit in den Einstellungen ändern).',
-        button: 'Los geht\'s!',
+        button: 'Weiter',
         showCrashReportingDialog: 'true',
+      },
+      consent: {
+        title: 'Bevor wir anfangen',
+        body: 'Als Elternteil oder Erziehungsberechtigter, bitte lies und akzeptiere Folgendes:',
+        button: 'Ich stimme zu — Los geht\'s!',
+        checkboxes: {
+          privacy: 'Ich habe die Datenschutzrichtlinie gelesen und akzeptiere sie',
+          terms: 'Ich habe die AGB gelesen und akzeptiere sie',
+          data: 'Ich stimme zu, dass earlyroots den Anzeigenamen und Avatar meines Kindes speichert, um das Erlebnis zu personalisieren',
+        },
+        links: {
+          privacyPolicy: 'Datenschutzrichtlinie ansehen',
+          termsConditions: 'AGB ansehen',
+        },
+        policyVersion: '1.0',
       },
     },
     crashReportingDialog: {
@@ -512,12 +538,14 @@ export default {
       howItWorks: '🌟 Drei Wege zum Entdecken',
       family: '👨‍👩‍👧‍👦 Gemeinsame Zeit, echte Vorteile',
       privacy: '🔒 Datenschutz an erster Stelle',
+      consent: '✅ Ein letzter Schritt',
     },
     benefits: {
       welcome: 'Gestützt auf Kindesentwicklungsforschung',
       howItWorks: 'Geschichten · Musik · Stimme — alles in einer App',
       family: 'Empfohlen von Kindesentwicklungsexperten',
       privacy: 'Deine Daten gehören dir',
+      consent: 'Deine Zustimmung schützt deine Familie',
     },
   },
 

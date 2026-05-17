@@ -42,6 +42,15 @@ export default {
       title: 'Ripristina app',
       message: 'Questo cancellerà TUTTI i dati dell\'app incluso il tuo accesso, il personaggio e le impostazioni. Sei sicuro?',
     },
+    deleteAccount: {
+      title: 'Elimina account',
+      message: 'Questo eliminerà permanentemente il tuo account e tutti i dati associati. Questa azione non può essere annullata.',
+      confirm: 'Digita ELIMINA per confermare',
+      success: 'Il tuo account è stato eliminato.',
+      error: 'Impossibile eliminare l\'account. Riprova.',
+      sessionExpired: 'La tua sessione è scaduta. Accedi di nuovo per eliminare il tuo account.',
+      deleting: 'Eliminazione account...',
+    },
     deleteReminder: {
       title: 'Elimina promemoria',
       message: 'Sei sicuro di voler eliminare "{{title}}"?',
@@ -442,6 +451,8 @@ export default {
     createAccount: 'Crea un account per salvare i tuoi progressi',
     crashReports: 'Rapporti di arresto',
     crashReportsHint: 'Aiutaci a correggere i bug inviando dati di arresto anonimi',
+    deleteAccount: 'Elimina account',
+    deleteAccountHint: 'Elimina permanentemente il tuo account e tutti i dati',
   },
 
   // Profile validation and edit profile screen
@@ -497,8 +508,23 @@ export default {
       privacy: {
         title: 'Privacy e inizio',
         body: 'I tuoi dati sono sicuri e pseudonimizzati. Nessuna informazione personale viene raccolta — l\'accesso usa solo un identificatore anonimo.\n\nAiutaci a migliorare condividendo rapporti di crash anonimi (puoi cambiarlo nelle Impostazioni).',
-        button: 'Iniziamo!',
+        button: 'Avanti',
         showCrashReportingDialog: 'true',
+      },
+      consent: {
+        title: 'Prima di iniziare',
+        body: 'Come genitore o tutore, leggi e accetta quanto segue:',
+        button: 'Accetto — Iniziamo!',
+        checkboxes: {
+          privacy: 'Ho letto e accetto l\'Informativa sulla privacy',
+          terms: 'Ho letto e accetto i Termini e condizioni',
+          data: 'Acconsento che earlyroots memorizzi il nome e l\'avatar di mio figlio/a per personalizzare l\'esperienza',
+        },
+        links: {
+          privacyPolicy: 'Vedi Informativa sulla privacy',
+          termsConditions: 'Vedi Termini e condizioni',
+        },
+        policyVersion: '1.0',
       },
     },
     crashReportingDialog: {
@@ -512,12 +538,14 @@ export default {
       howItWorks: '🌟 Tre modi per esplorare',
       family: '👨‍👩‍👧‍👦 Tempo insieme, benefici reali',
       privacy: '🔒 Privacy prima di tutto',
+      consent: '✅ Un ultimo passo',
     },
     benefits: {
       welcome: 'Supportato dalla ricerca sullo sviluppo infantile',
       howItWorks: 'Storie · Musica · Voce — tutto in un\'app',
       family: 'Raccomandato da esperti dello sviluppo infantile',
       privacy: 'I tuoi dati restano tuoi',
+      consent: 'Il tuo consenso protegge la tua famiglia',
     },
   },
 

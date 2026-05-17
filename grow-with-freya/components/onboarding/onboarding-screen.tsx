@@ -31,6 +31,8 @@ interface OnboardingScreenProps {
   currentStep: number;
   totalSteps: number;
   isTransitioning?: boolean;
+  customContent?: React.ReactNode;
+  isNextDisabled?: boolean;
 }
 
 export function OnboardingScreen({
@@ -43,6 +45,8 @@ export function OnboardingScreen({
   currentStep,
   totalSteps,
   isTransitioning = false,
+  customContent,
+  isNextDisabled = false,
 }: OnboardingScreenProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -170,16 +174,18 @@ export function OnboardingScreen({
 
   // Step 2 (How It Works) uses a feature list instead of an illustration
   const isFeatureListScreen = currentStep === 2;
-  // Step 4 (Privacy) is text-only (no illustration)
-  const isTextOnlyScreen = currentStep === 4;
+  // Step 4 (Privacy) and Step 5 (Consent) are text-only (no illustration)
+  const isConsentScreen = currentStep === 5;
+  const isTextOnlyScreen = currentStep === 4 || isConsentScreen;
 
   const renderContextualContent = (step: number) => {
-    // Map step number to translation keys (4 screens)
+    // Map step number to translation keys (5 screens)
     const contextualData = [
       { taglineKey: 'onboarding.taglines.welcome', benefitKey: 'onboarding.benefits.welcome' },
       { taglineKey: 'onboarding.taglines.howItWorks', benefitKey: 'onboarding.benefits.howItWorks' },
       { taglineKey: 'onboarding.taglines.family', benefitKey: 'onboarding.benefits.family' },
       { taglineKey: 'onboarding.taglines.privacy', benefitKey: 'onboarding.benefits.privacy' },
+      { taglineKey: 'onboarding.taglines.consent', benefitKey: 'onboarding.benefits.consent' },
     ];
 
     const data = contextualData[step - 1];
@@ -230,6 +236,7 @@ export function OnboardingScreen({
       ['📚', '🎵', '🎙️', '⭐'],
       ['👨‍👩‍👧‍👦', '🌱', '💛', '🌻'],
       ['🔒', '🛡️', '✅', '💚'],
+      ['📋', '✅', '🤝', '💚'],
     ];
 
     const elements = kidFriendlyElements[step - 1] || [];
@@ -366,10 +373,13 @@ export function OnboardingScreen({
           </ThemedText>
 
           {isFeatureListScreen && renderFeatureList()}
+          {isConsentScreen && customContent}
 
-          <View style={styles.contextualContent}>
-            {renderContextualContent(currentStep)}
-          </View>
+          {!isConsentScreen && (
+            <View style={styles.contextualContent}>
+              {renderContextualContent(currentStep)}
+            </View>
+          )}
         </Animated.View>
 
         {!isTextOnlyScreen && !isFeatureListScreen && (
@@ -417,12 +427,13 @@ export function OnboardingScreen({
           <Pressable
             style={({ pressed }) => [
               styles.nextButton,
-              pressed && styles.nextButtonPressed,
+              pressed && !isNextDisabled && styles.nextButtonPressed,
+              isNextDisabled && styles.nextButtonDisabled,
             ]}
             onPress={handleNext}
-            disabled={isTransitioning}
+            disabled={isTransitioning || isNextDisabled}
           >
-            <ThemedText style={styles.buttonText}>
+            <ThemedText style={[styles.buttonText, isNextDisabled && styles.buttonTextDisabled]}>
               {buttonLabel}
             </ThemedText>
           </Pressable>
@@ -656,11 +667,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#44A08D',
     transform: [{ scale: 0.98 }],
   },
+  nextButtonDisabled: {
+    backgroundColor: '#A0C4C0',
+    borderColor: '#8BB5B0',
+    opacity: 0.7,
+  },
   buttonText: {
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  buttonTextDisabled: {
+    opacity: 0.6,
   },
   progressHint: {
     fontSize: 12,

@@ -49,6 +49,7 @@ export default {
       confirm: 'Type DELETE to confirm',
       success: 'Your account has been deleted.',
       error: 'Failed to delete account. Please try again.',
+      sessionExpired: 'Your session has expired. Please sign in again to delete your account.',
       deleting: 'Deleting account...',
     },
     deleteReminder: {
@@ -517,8 +518,23 @@ export default {
       privacy: {
         title: 'Privacy & Getting Started',
         body: 'Your data is secure and pseudonymised. No personal information is collected — sign-in uses only an anonymous identifier.\n\nHelp us improve by sharing anonymous crash reports (you can change this anytime in Settings).',
-        button: "Let's begin!",
+        button: 'Next',
         showCrashReportingDialog: 'true',
+      },
+      consent: {
+        title: 'Before We Begin',
+        body: 'As a parent or guardian, please review and agree to the following:',
+        button: "I Agree — Let's Go!",
+        checkboxes: {
+          privacy: "I have read and accept the Privacy Policy",
+          terms: "I have read and accept the Terms & Conditions",
+          data: "I consent to earlyroots storing my child's display name and avatar to personalise their experience",
+        },
+        links: {
+          privacyPolicy: 'View Privacy Policy',
+          termsConditions: 'View Terms & Conditions',
+        },
+        policyVersion: '1.0',
       },
     },
     // Crash reporting dialog
@@ -534,12 +550,14 @@ export default {
       howItWorks: '🌟 Three ways to explore',
       family: '👨‍👩‍👧‍👦 Quality time, real benefits',
       privacy: '🔒 Privacy-first, always',
+      consent: '✅ One last step',
     },
     benefits: {
       welcome: 'Backed by child development research',
       howItWorks: 'Stories · Music · Voice — all in one app',
       family: 'Recommended by child development experts',
       privacy: 'Your data stays yours',
+      consent: 'Your consent keeps your family safe',
     },
   },
 

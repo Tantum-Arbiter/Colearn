@@ -39,6 +39,15 @@ export default {
       title: 'Redefinir aplicativo',
       message: 'Isso limpará TODOS os dados do aplicativo, incluindo seu login, personagem e configurações. Tem certeza?',
     },
+    deleteAccount: {
+      title: 'Eliminar conta',
+      message: 'Isto eliminará permanentemente a sua conta e todos os dados associados. Esta ação não pode ser desfeita.',
+      confirm: 'Escreva ELIMINAR para confirmar',
+      success: 'A sua conta foi eliminada.',
+      error: 'Falha ao eliminar a conta. Por favor, tente novamente.',
+      sessionExpired: 'A sua sessão expirou. Por favor, inicie sessão novamente para eliminar a sua conta.',
+      deleting: 'A eliminar conta...',
+    },
     deleteReminder: {
       title: 'Excluir lembrete',
       message: 'Tem certeza de que deseja excluir "{{title}}"?',
@@ -417,6 +426,8 @@ export default {
     createAccount: 'Crie uma conta para salvar seu progresso',
     crashReports: 'Relatórios de falha',
     crashReportsHint: 'Ajude-nos a corrigir bugs enviando dados de falha anônimos',
+    deleteAccount: 'Eliminar conta',
+    deleteAccountHint: 'Eliminar permanentemente a sua conta e todos os dados',
   },
   profile: {
     enterNickname: 'Digite um apelido',
@@ -468,8 +479,23 @@ export default {
       privacy: {
         title: 'Privacidade e começar',
         body: 'Os seus dados estão seguros e pseudonimizados. Nenhuma informação pessoal é recolhida — o login usa apenas um identificador anónimo.\n\nAjude-nos a melhorar partilhando relatórios de falhas anónimos (pode alterar nas Definições).',
-        button: 'Vamos começar!',
+        button: 'Seguinte',
         showCrashReportingDialog: 'true',
+      },
+      consent: {
+        title: 'Antes de começar',
+        body: 'Como pai ou responsável, por favor leia e aceite o seguinte:',
+        button: 'Concordo — Vamos!',
+        checkboxes: {
+          privacy: 'Li e aceito a Política de Privacidade',
+          terms: 'Li e aceito os Termos e Condições',
+          data: 'Consinto que o earlyroots armazene o nome e avatar do meu filho para personalizar a experiência',
+        },
+        links: {
+          privacyPolicy: 'Ver Política de Privacidade',
+          termsConditions: 'Ver Termos e Condições',
+        },
+        policyVersion: '1.0',
       },
     },
     crashReportingDialog: {
@@ -483,12 +509,14 @@ export default {
       howItWorks: '🌟 Três formas de explorar',
       family: '👨‍👩‍👧‍👦 Tempo juntos, benefícios reais',
       privacy: '🔒 Privacidade em primeiro lugar',
+      consent: '✅ Um último passo',
     },
     benefits: {
       welcome: 'Apoiado pela investigação em desenvolvimento infantil',
       howItWorks: 'Histórias · Música · Voz — tudo numa app',
       family: 'Recomendado por especialistas em desenvolvimento infantil',
       privacy: 'Os seus dados são seus',
+      consent: 'O seu consentimento protege a sua família',
     },
   },
   tutorial: {

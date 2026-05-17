@@ -39,6 +39,15 @@ export default {
       title: 'App Resetten',
       message: 'Dit verwijdert alle app-gegevens, inclusief inloggegevens, karakters en instellingen. Weet je het zeker?',
     },
+    deleteAccount: {
+      title: 'Account verwijderen',
+      message: 'Dit verwijdert permanent je account en alle bijbehorende gegevens. Deze actie kan niet ongedaan worden gemaakt.',
+      confirm: 'Typ VERWIJDEREN om te bevestigen',
+      success: 'Je account is verwijderd.',
+      error: 'Kan account niet verwijderen. Probeer het opnieuw.',
+      sessionExpired: 'Je sessie is verlopen. Log opnieuw in om je account te verwijderen.',
+      deleting: 'Account verwijderen...',
+    },
     deleteReminder: {
       title: 'Herinnering Verwijderen',
       message: '"{{title}}" verwijderen?',
@@ -417,6 +426,8 @@ export default {
     createAccount: 'Maak Account aan om Voortgang op te Slaan',
     crashReports: 'Crashrapporten',
     crashReportsHint: 'Stuur anonieme crashgegevens om ons te helpen bugs te repareren',
+    deleteAccount: 'Account verwijderen',
+    deleteAccountHint: 'Verwijder permanent je account en alle gegevens',
   },
   profile: {
     enterNickname: 'Voer Bijnaam in',
@@ -468,8 +479,23 @@ export default {
       privacy: {
         title: 'Privacy en aan de slag',
         body: 'Je gegevens zijn veilig en gepseudonimiseerd. Er worden geen persoonlijke gegevens verzameld — inloggen gebruikt alleen een anonieme identificatie.\n\nHelp ons verbeteren door anonieme crashrapporten te delen (je kunt dit wijzigen in Instellingen).',
-        button: 'Laten we beginnen!',
+        button: 'Volgende',
         showCrashReportingDialog: 'true',
+      },
+      consent: {
+        title: 'Voordat we beginnen',
+        body: 'Als ouder of voogd, lees en accepteer het volgende:',
+        button: 'Ik ga akkoord — Laten we gaan!',
+        checkboxes: {
+          privacy: 'Ik heb het privacybeleid gelezen en accepteer het',
+          terms: 'Ik heb de algemene voorwaarden gelezen en accepteer ze',
+          data: 'Ik geef toestemming dat earlyroots de weergavenaam en avatar van mijn kind opslaat om de ervaring te personaliseren',
+        },
+        links: {
+          privacyPolicy: 'Bekijk privacybeleid',
+          termsConditions: 'Bekijk algemene voorwaarden',
+        },
+        policyVersion: '1.0',
       },
     },
     crashReportingDialog: {
@@ -483,12 +509,14 @@ export default {
       howItWorks: '🌟 Drie manieren om te ontdekken',
       family: '👨‍👩‍👧‍👦 Tijd samen, echte voordelen',
       privacy: '🔒 Privacy staat voorop',
+      consent: '✅ Eén laatste stap',
     },
     benefits: {
       welcome: 'Gebaseerd op onderzoek naar kinderontwikkeling',
       howItWorks: 'Verhalen · Muziek · Stem — alles in één app',
       family: 'Aanbevolen door experts in kinderontwikkeling',
       privacy: 'Je gegevens blijven van jou',
+      consent: 'Jouw toestemming beschermt je gezin',
     },
   },
   tutorial: {

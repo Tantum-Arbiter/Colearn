@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Alert } from 'react-native';
+import { Alert, View, Pressable, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { OnboardingScreen } from './onboarding-screen';
 import { useAppStore } from '@/store/app-store';
 import { preloadOnboardingImages } from '@/services/image-preloader';
+import { ThemedText } from '../themed-text';
+import { PrivacyPolicyScreen } from '@/components/account/privacy-policy-screen';
+import { TermsConditionsScreen } from '@/components/account/terms-conditions-screen';
 
 interface OnboardingFlowProps {
   onComplete: () => void;
@@ -12,7 +15,11 @@ interface OnboardingFlowProps {
 export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const { setOnboardingComplete, setCrashReportingEnabled } = useAppStore();
+  const [consentPrivacy, setConsentPrivacy] = useState(false);
+  const [consentTerms, setConsentTerms] = useState(false);
+  const [consentData, setConsentData] = useState(false);
+  const [legalView, setLegalView] = useState<'none' | 'privacy' | 'terms'>('none');
+  const { setOnboardingComplete, setCrashReportingEnabled, setConsent } = useAppStore();
   const { t } = useTranslation();
 
   // Timeout cleanup refs
@@ -45,7 +52,16 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
       buttonLabel: t('onboarding.screens.privacy.button'),
       showCrashReportingDialog: true,
     },
+    {
+      title: t('onboarding.screens.consent.title'),
+      body: t('onboarding.screens.consent.body'),
+      illustration: 'consent',
+      buttonLabel: t('onboarding.screens.consent.button'),
+    },
   ];
+
+  const allConsentsChecked = consentPrivacy && consentTerms && consentData;
+  const isConsentStep = currentStep === onboardingScreens.length - 1;
 
   // Proceed to next step (or complete onboarding)
   const proceedToNext = () => {
@@ -57,6 +73,9 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
       if (currentStep < onboardingScreens.length - 1) {
         setCurrentStep(currentStep + 1);
       } else {
+        // Store parental consent before completing
+        const policyVersion = t('onboarding.screens.consent.policyVersion');
+        setConsent(policyVersion);
         setOnboardingComplete(true);
         onComplete();
       }
@@ -141,6 +160,51 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
 
   const currentScreen = onboardingScreens[currentStep];
 
+  // Render consent checkboxes for the final screen
+  const renderConsentContent = () => {
+    const checkboxItems = [
+      { key: 'privacy' as const, checked: consentPrivacy, toggle: () => setConsentPrivacy(!consentPrivacy), link: () => setLegalView('privacy') },
+      { key: 'terms' as const, checked: consentTerms, toggle: () => setConsentTerms(!consentTerms), link: () => setLegalView('terms') },
+      { key: 'data' as const, checked: consentData, toggle: () => setConsentData(!consentData) },
+    ];
+
+    return (
+      <View style={consentStyles.container}>
+        {checkboxItems.map((item) => (
+          <Pressable
+            key={item.key}
+            style={consentStyles.checkboxRow}
+            onPress={item.toggle}
+          >
+            <View style={[consentStyles.checkbox, item.checked && consentStyles.checkboxChecked]}>
+              {item.checked && <ThemedText style={consentStyles.checkmark}>✓</ThemedText>}
+            </View>
+            <View style={consentStyles.checkboxTextContainer}>
+              <ThemedText style={consentStyles.checkboxLabel}>
+                {t(`onboarding.screens.consent.checkboxes.${item.key}`)}
+              </ThemedText>
+              {item.link && (
+                <Pressable onPress={item.link}>
+                  <ThemedText style={consentStyles.linkText}>
+                    {t(`onboarding.screens.consent.links.${item.key === 'privacy' ? 'privacyPolicy' : 'termsConditions'}`)}
+                  </ThemedText>
+                </Pressable>
+              )}
+            </View>
+          </Pressable>
+        ))}
+      </View>
+    );
+  };
+
+  // Show legal screens when user taps a link
+  if (legalView === 'privacy') {
+    return <PrivacyPolicyScreen onBack={() => setLegalView('none')} />;
+  }
+  if (legalView === 'terms') {
+    return <TermsConditionsScreen onBack={() => setLegalView('none')} />;
+  }
+
   return (
     <OnboardingScreen
       title={currentScreen.title}
@@ -152,6 +216,55 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
       currentStep={currentStep + 1}
       totalSteps={onboardingScreens.length}
       isTransitioning={isTransitioning}
+      customContent={isConsentStep ? renderConsentContent() : undefined}
+      isNextDisabled={isConsentStep && !allConsentsChecked}
     />
   );
 }
+
+const consentStyles = StyleSheet.create({
+  container: {
+    marginTop: 16,
+    gap: 16,
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: '#4ECDC4',
+    backgroundColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  checkboxChecked: {
+    backgroundColor: '#4ECDC4',
+    borderColor: '#4ECDC4',
+  },
+  checkmark: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
+    lineHeight: 18,
+  },
+  checkboxTextContainer: {
+    flex: 1,
+  },
+  checkboxLabel: {
+    color: 'white',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  linkText: {
+    color: '#4ECDC4',
+    fontSize: 13,
+    textDecorationLine: 'underline',
+    marginTop: 4,
+  },
+});

@@ -37,6 +37,15 @@ export default {
       title: 'アプリをリセット',
       message: 'これにより、ログイン、キャラクター、設定を含むすべてのアプリデータが削除されます。よろしいですか？',
     },
+    deleteAccount: {
+      title: 'アカウントを削除',
+      message: 'アカウントとすべての関連データが完全に削除されます。この操作は取り消せません。',
+      confirm: '確認のため「削除」と入力してください',
+      success: 'アカウントが削除されました。',
+      error: 'アカウントの削除に失敗しました。もう一度お試しください。',
+      sessionExpired: 'セッションが期限切れです。アカウントを削除するには再度ログインしてください。',
+      deleting: 'アカウントを削除中...',
+    },
     deleteReminder: {
       title: 'リマインダーを削除',
       message: '「{{title}}」を削除してもよろしいですか？',
@@ -415,6 +424,8 @@ export default {
     createAccount: 'アカウントを作成して進捗を保存',
     crashReports: 'クラッシュレポート',
     crashReportsHint: '匿名のクラッシュデータを送信してバグ修正を支援',
+    deleteAccount: 'アカウントを削除',
+    deleteAccountHint: 'アカウントとすべてのデータを完全に削除',
   },
   profile: {
     enterNickname: 'ニックネームを入力',
@@ -466,8 +477,23 @@ export default {
       privacy: {
         title: 'プライバシーと開始',
         body: 'あなたのデータは安全で仮名化されています。個人情報は収集されません—ログインは匿名識別子のみ使用します。\n\n匿名のクラッシュレポートを共有して改善にご協力ください（設定で変更可能）。',
-        button: 'はじめましょう！',
+        button: '次へ',
         showCrashReportingDialog: 'true',
+      },
+      consent: {
+        title: '始める前に',
+        body: '保護者として、以下をお読みになり同意してください：',
+        button: '同意します — 始めましょう！',
+        checkboxes: {
+          privacy: 'プライバシーポリシーを読み、同意します',
+          terms: '利用規約を読み、同意します',
+          data: 'earlyrootsがお子様の表示名とアバターを保存して体験をパーソナライズすることに同意します',
+        },
+        links: {
+          privacyPolicy: 'プライバシーポリシーを見る',
+          termsConditions: '利用規約を見る',
+        },
+        policyVersion: '1.0',
       },
     },
     crashReportingDialog: {
@@ -481,12 +507,14 @@ export default {
       howItWorks: '🌟 3つの探検方法',
       family: '👨‍👩‍👧‍👦 一緒の時間、本物の効果',
       privacy: '🔒 プライバシー優先',
+      consent: '✅ 最後のステップ',
     },
     benefits: {
       welcome: '児童発達研究に基づく',
       howItWorks: '物語 · 音楽 · 声 — 一つのアプリで',
       family: '児童発達の専門家推奨',
       privacy: 'あなたのデータはあなたのもの',
+      consent: 'あなたの同意がご家族を守ります',
     },
   },
   tutorial: {

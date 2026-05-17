@@ -48,6 +48,7 @@ export default {
       confirm: 'Wpisz USUŃ aby potwierdzić',
       success: 'Twoje konto zostało usunięte.',
       error: 'Nie udało się usunąć konta. Spróbuj ponownie.',
+      sessionExpired: 'Twoja sesja wygasła. Zaloguj się ponownie, aby usunąć konto.',
       deleting: 'Usuwanie konta...',
     },
     deleteReminder: {
@@ -507,8 +508,23 @@ export default {
       privacy: {
         title: 'Prywatność i rozpoczęcie',
         body: 'Twoje dane są bezpieczne i zanonimizowane. Nie zbieramy danych osobowych — logowanie używa tylko anonimowego identyfikatora.\n\nPomóż nam się rozwijać udostępniając anonimowe raporty o awariach (możesz to zmienić w Ustawieniach).',
-        button: 'Zaczynamy!',
+        button: 'Dalej',
         showCrashReportingDialog: 'true',
+      },
+      consent: {
+        title: 'Zanim zaczniemy',
+        body: 'Jako rodzic lub opiekun, proszę przeczytaj i zaakceptuj poniższe:',
+        button: 'Zgadzam się — Zaczynajmy!',
+        checkboxes: {
+          privacy: 'Przeczytałem/am i akceptuję Politykę Prywatności',
+          terms: 'Przeczytałem/am i akceptuję Regulamin',
+          data: 'Wyrażam zgodę na przechowywanie przez earlyroots imienia i awatara mojego dziecka w celu personalizacji',
+        },
+        links: {
+          privacyPolicy: 'Zobacz Politykę Prywatności',
+          termsConditions: 'Zobacz Regulamin',
+        },
+        policyVersion: '1.0',
       },
     },
     crashReportingDialog: {
@@ -522,12 +538,14 @@ export default {
       howItWorks: '🌟 Trzy sposoby na odkrywanie',
       family: '👨‍👩‍👧‍👦 Czas razem, prawdziwe korzyści',
       privacy: '🔒 Prywatność na pierwszym miejscu',
+      consent: '✅ Ostatni krok',
     },
     benefits: {
       welcome: 'Oparte na badaniach rozwoju dziecka',
       howItWorks: 'Historyjki · Muzyka · Głos — wszystko w jednej aplikacji',
       family: 'Polecane przez ekspertów rozwoju dziecka',
       privacy: 'Twoje dane pozostają Twoje',
+      consent: 'Twoja zgoda chroni Twoją rodzinę',
     },
   },
 
