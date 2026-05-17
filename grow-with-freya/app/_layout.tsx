@@ -561,10 +561,18 @@ function AppContent() {
   };
 
   const handleLoginSkip = () => {
+    // Suppress carousel re-animation and container fade when MainMenu remounts in 'app' view
+    // (the guest flow already animated the carousel behind the overlay)
+    suppressNextCarouselAnimation();
+    suppressNextContainerFadeIn();
     setGuestMode(true);
     setShowLoginAfterOnboarding(false);
+    // Keep the login screen (with its guest MainMenu) mounted briefly so the app MainMenu
+    // can render underneath — prevents a visible flicker between unmount/remount
+    setShowLoginBehindLoading(true);
     setCurrentView('app');
     setCurrentPage('main');
+    setTimeout(() => setShowLoginBehindLoading(false), 500);
   };
 
 

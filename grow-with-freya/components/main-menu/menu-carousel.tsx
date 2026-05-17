@@ -9,6 +9,7 @@ import Animated, {
   withTiming,
   withDelay,
   Easing,
+  runOnJS,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useAccessibility } from '@/hooks/use-accessibility';
@@ -168,17 +169,12 @@ const StripButton = React.memo(function StripButton({
     slideOpacity.value = withDelay(delay,
       withTiming(1, { duration: SLIDE_IN_DURATION * 0.6, easing: Easing.out(Easing.cubic) }));
 
-    const slideAnimation = withTiming(0, { duration: SLIDE_IN_DURATION, easing: Easing.out(Easing.cubic) });
-    slideY.value = withDelay(delay, slideAnimation);
-
-    // Fire onLoadComplete after the last strip finishes
-    if (isLast && onSlideComplete) {
-      const totalDuration = delay + SLIDE_IN_DURATION + 50; // small buffer
-      const timer = setTimeout(() => {
-        onSlideComplete();
-      }, totalDuration);
-      return () => clearTimeout(timer);
-    }
+    slideY.value = withDelay(delay, withTiming(0, { duration: SLIDE_IN_DURATION, easing: Easing.out(Easing.cubic) }, (finished) => {
+      // Fire onLoadComplete only after the last strip's animation actually finishes on the UI thread
+      if (finished && isLast && onSlideComplete) {
+        runOnJS(onSlideComplete)();
+      }
+    }));
   }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const animatedStyle = useAnimatedStyle(() => ({

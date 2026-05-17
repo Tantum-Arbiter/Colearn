@@ -82,7 +82,7 @@ export default {
 
   // Login screen
   login: {
-    welcomeTitle: 'Bienvenido a\nGrow with Freya',
+    welcomeTitle: 'Bienvenido a\nEarlyroots Stories',
     subtitle: 'Inicia sesión para guardar el progreso de tu hijo y sincronizar entre dispositivos',
     continueWithGoogle: 'Continuar con Google',
     continueWithApple: 'Continuar con Apple',
@@ -97,6 +97,22 @@ export default {
     connectionTimeout: 'Tiempo de conexión agotado',
     connectionTimeoutMessage: 'El inicio de sesión ha expirado. Por favor, verifica tu conexión e inténtalo de nuevo.',
     ok: 'OK',
+  },
+
+  // Guest mode info
+  guestInfo: {
+    title: 'Navegando como invitado',
+    description: 'Puedes explorar Earlyroots Stories sin una cuenta, pero algunas funciones estarán limitadas.',
+    missingOutTitle: 'Lo que te pierdes sin iniciar sesión',
+    missing: {
+      syncProgress: 'Guardar y sincronizar el progreso de lectura de tu hijo',
+      multiDevice: 'Acceder a tu biblioteca en múltiples dispositivos',
+      cloudBackup: 'Copia de seguridad en la nube de favoritos y preferencias',
+      personalised: 'Recomendaciones de historias personalizadas',
+    },
+    subscriptionTitle: 'Desbloquea la experiencia completa',
+    subscriptionDescription: 'Earlyroots ofrece planes de suscripción que desbloquean nuestra biblioteca completa de historias interactivas, actividades musicales y contenido educativo. Inicia sesión en cualquier momento desde ajustes para mejorar y acceder a todo.',
+    continueButton: 'Continuar como invitado',
   },
 
   // Main menu
@@ -507,12 +523,6 @@ export default {
         body: 'Protección de tiempo de pantalla, sesiones guiadas y herramientas de juego compartido — diseñado para momentos cortos y significativos juntos. La investigación muestra que la participación conjunta ofrece los mayores beneficios.',
         button: 'Siguiente',
       },
-      privacy: {
-        title: 'Privacidad y comenzar',
-        body: 'Tus datos están seguros y seudonimizados. No se recoge información personal — el inicio de sesión usa solo un identificador anónimo.\n\nAyúdanos a mejorar compartiendo informes de fallos anónimos (puedes cambiarlo en Ajustes).',
-        button: 'Siguiente',
-        showCrashReportingDialog: 'true',
-      },
       consent: {
         title: 'Antes de empezar',
         body: 'Como padre o tutor, por favor revisa y acepta lo siguiente:',
@@ -548,21 +558,19 @@ export default {
       welcome: 'Despierta la imaginación jugando',
       howItWorks: '',
       family: 'Tiempo juntos, beneficios reales',
-      privacy: 'Privacidad primero, siempre',
       consent: 'Un último paso',
     },
     benefits: {
       welcome: 'Respaldado por investigación en desarrollo infantil',
       howItWorks: 'Historias · Música · Voz — todo en una app',
       family: 'Recomendado por expertos en desarrollo infantil',
-      privacy: 'Tus datos son tuyos',
       consent: 'Tu consentimiento protege a tu familia',
     },
   },
 
   // Tutorial
   tutorial: {
-    welcomeTitle: '¡Bienvenido a Grow with\nFreya! 🎉',
+    welcomeTitle: '¡Bienvenido a\nEarlyroots! 🎉',
     welcomeDescription: 'Hagamos un recorrido rápido para ayudarte a ti y a tu hijo a aprovechar al máximo la hora del cuento.',
     storiesTitle: 'Biblioteca de cuentos 📚',
     storiesDescription: 'Toca aquí para explorar nuestra colección de cuentos interactivos con hermosas ilustraciones.',

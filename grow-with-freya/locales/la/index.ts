@@ -77,7 +77,7 @@ export default {
     },
   },
   login: {
-    welcomeTitle: 'Salve in Grow with Freya',
+    welcomeTitle: 'Salve in\nEarlyroots Stories',
     subtitle: 'Progressum filii tui serva et inter apparatus synchroniza',
     continueWithGoogle: 'Pergere cum Google',
     continueWithApple: 'Pergere cum Apple',
@@ -92,6 +92,22 @@ export default {
     connectionTimeout: 'Conexio Exspiravit',
     connectionTimeoutMessage: 'Intrare exspiravit. Conexionem tuam confirma et iterum conare.',
     ok: 'Ita',
+  },
+
+  // Guest mode info
+  guestInfo: {
+    title: 'Navigare ut Hospes',
+    description: 'Earlyroots Stories sine ratione explorare potes, sed aliquae functiones limitatae erunt.',
+    missingOutTitle: 'Quid amittas sine inscriptione',
+    missing: {
+      syncProgress: 'Progressum lectionis infantis tui serva et synchroniza',
+      multiDevice: 'Bibliothecam tuam in pluribus machinis adiunge',
+      cloudBackup: 'Nubem reservationis gratissimorum et praeferentiarum',
+      personalised: 'Commendationes fabularum personales',
+    },
+    subscriptionTitle: 'Experientiam plenam reclude',
+    subscriptionDescription: 'Earlyroots consilia subscriptionis offert quae bibliothecam nostram completam fabularum interactivarum, activitatum musicarum et contenti discendi recludunt. Quovis tempore ex optionibus inscribe ad promovendum et omnia adiungenda.',
+    continueButton: 'Perge ut hospes',
   },
   menu: {
     stories: 'Fabulae',
@@ -478,12 +494,6 @@ export default {
         body: 'Protectio temporis ante screen, sessiones ductae et instrumenta ludi communis — designatum pro momentis brevibus et significantibus simul. Investigatio ostendit co-participationem maxima beneficia praebere.',
         button: 'Proxime',
       },
-      privacy: {
-        title: 'Privatio et initium',
-        body: 'Data tua secura et pseudonymizata sunt. Nulla informatio personalis colligitur — accessus solum identificatorem anonymum utitur.\n\nAdiuva nos meliorare communicando relationes anonymas de defectis (potes hoc mutare in Optionibus).',
-        button: 'Sequens',
-        showCrashReportingDialog: 'true',
-      },
       consent: {
         title: 'Antequam incipiamus',
         body: 'Ut parens vel custos, lege et accepta sequentia:',
@@ -519,19 +529,17 @@ export default {
       welcome: 'Imaginationem per ludum excita',
       howItWorks: '',
       family: 'Tempus simul, vera beneficia',
-      privacy: 'Privatio primum, semper',
       consent: 'Ultimus gradus',
     },
     benefits: {
       welcome: 'Investigatione progressus infantilis fultum',
       howItWorks: 'Fabulae · Musica · Vox — omnia in una applicatione',
       family: 'Commendatum ab expertis progressus infantilis',
-      privacy: 'Data tua manent tua',
       consent: 'Consensus tuus familiam tuam protegit',
     },
   },
   tutorial: {
-    welcomeTitle: 'Salve in Grow with Freya! 🎉',
+    welcomeTitle: 'Salve in\nEarlyroots! 🎉',
     welcomeDescription: 'Faciamus Celerem Circumductionem ut Te et Filium Tuum Adiuvemus Tempus Legendi Maxime Uti.',
     storiesTitle: 'Bibliotheca Fabulae 📚',
     storiesDescription: 'Tange Hic ut Collectionem Fabulae Interactivae cum Pulchris Imaginationibus et Iocosis Interactionibus Explores.',

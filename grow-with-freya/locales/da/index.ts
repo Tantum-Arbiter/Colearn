@@ -77,7 +77,7 @@ export default {
     },
   },
   login: {
-    welcomeTitle: 'Velkommen til Grow with Freya',
+    welcomeTitle: 'Velkommen til\nEarlyroots Stories',
     subtitle: 'Gem dit barns fremskridt og synkroniser på tværs af enheder',
     continueWithGoogle: 'Fortsæt med Google',
     continueWithApple: 'Fortsæt med Apple',
@@ -92,6 +92,22 @@ export default {
     connectionTimeout: 'Forbindelse timeout',
     connectionTimeoutMessage: 'Login udløb. Kontroller din forbindelse og prøv igen.',
     ok: 'OK',
+  },
+
+  // Guest mode info
+  guestInfo: {
+    title: 'Gennemse som gæst',
+    description: 'Du kan udforske Earlyroots Stories uden en konto, men nogle funktioner vil være begrænsede.',
+    missingOutTitle: 'Hvad du går glip af uden at logge ind',
+    missing: {
+      syncProgress: 'Gem og synkroniser dit barns læsefremskridt',
+      multiDevice: 'Få adgang til dit bibliotek på flere enheder',
+      cloudBackup: 'Cloud-backup af favoritter og præferencer',
+      personalised: 'Personlige historieanbefalinger',
+    },
+    subscriptionTitle: 'Lås op for den fulde oplevelse',
+    subscriptionDescription: 'Earlyroots tilbyder abonnementsplaner, der låser op for vores komplette bibliotek af interaktive historier, musikaktiviteter og læringsindhold. Log ind når som helst fra indstillinger for at opgradere og få adgang til alt.',
+    continueButton: 'Fortsæt som gæst',
   },
   menu: {
     stories: 'Historier',
@@ -478,12 +494,6 @@ export default {
         body: 'Skærmtidsbeskyttelse, guidede sessioner og fælles legeværktøjer — designet til korte, meningsfulde øjeblikke sammen. Forskning viser at fælles engagement giver de største fordele.',
         button: 'Næste',
       },
-      privacy: {
-        title: 'Privatliv og start',
-        body: 'Dine data er sikre og pseudonymiserede. Ingen personlige oplysninger indsamles — login bruger kun en anonym identifikator.\n\nHjælp os med at forbedre ved at dele anonyme fejlrapporter (du kan ændre dette i Indstillinger).',
-        button: 'Næste',
-        showCrashReportingDialog: 'true',
-      },
       consent: {
         title: 'Før vi begynder',
         body: 'Som forælder eller værge, læs venligst og accepter følgende:',
@@ -519,19 +529,17 @@ export default {
       welcome: 'Tænd fantasien gennem leg',
       howItWorks: '',
       family: 'Tid sammen, ægte fordele',
-      privacy: 'Privatliv først, altid',
       consent: 'Et sidste skridt',
     },
     benefits: {
       welcome: 'Understøttet af forskning i børneudvikling',
       howItWorks: 'Historier · Musik · Stemme — alt i én app',
       family: 'Anbefalet af eksperter i børneudvikling',
-      privacy: 'Dine data forbliver dine',
       consent: 'Dit samtykke beskytter din familie',
     },
   },
   tutorial: {
-    welcomeTitle: 'Velkommen til Grow with Freya! 🎉',
+    welcomeTitle: 'Velkommen til\nEarlyroots! 🎉',
     welcomeDescription: 'Lad os tage en hurtig rundvisning for at hjælpe dig og dit barn med at få mest ud af lesetiden.',
     storiesTitle: 'Historiebibliotek 📚',
     storiesDescription: 'Tryk her for at udforske en samling af interaktive historier med smukke illustrationer og sjove interaktioner.',

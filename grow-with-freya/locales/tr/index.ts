@@ -77,7 +77,7 @@ export default {
     },
   },
   login: {
-    welcomeTitle: 'Grow with Freya\'ya Hoş Geldiniz',
+    welcomeTitle: 'Earlyroots Stories\'a\nHoş Geldiniz',
     subtitle: 'Çocuğunuzun ilerlemesini kaydedin ve cihazlar arasında senkronize edin',
     continueWithGoogle: 'Google ile Devam Et',
     continueWithApple: 'Apple ile Devam Et',
@@ -92,6 +92,22 @@ export default {
     connectionTimeout: 'Bağlantı Zaman Aşımı',
     connectionTimeoutMessage: 'Giriş zaman aşımına uğradı. Bağlantınızı kontrol edin ve tekrar deneyin.',
     ok: 'Tamam',
+  },
+
+  // Guest mode info
+  guestInfo: {
+    title: 'Misafir olarak göz at',
+    description: 'Earlyroots Stories\'ı hesap olmadan keşfedebilirsiniz, ancak bazı özellikler sınırlı olacaktır.',
+    missingOutTitle: 'Giriş yapmadan neleri kaçırırsınız',
+    missing: {
+      syncProgress: 'Çocuğunuzun okuma ilerlemesini kaydedin ve senkronize edin',
+      multiDevice: 'Kütüphanenize birden fazla cihazdan erişin',
+      cloudBackup: 'Favoriler ve tercihlerin bulut yedeklemesi',
+      personalised: 'Kişiselleştirilmiş hikaye önerileri',
+    },
+    subscriptionTitle: 'Tam deneyimin kilidini açın',
+    subscriptionDescription: 'Earlyroots, etkileşimli hikayeler, müzik etkinlikleri ve eğitim içeriğinden oluşan tam kütüphanemizin kilidini açan abonelik planları sunar. Yükseltmek ve her şeye erişmek için istediğiniz zaman ayarlardan giriş yapın.',
+    continueButton: 'Misafir olarak devam et',
   },
   menu: {
     stories: 'Hikayeler',
@@ -478,12 +494,6 @@ export default {
         body: 'Ekran süresi koruması, rehberli oturumlar ve birlikte oyun araçları — birlikte kısa, anlamlı anlar için tasarlandı. Araştırmalar ortak katılımın en büyük faydaları sağladığını gösteriyor.',
         button: 'İleri',
       },
-      privacy: {
-        title: 'Gizlilik ve başlangıç',
-        body: 'Verileriniz güvenli ve takma adlıdır. Kişisel bilgi toplanmaz — giriş yalnızca anonim bir tanımlayıcı kullanır.\n\nAnonim çökme raporlarını paylaşarak gelişmemize yardımcı olun (bunu Ayarlar\'dan değiştirebilirsiniz).',
-        button: 'İleri',
-        showCrashReportingDialog: 'true',
-      },
       consent: {
         title: 'Başlamadan önce',
         body: 'Ebeveyn veya vasi olarak lütfen aşağıdakileri okuyun ve kabul edin:',
@@ -519,19 +529,17 @@ export default {
       welcome: 'Oyunla hayal gücünü ateşle',
       howItWorks: '',
       family: 'Birlikte zaman, gerçek faydalar',
-      privacy: 'Gizlilik öncelikli',
       consent: 'Son bir adım',
     },
     benefits: {
       welcome: 'Çocuk gelişimi araştırmalarına dayalı',
       howItWorks: 'Hikayeler · Müzik · Ses — tek uygulamada',
       family: 'Çocuk gelişimi uzmanları tarafından önerilen',
-      privacy: 'Verileriniz sizin kalır',
       consent: 'Onayınız ailenizi korur',
     },
   },
   tutorial: {
-    welcomeTitle: 'Grow with Freya\'ya Hoş Geldiniz! 🎉',
+    welcomeTitle: 'Earlyroots\'a\nHoş Geldiniz! 🎉',
     welcomeDescription: 'Siz ve çocuğunuzun okuma zamanından en iyi şekilde yararlanmanıza yardımcı olmak için hızlı bir tur alalım.',
     storiesTitle: 'Hikaye Kütüphanesi 📚',
     storiesDescription: 'Güzel illüstrasyonlar ve eğlenceli etkileşimler içeren etkileşimli hikayeler koleksiyonunu keşfetmek için buraya dokunun.',

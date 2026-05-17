@@ -146,7 +146,9 @@ export function OnboardingScreen({
         }
       }
       else if (dx < -80 || vx < -0.3) {
-        handleNext();
+        if (!isNextDisabled) {
+          handleNext();
+        }
       }
     },
   });
@@ -175,9 +177,9 @@ export function OnboardingScreen({
 
   // Step 2 (How It Works) uses a feature list instead of an illustration
   const isFeatureListScreen = currentStep === 2;
-  // Step 4 (Privacy) and Step 5 (Consent) are text-only (no illustration)
-  const isConsentScreen = currentStep === 5;
-  const isTextOnlyScreen = currentStep === 4 || isConsentScreen;
+  // Step 4 (Consent) is text-only (no illustration)
+  const isConsentScreen = currentStep === 4;
+  const isTextOnlyScreen = isConsentScreen;
 
   const renderContextualContent = (step: number) => {
     // Map step number to translation keys (5 screens)

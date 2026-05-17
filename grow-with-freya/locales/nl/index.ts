@@ -77,7 +77,7 @@ export default {
     },
   },
   login: {
-    welcomeTitle: 'Welkom bij Grow with Freya',
+    welcomeTitle: 'Welkom bij\nEarlyroots Stories',
     subtitle: 'Sla de voortgang van je kind op en synchroniseer tussen apparaten',
     continueWithGoogle: 'Doorgaan met Google',
     continueWithApple: 'Doorgaan met Apple',
@@ -92,6 +92,22 @@ export default {
     connectionTimeout: 'Verbinding Time-out',
     connectionTimeoutMessage: 'Inloggen verlopen. Controleer je verbinding en probeer het opnieuw.',
     ok: 'Oké',
+  },
+
+  // Guest mode info
+  guestInfo: {
+    title: 'Bladeren als gast',
+    description: 'Je kunt Earlyroots Stories verkennen zonder account, maar sommige functies zijn beperkt.',
+    missingOutTitle: 'Wat je mist zonder in te loggen',
+    missing: {
+      syncProgress: 'De leesvoortgang van je kind opslaan en synchroniseren',
+      multiDevice: 'Toegang tot je bibliotheek op meerdere apparaten',
+      cloudBackup: 'Cloudback-up van favorieten en voorkeuren',
+      personalised: 'Gepersonaliseerde verhaalaanbevelingen',
+    },
+    subscriptionTitle: 'Ontgrendel de volledige ervaring',
+    subscriptionDescription: 'Earlyroots biedt abonnementen die onze complete bibliotheek van interactieve verhalen, muziekactiviteiten en leercontent ontgrendelen. Log op elk moment in via instellingen om te upgraden en overal toegang toe te krijgen.',
+    continueButton: 'Doorgaan als gast',
   },
   menu: {
     stories: 'Verhalen',
@@ -478,12 +494,6 @@ export default {
         body: 'Schermtijdbescherming, begeleide sessies en gezamenlijke speeltools — ontworpen voor korte, betekenisvolle momenten samen. Onderzoek toont aan dat gezamenlijke betrokkenheid de grootste voordelen biedt.',
         button: 'Volgende',
       },
-      privacy: {
-        title: 'Privacy en aan de slag',
-        body: 'Je gegevens zijn veilig en gepseudonimiseerd. Er worden geen persoonlijke gegevens verzameld — inloggen gebruikt alleen een anonieme identificatie.\n\nHelp ons verbeteren door anonieme crashrapporten te delen (je kunt dit wijzigen in Instellingen).',
-        button: 'Volgende',
-        showCrashReportingDialog: 'true',
-      },
       consent: {
         title: 'Voordat we beginnen',
         body: 'Als ouder of voogd, lees en accepteer het volgende:',
@@ -519,19 +529,17 @@ export default {
       welcome: 'Verbeelding aanwakkeren door spel',
       howItWorks: '',
       family: 'Tijd samen, echte voordelen',
-      privacy: 'Privacy staat voorop',
       consent: 'Eén laatste stap',
     },
     benefits: {
       welcome: 'Gebaseerd op onderzoek naar kinderontwikkeling',
       howItWorks: 'Verhalen · Muziek · Stem — alles in één app',
       family: 'Aanbevolen door experts in kinderontwikkeling',
-      privacy: 'Je gegevens blijven van jou',
       consent: 'Jouw toestemming beschermt je gezin',
     },
   },
   tutorial: {
-    welcomeTitle: 'Welkom bij Grow with Freya! 🎉',
+    welcomeTitle: 'Welkom bij\nEarlyroots! 🎉',
     welcomeDescription: 'Laten we een snelle rondleiding doen om jou en je kind te helpen het meeste uit leestijd te halen.',
     storiesTitle: 'Verhalenbibliotheek 📚',
     storiesDescription: 'Tik hier om een verzameling interactieve verhalen met mooie illustraties en leuke interacties te verkennen.',

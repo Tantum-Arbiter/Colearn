@@ -82,7 +82,7 @@ export default {
 
   // Login screen
   login: {
-    welcomeTitle: 'Witaj w\nGrow with Freya',
+    welcomeTitle: 'Witaj w\nEarlyroots Stories',
     subtitle: 'Zaloguj się, aby zapisać postępy dziecka i synchronizować między urządzeniami',
     continueWithGoogle: 'Kontynuuj z Google',
     continueWithApple: 'Kontynuuj z Apple',
@@ -97,6 +97,22 @@ export default {
     connectionTimeout: 'Przekroczono limit czasu połączenia',
     connectionTimeoutMessage: 'Logowanie wygasło. Sprawdź połączenie i spróbuj ponownie.',
     ok: 'OK',
+  },
+
+  // Guest mode info
+  guestInfo: {
+    title: 'Przeglądanie jako gość',
+    description: 'Możesz przeglądać Earlyroots Stories bez konta, ale niektóre funkcje będą ograniczone.',
+    missingOutTitle: 'Co tracisz bez logowania',
+    missing: {
+      syncProgress: 'Zapisywanie i synchronizacja postępów czytania dziecka',
+      multiDevice: 'Dostęp do biblioteki na wielu urządzeniach',
+      cloudBackup: 'Kopia zapasowa ulubionych i preferencji w chmurze',
+      personalised: 'Spersonalizowane rekomendacje historii',
+    },
+    subscriptionTitle: 'Odblokuj pełne doświadczenie',
+    subscriptionDescription: 'Earlyroots oferuje plany subskrypcji, które odblokowują naszą pełną bibliotekę interaktywnych historii, aktywności muzycznych i treści edukacyjnych. Zaloguj się w dowolnym momencie z ustawień, aby uaktualnić i uzyskać dostęp do wszystkiego.',
+    continueButton: 'Kontynuuj jako gość',
   },
 
   // Main menu
@@ -507,12 +523,6 @@ export default {
         body: 'Ochrona czasu ekranowego, sesje z przewodnikiem i narzędzia do wspólnej zabawy — zaprojektowane do krótkich, wartościowych chwil razem. Badania pokazują, że wspólne zaangażowanie przynosi największe korzyści.',
         button: 'Dalej',
       },
-      privacy: {
-        title: 'Prywatność i rozpoczęcie',
-        body: 'Twoje dane są bezpieczne i zanonimizowane. Nie zbieramy danych osobowych — logowanie używa tylko anonimowego identyfikatora.\n\nPomóż nam się rozwijać udostępniając anonimowe raporty o awariach (możesz to zmienić w Ustawieniach).',
-        button: 'Dalej',
-        showCrashReportingDialog: 'true',
-      },
       consent: {
         title: 'Zanim zaczniemy',
         body: 'Jako rodzic lub opiekun, proszę przeczytaj i zaakceptuj poniższe:',
@@ -548,21 +558,19 @@ export default {
       welcome: 'Pobudzą wyobraźnię przez zabawę',
       howItWorks: '',
       family: 'Czas razem, prawdziwe korzyści',
-      privacy: 'Prywatność na pierwszym miejscu',
       consent: 'Ostatni krok',
     },
     benefits: {
       welcome: 'Oparte na badaniach rozwoju dziecka',
       howItWorks: 'Historyjki · Muzyka · Głos — wszystko w jednej aplikacji',
       family: 'Polecane przez ekspertów rozwoju dziecka',
-      privacy: 'Twoje dane pozostają Twoje',
       consent: 'Twoja zgoda chroni Twoją rodzinę',
     },
   },
 
   // Tutorial
   tutorial: {
-    welcomeTitle: 'Witaj w Grow with\nFreya! 🎉',
+    welcomeTitle: 'Witaj w\nEarlyroots! 🎉',
     welcomeDescription: 'Zróbmy szybką wycieczkę, która pomoże Tobie i Twojemu dziecku w pełni korzystać z czytania bajek.',
     storiesTitle: 'Biblioteka bajek 📚',
     storiesDescription: 'Dotknij tutaj, aby odkryć naszą kolekcję interaktywnych bajek z pięknymi ilustracjami.',

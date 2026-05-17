@@ -1,17 +1,20 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { View, StyleSheet, Dimensions, Text, Image } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  withRepeat,
   Easing,
   cancelAnimation,
 } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import LottieView from 'lottie-react-native';
 import * as Haptics from 'expo-haptics';
 import { createAudioPlayer, AudioPlayer } from 'expo-audio';
 
 import { useLoadingCircleAnimation, useCheckmarkAnimation, useTextFadeAnimation } from './auth/loading-animations';
+import { FreyaRocketRightSvg } from './main-menu/svg-components';
 import { BatchSyncService, BatchSyncProgress } from '@/services/batch-sync-service';
 import { CacheManager } from '@/services/cache-manager';
 import { StoryLoader } from '@/services/story-loader';
@@ -21,6 +24,39 @@ import { Logger } from '@/utils/logger';
 
 const log = Logger.create('StartupLoading');
 const { width, height } = Dimensions.get('window');
+
+// Same gradient as splash screen
+const GRADIENT_COLORS: [string, string, string] = ['#1E3A8A', '#3B82F6', '#4ECDC4'];
+
+// Stars
+const STAR_COUNT = 12;
+const STAR_SIZE = 3;
+const STAR_AREA_HEIGHT_RATIO = 0.6;
+
+// Rocket for ambient animation
+const ROCKET_SIZE = width > 768 ? 60 : 40;
+
+// Logo size
+const LOGO_SIZE = width > 768 ? 320 : 240;
+
+// Generate deterministic star positions
+const generateStars = (count: number) => {
+  const stars = [];
+  const starAreaHeight = height * STAR_AREA_HEIGHT_RATIO;
+  const seededRandom = (seed: number) => {
+    const x = Math.sin(seed * 9999) * 10000;
+    return x - Math.floor(x);
+  };
+  for (let i = 0; i < count; i++) {
+    stars.push({
+      id: i,
+      left: seededRandom(i * 1.7) * (width - 20) + 10,
+      top: seededRandom(i * 2.9) * starAreaHeight + 20,
+      opacity: 0.3 + seededRandom(i * 3.1) * 0.4,
+    });
+  }
+  return stars;
+};
 
 // Slide animation durations
 const SLIDE_IN_DURATION = 900;
@@ -53,6 +89,16 @@ export function StartupLoadingScreen({ onComplete, onSlideInComplete, onError }:
   // Slide: starts above viewport, slides down to 0, then slides back up on complete
   const slideY = useSharedValue(-height);
 
+  // Rocket ambient animation — gentle orbit loop
+  const rocketX = useSharedValue(width + ROCKET_SIZE);
+  const rocketY = useSharedValue(height * 0.7);
+  const rocketOpacity = useSharedValue(0);
+  const starRotation = useSharedValue(0);
+  const logoOpacity = useSharedValue(0);
+  const logoScale = useSharedValue(0.9);
+
+  const stars = useMemo(() => generateStars(STAR_COUNT), []);
+
   const loadingCircleAnim = useLoadingCircleAnimation();
   const checkmarkAnim = useCheckmarkAnimation();
   const textFadeAnim = useTextFadeAnimation();
@@ -80,6 +126,9 @@ export function StartupLoadingScreen({ onComplete, onSlideInComplete, onError }:
     return () => {
       isMountedRef.current = false;
       cancelAnimation(slideY);
+      cancelAnimation(rocketX);
+      cancelAnimation(rocketY);
+      cancelAnimation(starRotation);
       loadingCircleAnim.stopAnimation();
       checkmarkAnim.reset();
       if (playerRef.current) {
@@ -90,10 +139,31 @@ export function StartupLoadingScreen({ onComplete, onSlideInComplete, onError }:
 
   // Start sync on mount — slide the background in first
   useEffect(() => {
-    // Slide background image down into view
+    // Slide background down into view
     slideY.value = withTiming(0, {
       duration: SLIDE_IN_DURATION,
       easing: Easing.out(Easing.cubic),
+    });
+
+    // Fade in logo
+    logoOpacity.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) });
+    logoScale.value = withTiming(1, { duration: 800, easing: Easing.out(Easing.cubic) });
+
+    // Star twinkle rotation
+    starRotation.value = withRepeat(
+      withTiming(360, { duration: 4000, easing: Easing.linear }),
+      -1
+    );
+
+    // Rocket: gentle fly-by from right to left
+    rocketOpacity.value = withTiming(0.7, { duration: 400 });
+    rocketX.value = withTiming(-ROCKET_SIZE * 2, {
+      duration: 3000,
+      easing: Easing.inOut(Easing.cubic),
+    });
+    rocketY.value = withTiming(height * 0.55, {
+      duration: 3000,
+      easing: Easing.inOut(Easing.cubic),
     });
 
     // Notify parent when slide-in finishes — safe to mount content behind the overlay
@@ -226,46 +296,107 @@ export function StartupLoadingScreen({ onComplete, onSlideInComplete, onError }:
     transform: [{ translateY: slideY.value }],
   }));
 
+  const rocketAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: rocketOpacity.value,
+    transform: [
+      { translateX: rocketX.value },
+      { translateY: rocketY.value },
+      { rotate: '-30deg' },
+    ],
+  }));
+
+  const starAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${starRotation.value}deg` }],
+  }));
+
+  const logoAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: logoOpacity.value,
+    transform: [{ scale: logoScale.value }],
+  }));
+
   return (
     <Animated.View style={[styles.container, slideAnimatedStyle]}>
-      {/* Background — dark blue base with subtle texture, matching story transition */}
-      <View style={styles.backgroundImageContainer}>
-        <Image
-          source={require('../assets/images/ui-elements/background-home.webp')}
-          style={styles.backgroundImage}
-          resizeMode="repeat"
-        />
-      </View>
-
-      <View style={styles.content}>
-        {/* Loading Circle or Checkmark */}
-        <View style={styles.animationContainer}>
-          {!showCheckmark && (
-            <Animated.View style={loadingCircleAnim.animatedStyle}>
-              <View style={styles.loadingCircle} />
-            </Animated.View>
-          )}
-
-          {showCheckmark && (
-            <Animated.View style={checkmarkAnim.checkmarkAnimatedStyle}>
-              <LottieView
-                source={require('@/assets/animations/right-tick.json')}
-                autoPlay
-                loop={false}
-                style={styles.checkmark}
-              />
-            </Animated.View>
-          )}
+      <LinearGradient
+        colors={GRADIENT_COLORS}
+        style={styles.gradientContainer}
+      >
+        {/* Stars */}
+        <View style={styles.starsContainer}>
+          {stars.map((star) => (
+            <Animated.View
+              key={`star-${star.id}`}
+              style={[
+                styles.star,
+                starAnimatedStyle,
+                { left: star.left, top: star.top, opacity: star.opacity },
+              ]}
+            />
+          ))}
         </View>
 
-        {/* Status Text */}
-        <Animated.View style={textFadeAnim.animatedStyle}>
-          <Text style={styles.statusText}>{statusText}</Text>
-          {detailText ? (
-            <Text style={styles.detailText}>{detailText}</Text>
-          ) : null}
+        {/* Moon */}
+        <View style={styles.moonContainer} pointerEvents="none">
+          <Image
+            source={require('@/assets/images/ui-elements/moon-top-screen.webp')}
+            style={styles.moonImage}
+            resizeMode="contain"
+          />
+        </View>
+
+        {/* Bear */}
+        <View style={styles.bearContainer} pointerEvents="none">
+          <Image
+            source={require('@/assets/images/ui-elements/bear-bottom-screen.webp')}
+            style={styles.bearImage}
+            resizeMode="contain"
+          />
+        </View>
+
+        {/* Rocket fly-by */}
+        <View style={styles.rocketLayer}>
+          <Animated.View style={[styles.rocketWrapper, rocketAnimatedStyle]}>
+            <FreyaRocketRightSvg width={ROCKET_SIZE} height={ROCKET_SIZE} />
+          </Animated.View>
+        </View>
+
+        {/* Earlyroots logo */}
+        <Animated.View style={[styles.logoContainer, logoAnimatedStyle]}>
+          <Image
+            source={require('@/assets/images/ui-elements/earlyroots-logo.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
         </Animated.View>
-      </View>
+
+        {/* Loading / Checkmark + Status Text below logo */}
+        <View style={styles.content}>
+          <View style={styles.animationContainer}>
+            {!showCheckmark && (
+              <Animated.View style={loadingCircleAnim.animatedStyle}>
+                <View style={styles.loadingCircle} />
+              </Animated.View>
+            )}
+
+            {showCheckmark && (
+              <Animated.View style={checkmarkAnim.checkmarkAnimatedStyle}>
+                <LottieView
+                  source={require('@/assets/animations/right-tick.json')}
+                  autoPlay
+                  loop={false}
+                  style={styles.checkmark}
+                />
+              </Animated.View>
+            )}
+          </View>
+
+          <Animated.View style={textFadeAnim.animatedStyle}>
+            <Text style={styles.statusText}>{statusText}</Text>
+            {detailText ? (
+              <Text style={styles.detailText}>{detailText}</Text>
+            ) : null}
+          </Animated.View>
+        </View>
+      </LinearGradient>
     </Animated.View>
   );
 }
@@ -275,53 +406,126 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     zIndex: 10,
   },
-  backgroundImageContainer: {
-    ...StyleSheet.absoluteFillObject,
-    overflow: 'hidden',
-    backgroundColor: '#0F1D45', // Dark navy — darker than story transition for loading ambiance
+  gradientContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  backgroundImage: {
-    width: '200%',
-    height: '200%',
-    opacity: 0.15, // Very subtle texture on dark base
+  starsContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    zIndex: 1,
+  },
+  star: {
+    position: 'absolute',
+    width: STAR_SIZE,
+    height: STAR_SIZE,
+    backgroundColor: '#FFFFFF',
+    borderRadius: STAR_SIZE / 2,
+  },
+  moonContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    width: '100%',
+    height: '15%',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    zIndex: 2,
+  },
+  moonImage: {
+    width: 286,
+    height: 286,
+    opacity: 0.8,
+  },
+  bearContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    width: '100%',
+    height: '15%',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    zIndex: 2,
+  },
+  bearImage: {
+    width: 286,
+    height: 286,
+    opacity: 0.8,
+  },
+  rocketLayer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: ROCKET_SIZE,
+    height: ROCKET_SIZE,
+    zIndex: 5,
+  },
+  rocketWrapper: {
+    width: ROCKET_SIZE,
+    height: ROCKET_SIZE,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoContainer: {
+    position: 'absolute',
+    top: (height - LOGO_SIZE) / 2 - 40,
+    left: (width - LOGO_SIZE) / 2,
+    width: LOGO_SIZE,
+    height: LOGO_SIZE,
+    zIndex: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoImage: {
+    width: LOGO_SIZE,
+    height: LOGO_SIZE,
   },
   content: {
-    flex: 1,
+    position: 'absolute',
+    bottom: height * 0.15,
+    left: 0,
+    right: 0,
     alignItems: 'center',
-    justifyContent: 'center',
+    zIndex: 15,
   },
   animationContainer: {
-    width: 120,
-    height: 120,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  loadingCircle: {
     width: 80,
     height: 80,
-    borderRadius: 40,
-    borderWidth: 4,
-    borderColor: '#4ECDC4',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  loadingCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
     borderTopColor: 'transparent',
   },
   checkmark: {
-    width: 120,
-    height: 120,
+    width: 80,
+    height: 80,
   },
   statusText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '500',
     color: '#FFFFFF',
     textAlign: 'center',
     opacity: 0.9,
   },
   detailText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '400',
     color: '#FFFFFF',
     textAlign: 'center',
     opacity: 0.6,
-    marginTop: 8,
+    marginTop: 6,
   },
 });

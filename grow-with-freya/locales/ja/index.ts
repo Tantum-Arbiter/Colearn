@@ -75,7 +75,7 @@ export default {
     },
   },
   login: {
-    welcomeTitle: 'Grow with Freyaへようこそ',
+    welcomeTitle: 'Earlyroots Storiesへ\nようこそ',
     subtitle: 'ログインしてお子さんの進捗を保存し、デバイス間で同期します',
     continueWithGoogle: 'Googleで続行',
     continueWithApple: 'Appleで続行',
@@ -90,6 +90,22 @@ export default {
     connectionTimeout: '接続がタイムアウトしました',
     connectionTimeoutMessage: 'ログインがタイムアウトしました。接続を確認してもう一度お試しください。',
     ok: 'OK',
+  },
+
+  // Guest mode info
+  guestInfo: {
+    title: 'ゲストとしてブラウズ',
+    description: 'アカウントなしでEarlyroots Storiesを探索できますが、一部の機能が制限されます。',
+    missingOutTitle: 'サインインしないと利用できない機能',
+    missing: {
+      syncProgress: 'お子様の読書進捗を保存・同期',
+      multiDevice: '複数のデバイスでライブラリにアクセス',
+      cloudBackup: 'お気に入りと設定のクラウドバックアップ',
+      personalised: 'パーソナライズされたストーリーのおすすめ',
+    },
+    subscriptionTitle: 'フル体験をアンロック',
+    subscriptionDescription: 'Earlyrootsは、インタラクティブなストーリー、音楽アクティビティ、学習コンテンツの完全なライブラリをアンロックするサブスクリプションプランを提供しています。設定からいつでもサインインしてアップグレードし、すべてにアクセスできます。',
+    continueButton: 'ゲストとして続ける',
   },
   menu: {
     stories: 'ストーリー',
@@ -476,12 +492,6 @@ export default {
         body: 'スクリーンタイム保護、ガイド付きセッション、共同プレイツール — 短く意義ある時間を一緒に過ごすよう設計されています。研究によると、共同関与が最大の効果をもたらします。',
         button: '次へ',
       },
-      privacy: {
-        title: 'プライバシーと開始',
-        body: 'あなたのデータは安全で仮名化されています。個人情報は収集されません—ログインは匿名識別子のみ使用します。\n\n匿名のクラッシュレポートを共有して改善にご協力ください（設定で変更可能）。',
-        button: '次へ',
-        showCrashReportingDialog: 'true',
-      },
       consent: {
         title: '始める前に',
         body: '保護者として、以下をお読みになり同意してください：',
@@ -517,19 +527,17 @@ export default {
       welcome: '遊びで想像力を刺激',
       howItWorks: '',
       family: '一緒の時間、本物の効果',
-      privacy: 'プライバシー優先',
       consent: '最後のステップ',
     },
     benefits: {
       welcome: '児童発達研究に基づく',
       howItWorks: '物語 · 音楽 · 声 — 一つのアプリで',
       family: '児童発達の専門家推奨',
-      privacy: 'あなたのデータはあなたのもの',
       consent: 'あなたの同意がご家族を守ります',
     },
   },
   tutorial: {
-    welcomeTitle: 'Grow with Freyaへようこそ！🎉',
+    welcomeTitle: 'Earlyrootsへ\nようこそ！🎉',
     welcomeDescription: 'クイックツアーをして、あなたとお子さんが読書時間を最大限に活用できるようにしましょう。',
     storiesTitle: 'ストーリーライブラリ📚',
     storiesDescription: 'ここをタップして、美しいイラストと楽しいインタラクションを備えたインタラクティブストーリーのコレクションを探索してください。',

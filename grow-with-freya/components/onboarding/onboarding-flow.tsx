@@ -74,17 +74,11 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
       buttonLabel: t('onboarding.screens.family.button'),
     },
     {
-      title: t('onboarding.screens.privacy.title'),
-      body: t('onboarding.screens.privacy.body'),
-      illustration: 'privacy',
-      buttonLabel: t('onboarding.screens.privacy.button'),
-      showCrashReportingDialog: true,
-    },
-    {
       title: t('onboarding.screens.consent.title'),
       body: t('onboarding.screens.consent.body'),
       illustration: 'consent',
       buttonLabel: t('onboarding.screens.consent.button'),
+      showCrashReportingDialog: true,
     },
   ];
 

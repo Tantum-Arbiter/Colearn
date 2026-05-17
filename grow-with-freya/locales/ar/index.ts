@@ -77,7 +77,7 @@ export default {
     },
   },
   login: {
-    welcomeTitle: 'مرحباً بك في Grow with Freya',
+    welcomeTitle: 'مرحباً بك في\nEarlyroots Stories',
     subtitle: 'قم بتسجيل الدخول لحفظ تقدم طفلك والمزامنة عبر الأجهزة',
     continueWithGoogle: 'المتابعة مع Google',
     continueWithApple: 'المتابعة مع Apple',
@@ -92,6 +92,22 @@ export default {
     connectionTimeout: 'انتهت مهلة الاتصال',
     connectionTimeoutMessage: 'انتهت مهلة تسجيل الدخول. يرجى التحقق من اتصالك والمحاولة مرة أخرى.',
     ok: 'حسناً',
+  },
+
+  // Guest mode info
+  guestInfo: {
+    title: 'التصفح كضيف',
+    description: 'يمكنك استكشاف قصص Earlyroots بدون حساب، لكن بعض الميزات ستكون محدودة.',
+    missingOutTitle: 'ما ستفوتك بدون تسجيل الدخول',
+    missing: {
+      syncProgress: 'حفظ ومزامنة تقدم طفلك في القراءة',
+      multiDevice: 'الوصول إلى مكتبتك عبر أجهزة متعددة',
+      cloudBackup: 'نسخ احتياطي سحابي للمفضلات والتفضيلات',
+      personalised: 'توصيات قصص مخصصة',
+    },
+    subscriptionTitle: 'افتح التجربة الكاملة',
+    subscriptionDescription: 'يقدم Earlyroots خطط اشتراك تفتح مكتبتنا الكاملة من القصص التفاعلية والأنشطة الموسيقية ومحتوى التعلم. سجل الدخول في أي وقت من الإعدادات للترقية والوصول إلى كل شيء.',
+    continueButton: 'المتابعة كضيف',
   },
   menu: {
     stories: 'القصص',
@@ -478,12 +494,6 @@ export default {
         body: 'حماية وقت الشاشة وجلسات موجهة وأدوات للعب المشترك — مصمم لأوقات قصيرة وذات معنى معاً. تظهر الأبحاث أن المشاركة المشتركة تحقق أفضل النتائج.',
         button: 'التالي',
       },
-      privacy: {
-        title: 'الخصوصية والبدء',
-        body: 'بياناتك آمنة ومستعارة. لا يتم جمع معلومات شخصية — تسجيل الدخول يستخدم معرفاً مجهولاً فقط.\n\nساعدنا على التحسين بمشاركة تقارير الأعطال المجهولة (يمكنك تغيير ذلك في الإعدادات).',
-        button: 'التالي',
-        showCrashReportingDialog: 'true',
-      },
       consent: {
         title: 'قبل أن نبدأ',
         body: 'كوالد أو وصي، يرجى قراءة والموافقة على ما يلي:',
@@ -519,19 +529,17 @@ export default {
       welcome: 'أطلق الخيال من خلال اللعب',
       howItWorks: '',
       family: 'وقت معاً، فوائد حقيقية',
-      privacy: 'الخصوصية أولاً، دائماً',
       consent: 'خطوة أخيرة',
     },
     benefits: {
       welcome: 'مدعوم بأبحاث نمو الطفل',
       howItWorks: 'قصص · موسيقى · صوت — الكل في تطبيق واحد',
       family: 'موصى به من خبراء نمو الطفل',
-      privacy: 'بياناتك تبقى لك',
       consent: 'موافقتك تحمي عائلتك',
     },
   },
   tutorial: {
-    welcomeTitle: 'مرحباً بك في Grow with Freya! 🎉',
+    welcomeTitle: 'مرحباً بك في\nEarlyroots! 🎉',
     welcomeDescription: 'دعنا نأخذ جولة سريعة لمساعدتك أنت وطفلك على الاستفادة القصوى من وقت القراءة.',
     storiesTitle: 'مكتبة القصص 📚',
     storiesDescription: 'اضغط هنا لاستكشاف مجموعة من القصص التفاعلية مع الرسوم التوضيحية الجميلة والتفاعلات الممتعة.',

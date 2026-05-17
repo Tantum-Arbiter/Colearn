@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, StyleSheet, Dimensions, Pressable, Alert, Image, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -33,7 +33,29 @@ const DEBUG_LOGS = false;
 // NOTE: Profile/Story/Asset sync is now handled by BatchSyncService in StartupLoadingScreen
 // LoginScreen only handles authentication and token storage
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
+
+// Star configuration
+const STAR_COUNT = 15;
+const STAR_SIZE = 3;
+
+const generateStars = (count: number) => {
+  const stars = [];
+  const starAreaHeight = height * 0.6;
+  const seededRandom = (seed: number) => {
+    const x = Math.sin(seed * 9999) * 10000;
+    return x - Math.floor(x);
+  };
+  for (let i = 0; i < count; i++) {
+    stars.push({
+      id: i,
+      left: seededRandom(i * 1.3) * (width - 20) + 10,
+      top: seededRandom(i * 2.7) * starAreaHeight + 20,
+      opacity: 0.3 + seededRandom(i * 3.5) * 0.4,
+    });
+  }
+  return stars;
+};
 
 interface LoginScreenProps {
   onSuccess: () => void;
@@ -48,10 +70,13 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isAppleLoading, setIsAppleLoading] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [showGuestInfo, setShowGuestInfo] = useState(false);
+  const [showGuestMenu, setShowGuestMenu] = useState(false);
   const [currentView, setCurrentView] = useState<'main' | 'terms' | 'privacy'>('main');
   const [processedResponseId, setProcessedResponseId] = useState<string | null>(null);
 
   const { setGuestMode } = useAppStore();
+  const stars = useMemo(() => generateStars(STAR_COUNT), []);
 
   // Configure native Google Sign-In for Android on mount
   React.useEffect(() => {
@@ -144,6 +169,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
   const buttonsTranslateY = useSharedValue(30);
   const mainMenuTranslateX = useSharedValue(width); // Start off-screen to the right
   const loginScreenTranslateX = useSharedValue(0); // Login screen starts at 0
+  const guestInfoSlideY = useSharedValue(-height); // Start above screen
 
   React.useEffect(() => {
     // Fade in the entire container first (smooth transition from splash)
@@ -305,11 +331,37 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
   };
 
   const handleSkip = () => {
+    // Show guest info overlay first
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setShowGuestInfo(true);
+    // Slide the guest info overlay down into view
+    guestInfoSlideY.value = withTiming(0, {
+      duration: 900,
+      easing: Easing.out(Easing.cubic),
+    });
+  };
+
+  const handleGuestContinue = () => {
     // Set guest mode - no backend calls will be made
     setGuestMode(true);
     DEBUG_LOGS && console.log('[LoginScreen] Continuing as guest - no backend calls');
-    const callback = onSkip || onSuccess;
-    transitionToMainMenu(callback);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    // Mount the MainMenu underneath the guest info overlay
+    setShowGuestMenu(true);
+
+    // Slide the guest info overlay up out of view to reveal the menu
+    setTimeout(() => {
+      guestInfoSlideY.value = withTiming(-height, {
+        duration: 1200,
+        easing: Easing.in(Easing.cubic),
+      }, (finished) => {
+        if (finished) {
+          const callback = onSkip || onSuccess;
+          runOnJS(callback)();
+        }
+      });
+    }, 300);
   };
 
   const handleTermsPress = () => {
@@ -353,6 +405,10 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
     transform: [{ translateX: loginScreenTranslateX.value }],
   }));
 
+  const guestInfoAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: guestInfoSlideY.value }],
+  }));
+
   // Handle navigation between views (after all hooks)
   if (currentView === 'terms') {
     return <TermsConditionsScreen onBack={() => setCurrentView('main')} />;
@@ -367,11 +423,42 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
       {/* Login Screen - slides out to the left */}
       <Animated.View style={[styles.loginScreenWrapper, loginScreenAnimatedStyle]}>
         <LinearGradient
-          colors={['#E8F5E8', '#F0F8FF', '#E6F3FF']}
+          colors={['#1E3A8A', '#3B82F6', '#4ECDC4']}
           style={styles.gradient}
         >
+        {/* Stars */}
+        <View style={styles.starsContainer} pointerEvents="none">
+          {stars.map((star) => (
+            <View
+              key={`star-${star.id}`}
+              style={[
+                styles.star,
+                { left: star.left, top: star.top, opacity: star.opacity },
+              ]}
+            />
+          ))}
+        </View>
+
+        {/* Moon */}
+        <View style={styles.moonContainer} pointerEvents="none">
+          <Image
+            source={require('@/assets/images/ui-elements/moon-top-screen.webp')}
+            style={styles.moonImage}
+            resizeMode="contain"
+          />
+        </View>
+
+        {/* Bear */}
+        <View style={styles.bearContainer} pointerEvents="none">
+          <Image
+            source={require('@/assets/images/ui-elements/bear-bottom-screen.webp')}
+            style={styles.bearImage}
+            resizeMode="contain"
+          />
+        </View>
+
         {/* Header */}
-        <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
+        <View style={[styles.header, { paddingTop: insets.top + 80 }]}>
           <Animated.View style={[styles.titleContainer, titleAnimatedStyle]}>
             <ThemedText type="title" style={[styles.title, { fontSize: scaledFontSize(28) }]}>
               {t('login.welcomeTitle')}
@@ -385,9 +472,8 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
         {/* Logo */}
         <View style={styles.logoContainer}>
           <Animated.View style={[styles.logo, illustrationAnimatedStyle]}>
-            {/* App Icon Logo */}
             <Image
-              source={require('@/assets/images/icon.png')}
+              source={require('@/assets/images/ui-elements/earlyroots-logo.png')}
               style={styles.logoImage}
               resizeMode="contain"
             />
@@ -441,25 +527,93 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
           </Pressable>
         </Animated.View>
 
-        {/* Footer */}
-        <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
-          <View style={styles.footerTextContainer}>
-            <ThemedText style={[styles.footerText, { fontSize: scaledFontSize(12) }]}>{t('login.footerPrefix')}</ThemedText>
-            <Pressable onPress={handleTermsPress} style={styles.linkPressable}>
-              <ThemedText style={[styles.legalLink, { fontSize: scaledFontSize(12) }]}>{t('login.termsAndConditions')}</ThemedText>
-            </Pressable>
-            <ThemedText style={[styles.footerText, { fontSize: scaledFontSize(12) }]}>{t('login.and')}</ThemedText>
-            <Pressable onPress={handlePrivacyPress} style={styles.linkPressable}>
-              <ThemedText style={[styles.legalLink, { fontSize: scaledFontSize(12) }]}>{t('login.privacyPolicy')}</ThemedText>
-            </Pressable>
-          </View>
-        </View>
+        {/* Bottom spacer */}
+        <View style={{ paddingBottom: insets.bottom + 20 }} />
       </LinearGradient>
       </Animated.View>
 
-      {/* MainMenu slides in from the right - only render during transition to avoid flash */}
-      {/* disableTutorial=true prevents the tour from starting during login transition */}
-      {isTransitioning && (
+      {/* Guest Info Overlay - slides down from top */}
+      {showGuestInfo && (
+        <Animated.View style={[styles.guestInfoOverlay, guestInfoAnimatedStyle]}>
+          <LinearGradient
+            colors={['#1a1a3e', '#0d0d2b', '#050515']}
+            style={styles.gradient}
+          >
+            {/* Background art */}
+            <Image
+              source={require('@/assets/images/ui-elements/story-art-strip-subscribe.webp')}
+              style={styles.guestInfoBgImage}
+              resizeMode="cover"
+            />
+            <View style={styles.guestInfoBgOverlay} />
+
+            <View style={[styles.guestInfoContent, { paddingTop: insets.top + 10, paddingBottom: insets.bottom + 16 }]}>
+              {/* Logo */}
+              <Image
+                source={require('@/assets/images/ui-elements/earlyroots-logo.png')}
+                style={styles.guestInfoLogo}
+                resizeMode="contain"
+              />
+
+              {/* Title */}
+              <ThemedText style={styles.guestInfoTitle} numberOfLines={1} adjustsFontSizeToFit>
+                {t('guestInfo.title')}
+              </ThemedText>
+
+              {/* Description */}
+              <ThemedText style={styles.guestInfoDescription} numberOfLines={2} adjustsFontSizeToFit>
+                {t('guestInfo.description')}
+              </ThemedText>
+
+              {/* What you miss */}
+              <View style={styles.guestInfoSection}>
+                <ThemedText style={styles.guestInfoSectionTitle} numberOfLines={1} adjustsFontSizeToFit>
+                  {t('guestInfo.missingOutTitle')}
+                </ThemedText>
+
+                {['syncProgress', 'multiDevice', 'cloudBackup', 'personalised'].map((key) => (
+                  <View key={key} style={styles.guestInfoItem}>
+                    <ThemedText style={styles.guestInfoBullet}>✦</ThemedText>
+                    <ThemedText style={styles.guestInfoItemText} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.7}>
+                      {t(`guestInfo.missing.${key}`)}
+                    </ThemedText>
+                  </View>
+                ))}
+              </View>
+
+              {/* Subscription info */}
+              <View style={styles.guestInfoSection}>
+                <ThemedText style={styles.guestInfoSectionTitle} numberOfLines={1} adjustsFontSizeToFit>
+                  {t('guestInfo.subscriptionTitle')}
+                </ThemedText>
+                <ThemedText style={styles.guestInfoSubscriptionText} numberOfLines={4} adjustsFontSizeToFit minimumFontScale={0.7}>
+                  {t('guestInfo.subscriptionDescription')}
+                </ThemedText>
+              </View>
+
+              {/* Continue Button */}
+              <Pressable
+                style={styles.guestInfoContinueButton}
+                onPress={handleGuestContinue}
+              >
+                <ThemedText style={styles.guestInfoContinueText}>
+                  {t('guestInfo.continueButton')}
+                </ThemedText>
+              </Pressable>
+            </View>
+          </LinearGradient>
+        </Animated.View>
+      )}
+
+      {/* MainMenu for guest flow — mounted behind the guest info overlay, revealed by slide-up */}
+      {showGuestMenu && (
+        <View style={styles.guestMenuContainer}>
+          <MainMenu onNavigate={onNavigate || (() => {})} isActive={true} disableTutorial={true} entranceDelay={1500} />
+        </View>
+      )}
+
+      {/* MainMenu slides in from the right - only for login (non-guest) transition */}
+      {isTransitioning && !showGuestInfo && (
         <Animated.View style={[styles.mainMenuContainer, mainMenuAnimatedStyle]} pointerEvents="auto">
           <MainMenu onNavigate={onNavigate || (() => {})} isActive={true} disableTutorial={true} />
         </Animated.View>
@@ -481,12 +635,65 @@ const styles = StyleSheet.create({
     zIndex: 999,
     overflow: 'hidden',
   },
+  guestMenuContainer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 2,
+  },
   gradient: {
     flex: 1,
+  },
+  starsContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    zIndex: 1,
+  },
+  star: {
+    position: 'absolute',
+    width: STAR_SIZE,
+    height: STAR_SIZE,
+    backgroundColor: '#FFFFFF',
+    borderRadius: STAR_SIZE / 2,
+  },
+  moonContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    width: '100%',
+    height: '15%',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    zIndex: 2,
+  },
+  moonImage: {
+    width: 286,
+    height: 286,
+    opacity: 0.8,
+  },
+  bearContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    width: '100%',
+    height: '15%',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    zIndex: 2,
+  },
+  bearImage: {
+    width: 286,
+    height: 286,
+    opacity: 0.8,
   },
   header: {
     alignItems: 'center',
     paddingHorizontal: 20,
+    paddingTop: 20,
+    zIndex: 5,
   },
   titleContainer: {
     alignItems: 'center',
@@ -496,14 +703,14 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     textAlign: 'center',
-    color: '#2E8B8B',
+    color: '#FFFFFF',
     marginBottom: 12,
     lineHeight: 34,
   },
   subtitle: {
     fontSize: 16,
     textAlign: 'center',
-    color: '#5A5A5A',
+    color: 'rgba(255, 255, 255, 0.8)',
     lineHeight: 22,
     maxWidth: width * 0.85,
   },
@@ -512,26 +719,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
+    zIndex: 5,
   },
   logo: {
     justifyContent: 'center',
     alignItems: 'center',
   },
   logoImage: {
-    width: width > 768 ? 420 : 306,
-    height: width > 768 ? 420 : 306,
+    width: width > 768 ? 520 : 420,
+    height: width > 768 ? 520 : 420,
     marginBottom: width > 768 ? 32 : 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 12,
   },
   buttonContainer: {
     paddingHorizontal: 20,
     paddingVertical: 20,
     gap: 16,
     alignItems: 'center',
+    zIndex: 5,
   },
   loginButton: {
     borderRadius: 25,
@@ -582,13 +786,14 @@ const styles = StyleSheet.create({
   },
   skipButton: {
     paddingVertical: 12,
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     alignItems: 'center',
     marginTop: 8,
     maxWidth: 280,
     alignSelf: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
     borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.25)',
     borderRadius: 20,
   },
   skipButtonPressed: {
@@ -596,12 +801,13 @@ const styles = StyleSheet.create({
   },
   skipButtonText: {
     fontSize: 14,
-    color: '#7A7A7A',
-    textDecorationLine: 'underline',
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   footer: {
     paddingHorizontal: 20,
     alignItems: 'center',
+    zIndex: 5,
   },
   footerTextContainer: {
     flexDirection: 'row',
@@ -611,16 +817,129 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 12,
-    color: '#7A7A7A',
+    color: '#FFFFFF',
     lineHeight: 16,
+    fontWeight: '600',
   },
   linkPressable: {
     // No additional styling needed - just wraps the text
   },
   legalLink: {
     fontSize: 12,
-    color: '#4ECDC4',
+    color: '#FFFFFF',
     textDecorationLine: 'underline',
-    fontWeight: '500',
+    fontWeight: '700',
+  },
+  // Guest Info Overlay
+  guestInfoOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 500,
+  },
+  guestInfoBgImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: width,
+    height: height,
+    opacity: 0.35,
+  },
+  guestInfoBgOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(5, 5, 20, 0.45)',
+  },
+  guestInfoContent: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    justifyContent: 'flex-start',
+    gap: 12,
+  },
+  guestInfoLogo: {
+    width: width > 768 ? 320 : 220,
+    height: width > 768 ? 320 : 220,
+    marginBottom: -4,
+  },
+  guestInfoTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 6,
+  },
+  guestInfoDescription: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    lineHeight: 20,
+    maxWidth: width * 0.85,
+    textShadowColor: 'rgba(0, 0, 0, 0.6)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+    maxWidth: width * 0.85,
+  },
+  guestInfoSection: {
+    width: '100%',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  guestInfoSectionTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#FFD700',
+    marginBottom: 10,
+    textShadowColor: 'rgba(0, 0, 0, 0.6)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  guestInfoItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 6,
+    paddingRight: 8,
+  },
+  guestInfoBullet: {
+    color: '#FFD700',
+    fontSize: 14,
+    marginRight: 10,
+    lineHeight: 20,
+  },
+  guestInfoItemText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    lineHeight: 20,
+    flex: 1,
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  guestInfoSubscriptionText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    lineHeight: 20,
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  guestInfoContinueButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+    borderRadius: 25,
+    paddingVertical: 16,
+    paddingHorizontal: 40,
+    alignItems: 'center',
+    marginTop: 8,
+    width: '100%',
+    maxWidth: 300,
+  },
+  guestInfoContinueText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
 });

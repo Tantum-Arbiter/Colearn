@@ -83,7 +83,7 @@ export default {
 
   // Login screen
   login: {
-    welcomeTitle: 'Welcome to\nGrow with Freya',
+    welcomeTitle: 'Welcome to\nEarlyroots Stories',
     subtitle: "Sign in to save your child's progress and sync across devices",
     continueWithGoogle: 'Continue with Google',
     continueWithApple: 'Continue with Apple',
@@ -98,6 +98,22 @@ export default {
     connectionTimeout: 'Connection Timed Out',
     connectionTimeoutMessage: 'Login timed out. Please check your connection and try again.',
     ok: 'OK',
+  },
+
+  // Guest mode info
+  guestInfo: {
+    title: 'Browsing as a Guest',
+    description: 'You can explore Earlyroots Stories without an account, but some features will be limited.',
+    missingOutTitle: 'What you\'ll miss without signing in',
+    missing: {
+      syncProgress: 'Save and sync your child\'s reading progress',
+      multiDevice: 'Access your library across multiple devices',
+      cloudBackup: 'Cloud backup of favourites and preferences',
+      personalised: 'Personalised story recommendations',
+    },
+    subscriptionTitle: 'Unlock the full experience',
+    subscriptionDescription: 'Earlyroots offers subscription plans that unlock our complete library of interactive stories, music activities, and learning content. Sign in anytime from settings to upgrade and access everything.',
+    continueButton: 'Continue as Guest',
   },
 
   // Main menu
@@ -517,12 +533,6 @@ export default {
         body: 'Screen time protection, guided sessions and co-play tools — designed for short, meaningful moments together. Research shows co-engagement gives the greatest benefits for early development.',
         button: 'Next',
       },
-      privacy: {
-        title: 'Privacy & Getting Started',
-        body: 'Your data is secure and pseudonymised. No personal information is collected — sign-in uses only an anonymous identifier.\n\nHelp us improve by sharing anonymous crash reports (you can change this anytime in Settings).',
-        button: 'Next',
-        showCrashReportingDialog: 'true',
-      },
       consent: {
         title: 'Before We Begin',
         body: 'As a parent or guardian, please review and agree to the following:',
@@ -560,21 +570,19 @@ export default {
       welcome: 'Spark imagination through play',
       howItWorks: '',
       family: 'Quality time, real benefits',
-      privacy: 'Privacy-first, always',
       consent: 'One last step',
     },
     benefits: {
       welcome: 'Backed by child development research',
       howItWorks: 'Family · Stories · Music · Voice — all in one app',
       family: 'Recommended by child development experts',
-      privacy: 'Your data stays yours',
       consent: 'Your consent keeps your family safe',
     },
   },
 
   // Tutorial
   tutorial: {
-    welcomeTitle: 'Welcome to Grow with\nFreya! 🎉',
+    welcomeTitle: 'Welcome to\nEarlyroots! 🎉',
     welcomeDescription: "Let's take a quick tour to help you and your child get the most out of storytime together.",
     storiesTitle: 'Story Library 📚',
     storiesDescription: 'Tap here to explore our collection of interactive stories with beautiful illustrations and fun interactions.',
