@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import { useAppStore } from '../../store/app-store';
 import ScreenTimeService, { ScreenTimeWarning } from '../../services/screen-time-service';
@@ -57,6 +57,15 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
   // Queued warning that arrived during an immersive screen — shown on exit
   const [pendingWarning, setPendingWarning] = useState<ScreenTimeWarning | null>(null);
 
+  // Refs mirror React state so AppState/interval callbacks always read the
+  // current value — avoids stale-closure bugs where a backgrounded app skips
+  // endSession() because the handler captured an outdated `isTracking`.
+  const isTrackingRef = useRef(isTracking);
+  isTrackingRef.current = isTracking;
+
+  // Track whether the app is in the foreground so we can pause polling in the background.
+  const isAppActiveRef = useRef(AppState.currentState === 'active');
+
   const screenTimeService = ScreenTimeService.getInstance();
   const notificationService = NotificationService.getInstance();
 
@@ -79,16 +88,20 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
     }
   }, [isOnImmersiveScreen, pendingWarning]);
 
-  // Update today's usage periodically and check for daily reset
+  // Update today's usage periodically and check for daily reset.
+  // The interval ONLY fires when the app is in the foreground — the AppState
+  // handler below sets isAppActiveRef and the callback short-circuits otherwise.
   useEffect(() => {
     const updateUsage = async () => {
-      if (screenTimeEnabled) {
-        // Check if it's a new day and reset daily data if needed
-        await screenTimeService.checkAndResetDailyData();
+      // Skip work when the app is backgrounded — saves CPU/battery.
+      if (!isAppActiveRef.current) return;
+      if (!screenTimeEnabled) return;
 
-        const usage = await screenTimeService.getTodayUsage();
-        setTodayUsage(usage);
-      }
+      // Check if it's a new day and reset daily data if needed
+      await screenTimeService.checkAndResetDailyData();
+
+      const usage = await screenTimeService.getTodayUsage();
+      setTodayUsage(usage);
     };
 
     updateUsage();
@@ -135,23 +148,40 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screenTimeEnabled]);
 
-  // Handle app state changes - end on background, restart on active
+  // Handle app state changes — end session on background, restart on foreground.
+  // Uses refs instead of React state so the handler never has a stale closure.
+  // The dependency array is intentionally empty — the handler reads current
+  // values from refs / zustand at call time.
   useEffect(() => {
     const handleAppStateChange = async (nextAppState: AppStateStatus) => {
       if (nextAppState === 'background' || nextAppState === 'inactive') {
-        // App going to background, end current session
-        if (isTracking) {
+        isAppActiveRef.current = false;
+
+        // End the current session so background time is never counted.
+        if (isTrackingRef.current) {
           log.debug('Ending session (background)');
           await screenTimeService.endSession();
           setIsTracking(false);
           setCurrentActivity(null);
         }
       } else if (nextAppState === 'active') {
-        // App becoming active, start a new session if screen time is enabled
-        // BUT don't start if we're on an exempt screen (sleep/music)
-        if (screenTimeEnabled && !isTracking && !isOnExemptScreen) {
+        isAppActiveRef.current = true;
+
+        // Restart a session if screen time is still enabled and we're not on
+        // an exempt screen. Read fresh values from zustand to avoid staleness.
+        const {
+          screenTimeEnabled: stEnabled,
+          childAgeInMonths: age,
+          currentScreen: screen,
+        } = useAppStore.getState();
+
+        const exempt = EXEMPT_SCREENS.some(s =>
+          screen?.toLowerCase().includes(s.toLowerCase()) ?? false
+        );
+
+        if (stEnabled && !isTrackingRef.current && !exempt) {
           log.debug('Starting session (active)');
-          await screenTimeService.startSession('story', childAgeInMonths);
+          await screenTimeService.startSession('story', age);
           setIsTracking(true);
           setCurrentActivity('story');
         }
@@ -160,7 +190,8 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
 
     const subscription = AppState.addEventListener('change', handleAppStateChange);
     return () => subscription?.remove();
-  }, [isTracking, screenTimeEnabled, childAgeInMonths, isOnExemptScreen]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Pause/resume tracking based on exempt screens (sleep/music pages)
   useEffect(() => {
