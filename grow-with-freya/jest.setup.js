@@ -369,32 +369,43 @@ jest.mock('./components/themed-text', () => ({
   },
 }));
 
-// Mock react-native-svg
-jest.mock('react-native-svg', () => ({
-  SvgXml: 'SvgXml',
-  Svg: 'Svg',
-  Circle: 'Circle',
-  Ellipse: 'Ellipse',
-  G: 'G',
-  Text: 'Text',
-  TSpan: 'TSpan',
-  TextPath: 'TextPath',
-  Path: 'Path',
-  Polygon: 'Polygon',
-  Polyline: 'Polyline',
-  Line: 'Line',
-  Rect: 'Rect',
-  Use: 'Use',
-  Image: 'Image',
-  Symbol: 'Symbol',
-  Defs: 'Defs',
-  LinearGradient: 'LinearGradient',
-  RadialGradient: 'RadialGradient',
-  Stop: 'Stop',
-  ClipPath: 'ClipPath',
-  Pattern: 'Pattern',
-  Mask: 'Mask',
-}));
+// Mock react-native-svg — use actual React components so memo() wrappers work
+jest.mock('react-native-svg', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  const mockComponent = (name) => {
+    const C = (props) => React.createElement(View, { ...props, testID: `svg-${name}` });
+    C.displayName = name;
+    return C;
+  };
+  return {
+    __esModule: true,
+    default: mockComponent('Svg'),
+    SvgXml: mockComponent('SvgXml'),
+    Svg: mockComponent('Svg'),
+    Circle: mockComponent('Circle'),
+    Ellipse: mockComponent('Ellipse'),
+    G: mockComponent('G'),
+    Text: mockComponent('Text'),
+    TSpan: mockComponent('TSpan'),
+    TextPath: mockComponent('TextPath'),
+    Path: mockComponent('Path'),
+    Polygon: mockComponent('Polygon'),
+    Polyline: mockComponent('Polyline'),
+    Line: mockComponent('Line'),
+    Rect: mockComponent('Rect'),
+    Use: mockComponent('Use'),
+    Image: mockComponent('Image'),
+    Symbol: mockComponent('Symbol'),
+    Defs: mockComponent('Defs'),
+    LinearGradient: mockComponent('LinearGradient'),
+    RadialGradient: mockComponent('RadialGradient'),
+    Stop: mockComponent('Stop'),
+    ClipPath: mockComponent('ClipPath'),
+    Pattern: mockComponent('Pattern'),
+    Mask: mockComponent('Mask'),
+  };
+});
 
 // Mock React Native's Animated API
 jest.mock('react-native', () => {
