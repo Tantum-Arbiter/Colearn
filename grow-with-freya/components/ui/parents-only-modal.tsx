@@ -172,7 +172,7 @@ export function ParentsOnlyModal({
                     {t('parentsOnly.solveMath')}
                   </Text>
                   <Text style={[styles.mathProblemCompact, { fontSize: scaledFontSize(18) }]}>
-                    {challenge.num1} {challenge.operation === '*' ? 'x' : challenge.operation} {challenge.num2} = ?
+                    {challenge.num1} {challenge.operation} {challenge.num2} = ?
                   </Text>
                   <View style={styles.inputRow}>
                     <TextInput
@@ -217,7 +217,7 @@ export function ParentsOnlyModal({
               ) : (
                 <>
                   <Text style={[styles.mathProblem, { fontSize: scaledFontSize(32) }]}>
-                    {challenge.num1} {challenge.operation === '*' ? 'x' : challenge.operation} {challenge.num2} = ?
+                    {challenge.num1} {challenge.operation} {challenge.num2} = ?
                   </Text>
                   <Text style={[styles.subtitle, { fontSize: scaledFontSize(14) }]}>
                     {t('parentsOnly.mathSubtitle')}

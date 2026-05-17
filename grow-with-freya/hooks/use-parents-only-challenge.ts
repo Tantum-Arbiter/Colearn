@@ -8,7 +8,7 @@ export interface ParentChallenge {
   // Math challenge properties
   num1?: number;
   num2?: number;
-  operation?: '+' | '-' | '*';
+  operation?: '+' | '-';
   answer?: number;
 }
 
@@ -20,26 +20,21 @@ export const EMOJI_CHALLENGES: ParentChallenge[] = [
   { type: 'emoji', emoji: '🐫', word: 'camel' },
 ];
 
-// Math challenges - randomly generated
+// Math challenges - randomly generated (simple addition & subtraction only)
 export function generateMathChallenge(): ParentChallenge {
-  const operations: ('+' | '-' | '*')[] = ['+', '-', '*'];
+  const operations: ('+' | '-')[] = ['+', '-'];
   const operation = operations[Math.floor(Math.random() * operations.length)];
 
   let num1: number, num2: number, answer: number;
 
   if (operation === '+') {
-    num1 = Math.floor(Math.random() * 10) + 1; // 1-10
-    num2 = Math.floor(Math.random() * 10) + 1; // 1-10
+    num1 = Math.floor(Math.random() * 8) + 2; // 2-9
+    num2 = Math.floor(Math.random() * 8) + 1; // 1-8
     answer = num1 + num2;
-  } else if (operation === '-') {
-    num1 = Math.floor(Math.random() * 15) + 5; // 5-19
-    num2 = Math.floor(Math.random() * num1); // 0 to num1-1
-    answer = num1 - num2;
   } else {
-    // Multiplication - keep numbers small
-    num1 = Math.floor(Math.random() * 10) + 1; // 1-10
-    num2 = Math.floor(Math.random() * 10) + 1; // 1-10
-    answer = num1 * num2;
+    num1 = Math.floor(Math.random() * 10) + 5; // 5-14
+    num2 = Math.floor(Math.random() * (num1 - 1)) + 1; // 1 to num1-1 (always positive result)
+    answer = num1 - num2;
   }
 
   return { type: 'math', num1, num2, operation, answer };
