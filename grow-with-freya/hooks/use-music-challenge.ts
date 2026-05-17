@@ -155,6 +155,9 @@ export interface AudioSessionControl {
    *  Call before playing notes to avoid the first note being silenced
    *  by a stale playAndRecord session from useAudioRecorder. */
   ensurePlaybackMode: () => Promise<void>;
+  /** Synchronous check — true when audio session is already in playback mode.
+   *  Use to skip the async ensurePlaybackMode and fire sound instantly. */
+  isInPlaybackMode: () => boolean;
   /** Whether the recorder is currently listening (mic active) */
   isListening: boolean;
 }
@@ -322,23 +325,19 @@ export function useMusicChallenge(
     };
 
     // Ensure the iOS audio session is in playback mode before accepting input.
-    // On mount, useAudioRecorder (breath detector) may leave the session in
-    // playAndRecord mode. Without this, the first note played in press mode
-    // can be silenced because the session hasn't been restored yet.
-    // We await the session switch so that the state doesn't transition to
-    // 'awaiting_input' before the audio session is confirmed ready.
+    // If already cached as playback, finishes synchronously — no native bridge delay.
     const ctrl = audioSessionRef.current;
-    if (ctrl) {
+    if (ctrl && !ctrl.isInPlaybackMode()) {
       void ctrl.ensurePlaybackMode().then(finishStart);
     } else {
       finishStart();
     }
   }, [config, missingAssets, state, resolvedSequence]);
 
-  // Play a note sample. The note sustains indefinitely by restarting playback
-  // when the sample ends (via a playbackStatusUpdate listener). This is more
-  // reliable than player.loop across different expo-audio versions and sample
-  // durations. The note only stops when stopNote fades it out.
+  // Play a note sample. Creates a fresh AudioPlayer for each press (expo-audio
+  // players have native state that makes reuse unreliable). The note sustains
+  // indefinitely via a playbackStatusUpdate listener that restarts playback
+  // when the sample ends. The note only stops when stopNote fades it out.
   const playNoteAudio = useCallback((note: string) => {
     if (!instrument) return;
 
@@ -607,11 +606,11 @@ export function useMusicChallenge(
         });
         return;
       }
-      // Press mode or no session control — ensure playback audio session
-      // is active before playing. On first use, useAudioRecorder may have
-      // left the iOS session in playAndRecord mode (quiet/silent speaker).
+      // Press mode or no session control — fire sound immediately when the
+      // audio session is already cached in playback mode (zero latency).
+      // Only falls back to async on the very first note after mount.
       const ctrl = audioSessionRef.current;
-      if (ctrl) {
+      if (ctrl && !ctrl.isInPlaybackMode()) {
         void ctrl.ensurePlaybackMode().then(() => {
           playNoteAudio(note);
           processNoteForSequence(note);
@@ -661,11 +660,10 @@ export function useMusicChallenge(
   }, [isBreathActive, state, config, processNoteForSequence, playNoteAudio, ensurePlaybackSession]);
 
   const previewNote = useCallback((note: string) => {
-    // Ensure the audio session is in playback mode before playing.
-    // On iOS, useAudioRecorder's creation can leave the session in
-    // playAndRecord mode, which may silence the very first player.play().
+    // If the audio session is already in playback mode (cached), fire immediately.
+    // Otherwise do the async switch first — only happens on the very first note.
     const ctrl = audioSessionRef.current;
-    if (ctrl) {
+    if (ctrl && !ctrl.isInPlaybackMode()) {
       void ctrl.ensurePlaybackMode().then(() => playNoteAudio(note));
     } else {
       playNoteAudio(note);

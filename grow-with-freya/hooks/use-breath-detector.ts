@@ -42,6 +42,10 @@ export interface BreathDetectorResult {
   startListening: () => Promise<void>;
   stopListening: () => Promise<void>;
   ensurePlaybackMode: () => Promise<void>;
+  /** Synchronous check — returns true when the audio session is already in
+   *  playback-only mode (cached). Use this to skip the async ensurePlaybackMode
+   *  call and fire sound immediately with zero latency. */
+  isInPlaybackMode: () => boolean;
   /** Temporarily stop the recorder and switch to playback-only audio session
    *  for full speaker volume. isBreathActive keeps its last value (debounced).
    *  Returns a promise that resolves once the audio session has switched. */
@@ -99,6 +103,9 @@ export function useBreathDetector(
   // async work. Each pauseForPlayback bumps this; resumeRecording captures
   // the current value and bails if it has changed (meaning a new pause arrived).
   const pauseGenerationRef = useRef(0);
+  // Cached audio session mode — avoids redundant native bridge calls.
+  // Set to 'playback' or 'recording' after each successful setAudioModeAsync.
+  const audioModeRef = useRef<'playback' | 'recording' | null>(null);
 
   // Update breath detection from metering values.
   // Activation is immediate; deactivation is debounced so brief dips in
@@ -162,6 +169,7 @@ export function useBreathDetector(
       // Enable recording mode, but explicitly keep playback routed to speaker.
       // On iOS, play-and-record sessions can otherwise get sent to the receiver/earpiece.
       await setAudioModeAsync(RECORDING_AUDIO_MODE);
+      audioModeRef.current = 'recording';
       // prepareToRecordAsync() is required on Android — MediaRecorder must be
       // prepared before start(). Without this, record() silently fails and
       // metering stays at -160 (silence). iOS is more forgiving but we call
@@ -180,12 +188,18 @@ export function useBreathDetector(
   // This undoes the `allowsRecording: true` set by startListening AND
   // counteracts any session changes caused by useAudioRecorder's creation.
   const restorePlaybackAudioMode = useCallback(async () => {
+    if (audioModeRef.current === 'playback') return; // Already in playback — skip native call
     try {
       await setAudioModeAsync(PLAYBACK_AUDIO_MODE);
+      audioModeRef.current = 'playback';
     } catch {
       // best-effort
     }
   }, []);
+
+  /** Synchronous check: is the audio session already in playback mode?
+   *  Reads the cached ref — no native bridge call. */
+  const isInPlaybackMode = useCallback(() => audioModeRef.current === 'playback', []);
 
   const stopListening = useCallback(async () => {
     // Bump generation to cancel any in-flight resumeRecording async work
@@ -228,6 +242,7 @@ export function useBreathDetector(
     try { recorder.stop(); } catch {}
     try {
       await setAudioModeAsync(PLAYBACK_AUDIO_MODE);
+      audioModeRef.current = 'playback';
     } catch {}
     log.debug('Recorder paused — switched to playback mode (breath state frozen)');
   }, [recorder]);
@@ -255,6 +270,7 @@ export function useBreathDetector(
         // Bail if a new pause arrived while we were waiting
         if (pauseGenerationRef.current !== gen) return;
         await setAudioModeAsync(RECORDING_AUDIO_MODE);
+        audioModeRef.current = 'recording';
         if (pauseGenerationRef.current !== gen) return;
         await recorder.prepareToRecordAsync();
         if (pauseGenerationRef.current !== gen) return;
@@ -294,6 +310,7 @@ export function useBreathDetector(
     startListening,
     stopListening,
     ensurePlaybackMode: restorePlaybackAudioMode,
+    isInPlaybackMode,
     pauseForPlayback,
     resumeRecording,
   };

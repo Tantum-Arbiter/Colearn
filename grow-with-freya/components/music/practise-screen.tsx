@@ -153,8 +153,9 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
     pauseForPlayback: breathDetector.pauseForPlayback,
     resumeRecording: breathDetector.resumeRecording,
     ensurePlaybackMode: breathDetector.ensurePlaybackMode,
+    isInPlaybackMode: breathDetector.isInPlaybackMode,
     isListening: breathDetector.isListening,
-  }), [breathDetector.pauseForPlayback, breathDetector.resumeRecording, breathDetector.ensurePlaybackMode, breathDetector.isListening]);
+  }), [breathDetector.pauseForPlayback, breathDetector.resumeRecording, breathDetector.ensurePlaybackMode, breathDetector.isInPlaybackMode, breathDetector.isListening]);
 
   // Background music & note volume (must be before useMusicChallenge)
   const globalSound = useGlobalSound();

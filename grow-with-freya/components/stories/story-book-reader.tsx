@@ -266,8 +266,9 @@ export function StoryBookReader({
     pauseForPlayback: breathDetector.pauseForPlayback,
     resumeRecording: breathDetector.resumeRecording,
     ensurePlaybackMode: breathDetector.ensurePlaybackMode,
+    isInPlaybackMode: breathDetector.isInPlaybackMode,
     isListening: breathDetector.isListening,
-  }), [breathDetector.pauseForPlayback, breathDetector.resumeRecording, breathDetector.ensurePlaybackMode, breathDetector.isListening]);
+  }), [breathDetector.pauseForPlayback, breathDetector.resumeRecording, breathDetector.ensurePlaybackMode, breathDetector.isInPlaybackMode, breathDetector.isListening]);
 
   // Compute effective note volume: base volume * master * mute.
   // Updates live when the user toggles mute or adjusts the master slider.

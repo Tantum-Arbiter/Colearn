@@ -98,6 +98,7 @@ jest.mock('@/hooks/use-breath-detector', () => ({
     startListening: jest.fn(),
     stopListening: jest.fn(),
     ensurePlaybackMode: jest.fn(() => Promise.resolve()),
+    isInPlaybackMode: jest.fn(() => true),
     setUseFallback: jest.fn(),
   }),
 }));
