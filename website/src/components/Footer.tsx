@@ -131,6 +131,11 @@ export default function Footer() {
                   {t.footer.terms}
                 </Link>
               </li>
+              <li>
+                <Link href="/support/delete-account" className="text-white/70 hover:text-white transition">
+                  Delete Account
+                </Link>
+              </li>
             </ul>
           </div>
         </div>

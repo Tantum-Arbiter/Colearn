@@ -164,6 +164,54 @@ export default function ContactPage() {
         </div>
       </section>
 
+      {/* Delete Account Section */}
+      <section id="delete-account" className="py-8">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white rounded-2xl p-6 shadow-soft border border-red-100">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
+                <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <h2 className="font-rounded text-xl font-bold text-brand-text">
+                Delete My Account
+              </h2>
+            </div>
+            <p className="text-gray-600 text-sm mb-4">
+              You can delete your earlyroots account and all associated data at any time. Account deletion is permanent and cannot be undone.
+            </p>
+            <div className="space-y-3 mb-4">
+              <div className="flex items-start gap-3 bg-gray-50 rounded-xl p-3">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center mt-0.5">1</span>
+                <div>
+                  <p className="text-sm font-medium text-brand-text">Delete via the app</p>
+                  <p className="text-xs text-gray-500">Open the app → Account → Delete Account. Follow the confirmation steps to permanently remove your account.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 bg-gray-50 rounded-xl p-3">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center mt-0.5">2</span>
+                <div>
+                  <p className="text-sm font-medium text-brand-text">Email us</p>
+                  <p className="text-xs text-gray-500">
+                    Send an email to{' '}
+                    <a href="mailto:support@growwithfreya.com?subject=Delete%20My%20Account" className="text-primary font-medium hover:underline">
+                      support@growwithfreya.com
+                    </a>
+                    {' '}with the subject &ldquo;Delete My Account&rdquo; and we&apos;ll process your request within 48 hours.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-amber-50 rounded-xl p-3">
+              <p className="text-xs text-amber-700">
+                <strong>What gets deleted:</strong> Your user profile, preferences, session data, and all associated account information will be permanently removed from our servers. Downloaded stories cached on your device will also be cleared.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* FAQ Banner - Compact */}
       <section className="py-6">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
