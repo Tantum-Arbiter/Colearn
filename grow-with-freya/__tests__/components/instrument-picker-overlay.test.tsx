@@ -30,6 +30,17 @@ jest.mock('@/services/music-asset-registry', () => {
   };
 });
 
+jest.mock('@/store/app-store', () => {
+  const state = {
+    getEffectiveTier: () => 'premium' as const,
+    subscriptionTier: 'premium' as const,
+    devTierOverride: null,
+  };
+  const useAppStore = (selector?: (s: any) => any) => selector ? selector(state) : state;
+  useAppStore.getState = () => state;
+  return { useAppStore };
+});
+
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { InstrumentPickerOverlay } from '@/components/stories/instrument-picker-overlay';
