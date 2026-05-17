@@ -993,6 +993,12 @@ export default {
     // Plan details — Annual
     detailEverythingPremium: 'Everything in Premium',
     detailSave25: 'Save 25% vs monthly',
+    // Guest mode — sign-in required
+    signInToSubscribe: 'Sign In to Subscribe',
+    signInRequiredTitle: 'Sign In Required',
+    signInRequiredMessage: 'You need to sign in before you can subscribe. Your subscription will be linked to your account so you can access it on all your devices.',
+    signInRequiredConfirm: 'Sign In',
+    signInRequiredCancel: 'Not Now',
   },
 
   // Default page content

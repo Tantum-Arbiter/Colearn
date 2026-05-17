@@ -906,6 +906,12 @@ export default {
     detailAllInstruments: '所有乐器解锁',
     detailEverythingPremium: '高级版全部功能',
     detailSave25: '与月度相比节省25%',
+    // Guest mode — sign-in required
+    signInToSubscribe: '登录以订阅',
+    signInRequiredTitle: '需要登录',
+    signInRequiredMessage: '订阅前需要登录。您的订阅将与您的账户关联，以便在所有设备上访问。',
+    signInRequiredConfirm: '登录',
+    signInRequiredCancel: '暂不',
   },
 
   defaultPage: {

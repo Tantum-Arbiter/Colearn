@@ -912,6 +912,12 @@ export default {
     detailAllInstruments: 'جميع الآلات مفتوحة',
     detailEverythingPremium: 'كل ما في الخطة المميزة',
     detailSave25: 'وفر 25% مقارنة بالاشتراك الشهري',
+    // Guest mode — sign-in required
+    signInToSubscribe: 'سجّل الدخول للاشتراك',
+    signInRequiredTitle: 'تسجيل الدخول مطلوب',
+    signInRequiredMessage: 'يجب عليك تسجيل الدخول قبل الاشتراك. سيتم ربط اشتراكك بحسابك للوصول إليه على جميع أجهزتك.',
+    signInRequiredConfirm: 'تسجيل الدخول',
+    signInRequiredCancel: 'ليس الآن',
   },
 
   defaultPage: {

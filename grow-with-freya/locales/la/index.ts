@@ -908,6 +908,12 @@ export default {
     detailAllInstruments: 'Omnia instrumenta reclusa',
     detailEverythingPremium: 'Omnia ex Premium',
     detailSave25: 'Serva 25% comparate cum mensili',
+    // Guest mode — sign-in required
+    signInToSubscribe: 'Intra ut subscribas',
+    signInRequiredTitle: 'Introitus necessarius',
+    signInRequiredMessage: 'Ante subscribere debes intrare. Subscriptio tua cum ratione tua coniungetur ut in omnibus machinis accedere possis.',
+    signInRequiredConfirm: 'Intrare',
+    signInRequiredCancel: 'Non nunc',
   },
 
   defaultPage: {

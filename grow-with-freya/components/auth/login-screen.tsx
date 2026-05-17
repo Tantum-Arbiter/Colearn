@@ -70,12 +70,13 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isAppleLoading, setIsAppleLoading] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [showReturningMenu, setShowReturningMenu] = useState(false);
   const [showGuestInfo, setShowGuestInfo] = useState(false);
   const [showGuestMenu, setShowGuestMenu] = useState(false);
   const [currentView, setCurrentView] = useState<'main' | 'terms' | 'privacy'>('main');
   const [processedResponseId, setProcessedResponseId] = useState<string | null>(null);
 
-  const { setGuestMode } = useAppStore();
+  const { setGuestMode, getEffectiveTier } = useAppStore();
   const stars = useMemo(() => generateStars(STAR_COUNT), []);
 
   // Configure native Google Sign-In for Android on mount
@@ -331,8 +332,35 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
   };
 
   const handleSkip = () => {
-    // Show guest info overlay first
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    // Returning user with a paid subscription (internet down / session expired):
+    // skip the "what you're missing" overlay — fade out login UI, slide in main menu.
+    // Free-tier users (never purchased) still see the info overlay.
+    const tier = getEffectiveTier();
+    if (tier !== 'free') {
+      DEBUG_LOGS && console.log('[LoginScreen] Returning subscriber — skipping guest info');
+      setGuestMode(true);
+
+      // Fade out login UI elements (title, buttons, logo)
+      titleOpacity.value = withTiming(0, { duration: 400, easing: Easing.out(Easing.cubic) });
+      buttonsOpacity.value = withTiming(0, { duration: 400, easing: Easing.out(Easing.cubic) });
+      illustrationOpacity.value = withTiming(0, { duration: 400, easing: Easing.out(Easing.cubic) });
+      // Fade out the login background (gradient, stars, moon, bear)
+      containerOpacity.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) });
+
+      // Mount MainMenu behind the fading login — carousel buttons animate in naturally
+      setShowReturningMenu(true);
+
+      // After the carousel buttons have animated in (~2s), call onSkip to finish
+      setTimeout(() => {
+        const callback = onSkip || onSuccess;
+        callback();
+      }, 2000);
+      return;
+    }
+
+    // First-time / free user — show guest info overlay
     setShowGuestInfo(true);
     // Slide the guest info overlay down into view
     guestInfoSlideY.value = withTiming(0, {
@@ -612,6 +640,13 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
         </View>
       )}
 
+      {/* Returning subscriber: MainMenu mounted behind fading login, carousel buttons animate in */}
+      {showReturningMenu && (
+        <View style={styles.returningMenuContainer}>
+          <MainMenu onNavigate={onNavigate || (() => {})} isActive={true} disableTutorial={true} entranceDelay={400} />
+        </View>
+      )}
+
       {/* MainMenu slides in from the right - only for login (non-guest) transition */}
       {isTransitioning && !showGuestInfo && (
         <Animated.View style={[styles.mainMenuContainer, mainMenuAnimatedStyle]} pointerEvents="auto">
@@ -634,6 +669,10 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     zIndex: 999,
     overflow: 'hidden',
+  },
+  returningMenuContainer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1,
   },
   guestMenuContainer: {
     ...StyleSheet.absoluteFillObject,

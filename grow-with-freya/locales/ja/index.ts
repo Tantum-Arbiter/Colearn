@@ -906,6 +906,12 @@ export default {
     detailAllInstruments: 'すべての楽器が解除',
     detailEverythingPremium: 'プレミアムのすべて',
     detailSave25: '月額と比べて25%お得',
+    // Guest mode — sign-in required
+    signInToSubscribe: 'サインインして購読する',
+    signInRequiredTitle: 'サインインが必要です',
+    signInRequiredMessage: '購読するにはサインインが必要です。サブスクリプションはアカウントに紐づけられ、すべてのデバイスでアクセスできます。',
+    signInRequiredConfirm: 'サインイン',
+    signInRequiredCancel: '今はしない',
   },
 
   defaultPage: {

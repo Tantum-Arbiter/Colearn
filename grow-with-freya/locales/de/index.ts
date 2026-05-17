@@ -817,6 +817,12 @@ export default {
     detailAllInstruments: 'Alle Instrumente freigeschaltet',
     detailEverythingPremium: 'Alles aus Premium',
     detailSave25: '25 % sparen im Vergleich zum Monatsabo',
+    // Guest mode — sign-in required
+    signInToSubscribe: 'Anmelden zum Abonnieren',
+    signInRequiredTitle: 'Anmeldung erforderlich',
+    signInRequiredMessage: 'Du musst dich anmelden, bevor du abonnieren kannst. Dein Abonnement wird mit deinem Konto verknüpft, damit du es auf allen Geräten nutzen kannst.',
+    signInRequiredConfirm: 'Anmelden',
+    signInRequiredCancel: 'Nicht jetzt',
   },
 
   // Default page content

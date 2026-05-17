@@ -817,6 +817,12 @@ export default {
     detailAllInstruments: 'Todos los instrumentos desbloqueados',
     detailEverythingPremium: 'Todo lo de Premium',
     detailSave25: 'Ahorra un 25% respecto al plan mensual',
+    // Guest mode — sign-in required
+    signInToSubscribe: 'Inicia sesión para suscribirte',
+    signInRequiredTitle: 'Inicio de sesión requerido',
+    signInRequiredMessage: 'Debes iniciar sesión antes de suscribirte. Tu suscripción se vinculará a tu cuenta para que puedas acceder desde todos tus dispositivos.',
+    signInRequiredConfirm: 'Iniciar sesión',
+    signInRequiredCancel: 'Ahora no',
   },
 
   // Default page content

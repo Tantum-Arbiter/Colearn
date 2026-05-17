@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { View, Text, Pressable, StyleSheet, ScrollView, Image, useWindowDimensions } from 'react-native';
+import { View, Text, Pressable, StyleSheet, ScrollView, Image, useWindowDimensions, Alert } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS,
 } from 'react-native-reanimated';
@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { Fonts } from '@/constants/theme';
 import { PrivacyPolicyContent } from '@/components/account/privacy-policy-screen';
 import { TermsConditionsContent } from '@/components/account/terms-conditions-screen';
+import { useAppStore } from '@/store/app-store';
 
 type PlanId = 'monthly_basic' | 'monthly_premium' | 'yearly';
 interface Plan { id: PlanId; name: string; price: string; period: string; details: string[]; badge?: string; originalPrice?: string; }
@@ -74,6 +75,7 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
   const [selectedPlan, setSelectedPlan] = useState<PlanId>('monthly_premium');
   const plans = useMemo(() => buildPlans(getDeviceCurrency(), t), [t]);
   const [legalPage, setLegalPage] = useState<'privacy' | 'terms' | null>(null);
+  const { isGuestMode, setGuestMode, setShowLoginAfterOnboarding } = useAppStore();
   const translateY = useSharedValue(screenH);
   const backdropOpacity = useSharedValue(0);
   const legalSlideX = useSharedValue(screenW);
@@ -171,9 +173,32 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
             </View>
             {plans.map(renderPlan)}
           </ScrollView>
-          <Pressable style={st.subBtn} onPress={() => {}}>
+          <Pressable style={st.subBtn} onPress={() => {
+            if (isGuestMode) {
+              Alert.alert(
+                t('subscription.signInRequiredTitle'),
+                t('subscription.signInRequiredMessage'),
+                [
+                  { text: t('subscription.signInRequiredCancel'), style: 'cancel' },
+                  {
+                    text: t('subscription.signInRequiredConfirm'),
+                    onPress: () => {
+                      // Close overlay, clear guest mode, redirect to login
+                      handleClose();
+                      setTimeout(() => {
+                        setGuestMode(false);
+                        setShowLoginAfterOnboarding(true);
+                      }, ANIM_MS + 50);
+                    },
+                  },
+                ],
+              );
+              return;
+            }
+            // TODO: RevenueCat purchase flow
+          }}>
             <LinearGradient colors={['#F59E0B', '#D97706']} style={st.subBtnInner}>
-              <Text style={st.subBtnText}>{t('subscription.subscribe')}</Text>
+              <Text style={st.subBtnText}>{isGuestMode ? t('subscription.signInToSubscribe') : t('subscription.subscribe')}</Text>
             </LinearGradient>
           </Pressable>
           <View style={st.legalRow}>

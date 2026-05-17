@@ -908,6 +908,12 @@ export default {
     detailAllInstruments: 'Tüm enstrümanlar açık',
     detailEverythingPremium: 'Premium\'daki her şey',
     detailSave25: 'Aylığa göre %25 tasarruf',
+    // Guest mode — sign-in required
+    signInToSubscribe: 'Abone olmak için giriş yapın',
+    signInRequiredTitle: 'Giriş gerekli',
+    signInRequiredMessage: 'Abone olmadan önce giriş yapmanız gerekmektedir. Aboneliğiniz hesabınıza bağlanarak tüm cihazlarınızda erişebilirsiniz.',
+    signInRequiredConfirm: 'Giriş yap',
+    signInRequiredCancel: 'Şimdi değil',
   },
 
   defaultPage: {

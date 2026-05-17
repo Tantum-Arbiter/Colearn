@@ -908,6 +908,12 @@ export default {
     detailAllInstruments: 'Alle instrumenter låst op',
     detailEverythingPremium: 'Alt fra Premium',
     detailSave25: 'Spar 25% i forhold til månedligt',
+    // Guest mode — sign-in required
+    signInToSubscribe: 'Log ind for at abonnere',
+    signInRequiredTitle: 'Login påkrævet',
+    signInRequiredMessage: 'Du skal logge ind, før du kan abonnere. Dit abonnement bliver knyttet til din konto, så du kan bruge det på alle dine enheder.',
+    signInRequiredConfirm: 'Log ind',
+    signInRequiredCancel: 'Ikke nu',
   },
 
   defaultPage: {

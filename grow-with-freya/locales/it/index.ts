@@ -946,6 +946,12 @@ export default {
     detailAllInstruments: 'Tutti gli strumenti sbloccati',
     detailEverythingPremium: 'Tutto ciò che è incluso in Premium',
     detailSave25: 'Risparmia il 25% rispetto al mensile',
+    // Guest mode — sign-in required
+    signInToSubscribe: 'Accedi per abbonarti',
+    signInRequiredTitle: 'Accesso richiesto',
+    signInRequiredMessage: 'Devi accedere prima di poterti abbonare. Il tuo abbonamento sarà collegato al tuo account per accedervi su tutti i tuoi dispositivi.',
+    signInRequiredConfirm: 'Accedi',
+    signInRequiredCancel: 'Non ora',
   },
 
   // Default page content

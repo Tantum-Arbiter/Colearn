@@ -908,6 +908,12 @@ export default {
     detailAllInstruments: 'Alle instrumenten ontgrendeld',
     detailEverythingPremium: 'Alles uit Premium',
     detailSave25: 'Bespaar 25% ten opzichte van maandelijks',
+    // Guest mode — sign-in required
+    signInToSubscribe: 'Log in om te abonneren',
+    signInRequiredTitle: 'Inloggen vereist',
+    signInRequiredMessage: 'Je moet inloggen voordat je kunt abonneren. Je abonnement wordt gekoppeld aan je account zodat je het op al je apparaten kunt gebruiken.',
+    signInRequiredConfirm: 'Inloggen',
+    signInRequiredCancel: 'Niet nu',
   },
 
   defaultPage: {

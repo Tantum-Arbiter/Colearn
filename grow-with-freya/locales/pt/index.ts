@@ -908,6 +908,12 @@ export default {
     detailAllInstruments: 'Todos os instrumentos desbloqueados',
     detailEverythingPremium: 'Tudo o que está incluído no Premium',
     detailSave25: 'Poupe 25% em relação ao mensal',
+    // Guest mode — sign-in required
+    signInToSubscribe: 'Inicie sessão para subscrever',
+    signInRequiredTitle: 'Início de sessão necessário',
+    signInRequiredMessage: 'Precisa de iniciar sessão antes de poder subscrever. A sua subscrição será associada à sua conta para aceder em todos os seus dispositivos.',
+    signInRequiredConfirm: 'Iniciar sessão',
+    signInRequiredCancel: 'Agora não',
   },
 
   defaultPage: {

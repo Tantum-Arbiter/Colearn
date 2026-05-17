@@ -817,6 +817,12 @@ export default {
     detailAllInstruments: 'Wszystkie instrumenty odblokowane',
     detailEverythingPremium: 'Wszystko z planu Premium',
     detailSave25: 'Oszczędź 25% w porównaniu z miesięcznym',
+    // Guest mode — sign-in required
+    signInToSubscribe: 'Zaloguj się, aby subskrybować',
+    signInRequiredTitle: 'Wymagane logowanie',
+    signInRequiredMessage: 'Musisz się zalogować, zanim będziesz mógł subskrybować. Twoja subskrypcja zostanie powiązana z kontem, abyś mógł z niej korzystać na wszystkich urządzeniach.',
+    signInRequiredConfirm: 'Zaloguj się',
+    signInRequiredCancel: 'Nie teraz',
   },
 
   // Default page content
