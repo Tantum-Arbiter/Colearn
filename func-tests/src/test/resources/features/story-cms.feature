@@ -383,6 +383,111 @@ Feature: Story CMS and Delta-Sync
     And page 8 should not have field "musicChallenge"
     And page 9 should not have field "musicChallenge"
 
+  # =============================================
+  # JIGSAW PUZZLE STORIES
+  # =============================================
+
+  # JIGSAW STORY 1 - Puzzles on pages 1, 2, 3 (4x4 → 6x6 → 8x8)
+
+  @story-pages @jigsaw-puzzle @emulator-only
+  Scenario: Jigsaw-story-1 has jigsaw puzzles on pages 1, 2, and 3
+    Given I seed test story "jigsaw-story-1" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/jigsaw-story-1"
+    Then the response status code should be 200
+    And page 1 should have field "jigsawPuzzle"
+    And page 1 jigsawPuzzle should have field "enabled" with value "true"
+    And page 1 jigsawPuzzle should have field "gridSize" with value "4"
+    And page 1 jigsawPuzzle should have field "promptText"
+    And page 1 jigsawPuzzle should have field "allowSkip" with value "true"
+    And page 2 should have field "jigsawPuzzle"
+    And page 2 jigsawPuzzle should have field "gridSize" with value "6"
+    And page 3 should have field "jigsawPuzzle"
+    And page 3 jigsawPuzzle should have field "gridSize" with value "8"
+
+  @story-pages @jigsaw-puzzle @emulator-only
+  Scenario: Jigsaw-story-1 puzzle pages have correct interaction type
+    Given I seed test story "jigsaw-story-1" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/jigsaw-story-1"
+    Then the response status code should be 200
+    And page 1 should have field "interactionType" with value "jigsaw_puzzle"
+    And page 2 should have field "interactionType" with value "jigsaw_puzzle"
+    And page 3 should have field "interactionType" with value "jigsaw_puzzle"
+
+  @story-pages @jigsaw-puzzle @emulator-only
+  Scenario: Jigsaw-story-1 non-puzzle pages do not have jigsawPuzzle
+    Given I seed test story "jigsaw-story-1" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/jigsaw-story-1"
+    Then the response status code should be 200
+    And page 0 should not have field "jigsawPuzzle"
+    And page 4 should not have field "jigsawPuzzle"
+
+  # JIGSAW STORY 2 - Puzzles on pages 1, 2, 3 (4x4 → 6x6 → 8x8)
+
+  @story-pages @jigsaw-puzzle @emulator-only
+  Scenario: Jigsaw-story-2 has jigsaw puzzles on pages 1, 2, and 3
+    Given I seed test story "jigsaw-story-2" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/jigsaw-story-2"
+    Then the response status code should be 200
+    And page 1 should have field "jigsawPuzzle"
+    And page 1 jigsawPuzzle should have field "enabled" with value "true"
+    And page 1 jigsawPuzzle should have field "gridSize" with value "4"
+    And page 2 should have field "jigsawPuzzle"
+    And page 2 jigsawPuzzle should have field "gridSize" with value "6"
+    And page 3 should have field "jigsawPuzzle"
+    And page 3 jigsawPuzzle should have field "gridSize" with value "8"
+
+  @story-pages @jigsaw-puzzle @emulator-only
+  Scenario: Jigsaw-story-2 non-puzzle pages do not have jigsawPuzzle
+    Given I seed test story "jigsaw-story-2" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/jigsaw-story-2"
+    Then the response status code should be 200
+    And page 0 should not have field "jigsawPuzzle"
+    And page 4 should not have field "jigsawPuzzle"
+
+  # JIGSAW STORY 3 - Puzzles on pages 1, 2, 3, 4 (4x4 → 6x6 → 8x8 → 8x8)
+
+  @story-pages @jigsaw-puzzle @emulator-only
+  Scenario: Jigsaw-story-3 has jigsaw puzzles on pages 1, 2, 3, and 4
+    Given I seed test story "jigsaw-story-3" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/jigsaw-story-3"
+    Then the response status code should be 200
+    And page 1 should have field "jigsawPuzzle"
+    And page 1 jigsawPuzzle should have field "enabled" with value "true"
+    And page 1 jigsawPuzzle should have field "gridSize" with value "4"
+    And page 2 should have field "jigsawPuzzle"
+    And page 2 jigsawPuzzle should have field "gridSize" with value "6"
+    And page 3 should have field "jigsawPuzzle"
+    And page 3 jigsawPuzzle should have field "gridSize" with value "8"
+    And page 3 jigsawPuzzle should have field "allowSkip" with value "false"
+    And page 4 should have field "jigsawPuzzle"
+    And page 4 jigsawPuzzle should have field "gridSize" with value "8"
+    And page 4 jigsawPuzzle should have field "allowSkip" with value "true"
+
+  @story-pages @jigsaw-puzzle @emulator-only
+  Scenario: Jigsaw-story-3 non-puzzle pages do not have jigsawPuzzle
+    Given I seed test story "jigsaw-story-3" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/jigsaw-story-3"
+    Then the response status code should be 200
+    And page 0 should not have field "jigsawPuzzle"
+    And page 5 should not have field "jigsawPuzzle"
+
+  @story-pages @jigsaw-puzzle @emulator-only
+  Scenario: Jigsaw puzzle pages do not include musicChallenge
+    Given I seed test story "jigsaw-story-1" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/jigsaw-story-1"
+    Then the response status code should be 200
+    And page 1 should not have field "musicChallenge"
+    And page 2 should not have field "musicChallenge"
+    And page 3 should not have field "musicChallenge"
+
   @error-handling
   Scenario: Sync with invalid request body
     When I make a POST request to "/api/stories/delta" with invalid JSON

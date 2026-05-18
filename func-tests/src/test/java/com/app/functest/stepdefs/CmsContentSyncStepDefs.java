@@ -1037,6 +1037,30 @@ public class CmsContentSyncStepDefs extends BaseStepDefs {
         assertThat("musicChallenge." + fieldName + " should exist", challenge.get(fieldName), notNullValue());
     }
 
+    // =============================================
+    // Jigsaw puzzle step defs
+    // =============================================
+
+    @SuppressWarnings("unchecked")
+    @Then("page {int} jigsawPuzzle should have field {string} with value {string}")
+    public void pageJigsawPuzzleShouldHaveFieldWithValue(int pageNumber, String fieldName, String expectedValue) {
+        Map<String, Object> page = getPageByNumber(pageNumber);
+        Map<String, Object> puzzle = (Map<String, Object>) page.get("jigsawPuzzle");
+        assertThat("Page " + pageNumber + " should have jigsawPuzzle", puzzle, notNullValue());
+        Object value = puzzle.get(fieldName);
+        assertThat("jigsawPuzzle." + fieldName + " should exist", value, notNullValue());
+        assertThat("jigsawPuzzle." + fieldName, String.valueOf(value), is(expectedValue));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Then("page {int} jigsawPuzzle should have field {string}")
+    public void pageJigsawPuzzleShouldHaveField(int pageNumber, String fieldName) {
+        Map<String, Object> page = getPageByNumber(pageNumber);
+        Map<String, Object> puzzle = (Map<String, Object>) page.get("jigsawPuzzle");
+        assertThat("Page " + pageNumber + " should have jigsawPuzzle", puzzle, notNullValue());
+        assertThat("jigsawPuzzle." + fieldName + " should exist", puzzle.get(fieldName), notNullValue());
+    }
+
     @SuppressWarnings("unchecked")
     @Then("page {int} musicChallenge requiredSequence should be an array")
     public void pageMusicChallengeRequiredSequenceShouldBeAnArray(int pageNumber) {
