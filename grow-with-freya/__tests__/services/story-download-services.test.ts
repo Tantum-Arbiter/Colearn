@@ -980,7 +980,7 @@ describe('StoryDownloadService', () => {
 
     expect(messages.length).toBeGreaterThan(0);
     // New message format: "Downloading 1/2 -512 Bytes / 1 KB"
-    expect(messages[0]).toMatch(/Downloading \d+\/\d+ —/);
+    expect(messages[0]).toMatch(/Downloading \d+\/\d+ -/);
   });
 });
 
