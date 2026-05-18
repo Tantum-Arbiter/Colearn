@@ -2,8 +2,6 @@
   "id": "test-story-4",
   "title": "Test Story 4 - Unique Content",
   "category": "emotions",
-  "tag": "🏷️ Test",
-  "emoji": "📖",
   "coverImage": "assets/stories/cms-squirrels-snowman/cover/thumbnail.webp",
   "isAvailable": true,
   "ageRange": "2-5",

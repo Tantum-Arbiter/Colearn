@@ -781,6 +781,16 @@ export default {
     },
   },
 
+  // Jigsaw puzzle UI strings
+  jigsaw: {
+    amazing: 'Niesamowite!',
+    beginPuzzle: '🧩 Rozpocznij puzzle',
+    completedMoves: 'Ukończono w {{count}} ruchach!',
+    continueStory: 'Kontynuuj historię →',
+    shuffle: '↻ Wymieszaj',
+    skip: 'Pomiń →',
+  },
+
   // Audio settings modal
   audioSettings: {
     title: 'Ustawienia dźwięku',

@@ -33,8 +33,6 @@ const mockCmsStory: Story = {
   coverImage: 'assets/stories/story-1/cover.webp',
   checksum: 'abc123',
   category: 'adventure',
-  tag: 'adventure',
-  emoji: '🗺️',
   isAvailable: true,
   pages: [
     {
@@ -53,8 +51,6 @@ const mockBundledStoryUpdate: Story = {
   coverImage: 'assets/stories/snuggle-little-wombat/cover.webp',
   checksum: 'bundled123',
   category: 'bedtime',
-  tag: 'bedtime',
-  emoji: '🐨',
   isAvailable: true,
   pages: [{ id: 'page-1', pageNumber: 1, text: 'Updated text' }],
 };
@@ -73,7 +69,6 @@ const mockDeltaResponse: DeltaSyncResponse = {
       storyId: 'story-1',
       title: 'CMS Test Story',
       category: 'adventure',
-      emoji: '🗺️',
       thumbnailUrl: 'https://storage.googleapis.com/signed-thumbnail',
       isFree: true,
       isReferralReward: false,
@@ -442,8 +437,6 @@ describe('BatchSyncService', () => {
         coverImage: 'local:bundled-cover.webp',
         checksum: 'local123',
         category: 'adventure',
-        tag: 'adventure',
-        emoji: '📖',
         isAvailable: true,
         pages: [
           { id: 'page-1', pageNumber: 1, backgroundImage: 'local:bundled-bg.webp', text: 'Text' },

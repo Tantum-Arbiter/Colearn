@@ -31,8 +31,6 @@ const createMockStory = (id: string, assetsPerPage: number = 2, pageCount: numbe
   id,
   title: `Story ${id}`,
   category: 'adventure',
-  tag: 'test',
-  emoji: '📖',
   isAvailable: true,
   checksum: `checksum-${id}`,
   version: 1,

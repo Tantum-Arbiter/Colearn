@@ -1,0 +1,111 @@
+{
+  "id": "jigsaw-story-2",
+  "title": "Puzzle Forest - Medium Challenge",
+  "category": "adventure",
+  "coverImage": "assets/stories/squirrels-snowman/cover/thumbnail.webp",
+  "isAvailable": true,
+  "ageRange": "3-6",
+  "duration": 7,
+  "description": "A medium jigsaw puzzle adventure with 6x6 grids. For growing puzzle masters!",
+  "isPremium": false,
+  "author": "Freya Stories",
+  "tags": [
+    "puzzle",
+    "adventure",
+    "interactive"
+  ],
+  "version": 1,
+  "checksum": "jigsaw-story-2-checksum-v1",
+  "pages": [
+    {
+      "id": "jigsaw-story-2-cover",
+      "pageNumber": 0,
+      "type": "cover",
+      "backgroundImage": "assets/stories/squirrels-snowman/cover/cover.webp",
+      "text": "Puzzle Forest\n\nMedium Challenge",
+      "interactionType": "none"
+    },
+    {
+      "id": "jigsaw-story-2-page-1",
+      "pageNumber": 1,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-2/props/page-2.webp",
+      "text": "The shed picture got all scrambled! This one has more pieces.",
+      "interactionType": "jigsaw_puzzle",
+      "jigsawPuzzle": {
+        "enabled": true,
+        "gridSize": 4,
+        "promptText": "A bigger puzzle this time!",
+        "allowSkip": true
+      }
+    },
+    {
+      "id": "jigsaw-story-2-page-2",
+      "pageNumber": 2,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-4/page-4.webp",
+      "text": "The snowman scene needs rebuilding! 36 pieces to arrange.",
+      "interactionType": "jigsaw_puzzle",
+      "jigsawPuzzle": {
+        "enabled": true,
+        "gridSize": 6,
+        "promptText": "Rebuild the snowman scene!",
+        "allowSkip": true
+      }
+    },
+    {
+      "id": "jigsaw-story-2-page-3",
+      "pageNumber": 3,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-6/props/page-6.webp",
+      "text": "The friends are playing in the snow! Put the picture back together.",
+      "interactionType": "jigsaw_puzzle",
+      "jigsawPuzzle": {
+        "enabled": true,
+        "gridSize": 8,
+        "promptText": "Almost done - one more puzzle!",
+        "allowSkip": true
+      }
+    },
+    {
+      "id": "jigsaw-story-2-page-4",
+      "pageNumber": 4,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-8/page-8.webp",
+      "text": "You mastered the medium puzzles! You're getting really good at this!",
+      "interactionType": "none"
+    }
+  ],
+  "localizedTitle": {
+    "en": "Puzzle Forest - Medium Challenge",
+    "pl": "Puzzle Las - Średnie Wyzwanie",
+    "es": "Bosque de Rompecabezas - Desafío Medio",
+    "de": "Puzzle-Wald - Mittlere Herausforderung",
+    "fr": "Forêt Puzzle - Défi Moyen",
+    "it": "Foresta Puzzle - Sfida Media",
+    "pt": "Floresta Quebra-Cabeça - Desafio Médio",
+    "ja": "パズルの森 - 中級チャレンジ",
+    "ar": "غابة الألغاز - تحدٍ متوسط",
+    "tr": "Yapboz Ormanı - Orta Zorluk",
+    "nl": "Puzzelbos - Gemiddelde Uitdaging",
+    "da": "Puslespilskov - Medium Udfordring",
+    "la": "Silva Aenigmatum - Media Provocatio",
+    "zh": "拼图森林 - 中级挑战"
+  },
+  "localizedDescription": {
+    "en": "A medium jigsaw puzzle adventure with 6x6 grids. For growing puzzle masters!",
+    "pl": "Średnia przygoda z puzzlami 6x6. Dla rosnących mistrzów puzzli!",
+    "es": "Una aventura de rompecabezas media con cuadrículas de 6x6. ¡Para maestros de rompecabezas en crecimiento!",
+    "de": "Ein mittleres Puzzle-Abenteuer mit 6x6-Gittern. Für wachsende Puzzlemeister!",
+    "fr": "Une aventure puzzle moyenne avec des grilles 6x6. Pour les maîtres du puzzle en herbe !",
+    "it": "Un'avventura puzzle media con griglie 6x6. Per maestri del puzzle in crescita!",
+    "pt": "Uma aventura de quebra-cabeça média com grades 6x6. Para mestres de quebra-cabeça em crescimento!",
+    "ja": "6x6グリッドの中級ジグソーパズル冒険。成長するパズルマスターに！",
+    "ar": "مغامرة لغز متوسطة بشبكات 6×6. لأساتذة الألغاز الناشئين!",
+    "tr": "6x6 ızgaralı orta seviye yapboz macerası. Büyüyen yapboz ustaları için!",
+    "nl": "Een gemiddeld puzzelavontuur met 6x6-rasters. Voor groeiende puzzelmeesters!",
+    "da": "Et medium puslespilseventyr med 6x6 gitre. For voksende puslespilsmestre!",
+    "la": "Aenigma medium cum reticulis 6×6. Pro magistris aenigmatum crescentibus!",
+    "zh": "一个6x6中级拼图冒险。适合成长中的拼图大师！"
+  }
+}

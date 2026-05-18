@@ -18,7 +18,7 @@ import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { ALL_STORIES } from '@/data/stories';
-import { Story, StoryCategory, StoryFilterTag, STORY_FILTER_TAGS, CatalogEntry, getLocalizedText } from '@/types/story';
+import { Story, StoryCategory, StoryFilterTag, STORY_FILTER_TAGS, STORY_TAGS, CatalogEntry, getLocalizedText } from '@/types/story';
 import { Fonts } from '@/constants/theme';
 import { useAppStore, type SubscriptionTier, type StoryViewMode } from '@/store/app-store';
 import { SubscriptionOverlay } from '@/components/ui/subscription-overlay';
@@ -308,7 +308,7 @@ const StoryCard = memo(function StoryCard({
             />
           ) : (
             <View style={[styles.placeholderContainer, { width: cardWidth, height: cardHeight, borderRadius }]}>
-              <Text style={{ fontSize: emojiFontSize }}>{story.emoji}</Text>
+              <Text style={{ fontSize: emojiFontSize }}>{STORY_TAGS[story.category].emoji}</Text>
             </View>
           )}
 
@@ -987,9 +987,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       description: entry.description,
       localizedDescription: entry.localizedDescription,
       category: entry.category,
-      tag: entry.tag || entry.category,
       tags: entry.tags,
-      emoji: entry.emoji,
       coverImage: entry.thumbnailUrl,
       isAvailable: false, // Not downloaded -prevents "Read Story" button
       ageRange: entry.ageRange,

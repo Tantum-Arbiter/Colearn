@@ -24,8 +24,6 @@ describe('Stories Data', () => {
         expect(story.id).toBeTruthy();
         expect(story.title).toBeTruthy();
         expect(story.category).toBeTruthy();
-        expect(story.tag).toBeTruthy();
-        expect(story.emoji).toBeTruthy();
         expect(typeof story.isAvailable).toBe('boolean');
 
         // Optional fields
@@ -53,14 +51,11 @@ describe('Stories Data', () => {
       });
     });
 
-    it('should have consistent tag and emoji with category', () => {
+    it('should have a valid category with a matching STORY_TAGS entry', () => {
       MOCK_STORIES.forEach(story => {
         const categoryTag = STORY_TAGS[story.category];
-        // Some stories have custom emojis that don't match the category emoji
-        // Check that the tag contains either the category emoji or the category name
-        const hasEmoji = story.tag.includes(categoryTag.emoji);
-        const hasCategoryName = story.tag.toLowerCase().includes(story.category.toLowerCase());
-        expect(hasEmoji || hasCategoryName).toBe(true);
+        expect(categoryTag).toBeDefined();
+        expect(categoryTag.emoji).toBeTruthy();
       });
     });
   });
@@ -128,7 +123,7 @@ describe('Stories Data', () => {
     it('should return only available stories', () => {
       const availableStories = getAvailableStories();
 
-      expect(availableStories).toHaveLength(1); // Only Snuggle Little Wombat is available
+      expect(availableStories).toHaveLength(2); // Snuggle Little Wombat + Wombat Jigsaw Adventure
       availableStories.forEach(story => {
         expect(story.isAvailable).toBe(true);
       });
@@ -152,7 +147,7 @@ describe('Stories Data', () => {
       expect(availableStories).toContain(randomStory);
     });
 
-    it('should return the same story when only one is available', () => {
+    it('should return one of the available stories', () => {
       const stories = new Set();
 
       // Call multiple times
@@ -163,8 +158,9 @@ describe('Stories Data', () => {
         }
       }
 
-      // Only one available story, so only one unique ID
-      expect(stories.size).toBe(1);
+      // Two available stories, so at most 2 unique IDs
+      expect(stories.size).toBeGreaterThanOrEqual(1);
+      expect(stories.size).toBeLessThanOrEqual(2);
     });
 
     it('should handle edge case with no available stories', () => {
@@ -245,8 +241,6 @@ describe('Stories Data', () => {
           pl: 'Polish Title',
         },
         category: 'adventure',
-        tag: '🌟',
-        emoji: '🌟',
         isAvailable: true,
       };
 
@@ -264,8 +258,6 @@ describe('Stories Data', () => {
           es: 'Spanish description',
         },
         category: 'bedtime',
-        tag: '🌙',
-        emoji: '🌙',
         isAvailable: true,
       };
 

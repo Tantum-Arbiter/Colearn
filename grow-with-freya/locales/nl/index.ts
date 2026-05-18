@@ -874,6 +874,15 @@ export default {
     },
   },
 
+  jigsaw: {
+    amazing: 'Geweldig!',
+    beginPuzzle: '🧩 Begin puzzel',
+    completedMoves: 'Voltooid in {{count}} zetten!',
+    continueStory: 'Verhaal voortzetten →',
+    shuffle: '↻ Schudden',
+    skip: 'Overslaan →',
+  },
+
   audioSettings: {
     title: 'Geluidsinstellingen',
     masterVolume: 'Hoofdvolume',

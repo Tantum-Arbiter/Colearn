@@ -874,6 +874,15 @@ export default {
     },
   },
 
+  jigsaw: {
+    amazing: 'Fantastisk!',
+    beginPuzzle: '🧩 Start puslespil',
+    completedMoves: 'Fuldført på {{count}} træk!',
+    continueStory: 'Fortsæt historien →',
+    shuffle: '↻ Bland',
+    skip: 'Spring over →',
+  },
+
   audioSettings: {
     title: 'Lydindstillinger',
     masterVolume: 'Hovedvolumen',

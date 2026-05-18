@@ -1,0 +1,126 @@
+{
+  "id": "jigsaw-story-3",
+  "title": "Puzzle Forest - Hard Expert",
+  "category": "adventure",
+  "coverImage": "assets/stories/squirrels-snowman/cover/thumbnail.webp",
+  "isAvailable": true,
+  "ageRange": "4-7",
+  "duration": 10,
+  "description": "The hardest jigsaw puzzle adventure with 8x8 grids. Only for puzzle experts!",
+  "isPremium": true,
+  "author": "Freya Stories",
+  "tags": [
+    "puzzle",
+    "adventure",
+    "interactive",
+    "hard"
+  ],
+  "version": 1,
+  "checksum": "jigsaw-story-3-checksum-v1",
+  "pages": [
+    {
+      "id": "jigsaw-story-3-cover",
+      "pageNumber": 0,
+      "type": "cover",
+      "backgroundImage": "assets/stories/squirrels-snowman/cover/cover.webp",
+      "text": "Puzzle Forest\n\nHard Expert Mode",
+      "interactionType": "none"
+    },
+    {
+      "id": "jigsaw-story-3-page-1",
+      "pageNumber": 1,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-1/page-1.webp",
+      "text": "Welcome to expert mode! 64 tiles to rearrange. Are you ready?",
+      "interactionType": "jigsaw_puzzle",
+      "jigsawPuzzle": {
+        "enabled": true,
+        "gridSize": 4,
+        "promptText": "Let's start with a warm-up!",
+        "allowSkip": true
+      }
+    },
+    {
+      "id": "jigsaw-story-3-page-2",
+      "pageNumber": 2,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-3/page-3.webp",
+      "text": "The snowman scene is extra scrambled! Think carefully about each swap.",
+      "interactionType": "jigsaw_puzzle",
+      "jigsawPuzzle": {
+        "enabled": true,
+        "gridSize": 6,
+        "promptText": "Getting harder now!",
+        "allowSkip": true
+      }
+    },
+    {
+      "id": "jigsaw-story-3-page-3",
+      "pageNumber": 3,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-5/page-5.webp",
+      "text": "Mixed difficulty! Start with an easy warm-up.",
+      "interactionType": "jigsaw_puzzle",
+      "jigsawPuzzle": {
+        "enabled": true,
+        "gridSize": 8,
+        "promptText": "Think carefully about each swap!",
+        "allowSkip": false
+      }
+    },
+    {
+      "id": "jigsaw-story-3-page-4",
+      "pageNumber": 4,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-7/page-7.webp",
+      "text": "Now the real challenge! Back to expert difficulty.",
+      "interactionType": "jigsaw_puzzle",
+      "jigsawPuzzle": {
+        "enabled": true,
+        "gridSize": 8,
+        "promptText": "The ultimate expert challenge!",
+        "allowSkip": true
+      }
+    },
+    {
+      "id": "jigsaw-story-3-page-5",
+      "pageNumber": 5,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-9/page-9.webp",
+      "text": "Incredible! You're a true puzzle expert! The squirrels are so proud of you!",
+      "interactionType": "none"
+    }
+  ],
+  "localizedTitle": {
+    "en": "Puzzle Forest - Hard Expert",
+    "pl": "Puzzle Las - Trudny Ekspert",
+    "es": "Bosque de Rompecabezas - Experto Difícil",
+    "de": "Puzzle-Wald - Schwerer Experte",
+    "fr": "Forêt Puzzle - Expert Difficile",
+    "it": "Foresta Puzzle - Esperto Difficile",
+    "pt": "Floresta Quebra-Cabeça - Especialista Difícil",
+    "ja": "パズルの森 - 難関エキスパート",
+    "ar": "غابة الألغاز - خبير صعب",
+    "tr": "Yapboz Ormanı - Zor Uzman",
+    "nl": "Puzzelbos - Moeilijke Expert",
+    "da": "Puslespilskov - Svær Ekspert",
+    "la": "Silva Aenigmatum - Difficilis Peritus",
+    "zh": "拼图森林 - 困难专家"
+  },
+  "localizedDescription": {
+    "en": "The hardest jigsaw puzzle adventure with 8x8 grids. Only for puzzle experts!",
+    "pl": "Najtrudniejsza przygoda z puzzlami 8x8. Tylko dla ekspertów puzzli!",
+    "es": "¡La aventura de rompecabezas más difícil con cuadrículas de 8x8. Solo para expertos!",
+    "de": "Das schwierigste Puzzle-Abenteuer mit 8x8-Gittern. Nur für Puzzle-Experten!",
+    "fr": "L'aventure puzzle la plus difficile avec des grilles 8x8. Réservé aux experts !",
+    "it": "L'avventura puzzle più difficile con griglie 8x8. Solo per esperti di puzzle!",
+    "pt": "A aventura de quebra-cabeça mais difícil com grades 8x8. Apenas para especialistas!",
+    "ja": "8x8グリッドの最難関ジグソーパズル冒険。パズルエキスパート専用！",
+    "ar": "أصعب مغامرة لغز بشبكات 8×8. فقط لخبراء الألغاز!",
+    "tr": "8x8 ızgaralı en zor yapboz macerası. Sadece yapboz uzmanları için!",
+    "nl": "Het moeilijkste puzzelavontuur met 8x8-rasters. Alleen voor puzzelexperts!",
+    "da": "Det sværeste puslespilseventyr med 8x8 gitre. Kun for puslespilseksperter!",
+    "la": "Aenigma difficillimum cum reticulis 8×8. Solum pro peritis aenigmatum!",
+    "zh": "8x8最难的拼图冒险。只给拼图专家！"
+  }
+}

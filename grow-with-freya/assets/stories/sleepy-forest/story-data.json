@@ -2,8 +2,6 @@
   "id": "sleepy-forest",
   "title": "The Sleepy Forest",
   "category": "bedtime",
-  "tag": "🌙 Bedtime",
-  "emoji": "🦉",
   "coverImage": "assets/stories/sleepy-forest/cover/thumbnail.webp",
   "isAvailable": true,
   "ageRange": "2-5",

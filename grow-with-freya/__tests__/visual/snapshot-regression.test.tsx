@@ -33,8 +33,6 @@ const SNAPSHOT_TEST_STORY: Story = {
   id: 'snapshot-story',
   title: 'Snapshot Test Story',
   category: 'adventure',
-  tag: '📸 Snapshot',
-  emoji: '📸',
   coverImage: 'test-cover.jpg',
   isAvailable: true,
   ageRange: '3-6',
@@ -123,8 +121,6 @@ describe('Visual Regression Tests', () => {
         id: 'bedtime-snapshot',
         title: 'Bedtime Snapshot Story',
         category: 'bedtime',
-        tag: '🌙 Bedtime',
-        emoji: '🌙',
       };
 
       const { toJSON } = render(

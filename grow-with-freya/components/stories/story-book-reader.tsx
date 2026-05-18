@@ -16,14 +16,16 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { useTranslation } from 'react-i18next';
-import { Story, StoryPage, STORY_TAGS, InteractiveElement, getLocalizedText, MusicChallenge } from '@/types/story';
+import { Story, StoryPage, STORY_TAGS, InteractiveElement, getLocalizedText, MusicChallenge, JigsawPuzzle } from '@/types/story';
 import type { SupportedLanguage } from '@/services/i18n';
 import { SUPPORTED_LANGUAGES, setStoredLanguage } from '@/services/i18n';
 import { InteractiveElementComponent } from './interactive-element';
 import { MusicChallengeUI } from './music-challenge-ui';
+import { JigsawPuzzleUI } from './jigsaw-puzzle-ui';
 import { InstrumentPickerOverlay } from './instrument-picker-overlay';
 import { MusicSheetOverlay } from './music-sheet-overlay';
 import { useMusicChallenge } from '@/hooks/use-music-challenge';
+import { useJigsawChallenge } from '@/hooks/use-jigsaw-challenge';
 import { useBreathDetector } from '@/hooks/use-breath-detector';
 import { getInstrument } from '@/services/music-asset-registry';
 import {
@@ -295,6 +297,33 @@ export function StoryBookReader({
     effectiveNoteVolume,
     audioSessionControl,
   );
+
+  // ---- Jigsaw Puzzle support ----
+  const currentJigsawConfig = useMemo(() => {
+    const page = (story.pages || [])[currentPageIndex];
+    return page?.jigsawPuzzle;
+  }, [story.pages, currentPageIndex]);
+
+  const isJigsawPuzzlePage = useMemo(() => {
+    const page = (story.pages || [])[currentPageIndex];
+    return page?.interactionType === 'jigsaw_puzzle' && currentJigsawConfig?.enabled;
+  }, [story.pages, currentPageIndex, currentJigsawConfig?.enabled]);
+
+  const [jigsawCompleted, setJigsawCompleted] = useState<Record<number, boolean>>({});
+
+  const jigsawChallenge = useJigsawChallenge(
+    isJigsawPuzzlePage ? currentJigsawConfig : undefined,
+    () => {
+      setJigsawCompleted(prev => ({ ...prev, [currentPageIndex]: true }));
+    },
+  );
+
+  // Auto-start jigsaw when landing on a jigsaw page
+  useEffect(() => {
+    if (isJigsawPuzzlePage && jigsawChallenge.state === 'idle' && !jigsawCompleted[currentPageIndex]) {
+      jigsawChallenge.start();
+    }
+  }, [currentPageIndex, isJigsawPuzzlePage]);
 
   // Sync breath detector state to music challenge.
   // Only in blow mode -in press mode, MusicChallengeUI sets breathActive(true)
@@ -1747,6 +1776,25 @@ export function StoryBookReader({
               </Animated.View>
             )}
 
+            {/* Jigsaw Puzzle overlay */}
+            {!isNextPage && page.interactionType === 'jigsaw_puzzle' && page.jigsawPuzzle?.enabled && jigsawChallenge.state !== 'idle' && (
+              <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', zIndex: 50 }]}>
+                <JigsawPuzzleUI
+                  challenge={jigsawChallenge}
+                  imageSource={typeof page.backgroundImage === 'string' ? { uri: page.backgroundImage } : page.backgroundImage}
+                  promptText={page.jigsawPuzzle.promptText || ''}
+                  allowSkip={page.jigsawPuzzle.allowSkip}
+                  onSkip={() => {
+                    jigsawChallenge.cleanup();
+                    setJigsawCompleted(prev => ({ ...prev, [currentPageIndex]: true }));
+                  }}
+                  onContinue={() => {
+                    jigsawChallenge.cleanup();
+                  }}
+                />
+              </View>
+            )}
+
             {/* Page indicator overlay - Top Left, after exit button (hide on cover page and next page) */}
             {!isNextPage && page.pageNumber > 0 && (
               <View style={[styles.pageIndicatorOverlay, {
@@ -1963,7 +2011,7 @@ export function StoryBookReader({
             <Text style={styles.transitionTitle}>{displayTitle}</Text>
             <Text style={styles.transitionSubtitle}>{t('common.loading', { defaultValue: 'Preparing your story...' })}</Text>
             <View style={styles.transitionIndicator}>
-              <Text style={styles.transitionEmoji}>{story.emoji}</Text>
+              <Text style={styles.transitionEmoji}>{STORY_TAGS[story.category].emoji}</Text>
             </View>
           </View>
         </View>

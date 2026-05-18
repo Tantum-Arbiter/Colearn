@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, { useAnimatedStyle, useAnimatedProps, useSharedValue, withTiming, withSpring, withSequence, withDelay, Easing, cancelAnimation } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
-import { CatalogEntry, getLocalizedText } from '@/types/story';
+import { CatalogEntry, STORY_TAGS, getLocalizedText } from '@/types/story';
 import { StoryDownloadService, DownloadProgress } from '@/services/story-download-service';
 import { StoryAccessService } from '@/services/story-access-service';
 import { ApiClient } from '@/services/api-client';
@@ -391,7 +391,7 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
           />
         ) : (
           <View style={[cardStyles.placeholder, { width: cardWidth, height: cardHeight, borderRadius }]}>
-            <Text style={cardStyles.emoji}>{entry.emoji}</Text>
+            <Text style={cardStyles.emoji}>{STORY_TAGS[entry.category].emoji}</Text>
           </View>
         )}
 

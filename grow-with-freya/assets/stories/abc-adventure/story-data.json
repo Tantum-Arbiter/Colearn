@@ -2,8 +2,6 @@
   "id": "abc-adventure",
   "title": "ABC Adventure",
   "category": "learning",
-  "tag": "📚 Learning",
-  "emoji": "🔤",
   "coverImage": "assets/stories/abc-adventure/cover/thumbnail.webp",
   "isAvailable": true,
   "ageRange": "3-5",

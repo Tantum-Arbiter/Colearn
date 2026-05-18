@@ -11,15 +11,6 @@ const path = require('path');
 
 const catalog = require('./story-catalog.json');
 
-const STORY_TAGS = {
-  bedtime: { emoji: '🌙', label: 'Bedtime' },
-  adventure: { emoji: '🗺️', label: 'Adventure' },
-  nature: { emoji: '🐢', label: 'Nature' },
-  friendship: { emoji: '🤝', label: 'Friendship' },
-  learning: { emoji: '📚', label: 'Learning' },
-  fantasy: { emoji: '✨', label: 'Fantasy' }
-};
-
 function generateStoryPages(storyId, duration) {
   const pages = [];
   for (let i = 1; i <= duration; i++) {
@@ -34,14 +25,10 @@ function generateStoryPages(storyId, duration) {
 }
 
 function generateStoryData(story, isCmsOnly = false) {
-  const categoryTag = STORY_TAGS[story.category];
-  
   return {
     id: story.id,
     title: story.title,
     category: story.category,
-    tag: `${categoryTag.emoji} ${categoryTag.label}`,
-    emoji: story.emoji,
     coverImage: `assets/stories/${story.id}/cover/thumbnail.webp`,
     isAvailable: true,
     ageRange: story.ageRange,

@@ -131,7 +131,7 @@ export function StoryPreviewModal({
   if (!visible || !story) return null;
 
   const tagInfo = STORY_TAGS[story.category];
-  const displayTags = story.tags || [story.tag];
+  const displayTags = story.tags || [story.category];
 
   // Helper to translate tag names
   const translateTag = (tag: string): string => {
@@ -204,7 +204,7 @@ export function StoryPreviewModal({
               />
             ) : (
               <View style={[styles.coverImage, styles.placeholderCover]}>
-                <Text style={{ fontSize: 64 }}>{story.emoji}</Text>
+                <Text style={{ fontSize: 64 }}>{STORY_TAGS[story.category].emoji}</Text>
               </View>
             )}
           </View>

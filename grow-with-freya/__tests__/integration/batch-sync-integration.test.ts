@@ -42,8 +42,6 @@ const createMockStory = (id: string, title: string, assetCount: number = 2): Sto
   id,
   title,
   category: 'adventure',
-  tag: 'test',
-  emoji: '📖',
   isAvailable: true,
   checksum: `checksum-${id}`,
   version: 1,
@@ -91,8 +89,8 @@ describe('Batch Sync Integration Flow (On-Demand Model)', () => {
       ];
 
       const catalog = [
-        { storyId: '1', title: 'Story 1', category: 'adventure', emoji: '📖', thumbnailUrl: 'https://thumb1', isFree: true, isReferralReward: false, isPremium: false },
-        { storyId: '2', title: 'Story 2', category: 'adventure', emoji: '📖', thumbnailUrl: 'https://thumb2', isFree: false, isReferralReward: false, isPremium: true },
+        { storyId: '1', title: 'Story 1', category: 'adventure', thumbnailUrl: 'https://thumb1', isFree: true, isReferralReward: false, isPremium: false },
+        { storyId: '2', title: 'Story 2', category: 'adventure', thumbnailUrl: 'https://thumb2', isFree: false, isReferralReward: false, isPremium: true },
       ];
 
       mockApiClient.request.mockResolvedValueOnce({
@@ -146,7 +144,7 @@ describe('Batch Sync Integration Flow (On-Demand Model)', () => {
         serverVersion: { stories: 5, assets: 3, lastUpdated: new Date().toISOString() },
       });
 
-      const catalog = [{ storyId: 'cat-1', title: 'Cat Story', category: 'adventure', emoji: '🐱', thumbnailUrl: 'https://thumb', isFree: true, isReferralReward: false, isPremium: false }];
+      const catalog = [{ storyId: 'cat-1', title: 'Cat Story', category: 'adventure', thumbnailUrl: 'https://thumb', isFree: true, isReferralReward: false, isPremium: false }];
       mockApiClient.request.mockResolvedValueOnce({
         serverVersion: 5,
         assetVersion: 3,
@@ -175,7 +173,7 @@ describe('Batch Sync Integration Flow (On-Demand Model)', () => {
       });
 
       const newStory = createMockStory('3', 'New Story', 2);
-      const catalog = [{ storyId: '3', title: 'New Story', category: 'adventure', emoji: '📖', thumbnailUrl: 'https://thumb', isFree: true, isReferralReward: false, isPremium: false }];
+      const catalog = [{ storyId: '3', title: 'New Story', category: 'adventure', thumbnailUrl: 'https://thumb', isFree: true, isReferralReward: false, isPremium: false }];
 
       mockApiClient.request.mockResolvedValueOnce({
         serverVersion: 5,
@@ -271,7 +269,7 @@ describe('Batch Sync Integration Flow (On-Demand Model)', () => {
       );
 
       const catalog = stories.map(s => ({
-        storyId: s.id, title: s.title, category: 'adventure', emoji: '📖',
+        storyId: s.id, title: s.title, category: 'adventure',
         thumbnailUrl: `https://thumb-${s.id}`, isFree: true, isReferralReward: false, isPremium: false,
       }));
 
@@ -344,8 +342,6 @@ describe('Batch Sync Integration Flow (On-Demand Model)', () => {
         title: 'Snuggle Little Wombat (Updated)',
         checksum: 'new-checksum',
         category: 'bedtime',
-        tag: 'bedtime',
-        emoji: '🐨',
         isAvailable: true,
         pages: [{ id: 'p1', pageNumber: 1, text: 'Updated text' }],
       };
@@ -434,7 +430,7 @@ describe('Batch Sync Integration Flow (On-Demand Model)', () => {
         totalStories: 1,
         updatedCount: 1,
         lastUpdated: Date.now(),
-        catalog: [{ storyId: '1', title: 'Story 1', category: 'adventure', emoji: '📖', thumbnailUrl: 'https://thumb', isFree: true, isReferralReward: false, isPremium: false }],
+        catalog: [{ storyId: '1', title: 'Story 1', category: 'adventure', thumbnailUrl: 'https://thumb', isFree: true, isReferralReward: false, isPremium: false }],
       } as DeltaSyncResponse);
 
       mockCatalogService.updateCatalog.mockRejectedValueOnce(new Error('Catalog save failed'));
@@ -496,8 +492,8 @@ describe('Batch Sync Integration Flow (On-Demand Model)', () => {
       });
 
       const textOnlyStories: Story[] = [
-        { id: '1', title: 'Text Story 1', checksum: 'c1', category: 'adventure', tag: 'adventure', emoji: '📖', isAvailable: true, pages: [{ id: 'p1', pageNumber: 1, text: 'Text only' }] },
-        { id: '2', title: 'Text Story 2', checksum: 'c2', category: 'adventure', tag: 'adventure', emoji: '📖', isAvailable: true, pages: [{ id: 'p1', pageNumber: 1, text: 'Also text' }] },
+        { id: '1', title: 'Text Story 1', checksum: 'c1', category: 'adventure', isAvailable: true, pages: [{ id: 'p1', pageNumber: 1, text: 'Text only' }] },
+        { id: '2', title: 'Text Story 2', checksum: 'c2', category: 'adventure', isAvailable: true, pages: [{ id: 'p1', pageNumber: 1, text: 'Also text' }] },
       ];
 
       mockApiClient.request.mockResolvedValueOnce({
@@ -530,7 +526,7 @@ describe('Batch Sync Integration Flow (On-Demand Model)', () => {
         createMockStory(`story-${i}`, `Story ${i}`, 10)
       );
       const catalog = stories.map(s => ({
-        storyId: s.id, title: s.title, category: 'adventure', emoji: '📖',
+        storyId: s.id, title: s.title, category: 'adventure',
         thumbnailUrl: `https://thumb-${s.id}`, isFree: true, isReferralReward: false, isPremium: false,
       }));
 

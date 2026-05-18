@@ -874,6 +874,15 @@ export default {
     },
   },
 
+  jigsaw: {
+    amazing: 'Harika!',
+    beginPuzzle: '🧩 Bulmacayı Başlat',
+    completedMoves: '{{count}} hamlede tamamlandı!',
+    continueStory: 'Hikayeye devam et →',
+    shuffle: '↻ Karıştır',
+    skip: 'Atla →',
+  },
+
   audioSettings: {
     title: 'Ses Ayarları',
     masterVolume: 'Ana Ses Seviyesi',

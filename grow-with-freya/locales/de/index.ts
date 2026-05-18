@@ -781,6 +781,15 @@ export default {
     },
   },
 
+  jigsaw: {
+    amazing: 'Fantastisch!',
+    beginPuzzle: '🧩 Puzzle starten',
+    completedMoves: 'In {{count}} Zügen geschafft!',
+    continueStory: 'Geschichte fortsetzen →',
+    shuffle: '↻ Mischen',
+    skip: 'Überspringen →',
+  },
+
   // Audio settings modal
   audioSettings: {
     title: 'Audio-Einstellungen',

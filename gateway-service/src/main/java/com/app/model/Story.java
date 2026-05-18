@@ -22,12 +22,6 @@ public class Story {
     @JsonProperty("category")
     private String category;
 
-    @JsonProperty("tag")
-    private String tag;
-
-    @JsonProperty("emoji")
-    private String emoji;
-
     @JsonProperty("coverImage")
     private String coverImage;
 
@@ -140,21 +134,6 @@ public class Story {
         this.category = category;
     }
 
-    public String getTag() {
-        return tag;
-    }
-
-    public void setTag(String tag) {
-        this.tag = tag;
-    }
-
-    public String getEmoji() {
-        return emoji;
-    }
-
-    public void setEmoji(String emoji) {
-        this.emoji = emoji;
-    }
 
     public String getCoverImage() {
         return coverImage;

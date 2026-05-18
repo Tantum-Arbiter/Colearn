@@ -2,8 +2,6 @@
   "id": "test-story-8",
   "title": "Test Story 8 - Unique Content",
   "category": "animals",
-  "tag": "🏷️ Test",
-  "emoji": "📖",
   "coverImage": "assets/stories/cms-squirrels-snowman/cover/thumbnail.webp",
   "isAvailable": true,
   "ageRange": "2-5",

@@ -83,8 +83,6 @@ export const createMockStory = (overrides = {}) => ({
   id: 'test-story',
   title: 'Test Story',
   category: 'adventure',
-  tag: '🗺️ Adventure',
-  emoji: '🗺️',
   coverImage: 'test-cover.jpg',
   isAvailable: true,
   ageRange: '3-6',

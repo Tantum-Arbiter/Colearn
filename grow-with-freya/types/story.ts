@@ -64,8 +64,19 @@ export interface MusicChallenge {
   hintLevel: MusicHintLevel;
 }
 
+// Jigsaw puzzle grid sizes
+export type JigsawGridSize = '4x4' | '6x6' | '8x8';
+
+// Jigsaw puzzle configuration for a story page
+export interface JigsawPuzzle {
+  enabled: boolean;
+  gridSize: JigsawGridSize; // Grid dimensions: 4x4 (easy), 6x6 (medium), 8x8 (hard)
+  promptText: string; // Narrative prompt, e.g., "Put the picture back together!"
+  allowSkip: boolean;
+}
+
 // Page interaction types (extends beyond simple interactive elements)
-export type PageInteractionType = 'none' | 'interactive_state_change' | 'music_challenge';
+export type PageInteractionType = 'none' | 'interactive_state_change' | 'music_challenge' | 'jigsaw_puzzle';
 
 export interface StoryPage {
   id: string;
@@ -80,6 +91,9 @@ export interface StoryPage {
   // Music challenge support
   interactionType?: PageInteractionType; // Defaults to 'none' if not set
   musicChallenge?: MusicChallenge; // Present when interactionType === 'music_challenge'
+
+  // Jigsaw puzzle support
+  jigsawPuzzle?: JigsawPuzzle; // Present when interactionType === 'jigsaw_puzzle'
 }
 
 export interface Story {
@@ -87,8 +101,6 @@ export interface Story {
   title: string;
   localizedTitle?: LocalizedText; // Translated titles
   category: StoryCategory;
-  tag: string;
-  emoji: string;
   coverImage?: ImageSourcePropType | string; // Optional - will use placeholder if not provided
   isAvailable: boolean;
   ageRange?: string;
@@ -123,9 +135,7 @@ export interface CatalogEntry {
   description?: string;
   localizedDescription?: LocalizedText;
   category: StoryCategory;
-  tag?: string;
   tags?: string[];
-  emoji: string;
   thumbnailUrl?: string; // Signed URL for cover thumbnail
   isFree: boolean;
   isReferralReward: boolean;

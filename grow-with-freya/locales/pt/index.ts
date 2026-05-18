@@ -874,6 +874,15 @@ export default {
     },
   },
 
+  jigsaw: {
+    amazing: 'Incrível!',
+    beginPuzzle: '🧩 Começar quebra-cabeça',
+    completedMoves: 'Completado em {{count}} movimentos!',
+    continueStory: 'Continuar história →',
+    shuffle: '↻ Embaralhar',
+    skip: 'Pular →',
+  },
+
   audioSettings: {
     title: 'Configurações de áudio',
     masterVolume: 'Volume principal',

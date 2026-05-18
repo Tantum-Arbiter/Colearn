@@ -73,8 +73,6 @@ describe('Story Localization', () => {
           pl: 'Polish Title',
         },
         category: 'adventure',
-        tag: '🌟',
-        emoji: '🌟',
         isAvailable: true,
       };
 
@@ -92,8 +90,6 @@ describe('Story Localization', () => {
           es: 'Spanish description',
         },
         category: 'bedtime',
-        tag: '🌙',
-        emoji: '🌙',
         isAvailable: true,
       };
 

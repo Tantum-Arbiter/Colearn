@@ -2,8 +2,6 @@
   "id": "jungle-explorer",
   "title": "Jungle Explorer",
   "category": "adventure",
-  "tag": "🗺️ Adventure",
-  "emoji": "🦁",
   "coverImage": "assets/stories/jungle-explorer/cover/thumbnail.webp",
   "isAvailable": true,
   "ageRange": "3-6",

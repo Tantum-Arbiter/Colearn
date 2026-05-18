@@ -2,8 +2,6 @@
   "id": "mountain-climb",
   "title": "The Great Mountain Climb",
   "category": "adventure",
-  "tag": "🗺️ Adventure",
-  "emoji": "⛰️",
   "coverImage": "assets/stories/mountain-climb/cover/thumbnail.webp",
   "isAvailable": true,
   "ageRange": "3-6",

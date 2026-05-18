@@ -18,8 +18,6 @@
     "zh": "拥抱小袋熊"
   },
   "category": "bedtime",
-  "tag": "🌙 Bedtime",
-  "emoji": "🐨",
   "coverImage": "assets/stories/snuggle-little-wombat/cover/thumbnail.webp",
   "isAvailable": true,
   "ageRange": "2-5",
@@ -118,7 +116,13 @@
         "instrumentId": "flute",
         "promptText": "Play a gentle lullaby to help Wombat drift off to sleep!",
         "mode": "guided",
-        "requiredSequence": ["C", "D", "E", "D", "C"],
+        "requiredSequence": [
+          "C",
+          "D",
+          "E",
+          "D",
+          "C"
+        ],
         "successSongId": "wombat_lullaby_v1",
         "successStateId": "wombat_dreaming",
         "autoPlaySuccessSong": true,
@@ -177,7 +181,15 @@
         "instrumentId": "flute",
         "promptText": "Play a cozy tune to help Wombat snuggle into the burrow!",
         "mode": "guided",
-        "requiredSequence": ["E", "D", "C", "D", "E", "E", "E"],
+        "requiredSequence": [
+          "E",
+          "D",
+          "C",
+          "D",
+          "E",
+          "E",
+          "E"
+        ],
         "successSongId": "wombat_burrow_v1",
         "successStateId": "wombat_snuggled",
         "autoPlaySuccessSong": true,

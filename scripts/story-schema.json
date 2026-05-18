@@ -20,13 +20,6 @@
       "type": "string",
       "enum": ["personalized", "bedtime", "adventure", "nature", "friendship", "learning", "fantasy", "music", "activities", "growing"]
     },
-    "tag": {
-      "type": "string",
-      "description": "Display tag with emoji"
-    },
-    "emoji": {
-      "type": "string"
-    },
     "coverImage": {
       "type": "string",
       "description": "Path to cover thumbnail"
@@ -171,7 +164,7 @@
           },
           "interactionType": {
             "type": "string",
-            "enum": ["none", "interactive_state_change", "music_challenge"],
+            "enum": ["none", "interactive_state_change", "music_challenge", "jigsaw_puzzle"],
             "description": "Interaction type for this page"
           },
           "interactiveElements": {
@@ -248,6 +241,21 @@
                 "type": "string",
                 "enum": ["none", "minimal", "standard", "verbose"]
               }
+            }
+          },
+          "jigsawPuzzle": {
+            "type": "object",
+            "description": "Jigsaw puzzle configuration for this page",
+            "required": ["enabled", "gridSize", "promptText", "allowSkip"],
+            "properties": {
+              "enabled": { "type": "boolean" },
+              "gridSize": {
+                "type": "string",
+                "enum": ["4x4", "6x6", "8x8"],
+                "description": "Grid dimensions: 4x4 (easy), 6x6 (medium), 8x8 (hard)"
+              },
+              "promptText": { "type": "string", "description": "Narrative prompt for the jigsaw puzzle" },
+              "allowSkip": { "type": "boolean" }
             }
           }
         }

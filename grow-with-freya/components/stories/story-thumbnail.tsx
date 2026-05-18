@@ -10,7 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
-import { Story, getLocalizedText } from '@/types/story';
+import { Story, STORY_TAGS, getLocalizedText } from '@/types/story';
 import type { SupportedLanguage } from '@/services/i18n';
 import { Fonts } from '@/constants/theme';
 import { Logger } from '@/utils/logger';
@@ -131,7 +131,7 @@ export const StoryThumbnail: React.FC<StoryThumbnailProps> = ({
             />
           ) : (
             <View style={[styles.placeholderImage, { backgroundColor: story.isAvailable ? '#E8F4FD' : '#F5F5F5' }]}>
-              <Text style={styles.placeholderEmoji}>{story.emoji}</Text>
+              <Text style={styles.placeholderEmoji}>{STORY_TAGS[story.category].emoji}</Text>
             </View>
           )}
           
@@ -169,7 +169,7 @@ export const StoryThumbnail: React.FC<StoryThumbnailProps> = ({
 
         {/* Category Badge */}
         <View style={[styles.categoryBadge, { backgroundColor: story.isAvailable ? 'rgba(255,255,255,0.2)' : 'rgba(128,128,128,0.2)' }]}>
-          <Text style={styles.categoryText}>{story.tag}</Text>
+          <Text style={styles.categoryText}>{story.category}</Text>
         </View>
       </Pressable>
     </Animated.View>

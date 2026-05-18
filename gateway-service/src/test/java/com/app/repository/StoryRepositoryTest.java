@@ -157,8 +157,6 @@ class StoryRepositoryTest {
     // Helper methods
     private Story createTestStory(String id, String title, String category) {
         Story story = new Story(id, title, category);
-        story.setTag("🌙 Bedtime");
-        story.setEmoji("🌙");
         story.setAgeRange("2-5");
         story.setDuration(8);
         story.setDescription("A test story");

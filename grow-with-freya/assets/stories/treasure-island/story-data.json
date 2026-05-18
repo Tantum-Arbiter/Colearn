@@ -2,8 +2,6 @@
   "id": "treasure-island",
   "title": "Treasure Island Adventure",
   "category": "adventure",
-  "tag": "🗺️ Adventure",
-  "emoji": "🏴‍☠️",
   "coverImage": "assets/stories/treasure-island/cover/thumbnail.webp",
   "isAvailable": true,
   "ageRange": "3-6",

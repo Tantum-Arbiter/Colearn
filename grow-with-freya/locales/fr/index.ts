@@ -910,6 +910,15 @@ export default {
     },
   },
 
+  jigsaw: {
+    amazing: 'Incroyable !',
+    beginPuzzle: '🧩 Commencer le puzzle',
+    completedMoves: 'Terminé en {{count}} coups !',
+    continueStory: 'Continuer l\'histoire →',
+    shuffle: '↻ Mélanger',
+    skip: 'Passer →',
+  },
+
   // Audio settings modal
   audioSettings: {
     title: 'Paramètres audio',

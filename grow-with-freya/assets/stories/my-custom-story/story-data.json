@@ -2,8 +2,6 @@
   "id": "my-custom-story",
   "title": "My Amazing Custom Story",
   "category": "bedtime",
-  "tag": "🌙 Bedtime",
-  "emoji": "📚",
   "coverImage": "assets/stories/my-custom-story/cover/thumbnail.webp",
   "isAvailable": true,
   "ageRange": "2-5",

@@ -878,6 +878,15 @@ export default {
     },
   },
 
+  jigsaw: {
+    amazing: 'مذهل!',
+    beginPuzzle: '🧩 ابدأ اللغز',
+    completedMoves: 'اكتمل في {{count}} حركة!',
+    continueStory: 'متابعة القصة →',
+    shuffle: '↻ خلط',
+    skip: 'تخطي →',
+  },
+
   audioSettings: {
     title: 'إعدادات الصوت',
     masterVolume: 'مستوى الصوت الرئيسي',

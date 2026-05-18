@@ -1,0 +1,111 @@
+{
+  "id": "jigsaw-story-1",
+  "title": "Puzzle Forest - Easy Adventure",
+  "category": "adventure",
+  "coverImage": "assets/stories/squirrels-snowman/cover/thumbnail.webp",
+  "isAvailable": true,
+  "ageRange": "2-5",
+  "duration": 5,
+  "description": "A gentle jigsaw puzzle adventure with 4x4 grids. Perfect for little hands!",
+  "isPremium": false,
+  "author": "Freya Stories",
+  "tags": [
+    "puzzle",
+    "adventure",
+    "interactive"
+  ],
+  "version": 1,
+  "checksum": "jigsaw-story-1-checksum-v1",
+  "pages": [
+    {
+      "id": "jigsaw-story-1-cover",
+      "pageNumber": 0,
+      "type": "cover",
+      "backgroundImage": "assets/stories/squirrels-snowman/cover/cover.webp",
+      "text": "Puzzle Forest\n\nAn Easy Adventure",
+      "interactionType": "none"
+    },
+    {
+      "id": "jigsaw-story-1-page-1",
+      "pageNumber": 1,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-1/page-1.webp",
+      "text": "Squirrel found a magical picture that got scrambled! Can you help fix it?",
+      "interactionType": "jigsaw_puzzle",
+      "jigsawPuzzle": {
+        "enabled": true,
+        "gridSize": 4,
+        "promptText": "Swap the tiles to fix the picture!",
+        "allowSkip": true
+      }
+    },
+    {
+      "id": "jigsaw-story-1-page-2",
+      "pageNumber": 2,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-3/page-3.webp",
+      "text": "Another picture needs your help! The snowman got all jumbled up.",
+      "interactionType": "jigsaw_puzzle",
+      "jigsawPuzzle": {
+        "enabled": true,
+        "gridSize": 6,
+        "promptText": "Put the snowman back together!",
+        "allowSkip": true
+      }
+    },
+    {
+      "id": "jigsaw-story-1-page-3",
+      "pageNumber": 3,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-5/page-5.webp",
+      "text": "One last puzzle! You're doing amazing!",
+      "interactionType": "jigsaw_puzzle",
+      "jigsawPuzzle": {
+        "enabled": true,
+        "gridSize": 8,
+        "promptText": "One more puzzle to solve!",
+        "allowSkip": true
+      }
+    },
+    {
+      "id": "jigsaw-story-1-page-4",
+      "pageNumber": 4,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-7/page-7.webp",
+      "text": "You solved all the puzzles! What a puzzle master you are!",
+      "interactionType": "none"
+    }
+  ],
+  "localizedTitle": {
+    "en": "Puzzle Forest - Easy Adventure",
+    "pl": "Puzzle Las - Łatwa Przygoda",
+    "es": "Bosque de Rompecabezas - Aventura Fácil",
+    "de": "Puzzle-Wald - Leichtes Abenteuer",
+    "fr": "Forêt Puzzle - Aventure Facile",
+    "it": "Foresta Puzzle - Avventura Facile",
+    "pt": "Floresta Quebra-Cabeça - Aventura Fácil",
+    "ja": "パズルの森 - やさしい冒険",
+    "ar": "غابة الألغاز - مغامرة سهلة",
+    "tr": "Yapboz Ormanı - Kolay Macera",
+    "nl": "Puzzelbos - Makkelijk Avontuur",
+    "da": "Puslespilskov - Let Eventyr",
+    "la": "Silva Aenigmatum - Facilis Aventura",
+    "zh": "拼图森林 - 简单冒险"
+  },
+  "localizedDescription": {
+    "en": "A gentle jigsaw puzzle adventure with 4x4 grids. Perfect for little hands!",
+    "pl": "Łagodna przygoda z puzzlami 4x4. Idealna dla małych rączek!",
+    "es": "Una suave aventura de rompecabezas con cuadrículas de 4x4. ¡Perfecta para manitas pequeñas!",
+    "de": "Ein sanftes Puzzle-Abenteuer mit 4x4-Gittern. Perfekt für kleine Hände!",
+    "fr": "Une douce aventure puzzle avec des grilles 4x4. Parfait pour les petites mains !",
+    "it": "Una dolce avventura puzzle con griglie 4x4. Perfetta per piccole mani!",
+    "pt": "Uma aventura suave de quebra-cabeça com grades 4x4. Perfeita para mãozinhas!",
+    "ja": "4x4グリッドのやさしいジグソーパズル冒険。小さな手にぴったり！",
+    "ar": "مغامرة لغز لطيفة بشبكات 4×4. مثالية للأيدي الصغيرة!",
+    "tr": "4x4 ızgaralı nazik bir yapboz macerası. Küçük eller için mükemmel!",
+    "nl": "Een zacht puzzelavontuur met 4x4-rasters. Perfect voor kleine handjes!",
+    "da": "Et blidt puslespilseventyr med 4x4 gitre. Perfekt til små hænder!",
+    "la": "Aenigma mite cum reticulis 4×4. Perfectum pro manibus parvis!",
+    "zh": "一个温和的4x4拼图冒险。非常适合小手！"
+  }
+}

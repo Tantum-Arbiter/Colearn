@@ -872,6 +872,15 @@ export default {
     },
   },
 
+  jigsaw: {
+    amazing: '太棒了！',
+    beginPuzzle: '🧩 开始拼图',
+    completedMoves: '{{count}}步完成！',
+    continueStory: '继续故事 →',
+    shuffle: '↻ 重新洗牌',
+    skip: '跳过 →',
+  },
+
   audioSettings: {
     title: '音频设置',
     masterVolume: '主音量',

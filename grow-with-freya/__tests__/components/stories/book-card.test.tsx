@@ -17,8 +17,6 @@ const mockAvailableStory: Story = {
   id: '1',
   title: 'Test Story',
   category: 'adventure',
-  tag: '🗺️ Adventure',
-  emoji: '🗺️',
   isAvailable: true,
   ageRange: '3-6',
   duration: 10,
@@ -29,8 +27,6 @@ const mockPlaceholderStory: Story = {
   id: 'placeholder-1',
   title: 'Coming Soon',
   category: 'adventure',
-  tag: '',
-  emoji: '',
   isAvailable: false,
   description: 'More stories coming soon!'
 };
@@ -88,9 +84,8 @@ describe('BookCard', () => {
       <BookCard story={mockAvailableStory} />
     );
 
-    // Just verify the card renders - emoji is inside the component
+    // Just verify the card renders - emoji fallback comes from STORY_TAGS
     expect(result).toBeTruthy();
-    expect(mockAvailableStory.emoji).toBeDefined();
   });
 
   it('displays placeholder icon for unavailable stories', () => {

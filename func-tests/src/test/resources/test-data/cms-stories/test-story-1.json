@@ -2,8 +2,6 @@
   "id": "test-story-1",
   "title": "Test Story One - The Adventure Begins",
   "category": "adventure",
-  "tag": "🗺️ Adventure",
-  "emoji": "🌟",
   "coverImage": "assets/stories/cms-squirrels-snowman/cover/thumbnail.webp",
   "isAvailable": true,
   "ageRange": "2-5",
@@ -69,7 +67,12 @@
         "instrumentId": "flute",
         "promptText": "Play the flute to help Gary lift the rock!",
         "mode": "guided",
-        "requiredSequence": ["C", "D", "E", "C"],
+        "requiredSequence": [
+          "C",
+          "D",
+          "E",
+          "C"
+        ],
         "successSongId": "gary_rock_lift_theme_v1",
         "successStateId": "rock_moved",
         "autoPlaySuccessSong": true,

@@ -2,8 +2,6 @@
   "id": "test-story-3",
   "title": "Test Story 3 - Unique Content",
   "category": "nature",
-  "tag": "🏷️ Test",
-  "emoji": "📖",
   "coverImage": "assets/stories/cms-squirrels-snowman/cover/thumbnail.webp",
   "isAvailable": true,
   "ageRange": "2-5",

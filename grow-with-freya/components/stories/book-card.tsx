@@ -148,7 +148,7 @@ export function BookCard({ story, onPress, index = 0 }: BookCardProps) {
               resizeMode="cover"
             />
           ) : (
-            <Text style={styles.storyEmoji}>{story.emoji}</Text>
+            <Text style={styles.storyEmoji}>{STORY_TAGS[story.category].emoji}</Text>
           )}
         </View>
 

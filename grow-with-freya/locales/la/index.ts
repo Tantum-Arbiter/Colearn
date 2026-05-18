@@ -874,6 +874,15 @@ export default {
     },
   },
 
+  jigsaw: {
+    amazing: 'Mirum!',
+    beginPuzzle: '🧩 Incipe aenigma',
+    completedMoves: '{{count}} motibus perfectum!',
+    continueStory: 'Fabulam continua →',
+    shuffle: '↻ Misce',
+    skip: 'Praetermitte →',
+  },
+
   audioSettings: {
     title: 'Constitutiones Soni',
     masterVolume: 'Volumen Principale',

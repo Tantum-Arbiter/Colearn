@@ -18,7 +18,7 @@ import Animated, {
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import { Story, StoryPage } from '@/types/story';
+import { Story, StoryPage, STORY_TAGS } from '@/types/story';
 import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
 // All story images are loaded from local cache after batch sync - no authenticated fetching needed
@@ -169,7 +169,7 @@ export function PagePreviewModal({
             <Image source={typeof imageSource === 'string' ? { uri: imageSource } : imageSource} style={styles.thumbnailImage} contentFit="cover" transition={150} />
           ) : (
             <View style={styles.placeholderThumbnail}>
-              <Text style={styles.placeholderEmoji}>{story.emoji}</Text>
+              <Text style={styles.placeholderEmoji}>{STORY_TAGS[story.category].emoji}</Text>
             </View>
           )}
           {isCurrentPage && (

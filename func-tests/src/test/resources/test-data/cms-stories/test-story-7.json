@@ -2,8 +2,6 @@
   "id": "test-story-7",
   "title": "Test Story 7 - Unique Content",
   "category": "fantasy",
-  "tag": "🏷️ Test",
-  "emoji": "📖",
   "coverImage": "assets/stories/cms-squirrels-snowman/cover/thumbnail.webp",
   "isAvailable": true,
   "ageRange": "2-5",

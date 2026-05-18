@@ -65,8 +65,6 @@ class StoryControllerTest {
         testStory1.setId("story-1");
         testStory1.setTitle("The Sleepy Forest");
         testStory1.setCategory("bedtime");
-        testStory1.setTag("🌙 Bedtime");
-        testStory1.setEmoji("🦉");
         testStory1.setAvailable(true);
         testStory1.setDescription("A peaceful bedtime story");
         testStory1.setVersion(1);
@@ -122,8 +120,6 @@ class StoryControllerTest {
         testStory2.setId("story-2");
         testStory2.setTitle("The Happy Day");
         testStory2.setCategory("emotions");
-        testStory2.setTag("😊 Emotions");
-        testStory2.setEmoji("😊");
         testStory2.setAvailable(true);
         testStory2.setDescription("A story about happiness");
         testStory2.setVersion(1);

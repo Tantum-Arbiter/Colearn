@@ -12,8 +12,7 @@ export const BUNDLED_STORIES: Story[] = [
     id: 'snuggle-little-wombat',
     title: 'Snuggle Little Wombat',
     category: 'bedtime',
-    tag: '🌙 Bedtime',
-    emoji: '🐨',
+
     coverImage: '', // Placeholder - add actual asset path
     isAvailable: true,
     ageRange: '2-5',

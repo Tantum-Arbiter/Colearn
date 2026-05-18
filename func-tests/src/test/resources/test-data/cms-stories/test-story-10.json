@@ -2,8 +2,6 @@
   "id": "test-story-10",
   "title": "Test Story 10 - Unique Content",
   "category": "family",
-  "tag": "🏷️ Test",
-  "emoji": "📖",
   "coverImage": "assets/stories/cms-squirrels-snowman/cover/thumbnail.webp",
   "isAvailable": true,
   "ageRange": "2-5",

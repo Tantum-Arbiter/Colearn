@@ -950,6 +950,16 @@ export default {
     },
   },
 
+  // Jigsaw puzzle UI strings
+  jigsaw: {
+    amazing: 'Amazing!',
+    beginPuzzle: '🧩 Begin Puzzle',
+    completedMoves: 'Completed in {{count}} moves!',
+    continueStory: 'Continue Story →',
+    shuffle: '↻ Shuffle',
+    skip: 'Skip →',
+  },
+
   // Audio settings modal
   audioSettings: {
     title: 'Audio Settings',

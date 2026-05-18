@@ -307,8 +307,6 @@ public class TestAdminController {
         story1.setDescription("A cozy bedtime story about a sleepy bear");
         story1.setAgeRange("2-5");
         story1.setDuration(5);
-        story1.setTag("Bedtime");
-        story1.setEmoji("moon");
         story1.setAuthor("Test Author");
         story1.setTags(List.of("bedtime", "animals", "sleep"));
 
@@ -416,8 +414,6 @@ public class TestAdminController {
         story2.setDescription("An adventure story about a brave bunny");
         story2.setAgeRange("3-6");
         story2.setDuration(6);
-        story2.setTag("Adventure");
-        story2.setEmoji("rabbit");
         story2.setAuthor("Test Author");
         story2.setTags(List.of("adventure", "animals", "courage"));
         story2.setPages(List.of(
@@ -432,8 +428,6 @@ public class TestAdminController {
         story3.setDescription("A heartwarming story about friendship");
         story3.setAgeRange("2-5");
         story3.setDuration(4);
-        story3.setTag("Friendship");
-        story3.setEmoji("heart");
         story3.setAuthor("Test Author");
         story3.setTags(List.of("friendship", "kindness"));
         story3.setPages(List.of(
@@ -609,8 +603,6 @@ public class TestAdminController {
             story.setCategory((String) storyData.get("category"));
             story.setDescription((String) storyData.get("description"));
             story.setAgeRange((String) storyData.get("ageRange"));
-            story.setTag((String) storyData.get("tag"));
-            story.setEmoji((String) storyData.get("emoji"));
             story.setAuthor((String) storyData.get("author"));
             story.setCoverImage((String) storyData.get("coverImage"));
 

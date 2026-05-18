@@ -56,8 +56,6 @@ const createMockStory = (id: string, title: string): Story => ({
   id,
   title,
   category: 'adventure',
-  tag: 'test',
-  emoji: '📖',
   isAvailable: true,
   checksum: `checksum-${id}`,
 });

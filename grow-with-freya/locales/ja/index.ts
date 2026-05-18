@@ -872,6 +872,15 @@ export default {
     },
   },
 
+  jigsaw: {
+    amazing: 'すごい！',
+    beginPuzzle: '🧩 パズルを始める',
+    completedMoves: '{{count}}手でクリア！',
+    continueStory: '物語を続ける →',
+    shuffle: '↻ シャッフル',
+    skip: 'スキップ →',
+  },
+
   audioSettings: {
     title: 'オーディオ設定',
     masterVolume: 'マスターボリューム',
