@@ -151,7 +151,7 @@ public class AccountDeletionService {
             // Then hard-delete all session records (active + already-expired) for GDPR
             long deletedCount = userSessionRepository.deleteAllUserSessions(userId).join();
 
-            logger.debug("Sessions handled for user: {} — revoked: {}, deleted: {}",
+            logger.debug("Sessions handled for user: {} -revoked: {}, deleted: {}",
                     userId, revokedCount, deletedCount);
             metricsService.recordAccountDeletionStep("delete_sessions", true,
                     System.currentTimeMillis() - stepStart);

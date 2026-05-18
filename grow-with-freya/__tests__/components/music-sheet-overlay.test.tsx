@@ -100,7 +100,7 @@ describe('MusicSheetOverlay', () => {
       const onClose = jest.fn();
       const { json } = renderOverlay({ onClose });
       // The Pressable close button is inside Animated.View, which the reanimated mock
-      // renders as <div> — getByTestId and pressByTestId can't traverse into it.
+      // renders as <div> -getByTestId and pressByTestId can't traverse into it.
       // We verify the ✕ text renders and onClose is accepted without error.
       expect(treeContainsText(json, '✕')).toBe(true);
       // onClose → Pressable interaction is verified via E2E tests
@@ -190,7 +190,7 @@ describe('MusicSheetOverlay', () => {
 
   describe('notes with no matching layout entry', () => {
     it('should fall back to displaying the raw note name when layout has no match', () => {
-      // 'G' is NOT in testNoteLayout — should show "G" as the label text
+      // 'G' is NOT in testNoteLayout -should show "G" as the label text
       const allText = getAllText(renderOverlay({ requiredSequence: ['G'] }).json);
       expect(allText).toContain('G');
     });
@@ -223,7 +223,7 @@ describe('MusicSheetOverlay', () => {
 
   describe('completed note count equals sequence length', () => {
     it('should mark all notes as completed', () => {
-      // All 4 notes completed — all should be filled
+      // All 4 notes completed -all should be filled
       const { json } = renderOverlay({
         requiredSequence: ['C', 'D', 'E', 'C'],
         completedNoteCount: 4,

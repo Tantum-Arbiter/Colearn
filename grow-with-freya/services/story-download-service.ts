@@ -156,7 +156,7 @@ export class StoryDownloadService {
       if (cancelToken?.cancelled) {
         throw new DownloadAbortError(
           autoTimedOut
-            ? 'Download failed — connection lost'
+            ? 'Download failed -connection lost'
             : 'Download cancelled by user'
         );
       }
@@ -174,16 +174,16 @@ export class StoryDownloadService {
       onProgress?.(p);
     };
 
-    // Stall detector — fires every 3s during the download
+    // Stall detector -fires every 3s during the download
     let stallInterval: ReturnType<typeof setInterval> | null = setInterval(() => {
       const stalledFor = Date.now() - lastProgressTime;
 
-      // Auto-cancel after sustained stall — stop the interval immediately
+      // Auto-cancel after sustained stall -stop the interval immediately
       if (stalledFor > STALL_AUTO_CANCEL_MS && cancelToken && !cancelToken.cancelled) {
         autoTimedOut = true;
         cancelToken.cancelled = true;
         if (stallInterval) { clearInterval(stallInterval); stallInterval = null; }
-        log.warn(`Auto-cancelling download for ${storyId} — no progress for ${Math.round(stalledFor / 1000)}s`);
+        log.warn(`Auto-cancelling download for ${storyId} -no progress for ${Math.round(stalledFor / 1000)}s`);
         onProgress?.({
           phase: 'stalled',
           progress: -1,
@@ -204,7 +204,7 @@ export class StoryDownloadService {
     }, STALL_POLL_INTERVAL_MS);
 
     try {
-      // Phase 0: Authentication gate — fail fast if not logged in
+      // Phase 0: Authentication gate -fail fast if not logged in
       checkAbort();
       const isAuthed = await ApiClient.isAuthenticated();
       if (!isAuthed) {
@@ -249,7 +249,7 @@ export class StoryDownloadService {
         if (isAuth) {
           throw new Error('Not authenticated - please login');
         }
-        throw apiError; // genuine network / server error — let outer catch handle it
+        throw apiError; // genuine network / server error -let outer catch handle it
       }
       result.story = story;
 
@@ -281,7 +281,7 @@ export class StoryDownloadService {
               reportProgress({
                 phase: 'downloading-assets',
                 progress,
-                message: `Downloading ${current}/${total} — ${bytesFmt} / ${totalFmt}`,
+                message: `Downloading ${current}/${total} -${bytesFmt} / ${totalFmt}`,
                 detail: { currentAsset: current, totalAssets: total, bytesDownloaded, totalBytes },
               });
             }
@@ -464,7 +464,7 @@ export class StoryDownloadService {
 }
 
 
-/** Sentinel error used for cancellation and overall timeout — distinguished from real failures. */
+/** Sentinel error used for cancellation and overall timeout -distinguished from real failures. */
 class DownloadAbortError extends Error {
   constructor(message: string) {
     super(message);

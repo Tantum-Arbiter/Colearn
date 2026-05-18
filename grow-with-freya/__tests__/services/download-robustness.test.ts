@@ -66,9 +66,9 @@ function failedDownload(status = 500) {
 }
 
 // =====================================================================
-// CacheManager.downloadAndCacheAsset — timeout via Promise.race
+// CacheManager.downloadAndCacheAsset -timeout via Promise.race
 // =====================================================================
-describe('CacheManager.downloadAndCacheAsset — real timeout logic', () => {
+describe('CacheManager.downloadAndCacheAsset -real timeout logic', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Reset CacheManager initialization state
@@ -130,9 +130,9 @@ describe('CacheManager.downloadAndCacheAsset — real timeout logic', () => {
 });
 
 // =====================================================================
-// AssetDownloadUtils.downloadAssetsInBatches — real retry logic
+// AssetDownloadUtils.downloadAssetsInBatches -real retry logic
 // =====================================================================
-describe('AssetDownloadUtils.downloadAssetsInBatches — real retry logic', () => {
+describe('AssetDownloadUtils.downloadAssetsInBatches -real retry logic', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Reset CacheManager initialization so downloadAndCacheAsset works

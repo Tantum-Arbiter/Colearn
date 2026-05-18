@@ -95,7 +95,7 @@ async function getAssetChecksums() {
           continue;
         }
 
-        // GCS returns md5Hash as base64 — convert to hex for consistency
+        // GCS returns md5Hash as base64 -convert to hex for consistency
         const checksum = Buffer.from(md5Hash, 'base64').toString('hex');
 
         assetChecksums[path] = checksum;

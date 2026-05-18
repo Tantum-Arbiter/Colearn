@@ -7,7 +7,7 @@
 ## Overview
 
 The CMS is a file-based content pipeline that turns story JSON files + image assets into live content
-available to mobile clients. There is **no admin UI** — stories are authored as files in this repo,
+available to mobile clients. There is **no admin UI** -stories are authored as files in this repo,
 validated by CI, and deployed automatically on merge to `main`.
 
 ### Pipeline At a Glance
@@ -26,8 +26,8 @@ GitHub Actions (cms-stories-sync.yml)
              upload-assets-to-firestore.js → asset version metadata
          ↓
 Mobile app launch
-  ├─ VersionManager.checkVersions() — integer version comparison
-  ├─ BatchSyncService.performBatchSync() — POST /api/stories/delta
+  ├─ VersionManager.checkVersions() -integer version comparison
+  ├─ BatchSyncService.performBatchSync() -POST /api/stories/delta
   │     (sends client story checksums, receives only changed stories)
   ├─ CacheManager downloads new images via signed URLs from GCS
   └─ StoryLoader merges bundled + CMS stories for rendering
@@ -64,20 +64,20 @@ to the Firestore `stories` collection using **delta-sync** (only changed stories
 
 **Key design decisions:**
 
-1. **Firestore batch chunking** — Firestore has a hard 500-operation limit per batch. Stories are
+1. **Firestore batch chunking** -Firestore has a hard 500-operation limit per batch. Stories are
    chunked into batches of **400** to stay safely under the limit. At 1000 stories this means 3
    sequential commits instead of a crash. The same chunking applies to orphan deletion.
 
-2. **Delta-sync via checksums** — Each story gets a SHA-256 checksum computed from its content
+2. **Delta-sync via checksums** -Each story gets a SHA-256 checksum computed from its content
    (id, title, localized fields, page text, images, interactive elements, music challenges).
    The script compares against checksums stored in `content_versions/current`. Only stories with
    changed checksums are written, saving Firestore write costs.
 
-3. **Orphan deletion** — Stories present in Firestore but not in source files are deleted.
+3. **Orphan deletion** -Stories present in Firestore but not in source files are deleted.
    The `content_versions/current` document is replaced entirely (not merged) so deleted story
    checksums are automatically removed.
 
-4. **Upload modes** — `UPLOAD_MODE` controls which stories are read:
+4. **Upload modes** -`UPLOAD_MODE` controls which stories are read:
    - `cms-only` (default): Only `scripts/cms-stories/`
    - `bundled`: Only `grow-with-freya/assets/stories/`
    - `all`: Both directories
@@ -99,14 +99,14 @@ to the Firestore `stories` collection using **delta-sync** (only changed stories
 Reads MD5 checksums from **GCS object metadata** for all assets in the bucket and writes them
 to `asset_versions/current` in Firestore. This is used by the client for asset version tracking.
 
-**Key design decision: GCS metadata instead of file downloads** — GCS automatically computes and
+**Key design decision: GCS metadata instead of file downloads** -GCS automatically computes and
 stores an MD5 hash for every uploaded object. This script reads `file.metadata.md5Hash` instead of
 downloading files to compute checksums locally. At 1,700+ assets this avoids downloading ~340MB
 during every CI run. The checksums are converted from base64 to hex for consistency.
 
 **Note:** The client never reads individual asset checksums. It only compares the integer asset
 version number. A version bump triggers a delta-sync which compares story-level checksums. If no
-stories changed, zero assets are downloaded — even if the asset version bumped.
+stories changed, zero assets are downloaded -even if the asset version bumped.
 
 ### cms-manager CLI
 

@@ -238,7 +238,7 @@
                 "items": { "type": "string" },
                 "description": "Explicit note sequence (optional if songId is provided)"
               },
-              "successSongId": { "type": "string", "description": "Legacy — no longer used" },
+              "successSongId": { "type": "string", "description": "Legacy -no longer used" },
               "successStateId": { "type": "string", "description": "Optional page state change on success" },
               "autoPlaySuccessSong": { "type": "boolean" },
               "allowSkip": { "type": "boolean" },

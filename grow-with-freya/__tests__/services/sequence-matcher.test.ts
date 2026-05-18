@@ -120,7 +120,7 @@ describe('SequenceMatcher', () => {
       const matcher = new SequenceMatcher(['C', 'D', 'E'], false);
 
       matcher.processNote('C'); // correct
-      const result = matcher.processNote('C'); // repeat — NOT tolerated
+      const result = matcher.processNote('C'); // repeat -NOT tolerated
 
       expect(result.lastInputCorrect).toBe(false);
       expect(result.currentIndex).toBe(0);

@@ -1,11 +1,11 @@
 import { Story } from '@/types/story';
 
 /**
- * Real story data — only contains published stories with actual content.
+ * Real story data -only contains published stories with actual content.
  * Mock/placeholder stories for future sections are defined separately below.
  */
 export const MOCK_STORIES: Story[] = [
-  // Snuggle Little Wombat — our first published story
+  // Snuggle Little Wombat -our first published story
   {
     id: 'snuggle-little-wombat',
     title: 'Snuggle Little Wombat',

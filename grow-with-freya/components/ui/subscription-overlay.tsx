@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { View, Text, Pressable, StyleSheet, ScrollView, Image, useWindowDimensions, Alert } from 'react-native';
+import { View, Text, Pressable, StyleSheet, ScrollView, Image, useWindowDimensions, Alert, ActivityIndicator } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS,
 } from 'react-native-reanimated';
@@ -12,6 +12,7 @@ import { Fonts } from '@/constants/theme';
 import { PrivacyPolicyContent } from '@/components/account/privacy-policy-screen';
 import { TermsConditionsContent } from '@/components/account/terms-conditions-screen';
 import { useAppStore } from '@/store/app-store';
+import { mapPlanIdToPackage, purchasePackage, getOfferings } from '@/services/subscription-service';
 
 type PlanId = 'monthly_basic' | 'monthly_premium' | 'yearly';
 interface Plan { id: PlanId; name: string; price: string; period: string; details: string[]; badge?: string; originalPrice?: string; }
@@ -76,6 +77,7 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
   const plans = useMemo(() => buildPlans(getDeviceCurrency(), t), [t]);
   const [legalPage, setLegalPage] = useState<'privacy' | 'terms' | null>(null);
   const { isGuestMode, setGuestMode, setShowLoginAfterOnboarding } = useAppStore();
+  const [isPurchasing, setIsPurchasing] = useState(false);
   const translateY = useSharedValue(screenH);
   const backdropOpacity = useSharedValue(0);
   const legalSlideX = useSharedValue(screenW);
@@ -173,7 +175,7 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
             </View>
             {plans.map(renderPlan)}
           </ScrollView>
-          <Pressable style={st.subBtn} onPress={() => {
+          <Pressable style={st.subBtn} disabled={isPurchasing} onPress={() => {
             if (isGuestMode) {
               Alert.alert(
                 t('subscription.signInRequiredTitle'),
@@ -195,10 +197,40 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
               );
               return;
             }
-            // TODO: RevenueCat purchase flow
+            // RevenueCat purchase flow
+            setIsPurchasing(true);
+            (async () => {
+              try {
+                // Ensure offerings are loaded
+                await getOfferings();
+                const pkg = mapPlanIdToPackage(selectedPlan);
+                if (!pkg) {
+                  Alert.alert(t('subscription.errorTitle'), t('subscription.errorUnavailable'));
+                  return;
+                }
+                const result = await purchasePackage(pkg);
+                if (result.success) {
+                  handleClose();
+                } else if (result.cancelled) {
+                  // User cancelled -do nothing, keep overlay open
+                } else if (result.devMode) {
+                  Alert.alert('Dev Mode', 'Purchases are disabled in dev mode. Use Developer Options to set your subscription tier.');
+                } else if (result.error) {
+                  Alert.alert(t('subscription.errorTitle'), result.error);
+                }
+              } catch {
+                Alert.alert(t('subscription.errorTitle'), t('subscription.errorGeneric'));
+              } finally {
+                setIsPurchasing(false);
+              }
+            })();
           }}>
-            <LinearGradient colors={['#F59E0B', '#D97706']} style={st.subBtnInner}>
-              <Text style={st.subBtnText}>{isGuestMode ? t('subscription.signInToSubscribe') : t('subscription.subscribe')}</Text>
+            <LinearGradient colors={['#F59E0B', '#D97706']} style={[st.subBtnInner, isPurchasing && { opacity: 0.6 }]}>
+              {isPurchasing ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={st.subBtnText}>{isGuestMode ? t('subscription.signInToSubscribe') : t('subscription.subscribe')}</Text>
+              )}
             </LinearGradient>
           </Pressable>
           <View style={st.legalRow}>

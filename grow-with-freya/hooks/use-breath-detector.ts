@@ -5,12 +5,12 @@
  * Monitors audio level (metering) against a configurable threshold.
  *
  * Uses the shared useMicPermission hook so mic permission is only requested
- * ONCE across the entire app — shared with useVoiceRecording (narration mode).
+ * ONCE across the entire app -shared with useVoiceRecording (narration mode).
  *
  * Provides fallback mode when mic permission is denied or unavailable:
  * - useFallback = true → caller should show on-screen blow button instead
  *
- * Does NOT do pitch detection — only noise/breath level detection.
+ * Does NOT do pitch detection -only noise/breath level detection.
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -20,12 +20,12 @@ import { useMicPermission } from './use-mic-permission';
 
 const log = Logger.create('BreathDetector');
 
-// Threshold in dB — values above this indicate "blowing"
+// Threshold in dB -values above this indicate "blowing"
 // Typical quiet room: -40 to -30 dB, breath/blow: -20 to -5 dB
 const DEFAULT_BREATH_THRESHOLD_DB = -25;
 const METERING_POLL_INTERVAL_MS = 100;
 // Delay before deactivating breath when metering drops below threshold.
-// Prevents flickering — brief dips between breaths won't kill active notes.
+// Prevents flickering -brief dips between breaths won't kill active notes.
 const BREATH_DEACTIVATE_DELAY_MS = 250;
 
 export interface BreathDetectorOptions {
@@ -42,7 +42,7 @@ export interface BreathDetectorResult {
   startListening: () => Promise<void>;
   stopListening: () => Promise<void>;
   ensurePlaybackMode: () => Promise<void>;
-  /** Synchronous check — returns true when the audio session is already in
+  /** Synchronous check -returns true when the audio session is already in
    *  playback-only mode (cached). Use this to skip the async ensurePlaybackMode
    *  call and fire sound immediately with zero latency. */
   isInPlaybackMode: () => boolean;
@@ -93,7 +93,7 @@ export function useBreathDetector(
   // Poll recorder state for metering data
   const recorderState = useAudioRecorderState(recorder, METERING_POLL_INTERVAL_MS);
 
-  // Debounce timer for deactivating breath — prevents flickering when
+  // Debounce timer for deactivating breath -prevents flickering when
   // metering briefly dips below threshold between breaths.
   const breathOffTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // When true, breath state is frozen (pauseForPlayback active).
@@ -103,7 +103,7 @@ export function useBreathDetector(
   // async work. Each pauseForPlayback bumps this; resumeRecording captures
   // the current value and bails if it has changed (meaning a new pause arrived).
   const pauseGenerationRef = useRef(0);
-  // Cached audio session mode — avoids redundant native bridge calls.
+  // Cached audio session mode -avoids redundant native bridge calls.
   // Set to 'playback' or 'recording' after each successful setAudioModeAsync.
   const audioModeRef = useRef<'playback' | 'recording' | null>(null);
 
@@ -118,14 +118,14 @@ export function useBreathDetector(
       const isAboveThreshold = recorderState.metering > thresholdDb;
 
       if (isAboveThreshold) {
-        // Breath detected — activate immediately, cancel any pending deactivation
+        // Breath detected -activate immediately, cancel any pending deactivation
         if (breathOffTimerRef.current) {
           clearTimeout(breathOffTimerRef.current);
           breathOffTimerRef.current = null;
         }
         setIsBreathActive(true);
       } else if (isBreathActive && !breathOffTimerRef.current) {
-        // Below threshold while active — start deactivation timer
+        // Below threshold while active -start deactivation timer
         breathOffTimerRef.current = setTimeout(() => {
           breathOffTimerRef.current = null;
           setIsBreathActive(false);
@@ -156,7 +156,7 @@ export function useBreathDetector(
     if (micPermission.isUndetermined) {
       const result = await micPermission.requestPermission();
       if (result !== 'granted') {
-        log.warn('Microphone permission denied — using fallback blow button');
+        log.warn('Microphone permission denied -using fallback blow button');
         setUseFallback(true);
         return;
       }
@@ -170,7 +170,7 @@ export function useBreathDetector(
       // On iOS, play-and-record sessions can otherwise get sent to the receiver/earpiece.
       await setAudioModeAsync(RECORDING_AUDIO_MODE);
       audioModeRef.current = 'recording';
-      // prepareToRecordAsync() is required on Android — MediaRecorder must be
+      // prepareToRecordAsync() is required on Android -MediaRecorder must be
       // prepared before start(). Without this, record() silently fails and
       // metering stays at -160 (silence). iOS is more forgiving but we call
       // it on both platforms for consistency.
@@ -188,7 +188,7 @@ export function useBreathDetector(
   // This undoes the `allowsRecording: true` set by startListening AND
   // counteracts any session changes caused by useAudioRecorder's creation.
   const restorePlaybackAudioMode = useCallback(async () => {
-    if (audioModeRef.current === 'playback') return; // Already in playback — skip native call
+    if (audioModeRef.current === 'playback') return; // Already in playback -skip native call
     try {
       await setAudioModeAsync(PLAYBACK_AUDIO_MODE);
       audioModeRef.current = 'playback';
@@ -198,7 +198,7 @@ export function useBreathDetector(
   }, []);
 
   /** Synchronous check: is the audio session already in playback mode?
-   *  Reads the cached ref — no native bridge call. */
+   *  Reads the cached ref -no native bridge call. */
   const isInPlaybackMode = useCallback(() => audioModeRef.current === 'playback', []);
 
   const stopListening = useCallback(async () => {
@@ -208,7 +208,7 @@ export function useBreathDetector(
     isPausedForPlaybackRef.current = false;
     // Guard: if already not listening, skip to avoid double-stop crashes
     if (!isListening) {
-      log.debug('stopListening called but already not listening — skipping');
+      log.debug('stopListening called but already not listening -skipping');
       return;
     }
     setIsListening(false);
@@ -232,7 +232,7 @@ export function useBreathDetector(
   const pauseForPlayback = useCallback(async () => {
     // Bump generation to cancel any in-flight resumeRecording async work
     pauseGenerationRef.current++;
-    // Freeze breath state — prevent metering effect from changing isBreathActive
+    // Freeze breath state -prevent metering effect from changing isBreathActive
     isPausedForPlaybackRef.current = true;
     // Cancel any pending deactivation timer so it doesn't fire during the pause
     if (breathOffTimerRef.current) {
@@ -244,7 +244,7 @@ export function useBreathDetector(
       await setAudioModeAsync(PLAYBACK_AUDIO_MODE);
       audioModeRef.current = 'playback';
     } catch {}
-    log.debug('Recorder paused — switched to playback mode (breath state frozen)');
+    log.debug('Recorder paused -switched to playback mode (breath state frozen)');
   }, [recorder]);
 
   // Restart recording after a pauseForPlayback() call.
@@ -275,7 +275,7 @@ export function useBreathDetector(
         await recorder.prepareToRecordAsync();
         if (pauseGenerationRef.current !== gen) return;
         recorder.record();
-        log.debug('Recorder resumed — breath detection active');
+        log.debug('Recorder resumed -breath detection active');
       } catch (err) {
         log.warn('Failed to resume recording:', err);
       }
@@ -294,7 +294,7 @@ export function useBreathDetector(
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      log.debug('useBreathDetector unmounting — stopping recorder');
+      log.debug('useBreathDetector unmounting -stopping recorder');
       try { recorder.stop(); } catch {}
       // Fire-and-forget restore so subsequent audio isn't broken
       setAudioModeAsync(PLAYBACK_AUDIO_MODE).catch(() => {});

@@ -471,7 +471,7 @@ export default {
     screens: {
       welcome: {
         title: 'Verhalen die groeien\nmet je kind',
-        body: 'Interactieve verhalen met muziek, instrumenten en vertelling — ontworpen om verbeelding te stimuleren en vroege ontwikkeling te ondersteunen.',
+        body: 'Interactieve verhalen met muziek, instrumenten en vertelling -ontworpen om verbeelding te stimuleren en vroege ontwikkeling te ondersteunen.',
         button: 'Volgende',
       },
       howItWorks: {
@@ -486,12 +486,12 @@ export default {
           music: 'Muziek en instrumenten',
           musicDesc: 'Leer ritme en melodie met echte instrumentgeluiden',
           voice: 'Jouw stem',
-          voiceDesc: 'Neem vertellingen op zodat je kind je hoort — zelfs op afstand',
+          voiceDesc: 'Neem vertellingen op zodat je kind je hoort -zelfs op afstand',
         },
       },
       family: {
         title: 'Gemaakt voor gezinnen',
-        body: 'Schermtijdbescherming, begeleide sessies en gezamenlijke speeltools — ontworpen voor korte, betekenisvolle momenten samen. Onderzoek toont aan dat gezamenlijke betrokkenheid de grootste voordelen biedt.',
+        body: 'Schermtijdbescherming, begeleide sessies en gezamenlijke speeltools -ontworpen voor korte, betekenisvolle momenten samen. Onderzoek toont aan dat gezamenlijke betrokkenheid de grootste voordelen biedt.',
         button: 'Volgende',
       },
       consent: {
@@ -501,10 +501,10 @@ export default {
         closeLabel: 'Sluiten',
         dataSummary: {
           title: 'Wat we verzamelen en waarom',
-          profile: 'Weergavenaam en avatar — om de ervaring van je kind te personaliseren',
-          reading: 'Leesgeschiedenis, favorieten en voortgang — om verhalen en reeksen bij te houden',
-          screenTime: 'Schermtijdsessies — om gezond gebruik te beheren',
-          device: 'Apparaattype en app-versie — zodat de app goed werkt',
+          profile: 'Weergavenaam en avatar -om de ervaring van je kind te personaliseren',
+          reading: 'Leesgeschiedenis, favorieten en voortgang -om verhalen en reeksen bij te houden',
+          screenTime: 'Schermtijdsessies -om gezond gebruik te beheren',
+          device: 'Apparaattype en app-versie -zodat de app goed werkt',
           noSell: 'We verkopen nooit gegevens en tonen geen advertenties. Je kunt alles op elk moment verwijderen.',
         },
         checkboxes: {
@@ -533,7 +533,7 @@ export default {
     },
     benefits: {
       welcome: 'Gebaseerd op onderzoek naar kinderontwikkeling',
-      howItWorks: 'Verhalen · Muziek · Stem — alles in één app',
+      howItWorks: 'Verhalen · Muziek · Stem -alles in één app',
       family: 'Aanbevolen door experts in kinderontwikkeling',
       consent: 'Jouw toestemming beschermt je gezin',
     },
@@ -571,7 +571,7 @@ export default {
       },
       freeplay: {
         title: 'Vrij Spelen 🎹',
-        description: 'Speel vrij op elk instrument — geen regels, alleen plezier! Experimenteer met geluiden en maak je eigen muziek.',
+        description: 'Speel vrij op elk instrument -geen regels, alleen plezier! Experimenteer met geluiden en maak je eigen muziek.',
       },
       settings: {
         title: 'Instellingen ⚙️',
@@ -835,7 +835,7 @@ export default {
     backToLibrary: 'Terug naar bibliotheek',
     backToMenu: 'Terug',
     noSongsAvailable: 'Geen liedjes beschikbaar voor dit instrument',
-    freeplayPrompt: 'Vrij spelen — tik op een noot!',
+    freeplayPrompt: 'Vrij spelen -tik op een noot!',
     difficulty: { easy: 'Makkelijk', medium: 'Gemiddeld', hard: 'Moeilijk' },
     songs: {
       hotCrossBuns: 'Warme kruisbroodjes',
@@ -897,7 +897,7 @@ export default {
     uspStories: 'Verhalen die de ontwikkeling van kinderen ondersteunen',
     uspEducators: 'Leeftijdsgeschikte inhoud, beoordeeld door pedagogen',
     uspMusic: 'Interactieve muziek en instrumentoefeningen',
-    uspNoAds: 'Geen advertenties — veilig voor kleintjes',
+    uspNoAds: 'Geen advertenties -veilig voor kleintjes',
     uspLanguages: 'Beschikbaar in 14 talen',
     detailAllStories: 'Alle verhalen ontgrendeld',
     detailDownload50: 'Download tot 50 boeken',
@@ -908,7 +908,7 @@ export default {
     detailAllInstruments: 'Alle instrumenten ontgrendeld',
     detailEverythingPremium: 'Alles uit Premium',
     detailSave25: 'Bespaar 25% ten opzichte van maandelijks',
-    // Guest mode — sign-in required
+    // Guest mode -sign-in required
     signInToSubscribe: 'Log in om te abonneren',
     signInRequiredTitle: 'Inloggen vereist',
     signInRequiredMessage: 'Je moet inloggen voordat je kunt abonneren. Je abonnement wordt gekoppeld aan je account zodat je het op al je apparaten kunt gebruiken.',

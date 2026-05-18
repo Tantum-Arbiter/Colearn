@@ -56,7 +56,7 @@ import {
 import { StoryAccessService } from '@/services/story-access-service';
 
 // ============================================================================
-// Carousel configuration — tuned for 6 instruments
+// Carousel configuration -tuned for 6 instruments
 // ============================================================================
 const RADIUS = 180;
 const CENTER_SCALE = 1.0;
@@ -153,13 +153,13 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
     rotation.value = withSpring(target, { damping: 28, stiffness: 150 });
   }, [anglePerItem, rotation]);
 
-  // Tap gesture — tapping the centered instrument confirms the selection
+  // Tap gesture -tapping the centered instrument confirms the selection
   const tapGesture = useMemo(() => Gesture.Tap()
     .onEnd(() => {
       runOnJS(handleConfirmSelection)();
     }), [handleConfirmSelection]);
 
-  // Pan gesture for swiping — clamped to move at most one item per swipe.
+  // Pan gesture for swiping -clamped to move at most one item per swipe.
   const panGesture = useMemo(() => Gesture.Pan()
     .onStart(() => {
       gestureStartRotation.value = rotation.value;
@@ -190,7 +190,7 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
       });
     }), [anglePerItem, gestureStartRotation, rotation]);
 
-  // Compose: tap fires on quick taps, pan fires on drags — they don't conflict
+  // Compose: tap fires on quick taps, pan fires on drags -they don't conflict
   const composedGesture = useMemo(
     () => Gesture.Race(tapGesture, panGesture),
     [tapGesture, panGesture],
@@ -302,7 +302,7 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
 });
 
 // ============================================================================
-// CarouselItem — individual instrument card with 3D positioning + pulsing ring
+// CarouselItem -individual instrument card with 3D positioning + pulsing ring
 // ============================================================================
 
 interface CarouselItemProps {
@@ -322,7 +322,7 @@ function CarouselItem({
   isLocked = false,
   onLockedPress,
 }: CarouselItemProps) {
-  // Pulsing ring animation — always running, only visible when centered
+  // Pulsing ring animation -always running, only visible when centered
   const pulseScale = useSharedValue(1);
   const pulseOpacity = useSharedValue(0);
 
@@ -373,7 +373,7 @@ function CarouselItem({
     };
   });
 
-  // Pulsing ring — visible only when this item is at front (centered)
+  // Pulsing ring -visible only when this item is at front (centered)
   const animatedRingStyle = useAnimatedStyle(() => {
     const itemAngle = index * anglePerItem;
     const currentRotation = rotation.value;
@@ -390,7 +390,7 @@ function CarouselItem({
     };
   });
 
-  // Label text — visible only when centered
+  // Label text -visible only when centered
   const animatedLabelStyle = useAnimatedStyle(() => {
     const itemAngle = index * anglePerItem;
     const currentRotation = rotation.value;
@@ -410,7 +410,7 @@ function CarouselItem({
       {/* Pulsing ring behind the image */}
       <Animated.View style={[styles.pulsingRing, animatedRingStyle]} />
 
-      {/* Instrument image or placeholder — no touch handler here;
+      {/* Instrument image or placeholder -no touch handler here;
           taps are detected by the parent pan gesture (tiny drag = tap → confirm).
           Navigation is done via the arrow buttons or swiping. */}
       <View style={styles.itemPressable} testID={`instrument-${instrument.id}`}>
@@ -434,7 +434,7 @@ function CarouselItem({
         )}
       </View>
 
-      {/* Name + description — visible when centered */}
+      {/* Name + description -visible when centered */}
       <Animated.View style={[styles.itemLabel, animatedLabelStyle]}>
         <Text style={styles.instrumentName}>{instrument.displayName}</Text>
         <Text style={styles.instrumentDescription}>{instrument.description}</Text>

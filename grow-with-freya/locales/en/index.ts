@@ -506,11 +506,11 @@ export default {
     startExploring: 'Start Exploring',
     swipeOrTap: 'Swipe or tap to continue',
     readyToStart: 'Ready to start your journey!',
-    // Screen content — 4 focused screens
+    // Screen content -4 focused screens
     screens: {
       welcome: {
         title: 'Stories That Grow\nWith Your Child',
-        body: 'Interactive stories with music, instruments and narration — designed to spark imagination and support early development.',
+        body: 'Interactive stories with music, instruments and narration -designed to spark imagination and support early development.',
         button: 'Next',
       },
       howItWorks: {
@@ -525,12 +525,12 @@ export default {
           music: 'Music & Instruments',
           musicDesc: 'Learn rhythm and melody with real instrument sounds',
           voice: 'Your Voice',
-          voiceDesc: 'Record narrations so your child hears you — even apart',
+          voiceDesc: 'Record narrations so your child hears you -even apart',
         },
       },
       family: {
         title: 'Made for Families',
-        body: 'Screen time protection, guided sessions and co-play tools — designed for short, meaningful moments together. Research shows co-engagement gives the greatest benefits for early development.',
+        body: 'Screen time protection, guided sessions and co-play tools -designed for short, meaningful moments together. Research shows co-engagement gives the greatest benefits for early development.',
         button: 'Next',
       },
       consent: {
@@ -540,10 +540,10 @@ export default {
         closeLabel: 'Close',
         dataSummary: {
           title: 'What we collect & why',
-          profile: "Display name & avatar — to personalise your child's experience",
-          reading: 'Reading history, favourites & progress — to track stories and streaks',
-          screenTime: 'Screen time sessions — to help manage healthy usage',
-          device: 'Device type & app version — to keep the app working properly',
+          profile: "Display name & avatar -to personalise your child's experience",
+          reading: 'Reading history, favourites & progress -to track stories and streaks',
+          screenTime: 'Screen time sessions -to help manage healthy usage',
+          device: 'Device type & app version -to keep the app working properly',
           noSell: 'We never sell data or show ads. You can delete everything at any time.',
         },
         checkboxes: {
@@ -574,7 +574,7 @@ export default {
     },
     benefits: {
       welcome: 'Backed by child development research',
-      howItWorks: 'Family · Stories · Music · Voice — all in one app',
+      howItWorks: 'Family · Stories · Music · Voice -all in one app',
       family: 'Recommended by child development experts',
       consent: 'Your consent keeps your family safe',
     },
@@ -616,7 +616,7 @@ export default {
       },
       freeplay: {
         title: 'Freeplay 🎹',
-        description: 'Jam freely on any instrument — no rules, just fun! Experiment with sounds and create your own music.',
+        description: 'Jam freely on any instrument -no rules, just fun! Experiment with sounds and create your own music.',
       },
       settings: {
         title: 'Settings ⚙️',
@@ -902,7 +902,7 @@ export default {
     backToMenu: 'Back',
     noSongsAvailable: 'No songs available for this instrument',
     // Freeplay mode
-    freeplayPrompt: 'Free Play — tap any note!',
+    freeplayPrompt: 'Free Play -tap any note!',
     // Difficulty labels
     difficulty: {
       easy: 'Easy',
@@ -979,26 +979,36 @@ export default {
     uspStories: 'Stories crafted to support child development',
     uspEducators: 'Age-appropriate content reviewed by educators',
     uspMusic: 'Interactive music & instrument practice',
-    uspNoAds: 'No ads, ever — safe for little ones',
+    uspNoAds: 'No ads, ever -safe for little ones',
     uspLanguages: 'Available in 14 languages',
-    // Plan details — Basic
+    // Plan details -Basic
     detailAllStories: 'All stories unlocked',
     detailDownload50: 'Download up to 50 books',
     detailLimitedSongs: 'Limited songs access',
     detailSyncDevices: 'Sync across various devices',
-    // Plan details — Premium
+    // Plan details -Premium
     detailDownload100: 'Download up to 100 books',
     detailAllSongs: 'All songs in practice mode',
     detailAllInstruments: 'All instruments unlocked',
-    // Plan details — Annual
+    // Plan details -Annual
     detailEverythingPremium: 'Everything in Premium',
     detailSave25: 'Save 25% vs monthly',
-    // Guest mode — sign-in required
+    // Guest mode -sign-in required
     signInToSubscribe: 'Sign In to Subscribe',
     signInRequiredTitle: 'Sign In Required',
     signInRequiredMessage: 'You need to sign in before you can subscribe. Your subscription will be linked to your account so you can access it on all your devices.',
     signInRequiredConfirm: 'Sign In',
     signInRequiredCancel: 'Not Now',
+    // Purchase flow
+    errorTitle: 'Subscription Error',
+    errorUnavailable: 'This plan is not available right now. Please try again later.',
+    errorGeneric: 'Something went wrong. Please try again.',
+    // Restore purchases
+    restorePurchases: 'Restore Purchases',
+    restoreSuccessTitle: 'Purchases Restored',
+    restoreSuccessMessage: 'Your subscription has been restored successfully.',
+    restoreNoneTitle: 'No Purchases Found',
+    restoreNoneMessage: 'We couldn\'t find any previous purchases to restore.',
   },
 
   // Default page content

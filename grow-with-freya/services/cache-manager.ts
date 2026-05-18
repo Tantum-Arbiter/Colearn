@@ -471,7 +471,7 @@ export class CacheManager {
       await FileSystem.makeDirectoryAsync(parentDir, { intermediates: true });
     }
 
-    // Download with timeout — FileSystem.downloadAsync has no built-in timeout
+    // Download with timeout -FileSystem.downloadAsync has no built-in timeout
     const downloadPromise = FileSystem.downloadAsync(url, localPath);
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(
@@ -490,7 +490,7 @@ export class CacheManager {
     }
 
     if (downloadResult.status !== 200) {
-      // downloadAsync writes the error response body to disk — clean it up
+      // downloadAsync writes the error response body to disk -clean it up
       await this.deleteFileQuietly(localPath);
       throw new Error(`Failed to download asset (HTTP ${downloadResult.status}): ${assetPath}`);
     }
@@ -509,7 +509,7 @@ export class CacheManager {
       if (sizeError instanceof Error && sizeError.message.includes('too small')) {
         throw sizeError;
       }
-      // Ignore other size-check errors — file was downloaded OK
+      // Ignore other size-check errors -file was downloaded OK
     }
 
     log.debug(`Downloaded and cached asset: ${assetPath}`);
@@ -521,7 +521,7 @@ export class CacheManager {
     return uri !== null;
   }
 
-  /** Silently delete a file — used to clean up corrupt/partial downloads. */
+  /** Silently delete a file -used to clean up corrupt/partial downloads. */
   private static async deleteFileQuietly(filePath: string): Promise<void> {
     try {
       const info = await FileSystem.getInfoAsync(filePath);

@@ -7,6 +7,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming } fr
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore, type SubscriptionTier } from '../../store/app-store';
+import { restorePurchases, isDevMode } from '@/services/subscription-service';
 import { MoonBottomImage } from '../main-menu/animated-components';
 import { mainMenuStyles } from '../main-menu/styles';
 import { PageHeader } from '../ui/page-header';
@@ -315,7 +316,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
         error?.message?.includes('token');
 
       if (isAuthError) {
-        // Tokens were already cleared by the failed refresh — update UI state to match
+        // Tokens were already cleared by the failed refresh -update UI state to match
         setGuestMode(true);
         Alert.alert(
           t('alerts.deleteAccount.title'),
@@ -697,7 +698,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
             </View>
           </Pressable>
 
-          {/* Logout — transparent pill button like home icon */}
+          {/* Logout -transparent pill button like home icon */}
           <Pressable
             style={({ pressed }) => [styles.logoutButton, pressed && { opacity: 0.6 }]}
             onPress={isGuestMode ? handleLogin : handleLogout}
@@ -708,7 +709,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
             </Text>
           </Pressable>
 
-          {/* Delete Account — only shown for logged-in users */}
+          {/* Delete Account -only shown for logged-in users */}
           {!isGuestMode && (
             <View style={styles.deleteAccountSection}>
               <Pressable
@@ -729,6 +730,37 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
                 {t('account.deleteAccountHint')}
               </Text>
             </View>
+          )}
+
+          {/* Restore Purchases -Apple requires this for App Store approval */}
+          {!isGuestMode && !isDevMode() && (
+            <Pressable
+              style={({ pressed }) => [styles.logoutButton, { marginTop: 12 }, pressed && { opacity: 0.6 }]}
+              onPress={async () => {
+                const result = await restorePurchases();
+                if (result.success) {
+                  Alert.alert(
+                    t('subscription.restoreSuccessTitle'),
+                    t('subscription.restoreSuccessMessage'),
+                  );
+                } else if (result.error) {
+                  Alert.alert(
+                    t('subscription.errorTitle'),
+                    result.error,
+                  );
+                } else {
+                  Alert.alert(
+                    t('subscription.restoreNoneTitle'),
+                    t('subscription.restoreNoneMessage'),
+                  );
+                }
+              }}
+            >
+              <Ionicons name="refresh-outline" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+              <Text style={[styles.logoutButtonText, { fontSize: scaledFontSize(14) }]}>
+                {t('subscription.restorePurchases')}
+              </Text>
+            </Pressable>
           )}
 
           {/* Developer Options */}
@@ -990,7 +1022,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
 
-  // Logout — transparent pill like home icon
+  // Logout -transparent pill like home icon
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',

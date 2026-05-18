@@ -15,7 +15,7 @@ import math
 NOTES_DIR = os.path.join(os.path.dirname(__file__), '..', 'assets', 'music', 'notes')
 SAMPLE_RATE = 44100
 DURATION = 5.0        # seconds
-AMPLITUDE = 0.85      # peak amplitude (0..1) — leaves headroom
+AMPLITUDE = 0.85      # peak amplitude (0..1) -leaves headroom
 ATTACK_MS = 80        # attack ramp duration
 RELEASE_MS = 300      # fade-out at end of file
 

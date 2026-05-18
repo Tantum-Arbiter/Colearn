@@ -55,7 +55,7 @@ export interface MusicChallenge {
   songId?: string;
   /** Explicit note sequence. If omitted, resolved from songId at runtime. */
   requiredSequence?: string[]; // Note sequence, e.g., ["C", "D", "E", "C"]
-  successSongId?: string; // Legacy — kept for backward compat, no longer used
+  successSongId?: string; // Legacy -kept for backward compat, no longer used
   successStateId?: string; // Optional page state change on success, e.g., "rock_moved"
   autoPlaySuccessSong: boolean;
   allowSkip: boolean;

@@ -1,8 +1,8 @@
-# Song Library — Grow with Freya
+# Song Library -Grow with Freya
 
 ## Overview
 
-The song library is a core part of the **Music Challenge** feature. Every song is defined as a **note sequence** — an ordered array of note names (C, D, E, F, G, A) — rather than pre-recorded audio. This means the same melody can be played on any instrument that supports the required notes: a flute, recorder, ocarina, trumpet, clarinet, or saxophone. The instrument's own audio samples provide the sound.
+The song library is a core part of the **Music Challenge** feature. Every song is defined as a **note sequence** -an ordered array of note names (C, D, E, F, G, A) -rather than pre-recorded audio. This means the same melody can be played on any instrument that supports the required notes: a flute, recorder, ocarina, trumpet, clarinet, or saxophone. The instrument's own audio samples provide the sound.
 
 Songs are registered in `services/music-asset-registry.ts` in the `PRACTICE_SONGS` array. Each entry specifies:
 
@@ -51,12 +51,12 @@ Six **slow and smooth** melodies (70 BPM) that represent physical forces. These 
 
 | Song | Musical Character |
 |------|-------------------|
-| Song of Push | Ascending pairs — building pressure, moving outward |
-| Song of Pull | Descending pairs — drawing inward, gathering |
-| Song of Lift | Rising thirds — upward motion, getting lighter |
-| Song of Lower | Falling thirds — gentle descent, settling down |
-| Song of Break | Wide intervals — sharp contrasts, disruption |
-| Song of Fix | Stepwise resolution — rebuilding, coming together |
+| Song of Push | Ascending pairs -building pressure, moving outward |
+| Song of Pull | Descending pairs -drawing inward, gathering |
+| Song of Lift | Rising thirds -upward motion, getting lighter |
+| Song of Lower | Falling thirds -gentle descent, settling down |
+| Song of Break | Wide intervals -sharp contrasts, disruption |
+| Song of Fix | Stepwise resolution -rebuilding, coming together |
 
 ---
 
@@ -79,15 +79,15 @@ Songs are automatically filtered by instrument. A song only appears if the instr
 
 This song library is critical infrastructure for AI-generated storybooks. When an AI model creates a new story, it needs to:
 
-1. **Select appropriate songs** — The `category` field lets a model pick nursery rhymes for familiar comfort, storybook songs for mood-setting, or forces songs for science content.
+1. **Select appropriate songs** -The `category` field lets a model pick nursery rhymes for familiar comfort, storybook songs for mood-setting, or forces songs for science content.
 
-2. **Match difficulty to the reader** — The `difficulty` field guides song selection based on the child's progress.
+2. **Match difficulty to the reader** -The `difficulty` field guides song selection based on the child's progress.
 
-3. **Respect instrument constraints** — The `requiredNotes` field ensures the model only assigns songs playable on the story's chosen instrument.
+3. **Respect instrument constraints** -The `requiredNotes` field ensures the model only assigns songs playable on the story's chosen instrument.
 
-4. **Create new songs** — By studying the patterns in existing sequences, a model can generate new original melodies that follow the same structure: short sequences of notes from the available set, with appropriate difficulty and BPM.
+4. **Create new songs** -By studying the patterns in existing sequences, a model can generate new original melodies that follow the same structure: short sequences of notes from the available set, with appropriate difficulty and BPM.
 
-5. **Teach through music** — The forces songs demonstrate how music can represent abstract concepts. Future models can follow this pattern to create songs for other learning themes (colours, emotions, seasons, etc.).
+5. **Teach through music** -The forces songs demonstrate how music can represent abstract concepts. Future models can follow this pattern to create songs for other learning themes (colours, emotions, seasons, etc.).
 
 ### Guidelines for AI Song Creation
 
@@ -215,7 +215,7 @@ For stories managed via CMS (Firestore), localized fields use the `LocalizedText
 
 ```typescript
 interface LocalizedText {
-  en: string;   // Required — always the fallback
+  en: string;   // Required -always the fallback
   pl?: string;  es?: string;  de?: string;  fr?: string;
   it?: string;  pt?: string;  ja?: string;  ar?: string;
   tr?: string;  nl?: string;  da?: string;  la?: string;

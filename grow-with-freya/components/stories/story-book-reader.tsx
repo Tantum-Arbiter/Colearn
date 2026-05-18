@@ -252,7 +252,7 @@ export function StoryBookReader({
     return instrumentId ? getInstrument(instrumentId) : undefined;
   }, [selectedInstrumentId, currentMusicChallenge?.instrumentId]);
 
-  // Success song name — no longer used since completion plays back the user's
+  // Success song name -no longer used since completion plays back the user's
   // sequence note-by-note rather than a pre-recorded track.
   const successSongName = undefined;
 
@@ -262,7 +262,7 @@ export function StoryBookReader({
     enabled: isMusicChallengePage && (currentMusicChallenge?.micRequired ?? true),
   });
 
-  // Audio session control — lets useMusicChallenge pause/resume the recorder
+  // Audio session control -lets useMusicChallenge pause/resume the recorder
   // internally so notes always play at full speaker volume in blow mode.
   const audioSessionControl = useMemo(() => ({
     pauseForPlayback: breathDetector.pauseForPlayback,
@@ -297,7 +297,7 @@ export function StoryBookReader({
   );
 
   // Sync breath detector state to music challenge.
-  // Only in blow mode — in press mode, MusicChallengeUI sets breathActive(true)
+  // Only in blow mode -in press mode, MusicChallengeUI sets breathActive(true)
   // permanently, and we must not overwrite it with the mic's false signal.
   useEffect(() => {
     if (isMusicChallengePage && currentPlayModeRef.current === 'blow') {
@@ -306,7 +306,7 @@ export function StoryBookReader({
   }, [breathDetector.isBreathActive, isMusicChallengePage]);
 
   // Auto-open instrument picker when the story loads (before the first page appears)
-  // Skip in record mode — user is recording voice, not playing music
+  // Skip in record mode -user is recording voice, not playing music
   useEffect(() => {
     if (hasMusicChallenge && readingMode !== 'record') {
       setShowInstrumentPicker(true);
@@ -440,9 +440,9 @@ export function StoryBookReader({
     // preMusicChallengeVolumeRef was already saved in handleBeginMusicChallenge
     fadeMusicVolumeTo(0, 1000);
 
-    // Always (re)start the challenge — handles first play, retry, and revisit
+    // Always (re)start the challenge -handles first play, retry, and revisit
     musicChallenge.start();
-    // Don't start the breath detector here — the default play mode is "press",
+    // Don't start the breath detector here -the default play mode is "press",
     // which doesn't need the microphone.  Starting the recorder puts iOS into
     // playAndRecord mode and reduces speaker volume significantly.
     // The breath detector is started/stopped via handlePlayModeChange instead.
@@ -498,7 +498,7 @@ export function StoryBookReader({
     return () => { isMountedRef.current = false; };
   }, []);
 
-  // Android hardware back button — refs for functions defined later in the component
+  // Android hardware back button -refs for functions defined later in the component
   const handleExitRef = useRef<() => void>(() => {});
   const handlePreviousPageRef = useRef<() => void>(() => {});
   const closeMusicPracticeRef = useRef<(opts?: { cleanup?: boolean; stopBreath?: boolean; resetUiHidden?: boolean }) => void>(() => {});
@@ -561,7 +561,7 @@ export function StoryBookReader({
 
   // Animate the music practice overlay down off screen, then reset state.
   // Uses setTimeout instead of runOnJS inside the withTiming callback to avoid
-  // native crashes — runOnJS with inline anonymous functions in worklet callbacks
+  // native crashes -runOnJS with inline anonymous functions in worklet callbacks
   // can crash the Reanimated UI thread (no JS logs appear).
   const closeMusicPractice = useCallback((opts?: { cleanup?: boolean; stopBreath?: boolean; resetUiHidden?: boolean }) => {
     log.debug('closeMusicPractice called', opts);
@@ -576,7 +576,7 @@ export function StoryBookReader({
     // Run cleanup on the JS thread after animation completes
     setTimeout(() => {
       if (!isMountedRef.current || isExitingRef.current) {
-        log.debug('closeMusicPractice cleanup skipped — unmounted or exiting');
+        log.debug('closeMusicPractice cleanup skipped -unmounted or exiting');
         return;
       }
       log.debug('closeMusicPractice cleanup executing');
@@ -585,7 +585,7 @@ export function StoryBookReader({
         if (opts?.stopBreath) { breathDetector.stopListening().catch(() => {}); }
         if (opts?.resetUiHidden) { setMusicUiHidden(false); }
         restoreMusicVolume();
-        // Set phase to idle LAST — this unmounts the overlay.
+        // Set phase to idle LAST -this unmounts the overlay.
         // Animation values stay off-screen; they're reset in handleReadyToPlay
         // before the overlay is shown again, preventing any flash.
         setMusicChallengePhase('idle');
@@ -865,7 +865,7 @@ export function StoryBookReader({
     isExitingRef.current = true; // Mark that exit animation will handle rotation
 
     try {
-      // Clean up music challenge resources before exiting — this ensures
+      // Clean up music challenge resources before exiting -this ensures
       // note players, sustain timers, and breath detector are stopped
       // even if the user exits mid-challenge or right after closing practice.
       // Only clean up if we're actually in a music state (not already idle)
@@ -873,7 +873,7 @@ export function StoryBookReader({
       try {
         log.debug(`handleExit: musicChallengePhase=${musicChallengePhase}, cleaning up music`);
         musicChallenge.cleanup();
-        // stopListening is async — fire-and-forget but catch errors.
+        // stopListening is async -fire-and-forget but catch errors.
         // The unmount cleanup will also stop the recorder as a safety net.
         breathDetector.stopListening().catch(() => {});
       } catch (musicErr) {
@@ -1369,7 +1369,7 @@ export function StoryBookReader({
         setIsPlaying(true);
         return;
       } catch (e) {
-        // Player was released — fall through to create a new one
+        // Player was released -fall through to create a new one
       }
     }
 
@@ -1390,7 +1390,7 @@ export function StoryBookReader({
         setNarrationProgress(0);
         return;
       } catch (e) {
-        // Player was released — fall through to create a new one
+        // Player was released -fall through to create a new one
       }
     }
 
@@ -1408,7 +1408,7 @@ export function StoryBookReader({
   };
 
   // Narrate mode: auto-play recording when page changes (if auto-play is enabled)
-  // Don't start narration while instrument picker is visible — wait until user confirms
+  // Don't start narration while instrument picker is visible -wait until user confirms
   useEffect(() => {
     if (readingMode !== 'narrate' || !selectedVoiceOver || currentPageIndex === 0 || !narrationAutoPlay || showInstrumentPicker) {
       return;
@@ -1498,7 +1498,7 @@ export function StoryBookReader({
 
 
   // Auto-advance to next page after narration finishes (2 second delay) - only if auto-play is enabled
-  // Don't auto-advance on music challenge pages — wait for user to interact with Begin Playing
+  // Don't auto-advance on music challenge pages -wait for user to interact with Begin Playing
   useEffect(() => {
     if (shouldAutoAdvance && readingMode === 'narrate' && currentPageIndex < pages.length - 1 && narrationAutoPlay && !isMusicChallengePage) {
       const advanceTimer = setTimeout(() => {
@@ -1988,7 +1988,7 @@ export function StoryBookReader({
   return (
     <Animated.View style={[styles.container, exitAnimatedStyle, storyAnimatedStyle, bookOpeningAnimatedStyle]}>
       <View style={styles.background}>
-        {/* Gradient background — matches story selection screen so the exit
+        {/* Gradient background -matches story selection screen so the exit
             animation doesn't reveal a transparent/white gap behind the reader */}
         <LinearGradient
           colors={['#4ECDC4', '#3B82F6', '#1E3A8A']}
@@ -2277,7 +2277,7 @@ export function StoryBookReader({
                 </Pressable>
               </>
             )}
-            {/* Change Instrument — only show on music challenge page in landscape (not rotated to portrait) */}
+            {/* Change Instrument -only show on music challenge page in landscape (not rotated to portrait) */}
             {isMusicChallengePage && !instrumentIsRotated && (
               <>
                 <View style={styles.menuDivider} />
@@ -3291,7 +3291,7 @@ export function StoryBookReader({
       </View>
       )}
 
-      {/* "Begin Playing" — top center, aligned with nav buttons */}
+      {/* "Begin Playing" -top center, aligned with nav buttons */}
       {/* Hidden in record mode (no music) and narrate mode (shown below narration controls instead) */}
       {isMusicChallengePage && !showMusicSheet && !showInstrumentPicker && musicChallengePhase === 'idle' && readingMode !== 'record' && readingMode !== 'narrate' && (
         <View style={[styles.beginPlayingButton, { paddingTop: Math.max(insets.top + 20, 20) }]} pointerEvents="box-none">
@@ -3307,7 +3307,7 @@ export function StoryBookReader({
 
       {/* Music Sheet button is now inside MusicChallengeUI bottom section */}
 
-      {/* Music Sheet Overlay — shows note sequence for the current music challenge page */}
+      {/* Music Sheet Overlay -shows note sequence for the current music challenge page */}
       <MusicSheetOverlay
         visible={showMusicSheet}
         onClose={handleCloseMusicSheet}
@@ -3323,7 +3323,7 @@ export function StoryBookReader({
 
       />
 
-      {/* Instrument Picker Overlay — opened only from music challenge controls */}
+      {/* Instrument Picker Overlay -opened only from music challenge controls */}
       <InstrumentPickerOverlay
         visible={showInstrumentPicker}
         onSelect={handleInstrumentSelected}
@@ -3333,7 +3333,7 @@ export function StoryBookReader({
         onLockedPress={() => setShowSubscription(true)}
       />
 
-      {/* Subscription Overlay — triggered from locked instrument tap */}
+      {/* Subscription Overlay -triggered from locked instrument tap */}
       <SubscriptionOverlay
         visible={showSubscription}
         onClose={() => setShowSubscription(false)}
@@ -4827,7 +4827,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
   },
-  // "Begin Playing" — top center, aligned with exit/settings buttons
+  // "Begin Playing" -top center, aligned with exit/settings buttons
   beginPlayingButton: {
     position: 'absolute',
     top: 0,
@@ -4853,7 +4853,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
   },
-  // Floating "Music Sheet" button — bottom right (during playing)
+  // Floating "Music Sheet" button -bottom right (during playing)
   playSongButton: {
     position: 'absolute',
     bottom: 100,

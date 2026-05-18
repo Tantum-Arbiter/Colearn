@@ -500,7 +500,7 @@ export default {
     screens: {
       welcome: {
         title: 'Historyjki, które rosną\nz Twoim dzieckiem',
-        body: 'Interaktywne historyjki z muzyką, instrumentami i narracją — zaprojektowane, by pobudzać wyobraźnię i wspierać wczesny rozwój.',
+        body: 'Interaktywne historyjki z muzyką, instrumentami i narracją -zaprojektowane, by pobudzać wyobraźnię i wspierać wczesny rozwój.',
         button: 'Dalej',
       },
       howItWorks: {
@@ -515,12 +515,12 @@ export default {
           music: 'Muzyka i instrumenty',
           musicDesc: 'Ucz się rytmu i melodii z prawdziwymi dźwiękami instrumentów',
           voice: 'Twój głos',
-          voiceDesc: 'Nagraj narrację, by Twoje dziecko słyszało Cię — nawet z daleka',
+          voiceDesc: 'Nagraj narrację, by Twoje dziecko słyszało Cię -nawet z daleka',
         },
       },
       family: {
         title: 'Stworzone dla rodzin',
-        body: 'Ochrona czasu ekranowego, sesje z przewodnikiem i narzędzia do wspólnej zabawy — zaprojektowane do krótkich, wartościowych chwil razem. Badania pokazują, że wspólne zaangażowanie przynosi największe korzyści.',
+        body: 'Ochrona czasu ekranowego, sesje z przewodnikiem i narzędzia do wspólnej zabawy -zaprojektowane do krótkich, wartościowych chwil razem. Badania pokazują, że wspólne zaangażowanie przynosi największe korzyści.',
         button: 'Dalej',
       },
       consent: {
@@ -530,10 +530,10 @@ export default {
         closeLabel: 'Zamknij',
         dataSummary: {
           title: 'Co zbieramy i dlaczego',
-          profile: 'Nazwa wyświetlana i awatar — aby spersonalizować doświadczenie Twojego dziecka',
-          reading: 'Historia czytania, ulubione i postępy — aby śledzić historie i serie',
-          screenTime: 'Sesje czasu ekranowego — aby pomóc zarządzać zdrowym korzystaniem',
-          device: 'Typ urządzenia i wersja aplikacji — aby aplikacja działała prawidłowo',
+          profile: 'Nazwa wyświetlana i awatar -aby spersonalizować doświadczenie Twojego dziecka',
+          reading: 'Historia czytania, ulubione i postępy -aby śledzić historie i serie',
+          screenTime: 'Sesje czasu ekranowego -aby pomóc zarządzać zdrowym korzystaniem',
+          device: 'Typ urządzenia i wersja aplikacji -aby aplikacja działała prawidłowo',
           noSell: 'Nigdy nie sprzedajemy danych ani nie wyświetlamy reklam. Możesz usunąć wszystko w dowolnym momencie.',
         },
         checkboxes: {
@@ -562,7 +562,7 @@ export default {
     },
     benefits: {
       welcome: 'Oparte na badaniach rozwoju dziecka',
-      howItWorks: 'Historyjki · Muzyka · Głos — wszystko w jednej aplikacji',
+      howItWorks: 'Historyjki · Muzyka · Głos -wszystko w jednej aplikacji',
       family: 'Polecane przez ekspertów rozwoju dziecka',
       consent: 'Twoja zgoda chroni Twoją rodzinę',
     },
@@ -602,7 +602,7 @@ export default {
       },
       freeplay: {
         title: 'Swobodna Gra 🎹',
-        description: 'Graj swobodnie na dowolnym instrumencie — bez zasad, tylko zabawa! Eksperymentuj z dźwiękami i twórz własną muzykę.',
+        description: 'Graj swobodnie na dowolnym instrumencie -bez zasad, tylko zabawa! Eksperymentuj z dźwiękami i twórz własną muzykę.',
       },
       settings: {
         title: 'Ustawienia ⚙️',
@@ -742,7 +742,7 @@ export default {
     backToLibrary: 'Wróć do biblioteki',
     backToMenu: 'Wróć',
     noSongsAvailable: 'Brak piosenek dla tego instrumentu',
-    freeplayPrompt: 'Swobodna gra — dotknij dowolnej nuty!',
+    freeplayPrompt: 'Swobodna gra -dotknij dowolnej nuty!',
     difficulty: { easy: 'Łatwy', medium: 'Średni', hard: 'Trudny' },
     songs: {
       hotCrossBuns: 'Gorące bułeczki',
@@ -806,7 +806,7 @@ export default {
     uspStories: 'Opowieści wspierające rozwój dziecka',
     uspEducators: 'Treści dostosowane do wieku, recenzowane przez pedagogów',
     uspMusic: 'Interaktywna muzyka i ćwiczenia instrumentalne',
-    uspNoAds: 'Bez reklam — bezpieczne dla maluchów',
+    uspNoAds: 'Bez reklam -bezpieczne dla maluchów',
     uspLanguages: 'Dostępne w 14 językach',
     detailAllStories: 'Wszystkie opowieści odblokowane',
     detailDownload50: 'Pobierz do 50 książek',
@@ -817,7 +817,7 @@ export default {
     detailAllInstruments: 'Wszystkie instrumenty odblokowane',
     detailEverythingPremium: 'Wszystko z planu Premium',
     detailSave25: 'Oszczędź 25% w porównaniu z miesięcznym',
-    // Guest mode — sign-in required
+    // Guest mode -sign-in required
     signInToSubscribe: 'Zaloguj się, aby subskrybować',
     signInRequiredTitle: 'Wymagane logowanie',
     signInRequiredMessage: 'Musisz się zalogować, zanim będziesz mógł subskrybować. Twoja subskrypcja zostanie powiązana z kontem, abyś mógł z niej korzystać na wszystkich urządzeniach.',

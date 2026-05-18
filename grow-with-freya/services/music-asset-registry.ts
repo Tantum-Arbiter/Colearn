@@ -2,16 +2,16 @@
  * LocalMusicAssetRegistry
  *
  * Registry for locally bundled music assets: instruments and note samples.
- * All music assets are local on-device — CMS metadata only references stable asset IDs.
+ * All music assets are local on-device -CMS metadata only references stable asset IDs.
  *
  * Supported instruments: flute, recorder, ocarina, trumpet, clarinet, saxophone
  *
  * Asset directory structure:
- *   assets/music/instruments/{instrumentId}.png       — instrument image
- *   assets/music/notes/{instrumentFamily}/{note}.wav  — individual note samples
+ *   assets/music/instruments/{instrumentId}.png       -instrument image
+ *   assets/music/notes/{instrumentFamily}/{note}.wav  -individual note samples
  *
  * Success melodies are played back note-by-note using the instrument's own samples
- * after a music challenge is completed — no pre-recorded song files needed.
+ * after a music challenge is completed -no pre-recorded song files needed.
  *
  * Stories configure which instrument to use via:
  *   - CMS metadata: page.musicChallenge.instrumentId (e.g., "flute")
@@ -33,7 +33,7 @@ export type InstrumentFamily = 'flute' | 'recorder' | 'ocarina' | 'trumpet' | 'c
 // Instrument definition with visual + audio assets
 export interface InstrumentDefinition {
   id: string; // Stable ID referenced by CMS/stories (e.g., "flute", "trumpet")
-  family: InstrumentFamily; // Instrument family — maps to note sample folder
+  family: InstrumentFamily; // Instrument family -maps to note sample folder
   displayName: string; // Child-friendly display name
   description: string; // Short description for tooltips / accessibility
   image: number; // require() result for local instrument image
@@ -211,7 +211,7 @@ const INSTRUMENTS: Record<string, InstrumentDefinition> = {
 
 
 // Backward compatibility aliases (old ID → new ID)
-// The original implementation used "flute_basic" — now simplified to "flute".
+// The original implementation used "flute_basic" -now simplified to "flute".
 const INSTRUMENT_ALIASES: Record<string, string> = {
   flute_basic: 'flute',
   recorder_basic: 'recorder',
@@ -248,7 +248,7 @@ export function getInstrumentsByFamily(family: InstrumentFamily): InstrumentDefi
  * Returns a list of missing asset IDs (empty = all valid).
  *
  * Note: Only validates instrument and note assets. Success songs are no longer
- * pre-recorded — the app plays back the requiredSequence note-by-note using the
+ * pre-recorded -the app plays back the requiredSequence note-by-note using the
  * instrument's own samples after challenge completion.
  */
 export function validateMusicChallengeAssets(
@@ -295,7 +295,7 @@ export function registerInstrument(instrument: InstrumentDefinition): void {
 // ============================================================================
 // PRACTICE SONG LIBRARY
 //
-// Songs for Practise mode — defined as note sequences only (no pre-recorded audio).
+// Songs for Practise mode -defined as note sequences only (no pre-recorded audio).
 // Each song specifies which notes to play; the instrument samples provide the sound.
 // Songs are instrument-agnostic: any instrument can play them as long as it has the
 // required notes. The UI filters songs by the selected instrument's available notes.
@@ -319,7 +319,7 @@ export interface PracticeSong {
 
 const PRACTICE_SONGS: PracticeSong[] = [
   // =====================================================================
-  // NURSERY RHYMES — IP-free / public domain melodies
+  // NURSERY RHYMES -IP-free / public domain melodies
   // =====================================================================
 
   // ---- Easy nursery rhymes ----
@@ -482,7 +482,7 @@ const PRACTICE_SONGS: PracticeSong[] = [
   },
 
   // =====================================================================
-  // STORYBOOK SONGS — Original compositions for storybook instrument play
+  // STORYBOOK SONGS -Original compositions for storybook instrument play
   // =====================================================================
 
   // ---- Easy storybook songs ----
@@ -582,7 +582,7 @@ const PRACTICE_SONGS: PracticeSong[] = [
   },
 
   // =====================================================================
-  // FORCES SONGS — Slow, smooth melodies representing physical forces
+  // FORCES SONGS -Slow, smooth melodies representing physical forces
   // Used in storybooks to teach push, pull, lift, lower, break, and fix.
   // =====================================================================
   {

@@ -75,12 +75,12 @@ export interface MusicChallengeHookResult {
  * Builds musical phrases: single-note runs leading into chord resolutions.
  * Uses thirds and triads so chords sound natural.
  *
- * Level 2: 4 entries — two singles ascending, then a 2-note chord, resolve single
+ * Level 2: 4 entries -two singles ascending, then a 2-note chord, resolve single
  *          e.g. C → D → C+E → C
- * Level 3: 5 entries — single, single, 2-chord, single, 3-chord resolve
+ * Level 3: 5 entries -single, single, 2-chord, single, 3-chord resolve
  *          e.g. C → E → C+E → D → D+F+A
- * Level 4: 6 entries — single, 2-chord, single, 2-chord, single, 3-chord
- * Level 5: 7 entries — ascending singles + chords interwoven, triad finale
+ * Level 4: 6 entries -single, 2-chord, single, 2-chord, single, 3-chord
+ * Level 5: 7 entries -ascending singles + chords interwoven, triad finale
  */
 function generateHarderSequence(
   availableNotes: string[],
@@ -155,7 +155,7 @@ export interface AudioSessionControl {
    *  Call before playing notes to avoid the first note being silenced
    *  by a stale playAndRecord session from useAudioRecorder. */
   ensurePlaybackMode: () => Promise<void>;
-  /** Synchronous check — true when audio session is already in playback mode.
+  /** Synchronous check -true when audio session is already in playback mode.
    *  Use to skip the async ensurePlaybackMode and fire sound instantly. */
   isInPlaybackMode: () => boolean;
   /** Whether the recorder is currently listening (mic active) */
@@ -175,11 +175,11 @@ export function useMusicChallenge(
   // Ref mirror so playNote always reads the latest value without stale closures.
   // Updated both via setBreathActive (immediate) and useEffect (sync from state)
   // to avoid a one-render-cycle delay when MusicChallengeUI sets breathActive(true)
-  // on mount in press mode — without the immediate ref update, playNote would see
+  // on mount in press mode -without the immediate ref update, playNote would see
   // false for the first frame and silently queue notes instead of playing them.
   const isBreathActiveRef = useRef(false);
   const setIsBreathActive = useCallback((active: boolean) => {
-    isBreathActiveRef.current = active;   // Immediate — no render-cycle lag
+    isBreathActiveRef.current = active;   // Immediate -no render-cycle lag
     setIsBreathActiveRaw(active);         // Also update state for re-renders
   }, []);
   useEffect(() => { isBreathActiveRef.current = isBreathActive; }, [isBreathActive]);
@@ -214,9 +214,9 @@ export function useMusicChallenge(
 
   // Track currently held notes for chord matching
   const activeNotesRef = useRef<Set<string>>(new Set());
-  // Notes pressed while breath was not yet active — pending processing
+  // Notes pressed while breath was not yet active -pending processing
   const pendingNotesRef = useRef<string[]>([]);
-  // Ambient breath sound — plays the base note softly when blowing without pressing buttons
+  // Ambient breath sound -plays the base note softly when blowing without pressing buttons
   const ambientPlayerRef = useRef<AudioPlayer | null>(null);
   const AMBIENT_VOLUME = 0.25;
 
@@ -238,7 +238,7 @@ export function useMusicChallenge(
     }
     return resolvedSong?.sequence ?? [];
   })();
-  // BPM for playback timing — defaults to 120 when no song is referenced
+  // BPM for playback timing -defaults to 120 when no song is referenced
   const resolvedBpm = resolvedSong?.bpm ?? 120;
 
   // Validate assets on mount
@@ -264,14 +264,14 @@ export function useMusicChallenge(
   // Also cancels any in-flight fade-out intervals and delayed stop timers
   // so they don't access deallocated native AudioPlayer memory.
   const releaseAllNotePlayers = useCallback(() => {
-    // Cancel all delayed stopNote timers first — they would try to fade-out
+    // Cancel all delayed stopNote timers first -they would try to fade-out
     // players that we are about to release immediately.
     for (const timer of delayedStopTimersRef.current) {
       clearTimeout(timer);
     }
     delayedStopTimersRef.current.clear();
 
-    // Cancel all in-flight fade-out intervals — they access player.volume /
+    // Cancel all in-flight fade-out intervals -they access player.volume /
     // player.pause() / player.release() on players we are about to release.
     for (const interval of fadeIntervalsRef.current) {
       clearInterval(interval);
@@ -313,7 +313,7 @@ export function useMusicChallenge(
     const finishStart = () => {
       const seq = resolvedSequence;
       // For freeplay mode (empty sequence), we still transition to awaiting_input
-      // so playNote() works — there's just no sequence matcher to check against.
+      // so playNote() works -there's just no sequence matcher to check against.
       setCurrentSequence(seq);
       setDifficultyLevel(1);
       matcherRef.current = seq.length > 0 ? new SequenceMatcher(seq) : null;
@@ -325,7 +325,7 @@ export function useMusicChallenge(
     };
 
     // Ensure the iOS audio session is in playback mode before accepting input.
-    // If already cached as playback, finishes synchronously — no native bridge delay.
+    // If already cached as playback, finishes synchronously -no native bridge delay.
     const ctrl = audioSessionRef.current;
     if (ctrl && !ctrl.isInPlaybackMode()) {
       void ctrl.ensurePlaybackMode().then(finishStart);
@@ -417,7 +417,7 @@ export function useMusicChallenge(
   /**
    * Play back the current sequence using the instrument's note samples.
    * For chord entries, all notes play simultaneously. Each entry is spaced
-   * at 500ms — matching the UI playback visualization timing.
+   * at 500ms -matching the UI playback visualization timing.
    * Only adds a brief gap when consecutive entries are identical (so the
    * repeated note is audibly distinct).
    */
@@ -472,7 +472,7 @@ export function useMusicChallenge(
     };
   }, [instrument, resolvedBpm]);
 
-  /** Handle sequence completion — plays the full song back note-by-note */
+  /** Handle sequence completion -plays the full song back note-by-note */
   const handleSequenceComplete = useCallback(() => {
     activeNotesRef.current.clear();
     setState('sequence_complete');
@@ -606,7 +606,7 @@ export function useMusicChallenge(
         });
         return;
       }
-      // Press mode or no session control — fire sound immediately when the
+      // Press mode or no session control -fire sound immediately when the
       // audio session is already cached in playback mode (zero latency).
       // Only falls back to async on the very first note after mount.
       const ctrl = audioSessionRef.current;
@@ -620,9 +620,9 @@ export function useMusicChallenge(
         processNoteForSequence(note);
       }
     } else {
-      // No breath yet — silently queue; will play + process when breath arrives
+      // No breath yet -silently queue; will play + process when breath arrives
       pendingNotesRef.current.push(note);
-      log.debug('Note pressed without breath — queued silently');
+      log.debug('Note pressed without breath -queued silently');
     }
   }, [state, instrument, config, playNoteAudio, processNoteForSequence, ensurePlaybackSession]);
 
@@ -661,7 +661,7 @@ export function useMusicChallenge(
 
   const previewNote = useCallback((note: string) => {
     // If the audio session is already in playback mode (cached), fire immediately.
-    // Otherwise do the async switch first — only happens on the very first note.
+    // Otherwise do the async switch first -only happens on the very first note.
     const ctrl = audioSessionRef.current;
     if (ctrl && !ctrl.isInPlaybackMode()) {
       void ctrl.ensurePlaybackMode().then(() => playNoteAudio(note));
@@ -702,7 +702,7 @@ export function useMusicChallenge(
 
     const timer = setTimeout(() => {
       blowSustainTimersRef.current.delete(note);
-      log.debug(`Blow sustain timeout for ${note} — auto-fading`);
+      log.debug(`Blow sustain timeout for ${note} -auto-fading`);
       // Fade out the note player
       const player = notePlayersRef.current.get(note);
       if (player) {
@@ -744,7 +744,7 @@ export function useMusicChallenge(
     }
 
     const doStop = () => {
-      // Dampen the note on release — fade out over ~200ms then release.
+      // Dampen the note on release -fade out over ~200ms then release.
       const player = notePlayersRef.current.get(note);
       if (player) {
         notePlayersRef.current.delete(note);
@@ -783,12 +783,12 @@ export function useMusicChallenge(
   // fire on brief metering dips.
   useEffect(() => {
     if (!isBreathActive && config?.micRequired && notePlayersRef.current.size > 0) {
-      log.debug('Breath stopped — fading out all active note players');
+      log.debug('Breath stopped -fading out all active note players');
       for (const [note, player] of notePlayersRef.current) {
         notePlayersRef.current.delete(note);
         fadeOutPlayer(player);
       }
-      // Clear all sustain timers — notes are being stopped by breath-off
+      // Clear all sustain timers -notes are being stopped by breath-off
       clearAllBlowSustainTimers();
       // Reset blow-mode session state and resume recording
       blowActiveCountRef.current = 0;
@@ -853,7 +853,7 @@ export function useMusicChallenge(
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      log.debug('useMusicChallenge unmounting — releasing resources');
+      log.debug('useMusicChallenge unmounting -releasing resources');
       try {
         // Cancel delayed stopNote timers and fade-out intervals FIRST so they
         // don't fire after we release the native players below.

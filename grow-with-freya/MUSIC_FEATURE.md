@@ -2,7 +2,7 @@
 
 > **For LLMs / AI agents**: This README is the authoritative reference for the music challenge feature.
 > Read this file before modifying any music-related code. If you change architecture, assets, types,
-> or data flow, **update this file** to keep it accurate. This is not optional documentation — it is
+> or data flow, **update this file** to keep it accurate. This is not optional documentation -it is
 > the living specification that governs how the feature works and why decisions were made.
 
 ## Overview
@@ -37,14 +37,14 @@ while all instrument images, note audio samples, and success songs remain **bund
 ## Architecture
 
 ```
-story-book-reader.tsx (integration layer — detects music pages, gates navigation)
+story-book-reader.tsx (integration layer -detects music pages, gates navigation)
   ├── InstrumentPickerOverlay (full-screen carousel, shown on story entry)
   │     └── music-asset-registry (reads all available instruments for carousel)
   ├── useMusicChallenge hook (state machine + audio playback via expo-audio)
-  │     ├── SequenceMatcher (pure logic — ordered note sequence validation)
+  │     ├── SequenceMatcher (pure logic -ordered note sequence validation)
   │     └── music-asset-registry (local asset lookup + validation)
   ├── useBreathDetector hook (mic metering for blow detection, with fallback)
-  │     └── useMicPermission (shared singleton — no double mic prompt)
+  │     └── useMicPermission (shared singleton -no double mic prompt)
   ├── MusicChallengeUI component (instrument buttons, progress, feedback)
   └── music-analytics (structured event logging)
 ```
@@ -54,15 +54,15 @@ story-book-reader.tsx (integration layer — detects music pages, gates navigati
 | File | Purpose |
 |-|-|
 | `types/story.ts` | `MusicChallenge`, `PageInteractionType` types |
-| `services/music-asset-registry.ts` | Local asset registry — maps instrument/song IDs to bundled files |
+| `services/music-asset-registry.ts` | Local asset registry -maps instrument/song IDs to bundled files |
 | `services/sequence-matcher.ts` | Pure note sequence matching logic |
 | `services/music-analytics.ts` | Analytics event tracking |
-| `hooks/use-mic-permission.ts` | Shared mic permission singleton — used by both recording and breath detection |
-| `hooks/use-music-challenge.ts` | React hook — state machine, audio playback, completion |
+| `hooks/use-mic-permission.ts` | Shared mic permission singleton -used by both recording and breath detection |
+| `hooks/use-music-challenge.ts` | React hook -state machine, audio playback, completion |
 | `hooks/use-breath-detector.ts` | Microphone breath detection with on-screen fallback (uses shared permission) |
 | `components/stories/instrument-picker-overlay.tsx` | Full-screen instrument selection carousel (3D coverflow, pulsing ring, blur) |
-| `components/stories/music-challenge-ui.tsx` | Instrument UI — note buttons, sequence progress, feedback |
-| `components/stories/story-book-reader.tsx` | Integration — shows picker on story entry, renders challenge, blocks navigation |
+| `components/stories/music-challenge-ui.tsx` | Instrument UI -note buttons, sequence progress, feedback |
+| `components/stories/story-book-reader.tsx` | Integration -shows picker on story entry, renders challenge, blocks navigation |
 
 ### Backend/CMS Files
 
@@ -84,7 +84,7 @@ Stories can come from two sources, and both fully support music challenges.
 |-|-|-|
 | **Where stories live** | `grow-with-freya/data/bundled-stories.ts` | `scripts/cms-stories/{story-id}/story-data.json` |
 | **Where story images live** | `grow-with-freya/assets/stories/{story-id}/` | `scripts/cms-stories/{story-id}/page-*/` → GCS bucket |
-| **Where music assets live** | `grow-with-freya/assets/music/` (always local) | Same — music assets are always local, never in CMS |
+| **Where music assets live** | `grow-with-freya/assets/music/` (always local) | Same -music assets are always local, never in CMS |
 | **How they reach the app** | Bundled in the app binary via `require()` | Synced at runtime via delta-sync API |
 | **Offline support** | Always available | Cached locally after first sync |
 | **When to use** | Core stories that ship with the app | New stories added without app updates |
@@ -202,8 +202,8 @@ GitHub Actions (cms-stories-sync.yml)
   └── upload-assets-to-firestore.js → asset version metadata
          ↓
 App launch / background sync
-  ├── VersionManager.checkVersions() — compares local vs server version
-  ├── StorySyncService.syncStories() — POST /api/stories/delta
+  ├── VersionManager.checkVersions() -compares local vs server version
+  ├── StorySyncService.syncStories() -POST /api/stories/delta
   │     (sends client checksums, receives only changed stories)
   ├── CacheManager caches story data + downloads images to local filesystem
   └── StoryLoader merges bundled + CMS stories
@@ -233,7 +233,7 @@ Every story page should declare its `interactionType`. This applies to both loca
 
 | `interactionType` | Local (bundled-stories.ts) | CMS (story-data.json) | Behavior |
 |-|-|-|-|
-| `"none"` (or omitted) | Optional field | Optional field | Static page — just text + image |
+| `"none"` (or omitted) | Optional field | Optional field | Static page -just text + image |
 | `"interactive_state_change"` | Set on pages with `interactiveElements` | Same | Tap-to-reveal before/after state |
 | `"music_challenge"` | Set + `musicChallenge` object | Same | Music instrument + sequence challenge |
 
@@ -395,7 +395,7 @@ In Firestore (CMS) or `data/bundled-stories.ts` (local), set up the story page:
 
 | ID | Type | Status |
 |-|-|-|
-| `flute` | Instrument | Registered (placeholder — `require()` calls commented out, needs audio files) |
+| `flute` | Instrument | Registered (placeholder -`require()` calls commented out, needs audio files) |
 | `recorder` | Instrument | Registered (placeholder) |
 | `ocarina` | Instrument | Registered (placeholder) |
 | `trumpet` | Instrument | Registered (placeholder) |
@@ -415,7 +415,7 @@ In Firestore (CMS) or `data/bundled-stories.ts` (local), set up the story page:
 
 - **Short and clean**: 0.5–2 seconds per note, no silence padding
 - **Consistent volume**: Normalize all samples to the same level
-- **No reverb/effects**: Keep them dry — the app doesn't process audio
+- **No reverb/effects**: Keep them dry -the app doesn't process audio
 - **Child-safe volume**: No sudden loud peaks
 - **Naming**: Use note names exactly as referenced in sequences (e.g., `C.mp3`, `D.mp3`)
 
@@ -429,7 +429,7 @@ In Firestore (CMS) or `data/bundled-stories.ts` (local), set up the story page:
 
 - **Format**: PNG with transparent background
 - **Size**: 300×300px minimum, will be scaled by the app
-- **Style**: Match the app's illustration style — colorful, friendly, child-appropriate
+- **Style**: Match the app's illustration style -colorful, friendly, child-appropriate
 
 ---
 
@@ -450,7 +450,7 @@ Both `useVoiceRecording` (narration record mode) and `useBreathDetector` (music 
 need microphone access. A shared `useMicPermission` hook ensures:
 - The OS permission dialog is shown **at most once** per app session
 - Whichever feature requests permission first (recording or music), the result is cached
-- The second feature that needs mic reads the cached state — no re-prompt
+- The second feature that needs mic reads the cached state -no re-prompt
 - Concurrent requests are deduplicated (even if both hooks call `requestPermission` simultaneously)
 - Module-level singleton state (`cachedStatus`) survives across hook instances and re-renders
 
@@ -483,7 +483,7 @@ kind of stateful interaction that resolves from "before" to "after" when the cha
 
 MVP uses exact ordered sequence matching with tolerance for accidentally repeating the previous
 correct note. No timing, rhythm, or scoring. Wrong notes reset the sequence. This is intentionally
-simple — children should succeed with patience, not precision.
+simple -children should succeed with patience, not precision.
 
 **Chord support**: Sequence entries can be single notes (`"C"`) or chords using `+` notation (`"C+E"`,
 `"C+E+G"`). The `SequenceMatcher.processChord(activeNotes)` method validates that all required notes
@@ -513,8 +513,8 @@ idle → awaiting_input → playing_note → (awaiting_input | sequence_complete
 | `playing_note` | A note is being played (audio) |
 | `sequence_complete` | All notes played correctly |
 | `playing_success_song` | Success song is playing |
-| `completed` | Challenge done — page unlocked for progression. "Go Harder!" available. |
-| `error` | Asset validation failed — challenge disabled |
+| `completed` | Challenge done -page unlocked for progression. "Go Harder!" available. |
+| `error` | Asset validation failed -challenge disabled |
 
 ## "Go Harder" Difficulty Progression
 
@@ -522,7 +522,7 @@ After completing a music challenge, the child sees three options: **↻ Retry**,
 **Continue Story →**.
 
 Pressing "Go Harder" generates a new, harder chord-based sequence from the instrument's available
-notes and restarts the challenge. This is session-only — no persistence.
+notes and restarts the challenge. This is session-only -no persistence.
 
 ### Difficulty Levels
 
@@ -535,17 +535,17 @@ notes and restarts the challenge. This is session-only — no persistence.
 
 ### Chord Notation
 
-- Single note: `"C"` — press one button
-- 2-note chord: `"C+E"` — hold C and E simultaneously
-- 3-note chord: `"C+E+G"` — hold all three simultaneously
+- Single note: `"C"` -press one button
+- 2-note chord: `"C+E"` -hold C and E simultaneously
+- 3-note chord: `"C+E+G"` -hold all three simultaneously
 - The `+` separator is used internally; the UI displays chords as `C·E` in sequence dots
 
 ### Implementation
 
-- `SequenceMatcher.processChord(activeNotes: Set<string>)` — validates held notes against expected chord
-- `generateHarderSequence(availableNotes, level)` — procedural generator in `use-music-challenge.ts`
-- `useMusicChallenge.goHarder()` — increments difficulty, generates new sequence, resets state
-- `MusicChallengeUI` — highlights all notes in a chord entry, shows wider dots for chords
+- `SequenceMatcher.processChord(activeNotes: Set<string>)` -validates held notes against expected chord
+- `generateHarderSequence(availableNotes, level)` -procedural generator in `use-music-challenge.ts`
+- `useMusicChallenge.goHarder()` -increments difficulty, generates new sequence, resets state
+- `MusicChallengeUI` -highlights all notes in a chord entry, shows wider dots for chords
 
 ---
 
@@ -563,12 +563,12 @@ notes and restarts the challenge. This is session-only — no persistence.
 | Field | Type | Default | Description |
 |-|-|-|-|
 | `enabled` | boolean | `true` | Whether the challenge is active |
-| `instrumentId` | string | — | Local instrument asset ID (e.g., `"flute_basic"`) |
-| `promptText` | string | — | Narrative prompt shown to the child |
+| `instrumentId` | string | -| Local instrument asset ID (e.g., `"flute_basic"`) |
+| `promptText` | string | -| Narrative prompt shown to the child |
 | `mode` | `"guided" \| "free_play_optional"` | `"guided"` | Challenge mode |
-| `requiredSequence` | string[] | — | Notes to play in order (e.g., `["C", "D", "E", "C"]`) |
-| `successSongId` | string | — | Local song asset ID |
-| `successStateId` | string? | — | Optional page state ID on success |
+| `requiredSequence` | string[] | -| Notes to play in order (e.g., `["C", "D", "E", "C"]`) |
+| `successSongId` | string | -| Local song asset ID |
+| `successStateId` | string? | -| Optional page state ID on success |
 | `autoPlaySuccessSong` | boolean | `true` | Auto-play success song on completion |
 | `allowSkip` | boolean | `false` | Allow skipping the challenge |
 | `micRequired` | boolean | `true` | Require mic for breath detection |
@@ -649,7 +649,7 @@ cd gateway-service
 - **Notes pressed without blowing** → No sound, hint text shown
 - **Empty sequence** → Immediately completes (edge case in SequenceMatcher)
 - **Child leaves and returns to page** → Challenge can be restarted
-- **Offline** → Fully functional — all assets are local
+- **Offline** → Fully functional -all assets are local
 
 ---
 

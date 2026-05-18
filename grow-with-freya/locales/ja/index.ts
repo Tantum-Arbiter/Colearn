@@ -489,7 +489,7 @@ export default {
       },
       family: {
         title: '家族のために',
-        body: 'スクリーンタイム保護、ガイド付きセッション、共同プレイツール — 短く意義ある時間を一緒に過ごすよう設計されています。研究によると、共同関与が最大の効果をもたらします。',
+        body: 'スクリーンタイム保護、ガイド付きセッション、共同プレイツール -短く意義ある時間を一緒に過ごすよう設計されています。研究によると、共同関与が最大の効果をもたらします。',
         button: '次へ',
       },
       consent: {
@@ -499,10 +499,10 @@ export default {
         closeLabel: '閉じる',
         dataSummary: {
           title: '収集するデータとその理由',
-          profile: '表示名とアバター — お子様の体験をパーソナライズするため',
-          reading: '読書履歴、お気に入り、進捗 — ストーリーと連続記録を追跡するため',
-          screenTime: 'スクリーンタイムセッション — 健全な利用を管理するため',
-          device: 'デバイスの種類とアプリバージョン — アプリを正常に動作させるため',
+          profile: '表示名とアバター -お子様の体験をパーソナライズするため',
+          reading: '読書履歴、お気に入り、進捗 -ストーリーと連続記録を追跡するため',
+          screenTime: 'スクリーンタイムセッション -健全な利用を管理するため',
+          device: 'デバイスの種類とアプリバージョン -アプリを正常に動作させるため',
           noSell: 'データの販売や広告の表示は一切行いません。いつでもすべてのデータを削除できます。',
         },
         checkboxes: {
@@ -531,7 +531,7 @@ export default {
     },
     benefits: {
       welcome: '児童発達研究に基づく',
-      howItWorks: '物語 · 音楽 · 声 — 一つのアプリで',
+      howItWorks: '物語 · 音楽 · 声 -一つのアプリで',
       family: '児童発達の専門家推奨',
       consent: 'あなたの同意がご家族を守ります',
     },
@@ -569,7 +569,7 @@ export default {
       },
       freeplay: {
         title: 'フリープレイ 🎹',
-        description: 'どんな楽器でも自由に演奏 — ルールなし、楽しさだけ！音を試して自分だけの音楽を作りましょう。',
+        description: 'どんな楽器でも自由に演奏 -ルールなし、楽しさだけ！音を試して自分だけの音楽を作りましょう。',
       },
       settings: {
         title: '設定⚙️',
@@ -833,7 +833,7 @@ export default {
     backToLibrary: 'ライブラリに戻る',
     backToMenu: '戻る',
     noSongsAvailable: 'この楽器で演奏できる曲がありません',
-    freeplayPrompt: 'フリープレイ — どの音でもタップ！',
+    freeplayPrompt: 'フリープレイ -どの音でもタップ！',
     difficulty: { easy: 'かんたん', medium: 'ふつう', hard: 'むずかしい' },
     songs: {
       hotCrossBuns: 'ホットクロスバンズ',
@@ -895,7 +895,7 @@ export default {
     uspStories: '子どもの発達を支える物語',
     uspEducators: '教育者が監修した年齢に適したコンテンツ',
     uspMusic: 'インタラクティブな音楽と楽器練習',
-    uspNoAds: '広告なし — お子さまに安全',
+    uspNoAds: '広告なし -お子さまに安全',
     uspLanguages: '14言語で利用可能',
     detailAllStories: 'すべての物語が解除',
     detailDownload50: '最大50冊ダウンロード',
@@ -906,7 +906,7 @@ export default {
     detailAllInstruments: 'すべての楽器が解除',
     detailEverythingPremium: 'プレミアムのすべて',
     detailSave25: '月額と比べて25%お得',
-    // Guest mode — sign-in required
+    // Guest mode -sign-in required
     signInToSubscribe: 'サインインして購読する',
     signInRequiredTitle: 'サインインが必要です',
     signInRequiredMessage: '購読するにはサインインが必要です。サブスクリプションはアカウントに紐づけられ、すべてのデバイスでアクセスできます。',

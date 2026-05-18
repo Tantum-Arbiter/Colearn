@@ -278,7 +278,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
         isNextDisabled={isConsentStep && !allConsentsChecked}
       />
 
-      {/* Legal document overlay — slides in from top */}
+      {/* Legal document overlay -slides in from top */}
       {legalViewVisible && (
         <Animated.View
           style={[

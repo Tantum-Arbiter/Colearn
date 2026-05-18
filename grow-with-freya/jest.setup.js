@@ -369,7 +369,7 @@ jest.mock('./components/themed-text', () => ({
   },
 }));
 
-// Mock react-native-svg — use actual React components so memo() wrappers work
+// Mock react-native-svg -use actual React components so memo() wrappers work
 jest.mock('react-native-svg', () => {
   const React = require('react');
   const { View } = require('react-native');
@@ -469,6 +469,22 @@ jest.mock('./contexts/tutorial-context', () => ({
     markSettingsViewed: jest.fn(),
     resetAllTutorials: jest.fn().mockResolvedValue(undefined),
   }),
+}));
+
+// Mock react-native-purchases (RevenueCat)
+jest.mock('react-native-purchases', () => ({
+  __esModule: true,
+  default: {
+    configure: jest.fn().mockResolvedValue(undefined),
+    setLogLevel: jest.fn(),
+    getOfferings: jest.fn().mockResolvedValue({ current: null }),
+    purchasePackage: jest.fn().mockResolvedValue({ customerInfo: { entitlements: { active: {} } } }),
+    getCustomerInfo: jest.fn().mockResolvedValue({ entitlements: { active: {} } }),
+    restorePurchases: jest.fn().mockResolvedValue({ entitlements: { active: {} } }),
+    addCustomerInfoUpdateListener: jest.fn(),
+  },
+  LOG_LEVEL: { DEBUG: 4, INFO: 3, WARN: 2, ERROR: 1 },
+  PURCHASES_ERROR_CODE: { PURCHASE_CANCELLED_ERROR: 1 },
 }));
 
 // Mock console methods to reduce noise in tests

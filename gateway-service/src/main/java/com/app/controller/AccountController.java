@@ -16,7 +16,7 @@ import java.util.Map;
 /**
  * Account management endpoints.
  *
- * DELETE /api/account — permanently deletes the authenticated user's account
+ * DELETE /api/account -permanently deletes the authenticated user's account
  * and all associated data (profile, sessions, tokens) across all devices.
  */
 @RestController

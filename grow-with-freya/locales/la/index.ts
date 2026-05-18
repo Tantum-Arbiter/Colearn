@@ -471,7 +471,7 @@ export default {
     screens: {
       welcome: {
         title: 'Fabulae quae crescunt\ncum infante tuo',
-        body: 'Fabulae interactivae cum musica, instrumentis et narratione — ad imaginationem excitandam et progressum praematurum sustinendum.',
+        body: 'Fabulae interactivae cum musica, instrumentis et narratione -ad imaginationem excitandam et progressum praematurum sustinendum.',
         button: 'Proxime',
       },
       howItWorks: {
@@ -486,12 +486,12 @@ export default {
           music: 'Musica et instrumenta',
           musicDesc: 'Disce rhythmum et melodiam cum veris sonis instrumentorum',
           voice: 'Vox tua',
-          voiceDesc: 'Narra fabulas ut infans tuus te audiat — etiam procul',
+          voiceDesc: 'Narra fabulas ut infans tuus te audiat -etiam procul',
         },
       },
       family: {
         title: 'Pro familiis factum',
-        body: 'Protectio temporis ante screen, sessiones ductae et instrumenta ludi communis — designatum pro momentis brevibus et significantibus simul. Investigatio ostendit co-participationem maxima beneficia praebere.',
+        body: 'Protectio temporis ante screen, sessiones ductae et instrumenta ludi communis -designatum pro momentis brevibus et significantibus simul. Investigatio ostendit co-participationem maxima beneficia praebere.',
         button: 'Proxime',
       },
       consent: {
@@ -501,10 +501,10 @@ export default {
         closeLabel: 'Claudere',
         dataSummary: {
           title: 'Quid colligimus et cur',
-          profile: 'Nomen et imago — ad experientiam infantis tui personalem',
-          reading: 'Historia lectionis, favorita et progressus — ad fabulas et series sequendas',
-          screenTime: 'Sessiones temporis scrinii — ad usum sanum administrandum',
-          device: 'Genus machinae et versio applicationis — ut applicatio recte operetur',
+          profile: 'Nomen et imago -ad experientiam infantis tui personalem',
+          reading: 'Historia lectionis, favorita et progressus -ad fabulas et series sequendas',
+          screenTime: 'Sessiones temporis scrinii -ad usum sanum administrandum',
+          device: 'Genus machinae et versio applicationis -ut applicatio recte operetur',
           noSell: 'Numquam data vendimus nec publicationes ostendimus. Omnia quovis tempore delere potes.',
         },
         checkboxes: {
@@ -533,7 +533,7 @@ export default {
     },
     benefits: {
       welcome: 'Investigatione progressus infantilis fultum',
-      howItWorks: 'Fabulae · Musica · Vox — omnia in una applicatione',
+      howItWorks: 'Fabulae · Musica · Vox -omnia in una applicatione',
       family: 'Commendatum ab expertis progressus infantilis',
       consent: 'Consensus tuus familiam tuam protegit',
     },
@@ -571,7 +571,7 @@ export default {
       },
       freeplay: {
         title: 'Ludus Liber 🎹',
-        description: 'Libere lude in quovis instrumento — sine regulis, solum gaudium! Experimenta cum sonis et tuam musicam crea.',
+        description: 'Libere lude in quovis instrumento -sine regulis, solum gaudium! Experimenta cum sonis et tuam musicam crea.',
       },
       settings: {
         title: 'Constitutiones ⚙️',
@@ -835,7 +835,7 @@ export default {
     backToLibrary: 'Redire ad bibliothecam',
     backToMenu: 'Retro',
     noSongsAvailable: 'Nullae cantiones pro hoc instrumento praesto sunt',
-    freeplayPrompt: 'Ludus liber — quamlibet notam tange!',
+    freeplayPrompt: 'Ludus liber -quamlibet notam tange!',
     difficulty: { easy: 'Facilis', medium: 'Medius', hard: 'Difficilis' },
     songs: {
       hotCrossBuns: 'Panes calidi cruciformes',
@@ -897,7 +897,7 @@ export default {
     uspStories: 'Fabulae ad infantium progressum sustinendum',
     uspEducators: 'Contenta aetati apta, a magistris recognita',
     uspMusic: 'Musica interactiva et exercitatio instrumentorum',
-    uspNoAds: 'Sine nuntiis — tutum pro parvis',
+    uspNoAds: 'Sine nuntiis -tutum pro parvis',
     uspLanguages: 'In 14 linguis praesto',
     detailAllStories: 'Omnes fabulae reclusae',
     detailDownload50: 'Usque ad 50 libros transfer',
@@ -908,7 +908,7 @@ export default {
     detailAllInstruments: 'Omnia instrumenta reclusa',
     detailEverythingPremium: 'Omnia ex Premium',
     detailSave25: 'Serva 25% comparate cum mensili',
-    // Guest mode — sign-in required
+    // Guest mode -sign-in required
     signInToSubscribe: 'Intra ut subscribas',
     signInRequiredTitle: 'Introitus necessarius',
     signInRequiredMessage: 'Ante subscribere debes intrare. Subscriptio tua cum ratione tua coniungetur ut in omnibus machinis accedere possis.',

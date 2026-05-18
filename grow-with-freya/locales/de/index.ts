@@ -500,7 +500,7 @@ export default {
     screens: {
       welcome: {
         title: 'Geschichten, die mit\ndeinem Kind wachsen',
-        body: 'Interaktive Geschichten mit Musik, Instrumenten und Erzählung — entwickelt, um die Fantasie anzuregen und die frühe Entwicklung zu fördern.',
+        body: 'Interaktive Geschichten mit Musik, Instrumenten und Erzählung -entwickelt, um die Fantasie anzuregen und die frühe Entwicklung zu fördern.',
         button: 'Weiter',
       },
       howItWorks: {
@@ -515,12 +515,12 @@ export default {
           music: 'Musik & Instrumente',
           musicDesc: 'Lerne Rhythmus und Melodie mit echten Instrumentenklängen',
           voice: 'Deine Stimme',
-          voiceDesc: 'Nimm Erzählungen auf, damit dein Kind dich hört — auch aus der Ferne',
+          voiceDesc: 'Nimm Erzählungen auf, damit dein Kind dich hört -auch aus der Ferne',
         },
       },
       family: {
         title: 'Für Familien gemacht',
-        body: 'Bildschirmzeitschutz, geführte Sitzungen und gemeinsame Spielwerkzeuge — entwickelt für kurze, bedeutungsvolle Momente zusammen. Forschung zeigt, dass gemeinsames Engagement die größten Vorteile bietet.',
+        body: 'Bildschirmzeitschutz, geführte Sitzungen und gemeinsame Spielwerkzeuge -entwickelt für kurze, bedeutungsvolle Momente zusammen. Forschung zeigt, dass gemeinsames Engagement die größten Vorteile bietet.',
         button: 'Weiter',
       },
       consent: {
@@ -530,10 +530,10 @@ export default {
         closeLabel: 'Schließen',
         dataSummary: {
           title: 'Was wir sammeln und warum',
-          profile: 'Anzeigename und Avatar — um das Erlebnis Ihres Kindes zu personalisieren',
-          reading: 'Lesehistorie, Favoriten und Fortschritt — um Geschichten und Serien zu verfolgen',
-          screenTime: 'Bildschirmzeit-Sitzungen — um eine gesunde Nutzung zu unterstützen',
-          device: 'Gerätetyp und App-Version — damit die App ordnungsgemäß funktioniert',
+          profile: 'Anzeigename und Avatar -um das Erlebnis Ihres Kindes zu personalisieren',
+          reading: 'Lesehistorie, Favoriten und Fortschritt -um Geschichten und Serien zu verfolgen',
+          screenTime: 'Bildschirmzeit-Sitzungen -um eine gesunde Nutzung zu unterstützen',
+          device: 'Gerätetyp und App-Version -damit die App ordnungsgemäß funktioniert',
           noSell: 'Wir verkaufen niemals Daten und zeigen keine Werbung. Sie können jederzeit alles löschen.',
         },
         checkboxes: {
@@ -562,7 +562,7 @@ export default {
     },
     benefits: {
       welcome: 'Gestützt auf Kindesentwicklungsforschung',
-      howItWorks: 'Geschichten · Musik · Stimme — alles in einer App',
+      howItWorks: 'Geschichten · Musik · Stimme -alles in einer App',
       family: 'Empfohlen von Kindesentwicklungsexperten',
       consent: 'Deine Zustimmung schützt deine Familie',
     },
@@ -602,7 +602,7 @@ export default {
       },
       freeplay: {
         title: 'Freies Spiel 🎹',
-        description: 'Spiele frei auf jedem Instrument — keine Regeln, nur Spaß! Experimentiere mit Klängen und kreiere deine eigene Musik.',
+        description: 'Spiele frei auf jedem Instrument -keine Regeln, nur Spaß! Experimentiere mit Klängen und kreiere deine eigene Musik.',
       },
       settings: {
         title: 'Einstellungen ⚙️',
@@ -742,7 +742,7 @@ export default {
     backToLibrary: 'Zurück zur Bibliothek',
     backToMenu: 'Zurück',
     noSongsAvailable: 'Keine Lieder für dieses Instrument verfügbar',
-    freeplayPrompt: 'Freies Spiel — tippe auf eine Note!',
+    freeplayPrompt: 'Freies Spiel -tippe auf eine Note!',
     difficulty: { easy: 'Leicht', medium: 'Mittel', hard: 'Schwer' },
     songs: {
       hotCrossBuns: 'Heiße Kreuzbrötchen',
@@ -806,7 +806,7 @@ export default {
     uspStories: 'Geschichten zur Förderung der Kindesentwicklung',
     uspEducators: 'Altersgerechte Inhalte, von Pädagogen geprüft',
     uspMusic: 'Interaktive Musik und Instrumentenübungen',
-    uspNoAds: 'Keine Werbung — sicher für die Kleinen',
+    uspNoAds: 'Keine Werbung -sicher für die Kleinen',
     uspLanguages: 'In 14 Sprachen verfügbar',
     detailAllStories: 'Alle Geschichten freigeschaltet',
     detailDownload50: 'Bis zu 50 Bücher herunterladen',
@@ -817,7 +817,7 @@ export default {
     detailAllInstruments: 'Alle Instrumente freigeschaltet',
     detailEverythingPremium: 'Alles aus Premium',
     detailSave25: '25 % sparen im Vergleich zum Monatsabo',
-    // Guest mode — sign-in required
+    // Guest mode -sign-in required
     signInToSubscribe: 'Anmelden zum Abonnieren',
     signInRequiredTitle: 'Anmeldung erforderlich',
     signInRequiredMessage: 'Du musst dich anmelden, bevor du abonnieren kannst. Dein Abonnement wird mit deinem Konto verknüpft, damit du es auf allen Geräten nutzen kannst.',

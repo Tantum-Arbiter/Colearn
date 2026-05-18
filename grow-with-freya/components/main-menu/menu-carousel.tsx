@@ -50,7 +50,7 @@ interface MenuCarouselProps {
   buttonRefs?: Record<string, React.RefObject<View | null>>;
   /** Called once when all strip slide-in animations have finished */
   onLoadComplete?: () => void;
-  /** Extra delay (ms) before buttons start sliding in — used to coordinate with loading screen exit */
+  /** Extra delay (ms) before buttons start sliding in -used to coordinate with loading screen exit */
   entranceDelay?: number;
 }
 
@@ -72,7 +72,7 @@ export const MenuCarousel = React.memo(function MenuCarousel({
   const shouldAnimate = useMemo(() => {
     const now = Date.now();
     if (now - lastCarouselMountTime < CAROUSEL_DEBOUNCE_MS) {
-      return false; // Recently animated — skip to avoid double slide-in
+      return false; // Recently animated -skip to avoid double slide-in
     }
     lastCarouselMountTime = now;
     return true;
@@ -117,7 +117,7 @@ interface StripButtonProps {
   gap: number;
   scaledFontSize: (base: number) => number;
   buttonRef?: React.RefObject<View | null>;
-  /** Index in the menu list — drives stagger delay */
+  /** Index in the menu list -drives stagger delay */
   slideIndex: number;
   /** Whether this is the last strip (fires onSlideComplete) */
   isLast: boolean;
@@ -155,7 +155,7 @@ const StripButton = React.memo(function StripButton({
     hasSlid.current = true;
 
     if (!shouldAnimate) {
-      // Rapid remount — skip animation, show immediately
+      // Rapid remount -skip animation, show immediately
       slideY.value = 0;
       slideOpacity.value = 1;
       if (isLast && onSlideComplete) {

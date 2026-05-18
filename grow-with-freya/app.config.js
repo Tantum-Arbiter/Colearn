@@ -1,5 +1,6 @@
 const IS_DEV = process.env.EXPO_PUBLIC_APP_ENV === 'development';
 const IS_PREVIEW = process.env.EXPO_PUBLIC_APP_ENV === 'staging';
+const IS_PROD = process.env.EXPO_PUBLIC_APP_ENV === 'production';
 
 export default {
   expo: {
@@ -21,6 +22,8 @@ export default {
       googleAndroidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
       googleWebClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
       appleClientId: process.env.EXPO_PUBLIC_APPLE_CLIENT_ID,
+      revenueCatAppleKey: process.env.EXPO_PUBLIC_RC_APPLE_KEY ?? '',
+      revenueCatGoogleKey: process.env.EXPO_PUBLIC_RC_GOOGLE_KEY ?? '',
     },
     updates: {
       url: 'https://u.expo.dev/439b6b2f-be5f-4d59-98eb-73befbd1973e'
@@ -94,6 +97,7 @@ export default {
           microphonePermission: 'Allow $(PRODUCT_NAME) to access your microphone to record story narrations.'
         }
       ],
+      'react-native-purchases',
     ],
     experiments: {
       typedRoutes: true,

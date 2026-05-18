@@ -16,7 +16,7 @@ jest.mock('../../services/story-loader', () => ({
   },
 }));
 
-// Mock app store — controls subscription tier for StoryAccessService
+// Mock app store -controls subscription tier for StoryAccessService
 let mockSubscriptionTier: 'free' | 'basic' | 'premium' = 'premium'; // default to premium so existing tests pass
 jest.mock('@/store/app-store', () => ({
   useAppStore: {
@@ -845,7 +845,7 @@ describe('StoryDownloadService', () => {
     // Wait for the download to reach the hanging downloadAssetsInBatches
     await new Promise(r => setTimeout(r, 50));
 
-    // Jump time forward 15s — triggers stall warning but NOT auto-cancel
+    // Jump time forward 15s -triggers stall warning but NOT auto-cancel
     timeOffset = 15_000;
 
     // Wait for the stall interval (every 3s) to fire
@@ -873,7 +873,7 @@ describe('StoryDownloadService', () => {
     mockAssetUtils.formatBytes.mockReturnValue('0 Bytes');
     mockCacheManager.updateStories.mockResolvedValue();
 
-    // downloadAssetsInBatches hangs forever — simulates network drop
+    // downloadAssetsInBatches hangs forever -simulates network drop
     let resolveDownload: (val: any) => void;
     mockAssetUtils.downloadAssetsInBatches.mockImplementation(() => {
       return new Promise((resolve) => { resolveDownload = resolve; });
@@ -893,7 +893,7 @@ describe('StoryDownloadService', () => {
 
     await new Promise(r => setTimeout(r, 50));
 
-    // Jump time 25s — past auto-cancel threshold
+    // Jump time 25s -past auto-cancel threshold
     timeOffset = 25_000;
 
     // Wait for the stall interval (every 3s) to fire and auto-cancel
@@ -979,7 +979,7 @@ describe('StoryDownloadService', () => {
     });
 
     expect(messages.length).toBeGreaterThan(0);
-    // New message format: "Downloading 1/2 — 512 Bytes / 1 KB"
+    // New message format: "Downloading 1/2 -512 Bytes / 1 KB"
     expect(messages[0]).toMatch(/Downloading \d+\/\d+ —/);
   });
 });
@@ -1172,7 +1172,7 @@ describe('Download security gate', () => {
     mockApiClient.isAuthenticated.mockResolvedValue(true);
     mockSubscriptionTier = 'basic';
 
-    // basic tier has an active subscription — premium stories are allowed with any subscription
+    // basic tier has an active subscription -premium stories are allowed with any subscription
     mockApiClient.request.mockResolvedValueOnce(mockStory);
     mockAssetUtils.extractAssetPaths.mockReturnValue([]);
     mockAssetUtils.filterUncachedAssets.mockResolvedValue([]);
@@ -1190,7 +1190,7 @@ describe('Download security gate', () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toBe('subscription_required');
-    // Auth check passes but access check blocks — no API call made
+    // Auth check passes but access check blocks -no API call made
     expect(mockApiClient.request).not.toHaveBeenCalled();
   });
 

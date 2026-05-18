@@ -51,7 +51,7 @@ export class StoryAccessService {
       return { allowed: true };
     }
 
-    // Share-to-unlock stories — check if user has shared the app
+    // Share-to-unlock stories -check if user has shared the app
     if (entry.isShareToUnlock) {
       const hasShared = await this.hasCompletedShareUnlock();
       if (hasShared) {
@@ -65,7 +65,7 @@ export class StoryAccessService {
       return { allowed: false, reason: 'share_required' };
     }
 
-    // Referral reward stories — check if user has unlocked via referral
+    // Referral reward stories -check if user has unlocked via referral
     if (entry.isReferralReward) {
       const hasUnlock = await this.hasReferralUnlock(entry.storyId);
       if (hasUnlock) {
@@ -79,7 +79,7 @@ export class StoryAccessService {
       return { allowed: false, reason: 'referral_required' };
     }
 
-    // Premium / default — requires subscription
+    // Premium / default -requires subscription
     const hasSub = await this.hasActiveSubscription();
     if (hasSub) {
       return { allowed: true };
@@ -160,7 +160,7 @@ export class StoryAccessService {
   }
 
   /**
-   * Synchronous version — uses StoryLoader's in-memory cache.
+   * Synchronous version -uses StoryLoader's in-memory cache.
    * Returns null if the cache hasn't been populated yet.
    */
   static getDownloadedStoryCountSync(): number | null {
@@ -194,7 +194,7 @@ export class StoryAccessService {
     const stories: Story[] = await StoryLoader.getStories();
     const bundledIds = new Set((ALL_STORIES as Story[]).map((s: Story) => s.id));
 
-    // Prefer non-bundled (CMS) stories — the user downloaded these explicitly
+    // Prefer non-bundled (CMS) stories -the user downloaded these explicitly
     // and they can re-download them later. Pick the first one (oldest download).
     const cmsStory = stories.find((s: Story) => !bundledIds.has(s.id));
     if (cmsStory) return cmsStory;
@@ -263,7 +263,7 @@ export class StoryAccessService {
    */
   static async completeShareUnlock(): Promise<void> {
     await AsyncStorage.setItem(STORAGE_KEYS.SHARE_UNLOCKED, 'true');
-    log.info('Share-to-unlock completed — story permanently unlocked');
+    log.info('Share-to-unlock completed -story permanently unlocked');
   }
 
   // ──────────────────────────────────────────────

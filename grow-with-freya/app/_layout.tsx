@@ -47,8 +47,9 @@ import { ProfileSyncService } from '@/services/profile-sync-service';
 import { VersionManager } from '@/services/version-manager';
 // Import reminder service to trigger initialization and reschedule notifications on app startup
 import { reminderService } from '@/services/reminder-service';
+import { initialize as initSubscriptions } from '@/services/subscription-service';
 
-// Disable Reanimated strict mode warnings — our shared value reads are all inside
+// Disable Reanimated strict mode warnings -our shared value reads are all inside
 // useAnimatedStyle / useDerivedValue, but Reanimated's heuristic still fires false positives.
 configureReanimatedLogger({ level: ReanimatedLogLevel.warn, strict: false });
 
@@ -160,9 +161,9 @@ function AppContent() {
 
   // Track if sync is in progress to prevent premature navigation
   const syncInProgressRef = useRef(false);
-  // When true, loading overlay has fully slid in — safe to mount MainMenu behind it
+  // When true, loading overlay has fully slid in -safe to mount MainMenu behind it
   const [loadingMenuReady, setLoadingMenuReady] = useState(false);
-  // True while the loading screen is still sliding in after login — keeps login visible behind overlay
+  // True while the loading screen is still sliding in after login -keeps login visible behind overlay
   const [showLoginBehindLoading, setShowLoginBehindLoading] = useState(false);
 
 
@@ -246,7 +247,10 @@ function AppContent() {
     initializeImagePreloading();
   }, []);
 
-
+  // Initialize RevenueCat subscription service (no-op in __DEV__ / Expo Go)
+  useEffect(() => {
+    initSubscriptions();
+  }, []);
 
   // Initialize app state - logs disabled for performance
 
@@ -287,41 +291,41 @@ function AppContent() {
           return;
         }
 
-        // Fast local token check — no network, no timeout risk
+        // Fast local token check -no network, no timeout risk
         try {
           const hasTokens = await SecureStorage.isAuthenticated();
           log.info(`[Layout] Fast local auth check: hasTokens=${hasTokens}`);
 
           if (!hasTokens) {
-            // No tokens stored — user needs to log in
+            // No tokens stored -user needs to log in
             setShowLoginAfterOnboarding(true);
             setCurrentView('login');
           } else {
-            // Tokens exist — check if this is the first-ever sync
+            // Tokens exist -check if this is the first-ever sync
             const localVersion = await VersionManager.getLocalVersion();
             const isFirstSync = !localVersion;
             log.info(`[Layout] First sync: ${isFirstSync}, localVersion: ${localVersion?.stories ?? 'none'}`);
 
             if (isFirstSync) {
-              // First install — show loading screen until sync completes
+              // First install -show loading screen until sync completes
               // so thumbnails and catalog are ready before the user sees them
-              log.info('[Layout] First sync detected — showing loading screen');
+              log.info('[Layout] First sync detected -showing loading screen');
               setCurrentView('loading');
             } else {
-              // Returning user — instant main menu with cached thumbnails (via stable cacheKey).
+              // Returning user -instant main menu with cached thumbnails (via stable cacheKey).
               // Background sync refreshes signed URLs silently.
               setCurrentView('app');
               setCurrentPage('main');
 
-              // Background sync — no loading screen for returning users
+              // Background sync -no loading screen for returning users
               (async () => {
                 try {
                   log.info('[Layout] Background sync starting...');
-                  // Ensure token is valid (refresh if expired) — in background, no timeout risk
+                  // Ensure token is valid (refresh if expired) -in background, no timeout risk
                   try {
                     const isValid = await ApiClient.isAuthenticated();
                     if (!isValid) {
-                      log.warn('[Layout] Token refresh failed during background sync — user may need to re-login');
+                      log.warn('[Layout] Token refresh failed during background sync -user may need to re-login');
                     }
                   } catch (e) { log.warn('[Layout] Background token validation skipped:', e); }
                   // Sync profile
@@ -548,11 +552,11 @@ function AppContent() {
   const justLoggedInRef = useRef(false);
 
   const handleLoginSuccess = () => {
-    // First-time login — show loading screen so catalog + thumbnails are ready
+    // First-time login -show loading screen so catalog + thumbnails are ready
     // before the user sees the story selection screen
     justLoggedInRef.current = true;
     syncInProgressRef.current = true;
-    log.info('[Auth] Login successful — showing loading screen for first sync');
+    log.info('[Auth] Login successful -showing loading screen for first sync');
 
     setShowLoginAfterOnboarding(false);
     // Keep login visible behind the loading overlay during slide-in
@@ -568,7 +572,7 @@ function AppContent() {
     setGuestMode(true);
     setShowLoginAfterOnboarding(false);
     // Keep the login screen (with its guest MainMenu) mounted briefly so the app MainMenu
-    // can render underneath — prevents a visible flicker between unmount/remount
+    // can render underneath -prevents a visible flicker between unmount/remount
     setShowLoginBehindLoading(true);
     setCurrentView('app');
     setCurrentPage('main');
@@ -634,7 +638,7 @@ function AppContent() {
             await StoreReview.requestReview();
           }
         } catch {
-          // Silently ignore — review prompt is best-effort
+          // Silently ignore -review prompt is best-effort
         }
         setLastRatingPromptBookCount(totalStoriesRead);
       }, 1500);
@@ -685,7 +689,7 @@ function AppContent() {
   }
 
   // Login and loading views are combined so the LoginScreen instance stays mounted
-  // during the loading overlay's slide-in — preventing a flash when transitioning.
+  // during the loading overlay's slide-in -preventing a flash when transitioning.
   if (currentView === 'login' || currentView === 'loading') {
     if (currentView === 'loading') {
       syncInProgressRef.current = true;
@@ -693,7 +697,7 @@ function AppContent() {
     return (
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <View style={{ flex: 1 }}>
-          {/* Login screen — stays mounted during both 'login' and 'loading' views.
+          {/* Login screen -stays mounted during both 'login' and 'loading' views.
               During loading, it sits behind the overlay until the slide-in covers it,
               then gets unmounted once the overlay is fully opaque (onSlideInComplete). */}
           {(currentView === 'login' || showLoginBehindLoading) && (
@@ -714,11 +718,11 @@ function AppContent() {
             />
           )}
 
-          {/* Loading overlay (zIndex 10) — slides down over login, then up to reveal menu */}
+          {/* Loading overlay (zIndex 10) -slides down over login, then up to reveal menu */}
           {currentView === 'loading' && (
             <StartupLoadingScreen
               onSlideInComplete={() => {
-                log.info('[Layout] Loading slide-in done — swapping login for main menu');
+                log.info('[Layout] Loading slide-in done -swapping login for main menu');
                 setShowLoginBehindLoading(false);
                 setLoadingMenuReady(true);
               }}
@@ -732,7 +736,7 @@ function AppContent() {
                 setCurrentView('app');
                 setCurrentPage('main');
                 // Delay unmounting the loading MainMenu so the app-view MainMenu has time
-                // to mount and render its images from cache — prevents a visible flicker
+                // to mount and render its images from cache -prevents a visible flicker
                 // where strip images briefly disappear and re-decode between the two mounts.
                 setTimeout(() => setLoadingMenuReady(false), 500);
               }}

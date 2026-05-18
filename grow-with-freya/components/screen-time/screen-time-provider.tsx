@@ -54,11 +54,11 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
   const [showWarningModal, setShowWarningModal] = useState(false);
   // Track if we're paused due to being on an exempt screen (vs actually stopped)
   const [isPausedForExemptScreen, setIsPausedForExemptScreen] = useState(false);
-  // Queued warning that arrived during an immersive screen — shown on exit
+  // Queued warning that arrived during an immersive screen -shown on exit
   const [pendingWarning, setPendingWarning] = useState<ScreenTimeWarning | null>(null);
 
   // Refs mirror React state so AppState/interval callbacks always read the
-  // current value — avoids stale-closure bugs where a backgrounded app skips
+  // current value -avoids stale-closure bugs where a backgrounded app skips
   // endSession() because the handler captured an outdated `isTracking`.
   const isTrackingRef = useRef(isTracking);
   isTrackingRef.current = isTracking;
@@ -89,11 +89,11 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
   }, [isOnImmersiveScreen, pendingWarning]);
 
   // Update today's usage periodically and check for daily reset.
-  // The interval ONLY fires when the app is in the foreground — the AppState
+  // The interval ONLY fires when the app is in the foreground -the AppState
   // handler below sets isAppActiveRef and the callback short-circuits otherwise.
   useEffect(() => {
     const updateUsage = async () => {
-      // Skip work when the app is backgrounded — saves CPU/battery.
+      // Skip work when the app is backgrounded -saves CPU/battery.
       if (!isAppActiveRef.current) return;
       if (!screenTimeEnabled) return;
 
@@ -121,7 +121,7 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
         setShowWarningModal(true);
       }
 
-      // Send notification if enabled (always — notifications appear outside the app)
+      // Send notification if enabled (always -notifications appear outside the app)
       if (notificationsEnabled) {
         const notificationType = warning.type === 'limit_reached' ? 'limit_reached' : 'warning';
         notificationService.sendScreenTimeWarning(warning.message, notificationType);
@@ -148,9 +148,9 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screenTimeEnabled]);
 
-  // Handle app state changes — end session on background, restart on foreground.
+  // Handle app state changes -end session on background, restart on foreground.
   // Uses refs instead of React state so the handler never has a stale closure.
-  // The dependency array is intentionally empty — the handler reads current
+  // The dependency array is intentionally empty -the handler reads current
   // values from refs / zustand at call time.
   useEffect(() => {
     const handleAppStateChange = async (nextAppState: AppStateStatus) => {

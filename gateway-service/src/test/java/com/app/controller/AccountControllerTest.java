@@ -61,7 +61,7 @@ class AccountControllerTest {
     }
 
     @Test
-    @DisplayName("DELETE /api/account — success returns 200 with deleted status")
+    @DisplayName("DELETE /api/account -success returns 200 with deleted status")
     void deleteAccount_Success() throws Exception {
         setAuthenticatedUser(USER_ID);
         when(accountDeletionService.deleteAccount(USER_ID))
@@ -76,7 +76,7 @@ class AccountControllerTest {
     }
 
     @Test
-    @DisplayName("DELETE /api/account — unauthenticated returns 401")
+    @DisplayName("DELETE /api/account -unauthenticated returns 401")
     void deleteAccount_Unauthenticated() throws Exception {
         SecurityContextHolder.clearContext();
 
@@ -85,7 +85,7 @@ class AccountControllerTest {
     }
 
     @Test
-    @DisplayName("DELETE /api/account — user not found returns 404")
+    @DisplayName("DELETE /api/account -user not found returns 404")
     void deleteAccount_UserNotFound() throws Exception {
         setAuthenticatedUser(USER_ID);
         when(accountDeletionService.deleteAccount(USER_ID))
@@ -97,7 +97,7 @@ class AccountControllerTest {
     }
 
     @Test
-    @DisplayName("DELETE /api/account — deletion in progress returns 409")
+    @DisplayName("DELETE /api/account -deletion in progress returns 409")
     void deleteAccount_AlreadyInProgress() throws Exception {
         setAuthenticatedUser(USER_ID);
         when(accountDeletionService.deleteAccount(USER_ID))
@@ -110,7 +110,7 @@ class AccountControllerTest {
     }
 
     @Test
-    @DisplayName("DELETE /api/account — internal failure returns 409 (ACCOUNT_DELETION_FAILED)")
+    @DisplayName("DELETE /api/account -internal failure returns 409 (ACCOUNT_DELETION_FAILED)")
     void deleteAccount_InternalFailure() throws Exception {
         setAuthenticatedUser(USER_ID);
         when(accountDeletionService.deleteAccount(USER_ID))

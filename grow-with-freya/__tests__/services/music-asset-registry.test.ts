@@ -34,7 +34,7 @@ describe('MusicAssetRegistry', () => {
   // All 6 instruments registered and accessible
   // =============================================
 
-  describe('getInstrument — all 6 instruments', () => {
+  describe('getInstrument -all 6 instruments', () => {
     it.each(EXPECTED_INSTRUMENTS)(
       'should return $id with displayName "$displayName"',
       ({ id, displayName }) => {

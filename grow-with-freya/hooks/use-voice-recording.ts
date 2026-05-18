@@ -31,7 +31,7 @@ export interface UseVoiceRecordingReturn {
  * (shared with useBreathDetector in music challenge mode).
  */
 export function useVoiceRecording(): UseVoiceRecordingReturn {
-  // Shared mic permission — same singleton as useBreathDetector
+  // Shared mic permission -same singleton as useBreathDetector
   const micPermission = useMicPermission();
 
   // Use the standard useAudioRecorder hook for proper lifecycle management
@@ -57,7 +57,7 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
 
   const startRecording = useCallback(async (): Promise<boolean> => {
     try {
-      // Use shared permission — only prompts if not yet resolved
+      // Use shared permission -only prompts if not yet resolved
       if (micPermission.isUndetermined) {
         const result = await micPermission.requestPermission();
         if (result !== 'granted') {

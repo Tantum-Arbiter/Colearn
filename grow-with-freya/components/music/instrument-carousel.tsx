@@ -79,7 +79,7 @@ export const InstrumentCarousel = React.memo(function InstrumentCarousel({ selec
     selectFromRotation(target);
   }, [anglePerItem, rotation, selectFromRotation]);
 
-  // Tap disabled — selection is driven only by the arrows and pan gesture.
+  // Tap disabled -selection is driven only by the arrows and pan gesture.
   const pan = useMemo(() => Gesture.Pan()
     .onStart(() => { gestureStart.value = rotation.value; })
     .onUpdate(e => {
@@ -103,7 +103,7 @@ export const InstrumentCarousel = React.memo(function InstrumentCarousel({ selec
   const arrowTop = imageSize / 2 - arrowSize / 2;
   return (
     <View style={[st.wrapper, { height: carouselHeight }]}>
-      {/* Left arrow — flush with carousel edges */}
+      {/* Left arrow -flush with carousel edges */}
       <Pressable
         style={[st.arrow, { width: arrowSize, height: arrowSize, borderRadius: arrowSize / 2, top: arrowTop, left: 8 }]}
         onPress={() => goToNeighbor(1)}>
@@ -125,7 +125,7 @@ export const InstrumentCarousel = React.memo(function InstrumentCarousel({ selec
           </View>
         </GestureDetector>
       </GestureHandlerRootView>
-      {/* Right arrow — flush with carousel edges */}
+      {/* Right arrow -flush with carousel edges */}
       <Pressable
         style={[st.arrow, { width: arrowSize, height: arrowSize, borderRadius: arrowSize / 2, top: arrowTop, right: 8 }]}
         onPress={() => goToNeighbor(-1)}>

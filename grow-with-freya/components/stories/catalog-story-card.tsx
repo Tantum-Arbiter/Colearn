@@ -48,17 +48,17 @@ interface CatalogStoryCardProps {
   /** Pixel offset for bubble-swap animation (negative = move left, positive = shift right) */
   swapTranslateX?: number;
   onLongPress?: (entry: CatalogEntry) => void;
-  /** Called when download fails due to an auth error — parent should show sign-in flow */
+  /** Called when download fails due to an auth error -parent should show sign-in flow */
   onAuthError?: () => void;
   /** Whether this story is locked behind a subscription paywall */
   isLocked?: boolean;
-  /** Called when user taps a locked story — parent should show subscription overlay */
+  /** Called when user taps a locked story -parent should show subscription overlay */
   onLockedPress?: () => void;
   /** Called when download is blocked because the tier download limit is reached */
   onDownloadLimitReached?: (entry: CatalogEntry) => void;
   /** Whether this story uses share-to-unlock (shows share icon instead of lock) */
   isShareToUnlock?: boolean;
-  /** Called when user taps a share-to-unlock story — parent should open share sheet */
+  /** Called when user taps a share-to-unlock story -parent should open share sheet */
   onShareToUnlock?: (entry: CatalogEntry) => void;
 }
 
@@ -135,7 +135,7 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
   useLayoutEffect(() => {
     if (swapTranslateX === 0) {
       cancelAnimation(swapTx);   // stop any in-flight animation immediately
-      swapTx.value = 0;          // snap before paint — no visible artifact
+      swapTx.value = 0;          // snap before paint -no visible artifact
     } else {
       swapTx.value = withTiming(swapTranslateX, {
         duration: 280,
@@ -176,21 +176,21 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
   }, [progressValue, ringOpacity]);
 
   const handlePress = useCallback(async () => {
-    // ── Share-to-unlock story — open share sheet ──
+    // ── Share-to-unlock story -open share sheet ──
     if (isShareToUnlock) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       onShareToUnlock?.(entry);
       return;
     }
 
-    // ── Locked story — show subscription overlay ──
+    // ── Locked story -show subscription overlay ──
     if (isLocked) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       onLockedPress?.();
       return;
     }
 
-    // ── Tap to cancel — immediate, no confirmation dialog ──
+    // ── Tap to cancel -immediate, no confirmation dialog ──
     if (downloading) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       downloadSessionRef.current += 1; // invalidate old session
@@ -213,7 +213,7 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
       console.warn('Download limit check failed, proceeding:', e);
     }
 
-    // No network pre-check — start immediately, fail fast on actual error.
+    // No network pre-check -start immediately, fail fast on actual error.
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const session = ++downloadSessionRef.current;
     setDownloading(true);
@@ -316,7 +316,7 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
             { text: 'Sign In', onPress: () => onAuthError() },
           ]);
         } else {
-          // Detect network errors — but first check if the real problem is auth
+          // Detect network errors -but first check if the real problem is auth
           const isNetworkError = /network|fetch|timeout|connection|internet|abort/i.test(errorMsg);
           if (isNetworkError && onAuthError) {
             // Network error might be a masked auth failure (token refresh fetch failed)
@@ -395,7 +395,7 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
           </View>
         )}
 
-        {/* Dark overlay — stays full during download, fades on completion */}
+        {/* Dark overlay -stays full during download, fades on completion */}
         <Animated.View style={[cardStyles.darkOverlay, { borderRadius }, overlayStyle]} />
 
         {/* Share / Lock / Download icon (before downloading) */}
@@ -417,7 +417,7 @@ export const CatalogStoryCard = memo(function CatalogStoryCard({
           </View>
         )}
 
-        {/* Circular progress ring (during download) — tap to cancel */}
+        {/* Circular progress ring (during download) -tap to cancel */}
         {downloading && (
           <Animated.View style={[cardStyles.iconContainer, ringContainerStyle]}>
             <View style={cardStyles.ringWrapper}>

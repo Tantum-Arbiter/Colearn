@@ -2,10 +2,10 @@
  * Centralized logging utility with log levels and emoji prefixes.
  *
  * Output format:  🔹 [Namespace] message ...args
- *   debug  →  🔹   (blue diamond — verbose detail)
- *   info   →  ✅   (green check  — milestone / state change)
- *   warn   →  ⚠️   (warning sign — recoverable issue)
- *   error  →  ❌   (red cross    — failure)
+ *   debug  →  🔹   (blue diamond -verbose detail)
+ *   info   →  ✅   (green check  -milestone / state change)
+ *   warn   →  ⚠️   (warning sign -recoverable issue)
+ *   error  →  ❌   (red cross    -failure)
  *
  * Usage:
  *   import { Logger } from '@/utils/logger';
@@ -87,28 +87,28 @@ export class Logger {
     return LOG_LEVEL_PRIORITY[level] >= LOG_LEVEL_PRIORITY[globalConfig.minLevel];
   }
 
-  /** Debug — verbose operational details, only shown in dev mode */
+  /** Debug -verbose operational details, only shown in dev mode */
   debug(message: string, ...args: unknown[]): void {
     if (this.shouldLog('debug')) {
       console.log(LEVEL_EMOJI.debug, this.prefix, message, ...args);
     }
   }
 
-  /** Info — important state changes and events */
+  /** Info -important state changes and events */
   info(message: string, ...args: unknown[]): void {
     if (this.shouldLog('info')) {
       console.log(LEVEL_EMOJI.info, this.prefix, message, ...args);
     }
   }
 
-  /** Warn — potential issues or unexpected but handled states */
+  /** Warn -potential issues or unexpected but handled states */
   warn(message: string, ...args: unknown[]): void {
     if (this.shouldLog('warn')) {
       console.warn(LEVEL_EMOJI.warn, this.prefix, message, ...args);
     }
   }
 
-  /** Error — errors and failures */
+  /** Error -errors and failures */
   error(message: string, ...args: unknown[]): void {
     if (this.shouldLog('error')) {
       console.error(LEVEL_EMOJI.error, this.prefix, message, ...args);

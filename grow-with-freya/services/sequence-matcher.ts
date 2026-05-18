@@ -59,7 +59,7 @@ export class SequenceMatcher {
     const expectedNote = this.requiredSequence[this.currentIndex];
 
     if (note === expectedNote) {
-      // Correct note — advance
+      // Correct note -advance
       this.currentIndex++;
       return this.getResult(true);
     }
@@ -69,12 +69,12 @@ export class SequenceMatcher {
       // If the child accidentally repeats the previous correct note, tolerate it
       const previousNote = this.requiredSequence[this.currentIndex - 1];
       if (note === previousNote) {
-        // Tolerated repeat — don't advance but don't reset either
+        // Tolerated repeat -don't advance but don't reset either
         return this.getResult(true);
       }
     }
 
-    // Incorrect note — reset sequence
+    // Incorrect note -reset sequence
     this.currentIndex = 0;
     return this.getResult(false);
   }
@@ -102,10 +102,10 @@ export class SequenceMatcher {
       return this.getResult(true);
     }
 
-    // Not all chord notes held yet — don't reset, just wait.
+    // Not all chord notes held yet -don't reset, just wait.
     // Only reset if the user has pressed a note that is clearly wrong
     // (i.e., not part of the expected chord and not part of the previous entry).
-    return this.getResult(true); // patient — wait for the full chord
+    return this.getResult(true); // patient -wait for the full chord
   }
 
   /**

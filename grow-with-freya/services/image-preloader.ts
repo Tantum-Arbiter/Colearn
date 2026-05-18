@@ -53,7 +53,7 @@ async function preloadImage(source: any): Promise<void> {
       await Image.prefetch(resolved.uri);
     }
   } catch (error) {
-    // Individual preload failure — caller handles aggregation
+    // Individual preload failure -caller handles aggregation
     throw error;
   }
 }

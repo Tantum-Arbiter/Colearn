@@ -471,7 +471,7 @@ export default {
     screens: {
       welcome: {
         title: 'Historier der vokser\nmed dit barn',
-        body: 'Interaktive historier med musik, instrumenter og fortælling — designet til at tænde fantasien og støtte tidlig udvikling.',
+        body: 'Interaktive historier med musik, instrumenter og fortælling -designet til at tænde fantasien og støtte tidlig udvikling.',
         button: 'Næste',
       },
       howItWorks: {
@@ -486,12 +486,12 @@ export default {
           music: 'Musik & instrumenter',
           musicDesc: 'Lær rytme og melodi med ægte instrumentlyde',
           voice: 'Din stemme',
-          voiceDesc: 'Optag fortællinger så dit barn hører dig — selv på afstand',
+          voiceDesc: 'Optag fortællinger så dit barn hører dig -selv på afstand',
         },
       },
       family: {
         title: 'Lavet til familier',
-        body: 'Skærmtidsbeskyttelse, guidede sessioner og fælles legeværktøjer — designet til korte, meningsfulde øjeblikke sammen. Forskning viser at fælles engagement giver de største fordele.',
+        body: 'Skærmtidsbeskyttelse, guidede sessioner og fælles legeværktøjer -designet til korte, meningsfulde øjeblikke sammen. Forskning viser at fælles engagement giver de største fordele.',
         button: 'Næste',
       },
       consent: {
@@ -501,10 +501,10 @@ export default {
         closeLabel: 'Luk',
         dataSummary: {
           title: 'Hvad vi indsamler og hvorfor',
-          profile: 'Visningsnavn og avatar — for at tilpasse dit barns oplevelse',
-          reading: 'Læsehistorik, favoritter og fremskridt — for at følge historier og serier',
-          screenTime: 'Skærmtidssessioner — for at hjælpe med at styre sundt forbrug',
-          device: 'Enhedstype og app-version — for at sikre at appen fungerer korrekt',
+          profile: 'Visningsnavn og avatar -for at tilpasse dit barns oplevelse',
+          reading: 'Læsehistorik, favoritter og fremskridt -for at følge historier og serier',
+          screenTime: 'Skærmtidssessioner -for at hjælpe med at styre sundt forbrug',
+          device: 'Enhedstype og app-version -for at sikre at appen fungerer korrekt',
           noSell: 'Vi sælger aldrig data og viser ikke reklamer. Du kan slette alt når som helst.',
         },
         checkboxes: {
@@ -533,7 +533,7 @@ export default {
     },
     benefits: {
       welcome: 'Understøttet af forskning i børneudvikling',
-      howItWorks: 'Historier · Musik · Stemme — alt i én app',
+      howItWorks: 'Historier · Musik · Stemme -alt i én app',
       family: 'Anbefalet af eksperter i børneudvikling',
       consent: 'Dit samtykke beskytter din familie',
     },
@@ -571,7 +571,7 @@ export default {
       },
       freeplay: {
         title: 'Fri Leg 🎹',
-        description: 'Spil frit på ethvert instrument — ingen regler, bare sjov! Eksperimenter med lyde og skab din egen musik.',
+        description: 'Spil frit på ethvert instrument -ingen regler, bare sjov! Eksperimenter med lyde og skab din egen musik.',
       },
       settings: {
         title: 'Indstillinger ⚙️',
@@ -835,7 +835,7 @@ export default {
     backToLibrary: 'Tilbage til bibliotek',
     backToMenu: 'Tilbage',
     noSongsAvailable: 'Ingen sange tilgængelige for dette instrument',
-    freeplayPrompt: 'Fri leg — tryk på en vilkårlig tone!',
+    freeplayPrompt: 'Fri leg -tryk på en vilkårlig tone!',
     difficulty: { easy: 'Let', medium: 'Mellem', hard: 'Svær' },
     songs: {
       hotCrossBuns: 'Varme korsboller',
@@ -897,7 +897,7 @@ export default {
     uspStories: 'Historier skabt til at støtte børns udvikling',
     uspEducators: 'Alderspassende indhold gennemgået af pædagoger',
     uspMusic: 'Interaktiv musik og instrumentøvelse',
-    uspNoAds: 'Ingen reklamer — sikkert for de små',
+    uspNoAds: 'Ingen reklamer -sikkert for de små',
     uspLanguages: 'Tilgængelig på 14 sprog',
     detailAllStories: 'Alle historier låst op',
     detailDownload50: 'Download op til 50 bøger',
@@ -908,7 +908,7 @@ export default {
     detailAllInstruments: 'Alle instrumenter låst op',
     detailEverythingPremium: 'Alt fra Premium',
     detailSave25: 'Spar 25% i forhold til månedligt',
-    // Guest mode — sign-in required
+    // Guest mode -sign-in required
     signInToSubscribe: 'Log ind for at abonnere',
     signInRequiredTitle: 'Login påkrævet',
     signInRequiredMessage: 'Du skal logge ind, før du kan abonnere. Dit abonnement bliver knyttet til din konto, så du kan bruge det på alle dine enheder.',

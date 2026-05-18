@@ -18,7 +18,7 @@ import java.util.Set;
  * Horizontally scalable: each gateway instance maintains its own counters,
  * Prometheus aggregates across instances using sum().
  *
- * No data is persisted — events are converted to counter increments and discarded.
+ * No data is persisted -events are converted to counter increments and discarded.
  * Privacy-safe: no PII is accepted, no user-level tracking, no persistent identifiers.
  */
 @Service
@@ -28,7 +28,7 @@ public class ContentAnalyticsService {
 
     private final MeterRegistry meterRegistry;
 
-    /** Allowed event names — reject anything not in this set to prevent cardinality explosion */
+    /** Allowed event names -reject anything not in this set to prevent cardinality explosion */
     private static final Set<String> ALLOWED_EVENTS = Set.of(
         // Content engagement
         "story_opened", "story_completed", "story_abandoned",

@@ -500,7 +500,7 @@ export default {
     screens: {
       welcome: {
         title: 'Des histoires qui grandissent\navec votre enfant',
-        body: 'Histoires interactives avec musique, instruments et narration — conçues pour stimuler l\'imagination et soutenir le développement précoce.',
+        body: 'Histoires interactives avec musique, instruments et narration -conçues pour stimuler l\'imagination et soutenir le développement précoce.',
         button: 'Suivant',
       },
       howItWorks: {
@@ -515,12 +515,12 @@ export default {
           music: 'Musique et instruments',
           musicDesc: 'Apprenez le rythme et la mélodie avec de vrais sons d\'instruments',
           voice: 'Votre voix',
-          voiceDesc: 'Enregistrez des narrations pour que votre enfant vous entende — même à distance',
+          voiceDesc: 'Enregistrez des narrations pour que votre enfant vous entende -même à distance',
         },
       },
       family: {
         title: 'Conçu pour les familles',
-        body: 'Protection du temps d\'écran, sessions guidées et outils de jeu partagé — conçu pour des moments courts et significatifs ensemble. La recherche montre que l\'engagement conjoint offre les plus grands bénéfices.',
+        body: 'Protection du temps d\'écran, sessions guidées et outils de jeu partagé -conçu pour des moments courts et significatifs ensemble. La recherche montre que l\'engagement conjoint offre les plus grands bénéfices.',
         button: 'Suivant',
       },
       consent: {
@@ -530,10 +530,10 @@ export default {
         closeLabel: 'Fermer',
         dataSummary: {
           title: 'Ce que nous collectons et pourquoi',
-          profile: 'Pseudonyme et avatar — pour personnaliser l\'expérience de votre enfant',
-          reading: 'Historique de lecture, favoris et progression — pour suivre les histoires et les séries',
-          screenTime: 'Sessions de temps d\'écran — pour aider à gérer une utilisation saine',
-          device: 'Type d\'appareil et version de l\'app — pour que l\'app fonctionne correctement',
+          profile: 'Pseudonyme et avatar -pour personnaliser l\'expérience de votre enfant',
+          reading: 'Historique de lecture, favoris et progression -pour suivre les histoires et les séries',
+          screenTime: 'Sessions de temps d\'écran -pour aider à gérer une utilisation saine',
+          device: 'Type d\'appareil et version de l\'app -pour que l\'app fonctionne correctement',
           noSell: 'Nous ne vendons jamais de données et n\'affichons pas de publicités. Vous pouvez tout supprimer à tout moment.',
         },
         checkboxes: {
@@ -562,7 +562,7 @@ export default {
     },
     benefits: {
       welcome: 'Soutenu par la recherche en développement de l\'enfant',
-      howItWorks: 'Histoires · Musique · Voix — tout en une app',
+      howItWorks: 'Histoires · Musique · Voix -tout en une app',
       family: 'Recommandé par des experts en développement de l\'enfant',
       consent: 'Votre consentement protège votre famille',
     },
@@ -602,7 +602,7 @@ export default {
       },
       freeplay: {
         title: 'Jeu Libre 🎹',
-        description: 'Jouez librement de n\'importe quel instrument — pas de règles, juste du plaisir ! Expérimentez avec les sons et créez votre propre musique.',
+        description: 'Jouez librement de n\'importe quel instrument -pas de règles, juste du plaisir ! Expérimentez avec les sons et créez votre propre musique.',
       },
       settings: {
         title: 'Paramètres ⚙️',
@@ -871,7 +871,7 @@ export default {
     backToLibrary: 'Retour à la bibliothèque',
     backToMenu: 'Retour',
     noSongsAvailable: 'Aucune chanson disponible pour cet instrument',
-    freeplayPrompt: 'Jeu libre — appuyez sur n\'importe quelle note !',
+    freeplayPrompt: 'Jeu libre -appuyez sur n\'importe quelle note !',
     difficulty: { easy: 'Facile', medium: 'Moyen', hard: 'Difficile' },
     songs: {
       hotCrossBuns: 'Petits pains chauds',
@@ -935,7 +935,7 @@ export default {
     uspStories: 'Histoires conçues pour soutenir le développement de l\'enfant',
     uspEducators: 'Contenu adapté à l\'âge, vérifié par des éducateurs',
     uspMusic: 'Musique interactive et pratique instrumentale',
-    uspNoAds: 'Aucune publicité — sûr pour les tout-petits',
+    uspNoAds: 'Aucune publicité -sûr pour les tout-petits',
     uspLanguages: 'Disponible en 14 langues',
     detailAllStories: 'Toutes les histoires débloquées',
     detailDownload50: 'Téléchargez jusqu\'à 50 livres',
@@ -946,7 +946,7 @@ export default {
     detailAllInstruments: 'Tous les instruments débloqués',
     detailEverythingPremium: 'Tout ce qui est inclus dans Premium',
     detailSave25: 'Économisez 25 % par rapport au mensuel',
-    // Guest mode — sign-in required
+    // Guest mode -sign-in required
     signInToSubscribe: 'Connectez-vous pour vous abonner',
     signInRequiredTitle: 'Connexion requise',
     signInRequiredMessage: 'Vous devez vous connecter avant de pouvoir vous abonner. Votre abonnement sera lié à votre compte pour y accéder sur tous vos appareils.',

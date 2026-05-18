@@ -126,7 +126,7 @@ export function StoryPreviewModal({
     toggleFavoriteStory(story.id);
   }, [story, toggleFavoriteStory, starScale]);
 
-  // Don't render when not visible — prevents the modal from peeking into view
+  // Don't render when not visible -prevents the modal from peeking into view
   // after orientation changes (translateY shared value can become stale)
   if (!visible || !story) return null;
 

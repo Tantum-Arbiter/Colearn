@@ -58,7 +58,7 @@ class AnalyticsControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/analytics/events — accepts valid batch")
+    @DisplayName("POST /api/analytics/events -accepts valid batch")
     void testIngestValidBatch() throws Exception {
         when(contentAnalyticsService.processBatch(any())).thenReturn(3);
 
@@ -86,7 +86,7 @@ class AnalyticsControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/analytics/events — rejects empty events list")
+    @DisplayName("POST /api/analytics/events -rejects empty events list")
     void testRejectEmptyEvents() throws Exception {
         Map<String, Object> batch = Map.of(
             "sessionId", "uuid-123",
@@ -101,7 +101,7 @@ class AnalyticsControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/analytics/events — rejects missing sessionId")
+    @DisplayName("POST /api/analytics/events -rejects missing sessionId")
     void testRejectMissingSessionId() throws Exception {
         Map<String, Object> batch = Map.of(
             "platform", "ios",
@@ -115,7 +115,7 @@ class AnalyticsControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/analytics/events — rejects missing platform")
+    @DisplayName("POST /api/analytics/events -rejects missing platform")
     void testRejectMissingPlatform() throws Exception {
         Map<String, Object> batch = Map.of(
             "sessionId", "uuid-123",

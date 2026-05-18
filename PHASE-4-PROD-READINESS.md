@@ -1,4 +1,4 @@
-# Phase 4 — Production Readiness, Monitoring & DNS Migration
+# Phase 4 -Production Readiness, Monitoring & DNS Migration
 
 > **For LLMs / AI agents**: This document defines the production infrastructure plan.
 > Read this file before making changes to deployment, monitoring, DNS, or GCP configuration.
@@ -53,7 +53,7 @@ Cloudflare (DNS + CDN + WAF)  ──  earlyroots.co.uk
 | **GCP Dev** | Cloud Run | `gcp-dev` | Shared Firestore | `colearnwithfreya-assets` | CI/CD + func tests |
 | **Production** | GCE e2-small | `prod` | Shared Firestore | `earlyroots-assets` | Live users |
 
-**Firestore note:** Firestore is a project-level resource — both Cloud Run and GCE use the
+**Firestore note:** Firestore is a project-level resource -both Cloud Run and GCE use the
 same Firestore instance in project `apt-icon-472307-b7`. No new Firestore database needed.
 Collections are isolated by design (same schema, same data).
 
@@ -151,7 +151,7 @@ gcloud compute firewall-rules create deny-all-ingress \
 
 ### 4.2 Cloudflare Settings
 
-- **SSL mode:** Full (strict) — Cloudflare ↔ origin encrypted
+- **SSL mode:** Full (strict) -Cloudflare ↔ origin encrypted
 - **Always Use HTTPS:** On
 - **Minimum TLS:** 1.2
 - **Auto Minify:** Off (API only, no HTML)
@@ -165,7 +165,7 @@ gcloud compute firewall-rules create deny-all-ingress \
 
 ### 5.1 Current State (Local Docker Compose Only)
 
-You already have a solid monitoring stack — but it only runs locally:
+You already have a solid monitoring stack -but it only runs locally:
 
 | Component | Status | What it does |
 |---|---|---|
@@ -177,7 +177,7 @@ You already have a solid monitoring stack — but it only runs locally:
 ### 5.2 Production Monitoring Stack
 
 Run Prometheus + Grafana on the same GCE VM alongside the gateway. At e2-small scale
-this is fine — they add ~200MB RAM combined.
+this is fine -they add ~200MB RAM combined.
 
 ```yaml
 # docker-compose.prod.yml (on GCE VM)
@@ -212,7 +212,7 @@ services:
   grafana:
     image: grafana/grafana-enterprise
     ports:
-      - "127.0.0.1:3000:3000"  # Internal only — access via SSH tunnel
+      - "127.0.0.1:3000:3000"  # Internal only -access via SSH tunnel
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
       GF_USERS_ALLOW_SIGN_UP: "false"
@@ -280,9 +280,9 @@ Cloud Run already exposes metrics to **GCP Cloud Monitoring** natively. No extra
 
 **Recommended Cloud Run alerts (free, via GCP Console):**
 
-1. **Error rate > 5%** — Alerting policy on `run.googleapis.com/request_count` with `response_code_class=5xx`
-2. **P99 latency > 2s** — Alerting policy on `run.googleapis.com/request_latencies`
-3. **Instance count = 0 for > 10 min during work hours** — ensures the service hasn't crashed
+1. **Error rate > 5%** -Alerting policy on `run.googleapis.com/request_count` with `response_code_class=5xx`
+2. **P99 latency > 2s** -Alerting policy on `run.googleapis.com/request_latencies`
+3. **Instance count = 0 for > 10 min during work hours** -ensures the service hasn't crashed
 
 These complement your Docker-based Prometheus alerts for the GCE prod environment.
 
@@ -313,14 +313,14 @@ These apply to both Cloud Run (dev) and GCE (prod) since both expose `/actuator/
 
 ## 6. CI/CD Changes
 
-### 6.1 Cloud Run (Dev) — No Changes
+### 6.1 Cloud Run (Dev) -No Changes
 
 The existing `gateway-build.yml` workflow continues as-is:
 - Build → push to Artifact Registry → deploy to Cloud Run → run func tests
 - Profile: `gcp-dev`
 - This remains the CI/CD and functional test environment
 
-### 6.2 GCE (Prod) — New Deploy Step
+### 6.2 GCE (Prod) -New Deploy Step
 
 Add a new job to `gateway-build.yml` (or a separate workflow) that deploys to GCE
 after Cloud Run tests pass:
@@ -361,7 +361,7 @@ deploy-production:
 
 ## 7. Config Changes Required
 
-### 7.1 CORS — Add earlyroots domains
+### 7.1 CORS -Add earlyroots domains
 
 Files to update:
 - `gateway-service/src/main/resources/application-prod.yml`
@@ -382,7 +382,7 @@ cors:
     - https://assets.colearnwithfreya.co.uk
 ```
 
-### 7.2 Cloudflare Validation — Update Allowed User-Agents
+### 7.2 Cloudflare Validation -Update Allowed User-Agents
 
 ```yaml
 app:
@@ -459,7 +459,7 @@ Only change the user-facing brand name, not the technical identifiers.
 
 **GCE Network Egress (API traffic):**
 - 100K MAU × 30 API calls/day × 2KB avg = 6 GB/mo
-- Cloudflare absorbs this — GCE egress to Cloudflare is minimal
+- Cloudflare absorbs this -GCE egress to Cloudflare is minimal
 - ~$1/mo
 
 ### 8.4 Comparison: GCE vs Cloud Run (at 100K MAU)

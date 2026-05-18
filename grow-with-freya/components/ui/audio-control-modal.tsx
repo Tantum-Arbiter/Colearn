@@ -143,7 +143,7 @@ export const AudioControlModal: React.FC<AudioControlModalProps> = ({
     </Pressable>
   );
 
-  // Absolute positioning mode — used inside complex view hierarchies
+  // Absolute positioning mode -used inside complex view hierarchies
   // (e.g., story-book-reader) where native Modal causes iOS crashes.
   if (useAbsolutePositioning) {
     if (!visible) return null;
@@ -157,7 +157,7 @@ export const AudioControlModal: React.FC<AudioControlModalProps> = ({
     );
   }
 
-  // Default: native Modal — works in all normal view hierarchies.
+  // Default: native Modal -works in all normal view hierarchies.
   return (
     <Modal
       visible={visible}

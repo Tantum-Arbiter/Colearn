@@ -28,7 +28,7 @@ const SLIDE_OUT_DURATION = 1200;
 
 interface StartupLoadingScreenProps {
   onComplete: () => void;
-  /** Called once the slide-in animation finishes — safe to mount content behind the overlay */
+  /** Called once the slide-in animation finishes -safe to mount content behind the overlay */
   onSlideInComplete?: () => void;
   onError?: (error: string) => void;
 }
@@ -88,7 +88,7 @@ export function StartupLoadingScreen({ onComplete, onSlideInComplete, onError }:
     };
   }, []);
 
-  // Start sync on mount — slide the background in first
+  // Start sync on mount -slide the background in first
   useEffect(() => {
     // Slide background down into view
     slideY.value = withTiming(0, {
@@ -96,7 +96,7 @@ export function StartupLoadingScreen({ onComplete, onSlideInComplete, onError }:
       easing: Easing.out(Easing.cubic),
     });
 
-    // Notify parent when slide-in finishes — safe to mount content behind the overlay
+    // Notify parent when slide-in finishes -safe to mount content behind the overlay
     const slideInTimer = setTimeout(() => {
       onSlideInComplete?.();
     }, SLIDE_IN_DURATION + 50);
@@ -133,7 +133,7 @@ export function StartupLoadingScreen({ onComplete, onSlideInComplete, onError }:
           setProgressPercent(progress.progress);
 
           // Update status text based on sync phase
-          // Note: No download phases — assets are downloaded on-demand when user taps a story
+          // Note: No download phases -assets are downloaded on-demand when user taps a story
           switch (progress.phase) {
             case 'version-check':
               setStatusText('Checking for updates...');
@@ -228,7 +228,7 @@ export function StartupLoadingScreen({ onComplete, onSlideInComplete, onError }:
 
   return (
     <Animated.View style={[styles.container, slideAnimatedStyle]}>
-      {/* Background — dark navy base with subtle background-home texture */}
+      {/* Background -dark navy base with subtle background-home texture */}
       <View style={styles.backgroundImageContainer}>
         <Image
           source={require('../assets/images/ui-elements/background-home.webp')}

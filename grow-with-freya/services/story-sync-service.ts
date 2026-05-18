@@ -90,7 +90,7 @@ export class StorySyncService {
 
       // If no local data, sync is needed
       if (!localMetadata) {
-        log.info('No local data — initial sync needed');
+        log.info('No local data -initial sync needed');
         return true;
       }
       log.debug(`Local: v${localMetadata.version}, ${localMetadata.stories?.length || 0} stories`);
@@ -227,7 +227,7 @@ export class StorySyncService {
 
       await this.saveSyncMetadata(newMetadata);
 
-      log.info(`Sync complete — ${allStories.length} stories cached (${syncResponse.stories.length} updated, ${deletedStoryIds.size} deleted)`);
+      log.info(`Sync complete -${allStories.length} stories cached (${syncResponse.stories.length} updated, ${deletedStoryIds.size} deleted)`);
 
       return allStories;
     } catch (error) {

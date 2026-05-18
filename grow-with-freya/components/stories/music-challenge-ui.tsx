@@ -2,8 +2,8 @@
  * MusicChallengeUI - Landscape instrument view with note buttons
  *
  * Two play modes, toggled by user:
- *  🌬️ Blow mode  — mic listens while user holds note buttons
- *  ♫ Press mode — tapping buttons directly plays notes (no mic)
+ *  🌬️ Blow mode  -mic listens while user holds note buttons
+ *  ♫ Press mode -tapping buttons directly plays notes (no mic)
  *
  * Multi-touch: users can hold multiple buttons simultaneously.
  */
@@ -104,7 +104,7 @@ const NoteButton = React.memo(function NoteButton({
     }
   }, [highlighted, pulseScale]);
 
-  // Playback highlight — keyed on playbackTick so it re-triggers for repeated notes
+  // Playback highlight -keyed on playbackTick so it re-triggers for repeated notes
   useEffect(() => {
     if (playbackActive && playbackTick > 0) {
       bounceScale.value = withSequence(
@@ -137,7 +137,7 @@ const NoteButton = React.memo(function NoteButton({
     if (isPressed.current) return; // already pressed (duplicate event)
     isPressed.current = true;
     pressStartRef.current = Date.now();
-    // Slight depress + glow up instantly — stays glowing while held
+    // Slight depress + glow up instantly -stays glowing while held
     bounceScale.value = withTiming(0.93, { duration: 60 });
     glowIntensity.value = withTiming(1, { duration: 40 });
     onPressIn(note);
@@ -211,12 +211,12 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
   const celebrationOpacity = useSharedValue(0);
   const shineOffset = useSharedValue(-1);
 
-  // Song playback visualization — which sequence index is currently highlighted
+  // Song playback visualization -which sequence index is currently highlighted
   const [playbackIndex, setPlaybackIndex] = useState(-1);
   // Monotonic counter so NoteButton re-triggers animation even for repeated notes
   const [playbackTick, setPlaybackTick] = useState(0);
 
-  // Rotation for blow mode — instrument faces bottom of phone
+  // Rotation for blow mode -instrument faces bottom of phone
   const instrumentRotation = useSharedValue(0);
 
   const isPlayingSong = challenge.state === 'playing_success_song';
@@ -264,14 +264,14 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
   // Celebration bounce + shine animation
   useEffect(() => {
     if (showCelebration) {
-      // Quick bounce-in then settle — one bounce only, high damping to stabilise fast
+      // Quick bounce-in then settle -one bounce only, high damping to stabilise fast
       celebrationScale.value = withSequence(
         withTiming(0, { duration: 0 }),
         withSpring(1.08, { damping: 12, stiffness: 180 }),
         withSpring(1, { damping: 20, stiffness: 200 })
       );
       celebrationOpacity.value = withTiming(1, { duration: 400 });
-      // Single slow shine sweep, then hold — no repeat
+      // Single slow shine sweep, then hold -no repeat
       shineOffset.value = withSequence(
         withTiming(-1, { duration: 0 }),
         withTiming(2, { duration: 2000, easing: Easing.inOut(Easing.ease) })
@@ -294,7 +294,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
     opacity: celebrationOpacity.value,
   }));
 
-  // The active sequence — use currentSequence from hook when available (for Go Harder levels)
+  // The active sequence -use currentSequence from hook when available (for Go Harder levels)
   const activeSequence = challenge.currentSequence?.length > 0 ? challenge.currentSequence : requiredSequence;
   const hasSequence = activeSequence.length > 0;
 
@@ -408,7 +408,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
       {/* Center section: instrument body (not rotated) */}
       <View style={styles.instrumentBody}>
         <View style={styles.instrumentTube}>
-          {/* Rotate button — absolutely positioned at far left, only in press mode */}
+          {/* Rotate button -absolutely positioned at far left, only in press mode */}
           {playMode === 'press' && !isFinished && !isPlayingSong && (
             <View style={styles.rotateButtonWrapper}>
               <Pressable
@@ -461,8 +461,8 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
         </View>
       </View>
 
-      {/* Sequence dots — hidden when UI is toggled off or sequence is empty */}
-      {/* Sequence dots — use currentSequence from challenge when available (for Go Harder levels) */}
+      {/* Sequence dots -hidden when UI is toggled off or sequence is empty */}
+      {/* Sequence dots -use currentSequence from challenge when available (for Go Harder levels) */}
       {(() => {
         const displaySeq = challenge.currentSequence?.length > 0 ? challenge.currentSequence : requiredSequence;
         if (displaySeq.length === 0) return null;
@@ -584,7 +584,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
         )}
       </View>
 
-      {/* Floating controls — bottom left in landscape, rotate with instrument in portrait */}
+      {/* Floating controls -bottom left in landscape, rotate with instrument in portrait */}
       {onMusicSheet && !uiHidden && (
         <Animated.View style={[
           styles.floatingControlsWrapper,
@@ -602,7 +602,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
         </Animated.View>
       )}
 
-      {/* Hide/Unhide button — bottom right, aligned with burger menu */}
+      {/* Hide/Unhide button -bottom right, aligned with burger menu */}
       <View style={[
         styles.floatingControlsWrapper,
         { bottom: Math.max(insets.bottom + 20, 20), right: Math.max(insets.right + 20, 20) },
@@ -671,7 +671,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // Rotate button — absolutely positioned at far left inside tube
+  // Rotate button -absolutely positioned at far left inside tube
   rotateButtonWrapper: {
     position: 'absolute',
     left: 46,
@@ -700,7 +700,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 
-  // Instrument body — horizontal across the screen
+  // Instrument body -horizontal across the screen
   instrumentBody: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -748,7 +748,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
 
-  // Note buttons on the instrument — circular with letter only
+  // Note buttons on the instrument -circular with letter only
   noteButton: {
     width: 60,
     height: 60,
@@ -776,7 +776,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // Sequence progress dots — below instrument
+  // Sequence progress dots -below instrument
   sequenceContainer: {
     alignItems: 'center',
     gap: 4,
@@ -817,7 +817,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
 
-  // Bottom row — mode toggle, feedback, skip
+  // Bottom row -mode toggle, feedback, skip
   bottomRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -897,14 +897,14 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
   },
-  // Celebration (shown above instrument on completion — landscape, no rotation)
+  // Celebration (shown above instrument on completion -landscape, no rotation)
   celebrationContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
     width: '100%',
   },
-  // Celebration when rotated — stays in the top section so it doesn't overlap note buttons
+  // Celebration when rotated -stays in the top section so it doesn't overlap note buttons
   celebrationContainerRotated: {
     maxWidth: 260,
     paddingVertical: 8,

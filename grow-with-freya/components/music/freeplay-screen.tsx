@@ -84,7 +84,7 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
   const pickerAnimatedStyle = useAnimatedStyle(() => ({
     opacity: pickerOpacity.value,
   }));
-  // Rotated instrument overlay — fades in over the static blur
+  // Rotated instrument overlay -fades in over the static blur
   const instrumentOverlayAnimatedStyle = useAnimatedStyle(() => ({
     opacity: instrumentContentOpacity.value,
     left: (screenWidth - screenHeight) / 2,
@@ -116,7 +116,7 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
     enabled: !!selectedInstrumentId && !showPicker,
   });
 
-  // Audio session control — lets useMusicChallenge pause/resume the recorder
+  // Audio session control -lets useMusicChallenge pause/resume the recorder
   // internally so notes always play at full speaker volume in blow mode.
   const audioSessionControl = useMemo(() => ({
     pauseForPlayback: breathDetector.pauseForPlayback,
@@ -139,7 +139,7 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
   const currentPlayModeRef = useRef<'blow' | 'press'>('press');
 
   // Sync breath detector state to music challenge (matches story-book-reader).
-  // Only in blow mode — in press mode, MusicChallengeUI sets breathActive(true)
+  // Only in blow mode -in press mode, MusicChallengeUI sets breathActive(true)
   // permanently, and we must not overwrite it with the mic's false signal.
   useEffect(() => {
     if (selectedInstrumentId && !showPicker && currentPlayModeRef.current === 'blow') {
@@ -361,16 +361,16 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
 
   return (
     <View style={styles.container}>
-      {/* Background — always visible, never fades */}
+      {/* Background -always visible, never fades */}
       {renderStoriesBackground()}
 
-      {/* Static blur overlay — always mounted, never fades.
+      {/* Static blur overlay -always mounted, never fades.
           pointerEvents="none" so touches pass through to the rotated instrument view. */}
       <View style={styles.musicChallengeOverlay} pointerEvents="none">
         <BlurView intensity={40} style={StyleSheet.absoluteFill} tint="dark" />
       </View>
 
-      {/* Instrument rotated content — renders when instrument selected, fades in/out */}
+      {/* Instrument rotated content -renders when instrument selected, fades in/out */}
       {showInstrumentUI && (
           <Animated.View style={[styles.musicChallengeOverlayRotated, instrumentOverlayAnimatedStyle]}>
             <MusicChallengeUI
@@ -388,7 +388,7 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
               insetsOverride={rotatedInsets}
             />
 
-            {/* Top Left Controls — Exit (✕) button */}
+            {/* Top Left Controls -Exit (✕) button */}
             {!musicUiHidden && (
               <View style={[styles.topLeftControls, {
                 paddingTop: Math.max(rotatedInsets.top + 20, 20),
@@ -407,7 +407,7 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
               </View>
             )}
 
-            {/* Top Right Controls — Sound + Burger menu */}
+            {/* Top Right Controls -Sound + Burger menu */}
             {!musicUiHidden && (
               <View style={[styles.topRightControls, {
                 paddingTop: Math.max(rotatedInsets.top + 20, 20),
@@ -430,7 +430,7 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
               </View>
             )}
 
-            {/* Settings overlay — tap outside to close */}
+            {/* Settings overlay -tap outside to close */}
             {showSettingsMenu && (
               <Pressable style={styles.settingsOverlay} onPress={() => setShowSettingsMenu(false)} />
             )}
@@ -458,7 +458,7 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
           </Animated.View>
       )}
 
-      {/* Instrument picker — sits on top of blur (no own backdrop).
+      {/* Instrument picker -sits on top of blur (no own backdrop).
           Fades out when an instrument is selected; stays mounted briefly during fade. */}
       {showPickerOverlay && (
         <Animated.View style={[StyleSheet.absoluteFill, { zIndex: 20 }, pickerAnimatedStyle]}>
@@ -472,7 +472,7 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
         </Animated.View>
       )}
 
-      {/* Subscription Overlay — triggered from locked instrument tap */}
+      {/* Subscription Overlay -triggered from locked instrument tap */}
       <SubscriptionOverlay
         visible={showSubscription}
         onClose={() => setShowSubscription(false)}
@@ -497,7 +497,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.35)',
   },
-  // Rotated overlay — CSS rotation 90° to simulate landscape in portrait mode.
+  // Rotated overlay -CSS rotation 90° to simulate landscape in portrait mode.
   // Positioning (left/top) and dimensions (width/height) are set by the animated style.
   musicChallengeOverlayRotated: {
     position: 'absolute',

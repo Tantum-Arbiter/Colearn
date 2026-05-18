@@ -1,4 +1,4 @@
-# Frontend Architecture — Grow with Freya
+# Frontend Architecture -Grow with Freya
 
 > **For LLMs / AI agents**: This README is the authoritative reference for the frontend app architecture.
 > Read this file before modifying services, data flow, or navigation. If you change architecture, **update this file**.
@@ -20,12 +20,12 @@ for navigation and Zustand for state management.
 | Navigation | Expo Router | 6.0 |
 | State | Zustand + AsyncStorage | 5.0 |
 | Animations | React Native Reanimated | 4.1 |
-| Auth | Google Sign-In + Apple Auth | — |
+| Auth | Google Sign-In + Apple Auth | -|
 | Analytics | Sentry | 7.8 |
 | i18n | i18next + react-i18next | 24 / 15 |
 | Audio | expo-audio | 1.1 |
 | Images | expo-image | 3.0 |
-| Build | EAS Build | — |
+| Build | EAS Build | -|
 
 ## App Architecture
 
@@ -167,7 +167,7 @@ persisted state is loaded.
 - **Fallback**: Always English (`en`) when a translation is missing
 - **Language selection**: User picks in Settings → stored in AsyncStorage → `i18n.changeLanguage()`
 
-Arabic (`ar`) is RTL but the app does not yet have full RTL layout support — text renders correctly
+Arabic (`ar`) is RTL but the app does not yet have full RTL layout support -text renders correctly
 but layout remains LTR.
 
 ## Key Design Decisions
@@ -186,7 +186,7 @@ Clients never access GCS directly. The gateway generates 1-hour signed URLs. Thi
 
 ### 3. Delta-sync with checksums
 The app sends its story checksums to the server. The server returns only stories with different
-checksums. This minimizes data transfer — a typical sync with no changes is 2 API calls and
+checksums. This minimizes data transfer -a typical sync with no changes is 2 API calls and
 zero downloads.
 
 ### 4. Music assets are always local

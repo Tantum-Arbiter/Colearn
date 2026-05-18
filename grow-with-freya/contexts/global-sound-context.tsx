@@ -54,7 +54,7 @@ export function GlobalSoundProvider({ children }: GlobalSoundProviderProps) {
   const [voiceOverVolume, setVoiceOverVolumeState] = useState(1.0);
   // Track whether saved volume settings have been loaded from storage.
   // Until this is true, we must NOT push the default 1.0×1.0 effective volume
-  // to the background music service — that would briefly play at full volume
+  // to the background music service -that would briefly play at full volume
   // before the real (lower) saved values arrive from AsyncStorage.
   const [volumeSettingsLoaded, setVolumeSettingsLoaded] = useState(false);
 
@@ -199,7 +199,7 @@ const SAFE_FALLBACK: GlobalSoundContextType = {
 export function useGlobalSound(): GlobalSoundContextType {
   const context = useContext(GlobalSoundContext);
   if (context === undefined) {
-    log.warn('useGlobalSound called outside GlobalSoundProvider — using safe fallback');
+    log.warn('useGlobalSound called outside GlobalSoundProvider -using safe fallback');
     return SAFE_FALLBACK;
   }
   return context;

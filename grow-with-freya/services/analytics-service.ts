@@ -1,5 +1,5 @@
 /**
- * AnalyticsService — Privacy-safe, anonymous analytics for business insights.
+ * AnalyticsService -Privacy-safe, anonymous analytics for business insights.
  *
  * Design principles:
  * - No PII: no userId, deviceId, IP, or child data
@@ -233,7 +233,7 @@ class AnalyticsServiceImpl {
       await fetch(`${GATEWAY_URL}/api/analytics/events`, {
         method: 'POST',
         // PRIVACY: Only send Content-Type and auth. Do NOT send device headers
-        // (X-Device-ID etc.) — analytics must not transmit persistent identifiers.
+        // (X-Device-ID etc.) -analytics must not transmit persistent identifiers.
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${accessToken}`,
@@ -245,7 +245,7 @@ class AnalyticsServiceImpl {
       clearTimeout(timeoutId);
       log.debug(`Flushed ${eventsToSend.length} events`);
     } catch (error) {
-      // Fire-and-forget — analytics should never block UX
+      // Fire-and-forget -analytics should never block UX
       log.debug(`Flush failed (${eventsToSend.length} events discarded)`);
     }
   }
@@ -274,7 +274,7 @@ class AnalyticsServiceImpl {
   };
 
   private generateSessionId(): string {
-    // Simple UUID v4 — non-persistent, regenerated each launch
+    // Simple UUID v4 -non-persistent, regenerated each launch
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
       const r = (Math.random() * 16) | 0;
       const v = c === 'x' ? r : (r & 0x3) | 0x8;
@@ -284,7 +284,7 @@ class AnalyticsServiceImpl {
 
   // --- Testing helpers ---
 
-  /** @internal — for tests only */
+  /** @internal -for tests only */
   _getBuffer(): AnalyticsEvent[] { return this.buffer; }
   _getSessionId(): string { return this.sessionId; }
   _isConsentGiven(): boolean { return this.consentGiven; }

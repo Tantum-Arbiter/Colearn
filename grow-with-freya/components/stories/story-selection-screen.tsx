@@ -39,7 +39,7 @@ import { StoryAccessService } from '@/services/story-access-service';
 import type { SupportedLanguage } from '@/services/i18n';
 import Svg, { Rect, Path } from 'react-native-svg';
 
-/** 3-card carousel icon — center card raised */
+/** 3-card carousel icon -center card raised */
 const CarouselIcon = memo(function CarouselIcon({ size = 18, color = '#FFFFFF' }: { size?: number; color?: string }) {
   const w = size;
   const h = size;
@@ -47,13 +47,13 @@ const CarouselIcon = memo(function CarouselIcon({ size = 18, color = '#FFFFFF' }
   const cardH = h * 0.55;
   const r = 1.5;
   const gap = w * 0.06;
-  // Vertical center offset — push group down so it sits in the middle of the viewBox
+  // Vertical center offset -push group down so it sits in the middle of the viewBox
   const groupH = cardH; // tallest element (center card)
   const yOffset = (h - groupH) / 2;
   // Center card
   const cx = (w - cardW) / 2;
   const cy = yOffset;
-  // Side cards — shorter and lower
+  // Side cards -shorter and lower
   const sideH = cardH * 0.78;
   const sideY = cy + (cardH - sideH);
   const lx = cx - cardW - gap;
@@ -67,7 +67,7 @@ const CarouselIcon = memo(function CarouselIcon({ size = 18, color = '#FFFFFF' }
   );
 });
 
-/** Finger-tap icon — index finger pressing down */
+/** Finger-tap icon -index finger pressing down */
 const FingerTapIcon = memo(function FingerTapIcon({ size = 16, color = '#FFFFFF' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -89,7 +89,7 @@ const FingerTapIcon = memo(function FingerTapIcon({ size = 16, color = '#FFFFFF'
   );
 });
 
-// Story experience type filters — detect from page content, not tags
+// Story experience type filters -detect from page content, not tags
 type StoryTypeFilter = 'musical' | 'interactive' | 'classic';
 
 const ALL_TYPE_FILTERS: Set<StoryTypeFilter> = new Set(['musical', 'interactive', 'classic']);
@@ -138,7 +138,7 @@ const CARD_HEIGHT = 132;
 const CARD_MARGIN = 15;
 const ITEM_WIDTH = CARD_WIDTH + CARD_MARGIN;
 
-// Grid view card dimensions — 2 columns with padding
+// Grid view card dimensions -2 columns with padding
 const GRID_PADDING = 16;
 const GRID_GAP = 12;
 const GRID_CARD_WIDTH = Math.floor((Dimensions.get('window').width - GRID_PADDING * 2 - GRID_GAP) / 2);
@@ -185,7 +185,7 @@ const StoryCard = memo(function StoryCard({
   const wasHiddenRef = useRef(isHidden);
   const fadeOpacity = useSharedValue(isHidden ? 0 : 1);
 
-  // Implode animation for deletion — two phases:
+  // Implode animation for deletion -two phases:
   // 1. Scale implodes to 0 (the "pop" effect)
   // 2. Container width collapses to 0 so remaining cards slide across
   const deleteScale = useSharedValue(1);
@@ -215,7 +215,7 @@ const StoryCard = memo(function StoryCard({
     }
   }, [isDeleting]);
 
-  // Shimmer animation for unread stories — slides a highlight across the card periodically
+  // Shimmer animation for unread stories -slides a highlight across the card periodically
   const shimmerTranslate = useSharedValue(-cardWidth);
 
   useEffect(() => {
@@ -364,7 +364,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   const scaledBorderRadius = scaledButtonSize(15);
   const scaledEmojiFontSize = scaledFontSize(48);
 
-  // Grid card sizes (no scaling — fills available width)
+  // Grid card sizes (no scaling -fills available width)
   const gridCardW = GRID_CARD_WIDTH;
   const gridCardH = GRID_CARD_HEIGHT;
 
@@ -409,12 +409,12 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   const userAvatarType = useAppStore((state) => state.userAvatarType);
 
   // Filter stories based on selected tags (OR logic - match any selected tag)
-  // AND experience type filters (musical / interactive / classic — OR within type, AND with tags)
-  // AND gender-based filtering (hidden from UI — show unisex + matching gender)
+  // AND experience type filters (musical / interactive / classic -OR within type, AND with tags)
+  // AND gender-based filtering (hidden from UI -show unisex + matching gender)
   const filteredStories = useMemo(() => {
     let result = stories;
 
-    // Gender filter — show unisex stories + stories matching the child's gender
+    // Gender filter -show unisex stories + stories matching the child's gender
     // If no gender is set in profile, show everything
     if (userAvatarType) {
       result = result.filter(story =>
@@ -431,7 +431,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       );
     }
 
-    // Experience type filter (OR logic — show story if it matches ANY active type)
+    // Experience type filter (OR logic -show story if it matches ANY active type)
     // Skip filtering when all types are selected (no-op)
     if (storyTypeFilters.size < ALL_TYPE_FILTERS.size) {
       result = result.filter(story => {
@@ -487,7 +487,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     });
   }, []);
 
-  // View mode toggle (carousel ↔ grid) — instant swap with fade-in
+  // View mode toggle (carousel ↔ grid) -instant swap with fade-in
   const viewFadeOpacity = useSharedValue(1);
   const viewFadeStyle = useAnimatedStyle(() => ({ opacity: viewFadeOpacity.value }));
 
@@ -533,7 +533,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
           text: t('common.delete'),
           style: 'destructive',
           onPress: () => {
-            // Start the implode animation — actual deletion happens in onImplodeComplete
+            // Start the implode animation -actual deletion happens in onImplodeComplete
             setDeletingStoryId(story.id);
           },
         },
@@ -562,7 +562,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     setDeletingStoryId(null);
   }, [deletingStoryId, favoriteStoryIds, toggleFavoriteStory]);
 
-  // Handle download limit reached — show alert with option to delete a book or upgrade
+  // Handle download limit reached -show alert with option to delete a book or upgrade
   const handleDownloadLimitReached = useCallback(async (_entry: CatalogEntry) => {
     const limit = StoryAccessService.getDownloadLimit();
     const tier = StoryAccessService.getEffectiveTier();
@@ -651,7 +651,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
         const entries = await CatalogService.getCatalog();
         setCatalogEntries(entries);
       } catch {
-        // No catalog available yet — that's fine
+        // No catalog available yet -that's fine
       }
     };
     const handle = InteractionManager.runAfterInteractions(() => {
@@ -695,13 +695,13 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
         message: `Check out "${entry.title}" on Grow with Freya! A magical story app for kids 🌟`,
       });
       if (result.action === Share.sharedAction) {
-        // User completed the share — permanently unlock
+        // User completed the share -permanently unlock
         await StoryAccessService.completeShareUnlock();
         setShareUnlockedIds(prev => new Set(prev).add(entry.storyId));
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
     } catch {
-      // User cancelled or share failed — do nothing
+      // User cancelled or share failed -do nothing
     }
   }, []);
 
@@ -716,7 +716,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
         const catalogIds = catalogInGenre.map(e => e.storyId);
 
         if (catalogIndex > 0) {
-          // Start bubble swap — timer in useEffect will step through and refresh data when done
+          // Start bubble swap -timer in useEffect will step through and refresh data when done
           setBubbleSwap({
             storyId,
             genre,
@@ -729,7 +729,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
         }
       }
 
-      // No animation needed (catalogIndex === 0 or entry not found) — refresh immediately
+      // No animation needed (catalogIndex === 0 or entry not found) -refresh immediately
       StoryLoader.invalidateCache();
       const loadedStories = await StoryLoader.getStories();
       setStories(loadedStories);
@@ -751,7 +751,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       return () => clearTimeout(timer);
     }
 
-    // All swaps complete — refresh data after a brief pause for the final swap to settle
+    // All swaps complete -refresh data after a brief pause for the final swap to settle
     const finishTimer = setTimeout(async () => {
       try {
         StoryLoader.invalidateCache();
@@ -762,7 +762,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
         ]);
         // Update data and clear swap state together in the same batch.
         // React 18 batches these, so genreItems recomputes with the new data
-        // and bubbleSwap=null simultaneously — no intermediate frame where
+        // and bubbleSwap=null simultaneously -no intermediate frame where
         // swapTranslateX resets but old data still renders (which caused the gap).
         setStories(loadedStories);
         setCatalogEntries(entries);
@@ -976,7 +976,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     }
   }, [onStorySelect, startTransition]);
 
-  // Preview for catalog entries — build a lightweight Story-like object for the preview modal
+  // Preview for catalog entries -build a lightweight Story-like object for the preview modal
   const handleCatalogPreview = useCallback((entry: CatalogEntry) => {
     // Preview catalog entry
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -991,7 +991,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       tags: entry.tags,
       emoji: entry.emoji,
       coverImage: entry.thumbnailUrl,
-      isAvailable: false, // Not downloaded — prevents "Read Story" button
+      isAvailable: false, // Not downloaded -prevents "Read Story" button
       ageRange: entry.ageRange,
       duration: entry.duration,
       isFree: entry.isFree,
@@ -1023,7 +1023,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
         />
       );
     }
-    // Catalog entry — compute swap displacement for bubble-swap animation
+    // Catalog entry -compute swap displacement for bubble-swap animation
     const sid = item.data.storyId;
     let swapTx = 0;
     if (bubbleSwap && bubbleSwap.currentStep > 0) {
@@ -1057,7 +1057,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     );
   }, [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader, currentLanguage, readStoryIds, deletingStoryId, handleImplodeComplete, handleCatalogDownloadComplete, handleCatalogPreview, handleAuthError, handleDownloadLimitReached, bubbleSwap, effectiveTier, shareUnlockedIds, handleShareToUnlock]);
 
-  // Memoized render function for story cards (favorites only — pure Story[])
+  // Memoized render function for story cards (favorites only -pure Story[])
   const renderStoryCard: ListRenderItem<Story> = useCallback(({ item: story }) => (
     <StoryCard
       story={story}
@@ -1080,7 +1080,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   // Use the same key for both story and catalog representations of the same book.
   // The isDuplicate check in genreItems guarantees they never coexist in the same list,
   // so keys stay unique.  Matching keys let FlatList reuse the cell when a catalog
-  // entry transitions to a downloaded story — avoiding an unmount/mount cycle that
+  // entry transitions to a downloaded story -avoiding an unmount/mount cycle that
   // flashes a gap.
   const displayItemKeyExtractor = useCallback((item: StoryDisplayItem) =>
     item.type === 'story' ? item.data.id : item.data.storyId, []);
@@ -1130,7 +1130,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       {/* Content container with flex: 1 for proper layout - dynamic padding for scaled text */}
       <View style={{ flex: 1, paddingTop: insets.top + 90 + (textSizeScale - 1) * 40, zIndex: 10 }}>
 
-        {/* Story Type Filters — segmented row, visually distinct from theme tags */}
+        {/* Story Type Filters -segmented row, visually distinct from theme tags */}
         <View style={styles.typeFilterRow}>
           {STORY_TYPE_FILTERS.map((tf) => {
             const isActive = storyTypeFilters.has(tf.id);
@@ -1159,7 +1159,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
             );
           })}
 
-          {/* View mode toggle — carousel ↔ grid */}
+          {/* View mode toggle -carousel ↔ grid */}
           <Pressable
             onPress={handleViewModeToggle}
             hitSlop={10}
@@ -1201,7 +1201,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
           })}
         </ScrollView>
 
-        {/* Stories — Carousel or Grid view */}
+        {/* Stories -Carousel or Grid view */}
         {/* Disable scrolling when a story is selected to prevent position drift */}
         <ScrollView style={{ flex: 1 }} scrollEnabled={!isTransitioning && !shouldShowStoryReader && !isExpandingToReader}>
           {availableGenres.length === 0 && (selectedTags.size > 0 || storyTypeFilters.size < ALL_TYPE_FILTERS.size) && (
@@ -1358,7 +1358,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
         isPreInstalled={previewStory ? StoryLoader.isLocalStory(previewStory.id) : false}
       />
 
-      {/* Subscription Overlay — triggered from locked catalog cards */}
+      {/* Subscription Overlay -triggered from locked catalog cards */}
       <SubscriptionOverlay
         visible={showSubscription}
         onClose={() => setShowSubscription(false)}

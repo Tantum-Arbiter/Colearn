@@ -30,7 +30,7 @@ jest.mock('@/components/account/terms-conditions-screen', () => ({
   },
 }));
 
-// Mock OnboardingScreen — passes through customContent, isNextDisabled, and
+// Mock OnboardingScreen -passes through customContent, isNextDisabled, and
 // buttonLabel so we can test the consent checkboxes rendered by OnboardingFlow.
 jest.mock('@/components/onboarding/onboarding-screen', () => ({
   OnboardingScreen: ({ title, buttonLabel, onNext, currentStep, totalSteps, customContent, isNextDisabled }: any) => {
@@ -146,7 +146,7 @@ describe('OnboardingFlow', () => {
 
     it('button label is the consent button translation key', () => {
       const tree = renderAtConsentStep(mockOnComplete);
-      // i18n mock returns raw key — in production this resolves to "I Agree"
+      // i18n mock returns raw key -in production this resolves to "I Agree"
       expect(toStr(tree)).toContain('onboarding.screens.consent.button');
     });
 

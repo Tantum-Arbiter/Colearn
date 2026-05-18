@@ -72,7 +72,7 @@ const TAG_SETS = [
   ['adventure', 'friendship'], ['silly', 'rhymes', 'animals'],
 ];
 
-// Page text templates — each story gets unique page text based on animal + theme
+// Page text templates -each story gets unique page text based on animal + theme
 const PAGE_TEXTS = [
   (a, v) => `${a} wakes up early.\nToday is a special day!`,
   (a, v) => `${a} puts on a warm coat.\nTime to go outside!`,

@@ -471,7 +471,7 @@ export default {
     screens: {
       welcome: {
         title: 'Çocuğunuzla büyüyen\nhikayeler',
-        body: 'Müzik, enstrümanlar ve anlatımla interaktif hikayeler — hayal gücünü ateşlemek ve erken gelişimi desteklemek için tasarlandı.',
+        body: 'Müzik, enstrümanlar ve anlatımla interaktif hikayeler -hayal gücünü ateşlemek ve erken gelişimi desteklemek için tasarlandı.',
         button: 'İleri',
       },
       howItWorks: {
@@ -486,12 +486,12 @@ export default {
           music: 'Müzik ve enstrümanlar',
           musicDesc: 'Gerçek enstrüman sesleriyle ritim ve melodi öğrenin',
           voice: 'Sesiniz',
-          voiceDesc: 'Çocuğunuzun sizi duyması için anlatımlar kaydedin — uzaktan bile',
+          voiceDesc: 'Çocuğunuzun sizi duyması için anlatımlar kaydedin -uzaktan bile',
         },
       },
       family: {
         title: 'Aileler için yapıldı',
-        body: 'Ekran süresi koruması, rehberli oturumlar ve birlikte oyun araçları — birlikte kısa, anlamlı anlar için tasarlandı. Araştırmalar ortak katılımın en büyük faydaları sağladığını gösteriyor.',
+        body: 'Ekran süresi koruması, rehberli oturumlar ve birlikte oyun araçları -birlikte kısa, anlamlı anlar için tasarlandı. Araştırmalar ortak katılımın en büyük faydaları sağladığını gösteriyor.',
         button: 'İleri',
       },
       consent: {
@@ -501,10 +501,10 @@ export default {
         closeLabel: 'Kapat',
         dataSummary: {
           title: 'Ne topluyoruz ve neden',
-          profile: 'Görünen ad ve avatar — çocuğunuzun deneyimini kişiselleştirmek için',
-          reading: 'Okuma geçmişi, favoriler ve ilerleme — hikayeleri ve serileri takip etmek için',
-          screenTime: 'Ekran süresi oturumları — sağlıklı kullanımı yönetmeye yardımcı olmak için',
-          device: 'Cihaz türü ve uygulama sürümü — uygulamanın düzgün çalışması için',
+          profile: 'Görünen ad ve avatar -çocuğunuzun deneyimini kişiselleştirmek için',
+          reading: 'Okuma geçmişi, favoriler ve ilerleme -hikayeleri ve serileri takip etmek için',
+          screenTime: 'Ekran süresi oturumları -sağlıklı kullanımı yönetmeye yardımcı olmak için',
+          device: 'Cihaz türü ve uygulama sürümü -uygulamanın düzgün çalışması için',
           noSell: 'Verileri asla satmıyoruz ve reklam göstermiyoruz. Her şeyi istediğiniz zaman silebilirsiniz.',
         },
         checkboxes: {
@@ -533,7 +533,7 @@ export default {
     },
     benefits: {
       welcome: 'Çocuk gelişimi araştırmalarına dayalı',
-      howItWorks: 'Hikayeler · Müzik · Ses — tek uygulamada',
+      howItWorks: 'Hikayeler · Müzik · Ses -tek uygulamada',
       family: 'Çocuk gelişimi uzmanları tarafından önerilen',
       consent: 'Onayınız ailenizi korur',
     },
@@ -571,7 +571,7 @@ export default {
       },
       freeplay: {
         title: 'Serbest Çalma 🎹',
-        description: 'Herhangi bir enstrümanı özgürce çalın — kural yok, sadece eğlence! Seslerle deney yapın ve kendi müziğinizi yaratın.',
+        description: 'Herhangi bir enstrümanı özgürce çalın -kural yok, sadece eğlence! Seslerle deney yapın ve kendi müziğinizi yaratın.',
       },
       settings: {
         title: 'Ayarlar ⚙️',
@@ -835,7 +835,7 @@ export default {
     backToLibrary: 'Kütüphaneye Dön',
     backToMenu: 'Geri',
     noSongsAvailable: 'Bu enstrüman için şarkı bulunmuyor',
-    freeplayPrompt: 'Serbest çalma — herhangi bir notaya dokun!',
+    freeplayPrompt: 'Serbest çalma -herhangi bir notaya dokun!',
     difficulty: { easy: 'Kolay', medium: 'Orta', hard: 'Zor' },
     songs: {
       hotCrossBuns: 'Sıcak çörekler',
@@ -897,7 +897,7 @@ export default {
     uspStories: 'Çocuk gelişimini destekleyen hikâyeler',
     uspEducators: 'Eğitimciler tarafından incelenen yaşa uygun içerik',
     uspMusic: 'Etkileşimli müzik ve enstrüman pratiği',
-    uspNoAds: 'Reklam yok — küçükler için güvenli',
+    uspNoAds: 'Reklam yok -küçükler için güvenli',
     uspLanguages: '14 dilde mevcut',
     detailAllStories: 'Tüm hikâyeler açık',
     detailDownload50: '50 kitaba kadar indir',
@@ -908,7 +908,7 @@ export default {
     detailAllInstruments: 'Tüm enstrümanlar açık',
     detailEverythingPremium: 'Premium\'daki her şey',
     detailSave25: 'Aylığa göre %25 tasarruf',
-    // Guest mode — sign-in required
+    // Guest mode -sign-in required
     signInToSubscribe: 'Abone olmak için giriş yapın',
     signInRequiredTitle: 'Giriş gerekli',
     signInRequiredMessage: 'Abone olmadan önce giriş yapmanız gerekmektedir. Aboneliğiniz hesabınıza bağlanarak tüm cihazlarınızda erişebilirsiniz.',

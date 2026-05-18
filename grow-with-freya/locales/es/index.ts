@@ -500,7 +500,7 @@ export default {
     screens: {
       welcome: {
         title: 'Historias que crecen\ncon tu hijo',
-        body: 'Historias interactivas con música, instrumentos y narración — diseñadas para despertar la imaginación y apoyar el desarrollo temprano.',
+        body: 'Historias interactivas con música, instrumentos y narración -diseñadas para despertar la imaginación y apoyar el desarrollo temprano.',
         button: 'Siguiente',
       },
       howItWorks: {
@@ -515,12 +515,12 @@ export default {
           music: 'Música e instrumentos',
           musicDesc: 'Aprende ritmo y melodía con sonidos de instrumentos reales',
           voice: 'Tu voz',
-          voiceDesc: 'Graba narraciones para que tu hijo te escuche — incluso a distancia',
+          voiceDesc: 'Graba narraciones para que tu hijo te escuche -incluso a distancia',
         },
       },
       family: {
         title: 'Hecho para familias',
-        body: 'Protección de tiempo de pantalla, sesiones guiadas y herramientas de juego compartido — diseñado para momentos cortos y significativos juntos. La investigación muestra que la participación conjunta ofrece los mayores beneficios.',
+        body: 'Protección de tiempo de pantalla, sesiones guiadas y herramientas de juego compartido -diseñado para momentos cortos y significativos juntos. La investigación muestra que la participación conjunta ofrece los mayores beneficios.',
         button: 'Siguiente',
       },
       consent: {
@@ -530,10 +530,10 @@ export default {
         closeLabel: 'Cerrar',
         dataSummary: {
           title: 'Qué recopilamos y por qué',
-          profile: 'Nombre y avatar — para personalizar la experiencia de tu hijo/a',
-          reading: 'Historial de lectura, favoritos y progreso — para seguir historias y rachas',
-          screenTime: 'Sesiones de tiempo de pantalla — para gestionar un uso saludable',
-          device: 'Tipo de dispositivo y versión de la app — para que la app funcione correctamente',
+          profile: 'Nombre y avatar -para personalizar la experiencia de tu hijo/a',
+          reading: 'Historial de lectura, favoritos y progreso -para seguir historias y rachas',
+          screenTime: 'Sesiones de tiempo de pantalla -para gestionar un uso saludable',
+          device: 'Tipo de dispositivo y versión de la app -para que la app funcione correctamente',
           noSell: 'Nunca vendemos datos ni mostramos anuncios. Puedes borrar todo en cualquier momento.',
         },
         checkboxes: {
@@ -562,7 +562,7 @@ export default {
     },
     benefits: {
       welcome: 'Respaldado por investigación en desarrollo infantil',
-      howItWorks: 'Historias · Música · Voz — todo en una app',
+      howItWorks: 'Historias · Música · Voz -todo en una app',
       family: 'Recomendado por expertos en desarrollo infantil',
       consent: 'Tu consentimiento protege a tu familia',
     },
@@ -602,7 +602,7 @@ export default {
       },
       freeplay: {
         title: 'Juego Libre 🎹',
-        description: 'Toca libremente cualquier instrumento — ¡sin reglas, solo diversión! Experimenta con sonidos y crea tu propia música.',
+        description: 'Toca libremente cualquier instrumento -¡sin reglas, solo diversión! Experimenta con sonidos y crea tu propia música.',
       },
       settings: {
         title: 'Configuración ⚙️',
@@ -742,7 +742,7 @@ export default {
     backToLibrary: 'Volver a la biblioteca',
     backToMenu: 'Volver',
     noSongsAvailable: 'No hay canciones disponibles para este instrumento',
-    freeplayPrompt: 'Juego libre — ¡toca cualquier nota!',
+    freeplayPrompt: 'Juego libre -¡toca cualquier nota!',
     difficulty: { easy: 'Fácil', medium: 'Medio', hard: 'Difícil' },
     songs: {
       hotCrossBuns: 'Bollos cruzados',
@@ -806,7 +806,7 @@ export default {
     uspStories: 'Historias diseñadas para apoyar el desarrollo infantil',
     uspEducators: 'Contenido apropiado para la edad, revisado por educadores',
     uspMusic: 'Música interactiva y práctica de instrumentos',
-    uspNoAds: 'Sin anuncios, nunca — seguro para los pequeños',
+    uspNoAds: 'Sin anuncios, nunca -seguro para los pequeños',
     uspLanguages: 'Disponible en 14 idiomas',
     detailAllStories: 'Todas las historias desbloqueadas',
     detailDownload50: 'Descarga hasta 50 libros',
@@ -817,7 +817,7 @@ export default {
     detailAllInstruments: 'Todos los instrumentos desbloqueados',
     detailEverythingPremium: 'Todo lo de Premium',
     detailSave25: 'Ahorra un 25% respecto al plan mensual',
-    // Guest mode — sign-in required
+    // Guest mode -sign-in required
     signInToSubscribe: 'Inicia sesión para suscribirte',
     signInRequiredTitle: 'Inicio de sesión requerido',
     signInRequiredMessage: 'Debes iniciar sesión antes de suscribirte. Tu suscripción se vinculará a tu cuenta para que puedas acceder desde todos tus dispositivos.',

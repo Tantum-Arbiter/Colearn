@@ -117,7 +117,7 @@ describe('Batch Sync Integration Flow (On-Demand Model)', () => {
       expect(stats.storiesUpdated).toBe(2);
       expect(stats.assetsDownloaded).toBe(0); // No downloads at startup
 
-      // Verify progress phases — no download phases
+      // Verify progress phases -no download phases
       const phases = progressLog.map(p => p.phase);
       expect(phases).toContain('version-check');
       expect(phases).toContain('fetching-delta');

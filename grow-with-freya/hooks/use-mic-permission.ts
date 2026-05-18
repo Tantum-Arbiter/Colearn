@@ -1,5 +1,5 @@
 /**
- * useMicPermission — Shared microphone permission hook
+ * useMicPermission -Shared microphone permission hook
  *
  * Centralizes mic permission state so it is only requested ONCE per app session,
  * regardless of whether recording mode or breath detection triggers the request first.
@@ -9,7 +9,7 @@
  *   Without a shared state, a first-time user could see TWO permission prompts
  *   if they enter record mode and then hit a music challenge page (or vice versa).
  *   On iOS, the second prompt is a no-op (OS caches the result), but the UX is
- *   still jarring — the app shouldn't call requestPermissionsAsync() twice.
+ *   still jarring -the app shouldn't call requestPermissionsAsync() twice.
  *
  * How it works:
  *   1. On mount, checks current permission status (no prompt) via getPermissionsAsync()
@@ -21,8 +21,8 @@
  * Usage:
  *   const mic = useMicPermission();
  *   // mic.status: 'undetermined' | 'granted' | 'denied'
- *   // mic.requestPermission() — prompts if undetermined, no-op if already resolved
- *   // mic.isGranted — shortcut for status === 'granted'
+ *   // mic.requestPermission() -prompts if undetermined, no-op if already resolved
+ *   // mic.isGranted -shortcut for status === 'granted'
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -38,12 +38,12 @@ export interface MicPermissionResult {
   isGranted: boolean;
   isDenied: boolean;
   isUndetermined: boolean;
-  /** Request mic permission. Only prompts once — subsequent calls return cached result. */
+  /** Request mic permission. Only prompts once -subsequent calls return cached result. */
   requestPermission: () => Promise<MicPermissionStatus>;
 }
 
 // ============================================================================
-// Module-level singleton state — shared across ALL instances of the hook.
+// Module-level singleton state -shared across ALL instances of the hook.
 // This ensures that if useVoiceRecording and useBreathDetector both call
 // useMicPermission(), they share the same cached permission result.
 // ============================================================================
@@ -66,7 +66,7 @@ async function checkCurrentPermission(): Promise<MicPermissionStatus> {
     // Note: on iOS, getPermissionsAsync doesn't exist in expo-audio.
     // requestRecordingPermissionsAsync() returns the current status without
     // prompting if permission was already granted or permanently denied.
-    // On first call with 'undetermined', it WILL prompt — so we only
+    // On first call with 'undetermined', it WILL prompt -so we only
     // call this from requestPermission(), not from the initial check.
 
     // Actually, expo-audio's AudioModule doesn't have getPermissionsAsync,
@@ -85,7 +85,7 @@ async function checkCurrentPermission(): Promise<MicPermissionStatus> {
  * Uses a deduplication lock so even concurrent calls only prompt once.
  */
 async function doRequestPermission(): Promise<MicPermissionStatus> {
-  // Already resolved — don't prompt again
+  // Already resolved -don't prompt again
   if (cachedStatus !== 'undetermined') {
     return cachedStatus;
   }

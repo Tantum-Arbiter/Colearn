@@ -108,7 +108,7 @@ class AccountDeletionServiceTest {
     @Test
     @DisplayName("Multi-device: revokes sessions on multiple devices before deletion")
     void deleteAccount_MultiDevice_RevokesAllSessions() throws Exception {
-        // Arrange — 3 sessions across different devices
+        // Arrange -3 sessions across different devices
         UserSession session1 = createSession("sess-1", "iphone-A", "ios");
         UserSession session2 = createSession("sess-2", "ipad-B", "ios");
         UserSession session3 = createSession("sess-3", "pixel-C", "android");
@@ -129,7 +129,7 @@ class AccountDeletionServiceTest {
         // Act
         deletionService.deleteAccount(USER_ID).get();
 
-        // Assert — all 3 sessions were revoked and then deleted
+        // Assert -all 3 sessions were revoked and then deleted
         verify(metricsService).recordAccountDeletionSessionsRevoked(3);
         verify(userSessionRepository).deleteAllUserSessions(USER_ID);
     }
@@ -163,7 +163,7 @@ class AccountDeletionServiceTest {
         // Act
         deletionService.deleteAccount(USER_ID).get();
 
-        // Assert — profile delete was never called
+        // Assert -profile delete was never called
         verify(userProfileRepository, never()).delete(anyString());
         verify(metricsService).recordAccountDeletionStep(eq("delete_profile"), eq(true), anyLong());
     }
@@ -238,11 +238,11 @@ class AccountDeletionServiceTest {
     @Test
     @DisplayName("Concurrent deletion for same user is rejected")
     void deleteAccount_ConcurrentDeletion_Rejected() throws Exception {
-        // Arrange — make the first deletion hang
+        // Arrange -make the first deletion hang
         CompletableFuture<Optional<User>> hangingFuture = new CompletableFuture<>();
         when(userRepository.findById(USER_ID)).thenReturn(hangingFuture);
 
-        // Act — start first deletion (will hang on findById)
+        // Act -start first deletion (will hang on findById)
         deletionService.deleteAccount(USER_ID);
 
         // Second deletion should fail immediately

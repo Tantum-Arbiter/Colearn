@@ -50,7 +50,7 @@ interface MusicSheetOverlayProps {
   onNotePressOut?: (note: string) => void;
   /** When true, closing the overlay fades out instead of sliding down */
   fadeOutOnly?: boolean;
-  /** Tempo hint in BPM — controls preview playback speed (default: 120) */
+  /** Tempo hint in BPM -controls preview playback speed (default: 120) */
   bpm?: number;
 }
 
@@ -97,7 +97,7 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
     playbackIndexRef.current = playbackIndex;
   }, [playbackIndex]);
 
-  // Stop playback — release any held note and reset.
+  // Stop playback -release any held note and reset.
   // Uses playbackIndexRef to always have the current value (avoids stale closures).
   const stopPlayback = useCallback(() => {
     isPlayingRef.current = false;
@@ -120,7 +120,7 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
     if (!isPlayingRef.current) return;
 
     if (idx >= requiredSequence.length) {
-      // Sequence complete — stop
+      // Sequence complete -stop
       stopPlayback();
       return;
     }
@@ -175,7 +175,7 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
     }
   }, [visible]);
 
-  // Cleanup on unmount — ensure no dangling timers AND release held notes.
+  // Cleanup on unmount -ensure no dangling timers AND release held notes.
   // Uses the ref so we always call the latest stopPlayback (with current
   // onNotePressOut and requiredSequence) rather than a stale closure.
   useEffect(() => {
@@ -200,7 +200,7 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
       slideY.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.ease) });
     } else if (isRendered) {
       if (fadeOutOnly) {
-        // Fade out only (no slide) — used when transitioning to instrument view
+        // Fade out only (no slide) -used when transitioning to instrument view
         overlayOpacity.value = withTiming(
           0,
           { duration: 300, easing: Easing.in(Easing.ease) },
@@ -552,7 +552,7 @@ const styles = StyleSheet.create({
     maxHeight: '94%',
   },
   scrollView: {
-    // Do NOT use flex: 1 here — the parent container is content-sized (no
+    // Do NOT use flex: 1 here -the parent container is content-sized (no
     // explicit height), so flex: 1 would collapse the ScrollView to 0 height.
     // Instead we omit flex and apply a calculated maxHeight inline (see render).
   },

@@ -265,7 +265,7 @@ describe('CacheManager', () => {
           mimeType: 'image/png',
           md5: undefined,
         });
-        // After download, file validation checks size — mock a valid file
+        // After download, file validation checks size -mock a valid file
         mockFileSystem.getInfoAsync.mockResolvedValue(createFileInfo({ size: 2048 }));
 
         const result = await CacheManager.downloadAndCacheAsset(

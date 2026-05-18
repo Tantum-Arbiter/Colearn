@@ -1,4 +1,4 @@
-# Phase 3 — Monetisation & Download Management
+# Phase 3 -Monetisation & Download Management
 
 > **For LLMs / AI agents**: This document defines the subscription model and download cap system.
 > Read this file before implementing any paywall, subscription, download limit, or catalog browsing feature.
@@ -51,7 +51,7 @@ systems. Third-party payment processors (Stripe, etc.) cannot be used for in-app
 | `freya_basic_monthly` | Auto-renewable subscription | £5.99/mo | `basic_access` |
 | `freya_premium_monthly` | Auto-renewable subscription | £10/mo | `premium_access` |
 
-### Architecture — Client-Side Only
+### Architecture -Client-Side Only
 
 Subscription validation does **not** go through the gateway. RevenueCat's SDK validates receipts
 directly with Apple/Google servers. The client decides content access based on the entitlement
@@ -67,12 +67,12 @@ Apple/Google Servers ←→ RevenueCat Servers ←→ RevenueCat SDK (client)
 ```
 
 **Why not gateway-side gating?**
-- Stories are cached locally as plain JSON + images — a determined user could access them regardless
+- Stories are cached locally as plain JSON + images -a determined user could access them regardless
 - The real payment security is handled by Apple/Google infrastructure
 - Adding gateway enforcement adds complexity without meaningful security gain
-- RevenueCat's server-side receipt validation IS the server validation — just not our server
+- RevenueCat's server-side receipt validation IS the server validation -just not our server
 
-### Content Delivery Model — Catalog Browse + On-Demand Download
+### Content Delivery Model -Catalog Browse + On-Demand Download
 
 The current bulk delta-sync model (`batch-sync-service.ts`) is replaced with a catalog-first
 approach. Users browse a visual catalog and download individual stories on tap.
@@ -177,12 +177,12 @@ and what patterns to follow:
 - Super: full offline access with no explicit download cap
 - Content is small (text + audio), so storage isn't a concern
 
-#### Epic! (Children's Books — closest competitor)
+#### Epic! (Children's Books -closest competitor)
 - Free: 1 book per day
 - Paid: unlimited reading, offline downloads
 - Download limit: ~50 books at a time
 - Simple "Remove Download" button per book
-- No expiry — downloads stay until manually removed or app uninstalled
+- No expiry -downloads stay until manually removed or app uninstalled
 
 #### Khan Academy Kids (Education)
 - Free (non-profit model)
@@ -193,10 +193,10 @@ and what patterns to follow:
 
 Based on industry patterns, here is the recommended download cap implementation:
 
-#### Rule 1: Hard Cap Per Tier — Enforced Locally
+#### Rule 1: Hard Cap Per Tier -Enforced Locally
 
 ```
-Free:    2 stories (+ 1 referral bonus) — bundled, no download management needed
+Free:    2 stories (+ 1 referral bonus) -bundled, no download management needed
 Basic:   50 stories maximum downloaded at any time
 Premium: 125 stories maximum downloaded at any time
 ```
@@ -216,7 +216,7 @@ User taps "Download" on story #51 (basic tier)
 #### Rule 2: No Expiry on Downloads
 
 Unlike Spotify/Netflix, downloaded stories do **not** expire. Children's content is re-read
-repeatedly — a 3-year-old will read the same story 50 times. Expiring downloads would be
+repeatedly -a 3-year-old will read the same story 50 times. Expiring downloads would be
 hostile to the core use case.
 
 However, **subscription lapse** locks access:
@@ -289,7 +289,7 @@ Pre-fetched stories count toward the download limit. This feature should:
 - Be toggleable in Settings ("Auto-download new stories")
 - Default to ON for premium, unavailable for basic/free
 
-#### Rule 7: Upgrade Prompts — Contextual, Not Aggressive
+#### Rule 7: Upgrade Prompts -Contextual, Not Aggressive
 
 Upgrade prompts should only appear at natural friction points, never interrupt
 active reading. This follows Apple's Human Interface Guidelines and avoids
@@ -315,10 +315,10 @@ If the device is offline, the app should:
 - Show a subtle banner: "Go online to check for new stories"
 - After 7 days offline, show: "Connect to verify your subscription" (still allow access)
 
-RevenueCat's SDK handles this natively — it caches the last known entitlement state
+RevenueCat's SDK handles this natively -it caches the last known entitlement state
 and only re-verifies when connectivity is available.
 
-### External Setup (Manual — Not Code)
+### External Setup (Manual -Not Code)
 
 These steps must be completed before RevenueCat can be integrated in the codebase:
 
@@ -365,7 +365,7 @@ array `downloadedStoryIds` is the source of truth.
 
 **Tier transitions:**
 When a user upgrades (free → basic → premium), the limit increases immediately.
-When a user downgrades (premium → basic), downloads above 50 are **not** deleted — they
+When a user downgrades (premium → basic), downloads above 50 are **not** deleted -they
 become locked until the user manually removes enough to get below the new limit, or
 re-upgrades. This follows Spotify's approach.
 
@@ -377,23 +377,23 @@ no download capability. Signing in (even without subscribing) unlocks catalog br
 
 ## 3. Testing Subscriptions (Sandbox & License Testing)
 
-### Apple — Sandbox Test Accounts
+### Apple -Sandbox Test Accounts
 
 Apple provides dedicated sandbox accounts for testing in-app purchases without real charges.
 
 1. Go to [App Store Connect](https://appstoreconnect.apple.com) → Users and Access → Sandbox → Testers
-2. Create a sandbox tester (use a throwaway email — doesn't need to be a real inbox)
+2. Create a sandbox tester (use a throwaway email -doesn't need to be a real inbox)
 3. On the test device: Settings → App Store → sign out of your real Apple ID
-4. When the app triggers a purchase, iOS prompts sign-in — use the sandbox account
+4. When the app triggers a purchase, iOS prompts sign-in -use the sandbox account
 5. All purchases are free and instant
 6. Subscriptions auto-renew on an accelerated schedule:
    - Weekly → every 3 minutes
    - Monthly → every 5 minutes
    - Yearly → every 1 hour
 
-**Important:** Never sign into the main App Store with a sandbox account — only use it when the in-app purchase dialog appears.
+**Important:** Never sign into the main App Store with a sandbox account -only use it when the in-app purchase dialog appears.
 
-### Google — License Testers
+### Google -License Testers
 
 Google uses real Google accounts but bypasses payment for designated testers.
 
@@ -416,7 +416,7 @@ Purchases.setSimulatesAskToBuyInSandbox(true);
 
 - Sandbox purchases appear separately in the RevenueCat dashboard
 - Debug logs show the full purchase flow: offering → product → transaction → entitlement
-- No special code paths needed — sandbox accounts go through the real purchase flow, Apple/Google just don't charge money
+- No special code paths needed -sandbox accounts go through the real purchase flow, Apple/Google just don't charge money
 
 ### Debug Menu (Recommended)
 
@@ -475,7 +475,7 @@ Apple/Google App Store policies **require** a functioning "Delete My Account" fl
 
 ### What Needs Building
 
-#### Backend: `DELETE /api/account` — Cascading Account Deletion
+#### Backend: `DELETE /api/account` -Cascading Account Deletion
 
 A single authenticated endpoint that permanently deletes all server-side data for the
 requesting user. Must cascade across all collections:
@@ -533,7 +533,7 @@ User taps "Delete My Account"
 #### Sentry Considerations
 
 - `sendDefaultPii: false` is already set ✅
-- `mobileReplayIntegration()` records screen replays — if a child's profile info is
+- `mobileReplayIntegration()` records screen replays -if a child's profile info is
   visible on screen, this captures it. Consider removing replay in production or masking
   text fields with `Sentry.setTag('maskAllText', true)`.
 - On account deletion, call `Sentry.setUser(null)` to disassociate future events.

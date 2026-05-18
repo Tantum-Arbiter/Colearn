@@ -64,7 +64,7 @@ if (failures.length > 0) {
 const dupes = ids.filter((id, i) => ids.indexOf(id) !== i);
 console.log(`\nDuplicate IDs: ${dupes.length > 0 ? dupes.join(', ') : 'None'}`);
 
-// Asset check — verify each story dir has cover images
+// Asset check -verify each story dir has cover images
 let missingAssets = 0;
 for (const d of dirs) {
   const coverDir = path.join(dir, d, 'cover');

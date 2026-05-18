@@ -85,7 +85,7 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
   const { scaledFontSize, scaledButtonSize, textSizeScale } = useAccessibility();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
-  // Phase state — start directly on songs with first instrument selected
+  // Phase state -start directly on songs with first instrument selected
   const [phase, setPhase] = useState<PractisePhase>('songs');
   const [selectedInstrumentId, setSelectedInstrumentId] = useState<string>(
     () => {
@@ -112,7 +112,7 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
 
   // Fade-in animation for the rotated instrument overlay.
   // The overlay is rotated 90° to simulate landscape within the portrait screen.
-  // Only the content fades in — the blur background stays visible throughout.
+  // Only the content fades in -the blur background stays visible throughout.
   const instrumentContentOpacity = useSharedValue(0);
   const instrumentOverlayAnimatedStyle = useAnimatedStyle(() => ({
     opacity: instrumentContentOpacity.value,
@@ -147,7 +147,7 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
     enabled: phase === 'playing',
   });
 
-  // Audio session control — lets useMusicChallenge pause/resume the recorder
+  // Audio session control -lets useMusicChallenge pause/resume the recorder
   // internally so notes always play at full speaker volume in blow mode.
   const audioSessionControl = useMemo(() => ({
     pauseForPlayback: breathDetector.pauseForPlayback,
@@ -175,7 +175,7 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
   const currentPlayModeRef = useRef<'blow' | 'press'>('press');
 
   // Sync breath detector state to music challenge (matches story-book-reader / freeplay).
-  // Only in blow mode — in press mode, MusicChallengeUI sets breathActive(true)
+  // Only in blow mode -in press mode, MusicChallengeUI sets breathActive(true)
   // permanently, and we must not overwrite it with the mic's false signal.
   useEffect(() => {
     if (phase === 'playing' && currentPlayModeRef.current === 'blow') {
@@ -253,7 +253,7 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
   // change recreates onSelect → recreates Gesture.Race → crashes
   // react-native-gesture-handler on the native side.
   const handleInlineInstrumentChange = useCallback((instrumentId: string) => {
-    // Ignore if the same instrument is already selected — the carousel pan/arrow
+    // Ignore if the same instrument is already selected -the carousel pan/arrow
     // handlers can fire onSelect even when the centered item hasn't changed.
     if (instrumentId === selectedInstrumentIdRef.current) return;
 
@@ -444,16 +444,16 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
   if (phase === 'playing' && instrumentDef && selectedSong) {
     return (
       <View style={styles.container}>
-        {/* Background behind the blur — same as stories page */}
+        {/* Background behind the blur -same as stories page */}
         {renderStoriesBackground()}
 
-        {/* Static blur overlay — always visible, no fade, no rotation.
+        {/* Static blur overlay -always visible, no fade, no rotation.
             pointerEvents="none" so touches pass through to the rotated instrument view. */}
         <View style={styles.musicChallengeOverlay} pointerEvents="none">
           <BlurView intensity={40} style={StyleSheet.absoluteFill} tint="dark" />
         </View>
 
-        {/* Rotated instrument content — fades in over the static blur */}
+        {/* Rotated instrument content -fades in over the static blur */}
         <Animated.View style={[styles.musicChallengeOverlayRotated, instrumentOverlayAnimatedStyle]}>
           <MusicChallengeUI
             challenge={musicChallenge}
@@ -472,7 +472,7 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
             insetsOverride={rotatedInsets}
           />
 
-          {/* Top Left Controls — Exit (✕) button, matching freeplay/story layout.
+          {/* Top Left Controls -Exit (✕) button, matching freeplay/story layout.
               Inside the rotated view, "top" = portrait left edge, "left" = portrait bottom.
               Use portrait insets remapped for the 90° rotation:
                 rotated top    ← insets.left  (usually 0)
@@ -497,7 +497,7 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
             </View>
           )}
 
-          {/* Top Right Controls — Sound + Burger menu, matching freeplay/story layout */}
+          {/* Top Right Controls -Sound + Burger menu, matching freeplay/story layout */}
           {!musicUiHidden && (
             <View style={[styles.topRightControls, {
               paddingTop: Math.max(insets.left + 20, 20),
@@ -520,7 +520,7 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
             </View>
           )}
 
-          {/* Settings overlay — tap outside to close */}
+          {/* Settings overlay -tap outside to close */}
           {showSettingsMenu && (
             <Pressable style={styles.settingsOverlay} onPress={() => setShowSettingsMenu(false)} />
           )}
@@ -562,7 +562,7 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
 
         </Animated.View>
 
-        {/* Music Sheet Overlay — rendered outside the rotated parent so it
+        {/* Music Sheet Overlay -rendered outside the rotated parent so it
             always displays in portrait orientation without rotation hacks. */}
         <MusicSheetOverlay
           visible={showMusicSheet}
@@ -612,17 +612,17 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
     <View style={styles.container}>
       {renderStoriesBackground()}
 
-      {/* Shared page header — matches story selection screen */}
+      {/* Shared page header -matches story selection screen */}
       <PageHeader
         title={t('music.songLibrary')}
         onBack={handleBack}
         useHomeIcon
       />
 
-      {/* Song list — padded below the header like story selection */}
+      {/* Song list -padded below the header like story selection */}
       <View style={{ flex: 1, paddingTop: insets.top + 90 + (textSizeScale - 1) * 40, zIndex: 10 }}>
 
-      {/* Instrument selector — 3D coverflow carousel */}
+      {/* Instrument selector -3D coverflow carousel */}
       <InstrumentCarousel
         selectedInstrumentId={selectedInstrumentId}
         onSelect={handleInlineInstrumentChange}
@@ -705,7 +705,7 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
       />
       </View>
 
-      {/* Subscription Overlay — triggered from locked instrument tap */}
+      {/* Subscription Overlay -triggered from locked instrument tap */}
       <SubscriptionOverlay
         visible={showSubscription}
         onClose={() => setShowSubscription(false)}
@@ -737,7 +737,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.35)',
   },
-  // Rotated version for the practice screen — rotated 90° to simulate landscape.
+  // Rotated version for the practice screen -rotated 90° to simulate landscape.
   // Positioning (left/top) and dimensions (width/height) are set by the animated style.
   musicChallengeOverlayRotated: {
     position: 'absolute',

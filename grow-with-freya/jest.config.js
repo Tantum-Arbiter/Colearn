@@ -91,7 +91,7 @@ module.exports = {
     }],
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(react-native|@react-native|@react-native-community|expo|@expo|expo-av|expo-notifications|expo-device|expo-auth-session|expo-apple-authentication|expo-secure-store|expo-crypto|expo-web-browser|expo-constants|expo-modules-core|expo-image|expo-blur|react-native-reanimated|react-native-svg|@react-navigation|zustand|react-native-worklets|react-native-safe-area-context)/)',
+    'node_modules/(?!(react-native|@react-native|@react-native-community|expo|@expo|expo-av|expo-notifications|expo-device|expo-auth-session|expo-apple-authentication|expo-secure-store|expo-crypto|expo-web-browser|expo-constants|expo-modules-core|expo-image|expo-blur|react-native-reanimated|react-native-svg|@react-navigation|zustand|react-native-worklets|react-native-safe-area-context|react-native-purchases)/)',
   ],
   // Temporarily lowered coverage thresholds for CI/CD pipeline setup
   coverageThreshold: {

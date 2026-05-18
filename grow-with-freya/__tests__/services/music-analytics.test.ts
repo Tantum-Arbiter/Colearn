@@ -58,7 +58,7 @@ describe('MusicAnalytics', () => {
   });
 
   it('should accept correct parameter types for all tracking functions', () => {
-    // Verify type compatibility — these just need to not throw
+    // Verify type compatibility -these just need to not throw
     trackMusicPageViewed('s', 'p', 'i');
     trackMusicModeOpened('s', 'p', false);
     trackMicPermissionResult(true);

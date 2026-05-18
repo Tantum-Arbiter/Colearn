@@ -1,5 +1,5 @@
 /**
- * Tests for useMicPermission hook — shared microphone permission management.
+ * Tests for useMicPermission hook -shared microphone permission management.
  *
  * Key behaviors tested:
  * 1. Permission is only requested ONCE (singleton pattern)
@@ -77,7 +77,7 @@ describe('useMicPermission', () => {
     });
   });
 
-  describe('singleton behavior — permission requested only ONCE', () => {
+  describe('singleton behavior -permission requested only ONCE', () => {
     it('should call requestRecordingPermissionsAsync only once across multiple requestPermission calls', async () => {
       const { result } = renderHook(() => useMicPermission());
 
@@ -91,7 +91,7 @@ describe('useMicPermission', () => {
         await result.current.requestPermission();
       });
 
-      // Should only have been called ONCE — subsequent calls return cached result
+      // Should only have been called ONCE -subsequent calls return cached result
       expect(mockRequestPermissions).toHaveBeenCalledTimes(1);
     });
 
@@ -116,7 +116,7 @@ describe('useMicPermission', () => {
       expect(mockRequestPermissions).toHaveBeenCalledTimes(1);
     });
 
-    it('should not re-prompt after denial — returns cached denied', async () => {
+    it('should not re-prompt after denial -returns cached denied', async () => {
       mockRequestPermissions.mockResolvedValue({ granted: false });
 
       const { result } = renderHook(() => useMicPermission());
@@ -126,7 +126,7 @@ describe('useMicPermission', () => {
       });
       expect(result.current.isDenied).toBe(true);
 
-      // Call again — should NOT call the native API again
+      // Call again -should NOT call the native API again
       await act(async () => {
         const status = await result.current.requestPermission();
         expect(status).toBe('denied');

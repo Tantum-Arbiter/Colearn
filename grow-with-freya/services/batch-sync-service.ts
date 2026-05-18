@@ -119,7 +119,7 @@ export class BatchSyncService {
       stats.apiCalls++;
 
       if (!versionCheck.serverVersion) {
-        log.info('Offline — using cached content');
+        log.info('Offline -using cached content');
         stats.fromCache = true;
         stats.endTime = Date.now();
         stats.durationMs = stats.endTime - stats.startTime;
@@ -129,7 +129,7 @@ export class BatchSyncService {
 
       // Check if sync is needed
       if (!versionCheck.needsStorySync && !versionCheck.needsAssetSync) {
-        log.info('Stories up to date — refreshing catalog URLs…');
+        log.info('Stories up to date -refreshing catalog URLs…');
         // Stories are up to date, but we still need to call delta to get fresh catalog
         // entries with valid signed thumbnail URLs (they expire after 1 hour)
         try {
@@ -148,9 +148,9 @@ export class BatchSyncService {
         return stats;
       }
 
-      log.info(`Sync needed — local v${versionCheck.localVersion?.stories || 0} → server v${versionCheck.serverVersion.stories}`);
+      log.info(`Sync needed -local v${versionCheck.localVersion?.stories || 0} → server v${versionCheck.serverVersion.stories}`);
 
-      // Phase 2: Fetch delta content (1 API call) — metadata only, no asset downloads
+      // Phase 2: Fetch delta content (1 API call) -metadata only, no asset downloads
       log.info('Fetching delta content…');
       onProgress?.({ phase: 'fetching-delta', progress: 15, message: 'Fetching updates...' });
 
@@ -168,7 +168,7 @@ export class BatchSyncService {
       }
 
       // Phase 3: Save only bundled story metadata updates to cache
-      // CMS-only stories are NOT saved to cache — they appear in the catalog for on-demand download
+      // CMS-only stories are NOT saved to cache -they appear in the catalog for on-demand download
       onProgress?.({ phase: 'saving', progress: 60, message: 'Updating stories...' });
 
       const bundledIds = new Set(ALL_STORIES.map(s => s.id));

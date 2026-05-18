@@ -123,7 +123,7 @@ describe('BatchSyncService', () => {
       expect(stats.apiCalls).toBe(1);
     });
 
-    it('should sync metadata only — no asset downloads (on-demand model)', async () => {
+    it('should sync metadata only -no asset downloads (on-demand model)', async () => {
       const versionCheck: VersionCheckResult = {
         localVersion: { stories: 5, assets: 3, lastUpdated: new Date().toISOString() },
         serverVersion: { stories: 10, assets: 5, lastUpdated: new Date().toISOString() },

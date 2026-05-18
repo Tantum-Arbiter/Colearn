@@ -47,7 +47,7 @@ download_and_convert() {
   fi
 }
 
-# === FLUTE (C5, D5, E5, F5, G5, A5) — uses mezzo-forte ===
+# === FLUTE (C5, D5, E5, F5, G5, A5) -uses mezzo-forte ===
 echo "🎶 Flute..."
 mkdir -p "$NOTES_DIR/flute"
 for note in C D E F G A; do
@@ -55,7 +55,7 @@ for note in C D E F G A; do
 done
 echo ""
 
-# === CLARINET (C5, D5, E5, F5, G5) — uses forte (no mezzo-forte available) ===
+# === CLARINET (C5, D5, E5, F5, G5) -uses forte (no mezzo-forte available) ===
 echo "🎵 Clarinet..."
 mkdir -p "$NOTES_DIR/clarinet"
 for note in C D E F G; do
@@ -63,7 +63,7 @@ for note in C D E F G; do
 done
 echo ""
 
-# === SAXOPHONE (C5, D5, E5, F5, G5) — uses forte (mezzo-forte not available for all notes) ===
+# === SAXOPHONE (C5, D5, E5, F5, G5) -uses forte (mezzo-forte not available for all notes) ===
 echo "🎷 Saxophone..."
 mkdir -p "$NOTES_DIR/saxophone"
 for note in C D E F G; do
@@ -71,15 +71,15 @@ for note in C D E F G; do
 done
 echo ""
 
-# === TRUMPET (C5, D5, E5, F5, G5, A5) — using Philharmonia trombone (similar brass timbre) ===
-echo "🎺 Trumpet (using trombone samples — similar brass timbre)..."
+# === TRUMPET (C5, D5, E5, F5, G5, A5) -using Philharmonia trombone (similar brass timbre) ===
+echo "🎺 Trumpet (using trombone samples -similar brass timbre)..."
 mkdir -p "$NOTES_DIR/trumpet"
 for note in C D E F G A; do
   download_and_convert "trombone" "$note" "5" "forte" "$NOTES_DIR/trumpet"
 done
 echo ""
 
-# === RECORDER (C5, D5, E5, F5, G5) — VCSL Baroque Soprano Recorder (CC0) ===
+# === RECORDER (C5, D5, E5, F5, G5) -VCSL Baroque Soprano Recorder (CC0) ===
 VCSL_BASE="https://raw.githubusercontent.com/sgossner/VCSL/master/Aerophones/Edge-blown%20Aerophones/Baroque%20Soprano%20Recorder/Sustain"
 echo "🪈 Recorder (VCSL Baroque Soprano Recorder, CC0)..."
 mkdir -p "$NOTES_DIR/recorder"
@@ -102,7 +102,7 @@ for note in C D E F G; do
 done
 echo ""
 
-# === OCARINA (C5, D5, E5, F5, G5) — mixed sources (all CC0) ===
+# === OCARINA (C5, D5, E5, F5, G5) -mixed sources (all CC0) ===
 echo "🎵 Ocarina (CC0 sources)..."
 mkdir -p "$NOTES_DIR/ocarina"
 

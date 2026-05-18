@@ -489,7 +489,7 @@ export default {
       },
       family: {
         title: '为家庭打造',
-        body: '屏幕时间保护、引导式活动和亲子互动工具 — 专为有意义的短暂亲子时光设计。研究表明，共同参与能带来最大益处。',
+        body: '屏幕时间保护、引导式活动和亲子互动工具 -专为有意义的短暂亲子时光设计。研究表明，共同参与能带来最大益处。',
         button: '下一步',
       },
       consent: {
@@ -499,10 +499,10 @@ export default {
         closeLabel: '关闭',
         dataSummary: {
           title: '我们收集什么以及为什么',
-          profile: '显示名称和头像 — 用于个性化您孩子的体验',
-          reading: '阅读历史、收藏和进度 — 用于跟踪故事和连续记录',
-          screenTime: '屏幕时间记录 — 帮助管理健康使用',
-          device: '设备类型和应用版本 — 确保应用正常运行',
+          profile: '显示名称和头像 -用于个性化您孩子的体验',
+          reading: '阅读历史、收藏和进度 -用于跟踪故事和连续记录',
+          screenTime: '屏幕时间记录 -帮助管理健康使用',
+          device: '设备类型和应用版本 -确保应用正常运行',
           noSell: '我们绝不出售数据或展示广告。您可以随时删除所有数据。',
         },
         checkboxes: {
@@ -531,7 +531,7 @@ export default {
     },
     benefits: {
       welcome: '基于儿童发展研究',
-      howItWorks: '故事 · 音乐 · 声音 — 一个应用全搞定',
+      howItWorks: '故事 · 音乐 · 声音 -一个应用全搞定',
       family: '儿童发展专家推荐',
       consent: '您的同意保护您的家庭',
     },
@@ -833,7 +833,7 @@ export default {
     backToLibrary: '返回曲库',
     backToMenu: '返回',
     noSongsAvailable: '该乐器没有可用歌曲',
-    freeplayPrompt: '自由演奏 — 点击任意音符！',
+    freeplayPrompt: '自由演奏 -点击任意音符！',
     difficulty: { easy: '简单', medium: '中等', hard: '困难' },
     songs: {
       hotCrossBuns: '热十字面包',
@@ -906,7 +906,7 @@ export default {
     detailAllInstruments: '所有乐器解锁',
     detailEverythingPremium: '高级版全部功能',
     detailSave25: '与月度相比节省25%',
-    // Guest mode — sign-in required
+    // Guest mode -sign-in required
     signInToSubscribe: '登录以订阅',
     signInRequiredTitle: '需要登录',
     signInRequiredMessage: '订阅前需要登录。您的订阅将与您的账户关联，以便在所有设备上访问。',

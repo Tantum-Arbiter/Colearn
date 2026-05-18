@@ -170,7 +170,7 @@ export class AssetDownloadUtils {
             } catch (error) {
               lastError = error instanceof Error ? error.message : 'Unknown error';
               if (attempt === ASSET_MAX_RETRIES) {
-                log.error(`Failed after ${ASSET_MAX_RETRIES + 1} attempts: ${path} — ${lastError}`);
+                log.error(`Failed after ${ASSET_MAX_RETRIES + 1} attempts: ${path} -${lastError}`);
                 return { success: false, path, error: lastError, size: 0 };
               }
             }

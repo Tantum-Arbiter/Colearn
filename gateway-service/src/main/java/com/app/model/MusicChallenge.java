@@ -42,7 +42,7 @@ public class MusicChallenge {
 
     @JsonProperty("successSongId")
     @PropertyName("successSongId")
-    private String successSongId; // Legacy — kept for backward compat
+    private String successSongId; // Legacy -kept for backward compat
 
     @JsonProperty("successStateId")
     @PropertyName("successStateId")

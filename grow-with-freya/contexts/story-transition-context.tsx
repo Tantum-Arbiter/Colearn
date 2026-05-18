@@ -123,7 +123,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   // Track when we're animating the cancel transition - blocks touches during animation
   const [isCancelAnimating, setIsCancelAnimating] = useState(false);
 
-  // Preview page browsing — swipe through story pages on the cover overlay
+  // Preview page browsing -swipe through story pages on the cover overlay
   const [previewPageIndex, setPreviewPageIndex] = useState(0);
   const [prevPreviewPageIndex, setPrevPreviewPageIndex] = useState<number | null>(null); // For crossfade
   const isPageFlipping = useRef(false); // Guards against concurrent flips
@@ -200,10 +200,10 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const bookRotation = useSharedValue(0); // Rotation in degrees - used to counter-rotate during screen rotation
   const [isExpandingToReader, setIsExpandingToReader] = useState(false);
 
-  // Levitation effect — gentle vertical bob while book is in flight
+  // Levitation effect -gentle vertical bob while book is in flight
   const levitationY = useSharedValue(0);
 
-  // Preview carousel — simple slide offset for page flip animation
+  // Preview carousel -simple slide offset for page flip animation
   const pageSlideX = useSharedValue(0);
 
   // Current compensated border radius - updated by bookExpansionAnimatedStyle
@@ -287,7 +287,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     // Phone portrait: book sits slightly above true center so the book+buttons group is centered
     // Tablet/landscape: buttons are to the side, so book itself is at true vertical center
     const targetCenterY = isPhonePortraitNow
-      ? height * 0.44  // Near center — leaves just enough room for mode buttons + begin button below
+      ? height * 0.44  // Near center -leaves just enough room for mode buttons + begin button below
       : height / 2;    // True center for tablets (buttons sit beside the book)
 
     // Current center position
@@ -309,7 +309,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     const targetBookY = targetCenterY - scaledHeight / 2;
     setTargetBookPosition({ x: targetBookX, y: targetBookY, width: scaledWidth, height: scaledHeight });
 
-    // Smooth bezier curve — gentle acceleration then long, soft deceleration
+    // Smooth bezier curve -gentle acceleration then long, soft deceleration
     const glideEasing = Easing.bezier(0.25, 0.1, 0.25, 1);
 
     // Animate card to center of screen
@@ -352,7 +352,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     // Show mode selection buttons after animation completes
     if (showButtons) {
       setTimeout(() => {
-        // Settle the levitation — ease back to 0 and stop
+        // Settle the levitation -ease back to 0 and stop
         levitationY.value = withTiming(0, { duration: 400, easing: Easing.out(Easing.quad) });
         setShowModeSelection(true);
       }, MOVE_TO_CENTER_DURATION + BUTTONS_DELAY);
@@ -395,11 +395,11 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     overlayOpacity.value = 0;
 
     // Start animation synchronously so it begins on the same frame as the overlay mount
-    // — withTiming runs on the UI thread and isn't affected by JS thread renders
+    // -withTiming runs on the UI thread and isn't affected by JS thread renders
     animateToCenter(cardLayout, screenWidth, screenHeight, true);
 
     // Defer image preloading until the animation has settled
-    // — Image.prefetch causes JS thread pressure that jitters the animation
+    // -Image.prefetch causes JS thread pressure that jitters the animation
     if (story) {
       InteractionManager.runAfterInteractions(() => {
         preloadStoryImages(story);
@@ -572,7 +572,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     }
   };
 
-  // User cancels (taps X) — book slides down, then background slides up
+  // User cancels (taps X) -book slides down, then background slides up
   const cancelTransition = async () => {
     log.debug('Cancelling transition');
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -615,7 +615,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
         easing: Easing.out(Easing.quad)
       });
 
-      // Complete — resetTransition will clear selectedStoryId and unmount overlay
+      // Complete -resetTransition will clear selectedStoryId and unmount overlay
       setTimeout(() => {
         resetTransition();
       }, SLIDE_DURATION + 50);
@@ -624,7 +624,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
   const resetTransition = () => {
     // First: unmount the overlay by clearing state
-    // Do NOT reset shared values here — they run on the UI thread immediately,
+    // Do NOT reset shared values here -they run on the UI thread immediately,
     // but React re-render is async. If we reset transitionX/Y/Scale to 0 now,
     // the book would snap back to its tile position for 1 frame before the overlay unmounts.
     setIsTransitioning(false);
@@ -833,21 +833,21 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       // Wait for shrink to complete
       await new Promise(resolve => setTimeout(resolve, SETTLE_DELAY + SHRINK_DURATION + HOLD_AFTER_SHRINK));
 
-      // Phase 2: Close the cover (still in landscape) — reverse of opening's cover flip
+      // Phase 2: Close the cover (still in landscape) -reverse of opening's cover flip
       pageFlipProgress.value = withTiming(0, {
         duration: COVER_FLIP_DURATION,
         easing: Easing.inOut(Easing.cubic)
       });
       await new Promise(resolve => setTimeout(resolve, COVER_FLIP_DURATION + 100));
 
-      // Phase 3: Fade overlay — same as opening's overlay fade (reversed: we fade IN)
+      // Phase 3: Fade overlay -same as opening's overlay fade (reversed: we fade IN)
       overlayOpacity.value = withTiming(0.9, {
         duration: 150,
         easing: Easing.out(Easing.cubic)
       });
       await new Promise(resolve => setTimeout(resolve, 150));
 
-      // Phase 4: Rotate to portrait — reverse of opening's rotate to landscape
+      // Phase 4: Rotate to portrait -reverse of opening's rotate to landscape
       try {
         await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
         await new Promise(resolve => setTimeout(resolve, ROTATION_WAIT));
@@ -860,7 +860,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       const portraitH = portraitDims.height;
       setScreenDimensions(portraitDims);
 
-      // Phase 5: Animate book to portrait center — reverse of opening's landscape reposition
+      // Phase 5: Animate book to portrait center -reverse of opening's landscape reposition
       // Same duration (200ms) and easing as the opening animation
       const cardCX = originalCardPosition.x + originalCardPosition.width / 2;
       const cardCY = originalCardPosition.y + originalCardPosition.height / 2;
@@ -952,7 +952,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   };
 
   const finishExitAnimation = (onComplete: () => void) => {
-    // Don't reset shared values here — resetTransition defers them to avoid snap-back.
+    // Don't reset shared values here -resetTransition defers them to avoid snap-back.
     // Just clear React state to unmount the overlay.
     setIsExitAnimating(false);
     exitPageIndexRef.current = null;
@@ -1497,7 +1497,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   // Total number of previewable pages (cover + content pages)
   const totalPreviewPages = selectedStory?.pages?.length ?? 1;
 
-  // Two-layer crossfade page flip — matches the story book reader's transition.
+  // Two-layer crossfade page flip -matches the story book reader's transition.
   // Previous page stays visible underneath at full opacity while the new page
   // fades in on top, then the previous layer is cleared.
   const flipToPage = useCallback((newIndex: number, _direction: 'forward' | 'back') => {
@@ -1511,7 +1511,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
     // Step 2: After React renders the previous layer, hide current & swap index
     requestAnimationFrame(() => {
-      pageSlideX.value = 0; // instant — new image invisible
+      pageSlideX.value = 0; // instant -new image invisible
       setPreviewPageIndex(newIndex);
 
       // Step 3: Small delay so React renders the new page content, then fade in
@@ -1530,7 +1530,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     });
   }, [pageSlideX, previewPageIndex]);
 
-  // Animated style for the current preview page — fades in over previous layer
+  // Animated style for the current preview page -fades in over previous layer
   const previewFadeStyle = useAnimatedStyle(() => ({
     opacity: pageSlideX.value,
   }));
@@ -1543,8 +1543,8 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       {/* Keep blocking touches during cancel animation to prevent taps passing through to elements below */}
       {isTransitioning && cardPosition && selectedStory && (
         <View style={styles.overlay} pointerEvents={(showModeSelection || isCancelAnimating) ? 'auto' : 'none'}>
-          {/* Children art background image — slides down on entry, up on exit.
-              No overlay opacity — stays fully opaque so the background is always
+          {/* Children art background image -slides down on entry, up on exit.
+              No overlay opacity -stays fully opaque so the background is always
               full colour while sliding in/out. */}
           <Animated.View
             style={[styles.backgroundImageContainer, backgroundSlideAnimatedStyle]}
@@ -1673,7 +1673,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
               {renderPageImage()}
             </Animated.View>
 
-            {/* Book cover — shows current preview page when user has swiped,
+            {/* Book cover -shows current preview page when user has swiped,
                 or the cover image when on page 0. This ensures the correct image
                 is visible during cancel/exit animations (the preview overlay unmounts
                 when showModeSelection goes false, revealing this layer). */}
@@ -1713,7 +1713,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
             </Animated.View>
           </Animated.View>
 
-          {/* Swipeable page preview overlay — single layer with cross-fade on swipe */}
+          {/* Swipeable page preview overlay -single layer with cross-fade on swipe */}
           {showModeSelection && targetBookPosition && cardPosition && !isExpandingToReader && (() => {
             const spineWidth = 8 * (targetBookPosition.width / cardPosition.width);
 
@@ -1735,7 +1735,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                 }
               });
 
-            // Tap gesture that does nothing — absorbs taps on the book area
+            // Tap gesture that does nothing -absorbs taps on the book area
             // so they don't fall through to the "tap anywhere to begin" overlay
             const tapBlocker = Gesture.Tap().onEnd(() => {});
             const composedGesture = Gesture.Race(swipeGesture, tapBlocker);
@@ -1754,7 +1754,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
               <GestureHandlerRootView style={{ flex: 1 }}>
                 <GestureDetector gesture={composedGesture}>
                   <View style={{ width: '100%', height: '100%', borderRadius: bookBorderRadius, overflow: 'hidden' }}>
-                    {/* Previous page layer — stays at full opacity during crossfade */}
+                    {/* Previous page layer -stays at full opacity during crossfade */}
                     {prevPreviewPageIndex !== null && (
                       <View style={{ position: 'absolute', width: '100%', height: '100%' }}>
                         {renderPreviewImage(prevPreviewPageIndex)}
@@ -1762,13 +1762,13 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                       </View>
                     )}
 
-                    {/* Current page layer — fades in over previous page */}
+                    {/* Current page layer -fades in over previous page */}
                     <Animated.View style={[{ position: 'absolute', width: '100%', height: '100%' }, previewFadeStyle]}>
                       {renderPreviewImage(previewPageIndex)}
                       <View style={[styles.spineGradient, { width: spineWidth }]} />
                     </Animated.View>
 
-                    {/* Page indicator — inside the book, bottom */}
+                    {/* Page indicator -inside the book, bottom */}
                     {totalPreviewPages > 1 && (
                       <View style={styles.pageIndicatorContainer}>
                         <View style={styles.pageIndicatorPill}>
@@ -2387,7 +2387,7 @@ const styles = StyleSheet.create({
     width: 8,
     backgroundColor: 'rgba(0,0,0,0.15)',
   },
-  // Page preview indicator — pill container with dots + counter (matches button style)
+  // Page preview indicator -pill container with dots + counter (matches button style)
   pageIndicatorContainer: {
     position: 'absolute',
     bottom: 8,

@@ -65,9 +65,9 @@ public class AnalyticsEventBatchDTO {
         @JsonProperty("event")
         private String event;
 
-        /** Flexible properties bag — different events carry different fields.
+        /** Flexible properties bag -different events carry different fields.
          *  e.g. storyId, category, storyType, instrumentId, durationBucket, trigger, step, etc.
-         *  No PII should ever appear here — the app enforces this client-side. */
+         *  No PII should ever appear here -the app enforces this client-side. */
         @JsonProperty("properties")
         private Map<String, String> properties;
 

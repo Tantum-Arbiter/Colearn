@@ -273,7 +273,7 @@ public class StoryController {
     }
 
     /**
-     * Download endpoint — returns the full story with signed asset URLs for on-demand download.
+     * Download endpoint -returns the full story with signed asset URLs for on-demand download.
      */
     @GetMapping("/{storyId}/download")
     public ResponseEntity<?> downloadStory(@PathVariable String storyId) {

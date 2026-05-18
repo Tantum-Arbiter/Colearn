@@ -65,7 +65,7 @@ class ContentAnalyticsServiceTest {
     }
 
     @Test
-    @DisplayName("rejects unknown event names — prevents cardinality explosion")
+    @DisplayName("rejects unknown event names -prevents cardinality explosion")
     void testRejectUnknownEvents() {
         List<AnalyticsEvent> events = List.of(
             createEvent("story_opened", Map.of("storyId", "abc")),
@@ -79,7 +79,7 @@ class ContentAnalyticsServiceTest {
     }
 
     @Test
-    @DisplayName("strips disallowed property keys — only safe labels pass through")
+    @DisplayName("strips disallowed property keys -only safe labels pass through")
     void testStripDisallowedProperties() {
         List<AnalyticsEvent> events = List.of(
             createEvent("story_opened", Map.of(
@@ -234,7 +234,7 @@ class ContentAnalyticsServiceTest {
     }
 
     @Test
-    @DisplayName("content events get platform only — no app_version or locale labels")
+    @DisplayName("content events get platform only -no app_version or locale labels")
     void testContentEventsOmitVersionAndLocale() {
         List<AnalyticsEvent> events = List.of(
             createEvent("story_opened", Map.of("storyId", "abc")),
@@ -308,7 +308,7 @@ class ContentAnalyticsServiceTest {
     }
 
     @Test
-    @DisplayName("horizontally scalable — independent instances produce independent counters")
+    @DisplayName("horizontally scalable -independent instances produce independent counters")
     void testHorizontalScaling() {
         // Simulate two gateway instances with separate registries
         MeterRegistry registry1 = new SimpleMeterRegistry();
@@ -324,7 +324,7 @@ class ContentAnalyticsServiceTest {
                 createEvent("story_opened", Map.of("storyId", "abc"))
             )));
 
-        // Each instance has its own counter — Prometheus sums them
+        // Each instance has its own counter -Prometheus sums them
         double count1 = registry1.getMeters().stream()
             .filter(m -> m.getId().getName().equals("app.analytics.story_opened"))
             .mapToDouble(m -> ((Counter) m).count()).sum();

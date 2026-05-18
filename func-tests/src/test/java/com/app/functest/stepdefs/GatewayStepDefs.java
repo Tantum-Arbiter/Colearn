@@ -317,7 +317,7 @@ public class GatewayStepDefs extends BaseStepDefs {
                         """))
         );
 
-        // DELETE /api/account (account deletion — success)
+        // DELETE /api/account (account deletion -success)
         WireMock.stubFor(
             WireMock.delete(WireMock.urlPathEqualTo("/api/account"))
                 .withHeader("Authorization", WireMock.matching("Bearer valid-.*"))
@@ -332,7 +332,7 @@ public class GatewayStepDefs extends BaseStepDefs {
                         """))
         );
 
-        // DELETE /api/account — unauthenticated (no valid token)
+        // DELETE /api/account -unauthenticated (no valid token)
         WireMock.stubFor(
             WireMock.delete(WireMock.urlPathEqualTo("/api/account"))
                 .atPriority(10)

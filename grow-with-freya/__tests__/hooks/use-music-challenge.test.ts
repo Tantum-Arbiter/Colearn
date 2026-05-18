@@ -215,7 +215,7 @@ describe('useMusicChallenge', () => {
   it('should ignore note presses when not in awaiting_input state', () => {
     const { result } = renderHook(() => useMusicChallenge(createTestConfig()));
 
-    // Still in 'idle' state — not started
+    // Still in 'idle' state -not started
     act(() => result.current.playNote('C'));
     expect(result.current.currentNoteIndex).toBe(0);
   });

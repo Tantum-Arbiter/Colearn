@@ -311,11 +311,11 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     // Returning user with a paid subscription (internet down / session expired):
-    // skip the "what you're missing" overlay — fade out login UI, slide in main menu.
+    // skip the "what you're missing" overlay -fade out login UI, slide in main menu.
     // Free-tier users (never purchased) still see the info overlay.
     const tier = getEffectiveTier();
     if (tier !== 'free') {
-      DEBUG_LOGS && console.log('[LoginScreen] Returning subscriber — skipping guest info');
+      DEBUG_LOGS && console.log('[LoginScreen] Returning subscriber -skipping guest info');
       setGuestMode(true);
 
       // Fade out login UI elements (title, buttons, logo)
@@ -325,7 +325,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
       // Fade out the login background (gradient, stars, moon, bear)
       containerOpacity.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) });
 
-      // Mount MainMenu behind the fading login — carousel buttons animate in naturally
+      // Mount MainMenu behind the fading login -carousel buttons animate in naturally
       setShowReturningMenu(true);
 
       // After the carousel buttons have animated in (~2s), call onSkip to finish
@@ -336,7 +336,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
       return;
     }
 
-    // First-time / free user — show guest info overlay
+    // First-time / free user -show guest info overlay
     setShowGuestInfo(true);
     // Slide the guest info overlay down into view
     guestInfoSlideY.value = withTiming(0, {
@@ -591,7 +591,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
         </Animated.View>
       )}
 
-      {/* MainMenu for guest flow — mounted behind the guest info overlay, revealed by slide-up */}
+      {/* MainMenu for guest flow -mounted behind the guest info overlay, revealed by slide-up */}
       {showGuestMenu && (
         <View style={styles.guestMenuContainer}>
           <MainMenu onNavigate={onNavigate || (() => {})} isActive={true} disableTutorial={true} entranceDelay={1500} />

@@ -239,7 +239,7 @@ export const useAppStore = create<AppState>()(
       recordReadingSession: () => set((state) => {
         const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
         if (state.lastReadDate === today) {
-          // Already recorded today — just increment total
+          // Already recorded today -just increment total
           return { totalStoriesRead: state.totalStoriesRead + 1 };
         }
 

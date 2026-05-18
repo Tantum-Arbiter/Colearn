@@ -66,7 +66,7 @@ interface MainMenuProps {
   onNavigate: (destination: string) => void;
   isActive?: boolean; // Kept for API compatibility with EnhancedPageTransition
   disableTutorial?: boolean; // When true, don't show the tutorial (used during login transition)
-  /** Extra delay (ms) before carousel buttons slide in — used for loading screen reveal */
+  /** Extra delay (ms) before carousel buttons slide in -used for loading screen reveal */
   entranceDelay?: number;
 }
 
@@ -80,7 +80,7 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
   const isPremium = effectiveTier === 'premium';
   const [showSubscription, setShowSubscription] = useState(false);
 
-  // Unlock button animations — gentle pulse + shimmer + slide-out on navigate
+  // Unlock button animations -gentle pulse + shimmer + slide-out on navigate
   const unlockPulse = useSharedValue(1);
   const unlockShimmer = useSharedValue(0);
   const unlockSlideY = useSharedValue(0);
@@ -131,7 +131,7 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
   const [tutorialFinished, setTutorialFinished] = useState(false);
   const isTutorialPending = !disableTutorial && tutorialLoaded && shouldShowTutorial('main_menu_tour') && !tutorialFinished;
 
-  // Use a ref so guardedOnNavigate keeps a stable reference — avoids re-rendering
+  // Use a ref so guardedOnNavigate keeps a stable reference -avoids re-rendering
   // MenuCarousel (React.memo) when isTutorialPending changes, which would cause a flicker.
   const isTutorialPendingRef = useRef(isTutorialPending);
   isTutorialPendingRef.current = isTutorialPending;
@@ -171,9 +171,9 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const containerOpacity = useSharedValue(skipFadeIn ? 1 : 0);
 
-  // Fade in the container on mount (smooth transition from splash — skipped when behind loading overlay)
+  // Fade in the container on mount (smooth transition from splash -skipped when behind loading overlay)
   useEffect(() => {
-    if (skipFadeIn) return; // Already visible — no fade needed
+    if (skipFadeIn) return; // Already visible -no fade needed
     containerOpacity.value = withTiming(1, { duration: 300, easing: ReanimatedEasing.out(ReanimatedEasing.cubic) });
   }, [containerOpacity, skipFadeIn]);
 
@@ -412,7 +412,7 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
         />
       </View>
 
-      {/* Unlock a Plan tab — fixed to very bottom (hidden for premium subscribers) */}
+      {/* Unlock a Plan tab -fixed to very bottom (hidden for premium subscribers) */}
       {!isPremium && (
         <View style={[legacyStyles.unlockBtnContainer, { bottom: 0 }]}>
           <Animated.View style={unlockBtnAnimStyle}>
