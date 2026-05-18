@@ -26,7 +26,7 @@
     "test:performance": "jest --testPathPattern=__tests__/performance",
     "test:all": "npm run test:unit && npm run test:integration && npm run test:performance",
     "type-check": "tsc --noEmit",
-    "build:web": "EXPO_PLATFORM=web expo export --platform web",
+    "build:web": "expo export --platform web",
     "build:all": "expo export",
     "doctor": "expo doctor",
     "prebuild": "expo prebuild",
