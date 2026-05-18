@@ -26,7 +26,7 @@ import Animated, {
   interpolate,
   cancelAnimation,
 } from 'react-native-reanimated';
-import { Story } from '@/types/story';
+import { Story, STORY_TAGS } from '@/types/story';
 // All story images are loaded from local cache after batch sync - no authenticated fetching needed
 import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
@@ -1471,7 +1471,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
           justifyContent: 'center',
           alignItems: 'center'
         }}>
-          <Text style={{ fontSize: 48 }}>{selectedStory.emoji}</Text>
+          <Text style={{ fontSize: 48 }}>{STORY_TAGS[selectedStory.category].emoji}</Text>
         </View>
       );
     }

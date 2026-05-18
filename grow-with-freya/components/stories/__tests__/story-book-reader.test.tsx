@@ -149,8 +149,7 @@ const mockStory: Story = {
   id: 'test-story',
   title: 'Test Story',
   category: 'bedtime',
-  tag: '🌙 Bedtime',
-  emoji: '🌙',
+
   isAvailable: true,
   pages: [
     {
@@ -272,8 +271,7 @@ describe('StoryBookReader Scroll Indicators', () => {
     id: 'short-text-story',
     title: 'Short Text Story',
     category: 'bedtime',
-    tag: '🌙 Bedtime',
-    emoji: '🌙',
+
     isAvailable: true,
     pages: [
       {
@@ -302,8 +300,7 @@ describe('StoryBookReader Scroll Indicators', () => {
     id: 'long-text-story',
     title: 'Long Text Story',
     category: 'bedtime',
-    tag: '🌙 Bedtime',
-    emoji: '🌙',
+
     isAvailable: true,
     pages: [
       {
@@ -338,8 +335,7 @@ describe('StoryBookReader Scroll Indicators', () => {
     id: 'mixed-text-story',
     title: 'Mixed Text Story',
     category: 'adventure',
-    tag: '🗺️ Adventure',
-    emoji: '🗺️',
+
     isAvailable: true,
     pages: [
       {
@@ -443,8 +439,7 @@ describe('StoryBookReader Text Rendering with Newlines', () => {
       id: 'newline-story',
       title: 'Newline Story',
       category: 'bedtime',
-      tag: '🌙 Bedtime',
-      emoji: '🌙',
+
       isAvailable: true,
       pages: [
         {
@@ -476,8 +471,7 @@ describe('StoryBookReader Text Rendering with Newlines', () => {
       id: 'localized-newline-story',
       title: 'Localized Newline Story',
       category: 'bedtime',
-      tag: '🌙 Bedtime',
-      emoji: '🌙',
+
       isAvailable: true,
       pages: [
         {
