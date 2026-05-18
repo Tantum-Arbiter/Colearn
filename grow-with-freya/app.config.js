@@ -1,6 +1,7 @@
 const IS_DEV = process.env.EXPO_PUBLIC_APP_ENV === 'development';
 const IS_PREVIEW = process.env.EXPO_PUBLIC_APP_ENV === 'staging';
 const IS_PROD = process.env.EXPO_PUBLIC_APP_ENV === 'production';
+const IS_WEB = process.env.EXPO_PLATFORM === 'web' || process.env.PLATFORM === 'web';
 
 export default {
   expo: {
@@ -97,7 +98,7 @@ export default {
           microphonePermission: 'Allow $(PRODUCT_NAME) to access your microphone to record story narrations.'
         }
       ],
-      'react-native-purchases',
+      ...(!IS_WEB ? ['react-native-purchases'] : []),
     ],
     experiments: {
       typedRoutes: true,
