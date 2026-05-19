@@ -35,7 +35,7 @@
       "interactionType": "jigsaw_puzzle",
       "jigsawPuzzle": {
         "enabled": true,
-        "gridSize": 4,
+        "gridSize": "2x2",
         "promptText": "Let's start with a warm-up!",
         "allowSkip": true
       }
@@ -49,7 +49,7 @@
       "interactionType": "jigsaw_puzzle",
       "jigsawPuzzle": {
         "enabled": true,
-        "gridSize": 6,
+        "gridSize": "4x4",
         "promptText": "Getting harder now!",
         "allowSkip": true
       }
@@ -63,7 +63,7 @@
       "interactionType": "jigsaw_puzzle",
       "jigsawPuzzle": {
         "enabled": true,
-        "gridSize": 8,
+        "gridSize": "4x4",
         "promptText": "Think carefully about each swap!",
         "allowSkip": false
       }
@@ -77,7 +77,7 @@
       "interactionType": "jigsaw_puzzle",
       "jigsawPuzzle": {
         "enabled": true,
-        "gridSize": 8,
+        "gridSize": "4x4",
         "promptText": "The ultimate expert challenge!",
         "allowSkip": true
       }

@@ -144,14 +144,13 @@ export default {
       growing: 'Samen Groeien',
     },
     filterTags: {
-      personalized: 'Je Verhaal',
       calming: 'Kalmering',
       bedtime: 'Slaaptijd',
       adventure: 'Avontuur',
       learning: 'Leren',
       music: 'Muziek',
       family: 'Familie',
-      imagination: 'Verbeelding',
+      creativity: 'Creativiteit',
       animals: 'Dieren',
       friendship: 'Vriendschap',
       nature: 'Natuur',
@@ -761,6 +760,24 @@ export default {
         description: 'Wil je een ander geluid proberen? Open het menu (☰) en tik op \'Instrument Wisselen\' om op elk moment te wisselen.',
       },
     },
+    storyModes: {
+      welcome: {
+        title: 'Drie Manieren om te Ontdekken! 🌟',
+        description: 'Elk kind leert anders. Kies de verhaalervaring die de nieuwsgierigheid van je kind prikkelt -elk bouwt essentiële vaardigheden op door de magie van het spelen.',
+      },
+      interactive: {
+        title: 'Interactieve Verhalen ✨',
+        description: 'Tik, veeg en ontdek! Interactieve verhalen brengen pagina\'s tot leven met aanraakbare verrassingen, oorzaak-en-gevolg momenten en praktische leeractiviteiten. Onderzoek toont aan dat actieve deelname tijdens voorleestijd het begrip, de fijne motoriek en vroege probleemoplossing versterkt.',
+      },
+      musical: {
+        title: 'Muzikale Verhalen 🎵',
+        description: 'Lees, speel en treed op! Muzikale verhalen verweven echte instrumentuitdagingen in elk avontuur -je kind leert ritme, melodie en coördinatie terwijl het het verhaal volgt. Studies bevestigen dat vroege blootstelling aan muziek het geheugen, de taalontwikkeling en emotionele expressie verbetert.',
+      },
+      jigsaw: {
+        title: 'Puzzelverhalen 🧩',
+        description: 'Puzzel het samen! Puzzelverhalen verbergen prachtige puzzels op elke pagina en bouwen ruimtelijk bewustzijn, geduld en logisch denken op. Het voltooien van puzzels geeft kinderen een echt gevoel van prestatie en versterkt visueel-perceptuele vaardigheden die de leesvoorbereiding ondersteunen.',
+      },
+    },
     gestures: {
       speakerLongPress: {
         title: 'Lange Druk Tip 👆',
@@ -879,8 +896,25 @@ export default {
     beginPuzzle: '🧩 Begin puzzel',
     completedMoves: 'Voltooid in {{count}} zetten!',
     continueStory: 'Verhaal voortzetten →',
-    shuffle: '↻ Schudden',
+    preview: 'Voorbeeld',
+    reset: 'Herstellen',
+    scramble: 'Door elkaar',
+    shuffle: 'Schudden',
     skip: 'Overslaan →',
+    tapToClose: 'Tik ergens om te sluiten',
+  },
+
+  // Story mode selection
+  storyModes: {
+    interactive: 'Interactief',
+    interactiveDesc: 'Aanraak-, puzzel- en leeravonturen',
+    music: 'Muzikaal',
+    musicDesc: 'Verhalen met muzikale uitdagingen',
+    jigsaw: 'Puzzel',
+    jigsawDesc: 'Puzzelavonturen',
+    filterTouch: 'Aanraken',
+    filterJigsaw: 'Puzzel',
+    filterLearning: 'Leren',
   },
 
   audioSettings: {

@@ -144,14 +144,13 @@ export default {
       growing: 'Crescens Simul',
     },
     filterTags: {
-      personalized: 'Tua Fabula',
       calming: 'Tranquillans',
       bedtime: 'Tempus Somni',
       adventure: 'Adventura',
       learning: 'Doctrina',
       music: 'Musica',
       family: 'Familia',
-      imagination: 'Imaginatio',
+      creativity: 'Creativitas',
       animals: 'Animalia',
       friendship: 'Amicitia',
       nature: 'Natura',
@@ -761,6 +760,24 @@ export default {
         description: 'Vis sonum diversum temptare? Aperi menu (☰) et tange \'Muta Instrumentum\' ut quovis tempore mutes.',
       },
     },
+    storyModes: {
+      welcome: {
+        title: 'Tres Viae Explorandi! 🌟',
+        description: 'Quisque puer diverso modo discit. Elige experientiam fabulae quae curiositatem pueri tui excitat -unaquaeque artes essentiales per magiam ludi aedificat.',
+      },
+      interactive: {
+        title: 'Fabulae Interactivae ✨',
+        description: 'Tange, trahe et inveni! Fabulae interactivae paginas ad vitam revocant cum tactilibus miraculis, momentis causae et effectus et activitatibus discendi practicis. Investigatio ostendit participationem activam tempore fabulae comprehensionem, artes motorias subtiles et solutionem problematum primam roborare.',
+      },
+      musical: {
+        title: 'Fabulae Musicales 🎵',
+        description: 'Lege, lude et age! Fabulae musicales provocationes instrumentorum verorum in omni aventura intexunt -puer tuus rhythmum, melodiam et coordinationem discit dum fabulam sequitur. Studia confirmant expositionem musicae primam memoriam, progressum linguae et expressionem emotionalem augere.',
+      },
+      jigsaw: {
+        title: 'Fabulae Dissecturae 🧩',
+        description: 'Compone! Fabulae dissecturae pulchra aenigmata in unaquaque pagina celant, conscientiam spatialem, patientiam et cogitationem logicam aedificantes. Aenigmata perficere pueris verum sensum perfectionis dat et artes visuo-perceptuales roborat quae praeparationem lectionis sustinent.',
+      },
+    },
     gestures: {
       speakerLongPress: {
         title: 'Longum Tactum Consilium 👆',
@@ -879,8 +896,25 @@ export default {
     beginPuzzle: '🧩 Incipe aenigma',
     completedMoves: '{{count}} motibus perfectum!',
     continueStory: 'Fabulam continua →',
-    shuffle: '↻ Misce',
+    preview: 'Praevisio',
+    reset: 'Restitue',
+    scramble: 'Perturba',
+    shuffle: 'Misce',
     skip: 'Praetermitte →',
+    tapToClose: 'Tange ubique ad claudendum',
+  },
+
+  // Story mode selection
+  storyModes: {
+    interactive: 'Interactivum',
+    interactiveDesc: 'Adventurae tactus, aenigmatum et discendi',
+    music: 'Musicale',
+    musicDesc: 'Fabulae cum provocationibus musicalibus',
+    jigsaw: 'Aenigma',
+    jigsawDesc: 'Adventurae aenigmatum',
+    filterTouch: 'Tactus',
+    filterJigsaw: 'Aenigma',
+    filterLearning: 'Discere',
   },
 
   audioSettings: {

@@ -144,14 +144,13 @@ export default {
       growing: 'Birlikte Büyüyoruz',
     },
     filterTags: {
-      personalized: 'Sizin Hikayeniz',
       calming: 'Sakinleştirici',
       bedtime: 'Uyku Saati',
       adventure: 'Macera',
       learning: 'Öğrenme',
       music: 'Müzik',
       family: 'Aile',
-      imagination: 'Hayal Gücü',
+      creativity: 'Yaratıcılık',
       animals: 'Hayvanlar',
       friendship: 'Dostluk',
       nature: 'Doğa',
@@ -761,6 +760,24 @@ export default {
         description: 'Farklı bir ses denemek ister misiniz? Menüyü (☰) açın ve istediğiniz zaman değiştirmek için \'Enstrüman Değiştir\'e dokunun.',
       },
     },
+    storyModes: {
+      welcome: {
+        title: 'Keşfetmenin Üç Yolu! 🌟',
+        description: 'Her çocuk farklı öğrenir. Çocuğunuzun merakını uyandıran hikaye deneyimini seçin -her biri oyunun büyüsü aracılığıyla temel becerileri geliştirir.',
+      },
+      interactive: {
+        title: 'Etkileşimli Hikayeler ✨',
+        description: 'Dokun, kaydır ve keşfet! Etkileşimli hikayeler, dokunulabilir sürprizler, neden-sonuç anları ve uygulamalı öğrenme etkinlikleriyle sayfaları canlandırır. Araştırmalar, hikaye zamanında aktif katılımın anlama, ince motor becerileri ve erken problem çözmeyi güçlendirdiğini göstermektedir.',
+      },
+      musical: {
+        title: 'Müzikli Hikayeler 🎵',
+        description: 'Oku, çal ve sahneye çık! Müzikli hikayeler her maceraya gerçek enstrüman zorlukları örer -çocuğunuz hikayeyi takip ederken ritim, melodi ve koordinasyon öğrenir. Çalışmalar, erken müzik maruziyetinin hafıza, dil gelişimi ve duygusal ifadeyi artırdığını doğrulamaktadır.',
+      },
+      jigsaw: {
+        title: 'Yapboz Hikayeleri 🧩',
+        description: 'Parçaları birleştir! Yapboz hikayeleri her sayfada güzel yapbozlar gizler, mekansal farkındalık, sabır ve mantıksal düşünme geliştirir. Yapbozları tamamlamak çocuklara gerçek bir başarı hissi verir ve okuma hazırlığını destekleyen görsel-algısal becerileri güçlendirir.',
+      },
+    },
     gestures: {
       speakerLongPress: {
         title: 'Uzun Basma İpucu 👆',
@@ -879,8 +896,25 @@ export default {
     beginPuzzle: '🧩 Bulmacayı Başlat',
     completedMoves: '{{count}} hamlede tamamlandı!',
     continueStory: 'Hikayeye devam et →',
-    shuffle: '↻ Karıştır',
+    preview: 'Önizleme',
+    reset: 'Sıfırla',
+    scramble: 'Dağıt',
+    shuffle: 'Karıştır',
     skip: 'Atla →',
+    tapToClose: 'Kapatmak için herhangi bir yere dokunun',
+  },
+
+  // Story mode selection
+  storyModes: {
+    interactive: 'Etkileşimli',
+    interactiveDesc: 'Dokunma, bulmaca ve öğrenme maceraları',
+    music: 'Müzikal',
+    musicDesc: 'Müzikal meydan okumalarla hikayeler',
+    jigsaw: 'Yapboz',
+    jigsawDesc: 'Yapboz bulmaca maceraları',
+    filterTouch: 'Dokunma',
+    filterJigsaw: 'Bulmaca',
+    filterLearning: 'Öğrenme',
   },
 
   audioSettings: {

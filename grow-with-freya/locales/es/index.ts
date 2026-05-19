@@ -155,14 +155,13 @@ export default {
       growing: 'Creciendo juntos',
     },
     filterTags: {
-      personalized: 'Tu cuento',
       calming: 'Relajante',
       bedtime: 'Hora de dormir',
       adventure: 'Aventura',
       learning: 'Aprendizaje',
       music: 'Música',
       family: 'Familia',
-      imagination: 'Imaginación',
+      creativity: 'Creatividad',
       animals: 'Animales',
       friendship: 'Amistad',
       nature: 'Naturaleza',
@@ -669,6 +668,24 @@ export default {
       begin: { title: 'Comenzar a Tocar ▶️', description: 'Cuando llegues a una página musical, toca el botón \'Comenzar a Tocar\' en la parte superior para iniciar el desafío. ¡Primero abre la partitura para que puedas ver qué tocar!' },
       change: { title: 'Cambiar Instrumento 🔄', description: '¿Quieres probar un sonido diferente? Abre el menú (☰) y toca \'Cambiar Instrumento\' para cambiar en cualquier momento.' },
     },
+    storyModes: {
+      welcome: {
+        title: '¡Tres Formas de Explorar! 🌟',
+        description: 'Cada niño aprende de manera diferente. Elige la experiencia de historia que despierte la curiosidad de tu hijo -cada una desarrolla habilidades esenciales a través de la magia del juego.',
+      },
+      interactive: {
+        title: 'Historias Interactivas ✨',
+        description: '¡Toca, desliza y descubre! Las historias interactivas dan vida a las páginas con sorpresas táctiles, momentos de causa y efecto y actividades de aprendizaje práctico. Las investigaciones muestran que la participación activa durante la lectura fortalece la comprensión, la motricidad fina y la resolución temprana de problemas.',
+      },
+      musical: {
+        title: 'Historias Musicales 🎵',
+        description: '¡Lee, toca e interpreta! Las historias musicales entrelazan desafíos de instrumentos reales en cada aventura -tu hijo aprende ritmo, melodía y coordinación mientras sigue el relato. Los estudios confirman que la exposición temprana a la música mejora la memoria, el desarrollo del lenguaje y la expresión emocional.',
+      },
+      jigsaw: {
+        title: 'Historias de Rompecabezas 🧩',
+        description: '¡Arma el rompecabezas! Las historias de rompecabezas esconden hermosos puzzles en cada página, desarrollando la conciencia espacial, la paciencia y el pensamiento lógico. Completar rompecabezas da a los niños una verdadera sensación de logro y fortalece las habilidades visoperceptivas que apoyan la preparación para la lectura.',
+      },
+    },
     gestures: {
       speakerLongPress: { title: 'Mantén Presionado 👆', description: 'Mantén presionado el altavoz para más opciones.' },
       storySwipe: { title: 'Desliza para Navegar 👆', description: 'Desliza para pasar páginas rápidamente.' },
@@ -786,8 +803,25 @@ export default {
     beginPuzzle: '🧩 Comenzar rompecabezas',
     completedMoves: '¡Completado en {{count}} movimientos!',
     continueStory: 'Continuar historia →',
-    shuffle: '↻ Mezclar',
+    preview: 'Vista previa',
+    reset: 'Reiniciar',
+    scramble: 'Desordenar',
+    shuffle: 'Mezclar',
     skip: 'Saltar →',
+    tapToClose: 'Toca en cualquier lugar para cerrar',
+  },
+
+  // Story mode selection
+  storyModes: {
+    interactive: 'Interactivo',
+    interactiveDesc: 'Aventuras táctiles, de rompecabezas y aprendizaje',
+    music: 'Musical',
+    musicDesc: 'Cuentos con desafíos musicales',
+    jigsaw: 'Rompecabezas',
+    jigsawDesc: 'Aventuras de rompecabezas',
+    filterTouch: 'Tocar',
+    filterJigsaw: 'Rompecabezas',
+    filterLearning: 'Aprendizaje',
   },
 
   // Audio settings modal

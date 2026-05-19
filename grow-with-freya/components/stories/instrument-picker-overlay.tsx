@@ -78,6 +78,8 @@ interface InstrumentPickerOverlayProps {
   hideBackdrop?: boolean;
   /** Called when user tries to select a locked (subscription-gated) instrument */
   onLockedPress?: () => void;
+  /** If true, the left/right arrow buttons are hidden (swipe/tap only) */
+  hideArrows?: boolean;
 }
 
 export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverlay({
@@ -89,6 +91,7 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
   filterInstrumentIds,
   hideBackdrop = false,
   onLockedPress,
+  hideArrows = false,
 }: InstrumentPickerOverlayProps) {
   const { t } = useTranslation();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
@@ -237,16 +240,18 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
           <Text style={styles.subtitle}>{t('music.swipeToExplore')}</Text>
         </View>
 
-        {/* Carousel with left/right arrow buttons */}
+        {/* Carousel with optional left/right arrow buttons */}
         <View style={styles.carouselWithArrows}>
           {/* Left arrow */}
-          <Pressable
-            style={styles.arrowButton}
-            onPress={() => goToNeighbor(1)}
-            accessibilityLabel={t('music.previousInstrument', { defaultValue: 'Previous instrument' })}
-          >
-            <Ionicons name="chevron-back" size={22} color="rgba(255, 255, 255, 0.8)" />
-          </Pressable>
+          {!hideArrows && (
+            <Pressable
+              style={styles.arrowButton}
+              onPress={() => goToNeighbor(1)}
+              accessibilityLabel={t('music.previousInstrument', { defaultValue: 'Previous instrument' })}
+            >
+              <Ionicons name="chevron-back" size={22} color="rgba(255, 255, 255, 0.8)" />
+            </Pressable>
+          )}
 
           <GestureHandlerRootView style={styles.gestureRoot}>
             <GestureDetector gesture={composedGesture}>
@@ -276,13 +281,15 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
           </GestureHandlerRootView>
 
           {/* Right arrow */}
-          <Pressable
-            style={styles.arrowButton}
-            onPress={() => goToNeighbor(-1)}
-            accessibilityLabel={t('music.nextInstrument', { defaultValue: 'Next instrument' })}
-          >
-            <Ionicons name="chevron-forward" size={22} color="rgba(255, 255, 255, 0.8)" />
-          </Pressable>
+          {!hideArrows && (
+            <Pressable
+              style={styles.arrowButton}
+              onPress={() => goToNeighbor(-1)}
+              accessibilityLabel={t('music.nextInstrument', { defaultValue: 'Next instrument' })}
+            >
+              <Ionicons name="chevron-forward" size={22} color="rgba(255, 255, 255, 0.8)" />
+            </Pressable>
+          )}
         </View>
 
         <View style={[styles.footerSection, compactLayout && styles.footerSectionCompact]}>

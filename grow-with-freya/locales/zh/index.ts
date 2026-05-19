@@ -142,14 +142,13 @@ export default {
       growing: '一起成长',
     },
     filterTags: {
-      personalized: '您的故事',
       calming: '放松',
       bedtime: '睡前故事',
       adventure: '冒险',
       learning: '学习',
       music: '音乐',
       family: '家庭',
-      imagination: '想象力',
+      creativity: '创造力',
       animals: '动物',
       friendship: '友谊',
       nature: '自然',
@@ -759,6 +758,24 @@ export default {
         description: '想试试不同的声音？打开菜单（☰）并点击"更换乐器"随时更换。',
       },
     },
+    storyModes: {
+      welcome: {
+        title: '三种探索方式！🌟',
+        description: '每个孩子的学习方式不同。选择能激发孩子好奇心的故事体验——每一种都通过游戏的魔力培养基本技能。',
+      },
+      interactive: {
+        title: '互动故事 ✨',
+        description: '点击、滑动和发现！互动故事通过可触摸的惊喜、因果关系时刻和动手学习活动让页面活起来。研究表明，阅读时的积极参与能增强理解力、精细运动技能和早期问题解决能力。',
+      },
+      musical: {
+        title: '音乐故事 🎵',
+        description: '阅读、演奏和表演！音乐故事将真正的乐器挑战融入每一次冒险——您的孩子在跟随故事的同时学习节奏、旋律和协调。研究证实，早期接触音乐能提高记忆力、语言发展和情感表达能力。',
+      },
+      jigsaw: {
+        title: '拼图故事 🧩',
+        description: '拼在一起！拼图故事在每一页中隐藏美丽的拼图，培养空间意识、耐心和逻辑思维。完成拼图让孩子获得真正的成就感，并增强支持阅读准备的视觉感知技能。',
+      },
+    },
     gestures: {
       speakerLongPress: {
         title: '长按提示 👆',
@@ -877,8 +894,25 @@ export default {
     beginPuzzle: '🧩 开始拼图',
     completedMoves: '{{count}}步完成！',
     continueStory: '继续故事 →',
-    shuffle: '↻ 重新洗牌',
+    preview: '预览',
+    reset: '重置',
+    scramble: '打乱',
+    shuffle: '重新洗牌',
     skip: '跳过 →',
+    tapToClose: '点击任意位置关闭',
+  },
+
+  // Story mode selection
+  storyModes: {
+    interactive: '互动',
+    interactiveDesc: '触摸、拼图和学习冒险',
+    music: '音乐剧',
+    musicDesc: '带有音乐挑战的故事',
+    jigsaw: '拼图',
+    jigsawDesc: '拼图冒险',
+    filterTouch: '触摸',
+    filterJigsaw: '拼图',
+    filterLearning: '学习',
   },
 
   audioSettings: {

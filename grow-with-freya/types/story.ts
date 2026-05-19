@@ -65,12 +65,12 @@ export interface MusicChallenge {
 }
 
 // Jigsaw puzzle grid sizes
-export type JigsawGridSize = '4x4' | '6x6' | '8x8';
+export type JigsawGridSize = '2x2' | '4x4';
 
 // Jigsaw puzzle configuration for a story page
 export interface JigsawPuzzle {
   enabled: boolean;
-  gridSize: JigsawGridSize; // Grid dimensions: 4x4 (easy), 6x6 (medium), 8x8 (hard)
+  gridSize: JigsawGridSize; // Grid dimensions: 2x2 (easy), 4x4 (medium/hard)
   promptText: string; // Narrative prompt, e.g., "Put the picture back together!"
   allowSkip: boolean;
 }
@@ -168,13 +168,13 @@ export function getLocalizedText(
   return result;
 }
 
-export type StoryCategory = 'personalized' | 'bedtime' | 'adventure' | 'nature' | 'friendship' | 'learning' | 'fantasy' | 'music' | 'activities' | 'growing';
+export type StoryCategory = 'bedtime' | 'adventure' | 'nature' | 'friendship' | 'learning' | 'fantasy' | 'music' | 'activities' | 'growing';
 
 // Filter tags for story filtering (different from category)
-// 16 total tags for children's content (including personalized)
+// Standard children's storybook themes
 export type StoryFilterTag =
-  | 'personalized' | 'calming' | 'bedtime' | 'adventure' | 'learning' | 'music'
-  | 'family-exercises' | 'imagination-games' | 'animals' | 'friendship'
+  | 'calming' | 'bedtime' | 'adventure' | 'learning' | 'music'
+  | 'family' | 'creativity' | 'animals' | 'friendship'
   | 'nature' | 'fantasy' | 'counting' | 'emotions' | 'silly' | 'rhymes';
 
 export interface StoryFilterTagInfo {
@@ -185,14 +185,13 @@ export interface StoryFilterTagInfo {
 }
 
 export const STORY_FILTER_TAGS: Record<StoryFilterTag, StoryFilterTagInfo> = {
-  personalized: { id: 'personalized', emoji: '🎭', labelKey: 'stories.filterTags.personalized', color: '#FF69B4' },
   calming: { id: 'calming', emoji: '🧘', labelKey: 'stories.filterTags.calming', color: '#4ECDC4' },
   bedtime: { id: 'bedtime', emoji: '🌙', labelKey: 'stories.filterTags.bedtime', color: '#96CEB4' },
   adventure: { id: 'adventure', emoji: '🗺️', labelKey: 'stories.filterTags.adventure', color: '#FF6B6B' },
   learning: { id: 'learning', emoji: '📚', labelKey: 'stories.filterTags.learning', color: '#FFEAA7' },
   music: { id: 'music', emoji: '🎵', labelKey: 'stories.filterTags.music', color: '#FF9F43' },
-  'family-exercises': { id: 'family-exercises', emoji: '👨‍👩‍👧', labelKey: 'stories.filterTags.family', color: '#45B7D1' },
-  'imagination-games': { id: 'imagination-games', emoji: '🎭', labelKey: 'stories.filterTags.imagination', color: '#DDA0DD' },
+  family: { id: 'family', emoji: '👨‍👩‍👧', labelKey: 'stories.filterTags.family', color: '#45B7D1' },
+  creativity: { id: 'creativity', emoji: '🎨', labelKey: 'stories.filterTags.creativity', color: '#DDA0DD' },
   animals: { id: 'animals', emoji: '🐾', labelKey: 'stories.filterTags.animals', color: '#8B4513' },
   friendship: { id: 'friendship', emoji: '🤝', labelKey: 'stories.filterTags.friendship', color: '#FFB6C1' },
   nature: { id: 'nature', emoji: '🌳', labelKey: 'stories.filterTags.nature', color: '#228B22' },
@@ -211,12 +210,6 @@ export interface StoryTag {
 }
 
 export const STORY_TAGS: Record<StoryCategory, StoryTag> = {
-  personalized: {
-    category: 'personalized',
-    emoji: '🎭',
-    labelKey: 'stories.genres.personalized',
-    color: '#FF69B4'
-  },
   bedtime: {
     category: 'bedtime',
     emoji: '🌙',

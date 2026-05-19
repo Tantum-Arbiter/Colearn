@@ -1,9 +1,8 @@
-import { 
-  MOCK_STORIES, 
-  PLACEHOLDER_STORIES, 
-  ALL_STORIES, 
-  getAvailableStories, 
-  getRandomStory 
+import {
+  MOCK_STORIES,
+  ALL_STORIES,
+  getAvailableStories,
+  getRandomStory
 } from '@/data/stories';
 import { Story, STORY_TAGS } from '@/types/story';
 
@@ -60,56 +59,14 @@ describe('Stories Data', () => {
     });
   });
 
-  describe('PLACEHOLDER_STORIES', () => {
-    it('should have exactly 4 placeholder stories', () => {
-      expect(PLACEHOLDER_STORIES).toHaveLength(4);
-    });
-
-    it('should have all unavailable stories', () => {
-      PLACEHOLDER_STORIES.forEach(story => {
-        expect(story.isAvailable).toBe(false);
-      });
-    });
-
-    it('should have "Coming Soon" titles', () => {
-      PLACEHOLDER_STORIES.forEach(story => {
-        expect(story.title).toBe('Coming Soon');
-      });
-    });
-
-    it('should have unique placeholder IDs', () => {
-      const ids = PLACEHOLDER_STORIES.map(story => story.id);
-      const uniqueIds = new Set(ids);
-      expect(uniqueIds.size).toBe(ids.length);
-    });
-
-    it('should have placeholder ID format', () => {
-      PLACEHOLDER_STORIES.forEach(story => {
-        expect(story.id).toMatch(/^placeholder-\d+$/);
-      });
-    });
-  });
-
   describe('ALL_STORIES', () => {
     it('should have stories', () => {
       expect(ALL_STORIES.length).toBeGreaterThan(0);
     });
 
-    it('should contain all mock and placeholder stories', () => {
+    it('should contain all available stories', () => {
       const available = ALL_STORIES.filter(story => story.isAvailable);
-      const unavailable = ALL_STORIES.filter(story => !story.isAvailable);
-
-      // Verify there are some available and unavailable stories
       expect(available.length).toBeGreaterThan(0);
-      expect(unavailable.length).toBeGreaterThan(0);
-    });
-
-    it('should have available and unavailable stories', () => {
-      const available = ALL_STORIES.filter(story => story.isAvailable);
-      const unavailable = ALL_STORIES.filter(story => !story.isAvailable);
-
-      expect(available.length).toBeGreaterThan(0);
-      expect(unavailable.length).toBeGreaterThan(0);
     });
 
     it('should have unique IDs across all stories', () => {
@@ -212,7 +169,6 @@ describe('Stories Data', () => {
 
       // Access all story data
       const mockStories = MOCK_STORIES;
-      const placeholderStories = PLACEHOLDER_STORIES;
       const allStories = ALL_STORIES;
       const availableStories = getAvailableStories();
       const randomStory = getRandomStory();
@@ -220,7 +176,6 @@ describe('Stories Data', () => {
       const endTime = performance.now();
 
       expect(mockStories).toBeDefined();
-      expect(placeholderStories).toBeDefined();
       expect(allStories).toBeDefined();
       expect(availableStories).toBeDefined();
       expect(randomStory).toBeDefined();

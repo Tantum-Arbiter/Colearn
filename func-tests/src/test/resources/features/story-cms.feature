@@ -397,13 +397,13 @@ Feature: Story CMS and Delta-Sync
     Then the response status code should be 200
     And page 1 should have field "jigsawPuzzle"
     And page 1 jigsawPuzzle should have field "enabled" with value "true"
-    And page 1 jigsawPuzzle should have field "gridSize" with value "4"
+    And page 1 jigsawPuzzle should have field "gridSize" with value "2x2"
     And page 1 jigsawPuzzle should have field "promptText"
     And page 1 jigsawPuzzle should have field "allowSkip" with value "true"
     And page 2 should have field "jigsawPuzzle"
-    And page 2 jigsawPuzzle should have field "gridSize" with value "6"
+    And page 2 jigsawPuzzle should have field "gridSize" with value "4x4"
     And page 3 should have field "jigsawPuzzle"
-    And page 3 jigsawPuzzle should have field "gridSize" with value "8"
+    And page 3 jigsawPuzzle should have field "gridSize" with value "4x4"
 
   @story-pages @jigsaw-puzzle @emulator-only
   Scenario: Jigsaw-story-1 puzzle pages have correct interaction type
@@ -434,11 +434,11 @@ Feature: Story CMS and Delta-Sync
     Then the response status code should be 200
     And page 1 should have field "jigsawPuzzle"
     And page 1 jigsawPuzzle should have field "enabled" with value "true"
-    And page 1 jigsawPuzzle should have field "gridSize" with value "4"
+    And page 1 jigsawPuzzle should have field "gridSize" with value "2x2"
     And page 2 should have field "jigsawPuzzle"
-    And page 2 jigsawPuzzle should have field "gridSize" with value "6"
+    And page 2 jigsawPuzzle should have field "gridSize" with value "4x4"
     And page 3 should have field "jigsawPuzzle"
-    And page 3 jigsawPuzzle should have field "gridSize" with value "8"
+    And page 3 jigsawPuzzle should have field "gridSize" with value "4x4"
 
   @story-pages @jigsaw-puzzle @emulator-only
   Scenario: Jigsaw-story-2 non-puzzle pages do not have jigsawPuzzle
@@ -459,14 +459,14 @@ Feature: Story CMS and Delta-Sync
     Then the response status code should be 200
     And page 1 should have field "jigsawPuzzle"
     And page 1 jigsawPuzzle should have field "enabled" with value "true"
-    And page 1 jigsawPuzzle should have field "gridSize" with value "4"
+    And page 1 jigsawPuzzle should have field "gridSize" with value "2x2"
     And page 2 should have field "jigsawPuzzle"
-    And page 2 jigsawPuzzle should have field "gridSize" with value "6"
+    And page 2 jigsawPuzzle should have field "gridSize" with value "4x4"
     And page 3 should have field "jigsawPuzzle"
-    And page 3 jigsawPuzzle should have field "gridSize" with value "8"
+    And page 3 jigsawPuzzle should have field "gridSize" with value "4x4"
     And page 3 jigsawPuzzle should have field "allowSkip" with value "false"
     And page 4 should have field "jigsawPuzzle"
-    And page 4 jigsawPuzzle should have field "gridSize" with value "8"
+    And page 4 jigsawPuzzle should have field "gridSize" with value "4x4"
     And page 4 jigsawPuzzle should have field "allowSkip" with value "true"
 
   @story-pages @jigsaw-puzzle @emulator-only

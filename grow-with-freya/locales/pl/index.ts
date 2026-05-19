@@ -155,14 +155,13 @@ export default {
       growing: 'Razem rośniemy',
     },
     filterTags: {
-      personalized: 'Twoja bajka',
       calming: 'Uspokajające',
       bedtime: 'Na dobranoc',
       adventure: 'Przygodowe',
       learning: 'Edukacyjne',
       music: 'Muzyka',
       family: 'Rodzina',
-      imagination: 'Wyobraźnia',
+      creativity: 'Kreatywność',
       animals: 'Zwierzęta',
       friendship: 'Przyjaźń',
       nature: 'Przyroda',
@@ -669,6 +668,24 @@ export default {
       begin: { title: 'Zacznij Grać ▶️', description: 'Gdy dotrzesz na stronę muzyczną, dotknij przycisku \'Zacznij Grać\' na górze, aby rozpocząć wyzwanie. Najpierw otwiera partyturę, abyś zobaczył, co zagrać!' },
       change: { title: 'Zmień Instrument 🔄', description: 'Chcesz wypróbować inny dźwięk? Otwórz menu (☰) i dotknij \'Zmień Instrument\', aby zmienić w dowolnym momencie.' },
     },
+    storyModes: {
+      welcome: {
+        title: 'Trzy Sposoby na Odkrywanie! 🌟',
+        description: 'Każde dziecko uczy się inaczej. Wybierz doświadczenie z historią, które rozbudzi ciekawość Twojego dziecka -każde z nich buduje kluczowe umiejętności dzięki magii zabawy.',
+      },
+      interactive: {
+        title: 'Interaktywne Historie ✨',
+        description: 'Dotknij, przesuń i odkryj! Interaktywne historie ożywiają strony dotykowymi niespodziankami, momentami przyczyny i skutku oraz praktycznymi aktywnościami edukacyjnymi. Badania pokazują, że aktywne uczestnictwo podczas czytania wzmacnia rozumienie, motorykę małą i wczesne rozwiązywanie problemów.',
+      },
+      musical: {
+        title: 'Muzyczne Historie 🎵',
+        description: 'Czytaj, graj i występuj! Muzyczne historie wplatają prawdziwe wyzwania instrumentalne w każdą przygodę -Twoje dziecko uczy się rytmu, melodii i koordynacji, śledząc opowieść. Badania potwierdzają, że wczesna ekspozycja na muzykę poprawia pamięć, rozwój językowy i ekspresję emocjonalną.',
+      },
+      jigsaw: {
+        title: 'Historie z Puzzlami 🧩',
+        description: 'Ułóż to razem! Historie z puzzlami ukrywają piękne łamigłówki na każdej stronie, budując świadomość przestrzenną, cierpliwość i logiczne myślenie. Układanie puzzli daje dzieciom prawdziwe poczucie osiągnięcia i wzmacnia umiejętności wizualno-percepcyjne wspierające gotowość do czytania.',
+      },
+    },
     gestures: {
       speakerLongPress: { title: 'Przytrzymaj 👆', description: 'Przytrzymaj głośnik, aby uzyskać więcej opcji.' },
       storySwipe: { title: 'Przesuń do Nawigacji 👆', description: 'Przesuń, aby szybko przewracać strony.' },
@@ -787,8 +804,25 @@ export default {
     beginPuzzle: '🧩 Rozpocznij puzzle',
     completedMoves: 'Ukończono w {{count}} ruchach!',
     continueStory: 'Kontynuuj historię →',
-    shuffle: '↻ Wymieszaj',
+    preview: 'Podgląd',
+    reset: 'Resetuj',
+    scramble: 'Rozrzuć',
+    shuffle: 'Wymieszaj',
     skip: 'Pomiń →',
+    tapToClose: 'Dotknij gdziekolwiek, aby zamknąć',
+  },
+
+  // Story mode selection
+  storyModes: {
+    interactive: 'Interaktywne',
+    interactiveDesc: 'Przygody dotykowe, puzzlowe i edukacyjne',
+    music: 'Muzyczne',
+    musicDesc: 'Opowieści z wyzwaniami muzycznymi',
+    jigsaw: 'Puzzle',
+    jigsawDesc: 'Przygody z puzzlami',
+    filterTouch: 'Dotyk',
+    filterJigsaw: 'Puzzle',
+    filterLearning: 'Nauka',
   },
 
   // Audio settings modal

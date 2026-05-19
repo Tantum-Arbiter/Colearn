@@ -144,14 +144,13 @@ export default {
       growing: 'Vokser sammen',
     },
     filterTags: {
-      personalized: 'Din historie',
       calming: 'Beroligende',
       bedtime: 'Sengetid',
       adventure: 'Eventyr',
       learning: 'Læring',
       music: 'Musik',
       family: 'Familie',
-      imagination: 'Fantasi',
+      creativity: 'Kreativitet',
       animals: 'Dyr',
       friendship: 'Venskab',
       nature: 'Natur',
@@ -761,6 +760,24 @@ export default {
         description: 'Vil du prøve en anden lyd? Åbn menuen (☰) og tryk på \'Skift Instrument\' for at skifte når som helst.',
       },
     },
+    storyModes: {
+      welcome: {
+        title: 'Tre Måder at Udforske! 🌟',
+        description: 'Hvert barn lærer forskelligt. Vælg den historieoplevelse, der vækker dit barns nysgerrighed -hver enkelt opbygger vigtige færdigheder gennem legens magi.',
+      },
+      interactive: {
+        title: 'Interaktive Historier ✨',
+        description: 'Tryk, swipe og opdag! Interaktive historier bringer sider til live med overraskelser, årsag-og-virkning-øjeblikke og praktiske læringsaktiviteter. Forskning viser, at aktiv deltagelse under historietid styrker forståelse, finmotorik og tidlig problemløsning.',
+      },
+      musical: {
+        title: 'Musikalske Historier 🎵',
+        description: 'Læs, spil og optræd! Musikalske historier fletter rigtige instrumentudfordringer ind i hvert eventyr -dit barn lærer rytme, melodi og koordination, mens de følger fortællingen. Studier bekræfter, at tidlig musikeksponering styrker hukommelse, sprogudvikling og følelsesmæssigt udtryk.',
+      },
+      jigsaw: {
+        title: 'Puslespilshistorier 🧩',
+        description: 'Sæt det sammen! Puslespilshistorier gemmer smukke puslespil på hver side og opbygger rumlig bevidsthed, tålmodighed og logisk tænkning. At fuldføre puslespil giver børn en ægte følelse af præstation og styrker visuelle-perceptuelle færdigheder, der understøtter læseparathed.',
+      },
+    },
     gestures: {
       speakerLongPress: {
         title: 'Langt tryk tip 👆',
@@ -879,8 +896,25 @@ export default {
     beginPuzzle: '🧩 Start puslespil',
     completedMoves: 'Fuldført på {{count}} træk!',
     continueStory: 'Fortsæt historien →',
-    shuffle: '↻ Bland',
+    preview: 'Forhåndsvisning',
+    reset: 'Nulstil',
+    scramble: 'Bland sammen',
+    shuffle: 'Bland',
     skip: 'Spring over →',
+    tapToClose: 'Tryk hvor som helst for at lukke',
+  },
+
+  // Story mode selection
+  storyModes: {
+    interactive: 'Interaktiv',
+    interactiveDesc: 'Berørings-, puslespils- og læringseventyr',
+    music: 'Musikalsk',
+    musicDesc: 'Historier med musikalske udfordringer',
+    jigsaw: 'Puslespil',
+    jigsawDesc: 'Puslespilseventyr',
+    filterTouch: 'Berøring',
+    filterJigsaw: 'Puslespil',
+    filterLearning: 'Læring',
   },
 
   audioSettings: {

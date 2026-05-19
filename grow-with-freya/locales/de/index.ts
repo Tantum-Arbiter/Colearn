@@ -155,14 +155,13 @@ export default {
       growing: 'Gemeinsam wachsen',
     },
     filterTags: {
-      personalized: 'Deine Geschichte',
       calming: 'Beruhigend',
       bedtime: 'Gute Nacht',
       adventure: 'Abenteuer',
       learning: 'Lernen',
       music: 'Musik',
       family: 'Familie',
-      imagination: 'Fantasie',
+      creativity: 'Kreativität',
       animals: 'Tiere',
       friendship: 'Freundschaft',
       nature: 'Natur',
@@ -669,6 +668,24 @@ export default {
       begin: { title: 'Spielen Beginnen ▶️', description: 'Wenn du auf einer Musikseite ankommst, tippe oben auf \'Spielen Beginnen\', um die Herausforderung zu starten. Es öffnet zuerst das Notenblatt, damit du siehst, was du spielen musst!' },
       change: { title: 'Instrument Wechseln 🔄', description: 'Möchtest du einen anderen Klang ausprobieren? Öffne das Menü (☰) und tippe auf \'Instrument Wechseln\', um jederzeit zu wechseln.' },
     },
+    storyModes: {
+      welcome: {
+        title: 'Drei Wege zum Entdecken! 🌟',
+        description: 'Jedes Kind lernt anders. Wähle das Geschichtenerlebnis, das die Neugier deines Kindes weckt -jedes einzelne baut wichtige Fähigkeiten durch die Magie des Spielens auf.',
+      },
+      interactive: {
+        title: 'Interaktive Geschichten ✨',
+        description: 'Tippen, wischen und entdecken! Interaktive Geschichten erwecken Seiten mit berührbaren Überraschungen, Ursache-Wirkungs-Momenten und praktischen Lernaktivitäten zum Leben. Forschung zeigt, dass aktive Teilnahme während der Vorlesezeit das Verständnis, die Feinmotorik und frühes Problemlösen stärkt.',
+      },
+      musical: {
+        title: 'Musikalische Geschichten 🎵',
+        description: 'Lesen, spielen und aufführen! Musikalische Geschichten verweben echte Instrumenten-Herausforderungen in jedes Abenteuer -dein Kind lernt Rhythmus, Melodie und Koordination, während es der Geschichte folgt. Studien bestätigen, dass frühe Musikerfahrung Gedächtnis, Sprachentwicklung und emotionalen Ausdruck fördert.',
+      },
+      jigsaw: {
+        title: 'Puzzle-Geschichten 🧩',
+        description: 'Zusammensetzen! Puzzle-Geschichten verstecken wunderschöne Rätsel auf jeder Seite und fördern räumliches Bewusstsein, Geduld und logisches Denken. Das Lösen von Puzzles gibt Kindern ein echtes Erfolgserlebnis und stärkt visuell-perzeptive Fähigkeiten, die die Lesevorbereitung unterstützen.',
+      },
+    },
     gestures: {
       speakerLongPress: { title: 'Lang Drücken 👆', description: 'Drücke lang auf den Lautsprecher für mehr Optionen.' },
       storySwipe: { title: 'Wischen zum Navigieren 👆', description: 'Wische, um schnell Seiten umzublättern.' },
@@ -786,8 +803,25 @@ export default {
     beginPuzzle: '🧩 Puzzle starten',
     completedMoves: 'In {{count}} Zügen geschafft!',
     continueStory: 'Geschichte fortsetzen →',
-    shuffle: '↻ Mischen',
+    preview: 'Vorschau',
+    reset: 'Zurücksetzen',
+    scramble: 'Durcheinander',
+    shuffle: 'Mischen',
     skip: 'Überspringen →',
+    tapToClose: 'Tippe irgendwo zum Schließen',
+  },
+
+  // Story mode selection
+  storyModes: {
+    interactive: 'Interaktiv',
+    interactiveDesc: 'Berührungs-, Puzzle- und Lernabenteuer',
+    music: 'Musikalisch',
+    musicDesc: 'Geschichten mit musikalischen Herausforderungen',
+    jigsaw: 'Puzzle',
+    jigsawDesc: 'Puzzleabenteuer',
+    filterTouch: 'Berühren',
+    filterJigsaw: 'Puzzle',
+    filterLearning: 'Lernen',
   },
 
   // Audio settings modal

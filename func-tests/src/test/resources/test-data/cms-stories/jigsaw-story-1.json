@@ -34,7 +34,7 @@
       "interactionType": "jigsaw_puzzle",
       "jigsawPuzzle": {
         "enabled": true,
-        "gridSize": 4,
+        "gridSize": "2x2",
         "promptText": "Swap the tiles to fix the picture!",
         "allowSkip": true
       }
@@ -48,7 +48,7 @@
       "interactionType": "jigsaw_puzzle",
       "jigsawPuzzle": {
         "enabled": true,
-        "gridSize": 6,
+        "gridSize": "4x4",
         "promptText": "Put the snowman back together!",
         "allowSkip": true
       }
@@ -62,7 +62,7 @@
       "interactionType": "jigsaw_puzzle",
       "jigsawPuzzle": {
         "enabled": true,
-        "gridSize": 8,
+        "gridSize": "4x4",
         "promptText": "One more puzzle to solve!",
         "allowSkip": true
       }

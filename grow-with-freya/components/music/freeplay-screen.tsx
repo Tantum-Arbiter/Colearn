@@ -467,6 +467,7 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
             onSelect={handleInstrumentSelect}
             onClose={handleBack}
             hideBackdrop
+            hideArrows
             onLockedPress={() => setShowSubscription(true)}
           />
         </Animated.View>

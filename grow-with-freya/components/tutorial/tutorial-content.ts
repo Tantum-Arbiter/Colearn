@@ -383,6 +383,37 @@ export const MUSIC_MODE_TOUR_STEPS: TutorialStepWithKeys[] = [
 ];
 
 /**
+ * Story Modes Tour - shown when mode cards (Interactive/Musical/Jigsaw) appear for the first time
+ * Explains each story mode's unique developmental benefits
+ */
+export const STORY_MODES_TOUR_STEPS: TutorialStepWithKeys[] = [
+  {
+    id: 'modes_welcome',
+    titleKey: 'tutorial.storyModes.welcome.title',
+    descriptionKey: 'tutorial.storyModes.welcome.description',
+    tipPosition: 'center',
+  },
+  {
+    id: 'modes_interactive',
+    titleKey: 'tutorial.storyModes.interactive.title',
+    descriptionKey: 'tutorial.storyModes.interactive.description',
+    tipPosition: 'center',
+  },
+  {
+    id: 'modes_musical',
+    titleKey: 'tutorial.storyModes.musical.title',
+    descriptionKey: 'tutorial.storyModes.musical.description',
+    tipPosition: 'center',
+  },
+  {
+    id: 'modes_jigsaw',
+    titleKey: 'tutorial.storyModes.jigsaw.title',
+    descriptionKey: 'tutorial.storyModes.jigsaw.description',
+    tipPosition: 'center',
+  },
+];
+
+/**
  * Get tutorial steps by ID
  */
 export function getTutorialSteps(tutorialId: string): TutorialStepWithKeys[] {
@@ -403,6 +434,8 @@ export function getTutorialSteps(tutorialId: string): TutorialStepWithKeys[] {
       return SCREEN_TIME_TIPS;
     case 'music_mode_tour':
       return MUSIC_MODE_TOUR_STEPS;
+    case 'story_modes_tour':
+      return STORY_MODES_TOUR_STEPS;
     default:
       return [];
   }

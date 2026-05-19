@@ -155,14 +155,13 @@ export default {
       growing: 'Crescere insieme',
     },
     filterTags: {
-      personalized: 'La tua storia',
       calming: 'Calma',
       bedtime: 'Ora della nanna',
       adventure: 'Avventura',
       learning: 'Apprendimento',
       music: 'Musica',
       family: 'Famiglia',
-      imagination: 'Immaginazione',
+      creativity: 'Creatività',
       animals: 'Animali',
       friendship: 'Amicizia',
       nature: 'Natura',
@@ -792,6 +791,24 @@ export default {
         description: 'Vuoi provare un suono diverso? Apri il menu (☰) e tocca \'Cambia Strumento\' per cambiare in qualsiasi momento.',
       },
     },
+    storyModes: {
+      welcome: {
+        title: 'Tre Modi per Esplorare! 🌟',
+        description: 'Ogni bambino impara in modo diverso. Scegli l\'esperienza di storia che accende la curiosità del tuo bambino -ognuna sviluppa competenze essenziali attraverso la magia del gioco.',
+      },
+      interactive: {
+        title: 'Storie Interattive ✨',
+        description: 'Tocca, scorri e scopri! Le storie interattive danno vita alle pagine con sorprese tattili, momenti di causa-effetto e attività di apprendimento pratico. La ricerca dimostra che la partecipazione attiva durante la lettura rafforza la comprensione, la motricità fine e la risoluzione precoce dei problemi.',
+      },
+      musical: {
+        title: 'Storie Musicali 🎵',
+        description: 'Leggi, suona e recita! Le storie musicali intrecciano vere sfide di strumenti in ogni avventura -il tuo bambino impara ritmo, melodia e coordinazione seguendo il racconto. Gli studi confermano che l\'esposizione precoce alla musica migliora la memoria, lo sviluppo del linguaggio e l\'espressione emotiva.',
+      },
+      jigsaw: {
+        title: 'Storie Puzzle 🧩',
+        description: 'Metti insieme i pezzi! Le storie puzzle nascondono bellissimi puzzle in ogni pagina, sviluppando la consapevolezza spaziale, la pazienza e il pensiero logico. Completare i puzzle dà ai bambini un vero senso di realizzazione e rafforza le abilità visuo-percettive che supportano la preparazione alla lettura.',
+      },
+    },
     gestures: {
       speakerLongPress: {
         title: 'Suggerimento di pressione lunga 👆',
@@ -915,8 +932,25 @@ export default {
     beginPuzzle: '🧩 Inizia il puzzle',
     completedMoves: 'Completato in {{count}} mosse!',
     continueStory: 'Continua la storia →',
-    shuffle: '↻ Mescola',
+    preview: 'Anteprima',
+    reset: 'Ripristina',
+    scramble: 'Scomponi',
+    shuffle: 'Mescola',
     skip: 'Salta →',
+    tapToClose: 'Tocca ovunque per chiudere',
+  },
+
+  // Story mode selection
+  storyModes: {
+    interactive: 'Interattivo',
+    interactiveDesc: 'Avventure tattili, puzzle e apprendimento',
+    music: 'Musicale',
+    musicDesc: 'Storie con sfide musicali',
+    jigsaw: 'Puzzle',
+    jigsawDesc: 'Avventure di puzzle',
+    filterTouch: 'Tocco',
+    filterJigsaw: 'Puzzle',
+    filterLearning: 'Apprendimento',
   },
 
   // Audio settings modal

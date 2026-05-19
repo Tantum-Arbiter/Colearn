@@ -90,38 +90,83 @@ const FingerTapIcon = memo(function FingerTapIcon({ size = 16, color = '#FFFFFF'
 });
 
 // Story experience type filters -detect from page content, not tags
-type StoryTypeFilter = 'musical' | 'interactive' | 'classic';
+type StoryTypeFilter = 'musical' | 'interactive' | 'jigsaw';
 
-const ALL_TYPE_FILTERS: Set<StoryTypeFilter> = new Set(['musical', 'interactive', 'classic']);
+const ALL_TYPE_FILTERS: Set<StoryTypeFilter> = new Set(['musical', 'interactive', 'jigsaw']);
 
 const TYPE_FILTER_ACTIVE_COLOR = 'rgba(100, 140, 255, 0.25)'; // Subtle blue tint when selected
 
 const STORY_TYPE_FILTERS: { id: StoryTypeFilter; icon: keyof typeof Ionicons.glyphMap; label: string }[] = [
   { id: 'musical',     icon: 'musical-notes-outline',   label: 'Musical' },
   { id: 'interactive', icon: 'finger-print-outline',     label: 'Interactive' }, // icon overridden in render
-  { id: 'classic',     icon: 'book-outline',            label: 'Classic' },
+  { id: 'jigsaw',      icon: 'grid-outline',            label: 'Jigsaw' },
 ];
+
+// ---------------------------------------------------------------------------
+// Story mode selection - first screen when entering Stories
+// ---------------------------------------------------------------------------
+export type StoryMode = 'interactive' | 'music' | 'jigsaw';
+
+interface StoryModeInfo {
+  id: StoryMode;
+  labelKey: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  color: string;
+  descriptionKey: string;
+}
+
+export const STORY_MODES: StoryModeInfo[] = [
+  { id: 'interactive', labelKey: 'storyModes.interactive', icon: 'game-controller-outline', color: 'rgba(78, 205, 196, 0.85)', descriptionKey: 'storyModes.interactiveDesc' },
+  { id: 'music',       labelKey: 'storyModes.music',       icon: 'musical-notes-outline',   color: 'rgba(138, 100, 220, 0.85)', descriptionKey: 'storyModes.musicDesc' },
+  { id: 'jigsaw',      labelKey: 'storyModes.jigsaw',      icon: 'grid-outline',            color: 'rgba(59, 130, 246, 0.85)', descriptionKey: 'storyModes.jigsawDesc' },
+];
+
+// Interactive sub-filters (shown when mode = 'interactive')
+type InteractiveSubFilter = 'touch' | 'jigsaw' | 'learning';
+
+const INTERACTIVE_SUB_FILTERS: { id: InteractiveSubFilter; icon: keyof typeof Ionicons.glyphMap; labelKey: string }[] = [
+  { id: 'touch',    icon: 'finger-print-outline', labelKey: 'storyModes.filterTouch' },
+  { id: 'jigsaw',   icon: 'grid-outline',         labelKey: 'storyModes.filterJigsaw' },
+  { id: 'learning', icon: 'school-outline',        labelKey: 'storyModes.filterLearning' },
+];
+
+/** Does this story have touch (tap-to-animate) interactive elements? */
+function storyHasTouch(story: Story): boolean {
+  return !!story.pages?.some(p => p.interactiveElements && p.interactiveElements.length > 0);
+}
+
+/** Does this story have jigsaw puzzle pages? */
+function storyHasJigsaw(story: Story): boolean {
+  return !!story.pages?.some(p => p.interactionType === 'jigsaw_puzzle');
+}
+
+/** Does this story have a learning tag? */
+function storyIsLearning(story: Story): boolean {
+  return !!story.tags?.includes('learning');
+}
 
 /** Does this story contain at least one music challenge page? */
 function storyHasMusic(story: Story): boolean {
   return !!story.pages?.some(p => p.interactionType === 'music_challenge');
 }
 
-/** Does this story contain at least one page with interactive elements? */
+/** Does this story contain at least one page with interactive elements or jigsaw puzzles? */
 function storyHasInteractive(story: Story): boolean {
-  return !!story.pages?.some(p => p.interactiveElements && p.interactiveElements.length > 0);
+  return !!story.pages?.some(p =>
+    (p.interactiveElements && p.interactiveElements.length > 0) ||
+    p.interactionType === 'jigsaw_puzzle'
+  );
 }
 
 // White Ionicons icon for each filter tag (replaces coloured emojis)
 const TAG_ICONS: Record<StoryFilterTag, keyof typeof Ionicons.glyphMap> = {
-  personalized: 'person-outline',
   calming: 'leaf-outline',
   bedtime: 'moon-outline',
   adventure: 'compass-outline',
   learning: 'book-outline',
   music: 'musical-notes-outline',
-  'family-exercises': 'people-outline',
-  'imagination-games': 'color-palette-outline',
+  family: 'people-outline',
+  creativity: 'color-palette-outline',
   animals: 'paw-outline',
   friendship: 'heart-outline',
   nature: 'flower-outline',
@@ -146,6 +191,8 @@ const GRID_CARD_HEIGHT = Math.floor(GRID_CARD_WIDTH * 0.75); // 4:3 aspect ratio
 
 interface StorySelectionScreenProps {
   onStorySelect?: (story: Story) => void;
+  /** Pre-selected story mode from main menu mode cards */
+  initialMode?: StoryMode | null;
 }
 
 interface StoryCardProps {
@@ -347,7 +394,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProps) {
+export function StorySelectionScreen({ onStorySelect, initialMode }: StorySelectionScreenProps) {
   const insets = useSafeAreaInsets();
   const { requestReturnToMainMenu, setShowLoginAfterOnboarding, getEffectiveTier, storyViewMode, setStoryViewMode } = useAppStore();
   const effectiveTier: SubscriptionTier = getEffectiveTier();
@@ -383,6 +430,18 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   const [selectedTags, setSelectedTags] = useState<Set<StoryFilterTag>>(new Set());
   const [storyTypeFilters, setStoryTypeFilters] = useState<Set<StoryTypeFilter>>(new Set(ALL_TYPE_FILTERS));
 
+  // Story mode -always set from initialMode (mode cards are on the main menu now)
+  const [storyMode, setStoryMode] = useState<StoryMode | null>(initialMode ?? null);
+  // Interactive sub-filters (only used when storyMode === 'interactive')
+  const [interactiveFilters, setInteractiveFilters] = useState<Set<InteractiveSubFilter>>(new Set(['touch', 'jigsaw', 'learning']));
+
+  // Sync storyMode when initialMode changes (e.g. user picks a different mode from main menu)
+  useEffect(() => {
+    if (initialMode) {
+      setStoryMode(initialMode);
+    }
+  }, [initialMode]);
+
   // Catalog entries (not-yet-downloaded stories) merged into genre rows
   const [catalogEntries, setCatalogEntries] = useState<CatalogEntry[]>([]);
 
@@ -408,14 +467,11 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
   const readStoryIds = useAppStore((state) => state.readStoryIds);
   const userAvatarType = useAppStore((state) => state.userAvatarType);
 
-  // Filter stories based on selected tags (OR logic - match any selected tag)
-  // AND experience type filters (musical / interactive / classic -OR within type, AND with tags)
-  // AND gender-based filtering (hidden from UI -show unisex + matching gender)
+  // Filter stories based on story mode, sub-filters, tags, and gender
   const filteredStories = useMemo(() => {
     let result = stories;
 
     // Gender filter -show unisex stories + stories matching the child's gender
-    // If no gender is set in profile, show everything
     if (userAvatarType) {
       result = result.filter(story =>
         !story.gender ||
@@ -424,38 +480,54 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       );
     }
 
-    // Tag filter (OR logic)
+    // Mode-level filter: restrict to the selected story mode
+    if (storyMode === 'interactive') {
+      result = result.filter(story => storyHasInteractive(story));
+      // Apply interactive sub-filters (OR logic within active sub-filters)
+      if (interactiveFilters.size > 0 && interactiveFilters.size < 3) {
+        result = result.filter(story =>
+          (interactiveFilters.has('touch') && storyHasTouch(story)) ||
+          (interactiveFilters.has('jigsaw') && storyHasJigsaw(story)) ||
+          (interactiveFilters.has('learning') && storyIsLearning(story))
+        );
+      }
+    } else if (storyMode === 'music') {
+      result = result.filter(story => storyHasMusic(story));
+    } else if (storyMode === 'jigsaw') {
+      result = result.filter(story => storyHasJigsaw(story));
+    } else {
+      // No mode selected (mode picker visible) - apply legacy type filters
+      if (storyTypeFilters.size < ALL_TYPE_FILTERS.size) {
+        result = result.filter(story => {
+          const hasMusic = storyHasMusic(story);
+          const hasInteractive = storyHasInteractive(story);
+          const hasJigsaw = storyHasJigsaw(story);
+          return (storyTypeFilters.has('musical') && hasMusic)
+            || (storyTypeFilters.has('interactive') && hasInteractive)
+            || (storyTypeFilters.has('jigsaw') && hasJigsaw);
+        });
+      }
+    }
+
+    // Tag filter (OR logic) - applies in all modes except mode picker
     if (selectedTags.size > 0) {
       result = result.filter(story =>
         Array.from(selectedTags).some(tag => story.tags?.includes(tag))
       );
     }
 
-    // Experience type filter (OR logic -show story if it matches ANY active type)
-    // Skip filtering when all types are selected (no-op)
-    if (storyTypeFilters.size < ALL_TYPE_FILTERS.size) {
-      result = result.filter(story => {
-        const hasMusic = storyHasMusic(story);
-        const hasInteractive = storyHasInteractive(story);
-        const isClassic = !hasMusic && !hasInteractive;
-        return (storyTypeFilters.has('musical') && hasMusic)
-          || (storyTypeFilters.has('interactive') && hasInteractive)
-          || (storyTypeFilters.has('classic') && isClassic);
-      });
-    }
-
     return result;
-  }, [stories, selectedTags, storyTypeFilters, userAvatarType]);
+  }, [stories, selectedTags, storyTypeFilters, storyMode, interactiveFilters, userAvatarType]);
 
   // Get favorite stories (respects current filters)
   const favoriteStories = useMemo(() => {
     return filteredStories.filter(story => favoriteStoryIds.includes(story.id));
   }, [filteredStories, favoriteStoryIds]);
 
-  // Available filter tags - all 16 children's genres (including personalized)
+  // Available filter tags -children's storybook themes
   const filterTags: StoryFilterTag[] = [
-    'personalized', 'calming', 'bedtime', 'adventure', 'learning', 'music',
-    'family-exercises', 'imagination-games', 'animals', 'friendship',
+    'calming', 'bedtime', 'adventure', 'learning', 'music',
+    'family', 'creativity', 'animals', 'friendship',
     'nature', 'fantasy', 'counting', 'emotions', 'silly', 'rhymes'
   ];
 
@@ -804,9 +876,9 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     };
   });
 
-  // Preferred genre order - personalized first, then others
+  // Preferred genre order for display rows
   const GENRE_ORDER: StoryCategory[] = [
-    'personalized', 'bedtime', 'adventure', 'nature', 'friendship',
+    'bedtime', 'adventure', 'nature', 'friendship',
     'learning', 'fantasy', 'music', 'activities', 'growing'
   ];
 
@@ -822,11 +894,11 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     });
 
     // Add catalog entries into their category rows
-    // Catalog entries don't have page data, so we can't detect musical/interactive.
-    // When type filters are active (not all selected), hide catalog entries since
-    // we can't classify them. Tag filters still apply via entry.tags.
+    // Catalog entries don't have page data, so we can't detect musical/interactive/jigsaw.
+    // Hide catalog entries when a story mode is selected OR when legacy type filters are
+    // active, since we can't classify them without page-level data.
     const typeFilterActive = storyTypeFilters.size < ALL_TYPE_FILTERS.size;
-    if (!typeFilterActive) {
+    if (!typeFilterActive && !storyMode) {
       let filteredCatalog = catalogEntries;
 
       // Apply gender filter to catalog entries too
@@ -858,65 +930,6 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       });
     }
 
-    // ─── Personalized "For You" row ─────────────────────────────
-    // Surfaces recommendations based on reading history + gender match.
-    // Priority: 1) Gender-matched unread stories, 2) Stories from favourite categories
-    //           3) Unread stories the user hasn't seen yet
-    const readSet = new Set(readStoryIds);
-    const personalizedItems: StoryDisplayItem[] = [];
-    const personalizedIds = new Set<string>();
-
-    // Determine the user's favourite categories from reading history
-    const categoryCounts: Record<string, number> = {};
-    filteredStories.forEach(story => {
-      if (readSet.has(story.id)) {
-        categoryCounts[story.category] = (categoryCounts[story.category] || 0) + 1;
-      }
-    });
-    const favouriteCategories = Object.entries(categoryCounts)
-      .sort((a, b) => b[1] - a[1])
-      .map(([cat]) => cat);
-
-    // Helper to add an item (avoid duplicates)
-    const addPersonalized = (item: StoryDisplayItem) => {
-      const id = item.type === 'story' ? item.data.id : (item.data as CatalogEntry).storyId;
-      if (!personalizedIds.has(id)) {
-        personalizedIds.add(id);
-        personalizedItems.push(item);
-      }
-    };
-
-    // 1) Gender-matched unread downloaded stories
-    if (userAvatarType) {
-      filteredStories
-        .filter(s => s.gender === userAvatarType && !readSet.has(s.id))
-        .forEach(s => addPersonalized({ type: 'story', data: s }));
-    }
-
-    // 2) Unread stories from favourite categories
-    for (const cat of favouriteCategories) {
-      filteredStories
-        .filter(s => s.category === cat && !readSet.has(s.id))
-        .forEach(s => addPersonalized({ type: 'story', data: s }));
-    }
-
-    // 3) Any remaining unread downloaded stories
-    filteredStories
-      .filter(s => !readSet.has(s.id))
-      .forEach(s => addPersonalized({ type: 'story', data: s }));
-
-    // 4) Gender-matched catalog entries (not yet downloaded)
-    if (!typeFilterActive && userAvatarType) {
-      catalogEntries
-        .filter(e => e.gender === userAvatarType && !personalizedIds.has(e.storyId))
-        .forEach(e => addPersonalized({ type: 'catalog', data: e }));
-    }
-
-    // Cap at 10 items to keep the row manageable
-    if (personalizedItems.length > 0) {
-      itemMap['personalized'] = personalizedItems.slice(0, 10);
-    }
-
     const genres = Object.keys(itemMap)
       .filter(g => itemMap[g].length > 0)
       .sort((a, b) => {
@@ -926,7 +939,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
       });
 
     return { availableGenres: genres, genreItems: itemMap };
-  }, [filteredStories, catalogEntries, storyTypeFilters, selectedTags, userAvatarType, readStoryIds]);
+  }, [filteredStories, catalogEntries, storyTypeFilters, storyMode, selectedTags, userAvatarType]);
 
   const handleBackToMenu = useCallback(() => {
     // Debounce rapid back button presses (500ms)
@@ -936,9 +949,26 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
     }
     lastCallRef.current = now;
 
-
+    // Always return to main menu (mode cards are on the main menu now)
     requestReturnToMainMenu();
   }, [requestReturnToMainMenu]);
+
+  // handleModeSelect removed -mode cards are now on the main menu
+
+  // Handle interactive sub-filter toggle
+  const handleInteractiveFilterPress = useCallback((filter: InteractiveSubFilter) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setInteractiveFilters(prev => {
+      const next = new Set(prev);
+      if (next.has(filter)) {
+        if (next.size <= 1) return prev; // Don't allow removing the last filter
+        next.delete(filter);
+      } else {
+        next.add(filter);
+      }
+      return next;
+    });
+  }, []);
 
   const handleStoryPress = useCallback((story: Story, pressableRef?: any) => {
     if (!story.isAvailable) {
@@ -1122,42 +1152,66 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
         />
       ))}
 
-      {/* Shared page header component */}
-      <PageHeader title="Stories" onBack={handleBackToMenu} hideControls={isTransitioning} useHomeIcon />
+      {/* Shared page header component - always circular back arrow */}
+      <PageHeader
+        title={storyMode ? t(`storyModes.${storyMode}`) : 'Stories'}
+        onBack={handleBackToMenu}
+        hideControls={isTransitioning}
+        useBackArrow
+      />
 
       {/* Content container with flex: 1 for proper layout - dynamic padding for scaled text */}
       <View style={{ flex: 1, paddingTop: insets.top + 90 + (textSizeScale - 1) * 40, zIndex: 10 }}>
 
-        {/* Story Type Filters -segmented row, visually distinct from theme tags */}
-        <View style={styles.typeFilterRow}>
-          {STORY_TYPE_FILTERS.map((tf) => {
-            const isActive = storyTypeFilters.has(tf.id);
-            return (
-              <View key={tf.id} style={{ flex: 1 }}>
-                <Pressable
-                  style={[
-                    styles.typeFilterButton,
-                    isActive && styles.typeFilterButtonActive,
-                  ]}
-                  onPress={() => handleTypeFilterPress(tf.id)}
-                >
-                  {tf.id === 'interactive'
-                    ? <FingerTapIcon size={16} color={isActive ? '#FFFFFF' : 'rgba(255,255,255,0.7)'} />
-                    : <Ionicons name={tf.icon} size={16} color={isActive ? '#FFFFFF' : 'rgba(255,255,255,0.7)'} />
-                  }
-                  <Text style={[
-                    styles.typeFilterLabel,
-                    { fontSize: scaledFontSize(12) },
-                    isActive && styles.typeFilterLabelActive,
-                  ]}>
-                    {tf.label}
-                  </Text>
-                </Pressable>
-              </View>
-            );
-          })}
+        {/* ── Filtered story view ── */}
+        {storyMode !== null && (<>
 
-          {/* View mode toggle -carousel ↔ grid */}
+        {/* Filter row: paginated tag pages (3 per page) + pinned grid/carousel toggle */}
+        <View style={styles.filterBarRow}>
+          {(() => {
+            // Group tags into pages of 3
+            const TAGS_PER_PAGE = 3;
+            const tagPages: StoryFilterTag[][] = [];
+            for (let i = 0; i < filterTags.length; i += TAGS_PER_PAGE) {
+              tagPages.push(filterTags.slice(i, i + TAGS_PER_PAGE));
+            }
+            // Available width for the tag area (screen minus toggle button + padding)
+            const tagAreaWidth = Dimensions.get('window').width - 36 - 12 - 4; // toggle width + paddingRight + marginLeft
+            return (
+              <FlatList
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                style={styles.filterBarScroll}
+                data={tagPages}
+                keyExtractor={(_item, index) => `tag-page-${index}`}
+                renderItem={({ item: pageTags }) => (
+                  <View style={[styles.filterBarPage, { width: tagAreaWidth }]}>
+                    {pageTags.map((tag) => {
+                      const tagInfo = STORY_FILTER_TAGS[tag];
+                      const isSelected = selectedTags.has(tag);
+                      const tagLabel = t(tagInfo.labelKey);
+                      return (
+                        <Pressable
+                          key={tag}
+                          style={[
+                            styles.tagButton,
+                            isSelected && { backgroundColor: tagInfo.color }
+                          ]}
+                          onPress={() => handleTagPress(tag)}
+                        >
+                          <Ionicons name={TAG_ICONS[tag]} size={14} color="#FFFFFF" style={styles.tagIcon} />
+                          <Text style={[styles.tagLabel, { fontSize: scaledFontSize(12) }]} numberOfLines={1}>
+                            {tagLabel}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                )}
+              />
+            );
+          })()}
           <Pressable
             onPress={handleViewModeToggle}
             hitSlop={10}
@@ -1169,35 +1223,6 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
             }
           </Pressable>
         </View>
-
-        {/* Theme Tag Filters */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.tagScrollView}
-          contentContainerStyle={styles.tagContainer}
-        >
-          {filterTags.map((tag) => {
-            const tagInfo = STORY_FILTER_TAGS[tag];
-            const isSelected = selectedTags.has(tag);
-            const tagLabel = t(tagInfo.labelKey);
-            return (
-              <Pressable
-                key={tag}
-                style={[
-                  styles.tagButton,
-                  isSelected && { backgroundColor: tagInfo.color }
-                ]}
-                onPress={() => handleTagPress(tag)}
-              >
-                <Ionicons name={TAG_ICONS[tag]} size={14} color="#FFFFFF" style={styles.tagIcon} />
-                <Text style={[styles.tagLabel, { fontSize: scaledFontSize(12) }]}>
-                  {tagLabel}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
 
         {/* Stories -Carousel or Grid view */}
         {/* Disable scrolling when a story is selected to prevent position drift */}
@@ -1249,9 +1274,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
               {availableGenres.map((genre) => {
                 const items = genreItems[genre] || [];
                 const genreName = t(`stories.genres.${genre}`, { defaultValue: genre.charAt(0).toUpperCase() + genre.slice(1) });
-                const genreHeading = genre === 'personalized'
-                  ? t('stories.filterTags.personalized', { defaultValue: 'Your Story' })
-                  : t('stories.genreStories', { genre: genreName, defaultValue: `${genreName} Stories` });
+                const genreHeading = t('stories.genreStories', { genre: genreName, defaultValue: `${genreName} Stories` });
 
                 return (
                   <View key={genre} style={{ marginBottom: 40 }}>
@@ -1285,9 +1308,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
               {availableGenres.map((genre) => {
                 const items = genreItems[genre] || [];
                 const genreName = t(`stories.genres.${genre}`, { defaultValue: genre.charAt(0).toUpperCase() + genre.slice(1) });
-                const genreHeading = genre === 'personalized'
-                  ? t('stories.filterTags.personalized', { defaultValue: 'Your Story' })
-                  : t('stories.genreStories', { genre: genreName, defaultValue: `${genreName} Stories` });
+                const genreHeading = t('stories.genreStories', { genre: genreName, defaultValue: `${genreName} Stories` });
 
                 return (
                   <View key={genre}>
@@ -1344,6 +1365,7 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
           )}
           </Animated.View>
         </ScrollView>
+        </>)}
       </View>
 
       {/* Story Preview Modal */}
@@ -1367,6 +1389,45 @@ export function StorySelectionScreen({ onStorySelect }: StorySelectionScreenProp
 
 // Static styles - created once, not on every render
 const styles = StyleSheet.create({
+  // ── Mode picker ──
+  modePickerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 20,
+    paddingHorizontal: 30,
+    paddingBottom: 40,
+  },
+  modeCard: {
+    width: '100%',
+    borderRadius: 20,
+    paddingVertical: 28,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  modeCardTitle: {
+    color: '#FFFFFF',
+    fontFamily: Fonts.rounded,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  modeCardDescription: {
+    color: 'rgba(255, 255, 255, 0.85)',
+    fontFamily: Fonts.rounded,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
   cardPressable: {
     marginRight: CARD_MARGIN,
   },
@@ -1512,6 +1573,27 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
   },
+  // ── Filter bar: single row with scrollable tags + pinned toggle ──
+  filterBarRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    paddingRight: 8,
+    marginBottom: 12,
+  },
+  filterBarScroll: {
+    flex: 1,
+    overflow: 'hidden',
+  },
+  filterBarScrollContent: {
+    alignItems: 'center' as const,
+  },
+  filterBarPage: {
+    flexDirection: 'row' as const,
+    gap: 6,
+    paddingHorizontal: 12,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
   // ── View mode toggle ──
   viewModeToggle: {
     width: 36,
@@ -1522,7 +1604,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 8,
+    marginLeft: 4,
   },
   // ── Shared genre heading (extracted from inline) ──
   genreHeadingText: {

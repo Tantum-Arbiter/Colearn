@@ -581,14 +581,25 @@ function AppContent() {
 
 
 
+  // Track the selected story mode (interactive / music / classic) from main menu
+  const [selectedStoryMode, setSelectedStoryMode] = useState<string | null>(null);
+  // When true, MainMenu should show mode cards (Interactive/Musical/Classic) instead of carousel
+  const [returnToModeCards, setReturnToModeCards] = useState(false);
+
   const handleMainMenuNavigate = (destination: string) => {
-    // Map destination strings to PageKey types
-    // Note: music-stories and animated-stories currently route to stories
-    // until their dedicated screens are implemented
+    // Clear returnToModeCards when navigating away from main menu
+    setReturnToModeCards(false);
+    // Handle stories-{mode} destinations from mode card selection
+    if (destination.startsWith('stories-')) {
+      const mode = destination.replace('stories-', '');
+      setSelectedStoryMode(mode);
+      setCurrentPage('stories');
+      setCurrentScreen(destination);
+      return;
+    }
+
     const destinationMap: Record<string, PageKey> = {
       'stories': 'stories',
-      'music-stories': 'stories',  // TODO: Create dedicated music stories screen
-      'animated-stories': 'stories',  // TODO: Create dedicated animated stories screen
       'account': 'account',
       'practise': 'practise',
       'freeplay': 'freeplay',
@@ -608,6 +619,10 @@ function AppContent() {
 
 
   const handleBackToMainMenu = () => {
+    // If we were on the stories page (came from a mode card), show mode cards on return
+    if (currentPage === 'stories' && selectedStoryMode) {
+      setReturnToModeCards(true);
+    }
     setCurrentPage('main');
     setSelectedStory(null);
   };
@@ -758,11 +773,12 @@ function AppContent() {
         <EnhancedPageTransition
           currentPage={currentPage as string}
           pages={{
-            main: <MainMenu onNavigate={handleMainMenuNavigate} isActive={currentPage === 'main'} />,
+            main: <MainMenu onNavigate={handleMainMenuNavigate} isActive={currentPage === 'main'} returnToModeCards={returnToModeCards} />,
             stories: <SimpleStoryScreen
               onStorySelect={handleStorySelect}
               selectedStory={selectedStory}
               onBack={handleBackToMainMenu}
+              initialMode={selectedStoryMode}
             />,
             practise: <PractiseScreen onBack={handleBackToMainMenu} />,
             freeplay: <FreeplayScreen onBack={handleBackToMainMenu} />,

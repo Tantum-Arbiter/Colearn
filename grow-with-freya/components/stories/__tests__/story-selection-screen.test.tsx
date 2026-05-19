@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, waitFor, act } from '@testing-library/react-native';
+import { render, waitFor, act, fireEvent } from '@testing-library/react-native';
 import { StorySelectionScreen } from '../story-selection-screen';
 import { ScreenTimeProvider } from '../../screen-time/screen-time-provider';
 
@@ -148,5 +148,85 @@ describe('StorySelectionScreen', () => {
     // Component should not crash when catalog fails to load
     expect(result).toBeTruthy();
     expect(() => result.toJSON()).not.toThrow();
+  });
+
+  // ── Story Mode Tests (mode is now pre-selected via initialMode prop) ──
+
+  // Helper: find nodes whose text children contain the given string
+  function findByText(root: any, text: string) {
+    return root.findAll(
+      (node: any) => typeof node.children?.[0] === 'string' && node.children[0] === text
+    );
+  }
+
+  it('does not show mode picker cards (mode cards are now on main menu)', () => {
+    const { UNSAFE_root } = render(
+      <ScreenTimeProvider>
+        <StorySelectionScreen />
+      </ScreenTimeProvider>
+    );
+
+    // Mode description texts should NOT appear -mode picker was moved to main menu
+    expect(findByText(UNSAFE_root, 'storyModes.interactiveDesc').length).toBe(0);
+    expect(findByText(UNSAFE_root, 'storyModes.musicDesc').length).toBe(0);
+    expect(findByText(UNSAFE_root, 'storyModes.jigsawDesc').length).toBe(0);
+  });
+
+  it('shows interactive sub-filters when initialMode is interactive', () => {
+    const { UNSAFE_root } = render(
+      <ScreenTimeProvider>
+        <StorySelectionScreen initialMode="interactive" />
+      </ScreenTimeProvider>
+    );
+
+    expect(findByText(UNSAFE_root, 'storyModes.filterTouch').length).toBeGreaterThan(0);
+    expect(findByText(UNSAFE_root, 'storyModes.filterJigsaw').length).toBeGreaterThan(0);
+    expect(findByText(UNSAFE_root, 'storyModes.filterLearning').length).toBeGreaterThan(0);
+  });
+
+  it('does not show interactive sub-filters when initialMode is music', () => {
+    const { UNSAFE_root } = render(
+      <ScreenTimeProvider>
+        <StorySelectionScreen initialMode="music" />
+      </ScreenTimeProvider>
+    );
+
+    expect(findByText(UNSAFE_root, 'storyModes.filterTouch').length).toBe(0);
+    expect(findByText(UNSAFE_root, 'storyModes.filterJigsaw').length).toBe(0);
+    expect(findByText(UNSAFE_root, 'storyModes.filterLearning').length).toBe(0);
+  });
+
+  it('calls requestReturnToMainMenu when back is pressed', () => {
+    const { UNSAFE_root } = render(
+      <ScreenTimeProvider>
+        <StorySelectionScreen initialMode="jigsaw" />
+      </ScreenTimeProvider>
+    );
+
+    // Find the back Pressable (first Pressable in the tree from PageHeader)
+    const allPressables = UNSAFE_root.findAll(
+      (node: any) => typeof node.props?.onPress === 'function'
+    );
+    if (allPressables.length > 0) {
+      act(() => { allPressables[0].props.onPress(); });
+    }
+
+    // Back should go directly to main menu now
+    expect(mockAppState.requestReturnToMainMenu).toHaveBeenCalled();
+  });
+
+  it('renders without crashing with each initialMode', () => {
+    const modes = ['interactive', 'music', 'jigsaw'] as const;
+    for (const mode of modes) {
+      const { unmount } = render(
+        <ScreenTimeProvider>
+          <StorySelectionScreen initialMode={mode} />
+        </ScreenTimeProvider>
+      );
+
+      // Should not crash
+      expect(true).toBe(true);
+      unmount();
+    }
   });
 });

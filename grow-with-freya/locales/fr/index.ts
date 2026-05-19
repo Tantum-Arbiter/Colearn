@@ -155,14 +155,13 @@ export default {
       growing: 'Grandir ensemble',
     },
     filterTags: {
-      personalized: 'Votre histoire',
       calming: 'Apaisant',
       bedtime: 'Heure du coucher',
       adventure: 'Aventure',
       learning: 'Apprentissage',
       music: 'Musique',
       family: 'Famille',
-      imagination: 'Imagination',
+      creativity: 'Créativité',
       animals: 'Animaux',
       friendship: 'Amitié',
       nature: 'Nature',
@@ -792,6 +791,24 @@ export default {
         description: 'Envie d\'essayer un son différent ? Ouvrez le menu (☰) et appuyez sur \'Changer d\'Instrument\' pour changer à tout moment.',
       },
     },
+    storyModes: {
+      welcome: {
+        title: 'Trois Façons d\'Explorer ! 🌟',
+        description: 'Chaque enfant apprend différemment. Choisissez l\'expérience d\'histoire qui éveille la curiosité de votre enfant -chacune développe des compétences essentielles grâce à la magie du jeu.',
+      },
+      interactive: {
+        title: 'Histoires Interactives ✨',
+        description: 'Touchez, glissez et découvrez ! Les histoires interactives donnent vie aux pages avec des surprises tactiles, des moments de cause à effet et des activités d\'apprentissage pratiques. La recherche montre que la participation active pendant la lecture renforce la compréhension, la motricité fine et la résolution précoce de problèmes.',
+      },
+      musical: {
+        title: 'Histoires Musicales 🎵',
+        description: 'Lisez, jouez et interprétez ! Les histoires musicales intègrent de véritables défis d\'instruments dans chaque aventure -votre enfant apprend le rythme, la mélodie et la coordination en suivant le récit. Les études confirment que l\'exposition précoce à la musique améliore la mémoire, le développement du langage et l\'expression émotionnelle.',
+      },
+      jigsaw: {
+        title: 'Histoires Puzzle 🧩',
+        description: 'Assemblez les pièces ! Les histoires puzzle cachent de magnifiques puzzles dans chaque page, développant la conscience spatiale, la patience et la pensée logique. Compléter des puzzles donne aux enfants un véritable sentiment d\'accomplissement et renforce les compétences visuo-perceptives qui soutiennent la préparation à la lecture.',
+      },
+    },
     gestures: {
       speakerLongPress: {
         title: 'Conseil d\'appui long 👆',
@@ -915,8 +932,25 @@ export default {
     beginPuzzle: '🧩 Commencer le puzzle',
     completedMoves: 'Terminé en {{count}} coups !',
     continueStory: 'Continuer l\'histoire →',
-    shuffle: '↻ Mélanger',
+    preview: 'Aperçu',
+    reset: 'Réinitialiser',
+    scramble: 'Embrouiller',
+    shuffle: 'Mélanger',
     skip: 'Passer →',
+    tapToClose: 'Appuyez n\'importe où pour fermer',
+  },
+
+  // Story mode selection
+  storyModes: {
+    interactive: 'Interactif',
+    interactiveDesc: 'Aventures tactiles, puzzles et apprentissage',
+    music: 'Musical',
+    musicDesc: 'Histoires avec défis musicaux',
+    jigsaw: 'Puzzle',
+    jigsawDesc: 'Aventures de puzzle',
+    filterTouch: 'Toucher',
+    filterJigsaw: 'Puzzle',
+    filterLearning: 'Apprentissage',
   },
 
   // Audio settings modal

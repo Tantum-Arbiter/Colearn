@@ -34,7 +34,7 @@
       "interactionType": "jigsaw_puzzle",
       "jigsawPuzzle": {
         "enabled": true,
-        "gridSize": 4,
+        "gridSize": "2x2",
         "promptText": "A bigger puzzle this time!",
         "allowSkip": true
       }
@@ -48,7 +48,7 @@
       "interactionType": "jigsaw_puzzle",
       "jigsawPuzzle": {
         "enabled": true,
-        "gridSize": 6,
+        "gridSize": "4x4",
         "promptText": "Rebuild the snowman scene!",
         "allowSkip": true
       }
@@ -62,7 +62,7 @@
       "interactionType": "jigsaw_puzzle",
       "jigsawPuzzle": {
         "enabled": true,
-        "gridSize": 8,
+        "gridSize": "4x4",
         "promptText": "Almost done - one more puzzle!",
         "allowSkip": true
       }

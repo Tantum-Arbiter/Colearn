@@ -144,14 +144,13 @@ export default {
       growing: 'Crescendo juntos',
     },
     filterTags: {
-      personalized: 'Sua história',
       calming: 'Calmante',
       bedtime: 'Hora de dormir',
       adventure: 'Aventura',
       learning: 'Aprendizado',
       music: 'Música',
       family: 'Família',
-      imagination: 'Imaginação',
+      creativity: 'Criatividade',
       animals: 'Animais',
       friendship: 'Amizade',
       nature: 'Natureza',
@@ -761,6 +760,24 @@ export default {
         description: 'Quer experimentar um som diferente? Abra o menu (☰) e toque em \'Mudar de Instrumento\' para trocar a qualquer momento.',
       },
     },
+    storyModes: {
+      welcome: {
+        title: 'Três Formas de Explorar! 🌟',
+        description: 'Cada criança aprende de forma diferente. Escolha a experiência de história que desperta a curiosidade do seu filho -cada uma desenvolve habilidades essenciais através da magia da brincadeira.',
+      },
+      interactive: {
+        title: 'Histórias Interativas ✨',
+        description: 'Toque, deslize e descubra! As histórias interativas dão vida às páginas com surpresas táteis, momentos de causa e efeito e atividades de aprendizagem prática. Pesquisas mostram que a participação ativa durante a leitura fortalece a compreensão, a motricidade fina e a resolução precoce de problemas.',
+      },
+      musical: {
+        title: 'Histórias Musicais 🎵',
+        description: 'Leia, toque e apresente! As histórias musicais entrelaçam desafios de instrumentos reais em cada aventura -o seu filho aprende ritmo, melodia e coordenação enquanto segue a história. Estudos confirmam que a exposição precoce à música melhora a memória, o desenvolvimento da linguagem e a expressão emocional.',
+      },
+      jigsaw: {
+        title: 'Histórias de Quebra-Cabeça 🧩',
+        description: 'Monte o quebra-cabeça! As histórias de quebra-cabeça escondem belos puzzles em cada página, desenvolvendo a consciência espacial, a paciência e o pensamento lógico. Completar puzzles dá às crianças uma verdadeira sensação de conquista e fortalece as habilidades visuo-perceptivas que apoiam a preparação para a leitura.',
+      },
+    },
     gestures: {
       speakerLongPress: {
         title: 'Dica de pressão longa 👆',
@@ -879,8 +896,25 @@ export default {
     beginPuzzle: '🧩 Começar quebra-cabeça',
     completedMoves: 'Completado em {{count}} movimentos!',
     continueStory: 'Continuar história →',
-    shuffle: '↻ Embaralhar',
+    preview: 'Pré-visualizar',
+    reset: 'Reiniciar',
+    scramble: 'Embaralhar',
+    shuffle: 'Embaralhar',
     skip: 'Pular →',
+    tapToClose: 'Toque em qualquer lugar para fechar',
+  },
+
+  // Story mode selection
+  storyModes: {
+    interactive: 'Interativo',
+    interactiveDesc: 'Aventuras de toque, quebra-cabeça e aprendizado',
+    music: 'Musical',
+    musicDesc: 'Histórias com desafios musicais',
+    jigsaw: 'Quebra-cabeça',
+    jigsawDesc: 'Aventuras de quebra-cabeça',
+    filterTouch: 'Toque',
+    filterJigsaw: 'Quebra-cabeça',
+    filterLearning: 'Aprendizado',
   },
 
   audioSettings: {

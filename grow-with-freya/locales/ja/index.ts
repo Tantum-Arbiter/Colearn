@@ -142,14 +142,13 @@ export default {
       growing: '一緒に成長する',
     },
     filterTags: {
-      personalized: 'あなたのストーリー',
       calming: 'リラックス',
       bedtime: '就寝時間',
       adventure: '冒険',
       learning: '学習',
       music: '音楽',
       family: '家族',
-      imagination: '想像力',
+      creativity: '創造力',
       animals: '動物',
       friendship: '友情',
       nature: '自然',
@@ -759,6 +758,24 @@ export default {
         description: '別の音を試したいですか？メニュー（☰）を開いて「楽器を変更」をタップすれば、いつでも変更できます。',
       },
     },
+    storyModes: {
+      welcome: {
+        title: '3つの探検方法！🌟',
+        description: 'お子さまはそれぞれ違う方法で学びます。お子さまの好奇心を刺激するストーリー体験を選びましょう -それぞれが遊びの魔法を通じて大切なスキルを育みます。',
+      },
+      interactive: {
+        title: 'インタラクティブストーリー ✨',
+        description: 'タップ、スワイプ、発見！インタラクティブストーリーは、タッチできるサプライズ、因果関係の瞬間、実践的な学習活動でページに命を吹き込みます。研究によると、読み聞かせ中の積極的な参加は理解力、微細運動スキル、初期の問題解決能力を強化します。',
+      },
+      musical: {
+        title: 'ミュージカルストーリー 🎵',
+        description: '読んで、演奏して、パフォーマンス！ミュージカルストーリーは、すべての冒険に本物の楽器チャレンジを織り込みます -お子さまは物語を追いながらリズム、メロディー、コーディネーションを学びます。研究により、音楽への早期接触は記憶力、言語発達、感情表現を向上させることが確認されています。',
+      },
+      jigsaw: {
+        title: 'ジグソーストーリー 🧩',
+        description: 'パズルを組み立てよう！ジグソーストーリーは各ページに美しいパズルを隠し、空間認識、忍耐力、論理的思考を育みます。パズルを完成させることで、子どもたちは本当の達成感を得て、読書準備を支える視覚認知スキルを強化します。',
+      },
+    },
     gestures: {
       speakerLongPress: {
         title: 'ロングプレスチップ👆',
@@ -877,8 +894,25 @@ export default {
     beginPuzzle: '🧩 パズルを始める',
     completedMoves: '{{count}}手でクリア！',
     continueStory: '物語を続ける →',
-    shuffle: '↻ シャッフル',
+    preview: 'プレビュー',
+    reset: 'リセット',
+    scramble: 'バラバラにする',
+    shuffle: 'シャッフル',
     skip: 'スキップ →',
+    tapToClose: 'タップして閉じる',
+  },
+
+  // Story mode selection
+  storyModes: {
+    interactive: 'インタラクティブ',
+    interactiveDesc: 'タッチ、パズル、学習の冒険',
+    music: 'ミュージカル',
+    musicDesc: '音楽チャレンジ付きのストーリー',
+    jigsaw: 'ジグソー',
+    jigsawDesc: 'ジグソーパズルの冒険',
+    filterTouch: 'タッチ',
+    filterJigsaw: 'パズル',
+    filterLearning: '学習',
   },
 
   audioSettings: {

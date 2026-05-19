@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { render, fireEvent, act, waitFor } from '@testing-library/react-native';
 import { MainMenu } from '@/components/main-menu';
 import { ScreenTimeProvider } from '@/components/screen-time/screen-time-provider';
 
@@ -68,7 +68,7 @@ describe('MainMenu Component', () => {
     expect(getByLabelText('menu.stories button')).toBeTruthy();
   });
 
-  it('should handle navigation when stories button is pressed', () => {
+  it('should intercept stories button and not navigate directly', async () => {
     const { getByLabelText } = render(
       <ScreenTimeProvider>
         <MainMenu onNavigate={mockOnNavigate} />
@@ -76,9 +76,13 @@ describe('MainMenu Component', () => {
     );
 
     const storiesButton = getByLabelText('menu.stories button');
-    fireEvent.press(storiesButton);
+    await act(async () => {
+      fireEvent.press(storiesButton);
+    });
 
-    expect(mockOnNavigate).toHaveBeenCalledWith('stories');
+    // Stories button now shows mode cards instead of navigating directly
+    // onNavigate should NOT have been called with 'stories'
+    expect(mockOnNavigate).not.toHaveBeenCalledWith('stories');
   });
 
   it('should render background elements', () => {

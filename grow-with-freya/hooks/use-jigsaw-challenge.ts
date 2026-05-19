@@ -3,7 +3,7 @@
  *
  * The puzzle slices the page's background image into an NxN grid and
  * randomly scrambles the tiles.  The player selects one tile, then
- * taps an adjacent tile to swap them.  When every tile is back in its
+ * taps any other tile to swap them.  When every tile is back in its
  * original (solved) position the puzzle is complete and celebration
  * text appears.
  *
@@ -33,14 +33,18 @@ export interface JigsawChallengeHookResult {
   selectedTile: number;
   moveCount: number;
   isComplete: boolean;
-  /** Indices adjacent to the selected tile that are valid swap targets */
+  /** True when the puzzle was completed without pressing reset */
+  completedCleanly: boolean;
+  /** Indices of all other tiles (any tile can be swapped with the selected one) */
   validSwapTargets: number[];
 
   // Actions
   start: () => void;
-  /** Select or swap a tile.  First tap selects, second tap on adjacent swaps. */
+  /** Select or swap a tile.  First tap selects, second tap on any other tile swaps. */
   tapTile: (index: number) => void;
   retry: () => void;
+  /** Reset the puzzle back to idle -gives up without completing */
+  reset: () => void;
   skip: () => void;
   cleanup: () => void;
 }
@@ -49,7 +53,7 @@ export interface JigsawChallengeHookResult {
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Parse "4x4" → 4, "6x6" → 6, etc. */
+/** Parse "2x2" → 2, "4x4" → 4, etc. */
 function parseGridSize(size: JigsawGridSize): number {
   const n = parseInt(size.split('x')[0], 10);
   return isNaN(n) ? 4 : n;
@@ -88,17 +92,14 @@ function isSolved(tiles: number[]): boolean {
 }
 
 /**
- * Return the indices of tiles that are orthogonally adjacent
- * to `index` in an NxN grid.
+ * Return the indices of all tiles except the given one.
+ * Any tile can be swapped with any other tile.
  */
-function getAdjacentIndices(index: number, n: number): number[] {
-  const row = Math.floor(index / n);
-  const col = index % n;
+function getAllOtherIndices(index: number, total: number): number[] {
   const result: number[] = [];
-  if (row > 0) result.push((row - 1) * n + col);     // up
-  if (row < n - 1) result.push((row + 1) * n + col);  // down
-  if (col > 0) result.push(row * n + (col - 1));       // left
-  if (col < n - 1) result.push(row * n + (col + 1));   // right
+  for (let i = 0; i < total; i++) {
+    if (i !== index) result.push(i);
+  }
   return result;
 }
 
@@ -114,15 +115,17 @@ export function useJigsawChallenge(
   const [tiles, setTiles] = useState<number[]>([]);
   const [selectedTile, setSelectedTile] = useState(-1);
   const [moveCount, setMoveCount] = useState(0);
+  const [wasReset, setWasReset] = useState(false);
   const onCompleteRef = useRef(onComplete);
   useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
 
   const gridSize = useMemo(() => parseGridSize(config?.gridSize ?? '4x4'), [config?.gridSize]);
+  const totalTiles = gridSize * gridSize;
 
   const validSwapTargets = useMemo(() => {
     if (selectedTile < 0) return [];
-    return getAdjacentIndices(selectedTile, gridSize);
-  }, [selectedTile, gridSize]);
+    return getAllOtherIndices(selectedTile, totalTiles);
+  }, [selectedTile, totalTiles]);
 
   // Auto-cleanup when config becomes undefined (navigated away)
   useEffect(() => {
@@ -141,6 +144,7 @@ export function useJigsawChallenge(
     setTiles(shuffled);
     setSelectedTile(-1);
     setMoveCount(0);
+    setWasReset(false);
     setState('playing');
     log.debug(`Jigsaw started: ${config.gridSize} (${n * n} tiles)`);
   }, [config]);
@@ -161,15 +165,7 @@ export function useJigsawChallenge(
       return;
     }
 
-    // Check adjacency
-    const adjacent = getAdjacentIndices(selectedTile, gridSize);
-    if (!adjacent.includes(index)) {
-      // Not adjacent → re-select the tapped tile instead
-      setSelectedTile(index);
-      return;
-    }
-
-    // Swap the two tiles
+    // Swap the two tiles (any tile can be swapped with any other)
     setTiles(prev => {
       const next = [...prev];
       [next[selectedTile], next[index]] = [next[index], next[selectedTile]];
@@ -198,6 +194,15 @@ export function useJigsawChallenge(
     log.debug('Jigsaw retry');
   }, [config]);
 
+  const reset = useCallback(() => {
+    setTiles([]);
+    setSelectedTile(-1);
+    setMoveCount(0);
+    setWasReset(true);
+    setState('idle');
+    log.debug('Jigsaw reset (gave up)');
+  }, []);
+
   const skip = useCallback(() => {
     if (config?.allowSkip) {
       setState('completed');
@@ -210,6 +215,7 @@ export function useJigsawChallenge(
     setTiles([]);
     setSelectedTile(-1);
     setMoveCount(0);
+    setWasReset(false);
     setState('idle');
     log.debug('Jigsaw cleanup');
   }, []);
@@ -221,11 +227,13 @@ export function useJigsawChallenge(
     selectedTile,
     moveCount,
     isComplete: state === 'completed',
+    completedCleanly: state === 'completed' && !wasReset,
     validSwapTargets,
 
     start,
     tapTile,
     retry,
+    reset,
     skip,
     cleanup,
   };

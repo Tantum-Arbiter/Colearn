@@ -156,14 +156,13 @@ export default {
       growing: 'Growing Together',
     },
     filterTags: {
-      personalized: 'Your Story',
       calming: 'Calming',
       bedtime: 'Bedtime',
       adventure: 'Adventure',
       learning: 'Learning',
       music: 'Music',
       family: 'Family',
-      imagination: 'Imagination',
+      creativity: 'Creativity',
       animals: 'Animals',
       friendship: 'Friendship',
       nature: 'Nature',
@@ -812,6 +811,25 @@ export default {
         description: "Want to try a different sound? Open the menu (☰) and tap 'Change Instrument' to switch anytime.",
       },
     },
+    // Story Modes Tour - explains Interactive, Musical and Jigsaw modes
+    storyModes: {
+      welcome: {
+        title: 'Three Ways to Explore! 🌟',
+        description: 'Every child learns differently. Choose the story experience that sparks your child\'s curiosity -each one builds essential skills through the magic of play.',
+      },
+      interactive: {
+        title: 'Interactive Stories ✨',
+        description: 'Tap, swipe and discover! Interactive stories bring pages to life with touchable surprises, cause-and-effect moments and hands-on learning activities. Research shows active participation during storytime strengthens comprehension, fine motor skills and early problem-solving.',
+      },
+      musical: {
+        title: 'Musical Stories 🎵',
+        description: 'Read, play and perform! Musical stories weave real instrument challenges into every adventure -your child learns rhythm, melody and coordination while following the tale. Studies confirm early music exposure boosts memory, language development and emotional expression.',
+      },
+      jigsaw: {
+        title: 'Jigsaw Stories 🧩',
+        description: 'Piece it together! Jigsaw stories hide beautiful puzzles within each page, building spatial awareness, patience and logical thinking. Completing puzzles gives children a real sense of achievement and strengthens visual-perceptual skills that support reading readiness.',
+      },
+    },
     // Gesture Hints - keys match tutorial.gestures.* in tutorial-content.ts
     gestures: {
       speakerLongPress: {
@@ -956,8 +974,25 @@ export default {
     beginPuzzle: '🧩 Begin Puzzle',
     completedMoves: 'Completed in {{count}} moves!',
     continueStory: 'Continue Story →',
-    shuffle: '↻ Shuffle',
+    preview: 'Preview',
+    reset: 'Reset',
+    scramble: 'Scramble',
+    shuffle: 'Shuffle',
     skip: 'Skip →',
+    tapToClose: 'Tap anywhere to close',
+  },
+
+  // Story mode selection
+  storyModes: {
+    interactive: 'Interactive',
+    interactiveDesc: 'Touch, puzzle, and learning adventures',
+    music: 'Musical',
+    musicDesc: 'Stories with musical challenges',
+    jigsaw: 'Jigsaw',
+    jigsawDesc: 'Jigsaw puzzle adventures',
+    filterTouch: 'Touch',
+    filterJigsaw: 'Jigsaw',
+    filterLearning: 'Learning',
   },
 
   // Audio settings modal

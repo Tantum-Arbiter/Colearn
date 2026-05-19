@@ -18,7 +18,8 @@ export type TutorialId =
   | 'record_mode_tour'
   | 'narrate_mode_tour'
   | 'screen_time_tips'
-  | 'music_mode_tour';
+  | 'music_mode_tour'
+  | 'story_modes_tour';
 
 /**
  * Persisted tutorial state

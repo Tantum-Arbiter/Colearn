@@ -251,8 +251,8 @@
               "enabled": { "type": "boolean" },
               "gridSize": {
                 "type": "string",
-                "enum": ["4x4", "6x6", "8x8"],
-                "description": "Grid dimensions: 4x4 (easy), 6x6 (medium), 8x8 (hard)"
+                "enum": ["2x2", "4x4"],
+                "description": "Grid dimensions: 2x2 (easy), 4x4 (medium/hard)"
               },
               "promptText": { "type": "string", "description": "Narrative prompt for the jigsaw puzzle" },
               "allowSkip": { "type": "boolean" }

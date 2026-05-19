@@ -19,7 +19,7 @@ public class JigsawPuzzle {
 
     @JsonProperty("gridSize")
     @PropertyName("gridSize")
-    private String gridSize; // "4x4", "6x6", or "8x8"
+    private String gridSize; // "2x2" or "4x4"
 
     @JsonProperty("promptText")
     @PropertyName("promptText")

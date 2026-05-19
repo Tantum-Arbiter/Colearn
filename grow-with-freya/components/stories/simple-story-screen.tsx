@@ -7,21 +7,20 @@ interface SimpleStoryScreenProps {
   onStoryTransitionComplete?: () => void;
   selectedStory?: Story | null;
   onBack: () => void;
+  /** Pre-selected story mode from main menu (interactive / music / classic) */
+  initialMode?: string | null;
 }
 
 export function SimpleStoryScreen({
   onStorySelect,
   selectedStory,
   onBack,
+  initialMode,
 }: SimpleStoryScreenProps) {
-  // Story selection now uses the StoryTransitionContext for mode selection overlay
-  // The onStoryTransitionComplete is no longer called immediately -
-  // instead, the context's onBeginCallback handles starting the story reader
-  // after the user selects a mode and taps "Begin"
-
   return (
     <StorySelectionScreen
       onStorySelect={onStorySelect}
+      initialMode={initialMode as any}
     />
   );
 }

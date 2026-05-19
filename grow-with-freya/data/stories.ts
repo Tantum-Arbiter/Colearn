@@ -372,7 +372,7 @@ export const JIGSAW_STORIES: Story[] = [
         interactionType: 'jigsaw_puzzle',
         jigsawPuzzle: {
           enabled: true,
-          gridSize: 4,
+          gridSize: '2x2',
           promptText: 'Swap tiles to fix the picture!',
           allowSkip: true,
         },
@@ -401,7 +401,7 @@ export const JIGSAW_STORIES: Story[] = [
         interactionType: 'jigsaw_puzzle',
         jigsawPuzzle: {
           enabled: true,
-          gridSize: 6,
+          gridSize: '4x4',
           promptText: 'A bigger challenge awaits!',
           allowSkip: true,
         },
@@ -430,7 +430,7 @@ export const JIGSAW_STORIES: Story[] = [
         interactionType: 'jigsaw_puzzle',
         jigsawPuzzle: {
           enabled: true,
-          gridSize: 8,
+          gridSize: '4x4',
           promptText: 'The ultimate puzzle challenge!',
           allowSkip: true,
         },
@@ -439,179 +439,11 @@ export const JIGSAW_STORIES: Story[] = [
   } as Story
 ];
 
-// Create placeholder stories for empty slots
-export const PLACEHOLDER_STORIES: Story[] = Array.from({ length: 4 }, (_, index) => ({
-  id: `placeholder-${index + 1}`,
-  title: 'Coming Soon',
-  category: 'adventure',
-
-  coverImage: '',
-  isAvailable: false,
-  ageRange: '2-5',
-  duration: 8,
-  description: 'A new story is coming soon!',
-  pages: []
-}));
-
-// Learn Music placeholder stories
-export const MUSIC_PLACEHOLDER_STORIES: Story[] = [
-  {
-    id: 'music-placeholder-1',
-    title: 'Musical Adventures',
-    category: 'music',
-
-    coverImage: '',
-    isAvailable: false,
-    ageRange: '2-5',
-    duration: 8,
-    description: 'Learn about musical instruments and sounds!',
-    pages: []
-  },
-  {
-    id: 'music-placeholder-2',
-    title: 'Rhythm & Rhyme',
-    category: 'music',
-
-    coverImage: '',
-    isAvailable: false,
-    ageRange: '2-5',
-    duration: 8,
-    description: 'Discover the joy of rhythm and rhyme!',
-    pages: []
-  },
-  {
-    id: 'music-placeholder-3',
-    title: 'Singing Stars',
-    category: 'music',
-
-    coverImage: '',
-    isAvailable: false,
-    ageRange: '2-5',
-    duration: 8,
-    description: 'Sing along with your favorite songs!',
-    pages: []
-  }
-];
-
-// Spontaneous Activities placeholder stories
-export const ACTIVITIES_PLACEHOLDER_STORIES: Story[] = [
-  {
-    id: 'activities-placeholder-1',
-    title: 'Fun & Games',
-    category: 'activities',
-
-    coverImage: '',
-    isAvailable: false,
-    ageRange: '2-5',
-    duration: 8,
-    description: 'Exciting games and activities to try!',
-    pages: []
-  },
-  {
-    id: 'activities-placeholder-2',
-    title: 'Creative Play',
-    category: 'activities',
-
-    coverImage: '',
-    isAvailable: false,
-    ageRange: '2-5',
-    duration: 8,
-    description: 'Let your imagination run wild!',
-    pages: []
-  },
-  {
-    id: 'activities-placeholder-3',
-    title: 'Move & Groove',
-    category: 'activities',
-
-    coverImage: '',
-    isAvailable: false,
-    ageRange: '2-5',
-    duration: 8,
-    description: 'Active games to get you moving!',
-    pages: []
-  }
-];
-
-// Growing Together placeholder stories
-export const GROWING_PLACEHOLDER_STORIES: Story[] = [
-  {
-    id: 'growing-placeholder-1',
-    title: 'Family Moments',
-    category: 'growing',
-
-    coverImage: '',
-    isAvailable: false,
-    ageRange: '2-5',
-    duration: 8,
-    description: 'Special moments with family!',
-    pages: []
-  },
-  {
-    id: 'growing-placeholder-2',
-    title: 'Learning Together',
-    category: 'growing',
-
-    coverImage: '',
-    isAvailable: false,
-    ageRange: '2-5',
-    duration: 8,
-    description: 'Grow and learn with your loved ones!',
-    pages: []
-  },
-  {
-    id: 'growing-placeholder-3',
-    title: 'Sharing & Caring',
-    category: 'growing',
-
-    coverImage: '',
-    isAvailable: false,
-    ageRange: '2-5',
-    duration: 8,
-    description: 'Learn about kindness and sharing!',
-    pages: []
-  }
-];
-
-// Your Story placeholder stories (personalized)
-export const PERSONALIZED_PLACEHOLDER_STORIES: Story[] = [
-  {
-    id: 'personalized-placeholder-1',
-    title: 'Your Adventure',
-    category: 'personalized',
-
-    coverImage: '',
-    isAvailable: false,
-    ageRange: '2-5',
-    duration: 8,
-    description: 'Create your own personalized story!',
-    pages: [],
-    tags: ['personalized']
-  },
-  {
-    id: 'personalized-placeholder-2',
-    title: 'Your Journey',
-    category: 'personalized',
-
-    coverImage: '',
-    isAvailable: false,
-    ageRange: '2-5',
-    duration: 8,
-    description: 'A story starring you!',
-    pages: [],
-    tags: ['personalized']
-  }
-];
-
-// Combine all stories
+// Combine all stories -only real/published content; placeholders removed.
+// Additional stories are loaded from CMS via delta-sync.
 export const ALL_STORIES: Story[] = [
   ...MOCK_STORIES,
   ...JIGSAW_STORIES,
-  ...PLACEHOLDER_STORIES,
-  ...PERSONALIZED_PLACEHOLDER_STORIES, // Your Story section
-  ...MUSIC_PLACEHOLDER_STORIES,
-  ...ACTIVITIES_PLACEHOLDER_STORIES,
-  ...GROWING_PLACEHOLDER_STORIES
 ];
 
 // Helper functions
