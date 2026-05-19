@@ -12,48 +12,35 @@ import { Fonts } from '@/constants/theme';
 import { PrivacyPolicyContent } from '@/components/account/privacy-policy-screen';
 import { TermsConditionsContent } from '@/components/account/terms-conditions-screen';
 import { useAppStore } from '@/store/app-store';
-import { mapPlanIdToPackage, purchasePackage, getOfferings } from '@/services/subscription-service';
+import { mapPlanIdToPackage, purchasePackage, getOfferings, getOfferingPrices, type PlanPricing } from '@/services/subscription-service';
 
 type PlanId = 'monthly_basic' | 'monthly_premium' | 'yearly';
 interface Plan { id: PlanId; name: string; price: string; period: string; details: string[]; badge?: string; originalPrice?: string; }
 
-// --- Multi-currency pricing (Apple App Store tiers for US, EU, UK) ---
-type CurrencyKey = 'USD' | 'GBP' | 'EUR';
-interface CurrencyPricing { symbol: string; basic: string; premium: string; annual: string; annualOriginal: string; }
-
-const PRICING: Record<CurrencyKey, CurrencyPricing> = {
-  USD: { symbol: '$', basic: '$5.99', premium: '$9.99', annual: '$89.99', annualOriginal: '$119.88' },
-  GBP: { symbol: '£', basic: '£5.99', premium: '£9.99', annual: '£89.99', annualOriginal: '£119.88' },
-  EUR: { symbol: '€', basic: '€6.99', premium: '€10.99', annual: '€98.99', annualOriginal: '€131.88' },
+// --- Fallback pricing (shown before RC offerings load or in dev mode) ---
+const FALLBACK_PRICES: Record<PlanId, string> = {
+  monthly_basic: '$5.99',
+  monthly_premium: '$9.99',
+  yearly: '$89.99',
 };
+const FALLBACK_ANNUAL_ORIGINAL = '$119.88';
 
-/** Detect currency from device locale via expo-localization */
-function getDeviceCurrency(): CurrencyKey {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const Localization = require('expo-localization');
-    const locales = Localization.getLocales?.();
-    if (locales && locales.length > 0) {
-      const { currencyCode, regionCode } = locales[0];
-      if (currencyCode === 'EUR' || currencyCode === 'GBP' || currencyCode === 'USD') return currencyCode;
-      // Map region to currency for common EU/UK/US regions
-      if (regionCode === 'GB') return 'GBP';
-      if (regionCode === 'US') return 'USD';
-      const euRegions = ['AT','BE','CY','EE','FI','FR','DE','GR','IE','IT','LV','LT','LU','MT','NL','PT','SK','SI','ES','HR'];
-      if (euRegions.includes(regionCode ?? '')) return 'EUR';
-    }
-  } catch {}
-  return 'USD'; // Default to USD
-}
+function buildPlans(
+  t: (key: string) => string,
+  livePrices: Record<string, PlanPricing | null> | null,
+): Plan[] {
+  const basicPrice = livePrices?.monthly_basic?.priceString ?? FALLBACK_PRICES.monthly_basic;
+  const premiumPrice = livePrices?.monthly_premium?.priceString ?? FALLBACK_PRICES.monthly_premium;
+  const annualPrice = livePrices?.yearly?.priceString ?? FALLBACK_PRICES.yearly;
+  // For the "was" price, we can't pull a struck-through price from RC — keep fallback
+  const annualOriginal = FALLBACK_ANNUAL_ORIGINAL;
 
-function buildPlans(currency: CurrencyKey, t: (key: string) => string): Plan[] {
-  const p = PRICING[currency];
   return [
-    { id: 'monthly_basic', name: t('subscription.planBasic'), price: p.basic, period: t('subscription.perMonth'),
+    { id: 'monthly_basic', name: t('subscription.planBasic'), price: basicPrice, period: t('subscription.perMonth'),
       details: [t('subscription.detailAllStories'), t('subscription.detailDownload50'), t('subscription.detailLimitedSongs'), t('subscription.detailSyncDevices')] },
-    { id: 'monthly_premium', name: t('subscription.planPremium'), price: p.premium, period: t('subscription.perMonth'), badge: t('subscription.mostRecommended'),
+    { id: 'monthly_premium', name: t('subscription.planPremium'), price: premiumPrice, period: t('subscription.perMonth'), badge: t('subscription.mostRecommended'),
       details: [t('subscription.detailAllStories'), t('subscription.detailDownload100'), t('subscription.detailAllSongs'), t('subscription.detailAllInstruments')] },
-    { id: 'yearly', name: t('subscription.planAnnual'), price: p.annual, period: t('subscription.perYear'), badge: t('subscription.percentOff'), originalPrice: p.annualOriginal,
+    { id: 'yearly', name: t('subscription.planAnnual'), price: annualPrice, period: t('subscription.perYear'), badge: t('subscription.percentOff'), originalPrice: annualOriginal,
       details: [t('subscription.detailEverythingPremium'), t('subscription.detailSave25')] },
   ];
 }
@@ -74,7 +61,8 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
   const insets = useSafeAreaInsets();
   const { width: screenW, height: screenH } = useWindowDimensions();
   const [selectedPlan, setSelectedPlan] = useState<PlanId>('monthly_premium');
-  const plans = useMemo(() => buildPlans(getDeviceCurrency(), t), [t]);
+  const [livePrices, setLivePrices] = useState<Record<string, PlanPricing | null> | null>(null);
+  const plans = useMemo(() => buildPlans(t, livePrices), [t, livePrices]);
   const [legalPage, setLegalPage] = useState<'privacy' | 'terms' | null>(null);
   const { isGuestMode, setGuestMode, setShowLoginAfterOnboarding } = useAppStore();
   const [isPurchasing, setIsPurchasing] = useState(false);
@@ -82,10 +70,18 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
   const backdropOpacity = useSharedValue(0);
   const legalSlideX = useSharedValue(screenW);
 
+  // Fetch RC offerings when overlay becomes visible → populate live prices
   useEffect(() => {
     if (visible) {
       translateY.value = withTiming(0, { duration: ANIM_MS, easing: Easing.out(Easing.cubic) });
       backdropOpacity.value = withTiming(1, { duration: ANIM_MS });
+      // Load offerings in background; on success, swap fallback prices for live ones
+      (async () => {
+        const offerings = await getOfferings();
+        if (offerings) {
+          setLivePrices(getOfferingPrices());
+        }
+      })();
     }
   }, [visible, backdropOpacity, translateY]);
 

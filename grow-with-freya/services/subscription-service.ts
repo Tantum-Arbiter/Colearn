@@ -31,7 +31,7 @@ const ENTITLEMENT_IDS = {
 } as const;
 
 const PACKAGE_MAP: Record<string, string> = {
-  monthly_basic: '$rc_monthly',
+  monthly_basic: '$rc_monthly_basic',
   monthly_premium: '$rc_monthly',
   yearly: '$rc_annual',
 };
@@ -205,6 +205,34 @@ function handleCustomerInfoUpdate(customerInfo: CustomerInfo): void {
   const tier = mapEntitlementsToTier(customerInfo);
   useAppStore.getState().setSubscriptionTier(tier);
   log.info(`CustomerInfo updated -tier: ${tier}`);
+}
+
+/** Price info for a single plan, pulled from RevenueCat offerings. */
+export interface PlanPricing {
+  priceString: string;          // e.g. "$9.99"
+  introPrice?: string | null;   // e.g. "$0.99" for trial period
+}
+
+/**
+ * Get live pricing from cached RC offerings for each plan.
+ * Returns null per plan if no package found (or offerings not yet loaded).
+ * The overlay uses this to replace hardcoded prices with store-localised ones.
+ */
+export function getOfferingPrices(): Record<string, PlanPricing | null> {
+  const result: Record<string, PlanPricing | null> = {};
+  const packages = _cachedOfferings?.current?.availablePackages;
+  for (const [planId, rcId] of Object.entries(PACKAGE_MAP)) {
+    const pkg = packages?.find((p) => p.identifier === rcId);
+    if (pkg) {
+      result[planId] = {
+        priceString: pkg.product.priceString,
+        introPrice: pkg.product.introPrice?.priceString ?? null,
+      };
+    } else {
+      result[planId] = null;
+    }
+  }
+  return result;
 }
 
 /** Reset internal state for testing. Do NOT use in production code. */

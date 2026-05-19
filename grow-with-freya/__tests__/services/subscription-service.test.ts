@@ -20,6 +20,7 @@ import {
   syncEntitlements,
   restorePurchases,
   mapPlanIdToPackage,
+  getOfferingPrices,
   _resetForTesting,
 } from '@/services/subscription-service';
 // useAppStore is mocked below -imported for type reference only
@@ -32,8 +33,8 @@ function mockCustomerInfo(activeEntitlements: Record<string, { isActive: boolean
 }
 
 /** Build a mock package */
-function mockPackage(identifier: string) {
-  return { identifier, product: { title: 'Test', price: 1.99 } } as any;
+function mockPackage(identifier: string, priceString = '$9.99') {
+  return { identifier, product: { title: 'Test', price: 1.99, priceString, introPrice: null } } as any;
 }
 
 // ─── Override app-store mock to provide getState for subscription-service ───
@@ -436,12 +437,25 @@ describe('mapPlanIdToPackage', () => {
     (global as any).__DEV__ = false;
     (Constants as any).appOwnership = null;
     const offerings = {
-      current: { availablePackages: [mockPackage('$rc_monthly'), mockPackage('$rc_annual')] },
+      current: { availablePackages: [mockPackage('$rc_monthly_basic'), mockPackage('$rc_monthly'), mockPackage('$rc_annual')] },
     };
     (Purchases.getOfferings as jest.Mock).mockResolvedValueOnce(offerings);
     await getOfferings();
 
     const result = mapPlanIdToPackage('monthly_basic');
+    expect(result?.identifier).toBe('$rc_monthly_basic');
+  });
+
+  it('finds correct package for monthly_premium (distinct from basic)', async () => {
+    (global as any).__DEV__ = false;
+    (Constants as any).appOwnership = null;
+    const offerings = {
+      current: { availablePackages: [mockPackage('$rc_monthly_basic'), mockPackage('$rc_monthly'), mockPackage('$rc_annual')] },
+    };
+    (Purchases.getOfferings as jest.Mock).mockResolvedValueOnce(offerings);
+    await getOfferings();
+
+    const result = mapPlanIdToPackage('monthly_premium');
     expect(result?.identifier).toBe('$rc_monthly');
   });
 
@@ -503,5 +517,57 @@ describe('Security', () => {
       basic_access: { isActive: false },
     });
     expect(mapEntitlementsToTier(info)).toBe('free');
+  });
+});
+
+
+// ════════════════════════════════════════════════
+// 10. getOfferingPrices()
+// ════════════════════════════════════════════════
+
+describe('getOfferingPrices', () => {
+  it('returns null for all plans when offerings not loaded', () => {
+    const prices = getOfferingPrices();
+    expect(prices.monthly_basic).toBeNull();
+    expect(prices.monthly_premium).toBeNull();
+    expect(prices.yearly).toBeNull();
+  });
+
+  it('returns live priceString from cached offerings', async () => {
+    (global as any).__DEV__ = false;
+    (Constants as any).appOwnership = null;
+    const offerings = {
+      current: {
+        availablePackages: [
+          mockPackage('$rc_monthly_basic', '$5.99'),
+          mockPackage('$rc_monthly', '$9.99'),
+          mockPackage('$rc_annual', '$89.99'),
+        ],
+      },
+    };
+    (Purchases.getOfferings as jest.Mock).mockResolvedValueOnce(offerings);
+    await getOfferings();
+
+    const prices = getOfferingPrices();
+    expect(prices.monthly_basic?.priceString).toBe('$5.99');
+    expect(prices.monthly_premium?.priceString).toBe('$9.99');
+    expect(prices.yearly?.priceString).toBe('$89.99');
+  });
+
+  it('returns null for missing packages', async () => {
+    (global as any).__DEV__ = false;
+    (Constants as any).appOwnership = null;
+    const offerings = {
+      current: {
+        availablePackages: [mockPackage('$rc_monthly', '$9.99')],
+      },
+    };
+    (Purchases.getOfferings as jest.Mock).mockResolvedValueOnce(offerings);
+    await getOfferings();
+
+    const prices = getOfferingPrices();
+    expect(prices.monthly_basic).toBeNull(); // $rc_monthly_basic not in offerings
+    expect(prices.monthly_premium?.priceString).toBe('$9.99');
+    expect(prices.yearly).toBeNull(); // $rc_annual not in offerings
   });
 });
