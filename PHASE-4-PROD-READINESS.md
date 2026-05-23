@@ -515,6 +515,13 @@ Only change the user-facing brand name, not the technical identifiers.
 - [ ] Update Cloudflare allowed user-agents
 - [ ] Update `GCS_BUCKET` env var for prod to `earlyroots-assets`
 - [ ] Keep legacy `colearnwithfreya` domains in CORS during transition
+- [ ] **Update `eas.json` production `GATEWAY_URL`** — all three build profiles (`development`, `staging`, `production`) currently point `EXPO_PUBLIC_GATEWAY_URL` to `https://api.colearnwithfreya.co.uk`. The production profile must point to `https://api.earlyroots.co.uk` before the first store build. Dev/staging can keep the old URL during transition.
+- [ ] **Add `allowed-user-agents` to `application-prod.yml` Cloudflare config** — the prod Cloudflare section has `require-validation: true` but no `allowed-user-agents` list. Without this, the Cloudflare validation filter will reject every request. Add: `allowed-user-agents: EarlyRoots,GrowWithFreya,EarlyRoots-FuncTest` (matching Section 7.2).
+- [ ] **Verify `application-prod.yml` JWT property paths** — prod uses `jwt.secret` (line 86) while gcp-dev uses `app.jwt.secret` (line 34). Confirm the `JwtConfig` class resolves both paths correctly, otherwise auth will fail silently on the production VM. Run a local test with `SPRING_PROFILES_ACTIVE=prod` to validate.
+- [ ] **Rebrand `app.config.js` display name** — change production app name from `'Grow with Freya'` to `'Early Roots'` (line 7). Update `associatedDomains` from `applinks:colearnwithfreya.co.uk` to `applinks:earlyroots.co.uk` (line 37). Keep `bundleIdentifier` and `package` as `com.growwithfreya.app` to avoid store re-submission.
+- [ ] **Rebrand share text** — `story-selection-screen.tsx` line 767 says "Check out X on Grow with Freya!". Update to "Early Roots".
+- [ ] **Rebrand notification text** — `notification-service.ts` lines 106 and 223 say "Time for Grow with Freya! 🌟". Update to "Early Roots".
+- [ ] **Rename Sentry project references** — `app.json` lines 69–70 reference `project: "grow-with-freya"` and `organization: "grow-with-freya"`. Update to match the new Sentry project/org name (or rename in Sentry dashboard). Not user-facing but avoids dashboard confusion.
 
 ### 9.5 CI/CD
 
@@ -539,3 +546,9 @@ Only change the user-facing brand name, not the technical identifiers.
 - [ ] **Web-based account deletion page** — Google Play requires a web URL (not just in-app) for account deletion requests. Host a simple form or info page at `https://earlyroots.co.uk/delete-account` that links to the support email or submits a deletion request to the API.
 - [ ] **Sentry DSN via environment config** — move the hardcoded DSN in `sentry-service.ts` into `app.config.js` (via `extra` or env vars) so dev and prod can use different Sentry projects. Not a security issue (DSNs are client-side), but best practice for environment separation.
 - [ ] **Privacy policy processor list audit** — before each submission, verify that the processor list in the privacy policy matches the actual SDKs in the app. Any new SDK (analytics, A/B testing, push notifications) must be disclosed under Section 6.
+- [ ] **Rebrand Terms & Conditions screen** — `terms-conditions-screen.tsx` has 9 references to "Grow with Freya" and `support@growwithfreya.com` across both the full and embedded versions. Must match the privacy policy branding ("Early Roots", `support@earlyroots.co.uk`). Apple/Google reviewers will flag inconsistent branding between privacy policy and T&Cs.
+
+### 9.8 Data Protection & Backup
+
+- [ ] **Firestore scheduled exports** — set up automated Firestore exports to a GCS bucket (e.g. `gs://earlyroots-firestore-backups`) using `gcloud firestore export` on a daily cron. This provides point-in-time recovery if a bad deploy corrupts data or an accidental deletion occurs. GCS lifecycle policy can auto-delete exports older than 30 days to control costs.
+- [ ] **GCS asset bucket versioning** — enable object versioning on `earlyroots-assets` so story asset overwrites can be rolled back: `gsutil versioning set on gs://earlyroots-assets`.
