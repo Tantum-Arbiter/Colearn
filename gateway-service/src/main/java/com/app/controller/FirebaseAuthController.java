@@ -23,7 +23,6 @@ import jakarta.servlet.http.HttpServletRequest;
 @RestController
 @RequestMapping("/auth")
 @Profile({"test", "gcp-dev"})
-@CrossOrigin(origins = "*", maxAge = 3600)
 public class FirebaseAuthController {
 
     private static final Logger logger = LoggerFactory.getLogger(FirebaseAuthController.class);

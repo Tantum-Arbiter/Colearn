@@ -23,10 +23,13 @@ export function initializeSentry(): void {
     // Enable Logs
     enableLogs: true,
 
-    // Configure Session Replay - reduced sample rate for privacy
-    replaysSessionSampleRate: 0.05,
-    replaysOnErrorSampleRate: 1,
-    integrations: [Sentry.mobileReplayIntegration(), Sentry.feedbackIntegration()],
+    // Session Replay — dev only (disabled in production to protect children's PII)
+    replaysSessionSampleRate: __DEV__ ? 0.05 : 0,
+    replaysOnErrorSampleRate: __DEV__ ? 1 : 0,
+    integrations: [
+      ...(__DEV__ ? [Sentry.mobileReplayIntegration()] : []),
+      Sentry.feedbackIntegration(),
+    ],
 
     // Only capture errors, not transactions for minimal data collection
     tracesSampleRate: 0,

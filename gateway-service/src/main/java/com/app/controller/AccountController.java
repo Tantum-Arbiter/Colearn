@@ -21,7 +21,6 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*", maxAge = 3600)
 public class AccountController {
 
     private static final Logger logger = LoggerFactory.getLogger(AccountController.class);

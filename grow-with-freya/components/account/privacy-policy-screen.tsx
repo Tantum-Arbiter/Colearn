@@ -57,12 +57,12 @@ export function PrivacyPolicyScreen({ onBack }: PrivacyPolicyScreenProps) {
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>UK/EU GDPR & Child-Appropriate</Text>
             <Text style={[styles.appInfo, { fontSize: scaledFontSize(14) }]}>
-              App: Grow with Freya{'\n'}
+              App: Early Roots{'\n'}
               Controller: Tantum Arbiter, United Kingdom{'\n'}
-              Contact (privacy): privacy@growwithfreya.com{'\n'}
+              Contact (privacy): privacy@earlyroots.co.uk{'\n'}
               Data Protection Officer: N/A{'\n'}
-              Effective date: November 1, 2025{'\n'}
-              Version: 1.0
+              Effective date: May 23, 2026{'\n'}
+              Version: 2.0
             </Text>
           </View>
 
@@ -79,23 +79,24 @@ export function PrivacyPolicyScreen({ onBack }: PrivacyPolicyScreenProps) {
             <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
               • Parent account sign-in: Your Apple/Google account identifier (token), not your password.{'\n'}
               • Child profiles: Display name/alias and avatar selection.{'\n'}
+              • Voice recordings: Parent narrations of stories, stored on-device only and never transmitted to our servers.{'\n'}
               • Consents: Records of parent/guardian consents (terms version, consent scope, timestamp).{'\n'}
               • Device registration: Device identifier, platform, and model to keep profiles in sync.{'\n'}
               • Support: Emails or messages you send us.
             </Text>
 
-            <Text style={[styles.subsectionTitle, { fontSize: scaledFontSize(16) }]}>2.2 Data we do not collect in MVP</Text>
+            <Text style={[styles.subsectionTitle, { fontSize: scaledFontSize(16) }]}>2.2 Data we do not collect</Text>
             <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
-              • No advertising identifiers, no third-party ads, no behavioral tracking.{'\n'}
-              • No payment data.{'\n'}
-              • No voice recordings (voice features are deferred).{'\n'}
-              • No precise location.
+              • No advertising identifiers, no third-party ads, no behavioural tracking.{'\n'}
+              • No credit card or direct payment data (subscriptions are processed entirely by Apple/Google via RevenueCat – see Section 6).{'\n'}
+              • No precise location.{'\n'}
+              • No children&apos;s real names, photos, or biometric data.
             </Text>
 
             <Text style={[styles.subsectionTitle, { fontSize: scaledFontSize(16) }]}>2.3 Automatic data (app operations)</Text>
             <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
               • Basic diagnostic logs (timestamp, route, status, duration).{'\n'}
-              • Crash data on your device if you opt in to OS crash reporting.{'\n'}
+              • Crash data if you opt in to crash reporting (see Section 6).{'\n'}
               • Pseudonymous device identifier (for security, abuse prevention, and secure access – cannot identify a person, not shared with third parties).
             </Text>
           </View>
@@ -104,7 +105,7 @@ export function PrivacyPolicyScreen({ onBack }: PrivacyPolicyScreenProps) {
             <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>3. Why we use your data (lawful bases)</Text>
             <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
               • Contract: To provide the app, sign you in, sync content, and show your profiles.{'\n'}
-              • Consent: To record parental consent and any optional features that require it.{'\n'}
+              • Consent: To record parental consent, crash reporting, and any optional features that require it.{'\n'}
               • Legal obligation: To respond to data subject requests.{'\n'}
               • Legitimate interests (minimal, balanced): Security, fraud prevention, service analytics strictly necessary to operate the app. We process a pseudonymous device identifier to protect the app, prevent abuse, and ensure secure access. This identifier cannot be used to identify a person and is not shared with third parties.
             </Text>
@@ -116,7 +117,8 @@ export function PrivacyPolicyScreen({ onBack }: PrivacyPolicyScreenProps) {
               • Authenticate the parent/guardian account via Apple/Google.{'\n'}
               • Create and manage child profiles and keep them in sync across your devices.{'\n'}
               • Record and honour consent choices.{'\n'}
-              • Deliver stories and media from our content service/CMS.{'\n'}
+              • Deliver stories, music, and media from our content service.{'\n'}
+              • Process subscriptions via Apple/Google through RevenueCat (we do not see your payment details).{'\n'}
               • Provide support and maintain service security.
             </Text>
           </View>
@@ -124,19 +126,22 @@ export function PrivacyPolicyScreen({ onBack }: PrivacyPolicyScreenProps) {
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>5. Children&apos;s data &amp; parental consent</Text>
             <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
-              • The app is used with a parent/guardian.{'\n'}
+              • The app is designed to be used with a parent/guardian present.{'\n'}
               • We only process children&apos;s data (profile alias and avatar) with verifiable parental consent collected via the in-app parental gate.{'\n'}
+              • Voice recordings are stored on-device only and are under the parent&apos;s control.{'\n'}
               • Parents can review, export, or delete children&apos;s data at any time (see Section 9).
             </Text>
           </View>
 
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>6. Data sharing</Text>
+            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>6. Data sharing &amp; processors</Text>
             <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
-              We use carefully chosen processors to run the app, for example:{'\n'}
-              • Cloud hosting & object storage for content and profile data.{'\n'}
-              • Apple/Google for sign-in.{'\n\n'}
-              Processors act on our instructions and are bound by contracts and appropriate safeguards.{'\n\n'}
+              We use carefully chosen processors to run the app:{'\n'}
+              • Google Cloud Platform (cloud hosting, content storage, profile data).{'\n'}
+              • Apple/Google (sign-in authentication).{'\n'}
+              • RevenueCat (subscription management – processes purchase receipts from Apple/Google to verify your subscription status; does not receive your payment card details).{'\n'}
+              • Sentry (opt-in crash reporting – receives anonymised crash data only; no PII, no screen recordings in production; see sentry.io/privacy).{'\n\n'}
+              All processors act on our instructions and are bound by contracts and appropriate safeguards.{'\n\n'}
               We do not sell personal data. We do not share data with advertisers.
             </Text>
           </View>
@@ -144,15 +149,17 @@ export function PrivacyPolicyScreen({ onBack }: PrivacyPolicyScreenProps) {
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>7. International transfers</Text>
             <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
-              If we transfer data outside the UK/EU, we use recognised safeguards, such as UK Addendum to SCCs / EU SCCs or a valid adequacy decision. Details are available on request.
+              Some processors (e.g. RevenueCat, Sentry) may process data outside the UK/EU. Where this occurs, we rely on recognised safeguards such as UK Addendum to SCCs / EU SCCs or a valid adequacy decision. Details are available on request.
             </Text>
           </View>
 
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>8. Data retention</Text>
             <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
-              • Account data & profiles: kept while your account is active.{'\n'}
+              • Account data &amp; profiles: kept while your account is active.{'\n'}
+              • Voice recordings: stored on-device only; deleted when you remove them or uninstall the app.{'\n'}
               • Consent records: kept for 7 years for compliance.{'\n'}
+              • Crash reports: retained by Sentry for up to 90 days.{'\n'}
               • Diagnostics logs: up to 30 days, unless required to investigate issues.{'\n\n'}
               When you request erasure, we delete personal data without undue delay unless retention is required by law.
             </Text>
@@ -161,7 +168,7 @@ export function PrivacyPolicyScreen({ onBack }: PrivacyPolicyScreenProps) {
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>9. Your rights (UK/EU)</Text>
             <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
-              You can exercise these rights by emailing privacy@growwithfreya.com:{'\n'}
+              You can exercise these rights by emailing privacy@earlyroots.co.uk:{'\n'}
               • Access (copy of your data){'\n'}
               • Rectification (fix inaccuracies){'\n'}
               • Erasure (delete data){'\n'}
@@ -170,7 +177,8 @@ export function PrivacyPolicyScreen({ onBack }: PrivacyPolicyScreenProps) {
               • Objection (where we rely on legitimate interests){'\n'}
               • Withdraw consent (for consent-based features){'\n\n'}
               You can also delete your account and all associated data directly in the app via Account → Delete Account. Upon deletion, your profile, child profiles, reading history, and all server-side data are permanently removed.{'\n\n'}
-              You also have the right to complain to the UK ICO or your local data protection authority. UK ICO: https://ico.org.uk
+              You can also request account deletion at https://earlyroots.co.uk/delete-account.{'\n\n'}
+              You have the right to complain to the UK ICO or your local data protection authority. UK ICO: https://ico.org.uk
             </Text>
           </View>
 
@@ -180,13 +188,14 @@ export function PrivacyPolicyScreen({ onBack }: PrivacyPolicyScreenProps) {
               We use industry-standard security, including:{'\n'}
               • Encrypted transport (HTTPS) and secure storage for private data.{'\n'}
               • Short-lived session tokens; verification on each API call.{'\n'}
-              • Principle of least privilege for staff and systems.{'\n\n'}
+              • Principle of least privilege for staff and systems.{'\n'}
+              • Rate limiting and web application firewall protection.{'\n\n'}
               No system is 100% secure. If we learn of a breach impacting your data, we will notify you and authorities where required.
             </Text>
           </View>
 
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>11. Cookies & tracking</Text>
+            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>11. Cookies &amp; tracking</Text>
             <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
               The mobile app does not use third-party tracking cookies. If a future web dashboard uses cookies, we will present a separate cookie notice and choices.
             </Text>
@@ -324,128 +333,69 @@ export function PrivacyPolicyContent({ paddingTop = 0 }: PrivacyPolicyContentPro
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>UK/EU GDPR & Child-Appropriate</Text>
           <Text style={[styles.appInfo, { fontSize: scaledFontSize(14) }]}>
-            App: Grow with Freya{'\n'}
+            App: Early Roots{'\n'}
             Controller: Tantum Arbiter, United Kingdom{'\n'}
-            Contact (privacy): privacy@growwithfreya.com{'\n'}
-            Data Protection Officer: N/A{'\n'}
-            Effective date: November 1, 2025{'\n'}
-            Version: 1.0
+            Contact (privacy): privacy@earlyroots.co.uk{'\n'}
+            Effective date: May 23, 2026{'\n'}
+            Version: 2.0
           </Text>
         </View>
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>1. What this policy covers</Text>
           <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
-            This explains what personal data we collect, why we collect it, how we use it, and your rights. The app is intended for children aged 0–6 used with a parent/guardian. The parent/guardian is the account holder.
+            This explains what personal data we collect, why we collect it, how we use it, and your rights. The app is intended for children aged 0–6 used with a parent/guardian.
           </Text>
         </View>
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>2. What data we collect</Text>
-          <Text style={[styles.subsectionTitle, { fontSize: scaledFontSize(16) }]}>2.1 Data you provide</Text>
           <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
-            • Parent account sign-in: Your Apple/Google account identifier (token), not your password.{'\n'}
-            • Child profiles: Display name/alias and avatar selection.{'\n'}
-            • Consents: Records of parent/guardian consents (terms version, consent scope, timestamp).{'\n'}
-            • Device registration: Device identifier, platform, and model to keep profiles in sync.{'\n'}
-            • Support: Emails or messages you send us.
-          </Text>
-
-          <Text style={[styles.subsectionTitle, { fontSize: scaledFontSize(16) }]}>2.2 Data we do not collect in MVP</Text>
-          <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
-            • No advertising identifiers, no third-party ads, no behavioral tracking.{'\n'}
-            • No payment data.{'\n'}
-            • No voice recordings (voice features are deferred).{'\n'}
-            • No precise location.
-          </Text>
-
-          <Text style={[styles.subsectionTitle, { fontSize: scaledFontSize(16) }]}>2.3 Automatic data (app operations)</Text>
-          <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
-            • Basic diagnostic logs (timestamp, route, status, duration).{'\n'}
-            • Crash data on your device if you opt in to OS crash reporting.{'\n'}
-            • Pseudonymous device identifier (for security, abuse prevention, and secure access – cannot identify a person, not shared with third parties).
+            • Parent account sign-in via Apple/Google (ID token only).{'\n'}
+            • Child profiles: display name/alias and avatar.{'\n'}
+            • Voice recordings: stored on-device only, never sent to our servers.{'\n'}
+            • Crash data if you opt in (see Section 6).{'\n'}
+            • Pseudonymous device identifier for security.{'\n\n'}
+            We do not collect: advertising IDs, payment card details, precise location, children&apos;s real names or photos.
           </Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>3. Why we use your data (lawful bases)</Text>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>3–5. Use, lawful bases &amp; children&apos;s data</Text>
           <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
-            • Contract: To provide the app, sign you in, sync content, and show your profiles.{'\n'}
-            • Consent: To record parental consent and any optional features that require it.{'\n'}
-            • Legal obligation: To respond to data subject requests.{'\n'}
-            • Legitimate interests (minimal, balanced): Security, fraud prevention, service analytics strictly necessary to operate the app.
+            We use data to provide the app, authenticate you, sync profiles, deliver content, and process subscriptions via Apple/Google through RevenueCat. Children&apos;s data is processed only with parental consent.
           </Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>4. How we use the data</Text>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>6. Processors</Text>
           <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
-            • Authenticate the parent/guardian account via Apple/Google.{'\n'}
-            • Create and manage child profiles and keep them in sync across your devices.{'\n'}
-            • Record and honour consent choices.{'\n'}
-            • Deliver stories and media from our content service/CMS.{'\n'}
-            • Provide support and maintain service security.
+            Google Cloud Platform (hosting), Apple/Google (sign-in), RevenueCat (subscriptions), Sentry (opt-in crash reports, no PII). We do not sell data or use advertisers.
           </Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>5. Children&apos;s data &amp; parental consent</Text>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>7–8. Transfers &amp; retention</Text>
           <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
-            • The app is used with a parent/guardian.{'\n'}
-            • We only process children&apos;s data (profile alias and avatar) with verifiable parental consent.{'\n'}
-            • Parents can review, export, or delete children&apos;s data at any time (see Section 9).
+            International transfers use UK/EU SCCs. Account data kept while active. Voice recordings on-device only. Crash reports: 90 days. Logs: 30 days.
           </Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>6. Data sharing</Text>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>9. Your rights</Text>
           <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
-            We use carefully chosen processors to run the app:{'\n'}
-            • Cloud hosting & object storage for content and profile data.{'\n'}
-            • Apple/Google for sign-in.{'\n\n'}
-            We do not sell personal data. We do not share data with advertisers.
+            Email privacy@earlyroots.co.uk for: Access, Rectification, Erasure, Restriction, Portability, Objection, Withdraw consent.{'\n\n'}
+            Delete your account in-app via Account → Delete Account, or at https://earlyroots.co.uk/delete-account.{'\n\n'}
+            Complain to the UK ICO: https://ico.org.uk
           </Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>7. International transfers</Text>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>10. Contact</Text>
           <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
-            If we transfer data outside the UK/EU, we use recognised safeguards, such as UK Addendum to SCCs / EU SCCs or a valid adequacy decision.
+            Questions? privacy@earlyroots.co.uk
           </Text>
         </View>
-
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>8. Data retention</Text>
-          <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
-            • Account data & profiles: kept while your account is active.{'\n'}
-            • Consent records: kept for 7 years for compliance.{'\n'}
-            • Diagnostics logs: up to 30 days.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>9. Your rights (UK/EU)</Text>
-          <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
-            You can exercise these rights by emailing privacy@growwithfreya.com:{'\n'}
-            • Access, Rectification, Erasure, Restriction, Portability, Objection, Withdraw consent{'\n\n'}
-            You can also delete your account and all associated data directly in the app via Account → Delete Account.{'\n\n'}
-            You also have the right to complain to the UK ICO or your local data protection authority.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>10. Security</Text>
-          <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
-            We use industry-standard security, including encrypted transport (HTTPS) and secure storage.
-          </Text>
-        </View>
-
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>11. Contact</Text>
-            <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
-              Questions? privacy@growwithfreya.com
-            </Text>
-          </View>
         </View>
       </ScrollView>
     </View>
