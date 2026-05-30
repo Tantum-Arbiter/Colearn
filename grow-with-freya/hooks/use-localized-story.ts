@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Story, StoryPage, getLocalizedText, LocalizedText } from '@/types/story';
+import { Story, StoryPage, getLocalizedText, resolveAgeGroup, AgeGroup } from '@/types/story';
 import type { SupportedLanguage } from '@/services/i18n';
+import { useAppStore } from '@/store/app-store';
 
 /**
  * Hook to get localized story content based on current language
@@ -17,16 +18,18 @@ export function useLocalizedStory(story: Story) {
 }
 
 /**
- * Hook to get localized page text based on current language
+ * Hook to get localized page text based on current language and child age group
  */
 export function useLocalizedPage(page: StoryPage | undefined) {
   const { i18n } = useTranslation();
   const language = i18n.language as SupportedLanguage;
+  const childAgeInMonths = useAppStore((state) => state.childAgeInMonths);
+  const ageGroup = resolveAgeGroup(childAgeInMonths);
 
   return useMemo(() => {
     if (!page) return '';
-    return getLocalizedText(page.localizedText, page.text, language);
-  }, [page, language]);
+    return getLocalizedText(undefined, page.text, language, page.localizedText, ageGroup);
+  }, [page, language, ageGroup]);
 }
 
 /**
@@ -54,9 +57,10 @@ export function getLocalizedStoryDescription(
  */
 export function getLocalizedPageText(
   page: StoryPage | undefined,
-  language: SupportedLanguage
+  language: SupportedLanguage,
+  ageGroup: AgeGroup = '4-6'
 ): string {
   if (!page) return '';
-  return getLocalizedText(page.localizedText, page.text, language);
+  return getLocalizedText(undefined, page.text, language, page.localizedText, ageGroup);
 }
 

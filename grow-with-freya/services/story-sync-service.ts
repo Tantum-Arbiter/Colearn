@@ -306,9 +306,14 @@ export class StorySyncService {
             // Log first page with localized text to verify structure
             if (pagesWithLocalized.length > 0) {
               const firstPage = pagesWithLocalized[0];
+              const ageGroups = firstPage.localizedText ? Object.keys(firstPage.localizedText) : [];
+              const firstAgeGroupText = firstPage.localizedText && ageGroups.length > 0
+                ? firstPage.localizedText[ageGroups[0] as import('@/types/story').AgeGroup]
+                : undefined;
               log.debug(`  First localized page (${firstPage.id}):`, {
-                hasJapanese: !!firstPage.localizedText?.ja,
-                localizedTextKeys: firstPage.localizedText ? Object.keys(firstPage.localizedText) : []
+                ageGroups,
+                hasJapanese: !!firstAgeGroupText?.ja,
+                languageKeys: firstAgeGroupText ? Object.keys(firstAgeGroupText) : []
               });
             }
           });

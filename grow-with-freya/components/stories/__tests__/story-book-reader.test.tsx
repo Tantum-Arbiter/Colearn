@@ -479,9 +479,11 @@ describe('StoryBookReader Text Rendering with Newlines', () => {
           pageNumber: 1,
           text: 'English text.\nMore English.',
           localizedText: {
-            en: 'English text.\nMore English.',
-            pl: 'Tekst polski.\nWięcej polskiego.',
-            es: 'Texto español.\nMás español.',
+            '4-6': {
+              en: 'English text.\nMore English.',
+              pl: 'Tekst polski.\nWięcej polskiego.',
+              es: 'Texto español.\nMás español.',
+            },
           },
           backgroundImage: 'page1-bg.webp',
         },

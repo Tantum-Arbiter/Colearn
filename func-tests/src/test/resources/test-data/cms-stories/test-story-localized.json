@@ -55,20 +55,22 @@
       "backgroundImage": "assets/stories/cms-squirrels-snowman/cover/cover.webp",
       "text": "The Friendly Squirrel\n\nA Story About Sharing",
       "localizedText": {
-        "en": "The Friendly Squirrel\n\nA Story About Sharing",
-        "pl": "Przyjazna Wiewiórka\n\nOpowieść o Dzieleniu się",
-        "es": "La Ardilla Amigable\n\nUna Historia Sobre Compartir",
-        "de": "Das freundliche Eichhörnchen\n\nEine Geschichte über das Teilen",
-        "fr": "The Friendly Squirrel\n\nA Story About Sharing",
-        "it": "The Friendly Squirrel\n\nA Story About Sharing",
-        "pt": "The Friendly Squirrel\n\nA Story About Sharing",
-        "ja": "The Friendly Squirrel\n\nA Story About Sharing",
-        "ar": "The Friendly Squirrel\n\nA Story About Sharing",
-        "tr": "The Friendly Squirrel\n\nA Story About Sharing",
-        "nl": "The Friendly Squirrel\n\nA Story About Sharing",
-        "da": "The Friendly Squirrel\n\nA Story About Sharing",
-        "la": "The Friendly Squirrel\n\nA Story About Sharing",
-        "zh": "The Friendly Squirrel\n\nA Story About Sharing"
+        "4-6": {
+          "en": "The Friendly Squirrel\n\nA Story About Sharing",
+          "pl": "Przyjazna Wiewiórka\n\nOpowieść o Dzieleniu się",
+          "es": "La Ardilla Amigable\n\nUna Historia Sobre Compartir",
+          "de": "Das freundliche Eichhörnchen\n\nEine Geschichte über das Teilen",
+          "fr": "The Friendly Squirrel\n\nA Story About Sharing",
+          "it": "The Friendly Squirrel\n\nA Story About Sharing",
+          "pt": "The Friendly Squirrel\n\nA Story About Sharing",
+          "ja": "The Friendly Squirrel\n\nA Story About Sharing",
+          "ar": "The Friendly Squirrel\n\nA Story About Sharing",
+          "tr": "The Friendly Squirrel\n\nA Story About Sharing",
+          "nl": "The Friendly Squirrel\n\nA Story About Sharing",
+          "da": "The Friendly Squirrel\n\nA Story About Sharing",
+          "la": "The Friendly Squirrel\n\nA Story About Sharing",
+          "zh": "The Friendly Squirrel\n\nA Story About Sharing"
+        }
       }
     },
     {
@@ -78,20 +80,22 @@
       "backgroundImage": "assets/stories/cms-squirrels-snowman/page-1/page-1.webp",
       "text": "Once upon a time, there was a friendly little squirrel named Sammy.",
       "localizedText": {
-        "en": "Once upon a time, there was a friendly little squirrel named Sammy.",
-        "pl": "Dawno, dawno temu żyła sobie przyjazna mała wiewiórka o imieniu Sammy.",
-        "es": "Había una vez una pequeña ardilla amigable llamada Sammy.",
-        "de": "Es war einmal ein freundliches kleines Eichhörnchen namens Sammy.",
-        "fr": "Once upon a time, there was a friendly little squirrel named Sammy.",
-        "it": "Once upon a time, there was a friendly little squirrel named Sammy.",
-        "pt": "Once upon a time, there was a friendly little squirrel named Sammy.",
-        "ja": "Once upon a time, there was a friendly little squirrel named Sammy.",
-        "ar": "Once upon a time, there was a friendly little squirrel named Sammy.",
-        "tr": "Once upon a time, there was a friendly little squirrel named Sammy.",
-        "nl": "Once upon a time, there was a friendly little squirrel named Sammy.",
-        "da": "Once upon a time, there was a friendly little squirrel named Sammy.",
-        "la": "Once upon a time, there was a friendly little squirrel named Sammy.",
-        "zh": "Once upon a time, there was a friendly little squirrel named Sammy."
+        "4-6": {
+          "en": "Once upon a time, there was a friendly little squirrel named Sammy.",
+          "pl": "Dawno, dawno temu żyła sobie przyjazna mała wiewiórka o imieniu Sammy.",
+          "es": "Había una vez una pequeña ardilla amigable llamada Sammy.",
+          "de": "Es war einmal ein freundliches kleines Eichhörnchen namens Sammy.",
+          "fr": "Once upon a time, there was a friendly little squirrel named Sammy.",
+          "it": "Once upon a time, there was a friendly little squirrel named Sammy.",
+          "pt": "Once upon a time, there was a friendly little squirrel named Sammy.",
+          "ja": "Once upon a time, there was a friendly little squirrel named Sammy.",
+          "ar": "Once upon a time, there was a friendly little squirrel named Sammy.",
+          "tr": "Once upon a time, there was a friendly little squirrel named Sammy.",
+          "nl": "Once upon a time, there was a friendly little squirrel named Sammy.",
+          "da": "Once upon a time, there was a friendly little squirrel named Sammy.",
+          "la": "Once upon a time, there was a friendly little squirrel named Sammy.",
+          "zh": "Once upon a time, there was a friendly little squirrel named Sammy."
+        }
       }
     },
     {
@@ -101,20 +105,22 @@
       "backgroundImage": "assets/stories/cms-squirrels-snowman/page-2/page-2.webp",
       "text": "Sammy loved to collect acorns in the autumn forest.",
       "localizedText": {
-        "en": "Sammy loved to collect acorns in the autumn forest.",
-        "pl": "Sammy uwielbiał zbierać żołędzie w jesiennym lesie.",
-        "es": "A Sammy le encantaba recolectar bellotas en el bosque de otoño.",
-        "de": "Sammy liebte es, im Herbstwald Eicheln zu sammeln.",
-        "fr": "Sammy loved to collect acorns in the autumn forest.",
-        "it": "Sammy loved to collect acorns in the autumn forest.",
-        "pt": "Sammy loved to collect acorns in the autumn forest.",
-        "ja": "Sammy loved to collect acorns in the autumn forest.",
-        "ar": "Sammy loved to collect acorns in the autumn forest.",
-        "tr": "Sammy loved to collect acorns in the autumn forest.",
-        "nl": "Sammy loved to collect acorns in the autumn forest.",
-        "da": "Sammy loved to collect acorns in the autumn forest.",
-        "la": "Sammy loved to collect acorns in the autumn forest.",
-        "zh": "Sammy loved to collect acorns in the autumn forest."
+        "4-6": {
+          "en": "Sammy loved to collect acorns in the autumn forest.",
+          "pl": "Sammy uwielbiał zbierać żołędzie w jesiennym lesie.",
+          "es": "A Sammy le encantaba recolectar bellotas en el bosque de otoño.",
+          "de": "Sammy liebte es, im Herbstwald Eicheln zu sammeln.",
+          "fr": "Sammy loved to collect acorns in the autumn forest.",
+          "it": "Sammy loved to collect acorns in the autumn forest.",
+          "pt": "Sammy loved to collect acorns in the autumn forest.",
+          "ja": "Sammy loved to collect acorns in the autumn forest.",
+          "ar": "Sammy loved to collect acorns in the autumn forest.",
+          "tr": "Sammy loved to collect acorns in the autumn forest.",
+          "nl": "Sammy loved to collect acorns in the autumn forest.",
+          "da": "Sammy loved to collect acorns in the autumn forest.",
+          "la": "Sammy loved to collect acorns in the autumn forest.",
+          "zh": "Sammy loved to collect acorns in the autumn forest."
+        }
       }
     },
     {
@@ -124,20 +130,22 @@
       "backgroundImage": "assets/stories/cms-squirrels-snowman/page-3/page-3.webp",
       "text": "One day, Sammy met a hungry rabbit who had no food.",
       "localizedText": {
-        "en": "One day, Sammy met a hungry rabbit who had no food.",
-        "pl": "Pewnego dnia Sammy spotkał głodnego królika, który nie miał jedzenia.",
-        "es": "Un día, Sammy conoció a un conejo hambriento que no tenía comida.",
-        "de": "Eines Tages traf Sammy einen hungrigen Hasen, der kein Essen hatte.",
-        "fr": "One day, Sammy met a hungry rabbit who had no food.",
-        "it": "One day, Sammy met a hungry rabbit who had no food.",
-        "pt": "One day, Sammy met a hungry rabbit who had no food.",
-        "ja": "One day, Sammy met a hungry rabbit who had no food.",
-        "ar": "One day, Sammy met a hungry rabbit who had no food.",
-        "tr": "One day, Sammy met a hungry rabbit who had no food.",
-        "nl": "One day, Sammy met a hungry rabbit who had no food.",
-        "da": "One day, Sammy met a hungry rabbit who had no food.",
-        "la": "One day, Sammy met a hungry rabbit who had no food.",
-        "zh": "One day, Sammy met a hungry rabbit who had no food."
+        "4-6": {
+          "en": "One day, Sammy met a hungry rabbit who had no food.",
+          "pl": "Pewnego dnia Sammy spotkał głodnego królika, który nie miał jedzenia.",
+          "es": "Un día, Sammy conoció a un conejo hambriento que no tenía comida.",
+          "de": "Eines Tages traf Sammy einen hungrigen Hasen, der kein Essen hatte.",
+          "fr": "One day, Sammy met a hungry rabbit who had no food.",
+          "it": "One day, Sammy met a hungry rabbit who had no food.",
+          "pt": "One day, Sammy met a hungry rabbit who had no food.",
+          "ja": "One day, Sammy met a hungry rabbit who had no food.",
+          "ar": "One day, Sammy met a hungry rabbit who had no food.",
+          "tr": "One day, Sammy met a hungry rabbit who had no food.",
+          "nl": "One day, Sammy met a hungry rabbit who had no food.",
+          "da": "One day, Sammy met a hungry rabbit who had no food.",
+          "la": "One day, Sammy met a hungry rabbit who had no food.",
+          "zh": "One day, Sammy met a hungry rabbit who had no food."
+        }
       }
     },
     {
@@ -147,20 +155,22 @@
       "backgroundImage": "assets/stories/cms-squirrels-snowman/page-4/page-4.webp",
       "text": "\"Here, take some of my acorns,\" said Sammy with a smile.",
       "localizedText": {
-        "en": "\"Here, take some of my acorns,\" said Sammy with a smile.",
-        "pl": "\"Proszę, weź trochę moich żołędzi\" -powiedział Sammy z uśmiechem.",
-        "es": "\"Aquí, toma algunas de mis bellotas\" -dijo Sammy con una sonrisa.",
-        "de": "\"Hier, nimm ein paar von meinen Eicheln\" -sagte Sammy mit einem Lächeln.",
-        "fr": "\"Here, take some of my acorns,\" said Sammy with a smile.",
-        "it": "\"Here, take some of my acorns,\" said Sammy with a smile.",
-        "pt": "\"Here, take some of my acorns,\" said Sammy with a smile.",
-        "ja": "\"Here, take some of my acorns,\" said Sammy with a smile.",
-        "ar": "\"Here, take some of my acorns,\" said Sammy with a smile.",
-        "tr": "\"Here, take some of my acorns,\" said Sammy with a smile.",
-        "nl": "\"Here, take some of my acorns,\" said Sammy with a smile.",
-        "da": "\"Here, take some of my acorns,\" said Sammy with a smile.",
-        "la": "\"Here, take some of my acorns,\" said Sammy with a smile.",
-        "zh": "\"Here, take some of my acorns,\" said Sammy with a smile."
+        "4-6": {
+          "en": "\"Here, take some of my acorns,\" said Sammy with a smile.",
+          "pl": "\"Proszę, weź trochę moich żołędzi\" -powiedział Sammy z uśmiechem.",
+          "es": "\"Aquí, toma algunas de mis bellotas\" -dijo Sammy con una sonrisa.",
+          "de": "\"Hier, nimm ein paar von meinen Eicheln\" -sagte Sammy mit einem Lächeln.",
+          "fr": "\"Here, take some of my acorns,\" said Sammy with a smile.",
+          "it": "\"Here, take some of my acorns,\" said Sammy with a smile.",
+          "pt": "\"Here, take some of my acorns,\" said Sammy with a smile.",
+          "ja": "\"Here, take some of my acorns,\" said Sammy with a smile.",
+          "ar": "\"Here, take some of my acorns,\" said Sammy with a smile.",
+          "tr": "\"Here, take some of my acorns,\" said Sammy with a smile.",
+          "nl": "\"Here, take some of my acorns,\" said Sammy with a smile.",
+          "da": "\"Here, take some of my acorns,\" said Sammy with a smile.",
+          "la": "\"Here, take some of my acorns,\" said Sammy with a smile.",
+          "zh": "\"Here, take some of my acorns,\" said Sammy with a smile."
+        }
       }
     },
     {
@@ -170,20 +180,22 @@
       "backgroundImage": "assets/stories/cms-squirrels-snowman/page-5/page-5.webp",
       "text": "The rabbit was so happy! They became the best of friends.",
       "localizedText": {
-        "en": "The rabbit was so happy! They became the best of friends.",
-        "pl": "Królik był taki szczęśliwy! Zostali najlepszymi przyjaciółmi.",
-        "es": "¡El conejo estaba muy feliz! Se convirtieron en los mejores amigos.",
-        "de": "Der Hase war so glücklich! Sie wurden die besten Freunde.",
-        "fr": "The rabbit was so happy! They became the best of friends.",
-        "it": "The rabbit was so happy! They became the best of friends.",
-        "pt": "The rabbit was so happy! They became the best of friends.",
-        "ja": "The rabbit was so happy! They became the best of friends.",
-        "ar": "The rabbit was so happy! They became the best of friends.",
-        "tr": "The rabbit was so happy! They became the best of friends.",
-        "nl": "The rabbit was so happy! They became the best of friends.",
-        "da": "The rabbit was so happy! They became the best of friends.",
-        "la": "The rabbit was so happy! They became the best of friends.",
-        "zh": "The rabbit was so happy! They became the best of friends."
+        "4-6": {
+          "en": "The rabbit was so happy! They became the best of friends.",
+          "pl": "Królik był taki szczęśliwy! Zostali najlepszymi przyjaciółmi.",
+          "es": "¡El conejo estaba muy feliz! Se convirtieron en los mejores amigos.",
+          "de": "Der Hase war so glücklich! Sie wurden die besten Freunde.",
+          "fr": "The rabbit was so happy! They became the best of friends.",
+          "it": "The rabbit was so happy! They became the best of friends.",
+          "pt": "The rabbit was so happy! They became the best of friends.",
+          "ja": "The rabbit was so happy! They became the best of friends.",
+          "ar": "The rabbit was so happy! They became the best of friends.",
+          "tr": "The rabbit was so happy! They became the best of friends.",
+          "nl": "The rabbit was so happy! They became the best of friends.",
+          "da": "The rabbit was so happy! They became the best of friends.",
+          "la": "The rabbit was so happy! They became the best of friends.",
+          "zh": "The rabbit was so happy! They became the best of friends."
+        }
       }
     },
     {
@@ -193,20 +205,22 @@
       "backgroundImage": "assets/stories/cms-squirrels-snowman/page-6/page-6.webp",
       "text": "Sharing makes everyone happy. The End.",
       "localizedText": {
-        "en": "Sharing makes everyone happy. The End.",
-        "pl": "Dzielenie się sprawia, że wszyscy są szczęśliwi. Koniec.",
-        "es": "Compartir hace feliz a todos. Fin.",
-        "de": "Teilen macht alle glücklich. Ende.",
-        "fr": "Sharing makes everyone happy. The End.",
-        "it": "Sharing makes everyone happy. The End.",
-        "pt": "Sharing makes everyone happy. The End.",
-        "ja": "Sharing makes everyone happy. The End.",
-        "ar": "Sharing makes everyone happy. The End.",
-        "tr": "Sharing makes everyone happy. The End.",
-        "nl": "Sharing makes everyone happy. The End.",
-        "da": "Sharing makes everyone happy. The End.",
-        "la": "Sharing makes everyone happy. The End.",
-        "zh": "Sharing makes everyone happy. The End."
+        "4-6": {
+          "en": "Sharing makes everyone happy. The End.",
+          "pl": "Dzielenie się sprawia, że wszyscy są szczęśliwi. Koniec.",
+          "es": "Compartir hace feliz a todos. Fin.",
+          "de": "Teilen macht alle glücklich. Ende.",
+          "fr": "Sharing makes everyone happy. The End.",
+          "it": "Sharing makes everyone happy. The End.",
+          "pt": "Sharing makes everyone happy. The End.",
+          "ja": "Sharing makes everyone happy. The End.",
+          "ar": "Sharing makes everyone happy. The End.",
+          "tr": "Sharing makes everyone happy. The End.",
+          "nl": "Sharing makes everyone happy. The End.",
+          "da": "Sharing makes everyone happy. The End.",
+          "la": "Sharing makes everyone happy. The End.",
+          "zh": "Sharing makes everyone happy. The End."
+        }
       }
     }
   ]

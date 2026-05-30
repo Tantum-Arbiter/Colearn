@@ -1,0 +1,99 @@
+{
+  "id": "reading-story-1",
+  "title": "Word Garden - Fill in the Blanks",
+  "category": "learning",
+  "coverImage": "assets/stories/squirrels-snowman/cover/thumbnail.webp",
+  "isAvailable": true,
+  "ageRange": "3-6",
+  "duration": 5,
+  "description": "A gentle reading challenge adventure where children fill in missing words.",
+  "isPremium": false,
+  "author": "Freya Stories",
+  "tags": [
+    "reading",
+    "learning",
+    "interactive"
+  ],
+  "version": 1,
+  "checksum": "reading-story-1-checksum-v1",
+  "pages": [
+    {
+      "id": "reading-story-1-cover",
+      "pageNumber": 0,
+      "type": "cover",
+      "backgroundImage": "assets/stories/squirrels-snowman/cover/cover.webp",
+      "text": "Word Garden\n\nFill in the Blanks",
+      "interactionType": "none"
+    },
+    {
+      "id": "reading-story-1-page-1",
+      "pageNumber": 1,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-1/page-1.webp",
+      "text": "The little squirrel loved to play in the garden every morning.",
+      "interactionType": "reading_challenge",
+      "readingChallenge": {
+        "enabled": true,
+        "mode": "fill_in_blank",
+        "promptText": "Can you fill in the missing words?",
+        "allowSkip": true,
+        "blankWordIndices": [2, 5, 9]
+      }
+    },
+    {
+      "id": "reading-story-1-page-2",
+      "pageNumber": 2,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-3/page-3.webp",
+      "text": "The birds sang a happy song in the tall trees.",
+      "interactionType": "reading_challenge",
+      "readingChallenge": {
+        "enabled": true,
+        "mode": "fill_in_blank",
+        "promptText": "Which words are missing?",
+        "allowSkip": true,
+        "blankWordIndices": [1, 4, 8]
+      }
+    },
+    {
+      "id": "reading-story-1-page-3",
+      "pageNumber": 3,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-5/page-5.webp",
+      "text": "You filled in all the words! What a clever reader you are!",
+      "interactionType": "none"
+    }
+  ],
+  "localizedTitle": {
+    "en": "Word Garden - Fill in the Blanks",
+    "pl": "Ogród Słów - Uzupełnij Luki",
+    "es": "Jardín de Palabras - Rellena los Espacios",
+    "de": "Wortgarten - Lücken Füllen",
+    "fr": "Jardin de Mots - Remplir les Blancs",
+    "it": "Giardino di Parole - Riempi gli Spazi",
+    "pt": "Jardim de Palavras - Preencha os Espaços",
+    "ja": "言葉の庭 - 空欄を埋めよう",
+    "ar": "حديقة الكلمات - املأ الفراغات",
+    "tr": "Kelime Bahçesi - Boşlukları Doldur",
+    "nl": "Woordentuin - Vul de Lege Plekken In",
+    "da": "Ordehave - Udfyld Hullerne",
+    "la": "Hortus Verborum - Lacunas Imple",
+    "zh": "词语花园 - 填空"
+  },
+  "localizedDescription": {
+    "en": "A gentle reading challenge adventure where children fill in missing words.",
+    "pl": "Łagodna przygoda z wyzwaniem czytelniczym, gdzie dzieci uzupełniają brakujące słowa.",
+    "es": "Una suave aventura de lectura donde los niños rellenan las palabras que faltan.",
+    "de": "Ein sanftes Lese-Abenteuer, bei dem Kinder fehlende Wörter ergänzen.",
+    "fr": "Une douce aventure de lecture où les enfants complètent les mots manquants.",
+    "it": "Una dolce avventura di lettura dove i bambini completano le parole mancanti.",
+    "pt": "Uma aventura suave de leitura onde as crianças preenchem as palavras que faltam.",
+    "ja": "子どもたちが足りない言葉を埋めるやさしい読書チャレンジ冒険。",
+    "ar": "مغامرة قراءة لطيفة حيث يملأ الأطفال الكلمات المفقودة.",
+    "tr": "Çocukların eksik kelimeleri doldurduğu nazik bir okuma macerası.",
+    "nl": "Een zacht leesavontuur waar kinderen ontbrekende woorden invullen.",
+    "da": "Et blidt læseeventyr hvor børn udfylder manglende ord.",
+    "la": "Aventura lectura mitis ubi pueri verba deesse implent.",
+    "zh": "一个温和的阅读挑战冒险，孩子们填写缺失的单词。"
+  }
+}

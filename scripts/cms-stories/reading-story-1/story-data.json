@@ -1,0 +1,167 @@
+{
+  "id": "reading-story-1",
+  "title": "Word Garden - Fill in the Blanks",
+  "localizedTitle": {
+    "en": "Word Garden - Fill in the Blanks",
+    "pl": "Ogród Słów - Uzupełnij Luki",
+    "es": "Jardín de Palabras - Rellena los Espacios",
+    "de": "Wortgarten - Lücken Füllen",
+    "fr": "Jardin de Mots - Remplir les Blancs",
+    "it": "Giardino di Parole - Riempi gli Spazi",
+    "pt": "Jardim de Palavras - Preencha os Espaços",
+    "ja": "言葉の庭 - 空欄を埋めよう",
+    "ar": "حديقة الكلمات - املأ الفراغات",
+    "tr": "Kelime Bahçesi - Boşlukları Doldur",
+    "nl": "Woordentuin - Vul de Lege Plekken In",
+    "da": "Ordehave - Udfyld Hullerne",
+    "la": "Hortus Verborum - Lacunas Imple",
+    "zh": "词语花园 - 填空"
+  },
+  "category": "learning",
+  "coverImage": "assets/stories/reading-story-1/cover/cover.webp",
+  "isAvailable": true,
+  "ageRange": "3-6",
+  "duration": 4,
+  "description": "A gentle reading challenge adventure where children fill in missing words.",
+  "localizedDescription": {
+    "en": "A gentle reading challenge adventure where children fill in missing words.",
+    "pl": "Łagodna przygoda z wyzwaniem czytelniczym, gdzie dzieci uzupełniają brakujące słowa.",
+    "es": "Una suave aventura de lectura donde los niños rellenan las palabras que faltan.",
+    "de": "Ein sanftes Lese-Abenteuer, bei dem Kinder fehlende Wörter ergänzen.",
+    "fr": "Une douce aventure de lecture où les enfants complètent les mots manquants.",
+    "it": "Una dolce avventura di lettura dove i bambini completano le parole mancanti.",
+    "pt": "Uma aventura suave de leitura onde as crianças preenchem as palavras que faltam.",
+    "ja": "子どもたちが足りない言葉を埋めるやさしい読書チャレンジ冒険。",
+    "ar": "مغامرة قراءة لطيفة حيث يملأ الأطفال الكلمات المفقودة.",
+    "tr": "Çocukların eksik kelimeleri doldurduğu nazik bir okuma macerası.",
+    "nl": "Een zacht leesavontuur waar kinderen ontbrekende woorden invullen.",
+    "da": "Et blidt læseeventyr hvor børn udfylder manglende ord.",
+    "la": "Aventura lectura mitis ubi pueri verba deesse implent.",
+    "zh": "一个温和的阅读挑战冒险，孩子们填写缺失的单词。"
+  },
+  "isPremium": false,
+  "author": "Freya Stories",
+  "tags": ["reading", "learning", "interactive"],
+  "version": 1,
+  "checksum": "reading-story-1-checksum-v1",
+  "pages": [
+    {
+      "id": "reading-story-1-cover",
+      "pageNumber": 0,
+      "type": "cover",
+      "backgroundImage": "assets/stories/reading-story-1/cover/cover.webp",
+      "text": "Word Garden\n\nFill in the Blanks",
+      "interactionType": "none",
+      "localizedText": {
+        "4-6": {
+          "en": "Word Garden\n\nFill in the Blanks",
+          "pl": "Ogród Słów\n\nUzupełnij Luki",
+          "es": "Jardín de Palabras\n\nRellena los Espacios",
+          "de": "Wortgarten\n\nLücken Füllen",
+          "fr": "Jardin de Mots\n\nRemplir les Blancs",
+          "it": "Giardino di Parole\n\nRiempi gli Spazi",
+          "pt": "Jardim de Palavras\n\nPreencha os Espaços",
+          "ja": "言葉の庭\n\n空欄を埋めよう",
+          "ar": "حديقة الكلمات\n\nاملأ الفراغات",
+          "tr": "Kelime Bahçesi\n\nBoşlukları Doldur",
+          "nl": "Woordentuin\n\nVul de Lege Plekken In",
+          "da": "Ordehave\n\nUdfyld Hullerne",
+          "la": "Hortus Verborum\n\nLacunas Imple",
+          "zh": "词语花园\n\n填空"
+        }
+      }
+    },
+    {
+      "id": "reading-story-1-page-1",
+      "pageNumber": 1,
+      "type": "story",
+      "backgroundImage": "assets/stories/reading-story-1/page-1/background.webp",
+      "text": "The little squirrel loved to play in the garden every morning.",
+      "interactionType": "reading_challenge",
+      "readingChallenge": {
+        "enabled": true,
+        "mode": "fill_in_blank",
+        "promptText": "Can you fill in the missing words?",
+        "allowSkip": true,
+        "blankWordIndices": [2, 5, 9]
+      },
+      "localizedText": {
+        "4-6": {
+          "en": "The little squirrel loved to play in the garden every morning.\n",
+          "pl": "Mała wiewiórka uwielbiała bawić się w ogrodzie każdego ranka.\n",
+          "es": "La pequeña ardilla amaba jugar en el jardín cada mañana.\n",
+          "de": "Das kleine Eichhörnchen liebte es, jeden Morgen im Garten zu spielen.\n",
+          "fr": "Le petit écureuil adorait jouer dans le jardin chaque matin.\n",
+          "it": "Il piccolo scoiattolo amava giocare nel giardino ogni mattina.\n",
+          "pt": "O pequeno esquilo adorava brincar no jardim todas as manhãs.\n",
+          "ja": "小さなリスは毎朝庭で遊ぶのが大好きでした。\n",
+          "ar": "كان السنجاب الصغير يحب اللعب في الحديقة كل صباح.\n",
+          "tr": "Küçük sincap her sabah bahçede oynamayı çok severdi.\n",
+          "nl": "Het kleine eekhoorntje hield ervan om elke ochtend in de tuin te spelen.\n",
+          "da": "Det lille egern elskede at lege i haven hver morgen.\n",
+          "la": "Sciurus parvus ludere in horto mane quoque amabat.\n",
+          "zh": "小松鼠喜欢每天早上在花园里玩耍。\n"
+        }
+      }
+    },
+    {
+      "id": "reading-story-1-page-2",
+      "pageNumber": 2,
+      "type": "story",
+      "backgroundImage": "assets/stories/reading-story-1/page-2/background.webp",
+      "text": "The birds sang a happy song in the tall trees.",
+      "interactionType": "reading_challenge",
+      "readingChallenge": {
+        "enabled": true,
+        "mode": "fill_in_blank",
+        "promptText": "Which words are missing?",
+        "allowSkip": true,
+        "blankWordIndices": [1, 4, 8]
+      },
+      "localizedText": {
+        "4-6": {
+          "en": "The birds sang a happy song in the tall trees.\n",
+          "pl": "Ptaki śpiewały wesołą piosenkę na wysokich drzewach.\n",
+          "es": "Los pájaros cantaron una canción feliz en los árboles altos.\n",
+          "de": "Die Vögel sangen ein fröhliches Lied in den hohen Bäumen.\n",
+          "fr": "Les oiseaux chantaient une chanson joyeuse dans les grands arbres.\n",
+          "it": "Gli uccelli cantavano una canzone felice negli alberi alti.\n",
+          "pt": "Os pássaros cantaram uma canção feliz nas árvores altas.\n",
+          "ja": "鳥たちは高い木の中で幸せな歌を歌いました。\n",
+          "ar": "غنت الطيور أغنية سعيدة في الأشجار الطويلة.\n",
+          "tr": "Kuşlar uzun ağaçlarda mutlu bir şarkı söylediler.\n",
+          "nl": "De vogels zongen een vrolijk liedje in de hoge bomen.\n",
+          "da": "Fuglene sang en glad sang i de høje træer.\n",
+          "la": "Aves cantabant carmen laetum in arboribus altis.\n",
+          "zh": "鸟儿在高大的树上唱着快乐的歌。\n"
+        }
+      }
+    },
+    {
+      "id": "reading-story-1-page-3",
+      "pageNumber": 3,
+      "type": "story",
+      "backgroundImage": "assets/stories/reading-story-1/page-3/background.webp",
+      "text": "You filled in all the words! What a clever reader you are!",
+      "interactionType": "none",
+      "localizedText": {
+        "4-6": {
+          "en": "You filled in all the words! What a clever reader you are!\n",
+          "pl": "Uzupełniłeś wszystkie słowa! Jaki z ciebie sprytny czytelnik!\n",
+          "es": "¡Rellenaste todas las palabras! ¡Qué lector tan inteligente eres!\n",
+          "de": "Du hast alle Wörter ausgefüllt! Was für ein kluger Leser du bist!\n",
+          "fr": "Tu as rempli tous les mots ! Quel lecteur intelligent tu es !\n",
+          "it": "Hai compilato tutte le parole! Che lettore intelligente sei!\n",
+          "pt": "Você preencheu todas as palavras! Que leitor inteligente você é!\n",
+          "ja": "すべての言葉を埋めました！なんて賢い読者でしょう！\n",
+          "ar": "لقد ملأت كل الكلمات! يا لك من قارئ ذكي!\n",
+          "tr": "Tüm kelimeleri doldurdun! Ne kadar akıllı bir okuyucusun!\n",
+          "nl": "Je hebt alle woorden ingevuld! Wat een slimme lezer ben jij!\n",
+          "da": "Du udfyldte alle ordene! Sikke en klog læser du er!\n",
+          "la": "Omnia verba implevisti! Quam callidus lector es!\n",
+          "zh": "你填写了所有的单词！你真是一个聪明的读者！\n"
+        }
+      }
+    }
+  ]
+}

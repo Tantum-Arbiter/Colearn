@@ -134,9 +134,11 @@ function formatStoryData(data) {
       title: formatted.title,
       pages: formatted.pages?.map(p => ({
         text: p.text,
+        localizedText: p.localizedText,
         interactionType: p.interactionType,
         interactiveElements: p.interactiveElements,
         musicChallenge: p.musicChallenge,
+        readingChallenge: p.readingChallenge,
       })),
     }))
     .digest('hex').substring(0, 16);

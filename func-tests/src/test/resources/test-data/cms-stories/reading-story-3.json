@@ -1,0 +1,132 @@
+{
+  "id": "reading-story-3",
+  "title": "Mixed Reading Fun",
+  "category": "learning",
+  "coverImage": "assets/stories/squirrels-snowman/cover/thumbnail.webp",
+  "isAvailable": true,
+  "ageRange": "4-6",
+  "duration": 7,
+  "description": "A mixed reading challenge with both fill-in-blank and spell-word modes.",
+  "isPremium": true,
+  "author": "Freya Stories",
+  "tags": [
+    "reading",
+    "spelling",
+    "learning",
+    "interactive"
+  ],
+  "version": 1,
+  "checksum": "reading-story-3-checksum-v1",
+  "pages": [
+    {
+      "id": "reading-story-3-cover",
+      "pageNumber": 0,
+      "type": "cover",
+      "backgroundImage": "assets/stories/squirrels-snowman/cover/cover.webp",
+      "text": "Mixed Reading Fun\n\nAn Adventure in Words",
+      "interactionType": "none"
+    },
+    {
+      "id": "reading-story-3-page-1",
+      "pageNumber": 1,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-1/page-1.webp",
+      "text": "Once upon a time there was a brave little fox.",
+      "interactionType": "reading_challenge",
+      "readingChallenge": {
+        "enabled": true,
+        "mode": "fill_in_blank",
+        "promptText": "Fill in the missing words!",
+        "allowSkip": false,
+        "blankWordIndices": [3, 7, 9]
+      }
+    },
+    {
+      "id": "reading-story-3-page-2",
+      "pageNumber": 2,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-3/page-3.webp",
+      "text": "The fox loved to explore the deep forest.",
+      "interactionType": "reading_challenge",
+      "readingChallenge": {
+        "enabled": true,
+        "mode": "spell_word",
+        "promptText": "Spell the animal!",
+        "allowSkip": true,
+        "targetWord": "FOX",
+        "distractorLetters": ["G", "P", "W"]
+      }
+    },
+    {
+      "id": "reading-story-3-page-3",
+      "pageNumber": 3,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-5/page-5.webp",
+      "text": "The stars twinkled brightly above the sleeping forest.",
+      "interactionType": "reading_challenge",
+      "readingChallenge": {
+        "enabled": true,
+        "mode": "fill_in_blank",
+        "promptText": "Can you complete this sentence?",
+        "allowSkip": true,
+        "blankWordIndices": [1, 3, 7]
+      }
+    },
+    {
+      "id": "reading-story-3-page-4",
+      "pageNumber": 4,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-7/page-7.webp",
+      "text": "The brave fox went home feeling happy and proud.",
+      "interactionType": "reading_challenge",
+      "readingChallenge": {
+        "enabled": true,
+        "mode": "spell_word",
+        "promptText": "Spell this feeling!",
+        "allowSkip": true,
+        "targetWord": "HAPPY",
+        "distractorLetters": ["Z", "X"]
+      }
+    },
+    {
+      "id": "reading-story-3-page-5",
+      "pageNumber": 5,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-9/page-9.webp",
+      "text": "What a wonderful adventure with words! You are a reading champion!",
+      "interactionType": "none"
+    }
+  ],
+  "localizedTitle": {
+    "en": "Mixed Reading Fun",
+    "pl": "Mieszana Zabawa Czytelnicza",
+    "es": "Diversión de Lectura Mixta",
+    "de": "Gemischter Lesespaß",
+    "fr": "Lecture Mixte Amusante",
+    "it": "Divertimento di Lettura Misto",
+    "pt": "Diversão de Leitura Mista",
+    "ja": "ミックスリーディングファン",
+    "ar": "متعة القراءة المختلطة",
+    "tr": "Karışık Okuma Eğlencesi",
+    "nl": "Gemengd Leesplezier",
+    "da": "Blandet Læsesjov",
+    "la": "Lectura Mixta Ludicra",
+    "zh": "混合阅读乐趣"
+  },
+  "localizedDescription": {
+    "en": "A mixed reading challenge with both fill-in-blank and spell-word modes.",
+    "pl": "Mieszane wyzwanie czytelnicze z trybami uzupełniania luk i literowania.",
+    "es": "Un desafío de lectura mixto con modos de rellenar espacios y deletrear palabras.",
+    "de": "Eine gemischte Leseherausforderung mit Lückentext- und Buchstabiermodus.",
+    "fr": "Un défi de lecture mixte avec des modes de remplissage et d'épellation.",
+    "it": "Una sfida di lettura mista con modalità di riempimento e compitazione.",
+    "pt": "Um desafio de leitura misto com modos de preenchimento e soletração.",
+    "ja": "穴埋めとスペリングモードを備えたミックスリーディングチャレンジ。",
+    "ar": "تحدي قراءة مختلط مع أوضاع ملء الفراغات وتهجئة الكلمات.",
+    "tr": "Boşluk doldurma ve kelime heceleme modlarıyla karışık bir okuma mücadelesi.",
+    "nl": "Een gemengde leesuitdaging met invul- en spelmodi.",
+    "da": "En blandet læseudfordring med udfyldnings- og stavetilstande.",
+    "la": "Provocatio lecturae mixta cum modis implendi et litterandi.",
+    "zh": "一个混合阅读挑战，包含填空和拼写模式。"
+  }
+}

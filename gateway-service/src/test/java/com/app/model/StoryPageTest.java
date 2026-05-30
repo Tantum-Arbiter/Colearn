@@ -6,7 +6,9 @@ import org.junit.jupiter.api.DisplayName;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -231,6 +233,113 @@ class StoryPageTest {
 
         // Null language should return English
         assertEquals("English text", storyPage.getTextForLanguage(null));
+    }
+
+    // =============================================
+    // Age group text tests
+    // =============================================
+
+    @Test
+    @DisplayName("Should set and get ageGroupText with multiple age groups")
+    void testAgeGroupTextMultipleAgeGroups() {
+        LocalizedText babyText = new LocalizedText("Baby bear sleeps.");
+        babyText.setPl("Miś śpi.");
+
+        LocalizedText toddlerText = new LocalizedText("The little bear curls up and sleeps.");
+        toddlerText.setPl("Mały miś zwija się i śpi.");
+
+        Map<String, LocalizedText> ageGroupText = new HashMap<>();
+        ageGroupText.put("0-2", babyText);
+        ageGroupText.put("2-4", toddlerText);
+
+        storyPage.setAgeGroupText(ageGroupText);
+
+        assertNotNull(storyPage.getAgeGroupText());
+        assertEquals(2, storyPage.getAgeGroupText().size());
+        assertEquals("Baby bear sleeps.", storyPage.getAgeGroupText().get("0-2").getEn());
+        assertEquals("Miś śpi.", storyPage.getAgeGroupText().get("0-2").getPl());
+    }
+
+    @Test
+    @DisplayName("Should return age-appropriate text for language and age group")
+    void testGetTextForLanguageAndAgeGroup() {
+        LocalizedText babyText = new LocalizedText("Baby text");
+        babyText.setPl("Tekst dla niemowlaka");
+
+        LocalizedText preschoolText = new LocalizedText("Preschool text");
+        preschoolText.setPl("Tekst przedszkolny");
+
+        Map<String, LocalizedText> ageGroupText = new HashMap<>();
+        ageGroupText.put("0-2", babyText);
+        ageGroupText.put("4-6", preschoolText);
+
+        storyPage.setText("Default text");
+        storyPage.setAgeGroupText(ageGroupText);
+
+        assertEquals("Baby text", storyPage.getTextForLanguageAndAgeGroup("en", "0-2"));
+        assertEquals("Tekst dla niemowlaka", storyPage.getTextForLanguageAndAgeGroup("pl", "0-2"));
+        assertEquals("Preschool text", storyPage.getTextForLanguageAndAgeGroup("en", "4-6"));
+        assertEquals("Tekst przedszkolny", storyPage.getTextForLanguageAndAgeGroup("pl", "4-6"));
+    }
+
+    @Test
+    @DisplayName("Should fall back through younger age groups when requested not present")
+    void testGetTextForLanguageAndAgeGroupFallback() {
+        LocalizedText babyText = new LocalizedText("Baby English");
+        babyText.setPl("Baby polski");
+
+        storyPage.setText("Default text");
+        Map<String, LocalizedText> ageGroupText = new HashMap<>();
+        ageGroupText.put("0-2", babyText);
+        storyPage.setAgeGroupText(ageGroupText);
+
+        // "2-4" not present → falls back to "0-2"
+        assertEquals("Baby English", storyPage.getTextForLanguageAndAgeGroup("en", "2-4"));
+        assertEquals("Baby polski", storyPage.getTextForLanguageAndAgeGroup("pl", "2-4"));
+    }
+
+    @Test
+    @DisplayName("Should fall back to default text when ageGroupText map is empty")
+    void testGetTextForLanguageAndAgeGroupFallbackEmpty() {
+        storyPage.setText("Default text");
+        storyPage.setAgeGroupText(new HashMap<>());
+
+        assertEquals("Default text", storyPage.getTextForLanguageAndAgeGroup("en", "0-2"));
+        assertEquals("Default text", storyPage.getTextForLanguageAndAgeGroup("pl", "4-6"));
+    }
+
+    @Test
+    @DisplayName("Should fall back to default text when no localization at all")
+    void testGetTextForLanguageAndAgeGroupFallbackToDefault() {
+        storyPage.setText("Default text");
+        storyPage.setAgeGroupText(null);
+
+        assertEquals("Default text", storyPage.getTextForLanguageAndAgeGroup("en", "0-2"));
+        assertEquals("Default text", storyPage.getTextForLanguageAndAgeGroup("pl", "4-6"));
+    }
+
+    @Test
+    @DisplayName("Should handle null ageGroup parameter")
+    void testGetTextForLanguageAndAgeGroupNullAgeGroup() {
+        LocalizedText localizedText = new LocalizedText("Localized text");
+        storyPage.setText("Default text");
+        storyPage.setLocalizedText(localizedText);
+
+        // null ageGroup → falls back to localizedText → "Localized text"
+        assertEquals("Localized text", storyPage.getTextForLanguageAndAgeGroup("en", null));
+    }
+
+    @Test
+    @DisplayName("Should fall back from ageGroupText to localizedText")
+    void testGetTextForLanguageAndAgeGroupFallbackToLocalizedText() {
+        LocalizedText defaultText = new LocalizedText("Default localized");
+        defaultText.setPl("Domyślny zlokalizowany");
+        storyPage.setLocalizedText(defaultText);
+        storyPage.setText("Fallback text");
+
+        // No ageGroupText set → should fall back to localizedText
+        assertEquals("Default localized", storyPage.getTextForLanguageAndAgeGroup("en", "0-2"));
+        assertEquals("Domyślny zlokalizowany", storyPage.getTextForLanguageAndAgeGroup("pl", "4-6"));
     }
 
     // =============================================

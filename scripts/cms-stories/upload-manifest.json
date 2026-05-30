@@ -1188,6 +1188,32 @@
       ],
       "assetCount": 17,
       "note": "Music challenges on pages 2 and 10. Unique assets for end-to-end GCS testing."
+    },
+    {
+      "storyId": "reading-story-1",
+      "storyDataPath": "cms-stories/reading-story-1/story-data.json",
+      "assets": [
+        { "localPath": "cms-stories/reading-story-1/cover/cover.webp", "gcsPath": "assets/stories/reading-story-1/cover/cover.webp" },
+        { "localPath": "cms-stories/reading-story-1/cover/thumbnail.webp", "gcsPath": "assets/stories/reading-story-1/cover/thumbnail.webp" },
+        { "localPath": "cms-stories/reading-story-1/page-1/background.webp", "gcsPath": "assets/stories/reading-story-1/page-1/background.webp" },
+        { "localPath": "cms-stories/reading-story-1/page-2/background.webp", "gcsPath": "assets/stories/reading-story-1/page-2/background.webp" },
+        { "localPath": "cms-stories/reading-story-1/page-3/background.webp", "gcsPath": "assets/stories/reading-story-1/page-3/background.webp" }
+      ],
+      "assetCount": 5,
+      "note": "Reading challenge story with fill_in_blank mode on pages 1 and 2."
+    },
+    {
+      "storyId": "reading-story-2",
+      "storyDataPath": "cms-stories/reading-story-2/story-data.json",
+      "assets": [
+        { "localPath": "cms-stories/reading-story-2/cover/cover.webp", "gcsPath": "assets/stories/reading-story-2/cover/cover.webp" },
+        { "localPath": "cms-stories/reading-story-2/cover/thumbnail.webp", "gcsPath": "assets/stories/reading-story-2/cover/thumbnail.webp" },
+        { "localPath": "cms-stories/reading-story-2/page-1/background.webp", "gcsPath": "assets/stories/reading-story-2/page-1/background.webp" },
+        { "localPath": "cms-stories/reading-story-2/page-2/background.webp", "gcsPath": "assets/stories/reading-story-2/page-2/background.webp" },
+        { "localPath": "cms-stories/reading-story-2/page-3/background.webp", "gcsPath": "assets/stories/reading-story-2/page-3/background.webp" }
+      ],
+      "assetCount": 5,
+      "note": "Reading challenge story with spell_word mode on pages 1 and 2."
     }
   ]
 }

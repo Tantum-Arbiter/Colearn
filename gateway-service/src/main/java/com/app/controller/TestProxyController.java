@@ -90,10 +90,8 @@ public class TestProxyController {
         return forward(request, defaultRestTemplate, "default", "Account Service");
     }
 
-    @RequestMapping(value = "/api/account", method = { RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.DELETE })
-    public ResponseEntity<byte[]> proxyAccountRoot(HttpServletRequest request) throws IOException, TimeoutException {
-        return forward(request, defaultRestTemplate, "default", "Account Service");
-    }
+    // Note: /api/account root is handled by AccountController.deleteAccount() — do NOT add a proxy mapping here
+    // to avoid "Ambiguous handler methods" errors.
 
     @RequestMapping(value = "/api/auth/**", method = { RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.DELETE })
     public ResponseEntity<byte[]> proxyAuth(HttpServletRequest request) throws IOException, TimeoutException {

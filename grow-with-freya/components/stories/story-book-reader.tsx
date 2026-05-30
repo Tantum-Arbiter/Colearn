@@ -16,16 +16,18 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { useTranslation } from 'react-i18next';
-import { Story, StoryPage, STORY_TAGS, InteractiveElement, getLocalizedText, MusicChallenge, JigsawPuzzle } from '@/types/story';
+import { Story, StoryPage, STORY_TAGS, InteractiveElement, getLocalizedText, resolveAgeGroup, MusicChallenge, JigsawPuzzle, ReadingChallenge } from '@/types/story';
 import type { SupportedLanguage } from '@/services/i18n';
 import { SUPPORTED_LANGUAGES, setStoredLanguage } from '@/services/i18n';
 import { InteractiveElementComponent } from './interactive-element';
 import { MusicChallengeUI } from './music-challenge-ui';
 import { JigsawPuzzleUI } from './jigsaw-puzzle-ui';
+import { ReadingChallengeUI } from './reading-challenge-ui';
 import { InstrumentPickerOverlay } from './instrument-picker-overlay';
 import { MusicSheetOverlay } from './music-sheet-overlay';
 import { useMusicChallenge } from '@/hooks/use-music-challenge';
 import { useJigsawChallenge } from '@/hooks/use-jigsaw-challenge';
+import { useReadingChallenge } from '@/hooks/use-reading-challenge';
 import { useBreathDetector } from '@/hooks/use-breath-detector';
 import { getInstrument } from '@/services/music-asset-registry';
 import {
@@ -92,8 +94,11 @@ export function StoryBookReader({
         // Log first page's localized text to verify structure
         const firstPageWithLocalized = pagesWithLocalized[0];
         if (firstPageWithLocalized?.localizedText) {
-          log.debug(`First page (${firstPageWithLocalized.id}) localizedText keys:`, Object.keys(firstPageWithLocalized.localizedText));
-          log.debug(`Japanese text available: ${!!firstPageWithLocalized.localizedText.ja}`);
+          log.debug(`First page (${firstPageWithLocalized.id}) localizedText age groups:`, Object.keys(firstPageWithLocalized.localizedText));
+          const firstAgeGroup = Object.values(firstPageWithLocalized.localizedText)[0];
+          if (firstAgeGroup) {
+            log.debug(`Languages in first age group:`, Object.keys(firstAgeGroup));
+          }
         }
       } else {
         log.warn(`Story ${story.id} has NO pages with localizedText - only fallback text available`);
@@ -336,6 +341,49 @@ export function StoryBookReader({
     setJigsawCompleted(prev => ({ ...prev, [currentPageIndex]: true }));
     jigsawChallenge.cleanup();
   }, [jigsawChallenge, currentPageIndex]);
+
+  // ---- Reading Challenge support ----
+  const currentReadingConfig = useMemo(() => {
+    const page = (story.pages || [])[currentPageIndex];
+    return page?.readingChallenge;
+  }, [story.pages, currentPageIndex]);
+
+  const isReadingChallengePage = useMemo(() => {
+    const page = (story.pages || [])[currentPageIndex];
+    return page?.interactionType === 'reading_challenge' && currentReadingConfig?.enabled;
+  }, [story.pages, currentPageIndex, currentReadingConfig?.enabled]);
+
+  const currentPageText = useMemo(() => {
+    const page = (story.pages || [])[currentPageIndex];
+    return page?.text ?? '';
+  }, [story.pages, currentPageIndex]);
+
+  const [readingCompleted, setReadingCompleted] = useState<Record<number, boolean>>({});
+
+  const readingChallenge = useReadingChallenge(
+    isReadingChallengePage ? currentReadingConfig : undefined,
+    currentPageText,
+    () => {
+      // Completion is marked in handleReadingContinue after user taps Continue.
+    },
+  );
+
+  const isReadingActive = isReadingChallengePage && (readingChallenge.state === 'playing' || readingChallenge.state === 'completed');
+
+  const handleBeginReading = useCallback(() => {
+    if (!isReadingChallengePage || !currentReadingConfig?.enabled) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    readingChallenge.start();
+  }, [isReadingChallengePage, currentReadingConfig, readingChallenge]);
+
+  const handleReadingReset = useCallback(() => {
+    readingChallenge.reset();
+  }, [readingChallenge]);
+
+  const handleReadingContinue = useCallback(() => {
+    setReadingCompleted(prev => ({ ...prev, [currentPageIndex]: true }));
+    readingChallenge.cleanup();
+  }, [readingChallenge, currentPageIndex]);
 
   // Sync breath detector state to music challenge.
   // Only in blow mode -in press mode, MusicChallengeUI sets breathActive(true)
@@ -644,6 +692,8 @@ export function StoryBookReader({
   // Accessibility scaling
   const { scaledFontSize, scaledButtonSize, textSizeScale } = useAccessibility();
   const setTextSizeScale = useAppStore((state) => state.setTextSizeScale);
+  const childAgeInMonths = useAppStore((state) => state.childAgeInMonths);
+  const childAgeGroup = resolveAgeGroup(childAgeInMonths);
   const markStoryAsRead = useAppStore((state) => state.markStoryAsRead);
   const recordReadingSession = useAppStore((state) => state.recordReadingSession);
   // Mark story as read and record the reading session (for streak tracking)
@@ -1798,6 +1848,17 @@ export function StoryBookReader({
               />
             )}
 
+            {/* Reading Challenge - keep mounted during completion so celebration overlay shows */}
+            {!isNextPage && page.interactionType === 'reading_challenge' && page.readingChallenge?.enabled && (
+              <ReadingChallengeUI
+                challenge={readingChallenge}
+                onReset={handleReadingReset}
+                onContinue={handleReadingContinue}
+                onSkip={page.readingChallenge.allowSkip ? () => readingChallenge.skip() : undefined}
+                allowSkip={page.readingChallenge.allowSkip}
+              />
+            )}
+
             {/* Page indicator overlay - Top Left, after exit button (hide on cover page and next page) */}
             {!isNextPage && page.pageNumber > 0 && (
               <View style={[styles.pageIndicatorOverlay, {
@@ -2431,8 +2492,8 @@ export function StoryBookReader({
         {/* UI Controls Layer */}
         <View style={styles.uiControlsLayer}>
 
-        {/* Bottom UI Panel - Text and Controls (hide on cover page and during jigsaw) */}
-        {currentPage && currentPageIndex > 0 && !isJigsawActive && (
+        {/* Bottom UI Panel - Text and Controls (hide on cover page and during jigsaw/reading) */}
+        {currentPage && currentPageIndex > 0 && !isJigsawActive && !isReadingActive && (
           <View style={[
             styles.bottomUIPanel,
             readingMode === 'record' && styles.bottomUIPanelRecordMode,
@@ -2459,10 +2520,10 @@ export function StoryBookReader({
                   height: scaledButtonSize(50),
                   borderRadius: scaledButtonSize(25),
                 },
-                (currentPageIndex <= 1 || isJigsawActive || (readingMode === 'record' && isRecording)) && styles.navButtonDisabled,
+                (currentPageIndex <= 1 || isJigsawActive || isReadingActive || (readingMode === 'record' && isRecording)) && styles.navButtonDisabled,
               ]}
               onPress={handlePreviousPage}
-              disabled={currentPageIndex <= 1 || isTransitioning || isJigsawActive || (readingMode === 'record' && isRecording)}
+              disabled={currentPageIndex <= 1 || isTransitioning || isJigsawActive || isReadingActive || (readingMode === 'record' && isRecording)}
               testID="left-touch-area"
             >
               <Text style={[
@@ -2518,7 +2579,7 @@ export function StoryBookReader({
                       >
                         <View style={{ paddingRight: 15, alignItems: 'center' }}>
                           {renderTextWithHighlight(
-                            getLocalizedText(currentPage?.localizedText, currentPage?.text, compareLanguage) || '',
+                            getLocalizedText(undefined, currentPage?.text || '', compareLanguage, currentPage?.localizedText, childAgeGroup) || '',
                             fontSize,
                             lineHeight,
                             currentPage?.pageNumber === 0 ? styles.coverText : styles.storyText,
@@ -2561,7 +2622,7 @@ export function StoryBookReader({
                     >
                       <View style={{ paddingRight: 15, alignItems: 'center' }}>
                         {renderTextWithHighlight(
-                          getLocalizedText(currentPage?.localizedText, currentPage?.text, isCompareLanguageEnabled ? sessionLanguage : currentLanguage) || '',
+                          getLocalizedText(undefined, currentPage?.text || '', isCompareLanguageEnabled ? sessionLanguage : currentLanguage, currentPage?.localizedText, childAgeGroup) || '',
                           fontSize,
                           lineHeight,
                           currentPage?.pageNumber === 0 ? styles.coverText : styles.storyText,
@@ -2595,10 +2656,10 @@ export function StoryBookReader({
                 currentPageIndex === pages.length - 1 && styles.completeButton,
                 (readingMode === 'record' && (isRecording || (currentPageIndex > 0 && !tempRecordingUri && !currentVoiceOver?.pageRecordings[currentPageIndex]))) && styles.navButtonDisabled,
                 isExiting && styles.navButtonDisabled,
-                isJigsawActive && styles.navButtonDisabled,
+                (isJigsawActive || isReadingActive) && styles.navButtonDisabled,
               ]}
               onPress={handleNextPage}
-              disabled={isTransitioning || isExiting || isJigsawActive || (readingMode === 'record' && (isRecording || (currentPageIndex > 0 && !tempRecordingUri && !currentVoiceOver?.pageRecordings[currentPageIndex])))}
+              disabled={isTransitioning || isExiting || isJigsawActive || isReadingActive || (readingMode === 'record' && (isRecording || (currentPageIndex > 0 && !tempRecordingUri && !currentVoiceOver?.pageRecordings[currentPageIndex])))}
               testID="right-touch-area"
             >
               <Text style={[

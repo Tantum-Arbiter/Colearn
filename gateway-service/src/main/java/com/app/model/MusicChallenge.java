@@ -171,6 +171,7 @@ public class MusicChallenge {
                 ", instrumentId='" + instrumentId + '\'' +
                 ", mode='" + mode + '\'' +
                 ", songId='" + songId + '\'' +
+                ", successSongId='" + successSongId + '\'' +
                 ", requiredSequence=" + requiredSequence +
                 '}';
     }

@@ -136,23 +136,40 @@
           },
           "localizedText": {
             "type": "object",
-            "description": "Localized page text for multi-language support",
+            "description": "Age-grouped localized page text. Keys are age groups (0-2, 2-4, 4-6). Values are localized text objects with language codes as keys.",
             "properties": {
-              "en": { "type": "string" },
-              "pl": { "type": "string" },
-              "es": { "type": "string" },
-              "de": { "type": "string" },
-              "fr": { "type": "string" },
-              "it": { "type": "string" },
-              "pt": { "type": "string" },
-              "ja": { "type": "string" },
-              "ar": { "type": "string" },
-              "tr": { "type": "string" },
-              "nl": { "type": "string" },
-              "da": { "type": "string" },
-              "la": { "type": "string" },
-              "zh": { "type": "string" }
-            }
+              "0-2": {
+                "type": "object",
+                "properties": {
+                  "en": { "type": "string" }, "pl": { "type": "string" }, "es": { "type": "string" },
+                  "de": { "type": "string" }, "fr": { "type": "string" }, "it": { "type": "string" },
+                  "pt": { "type": "string" }, "ja": { "type": "string" }, "ar": { "type": "string" },
+                  "tr": { "type": "string" }, "nl": { "type": "string" }, "da": { "type": "string" },
+                  "la": { "type": "string" }, "zh": { "type": "string" }
+                }
+              },
+              "2-4": {
+                "type": "object",
+                "properties": {
+                  "en": { "type": "string" }, "pl": { "type": "string" }, "es": { "type": "string" },
+                  "de": { "type": "string" }, "fr": { "type": "string" }, "it": { "type": "string" },
+                  "pt": { "type": "string" }, "ja": { "type": "string" }, "ar": { "type": "string" },
+                  "tr": { "type": "string" }, "nl": { "type": "string" }, "da": { "type": "string" },
+                  "la": { "type": "string" }, "zh": { "type": "string" }
+                }
+              },
+              "4-6": {
+                "type": "object",
+                "properties": {
+                  "en": { "type": "string" }, "pl": { "type": "string" }, "es": { "type": "string" },
+                  "de": { "type": "string" }, "fr": { "type": "string" }, "it": { "type": "string" },
+                  "pt": { "type": "string" }, "ja": { "type": "string" }, "ar": { "type": "string" },
+                  "tr": { "type": "string" }, "nl": { "type": "string" }, "da": { "type": "string" },
+                  "la": { "type": "string" }, "zh": { "type": "string" }
+                }
+              }
+            },
+            "additionalProperties": false
           },
           "backgroundImage": {
             "type": "string",
@@ -164,7 +181,7 @@
           },
           "interactionType": {
             "type": "string",
-            "enum": ["none", "interactive_state_change", "music_challenge", "jigsaw_puzzle"],
+            "enum": ["none", "interactive_state_change", "music_challenge", "jigsaw_puzzle", "reading_challenge"],
             "description": "Interaction type for this page"
           },
           "interactiveElements": {
@@ -256,6 +273,35 @@
               },
               "promptText": { "type": "string", "description": "Narrative prompt for the jigsaw puzzle" },
               "allowSkip": { "type": "boolean" }
+            }
+          },
+          "readingChallenge": {
+            "type": "object",
+            "description": "Reading challenge configuration for this page",
+            "required": ["enabled", "mode", "promptText", "allowSkip"],
+            "properties": {
+              "enabled": { "type": "boolean" },
+              "mode": {
+                "type": "string",
+                "enum": ["fill_in_blank", "spell_word"],
+                "description": "Challenge mode: fill_in_blank (tap missing words in order) or spell_word (select letters to spell a word)"
+              },
+              "promptText": { "type": "string", "description": "Narrative prompt for the reading challenge" },
+              "allowSkip": { "type": "boolean" },
+              "blankWordIndices": {
+                "type": "array",
+                "items": { "type": "integer", "minimum": 0 },
+                "description": "Zero-based indices of words in page text to blank out (fill_in_blank mode)"
+              },
+              "targetWord": {
+                "type": "string",
+                "description": "The word the user must spell (spell_word mode)"
+              },
+              "distractorLetters": {
+                "type": "array",
+                "items": { "type": "string", "maxLength": 1 },
+                "description": "Extra letters added to the letter pool as distractors (spell_word mode)"
+              }
             }
           }
         }

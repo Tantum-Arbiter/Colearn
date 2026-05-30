@@ -1,0 +1,101 @@
+{
+  "id": "reading-story-2",
+  "title": "Spelling Stars - Spell the Word",
+  "category": "learning",
+  "coverImage": "assets/stories/squirrels-snowman/cover/thumbnail.webp",
+  "isAvailable": true,
+  "ageRange": "3-6",
+  "duration": 5,
+  "description": "A spelling challenge adventure where children spell words letter by letter.",
+  "isPremium": false,
+  "author": "Freya Stories",
+  "tags": [
+    "spelling",
+    "learning",
+    "interactive"
+  ],
+  "version": 1,
+  "checksum": "reading-story-2-checksum-v1",
+  "pages": [
+    {
+      "id": "reading-story-2-cover",
+      "pageNumber": 0,
+      "type": "cover",
+      "backgroundImage": "assets/stories/squirrels-snowman/cover/cover.webp",
+      "text": "Spelling Stars\n\nSpell the Word",
+      "interactionType": "none"
+    },
+    {
+      "id": "reading-story-2-page-1",
+      "pageNumber": 1,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-1/page-1.webp",
+      "text": "The squirrel found a shiny acorn under the big tree.",
+      "interactionType": "reading_challenge",
+      "readingChallenge": {
+        "enabled": true,
+        "mode": "spell_word",
+        "promptText": "Can you spell this word?",
+        "allowSkip": true,
+        "targetWord": "TREE",
+        "distractorLetters": ["X", "Z", "Q"]
+      }
+    },
+    {
+      "id": "reading-story-2-page-2",
+      "pageNumber": 2,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-3/page-3.webp",
+      "text": "A fluffy rabbit hopped across the meadow.",
+      "interactionType": "reading_challenge",
+      "readingChallenge": {
+        "enabled": true,
+        "mode": "spell_word",
+        "promptText": "Spell this animal!",
+        "allowSkip": false,
+        "targetWord": "RABBIT",
+        "distractorLetters": ["X", "Z"]
+      }
+    },
+    {
+      "id": "reading-story-2-page-3",
+      "pageNumber": 3,
+      "type": "story",
+      "backgroundImage": "assets/stories/squirrels-snowman/page-5/page-5.webp",
+      "text": "You spelled all the words! What a spelling star you are!",
+      "interactionType": "none"
+    }
+  ],
+  "localizedTitle": {
+    "en": "Spelling Stars - Spell the Word",
+    "pl": "Gwiazdy Literowania - Przeliteruj Słowo",
+    "es": "Estrellas del Deletreo - Deletrea la Palabra",
+    "de": "Buchstabiersterne - Buchstabiere das Wort",
+    "fr": "Étoiles d'Orthographe - Épelle le Mot",
+    "it": "Stelle del Compitare - Compita la Parola",
+    "pt": "Estrelas da Soletração - Soletre a Palavra",
+    "ja": "スペリングスター - 言葉をつづろう",
+    "ar": "نجوم التهجئة - تهجئة الكلمة",
+    "tr": "Heceleme Yıldızları - Kelimeyi Hecele",
+    "nl": "Spelsterren - Spel het Woord",
+    "da": "Stavningsstjerner - Stav Ordet",
+    "la": "Stellae Litterationis - Verbum Littera",
+    "zh": "拼写之星 - 拼出单词"
+  },
+  "localizedDescription": {
+    "en": "A spelling challenge adventure where children spell words letter by letter.",
+    "pl": "Przygoda z wyzwaniem literowania, gdzie dzieci literują słowa litera po literze.",
+    "es": "Una aventura de deletreo donde los niños deletrean palabras letra por letra.",
+    "de": "Ein Buchstabierabenteuer, bei dem Kinder Wörter Buchstabe für Buchstabe buchstabieren.",
+    "fr": "Une aventure d'orthographe où les enfants épellent les mots lettre par lettre.",
+    "it": "Un'avventura di compitazione dove i bambini compitano le parole lettera per lettera.",
+    "pt": "Uma aventura de soletração onde as crianças soletram palavras letra por letra.",
+    "ja": "子どもたちが一文字ずつ言葉をつづるスペリングチャレンジ冒険。",
+    "ar": "مغامرة تهجئة حيث يتهجى الأطفال الكلمات حرفاً بحرف.",
+    "tr": "Çocukların kelimeleri harf harf hecelediği bir heceleme macerası.",
+    "nl": "Een spelavontuur waar kinderen woorden letter voor letter spellen.",
+    "da": "Et staveventyr hvor børn staver ord bogstav for bogstav.",
+    "la": "Aventura litterationis ubi pueri verba litteram per litteram scribunt.",
+    "zh": "一个拼写挑战冒险，孩子们逐字母拼写单词。"
+  }
+}

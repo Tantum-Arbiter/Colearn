@@ -488,6 +488,111 @@ Feature: Story CMS and Delta-Sync
     And page 2 should not have field "musicChallenge"
     And page 3 should not have field "musicChallenge"
 
+  # =============================================
+  # READING CHALLENGE STORIES
+  # =============================================
+
+  # READING STORY 1 - Fill in the blank mode (pages 1, 2)
+
+  @story-pages @reading-challenge @emulator-only
+  Scenario: Reading-story-1 has reading challenges on pages 1 and 2
+    Given I seed test story "reading-story-1" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/reading-story-1"
+    Then the response status code should be 200
+    And page 1 should have field "readingChallenge"
+    And page 1 readingChallenge should have field "enabled" with value "true"
+    And page 1 readingChallenge should have field "mode" with value "fill_in_blank"
+    And page 1 readingChallenge should have field "promptText"
+    And page 1 readingChallenge should have field "allowSkip" with value "true"
+    And page 1 readingChallenge blankWordIndices should be an array
+    And page 1 readingChallenge blankWordIndices should have 3 elements
+    And page 2 should have field "readingChallenge"
+    And page 2 readingChallenge should have field "mode" with value "fill_in_blank"
+
+  @story-pages @reading-challenge @emulator-only
+  Scenario: Reading-story-1 reading challenge pages have correct interaction type
+    Given I seed test story "reading-story-1" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/reading-story-1"
+    Then the response status code should be 200
+    And page 1 should have field "interactionType" with value "reading_challenge"
+    And page 2 should have field "interactionType" with value "reading_challenge"
+
+  @story-pages @reading-challenge @emulator-only
+  Scenario: Reading-story-1 non-challenge pages do not have readingChallenge
+    Given I seed test story "reading-story-1" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/reading-story-1"
+    Then the response status code should be 200
+    And page 0 should not have field "readingChallenge"
+    And page 3 should not have field "readingChallenge"
+
+  # READING STORY 2 - Spell word mode (pages 1, 2)
+
+  @story-pages @reading-challenge @emulator-only
+  Scenario: Reading-story-2 has spell word challenges on pages 1 and 2
+    Given I seed test story "reading-story-2" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/reading-story-2"
+    Then the response status code should be 200
+    And page 1 should have field "readingChallenge"
+    And page 1 readingChallenge should have field "enabled" with value "true"
+    And page 1 readingChallenge should have field "mode" with value "spell_word"
+    And page 1 readingChallenge should have field "targetWord" with value "TREE"
+    And page 1 readingChallenge should have field "allowSkip" with value "true"
+    And page 1 readingChallenge distractorLetters should be an array
+    And page 2 should have field "readingChallenge"
+    And page 2 readingChallenge should have field "mode" with value "spell_word"
+    And page 2 readingChallenge should have field "targetWord" with value "RABBIT"
+    And page 2 readingChallenge should have field "allowSkip" with value "false"
+
+  @story-pages @reading-challenge @emulator-only
+  Scenario: Reading-story-2 non-challenge pages do not have readingChallenge
+    Given I seed test story "reading-story-2" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/reading-story-2"
+    Then the response status code should be 200
+    And page 0 should not have field "readingChallenge"
+    And page 3 should not have field "readingChallenge"
+
+  # READING STORY 3 - Mixed modes (fill_in_blank + spell_word on pages 1-4)
+
+  @story-pages @reading-challenge @emulator-only
+  Scenario: Reading-story-3 has mixed reading challenge modes
+    Given I seed test story "reading-story-3" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/reading-story-3"
+    Then the response status code should be 200
+    And page 1 should have field "readingChallenge"
+    And page 1 readingChallenge should have field "mode" with value "fill_in_blank"
+    And page 1 readingChallenge should have field "allowSkip" with value "false"
+    And page 2 readingChallenge should have field "mode" with value "spell_word"
+    And page 2 readingChallenge should have field "targetWord" with value "FOX"
+    And page 3 readingChallenge should have field "mode" with value "fill_in_blank"
+    And page 4 readingChallenge should have field "mode" with value "spell_word"
+    And page 4 readingChallenge should have field "targetWord" with value "HAPPY"
+
+  @story-pages @reading-challenge @emulator-only
+  Scenario: Reading-story-3 non-challenge pages do not have readingChallenge
+    Given I seed test story "reading-story-3" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/reading-story-3"
+    Then the response status code should be 200
+    And page 0 should not have field "readingChallenge"
+    And page 5 should not have field "readingChallenge"
+
+  @story-pages @reading-challenge @emulator-only
+  Scenario: Reading challenge pages do not include musicChallenge or jigsawPuzzle
+    Given I seed test story "reading-story-1" to the local Firestore emulator
+    And I have a valid authentication token
+    When I make a GET request to "/api/stories/reading-story-1"
+    Then the response status code should be 200
+    And page 1 should not have field "musicChallenge"
+    And page 1 should not have field "jigsawPuzzle"
+    And page 2 should not have field "musicChallenge"
+    And page 2 should not have field "jigsawPuzzle"
+
   @error-handling
   Scenario: Sync with invalid request body
     When I make a POST request to "/api/stories/delta" with invalid JSON

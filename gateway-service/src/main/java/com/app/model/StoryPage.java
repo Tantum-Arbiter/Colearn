@@ -6,6 +6,7 @@ import com.google.cloud.firestore.annotation.PropertyName;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -31,6 +32,10 @@ public class StoryPage {
     @PropertyName("localizedText")
     private LocalizedText localizedText;
 
+    @JsonProperty("ageGroupText")
+    @PropertyName("ageGroupText")
+    private Map<String, LocalizedText> ageGroupText; // "0-2", "2-4", "4-6" -> LocalizedText
+
     @JsonProperty("backgroundImage")
     @PropertyName("backgroundImage")
     private String backgroundImage;
@@ -54,6 +59,10 @@ public class StoryPage {
     @JsonProperty("jigsawPuzzle")
     @PropertyName("jigsawPuzzle")
     private JigsawPuzzle jigsawPuzzle;
+
+    @JsonProperty("readingChallenge")
+    @PropertyName("readingChallenge")
+    private ReadingChallenge readingChallenge;
 
     public StoryPage() {
         this.interactiveElements = new ArrayList<>();
@@ -106,12 +115,57 @@ public class StoryPage {
         this.localizedText = localizedText;
     }
 
+    public Map<String, LocalizedText> getAgeGroupText() {
+        return ageGroupText;
+    }
+
+    public void setAgeGroupText(Map<String, LocalizedText> ageGroupText) {
+        this.ageGroupText = ageGroupText;
+    }
+
+    /**
+     * Get text for a specific language (no age group).
+     * Resolution: localizedText[lang] → localizedText.en → text
+     */
     public String getTextForLanguage(String languageCode) {
         if (localizedText != null) {
-            String localized = localizedText.getText(languageCode);
-            if (localized != null) return localized;
+            String result = localizedText.getText(languageCode);
+            if (result != null) return result;
         }
         return text;
+    }
+
+    /**
+     * Get text for a specific language and age group.
+     * Resolution: ageGroupText[ageGroup][lang] → ageGroupText[ageGroup].en
+     *           → localizedText[lang] → localizedText.en → text
+     */
+    public String getTextForLanguageAndAgeGroup(String languageCode, String ageGroup) {
+        // Try age-group-specific text first
+        if (ageGroupText != null && ageGroup != null) {
+            String[] fallbackChain = getAgeGroupFallbackChain(ageGroup);
+            for (String group : fallbackChain) {
+                LocalizedText groupText = ageGroupText.get(group);
+                if (groupText != null) {
+                    String result = groupText.getText(languageCode);
+                    if (result != null) return result;
+                }
+            }
+        }
+        // Fall back to default localizedText
+        return getTextForLanguage(languageCode);
+    }
+
+    /**
+     * Returns the fallback chain for age groups.
+     */
+    private static String[] getAgeGroupFallbackChain(String ageGroup) {
+        switch (ageGroup) {
+            case "0-2": return new String[]{"0-2"};
+            case "2-4": return new String[]{"2-4", "0-2"};
+            case "4-6": return new String[]{"4-6", "2-4", "0-2"};
+            default: return new String[]{"4-6", "2-4", "0-2"};
+        }
     }
 
     public String getBackgroundImage() {
@@ -160,6 +214,14 @@ public class StoryPage {
 
     public void setJigsawPuzzle(JigsawPuzzle jigsawPuzzle) {
         this.jigsawPuzzle = jigsawPuzzle;
+    }
+
+    public ReadingChallenge getReadingChallenge() {
+        return readingChallenge;
+    }
+
+    public void setReadingChallenge(ReadingChallenge readingChallenge) {
+        this.readingChallenge = readingChallenge;
     }
 
     @Override

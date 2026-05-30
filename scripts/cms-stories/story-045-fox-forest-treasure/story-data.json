@@ -55,20 +55,22 @@
       "backgroundImage": "assets/stories/story-045-fox-forest-treasure/cover/story-045-fox-forest-treasure-cover.webp",
       "text": "Fox's Forest Treasure",
       "localizedText": {
-        "en": "Fox's Forest Treasure",
-        "pl": "Lis - Przygoda",
-        "es": "Zorro - Aventura",
-        "de": "Fuchs - Abenteuer",
-        "fr": "Renard - Aventure",
-        "it": "Volpe - Avventura",
-        "pt": "Raposa - Aventura",
-        "ja": "キツネの冒険",
-        "ar": "مغامرة ثعلب",
-        "tr": "Tilki Macerası",
-        "nl": "Vos Avontuur",
-        "da": "Ræv Eventyr",
-        "la": "Vulpes Aventura",
-        "zh": "狐狸的冒险"
+        "4-6": {
+          "en": "Fox's Forest Treasure",
+          "pl": "Lis - Przygoda",
+          "es": "Zorro - Aventura",
+          "de": "Fuchs - Abenteuer",
+          "fr": "Renard - Aventure",
+          "it": "Volpe - Avventura",
+          "pt": "Raposa - Aventura",
+          "ja": "キツネの冒険",
+          "ar": "مغامرة ثعلب",
+          "tr": "Tilki Macerası",
+          "nl": "Vos Avontuur",
+          "da": "Ræv Eventyr",
+          "la": "Vulpes Aventura",
+          "zh": "狐狸的冒险"
+        }
       }
     },
     {
@@ -78,20 +80,22 @@
       "backgroundImage": "assets/stories/story-045-fox-forest-treasure/page-1/story-045-fox-forest-treasure-page-1.webp",
       "text": "Fox wakes up early.\nToday is a special day!",
       "localizedText": {
-        "en": "Fox wakes up early.\nToday is a special day!",
-        "pl": "[PL] Fox wakes up early.\nToday is a special day!",
-        "es": "[ES] Fox wakes up early.\nToday is a special day!",
-        "de": "[DE] Fox wakes up early.\nToday is a special day!",
-        "fr": "[FR] Fox wakes up early.\nToday is a special day!",
-        "it": "[IT] Fox wakes up early.\nToday is a special day!",
-        "pt": "[PT] Fox wakes up early.\nToday is a special day!",
-        "ja": "[JA] Fox wakes up early.\nToday is a special day!",
-        "ar": "[AR] Fox wakes up early.\nToday is a special day!",
-        "tr": "[TR] Fox wakes up early.\nToday is a special day!",
-        "nl": "[NL] Fox wakes up early.\nToday is a special day!",
-        "da": "[DA] Fox wakes up early.\nToday is a special day!",
-        "la": "[LA] Fox wakes up early.\nToday is a special day!",
-        "zh": "[ZH] Fox wakes up early.\nToday is a special day!"
+        "4-6": {
+          "en": "Fox wakes up early.\nToday is a special day!",
+          "pl": "[PL] Fox wakes up early.\nToday is a special day!",
+          "es": "[ES] Fox wakes up early.\nToday is a special day!",
+          "de": "[DE] Fox wakes up early.\nToday is a special day!",
+          "fr": "[FR] Fox wakes up early.\nToday is a special day!",
+          "it": "[IT] Fox wakes up early.\nToday is a special day!",
+          "pt": "[PT] Fox wakes up early.\nToday is a special day!",
+          "ja": "[JA] Fox wakes up early.\nToday is a special day!",
+          "ar": "[AR] Fox wakes up early.\nToday is a special day!",
+          "tr": "[TR] Fox wakes up early.\nToday is a special day!",
+          "nl": "[NL] Fox wakes up early.\nToday is a special day!",
+          "da": "[DA] Fox wakes up early.\nToday is a special day!",
+          "la": "[LA] Fox wakes up early.\nToday is a special day!",
+          "zh": "[ZH] Fox wakes up early.\nToday is a special day!"
+        }
       }
     },
     {
@@ -101,20 +105,22 @@
       "backgroundImage": "assets/stories/story-045-fox-forest-treasure/page-2/story-045-fox-forest-treasure-page-2.webp",
       "text": "Fox puts on a warm coat.\nTime to go outside!",
       "localizedText": {
-        "en": "Fox puts on a warm coat.\nTime to go outside!",
-        "pl": "[PL] Fox puts on a warm coat.\nTime to go outside!",
-        "es": "[ES] Fox puts on a warm coat.\nTime to go outside!",
-        "de": "[DE] Fox puts on a warm coat.\nTime to go outside!",
-        "fr": "[FR] Fox puts on a warm coat.\nTime to go outside!",
-        "it": "[IT] Fox puts on a warm coat.\nTime to go outside!",
-        "pt": "[PT] Fox puts on a warm coat.\nTime to go outside!",
-        "ja": "[JA] Fox puts on a warm coat.\nTime to go outside!",
-        "ar": "[AR] Fox puts on a warm coat.\nTime to go outside!",
-        "tr": "[TR] Fox puts on a warm coat.\nTime to go outside!",
-        "nl": "[NL] Fox puts on a warm coat.\nTime to go outside!",
-        "da": "[DA] Fox puts on a warm coat.\nTime to go outside!",
-        "la": "[LA] Fox puts on a warm coat.\nTime to go outside!",
-        "zh": "[ZH] Fox puts on a warm coat.\nTime to go outside!"
+        "4-6": {
+          "en": "Fox puts on a warm coat.\nTime to go outside!",
+          "pl": "[PL] Fox puts on a warm coat.\nTime to go outside!",
+          "es": "[ES] Fox puts on a warm coat.\nTime to go outside!",
+          "de": "[DE] Fox puts on a warm coat.\nTime to go outside!",
+          "fr": "[FR] Fox puts on a warm coat.\nTime to go outside!",
+          "it": "[IT] Fox puts on a warm coat.\nTime to go outside!",
+          "pt": "[PT] Fox puts on a warm coat.\nTime to go outside!",
+          "ja": "[JA] Fox puts on a warm coat.\nTime to go outside!",
+          "ar": "[AR] Fox puts on a warm coat.\nTime to go outside!",
+          "tr": "[TR] Fox puts on a warm coat.\nTime to go outside!",
+          "nl": "[NL] Fox puts on a warm coat.\nTime to go outside!",
+          "da": "[DA] Fox puts on a warm coat.\nTime to go outside!",
+          "la": "[LA] Fox puts on a warm coat.\nTime to go outside!",
+          "zh": "[ZH] Fox puts on a warm coat.\nTime to go outside!"
+        }
       }
     },
     {
@@ -124,20 +130,22 @@
       "backgroundImage": "assets/stories/story-045-fox-forest-treasure/page-3/story-045-fox-forest-treasure-page-3.webp",
       "text": "The path winds through the woods.\nFox finds hidden treasure.",
       "localizedText": {
-        "en": "The path winds through the woods.\nFox finds hidden treasure.",
-        "pl": "[PL] The path winds through the woods.\nFox finds hidden treasure.",
-        "es": "[ES] The path winds through the woods.\nFox finds hidden treasure.",
-        "de": "[DE] The path winds through the woods.\nFox finds hidden treasure.",
-        "fr": "[FR] The path winds through the woods.\nFox finds hidden treasure.",
-        "it": "[IT] The path winds through the woods.\nFox finds hidden treasure.",
-        "pt": "[PT] The path winds through the woods.\nFox finds hidden treasure.",
-        "ja": "[JA] The path winds through the woods.\nFox finds hidden treasure.",
-        "ar": "[AR] The path winds through the woods.\nFox finds hidden treasure.",
-        "tr": "[TR] The path winds through the woods.\nFox finds hidden treasure.",
-        "nl": "[NL] The path winds through the woods.\nFox finds hidden treasure.",
-        "da": "[DA] The path winds through the woods.\nFox finds hidden treasure.",
-        "la": "[LA] The path winds through the woods.\nFox finds hidden treasure.",
-        "zh": "[ZH] The path winds through the woods.\nFox finds hidden treasure."
+        "4-6": {
+          "en": "The path winds through the woods.\nFox finds hidden treasure.",
+          "pl": "[PL] The path winds through the woods.\nFox finds hidden treasure.",
+          "es": "[ES] The path winds through the woods.\nFox finds hidden treasure.",
+          "de": "[DE] The path winds through the woods.\nFox finds hidden treasure.",
+          "fr": "[FR] The path winds through the woods.\nFox finds hidden treasure.",
+          "it": "[IT] The path winds through the woods.\nFox finds hidden treasure.",
+          "pt": "[PT] The path winds through the woods.\nFox finds hidden treasure.",
+          "ja": "[JA] The path winds through the woods.\nFox finds hidden treasure.",
+          "ar": "[AR] The path winds through the woods.\nFox finds hidden treasure.",
+          "tr": "[TR] The path winds through the woods.\nFox finds hidden treasure.",
+          "nl": "[NL] The path winds through the woods.\nFox finds hidden treasure.",
+          "da": "[DA] The path winds through the woods.\nFox finds hidden treasure.",
+          "la": "[LA] The path winds through the woods.\nFox finds hidden treasure.",
+          "zh": "[ZH] The path winds through the woods.\nFox finds hidden treasure."
+        }
       }
     },
     {
@@ -147,20 +155,22 @@
       "backgroundImage": "assets/stories/story-045-fox-forest-treasure/page-4/story-045-fox-forest-treasure-page-4.webp",
       "text": "\"How exciting!\" says Fox.\nEverything looks so different!",
       "localizedText": {
-        "en": "\"How exciting!\" says Fox.\nEverything looks so different!",
-        "pl": "[PL] \"How exciting!\" says Fox.\nEverything looks so different!",
-        "es": "[ES] \"How exciting!\" says Fox.\nEverything looks so different!",
-        "de": "[DE] \"How exciting!\" says Fox.\nEverything looks so different!",
-        "fr": "[FR] \"How exciting!\" says Fox.\nEverything looks so different!",
-        "it": "[IT] \"How exciting!\" says Fox.\nEverything looks so different!",
-        "pt": "[PT] \"How exciting!\" says Fox.\nEverything looks so different!",
-        "ja": "[JA] \"How exciting!\" says Fox.\nEverything looks so different!",
-        "ar": "[AR] \"How exciting!\" says Fox.\nEverything looks so different!",
-        "tr": "[TR] \"How exciting!\" says Fox.\nEverything looks so different!",
-        "nl": "[NL] \"How exciting!\" says Fox.\nEverything looks so different!",
-        "da": "[DA] \"How exciting!\" says Fox.\nEverything looks so different!",
-        "la": "[LA] \"How exciting!\" says Fox.\nEverything looks so different!",
-        "zh": "[ZH] \"How exciting!\" says Fox.\nEverything looks so different!"
+        "4-6": {
+          "en": "\"How exciting!\" says Fox.\nEverything looks so different!",
+          "pl": "[PL] \"How exciting!\" says Fox.\nEverything looks so different!",
+          "es": "[ES] \"How exciting!\" says Fox.\nEverything looks so different!",
+          "de": "[DE] \"How exciting!\" says Fox.\nEverything looks so different!",
+          "fr": "[FR] \"How exciting!\" says Fox.\nEverything looks so different!",
+          "it": "[IT] \"How exciting!\" says Fox.\nEverything looks so different!",
+          "pt": "[PT] \"How exciting!\" says Fox.\nEverything looks so different!",
+          "ja": "[JA] \"How exciting!\" says Fox.\nEverything looks so different!",
+          "ar": "[AR] \"How exciting!\" says Fox.\nEverything looks so different!",
+          "tr": "[TR] \"How exciting!\" says Fox.\nEverything looks so different!",
+          "nl": "[NL] \"How exciting!\" says Fox.\nEverything looks so different!",
+          "da": "[DA] \"How exciting!\" says Fox.\nEverything looks so different!",
+          "la": "[LA] \"How exciting!\" says Fox.\nEverything looks so different!",
+          "zh": "[ZH] \"How exciting!\" says Fox.\nEverything looks so different!"
+        }
       }
     },
     {
@@ -170,20 +180,22 @@
       "backgroundImage": "assets/stories/story-045-fox-forest-treasure/page-5/story-045-fox-forest-treasure-page-5.webp",
       "text": "Fox meets a friend along the way.\nThey decide to explore together.",
       "localizedText": {
-        "en": "Fox meets a friend along the way.\nThey decide to explore together.",
-        "pl": "[PL] Fox meets a friend along the way.\nThey decide to explore together.",
-        "es": "[ES] Fox meets a friend along the way.\nThey decide to explore together.",
-        "de": "[DE] Fox meets a friend along the way.\nThey decide to explore together.",
-        "fr": "[FR] Fox meets a friend along the way.\nThey decide to explore together.",
-        "it": "[IT] Fox meets a friend along the way.\nThey decide to explore together.",
-        "pt": "[PT] Fox meets a friend along the way.\nThey decide to explore together.",
-        "ja": "[JA] Fox meets a friend along the way.\nThey decide to explore together.",
-        "ar": "[AR] Fox meets a friend along the way.\nThey decide to explore together.",
-        "tr": "[TR] Fox meets a friend along the way.\nThey decide to explore together.",
-        "nl": "[NL] Fox meets a friend along the way.\nThey decide to explore together.",
-        "da": "[DA] Fox meets a friend along the way.\nThey decide to explore together.",
-        "la": "[LA] Fox meets a friend along the way.\nThey decide to explore together.",
-        "zh": "[ZH] Fox meets a friend along the way.\nThey decide to explore together."
+        "4-6": {
+          "en": "Fox meets a friend along the way.\nThey decide to explore together.",
+          "pl": "[PL] Fox meets a friend along the way.\nThey decide to explore together.",
+          "es": "[ES] Fox meets a friend along the way.\nThey decide to explore together.",
+          "de": "[DE] Fox meets a friend along the way.\nThey decide to explore together.",
+          "fr": "[FR] Fox meets a friend along the way.\nThey decide to explore together.",
+          "it": "[IT] Fox meets a friend along the way.\nThey decide to explore together.",
+          "pt": "[PT] Fox meets a friend along the way.\nThey decide to explore together.",
+          "ja": "[JA] Fox meets a friend along the way.\nThey decide to explore together.",
+          "ar": "[AR] Fox meets a friend along the way.\nThey decide to explore together.",
+          "tr": "[TR] Fox meets a friend along the way.\nThey decide to explore together.",
+          "nl": "[NL] Fox meets a friend along the way.\nThey decide to explore together.",
+          "da": "[DA] Fox meets a friend along the way.\nThey decide to explore together.",
+          "la": "[LA] Fox meets a friend along the way.\nThey decide to explore together.",
+          "zh": "[ZH] Fox meets a friend along the way.\nThey decide to explore together."
+        }
       }
     },
     {
@@ -193,20 +205,22 @@
       "backgroundImage": "assets/stories/story-045-fox-forest-treasure/page-6/story-045-fox-forest-treasure-page-6.webp",
       "text": "They find something wonderful.\nFox can hardly believe it!",
       "localizedText": {
-        "en": "They find something wonderful.\nFox can hardly believe it!",
-        "pl": "[PL] They find something wonderful.\nFox can hardly believe it!",
-        "es": "[ES] They find something wonderful.\nFox can hardly believe it!",
-        "de": "[DE] They find something wonderful.\nFox can hardly believe it!",
-        "fr": "[FR] They find something wonderful.\nFox can hardly believe it!",
-        "it": "[IT] They find something wonderful.\nFox can hardly believe it!",
-        "pt": "[PT] They find something wonderful.\nFox can hardly believe it!",
-        "ja": "[JA] They find something wonderful.\nFox can hardly believe it!",
-        "ar": "[AR] They find something wonderful.\nFox can hardly believe it!",
-        "tr": "[TR] They find something wonderful.\nFox can hardly believe it!",
-        "nl": "[NL] They find something wonderful.\nFox can hardly believe it!",
-        "da": "[DA] They find something wonderful.\nFox can hardly believe it!",
-        "la": "[LA] They find something wonderful.\nFox can hardly believe it!",
-        "zh": "[ZH] They find something wonderful.\nFox can hardly believe it!"
+        "4-6": {
+          "en": "They find something wonderful.\nFox can hardly believe it!",
+          "pl": "[PL] They find something wonderful.\nFox can hardly believe it!",
+          "es": "[ES] They find something wonderful.\nFox can hardly believe it!",
+          "de": "[DE] They find something wonderful.\nFox can hardly believe it!",
+          "fr": "[FR] They find something wonderful.\nFox can hardly believe it!",
+          "it": "[IT] They find something wonderful.\nFox can hardly believe it!",
+          "pt": "[PT] They find something wonderful.\nFox can hardly believe it!",
+          "ja": "[JA] They find something wonderful.\nFox can hardly believe it!",
+          "ar": "[AR] They find something wonderful.\nFox can hardly believe it!",
+          "tr": "[TR] They find something wonderful.\nFox can hardly believe it!",
+          "nl": "[NL] They find something wonderful.\nFox can hardly believe it!",
+          "da": "[DA] They find something wonderful.\nFox can hardly believe it!",
+          "la": "[LA] They find something wonderful.\nFox can hardly believe it!",
+          "zh": "[ZH] They find something wonderful.\nFox can hardly believe it!"
+        }
       }
     },
     {
@@ -216,20 +230,22 @@
       "backgroundImage": "assets/stories/story-045-fox-forest-treasure/page-7/story-045-fox-forest-treasure-page-7.webp",
       "text": "Together they share a laugh.\nFriendship makes everything better.",
       "localizedText": {
-        "en": "Together they share a laugh.\nFriendship makes everything better.",
-        "pl": "[PL] Together they share a laugh.\nFriendship makes everything better.",
-        "es": "[ES] Together they share a laugh.\nFriendship makes everything better.",
-        "de": "[DE] Together they share a laugh.\nFriendship makes everything better.",
-        "fr": "[FR] Together they share a laugh.\nFriendship makes everything better.",
-        "it": "[IT] Together they share a laugh.\nFriendship makes everything better.",
-        "pt": "[PT] Together they share a laugh.\nFriendship makes everything better.",
-        "ja": "[JA] Together they share a laugh.\nFriendship makes everything better.",
-        "ar": "[AR] Together they share a laugh.\nFriendship makes everything better.",
-        "tr": "[TR] Together they share a laugh.\nFriendship makes everything better.",
-        "nl": "[NL] Together they share a laugh.\nFriendship makes everything better.",
-        "da": "[DA] Together they share a laugh.\nFriendship makes everything better.",
-        "la": "[LA] Together they share a laugh.\nFriendship makes everything better.",
-        "zh": "[ZH] Together they share a laugh.\nFriendship makes everything better."
+        "4-6": {
+          "en": "Together they share a laugh.\nFriendship makes everything better.",
+          "pl": "[PL] Together they share a laugh.\nFriendship makes everything better.",
+          "es": "[ES] Together they share a laugh.\nFriendship makes everything better.",
+          "de": "[DE] Together they share a laugh.\nFriendship makes everything better.",
+          "fr": "[FR] Together they share a laugh.\nFriendship makes everything better.",
+          "it": "[IT] Together they share a laugh.\nFriendship makes everything better.",
+          "pt": "[PT] Together they share a laugh.\nFriendship makes everything better.",
+          "ja": "[JA] Together they share a laugh.\nFriendship makes everything better.",
+          "ar": "[AR] Together they share a laugh.\nFriendship makes everything better.",
+          "tr": "[TR] Together they share a laugh.\nFriendship makes everything better.",
+          "nl": "[NL] Together they share a laugh.\nFriendship makes everything better.",
+          "da": "[DA] Together they share a laugh.\nFriendship makes everything better.",
+          "la": "[LA] Together they share a laugh.\nFriendship makes everything better.",
+          "zh": "[ZH] Together they share a laugh.\nFriendship makes everything better."
+        }
       }
     },
     {
@@ -239,20 +255,22 @@
       "backgroundImage": "assets/stories/story-045-fox-forest-treasure/page-8/story-045-fox-forest-treasure-page-8.webp",
       "text": "The sun begins to set.\nFox feels happy and warm inside.",
       "localizedText": {
-        "en": "The sun begins to set.\nFox feels happy and warm inside.",
-        "pl": "[PL] The sun begins to set.\nFox feels happy and warm inside.",
-        "es": "[ES] The sun begins to set.\nFox feels happy and warm inside.",
-        "de": "[DE] The sun begins to set.\nFox feels happy and warm inside.",
-        "fr": "[FR] The sun begins to set.\nFox feels happy and warm inside.",
-        "it": "[IT] The sun begins to set.\nFox feels happy and warm inside.",
-        "pt": "[PT] The sun begins to set.\nFox feels happy and warm inside.",
-        "ja": "[JA] The sun begins to set.\nFox feels happy and warm inside.",
-        "ar": "[AR] The sun begins to set.\nFox feels happy and warm inside.",
-        "tr": "[TR] The sun begins to set.\nFox feels happy and warm inside.",
-        "nl": "[NL] The sun begins to set.\nFox feels happy and warm inside.",
-        "da": "[DA] The sun begins to set.\nFox feels happy and warm inside.",
-        "la": "[LA] The sun begins to set.\nFox feels happy and warm inside.",
-        "zh": "[ZH] The sun begins to set.\nFox feels happy and warm inside."
+        "4-6": {
+          "en": "The sun begins to set.\nFox feels happy and warm inside.",
+          "pl": "[PL] The sun begins to set.\nFox feels happy and warm inside.",
+          "es": "[ES] The sun begins to set.\nFox feels happy and warm inside.",
+          "de": "[DE] The sun begins to set.\nFox feels happy and warm inside.",
+          "fr": "[FR] The sun begins to set.\nFox feels happy and warm inside.",
+          "it": "[IT] The sun begins to set.\nFox feels happy and warm inside.",
+          "pt": "[PT] The sun begins to set.\nFox feels happy and warm inside.",
+          "ja": "[JA] The sun begins to set.\nFox feels happy and warm inside.",
+          "ar": "[AR] The sun begins to set.\nFox feels happy and warm inside.",
+          "tr": "[TR] The sun begins to set.\nFox feels happy and warm inside.",
+          "nl": "[NL] The sun begins to set.\nFox feels happy and warm inside.",
+          "da": "[DA] The sun begins to set.\nFox feels happy and warm inside.",
+          "la": "[LA] The sun begins to set.\nFox feels happy and warm inside.",
+          "zh": "[ZH] The sun begins to set.\nFox feels happy and warm inside."
+        }
       }
     },
     {
@@ -262,20 +280,22 @@
       "backgroundImage": "assets/stories/story-045-fox-forest-treasure/page-9/story-045-fox-forest-treasure-page-9.webp",
       "text": "It's time to go home now.\nFox waves goodbye to the day.",
       "localizedText": {
-        "en": "It's time to go home now.\nFox waves goodbye to the day.",
-        "pl": "[PL] It's time to go home now.\nFox waves goodbye to the day.",
-        "es": "[ES] It's time to go home now.\nFox waves goodbye to the day.",
-        "de": "[DE] It's time to go home now.\nFox waves goodbye to the day.",
-        "fr": "[FR] It's time to go home now.\nFox waves goodbye to the day.",
-        "it": "[IT] It's time to go home now.\nFox waves goodbye to the day.",
-        "pt": "[PT] It's time to go home now.\nFox waves goodbye to the day.",
-        "ja": "[JA] It's time to go home now.\nFox waves goodbye to the day.",
-        "ar": "[AR] It's time to go home now.\nFox waves goodbye to the day.",
-        "tr": "[TR] It's time to go home now.\nFox waves goodbye to the day.",
-        "nl": "[NL] It's time to go home now.\nFox waves goodbye to the day.",
-        "da": "[DA] It's time to go home now.\nFox waves goodbye to the day.",
-        "la": "[LA] It's time to go home now.\nFox waves goodbye to the day.",
-        "zh": "[ZH] It's time to go home now.\nFox waves goodbye to the day."
+        "4-6": {
+          "en": "It's time to go home now.\nFox waves goodbye to the day.",
+          "pl": "[PL] It's time to go home now.\nFox waves goodbye to the day.",
+          "es": "[ES] It's time to go home now.\nFox waves goodbye to the day.",
+          "de": "[DE] It's time to go home now.\nFox waves goodbye to the day.",
+          "fr": "[FR] It's time to go home now.\nFox waves goodbye to the day.",
+          "it": "[IT] It's time to go home now.\nFox waves goodbye to the day.",
+          "pt": "[PT] It's time to go home now.\nFox waves goodbye to the day.",
+          "ja": "[JA] It's time to go home now.\nFox waves goodbye to the day.",
+          "ar": "[AR] It's time to go home now.\nFox waves goodbye to the day.",
+          "tr": "[TR] It's time to go home now.\nFox waves goodbye to the day.",
+          "nl": "[NL] It's time to go home now.\nFox waves goodbye to the day.",
+          "da": "[DA] It's time to go home now.\nFox waves goodbye to the day.",
+          "la": "[LA] It's time to go home now.\nFox waves goodbye to the day.",
+          "zh": "[ZH] It's time to go home now.\nFox waves goodbye to the day."
+        }
       }
     },
     {
@@ -285,20 +305,22 @@
       "backgroundImage": "assets/stories/story-045-fox-forest-treasure/page-10/story-045-fox-forest-treasure-page-10.webp",
       "text": "Tucked in bed, Fox smiles.\nWhat a wonderful adventure!\nThe End.",
       "localizedText": {
-        "en": "Tucked in bed, Fox smiles.\nWhat a wonderful adventure!\nThe End.",
-        "pl": "[PL] Tucked in bed, Fox smiles.\nWhat a wonderful adventure!\nThe End.",
-        "es": "[ES] Tucked in bed, Fox smiles.\nWhat a wonderful adventure!\nThe End.",
-        "de": "[DE] Tucked in bed, Fox smiles.\nWhat a wonderful adventure!\nThe End.",
-        "fr": "[FR] Tucked in bed, Fox smiles.\nWhat a wonderful adventure!\nThe End.",
-        "it": "[IT] Tucked in bed, Fox smiles.\nWhat a wonderful adventure!\nThe End.",
-        "pt": "[PT] Tucked in bed, Fox smiles.\nWhat a wonderful adventure!\nThe End.",
-        "ja": "[JA] Tucked in bed, Fox smiles.\nWhat a wonderful adventure!\nThe End.",
-        "ar": "[AR] Tucked in bed, Fox smiles.\nWhat a wonderful adventure!\nThe End.",
-        "tr": "[TR] Tucked in bed, Fox smiles.\nWhat a wonderful adventure!\nThe End.",
-        "nl": "[NL] Tucked in bed, Fox smiles.\nWhat a wonderful adventure!\nThe End.",
-        "da": "[DA] Tucked in bed, Fox smiles.\nWhat a wonderful adventure!\nThe End.",
-        "la": "[LA] Tucked in bed, Fox smiles.\nWhat a wonderful adventure!\nThe End.",
-        "zh": "[ZH] Tucked in bed, Fox smiles.\nWhat a wonderful adventure!\nThe End."
+        "4-6": {
+          "en": "Tucked in bed, Fox smiles.\nWhat a wonderful adventure!\nThe End.",
+          "pl": "[PL] Tucked in bed, Fox smiles.\nWhat a wonderful adventure!\nThe End.",
+          "es": "[ES] Tucked in bed, Fox smiles.\nWhat a wonderful adventure!\nThe End.",
+          "de": "[DE] Tucked in bed, Fox smiles.\nWhat a wonderful adventure!\nThe End.",
+          "fr": "[FR] Tucked in bed, Fox smiles.\nWhat a wonderful adventure!\nThe End.",
+          "it": "[IT] Tucked in bed, Fox smiles.\nWhat a wonderful adventure!\nThe End.",
+          "pt": "[PT] Tucked in bed, Fox smiles.\nWhat a wonderful adventure!\nThe End.",
+          "ja": "[JA] Tucked in bed, Fox smiles.\nWhat a wonderful adventure!\nThe End.",
+          "ar": "[AR] Tucked in bed, Fox smiles.\nWhat a wonderful adventure!\nThe End.",
+          "tr": "[TR] Tucked in bed, Fox smiles.\nWhat a wonderful adventure!\nThe End.",
+          "nl": "[NL] Tucked in bed, Fox smiles.\nWhat a wonderful adventure!\nThe End.",
+          "da": "[DA] Tucked in bed, Fox smiles.\nWhat a wonderful adventure!\nThe End.",
+          "la": "[LA] Tucked in bed, Fox smiles.\nWhat a wonderful adventure!\nThe End.",
+          "zh": "[ZH] Tucked in bed, Fox smiles.\nWhat a wonderful adventure!\nThe End."
+        }
       }
     }
   ],

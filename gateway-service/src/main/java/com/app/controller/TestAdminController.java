@@ -457,6 +457,7 @@ public class TestAdminController {
                     content.append(page.getId());
                     content.append(page.getText());
                     content.append(serializeLocalizedText(page.getLocalizedText()));
+                    content.append(serializeAgeGroupedText(page.getAgeGroupText()));
                     content.append(page.getPageNumber());
                 });
             }
@@ -487,6 +488,19 @@ public class TestAdminController {
         return sb.toString();
     }
 
+    private String serializeAgeGroupedText(Map<String, LocalizedText> ageGroupedText) {
+        if (ageGroupedText == null) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        ageGroupedText.forEach((ageGroup, lt) -> {
+            sb.append(ageGroup).append(":{");
+            sb.append(serializeLocalizedText(lt));
+            sb.append("}|");
+        });
+        return sb.toString();
+    }
+
     private LocalizedText parseLocalizedText(Map<?, ?> map) {
         LocalizedText lt = new LocalizedText();
         if (map.get("en") != null) lt.setEn((String) map.get("en"));
@@ -504,6 +518,17 @@ public class TestAdminController {
         if (map.get("la") != null) lt.setLa((String) map.get("la"));
         if (map.get("zh") != null) lt.setZh((String) map.get("zh"));
         return lt;
+    }
+
+    private Map<String, LocalizedText> parseAgeGroupedText(Map<?, ?> map) {
+        Map<String, LocalizedText> result = new HashMap<>();
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
+            String ageGroup = (String) entry.getKey();
+            if (entry.getValue() instanceof Map<?, ?> langMap) {
+                result.put(ageGroup, parseLocalizedText(langMap));
+            }
+        }
+        return result;
     }
 
     @PostMapping("/flags")
@@ -644,6 +669,9 @@ public class TestAdminController {
 
                         if (pageMap.get("localizedText") instanceof Map<?, ?> localizedTextMap) {
                             page.setLocalizedText(parseLocalizedText(localizedTextMap));
+                        }
+                        if (pageMap.get("ageGroupText") instanceof Map<?, ?> ageGroupTextMap) {
+                            page.setAgeGroupText(parseAgeGroupedText(ageGroupTextMap));
                         }
 
                         // Parse interactiveElements

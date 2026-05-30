@@ -1,0 +1,169 @@
+{
+  "id": "reading-story-2",
+  "title": "Spelling Stars - Spell the Word",
+  "localizedTitle": {
+    "en": "Spelling Stars - Spell the Word",
+    "pl": "Gwiazdy Literowania - Przeliteruj Słowo",
+    "es": "Estrellas del Deletreo - Deletrea la Palabra",
+    "de": "Buchstabiersterne - Buchstabiere das Wort",
+    "fr": "Étoiles d'Orthographe - Épelle le Mot",
+    "it": "Stelle del Compitare - Compita la Parola",
+    "pt": "Estrelas da Soletração - Soletre a Palavra",
+    "ja": "スペリングスター - 言葉をつづろう",
+    "ar": "نجوم التهجئة - تهجئة الكلمة",
+    "tr": "Heceleme Yıldızları - Kelimeyi Hecele",
+    "nl": "Spelsterren - Spel het Woord",
+    "da": "Stavningsstjerner - Stav Ordet",
+    "la": "Stellae Litterationis - Verbum Littera",
+    "zh": "拼写之星 - 拼出单词"
+  },
+  "category": "learning",
+  "coverImage": "assets/stories/reading-story-2/cover/cover.webp",
+  "isAvailable": true,
+  "ageRange": "3-6",
+  "duration": 4,
+  "description": "A spelling challenge adventure where children spell words letter by letter.",
+  "localizedDescription": {
+    "en": "A spelling challenge adventure where children spell words letter by letter.",
+    "pl": "Przygoda z wyzwaniem literowania, gdzie dzieci literują słowa litera po literze.",
+    "es": "Una aventura de deletreo donde los niños deletrean palabras letra por letra.",
+    "de": "Ein Buchstabierabenteuer, bei dem Kinder Wörter Buchstabe für Buchstabe buchstabieren.",
+    "fr": "Une aventure d'orthographe où les enfants épellent les mots lettre par lettre.",
+    "it": "Un'avventura di compitazione dove i bambini compitano le parole lettera per lettera.",
+    "pt": "Uma aventura de soletração onde as crianças soletram palavras letra por letra.",
+    "ja": "子どもたちが一文字ずつ言葉をつづるスペリングチャレンジ冒険。",
+    "ar": "مغامرة تهجئة حيث يتهجى الأطفال الكلمات حرفاً بحرف.",
+    "tr": "Çocukların kelimeleri harf harf hecelediği bir heceleme macerası.",
+    "nl": "Een spelavontuur waar kinderen woorden letter voor letter spellen.",
+    "da": "Et staveventyr hvor børn staver ord bogstav for bogstav.",
+    "la": "Aventura litterationis ubi pueri verba litteram per litteram scribunt.",
+    "zh": "一个拼写挑战冒险，孩子们逐字母拼写单词。"
+  },
+  "isPremium": false,
+  "author": "Freya Stories",
+  "tags": ["spelling", "learning", "interactive"],
+  "version": 1,
+  "checksum": "reading-story-2-checksum-v1",
+  "pages": [
+    {
+      "id": "reading-story-2-cover",
+      "pageNumber": 0,
+      "type": "cover",
+      "backgroundImage": "assets/stories/reading-story-2/cover/cover.webp",
+      "text": "Spelling Stars\n\nSpell the Word",
+      "interactionType": "none",
+      "localizedText": {
+        "4-6": {
+          "en": "Spelling Stars\n\nSpell the Word",
+          "pl": "Gwiazdy Literowania\n\nPrzeliteruj Słowo",
+          "es": "Estrellas del Deletreo\n\nDeletetrea la Palabra",
+          "de": "Buchstabiersterne\n\nBuchstabiere das Wort",
+          "fr": "Étoiles d'Orthographe\n\nÉpelle le Mot",
+          "it": "Stelle del Compitare\n\nCompita la Parola",
+          "pt": "Estrelas da Soletração\n\nSoletre a Palavra",
+          "ja": "スペリングスター\n\n言葉をつづろう",
+          "ar": "نجوم التهجئة\n\nتهجئة الكلمة",
+          "tr": "Heceleme Yıldızları\n\nKelimeyi Hecele",
+          "nl": "Spelsterren\n\nSpel het Woord",
+          "da": "Stavningsstjerner\n\nStav Ordet",
+          "la": "Stellae Litterationis\n\nVerbum Littera",
+          "zh": "拼写之星\n\n拼出单词"
+        }
+      }
+    },
+    {
+      "id": "reading-story-2-page-1",
+      "pageNumber": 1,
+      "type": "story",
+      "backgroundImage": "assets/stories/reading-story-2/page-1/background.webp",
+      "text": "The squirrel found a shiny acorn under the big tree.",
+      "interactionType": "reading_challenge",
+      "readingChallenge": {
+        "enabled": true,
+        "mode": "spell_word",
+        "promptText": "Can you spell this word?",
+        "allowSkip": true,
+        "targetWord": "TREE",
+        "distractorLetters": ["X", "Z", "Q"]
+      },
+      "localizedText": {
+        "4-6": {
+          "en": "The squirrel found a shiny acorn under the big tree.\n",
+          "pl": "Wiewiórka znalazła błyszczący żołądź pod dużym drzewem.\n",
+          "es": "La ardilla encontró una bellota brillante bajo el gran árbol.\n",
+          "de": "Das Eichhörnchen fand eine glänzende Eichel unter dem großen Baum.\n",
+          "fr": "L'écureuil a trouvé un gland brillant sous le grand arbre.\n",
+          "it": "Lo scoiattolo ha trovato una ghianda lucente sotto il grande albero.\n",
+          "pt": "O esquilo encontrou uma bolota brilhante sob a grande árvore.\n",
+          "ja": "リスは大きな木の下で光るどんぐりを見つけました。\n",
+          "ar": "وجد السنجاب بلوطة لامعة تحت الشجرة الكبيرة.\n",
+          "tr": "Sincap büyük ağacın altında parlak bir meşe palamudu buldu.\n",
+          "nl": "De eekhoorn vond een glimmende eikel onder de grote boom.\n",
+          "da": "Egernet fandt en skinnende agern under det store træ.\n",
+          "la": "Sciurus glandem splendidam sub arbore magna invenit.\n",
+          "zh": "松鼠在大树下找到了一颗闪亮的橡子。\n"
+        }
+      }
+    },
+    {
+      "id": "reading-story-2-page-2",
+      "pageNumber": 2,
+      "type": "story",
+      "backgroundImage": "assets/stories/reading-story-2/page-2/background.webp",
+      "text": "A fluffy rabbit hopped across the meadow.",
+      "interactionType": "reading_challenge",
+      "readingChallenge": {
+        "enabled": true,
+        "mode": "spell_word",
+        "promptText": "Spell this animal!",
+        "allowSkip": false,
+        "targetWord": "RABBIT",
+        "distractorLetters": ["X", "Z"]
+      },
+      "localizedText": {
+        "4-6": {
+          "en": "A fluffy rabbit hopped across the meadow.\n",
+          "pl": "Puszysty królik skakał przez łąkę.\n",
+          "es": "Un conejo esponjoso saltó por el prado.\n",
+          "de": "Ein flauschiges Kaninchen hüpfte über die Wiese.\n",
+          "fr": "Un lapin pelucheux a sauté à travers la prairie.\n",
+          "it": "Un coniglio soffice saltellava attraverso il prato.\n",
+          "pt": "Um coelho fofo pulou pelo prado.\n",
+          "ja": "ふわふわのうさぎが牧草地を跳ねていました。\n",
+          "ar": "قفز أرنب رقيق عبر المرج.\n",
+          "tr": "Tüylü bir tavşan çayırda zıpladı.\n",
+          "nl": "Een pluizig konijn hupte over de weide.\n",
+          "da": "En lodden kanin hoppede over engen.\n",
+          "la": "Cuniculus mollis per pratum saliebat.\n",
+          "zh": "一只毛茸茸的兔子跳过了草地。\n"
+        }
+      }
+    },
+    {
+      "id": "reading-story-2-page-3",
+      "pageNumber": 3,
+      "type": "story",
+      "backgroundImage": "assets/stories/reading-story-2/page-3/background.webp",
+      "text": "You spelled all the words! What a spelling star you are!",
+      "interactionType": "none",
+      "localizedText": {
+        "4-6": {
+          "en": "You spelled all the words! What a spelling star you are!\n",
+          "pl": "Przeliterowałeś wszystkie słowa! Jaka z ciebie gwiazda literowania!\n",
+          "es": "¡Deletreaste todas las palabras! ¡Qué estrella del deletreo eres!\n",
+          "de": "Du hast alle Wörter buchstabiert! Was für ein Buchstabierstar du bist!\n",
+          "fr": "Tu as épelé tous les mots ! Quelle étoile d'orthographe tu es !\n",
+          "it": "Hai compitato tutte le parole! Che stella del compitare sei!\n",
+          "pt": "Você soletrou todas as palavras! Que estrela da soletração você é!\n",
+          "ja": "すべての言葉をつづりました！なんてスペリングスターでしょう！\n",
+          "ar": "لقد تهجيت كل الكلمات! يا لك من نجم التهجئة!\n",
+          "tr": "Tüm kelimeleri heceledin! Ne kadar harika bir heceleme yıldızısın!\n",
+          "nl": "Je hebt alle woorden gespeld! Wat een spelster ben jij!\n",
+          "da": "Du stavede alle ordene! Sikke en stavestjerne du er!\n",
+          "la": "Omnia verba litterasti! Quam stellae litterationis es!\n",
+          "zh": "你拼写了所有的单词！你真是一颗拼写之星！\n"
+        }
+      }
+    }
+  ]
+}

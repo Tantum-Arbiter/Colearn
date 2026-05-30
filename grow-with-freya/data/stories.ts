@@ -55,7 +55,7 @@ export const MOCK_STORIES: Story[] = [
         pageNumber: 0,
         backgroundImage: require('../assets/stories/snuggle-little-wombat/cover/cover-large.webp'),
         text: 'Snuggle Little Wombat',
-        localizedText: {
+        localizedText: { '4-6': {
           en: 'Snuggle Little Wombat',
           pl: 'Przytul Małego Wombata',
           es: 'Acurruca al Pequeño Wombat',
@@ -70,14 +70,14 @@ export const MOCK_STORIES: Story[] = [
           da: 'Knus Lille Wombat',
           la: 'Amplexus Parvus Wombatus',
           zh: '拥抱小袋熊',
-        },
+        } },
       },
       {
         id: 'snuggle-little-wombat-1',
         pageNumber: 1,
         backgroundImage: require('../assets/stories/snuggle-little-wombat/page-1/background.webp'),
         text: 'Wombat yawned, the sky turned blue, time to rest, the stars peek through.',
-        localizedText: {
+        localizedText: { '4-6': {
           en: 'Wombat yawned, the sky turned blue, time to rest, the stars peek through.',
           pl: 'Wombat ziewnął, niebo zrobiło się niebieskie, czas na odpoczynek, gwiazdy zaczęły błyszczeć.',
           es: 'Wombat bostezó, el cielo se volvió azul, hora de descansar, las estrellas asoman.',
@@ -92,14 +92,14 @@ export const MOCK_STORIES: Story[] = [
           da: 'Wombat gæbede, himlen blev blå, tid til at hvile, stjernerne kigger gennem.',
           la: 'Wombatus oscitavit, caelum caeruleum factum est, tempus quiescendi, stellae prospiciunt.',
           zh: '袋熊打了个哈欠，天空变蓝了，是休息的时候了，星星从中窥视。',
-        },
+        } },
       },
       {
         id: 'snuggle-little-wombat-2',
         pageNumber: 2,
         backgroundImage: require('../assets/stories/snuggle-little-wombat/page-2/background.webp'),
         text: 'Wombat stared, the night felt new, time to dream, like we must do.',
-        localizedText: {
+        localizedText: { '4-6': {
           en: 'Wombat stared, the night felt new, time to dream, like we must do.',
           pl: 'Wombat patrzył, noc wydawała się nowa, czas na marzenia, tak jak my musimy.',
           es: 'Wombat miró, la noche se sentía nueva, hora de soñar, como debemos hacer.',
@@ -114,7 +114,7 @@ export const MOCK_STORIES: Story[] = [
           da: 'Wombat stirrede, natten føltes ny, tid til at drømme, som vi skal gøre.',
           la: 'Wombatus intuitus est, nox nova sensit, tempus somniandi, sicut facere debemus.',
           zh: '袋熊凝视着，夜晚感觉很新，是梦想的时候了，就像我们必须做的那样。',
-        },
+        } },
         interactionType: 'music_challenge',
         musicChallenge: {
           enabled: true,
@@ -135,7 +135,7 @@ export const MOCK_STORIES: Story[] = [
         pageNumber: 3,
         backgroundImage: require('../assets/stories/snuggle-little-wombat/page-3/background.webp'),
         text: 'Wombat walked, the stars shined through, looking for a nest, that\'s warm and new.',
-        localizedText: {
+        localizedText: { '4-6': {
           en: 'Wombat walked, the stars shined through, looking for a nest, that\'s warm and new.',
           pl: 'Wombat szedł, gwiazdy świeciły, szukając gniazda, ciepłego i nowego.',
           es: 'Wombat caminó, las estrellas brillaban, buscando un nido, cálido y nuevo.',
@@ -150,14 +150,14 @@ export const MOCK_STORIES: Story[] = [
           da: 'Wombat gik, stjernerne skinnede, ledte efter et rede, der er varmt og nyt.',
           la: 'Wombatus ambulavit, stellae lucebant, nidum quaerens, qui calidus et novus est.',
           zh: '袋熊走着，星星闪闪发光，寻找一个温暖而新的巢穴。',
-        },
+        } },
       },
       {
         id: 'snuggle-little-wombat-4',
         pageNumber: 4,
         backgroundImage: require('../assets/stories/snuggle-little-wombat/page-4/background.webp'),
         text: 'Wombat smiled, a burrow in view, time to rest, and dream things new.',
-        localizedText: {
+        localizedText: { '4-6': {
           en: 'Wombat smiled, a burrow in view, time to rest, and dream things new.',
           pl: 'Wombat uśmiechnął się, nora w zasięgu wzroku, czas na odpoczynek i nowe marzenia.',
           es: 'Wombat sonrió, una madriguera a la vista, hora de descansar y soñar cosas nuevas.',
@@ -172,7 +172,7 @@ export const MOCK_STORIES: Story[] = [
           da: 'Wombat smilede, et hul i sigte, tid til at hvile og drømme om nye ting.',
           la: 'Wombatus risit, fovea in conspectu, tempus quiescendi et somniandi rerum novarum.',
           zh: '袋熊微笑了，一个洞穴在视野中，是休息和梦想新事物的时候了。',
-        },
+        } },
         interactionType: 'music_challenge',
         musicChallenge: {
           enabled: true,
@@ -193,7 +193,7 @@ export const MOCK_STORIES: Story[] = [
         pageNumber: 5,
         backgroundImage: require('../assets/stories/snuggle-little-wombat/page-5/background.webp'),
         text: 'Wombat stopped, where soft roots grew, inside the burrow, the quietness grew.',
-        localizedText: {
+        localizedText: { '4-6': {
           en: 'Wombat stopped, where soft roots grew, inside the burrow, the quietness grew.',
           pl: 'Wombat zatrzymał się, gdzie rosły miękkie korzenie, wewnątrz nory cisza rosła.',
           es: 'Wombat se detuvo, donde crecían raíces suaves, dentro de la madriguera, la quietud crecía.',
@@ -208,14 +208,14 @@ export const MOCK_STORIES: Story[] = [
           da: 'Wombat stoppede, hvor bløde rødder voksede, inde i hullet, stilheden voksede.',
           la: 'Wombatus stetit, ubi radices molles creverunt, in fovea, silentium crevit.',
           zh: '袋熊停了下来，柔软的根生长的地方，在洞穴里，寂静增长了。',
-        },
+        } },
       },
       {
         id: 'snuggle-little-wombat-6',
         pageNumber: 6,
         backgroundImage: require('../assets/stories/snuggle-little-wombat/page-6/background.webp'),
         text: 'Wombat nests, the night time grew, sleeping in a bed, where dreams come true.',
-        localizedText: {
+        localizedText: { '4-6': {
           en: 'Wombat nests, the night time grew, sleeping in a bed, where dreams come true.',
           pl: 'Wombat zagnieździł się, noc nadeszła, śpiąc w łóżeczku, gdzie marzenia się spełniają.',
           es: 'Wombat anida, la noche creció, durmiendo en una cama, donde los sueños se hacen realidad.',
@@ -230,14 +230,14 @@ export const MOCK_STORIES: Story[] = [
           da: 'Wombat bygger rede, natten voksede, sover i en seng, hvor drømme bliver virkelighed.',
           la: 'Wombatus nidificat, nox crevit, in lecto dormiens, ubi somnia vera fiunt.',
           zh: '袋熊筑巢，夜晚增长，在床上睡觉，梦想成真的地方。',
-        },
+        } },
       },
       {
         id: 'snuggle-little-wombat-7',
         pageNumber: 7,
         backgroundImage: require('../assets/stories/snuggle-little-wombat/page-7/background.webp'),
         text: 'Wombat dreamt, with gentle cheer, hugging berries he held so dear.',
-        localizedText: {
+        localizedText: { '4-6': {
           en: 'Wombat dreamt, with gentle cheer, hugging berries he held so dear.',
           pl: 'Wombat śnił, z łagodną radością, przytulając jagody, które tak kochał.',
           es: 'Wombat soñó, con suave alegría, abrazando bayas que tanto quería.',
@@ -252,14 +252,14 @@ export const MOCK_STORIES: Story[] = [
           da: 'Wombat drømte, med blid glæde, omfavnende bær han holdt så dyrt.',
           la: 'Wombatus somniavit, cum gaudio miti, bacas amplexans quas tam carus tenuit.',
           zh: '袋熊梦想，带着温柔的欢乐，拥抱他珍视的浆果。',
-        },
+        } },
       },
       {
         id: 'snuggle-little-wombat-8',
         pageNumber: 8,
         backgroundImage: require('../assets/stories/snuggle-little-wombat/page-8/background.webp'),
         text: 'Wombat sleeps, in quiet delight, your turn - turn off the light... goodnight!',
-        localizedText: {
+        localizedText: { '4-6': {
           en: 'Wombat sleeps, in quiet delight, your turn - turn off the light... goodnight!',
           pl: 'Wombat śpi, w cichej radości, twoja kolej - zgaś światło... dobranoc!',
           es: 'Wombat duerme, en tranquila alegría, tu turno - apaga la luz... ¡buenas noches!',
@@ -274,7 +274,7 @@ export const MOCK_STORIES: Story[] = [
           da: 'Wombat sover, i stille glæde, din tur - sluk lyset... godnat!',
           la: 'Wombatus dormit, in gaudio tranquillo, tuus est modus - lucernam exstingue... bene nocte!',
           zh: '袋熊睡觉，在安静的喜悦中，轮到你了-关掉灯...晚安！',
-        },
+        } },
       }
     ]
   } as Story
@@ -331,7 +331,7 @@ export const JIGSAW_STORIES: Story[] = [
         pageNumber: 0,
         backgroundImage: require('../assets/stories/snuggle-little-wombat/cover/cover-large.webp'),
         text: 'Wombat Jigsaw Adventure',
-        localizedText: {
+        localizedText: { '4-6': {
           en: 'Wombat Jigsaw Adventure',
           pl: 'Przygoda z Puzzlami Wombata',
           es: 'Aventura Rompecabezas de Wombat',
@@ -346,14 +346,14 @@ export const JIGSAW_STORIES: Story[] = [
           da: 'Wombat Puslespil Eventyr',
           la: 'Wombatus Aenigma Aventura',
           zh: '袋熊拼图冒险',
-        },
+        } },
       },
       {
         id: 'wombat-jigsaw-1',
         pageNumber: 1,
         backgroundImage: require('../assets/stories/snuggle-little-wombat/page-1/background.webp'),
         text: 'Wombat\'s picture got all mixed up! Can you put it back together?',
-        localizedText: {
+        localizedText: { '4-6': {
           en: 'Wombat\'s picture got all mixed up! Can you put it back together?',
           pl: 'Obrazek Wombata się pomieszał! Czy potrafisz go złożyć?',
           es: '¡La imagen de Wombat se mezcló! ¿Puedes volver a armarla?',
@@ -368,7 +368,7 @@ export const JIGSAW_STORIES: Story[] = [
           da: 'Wombats billede er blandet! Kan du sætte det sammen igen?',
           la: 'Imago Wombati mixta est! Potesne eam recomponere?',
           zh: '袋熊的图片混乱了！你能把它拼回去吗？',
-        },
+        } },
         interactionType: 'jigsaw_puzzle',
         jigsawPuzzle: {
           enabled: true,
@@ -382,7 +382,7 @@ export const JIGSAW_STORIES: Story[] = [
         pageNumber: 2,
         backgroundImage: require('../assets/stories/snuggle-little-wombat/page-3/background.webp'),
         text: 'This one is a bit trickier! Can you solve the bigger puzzle?',
-        localizedText: {
+        localizedText: { '4-6': {
           en: 'This one is a bit trickier! Can you solve the bigger puzzle?',
           pl: 'Ten jest trochę trudniejszy! Czy potrafisz rozwiązać większy puzzle?',
           es: '¡Este es un poco más difícil! ¿Puedes resolver el puzzle más grande?',
@@ -397,7 +397,7 @@ export const JIGSAW_STORIES: Story[] = [
           da: 'Denne er lidt sværere! Kan du løse det større puslespil?',
           la: 'Hoc paulo difficilius est! Potesne maius aenigma solvere?',
           zh: '这个有点难！你能解开更大的拼图吗？',
-        },
+        } },
         interactionType: 'jigsaw_puzzle',
         jigsawPuzzle: {
           enabled: true,
@@ -411,7 +411,7 @@ export const JIGSAW_STORIES: Story[] = [
         pageNumber: 3,
         backgroundImage: require('../assets/stories/snuggle-little-wombat/page-6/background.webp'),
         text: 'The ultimate challenge! Can you master the hardest puzzle?',
-        localizedText: {
+        localizedText: { '4-6': {
           en: 'The ultimate challenge! Can you master the hardest puzzle?',
           pl: 'Ostateczne wyzwanie! Czy opanujesz najtrudniejszy puzzle?',
           es: '¡El desafío definitivo! ¿Puedes dominar el puzzle más difícil?',
@@ -426,7 +426,7 @@ export const JIGSAW_STORIES: Story[] = [
           da: 'Den ultimative udfordring! Kan du mestre det sværeste puslespil?',
           la: 'Provocatio ultima! Potesne difficillimum aenigma superare?',
           zh: '终极挑战！你能掌握最难的拼图吗？',
-        },
+        } },
         interactionType: 'jigsaw_puzzle',
         jigsawPuzzle: {
           enabled: true,

@@ -182,6 +182,7 @@ public class StoryService {
                     content.append(page.getId());
                     content.append(page.getText());
                     content.append(serializeLocalizedText(page.getLocalizedText()));
+                    content.append(serializeAgeGroupedText(page.getAgeGroupText()));
                     content.append(page.getPageNumber());
                 });
             }
@@ -210,6 +211,19 @@ public class StoryService {
         if (localizedText.getPl() != null) sb.append("pl:").append(localizedText.getPl()).append("|");
         if (localizedText.getEs() != null) sb.append("es:").append(localizedText.getEs()).append("|");
         if (localizedText.getDe() != null) sb.append("de:").append(localizedText.getDe()).append("|");
+        return sb.toString();
+    }
+
+    private String serializeAgeGroupedText(java.util.Map<String, com.app.model.LocalizedText> ageGroupedText) {
+        if (ageGroupedText == null) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        ageGroupedText.forEach((ageGroup, lt) -> {
+            sb.append(ageGroup).append(":{");
+            sb.append(serializeLocalizedText(lt));
+            sb.append("}|");
+        });
         return sb.toString();
     }
 }

@@ -19,6 +19,22 @@ export interface LocalizedText {
   zh?: string;
 }
 
+// Age groups for age-appropriate text variations
+export type AgeGroup = '0-2' | '2-4' | '4-6';
+
+// Age-group-specific localized text (maps age group → localized text)
+export type AgeGroupText = Partial<Record<AgeGroup, LocalizedText>>;
+
+/**
+ * Resolve the age group for a child based on age in months.
+ * Returns the matching age group key for ageGroupText lookup.
+ */
+export function resolveAgeGroup(ageInMonths: number): AgeGroup {
+  if (ageInMonths < 24) return '0-2';
+  if (ageInMonths < 48) return '2-4';
+  return '4-6';
+}
+
 // Interactive element types for story pages
 export type InteractiveElementType = 'reveal' | 'toggle' | 'drag';
 
@@ -75,8 +91,25 @@ export interface JigsawPuzzle {
   allowSkip: boolean;
 }
 
+// Reading challenge modes
+export type ReadingChallengeMode = 'fill_in_blank' | 'spell_word';
+
+// Reading challenge configuration for a story page
+export interface ReadingChallenge {
+  enabled: boolean;
+  mode: ReadingChallengeMode;
+  promptText: string; // Narrative prompt, e.g., "Can you fill in the missing words?"
+  allowSkip: boolean;
+  /** For fill_in_blank: zero-based indices of words in page text to blank out (user taps words in order) */
+  blankWordIndices?: number[];
+  /** For spell_word: the target word the user must spell by selecting letters */
+  targetWord?: string;
+  /** Optional distractor letters added to the letter pool (spell_word mode only) */
+  distractorLetters?: string[];
+}
+
 // Page interaction types (extends beyond simple interactive elements)
-export type PageInteractionType = 'none' | 'interactive_state_change' | 'music_challenge' | 'jigsaw_puzzle';
+export type PageInteractionType = 'none' | 'interactive_state_change' | 'music_challenge' | 'jigsaw_puzzle' | 'reading_challenge';
 
 export interface StoryPage {
   id: string;
@@ -85,7 +118,7 @@ export interface StoryPage {
   backgroundImage?: string; // Background image for the page
   characterImage?: string; // Character/foreground image
   text: string; // Story text for this page
-  localizedText?: LocalizedText; // Translated page text
+  localizedText?: AgeGroupText; // Age-grouped localized text: {"4-6": {"en": "...", ...}, "0-2": {"en": "...", ...}}
   interactiveElements?: InteractiveElement[]; // Optional interactive props for this page
 
   // Music challenge support
@@ -94,6 +127,9 @@ export interface StoryPage {
 
   // Jigsaw puzzle support
   jigsawPuzzle?: JigsawPuzzle; // Present when interactionType === 'jigsaw_puzzle'
+
+  // Reading challenge support
+  readingChallenge?: ReadingChallenge; // Present when interactionType === 'reading_challenge'
 }
 
 export interface Story {
@@ -148,23 +184,37 @@ export interface CatalogEntry {
 }
 
 /**
- * Get localized text with fallback to English
+ * Get localized text with fallback to English.
+ * When ageGroupText and ageGroup are provided, prioritises age-appropriate text.
+ *
+ * Resolution order:
+ *  1. ageGroupText[ageGroup][language]
+ *  2. ageGroupText[ageGroup].en
+ *  3. localized[language]
+ *  4. localized.en
+ *  5. fallback
  */
 export function getLocalizedText(
   localized: LocalizedText | undefined,
   fallback: string,
-  language?: SupportedLanguage
+  language?: SupportedLanguage,
+  ageGroupText?: AgeGroupText,
+  ageGroup?: AgeGroup,
 ): string {
+  // Try age-group-specific text first
+  if (ageGroupText && ageGroup) {
+    const ageLocalized = ageGroupText[ageGroup];
+    if (ageLocalized) {
+      const ageResult = language ? (ageLocalized[language] || ageLocalized.en) : ageLocalized.en;
+      if (ageResult) return ageResult;
+    }
+  }
+
+  // Fall back to standard localized text
   if (!localized) return fallback;
   if (!language) return localized.en || fallback;
 
   const result = localized[language] || localized.en || fallback;
-
-  // Debug: Log if we're falling back to English when a different language was requested
-  if (language && language !== 'en' && localized[language] === undefined && localized.en) {
-    // Silently fall back to English - this is expected behavior
-  }
-
   return result;
 }
 
