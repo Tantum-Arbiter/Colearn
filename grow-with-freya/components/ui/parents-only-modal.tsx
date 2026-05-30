@@ -48,9 +48,31 @@ export function ParentsOnlyModal({
   const inputRef = useRef<TextInput>(null);
   const { width, height } = useWindowDimensions();
   const keyboardOffset = useRef(new Animated.Value(0)).current;
+  const entranceOpacity = useRef(new Animated.Value(0)).current;
+  const entranceTranslateY = useRef(new Animated.Value(30)).current;
 
   // Detect phone in landscape (small height + landscape orientation)
   const isPhoneLandscape = height < 500 && width > height;
+
+  // Entrance animation — fade in backdrop + slide up content
+  useEffect(() => {
+    if (visible) {
+      entranceOpacity.setValue(0);
+      entranceTranslateY.setValue(30);
+      Animated.parallel([
+        Animated.timing(entranceOpacity, {
+          toValue: 1,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+        Animated.timing(entranceTranslateY, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible, entranceOpacity, entranceTranslateY]);
 
   // Smooth keyboard animation using Animated API
   useEffect(() => {
@@ -112,13 +134,13 @@ export function ParentsOnlyModal({
   }
 
   return (
-    <View style={[styles.absoluteContainer, fullScreenStyle]}>
+    <Animated.View style={[styles.absoluteContainer, fullScreenStyle, { opacity: entranceOpacity }]}>
       <Pressable style={styles.backdrop} onPress={onClose} />
       <View style={[styles.modalOverlay, fullScreenStyle]} pointerEvents="box-none">
         <Animated.View style={[
           styles.content,
           isPhoneLandscape && styles.contentLandscape,
-          { transform: [{ translateY: keyboardOffset }] },
+          { transform: [{ translateY: Animated.add(keyboardOffset, entranceTranslateY) }] },
         ]}>
           <Pressable style={styles.closeButton} onPress={onClose}>
             <Text style={styles.closeButtonText}>✕</Text>
@@ -254,7 +276,7 @@ export function ParentsOnlyModal({
           )}
         </Animated.View>
       </View>
-    </View>
+    </Animated.View>
   );
 }
 

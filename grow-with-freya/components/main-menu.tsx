@@ -67,6 +67,26 @@ const MODE_CARD_IMAGES = {
   music: require('../assets/images/menu-icons/stories-strip.webp'),
 } as const;
 
+// Sub-menu item definitions for Instruments and Learning menus
+interface SubMenuItem {
+  id: string;
+  labelKey: string;
+  image: ReturnType<typeof require>;
+}
+
+const INSTRUMENT_ITEMS: SubMenuItem[] = [
+  { id: 'practise', labelKey: 'menu.practise', image: require('../assets/images/menu-icons/practise-strip.webp') },
+  { id: 'freeplay', labelKey: 'menu.freeplay', image: require('../assets/images/menu-icons/instruments-button.webp') },
+];
+
+const LEARNING_ITEMS: SubMenuItem[] = [
+  { id: 'spelling', labelKey: 'menu.spelling', image: require('../assets/images/menu-icons/spelling-button.webp') },
+  { id: 'numbers', labelKey: 'menu.numbers', image: require('../assets/images/menu-icons/numbers-button.webp') },
+  { id: 'feelings', labelKey: 'menu.feelings', image: require('../assets/images/menu-icons/feelings-button.webp') },
+];
+
+type SubMenuType = 'stories' | 'instruments' | 'learning' | null;
+
 // Module-level flag to skip the container fade-in on the next mount.
 // Set by suppressNextContainerFadeIn() before a loading→app transition so the menu
 // doesn't flash from opacity 0→1 when it was already visible behind the loading overlay.
@@ -83,11 +103,11 @@ interface MainMenuProps {
   disableTutorial?: boolean; // When true, don't show the tutorial (used during login transition)
   /** Extra delay (ms) before carousel buttons slide in -used for loading screen reveal */
   entranceDelay?: number;
-  /** When true, immediately show mode cards (Interactive/Musical/Jigsaw) instead of carousel */
-  returnToModeCards?: boolean;
+  /** When set, immediately show the specified sub-menu instead of the main carousel */
+  returnToSubMenu?: SubMenuType;
 }
 
-function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entranceDelay = 0, returnToModeCards = false }: MainMenuProps) {
+function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entranceDelay = 0, returnToSubMenu = null }: MainMenuProps) {
   const insets = useSafeAreaInsets();
   const { scaledButtonSize, scaledFontSize } = useAccessibility();
 
@@ -144,14 +164,14 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
 
   const { t } = useTranslation();
 
-  // ── Story mode cards (shown in-place of carousel when Stories is tapped) ──
-  const [showModeCards, setShowModeCards] = useState(false);
+  // ── Generic sub-menu system (replaces carousel with sub-items when a menu button is tapped) ──
+  const [activeSubMenu, setActiveSubMenu] = useState<SubMenuType>(null);
   const carouselOpacity = useSharedValue(1);
   const carouselSlideY = useSharedValue(0);
-  const modeCardsOpacity = useSharedValue(0);
-  const SLIDE_DISTANCE = Math.round(getScreenDimensions().height * 0.45); // enough to fully exit the visible area
+  const subMenuOpacity = useSharedValue(0);
+  const SLIDE_DISTANCE = Math.round(getScreenDimensions().height * 0.45);
   const SLIDE_DURATION = 500;
-  const modeCardsSlideY = useSharedValue(SLIDE_DISTANCE); // starts below
+  const subMenuSlideY = useSharedValue(SLIDE_DISTANCE);
   const slideEasingOut = ReanimatedEasing.out(ReanimatedEasing.cubic);
   const slideEasingIn = ReanimatedEasing.in(ReanimatedEasing.cubic);
 
@@ -159,61 +179,75 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
     opacity: carouselOpacity.value,
     transform: [{ translateY: carouselSlideY.value }],
   }));
-  const modeCardsFadeStyle = useAnimatedStyle(() => ({
-    opacity: modeCardsOpacity.value,
-    transform: [{ translateY: modeCardsSlideY.value }],
+  const subMenuFadeStyle = useAnimatedStyle(() => ({
+    opacity: subMenuOpacity.value,
+    transform: [{ translateY: subMenuSlideY.value }],
   }));
 
-  // When returning from stories, immediately show mode cards (no animation)
+  // When returning from stories, immediately show story mode cards (no animation)
   useEffect(() => {
-    if (returnToModeCards && isActive) {
-      setShowModeCards(true);
+    if (returnToSubMenu && isActive) {
+      setActiveSubMenu(returnToSubMenu);
       carouselOpacity.value = 0;
       carouselSlideY.value = -SLIDE_DISTANCE;
-      modeCardsOpacity.value = 1;
-      modeCardsSlideY.value = 0;
+      subMenuOpacity.value = 1;
+      subMenuSlideY.value = 0;
     }
-  }, [returnToModeCards, isActive]);
+  }, [returnToSubMenu, isActive]);
 
-  const handleShowModeCards = useCallback(() => {
+  const handleShowSubMenu = useCallback((menu: SubMenuType) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setShowModeCards(true);
+    setActiveSubMenu(menu);
     // 1) Carousel slides up and fades out
     carouselOpacity.value = withTiming(0, { duration: SLIDE_DURATION, easing: slideEasingIn });
     carouselSlideY.value = withTiming(-SLIDE_DISTANCE, { duration: SLIDE_DURATION, easing: slideEasingIn });
-    // 2) After carousel exits, mode cards slide up from below
-    modeCardsSlideY.value = SLIDE_DISTANCE; // reset start position
-    modeCardsOpacity.value = 0;
-    modeCardsOpacity.value = withDelay(SLIDE_DURATION, withTiming(1, { duration: SLIDE_DURATION, easing: slideEasingOut }));
-    modeCardsSlideY.value = withDelay(SLIDE_DURATION, withTiming(0, { duration: SLIDE_DURATION, easing: slideEasingOut }));
-  }, [carouselOpacity, carouselSlideY, modeCardsOpacity, modeCardsSlideY]);
+    // 2) After carousel exits, sub-menu slides up from below
+    subMenuSlideY.value = SLIDE_DISTANCE;
+    subMenuOpacity.value = 0;
+    subMenuOpacity.value = withDelay(SLIDE_DURATION, withTiming(1, { duration: SLIDE_DURATION, easing: slideEasingOut }));
+    subMenuSlideY.value = withDelay(SLIDE_DURATION, withTiming(0, { duration: SLIDE_DURATION, easing: slideEasingOut }));
+  }, [carouselOpacity, carouselSlideY, subMenuOpacity, subMenuSlideY]);
 
-  const handleHideModeCards = useCallback(() => {
+  const handleHideSubMenu = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    // 1) Mode cards slide down and fade out
-    modeCardsOpacity.value = withTiming(0, { duration: SLIDE_DURATION, easing: slideEasingIn });
-    modeCardsSlideY.value = withTiming(SLIDE_DISTANCE, { duration: SLIDE_DURATION, easing: slideEasingIn });
-    // 2) After mode cards exit, carousel slides back down from above
-    carouselSlideY.value = -SLIDE_DISTANCE; // reset start position
+    // 1) Sub-menu slides down and fades out
+    subMenuOpacity.value = withTiming(0, { duration: SLIDE_DURATION, easing: slideEasingIn });
+    subMenuSlideY.value = withTiming(SLIDE_DISTANCE, { duration: SLIDE_DURATION, easing: slideEasingIn });
+    // 2) After sub-menu exits, carousel slides back down from above
+    carouselSlideY.value = -SLIDE_DISTANCE;
     carouselOpacity.value = 0;
     carouselOpacity.value = withDelay(SLIDE_DURATION, withTiming(1, { duration: SLIDE_DURATION, easing: slideEasingOut }));
     carouselSlideY.value = withDelay(SLIDE_DURATION, withTiming(0, { duration: SLIDE_DURATION, easing: slideEasingOut }));
-    setTimeout(() => setShowModeCards(false), SLIDE_DURATION * 2 + 50);
-  }, [carouselOpacity, carouselSlideY, modeCardsOpacity, modeCardsSlideY]);
+    setTimeout(() => setActiveSubMenu(null), SLIDE_DURATION * 2 + 50);
+  }, [carouselOpacity, carouselSlideY, subMenuOpacity, subMenuSlideY]);
 
   const handleModeCardSelect = useCallback((mode: StoryMode) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     unlockSlideY.value = withTiming(100, { duration: 300, easing: ReanimatedEasing.in(ReanimatedEasing.ease) });
     onNavigate(`stories-${mode}`);
-    // Reset mode cards state after navigating so they're hidden when coming back
+    // Reset sub-menu state after navigating
     setTimeout(() => {
-      setShowModeCards(false);
+      setActiveSubMenu(null);
       carouselOpacity.value = 1;
       carouselSlideY.value = 0;
-      modeCardsOpacity.value = 0;
-      modeCardsSlideY.value = SLIDE_DISTANCE;
+      subMenuOpacity.value = 0;
+      subMenuSlideY.value = SLIDE_DISTANCE;
     }, 500);
-  }, [onNavigate, unlockSlideY, carouselOpacity, carouselSlideY, modeCardsOpacity, modeCardsSlideY]);
+  }, [onNavigate, unlockSlideY, carouselOpacity, carouselSlideY, subMenuOpacity, subMenuSlideY]);
+
+  const handleSubMenuItemSelect = useCallback((destination: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    unlockSlideY.value = withTiming(100, { duration: 300, easing: ReanimatedEasing.in(ReanimatedEasing.ease) });
+    onNavigate(destination);
+    // Reset sub-menu state after navigating
+    setTimeout(() => {
+      setActiveSubMenu(null);
+      carouselOpacity.value = 1;
+      carouselSlideY.value = 0;
+      subMenuOpacity.value = 0;
+      subMenuSlideY.value = SLIDE_DISTANCE;
+    }, 500);
+  }, [onNavigate, unlockSlideY, carouselOpacity, carouselSlideY, subMenuOpacity, subMenuSlideY]);
 
   // Block navigation while the main menu tutorial is pending (first-time sign-in).
   // This prevents the user tapping a button before the tutorial overlay mounts.
@@ -228,15 +262,15 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
 
   const guardedOnNavigate = useCallback((destination: string) => {
     if (isTutorialPendingRef.current) return; // Block navigation until tutorial completes/skips
-    // Intercept Stories button - show mode cards instead of navigating
-    if (destination === 'stories') {
-      handleShowModeCards();
+    // Intercept buttons that have sub-menus
+    if (destination === 'stories' || destination === 'instruments' || destination === 'learning') {
+      handleShowSubMenu(destination as SubMenuType);
       return;
     }
     // Slide unlock button off-screen before page transition
     unlockSlideY.value = withTiming(100, { duration: 300, easing: ReanimatedEasing.in(ReanimatedEasing.ease) });
     onNavigate(destination);
-  }, [onNavigate, unlockSlideY, handleShowModeCards]);
+  }, [onNavigate, unlockSlideY, handleShowSubMenu]);
 
   const handleTutorialEnd = useCallback(() => {
     setTutorialFinished(true);
@@ -295,23 +329,23 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
 
   // Tutorial target refs - using refs that get populated when buttons render
   const storiesButtonRef = useRef<View>(null);
-  const practiseButtonRef = useRef<View>(null);
-  const freeplayButtonRef = useRef<View>(null);
+  const instrumentsButtonRef = useRef<View>(null);
+  const learningButtonRef = useRef<View>(null);
   const musicControlRef = useRef<View>(null);
   const settingsButtonRef = useRef<View>(null);
 
   // Per-button refs for the carousel strip buttons (keyed by menu item id)
   const carouselButtonRefs = useMemo(() => ({
     stories: storiesButtonRef,
-    practise: practiseButtonRef,
-    freeplay: freeplayButtonRef,
+    instruments: instrumentsButtonRef,
+    learning: learningButtonRef,
   }), []);
 
   // Build tutorial target refs map - maps step IDs to refs
   const tutorialTargetRefs = useMemo(() => ({
     'stories_button': storiesButtonRef,
-    'practise_button': practiseButtonRef,
-    'freeplay_button': freeplayButtonRef,
+    'instruments_button': instrumentsButtonRef,
+    'learning_button': learningButtonRef,
     'settings_button': settingsButtonRef,
     'sound_control': musicControlRef,
   }), []);
@@ -505,8 +539,8 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
 
 
       <View style={legacyStyles.menuContainer}>
-        {/* Menu carousel (fades out when mode cards shown) */}
-        <Animated.View style={[{ width: '100%', alignItems: 'center' }, carouselFadeStyle]} pointerEvents={showModeCards ? 'none' : 'auto'}>
+        {/* Menu carousel (fades out when sub-menu shown) */}
+        <Animated.View style={[{ width: '100%', alignItems: 'center' }, carouselFadeStyle]} pointerEvents={activeSubMenu ? 'none' : 'auto'}>
           <MenuCarousel
             onNavigate={guardedOnNavigate}
             buttonRefs={carouselButtonRefs}
@@ -515,13 +549,12 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
           />
         </Animated.View>
 
-        {/* Story mode cards -always mounted so images stay decoded in cache;
-             visibility controlled purely by the animated opacity + translateY. */}
+        {/* Sub-menu overlay — renders story mode cards, instrument buttons, or learning buttons */}
         <Animated.View
-          style={[legacyStyles.modeCardsOverlay, modeCardsFadeStyle]}
-          pointerEvents={showModeCards ? 'auto' : 'none'}
+          style={[legacyStyles.modeCardsOverlay, subMenuFadeStyle]}
+          pointerEvents={activeSubMenu ? 'auto' : 'none'}
         >
-          {STORY_MODES.map((mode) => {
+          {activeSubMenu === 'stories' && STORY_MODES.map((mode) => {
             const modeImage = MODE_CARD_IMAGES[mode.id as keyof typeof MODE_CARD_IMAGES];
             return (
               <Pressable
@@ -549,8 +582,33 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
               </Pressable>
             );
           })}
+          {(activeSubMenu === 'instruments' ? INSTRUMENT_ITEMS : activeSubMenu === 'learning' ? LEARNING_ITEMS : []).map((item) => (
+            <Pressable
+              key={item.id}
+              onPress={() => handleSubMenuItemSelect(item.id)}
+              testID={`main-submenu-${item.id}`}
+              style={({ pressed }) => [
+                legacyStyles.modeStrip,
+                { width: modeStripW, height: modeStripH, borderRadius: modeStripH * 0.2 },
+                pressed && legacyStyles.modeStripPressed,
+              ]}
+            >
+              <Image
+                source={item.image}
+                style={[legacyStyles.modeStripImage, { borderRadius: modeStripH * 0.2 }]}
+                contentFit="cover"
+                cachePolicy="memory-disk"
+                recyclingKey={`submenu-${item.id}`}
+              />
+              <View style={legacyStyles.modeStripTextOverlay}>
+                <Text style={[legacyStyles.modeStripLabel, { fontSize: scaledFontSize(32) }]}>
+                  {t(item.labelKey)}
+                </Text>
+              </View>
+            </Pressable>
+          ))}
           {/* Plain back arrow below the buttons */}
-          <Pressable style={legacyStyles.modeBackArrow} onPress={handleHideModeCards} testID="mode-back-arrow">
+          <Pressable style={legacyStyles.modeBackArrow} onPress={handleHideSubMenu} testID="mode-back-arrow">
             <Ionicons name="arrow-back" size={scaledButtonSize(44)} color="#FFFFFF" style={{ textShadowColor: 'rgba(0,0,0,0.6)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 6 }} />
           </Pressable>
         </Animated.View>
@@ -605,7 +663,7 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
 
         {/* Story Modes Tutorial - explains Interactive, Musical & Jigsaw on first view */}
         {!disableTutorial && (
-          <StoryModeTipsOverlay isActive={showModeCards} />
+          <StoryModeTipsOverlay isActive={activeSubMenu === 'stories'} />
         )}
       </LinearGradient>
     </Animated.View>

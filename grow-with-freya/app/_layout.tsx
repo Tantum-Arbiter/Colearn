@@ -29,6 +29,7 @@ import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
 import { StoryBookReader } from '@/components/stories/story-book-reader';
 import { PractiseScreen } from '@/components/music/practise-screen';
 import { FreeplayScreen } from '@/components/music/freeplay-screen';
+import { LearningScreen } from '@/components/learning/learning-screen';
 import { ScreenTimeProvider } from '@/components/screen-time/screen-time-provider';
 import { Story } from '@/types/story';
 import { preloadCriticalImages, preloadSecondaryImages } from '@/services/image-preloader';
@@ -150,7 +151,7 @@ function AppContent() {
   const [hasStartedBackgroundMusic, setHasStartedBackgroundMusic] = useState(false);
 
   type AppView = 'splash' | 'onboarding' | 'login' | 'loading' | 'app' | 'main' | 'stories' | 'story-reader' | 'account';
-  type PageKey = 'main' | 'stories' | 'story-reader' | 'account' | 'practise' | 'freeplay';
+  type PageKey = 'main' | 'stories' | 'story-reader' | 'account' | 'practise' | 'freeplay' | 'spelling' | 'numbers' | 'feelings';
 
   const [currentView, setCurrentView] = useState<AppView>('splash');
   const [currentPage, setCurrentPage] = useState<PageKey>('main');
@@ -583,12 +584,12 @@ function AppContent() {
 
   // Track the selected story mode (interactive / music / classic) from main menu
   const [selectedStoryMode, setSelectedStoryMode] = useState<string | null>(null);
-  // When true, MainMenu should show mode cards (Interactive/Musical/Classic) instead of carousel
-  const [returnToModeCards, setReturnToModeCards] = useState(false);
+  // When set, MainMenu should show the specified sub-menu instead of the main carousel
+  const [returnToSubMenu, setReturnToSubMenu] = useState<'stories' | 'instruments' | 'learning' | null>(null);
 
-  const handleMainMenuNavigate = (destination: string) => {
-    // Clear returnToModeCards when navigating away from main menu
-    setReturnToModeCards(false);
+  const handleMainMenuNavigate = async (destination: string) => {
+    // Clear returnToSubMenu when navigating away from main menu
+    setReturnToSubMenu(null);
     // Handle stories-{mode} destinations from mode card selection
     if (destination.startsWith('stories-')) {
       const mode = destination.replace('stories-', '');
@@ -603,6 +604,9 @@ function AppContent() {
       'account': 'account',
       'practise': 'practise',
       'freeplay': 'freeplay',
+      'spelling': 'spelling',
+      'numbers': 'numbers',
+      'feelings': 'feelings',
     };
 
     const pageKey = destinationMap[destination];
@@ -621,10 +625,20 @@ function AppContent() {
   const handleBackToMainMenu = () => {
     // If we were on the stories page (came from a mode card), show mode cards on return
     if (currentPage === 'stories' && selectedStoryMode) {
-      setReturnToModeCards(true);
+      setReturnToSubMenu('stories');
     }
     setCurrentPage('main');
     setSelectedStory(null);
+  };
+
+  const handleBackToInstruments = () => {
+    setReturnToSubMenu('instruments');
+    setCurrentPage('main');
+  };
+
+  const handleBackToLearning = () => {
+    setReturnToSubMenu('learning');
+    setCurrentPage('main');
   };
 
   const handleBackToStories = () => {
@@ -660,6 +674,23 @@ function AppContent() {
     }
   };
 
+  // Learning screen activity selection - loads CMS story and opens in reader
+  const handleLearningActivitySelect = useCallback(async (storyId: string) => {
+    try {
+      const stories = await StoryLoader.getStories();
+      const story = stories.find(s => s.id === storyId);
+      if (story) {
+        setStoryBeingRead(story);
+        setShowStoryReader(true);
+        setCurrentView('story-reader');
+      } else {
+        log.warn(`Learning story ${storyId} not found in loaded stories`);
+      }
+    } catch (error) {
+      log.error(`Failed to load learning story ${storyId}:`, error);
+    }
+  }, []);
+
   const handleStorySelect = (story: Story) => {
     setSelectedStory(story);
     // Start thumbnail expansion animation first, then transition to story reader
@@ -668,18 +699,24 @@ function AppContent() {
 
   // Android hardware back button support
   // Story reader and account screen handle their own back button internally;
-  // this handles top-level page navigation (stories/practise/freeplay → main menu).
+  // this handles top-level page navigation with parent sub-menu awareness.
   // On the main menu, returns false to allow default Android behavior (exit/minimize app).
   const handleHardwareBack = useCallback(() => {
     // Story reader handles its own back button - don't interfere
     if (showStoryReader && storyBeingRead) return false;
 
-    // If on a sub-page, go back to main menu
+    // If on a sub-page, go back to the parent sub-menu or main menu
     if (currentPage !== 'main') {
       // Account screen handles its own internal back navigation
-      // Only handle the top-level back here for non-account pages
       if (currentPage === 'account') return false;
-      handleBackToMainMenu();
+      // Practise/freeplay go back to instruments sub-menu
+      if (currentPage === 'practise' || currentPage === 'freeplay') {
+        handleBackToInstruments();
+      } else if (currentPage === 'spelling' || currentPage === 'numbers' || currentPage === 'feelings') {
+        handleBackToLearning();
+      } else {
+        handleBackToMainMenu();
+      }
       return true;
     }
 
@@ -773,15 +810,18 @@ function AppContent() {
         <EnhancedPageTransition
           currentPage={currentPage as string}
           pages={{
-            main: <MainMenu onNavigate={handleMainMenuNavigate} isActive={currentPage === 'main'} returnToModeCards={returnToModeCards} />,
+            main: <MainMenu onNavigate={handleMainMenuNavigate} isActive={currentPage === 'main'} returnToSubMenu={returnToSubMenu} />,
             stories: <SimpleStoryScreen
               onStorySelect={handleStorySelect}
               selectedStory={selectedStory}
               onBack={handleBackToMainMenu}
               initialMode={selectedStoryMode}
             />,
-            practise: <PractiseScreen onBack={handleBackToMainMenu} />,
-            freeplay: <FreeplayScreen onBack={handleBackToMainMenu} />,
+            practise: <PractiseScreen onBack={handleBackToInstruments} />,
+            freeplay: <FreeplayScreen onBack={handleBackToInstruments} />,
+            spelling: <LearningScreen mode="spelling" onBack={handleBackToLearning} onActivitySelect={handleLearningActivitySelect} />,
+            numbers: <LearningScreen mode="numbers" onBack={handleBackToLearning} onActivitySelect={handleLearningActivitySelect} />,
+            feelings: <LearningScreen mode="feelings" onBack={handleBackToLearning} onActivitySelect={handleLearningActivitySelect} />,
             account: <AccountScreen onBack={handleAccountBack} isActive={currentPage === 'account'} />,
           }}
           duration={800}

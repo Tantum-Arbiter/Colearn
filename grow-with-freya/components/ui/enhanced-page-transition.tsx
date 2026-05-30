@@ -81,6 +81,8 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   const screenTimeTranslateY = useSharedValue(currentPage === 'screen_time' ? 0 : screenHeight);
   const practiseTranslateY = useSharedValue(currentPage === 'practise' ? 0 : screenHeight);
   const freeplayTranslateY = useSharedValue(currentPage === 'freeplay' ? 0 : screenHeight);
+  const spellingTranslateY = useSharedValue(currentPage === 'spelling' ? 0 : screenHeight);
+  const numbersTranslateY = useSharedValue(currentPage === 'numbers' ? 0 : screenHeight);
   const accountTranslateY = useSharedValue(currentPage === 'account' ? 0 : -screenHeight);
 
   // Map page keys to their animation values
@@ -92,6 +94,8 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
     'screen_time': screenTimeTranslateY,
     practise: practiseTranslateY,
     freeplay: freeplayTranslateY,
+    spelling: spellingTranslateY,
+    numbers: numbersTranslateY,
     account: accountTranslateY,
   };
 
@@ -117,6 +121,12 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
     }
     if (currentPage !== 'freeplay') {
       freeplayTranslateY.value = screenHeight;
+    }
+    if (currentPage !== 'spelling') {
+      spellingTranslateY.value = screenHeight;
+    }
+    if (currentPage !== 'numbers') {
+      numbersTranslateY.value = screenHeight;
     }
     if (currentPage !== 'account') {
       // Account page slides down from top
@@ -166,6 +176,16 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
 
     freeplayTranslateY.value = withTiming(
       currentPage === 'freeplay' ? 0 : screenHeight,
+      animationConfig
+    );
+
+    spellingTranslateY.value = withTiming(
+      currentPage === 'spelling' ? 0 : screenHeight,
+      animationConfig
+    );
+
+    numbersTranslateY.value = withTiming(
+      currentPage === 'numbers' ? 0 : screenHeight,
       animationConfig
     );
 

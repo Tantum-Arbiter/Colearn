@@ -616,7 +616,7 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
       <PageHeader
         title={t('music.songLibrary')}
         onBack={handleBack}
-        useHomeIcon
+        useBackArrow
       />
 
       {/* Song list -padded below the header like story selection */}

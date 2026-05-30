@@ -40,8 +40,8 @@ export interface CarouselMenuItem {
 
 const MENU_ITEMS: CarouselMenuItem[] = [
   { id: 'stories', labelKey: 'menu.stories', destination: 'stories', image: require('../../assets/images/menu-icons/stories-strip.webp') },
-  { id: 'practise', labelKey: 'menu.practise', destination: 'practise', image: require('../../assets/images/menu-icons/practise-strip.webp') },
-  { id: 'freeplay', labelKey: 'menu.freeplay', destination: 'freeplay', image: require('../../assets/images/menu-icons/freeplay-strip.webp') },
+  { id: 'instruments', labelKey: 'menu.instruments', destination: 'instruments', image: require('../../assets/images/menu-icons/freeplay-strip.webp') },
+  { id: 'learning', labelKey: 'menu.learning', destination: 'learning', image: require('../../assets/images/menu-icons/learning-button.webp') },
 ];
 
 interface MenuCarouselProps {
@@ -213,7 +213,7 @@ const StripButton = React.memo(function StripButton({
           style={[
             styles.stripImage,
             { borderRadius: stripHeight * 0.2 },
-            item.id === 'freeplay' && { transform: [{ scale: 1.25 }] },
+            item.id === 'learning' && { transform: [{ scale: 1.25 }] },
           ]}
           resizeMode="cover"
           fadeDuration={0}

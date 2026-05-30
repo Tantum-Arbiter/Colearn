@@ -232,7 +232,7 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
           testID="instrument-picker-close-button"
           accessibilityLabel={t('music.closeInstrumentPicker')}
         >
-          <Ionicons name="home" size={20} color="#FFFFFF" />
+          <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
         </Pressable>
 
         <View style={[styles.headerSection, compactLayout && styles.headerSectionCompact]}>

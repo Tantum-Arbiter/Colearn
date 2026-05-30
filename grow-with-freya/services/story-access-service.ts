@@ -134,6 +134,21 @@ export class StoryAccessService {
   }
 
   // ──────────────────────────────────────────────
+  // Learning activity access
+  // ──────────────────────────────────────────────
+
+  /**
+   * Check if a learning activity at a given position within its age group is unlocked.
+   * - Free tier: first 3 per age group are free, rest locked
+   * - Basic / Premium: all activities unlocked
+   */
+  static isLearningActivityUnlocked(positionInGroup: number): boolean {
+    const tier = this.getEffectiveTier();
+    if (tier === 'basic' || tier === 'premium') return true;
+    return positionInGroup < 3; // FREE_PER_AGE_GROUP
+  }
+
+  // ──────────────────────────────────────────────
   // Download limit enforcement
   // ──────────────────────────────────────────────
 
