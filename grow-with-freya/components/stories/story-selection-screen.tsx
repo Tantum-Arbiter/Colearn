@@ -1315,6 +1315,35 @@ export function StorySelectionScreen({ onStorySelect, initialMode }: StorySelect
           ) : (
             /* ── GRID VIEW ── */
             <View style={styles.gridContainer}>
+              {/* Your Favorites Grid - shown only if there are favorites */}
+              {favoriteStories.length > 0 && (
+                <View>
+                  <Text style={styles.gridGenreHeading}>
+                    <Ionicons name="star" size={16} color="#FFD700" />{' '}{t('stories.yourFavorites', { defaultValue: 'Your Favorites' })}
+                  </Text>
+                  <View style={styles.gridRow}>
+                    {favoriteStories.map((story) => (
+                      <View key={story.id} style={styles.gridCell}>
+                        <StoryCard
+                          story={story}
+                          onPress={handleStoryPress}
+                          onLongPress={handleLongPress}
+                          cardWidth={gridCardW}
+                          cardHeight={gridCardH}
+                          borderRadius={scaledBorderRadius}
+                          emojiFontSize={scaledEmojiFontSize}
+                          isHidden={(isTransitioning || shouldShowStoryReader || isExpandingToReader) && selectedStoryId === story.id}
+                          isUnread={story.isAvailable && !readStoryIds.includes(story.id)}
+                          isDeleting={deletingStoryId === story.id}
+                          onDeleteAnimationComplete={handleImplodeComplete}
+                          language={currentLanguage}
+                        />
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
+
               {availableGenres.map((genre) => {
                 const items = genreItems[genre] || [];
                 const genreName = t(`stories.genres.${genre}`, { defaultValue: genre.charAt(0).toUpperCase() + genre.slice(1) });
