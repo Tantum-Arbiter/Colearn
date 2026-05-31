@@ -890,12 +890,26 @@ export function StorySelectionScreen({ onStorySelect, initialMode }: StorySelect
     });
 
     // Add catalog entries into their category rows
-    // Catalog entries don't have page data, so we can't detect musical/interactive/jigsaw.
-    // Hide catalog entries when a story mode is selected OR when legacy type filters are
-    // active, since we can't classify them without page-level data.
+    // Catalog entries don't have page data, but they DO have tags which we can use
+    // to classify them for mode filtering (e.g. 'interactive', 'music').
+    // Hide catalog entries only when legacy type filters are active (can't classify).
     const typeFilterActive = storyTypeFilters.size < ALL_TYPE_FILTERS.size;
-    if (!typeFilterActive && !storyMode) {
+    if (!typeFilterActive) {
       let filteredCatalog = catalogEntries;
+
+      // Apply mode filter using catalog tags as proxy for page-level data
+      if (storyMode === 'interactive') {
+        filteredCatalog = filteredCatalog.filter(entry =>
+          entry.tags?.includes('interactive')
+        );
+      } else if (storyMode === 'music') {
+        filteredCatalog = filteredCatalog.filter(entry =>
+          entry.tags?.includes('music')
+        );
+      } else if (storyMode === 'jigsaw') {
+        // No jigsaw tag exists in CMS — jigsaw stories are bundled locally
+        filteredCatalog = [];
+      }
 
       // Apply gender filter to catalog entries too
       if (userAvatarType) {

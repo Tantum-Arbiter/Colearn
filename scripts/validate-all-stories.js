@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 
 const VALID_CATEGORIES = ['personalized', 'bedtime', 'adventure', 'nature', 'friendship', 'learning', 'fantasy', 'music', 'activities', 'growing'];
-const VALID_TAGS = ['calming', 'bedtime', 'adventure', 'learning', 'music', 'family-exercises', 'imagination-games', 'animals', 'friendship', 'nature', 'fantasy', 'counting', 'emotions', 'silly', 'rhymes'];
+const VALID_TAGS = ['calming', 'bedtime', 'adventure', 'learning', 'music', 'family-exercises', 'imagination-games', 'animals', 'friendship', 'nature', 'fantasy', 'counting', 'emotions', 'silly', 'rhymes', 'interactive'];
 const ID_PATTERN = /^[a-z0-9-]+$/;
 
 function validateStory(data, filename) {
