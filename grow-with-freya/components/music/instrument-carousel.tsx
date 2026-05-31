@@ -34,6 +34,7 @@ interface Props {
 
 export const InstrumentCarousel = React.memo(function InstrumentCarousel({ selectedInstrumentId, onSelect, onLockedPress }: Props) {
   const { scaledButtonSize, scaledFontSize } = useAccessibility();
+  const { width: windowWidth } = useWindowDimensions();
   const imageSize = scaledButtonSize(BASE_IMAGE_SIZE);
   const radius = scaledButtonSize(BASE_RADIUS);
   // Height = image + label area below
@@ -98,7 +99,6 @@ export const InstrumentCarousel = React.memo(function InstrumentCarousel({ selec
     }), [anglePerItem, gestureStart, rotation, selectFromRotation]);
   if (instruments.length === 0) return null;
 
-  const { width: windowWidth } = useWindowDimensions();
   const arrowSize = scaledButtonSize(36);
   // Arrows sit at the vertical center of the image, not the full carousel height
   const arrowTop = imageSize / 2 - arrowSize / 2;
