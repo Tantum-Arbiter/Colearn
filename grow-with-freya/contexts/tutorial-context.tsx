@@ -12,6 +12,7 @@ const TUTORIAL_STORAGE_KEY = '@tutorial_state';
 export type TutorialId =
   | 'main_menu_tour'
   | 'story_reader_tips'
+  | 'emotion_cards_tips'
   | 'settings_walkthrough'
   | 'gesture_hints'
   | 'book_mode_tour'
@@ -19,7 +20,12 @@ export type TutorialId =
   | 'narrate_mode_tour'
   | 'screen_time_tips'
   | 'music_mode_tour'
-  | 'story_modes_tour';
+  | 'story_modes_tour'
+  | 'spelling_tips'
+  | 'numbers_tips'
+  | 'feelings_tips'
+  | 'practise_tips'
+  | 'freeplay_tips';
 
 /**
  * Persisted tutorial state
@@ -28,6 +34,7 @@ interface TutorialState {
   completedTutorials: TutorialId[];
   hasSeenFirstStory: boolean;
   hasSeenSettings: boolean;
+  hasSeenEmotionCards: boolean;
   hasSeenScreenTime: boolean;
   lastResetTimestamp: number;
 }
@@ -36,6 +43,7 @@ const DEFAULT_STATE: TutorialState = {
   completedTutorials: [],
   hasSeenFirstStory: false,
   hasSeenSettings: false,
+  hasSeenEmotionCards: false,
   hasSeenScreenTime: false,
   lastResetTimestamp: 0,
 };
@@ -46,6 +54,7 @@ interface TutorialContextType {
   completedTutorials: TutorialId[];
   hasSeenFirstStory: boolean;
   hasSeenSettings: boolean;
+  hasSeenEmotionCards: boolean;
   hasSeenScreenTime: boolean;
   lastResetTimestamp: number;
 
@@ -64,6 +73,7 @@ interface TutorialContextType {
   shouldShowTutorial: (tutorialId: TutorialId) => boolean;
   markFirstStoryViewed: () => void;
   markSettingsViewed: () => void;
+  markEmotionCardsViewed: () => void;
   markScreenTimeViewed: () => void;
 
   // Reset (for settings)
@@ -172,6 +182,13 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
     }
   }, [state, persistState]);
 
+  const markEmotionCardsViewed = useCallback(() => {
+    if (!state.hasSeenEmotionCards) {
+      const newState = { ...state, hasSeenEmotionCards: true };
+      persistState(newState);
+    }
+  }, [state, persistState]);
+
   const markScreenTimeViewed = useCallback(() => {
     if (!state.hasSeenScreenTime) {
       const newState = { ...state, hasSeenScreenTime: true };
@@ -193,6 +210,7 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
     completedTutorials: state.completedTutorials,
     hasSeenFirstStory: state.hasSeenFirstStory,
     hasSeenSettings: state.hasSeenSettings,
+    hasSeenEmotionCards: state.hasSeenEmotionCards,
     hasSeenScreenTime: state.hasSeenScreenTime,
     lastResetTimestamp: state.lastResetTimestamp,
     activeTutorial,
@@ -205,6 +223,7 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
     shouldShowTutorial,
     markFirstStoryViewed,
     markSettingsViewed,
+    markEmotionCardsViewed,
     markScreenTimeViewed,
     resetAllTutorials,
   };

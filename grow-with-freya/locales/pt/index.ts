@@ -28,6 +28,7 @@ export default {
     extraLarge: 'Extra grande',
     on: 'SIM',
     off: 'NÃO',
+    openSettings: 'Abrir Configurações',
   },
   alerts: {
     logout: {
@@ -37,7 +38,7 @@ export default {
     },
     resetApp: {
       title: 'Redefinir aplicativo',
-      message: 'Isso limpará TODOS os dados do aplicativo, incluindo seu login, personagem e configurações. Tem certeza?',
+      message: 'Isso limpará TODOS os dados do aplicativo, incluindo seu login, personagem e configurações. Tem certeza? ',
     },
     deleteAccount: {
       title: 'Eliminar conta',
@@ -50,11 +51,11 @@ export default {
     },
     deleteReminder: {
       title: 'Excluir lembrete',
-      message: 'Tem certeza de que deseja excluir "{{title}}"?',
+      message: 'Tem certeza de que deseja excluir "{{title}}"? ',
     },
     unsavedChanges: {
       title: 'Alterações não salvas',
-      message: 'Você tem alterações não salvas. Tem certeza de que deseja sair sem salvar?',
+      message: 'Você tem alterações não salvas. Tem certeza de que deseja sair sem salvar? ',
     },
     missingTitle: {
       title: 'Título ausente',
@@ -83,9 +84,9 @@ export default {
     continueWithApple: 'Continuar com Apple',
     signingIn: 'Entrando...',
     continueWithoutSignIn: 'Continuar sem entrar',
-    footerPrefix: 'Ao continuar, você concorda com nossos ',
+    footerPrefix: 'Ao continuar, você concorda com nossos',
     termsAndConditions: 'Termos e Condições',
-    and: ' e ',
+    and: ' e',
     privacyPolicy: 'Política de Privacidade',
     signInFailed: 'Falha ao entrar',
     signInFailedMessage: 'Não foi possível entrar com Google. Tente novamente.',
@@ -113,7 +114,7 @@ export default {
     stories: 'Histórias',
     practise: 'Praticar',
     freeplay: 'Jogo Livre',
-    instruments: 'Tocar Instrumentos',
+    instruments: 'Instrumentos',
     learning: 'Aprendizagem',
     spelling: 'Soletração',
     numbers: 'Números',
@@ -123,11 +124,11 @@ export default {
     title: 'Acessibilidade',
     textSizeHint: 'Ajuste o tamanho do texto e dos botões para melhor visibilidade',
     grayscale: 'Escala de cinza / Alto contraste',
-    grayscaleHint: 'Para o modo preto e branco, use as configurações de acessibilidade integradas do seu dispositivo:',
+    grayscaleHint: 'Para o modo preto e branco, use as configurações de acessibilidade integradas do seu dispositivo: ',
     grayscaleIos: 'Configurações → Acessibilidade → Tela e tamanho do texto → Filtros de cor → Escala de cinza',
     grayscaleAndroid: 'Configurações → Acessibilidade → Ajuste de cor → Escala de cinza',
     blueLight: 'Filtro de luz azul (modo noturno)',
-    blueLightHint: 'Reduza a luz azul para ajudar seu filho a dormir melhor. Ative o modo noturno do seu dispositivo:',
+    blueLightHint: 'Reduza a luz azul para ajudar seu filho a dormir melhor. Ative o modo noturno do seu dispositivo: ',
     blueLightIos: 'Configurações → Tela e brilho → Turno noturno → Ativar',
     blueLightAndroid: 'Configurações → Tela → Luz noturna (ou Conforto dos olhos) → Ativar',
     blueLightBenefit: 'A luz azul das telas pode afetar o sono. Ativar o modo noturno à noite ajuda o cérebro do seu filho a se preparar para a cama reduzindo os comprimentos de onda azuis estimulantes.',
@@ -189,8 +190,8 @@ export default {
     compareLanguageOn: 'Comparar idiomas: Ativado',
     compareLanguageOff: 'Comparar idiomas: Desativado',
     selectCompareLanguage: 'Escolha idiomas para ler, comparar ou gravar.',
-    selectFirstLanguage: 'Primeiro idioma (caixa branca):',
-    selectSecondLanguage: 'Segundo idioma (caixa azul):',
+    selectFirstLanguage: 'Primeiro idioma (caixa branca): ',
+    selectSecondLanguage: 'Segundo idioma (caixa azul): ',
     done: 'Concluído',
     autoPlayOn: 'Reprodução automática: Ativada',
     autoPlayOff: 'Reprodução automática: Desativada',
@@ -202,16 +203,16 @@ export default {
     permissionMessage: 'O acesso ao microfone é necessário para gravar sua voz.',
     recordingError: 'Erro de gravação',
     recordingErrorMessage: 'Falha ao iniciar a gravação. Tente novamente.',
-    overwriteRecording: 'Sobrescrever gravação?',
-    overwriteRecordingMessage: 'Esta página já tem uma gravação. Tem certeza de que deseja sobrescrevê-la com uma nova gravação?',
+    overwriteRecording: 'Sobrescrever gravação? ',
+    overwriteRecordingMessage: 'Esta página já tem uma gravação. Tem certeza de que deseja sobrescrevê-la com uma nova gravação? ',
     nameAlreadyExists: 'O nome já existe',
     nameAlreadyExistsMessage: 'Uma voz chamada "{{name}}" já existe. Escolha um nome diferente.',
     error: 'Erro',
     createVoiceOverError: 'Falha ao criar voz. Tente novamente.',
-    overwriteVoiceOver: 'Sobrescrever voz?',
-    overwriteVoiceOverMessage: '"{{name}}" tem {{count}} página(s) gravada(s). Deseja sobrescrever com novas gravações?',
+    overwriteVoiceOver: 'Sobrescrever voz? ',
+    overwriteVoiceOverMessage: '"{{name}}" tem {{count}} página(s) gravada(s). Deseja sobrescrever com novas gravações? ',
     deleteVoiceOver: 'Excluir voz',
-    deleteVoiceOverMessage: 'Tem certeza de que deseja excluir "{{name}}"?',
+    deleteVoiceOverMessage: 'Tem certeza de que deseja excluir "{{name}}"? ',
     deleteVoiceOverMessageWithUndo: 'Tem certeza de que deseja excluir "{{name}}"? Isso não pode ser desfeito.',
     overwrite: 'Sobrescrever',
     delete: 'Excluir',
@@ -227,8 +228,8 @@ export default {
     narrateAs: 'Narrar como: {{name}}',
     recordVoiceOver: 'Gravar voz',
     selectVoiceOver: 'Selecionar voz',
-    selectExisting: 'Selecione existente para sobrescrever:',
-    orCreateNew: 'Ou criar novo:',
+    selectExisting: 'Selecione existente para sobrescrever: ',
+    orCreateNew: 'Ou criar novo: ',
     enterName: 'Digite o nome...',
     create: 'Criar',
     chooseRecording: 'Escolha uma gravação para reproduzir',
@@ -294,12 +295,13 @@ export default {
     noScreenTime: 'Sem tempo de tela',
     recommended: 'Recomendado',
     excessive: 'Excessivo',
+    overLimit: 'Acima do Limite',
     createMySchedule: 'Criar meu cronograma',
     scheduleIntro: 'Configure horários de notificação personalizados para as atividades de tempo de tela do seu filho. Você receberá lembretes suaves quando for hora de histórias, emoções ou atividades musicais.',
     scheduleIntroShort: 'Configure horários de notificação personalizados para as atividades de tempo de tela do seu filho.',
     createCustomReminders: '+ Criar lembretes personalizados',
     recommendedTimes: 'Horários recomendados',
-    recommendedTimesIntro: 'De acordo com a pesquisa de desenvolvimento infantil, os melhores momentos para atividades de tela são:',
+    recommendedTimesIntro: 'De acordo com a pesquisa de desenvolvimento infantil, os melhores momentos para atividades de tela são: ',
     morningStoriesEmotions: 'Histórias e emoções matutinas',
     afternoonLearning: 'Atividades de aprendizado à tarde',
     preDinnerMusic: 'Música relaxante antes do jantar',
@@ -336,6 +338,10 @@ export default {
     creating: 'Criando...',
     noReminders: 'Nenhum lembrete personalizado',
     noRemindersHint: 'Crie seu primeiro lembrete para começar com notificações de exercício personalizadas.',
+    permissionRequired: {
+      title: 'Notificações Necessárias',
+      message: 'Para receber lembretes, ative as notificações para este aplicativo nas configurações do dispositivo.',
+    },
     total: 'Total',
     today: 'Hoje',
     loading: 'Carregando lembretes...',
@@ -347,7 +353,7 @@ export default {
     messagePlaceholder: 'Digite a mensagem do lembrete...',
     dayOfWeek: 'Dia da semana',
     timeLabel: 'Hora',
-    timeSlotTaken: '⚠️ Este horário já está ocupado para este dia',
+    timeSlotTaken: ' Este horário já está ocupado para este dia',
     conflictHint: 'Vermelho (!) mostra conflitos para o dia selecionado. Todos os horários estão disponíveis.',
     selectDayHint: 'Selecione um dia para ver a disponibilidade de horários',
     active: 'Ativo',
@@ -430,8 +436,8 @@ export default {
     profile: 'Perfil',
     nickname: 'Apelido',
     avatarType: 'Tipo de avatar',
-    boy: '👦 Menino',
-    girl: '👧 Menina',
+    boy: ' Menino',
+    girl: ' Menina',
     settings: 'Configurações',
     language: 'Idioma',
     textSize: 'Tamanho do texto',
@@ -457,15 +463,15 @@ export default {
     nicknamePlaceholder: 'Digite seu apelido...',
     nicknameCharacters: '{{count}}/20 caracteres',
     avatarType: 'Tipo de avatar',
-    boy: '👦 Menino',
-    girl: '👧 Menina',
+    boy: ' Menino',
+    girl: ' Menina',
     saveChanges: 'Salvar alterações',
-    comingSoon: '✨ Mais opções de personalização de perfil em breve - ainda em desenvolvimento!',
+    comingSoon: ' Mais opções de personalização de perfil em breve - ainda em desenvolvimento!',
   },
   onboarding: {
     welcome: 'Bem-vindo!',
     letsGetStarted: 'Vamos começar',
-    whatsYourName: 'Qual é o seu nome?',
+    whatsYourName: 'Qual é o seu nome? ',
     enterNickname: 'Digite um apelido',
     chooseAvatar: 'Escolha seu avatar',
     allSet: 'Tudo pronto!',
@@ -500,7 +506,7 @@ export default {
       },
       consent: {
         title: 'Antes de começar',
-        body: 'Como pai ou responsável, por favor leia e aceite o seguinte:',
+        body: 'Como pai ou responsável, por favor leia e aceite o seguinte: ',
         button: 'Concordo',
         closeLabel: 'Fechar',
         dataSummary: {
@@ -524,7 +530,7 @@ export default {
       },
     },
     crashReportingDialog: {
-      title: 'Ativar relatórios de falha?',
+      title: 'Ativar relatórios de falha? ',
       body: 'Relatórios de falha anônimos nos ajudam a corrigir bugs e melhorar o aplicativo. Nenhum dado pessoal é coletado.\n\nVocê pode alterar isso a qualquer momento em Configurações.',
       noThanks: 'Não, obrigado',
       enable: 'Ativar',
@@ -543,9 +549,9 @@ export default {
     },
   },
   tutorial: {
-    welcomeTitle: 'Bem-vindo ao\nEarlyroots! 🎉',
+    welcomeTitle: 'Bem-vindo ao\nEarlyroots!',
     welcomeDescription: 'Vamos fazer um tour rápido para ajudá-lo a você e seu filho a aproveitar ao máximo o tempo de leitura juntos.',
-    storiesTitle: 'Biblioteca de histórias 📚',
+    storiesTitle: 'Biblioteca de histórias',
     storiesDescription: 'Toque aqui para explorar nossa coleção de histórias interativas com belas ilustrações e interações divertidas.',
     skip: 'Pular',
     gotIt: 'Entendi!',
@@ -562,111 +568,119 @@ export default {
     },
     mainMenu: {
       welcome: {
-        title: 'Bem-vindo ao Grow with\nFreya! 🎉',
+        title: 'Bem-vindo ao Grow with\nFreya!',
         description: 'Vamos fazer um tour rápido para ajudá-lo a você e seu filho a aproveitar ao máximo o tempo de leitura juntos.',
       },
       stories: {
-        title: 'Histórias 📚',
+        title: 'Histórias',
         description: 'Explore a nossa coleção de histórias interativas com belas ilustrações e interações divertidas.',
       },
       practise: {
-        title: 'Praticar 🎵',
+        title: 'Praticar',
         description: 'Aprenda a tocar músicas em diferentes instrumentos. Acompanhe e desenvolva as suas competências musicais!',
       },
       freeplay: {
-        title: 'Jogo Livre 🎹',
+        title: 'Jogo Livre',
         description: 'Toque livremente qualquer instrumento -sem regras, só diversão! Experimente sons e crie a sua própria música.',
       },
+      instruments: {
+        title: 'Instrumentos',
+        description: 'Pratique músicas ou toque livremente em diferentes instrumentos. Desenvolva habilidades musicais enquanto se diverte!',
+      },
+      learning: {
+        title: 'Aprendizado',
+        description: 'Atividades interativas de ortografia e números que ajudam a desenvolver habilidades iniciais de leitura e matemática.',
+      },
       settings: {
-        title: 'Configurações ⚙️',
+        title: 'Configurações',
         description: 'Personalize o aplicativo para funcionar melhor para sua família.',
       },
       sound: {
-        title: 'Controle de som 🔊',
+        title: 'Controle de som',
         description: 'Toque aqui para controlar a música de fundo e efeitos sonoros.',
       },
     },
     screenTime: {
       intro: {
-        title: 'Painel de tempo de tela ⏱️',
+        title: 'Painel de tempo de tela',
         description: 'Monitore e gerencie o tempo de tela diário do seu filho com limites apropriados à idade.',
       },
       ageBased: {
-        title: 'Limites baseados em idade 👶',
+        title: 'Limites baseados em idade',
         description: 'Defina a idade do seu filho para obter automaticamente os limites de tempo de tela recomendados pela OMS/AAP.',
       },
       heatmap: {
-        title: 'Atividade semanal 📊',
+        title: 'Atividade semanal',
         description: 'Veja os padrões de uso de tempo de tela ao longo da semana para ajudar a estabelecer rotinas saudáveis.',
       },
       reminders: {
-        title: 'Definir lembretes ⏰',
+        title: 'Definir lembretes',
         description: 'Crie lembretes personalizados para atividades, pausas ou rotinas de dormir.',
       },
       routine: {
-        title: 'Construir rotinas saudáveis 🌟',
+        title: 'Construir rotinas saudáveis',
         description: 'Use dados de tempo de tela para estabelecer rotinas diárias consistentes que funcionem para sua família.',
       },
     },
     storyReader: {
       welcome: {
-        title: 'Dicas de tempo de leitura 📖',
+        title: 'Dicas de tempo de leitura',
         description: 'Aqui estão algumas dicas para tornar o tempo de leitura mágico para você e seu filho!',
       },
       interactive: {
-        title: 'Procure por interações ✨',
+        title: 'Procure por interações',
         description: 'Algumas páginas têm surpresas escondidas! Encoraje seu filho a tocar em objetos que brilham ou cintilam.',
       },
       point: {
-        title: 'Apontar e discutir 👆',
+        title: 'Apontar e discutir',
         description: 'Faça perguntas sobre as imagens. "O que você vê?" "De que cor é a borboleta?"',
       },
       pause: {
-        title: 'Pausa e previsão 🤔',
+        title: 'Pausa e previsão',
         description: 'Antes de virar a página, pergunte "O que você acha que vai acontecer a seguir?" para aumentar o envolvimento.',
       },
       voices: {
-        title: 'Use vozes diferentes 🎭',
+        title: 'Use vozes diferentes',
         description: 'Dê vida aos personagens com vozes bobas! Seu filho adorará a performance.',
       },
       navigate: {
-        title: 'Navegação fácil 📚',
+        title: 'Navegação fácil',
         description: 'Deslize para a esquerda ou direita para virar as páginas. Toque no botão de menu para mais opções.',
       },
       tapWords: {
-        title: 'Toque nas palavras para se concentrar 👆',
+        title: 'Toque nas palavras para se concentrar',
         description: 'Toque em qualquer palavra da história para destacá-la! Isso ajuda a concentrar a atenção e torna a leitura mais interativa e envolvente.',
       },
       compareLanguages: {
-        title: 'Comparar idiomas 🌍',
+        title: 'Comparar idiomas',
         description: 'Use o menu para ativar "Comparar idiomas" e visualize a história em dois idiomas lado a lado. Perfeito para famílias multilíngues que aprendem juntas!',
       },
     },
     bookMode: {
       read: {
-        title: 'Modo de leitura 📖',
+        title: 'Modo de leitura',
         description: 'Toque aqui para ler a história você mesmo com seu filho. Vire as páginas no seu ritmo.',
       },
       record: {
-        title: 'Modo de gravação 🎙️',
+        title: 'Modo de gravação',
         description: 'Grave sua voz lendo a história. Perfeito quando você está fora!',
       },
       narrate: {
-        title: 'Modo de escuta 🎧',
+        title: 'Modo de escuta',
         description: 'Ouça uma narração pré-gravada da história. Ótimo para a hora de dormir!',
       },
       preview: {
-        title: 'Visualizar 👁️',
+        title: 'Visualizar',
         description: 'Veja os detalhes da história, duração e temas antes de começar a ler.',
       },
     },
     recordMode: {
       intro: {
-        title: 'Grave sua voz 🎙️',
+        title: 'Grave sua voz',
         description: 'Crie uma narração pessoal desta história que seu filho pode ouvir a qualquer momento - mesmo quando você não está lá!',
       },
       button: {
-        title: 'Controles de gravação 🔴',
+        title: 'Controles de gravação',
         description: 'Toque no microfone para começar a gravar. Leia o texto da página em voz alta e toque novamente para parar.',
       },
       playback: {
@@ -674,123 +688,241 @@ export default {
         description: 'Ouça sua gravação e grave novamente se necessário. Seu filho adorará ouvir sua voz!',
       },
       sound: {
-        title: 'Dica de som 🔊',
+        title: 'Dica de som',
         description: 'Encontre um local tranquilo para a melhor qualidade de gravação. O ruído de fundo pode ser distraente.',
       },
       limit: {
-        title: 'Vozes familiares 👨‍👩‍👧',
+        title: 'Vozes familiares',
         description: 'Vários membros da família podem gravar! Avós, tios, tias - deixe todos participarem.',
       },
       benefit: {
-        title: 'Por que gravar? 💜',
+        title: 'Por que gravar? ',
         description: 'A pesquisa mostra que ouvir uma voz familiar ajuda as crianças a se sentirem seguras e conectadas, especialmente durante a separação.',
       },
       navigation: {
-        title: 'Navegar páginas 📖',
+        title: 'Navegar páginas',
         description: 'Use as setas para se mover entre as páginas. Grave cada página para criar uma história completamente narrada!',
       },
     },
     narrateMode: {
       intro: {
-        title: 'Modo de escuta 🎧',
+        title: 'Modo de escuta',
         description: 'Relaxe e aproveite! A história será lida em voz alta usando uma voz gravada.',
       },
       autoPlayback: {
-        title: 'Reprodução automática 📖',
+        title: 'Reprodução automática',
         description: 'As páginas viram automaticamente após o término da narração. Perfeito para a hora de dormir!',
       },
       controls: {
-        title: 'Controles de reprodução ▶️',
+        title: 'Controles de reprodução',
         description: 'Pause, releia ou avance usando os controles. Você controla o ritmo.',
       },
       sound: {
-        title: 'Dica de som 🔊',
+        title: 'Dica de som',
         description: 'Certifique-se de que o volume do seu dispositivo está alto! Use fones de ouvido para uma experiência mais imersiva.',
       },
       benefit: {
-        title: 'Tempo de ligação 💜',
+        title: 'Tempo de ligação',
         description: 'Mesmo no modo de escuta, permaneça envolvido! Aponte as imagens, faça perguntas e aproveite a história juntos.',
       },
     },
     settings: {
       intro: {
-        title: 'Configurações ⚙️',
+        title: 'Configurações',
         description: 'Personalize o aplicativo para funcionar melhor para sua família.',
       },
       login: {
-        title: 'Conta e sincronização 🔐',
+        title: 'Conta e sincronização',
         description: 'Faça login para salvar seu progresso e sincronizar entre dispositivos.',
       },
       language: {
-        title: 'Idioma 🌍',
+        title: 'Idioma',
         description: 'Escolha seu idioma preferido para a interface do aplicativo.',
       },
       avatar: {
-        title: 'Seu avatar 🎭',
+        title: 'Seu avatar',
         description: 'Personalize a experiência do seu filho com um avatar personalizado.',
       },
       accessibility: {
-        title: 'Acessibilidade ♿',
+        title: 'Acessibilidade',
         description: 'Ajuste o tamanho do texto e outras configurações para uso mais fácil.',
       },
       screenTime: {
-        title: 'Tempo de tela ⏱️',
+        title: 'Tempo de tela',
         description: 'Defina limites saudáveis e monitore o uso diário.',
       },
     },
     // Music Mode Tips - keys match tutorial.musicMode.* in tutorial-content.ts
     musicMode: {
       welcome: {
-        title: 'Modo Música 🎵',
+        title: 'Modo Música',
         description: 'Algumas páginas desta história têm desafios musicais! Toque notas num instrumento virtual para completá-los.',
       },
       instrument: {
-        title: 'Escolha o Seu Instrumento 🎹',
+        title: 'Escolha o Seu Instrumento',
         description: 'Quando um livro com música abre, deslize pelo carrossel para escolher o seu instrumento favorito. Cada um tem sons únicos!',
       },
       playing: {
-        title: 'Tocar Notas 🎶',
+        title: 'Tocar Notas',
         description: 'Pressione os botões coloridos para tocar notas. Siga a sequência mostrada no topo para completar o desafio!',
       },
       sheet: {
-        title: 'Partitura Musical 📋',
+        title: 'Partitura Musical',
         description: 'Toque no botão de nota musical (canto inferior esquerdo) para ver todas as notas que precisa tocar. Pode até ouvir uma pré-visualização da melodia!',
       },
       begin: {
-        title: 'Começar a Tocar ▶️',
+        title: 'Começar a Tocar',
         description: 'Quando chegar a uma página musical, toque no botão \'Começar a Tocar\' no topo para iniciar o desafio. Abre primeiro a partitura para que possa ver o que tocar!',
       },
       change: {
-        title: 'Mudar de Instrumento 🔄',
-        description: 'Quer experimentar um som diferente? Abra o menu (☰) e toque em \'Mudar de Instrumento\' para trocar a qualquer momento.',
+        title: 'Mudar de Instrumento',
+        description: 'Quer experimentar um som diferente? Abra o menu () e toque em \'Mudar de Instrumento\' para trocar a qualquer momento.',
       },
     },
     storyModes: {
       welcome: {
-        title: 'Três Formas de Explorar! 🌟',
+        title: 'Três Formas de Explorar!',
         description: 'Cada criança aprende de forma diferente. Escolha a experiência de história que desperta a curiosidade do seu filho -cada uma desenvolve habilidades essenciais através da magia da brincadeira.',
       },
       interactive: {
-        title: 'Histórias Interativas ✨',
+        title: 'Histórias Interativas',
         description: 'Toque, deslize e descubra! As histórias interativas dão vida às páginas com surpresas táteis, momentos de causa e efeito e atividades de aprendizagem prática. Pesquisas mostram que a participação ativa durante a leitura fortalece a compreensão, a motricidade fina e a resolução precoce de problemas.',
       },
       musical: {
-        title: 'Histórias Musicais 🎵',
+        title: 'Histórias Musicais',
         description: 'Leia, toque e apresente! As histórias musicais entrelaçam desafios de instrumentos reais em cada aventura -o seu filho aprende ritmo, melodia e coordenação enquanto segue a história. Estudos confirmam que a exposição precoce à música melhora a memória, o desenvolvimento da linguagem e a expressão emocional.',
       },
       jigsaw: {
-        title: 'Histórias de Quebra-Cabeça 🧩',
+        title: 'Histórias de Quebra-Cabeça',
         description: 'Monte o quebra-cabeça! As histórias de quebra-cabeça escondem belos puzzles em cada página, desenvolvendo a consciência espacial, a paciência e o pensamento lógico. Completar puzzles dá às crianças uma verdadeira sensação de conquista e fortalece as habilidades visuo-perceptivas que apoiam a preparação para a leitura.',
       },
     },
     gestures: {
       speakerLongPress: {
-        title: 'Dica de pressão longa 👆',
+        title: 'Dica de pressão longa',
         description: 'Pressione longamente o botão do alto-falante para mais opções de áudio.',
       },
       storySwipe: {
-        title: 'Navegação por deslize 👆',
+        title: 'Navegação por deslize',
         description: 'Deslize para a esquerda ou direita para virar as páginas rapidamente.',
+      },
+    },
+    // Emotion Cards Tips
+    emotionCards: {
+      welcome: {
+        title: 'Bem-vindo às cartas de emoções!',
+        description: 'Ajude seu filho a aprender a reconhecer e expressar emoções através de cartas interativas e divertidas.',
+      },
+      together: {
+        title: 'Jogar juntos',
+        description: 'Sente-se com seu filho e alternem virando as cartas. Faça as emoções juntos - é mais divertido!',
+      },
+      connect: {
+        title: 'Fazer conexões',
+        description: 'Faça perguntas como "Quando você sentiu isso?" para ajudar seu filho a entender suas emoções.',
+      },
+      scenarios: {
+        title: 'Criar cenários',
+        description: 'Encene situações que possam causar cada emoção. "Como você se sentiria se seu brinquedo quebrasse?"',
+      },
+      themes: {
+        title: 'Tente temas diferentes',
+        description: 'Alterne entre temas de emoji, animal e urso para mantê-lo fresco e envolvente!',
+      },
+    },
+    // Spelling Tips
+    spelling: {
+      welcome: {
+        title: 'Atividades de Ortografia',
+        description: 'Bem-vindo à Ortografia! Atividades interativas e divertidas para ajudar o seu filho a aprender letras, palavras e ortografia.',
+      },
+      ages: {
+        title: 'Conteúdo por Idades',
+        description: 'As atividades estão agrupadas por faixa etária. Use o carrossel no topo para filtrar o nível do seu filho.',
+      },
+      together: {
+        title: 'Aprendam Juntos',
+        description: 'Sente-se com o seu filho e pronunciem as letras juntos. Encoraje-o e celebre cada tentativa!',
+      },
+      benefit: {
+        title: 'Construir a Literacia',
+        description: 'A prática precoce da ortografia desenvolve a consciência fonémica, o reconhecimento de letras e o amor pelas palavras que dura toda a vida.',
+      },
+    },
+    // Numbers Tips
+    numbers: {
+      welcome: {
+        title: 'Atividades com Números',
+        description: 'Bem-vindo aos Números! Atividades envolventes para ajudar o seu filho a explorar a contagem, as formas e a primeira matemática.',
+      },
+      ages: {
+        title: 'Conteúdo por Idades',
+        description: 'As atividades estão agrupadas por faixa etária. Use o carrossel no topo para encontrar o nível certo para o seu filho.',
+      },
+      together: {
+        title: 'Contem Juntos',
+        description: 'Contem em voz alta juntos, apontem para objetos e façam dos números parte da brincadeira diária!',
+      },
+      benefit: {
+        title: 'Construir a Numeracia',
+        description: 'O jogo precoce com números desenvolve o pensamento lógico, o reconhecimento de padrões e uma base sólida para a matemática.',
+      },
+    },
+    // Feelings Tips
+    feelings: {
+      welcome: {
+        title: 'Atividades de Sentimentos',
+        description: 'Bem-vindo aos Sentimentos! Atividades que ajudam o seu filho a reconhecer, nomear e compreender as emoções.',
+      },
+      ages: {
+        title: 'Conteúdo por Idades',
+        description: 'As atividades estão agrupadas por faixa etária. Escolha atividades adequadas ao desenvolvimento emocional do seu filho.',
+      },
+      together: {
+        title: 'Explorem Juntos',
+        description: 'Falem abertamente sobre as emoções. Pergunte "Como é que isso te faz sentir?" e partilhe os seus próprios sentimentos também.',
+      },
+      benefit: {
+        title: 'Inteligência Emocional',
+        description: 'Compreender as emoções desenvolve a empatia, a autorregulação e fortes competências sociais — essenciais para o bem-estar ao longo da vida.',
+      },
+    },
+    // Practise Mode Tips
+    practise: {
+      welcome: {
+        title: 'Modo Prática',
+        description: 'Aprenda a tocar músicas reais em diferentes instrumentos! Siga as notas e desenvolva as suas competências musicais passo a passo.',
+      },
+      instrument: {
+        title: 'Escolha o Seu Instrumento',
+        description: 'Deslize pelo carrossel para escolher o seu instrumento favorito. Cada um tem o seu som único!',
+      },
+      songs: {
+        title: 'Escolha uma Música',
+        description: 'Explore a biblioteca de músicas e escolha uma música para aprender. As músicas estão ordenadas por dificuldade — comece fácil e progrida!',
+      },
+      benefit: {
+        title: 'Desenvolvimento Musical',
+        description: 'Aprender a tocar músicas desenvolve o ritmo, a coordenação, a memória e a concentração — tudo através da alegria da música.',
+      },
+    },
+    // Freeplay Mode Tips
+    freeplay: {
+      welcome: {
+        title: 'Modo Livre',
+        description: 'Sem regras, só diversão! Explore qualquer instrumento e crie a sua própria música. Perfeito para a criatividade e a autoexpressão.',
+      },
+      instrument: {
+        title: 'Escolha o Seu Instrumento',
+        description: 'Escolha qualquer instrumento do carrossel. Experimente todos para descobrir novos sons e favoritos!',
+      },
+      play: {
+        title: 'Toque Livremente',
+        description: 'Pressione os botões coloridos para fazer música. Não há notas erradas — cada som faz parte da aventura!',
+      },
+      benefit: {
+        title: 'Expressão Criativa',
+        description: 'O jogo musical livre nutre a criatividade, a autoconfiança e o amor pela música que cresce com o seu filho.',
       },
     },
   },
@@ -818,36 +950,179 @@ export default {
     guidelines: 'Seguindo as recomendações da OMS e AAP para tempo de tela saudável',
     closeNotification: 'Fechar notificação',
     educationalMessage: 'Tente outras atividades: ler livros, brincar ao ar livre ou brincar de forma criativa!',
-    approachingMessage: 'Você tem apenas {{minutes}} minutos de tempo de tela restantes hoje. Deseja continuar ou fechar o aplicativo?',
+    approachingMessage: 'Você tem apenas {{minutes}} minutos de tempo de tela restantes hoje. Deseja continuar ou fechar o aplicativo? ',
     limitReachedMessage: 'Limite de tempo de tela diário atingido. É hora de fechar o aplicativo e tentar outras atividades!',
   },
+  // Relaxing music screen
+  relaxMusic: {
+    title: 'Um lugar mais tranquilo',
+    screenTitle: 'Relaxar',
+    subtitle: 'Tire um momento. Pause. Relaxe um pouco.',
+    headphoneGuidance: 'Para a melhor experiência, use fones de ouvido. Encontre uma posição confortável, feche os olhos e concentre-se na respiração.',
+    stopAll: 'Parar',
+    tipsTitle: 'Técnicas de relaxamento',
+    tipsBody: 'Estas faixas usam batidas binaurais — diferenças subtis de frequência entre cada ouvido que encorajam o cérebro a desacelerar. Fones de ouvido são necessários.\n\nExperimente estas técnicas simples enquanto ouve:\n\nRespiração quadrada\nInspire por 4 contagens, segure 4, expire 4, segure 4. Repita.\n\nVarredura corporal\nComece pelos dedos dos pés e foque lentamente em cada parte do corpo. Note qualquer tensão e relaxe conscientemente.\n\nAncoragem 5-4-3-2-1\nNote 5 coisas que vê, 4 que toca, 3 que ouve, 2 que cheira e 1 que saboreia.\n\nNuvens de pensamentos\nImagine cada pensamento como uma nuvem cruzando o céu. Reconheça-o e deixe-o passar.',
+  },
+
+    // Emotion cards
+  emotions: {
+    title: 'Sentimentos',
+    subtitle: 'Escolha seu estilo e aprenda sobre sentimentos',
+    greatJob: 'Ótimo trabalho!',
+    sections: {
+      emotionCards: 'Cartões de emoções',
+      developingEmotions: 'Desenvolvendo emoções',
+      parentsToo: 'Pais também',
+      parentsTooSubtitle: 'Incluímos algo para ajudá-lo a relaxar, você está fazendo um trabalho incrível.',
+      relaxingMusic: 'Música relaxante',
+      relaxingMusicDescription: 'Sons calmantes e sequências de relaxamento para ajudá-lo a descansar',
+    },
+    pickYourStyle: 'Escolha seu estilo',
+    expressWithTheme: 'Expresse {{emotion}} com {{theme}}!',
+    expressing: 'Estou expressando {{emotion}}!',
+    loading: 'Carregando...',
+    progress: 'Progresso: {{completed}} / {{total}}',
+    themes: {
+      emoji: {
+        name: 'Emoji',
+        description: 'Expresse emoções com rostos emoji divertidos',
+      },
+      animals: {
+        name: 'Animais',
+        description: 'Aprenda emoções através de amigos animais fofos',
+      },
+      bear: {
+        name: 'Urso',
+        description: 'Aprenda emoções com nosso urso amigável',
+      },
+    },
+    emoji: {
+      happy: 'Feliz',
+      sad: 'Triste',
+      angry: 'Bravo',
+      surprised: 'Surpreso',
+      scared: 'Assustado',
+      excited: 'Animado',
+      confused: 'Confuso',
+      proud: 'Orgulhoso',
+      shy: 'Tímido',
+      loving: 'Amoroso',
+    },
+    animals: {
+      happy: 'Coelho feliz',
+      sad: 'Gatinho triste',
+      angry: 'Cachorro bravo',
+      surprised: 'Pintinho surpreso',
+      scared: 'Guaxinim assustado',
+      excited: 'Raposa animada',
+      confused: 'Elefante confuso',
+      proud: 'Urso orgulhoso',
+      shy: 'Preguiça tímida',
+      loving: 'Panda amoroso',
+    },
+    bear: {
+      happy: 'Urso feliz',
+      sad: 'Urso triste',
+      angry: 'Urso bravo',
+      surprised: 'Urso surpreso',
+      scared: 'Urso assustado',
+      excited: 'Urso animado',
+      confused: 'Urso confuso',
+      proud: 'Urso orgulhoso',
+      shy: 'Urso tímido',
+      loving: 'Urso amoroso',
+    },
+    prompts: {
+      happy: [
+'Mostre-me seu maior sorriso!',
+'Você consegue rir como se tivesse ouvido algo engraçado? ',
+'Faça uma cara feliz e bata palmas!',
+'Mostre-me como você fica quando recebe um presente!',
+      ],
+      sad: [
+'Mostre-me uma cara triste',
+'Você consegue fazer uma cara como se tivesse perdido seu brinquedo? ',
+'Mostre-me como você se sente quando tem que dizer adeus',
+'Faça uma cara de bico como quando você está decepcionado',
+      ],
+      angry: [
+'Mostre-me uma cara brava',
+'Você consegue franzir a testa como se estivesse bravo? ',
+'Mostre-me como você fica quando alguém mau joga seu brinquedo favorito',
+'Faça uma cara de resmungão com os braços cruzados!',
+      ],
+      surprised: [
+'Mostre-me uma cara surpresa!',
+'Você consegue abrir os olhos e a boca bem grandes? ',
+'Mostre-me como você fica quando vê algo incrível!',
+'Faça uma cara como se tivesse visto magia!',
+      ],
+      scared: [
+'Mostre-me uma cara assustada',
+'Você consegue se esconder atrás das mãos como se tivesse medo? ',
+'Mostre-me como você fica durante uma tempestade',
+'Faça uma cara como se tivesse visto algo assustador!',
+      ],
+      excited: [
+'Mostre-me como você fica animado!',
+'Você consegue pular para cima e para baixo com um grande sorriso? ',
+'Mostre-me sua cara quando você vai para algum lugar divertido!',
+'Faça uma cara animada e acene as mãos!',
+      ],
+      confused: [
+'Mostre-me uma cara confusa',
+'Você consegue franzir a testa como se estivesse pensando muito? ',
+'Mostre-me como você fica quando não entende algo',
+'Faça uma cara como se estivesse resolvendo um quebra-cabeça!',
+      ],
+      proud: [
+'Mostre-me como você fica orgulhoso!',
+'Você consegue ficar em pé e sorrir como se tivesse feito algo ótimo? ',
+'Mostre-me sua cara orgulhosa quando termina um quebra-cabeça!',
+'Faça uma cara como se tivesse ajudado alguém!',
+      ],
+      shy: [
+'Mostre-me uma cara tímida',
+'Você consegue esconder um pouco o rosto? ',
+'Mostre-me como você fica quando conhece alguém novo',
+'Faça um sorriso tímido e olhe para baixo!',
+      ],
+      loving: [
+'Mostre-me sua cara amorosa!',
+'Você consegue se dar um grande abraço? ',
+'Mostre-me como você olha para alguém que ama!',
+'Faça uma cara como se estivesse dando beijos!',
+      ],
+    },
+  },
+
   // Music challenge UI strings
   music: {
     amazing: 'Incrível!',
     levelComplete: 'Nível {{level}} concluído!',
     playingYourSong: 'Tocando sua música...',
     listeningToMelody: 'Ouça sua melodia...',
-    retry: '↻ Tentar novamente',
+    retry: 'Tentar novamente',
     goHarder: 'Aumentar dificuldade',
     goHarderLevel: 'Aumentar dificuldade (Nv {{level}})',
-    continueStory: 'Continuar história →',
-    skip: 'Pular →',
-    blowMode: '♪ Soprar',
-    pressMode: '♫ Pressionar',
-    blowing: '♪ Soprando!',
+    continueStory: 'Continuar história',
+    skip: 'Pular',
+    blowMode: 'Soprar',
+    pressMode: 'Pressionar',
+    blowing: 'Soprando!',
     blowWhileHolding: 'Sopre enquanto segura as notas',
     tryAgain: 'Tente novamente!',
     openMusicSheet: 'Abrir partitura',
     showControls: 'Mostrar controles',
     hideControls: 'Ocultar controles',
-    musicSheet: '♪ Partitura',
+    musicSheet: 'Partitura',
     notesToPlay: 'Notas para tocar ({{completed}}/{{total}})',
     pause: 'Pausar',
     preview: 'Pré-visualizar',
     tapAndHoldNotes: 'Toque e segure as notas para ouvi-las',
     playingPreview: 'Reproduzindo pré-visualização… toque em Pausar para parar',
-    successSong: '♫ Música de sucesso',
-    readyToPlay: '♫ Pronto para tocar',
+    successSong: ' Música de sucesso',
+    readyToPlay: ' Pronto para tocar',
     chooseInstrument: 'Escolha seu instrumento',
     swipeToExplore: 'Deslize para explorar, toque para selecionar',
     useThisInstrument: 'Usar este instrumento',
@@ -894,18 +1169,71 @@ export default {
       songOfBreak: 'Canção da quebra',
       songOfFix: 'Canção do conserto',
     },
+    // Binaural / relaxation track titles and descriptions
+    tracks: {
+      tantrumAlpha: {
+        title: 'Acalmar birra (10Hz)',
+        artist: 'Batidas binaurais',
+        description: 'Ondas alfa para acalmar birras. Use fones de ouvido.',
+      },
+      sleepAlpha: {
+        title: 'Rumo ao relaxamento',
+        artist: 'Batidas binaurais',
+        description: 'Ondas alfa para iniciar o relaxamento. Repete.',
+      },
+      sleepTheta: {
+        title: 'Relaxamento profundo',
+        artist: 'Batidas binaurais',
+        description: 'Ondas theta para relaxamento profundo. Repete.',
+      },
+      sleepSequence: {
+        title: 'Sequência completa de relaxamento',
+        artist: 'Batidas binaurais',
+        description: 'Progressão completa: Rumo ao relaxamento → Relaxamento profundo.',
+      },
+      bearsBirthdayParty: {
+        title: 'Festa de aniversário do urso',
+        artist: 'História para dormir',
+        description: 'Uma história emocionante sobre um urso celebrando um aniversário especial.',
+      },
+      damselElephant: {
+        title: 'Damsel o elefante',
+        artist: 'História para dormir',
+        description: 'Junte-se a Damsel o elefante numa aventura suave.',
+      },
+      jimmyMouse: {
+        title: 'Jimmy Rato e os urbanos',
+        artist: 'História para dormir',
+        description: 'Um ratinho descobre a cidade grande.',
+      },
+      newYearJungle: {
+        title: 'Ano Novo na selva',
+        artist: 'História para dormir',
+        description: 'Os animais da selva celebram juntos o ano novo.',
+      },
+      snowWhite: {
+        title: 'Branca de Neve',
+        artist: 'História para dormir',
+        description: 'O clássico conto de fadas, perfeito para dormir.',
+      },
+    },
+    tags: {
+      calming: 'Calmante',
+      bedtime: 'Hora de dormir',
+      stories: 'Histórias',
+    },
   },
 
   jigsaw: {
     amazing: 'Incrível!',
-    beginPuzzle: '🧩 Começar quebra-cabeça',
+    beginPuzzle: 'Começar quebra-cabeça',
     completedMoves: 'Completado em {{count}} movimentos!',
-    continueStory: 'Continuar história →',
+    continueStory: 'Continuar história',
     preview: 'Pré-visualizar',
     reset: 'Reiniciar',
     scramble: 'Embaralhar',
     shuffle: 'Embaralhar',
-    skip: 'Pular →',
+    skip: 'Pular',
     tapToClose: 'Toque em qualquer lugar para fechar',
   },
 
@@ -942,7 +1270,7 @@ export default {
     firstWordsDesc: 'Soletre palavras simples com peças coloridas',
     firstWordsAge: 'Idades 1-2',
     colourSpelling: 'Soletrar Cores',
-    colourSpellingDesc: 'Consegue soletrar as cores do arco-íris?',
+    colourSpellingDesc: 'Consegue soletrar as cores do arco-íris? ',
     colourSpellingAge: 'Idades 1-2',
     shapeNames: 'Nomes de Formas',
     shapeNamesDesc: 'Soletre círculos, quadrados e mais!',
@@ -990,7 +1318,7 @@ export default {
     colourCountingDesc: 'Conte objetos coloridos e aprenda números!',
     colourCountingAge: 'Idades 1-2',
     shapeCounting: 'Contar Formas',
-    shapeCountingDesc: 'Quantas formas consegue contar?',
+    shapeCountingDesc: 'Quantas formas consegue contar? ',
     shapeCountingAge: 'Idades 1-2',
     oneTwoThree: 'Um, Dois, Três!',
     oneTwoThreeDesc: 'Uma suave primeira aventura de contagem',
@@ -1002,7 +1330,7 @@ export default {
     animalCountingDesc: 'Conte os animais na fazenda e na selva!',
     animalCountingAge: 'Idades 2-4',
     fruitCounting: 'Contar Frutas',
-    fruitCountingDesc: 'Quantas frutas consegue contar na cesta?',
+    fruitCountingDesc: 'Quantas frutas consegue contar na cesta? ',
     fruitCountingAge: 'Idades 2-4',
     toyCounting: 'Contar Brinquedos',
     toyCountingDesc: 'Conte seus brinquedos favoritos e aprenda números!',
@@ -1108,6 +1436,14 @@ export default {
     signInRequiredMessage: 'Precisa de iniciar sessão antes de poder subscrever. A sua subscrição será associada à sua conta para aceder em todos os seus dispositivos.',
     signInRequiredConfirm: 'Iniciar sessão',
     signInRequiredCancel: 'Agora não',
+    errorTitle: 'Erro de Assinatura',
+    errorUnavailable: 'Este plano não está disponível no momento. Tente novamente mais tarde.',
+    errorGeneric: 'Algo deu errado. Tente novamente.',
+    restorePurchases: 'Restaurar Compras',
+    restoreSuccessTitle: 'Compras Restauradas',
+    restoreSuccessMessage: 'Sua assinatura foi restaurada com sucesso.',
+    restoreNoneTitle: 'Nenhuma Compra Encontrada',
+    restoreNoneMessage: 'Não conseguimos encontrar compras anteriores para restaurar.',
   },
 
   defaultPage: {

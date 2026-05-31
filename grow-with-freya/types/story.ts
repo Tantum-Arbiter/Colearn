@@ -208,6 +208,14 @@ export function getLocalizedText(
       const ageResult = language ? (ageLocalized[language] || ageLocalized.en) : ageLocalized.en;
       if (ageResult) return ageResult;
     }
+
+    // If ageGroupText is actually a flat LocalizedText (keys are language codes, not age groups),
+    // treat it as a localized text object directly.
+    const flatText = ageGroupText as unknown as LocalizedText;
+    if (flatText.en || flatText.fr || flatText.es || flatText.de) {
+      const flatResult = language ? (flatText[language] || flatText.en) : flatText.en;
+      if (flatResult) return flatResult;
+    }
   }
 
   // Fall back to standard localized text

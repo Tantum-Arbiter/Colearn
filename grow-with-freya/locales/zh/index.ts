@@ -26,6 +26,9 @@ export default {
     medium: '中',
     large: '大',
     extraLarge: '超大',
+    openSettings: '打开设置',
+    on: '开',
+    off: '关',
   },
   alerts: {
     logout: {
@@ -111,7 +114,7 @@ export default {
     stories: '故事',
     practise: '练习',
     freeplay: '自由演奏',
-    instruments: '演奏乐器',
+    instruments: '乐器',
     learning: '学习',
     spelling: '拼写',
     numbers: '数字',
@@ -182,6 +185,7 @@ export default {
     pageNumber: '第{{number}}页',
     current: '当前',
     fontButtonSize: '字体/按钮大小',
+    changeLanguage: '更改语言',
     compareLanguage: '比较语言',
     compareLanguageOn: '比较语言：打开',
     compareLanguageOff: '比较语言：关闭',
@@ -291,6 +295,7 @@ export default {
     noScreenTime: '无屏幕时间',
     recommended: '推荐',
     excessive: '过度',
+    overLimit: '超出限制',
     createMySchedule: '创建我的日程',
     scheduleIntro: '为孩子的屏幕时间活动设置自定义通知时间。当该进行故事、情感或音乐活动时，您会收到温和的提醒。',
     scheduleIntroShort: '为孩子的屏幕时间活动设置自定义通知时间。',
@@ -315,7 +320,6 @@ export default {
     saveSettings: '保存设置',
     settingsSyncNote: '您的设置将在所有设备间同步',
     notificationsEnabled: '通知已启用！',
-    dontForgetToSave: '别忘了保存您的更改！',
     permissionRequired: '需要权限',
     enableNotificationsInSettings: '在设备设置中启用通知。',
     sun: '星期日',
@@ -334,6 +338,10 @@ export default {
     creating: '创建中...',
     noReminders: '无自定义提醒',
     noRemindersHint: '创建您的第一个提醒以开始自定义活动通知。',
+    permissionRequired: {
+      title: '需要通知权限',
+      message: '要接收提醒，请在设备设置中为此应用启用通知。',
+    },
     total: '总计',
     today: '今天',
     loading: '加载提醒中...',
@@ -345,7 +353,7 @@ export default {
     messagePlaceholder: '输入提醒消息...',
     dayOfWeek: '星期几',
     timeLabel: '时间',
-    timeSlotTaken: '⚠️ 此时间段在此日期已被占用',
+    timeSlotTaken: ' 此时间段在此日期已被占用',
     conflictHint: '红色(!)表示所选日期的冲突。所有时间都可用。',
     selectDayHint: '选择工作日以查看时间可用性',
     active: '活跃',
@@ -428,8 +436,8 @@ export default {
     profile: '个人资料',
     nickname: '昵称',
     avatarType: '头像类型',
-    boy: '👦 男孩',
-    girl: '👧 女孩',
+    boy: ' 男孩',
+    girl: ' 女孩',
     settings: '设置',
     language: '语言',
     textSize: '文本大小',
@@ -455,10 +463,10 @@ export default {
     nicknamePlaceholder: '输入昵称...',
     nicknameCharacters: '{{count}}/20个字符',
     avatarType: '头像类型',
-    boy: '👦 男孩',
-    girl: '👧 女孩',
+    boy: ' 男孩',
+    girl: ' 女孩',
     saveChanges: '保存更改',
-    comingSoon: '✨ 个人资料自定义选项即将推出 - 仍在开发中！',
+    comingSoon: ' 个人资料自定义选项即将推出 - 仍在开发中！',
   },
   onboarding: {
     welcome: '欢迎！',
@@ -541,9 +549,9 @@ export default {
     },
   },
   tutorial: {
-    welcomeTitle: '欢迎来到\nEarlyroots! 🎉',
+    welcomeTitle: '欢迎来到\nEarlyroots!',
     welcomeDescription: '让我们进行快速导览，帮助您和孩子充分利用阅读时间。',
-    storiesTitle: '故事库 📚',
+    storiesTitle: '故事库',
     storiesDescription: '点击此处探索包含精美插图和有趣互动的互动故事集合。',
     skip: '跳过',
     gotIt: '明白了！',
@@ -560,111 +568,119 @@ export default {
     },
     mainMenu: {
       welcome: {
-        title: '欢迎来到Grow with Freya! 🎉',
+        title: '欢迎来到Grow with Freya!',
         description: '让我们进行快速导览，帮助您和孩子充分利用阅读时间。',
       },
       stories: {
-        title: '故事 📚',
+        title: '故事',
         description: '探索我们的互动故事系列，拥有精美的插图和有趣的互动体验。',
       },
       practise: {
-        title: '练习 🎵',
+        title: '练习',
         description: '学习在不同乐器上演奏歌曲。跟着节奏，提升你的音乐技能！',
       },
       freeplay: {
-        title: '自由演奏 🎹',
+        title: '自由演奏',
         description: '在任何乐器上自由演奏——没有规则，只有乐趣！尝试各种声音，创作属于你的音乐。',
       },
+      instruments: {
+        title: '乐器',
+        description: '练习歌曲或在不同乐器上自由演奏。在享受乐趣的同时提升音乐技能！',
+      },
+      learning: {
+        title: '学习',
+        description: '互动拼写和数字活动，帮助培养早期读写和计算能力。',
+      },
       settings: {
-        title: '设置 ⚙️',
+        title: '设置',
         description: '自定义应用以最适合您的家庭。',
       },
       sound: {
-        title: '声音控制 🔊',
+        title: '声音控制',
         description: '点击此处管理背景音乐和音效。',
       },
     },
     screenTime: {
       intro: {
-        title: '屏幕时间仪表板 ⏱️',
+        title: '屏幕时间仪表板',
         description: '使用适合年龄的限制监控、管理和设置孩子的每日屏幕时间。',
       },
       ageBased: {
-        title: '基于年龄的限制 👶',
+        title: '基于年龄的限制',
         description: '设置孩子的年龄并自动获得WHO/AAP推荐的屏幕时间限制。',
       },
       heatmap: {
-        title: '周活动 📊',
+        title: '周活动',
         description: '查看整周的屏幕时间使用模式以帮助建立健康的常规。',
       },
       reminders: {
-        title: '设置提醒 ⏰',
+        title: '设置提醒',
         description: '为活动、休息或睡前常规创建自定义提醒。',
       },
       routine: {
-        title: '建立健康常规 🌟',
+        title: '建立健康常规',
         description: '使用屏幕时间数据建立适合您家庭的一致日常常规。',
       },
     },
     storyReader: {
       welcome: {
-        title: '阅读时间提示 📖',
+        title: '阅读时间提示',
         description: '以下是一些使与孩子的阅读时间神奇的提示！',
       },
       interactive: {
-        title: '寻找互动 ✨',
+        title: '寻找互动',
         description: '某些页面有隐藏的惊喜！鼓励孩子点击闪闪发光或闪烁的东西。',
       },
       point: {
-        title: '指向并讨论 👆',
+        title: '指向并讨论',
         description: '提出关于图片的问题。"你看到什么？""蝴蝶是什么颜色？"',
       },
       pause: {
-        title: '暂停并预测 🤔',
+        title: '暂停并预测',
         description: '在翻页前问"你认为接下来会发生什么？"以增加参与度。',
       },
       voices: {
-        title: '使用不同的声音 🎭',
+        title: '使用不同的声音',
         description: '用傻傻的声音给角色赋予生命！孩子们喜欢表演。',
       },
       navigate: {
-        title: '轻松导航 📚',
+        title: '轻松导航',
         description: '向左或向右滑动以快速翻页。点击菜单按钮获取更多选项。',
       },
       tapWords: {
-        title: '点击单词以聚焦 👆',
+        title: '点击单词以聚焦',
         description: '点击故事中的任何单词以突出显示它！这有助于吸引注意力并使阅读更具互动性和吸引力。',
       },
       compareLanguages: {
-        title: '比较语言 🌍',
+        title: '比较语言',
         description: '使用菜单启用"比较语言"并并排以两种语言显示故事。非常适合多语言家庭一起学习！',
       },
     },
     bookMode: {
       read: {
-        title: '阅读模式 📖',
+        title: '阅读模式',
         description: '点击此处与孩子一起自己阅读故事。按自己的节奏翻页。',
       },
       record: {
-        title: '录制模式 🎙️',
+        title: '录制模式',
         description: '在阅读故事时录制您的声音。当您不在时完美！',
       },
       narrate: {
-        title: '聆听模式 🎧',
+        title: '聆听模式',
         description: '聆听故事的预先录制的叙述。非常适合睡前！',
       },
       preview: {
-        title: '预览 👁️',
+        title: '预览',
         description: '在开始阅读前检查故事详情、时长和主题。',
       },
     },
     recordMode: {
       intro: {
-        title: '录制您的声音 🎙️',
+        title: '录制您的声音',
         description: '为这个故事创建个人叙述。孩子可以随时听 - 即使您不在！',
       },
       button: {
-        title: '录制控制 🔴',
+        title: '录制控制',
         description: '点击麦克风按钮开始录制。大声读出页面文本，然后再次点击停止。',
       },
       playback: {
@@ -672,123 +688,241 @@ export default {
         description: '聆听录制并在必要时重新录制。孩子们喜欢听到您的声音！',
       },
       sound: {
-        title: '声音提示 🔊',
+        title: '声音提示',
         description: '找一个安静的地方以获得最佳录制质量。背景噪音可能会分散注意力。',
       },
       limit: {
-        title: '家庭声音 👨‍👩‍👧',
+        title: '家庭声音',
         description: '多个家庭成员可以录制！祖母、叔叔和阿姨 - 让每个人都参与。',
       },
       benefit: {
-        title: '为什么录制？ 💜',
+        title: '为什么录制？',
         description: '研究表明听到熟悉的声音可以帮助孩子感到安全和联系，特别是在分离期间。',
       },
       navigation: {
-        title: '页面导航 📖',
+        title: '页面导航',
         description: '使用箭头在页面之间导航。录制每一页以创建完整的叙述故事！',
       },
     },
     narrateMode: {
       intro: {
-        title: '聆听模式 🎧',
+        title: '聆听模式',
         description: '放松并享受！故事用录制的声音大声朗读。',
       },
       autoPlayback: {
-        title: '自动播放 📖',
+        title: '自动播放',
         description: '叙述完成后页面自动翻转。非常适合睡前！',
       },
       controls: {
-        title: '播放控制 ▶️',
+        title: '播放控制',
         description: '使用控制暂停、重新聆听或快进。检查速度。',
       },
       sound: {
-        title: '声音提示 🔊',
+        title: '声音提示',
         description: '确保设备音量很高！使用耳机以获得更多沉浸感。',
       },
       benefit: {
-        title: '绑定时间 💜',
+        title: '绑定时间',
         description: '即使在聆听模式下，也要保持参与！指向图片、提出问题并一起享受故事。',
       },
     },
     settings: {
       intro: {
-        title: '设置 ⚙️',
+        title: '设置',
         description: '自定义应用以最适合您的家庭。',
       },
       login: {
-        title: '账户和同步 🔐',
+        title: '账户和同步',
         description: '登录以保存进度并在设备间同步。',
       },
       language: {
-        title: '语言 🌍',
+        title: '语言',
         description: '为应用界面选择您的首选语言。',
       },
       avatar: {
-        title: '您的头像 🎭',
+        title: '您的头像',
         description: '使用自定义头像个性化孩子的体验。',
       },
       accessibility: {
-        title: '无障碍 ♿',
+        title: '无障碍',
         description: '调整文本大小和其他设置以便于使用。',
       },
       screenTime: {
-        title: '屏幕时间 ⏱️',
+        title: '屏幕时间',
         description: '设置健康限制并监控每日使用。',
       },
     },
     // Music Mode Tips - keys match tutorial.musicMode.* in tutorial-content.ts
     musicMode: {
       welcome: {
-        title: '音乐模式 🎵',
+        title: '音乐模式',
         description: '这个故事的某些页面有音乐挑战！在虚拟乐器上演奏音符来完成它们。',
       },
       instrument: {
-        title: '选择你的乐器 🎹',
+        title: '选择你的乐器',
         description: '当打开一本有音乐的书时，滑动轮播图选择你最喜欢的乐器。每种乐器都有独特的声音！',
       },
       playing: {
-        title: '演奏音符 🎶',
+        title: '演奏音符',
         description: '按下彩色按钮来演奏音符。按照顶部显示的序列来完成挑战！',
       },
       sheet: {
-        title: '乐谱 📋',
+        title: '乐谱',
         description: '点击音符按钮（左下角）查看所有需要演奏的音符。你甚至可以预览旋律！',
       },
       begin: {
-        title: '开始演奏 ▶️',
+        title: '开始演奏',
         description: '当你到达音乐页面时，点击顶部的"开始演奏"按钮来启动挑战。它会先打开乐谱，让你看到要演奏什么！',
       },
       change: {
-        title: '更换乐器 🔄',
-        description: '想试试不同的声音？打开菜单（☰）并点击"更换乐器"随时更换。',
+        title: '更换乐器',
+        description: '想试试不同的声音？打开菜单（）并点击"更换乐器"随时更换。',
       },
     },
     storyModes: {
       welcome: {
-        title: '三种探索方式！🌟',
+        title: '三种探索方式！',
         description: '每个孩子的学习方式不同。选择能激发孩子好奇心的故事体验——每一种都通过游戏的魔力培养基本技能。',
       },
       interactive: {
-        title: '互动故事 ✨',
+        title: '互动故事',
         description: '点击、滑动和发现！互动故事通过可触摸的惊喜、因果关系时刻和动手学习活动让页面活起来。研究表明，阅读时的积极参与能增强理解力、精细运动技能和早期问题解决能力。',
       },
       musical: {
-        title: '音乐故事 🎵',
+        title: '音乐故事',
         description: '阅读、演奏和表演！音乐故事将真正的乐器挑战融入每一次冒险——您的孩子在跟随故事的同时学习节奏、旋律和协调。研究证实，早期接触音乐能提高记忆力、语言发展和情感表达能力。',
       },
       jigsaw: {
-        title: '拼图故事 🧩',
+        title: '拼图故事',
         description: '拼在一起！拼图故事在每一页中隐藏美丽的拼图，培养空间意识、耐心和逻辑思维。完成拼图让孩子获得真正的成就感，并增强支持阅读准备的视觉感知技能。',
       },
     },
     gestures: {
       speakerLongPress: {
-        title: '长按提示 👆',
+        title: '长按提示',
         description: '长按扬声器按钮以查看额外的声音选项。',
       },
       storySwipe: {
-        title: '滑动导航 👆',
+        title: '滑动导航',
         description: '向左或向右滑动以快速翻页。',
+      },
+    },
+    // Emotion Cards Tips
+    emotionCards: {
+      welcome: {
+        title: '欢迎来到情感卡!',
+        description: '通过互动和有趣的卡帮助孩子识别和表达情感。',
+      },
+      together: {
+        title: '一起玩',
+        description: '与孩子坐在一起并轮流翻卡。一起做鬼脸 - 更有趣！',
+      },
+      connect: {
+        title: '建立联系',
+        description: '提出"你什么时候感到这样？"之类的问题来帮助孩子理解情感。',
+      },
+      scenarios: {
+        title: '创建场景',
+        description: '表演可能触发每种情感的情况。"如果你的玩具坏了你会怎样感受？"',
+      },
+      themes: {
+        title: '尝试不同的主题',
+        description: '在表情符号、动物和熊主题之间切换以保持新鲜和有趣！',
+      },
+    },
+    // Spelling Tips
+    spelling: {
+      welcome: {
+        title: '拼写活动',
+        description: '欢迎来到拼写！有趣的互动活动，帮助您的孩子学习字母、单词和拼写。',
+      },
+      ages: {
+        title: '适龄内容',
+        description: '活动按年龄段分组。使用顶部的轮播器筛选适合您孩子水平的内容。',
+      },
+      together: {
+        title: '一起学习',
+        description: '和孩子坐在一起，一起大声拼读字母。鼓励他们，为每一次尝试欢呼！',
+      },
+      benefit: {
+        title: '培养识字能力',
+        description: '早期的拼写练习培养音素意识、字母识别和终身热爱文字的能力。',
+      },
+    },
+    // Numbers Tips
+    numbers: {
+      welcome: {
+        title: '数字活动',
+        description: '欢迎来到数字！引人入胜的活动，帮助您的孩子探索计数、形状和初级数学。',
+      },
+      ages: {
+        title: '适龄内容',
+        description: '活动按年龄段分组。使用顶部的轮播器为您的孩子找到合适的水平。',
+      },
+      together: {
+        title: '一起数数',
+        description: '一起大声数数，指向物品，让数字成为日常游戏的一部分！',
+      },
+      benefit: {
+        title: '培养数学能力',
+        description: '早期的数字游戏培养逻辑思维、模式识别和扎实的数学基础。',
+      },
+    },
+    // Feelings Tips
+    feelings: {
+      welcome: {
+        title: '情感活动',
+        description: '欢迎来到情感！帮助您的孩子认识、命名和理解情绪的活动。',
+      },
+      ages: {
+        title: '适龄内容',
+        description: '活动按年龄段分组。选择适合孩子情感发展的活动。',
+      },
+      together: {
+        title: '一起探索',
+        description: '坦诚地谈论情绪。问"这让你感觉怎么样？"也分享你自己的感受。',
+      },
+      benefit: {
+        title: '情商',
+        description: '理解情绪培养同理心、自我调节和强大的社交技能——这对终身幸福至关重要。',
+      },
+    },
+    // Practise Mode Tips
+    practise: {
+      welcome: {
+        title: '练习模式',
+        description: '学习用不同的乐器演奏真正的歌曲！跟着音符，一步步提高你的音乐技能。',
+      },
+      instrument: {
+        title: '选择你的乐器',
+        description: '滑动轮播器选择你最喜欢的乐器。每一个都有独特的声音！',
+      },
+      songs: {
+        title: '选一首歌',
+        description: '浏览歌曲库，选择一首要学的歌。歌曲按难度排序——从简单的开始吧！',
+      },
+      benefit: {
+        title: '音乐发展',
+        description: '学习演奏歌曲培养节奏感、协调性、记忆力和注意力——都是通过音乐的快乐。',
+      },
+    },
+    // Freeplay Mode Tips
+    freeplay: {
+      welcome: {
+        title: '自由演奏模式',
+        description: '没有规则，只有乐趣！探索任何乐器，创作你自己的音乐。完美的创意和自我表达。',
+      },
+      instrument: {
+        title: '选择你的乐器',
+        description: '从轮播器中选择任何乐器。试试所有的，发现新的声音和最爱！',
+      },
+      play: {
+        title: '自由演奏',
+        description: '按下彩色按钮来创作音乐。没有错误的音符——每个声音都是冒险的一部分！',
+      },
+      benefit: {
+        title: '创意表达',
+        description: '自由的音乐游戏培养创造力、自信心和与孩子一起成长的音乐热爱。',
       },
     },
   },
@@ -819,33 +953,176 @@ export default {
     approachingMessage: '今天的屏幕时间还剩{{minutes}}分钟。您想继续还是关闭应用？',
     limitReachedMessage: '您已达到每日屏幕时间限制。是时候关闭应用并尝试其他活动了！',
   },
+  // Relaxing music screen
+  relaxMusic: {
+    title: '更安静的地方',
+    screenTitle: '放松',
+    subtitle: '停一停。暂停。放松一下。',
+    headphoneGuidance: '为获得最佳体验，请使用耳机。找一个舒适的姿势，闭上眼睛，专注于呼吸。让声音引导你进入放松状态。',
+    stopAll: '停止',
+    tipsTitle: '放松技巧',
+    tipsBody: '这些音轨使用双耳节拍 — 每只耳朵之间微妙的频率差异，鼓励大脑放松下来。需要使用耳机才能产生效果。\n\n聆听时尝试这些简单的技巧：\n\n方块呼吸\n吸气4拍，屏住4拍，呼气4拍，屏住4拍。重复。\n\n身体扫描\n从脚趾开始，慢慢关注身体的每个部位。注意紧张感并有意识地放松。\n\n5-4-3-2-1 接地法\n注意5样你看到的、4样你触摸到的、3样你听到的、2样你闻到的和1样你尝到的。\n\n思绪云朵\n将每个想法想象成飘过天空的云。承认它，然后让它不加评判地飘过。',
+  },
+
+    // Emotion cards
+  emotions: {
+    title: '感受',
+    subtitle: '选择您的风格并学习感受',
+    greatJob: '做得好！',
+    sections: {
+      emotionCards: '情感卡片',
+      developingEmotions: '发展情感',
+      parentsToo: '父母也是',
+      parentsTooSubtitle: '我们为您准备了一些帮助您放松的内容，您做得非常棒。',
+      relaxingMusic: '放松音乐',
+      relaxingMusicDescription: '帮助您放松的舒缓声音和放松序列',
+    },
+    pickYourStyle: '选择您的风格',
+    expressWithTheme: '用{{theme}}表达{{emotion}}！',
+    expressing: '我在表达{{emotion}}！',
+    loading: '加载中...',
+    progress: '进度：{{completed}}/{{total}}',
+    themes: {
+      emoji: {
+        name: '表情符号',
+        description: '用有趣的表情符号脸表达情感',
+      },
+      animals: {
+        name: '动物',
+        description: '通过可爱的动物朋友学习情感',
+      },
+      bear: {
+        name: '熊',
+        description: '与友好的熊学习情感',
+      },
+    },
+    emoji: {
+      happy: '开心',
+      sad: '伤心',
+      angry: '生气',
+      surprised: '惊讶',
+      scared: '害怕',
+      excited: '兴奋',
+      confused: '困惑',
+      proud: '骄傲',
+      shy: '害羞',
+      loving: '充满爱',
+    },
+    animals: {
+      happy: '开心的兔子',
+      sad: '伤心的猫',
+      angry: '生气的狗',
+      surprised: '惊讶的鸡',
+      scared: '害怕的浣熊',
+      excited: '兴奋的狐狸',
+      confused: '困惑的大象',
+      proud: '骄傲的熊',
+      shy: '害羞的树懒',
+      loving: '充满爱的熊猫',
+    },
+    bear: {
+      happy: '开心的熊',
+      sad: '伤心的熊',
+      angry: '生气的熊',
+      surprised: '惊讶的熊',
+      scared: '害怕的熊',
+      excited: '兴奋的熊',
+      confused: '困惑的熊',
+      proud: '骄傲的熊',
+      shy: '害羞的熊',
+      loving: '充满爱的熊',
+    },
+    prompts: {
+      happy: [
+'展示你最大的笑容！',
+'你能像听到有趣的东西一样笑吗？',
+'做一个开心的脸并拍手！',
+'展示你收到礼物时的脸！',
+      ],
+      sad: [
+'展示伤心的脸',
+'你能像失去玩具一样撅嘴吗？',
+'展示你必须说再见时的感受',
+'做一个失望的脸',
+      ],
+      angry: [
+'展示生气的脸',
+'你能像生气一样撅嘴吗？',
+'展示当有人做坏事并扔掉你最喜欢的玩具时的脸',
+'做一个紧绷和嘟囔的脸！',
+      ],
+      surprised: [
+'展示惊讶的脸！',
+'你能睁大眼睛和嘴巴吗？',
+'展示你看到令人惊奇的东西时的脸！',
+'做一个像看到幽灵一样的脸！',
+      ],
+      scared: [
+'展示害怕的脸',
+'你能像害怕一样躲在手后面吗？',
+'展示你在暴风雨中的感受',
+'做一个像看到可怕东西一样的脸！',
+      ],
+      excited: [
+'展示兴奋的脸！',
+'你能跳上跳下并带着大笑容吗？',
+'展示你要去做有趣的事情时的脸！',
+'做一个兴奋的脸并挥动你的手！',
+      ],
+      confused: [
+'展示困惑的脸',
+'你能像深思熟虑一样撅嘴吗？',
+'展示你不理解某事时的脸',
+'做一个像在解谜一样的脸！',
+      ],
+      proud: [
+'展示骄傲的脸！',
+'你能挺直身体并像做了令人惊奇的事情一样微笑吗？',
+'展示你解开谜题时的骄傲脸！',
+'做一个像帮助了某人一样的脸！',
+      ],
+      shy: [
+'展示害羞的脸',
+'你能把脸藏一点吗？',
+'展示你遇到新人时的脸',
+'做一个害羞的笑容并向下看！',
+      ],
+      loving: [
+'展示充满爱的脸！',
+'你能给自己一个大拥抱吗？',
+'展示你看着你爱的人时的脸！',
+'做一个像在亲吻一样的脸！',
+      ],
+    },
+  },
+
   // Music challenge UI strings
   music: {
     amazing: '太棒了！',
     levelComplete: '第{{level}}关完成！',
     playingYourSong: '正在播放你的歌曲...',
     listeningToMelody: '聆听你的旋律...',
-    retry: '↻ 重试',
+    retry: '重试',
     goHarder: '增加难度',
     goHarderLevel: '增加难度 (等级 {{level}})',
-    continueStory: '继续故事 →',
-    skip: '跳过 →',
-    blowMode: '♪ 吹奏',
-    pressMode: '♫ 按键',
-    blowing: '♪ 吹奏中！',
+    continueStory: '继续故事',
+    skip: '跳过',
+    blowMode: '吹奏',
+    pressMode: '按键',
+    blowing: '吹奏中！',
     blowWhileHolding: '按住音符的同时吹气',
     tryAgain: '再试一次！',
     openMusicSheet: '打开乐谱',
     showControls: '显示控制',
     hideControls: '隐藏控制',
-    musicSheet: '♪ 乐谱',
+    musicSheet: '乐谱',
     notesToPlay: '待演奏音符 ({{completed}}/{{total}})',
     pause: '暂停',
     preview: '预览',
     tapAndHoldNotes: '点击并按住音符来聆听',
     playingPreview: '正在播放预览… 点击暂停以停止',
-    successSong: '♫ 成功之歌',
-    readyToPlay: '♫ 准备演奏',
+    successSong: ' 成功之歌',
+    readyToPlay: ' 准备演奏',
     chooseInstrument: '选择你的乐器',
     swipeToExplore: '滑动浏览，点击选择',
     useThisInstrument: '使用此乐器',
@@ -892,18 +1169,71 @@ export default {
       songOfBreak: '破之歌',
       songOfFix: '修之歌',
     },
+    // Binaural / relaxation track titles and descriptions
+    tracks: {
+      tantrumAlpha: {
+        title: '平息发脾气 (10Hz)',
+        artist: '双耳节拍',
+        description: '用于平息发脾气的阿尔法波。请使用耳机。',
+      },
+      sleepAlpha: {
+        title: '进入放松',
+        artist: '双耳节拍',
+        description: '开始放松的阿尔法波。循环播放。',
+      },
+      sleepTheta: {
+        title: '深度放松',
+        artist: '双耳节拍',
+        description: '深度放松的西塔波。循环播放。',
+      },
+      sleepSequence: {
+        title: '完整放松序列',
+        artist: '双耳节拍',
+        description: '完整进程：进入放松 → 深度放松。',
+      },
+      bearsBirthdayParty: {
+        title: '小熊的生日派对',
+        artist: '睡前故事',
+        description: '一个关于小熊庆祝特别生日的温馨故事。',
+      },
+      damselElephant: {
+        title: '大象丹赛尔',
+        artist: '睡前故事',
+        description: '和大象丹赛尔一起踏上温柔的冒险。',
+      },
+      jimmyMouse: {
+        title: '老鼠吉米和城里人',
+        artist: '睡前故事',
+        description: '一只小老鼠发现了大城市。',
+      },
+      newYearJungle: {
+        title: '丛林里的新年',
+        artist: '睡前故事',
+        description: '丛林动物们一起庆祝新年。',
+      },
+      snowWhite: {
+        title: '白雪公主',
+        artist: '睡前故事',
+        description: '经典童话白雪公主，适合睡前听。',
+      },
+    },
+    tags: {
+      calming: '镇静',
+      bedtime: '睡前',
+      stories: '故事',
+    },
   },
 
   jigsaw: {
     amazing: '太棒了！',
-    beginPuzzle: '🧩 开始拼图',
+    beginPuzzle: '开始拼图',
     completedMoves: '{{count}}步完成！',
-    continueStory: '继续故事 →',
+    continueStory: '继续故事',
     preview: '预览',
     reset: '重置',
     scramble: '打乱',
     shuffle: '重新洗牌',
-    skip: '跳过 →',
+    skip: '跳过',
     tapToClose: '点击任意位置关闭',
   },
 
@@ -1106,6 +1436,14 @@ export default {
     signInRequiredMessage: '订阅前需要登录。您的订阅将与您的账户关联，以便在所有设备上访问。',
     signInRequiredConfirm: '登录',
     signInRequiredCancel: '暂不',
+    errorTitle: '订阅错误',
+    errorUnavailable: '此计划目前不可用。请稍后再试。',
+    errorGeneric: '出了点问题。请重试。',
+    restorePurchases: '恢复购买',
+    restoreSuccessTitle: '购买已恢复',
+    restoreSuccessMessage: '您的订阅已成功恢复。',
+    restoreNoneTitle: '未找到购买记录',
+    restoreNoneMessage: '我们未能找到可恢复的历史购买记录。',
   },
 
   defaultPage: {

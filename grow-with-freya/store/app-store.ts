@@ -5,6 +5,11 @@ import { Logger } from '@/utils/logger';
 
 const log = Logger.create('Store');
 
+/** SSR-safe storage: returns a no-op shim when window is unavailable (Node/SSR rendering). */
+const safeAsyncStorage = typeof window === 'undefined'
+  ? { getItem: () => Promise.resolve(null), setItem: () => Promise.resolve(), removeItem: () => Promise.resolve() }
+  : AsyncStorage;
+
 
 
 // Subscription tiers
@@ -278,7 +283,7 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'app-storage',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => safeAsyncStorage),
       // Persist important app state including background animation positions
       // Note: isAppReady and hasHydrated are NOT persisted
       partialize: (state) => ({

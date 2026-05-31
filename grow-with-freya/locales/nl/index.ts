@@ -28,6 +28,7 @@ export default {
     extraLarge: 'Extra Groot',
     on: 'AAN',
     off: 'UIT',
+    openSettings: 'Instellingen openen',
   },
   alerts: {
     logout: {
@@ -37,7 +38,7 @@ export default {
     },
     resetApp: {
       title: 'App Resetten',
-      message: 'Dit verwijdert alle app-gegevens, inclusief inloggegevens, karakters en instellingen. Weet je het zeker?',
+      message: 'Dit verwijdert alle app-gegevens, inclusief inloggegevens, karakters en instellingen. Weet je het zeker? ',
     },
     deleteAccount: {
       title: 'Account verwijderen',
@@ -50,11 +51,11 @@ export default {
     },
     deleteReminder: {
       title: 'Herinnering Verwijderen',
-      message: '"{{title}}" verwijderen?',
+      message: '"{{title}}" verwijderen? ',
     },
     unsavedChanges: {
       title: 'Niet-opgeslagen Wijzigingen',
-      message: 'Je hebt niet-opgeslagen wijzigingen. Weet je zeker dat je wilt afsluiten zonder op te slaan?',
+      message: 'Je hebt niet-opgeslagen wijzigingen. Weet je zeker dat je wilt afsluiten zonder op te slaan? ',
     },
     missingTitle: {
       title: 'Titel Ontbreekt',
@@ -113,7 +114,7 @@ export default {
     stories: 'Verhalen',
     practise: 'Oefenen',
     freeplay: 'Vrij Spelen',
-    instruments: 'Instrumenten Spelen',
+    instruments: 'Instrumenten',
     learning: 'Leren',
     spelling: 'Spelling',
     numbers: 'Nummers',
@@ -123,11 +124,11 @@ export default {
     title: 'Toegankelijkheid',
     textSizeHint: 'Verbeter de zichtbaarheid door de grootte van tekst en knoppen aan te passen',
     grayscale: 'Grijswaarden/Hoog Contrast',
-    grayscaleHint: 'Gebruik de ingebouwde toegankelijkheidsinstellingen van je apparaat voor zwart-witmodus:',
+    grayscaleHint: 'Gebruik de ingebouwde toegankelijkheidsinstellingen van je apparaat voor zwart-witmodus: ',
     grayscaleIos: 'Instellingen → Toegankelijkheid → Scherm- en Tekstgrootte → Kleurfilters → Grijswaarden',
     grayscaleAndroid: 'Instellingen → Toegankelijkheid → Kleurinstellingen → Grijswaarden',
     blueLight: 'Blauwlichtfilter (Nachtmodus)',
-    blueLightHint: 'Verbeter de slaapkwaliteit van je kind door blauw licht te verminderen. Schakel de nachtmodus in op je apparaat:',
+    blueLightHint: 'Verbeter de slaapkwaliteit van je kind door blauw licht te verminderen. Schakel de nachtmodus in op je apparaat: ',
     blueLightIos: 'Instellingen → Scherm- en Helderheid → Night Shift → Aan',
     blueLightAndroid: 'Instellingen → Scherm → Nachtlicht (of Oogcomfort) → Aan',
     blueLightBenefit: 'Blauw licht op het scherm kan de slaapkwaliteit beïnvloeden. Het inschakelen van de nachtmodus \'s avonds helpt de hersenen van je kind zich voor te bereiden op slaap door blauwe golflengte te verminderen.',
@@ -189,8 +190,8 @@ export default {
     compareLanguageOn: 'Talen Vergelijken: Aan',
     compareLanguageOff: 'Talen Vergelijken: Uit',
     selectCompareLanguage: 'Selecteer een taal om te lezen, vergelijken of op te nemen.',
-    selectFirstLanguage: 'Eerste Taal (Wit Vak):',
-    selectSecondLanguage: 'Tweede Taal (Blauw Vak):',
+    selectFirstLanguage: 'Eerste Taal (Wit Vak): ',
+    selectSecondLanguage: 'Tweede Taal (Blauw Vak): ',
     done: 'Klaar',
     autoPlayOn: 'Automatisch Afspelen: Aan',
     autoPlayOff: 'Automatisch Afspelen: Uit',
@@ -202,16 +203,16 @@ export default {
     permissionMessage: 'Microfoontoestemming is vereist om audio op te nemen.',
     recordingError: 'Opnamefout',
     recordingErrorMessage: 'Kon opname niet starten. Probeer het opnieuw.',
-    overwriteRecording: 'Opname overschrijven?',
-    overwriteRecordingMessage: 'Deze pagina heeft al een opname. Wil je deze overschrijven met een nieuwe opname?',
+    overwriteRecording: 'Opname overschrijven? ',
+    overwriteRecordingMessage: 'Deze pagina heeft al een opname. Wil je deze overschrijven met een nieuwe opname? ',
     nameAlreadyExists: 'Naam Bestaat al',
     nameAlreadyExistsMessage: 'Er bestaat al een stem met de naam "{{name}}". Selecteer alstublieft een andere naam.',
     error: 'Fout',
     createVoiceOverError: 'Kon stem niet maken. Probeer het opnieuw.',
-    overwriteVoiceOver: 'Stem overschrijven?',
-    overwriteVoiceOverMessage: '"{{name}}" heeft opnames voor {{count}} pagina\'s. Wil je deze overschrijven met een nieuwe opname?',
+    overwriteVoiceOver: 'Stem overschrijven? ',
+    overwriteVoiceOverMessage: '"{{name}}" heeft opnames voor {{count}} pagina\'s. Wil je deze overschrijven met een nieuwe opname? ',
     deleteVoiceOver: 'Stem Verwijderen',
-    deleteVoiceOverMessage: '"{{name}}" verwijderen?',
+    deleteVoiceOverMessage: '"{{name}}" verwijderen? ',
     deleteVoiceOverMessageWithUndo: '"{{name}}" verwijderen? Dit kan niet ongedaan gemaakt worden.',
     overwrite: 'Overschrijven',
     delete: 'Verwijderen',
@@ -227,8 +228,8 @@ export default {
     narrateAs: 'Vertellen als: {{name}}',
     recordVoiceOver: 'Stemopname Maken',
     selectVoiceOver: 'Selecteer Stem',
-    selectExisting: 'Selecteer bestaande om te overschrijven:',
-    orCreateNew: 'of maak nieuw:',
+    selectExisting: 'Selecteer bestaande om te overschrijven: ',
+    orCreateNew: 'of maak nieuw: ',
     enterName: 'Voer naam in...',
     create: 'Maken',
     chooseRecording: 'Selecteer opname om af te spelen',
@@ -294,12 +295,13 @@ export default {
     noScreenTime: 'Geen Schermtijd',
     recommended: 'Aanbevolen',
     excessive: 'Buitensporig',
+    overLimit: 'Over de Limiet',
     createMySchedule: 'Mijn Schema Maken',
     scheduleIntro: 'Stel aangepaste meldingstijden in voor schermtijdactiviteiten van je kind. Je ontvangt zachte herinneringen wanneer het tijd is voor verhaal-, emotie- of muziekactiviteiten.',
     scheduleIntroShort: 'Stel aangepaste meldingstijden in voor schermtijdactiviteiten van je kind.',
     createCustomReminders: '+ Aangepaste Herinnering Maken',
     recommendedTimes: 'Aanbevolen Tijden',
-    recommendedTimesIntro: 'Volgens onderzoek naar kinderontwikkeling zijn de beste tijden voor schermactiviteiten:',
+    recommendedTimesIntro: 'Volgens onderzoek naar kinderontwikkeling zijn de beste tijden voor schermactiviteiten: ',
     morningStoriesEmotions: 'Ochtendverhalen en Emoties',
     afternoonLearning: 'Namiddagleeractiviteiten',
     preDinnerMusic: 'Ontspanningsmuziek voor het Diner',
@@ -336,6 +338,10 @@ export default {
     creating: 'Maken...',
     noReminders: 'Geen Aangepaste Herinneringen',
     noRemindersHint: 'Maak je eerste herinnering om aangepaste activiteitsmeldingen te starten.',
+    permissionRequired: {
+      title: 'Meldingen Vereist',
+      message: 'Om herinneringen te ontvangen, schakel meldingen in voor deze app in je apparaatinstellingen.',
+    },
     total: 'Totaal',
     today: 'Vandaag',
     loading: 'Herinneringen Laden...',
@@ -347,7 +353,7 @@ export default {
     messagePlaceholder: 'Voer herinneringbericht in...',
     dayOfWeek: 'Dag van de Week',
     timeLabel: 'Tijd',
-    timeSlotTaken: '⚠️ Dit tijdslot is al bezet op deze dag',
+    timeSlotTaken: ' Dit tijdslot is al bezet op deze dag',
     conflictHint: 'Rood (!) geeft conflict aan op geselecteerde dag. Alle tijden zijn beschikbaar.',
     selectDayHint: 'Selecteer weekdag om tijdbeschikbaarheid te zien',
     active: 'Actief',
@@ -430,8 +436,8 @@ export default {
     profile: 'Profiel',
     nickname: 'Bijnaam',
     avatarType: 'Avatartype',
-    boy: '👦 Jongen',
-    girl: '👧 Meisje',
+    boy: ' Jongen',
+    girl: ' Meisje',
     settings: 'Instellingen',
     language: 'Taal',
     textSize: 'Tekstgrootte',
@@ -457,15 +463,15 @@ export default {
     nicknamePlaceholder: 'Voer Bijnaam in...',
     nicknameCharacters: '{{count}}/20 tekens',
     avatarType: 'Avatartype',
-    boy: '👦 Jongen',
-    girl: '👧 Meisje',
+    boy: ' Jongen',
+    girl: ' Meisje',
     saveChanges: 'Wijzigingen Opslaan',
-    comingSoon: '✨ Profielaanpassingsopties Binnenkort - Nog in Ontwikkeling!',
+    comingSoon: ' Profielaanpassingsopties Binnenkort - Nog in Ontwikkeling!',
   },
   onboarding: {
     welcome: 'Welkom!',
     letsGetStarted: 'Laten we Beginnen',
-    whatsYourName: 'Wat is je Naam?',
+    whatsYourName: 'Wat is je Naam? ',
     enterNickname: 'Voer Bijnaam in',
     chooseAvatar: 'Kies Avatar',
     allSet: 'Alles Klaar!',
@@ -500,7 +506,7 @@ export default {
       },
       consent: {
         title: 'Voordat we beginnen',
-        body: 'Als ouder of voogd, lees en accepteer het volgende:',
+        body: 'Als ouder of voogd, lees en accepteer het volgende: ',
         button: 'Ik ga akkoord',
         closeLabel: 'Sluiten',
         dataSummary: {
@@ -524,7 +530,7 @@ export default {
       },
     },
     crashReportingDialog: {
-      title: 'Crashrapporten inschakelen?',
+      title: 'Crashrapporten inschakelen? ',
       body: 'Anonieme crashrapporten helpen bugs te repareren en de app te verbeteren. Er worden geen persoonlijke gegevens verzameld.\n\nJe kunt dit op elk moment in Instellingen wijzigen.',
       noThanks: 'Nee bedankt',
       enable: 'Inschakelen',
@@ -543,9 +549,9 @@ export default {
     },
   },
   tutorial: {
-    welcomeTitle: 'Welkom bij\nEarlyroots! 🎉',
+    welcomeTitle: 'Welkom bij\nEarlyroots!',
     welcomeDescription: 'Laten we een snelle rondleiding doen om jou en je kind te helpen het meeste uit leestijd te halen.',
-    storiesTitle: 'Verhalenbibliotheek 📚',
+    storiesTitle: 'Verhalenbibliotheek',
     storiesDescription: 'Tik hier om een verzameling interactieve verhalen met mooie illustraties en leuke interacties te verkennen.',
     skip: 'Overslaan',
     gotIt: 'Begrepen!',
@@ -562,111 +568,119 @@ export default {
     },
     mainMenu: {
       welcome: {
-        title: 'Welkom bij Grow with Freya! 🎉',
+        title: 'Welkom bij Grow with Freya!',
         description: 'Laten we een snelle rondleiding doen om jou en je kind te helpen het meeste uit leestijd te halen.',
       },
       stories: {
-        title: 'Verhalen 📚',
+        title: 'Verhalen',
         description: 'Ontdek onze collectie interactieve verhalen met prachtige illustraties en leuke interacties.',
       },
       practise: {
-        title: 'Oefenen 🎵',
+        title: 'Oefenen',
         description: 'Leer liedjes spelen op verschillende instrumenten. Volg mee en bouw je muzikale vaardigheden op!',
       },
       freeplay: {
-        title: 'Vrij Spelen 🎹',
+        title: 'Vrij Spelen',
         description: 'Speel vrij op elk instrument -geen regels, alleen plezier! Experimenteer met geluiden en maak je eigen muziek.',
       },
+      instruments: {
+        title: 'Instrumenten',
+        description: 'Oefen liedjes of jam vrij op verschillende instrumenten. Bouw muzikale vaardigheden op terwijl je plezier hebt!',
+      },
+      learning: {
+        title: 'Leren',
+        description: 'Interactieve spelling- en rekenactiviteiten die helpen bij het opbouwen van vroege lees- en rekenvaardigheden.',
+      },
       settings: {
-        title: 'Instellingen ⚙️',
+        title: 'Instellingen',
         description: 'Pas de app aan zodat deze het beste voor je gezin werkt.',
       },
       sound: {
-        title: 'Geluidsbediening 🔊',
+        title: 'Geluidsbediening',
         description: 'Tik hier om achtergrondmuziek en geluidseffecten te beheren.',
       },
     },
     screenTime: {
       intro: {
-        title: 'Schermtijd Dashboard ⏱️',
+        title: 'Schermtijd Dashboard',
         description: 'Monitor, beheer en stel dagelijkse schermtijd van je kind in met leeftijdsgeschikte limieten.',
       },
       ageBased: {
-        title: 'Leeftijdsgebaseerde Limieten 👶',
+        title: 'Leeftijdsgebaseerde Limieten',
         description: 'Stel de leeftijd van je kind in en ontvang automatisch WHO/AAP aanbevolen schermtijdlimieten.',
       },
       heatmap: {
-        title: 'Wekelijkse Activiteit 📊',
+        title: 'Wekelijkse Activiteit',
         description: 'Zie schermtijd gebruikspatronen gedurende de week om je te helpen een gezonde routine op te bouwen.',
       },
       reminders: {
-        title: 'Stel Herinneringen in ⏰',
+        title: 'Stel Herinneringen in',
         description: 'Maak aangepaste herinneringen voor activiteiten, pauzes of slaaptijdroutine.',
       },
       routine: {
-        title: 'Bouw Gezonde Routine op 🌟',
+        title: 'Bouw Gezonde Routine op',
         description: 'Gebruik schermtijdgegevens om een consistente dagelijkse routine op te bouwen die voor je gezin werkt.',
       },
     },
     storyReader: {
       welcome: {
-        title: 'Leestijdtips 📖',
+        title: 'Leestijdtips',
         description: 'Hier zijn enkele tips om leestijd met je kind magisch te maken!',
       },
       interactive: {
-        title: 'Zoek Interacties ✨',
+        title: 'Zoek Interacties',
         description: 'Sommige pagina\'s hebben verborgen verrassingen! Moedig je kind aan om op glimmende of flitsende dingen te tikken.',
       },
       point: {
-        title: 'Wijs en Bespreek 👆',
+        title: 'Wijs en Bespreek',
         description: 'Stel vragen over afbeeldingen. "Wat zie je?" "Welke kleur is de vlinder?"',
       },
       pause: {
-        title: 'Pauzeer en Voorspel 🤔',
+        title: 'Pauzeer en Voorspel',
         description: 'Vraag "Wat denk je dat er volgende gebeurt?" voordat je de pagina omdraait om betrokkenheid te vergroten.',
       },
       voices: {
-        title: 'Gebruik Verschillende Stemmen 🎭',
+        title: 'Gebruik Verschillende Stemmen',
         description: 'Geef karakters leven met domme stemmen! Kinderen houden van performance.',
       },
       navigate: {
-        title: 'Gemakkelijke Navigatie 📚',
+        title: 'Gemakkelijke Navigatie',
         description: 'Veeg naar links of rechts om pagina\'s om te draaien. Tik op menuknop voor meer opties.',
       },
       tapWords: {
-        title: 'Tik op Woorden om te Focussen 👆',
+        title: 'Tik op Woorden om te Focussen',
         description: 'Tik op elk woord in het verhaal om het te markeren! Dit helpt aandacht te trekken en maakt lezen interactiever en boeiender.',
       },
       compareLanguages: {
-        title: 'Vergelijk Talen 🌍',
+        title: 'Vergelijk Talen',
         description: 'Gebruik het menu om "Talen Vergelijken" in te schakelen en het verhaal naast elkaar in twee talen weer te geven. Perfect voor meertalige gezinnen om samen te leren!',
       },
     },
     bookMode: {
       read: {
-        title: 'Leesmodus 📖',
+        title: 'Leesmodus',
         description: 'Tik hier om het verhaal zelf met je kind te lezen. Draai pagina\'s in je eigen tempo.',
       },
       record: {
-        title: 'Opnamemodus 🎙️',
+        title: 'Opnamemodus',
         description: 'Neem je stem op terwijl je het verhaal leest. Perfect als je weg bent!',
       },
       narrate: {
-        title: 'Luistermodus 🎧',
+        title: 'Luistermodus',
         description: 'Luister naar een vooraf opgenomen vertelling van het verhaal. Perfect voor slaaptijd!',
       },
       preview: {
-        title: 'Voorbeeld 👁️',
+        title: 'Voorbeeld',
         description: 'Controleer verhaaldetails, duur en thema\'s voordat je begint met lezen.',
       },
     },
     recordMode: {
       intro: {
-        title: 'Neem je Stem op 🎙️',
+        title: 'Neem je Stem op',
         description: 'Maak een persoonlijke vertelling voor dit verhaal. Je kind kan op elk moment luisteren - zelfs als je weg bent!',
       },
       button: {
-        title: 'Opnamecontroles 🔴',
+        title: 'Opnamecontroles',
         description: 'Tik op microfoonknop om opname te starten. Lees paginatekst hardop, tik dan opnieuw om te stoppen.',
       },
       playback: {
@@ -674,123 +688,241 @@ export default {
         description: 'Luister naar de opname en neem opnieuw op indien nodig. Kinderen houden ervan je stem te horen!',
       },
       sound: {
-        title: 'Geluidstip 🔊',
+        title: 'Geluidstip',
         description: 'Vind een rustige plek voor beste opnamekwaliteit. Achtergrondgeluid kan afleidend zijn.',
       },
       limit: {
-        title: 'Familiestemt 👨‍👩‍👧',
+        title: 'Familiestemt',
         description: 'Meerdere gezinsleden kunnen opnemen! Oma\'s, ooms en tantes - laat iedereen deelnemen.',
       },
       benefit: {
-        title: 'Waarom Opnemen? 💜',
+        title: 'Waarom Opnemen? ',
         description: 'Onderzoek toont aan dat het luisteren naar een vertrouwde stem kinderen helpt zich veilig en verbonden te voelen, vooral tijdens scheiding.',
       },
       navigation: {
-        title: 'Paginanavigatie 📖',
+        title: 'Paginanavigatie',
         description: 'Gebruik pijlen om tussen pagina\'s te navigeren. Neem elke pagina op om een volledig verteld verhaal te maken!',
       },
     },
     narrateMode: {
       intro: {
-        title: 'Luistermodus 🎧',
+        title: 'Luistermodus',
         description: 'Ontspan en geniet! Het verhaal wordt hardop gelezen met een opgenomen stem.',
       },
       autoPlayback: {
-        title: 'Automatisch Afspelen 📖',
+        title: 'Automatisch Afspelen',
         description: 'Pagina\'s draaien automatisch om nadat de vertelling is voltooid. Perfect voor slaaptijd!',
       },
       controls: {
-        title: 'Afspeelcontroles ▶️',
+        title: 'Afspeelcontroles',
         description: 'Gebruik controles om te pauzeren, opnieuw te luisteren of snel vooruit te gaan. Controleer snelheid.',
       },
       sound: {
-        title: 'Geluidstip 🔊',
+        title: 'Geluidstip',
         description: 'Zorg dat het geluidsniveau van je apparaat hoog is! Gebruik koptelefoon voor meer onderdompeling.',
       },
       benefit: {
-        title: 'Bindingstijd 💜',
+        title: 'Bindingstijd',
         description: 'Zelfs in luistermodus, blijf betrokken! Wijs naar afbeeldingen, stel vragen en geniet van het verhaal samen.',
       },
     },
     settings: {
       intro: {
-        title: 'Instellingen ⚙️',
+        title: 'Instellingen',
         description: 'Pas de app aan zodat deze het beste voor je gezin werkt.',
       },
       login: {
-        title: 'Account en Synchronisatie 🔐',
+        title: 'Account en Synchronisatie',
         description: 'Log in om voortgang op te slaan en tussen apparaten te synchroniseren.',
       },
       language: {
-        title: 'Taal 🌍',
+        title: 'Taal',
         description: 'Kies je voorkeurstaal voor de app-interface.',
       },
       avatar: {
-        title: 'Je Avatar 🎭',
+        title: 'Je Avatar',
         description: 'Personaliseer je kind\'s ervaring met een aangepaste avatar.',
       },
       accessibility: {
-        title: 'Toegankelijkheid ♿',
+        title: 'Toegankelijkheid',
         description: 'Pas tekstgrootte en andere instellingen aan voor gemakkelijker gebruik.',
       },
       screenTime: {
-        title: 'Schermtijd ⏱️',
+        title: 'Schermtijd',
         description: 'Stel gezonde limieten in en monitor dagelijks gebruik.',
       },
     },
     // Music Mode Tips - keys match tutorial.musicMode.* in tutorial-content.ts
     musicMode: {
       welcome: {
-        title: 'Muziekmodus 🎵',
+        title: 'Muziekmodus',
         description: 'Sommige pagina\'s in dit verhaal hebben muziekuitdagingen! Speel noten op een virtueel instrument om ze te voltooien.',
       },
       instrument: {
-        title: 'Kies Je Instrument 🎹',
+        title: 'Kies Je Instrument',
         description: 'Wanneer een boek met muziek opent, veeg door de carrousel om je favoriete instrument te kiezen. Elk heeft unieke klanken!',
       },
       playing: {
-        title: 'Noten Spelen 🎶',
+        title: 'Noten Spelen',
         description: 'Druk op de gekleurde knoppen om noten te spelen. Volg de reeks bovenaan om de uitdaging te voltooien!',
       },
       sheet: {
-        title: 'Muziekblad 📋',
+        title: 'Muziekblad',
         description: 'Tik op de nootknop (linksonder) om alle noten te zien die je moet spelen. Je kunt zelfs een voorbeeld van de melodie beluisteren!',
       },
       begin: {
-        title: 'Begin met Spelen ▶️',
+        title: 'Begin met Spelen',
         description: 'Wanneer je op een muziekpagina aankomt, tik op de \'Begin met Spelen\' knop bovenaan om de uitdaging te starten. Het opent eerst het muziekblad zodat je kunt zien wat je moet spelen!',
       },
       change: {
-        title: 'Instrument Wisselen 🔄',
-        description: 'Wil je een ander geluid proberen? Open het menu (☰) en tik op \'Instrument Wisselen\' om op elk moment te wisselen.',
+        title: 'Instrument Wisselen',
+        description: 'Wil je een ander geluid proberen? Open het menu () en tik op \'Instrument Wisselen\' om op elk moment te wisselen.',
       },
     },
     storyModes: {
       welcome: {
-        title: 'Drie Manieren om te Ontdekken! 🌟',
+        title: 'Drie Manieren om te Ontdekken!',
         description: 'Elk kind leert anders. Kies de verhaalervaring die de nieuwsgierigheid van je kind prikkelt -elk bouwt essentiële vaardigheden op door de magie van het spelen.',
       },
       interactive: {
-        title: 'Interactieve Verhalen ✨',
+        title: 'Interactieve Verhalen',
         description: 'Tik, veeg en ontdek! Interactieve verhalen brengen pagina\'s tot leven met aanraakbare verrassingen, oorzaak-en-gevolg momenten en praktische leeractiviteiten. Onderzoek toont aan dat actieve deelname tijdens voorleestijd het begrip, de fijne motoriek en vroege probleemoplossing versterkt.',
       },
       musical: {
-        title: 'Muzikale Verhalen 🎵',
+        title: 'Muzikale Verhalen',
         description: 'Lees, speel en treed op! Muzikale verhalen verweven echte instrumentuitdagingen in elk avontuur -je kind leert ritme, melodie en coördinatie terwijl het het verhaal volgt. Studies bevestigen dat vroege blootstelling aan muziek het geheugen, de taalontwikkeling en emotionele expressie verbetert.',
       },
       jigsaw: {
-        title: 'Puzzelverhalen 🧩',
+        title: 'Puzzelverhalen',
         description: 'Puzzel het samen! Puzzelverhalen verbergen prachtige puzzels op elke pagina en bouwen ruimtelijk bewustzijn, geduld en logisch denken op. Het voltooien van puzzels geeft kinderen een echt gevoel van prestatie en versterkt visueel-perceptuele vaardigheden die de leesvoorbereiding ondersteunen.',
       },
     },
     gestures: {
       speakerLongPress: {
-        title: 'Lange Druk Tip 👆',
+        title: 'Lange Druk Tip',
         description: 'Houd lang ingedrukt op de luidspreker knop om extra geluidopties te zien.',
       },
       storySwipe: {
-        title: 'Veegnavigatie 👆',
+        title: 'Veegnavigatie',
         description: 'Veeg naar links of rechts om pagina\'s snel om te draaien.',
+      },
+    },
+    // Emotion Cards Tips
+    emotionCards: {
+      welcome: {
+        title: 'Welkom bij Emotikaarten!',
+        description: 'Help je kind emoties herkennen en uitdrukken door interactieve en leuke kaarten.',
+      },
+      together: {
+        title: 'Speel Samen',
+        description: 'Zit bij je kind en draai om beurten kaarten. Maak samen gezichten - het is meer plezier!',
+      },
+      connect: {
+        title: 'Maak Verbinding',
+        description: 'Stel vragen zoals "Wanneer voelde je je zo?" om je kind te helpen emoties te begrijpen.',
+      },
+      scenarios: {
+        title: 'Maak Scenario\'s',
+        description: 'Speel situaties na die elke emotie kunnen triggeren. "Hoe zou je je voelen als je speelgoed brak?"',
+      },
+      themes: {
+        title: 'Probeer Verschillende Thema\'s',
+        description: 'Wissel tussen emoji\'s, dieren en beer thema\'s om dingen vers en interessant te houden!',
+      },
+    },
+    // Spelling Tips
+    spelling: {
+      welcome: {
+        title: 'Spellingactiviteiten',
+        description: 'Welkom bij Spelling! Leuke interactieve activiteiten om je kind te helpen letters, woorden en spelling te leren.',
+      },
+      ages: {
+        title: 'Leeftijdsgeschikte Inhoud',
+        description: 'Activiteiten zijn gegroepeerd op leeftijdsgroep. Gebruik de carrousel bovenaan om te filteren op het niveau van je kind.',
+      },
+      together: {
+        title: 'Samen Leren',
+        description: 'Ga bij je kind zitten en spel de letters samen uit. Moedig aan en vier elke poging!',
+      },
+      benefit: {
+        title: 'Geletterdheid Opbouwen',
+        description: 'Vroeg oefenen met spelling ontwikkelt fonemisch bewustzijn, letterherkenning en een liefde voor woorden die een leven lang meegaat.',
+      },
+    },
+    // Numbers Tips
+    numbers: {
+      welcome: {
+        title: 'Getallenactiviteiten',
+        description: 'Welkom bij Getallen! Boeiende activiteiten om je kind te helpen tellen, vormen en eerste wiskunde te ontdekken.',
+      },
+      ages: {
+        title: 'Leeftijdsgeschikte Inhoud',
+        description: 'Activiteiten zijn gegroepeerd op leeftijdsgroep. Gebruik de carrousel bovenaan om het juiste niveau voor je kind te vinden.',
+      },
+      together: {
+        title: 'Samen Tellen',
+        description: 'Tel samen hardop, wijs naar voorwerpen en maak getallen onderdeel van het dagelijks spel!',
+      },
+      benefit: {
+        title: 'Rekenvaardigheid Opbouwen',
+        description: 'Vroeg spelen met getallen ontwikkelt logisch denken, patroonherkenning en een stevige basis voor wiskunde.',
+      },
+    },
+    // Feelings Tips
+    feelings: {
+      welcome: {
+        title: 'Gevoelensactiviteiten',
+        description: 'Welkom bij Gevoelens! Activiteiten die je kind helpen emoties te herkennen, benoemen en begrijpen.',
+      },
+      ages: {
+        title: 'Leeftijdsgeschikte Inhoud',
+        description: 'Activiteiten zijn gegroepeerd op leeftijdsgroep. Kies activiteiten die passen bij de emotionele ontwikkeling van je kind.',
+      },
+      together: {
+        title: 'Samen Ontdekken',
+        description: 'Praat openlijk over emoties. Vraag "Hoe voelt dat?" en deel ook je eigen gevoelens.',
+      },
+      benefit: {
+        title: 'Emotionele Intelligentie',
+        description: 'Emoties begrijpen bouwt empathie, zelfregulatie en sterke sociale vaardigheden op — essentieel voor levenslang welzijn.',
+      },
+    },
+    // Practise Mode Tips
+    practise: {
+      welcome: {
+        title: 'Oefenmodus',
+        description: 'Leer echte liedjes spelen op verschillende instrumenten! Volg de noten en bouw je muzikale vaardigheden stap voor stap op.',
+      },
+      instrument: {
+        title: 'Kies Je Instrument',
+        description: 'Veeg door de carrousel om je favoriete instrument te kiezen. Elk heeft zijn eigen unieke geluid!',
+      },
+      songs: {
+        title: 'Kies een Liedje',
+        description: 'Blader door de muziekbibliotheek en kies een liedje om te leren. Liedjes zijn gesorteerd op moeilijkheid — begin makkelijk en werk omhoog!',
+      },
+      benefit: {
+        title: 'Muzikale Ontwikkeling',
+        description: 'Liedjes leren spelen ontwikkelt ritme, coördinatie, geheugen en concentratie — allemaal door de vreugde van muziek.',
+      },
+    },
+    // Freeplay Mode Tips
+    freeplay: {
+      welcome: {
+        title: 'Vrij Spelen Modus',
+        description: 'Geen regels, gewoon plezier! Verken elk instrument en maak je eigen muziek. Perfect voor creativiteit en zelfexpressie.',
+      },
+      instrument: {
+        title: 'Kies Je Instrument',
+        description: 'Kies elk instrument uit de carrousel. Probeer ze allemaal om nieuwe geluiden en favorieten te ontdekken!',
+      },
+      play: {
+        title: 'Speel Vrij',
+        description: 'Druk op de gekleurde knoppen om muziek te maken. Er zijn geen verkeerde noten — elk geluid is deel van het avontuur!',
+      },
+      benefit: {
+        title: 'Creatieve Expressie',
+        description: 'Vrij muzikaal spel koestert creativiteit, zelfvertrouwen en een liefde voor muziek die meegroeit met je kind.',
       },
     },
   },
@@ -818,36 +950,179 @@ export default {
     guidelines: 'Gezonde schermtijd volgt WHO/AAP aanbevelingen',
     closeNotification: 'Sluit Melding',
     educationalMessage: 'Probeer andere activiteiten: Lees een boek of speel buiten of speel creatief!',
-    approachingMessage: 'Vandaag\'s schermtijd {{minutes}} minuten over. Wil je doorgaan of de app sluiten?',
+    approachingMessage: 'Vandaag\'s schermtijd {{minutes}} minuten over. Wil je doorgaan of de app sluiten? ',
     limitReachedMessage: 'Je hebt je dagelijkse schermtijdlimiet bereikt. Tijd om de app te sluiten en andere activiteiten te proberen!',
   },
+  // Relaxing music screen
+  relaxMusic: {
+    title: 'Een rustigere plek',
+    screenTitle: 'Ontspan',
+    subtitle: 'Neem even de tijd. Pauzeer. Ontspan een beetje.',
+    headphoneGuidance: 'Voor de beste ervaring, gebruik een koptelefoon. Zoek een comfortabele positie, sluit je ogen en focus op je ademhaling.',
+    stopAll: 'Stop',
+    tipsTitle: 'Ontspanningstechnieken',
+    tipsBody: 'Deze nummers gebruiken binaurale beats — subtiele frequentieverschillen tussen elk oor die je brein aanmoedigen om te vertragen. Een koptelefoon is vereist.\n\nProbeer deze simpele technieken tijdens het luisteren:\n\nVierkant ademhalen\nAdem 4 tellen in, houd 4 vast, adem 4 uit, houd 4 vast. Herhaal.\n\nBodyscan\nBegin bij je tenen en focus langzaam op elk lichaamsdeel. Merk spanning op en ontspan het bewust.\n\n5-4-3-2-1 Aarding\nMerk 5 dingen op die je ziet, 4 die je voelt, 3 die je hoort, 2 die je ruikt en 1 die je proeft.\n\nGedachtenwolken\nStel je elke gedachte voor als een wolk die voorbijdrijft. Erken het en laat het gaan.',
+  },
+
+    // Emotion cards
+  emotions: {
+    title: 'Gevoelens',
+    subtitle: 'Kies je stijl en leer gevoelens',
+    greatJob: 'Goed gedaan!',
+    sections: {
+      emotionCards: 'Emotiekaarten',
+      developingEmotions: 'Emoties ontwikkelen',
+      parentsToo: 'Ouders ook',
+      parentsTooSubtitle: 'We hebben iets toegevoegd om je te helpen ontspannen, je doet het geweldig.',
+      relaxingMusic: 'Ontspannende muziek',
+      relaxingMusicDescription: 'Kalmerende geluiden en ontspanningssequenties om te relaxen',
+    },
+    pickYourStyle: 'Kies Je Stijl',
+    expressWithTheme: 'Druk {{emotion}} uit met {{theme}}!',
+    expressing: 'Ik druk {{emotion}} uit!',
+    loading: 'Laden...',
+    progress: 'Voortgang: {{completed}}/{{total}}',
+    themes: {
+      emoji: {
+        name: 'Emoji\'s',
+        description: 'Druk emoties uit met grappige emoji-gezichten',
+      },
+      animals: {
+        name: 'Dieren',
+        description: 'Leer emoties via schattige dierenvrienden',
+      },
+      bear: {
+        name: 'Beer',
+        description: 'Leer emoties met een vriendelijke beer',
+      },
+    },
+    emoji: {
+      happy: 'Blij',
+      sad: 'Verdrietig',
+      angry: 'Boos',
+      surprised: 'Verrast',
+      scared: 'Bang',
+      excited: 'Opgewonden',
+      confused: 'Verward',
+      proud: 'Trots',
+      shy: 'Verlegen',
+      loving: 'Liefdevol',
+    },
+    animals: {
+      happy: 'Blij Konijn',
+      sad: 'Verdrietige Kat',
+      angry: 'Boze Hond',
+      surprised: 'Verraste Kuiken',
+      scared: 'Bange Wasbeer',
+      excited: 'Opgewonden Vos',
+      confused: 'Verwarde Olifant',
+      proud: 'Trotse Beer',
+      shy: 'Verlegen Luiaard',
+      loving: 'Liefdeloze Panda',
+    },
+    bear: {
+      happy: 'Blije Beer',
+      sad: 'Verdrietige Beer',
+      angry: 'Boze Beer',
+      surprised: 'Verraste Beer',
+      scared: 'Bange Beer',
+      excited: 'Opgewonden Beer',
+      confused: 'Verwarde Beer',
+      proud: 'Trotse Beer',
+      shy: 'Verlegen Beer',
+      loving: 'Liefdeloze Beer',
+    },
+    prompts: {
+      happy: [
+'Toon je grootste glimlach!',
+'Kun je lachen alsof je iets grappigs hebt gehoord? ',
+'Maak een blij gezicht en klap in je handen!',
+'Toon het gezicht dat je maakt als je een cadeau krijgt!',
+      ],
+      sad: [
+'Toon een verdrietig gezicht',
+'Kun je pruilen alsof je je speelgoed bent kwijtgeraakt? ',
+'Toon hoe je je voelt als je afscheid moet nemen',
+'Maak een teleurgesteld gezicht',
+      ],
+      angry: [
+'Toon een boos gezicht',
+'Kun je pruilen alsof je boos bent? ',
+'Toon het gezicht dat je maakt als iemand iets gemeens doet en je favoriete speelgoed weggooit',
+'Maak een pruil- en bromgezicht!',
+      ],
+      surprised: [
+'Toon een verrast gezicht!',
+'Kun je je ogen en mond openmaken? ',
+'Toon het gezicht dat je maakt als je iets geweldigs ziet!',
+'Maak een gezicht alsof je een spook hebt gezien!',
+      ],
+      scared: [
+'Toon een bang gezicht',
+'Kun je je achter je handen verstoppen alsof je bang bent? ',
+'Toon hoe je je voelt tijdens een storm',
+'Maak een gezicht alsof je iets enge hebt gezien!',
+      ],
+      excited: [
+'Toon een opgewonden gezicht!',
+'Kun je met een grote glimlach op en neer springen? ',
+'Toon het gezicht dat je maakt als je naar iets leuks gaat!',
+'Maak een opgewonden gezicht en zwaai met je handen!',
+      ],
+      confused: [
+'Toon een verward gezicht',
+'Kun je pruilen alsof je diep nadenkt? ',
+'Toon het gezicht dat je maakt als je iets niet begrijpt',
+'Maak een gezicht alsof je een puzzel oplost!',
+      ],
+      proud: [
+'Toon een trots gezicht!',
+'Kun je rechtop staan en glimlachen alsof je iets geweldigs hebt gedaan? ',
+'Toon het trotse gezicht dat je maakt als je een puzzel hebt opgelost!',
+'Maak een gezicht alsof je iemand hebt geholpen!',
+      ],
+      shy: [
+'Toon een verlegen gezicht',
+'Kun je je gezicht een beetje verbergen? ',
+'Toon het gezicht dat je maakt als je iemand nieuws ontmoet',
+'Maak een verlegen glimlach en kijk omlaag!',
+      ],
+      loving: [
+'Toon een liefdevol gezicht!',
+'Kun je jezelf een grote knuffel geven? ',
+'Toon het gezicht dat je maakt als je naar iemand van wie je houdt kijkt!',
+'Maak een gezicht alsof je een kus geeft!',
+      ],
+    },
+  },
+
   // Music challenge UI strings
   music: {
     amazing: 'Geweldig!',
     levelComplete: 'Niveau {{level}} voltooid!',
     playingYourSong: 'Je liedje wordt afgespeeld...',
     listeningToMelody: 'Luister naar je melodie...',
-    retry: '↻ Opnieuw',
+    retry: 'Opnieuw',
     goHarder: 'Verhoog moeilijkheid',
     goHarderLevel: 'Verhoog moeilijkheid (Nv {{level}})',
-    continueStory: 'Verhaal voortzetten →',
-    skip: 'Overslaan →',
-    blowMode: '♪ Blazen',
-    pressMode: '♫ Drukken',
-    blowing: '♪ Blazen!',
+    continueStory: 'Verhaal voortzetten',
+    skip: 'Overslaan',
+    blowMode: 'Blazen',
+    pressMode: 'Drukken',
+    blowing: 'Blazen!',
     blowWhileHolding: 'Blaas terwijl je noten ingedrukt houdt',
     tryAgain: 'Probeer opnieuw!',
     openMusicSheet: 'Muziekblad openen',
     showControls: 'Bediening tonen',
     hideControls: 'Bediening verbergen',
-    musicSheet: '♪ Muziekblad',
+    musicSheet: 'Muziekblad',
     notesToPlay: 'Te spelen noten ({{completed}}/{{total}})',
     pause: 'Pauze',
     preview: 'Voorbeeld',
     tapAndHoldNotes: 'Tik en houd noten vast om ze te horen',
     playingPreview: 'Voorbeeld afspelen… tik op Pauze om te stoppen',
-    successSong: '♫ Succeslied',
-    readyToPlay: '♫ Klaar om te spelen',
+    successSong: ' Succeslied',
+    readyToPlay: ' Klaar om te spelen',
     chooseInstrument: 'Kies je instrument',
     swipeToExplore: 'Veeg om te verkennen, tik om te selecteren',
     useThisInstrument: 'Dit instrument gebruiken',
@@ -894,18 +1169,71 @@ export default {
       songOfBreak: 'Lied van het breken',
       songOfFix: 'Lied van het repareren',
     },
+    // Binaural / relaxation track titles and descriptions
+    tracks: {
+      tantrumAlpha: {
+        title: 'Driftbui kalmeren (10Hz)',
+        artist: 'Binaurale beats',
+        description: 'Alfagolven voor kalmering. Gebruik een koptelefoon.',
+      },
+      sleepAlpha: {
+        title: 'Naar ontspanning',
+        artist: 'Binaurale beats',
+        description: 'Alfagolven om te ontspannen. Herhaalt tot gestopt.',
+      },
+      sleepTheta: {
+        title: 'Diepe ontspanning',
+        artist: 'Binaurale beats',
+        description: 'Thetagolven voor diepe ontspanning. Herhaalt tot gestopt.',
+      },
+      sleepSequence: {
+        title: 'Volledige ontspanningssequentie',
+        artist: 'Binaurale beats',
+        description: 'Complete progressie: Naar ontspanning → Diepe ontspanning.',
+      },
+      bearsBirthdayParty: {
+        title: 'Beertjes verjaardagsfeest',
+        artist: 'Bedtijdverhaal',
+        description: 'Een hartverwarmend verhaal over een beer die verjaardag viert.',
+      },
+      damselElephant: {
+        title: 'Damsel de olifant',
+        artist: 'Bedtijdverhaal',
+        description: 'Ga mee met Damsel de olifant op een zacht avontuur.',
+      },
+      jimmyMouse: {
+        title: 'Jimmy Muis en de stadsgenoten',
+        artist: 'Bedtijdverhaal',
+        description: 'Een klein muisje ontdekt de grote stad.',
+      },
+      newYearJungle: {
+        title: 'Nieuwjaar in de jungle',
+        artist: 'Bedtijdverhaal',
+        description: 'De jungledieren vieren samen het nieuwe jaar.',
+      },
+      snowWhite: {
+        title: 'Sneeuwwitje',
+        artist: 'Bedtijdverhaal',
+        description: 'Het klassieke sprookje, perfect voor bedtijd.',
+      },
+    },
+    tags: {
+      calming: 'Kalmerend',
+      bedtime: 'Bedtijd',
+      stories: 'Verhalen',
+    },
   },
 
   jigsaw: {
     amazing: 'Geweldig!',
-    beginPuzzle: '🧩 Begin puzzel',
+    beginPuzzle: 'Begin puzzel',
     completedMoves: 'Voltooid in {{count}} zetten!',
-    continueStory: 'Verhaal voortzetten →',
+    continueStory: 'Verhaal voortzetten',
     preview: 'Voorbeeld',
     reset: 'Herstellen',
     scramble: 'Door elkaar',
     shuffle: 'Schudden',
-    skip: 'Overslaan →',
+    skip: 'Overslaan',
     tapToClose: 'Tik ergens om te sluiten',
   },
 
@@ -942,7 +1270,7 @@ export default {
     firstWordsDesc: 'Spel eenvoudige woorden met kleurrijke tegels',
     firstWordsAge: 'Leeftijd 1-2',
     colourSpelling: 'Kleuren Spellen',
-    colourSpellingDesc: 'Kun je de kleuren van de regenboog spellen?',
+    colourSpellingDesc: 'Kun je de kleuren van de regenboog spellen? ',
     colourSpellingAge: 'Leeftijd 1-2',
     shapeNames: 'Vormnamen',
     shapeNamesDesc: 'Spel cirkels, vierkanten en meer!',
@@ -990,7 +1318,7 @@ export default {
     colourCountingDesc: 'Tel kleurrijke voorwerpen en leer getallen!',
     colourCountingAge: 'Leeftijd 1-2',
     shapeCounting: 'Vormen Tellen',
-    shapeCountingDesc: 'Hoeveel vormen kun je tellen?',
+    shapeCountingDesc: 'Hoeveel vormen kun je tellen? ',
     shapeCountingAge: 'Leeftijd 1-2',
     oneTwoThree: 'Een, Twee, Drie!',
     oneTwoThreeDesc: 'Een zacht eerste telavontuur',
@@ -1002,7 +1330,7 @@ export default {
     animalCountingDesc: 'Tel de dieren op de boerderij en in de jungle!',
     animalCountingAge: 'Leeftijd 2-4',
     fruitCounting: 'Fruit Tellen',
-    fruitCountingDesc: 'Hoeveel fruit kun je tellen in de mand?',
+    fruitCountingDesc: 'Hoeveel fruit kun je tellen in de mand? ',
     fruitCountingAge: 'Leeftijd 2-4',
     toyCounting: 'Speelgoed Tellen',
     toyCountingDesc: 'Tel je favoriete speelgoed en leer getallen!',
@@ -1108,6 +1436,14 @@ export default {
     signInRequiredMessage: 'Je moet inloggen voordat je kunt abonneren. Je abonnement wordt gekoppeld aan je account zodat je het op al je apparaten kunt gebruiken.',
     signInRequiredConfirm: 'Inloggen',
     signInRequiredCancel: 'Niet nu',
+    errorTitle: 'Abonnementsfout',
+    errorUnavailable: 'Dit abonnement is momenteel niet beschikbaar. Probeer het later opnieuw.',
+    errorGeneric: 'Er is iets misgegaan. Probeer het opnieuw.',
+    restorePurchases: 'Aankopen Herstellen',
+    restoreSuccessTitle: 'Aankopen Hersteld',
+    restoreSuccessMessage: 'Je abonnement is succesvol hersteld.',
+    restoreNoneTitle: 'Geen Aankopen Gevonden',
+    restoreNoneMessage: 'We konden geen eerdere aankopen vinden om te herstellen.',
   },
 
   defaultPage: {

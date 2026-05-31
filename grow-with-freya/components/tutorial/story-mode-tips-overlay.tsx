@@ -14,11 +14,13 @@ import { useTranslation } from 'react-i18next';
 
 const TUTORIAL_ID = 'story_modes_tour' as const;
 
-const STEP_ICONS: Record<string, string> = {
-  modes_welcome: '🌟',
-  modes_interactive: '✨',
-  modes_musical: '🎵',
-  modes_jigsaw: '🧩',
+type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
+
+const STEP_ICONS: Record<string, IoniconsName> = {
+  modes_welcome: 'star-outline',
+  modes_interactive: 'sparkles-outline',
+  modes_musical: 'musical-notes-outline',
+  modes_jigsaw: 'extension-puzzle-outline',
 };
 
 interface StoryModeTipsOverlayProps {
@@ -55,6 +57,14 @@ export function StoryModeTipsOverlay({ isActive, onClose }: StoryModeTipsOverlay
       scale.value = withSpring(1, { damping: 15 });
     }
   }, [shouldShow, opacity, scale, startTutorial]);
+
+  // Clean up when page becomes inactive — dismiss any visible overlay
+  useEffect(() => {
+    if (!isActive && isVisible) {
+      setIsVisible(false);
+      completeTutorial();
+    }
+  }, [isActive, isVisible, completeTutorial]);
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -107,7 +117,7 @@ export function StoryModeTipsOverlay({ isActive, onClose }: StoryModeTipsOverlay
           {isPhoneLandscape ? (
             <>
               <View style={[styles.iconContainer, { marginBottom: 0, marginRight: 16 }]}>
-                <Text style={styles.icon}>{STEP_ICONS[currentTip.id] || '📖'}</Text>
+                <Ionicons name={STEP_ICONS[currentTip.id] || 'book-outline'} size={36} color="#4ECDC4" />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.title, { marginBottom: 4 }]}>{t(currentTip.titleKey)}</Text>
@@ -137,7 +147,7 @@ export function StoryModeTipsOverlay({ isActive, onClose }: StoryModeTipsOverlay
           ) : (
             <>
               <View style={styles.iconContainer}>
-                <Text style={styles.icon}>{STEP_ICONS[currentTip.id] || '📖'}</Text>
+                <Ionicons name={STEP_ICONS[currentTip.id] || 'book-outline'} size={36} color="#4ECDC4" />
               </View>
               <Text style={styles.title}>{t(currentTip.titleKey)}</Text>
               <Text style={styles.description}>{t(currentTip.descriptionKey)}</Text>
@@ -200,7 +210,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  icon: { fontSize: 40 },
+
   title: {
     fontSize: 20,
     fontFamily: Fonts.sans,

@@ -53,6 +53,7 @@ import { Fonts } from '@/constants/theme';
 import { useGlobalSound } from '@/contexts/global-sound-context';
 import { SubscriptionOverlay } from '@/components/ui/subscription-overlay';
 import { StoryAccessService } from '@/services/story-access-service';
+import { LearningTipsOverlay } from '@/components/tutorial';
 
 // Pre-generate star positions at module level (same as story selection screen)
 const STAR_POSITIONS = generateStarPositions(VISUAL_EFFECTS.STAR_COUNT);
@@ -65,6 +66,8 @@ type PractisePhase = 'songs' | 'preview' | 'playing';
 
 interface PractiseScreenProps {
   onBack: () => void;
+  /** Whether this screen is the currently active page (controls tutorial visibility) */
+  isActive?: boolean;
 }
 
 const DIFFICULTY_COLORS: Record<PracticeSongDifficulty, string> = {
@@ -73,13 +76,13 @@ const DIFFICULTY_COLORS: Record<PracticeSongDifficulty, string> = {
   hard: '#F44336',
 };
 
-const DIFFICULTY_STARS: Record<PracticeSongDifficulty, string> = {
-  easy: '⭐',
-  medium: '⭐⭐',
-  hard: '⭐⭐⭐',
+const DIFFICULTY_STAR_COUNT: Record<PracticeSongDifficulty, number> = {
+  easy: 1,
+  medium: 2,
+  hard: 3,
 };
 
-export function PractiseScreen({ onBack }: PractiseScreenProps) {
+export function PractiseScreen({ onBack, isActive = false }: PractiseScreenProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledButtonSize, textSizeScale } = useAccessibility();
@@ -492,7 +495,7 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
                 }]}
                 onPress={handleBackToSongs}
               >
-                <Ionicons name="home" size={scaledFontSize(20)} color="#333333" />
+                <Ionicons name="arrow-back" size={scaledFontSize(20)} color="#333333" />
               </Pressable>
             </View>
           )}
@@ -515,7 +518,7 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
                   setShowSettingsMenu(prev => !prev);
                 }}
               >
-                <Text style={[styles.settingsButtonText, { fontSize: scaledFontSize(28), marginTop: 2 }]}>☰</Text>
+                <Ionicons name="menu" size={scaledFontSize(24)} color="#333333" />
               </Pressable>
             </View>
           )}
@@ -665,9 +668,14 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
                 </View>
               ) : (
               <View style={[styles.diffBadge, { backgroundColor: DIFFICULTY_COLORS[item.difficulty] }]}>
-                <Text style={[styles.diffBadgeText, { fontSize: diffBadgeFontSize }]}>
-                  {DIFFICULTY_STARS[item.difficulty]} {t(`music.difficulty.${item.difficulty}`)}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  {Array.from({ length: DIFFICULTY_STAR_COUNT[item.difficulty] }).map((_, i) => (
+                    <Ionicons key={i} name="star" size={diffBadgeFontSize - 2} color="#FFFFFF" style={{ marginRight: 1 }} />
+                  ))}
+                  <Text style={[styles.diffBadgeText, { fontSize: diffBadgeFontSize, marginLeft: 3 }]}>
+                    {t(`music.difficulty.${item.difficulty}`)}
+                  </Text>
+                </View>
               </View>
               )}
             </View>
@@ -710,6 +718,9 @@ export function PractiseScreen({ onBack }: PractiseScreenProps) {
         visible={showSubscription}
         onClose={() => setShowSubscription(false)}
       />
+
+      {/* Practise mode tutorial — shown on first visit */}
+      <LearningTipsOverlay tutorialId="practise_tips" isActive={isActive} />
     </View>
   );
 }

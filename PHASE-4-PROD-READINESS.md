@@ -552,3 +552,645 @@ Only change the user-facing brand name, not the technical identifiers.
 
 - [ ] **Firestore scheduled exports** — set up automated Firestore exports to a GCS bucket (e.g. `gs://earlyroots-firestore-backups`) using `gcloud firestore export` on a daily cron. This provides point-in-time recovery if a bad deploy corrupts data or an accidental deletion occurs. GCS lifecycle policy can auto-delete exports older than 30 days to control costs.
 - [ ] **GCS asset bucket versioning** — enable object versioning on `earlyroots-assets` so story asset overwrites can be rolled back: `gsutil versioning set on gs://earlyroots-assets`.
+
+---
+
+## 10. Learning Games — Interactive Education System
+
+> Standalone game engine replacing the current story-reader-based reading challenges.
+> All games run fully offline, require no backend, and target iOS + Android.
+> Every game type follows the **co-engagement** principle — parent and child play together.
+
+### 10.1 Architecture Overview
+
+```
+LearningScreen (activity list)
+    │
+    ├─► SpellingGameScreen  ── image-spell, word-scramble, missing-letter
+    ├─► ChoiceGameScreen    ── pick-one answers (counting, matching, rhymes)
+    ├─► SortingGameScreen   ── bucket-sort (recycling, emotion sorting)
+    │
+    └─► Shared infrastructure:
+        ├── GameProgressProvider  (stars, completion tracking)
+        ├── CelebrationOverlay   (star burst, wombat clap)
+        ├── ProgressBar          (dots / filled stars)
+        └── Word/Question packs  (data-driven, per activity ID)
+```
+
+**Key design decisions:**
+- Games are **standalone screens**, not overlays on the story reader
+- All content is **data-driven** — word packs, question sets, and sort items are JSON config
+- Images use **existing story assets** where possible, plus bundled category illustrations
+- No timers, streaks, or leaderboards — calm, warm encouragement only
+- Wrong answers get a gentle shake, not a full reset (age-appropriate for 0–6)
+
+### 10.2 Core Game Mechanics
+
+Three reusable game screen components power all 18 activities:
+
+#### Mechanic A: Image Spell (`SpellingGameScreen`)
+
+Show an illustration → child taps pastel letter cards to spell the word.
+
+```
+┌──────────────────────────────┐
+│  ✨  "What is this?"         │
+│                              │
+│    ┌──────────────────┐      │
+│    │  [illustration   │      │
+│    │   of a CAT]      │      │
+│    └──────────────────┘      │
+│                              │
+│    ┌───┐  ┌───┐  ┌───┐      │  ← empty card slots (dashed border)
+│    │ · │  │ · │  │ · │      │
+│    └───┘  └───┘  └───┘      │
+│                              │
+│  ┌───┐ ┌───┐ ┌───┐ ┌───┐   │  ← shuffled pastel letter cards
+│  │ A │ │ T │ │ X │ │ C │   │
+│  └───┘ └───┘ └───┘ └───┘   │
+│                              │
+│     ⭐ ⭐ ⭐ ○ ○              │  ← progress (3/5 words done)
+└──────────────────────────────┘
+```
+
+**Variants using this mechanic:**
+
+| Activity | Age | Description | Image source |
+|---|---|---|---|
+| ABC Animals | 1-2 | Spell animal names: CAT, DOG, FOX, HEN, OWL | Bundled animal illustrations |
+| First Words | 1-2 | Spell everyday words: CUP, BED, HAT, SUN, BUS | Bundled object illustrations |
+| Colour Spelling | 1-2 | Spell colour names: RED, BLUE, PINK, GREEN | Colour swatch + object |
+| Shape Names | 1-2 | Spell shapes: STAR, MOON, HEART | Shape illustrations |
+| Animal Spelling | 2-4 | Longer animal names: BEAR, FROG, DUCK, FISH, BIRD | Bundled illustrations |
+| Food Spelling | 2-4 | Food words: CAKE, MILK, RICE, PEAR, SOUP | Bundled illustrations |
+| Nature Words | 2-4 | Nature: TREE, LEAF, RAIN, POND, SEED | Reuse story page assets |
+| Garden Words | 2-4 | Garden: ROSE, SOIL, WORM, SNAIL, BEE | Bundled illustrations |
+| Word Builder | 4+ | Longer words: FOREST, RABBIT, GARDEN, FLOWER | Bundled illustrations |
+| Tricky Words | 4+ | Irregular spelling: NIGHT, LIGHT, KNIGHT, COULD | Bundled illustrations |
+
+**Wrong answer behaviour:** Incorrect letter card shakes for 300ms, stays in the pool. Slot pulses gold to draw attention. No reset, no penalty — try again.
+
+#### Mechanic B: Pick One (`ChoiceGameScreen`)
+
+Show a prompt (image, text, number group) → child taps one answer card from 2–4 choices.
+
+```
+┌──────────────────────────────┐
+│  "How many butterflies?"     │
+│                              │
+│      🦋  🦋  🦋              │  ← visual prompt
+│                              │
+│  ┌────┐   ┌────┐   ┌────┐   │
+│  │  1 │   │  3 │   │  5 │   │  ← choice cards (tap one)
+│  └────┘   └────┘   └────┘   │
+│                              │
+│     ⭐ ⭐ ○ ○ ○ ○             │  ← progress
+└──────────────────────────────┘
+```
+
+**Activities using this mechanic:**
+
+| Activity | Age | Prompt | Choices | Section |
+|---|---|---|---|---|
+| Letter Match | 1-2 | Uppercase letter "B" | 3 images (ball, cat, tree) — tap what starts with B | Spelling |
+| First Sound | 1-2 | Image of object | 3 letter cards — tap the first letter | Spelling |
+| Rhyme Match | 4+ | Word "CAT" | 3 images (hat, dog, sun) — tap the rhyme | Spelling |
+| Missing Letter | 2-4 | Word with gap "C_T" | 3 letter cards (A, O, E) — tap the right one | Spelling |
+| Count & Tap | 1-2 | N objects shown | 3 number cards — tap the count | Numbers |
+| More or Less | 1-2 | Two groups of objects | "Which has more?" — tap left or right | Numbers |
+| Number Sequence | 2-4 | "1, 2, _, 4" | 3 number cards — fill the gap | Numbers |
+| Shape Counter | 2-4 | Mixed shapes, "How many circles?" | 3 number cards | Numbers |
+| Simple Addition | 4+ | "2 🍎 + 3 🍎 = ?" | 3 number cards | Numbers |
+| Number Patterns | 4+ | "2, 4, 6, ?" | 3 number cards | Numbers |
+| Emotion Match | 2-4 | Face/expression image | 3 word cards (happy, sad, angry) | Feelings |
+| Scenario Pick | 4+ | Text: "Your friend shares a toy" | 3 emotion face cards | Feelings |
+
+**Wrong answer behaviour:** Card briefly turns red/shakes, then returns to normal. Correct answer bounces and glows. No penalty counter.
+
+#### Mechanic C: Bucket Sort (`SortingGameScreen`)
+
+Items appear one at a time. Child taps an item, then taps the correct bin/bucket.
+
+```
+┌──────────────────────────────┐
+│  "Where does this go?"       │
+│                              │
+│       ┌────────────┐         │
+│       │  [banana   │         │  ← current item (image + label)
+│       │   peel]    │         │
+│       └────────────┘         │
+│                              │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐
+│  │  🟢     │ │  🔵     │ │  ⚫     │
+│  │ Recycle │ │  Food   │ │  Bin    │  ← 3 bins (tap to place)
+│  │   2/4   │ │  1/3    │ │  0/2   │
+│  └─────────┘ └─────────┘ └─────────┘
+│                              │
+│     ⭐ ⭐ ⭐ ○ ○ ○ ○ ○ ○     │
+└──────────────────────────────┘
+```
+
+**Activities using this mechanic:**
+
+| Activity | Age | Items | Buckets | Section |
+|---|---|---|---|---|
+| Colour Counting | 1-2 | Coloured objects | 3 colour bins (red, blue, yellow) | Numbers |
+| Recycling Sort | 2-4 | Waste items (can, peel, wrapper, paper, bottle) | 3 bins (recycle ♻️, food waste 🥬, general ⬛) | Numbers |
+| Toy Counting | 2-4 | Toy items | Numbered bins (1, 2, 3) — "How many of this toy?" | Numbers |
+| Fruit Counting | 2-4 | Fruit items | Numbered bins | Numbers |
+| Garden Counting | 2-4 | Garden items (bugs, flowers, leaves) | Numbered bins | Numbers |
+| Feeling Sort | 2-4 | Emotion face cards | 2 bins ("Feels good 😊" / "Feels tricky 😟") | Feelings |
+| Kindness Quest | 2-4 | Action cards ("sharing", "pushing") | 2 bins ("Kind ❤️" / "Not kind") | Feelings |
+| Friendship Stories | 2-4 | Scenario cards | 2 bins ("Good friend" / "Not yet") | Feelings |
+
+**Correct placement:** Item floats into bin with a satisfying pop + counter increments. **Wrong:** Bin shakes, item bounces back.
+
+### 10.3 Data Model
+
+```typescript
+// ── Spelling packs ──────────────────────────────────────────
+interface SpellingWord {
+  word: string;                   // Target word: "CAT"
+  imageKey: string;               // Asset key for illustration
+  distractors: string[];          // Extra letters to shuffle in: ["X", "Z"]
+  hint?: string;                  // Optional hint text
+}
+
+interface SpellingPack {
+  id: string;                     // Matches activity ID: "abc-animals"
+  words: SpellingWord[];          // 5-8 words per pack
+  ageRange: AgeRange;
+}
+
+// ── Choice questions ────────────────────────────────────────
+interface ChoiceQuestion {
+  promptType: 'image' | 'text' | 'count' | 'sequence';
+  promptImageKey?: string;        // Image to show
+  promptText?: string;            // Text/number to show
+  promptItems?: number;           // Count of objects to display
+  choices: ChoiceOption[];        // 2-4 answer options
+  correctIndex: number;           // Index of correct answer
+}
+
+interface ChoiceOption {
+  type: 'text' | 'image' | 'number';
+  value: string;                  // Display text, number, or image key
+}
+
+interface ChoicePack {
+  id: string;                     // Matches activity ID
+  questions: ChoiceQuestion[];    // 5-10 questions per pack
+  ageRange: AgeRange;
+}
+
+// ── Sorting items ───────────────────────────────────────────
+interface SortItem {
+  imageKey: string;               // Item illustration
+  label: string;                  // Item name
+  correctBucket: number;          // Index of correct bucket (0-based)
+}
+
+interface SortBucket {
+  label: string;                  // Bucket name: "Recycle"
+  color: string;                  // Bucket colour: "#22C55E"
+  icon: string;                   // Ionicons name
+  capacity: number;               // How many items go here
+}
+
+interface SortPack {
+  id: string;                     // Matches activity ID
+  items: SortItem[];              // 6-12 items to sort
+  buckets: SortBucket[];          // 2-3 buckets
+  ageRange: AgeRange;
+}
+
+// ── Progress tracking ───────────────────────────────────────
+interface GameProgress {
+  activityId: string;
+  completedAt?: number;           // Timestamp of last completion
+  starsEarned: number;            // 0-3 stars (0 = not attempted)
+  attempts: number;               // Total play count
+}
+```
+
+### 10.4 Image Assets Required
+
+| Category | Count | Format | Size target | Source |
+|---|---|---|---|---|
+| Animals | 15 | WebP | 200×200 | New bundled illustrations |
+| Food | 10 | WebP | 200×200 | New bundled illustrations |
+| Nature | 10 | WebP | 200×200 | Reuse story page crops + new |
+| Colours/shapes | 8 | WebP | 200×200 | Simple generated assets |
+| Recycling items | 12 | WebP | 200×200 | New bundled illustrations |
+| Emotion faces | 8 | WebP | 200×200 | Reuse emotion card assets |
+| Number objects | 10 | WebP | 200×200 | Simple generated assets |
+| **Total** | **~73** | | **~1.5 MB** | |
+
+All images bundled in-app for offline play. No network dependency.
+
+### 10.5 Reward System
+
+**Per-round feedback (calm, not addictive):**
+- Correct answer → card glows, gentle chime sound
+- Complete a word/question → progress dot fills with star
+- All wrong attempts → encouraging text ("Try again!"), no penalty
+
+**Per-pack completion:**
+- Stars earned based on accuracy: 3⭐ (no mistakes), 2⭐ (1-2 mistakes), 1⭐ (completed)
+- Wombat character celebration animation
+- "Well done!" screen with collected stars
+- Return to activity list with star badge on completed card
+
+**Persistent tracking (stored in AsyncStorage):**
+- Stars per activity (visible on activity cards in LearningScreen)
+- Total stars across all activities
+- No timers, streaks, or leaderboards
+
+### 10.6 Test Plan
+
+#### Unit Tests
+
+| Test file | Covers | Cases |
+|---|---|---|
+| `__tests__/games/spelling-game.test.tsx` | SpellingGameScreen | Renders word image, letter cards appear shuffled, correct tap places letter, wrong tap shakes card, all letters placed → completion, progress bar updates, back button works |
+| `__tests__/games/choice-game.test.tsx` | ChoiceGameScreen | Renders prompt (image/text/count), choice cards appear, correct tap advances, wrong tap shakes, all questions → completion, different prompt types render correctly |
+| `__tests__/games/sorting-game.test.tsx` | SortingGameScreen | Renders current item, buckets display with labels, correct sort → item enters bin, wrong sort → item bounces, all items sorted → completion, bucket counts update |
+| `__tests__/games/game-progress.test.tsx` | GameProgressProvider | Stars calculated correctly (3/2/1), progress persists to AsyncStorage, progress loads on mount, reset clears progress |
+| `__tests__/games/celebration-overlay.test.tsx` | CelebrationOverlay | Shows stars earned, shows wombat animation, continue button returns to list |
+| `__tests__/games/word-packs.test.ts` | Word/question data | All packs have required fields, all image keys map to real assets, no duplicate IDs, distractor letters don't duplicate target letters, correct indices are in bounds |
+
+#### Integration Tests
+
+| Test | What it validates |
+|---|---|
+| Activity card → game screen | Tapping an activity opens the correct game type with correct pack data |
+| Game completion → progress | Finishing a game updates the activity card with star badge |
+| Back button mid-game | Navigating back doesn't crash, no progress saved for incomplete games |
+| Orientation | Games render correctly in portrait (phone) and landscape (tablet) |
+| Accessibility | All interactive elements have accessibility labels, scaled font sizes work |
+| Offline | All games work with airplane mode (no network calls) |
+
+#### Type Safety
+
+```bash
+# All game data packs validated at compile time
+npx tsc --noEmit
+```
+
+### 10.7 Implementation Phases
+
+#### Phase A: Foundation (Week 1)
+
+- [ ] Define TypeScript types for `SpellingPack`, `ChoicePack`, `SortPack`, `GameProgress`
+- [ ] Create `GameProgressProvider` (AsyncStorage-backed star tracking)
+- [ ] Create `CelebrationOverlay` component (star burst + continue button)
+- [ ] Create `ProgressBar` component (filled dots/stars)
+- [ ] Write unit tests for progress provider and celebration overlay
+- [ ] Update `LearningActivity` interface: replace `storyId` with `gameType` + `packId`
+- [ ] Update `_layout.tsx` navigation: route to game screens instead of `StoryBookReader`
+
+#### Phase B: SpellingGameScreen (Week 2)
+
+- [ ] Build `SpellingGameScreen` component (image + letter card slots + pool)
+- [ ] Reuse pastel letter card styles from `ReadingChallengeUI`
+- [ ] Create word packs for all 10 spelling activities (50-80 words total)
+- [ ] Source/create ~35 bundled illustrations (animals, food, nature, objects)
+- [ ] Add wrong-answer shake animation (Reanimated)
+- [ ] Add correct-answer glow animation
+- [ ] Wire up progress tracking + celebration on pack completion
+- [ ] Write unit tests for SpellingGameScreen
+- [ ] Test on iOS and Android devices
+
+#### Phase C: ChoiceGameScreen (Week 3)
+
+- [ ] Build `ChoiceGameScreen` component (prompt area + choice cards)
+- [ ] Support all 4 prompt types: image, text, count, sequence
+- [ ] Create question packs for all 12 choice activities (60-120 questions total)
+- [ ] Source/create ~20 illustrations for counting and matching prompts
+- [ ] Add answer feedback animations (correct bounce, wrong shake)
+- [ ] Wire up progress tracking + celebration
+- [ ] Write unit tests for ChoiceGameScreen
+- [ ] Test on iOS and Android devices
+
+#### Phase D: SortingGameScreen (Week 4)
+
+- [ ] Build `SortingGameScreen` component (item display + bucket bins)
+- [ ] Add item-to-bucket placement animation (float into bin)
+- [ ] Create sort packs: recycling (12 items), emotions (8 items), colours (8 items)
+- [ ] Source/create ~12 recycling item illustrations
+- [ ] Reuse emotion card assets for feeling sort
+- [ ] Add bucket counter + capacity visuals
+- [ ] Wire up progress tracking + celebration
+- [ ] Write unit tests for SortingGameScreen
+- [ ] Test on iOS and Android devices
+
+#### Phase E: Polish & QA (Week 5)
+
+- [ ] Integration test: full flow from activity list → game → completion → stars on card
+- [ ] Accessibility audit: all elements labelled, font scaling works, high contrast
+- [ ] Tablet layout testing (iPad landscape)
+- [ ] RTL language testing (Arabic)
+- [ ] Add haptic feedback on taps (already using expo-haptics)
+- [ ] Performance profiling: ensure 60fps during animations
+- [ ] Sound effects: gentle chime on correct, soft thud on wrong (optional)
+- [ ] Update LearningTipsOverlay to explain new game mechanics
+- [ ] Update all 14 locale files with any new translation keys
+- [ ] Final pass: remove old `wombat-spelling` / `wombat-word-placing` story routing
+
+### 10.8 Platform Compatibility
+
+| Feature | iOS | Android | Web | Notes |
+|---|---|---|---|---|
+| SpellingGameScreen | ✅ | ✅ | ✅ | Pressable + Reanimated |
+| ChoiceGameScreen | ✅ | ✅ | ✅ | Pressable + Reanimated |
+| SortingGameScreen | ✅ | ✅ | ✅ | Pressable + Reanimated (no drag-and-drop) |
+| Haptic feedback | ✅ | ✅ | ❌ | expo-haptics (graceful no-op on web) |
+| AsyncStorage progress | ✅ | ✅ | ✅ | Already SSR-guarded |
+| Bundled images | ✅ | ✅ | ✅ | require() / asset modules |
+| Offline play | ✅ | ✅ | ✅ | No network calls |
+| Portrait + landscape | ✅ | ✅ | ✅ | useWindowDimensions responsive |
+| Accessibility scaling | ✅ | ✅ | ✅ | useAccessibility hook |
+
+### 10.9 Risk Assessment
+
+| Risk | Impact | Mitigation |
+|---|---|---|
+| Image asset creation bottleneck | High — blocks Phases B-D | Start with emoji/Ionicons fallbacks, swap real illustrations later |
+| Word pack localisation | Medium — 14 languages × 80+ words | Phase 1: English only. Add translations in subsequent release |
+| Reanimated perf on low-end Android | Low — animations are simple | Test on budget Android devices early. Use `withTiming` not spring physics |
+| Scope creep into drag-and-drop | Medium — complex gesture handling | Strict tap-only mechanics. No `PanGestureHandler` in v1 |
+| Breaking existing reading challenges | Low — ReadingChallengeUI stays | Keep story-reader reading challenges intact. New games are additive |
+
+---
+
+## 11. Parent Scaffolding Guides — Long-Press Experience Tips
+
+> **Core idea:** Long-press (hold) any activity card, story card, or content tile across every
+> sub-menu to reveal a parent-facing guide explaining what the content is, how to engage with
+> it together, and top tips for maximising developmental value.
+>
+> This directly supports the **co-engagement** principle — the app is used by parent and child
+> together. Parents often don't know *how* to scaffold a learning moment. We tell them.
+
+### 11.1 Interaction Pattern
+
+```
+  ┌─────────────────────────────────┐
+  │  Long-press any card (500ms)    │
+  │                                 │
+  │  ┌───────────────────────────┐  │
+  │  │  ✨ ABC Animals            │  │
+  │  │                           │  │
+  │  │  WHAT IT IS               │  │
+  │  │  Your child sees pictures │  │
+  │  │  of animals and spells    │  │
+  │  │  their names by tapping   │  │
+  │  │  letter cards.            │  │
+  │  │                           │  │
+  │  │  HOW TO PLAY TOGETHER     │  │
+  │  │  • Say the animal name    │  │
+  │  │    out loud together      │  │
+  │  │  • Sound out each letter  │  │
+  │  │  • Celebrate every try    │  │
+  │  │                           │  │
+  │  │  💡 TOP TIPS               │  │
+  │  │  • Ask "What sound does   │  │
+  │  │    a cat make?" after     │  │
+  │  │  • Connect to real life:  │  │
+  │  │    "We saw a dog today!"  │  │
+  │  │  • No rush — let them     │  │
+  │  │    explore at their pace  │  │
+  │  │                           │  │
+  │  │  🌱 WHAT THEY'RE LEARNING  │  │
+  │  │  Letter recognition,      │  │
+  │  │  phonics awareness,       │  │
+  │  │  fine motor skills        │  │
+  │  │                           │  │
+  │  │  Ages 1-2  ·  5 words     │  │
+  │  │                           │  │
+  │  │  ┌────────┐  ┌─────────┐  │  │
+  │  │  │  Play  │  │  Close  │  │  │
+  │  │  └────────┘  └─────────┘  │  │
+  │  └───────────────────────────┘  │
+  └─────────────────────────────────┘
+```
+
+**Trigger:** `onLongPress` (500ms hold) on any content card. Haptic feedback on trigger.
+**Dismiss:** Tap "Close", tap outside, or swipe down.
+**Play:** Opens the activity/story directly from the guide.
+
+### 11.2 Guide Sections
+
+Every guide has 4 consistent sections, regardless of content type:
+
+| Section | Purpose | Tone |
+|---|---|---|
+| **What It Is** | Plain-English description of what the child will see and do | Informative, simple |
+| **How to Play Together** | 3-4 bullet points on how the parent can actively participate | Encouraging, actionable |
+| **Top Tips** | 2-3 scaffolding tips connecting the activity to real-world learning | Warm, practical |
+| **What They're Learning** | Developmental skills being exercised (tagged from a fixed taxonomy) | Educational, concise |
+
+Plus metadata: age range, duration/word count, and a "Play" button.
+
+### 11.3 Where It Appears
+
+Guides apply to **every sub-menu** in the app, not just learning:
+
+| Section | Card type | Example guide content |
+|---|---|---|
+| **Stories** | Story cards | What the story is about, themes to discuss, questions to ask after reading, literacy skills |
+| **Stories — Musical** | Musical story cards | How the music challenge works, how to clap along, rhythm & timing skills |
+| **Stories — Interactive** | Interactive story cards | What touch elements to look for, how to let the child discover, cause-and-effect learning |
+| **Stories — Jigsaw** | Jigsaw story cards | How to help without doing it for them, spatial awareness skills, patience building |
+| **Spelling** | Activity cards | What words they'll spell, how to sound out letters together, phonics skills |
+| **Numbers** | Activity cards | What maths concepts are covered, how to count objects in real life, number sense |
+| **Feelings** | Activity cards | What emotions are explored, how to ask "when do you feel this?", emotional literacy |
+| **Instruments** | Instrument cards | How the instrument sounds, how to move/dance together, musical awareness |
+| **Practise** | Song cards | What the song teaches, how to sing along, rhythm & memory skills |
+| **Free Play** | Instrument selection | How free play works, how to encourage experimentation, creative expression |
+
+### 11.4 Data Model
+
+```typescript
+interface ScaffoldingGuide {
+  /** Unique key matching the content ID (activity ID, story ID, song ID, etc.) */
+  contentId: string;
+
+  /** What this content is — shown as the first section */
+  whatItIs: string;
+
+  /** How parent and child can engage together — 3-4 bullet points */
+  howToPlay: string[];
+
+  /** Top tips for maximising developmental value — 2-3 bullets */
+  topTips: string[];
+
+  /** Developmental skills being exercised */
+  learningOutcomes: DevelopmentalSkill[];
+
+  /** Optional age suitability note beyond the age badge */
+  ageNote?: string;
+}
+
+/** Fixed taxonomy of developmental skills — consistent across all guides */
+type DevelopmentalSkill =
+  // Literacy & language
+  | 'letter-recognition'
+  | 'phonics-awareness'
+  | 'vocabulary'
+  | 'reading-comprehension'
+  | 'spelling'
+  | 'storytelling'
+  // Numeracy
+  | 'counting'
+  | 'number-recognition'
+  | 'addition-subtraction'
+  | 'patterns'
+  | 'sorting-categorisation'
+  | 'spatial-awareness'
+  // Social & emotional
+  | 'emotional-literacy'
+  | 'empathy'
+  | 'self-regulation'
+  | 'turn-taking'
+  | 'patience'
+  // Motor & sensory
+  | 'fine-motor'
+  | 'rhythm-timing'
+  | 'listening'
+  | 'hand-eye-coordination'
+  // Creative
+  | 'creative-expression'
+  | 'imagination'
+  | 'problem-solving'
+  // Values
+  | 'environmental-awareness'
+  | 'kindness';
+
+/** Human-readable labels for each skill (translatable) */
+const SKILL_LABELS: Record<DevelopmentalSkill, string> = {
+  'letter-recognition': 'Letter Recognition',
+  'phonics-awareness': 'Phonics Awareness',
+  'vocabulary': 'Vocabulary',
+  'reading-comprehension': 'Reading Comprehension',
+  'spelling': 'Spelling',
+  'storytelling': 'Storytelling',
+  'counting': 'Counting',
+  'number-recognition': 'Number Recognition',
+  'addition-subtraction': 'Addition & Subtraction',
+  'patterns': 'Patterns',
+  'sorting-categorisation': 'Sorting & Categorisation',
+  'spatial-awareness': 'Spatial Awareness',
+  'emotional-literacy': 'Emotional Literacy',
+  'empathy': 'Empathy',
+  'self-regulation': 'Self-Regulation',
+  'turn-taking': 'Turn-Taking',
+  'patience': 'Patience',
+  'fine-motor': 'Fine Motor Skills',
+  'rhythm-timing': 'Rhythm & Timing',
+  'listening': 'Listening',
+  'hand-eye-coordination': 'Hand-Eye Coordination',
+  'creative-expression': 'Creative Expression',
+  'imagination': 'Imagination',
+  'problem-solving': 'Problem Solving',
+  'environmental-awareness': 'Environmental Awareness',
+  'kindness': 'Kindness',
+};
+```
+
+### 11.5 Example Guides
+
+#### Spelling — "ABC Animals" (ages 1-2)
+
+| Section | Content |
+|---|---|
+| **What It Is** | Your child sees a picture of an animal and spells its name by tapping colourful letter cards into the right order. |
+| **How to Play Together** | • Say the animal name out loud before they start spelling · • Point to each letter and say its sound: "C says 'kuh'" · • If they're stuck, say the next letter sound as a hint · • Clap and cheer when they complete a word |
+| **Top Tips** | • Ask "What sound does a cat make?" to extend the moment · • Connect to real life: "We saw a dog in the park!" · • Let them try wrong letters — it's part of learning |
+| **What They're Learning** | Letter Recognition, Phonics Awareness, Fine Motor Skills, Vocabulary |
+
+#### Numbers — "Recycling Sort" (ages 2-4)
+
+| Section | Content |
+|---|---|
+| **What It Is** | Items appear one at a time — your child taps the right bin to sort recycling, food waste, and general rubbish. |
+| **How to Play Together** | • Talk about each item: "A banana peel — where does that go?" · • Let them guess before tapping · • If wrong, explain why: "Plastic bottles can be recycled!" · • Count the items in each bin together |
+| **Top Tips** | • After playing, do a real sorting activity with household items · • Talk about why recycling matters — keep it simple and positive · • Praise the effort, not just the right answers |
+| **What They're Learning** | Sorting & Categorisation, Environmental Awareness, Problem Solving, Counting |
+
+#### Stories — "Snuggle Little Wombat" (musical mode)
+
+| Section | Content |
+|---|---|
+| **What It Is** | A gentle bedtime story about a wombat finding a cosy place to sleep, with musical challenges where your child plays along with instruments. |
+| **How to Play Together** | • Read the words out loud together in a calm, sleepy voice · • When the music challenge appears, help them tap along · • Ask "Where do you think Wombat will sleep?" · • Use it as part of your bedtime routine |
+| **Top Tips** | • Tap the rhythm together — clap or pat your knees · • After the story, ask "What was your favourite part?" · • Re-read it — repetition builds comprehension and comfort |
+| **What They're Learning** | Listening, Rhythm & Timing, Reading Comprehension, Imagination, Vocabulary |
+
+### 11.6 UI Component — `ScaffoldingGuideModal`
+
+```
+Component: ScaffoldingGuideModal
+Props:
+  visible: boolean
+  guide: ScaffoldingGuide | null
+  contentTitle: string
+  contentImage?: ImageSource
+  ageRange?: string
+  onPlay: () => void
+  onClose: () => void
+
+Visual style:
+  - Bottom sheet modal (slides up from bottom, 80% screen height)
+  - Semi-transparent dark backdrop
+  - Rounded top corners (24px radius)
+  - Soft gradient background matching app theme (deep navy → midnight)
+  - Each section has a small icon (Ionicons) + heading + body text
+  - Developmental skills shown as small pastel pill badges
+  - "Play" button uses the activity's accent colour
+  - "Close" is a grey text button or X icon
+```
+
+### 11.7 Implementation Checklist
+
+#### Data & Types
+
+- [ ] Define `ScaffoldingGuide` interface and `DevelopmentalSkill` type in `types/`
+- [ ] Define `SKILL_LABELS` lookup (translatable via i18n keys)
+- [ ] Create guide data files per section: `data/guides/spelling-guides.ts`, `data/guides/story-guides.ts`, etc.
+- [ ] Write guides for all existing content (~45 guides across all sections)
+
+#### Component
+
+- [ ] Build `ScaffoldingGuideModal` bottom sheet component
+- [ ] Add developmental skill pill badges (pastel rounded chips)
+- [ ] Add "Play" and "Close" action buttons
+- [ ] Support content image/icon in the header
+- [ ] Haptic feedback on long-press trigger
+- [ ] Smooth slide-up animation (Reanimated `withTiming`)
+
+#### Integration Points
+
+- [ ] **LearningScreen** — add `onLongPress` to activity cards → show guide
+- [ ] **StorySelectionScreen** — add `onLongPress` to story cards → show guide
+- [ ] **PractiseScreen** — add `onLongPress` to song cards → show guide
+- [ ] **FreeplayScreen** — add `onLongPress` to instrument selection → show guide
+- [ ] **InstrumentCarousel** — add `onLongPress` to instrument cards → show guide
+- [ ] **CatalogStoryCard** — add `onLongPress` to catalog entries → show guide
+
+#### Localisation
+
+- [ ] Add all guide text to `locales/en/index.ts` under `scaffolding.*` namespace
+- [ ] Add `DevelopmentalSkill` labels to all 14 locale files
+- [ ] Section headings: `scaffolding.whatItIs`, `scaffolding.howToPlay`, `scaffolding.topTips`, `scaffolding.whatTheyLearn`
+
+#### Tests
+
+- [ ] Unit test: `ScaffoldingGuideModal` renders all 4 sections
+- [ ] Unit test: "Play" button calls `onPlay`, "Close" calls `onClose`
+- [ ] Unit test: developmental skill pills render from guide data
+- [ ] Unit test: modal doesn't render when `visible=false`
+- [ ] Integration test: long-press on activity card opens correct guide
+- [ ] Integration test: long-press on story card opens correct guide
+- [ ] Data test: every content ID in the app has a matching guide entry (no gaps)
+- [ ] Accessibility test: all guide text is readable by screen readers, fonts scale

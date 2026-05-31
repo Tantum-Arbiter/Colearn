@@ -44,6 +44,7 @@ import {
 import type { MusicChallenge } from '@/types/story';
 import { useGlobalSound } from '@/contexts/global-sound-context';
 import { SubscriptionOverlay } from '@/components/ui/subscription-overlay';
+import { LearningTipsOverlay } from '@/components/tutorial';
 
 // Pre-generate star positions at module level (same as story selection screen)
 const STAR_POSITIONS = generateStarPositions(VISUAL_EFFECTS.STAR_COUNT);
@@ -52,9 +53,11 @@ type PlayMode = 'blow' | 'press';
 
 interface FreeplayScreenProps {
   onBack: () => void;
+  /** Whether this screen is the currently active page (controls tutorial visibility) */
+  isActive?: boolean;
 }
 
-export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
+export function FreeplayScreen({ onBack, isActive = false }: FreeplayScreenProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledButtonSize } = useAccessibility();
@@ -402,7 +405,7 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
                   }]}
                   onPress={handleChangeInstrument}
                 >
-                  <Ionicons name="home" size={scaledFontSize(20)} color="#333333" />
+                  <Ionicons name="arrow-back" size={scaledFontSize(20)} color="#333333" />
                 </Pressable>
               </View>
             )}
@@ -425,7 +428,7 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
                     setShowSettingsMenu(prev => !prev);
                   }}
                 >
-                  <Text style={[styles.settingsButtonText, { fontSize: scaledFontSize(28), marginTop: 2 }]}>☰</Text>
+                  <Ionicons name="menu" size={scaledFontSize(24)} color="#333333" />
                 </Pressable>
               </View>
             )}
@@ -478,6 +481,9 @@ export function FreeplayScreen({ onBack }: FreeplayScreenProps) {
         visible={showSubscription}
         onClose={() => setShowSubscription(false)}
       />
+
+      {/* Freeplay mode tutorial — shown on first visit */}
+      <LearningTipsOverlay tutorialId="freeplay_tips" isActive={isActive} />
     </View>
   );
 }

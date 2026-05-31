@@ -10,6 +10,7 @@ import Animated, {
   cancelAnimation as cancelReanimatedAnimation,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { Ionicons } from '@expo/vector-icons';
 
 import { ThemedText } from '../themed-text';
 import { getIconSvgType, getSvgComponentFromSvg } from './assets';
@@ -285,7 +286,7 @@ export const MenuIcon = React.memo(function MenuIcon({
           {/* Shining star overlay for active icon */}
           {status === 'animated_interactive' && (
             <Animated.View style={[menuIconStyles.shimmerOverlay, shimmerStyle]}>
-              <ThemedText style={menuIconStyles.starEmoji}>✨</ThemedText>
+              <Ionicons name="sparkles" size={20} color="#FFD700" />
             </Animated.View>
           )}
 

@@ -10,7 +10,7 @@
 
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -416,7 +416,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
                 onPress={toggleManualRotation}
                 testID="rotate-button"
               >
-                <Text style={[styles.rotateButtonText, { fontSize: scaledFontSize(20) }]}>↻</Text>
+                <Ionicons name="refresh" size={scaledFontSize(18)} color="#FFFFFF" />
               </Pressable>
             </View>
           )}
@@ -527,7 +527,10 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
                 onPress={challenge.retry}
                 testID="retry-button"
               >
-                <Text style={[styles.retryButtonText, { fontSize: scaledFontSize(15) }]}>{t('music.retry')}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="refresh-outline" size={scaledFontSize(14)} color="#FFFFFF" style={{ marginRight: 4 }} />
+                  <Text style={[styles.retryButtonText, { fontSize: scaledFontSize(15) }]}>{t('music.retry')}</Text>
+                </View>
               </Pressable>
               {!challenge.isMaxDifficulty && (
                 <Pressable
@@ -545,7 +548,10 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
                 onPress={onContinue}
                 testID="continue-story-button"
               >
-                <Text style={[styles.continueButtonText, { fontSize: scaledFontSize(15) }]}>{continueLabel ?? t('music.continueStory')}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Text style={[styles.continueButtonText, { fontSize: scaledFontSize(15) }]}>{continueLabel ?? t('music.continueStory')}</Text>
+                  <Ionicons name="chevron-forward" size={scaledFontSize(14)} color="#FFFFFF" style={{ marginLeft: 4 }} />
+                </View>
               </Pressable>
             </>
           ) : !uiHidden ? (
@@ -558,9 +564,12 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
                 onPress={togglePlayMode}
                 testID="play-mode-toggle"
               >
-                <Text style={[styles.modeToggleText, { fontSize: scaledFontSize(14) }]}>
-                  {playMode === 'blow' ? t('music.blowMode') : t('music.pressMode')}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="musical-note" size={scaledFontSize(12)} color="#FFFFFF" style={{ marginRight: 4 }} />
+                  <Text style={[styles.modeToggleText, { fontSize: scaledFontSize(14) }]}>
+                    {playMode === 'blow' ? t('music.blowMode') : t('music.pressMode')}
+                  </Text>
+                </View>
               </Pressable>
 
 
@@ -571,7 +580,10 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
 
               {allowSkip && (
                 <Pressable style={styles.skipButton} onPress={onSkip}>
-                  <Text style={[styles.skipButtonText, { fontSize: scaledFontSize(13) }]}>{t('music.skip')}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={[styles.skipButtonText, { fontSize: scaledFontSize(13) }]}>{t('music.skip')}</Text>
+                    <Ionicons name="chevron-forward" size={scaledFontSize(12)} color="rgba(255,255,255,0.7)" style={{ marginLeft: 2 }} />
+                  </View>
                 </Pressable>
               )}
             </>
@@ -903,6 +915,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     width: '100%',
+    overflow: 'visible',
   },
   // Celebration when rotated -stays in the top section so it doesn't overlap note buttons
   celebrationContainerRotated: {

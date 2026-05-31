@@ -242,7 +242,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
             onPress={item.toggle}
           >
             <View style={[consentStyles.checkbox, item.checked && consentStyles.checkboxChecked]}>
-              {item.checked && <ThemedText style={consentStyles.checkmark}>✓</ThemedText>}
+              {item.checked && <Ionicons name="checkmark" size={16} color="#FFFFFF" />}
             </View>
             <View style={consentStyles.checkboxTextContainer}>
               <ThemedText style={consentStyles.checkboxLabel}>

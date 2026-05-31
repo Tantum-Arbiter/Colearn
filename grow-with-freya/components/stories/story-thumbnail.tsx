@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, Pressable, StyleSheet, ImageSourcePropType } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import Animated, {
   useSharedValue,
@@ -138,7 +139,7 @@ export const StoryThumbnail: React.FC<StoryThumbnailProps> = ({
           {/* Loading overlay */}
           {isVisible && coverImageSource && !imageLoaded && !imageError && (
             <View style={styles.loadingOverlay}>
-              <Text style={styles.loadingText}>📖</Text>
+              <Ionicons name="book-outline" size={24} color="rgba(255,255,255,0.6)" />
             </View>
           )}
         </View>

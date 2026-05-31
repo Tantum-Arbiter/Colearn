@@ -180,15 +180,15 @@ export function StoryPreviewModal({
         >
           {/* X Close Button - top left */}
           <Pressable style={styles.xCloseButton} onPress={handleClose}>
-            <Text style={styles.xCloseButtonText}>✕</Text>
+            <Ionicons name="close" size={18} color="#666" />
           </Pressable>
 
           {/* Favorite Star Button - top right (only for downloaded stories) */}
           {story.isAvailable && (
             <Pressable style={styles.favoriteButton} onPress={handleToggleFavorite}>
-              <Animated.Text style={[styles.favoriteButtonText, starAnimatedStyle]}>
-                {isFavorited ? '⭐' : '☆'}
-              </Animated.Text>
+              <Animated.View style={starAnimatedStyle}>
+                <Ionicons name={isFavorited ? 'star' : 'star-outline'} size={24} color={isFavorited ? '#FFD700' : '#999'} />
+              </Animated.View>
             </Pressable>
           )}
 
@@ -297,7 +297,7 @@ export function StoryPreviewModal({
             {/* Pre-installed notice */}
             {isPreInstalled && story.isAvailable && (
               <View style={styles.preInstalledNotice}>
-                <Text style={[styles.preInstalledIcon]}>📦</Text>
+                <Ionicons name="cube-outline" size={16} color="#4ECDC4" />
                 <Text style={[styles.preInstalledText, { fontSize: scaledFontSize(12) }]}>
                   {t('storyPreview.preInstalledNotice')}
                 </Text>

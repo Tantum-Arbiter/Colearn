@@ -44,7 +44,8 @@
   "tags": [
     "adventure",
     "animals",
-    "friendship"
+    "friendship",
+    "interactive"
   ],
   "pages": [
     {
@@ -117,7 +118,16 @@
           "la": "Tres sciuri parvi ex domo arboris iucunda prospexerunt, laeti terram mirabilem nivatam explorare.\n",
           "zh": "三只小松鼠从舒适的树屋里探出头来，兴奋地探索雪白的仙境。 "
         }
-      }
+      },
+      "interactiveElements": [
+        {
+          "id": "tree-door",
+          "type": "reveal",
+          "image": "assets/stories/squirrels-snowman/page-2/tree-door-open.webp",
+          "position": { "x": 0.42, "y": 0.35 },
+          "size": { "width": 0.20, "height": 0.25 }
+        }
+      ]
     },
     {
       "id": "squirrels-snowman-3",
@@ -165,7 +175,16 @@
           "la": "Subito, viderunt aliquid mirum - hominem niveum altum cum naso pastinacae et oculis carbonum! ",
           "zh": "突然，他们发现了一些令人惊奇的东西——一个高大的雪人，有胡萝卜鼻子和煤炭眼睛！ "
         }
-      }
+      },
+      "interactiveElements": [
+        {
+          "id": "snowman-hat",
+          "type": "reveal",
+          "image": "assets/stories/squirrels-snowman/page-4/snowman-hat-reveal.webp",
+          "position": { "x": 0.38, "y": 0.15 },
+          "size": { "width": 0.25, "height": 0.20 }
+        }
+      ]
     },
     {
       "id": "squirrels-snowman-5",
@@ -237,7 +256,16 @@
           "la": "Sciuri glandes et coni pini attulere ut amicum hominem niveum ornent.\n",
           "zh": "松鼠带来了橡子和松果来装饰他们的雪人朋友。\n"
         }
-      }
+      },
+      "interactiveElements": [
+        {
+          "id": "acorn-basket",
+          "type": "reveal",
+          "image": "assets/stories/squirrels-snowman/page-7/acorn-basket-open.webp",
+          "position": { "x": 0.55, "y": 0.50 },
+          "size": { "width": 0.18, "height": 0.22 }
+        }
+      ]
     },
     {
       "id": "squirrels-snowman-8",
@@ -309,7 +337,16 @@
           "la": "Cum magia hiemalis aera impleret, sciuri didici amicitiam etiam in frigidissima temperie florere posse.\nFinis.\n",
           "zh": "当冬天的魔法充满空气时，松鼠们学到了即使在最寒冷的季节，友谊也能绽放。结束。 "
         }
-      }
+      },
+      "interactiveElements": [
+        {
+          "id": "star-glow",
+          "type": "reveal",
+          "image": "assets/stories/squirrels-snowman/page-10/star-glow.webp",
+          "position": { "x": 0.45, "y": 0.10 },
+          "size": { "width": 0.15, "height": 0.15 }
+        }
+      ]
     }
   ],
   "version": 1,

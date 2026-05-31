@@ -12,7 +12,7 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { FontAwesome5 } from '@expo/vector-icons';
+import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 import * as Google from 'expo-auth-session/providers/google';
 
 import { ThemedText } from '../themed-text';
@@ -559,7 +559,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
 
                 {['syncProgress', 'multiDevice', 'cloudBackup', 'personalised'].map((key) => (
                   <View key={key} style={styles.guestInfoItem}>
-                    <ThemedText style={styles.guestInfoBullet}>✦</ThemedText>
+                    <Ionicons name="checkmark-circle-outline" size={14} color="#4ECDC4" style={{ marginRight: 4 }} />
                     <ThemedText style={styles.guestInfoItemText} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.7}>
                       {t(`guestInfo.missing.${key}`)}
                     </ThemedText>

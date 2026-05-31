@@ -13,6 +13,19 @@ import { useTutorial } from '@/contexts/tutorial-context';
 import { STORY_READER_TIPS } from './tutorial-content';
 import { useTranslation } from 'react-i18next';
 
+type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
+
+const STEP_ICONS: Record<string, IoniconsName> = {
+  story_welcome: 'book-outline',
+  interactive_elements: 'sparkles-outline',
+  point_and_discuss: 'hand-left-outline',
+  pause_and_predict: 'help-circle-outline',
+  voices_and_sounds: 'megaphone-outline',
+  navigate_story: 'phone-portrait-outline',
+  tap_words_highlight: 'hand-left-outline',
+  compare_languages: 'globe-outline',
+};
+
 interface StoryTipsOverlayProps {
   storyId: string;
   forceShow?: boolean;
@@ -46,7 +59,8 @@ export function StoryTipsOverlay({ storyId, forceShow = false, onClose }: StoryT
   // Check if we should show the tutorial (compute once to avoid dependency issues)
   const shouldShow = !hasSeenFirstStory && shouldShowTutorial('story_reader_tips');
 
-  // Mount immediately to block touches, then show card after delay
+  // Show overlay after a short delay (allows orientation to settle and buttons to render)
+  // Touch blocking only activates when the card is visible (isVisible === true)
   useEffect(() => {
     if (forceShow) {
       // Immediately show when forceShow is true
@@ -57,17 +71,14 @@ export function StoryTipsOverlay({ storyId, forceShow = false, onClose }: StoryT
       cardOpacity.value = withTiming(1, { duration: 300 });
       cardScale.value = withSpring(1, { damping: 20, stiffness: 200 });
     } else if (shouldShow) {
-      // Mount immediately to block touches during loading
-      setIsMounted(true);
-      overlayOpacity.value = withTiming(0.5, { duration: 300 }); // Partial overlay during loading
-
       // Delay for phone to wait for orientation change to complete
       const delay = isPhoneLandscape ? 2000 : 1200;
       const timer = setTimeout(() => {
+        setIsMounted(true);
         setIsVisible(true);
         overlayOpacity.value = withTiming(1, { duration: 300 });
         cardOpacity.value = withTiming(1, { duration: 300 });
-        cardScale.value = withSpring(1, { damping: 20, stiffness: 200 }); // Less bouncy
+        cardScale.value = withSpring(1, { damping: 20, stiffness: 200 });
       }, delay);
       return () => clearTimeout(timer);
     }
@@ -129,9 +140,9 @@ export function StoryTipsOverlay({ storyId, forceShow = false, onClose }: StoryT
 
   return (
     <View style={styles.overlayContainer} pointerEvents="box-none">
-      {/* Background overlay - fades in immediately to block touches */}
-      <Animated.View style={[styles.overlay, animatedOverlayStyle]} pointerEvents="auto">
-        {/* Invisible touch-blocking layer - blocks ALL touches */}
+      {/* Background overlay - blocks touches only when card is visible */}
+      <Animated.View style={[styles.overlay, animatedOverlayStyle]} pointerEvents={isVisible ? 'auto' : 'none'}>
+        {/* Touch-blocking layer - only active when tips card is showing */}
         <Pressable
           style={StyleSheet.absoluteFill}
           onPress={() => {}}
@@ -154,16 +165,7 @@ export function StoryTipsOverlay({ storyId, forceShow = false, onClose }: StoryT
               // Landscape layout: icon on left, content on right
               <>
                 <View style={[styles.iconContainer, { marginBottom: 0, marginRight: 16 }]}>
-                  <Text style={styles.icon}>
-                    {currentTip.id === 'story_welcome' && '📖'}
-                    {currentTip.id === 'interactive_elements' && '✨'}
-                    {currentTip.id === 'point_and_discuss' && '👆'}
-                    {currentTip.id === 'pause_and_predict' && '🤔'}
-                    {currentTip.id === 'voices_and_sounds' && '🎭'}
-                    {currentTip.id === 'navigate_story' && '📱'}
-                    {currentTip.id === 'tap_words_highlight' && '👆'}
-                    {currentTip.id === 'compare_languages' && '🌍'}
-                  </Text>
+                  <Ionicons name={STEP_ICONS[currentTip.id] || 'book-outline'} size={36} color="#4ECDC4" />
                 </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.title, { marginBottom: 4 }]}>{t(currentTip.titleKey)}</Text>
@@ -194,16 +196,7 @@ export function StoryTipsOverlay({ storyId, forceShow = false, onClose }: StoryT
             // Portrait layout: vertical stack
             <>
               <View style={styles.iconContainer}>
-                <Text style={styles.icon}>
-                  {currentTip.id === 'story_welcome' && '📖'}
-                  {currentTip.id === 'interactive_elements' && '✨'}
-                  {currentTip.id === 'point_and_discuss' && '👆'}
-                  {currentTip.id === 'pause_and_predict' && '🤔'}
-                  {currentTip.id === 'voices_and_sounds' && '🎭'}
-                  {currentTip.id === 'navigate_story' && '📱'}
-                  {currentTip.id === 'tap_words_highlight' && '👆'}
-                  {currentTip.id === 'compare_languages' && '🌍'}
-                </Text>
+                <Ionicons name={STEP_ICONS[currentTip.id] || 'book-outline'} size={36} color="#4ECDC4" />
               </View>
 
               <Text style={styles.title}>{t(currentTip.titleKey)}</Text>
@@ -286,9 +279,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  icon: {
-    fontSize: 40,
-  },
+
   title: {
     fontSize: 20,
     fontFamily: Fonts.sans,

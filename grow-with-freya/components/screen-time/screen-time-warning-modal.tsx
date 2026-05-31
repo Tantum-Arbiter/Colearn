@@ -11,6 +11,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
+import { Ionicons } from '@expo/vector-icons';
 import { ScreenTimeWarning } from '../../services/screen-time-service';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -77,16 +78,17 @@ export function ScreenTimeWarningModal({
   if (!visible && !warning) return null;
   if (!warning) return null;
 
-  const getModalIcon = () => {
+  type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
+  const getModalIcon = (): IoniconsName => {
     switch (warning.type) {
       case 'approaching_limit':
-        return '⏰';
+        return 'timer-outline';
       case 'limit_reached':
-        return '🛑';
+        return 'stop-circle-outline';
       case 'daily_complete':
-        return '✅';
+        return 'checkmark-circle-outline';
       default:
-        return '⏰';
+        return 'timer-outline';
     }
   };
 
@@ -134,7 +136,7 @@ export function ScreenTimeWarningModal({
           >
             {/* Icon */}
             <View style={[styles.iconContainer, { backgroundColor: getModalColor() }]}>
-              <Text style={styles.icon}>{getModalIcon()}</Text>
+              <Ionicons name={getModalIcon()} size={36} color="#FFFFFF" />
             </View>
 
             {/* Title */}
@@ -146,7 +148,7 @@ export function ScreenTimeWarningModal({
             {/* WHO/AAP Guidelines Note */}
             <View style={styles.guidelinesContainer}>
               <Text style={styles.guidelinesText}>
-                📋 {t('screenTimeWarning.guidelines')}
+                {t('screenTimeWarning.guidelines')}
               </Text>
             </View>
 
@@ -163,7 +165,7 @@ export function ScreenTimeWarningModal({
             {/* Educational Message */}
             <View style={styles.educationalContainer}>
               <Text style={styles.educationalText}>
-                💡 {t('screenTimeWarning.educationalMessage')}
+                {t('screenTimeWarning.educationalMessage')}
               </Text>
             </View>
           </LinearGradient>

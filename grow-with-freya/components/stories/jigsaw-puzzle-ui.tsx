@@ -408,7 +408,7 @@ export const JigsawPuzzleUI: React.FC<JigsawPuzzleUIProps> = ({
         {completedCleanly && (
           <View style={styles.celebrationOverlay}>
             <Animated.View style={[styles.celebrationContainer, celebrationStyle]}>
-              <Text style={[styles.celebrationEmoji, { fontSize: scaledFontSize(60) }]}>🎉</Text>
+              <Ionicons name="trophy-outline" size={scaledFontSize(60)} color="#FFD700" />
               <Text style={[styles.celebrationText, { fontSize: scaledFontSize(42) }]}>
                 {t('jigsaw.amazing')}
               </Text>
@@ -416,9 +416,12 @@ export const JigsawPuzzleUI: React.FC<JigsawPuzzleUIProps> = ({
                 {t('jigsaw.completedMoves', { count: moveCount })}
               </Text>
               <Pressable style={styles.continueButton} onPress={onContinue}>
-                <Text style={[styles.continueButtonText, { fontSize: scaledFontSize(16) }]}>
-                  {t('jigsaw.continueStory')}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Text style={[styles.continueButtonText, { fontSize: scaledFontSize(16) }]}>
+                    {t('jigsaw.continueStory')}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={scaledFontSize(14)} color="#FFFFFF" style={{ marginLeft: 4 }} />
+                </View>
               </Pressable>
             </Animated.View>
           </View>
@@ -502,6 +505,7 @@ const styles = StyleSheet.create({
   celebrationContainer: {
     alignItems: 'center',
     paddingHorizontal: 32,
+    overflow: 'visible',
   },
   celebrationEmoji: {
     marginBottom: 8,

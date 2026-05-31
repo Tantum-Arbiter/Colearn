@@ -8,6 +8,7 @@ import Animated, {
   Easing
 } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
+import { Ionicons } from '@expo/vector-icons';
 import { Story, STORY_TAGS, getLocalizedText } from '@/types/story';
 import type { SupportedLanguage } from '@/services/i18n';
 import { Fonts } from '@/constants/theme';
@@ -140,7 +141,7 @@ export function BookCard({ story, onPress, index = 0 }: BookCardProps) {
         ]}>
           {/* All images are loaded from local cache after batch sync */}
           {isPlaceholder ? (
-            <Text style={styles.placeholderIcon}>📚</Text>
+            <Ionicons name="book-outline" size={32} color="rgba(255,255,255,0.6)" />
           ) : story.coverImage ? (
             <Image
               source={typeof story.coverImage === 'string' ? { uri: story.coverImage } : story.coverImage}

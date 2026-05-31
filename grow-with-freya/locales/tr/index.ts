@@ -28,6 +28,7 @@ export default {
     extraLarge: 'Çok Büyük',
     on: 'AÇIK',
     off: 'KAPALI',
+    openSettings: 'Ayarları Aç',
   },
   alerts: {
     logout: {
@@ -37,7 +38,7 @@ export default {
     },
     resetApp: {
       title: 'Uygulamayı Sıfırla',
-      message: 'Bu, giriş, karakterler ve ayarlar dahil tüm uygulama verilerini silecektir. Emin misiniz?',
+      message: 'Bu, giriş, karakterler ve ayarlar dahil tüm uygulama verilerini silecektir. Emin misiniz? ',
     },
     deleteAccount: {
       title: 'Hesabı Sil',
@@ -50,11 +51,11 @@ export default {
     },
     deleteReminder: {
       title: 'Hatırlatıcıyı Sil',
-      message: '"{{title}}" silinsin mi?',
+      message: '"{{title}}" silinsin mi? ',
     },
     unsavedChanges: {
       title: 'Kaydedilmemiş Değişiklikler',
-      message: 'Kaydedilmemiş değişiklikleriniz var. Kaydetmeden çıkmak istediğinizden emin misiniz?',
+      message: 'Kaydedilmemiş değişiklikleriniz var. Kaydetmeden çıkmak istediğinizden emin misiniz? ',
     },
     missingTitle: {
       title: 'Başlık Eksik',
@@ -113,7 +114,7 @@ export default {
     stories: 'Hikayeler',
     practise: 'Alıştırma',
     freeplay: 'Serbest Çalma',
-    instruments: 'Enstrüman Çal',
+    instruments: 'Enstrümanlar',
     learning: 'Öğrenme',
     spelling: 'Heceleme',
     numbers: 'Sayılar',
@@ -123,11 +124,11 @@ export default {
     title: 'Erişilebilirlik',
     textSizeHint: 'Metin ve düğme boyutunu ayarlayarak daha iyi görünürlük sağlayın',
     grayscale: 'Gri Tonlama/Yüksek Kontrast',
-    grayscaleHint: 'Siyah beyaz mod için cihazınızın yerleşik erişilebilirlik ayarlarını kullanın:',
+    grayscaleHint: 'Siyah beyaz mod için cihazınızın yerleşik erişilebilirlik ayarlarını kullanın: ',
     grayscaleIos: 'Ayarlar → Erişilebilirlik → Ekran ve Metin Boyutu → Renk Filtreleri → Gri Tonlama',
     grayscaleAndroid: 'Ayarlar → Erişilebilirlik → Renk Ayarı → Gri Tonlama',
     blueLight: 'Mavi Işık Filtresi (Gece Modu)',
-    blueLightHint: 'Mavi ışığı azaltarak çocuğunuzun uyku kalitesini iyileştirin. Cihazınızda gece modunu etkinleştirin:',
+    blueLightHint: 'Mavi ışığı azaltarak çocuğunuzun uyku kalitesini iyileştirin. Cihazınızda gece modunu etkinleştirin: ',
     blueLightIos: 'Ayarlar → Ekran ve Parlaklık → Night Shift → Açık',
     blueLightAndroid: 'Ayarlar → Ekran → Gece Işığı (veya Göz Konfortu) → Açık',
     blueLightBenefit: 'Ekrandaki mavi ışık uyku kalitesini etkileyebilir. Akşamları gece modunu etkinleştirmek, uyarıcı mavi dalga boylarını azaltarak çocuğunuzun beyninin uyku için hazırlanmasına yardımcı olur.',
@@ -189,8 +190,8 @@ export default {
     compareLanguageOn: 'Dilleri Karşılaştır: Açık',
     compareLanguageOff: 'Dilleri Karşılaştır: Kapalı',
     selectCompareLanguage: 'Okumak, karşılaştırmak veya kaydetmek için bir dil seçin.',
-    selectFirstLanguage: 'İlk Dil (Beyaz Kutu):',
-    selectSecondLanguage: 'İkinci Dil (Mavi Kutu):',
+    selectFirstLanguage: 'İlk Dil (Beyaz Kutu): ',
+    selectSecondLanguage: 'İkinci Dil (Mavi Kutu): ',
     done: 'Bitti',
     autoPlayOn: 'Otomatik Oynat: Açık',
     autoPlayOff: 'Otomatik Oynat: Kapalı',
@@ -202,16 +203,16 @@ export default {
     permissionMessage: 'Ses kaydetmek için mikrofon erişim izni gereklidir.',
     recordingError: 'Kayıt Hatası',
     recordingErrorMessage: 'Kayıt başlatılamadı. Lütfen tekrar deneyin.',
-    overwriteRecording: 'Kaydın üzerine yazılsın mı?',
-    overwriteRecordingMessage: 'Bu sayfanın zaten bir kaydı var. Yeni bir kayıtla üzerine yazılsın mı?',
+    overwriteRecording: 'Kaydın üzerine yazılsın mı? ',
+    overwriteRecordingMessage: 'Bu sayfanın zaten bir kaydı var. Yeni bir kayıtla üzerine yazılsın mı? ',
     nameAlreadyExists: 'Ad Zaten Var',
     nameAlreadyExistsMessage: '"{{name}}" adında bir ses zaten var. Lütfen farklı bir ad seçin.',
     error: 'Hata',
     createVoiceOverError: 'Ses oluşturulamadı. Lütfen tekrar deneyin.',
-    overwriteVoiceOver: 'Ses üzerine yazılsın mı?',
-    overwriteVoiceOverMessage: '"{{name}}" {{count}} sayfanın kaydına sahip. Yeni bir kayıtla üzerine yazılsın mı?',
+    overwriteVoiceOver: 'Ses üzerine yazılsın mı? ',
+    overwriteVoiceOverMessage: '"{{name}}" {{count}} sayfanın kaydına sahip. Yeni bir kayıtla üzerine yazılsın mı? ',
     deleteVoiceOver: 'Sesi Sil',
-    deleteVoiceOverMessage: '"{{name}}" silinsin mi?',
+    deleteVoiceOverMessage: '"{{name}}" silinsin mi? ',
     deleteVoiceOverMessageWithUndo: '"{{name}}" silinsin mi? Bu geri alınamaz.',
     overwrite: 'Üzerine Yaz',
     delete: 'Sil',
@@ -227,8 +228,8 @@ export default {
     narrateAs: 'Anlatılıyor: {{name}}',
     recordVoiceOver: 'Ses Kaydı Yap',
     selectVoiceOver: 'Ses Seçin',
-    selectExisting: 'Üzerine yazılacak mevcut olanı seçin:',
-    orCreateNew: 'veya yeni oluştur:',
+    selectExisting: 'Üzerine yazılacak mevcut olanı seçin: ',
+    orCreateNew: 'veya yeni oluştur: ',
     enterName: 'Ad girin...',
     create: 'Oluştur',
     chooseRecording: 'Oynatılacak kaydı seçin',
@@ -294,12 +295,13 @@ export default {
     noScreenTime: 'Ekran Süresi Yok',
     recommended: 'Önerilen',
     excessive: 'Aşırı',
+    overLimit: 'Limit Aşıldı',
     createMySchedule: 'Benim Programımı Oluştur',
     scheduleIntro: 'Çocuğunuzun ekran süresi aktiviteleri için özel bildirim zamanları ayarlayın. Hikaye veya duygu veya müzik aktivitesi zamanı geldiğinde nazik hatırlatıcılar alacaksınız.',
     scheduleIntroShort: 'Çocuğunuzun ekran süresi aktiviteleri için özel bildirim zamanları ayarlayın.',
     createCustomReminders: '+ Özel Hatırlatıcı Oluştur',
     recommendedTimes: 'Önerilen Zamanlar',
-    recommendedTimesIntro: 'Çocuk gelişimi araştırmasına göre, ekran aktiviteleri için en iyi zamanlar:',
+    recommendedTimesIntro: 'Çocuk gelişimi araştırmasına göre, ekran aktiviteleri için en iyi zamanlar: ',
     morningStoriesEmotions: 'Sabah Hikayeleri ve Duygular',
     afternoonLearning: 'Öğleden Sonra Öğrenme Aktiviteleri',
     preDinnerMusic: 'Akşam Yemeğinden Önce Rahatlatma Müziği',
@@ -336,6 +338,10 @@ export default {
     creating: 'Oluşturuluyor...',
     noReminders: 'Özel Hatırlatıcı Yok',
     noRemindersHint: 'Özel aktivite bildirimleri başlatmak için ilk hatırlatıcınızı oluşturun.',
+    permissionRequired: {
+      title: 'Bildirimler Gerekli',
+      message: 'Hatırlatıcılar almak için lütfen cihaz ayarlarında bu uygulama için bildirimleri etkinleştirin.',
+    },
     total: 'Toplam',
     today: 'Bugün',
     loading: 'Hatırlatıcılar Yükleniyor...',
@@ -347,7 +353,7 @@ export default {
     messagePlaceholder: 'Hatırlatıcı iletisini girin...',
     dayOfWeek: 'Haftanın Günü',
     timeLabel: 'Zaman',
-    timeSlotTaken: '⚠️ Bu zaman aralığı bu gün zaten dolu',
+    timeSlotTaken: ' Bu zaman aralığı bu gün zaten dolu',
     conflictHint: 'Kırmızı (!) seçilen gündeki çatışmayı gösterir. Tüm zamanlar mevcuttur.',
     selectDayHint: 'Zaman mevcudiyetini görmek için haftanın gününü seçin',
     active: 'Etkin',
@@ -430,8 +436,8 @@ export default {
     profile: 'Profil',
     nickname: 'Takma Ad',
     avatarType: 'Avatar Türü',
-    boy: '👦 Erkek',
-    girl: '👧 Kız',
+    boy: ' Erkek',
+    girl: ' Kız',
     settings: 'Ayarlar',
     language: 'Dil',
     textSize: 'Metin Boyutu',
@@ -457,15 +463,15 @@ export default {
     nicknamePlaceholder: 'Takma Ad Girin...',
     nicknameCharacters: '{{count}}/20 karakter',
     avatarType: 'Avatar Türü',
-    boy: '👦 Erkek',
-    girl: '👧 Kız',
+    boy: ' Erkek',
+    girl: ' Kız',
     saveChanges: 'Değişiklikleri Kaydet',
-    comingSoon: '✨ Profil Özelleştirme Seçenekleri Yakında - Hala Geliştirme Aşamasında!',
+    comingSoon: ' Profil Özelleştirme Seçenekleri Yakında - Hala Geliştirme Aşamasında!',
   },
   onboarding: {
     welcome: 'Hoş Geldiniz!',
     letsGetStarted: 'Başlayalım',
-    whatsYourName: 'Adın Ne?',
+    whatsYourName: 'Adın Ne? ',
     enterNickname: 'Takma Ad Girin',
     chooseAvatar: 'Avatar Seç',
     allSet: 'Hepsi Hazır!',
@@ -500,7 +506,7 @@ export default {
       },
       consent: {
         title: 'Başlamadan önce',
-        body: 'Ebeveyn veya vasi olarak lütfen aşağıdakileri okuyun ve kabul edin:',
+        body: 'Ebeveyn veya vasi olarak lütfen aşağıdakileri okuyun ve kabul edin: ',
         button: 'Kabul ediyorum',
         closeLabel: 'Kapat',
         dataSummary: {
@@ -524,7 +530,7 @@ export default {
       },
     },
     crashReportingDialog: {
-      title: 'Çökme raporlarını etkinleştir?',
+      title: 'Çökme raporlarını etkinleştir? ',
       body: 'Anonim çökme raporları hataları düzeltmeye ve uygulamayı iyileştirmeye yardımcı olur. Kişisel veri toplanmaz.\n\nBunu istediğiniz zaman Ayarlar\'dan değiştirebilirsiniz.',
       noThanks: 'Hayır teşekkürler',
       enable: 'Etkinleştir',
@@ -543,9 +549,9 @@ export default {
     },
   },
   tutorial: {
-    welcomeTitle: 'Earlyroots\'a\nHoş Geldiniz! 🎉',
+    welcomeTitle: 'Earlyroots\'a\nHoş Geldiniz!',
     welcomeDescription: 'Siz ve çocuğunuzun okuma zamanından en iyi şekilde yararlanmanıza yardımcı olmak için hızlı bir tur alalım.',
-    storiesTitle: 'Hikaye Kütüphanesi 📚',
+    storiesTitle: 'Hikaye Kütüphanesi',
     storiesDescription: 'Güzel illüstrasyonlar ve eğlenceli etkileşimler içeren etkileşimli hikayeler koleksiyonunu keşfetmek için buraya dokunun.',
     skip: 'Atla',
     gotIt: 'Anladım!',
@@ -562,111 +568,119 @@ export default {
     },
     mainMenu: {
       welcome: {
-        title: 'Grow with Freya\'ya Hoş Geldiniz! 🎉',
+        title: 'Grow with Freya\'ya Hoş Geldiniz!',
         description: 'Siz ve çocuğunuzun okuma zamanından en iyi şekilde yararlanmanıza yardımcı olmak için hızlı bir tur alalım.',
       },
       stories: {
-        title: 'Hikayeler 📚',
+        title: 'Hikayeler',
         description: 'Güzel çizimler ve eğlenceli etkileşimlerle dolu interaktif hikaye koleksiyonumuzu keşfedin.',
       },
       practise: {
-        title: 'Alıştırma 🎵',
+        title: 'Alıştırma',
         description: 'Farklı enstrümanlarda şarkı çalmayı öğrenin. Takip edin ve müzik becerilerinizi geliştirin!',
       },
       freeplay: {
-        title: 'Serbest Çalma 🎹',
+        title: 'Serbest Çalma',
         description: 'Herhangi bir enstrümanı özgürce çalın -kural yok, sadece eğlence! Seslerle deney yapın ve kendi müziğinizi yaratın.',
       },
+      instruments: {
+        title: 'Enstrümanlar',
+        description: 'Şarkıları pratik edin veya farklı enstrümanlarda özgürce çalın. Eğlenirken müzik becerilerinizi geliştirin!',
+      },
+      learning: {
+        title: 'Öğrenme',
+        description: 'Erken okuma yazma ve sayısal becerilerin geliştirilmesine yardımcı olan etkileşimli yazım ve sayı aktiviteleri.',
+      },
       settings: {
-        title: 'Ayarlar ⚙️',
+        title: 'Ayarlar',
         description: 'Uygulamayı aileniz için en iyi şekilde çalışacak şekilde özelleştirin.',
       },
       sound: {
-        title: 'Ses Kontrolü 🔊',
+        title: 'Ses Kontrolü',
         description: 'Arka plan müziği ve ses efektlerini kontrol etmek için buraya dokunun.',
       },
     },
     screenTime: {
       intro: {
-        title: 'Ekran Süresi Panosu ⏱️',
+        title: 'Ekran Süresi Panosu',
         description: 'Çocuğunuzun günlük ekran süresini yaşa uygun sınırlarla izleyin, yönetin ve ayarlayın.',
       },
       ageBased: {
-        title: 'Yaşa Dayalı Sınırlar 👶',
+        title: 'Yaşa Dayalı Sınırlar',
         description: 'Çocuğunuzun yaşını ayarlayın ve WHO/AAP tarafından önerilen ekran süresi sınırlarını otomatik olarak alın.',
       },
       heatmap: {
-        title: 'Haftalık Aktivite 📊',
+        title: 'Haftalık Aktivite',
         description: 'Sağlıklı bir rutin oluşturmanıza yardımcı olmak için hafta boyunca ekran süresi kullanım düzenlerini görün.',
       },
       reminders: {
-        title: 'Hatırlatıcıları Ayarlayın ⏰',
+        title: 'Hatırlatıcıları Ayarlayın',
         description: 'Aktiviteler, molalar veya uyku saati rutini için özel hatırlatıcılar oluşturun.',
       },
       routine: {
-        title: 'Sağlıklı Rutin Oluşturun 🌟',
+        title: 'Sağlıklı Rutin Oluşturun',
         description: 'Ailenize uygun tutarlı bir günlük rutin oluşturmaya yardımcı olmak için ekran süresi verilerini kullanın.',
       },
     },
     storyReader: {
       welcome: {
-        title: 'Okuma Zamanı İpuçları 📖',
+        title: 'Okuma Zamanı İpuçları',
         description: 'Çocuğunuzla okuma zamanını sihirli kılmak için bazı ipuçları!',
       },
       interactive: {
-        title: 'Etkileşimleri Arayın ✨',
+        title: 'Etkileşimleri Arayın',
         description: 'Bazı sayfaların gizli sürprizleri var! Çocuğunuzu parlayan veya ışıldayan şeylere dokunmaya teşvik edin.',
       },
       point: {
-        title: 'İşaret Et ve Tartış 👆',
+        title: 'İşaret Et ve Tartış',
         description: 'Resimleri hakkında sorular sorun. "Ne görüyorsun?" "Kelebek ne renk?"',
       },
       pause: {
-        title: 'Duraklat ve Tahmin Et 🤔',
+        title: 'Duraklat ve Tahmin Et',
         description: 'Sayfayı çevirmeden önce "Sonra ne olacağını düşünüyorsun?" sorun katılımı artırmak için.',
       },
       voices: {
-        title: 'Farklı Sesler Kullanın 🎭',
+        title: 'Farklı Sesler Kullanın',
         description: 'Karakterlere aptalca seslerle hayat verin! Çocuklar performansı seviyorlar.',
       },
       navigate: {
-        title: 'Kolay Navigasyon 📚',
+        title: 'Kolay Navigasyon',
         description: 'Sayfaları çevirmek için sola veya sağa kaydırın. Daha fazla seçenek için menü düğmesine dokunun.',
       },
       tapWords: {
-        title: 'Odaklanmak İçin Kelimelere Dokunun 👆',
+        title: 'Odaklanmak İçin Kelimelere Dokunun',
         description: 'Hikayedeki herhangi bir kelimeye dokunun vurgula! Bu dikkat çekmeye yardımcı olur ve okumayı daha etkileşimli ve ilgi çekici hale getirir.',
       },
       compareLanguages: {
-        title: 'Dilleri Karşılaştır 🌍',
+        title: 'Dilleri Karşılaştır',
         description: 'Menüyü kullanarak "Dilleri Karşılaştır"ı etkinleştirin ve hikayeyi yan yana iki dilde görüntüleyin. Çok dilli aileler için birlikte öğrenmeye mükemmel!',
       },
     },
     bookMode: {
       read: {
-        title: 'Okuma Modu 📖',
+        title: 'Okuma Modu',
         description: 'Çocuğunuzla birlikte hikayeyi kendiniz okumak için buraya dokunun. Sayfaları kendi hızınızda çevirin.',
       },
       record: {
-        title: 'Kayıt Modu 🎙️',
+        title: 'Kayıt Modu',
         description: 'Hikayeyi okurken sesinizi kaydedin. Uzakta olduğunuzda mükemmel!',
       },
       narrate: {
-        title: 'Dinleme Modu 🎧',
+        title: 'Dinleme Modu',
         description: 'Hikayenin önceden kaydedilmiş bir anlatımını dinleyin. Uyku saati için mükemmel!',
       },
       preview: {
-        title: 'Önizleme 👁️',
+        title: 'Önizleme',
         description: 'Okumaya başlamadan önce hikaye ayrıntılarını, süresini ve temalarını kontrol edin.',
       },
     },
     recordMode: {
       intro: {
-        title: 'Sesinizi Kaydedin 🎙️',
+        title: 'Sesinizi Kaydedin',
         description: 'Bu hikaye için kişisel bir anlatım oluşturun. Çocuğunuz istediğiniz zaman dinleyebilir - hatta uzakta olduğunuzda bile!',
       },
       button: {
-        title: 'Kayıt Kontrolleri 🔴',
+        title: 'Kayıt Kontrolleri',
         description: 'Kaydı başlatmak için mikrofon düğmesine dokunun. Sayfa metnini yüksek sesle okuyun, sonra durdurmak için tekrar dokunun.',
       },
       playback: {
@@ -674,123 +688,241 @@ export default {
         description: 'Kaydı dinleyin ve gerekirse yeniden kaydedin. Çocuklar sesinizi duymayı seviyorlar!',
       },
       sound: {
-        title: 'Ses İpucu 🔊',
+        title: 'Ses İpucu',
         description: 'En iyi kayıt kalitesi için sessiz bir yer bulun. Arka plan gürültüsü dikkat dağıtıcı olabilir.',
       },
       limit: {
-        title: 'Aile Sesi 👨‍👩‍👧',
+        title: 'Aile Sesi',
         description: 'Ailenin birden fazla üyesi kaydedebilir! Büyükanneler, amcalar ve teyzeler - herkesin katılmasına izin verin.',
       },
       benefit: {
-        title: 'Neden Kayıt? 💜',
+        title: 'Neden Kayıt? ',
         description: 'Araştırma, tanıdık bir sesin dinlenmesinin çocukların, özellikle ayrılık sırasında güvenli ve bağlı hissetmelerine yardımcı olduğunu göstermektedir.',
       },
       navigation: {
-        title: 'Sayfa Navigasyonu 📖',
+        title: 'Sayfa Navigasyonu',
         description: 'Sayfalar arasında gezinmek için okları kullanın. Tam anlatılmış bir hikaye oluşturmak için her sayfayı kaydedin!',
       },
     },
     narrateMode: {
       intro: {
-        title: 'Dinleme Modu 🎧',
+        title: 'Dinleme Modu',
         description: 'Rahatla ve keyfini çıkar! Hikaye kaydedilmiş bir sesle yüksek sesle okunuyor.',
       },
       autoPlayback: {
-        title: 'Otomatik Oynat 📖',
+        title: 'Otomatik Oynat',
         description: 'Anlatım bittikten sonra sayfalar otomatik olarak çevrilir. Uyku saati için mükemmel!',
       },
       controls: {
-        title: 'Oynatma Kontrolleri ▶️',
+        title: 'Oynatma Kontrolleri',
         description: 'Duraklatmak, yeniden dinlemek veya hızlı ileri almak için kontrolleri kullanın. Hızı kontrol edin.',
       },
       sound: {
-        title: 'Ses İpucu 🔊',
+        title: 'Ses İpucu',
         description: 'Cihazınızın ses seviyesinin yüksek olduğundan emin olun! Daha sürükleyici bir deneyim için kulaklık kullanın.',
       },
       benefit: {
-        title: 'Bağlantı Zamanı 💜',
+        title: 'Bağlantı Zamanı',
         description: 'Dinleme modunda bile, katılımda kalın! Resimleri gösterin, sorular sorun ve hikayenin tadını birlikte çıkarın.',
       },
     },
     settings: {
       intro: {
-        title: 'Ayarlar ⚙️',
+        title: 'Ayarlar',
         description: 'Uygulamayı aileniz için en iyi şekilde çalışacak şekilde özelleştirin.',
       },
       login: {
-        title: 'Hesap ve Senkronizasyon 🔐',
+        title: 'Hesap ve Senkronizasyon',
         description: 'İlerlemeyi kaydetmek ve cihazlar arasında senkronize etmek için giriş yapın.',
       },
       language: {
-        title: 'Dil 🌍',
+        title: 'Dil',
         description: 'Uygulama arayüzü için tercih ettiğin dili seç.',
       },
       avatar: {
-        title: 'Avatarınız 🎭',
+        title: 'Avatarınız',
         description: 'Özel bir avatar kullanarak çocuğunuzun deneyimini kişiselleştirin.',
       },
       accessibility: {
-        title: 'Erişilebilirlik ♿',
+        title: 'Erişilebilirlik',
         description: 'Metin boyutunu ve diğer ayarları kullanımı kolaylaştırmak için ayarlayın.',
       },
       screenTime: {
-        title: 'Ekran Süresi ⏱️',
+        title: 'Ekran Süresi',
         description: 'Sağlıklı sınırlar belirleyin ve günlük kullanımı izleyin.',
       },
     },
     // Music Mode Tips - keys match tutorial.musicMode.* in tutorial-content.ts
     musicMode: {
       welcome: {
-        title: 'Müzik Modu 🎵',
+        title: 'Müzik Modu',
         description: 'Bu hikayenin bazı sayfalarında müzik meydan okumaları var! Sanal bir enstrümanda notalar çalarak tamamlayın.',
       },
       instrument: {
-        title: 'Enstrümanınızı Seçin 🎹',
+        title: 'Enstrümanınızı Seçin',
         description: 'Müzikli bir kitap açıldığında, en sevdiğiniz enstrümanı seçmek için karuseli kaydırın. Her birinin benzersiz sesleri var!',
       },
       playing: {
-        title: 'Nota Çalma 🎶',
+        title: 'Nota Çalma',
         description: 'Nota çalmak için renkli düğmelere basın. Meydan okumayı tamamlamak için üstte gösterilen sırayı takip edin!',
       },
       sheet: {
-        title: 'Müzik Sayfası 📋',
+        title: 'Müzik Sayfası',
         description: 'Çalmanız gereken tüm notaları görmek için nota düğmesine (sol alt) dokunun. Melodinin önizlemesini bile dinleyebilirsiniz!',
       },
       begin: {
-        title: 'Çalmaya Başla ▶️',
+        title: 'Çalmaya Başla',
         description: 'Bir müzik sayfasına geldiğinizde, meydan okumayı başlatmak için üstteki \'Çalmaya Başla\' düğmesine dokunun. Önce müzik sayfasını açar, böylece ne çalacağınızı görebilirsiniz!',
       },
       change: {
-        title: 'Enstrüman Değiştir 🔄',
-        description: 'Farklı bir ses denemek ister misiniz? Menüyü (☰) açın ve istediğiniz zaman değiştirmek için \'Enstrüman Değiştir\'e dokunun.',
+        title: 'Enstrüman Değiştir',
+        description: 'Farklı bir ses denemek ister misiniz? Menüyü () açın ve istediğiniz zaman değiştirmek için \'Enstrüman Değiştir\'e dokunun.',
       },
     },
     storyModes: {
       welcome: {
-        title: 'Keşfetmenin Üç Yolu! 🌟',
+        title: 'Keşfetmenin Üç Yolu!',
         description: 'Her çocuk farklı öğrenir. Çocuğunuzun merakını uyandıran hikaye deneyimini seçin -her biri oyunun büyüsü aracılığıyla temel becerileri geliştirir.',
       },
       interactive: {
-        title: 'Etkileşimli Hikayeler ✨',
+        title: 'Etkileşimli Hikayeler',
         description: 'Dokun, kaydır ve keşfet! Etkileşimli hikayeler, dokunulabilir sürprizler, neden-sonuç anları ve uygulamalı öğrenme etkinlikleriyle sayfaları canlandırır. Araştırmalar, hikaye zamanında aktif katılımın anlama, ince motor becerileri ve erken problem çözmeyi güçlendirdiğini göstermektedir.',
       },
       musical: {
-        title: 'Müzikli Hikayeler 🎵',
+        title: 'Müzikli Hikayeler',
         description: 'Oku, çal ve sahneye çık! Müzikli hikayeler her maceraya gerçek enstrüman zorlukları örer -çocuğunuz hikayeyi takip ederken ritim, melodi ve koordinasyon öğrenir. Çalışmalar, erken müzik maruziyetinin hafıza, dil gelişimi ve duygusal ifadeyi artırdığını doğrulamaktadır.',
       },
       jigsaw: {
-        title: 'Yapboz Hikayeleri 🧩',
+        title: 'Yapboz Hikayeleri',
         description: 'Parçaları birleştir! Yapboz hikayeleri her sayfada güzel yapbozlar gizler, mekansal farkındalık, sabır ve mantıksal düşünme geliştirir. Yapbozları tamamlamak çocuklara gerçek bir başarı hissi verir ve okuma hazırlığını destekleyen görsel-algısal becerileri güçlendirir.',
       },
     },
     gestures: {
       speakerLongPress: {
-        title: 'Uzun Basma İpucu 👆',
+        title: 'Uzun Basma İpucu',
         description: 'Ek ses seçeneklerini görmek için hoparlör düğmesine uzun basın.',
       },
       storySwipe: {
-        title: 'Kaydırma Navigasyonu 👆',
+        title: 'Kaydırma Navigasyonu',
         description: 'Sayfaları hızlı bir şekilde çevirmek için sola veya sağa kaydırın.',
+      },
+    },
+    // Emotion Cards Tips
+    emotionCards: {
+      welcome: {
+        title: 'Duygu Kartlarına Hoş Geldiniz!',
+        description: 'Çocuğunuzun etkileşimli ve eğlenceli kartlar aracılığıyla duyguları tanımayı ve ifade etmeyi öğrenmesine yardımcı olun.',
+      },
+      together: {
+        title: 'Birlikte Oyna',
+        description: 'Çocuğunuzla oturun ve kartları çevirmeyi sırayla yapın. Birlikte yüzler yapın - daha eğlenceli!',
+      },
+      connect: {
+        title: 'Bağlantı Kurun',
+        description: 'Çocuğunuzun duyguları anlamasına yardımcı olmak için "Ne zaman bunu hissettin?" gibi sorular sorun.',
+      },
+      scenarios: {
+        title: 'Senaryolar Oluşturun',
+        description: 'Her duyguyu tetikleyebilecek durumları canlandırın. "Oyuncağın kırılırsa nasıl hissedersin?"',
+      },
+      themes: {
+        title: 'Farklı Temalar Deneyin',
+        description: 'Emojiler, hayvanlar ve ayı temaları arasında geçiş yaparak işleri taze ve ilgi çekici tutun!',
+      },
+    },
+    // Spelling Tips
+    spelling: {
+      welcome: {
+        title: 'Yazım Etkinlikleri',
+        description: 'Yazım\'a Hoş Geldiniz! Çocuğunuzun harfleri, kelimeleri ve yazımı öğrenmesine yardımcı olacak eğlenceli interaktif etkinlikler.',
+      },
+      ages: {
+        title: 'Yaşa Uygun İçerik',
+        description: 'Etkinlikler yaş grubuna göre sıralanmıştır. Çocuğunuzun seviyesine göre filtrelemek için üstteki karuseli kullanın.',
+      },
+      together: {
+        title: 'Birlikte Öğrenin',
+        description: 'Çocuğunuzla oturun ve harfleri birlikte söyleyin. Onu teşvik edin ve her denemesini kutlayın!',
+      },
+      benefit: {
+        title: 'Okur-Yazarlık Geliştirme',
+        description: 'Erken yazım pratiği fonemik farkındalık, harf tanıma ve ömür boyu sürecek bir kelime sevgisi geliştirir.',
+      },
+    },
+    // Numbers Tips
+    numbers: {
+      welcome: {
+        title: 'Sayı Etkinlikleri',
+        description: 'Sayılar\'a Hoş Geldiniz! Çocuğunuzun sayma, şekiller ve erken matematiği keşfetmesine yardımcı olacak ilgi çekici etkinlikler.',
+      },
+      ages: {
+        title: 'Yaşa Uygun İçerik',
+        description: 'Etkinlikler yaş grubuna göre sıralanmıştır. Çocuğunuz için doğru seviyeyi bulmak için üstteki karuseli kullanın.',
+      },
+      together: {
+        title: 'Birlikte Sayın',
+        description: 'Birlikte yüksek sesle sayın, nesneleri gösterin ve sayıları günlük oyunun bir parçası yapın!',
+      },
+      benefit: {
+        title: 'Sayısal Beceri Geliştirme',
+        description: 'Erken sayı oyunu mantıksal düşünme, örüntü tanıma ve matematik için güvenli bir temel geliştirir.',
+      },
+    },
+    // Feelings Tips
+    feelings: {
+      welcome: {
+        title: 'Duygu Etkinlikleri',
+        description: 'Duygular\'a Hoş Geldiniz! Çocuğunuzun duyguları tanımasına, adlandırmasına ve anlamasına yardımcı olan etkinlikler.',
+      },
+      ages: {
+        title: 'Yaşa Uygun İçerik',
+        description: 'Etkinlikler yaş grubuna göre sıralanmıştır. Çocuğunuzun duygusal gelişimine uygun etkinlikler seçin.',
+      },
+      together: {
+        title: 'Birlikte Keşfedin',
+        description: 'Duygular hakkında açıkça konuşun. "Bu seni nasıl hissettiriyor?" diye sorun ve kendi duygularınızı da paylaşın.',
+      },
+      benefit: {
+        title: 'Duygusal Zeka',
+        description: 'Duyguları anlamak empati, öz düzenleme ve güçlü sosyal beceriler geliştirir — yaşam boyu iyilik hali için gereklidir.',
+      },
+    },
+    // Practise Mode Tips
+    practise: {
+      welcome: {
+        title: 'Alıştırma Modu',
+        description: 'Farklı enstrümanlarda gerçek şarkılar çalmayı öğrenin! Notaları takip edin ve müzik becerilerinizi adım adım geliştirin.',
+      },
+      instrument: {
+        title: 'Enstrümanınızı Seçin',
+        description: 'En sevdiğiniz enstrümanı seçmek için karuseli kaydırın. Her birinin kendine özgü bir sesi var!',
+      },
+      songs: {
+        title: 'Bir Şarkı Seçin',
+        description: 'Şarkı kütüphanesine göz atın ve öğrenmek için bir şarkı seçin. Şarkılar zorluğa göre sıralanmıştır — kolaydan başlayın!',
+      },
+      benefit: {
+        title: 'Müzikal Gelişim',
+        description: 'Şarkı çalmayı öğrenmek ritim, koordinasyon, hafıza ve konsantrasyon geliştirir — hepsi müziğin keyfi sayesinde.',
+      },
+    },
+    // Freeplay Mode Tips
+    freeplay: {
+      welcome: {
+        title: 'Serbest Çalma Modu',
+        description: 'Kural yok, sadece eğlence! Herhangi bir enstrümanı keşfedin ve kendi müziğinizi yaratın. Yaratıcılık ve kendini ifade için mükemmel.',
+      },
+      instrument: {
+        title: 'Enstrümanınızı Seçin',
+        description: 'Karuselden herhangi bir enstrüman seçin. Yeni sesler ve favoriler keşfetmek için hepsini deneyin!',
+      },
+      play: {
+        title: 'Özgürce Çalın',
+        description: 'Müzik yapmak için renkli düğmelere basın. Yanlış nota yok — her ses maceranın bir parçası!',
+      },
+      benefit: {
+        title: 'Yaratıcı İfade',
+        description: 'Serbest müzik oyunu yaratıcılığı, özgüveni ve çocuğunuzla birlikte büyüyen müzik sevgisini besler.',
       },
     },
   },
@@ -818,36 +950,179 @@ export default {
     guidelines: 'Sağlıklı ekran süresi WHO/AAP önerilerini takip eder',
     closeNotification: 'Bildirimi Kapat',
     educationalMessage: 'Diğer aktiviteleri deneyin: Bir kitap okuyun veya dışarıda oynayın veya yaratıcı oyun oynayın!',
-    approachingMessage: 'Bugünün ekran süresi {{minutes}} dakika kaldı. Devam etmek mi yoksa uygulamayı kapatmak mı istiyorsunuz?',
+    approachingMessage: 'Bugünün ekran süresi {{minutes}} dakika kaldı. Devam etmek mi yoksa uygulamayı kapatmak mı istiyorsunuz? ',
     limitReachedMessage: 'Günlük ekran süresi sınırınıza ulaştınız. Uygulamayı kapatıp diğer aktiviteleri deneme zamanı!',
   },
+  // Relaxing music screen
+  relaxMusic: {
+    title: 'Daha sessiz bir yer',
+    screenTitle: 'Rahatlat',
+    subtitle: 'Bir an durun. Mola verin. Biraz rahatlayın.',
+    headphoneGuidance: 'En iyi deneyim için kulaklık kullanın. Rahat bir pozisyon bulun, gözlerinizi kapatın ve nefes almanıza odaklanın.',
+    stopAll: 'Durdur',
+    tipsTitle: 'Rahatlama Teknikleri',
+    tipsBody: 'Bu parçalar binaural vuruşlar kullanır — her kulaktaki ince frekans farkları beyninizi yavaşlamaya teşvik eder. Kulaklık gereklidir.\n\nDinlerken bu basit teknikleri deneyin:\n\nKare Nefes\n4 sayı nefes al, 4 tut, 4 ver, 4 tut. Tekrarla.\n\nVücut Taraması\nAyak parmaklarından başlayarak vücudunuzun her bölümüne yavaşça odaklanın. Gerginliği fark edin ve bilinçli olarak gevşetin.\n\n5-4-3-2-1 Topraklama\nGördüğünüz 5 şeyi, dokunduğunuz 4, duyduğunuz 3, kokladığınız 2 ve tattığınız 1 şeyi fark edin.\n\nDüşünce Bulutları\nHer düşünceyi gökyüzünden geçen bir bulut olarak hayal edin. Kabul edin ve geçmesine izin verin.',
+  },
+
+    // Emotion cards
+  emotions: {
+    title: 'Duygular',
+    subtitle: 'Stilinizi seçin ve duyguları öğrenin',
+    greatJob: 'Harika iş!',
+    sections: {
+      emotionCards: 'Duygu Kartları',
+      developingEmotions: 'Duyguları Geliştirme',
+      parentsToo: 'Ebeveynler de',
+      parentsTooSubtitle: 'Rahatlamanıza yardımcı olacak bir şey ekledik, harika gidiyorsunuz.',
+      relaxingMusic: 'Rahatlatıcı Müzik',
+      relaxingMusicDescription: 'Rahatlamanıza yardımcı olacak sakinleştirici sesler ve rahatlama sekansları',
+    },
+    pickYourStyle: 'Stilinizi Seçin',
+    expressWithTheme: '{{emotion}} duygusunu {{theme}} ile ifade edin!',
+    expressing: '{{emotion}} duygusunu ifade ediyorum!',
+    loading: 'Yükleniyor...',
+    progress: 'İlerleme: {{completed}}/{{total}}',
+    themes: {
+      emoji: {
+        name: 'Emojiler',
+        description: 'Eğlenceli emoji yüzleriyle duyguları ifade edin',
+      },
+      animals: {
+        name: 'Hayvanlar',
+        description: 'Sevimli hayvan arkadaşları aracılığıyla duyguları öğrenin',
+      },
+      bear: {
+        name: 'Ayı',
+        description: 'Dostça bir ayıyla duyguları öğrenin',
+      },
+    },
+    emoji: {
+      happy: 'Mutlu',
+      sad: 'Üzgün',
+      angry: 'Kızgın',
+      surprised: 'Şaşkın',
+      scared: 'Korkmuş',
+      excited: 'Heyecanlı',
+      confused: 'Kafası Karışık',
+      proud: 'Gururlu',
+      shy: 'Utangaç',
+      loving: 'Sevgi Dolu',
+    },
+    animals: {
+      happy: 'Mutlu Tavşan',
+      sad: 'Üzgün Kedi',
+      angry: 'Kızgın Köpek',
+      surprised: 'Şaşkın Civciv',
+      scared: 'Korkmuş Rakun',
+      excited: 'Heyecanlı Tilki',
+      confused: 'Kafası Karışık Fil',
+      proud: 'Gururlu Ayı',
+      shy: 'Utangaç Tembel Hayvan',
+      loving: 'Sevgi Dolu Panda',
+    },
+    bear: {
+      happy: 'Mutlu Ayı',
+      sad: 'Üzgün Ayı',
+      angry: 'Kızgın Ayı',
+      surprised: 'Şaşkın Ayı',
+      scared: 'Korkmuş Ayı',
+      excited: 'Heyecanlı Ayı',
+      confused: 'Kafası Karışık Ayı',
+      proud: 'Gururlu Ayı',
+      shy: 'Utangaç Ayı',
+      loving: 'Sevgi Dolu Ayı',
+    },
+    prompts: {
+      happy: [
+'En büyük gülümsemeyi göster!',
+'Komik bir şey duymuş gibi gülüp gülebilir misin? ',
+'Mutlu bir yüz yap ve alkış tut!',
+'Hediye aldığında yaptığın yüzü göster!',
+      ],
+      sad: [
+'Üzgün bir yüz göster',
+'Oyuncağını kaybetmiş gibi somurtabilir misin? ',
+'Veda etmek zorunda kaldığında hissettiğini göster',
+'Hayal kırıklığına uğramış gibi bir yüz yap',
+      ],
+      angry: [
+'Kızgın bir yüz göster',
+'Kızgın gibi somurtabilir misin? ',
+'Birisi kötü bir şey yaptığında ve sevdiğin oyuncağını attığında yaptığın yüzü göster',
+'Somurtan ve mırıldanan bir yüz yap!',
+      ],
+      surprised: [
+'Şaşkın bir yüz göster!',
+'Gözlerini ve ağzını açabilir misin? ',
+'Harika bir şey gördüğünde yaptığın yüzü göster!',
+'Bir hayalet gördüğün gibi bir yüz yap!',
+      ],
+      scared: [
+'Korkmuş bir yüz göster',
+'Ellerinin arkasına saklanabilir misin korkmuş gibi? ',
+'Fırtına sırasında yaptığın yüzü göster',
+'Korkutucu bir şey gördüğün gibi bir yüz yap!',
+      ],
+      excited: [
+'Heyecanlı bir yüz göster!',
+'Büyük bir gülümsemeyle yukarı aşağı zıplayabilir misin? ',
+'Eğlenceli bir yere giderken yaptığın yüzü göster!',
+'Heyecanlı bir yüz yap ve ellerini salla!',
+      ],
+      confused: [
+'Kafası karışık bir yüz göster',
+'Çok düşünüyor gibi somurtabilir misin? ',
+'Bir şey anlamadığında yaptığın yüzü göster',
+'Bir bulmaca çözerken yaptığın gibi bir yüz yap!',
+      ],
+      proud: [
+'Gururlu bir yüz göster!',
+'Harika bir şey yaptığın gibi dik durup gülümseyebilir misin? ',
+'Bulmacayı tamamladığında yaptığın gururlu yüzü göster!',
+'Birini yardım etmiş gibi bir yüz yap!',
+      ],
+      shy: [
+'Utangaç bir yüz göster',
+'Yüzünü biraz saklayabilir misin? ',
+'Yeni birini tanıştığında yaptığın yüzü göster',
+'Utangaç bir gülümseme yap ve aşağıya bak!',
+      ],
+      loving: [
+'Sevgi dolu bir yüz göster!',
+'Kendine büyük bir sarılma verebilir misin? ',
+'Sevdiğin birini izlerken yaptığın yüzü göster!',
+'Öpücük veriyormuş gibi bir yüz yap!',
+      ],
+    },
+  },
+
   // Music challenge UI strings
   music: {
     amazing: 'Harika!',
     levelComplete: 'Seviye {{level}} tamamlandı!',
     playingYourSong: 'Şarkınız çalınıyor...',
     listeningToMelody: 'Melodinizi dinleyin...',
-    retry: '↻ Tekrar dene',
+    retry: 'Tekrar dene',
     goHarder: 'Zorluğu artır',
     goHarderLevel: 'Zorluğu artır (Sv {{level}})',
-    continueStory: 'Hikayeye devam et →',
-    skip: 'Atla →',
-    blowMode: '♪ Üfle',
-    pressMode: '♫ Bas',
-    blowing: '♪ Üfleniyor!',
+    continueStory: 'Hikayeye devam et',
+    skip: 'Atla',
+    blowMode: 'Üfle',
+    pressMode: 'Bas',
+    blowing: 'Üfleniyor!',
     blowWhileHolding: 'Notaları tutarken üfleyin',
     tryAgain: 'Tekrar deneyin!',
     openMusicSheet: 'Nota kağıdını aç',
     showControls: 'Kontrolleri göster',
     hideControls: 'Kontrolleri gizle',
-    musicSheet: '♪ Nota Kağıdı',
+    musicSheet: 'Nota Kağıdı',
     notesToPlay: 'Çalınacak notalar ({{completed}}/{{total}})',
     pause: 'Duraklat',
     preview: 'Önizleme',
     tapAndHoldNotes: 'Notaları duymak için dokunup basılı tutun',
     playingPreview: 'Önizleme çalınıyor… durdurmak için Duraklat\'a dokunun',
-    successSong: '♫ Başarı Şarkısı',
-    readyToPlay: '♫ Çalmaya hazır',
+    successSong: ' Başarı Şarkısı',
+    readyToPlay: ' Çalmaya hazır',
     chooseInstrument: 'Enstrümanınızı seçin',
     swipeToExplore: 'Keşfetmek için kaydırın, seçmek için dokunun',
     useThisInstrument: 'Bu enstrümanı kullan',
@@ -894,18 +1169,71 @@ export default {
       songOfBreak: 'Kırma şarkısı',
       songOfFix: 'Tamir şarkısı',
     },
+    // Binaural / relaxation track titles and descriptions
+    tracks: {
+      tantrumAlpha: {
+        title: 'Öfke yatıştırma (10Hz)',
+        artist: 'Binaural vuruşlar',
+        description: 'Öfke anlarında sakinleştirmek için alfa dalgaları. Kulaklık kullanın.',
+      },
+      sleepAlpha: {
+        title: 'Rahatlamaya doğru',
+        artist: 'Binaural vuruşlar',
+        description: 'Rahatlamayı başlatmak için alfa dalgaları. Tekrarlar.',
+      },
+      sleepTheta: {
+        title: 'Derin rahatlama',
+        artist: 'Binaural vuruşlar',
+        description: 'Derin rahatlama için theta dalgaları. Tekrarlar.',
+      },
+      sleepSequence: {
+        title: 'Tam rahatlama dizisi',
+        artist: 'Binaural vuruşlar',
+        description: 'Tam ilerleme: Rahatlamaya doğru → Derin rahatlama.',
+      },
+      bearsBirthdayParty: {
+        title: 'Ayının doğum günü partisi',
+        artist: 'Uyku hikayesi',
+        description: 'Özel bir doğum günü kutlayan ayı hakkında sıcak bir hikaye.',
+      },
+      damselElephant: {
+        title: 'Damsel fil',
+        artist: 'Uyku hikayesi',
+        description: 'Damsel fil ile nazik bir maceraya katıl.',
+      },
+      jimmyMouse: {
+        title: 'Jimmy Fare ve şehirliler',
+        artist: 'Uyku hikayesi',
+        description: 'Küçük bir fare büyük şehri keşfeder.',
+      },
+      newYearJungle: {
+        title: 'Ormanda yeni yıl',
+        artist: 'Uyku hikayesi',
+        description: 'Orman hayvanları birlikte yeni yılı kutlar.',
+      },
+      snowWhite: {
+        title: 'Pamuk Prenses',
+        artist: 'Uyku hikayesi',
+        description: 'Klasik masal, uyku vakti için mükemmel.',
+      },
+    },
+    tags: {
+      calming: 'Sakinleştirici',
+      bedtime: 'Uyku vakti',
+      stories: 'Hikayeler',
+    },
   },
 
   jigsaw: {
     amazing: 'Harika!',
-    beginPuzzle: '🧩 Bulmacayı Başlat',
+    beginPuzzle: 'Bulmacayı Başlat',
     completedMoves: '{{count}} hamlede tamamlandı!',
-    continueStory: 'Hikayeye devam et →',
+    continueStory: 'Hikayeye devam et',
     preview: 'Önizleme',
     reset: 'Sıfırla',
     scramble: 'Dağıt',
     shuffle: 'Karıştır',
-    skip: 'Atla →',
+    skip: 'Atla',
     tapToClose: 'Kapatmak için herhangi bir yere dokunun',
   },
 
@@ -942,7 +1270,7 @@ export default {
     firstWordsDesc: 'Renkli karolarla basit kelimeleri hecele',
     firstWordsAge: 'Yaş 1-2',
     colourSpelling: 'Renk Heceleme',
-    colourSpellingDesc: 'Gökkuşağının renklerini heceleyebilir misin?',
+    colourSpellingDesc: 'Gökkuşağının renklerini heceleyebilir misin? ',
     colourSpellingAge: 'Yaş 1-2',
     shapeNames: 'Şekil İsimleri',
     shapeNamesDesc: 'Daire, kare ve daha fazlasını hecele!',
@@ -990,7 +1318,7 @@ export default {
     colourCountingDesc: 'Renkli nesneleri say ve sayıları öğren!',
     colourCountingAge: 'Yaş 1-2',
     shapeCounting: 'Şekil Sayma',
-    shapeCountingDesc: 'Kaç şekil sayabilirsin?',
+    shapeCountingDesc: 'Kaç şekil sayabilirsin? ',
     shapeCountingAge: 'Yaş 1-2',
     oneTwoThree: 'Bir, İki, Üç!',
     oneTwoThreeDesc: 'Yumuşak bir ilk sayma macerası',
@@ -1002,7 +1330,7 @@ export default {
     animalCountingDesc: 'Çiftlikteki ve ormandaki hayvanları say!',
     animalCountingAge: 'Yaş 2-4',
     fruitCounting: 'Meyve Sayma',
-    fruitCountingDesc: 'Sepetteki kaç meyve sayabilirsin?',
+    fruitCountingDesc: 'Sepetteki kaç meyve sayabilirsin? ',
     fruitCountingAge: 'Yaş 2-4',
     toyCounting: 'Oyuncak Sayma',
     toyCountingDesc: 'Favori oyuncaklarını say ve sayıları öğren!',
@@ -1108,6 +1436,14 @@ export default {
     signInRequiredMessage: 'Abone olmadan önce giriş yapmanız gerekmektedir. Aboneliğiniz hesabınıza bağlanarak tüm cihazlarınızda erişebilirsiniz.',
     signInRequiredConfirm: 'Giriş yap',
     signInRequiredCancel: 'Şimdi değil',
+    errorTitle: 'Abonelik Hatası',
+    errorUnavailable: 'Bu plan şu anda mevcut değil. Lütfen daha sonra tekrar deneyin.',
+    errorGeneric: 'Bir şeyler ters gitti. Lütfen tekrar deneyin.',
+    restorePurchases: 'Satın Alımları Geri Yükle',
+    restoreSuccessTitle: 'Satın Alımlar Geri Yüklendi',
+    restoreSuccessMessage: 'Aboneliğiniz başarıyla geri yüklendi.',
+    restoreNoneTitle: 'Satın Alım Bulunamadı',
+    restoreNoneMessage: 'Geri yüklenecek önceki satın alım bulunamadı.',
   },
 
   defaultPage: {

@@ -100,8 +100,8 @@ export interface MenuItemData {
 
 export const DEFAULT_MENU_ITEMS: MenuItemData[] = [
   { icon: 'stories-icon', labelKey: 'menu.stories', destination: 'stories' },
-  { icon: 'instruments-icon', labelKey: 'menu.instruments', destination: 'instruments' },
   { icon: 'learning-icon', labelKey: 'menu.learning', destination: 'learning' },
+  { icon: 'instruments-icon', labelKey: 'menu.instruments', destination: 'instruments' },
 ] as const;
 
 export type IconStatus = 'animated_interactive' | 'inactive';

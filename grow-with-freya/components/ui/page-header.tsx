@@ -143,7 +143,7 @@ export function PageHeader({
       </View>
 
       {/* Title - aligned with header row */}
-      <View style={[styles.titleContainer, { top: titleContainerTop, height: musicBackgroundSize }]}>
+      <View style={[styles.titleContainer, { top: titleContainerTop, minHeight: musicBackgroundSize, paddingBottom: 12 }]}>
         <Text style={[styles.title, { fontSize: titleFontSize }]}>{title}</Text>
         {subtitle && (
           <Text style={[styles.subtitle, { fontSize: subtitleFontSize, marginTop: subtitleMarginTop }]}>{subtitle}</Text>
@@ -171,6 +171,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     zIndex: 30,
     elevation: 30, // Android requires elevation for proper z-ordering
+    overflow: 'visible',
   },
   backButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
@@ -232,7 +233,8 @@ const styles = StyleSheet.create({
     zIndex: 25,
     elevation: 25, // Android requires elevation for proper z-ordering
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
+    overflow: 'visible', // Prevent text shadow clipping
   },
   title: {
     color: 'white',

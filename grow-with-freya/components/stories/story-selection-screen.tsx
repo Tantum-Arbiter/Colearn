@@ -122,11 +122,10 @@ export const STORY_MODES: StoryModeInfo[] = [
 ];
 
 // Interactive sub-filters (shown when mode = 'interactive')
-type InteractiveSubFilter = 'touch' | 'jigsaw' | 'learning';
+type InteractiveSubFilter = 'touch' | 'learning';
 
 const INTERACTIVE_SUB_FILTERS: { id: InteractiveSubFilter; icon: keyof typeof Ionicons.glyphMap; labelKey: string }[] = [
   { id: 'touch',    icon: 'finger-print-outline', labelKey: 'storyModes.filterTouch' },
-  { id: 'jigsaw',   icon: 'grid-outline',         labelKey: 'storyModes.filterJigsaw' },
   { id: 'learning', icon: 'school-outline',        labelKey: 'storyModes.filterLearning' },
 ];
 
@@ -150,11 +149,10 @@ function storyHasMusic(story: Story): boolean {
   return !!story.pages?.some(p => p.interactionType === 'music_challenge');
 }
 
-/** Does this story contain at least one page with interactive elements or jigsaw puzzles? */
+/** Does this story contain at least one page with touch-interactive elements? */
 function storyHasInteractive(story: Story): boolean {
   return !!story.pages?.some(p =>
-    (p.interactiveElements && p.interactiveElements.length > 0) ||
-    p.interactionType === 'jigsaw_puzzle'
+    p.interactiveElements && p.interactiveElements.length > 0
   );
 }
 
@@ -433,13 +431,12 @@ export function StorySelectionScreen({ onStorySelect, initialMode }: StorySelect
   // Story mode -always set from initialMode (mode cards are on the main menu now)
   const [storyMode, setStoryMode] = useState<StoryMode | null>(initialMode ?? null);
   // Interactive sub-filters (only used when storyMode === 'interactive')
-  const [interactiveFilters, setInteractiveFilters] = useState<Set<InteractiveSubFilter>>(new Set(['touch', 'jigsaw', 'learning']));
+  const [interactiveFilters, setInteractiveFilters] = useState<Set<InteractiveSubFilter>>(new Set(['touch', 'learning']));
 
-  // Sync storyMode when initialMode changes (e.g. user picks a different mode from main menu)
+  // Sync storyMode when initialMode changes (e.g. user picks a different mode from main menu,
+  // or navigates to plain 'stories' which clears the mode to null)
   useEffect(() => {
-    if (initialMode) {
-      setStoryMode(initialMode);
-    }
+    setStoryMode(initialMode ?? null);
   }, [initialMode]);
 
   // Catalog entries (not-yet-downloaded stories) merged into genre rows
@@ -484,10 +481,9 @@ export function StorySelectionScreen({ onStorySelect, initialMode }: StorySelect
     if (storyMode === 'interactive') {
       result = result.filter(story => storyHasInteractive(story));
       // Apply interactive sub-filters (OR logic within active sub-filters)
-      if (interactiveFilters.size > 0 && interactiveFilters.size < 3) {
+      if (interactiveFilters.size > 0 && interactiveFilters.size < 2) {
         result = result.filter(story =>
           (interactiveFilters.has('touch') && storyHasTouch(story)) ||
-          (interactiveFilters.has('jigsaw') && storyHasJigsaw(story)) ||
           (interactiveFilters.has('learning') && storyIsLearning(story))
         );
       }
@@ -764,7 +760,7 @@ export function StorySelectionScreen({ onStorySelect, initialMode }: StorySelect
   const handleShareToUnlock = useCallback(async (entry: CatalogEntry) => {
     try {
       const result = await Share.share({
-        message: `Check out "${entry.title}" on Grow with Freya! A magical story app for kids 🌟`,
+        message: `Check out "${entry.title}" on Grow with Freya! A magical story app for kids`,
       });
       if (result.action === Share.sharedAction) {
         // User completed the share -permanently unlock
@@ -1248,7 +1244,7 @@ export function StorySelectionScreen({ onStorySelect, initialMode }: StorySelect
               {favoriteStories.length > 0 && (
                 <View style={{ marginBottom: 40 }}>
                   <Text style={styles.genreHeadingText}>
-                    ⭐ {t('stories.yourFavorites', { defaultValue: 'Your Favorites' })}
+                    <Ionicons name="star" size={16} color="#FFD700" />{' '}{t('stories.yourFavorites', { defaultValue: 'Your Favorites' })}
                   </Text>
                   <FlatList
                     data={favoriteStories}

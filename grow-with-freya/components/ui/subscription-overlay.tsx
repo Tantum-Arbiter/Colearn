@@ -156,7 +156,7 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
           />
           <View style={st.bgOverlay} />
           <Pressable style={[st.closeBtn, { top: insets.top + 10 }]} onPress={handleClose} hitSlop={16}>
-            <Text style={st.closeTxt}>✕</Text>
+            <Ionicons name="close" size={20} color="#FFFFFF" />
           </Pressable>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={st.scroll}>
             <Text style={st.header}>{t('subscription.unlockPlan')}</Text>
@@ -246,7 +246,7 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
             <LinearGradient colors={['#1a1a3e', '#0d0d2b', '#050515']}
               style={[st.legalPanelInner, { paddingTop: insets.top + 10, paddingBottom: insets.bottom + 16 }]}>
               <Pressable style={[st.closeBtn, { top: insets.top + 10 }]} onPress={closeLegal} hitSlop={16}>
-                <Text style={st.closeTxt}>✕</Text>
+                <Ionicons name="close" size={20} color="#FFFFFF" />
               </Pressable>
               <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 40 }}>
                 {legalPage === 'privacy' ? <PrivacyPolicyContent /> : <TermsConditionsContent />}

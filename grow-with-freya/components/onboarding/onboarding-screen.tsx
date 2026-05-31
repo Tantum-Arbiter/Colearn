@@ -240,17 +240,18 @@ export function OnboardingScreen({
     const isTablet = width >= 768;
     if (!isTablet) return [];
 
-    const kidFriendlyElements = [
-      ['🐻', '⭐', '🎈', '🦄'],
-      ['📚', '🎵', '🎙️', '⭐'],
-      ['👨‍👩‍👧‍👦', '🌱', '💛', '🌻'],
-      ['🔒', '🛡️', '✅', '💚'],
-      ['📋', '✅', '🤝', '💚'],
+    type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
+    const decorativeIcons: IoniconsName[][] = [
+      ['paw-outline', 'star-outline', 'balloon-outline', 'sparkles-outline'],
+      ['book-outline', 'musical-note-outline', 'mic-outline', 'star-outline'],
+      ['people-outline', 'leaf-outline', 'heart-outline', 'flower-outline'],
+      ['lock-closed-outline', 'shield-checkmark-outline', 'checkmark-circle-outline', 'heart-outline'],
+      ['clipboard-outline', 'checkmark-circle-outline', 'people-outline', 'heart-outline'],
     ];
 
-    const elements = kidFriendlyElements[step - 1] || [];
+    const icons = decorativeIcons[step - 1] || [];
 
-    return elements.map((emoji, index) => {
+    return icons.map((iconName, index) => {
       const sizeVariation = [14, 16, 15, 17][index] || 16;
       const positions = [
         { top: '10%', left: '5%' },
@@ -262,19 +263,18 @@ export function OnboardingScreen({
       const position = positions[index] || positions[0];
 
       return (
-        <Animated.Text
+        <Animated.View
           key={index}
           style={[
             styles.decorativeEmoji,
             {
               top: position.top as any,
               left: position.left as any,
-              fontSize: sizeVariation,
             }
           ]}
         >
-          {emoji}
-        </Animated.Text>
+          <Ionicons name={iconName} size={sizeVariation} color="rgba(255,255,255,0.3)" />
+        </Animated.View>
       );
     });
   };

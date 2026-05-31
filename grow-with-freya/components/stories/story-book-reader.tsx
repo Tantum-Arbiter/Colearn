@@ -748,9 +748,25 @@ export function StoryBookReader({
 
     checkAndSetLandscape();
 
+    // Subscribe to orientation changes — if something else forces portrait while the
+    // story reader is mounted (e.g. app backgrounding, layout re-render race), re-lock
+    // landscape immediately so the reader never stays in portrait.
+    const subscription = ScreenOrientation.addOrientationChangeListener((event) => {
+      if (!isMounted || isExitingRef.current) return;
+      const newOrientation = event.orientationInfo.orientation;
+      const isLandscape = newOrientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
+                          newOrientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT;
+      if (!isLandscape) {
+        log.debug('Story reader: orientation changed to portrait — re-locking landscape');
+        ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE)
+          .catch(error => log.warn('Failed to re-lock landscape:', error));
+      }
+    });
+
     return () => {
       if (isMounted) {
         isMounted = false;
+        subscription.remove();
         // Only restore orientation if NOT exiting via handleExit (exit animation handles rotation)
         if (!isExitingRef.current) {
           ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP)
@@ -2099,7 +2115,10 @@ export function StoryBookReader({
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>Story pages not available</Text>
         <Pressable style={styles.exitButton} onPress={handleExit}>
-          <Text style={styles.exitButtonText}>← Back</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Ionicons name="arrow-back" size={16} color="#FFFFFF" style={{ marginRight: 4 }} />
+            <Text style={styles.exitButtonText}>Back</Text>
+          </View>
         </Pressable>
       </View>
     );
@@ -2141,7 +2160,7 @@ export function StoryBookReader({
             } : handleExit}
             disabled={musicChallengePhase !== 'playing' && isExiting}
           >
-            <Ionicons name="home" size={scaledFontSize(20)} color="#333333" />
+            <Ionicons name="arrow-back" size={scaledFontSize(20)} color="#333333" />
           </Pressable>
         </View>
         )}
@@ -2186,7 +2205,7 @@ export function StoryBookReader({
                       handlePlayRecording();
                     }}
                   >
-                    <Text style={styles.playButtonIcon}>▶</Text>
+                    <Ionicons name="play" size={14} color="#FFFFFF" />
                   </Pressable>
                 ) : (
                   <Pressable
@@ -2239,7 +2258,7 @@ export function StoryBookReader({
                   }
                 }}
               >
-                <Text style={[styles.narrationPlayPauseIcon, { fontSize: scaledFontSize(isPlaying ? 10 : 14) }]}>{isPlaying ? '||' : '▶'}</Text>
+                <Ionicons name={isPlaying ? 'pause' : 'play'} size={scaledFontSize(14)} color="#FFFFFF" />
               </Pressable>
               {/* Progress Bar */}
               <View style={styles.narrationProgressContainer}>
@@ -2278,7 +2297,10 @@ export function StoryBookReader({
                 onPress={handleBeginMusicChallenge}
                 testID="begin-music-challenge-button-narrate"
               >
-                <Text style={styles.beginPlayingButtonText}>♪ Begin Playing</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="musical-note" size={16} color="#FFFFFF" style={{ marginRight: 4 }} />
+                  <Text style={styles.beginPlayingButtonText}>Begin Playing</Text>
+                </View>
               </Pressable>
             )}
           </View>
@@ -2312,7 +2334,7 @@ export function StoryBookReader({
               }
             }}
           >
-            <Text style={[styles.settingsButtonText, { fontSize: scaledFontSize(28), marginTop: 2 }]}>☰</Text>
+            <Ionicons name="menu" size={scaledFontSize(24)} color="#333333" />
           </Pressable>
         </View>
         )}
@@ -2526,13 +2548,7 @@ export function StoryBookReader({
               disabled={currentPageIndex <= 1 || isTransitioning || isJigsawActive || isReadingActive || (readingMode === 'record' && isRecording)}
               testID="left-touch-area"
             >
-              <Text style={[
-                styles.navButtonText,
-                { fontSize: scaledFontSize(20) },
-                currentPageIndex <= 1 && styles.navButtonTextDisabled
-              ]}>
-                ←
-              </Text>
+              <Ionicons name="chevron-back" size={scaledFontSize(20)} color={currentPageIndex <= 1 ? 'rgba(128,128,128,0.3)' : '#808080'} />
             </Pressable>
           </Animated.View>
 
@@ -2667,7 +2683,7 @@ export function StoryBookReader({
                 { fontSize: scaledFontSize(20) },
                 currentPageIndex === pages.length - 1 && styles.completeButtonText
               ]}>
-                {currentPageIndex === pages.length - 1 ? '✓' : '→'}
+                {currentPageIndex === pages.length - 1 ? <Ionicons name="checkmark" size={scaledFontSize(20)} color="#FFFFFF" /> : <Ionicons name="chevron-forward" size={scaledFontSize(20)} color="#808080" />}
               </Text>
             </Pressable>
           </Animated.View>
@@ -2727,7 +2743,7 @@ export function StoryBookReader({
                 setReadingMode('read');
               }}
             >
-              <Text style={[styles.modeButtonIcon, { fontSize: scaledFontSize(24) }]}>∞</Text>
+              <Ionicons name="book-outline" size={scaledFontSize(20)} color="#FFFFFF" />
               <Text style={[styles.modeButtonText, { fontSize: scaledFontSize(12) }]}>{t('reader.readMode')}</Text>
             </Pressable>
             <Pressable
@@ -2741,7 +2757,7 @@ export function StoryBookReader({
                 setShowVoiceOverNameModal(true);
               }}
             >
-              <Text style={[styles.modeButtonIcon, { fontSize: scaledFontSize(24) }]}>●</Text>
+              <Ionicons name="mic-outline" size={scaledFontSize(20)} color="#FFFFFF" />
               <Text style={[styles.modeButtonText, { fontSize: scaledFontSize(12) }]}>{t('reader.recordMode')}</Text>
             </Pressable>
             <Pressable
@@ -2755,7 +2771,7 @@ export function StoryBookReader({
                 setShowVoiceOverSelectModal(true);
               }}
             >
-              <Text style={[styles.modeButtonIcon, { fontSize: scaledFontSize(24) }]}>♫</Text>
+              <Ionicons name="headset-outline" size={scaledFontSize(20)} color="#FFFFFF" />
               <Text style={[styles.modeButtonText, { fontSize: scaledFontSize(12) }]}>{t('reader.listenMode')}</Text>
             </Pressable>
           </View>
@@ -2794,10 +2810,7 @@ export function StoryBookReader({
                 setVoiceOverName('');
               }}
             >
-              <Text style={[
-                styles.modalCloseButtonText,
-                isPhoneLandscape && { fontSize: 14 },
-              ]}>✕</Text>
+              <Ionicons name="close" size={16} color="#666" />
             </Pressable>
 
             {isPhoneLandscape ? (
@@ -2883,7 +2896,7 @@ export function StoryBookReader({
                             }, 300);
                           }}
                         >
-                          <Text style={styles.landscapeDeleteText}>✕</Text>
+                          <Ionicons name="close" size={14} color="#FF6B6B" />
                         </Pressable>
                       </View>
                     ))}
@@ -3003,7 +3016,7 @@ export function StoryBookReader({
                               }, 300);
                             }}
                           >
-                            <Text style={styles.deleteButtonText}>✕</Text>
+                            <Ionicons name="close" size={14} color="#FF6B6B" />
                           </Pressable>
                         </View>
                       ))}
@@ -3072,7 +3085,7 @@ export function StoryBookReader({
                 setReadingMode('read');
               }}
             >
-              <Text style={styles.modalCloseButtonText}>✕</Text>
+              <Ionicons name="close" size={18} color="#666" />
             </Pressable>
             <Text style={styles.modalTitle}>Select Voice Over</Text>
             <Text style={styles.modalSubtitle}>Choose a recording to play</Text>
@@ -3186,7 +3199,10 @@ export function StoryBookReader({
           />
           <View style={styles.musicModeOverlay}>
             <View style={styles.musicModeHeader}>
-              <Text style={styles.musicModeTitle}>♪ Music Mode</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons name="musical-note" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+                <Text style={styles.musicModeTitle}>Music Mode</Text>
+              </View>
               <Pressable
                 style={styles.musicModeCloseButton}
                 onPress={() => {
@@ -3195,7 +3211,7 @@ export function StoryBookReader({
                   restoreMusicVolume();
                 }}
               >
-                <Text style={styles.musicModeCloseText}>✕</Text>
+                <Ionicons name="close" size={18} color="#FFFFFF" />
               </Pressable>
             </View>
             {isMusicChallengePage && currentMusicChallenge ? (
@@ -3221,7 +3237,7 @@ export function StoryBookReader({
             ) : (
               <View style={styles.musicModeFreePlay}>
                 <Text style={styles.musicModeFreePlayText}>
-                  ♫ No music challenge on this page.{'\n'}Free play coming soon!
+                  No music challenge on this page.{'\n'}Free play coming soon!
                 </Text>
               </View>
             )}
@@ -3258,7 +3274,7 @@ export function StoryBookReader({
                 style={styles.compareLanguageModalCloseButton}
                 onPress={() => setShowCompareLanguageModal(false)}
               >
-                <Text style={styles.compareLanguageModalCloseButtonText}>✕</Text>
+                <Ionicons name="close" size={18} color="#666" />
               </Pressable>
             </View>
 
@@ -3355,7 +3371,7 @@ export function StoryBookReader({
                 style={styles.compareLanguageModalCloseButton}
                 onPress={() => setShowChangeLanguageModal(false)}
               >
-                <Text style={styles.compareLanguageModalCloseButtonText}>✕</Text>
+                <Ionicons name="close" size={18} color="#666" />
               </Pressable>
             </View>
 
@@ -3423,7 +3439,10 @@ export function StoryBookReader({
             onPress={handleBeginMusicChallenge}
             testID="begin-music-challenge-button"
           >
-            <Text style={styles.beginPlayingButtonText}>♪ Begin Playing</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons name="musical-note" size={16} color="#FFFFFF" style={{ marginRight: 4 }} />
+              <Text style={styles.beginPlayingButtonText}>Begin Playing</Text>
+            </View>
           </Pressable>
         </View>
       )}
@@ -3436,7 +3455,10 @@ export function StoryBookReader({
             onPress={handleBeginJigsaw}
             testID="jigsaw-scramble-button"
           >
-            <Text style={styles.beginPlayingButtonText}>🧩 {t('jigsaw.scramble')}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons name="extension-puzzle-outline" size={16} color="#FFFFFF" style={{ marginRight: 4 }} />
+              <Text style={styles.beginPlayingButtonText}>{t('jigsaw.scramble')}</Text>
+            </View>
           </Pressable>
         </View>
       )}
@@ -4165,6 +4187,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 30,
     marginBottom: 20,
+    overflow: 'visible',
   },
   coverTitleText: {
     fontSize: 28,

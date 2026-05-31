@@ -1,10 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { SchedulableTriggerInputTypes } from 'expo-notifications';
+import { Platform } from 'react-native';
 import { ApiClient } from './api-client';
 import { Logger } from '@/utils/logger';
 
 const log = Logger.create('Reminders');
+
+/** True when running in a Node/SSR context where window and AsyncStorage are unavailable */
+const isSSR = typeof window === 'undefined' || Platform.OS === 'web' && typeof document === 'undefined';
 
 export interface CustomReminder {
   id: string;
@@ -33,7 +37,9 @@ export class ReminderService {
   private lastSyncedReminders: CustomReminder[] = []; // Last synced state (to backend)
 
   private constructor() {
-    this.loadReminders();
+    if (!isSSR) {
+      this.loadReminders();
+    }
   }
 
   static getInstance(): ReminderService {

@@ -26,6 +26,9 @@ export default {
     medium: '中',
     large: '大',
     extraLarge: '特大',
+    openSettings: '設定を開く',
+    on: 'オン',
+    off: 'オフ',
   },
   alerts: {
     logout: {
@@ -111,7 +114,7 @@ export default {
     stories: 'ストーリー',
     practise: '練習',
     freeplay: 'フリープレイ',
-    instruments: '楽器を演奏',
+    instruments: '楽器',
     learning: '学習',
     spelling: 'スペリング',
     numbers: '数字',
@@ -182,6 +185,7 @@ export default {
     pageNumber: 'ページ{{number}}',
     current: '現在',
     fontButtonSize: 'フォント/ボタンサイズ',
+    changeLanguage: '言語を変更',
     compareLanguage: '言語を比較',
     compareLanguageOn: '言語を比較：オン',
     compareLanguageOff: '言語を比較：オフ',
@@ -291,6 +295,7 @@ export default {
     noScreenTime: 'スクリーンタイムなし',
     recommended: '推奨',
     excessive: '過度',
+    overLimit: '制限超過',
     createMySchedule: 'スケジュールを作成',
     scheduleIntro: 'お子さんの画面時間アクティビティのカスタム通知時間を設定します。ストーリー、感情、または音楽アクティビティの時間になると、優しいリマインダーが届きます。',
     scheduleIntroShort: 'お子さんの画面時間アクティビティのカスタム通知時間を設定します。',
@@ -315,7 +320,6 @@ export default {
     saveSettings: '設定を保存',
     settingsSyncNote: 'お客様の設定はすべてのデバイスで同期されます',
     notificationsEnabled: '通知が有効になりました！',
-    dontForgetToSave: '変更を保存することを忘れないでください！',
     permissionRequired: '許可が必要です',
     enableNotificationsInSettings: 'デバイスの設定で通知を有効にしてください。',
     sun: '日',
@@ -334,6 +338,10 @@ export default {
     creating: '作成中...',
     noReminders: 'カスタムリマインダーなし',
     noRemindersHint: '最初のリマインダーを作成して、カスタム運動通知を開始します。',
+    permissionRequired: {
+      title: '通知が必要です',
+      message: 'リマインダーを受け取るには、デバイスの設定でこのアプリの通知を有効にしてください。',
+    },
     total: '合計',
     today: '今日',
     loading: 'リマインダーを読み込み中...',
@@ -345,7 +353,7 @@ export default {
     messagePlaceholder: 'リマインダーメッセージを入力...',
     dayOfWeek: '曜日',
     timeLabel: '時間',
-    timeSlotTaken: '⚠️ この時間帯はこの日にはすでに占有されています',
+    timeSlotTaken: ' この時間帯はこの日にはすでに占有されています',
     conflictHint: '赤（！）は選択した日の競合を示します。すべての時間が利用可能です。',
     selectDayHint: '時間の可用性を確認するには、曜日を選択してください',
     active: 'アクティブ',
@@ -428,8 +436,8 @@ export default {
     profile: 'プロフィール',
     nickname: 'ニックネーム',
     avatarType: 'アバタータイプ',
-    boy: '👦 男の子',
-    girl: '👧 女の子',
+    boy: ' 男の子',
+    girl: ' 女の子',
     settings: '設定',
     language: '言語',
     textSize: 'テキストサイズ',
@@ -455,10 +463,10 @@ export default {
     nicknamePlaceholder: 'ニックネームを入力...',
     nicknameCharacters: '{{count}}/20文字',
     avatarType: 'アバタータイプ',
-    boy: '👦 男の子',
-    girl: '👧 女の子',
+    boy: ' 男の子',
+    girl: ' 女の子',
     saveChanges: '変更を保存',
-    comingSoon: '✨ プロフィールカスタマイズオプションが近日公開-まだ開発中です！',
+    comingSoon: ' プロフィールカスタマイズオプションが近日公開-まだ開発中です！',
   },
   onboarding: {
     welcome: 'ようこそ！',
@@ -541,9 +549,9 @@ export default {
     },
   },
   tutorial: {
-    welcomeTitle: 'Earlyrootsへ\nようこそ！🎉',
+    welcomeTitle: 'Earlyrootsへ\nようこそ！',
     welcomeDescription: 'クイックツアーをして、あなたとお子さんが読書時間を最大限に活用できるようにしましょう。',
-    storiesTitle: 'ストーリーライブラリ📚',
+    storiesTitle: 'ストーリーライブラリ',
     storiesDescription: 'ここをタップして、美しいイラストと楽しいインタラクションを備えたインタラクティブストーリーのコレクションを探索してください。',
     skip: 'スキップ',
     gotIt: 'わかりました！',
@@ -560,111 +568,119 @@ export default {
     },
     mainMenu: {
       welcome: {
-        title: 'Grow with Freyaへようこそ！🎉',
+        title: 'Grow with Freyaへようこそ！',
         description: 'クイックツアーをして、あなたとお子さんが読書時間を最大限に活用できるようにしましょう。',
       },
       stories: {
-        title: 'ストーリー 📚',
+        title: 'ストーリー',
         description: '美しいイラストと楽しいインタラクションのあるインタラクティブなストーリーコレクションを探索しましょう。',
       },
       practise: {
-        title: '練習 🎵',
+        title: '練習',
         description: 'さまざまな楽器で曲を演奏することを学びましょう。リズムに合わせて音楽スキルを磨きましょう！',
       },
       freeplay: {
-        title: 'フリープレイ 🎹',
+        title: 'フリープレイ',
         description: 'どんな楽器でも自由に演奏 -ルールなし、楽しさだけ！音を試して自分だけの音楽を作りましょう。',
       },
+      instruments: {
+        title: '楽器',
+        description: '曲を練習したり、さまざまな楽器で自由に演奏しましょう。楽しみながら音楽スキルを磨きましょう！',
+      },
+      learning: {
+        title: '学習',
+        description: '初期の読み書きと計算スキルの構築に役立つインタラクティブなスペリングと数字のアクティビティ。',
+      },
       settings: {
-        title: '設定⚙️',
+        title: '設定',
         description: 'アプリをカスタマイズして、ご家族に最適に機能するようにしてください。',
       },
       sound: {
-        title: 'サウンドコントロール🔊',
+        title: 'サウンドコントロール',
         description: 'ここをタップして、背景音楽と音響効果を制御してください。',
       },
     },
     screenTime: {
       intro: {
-        title: 'スクリーンタイムダッシュボード⏱️',
+        title: 'スクリーンタイムダッシュボード',
         description: 'お子さんの毎日の画面時間を年齢に適した制限で監視および管理します。',
       },
       ageBased: {
-        title: '年齢ベースの制限👶',
+        title: '年齢ベースの制限',
         description: 'お子さんの年齢を設定して、WHO/AAP推奨の画面時間制限を自動的に取得します。',
       },
       heatmap: {
-        title: '週間アクティビティ📊',
+        title: '週間アクティビティ',
         description: '週を通じた画面時間の使用パターンを確認して、健全なルーチンを確立するのに役立ちます。',
       },
       reminders: {
-        title: 'リマインダーを設定⏰',
+        title: 'リマインダーを設定',
         description: 'アクティビティ、休憩、または就寝時間のルーチンのカスタムリマインダーを作成します。',
       },
       routine: {
-        title: '健全なルーチンを構築🌟',
+        title: '健全なルーチンを構築',
         description: 'スクリーンタイムデータを使用して、ご家族に適した一貫した毎日のルーチンを確立します。',
       },
     },
     storyReader: {
       welcome: {
-        title: '読書時間のヒント📖',
+        title: '読書時間のヒント',
         description: 'あなたとお子さんの読書時間を魔法のようにするためのいくつかのヒントをここに示します！',
       },
       interactive: {
-        title: 'インタラクションを探す✨',
+        title: 'インタラクションを探す',
         description: 'いくつかのページには隠された驚きがあります！お子さんが輝いたり輝いたりするオブジェクトをタップするように促してください。',
       },
       point: {
-        title: 'ポイントして議論👆',
+        title: 'ポイントして議論',
         description: '画像について質問してください。「何が見えますか？」「蝶はどの色ですか？」',
       },
       pause: {
-        title: '一時停止と予測🤔',
+        title: '一時停止と予測',
         description: 'ページをめくる前に、「次に何が起こると思いますか？」と聞いて、エンゲージメントを高めてください。',
       },
       voices: {
-        title: 'さまざまな声を使用🎭',
+        title: 'さまざまな声を使用',
         description: 'キャラクターに愚かな声で命を吹き込んでください！お子さんはパフォーマンスが大好きです。',
       },
       navigate: {
-        title: '簡単なナビゲーション📚',
+        title: '簡単なナビゲーション',
         description: '左または右にスワイプしてページをめくります。メニューボタンをタップして、その他のオプションを表示します。',
       },
       tapWords: {
-        title: 'フォーカスするために単語をタップ👆',
+        title: 'フォーカスするために単語をタップ',
         description: 'ストーリー内の任意の単語をタップしてハイライトします！これは注意を集中させるのに役立ち、読書をより対話的で魅力的にします。',
       },
       compareLanguages: {
-        title: '言語を比較🌍',
+        title: '言語を比較',
         description: 'メニューを使用して「言語を比較」を有効にし、ストーリーを2つの言語で並べて表示します。多言語家族が一緒に学ぶのに最適です！',
       },
     },
     bookMode: {
       read: {
-        title: '読み取りモード📖',
+        title: '読み取りモード',
         description: 'ここをタップして、お子さんと一緒にストーリーを自分で読んでください。自分のペースでページをめくります。',
       },
       record: {
-        title: '記録モード🎙️',
+        title: '記録モード',
         description: 'ストーリーを読んでいるあなたの声を記録してください。あなたが不在の時に完璧です！',
       },
       narrate: {
-        title: 'リッスンモード🎧',
+        title: 'リッスンモード',
         description: 'ストーリーの事前に記録されたナレーションを聞いてください。就寝時間に最適です！',
       },
       preview: {
-        title: 'プレビュー👁️',
+        title: 'プレビュー',
         description: '読み始める前に、ストーリーの詳細、期間、テーマを確認してください。',
       },
     },
     recordMode: {
       intro: {
-        title: '声を録音してください🎙️',
+        title: '声を録音してください',
         description: 'このストーリーの個人的なナレーションを作成します。お子さんはいつでも聞くことができます-あなたが不在の時でも！',
       },
       button: {
-        title: '記録コントロール🔴',
+        title: '記録コントロール',
         description: 'マイクをタップして記録を開始します。ページのテキストを大声で読んでから、もう一度タップして停止します。',
       },
       playback: {
@@ -672,123 +688,241 @@ export default {
         description: '記録を聞いて、必要に応じて再度記録してください。お子さんはあなたの声を聞くのが大好きです！',
       },
       sound: {
-        title: 'サウンドチップ🔊',
+        title: 'サウンドチップ',
         description: '最高の記録品質のために静かな場所を見つけてください。背景ノイズは気を散らす可能性があります。',
       },
       limit: {
-        title: 'ファミリーボイス👨‍👩‍👧',
+        title: 'ファミリーボイス',
         description: '複数の家族が記録できます！祖父母、叔父、叔母-みんなに参加させてください。',
       },
       benefit: {
-        title: 'なぜ記録するのか？💜',
+        title: 'なぜ記録するのか？',
         description: '研究は、なじみのある声を聞くことが、特に分離中に、子供たちが安全で接続されていると感じるのに役立つことを示しています。',
       },
       navigation: {
-        title: 'ナビゲートページ📖',
+        title: 'ナビゲートページ',
         description: '矢印を使用してページ間を移動します。各ページを記録して、完全にナレートされたストーリーを作成します！',
       },
     },
     narrateMode: {
       intro: {
-        title: 'リッスンモード🎧',
+        title: 'リッスンモード',
         description: 'リラックスして楽しんでください！ストーリーは記録された声を使用して大声で読まれます。',
       },
       autoPlayback: {
-        title: '自動再生📖',
+        title: '自動再生',
         description: 'ナレーションの終了後、ページが自動的に回転します。就寝時間に最適です！',
       },
       controls: {
-        title: '再生コントロール▶️',
+        title: '再生コントロール',
         description: 'コントロールを使用して一時停止、再聴取、または早送りします。ペースを制御します。',
       },
       sound: {
-        title: 'サウンドチップ🔊',
+        title: 'サウンドチップ',
         description: 'デバイスの音量が大きいことを確認してください！より没入的な体験のためにヘッドフォンを使用してください。',
       },
       benefit: {
-        title: 'ボンディングタイム💜',
+        title: 'ボンディングタイム',
         description: 'リッスンモードでも、関与し続けてください！画像を指して、質問をして、一緒にストーリーを楽しんでください。',
       },
     },
     settings: {
       intro: {
-        title: '設定⚙️',
+        title: '設定',
         description: 'アプリをカスタマイズして、ご家族に最適に機能するようにしてください。',
       },
       login: {
-        title: 'アカウントと同期🔐',
+        title: 'アカウントと同期',
         description: 'ログインして進捗を保存し、デバイス間で同期します。',
       },
       language: {
-        title: '言語🌍',
+        title: '言語',
         description: 'アプリインターフェイスの優先言語を選択してください。',
       },
       avatar: {
-        title: 'あなたのアバター🎭',
+        title: 'あなたのアバター',
         description: 'カスタムアバターでお子さんのエクスペリエンスをパーソナライズしてください。',
       },
       accessibility: {
-        title: 'アクセシビリティ♿',
+        title: 'アクセシビリティ',
         description: 'テキストサイズおよびその他の設定を調整して、より簡単に使用できるようにしてください。',
       },
       screenTime: {
-        title: 'スクリーンタイム⏱️',
+        title: 'スクリーンタイム',
         description: '健全な制限を設定し、毎日の使用を監視します。',
       },
     },
     // Music Mode Tips - keys match tutorial.musicMode.* in tutorial-content.ts
     musicMode: {
       welcome: {
-        title: 'ミュージックモード 🎵',
+        title: 'ミュージックモード',
         description: 'この物語のいくつかのページには音楽チャレンジがあります！仮想楽器でノートを演奏して完成させましょう。',
       },
       instrument: {
-        title: '楽器を選ぼう 🎹',
+        title: '楽器を選ぼう',
         description: '音楽付きの本が開いたら、カルーセルをスワイプしてお気に入りの楽器を選んでください。それぞれユニークな音があります！',
       },
       playing: {
-        title: 'ノートを演奏 🎶',
+        title: 'ノートを演奏',
         description: 'カラフルなボタンを押してノートを演奏しましょう。上に表示されたシーケンスに合わせてチャレンジを完成させましょう！',
       },
       sheet: {
-        title: '楽譜 📋',
+        title: '楽譜',
         description: '音符ボタン（左下）をタップして、演奏する必要があるすべてのノートを確認できます。メロディーのプレビューも聴けます！',
       },
       begin: {
-        title: '演奏を開始 ▶️',
+        title: '演奏を開始',
         description: '音楽ページに到着したら、上の「演奏を開始」ボタンをタップしてチャレンジを始めましょう。まず楽譜が開くので、何を演奏するか確認できます！',
       },
       change: {
-        title: '楽器を変更 🔄',
-        description: '別の音を試したいですか？メニュー（☰）を開いて「楽器を変更」をタップすれば、いつでも変更できます。',
+        title: '楽器を変更',
+        description: '別の音を試したいですか？メニュー（）を開いて「楽器を変更」をタップすれば、いつでも変更できます。',
       },
     },
     storyModes: {
       welcome: {
-        title: '3つの探検方法！🌟',
+        title: '3つの探検方法！',
         description: 'お子さまはそれぞれ違う方法で学びます。お子さまの好奇心を刺激するストーリー体験を選びましょう -それぞれが遊びの魔法を通じて大切なスキルを育みます。',
       },
       interactive: {
-        title: 'インタラクティブストーリー ✨',
+        title: 'インタラクティブストーリー',
         description: 'タップ、スワイプ、発見！インタラクティブストーリーは、タッチできるサプライズ、因果関係の瞬間、実践的な学習活動でページに命を吹き込みます。研究によると、読み聞かせ中の積極的な参加は理解力、微細運動スキル、初期の問題解決能力を強化します。',
       },
       musical: {
-        title: 'ミュージカルストーリー 🎵',
+        title: 'ミュージカルストーリー',
         description: '読んで、演奏して、パフォーマンス！ミュージカルストーリーは、すべての冒険に本物の楽器チャレンジを織り込みます -お子さまは物語を追いながらリズム、メロディー、コーディネーションを学びます。研究により、音楽への早期接触は記憶力、言語発達、感情表現を向上させることが確認されています。',
       },
       jigsaw: {
-        title: 'ジグソーストーリー 🧩',
+        title: 'ジグソーストーリー',
         description: 'パズルを組み立てよう！ジグソーストーリーは各ページに美しいパズルを隠し、空間認識、忍耐力、論理的思考を育みます。パズルを完成させることで、子どもたちは本当の達成感を得て、読書準備を支える視覚認知スキルを強化します。',
       },
     },
     gestures: {
       speakerLongPress: {
-        title: 'ロングプレスチップ👆',
+        title: 'ロングプレスチップ',
         description: 'スピーカーボタンを長く押して、その他のオーディオオプションを表示します。',
       },
       storySwipe: {
-        title: 'スワイプナビゲーション👆',
+        title: 'スワイプナビゲーション',
         description: '左または右にスワイプしてページをすばやく回転させます。',
+      },
+    },
+    // Emotion Cards Tips
+    emotionCards: {
+      welcome: {
+        title: '感情カードへようこそ！',
+        description: 'お子さんがインタラクティブで楽しいカードを通じて感情を認識し、表現することを学ぶのを支援してください。',
+      },
+      together: {
+        title: '一緒に遊ぶ',
+        description: 'お子さんと一緒に座ってカードを裏返すのを交代してください。一緒に感情を作ってください-それはより楽しいです！',
+      },
+      connect: {
+        title: '接続を作成',
+        description: '「いつそれを感じましたか？」のような質問をして、お子さんが感情を理解するのを支援してください。',
+      },
+      scenarios: {
+        title: 'シナリオを作成',
+        description: '各感情を引き起こす可能性のある状況を演じてください。「おもちゃが壊れたらどう感じますか？」',
+      },
+      themes: {
+        title: 'さまざまなテーマを試す',
+        description: '絵文字、動物、クマのテーマを切り替えて、新鮮で魅力的に保ってください！',
+      },
+    },
+    // Spelling Tips
+    spelling: {
+      welcome: {
+        title: 'スペリング活動',
+        description: 'スペリングへようこそ！お子さまが文字、単語、スペリングを学ぶのに役立つ楽しいインタラクティブな活動です。',
+      },
+      ages: {
+        title: '年齢に合ったコンテンツ',
+        description: '活動は年齢別にグループ分けされています。上のカルーセルを使って、お子さまのレベルに合わせてフィルタリングしてください。',
+      },
+      together: {
+        title: '一緒に学ぼう',
+        description: 'お子さまと一緒に座って、文字を声に出して読みましょう。励まして、すべての挑戦を褒めてあげましょう！',
+      },
+      benefit: {
+        title: '読み書き力の構築',
+        description: '早期のスペリング練習は、音素認識、文字認識、そして一生続く言葉への愛を育みます。',
+      },
+    },
+    // Numbers Tips
+    numbers: {
+      welcome: {
+        title: '数字の活動',
+        description: '数字へようこそ！お子さまが数え方、形、初めての算数を探求するのに役立つ魅力的な活動です。',
+      },
+      ages: {
+        title: '年齢に合ったコンテンツ',
+        description: '活動は年齢別にグループ分けされています。上のカルーセルを使って、お子さまに合ったレベルを見つけてください。',
+      },
+      together: {
+        title: '一緒に数えよう',
+        description: '一緒に声に出して数えて、物を指さして、数字を毎日の遊びの一部にしましょう！',
+      },
+      benefit: {
+        title: '計算力の構築',
+        description: '早期の数遊びは、論理的思考、パターン認識、算数への自信のある基盤を育みます。',
+      },
+    },
+    // Feelings Tips
+    feelings: {
+      welcome: {
+        title: '気持ちの活動',
+        description: '気持ちへようこそ！お子さまが感情を認識し、名前をつけ、理解するのに役立つ活動です。',
+      },
+      ages: {
+        title: '年齢に合ったコンテンツ',
+        description: '活動は年齢別にグループ分けされています。お子さまの情緒発達に合った活動を選んでください。',
+      },
+      together: {
+        title: '一緒に探求しよう',
+        description: '感情についてオープンに話しましょう。「それはどんな気持ち？」と聞いて、自分の気持ちも共有しましょう。',
+      },
+      benefit: {
+        title: '感情知能',
+        description: '感情を理解することは、共感、自己制御、強い社会的スキルを育みます — 生涯の幸福に不可欠です。',
+      },
+    },
+    // Practise Mode Tips
+    practise: {
+      welcome: {
+        title: '練習モード',
+        description: 'さまざまな楽器で本物の曲を演奏することを学びましょう！音符に従って、音楽スキルをステップバイステップで身につけましょう。',
+      },
+      instrument: {
+        title: '楽器を選ぼう',
+        description: 'カルーセルをスワイプして、お気に入りの楽器を選びましょう。それぞれにユニークな音があります！',
+      },
+      songs: {
+        title: '曲を選ぼう',
+        description: '曲ライブラリを閲覧して、学ぶ曲を選びましょう。曲は難易度順に並んでいます — 簡単なものから始めましょう！',
+      },
+      benefit: {
+        title: '音楽的発達',
+        description: '曲を演奏することを学ぶことは、リズム、協調性、記憶力、集中力を育みます — すべて音楽の喜びを通して。',
+      },
+    },
+    // Freeplay Mode Tips
+    freeplay: {
+      welcome: {
+        title: 'フリープレイモード',
+        description: 'ルールなし、楽しいだけ！好きな楽器を探求して、自分だけの音楽を作りましょう。創造性と自己表現にぴったりです。',
+      },
+      instrument: {
+        title: '楽器を選ぼう',
+        description: 'カルーセルから好きな楽器を選びましょう。全部試して、新しい音やお気に入りを発見しましょう！',
+      },
+      play: {
+        title: '自由に演奏しよう',
+        description: 'カラフルなボタンを押して音楽を作りましょう。間違った音はありません — すべての音が冒険の一部です！',
+      },
+      benefit: {
+        title: '創造的表現',
+        description: '自由な音楽遊びは、創造性、自信、そしてお子さまと共に成長する音楽への愛を育みます。',
       },
     },
   },
@@ -819,33 +953,176 @@ export default {
     approachingMessage: '今日の画面時間は{{minutes}}分だけです。続行するか、アプリを閉じますか？',
     limitReachedMessage: '1日の画面時間制限に達しました。アプリを閉じて、他のアクティビティを試す時間です！',
   },
+  // Relaxing music screen
+  relaxMusic: {
+    title: '静かな場所',
+    screenTitle: 'リラックス',
+    subtitle: 'ちょっと一息。ゆっくり。リラックス。',
+    headphoneGuidance: '最高の体験のために、ヘッドフォンをご使用ください。楽な姿勢で目を閉じ、呼吸に集中してください。',
+    stopAll: '停止',
+    tipsTitle: 'リラクゼーション テクニック',
+    tipsBody: 'これらのトラックはバイノーラルビートを使用しています — 左右の耳に微妙な周波数差を与え、脳のリラックスを促します。効果を得るにはヘッドホンが必要です。\n\n聴きながら試してみてください：\n\nボックス呼吸法\n4カウント吸って、4カウント止めて、4カウント吐いて、4カウント止める。繰り返す。\n\nボディスキャン\nつま先から始めて、体の各部分にゆっくり意識を向けます。緊張に気づいたら意識的にほぐしましょう。\n\n5-4-3-2-1 グラウンディング\n見えるもの5つ、触れるもの4つ、聞こえるもの3つ、匂うもの2つ、味わえるもの1つに注目。\n\n思考の雲\n各思考を空を流れる雲のように想像します。認めてから、判断せずに通り過ぎさせましょう。',
+  },
+
+    // Emotion cards
+  emotions: {
+    title: '気持ち',
+    subtitle: 'あなたのスタイルを選んで気持ちを学びましょう',
+    greatJob: 'よくできました！',
+    sections: {
+      emotionCards: '感情カード',
+      developingEmotions: '感情を育てる',
+      parentsToo: '親御さんも',
+      parentsTooSubtitle: 'リラックスできるものを用意しました。あなたは素晴らしいです。',
+      relaxingMusic: 'リラックス音楽',
+      relaxingMusicDescription: 'くつろぐための癒しの音とリラクゼーションシーケンス',
+    },
+    pickYourStyle: 'あなたのスタイルを選択',
+    expressWithTheme: '{{theme}}で{{emotion}}を表現してください！',
+    expressing: '{{emotion}}を表現しています！',
+    loading: '読み込み中...',
+    progress: '進捗：{{completed}}/{{total}}',
+    themes: {
+      emoji: {
+        name: '絵文字',
+        description: '楽しい絵文字の顔で感情を表現する',
+      },
+      animals: {
+        name: '動物',
+        description: 'かわいい動物の友達を通じて感情を学ぶ',
+      },
+      bear: {
+        name: 'クマ',
+        description: 'フレンドリーなクマで感情を学ぶ',
+      },
+    },
+    emoji: {
+      happy: '幸せ',
+      sad: '悲しい',
+      angry: '怒っている',
+      surprised: '驚いた',
+      scared: '怖い',
+      excited: '興奮している',
+      confused: '混乱している',
+      proud: '誇りに思う',
+      shy: '恥ずかしい',
+      loving: '愛情深い',
+    },
+    animals: {
+      happy: '幸せなウサギ',
+      sad: '悲しい子猫',
+      angry: '怒った犬',
+      surprised: '驚いたひよこ',
+      scared: '怖いアライグマ',
+      excited: '興奮したキツネ',
+      confused: '混乱した象',
+      proud: '誇りに思うクマ',
+      shy: '恥ずかしいナマケモノ',
+      loving: '愛情深いパンダ',
+    },
+    bear: {
+      happy: '幸せなクマ',
+      sad: '悲しいクマ',
+      angry: '怒ったクマ',
+      surprised: '驚いたクマ',
+      scared: '怖いクマ',
+      excited: '興奮したクマ',
+      confused: '混乱したクマ',
+      proud: '誇りに思うクマ',
+      shy: '恥ずかしいクマ',
+      loving: '愛情深いクマ',
+    },
+    prompts: {
+      happy: [
+'一番大きな笑顔を見せてください！',
+'何か面白いことを聞いたように笑えますか？',
+'幸せな顔をして手をたたいてください！',
+'プレゼントをもらったときのような顔を見せてください！',
+      ],
+      sad: [
+'悲しい顔を見せてください',
+'おもちゃを失ったようなしかめっ面ができますか？',
+'さようならを言わなければならないときの気持ちを見せてください',
+'がっかりしたときのようにふくれっ面をしてください',
+      ],
+      angry: [
+'怒った顔を見せてください',
+'怒っているようにしかめっ面ができますか？',
+'誰かが悪いことをしてあなたの好きなおもちゃを投げたときのような顔を見せてください',
+'腕を組んでぶつぶつ言う顔をしてください！',
+      ],
+      surprised: [
+'驚いた顔を見せてください！',
+'目と口を大きく開けることができますか？',
+'何か素晴らしいものを見たときのような顔を見せてください！',
+'魔法を見たようなしかめっ面をしてください！',
+      ],
+      scared: [
+'怖い顔を見せてください',
+'怖いように手の後ろに隠れることができますか？',
+'嵐の間のような顔を見せてください',
+'何か幽霊のようなものを見たような顔をしてください！',
+      ],
+      excited: [
+'興奮した顔を見せてください！',
+'大きな笑顔で上下にジャンプできますか？',
+'楽しい場所に行くときのような顔を見せてください！',
+'興奮した顔をして手を振ってください！',
+      ],
+      confused: [
+'混乱した顔を見せてください',
+'一生懸命考えているようにしかめっ面ができますか？',
+'何か理解できないときのような顔を見せてください',
+'パズルを解いているようなしかめっ面をしてください！',
+      ],
+      proud: [
+'誇りに思う顔を見せてください！',
+'何か素晴らしいことをしたようにまっすぐ立って笑えますか？',
+'パズルを完成させたときの誇りに思う顔を見せてください！',
+'誰かを助けたようなしかめっ面をしてください！',
+      ],
+      shy: [
+'恥ずかしい顔を見せてください',
+'顔を少し隠すことができますか？',
+'新しい人に会ったときのような顔を見せてください',
+'恥ずかしい笑顔をして下を見てください！',
+      ],
+      loving: [
+'愛情深い顔を見せてください！',
+'自分に大きなハグをあげることができますか？',
+'愛する人を見つめるときのような顔を見せてください！',
+'キスをあげているようなしかめっ面をしてください！',
+      ],
+    },
+  },
+
   // Music challenge UI strings
   music: {
     amazing: 'すごい！',
     levelComplete: 'レベル{{level}}クリア！',
     playingYourSong: 'あなたの曲を再生中...',
     listeningToMelody: 'メロディーを聴いてください...',
-    retry: '↻ やり直す',
+    retry: 'やり直す',
     goHarder: '難易度を上げる',
     goHarderLevel: '難易度を上げる (Lv {{level}})',
-    continueStory: '物語を続ける →',
-    skip: 'スキップ →',
-    blowMode: '♪ 吹く',
-    pressMode: '♫ 押す',
-    blowing: '♪ 吹いています！',
+    continueStory: '物語を続ける',
+    skip: 'スキップ',
+    blowMode: '吹く',
+    pressMode: '押す',
+    blowing: '吹いています！',
     blowWhileHolding: 'ノートを押しながら吹いてください',
     tryAgain: 'もう一度！',
     openMusicSheet: '楽譜を開く',
     showControls: 'コントロールを表示',
     hideControls: 'コントロールを非表示',
-    musicSheet: '♪ 楽譜',
+    musicSheet: '楽譜',
     notesToPlay: '演奏するノート ({{completed}}/{{total}})',
     pause: '一時停止',
     preview: 'プレビュー',
     tapAndHoldNotes: 'ノートをタップ＆ホールドして聴く',
     playingPreview: 'プレビュー再生中… 一時停止をタップして停止',
-    successSong: '♫ 成功の歌',
-    readyToPlay: '♫ 演奏準備完了',
+    successSong: ' 成功の歌',
+    readyToPlay: ' 演奏準備完了',
     chooseInstrument: '楽器を選んでください',
     swipeToExplore: 'スワイプで探索、タップで選択',
     useThisInstrument: 'この楽器を使う',
@@ -892,18 +1169,71 @@ export default {
       songOfBreak: '壊す歌',
       songOfFix: '直す歌',
     },
+    // Binaural / relaxation track titles and descriptions
+    tracks: {
+      tantrumAlpha: {
+        title: '癇癪を鎮める (10Hz)',
+        artist: 'バイノーラルビート',
+        description: '癇癪時の鎮静用アルファ波。ヘッドホン推奨。',
+      },
+      sleepAlpha: {
+        title: 'リラックスへ',
+        artist: 'バイノーラルビート',
+        description: 'リラックス開始のアルファ波。停止するまで繰り返します。',
+      },
+      sleepTheta: {
+        title: '深いリラックス',
+        artist: 'バイノーラルビート',
+        description: '深いリラックスのためのシータ波。停止するまで繰り返します。',
+      },
+      sleepSequence: {
+        title: 'フルリラックスシーケンス',
+        artist: 'バイノーラルビート',
+        description: '完全な進行：リラックスへ → 深いリラックス。',
+      },
+      bearsBirthdayParty: {
+        title: 'くまさんの誕生日パーティー',
+        artist: 'おやすみ前のお話',
+        description: '特別な誕生日を祝うくまさんの心温まるお話。',
+      },
+      damselElephant: {
+        title: 'ダムセルぞうさん',
+        artist: 'おやすみ前のお話',
+        description: 'ダムセルぞうさんと優しい冒険に出かけよう。',
+      },
+      jimmyMouse: {
+        title: 'ジミーねずみと街の人たち',
+        artist: 'おやすみ前のお話',
+        description: '小さなねずみが大きな街を発見する。',
+      },
+      newYearJungle: {
+        title: 'ジャングルの新年',
+        artist: 'おやすみ前のお話',
+        description: 'ジャングルの動物たちが一緒に新年を祝います。',
+      },
+      snowWhite: {
+        title: '白雪姫',
+        artist: 'おやすみ前のお話',
+        description: '白雪姫の古典的なおとぎ話、おやすみ前にぴったり。',
+      },
+    },
+    tags: {
+      calming: '癒し',
+      bedtime: 'おやすみ',
+      stories: 'お話',
+    },
   },
 
   jigsaw: {
     amazing: 'すごい！',
-    beginPuzzle: '🧩 パズルを始める',
+    beginPuzzle: 'パズルを始める',
     completedMoves: '{{count}}手でクリア！',
-    continueStory: '物語を続ける →',
+    continueStory: '物語を続ける',
     preview: 'プレビュー',
     reset: 'リセット',
     scramble: 'バラバラにする',
     shuffle: 'シャッフル',
-    skip: 'スキップ →',
+    skip: 'スキップ',
     tapToClose: 'タップして閉じる',
   },
 
@@ -1106,6 +1436,14 @@ export default {
     signInRequiredMessage: '購読するにはサインインが必要です。サブスクリプションはアカウントに紐づけられ、すべてのデバイスでアクセスできます。',
     signInRequiredConfirm: 'サインイン',
     signInRequiredCancel: '今はしない',
+    errorTitle: 'サブスクリプションエラー',
+    errorUnavailable: 'このプランは現在ご利用いただけません。後でもう一度お試しください。',
+    errorGeneric: '問題が発生しました。もう一度お試しください。',
+    restorePurchases: '購入を復元',
+    restoreSuccessTitle: '購入が復元されました',
+    restoreSuccessMessage: 'サブスクリプションが正常に復元されました。',
+    restoreNoneTitle: '購入が見つかりません',
+    restoreNoneMessage: '復元する以前の購入が見つかりませんでした。',
   },
 
   defaultPage: {

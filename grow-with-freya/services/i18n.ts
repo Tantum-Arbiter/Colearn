@@ -23,10 +23,12 @@ import tr from '../locales/tr';
 import nl from '../locales/nl';
 import da from '../locales/da';
 import la from '../locales/la';
+import ja from '../locales/ja';
+import zh from '../locales/zh';
 
 const LANGUAGE_STORAGE_KEY = '@app_language';
 
-export type SupportedLanguage = 'en' | 'pl' | 'es' | 'de' | 'fr' | 'it' | 'pt' | 'ar' | 'tr' | 'nl' | 'da' | 'la';
+export type SupportedLanguage = 'en' | 'pl' | 'es' | 'de' | 'fr' | 'it' | 'pt' | 'ar' | 'tr' | 'nl' | 'da' | 'la' | 'ja' | 'zh';
 
 export const SUPPORTED_LANGUAGES: { code: SupportedLanguage; name: string; flag: string; nativeName: string }[] = [
   { code: 'en', name: 'English', flag: '🇬🇧', nativeName: 'English' },
@@ -41,6 +43,8 @@ export const SUPPORTED_LANGUAGES: { code: SupportedLanguage; name: string; flag:
   { code: 'nl', name: 'Dutch', flag: '🇳🇱', nativeName: 'Nederlands' },
   { code: 'da', name: 'Danish', flag: '🇩🇰', nativeName: 'Dansk' },
   { code: 'la', name: 'Latin', flag: '🏛️', nativeName: 'Latīna' },
+  { code: 'ja', name: 'Japanese', flag: '🇯🇵', nativeName: '日本語' },
+  { code: 'zh', name: 'Chinese', flag: '🇨🇳', nativeName: '中文' },
 ];
 
 const resources = {
@@ -56,6 +60,8 @@ const resources = {
   nl: { translation: nl },
   da: { translation: da },
   la: { translation: la },
+  ja: { translation: ja },
+  zh: { translation: zh },
 };
 
 export async function getStoredLanguage(): Promise<SupportedLanguage> {

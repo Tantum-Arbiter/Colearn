@@ -9,6 +9,7 @@ import Animated, {
   Easing
 } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
+import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from './themed-text';
 
 import { BearTopImage } from './main-menu/animated-components';
@@ -57,21 +58,22 @@ interface DefaultPageProps {
 
 
 // Content data for each page (using translation keys)
-const pageContent: { [key: string]: { emoji: string; messageKey: string; subtitleKey: string; color: string } } = {
+type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
+const pageContent: { [key: string]: { icon: IoniconsName; messageKey: string; subtitleKey: string; color: string } } = {
   'Stories': {
-    emoji: '📚',
+    icon: 'book-outline',
     messageKey: 'defaultPage.stories.message',
     subtitleKey: 'defaultPage.stories.subtitle',
     color: '#FF6B6B'
   },
   'Sensory': {
-    emoji: '🌟',
+    icon: 'sparkles-outline',
     messageKey: 'defaultPage.sensory.message',
     subtitleKey: 'defaultPage.sensory.subtitle',
     color: '#4ECDC4'
   },
   'Screen Time': {
-    emoji: '⏰',
+    icon: 'timer-outline',
     messageKey: 'defaultPage.screenTime.message',
     subtitleKey: 'defaultPage.screenTime.subtitle',
     color: '#FFEAA7'
@@ -161,8 +163,8 @@ export function DefaultPage({ icon, title, onBack }: DefaultPageProps) {
         <View style={styles.content}>
         <ThemedText style={styles.title}>{title}</ThemedText>
 
-        {/* Large emoji */}
-        <ThemedText style={styles.emoji}>{content.emoji}</ThemedText>
+        {/* Large icon */}
+        <Ionicons name={content.icon} size={60} color={content.color} />
 
         <ThemedText style={[styles.message, { color: content.color }]}>
           {t(content.messageKey)}

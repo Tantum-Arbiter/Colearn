@@ -928,7 +928,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
                       {lang.nativeName}
                     </Text>
                     {currentLanguage === lang.code && (
-                      <Text style={[styles.languageCheck, { fontSize: scaledFontSize(18) }]}>✓</Text>
+                      <Ionicons name="checkmark" size={scaledFontSize(18)} color="#4ECDC4" />
                     )}
                   </Pressable>
                 ))}

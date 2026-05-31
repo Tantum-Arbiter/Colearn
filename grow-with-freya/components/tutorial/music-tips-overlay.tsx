@@ -21,13 +21,15 @@ interface MusicTipsOverlayProps {
   onClose?: () => void;
 }
 
-const STEP_ICONS: Record<string, string> = {
-  'music_welcome': '🎵',
-  'music_instrument': '🎹',
-  'music_playing': '🎶',
-  'music_sheet': '📋',
-  'music_begin': '▶️',
-  'music_change': '🔄',
+type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
+
+const STEP_ICONS: Record<string, IoniconsName> = {
+  'music_welcome': 'musical-notes-outline',
+  'music_instrument': 'musical-note-outline',
+  'music_playing': 'play-circle-outline',
+  'music_sheet': 'document-text-outline',
+  'music_begin': 'play-outline',
+  'music_change': 'swap-horizontal-outline',
 };
 
 const TUTORIAL_ID = 'music_mode_tour' as const;
@@ -64,6 +66,14 @@ export function MusicTipsOverlay({ isActive, forceShow = false, onClose }: Music
       scale.value = withSpring(1, { damping: 15 });
     }
   }, [shouldShow, opacity, scale, startTutorial, forceShow]);
+
+  // Clean up when page becomes inactive — dismiss any visible overlay
+  useEffect(() => {
+    if (!isActive && isVisible && !forceShow) {
+      setIsVisible(false);
+      completeTutorial();
+    }
+  }, [isActive, isVisible, completeTutorial, forceShow]);
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -123,7 +133,7 @@ export function MusicTipsOverlay({ isActive, forceShow = false, onClose }: Music
           {isPhoneLandscape ? (
             <>
               <View style={[styles.iconContainer, { marginBottom: 0, marginRight: 16 }]}>
-                <Text style={styles.icon}>{STEP_ICONS[currentTip.id] || '🎵'}</Text>
+                <Ionicons name={STEP_ICONS[currentTip.id] || 'musical-notes-outline'} size={36} color="#4ECDC4" />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.title, { marginBottom: 4 }]}>{t(currentTip.titleKey)}</Text>
@@ -153,7 +163,7 @@ export function MusicTipsOverlay({ isActive, forceShow = false, onClose }: Music
           ) : (
             <>
               <View style={styles.iconContainer}>
-                <Text style={styles.icon}>{STEP_ICONS[currentTip.id] || '🎵'}</Text>
+                <Ionicons name={STEP_ICONS[currentTip.id] || 'musical-notes-outline'} size={36} color="#4ECDC4" />
               </View>
 
               <Text style={styles.title}>{t(currentTip.titleKey)}</Text>
@@ -225,9 +235,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  icon: {
-    fontSize: 40,
-  },
+
   title: {
     fontSize: 20,
     fontFamily: Fonts.sans,

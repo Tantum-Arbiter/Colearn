@@ -398,7 +398,7 @@ export function SpotlightOverlay({
     if (!hasTarget || !adjustedTarget) return null;
 
     // No arrows for main menu carousel buttons - on all devices
-    const menuButtons = ['stories_button', 'practise_button', 'freeplay_button'];
+    const menuButtons = ['stories_button', 'learning_button', 'instruments_button', 'practise_button', 'freeplay_button'];
     if (menuButtons.includes(step.id)) {
       return null;
     }

@@ -18,12 +18,14 @@ interface ScreenTimeTipsOverlayProps {
   isActive?: boolean;
 }
 
-const STEP_ICONS: Record<string, string> = {
-  'screen_time_intro': '⏱️',
-  'age_based_limits': '👶',
-  'weekly_heatmap': '📊',
-  'custom_reminders': '🔔',
-  'routine_building': '📅',
+type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
+
+const STEP_ICONS: Record<string, IoniconsName> = {
+  'screen_time_intro': 'timer-outline',
+  'age_based_limits': 'happy-outline',
+  'weekly_heatmap': 'bar-chart-outline',
+  'custom_reminders': 'notifications-outline',
+  'routine_building': 'calendar-outline',
 };
 
 export function ScreenTimeTipsOverlay({ isActive = true }: ScreenTimeTipsOverlayProps) {
@@ -102,7 +104,7 @@ export function ScreenTimeTipsOverlay({ isActive = true }: ScreenTimeTipsOverlay
         />
         <Animated.View style={[styles.card, animatedCardStyle]}>
           <View style={styles.iconContainer}>
-            <Text style={styles.icon}>{STEP_ICONS[currentTip.id] || '⏱️'}</Text>
+            <Ionicons name={STEP_ICONS[currentTip.id] || 'timer-outline'} size={32} color="#4ECDC4" />
           </View>
 
           <Text style={styles.title}>{t(currentTip.titleKey)}</Text>
@@ -169,9 +171,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  icon: {
-    fontSize: 32,
-  },
+
   title: {
     fontFamily: Fonts.primary,
     fontSize: 20,

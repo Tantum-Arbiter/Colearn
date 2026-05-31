@@ -30,6 +30,7 @@ import { StoryBookReader } from '@/components/stories/story-book-reader';
 import { PractiseScreen } from '@/components/music/practise-screen';
 import { FreeplayScreen } from '@/components/music/freeplay-screen';
 import { LearningScreen } from '@/components/learning/learning-screen';
+import { EmotionsScreen } from '@/components/emotions';
 import { ScreenTimeProvider } from '@/components/screen-time/screen-time-provider';
 import { Story } from '@/types/story';
 import { preloadCriticalImages, preloadSecondaryImages } from '@/services/image-preloader';
@@ -611,6 +612,11 @@ function AppContent() {
 
     const pageKey = destinationMap[destination];
     if (pageKey) {
+      // When navigating to plain 'stories' (not via a mode card), clear any
+      // previously selected story mode so all stories are visible.
+      if (destination === 'stories') {
+        setSelectedStoryMode(null);
+      }
       setCurrentPage(pageKey);
       setCurrentScreen(destination);
     }
@@ -817,11 +823,11 @@ function AppContent() {
               onBack={handleBackToMainMenu}
               initialMode={selectedStoryMode}
             />,
-            practise: <PractiseScreen onBack={handleBackToInstruments} />,
-            freeplay: <FreeplayScreen onBack={handleBackToInstruments} />,
-            spelling: <LearningScreen mode="spelling" onBack={handleBackToLearning} onActivitySelect={handleLearningActivitySelect} />,
-            numbers: <LearningScreen mode="numbers" onBack={handleBackToLearning} onActivitySelect={handleLearningActivitySelect} />,
-            feelings: <LearningScreen mode="feelings" onBack={handleBackToLearning} onActivitySelect={handleLearningActivitySelect} />,
+            practise: <PractiseScreen onBack={handleBackToInstruments} isActive={currentPage === 'practise'} />,
+            freeplay: <FreeplayScreen onBack={handleBackToInstruments} isActive={currentPage === 'freeplay'} />,
+            spelling: <LearningScreen mode="spelling" onBack={handleBackToLearning} onActivitySelect={handleLearningActivitySelect} isActive={currentPage === 'spelling'} />,
+            numbers: <LearningScreen mode="numbers" onBack={handleBackToLearning} onActivitySelect={handleLearningActivitySelect} isActive={currentPage === 'numbers'} />,
+            feelings: <EmotionsScreen onBack={handleBackToLearning} />,
             account: <AccountScreen onBack={handleAccountBack} isActive={currentPage === 'account'} />,
           }}
           duration={800}

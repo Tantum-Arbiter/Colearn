@@ -1,8 +1,28 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SUPPORTED_LANGUAGES, SupportedLanguage } from '@/services/i18n';
 
-// We test the public exports and configuration rather than internal functions
-// since i18n initializes on import
+// Helper to extract all leaf keys from a nested object
+function getLeafKeys(obj: any, prefix = ''): string[] {
+  const keys: string[] = [];
+  for (const key of Object.keys(obj)) {
+    const fullKey = prefix ? `${prefix}.${key}` : key;
+    if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+      keys.push(...getLeafKeys(obj[key], fullKey));
+    } else {
+      keys.push(fullKey);
+    }
+  }
+  return keys;
+}
+
+// All locale codes that should be registered
+const ALL_LOCALE_CODES = ['en', 'pl', 'es', 'de', 'fr', 'it', 'pt', 'ar', 'tr', 'nl', 'da', 'la', 'ja', 'zh'];
+
+// Load all locale modules once
+const localeModules: Record<string, any> = {};
+ALL_LOCALE_CODES.forEach(code => {
+  localeModules[code] = require(`@/locales/${code}`).default;
+});
 
 describe('i18n Service', () => {
   beforeEach(() => {
@@ -10,104 +30,31 @@ describe('i18n Service', () => {
   });
 
   describe('SUPPORTED_LANGUAGES', () => {
-    it('should have 12 supported languages', () => {
-      expect(SUPPORTED_LANGUAGES).toHaveLength(12);
+    it('should have 14 supported languages', () => {
+      expect(SUPPORTED_LANGUAGES).toHaveLength(14);
     });
 
-    it('should include English', () => {
-      const english = SUPPORTED_LANGUAGES.find(l => l.code === 'en');
-      expect(english).toBeDefined();
-      expect(english?.name).toBe('English');
-      expect(english?.flag).toBe('🇬🇧');
-      expect(english?.nativeName).toBe('English');
-    });
-
-    it('should include Polish', () => {
-      const polish = SUPPORTED_LANGUAGES.find(l => l.code === 'pl');
-      expect(polish).toBeDefined();
-      expect(polish?.name).toBe('Polish');
-      expect(polish?.flag).toBe('🇵🇱');
-      expect(polish?.nativeName).toBe('Polski');
-    });
-
-    it('should include Spanish', () => {
-      const spanish = SUPPORTED_LANGUAGES.find(l => l.code === 'es');
-      expect(spanish).toBeDefined();
-      expect(spanish?.name).toBe('Spanish');
-      expect(spanish?.flag).toBe('🇪🇸');
-      expect(spanish?.nativeName).toBe('Español');
-    });
-
-    it('should include German', () => {
-      const german = SUPPORTED_LANGUAGES.find(l => l.code === 'de');
-      expect(german).toBeDefined();
-      expect(german?.name).toBe('German');
-      expect(german?.flag).toBe('🇩🇪');
-      expect(german?.nativeName).toBe('Deutsch');
-    });
-
-    it('should include French', () => {
-      const french = SUPPORTED_LANGUAGES.find(l => l.code === 'fr');
-      expect(french).toBeDefined();
-      expect(french?.name).toBe('French');
-      expect(french?.flag).toBe('🇫🇷');
-      expect(french?.nativeName).toBe('Français');
-    });
-
-    it('should include Italian', () => {
-      const italian = SUPPORTED_LANGUAGES.find(l => l.code === 'it');
-      expect(italian).toBeDefined();
-      expect(italian?.name).toBe('Italian');
-      expect(italian?.flag).toBe('🇮🇹');
-      expect(italian?.nativeName).toBe('Italiano');
-    });
-
-    it('should include Portuguese', () => {
-      const portuguese = SUPPORTED_LANGUAGES.find(l => l.code === 'pt');
-      expect(portuguese).toBeDefined();
-      expect(portuguese?.name).toBe('Portuguese');
-      expect(portuguese?.flag).toBe('🇵🇹');
-      expect(portuguese?.nativeName).toBe('Português');
-    });
-
-    it('should include Arabic', () => {
-      const arabic = SUPPORTED_LANGUAGES.find(l => l.code === 'ar');
-      expect(arabic).toBeDefined();
-      expect(arabic?.name).toBe('Arabic');
-      expect(arabic?.flag).toBe('🇸🇦');
-      expect(arabic?.nativeName).toBe('العربية');
-    });
-
-    it('should include Turkish', () => {
-      const turkish = SUPPORTED_LANGUAGES.find(l => l.code === 'tr');
-      expect(turkish).toBeDefined();
-      expect(turkish?.name).toBe('Turkish');
-      expect(turkish?.flag).toBe('🇹🇷');
-      expect(turkish?.nativeName).toBe('Türkçe');
-    });
-
-    it('should include Dutch', () => {
-      const dutch = SUPPORTED_LANGUAGES.find(l => l.code === 'nl');
-      expect(dutch).toBeDefined();
-      expect(dutch?.name).toBe('Dutch');
-      expect(dutch?.flag).toBe('🇳🇱');
-      expect(dutch?.nativeName).toBe('Nederlands');
-    });
-
-    it('should include Danish', () => {
-      const danish = SUPPORTED_LANGUAGES.find(l => l.code === 'da');
-      expect(danish).toBeDefined();
-      expect(danish?.name).toBe('Danish');
-      expect(danish?.flag).toBe('🇩🇰');
-      expect(danish?.nativeName).toBe('Dansk');
-    });
-
-    it('should include Latin', () => {
-      const latin = SUPPORTED_LANGUAGES.find(l => l.code === 'la');
-      expect(latin).toBeDefined();
-      expect(latin?.name).toBe('Latin');
-      expect(latin?.flag).toBe('🏛️');
-      expect(latin?.nativeName).toBe('Latīna');
+    it.each([
+      ['en', 'English', '🇬🇧', 'English'],
+      ['pl', 'Polish', '🇵🇱', 'Polski'],
+      ['es', 'Spanish', '🇪🇸', 'Español'],
+      ['de', 'German', '🇩🇪', 'Deutsch'],
+      ['fr', 'French', '🇫🇷', 'Français'],
+      ['it', 'Italian', '🇮🇹', 'Italiano'],
+      ['pt', 'Portuguese', '🇵🇹', 'Português'],
+      ['ar', 'Arabic', '🇸🇦', 'العربية'],
+      ['tr', 'Turkish', '🇹🇷', 'Türkçe'],
+      ['nl', 'Dutch', '🇳🇱', 'Nederlands'],
+      ['da', 'Danish', '🇩🇰', 'Dansk'],
+      ['la', 'Latin', '🏛️', 'Latīna'],
+      ['ja', 'Japanese', '🇯🇵', '日本語'],
+      ['zh', 'Chinese', '🇨🇳', '中文'],
+    ])('should include %s (%s)', (code, name, flag, nativeName) => {
+      const lang = SUPPORTED_LANGUAGES.find(l => l.code === code);
+      expect(lang).toBeDefined();
+      expect(lang?.name).toBe(name);
+      expect(lang?.flag).toBe(flag);
+      expect(lang?.nativeName).toBe(nativeName);
     });
 
     it('should have unique language codes', () => {
@@ -116,7 +63,7 @@ describe('i18n Service', () => {
       expect(uniqueCodes.size).toBe(codes.length);
     });
 
-    it('should have flags for all languages', () => {
+    it('should have non-empty flags for all languages', () => {
       SUPPORTED_LANGUAGES.forEach(lang => {
         expect(lang.flag).toBeDefined();
         expect(lang.flag.length).toBeGreaterThan(0);
@@ -125,138 +72,125 @@ describe('i18n Service', () => {
   });
 
   describe('SupportedLanguage type', () => {
-    it('should accept valid language codes', () => {
-      const en: SupportedLanguage = 'en';
-      const pl: SupportedLanguage = 'pl';
-      const es: SupportedLanguage = 'es';
-      const de: SupportedLanguage = 'de';
-      const fr: SupportedLanguage = 'fr';
-      const it: SupportedLanguage = 'it';
-      const pt: SupportedLanguage = 'pt';
-      const ar: SupportedLanguage = 'ar';
-      const tr: SupportedLanguage = 'tr';
-      const nl: SupportedLanguage = 'nl';
-      const da: SupportedLanguage = 'da';
-      const la: SupportedLanguage = 'la';
-
-      const validCodes = ['en', 'pl', 'es', 'de', 'fr', 'it', 'pt', 'ar', 'tr', 'nl', 'da', 'la'];
-      expect(validCodes).toContain(en);
-      expect(validCodes).toContain(pl);
-      expect(validCodes).toContain(es);
-      expect(validCodes).toContain(de);
-      expect(validCodes).toContain(fr);
-      expect(validCodes).toContain(it);
-      expect(validCodes).toContain(pt);
-      expect(validCodes).toContain(ar);
-      expect(validCodes).toContain(tr);
-      expect(validCodes).toContain(nl);
-      expect(validCodes).toContain(da);
-      expect(validCodes).toContain(la);
+    it('should accept all 14 valid language codes', () => {
+      const validCodes: SupportedLanguage[] = ['en', 'pl', 'es', 'de', 'fr', 'it', 'pt', 'ar', 'tr', 'nl', 'da', 'la', 'ja', 'zh'];
+      validCodes.forEach(code => {
+        expect(ALL_LOCALE_CODES).toContain(code);
+      });
+      expect(validCodes).toHaveLength(14);
     });
   });
 
   describe('Language storage integration', () => {
     it('should use @app_language key for storage', async () => {
-      // This tests that AsyncStorage is called with the correct key
       const mockGetItem = AsyncStorage.getItem as jest.Mock;
       mockGetItem.mockResolvedValue('pl');
-
-      // The i18n service uses this key internally
       const EXPECTED_KEY = '@app_language';
-      
-      // Verify the key format is consistent with what the service expects
       expect(EXPECTED_KEY).toBe('@app_language');
     });
   });
 
   describe('Translation resources', () => {
-    let en: any;
-    let pl: any;
-    let es: any;
-    let de: any;
-    let fr: any;
-    let italian: any;
-    let pt: any;
-    let ar: any;
-    let tr: any;
-    let nl: any;
-    let da: any;
-    let la: any;
-
-    beforeAll(() => {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      en = require('@/locales/en').default;
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      pl = require('@/locales/pl').default;
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      es = require('@/locales/es').default;
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      de = require('@/locales/de').default;
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      fr = require('@/locales/fr').default;
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      italian = require('@/locales/it').default;
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      pt = require('@/locales/pt').default;
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      ar = require('@/locales/ar').default;
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      tr = require('@/locales/tr').default;
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      nl = require('@/locales/nl').default;
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      da = require('@/locales/da').default;
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      la = require('@/locales/la').default;
-    });
-
-    it('should have consistent keys across languages', () => {
-      // Get top-level keys from English (the reference)
-      const enKeys = Object.keys(en);
-
-      // Each language should have the same top-level keys
-      expect(Object.keys(pl)).toEqual(expect.arrayContaining(enKeys));
-      expect(Object.keys(es)).toEqual(expect.arrayContaining(enKeys));
-      expect(Object.keys(de)).toEqual(expect.arrayContaining(enKeys));
-      expect(Object.keys(fr)).toEqual(expect.arrayContaining(enKeys));
-      expect(Object.keys(italian)).toEqual(expect.arrayContaining(enKeys));
-      expect(Object.keys(pt)).toEqual(expect.arrayContaining(enKeys));
-      expect(Object.keys(ar)).toEqual(expect.arrayContaining(enKeys));
-      expect(Object.keys(tr)).toEqual(expect.arrayContaining(enKeys));
-      expect(Object.keys(nl)).toEqual(expect.arrayContaining(enKeys));
-      expect(Object.keys(da)).toEqual(expect.arrayContaining(enKeys));
-      expect(Object.keys(la)).toEqual(expect.arrayContaining(enKeys));
+    it('should have all top-level sections in every language', () => {
+      const enKeys = Object.keys(localeModules['en']);
+      ALL_LOCALE_CODES.forEach(code => {
+        const locKeys = Object.keys(localeModules[code]);
+        enKeys.forEach(key => {
+          expect(locKeys).toContain(key);
+        });
+      });
     });
 
     it('should have common section in all languages', () => {
-      expect(en.common).toBeDefined();
-      expect(pl.common).toBeDefined();
-      expect(es.common).toBeDefined();
-      expect(de.common).toBeDefined();
-      expect(fr.common).toBeDefined();
-      expect(italian.common).toBeDefined();
-      expect(pt.common).toBeDefined();
-      expect(ar.common).toBeDefined();
-      expect(tr.common).toBeDefined();
-      expect(nl.common).toBeDefined();
-      expect(da.common).toBeDefined();
-      expect(la.common).toBeDefined();
+      ALL_LOCALE_CODES.forEach(code => {
+        expect(localeModules[code].common).toBeDefined();
+      });
     });
 
     it('should have menu section in all languages', () => {
-      expect(en.menu).toBeDefined();
-      expect(pl.menu).toBeDefined();
-      expect(es.menu).toBeDefined();
-      expect(de.menu).toBeDefined();
-      expect(fr.menu).toBeDefined();
-      expect(italian.menu).toBeDefined();
-      expect(pt.menu).toBeDefined();
-      expect(ar.menu).toBeDefined();
-      expect(tr.menu).toBeDefined();
-      expect(nl.menu).toBeDefined();
-      expect(da.menu).toBeDefined();
-      expect(la.menu).toBeDefined();
+      ALL_LOCALE_CODES.forEach(code => {
+        expect(localeModules[code].menu).toBeDefined();
+      });
     });
+  });
+
+  describe('Deep key parity', () => {
+    const enKeys = getLeafKeys(localeModules['en']);
+    const enKeySet = new Set(enKeys);
+
+    it.each(ALL_LOCALE_CODES.filter(c => c !== 'en'))(
+      '%s should have every key that English has',
+      (code) => {
+        const locKeys = new Set(getLeafKeys(localeModules[code]));
+        const missing = enKeys.filter(k => !locKeys.has(k));
+        expect(missing).toEqual([]);
+      }
+    );
+
+    it.each(ALL_LOCALE_CODES.filter(c => c !== 'en'))(
+      '%s should not have extra keys that English lacks',
+      (code) => {
+        const locKeys = getLeafKeys(localeModules[code]);
+        const extra = locKeys.filter(k => !enKeySet.has(k));
+        expect(extra).toEqual([]);
+      }
+    );
+  });
+
+  describe('No decorative symbols in translation strings', () => {
+    // These symbols should be rendered as Ionicons in UI buttons/labels,
+    // not embedded in translation strings
+    const FORBIDDEN_PATTERNS = [
+      { pattern: /←/, name: 'left arrow (←)' },
+      { pattern: /→/, name: 'right arrow (→)' },
+      { pattern: /↻/, name: 'rotate arrow (↻)' },
+      { pattern: /♪/, name: 'music note (♪)' },
+      { pattern: /♫/, name: 'music notes (♫)' },
+    ];
+
+    // Keys where these symbols are intentionally used as content (not UI decoration)
+    const ALLOWED_KEYS = new Set([
+      'common.backArrow',                        // Text-based back arrow label
+      'accessibility.grayscaleIos',               // Navigation path: Settings → ...
+      'accessibility.grayscaleAndroid',            // Navigation path: Settings → ...
+      'accessibility.blueLightIos',               // Navigation path: Settings → ...
+      'accessibility.blueLightAndroid',            // Navigation path: Settings → ...
+      'music.successSong',                        // Music label with ♫
+      'music.readyToPlay',                        // Music label with ♫
+      'music.tracks.sleepSequence.description',   // Sequence indicator: A → B
+    ]);
+
+    function collectStringValues(obj: any, prefix = ''): { key: string; value: string }[] {
+      const entries: { key: string; value: string }[] = [];
+      for (const key of Object.keys(obj)) {
+        const fullKey = prefix ? `${prefix}.${key}` : key;
+        if (typeof obj[key] === 'string') {
+          entries.push({ key: fullKey, value: obj[key] });
+        } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+          entries.push(...collectStringValues(obj[key], fullKey));
+        }
+      }
+      return entries;
+    }
+
+    it.each(ALL_LOCALE_CODES)(
+      '%s should not contain decorative arrows or music symbols in translation strings',
+      (code) => {
+        const entries = collectStringValues(localeModules[code]);
+        const violations: string[] = [];
+
+        entries.forEach(({ key, value }) => {
+          if (ALLOWED_KEYS.has(key)) return; // Skip intentional uses
+          FORBIDDEN_PATTERNS.forEach(({ pattern, name }) => {
+            if (pattern.test(value)) {
+              violations.push(`${key}: contains ${name} in "${value.substring(0, 60)}..."`);
+            }
+          });
+        });
+
+        expect(violations).toEqual([]);
+      }
+    );
   });
 });
 

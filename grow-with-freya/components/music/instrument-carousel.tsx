@@ -7,13 +7,13 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, Image } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Image, useWindowDimensions } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue, useAnimatedStyle, withRepeat, withSequence,
   withTiming, interpolate, Extrapolation, Easing, SharedValue, runOnJS,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
-import { Ionicons } from '@expo/vector-icons';
 import { getAvailableInstrumentIds, getInstrument, InstrumentDefinition } from '@/services/music-asset-registry';
 import { StoryAccessService } from '@/services/story-access-service';
 import { useAccessibility } from '@/hooks/use-accessibility';
@@ -98,16 +98,20 @@ export const InstrumentCarousel = React.memo(function InstrumentCarousel({ selec
     }), [anglePerItem, gestureStart, rotation, selectFromRotation]);
   if (instruments.length === 0) return null;
 
+  const { width: windowWidth } = useWindowDimensions();
   const arrowSize = scaledButtonSize(36);
   // Arrows sit at the vertical center of the image, not the full carousel height
   const arrowTop = imageSize / 2 - arrowSize / 2;
+  // Position arrows just outside the nearest carousel items by calculating from
+  // window center minus carousel radius, minus a small gap for the arrow itself
+  const arrowInset = Math.max(8, (windowWidth / 2) - radius - arrowSize * 0.5);
   return (
     <View style={[st.wrapper, { height: carouselHeight }]}>
-      {/* Left arrow -flush with carousel edges */}
+      {/* Left arrow -close to carousel items */}
       <Pressable
-        style={[st.arrow, { width: arrowSize, height: arrowSize, borderRadius: arrowSize / 2, top: arrowTop, left: 8 }]}
+        style={[st.arrow, { width: arrowSize, height: arrowSize, borderRadius: arrowSize / 2, top: arrowTop, left: arrowInset }]}
         onPress={() => goToNeighbor(1)}>
-        <Text style={[st.arrowTxt, { fontSize: scaledFontSize(26) }]}>‹</Text>
+        <Ionicons name="chevron-back" size={scaledFontSize(20)} color="#808080" />
       </Pressable>
       {/* Carousel */}
       <GestureHandlerRootView style={st.gesture}>
@@ -125,11 +129,11 @@ export const InstrumentCarousel = React.memo(function InstrumentCarousel({ selec
           </View>
         </GestureDetector>
       </GestureHandlerRootView>
-      {/* Right arrow -flush with carousel edges */}
+      {/* Right arrow -close to carousel items */}
       <Pressable
-        style={[st.arrow, { width: arrowSize, height: arrowSize, borderRadius: arrowSize / 2, top: arrowTop, right: 8 }]}
+        style={[st.arrow, { width: arrowSize, height: arrowSize, borderRadius: arrowSize / 2, top: arrowTop, right: arrowInset }]}
         onPress={() => goToNeighbor(-1)}>
-        <Text style={[st.arrowTxt, { fontSize: scaledFontSize(26) }]}>›</Text>
+        <Ionicons name="chevron-forward" size={scaledFontSize(20)} color="#808080" />
       </Pressable>
     </View>
   );
@@ -209,7 +213,7 @@ function CarouselItem({ instrument, index, anglePerItem, rotation, imageSize, ra
         ) : (
           <View style={[st.ph, { width: imageSize, height: imageSize, borderRadius: imageSize / 2,
             backgroundColor: instrument.noteLayout[0]?.color || '#666', opacity: isLocked ? 0.5 : 1 }]}>
-            <Text style={{ fontSize: imageSize * 0.45 }}>{instrument.noteLayout[0]?.label || '🎵'}</Text>
+            <Ionicons name="musical-note" size={imageSize * 0.4} color="#FFFFFF" />
           </View>
         )}
         {/* Lock overlay for subscription-gated instruments */}
@@ -237,7 +241,6 @@ function CarouselItem({ instrument, index, anglePerItem, rotation, imageSize, ra
 const st = StyleSheet.create({
   wrapper: { width: '100%', marginBottom: 4 },
   arrow: { position: 'absolute', backgroundColor: 'rgba(255,255,255,0.12)', justifyContent: 'center', alignItems: 'center', zIndex: 10 },
-  arrowTxt: { color: 'rgba(255,255,255,0.8)', fontWeight: '300', marginTop: -2 },
   gesture: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   cContainer: { width: '100%', justifyContent: 'center', alignItems: 'center' },
   carousel: { width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },

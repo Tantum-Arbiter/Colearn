@@ -12,6 +12,17 @@ import { useTutorial } from '@/contexts/tutorial-context';
 import { SETTINGS_WALKTHROUGH_STEPS } from './tutorial-content';
 import { useTranslation } from 'react-i18next';
 
+type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
+
+const STEP_ICONS: Record<string, IoniconsName> = {
+  settings_intro: 'settings-outline',
+  login: 'lock-closed-outline',
+  language: 'globe-outline',
+  avatar: 'person-outline',
+  accessibility: 'search-outline',
+  screen_time: 'timer-outline',
+};
+
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface SettingsTipsOverlayProps {
@@ -108,14 +119,7 @@ export function SettingsTipsOverlay({ isActive = true }: SettingsTipsOverlayProp
         />
         <Animated.View style={[styles.card, animatedCardStyle]}>
           <View style={styles.iconContainer}>
-            <Text style={styles.icon}>
-              {currentTip.id === 'settings_intro' && '⚙️'}
-              {currentTip.id === 'login' && '🔐'}
-              {currentTip.id === 'language' && '🌍'}
-              {currentTip.id === 'avatar' && '👤'}
-              {currentTip.id === 'accessibility' && '🔍'}
-              {currentTip.id === 'screen_time' && '⏱️'}
-            </Text>
+            <Ionicons name={STEP_ICONS[currentTip.id] || 'settings-outline'} size={36} color="#4ECDC4" />
           </View>
 
           <Text style={styles.title}>{t(currentTip.titleKey)}</Text>
@@ -188,7 +192,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  icon: { fontSize: 40 },
+
   title: {
     fontSize: 20,
     fontFamily: Fonts.sans,

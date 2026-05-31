@@ -425,7 +425,7 @@ function CarouselItem({
           <Image source={instrument.image} style={[styles.instrumentImage, isLocked && { opacity: 0.5 }]} resizeMode="contain" />
         ) : (
           <View style={[styles.instrumentPlaceholder, { backgroundColor: instrument.noteLayout[0]?.color || '#666' }, isLocked && { opacity: 0.5 }]}>
-            <Text style={styles.placeholderEmoji}>{instrument.noteLayout[0]?.label || '🎵'}</Text>
+            <Ionicons name="musical-note" size={40} color="#FFFFFF" />
           </View>
         )}
         {/* Lock overlay for subscription-gated instruments */}

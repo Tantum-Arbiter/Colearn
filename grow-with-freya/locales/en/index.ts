@@ -2,7 +2,7 @@ export default {
   // Common UI elements
   common: {
     back: 'Back',
-    backArrow: '← Back',
+    backArrow: 'Back',
     next: 'Next',
     done: 'Done',
     cancel: 'Cancel',
@@ -41,7 +41,7 @@ export default {
     },
     resetApp: {
       title: 'Reset App',
-      message: 'This will clear ALL app data including your login, character, and settings. Are you sure?',
+      message: 'This will clear ALL app data including your login, character, and settings. Are you sure? ',
     },
     deleteAccount: {
       title: 'Delete Account',
@@ -54,11 +54,11 @@ export default {
     },
     deleteReminder: {
       title: 'Delete Reminder',
-      message: 'Are you sure you want to delete "{{title}}"?',
+      message: 'Are you sure you want to delete "{{title}}"? ',
     },
     unsavedChanges: {
       title: 'Unsaved Changes',
-      message: 'You have unsaved changes. Are you sure you want to leave without saving?',
+      message: 'You have unsaved changes. Are you sure you want to leave without saving? ',
     },
     missingTitle: {
       title: 'Missing Title',
@@ -89,9 +89,9 @@ export default {
     continueWithApple: 'Continue with Apple',
     signingIn: 'Signing in...',
     continueWithoutSignIn: 'Continue without signing in',
-    footerPrefix: 'By continuing, you agree to our ',
+    footerPrefix: 'By continuing, you agree to our',
     termsAndConditions: 'Terms & Conditions',
-    and: ' and ',
+    and: ' and',
     privacyPolicy: 'Privacy Policy',
     signInFailed: 'Sign-In Failed',
     signInFailedMessage: 'Unable to sign in with Google. Please try again.',
@@ -121,7 +121,7 @@ export default {
     stories: 'Stories',
     practise: 'Practise',
     freeplay: 'Freeplay',
-    instruments: 'Play Instruments',
+    instruments: 'Instruments',
     learning: 'Learning',
     spelling: 'Spelling',
     numbers: 'Numbers',
@@ -133,11 +133,11 @@ export default {
     title: 'Accessibility',
     textSizeHint: 'Adjust text and button sizes for better visibility',
     grayscale: 'Grayscale / High Contrast',
-    grayscaleHint: 'For black & white mode, use your device\'s built-in accessibility settings:',
+    grayscaleHint: 'For black & white mode, use your device\'s built-in accessibility settings: ',
     grayscaleIos: 'Settings → Accessibility → Display & Text Size → Color Filters → Grayscale',
     grayscaleAndroid: 'Settings → Accessibility → Color adjustment → Grayscale',
     blueLight: 'Blue Light Filter (Night Mode)',
-    blueLightHint: 'Reduce blue light to help your child sleep better. Enable your device\'s night mode:',
+    blueLightHint: 'Reduce blue light to help your child sleep better. Enable your device\'s night mode: ',
     blueLightIos: 'Settings → Display & Brightness → Night Shift → Turn on',
     blueLightAndroid: 'Settings → Display → Night Light (or Eye Comfort) → Turn on',
     blueLightBenefit: 'Blue light from screens can affect sleep. Turning on night mode in the evening helps your child\'s brain prepare for bedtime by reducing stimulating blue wavelengths.',
@@ -205,8 +205,8 @@ export default {
     compareLanguageOn: 'Compare Languages: On',
     compareLanguageOff: 'Compare Languages: Off',
     selectCompareLanguage: 'Choose languages to read, compare or record.',
-    selectFirstLanguage: 'First language (white box):',
-    selectSecondLanguage: 'Second language (blue box):',
+    selectFirstLanguage: 'First language (white box): ',
+    selectSecondLanguage: 'Second language (blue box): ',
     done: 'Done',
     autoPlayOn: 'Auto-Play: On',
     autoPlayOff: 'Auto-Play: Off',
@@ -219,16 +219,16 @@ export default {
     permissionMessage: 'Microphone access is needed to record your voice.',
     recordingError: 'Recording Error',
     recordingErrorMessage: 'Failed to start recording. Please try again.',
-    overwriteRecording: 'Overwrite Recording?',
-    overwriteRecordingMessage: 'This page already has a recording. Are you sure you want to overwrite it with a new recording?',
+    overwriteRecording: 'Overwrite Recording? ',
+    overwriteRecordingMessage: 'This page already has a recording. Are you sure you want to overwrite it with a new recording? ',
     nameAlreadyExists: 'Name Already Exists',
     nameAlreadyExistsMessage: 'A voice over named "{{name}}" already exists. Please choose a different name.',
     error: 'Error',
     createVoiceOverError: 'Failed to create voice over. Please try again.',
-    overwriteVoiceOver: 'Overwrite Voice Over?',
-    overwriteVoiceOverMessage: '"{{name}}" already has {{count}} page(s) recorded. Do you want to overwrite with new recordings?',
+    overwriteVoiceOver: 'Overwrite Voice Over? ',
+    overwriteVoiceOverMessage: '"{{name}}" already has {{count}} page(s) recorded. Do you want to overwrite with new recordings? ',
     deleteVoiceOver: 'Delete Voice Over',
-    deleteVoiceOverMessage: 'Are you sure you want to delete "{{name}}"?',
+    deleteVoiceOverMessage: 'Are you sure you want to delete "{{name}}"? ',
     deleteVoiceOverMessageWithUndo: 'Are you sure you want to delete "{{name}}"? This cannot be undone.',
     overwrite: 'Overwrite',
     delete: 'Delete',
@@ -246,8 +246,8 @@ export default {
     narrateAs: 'Narrate as: {{name}}',
     recordVoiceOver: 'Record Voice Over',
     selectVoiceOver: 'Select Voice Over',
-    selectExisting: 'Select existing to overwrite:',
-    orCreateNew: 'Or create new:',
+    selectExisting: 'Select existing to overwrite: ',
+    orCreateNew: 'Or create new: ',
     enterName: 'Enter name...',
     create: 'Create',
     chooseRecording: 'Choose a recording to play',
@@ -325,7 +325,7 @@ export default {
     scheduleIntroShort: "Set up personalized notification times for your child's screen time activities.",
     createCustomReminders: '+ Create Custom Reminders',
     recommendedTimes: 'Recommended Times',
-    recommendedTimesIntro: 'Based on child development research, the best times for screen activities are:',
+    recommendedTimesIntro: 'Based on child development research, the best times for screen activities are: ',
     morningStoriesEmotions: 'Morning stories & emotions',
     afternoonLearning: 'Afternoon learning activities',
     preDinnerMusic: 'Pre-dinner wind down music',
@@ -539,7 +539,7 @@ export default {
       },
       consent: {
         title: 'Before We Begin',
-        body: 'As a parent or guardian, please review and agree to the following:',
+        body: 'As a parent or guardian, please review and agree to the following: ',
         button: "I Agree",
         closeLabel: 'Close',
         dataSummary: {
@@ -564,7 +564,7 @@ export default {
     },
     // Crash reporting dialog
     crashReportingDialog: {
-      title: 'Enable Crash Reports?',
+      title: 'Enable Crash Reports? ',
       body: 'Anonymous crash reports help us fix bugs and improve the app. No personal data is collected.\n\nYou can change this anytime in Settings.',
       noThanks: 'No Thanks',
       enable: 'Enable',
@@ -586,9 +586,9 @@ export default {
 
   // Tutorial
   tutorial: {
-    welcomeTitle: 'Welcome to\nEarlyroots! 🎉',
+    welcomeTitle: 'Welcome to\nEarlyroots!',
     welcomeDescription: "Let's take a quick tour to help you and your child get the most out of storytime together.",
-    storiesTitle: 'Story Library 📚',
+    storiesTitle: 'Story Library',
     storiesDescription: 'Tap here to explore our collection of interactive stories with beautiful illustrations and fun interactions.',
     skip: 'Skip',
     gotIt: 'Got it!',
@@ -607,251 +607,369 @@ export default {
     // Main Menu Tour - shown on first login
     mainMenu: {
       welcome: {
-        title: 'Welcome to Grow with\nFreya! 🎉',
+        title: 'Welcome to Grow with\nFreya!',
         description: "Let's take a quick tour to help you and your child get the most out of storytime together.",
       },
       stories: {
-        title: 'Stories 📚',
+        title: 'Stories',
         description: 'Explore our collection of interactive stories with beautiful illustrations and fun interactions.',
       },
       practise: {
-        title: 'Practise 🎵',
+        title: 'Practise',
         description: 'Learn to play songs on different instruments. Follow along and build your musical skills!',
       },
       freeplay: {
-        title: 'Freeplay 🎹',
+        title: 'Freeplay',
         description: 'Jam freely on any instrument -no rules, just fun! Experiment with sounds and create your own music.',
       },
       instruments: {
-        title: 'Play Instruments 🎵',
+        title: 'Instruments',
         description: 'Practise songs or jam freely on different instruments. Build musical skills while having fun!',
       },
       learning: {
-        title: 'Learning 📖',
+        title: 'Learning',
         description: 'Interactive spelling and number activities that help build early literacy and numeracy skills.',
       },
       settings: {
-        title: 'Settings ⚙️',
+        title: 'Settings',
         description: 'Customise the app to work best for your family.',
       },
       sound: {
-        title: 'Sound Control 🔊',
+        title: 'Sound Control',
         description: 'Tap here to control background music and sound effects.',
       },
     },
     // Screen Time Tips - keys match tutorial.screenTime.* in tutorial-content.ts
     screenTime: {
       intro: {
-        title: 'Screen Time Dashboard ⏱️',
+        title: 'Screen Time Dashboard',
         description: 'Track and manage your child\'s daily screen time with age-appropriate limits.',
       },
       ageBased: {
-        title: 'Age-Based Limits 👶',
+        title: 'Age-Based Limits',
         description: 'Set your child\'s age to get WHO/AAP recommended screen time limits automatically.',
       },
       heatmap: {
-        title: 'Weekly Activity 📊',
+        title: 'Weekly Activity',
         description: 'See patterns in screen time usage throughout the week to help establish healthy routines.',
       },
       reminders: {
-        title: 'Set Reminders ⏰',
+        title: 'Set Reminders',
         description: 'Create custom reminders for activities, breaks, or bedtime routines.',
       },
       routine: {
-        title: 'Build Healthy Routines 🌟',
+        title: 'Build Healthy Routines',
         description: 'Use screen time data to establish consistent daily routines that work for your family.',
       },
     },
     // Story Reader Tips - keys match tutorial.storyReader.* in tutorial-content.ts
     storyReader: {
       welcome: {
-        title: 'Story Time Tips 📖',
+        title: 'Story Time Tips',
         description: 'Here are some tips to make storytime magical for you and your child!',
       },
       interactive: {
-        title: 'Look for Interactions ✨',
+        title: 'Look for Interactions',
         description: 'Some pages have hidden surprises! Encourage your child to tap on objects that sparkle or glow.',
       },
       point: {
-        title: 'Point and Discuss 👆',
+        title: 'Point and Discuss',
         description: 'Ask questions about the pictures. "What do you see?" "What colour is the butterfly?"',
       },
       pause: {
-        title: 'Pause and Predict 🤔',
+        title: 'Pause and Predict',
         description: 'Before turning the page, ask "What do you think will happen next?" to boost engagement.',
       },
       voices: {
-        title: 'Use Different Voices 🎭',
+        title: 'Use Different Voices',
         description: 'Make characters come alive with silly voices! Your child will love the performance.',
       },
       navigate: {
-        title: 'Easy Navigation 📚',
+        title: 'Easy Navigation',
         description: 'Swipe left or right to turn pages. Tap the menu button for more options.',
       },
       tapWords: {
-        title: 'Tap Words to Focus 👆',
+        title: 'Tap Words to Focus',
         description: 'Tap any word in the story to highlight it! This helps focus attention and makes reading more interactive and engaging.',
       },
       compareLanguages: {
-        title: 'Compare Languages 🌍',
+        title: 'Compare Languages',
         description: 'Use the menu to enable "Compare Languages" and view the story in two languages side-by-side. Perfect for multilingual families learning together!',
       },
     },
     // Book Mode Tips - keys match tutorial.bookMode.* in tutorial-content.ts
     bookMode: {
       read: {
-        title: 'Read Mode 📖',
+        title: 'Read Mode',
         description: 'Tap here to read the story yourself with your child. Turn pages at your own pace.',
       },
       record: {
-        title: 'Record Mode 🎙️',
+        title: 'Record Mode',
         description: 'Record your own voice reading the story. Perfect for when you\'re away!',
       },
       narrate: {
-        title: 'Listen Mode 🎧',
+        title: 'Listen Mode',
         description: 'Listen to a pre-recorded narration of the story. Great for bedtime!',
       },
       preview: {
-        title: 'Preview 👁️',
+        title: 'Preview',
         description: 'See story details, duration, and themes before you start reading.',
       },
     },
     // Record Mode Tips - keys match tutorial.recordMode.* in tutorial-content.ts
     recordMode: {
       intro: {
-        title: 'Record Your Voice 🎙️',
+        title: 'Record Your Voice',
         description: 'Create a personal narration of this story that your child can listen to anytime - even when you\'re not there!',
       },
       button: {
-        title: 'Recording Controls 🔴',
+        title: 'Recording Controls',
         description: 'Tap the microphone to start recording. Read the page text aloud, then tap again to stop.',
       },
       playback: {
-        title: 'Review Your Recording ↺',
+        title: 'Review Your Recording',
         description: 'Listen back to your recording and re-record if needed. Your child will love hearing your voice!',
       },
       sound: {
-        title: 'Sound Tip 🔊',
+        title: 'Sound Tip',
         description: 'Find a quiet space for the best recording quality. Background noise can be distracting.',
       },
       limit: {
-        title: 'Family Voices 👨‍👩‍👧',
+        title: 'Family Voices',
         description: 'Multiple family members can record! Grandparents, aunts, uncles - let everyone join in.',
       },
       benefit: {
-        title: 'Why Record? 💜',
+        title: 'Why Record? ',
         description: 'Research shows hearing a familiar voice helps children feel secure and connected, especially during separation.',
       },
       navigation: {
-        title: 'Navigate Pages 📖',
+        title: 'Navigate Pages',
         description: 'Use the arrows to move between pages. Record each page to create a complete narrated story!',
       },
     },
     // Narrate Mode Tips - keys match tutorial.narrateMode.* in tutorial-content.ts
     narrateMode: {
       intro: {
-        title: 'Listen Mode 🎧',
+        title: 'Listen Mode',
         description: 'Sit back and enjoy! The story will be read aloud using a recorded voice.',
       },
       autoPlayback: {
-        title: 'Auto-Play 📖',
+        title: 'Auto-Play',
         description: 'Pages turn automatically after the narration finishes. Perfect for bedtime!',
       },
       controls: {
-        title: 'Playback Controls ▶️',
+        title: 'Playback Controls',
         description: 'Pause, replay, or skip ahead using the controls. You\'re in charge of the pace.',
       },
       sound: {
-        title: 'Sound Tip 🔊',
+        title: 'Sound Tip',
         description: 'Make sure your device volume is up! Use headphones for a more immersive experience.',
       },
       benefit: {
-        title: 'Bonding Time 💜',
+        title: 'Bonding Time',
         description: 'Even in listen mode, stay engaged! Point to pictures, ask questions, and enjoy the story together.',
       },
     },
     // Settings Walkthrough - keys match tutorial.settings.* in tutorial-content.ts
     settings: {
       intro: {
-        title: 'Settings ⚙️',
+        title: 'Settings',
         description: 'Customise the app to work best for your family.',
       },
       login: {
-        title: 'Account & Sync 🔐',
+        title: 'Account & Sync',
         description: 'Sign in to save your progress and sync across devices.',
       },
       language: {
-        title: 'Language 🌍',
+        title: 'Language',
         description: 'Choose your preferred language for the app interface.',
       },
       avatar: {
-        title: 'Your Avatar 🎭',
+        title: 'Your Avatar',
         description: 'Personalise your child\'s experience with a custom avatar.',
       },
       accessibility: {
-        title: 'Accessibility ♿',
+        title: 'Accessibility',
         description: 'Adjust text size and other settings for easier use.',
       },
       screenTime: {
-        title: 'Screen Time ⏱️',
+        title: 'Screen Time',
         description: 'Set healthy limits and track daily usage.',
       },
     },
     // Music Mode Tips - keys match tutorial.musicMode.* in tutorial-content.ts
     musicMode: {
       welcome: {
-        title: 'Music Mode 🎵',
+        title: 'Music Mode',
         description: 'Some pages in this story have music challenges! Play notes on a virtual instrument to complete them.',
       },
       instrument: {
-        title: 'Choose Your Story Instrument 🎹',
+        title: 'Choose Your Story Instrument',
         description: 'When a book with music opens, swipe through the carousel to pick your favourite instrument. Each one has unique sounds!',
       },
       playing: {
-        title: 'Playing Notes 🎶',
+        title: 'Playing Notes',
         description: 'Press the coloured buttons to play notes. Match the sequence shown at the top to complete the challenge!',
       },
       sheet: {
-        title: 'Music Sheet 📋',
+        title: 'Music Sheet',
         description: 'Tap the music note button (bottom left) to see all the notes you need to play. You can even preview the melody!',
       },
       begin: {
-        title: 'Begin Playing ▶️',
-        description: "When you arrive on a music page, tap the 'Begin Playing' button at the top to start the challenge. It opens the music sheet first so you can see what to play!",
+        title: 'Begin Playing',
+        description: "When you arrive on a music page, tap the'Begin Playing' button at the top to start the challenge. It opens the music sheet first so you can see what to play!",
       },
       change: {
-        title: 'Change Instrument 🔄',
-        description: "Want to try a different sound? Open the menu (☰) and tap 'Change Instrument' to switch anytime.",
+        title: 'Change Instrument',
+        description: "Want to try a different sound? Open the menu and tap'Change Instrument' to switch anytime.",
       },
     },
     // Story Modes Tour - explains Interactive, Musical and Jigsaw modes
     storyModes: {
       welcome: {
-        title: 'Three Ways to Explore! 🌟',
+        title: 'Three Ways to Explore!',
         description: 'Every child learns differently. Choose the story experience that sparks your child\'s curiosity -each one builds essential skills through the magic of play.',
       },
       interactive: {
-        title: 'Interactive Stories ✨',
+        title: 'Interactive Stories',
         description: 'Tap, swipe and discover! Interactive stories bring pages to life with touchable surprises, cause-and-effect moments and hands-on learning activities. Research shows active participation during storytime strengthens comprehension, fine motor skills and early problem-solving.',
       },
       musical: {
-        title: 'Musical Stories 🎵',
+        title: 'Musical Stories',
         description: 'Read, play and perform! Musical stories weave real instrument challenges into every adventure -your child learns rhythm, melody and coordination while following the tale. Studies confirm early music exposure boosts memory, language development and emotional expression.',
       },
       jigsaw: {
-        title: 'Jigsaw Stories 🧩',
+        title: 'Jigsaw Stories',
         description: 'Piece it together! Jigsaw stories hide beautiful puzzles within each page, building spatial awareness, patience and logical thinking. Completing puzzles gives children a real sense of achievement and strengthens visual-perceptual skills that support reading readiness.',
       },
     },
     // Gesture Hints - keys match tutorial.gestures.* in tutorial-content.ts
     gestures: {
       speakerLongPress: {
-        title: 'Long Press Tip 👆',
+        title: 'Long Press Tip',
         description: 'Long press the speaker button for more audio options.',
       },
       storySwipe: {
-        title: 'Swipe Navigation 👆',
+        title: 'Swipe Navigation',
         description: 'Swipe left or right to turn pages quickly.',
+      },
+    },
+    // Emotion Cards Tips
+    emotionCards: {
+      welcome: {
+        title: 'Welcome to Emotion Cards!',
+        description: 'Help your child learn to recognise and express emotions through fun, interactive cards.',
+      },
+      together: {
+        title: 'Play Together',
+        description: 'Sit with your child and take turns flipping cards. Make the emotions together - it\'s more fun!',
+      },
+      connect: {
+        title: 'Make Connections',
+        description: 'Ask questions like "When did you feel this way?" to help your child understand their emotions.',
+      },
+      scenarios: {
+        title: 'Create Scenarios',
+        description: 'Act out situations that might cause each emotion. "How would you feel if your toy broke?"',
+      },
+      themes: {
+        title: 'Try Different Themes',
+        description: 'Switch between emoji, animal, and bear themes to keep it fresh and engaging!',
+      },
+    },
+    // Spelling Tips
+    spelling: {
+      welcome: {
+        title: 'Spelling Activities',
+        description: 'Welcome to Spelling! Fun interactive activities to help your child learn letters, words and spelling.',
+      },
+      ages: {
+        title: 'Age-Appropriate Content',
+        description: 'Activities are grouped by age range. Use the carousel at the top to filter for your child\'s level.',
+      },
+      together: {
+        title: 'Learn Together',
+        description: 'Sit with your child and sound out the letters together. Encourage them and celebrate every attempt!',
+      },
+      benefit: {
+        title: 'Building Literacy',
+        description: 'Early spelling practice builds phonemic awareness, letter recognition and a love of words that lasts a lifetime.',
+      },
+    },
+    // Numbers Tips
+    numbers: {
+      welcome: {
+        title: 'Number Activities',
+        description: 'Welcome to Numbers! Engaging activities to help your child explore counting, shapes and early maths.',
+      },
+      ages: {
+        title: 'Age-Appropriate Content',
+        description: 'Activities are grouped by age range. Use the carousel at the top to find the right level for your child.',
+      },
+      together: {
+        title: 'Count Together',
+        description: 'Count out loud together, point to objects and make numbers part of everyday play!',
+      },
+      benefit: {
+        title: 'Building Numeracy',
+        description: 'Early number play develops logical thinking, pattern recognition and a confident foundation for maths.',
+      },
+    },
+    // Feelings Tips
+    feelings: {
+      welcome: {
+        title: 'Feelings Activities',
+        description: 'Welcome to Feelings! Activities that help your child recognise, name and understand emotions.',
+      },
+      ages: {
+        title: 'Age-Appropriate Content',
+        description: 'Activities are grouped by age range. Choose activities suited to your child\'s emotional development.',
+      },
+      together: {
+        title: 'Explore Together',
+        description: 'Talk about emotions openly. Ask "How does that make you feel?" and share your own feelings too.',
+      },
+      benefit: {
+        title: 'Emotional Intelligence',
+        description: 'Understanding emotions builds empathy, self-regulation and strong social skills — essential for lifelong wellbeing.',
+      },
+    },
+    // Practise Mode Tips
+    practise: {
+      welcome: {
+        title: 'Practise Mode',
+        description: 'Learn to play real songs on different instruments! Follow the notes and build your musical skills step by step.',
+      },
+      instrument: {
+        title: 'Choose Your Instrument',
+        description: 'Swipe through the carousel to pick your favourite instrument. Each one has its own unique sound!',
+      },
+      songs: {
+        title: 'Pick a Song',
+        description: 'Browse the song library and choose a song to learn. Songs are sorted by difficulty — start easy and work your way up!',
+      },
+      benefit: {
+        title: 'Musical Development',
+        description: 'Learning to play songs develops rhythm, coordination, memory and concentration — all through the joy of music.',
+      },
+    },
+    // Freeplay Mode Tips
+    freeplay: {
+      welcome: {
+        title: 'Freeplay Mode',
+        description: 'No rules, just fun! Explore any instrument and create your own music. Perfect for creativity and self-expression.',
+      },
+      instrument: {
+        title: 'Choose Your Instrument',
+        description: 'Pick any instrument from the carousel. Try them all to discover new sounds and favourites!',
+      },
+      play: {
+        title: 'Play Freely',
+        description: 'Press the coloured buttons to make music. There are no wrong notes — every sound is part of the adventure!',
+      },
+      benefit: {
+        title: 'Creative Expression',
+        description: 'Free musical play nurtures creativity, self-confidence and a love of music that grows with your child.',
       },
     },
   },
@@ -884,8 +1002,156 @@ export default {
     guidelines: 'Following WHO & AAP recommendations for healthy screen time',
     closeNotification: 'Close Notification',
     educationalMessage: 'Try other activities: reading books, playing outside, or creative play!',
-    approachingMessage: 'Only {{minutes}} minutes of screen time left today. Would you like to continue or close the app?',
+    approachingMessage: 'Only {{minutes}} minutes of screen time left today. Would you like to continue or close the app? ',
     limitReachedMessage: "Daily screen time limit reached. It's time to close the app and try other activities!",
+  },
+
+  // Relaxing music screen
+  relaxMusic: {
+    title: 'A quieter place',
+    screenTitle: 'Relax',
+    subtitle: 'Take a moment. Pause. Relax a bit.',
+    headphoneGuidance: 'For the best experience, use headphones. Find a comfortable position, close your eyes, and focus on your breathing. Let the sounds guide you into relaxation.',
+    stopAll: 'Stop',
+    tipsTitle: 'Relaxation Techniques',
+    tipsBody: 'These tracks use binaural beats — subtle frequency differences between each ear that encourage your brain to slow down. Headphones are required for the effect to work.\n\nTry these simple techniques while listening:\n\nBox Breathing\nBreathe in for 4 counts, hold for 4, breathe out for 4, hold for 4. Repeat.\n\nBody Scan\nStarting from your toes, slowly focus on each part of your body. Notice any tension and consciously relax it as you move upward.\n\n5-4-3-2-1 Grounding\nNotice 5 things you can see, 4 you can touch, 3 you can hear, 2 you can smell, and 1 you can taste.\n\nThought Clouds\nPicture each thought as a cloud drifting across the sky. Acknowledge it, then let it pass without judgement.',
+  },
+
+  // Emotion cards
+  emotions: {
+    title: 'Feelings',
+    subtitle: 'Choose your style and learn about feelings',
+    greatJob: 'Great job!',
+    sections: {
+      emotionCards: 'Emotion Cards',
+      developingEmotions: 'Developing Emotions',
+      parentsToo: 'Parents Too',
+      parentsTooSubtitle: 'We\'ve included something for you to help take the edge off, you are doing amazing.',
+      relaxingMusic: 'Relaxing Music',
+      relaxingMusicDescription: 'Calming sounds and relaxation sequences to help you unwind',
+    },
+    pickYourStyle: 'Pick Your Style',
+    expressWithTheme: 'Express with {{theme}}!',
+    expressing: "I'm expressing {{emotion}}!",
+    loading: 'Loading...',
+    progress: 'Progress: {{completed}} / {{total}}',
+    // Theme names and descriptions
+    themes: {
+      emoji: {
+        name: 'Emoji',
+        description: 'Express emotions with fun emoji faces',
+      },
+      animals: {
+        name: 'Animals',
+        description: 'Learn emotions through cute animal friends',
+      },
+      bear: {
+        name: 'Bear',
+        description: 'Learn emotions with our friendly bear',
+      },
+    },
+    // Emoji theme emotion names
+    emoji: {
+      happy: 'Happy',
+      sad: 'Sad',
+      angry: 'Angry',
+      surprised: 'Surprised',
+      scared: 'Scared',
+      excited: 'Excited',
+      confused: 'Confused',
+      proud: 'Proud',
+      shy: 'Shy',
+      loving: 'Loving',
+    },
+    // Animals theme emotion names
+    animals: {
+      happy: 'Happy Bunny',
+      sad: 'Sad Kitty',
+      angry: 'Angry Dog',
+      surprised: 'Surprised Chick',
+      scared: 'Scared Raccoon',
+      excited: 'Excited Fox',
+      confused: 'Confused Elephant',
+      proud: 'Proud Bear',
+      shy: 'Shy Sloth',
+      loving: 'Loving Panda',
+    },
+    // Bear theme emotion names
+    bear: {
+      happy: 'Happy Bear',
+      sad: 'Sad Bear',
+      angry: 'Angry Bear',
+      surprised: 'Surprised Bear',
+      scared: 'Scared Bear',
+      excited: 'Excited Bear',
+      confused: 'Confused Bear',
+      proud: 'Proud Bear',
+      shy: 'Shy Bear',
+      loving: 'Loving Bear',
+    },
+    // Expression prompts for each emotion
+    prompts: {
+      happy: [
+'Show me your biggest smile!',
+'Can you laugh like you heard something funny? ',
+'Make a happy face and clap your hands!',
+'Show me how you look when you get a present!',
+      ],
+      sad: [
+'Show me a sad face',
+'Can you make your face look like you lost your toy? ',
+'Show me how you feel when you have to say goodbye',
+        "Make a pouty face like when you're disappointed",
+      ],
+      angry: [
+'Show me an angry face',
+        "Can you scrunch up your face like you're mad?",
+        "Show me how you look when someone mean throws your favourite toy",
+'Make a grumpy face with crossed arms!',
+      ],
+      surprised: [
+'Show me a surprised face!',
+'Can you open your eyes and mouth really wide? ',
+'Show me how you look when you see something amazing!',
+'Make a face like you just saw magic!',
+      ],
+      scared: [
+'Show me a scared face',
+        "Can you hide behind your hands like you're scared?",
+'Show me how you look during a thunderstorm',
+'Make a face like you saw something spooky!',
+      ],
+      excited: [
+'Show me how excited you get!',
+'Can you jump up and down with a big smile? ',
+        "Show me your face when you're going somewhere fun!",
+'Make an excited face and wave your hands!',
+      ],
+      confused: [
+'Show me a confused face',
+        "Can you scrunch your eyebrows like you're thinking hard?",
+        "Show me how you look when you don't understand something",
+        "Make a face like you're trying to solve a puzzle!",
+      ],
+      proud: [
+'Show me how proud you are!',
+'Can you stand tall and smile like you did something great? ',
+'Show me your proud face when you finish a puzzle!',
+'Make a face like you just helped someone!',
+      ],
+      shy: [
+'Show me a shy face',
+'Can you hide your face a little bit? ',
+'Show me how you look when meeting someone new',
+'Make a shy smile and look down!',
+      ],
+      loving: [
+'Show me your loving face!',
+'Can you give yourself a big hug? ',
+'Show me how you look at someone you love!',
+        "Make a face like you're giving kisses!",
+      ],
+    },
   },
 
   // Music challenge UI strings
@@ -896,15 +1162,15 @@ export default {
     playingYourSong: 'Playing your song...',
     listeningToMelody: 'Listen to your melody...',
     // Buttons
-    retry: '↻ Retry',
+    retry: 'Retry',
     goHarder: 'Increase Difficulty',
     goHarderLevel: 'Increase Difficulty (Lv {{level}})',
-    continueStory: 'Continue Story →',
-    skip: 'Skip →',
+    continueStory: 'Continue Story',
+    skip: 'Skip',
     // Play modes
-    blowMode: '♪ Blow',
-    pressMode: '♫ Press',
-    blowing: '♪ Blowing!',
+    blowMode: 'Blow',
+    pressMode: 'Press',
+    blowing: 'Blowing!',
     blowWhileHolding: 'Blow while holding notes',
     tryAgain: 'Try again!',
     // Accessibility
@@ -912,7 +1178,7 @@ export default {
     showControls: 'Show controls',
     hideControls: 'Hide controls',
     // Music sheet overlay
-    musicSheet: '♪ Music Sheet',
+    musicSheet: 'Music Sheet',
     notesToPlay: 'Notes to Play ({{completed}}/{{total}})',
     pause: 'Pause',
     preview: 'Preview',
@@ -979,19 +1245,72 @@ export default {
       songOfBreak: 'Song of Break',
       songOfFix: 'Song of Fix',
     },
+    // Binaural / relaxation track titles and descriptions
+    tracks: {
+      tantrumAlpha: {
+        title: 'Tantrum Calming (10Hz)',
+        artist: 'Binaural Beats',
+        description: 'Alpha waves for calming during tantrums. Use with headphones for best effect.',
+      },
+      sleepAlpha: {
+        title: 'Ease into Relaxation',
+        artist: 'Binaural Beats',
+        description: 'Alpha waves to begin relaxation. Loops until stopped.',
+      },
+      sleepTheta: {
+        title: 'Deep Relaxation',
+        artist: 'Binaural Beats',
+        description: 'Theta waves for deep relaxation. Loops until stopped.',
+      },
+      sleepSequence: {
+        title: 'Full Relaxation Sequence',
+        artist: 'Binaural Beats',
+        description: 'Complete relaxation progression: Ease into Relaxation → Deep Relaxation.',
+      },
+      bearsBirthdayParty: {
+        title: "Bear's Birthday Party",
+        artist: 'Bedtime Story',
+        description: 'A heartwarming tale about a bear celebrating a special birthday.',
+      },
+      damselElephant: {
+        title: 'Damsel the Elephant',
+        artist: 'Bedtime Story',
+        description: 'Join Damsel the elephant on a gentle adventure.',
+      },
+      jimmyMouse: {
+        title: 'Jimmy Mouse and the City Slickers',
+        artist: 'Bedtime Story',
+        description: 'A little mouse discovers the big city.',
+      },
+      newYearJungle: {
+        title: 'New Year in the Jungle',
+        artist: 'Bedtime Story',
+        description: 'The jungle animals celebrate a new year together.',
+      },
+      snowWhite: {
+        title: 'Snow White',
+        artist: 'Bedtime Story',
+        description: 'The classic fairy tale of Snow White, perfect for bedtime.',
+      },
+    },
+    tags: {
+      calming: 'Calming',
+      bedtime: 'Bedtime',
+      stories: 'Stories',
+    },
   },
 
   // Jigsaw puzzle UI strings
   jigsaw: {
     amazing: 'Amazing!',
-    beginPuzzle: '🧩 Begin Puzzle',
+    beginPuzzle: 'Begin Puzzle',
     completedMoves: 'Completed in {{count}} moves!',
-    continueStory: 'Continue Story →',
+    continueStory: 'Continue Story',
     preview: 'Preview',
     reset: 'Reset',
     scramble: 'Scramble',
     shuffle: 'Shuffle',
-    skip: 'Skip →',
+    skip: 'Skip',
     tapToClose: 'Tap anywhere to close',
   },
 
@@ -1031,7 +1350,7 @@ export default {
     firstWordsDesc: 'Spell simple everyday words with colourful tiles',
     firstWordsAge: 'Ages 1-2',
     colourSpelling: 'Colour Spelling',
-    colourSpellingDesc: 'Can you spell the colours of the rainbow?',
+    colourSpellingDesc: 'Can you spell the colours of the rainbow? ',
     colourSpellingAge: 'Ages 1-2',
     shapeNames: 'Shape Names',
     shapeNamesDesc: 'Spell circles, squares and more!',
@@ -1082,7 +1401,7 @@ export default {
     colourCountingDesc: 'Count colourful objects and learn numbers!',
     colourCountingAge: 'Ages 1-2',
     shapeCounting: 'Shape Counting',
-    shapeCountingDesc: 'How many shapes can you count?',
+    shapeCountingDesc: 'How many shapes can you count? ',
     shapeCountingAge: 'Ages 1-2',
     oneTwoThree: 'One, Two, Three!',
     oneTwoThreeDesc: 'A gentle first counting adventure',
@@ -1095,7 +1414,7 @@ export default {
     animalCountingDesc: 'Count the animals on the farm and in the jungle!',
     animalCountingAge: 'Ages 2-4',
     fruitCounting: 'Fruit Counting',
-    fruitCountingDesc: 'How many fruits can you count in the basket?',
+    fruitCountingDesc: 'How many fruits can you count in the basket? ',
     fruitCountingAge: 'Ages 2-4',
     toyCounting: 'Toy Counting',
     toyCountingDesc: 'Count your favourite toys and learn numbers!',

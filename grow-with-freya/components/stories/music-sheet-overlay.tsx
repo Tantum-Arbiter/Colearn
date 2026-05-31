@@ -359,9 +359,12 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
         {/* Header with title and close button */}
         <View style={[styles.header, isLandscape && styles.headerLandscape]}>
           <View style={styles.headerLeft}>
-            <Text style={[styles.title, isLandscape && styles.titleLandscape]}>
-              {t('music.musicSheet')}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons name="musical-note" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+              <Text style={[styles.title, isLandscape && styles.titleLandscape]}>
+                {t('music.musicSheet')}
+              </Text>
+            </View>
             {!isLandscape && (
               <Text style={styles.instrumentLabel}>{instrumentName}</Text>
             )}
@@ -373,7 +376,7 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
             onPress={onClose}
             testID="music-sheet-close-button"
           >
-            <Text style={styles.closeButtonText}>✕</Text>
+            <Ionicons name="close" size={18} color="#FFFFFF" />
           </Pressable>
         </View>
 

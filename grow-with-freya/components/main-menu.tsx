@@ -71,7 +71,7 @@ const MODE_CARD_IMAGES = {
 interface SubMenuItem {
   id: string;
   labelKey: string;
-  image: ReturnType<typeof require>;
+  image: number; // bundled require() asset ID
 }
 
 const INSTRUMENT_ITEMS: SubMenuItem[] = [

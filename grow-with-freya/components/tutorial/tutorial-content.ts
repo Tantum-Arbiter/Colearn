@@ -27,17 +27,17 @@ export const MAIN_MENU_TOUR_STEPS: TutorialStepWithKeys[] = [
     spotlightBorderRadius: 24,
   },
   {
-    id: 'instruments_button',
-    titleKey: 'tutorial.mainMenu.instruments.title',
-    descriptionKey: 'tutorial.mainMenu.instruments.description',
+    id: 'learning_button',
+    titleKey: 'tutorial.mainMenu.learning.title',
+    descriptionKey: 'tutorial.mainMenu.learning.description',
     tipPosition: 'below',
     spotlightShape: 'rounded-rect',
     spotlightBorderRadius: 24,
   },
   {
-    id: 'learning_button',
-    titleKey: 'tutorial.mainMenu.learning.title',
-    descriptionKey: 'tutorial.mainMenu.learning.description',
+    id: 'instruments_button',
+    titleKey: 'tutorial.mainMenu.instruments.title',
+    descriptionKey: 'tutorial.mainMenu.instruments.description',
     tipPosition: 'below',
     spotlightShape: 'rounded-rect',
     spotlightBorderRadius: 24,
@@ -108,6 +108,45 @@ export const STORY_READER_TIPS: TutorialStepWithKeys[] = [
     id: 'compare_languages',
     titleKey: 'tutorial.storyReader.compareLanguages.title',
     descriptionKey: 'tutorial.storyReader.compareLanguages.description',
+    tipPosition: 'center',
+  },
+];
+
+/**
+ * Parent guidance for using emotion cards with young children
+ */
+export const EMOTION_CARDS_TIPS: TutorialStepWithKeys[] = [
+  {
+    id: 'emotion_cards_welcome',
+    titleKey: 'tutorial.emotionCards.welcome.title',
+    descriptionKey: 'tutorial.emotionCards.welcome.description',
+    tipPosition: 'center',
+  },
+  {
+    id: 'emotion_cards_together',
+    titleKey: 'tutorial.emotionCards.together.title',
+    descriptionKey: 'tutorial.emotionCards.together.description',
+    tipPosition: 'center',
+    image: require('@/assets/images/ui-elements/emotion-cards-tip.webp'),
+  },
+  {
+    id: 'emotion_cards_connect',
+    titleKey: 'tutorial.emotionCards.connect.title',
+    descriptionKey: 'tutorial.emotionCards.connect.description',
+    tipPosition: 'center',
+    image: require('@/assets/images/ui-elements/emotion-cards-tip.webp'),
+  },
+  {
+    id: 'emotion_cards_scenarios',
+    titleKey: 'tutorial.emotionCards.scenarios.title',
+    descriptionKey: 'tutorial.emotionCards.scenarios.description',
+    tipPosition: 'center',
+    image: require('@/assets/images/ui-elements/emotion-cards-tip.webp'),
+  },
+  {
+    id: 'emotion_cards_themes',
+    titleKey: 'tutorial.emotionCards.themes.title',
+    descriptionKey: 'tutorial.emotionCards.themes.description',
     tipPosition: 'center',
   },
 ];
@@ -414,6 +453,156 @@ export const STORY_MODES_TOUR_STEPS: TutorialStepWithKeys[] = [
 ];
 
 /**
+ * Spelling Tips - shown when entering the spelling section for the first time
+ */
+export const SPELLING_TIPS: TutorialStepWithKeys[] = [
+  {
+    id: 'spelling_welcome',
+    titleKey: 'tutorial.spelling.welcome.title',
+    descriptionKey: 'tutorial.spelling.welcome.description',
+    tipPosition: 'center',
+  },
+  {
+    id: 'spelling_ages',
+    titleKey: 'tutorial.spelling.ages.title',
+    descriptionKey: 'tutorial.spelling.ages.description',
+    tipPosition: 'center',
+  },
+  {
+    id: 'spelling_together',
+    titleKey: 'tutorial.spelling.together.title',
+    descriptionKey: 'tutorial.spelling.together.description',
+    tipPosition: 'center',
+  },
+  {
+    id: 'spelling_benefit',
+    titleKey: 'tutorial.spelling.benefit.title',
+    descriptionKey: 'tutorial.spelling.benefit.description',
+    tipPosition: 'center',
+  },
+];
+
+/**
+ * Numbers Tips - shown when entering the numbers section for the first time
+ */
+export const NUMBERS_TIPS: TutorialStepWithKeys[] = [
+  {
+    id: 'numbers_welcome',
+    titleKey: 'tutorial.numbers.welcome.title',
+    descriptionKey: 'tutorial.numbers.welcome.description',
+    tipPosition: 'center',
+  },
+  {
+    id: 'numbers_ages',
+    titleKey: 'tutorial.numbers.ages.title',
+    descriptionKey: 'tutorial.numbers.ages.description',
+    tipPosition: 'center',
+  },
+  {
+    id: 'numbers_together',
+    titleKey: 'tutorial.numbers.together.title',
+    descriptionKey: 'tutorial.numbers.together.description',
+    tipPosition: 'center',
+  },
+  {
+    id: 'numbers_benefit',
+    titleKey: 'tutorial.numbers.benefit.title',
+    descriptionKey: 'tutorial.numbers.benefit.description',
+    tipPosition: 'center',
+  },
+];
+
+/**
+ * Feelings Tips - shown when entering the feelings section for the first time
+ */
+export const FEELINGS_TIPS: TutorialStepWithKeys[] = [
+  {
+    id: 'feelings_welcome',
+    titleKey: 'tutorial.feelings.welcome.title',
+    descriptionKey: 'tutorial.feelings.welcome.description',
+    tipPosition: 'center',
+  },
+  {
+    id: 'feelings_ages',
+    titleKey: 'tutorial.feelings.ages.title',
+    descriptionKey: 'tutorial.feelings.ages.description',
+    tipPosition: 'center',
+  },
+  {
+    id: 'feelings_together',
+    titleKey: 'tutorial.feelings.together.title',
+    descriptionKey: 'tutorial.feelings.together.description',
+    tipPosition: 'center',
+  },
+  {
+    id: 'feelings_benefit',
+    titleKey: 'tutorial.feelings.benefit.title',
+    descriptionKey: 'tutorial.feelings.benefit.description',
+    tipPosition: 'center',
+  },
+];
+
+/**
+ * Practise Mode Tips - shown when entering practise mode for the first time
+ */
+export const PRACTISE_TIPS: TutorialStepWithKeys[] = [
+  {
+    id: 'practise_welcome',
+    titleKey: 'tutorial.practise.welcome.title',
+    descriptionKey: 'tutorial.practise.welcome.description',
+    tipPosition: 'center',
+  },
+  {
+    id: 'practise_instrument',
+    titleKey: 'tutorial.practise.instrument.title',
+    descriptionKey: 'tutorial.practise.instrument.description',
+    tipPosition: 'center',
+  },
+  {
+    id: 'practise_songs',
+    titleKey: 'tutorial.practise.songs.title',
+    descriptionKey: 'tutorial.practise.songs.description',
+    tipPosition: 'center',
+  },
+  {
+    id: 'practise_benefit',
+    titleKey: 'tutorial.practise.benefit.title',
+    descriptionKey: 'tutorial.practise.benefit.description',
+    tipPosition: 'center',
+  },
+];
+
+/**
+ * Freeplay Mode Tips - shown when entering freeplay mode for the first time
+ */
+export const FREEPLAY_TIPS: TutorialStepWithKeys[] = [
+  {
+    id: 'freeplay_welcome',
+    titleKey: 'tutorial.freeplay.welcome.title',
+    descriptionKey: 'tutorial.freeplay.welcome.description',
+    tipPosition: 'center',
+  },
+  {
+    id: 'freeplay_instrument',
+    titleKey: 'tutorial.freeplay.instrument.title',
+    descriptionKey: 'tutorial.freeplay.instrument.description',
+    tipPosition: 'center',
+  },
+  {
+    id: 'freeplay_play',
+    titleKey: 'tutorial.freeplay.play.title',
+    descriptionKey: 'tutorial.freeplay.play.description',
+    tipPosition: 'center',
+  },
+  {
+    id: 'freeplay_benefit',
+    titleKey: 'tutorial.freeplay.benefit.title',
+    descriptionKey: 'tutorial.freeplay.benefit.description',
+    tipPosition: 'center',
+  },
+];
+
+/**
  * Get tutorial steps by ID
  */
 export function getTutorialSteps(tutorialId: string): TutorialStepWithKeys[] {
@@ -422,6 +611,8 @@ export function getTutorialSteps(tutorialId: string): TutorialStepWithKeys[] {
       return MAIN_MENU_TOUR_STEPS;
     case 'story_reader_tips':
       return STORY_READER_TIPS;
+    case 'emotion_cards_tips':
+      return EMOTION_CARDS_TIPS;
     case 'settings_walkthrough':
       return SETTINGS_WALKTHROUGH_STEPS;
     case 'book_mode_tour':
@@ -436,6 +627,16 @@ export function getTutorialSteps(tutorialId: string): TutorialStepWithKeys[] {
       return MUSIC_MODE_TOUR_STEPS;
     case 'story_modes_tour':
       return STORY_MODES_TOUR_STEPS;
+    case 'spelling_tips':
+      return SPELLING_TIPS;
+    case 'numbers_tips':
+      return NUMBERS_TIPS;
+    case 'feelings_tips':
+      return FEELINGS_TIPS;
+    case 'practise_tips':
+      return PRACTISE_TIPS;
+    case 'freeplay_tips':
+      return FREEPLAY_TIPS;
     default:
       return [];
   }

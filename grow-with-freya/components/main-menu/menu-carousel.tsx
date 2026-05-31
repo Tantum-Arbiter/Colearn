@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, StyleSheet, Pressable, Text, Image, ImageSourcePropType } from 'react-native';
+import { View, StyleSheet, Pressable, Text } from 'react-native';
+import { Image, ImageSource } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 import { getScreenDimensions } from './constants';
 import Animated, {
@@ -35,13 +36,13 @@ export interface CarouselMenuItem {
   id: string;
   labelKey: string;
   destination: string;
-  image: ImageSourcePropType;
+  image: ImageSource;
 }
 
 const MENU_ITEMS: CarouselMenuItem[] = [
   { id: 'stories', labelKey: 'menu.stories', destination: 'stories', image: require('../../assets/images/menu-icons/stories-strip.webp') },
-  { id: 'instruments', labelKey: 'menu.instruments', destination: 'instruments', image: require('../../assets/images/menu-icons/freeplay-strip.webp') },
   { id: 'learning', labelKey: 'menu.learning', destination: 'learning', image: require('../../assets/images/menu-icons/learning-button.webp') },
+  { id: 'instruments', labelKey: 'menu.instruments', destination: 'instruments', image: require('../../assets/images/menu-icons/freeplay-strip.webp') },
 ];
 
 interface MenuCarouselProps {
@@ -215,8 +216,10 @@ const StripButton = React.memo(function StripButton({
             { borderRadius: stripHeight * 0.2 },
             item.id === 'learning' && { transform: [{ scale: 1.25 }] },
           ]}
-          resizeMode="cover"
-          fadeDuration={0}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+          recyclingKey={`carousel-${item.id}`}
+          priority="high"
         />
         <View style={styles.textOverlay}>
           <Text style={[styles.label, { fontSize: scaledFontSize(32) }]}>

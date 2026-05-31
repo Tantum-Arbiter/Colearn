@@ -28,6 +28,7 @@ export default {
     extraLarge: 'Maximus',
     on: 'ITA',
     off: 'NON',
+    openSettings: 'Aperi Optiones',
   },
   alerts: {
     logout: {
@@ -37,7 +38,7 @@ export default {
     },
     resetApp: {
       title: 'Reficere Applicationem',
-      message: 'Hoc omnes applicationis notitias delebit, incluso intrare, characteres et constitutiones. Certusne es?',
+      message: 'Hoc omnes applicationis notitias delebit, incluso intrare, characteres et constitutiones. Certusne es? ',
     },
     deleteAccount: {
       title: 'Delere Rationem',
@@ -50,11 +51,11 @@ export default {
     },
     deleteReminder: {
       title: 'Delere Monitorem',
-      message: 'Delere "{{title}}"?',
+      message: 'Delere "{{title}}"? ',
     },
     unsavedChanges: {
       title: 'Mutationes Non Servatae',
-      message: 'Mutationes non servatas habes. Certusne es ut claudas sine servando?',
+      message: 'Mutationes non servatas habes. Certusne es ut claudas sine servando? ',
     },
     missingTitle: {
       title: 'Titulus Deest',
@@ -113,7 +114,7 @@ export default {
     stories: 'Fabulae',
     practise: 'Exercitatio',
     freeplay: 'Ludus Liber',
-    instruments: 'Instrumenta Ludere',
+    instruments: 'Instrumenta',
     learning: 'Doctrina',
     spelling: 'Litteratio',
     numbers: 'Numeri',
@@ -123,11 +124,11 @@ export default {
     title: 'Accessibilitas',
     textSizeHint: 'Visibilitatem meliorem fac textus et bottones magnitudinem mutando',
     grayscale: 'Griseus/Altus Contrarius',
-    grayscaleHint: 'Usa apparatus constitutiones accessibilitatis ad nigrum-album modum:',
+    grayscaleHint: 'Usa apparatus constitutiones accessibilitatis ad nigrum-album modum: ',
     grayscaleIos: 'Constitutiones → Accessibilitas → Ostensio et Textus Magnitudo → Colorum Filtra → Griseus',
     grayscaleAndroid: 'Constitutiones → Accessibilitas → Colorum Constitutiones → Griseus',
     blueLight: 'Caerulei Luminis Filtrum (Nox Modus)',
-    blueLightHint: 'Qualitate somni filii tui meliorem fac caerulei luminis reducendo. Nox Modum in apparatus tuo activa:',
+    blueLightHint: 'Qualitate somni filii tui meliorem fac caerulei luminis reducendo. Nox Modum in apparatus tuo activa: ',
     blueLightIos: 'Constitutiones → Ostensio et Luminositas → Night Shift → Activum',
     blueLightAndroid: 'Constitutiones → Ostensio → Nox Lux (vel Oculi Commoditas) → Activum',
     blueLightBenefit: 'Caerulei lumen in ostensione somni qualitatem afficere potest. Nox Modus activando vespere cerebrum filii tui praeparat somno reducendo caerulei longitudines undae.',
@@ -189,8 +190,8 @@ export default {
     compareLanguageOn: 'Compara Linguam: Activum',
     compareLanguageOff: 'Compara Linguam: Inactivum',
     selectCompareLanguage: 'Elige linguam ut legas, compares vel recordes.',
-    selectFirstLanguage: 'Prima Lingua (Album Campus):',
-    selectSecondLanguage: 'Secunda Lingua (Caeruleum Campus):',
+    selectFirstLanguage: 'Prima Lingua (Album Campus): ',
+    selectSecondLanguage: 'Secunda Lingua (Caeruleum Campus): ',
     done: 'Perfectum',
     autoPlayOn: 'Automatica Ludificatio: Activum',
     autoPlayOff: 'Automatica Ludificatio: Inactivum',
@@ -202,16 +203,16 @@ export default {
     permissionMessage: 'Permissio Microphoni necessaria est ad sonum recordandum.',
     recordingError: 'Error Recordationis',
     recordingErrorMessage: 'Non potui recordationem incipere. Iterum conare.',
-    overwriteRecording: 'Superscribere Recordationem?',
-    overwriteRecordingMessage: 'Haec pagina iam recordationem habet. Visne eam nova recordatione superscribere?',
+    overwriteRecording: 'Superscribere Recordationem? ',
+    overwriteRecordingMessage: 'Haec pagina iam recordationem habet. Visne eam nova recordatione superscribere? ',
     nameAlreadyExists: 'Nomen Iam Exstat',
     nameAlreadyExistsMessage: 'Vox cum nomine "{{name}}" iam exstat. Amabo te alium nomen elige.',
     error: 'Error',
     createVoiceOverError: 'Non potui vocem creare. Iterum conare.',
-    overwriteVoiceOver: 'Superscribere Vocem?',
-    overwriteVoiceOverMessage: '"{{name}}" recordationes pro {{count}} paginis habet. Visne eas nova recordatione superscribere?',
+    overwriteVoiceOver: 'Superscribere Vocem? ',
+    overwriteVoiceOverMessage: '"{{name}}" recordationes pro {{count}} paginis habet. Visne eas nova recordatione superscribere? ',
     deleteVoiceOver: 'Delere Vocem',
-    deleteVoiceOverMessage: 'Delere "{{name}}"?',
+    deleteVoiceOverMessage: 'Delere "{{name}}"? ',
     deleteVoiceOverMessageWithUndo: 'Delere "{{name}}"? Hoc refici non potest.',
     overwrite: 'Superscribere',
     delete: 'Delere',
@@ -227,8 +228,8 @@ export default {
     narrateAs: 'Narrans ut: {{name}}',
     recordVoiceOver: 'Fac Recordationem Vocis',
     selectVoiceOver: 'Elige Vocem',
-    selectExisting: 'Elige existentem ut superscribas:',
-    orCreateNew: 'vel crea novum:',
+    selectExisting: 'Elige existentem ut superscribas: ',
+    orCreateNew: 'vel crea novum: ',
     enterName: 'Intra nomen...',
     create: 'Creare',
     chooseRecording: 'Elige recordationem ut ludifices',
@@ -294,12 +295,13 @@ export default {
     noScreenTime: 'Nullum Tempus Ostentionis',
     recommended: 'Commendatum',
     excessive: 'Excessivum',
+    overLimit: 'Supra Limitem',
     createMySchedule: 'Crea Meum Schema',
     scheduleIntro: 'Constitue Tempora Notificationum Personalium pro Activitatibus Temporis Ostentionis Filii Tui. Accipies Monitiones Molles Cum Tempus Sit pro Activitatibus Fabulae, Affectionis vel Musicae.',
     scheduleIntroShort: 'Constitue Tempora Notificationum Personalium pro Activitatibus Temporis Ostentionis Filii Tui.',
     createCustomReminders: '+ Crea Monitorem Personalem',
     recommendedTimes: 'Tempora Commendatae',
-    recommendedTimesIntro: 'Secundum Investigationes in Evolutione Puerorum, Optima Tempora pro Activitatibus Ostentionis Sunt:',
+    recommendedTimesIntro: 'Secundum Investigationes in Evolutione Puerorum, Optima Tempora pro Activitatibus Ostentionis Sunt: ',
     morningStoriesEmotions: 'Fabulae Matutinae et Affectiones',
     afternoonLearning: 'Activitates Doctrinae Pomeridianae',
     preDinnerMusic: 'Musica Tranquillationis Ante Cenam',
@@ -336,6 +338,10 @@ export default {
     creating: 'Creando...',
     noReminders: 'Nulli Monitores Personales',
     noRemindersHint: 'Crea Tuum Primum Monitorem ut Notificationes Activitatum Personales Incipias.',
+    permissionRequired: {
+      title: 'Notificationes Necessariae',
+      message: 'Ad admonitiones accipiendas, notificationes pro hac applicatione in optionibus instrumenti tui permitte.',
+    },
     total: 'Totum',
     today: 'Hodie',
     loading: 'Monitores Onerans...',
@@ -347,7 +353,7 @@ export default {
     messagePlaceholder: 'Intra Nuntium Monitoris...',
     dayOfWeek: 'Dies Hebdomadae',
     timeLabel: 'Tempus',
-    timeSlotTaken: '⚠️ Hoc Tempus Iam Occupatum Est in Hoc Die',
+    timeSlotTaken: ' Hoc Tempus Iam Occupatum Est in Hoc Die',
     conflictHint: 'Rubrum (!) Conflictum in Die Electo Indicat. Omnia Tempora Praesto Sunt.',
     selectDayHint: 'Elige Diem Hebdomadae ut Praestantiam Temporis Videas',
     active: 'Activum',
@@ -430,8 +436,8 @@ export default {
     profile: 'Professio',
     nickname: 'Cognomen',
     avatarType: 'Genus Avataris',
-    boy: '👦 Puer',
-    girl: '👧 Puella',
+    boy: ' Puer',
+    girl: ' Puella',
     settings: 'Constitutiones',
     language: 'Lingua',
     textSize: 'Magnitudo Textus',
@@ -457,15 +463,15 @@ export default {
     nicknamePlaceholder: 'Intra Cognomen...',
     nicknameCharacters: '{{count}}/20 Characteres',
     avatarType: 'Genus Avataris',
-    boy: '👦 Puer',
-    girl: '👧 Puella',
+    boy: ' Puer',
+    girl: ' Puella',
     saveChanges: 'Serva Mutationes',
-    comingSoon: '✨ Optiones Customizationis Professionis Mox Venient - Adhuc in Evolutione!',
+    comingSoon: ' Optiones Customizationis Professionis Mox Venient - Adhuc in Evolutione!',
   },
   onboarding: {
     welcome: 'Salve!',
     letsGetStarted: 'Incipere Licebit',
-    whatsYourName: 'Quod Est Nomen Tuum?',
+    whatsYourName: 'Quod Est Nomen Tuum? ',
     enterNickname: 'Intra Cognomen',
     chooseAvatar: 'Elige Avatarem',
     allSet: 'Omnia Praeparata!',
@@ -500,7 +506,7 @@ export default {
       },
       consent: {
         title: 'Antequam incipiamus',
-        body: 'Ut parens vel custos, lege et accepta sequentia:',
+        body: 'Ut parens vel custos, lege et accepta sequentia: ',
         button: 'Consentio',
         closeLabel: 'Claudere',
         dataSummary: {
@@ -524,7 +530,7 @@ export default {
       },
     },
     crashReportingDialog: {
-      title: 'Visne Relationes Collapsus Activare?',
+      title: 'Visne Relationes Collapsus Activare? ',
       body: 'Relationes Collapsus Anonymae Errores Reficere et Applicationem Meliorem Facere Adiuvant. Nullae Notitiae Personales Colliguntur.\n\nHoc in Constitutionibus Quolibet Tempore Mutare Potes.',
       noThanks: 'Non, Gratias',
       enable: 'Activa',
@@ -543,9 +549,9 @@ export default {
     },
   },
   tutorial: {
-    welcomeTitle: 'Salve in\nEarlyroots! 🎉',
+    welcomeTitle: 'Salve in\nEarlyroots!',
     welcomeDescription: 'Faciamus Celerem Circumductionem ut Te et Filium Tuum Adiuvemus Tempus Legendi Maxime Uti.',
-    storiesTitle: 'Bibliotheca Fabulae 📚',
+    storiesTitle: 'Bibliotheca Fabulae',
     storiesDescription: 'Tange Hic ut Collectionem Fabulae Interactivae cum Pulchris Imaginationibus et Iocosis Interactionibus Explores.',
     skip: 'Praeterire',
     gotIt: 'Intellexi!',
@@ -562,111 +568,119 @@ export default {
     },
     mainMenu: {
       welcome: {
-        title: 'Salve in Grow with Freya! 🎉',
+        title: 'Salve in Grow with Freya!',
         description: 'Faciamus Celerem Circumductionem ut Te et Filium Tuum Adiuvemus Tempus Legendi Maxime Uti.',
       },
       stories: {
-        title: 'Fabulae 📚',
+        title: 'Fabulae',
         description: 'Explora collectionem nostram fabularum interactivarum cum pulchris illustrationibus et iucundis interactionibus.',
       },
       practise: {
-        title: 'Exercitatio 🎵',
+        title: 'Exercitatio',
         description: 'Disce cantiones in diversis instrumentis ludere. Sequere et artes musicas tuas aedifica!',
       },
       freeplay: {
-        title: 'Ludus Liber 🎹',
+        title: 'Ludus Liber',
         description: 'Libere lude in quovis instrumento -sine regulis, solum gaudium! Experimenta cum sonis et tuam musicam crea.',
       },
+      instruments: {
+        title: 'Instrumenta',
+        description: 'Cantiones exerce vel libere in diversis instrumentis lude. Artes musicas cum gaudio aedifica!',
+      },
+      learning: {
+        title: 'Doctrina',
+        description: 'Activitates orthographiae et numerorum interactivae quae artes primae lectionis et numerationis aedificant.',
+      },
       settings: {
-        title: 'Constitutiones ⚙️',
+        title: 'Constitutiones',
         description: 'Customiza Applicationem ut Optima pro Tua Familia Operetur.',
       },
       sound: {
-        title: 'Moderatio Soni 🔊',
+        title: 'Moderatio Soni',
         description: 'Tange Hic ut Musicam Fundalem et Effectus Soni Modereres.',
       },
     },
     screenTime: {
       intro: {
-        title: 'Tabella Temporis Ostentionis ⏱️',
+        title: 'Tabella Temporis Ostentionis',
         description: 'Observa, Administra et Tempus Ostentionis Diurnum Filii Tui cum Limitibus Aetate Convenientibus Constitue.',
       },
       ageBased: {
-        title: 'Limites Aetate Basati 👶',
+        title: 'Limites Aetate Basati',
         description: 'Aetate Filii Tui Constituta Automatice Limites Temporis Ostentionis Commendatos WHO/AAP Accipe.',
       },
       heatmap: {
-        title: 'Activitas Hebdomadalis 📊',
+        title: 'Activitas Hebdomadalis',
         description: 'Exempla Usus Temporis Ostentionis per Hebdomadam Vide ut Routinam Sanum Aedifices.',
       },
       reminders: {
-        title: 'Monitores Constitue ⏰',
+        title: 'Monitores Constitue',
         description: 'Monitores Personales pro Activitatibus, Pausis vel Consuetudine Temporis Somni Crea.',
       },
       routine: {
-        title: 'Routinam Sanum Aedifica 🌟',
+        title: 'Routinam Sanum Aedifica',
         description: 'Notitias Temporis Ostentionis Usa ut Routinam Diurnam Consistentem Quae pro Tua Familia Operetur Aedifices.',
       },
     },
     storyReader: {
       welcome: {
-        title: 'Consilia Temporis Legendi 📖',
+        title: 'Consilia Temporis Legendi',
         description: 'Hic Sunt Consilia ut Tempus Legendi cum Filio Tuo Magicum Facias!',
       },
       interactive: {
-        title: 'Interactiones Quaere ✨',
+        title: 'Interactiones Quaere',
         description: 'Aliquae Paginae Surprisas Occultatas Habent! Filium Tuum Hortare ut Res Lucentes vel Fulgurantia Tangat.',
       },
       point: {
-        title: 'Monstra et Discute 👆',
+        title: 'Monstra et Discute',
         description: 'Quaestiones de Imaginationibus Pone. "Quid Vides?" "Quae Colore Est Papilio?"',
       },
       pause: {
-        title: 'Pausa et Praedice 🤔',
+        title: 'Pausa et Praedice',
         description: 'Quaere "Quid Putas Sequens Accidet?" Antequam Paginam Vertis ut Engagement Augeatur.',
       },
       voices: {
-        title: 'Varias Voces Usa 🎭',
+        title: 'Varias Voces Usa',
         description: 'Characteres Vitam Da cum Iocosis Vocibus! Pueri Performantiam Amant.',
       },
       navigate: {
-        title: 'Navigatio Facilis 📚',
+        title: 'Navigatio Facilis',
         description: 'Trahe Sinistram vel Dextram ut Paginas Celeriter Vertas. Tange Bottone Menu pro Pluribus Optionibus.',
       },
       tapWords: {
-        title: 'Tange Verba ut Focum Facias 👆',
+        title: 'Tange Verba ut Focum Facias',
         description: 'Tange Unumquodque Verbum in Fabula ut Illud Lucefacias! Hoc Attentionem Trahere Adiuvat et Legendum Magis Interactivum et Engagatum Facit.',
       },
       compareLanguages: {
-        title: 'Linguas Compara 🌍',
+        title: 'Linguas Compara',
         description: 'Usa Menu ut "Linguas Compara" Actives et Fabulam Latere Iuxta Latere in Duabus Linguis Ostende. Perfectum pro Familiis Multilinguis ut Simul Discant!',
       },
     },
     bookMode: {
       read: {
-        title: 'Modus Legendi 📖',
+        title: 'Modus Legendi',
         description: 'Tange Hic ut Fabulam Ipse cum Filio Tuo Legas. Paginas Tuo Tempore Verte.',
       },
       record: {
-        title: 'Modus Recordationis 🎙️',
+        title: 'Modus Recordationis',
         description: 'Tuam Vocem Recordare Dum Fabulam Legis. Perfectum Cum Absis!',
       },
       narrate: {
-        title: 'Modus Audiendi 🎧',
+        title: 'Modus Audiendi',
         description: 'Audi Fabulam Praegravem Narratam. Perfectum ad Tempus Somni!',
       },
       preview: {
-        title: 'Praevisa 👁️',
+        title: 'Praevisa',
         description: 'Detaila Fabulae, Durationem et Themata Verifica Antequam Legere Incipias.',
       },
     },
     recordMode: {
       intro: {
-        title: 'Recordare Tuam Vocem 🎙️',
+        title: 'Recordare Tuam Vocem',
         description: 'Narrationem Personalem pro Hac Fabula Crea. Filius Tuus Quolibet Tempore Audire Potest - Etiam Cum Absis!',
       },
       button: {
-        title: 'Moderationes Recordationis 🔴',
+        title: 'Moderationes Recordationis',
         description: 'Tange Bottone Microphoni ut Recordatio Incipiat. Textum Paginae Alte Lege, Tange Iterum ut Termines.',
       },
       playback: {
@@ -674,123 +688,241 @@ export default {
         description: 'Recordationem Audi et Iterum Recordare Si Necessarium. Pueri Tuam Vocem Audire Amant!',
       },
       sound: {
-        title: 'Consilium Soni 🔊',
+        title: 'Consilium Soni',
         description: 'Locum Tranquillum Invenire pro Optima Qualitate Recordationis. Sonus Fundalis Distrahere Potest.',
       },
       limit: {
-        title: 'Voces Familiae 👨‍👩‍👧',
+        title: 'Voces Familiae',
         description: 'Plures Familiae Membra Recordare Possunt! Aviae, Avunculi et Amitae - Omnes Participare Sinite.',
       },
       benefit: {
-        title: 'Cur Recordare? 💜',
+        title: 'Cur Recordare? ',
         description: 'Investigatio Ostendit Vocem Notam Audire Pueros Tutum et Connexum Sentire Adiuvare, Praecipue Sub Separatione.',
       },
       navigation: {
-        title: 'Navigatio Paginae 📖',
+        title: 'Navigatio Paginae',
         description: 'Sagittas Usa ut Inter Paginas Navigares. Unumquodque Paginam Recordare ut Fabulam Omnino Narratam Crees!',
       },
     },
     narrateMode: {
       intro: {
-        title: 'Modus Audiendi 🎧',
+        title: 'Modus Audiendi',
         description: 'Relaxa et Fruere! Fabula Cum Voce Recordata Alte Legitur.',
       },
       autoPlayback: {
-        title: 'Automatica Ludificatio 📖',
+        title: 'Automatica Ludificatio',
         description: 'Paginae Automatice Vertuntur Postquam Narratio Perfecta Est. Perfectum ad Tempus Somni!',
       },
       controls: {
-        title: 'Moderationes Ludificationis ▶️',
+        title: 'Moderationes Ludificationis',
         description: 'Moderationes Usa ut Pausas, Iterum Audias vel Celeriter Praeterire. Velocitatem Moderare.',
       },
       sound: {
-        title: 'Consilium Soni 🔊',
+        title: 'Consilium Soni',
         description: 'Sura Apparatus Tuus Altum Sonum Habet! Aures Capitis Usa pro Magis Immersione.',
       },
       benefit: {
-        title: 'Tempus Connexionis 💜',
+        title: 'Tempus Connexionis',
         description: 'Etiam in Modo Audiendi, Engagatus Mane! Imaginationes Monstra, Quaestiones Pone et Fabulam Simul Fruere.',
       },
     },
     settings: {
       intro: {
-        title: 'Constitutiones ⚙️',
+        title: 'Constitutiones',
         description: 'Customiza Applicationem ut Optima pro Tua Familia Operetur.',
       },
       login: {
-        title: 'Rationes et Synchronizatio 🔐',
+        title: 'Rationes et Synchronizatio',
         description: 'Intrare ut Progressum Serves et Inter Apparatus Synchronizes.',
       },
       language: {
-        title: 'Lingua 🌍',
+        title: 'Lingua',
         description: 'Tuam Linguam Praefectam pro Interfacie Applicationis Elige.',
       },
       avatar: {
-        title: 'Tuus Avatarem 🎭',
+        title: 'Tuus Avatarem',
         description: 'Experientiam Filii Tui Customiza cum Avatare Personali.',
       },
       accessibility: {
-        title: 'Accessibilitas ♿',
+        title: 'Accessibilitas',
         description: 'Magnitudinem Textus et Alias Constitutiones Mutare ut Facilius Utaris.',
       },
       screenTime: {
-        title: 'Tempus Ostentionis ⏱️',
+        title: 'Tempus Ostentionis',
         description: 'Limites Sanos Constitue et Usum Diurnum Observa.',
       },
     },
     // Music Mode Tips - keys match tutorial.musicMode.* in tutorial-content.ts
     musicMode: {
       welcome: {
-        title: 'Modus Musicae 🎵',
+        title: 'Modus Musicae',
         description: 'Aliquae paginae huius fabulae provocationes musicas habent! Notas in instrumento virtuali lude ut eas compleas.',
       },
       instrument: {
-        title: 'Elige Instrumentum Tuum 🎹',
+        title: 'Elige Instrumentum Tuum',
         description: 'Cum liber cum musica aperitur, per carrousel trahe ut instrumentum tuum dilectum eligas. Unumquodque sonos singulares habet!',
       },
       playing: {
-        title: 'Notas Ludere 🎶',
+        title: 'Notas Ludere',
         description: 'Preme bottones coloratos ut notas ludas. Sequentiam in summo monstratam sequere ut provocationem compleas!',
       },
       sheet: {
-        title: 'Charta Musicae 📋',
+        title: 'Charta Musicae',
         description: 'Tange bottonem notae musicalis (sinistro inferiore) ut omnes notas quas ludere debes videas. Melodiam etiam praevidere potes!',
       },
       begin: {
-        title: 'Incipe Ludere ▶️',
+        title: 'Incipe Ludere',
         description: 'Cum ad paginam musicam pervenias, tange bottonem \'Incipe Ludere\' in summo ut provocationem incipias. Primum chartam musicae aperit ut videas quid ludas!',
       },
       change: {
-        title: 'Muta Instrumentum 🔄',
-        description: 'Vis sonum diversum temptare? Aperi menu (☰) et tange \'Muta Instrumentum\' ut quovis tempore mutes.',
+        title: 'Muta Instrumentum',
+        description: 'Vis sonum diversum temptare? Aperi menu () et tange \'Muta Instrumentum\' ut quovis tempore mutes.',
       },
     },
     storyModes: {
       welcome: {
-        title: 'Tres Viae Explorandi! 🌟',
+        title: 'Tres Viae Explorandi!',
         description: 'Quisque puer diverso modo discit. Elige experientiam fabulae quae curiositatem pueri tui excitat -unaquaeque artes essentiales per magiam ludi aedificat.',
       },
       interactive: {
-        title: 'Fabulae Interactivae ✨',
+        title: 'Fabulae Interactivae',
         description: 'Tange, trahe et inveni! Fabulae interactivae paginas ad vitam revocant cum tactilibus miraculis, momentis causae et effectus et activitatibus discendi practicis. Investigatio ostendit participationem activam tempore fabulae comprehensionem, artes motorias subtiles et solutionem problematum primam roborare.',
       },
       musical: {
-        title: 'Fabulae Musicales 🎵',
+        title: 'Fabulae Musicales',
         description: 'Lege, lude et age! Fabulae musicales provocationes instrumentorum verorum in omni aventura intexunt -puer tuus rhythmum, melodiam et coordinationem discit dum fabulam sequitur. Studia confirmant expositionem musicae primam memoriam, progressum linguae et expressionem emotionalem augere.',
       },
       jigsaw: {
-        title: 'Fabulae Dissecturae 🧩',
+        title: 'Fabulae Dissecturae',
         description: 'Compone! Fabulae dissecturae pulchra aenigmata in unaquaque pagina celant, conscientiam spatialem, patientiam et cogitationem logicam aedificantes. Aenigmata perficere pueris verum sensum perfectionis dat et artes visuo-perceptuales roborat quae praeparationem lectionis sustinent.',
       },
     },
     gestures: {
       speakerLongPress: {
-        title: 'Longum Tactum Consilium 👆',
+        title: 'Longum Tactum Consilium',
         description: 'Longum Tactum Bottone Altoparlantis Tene ut Optiones Soni Extras Videas.',
       },
       storySwipe: {
-        title: 'Navigatio Tractus 👆',
+        title: 'Navigatio Tractus',
         description: 'Trahe Sinistram vel Dextram ut Paginas Celeriter Vertas.',
+      },
+    },
+    // Emotion Cards Tips
+    emotionCards: {
+      welcome: {
+        title: 'Salve in Cartas Affectionum!',
+        description: 'Filium Tuum Adiuva Affectiones Recognoscere et Exprimere per Cartas Interactivas et Iocosas.',
+      },
+      together: {
+        title: 'Luda Simul',
+        description: 'Sede cum Filio Tuo et Cartas Vices Vertite. Facies Simul Fac - Magis Iocosus Est!',
+      },
+      connect: {
+        title: 'Connexionem Fac',
+        description: 'Quaestiones Sicut "Quando Te Sic Sensisti?" Pone ut Filium Tuum Affectiones Intellegere Adiuves.',
+      },
+      scenarios: {
+        title: 'Scenaria Fac',
+        description: 'Situationes Luda Quae Unumquodque Affectionem Possunt Excitare. "Quomodo Te Sensisse Si Ludibrium Tuum Fractum Esset?"',
+      },
+      themes: {
+        title: 'Varia Themata Proba',
+        description: 'Inter Emojis, Animalia et Themata Ursi Varia. Res Recentes et Interessantes Tene!',
+      },
+    },
+    // Spelling Tips
+    spelling: {
+      welcome: {
+        title: 'Spelling Activities',
+        description: 'Welcome to Spelling! Fun interactive activities to help your child learn letters, words and spelling.',
+      },
+      ages: {
+        title: 'Age-Appropriate Content',
+        description: 'Activities are grouped by age range. Use the carousel at the top to filter for your child\'s level.',
+      },
+      together: {
+        title: 'Learn Together',
+        description: 'Sit with your child and sound out the letters together. Encourage them and celebrate every attempt!',
+      },
+      benefit: {
+        title: 'Building Literacy',
+        description: 'Early spelling practice builds phonemic awareness, letter recognition and a love of words that lasts a lifetime.',
+      },
+    },
+    // Numbers Tips
+    numbers: {
+      welcome: {
+        title: 'Number Activities',
+        description: 'Welcome to Numbers! Engaging activities to help your child explore counting, shapes and early maths.',
+      },
+      ages: {
+        title: 'Age-Appropriate Content',
+        description: 'Activities are grouped by age range. Use the carousel at the top to find the right level for your child.',
+      },
+      together: {
+        title: 'Count Together',
+        description: 'Count out loud together, point to objects and make numbers part of everyday play!',
+      },
+      benefit: {
+        title: 'Building Numeracy',
+        description: 'Early number play develops logical thinking, pattern recognition and a confident foundation for maths.',
+      },
+    },
+    // Feelings Tips
+    feelings: {
+      welcome: {
+        title: 'Feelings Activities',
+        description: 'Welcome to Feelings! Activities that help your child recognise, name and understand emotions.',
+      },
+      ages: {
+        title: 'Age-Appropriate Content',
+        description: 'Activities are grouped by age range. Choose activities suited to your child\'s emotional development.',
+      },
+      together: {
+        title: 'Explore Together',
+        description: 'Talk about emotions openly. Ask "How does that make you feel?" and share your own feelings too.',
+      },
+      benefit: {
+        title: 'Emotional Intelligence',
+        description: 'Understanding emotions builds empathy, self-regulation and strong social skills — essential for lifelong wellbeing.',
+      },
+    },
+    // Practise Mode Tips
+    practise: {
+      welcome: {
+        title: 'Practise Mode',
+        description: 'Learn to play real songs on different instruments! Follow the notes and build your musical skills step by step.',
+      },
+      instrument: {
+        title: 'Choose Your Instrument',
+        description: 'Swipe through the carousel to pick your favourite instrument. Each one has its own unique sound!',
+      },
+      songs: {
+        title: 'Pick a Song',
+        description: 'Browse the song library and choose a song to learn. Songs are sorted by difficulty — start easy and work your way up!',
+      },
+      benefit: {
+        title: 'Musical Development',
+        description: 'Learning to play songs develops rhythm, coordination, memory and concentration — all through the joy of music.',
+      },
+    },
+    // Freeplay Mode Tips
+    freeplay: {
+      welcome: {
+        title: 'Freeplay Mode',
+        description: 'No rules, just fun! Explore any instrument and create your own music. Perfect for creativity and self-expression.',
+      },
+      instrument: {
+        title: 'Choose Your Instrument',
+        description: 'Pick any instrument from the carousel. Try them all to discover new sounds and favourites!',
+      },
+      play: {
+        title: 'Play Freely',
+        description: 'Press the coloured buttons to make music. There are no wrong notes — every sound is part of the adventure!',
+      },
+      benefit: {
+        title: 'Creative Expression',
+        description: 'Free musical play nurtures creativity, self-confidence and a love of music that grows with your child.',
       },
     },
   },
@@ -818,36 +950,179 @@ export default {
     guidelines: 'Tempus Ostentionis Sanum Directiones WHO/AAP Sequitur',
     closeNotification: 'Claudere Notificationem',
     educationalMessage: 'Alias Activitates Proba: Librum Lege vel Foris Luda vel Creative Luda!',
-    approachingMessage: 'Tempus Ostentionis Hodierni {{minutes}} Minuta Reliqua. Visne Pergere vel Applicationem Claudere?',
+    approachingMessage: 'Tempus Ostentionis Hodierni {{minutes}} Minuta Reliqua. Visne Pergere vel Applicationem Claudere? ',
     limitReachedMessage: 'Tuos Limites Temporis Ostentionis Diurnos Iam Attacti. Tempus est Applicationem Claudere et Alias Activitates Conari!',
   },
+  // Relaxing music screen
+  relaxMusic: {
+    title: 'Locus tranquillior',
+    screenTitle: 'Relaxare',
+    subtitle: 'Momentum cape. Pausa. Relaxa paululum.',
+    headphoneGuidance: 'Pro optima experientia, auricularia utere. Locum commodum inveni, oculos claude, et in spiritu tuo attende.',
+    stopAll: 'Siste',
+    tipsTitle: 'Artes Relaxandi',
+    tipsBody: 'Haec vestigia pulsus binaurales utuntur — subtiles differentiae frequentiae inter utramque aurem quae cerebrum tuum ad relaxandum hortantur. Auricularia necessaria sunt.\n\nHas artes simplices tempta dum audis:\n\nRespiratio Quadrata\nInspira 4 numeros, tene 4, expira 4, tene 4. Repete.\n\nCorporis Inspectio\nA digitis pedum incipe, lente in singulas corporis partes attende. Tensionem nota et consulto relaxa.\n\nFundatio 5-4-3-2-1\nNota 5 res quas vides, 4 quas tangis, 3 quas audis, 2 quas olfacis, et 1 quam gustas.\n\nNubes Cogitationum\nFinge singulam cogitationem ut nubem per caelum transeuntem. Agnosce eam et sine praeiudicio transire sine.',
+  },
+
+    // Emotion cards
+  emotions: {
+    title: 'Sensus',
+    subtitle: 'Elige Stilum Tuum et Disce Sensus',
+    greatJob: 'Optime factum!',
+    sections: {
+      emotionCards: 'Chartae Sensuum',
+      developingEmotions: 'Sensus Evolvere',
+      parentsToo: 'Parentes Quoque',
+      parentsTooSubtitle: 'Aliquid inclusimus ut te adiuvemus, optime agis.',
+      relaxingMusic: 'Musica Tranquilla',
+      relaxingMusicDescription: 'Soni sedantes et sequentiae relaxandi ad tranquillitatem',
+    },
+    pickYourStyle: 'Elige Stilum Tuum',
+    expressWithTheme: 'Exprime {{emotion}} cum {{theme}}!',
+    expressing: 'Exprimam {{emotion}}!',
+    loading: 'Onerans...',
+    progress: 'Progressus: {{completed}}/{{total}}',
+    themes: {
+      emoji: {
+        name: 'Emojis',
+        description: 'Exprime Affectiones cum Iocosis Faciebus Emoji',
+      },
+      animals: {
+        name: 'Animalia',
+        description: 'Disce Affectiones per Dulces Amicos Animales',
+      },
+      bear: {
+        name: 'Ursus',
+        description: 'Disce Affectiones cum Amico Urso',
+      },
+    },
+    emoji: {
+      happy: 'Laetus',
+      sad: 'Tristis',
+      angry: 'Iratus',
+      surprised: 'Admiratus',
+      scared: 'Timidus',
+      excited: 'Excitatus',
+      confused: 'Confusus',
+      proud: 'Superbus',
+      shy: 'Pudibundus',
+      loving: 'Amans',
+    },
+    animals: {
+      happy: 'Laetus Cuniculus',
+      sad: 'Tristis Felis',
+      angry: 'Iratus Canis',
+      surprised: 'Admiratus Gallus',
+      scared: 'Timidus Procyon',
+      excited: 'Excitatus Vulpes',
+      confused: 'Confusus Elephas',
+      proud: 'Superbus Ursus',
+      shy: 'Pudibundus Bradypus',
+      loving: 'Amans Panda',
+    },
+    bear: {
+      happy: 'Laetus Ursus',
+      sad: 'Tristis Ursus',
+      angry: 'Iratus Ursus',
+      surprised: 'Admiratus Ursus',
+      scared: 'Timidus Ursus',
+      excited: 'Excitatus Ursus',
+      confused: 'Confusus Ursus',
+      proud: 'Superbus Ursus',
+      shy: 'Pudibundus Ursus',
+      loving: 'Amans Ursus',
+    },
+    prompts: {
+      happy: [
+'Ostende Maximam Tuam Risum!',
+'Potesne Ridere Quasi Aliquid Iocosus Audiveris? ',
+'Fac Laetam Faciem et Plaudite Manibus!',
+'Ostende Faciem Quam Facis Cum Donum Accipis!',
+      ],
+      sad: [
+'Ostende Tristem Faciem',
+'Potesne Os Trahere Quasi Ludibrium Tuum Amisisti? ',
+'Ostende Quomodo Te Sentis Cum Vale Dicere Debeas',
+'Fac Deceptam Faciem',
+      ],
+      angry: [
+'Ostende Iratam Faciem',
+'Potesne Os Trahere Quasi Iratus Sis? ',
+'Ostende Faciem Quam Facis Cum Aliquis Malum Facit et Ludibrium Tuum Praefectum Iacit',
+'Fac Tractam et Murmurientem Faciem!',
+      ],
+      surprised: [
+'Ostende Admiratam Faciem!',
+'Potesne Oculos et Os Aperire? ',
+'Ostende Faciem Quam Facis Cum Aliquid Mirabile Vides!',
+'Fac Faciem Quasi Spectra Vidisti!',
+      ],
+      scared: [
+'Ostende Timidam Faciem',
+'Potesne Te Post Manus Abscondere Quasi Timidus Sis? ',
+'Ostende Quomodo Te Sentis Sub Tempestate',
+'Fac Faciem Quasi Aliquid Terribile Vidisti!',
+      ],
+      excited: [
+'Ostende Excitatam Faciem!',
+'Potesne Saltare Su et Deorsum cum Magno Risu? ',
+'Ostende Faciem Quam Facis Cum Ad Aliquid Iocosus Ire Debeas!',
+'Fac Excitatam Faciem et Agita Manus!',
+      ],
+      confused: [
+'Ostende Confusam Faciem',
+'Potesne Os Trahere Quasi Profunde Cogites? ',
+'Ostende Faciem Quam Facis Cum Aliquid Non Intellegas',
+'Fac Faciem Quasi Aenigma Solvas!',
+      ],
+      proud: [
+'Ostende Superbam Faciem!',
+'Potesne Recte Stare et Ridere Quasi Aliquid Mirabile Feceris? ',
+'Ostende Superbam Faciem Quam Facis Cum Aenigma Solveris!',
+'Fac Faciem Quasi Aliquem Adiuveris!',
+      ],
+      shy: [
+'Ostende Pudibundam Faciem',
+'Potesne Faciem Tuam Paulum Abscondere? ',
+'Ostende Faciem Quam Facis Cum Aliquem Novum Convenias',
+'Fac Pudibundum Risum et Aspice Deorsum!',
+      ],
+      loving: [
+'Ostende Amantem Faciem!',
+'Potesne Te Magnum Amplexum Dare? ',
+'Ostende Faciem Quam Facis Cum Aliquem Quem Amas Aspicis!',
+'Fac Faciem Quasi Osculum Dares!',
+      ],
+    },
+  },
+
   // Music challenge UI strings
   music: {
     amazing: 'Mirum!',
     levelComplete: 'Gradus {{level}} perfectus!',
     playingYourSong: 'Carmen tuum canens...',
     listeningToMelody: 'Melodiam tuam audi...',
-    retry: '↻ Iterum',
+    retry: 'Iterum',
     goHarder: 'Difficultatem auge',
     goHarderLevel: 'Difficultatem auge (Gr {{level}})',
-    continueStory: 'Fabulam continua →',
-    skip: 'Praetermitte →',
-    blowMode: '♪ Fla',
-    pressMode: '♫ Preme',
-    blowing: '♪ Flans!',
+    continueStory: 'Fabulam continua',
+    skip: 'Praetermitte',
+    blowMode: 'Fla',
+    pressMode: 'Preme',
+    blowing: 'Flans!',
     blowWhileHolding: 'Fla dum notas tenes',
     tryAgain: 'Iterum conare!',
     openMusicSheet: 'Chartam musicam aperi',
     showControls: 'Moderamina ostende',
     hideControls: 'Moderamina absconde',
-    musicSheet: '♪ Charta Musica',
+    musicSheet: 'Charta Musica',
     notesToPlay: 'Notae canendae ({{completed}}/{{total}})',
     pause: 'Pausa',
     preview: 'Praevisio',
     tapAndHoldNotes: 'Notas tange et tene ut audias',
     playingPreview: 'Praevisio canens… Pausam tange ut sistas',
-    successSong: '♫ Carmen Victoriae',
-    readyToPlay: '♫ Paratus ad Canendum',
+    successSong: ' Carmen Victoriae',
+    readyToPlay: ' Paratus ad Canendum',
     chooseInstrument: 'Instrumentum tuum elige',
     swipeToExplore: 'Trae ut explores, tange ut eligas',
     useThisInstrument: 'Hoc instrumentum utere',
@@ -894,18 +1169,71 @@ export default {
       songOfBreak: 'Carmen fracturae',
       songOfFix: 'Carmen reparationis',
     },
+    // Binaural / relaxation track titles and descriptions
+    tracks: {
+      tantrumAlpha: {
+        title: 'Sedatio irae (10Hz)',
+        artist: 'Pulsus binaurales',
+        description: 'Undae alpha ad sedandum. Auricularia utere.',
+      },
+      sleepAlpha: {
+        title: 'Ad relaxationem',
+        artist: 'Pulsus binaurales',
+        description: 'Undae alpha ad relaxationem. Iteratur.',
+      },
+      sleepTheta: {
+        title: 'Relaxatio profunda',
+        artist: 'Pulsus binaurales',
+        description: 'Undae theta ad relaxationem profundam. Iteratur.',
+      },
+      sleepSequence: {
+        title: 'Series relaxationis plena',
+        artist: 'Pulsus binaurales',
+        description: 'Progressio plena: Ad relaxationem → Relaxatio profunda.',
+      },
+      bearsBirthdayParty: {
+        title: 'Dies natalis ursi',
+        artist: 'Fabula vespertina',
+        description: 'Fabula de urso diem natalem celebrante.',
+      },
+      damselElephant: {
+        title: 'Damsel elephantus',
+        artist: 'Fabula vespertina',
+        description: 'Damsel elephantum in leni itinere comitare.',
+      },
+      jimmyMouse: {
+        title: 'Jacobus Mus et urbani',
+        artist: 'Fabula vespertina',
+        description: 'Parvus mus urbem magnam invenit.',
+      },
+      newYearJungle: {
+        title: 'Annus novus in silva',
+        artist: 'Fabula vespertina',
+        description: 'Animalia silvae annum novum una celebrant.',
+      },
+      snowWhite: {
+        title: 'Nivea',
+        artist: 'Fabula vespertina',
+        description: 'Fabula classica Niveae, perfecta ad somnum.',
+      },
+    },
+    tags: {
+      calming: 'Sedans',
+      bedtime: 'Hora somni',
+      stories: 'Fabulae',
+    },
   },
 
   jigsaw: {
     amazing: 'Mirum!',
-    beginPuzzle: '🧩 Incipe aenigma',
+    beginPuzzle: 'Incipe aenigma',
     completedMoves: '{{count}} motibus perfectum!',
-    continueStory: 'Fabulam continua →',
+    continueStory: 'Fabulam continua',
     preview: 'Praevisio',
     reset: 'Restitue',
     scramble: 'Perturba',
     shuffle: 'Misce',
-    skip: 'Praetermitte →',
+    skip: 'Praetermitte',
     tapToClose: 'Tange ubique ad claudendum',
   },
 
@@ -942,7 +1270,7 @@ export default {
     firstWordsDesc: 'Verba simplicia cum tabellis coloratis litteras',
     firstWordsAge: 'Aetates 1-2',
     colourSpelling: 'Colorum Litteratio',
-    colourSpellingDesc: 'Potesne colores arcus caelestis litterare?',
+    colourSpellingDesc: 'Potesne colores arcus caelestis litterare? ',
     colourSpellingAge: 'Aetates 1-2',
     shapeNames: 'Nomina Formarum',
     shapeNamesDesc: 'Circulos, quadrata et plura litteras!',
@@ -990,7 +1318,7 @@ export default {
     colourCountingDesc: 'Res coloratas numera et numeros disce!',
     colourCountingAge: 'Aetates 1-2',
     shapeCounting: 'Formarum Numeratio',
-    shapeCountingDesc: 'Quot formas numerare potes?',
+    shapeCountingDesc: 'Quot formas numerare potes? ',
     shapeCountingAge: 'Aetates 1-2',
     oneTwoThree: 'Unum, Duo, Tria!',
     oneTwoThreeDesc: 'Mitis prima aventura numerandi',
@@ -1002,7 +1330,7 @@ export default {
     animalCountingDesc: 'Animalia in villa et silva numera!',
     animalCountingAge: 'Aetates 2-4',
     fruitCounting: 'Fructuum Numeratio',
-    fruitCountingDesc: 'Quot fructus in canistro numerare potes?',
+    fruitCountingDesc: 'Quot fructus in canistro numerare potes? ',
     fruitCountingAge: 'Aetates 2-4',
     toyCounting: 'Ludorum Numeratio',
     toyCountingDesc: 'Ludos dilectos numera et numeros disce!',
@@ -1108,6 +1436,14 @@ export default {
     signInRequiredMessage: 'Ante subscribere debes intrare. Subscriptio tua cum ratione tua coniungetur ut in omnibus machinis accedere possis.',
     signInRequiredConfirm: 'Intrare',
     signInRequiredCancel: 'Non nunc',
+    errorTitle: 'Error Subscriptionis',
+    errorUnavailable: 'Hic ratio nunc non praesto est. Postea iterum tempta.',
+    errorGeneric: 'Aliquid erravit. Iterum tempta.',
+    restorePurchases: 'Emptiones Restaura',
+    restoreSuccessTitle: 'Emptiones Restauratae',
+    restoreSuccessMessage: 'Subscriptio tua prospere restaurata est.',
+    restoreNoneTitle: 'Nullae Emptiones Inventae',
+    restoreNoneMessage: 'Nullas emptiones priores ad restaurandum invenire potuimus.',
   },
 
   defaultPage: {

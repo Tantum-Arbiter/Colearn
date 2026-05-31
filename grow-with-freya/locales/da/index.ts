@@ -28,6 +28,7 @@ export default {
     extraLarge: 'Ekstra stor',
     on: 'TIL',
     off: 'FRA',
+    openSettings: 'Åbn Indstillinger',
   },
   alerts: {
     logout: {
@@ -37,7 +38,7 @@ export default {
     },
     resetApp: {
       title: 'Nulstil app',
-      message: 'Dette sletter alle app-data, herunder login, karakterer og indstillinger. Er du sikker?',
+      message: 'Dette sletter alle app-data, herunder login, karakterer og indstillinger. Er du sikker? ',
     },
     deleteAccount: {
       title: 'Slet konto',
@@ -50,11 +51,11 @@ export default {
     },
     deleteReminder: {
       title: 'Slet påmindelse',
-      message: 'Slet "{{title}}"?',
+      message: 'Slet "{{title}}"? ',
     },
     unsavedChanges: {
       title: 'Ugemte ændringer',
-      message: 'Du har ugemte ændringer. Er du sikker på, at du vil lukke uden at gemme?',
+      message: 'Du har ugemte ændringer. Er du sikker på, at du vil lukke uden at gemme? ',
     },
     missingTitle: {
       title: 'Titel mangler',
@@ -113,7 +114,7 @@ export default {
     stories: 'Historier',
     practise: 'Øvelse',
     freeplay: 'Fri Leg',
-    instruments: 'Spil Instrumenter',
+    instruments: 'Instrumenter',
     learning: 'Læring',
     spelling: 'Stavning',
     numbers: 'Tal',
@@ -123,11 +124,11 @@ export default {
     title: 'Tilgængelighed',
     textSizeHint: 'Forbedre synligheden ved at justere størrelsen på tekst og knapper',
     grayscale: 'Gråtoner/Høj kontrast',
-    grayscaleHint: 'Brug enhedens indbyggede tilgængelighedsindstillinger til sort-hvid tilstand:',
+    grayscaleHint: 'Brug enhedens indbyggede tilgængelighedsindstillinger til sort-hvid tilstand: ',
     grayscaleIos: 'Indstillinger → Tilgængelighed → Skærm- og tekststørrelse → Farvefiltre → Gråtoner',
     grayscaleAndroid: 'Indstillinger → Tilgængelighed → Farveindstillinger → Gråtoner',
     blueLight: 'Blåt lys filter (nattilstand)',
-    blueLightHint: 'Forbedre dit barns søvnkvalitet ved at reducere blåt lys. Aktivér nattilstand på din enhed:',
+    blueLightHint: 'Forbedre dit barns søvnkvalitet ved at reducere blåt lys. Aktivér nattilstand på din enhed: ',
     blueLightIos: 'Indstillinger → Skærm og lysstyrke → Night Shift → Til',
     blueLightAndroid: 'Indstillinger → Skærm → Natlys (eller øjnekomfort) → Til',
     blueLightBenefit: 'Blåt lys på skærmen kan påvirke søvnkvaliteten. Aktivering af nattilstand om aftenen hjælper dit barns hjerne med at forberede sig på søvn ved at reducere blå bølgelængde.',
@@ -189,8 +190,8 @@ export default {
     compareLanguageOn: 'Sammenlign sprog: Til',
     compareLanguageOff: 'Sammenlign sprog: Fra',
     selectCompareLanguage: 'Vælg et sprog for at læse, sammenligne eller optage.',
-    selectFirstLanguage: 'Første sprog (hvidt felt):',
-    selectSecondLanguage: 'Andet sprog (blåt felt):',
+    selectFirstLanguage: 'Første sprog (hvidt felt): ',
+    selectSecondLanguage: 'Andet sprog (blåt felt): ',
     done: 'Færdig',
     autoPlayOn: 'Automatisk afspilning: Til',
     autoPlayOff: 'Automatisk afspilning: Fra',
@@ -202,16 +203,16 @@ export default {
     permissionMessage: 'Mikrofonilladelse er påkrævet for at optage lyd.',
     recordingError: 'Optagefejl',
     recordingErrorMessage: 'Kunne ikke starte optagelse. Prøv igen.',
-    overwriteRecording: 'Overskriv optagelse?',
-    overwriteRecordingMessage: 'Denne side har allerede en optagelse. Vil du overskrive den med en ny optagelse?',
+    overwriteRecording: 'Overskriv optagelse? ',
+    overwriteRecordingMessage: 'Denne side har allerede en optagelse. Vil du overskrive den med en ny optagelse? ',
     nameAlreadyExists: 'Navn findes allerede',
     nameAlreadyExistsMessage: 'Der findes allerede en stemme med navnet "{{name}}". Vælg venligst et andet navn.',
     error: 'Fejl',
     createVoiceOverError: 'Kunne ikke oprette stemme. Prøv igen.',
-    overwriteVoiceOver: 'Overskriv stemme?',
-    overwriteVoiceOverMessage: '"{{name}}" har optagelser for {{count}} sider. Vil du overskrive dem med en ny optagelse?',
+    overwriteVoiceOver: 'Overskriv stemme? ',
+    overwriteVoiceOverMessage: '"{{name}}" har optagelser for {{count}} sider. Vil du overskrive dem med en ny optagelse? ',
     deleteVoiceOver: 'Slet stemme',
-    deleteVoiceOverMessage: 'Slet "{{name}}"?',
+    deleteVoiceOverMessage: 'Slet "{{name}}"? ',
     deleteVoiceOverMessageWithUndo: 'Slet "{{name}}"? Dette kan ikke fortrydes.',
     overwrite: 'Overskriv',
     delete: 'Slet',
@@ -227,8 +228,8 @@ export default {
     narrateAs: 'Fortæller som: {{name}}',
     recordVoiceOver: 'Lav stemoptagelse',
     selectVoiceOver: 'Vælg stemme',
-    selectExisting: 'Vælg eksisterende for at overskrive:',
-    orCreateNew: 'eller opret ny:',
+    selectExisting: 'Vælg eksisterende for at overskrive: ',
+    orCreateNew: 'eller opret ny: ',
     enterName: 'Angiv navn...',
     create: 'Opret',
     chooseRecording: 'Vælg optagelse for at afspille',
@@ -294,12 +295,13 @@ export default {
     noScreenTime: 'Ingen skærmtid',
     recommended: 'Anbefalet',
     excessive: 'Overdreven',
+    overLimit: 'Over Grænse',
     createMySchedule: 'Opret mit skema',
     scheduleIntro: 'Indstil brugerdefinerede notifikationstider for dit barns skærmtidsaktiviteter. Du modtager venlige påmindelser når det er tid til historie-, følelse- eller musikaktiviteter.',
     scheduleIntroShort: 'Indstil brugerdefinerede notifikationstider for dit barns skærmtidsaktiviteter.',
     createCustomReminders: '+ Opret brugerdefineret påmindelse',
     recommendedTimes: 'Anbefalede tider',
-    recommendedTimesIntro: 'Ifølge forskning i børnenes udvikling er de bedste tider for skærmaktiviteter:',
+    recommendedTimesIntro: 'Ifølge forskning i børnenes udvikling er de bedste tider for skærmaktiviteter: ',
     morningStoriesEmotions: 'Morgenhistorier og følelser',
     afternoonLearning: 'Eftermiddagslæringsaktiviteter',
     preDinnerMusic: 'Afslappningsmusik før middag',
@@ -336,6 +338,10 @@ export default {
     creating: 'Opretter...',
     noReminders: 'Ingen brugerdefinerede påmindelser',
     noRemindersHint: 'Opret din første påmindelse for at starte brugerdefinerede aktivitetsnotifikationer.',
+    permissionRequired: {
+      title: 'Notifikationer Påkrævet',
+      message: 'For at modtage påmindelser skal du aktivere notifikationer for denne app i din enheds indstillinger.',
+    },
     total: 'I alt',
     today: 'I dag',
     loading: 'Indlæser påmindelser...',
@@ -347,7 +353,7 @@ export default {
     messagePlaceholder: 'Angiv påmindelsebesked...',
     dayOfWeek: 'Dag i ugen',
     timeLabel: 'Tid',
-    timeSlotTaken: '⚠️ Dette tidsrum er allerede optaget på denne dag',
+    timeSlotTaken: ' Dette tidsrum er allerede optaget på denne dag',
     conflictHint: 'Rød (!) angiver konflikt på valgt dag. Alle tider er tilgængelige.',
     selectDayHint: 'Vælg ugedag for at se tidstilgængelighed',
     active: 'Aktiv',
@@ -430,8 +436,8 @@ export default {
     profile: 'Profil',
     nickname: 'Kaldenavn',
     avatarType: 'Avatartype',
-    boy: '👦 Dreng',
-    girl: '👧 Pige',
+    boy: ' Dreng',
+    girl: ' Pige',
     settings: 'Indstillinger',
     language: 'Sprog',
     textSize: 'Tekststørrelse',
@@ -457,15 +463,15 @@ export default {
     nicknamePlaceholder: 'Angiv kaldenavn...',
     nicknameCharacters: '{{count}}/20 tegn',
     avatarType: 'Avatartype',
-    boy: '👦 Dreng',
-    girl: '👧 Pige',
+    boy: ' Dreng',
+    girl: ' Pige',
     saveChanges: 'Gem ændringer',
-    comingSoon: '✨ Profilindstillingsmuligheder kommer snart - stadig under udvikling!',
+    comingSoon: ' Profilindstillingsmuligheder kommer snart - stadig under udvikling!',
   },
   onboarding: {
     welcome: 'Velkommen!',
     letsGetStarted: 'Lad os komme i gang',
-    whatsYourName: 'Hvad er dit navn?',
+    whatsYourName: 'Hvad er dit navn? ',
     enterNickname: 'Angiv kaldenavn',
     chooseAvatar: 'Vælg avatar',
     allSet: 'Alt er klar!',
@@ -500,7 +506,7 @@ export default {
       },
       consent: {
         title: 'Før vi begynder',
-        body: 'Som forælder eller værge, læs venligst og accepter følgende:',
+        body: 'Som forælder eller værge, læs venligst og accepter følgende: ',
         button: 'Jeg accepterer',
         closeLabel: 'Luk',
         dataSummary: {
@@ -524,7 +530,7 @@ export default {
       },
     },
     crashReportingDialog: {
-      title: 'Vil du aktivere nedbrudrapporter?',
+      title: 'Vil du aktivere nedbrudrapporter? ',
       body: 'Anonyme nedbrudrapporter hjælper med at reparere fejl og forbedre appen. Ingen personlige data indsamles.\n\nDu kan ændre dette i Indstillinger på ethvert tidspunkt.',
       noThanks: 'Nej tak',
       enable: 'Aktivér',
@@ -543,9 +549,9 @@ export default {
     },
   },
   tutorial: {
-    welcomeTitle: 'Velkommen til\nEarlyroots! 🎉',
+    welcomeTitle: 'Velkommen til\nEarlyroots!',
     welcomeDescription: 'Lad os tage en hurtig rundvisning for at hjælpe dig og dit barn med at få mest ud af lesetiden.',
-    storiesTitle: 'Historiebibliotek 📚',
+    storiesTitle: 'Historiebibliotek',
     storiesDescription: 'Tryk her for at udforske en samling af interaktive historier med smukke illustrationer og sjove interaktioner.',
     skip: 'Spring over',
     gotIt: 'Forstået!',
@@ -562,111 +568,119 @@ export default {
     },
     mainMenu: {
       welcome: {
-        title: 'Velkommen til Grow with Freya! 🎉',
+        title: 'Velkommen til Grow with Freya!',
         description: 'Lad os tage en hurtig rundvisning for at hjælpe dig og dit barn med at få mest ud af lesetiden.',
       },
       stories: {
-        title: 'Historier 📚',
+        title: 'Historier',
         description: 'Udforsk vores samling af interaktive historier med smukke illustrationer og sjove interaktioner.',
       },
       practise: {
-        title: 'Øvelse 🎵',
+        title: 'Øvelse',
         description: 'Lær at spille sange på forskellige instrumenter. Følg med og opbyg dine musikalske færdigheder!',
       },
       freeplay: {
-        title: 'Fri Leg 🎹',
+        title: 'Fri Leg',
         description: 'Spil frit på ethvert instrument -ingen regler, bare sjov! Eksperimenter med lyde og skab din egen musik.',
       },
+      instruments: {
+        title: 'Instrumenter',
+        description: 'Øv sange eller jam frit på forskellige instrumenter. Opbyg musikalske færdigheder mens du har det sjovt!',
+      },
+      learning: {
+        title: 'Læring',
+        description: 'Interaktive stave- og talaktiviteter der hjælper med at opbygge tidlige læse- og regnefærdigheder.',
+      },
       settings: {
-        title: 'Indstillinger ⚙️',
+        title: 'Indstillinger',
         description: 'Tilpas appen så den fungerer bedst for din familie.',
       },
       sound: {
-        title: 'Lydkontrol 🔊',
+        title: 'Lydkontrol',
         description: 'Tryk her for at styre baggrundsmusik og lydeffekter.',
       },
     },
     screenTime: {
       intro: {
-        title: 'Skærmtidsdashboard ⏱️',
+        title: 'Skærmtidsdashboard',
         description: 'Overvåg, administrer og indstil dit barns daglige skærmtid med alderspassende grænser.',
       },
       ageBased: {
-        title: 'Aldersbaserede grænser 👶',
+        title: 'Aldersbaserede grænser',
         description: 'Indstil dit barns alder og få automatisk WHO/AAP anbefalede skærmtidsgrænser.',
       },
       heatmap: {
-        title: 'Ugentlig aktivitet 📊',
+        title: 'Ugentlig aktivitet',
         description: 'Se skærmtid brugsmønstre gennem ugen for at hjælpe dig med at opbygge en sund rutine.',
       },
       reminders: {
-        title: 'Indstil påmindelser ⏰',
+        title: 'Indstil påmindelser',
         description: 'Opret brugerdefinerede påmindelser for aktiviteter, pauser eller sengetidsrutine.',
       },
       routine: {
-        title: 'Opbyg sund rutine 🌟',
+        title: 'Opbyg sund rutine',
         description: 'Brug skærmtidsdata til at opbygge en konsistent daglig rutine der fungerer for din familie.',
       },
     },
     storyReader: {
       welcome: {
-        title: 'Lesetidstips 📖',
+        title: 'Lesetidstips',
         description: 'Her er nogle tips til at gøre lesetid med dit barn magisk!',
       },
       interactive: {
-        title: 'Søg efter interaktioner ✨',
+        title: 'Søg efter interaktioner',
         description: 'Nogle sider har skjulte overraskelser! Opfordre dit barn til at trykke på glimmende eller blinkende ting.',
       },
       point: {
-        title: 'Peg og diskutér 👆',
+        title: 'Peg og diskutér',
         description: 'Stil spørgsmål om billeder. "Hvad ser du?" "Hvilken farve er sommerfuglen?"',
       },
       pause: {
-        title: 'Pause og forudsig 🤔',
+        title: 'Pause og forudsig',
         description: 'Spørg "Hvad tror du der sker næste?" før du vender siden for at øge engagement.',
       },
       voices: {
-        title: 'Brug forskellige stemmer 🎭',
+        title: 'Brug forskellige stemmer',
         description: 'Giv karakterer liv med tosset stemmer! Børn elsker performance.',
       },
       navigate: {
-        title: 'Nem navigation 📚',
+        title: 'Nem navigation',
         description: 'Stryg til venstre eller højre for at vende sider. Tryk på menuknap for flere muligheder.',
       },
       tapWords: {
-        title: 'Tryk på ord for at fokusere 👆',
+        title: 'Tryk på ord for at fokusere',
         description: 'Tryk på ethvert ord i historien for at fremhæve det! Dette hjælper med at trække opmærksomhed og gør læsning mere interaktiv og engagerende.',
       },
       compareLanguages: {
-        title: 'Sammenlign sprog 🌍',
+        title: 'Sammenlign sprog',
         description: 'Brug menuen til at aktivere "Sammenlign sprog" og vis historien side ved side på to sprog. Perfekt for flersprogede familier til at lære sammen!',
       },
     },
     bookMode: {
       read: {
-        title: 'Læsetilstand 📖',
+        title: 'Læsetilstand',
         description: 'Tryk her for at læse historien selv med dit barn. Vend sider i dit eget tempo.',
       },
       record: {
-        title: 'Optagetilstand 🎙️',
+        title: 'Optagetilstand',
         description: 'Optag din stemme mens du læser historien. Perfekt når du er væk!',
       },
       narrate: {
-        title: 'Lyttetilstand 🎧',
+        title: 'Lyttetilstand',
         description: 'Lyt til en forudoptaget fortælling af historien. Perfekt til sengetid!',
       },
       preview: {
-        title: 'Forhåndsvisning 👁️',
+        title: 'Forhåndsvisning',
         description: 'Tjek historiedetaljer, varighed og temaer før du begynder at læse.',
       },
     },
     recordMode: {
       intro: {
-        title: 'Optag din stemme 🎙️',
+        title: 'Optag din stemme',
         description: 'Opret en personlig fortælling til denne historie. Dit barn kan lytte når som helst - selv når du er væk!',
       },
       button: {
-        title: 'Optagekontroller 🔴',
+        title: 'Optagekontroller',
         description: 'Tryk på mikrofonknap for at starte optagelse. Læs sideteksten højt, tryk derefter igen for at stoppe.',
       },
       playback: {
@@ -674,123 +688,241 @@ export default {
         description: 'Lyt til optagelsen og optag igen hvis nødvendigt. Børn elsker at høre din stemme!',
       },
       sound: {
-        title: 'Lydtip 🔊',
+        title: 'Lydtip',
         description: 'Find et stille sted for bedste optagekvalitet. Baggrundslyden kan være distraherende.',
       },
       limit: {
-        title: 'Familiestemmerne 👨‍👩‍👧',
+        title: 'Familiestemmerne',
         description: 'Flere familiemedlemmer kan optage! Bedstemødre, onkler og tanter - lad alle deltage.',
       },
       benefit: {
-        title: 'Hvorfor optage? 💜',
+        title: 'Hvorfor optage? ',
         description: 'Forskning viser at lytning til en velkendt stemme hjælper børn med at føle sig sikre og forbundne, især under adskillelse.',
       },
       navigation: {
-        title: 'Sidenavigation 📖',
+        title: 'Sidenavigation',
         description: 'Brug pile til at navigere mellem sider. Optag hver side for at skabe en fuldt fortalt historie!',
       },
     },
     narrateMode: {
       intro: {
-        title: 'Lyttetilstand 🎧',
+        title: 'Lyttetilstand',
         description: 'Slap af og nyd! Historien bliver læst højt med en optaget stemme.',
       },
       autoPlayback: {
-        title: 'Automatisk afspilning 📖',
+        title: 'Automatisk afspilning',
         description: 'Sider vender automatisk efter fortællingen er færdig. Perfekt til sengetid!',
       },
       controls: {
-        title: 'Afspilningskontroller ▶️',
+        title: 'Afspilningskontroller',
         description: 'Brug kontroller til at pause, genlyt eller spol hurtigt frem. Kontroller hastighed.',
       },
       sound: {
-        title: 'Lydtip 🔊',
+        title: 'Lydtip',
         description: 'Sørg for at enhedens lydstyrke er høj! Brug hovedtelefoner for mere fordybelse.',
       },
       benefit: {
-        title: 'Bindingstid 💜',
+        title: 'Bindingstid',
         description: 'Selv i lyttetilstand, bliv engageret! Peg på billeder, stil spørgsmål og nyd historien sammen.',
       },
     },
     settings: {
       intro: {
-        title: 'Indstillinger ⚙️',
+        title: 'Indstillinger',
         description: 'Tilpas appen så den fungerer bedst for din familie.',
       },
       login: {
-        title: 'Konto og synkronisering 🔐',
+        title: 'Konto og synkronisering',
         description: 'Log ind for at gemme fremskridt og synkronisere på tværs af enheder.',
       },
       language: {
-        title: 'Sprog 🌍',
+        title: 'Sprog',
         description: 'Vælg dit foretrukne sprog til app-grænsefladen.',
       },
       avatar: {
-        title: 'Din avatar 🎭',
+        title: 'Din avatar',
         description: 'Personalisér dit barns oplevelse med en brugerdefineret avatar.',
       },
       accessibility: {
-        title: 'Tilgængelighed ♿',
+        title: 'Tilgængelighed',
         description: 'Juster tekststørrelse og andre indstillinger for lettere brug.',
       },
       screenTime: {
-        title: 'Skærmtid ⏱️',
+        title: 'Skærmtid',
         description: 'Sæt sunde grænser og overvåg daglig brug.',
       },
     },
     // Music Mode Tips - keys match tutorial.musicMode.* in tutorial-content.ts
     musicMode: {
       welcome: {
-        title: 'Musiktilstand 🎵',
+        title: 'Musiktilstand',
         description: 'Nogle sider i denne historie har musikudfordringer! Spil noder på et virtuelt instrument for at fuldføre dem.',
       },
       instrument: {
-        title: 'Vælg Dit Instrument 🎹',
+        title: 'Vælg Dit Instrument',
         description: 'Når en bog med musik åbnes, stryg gennem karrusellen for at vælge dit yndlingsinstrument. Hvert har unikke lyde!',
       },
       playing: {
-        title: 'Spil Noder 🎶',
+        title: 'Spil Noder',
         description: 'Tryk på de farvede knapper for at spille noder. Følg sekvensen vist øverst for at fuldføre udfordringen!',
       },
       sheet: {
-        title: 'Nodeark 📋',
+        title: 'Nodeark',
         description: 'Tryk på nodeknappen (nederst til venstre) for at se alle de noder, du skal spille. Du kan endda forhåndsvise melodien!',
       },
       begin: {
-        title: 'Begynd at Spille ▶️',
+        title: 'Begynd at Spille',
         description: 'Når du ankommer til en musikside, tryk på \'Begynd at Spille\' knappen øverst for at starte udfordringen. Den åbner først nodearket, så du kan se, hvad du skal spille!',
       },
       change: {
-        title: 'Skift Instrument 🔄',
-        description: 'Vil du prøve en anden lyd? Åbn menuen (☰) og tryk på \'Skift Instrument\' for at skifte når som helst.',
+        title: 'Skift Instrument',
+        description: 'Vil du prøve en anden lyd? Åbn menuen () og tryk på \'Skift Instrument\' for at skifte når som helst.',
       },
     },
     storyModes: {
       welcome: {
-        title: 'Tre Måder at Udforske! 🌟',
+        title: 'Tre Måder at Udforske!',
         description: 'Hvert barn lærer forskelligt. Vælg den historieoplevelse, der vækker dit barns nysgerrighed -hver enkelt opbygger vigtige færdigheder gennem legens magi.',
       },
       interactive: {
-        title: 'Interaktive Historier ✨',
+        title: 'Interaktive Historier',
         description: 'Tryk, swipe og opdag! Interaktive historier bringer sider til live med overraskelser, årsag-og-virkning-øjeblikke og praktiske læringsaktiviteter. Forskning viser, at aktiv deltagelse under historietid styrker forståelse, finmotorik og tidlig problemløsning.',
       },
       musical: {
-        title: 'Musikalske Historier 🎵',
+        title: 'Musikalske Historier',
         description: 'Læs, spil og optræd! Musikalske historier fletter rigtige instrumentudfordringer ind i hvert eventyr -dit barn lærer rytme, melodi og koordination, mens de følger fortællingen. Studier bekræfter, at tidlig musikeksponering styrker hukommelse, sprogudvikling og følelsesmæssigt udtryk.',
       },
       jigsaw: {
-        title: 'Puslespilshistorier 🧩',
+        title: 'Puslespilshistorier',
         description: 'Sæt det sammen! Puslespilshistorier gemmer smukke puslespil på hver side og opbygger rumlig bevidsthed, tålmodighed og logisk tænkning. At fuldføre puslespil giver børn en ægte følelse af præstation og styrker visuelle-perceptuelle færdigheder, der understøtter læseparathed.',
       },
     },
     gestures: {
       speakerLongPress: {
-        title: 'Langt tryk tip 👆',
+        title: 'Langt tryk tip',
         description: 'Tryk længe på højttalerknappen for at se ekstra lydmuligheder.',
       },
       storySwipe: {
-        title: 'Stryg navigation 👆',
+        title: 'Stryg navigation',
         description: 'Stryg til venstre eller højre for at vende sider hurtigt.',
+      },
+    },
+    // Emotion Cards Tips
+    emotionCards: {
+      welcome: {
+        title: 'Velkommen til følelseskort!',
+        description: 'Hjælp dit barn med at genkende og udtrykke følelser gennem interaktive og sjove kort.',
+      },
+      together: {
+        title: 'Spil sammen',
+        description: 'Sid med dit barn og vend kort på skift. Lav ansigter sammen - det er mere sjovt!',
+      },
+      connect: {
+        title: 'Skab forbindelse',
+        description: 'Stil spørgsmål som "Hvornår følte du dig sådan?" for at hjælpe dit barn med at forstå følelser.',
+      },
+      scenarios: {
+        title: 'Opret scenarier',
+        description: 'Spil situationer der kan udløse hver følelse. "Hvordan ville du føle dig hvis dit legetøj gik i stykker?"',
+      },
+      themes: {
+        title: 'Prøv forskellige temaer',
+        description: 'Skift mellem emojis, dyr og bjørn temaer for at holde tingene friske og interessante!',
+      },
+    },
+    // Spelling Tips
+    spelling: {
+      welcome: {
+        title: 'Staveaktiviteter',
+        description: 'Velkommen til Stavning! Sjove interaktive aktiviteter, der hjælper dit barn med at lære bogstaver, ord og stavning.',
+      },
+      ages: {
+        title: 'Alderspassende Indhold',
+        description: 'Aktiviteter er grupperet efter alder. Brug karrusellen øverst til at filtrere efter dit barns niveau.',
+      },
+      together: {
+        title: 'Lær Sammen',
+        description: 'Sid med dit barn og stav bogstaverne sammen. Opmuntr dem og fejr hvert forsøg!',
+      },
+      benefit: {
+        title: 'Opbygning af Læsefærdigheder',
+        description: 'Tidlig staveøvelse udvikler fonemisk bevidsthed, bogstavgenkendelse og en kærlighed til ord, der varer hele livet.',
+      },
+    },
+    // Numbers Tips
+    numbers: {
+      welcome: {
+        title: 'Talaktiviteter',
+        description: 'Velkommen til Tal! Engagerende aktiviteter, der hjælper dit barn med at udforske tælling, former og tidlig matematik.',
+      },
+      ages: {
+        title: 'Alderspassende Indhold',
+        description: 'Aktiviteter er grupperet efter alder. Brug karrusellen øverst til at finde det rigtige niveau for dit barn.',
+      },
+      together: {
+        title: 'Tæl Sammen',
+        description: 'Tæl højt sammen, peg på genstande og gør tal til en del af den daglige leg!',
+      },
+      benefit: {
+        title: 'Opbygning af Regnefærdigheder',
+        description: 'Tidlig talleg udvikler logisk tænkning, mønstergenkendelse og et solidt fundament for matematik.',
+      },
+    },
+    // Feelings Tips
+    feelings: {
+      welcome: {
+        title: 'Følelsesaktiviteter',
+        description: 'Velkommen til Følelser! Aktiviteter, der hjælper dit barn med at genkende, navngive og forstå følelser.',
+      },
+      ages: {
+        title: 'Alderspassende Indhold',
+        description: 'Aktiviteter er grupperet efter alder. Vælg aktiviteter, der passer til dit barns følelsesmæssige udvikling.',
+      },
+      together: {
+        title: 'Udforsk Sammen',
+        description: 'Tal åbent om følelser. Spørg "Hvordan føles det?" og del også dine egne følelser.',
+      },
+      benefit: {
+        title: 'Følelsesmæssig Intelligens',
+        description: 'At forstå følelser opbygger empati, selvregulering og stærke sociale færdigheder — afgørende for livslang trivsel.',
+      },
+    },
+    // Practise Mode Tips
+    practise: {
+      welcome: {
+        title: 'Øvelsestilstand',
+        description: 'Lær at spille rigtige sange på forskellige instrumenter! Følg noderne og opbyg dine musikalske færdigheder trin for trin.',
+      },
+      instrument: {
+        title: 'Vælg Dit Instrument',
+        description: 'Stryg gennem karrusellen for at vælge dit yndlingsinstrument. Hvert har sin egen unikke lyd!',
+      },
+      songs: {
+        title: 'Vælg en Sang',
+        description: 'Gennemse sangbiblioteket og vælg en sang at lære. Sange er sorteret efter sværhedsgrad — start let og arbejd dig op!',
+      },
+      benefit: {
+        title: 'Musikalsk Udvikling',
+        description: 'At lære at spille sange udvikler rytme, koordination, hukommelse og koncentration — alt gennem glæden ved musik.',
+      },
+    },
+    // Freeplay Mode Tips
+    freeplay: {
+      welcome: {
+        title: 'Fri Leg Tilstand',
+        description: 'Ingen regler, bare sjov! Udforsk ethvert instrument og skab din egen musik. Perfekt til kreativitet og selvudfoldelse.',
+      },
+      instrument: {
+        title: 'Vælg Dit Instrument',
+        description: 'Vælg et instrument fra karrusellen. Prøv dem alle for at opdage nye lyde og favoritter!',
+      },
+      play: {
+        title: 'Spil Frit',
+        description: 'Tryk på de farvede knapper for at lave musik. Der er ingen forkerte toner — hver lyd er en del af eventyret!',
+      },
+      benefit: {
+        title: 'Kreativt Udtryk',
+        description: 'Fri musikalsk leg nærer kreativitet, selvtillid og en kærlighed til musik, der vokser med dit barn.',
       },
     },
   },
@@ -818,36 +950,179 @@ export default {
     guidelines: 'Sund skærmtid følger WHO/AAP anbefalinger',
     closeNotification: 'Luk meddelelse',
     educationalMessage: 'Prøv andre aktiviteter: Læs en bog eller leg udenfor eller leg kreativt!',
-    approachingMessage: 'Dagens skærmtid {{minutes}} minutter tilbage. Vil du fortsætte eller lukke appen?',
+    approachingMessage: 'Dagens skærmtid {{minutes}} minutter tilbage. Vil du fortsætte eller lukke appen? ',
     limitReachedMessage: 'Du har nået din daglige skærmtidsgrænse. Tid til at lukke appen og prøve andre aktiviteter!',
   },
+  // Relaxing music screen
+  relaxMusic: {
+    title: 'Et roligere sted',
+    screenTitle: 'Slap af',
+    subtitle: 'Tag et øjeblik. Pause. Slap lidt af.',
+    headphoneGuidance: 'For den bedste oplevelse, brug hovedtelefoner. Find en behagelig position, luk øjnene, og fokuser på din vejrtrækning.',
+    stopAll: 'Stop',
+    tipsTitle: 'Afslapningsteknikker',
+    tipsBody: 'Disse numre bruger binaurale beats — subtile frekvensforskelle mellem hvert øre, der opfordrer din hjerne til at slappe af. Høretelefoner er nødvendige for at effekten virker.\n\nPrøv disse simple teknikker mens du lytter:\n\nFirkant-vejrtrækning\nTræk vejret ind i 4 tællinger, hold 4, pust ud 4, hold 4. Gentag.\n\nKropsscanning\nStart fra tæerne og fokuser langsomt på hver del af kroppen. Bemærk spændinger og slap bevidst af.\n\n5-4-3-2-1 Jordforbindelse\nBemærk 5 ting du kan se, 4 du kan røre, 3 du kan høre, 2 du kan lugte og 1 du kan smage.\n\nTankeskyer\nForestil dig hver tanke som en sky, der driver forbi. Anerkend den og lad den passere.',
+  },
+
+    // Emotion cards
+  emotions: {
+    title: 'Følelser',
+    subtitle: 'Vælg din stil og lær om følelser',
+    greatJob: 'Godt klaret!',
+    sections: {
+      emotionCards: 'Følelseskort',
+      developingEmotions: 'Udvikling af følelser',
+      parentsToo: 'Forældre også',
+      parentsTooSubtitle: 'Vi har inkluderet noget til at hjælpe dig med at slappe af, du klarer det fantastisk.',
+      relaxingMusic: 'Afslappende musik',
+      relaxingMusicDescription: 'Beroligende lyde og afspændingssekvenser til at hjælpe dig med at slappe af',
+    },
+    pickYourStyle: 'Vælg din stil',
+    expressWithTheme: 'Udtryk {{emotion}} med {{theme}}!',
+    expressing: 'Jeg udtrykker {{emotion}}!',
+    loading: 'Indlæser...',
+    progress: 'Fremskridt: {{completed}}/{{total}}',
+    themes: {
+      emoji: {
+        name: 'Emojis',
+        description: 'Udtryk følelser med sjove emoji-ansigter',
+      },
+      animals: {
+        name: 'Dyr',
+        description: 'Lær følelser gennem søde dyrevenner',
+      },
+      bear: {
+        name: 'Bjørn',
+        description: 'Lær følelser med en venlig bjørn',
+      },
+    },
+    emoji: {
+      happy: 'Glad',
+      sad: 'Trist',
+      angry: 'Vred',
+      surprised: 'Overrasket',
+      scared: 'Bange',
+      excited: 'Begejstret',
+      confused: 'Forvirret',
+      proud: 'Stolt',
+      shy: 'Genert',
+      loving: 'Kærlig',
+    },
+    animals: {
+      happy: 'Glad kanin',
+      sad: 'Trist kat',
+      angry: 'Vred hund',
+      surprised: 'Overrasket kylling',
+      scared: 'Bange vaskebjørn',
+      excited: 'Begejstret ræv',
+      confused: 'Forvirret elefant',
+      proud: 'Stolt bjørn',
+      shy: 'Genert dovendyr',
+      loving: 'Kærlig panda',
+    },
+    bear: {
+      happy: 'Glad bjørn',
+      sad: 'Trist bjørn',
+      angry: 'Vred bjørn',
+      surprised: 'Overrasket bjørn',
+      scared: 'Bange bjørn',
+      excited: 'Begejstret bjørn',
+      confused: 'Forvirret bjørn',
+      proud: 'Stolt bjørn',
+      shy: 'Genert bjørn',
+      loving: 'Kærlig bjørn',
+    },
+    prompts: {
+      happy: [
+'Vis dit største smil!',
+'Kan du grine som om du har hørt noget sjovt? ',
+'Lav et glad ansigt og klap i dine hænder!',
+'Vis det ansigt du laver når du får en gave!',
+      ],
+      sad: [
+'Vis et trist ansigt',
+'Kan du trække på munden som om du har mistet dit legetøj? ',
+'Vis hvordan du føler dig når du skal sige farvel',
+'Lav et skuffet ansigt',
+      ],
+      angry: [
+'Vis et vred ansigt',
+'Kan du trække på munden som om du er vred? ',
+'Vis det ansigt du laver når nogen gør noget forkert og smider dit yndlingslegetøj',
+'Lav et trukket og brummende ansigt!',
+      ],
+      surprised: [
+'Vis et overrasket ansigt!',
+'Kan du åbne øjnene og munden? ',
+'Vis det ansigt du laver når du ser noget fantastisk!',
+'Lav et ansigt som om du har set et spøgelse!',
+      ],
+      scared: [
+'Vis et bange ansigt',
+'Kan du gemme dig bag dine hænder som om du er bange? ',
+'Vis hvordan du føler dig under en storm',
+'Lav et ansigt som om du har set noget skræmmende!',
+      ],
+      excited: [
+'Vis et begejstret ansigt!',
+'Kan du hoppe op og ned med et stort smil? ',
+'Vis det ansigt du laver når du skal til noget sjovt!',
+'Lav et begejstret ansigt og vink med dine hænder!',
+      ],
+      confused: [
+'Vis et forvirret ansigt',
+'Kan du trække på munden som om du tænker dybt? ',
+'Vis det ansigt du laver når du ikke forstår noget',
+'Lav et ansigt som om du løser et puslespil!',
+      ],
+      proud: [
+'Vis et stolt ansigt!',
+'Kan du stå opret og smile som om du har gjort noget fantastisk? ',
+'Vis det stolte ansigt du laver når du har løst et puslespil!',
+'Lav et ansigt som om du har hjulpet nogen!',
+      ],
+      shy: [
+'Vis et genert ansigt',
+'Kan du gemme dit ansigt lidt? ',
+'Vis det ansigt du laver når du møder nogen nyt',
+'Lav et genert smil og kig ned!',
+      ],
+      loving: [
+'Vis et kærligt ansigt!',
+'Kan du give dig selv en stor knus? ',
+'Vis det ansigt du laver når du ser på nogen du elsker!',
+'Lav et ansigt som om du giver et kys!',
+      ],
+    },
+  },
+
   // Music challenge UI strings
   music: {
     amazing: 'Fantastisk!',
     levelComplete: 'Niveau {{level}} gennemført!',
     playingYourSong: 'Afspiller din sang...',
     listeningToMelody: 'Lyt til din melodi...',
-    retry: '↻ Prøv igen',
+    retry: 'Prøv igen',
     goHarder: 'Øg sværhedsgrad',
     goHarderLevel: 'Øg sværhedsgrad (Nv {{level}})',
-    continueStory: 'Fortsæt historien →',
-    skip: 'Spring over →',
-    blowMode: '♪ Pust',
-    pressMode: '♫ Tryk',
-    blowing: '♪ Puster!',
+    continueStory: 'Fortsæt historien',
+    skip: 'Spring over',
+    blowMode: 'Pust',
+    pressMode: 'Tryk',
+    blowing: 'Puster!',
     blowWhileHolding: 'Pust mens du holder noterne',
     tryAgain: 'Prøv igen!',
     openMusicSheet: 'Åbn nodeark',
     showControls: 'Vis kontroller',
     hideControls: 'Skjul kontroller',
-    musicSheet: '♪ Nodeark',
+    musicSheet: 'Nodeark',
     notesToPlay: 'Noder at spille ({{completed}}/{{total}})',
     pause: 'Pause',
     preview: 'Forhåndsvisning',
     tapAndHoldNotes: 'Tryk og hold på noder for at høre dem',
     playingPreview: 'Afspiller forhåndsvisning… tryk Pause for at stoppe',
-    successSong: '♫ Successang',
-    readyToPlay: '♫ Klar til at spille',
+    successSong: ' Successang',
+    readyToPlay: ' Klar til at spille',
     chooseInstrument: 'Vælg dit instrument',
     swipeToExplore: 'Stryg for at udforske, tryk for at vælge',
     useThisInstrument: 'Brug dette instrument',
@@ -894,18 +1169,71 @@ export default {
       songOfBreak: 'Brud-sangen',
       songOfFix: 'Reparationssang',
     },
+    // Binaural / relaxation track titles and descriptions
+    tracks: {
+      tantrumAlpha: {
+        title: 'Raserianfald beroligende (10Hz)',
+        artist: 'Binaurale beats',
+        description: 'Alfabølger til at berolige under raserianfald. Brug høretelefoner.',
+      },
+      sleepAlpha: {
+        title: 'Ind i afslapning',
+        artist: 'Binaurale beats',
+        description: 'Alfabølger til at begynde afslapning. Gentages indtil stoppet.',
+      },
+      sleepTheta: {
+        title: 'Dyb afslapning',
+        artist: 'Binaurale beats',
+        description: 'Thetabølger til dyb afslapning. Gentages indtil stoppet.',
+      },
+      sleepSequence: {
+        title: 'Fuld afslapningssekvens',
+        artist: 'Binaurale beats',
+        description: 'Komplet forløb: Ind i afslapning → Dyb afslapning.',
+      },
+      bearsBirthdayParty: {
+        title: 'Bjørnens fødselsdag',
+        artist: 'Godnathistorie',
+        description: 'En varm historie om en bjørn, der fejrer en særlig fødselsdag.',
+      },
+      damselElephant: {
+        title: 'Damsel elefanten',
+        artist: 'Godnathistorie',
+        description: 'Følg med Damsel elefanten på et blødt eventyr.',
+      },
+      jimmyMouse: {
+        title: 'Jimmy Mus og storbyfolket',
+        artist: 'Godnathistorie',
+        description: 'En lille mus opdager den store by.',
+      },
+      newYearJungle: {
+        title: 'Nytår i junglen',
+        artist: 'Godnathistorie',
+        description: 'Jungledyrene fejrer nytår sammen.',
+      },
+      snowWhite: {
+        title: 'Snehvide',
+        artist: 'Godnathistorie',
+        description: 'Det klassiske eventyr om Snehvide, perfekt til sengetid.',
+      },
+    },
+    tags: {
+      calming: 'Beroligende',
+      bedtime: 'Sengetid',
+      stories: 'Historier',
+    },
   },
 
   jigsaw: {
     amazing: 'Fantastisk!',
-    beginPuzzle: '🧩 Start puslespil',
+    beginPuzzle: 'Start puslespil',
     completedMoves: 'Fuldført på {{count}} træk!',
-    continueStory: 'Fortsæt historien →',
+    continueStory: 'Fortsæt historien',
     preview: 'Forhåndsvisning',
     reset: 'Nulstil',
     scramble: 'Bland sammen',
     shuffle: 'Bland',
-    skip: 'Spring over →',
+    skip: 'Spring over',
     tapToClose: 'Tryk hvor som helst for at lukke',
   },
 
@@ -942,7 +1270,7 @@ export default {
     firstWordsDesc: 'Stav simple hverdagsord med farverige brikker',
     firstWordsAge: 'Alder 1-2',
     colourSpelling: 'Farvestaving',
-    colourSpellingDesc: 'Kan du stave regnbuens farver?',
+    colourSpellingDesc: 'Kan du stave regnbuens farver? ',
     colourSpellingAge: 'Alder 1-2',
     shapeNames: 'Formnavne',
     shapeNamesDesc: 'Stav cirkler, firkanter og mere!',
@@ -990,7 +1318,7 @@ export default {
     colourCountingDesc: 'Tæl farverige ting og lær tal!',
     colourCountingAge: 'Alder 1-2',
     shapeCounting: 'Formtælling',
-    shapeCountingDesc: 'Hvor mange former kan du tælle?',
+    shapeCountingDesc: 'Hvor mange former kan du tælle? ',
     shapeCountingAge: 'Alder 1-2',
     oneTwoThree: 'En, To, Tre!',
     oneTwoThreeDesc: 'Et blødt første tælleeventyr',
@@ -1002,7 +1330,7 @@ export default {
     animalCountingDesc: 'Tæl dyrene på gården og i junglen!',
     animalCountingAge: 'Alder 2-4',
     fruitCounting: 'Frugttælling',
-    fruitCountingDesc: 'Hvor mange frugter kan du tælle i kurven?',
+    fruitCountingDesc: 'Hvor mange frugter kan du tælle i kurven? ',
     fruitCountingAge: 'Alder 2-4',
     toyCounting: 'Legetøjstælling',
     toyCountingDesc: 'Tæl dine yndlingslegetøj og lær tal!',
@@ -1108,6 +1436,14 @@ export default {
     signInRequiredMessage: 'Du skal logge ind, før du kan abonnere. Dit abonnement bliver knyttet til din konto, så du kan bruge det på alle dine enheder.',
     signInRequiredConfirm: 'Log ind',
     signInRequiredCancel: 'Ikke nu',
+    errorTitle: 'Abonnementsfejl',
+    errorUnavailable: 'Denne plan er ikke tilgængelig lige nu. Prøv igen senere.',
+    errorGeneric: 'Noget gik galt. Prøv igen.',
+    restorePurchases: 'Gendan Køb',
+    restoreSuccessTitle: 'Køb Gendannet',
+    restoreSuccessMessage: 'Dit abonnement er blevet gendannet.',
+    restoreNoneTitle: 'Ingen Køb Fundet',
+    restoreNoneMessage: 'Vi kunne ikke finde nogen tidligere køb at gendanne.',
   },
 
   defaultPage: {

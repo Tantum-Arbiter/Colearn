@@ -32,7 +32,7 @@ const AnimatedPage: React.FC<AnimatedPageProps> = memo(function AnimatedPage({ p
   return (
     <Animated.View
       key={pageKey}
-      style={[styles.page, animatedStyle]}
+      style={[styles.page, animatedStyle, { zIndex: isActive ? 1 : 0 }]}
       pointerEvents={isActive ? 'auto' : 'none'}
     >
       {pageComponent || (
@@ -83,6 +83,7 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   const freeplayTranslateY = useSharedValue(currentPage === 'freeplay' ? 0 : screenHeight);
   const spellingTranslateY = useSharedValue(currentPage === 'spelling' ? 0 : screenHeight);
   const numbersTranslateY = useSharedValue(currentPage === 'numbers' ? 0 : screenHeight);
+  const feelingsTranslateY = useSharedValue(currentPage === 'feelings' ? 0 : screenHeight);
   const accountTranslateY = useSharedValue(currentPage === 'account' ? 0 : -screenHeight);
 
   // Map page keys to their animation values
@@ -96,6 +97,7 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
     freeplay: freeplayTranslateY,
     spelling: spellingTranslateY,
     numbers: numbersTranslateY,
+    feelings: feelingsTranslateY,
     account: accountTranslateY,
   };
 
@@ -127,6 +129,9 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
     }
     if (currentPage !== 'numbers') {
       numbersTranslateY.value = screenHeight;
+    }
+    if (currentPage !== 'feelings') {
+      feelingsTranslateY.value = screenHeight;
     }
     if (currentPage !== 'account') {
       // Account page slides down from top
@@ -186,6 +191,11 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
 
     numbersTranslateY.value = withTiming(
       currentPage === 'numbers' ? 0 : screenHeight,
+      animationConfig
+    );
+
+    feelingsTranslateY.value = withTiming(
+      currentPage === 'feelings' ? 0 : screenHeight,
       animationConfig
     );
 

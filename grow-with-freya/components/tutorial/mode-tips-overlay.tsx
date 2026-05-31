@@ -24,21 +24,23 @@ const TUTORIALS: Record<'record' | 'narrate', { id: TutorialId; steps: TutorialS
   narrate: { id: 'narrate_mode_tour', steps: NARRATE_MODE_TOUR_STEPS },
 };
 
-const STEP_ICONS: Record<string, string> = {
+type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
+
+const STEP_ICONS: Record<string, IoniconsName> = {
   // Record mode icons
-  'record_intro': '🎙️',
-  'record_button_tip': '🔴',
-  'playback_controls': '↺',
-  'record_sound_tip': '🔊',
-  'record_limit': '👨‍👩‍👧',
-  'record_benefit': '💜',
-  'record_navigation': '📖',
+  'record_intro': 'mic-outline',
+  'record_button_tip': 'radio-button-on',
+  'playback_controls': 'refresh-outline',
+  'record_sound_tip': 'volume-high-outline',
+  'record_limit': 'people-outline',
+  'record_benefit': 'heart-outline',
+  'record_navigation': 'book-outline',
   // Narrate mode icons
-  'narrate_intro': '🎧',
-  'auto_playback': '📖',
-  'narrate_controls': '▶️',
-  'narrate_sound_tip': '🔊',
-  'narrate_benefit': '💜',
+  'narrate_intro': 'headset-outline',
+  'auto_playback': 'book-outline',
+  'narrate_controls': 'play-outline',
+  'narrate_sound_tip': 'volume-high-outline',
+  'narrate_benefit': 'heart-outline',
 };
 
 /**
@@ -78,6 +80,14 @@ export function ModeTipsOverlay({ mode, isActive, forceShow = false, onClose }: 
       scale.value = withSpring(1, { damping: 15 });
     }
   }, [shouldShow, tutorial.id, opacity, scale, startTutorial, forceShow]);
+
+  // Clean up when page becomes inactive — dismiss any visible overlay
+  useEffect(() => {
+    if (!isActive && isVisible && !forceShow) {
+      setIsVisible(false);
+      completeTutorial();
+    }
+  }, [isActive, isVisible, completeTutorial, forceShow]);
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -147,7 +157,7 @@ export function ModeTipsOverlay({ mode, isActive, forceShow = false, onClose }: 
             // Landscape layout: icon on left, content on right
             <>
               <View style={[styles.iconContainer, { marginBottom: 0, marginRight: 16 }]}>
-                <Text style={styles.icon}>{STEP_ICONS[currentTip.id] || '📖'}</Text>
+                <Ionicons name={STEP_ICONS[currentTip.id] || 'book-outline'} size={36} color="#4ECDC4" />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.title, { marginBottom: 4 }]}>{t(currentTip.titleKey)}</Text>
@@ -178,7 +188,7 @@ export function ModeTipsOverlay({ mode, isActive, forceShow = false, onClose }: 
             // Portrait layout: vertical stack
             <>
               <View style={styles.iconContainer}>
-                <Text style={styles.icon}>{STEP_ICONS[currentTip.id] || '📖'}</Text>
+                <Ionicons name={STEP_ICONS[currentTip.id] || 'book-outline'} size={36} color="#4ECDC4" />
               </View>
 
               <Text style={styles.title}>{t(currentTip.titleKey)}</Text>
@@ -251,9 +261,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  icon: {
-    fontSize: 40,
-  },
+
   title: {
     fontSize: 20,
     fontFamily: Fonts.sans,
