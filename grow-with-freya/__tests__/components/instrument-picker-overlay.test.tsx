@@ -136,12 +136,11 @@ describe('InstrumentPickerOverlay', () => {
   });
 
   describe('placeholder rendering', () => {
-    it('should render emoji placeholders when instrument image is 0', () => {
+    it('should render Ionicons musical-note placeholder when instrument image is 0', () => {
       const { json } = renderVisible();
       // All test instruments have image: 0, so placeholders should show
-      expect(treeContainsText(json, '⭐')).toBe(true); // flute
-      expect(treeContainsText(json, '🌲')).toBe(true); // recorder
-      expect(treeContainsText(json, '🛡️')).toBe(true); // trumpet
+      // The component renders <Ionicons name="musical-note"> for placeholders
+      expect(treeContainsText(json, 'musical-note')).toBe(true);
     });
   });
 
@@ -254,8 +253,8 @@ describe('InstrumentPickerOverlay', () => {
         <InstrumentPickerOverlay visible={true} onSelect={jest.fn()} />
       );
       const json = result.toJSON();
-      // With empty noteLayout, fallback should be '🎵'
-      expect(treeContainsText(json, '🎵')).toBe(true);
+      // With empty noteLayout, fallback renders <Ionicons name="musical-note">
+      expect(treeContainsText(json, 'musical-note')).toBe(true);
     });
   });
 });

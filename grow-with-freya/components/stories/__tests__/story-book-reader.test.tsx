@@ -19,9 +19,16 @@ jest.mock('expo-linear-gradient', () => ({
 jest.mock('expo-screen-orientation', () => ({
   lockAsync: jest.fn(() => Promise.resolve()),
   unlockAsync: jest.fn(() => Promise.resolve()),
+  addOrientationChangeListener: jest.fn(() => ({ remove: jest.fn() })),
   OrientationLock: {
     LANDSCAPE: 'LANDSCAPE',
     PORTRAIT_UP: 'PORTRAIT_UP',
+  },
+  Orientation: {
+    LANDSCAPE_LEFT: 3,
+    LANDSCAPE_RIGHT: 4,
+    PORTRAIT_UP: 1,
+    PORTRAIT_DOWN: 2,
   },
 }));
 
@@ -253,7 +260,7 @@ describe('StoryBookReader', () => {
 
     const settingsButton = UNSAFE_root.findAll((node: any) => (
       typeof node.props?.onPress === 'function'
-      && extractNodeText(node).includes('☰')
+      && extractNodeText(node).includes('menu')
     ))[0];
 
     fireEvent.press(settingsButton);

@@ -91,9 +91,10 @@ describe('MusicSheetOverlay', () => {
   });
 
   describe('close button', () => {
-    it('should render the close button with ✕', () => {
+    it('should render the close button with Ionicons close icon', () => {
       const { json } = renderOverlay();
-      expect(treeContainsText(json, '✕')).toBe(true);
+      // Close button now uses <Ionicons name="close"> instead of ✕ text
+      expect(treeContainsText(json, 'close')).toBe(true);
     });
 
     it('should accept onClose callback prop and render the close button', () => {
@@ -101,8 +102,8 @@ describe('MusicSheetOverlay', () => {
       const { json } = renderOverlay({ onClose });
       // The Pressable close button is inside Animated.View, which the reanimated mock
       // renders as <div> -getByTestId and pressByTestId can't traverse into it.
-      // We verify the ✕ text renders and onClose is accepted without error.
-      expect(treeContainsText(json, '✕')).toBe(true);
+      // We verify the close icon renders and onClose is accepted without error.
+      expect(treeContainsText(json, 'close')).toBe(true);
       // onClose → Pressable interaction is verified via E2E tests
     });
   });

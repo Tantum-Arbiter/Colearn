@@ -23,6 +23,9 @@ const unlockAsync = jest.fn(() => Promise.resolve());
 const getOrientationAsync = jest.fn(() => Promise.resolve(Orientation.PORTRAIT_UP));
 const getOrientationLockAsync = jest.fn(() => Promise.resolve(OrientationLock.DEFAULT));
 
+const addOrientationChangeListener = jest.fn(() => ({ remove: jest.fn() }));
+const removeOrientationChangeListener = jest.fn();
+
 module.exports = {
   OrientationLock,
   Orientation,
@@ -30,4 +33,6 @@ module.exports = {
   unlockAsync,
   getOrientationAsync,
   getOrientationLockAsync,
+  addOrientationChangeListener,
+  removeOrientationChangeListener,
 };
