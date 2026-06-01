@@ -1,5 +1,4 @@
 export default {
-  // Common UI elements
   common: {
     back: 'Volver',
     backArrow: '← Volver',
@@ -31,8 +30,6 @@ export default {
     off: 'NO',
     openSettings: 'Abrir Configuración',
   },
-
-  // Alerts
   alerts: {
     logout: {
       title: 'Cerrar sesión',
@@ -80,8 +77,6 @@ export default {
       message: 'Error al crear el recordatorio. Por favor, inténtalo de nuevo.',
     },
   },
-
-  // Login screen
   login: {
     welcomeTitle: 'Bienvenido a\nEarlyroots Stories',
     subtitle: 'Inicia sesión para guardar el progreso de tu hijo y sincronizar entre dispositivos',
@@ -99,8 +94,6 @@ export default {
     connectionTimeoutMessage: 'El inicio de sesión ha expirado. Por favor, verifica tu conexión e inténtalo de nuevo.',
     ok: 'OK',
   },
-
-  // Guest mode info
   guestInfo: {
     title: 'Navegando como invitado',
     description: 'Puedes explorar Earlyroots Stories sin una cuenta, pero algunas funciones estarán limitadas.',
@@ -115,8 +108,6 @@ export default {
     subscriptionDescription: 'Earlyroots ofrece planes de suscripción que desbloquean nuestra biblioteca completa de historias interactivas, actividades musicales y contenido educativo. Inicia sesión en cualquier momento desde ajustes para mejorar y acceder a todo.',
     continueButton: 'Continuar como invitado',
   },
-
-  // Main menu
   menu: {
     stories: 'Cuentos',
     practise: 'Practicar',
@@ -127,8 +118,6 @@ export default {
     numbers: 'Números',
     feelings: 'Feelings',
   },
-
-  // Accessibility settings
   accessibility: {
     title: 'Accesibilidad',
     textSizeHint: 'Ajusta el tamaño del texto y los botones para mejor visibilidad',
@@ -142,8 +131,6 @@ export default {
     blueLightAndroid: 'Ajustes → Pantalla → Luz nocturna (o Confort visual) → Activar',
     blueLightBenefit: 'La luz azul de las pantallas puede afectar el sueño. Activar el modo nocturno por la noche ayuda al cerebro de tu hijo a prepararse para dormir al reducir las longitudes de onda azules estimulantes.',
   },
-
-  // Story selection
   stories: {
     title: 'Cuentos',
     genreStories: 'Cuentos de {{genre}}',
@@ -178,8 +165,6 @@ export default {
       rhymes: 'Rimas',
     },
   },
-
-  // Story reader
   reader: {
     tapToContinue: 'Toca para continuar',
     tapToBegin: 'Toca para comenzar',
@@ -231,8 +216,6 @@ export default {
     delete: 'Eliminar',
     cancel: 'Cancelar',
   },
-
-  // Story mode selection (book preview overlay)
   storyMode: {
     read: 'Leer',
     record: 'Grabar',
@@ -253,8 +236,6 @@ export default {
     nameAlreadyExists: 'El nombre ya existe',
     nameAlreadyExistsMessage: 'Ya existe una voz llamada "{{name}}". Por favor elige otro nombre.',
   },
-
-  // Story preview modal
   storyPreview: {
     audience: 'Audiencia',
     ages: 'Edades {{range}}',
@@ -267,8 +248,6 @@ export default {
     removeConfirm: '¿Eliminar "{{title}}" de este dispositivo? Puedes descargarlo de nuevo en cualquier momento.',
     preInstalledNotice: 'Este cuento viene preinstalado con la app. No se puede eliminar y no cuenta para tu límite de descargas.',
   },
-
-  // Story completion
   completion: {
     theEnd: 'Fin',
     wellDone: '¡Muy bien!',
@@ -276,8 +255,6 @@ export default {
     rereadStory: 'Leer de nuevo',
     backToMenu: 'Volver al menú',
   },
-
-  // Screen time
   screenTime: {
     title: 'Tiempo de pantalla',
     todayUsage: 'Uso de hoy',
@@ -351,8 +328,6 @@ export default {
     fri: 'Vie',
     sat: 'Sáb',
   },
-
-  // Reminders
   reminders: {
     title: 'Recordatorios personalizados',
     createTitle: 'Crear recordatorio',
@@ -454,8 +429,6 @@ export default {
       },
     },
   },
-
-  // Account screen
   account: {
     title: 'Cuenta',
     profile: 'Perfil',
@@ -480,8 +453,6 @@ export default {
     deleteAccount: 'Eliminar cuenta',
     deleteAccountHint: 'Eliminar permanentemente tu cuenta y todos los datos',
   },
-
-  // Profile validation and edit profile screen
   profile: {
     enterNickname: 'Por favor ingresa un apodo',
     nicknameTooLong: 'El apodo debe tener 20 caracteres o menos',
@@ -495,8 +466,6 @@ export default {
     saveChanges: 'Guardar Cambios',
     comingSoon: ' ¡Más opciones de personalización de perfil próximamente - aún en desarrollo!',
   },
-
-  // Onboarding
   onboarding: {
     welcome: '¡Bienvenido!',
     letsGetStarted: 'Comencemos',
@@ -577,8 +546,6 @@ export default {
       consent: 'Tu consentimiento protege a tu familia',
     },
   },
-
-  // Tutorial
   tutorial: {
     welcomeTitle: '¡Bienvenido a\nEarlyroots!',
     welcomeDescription: 'Hagamos un recorrido rápido para ayudarte a ti y a tu hijo a aprovechar al máximo la hora del cuento.',
@@ -632,60 +599,182 @@ export default {
       },
     },
     screenTime: {
-      intro: { title: 'Panel de Tiempo de Pantalla', description: 'Rastrea y administra el tiempo de pantalla diario de tu hijo.' },
-      ageBased: { title: 'Límites por Edad', description: 'Establece la edad de tu hijo para obtener límites recomendados automáticamente.' },
-      heatmap: { title: 'Actividad Semanal', description: 'Ve patrones en el uso del tiempo de pantalla durante la semana.' },
-      reminders: { title: 'Configura Recordatorios', description: 'Crea recordatorios personalizados para actividades y descansos.' },
-      routine: { title: 'Construye Rutinas Saludables', description: 'Usa los datos para establecer rutinas diarias consistentes.' },
+      intro: {
+        title: 'Panel de Tiempo de Pantalla',
+        description: 'Rastrea y administra el tiempo de pantalla diario de tu hijo.',
+      },
+      ageBased: {
+        title: 'Límites por Edad',
+        description: 'Establece la edad de tu hijo para obtener límites recomendados automáticamente.',
+      },
+      heatmap: {
+        title: 'Actividad Semanal',
+        description: 'Ve patrones en el uso del tiempo de pantalla durante la semana.',
+      },
+      reminders: {
+        title: 'Configura Recordatorios',
+        description: 'Crea recordatorios personalizados para actividades y descansos.',
+      },
+      routine: {
+        title: 'Construye Rutinas Saludables',
+        description: 'Usa los datos para establecer rutinas diarias consistentes.',
+      },
     },
     storyReader: {
-      welcome: { title: 'Consejos para la Hora del Cuento', description: '¡Aquí hay consejos para hacer mágica la hora del cuento!' },
-      interactive: { title: 'Busca Interacciones', description: '¡Algunas páginas tienen sorpresas ocultas! Anima a tu hijo a tocar objetos.' },
-      point: { title: 'Señala y Discute', description: 'Haz preguntas sobre las imágenes. "¿Qué ves?" "¿De qué color es?"' },
-      pause: { title: 'Pausa y Predice', description: 'Antes de voltear la página, pregunta "¿Qué crees que pasará?"' },
-      voices: { title: 'Usa Diferentes Voces', description: '¡Dale vida a los personajes con voces graciosas!' },
-      navigate: { title: 'Navegación Fácil', description: 'Desliza para pasar páginas. Toca el menú para más opciones.' },
-      tapWords: { title: 'Toca Palabras para Enfocar', description: '¡Toca cualquier palabra en el cuento para resaltarla! Esto ayuda a enfocar la atención y hace la lectura más interactiva y atractiva.' },
-      compareLanguages: { title: 'Comparar Idiomas', description: '¡Usa el menú para habilitar "Comparar idiomas" y ver el cuento en dos idiomas lado a lado. Perfecto para familias multilingües que aprenden juntas!' },
+      welcome: {
+        title: 'Consejos para la Hora del Cuento',
+        description: '¡Aquí hay consejos para hacer mágica la hora del cuento!',
+      },
+      interactive: {
+        title: 'Busca Interacciones',
+        description: '¡Algunas páginas tienen sorpresas ocultas! Anima a tu hijo a tocar objetos.',
+      },
+      point: {
+        title: 'Señala y Discute',
+        description: 'Haz preguntas sobre las imágenes. "¿Qué ves?" "¿De qué color es?"',
+      },
+      pause: {
+        title: 'Pausa y Predice',
+        description: 'Antes de voltear la página, pregunta "¿Qué crees que pasará?"',
+      },
+      voices: {
+        title: 'Usa Diferentes Voces',
+        description: '¡Dale vida a los personajes con voces graciosas!',
+      },
+      navigate: {
+        title: 'Navegación Fácil',
+        description: 'Desliza para pasar páginas. Toca el menú para más opciones.',
+      },
+      tapWords: {
+        title: 'Toca Palabras para Enfocar',
+        description: '¡Toca cualquier palabra en el cuento para resaltarla! Esto ayuda a enfocar la atención y hace la lectura más interactiva y atractiva.',
+      },
+      compareLanguages: {
+        title: 'Comparar Idiomas',
+        description: '¡Usa el menú para habilitar "Comparar idiomas" y ver el cuento en dos idiomas lado a lado. Perfecto para familias multilingües que aprenden juntas!',
+      },
     },
     bookMode: {
-      read: { title: 'Modo Lectura', description: 'Toca aquí para leer el cuento con tu hijo a tu propio ritmo.' },
-      record: { title: 'Modo Grabación', description: 'Graba tu voz leyendo el cuento. ¡Perfecto cuando no estás!' },
-      narrate: { title: 'Modo Escucha', description: 'Escucha una narración pregrabada. ¡Genial para dormir!' },
-      preview: { title: 'Vista Previa', description: 'Ve detalles del cuento antes de comenzar a leer.' },
+      read: {
+        title: 'Modo Lectura',
+        description: 'Toca aquí para leer el cuento con tu hijo a tu propio ritmo.',
+      },
+      record: {
+        title: 'Modo Grabación',
+        description: 'Graba tu voz leyendo el cuento. ¡Perfecto cuando no estás!',
+      },
+      narrate: {
+        title: 'Modo Escucha',
+        description: 'Escucha una narración pregrabada. ¡Genial para dormir!',
+      },
+      preview: {
+        title: 'Vista Previa',
+        description: 'Ve detalles del cuento antes de comenzar a leer.',
+      },
     },
     recordMode: {
-      intro: { title: 'Graba Tu Voz', description: 'Crea una narración personal que tu hijo pueda escuchar cuando no estés.' },
-      button: { title: 'Controles de Grabación', description: 'Toca el micrófono para grabar. Lee el texto en voz alta.' },
-      playback: { title: 'Revisa Tu Grabación ↺', description: 'Escucha tu grabación y vuelve a grabar si es necesario.' },
-      sound: { title: 'Consejo de Sonido', description: 'Encuentra un lugar tranquilo para mejor calidad.' },
-      limit: { title: 'Voces Familiares', description: '¡Múltiples familiares pueden grabar! Abuelos, tíos, todos.' },
-      benefit: { title: '¿Por Qué Grabar? ', description: 'Escuchar una voz familiar ayuda a los niños a sentirse seguros.' },
-      navigation: { title: 'Navega Páginas', description: 'Usa las flechas para moverte entre páginas.' },
+      intro: {
+        title: 'Graba Tu Voz',
+        description: 'Crea una narración personal que tu hijo pueda escuchar cuando no estés.',
+      },
+      button: {
+        title: 'Controles de Grabación',
+        description: 'Toca el micrófono para grabar. Lee el texto en voz alta.',
+      },
+      playback: {
+        title: 'Revisa Tu Grabación ↺',
+        description: 'Escucha tu grabación y vuelve a grabar si es necesario.',
+      },
+      sound: {
+        title: 'Consejo de Sonido',
+        description: 'Encuentra un lugar tranquilo para mejor calidad.',
+      },
+      limit: {
+        title: 'Voces Familiares',
+        description: '¡Múltiples familiares pueden grabar! Abuelos, tíos, todos.',
+      },
+      benefit: {
+        title: '¿Por Qué Grabar? ',
+        description: 'Escuchar una voz familiar ayuda a los niños a sentirse seguros.',
+      },
+      navigation: {
+        title: 'Navega Páginas',
+        description: 'Usa las flechas para moverte entre páginas.',
+      },
     },
     narrateMode: {
-      intro: { title: 'Modo Escucha', description: '¡Relájate y disfruta! El cuento se leerá en voz alta.' },
-      autoPlayback: { title: 'Auto-Reproducción', description: 'Las páginas pasan automáticamente. ¡Perfecto para dormir!' },
-      controls: { title: 'Controles de Reproducción', description: 'Pausa, repite o salta usando los controles.' },
-      sound: { title: 'Consejo de Sonido', description: '¡Asegúrate de que el volumen esté alto! Usa auriculares.' },
-      benefit: { title: 'Tiempo de Conexión', description: 'Mantente involucrado, señala imágenes y haz preguntas.' },
+      intro: {
+        title: 'Modo Escucha',
+        description: '¡Relájate y disfruta! El cuento se leerá en voz alta.',
+      },
+      autoPlayback: {
+        title: 'Auto-Reproducción',
+        description: 'Las páginas pasan automáticamente. ¡Perfecto para dormir!',
+      },
+      controls: {
+        title: 'Controles de Reproducción',
+        description: 'Pausa, repite o salta usando los controles.',
+      },
+      sound: {
+        title: 'Consejo de Sonido',
+        description: '¡Asegúrate de que el volumen esté alto! Usa auriculares.',
+      },
+      benefit: {
+        title: 'Tiempo de Conexión',
+        description: 'Mantente involucrado, señala imágenes y haz preguntas.',
+      },
     },
     settings: {
-      intro: { title: 'Configuración', description: 'Personaliza la app para tu familia.' },
-      login: { title: 'Cuenta y Sincronización', description: 'Inicia sesión para guardar tu progreso.' },
-      language: { title: 'Idioma', description: 'Elige tu idioma preferido.' },
-      avatar: { title: 'Tu Avatar', description: 'Personaliza la experiencia de tu hijo.' },
-      accessibility: { title: 'Accesibilidad', description: 'Ajusta el tamaño del texto.' },
-      screenTime: { title: 'Tiempo de Pantalla', description: 'Establece límites saludables.' },
+      intro: {
+        title: 'Configuración',
+        description: 'Personaliza la app para tu familia.',
+      },
+      login: {
+        title: 'Cuenta y Sincronización',
+        description: 'Inicia sesión para guardar tu progreso.',
+      },
+      language: {
+        title: 'Idioma',
+        description: 'Elige tu idioma preferido.',
+      },
+      avatar: {
+        title: 'Tu Avatar',
+        description: 'Personaliza la experiencia de tu hijo.',
+      },
+      accessibility: {
+        title: 'Accesibilidad',
+        description: 'Ajusta el tamaño del texto.',
+      },
+      screenTime: {
+        title: 'Tiempo de Pantalla',
+        description: 'Establece límites saludables.',
+      },
     },
-    // Music Mode Tips - keys match tutorial.musicMode.* in tutorial-content.ts
     musicMode: {
-      welcome: { title: 'Modo Música', description: '¡Algunas páginas de esta historia tienen desafíos musicales! Toca notas en un instrumento virtual para completarlos.' },
-      instrument: { title: 'Elige Tu Instrumento', description: 'Cuando se abre un libro con música, desliza el carrusel para elegir tu instrumento favorito. ¡Cada uno tiene sonidos únicos!' },
-      playing: { title: 'Tocar Notas', description: '¡Presiona los botones de colores para tocar notas. Sigue la secuencia mostrada arriba para completar el desafío!' },
-      sheet: { title: 'Partitura Musical', description: '¡Toca el botón de nota musical (abajo a la izquierda) para ver todas las notas que necesitas tocar. ¡Incluso puedes escuchar una vista previa de la melodía!' },
-      begin: { title: 'Comenzar a Tocar', description: 'Cuando llegues a una página musical, toca el botón \'Comenzar a Tocar\' en la parte superior para iniciar el desafío. ¡Primero abre la partitura para que puedas ver qué tocar!' },
-      change: { title: 'Cambiar Instrumento', description: '¿Quieres probar un sonido diferente? Abre el menú () y toca \'Cambiar Instrumento\' para cambiar en cualquier momento.' },
+      welcome: {
+        title: 'Modo Música',
+        description: '¡Algunas páginas de esta historia tienen desafíos musicales! Toca notas en un instrumento virtual para completarlos.',
+      },
+      instrument: {
+        title: 'Elige Tu Instrumento',
+        description: 'Cuando se abre un libro con música, desliza el carrusel para elegir tu instrumento favorito. ¡Cada uno tiene sonidos únicos!',
+      },
+      playing: {
+        title: 'Tocar Notas',
+        description: '¡Presiona los botones de colores para tocar notas. Sigue la secuencia mostrada arriba para completar el desafío!',
+      },
+      sheet: {
+        title: 'Partitura Musical',
+        description: '¡Toca el botón de nota musical (abajo a la izquierda) para ver todas las notas que necesitas tocar. ¡Incluso puedes escuchar una vista previa de la melodía!',
+      },
+      begin: {
+        title: 'Comenzar a Tocar',
+        description: 'Cuando llegues a una página musical, toca el botón \'Comenzar a Tocar\' en la parte superior para iniciar el desafío. ¡Primero abre la partitura para que puedas ver qué tocar!',
+      },
+      change: {
+        title: 'Cambiar Instrumento',
+        description: '¿Quieres probar un sonido diferente? Abre el menú () y toca \'Cambiar Instrumento\' para cambiar en cualquier momento.',
+      },
     },
     storyModes: {
       welcome: {
@@ -706,18 +795,37 @@ export default {
       },
     },
     gestures: {
-      speakerLongPress: { title: 'Mantén Presionado', description: 'Mantén presionado el altavoz para más opciones.' },
-      storySwipe: { title: 'Desliza para Navegar', description: 'Desliza para pasar páginas rápidamente.' },
+      speakerLongPress: {
+        title: 'Mantén Presionado',
+        description: 'Mantén presionado el altavoz para más opciones.',
+      },
+      storySwipe: {
+        title: 'Desliza para Navegar',
+        description: 'Desliza para pasar páginas rápidamente.',
+      },
     },
-    // Emotion Cards Tips
     emotionCards: {
-      welcome: { title: '¡Bienvenido a Tarjetas de Emociones!', description: 'Ayuda a tu hijo a reconocer y expresar emociones a través de tarjetas interactivas.' },
-      together: { title: 'Juega Juntos', description: 'Siéntate con tu hijo y túrnense para voltear tarjetas. ¡Hagan las emociones juntos!' },
-      connect: { title: 'Haz Conexiones', description: 'Pregunta "¿Cuándo te sentiste así?" para ayudar a tu hijo a entender sus emociones.' },
-      scenarios: { title: 'Crea Escenarios', description: 'Actúa situaciones que podrían causar cada emoción. "¿Cómo te sentirías si se rompiera tu juguete?"' },
-      themes: { title: 'Prueba Diferentes Temas', description: '¡Cambia entre emoji, animales y oso para mantenerlo fresco!' },
+      welcome: {
+        title: '¡Bienvenido a Tarjetas de Emociones!',
+        description: 'Ayuda a tu hijo a reconocer y expresar emociones a través de tarjetas interactivas.',
+      },
+      together: {
+        title: 'Juega Juntos',
+        description: 'Siéntate con tu hijo y túrnense para voltear tarjetas. ¡Hagan las emociones juntos!',
+      },
+      connect: {
+        title: 'Haz Conexiones',
+        description: 'Pregunta "¿Cuándo te sentiste así?" para ayudar a tu hijo a entender sus emociones.',
+      },
+      scenarios: {
+        title: 'Crea Escenarios',
+        description: 'Actúa situaciones que podrían causar cada emoción. "¿Cómo te sentirías si se rompiera tu juguete?"',
+      },
+      themes: {
+        title: 'Prueba Diferentes Temas',
+        description: '¡Cambia entre emoji, animales y oso para mantenerlo fresco!',
+      },
     },
-    // Spelling Tips
     spelling: {
       welcome: {
         title: 'Actividades de Ortografía',
@@ -736,7 +844,6 @@ export default {
         description: 'La práctica temprana de la ortografía desarrolla la conciencia fonémica, el reconocimiento de letras y el amor por las palabras que dura toda la vida.',
       },
     },
-    // Numbers Tips
     numbers: {
       welcome: {
         title: 'Actividades de Números',
@@ -755,7 +862,6 @@ export default {
         description: 'El juego temprano con números desarrolla el pensamiento lógico, el reconocimiento de patrones y una base sólida para las matemáticas.',
       },
     },
-    // Feelings Tips
     feelings: {
       welcome: {
         title: 'Actividades de Sentimientos',
@@ -774,7 +880,6 @@ export default {
         description: 'Comprender las emociones desarrolla la empatía, la autorregulación y fuertes habilidades sociales — esenciales para el bienestar de toda la vida.',
       },
     },
-    // Practise Mode Tips
     practise: {
       welcome: {
         title: 'Modo Práctica',
@@ -793,7 +898,6 @@ export default {
         description: 'Aprender a tocar canciones desarrolla el ritmo, la coordinación, la memoria y la concentración — todo a través de la alegría de la música.',
       },
     },
-    // Freeplay Mode Tips
     freeplay: {
       welcome: {
         title: 'Modo Libre',
@@ -813,8 +917,6 @@ export default {
       },
     },
   },
-
-  // Parents only modal
   parentsOnly: {
     title: 'Solo para padres',
     typeAnimalName: 'Escribe el nombre del animal',
@@ -831,8 +933,6 @@ export default {
       camel: 'camello',
     },
   },
-
-  // Screen time warning modal
   screenTimeWarning: {
     approachingLimit: 'Advertencia de tiempo de pantalla',
     limitReached: 'Límite diario alcanzado',
@@ -845,39 +945,37 @@ export default {
     limitReachedMessage: 'Se ha alcanzado el límite diario de tiempo de pantalla. ¡Es hora de cerrar la aplicación y probar otras actividades!',
     suggestions: {
       spelling: {
-        1: 'Practica escribir las letras que aprendiste con lápiz y papel juntos',
-        2: 'Señala y nombra objetos por la casa — ¿cuántos puedes deletrear?',
-        3: 'Lean juntos un libro favorito y encuentren las letras que practicaron',
+        '1': 'Practica escribir las letras que aprendiste con lápiz y papel juntos',
+        '2': 'Señala y nombra objetos por la casa — ¿cuántos puedes deletrear?',
+        '3': 'Lean juntos un libro favorito y encuentren las letras que practicaron',
       },
       counting: {
-        1: 'Cuenten los pasos mientras caminan juntos por la casa o el jardín',
-        2: 'Clasifica juguetes por color, tamaño o forma — ¿cuántos grupos puedes hacer?',
-        3: 'Cocinen algo sencillo juntos y cuenten los ingredientes',
+        '1': 'Cuenten los pasos mientras caminan juntos por la casa o el jardín',
+        '2': 'Clasifica juguetes por color, tamaño o forma — ¿cuántos grupos puedes hacer?',
+        '3': 'Cocinen algo sencillo juntos y cuenten los ingredientes',
       },
       instruments: {
-        1: 'Canten juntos su canción favorita o inventen una nueva y divertida',
-        2: '¡Hagan ritmo con ollas, sartenes y cucharas de madera — una banda de cocina!',
-        3: 'Salgan a caminar y escuchen — ¿cuántos sonidos diferentes pueden oír?',
+        '1': 'Canten juntos su canción favorita o inventen una nueva y divertida',
+        '2': '¡Hagan ritmo con ollas, sartenes y cucharas de madera — una banda de cocina!',
+        '3': 'Salgan a caminar y escuchen — ¿cuántos sonidos diferentes pueden oír?',
       },
       feelings: {
-        1: '¡Dibujen juntos caras con diferentes emociones — feliz, triste, sorprendido!',
-        2: 'Hablen sobre cómo se sienten los personajes de su libro favorito',
-        3: 'Jueguen a adivinar emociones — actúen una emoción para el otro',
+        '1': '¡Dibujen juntos caras con diferentes emociones — feliz, triste, sorprendido!',
+        '2': 'Hablen sobre cómo se sienten los personajes de su libro favorito',
+        '3': 'Jueguen a adivinar emociones — actúen una emoción para el otro',
       },
       stories: {
-        1: 'Vuelvan a contar la historia que leyeron usando juguetes o títeres',
-        2: 'Dibuja tu personaje o escena favorita del cuento',
-        3: 'Actúen juntos la historia — túrnense para ser diferentes personajes',
+        '1': 'Vuelvan a contar la historia que leyeron usando juguetes o títeres',
+        '2': 'Dibuja tu personaje o escena favorita del cuento',
+        '3': 'Actúen juntos la historia — túrnense para ser diferentes personajes',
       },
       general: {
-        1: 'Lean un libro juntos y hablen sobre las imágenes',
-        2: 'Salgan a explorar la naturaleza — busquen hojas, insectos o nubes',
-        3: 'Hagan juego creativo — dibujar, construir o juego de imaginación',
+        '1': 'Lean un libro juntos y hablen sobre las imágenes',
+        '2': 'Salgan a explorar la naturaleza — busquen hojas, insectos o nubes',
+        '3': 'Hagan juego creativo — dibujar, construir o juego de imaginación',
       },
     },
   },
-
-  // Relaxing music screen
   relaxMusic: {
     title: 'Un lugar más tranquilo',
     screenTitle: 'Relajar',
@@ -887,8 +985,6 @@ export default {
     tipsTitle: 'Técnicas de relajación',
     tipsBody: 'Estas pistas usan latidos binaurales — diferencias sutiles de frecuencia entre cada oído que animan a tu cerebro a relajarse. Se requieren auriculares para que funcione.\n\nPrueba estas técnicas sencillas mientras escuchas:\n\nRespiración cuadrada\nInhala 4 tiempos, mantén 4, exhala 4, mantén 4. Repite.\n\nEscaneo corporal\nDesde los dedos de los pies, enfócate lentamente en cada parte del cuerpo. Nota cualquier tensión y relájala conscientemente.\n\nAnclaje 5-4-3-2-1\nNota 5 cosas que ves, 4 que tocas, 3 que oyes, 2 que hueles y 1 que saboreas.\n\nNubes de pensamientos\nImagina cada pensamiento como una nube que cruza el cielo. Reconócelo y déjalo pasar.',
   },
-
-    // Emotion cards
   emotions: {
     title: 'Sentimientos',
     subtitle: 'Elige tu estilo y aprende sobre sentimientos',
@@ -958,69 +1054,67 @@ export default {
     },
     prompts: {
       happy: [
-'¡Muéstrame tu mayor sonrisa!',
-'¿Puedes reír como si hubieras escuchado algo gracioso? ',
-'¡Pon una cara feliz y aplaude!',
-'¡Muéstrame cómo te ves cuando recibes un regalo!',
+        '¡Muéstrame tu mayor sonrisa!',
+        '¿Puedes reír como si hubieras escuchado algo gracioso? ',
+        '¡Pon una cara feliz y aplaude!',
+        '¡Muéstrame cómo te ves cuando recibes un regalo!',
       ],
       sad: [
-'Muéstrame una cara triste',
-'¿Puedes poner una cara como si hubieras perdido tu juguete? ',
-'Muéstrame cómo te sientes cuando tienes que despedirte',
-'Pon una cara de puchero como cuando estás decepcionado',
+        'Muéstrame una cara triste',
+        '¿Puedes poner una cara como si hubieras perdido tu juguete? ',
+        'Muéstrame cómo te sientes cuando tienes que despedirte',
+        'Pon una cara de puchero como cuando estás decepcionado',
       ],
       angry: [
-'Muéstrame una cara enojada',
-'¿Puedes arrugar la cara como si estuvieras enfadado? ',
-'Muéstrame cómo te ves cuando alguien malo tira tu juguete favorito',
-'¡Pon una cara gruñona con los brazos cruzados!',
+        'Muéstrame una cara enojada',
+        '¿Puedes arrugar la cara como si estuvieras enfadado? ',
+        'Muéstrame cómo te ves cuando alguien malo tira tu juguete favorito',
+        '¡Pon una cara gruñona con los brazos cruzados!',
       ],
       surprised: [
-'¡Muéstrame una cara de sorpresa!',
-'¿Puedes abrir los ojos y la boca muy grandes? ',
-'¡Muéstrame cómo te ves cuando ves algo increíble!',
-'¡Pon una cara como si acabaras de ver magia!',
+        '¡Muéstrame una cara de sorpresa!',
+        '¿Puedes abrir los ojos y la boca muy grandes? ',
+        '¡Muéstrame cómo te ves cuando ves algo increíble!',
+        '¡Pon una cara como si acabaras de ver magia!',
       ],
       scared: [
-'Muéstrame una cara asustada',
-'¿Puedes esconderte detrás de tus manos como si tuvieras miedo? ',
-'Muéstrame cómo te ves durante una tormenta',
-'¡Pon una cara como si hubieras visto algo espeluznante!',
+        'Muéstrame una cara asustada',
+        '¿Puedes esconderte detrás de tus manos como si tuvieras miedo? ',
+        'Muéstrame cómo te ves durante una tormenta',
+        '¡Pon una cara como si hubieras visto algo espeluznante!',
       ],
       excited: [
-'¡Muéstrame lo emocionado que puedes estar!',
-'¿Puedes saltar arriba y abajo con una gran sonrisa? ',
-'¡Muéstrame tu cara cuando vas a un lugar divertido!',
-'¡Pon una cara emocionada y mueve las manos!',
+        '¡Muéstrame lo emocionado que puedes estar!',
+        '¿Puedes saltar arriba y abajo con una gran sonrisa? ',
+        '¡Muéstrame tu cara cuando vas a un lugar divertido!',
+        '¡Pon una cara emocionada y mueve las manos!',
       ],
       confused: [
-'Muéstrame una cara confundida',
-'¿Puedes arrugar las cejas como si estuvieras pensando mucho? ',
-'Muéstrame cómo te ves cuando no entiendes algo',
-'¡Pon una cara como si estuvieras resolviendo un rompecabezas!',
+        'Muéstrame una cara confundida',
+        '¿Puedes arrugar las cejas como si estuvieras pensando mucho? ',
+        'Muéstrame cómo te ves cuando no entiendes algo',
+        '¡Pon una cara como si estuvieras resolviendo un rompecabezas!',
       ],
       proud: [
-'¡Muéstrame lo orgulloso que estás!',
-'¿Puedes ponerte derecho y sonreír como si hubieras hecho algo genial? ',
-'¡Muéstrame tu cara de orgullo cuando terminas un rompecabezas!',
-'¡Pon una cara como si acabaras de ayudar a alguien!',
+        '¡Muéstrame lo orgulloso que estás!',
+        '¿Puedes ponerte derecho y sonreír como si hubieras hecho algo genial? ',
+        '¡Muéstrame tu cara de orgullo cuando terminas un rompecabezas!',
+        '¡Pon una cara como si acabaras de ayudar a alguien!',
       ],
       shy: [
-'Muéstrame una cara tímida',
-'¿Puedes esconder tu cara un poquito? ',
-'Muéstrame cómo te ves cuando conoces a alguien nuevo',
-'¡Haz una sonrisa tímida y mira hacia abajo!',
+        'Muéstrame una cara tímida',
+        '¿Puedes esconder tu cara un poquito? ',
+        'Muéstrame cómo te ves cuando conoces a alguien nuevo',
+        '¡Haz una sonrisa tímida y mira hacia abajo!',
       ],
       loving: [
-'¡Muéstrame tu cara de cariño!',
-'¿Puedes darte un gran abrazo? ',
-'¡Muéstrame cómo miras a alguien que quieres!',
-'¡Pon una cara como si estuvieras dando besitos!',
+        '¡Muéstrame tu cara de cariño!',
+        '¿Puedes darte un gran abrazo? ',
+        '¡Muéstrame cómo miras a alguien que quieres!',
+        '¡Pon una cara como si estuvieras dando besitos!',
       ],
     },
   },
-
-  // Music challenge UI strings
   music: {
     amazing: '¡Increíble!',
     levelComplete: '¡Nivel {{level}} completado!',
@@ -1057,7 +1151,11 @@ export default {
     backToMenu: 'Volver',
     noSongsAvailable: 'No hay canciones disponibles para este instrumento',
     freeplayPrompt: 'Juego libre -¡toca cualquier nota!',
-    difficulty: { easy: 'Fácil', medium: 'Medio', hard: 'Difícil' },
+    difficulty: {
+      easy: 'Fácil',
+      medium: 'Medio',
+      hard: 'Difícil',
+    },
     songs: {
       hotCrossBuns: 'Bollos cruzados',
       rainRain: 'Lluvia, lluvia, vete ya',
@@ -1093,7 +1191,6 @@ export default {
       songOfBreak: 'Canción de la rotura',
       songOfFix: 'Canción de la reparación',
     },
-    // Binaural / relaxation track titles and descriptions
     tracks: {
       tantrumAlpha: {
         title: 'Calmante de rabietas (10Hz)',
@@ -1147,7 +1244,6 @@ export default {
       stories: 'Cuentos',
     },
   },
-
   jigsaw: {
     amazing: '¡Increíble!',
     beginPuzzle: 'Comenzar rompecabezas',
@@ -1160,8 +1256,6 @@ export default {
     skip: 'Saltar',
     tapToClose: 'Toca en cualquier lugar para cerrar',
   },
-
-  // Story mode selection
   storyModes: {
     interactive: 'Interactivo',
     interactiveDesc: 'Aventuras táctiles, de rompecabezas y aprendizaje',
@@ -1173,16 +1267,12 @@ export default {
     filterJigsaw: 'Rompecabezas',
     filterLearning: 'Aprendizaje',
   },
-
-  // Audio settings modal
   audioSettings: {
     title: 'Configuración de audio',
     masterVolume: 'Volumen principal',
     music: 'Música',
     voiceOver: 'Narración',
   },
-
-  // Learning activities
   learning: {
     spellingTitle: 'Deletreo',
     numbersTitle: 'Números',
@@ -1279,7 +1369,6 @@ export default {
     subtractionFun: 'Restas Divertidas',
     subtractionFunDesc: '¡Resta números en aventuras de historias divertidas!',
     subtractionFunAge: 'Edades 4+',
-    // Feelings
     happyFaces: 'Happy Faces',
     happyFacesDesc: 'Explore happy expressions and learn about joy!',
     happyFacesAge: 'Ages 1-2',
@@ -1325,9 +1414,26 @@ export default {
     selfEsteemStars: 'Self-Esteem Stars',
     selfEsteemStarsDesc: 'Discover what makes you special and unique!',
     selfEsteemStarsAge: 'Ages 4+',
+    age12: 'Ages 1-2',
+    age24: 'Ages 2-4',
+    age4plus: 'Ages 4+',
+    storyPicker: {
+      choose: 'Choose a story to play',
+      pages: '{{count}} pages',
+    },
+    activityMode: {
+      play: 'Play',
+      preview: 'Preview',
+      tapToBegin: 'Tap to begin',
+    },
+    activityPreview: {
+      ageRange: 'Age Range',
+      ages: 'Ages {{range}}',
+      type: 'Type',
+      playActivity: 'Play',
+      aboutThisActivity: 'About this activity',
+    },
   },
-
-  // Subscription overlay
   subscription: {
     unlockPlan: 'Desbloquea un plan',
     choosePlan: 'Elige el plan que mejor se adapte a tu familia',
@@ -1356,7 +1462,6 @@ export default {
     detailAllInstruments: 'Todos los instrumentos desbloqueados',
     detailEverythingPremium: 'Todo lo de Premium',
     detailSave25: 'Ahorra un 25% respecto al plan mensual',
-    // Guest mode -sign-in required
     signInToSubscribe: 'Inicia sesión para suscribirte',
     signInRequiredTitle: 'Inicio de sesión requerido',
     signInRequiredMessage: 'Debes iniciar sesión antes de suscribirte. Tu suscripción se vinculará a tu cuenta para que puedas acceder desde todos tus dispositivos.',
@@ -1371,8 +1476,6 @@ export default {
     restoreNoneTitle: 'No Se Encontraron Compras',
     restoreNoneMessage: 'No pudimos encontrar compras anteriores para restaurar.',
   },
-
-  // Default page content
   defaultPage: {
     comingSoon: '¡Próximamente!',
     stories: {
@@ -1716,8 +1819,6 @@ export default {
       },
     },
   },
-
-  // Game screens
   games: {
     wellDone: 'Well Done!',
     roundComplete: 'You finished the round — great work!',
@@ -1725,17 +1826,14 @@ export default {
     nextPage: 'Next page',
     showHint: 'Show hint',
     hideHint: 'Hide hint',
-      tryAgain: 'Try another letter!',
+    tryAgain: 'Try another letter!',
     tryAgainWord: 'Try another word!',
     chooseLetter: 'Choose a letter:',
     chooseWord: 'Choose a word:',
     nextWord: 'Next word',
   },
-
-  // ── Spelling Stories ─────────────────────────────────────────────────
   spelling: {
     stories: {
-      // Story 1: "Owl Can't Sleep" — abc-animals (easy)
       owlCantSleep: {
         title: 'Owl Can\'t Sleep',
         page1: 'Owl flew to the cosy barn. Someone was purring softly on a warm hay bale. Who is it? Can you spell their name?',
@@ -1744,7 +1842,6 @@ export default {
         page4: 'In the muddy pen, someone was curled up in the straw, fast asleep with a tiny snore.',
         page5: 'All his friends are sleeping soundly. Owl yawns his biggest yawn — "Goodnight, everyone." Now spell Owl\'s own name!',
       },
-      // Story 2: "Teddy's Big Day Out" — first-words (easy)
       teddysDayOut: {
         title: 'Teddy\'s Big Day Out',
         page1: 'Teddy Bear has escaped from the toy box! By the front door, he left something he likes to wear on his head.',
@@ -1753,7 +1850,6 @@ export default {
         page4: 'Oh dear — Teddy got sleepy! He climbed up onto the softest place in the bedroom.',
         page5: 'Time to go home! Teddy waved goodbye and hopped onto the big red thing that goes beep beep!',
       },
-      // Story 3: "The Painter Mouse" — colour-spelling (easy)
       painterMouse: {
         title: 'The Painter Mouse',
         page1: 'A tiny mouse discovers magical paintbrushes! The roses have lost their colour. What colour should they be?',
@@ -1762,7 +1858,6 @@ export default {
         page4: 'The treasure chest is empty! It needs a shimmering, sparkling colour to look beautiful again.',
         page5: 'The last brush! The old stone wall needs its colour. Mouse paints the final stroke — the world is beautiful again!',
       },
-      // Story 4: "Shapes in the Clouds" — shape-names (easy)
       shapesInClouds: {
         title: 'Shapes in the Clouds',
         page1: 'Lying on the warm grass on a sunny afternoon, you look up. That cloud has five beautiful points — it looks just like a...',
@@ -1771,7 +1866,6 @@ export default {
         page4: 'That pointy cloud looks like an ice cream! It\'s shaped just like a...',
         page5: 'The last cloud is smooth and rounded, like an egg. What shape is that? It\'s an...',
       },
-      // Story 5: "First Day Friends" — my-name (easy)
       firstDayFriends: {
         title: 'First Day Friends',
         page1: 'It\'s the first day at nursery! The coat pegs have name labels but someone mixed them all up. The girl with the biggest smile needs her peg — her name starts with M...',
@@ -1780,7 +1874,6 @@ export default {
         page4: 'The girl who brought flowers from her garden for the teacher — can you help her find her peg?',
         page5: 'And this kind boy who helped tidy up at the end of the day. He deserves his peg too! What\'s his name?',
       },
-      // Story 6: "Wombat Counts the Stars" — wombat-spelling (medium)
       wombatStars: {
         title: 'Wombat Counts the Stars',
         page1: 'As the sun dips below the hills, Wombat climbs his favourite lookout spot. A big, round, glowing light appears in the sky — it\'s the...',
@@ -1789,7 +1882,6 @@ export default {
         page4: 'Wombat\'s eyes grow heavy. He curls up under the sparkly sky and has the most wonderful...',
         page5: 'In his dream, Wombat meets a soft, cuddly friend who gives him a warm hug. It\'s a friendly...',
       },
-      // Story 7: "The Jungle Welcomes You" — animal-spelling (medium)
       jungleWelcome: {
         title: 'The Jungle Welcomes You',
         page1: 'You step into the jungle and hear a gentle clip-clop sound. Through the trees, a magnificent creature with a flowing mane appears!',
@@ -1798,7 +1890,6 @@ export default {
         page4: 'Deep in the bamboo forest, a gentle black-and-white friend is munching on leaves. So peaceful!',
         page5: 'High up in a eucalyptus tree, someone fluffy and grey is having a nap. Spell their name and they\'ll wave!',
       },
-      // Story 8: "Bear's Hungry Tummy" — food-spelling (medium)
       bearHungry: {
         title: 'Bear\'s Hungry Tummy',
         page1: 'Bear\'s tummy is rumbling! He opens the kitchen door. Something warm and golden just came out of the oven. It smells delicious!',
@@ -1807,7 +1898,6 @@ export default {
         page4: 'Pop! Something just popped up from the toaster, warm and crunchy. Perfect with butter and jam!',
         page5: 'For dessert, Bear picks a sweet, tropical fruit that\'s orange and juicy inside. What a feast!',
       },
-      // Story 9: "The Enchanted Castle" — story-spelling (hard)
       enchantedCastle: {
         title: 'The Enchanted Castle',
         page1: 'You open a magical storybook and — whoosh — you\'re pulled right inside! Before you stands a grand building with tall towers and a drawbridge...',
@@ -1815,6 +1905,1098 @@ export default {
         page3: 'The creature leads you to the throne room, where the wisest and kindest ruler of all the land smiles warmly.',
         page4: 'To find your way home, you must journey through a place full of ancient trees, dappled sunlight and birdsong.',
         page5: 'At the heart of it all, a swirl of sparkles appears. The book glows — this is the power that will take you home!',
+      },
+      farmyardFriends: {
+        title: 'Farmyard Friends',
+        page1: 'The farmyard gate opens! A big spotted friend chews the grass. Can you spell their name?',
+        page2: 'In the ___, a sneaky ___ peeks out!',
+        page3: 'Buzz buzz! A tiny stripy visitor lands on a flower.',
+        page4: 'Behind the barn, the ___ lays an ___!',
+        page5: 'The farmer\'s muddy pink friend splashes in the puddle. Spell their name!',
+      },
+      bugHunt: {
+        title: 'Bug Hunt',
+        page1: 'We\'re going on a bug hunt! A buzzy friend lands on your hand.',
+        page2: 'Under the ___, a tiny ___ carries a leaf!',
+        page3: 'Whoo-whoo! Up in the tree, a wise bird watches.',
+        page4: 'A fluffy red ___ dashes by to ___!',
+        page5: 'Your faithful friend waits at the garden gate, wagging their tail!',
+      },
+      pondLife: {
+        title: 'Pond Life',
+        page1: 'Down by the pond, a fluffy red tail disappears into the bushes!',
+        page2: 'Across the field, the ___ says ___!',
+        page3: 'Oink oink! A muddy friend rolls in the wet ground by the pond.',
+        page4: 'The ___ starts to ___!',
+        page5: 'A soft furry friend is purring on the sunny path. Spell their name!',
+      },
+      barnDance: {
+        title: 'Barn Dance',
+        page1: 'The barn is ready for a dance! A red feathered friend struts in first.',
+        page2: 'Next, the ___ slides through the ___!',
+        page3: 'Moo! A big spotted dancer joins the party.',
+        page4: 'From the rafters, the ___ calls ___!',
+        page5: 'The last dancer has a beautiful bushy tail. Who is it?',
+      },
+      kitchenAdventure: {
+        title: 'Kitchen Adventure',
+        page1: 'Time for breakfast! You need something to drink from. What do you need?',
+        page2: '___ pours the ___.',
+        page3: 'Quick! Pack your things in something you carry on your shoulder!',
+        page4: '___ puts on a ___.',
+        page5: 'After a busy day, you climb into something soft and cosy.',
+      },
+      parkDay: {
+        title: 'Park Day',
+        page1: 'What a lovely day! The big warm thing shines up in the sky.',
+        page2: 'It\'s so ___! Grab your ___.',
+        page3: 'Here it comes, rumbling down the road! Jump on!',
+        page4: 'Don\'t forget your ___, ___!',
+        page5: 'Who is waiting at the park gate with a big smile?',
+      },
+      rainyMorning: {
+        title: 'Rainy Morning',
+        page1: 'Pitter patter! You\'ll need something on your head today.',
+        page2: 'Pour some warm tea into your ___. It\'s ___.',
+        page3: 'Who is reading the newspaper at the table?',
+        page4: 'Look! The ___ is coming out — it\'s getting ___!',
+        page5: 'The big thing that takes you to school splashes through puddles!',
+      },
+      bedtimeRoutine: {
+        title: 'Bedtime Routine',
+        page1: 'Yawn! Time to get into something soft and warm.',
+        page2: '___ gives you a big ___.',
+        page3: 'Before sleep, a warm milky drink in your favourite container.',
+        page4: '___ has a little ___ too.',
+        page5: 'Close your eyes. Tomorrow the warm bright thing will rise again!',
+      },
+      rainbowGarden: {
+        title: 'Rainbow Garden',
+        page1: 'A rainbow arcs over the garden! The sky behind it is a beautiful colour.',
+        page2: 'The ___ roses are bright as the ___!',
+        page3: 'The butterflies shimmer with a precious, warm glow.',
+        page4: 'The ___ flowers sway under the ___.',
+        page5: 'As the clouds come, the garden goes a gentle soft colour.',
+      },
+      paintSplash: {
+        title: 'Paint Splash',
+        page1: 'Splish splash! The first pot of paint tips over — what a pretty colour!',
+        page2: 'Now ___ it with ___ paint!',
+        page3: 'A bright, warm colour splashes across the canvas.',
+        page4: 'Sprinkle some ___ for the ___!',
+        page5: 'The final colour makes everything fresh and zingy!',
+      },
+      sunsetColours: {
+        title: 'Sunset Colours',
+        page1: 'The sun is setting! The sky turns a warm, shiny colour.',
+        page2: 'The clouds go ___. They ___.',
+        page3: 'As darkness comes, the sky turns a gentle, quiet colour.',
+        page4: 'The last ___ of sunset fades to ___.',
+        page5: 'Night falls and the sky is a deep, peaceful colour.',
+      },
+      colourParade: {
+        title: 'Colour Parade',
+        page1: 'A parade of colours marches through town! First up, bright and zesty!',
+        page2: 'The ___ float comes through the ___.',
+        page3: 'A shiny, jewel-like colour on the next float!',
+        page4: 'Then ___ as the ___!',
+        page5: 'The last float is the warmest colour of all!',
+      },
+      shapeParty: {
+        title: 'Shape Party',
+        page1: 'Welcome to the shape party! A present arrives in something with four sides.',
+        page2: 'The ___ balloons ___!',
+        page3: 'The party hats are pointy at the top!',
+        page4: 'Look up! The ___ decorations fill the ___!',
+        page5: 'The cake is a funny rounded shape — not quite a circle!',
+      },
+      shapeIsland: {
+        title: 'Shape Island',
+        page1: 'You arrive on Shape Island! A sparkling circle greets you.',
+        page2: 'In the ___, you find a ___ treasure chest!',
+        page3: 'Up in the sky, a five-pointed shape glitters brightly!',
+        page4: 'An ice cream ___ melts in the ___!',
+        page5: 'The island is made of a special 3D square shape!',
+      },
+      shapeTreasure: {
+        title: 'Shape Treasure',
+        page1: 'X marks the spot! The treasure is inside a special 3D shape.',
+        page2: 'The ___ key unlocks the ___!',
+        page3: 'A small, round mark on the map shows the way.',
+        page4: 'Follow the ___ doorway using the ___!',
+        page5: 'The treasure glows! It\'s shaped like the brightest thing in the night sky.',
+      },
+      shapeRace: {
+        title: 'Shape Race',
+        page1: 'Ready, set, go! The first racer zooms through a curved doorway.',
+        page2: 'A tiny ___ bounces to ___!',
+        page3: 'The sparkly circle racer rolls around the bend!',
+        page4: 'The ___ racer tumbles to ___!',
+        page5: 'And the winner crosses the finish line — it\'s the four-sided friend!',
+      },
+      nameGarden: {
+        title: 'Name Garden',
+        page1: 'Welcome to the Name Garden! The first name tag blooms.',
+        page2: '___ and ___ find their flowers too!',
+        page3: 'A bolt of energy sparks a new name tag!',
+        page4: '___ and ___ water their flowers.',
+        page5: 'The last name tag blooms beautifully in the garden!',
+      },
+      nameStars: {
+        title: 'Name Stars',
+        page1: 'The night sky lights up with names! The first star twinkles.',
+        page2: '___ and ___ shine brightly!',
+        page3: 'A flower-like star blooms in the constellation.',
+        page4: '___ and ___ join the sky!',
+        page5: 'The bravest star roars into the night!',
+      },
+      namePicnic: {
+        title: 'Name Picnic',
+        page1: 'Time for a name picnic! The first friend arrives.',
+        page2: '___ and ___ bring sandwiches!',
+        page3: 'A cuddly friend joins with honey!',
+        page4: '___ and ___ share the blanket!',
+        page5: 'The last friend arrives with a basket of flowers!',
+      },
+      nameRainbow: {
+        title: 'Name Rainbow',
+        page1: 'A rainbow of names! The first colour spells out a brave name.',
+        page2: '___ and ___ add their colours!',
+        page3: 'A friendly name joins the rainbow.',
+        page4: '___ and ___ make it brighter!',
+        page5: 'The final name completes the rainbow!',
+      },
+      wombatPicnic: {
+        title: 'Wombat\'s Starlit Picnic',
+        page1: 'The night sky twinkles! Wombat lays out a blanket under the shining lights.',
+        page2: 'The ___ starts to ___ and it\'s so ___!',
+        page3: 'Wombat lights something warm and cosy to see by.',
+        page4: 'In a ___, under the ___, a ___ appears!',
+        page5: 'Wombat yawns happily. Time to close those eyes.',
+      },
+      wombatDream: {
+        title: 'Wombat\'s Dream',
+        page1: 'The sky goes dark. Wombat snuggles into the burrow.',
+        page2: 'A ___ shape drifts, so ___, like a friendly ___.',
+        page3: 'Wombat starts to see wonderful pictures in sleep.',
+        page4: 'Time to ___, the ___ glows, the ___ shines.',
+        page5: 'In the dream, a twinkling light guides the way!',
+      },
+      wombatGarden: {
+        title: 'Wombat\'s Garden',
+        page1: 'Wombat wanders into the garden. A cuddly friend waves hello!',
+        page2: 'The ___ and ___ light the ___ brightly.',
+        page3: 'A fluffy shape floats overhead.',
+        page4: 'Time to ___! The ___ makes the ___ cosy.',
+        page5: 'Wombat sees magical pictures as eyes close.',
+      },
+      wombatSnow: {
+        title: 'Wombat\'s Snowy Evening',
+        page1: 'A soft glow appears in the sky. Wombat looks up in wonder.',
+        page2: 'The ___ is ___! A ___ drifts past.',
+        page3: 'Wombat curls up. Eyes start to feel heavy.',
+        page4: 'A ___ twinkles, the ___ comes, a ___ appears.',
+        page5: 'Something warm and cosy lights the way home.',
+      },
+      safariSunrise: {
+        title: 'Safari Sunrise',
+        page1: 'The safari jeep rumbles! A magnificent striped cat prowls past.',
+        page2: 'An ___ starts to ___! Over the ___ it flies!',
+        page3: 'Splash! The ocean\'s gentle giant surfaces for air.',
+        page4: 'A ___ shakes its ___ and begins to ___.',
+        page5: 'In the bamboo grove, a black and white friend munches peacefully.',
+      },
+      oceanAnimals: {
+        title: 'Ocean Animals',
+        page1: 'Dive under the waves! A huge, gentle creature sings a song.',
+        page2: 'On the ___, a sleepy ___ naps in a ___.',
+        page3: 'Back on land, a fluffy white friend stands in the field.',
+        page4: 'A ___ lets out a ___! What a big ___!',
+        page5: 'Soaring high, a majestic bird rides the wind.',
+      },
+      mountainAnimals: {
+        title: 'Mountain Animals',
+        page1: 'Up the mountain path! A grey cuddly friend sleeps in a tree.',
+        page2: 'The ___ has soft ___ on the ___.',
+        page3: 'Clip-clop! A strong, beautiful creature trots along the ridge.',
+        page4: 'A ___ runs so ___! Watch it ___!',
+        page5: 'Near the peak, a striped cat watches the sunset.',
+      },
+      animalBedtime: {
+        title: 'Animal Bedtime',
+        page1: 'The farm is getting sleepy. A fluffy white friend counts itself!',
+        page2: 'A ___ starts to ___. So ___ and warm.',
+        page3: 'The majestic bird folds its wings on a high perch.',
+        page4: 'The ___ ocean giant stays ___ in the ___.',
+        page5: 'The cuddly grey friend is already fast asleep!',
+      },
+      picnicBasket: {
+        title: 'Picnic Basket',
+        page1: 'Time for a picnic! Little purple fruits fill the basket.',
+        page2: 'Some ___ bread, so ___, in a ___.',
+        page3: 'A tropical orange fruit adds sweetness!',
+        page4: 'Fresh ___ slices, so ___, with ___!',
+        page5: 'A big round green fruit is the perfect refreshment!',
+      },
+      bakingDay: {
+        title: 'Baking Day',
+        page1: 'The kitchen smells amazing! Something golden pops out of the toaster.',
+        page2: 'A ___ has ___ cheese in the ___!',
+        page3: 'A bowl of fresh leaves and vegetables for lunch.',
+        page4: 'Purple ___ go in the ___ to ___.',
+        page5: 'Dinner is long, twisty noodles with sauce!',
+      },
+      fruitFeast: {
+        title: 'Fruit Feast',
+        page1: 'A huge green fruit leads the fruit parade!',
+        page2: 'The ___ is ___ and ___.',
+        page3: 'Something warm and golden from the bakery.',
+        page4: 'The ___ is ___ in a special ___.',
+        page5: 'The feast ends with everyone\'s cheesy favourite!',
+      },
+      kitchenMagic: {
+        title: 'Kitchen Magic',
+        page1: 'The magic pot bubbles with twisty noodles!',
+        page2: 'Fresh ___ leaves, gently ___!',
+        page3: 'With a wave of the spoon, a cheesy disc appears!',
+        page4: 'A cool ___ fruit, a small ___.',
+        page5: 'The purple fruits appear for dessert. Magic!',
+      },
+      forestWalk: {
+        title: 'Forest Walk',
+        page1: 'A golden shape drifts down from the trees. Catch it!',
+        page2: 'Pitter-patter! Drops fall into the ___.',
+        page3: 'Look! A tiny green shoot pushes through the soil.',
+        page4: 'A smooth ___ sits by the ___.',
+        page5: 'A cosy home made of twigs sits in the branches.',
+      },
+      riverAdventure: {
+        title: 'River Adventure',
+        page1: 'A still pool of water reflects the sky. Beautiful!',
+        page2: 'A curly ___ grows by the ___.',
+        page3: 'Drip, drip! Water falls from the grey sky.',
+        page4: 'A golden ___ floats by a tiny ___.',
+        page5: 'Soft green cushions cover the stones by the water.',
+      },
+      hilltopView: {
+        title: 'Hilltop View',
+        page1: 'At the top! A smooth, round stone marks the summit.',
+        page2: 'A cosy ___ of twigs and ___.',
+        page3: 'Curly green fronds wave in the breeze.',
+        page4: 'Drops of ___ soak the ___.',
+        page5: 'A tiny shoot sprouts between the rocks!',
+      },
+      meadowMorning: {
+        title: 'Meadow Morning',
+        page1: 'Soft green cushions cover the old stone wall.',
+        page2: 'A tiny ___ pushes through the ___.',
+        page3: 'A cosy twig home peeps out from the hedge.',
+        page4: 'A still ___ reflects a curly ___.',
+        page5: 'A golden shape floats down. Good morning!',
+      },
+      rainyDayNature: {
+        title: 'Rainy Day Nature',
+        page1: 'Drip, drip, drip! Water falls from the sky.',
+        page2: 'Soft green ___ grows by the ___.',
+        page3: 'A golden shape lands in a puddle!',
+        page4: 'A cosy ___ stays dry on the ___.',
+        page5: 'Curly green fronds dance in the drops.',
+      },
+      gardenSunrise: {
+        title: 'Garden Sunrise',
+        page1: 'The garden wakes up! A beautiful flower opens its petals.',
+        page2: 'Tiny ___ curl in the ___, stretching their ___.',
+        page3: 'A tall green wall of leaves stands at the garden edge.',
+        page4: 'Watch out for the ___! Water trickles through the ___.',
+        page5: 'Something delicious grows on the tree. Pick it!',
+      },
+      gardenRain: {
+        title: 'Garden Rain',
+        page1: 'Rain falls on the garden! Deep underground, something drinks it up.',
+        page2: 'A ___ opens wide, the ___ shelters the ___.',
+        page3: 'A single, delicate part of a flower catches a raindrop.',
+        page4: 'The ___ ripens in the ___, despite the ___.',
+        page5: 'The tree stands strong, its thick middle keeping everything steady.',
+      },
+      gardenNight: {
+        title: 'Garden at Night',
+        page1: 'The roses show off their protective prickles in the moonlight.',
+        page2: 'The ___ holds strong, ___ drink deeply, ___ nod.',
+        page3: 'The soil rests. Everything grows while we sleep.',
+        page4: 'A ___ and ___ shimmer with dew. The ___ is ripe.',
+        page5: 'Trickle, trickle. The garden stream flows gently on.',
+      },
+      gardenSpring: {
+        title: 'Garden in Spring',
+        page1: 'Babbling water brings life to the garden!',
+        page2: 'The ___ is rich, the ___ bloom, each ___ unfurls.',
+        page3: 'The old tree stretches its thick middle toward the sun.',
+        page4: 'Flowers ___ and ___ grow green. A ___ appears!',
+        page5: 'Deep underground, something reaches down, down, down.',
+      },
+      gardenHarvest: {
+        title: 'Garden Harvest',
+        page1: 'Autumn! Time to pick the ripe, delicious things from the tree.',
+        page2: 'Water trickles through the ___. The ___ stands tall, the ___ is rich.',
+        page3: 'One last beautiful flower opens for the season.',
+        page4: 'Deep ___ hold firm. A ___ catches the breeze. A ___ gleams.',
+        page5: 'The tall green wall of leaves turns golden. Beautiful!',
+      },
+      wordFactory: {
+        title: 'The Word Factory',
+        page1: 'The word factory starts up! Water bursts from the first machine.',
+        page2: 'Cross the ___ to reach the next ___! It\'s ___!',
+        page3: 'The next machine whirs and something zooms through the air!',
+        page4: 'A ___ flows through the ___ into the ___ below.',
+        page5: 'The final word glows with amazement!',
+      },
+      wordQuest: {
+        title: 'Word Quest',
+        page1: 'The quest begins at a crossing over the river!',
+        page2: 'Something ___ blocks the ___! It\'s a ___!',
+        page3: 'Look up! A distant world hangs in the night sky.',
+        page4: 'Through the ___, past the ___, up goes the ___!',
+        page5: 'The quest ends as the sun goes down. What a view!',
+      },
+      wordForest: {
+        title: 'Word Forest',
+        page1: 'Brrr! Everything is covered in ice crystals.',
+        page2: 'Past the ___, through the ___, over the ___.',
+        page3: 'A sparkling ribbon of water cuts through the trees.',
+        page4: 'A distant ___, full of ___, past the ___!',
+        page5: 'The word forest blooms into a beautiful place!',
+      },
+      wordStar: {
+        title: 'Word Star',
+        page1: 'The word star rises over a beautiful, colourful place!',
+        page2: 'A ___ of water, full of ___, through the ___!',
+        page3: 'The sun paints the sky in warm colours.',
+        page4: 'A ___ crossing the ___. The ___ flows on.',
+        page5: 'With a whoosh, something soars up into the sky!',
+      },
+      wordOcean: {
+        title: 'Word Ocean',
+        page1: 'Dive in! The word ocean is full of amazement!',
+        page2: 'Something flies through the ___, past a ___, into the ___!',
+        page3: 'Splish splash! Water bursts from the deep.',
+        page4: 'Through the ___, a distant ___, crossing the ___!',
+        page5: 'A glittering ribbon of water leads the way home.',
+      },
+      sentenceParty: {
+        title: 'Sentence Party',
+        page1: 'Miaow! A furry friend sits on the mat. Spell what you see!',
+        page2: 'A ___ comes bounding over! It ___ and has a ___!',
+        page3: 'Hooray! Everyone plays together in the garden.',
+        page4: '___ on the bench. Time to ___ — grab ___!',
+        page5: 'Boing! Up in the air!',
+      },
+      sentenceForest: {
+        title: 'Sentence Forest',
+        page1: 'Woof! A friendly creature bounds through the trees.',
+        page2: 'A furry ___ friend! ___ together! ___!',
+        page3: 'Look! Something smart and red sits on a branch.',
+        page4: '___ on the log. Time to ___. Where is ___?',
+        page5: 'Quick feet carry someone far through the woods!',
+      },
+      sentenceBeach: {
+        title: 'Sentence Beach',
+        page1: 'The sandcastle is done! Time to head somewhere cosy.',
+        page2: 'Pack up ___! Everyone ___ for ___.',
+        page3: 'Someone finds a comfy spot on a towel.',
+        page4: 'A ___ brings ice cream! ___ and ___!',
+        page5: 'Something smart and red dries in the sun.',
+      },
+      sentenceNight: {
+        title: 'Sentence Night',
+        page1: 'Stars appear! A cuddly thing sits on the pillow.',
+        page2: '___ high! A furry ___ and a ___.',
+        page3: 'Quick feet race to brush teeth before bedtime!',
+        page4: '___ together. A ___. Time to ___.',
+        page5: 'Someone sits quietly, reading one more page.',
+      },
+      sentencePark: {
+        title: 'Sentence Park',
+        page1: 'Boing! Someone jumps over the puddles.',
+        page2: 'Time to ___. The ___ follows! ___.',
+        page3: 'A furry friend chases leaves on the path.',
+        page4: '___ across the field! Pack up ___. ___ waits.',
+        page5: 'Something smart and red blows away in the wind!',
+      },
+      trickyIsland: {
+        title: 'Tricky Island',
+        page1: 'That\'s plenty! You have more than you need on this island.',
+        page2: 'Lots of ___ are here! Your best ___ waves. Time for ___!',
+        page3: 'Land ho! A tropical place surrounded by water!',
+        page4: 'A grand ___ with a brave ___! Time to ___.',
+        page5: 'Something round, juicy and colourful grows on the tree!',
+      },
+      trickyJungle: {
+        title: 'Tricky Jungle',
+        page1: 'Your best pal waves from the vines! Spell who they are.',
+        page2: 'A grand ___ towers over the ___. A ___ grows on the tree!',
+        page3: 'All the folk in the jungle gather around the campfire.',
+        page4: 'You have ___ for ___! A ___ waves from the shadows.',
+        page5: 'Shhh! Pay attention carefully to the jungle sounds.',
+      },
+      trickyCastle: {
+        title: 'Tricky Castle',
+        page1: 'A grand building with tall towers rises from the mist!',
+        page2: 'A brave ___ asks you to ___! All the ___ cheer!',
+        page3: 'The bell rings! Time to learn something new.',
+        page4: 'Your best ___ finds a ___ to eat. You\'ve had ___!',
+        page5: 'Across the water, a tropical place appears!',
+      },
+      trickyOcean: {
+        title: 'Tricky Ocean',
+        page1: 'Clink! A brave warrior in shining armour appears on deck.',
+        page2: 'A ___ fruit rolls across the deck. That\'s ___! The ___ is grand!',
+        page3: 'Shhh! Pay attention to the sound of the waves.',
+        page4: 'Time for ___! The ___ ahead is tropical. Your ___ smiles.',
+        page5: 'All the folk on the ship cheer as land appears!',
+      },
+      trickyMountain: {
+        title: 'Tricky Mountain',
+        page1: 'Ding ding! A bell rings at the mountain-top building.',
+        page2: 'Time to ___! Your ___ climbs beside you. The ___ shines.',
+        page3: 'Something round, juicy and colourful in your lunch box!',
+        page4: 'All the ___ at the summit! The ___ is grand! The ___ awaits!',
+        page5: 'That\'s plenty! You\'ve climbed high enough for today.',
+      },
+      dragonLibrary: {
+        title: 'The Dragon\'s Library',
+        page1: 'In a dusty library, a book glows. A scaly creature appears on the cover!',
+        page2: 'Through the ___, past the ___! The ___ sparkles.',
+        page3: 'The creature leads you across a grand crossing over the river.',
+        page4: 'A ___ on the wall begins to ___! Something ___ shimmers.',
+        page5: 'The answer is written on an ancient rolled-up paper!',
+      },
+      moonlitPath: {
+        title: 'The Moonlit Path',
+        page1: 'Moonlight filters through the trees. You step into the woods.',
+        page2: 'Something ___ glows! You ___ deeper. A ___ appears!',
+        page3: 'Through the clearing, a grand building with towers!',
+        page4: 'An ancient ___ opens! Past the ___. A brave ___ nods.',
+        page5: 'A sparkle of power fills the air!',
+      },
+      starryKingdom: {
+        title: 'The Starry Kingdom',
+        page1: 'A brave warrior in shining armour greets you at the gates!',
+        page2: 'An ancient ___ reveals the ___! Through the ___.',
+        page3: 'Everything shimmers with a warm, precious glow!',
+        page4: 'A scaly ___ guards the ___! You ___ bravely onward.',
+        page5: 'A grand crossing leads to the throne room!',
+      },
+      enchantedForest: {
+        title: 'The Enchanted Forest',
+        page1: 'You step off the path to explore deeper into the woods.',
+        page2: 'A ___! A brave ___! An ancient ___!',
+        page3: 'A sparkle of power lights up the forest floor!',
+        page4: 'Something ___ shimmers through the ___. A scaly ___ appears!',
+        page5: 'At the heart of the forest stands a grand building!',
+      },
+    },
+  },
+  numbers: {
+    stories: {
+      cf1: {
+        title: 'Starry Count',
+        page1: 'Look up! The sky has a bright light. Can you spell how many?',
+        page2: 'Now ___ more appear, and it\'s ___!',
+        page3: 'A whole hand\'s worth of fingers. That many stars!',
+        page4: '___ more twinkle. Time to ___!',
+        page5: 'Four bright lights form a diamond shape!',
+      },
+      cf2: {
+        title: 'Sunny Count',
+        page1: 'The sun is up! Count the clouds.',
+        page2: 'Just ___ cloud and the ___!',
+        page3: 'So many clouds! Use all your fingers.',
+        page4: 'Now ___ and ___ clouds float by!',
+        page5: 'Half a dozen clouds dance in a row!',
+      },
+      cf3: {
+        title: 'Rainbow Count',
+        page1: 'A rainbow appears! Let\'s add up the colours.',
+        page2: '___ stripes and ___ more!',
+        page3: 'All the colours together make a sum!',
+        page4: '___ bands of colour, then ___!',
+        page5: 'Five beautiful colours shine brightest!',
+      },
+      cf4: {
+        title: 'Garden Count',
+        page1: 'In the garden, half a dozen butterflies dance!',
+        page2: '___ flutter past, time to ___!',
+        page3: 'Just one lonely caterpillar on the leaf.',
+        page4: '___ more join, the ___ grows!',
+        page5: 'All ten fingers can count the flowers!',
+      },
+      cf5: {
+        title: 'Ocean Count',
+        page1: 'Four fish swim in the coral reef!',
+        page2: '___ more swim up, that\'s ___!',
+        page3: 'A pair of seahorses bob past.',
+        page4: 'Just ___, then time to ___!',
+        page5: 'The total is in! Count them all up!',
+      },
+      nf1: {
+        title: 'Bear Friends',
+        page1: 'One bear cub sits by the river.',
+        page2: '___ more arrive for a ___!',
+        page3: 'What a big group of friends!',
+        page4: 'So much ___! Now there are ___!',
+        page5: 'Half a dozen friends splash and play!',
+      },
+      nf2: {
+        title: 'Puppy Pals',
+        page1: 'A puppy gives everyone a warm welcome!',
+        page2: 'Just ___ pup, but so ___!',
+        page3: 'Playtime! Everyone has a wonderful time.',
+        page4: 'Count to ___. That\'s ___ puppies!',
+        page5: 'Five wagging tails in a row!',
+      },
+      nf3: {
+        title: 'Kitten Club',
+        page1: 'Two little kittens chase a ball of yarn.',
+        page2: 'Such ___! Plus ___ makes a party!',
+        page3: 'All ten kittens are in the basket!',
+        page4: 'A warm ___. So many ___ friends!',
+        page5: 'Just one kitten left on the mat.',
+      },
+      nf4: {
+        title: 'Bunny Band',
+        page1: 'Five bunnies hop into the meadow!',
+        page2: '___ jump high. Just ___ more!',
+        page3: 'Everyone gets a big cuddle!',
+        page4: 'So many ___ friends having ___!',
+        page5: 'Ten bunny ears pop up from the grass!',
+      },
+      nf5: {
+        title: 'Duck Pals',
+        page1: 'Six little ducks waddle to the pond.',
+        page2: 'A ___ pair having ___!',
+        page3: 'One big duck leads the way!',
+        page4: 'Just ___ and a big ___!',
+        page5: 'Five ducks swim in a perfect line!',
+      },
+      cc1: {
+        title: 'Paint Pots',
+        page1: 'A warm colour fills the first pot.',
+        page2: '___ pots and one ___ pot!',
+        page3: 'Five pots all in a row!',
+        page4: 'A pretty ___ pot, just ___!',
+        page5: 'Ten colours fill the shelf!',
+      },
+      cc2: {
+        title: 'Crayon Box',
+        page1: 'A cool sky colour rolls out of the box.',
+        page2: 'A warm ___ next, then ___!',
+        page3: 'One crayon draws a big circle.',
+        page4: 'Count ___! A pretty ___ joins!',
+        page5: 'Five crayons colour the page!',
+      },
+      cc3: {
+        title: 'Rainbow Train',
+        page1: 'The train\'s first carriage is a pretty, soft colour!',
+        page2: '___ carriages! A warm ___ one!',
+        page3: 'Four carriages chug along!',
+        page4: 'A cool ___ carriage, then ___!',
+        page5: 'One engine pulls them all!',
+      },
+      cc4: {
+        title: 'Colour Kites',
+        page1: 'Four kites fly high in the sky!',
+        page2: 'Just ___ kite. A pretty ___ one!',
+        page3: 'A bright warm kite joins the sky!',
+        page4: '___ kites dancing, one ___ one!',
+        page5: 'Two kites do a loop-the-loop!',
+      },
+      cc5: {
+        title: 'Chalk Garden',
+        page1: 'Ten chalk marks colour the pavement!',
+        page2: '___ marks, a warm ___ one!',
+        page3: 'Cool sky-colour chalk draws a river.',
+        page4: '___ circles, a pretty ___ heart!',
+        page5: 'Five beautiful chalk flowers!',
+      },
+      sc1: {
+        title: 'Shape Train',
+        page1: 'The train is made of four-sided shapes!',
+        page2: 'Count the ___ and the ___!',
+        page3: 'Round sparkly shapes decorate the carriage.',
+        page4: 'Pointy ___ on the roof, ___!',
+        page5: 'Just one engine at the front!',
+      },
+      sc2: {
+        title: 'Shape Boat',
+        page1: 'A five-pointed shape guides the boat!',
+        page2: 'Cargo ___ below, just ___!',
+        page3: 'A pointy shape steers through the waves.',
+        page4: 'Round ___! Count to ___!',
+        page5: 'Two sails catch the wind!',
+      },
+      sc3: {
+        title: 'Shape Kite',
+        page1: 'Five shapes decorate the kite!',
+        page2: 'A pointy ___ and a ___!',
+        page3: 'The tail is made of four-sided shapes.',
+        page4: 'A pair of ___ shapes. ___ more!',
+        page5: 'Ten shapes dance in the sky!',
+      },
+      sc4: {
+        title: 'Shape Castle',
+        page1: 'Pointy towers top the castle!',
+        page2: '___ towers, a ___ treasure!',
+        page3: 'All ten windows are round!',
+        page4: 'A ___ flag, just ___!',
+        page5: 'Round gems sparkle on the crown!',
+      },
+      sc5: {
+        title: 'Shape Rocket',
+        page1: 'Round portholes line the rocket.',
+        page2: 'Count ___, a pointy ___!',
+        page3: 'A pair of boosters fire!',
+        page4: '___ controls and ___!',
+        page5: 'A five-pointed badge marks the pilot!',
+      },
+      ot1: {
+        title: 'Step Count',
+        page1: 'One step forward on the path.',
+        page2: '___ steps more! Big ___!',
+        page3: 'Six stepping stones cross the stream.',
+        page4: 'Count to ___! Time to ___!',
+        page5: 'Five jumps to the finish!',
+      },
+      ot2: {
+        title: 'Cloud Hop',
+        page1: 'Two fluffy clouds to hop across!',
+        page2: 'Just ___ cloud. ___ more ahead!',
+        page3: 'Time to add up the clouds!',
+        page4: '___ clouds in all. So ___!',
+        page5: 'Ten clouds in a row!',
+      },
+      ot3: {
+        title: 'Bee Trail',
+        page1: 'Ten flowers on the bee\'s trail!',
+        page2: '___ flowers and ___ bees!',
+        page3: 'A big buzzy bee lands!',
+        page4: '___ petals, just ___!',
+        page5: 'Four flower beds to visit!',
+      },
+      ot4: {
+        title: 'Leaf Jump',
+        page1: 'Five leaves fall from the tree!',
+        page2: 'Time to ___! Count to ___!',
+        page3: 'Four leaves spin in the wind!',
+        page4: '___ more land, so ___!',
+        page5: 'Just one golden leaf left!',
+      },
+      ot5: {
+        title: 'Puddle Splash',
+        page1: 'Time to add up the puddles!',
+        page2: '___ puddles and ___!',
+        page3: 'Six big splashes!',
+        page4: '___ ripples, then ___!',
+        page5: 'A big duck splashes in the biggest one!',
+      },
+      wp1: {
+        title: 'Forest Count',
+        page1: 'How many trees? Let\'s count them up!',
+        page2: '___ trees. The ___ is ___.',
+        page3: 'Eight mushrooms grow in a circle.',
+        page4: 'A ___ of acorns! ___ the nuts!',
+        page5: 'The total is in. Well done!',
+      },
+      wp2: {
+        title: 'Star Math',
+        page1: 'Seven stars twinkle in a line.',
+        page2: '___ more appear. ___ to the ___!',
+        page3: 'Double the stars! Count them twice.',
+        page4: '___ and ___ make ___.',
+        page5: 'A whole dozen stars fill the sky!',
+      },
+      wp3: {
+        title: 'River Sum',
+        page1: 'The fish are equal on each side of the river!',
+        page2: '___ fish, a ___ of them. ___!',
+        page3: 'Take some away — time to subtract!',
+        page4: '___ remain. ___ fish. The ___ is clear!',
+        page5: 'Count them all up one more time!',
+      },
+      wp4: {
+        title: 'Cloud Tally',
+        page1: 'A whole dozen clouds roll in!',
+        page2: '___ the clouds. They\'re all ___. ___ to go!',
+        page3: 'The total keeps growing!',
+        page4: '___ all the clouds! ___ appear. ___!',
+        page5: 'Everything is equal and balanced in the sky.',
+      },
+      wp5: {
+        title: 'Moon Math',
+        page1: 'Count the moonbeams — two times as many tonight!',
+        page2: '___ some away. ___ beams. A ___ shines!',
+        page3: 'Count everything together.',
+        page4: 'The ___ is ___! ___ moonbeams!',
+        page5: 'Seven moonbeams light the way home.',
+      },
+      ac1: {
+        title: 'Safari Sum',
+        page1: 'A black and white friend munches bamboo!',
+        page2: '___ animals. ___ stripes. The ___ prowls!',
+        page3: 'Three baby animals play together.',
+        page4: '___ in total. All ___. The ___ watches!',
+        page5: 'The total count is done!',
+      },
+      ac2: {
+        title: 'Jungle Tally',
+        page1: 'A striped cat lounges in the shade.',
+        page2: 'The ___ rests. ___ animals. ___ them all!',
+        page3: 'Everything is balanced in the jungle.',
+        page4: '___ friends. The ___ is clear. ___ rest!',
+        page5: 'Seven animals call the jungle home.',
+      },
+      ac3: {
+        title: 'Pond Count',
+        page1: 'Count the lily pads!',
+        page2: 'The ___ prowls. ___ frogs. ___ lily pads!',
+        page3: 'Seven dragonflies zip past!',
+        page4: 'The ___ watches. The ___ grows. ___!',
+        page5: 'Eight creatures live by the pond!',
+      },
+      ac4: {
+        title: 'Farm Math',
+        page1: 'Eight chicks hatch in the barn!',
+        page2: '___ in the field. The ___ grazes. ___!',
+        page3: 'A striped visitor watches from outside.',
+        page4: '___ the animals. ___ chicks. ___ friends!',
+        page5: 'The black and white friend waves from the bamboo.',
+      },
+      ac5: {
+        title: 'Zoo Count',
+        page1: 'Three tickets to the zoo!',
+        page2: '___ animals. ___ them all. ___!',
+        page3: 'The final total is on the board.',
+        page4: 'The ___ and ___ play. ___ cheer!',
+        page5: 'Count them one more time!',
+      },
+      fc1: {
+        title: 'Orchard Sum',
+        page1: 'Pick the round red fruit from the tree!',
+        page2: 'Purple ___, all ___, ___!',
+        page3: 'Three baskets fill up quickly.',
+        page4: 'Sweet ___ fruit. The ___ grows. ___!',
+        page5: 'The total harvest is in!',
+      },
+      fc2: {
+        title: 'Market Math',
+        page1: 'Purple clusters of fruit fill the stall.',
+        page2: 'Round red ___, eight more ___! The ___ grows.',
+        page3: 'Seven crates stacked up high!',
+        page4: '___ fruit, a big ___, ___!',
+        page5: 'A big sweet green fruit for dessert!',
+      },
+      fc3: {
+        title: 'Picnic Count',
+        page1: 'A big green fruit is the centrepiece!',
+        page2: '___ fruit, round ___, ___!',
+        page3: 'Count up the snacks!',
+        page4: 'Purple ___, the ___ grows, ___!',
+        page5: 'The round red fruit finishes the picnic!',
+      },
+      fc4: {
+        title: 'Garden Fruit',
+        page1: 'Count the fruit in the garden!',
+        page2: 'A sweet ___, purple ___, ___!',
+        page3: 'Eight pieces of fruit on the ground!',
+        page4: 'Round ___, seven more! ___!',
+        page5: 'Three perfect picks to take home.',
+      },
+      fc5: {
+        title: 'Smoothie Sum',
+        page1: 'Seven ingredients for the smoothie!',
+        page2: 'The ___ grows! ___, a round ___!',
+        page3: 'Purple fruit blends in!',
+        page4: '___ left, a sweet ___, ___!',
+        page5: 'The total smoothie is blended!',
+      },
+      tc1: {
+        title: 'Toy Shelf',
+        page1: 'Building blocks stack up on the shelf!',
+        page2: 'A ___ rolls by. ___ blocks. ___!',
+        page3: 'A big vehicle rumbles across the carpet.',
+        page4: 'A ___ dances. The ___ grows. ___!',
+        page5: 'The total count of toys!',
+      },
+      tc2: {
+        title: 'Playroom Sum',
+        page1: 'Choo choo! The toy train circles the track.',
+        page2: '___ stacked up. ___ toys. A ___ joins!',
+        page3: 'Seven toys line up!',
+        page4: 'A big ___, ___. The ___ grows!',
+        page5: 'A little figure pirouettes at the end!',
+      },
+      tc3: {
+        title: 'Toy Parade',
+        page1: 'The little figure leads the parade!',
+        page2: 'A big ___, the ___ grows, a ___!',
+        page3: 'Count all the toys marching!',
+        page4: '___ stack high. ___ toys. ___!',
+        page5: 'The train choo-choos to the finish!',
+      },
+      tc4: {
+        title: 'Box Tidy',
+        page1: 'Eight toys to put away!',
+        page2: 'The ___ goes in. ___ more. ___!',
+        page3: 'A big vehicle parks in the corner.',
+        page4: 'The ___, the ___, ___!',
+        page5: 'All the blocks are stacked neatly!',
+      },
+      tc5: {
+        title: 'Toy Race',
+        page1: 'Count the racers!',
+        page2: '___ toys racing. A big ___. A ___!',
+        page3: 'The total is counted!',
+        page4: 'A ___, blocks everywhere, ___!',
+        page5: 'Seven toys cross the finish line!',
+      },
+      gc1: {
+        title: 'Flower Sum',
+        page1: 'Beautiful flowers bloom in the garden!',
+        page2: 'A ___, seven more. ___!',
+        page3: 'A whole bunch of flowers together!',
+        page4: 'The ___ grows. ___ flowers. ___!',
+        page5: 'Three perfect bouquets!',
+      },
+      gc2: {
+        title: 'Seed Tally',
+        page1: 'A delicate flower part catches the breeze.',
+        page2: '___ open wide. ___ petals. A ___!',
+        page3: 'Count the seedlings!',
+        page4: '___ grow. ___ flowers. ___!',
+        page5: 'The total garden count!',
+      },
+      gc3: {
+        title: 'Pot Count',
+        page1: 'Seven plant pots on the windowsill!',
+        page2: '___ pots. A ___ blooms. ___!',
+        page3: 'A delicate part floats down.',
+        page4: '___ open. ___ and ___!',
+        page5: 'Count them all one more time!',
+      },
+      gc4: {
+        title: 'Rain Bloom',
+        page1: 'Three seedlings pop up after the rain!',
+        page2: 'The ___ grows. A ___ unfurls. ___!',
+        page3: 'Eight drops water the garden.',
+        page4: 'A ___ of flowers! ___ bloom. ___!',
+        page5: 'Seven buds are ready to open!',
+      },
+      gc5: {
+        title: 'Garden Math',
+        page1: 'Eight rows of flowers!',
+        page2: '___ and ___ bloom. ___!',
+        page3: 'The total tally board fills up.',
+        page4: 'A ___, seven more, a ___!',
+        page5: 'A whole bunch of flowers to take inside!',
+      },
+      np1: {
+        title: 'Riddle Room',
+        page1: 'A tricky puzzle waits on the door!',
+        page2: '___ clues! ___ the code, ___ the lock!',
+        page3: 'Twenty keys hang on the wall.',
+        page4: '___ and ___ match! Time to ___!',
+        page5: 'Everything equals the right answer!',
+      },
+      np2: {
+        title: 'Maze Math',
+        page1: 'Twelve paths twist and turn!',
+        page2: '___ ahead! The ___! A ___ forms!',
+        page3: 'Split the path — time to divide!',
+        page4: '___ the score, ___ more! ___!',
+        page5: 'The puzzle is solved!',
+      },
+      np3: {
+        title: 'Key Quest',
+        page1: 'Double the keys to unlock the door!',
+        page2: '___ the code! ___ keys. ___!',
+        page3: 'Eleven gems light up the lock.',
+        page4: 'The ___ fits! ___ more! ___!',
+        page5: 'Triple the treasure inside!',
+      },
+      np4: {
+        title: 'Clock Puzzle',
+        page1: 'Triple the hands on the magic clock!',
+        page2: '___ match! ___ spin. The ___!',
+        page3: 'Twelve numbers glow on the face.',
+        page4: '___ more! ___ the hours! ___!',
+        page5: 'Eleven chimes ring out!',
+      },
+      np5: {
+        title: 'Treasure Lock',
+        page1: 'Everything must be balanced to open the lock!',
+        page2: '___ the numbers! ___ spins. ___!',
+        page3: 'Double the gems to unlock it.',
+        page4: '___ and ___ glow! ___!',
+        page5: 'Twenty gold coins spill out!',
+      },
+      af1: {
+        title: 'Sum Quest',
+        page1: 'Time to start adding things up!',
+        page2: '___ and ___ make a ___!',
+        page3: 'How many in total?',
+        page4: '___ more! ___ in all. ___!',
+        page5: 'Everything is balanced!',
+      },
+      af2: {
+        title: 'Cloud Sum',
+        page1: 'Twelve clouds drift by.',
+        page2: '___ up! ___ the score. ___!',
+        page3: 'Double the clouds appear!',
+        page4: '___ and ___ more! ___!',
+        page5: 'The total fills the sky!',
+      },
+      af3: {
+        title: 'River Add',
+        page1: 'Twenty pebbles in the river!',
+        page2: 'The ___ is big! ___ and ___!',
+        page3: 'Eleven fish swim past.',
+        page4: 'The ___ adds up! ___ and ___!',
+        page5: 'Time to add it all together!',
+      },
+      af4: {
+        title: 'Star Add',
+        page1: 'The total number of stars tonight?',
+        page2: '___ shine! ___ more and ___!',
+        page3: 'Count them all up!',
+        page4: '___ up! ___ and ___!',
+        page5: 'Twenty stars fill the sky!',
+      },
+      af5: {
+        title: 'Moon Add',
+        page1: 'Eleven moonbeams light the path.',
+        page2: '___ and ___, ___!',
+        page3: 'Everything equals the total!',
+        page4: '___ beams! ___ and ___!',
+        page5: 'Double the glow tonight!',
+      },
+      ns1: {
+        title: 'Dragon Count',
+        page1: 'Once upon a time, in a land of numbers...',
+        page2: '___ knights! A ___ appears! ___!',
+        page3: 'Twenty gold coins in the dragon\'s lair.',
+        page4: '___ gems! ___ them! ___!',
+        page5: 'The puzzle unlocks the ending!',
+      },
+      ns2: {
+        title: 'Fairy Math',
+        page1: 'Twelve fairies dance in a ring.',
+        page2: 'The ___ unfolds! ___ and ___!',
+        page3: 'Everything is balanced in fairy land.',
+        page4: '___ wishes! The ___ glows! ___!',
+        page5: 'How many fairies are left?',
+      },
+      ns3: {
+        title: 'Pirate Sum',
+        page1: 'Count the treasure chests!',
+        page2: '___ coins! ___ and ___!',
+        page3: 'The total treasure!',
+        page4: 'The ___ sparkles! ___ and ___!',
+        page5: 'Eleven doubloons in the last chest!',
+      },
+      ns4: {
+        title: 'Robot Tale',
+        page1: 'Eleven robots power up!',
+        page2: '___ beep! ___ and ___!',
+        page3: 'The puzzle circuit connects!',
+        page4: 'The ___ counts! ___ and ___!',
+        page5: 'Twelve robots march in formation!',
+      },
+      ns5: {
+        title: 'Wizard Count',
+        page1: 'How many spells in the wizard\'s book?',
+        page2: 'The ___ glows! A ___ and ___!',
+        page3: 'Twenty pages turn by magic!',
+        page4: '___ spells! ___ and ___!',
+        page5: 'The story ends happily!',
+      },
+      npa1: {
+        title: 'Stripe Code',
+        page1: 'A pattern of stripes appears!',
+        page2: '___ and ___ follow the ___!',
+        page3: 'Twenty shapes in a row.',
+        page4: '___ and ___ create ___!',
+        page5: 'The pattern repeats perfectly!',
+      },
+      npa2: {
+        title: 'Bead Chain',
+        page1: 'Double the beads on the chain!',
+        page2: 'The ___ grows. ___ and ___!',
+        page3: 'Triple the pattern!',
+        page4: 'It ___! ___ and ___!',
+        page5: 'Eleven beads complete the chain.',
+      },
+      npa3: {
+        title: 'Tile Floor',
+        page1: 'Twelve tiles make the first row.',
+        page2: 'The pattern ___! ___ and ___!',
+        page3: 'Everything balances!',
+        page4: '___ tiles! ___ and ___!',
+        page5: 'A beautiful pattern series!',
+      },
+      npa4: {
+        title: 'Star Spiral',
+        page1: 'The pattern repeats in a spiral!',
+        page2: '___ and ___ follow! ___!',
+        page3: 'Double the spiral arms!',
+        page4: 'The ___ grows! ___ and ___!',
+        page5: 'Twelve points complete the star.',
+      },
+      npa5: {
+        title: 'Wave Rhythm',
+        page1: 'Eleven waves in a rhythm.',
+        page2: '___ the ___! ___ and ___!',
+        page3: 'The pattern repeats!',
+        page4: '___ and ___ create ___!',
+        page5: 'Twenty waves crash on the shore.',
+      },
+      sf1: {
+        title: 'Cookie Share',
+        page1: 'Take some cookies away — how many are left?',
+        page2: '___ and ___ fewer! ___!',
+        page3: 'Twenty cookies to start with.',
+        page4: '___ go! ___ stay! ___!',
+        page5: 'Everything balances at the end.',
+      },
+      sf2: {
+        title: 'Balloon Pop',
+        page1: 'Twelve balloons float in the sky.',
+        page2: '___ them away! ___ left! ___!',
+        page3: 'How many fewer now?',
+        page4: '___ and ___ remain! ___!',
+        page5: 'The rest stay floating happily.',
+      },
+      sf3: {
+        title: 'Apple Take',
+        page1: 'Take some away! How many are left to leave?',
+        page2: 'The ___ stay! ___ and ___!',
+        page3: 'Eleven apples on the tree.',
+        page4: '___ fall! ___ and ___!',
+        page5: 'Only a few fewer left.',
+      },
+      sf4: {
+        title: 'Star Fall',
+        page1: 'Some stars remain while others fall.',
+        page2: '___ and ___. Some ___!',
+        page3: 'Take some away from the sky!',
+        page4: '___ of them! ___ and ___!',
+        page5: 'A few are left behind.',
+      },
+      sf5: {
+        title: 'Sand Scoop',
+        page1: 'Eleven scoops in the bucket!',
+        page2: '___ away! ___ and ___!',
+        page3: 'Everything balances!',
+        page4: '___ scoops! ___ and ___!',
+        page5: 'Take the last ones away.',
       },
     },
   },
