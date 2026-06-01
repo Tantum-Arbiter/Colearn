@@ -154,6 +154,18 @@ export const SPELLING_BRIDGES: RealWorldBridgeData[] = [
   },
 
   {
+    activityId: 'rhyme-time',
+    section: 'spelling',
+    narrationKey: 'bridge.spelling.rhymeTime.narration',
+    adventures: [
+      { category: 'at-home', descriptionKey: 'bridge.spelling.rhymeTime.home', skills: ['phonics-awareness', 'vocabulary'] },
+      { category: 'outdoors', descriptionKey: 'bridge.spelling.rhymeTime.outdoors', skills: ['phonics-awareness', 'creative-expression'] },
+      { category: 'creative', descriptionKey: 'bridge.spelling.rhymeTime.creative', skills: ['creative-expression', 'phonics-awareness'] },
+    ],
+    closingKey: 'bridge.spelling.rhymeTime.closing',
+  },
+
+  {
     activityId: 'story-spelling',
     section: 'spelling',
     narrationKey: 'bridge.spelling.storySpelling.narration',

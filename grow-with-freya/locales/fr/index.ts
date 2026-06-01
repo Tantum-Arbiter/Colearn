@@ -1960,15 +1960,6 @@ export default {
         page4: 'To find your way home, you must journey through a place full of ancient trees, dappled sunlight and birdsong.',
         page5: 'At the heart of it all, a swirl of sparkles appears. The book glows — this is the power that will take you home!',
       },
-      // Story 10: "The Rhyming River" — rhyme-time (hard)
-      rhymingRiver: {
-        title: 'The Rhyming River',
-        page1: '🎵 A little boat floats down a magical river. At the first bend, the river sings: "Row your boat around the lake, stop beside the yummy..."',
-        page2: '🎵 The boat sails further. "Sparkly water, bright and blue, float me gently to the..." — What rhymes with blue?',
-        page3: '🎵 Around the bend: "Hear the bird? It\'s doing well, listen to it ring the..." — What rhymes with well?',
-        page4: '🎵 The river whispers: "Sun comes out after the rain, splashing puddles — here at last comes the..."',
-        page5: '🎵 The final bend! "Choo choo choo along the track, this wonderful journey — there\'s no going back!" — Spell what goes on the track!',
-      },
     },
   },
 };
