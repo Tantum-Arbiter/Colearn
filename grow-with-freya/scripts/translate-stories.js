@@ -620,6 +620,210 @@ S['mountainAnimals'] = {
   zh: ['山地动物','沿着山路往上走！一个灰色的可爱朋友在树上睡觉。','___在___上有柔软的___。','嗒嗒！一个强壮美丽的生物沿着山脊小跑。','一个___跑得好___！看它___！','靠近山顶，一只条纹猫在看日落。'],
 };
 
+// Story 37: animalBedtime
+S['animalBedtime'] = {
+  ar: ['وقت نوم الحيوانات','المزرعة تنعس. صديق أبيض رقيق يعد نفسه!','___ يبدأ بـ ___. ___ جداً ودافئ.','الطائر المهيب يطوي جناحيه على مكان عالٍ.','عملاق المحيط ___ يبقى ___ في ___.','الصديق الرمادي المحبوب نائم بالفعل!'],
+  da: ['Dyresengetid','Gården bliver søvnig. En blød hvid ven tæller sig selv!','En ___ begynder at ___. Så ___ og varm.','Den majestætiske fugl folder sine vinger på en høj pind.','Den ___ havkæmpe bliver ___ i ___.','Den søde grå ven sover allerede dybt!'],
+  de: ['Tierschlafenszeit','Der Bauernhof wird schläfrig. Ein flauschiger weißer Freund zählt sich selbst!','Ein ___ fängt an zu ___. So ___ und warm.','Der majestätische Vogel faltet seine Flügel auf einem hohen Sitz.','Der ___ Ozeanriese bleibt ___ im ___.','Der kuschelige graue Freund schläft schon tief und fest!'],
+  es: ['Hora de dormir animal','La granja se adormece. ¡Un amigo blanco esponjoso se cuenta a sí mismo!','Un ___ empieza a ___. Tan ___ y cálido.','El pájaro majestuoso pliega sus alas en un alto posadero.','El ___ gigante del océano se queda ___ en el ___.','¡El amigo gris tierno ya está profundamente dormido!'],
+  fr: ['L\'heure du dodo des animaux','La ferme s\'endort. Un ami blanc duveteux se compte !','Un ___ commence à ___. Si ___ et chaud.','L\'oiseau majestueux replie ses ailes sur un perchoir élevé.','Le ___ géant de l\'océan reste ___ dans le ___.','L\'ami gris câlin dort déjà profondément !'],
+  it: ['L\'ora della nanna degli animali','La fattoria si addormenta. Un amico bianco soffice conta se stesso!','Un ___ inizia a ___. Così ___ e caldo.','L\'uccello maestoso ripiega le ali su un alto trespolo.','Il ___ gigante dell\'oceano resta ___ nel ___.','L\'amico grigio coccolone dorme già profondamente!'],
+  ja: ['どうぶつのおやすみ','のうじょうがねむくなってきた。ふわふわのしろいともだちがじぶんをかぞえる！','___が___しはじめる。とても___であたたかい。','いだいなとりがたかいとまりぎではねをたたむ。','___のうみのきょじんが___のなかで___にしている。','はいいろのもふもふのともだちはもうぐっすりねている！'],
+  la: ['Hora somni animalium','Villa somnolenta fit. Mollis albus amicus se numerat!','___ incipit ___. Tam ___ et calidus.','Maiestuosa avis in alto sedili alas complicat.','___ gigas oceani ___ in ___ manet.','Amicus canus blandus iam profunde dormit!'],
+  nl: ['Dieren bedtijd','De boerderij wordt slaperig. Een pluizig wit vriendje telt zichzelf!','Een ___ begint te ___. Zo ___ en warm.','De majestueuze vogel vouwt zijn vleugels op een hoge zitplaats.','De ___ oceaanreus blijft ___ in de ___.','Het knuffelige grijze vriendje slaapt al diep!'],
+  pl: ['Pora snu zwierząt','Farma robi się senna. Puszysty biały przyjaciel liczy sam siebie!','___ zaczyna ___. Tak ___ i ciepło.','Majestatyczny ptak składa skrzydła na wysokiej żerdzi.','___ olbrzym oceanu zostaje ___ w ___.','Przytulny szary przyjaciel już śpi głęboko!'],
+  pt: ['Hora de dormir dos animais','A fazenda fica sonolenta. Um amigo branco fofo conta a si mesmo!','Um ___ começa a ___. Tão ___ e quente.','O pássaro majestoso dobra as asas em um poleiro alto.','O ___ gigante do oceano fica ___ no ___.','O amigo cinza fofo já está dormindo profundamente!'],
+  tr: ['Hayvan Uyku Vakti','Çiftlik uykuya dalıyor. Kabarık beyaz bir arkadaş kendini sayıyor!','Bir ___ ___\'a başlıyor. Çok ___ ve sıcak.','Görkemli kuş yüksek tüneğinde kanatlarını katıyor.','___ okyanus devi ___\'da ___ kalıyor.','Sevimli gri arkadaş çoktan derin uykuda!'],
+  zh: ['动物的睡觉时间','农场变得困了。毛茸茸的白色朋友在数自己！','一个___开始___。好___好温暖。','雄伟的鸟在高高的栖木上收起翅膀。','___海洋巨人在___中保持___。','可爱的灰色朋友已经睡着了！'],
+};
+
+// Story 38: picnicBasket
+S['picnicBasket'] = {
+  ar: ['سلة النزهة','حان وقت النزهة! فواكه بنفسجية صغيرة تملأ السلة.','بعض الخبز ___، ___ جداً، في ___.','فاكهة استوائية برتقالية تضيف حلاوة!','شرائح ___ طازجة، ___ جداً، مع ___!','فاكهة خضراء كبيرة مستديرة هي المرطب المثالي!'],
+  da: ['Picnickurv','Tid til picnic! Små lilla frugter fylder kurven.','Noget ___ brød, så ___, i en ___.','En tropisk orange frugt tilføjer sødme!','Friske ___ skiver, så ___, med ___!','En stor rund grøn frugt er den perfekte forfriskning!'],
+  de: ['Picknickkorb','Zeit für ein Picknick! Kleine lila Früchte füllen den Korb.','Etwas ___ Brot, so ___, in einem ___.','Eine tropische orange Frucht bringt Süße!','Frische ___ Scheiben, so ___, mit ___!','Eine große runde grüne Frucht ist die perfekte Erfrischung!'],
+  es: ['Cesta de picnic','¡Hora del picnic! Pequeñas frutas moradas llenan la cesta.','Algo de pan ___, tan ___, en un ___.','¡Una fruta tropical naranja añade dulzura!','¡Rodajas frescas de ___, tan ___, con ___!','¡Una gran fruta verde redonda es el refresco perfecto!'],
+  fr: ['Panier de pique-nique','C\'est l\'heure du pique-nique ! De petits fruits violets remplissent le panier.','Du pain ___, si ___, dans un ___.','Un fruit tropical orange ajoute de la douceur !','Des tranches fraîches de ___, si ___, avec ___ !','Un gros fruit vert rond est le rafraîchissement parfait !'],
+  it: ['Cestino da picnic','È ora del picnic! Piccoli frutti viola riempiono il cestino.','Del pane ___, così ___, in un ___.','Un frutto tropicale arancione aggiunge dolcezza!','Fette fresche di ___, così ___, con ___!','Un grande frutto verde rotondo è il ristoro perfetto!'],
+  ja: ['ピクニックバスケット','ピクニックのじかん！ちいさなむらさきのくだものがバスケットにいっぱい。','___パン、とても___、___のなかに。','トロピカルなオレンジのくだものがあまさをくわえる！','___のフレッシュなスライス、とても___、___つき！','おおきなまるいみどりのくだものはかんぺきなリフレッシュ！'],
+  la: ['Cista convivii','Tempus convivii! Parvi fructus purpurei cistam implent.','Panis ___, tam ___, in ___.','Fructus tropicus aurantiacus dulcedinem addit!','Recentes ___ segmenta, tam ___, cum ___!','Magnus rotundus viridis fructus perfectum refrigerium est!'],
+  nl: ['Picknickmand','Tijd voor een picknick! Kleine paarse vruchten vullen de mand.','Wat ___ brood, zo ___, in een ___.','Een tropische oranje vrucht voegt zoetheid toe!','Verse ___ plakjes, zo ___, met ___!','Een grote ronde groene vrucht is de perfecte verfrissing!'],
+  pl: ['Koszyk piknikowy','Czas na piknik! Małe fioletowe owoce wypełniają koszyk.','Trochę ___ chleba, tak ___, w ___.','Tropikalny pomarańczowy owoc dodaje słodyczy!','Świeże plastry ___, tak ___, z ___!','Duży okrągły zielony owoc to idealne orzeźwienie!'],
+  pt: ['Cesta de piquenique','Hora do piquenique! Pequenas frutas roxas enchem a cesta.','Um pouco de pão ___, tão ___, em um ___.','Uma fruta tropical laranja adiciona doçura!','Fatias frescas de ___, tão ___, com ___!','Uma grande fruta verde redonda é o refresco perfeito!'],
+  tr: ['Piknik Sepeti','Piknik zamanı! Küçük mor meyveler sepeti dolduruyor.','Biraz ___ ekmek, çok ___, bir ___\'da.','Tropik turuncu bir meyve tatlılık katıyor!','Taze ___ dilimleri, çok ___, ___\'la!','Büyük yuvarlak yeşil bir meyve mükemmel serinletici!'],
+  zh: ['野餐篮','野餐时间到！小小的紫色水果装满了篮子。','一些___面包，好___，在___里。','热带橙色水果增添甜味！','新鲜的___片，好___，配___！','一个大大的圆圆的绿色水果是完美的清凉饮品！'],
+};
+
+// Story 39: bakingDay
+S['bakingDay'] = {
+  ar: ['يوم الخبز','المطبخ رائحته رائعة! شيء ذهبي يخرج من المحمصة.','___ فيه جبن ___ في ___!','وعاء من الأوراق والخضروات الطازجة للغداء.','___ بنفسجي يدخل ___ لـ ___.','العشاء نودلز طويلة ملتوية بالصوص!'],
+  da: ['Bagedag','Køkkenet dufter fantastisk! Noget gyldent springer ud af brødristeren.','En ___ har ___ ost i ___!','En skål med friske blade og grøntsager til frokost.','Lilla ___ går i ___ for at ___.','Aftensmaden er lange, snoede nudler med sauce!'],
+  de: ['Backtag','Die Küche duftet wunderbar! Etwas Goldenes springt aus dem Toaster.','Ein ___ hat ___ Käse im ___!','Eine Schüssel mit frischen Blättern und Gemüse zum Mittagessen.','Lila ___ kommen in den ___ zum ___.','Abendessen sind lange, gedrehte Nudeln mit Soße!'],
+  es: ['Día de hornear','¡La cocina huele increíble! Algo dorado sale de la tostadora.','¡Un ___ tiene queso ___ en el ___!','Un tazón de hojas frescas y verduras para el almuerzo.','___ moradas van al ___ para ___.','¡La cena son fideos largos y retorcidos con salsa!'],
+  fr: ['Jour de pâtisserie','La cuisine sent merveilleusement bon ! Quelque chose de doré sort du grille-pain.','Un ___ a du fromage ___ dans le ___ !','Un bol de feuilles fraîches et de légumes pour le déjeuner.','Des ___ violets vont dans le ___ pour ___.','Le dîner, ce sont de longs nouilles torsadées avec de la sauce !'],
+  it: ['Giorno di cottura','La cucina ha un profumo fantastico! Qualcosa di dorato esce dal tostapane.','Un ___ ha formaggio ___ nel ___!','Una ciotola di foglie fresche e verdure per pranzo.','___ viola vanno nel ___ per ___.','La cena sono lunghi noodle ritorti con salsa!'],
+  ja: ['おかしづくりのひ','キッチンがいいにおい！きんいろのものがトースターからでてくる。','___に___チーズが___のなかに！','ひるごはんにしんせんなはっぱとやさいのボウル。','むらさきの___が___のなかに___のために。','ばんごはんはソースつきのながくてくるくるめん！'],
+  la: ['Dies coquendi','Culina mire olet! Aliquid aureum e tostario prosilit.','___ habet caseum ___ in ___!','Patera foliorum recentium et holerum pro prandio.','Purpurei ___ in ___ ad ___ eunt.','Cena longa torta pasta cum condimento est!'],
+  nl: ['Bakdag','De keuken ruikt heerlijk! Iets goudkleurigs springt uit de broodrooster.','Een ___ heeft ___ kaas in de ___!','Een kom verse bladeren en groenten voor de lunch.','Paarse ___ gaan in de ___ om te ___.','Het avondeten is lange, gedraaide noedels met saus!'],
+  pl: ['Dzień pieczenia','Kuchnia pachnie wspaniale! Coś złotego wyskakuje z tostera.','___ ma ___ ser w ___!','Miska świeżych liści i warzyw na lunch.','Fioletowe ___ idą do ___ żeby ___.','Kolacja to długie, kręcone makaron z sosem!'],
+  pt: ['Dia de assar','A cozinha cheira maravilhosamente! Algo dourado sai da torradeira.','Um ___ tem queijo ___ no ___!','Uma tigela de folhas frescas e legumes para o almoço.','___ roxos vão no ___ para ___.','O jantar são noodles longos e torcidos com molho!'],
+  tr: ['Fırın Günü','Mutfak harika kokuyor! Tost makinesinden altın rengi bir şey çıkıyor.','Bir ___\'da ___ peynir ___\'da!','Öğle yemeği için taze yapraklar ve sebzelerle dolu bir kâse.','Mor ___ ___\'a ___ için giriyor.','Akşam yemeği soslu uzun, kıvrık erişte!'],
+  zh: ['烘焙日','厨房闻起来好香！金色的东西从烤面包机里跳出来。','一个___里有___奶酪在___里！','一碗新鲜叶子和蔬菜做午餐。','紫色___放进___去___。','晚餐是长长的卷卷面条配酱汁！'],
+};
+
+// Story 40: fruitFeast
+S['fruitFeast'] = {
+  ar: ['وليمة الفواكه','فاكهة خضراء ضخمة تقود موكب الفواكه!','___ هو ___ و___.','شيء دافئ وذهبي من المخبز.','___ هو ___ في ___ خاص.','الوليمة تنتهي بالمفضلة الجبنية للجميع!'],
+  da: ['Frugtfest','En kæmpe grøn frugt leder frugtparaden!','___ er ___ og ___.','Noget varmt og gyldent fra bageriet.','___ er ___ i en speciel ___.','Festen slutter med alles ostede favorit!'],
+  de: ['Obstfest','Eine riesige grüne Frucht führt die Obstparade an!','Der ___ ist ___ und ___.','Etwas Warmes und Goldenes aus der Bäckerei.','Der ___ ist ___ in einem besonderen ___.','Das Fest endet mit jedermanns Käse-Favoriten!'],
+  es: ['Fiesta de frutas','¡Una enorme fruta verde lidera el desfile de frutas!','El ___ es ___ y ___.','Algo cálido y dorado de la panadería.','El ___ es ___ en un ___ especial.','¡La fiesta termina con el favorito de queso de todos!'],
+  fr: ['Festin de fruits','Un énorme fruit vert mène le défilé de fruits !','Le ___ est ___ et ___.','Quelque chose de chaud et doré de la boulangerie.','Le ___ est ___ dans un ___ spécial.','Le festin se termine avec le fromage préféré de tous !'],
+  it: ['Festa della frutta','Un enorme frutto verde guida la parata della frutta!','Il ___ è ___ e ___.','Qualcosa di caldo e dorato dal panificio.','Il ___ è ___ in uno ___ speciale.','La festa finisce con il formaggio preferito da tutti!'],
+  ja: ['くだもののごちそう','おおきなみどりのくだものがくだもののパレードをひきいる！','___は___で___。','パンやさんからあたたかくてきんいろのもの。','___は___、とくべつな___のなかで。','ごちそうはみんなだいすきなチーズでおわり！'],
+  la: ['Epulae fructuum','Ingens viridis fructus pompam fructuum ducit!','___ est ___ et ___.','Aliquid calidum et aureum e pistrino.','___ est ___ in speciali ___.','Epulae cum omnium caseato favorito terminantur!'],
+  nl: ['Fruitfeest','Een enorm groen fruit leidt de fruitparade!','De ___ is ___ en ___.','Iets warms en goudkleurigs van de bakkerij.','De ___ is ___ in een speciaal ___.','Het feest eindigt met ieders kaas-favoriet!'],
+  pl: ['Uczta owocowa','Ogromny zielony owoc prowadzi paradę owoców!','___ jest ___ i ___.','Coś ciepłego i złotego z piekarni.','___ jest ___ w specjalnym ___.','Uczta kończy się ulubionym serowym daniem wszystkich!'],
+  pt: ['Festa de frutas','Uma enorme fruta verde lidera o desfile de frutas!','O ___ é ___ e ___.','Algo quente e dourado da padaria.','O ___ é ___ em um ___ especial.','A festa termina com o favorito de queijo de todos!'],
+  tr: ['Meyve Şöleni','Dev yeşil bir meyve meyve geçidini yönetiyor!','___ ___ ve ___.','Fırından sıcak ve altın rengi bir şey.','___ özel bir ___\'da ___.','Şölen herkesin peynirli favorisiyle bitiyor!'],
+  zh: ['水果盛宴','一个巨大的绿色水果领导水果游行！','___是___和___。','面包店里温暖金黄的东西。','___在特别的___里是___。','盛宴以大家最爱的奶酪结束！'],
+};
+
+// Story 41: kitchenMagic
+S['kitchenMagic'] = {
+  ar: ['سحر المطبخ','القدر السحري يغلي بنودلز ملتوية!','أوراق ___ طازجة، ___ بلطف!','بتلويحة من الملعقة، قرص جبني يظهر!','فاكهة ___ باردة، ___ صغير.','الفواكه البنفسجية تظهر للتحلية. سحر!'],
+  da: ['Køkkenmagi','Den magiske gryde bobler med snoede nudler!','Friske ___ blade, forsigtigt ___!','Med et vink af skeen dukker en osteagtig disk op!','En kølig ___ frugt, en lille ___.','De lilla frugter dukker op til dessert. Magi!'],
+  de: ['Küchenmagie','Der Zaubertopf brodelt mit gedrehten Nudeln!','Frische ___ Blätter, sanft ___!','Mit einem Schwung des Löffels erscheint eine käsige Scheibe!','Eine kühle ___ Frucht, ein kleiner ___.','Die lila Früchte erscheinen zum Nachtisch. Magie!'],
+  es: ['Magia de cocina','¡La olla mágica burbujea con fideos retorcidos!','¡Hojas frescas de ___, suavemente ___!','¡Con un movimiento de la cuchara, un disco de queso aparece!','Una fruta ___ fresca, un pequeño ___.','¡Las frutas moradas aparecen para el postre. ¡Magia!'],
+  fr: ['Magie de cuisine','La marmite magique bouillonne avec des nouilles torsadées !','Des feuilles ___ fraîches, doucement ___ !','D\'un coup de cuillère, un disque fromager apparaît !','Un fruit ___ frais, un petit ___.','Les fruits violets apparaissent pour le dessert. Magie !'],
+  it: ['Magia in cucina','La pentola magica bolle con noodle ritorti!','Foglie ___ fresche, delicatamente ___!','Con un colpo di cucchiaio, un disco di formaggio appare!','Un frutto ___ fresco, un piccolo ___.','I frutti viola appaiono per il dessert. Magia!'],
+  ja: ['キッチンのまほう','まほうのなべがくるくるめんでぐつぐつ！','しんせんな___のはっぱ、やさしく___！','スプーンをふると、チーズのまるいものがあらわれる！','つめたい___のくだもの、ちいさな___。','むらさきのくだものがデザートにあらわれる。まほう！'],
+  la: ['Magia culinae','Olla magica cum tortis pastis bullit!','Recentia ___ folia, leniter ___!','Ictu cochlearis, discus caseatus apparet!','Frigidus ___ fructus, parvus ___.','Purpurei fructus pro secunda mensa apparent. Magia!'],
+  nl: ['Keukenmagie','De magische pot borrelt met gedraaide noedels!','Verse ___ blaadjes, zachtjes ___!','Met een zwaai van de lepel verschijnt een kaasschijf!','Een koele ___ vrucht, een kleine ___.','De paarse vruchten verschijnen als toetje. Magie!'],
+  pl: ['Magia kuchni','Magiczny garnek bulgocze z kręconymi makaronami!','Świeże ___ listki, delikatnie ___!','Machnięciem łyżki pojawia się serowy krążek!','Chłodny ___ owoc, mały ___.','Fioletowe owoce pojawiają się na deser. Magia!'],
+  pt: ['Magia na cozinha','A panela mágica borbulha com noodles torcidos!','Folhas ___ frescas, suavemente ___!','Com um aceno da colher, um disco de queijo aparece!','Uma fruta ___ fresca, um pequeno ___.','As frutas roxas aparecem para a sobremesa. Magia!'],
+  tr: ['Mutfak Sihiri','Sihirli tencere kıvrımlı erişteyle kaynıyor!','Taze ___ yapraklar, nazikçe ___!','Kaşığın bir sallanmasıyla peynirli bir disk beliriyor!','Serin bir ___ meyve, küçük bir ___.','Mor meyveler tatlı için beliriyor. Sihir!'],
+  zh: ['厨房魔法','魔法锅冒着卷卷面条的泡泡！','新鲜的___叶子，轻轻地___！','勺子一挥，一个奶酪圆饼出现了！','一个凉凉的___水果，一个小___。','紫色水果出现做甜点。魔法！'],
+};
+
+// Story 42: forestWalk
+S['forestWalk'] = {
+  ar: ['نزهة في الغابة','شكل ذهبي ينزل من الأشجار. أمسكه!','طق طق! قطرات تسقط في ___.','انظر! نبتة خضراء صغيرة تخترق التربة.','___ ناعم يجلس بجانب ___.','بيت مريح من الأغصان يجلس في الفروع.'],
+  da: ['Skovtur','En gylden form driver ned fra træerne. Fang den!','Pitter-patter! Dråber falder i ___.','Se! Et lille grønt skud skyder op gennem jorden.','En glat ___ sidder ved ___.','Et hyggeligt hjem af kviste sidder i grenene.'],
+  de: ['Waldspaziergang','Eine goldene Form schwebt von den Bäumen herunter. Fang sie!','Plitsch-platsch! Tropfen fallen in den ___.','Schau! Ein winziger grüner Trieb drängt durch die Erde.','Ein glatter ___ sitzt am ___.','Ein gemütliches Heim aus Zweigen sitzt in den Ästen.'],
+  es: ['Paseo por el bosque','¡Una forma dorada baja flotando de los árboles. ¡Atrápala!','¡Plic-plac! Gotas caen en el ___.','¡Mira! Un pequeño brote verde sale de la tierra.','Un ___ liso se sienta junto al ___.','¡Una casita acogedora de ramitas está en las ramas.'],
+  fr: ['Promenade en forêt','Une forme dorée descend des arbres. Attrape-la !','Plic-ploc ! Des gouttes tombent dans le ___.','Regarde ! Une petite pousse verte perce le sol.','Un ___ lisse est posé près du ___.','Un nid douillet de brindilles est dans les branches.'],
+  it: ['Passeggiata nel bosco','Una forma dorata scende dagli alberi. Prendila!','Plic-ploc! Gocce cadono nel ___.','Guarda! Un piccolo germoglio verde spunta dal terreno.','Un ___ liscio si trova vicino al ___.','Una casetta accogliente di rametti è tra i rami.'],
+  ja: ['もりのさんぽ','きんいろのかたちがきからおりてくる。つかまえて！','ぽたぽた！しずくが___におちる。','みて！ちいさなみどりのめがつちからでてくる。','なめらかな___が___のそばにある。','こえだのここちよいおうちがえだのなかにある。'],
+  la: ['Ambulatio in silva','Forma aurea de arboribus descendit. Cape eam!','Pitter-patter! Guttae in ___ cadunt.','Specta! Parvus viridis surculus per solum surgit.','Laevis ___ iuxta ___ sedet.','Gratum domicilium ramulorum in ramis sedet.'],
+  nl: ['Boswandeling','Een gouden vorm dwarrelt van de bomen. Vang het!','Tik-tik! Druppels vallen in de ___.','Kijk! Een klein groen scheurtje duwt door de grond.','Een gladde ___ zit bij de ___.','Een gezellig huisje van takjes zit in de takken.'],
+  pl: ['Spacer po lesie','Złoty kształt opada z drzew. Złap go!','Kap-kap! Krople spadają do ___.','Patrz! Mały zielony pęd przebija ziemię.','Gładki ___ leży obok ___.','Przytulny domek z gałązek siedzi w gałęziach.'],
+  pt: ['Passeio na floresta','Uma forma dourada desce das árvores. Pegue-a!','Ping-ping! Gotas caem no ___.','Olhe! Um pequeno broto verde empurra o solo.','Um ___ liso fica perto do ___.','Uma casinha aconchegante de gravetos está nos galhos.'],
+  tr: ['Orman Yürüyüşü','Ağaçlardan altın bir şekil süzülüyor. Yakala!','Şıp şıp! Damlalar ___\'a düşüyor.','Bak! Küçük yeşil bir filiz topraktan çıkıyor.','Düz bir ___ ___\'ın yanında oturuyor.','Dalların arasında çalı çırpıdan yapılmış rahat bir ev var.'],
+  zh: ['森林漫步','一个金色的形状从树上飘落。抓住它！','滴答滴答！水滴落入___。','看！一个小小的绿芽从土里钻出来。','一个光滑的___在___旁边。','树枝间有一个树枝做的温馨小屋。'],
+};
+
+// Story 43: riverAdventure
+S['riverAdventure'] = {
+  ar: ['مغامرة النهر','بركة ماء ساكنة تعكس السماء. جميل!','___ مجعد ينمو بجانب ___.','قطر قطر! ماء يسقط من السماء الرمادية.','___ ذهبي يطفو بجانب ___ صغير.','وسائد خضراء ناعمة تغطي الحجارة بجانب الماء.'],
+  da: ['Flodtur','En stille vandpøl afspejler himlen. Smukt!','En krøllet ___ vokser ved ___.','Dryp, dryp! Vand falder fra den grå himmel.','Et gyldent ___ flyder forbi en lille ___.','Bløde grønne puder dækker stenene ved vandet.'],
+  de: ['Flussabenteuer','Ein stiller Wasserteich spiegelt den Himmel. Wunderschön!','Ein lockiges ___ wächst am ___.','Tropf, tropf! Wasser fällt vom grauen Himmel.','Ein goldenes ___ schwimmt an einem kleinen ___ vorbei.','Weiche grüne Kissen bedecken die Steine am Wasser.'],
+  es: ['Aventura en el río','¡Una piscina de agua tranquila refleja el cielo. ¡Hermoso!','Un ___ rizado crece junto al ___.','¡Goteo, goteo! Agua cae del cielo gris.','Un ___ dorado flota junto a un pequeño ___.','Cojines verdes suaves cubren las piedras junto al agua.'],
+  fr: ['Aventure au ruisseau','Une mare d\'eau calme reflète le ciel. Magnifique !','Un ___ frisé pousse près du ___.','Goutte, goutte ! L\'eau tombe du ciel gris.','Un ___ doré flotte près d\'un petit ___.','Des coussins verts doux couvrent les pierres au bord de l\'eau.'],
+  it: ['Avventura al fiume','Una pozza d\'acqua tranquilla riflette il cielo. Bellissimo!','Un ___ riccio cresce vicino al ___.','Goccia, goccia! L\'acqua cade dal cielo grigio.','Un ___ dorato galleggia vicino a un piccolo ___.','Morbidi cuscini verdi coprono le pietre vicino all\'acqua.'],
+  ja: ['かわのぼうけん','しずかなみずたまりがそらをうつしている。きれい！','くるくるの___が___のそばにはえている。','ぽたぽた！はいいろのそらからみずがおちる。','きんいろの___がちいさな___のそばにうかんでいる。','やわらかいみどりのクッションがみずのそばのいしをおおっている。'],
+  la: ['Aventura fluvii','Tranquillum stagnum caelum reflectit. Pulchrum!','Crispus ___ iuxta ___ crescit.','Gutta, gutta! Aqua de caelo cano cadit.','Aureus ___ iuxta parvum ___ natat.','Mollia viridia pulvinaria lapides iuxta aquam tegunt.'],
+  nl: ['Rivieravontuur','Een stil waterplas weerspiegelt de lucht. Prachtig!','Een krullende ___ groeit bij de ___.','Drip, drip! Water valt uit de grijze lucht.','Een gouden ___ drijft langs een kleine ___.','Zachte groene kussentjes bedekken de stenen bij het water.'],
+  pl: ['Przygoda nad rzeką','Spokojna toń wody odbija niebo. Piękne!','Kręcony ___ rośnie obok ___.','Kap, kap! Woda spada z szarego nieba.','Złoty ___ płynie obok małego ___.','Miękkie zielone poduszki pokrywają kamienie nad wodą.'],
+  pt: ['Aventura no rio','Uma poça de água parada reflete o céu. Lindo!','Um ___ cacheado cresce perto do ___.','Ping, ping! Água cai do céu cinzento.','Um ___ dourado flutua perto de um pequeno ___.','Almofadas verdes macias cobrem as pedras perto da água.'],
+  tr: ['Nehir Macerası','Durgun bir su birikintisi gökyüzünü yansıtıyor. Güzel!','Kıvrımlı bir ___ ___\'ın yanında büyüyor.','Damla, damla! Gri gökyüzünden su düşüyor.','Altın bir ___ küçük bir ___\'ın yanında yüzüyor.','Yumuşak yeşil yastıklar suyun kenarındaki taşları örtüyor.'],
+  zh: ['河流冒险','一池静水映着天空。真美！','卷曲的___在___旁边生长。','滴答滴答！水从灰色天空落下。','金色的___在小小的___旁边漂浮。','柔软的绿色垫子覆盖着水边的石头。'],
+};
+
+// Story 44: hilltopView
+S['hilltopView'] = {
+  ar: ['منظر قمة التل','في القمة! حجر أملس مستدير يحدد القمة.','___ مريح من الأغصان و___.','سعف خضراء مجعدة تتمايل في النسيم.','قطرات ___ تبلل ___.','نبتة صغيرة تنبت بين الصخور!'],
+  da: ['Bakketopsudsigt','På toppen! En glat, rund sten markerer toppen.','En hyggelig ___ af kviste og ___.','Krøllede grønne blade svajer i brisen.','Dråber af ___ gennemvæder ___.','Et lille skud spirer mellem klipperne!'],
+  de: ['Hügelblick','Auf dem Gipfel! Ein glatter, runder Stein markiert die Spitze.','Ein gemütlicher ___ aus Zweigen und ___.','Lockige grüne Wedel wiegen sich im Wind.','Tropfen von ___ durchnässen den ___.','Ein winziger Trieb sprießt zwischen den Felsen!'],
+  es: ['Vista desde la colina','¡En la cima! Una piedra lisa y redonda marca la cumbre.','Un ___ acogedor de ramitas y ___.','Frondes verdes rizados se mecen en la brisa.','Gotas de ___ empapan el ___.','¡Un pequeño brote surge entre las rocas!'],
+  fr: ['Vue du sommet','Au sommet ! Une pierre lisse et ronde marque le pic.','Un ___ douillet de brindilles et ___.','Des frondes vertes frisées ondulent dans la brise.','Des gouttes de ___ trempent le ___.','Une petite pousse germe entre les rochers !'],
+  it: ['Vista dalla collina','In cima! Una pietra liscia e rotonda segna la vetta.','Un ___ accogliente di rametti e ___.','Fronde verdi arricciate ondeggiano nella brezza.','Gocce di ___ bagnano il ___.','Un piccolo germoglio spunta tra le rocce!'],
+  ja: ['おかのうえのけしき','てっぺんについた！なめらかなまるいいしがちょうじょうをしめす。','こえだと___のここちよい___。','みどりのくるくるのはっぱがそよかぜにゆれる。','___のしずくが___をぬらす。','いわのあいだからちいさなめがでている！'],
+  la: ['Prospectus collis','In summo! Laevis rotundus lapis cacumen signat.','Gratum ___ ramulorum et ___.','Crispae virides frondes in aura fluctuant.','Guttae ___ ___ madefaciunt.','Parvus surculus inter saxa germinat!'],
+  nl: ['Heuveltopuitzicht','Op de top! Een gladde, ronde steen markeert de top.','Een gezellige ___ van takjes en ___.','Krullende groene varenbladen wuiven in de bries.','Druppels ___ doordrenken de ___.','Een klein scheurtje ontkiemt tussen de rotsen!'],
+  pl: ['Widok ze wzgórza','Na szczycie! Gładki, okrągły kamień oznacza szczyt.','Przytulny ___ z gałązek i ___.','Kręcone zielone liście falują na wietrze.','Krople ___ moczyą ___.','Mały pęd kiełkuje między skałami!'],
+  pt: ['Vista do topo','No topo! Uma pedra lisa e redonda marca o cume.','Um ___ aconchegante de gravetos e ___.','Frondes verdes cacheadas balançam na brisa.','Gotas de ___ encharcam o ___.','Um pequeno broto brota entre as rochas!'],
+  tr: ['Tepe Manzarası','Tepede! Düz, yuvarlak bir taş zirveyi işaretliyor.','Dallardan ve ___\'dan rahat bir ___.','Kıvrımlı yeşil yapraklar esintide sallanıyor.','___ damlaları ___\'ı ıslatıyor.','Kayaların arasından küçük bir filiz çıkıyor!'],
+  zh: ['山顶景色','到顶了！一块光滑的圆石标志着山顶。','树枝和___做的舒适___。','卷曲的绿色蕨叶在微风中摇曳。','___的水滴浸湿了___。','一个小芽从岩石间冒出来！'],
+};
+
+// Story 45: meadowMorning
+S['meadowMorning'] = {
+  ar: ['صباح المرج','وسائد خضراء ناعمة تغطي جدار الحجر القديم.','___ صغير يخترق ___.','بيت أغصان مريح يطل من السياج.','___ ساكن يعكس ___ مجعد.','شكل ذهبي يطفو للأسفل. صباح الخير!'],
+  da: ['Engmorgen','Bløde grønne puder dækker den gamle stenmur.','En lille ___ skyder op gennem ___.','Et hyggeligt kvistehjem kigger ud fra hækken.','En stille ___ afspejler en krøllet ___.','En gylden form flyder ned. Godmorgen!'],
+  de: ['Wiesenmorgen','Weiche grüne Kissen bedecken die alte Steinmauer.','Ein winziger ___ drängt durch den ___.','Ein gemütliches Zweigheim lugt aus der Hecke.','Ein stiller ___ spiegelt ein lockiges ___.','Eine goldene Form schwebt herab. Guten Morgen!'],
+  es: ['Mañana en el prado','Cojines verdes suaves cubren el viejo muro de piedra.','Un pequeño ___ empuja a través del ___.','Una casita de ramitas asoma del seto.','Un ___ tranquilo refleja un ___ rizado.','Una forma dorada flota hacia abajo. ¡Buenos días!'],
+  fr: ['Matin dans le pré','Des coussins verts doux couvrent le vieux mur de pierre.','Un petit ___ pousse à travers le ___.','Un nid douillet de brindilles apparaît dans la haie.','Un ___ calme reflète un ___ frisé.','Une forme dorée flotte vers le bas. Bonjour !'],
+  it: ['Mattina nel prato','Morbidi cuscini verdi coprono il vecchio muro di pietra.','Un piccolo ___ spunta attraverso il ___.','Una casetta di rametti fa capolino dalla siepe.','Un ___ calmo riflette un ___ riccio.','Una forma dorata scende fluttuando. Buongiorno!'],
+  ja: ['のはらのあさ','やわらかいみどりのクッションがふるいいしのかべをおおっている。','ちいさな___が___からでてくる。','こえだのここちよいおうちがいけがきからのぞいている。','しずかな___がくるくるの___をうつしている。','きんいろのかたちがおりてくる。おはよう！'],
+  la: ['Mane in prato','Mollia viridia pulvinaria veterem murum lapideum tegunt.','Parvus ___ per ___ surgit.','Gratum domicilium ramulorum e saepe prospicit.','Tranquillus ___ crispum ___ reflectit.','Forma aurea descendit. Bonum mane!'],
+  nl: ['Weideochtend','Zachte groene kussentjes bedekken de oude stenen muur.','Een klein ___ duwt door de ___.','Een gezellig takjeshuisje gluurt uit de haag.','Een stil ___ weerspiegelt een krullende ___.','Een gouden vorm dwarrelt naar beneden. Goedemorgen!'],
+  pl: ['Poranek na łące','Miękkie zielone poduszki pokrywają stary kamienny mur.','Mały ___ przebija ___.','Przytulny domek z gałązek wygląda z żywopłotu.','Spokojny ___ odbija kręcony ___.','Złoty kształt opada w dół. Dzień dobry!'],
+  pt: ['Manhã no prado','Almofadas verdes macias cobrem o velho muro de pedra.','Um pequeno ___ empurra através do ___.','Uma casinha de gravetos espreita da cerca.','Um ___ calmo reflete um ___ cacheado.','Uma forma dourada flutua para baixo. Bom dia!'],
+  tr: ['Çayır Sabahı','Yumuşak yeşil yastıklar eski taş duvarı örtüyor.','Küçük bir ___ ___\'dan çıkıyor.','Çalı çırpıdan yapılmış rahat bir ev çitten bakıyor.','Durgun bir ___ kıvrımlı bir ___\'ı yansıtıyor.','Altın bir şekil aşağıya süzülüyor. Günaydın!'],
+  zh: ['草地清晨','柔软的绿色垫子覆盖着旧石墙。','一个小小的___从___中冒出来。','树篱里探出一个树枝做的温馨小屋。','平静的___映着卷曲的___。','一个金色的形状飘落下来。早上好！'],
+};
+
+// Story 46: rainyDayNature
+S['rainyDayNature'] = {
+  ar: ['طبيعة يوم ممطر','قطر، قطر، قطر! ماء يسقط من السماء.','___ أخضر ناعم ينمو بجانب ___.','شكل ذهبي يهبط في بركة!','___ مريح يبقى جافاً على ___.','سعف خضراء مجعدة ترقص في القطرات.'],
+  da: ['Regnvejrsnatur','Dryp, dryp, dryp! Vand falder fra himlen.','Blødt grønt ___ vokser ved ___.','En gylden form lander i en pyt!','En hyggelig ___ holder sig tør på ___.','Krøllede grønne blade danser i dråberne.'],
+  de: ['Regentagnatur','Tropf, tropf, tropf! Wasser fällt vom Himmel.','Weiches grünes ___ wächst am ___.','Eine goldene Form landet in einer Pfütze!','Ein gemütlicher ___ bleibt trocken auf dem ___.','Lockige grüne Wedel tanzen in den Tropfen.'],
+  es: ['Naturaleza en día lluvioso','¡Goteo, goteo, goteo! Agua cae del cielo.','___ verde suave crece junto al ___.','¡Una forma dorada aterriza en un charco!','Un ___ acogedor se mantiene seco en el ___.','Frondes verdes rizados bailan en las gotas.'],
+  fr: ['Nature un jour de pluie','Goutte, goutte, goutte ! L\'eau tombe du ciel.','Du ___ vert doux pousse près du ___.','Une forme dorée atterrit dans une flaque !','Un ___ douillet reste sec sur le ___.','Des frondes vertes frisées dansent dans les gouttes.'],
+  it: ['Natura in un giorno di pioggia','Goccia, goccia, goccia! L\'acqua cade dal cielo.','Morbido ___ verde cresce vicino al ___.','Una forma dorata atterra in una pozzanghera!','Un ___ accogliente resta asciutto sul ___.','Fronde verdi arricciate danzano nelle gocce.'],
+  ja: ['あめのひのしぜん','ぽたぽたぽた！そらからみずがおちる。','やわらかいみどりの___が___のそばにはえている。','きんいろのかたちがみずたまりにおちる！','ここちよい___が___のうえでかわいたまま。','みどりのくるくるのはっぱがしずくのなかでおどる。'],
+  la: ['Natura diei pluvii','Gutta, gutta, gutta! Aqua de caelo cadit.','Molle viride ___ iuxta ___ crescit.','Forma aurea in lacunam cadit!','Gratum ___ siccum in ___ manet.','Crispae virides frondes in guttis saltant.'],
+  nl: ['Regendag natuur','Drip, drip, drip! Water valt uit de lucht.','Zacht groen ___ groeit bij de ___.','Een gouden vorm landt in een plas!','Een gezellige ___ blijft droog op de ___.','Krullende groene varenbladen dansen in de druppels.'],
+  pl: ['Przyroda w deszczowy dzień','Kap, kap, kap! Woda spada z nieba.','Miękki zielony ___ rośnie obok ___.','Złoty kształt ląduje w kałuży!','Przytulny ___ zostaje suchy na ___.','Kręcone zielone liście tańczą w kroplach.'],
+  pt: ['Natureza em dia chuvoso','Ping, ping, ping! Água cai do céu.','___ verde macio cresce perto do ___.','Uma forma dourada pousa em uma poça!','Um ___ aconchegante fica seco no ___.','Frondes verdes cacheadas dançam nas gotas.'],
+  tr: ['Yağmurlu Gün Doğası','Damla, damla, damla! Gökyüzünden su düşüyor.','Yumuşak yeşil ___ ___\'ın yanında büyüyor.','Altın bir şekil bir su birikintisine konuyor!','Rahat bir ___ ___\'da kuru kalıyor.','Kıvrımlı yeşil yapraklar damlaların içinde dans ediyor.'],
+  zh: ['雨天自然','滴答，滴答，滴答！水从天空落下。','柔软的绿色___在___旁边生长。','一个金色的形状落入水洼！','舒适的___在___上保持干燥。','卷曲的绿色蕨叶在水滴中跳舞。'],
+};
+
+// Story 47: gardenSunrise
+S['gardenSunrise'] = {
+  ar: ['شروق الحديقة','الحديقة تستيقظ! زهرة جميلة تفتح بتلاتها.','___ صغيرة تتلوى في ___، تمد ___ها.','جدار أخضر طويل من الأوراق يقف عند حافة الحديقة.','احذر من ___! ماء يتسرب عبر ___.','شيء لذيذ ينمو على الشجرة. قطفه!'],
+  da: ['Havesolopgang','Haven vågner! En smuk blomst åbner sine kronblade.','Små ___ krøller sig i ___ og strækker deres ___.','En høj grøn mur af blade står ved havekanten.','Pas på ___! Vand siver gennem ___.','Noget lækker vokser på træet. Pluk det!'],
+  de: ['Gartensonnenaufgang','Der Garten wacht auf! Eine schöne Blume öffnet ihre Blütenblätter.','Kleine ___ kringeln sich im ___ und strecken ihre ___.','Eine hohe grüne Wand aus Blättern steht am Gartenrand.','Pass auf den ___ auf! Wasser rieselt durch den ___.','Etwas Leckeres wächst am Baum. Pflücke es!'],
+  es: ['Amanecer en el jardín','¡El jardín despierta! Una hermosa flor abre sus pétalos.','Pequeños ___ se enroscan en el ___, estirando sus ___.','Un alto muro verde de hojas está al borde del jardín.','¡Cuidado con el ___! El agua gotea por el ___.','¡Algo delicioso crece en el árbol. ¡Recógelo!'],
+  fr: ['Lever de soleil au jardin','Le jardin se réveille ! Une belle fleur ouvre ses pétales.','De petits ___ s\'enroulent dans le ___, étirant leurs ___.','Un grand mur vert de feuilles se dresse au bord du jardin.','Attention au ___ ! L\'eau coule à travers le ___.','Quelque chose de délicieux pousse sur l\'arbre. Cueille-le !'],
+  it: ['Alba nel giardino','Il giardino si sveglia! Un bel fiore apre i suoi petali.','Piccoli ___ si arricciano nel ___, allungando i loro ___.','Un alto muro verde di foglie sta al bordo del giardino.','Attento al ___! L\'acqua scorre attraverso il ___.','Qualcosa di delizioso cresce sull\'albero. Coglilo!'],
+  ja: ['にわのひので','にわがめをさます！きれいなはながはなびらをひらきます。','ちいさな___が___のなかでくるくるして___をのばしている。','にわのはしにはっぱのたかいみどりのかべがたっている。','___にきをつけて！みずが___をとおってながれる。','きのうえでおいしいものがそだっている。とって！'],
+  la: ['Ortus solis in horto','Hortus expergiscitur! Pulcher flos petala sua aperit.','Parvi ___ in ___ convolvuntur, ___ suos porrigentes.','Altus viridis murus foliorum ad oram horti stat.','Cave ___! Aqua per ___ manat.','Aliquid delectabile in arbore crescit. Carpe!'],
+  nl: ['Tuinzonsopgang','De tuin wordt wakker! Een mooie bloem opent haar bloemblaadjes.','Kleine ___ krullen in de ___, hun ___ strekkend.','Een hoge groene muur van bladeren staat aan de tuinrand.','Pas op voor de ___! Water sijpelt door de ___.','Iets lekkers groeit aan de boom. Pluk het!'],
+  pl: ['Wschód słońca w ogrodzie','Ogród się budzi! Piękny kwiat otwiera swoje płatki.','Małe ___ zwijają się w ___, rozciągając swoje ___.','Wysoki zielony mur z liści stoi na skraju ogrodu.','Uważaj na ___! Woda sączy się przez ___.','Coś pysznego rośnie na drzewie. Zbierz!'],
+  pt: ['Nascer do sol no jardim','O jardim acorda! Uma bela flor abre suas pétalas.','Pequenos ___ se enrolam no ___, esticando seus ___.','Um alto muro verde de folhas está na borda do jardim.','Cuidado com o ___! Água escorre pelo ___.','Algo delicioso cresce na árvore. Colha!'],
+  tr: ['Bahçe Gün Doğumu','Bahçe uyanıyor! Güzel bir çiçek yapraklarını açıyor.','Küçük ___ ___\'da kıvrılıyor, ___\'larını uzatıyor.','Bahçe kenarında yapraklardan yüksek yeşil bir duvar duruyor.','___\'a dikkat et! Su ___\'dan sızıyor.','Ağaçta lezzetli bir şey büyüyor. Topla!'],
+  zh: ['花园日出','花园醒了！一朵美丽的花开放了它的花瓣。','小小的___在___里卷曲，伸展它们的___。','花园边上有一面高高的绿叶墙。','小心___！水在___中流淌。','树上长着好吃的东西。摘下来！'],
+};
+
+// Story 48: gardenRain
+S['gardenRain'] = {
+  ar: ['مطر الحديقة','مطر يسقط على الحديقة! تحت الأرض بعمق، شيء يشربه.','___ يفتح واسعاً، ___ يأوي ___.','جزء واحد دقيق من زهرة يلتقط قطرة مطر.','___ ينضج في ___، رغم ___.','الشجرة تقف قوية، وسطها السميك يبقي كل شيء ثابتاً.'],
+  da: ['Haveregn','Regn falder på haven! Dybt under jorden drikker noget det op.','En ___ åbner sig vidt, ___ beskytter ___.','En enkelt, delikat del af en blomst fanger en regndråbe.','___ modnes i ___ trods ___.','Træet står stærkt, dets tykke midte holder alt stabilt.'],
+  de: ['Gartenregen','Regen fällt auf den Garten! Tief unter der Erde trinkt etwas ihn auf.','Ein ___ öffnet sich weit, der ___ schützt den ___.','Ein einzelner, zarter Teil einer Blume fängt einen Regentropfen.','Der ___ reift im ___, trotz des ___.','Der Baum steht stark, seine dicke Mitte hält alles stabil.'],
+  es: ['Lluvia en el jardín','¡Llueve en el jardín! Muy profundo bajo tierra, algo lo bebe.','Un ___ se abre ampliamente, el ___ protege al ___.','Una parte única y delicada de una flor atrapa una gota de lluvia.','El ___ madura en el ___, a pesar del ___.','El árbol se mantiene fuerte, su grueso medio mantiene todo estable.'],
+  fr: ['Pluie au jardin','La pluie tombe sur le jardin ! Profondément sous terre, quelque chose la boit.','Un ___ s\'ouvre grand, le ___ abrite le ___.','Une partie unique et délicate d\'une fleur attrape une goutte de pluie.','Le ___ mûrit dans le ___, malgré le ___.','L\'arbre reste fort, son milieu épais maintient tout stable.'],
+  it: ['Pioggia nel giardino','La pioggia cade sul giardino! In profondità sotto terra, qualcosa la beve.','Un ___ si apre ampiamente, il ___ ripara il ___.','Una singola, delicata parte di un fiore cattura una goccia di pioggia.','Il ___ matura nel ___, nonostante il ___.','L\'albero resta forte, il suo centro spesso tiene tutto stabile.'],
+  ja: ['にわのあめ','にわにあめがふる！ちかのふかくで、なにかがのみこむ。','___がおおきくひらく、___が___をまもる。','はなのひとつのこまかなぶぶんがあめのしずくをうけとめる。','___にもかかわらず___のなかで___がじゅくす。','きはつよくたっている、ふといまんなかがすべてをしっかりささえる。'],
+  la: ['Pluvia in horto','Pluvia in hortum cadit! Profunde sub terra, aliquid eam bibit.','___ late aperitur, ___ ___ protegit.','Unica, delicata pars floris guttam pluviae capit.','___ in ___ maturat, non obstante ___.','Arbor firma stat, crassus medius omnia stabilia tenet.'],
+  nl: ['Tuinregen','Regen valt op de tuin! Diep onder de grond drinkt iets het op.','Een ___ gaat wijd open, de ___ beschermt de ___.','Een enkel, delicaat deel van een bloem vangt een regendruppel.','De ___ rijpt in de ___, ondanks de ___.','De boom staat sterk, zijn dikke midden houdt alles stabiel.'],
+  pl: ['Deszcz w ogrodzie','Deszcz pada na ogród! Głęboko pod ziemią coś go pije.','___ otwiera się szeroko, ___ chroni ___.','Jedna delikatna część kwiatu łapie kroplę deszczu.','___ dojrzewa w ___, mimo ___.','Drzewo stoi mocno, jego gruby środek trzyma wszystko stabilnie.'],
+  pt: ['Chuva no jardim','Chuva cai no jardim! No fundo da terra, algo a bebe.','Um ___ se abre amplamente, o ___ protege o ___.','Uma única e delicada parte de uma flor pega uma gota de chuva.','O ___ amadurece no ___, apesar do ___.','A árvore se mantém forte, seu meio grosso mantém tudo estável.'],
+  tr: ['Bahçe Yağmuru','Bahçeye yağmur yağıyor! Yerin derinliklerinde bir şey onu içiyor.','Bir ___ geniş açılıyor, ___ ___\'ı koruyor.','Bir çiçeğin tek, narin parçası bir yağmur damlası yakalıyor.','___ ___\'a rağmen ___\'da olgunlaşıyor.','Ağaç güçlü duruyor, kalın gövdesi her şeyi sabit tutuyor.'],
+  zh: ['花园雨','雨落在花园里！在地下深处，有东西在喝它。','___大大地张开，___保护着___。','一朵花的一个精致部分接住了一滴雨。','___在___中成熟，尽管有___。','树站得很稳，粗壮的树干让一切都稳定。'],
+};
+
 // ── PLACEHOLDER: More stories will be added below ──
 
 // ══════════════════════════════════════════════════════════════════════
