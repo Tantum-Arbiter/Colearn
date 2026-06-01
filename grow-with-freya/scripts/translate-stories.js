@@ -294,6 +294,332 @@ S['rainyMorning'] = {
   zh: ['雨天早晨','滴答滴答！今天你得戴点什么在头上。','把热茶倒进你的___。好___。','谁在桌旁读报纸？','看！___出来了——变___了！','送你去学校的大东西在水坑里哗啦哗啦！'],
 };
 
+// Story 17: bedtimeRoutine (spelling story version - NOTE: skip to avoid conflict with feelings bedtimeRoutine)
+// Skipped intentionally - same key name exists in feelings section
+
+// Story 18: rainbowGarden
+S['rainbowGarden'] = {
+  ar: ['حديقة قوس قزح','قوس قزح يمتد فوق الحديقة! السماء خلفه بلون جميل.','الورود ___ زاهية مثل ___!','الفراشات تتلألأ بوهج ثمين ودافئ.','الأزهار ___ تتمايل تحت ___.',  'عندما تأتي الغيوم، تصبح الحديقة بلون ناعم لطيف.'],
+  da: ['Regnbuehaven','En regnbue buer over haven! Himlen bag den er en smuk farve.','De ___ roser er lyse som ___!','Sommerfuglene glimter med en dyrebar, varm glød.','De ___ blomster svajer under ___.',  'Når skyerne kommer, bliver haven en blid, blød farve.'],
+  de: ['Regenbogengarten','Ein Regenbogen spannt sich über den Garten! Der Himmel dahinter hat eine wunderschöne Farbe.','Die ___ Rosen leuchten wie ___!','Die Schmetterlinge schimmern mit einem kostbaren, warmen Glanz.','Die ___ Blumen wiegen sich unter ___.',  'Wenn die Wolken kommen, wird der Garten eine sanfte, weiche Farbe.'],
+  es: ['Jardín arcoíris','¡Un arcoíris se arquea sobre el jardín! El cielo detrás es de un color hermoso.','¡Las rosas ___ brillan como ___!','Las mariposas relucen con un brillo precioso y cálido.','Las flores ___ se mecen bajo ___.',  'Cuando llegan las nubes, el jardín se vuelve de un color suave y delicado.'],
+  fr: ['Jardin arc-en-ciel','Un arc-en-ciel enjambe le jardin ! Le ciel derrière est d\\\'une belle couleur.','Les roses ___ brillent comme ___ !','Les papillons chatoient d\\\'un éclat précieux et chaud.','Les fleurs ___ se balancent sous ___.',  'Quand les nuages arrivent, le jardin prend une couleur douce et tendre.'],
+  it: ['Giardino arcobaleno','Un arcobaleno si inarca sul giardino! Il cielo dietro è di un bel colore.','Le rose ___ brillano come ___!','Le farfalle luccicano con un bagliore prezioso e caldo.','I fiori ___ ondeggiano sotto ___.',  'Quando arrivano le nuvole, il giardino diventa di un colore morbido e delicato.'],
+  ja: ['にじのにわ','にじがにわのうえにかかっています！そのうしろのそらはきれいないろ。','___のバラは___のようにあざやか！','ちょうちょがたからもののようなあたたかいかがやきできらめいています。','___のはなが___のしたでゆれています。','くもがくると、にわはやさしくやわらかないろになります。'],
+  la: ['Hortus iridis','Iris super hortum arcuatur! Caelum post eam pulchro colore est.','Rosae ___ lucent sicut ___!','Papiliones pretioso calido splendore micant.','Flores ___ sub ___ oscillant.',  'Cum nubes veniunt, hortus mollem tenerum colorem sumit.'],
+  nl: ['Regenboogtuin','Een regenboog welft over de tuin! De lucht erachter is een prachtige kleur.','De ___ rozen zijn zo helder als ___!','De vlinders glanzen met een kostbare, warme gloed.','De ___ bloemen wiegen onder ___.',  'Als de wolken komen, wordt de tuin een zachte, tedere kleur.'],
+  pl: ['Tęczowy ogród','Tęcza łukiem wisi nad ogrodem! Niebo za nią ma piękny kolor.','Róże ___ jasne jak ___!','Motyle migoczą cennym, ciepłym blaskiem.','Kwiaty ___ kołyszą się pod ___.',  'Gdy przychodzą chmury, ogród staje się delikatnym, miękkim kolorem.'],
+  pt: ['Jardim arco-íris','Um arco-íris se curva sobre o jardim! O céu atrás é de uma cor linda.','As rosas ___ brilham como ___!','As borboletas cintilam com um brilho precioso e quente.','As flores ___ balançam sob ___.',  'Quando as nuvens chegam, o jardim fica de uma cor suave e delicada.'],
+  tr: ['Gökkuşağı Bahçesi','Bahçenin üzerinde bir gökkuşağı! Arkasındaki gökyüzü güzel bir renk.','___ güller ___ kadar parlak!','Kelebekler değerli, sıcak bir parıltıyla ışıldıyor.','___ çiçekler ___\'ın altında sallanıyor.',  'Bulutlar gelince bahçe yumuşak, nazik bir renk alıyor.'],
+  zh: ['彩虹花园','一道彩虹横跨花园！后面的天空是美丽的颜色。','___的玫瑰像___一样鲜艳！','蝴蝶闪着珍贵温暖的光芒。','___的花在___下摇曳。','云来了，花园变成柔和温柔的颜色。'],
+};
+
+// Story 19: paintSplash
+S['paintSplash'] = {
+  ar: ['رشة طلاء','سبلاش! أول وعاء طلاء ينقلب — يا له من لون جميل!','الآن ___ بطلاء ___!','لون مشرق ودافئ يتناثر على القماش.','رشّ بعض ___ لـ___!','اللون الأخير يجعل كل شيء منعشاً وحيوياً!'],
+  da: ['Malesprøjt','Splish splash! Den første malingskrukke vælter — sikke en smuk farve!','Nu ___ det med ___ maling!','En lys, varm farve sprøjter over lærredet.','Drys noget ___ til ___!','Den sidste farve gør alt friskt og sprudlende!'],
+  de: ['Farbklecks','Splish splash! Der erste Farbtopf kippt um — was für eine schöne Farbe!','Jetzt ___ es mit ___ Farbe!','Eine helle, warme Farbe spritzt über die Leinwand.','Streue etwas ___ für ___!','Die letzte Farbe macht alles frisch und prickelnd!'],
+  es: ['Salpicadura de pintura','¡Splash! El primer bote de pintura se vuelca — ¡qué color tan bonito!','¡Ahora ___ con pintura ___!','Un color brillante y cálido salpica el lienzo.','¡Espolvorea un poco de ___ para ___!','¡El último color hace que todo sea fresco y chispeante!'],
+  fr: ['Éclaboussure de peinture','Splish splash ! Le premier pot de peinture se renverse — quelle jolie couleur !','Maintenant ___ avec de la peinture ___ !','Une couleur vive et chaude éclabousse la toile.','Saupoudre du ___ pour ___ !','La dernière couleur rend tout frais et pétillant !'],
+  it: ['Spruzzi di colore','Splash! Il primo barattolo di vernice si rovescia — che bel colore!','Ora ___ con la vernice ___!','Un colore vivace e caldo schizza sulla tela.','Cospargi un po\\\' di ___ per ___!','L\\\'ultimo colore rende tutto fresco e frizzante!'],
+  ja: ['えのぐのしぶき','バシャッ！さいしょのえのぐのつぼがたおれた — なんてきれいないろ！','つぎは___のえのぐで___しよう！','あかるくてあたたかいいろがキャンバスにはねます。','___のために___をふりかけよう！','さいごのいろがすべてをさわやかにいきいきさせる！'],
+  la: ['Aspersio pigmenti','Splish splash! Prima olla pigmenti vertitur — quam pulcher color!','Nunc ___ cum pigmento ___!','Clarus calidus color super linteum spargitur.','Asperge aliquid ___ pro ___!','Ultimus color omnia recentia et vivacia facit!'],
+  nl: ['Verfspatten','Splish splash! De eerste verfpot valt om — wat een mooie kleur!','Nu ___ het met ___ verf!','Een heldere, warme kleur spat over het doek.','Strooi wat ___ voor ___!','De laatste kleur maakt alles fris en bruisend!'],
+  pl: ['Plama farby','Plusk! Pierwszy słoik farby się przewraca — jaki piękny kolor!','Teraz ___ farbą ___!','Jasny, ciepły kolor rozpryskuje się na płótnie.','Posyp trochę ___ na ___!','Ostatni kolor sprawia, że wszystko jest świeże i żywe!'],
+  pt: ['Respingo de tinta','Splash! O primeiro pote de tinta tomba — que cor bonita!','Agora ___ com tinta ___!','Uma cor brilhante e quente espirra na tela.','Salpique um pouco de ___ para ___!','A última cor deixa tudo fresco e vibrante!'],
+  tr: ['Boya Sıçraması','Şap şup! İlk boya kutusu devrildi — ne güzel bir renk!','Şimdi ___ boyayla ___!','Parlak, sıcak bir renk tuvale sıçrıyor.','Biraz ___ ___ için serp!','Son renk her şeyi taze ve canlı yapıyor!'],
+  zh: ['泼彩画','哗！第一罐颜料倒了——多漂亮的颜色！','现在用___颜料___！','一种明亮温暖的颜色溅到画布上。','撒一些___给___！','最后的颜色让一切清新活泼！'],
+};
+
+// Story 20: sunsetColours
+S['sunsetColours'] = {
+  ar: ['ألوان الغروب','الشمس تغرب! السماء تتحول للون دافئ ولامع.','الغيوم تصبح ___. إنها ___.','مع حلول الظلام، السماء تتحول للون هادئ وساكن.','آخر ___ من الغروب يتلاشى إلى ___.','يحل الليل والسماء بلون عميق وسلمي.'],
+  da: ['Solnedgangsfarver','Solen går ned! Himlen bliver en varm, skinnende farve.','Skyerne bliver ___. De ___.','Når mørket kommer, bliver himlen en blid, stille farve.','Det sidste ___ af solnedgangen falmer til ___.','Natten falder og himlen er en dyb, fredelig farve.'],
+  de: ['Sonnenuntergangsfarben','Die Sonne geht unter! Der Himmel wird eine warme, leuchtende Farbe.','Die Wolken werden ___. Sie ___.','Mit der Dunkelheit wird der Himmel eine sanfte, ruhige Farbe.','Das letzte ___ des Sonnenuntergangs verblasst zu ___.','Die Nacht bricht herein und der Himmel ist eine tiefe, friedliche Farbe.'],
+  es: ['Colores del atardecer','¡El sol se está poniendo! El cielo se vuelve de un color cálido y brillante.','Las nubes se ponen ___. Ellas ___.','Con la oscuridad, el cielo se vuelve de un color suave y tranquilo.','El último ___ del atardecer se desvanece a ___.','Cae la noche y el cielo es de un color profundo y pacífico.'],
+  fr: ['Couleurs du coucher de soleil','Le soleil se couche ! Le ciel prend une couleur chaude et brillante.','Les nuages deviennent ___. Ils ___.','Avec l\\\'obscurité, le ciel prend une couleur douce et calme.','Le dernier ___ du coucher de soleil s\\\'estompe en ___.','La nuit tombe et le ciel est d\\\'une couleur profonde et paisible.'],
+  it: ['Colori del tramonto','Il sole sta tramontando! Il cielo diventa di un colore caldo e luminoso.','Le nuvole diventano ___. Loro ___.','Con il buio, il cielo diventa di un colore dolce e tranquillo.','L\\\'ultimo ___ del tramonto sfuma in ___.','Scende la notte e il cielo è di un colore profondo e pacifico.'],
+  ja: ['ゆうやけいろ','たいようがしずんでいく！そらがあたたかくてかがやくいろになります。','くもが___になります。___。','くらくなると、そらはしずかでおだやかないろになります。','ゆうやけのさいごの___が___にきえていきます。','よるがきて、そらはふかくてへいわないろになります。'],
+  la: ['Colores solis occidentis','Sol occidit! Caelum calido fulgenti colore fit.','Nubes ___ fiunt. ___.',  'Cum tenebrae veniunt, caelum mollem quietum colorem sumit.','Ultimum ___ solis occidentis in ___ evanescit.','Nox venit et caelum profundo pacifico colore est.'],
+  nl: ['Zonsondergangskleuren','De zon gaat onder! De lucht wordt een warme, glanzende kleur.','De wolken worden ___. Ze ___.','Als het donker wordt, wordt de lucht een zachte, stille kleur.','De laatste ___ van de zonsondergang vervaagt tot ___.','De nacht valt en de lucht is een diepe, vredige kleur.'],
+  pl: ['Kolory zachodu','Słońce zachodzi! Niebo staje się ciepłym, lśniącym kolorem.','Chmury stają się ___. One ___.','Gdy zapada ciemność, niebo staje się delikatnym, cichym kolorem.','Ostatni ___ zachodu blednie do ___.','Zapada noc i niebo ma głęboki, spokojny kolor.'],
+  pt: ['Cores do pôr do sol','O sol está se pondo! O céu se torna de uma cor quente e brilhante.','As nuvens ficam ___. Elas ___.','Com a escuridão, o céu se torna de uma cor suave e tranquila.','O último ___ do pôr do sol desaparece para ___.','A noite cai e o céu é de uma cor profunda e pacífica.'],
+  tr: ['Gün Batımı Renkleri','Güneş batıyor! Gökyüzü sıcak, parlak bir renk alıyor.','Bulutlar ___ oluyor. ___.',  'Karanlık çökerken gökyüzü yumuşak, sakin bir renk alıyor.','Gün batımının son ___\'ı ___\'a soluyor.','Gece çöküyor ve gökyüzü derin, huzurlu bir renk.'],
+  zh: ['日落的颜色','太阳正在落下！天空变成温暖闪亮的颜色。','云朵变成___。它们___。','随着黑暗降临，天空变成柔和安静的颜色。','日落最后的___消退为___。','夜幕降临，天空是深沉宁静的颜色。'],
+};
+
+// Story 21: colourParade
+S['colourParade'] = {
+  ar: ['موكب الألوان','موكب الألوان يمر عبر المدينة! أولاً، مشرق ومنعش!','العربة ___ تمر عبر ___.','لون لامع كالجوهرة على العربة التالية!','ثم ___ مثل ___!','العربة الأخيرة هي أدفأ لون على الإطلاق!'],
+  da: ['Farveparade','En farveparade marcherer gennem byen! Først op, lys og frisk!','Den ___ float kommer gennem ___.','En skinnende, juvellignende farve på den næste float!','Så ___ som ___!','Den sidste float er den varmeste farve af alle!'],
+  de: ['Farbparade','Eine Farbparade marschiert durch die Stadt! Zuerst, hell und frisch!','Der ___ Wagen kommt durch die ___.','Eine glänzende, juwelenhafte Farbe auf dem nächsten Wagen!','Dann ___ wie ___!','Der letzte Wagen ist die wärmste Farbe von allen!'],
+  es: ['Desfile de colores','¡Un desfile de colores marcha por la ciudad! ¡Primero, brillante y fresco!','La carroza ___ pasa por ___.','¡Un color brillante como una joya en la siguiente carroza!','¡Luego ___ como ___!','¡La última carroza es el color más cálido de todos!'],
+  fr: ['Défilé de couleurs','Un défilé de couleurs traverse la ville ! D\\\'abord, vif et pétillant !','Le char ___ passe par ___.','Une couleur brillante comme un bijou sur le prochain char !','Puis ___ comme ___ !','Le dernier char est la couleur la plus chaude de toutes !'],
+  it: ['Parata di colori','Una parata di colori marcia per la città! Per primo, vivace e fresco!','Il carro ___ passa per ___.','Un colore brillante come un gioiello sul prossimo carro!','Poi ___ come ___!','L\\\'ultimo carro è il colore più caldo di tutti!'],
+  ja: ['いろのパレード','いろのパレードがまちをとおります！まずは、あかるくてさわやか！','___のフロートが___をとおります。','つぎのフロートにはほうせきのようなきらきらしたいろ！','それから___のように___！','さいごのフロートはいちばんあたたかいいろ！'],
+  la: ['Pompa colorum','Pompa colorum per oppidum graditur! Primum, clarus et vivax!','Currus ___ per ___ transit.','Fulgidus color gemmeus in proximo curru!','Deinde ___ sicut ___!','Ultimus currus calidissimus color omnium est!'],
+  nl: ['Kleurenparade','Een kleurenparade marcheert door de stad! Als eerste, helder en fris!','De ___ praalwagen komt door ___.','Een glanzende, juweelachtige kleur op de volgende praalwagen!','Dan ___ als ___!','De laatste praalwagen is de warmste kleur van allemaal!'],
+  pl: ['Parada kolorów','Parada kolorów maszeruje przez miasto! Najpierw jasny i orzeźwiający!','Platforma ___ przejeżdża przez ___.','Błyszczący, klejnotowy kolor na następnej platformie!','Potem ___ jak ___!','Ostatnia platforma to najcieplejszy kolor ze wszystkich!'],
+  pt: ['Desfile de cores','Um desfile de cores marcha pela cidade! Primeiro, brilhante e vibrante!','O carro ___ passa pelo ___.','Uma cor brilhante como uma joia no próximo carro!','Depois ___ como ___!','O último carro é a cor mais quente de todas!'],
+  tr: ['Renk Geçidi','Şehirde bir renk geçidi! İlk olarak parlak ve canlı!','___ platform ___\'dan geçiyor.','Sonraki platformda mücevher gibi parlak bir renk!','Sonra ___ gibi ___!','Son platform en sıcak renk!'],
+  zh: ['色彩游行','色彩游行穿过城镇！首先是明亮清新的！','___彩车穿过___。','下一辆彩车上有宝石般闪亮的颜色！','然后___像___！','最后一辆彩车是最温暖的颜色！'],
+};
+
+// Story 22: shapeParty
+S['shapeParty'] = {
+  ar: ['حفلة الأشكال','مرحباً بحفلة الأشكال! هدية تصل في شيء بأربعة جوانب.','البالونات ___ ___!','قبعات الحفلة مدببة من الأعلى!','انظر للأعلى! الزينة ___ تملأ ___!','الكعكة بشكل مستدير مضحك — ليست دائرة تماماً!'],
+  da: ['Formfest','Velkommen til formfesten! En gave ankommer i noget med fire sider.','De ___ balloner ___!','Festhatterne er spidse i toppen!','Kig op! De ___ dekorationer fylder ___!','Kagen er en sjov rundet form — ikke helt en cirkel!'],
+  de: ['Formenparty','Willkommen zur Formenparty! Ein Geschenk kommt in etwas mit vier Seiten.','Die ___ Luftballons ___!','Die Partyhüte sind oben spitz!','Schau nach oben! Die ___ Dekorationen füllen ___!','Der Kuchen hat eine lustige runde Form — nicht ganz ein Kreis!'],
+  es: ['Fiesta de formas','¡Bienvenidos a la fiesta de formas! Un regalo llega en algo con cuatro lados.','¡Los globos ___ ___!','¡Los gorros de fiesta son puntiagudos arriba!','¡Mira arriba! ¡Las decoraciones ___ llenan ___!','¡El pastel tiene una forma redondeada graciosa — no del todo un círculo!'],
+  fr: ['Fête des formes','Bienvenue à la fête des formes ! Un cadeau arrive dans quelque chose à quatre côtés.','Les ballons ___ ___ !','Les chapeaux de fête sont pointus en haut !','Regarde en haut ! Les décorations ___ remplissent ___ !','Le gâteau a une drôle de forme arrondie — pas tout à fait un cercle !'],
+  it: ['Festa delle forme','Benvenuti alla festa delle forme! Un regalo arriva in qualcosa con quattro lati.','I palloncini ___ ___!','I cappelli da festa sono appuntiti in cima!','Guarda in alto! Le decorazioni ___ riempiono ___!','La torta ha una forma arrotondata divertente — non proprio un cerchio!'],
+  ja: ['かたちのパーティー','かたちのパーティーへようこそ！よっつのへんがあるものにプレゼントがとどきます。','___のふうせんが___！','パーティーぼうしはうえがとがっている！','うえをみて！___のかざりが___をうめつくしている！','ケーキはまるいおもしろいかたち — まんまるではないよ！'],
+  la: ['Convivium formarum','Salve ad convivium formarum! Donum in aliquo cum quattuor lateribus advenit.','Vesicae ___ ___!','Pilei festivitatis sursum acuminati sunt!','Sursum specta! Ornamenta ___ ___ implent!','Placenta formam rotundam ridiculam habet — non plane circulus!'],
+  nl: ['Vormenfeest','Welkom op het vormenfeest! Een cadeau komt in iets met vier kanten.','De ___ ballonnen ___!','De feesthoedjes zijn bovenaan puntig!','Kijk omhoog! De ___ versieringen vullen ___!','De taart heeft een grappige ronde vorm — niet helemaal een cirkel!'],
+  pl: ['Przyjęcie kształtów','Witamy na przyjęciu kształtów! Prezent przybywa w czymś z czterema bokami.','Balony ___ ___!','Czapeczki imprezowe są spiczaste na górze!','Spójrz w górę! Dekoracje ___ wypełniają ___!','Tort ma zabawny zaokrąglony kształt — nie do końca koło!'],
+  pt: ['Festa das formas','Bem-vindos à festa das formas! Um presente chega em algo com quatro lados.','Os balões ___ ___!','Os chapéus de festa são pontudos no topo!','Olhe para cima! As decorações ___ preenchem ___!','O bolo tem uma forma arredondada engraçada — não é bem um círculo!'],
+  tr: ['Şekil Partisi','Şekil partisine hoş geldiniz! Dört kenarlı bir şeyde hediye geliyor.','___ balonlar ___!','Parti şapkaları tepede sivri!','Yukarı bak! ___ süslemeler ___\'ı dolduruyor!','Pasta eğlenceli yuvarlak bir şekil — tam bir daire değil!'],
+  zh: ['形状派对','欢迎来到形状派对！礼物装在四个边的东西里到了。','___气球___！','派对帽子顶部是尖尖的！','抬头看！___装饰品填满了___！','蛋糕是有趣的圆形——不完全是圆形！'],
+};
+
+// Story 23: shapeIsland
+S['shapeIsland'] = {
+  ar: ['جزيرة الأشكال','وصلت إلى جزيرة الأشكال! دائرة متلألئة ترحب بك.','في ___، تجد صندوق كنز ___!','في السماء، شكل بخمسة رؤوس يتلألأ بشدة!','مثلجات ___ تذوب في ___!','الجزيرة مصنوعة من شكل مربع خاص ثلاثي الأبعاد!'],
+  da: ['Formøen','Du ankommer til Formøen! En glitrende cirkel byder dig velkommen.','I ___ finder du en ___ skattekiste!','Oppe på himlen glitrer en femtakket form!','En is ___ smelter i ___!','Øen er lavet af en speciel 3D firkantet form!'],
+  de: ['Formeninsel','Du kommst auf der Formeninsel an! Ein funkelnder Kreis begrüßt dich.','Im ___ findest du eine ___ Schatztruhe!','Am Himmel glitzert eine fünfzackige Form hell!','Ein Eis___ schmilzt im ___!','Die Insel besteht aus einer besonderen 3D-Quadratform!'],
+  es: ['Isla de las formas','¡Llegas a la Isla de las Formas! Un círculo brillante te da la bienvenida.','¡En el ___ encuentras un cofre del tesoro ___!','¡En el cielo, una forma de cinco puntas brilla intensamente!','¡Un helado ___ se derrite en ___!','¡La isla está hecha de una forma cuadrada 3D especial!'],
+  fr: ['L\\\'île des formes','Tu arrives sur l\\\'île des formes ! Un cercle étincelant t\\\'accueille.','Dans le ___, tu trouves un coffre au trésor ___ !','Dans le ciel, une forme à cinq pointes brille !','Une glace ___ fond dans ___ !','L\\\'île est faite d\\\'une forme carrée 3D spéciale !'],
+  it: ['Isola delle forme','Arrivi sull\\\'Isola delle Forme! Un cerchio scintillante ti accoglie.','Nel ___ trovi un forziere ___!','In cielo, una forma a cinque punte brilla!','Un gelato ___ si scioglie nel ___!','L\\\'isola è fatta di una speciale forma quadrata 3D!'],
+  ja: ['かたちのしま','かたちのしまにとうちゃく！きらきらのまるがむかえてくれます。','___のなかで、___のたからばこをみつけた！','そらのうえで、いつつのとがりがあるかたちがきらきらひかっている！','アイスクリーム___が___のなかでとけている！','しまはとくべつな3Dのしかくいかたちでできている！'],
+  la: ['Insula formarum','Ad Insulam Formarum advenis! Scintillans circulus te salutat.','In ___, arcam thesauri ___ invenis!','In caelo, forma quinque cuspidibus fulget!','Glacies ___ in ___ liquescit!','Insula ex speciali forma quadrata 3D facta est!'],
+  nl: ['Vormeneiland','Je komt aan op Vormeneiland! Een sprankelende cirkel verwelkomt je.','In de ___ vind je een ___ schatkist!','Aan de hemel glinstert een vijfpuntige vorm!','Een ijsje ___ smelt in de ___!','Het eiland is gemaakt van een speciale 3D vierkante vorm!'],
+  pl: ['Wyspa kształtów','Przybywasz na Wyspę Kształtów! Błyszczące koło cię wita.','W ___ znajdujesz ___ skrzynię ze skarbem!','Na niebie pięcioramienny kształt błyszczy jasno!','Lód ___ topi się w ___!','Wyspa jest zrobiona ze specjalnego kształtu sześcianu 3D!'],
+  pt: ['Ilha das formas','Você chega na Ilha das Formas! Um círculo brilhante te recebe.','No ___ você encontra um baú do tesouro ___!','No céu, uma forma de cinco pontas brilha!','Um sorvete ___ derrete no ___!','A ilha é feita de uma forma quadrada 3D especial!'],
+  tr: ['Şekil Adası','Şekil Adasına ulaştın! Parlayan bir daire seni karşılıyor.','___\'da ___ bir hazine sandığı buluyorsun!','Gökyüzünde beş köşeli bir şekil parlıyor!','Bir dondurma ___ ___\'da eriyor!','Ada özel bir 3D kare şeklinden yapılmış!'],
+  zh: ['形状岛','你到达了形状岛！一个闪闪发光的圆形欢迎你。','在___里，你找到了一个___宝箱！','天上，一个五角形状闪闪发亮！','一个冰淇淋___在___里融化了！','这个岛是由特殊的3D正方形做成的！'],
+};
+
+// Story 24: shapeTreasure
+S['shapeTreasure'] = {
+  ar: ['كنز الأشكال','X يحدد المكان! الكنز داخل شكل ثلاثي الأبعاد خاص.','المفتاح ___ يفتح ___!','علامة صغيرة مستديرة على الخريطة تدل على الطريق.','اتبع المدخل ___ باستخدام ___!','الكنز يتوهج! شكله مثل ألمع شيء في سماء الليل.'],
+  da: ['Formskatter','X markerer stedet! Skatten er inde i en speciel 3D-form.','Den ___ nøgle låser ___ op!','Et lille rundt mærke på kortet viser vejen.','Følg den ___ døråbning ved hjælp af ___!','Skatten lyser! Den er formet som det lyseste på nattehimlen.'],
+  de: ['Formenschatz','X markiert die Stelle! Der Schatz ist in einer besonderen 3D-Form.','Der ___ Schlüssel öffnet ___!','Ein kleiner runder Punkt auf der Karte zeigt den Weg.','Folge dem ___ Eingang mit ___!','Der Schatz leuchtet! Er hat die Form des hellsten Dings am Nachthimmel.'],
+  es: ['Tesoro de formas','¡X marca el lugar! El tesoro está dentro de una forma 3D especial.','¡La llave ___ abre ___!','Una pequeña marca redonda en el mapa muestra el camino.','¡Sigue la entrada ___ usando ___!','¡El tesoro brilla! Tiene la forma de lo más brillante en el cielo nocturno.'],
+  fr: ['Trésor des formes','X marque l\\\'endroit ! Le trésor est dans une forme 3D spéciale.','La clé ___ ouvre ___ !','Un petit point rond sur la carte montre le chemin.','Suis la porte ___ en utilisant ___ !','Le trésor brille ! Il a la forme de la chose la plus brillante dans le ciel nocturne.'],
+  it: ['Tesoro delle forme','X segna il punto! Il tesoro è dentro una forma 3D speciale.','La chiave ___ apre ___!','Un piccolo segno rotondo sulla mappa mostra la via.','Segui la porta ___ usando ___!','Il tesoro brilla! Ha la forma della cosa più luminosa nel cielo notturno.'],
+  ja: ['かたちのたからもの','Xがばしょをしるしている！たからものはとくべつな3Dのかたちのなかに。','___のかぎが___をあける！','ちずのうえのちいさなまるいしるしがみちをおしえてくれる。','___のもんを___をつかってとおろう！','たからものがひかっている！よぞらでいちばんあかるいものとおなじかたちだ。'],
+  la: ['Thesaurus formarum','X locum signat! Thesaurus in speciali forma 3D est.','Clavis ___ aperit ___!','Parvum rotundum signum in mappa viam monstrat.','Ianuam ___ utens ___ sequere!','Thesaurus lucet! Formam rei lucidissimae in caelo nocturno habet.'],
+  nl: ['Vormenschat','X markeert de plek! De schat zit in een speciale 3D-vorm.','De ___ sleutel opent ___!','Een klein rond teken op de kaart wijst de weg.','Volg de ___ deur met ___!','De schat gloeit! Het heeft de vorm van het helderste ding aan de nachtelijke hemel!'],
+  pl: ['Skarb kształtów','X oznacza miejsce! Skarb jest wewnątrz specjalnego kształtu 3D.','Klucz ___ otwiera ___!','Mały okrągły znaczek na mapie pokazuje drogę.','Idź przez drzwi ___ używając ___!','Skarb świeci! Ma kształt najjaśniejszej rzeczy na nocnym niebie.'],
+  pt: ['Tesouro das formas','X marca o lugar! O tesouro está dentro de uma forma 3D especial.','A chave ___ abre ___!','Uma pequena marca redonda no mapa mostra o caminho.','Siga a porta ___ usando ___!','O tesouro brilha! Tem a forma da coisa mais brilhante no céu noturno.'],
+  tr: ['Şekil Hazinesi','X noktayı işaretliyor! Hazine özel bir 3D şeklin içinde.','___ anahtar ___\'ı açıyor!','Haritadaki küçük yuvarlak işaret yolu gösteriyor.','___ kapıdan ___\'ı kullanarak geç!','Hazine parlıyor! Gece gökyüzündeki en parlak şey şeklinde.'],
+  zh: ['形状宝藏','X标记了位置！宝藏在一个特殊的3D形状里。','___钥匙打开了___！','地图上一个小圆点指引方向。','跟着___门用___走！','宝藏发光了！它的形状像夜空中最亮的东西。'],
+};
+
+// Story 25: shapeRace
+S['shapeRace'] = {
+  ar: ['سباق الأشكال','استعد، انطلق! أول متسابق ينطلق عبر باب منحني.','___ صغير يقفز إلى ___!','متسابق الدائرة اللامع يتدحرج حول المنعطف!','متسابق ___ يتعثر إلى ___!','والفائز يعبر خط النهاية — إنه الصديق ذو الأربعة جوانب!'],
+  da: ['Formløb','Klar, parat, start! Den første racer suser gennem en buet døråbning.','En lille ___ hopper til ___!','Den funklende cirkelracer ruller rundt om svinget!','___ raceren tumlede til ___!','Og vinderen krydser målstregen — det er den firkantede ven!'],
+  de: ['Formenrennen','Auf die Plätze, fertig, los! Der erste Rennfahrer saust durch einen gewölbten Eingang.','Ein kleines ___ springt zum ___!','Der funkelnde Kreis-Rennfahrer rollt um die Kurve!','Der ___ Rennfahrer purzelt zum ___!','Und der Gewinner überquert die Ziellinie — es ist der vierseitige Freund!'],
+  es: ['Carrera de formas','¡Preparados, listos, ya! El primer corredor pasa por una puerta curva.','¡Un pequeño ___ salta a ___!','¡El corredor circular brillante rueda por la curva!','¡El corredor ___ rueda a ___!','¡Y el ganador cruza la meta — es el amigo de cuatro lados!'],
+  fr: ['Course des formes','À vos marques, prêts, partez ! Le premier coureur file à travers une porte courbe.','Un petit ___ rebondit vers ___ !','Le coureur cercle étincelant roule autour du virage !','Le coureur ___ dégringole vers ___ !','Et le gagnant franchit la ligne d\\\'arrivée — c\\\'est l\\\'ami à quatre côtés !'],
+  it: ['Gara delle forme','Pronti, via! Il primo corridore sfreccia attraverso una porta curva.','Un piccolo ___ rimbalza verso ___!','Il corridore cerchio scintillante rotola intorno alla curva!','Il corridore ___ ruzzola verso ___!','E il vincitore taglia il traguardo — è l\\\'amico a quattro lati!'],
+  ja: ['かたちのレース','よーい、スタート！さいしょのレーサーがまがったもんをくぐりぬけます。','ちいさな___が___へはねる！','きらきらのまるいレーサーがカーブをまがる！','___のレーサーが___にころがる！','そしてゆうしょうしゃがゴールをきる — よんかくのともだちだ！'],
+  la: ['Cursus formarum','Parati, stati, ite! Primus cursor per arcuatam ianuam volat.','Parvus ___ ad ___ salit!','Scintillans circulus cursor circa flexum volvitur!','Cursor ___ ad ___ cecidit!','Et victor lineam finis transit — amicus quattuor laterum est!'],
+  nl: ['Vormenrace','Klaar, af! De eerste racer zoeft door een gebogen deur.','Een klein ___ stuitert naar ___!','De sprankelende cirkelracer rolt om de bocht!','De ___ racer tuimelt naar ___!','En de winnaar passeert de finish — het is het vierkante vriendje!'],
+  pl: ['Wyścig kształtów','Gotowi, start! Pierwszy zawodnik mknie przez łukowate drzwi.','Mały ___ podskakuje do ___!','Błyszczący okrągły zawodnik toczy się za zakrętem!','Zawodnik ___ toczy się do ___!','A zwycięzca przekracza metę — to czworoboczny przyjaciel!'],
+  pt: ['Corrida das formas','Preparar, apontar, já! O primeiro corredor passa por uma porta curva.','Um pequeno ___ pula para ___!','O corredor circular brilhante rola pela curva!','O corredor ___ cai para ___!','E o vencedor cruza a linha de chegada — é o amigo de quatro lados!'],
+  tr: ['Şekil Yarışı','Hazır, başla! İlk yarışçı kavisli kapıdan geçiyor.','Küçük bir ___ ___\'a zıplıyor!','Işıltılı daire yarışçı virajda yuvarlanıyor!','___ yarışçı ___\'a yuvarlanıyor!','Ve kazanan bitiş çizgisini geçiyor — dört kenarlı arkadaş!'],
+  zh: ['形状赛跑','预备，开始！第一个选手冲过弧形门。','一个小___弹向___！','闪闪发光的圆形选手绕过弯道！','___选手滚向___！','获胜者冲过终点线——是四边形朋友！'],
+};
+
+// Story 26: nameGarden
+S['nameGarden'] = {
+  ar: ['حديقة الأسماء','مرحباً بحديقة الأسماء! أول بطاقة اسم تتفتح.','___ و___ يجدان زهورهما أيضاً!','شرارة طاقة تشعل بطاقة اسم جديدة!','___ و___ يسقيان زهورهما.','آخر بطاقة اسم تتفتح بجمال في الحديقة!'],
+  da: ['Navnehaven','Velkommen til Navnehaven! Det første navneskilt blomstrer.','___ og ___ finder også deres blomster!','Et energiglimt tænder et nyt navneskilt!','___ og ___ vander deres blomster.','Det sidste navneskilt blomstrer smukt i haven!'],
+  de: ['Namensgarten','Willkommen im Namensgarten! Das erste Namensschild blüht.','___ und ___ finden ihre Blumen auch!','Ein Energieblitz entzündet ein neues Namensschild!','___ und ___ gießen ihre Blumen.','Das letzte Namensschild blüht wunderschön im Garten!'],
+  es: ['Jardín de nombres','¡Bienvenidos al Jardín de Nombres! La primera etiqueta florece.','¡___ y ___ también encuentran sus flores!','¡Un rayo de energía enciende una nueva etiqueta!','___ y ___ riegan sus flores.','¡La última etiqueta florece hermosamente en el jardín!'],
+  fr: ['Jardin des noms','Bienvenue au Jardin des Noms ! La première étiquette fleurit.','___ et ___ trouvent leurs fleurs aussi !','Un éclair d\\\'énergie fait naître une nouvelle étiquette !','___ et ___ arrosent leurs fleurs.','La dernière étiquette fleurit magnifiquement dans le jardin !'],
+  it: ['Giardino dei nomi','Benvenuti al Giardino dei Nomi! La prima targhetta fiorisce.','___ e ___ trovano anche i loro fiori!','Un lampo di energia accende una nuova targhetta!','___ e ___ innaffiano i loro fiori.','L\\\'ultima targhetta fiorisce magnificamente nel giardino!'],
+  ja: ['なまえのにわ','なまえのにわへようこそ！さいしょのなまえふだがさきます。','___と___もはなをみつけた！','エネルギーのひらめきがあたらしいなまえふだをつける！','___と___がはなにみずをやります。','さいごのなまえふだがにわできれいにさきました！'],
+  la: ['Hortus nominum','Salve ad Hortum Nominum! Prima tessera nominis floret.','___ et ___ flores suos quoque inveniunt!','Ictus energiae novam tesseram accendit!','___ et ___ flores suos irrigant.','Ultima tessera in horto pulchre floret!'],
+  nl: ['Namentuin','Welkom in de Namentuin! Het eerste naamkaartje bloeit.','___ en ___ vinden ook hun bloemen!','Een energieflits ontvlamt een nieuw naamkaartje!','___ en ___ geven hun bloemen water.','Het laatste naamkaartje bloeit prachtig in de tuin!'],
+  pl: ['Ogród imion','Witamy w Ogrodzie Imion! Pierwsza plakietka rozkwita.','___ i ___ też znajdują swoje kwiaty!','Błysk energii zapala nową plakietkę!','___ i ___ podlewają swoje kwiaty.','Ostatnia plakietka pięknie rozkwita w ogrodzie!'],
+  pt: ['Jardim dos nomes','Bem-vindos ao Jardim dos Nomes! A primeira etiqueta floresce.','___ e ___ encontram suas flores também!','Um raio de energia acende uma nova etiqueta!','___ e ___ regam suas flores.','A última etiqueta floresce lindamente no jardim!'],
+  tr: ['İsim Bahçesi','İsim Bahçesine hoş geldiniz! İlk isim etiketi açıyor.','___ ve ___ da çiçeklerini buluyor!','Bir enerji parıltısı yeni bir isim etiketi yakıyor!','___ ve ___ çiçeklerini suluyor.','Son isim etiketi bahçede güzelce açıyor!'],
+  zh: ['名字花园','欢迎来到名字花园！第一个名牌绽放了。','___和___也找到了他们的花！','一道能量火花点亮了新的名牌！','___和___给花浇水。','最后一个名牌在花园里美丽地绽放了！'],
+};
+
+// Story 27: nameStars
+S['nameStars'] = {
+  ar: ['نجوم الأسماء','سماء الليل تضيء بالأسماء! أول نجمة تتلألأ.','___ و___ يلمعان بشدة!','نجمة كالزهرة تتفتح في الكوكبة.','___ و___ ينضمان للسماء!','أشجع نجمة تزأر في الليل!'],
+  da: ['Navnestjerner','Nattehimlen lyser op med navne! Den første stjerne blinker.','___ og ___ lyser klart!','En blomstlignende stjerne blomstrer i stjernebilledet.','___ og ___ slutter sig til himlen!','Den modigste stjerne brøler ud i natten!'],
+  de: ['Namenssterne','Der Nachthimmel leuchtet mit Namen! Der erste Stern funkelt.','___ und ___ leuchten hell!','Ein blumenartiger Stern blüht im Sternbild.','___ und ___ kommen an den Himmel!','Der mutigste Stern brüllt in die Nacht!'],
+  es: ['Estrellas de nombres','¡El cielo nocturno se ilumina con nombres! La primera estrella brilla.','¡___ y ___ brillan intensamente!','Una estrella como una flor florece en la constelación.','¡___ y ___ se unen al cielo!','¡La estrella más valiente ruge en la noche!'],
+  fr: ['Étoiles des noms','Le ciel nocturne s\\\'illumine de noms ! La première étoile scintille.','___ et ___ brillent fort !','Une étoile en forme de fleur éclot dans la constellation.','___ et ___ rejoignent le ciel !','L\\\'étoile la plus courageuse rugit dans la nuit !'],
+  it: ['Stelle dei nomi','Il cielo notturno si illumina di nomi! La prima stella brilla.','___ e ___ brillano intensamente!','Una stella a forma di fiore sboccia nella costellazione.','___ e ___ si uniscono al cielo!','La stella più coraggiosa ruggisce nella notte!'],
+  ja: ['なまえのほし','よぞらがなまえでかがやく！さいしょのほしがきらめく。','___と___があかるくひかる！','はなのようなほしがせいざのなかでさく。','___と___がそらにくわわる！','いちばんゆうかんなほしがよるにほえる！'],
+  la: ['Stellae nominum','Caelum nocturnum nominibus lucet! Prima stella scintillat.','___ et ___ clare fulgent!','Stella floris similis in constellatione floret.','___ et ___ caelo se adiungunt!','Fortissima stella in noctem rugit!'],
+  nl: ['Namensterren','De nachtelijke hemel licht op met namen! De eerste ster twinkelt.','___ en ___ schijnen helder!','Een bloemachtige ster bloeit in het sterrenbeeld.','___ en ___ voegen zich bij de hemel!','De dapperste ster brult de nacht in!'],
+  pl: ['Gwiazdy imion','Nocne niebo rozświetla się imionami! Pierwsza gwiazda migocze.','___ i ___ świecą jasno!','Gwiazda jak kwiat rozkwita w konstelacji.','___ i ___ dołączają do nieba!','Najodważniejsza gwiazda ryczy w noc!'],
+  pt: ['Estrelas dos nomes','O céu noturno se ilumina com nomes! A primeira estrela brilha.','___ e ___ brilham intensamente!','Uma estrela como uma flor desabrocha na constelação.','___ e ___ se juntam ao céu!','A estrela mais corajosa ruge na noite!'],
+  tr: ['İsim Yıldızları','Gece gökyüzü isimlerle aydınlanıyor! İlk yıldız parlıyor.','___ ve ___ parlak parlak ışıldıyor!','Çiçek gibi bir yıldız takımyıldızda açıyor.','___ ve ___ gökyüzüne katılıyor!','En cesur yıldız geceye kükrüyor!'],
+  zh: ['名字星星','夜空被名字照亮了！第一颗星星闪烁着。','___和___明亮地闪耀！','一颗花朵般的星星在星座中绽放。','___和___加入了天空！','最勇敢的星星在夜空中咆哮！'],
+};
+
+// Story 28: namePicnic
+S['namePicnic'] = {
+  ar: ['نزهة الأسماء','حان وقت نزهة الأسماء! أول صديق يصل.','___ و___ يحضران شطائر!','صديق محبوب ينضم بالعسل!','___ و___ يتشاركان البطانية!','آخر صديق يصل بسلة زهور!'],
+  da: ['Navnepicnic','Tid til en navnepicnic! Den første ven ankommer.','___ og ___ medbringer sandwiches!','En nuttede ven tilslutter sig med honning!','___ og ___ deler tæppet!','Den sidste ven ankommer med en kurv blomster!'],
+  de: ['Namenspicknick','Zeit für ein Namenspicknick! Der erste Freund kommt an.','___ und ___ bringen Sandwiches mit!','Ein kuscheliger Freund kommt mit Honig dazu!','___ und ___ teilen die Decke!','Der letzte Freund kommt mit einem Korb voller Blumen!'],
+  es: ['Picnic de nombres','¡Hora del picnic de nombres! El primer amigo llega.','¡___ y ___ traen sándwiches!','¡Un amigo tierno se une con miel!','¡___ y ___ comparten la manta!','¡El último amigo llega con una cesta de flores!'],
+  fr: ['Pique-nique des noms','C\'est l\'heure du pique-nique des noms ! Le premier ami arrive.','___ et ___ apportent des sandwichs !','Un ami câlin se joint avec du miel !','___ et ___ partagent la couverture !','Le dernier ami arrive avec un panier de fleurs !'],
+  it: ['Picnic dei nomi','È ora del picnic dei nomi! Il primo amico arriva.','___ e ___ portano panini!','Un amico coccolone si unisce con il miele!','___ e ___ condividono la coperta!','L\'ultimo amico arriva con un cestino di fiori!'],
+  ja: ['なまえのピクニック','なまえのピクニックのじかん！さいしょのともだちがつきます。','___と___がサンドイッチをもってきた！','もふもふのともだちがはちみつをもってくわわる！','___と___がブランケットをわけあう！','さいごのともだちがはなのかごをもってとうちゃく！'],
+  la: ['Convivium nominum','Tempus convivii nominum! Primus amicus advenit.','___ et ___ prandium afferunt!','Amicus blandus cum melle se adiungit!','___ et ___ stragulum dividunt!','Ultimus amicus cum cista florum advenit!'],
+  nl: ['Namenpicknick','Tijd voor een namenpicknick! De eerste vriend komt aan.','___ en ___ brengen broodjes mee!','Een knuffelig vriendje komt erbij met honing!','___ en ___ delen het kleed!','De laatste vriend komt met een mand bloemen!'],
+  pl: ['Piknik imion','Czas na piknik imion! Pierwszy przyjaciel przybywa.','___ i ___ przynoszą kanapki!','Przytulny przyjaciel dołącza z miodem!','___ i ___ dzielą się kocem!','Ostatni przyjaciel przybywa z koszem kwiatów!'],
+  pt: ['Piquenique dos nomes','Hora do piquenique dos nomes! O primeiro amigo chega.','___ e ___ trazem sanduíches!','Um amigo fofo se junta com mel!','___ e ___ dividem o cobertor!','O último amigo chega com uma cesta de flores!'],
+  tr: ['İsim Pikniği','İsim pikniği zamanı! İlk arkadaş geliyor.','___ ve ___ sandviç getiriyor!','Sevimli bir arkadaş balla katılıyor!','___ ve ___ battaniyeyi paylaşıyor!','Son arkadaş bir sepet çiçekle geliyor!'],
+  zh: ['名字野餐','名字野餐时间到！第一个朋友到了。','___和___带来了三明治！','一个可爱的朋友带着蜂蜜加入！','___和___分享毯子！','最后一个朋友带着一篮花到了！'],
+};
+
+// Story 29: nameRainbow
+S['nameRainbow'] = {
+  ar: ['قوس قزح الأسماء','قوس قزح من الأسماء! اللون الأول يكتب اسماً شجاعاً.','___ و___ يضيفان ألوانهما!','اسم ودود ينضم لقوس القزح.','___ و___ يجعلانه أكثر سطوعاً!','الاسم الأخير يكمل قوس القزح!'],
+  da: ['Navneregnbue','En regnbue af navne! Den første farve staver et modigt navn.','___ og ___ tilføjer deres farver!','Et venligt navn slutter sig til regnbuen.','___ og ___ gør den lysere!','Det sidste navn fuldender regnbuen!'],
+  de: ['Namensregenbogen','Ein Regenbogen der Namen! Die erste Farbe buchstabiert einen mutigen Namen.','___ und ___ fügen ihre Farben hinzu!','Ein freundlicher Name schließt sich dem Regenbogen an.','___ und ___ machen ihn heller!','Der letzte Name vollendet den Regenbogen!'],
+  es: ['Arcoíris de nombres','¡Un arcoíris de nombres! El primer color deletrea un nombre valiente.','¡___ y ___ agregan sus colores!','Un nombre amigable se une al arcoíris.','¡___ y ___ lo hacen más brillante!','¡El nombre final completa el arcoíris!'],
+  fr: ['Arc-en-ciel des noms','Un arc-en-ciel de noms ! La première couleur épelle un nom courageux.','___ et ___ ajoutent leurs couleurs !','Un nom amical rejoint l\'arc-en-ciel.','___ et ___ le rendent plus brillant !','Le dernier nom complète l\'arc-en-ciel !'],
+  it: ['Arcobaleno dei nomi','Un arcobaleno di nomi! Il primo colore scrive un nome coraggioso.','___ e ___ aggiungono i loro colori!','Un nome amichevole si unisce all\'arcobaleno.','___ e ___ lo rendono più luminoso!','L\'ultimo nome completa l\'arcobaleno!'],
+  ja: ['なまえのにじ','なまえのにじ！さいしょのいろがゆうかんななまえをつづる。','___と___がいろをくわえる！','やさしいなまえがにじにくわわる。','___と___がもっとあかるくする！','さいごのなまえがにじをかんせいさせる！'],
+  la: ['Arcus nominum','Arcus nominum! Primus color nomen audax scribit.','___ et ___ colores suos addunt!','Nomen amicum arcui se adiungit.','___ et ___ eum lucidiorem faciunt!','Ultimum nomen arcum complet!'],
+  nl: ['Namenregenboog','Een regenboog van namen! De eerste kleur spelt een dappere naam.','___ en ___ voegen hun kleuren toe!','Een vriendelijke naam voegt zich bij de regenboog.','___ en ___ maken het helderder!','De laatste naam maakt de regenboog compleet!'],
+  pl: ['Tęcza imion','Tęcza imion! Pierwszy kolor pisze odważne imię.','___ i ___ dodają swoje kolory!','Przyjazne imię dołącza do tęczy.','___ i ___ sprawiają, że jest jaśniejsza!','Ostatnie imię dopełnia tęczę!'],
+  pt: ['Arco-íris dos nomes','Um arco-íris de nomes! A primeira cor soletra um nome corajoso.','___ e ___ adicionam suas cores!','Um nome amigável se junta ao arco-íris.','___ e ___ o tornam mais brilhante!','O último nome completa o arco-íris!'],
+  tr: ['İsim Gökkuşağı','İsimlerin gökkuşağı! İlk renk cesur bir isim yazıyor.','___ ve ___ renklerini ekliyor!','Dostça bir isim gökkuşağına katılıyor.','___ ve ___ daha parlak yapıyor!','Son isim gökkuşağını tamamlıyor!'],
+  zh: ['名字彩虹','名字的彩虹！第一种颜色拼出一个勇敢的名字。','___和___添加他们的颜色！','一个友好的名字加入彩虹。','___和___让它更亮！','最后一个名字完成了彩虹！'],
+};
+
+// Story 30: wombatPicnic
+S['wombatPicnic'] = {
+  ar: ['نزهة ومبات تحت النجوم','السماء الليلية تتلألأ! ومبات يمد بطانية تحت الأضواء الساطعة.','___ يبدأ بـ ___ وهو ___!','ومبات يضيء شيئاً دافئاً ومريحاً.','في ___، تحت ___، يظهر ___!','ومبات يتثاءب بسعادة. حان وقت إغلاق العيون.'],
+  da: ['Wombats stjernepicnic','Nattehimlen funkler! Wombat lægger et tæppe ud under de skinnende lys.','___ begynder at ___ og det er så ___!','Wombat tænder noget varmt og hyggeligt.','I en ___, under ___, dukker en ___ op!','Wombat gaber lykkeligt. Tid til at lukke øjnene.'],
+  de: ['Wombats Sternenpicknick','Der Nachthimmel funkelt! Wombat breitet eine Decke unter den leuchtenden Lichtern aus.','Das ___ beginnt zu ___ und es ist so ___!','Wombat zündet etwas Warmes und Gemütliches an.','In einem ___, unter dem ___, erscheint ein ___!','Wombat gähnt glücklich. Zeit die Augen zu schließen.'],
+  es: ['Picnic estelar de Wombat','¡El cielo nocturno centellea! Wombat extiende una manta bajo las luces brillantes.','¡El ___ empieza a ___ y es tan ___!','Wombat enciende algo cálido y acogedor.','¡En un ___, bajo el ___, aparece un ___!','Wombat bosteza feliz. Hora de cerrar los ojos.'],
+  fr: ['Pique-nique étoilé de Wombat','Le ciel nocturne scintille ! Wombat étale une couverture sous les lumières.','Le ___ commence à ___ et c\'est si ___ !','Wombat allume quelque chose de chaud et douillet.','Dans un ___, sous le ___, un ___ apparaît !','Wombat bâille joyeusement. Il est temps de fermer les yeux.'],
+  it: ['Picnic stellare di Wombat','Il cielo notturno luccica! Wombat stende una coperta sotto le luci splendenti.','Il ___ inizia a ___ ed è così ___!','Wombat accende qualcosa di caldo e accogliente.','In un ___, sotto il ___, appare un ___!','Wombat sbadiglia felicemente. È ora di chiudere gli occhi.'],
+  ja: ['ウォンバットのほしぞらピクニック','よぞらがきらめく！ウォンバットがかがやくひかりのしたにブランケットをしきます。','___が___しはじめて、とても___！','ウォンバットがあたたかくてここちよいものをつけます。','___のなかで、___のしたに、___があらわれる！','ウォンバットはしあわせにあくびをします。めをとじるじかんです。'],
+  la: ['Convivium stellatum Wombati','Caelum nocturnum scintillat! Wombat stragulum sub lucentibus luminibus sternit.','___ incipit ___ et tam ___ est!','Wombat aliquid calidum et gratum accendit.','In ___, sub ___, ___ apparet!','Wombat feliciter oscitat. Tempus oculos claudendi.'],
+  nl: ['Wombats sterrenpicknick','De nachtelijke hemel twinkelt! Wombat legt een deken uit onder de stralende lichten.','De ___ begint te ___ en het is zo ___!','Wombat steekt iets warms en gezelligs aan.','In een ___, onder de ___, verschijnt een ___!','Wombat gaapt vrolijk. Tijd om de oogjes te sluiten.'],
+  pl: ['Piknik Wombata pod gwiazdami','Nocne niebo migocze! Wombat rozkłada koc pod świecącymi światłami.','___ zaczyna ___ i jest tak ___!','Wombat zapala coś ciepłego i przytulnego.','W ___, pod ___, pojawia się ___!','Wombat ziewa szczęśliwie. Czas zamknąć oczy.'],
+  pt: ['Piquenique estrelado do Wombat','O céu noturno brilha! Wombat estende um cobertor sob as luzes brilhantes.','O ___ começa a ___ e é tão ___!','Wombat acende algo quente e aconchegante.','Em um ___, sob o ___, um ___ aparece!','Wombat boceja feliz. Hora de fechar os olhos.'],
+  tr: ['Wombat\'ın Yıldızlı Pikniği','Gece gökyüzü parlıyor! Wombat parlayan ışıkların altına battaniye seriyor.','___ ___\'a başlıyor ve çok ___!','Wombat sıcak ve rahat bir şey yakıyor.','Bir ___\'da, ___\'ın altında, bir ___ beliriyor!','Wombat mutluca esniyor. Gözleri kapama zamanı.'],
+  zh: ['袋熊的星光野餐','夜空闪闪发光！袋熊在闪亮的灯光下铺开毯子。','___开始___，真___！','袋熊点亮温暖舒适的东西。','在___里，在___下，___出现了！','袋熊开心地打哈欠。是时候闭上眼睛了。'],
+};
+
+// Story 31: wombatDream
+S['wombatDream'] = {
+  ar: ['حلم ومبات','السماء تظلم. ومبات يتعانق في الجحر.','شكل ___ يطفو، ___ جداً، كـ ___ ودود.','ومبات يبدأ برؤية صور رائعة في النوم.','حان وقت ___، ___ يتوهج، ___ يلمع.','في الحلم، ضوء متلألئ يرشد الطريق!'],
+  da: ['Wombats drøm','Himlen bliver mørk. Wombat puttes ind i hulen.','En ___ form driver, så ___, som en venlig ___.','Wombat begynder at se vidunderlige billeder i søvne.','Tid til at ___, ___ lyser, ___ skinner.','I drømmen viser et blinkende lys vejen!'],
+  de: ['Wombats Traum','Der Himmel wird dunkel. Wombat kuschelt sich in den Bau.','Eine ___ Form treibt, so ___, wie ein freundlicher ___.','Wombat beginnt wunderbare Bilder im Schlaf zu sehen.','Zeit zum ___, der ___ leuchtet, der ___ scheint.','Im Traum zeigt ein funkelndes Licht den Weg!'],
+  es: ['El sueño de Wombat','El cielo oscurece. Wombat se acurruca en la madriguera.','Una forma ___ flota, tan ___, como un ___ amigable.','Wombat empieza a ver imágenes maravillosas mientras duerme.','Es hora de ___, el ___ brilla, el ___ resplandece.','¡En el sueño, una luz titilante guía el camino!'],
+  fr: ['Le rêve de Wombat','Le ciel s\'assombrit. Wombat se blottit dans le terrier.','Une forme ___ flotte, si ___, comme un ___ amical.','Wombat commence à voir de magnifiques images en dormant.','Il est temps de ___, le ___ brille, le ___ scintille.','Dans le rêve, une lumière scintillante montre le chemin !'],
+  it: ['Il sogno di Wombat','Il cielo si oscura. Wombat si rannicchia nella tana.','Una forma ___ galleggia, così ___, come un ___ amichevole.','Wombat inizia a vedere immagini meravigliose nel sonno.','È ora di ___, il ___ brilla, il ___ splende.','Nel sogno, una luce scintillante guida la via!'],
+  ja: ['ウォンバットのゆめ','そらがくらくなる。ウォンバットはすあなにもぐります。','___のかたちがただよう、とても___、やさしい___のように。','ウォンバットはねむりのなかですてきなえをみはじめます。','___のじかん、___がかがやき、___がひかる。','ゆめのなかで、きらめくひかりがみちをてらす！'],
+  la: ['Somnium Wombati','Caelum obscuratur. Wombat in cuniculum se contrahit.','Forma ___ vagatur, tam ___, sicut amicus ___.','Wombat mirabiles imagines in somno videre incipit.','Tempus ___, ___ lucet, ___ fulget.','In somnio, lux scintillans viam monstrat!'],
+  nl: ['Wombats droom','De lucht wordt donker. Wombat kruipt in het hol.','Een ___ vorm drijft, zo ___, als een vriendelijke ___.','Wombat begint prachtige beelden te zien in zijn slaap.','Tijd om ___, de ___ gloeit, de ___ schijnt.','In de droom wijst een twinkelend lichtje de weg!'],
+  pl: ['Sen Wombata','Niebo ciemnieje. Wombat wtula się w norę.','Kształt ___ dryfuje, tak ___, jak przyjazny ___.','Wombat zaczyna widzieć cudowne obrazy we śnie.','Czas na ___, ___ świeci, ___ błyszczy.','We śnie migoczące światło wskazuje drogę!'],
+  pt: ['O sonho do Wombat','O céu escurece. Wombat se aconchega na toca.','Uma forma ___ flutua, tão ___, como um ___ amigável.','Wombat começa a ver imagens maravilhosas no sono.','Hora de ___, o ___ brilha, o ___ reluz.','No sonho, uma luz cintilante guia o caminho!'],
+  tr: ['Wombat\'ın Rüyası','Gökyüzü kararıyor. Wombat yuvasına kıvrılıyor.','Bir ___ şekil süzülüyor, çok ___, dostça bir ___ gibi.','Wombat uykuda harika resimler görmeye başlıyor.','___\'a zaman, ___ parlıyor, ___ ışıldıyor.','Rüyada, parlayan bir ışık yolu gösteriyor!'],
+  zh: ['袋熊的梦','天空变暗了。袋熊钻进洞穴。','一个___的形状飘过，那么___，像一个友好的___。','袋熊开始在睡梦中看到美妙的画面。','___的时候，___发光，___闪耀。','在梦里，一束闪烁的光指引方向！'],
+};
+
+// Story 32: wombatGarden
+S['wombatGarden'] = {
+  ar: ['حديقة ومبات','ومبات يتجول في الحديقة. صديق محبوب يلوح بالتحية!','___ و___ ينيران ___ بشكل ساطع.','شكل رقيق يطفو في الأعلى.','حان وقت ___! ___ يجعل ___ مريحاً.','ومبات يرى صوراً سحرية بينما تغلق العيون.'],
+  da: ['Wombats have','Wombat vandrer ind i haven. En nuttet ven vinker hej!','___ og ___ lyser ___ klart.','En blød form svæver ovenover.','Tid til at ___! ___ gør ___ hyggelig.','Wombat ser magiske billeder mens øjnene lukkes.'],
+  de: ['Wombats Garten','Wombat wandert in den Garten. Ein kuscheliger Freund winkt hallo!','___ und ___ beleuchten ___ hell.','Eine flauschige Form schwebt über uns.','Zeit zum ___! ___ macht ___ gemütlich.','Wombat sieht magische Bilder wenn die Augen sich schließen.'],
+  es: ['El jardín de Wombat','Wombat pasea por el jardín. ¡Un amigo tierno saluda!','___ y ___ iluminan ___ brillantemente.','Una forma esponjosa flota arriba.','¡Hora de ___! ___ hace ___ acogedor.','Wombat ve imágenes mágicas mientras los ojos se cierran.'],
+  fr: ['Le jardin de Wombat','Wombat se promène dans le jardin. Un ami câlin fait coucou !','___ et ___ éclairent ___ vivement.','Une forme duveteuse flotte au-dessus.','Il est temps de ___ ! ___ rend ___ douillet.','Wombat voit des images magiques quand les yeux se ferment.'],
+  it: ['Il giardino di Wombat','Wombat passeggia nel giardino. Un amico coccolone saluta!','___ e ___ illuminano ___ brillantemente.','Una forma soffice galleggia sopra.','È ora di ___! ___ rende ___ accogliente.','Wombat vede immagini magiche mentre gli occhi si chiudono.'],
+  ja: ['ウォンバットのにわ','ウォンバットがにわにさんぽします。もふもふのともだちがてをふっています！','___と___が___をあかるくてらします。','ふわふわのかたちがうえにうかんでいます。','___のじかん！___が___をここちよくします。','ウォンバットはめをとじるとまほうのえがみえます。'],
+  la: ['Hortus Wombati','Wombat in hortum ambulat. Amicus blandus manu salutat!','___ et ___ ___ clare illuminant.','Forma mollis supra volat.','Tempus ___! ___ ___ gratum facit.','Wombat magicas imagines videt dum oculi clauduntur.'],
+  nl: ['Wombats tuin','Wombat wandelt de tuin in. Een knuffelig vriendje zwaait hallo!','___ en ___ verlichten ___ helder.','Een pluizige vorm zweeft boven.','Tijd om ___! ___ maakt ___ gezellig.','Wombat ziet magische beelden als de oogjes sluiten.'],
+  pl: ['Ogród Wombata','Wombat spaceruje po ogrodzie. Przytulny przyjaciel macha na powitanie!','___ i ___ oświetlają ___ jasno.','Puszysty kształt unosi się nad głową.','Czas na ___! ___ sprawia, że ___ jest przytulnie.','Wombat widzi magiczne obrazy gdy oczy się zamykają.'],
+  pt: ['O jardim do Wombat','Wombat passeia pelo jardim. Um amigo fofo acena!','___ e ___ iluminam ___ brilhantemente.','Uma forma fofa flutua acima.','Hora de ___! ___ torna ___ aconchegante.','Wombat vê imagens mágicas enquanto os olhos se fecham.'],
+  tr: ['Wombat\'ın Bahçesi','Wombat bahçeye yürüyor. Sevimli bir arkadaş el sallıyor!','___ ve ___ ___\'ı parlak aydınlatıyor.','Yumuşak bir şekil yukarıda süzülüyor.','___\'a zaman! ___ ___\'ı rahat yapıyor.','Wombat gözler kapanırken sihirli resimler görüyor.'],
+  zh: ['袋熊的花园','袋熊走进花园。一个可爱的朋友挥手问好！','___和___把___照得很亮。','一个毛茸茸的形状在上面飘浮。','___的时候！___让___很温馨。','袋熊闭上眼睛时看到了神奇的画面。'],
+};
+
+// Story 33: wombatSnow
+S['wombatSnow'] = {
+  ar: ['أمسية ومبات الثلجية','توهج ناعم يظهر في السماء. ومبات ينظر للأعلى بدهشة.','___ هو ___! ___ يطفو.','ومبات يتكور. العيون تبدأ بالثقل.','___ يتلألأ، ___ يأتي، ___ يظهر.','شيء دافئ ومريح ينير الطريق للبيت.'],
+  da: ['Wombats sneklædte aften','Et blødt skær dukker op på himlen. Wombat kigger op i undren.','___ er ___! En ___ driver forbi.','Wombat ruller sig sammen. Øjnene begynder at føles tunge.','En ___ blinker, ___ kommer, en ___ dukker op.','Noget varmt og hyggeligt lyser vejen hjem.'],
+  de: ['Wombats Schneeabend','Ein sanftes Leuchten erscheint am Himmel. Wombat schaut staunend nach oben.','Der ___ ist ___! Ein ___ treibt vorbei.','Wombat rollt sich zusammen. Die Augen werden schwer.','Ein ___ funkelt, der ___ kommt, ein ___ erscheint.','Etwas Warmes und Gemütliches leuchtet den Weg nach Hause.'],
+  es: ['La tarde nevada de Wombat','Un brillo suave aparece en el cielo. Wombat mira arriba con asombro.','¡El ___ es ___! Un ___ pasa flotando.','Wombat se acurruca. Los ojos empiezan a pesar.','Un ___ centellea, el ___ viene, un ___ aparece.','Algo cálido y acogedor ilumina el camino a casa.'],
+  fr: ['La soirée enneigée de Wombat','Une douce lueur apparaît dans le ciel. Wombat regarde vers le haut avec émerveillement.','Le ___ est ___ ! Un ___ passe en flottant.','Wombat se roule en boule. Les yeux commencent à être lourds.','Un ___ scintille, le ___ vient, un ___ apparaît.','Quelque chose de chaud et douillet éclaire le chemin du retour.'],
+  it: ['La serata innevata di Wombat','Un bagliore morbido appare nel cielo. Wombat guarda in alto con meraviglia.','Il ___ è ___! Un ___ passa fluttuando.','Wombat si raggomitola. Gli occhi iniziano a pesare.','Un ___ brilla, il ___ arriva, un ___ appare.','Qualcosa di caldo e accogliente illumina la via di casa.'],
+  ja: ['ウォンバットのゆきのよる','そらにやさしいひかりがあらわれます。ウォンバットはふしぎそうにみあげます。','___は___！___がとおりすぎます。','ウォンバットがまるくなる。めがおもくなってきた。','___がきらめく、___がくる、___があらわれる。','あたたかくてここちよいものがおうちへのみちをてらします。'],
+  la: ['Vesper nivalis Wombati','Lenis fulgor in caelo apparet. Wombat sursum cum admiratione spectat.','___ est ___! ___ praeterit.','Wombat se convolvit. Oculi graves fieri incipiunt.','___ scintillat, ___ venit, ___ apparet.','Aliquid calidum et gratum viam domum illuminat.'],
+  nl: ['Wombats besneeuwde avond','Een zacht schijnsel verschijnt aan de hemel. Wombat kijkt verwonderd omhoog.','De ___ is ___! Een ___ drijft voorbij.','Wombat rolt zich op. De oogjes worden zwaar.','Een ___ twinkelt, de ___ komt, een ___ verschijnt.','Iets warms en gezelligs verlicht de weg naar huis.'],
+  pl: ['Śnieżny wieczór Wombata','Delikatna poświata pojawia się na niebie. Wombat patrzy w górę ze zdumieniem.','___ jest ___! ___ przelatuje obok.','Wombat zwija się w kłębek. Oczy zaczynają ciążyć.','___ migocze, ___ nadchodzi, ___ się pojawia.','Coś ciepłego i przytulnego oświetla drogę do domu.'],
+  pt: ['A noite nevada do Wombat','Um brilho suave aparece no céu. Wombat olha para cima admirado.','O ___ é ___! Um ___ passa flutuando.','Wombat se enrola. Os olhos começam a ficar pesados.','Um ___ brilha, o ___ vem, um ___ aparece.','Algo quente e aconchegante ilumina o caminho para casa.'],
+  tr: ['Wombat\'ın Karlı Akşamı','Gökyüzünde yumuşak bir parıltı beliriyor. Wombat hayretle yukarı bakıyor.','___ ___! Bir ___ geçiyor.','Wombat kıvrılıyor. Gözler ağırlaşmaya başlıyor.','Bir ___ parlıyor, ___ geliyor, bir ___ beliriyor.','Sıcak ve rahat bir şey eve giden yolu aydınlatıyor.'],
+  zh: ['袋熊的雪夜','天空出现柔和的光芒。袋熊惊奇地抬头看。','___是___！一个___飘过。','袋熊蜷缩起来。眼睛开始变重。','___闪烁，___来了，___出现了。','温暖舒适的东西照亮了回家的路。'],
+};
+
+// Story 34: safariSunrise
+S['safariSunrise'] = {
+  ar: ['شروق السفاري','سيارة السفاري تهدر! قط مخطط رائع يتسلل.','___ يبدأ بـ ___! فوق ___ يطير!','سبلاش! عملاق المحيط اللطيف يطفو للتنفس.','___ يهز ___ ويبدأ بـ ___.','في بستان الخيزران، صديق أبيض وأسود يمضغ بسلام.'],
+  da: ['Safarisolopgang','Safarijeeppen brummer! En storslået stribet kat lister forbi.','En ___ begynder at ___! Over ___ flyver den!','Plask! Havets blide kæmpe dukker op for at trække vejret.','En ___ ryster sin ___ og begynder at ___.','I bambusslunden tygger en sort og hvid ven fredeligt.'],
+  de: ['Safari-Sonnenaufgang','Der Safari-Jeep brummt! Eine prächtige gestreifte Katze schleicht vorbei.','Ein ___ fängt an zu ___! Über den ___ fliegt es!','Platsch! Der sanfte Ozeanriese taucht zum Atmen auf.','Ein ___ schüttelt sein ___ und beginnt zu ___.','Im Bambushain knabbert ein schwarz-weißer Freund friedlich.'],
+  es: ['Amanecer de safari','¡El jeep de safari ruge! Un magnífico gato rayado acecha.','¡Un ___ empieza a ___! ¡Sobre el ___ vuela!','¡Splash! El gigante gentil del océano sale a respirar.','Un ___ sacude su ___ y empieza a ___.','En el bosque de bambú, un amigo blanco y negro mastica tranquilamente.'],
+  fr: ['Lever de soleil safari','Le jeep safari gronde ! Un magnifique chat rayé rôde.','Un ___ commence à ___ ! Au-dessus du ___ il vole !','Splash ! Le doux géant de l\'océan remonte pour respirer.','Un ___ secoue son ___ et commence à ___.','Dans la bambouseraie, un ami noir et blanc grignote paisiblement.'],
+  it: ['Alba nel safari','La jeep safari romba! Un magnifico gatto a strisce si aggira.','Un ___ inizia a ___! Sopra il ___ vola!','Splash! Il gigante gentile dell\'oceano emerge per respirare.','Un ___ scuote il suo ___ e inizia a ___.','Nel boschetto di bambù, un amico bianco e nero mastica pacificamente.'],
+  ja: ['サファリのひので','サファリジープがうなる！すばらしいしまもようのねこがしのびよる。','___が___しはじめる！___のうえをとぶ！','バシャ！うみのやさしいきょじんがいきをしにうかびあがる。','___が___をふって___しはじめる。','たけやぶのなかで、しろくろのともだちがへいわにたべている。'],
+  la: ['Ortus solis in safari','Raeda safari fremit! Magnificus felis striatus obambulat.','___ incipit ___! Super ___ volat!','Splash! Blandus gigas oceani ad respirandum emergit.','___ suum ___ quatit et ___ incipit.','In silva bambusae, amicus albus et niger pacifice manducat.'],
+  nl: ['Safari-zonsopgang','De safarijeep bromt! Een prachtige gestreepte kat sluipt voorbij.','Een ___ begint te ___! Over de ___ vliegt het!','Plons! De zachte oceaanreus komt boven voor lucht.','Een ___ schudt zijn ___ en begint te ___.','In het bamboebos kauwt een zwart-witte vriend vredig.'],
+  pl: ['Wschód słońca na safari','Jeep safari warczy! Wspaniały prążkowany kot skrada się obok.','___ zaczyna ___! Nad ___ leci!','Plusk! Łagodny olbrzym oceanu wynurza się po powietrze.','___ potrząsa swoim ___ i zaczyna ___.','W gaju bambusowym czarno-biały przyjaciel spokojnie przeżuwa.'],
+  pt: ['Nascer do sol no safari','O jipe de safari ruge! Um magnífico gato listrado espreita.','Um ___ começa a ___! Sobre o ___ voa!','Splash! O gentil gigante do oceano emerge para respirar.','Um ___ sacode seu ___ e começa a ___.','No bosque de bambu, um amigo preto e branco mastiga pacificamente.'],
+  tr: ['Safari Gün Doğumu','Safari cipi gürüldüyor! Muhteşem çizgili bir kedi süzülüyor.','Bir ___ ___\'a başlıyor! ___\'ın üzerinden uçuyor!','Şıp! Okyanusun nazik devi nefes almak için yüzeye çıkıyor.','Bir ___ ___\'ını sallıyor ve ___\'a başlıyor.','Bambu korusunda siyah beyaz bir arkadaş huzurla çiğniyor.'],
+  zh: ['野生动物日出','越野车轰鸣！一只壮丽的条纹猫悄悄走过。','一个___开始___！在___上空飞翔！','哗！海洋的温柔巨人浮出水面呼吸。','一个___摇动它的___并开始___。','在竹林里，一个黑白相间的朋友安静地嚼着。'],
+};
+
+// Story 35: oceanAnimals
+S['oceanAnimals'] = {
+  ar: ['حيوانات المحيط','غص تحت الأمواج! مخلوق ضخم ولطيف يغني أغنية.','على ___، ___ نعسان ينام في ___.','على اليابسة، صديق أبيض رقيق يقف في الحقل.','___ يطلق ___! يا لها من ___ كبيرة!','يحلق عالياً، طائر مهيب يركب الريح.'],
+  da: ['Havdyr','Dyk under bølgerne! Et kæmpe, blidt væsen synger en sang.','På ___ tager en søvnig ___ en lur i en ___.','Tilbage på land står en blød hvid ven på marken.','En ___ udstøder et ___! Sikke en stor ___!','Højt oppe rider en majestætisk fugl på vinden.'],
+  de: ['Meerestiere','Tauche unter die Wellen! Ein riesiges, sanftes Wesen singt ein Lied.','Auf dem ___ macht ein schläfriger ___ ein Nickerchen in einem ___.','Zurück an Land steht ein flauschiger weißer Freund auf der Wiese.','Ein ___ lässt einen ___ los! Was für ein großer ___!','Hoch oben reitet ein majestätischer Vogel auf dem Wind.'],
+  es: ['Animales del océano','¡Sumérgete bajo las olas! Una criatura enorme y gentil canta una canción.','En el ___, un ___ somnoliento duerme en un ___.','De vuelta en tierra, un amigo blanco y esponjoso está en el campo.','¡Un ___ suelta un ___! ¡Qué ___ tan grande!','Volando alto, un pájaro majestuoso cabalga el viento.'],
+  fr: ['Animaux de l\'océan','Plonge sous les vagues ! Une énorme et douce créature chante une chanson.','Sur le ___, un ___ endormi fait la sieste dans un ___.','De retour sur terre, un ami blanc duveteux se tient dans le champ.','Un ___ pousse un ___ ! Quel grand ___ !','Planant haut, un oiseau majestueux chevauche le vent.'],
+  it: ['Animali dell\'oceano','Tuffati sotto le onde! Una creatura enorme e gentile canta una canzone.','Sul ___, un ___ sonnolento fa un pisolino in un ___.','Sulla terraferma, un amico bianco e soffice sta nel campo.','Un ___ emette un ___! Che grande ___!','Volando in alto, un uccello maestoso cavalca il vento.'],
+  ja: ['うみのどうぶつ','なみのしたにもぐろう！おおきくてやさしいいきものがうたをうたっています。','___のうえで、ねむい___が___でおひるね。','りくにもどると、ふわふわのしろいともだちがのはらにたっている。','___が___をだす！なんておおきな___！','たかくとんで、いだいなとりがかぜにのっている。'],
+  la: ['Animalia oceani','Sub undas merge! Ingens et blanda creatura canticum canit.','In ___, somniculosus ___ in ___ dormitat.','In terra, mollis albus amicus in agro stat.','___ ___ emittit! Quam magnus ___!','Alte volans, maiestuosa avis ventum vehit.'],
+  nl: ['Oceaandieren','Duik onder de golven! Een enorm, zacht wezen zingt een liedje.','Op de ___ doet een slaperige ___ een dutje in een ___.','Terug op het land staat een pluizig wit vriendje in het veld.','Een ___ laat een ___ los! Wat een grote ___!','Hoog vliegend rijdt een majestueuze vogel op de wind.'],
+  pl: ['Zwierzęta oceanu','Zanurz się pod fale! Ogromne, łagodne stworzenie śpiewa piosenkę.','Na ___, śpiący ___ drzemie w ___.','Na lądzie puszysty biały przyjaciel stoi na polu.','___ wydaje ___! Co za duży ___!','Szybując wysoko, majestatyczny ptak jeździ na wietrze.'],
+  pt: ['Animais do oceano','Mergulhe sob as ondas! Uma criatura enorme e gentil canta uma canção.','No ___, um ___ sonolento cochila em um ___.','De volta à terra, um amigo branco e fofo está no campo.','Um ___ solta um ___! Que grande ___!','Voando alto, um pássaro majestoso cavalga o vento.'],
+  tr: ['Okyanus Hayvanları','Dalgaların altına dal! Kocaman, nazik bir yaratık şarkı söylüyor.','___\'da, uykulu bir ___ ___\'da uyuyor.','Karada, kabarık beyaz bir arkadaş tarlada duruyor.','Bir ___ bir ___ çıkarıyor! Ne büyük bir ___!','Yüksekte süzülen görkemli bir kuş rüzgâra biniyor.'],
+  zh: ['海洋动物','潜入波浪之下！一个巨大温柔的生物在唱歌。','在___上，困倦的___在___里打盹。','回到陆地上，一个毛茸茸的白色朋友站在田野里。','一个___发出___！好大的___！','高高翱翔，一只雄伟的鸟乘风飞翔。'],
+};
+
+// Story 36: mountainAnimals
+S['mountainAnimals'] = {
+  ar: ['حيوانات الجبل','صعوداً على مسار الجبل! صديق رمادي محبوب ينام في شجرة.','___ له ___ ناعم على ___.','طق طق! مخلوق قوي وجميل يمشي على القمة.','___ يركض بسرعة ___! شاهده ___!','بالقرب من القمة، قط مخطط يراقب غروب الشمس.'],
+  da: ['Bjergdyr','Op ad bjergstien! En grå nuttet ven sover i et træ.','___ har blødt ___ på ___.','Klip-klap! Et stærkt, smukt væsen traver langs ryggen.','En ___ løber så ___! Se den ___!','Nær toppen ser en stribet kat solnedgangen.'],
+  de: ['Bergtiere','Den Bergpfad hinauf! Ein grauer kuscheliger Freund schläft in einem Baum.','Der ___ hat weiches ___ auf dem ___.','Klipp-klapp! Ein starkes, schönes Wesen trabt über den Grat.','Ein ___ rennt so ___! Schau es ___!','Nahe dem Gipfel beobachtet eine gestreifte Katze den Sonnenuntergang.'],
+  es: ['Animales de montaña','¡Subiendo por el sendero de montaña! Un amigo gris tierno duerme en un árbol.','El ___ tiene suave ___ en el ___.','¡Clip-clop! Una criatura fuerte y hermosa trota por la cresta.','¡Un ___ corre tan ___! ¡Míralo ___!','Cerca de la cima, un gato rayado observa el atardecer.'],
+  fr: ['Animaux de la montagne','En haut du sentier de montagne ! Un ami gris câlin dort dans un arbre.','Le ___ a du doux ___ sur le ___.','Clip-clop ! Une créature forte et belle trotte le long de la crête.','Un ___ court si ___ ! Regarde-le ___ !','Près du sommet, un chat rayé regarde le coucher de soleil.'],
+  it: ['Animali di montagna','Su per il sentiero di montagna! Un amico grigio coccolone dorme su un albero.','Il ___ ha morbido ___ sul ___.','Clip-clop! Una creatura forte e bella trotta lungo la cresta.','Un ___ corre così ___! Guardalo ___!','Vicino alla cima, un gatto a strisce guarda il tramonto.'],
+  ja: ['やまのどうぶつ','やまみちをのぼろう！はいいろのもふもふのともだちがきのうえでねている。','___には___のうえにやわらかい___がある。','パカパカ！つよくてうつくしいいきものがおねをあるく。','___がとても___はしる！___をみて！','ちょうじょうのちかくで、しまもようのねこがゆうやけをみている。'],
+  la: ['Animalia montium','Per iter montis sursum! Amicus canus blandus in arbore dormit.','___ habet molle ___ in ___.','Clip-clop! Fortis pulchra creatura per iugum graditur.','___ tam ___ currit! Specta ___ !','Prope cacumen, felis striatus solis occasum spectat.'],
+  nl: ['Bergdieren','De bergpad op! Een grijze knuffelvriendje slaapt in een boom.','De ___ heeft zacht ___ op de ___.','Klip-klap! Een sterk, mooi wezen draaft langs de bergkam.','Een ___ rent zo ___! Kijk het ___!','Dichtbij de top bekijkt een gestreepte kat de zonsondergang.'],
+  pl: ['Zwierzęta górskie','W górę ścieżką! Szary przytulny przyjaciel śpi na drzewie.','___ ma miękkie ___ na ___.','Stuk-stuk! Silne, piękne stworzenie kłusuje wzdłuż grzbietu.','___ biegnie tak ___! Patrz jak ___!','Blisko szczytu prążkowany kot obserwuje zachód słońca.'],
+  pt: ['Animais da montanha','Subindo a trilha da montanha! Um amigo cinza fofo dorme em uma árvore.','O ___ tem ___ macio no ___.','Clip-clop! Uma criatura forte e bonita trota pela crista.','Um ___ corre tão ___! Olhe ___!','Perto do pico, um gato listrado observa o pôr do sol.'],
+  tr: ['Dağ Hayvanları','Dağ yolundan yukarı! Gri sevimli bir arkadaş ağaçta uyuyor.','___\'ın ___\'da yumuşak ___\'ı var.','Takır-tukur! Güçlü, güzel bir yaratık sırtta koşuyor.','Bir ___ çok ___ koşuyor! ___\'ını izle!','Zirvenin yakınında çizgili bir kedi gün batımını izliyor.'],
+  zh: ['山地动物','沿着山路往上走！一个灰色的可爱朋友在树上睡觉。','___在___上有柔软的___。','嗒嗒！一个强壮美丽的生物沿着山脊小跑。','一个___跑得好___！看它___！','靠近山顶，一只条纹猫在看日落。'],
+};
+
 // ── PLACEHOLDER: More stories will be added below ──
 
 // ══════════════════════════════════════════════════════════════════════
