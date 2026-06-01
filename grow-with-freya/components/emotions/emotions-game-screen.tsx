@@ -8,7 +8,6 @@ import Animated, {
   withTiming,
   withRepeat,
   withSequence,
-  withSpring,
   Easing,
 } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
@@ -26,6 +25,15 @@ import { useAccessibility } from '@/hooks/use-accessibility';
 import { PageHeader } from '@/components/ui/page-header';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
+import { RealWorldBridgeOverlay } from '@/components/learning/real-world-bridge-overlay';
+import { useScreenTime } from '@/components/screen-time';
+
+/** Map emotion themes to the most relevant feelings bridge activity ID */
+const THEME_TO_BRIDGE_ACTIVITY: Record<EmotionTheme, string> = {
+  emoji: 'emotion-faces',
+  animals: 'animal-feelings',
+  bear: 'my-feelings',
+};
 
 interface EmotionsGameScreenProps {
   onBack: () => void;
@@ -37,6 +45,7 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet, contentMaxWidth, textSizeScale } = useAccessibility();
+  const { setLastCompletedActivityId } = useScreenTime();
 
   // Generate star positions for background (matching unified screen pattern)
   const starPositions = useMemo(() => generateStarPositions(VISUAL_EFFECTS.STAR_COUNT), []);
@@ -92,10 +101,8 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
   // Content fade-out animation for game completion
   const contentOpacity = useSharedValue(1);
 
-  // Celebration overlay animation (matching music-challenge-ui.tsx style)
-  const celebrationScale = useSharedValue(0);
-  const celebrationOpacity = useSharedValue(0);
-  const [showGreatJob, setShowGreatJob] = useState(false);
+  // Real World Bridge overlay — shown after game content fades out
+  const [showBridge, setShowBridge] = useState(false);
 
   // Run screen fade-in and card spin-in animation on mount
   useEffect(() => {
@@ -184,21 +191,13 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
   const startSpinTransition = (correctEmotionId?: string) => {
     setIsCardAnimating(true); // Disable button presses during transition
 
-    // First, fade out the prompt text
-    promptOpacity.value = withTiming(0, { duration: 200 });
-
-    // Spin out the current card
-    cardRotation.value = withTiming(cardRotation.value + 360, {
-      duration: 600,
-      easing: Easing.inOut(Easing.cubic)
+    // Fade out ALL game content (card + prompt + button + progress + timer)
+    contentOpacity.value = withTiming(0, {
+      duration: 400,
+      easing: Easing.out(Easing.cubic),
     });
 
-    cardScale.value = withSequence(
-      withTiming(1.1, { duration: 200 }),
-      withTiming(0, { duration: 400 })
-    );
-
-    // After the spin out animation, check if game should continue
+    // After fade-out completes, update state and fade back in
     setTimeout(() => {
       // Update completed emotions if this was a correct answer
       let newCompletedEmotions = gameState.completedEmotions;
@@ -211,16 +210,16 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
       }
 
       if (newCompletedEmotions.length >= EMOTION_GAME_CONFIG.emotionsPerLevel) {
-        // Level complete - trigger Good Job animation
+        // Level complete — content stays faded out, bridge takes over
         triggerGoodJobAnimation();
       } else {
-        // Spin in new emotion
-        spinInNewEmotion(newCompletedEmotions);
+        // Set up new emotion and fade everything back in
+        fadeInNewEmotion(newCompletedEmotions);
       }
-    }, 600);
+    }, 450);
   };
 
-  const spinInNewEmotion = (completedEmotions: string[]) => {
+  const fadeInNewEmotion = (completedEmotions: string[]) => {
     const newEmotion = getRandomEmotion(completedEmotions);
     const promptIndex = getRandomPromptIndex();
 
@@ -228,39 +227,45 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
     setGameState(prev => ({
       ...prev,
       currentEmotion: newEmotion,
-      currentPrompt: String(promptIndex), // Store prompt index as string
+      currentPrompt: String(promptIndex),
       isGameActive: true
     }));
 
     // Reset timer
     setTimeLeft(EMOTION_GAME_CONFIG.timePerEmotion || 60);
     setIsTimerActive(true);
-    setIsCardAnimating(true); // Disable button presses during animation
+    setIsCardAnimating(true);
 
-    // Spin in the new card - continue from current rotation + 360 degrees
-    const currentRotation = cardRotation.value;
-    cardRotation.value = currentRotation + 360; // Add another 360 degrees
+    // Reset card to initial spin-in position
+    cardRotation.value = 360;
     cardScale.value = 0;
+    promptOpacity.value = 0;
 
-    cardRotation.value = withTiming(currentRotation, {
-      duration: 600,
-      easing: Easing.inOut(Easing.cubic)
+    // Fade content back in
+    contentOpacity.value = withTiming(1, {
+      duration: 400,
+      easing: Easing.out(Easing.cubic),
     });
 
+    // Spin the card in within the fading content
+    cardRotation.value = withTiming(0, {
+      duration: 500,
+      easing: Easing.inOut(Easing.cubic)
+    });
     cardScale.value = withSequence(
-      withTiming(1.1, { duration: 400 }),
-      withTiming(1, { duration: 200 })
+      withTiming(1.1, { duration: 350 }),
+      withTiming(1, { duration: 150 })
     );
 
-    // Fade in the new prompt text after a short delay
+    // Fade in prompt after card settles
     setTimeout(() => {
-      promptOpacity.value = withTiming(1, { duration: 400 });
+      promptOpacity.value = withTiming(1, { duration: 300 });
     }, 300);
 
-    // Enable button presses after animation completes (600ms spin + 200ms scale)
+    // Enable button presses after all animations
     setTimeout(() => {
       setIsCardAnimating(false);
-    }, 800);
+    }, 600);
   };
 
   const handleExpressionComplete = () => {
@@ -274,34 +279,20 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
     // Stop the timer
     setIsTimerActive(false);
 
-    // Step 1: Show "Great job!" with music-mode celebration style
-    // (bounce-in with spring, then settle — matching music-challenge-ui.tsx)
-    setShowGreatJob(true);
-    celebrationScale.value = withSequence(
-      withTiming(0, { duration: 0 }),
-      withSpring(1.08, { damping: 12, stiffness: 180 }),
-      withSpring(1, { damping: 20, stiffness: 200 })
-    );
-    celebrationOpacity.value = withTiming(1, { duration: 400 });
+    // Report the completed activity to the screen time provider
+    const activityId = THEME_TO_BRIDGE_ACTIVITY[selectedTheme];
+    setLastCompletedActivityId(activityId);
 
-    // Step 2: After holding the message, fade out everything
+    // Content is already faded out from startSpinTransition — show bridge directly
     setTimeout(() => {
-      // Fade out game content
-      contentOpacity.value = withTiming(0, {
-        duration: 500,
-        easing: Easing.out(Easing.cubic)
-      });
-      // Fade out celebration overlay
-      celebrationOpacity.value = withTiming(0, {
-        duration: 500,
-        easing: Easing.out(Easing.cubic)
-      });
-    }, 1500);
+      setShowBridge(true);
+    }, 200);
+  };
 
-    // Step 3: Return to menu after fade out completes
-    setTimeout(() => {
-      onGameComplete();
-    }, 2100);
+  /** Called when user dismisses the Real World Bridge overlay — returns to feelings hub */
+  const handleBridgeDismiss = () => {
+    setShowBridge(false);
+    onBack();
   };
 
   // Animated styles
@@ -324,10 +315,7 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
     opacity: contentOpacity.value,
   }));
 
-  const celebrationStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: celebrationScale.value }],
-    opacity: celebrationOpacity.value,
-  }));
+
 
   return (
     <Animated.View style={[{ flex: 1 }, screenAnimatedStyle]}>
@@ -447,14 +435,13 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
         </View>
       </Animated.View>
 
-      {/* Celebration overlay — matching music-challenge-ui.tsx style */}
-      {showGreatJob && (
-        <Animated.View style={[styles.celebrationOverlay, celebrationStyle]}>
-          <ThemedText style={[styles.celebrationText, { fontSize: scaledFontSize(36) }]}>
-            {t('emotions.greatJob')}
-          </ThemedText>
-        </Animated.View>
-      )}
+      {/* Real World Bridge — shows after game content fades out */}
+      <RealWorldBridgeOverlay
+        visible={showBridge}
+        activityId={THEME_TO_BRIDGE_ACTIVITY[selectedTheme]}
+        gameSection="feelings"
+        onDismiss={handleBridgeDismiss}
+      />
 
       </LinearGradient>
     </Animated.View>
@@ -549,23 +536,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#2ECC71',
     borderRadius: 4,
   },
-  // Celebration overlay — matching music-challenge-ui.tsx celebrationContainer + celebrationText
-  celebrationOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 50,
-    overflow: 'visible',
-  },
-  celebrationText: {
-    color: '#FFD700',
-    fontSize: 36,
-    fontWeight: '900',
-    textAlign: 'center',
-    letterSpacing: 3,
-    textShadowColor: 'rgba(255, 215, 0, 0.6)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 20,
-    fontFamily: Fonts.primary,
-  },
+
 });

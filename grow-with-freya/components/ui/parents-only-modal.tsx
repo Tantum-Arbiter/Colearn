@@ -13,7 +13,6 @@ import {
   StatusBar,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/constants/theme';
 import type { ParentChallenge } from '@/hooks/use-parents-only-challenge';
 
@@ -144,7 +143,7 @@ export function ParentsOnlyModal({
           { transform: [{ translateY: Animated.add(keyboardOffset, entranceTranslateY) }] },
         ]}>
           <Pressable style={styles.closeButton} onPress={onClose}>
-            <Ionicons name="close" size={18} color="#FFFFFF" />
+            <Text style={styles.closeButtonText}>✕</Text>
           </Pressable>
 
           {isPhoneLandscape ? (

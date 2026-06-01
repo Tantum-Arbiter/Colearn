@@ -6,12 +6,12 @@ import Footer from '@/components/Footer';
 import LanguageSelector from '@/components/LanguageSelector';
 
 export const metadata: Metadata = {
-  title: 'earlyroots | Animated Storybooks for Children',
-  description: 'Animated storybooks that bring reading to life. Discover safe, ad-free stories children love and parents trust. Start storytime today.',
-  keywords: ['children stories', 'animated storybooks', 'kids reading app', 'bedtime stories', 'educational stories'],
+  title: 'earlyroots | Stories, Music & Early Learning for Ages 0–6',
+  description: 'The all-in-one early learning app for ages 0–6. Interactive stories, musical instruments, spelling games, emotional intelligence — safe, ad-free, and designed for parent-child co-engagement.',
+  keywords: ['early learning app', 'children stories', 'kids music instruments', 'spelling games for kids', 'emotional learning', 'educational app', 'screen time management', 'parent child app'],
   openGraph: {
-    title: 'earlyroots | Animated Storybooks for Children',
-    description: 'Animated storybooks that bring reading to life.',
+    title: 'earlyroots | Stories, Music & Early Learning for Ages 0–6',
+    description: 'Five learning experiences in one calm, beautiful app. Stories, music, spelling, emotions, and numbers — designed for families.',
     type: 'website',
   },
 };

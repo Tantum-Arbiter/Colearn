@@ -3,6 +3,8 @@ import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 import { ScreenTimeScreen } from '../../../components/screen-time/screen-time-screen';
 import { ScreenTimeProvider } from '../../../components/screen-time/screen-time-provider';
+import { screenToActivityType } from '../../../components/screen-time/screen-time-provider';
+import { ScreenTimeWarningModal } from '../../../components/screen-time/screen-time-warning-modal';
 import { useAppStore } from '../../../store/app-store';
 import ScreenTimeService from '../../../services/screen-time-service';
 import NotificationService from '../../../services/notification-service';
@@ -11,17 +13,23 @@ import NotificationService from '../../../services/notification-service';
 jest.mock('../../../store/app-store');
 jest.mock('../../../services/screen-time-service');
 jest.mock('../../../services/notification-service');
-jest.mock('../../../components/screen-time/screen-time-provider', () => ({
-  ScreenTimeProvider: ({ children }: { children: React.ReactNode }) => children,
-  useScreenTime: () => ({
-    isTracking: false,
-    currentActivity: null,
-    todayUsage: 300, // 5 minutes in seconds
-    startActivity: jest.fn(),
-    endActivity: jest.fn(),
-    showWarning: jest.fn(),
-  }),
-}));
+jest.mock('../../../components/screen-time/screen-time-provider', () => {
+  const actual = jest.requireActual('../../../components/screen-time/screen-time-provider');
+  return {
+    ...actual,
+    ScreenTimeProvider: ({ children }: { children: React.ReactNode }) => children,
+    useScreenTime: () => ({
+      isTracking: false,
+      currentActivity: null,
+      todayUsage: 300, // 5 minutes in seconds
+      startActivity: jest.fn(),
+      endActivity: jest.fn(),
+      showWarning: jest.fn(),
+      refreshUsage: jest.fn(),
+      setLastCompletedActivityId: jest.fn(),
+    }),
+  };
+});
 jest.mock('react-native/Libraries/Alert/Alert', () => ({
   alert: jest.fn(),
 }));
@@ -33,29 +41,49 @@ jest.mock('expo-haptics', () => ({
     Heavy: 'heavy',
   },
 }));
-jest.mock('react-native-reanimated', () => ({
-  useSharedValue: jest.fn(() => ({ value: 0 })),
-  useAnimatedStyle: jest.fn(() => ({})),
-  useAnimatedProps: jest.fn(() => ({})),
-  withRepeat: jest.fn((animation) => animation),
-  withTiming: jest.fn((value) => value),
-  withSpring: jest.fn((value) => value),
-  withSequence: jest.fn((value) => value),
-  withDelay: jest.fn((_, value) => value),
-  interpolate: jest.fn((value) => value),
-  Easing: { inOut: jest.fn(), bezier: jest.fn() },
-  createAnimatedComponent: (component: any) => component,
-  default: {
-    View: 'View',
-    createAnimatedComponent: (component: any) => component,
-  },
-}));
-jest.mock('expo-linear-gradient', () => ({
-  LinearGradient: 'LinearGradient',
-}));
-jest.mock('@expo/vector-icons', () => ({
-  Ionicons: 'Ionicons',
-}));
+// Override Reanimated mock so animated styles don't hide elements in tests
+// (the global mock executes style functions, producing opacity:0 / translateY:off-screen)
+jest.mock('react-native-reanimated', () => {
+  const React = require('react');
+  const RN = require('react-native');
+  const AnimatedView = React.forwardRef((props: any, ref: any) => {
+    const { style, children, ...rest } = props;
+    return React.createElement(RN.View, { ...rest, ref, style }, children);
+  });
+  const AnimatedText = React.forwardRef((props: any, ref: any) => {
+    const { style, children, ...rest } = props;
+    return React.createElement(RN.Text, { ...rest, ref, style }, children);
+  });
+  return {
+    __esModule: true,
+    default: { View: AnimatedView, Text: AnimatedText, createAnimatedComponent: (c: any) => c },
+    useSharedValue: jest.fn((v: any) => ({ value: v })),
+    useAnimatedStyle: jest.fn(() => ({})),
+    useAnimatedProps: jest.fn(() => ({})),
+    useDerivedValue: jest.fn((fn: any) => ({ value: fn() })),
+    withTiming: jest.fn((v: any) => v),
+    withSpring: jest.fn((v: any) => v),
+    withDelay: jest.fn((_: any, v: any) => v),
+    withRepeat: jest.fn((a: any) => a),
+    withSequence: jest.fn((...a: any[]) => a[a.length - 1]),
+    Easing: { out: jest.fn((e: any) => e), in: jest.fn((e: any) => e), inOut: jest.fn((e: any) => e), cubic: jest.fn(), bezier: jest.fn() },
+    runOnJS: jest.fn((fn: any) => fn),
+    interpolate: jest.fn((v: any) => v),
+    createAnimatedComponent: (c: any) => c,
+  };
+});
+jest.mock('expo-linear-gradient', () => {
+  const { View } = require('react-native');
+  return { LinearGradient: ({ children, testID, style, ...rest }: any) => <View testID={testID} style={style}>{children}</View> };
+});
+jest.mock('expo-blur', () => {
+  const { View } = require('react-native');
+  return { BlurView: (props: any) => <View {...props} /> };
+});
+jest.mock('@expo/vector-icons', () => {
+  const { Text } = require('react-native');
+  return { Ionicons: (props: any) => <Text>{props.name}</Text> };
+});
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));
@@ -306,5 +334,199 @@ describe.skip('ScreenTimeScreen', () => {
     // Should not show weekly overview while loading
     expect(queryByText('Weekly Overview')).toBeFalsy();
     expect(queryByText('Recommended Schedule')).toBeFalsy();
+  });
+});
+
+// ─── screenToActivityType unit tests ────────────────────────────────────────
+describe('screenToActivityType', () => {
+  it('returns "spelling" for spelling-related screens', () => {
+    expect(screenToActivityType('spelling-game')).toBe('spelling');
+    expect(screenToActivityType('word-builder')).toBe('spelling');
+  });
+
+  it('returns "counting" for number/counting screens', () => {
+    expect(screenToActivityType('number-challenge')).toBe('counting');
+    expect(screenToActivityType('counting-game')).toBe('counting');
+  });
+
+  it('returns "instruments" for music/instrument screens', () => {
+    expect(screenToActivityType('practise')).toBe('instruments');
+    expect(screenToActivityType('freeplay')).toBe('instruments');
+    expect(screenToActivityType('instrument-select')).toBe('instruments');
+    expect(screenToActivityType('music-challenge')).toBe('instruments');
+  });
+
+  it('returns "feelings" for emotion screens', () => {
+    expect(screenToActivityType('feeling-cards')).toBe('feelings');
+    expect(screenToActivityType('emotion-match')).toBe('feelings');
+  });
+
+  it('returns "stories" for story screens', () => {
+    expect(screenToActivityType('story-reader')).toBe('stories');
+  });
+
+  it('returns "general" for unknown or null screens', () => {
+    expect(screenToActivityType(null)).toBe('general');
+    expect(screenToActivityType(undefined)).toBe('general');
+    expect(screenToActivityType('home')).toBe('general');
+    expect(screenToActivityType('settings')).toBe('general');
+  });
+});
+
+// ─── Tree search helpers (react-native-web + jsdom don't support RNTL queries) ─
+function treeContainsText(node: any, text: string): boolean {
+  if (!node) return false;
+  if (typeof node === 'string') return node.includes(text);
+  if (Array.isArray(node)) return node.some((child: any) => treeContainsText(child, text));
+  if (node.children) return treeContainsText(node.children, text);
+  return false;
+}
+
+function countTextOccurrences(node: any, text: string): number {
+  if (!node) return 0;
+  if (typeof node === 'string') return node === text ? 1 : 0;
+  if (Array.isArray(node)) return node.reduce((sum: number, child: any) => sum + countTextOccurrences(child, text), 0);
+  if (node.children) return countTextOccurrences(node.children, text);
+  return 0;
+}
+
+function renderModal(overrides: Partial<React.ComponentProps<typeof ScreenTimeWarningModal>> = {}) {
+  const defaults = {
+    visible: true,
+    warning: { type: 'approaching_limit' as const, remainingTime: 300, message: 'Only 5 minutes left' },
+    onDismiss: jest.fn(),
+  };
+  const result = render(<ScreenTimeWarningModal {...defaults} {...overrides} />);
+  return { ...result, json: result.toJSON() };
+}
+
+// ─── ScreenTimeWarningModal unit tests ──────────────────────────────────────
+describe('ScreenTimeWarningModal', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('renders the suggestions section when visible', () => {
+    const { json } = renderModal({ lastActivityType: 'spelling' });
+    expect(treeContainsText(json, 'screenTimeWarning.trySomethingNew')).toBe(true);
+  });
+
+  it('renders the "try something new" heading', () => {
+    const { json } = renderModal({ lastActivityType: 'spelling' });
+    expect(treeContainsText(json, 'screenTimeWarning.trySomethingNew')).toBe(true);
+  });
+
+  it('shows exactly 2 generic suggestion bullets when no bridge data', () => {
+    const { json } = renderModal({ lastActivityType: 'instruments' });
+    const bulletCount = countTextOccurrences(json, '•');
+    expect(bulletCount).toBe(2);
+  });
+
+  it('defaults to "general" activity type when none provided', () => {
+    const { json } = renderModal();
+    // Should render general emoji and suggestions
+    expect(treeContainsText(json, '🌟')).toBe(true);
+    expect(treeContainsText(json, 'screenTimeWarning.suggestions.general')).toBe(true);
+  });
+
+  it('does not render when warning is null', () => {
+    const { toJSON } = render(
+      <ScreenTimeWarningModal visible={false} warning={null} onDismiss={jest.fn()} />
+    );
+    expect(toJSON()).toBeNull();
+  });
+
+  it('renders the warning message', () => {
+    const { json } = renderModal();
+    expect(treeContainsText(json, 'Only 5 minutes left')).toBe(true);
+  });
+
+  it('renders dismiss button', () => {
+    const { json } = renderModal();
+    expect(treeContainsText(json, 'screenTimeWarning.closeNotification')).toBe(true);
+  });
+
+  // ─── Bridge data integration tests ──────────────────────────────────────
+  describe('bridge-based suggestions', () => {
+    it('renders bridge narration when lastCompletedActivityId has bridge data', () => {
+      const { json } = renderModal({
+        lastActivityType: 'spelling',
+        lastCompletedActivityId: 'abc-animals',
+      });
+      expect(treeContainsText(json, 'bridge.spelling.abcAnimals.narration')).toBe(true);
+    });
+
+    it('renders 3 bridge adventure cards when bridge data is available', () => {
+      const { json } = renderModal({
+        lastActivityType: 'spelling',
+        lastCompletedActivityId: 'abc-animals',
+      });
+      // Each card has a category label
+      expect(treeContainsText(json, 'bridge.atHome')).toBe(true);
+      expect(treeContainsText(json, 'bridge.outdoors')).toBe(true);
+      expect(treeContainsText(json, 'bridge.creative')).toBe(true);
+    });
+
+    it('renders category icons in bridge cards', () => {
+      const { json } = renderModal({
+        lastActivityType: 'spelling',
+        lastCompletedActivityId: 'abc-animals',
+      });
+      // Ionicons mock renders icon name as text
+      expect(treeContainsText(json, 'home-outline')).toBe(true);
+      expect(treeContainsText(json, 'leaf-outline')).toBe(true);
+      expect(treeContainsText(json, 'color-palette-outline')).toBe(true);
+    });
+
+    it('does NOT render generic bullet suggestions when bridge data is available', () => {
+      const { json } = renderModal({
+        lastActivityType: 'spelling',
+        lastCompletedActivityId: 'abc-animals',
+      });
+      const bulletCount = countTextOccurrences(json, '•');
+      expect(bulletCount).toBe(0);
+    });
+
+    it('falls back to generic suggestions for unknown activity ID', () => {
+      const { json } = renderModal({
+        lastActivityType: 'instruments',
+        lastCompletedActivityId: 'nonexistent-activity',
+      });
+      const bulletCount = countTextOccurrences(json, '•');
+      expect(bulletCount).toBe(2);
+      // No bridge-specific content
+      expect(treeContainsText(json, 'bridge.atHome')).toBe(false);
+    });
+
+    it('falls back to generic suggestions when lastCompletedActivityId is null', () => {
+      const { json } = renderModal({
+        lastActivityType: 'feelings',
+        lastCompletedActivityId: null,
+      });
+      const bulletCount = countTextOccurrences(json, '•');
+      expect(bulletCount).toBe(2);
+      // No bridge narration
+      expect(treeContainsText(json, 'bridge.feelings')).toBe(false);
+    });
+
+    it('renders bridge data for a feelings activity', () => {
+      const { json } = renderModal({
+        lastActivityType: 'feelings',
+        lastCompletedActivityId: 'emotion-faces',
+      });
+      expect(treeContainsText(json, 'bridge.feelings.emotionFaces.narration')).toBe(true);
+      expect(treeContainsText(json, 'bridge.atHome')).toBe(true);
+      expect(treeContainsText(json, 'bridge.outdoors')).toBe(true);
+      expect(treeContainsText(json, 'bridge.creative')).toBe(true);
+    });
+
+    it('renders bridge data for a numbers activity', () => {
+      const { json } = renderModal({
+        lastActivityType: 'counting',
+        lastCompletedActivityId: 'counting-fun',
+      });
+      expect(treeContainsText(json, 'bridge.numbers.countingFun.narration')).toBe(true);
+      expect(treeContainsText(json, 'bridge.atHome')).toBe(true);
+    });
   });
 });

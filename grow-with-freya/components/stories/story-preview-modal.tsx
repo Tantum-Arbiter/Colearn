@@ -66,8 +66,8 @@ export function StoryPreviewModal({
   const backdropOpacity = useSharedValue(0);
   const isAnimatingOut = useSharedValue(false);
 
-  // Favorite star animation
-  const starScale = useSharedValue(1);
+  // Favorite heart animation
+  const heartScale = useSharedValue(1);
 
   // Animate in when visible changes
   useEffect(() => {
@@ -108,8 +108,8 @@ export function StoryPreviewModal({
     opacity: backdropOpacity.value,
   }));
 
-  const starAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: starScale.value }],
+  const heartAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: heartScale.value }],
   }));
 
   // Handle toggling favorite with animation
@@ -118,13 +118,13 @@ export function StoryPreviewModal({
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     // Bounce animation
-    starScale.value = withSequence(
+    heartScale.value = withSequence(
       withSpring(1.3, { damping: 10, stiffness: 400 }),
       withSpring(1, { damping: 10, stiffness: 400 })
     );
 
     toggleFavoriteStory(story.id);
-  }, [story, toggleFavoriteStory, starScale]);
+  }, [story, toggleFavoriteStory, heartScale]);
 
   // Don't render when not visible -prevents the modal from peeking into view
   // after orientation changes (translateY shared value can become stale)
@@ -183,11 +183,11 @@ export function StoryPreviewModal({
             <Ionicons name="close" size={18} color="#666" />
           </Pressable>
 
-          {/* Favorite Star Button - top right (only for downloaded stories) */}
+          {/* Favorite Heart Button - top right (only for downloaded stories) */}
           {story.isAvailable && (
             <Pressable style={styles.favoriteButton} onPress={handleToggleFavorite}>
-              <Animated.View style={starAnimatedStyle}>
-                <Ionicons name={isFavorited ? 'star' : 'star-outline'} size={24} color={isFavorited ? '#FFD700' : '#999'} />
+              <Animated.View style={heartAnimatedStyle}>
+                <Ionicons name={isFavorited ? 'heart' : 'heart-outline'} size={24} color={isFavorited ? '#FF6B6B' : '#999'} />
               </Animated.View>
             </Pressable>
           )}

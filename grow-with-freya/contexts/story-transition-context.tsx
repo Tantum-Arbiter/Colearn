@@ -37,6 +37,8 @@ import { StoryPreviewModal } from '@/components/stories/story-preview-modal';
 import { TutorialOverlay } from '@/components/tutorial/tutorial-overlay';
 import { useTutorial } from '@/contexts/tutorial-context';
 import { useTranslation } from 'react-i18next';
+import { Ionicons } from '@expo/vector-icons';
+import { useAppStore } from '@/store/app-store';
 
 // Animation timing constants
 const MOVE_TO_CENTER_DURATION = 1600; // Slow, cinematic glide from tile to center
@@ -166,6 +168,8 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet } = useAccessibility();
   const parentsOnly = useParentsOnlyChallenge();
+  const toggleFavoriteStory = useAppStore((s) => s.toggleFavoriteStory);
+  const favoriteStoryIds = useAppStore((s) => s.favoriteStoryIds);
 
   // Use screenDimensions state so layout updates when orientation changes
   const { width: screenWidth, height: screenHeight } = screenDimensions;
@@ -1637,6 +1641,63 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                 <Text style={[styles.closeButtonText, { fontSize: closeIconSize }]}>✕</Text>
               </Pressable>
             </Animated.View>
+            );
+          })()}
+
+          {/* Favourite heart button - top right of book (mirrors close button) */}
+          {showModeSelection && targetBookPosition && !showPreviewModal && (() => {
+            const isPhonePortrait = isPhone && !isLandscape;
+            const isPhoneLandscape = isPhone && isLandscape;
+
+            let favButtonSize: number;
+            let favButtonOffset: number;
+            let favIconSize: number;
+
+            if (isPhonePortrait) {
+              favButtonSize = scaledButtonSize(36);
+              favButtonOffset = scaledButtonSize(8);
+              favIconSize = scaledFontSize(16);
+            } else if (isPhoneLandscape) {
+              favButtonSize = scaledButtonSize(28);
+              favButtonOffset = scaledButtonSize(6);
+              favIconSize = scaledFontSize(14);
+            } else {
+              favButtonSize = scaledButtonSize(44);
+              favButtonOffset = scaledButtonSize(12);
+              favIconSize = scaledFontSize(20);
+            }
+
+            const isFav = selectedStoryId ? favoriteStoryIds.includes(selectedStoryId) : false;
+
+            return (
+              <Animated.View
+                entering={FadeIn.delay(150).duration(200)}
+                style={[styles.closeButtonContainer, {
+                  left: targetBookPosition.x + targetBookPosition.width - favButtonSize + favButtonOffset,
+                  top: targetBookPosition.y - favButtonOffset,
+                }]}
+              >
+                <Pressable
+                  style={[styles.closeButton, {
+                    width: favButtonSize,
+                    height: favButtonSize,
+                    borderRadius: favButtonSize / 2,
+                  }]}
+                  onPress={() => {
+                    if (selectedStoryId) {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      toggleFavoriteStory(selectedStoryId);
+                    }
+                  }}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Ionicons
+                    name={isFav ? 'heart' : 'heart-outline'}
+                    size={favIconSize}
+                    color={isFav ? '#FF6B6B' : '#999'}
+                  />
+                </Pressable>
+              </Animated.View>
             );
           })()}
 

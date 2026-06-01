@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   rightControlsPhone: {
-    flexDirection: 'column',
+    flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },

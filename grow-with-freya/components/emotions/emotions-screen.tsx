@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
@@ -7,7 +7,10 @@ import Animated, {
   withTiming,
   withRepeat,
   Easing,
+  runOnJS,
 } from 'react-native-reanimated';
+
+const SCREEN_HEIGHT = Dimensions.get('window').height;
 import { useTranslation } from 'react-i18next';
 import { EmotionsGameScreen } from './emotions-game-screen';
 import { EmotionsUnifiedScreen } from './emotions-unified-screen';
@@ -59,6 +62,10 @@ export function EmotionsScreen({ onBack }: EmotionsScreenProps) {
   const menuOpacity = useSharedValue(1);
   const parentsOpacity = useSharedValue(0);
 
+  // Game screen slide-from-top animation
+  const gameSlideY = useSharedValue(-SCREEN_HEIGHT);
+  const [isGameMounted, setIsGameMounted] = useState(false);
+
   const menuAnimatedStyle = useAnimatedStyle(() => ({
     opacity: menuOpacity.value,
   }));
@@ -67,21 +74,40 @@ export function EmotionsScreen({ onBack }: EmotionsScreenProps) {
     opacity: parentsOpacity.value,
   }));
 
+  const gameSlideStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: gameSlideY.value }],
+  }));
+
   const handleStartGame = (theme: EmotionTheme) => {
     setSelectedTheme(theme);
-    menuOpacity.value = withTiming(0, { duration: 400, easing: Easing.out(Easing.cubic) });
-    setTimeout(() => {
-      setCurrentView('game');
-    }, 400);
-  };
-
-  const handleBackToMenu = () => {
-    menuOpacity.value = 0;
-    setCurrentView('menu');
-    requestAnimationFrame(() => {
-      menuOpacity.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) });
+    // Menu stays visible underneath (no opacity change needed — game slides on top)
+    setCurrentView('game');
+    // Pre-position off-screen, mount, then slide in
+    gameSlideY.value = -SCREEN_HEIGHT;
+    setIsGameMounted(true);
+    // Use withDelay so the component mounts at the off-screen position first
+    gameSlideY.value = withTiming(0, {
+      duration: 500,
+      easing: Easing.out(Easing.cubic),
     });
   };
+
+  /** Slide the game screen back up, then unmount it */
+  const handleBackToMenu = () => {
+    gameSlideY.value = withTiming(-SCREEN_HEIGHT, {
+      duration: 450,
+      easing: Easing.in(Easing.cubic),
+    }, (finished) => {
+      if (finished) {
+        runOnJS(finishBackToMenu)();
+      }
+    });
+  };
+
+  const finishBackToMenu = useCallback(() => {
+    setIsGameMounted(false);
+    setCurrentView('menu');
+  }, []);
 
   const handleNavigateToParents = () => {
     // Fade out menu, fade in relax gradient + content
@@ -110,16 +136,17 @@ export function EmotionsScreen({ onBack }: EmotionsScreenProps) {
     }, 500);
   }, []);
 
+  /** Game complete — slide game up, reveal menu */
   const handleGameComplete = useCallback(() => {
-    menuOpacity.value = 0;
-    setCurrentView('menu');
-    requestAnimationFrame(() => {
-      menuOpacity.value = withTiming(1, {
-        duration: 600,
-        easing: Easing.out(Easing.cubic),
-      });
+    gameSlideY.value = withTiming(-SCREEN_HEIGHT, {
+      duration: 450,
+      easing: Easing.in(Easing.cubic),
+    }, (finished) => {
+      if (finished) {
+        runOnJS(finishBackToMenu)();
+      }
     });
-  }, []);
+  }, [finishBackToMenu]);
 
   // Reset state before navigating away so re-entering always shows the menu
   const handleBack = useCallback(() => {
@@ -186,13 +213,15 @@ export function EmotionsScreen({ onBack }: EmotionsScreenProps) {
         />
       </Animated.View>
 
-      {/* Game — only mounted when active (has its own background) */}
-      {currentView === 'game' && (
-        <EmotionsGameScreen
-          onBack={handleBackToMenu}
-          onGameComplete={handleGameComplete}
-          selectedTheme={selectedTheme}
-        />
+      {/* Game — slides in from top when active, slides back up when complete */}
+      {isGameMounted && (
+        <Animated.View style={[styles.gameSlideContainer, gameSlideStyle]}>
+          <EmotionsGameScreen
+            onBack={handleBackToMenu}
+            onGameComplete={handleGameComplete}
+            selectedTheme={selectedTheme}
+          />
+        </Animated.View>
       )}
 
       {/* Relax — mounted when navigating to/from, unmounted when back on menu */}
@@ -224,5 +253,9 @@ const styles = StyleSheet.create({
   fullSize: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 10,
+  },
+  gameSlideContainer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 20,
   },
 });

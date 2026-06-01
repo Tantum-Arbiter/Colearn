@@ -4,27 +4,38 @@ import Link from 'next/link';
 import { useState, useEffect, ReactNode } from 'react';
 import { useLanguage } from '@/i18n/LanguageContext';
 
+// Stories icon
 const BookStackIcon = ({ className = "w-16 h-16 lg:w-20 lg:h-20" }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
   </svg>
 );
 
-const BookOpenIcon = ({ className = "w-16 h-16 lg:w-20 lg:h-20" }: { className?: string }) => (
+// Music icon
+const MusicalNoteIcon = ({ className = "w-16 h-16 lg:w-20 lg:h-20" }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 9l10.5-3m0 6.553v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 11-.99-3.467l2.31-.66a2.25 2.25 0 001.632-2.163zm0 0V4.5A2.25 2.25 0 0016.5 2.25H15M3.75 21h16.5M3.75 21v-3.675a2.25 2.25 0 011.53-2.137l.217-.065M3.75 21h.008v.008H3.75V21zm.375-3.81a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
   </svg>
 );
 
-const ChartBarIcon = ({ className = "w-16 h-16 lg:w-20 lg:h-20" }: { className?: string }) => (
+// Spelling / ABC icon
+const SpellingIcon = ({ className = "w-16 h-16 lg:w-20 lg:h-20" }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
   </svg>
 );
 
-const MoonIcon = ({ className = "w-16 h-16 lg:w-20 lg:h-20" }: { className?: string }) => (
+// Emotions / Heart icon
+const HeartIcon = ({ className = "w-16 h-16 lg:w-20 lg:h-20" }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+  </svg>
+);
+
+// Real-world bridge / Sun icon
+const SunIcon = ({ className = "w-16 h-16 lg:w-20 lg:h-20" }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
   </svg>
 );
 
@@ -39,31 +50,38 @@ interface Screenshot {
 const screenshots: Screenshot[] = [
   {
     id: 1,
-    title: 'Story Library',
+    title: 'Interactive Stories',
     icon: BookStackIcon,
-    description: 'Browse our collection',
+    description: 'Animated read-along books',
     bgColor: 'from-blue-400 to-purple-500',
   },
   {
     id: 2,
-    title: 'Reading Mode',
-    icon: BookOpenIcon,
-    description: 'Immersive storytelling',
+    title: 'Music & Instruments',
+    icon: MusicalNoteIcon,
+    description: 'Play piano, drums & more',
     bgColor: 'from-brand-blue to-brand-teal',
   },
   {
     id: 3,
-    title: 'Parent Dashboard',
-    icon: ChartBarIcon,
-    description: 'Track screen time',
+    title: 'Spelling & Literacy',
+    icon: SpellingIcon,
+    description: 'Word games in stories',
     bgColor: 'from-teal-400 to-emerald-500',
   },
   {
     id: 4,
-    title: 'Bedtime Stories',
-    icon: MoonIcon,
-    description: 'Calm wind-down mode',
-    bgColor: 'from-indigo-500 to-purple-600',
+    title: 'Emotions & Feelings',
+    icon: HeartIcon,
+    description: 'Emotional intelligence',
+    bgColor: 'from-pink-400 to-rose-500',
+  },
+  {
+    id: 5,
+    title: 'Real-World Bridge',
+    icon: SunIcon,
+    description: 'Screen time → playtime',
+    bgColor: 'from-amber-400 to-orange-500',
   },
 ];
 
@@ -134,13 +152,13 @@ export default function Hero() {
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                Research-Backed
+                5-in-1 Learning
               </div>
               <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full">
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                Screen Time Controls
+                Real-World Bridge
               </div>
               <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full">
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -152,13 +170,13 @@ export default function Hero() {
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                Educator-Informed
+                Co-Engagement
               </div>
               <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full">
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                Parent-Guided Play
+                14 Languages
               </div>
             </div>
           </div>

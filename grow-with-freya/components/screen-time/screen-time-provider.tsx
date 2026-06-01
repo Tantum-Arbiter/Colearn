@@ -8,6 +8,21 @@ import { Logger } from '@/utils/logger';
 
 const log = Logger.create('ScreenTime');
 
+/** Activity type derived from the screen the user was on */
+export type ActivityType = 'spelling' | 'counting' | 'instruments' | 'feelings' | 'stories' | 'general';
+
+/** Maps a screen name (from currentScreen in AppStore) to an ActivityType */
+export function screenToActivityType(screen: string | null | undefined): ActivityType {
+  if (!screen) return 'general';
+  const s = screen.toLowerCase();
+  if (s.includes('spelling') || s.includes('word')) return 'spelling';
+  if (s.includes('number') || s.includes('counting')) return 'counting';
+  if (s.includes('practise') || s.includes('freeplay') || s.includes('instrument') || s.includes('music')) return 'instruments';
+  if (s.includes('feeling') || s.includes('emotion')) return 'feelings';
+  if (s.includes('story') || s.includes('reader')) return 'stories';
+  return 'general';
+}
+
 interface ScreenTimeContextType {
   isTracking: boolean;
   currentActivity: 'story' | null;
@@ -16,6 +31,8 @@ interface ScreenTimeContextType {
   endActivity: () => Promise<void>;
   showWarning: (warning: ScreenTimeWarning) => void;
   refreshUsage: () => Promise<void>;
+  /** Set the bridge activity ID of the last completed game (e.g. 'abc-animals') */
+  setLastCompletedActivityId: (activityId: string) => void;
 }
 
 const ScreenTimeContext = createContext<ScreenTimeContextType | null>(null);
@@ -56,6 +73,10 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
   const [isPausedForExemptScreen, setIsPausedForExemptScreen] = useState(false);
   // Queued warning that arrived during an immersive screen -shown on exit
   const [pendingWarning, setPendingWarning] = useState<ScreenTimeWarning | null>(null);
+  // The last activity the user was doing — used for contextual suggestions in the warning modal
+  const [lastActivityType, setLastActivityType] = useState<ActivityType>('general');
+  // Specific bridge activity ID of the last completed game (e.g. 'abc-animals')
+  const [lastCompletedActivityId, setLastCompletedActivityId] = useState<string | null>(null);
 
   // Refs mirror React state so AppState/interval callbacks always read the
   // current value -avoids stale-closure bugs where a backgrounded app skips
@@ -65,6 +86,8 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
 
   // Track whether the app is in the foreground so we can pause polling in the background.
   const isAppActiveRef = useRef(AppState.currentState === 'active');
+  // Track previous screen to detect activity transitions
+  const prevScreenRef = useRef<string | null>(null);
 
   const screenTimeService = ScreenTimeService.getInstance();
   const notificationService = NotificationService.getInstance();
@@ -78,6 +101,18 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
   const isOnImmersiveScreen = IMMERSIVE_SCREENS.some(screen =>
     currentScreen?.toLowerCase() === screen.toLowerCase()
   );
+
+  // Track screen changes to capture the last activity type
+  useEffect(() => {
+    if (currentScreen && currentScreen !== prevScreenRef.current) {
+      // When leaving a screen, capture its activity type
+      const prevActivity = screenToActivityType(prevScreenRef.current);
+      if (prevActivity !== 'general') {
+        setLastActivityType(prevActivity);
+      }
+      prevScreenRef.current = currentScreen;
+    }
+  }, [currentScreen]);
 
   // When leaving an immersive screen, show any pending warning
   useEffect(() => {
@@ -113,6 +148,12 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
   // Set up warning callback
   useEffect(() => {
     const handleWarning = (warning: ScreenTimeWarning) => {
+      // Capture the current activity for contextual suggestions
+      const activity = screenToActivityType(currentScreen);
+      if (activity !== 'general') {
+        setLastActivityType(activity);
+      }
+
       // If user is on an immersive screen, queue the warning for later
       if (IMMERSIVE_SCREENS.some(s => currentScreen?.toLowerCase() === s.toLowerCase())) {
         setPendingWarning(warning);
@@ -287,6 +328,10 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
     setCurrentWarning(null);
   }, []);
 
+  const handleSetLastCompletedActivityId = useCallback((activityId: string) => {
+    setLastCompletedActivityId(activityId);
+  }, []);
+
   const contextValue: ScreenTimeContextType = {
     isTracking,
     currentActivity,
@@ -295,6 +340,7 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
     endActivity,
     showWarning,
     refreshUsage,
+    setLastCompletedActivityId: handleSetLastCompletedActivityId,
   };
 
   return (
@@ -304,6 +350,8 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
       <ScreenTimeWarningModal
         visible={showWarningModal}
         warning={currentWarning}
+        lastActivityType={lastActivityType}
+        lastCompletedActivityId={lastCompletedActivityId}
         onDismiss={handleDismiss}
       />
     </ScreenTimeContext.Provider>

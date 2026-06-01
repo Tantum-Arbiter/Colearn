@@ -1258,7 +1258,7 @@ export function StorySelectionScreen({ onStorySelect, initialMode }: StorySelect
               {favoriteStories.length > 0 && (
                 <View style={{ marginBottom: 40 }}>
                   <Text style={styles.genreHeadingText}>
-                    <Ionicons name="star" size={16} color="#FFD700" />{' '}{t('stories.yourFavorites', { defaultValue: 'Your Favorites' })}
+                    <Ionicons name="heart" size={16} color="#FF6B6B" />{' '}{t('stories.yourFavorites', { defaultValue: 'Your Favorites' })}
                   </Text>
                   <FlatList
                     data={favoriteStories}
@@ -1319,7 +1319,7 @@ export function StorySelectionScreen({ onStorySelect, initialMode }: StorySelect
               {favoriteStories.length > 0 && (
                 <View>
                   <Text style={styles.gridGenreHeading}>
-                    <Ionicons name="star" size={16} color="#FFD700" />{' '}{t('stories.yourFavorites', { defaultValue: 'Your Favorites' })}
+                    <Ionicons name="heart" size={16} color="#FF6B6B" />{' '}{t('stories.yourFavorites', { defaultValue: 'Your Favorites' })}
                   </Text>
                   <View style={styles.gridRow}>
                     {favoriteStories.map((story) => (

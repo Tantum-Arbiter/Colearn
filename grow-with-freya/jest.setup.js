@@ -354,6 +354,8 @@ jest.mock('@/store/app-store', () => ({
     requestReturnToMainMenu: jest.fn(),
     clearReturnToMainMenu: jest.fn(),
     updateBackgroundAnimationState: jest.fn(),
+    textSizeScale: 1.0,
+    setTextSizeScale: jest.fn(),
   })),
   BASIC_TIER_INSTRUMENTS: ['flute', 'recorder', 'ocarina'],
 }));

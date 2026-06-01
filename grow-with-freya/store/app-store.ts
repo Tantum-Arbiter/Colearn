@@ -68,6 +68,8 @@ export interface AppState {
 
   // Story favorites
   favoriteStoryIds: string[]; // Array of story IDs that user has favorited
+  // Activity favorites
+  favoriteActivityIds: string[]; // Array of activity IDs that user has favorited
 
   // Story read tracking
   readStoryIds: string[]; // Array of story IDs that user has opened/read
@@ -82,6 +84,8 @@ export interface AppState {
 
   // Story browse layout preference
   storyViewMode: StoryViewMode;
+  // Learning browse layout preference
+  learningViewMode: StoryViewMode;
 
   // Background animation state persistence
   backgroundAnimationState: {
@@ -119,10 +123,13 @@ export interface AppState {
   getEffectiveTier: () => SubscriptionTier;
   toggleFavoriteStory: (storyId: string) => void;
   isStoryFavorited: (storyId: string) => boolean;
+  toggleFavoriteActivity: (activityId: string) => void;
+  isActivityFavorited: (activityId: string) => boolean;
   markStoryAsRead: (storyId: string) => void;
   setLastRatingPromptBookCount: (count: number) => void;
   recordReadingSession: () => void; // Call when a story is opened to update streak
   setStoryViewMode: (mode: StoryViewMode) => void;
+  setLearningViewMode: (mode: StoryViewMode) => void;
 
   updateBackgroundAnimationState: (state: {
     cloudFloat1: number;
@@ -161,6 +168,7 @@ export const useAppStore = create<AppState>()(
       consentPolicyVersion: null,
       textSizeScale: 1.0, // Default to normal size
       favoriteStoryIds: [], // Start with no favorites
+      favoriteActivityIds: [], // Start with no activity favorites
       readStoryIds: [], // Start with no read stories
       lastRatingPromptBookCount: 0, // Never prompted for rating
       readingStreak: 0,
@@ -168,6 +176,7 @@ export const useAppStore = create<AppState>()(
       lastReadDate: null,
       totalStoriesRead: 0,
       storyViewMode: 'carousel' as StoryViewMode,
+      learningViewMode: 'carousel' as StoryViewMode,
 
       backgroundAnimationState: {
         cloudFloat1: -200,
@@ -234,6 +243,17 @@ export const useAppStore = create<AppState>()(
         // we need to access it differently. This will be used via useAppStore.getState()
         return false; // Placeholder - actual check is done via selector
       },
+      toggleFavoriteActivity: (activityId: string) => set((state) => {
+        const isFavorited = state.favoriteActivityIds.includes(activityId);
+        if (isFavorited) {
+          return { favoriteActivityIds: state.favoriteActivityIds.filter(id => id !== activityId) };
+        } else {
+          return { favoriteActivityIds: [...state.favoriteActivityIds, activityId] };
+        }
+      }),
+      isActivityFavorited: (activityId: string) => {
+        return get().favoriteActivityIds.includes(activityId);
+      },
       markStoryAsRead: (storyId: string) => set((state) => {
         if (state.readStoryIds.includes(storyId)) {
           return state; // Already marked as read
@@ -271,6 +291,7 @@ export const useAppStore = create<AppState>()(
       }),
       clearReturnToMainMenu: () => set({ shouldReturnToMainMenu: false }),
       setStoryViewMode: (mode: StoryViewMode) => set({ storyViewMode: mode }),
+      setLearningViewMode: (mode: StoryViewMode) => set({ learningViewMode: mode }),
       updateBackgroundAnimationState: (animationState: { cloudFloat1: number; cloudFloat2: number; rocketFloat1: number; rocketFloat2: number }) => set({ backgroundAnimationState: animationState }),
       clearPersistedStorage: async () => {
         try {
@@ -305,6 +326,7 @@ export const useAppStore = create<AppState>()(
         consentPolicyVersion: state.consentPolicyVersion,
         textSizeScale: state.textSizeScale,
         favoriteStoryIds: state.favoriteStoryIds,
+        favoriteActivityIds: state.favoriteActivityIds,
         readStoryIds: state.readStoryIds,
         lastRatingPromptBookCount: state.lastRatingPromptBookCount,
         readingStreak: state.readingStreak,
@@ -312,6 +334,7 @@ export const useAppStore = create<AppState>()(
         lastReadDate: state.lastReadDate,
         totalStoriesRead: state.totalStoriesRead,
         storyViewMode: state.storyViewMode,
+        learningViewMode: state.learningViewMode,
         backgroundAnimationState: state.backgroundAnimationState,
       }),
       onRehydrateStorage: () => (state, error) => {

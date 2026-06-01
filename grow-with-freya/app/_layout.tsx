@@ -29,13 +29,15 @@ import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
 import { StoryBookReader } from '@/components/stories/story-book-reader';
 import { PractiseScreen } from '@/components/music/practise-screen';
 import { FreeplayScreen } from '@/components/music/freeplay-screen';
-import { LearningScreen } from '@/components/learning/learning-screen';
+import { LearningScreen, type GameType } from '@/components/learning/learning-screen';
+import { SpellingGameScreen } from '@/components/games/spelling-game-screen';
 import { EmotionsScreen } from '@/components/emotions';
 import { ScreenTimeProvider } from '@/components/screen-time/screen-time-provider';
 import { Story } from '@/types/story';
 import { preloadCriticalImages, preloadSecondaryImages } from '@/services/image-preloader';
 import { EnhancedPageTransition } from '@/components/ui/enhanced-page-transition';
 import { StoryTransitionProvider, useStoryTransition } from '@/contexts/story-transition-context';
+import { ActivityTransitionProvider, useActivityTransition } from '@/contexts/ActivityTransitionContext';
 import { GlobalSoundProvider } from '@/contexts/global-sound-context';
 import { TutorialProvider } from '@/contexts/tutorial-context';
 import { updateSentryConsent } from '@/services/sentry-service';
@@ -87,7 +89,9 @@ export default function RootLayout() {
         <TutorialProvider>
           <ScreenTimeProvider>
             <StoryTransitionProvider>
-              <AppContent />
+              <ActivityTransitionProvider>
+                <AppContent />
+              </ActivityTransitionProvider>
             </StoryTransitionProvider>
           </ScreenTimeProvider>
         </TutorialProvider>
@@ -107,6 +111,16 @@ function AppContent() {
     setOnReturnToModeSelectionCallback,
     setOnCancelCallback
   } = useStoryTransition();
+
+  // Access activity transition context for learning game transitions
+  const {
+    selectedActivity: transitionActivity,
+    setOnBeginCallback: setActivityOnBeginCallback,
+    setOnCancelCallback: setActivityOnCancelCallback,
+    setOnReturnCallback: setActivityOnReturnCallback,
+    exitGame: exitActivityGame,
+    isInGame: isInActivityGame,
+  } = useActivityTransition();
 
   const colorScheme = useColorScheme();
   const {
@@ -152,7 +166,7 @@ function AppContent() {
   const [hasStartedBackgroundMusic, setHasStartedBackgroundMusic] = useState(false);
 
   type AppView = 'splash' | 'onboarding' | 'login' | 'loading' | 'app' | 'main' | 'stories' | 'story-reader' | 'account';
-  type PageKey = 'main' | 'stories' | 'story-reader' | 'account' | 'practise' | 'freeplay' | 'spelling' | 'numbers' | 'feelings';
+  type PageKey = 'main' | 'stories' | 'story-reader' | 'account' | 'practise' | 'freeplay' | 'spelling' | 'numbers' | 'feelings' | 'spelling-game';
 
   const [currentView, setCurrentView] = useState<AppView>('splash');
   const [currentPage, setCurrentPage] = useState<PageKey>('main');
@@ -160,6 +174,8 @@ function AppContent() {
   // Story being read - kept separate so it persists during book closing animation
   const [storyBeingRead, setStoryBeingRead] = useState<Story | null>(null);
   const [showStoryReader, setShowStoryReader] = useState(false);
+  // When false, EnhancedPageTransition sets positions instantly (overlay handles visual transition)
+  const [animatePageTransition, setAnimatePageTransition] = useState(true);
 
   // Track if sync is in progress to prevent premature navigation
   const syncInProgressRef = useRef(false);
@@ -545,6 +561,33 @@ function AppContent() {
     };
   }, [setOnCancelCallback]);
 
+  // Activity transition: when user taps "Play" / "Tap to Begin", navigate to story picker
+  useEffect(() => {
+    if (!transitionActivity) return;
+
+    const handleActivityBegin = () => {
+      // The activity transition has already set spellingActivityId via the learning screen callback
+      // Skip page animation — the overlay handles the visual slide-up transition
+      setAnimatePageTransition(false);
+      setCurrentPage('spelling-game');
+      // Re-enable animation for subsequent navigations
+      setTimeout(() => setAnimatePageTransition(true), 50);
+    };
+
+    setActivityOnBeginCallback(() => () => handleActivityBegin());
+    return () => { setActivityOnBeginCallback(null); };
+  }, [transitionActivity, setActivityOnBeginCallback]);
+
+  // Activity transition: when user cancels (X button), just stay on current page
+  useEffect(() => {
+    setActivityOnCancelCallback(() => () => {
+      // No-op — the cancel animation already handles cleanup
+    });
+    return () => { setActivityOnCancelCallback(null); };
+  }, [setActivityOnCancelCallback]);
+
+
+
   const handleOnboardingComplete = () => {
     setOnboardingComplete(true);
     setShowLoginAfterOnboarding(true);
@@ -680,8 +723,38 @@ function AppContent() {
     }
   };
 
-  // Learning screen activity selection - loads CMS story and opens in reader
-  const handleLearningActivitySelect = useCallback(async (storyId: string) => {
+  // Spelling game state
+  const [spellingActivityId, setSpellingActivityId] = useState<string | null>(null);
+  const [spellingStoryId, setSpellingStoryId] = useState<string | undefined>(undefined);
+  const [spellingReturnPage, setSpellingReturnPage] = useState<PageKey>('spelling');
+
+
+  // Activity transition: when user returns from game, navigate back to learning page
+  useEffect(() => {
+    setActivityOnReturnCallback(() => () => {
+      // Let the page transition animate normally (the overlay is off-screen at this point)
+      setCurrentPage(spellingReturnPage);
+    });
+    return () => { setActivityOnReturnCallback(null); };
+  }, [setActivityOnReturnCallback, spellingReturnPage]);
+
+  // Learning screen activity selection - sets spelling state; the activity
+  // transition overlay handles the visual navigation, so we do NOT
+  // setCurrentPage here — that happens in handleActivityBegin.
+  const handleLearningActivitySelect = useCallback(async (activityId: string, gameType: GameType, storyId?: string, nameKey?: string) => {
+    if (gameType === 'spelling') {
+      setSpellingActivityId(activityId);
+      setSpellingStoryId(undefined);
+      setSpellingReturnPage(currentPage as PageKey);
+      // Navigation happens via the activity transition's onBegin callback
+      return;
+    }
+
+    // Fallback: open story reader for 'story', 'choice', 'sorting' (until those screens exist)
+    if (!storyId) {
+      log.warn(`Activity ${activityId} has no storyId for fallback`);
+      return;
+    }
     try {
       const stories = await StoryLoader.getStories();
       const story = stories.find(s => s.id === storyId);
@@ -695,7 +768,7 @@ function AppContent() {
     } catch (error) {
       log.error(`Failed to load learning story ${storyId}:`, error);
     }
-  }, []);
+  }, [currentPage]);
 
   const handleStorySelect = (story: Story) => {
     setSelectedStory(story);
@@ -718,6 +791,13 @@ function AppContent() {
       // Practise/freeplay go back to instruments sub-menu
       if (currentPage === 'practise' || currentPage === 'freeplay') {
         handleBackToInstruments();
+      } else if (currentPage === 'spelling-game') {
+        // Slide overlay back down (book preview), then dismiss to game list
+        if (isInActivityGame) {
+          exitActivityGame();
+        } else {
+          setCurrentPage(spellingReturnPage);
+        }
       } else if (currentPage === 'spelling' || currentPage === 'numbers' || currentPage === 'feelings') {
         handleBackToLearning();
       } else {
@@ -728,7 +808,7 @@ function AppContent() {
 
     // On main menu - let Android handle it (exit/minimize app)
     return false;
-  }, [currentPage, showStoryReader, storyBeingRead]);
+  }, [currentPage, showStoryReader, storyBeingRead, isInActivityGame, exitActivityGame]);
 
   useEffect(() => {
     if (Platform.OS !== 'android') return;
@@ -827,10 +907,25 @@ function AppContent() {
             freeplay: <FreeplayScreen onBack={handleBackToInstruments} isActive={currentPage === 'freeplay'} />,
             spelling: <LearningScreen mode="spelling" onBack={handleBackToLearning} onActivitySelect={handleLearningActivitySelect} isActive={currentPage === 'spelling'} />,
             numbers: <LearningScreen mode="numbers" onBack={handleBackToLearning} onActivitySelect={handleLearningActivitySelect} isActive={currentPage === 'numbers'} />,
+            'spelling-game': spellingActivityId ? (
+              <SpellingGameScreen
+                activityId={spellingActivityId}
+                storyId={spellingStoryId}
+                onBack={() => {
+                  if (isInActivityGame) {
+                    exitActivityGame();
+                  } else {
+                    setCurrentPage(spellingReturnPage);
+                  }
+                }}
+                isActive={currentPage === 'spelling-game'}
+              />
+            ) : null,
             feelings: <EmotionsScreen onBack={handleBackToLearning} />,
             account: <AccountScreen onBack={handleAccountBack} isActive={currentPage === 'account'} />,
           }}
           duration={800}
+          animate={animatePageTransition}
         />
 
         {/* Story reader rendered on top - only loads AFTER mode selection is complete (not during transition) */}
