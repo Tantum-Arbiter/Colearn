@@ -7,10 +7,7 @@
 
 ## 1. Communication
 
-- Be concise. Don't over-explain. No "Great question!", "You're absolutely right!", "Excellent point!".
-- Brief acknowledgements only when they add clarity: "Got it.", "I see the issue."
-- Skip acknowledgements when you can just proceed.
-- Wrap code excerpts shown to the user in `<augment_code_snippet>` XML tags (see root CLAUDE.md).
+Communication & code-display rules: see root `../CLAUDE.md` → **Communication & Code Display**.
 
 ---
 
@@ -104,14 +101,7 @@ If you can't verify: **"⚠️ UNVERIFIED — Unable to confirm this claim in co
 
 ## 7. Commits
 
-```
-<message>
-
-References: colearn#<issue-number>
-```
-- Confirm all intended files are staged before committing.
-- `Co-authored-by:` for pairing.
-- **Never push or open PRs without explicit permission** (root CLAUDE.md).
+Commit rules: see root `../CLAUDE.md` → **Commits**.
 
 ---
 

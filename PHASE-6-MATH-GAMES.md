@@ -1,3 +1,14 @@
+---
+title: "Phase 6 — Math Games for Early Learners"
+type: roadmap
+phase: 6
+status: planned
+owner: CoLearn
+tags: [phase-6, math-games, learning, roadmap]
+updated: 2026-07-02
+---
+
+
 # Phase 6 — Math Games for Early Learners
 
 > **For LLMs / AI agents**: This document defines the math games roadmap for the Learning section.

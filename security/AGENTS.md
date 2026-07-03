@@ -8,7 +8,7 @@
 
 ## 1. Communication
 
-- Be concise. No flattery. Match root CLAUDE.md.
+Communication & code-display rules: see root `../CLAUDE.md` → **Communication & Code Display**.
 
 ---
 
@@ -89,12 +89,7 @@ Reproducibility: <every run | intermittent — N/M>
 
 ## 8. Commits
 
-```
-<message>
-
-References: colearn#<issue-number>
-```
-Never push without explicit permission. **Never include attack payloads in commit messages** — refer to them via test name only.
+Commit rules: see root `../CLAUDE.md` → **Commits**. **Never include attack payloads in commit messages** — refer to them via test name only.
 
 ---
 

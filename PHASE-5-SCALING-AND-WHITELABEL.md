@@ -1,3 +1,14 @@
+---
+title: "Phase 5 — Scaling, White-Labelling & Growth Optimisation"
+type: roadmap
+phase: 5
+status: planned
+owner: CoLearn
+tags: [phase-5, scaling, white-label, multi-tenancy, roadmap]
+updated: 2026-07-02
+---
+
+
 # Phase 5 — Scaling, White-Labelling & Growth Optimisation
 
 > **For LLMs / AI agents**: This document defines the scaling, white-labelling, and growth

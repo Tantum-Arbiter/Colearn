@@ -24,23 +24,54 @@ The product is a mobile app (iOS + Android) combining interactive storytelling, 
 
 ```
 colearn/
-├── grow-with-freya/          # React Native / Expo mobile app
+├── grow-with-freya/          # React Native / Expo mobile app          · see AGENTS.md
 │   ├── ARCHITECTURE.md       # ⭐ Frontend architecture (READ FIRST for app work)
 │   ├── MUSIC_FEATURE.md      # Music challenge system, instruments, state machine
 │   ├── SONGS_README.md       # Song library, categories, instrument compatibility
-│   └── NEXT-PHASE-3.md       # Subscription model, download caps, RevenueCat
-├── gateway-service/          # Spring Boot backend (Java 21, Gradle)
+│   ├── NEXT-PHASE-3.md       # Subscription model, download caps, RevenueCat
+│   ├── story-requirements.md # Story content requirements
+│   └── scripts/TRANSLATIONS.md # i18n translation tooling
+├── gateway-service/          # Spring Boot backend (Java 21, Gradle)   · see AGENTS.md
 │   └── README.md             # API reference, all endpoints
-├── func-tests/               # Cloud Run functional test suite
-├── scripts/                  # CMS pipeline, upload scripts, Firestore schema
-├── security/                 # Security audit tools
+├── func-tests/               # E2E tests — Cucumber + WireMock vs gateway-service · see AGENTS.md
+├── nft/                      # Load / performance tests — Gatling 3 / Scala      · see AGENTS.md
+├── website/                  # Marketing + legal site — Next.js 15 (earlyroots.co.uk) · see AGENTS.md
+├── scripts/                  # CMS pipeline, uploads, Firestore schema, i18n      · see AGENTS.md
+├── security/                 # Penetration / security test suite (pytest)        · see AGENTS.md
+├── wiremock-server/          # Standalone WireMock stubs used by func-tests
 ├── PHASE-4-PROD-READINESS.md # ⭐ Production checklist, infrastructure, DNS, costs
 ├── PHASE-5-SCALING-AND-WHITELABEL.md # White-label roadmap, multi-tenancy, scaling
 ├── PHASE-6-MATH-GAMES.md    # ⭐ Math games roadmap, age-appropriate mechanics, technical plan
-└── CLAUDE.md                 # This file
+├── 00_INBOX.md              # Quick-capture inbox + weekly-review checklist (Obsidian)
+└── CLAUDE.md                 # This file — root operating instructions
 ```
 
+**Every subproject has its own `AGENTS.md`** covering *how to work* in that stack (tests, editing rules, commands, safety rails). **After this file, read the relevant `AGENTS.md` before working in a subproject.**
+
 **Always read the relevant `*.md` file before modifying a system.** If you change architecture, update the corresponding doc.
+
+---
+
+## Documentation Map
+
+| Working on… | Read |
+|---|---|
+| Project identity, principles, never-rules | this file ([`CLAUDE.md`](CLAUDE.md)) |
+| Mobile app architecture | [`grow-with-freya/ARCHITECTURE.md`](grow-with-freya/ARCHITECTURE.md) + [`grow-with-freya/AGENTS.md`](grow-with-freya/AGENTS.md) |
+| Music / instruments feature | [`grow-with-freya/MUSIC_FEATURE.md`](grow-with-freya/MUSIC_FEATURE.md) |
+| Song library | [`grow-with-freya/SONGS_README.md`](grow-with-freya/SONGS_README.md) |
+| Subscriptions / paywall / downloads | [`grow-with-freya/NEXT-PHASE-3.md`](grow-with-freya/NEXT-PHASE-3.md) |
+| Story content requirements | [`grow-with-freya/story-requirements.md`](grow-with-freya/story-requirements.md) |
+| Backend API / endpoints | [`gateway-service/README.md`](gateway-service/README.md) + [`gateway-service/AGENTS.md`](gateway-service/AGENTS.md) |
+| E2E / functional tests | [`func-tests/AGENTS.md`](func-tests/AGENTS.md) |
+| Load / performance tests | [`nft/AGENTS.md`](nft/AGENTS.md) |
+| Marketing / legal website | [`website/AGENTS.md`](website/AGENTS.md) |
+| CMS pipeline / story uploads / i18n | [`scripts/AGENTS.md`](scripts/AGENTS.md) (+ [`grow-with-freya/scripts/TRANSLATIONS.md`](grow-with-freya/scripts/TRANSLATIONS.md)) |
+| Security / pen-test suite | [`security/AGENTS.md`](security/AGENTS.md) |
+| Production readiness / infra | [`PHASE-4-PROD-READINESS.md`](PHASE-4-PROD-READINESS.md) |
+| Scaling / white-label | [`PHASE-5-SCALING-AND-WHITELABEL.md`](PHASE-5-SCALING-AND-WHITELABEL.md) |
+| Math games roadmap | [`PHASE-6-MATH-GAMES.md`](PHASE-6-MATH-GAMES.md) |
+| Quick capture / weekly review | [`00_INBOX.md`](00_INBOX.md) |
 
 ---
 
@@ -130,6 +161,30 @@ cd gateway-service
 ```
 
 Test files mirror source structure in `__tests__/`. Jest config has extensive React Native mocks in `__mocks__/`.
+
+---
+
+## Communication & Code Display
+
+- Be concise. Don't over-explain. No flattery — skip "Great question!", "You're absolutely right!", "Excellent point!".
+- Brief acknowledgements only when they add clarity ("Got it.", "I see the issue."); otherwise just proceed.
+- Wrap code excerpts shown to the user in `<augment_code_snippet path="…" mode="EXCERPT">` XML tags (four backticks, keep it under ~10 lines).
+- Every claim about the codebase must be verifiable (file + line range). If you can't verify it, mark it **"⚠️ UNVERIFIED"** — never guess.
+
+---
+
+## Commits
+
+Commit message format:
+```
+<message>
+
+References: colearn#<issue-number>
+```
+- Confirm all intended files are staged before committing.
+- Use `Co-authored-by:` when pairing.
+- **Never push, open PRs, or deploy without explicit permission.**
+- Subproject `AGENTS.md` files may add project-specific commit rules (e.g. no uploads or load-test runs from commit hooks).
 
 ---
 

@@ -38,6 +38,9 @@ out/
 ### VS Code ###
 .vscode/
 
+### Obsidian (personal vault config) ###
+.obsidian/
+
 # Node.js and npm
 node_modules/
 npm-debug.log*

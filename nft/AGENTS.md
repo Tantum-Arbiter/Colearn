@@ -8,7 +8,7 @@
 
 ## 1. Communication
 
-- Be concise. No flattery. Match the rules in root CLAUDE.md.
+Communication & code-display rules: see root `../CLAUDE.md` → **Communication & Code Display**.
 
 ---
 
@@ -78,12 +78,7 @@ Report: <path or URL to Gatling HTML>
 
 ## 8. Commits
 
-```
-<message>
-
-References: colearn#<issue-number>
-```
-Never push without explicit permission. **Never trigger a staging/prod run from a commit hook.**
+Commit rules: see root `../CLAUDE.md` → **Commits**. **Never trigger a staging/prod run from a commit hook.**
 
 ---
 

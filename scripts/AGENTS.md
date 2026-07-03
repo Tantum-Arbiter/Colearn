@@ -8,7 +8,7 @@
 
 ## 1. Communication
 
-- Be concise. No flattery. Match root CLAUDE.md.
+Communication & code-display rules: see root `../CLAUDE.md` → **Communication & Code Display**.
 
 ---
 
@@ -90,12 +90,7 @@ For broken uploads, also capture: exact command run, target project, response fr
 
 ## 8. Commits
 
-```
-<message>
-
-References: colearn#<issue-number>
-```
-Never push without explicit permission. **Never run an upload as part of a commit hook.**
+Commit rules: see root `../CLAUDE.md` → **Commits**. **Never run an upload as part of a commit hook.**
 
 ---
 

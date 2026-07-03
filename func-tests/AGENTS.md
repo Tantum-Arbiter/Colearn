@@ -7,8 +7,7 @@
 
 ## 1. Communication
 
-- Be concise. No "Great question!", "You're absolutely right!", "Excellent point!".
-- Brief acknowledgements only when they add clarity.
+Communication & code-display rules: see root `../CLAUDE.md` → **Communication & Code Display**.
 
 ---
 
@@ -92,12 +91,7 @@ Failure: <exact assertion message or HTTP status mismatch>
 
 ## 8. Commits
 
-```
-<message>
-
-References: colearn#<issue-number>
-```
-Never push without explicit permission (root CLAUDE.md).
+Commit rules: see root `../CLAUDE.md` → **Commits**.
 
 ---
 

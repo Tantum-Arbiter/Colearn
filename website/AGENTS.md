@@ -8,7 +8,7 @@
 
 ## 1. Communication
 
-- Be concise. No flattery. Match root CLAUDE.md.
+Communication & code-display rules: see root `../CLAUDE.md` → **Communication & Code Display**.
 
 ---
 
@@ -90,12 +90,7 @@ Unverified claims must be marked: **"⚠️ UNVERIFIED — Unable to confirm thi
 
 ## 9. Commits
 
-```
-<message>
-
-References: colearn#<issue-number>
-```
-Never push or deploy without explicit permission.
+Commit rules: see root `../CLAUDE.md` → **Commits**.
 
 ---
 

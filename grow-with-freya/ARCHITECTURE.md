@@ -1,3 +1,13 @@
+---
+title: "Frontend Architecture — Grow with Freya"
+type: architecture
+status: living
+owner: CoLearn
+tags: [architecture, frontend, mobile, react-native, expo]
+updated: 2026-07-02
+---
+
+
 # Frontend Architecture -Grow with Freya
 
 > **For LLMs / AI agents**: This README is the authoritative reference for the frontend app architecture.
