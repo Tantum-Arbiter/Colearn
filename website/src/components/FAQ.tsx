@@ -17,11 +17,11 @@ export default function FAQ() {
   ];
 
   return (
-    <section id="faq" className="py-20 bg-white">
+    <section id="faq" className="py-20 bg-cream">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-12">
-          <h2 className="font-rounded text-3xl sm:text-4xl font-bold text-brand-text mb-4">
+          <h2 className="font-rounded text-3xl sm:text-4xl font-semibold text-ink mb-4">
             {t.faq.title} <span className="text-primary">{t.faq.titleHighlight}</span>
           </h2>
         </div>
@@ -32,9 +32,9 @@ export default function FAQ() {
             <div key={index} className="bg-white rounded-2xl shadow-soft overflow-hidden">
               <button
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                className="w-full px-6 py-5 text-left flex justify-between items-center hover:bg-gray-50 transition"
+                className="w-full px-6 py-5 text-left flex justify-between items-center hover:bg-cream/60 transition"
               >
-                <span className="font-semibold text-brand-text pr-4">{faq.question}</span>
+                <span className="font-rounded font-medium text-ink pr-4">{faq.question}</span>
                 <svg
                   className={`w-5 h-5 text-primary flex-shrink-0 transition-transform ${
                     openIndex === index ? 'rotate-180' : ''
@@ -48,7 +48,7 @@ export default function FAQ() {
               </button>
               {openIndex === index && (
                 <div className="px-6 pb-5">
-                  <p className="text-gray-600">{faq.answer}</p>
+                  <p className="text-ink-soft">{faq.answer}</p>
                 </div>
               )}
             </div>

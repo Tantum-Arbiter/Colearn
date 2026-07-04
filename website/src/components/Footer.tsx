@@ -7,7 +7,7 @@ export default function Footer() {
   const { t } = useLanguage();
 
   return (
-    <footer className="bg-brand-deepBlue text-white relative overflow-hidden">
+    <footer className="bg-night text-white relative overflow-hidden">
       {/* Space stars/dots scattered throughout */}
       <div className="absolute inset-0 pointer-events-none">
         {/* Top area stars */}
@@ -80,10 +80,10 @@ export default function Footer() {
             <Link href="/" className="flex items-center gap-2 mb-4">
               <img
                 src="/logo.png"
-                alt="earlyroots"
+                alt="Early Roots"
                 className="w-10 h-10 rounded-xl"
               />
-              <span className="font-rounded font-bold text-xl">earlyroots</span>
+              <span className="font-rounded font-semibold text-xl">Early Roots</span>
             </Link>
             <p className="text-white/70 max-w-sm">
               {t.footer.tagline}
@@ -133,7 +133,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/support/delete-account" className="text-white/70 hover:text-white transition">
-                  Delete Account
+                  {t.footer.deleteAccount}
                 </Link>
               </li>
             </ul>
@@ -143,7 +143,7 @@ export default function Footer() {
         {/* Bottom */}
         <div className="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-white/50 text-sm">
-            © {new Date().getFullYear()} earlyroots. All rights reserved.
+            © {new Date().getFullYear()} Early Roots. All rights reserved.
           </p>
           <div className="flex gap-4">
             {/* Social Icons */}

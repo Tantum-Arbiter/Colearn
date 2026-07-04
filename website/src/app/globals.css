@@ -6,13 +6,32 @@
   --brand-deep-blue: #1E3A8A;
   --brand-blue: #3B82F6;
   --brand-teal: #4ECDC4;
-  --brand-text: #11181C;
-  --brand-background: #ffffff;
+  --brand-text: #2E3D4F;
+  --brand-background: #FDFAF2;
+  --night: #1E1B4B;
+  --cream: #FDFAF2;
+  --cream-deep: #F6F0E2;
+  --ink: #2E3D4F;
+  --ink-soft: #5A6B7D;
+  --star: #FFD166;
 }
 
 /* Smooth scrolling for navigation */
 html {
   scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .animate-twinkle,
+  .animate-float,
+  .animate-pulse,
+  .animate-bounce {
+    animation: none;
+  }
 }
 
 /* Offset for fixed header when scrolling to sections */
@@ -27,30 +46,52 @@ body {
 }
 
 body {
-  color: var(--brand-text);
-  background: var(--brand-background);
-  font-family: 'SF Pro Display', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--ink);
+  background: var(--cream);
+  font-family: var(--font-nunito), 'Nunito', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Rounded font for headings and emphasis */
-.font-rounded {
-  font-family: 'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', system-ui, sans-serif;
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-fredoka), 'Fredoka', var(--font-nunito), 'Nunito', sans-serif;
+  line-height: 1.15;
+}
+
+h1 {
+  letter-spacing: -0.01em;
 }
 
 /* Brand gradient backgrounds */
 .bg-gradient-brand {
-  background: linear-gradient(135deg, var(--brand-deep-blue) 0%, var(--brand-blue) 50%, var(--brand-teal) 100%);
+  background: linear-gradient(135deg, var(--brand-deep-blue) 0%, var(--brand-blue) 55%, var(--brand-teal) 100%);
 }
 
 .bg-gradient-hero {
-  background: linear-gradient(180deg, var(--brand-deep-blue) 0%, var(--brand-blue) 100%);
+  background: linear-gradient(180deg, #171A3D 0%, var(--brand-deep-blue) 60%, #2E5FBF 100%);
+}
+
+.bg-gradient-night {
+  background: linear-gradient(180deg, #171A3D 0%, var(--night) 55%, var(--brand-deep-blue) 100%);
 }
 
 /* Smooth transitions */
 a, button {
   transition: all 0.2s ease-in-out;
+}
+
+/* Gentle focus ring, storybook gold */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--star);
+  outline-offset: 3px;
 }
 
 /* Custom scrollbar */
@@ -59,7 +100,7 @@ a, button {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--cream-deep);
 }
 
 ::-webkit-scrollbar-thumb {
@@ -88,20 +129,3 @@ a, button {
 .rotate-y-180 {
   transform: rotateY(180deg);
 }
-
-/* Fade in animation */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.2s ease-out forwards;
-}
-

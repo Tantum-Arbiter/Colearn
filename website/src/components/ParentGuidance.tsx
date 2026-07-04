@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useLanguage } from '@/i18n/LanguageContext';
+import Stars from '@/components/Stars';
 
 const SunIcon = () => (
   <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
@@ -78,28 +79,28 @@ export default function About() {
   ];
 
   return (
-    <section id="about" className="py-20 bg-gray-50">
+    <section id="about" className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* What is an earlyroots Story */}
+        {/* What is an Early Roots Story */}
         <div className="grid lg:grid-cols-2 gap-12 items-center mb-20">
           {/* Left Content */}
           <div>
-            <h2 className="font-rounded text-3xl sm:text-4xl font-bold text-brand-text mb-6">
+            <h2 className="font-rounded text-3xl sm:text-4xl font-semibold text-ink mb-6">
               {t.parentGuidance.whatsAFreyaStory} <span className="text-primary">{t.parentGuidance.freyaStory}</span>?
             </h2>
-            <p className="text-lg text-gray-700 mb-6">
+            <p className="text-lg text-ink-soft mb-6">
               {t.parentGuidance.storyIntro}
             </p>
 
             <div className="space-y-6">
               {storySteps.map((step) => (
                 <div key={step.number} className="flex gap-4">
-                  <div className="flex-shrink-0 w-12 h-12 rounded-full bg-brand-teal/20 flex items-center justify-center">
-                    <span className="text-xl font-bold text-brand-teal">{step.number}</span>
+                  <div className="flex-shrink-0 w-12 h-12 rounded-full bg-star-soft flex items-center justify-center">
+                    <span className="font-rounded text-xl font-semibold text-amber-600">{step.number}</span>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg mb-1">{step.title}</h3>
-                    <p className="text-gray-600">{step.description}</p>
+                    <h3 className="font-rounded font-medium text-lg mb-1 text-ink">{step.title}</h3>
+                    <p className="text-ink-soft">{step.description}</p>
                   </div>
                 </div>
               ))}
@@ -108,7 +109,7 @@ export default function About() {
 
           {/* Right Content - Visual Demo */}
           <div className="relative">
-            <div className="bg-white rounded-3xl shadow-card p-8">
+            <div className="bg-cream rounded-3xl shadow-card p-8">
               {/* Simulated book preview */}
               <div className="aspect-video bg-gradient-to-br from-brand-blue to-brand-teal rounded-2xl flex items-center justify-center relative overflow-hidden">
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -126,8 +127,8 @@ export default function About() {
                 </div>
               </div>
               {/* Read-along text preview */}
-              <div className="mt-6 p-4 bg-gray-50 rounded-xl">
-                <p className="text-lg text-gray-800">
+              <div className="mt-6 p-4 bg-white rounded-xl shadow-soft">
+                <p className="text-lg text-ink">
                   {t.parentGuidance.demoText}
                 </p>
               </div>
@@ -138,16 +139,16 @@ export default function About() {
         </div>
 
         {/* Parent Guidance Section */}
-        <div className="bg-white rounded-3xl p-8 md:p-12 shadow-card">
+        <div className="bg-cream rounded-4xl p-8 md:p-12 shadow-soft">
           {/* Section Header */}
           <div className="text-center mb-12">
-            <span className="inline-block px-4 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">
+            <span className="inline-block px-4 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-semibold mb-4">
               {t.parentGuidance.parentGuidedPlay}
             </span>
-            <h2 className="font-rounded text-3xl sm:text-4xl font-bold text-brand-text mb-4">
-              {t.parentGuidance.guideTitle} <span className="text-primary">{t.parentGuidance.guideYou}</span>{t.parentGuidance.soYouCanGuide} <span className="text-secondary">{t.parentGuidance.guideThem}</span>
+            <h2 className="font-rounded text-3xl sm:text-4xl font-semibold text-ink mb-4">
+              {t.parentGuidance.guideTitle} <span className="text-primary">{t.parentGuidance.guideYou}</span>{t.parentGuidance.soYouCanGuide} <span className="text-brand-teal">{t.parentGuidance.guideThem}</span>
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg text-ink-soft max-w-2xl mx-auto">
               {t.parentGuidance.guideSubtitle}
             </p>
           </div>
@@ -157,14 +158,14 @@ export default function About() {
             {guidanceFeatures.map((feature, index) => (
               <div
                 key={index}
-                className="flex gap-4 p-6 bg-gray-50 rounded-2xl hover:bg-blue-50 transition-colors"
+                className="flex gap-4 p-6 bg-white rounded-3xl shadow-soft hover:shadow-lift hover:-translate-y-0.5 transition-all"
               >
                 <div className="text-primary flex-shrink-0">{feature.icon}</div>
                 <div>
-                  <h3 className="font-rounded font-semibold text-lg text-brand-text mb-2">
+                  <h3 className="font-rounded font-medium text-lg text-ink mb-2">
                     {feature.title}
                   </h3>
-                  <p className="text-gray-600 text-sm">
+                  <p className="text-ink-soft text-sm">
                     {feature.description}
                   </p>
                 </div>
@@ -173,7 +174,8 @@ export default function About() {
           </div>
 
           {/* CTA Box */}
-          <div className="bg-gradient-brand rounded-2xl p-8 text-center text-white relative overflow-hidden">
+          <div className="bg-gradient-night rounded-3xl p-8 text-center text-white relative overflow-hidden">
+            <Stars className="opacity-70" />
             {/* Background texture */}
             <div
               className="absolute inset-0 opacity-[0.05] pointer-events-none"
@@ -193,7 +195,7 @@ export default function About() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="#pricing"
-                className="inline-flex items-center justify-center gap-2 bg-white text-primary font-semibold px-8 py-3 rounded-full hover:bg-gray-100 transition-colors"
+                className="font-rounded inline-flex items-center justify-center gap-2 bg-gradient-sun text-night font-semibold px-8 py-3 rounded-full shadow-glow hover:-translate-y-0.5 transition"
               >
                 {t.parentGuidance.startFreeTrial}
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -202,7 +204,7 @@ export default function About() {
               </Link>
               <Link
                 href="#features"
-                className="inline-flex items-center justify-center gap-2 bg-white/20 text-white font-semibold px-8 py-3 rounded-full hover:bg-white/30 transition-colors"
+                className="font-rounded inline-flex items-center justify-center gap-2 bg-white/15 border border-white/30 text-white font-semibold px-8 py-3 rounded-full hover:bg-white/25 transition"
               >
                 {t.parentGuidance.seeAllFeatures}
               </Link>

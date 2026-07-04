@@ -31,7 +31,7 @@ export default function ContactPage() {
                 General Enquiries
               </h3>
               <p className="text-gray-500 mb-2 text-sm">
-                Questions about earlyroots?
+                Questions about Early Roots?
               </p>
               <span className="text-primary text-sm font-medium group-hover:underline">
                 hello@earlyroots.com
@@ -179,7 +179,7 @@ export default function ContactPage() {
               </h2>
             </div>
             <p className="text-gray-600 text-sm mb-4">
-              You can delete your earlyroots account and all associated data at any time. Account deletion is permanent and cannot be undone.
+              You can delete your Early Roots account and all associated data at any time. Account deletion is permanent and cannot be undone.
             </p>
             <div className="space-y-3 mb-4">
               <div className="flex items-start gap-3 bg-gray-50 rounded-xl p-3">

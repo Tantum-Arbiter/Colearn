@@ -1,6 +1,7 @@
 'use client';
 
 import { useLanguage } from '@/i18n/LanguageContext';
+import Stars from '@/components/Stars';
 
 const BeakerIcon = () => (
   <svg className="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
@@ -101,18 +102,18 @@ export default function ResearchBacked() {
   ];
 
   return (
-    <section id="research" className="py-20 bg-white">
+    <section id="research" className="py-20 bg-cream">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-16">
-          <div className="inline-flex items-center bg-brand-teal/20 px-4 py-2 rounded-full text-sm font-medium text-brand-deepBlue mb-4">
+          <div className="inline-flex items-center bg-brand-teal/20 px-4 py-2 rounded-full text-sm font-semibold text-brand-deepBlue mb-4">
             <BeakerIcon />
             {t.research.evidenceBased}
           </div>
-          <h2 className="font-rounded text-3xl sm:text-4xl font-bold text-brand-text mb-4">
+          <h2 className="font-rounded text-3xl sm:text-4xl font-semibold text-ink mb-4">
             {t.research.title} <span className="text-primary">{t.research.titleHighlight}</span> {t.research.titleEnd}
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-ink-soft max-w-2xl mx-auto">
             {t.research.subtitle}
           </p>
         </div>
@@ -126,8 +127,8 @@ export default function ResearchBacked() {
                   {point.icon}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg mb-2">{point.title}</h3>
-                  <p className="text-gray-600">{point.description}</p>
+                  <h3 className="font-rounded font-medium text-lg mb-2 text-ink">{point.title}</h3>
+                  <p className="text-ink-soft">{point.description}</p>
                 </div>
               </div>
             ))}
@@ -135,28 +136,29 @@ export default function ResearchBacked() {
 
           {/* Right - Research Foundation */}
           <div className="bg-white rounded-3xl shadow-card p-8">
-            <h3 className="font-rounded font-semibold text-xl mb-6 text-center">
+            <h3 className="font-rounded font-medium text-xl mb-6 text-center text-ink">
               {t.research.informedBy}
             </h3>
             <div className="grid grid-cols-2 gap-4">
               {researchAreas.map((area, i) => (
                 <div
                   key={i}
-                  className="flex items-center gap-3 p-4 rounded-xl bg-gray-50"
+                  className="flex items-center gap-3 p-4 rounded-xl bg-cream"
                 >
                   <span className="text-primary">{area.icon}</span>
-                  <span className="font-medium text-gray-700">{area.title}</span>
+                  <span className="font-semibold text-ink">{area.title}</span>
                 </div>
               ))}
             </div>
-            <p className="text-center text-sm text-gray-500 mt-6">
+            <p className="text-center text-sm text-ink-soft mt-6">
               {t.research.researchFoundation}
             </p>
           </div>
         </div>
 
         {/* Screen Time Feature Highlight */}
-        <div className="mt-16 bg-gradient-brand rounded-3xl p-8 md:p-12 text-white relative overflow-hidden">
+        <div className="mt-16 bg-gradient-night rounded-4xl p-8 md:p-12 text-white relative overflow-hidden">
+          <Stars className="opacity-70" />
           {/* Background texture */}
           <div
             className="absolute inset-0 opacity-[0.05] pointer-events-none"
@@ -169,7 +171,7 @@ export default function ResearchBacked() {
           />
           <div className="grid md:grid-cols-2 gap-8 items-center relative">
             <div>
-              <h3 className="font-rounded text-2xl md:text-3xl font-bold mb-4">
+              <h3 className="font-rounded text-2xl md:text-3xl font-semibold mb-4">
                 {t.research.smartScreenTime}
               </h3>
               <p className="text-white/80 mb-6">
@@ -194,10 +196,10 @@ export default function ResearchBacked() {
             <div className="flex justify-center">
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center">
                 <div className="mb-4 flex justify-center"><TimerIcon /></div>
-                <div className="font-rounded text-4xl font-bold mb-2">25 min</div>
+                <div className="font-rounded text-4xl font-semibold mb-2">25 min</div>
                 <div className="text-white/70">{t.research.todaysReading}</div>
                 <div className="mt-4 w-full bg-white/20 rounded-full h-2">
-                  <div className="bg-brand-teal h-2 rounded-full" style={{ width: '83%' }} />
+                  <div className="bg-star h-2 rounded-full" style={{ width: '83%' }} />
                 </div>
                 <div className="text-sm text-white/60 mt-2">{t.research.untilDailyGoal}</div>
               </div>

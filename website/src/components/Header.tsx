@@ -53,18 +53,18 @@ export default function Header() {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm shadow-soft">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-cream/90 backdrop-blur-md shadow-soft">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
             <img
               src="/logo.png"
-              alt="earlyroots"
+              alt="Early Roots"
               className="w-10 h-10 rounded-xl"
             />
-            <span className="font-rounded font-bold text-xl text-brand-deepBlue hidden sm:block">
-              earlyroots
+            <span className="font-rounded font-semibold text-xl text-brand-deepBlue hidden sm:block">
+              Early Roots
             </span>
           </Link>
 
@@ -75,7 +75,7 @@ export default function Header() {
                 key={item.label}
                 href={item.href}
                 onClick={(e) => handleNavClick(e, item)}
-                className="text-brand-text hover:text-primary transition"
+                className="font-semibold text-ink-soft hover:text-brand-blue transition"
               >
                 {item.label}
               </Link>
@@ -86,13 +86,13 @@ export default function Header() {
           <div className="hidden md:flex items-center gap-4">
             <Link
               href="/educators"
-              className="text-primary hover:text-primary-dark font-medium transition"
+              className="text-primary hover:text-primary-dark font-semibold transition"
             >
-              Educators
+              {t.header.educators}
             </Link>
             <Link
               href="/signup"
-              className="bg-gradient-brand text-white px-6 py-2.5 rounded-full font-medium hover:shadow-glow transition"
+              className="font-rounded bg-gradient-brand text-white px-6 py-2.5 rounded-full font-medium hover:shadow-glow-blue hover:-translate-y-0.5 transition"
             >
               {t.header.startFreeTrial}
             </Link>
@@ -101,7 +101,7 @@ export default function Header() {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg hover:bg-gray-100"
+            className="md:hidden p-2 rounded-lg hover:bg-cream-deep"
             aria-label="Toggle menu"
           >
             <svg
@@ -121,25 +121,25 @@ export default function Header() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-gray-100">
+          <div className="md:hidden py-4 border-t border-cream-deep">
             <div className="flex flex-col gap-4">
               {navItems.map((item) => (
                 <Link
                   key={item.label}
                   href={item.href}
                   onClick={(e) => handleNavClick(e, item)}
-                  className="text-brand-text hover:text-primary py-2"
+                  className="font-semibold text-ink-soft hover:text-brand-blue py-2"
                 >
                   {item.label}
                 </Link>
               ))}
-              <hr className="border-gray-100" />
-              <Link href="/educators" className="text-primary font-medium py-2">
-                Educators
+              <hr className="border-cream-deep" />
+              <Link href="/educators" className="text-primary font-semibold py-2">
+                {t.header.educators}
               </Link>
               <Link
                 href="/signup"
-                className="bg-gradient-brand text-white px-6 py-3 rounded-full font-medium text-center"
+                className="font-rounded bg-gradient-brand text-white px-6 py-3 rounded-full font-medium text-center"
               >
                 {t.header.startFreeTrial}
               </Link>

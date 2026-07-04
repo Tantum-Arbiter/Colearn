@@ -2,17 +2,18 @@
 
 import Link from 'next/link';
 import { useLanguage } from '@/i18n/LanguageContext';
+import Stars from '@/components/Stars';
+import Moon from '@/components/Moon';
 
 export default function CTA() {
   const { t } = useLanguage();
 
   return (
-    <section className="py-20 bg-gray-50">
+    <section className="py-20 bg-white">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <div className="bg-gradient-brand rounded-3xl p-12 relative overflow-hidden">
-          {/* Background decoration */}
-          <div className="absolute top-0 left-0 w-32 h-32 bg-white/10 rounded-full -translate-x-1/2 -translate-y-1/2" />
-          <div className="absolute bottom-0 right-0 w-48 h-48 bg-brand-teal/20 rounded-full translate-x-1/4 translate-y-1/4" />
+        <div className="bg-gradient-night rounded-4xl p-12 relative overflow-hidden shadow-card">
+          <Stars className="opacity-80" />
+          <Moon className="absolute top-4 right-6 w-16 h-16 sm:w-20 sm:h-20 pointer-events-none" />
           {/* Background texture */}
           <div
             className="absolute inset-0 opacity-[0.05] pointer-events-none"
@@ -25,8 +26,8 @@ export default function CTA() {
           />
 
           <div className="relative">
-            <h2 className="font-rounded text-3xl sm:text-4xl font-bold text-white mb-4">
-              {t.cta.title} <span className="text-brand-teal">{t.cta.titleHighlight}</span>
+            <h2 className="font-rounded text-3xl sm:text-4xl font-semibold text-white mb-4">
+              {t.cta.title} <span className="text-star">{t.cta.titleHighlight}</span>
             </h2>
             <p className="text-lg text-white/80 mb-8 max-w-xl mx-auto">
               {t.cta.subtitle}
@@ -34,17 +35,18 @@ export default function CTA() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/signup"
-                className="bg-white text-primary-dark px-8 py-4 rounded-full font-semibold text-lg hover:bg-brand-teal hover:text-white transition shadow-lg"
+                className="font-rounded bg-gradient-sun text-night px-8 py-4 rounded-full font-semibold text-lg shadow-glow hover:-translate-y-1 transition"
               >
                 {t.cta.startFreeTrial}
               </Link>
               <Link
                 href="#pricing"
-                className="border-2 border-white/50 text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-white/10 transition"
+                className="font-rounded border-2 border-white/40 text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-white/10 hover:-translate-y-1 transition"
               >
                 {t.pricing.pricing}
               </Link>
             </div>
+            <p className="text-white/60 text-sm mt-6">{t.cta.noCreditCard}</p>
           </div>
         </div>
       </div>

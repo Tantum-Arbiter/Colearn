@@ -75,6 +75,18 @@ export default function Features() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const { t } = useLanguage();
 
+  const accents = [
+    'bg-blue-100 text-brand-blue',
+    'bg-teal-100 text-teal-600',
+    'bg-amber-100 text-amber-600',
+    'bg-rose-100 text-rose-500',
+    'bg-orange-100 text-orange-500',
+    'bg-indigo-100 text-indigo-500',
+    'bg-emerald-100 text-emerald-600',
+    'bg-purple-100 text-purple-500',
+    'bg-sky-100 text-sky-600',
+  ];
+
   const features = [
     {
       icon: <BookOpenIcon />,
@@ -172,14 +184,14 @@ export default function Features() {
   };
 
   return (
-    <section id="features" className="py-20 bg-white">
+    <section id="features" className="py-20 bg-cream">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-16">
-          <h2 className="font-rounded text-3xl sm:text-4xl font-bold text-brand-text mb-4">
+          <h2 className="font-rounded text-3xl sm:text-4xl font-semibold text-ink mb-4">
             {t.features.title} <span className="text-primary">{t.features.titleHighlight}</span> {t.features.titleEnd}
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-8">
+          <p className="text-lg text-ink-soft max-w-2xl mx-auto mb-8">
             {t.features.subtitle}
           </p>
 
@@ -236,26 +248,26 @@ export default function Features() {
                 >
                   {/* Front Face */}
                   <div
-                    className={`absolute inset-0 backface-hidden rounded-3xl p-8 transition-colors duration-300 ${
-                      isFlipped ? 'bg-gray-50' : 'bg-gray-50 hover:bg-gradient-brand group'
+                    className={`absolute inset-0 backface-hidden rounded-3xl p-8 bg-white shadow-soft transition-all duration-300 ${
+                      isFlipped ? '' : 'group hover:shadow-lift hover:-translate-y-1'
                     }`}
                   >
-                    <div className={`mb-4 text-primary ${!isFlipped ? 'group-hover:text-white' : ''}`}>
+                    <div className={`mb-4 inline-flex items-center justify-center w-14 h-14 rounded-2xl ${accents[index % accents.length]}`}>
                       {feature.icon}
                     </div>
-                    <h3 className={`font-rounded font-semibold text-xl mb-3 ${!isFlipped ? 'group-hover:text-white' : ''}`}>
+                    <h3 className="font-rounded font-medium text-xl mb-3 text-ink">
                       {feature.title}
                     </h3>
-                    <p className={`text-gray-600 ${!isFlipped ? 'group-hover:text-white/80' : ''}`}>
+                    <p className="text-ink-soft">
                       {feature.description}
                     </p>
-                    <div className={`absolute bottom-4 right-4 text-xs text-gray-400 ${!isFlipped ? 'group-hover:text-white/60' : ''}`}>
+                    <div className="absolute bottom-4 right-4 text-xs text-ink-soft/60">
                       {t.features.tapToLearnMore}
                     </div>
                   </div>
 
                   {/* Back Face */}
-                  <div className="absolute inset-0 backface-hidden rotate-y-180 rounded-3xl p-8 bg-gradient-brand text-white overflow-hidden">
+                  <div className="absolute inset-0 backface-hidden rotate-y-180 rounded-3xl p-8 bg-gradient-night text-white overflow-hidden shadow-card">
                     {/* Background texture */}
                     <div
                       className="absolute inset-0 opacity-[0.05] pointer-events-none"
@@ -268,7 +280,7 @@ export default function Features() {
                     />
                     <div className="relative h-full flex flex-col">
                       <div className="mb-3 text-white">{feature.icon}</div>
-                      <h3 className="font-rounded font-semibold text-lg mb-3">
+                      <h3 className="font-rounded font-medium text-lg mb-3">
                         {feature.title}
                       </h3>
 
