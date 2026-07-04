@@ -24,7 +24,10 @@
     "slideMusicDesc": "Toca piano, tambores e mais",
     "slideSpellingDesc": "Jogos de palavras nas histórias",
     "slideEmotionsDesc": "Inteligência emocional",
-    "slideBridgeDesc": "Do ecrã à brincadeira real"
+    "slideBridgeDesc": "Do ecrã à brincadeira real",
+    "skyHint": "Toque no céu para tocar uma nota",
+    "soundOn": "Som ligado",
+    "soundOff": "Som desligado"
   },
   "features": {
     "title": "Histórias Que",

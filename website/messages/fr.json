@@ -24,7 +24,10 @@
     "slideMusicDesc": "Piano, tambours et plus encore",
     "slideSpellingDesc": "Jeux de mots dans les histoires",
     "slideEmotionsDesc": "Intelligence émotionnelle",
-    "slideBridgeDesc": "De l'écran au jeu réel"
+    "slideBridgeDesc": "De l'écran au jeu réel",
+    "skyHint": "Touchez le ciel pour jouer une note",
+    "soundOn": "Son activé",
+    "soundOff": "Son coupé"
   },
   "features": {
     "title": "Des Histoires Qui",

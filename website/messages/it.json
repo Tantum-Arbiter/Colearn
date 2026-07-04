@@ -24,7 +24,10 @@
     "slideMusicDesc": "Suona piano, tamburi e altro",
     "slideSpellingDesc": "Giochi di parole nelle storie",
     "slideEmotionsDesc": "Intelligenza emotiva",
-    "slideBridgeDesc": "Dallo schermo al gioco reale"
+    "slideBridgeDesc": "Dallo schermo al gioco reale",
+    "skyHint": "Tocca il cielo per suonare una nota",
+    "soundOn": "Audio attivo",
+    "soundOff": "Audio disattivato"
   },
   "features": {
     "title": "Storie Che",

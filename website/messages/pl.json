@@ -24,7 +24,10 @@
     "slideMusicDesc": "Graj na pianinie, bębnach i nie tylko",
     "slideSpellingDesc": "Zabawy słowne w bajkach",
     "slideEmotionsDesc": "Inteligencja emocjonalna",
-    "slideBridgeDesc": "Od ekranu do prawdziwej zabawy"
+    "slideBridgeDesc": "Od ekranu do prawdziwej zabawy",
+    "skyHint": "Dotknij nieba, aby zagrać nutę",
+    "soundOn": "Dźwięk włączony",
+    "soundOff": "Dźwięk wyłączony"
   },
   "features": {
     "title": "Historie Które",

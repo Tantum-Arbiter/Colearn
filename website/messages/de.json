@@ -24,7 +24,10 @@
     "slideMusicDesc": "Klavier, Trommeln und mehr",
     "slideSpellingDesc": "Wortspiele in Geschichten",
     "slideEmotionsDesc": "Emotionale Intelligenz",
-    "slideBridgeDesc": "Vom Bildschirm zum Spielen"
+    "slideBridgeDesc": "Vom Bildschirm zum Spielen",
+    "skyHint": "Tippe auf den Himmel, um einen Ton zu spielen",
+    "soundOn": "Ton an",
+    "soundOff": "Ton aus"
   },
   "features": {
     "title": "Geschichten Die",

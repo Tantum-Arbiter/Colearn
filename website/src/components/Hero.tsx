@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { useState, useEffect, ReactNode } from 'react';
 import { useLanguage } from '@/i18n/LanguageContext';
-import Stars from '@/components/Stars';
 import Moon from '@/components/Moon';
+import NightSkyCanvas from '@/components/NightSkyCanvas';
 
 const BookStackIcon = ({ className = "w-16 h-16 lg:w-20 lg:h-20" }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
@@ -111,12 +111,9 @@ export default function Hero() {
     <section id="hero" className="relative min-h-screen bg-gradient-hero overflow-hidden">
       {/* Night sky decoration */}
       <div className="absolute inset-0 overflow-hidden">
-        <Stars />
+        <NightSkyCanvas />
 
         <Moon className="hidden sm:block absolute top-24 right-[7%] w-28 h-28 sm:w-36 sm:h-36 pointer-events-none" />
-
-        <div className="absolute top-20 left-10 w-64 h-64 bg-brand-teal/15 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-star/10 rounded-full blur-3xl" />
 
         <div
           className="absolute inset-0 opacity-[0.04] pointer-events-none"

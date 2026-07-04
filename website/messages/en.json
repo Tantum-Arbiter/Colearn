@@ -24,7 +24,10 @@
     "slideMusicDesc": "Play piano, drums & more",
     "slideSpellingDesc": "Word games in stories",
     "slideEmotionsDesc": "Emotional intelligence",
-    "slideBridgeDesc": "Screen time → playtime"
+    "slideBridgeDesc": "Screen time → playtime",
+    "skyHint": "Tap the sky to play a note",
+    "soundOn": "Sound on",
+    "soundOff": "Sound off"
   },
   "features": {
     "title": "Five Ways to",

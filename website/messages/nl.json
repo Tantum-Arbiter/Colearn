@@ -24,7 +24,10 @@
     "slideMusicDesc": "Speel piano, drums en meer",
     "slideSpellingDesc": "Woordspelletjes in verhalen",
     "slideEmotionsDesc": "Emotionele intelligentie",
-    "slideBridgeDesc": "Van scherm naar echt spelen"
+    "slideBridgeDesc": "Van scherm naar echt spelen",
+    "skyHint": "Tik op de lucht om een noot te spelen",
+    "soundOn": "Geluid aan",
+    "soundOff": "Geluid uit"
   },
   "features": {
     "title": "Verhalen Die",
