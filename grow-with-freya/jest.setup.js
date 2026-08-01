@@ -1,3 +1,5 @@
+global.__DEV__ = typeof global.__DEV__ === 'boolean' ? global.__DEV__ : false;
+
 // Mock react-native-worklets first (must be before reanimated)
 jest.mock('react-native-worklets', () => ({
   __esModule: true,
@@ -325,7 +327,8 @@ jest.mock('react-native-safe-area-context', () => ({
 
 // Mock app store
 jest.mock('@/store/app-store', () => ({
-  useAppStore: jest.fn(() => ({
+  useAppStore: jest.fn((selector) => {
+    const state = {
     isAppReady: true,
     hasCompletedOnboarding: true,
     currentChildId: null,
@@ -356,7 +359,21 @@ jest.mock('@/store/app-store', () => ({
     updateBackgroundAnimationState: jest.fn(),
     textSizeScale: 1.0,
     setTextSizeScale: jest.fn(),
-  })),
+    childAgeInMonths: 24,
+    markStoryAsRead: jest.fn(),
+    recordReadingSession: jest.fn(),
+    favoriteStoryIds: [],
+    toggleFavoriteStory: jest.fn(),
+    storyProgress: {},
+    useStoryGarden: false,
+    setStoryProgress: jest.fn(),
+    markStoryCompleted: jest.fn(),
+    clearStoryProgress: jest.fn(),
+    getContinueReadingStoryId: () => null,
+    setUseStoryGarden: jest.fn(),
+    };
+    return typeof selector === 'function' ? selector(state) : state;
+  }),
   BASIC_TIER_INSTRUMENTS: ['flute', 'recorder', 'ocarina'],
 }));
 
