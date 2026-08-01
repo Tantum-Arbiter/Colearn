@@ -46,7 +46,19 @@ const BUTTONS_DELAY = 400; // Delay before buttons slide in after book settles
 
 export type ReadingMode = 'read' | 'record' | 'narrate';
 
+export interface GardenOpenRequest {
+  story: Story;
+  mode: ReadingMode;
+  voiceOver: VoiceOver | null;
+}
+
 interface StoryTransitionContextType {
+  // Story Garden: direct open request, bypassing the legacy mode-selection overlay.
+  // The garden owns its own book-opening ritual and only needs the reader mounted.
+  gardenOpenRequest: GardenOpenRequest | null;
+  requestGardenOpen: (story: Story, mode: ReadingMode, voiceOver: VoiceOver | null) => void;
+  clearGardenOpen: () => void;
+
   // Animation state
   isTransitioning: boolean;
   showModeSelection: boolean;
@@ -122,6 +134,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const [onReturnToModeSelectionCallback, setOnReturnToModeSelectionCallback] = useState<(() => void) | null>(null);
   const [onCancelCallback, setOnCancelCallback] = useState<(() => void) | null>(null);
   const [isExitAnimating, setIsExitAnimating] = useState(false);
+  const [gardenOpenRequest, setGardenOpenRequest] = useState<GardenOpenRequest | null>(null);
   // Track when we're animating the cancel transition - blocks touches during animation
   const [isCancelAnimating, setIsCancelAnimating] = useState(false);
 
@@ -1402,7 +1415,22 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     }, 300);
   };
 
+  const requestGardenOpen = useCallback((story: Story, mode: ReadingMode, voiceOver: VoiceOver | null) => {
+    setSelectedStoryId(story.id);
+    setSelectedStory(story);
+    setSelectedMode(mode);
+    setCurrentVoiceOver(voiceOver);
+    setGardenOpenRequest({ story, mode, voiceOver });
+  }, []);
+
+  const clearGardenOpen = useCallback(() => {
+    setGardenOpenRequest(null);
+  }, []);
+
   const contextValue: StoryTransitionContextType = {
+    gardenOpenRequest,
+    requestGardenOpen,
+    clearGardenOpen,
     isTransitioning,
     showModeSelection,
     selectedStoryId,
