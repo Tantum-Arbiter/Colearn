@@ -20,6 +20,13 @@ export const BASIC_TIER_INSTRUMENTS = ['flute', 'recorder', 'ocarina'] as const;
 
 export type StoryViewMode = 'carousel' | 'grid';
 
+export interface StoryProgress {
+  pageIndex: number;
+  totalPages: number;
+  updatedAt: string;
+  completedCount: number;
+}
+
 export interface AppState {
   // App initialization
   isAppReady: boolean;
@@ -87,6 +94,10 @@ export interface AppState {
   // Learning browse layout preference
   learningViewMode: StoryViewMode;
 
+  storyProgress: Record<string, StoryProgress>;
+  useStoryGarden: boolean;
+  useHomeScene: boolean;
+
   // Background animation state persistence
   backgroundAnimationState: {
     cloudFloat1: number;
@@ -130,6 +141,13 @@ export interface AppState {
   recordReadingSession: () => void; // Call when a story is opened to update streak
   setStoryViewMode: (mode: StoryViewMode) => void;
   setLearningViewMode: (mode: StoryViewMode) => void;
+
+  setStoryProgress: (storyId: string, pageIndex: number, totalPages: number) => void;
+  markStoryCompleted: (storyId: string) => void;
+  clearStoryProgress: (storyId: string) => void;
+  getContinueReadingStoryId: () => string | null;
+  setUseStoryGarden: (enabled: boolean) => void;
+  setUseHomeScene: (enabled: boolean) => void;
 
   updateBackgroundAnimationState: (state: {
     cloudFloat1: number;
@@ -177,6 +195,9 @@ export const useAppStore = create<AppState>()(
       totalStoriesRead: 0,
       storyViewMode: 'carousel' as StoryViewMode,
       learningViewMode: 'carousel' as StoryViewMode,
+      storyProgress: {},
+      useStoryGarden: false,
+      useHomeScene: true,
 
       backgroundAnimationState: {
         cloudFloat1: -200,
@@ -292,6 +313,52 @@ export const useAppStore = create<AppState>()(
       clearReturnToMainMenu: () => set({ shouldReturnToMainMenu: false }),
       setStoryViewMode: (mode: StoryViewMode) => set({ storyViewMode: mode }),
       setLearningViewMode: (mode: StoryViewMode) => set({ learningViewMode: mode }),
+      setStoryProgress: (storyId: string, pageIndex: number, totalPages: number) => set((state) => {
+        const existing = state.storyProgress[storyId];
+        return {
+          storyProgress: {
+            ...state.storyProgress,
+            [storyId]: {
+              pageIndex,
+              totalPages,
+              updatedAt: new Date().toISOString(),
+              completedCount: existing?.completedCount ?? 0,
+            },
+          },
+        };
+      }),
+      markStoryCompleted: (storyId: string) => set((state) => {
+        const existing = state.storyProgress[storyId];
+        return {
+          storyProgress: {
+            ...state.storyProgress,
+            [storyId]: {
+              pageIndex: 0,
+              totalPages: existing?.totalPages ?? 0,
+              updatedAt: new Date().toISOString(),
+              completedCount: (existing?.completedCount ?? 0) + 1,
+            },
+          },
+        };
+      }),
+      clearStoryProgress: (storyId: string) => set((state) => {
+        if (!state.storyProgress[storyId]) {
+          return state;
+        }
+        const remaining = { ...state.storyProgress };
+        delete remaining[storyId];
+        return { storyProgress: remaining };
+      }),
+      getContinueReadingStoryId: (): string | null => {
+        const entries = Object.entries(get().storyProgress)
+          .filter(([, progress]) => progress.pageIndex > 0 && progress.pageIndex < progress.totalPages)
+          .sort(([, a], [, b]) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
+
+        return entries.length > 0 ? entries[0][0] : null;
+      },
+      setUseStoryGarden: (enabled: boolean) => set({ useStoryGarden: enabled }),
+
+      setUseHomeScene: (enabled: boolean) => set({ useHomeScene: enabled }),
       updateBackgroundAnimationState: (animationState: { cloudFloat1: number; cloudFloat2: number; rocketFloat1: number; rocketFloat2: number }) => set({ backgroundAnimationState: animationState }),
       clearPersistedStorage: async () => {
         try {
@@ -335,6 +402,8 @@ export const useAppStore = create<AppState>()(
         totalStoriesRead: state.totalStoriesRead,
         storyViewMode: state.storyViewMode,
         learningViewMode: state.learningViewMode,
+        storyProgress: state.storyProgress,
+        useStoryGarden: state.useStoryGarden,
         backgroundAnimationState: state.backgroundAnimationState,
       }),
       onRehydrateStorage: () => (state, error) => {
