@@ -1,0 +1,172 @@
+import React, { memo, useEffect } from 'react';
+import { View, Pressable, StyleSheet } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+  cancelAnimation,
+  Easing,
+} from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
+import Svg, { Circle } from 'react-native-svg';
+import { useReducedMotion } from '@/hooks/use-reduced-motion';
+import {
+  SCREEN_TIME_RING,
+  isScreenTimeExceeded,
+  ringDashOffset,
+  screenTimeProgress,
+} from '@/constants/screen-time-ring';
+
+export interface ScreenTimeRingProps {
+  usageSeconds: number;
+  limitSeconds: number;
+  tint?: string;
+  onPress?: () => void;
+  testID?: string;
+}
+
+export const ScreenTimeRing = memo(function ScreenTimeRing({
+  usageSeconds,
+  limitSeconds,
+  tint = '#FFFFFF',
+  onPress,
+  testID = 'screen-time-ring',
+}: ScreenTimeRingProps) {
+  const { t } = useTranslation();
+  const reduceMotion = useReducedMotion();
+  const pulse = useSharedValue(1);
+
+  const exceeded = isScreenTimeExceeded(usageSeconds, limitSeconds);
+
+  useEffect(() => {
+    if (!exceeded || reduceMotion) {
+      cancelAnimation(pulse);
+      pulse.value = withTiming(1, { duration: 200 });
+      return;
+    }
+
+    pulse.value = withRepeat(
+      withSequence(
+        withTiming(SCREEN_TIME_RING.pulseScale, {
+          duration: SCREEN_TIME_RING.pulseDuration,
+          easing: Easing.inOut(Easing.quad),
+        }),
+        withTiming(1, {
+          duration: SCREEN_TIME_RING.pulseDuration,
+          easing: Easing.inOut(Easing.quad),
+        })
+      ),
+      -1,
+      false
+    );
+
+    return () => {
+      cancelAnimation(pulse);
+    };
+  }, [exceeded, reduceMotion, pulse]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulse.value }],
+  }));
+
+  if (limitSeconds <= 0) {
+    return null;
+  }
+
+  const size = SCREEN_TIME_RING.size;
+  const stroke = SCREEN_TIME_RING.strokeWidth;
+  const radius = (size - stroke) / 2;
+  const centre = size / 2;
+  const circumference = 2 * Math.PI * radius;
+  const progress = screenTimeProgress(usageSeconds, limitSeconds);
+
+  const label = t(exceeded ? 'home.screenTimeExceeded' : 'home.screenTimeRemaining');
+
+  const dial = (
+    <Animated.View style={[styles.root, animatedStyle]}>
+      {exceeded ? (
+        <View
+          style={[
+            styles.halo,
+            {
+              width: size * 1.9,
+              height: size * 1.9,
+              borderRadius: size * 0.95,
+              backgroundColor: SCREEN_TIME_RING.exceededHalo,
+            },
+          ]}
+        />
+      ) : null}
+
+      <Svg width={size} height={size}>
+        <Circle
+          cx={centre}
+          cy={centre}
+          r={radius}
+          stroke={exceeded ? SCREEN_TIME_RING.exceededColour : tint}
+          strokeOpacity={exceeded ? 1 : SCREEN_TIME_RING.trackOpacity}
+          strokeWidth={stroke}
+          fill="none"
+        />
+
+        {exceeded ? (
+          <Circle
+            testID="screen-time-ring-fill"
+            cx={centre}
+            cy={centre}
+            r={radius - stroke / 2}
+            fill={SCREEN_TIME_RING.exceededColour}
+          />
+        ) : (
+          <Circle
+            testID="screen-time-ring-arc"
+            cx={centre}
+            cy={centre}
+            r={radius}
+            stroke={tint}
+            strokeOpacity={SCREEN_TIME_RING.arcOpacity}
+            strokeWidth={stroke}
+            strokeLinecap="round"
+            fill="none"
+            strokeDasharray={`${circumference} ${circumference}`}
+            strokeDashoffset={ringDashOffset(progress, circumference)}
+            transform={`rotate(-90 ${centre} ${centre})`}
+          />
+        )}
+      </Svg>
+    </Animated.View>
+  );
+
+  if (!onPress) {
+    return (
+      <View testID={testID} accessibilityRole="image" accessibilityLabel={label}>
+        {dial}
+      </View>
+    );
+  }
+
+  return (
+    <Pressable
+      testID={testID}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityHint={t('home.screenTimeOpen')}
+      hitSlop={SCREEN_TIME_RING.hitSlop}
+      onPress={onPress}
+    >
+      {dial}
+    </Pressable>
+  );
+});
+
+const styles = StyleSheet.create({
+  root: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  halo: {
+    position: 'absolute',
+  },
+});

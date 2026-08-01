@@ -28,6 +28,7 @@ import { SubscriptionOverlay } from '@/components/ui/subscription-overlay';
 import * as Haptics from 'expo-haptics';
 import { STORY_MODES, type StoryMode } from '@/components/stories/story-selection-screen';
 import { Fonts } from '@/constants/theme';
+import { HomeSceneContainer } from '@/components/home';
 
 
 import { ErrorBoundary } from './error-boundary';
@@ -108,6 +109,7 @@ interface MainMenuProps {
 }
 
 function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entranceDelay = 0, returnToSubMenu = null }: MainMenuProps) {
+  const useHomeScene = useAppStore((state) => state.useHomeScene);
   const insets = useSafeAreaInsets();
   const { scaledButtonSize, scaledFontSize } = useAccessibility();
 
@@ -278,6 +280,10 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
 
   // Parents Only modal - using shared hook
   const parentsOnly = useParentsOnlyChallenge();
+
+  const openGrownUpsCorner = useCallback(() => {
+    parentsOnly.showChallenge(() => onNavigate('account'));
+  }, [parentsOnly, onNavigate]);
 
   // Get current screen dimensions (updates with orientation changes)
   const { height: screenHeight } = getScreenDimensions();
@@ -455,6 +461,23 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
   }), [screenHeight]);
 
 
+
+  if (useHomeScene) {
+    return (
+      <>
+        <HomeSceneContainer onNavigate={guardedOnNavigate} onOpenGrownUps={openGrownUpsCorner} />
+        <ParentsOnlyModal
+          visible={parentsOnly.isVisible}
+          challenge={parentsOnly.challenge}
+          inputValue={parentsOnly.inputValue}
+          onInputChange={parentsOnly.setInputValue}
+          onSubmit={parentsOnly.handleSubmit}
+          onClose={parentsOnly.handleClose}
+          isInputValid={parentsOnly.isInputValid}
+        />
+      </>
+    );
+  }
 
   return (
     <Animated.View style={[{ flex: 1 }, containerAnimatedStyle]}>
