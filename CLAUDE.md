@@ -42,6 +42,8 @@ colearn/
 ├── PHASE-4-PROD-READINESS.md # ⭐ Production checklist, infrastructure, DNS, costs
 ├── PHASE-5-SCALING-AND-WHITELABEL.md # White-label roadmap, multi-tenancy, scaling
 ├── PHASE-6-MATH-GAMES.md    # ⭐ Math games roadmap, age-appropriate mechanics, technical plan
+├── docs/                     # Cross-project docs: contracts/, ux/, qa/, ORCHESTRATION.md
+├── .claude/agents/           # Agent team: architect, backend, ux, ui, qa · see docs/ORCHESTRATION.md
 ├── 00_INBOX.md              # Quick-capture inbox + weekly-review checklist (Obsidian)
 └── CLAUDE.md                 # This file — root operating instructions
 ```
@@ -72,6 +74,7 @@ colearn/
 | Scaling / white-label | [`PHASE-5-SCALING-AND-WHITELABEL.md`](PHASE-5-SCALING-AND-WHITELABEL.md) |
 | Math games roadmap | [`PHASE-6-MATH-GAMES.md`](PHASE-6-MATH-GAMES.md) |
 | Quick capture / weekly review | [`00_INBOX.md`](00_INBOX.md) |
+| Multi-agent orchestration (agent team, contracts, QA loop) | [`docs/ORCHESTRATION.md`](docs/ORCHESTRATION.md) |
 
 ---
 
