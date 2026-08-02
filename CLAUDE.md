@@ -213,7 +213,7 @@ When generating image prompts:
 | Privacy email | `privacy@earlyroots.co.uk` |
 | Support email | `support@earlyroots.co.uk` |
 | Domain | `earlyroots.co.uk` / `api.earlyroots.co.uk` |
-| Orientation | Portrait-locked on phones, all orientations on tablets, except story reader (always unlocked) |
+| Orientation | Portrait-locked on phones, all orientations on tablets; story reader is landscape-locked (never portrait — re-locks if the OS forces it) |
 | i18n | 14 languages, English fallback, RTL partial (Arabic text OK, layout LTR) |
 | Auth | Google/Apple → gateway JWT pair (access + refresh), stored in SecureStore |
 | Subscriptions | Free / Basic (£5.99/mo) / Premium (£10/mo) via RevenueCat |
