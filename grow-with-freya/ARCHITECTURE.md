@@ -4,7 +4,7 @@ type: architecture
 status: living
 owner: CoLearn
 tags: [architecture, frontend, mobile, react-native, expo]
-updated: 2026-07-02
+updated: 2026-07-28
 ---
 
 
@@ -51,7 +51,9 @@ components/
 ├── stories/                ← Story reader, page rendering, interactions
 │   ├── story-book-reader.tsx    ← Core reader: page navigation, mode selection, overlays
 │   ├── music-challenge-ui.tsx   ← Note buttons, sequence progress, blow detection
-│   └── instrument-picker-overlay.tsx  ← Instrument selection carousel
+│   ├── instrument-picker-overlay.tsx  ← Instrument selection carousel
+│   ├── story-garden/            ← Story Garden catalogue + book-opening ritual (flagged)
+│   └── reader/                  ← Auto-hiding reader chrome, page-edge navigation
 ├── music/                  ← Music mode screens (practice, freeplay)
 ├── account/                ← Settings, language, screen time, profile
 ├── tutorial/               ← Contextual tip overlays
@@ -154,7 +156,46 @@ and handles token refresh transparently.
 - **Story reader**: Unlocks all orientations so stories can be read in landscape
 - On exit from story reader, orientation re-locks to portrait (phones only)
 
-This is handled in `app/_layout.tsx` via `expo-screen-orientation`.
+`hooks/use-story-orientation.ts` owns this. `app/_layout.tsx` calls its
+`applyDefaultOrientation()` helper for the app-launch and view-change defaults.
+
+The hook's `lockLandscape()` / `lockPortrait()` resolve on the **emitted
+`orientationChange` event** (with a 1500 ms fallback), not on a fixed `setTimeout`.
+This matters: the Story Garden's book-opening bridge keeps one book rendered across
+the rotation and counter-rotates it to stay upright, which is only believable if the
+settle is frame-accurate rather than approximated.
+
+## Story Garden (feature-flagged)
+
+The child-facing catalogue and the book-opening ritual, gated by `useStoryGarden`
+in the Zustand store (default `false`). `components/stories/simple-story-screen.tsx`
+is the single mount point that switches between the legacy catalogue and the garden.
+
+```
+Portrait Story Garden  →  tap a book  →  focused book (Read Together / Listen to <name>)
+  →  cover expands  →  book begins opening  →  landscape requested  →  book settles open
+  →  landscape reader  →  final page  →  book closes  →  Read Again / Put It Back
+```
+
+| Concern | Location |
+|---------|----------|
+| Shelf definitions (4 places ← 9 categories) | `constants/story-places.ts` |
+| Every duration, easing and ratio | `constants/story-garden-motion.ts` |
+| Opening state machine | `hooks/use-book-opening.ts` |
+| Reduced motion | `hooks/use-reduced-motion.ts` |
+| Auto-hiding reader controls | `hooks/use-auto-hide-controls.ts` |
+| One-hotspot-at-a-time rhythm | `hooks/use-interaction-rhythm.ts` |
+| Reader mount seam | `requestGardenOpen` in `contexts/story-transition-context.tsx` |
+| Reading progress (Continue Reading, bookmark) | `storyProgress` in `store/app-store.ts` |
+
+The garden never calls `startTransition` / `selectModeAndBegin`. It runs its own
+ritual and then calls `requestGardenOpen(story, mode, voiceOver)`, which `_layout`
+observes to mount the reader. The legacy transition path is untouched.
+
+Parent-facing exits (Parent corner, Record a Voice) go through
+`useParentsOnlyChallenge` before leaving the child experience.
+
+See `STORY-GARDEN.md` for the full design rationale and phase breakdown.
 
 ## State Management
 
@@ -231,6 +272,7 @@ extensive mocks for React Native modules (`__mocks__/`).
 
 | Document | Scope |
 |----------|-------|
+| `STORY-GARDEN.md` | Story Garden catalogue, book-opening ritual, orientation bridge, reader chrome |
 | `MUSIC_FEATURE.md` | Music challenge architecture, instruments, state machine, CMS config |
 | `SONGS_README.md` | Song library, categories, instrument compatibility, AI guidelines |
 | `scripts/README.md` | CMS pipeline, upload scripts, Firestore schema |

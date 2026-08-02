@@ -27,12 +27,11 @@ module.exports = {
       '/__tests__/performance/',
       '/__tests__/services/sleep-sequence-player.test.ts',
       '/__tests__/components/emotions/emotions-game-screen.test.tsx',
-      '/__tests__/components/stories/story-book-reader.test.tsx',
       '/__tests__/visual/snapshot-regression.test.tsx',
       '/__tests__/services/background-music.test.ts',
       '/__tests__/hooks/use-background-music.test.tsx',
       '/__tests__/components/main-menu.test.tsx',
-      '/__tests__/components/stories/',
+      '/__tests__/components/stories/book-card.test.tsx',
       '/__tests__/components/emotions/',
       '/__tests__/components/auth/loading-overlay.test.tsx', // Skip due to lottie-react-native module issues
       '/__tests__/components/story-selection-stars.test.tsx', // Skip due to Reanimated Easing mock issues

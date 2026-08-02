@@ -20,6 +20,10 @@ const MockImage = React.forwardRef((props, ref) => {
 
 MockImage.displayName = 'MockExpoImage';
 
+MockImage.prefetch = jest.fn(() => Promise.resolve(true));
+MockImage.clearMemoryCache = jest.fn(() => Promise.resolve(true));
+MockImage.clearDiskCache = jest.fn(() => Promise.resolve(true));
+
 module.exports = {
   Image: MockImage,
 };

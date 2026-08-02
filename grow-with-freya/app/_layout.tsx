@@ -16,6 +16,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAppStore } from '@/store/app-store';
 import { Logger } from '@/utils/logger';
 import { useBackgroundMusic } from '@/hooks/use-background-music';
+import { applyDefaultOrientation } from '@/hooks/use-story-orientation';
 import { AppSplashScreen } from '@/components/splash-screen';
 import { OnboardingFlow } from '@/components/onboarding/onboarding-flow';
 import { LoginScreen } from '@/components/auth/login-screen';
@@ -109,7 +110,9 @@ function AppContent() {
     selectedVoiceOver: transitionVoiceOver,
     setOnBeginCallback,
     setOnReturnToModeSelectionCallback,
-    setOnCancelCallback
+    setOnCancelCallback,
+    gardenOpenRequest,
+    clearGardenOpen
   } = useStoryTransition();
 
   // Access activity transition context for learning game transitions
@@ -202,16 +205,7 @@ function AppContent() {
   useEffect(() => {
     const initializeOrientation = async () => {
       try {
-        const { width, height } = Dimensions.get('window');
-        const isTablet = Math.min(width, height) >= 768; // iPad and larger
-
-        if (isTablet) {
-          // Allow all orientations on tablets
-          await ScreenOrientation.unlockAsync();
-        } else {
-          // Lock to portrait orientation for phones
-          await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-        }
+        await applyDefaultOrientation();
       } catch (error) {
         log.warn('Failed to initialize orientation:', error);
       }
@@ -224,17 +218,8 @@ function AppContent() {
   useEffect(() => {
     const handleOrientation = async () => {
       try {
-        const { width, height } = Dimensions.get('window');
-        const isTablet = Math.min(width, height) >= 768;
-
         if (currentView !== 'story-reader') {
-          if (isTablet) {
-            // Allow all orientations on tablets
-            await ScreenOrientation.unlockAsync();
-          } else {
-            // Lock to portrait on phones
-            await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-          }
+          await applyDefaultOrientation();
         }
       } catch (error) {
         log.warn('Failed to set orientation:', error);
@@ -523,6 +508,18 @@ function AppContent() {
       setOnBeginCallback(null);
     };
   }, [transitionStory, setOnBeginCallback]);
+
+  // Story Garden opens its book with its own ritual, then asks for the reader directly
+  useEffect(() => {
+    if (!gardenOpenRequest) {
+      return;
+    }
+
+    setStoryBeingRead(gardenOpenRequest.story);
+    setShowStoryReader(true);
+    setCurrentView('story-reader');
+    clearGardenOpen();
+  }, [gardenOpenRequest, clearGardenOpen]);
 
   // Register callback for when returning to mode selection from story reader
   useEffect(() => {
@@ -902,6 +899,7 @@ function AppContent() {
               selectedStory={selectedStory}
               onBack={handleBackToMainMenu}
               initialMode={selectedStoryMode}
+              onOpenParentCorner={() => setCurrentPage('account')}
             />,
             practise: <PractiseScreen onBack={handleBackToInstruments} isActive={currentPage === 'practise'} />,
             freeplay: <FreeplayScreen onBack={handleBackToInstruments} isActive={currentPage === 'freeplay'} />,

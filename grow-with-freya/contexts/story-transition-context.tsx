@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { Logger } from '@/utils/logger';
 
 const log = Logger.create('StoryTransition');
@@ -44,9 +44,21 @@ const LANDSCAPE_DIMENSIONS_TIMEOUT_MS = 800; // Fallback if the dimension-change
 
 export type ReadingMode = 'read' | 'record' | 'narrate';
 
+export interface GardenOpenRequest {
+  story: Story;
+  mode: ReadingMode;
+  voiceOver: VoiceOver | null;
+}
+
 export type TransitionPhase = 'flying' | 'detail' | 'prompt' | 'opening' | null;
 
 interface StoryTransitionContextType {
+  // Story Garden: direct open request, bypassing the detail/prompt overlay.
+  // The garden owns its own book-opening ritual and only needs the reader mounted.
+  gardenOpenRequest: GardenOpenRequest | null;
+  requestGardenOpen: (story: Story, mode: ReadingMode, voiceOver: VoiceOver | null) => void;
+  clearGardenOpen: () => void;
+
   // Animation state
   isTransitioning: boolean;
   showModeSelection: boolean;
@@ -112,6 +124,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const [phase, setPhase] = useState<TransitionPhase>(null);
   const showModeSelection = phase === 'detail';
   const [selectedStoryId, setSelectedStoryId] = useState<string | null>(null);
+  const [gardenOpenRequest, setGardenOpenRequest] = useState<GardenOpenRequest | null>(null);
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   const [selectedMode, setSelectedMode] = useState<ReadingMode>('read');
   const [cardPosition, setCardPosition] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
@@ -1548,7 +1561,22 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     }, 300);
   };
 
+  const requestGardenOpen = useCallback((story: Story, mode: ReadingMode, voiceOver: VoiceOver | null) => {
+    setSelectedStoryId(story.id);
+    setSelectedStory(story);
+    setSelectedMode(mode);
+    setCurrentVoiceOver(voiceOver);
+    setGardenOpenRequest({ story, mode, voiceOver });
+  }, []);
+
+  const clearGardenOpen = useCallback(() => {
+    setGardenOpenRequest(null);
+  }, []);
+
   const contextValue: StoryTransitionContextType = {
+    gardenOpenRequest,
+    requestGardenOpen,
+    clearGardenOpen,
     isTransitioning,
     showModeSelection,
     selectedStoryId,
