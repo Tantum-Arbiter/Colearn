@@ -1,0 +1,140 @@
+/**
+ * Tests for the onboarding page content blocks that make up the redesigned
+ * five-page intro (worlds / together / safety / ready) plus the profile setup.
+ *
+ * Key behaviors tested:
+ * 1. Each page renders every item from its design
+ * 2. Copy comes from translation keys, not hardcoded English
+ * 3. The profile page reports avatar, nickname and age-range changes
+ */
+
+import React from 'react';
+import { render, fireEvent, act } from '@testing-library/react-native';
+import {
+  TogetherPage,
+  SafetyPage,
+  ReadyPage,
+  ProfilePage,
+  AGE_RANGE_OPTIONS,
+} from '@/components/onboarding/onboarding-pages';
+
+function findByTestId(tree: ReturnType<typeof render>, testID: string) {
+  return tree.UNSAFE_root.findAll((n: any) => n.props.testID === testID);
+}
+
+function toStr(tree: ReturnType<typeof render>) {
+  return JSON.stringify(tree.toJSON());
+}
+
+describe('TogetherPage', () => {
+  it.each(['read', 'play', 'talk'])('renders the %s chip', (key) => {
+    const tree = render(<TogetherPage />);
+
+    expect(findByTestId(tree, `together-chip-${key}`)).toHaveLength(1);
+  });
+
+  it.each(['read', 'play', 'talk'])('renders the %s icon art', (key) => {
+    const tree = render(<TogetherPage />);
+
+    expect(findByTestId(tree, `together-art-${key}`).length).toBeGreaterThan(0);
+  });
+
+  it('renders the hero illustration', () => {
+    const tree = render(<TogetherPage />);
+
+    expect(findByTestId(tree, 'together-hero').length).toBeGreaterThan(0);
+  });
+
+  it('renders its own body copy below the chips', () => {
+    expect(toStr(render(<TogetherPage />))).toContain('onboardingV2.together.body');
+  });
+});
+
+describe('SafetyPage', () => {
+  it.each(['noAds', 'noTracking', 'noPressure', 'gentle'])('renders the %s promise', (key) => {
+    const tree = render(<SafetyPage />);
+
+    expect(findByTestId(tree, `safety-item-${key}`)).toHaveLength(1);
+  });
+});
+
+describe('ReadyPage', () => {
+  it.each(['offline', 'routines', 'parent'])('renders the %s feature', (key) => {
+    const tree = render(<ReadyPage />);
+
+    expect(findByTestId(tree, `ready-item-${key}`)).toHaveLength(1);
+  });
+
+  it('renders a description for each feature', () => {
+    const s = toStr(render(<ReadyPage />));
+
+    expect(s).toContain('onboardingV2.ready.offlineDesc');
+    expect(s).toContain('onboardingV2.ready.routinesDesc');
+    expect(s).toContain('onboardingV2.ready.parentDesc');
+  });
+});
+
+describe('ProfilePage', () => {
+  const defaultProps = {
+    nickname: '',
+    onNicknameChange: jest.fn(),
+    avatarType: 'girl' as const,
+    onAvatarTypeChange: jest.fn(),
+    ageMonths: 36,
+    onAgeChange: jest.fn(),
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('renders both avatar options', () => {
+    const tree = render(<ProfilePage {...defaultProps} />);
+
+    expect(findByTestId(tree, 'avatar-option-girl').length).toBeGreaterThan(0);
+    expect(findByTestId(tree, 'avatar-option-boy').length).toBeGreaterThan(0);
+  });
+
+  it('reports nickname changes', () => {
+    const tree = render(<ProfilePage {...defaultProps} />);
+
+    fireEvent.changeText(findByTestId(tree, 'profile-nickname-input')[0], 'Freya');
+
+    expect(defaultProps.onNicknameChange).toHaveBeenCalledWith('Freya');
+  });
+
+  it('reports avatar changes', () => {
+    const tree = render(<ProfilePage {...defaultProps} />);
+
+    fireEvent.press(findByTestId(tree, 'avatar-option-boy')[0]);
+
+    expect(defaultProps.onAvatarTypeChange).toHaveBeenCalledWith('boy');
+  });
+
+  it.each(AGE_RANGE_OPTIONS.map((o) => [o.key, o.months] as const))(
+    'reports the %s age range as %i months',
+    (key, months) => {
+      const tree = render(<ProfilePage {...defaultProps} />);
+
+      fireEvent.press(findByTestId(tree, `age-option-${key}`)[0]);
+
+      expect(defaultProps.onAgeChange).toHaveBeenCalledWith(months);
+    }
+  );
+
+  it('marks the selected age range', () => {
+    const tree = render(<ProfilePage {...defaultProps} ageMonths={60} />);
+
+    const selected = findByTestId(tree, 'age-option-4-6')[0];
+
+    expect(selected.props.accessibilityState).toEqual({ selected: true });
+  });
+
+  it('marks the selected avatar', () => {
+    const tree = render(<ProfilePage {...defaultProps} avatarType="boy" />);
+
+    const selected = findByTestId(tree, 'avatar-option-boy')[0];
+
+    expect(selected.props.accessibilityState).toEqual({ selected: true });
+  });
+});

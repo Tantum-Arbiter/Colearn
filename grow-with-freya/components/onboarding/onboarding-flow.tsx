@@ -5,6 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS } from 'react-native-reanimated';
 import { OnboardingScreen } from './onboarding-screen';
+import { TogetherPage, SafetyPage, ReadyPage, ProfilePage } from './onboarding-pages';
+import { GOLD, CARD_BG, CARD_BORDER, TEXT_MUTED, NIGHT_BASE } from './onboarding-theme';
 import { useAppStore } from '@/store/app-store';
 import { preloadOnboardingImages } from '@/services/image-preloader';
 import { ThemedText } from '../themed-text';
@@ -15,6 +17,12 @@ interface OnboardingFlowProps {
   onComplete: () => void;
 }
 
+type StepId = 'together' | 'safe' | 'ready' | 'consent' | 'profile';
+
+const STEP_ORDER: StepId[] = ['together', 'safe', 'ready', 'consent', 'profile'];
+const CONSENT_INDEX = STEP_ORDER.indexOf('consent');
+const DEFAULT_AGE_MONTHS = 36;
+
 export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -24,11 +32,19 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const [legalView, setLegalView] = useState<'none' | 'privacy' | 'terms'>('none');
   const [legalViewVisible, setLegalViewVisible] = useState(false);
   const [dataSummaryExpanded, setDataSummaryExpanded] = useState(false);
-  const { setOnboardingComplete, setCrashReportingEnabled, setConsent } = useAppStore();
+  const [nickname, setNickname] = useState('');
+  const [avatarType, setAvatarType] = useState<'boy' | 'girl'>('girl');
+  const [ageMonths, setAgeMonths] = useState(DEFAULT_AGE_MONTHS);
+  const {
+    setOnboardingComplete,
+    setCrashReportingEnabled,
+    setConsent,
+    setUserProfile,
+    setChildAge,
+  } = useAppStore();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
-  // Slide-in animation for legal overlay
   const screenHeight = Dimensions.get('window').height;
   const legalSlideY = useSharedValue(-screenHeight);
 
@@ -50,66 +66,50 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
     });
   };
 
-  // Timeout cleanup refs
   const nextTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const onboardingScreens = [
-    {
-      title: t('onboarding.screens.welcome.title'),
-      body: t('onboarding.screens.welcome.body'),
-      illustration: 'family reading together',
-      buttonLabel: t('onboarding.screens.welcome.button'),
-    },
-    {
-      title: t('onboarding.screens.howItWorks.title'),
-      body: t('onboarding.screens.howItWorks.body'),
-      illustration: 'how-it-works',
-      buttonLabel: t('onboarding.screens.howItWorks.button'),
-    },
-    {
-      title: t('onboarding.screens.family.title'),
-      body: t('onboarding.screens.family.body'),
-      illustration: 'parent hugging child',
-      buttonLabel: t('onboarding.screens.family.button'),
-    },
-    {
-      title: t('onboarding.screens.consent.title'),
-      body: t('onboarding.screens.consent.body'),
-      illustration: 'consent',
-      buttonLabel: t('onboarding.screens.consent.button'),
-      showCrashReportingDialog: true,
-    },
-  ];
-
+  const stepId = STEP_ORDER[currentStep];
+  const isConsentStep = stepId === 'consent';
+  const isProfileStep = stepId === 'profile';
   const allConsentsChecked = consentPrivacy && consentTerms && consentData;
-  const isConsentStep = currentStep === onboardingScreens.length - 1;
 
-  // Proceed to next step (or complete onboarding)
-  const proceedToNext = () => {
+  const finishOnboarding = (saveProfile: boolean) => {
+    if (saveProfile && nickname.trim()) {
+      setUserProfile(nickname.trim(), avatarType, `${avatarType}_1`);
+    }
+    if (saveProfile) {
+      setChildAge(ageMonths);
+    }
+    setOnboardingComplete(true);
+    onComplete();
+  };
+
+  const goToStep = (index: number) => {
     setIsTransitioning(true);
     if (nextTimeoutRef.current) {
       clearTimeout(nextTimeoutRef.current);
     }
     nextTimeoutRef.current = setTimeout(() => {
-      if (currentStep < onboardingScreens.length - 1) {
-        setCurrentStep(currentStep + 1);
-      } else {
-        // Store parental consent before completing
-        const policyVersion = t('onboarding.screens.consent.policyVersion');
-        setConsent(policyVersion);
-        setOnboardingComplete(true);
-        onComplete();
-      }
+      setCurrentStep(index);
       setIsTransitioning(false);
-    }, 300);
+    }, 250);
+  };
+
+  const proceedToNext = () => {
+    if (isProfileStep) {
+      finishOnboarding(true);
+      return;
+    }
+    if (isConsentStep) {
+      setConsent(t('onboarding.screens.consent.policyVersion'));
+    }
+    goToStep(currentStep + 1);
   };
 
   const handleNext = () => {
-    const currentScreenData = onboardingScreens[currentStep];
-
-    // Show crash reporting consent dialog on that specific screen
-    if (currentScreenData.showCrashReportingDialog) {
+    // Crash-reporting choice is asked once, as the consent step is completed
+    if (isConsentStep) {
       Alert.alert(
         t('onboarding.crashReportingDialog.title'),
         t('onboarding.crashReportingDialog.body'),
@@ -119,7 +119,6 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
             style: 'cancel',
             onPress: () => {
               setCrashReportingEnabled(false);
-              // User declined crash reporting
               proceedToNext();
             },
           },
@@ -128,7 +127,6 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
             style: 'default',
             onPress: () => {
               setCrashReportingEnabled(true);
-              // User enabled crash reporting
               proceedToNext();
             },
           },
@@ -150,17 +148,24 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
       prevTimeoutRef.current = setTimeout(() => {
         setCurrentStep(currentStep - 1);
         setIsTransitioning(false);
-      }, 300);
+      }, 250);
     }
   };
 
-  // Preload onboarding images when component mounts
+  // Skipping the intro jumps to consent -consent itself can never be skipped
+  const handleSkip = () => {
+    if (isProfileStep) {
+      finishOnboarding(false);
+      return;
+    }
+    goToStep(CONSENT_INDEX);
+  };
+
   useEffect(() => {
     const loadOnboardingImages = async () => {
       try {
-        const result = await preloadOnboardingImages();
-        // Onboarding images preloaded
-      } catch (error) {
+        await preloadOnboardingImages();
+      } catch {
         // Non-critical: images will load on demand
       }
     };
@@ -168,7 +173,6 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
     loadOnboardingImages();
   }, []);
 
-  // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
       if (nextTimeoutRef.current) {
@@ -180,9 +184,6 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
     };
   }, []);
 
-  const currentScreen = onboardingScreens[currentStep];
-
-  // Data summary items with icon names
   const summaryItems: { icon: keyof typeof Ionicons.glyphMap; key: string }[] = [
     { icon: 'person-outline', key: 'profile' },
     { icon: 'book-outline', key: 'reading' },
@@ -191,7 +192,6 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
     { icon: 'shield-checkmark-outline', key: 'noSell' },
   ];
 
-  // Render the collapsible data summary
   const renderDataSummary = () => (
     <View style={consentStyles.summaryContainer}>
       <Pressable
@@ -211,7 +211,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
         <View style={consentStyles.summaryBody}>
           {summaryItems.map((item) => (
             <View key={item.key} style={consentStyles.summaryItemRow}>
-              <Ionicons name={item.icon} size={15} color="#FFFFFF" style={consentStyles.summaryItemIcon} />
+              <Ionicons name={item.icon} size={15} color={GOLD} style={consentStyles.summaryItemIcon} />
               <ThemedText style={consentStyles.summaryItem}>
                 {t(`onboarding.screens.consent.dataSummary.${item.key}`)}
               </ThemedText>
@@ -222,12 +222,11 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
     </View>
   );
 
-  // Render consent checkboxes for the final screen
   const renderConsentContent = () => {
     const checkboxItems = [
       { key: 'privacy' as const, checked: consentPrivacy, toggle: () => setConsentPrivacy(!consentPrivacy), link: () => openLegalView('privacy') },
       { key: 'terms' as const, checked: consentTerms, toggle: () => setConsentTerms(!consentTerms), link: () => openLegalView('terms') },
-      { key: 'data' as const, checked: consentData, toggle: () => setConsentData(!consentData) },
+      { key: 'data' as const, checked: consentData, toggle: () => setConsentData(!consentData), link: undefined },
     ];
 
     return (
@@ -242,7 +241,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
             onPress={item.toggle}
           >
             <View style={[consentStyles.checkbox, item.checked && consentStyles.checkboxChecked]}>
-              {item.checked && <Ionicons name="checkmark" size={16} color="#FFFFFF" />}
+              {item.checked && <Ionicons name="checkmark" size={16} color={NIGHT_BASE} />}
             </View>
             <View style={consentStyles.checkboxTextContainer}>
               <ThemedText style={consentStyles.checkboxLabel}>
@@ -262,32 +261,67 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
     );
   };
 
+  const stepContent: Record<StepId, { title: string; body?: string; content: React.ReactNode; buttonLabel: string }> = {
+    together: {
+      title: t('onboardingV2.together.title'),
+      content: <TogetherPage />,
+      buttonLabel: t('onboarding.screens.welcome.button'),
+    },
+    safe: {
+      title: t('onboardingV2.safe.title'),
+      content: <SafetyPage />,
+      buttonLabel: t('onboarding.screens.welcome.button'),
+    },
+    ready: {
+      title: t('onboardingV2.ready.title'),
+      content: <ReadyPage />,
+      buttonLabel: t('onboarding.screens.welcome.button'),
+    },
+    consent: {
+      title: t('onboarding.screens.consent.title'),
+      body: t('onboarding.screens.consent.body'),
+      content: renderConsentContent(),
+      buttonLabel: t('onboarding.screens.consent.button'),
+    },
+    profile: {
+      title: t('onboardingV2.profile.title'),
+      content: (
+        <ProfilePage
+          nickname={nickname}
+          onNicknameChange={setNickname}
+          avatarType={avatarType}
+          onAvatarTypeChange={setAvatarType}
+          ageMonths={ageMonths}
+          onAgeChange={setAgeMonths}
+        />
+      ),
+      buttonLabel: nickname.trim()
+        ? t('onboardingV2.profile.continueAs', { name: nickname.trim() })
+        : t('onboarding.screens.welcome.button'),
+    },
+  };
+
+  const current = stepContent[stepId];
+
   return (
     <View style={{ flex: 1 }}>
       <OnboardingScreen
-        title={currentScreen.title}
-        body={currentScreen.body}
-        illustration={currentScreen.illustration}
-        buttonLabel={currentScreen.buttonLabel}
+        title={current.title}
+        body={current.body}
+        buttonLabel={current.buttonLabel}
         onNext={handleNext}
         onPrevious={handlePrevious}
+        onSkip={isConsentStep ? undefined : handleSkip}
         currentStep={currentStep + 1}
-        totalSteps={onboardingScreens.length}
+        totalSteps={STEP_ORDER.length}
         isTransitioning={isTransitioning}
-        customContent={isConsentStep ? renderConsentContent() : undefined}
+        customContent={current.content}
         isNextDisabled={isConsentStep && !allConsentsChecked}
       />
 
-      {/* Legal document overlay -slides in from top */}
       {legalViewVisible && (
-        <Animated.View
-          style={[
-            consentStyles.legalOverlay,
-            legalOverlayStyle,
-          ]}
-        >
+        <Animated.View style={[consentStyles.legalOverlay, legalOverlayStyle]}>
           <View style={[consentStyles.legalOverlayInner, { paddingTop: insets.top }]}>
-            {/* Title header */}
             <View style={consentStyles.legalHeader}>
               <ThemedText style={consentStyles.legalTitle}>
                 {legalView === 'privacy'
@@ -296,20 +330,18 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
               </ThemedText>
             </View>
 
-            {/* Scrollable legal content */}
             <View style={{ flex: 1 }}>
               {legalView === 'privacy' && <PrivacyPolicyContent paddingTop={0} />}
               {legalView === 'terms' && <TermsConditionsContent paddingTop={0} />}
             </View>
 
-            {/* Close button at the bottom */}
             <View style={[consentStyles.legalFooter, { paddingBottom: Math.max(insets.bottom, 16) + 8 }]}>
               <Pressable
                 testID="legal-modal-close"
                 style={consentStyles.legalCloseButton}
                 onPress={closeLegalView}
               >
-                <Ionicons name="close-outline" size={20} color="#FFFFFF" style={{ marginRight: 6 }} />
+                <Ionicons name="close-outline" size={20} color={NIGHT_BASE} style={{ marginRight: 6 }} />
                 <ThemedText style={consentStyles.legalCloseText}>
                   {t('onboarding.screens.consent.closeLabel', 'Close')}
                 </ThemedText>
@@ -325,15 +357,13 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
 const consentStyles = StyleSheet.create({
   container: {
     alignSelf: 'stretch',
-    marginTop: 16,
-    gap: 14,
-    paddingHorizontal: 4,
+    gap: 12,
   },
-
-  // --- Collapsible data summary ---
   summaryContainer: {
-    backgroundColor: '#2E8B8B',
-    borderRadius: 12,
+    backgroundColor: CARD_BG,
+    borderWidth: 1,
+    borderColor: CARD_BORDER,
+    borderRadius: 14,
     overflow: 'hidden',
   },
   summaryHeader: {
@@ -369,74 +399,66 @@ const consentStyles = StyleSheet.create({
     marginTop: 2,
   },
   summaryItem: {
-    color: 'rgba(255,255,255,0.9)',
+    color: TEXT_MUTED,
     fontSize: 13,
     lineHeight: 19,
     flex: 1,
   },
-
-  // --- Checkbox rows ---
   checkboxRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 12,
-    backgroundColor: 'rgba(255,255,255,0.55)',
-    borderRadius: 12,
+    backgroundColor: CARD_BG,
+    borderWidth: 1,
+    borderColor: CARD_BORDER,
+    borderRadius: 14,
     padding: 14,
   },
   checkbox: {
     width: 26,
     height: 26,
-    borderRadius: 6,
+    borderRadius: 7,
     borderWidth: 2,
-    borderColor: '#4ECDC4',
+    borderColor: GOLD,
     backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 1,
   },
   checkboxChecked: {
-    backgroundColor: '#4ECDC4',
-    borderColor: '#4ECDC4',
-  },
-  checkmark: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: 'bold',
-    lineHeight: 20,
+    backgroundColor: GOLD,
+    borderColor: GOLD,
   },
   checkboxTextContainer: {
     flex: 1,
   },
   checkboxLabel: {
-    color: '#2A2A2A',
+    color: '#FFFFFF',
     fontSize: 15,
     lineHeight: 22,
     fontWeight: '500',
   },
   linkText: {
-    color: '#1A7A7A',
+    color: GOLD,
     fontSize: 13,
     fontWeight: '600',
     textDecorationLine: 'underline',
     marginTop: 4,
   },
-
-  // --- Legal document overlay (slides from top) ---
   legalOverlay: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 100,
   },
   legalOverlayInner: {
     flex: 1,
-    backgroundColor: '#0F1D45',
+    backgroundColor: NIGHT_BASE,
   },
   legalHeader: {
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.15)',
+    borderBottomColor: CARD_BORDER,
   },
   legalTitle: {
     color: '#FFFFFF',
@@ -447,22 +469,22 @@ const consentStyles = StyleSheet.create({
   legalFooter: {
     alignItems: 'center',
     paddingTop: 12,
-    backgroundColor: '#0F1D45',
+    backgroundColor: NIGHT_BASE,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.15)',
+    borderTopColor: CARD_BORDER,
   },
   legalCloseButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#4ECDC4',
+    backgroundColor: GOLD,
     paddingHorizontal: 32,
     paddingVertical: 14,
     borderRadius: 25,
     minWidth: 160,
   },
   legalCloseText: {
-    color: '#FFFFFF',
+    color: NIGHT_BASE,
     fontSize: 16,
     fontWeight: '600',
   },

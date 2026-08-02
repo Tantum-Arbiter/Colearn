@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useMemo } from 'react';
-import { View, StyleSheet, Dimensions, Image, Text } from 'react-native';
+import { View, StyleSheet, Dimensions, Image, Text, ActivityIndicator } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
@@ -13,20 +14,17 @@ import * as Font from 'expo-font';
 
 import { useAppStore } from '@/store/app-store';
 import { DeviceInfoService } from '@/services/device-info-service';
-import { FreyaRocketRightSvg } from './main-menu/svg-components';
 
 const { width, height } = Dimensions.get('window');
 
-// Same gradient colors as main menu
-const GRADIENT_COLORS: [string, string, string] = ['#1E3A8A', '#3B82F6', '#4ECDC4'];
+// Night-sky gradient per the Phase 7 design set
+const GRADIENT_COLORS: [string, string, string] = ['#050515', '#0A0F2C', '#1a1a3e'];
 
 // Star configuration (matching main menu)
 const STAR_COUNT = 15;
 const STAR_SIZE = 3;
 const STAR_AREA_HEIGHT_RATIO = 0.6;
 
-// Rocket size - small accent, not the main focus
-const ROCKET_SIZE = width > 768 ? 80 : 50;
 
 // Logo size - responsive (large, main focus of splash)
 const LOGO_SIZE = width > 768 ? 380 : 280;
@@ -54,26 +52,9 @@ const generateStars = (count: number) => {
 
 SplashScreen.preventAutoHideAsync();
 
-// Rocket start: off-screen bottom-left
-const START_X = -ROCKET_SIZE * 1.5;
-const START_Y = height + ROCKET_SIZE / 2;
-
-// Rocket passes through lower-center area (below the logo)
-const MID_X = (width - ROCKET_SIZE) / 2;
-const MID_Y = height * 0.65;
-
-// Rocket exits: off-screen top-right
-const END_X = width + ROCKET_SIZE;
-const END_Y = -ROCKET_SIZE * 2;
-
 export function AppSplashScreen() {
   const { setAppReady } = useAppStore();
 
-  const rocketX = useSharedValue(START_X);
-  const rocketY = useSharedValue(START_Y);
-  const rocketScale = useSharedValue(0.3);
-  const rocketRotation = useSharedValue(-30);
-  const rocketOpacity = useSharedValue(0);
   const logoOpacity = useSharedValue(0);
   const logoScale = useSharedValue(0.8);
   const starRotation = useSharedValue(0);
@@ -81,6 +62,7 @@ export function AppSplashScreen() {
 
   const delayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const { t } = useTranslation();
   const stars = useMemo(() => generateStars(STAR_COUNT), []);
 
   useEffect(() => {
@@ -94,57 +76,15 @@ export function AppSplashScreen() {
         logoOpacity.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) });
         logoScale.value = withTiming(1, { duration: 800, easing: Easing.out(Easing.back(1.1)) });
 
-        // Rocket: fly from bottom-left toward center (phase 1)
-        rocketOpacity.value = withTiming(1, { duration: 200 });
-        rocketX.value = withTiming(MID_X, {
-          duration: 1200,
-          easing: Easing.out(Easing.cubic)
-        });
-        rocketY.value = withTiming(MID_Y, {
-          duration: 1200,
-          easing: Easing.out(Easing.cubic)
-        });
-        rocketScale.value = withTiming(1.2, {
-          duration: 1200,
-          easing: Easing.out(Easing.back(1.2))
-        });
-        rocketRotation.value = withTiming(-25, {
-          duration: 1200,
-          easing: Easing.out(Easing.cubic)
-        });
-
         // Star rotation
         starRotation.value = withRepeat(
           withTiming(360, { duration: 3000, easing: Easing.linear }),
           -1
         );
 
-        // Wait for rocket to reach center
+        // Brief pause to admire the logo and tagline
         await new Promise<void>(resolve => {
-          delayTimeoutRef.current = setTimeout(resolve, 1300);
-        });
-
-        // Phase 2: rocket continues off-screen top-right (behind logo via z-index)
-        rocketX.value = withTiming(END_X, {
-          duration: 800,
-          easing: Easing.in(Easing.cubic)
-        });
-        rocketY.value = withTiming(END_Y, {
-          duration: 800,
-          easing: Easing.in(Easing.cubic)
-        });
-        rocketScale.value = withTiming(0.6, {
-          duration: 800,
-          easing: Easing.in(Easing.cubic)
-        });
-        rocketRotation.value = withTiming(-40, {
-          duration: 800,
-          easing: Easing.in(Easing.cubic)
-        });
-
-        // Wait for rocket to exit + brief pause to admire logo
-        await new Promise<void>(resolve => {
-          delayTimeoutRef.current = setTimeout(resolve, 1500);
+          delayTimeoutRef.current = setTimeout(resolve, 1800);
         });
 
         // Fade out splash screen
@@ -170,16 +110,6 @@ export function AppSplashScreen() {
       }
     };
   }, []);
-
-  const rocketAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: rocketOpacity.value,
-    transform: [
-      { translateX: rocketX.value },
-      { translateY: rocketY.value },
-      { scale: rocketScale.value },
-      { rotate: `${rocketRotation.value}deg` },
-    ],
-  }));
 
   const starAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${starRotation.value}deg` }],
@@ -236,14 +166,7 @@ export function AppSplashScreen() {
           />
         </View>
 
-        {/* Rocket flying across screen (behind logo via lower zIndex) */}
-        <View style={styles.rocketContainer}>
-          <Animated.View style={[styles.rocketWrapper, rocketAnimatedStyle]}>
-            <FreyaRocketRightSvg width={ROCKET_SIZE} height={ROCKET_SIZE} />
-          </Animated.View>
-        </View>
-
-        {/* Earlyroots logo - centered, above rocket */}
+        {/* Earlyroots logo - centered */}
         <Animated.View style={[styles.logoContainer, logoAnimatedStyle]}>
           <Image
             source={require('@/assets/images/ui-elements/earlyroots-logo.png')}
@@ -251,6 +174,12 @@ export function AppSplashScreen() {
             resizeMode="contain"
           />
         </Animated.View>
+
+        {/* Tagline + loading ring per design */}
+        <View style={styles.taglineContainer} pointerEvents="none">
+          <Text style={styles.taglineText}>{t('splash.tagline')}</Text>
+          <ActivityIndicator size="small" color="rgba(255, 255, 255, 0.8)" style={styles.loadingRing} />
+        </View>
 
         {/* App version at bottom */}
         <View style={styles.versionContainer}>
@@ -317,33 +246,41 @@ const styles = StyleSheet.create({
     height: 286,
     opacity: 0.8,
   },
-  rocketContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: ROCKET_SIZE,
-    height: ROCKET_SIZE,
-    zIndex: 10,
-  },
-  rocketWrapper: {
-    width: ROCKET_SIZE,
-    height: ROCKET_SIZE,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   logoContainer: {
     position: 'absolute',
     top: (height - LOGO_SIZE) / 2,
     left: (width - LOGO_SIZE) / 2,
     width: LOGO_SIZE,
     height: LOGO_SIZE,
-    zIndex: 15, // Above rocket so it passes "behind" the logo
+    zIndex: 15,
     alignItems: 'center',
     justifyContent: 'center',
   },
   logoImage: {
     width: LOGO_SIZE,
     height: LOGO_SIZE,
+  },
+  taglineContainer: {
+    position: 'absolute',
+    bottom: '21%',
+    left: 32,
+    right: 32,
+    alignItems: 'center',
+    gap: 18,
+    zIndex: 20,
+  },
+  taglineText: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.92)',
+    textAlign: 'center',
+    lineHeight: 28,
+    textShadowColor: 'rgba(0, 0, 0, 0.4)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  loadingRing: {
+    marginTop: 2,
   },
   versionContainer: {
     position: 'absolute',

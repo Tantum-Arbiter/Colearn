@@ -1,773 +1,344 @@
-import React, { useEffect } from 'react';
-import { View, ScrollView, StyleSheet, Dimensions, Pressable, PanResponder, Platform } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, ScrollView, StyleSheet, Dimensions, Pressable, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withSpring,
-  withDelay,
-  FadeInUp,
-  ZoomIn,
-  Easing
-} from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 
 import { ThemedText } from '../themed-text';
-import { PngIllustration } from '../ui/png-illustration';
-import { useBackButtonText } from '@/hooks/use-back-button-text';
+import { useAccessibility } from '@/hooks/use-accessibility';
+import { NIGHT_GRADIENT, GOLD, TEXT_MUTED } from './onboarding-theme';
 
 const { width, height } = Dimensions.get('window');
 
-interface OnboardingScreenProps {
+const STAR_COUNT = 55;
+
+const generateStars = (count: number) => {
+  const seededRandom = (seed: number) => {
+    const x = Math.sin(seed * 9999) * 10000;
+    return x - Math.floor(x);
+  };
+  return Array.from({ length: count }, (_, i) => ({
+    id: i,
+    left: seededRandom(i * 1.1) * (width - 20) + 10,
+    top: seededRandom(i * 2.3) * height * 0.92 + 12,
+    size: seededRandom(i * 4.1) > 0.82 ? 3 : seededRandom(i * 5.3) > 0.5 ? 2 : 1.5,
+    opacity: 0.2 + seededRandom(i * 3.7) * 0.6,
+  }));
+};
+
+export interface OnboardingScreenProps {
   title: string;
-  body: string;
-  illustration: string;
+  body?: string;
+  illustration?: string;
   buttonLabel: string;
   onNext: () => void;
   onPrevious?: () => void;
+  onSkip?: () => void;
   currentStep: number;
   totalSteps: number;
   isTransitioning?: boolean;
   customContent?: React.ReactNode;
   isNextDisabled?: boolean;
+  /** Hung from the top-right, outside the scroll area. */
+  decoration?: React.ReactNode;
 }
+
+const MASCOT_INSET = 208;
 
 export function OnboardingScreen({
   title,
   body,
-  illustration,
   buttonLabel,
   onNext,
   onPrevious,
+  onSkip,
   currentStep,
   totalSteps,
   isTransitioning = false,
   customContent,
   isNextDisabled = false,
+  decoration,
 }: OnboardingScreenProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const backButtonText = useBackButtonText();
-
-  // Device-specific adjustments for Dynamic Island and notches
-  const getProgressTopMargin = () => {
-    // Base margin for progress indicator
-    const baseMargin = 10;
-
-    // Add extra space for devices with Dynamic Island or notch
-    // insets.top will be larger on devices with Dynamic Island/notch
-    if (insets.top > 44) {
-      // Devices with Dynamic Island (iPhone 14 Pro+) or larger notches
-      return insets.top + baseMargin + 5;
-    } else if (insets.top > 20) {
-      // Devices with standard notch (iPhone X series)
-      return insets.top + baseMargin;
-    } else {
-      // Older devices without notch (iPhone 8, SE, etc.)
-      return insets.top + baseMargin + 20;
-    }
-  };
-
-  const isAndroid = Platform.OS === 'android';
-  const buttonScale = useSharedValue(1);
-  const textOpacity = useSharedValue(0);
-  const textTranslateX = useSharedValue(50);
-  const imageOpacity = useSharedValue(isAndroid ? 1 : 0); // Android: no fade, iOS: fade in
-  const imageTranslateY = useSharedValue(30);
-  const imageScale = useSharedValue(isAndroid ? 0 : 1); // Android: scale from 0, iOS: no scale
-  const buttonOpacity = useSharedValue(0);
-  const buttonTranslateY = useSharedValue(20);
-  const containerOpacity = useSharedValue(0); // For initial fade-in from splash
-
-  // Initial container fade-in (runs once on mount)
-  useEffect(() => {
-    containerOpacity.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) });
-  }, []);
-
-  useEffect(() => {
-    textOpacity.value = 0;
-    textTranslateX.value = 50;
-    imageOpacity.value = isAndroid ? 1 : 0;
-    imageTranslateY.value = 30;
-    imageScale.value = isAndroid ? 0 : 1;
-    buttonOpacity.value = 0;
-    buttonTranslateY.value = 20;
-
-    textOpacity.value = withDelay(100, withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) }));
-    textTranslateX.value = withDelay(100, withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) }));
-
-    if (isAndroid) {
-      // Android: scale from 0 to 1 (no opacity) to avoid shadow rendering issues
-      imageTranslateY.value = withDelay(300, withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) }));
-      imageScale.value = withDelay(300, withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) }));
-    } else {
-      // iOS: fade in with translate (original behavior)
-      imageOpacity.value = withDelay(300, withTiming(1, { duration: 600, easing: Easing.out(Easing.back(1.1)) }));
-      imageTranslateY.value = withDelay(300, withTiming(0, { duration: 600, easing: Easing.out(Easing.back(1.1)) }));
-    }
-
-    buttonOpacity.value = withDelay(500, withTiming(1, { duration: 500, easing: Easing.out(Easing.back(1.1)) }));
-    buttonTranslateY.value = withDelay(500, withTiming(0, { duration: 500, easing: Easing.out(Easing.back(1.1)) }));
-  }, [currentStep]);
-
-  const containerAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: containerOpacity.value,
-  }));
+  const { scaledFontSize, scaledPadding } = useAccessibility();
+  const stars = useMemo(() => generateStars(STAR_COUNT), []);
 
   const handleNext = () => {
+    if (isNextDisabled || isTransitioning) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    buttonScale.value = withSpring(0.95, { duration: 100 }, () => {
-      buttonScale.value = withSpring(1, { duration: 200 });
-    });
     onNext();
   };
 
   const handlePrevious = () => {
-    if (onPrevious && currentStep > 1) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      onPrevious();
-    }
-  };
-
-  const panResponder = PanResponder.create({
-    onMoveShouldSetPanResponder: (_, gestureState) => {
-      return Math.abs(gestureState.dx) > Math.abs(gestureState.dy) && Math.abs(gestureState.dx) > 15;
-    },
-    onPanResponderRelease: (_, gestureState) => {
-      const { dx, vx } = gestureState;
-
-      if (dx > 80 || vx > 0.3) {
-        if (currentStep > 1 && onPrevious) {
-          handlePrevious();
-        }
-      }
-      else if (dx < -80 || vx < -0.3) {
-        if (!isNextDisabled) {
-          handleNext();
-        }
-      }
-    },
-  });
-
-  const buttonAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: buttonScale.value }],
-  }));
-
-  const textAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: textOpacity.value,
-    transform: [{ translateX: textTranslateX.value }],
-  }));
-
-  const imageAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: imageOpacity.value,
-    transform: [
-      { translateY: imageTranslateY.value },
-      { scale: imageScale.value }
-    ],
-  }));
-
-  const buttonContainerAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: buttonOpacity.value,
-    transform: [{ translateY: buttonTranslateY.value }],
-  }));
-
-  // Step 2 (How It Works) uses a feature list instead of an illustration
-  const isFeatureListScreen = currentStep === 2;
-  // Step 4 (Consent) is text-only (no illustration)
-  const isConsentScreen = currentStep === 4;
-  const isTextOnlyScreen = isConsentScreen;
-
-  const renderContextualContent = (step: number) => {
-    // Map step number to translation keys (5 screens)
-    const contextualData = [
-      { taglineKey: 'onboarding.taglines.welcome', benefitKey: 'onboarding.benefits.welcome' },
-      { taglineKey: 'onboarding.taglines.howItWorks', benefitKey: 'onboarding.benefits.howItWorks' },
-      { taglineKey: 'onboarding.taglines.family', benefitKey: 'onboarding.benefits.family' },
-      { taglineKey: 'onboarding.taglines.privacy', benefitKey: 'onboarding.benefits.privacy' },
-      { taglineKey: 'onboarding.taglines.consent', benefitKey: 'onboarding.benefits.consent' },
-    ];
-
-    const data = contextualData[step - 1];
-    if (!data) return null;
-
-    const tagline = data.taglineKey ? t(data.taglineKey) : '';
-    const benefit = data.benefitKey ? t(data.benefitKey) : '';
-
-    if (!tagline && !benefit) return null;
-
-    return (
-      <View style={styles.contextualWrapper}>
-        {tagline ? <ThemedText style={styles.tagline}>{tagline}</ThemedText> : null}
-        {benefit ? <ThemedText style={styles.benefit}>{benefit}</ThemedText> : null}
-      </View>
-    );
-  };
-
-  // Feature list for "How It Works" screen (step 2)
-  const renderFeatureList = () => {
-    const features: { icon: keyof typeof Ionicons.glyphMap; label: string; desc: string }[] = [
-      { icon: 'people-outline', label: t('onboarding.screens.howItWorks.features.scaffold'), desc: t('onboarding.screens.howItWorks.features.scaffoldDesc') },
-      { icon: 'book-outline', label: t('onboarding.screens.howItWorks.features.stories'), desc: t('onboarding.screens.howItWorks.features.storiesDesc') },
-      { icon: 'musical-notes-outline', label: t('onboarding.screens.howItWorks.features.music'), desc: t('onboarding.screens.howItWorks.features.musicDesc') },
-      { icon: 'mic-outline', label: t('onboarding.screens.howItWorks.features.voice'), desc: t('onboarding.screens.howItWorks.features.voiceDesc') },
-    ];
-    return (
-      <View style={styles.featureList}>
-        {features.map((f, i) => (
-          <Animated.View
-            key={i}
-            entering={FadeInUp.delay(400 + i * 150).duration(500)}
-            style={styles.featureRow}
-          >
-            <View style={styles.featureHeader}>
-              <View style={styles.featureIconContainer}>
-                <Ionicons name={f.icon} size={20} color="#FFFFFF" />
-              </View>
-              <ThemedText style={styles.featureLabel}>{f.label}</ThemedText>
-            </View>
-            <ThemedText style={styles.featureDesc}>{f.desc}</ThemedText>
-          </Animated.View>
-        ))}
-      </View>
-    );
-  };
-
-  const renderDecorativeElements = (step: number) => {
-    const isTablet = width >= 768;
-    if (!isTablet) return [];
-
-    type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
-    const decorativeIcons: IoniconsName[][] = [
-      ['paw-outline', 'star-outline', 'balloon-outline', 'sparkles-outline'],
-      ['book-outline', 'musical-note-outline', 'mic-outline', 'star-outline'],
-      ['people-outline', 'leaf-outline', 'heart-outline', 'flower-outline'],
-      ['lock-closed-outline', 'shield-checkmark-outline', 'checkmark-circle-outline', 'heart-outline'],
-      ['clipboard-outline', 'checkmark-circle-outline', 'people-outline', 'heart-outline'],
-    ];
-
-    const icons = decorativeIcons[step - 1] || [];
-
-    return icons.map((iconName, index) => {
-      const sizeVariation = [14, 16, 15, 17][index] || 16;
-      const positions = [
-        { top: '10%', left: '5%' },
-        { top: '15%', left: '88%' },
-        { top: '85%', left: '8%' },
-        { top: '88%', left: '85%' },
-      ];
-
-      const position = positions[index] || positions[0];
-
-      return (
-        <Animated.View
-          key={index}
-          style={[
-            styles.decorativeEmoji,
-            {
-              top: position.top as any,
-              left: position.left as any,
-            }
-          ]}
-        >
-          <Ionicons name={iconName} size={sizeVariation} color="rgba(255,255,255,0.3)" />
-        </Animated.View>
-      );
-    });
-  };
-
-
-  const renderFloatingElements = () => {
-    const isTablet = width >= 768;
-
-    if (!isTablet) {
-      return null;
-    }
-
-    const dots = [
-      { delay: 800, size: 4, opacity: 0.15 },
-      { delay: 1200, size: 6, opacity: 0.1 },
-      { delay: 1000, size: 3, opacity: 0.2 },
-    ];
-
-    return (
-      <>
-        {dots.map((dot, index) => {
-          const dotStyles = [
-            styles.floatingDot1,
-            styles.floatingDot2,
-            styles.floatingDot3,
-          ];
-
-          return (
-            <Animated.View
-              key={index}
-              style={[
-                styles.floatingDot,
-                dotStyles[index] || dotStyles[0],
-                {
-                  width: dot.size,
-                  height: dot.size,
-                  borderRadius: dot.size / 2,
-                  opacity: dot.opacity,
-                }
-              ]}
-              entering={FadeInUp.delay(dot.delay).duration(1000)}
-            />
-          );
-        })}
-      </>
-    );
-  };
-
-  const renderIllustration = (content: string) => {
-    const illustrationMap: { [key: string]: string } = {
-      'family reading together': 'family-reading',
-      'how-it-works': 'tina-bruno',
-      'parent hugging child': 'research-backed',
-      'privacy': 'research-backed',
-    };
-
-    const pngName = illustrationMap[content] || 'tina-bruno';
-
-    return (
-      <PngIllustration
-        key={pngName}
-        name={pngName}
-      />
-    );
+    if (!onPrevious || isTransitioning) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onPrevious();
   };
 
   return (
-    <Animated.View style={[{ flex: 1 }, containerAnimatedStyle]} {...panResponder.panHandlers}>
-      <LinearGradient
-        colors={['#E8F5E8', '#F0F8FF', '#E6F3FF']}
-        style={styles.container}
-      >
+    <View style={styles.container}>
+      <LinearGradient colors={NIGHT_GRADIENT} style={StyleSheet.absoluteFill} />
 
-
-      <View style={[styles.progressContainer, { marginTop: getProgressTopMargin() }]}>
-        <View style={styles.progressWrapper}>
-          {[...Array(totalSteps)].map((_, index) => (
-            <View
-              key={index}
-              style={[
-                styles.progressDot,
-                index < currentStep ? styles.progressDotActive : styles.progressDotInactive,
-              ]}
-            />
-          ))}
-        </View>
-        <ThemedText style={styles.stepCounter}>
-          {currentStep}/{totalSteps}
-        </ThemedText>
+      <View style={styles.starsLayer} pointerEvents="none">
+        {stars.map((star) => (
+          <View
+            key={`star-${star.id}`}
+            style={[
+              styles.star,
+              {
+                left: star.left,
+                top: star.top,
+                width: star.size,
+                height: star.size,
+                borderRadius: star.size / 2,
+                opacity: star.opacity,
+              },
+            ]}
+          />
+        ))}
       </View>
 
-      <View style={styles.contentContainer}>
-        {isConsentScreen ? (
-          <Animated.View
-            style={[
-              styles.textContainer,
-              textAnimatedStyle,
-              styles.consentTextContainer,
-            ]}
-          >
-            <ThemedText type="title" style={styles.title} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>
-              {title}
-            </ThemedText>
-            <ThemedText style={styles.body}>
-              {body}
-            </ThemedText>
-            <ScrollView
-              style={styles.consentScroll}
-              contentContainerStyle={styles.consentScrollContent}
-              showsVerticalScrollIndicator={false}
-              bounces={true}
-              decelerationRate={0.985}
-            >
-              {customContent}
-            </ScrollView>
-          </Animated.View>
-        ) : isFeatureListScreen ? (
-          <Animated.View
-            style={[
-              styles.textContainer,
-              textAnimatedStyle,
-              styles.consentTextContainer,
-            ]}
-          >
-            <ThemedText type="title" style={styles.title} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>
-              {title}
-            </ThemedText>
-            <ThemedText style={styles.body}>
-              {body}
-            </ThemedText>
-            <ScrollView
-              style={styles.consentScroll}
-              contentContainerStyle={styles.consentScrollContent}
-              showsVerticalScrollIndicator={false}
-              bounces={true}
-              decelerationRate={0.985}
-            >
-              {renderFeatureList()}
-              <View style={styles.contextualContent}>
-                {renderContextualContent(currentStep)}
-              </View>
-            </ScrollView>
-          </Animated.View>
-        ) : (
-          <Animated.View
-            style={[
-              styles.textContainer,
-              textAnimatedStyle,
-              isTextOnlyScreen && styles.textContainerExpanded
-            ]}
-          >
-            <ThemedText type="title" style={styles.title} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>
-              {title}
-            </ThemedText>
-            <ThemedText style={styles.body}>
-              {body}
-            </ThemedText>
-
-            <View style={styles.contextualContent}>
-              {renderContextualContent(currentStep)}
-            </View>
-          </Animated.View>
-        )}
-
-        {!isTextOnlyScreen && !isFeatureListScreen && (
-          <Animated.View
-            key={isAndroid ? `illustration-${currentStep}` : undefined}
-            entering={isAndroid ? ZoomIn.delay(300).duration(600) : undefined}
-            style={[
-              styles.illustrationContainer,
-              !isAndroid && imageAnimatedStyle,
-            ]}
-          >
-            <View style={styles.decorativeBackground}>
-              {renderDecorativeElements(currentStep)}
-            </View>
-
-            {renderIllustration(illustration)}
-
-            <View style={styles.floatingElements}>
-              {renderFloatingElements()}
-            </View>
-          </Animated.View>
-        )}
+      <View style={styles.moonLayer} pointerEvents="none">
+        <Image
+          source={require('@/assets/images/ui-elements/moon-top-screen.webp')}
+          style={styles.moonImage}
+          resizeMode="contain"
+        />
       </View>
 
+      {onSkip && (
+        <Animated.View
+          entering={FadeIn.duration(300)}
+          style={[styles.skipContainer, { top: insets.top + scaledPadding(10) }]}
+        >
+          <Pressable
+            testID="onboarding-skip"
+            onPress={onSkip}
+            hitSlop={12}
+            accessibilityLabel={t('onboardingV2.skip')}
+          >
+            <ThemedText style={[styles.skipText, { fontSize: scaledFontSize(15) }]}>
+              {t('onboardingV2.skip')}
+            </ThemedText>
+          </Pressable>
+        </Animated.View>
+      )}
 
-      <Animated.View
-        style={[
-          styles.buttonContainer,
-          buttonAnimatedStyle,
-          buttonContainerAnimatedStyle,
-          // Add extra bottom padding on Android for navigation bar
-          Platform.OS === 'android' && { paddingBottom: Math.max(insets.bottom, 20) + 10 }
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingTop: insets.top + scaledPadding(34), paddingBottom: scaledPadding(8) },
         ]}
+        showsVerticalScrollIndicator={false}
       >
-        <View style={styles.navigationButtons}>
-          {currentStep > 1 && (
+        <Animated.View entering={FadeInDown.duration(450)} style={styles.header}>
+          <ThemedText style={[styles.title, { fontSize: scaledFontSize(28) }]}>{title}</ThemedText>
+          {body ? (
+            <ThemedText style={[styles.body, { fontSize: scaledFontSize(15) }]}>{body}</ThemedText>
+          ) : null}
+        </Animated.View>
+
+        {customContent ? (
+          <Animated.View entering={FadeInDown.delay(120).duration(450)} style={styles.customContent}>
+            {customContent}
+          </Animated.View>
+        ) : null}
+      </ScrollView>
+
+      {decoration && (
+        <View style={[styles.decorationLayer, { top: insets.top - 26 }]} pointerEvents="none">
+          {decoration}
+        </View>
+      )}
+
+      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) + scaledPadding(8) }]}>
+        <View style={styles.buttonRow}>
+          {onPrevious && currentStep > 1 ? (
             <Pressable
+              testID="onboarding-back"
               style={styles.backButton}
               onPress={handlePrevious}
+              accessibilityLabel={t('common.back')}
             >
-              <ThemedText style={styles.backButtonText}>{backButtonText}</ThemedText>
+              <Ionicons name="chevron-back" size={scaledFontSize(18)} color="#FFFFFF" />
+              <ThemedText style={[styles.backText, { fontSize: scaledFontSize(15) }]}>
+                {t('common.back')}
+              </ThemedText>
             </Pressable>
-          )}
+          ) : null}
 
           <Pressable
-            style={({ pressed }) => [
-              styles.nextButton,
-              pressed && !isNextDisabled && styles.nextButtonPressed,
-              isNextDisabled && styles.nextButtonDisabled,
-            ]}
+            testID="onboarding-next"
+            style={[styles.nextButton, isNextDisabled && styles.nextButtonDisabled]}
             onPress={handleNext}
-            disabled={isTransitioning || isNextDisabled}
+            disabled={isNextDisabled || isTransitioning}
+            accessibilityLabel={buttonLabel}
           >
-            <ThemedText style={[styles.buttonText, isNextDisabled && styles.buttonTextDisabled]}>
+            <ThemedText style={[styles.nextText, { fontSize: scaledFontSize(16) }]}>
               {buttonLabel}
             </ThemedText>
+            <Ionicons name="arrow-forward" size={scaledFontSize(17)} color="#1A1633" />
           </Pressable>
         </View>
 
-        <ThemedText style={styles.progressHint}>
-          {currentStep < totalSteps ? t('onboarding.swipeOrTap') : t('onboarding.readyToStart')}
-        </ThemedText>
-      </Animated.View>
-    </LinearGradient>
-    </Animated.View>
+        <View style={styles.progressRow}>
+          {Array.from({ length: totalSteps }, (_, i) => (
+            <View
+              key={`dot-${i}`}
+              testID={`progress-dot-${i}`}
+              style={[styles.progressDot, i === currentStep - 1 && styles.progressDotActive]}
+            />
+          ))}
+          <ThemedText
+            testID="onboarding-step-counter"
+            style={[styles.stepCounter, { fontSize: scaledFontSize(13) }]}
+          >
+            {t('onboardingV2.stepCounter', { current: currentStep, total: totalSteps })}
+          </ThemedText>
+        </View>
+      </View>
+
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 20, // Reduced since we're using safe area insets
-    paddingBottom: 30,
   },
-
-  progressContainer: {
+  starsLayer: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  star: {
+    position: 'absolute',
+    backgroundColor: '#FFFFFF',
+  },
+  moonLayer: {
+    position: 'absolute',
+    top: -70,
+    left: 0,
+    right: 0,
     alignItems: 'center',
-    marginBottom: 20,
-    gap: 8,
+    opacity: 0.35,
   },
-  progressWrapper: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+  moonImage: {
+    width: 240,
+    height: 240,
+  },
+  skipContainer: {
+    position: 'absolute',
+    right: 20,
+    zIndex: 30,
+  },
+  skipText: {
+    color: TEXT_MUTED,
+    fontWeight: '600',
+  },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 24,
+  },
+  header: {
     alignItems: 'center',
-    gap: 8,
-  },
-  stepCounter: {
-    fontSize: 12,
-    color: '#2E8B8B',
-    fontWeight: '500',
-    marginTop: 4,
-  },
-  progressDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  progressDotActive: {
-    backgroundColor: '#4ECDC4',
-  },
-  progressDotInactive: {
-    backgroundColor: 'rgba(78, 205, 196, 0.3)',
-  },
-  contentContainer: {
-    flex: 1,
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-  },
-  textContainer: {
-    alignItems: 'center',
-    marginBottom: 30,
-    paddingHorizontal: 12,
-    width: '100%',
-  },
-  textContainerExpanded: {
-    flex: 1,
-    justifyContent: 'center',
-    marginBottom: 0,
-  },
-  consentTextContainer: {
-    flex: 1,
-    marginBottom: 0,
-  },
-  consentScroll: {
-    flex: 1,
-    width: '100%',
-  },
-  consentScrollContent: {
-    paddingBottom: 12,
+    marginBottom: 12,
   },
   title: {
-    fontSize: 26,
-    fontWeight: 'bold',
+    color: '#FFFFFF',
+    fontWeight: '700',
     textAlign: 'center',
-    marginBottom: 16,
-    color: '#2E8B8B',
-    lineHeight: 32,
-    width: '100%',
+    lineHeight: 36,
   },
   body: {
-    fontSize: 16,
+    color: TEXT_MUTED,
     textAlign: 'center',
-    lineHeight: 24,
-    color: '#5A5A5A',
-    maxWidth: width * 0.85,
+    lineHeight: 22,
+    marginTop: 12,
+    maxWidth: 320,
   },
-  contextualContent: {
-    marginTop: 20,
-    alignItems: 'center',
+  customContent: {
+    alignSelf: 'stretch',
   },
-  contextualWrapper: {
-    alignItems: 'center',
-    gap: 6,
+  footer: {
+    paddingHorizontal: 24,
+    paddingTop: 10,
+    gap: 14,
+    zIndex: 10,
   },
-  tagline: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#4ECDC4',
-    textAlign: 'center',
-  },
-  benefit: {
-    fontSize: 12,
-    color: '#7A7A7A',
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
-  // Feature list styles (How It Works screen)
-  featureList: {
-    marginTop: 16,
-    gap: 10,
-    width: '100%',
-    paddingHorizontal: 4,
-  },
-  featureRow: {
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    borderRadius: 14,
-    padding: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  featureHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  featureIconContainer: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#2E8B8B',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 8,
-  },
-  featureLabel: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#2E8B8B',
-    flex: 1,
-  },
-  featureDesc: {
-    fontSize: 13,
-    color: '#5A5A5A',
-    lineHeight: 18,
-    paddingLeft: 36,
-  },
-  illustrationContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 20,
-    maxHeight: height * 0.5,
-    position: 'relative',
-    width: '100%',
-  },
-
-  decorativeBackground: {
+  decorationLayer: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 0,
-  },
-  decorativeEmoji: {
-    position: 'absolute',
-    fontSize: 16,
-    opacity: 0.3,
+    right: 26,
     zIndex: 1,
   },
-  floatingElements: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 0,
-  },
-  floatingDot: {
-    position: 'absolute',
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(78, 205, 196, 0.2)',
-  },
-  floatingDot1: {
-    top: '15%',
-    left: '8%',
-  },
-  floatingDot2: {
-    top: '85%',
-    left: '85%',
-  },
-  floatingDot3: {
-    top: '12%',
-    left: '90%',
-  },
-
-  buttonContainer: {
-    alignItems: 'center',
-    marginTop: 20,
-    gap: 12,
-  },
-  navigationButtons: {
+  progressRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 16,
-    width: '100%',
+    gap: 7,
+  },
+  progressDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+  },
+  progressDotActive: {
+    width: 20,
+    backgroundColor: GOLD,
+  },
+  stepCounter: {
+    color: TEXT_MUTED,
+    fontWeight: '600',
+    marginLeft: 10,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
   },
   backButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
     borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(78, 205, 196, 0.3)',
-    alignSelf: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    borderColor: 'rgba(255, 255, 255, 0.14)',
   },
-  backButtonText: {
-    color: '#2E8B8B',
-    fontSize: 15,
-    fontWeight: '500',
+  backText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   nextButton: {
-    backgroundColor: '#4ECDC4',
-    paddingHorizontal: 32,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
     paddingVertical: 14,
-    borderRadius: 25,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-    minWidth: 140,
-    maxWidth: 260,
-    alignSelf: 'center',
-  },
-  nextButtonPressed: {
-    backgroundColor: '#44A08D',
-    transform: [{ scale: 0.98 }],
+    paddingHorizontal: 28,
+    borderRadius: 26,
+    backgroundColor: GOLD,
+    shadowColor: GOLD,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 6,
   },
   nextButtonDisabled: {
-    backgroundColor: '#A0C4C0',
-    borderColor: '#8BB5B0',
-    opacity: 0.7,
+    backgroundColor: 'rgba(232, 184, 75, 0.35)',
+    shadowOpacity: 0,
   },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  buttonTextDisabled: {
-    opacity: 0.6,
-  },
-  progressHint: {
-    fontSize: 12,
-    color: '#7A7A7A',
-    textAlign: 'center',
-    fontStyle: 'italic',
-    marginTop: 8,
+  nextText: {
+    color: '#1A1633',
+    fontWeight: '700',
   },
 });
