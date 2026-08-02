@@ -80,7 +80,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
 
   // Configure native Google Sign-In for Android on mount
   React.useEffect(() => {
-    if (Platform.OS === 'android') {
+    if (Platform.OS === 'android' && AuthService.isGoogleAuthConfigured()) {
       AuthService.configureNativeGoogleSignIn();
     }
   }, []);
@@ -187,6 +187,12 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
 
   const handleGoogleLogin = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    if (!AuthService.isGoogleAuthConfigured()) {
+      log.error('Google Sign-In unavailable: client id not configured for this build');
+      Alert.alert(t('login.signInFailed'), t('login.signInFailedMessage'));
+      return;
+    }
     setIsGoogleLoading(true);
 
     // On Android, use native Google Sign-In if available
@@ -409,7 +415,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
       {/* Login Screen - slides out to the left */}
       <View style={styles.loginScreenWrapper}>
         <LinearGradient
-          colors={['#1E3A8A', '#3B82F6', '#4ECDC4']}
+          colors={['#050515', '#0A0F2C', '#1a1a3e']}
           style={styles.gradient}
         >
         {/* Stars */}
@@ -466,8 +472,26 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
           </Animated.View>
         </View>
 
-        {/* Login Buttons */}
+        {/* Login Buttons - Apple first per design, both as white pills */}
         <Animated.View style={[styles.buttonContainer, buttonsAnimatedStyle]}>
+          {Platform.OS === 'ios' && (
+            <Pressable
+              style={[
+                styles.loginButton,
+                styles.appleButton,
+              ]}
+              onPress={handleAppleLogin}
+              disabled={isGoogleLoading || isAppleLoading}
+            >
+              <View style={styles.buttonContent}>
+                <FontAwesome5 name="apple" size={scaledButtonSize(18)} color="#111111" style={styles.iconSpacing} />
+                <ThemedText style={[styles.buttonText, styles.appleButtonText, { fontSize: scaledFontSize(16) }]}>
+                  {isAppleLoading ? t('login.signingIn') : t('login.continueWithApple')}
+                </ThemedText>
+              </View>
+            </Pressable>
+          )}
+
           <Pressable
             style={[
               styles.loginButton,
@@ -484,37 +508,31 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
             </View>
           </Pressable>
 
-          {Platform.OS === 'ios' && (
-            <Pressable
-              style={[
-                styles.loginButton,
-                styles.appleButton,
-              ]}
-              onPress={handleAppleLogin}
-              disabled={isGoogleLoading || isAppleLoading}
-            >
-              <View style={styles.buttonContent}>
-                <FontAwesome5 name="apple" size={scaledButtonSize(18)} color="#FFFFFF" style={styles.iconSpacing} />
-                <ThemedText style={[styles.buttonText, styles.appleButtonText, { fontSize: scaledFontSize(16) }]}>
-                  {isAppleLoading ? t('login.signingIn') : t('login.continueWithApple')}
-                </ThemedText>
-              </View>
-            </Pressable>
-          )}
-
-          {/* Skip Button */}
+          {/* Guest Button - outline pill per design */}
           <Pressable
             style={styles.skipButton}
             onPress={handleSkip}
           >
-            <ThemedText style={[styles.skipButtonText, { fontSize: scaledFontSize(14) }]}>
-              {t('login.continueWithoutSignIn')}
-            </ThemedText>
+            <View style={styles.buttonContent}>
+              <Ionicons name="person" size={scaledButtonSize(16)} color="#FFFFFF" style={styles.iconSpacing} />
+              <ThemedText style={[styles.skipButtonText, { fontSize: scaledFontSize(15) }]}>
+                {t('login.continueWithoutSignIn')}
+              </ThemedText>
+            </View>
           </Pressable>
+
+          <ThemedText style={[styles.guestNote, { fontSize: scaledFontSize(13) }]}>
+            {t('login.guestNote')}
+          </ThemedText>
         </Animated.View>
 
-        {/* Bottom spacer */}
-        <View style={{ paddingBottom: insets.bottom + 20 }} />
+        {/* Privacy promise footer - shield per design */}
+        <View style={[styles.privacyFooter, { paddingBottom: insets.bottom + 20 }]}>
+          <Ionicons name="shield-checkmark" size={scaledFontSize(22)} color="#E8B84B" />
+          <ThemedText style={[styles.privacyFooterText, { fontSize: scaledFontSize(13) }]}>
+            {t('login.privacyPromise')}
+          </ThemedText>
+        </View>
       </LinearGradient>
       </View>
 
@@ -747,9 +765,9 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
   },
   appleButton: {
-    backgroundColor: '#000000',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#000000',
+    borderColor: '#E0E0E0',
   },
   buttonPressed: {
     opacity: 0.7,
@@ -774,7 +792,27 @@ const styles = StyleSheet.create({
     color: '#333333',
   },
   appleButtonText: {
-    color: '#FFFFFF',
+    color: '#111111',
+  },
+  guestNote: {
+    textAlign: 'center',
+    color: 'rgba(255, 255, 255, 0.65)',
+    lineHeight: 19,
+    marginTop: 12,
+    maxWidth: 280,
+    alignSelf: 'center',
+  },
+  privacyFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingHorizontal: 32,
+    zIndex: 5,
+  },
+  privacyFooterText: {
+    color: 'rgba(255, 255, 255, 0.75)',
+    lineHeight: 19,
   },
   skipButton: {
     paddingVertical: 12,

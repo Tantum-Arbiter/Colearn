@@ -35,6 +35,15 @@ const GOOGLE_IOS_CLIENT_ID = extra.googleIosClientId || process.env.EXPO_PUBLIC_
 const GOOGLE_ANDROID_CLIENT_ID = extra.googleAndroidClientId || process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
 const GOOGLE_WEB_CLIENT_ID = extra.googleWebClientId || process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
 
+// Google.useAuthRequest throws at render time when the platform client id is
+// undefined -substitute a placeholder so the login screen can mount, and gate
+// the actual sign-in flow behind isGoogleAuthConfigured()
+const MISSING_GOOGLE_CLIENT_ID = 'missing-client-id.apps.googleusercontent.com';
+
+if (!GOOGLE_IOS_CLIENT_ID || !GOOGLE_ANDROID_CLIENT_ID || !GOOGLE_WEB_CLIENT_ID) {
+  log.warn('Google client id(s) missing -Google Sign-In disabled. Check EXPO_PUBLIC_GOOGLE_*_CLIENT_ID env vars (.env for local builds, eas.json for EAS builds).');
+}
+
 const fetchWithTimeout = async (url: string, options: RequestInit): Promise<Response> => {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), AUTH_TIMEOUT_MS);
@@ -111,12 +120,18 @@ export class AuthService {
     }
   }
 
+  static isGoogleAuthConfigured(): boolean {
+    if (Platform.OS === 'ios') return Boolean(GOOGLE_IOS_CLIENT_ID);
+    if (Platform.OS === 'android') return Boolean(GOOGLE_ANDROID_CLIENT_ID);
+    return Boolean(GOOGLE_WEB_CLIENT_ID);
+  }
+
   static getGoogleConfig() {
     const config: Record<string, string | undefined> = {
-      iosClientId: this.googleConfig.iosClientId,
-      androidClientId: this.googleConfig.androidClientId,
-      webClientId: this.googleConfig.webClientId,
-      expoClientId: this.googleConfig.expoClientId,
+      iosClientId: this.googleConfig.iosClientId || MISSING_GOOGLE_CLIENT_ID,
+      androidClientId: this.googleConfig.androidClientId || MISSING_GOOGLE_CLIENT_ID,
+      webClientId: this.googleConfig.webClientId || MISSING_GOOGLE_CLIENT_ID,
+      expoClientId: this.googleConfig.expoClientId || MISSING_GOOGLE_CLIENT_ID,
     };
 
     if (Platform.OS === 'ios') {

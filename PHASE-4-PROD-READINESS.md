@@ -1205,3 +1205,76 @@ Visual style:
 - [ ] Integration test: long-press on story card opens correct guide
 - [ ] Data test: every content ID in the app has a matching guide entry (no gaps)
 - [ ] Accessibility test: all guide text is readable by screen readers, fonts scale
+
+---
+
+## 12. Security Posture — Dependency Advisories
+
+> **TL;DR: `npm audit` reports ~30 advisories. Zero of them reach shipped app code.**
+> They are all build-time tooling. **Never run `npm audit fix --force` on this project.**
+
+### Verified finding (2026-08-02, Expo SDK 54)
+
+All 12 root-flagged packages were checked against the **actual production iOS bundle**:
+
+| | Result |
+|---|---|
+| Modules in production bundle | 2,487 across 148 npm packages |
+| Vulnerable packages present in bundle | **0 of 12** |
+
+Flagged packages and where they actually run:
+
+| Package | Severity | Runs at |
+|---|---|---|
+| `tar`, `shell-quote` | critical | npm / Expo CLI unpacking, prebuild |
+| `ws` | high | Metro dev-server websocket, React DevTools |
+| `undici`, `js-yaml`, `fast-uri`, `brace-expansion` | high | CLI fetch, config parsing, schema validation, globbing |
+| `postcss`, `svgo` | high | web/asset processing at build time |
+| `@babel/core`, `@babel/plugin-transform-modules-systemjs` | high / low | transpiler — its *output* ships, the compiler does not |
+| `uuid` | moderate | `@expo/cli` → `xcode` project manipulation |
+
+Residual risk is to the **build machine** (e.g. `tar` path traversal during a malicious
+package install — a supply-chain scenario), not to users' devices.
+
+### How to re-verify (do this, don't assume)
+
+```bash
+npx expo export --platform ios --source-maps --output-dir /tmp/erexport
+# then list every npm package Metro actually bundled from the .map "sources" array
+```
+
+⚠️ **Do not grep the `.hbc` bundle** — Hermes strips module paths, so every lookup returns
+"not found" and the result is meaningless. Always run a control for packages you *know*
+ship (`react-native`, `expo-audio`, `zustand`) to prove the method works before trusting it.
+
+`npm audit --omit=dev` is **also misleading here**: `expo` is a production dependency that
+transitively pulls `@expo/cli` and `metro`, so npm attributes their advisories to
+"production" even though Metro tree-shakes them out of the bundle entirely.
+
+### Why `npm audit fix --force` is banned
+
+Run on 2026-08-02, it **downgraded `expo` 54 → 46** while separately bumping several
+`expo-*` modules to SDK 57 versions, leaving SDK-46 core + SDK-57 modules + React Native
+0.81 — an unbuildable tree. It also made the audit **worse: 20 → 25 advisories**, newly
+including 2 critical. Recovery was `git checkout -- package.json package-lock.json`
+followed by `npm ci`.
+
+### Correct dependency workflow
+
+```bash
+npx expo install --check     # report drift against the installed SDK
+npx expo install --fix       # align upward, within the SDK
+npx expo-doctor              # full project health
+```
+
+Transitive tooling advisories clear when Expo ships fixed tooling — resolve them by moving
+SDK 54 → 55 → 56 deliberately, testing at each step. Never by letting npm rewrite the graph.
+
+### Known-accepted, and what is not
+
+- **Accepted**: the build-tooling advisories above, pending SDK upgrades.
+- **Not accepted, fix immediately**: any advisory in a package that appears in the source-map
+  package list (i.e. genuinely bundled), or any missing native peer dependency —
+  `expo-doctor` flagged a missing `expo-asset` (required by `expo-audio`) that could crash
+  production builds outside Expo Go. Fixed 2026-08-02.
+- If CI should gate on audit, prefer `npm audit --audit-level=critical` over failing on noise.

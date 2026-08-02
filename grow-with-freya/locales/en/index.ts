@@ -83,10 +83,12 @@ export default {
 
   // Login screen
   login: {
-    welcomeTitle: 'Welcome to\nEarlyroots Stories',
+    welcomeTitle: 'Grown-ups, let\'s get started',
     subtitle: "Sign in to save your child's progress and sync across devices",
     continueWithGoogle: 'Continue with Google',
     continueWithApple: 'Continue with Apple',
+    guestNote: 'Includes two free stories. Cloud sync is unavailable in guest mode.',
+    privacyPromise: 'No adverts. No behavioural tracking.',
     signingIn: 'Signing in...',
     continueWithoutSignIn: 'Continue without signing in',
     footerPrefix: 'By continuing, you agree to our',
@@ -255,6 +257,28 @@ export default {
     pagesRecorded: '{{count}} pages recorded',
     nameAlreadyExists: 'Name Already Exists',
     nameAlreadyExistsMessage: 'A voice over named "{{name}}" already exists. Please choose a different name.',
+  },
+
+  // Story detail view (shown after tapping a book)
+  storyDetail: {
+    readTogether: 'Read Together',
+    listen: 'Listen',
+    playAlong: 'Play Along',
+    readNow: 'Read now',
+    savedOffline: 'Saved for offline',
+    supports: 'Supports',
+    minutes: '{{count}} min',
+    ages: 'Ages {{range}}',
+    interactive: 'Interactive',
+    favourite: 'Favourite',
+  },
+
+  // Rotate-to-landscape prompt (shown before the book opens)
+  rotatePrompt: {
+    ready: 'Ready for our story time?',
+    turnTogether: 'Turn the screen together',
+    openWhenSideways: "We'll open the book when your device is sideways.",
+    openForMe: 'Open the book for me',
   },
 
   // Story preview modal
@@ -2624,6 +2648,61 @@ export default {
       sf3: { title: 'Apple Take', page1: 'Take some away! How many are left to leave?', page2: 'The ___ stay! ___ and ___!', page3: 'Eleven apples on the tree.', page4: '___ fall! ___ and ___!', page5: 'Only a few fewer left.' },
       sf4: { title: 'Star Fall', page1: 'Some stars remain while others fall.', page2: '___ and ___. Some ___!', page3: 'Take some away from the sky!', page4: '___ of them! ___ and ___!', page5: 'A few are left behind.' },
       sf5: { title: 'Sand Scoop', page1: 'Eleven scoops in the bucket!', page2: '___ away! ___ and ___!', page3: 'Everything balances!', page4: '___ scoops! ___ and ___!', page5: 'Take the last ones away.' },
+    },
+  },
+
+  splash: {
+    tagline: 'A gentle place to grow together.',
+  },
+
+  onboardingV2: {
+    stepCounter: '{{current}} of {{total}}',
+    skip: 'Skip',
+    worlds: {
+      storiesDesc: 'Gentle illustrated tales to share at bedtime, with narration you can record in your own voice.',
+      musicDesc: 'Real instrument sounds, simple songs and rhythm games to play together.',
+      learningDesc: 'Counting, letters and first words through calm, playful activities.',
+      feelingsDesc: 'Stories and cards that help little ones name and share how they feel.',
+      close: 'Close',
+      title: 'Little moments.\nBig growing.',
+      footer: 'Made to enjoy together.',
+      stories: 'Stories',
+      music: 'Music',
+      learning: 'Learning',
+      feelings: 'Feelings',
+    },
+    together: {
+      title: 'Better when\nwe play together.',
+      body: 'Early Roots is designed for children and grown-ups to explore side by side.',
+      read: 'Read together',
+      play: 'Play together',
+      talk: 'Talk together',
+    },
+    safe: {
+      title: 'A safe place to grow',
+      noAds: 'No adverts',
+      noTracking: 'No behavioural tracking',
+      noPressure: 'No pressure or streaks',
+      gentle: 'Gentle sounds & animations',
+    },
+    ready: {
+      title: 'Stories ready\nwhen you need them.',
+      offlineTitle: 'Works offline',
+      offlineDesc: 'Downloaded stories are available without a connection.',
+      routinesTitle: 'Made for routines',
+      routinesDesc: 'Perfect for bedtime, travel and quiet time.',
+      parentTitle: 'Parent managed',
+      parentDesc: 'Control downloads, profiles and screen time.',
+    },
+    profile: {
+      title: 'Who is exploring today?',
+      nicknameLabel: 'Nickname',
+      nicknamePlaceholder: 'Enter a nickname',
+      ageLabel: 'Age range',
+      languageLabel: 'Language',
+      setUpLater: 'Set up later',
+      continueAs: 'Continue as {{name}}',
+      helper: 'This helps us suggest suitable stories and activities.',
     },
   },
 };

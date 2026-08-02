@@ -10,6 +10,15 @@ jest.mock('react-native-reanimated', () => {
   const Text = require('react-native').Text;
   const ScrollView = require('react-native').ScrollView;
 
+  // Chainable builder for entering/exiting layout animations (FadeIn.duration(300).delay(100)...)
+  const createAnimationBuilder = () => {
+    const builder = {};
+    ['duration', 'delay', 'easing', 'springify', 'damping', 'stiffness', 'withInitialValues', 'withCallback', 'build'].forEach((method) => {
+      builder[method] = () => builder;
+    });
+    return builder;
+  };
+
   return {
     __esModule: true,
     default: {
@@ -26,7 +35,10 @@ jest.mock('react-native-reanimated', () => {
     useSharedValue: jest.fn(() => ({ value: 0 })),
     useAnimatedStyle: jest.fn(() => ({})),
     useAnimatedProps: jest.fn(() => ({})),
-    withTiming: jest.fn((value) => value),
+    withTiming: jest.fn((value, _config, callback) => {
+      if (typeof callback === 'function') callback(true);
+      return value;
+    }),
     withSpring: jest.fn((value) => value),
     withDecay: jest.fn((value) => value),
     withDelay: jest.fn((delay, animation) => animation),
@@ -37,6 +49,20 @@ jest.mock('react-native-reanimated', () => {
     runOnUI: jest.fn((fn) => fn),
     interpolate: jest.fn((value, inputRange, outputRange) => outputRange[0]),
     Extrapolate: { CLAMP: 'clamp' },
+    FadeIn: createAnimationBuilder(),
+    FadeOut: createAnimationBuilder(),
+    FadeInUp: createAnimationBuilder(),
+    FadeInDown: createAnimationBuilder(),
+    FadeOutUp: createAnimationBuilder(),
+    FadeOutDown: createAnimationBuilder(),
+    SlideInUp: createAnimationBuilder(),
+    SlideInDown: createAnimationBuilder(),
+    SlideInLeft: createAnimationBuilder(),
+    SlideInRight: createAnimationBuilder(),
+    SlideOutUp: createAnimationBuilder(),
+    SlideOutDown: createAnimationBuilder(),
+    SlideOutLeft: createAnimationBuilder(),
+    SlideOutRight: createAnimationBuilder(),
     Easing: {
       linear: jest.fn(),
       ease: jest.fn(),
