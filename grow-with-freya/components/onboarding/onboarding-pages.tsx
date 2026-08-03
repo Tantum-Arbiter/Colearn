@@ -619,6 +619,8 @@ const styles = StyleSheet.create({
   safetyGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    width: '86%',
+    alignSelf: 'center',
     borderRadius: 16,
     borderWidth: 1,
     borderColor: SAFETY_BORDER,
