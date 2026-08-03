@@ -215,16 +215,17 @@ const SAFETY_ITEMS: {
   key: string;
   art: ImageSourcePropType;
   nudgeX?: number;
+  nudgeY?: number;
   labelNudgeX?: number;
 }[] = [
-  { key: 'noAds', art: require('@/assets/images/onboarding/safe-no-ads.webp') },
+  { key: 'noAds', art: require('@/assets/images/onboarding/safe-no-ads.webp'), nudgeY: -8 },
   {
     key: 'noTracking',
     art: require('@/assets/images/onboarding/safe-no-tracking.webp'),
     nudgeX: 5,
     labelNudgeX: 3,
   },
-  { key: 'noPressure', art: require('@/assets/images/onboarding/safe-no-streaks.webp') },
+  { key: 'noPressure', art: require('@/assets/images/onboarding/safe-no-streaks.webp'), nudgeY: -4 },
   { key: 'gentle', art: require('@/assets/images/onboarding/safe-gentle.webp') },
 ];
 
@@ -269,7 +270,14 @@ export function SafetyPage() {
               source={item.art}
               style={[
                 styles.safetyArt,
-                item.nudgeX ? { transform: [{ translateX: item.nudgeX }] } : null,
+                item.nudgeX || item.nudgeY
+                  ? {
+                      transform: [
+                        { translateX: item.nudgeX ?? 0 },
+                        { translateY: item.nudgeY ?? 0 },
+                      ],
+                    }
+                  : null,
               ]}
               resizeMode="cover"
             />
