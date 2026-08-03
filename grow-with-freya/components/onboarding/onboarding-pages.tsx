@@ -20,8 +20,8 @@ const CHIP_SIZE = Math.floor((SCREEN_WIDTH - SHELL_H_PADDING * 2 - CHIP_GAP * 2)
 // sized to keep that glyph at roughly 61pt
 // the tile claims nearly the whole cell: padding is trimmed to the minimum that
 // still separates it from the gold dividers
-const SAFETY_ART = 100;
-const SAFETY_CELL_H = 145;
+const SAFETY_ART = 83;
+const SAFETY_CELL_H = 128;
 // gold hairlines over a near-opaque navy fill: the panel overlaps the base of
 // the cloud art, so the cells have to stay legible over it
 const SAFETY_BORDER = 'rgba(232, 184, 75, 0.55)';
@@ -34,7 +34,7 @@ const TOGETHER_BACKDROP_H = Math.round(SCREEN_WIDTH * TOGETHER_ART_RATIO);
 // safety art is 900x774; same full-bleed treatment as the together backdrop
 // the safety scene reads as a full-width band with the cloud cropped to it,
 // rather than the whole square artwork inset on the page
-const SAFE_BACKDROP_H = Math.round(SCREEN_WIDTH * 0.59);
+const SAFE_BACKDROP_H = Math.round(SCREEN_WIDTH * 0.51);
 const SAFE_BACKDROP_TOP = 172;
 // drops the scene down the screen so the headline has clear sky above it
 const TOGETHER_BACKDROP_TOP = 128;
@@ -466,7 +466,9 @@ const styles = StyleSheet.create({
     marginTop: SAFE_BACKDROP_TOP,
   },
   safeBackdropSpacer: {
-    height: SAFE_BACKDROP_H + SAFE_BACKDROP_TOP - 214,
+    // clears the full height of the band plus a gap, so the panel starts below
+    // the artwork instead of cutting across its lower edge
+    height: SAFE_BACKDROP_H + SAFE_BACKDROP_TOP - 167,
   },
   togetherBackdrop: {
     width: SCREEN_WIDTH,
