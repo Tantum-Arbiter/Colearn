@@ -15,8 +15,9 @@ const CHIP_GAP = 10;
 const CHIP_SIZE = Math.floor((SCREEN_WIDTH - SHELL_H_PADDING * 2 - CHIP_GAP * 2) / 3);
 // the safety promises read as one panel of four quadrants, so the art is a small
 // glyph inside each cell rather than a tile in its own right
-const SAFETY_ART = 60;
-const SAFETY_CELL_H = 124;
+// matches the together-page chips so the two steps read at the same scale
+const SAFETY_ART = CHIP_SIZE;
+const SAFETY_CELL_H = SAFETY_ART + 56;
 // gold hairlines over a near-opaque navy fill: the panel overlaps the base of
 // the cloud art, so the cells have to stay legible over it
 const SAFETY_BORDER = 'rgba(232, 184, 75, 0.38)';
@@ -462,9 +463,9 @@ const styles = StyleSheet.create({
     marginTop: SAFE_BACKDROP_TOP,
   },
   safeBackdropSpacer: {
-    // clears the base of the cloud so the panel starts below the constellation
-    // rather than cutting through its lower arc
-    height: SAFE_BACKDROP_H + SAFE_BACKDROP_TOP - 240,
+    // full-size promise art needs the height, so the panel rides up over the
+    // base of the cloud, leaving the shield and the bulk of the scene visible
+    height: SAFE_BACKDROP_H + SAFE_BACKDROP_TOP - 318,
   },
   togetherBackdrop: {
     width: SCREEN_WIDTH,
@@ -609,10 +610,10 @@ const styles = StyleSheet.create({
     width: '50%',
     minHeight: SAFETY_CELL_H,
     alignItems: 'center',
-    paddingTop: 14,
-    paddingBottom: 12,
+    paddingTop: 10,
+    paddingBottom: 10,
     paddingHorizontal: 10,
-    gap: 6,
+    gap: 4,
   },
   safetyCellDividerRight: {
     borderRightWidth: 1,
