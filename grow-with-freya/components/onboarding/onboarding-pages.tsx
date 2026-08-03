@@ -20,8 +20,8 @@ const CHIP_SIZE = Math.floor((SCREEN_WIDTH - SHELL_H_PADDING * 2 - CHIP_GAP * 2)
 // sized to keep that glyph at roughly 61pt
 // the tile claims nearly the whole cell: padding is trimmed to the minimum that
 // still separates it from the gold dividers
-const SAFETY_ART = 118;
-const SAFETY_CELL_H = 163;
+const SAFETY_ART = 100;
+const SAFETY_CELL_H = 145;
 // gold hairlines over a near-opaque navy fill: the panel overlaps the base of
 // the cloud art, so the cells have to stay legible over it
 const SAFETY_BORDER = 'rgba(232, 184, 75, 0.55)';
@@ -34,7 +34,7 @@ const TOGETHER_BACKDROP_H = Math.round(SCREEN_WIDTH * TOGETHER_ART_RATIO);
 // safety art is 900x774; same full-bleed treatment as the together backdrop
 // the safety scene reads as a full-width band with the cloud cropped to it,
 // rather than the whole square artwork inset on the page
-const SAFE_BACKDROP_H = Math.round(SCREEN_WIDTH * 0.5);
+const SAFE_BACKDROP_H = Math.round(SCREEN_WIDTH * 0.59);
 const SAFE_BACKDROP_TOP = 172;
 // drops the scene down the screen so the headline has clear sky above it
 const TOGETHER_BACKDROP_TOP = 128;
