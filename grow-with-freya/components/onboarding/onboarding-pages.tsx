@@ -15,10 +15,9 @@ const CHIP_GAP = 10;
 const CHIP_SIZE = Math.floor((SCREEN_WIDTH - SHELL_H_PADDING * 2 - CHIP_GAP * 2) / 3);
 // the safety promises read as one panel of four quadrants, so the art is a small
 // glyph inside each cell rather than a tile in its own right
-// the promise art is cropped to the bare glyph, so the frame is the glyph size
-// rather than a tile with its own background
-const SAFETY_ART = 48;
-const SAFETY_CELL_H = 100;
+// the promise art is a full starfield tile, sized to fill its quadrant
+const SAFETY_ART = 116;
+const SAFETY_CELL_H = SAFETY_ART + 46;
 // gold hairlines over a near-opaque navy fill: the panel overlaps the base of
 // the cloud art, so the cells have to stay legible over it
 const SAFETY_BORDER = 'rgba(232, 184, 75, 0.55)';
@@ -30,7 +29,10 @@ const TOGETHER_ART_RATIO = 941 / 900;
 const TOGETHER_BACKDROP_H = Math.round(SCREEN_WIDTH * TOGETHER_ART_RATIO);
 // safety art is 900x774; same full-bleed treatment as the together backdrop
 const SAFE_ART_RATIO = 774 / 900;
-const SAFE_BACKDROP_H = Math.round(SCREEN_WIDTH * SAFE_ART_RATIO);
+// scaled back from full-bleed: the full-size promise tiles need the height, and
+// shrinking the scene keeps the whole cloud visible rather than hiding its base
+const SAFE_BACKDROP_SCALE = 0.72;
+const SAFE_BACKDROP_H = Math.round(SCREEN_WIDTH * SAFE_ART_RATIO * SAFE_BACKDROP_SCALE);
 const SAFE_BACKDROP_TOP = 118;
 // drops the scene down the screen so the headline has clear sky above it
 const TOGETHER_BACKDROP_TOP = 128;
@@ -212,10 +214,10 @@ export function SafetyBackdrop() {
         style={styles.togetherBackdropImage}
         resizeMode="cover"
       />
-      <LinearGradient colors={['#07091E', 'rgba(7, 9, 30, 0.55)', 'transparent']} locations={[0, 0.4, 1]} style={styles.backdropFadeTop} pointerEvents="none" />
-      <LinearGradient colors={['transparent', 'rgba(12, 17, 48, 0.55)', '#0C1130']} locations={[0, 0.6, 1]} style={styles.backdropFadeBottom} pointerEvents="none" />
-      <LinearGradient colors={['#090C26', 'rgba(9, 12, 38, 0.55)', 'transparent']} locations={[0, 0.4, 1]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={styles.backdropFadeLeft} pointerEvents="none" />
-      <LinearGradient colors={['transparent', 'rgba(9, 12, 38, 0.55)', '#090C26']} locations={[0, 0.6, 1]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={styles.backdropFadeRight} pointerEvents="none" />
+      <LinearGradient colors={['#07091E', 'rgba(7, 9, 30, 0.6)', 'transparent']} locations={[0, 0.45, 1]} style={styles.safeFadeTop} pointerEvents="none" />
+      <LinearGradient colors={['transparent', 'rgba(12, 17, 48, 0.6)', '#0C1130']} locations={[0, 0.55, 1]} style={styles.safeFadeBottom} pointerEvents="none" />
+      <LinearGradient colors={['#090C26', 'rgba(9, 12, 38, 0.6)', 'transparent']} locations={[0, 0.45, 1]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={styles.safeFadeLeft} pointerEvents="none" />
+      <LinearGradient colors={['transparent', 'rgba(9, 12, 38, 0.6)', '#090C26']} locations={[0, 0.55, 1]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={styles.safeFadeRight} pointerEvents="none" />
     </View>
   );
 }
@@ -459,9 +461,10 @@ const styles = StyleSheet.create({
     marginLeft: 186,
   },
   safeBackdrop: {
-    width: SCREEN_WIDTH,
+    width: Math.round(SCREEN_WIDTH * SAFE_BACKDROP_SCALE),
     height: SAFE_BACKDROP_H,
     marginTop: SAFE_BACKDROP_TOP,
+    alignSelf: 'center',
   },
   safeBackdropSpacer: {
     // the compact panel gives the height back, so the cloud clears it again
@@ -489,6 +492,36 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: '22%',
+  },
+  // the safety scene is inset rather than full-bleed, so its edges need deeper
+  // fades to dissolve the band into the night sky instead of showing a seam
+  safeFadeTop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '34%',
+  },
+  safeFadeBottom: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '34%',
+  },
+  safeFadeLeft: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    width: '34%',
+  },
+  safeFadeRight: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    right: 0,
+    width: '34%',
   },
   backdropFadeLeft: {
     position: 'absolute',
@@ -626,6 +659,8 @@ const styles = StyleSheet.create({
   safetyArtFrame: {
     width: SAFETY_ART,
     height: SAFETY_ART,
+    borderRadius: SAFETY_ART * 0.22,
+    overflow: 'hidden',
   },
   safetyArt: {
     width: '100%',
