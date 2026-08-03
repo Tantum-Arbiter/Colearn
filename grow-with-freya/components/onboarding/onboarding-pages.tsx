@@ -13,7 +13,10 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SHELL_H_PADDING = 24;
 const CHIP_GAP = 10;
 const CHIP_SIZE = Math.floor((SCREEN_WIDTH - SHELL_H_PADDING * 2 - CHIP_GAP * 2) / 3);
-const SAFETY_ART = CHIP_SIZE;
+// the safety promises read as one panel of four quadrants, so the art is a small
+// glyph inside each cell rather than a tile in its own right
+const SAFETY_ART = 44;
+const SAFETY_CELL_H = 112;
 // the together art is 900x941; sizing the backdrop to that ratio means the full
 // scene shows edge-to-edge with no crop
 const TOGETHER_ART_RATIO = 941 / 900;
@@ -219,8 +222,16 @@ export function SafetyPage() {
       <View style={styles.safeBackdropSpacer} />
 
       <View style={styles.safetyGrid}>
-        {SAFETY_ITEMS.map((item) => (
-          <View key={item.key} testID={`safety-item-${item.key}`} style={styles.safetyCell}>
+        {SAFETY_ITEMS.map((item, index) => (
+          <View
+            key={item.key}
+            testID={`safety-item-${item.key}`}
+            style={[
+              styles.safetyCell,
+              index % 2 === 0 && styles.safetyCellDividerRight,
+              index < 2 && styles.safetyCellDividerBottom,
+            ]}
+          >
             <View style={styles.safetyArtFrame}>
               <Image
                 testID={`safety-art-${item.key}`}
@@ -229,7 +240,10 @@ export function SafetyPage() {
                 resizeMode="cover"
               />
             </View>
-            <ThemedText style={[styles.safetyLabel, { fontSize: scaledFontSize(13) }]}>
+            <ThemedText
+              numberOfLines={2}
+              style={[styles.safetyLabel, { fontSize: scaledFontSize(12) }]}
+            >
               {t(`onboardingV2.safe.${item.key}`)}
             </ThemedText>
           </View>
@@ -443,7 +457,9 @@ const styles = StyleSheet.create({
     marginTop: SAFE_BACKDROP_TOP,
   },
   safeBackdropSpacer: {
-    height: SAFE_BACKDROP_H + SAFE_BACKDROP_TOP - 316,
+    // the compact promise panel needs less room than the old tile grid, so the
+    // spacer grows to let more of the cloud scene show above it
+    height: SAFE_BACKDROP_H + SAFE_BACKDROP_TOP - 284,
   },
   togetherBackdrop: {
     width: SCREEN_WIDTH,
@@ -578,32 +594,43 @@ const styles = StyleSheet.create({
   safetyGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'center',
-    rowGap: 6,
-    columnGap: 18,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: CARD_BORDER,
+    backgroundColor: CARD_BG,
+    overflow: 'hidden',
   },
   safetyCell: {
-    width: '46%',
+    width: '50%',
+    minHeight: SAFETY_CELL_H,
     alignItems: 'center',
-    gap: 6,
+    paddingTop: 16,
+    paddingBottom: 14,
+    paddingHorizontal: 10,
+    gap: 8,
+  },
+  safetyCellDividerRight: {
+    borderRightWidth: 1,
+    borderRightColor: CARD_BORDER,
+  },
+  safetyCellDividerBottom: {
+    borderBottomWidth: 1,
+    borderBottomColor: CARD_BORDER,
   },
   safetyArtFrame: {
     width: SAFETY_ART,
     height: SAFETY_ART,
-    borderRadius: SAFETY_ART * 0.22,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.22)',
+    borderRadius: SAFETY_ART * 0.28,
     overflow: 'hidden',
   },
   safetyArt: {
-    width: SAFETY_ART + 10,
-    height: SAFETY_ART + 10,
-    marginLeft: -5,
-    marginTop: -5,
+    width: '100%',
+    height: '100%',
   },
   safetyLabel: {
     color: '#FFFFFF',
     fontWeight: '600',
+    lineHeight: 16,
     textAlign: 'center',
   },
   shieldCircle: {
