@@ -647,7 +647,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-end',
     paddingBottom: 6,
-    paddingHorizontal: 6,
+    // narrow enough that the longer promises wrap onto their second line
+    // rather than running the full width of the cell
+    paddingHorizontal: 18,
     overflow: 'hidden',
   },
   safetyCellDividerRight: {
