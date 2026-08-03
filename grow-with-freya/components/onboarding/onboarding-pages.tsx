@@ -20,7 +20,7 @@ const CHIP_SIZE = Math.floor((SCREEN_WIDTH - SHELL_H_PADDING * 2 - CHIP_GAP * 2)
 // sized to keep that glyph at roughly 61pt
 // the tile claims nearly the whole cell: padding is trimmed to the minimum that
 // still separates it from the gold dividers
-const SAFETY_ART = 83;
+const SAFETY_ART = 88;
 const SAFETY_CELL_H = 128;
 // gold hairlines over a near-opaque navy fill: the panel overlaps the base of
 // the cloud art, so the cells have to stay legible over it
@@ -632,9 +632,9 @@ const styles = StyleSheet.create({
     minHeight: SAFETY_CELL_H,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 5,
+    paddingVertical: 3,
     paddingHorizontal: 8,
-    gap: 3,
+    gap: 2,
   },
   safetyCellDividerRight: {
     borderRightWidth: 1,
