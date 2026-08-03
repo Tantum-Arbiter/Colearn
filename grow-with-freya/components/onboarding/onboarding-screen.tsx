@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   title: {
-    color: '#FFFFFF',
+    color: '#F4DFAE',
     fontWeight: '700',
     textAlign: 'center',
     lineHeight: 36,
