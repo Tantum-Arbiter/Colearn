@@ -636,7 +636,7 @@ const styles = StyleSheet.create({
     height: SAFETY_CELL_H,
     alignItems: 'center',
     justifyContent: 'flex-end',
-    paddingBottom: 10,
+    paddingBottom: 6,
     paddingHorizontal: 6,
     overflow: 'hidden',
   },
@@ -648,6 +648,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: SAFETY_DIVIDER,
   },
+  // exactly the cell's box: cover crops the square art symmetrically, which
+  // leaves the glyph on the cell's centre point
   safetyArt: {
     ...StyleSheet.absoluteFillObject,
     width: undefined,
@@ -659,7 +661,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: '62%',
+    height: '48%',
   },
   safetyLabel: {
     color: '#FFFFFF',
