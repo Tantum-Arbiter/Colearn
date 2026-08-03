@@ -3051,11 +3051,12 @@ export default {
       talk: 'Birlikte konuş',
     },
     safe: {
-      title: 'Büyümek için güvenli bir yer',
+      title: 'Daha sakin ve güvenli\nbir ekran zamanı.',
       noAds: 'Reklam yok',
       noTracking: 'Davranış takibi yok',
-      noPressure: 'Baskı ya da seri yok',
-      gentle: 'Yumuşak sesler ve animasyonlar',
+      noPressure: 'Seri ya da baskı yok',
+      gentle: 'Yumuşak sesler ve hareketler',
+      body: 'Sakin etkinlikler, hoşgörülü etkileşimler ve dikkat çeken ödüller yok.',
     },
     ready: {
       title: 'İhtiyacın olduğunda\nhazır masallar.',

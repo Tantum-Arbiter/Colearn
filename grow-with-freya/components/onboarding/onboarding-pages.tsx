@@ -9,10 +9,21 @@ import { ThemedText } from '../themed-text';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { GOLD, PURPLE, CARD_BG, CARD_BORDER, TEXT_MUTED, TEXT_FAINT, NIGHT_BASE } from './onboarding-theme';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SHELL_H_PADDING = 24;
 const CHIP_GAP = 10;
 const CHIP_SIZE = Math.floor((SCREEN_WIDTH - SHELL_H_PADDING * 2 - CHIP_GAP * 2) / 3);
+const SAFETY_ART = CHIP_SIZE;
+// the together art is 900x941; sizing the backdrop to that ratio means the full
+// scene shows edge-to-edge with no crop
+const TOGETHER_ART_RATIO = 941 / 900;
+const TOGETHER_BACKDROP_H = Math.round(SCREEN_WIDTH * TOGETHER_ART_RATIO);
+// safety art is 900x774; same full-bleed treatment as the together backdrop
+const SAFE_ART_RATIO = 774 / 900;
+const SAFE_BACKDROP_H = Math.round(SCREEN_WIDTH * SAFE_ART_RATIO);
+const SAFE_BACKDROP_TOP = 118;
+// drops the scene down the screen so the headline has clear sky above it
+const TOGETHER_BACKDROP_TOP = 128;
 
 export interface WorldTile {
   key: string;
@@ -97,48 +108,56 @@ const TOGETHER_CHIPS: { key: string; art: ImageSourcePropType }[] = [
   { key: 'talk', art: require('@/assets/images/onboarding/together-talk.webp') },
 ];
 
+/** Full-bleed art for the together page: the title sits over it and the chips
+ *  overlap its lower edge, so it reads as the scene rather than a card. */
+export function TogetherBackdrop() {
+  return (
+    <View style={styles.togetherBackdrop}>
+      <Image
+        testID="together-hero"
+        source={require('@/assets/images/onboarding/together-hero.webp')}
+        style={styles.togetherBackdropImage}
+        resizeMode="cover"
+      />
+      <LinearGradient
+        colors={['#06081C', 'rgba(6, 8, 28, 0.55)', 'transparent']}
+        locations={[0, 0.4, 1]}
+        style={styles.backdropFadeTop}
+        pointerEvents="none"
+      />
+      <LinearGradient
+        colors={['transparent', 'rgba(13, 18, 51, 0.55)', '#0D1233']}
+        locations={[0, 0.6, 1]}
+        style={styles.backdropFadeBottom}
+        pointerEvents="none"
+      />
+      <LinearGradient
+        colors={['#090D27', 'rgba(9, 13, 39, 0.55)', 'transparent']}
+        locations={[0, 0.4, 1]}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        style={styles.backdropFadeLeft}
+        pointerEvents="none"
+      />
+      <LinearGradient
+        colors={['transparent', 'rgba(9, 13, 39, 0.55)', '#090D27']}
+        locations={[0, 0.6, 1]}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        style={styles.backdropFadeRight}
+        pointerEvents="none"
+      />
+    </View>
+  );
+}
+
 export function TogetherPage() {
   const { t } = useTranslation();
-  const { scaledFontSize, isTablet } = useAccessibility();
+  const { scaledFontSize } = useAccessibility();
 
   return (
     <View style={styles.pageContainer}>
-      <View style={[styles.heroWrap, isTablet ? styles.heroWrapTablet : null]}>
-        <Image
-          testID="together-hero"
-          source={require('@/assets/images/onboarding/together-hero.webp')}
-          style={styles.togetherHero}
-          resizeMode="cover"
-        />
-        <LinearGradient
-          colors={['#070A1E', 'rgba(7, 10, 30, 0.55)', 'transparent']}
-          locations={[0, 0.45, 1]}
-          style={styles.heroFadeTop}
-          pointerEvents="none"
-        />
-        <LinearGradient
-          colors={['transparent', 'rgba(13, 19, 56, 0.6)', '#0D1338']}
-          locations={[0, 0.5, 1]}
-          style={styles.heroFadeBottom}
-          pointerEvents="none"
-        />
-        <LinearGradient
-          colors={['#0A0F2C', 'rgba(10, 15, 44, 0.5)', 'transparent']}
-          locations={[0, 0.4, 1]}
-          start={{ x: 0, y: 0.5 }}
-          end={{ x: 1, y: 0.5 }}
-          style={styles.heroFadeLeft}
-          pointerEvents="none"
-        />
-        <LinearGradient
-          colors={['transparent', 'rgba(10, 15, 44, 0.5)', '#0A0F2C']}
-          locations={[0, 0.6, 1]}
-          start={{ x: 0, y: 0.5 }}
-          end={{ x: 1, y: 0.5 }}
-          style={styles.heroFadeRight}
-          pointerEvents="none"
-        />
-      </View>
+      <View style={styles.backdropSpacer} />
 
       <View style={styles.chipRow}>
         {TOGETHER_CHIPS.map((chip) => (
@@ -165,7 +184,31 @@ export function TogetherPage() {
   );
 }
 
-const SAFETY_ITEMS = ['noAds', 'noTracking', 'noPressure', 'gentle'];
+const SAFETY_ITEMS: { key: string; art: ImageSourcePropType }[] = [
+  { key: 'noAds', art: require('@/assets/images/onboarding/safe-no-ads.webp') },
+  { key: 'noTracking', art: require('@/assets/images/onboarding/safe-no-tracking.webp') },
+  { key: 'noPressure', art: require('@/assets/images/onboarding/safe-no-streaks.webp') },
+  { key: 'gentle', art: require('@/assets/images/onboarding/safe-gentle.webp') },
+];
+
+/** Full-bleed cloud art: the title sits over it and the promise tiles overlap
+ *  its base, matching the together page. */
+export function SafetyBackdrop() {
+  return (
+    <View style={styles.safeBackdrop}>
+      <Image
+        testID="safe-hero"
+        source={require('@/assets/images/onboarding/safe-hero.webp')}
+        style={styles.togetherBackdropImage}
+        resizeMode="cover"
+      />
+      <LinearGradient colors={['#07091E', 'rgba(7, 9, 30, 0.55)', 'transparent']} locations={[0, 0.4, 1]} style={styles.backdropFadeTop} pointerEvents="none" />
+      <LinearGradient colors={['transparent', 'rgba(12, 17, 48, 0.55)', '#0C1130']} locations={[0, 0.6, 1]} style={styles.backdropFadeBottom} pointerEvents="none" />
+      <LinearGradient colors={['#090C26', 'rgba(9, 12, 38, 0.55)', 'transparent']} locations={[0, 0.4, 1]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={styles.backdropFadeLeft} pointerEvents="none" />
+      <LinearGradient colors={['transparent', 'rgba(9, 12, 38, 0.55)', '#090C26']} locations={[0, 0.6, 1]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={styles.backdropFadeRight} pointerEvents="none" />
+    </View>
+  );
+}
 
 export function SafetyPage() {
   const { t } = useTranslation();
@@ -173,20 +216,29 @@ export function SafetyPage() {
 
   return (
     <View style={styles.pageContainer}>
-      <View style={styles.shieldCircle}>
-        <Ionicons name="shield-checkmark" size={scaledFontSize(40)} color={GOLD} />
-      </View>
+      <View style={styles.safeBackdropSpacer} />
 
-      <View style={styles.checkList}>
-        {SAFETY_ITEMS.map((key) => (
-          <View key={key} testID={`safety-item-${key}`} style={styles.checkRow}>
-            <Ionicons name="checkmark-circle" size={scaledFontSize(20)} color={GOLD} />
-            <ThemedText style={[styles.checkLabel, { fontSize: scaledFontSize(15) }]}>
-              {t(`onboardingV2.safe.${key}`)}
+      <View style={styles.safetyGrid}>
+        {SAFETY_ITEMS.map((item) => (
+          <View key={item.key} testID={`safety-item-${item.key}`} style={styles.safetyCell}>
+            <View style={styles.safetyArtFrame}>
+              <Image
+                testID={`safety-art-${item.key}`}
+                source={item.art}
+                style={styles.safetyArt}
+                resizeMode="cover"
+              />
+            </View>
+            <ThemedText style={[styles.safetyLabel, { fontSize: scaledFontSize(13) }]}>
+              {t(`onboardingV2.safe.${item.key}`)}
             </ThemedText>
           </View>
         ))}
       </View>
+
+      <ThemedText style={[styles.togetherBody, { fontSize: scaledFontSize(14) }]}>
+        {t('onboardingV2.safe.body')}
+      </ThemedText>
     </View>
   );
 }
@@ -385,6 +437,55 @@ const styles = StyleSheet.create({
     marginTop: 150,
     marginLeft: 186,
   },
+  safeBackdrop: {
+    width: SCREEN_WIDTH,
+    height: SAFE_BACKDROP_H,
+    marginTop: SAFE_BACKDROP_TOP,
+  },
+  safeBackdropSpacer: {
+    height: SAFE_BACKDROP_H + SAFE_BACKDROP_TOP - 316,
+  },
+  togetherBackdrop: {
+    width: SCREEN_WIDTH,
+    height: TOGETHER_BACKDROP_H,
+    marginTop: TOGETHER_BACKDROP_TOP,
+  },
+  togetherBackdropImage: {
+    width: '100%',
+    height: '100%',
+  },
+  backdropFadeTop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '22%',
+  },
+  backdropFadeBottom: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '22%',
+  },
+  backdropFadeLeft: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    width: '22%',
+  },
+  backdropFadeRight: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    right: 0,
+    width: '22%',
+  },
+  // reserves the space the backdrop occupies so the chips land over its base
+  backdropSpacer: {
+    height: TOGETHER_BACKDROP_H + TOGETHER_BACKDROP_TOP - 246,
+  },
   heroWrap: {
     alignSelf: 'center',
     width: 299,
@@ -396,6 +497,14 @@ const styles = StyleSheet.create({
     width: 374,
     height: 392,
   },
+  safeHeroWrap: {
+    width: 196,
+    height: 162,
+  },
+  safeHeroWrapTablet: {
+    width: 260,
+    height: 216,
+  },
   togetherHero: {
     width: '100%',
     height: '100%',
@@ -405,28 +514,28 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: '18%',
+    height: '40%',
   },
   heroFadeBottom: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: '16%',
+    height: '38%',
   },
   heroFadeLeft: {
     position: 'absolute',
     top: 0,
     bottom: 0,
     left: 0,
-    width: '12%',
+    width: '30%',
   },
   heroFadeRight: {
     position: 'absolute',
     top: 0,
     bottom: 0,
     right: 0,
-    width: '12%',
+    width: '30%',
   },
   chipRow: {
     flexDirection: 'row',
@@ -448,8 +557,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(12, 16, 44, 0.6)',
   },
   chipArt: {
-    width: '100%',
-    height: '100%',
+    // slight overscan: the frame's overflow clip shapes the corners, so no
+    // sliver of frame background can show between artwork and border
+    width: CHIP_SIZE + 10,
+    height: CHIP_SIZE + 10,
+    marginLeft: -5,
+    marginTop: -5,
   },
   chipLabel: {
     color: '#FFFFFF',
@@ -461,6 +574,37 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
     paddingHorizontal: 8,
+  },
+  safetyGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    rowGap: 6,
+    columnGap: 18,
+  },
+  safetyCell: {
+    width: '46%',
+    alignItems: 'center',
+    gap: 6,
+  },
+  safetyArtFrame: {
+    width: SAFETY_ART,
+    height: SAFETY_ART,
+    borderRadius: SAFETY_ART * 0.22,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.22)',
+    overflow: 'hidden',
+  },
+  safetyArt: {
+    width: SAFETY_ART + 10,
+    height: SAFETY_ART + 10,
+    marginLeft: -5,
+    marginTop: -5,
+  },
+  safetyLabel: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    textAlign: 'center',
   },
   shieldCircle: {
     alignSelf: 'center',

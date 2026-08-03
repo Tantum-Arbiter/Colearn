@@ -3051,11 +3051,12 @@ export default {
       talk: 'Simul loqui',
     },
     safe: {
-      title: 'Locus tutus ad crescendum',
+      title: 'Tempus scrinii quietius\net tutius.',
       noAds: 'Nulla praeconia',
       noTracking: 'Nullus morum vestigatus',
-      noPressure: 'Nulla pressio nec series',
-      gentle: 'Soni et motus lenes',
+      noPressure: 'Nullae series nec pressio',
+      gentle: 'Soni motusque lenes',
+      body: 'Actiones quietae, responsa clementia, nulla praemia animum rapientia.',
     },
     ready: {
       title: 'Fabulae paratae\ncum eis eges.',

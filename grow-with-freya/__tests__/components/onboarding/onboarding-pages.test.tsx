@@ -12,7 +12,9 @@ import React from 'react';
 import { render, fireEvent, act } from '@testing-library/react-native';
 import {
   TogetherPage,
+  TogetherBackdrop,
   SafetyPage,
+  SafetyBackdrop,
   ReadyPage,
   ProfilePage,
   AGE_RANGE_OPTIONS,
@@ -39,14 +41,22 @@ describe('TogetherPage', () => {
     expect(findByTestId(tree, `together-art-${key}`).length).toBeGreaterThan(0);
   });
 
-  it('renders the hero illustration', () => {
+  it('does not render the hero itself -the shell places it as a full-bleed backdrop', () => {
     const tree = render(<TogetherPage />);
 
-    expect(findByTestId(tree, 'together-hero').length).toBeGreaterThan(0);
+    expect(findByTestId(tree, 'together-hero')).toHaveLength(0);
   });
 
   it('renders its own body copy below the chips', () => {
     expect(toStr(render(<TogetherPage />))).toContain('onboardingV2.together.body');
+  });
+});
+
+describe('TogetherBackdrop', () => {
+  it('renders the full-bleed hero illustration', () => {
+    const tree = render(<TogetherBackdrop />);
+
+    expect(findByTestId(tree, 'together-hero').length).toBeGreaterThan(0);
   });
 });
 
@@ -55,6 +65,30 @@ describe('SafetyPage', () => {
     const tree = render(<SafetyPage />);
 
     expect(findByTestId(tree, `safety-item-${key}`)).toHaveLength(1);
+  });
+
+  it.each(['noAds', 'noTracking', 'noPressure', 'gentle'])('renders the %s icon art', (key) => {
+    const tree = render(<SafetyPage />);
+
+    expect(findByTestId(tree, `safety-art-${key}`).length).toBeGreaterThan(0);
+  });
+
+  it('does not render the hero itself -the shell places it as a full-bleed backdrop', () => {
+    const tree = render(<SafetyPage />);
+
+    expect(findByTestId(tree, 'safe-hero')).toHaveLength(0);
+  });
+
+  it('renders the supporting copy', () => {
+    expect(toStr(render(<SafetyPage />))).toContain('onboardingV2.safe.body');
+  });
+});
+
+describe('SafetyBackdrop', () => {
+  it('renders the full-bleed cloud illustration', () => {
+    const tree = render(<SafetyBackdrop />);
+
+    expect(findByTestId(tree, 'safe-hero').length).toBeGreaterThan(0);
   });
 });
 

@@ -3051,11 +3051,12 @@ export default {
       talk: 'Conversar juntos',
     },
     safe: {
-      title: 'Um lugar seguro para crescer',
+      title: 'Um tempo de ecrã\nmais calmo e seguro.',
       noAds: 'Sem anúncios',
       noTracking: 'Sem rastreamento comportamental',
-      noPressure: 'Sem pressão nem sequências',
-      gentle: 'Sons e animações suaves',
+      noPressure: 'Sem sequências nem pressão',
+      gentle: 'Sons e movimentos suaves',
+      body: 'Atividades tranquilas, interações tolerantes e sem recompensas que prendem a atenção.',
     },
     ready: {
       title: 'Histórias prontas\nquando precisar.',

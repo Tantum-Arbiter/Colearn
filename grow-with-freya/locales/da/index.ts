@@ -3051,11 +3051,12 @@ export default {
       talk: 'Tal sammen',
     },
     safe: {
-      title: 'Et trygt sted at vokse',
+      title: 'En roligere og tryggere\nform for skærmtid.',
       noAds: 'Ingen reklamer',
       noTracking: 'Ingen adfærdssporing',
-      noPressure: 'Intet pres eller streaks',
-      gentle: 'Blide lyde og animationer',
+      noPressure: 'Ingen streaks eller pres',
+      gentle: 'Blide lyde og bevægelser',
+      body: 'Rolige aktiviteter, tilgivende interaktioner og ingen opmærksomhedskrævende belønninger.',
     },
     ready: {
       title: 'Historier klar,\nnår I har brug for dem.',

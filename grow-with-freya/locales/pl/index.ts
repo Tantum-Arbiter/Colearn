@@ -3051,11 +3051,12 @@ export default {
       talk: 'Rozmawiajmy razem',
     },
     safe: {
-      title: 'Bezpieczne miejsce do wzrastania',
+      title: 'Spokojniejszy i bezpieczniejszy\nczas przed ekranem.',
       noAds: 'Bez reklam',
       noTracking: 'Bez śledzenia zachowań',
-      noPressure: 'Bez presji i serii',
-      gentle: 'Łagodne dźwięki i animacje',
+      noPressure: 'Bez serii i presji',
+      gentle: 'Łagodne dźwięki i ruch',
+      body: 'Ciche zajęcia, wyrozumiałe interakcje i żadnych nagród przyciągających uwagę.',
     },
     ready: {
       title: 'Bajki gotowe,\ngdy ich potrzebujesz.',

@@ -2733,11 +2733,12 @@ export default {
       talk: 'Talk together',
     },
     safe: {
-      title: 'A safe place to grow',
+      title: 'A calm and safer\nkind of screen time.',
       noAds: 'No adverts',
       noTracking: 'No behavioural tracking',
-      noPressure: 'No pressure or streaks',
-      gentle: 'Gentle sounds & animations',
+      noPressure: 'No streaks or pressure',
+      gentle: 'Gentle sounds and movement',
+      body: 'Quiet activities, forgiving interactions and no attention-grabbing rewards.',
     },
     ready: {
       title: 'Stories ready\nwhen you need them.',

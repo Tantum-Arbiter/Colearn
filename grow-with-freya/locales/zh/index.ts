@@ -3051,11 +3051,12 @@ export default {
       talk: '一起聊天',
     },
     safe: {
-      title: '安心成长的地方',
+      title: '更平静、更安心的\n屏幕时光。',
       noAds: '无广告',
       noTracking: '无行为追踪',
-      noPressure: '无压力、无连续打卡',
-      gentle: '轻柔的声音与动画',
+      noPressure: '没有连续打卡或压力',
+      gentle: '轻柔的声音与动效',
+      body: '安静的活动、宽容的互动，没有吸引注意力的奖励。',
     },
     ready: {
       title: '随时可读的故事。',

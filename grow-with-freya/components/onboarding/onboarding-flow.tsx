@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS } from 'react-native-reanimated';
 import { OnboardingScreen } from './onboarding-screen';
-import { TogetherPage, SafetyPage, ReadyPage, ProfilePage } from './onboarding-pages';
+import { TogetherPage, TogetherBackdrop, SafetyPage, SafetyBackdrop, ReadyPage, ProfilePage } from './onboarding-pages';
 import { GOLD, CARD_BG, CARD_BORDER, TEXT_MUTED, NIGHT_BASE } from './onboarding-theme';
 import { useAppStore } from '@/store/app-store';
 import { preloadOnboardingImages } from '@/services/image-preloader';
@@ -317,6 +317,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
         isTransitioning={isTransitioning}
         customContent={current.content}
         isNextDisabled={isConsentStep && !allConsentsChecked}
+        backdrop={stepId === 'together' ? <TogetherBackdrop /> : stepId === 'safe' ? <SafetyBackdrop /> : undefined}
       />
 
       {legalViewVisible && (

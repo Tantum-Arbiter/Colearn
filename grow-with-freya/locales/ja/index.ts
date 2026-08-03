@@ -3051,11 +3051,12 @@ export default {
       talk: 'いっしょに話す',
     },
     safe: {
-      title: '安心して育つ場所',
+      title: 'おだやかで安心な\nスクリーンタイム。',
       noAds: '広告なし',
       noTracking: '行動トラッキングなし',
-      noPressure: 'プレッシャーや連続記録なし',
-      gentle: 'やさしい音とアニメーション',
+      noPressure: '連続記録もプレッシャーもなし',
+      gentle: 'やさしい音と動き',
+      body: '静かな遊び、やさしい反応、気を引く報酬はありません。',
     },
     ready: {
       title: 'いつでも読める\nおはなしを。',

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, ScrollView, StyleSheet, Dimensions, Pressable, Image } from 'react-native';
+import { View, ScrollView, StyleSheet, Dimensions, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
@@ -44,6 +44,8 @@ export interface OnboardingScreenProps {
   isNextDisabled?: boolean;
   /** Hung from the top-right, outside the scroll area. */
   decoration?: React.ReactNode;
+  /** Full-bleed art behind the title and content. */
+  backdrop?: React.ReactNode;
 }
 
 const MASCOT_INSET = 208;
@@ -61,6 +63,7 @@ export function OnboardingScreen({
   customContent,
   isNextDisabled = false,
   decoration,
+  backdrop,
 }: OnboardingScreenProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -102,13 +105,11 @@ export function OnboardingScreen({
         ))}
       </View>
 
-      <View style={styles.moonLayer} pointerEvents="none">
-        <Image
-          source={require('@/assets/images/ui-elements/moon-top-screen.webp')}
-          style={styles.moonImage}
-          resizeMode="contain"
-        />
-      </View>
+      {backdrop && (
+        <View style={styles.backdropLayer} pointerEvents="none">
+          {backdrop}
+        </View>
+      )}
 
       {onSkip && (
         <Animated.View
@@ -218,17 +219,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     backgroundColor: '#FFFFFF',
   },
-  moonLayer: {
+  backdropLayer: {
     position: 'absolute',
-    top: -70,
+    top: 0,
     left: 0,
     right: 0,
-    alignItems: 'center',
-    opacity: 0.35,
-  },
-  moonImage: {
-    width: 240,
-    height: 240,
   },
   skipContainer: {
     position: 'absolute',
@@ -236,8 +231,11 @@ const styles = StyleSheet.create({
     zIndex: 30,
   },
   skipText: {
-    color: TEXT_MUTED,
-    fontWeight: '600',
+    color: '#FFFFFF',
+    fontWeight: '700',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 6,
   },
   scroll: {
     flex: 1,
@@ -254,6 +252,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
     lineHeight: 36,
+    textShadowColor: 'rgba(0, 0, 0, 0.55)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 10,
   },
   body: {
     color: TEXT_MUTED,

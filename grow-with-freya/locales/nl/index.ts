@@ -3051,11 +3051,12 @@ export default {
       talk: 'Samen praten',
     },
     safe: {
-      title: 'Een veilige plek om te groeien',
+      title: 'Een rustigere en veiligere\nvorm van schermtijd.',
       noAds: 'Geen advertenties',
       noTracking: 'Geen gedragstracking',
-      noPressure: 'Geen druk of reeksen',
-      gentle: 'Zachte geluiden en animaties',
+      noPressure: 'Geen reeksen of druk',
+      gentle: 'Zachte geluiden en beweging',
+      body: 'Rustige activiteiten, vergevingsgezinde interacties en geen aandachttrekkende beloningen.',
     },
     ready: {
       title: 'Verhalen klaar\nwanneer je ze nodig hebt.',
