@@ -22,6 +22,16 @@ const CHIP_SIZE = Math.floor((SCREEN_WIDTH - SHELL_H_PADDING * 2 - CHIP_GAP * 2)
 // still separates it from the gold dividers
 // the art fills its whole cell, with the label sitting over it
 const SAFETY_CELL_H = 128;
+const SAFETY_GRID_RATIO = 0.86;
+const SAFETY_CELL_W = Math.floor(((SCREEN_WIDTH - SHELL_H_PADDING * 2) * SAFETY_GRID_RATIO) / 2);
+// every label reserves two lines, so a one-line label starts level with the
+// first line of a two-line one
+const SAFETY_LABEL_LINE = 16;
+const SAFETY_LABEL_H = SAFETY_LABEL_LINE * 2;
+// lifts the art so the glyph centres in the space above the label. Capped so
+// the frame never grows taller than the cell is wide -- past that, cover would
+// scale to the height and enlarge the glyph instead of just moving it.
+const SAFETY_ART_LIFT = Math.max(0, Math.min(24, SAFETY_CELL_W - SAFETY_CELL_H));
 // gold hairlines over a near-opaque navy fill: the panel overlaps the base of
 // the cloud art, so the cells have to stay legible over it
 const SAFETY_BORDER = 'rgba(232, 184, 75, 0.55)';
@@ -623,7 +633,7 @@ const styles = StyleSheet.create({
   safetyGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    width: '86%',
+    width: `${SAFETY_GRID_RATIO * 100}%`,
     alignSelf: 'center',
     borderRadius: 16,
     borderWidth: 1,
@@ -648,12 +658,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: SAFETY_DIVIDER,
   },
-  // exactly the cell's box: cover crops the square art symmetrically, which
-  // leaves the glyph on the cell's centre point
   safetyArt: {
-    ...StyleSheet.absoluteFillObject,
-    width: undefined,
-    height: undefined,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    top: -SAFETY_ART_LIFT,
   },
   // darkens the base of each cell so the label stays readable over the art
   safetyLabelScrim: {
@@ -666,7 +676,8 @@ const styles = StyleSheet.create({
   safetyLabel: {
     color: '#FFFFFF',
     fontWeight: '700',
-    lineHeight: 16,
+    lineHeight: SAFETY_LABEL_LINE,
+    height: SAFETY_LABEL_H,
     textAlign: 'center',
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: 0, height: 1 },
