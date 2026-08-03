@@ -16,8 +16,10 @@ const CHIP_SIZE = Math.floor((SCREEN_WIDTH - SHELL_H_PADDING * 2 - CHIP_GAP * 2)
 // the safety promises read as one panel of four quadrants, so the art is a small
 // glyph inside each cell rather than a tile in its own right
 // the promise art is a full starfield tile, sized to fill its quadrant
-const SAFETY_ART = 61;
-const SAFETY_CELL_H = 132;
+// the art is a starfield tile whose glyph fills ~66% of it, so the tile is
+// sized to keep that glyph at roughly 61pt
+const SAFETY_ART = 93;
+const SAFETY_CELL_H = 163;
 // gold hairlines over a near-opaque navy fill: the panel overlaps the base of
 // the cloud art, so the cells have to stay legible over it
 const SAFETY_BORDER = 'rgba(232, 184, 75, 0.55)';
@@ -30,7 +32,7 @@ const TOGETHER_BACKDROP_H = Math.round(SCREEN_WIDTH * TOGETHER_ART_RATIO);
 // safety art is 900x774; same full-bleed treatment as the together backdrop
 // the safety scene reads as a full-width band with the cloud cropped to it,
 // rather than the whole square artwork inset on the page
-const SAFE_BACKDROP_H = Math.round(SCREEN_WIDTH * 0.568);
+const SAFE_BACKDROP_H = Math.round(SCREEN_WIDTH * 0.5);
 const SAFE_BACKDROP_TOP = 172;
 // drops the scene down the screen so the headline has clear sky above it
 const TOGETHER_BACKDROP_TOP = 128;
@@ -462,7 +464,7 @@ const styles = StyleSheet.create({
     marginTop: SAFE_BACKDROP_TOP,
   },
   safeBackdropSpacer: {
-    height: SAFE_BACKDROP_H + SAFE_BACKDROP_TOP - 198,
+    height: SAFE_BACKDROP_H + SAFE_BACKDROP_TOP - 214,
   },
   togetherBackdrop: {
     width: SCREEN_WIDTH,
@@ -639,6 +641,8 @@ const styles = StyleSheet.create({
   safetyArtFrame: {
     width: SAFETY_ART,
     height: SAFETY_ART,
+    borderRadius: SAFETY_ART * 0.22,
+    overflow: 'hidden',
   },
   safetyArt: {
     width: '100%',
