@@ -208,11 +208,22 @@ export function TogetherPage() {
   );
 }
 
-/** `nudgeX` corrects art whose glyph does not sit optically centred in its
- *  own frame; positive values move it right. */
-const SAFETY_ITEMS: { key: string; art: ImageSourcePropType; nudgeX?: number }[] = [
+/** `nudgeX` corrects art whose glyph does not sit optically centred in its own
+ *  frame; `labelNudgeX` does the same for the label. Positive values move
+ *  right. */
+const SAFETY_ITEMS: {
+  key: string;
+  art: ImageSourcePropType;
+  nudgeX?: number;
+  labelNudgeX?: number;
+}[] = [
   { key: 'noAds', art: require('@/assets/images/onboarding/safe-no-ads.webp') },
-  { key: 'noTracking', art: require('@/assets/images/onboarding/safe-no-tracking.webp'), nudgeX: 5 },
+  {
+    key: 'noTracking',
+    art: require('@/assets/images/onboarding/safe-no-tracking.webp'),
+    nudgeX: 5,
+    labelNudgeX: 3,
+  },
   { key: 'noPressure', art: require('@/assets/images/onboarding/safe-no-streaks.webp') },
   { key: 'gentle', art: require('@/assets/images/onboarding/safe-gentle.webp') },
 ];
@@ -270,7 +281,11 @@ export function SafetyPage() {
             />
             <ThemedText
               numberOfLines={2}
-              style={[styles.safetyLabel, { fontSize: scaledFontSize(12) }]}
+              style={[
+                styles.safetyLabel,
+                { fontSize: scaledFontSize(12) },
+                item.labelNudgeX ? { transform: [{ translateX: item.labelNudgeX }] } : null,
+              ]}
             >
               {t(`onboardingV2.safe.${item.key}`)}
             </ThemedText>
