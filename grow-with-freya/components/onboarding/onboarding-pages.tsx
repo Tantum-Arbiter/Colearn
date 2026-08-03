@@ -18,8 +18,8 @@ const CHIP_SIZE = Math.floor((SCREEN_WIDTH - SHELL_H_PADDING * 2 - CHIP_GAP * 2)
 // the promise art is a full starfield tile, sized to fill its quadrant
 // the art is a starfield tile whose glyph fills ~66% of it, so the tile is
 // sized to keep that glyph at roughly 61pt
-const SAFETY_ART = 93;
-const SAFETY_CELL_H = 163;
+const SAFETY_ART = 112;
+const SAFETY_CELL_H = 182;
 // gold hairlines over a near-opaque navy fill: the panel overlaps the base of
 // the cloud art, so the cells have to stay legible over it
 const SAFETY_BORDER = 'rgba(232, 184, 75, 0.55)';
@@ -32,7 +32,7 @@ const TOGETHER_BACKDROP_H = Math.round(SCREEN_WIDTH * TOGETHER_ART_RATIO);
 // safety art is 900x774; same full-bleed treatment as the together backdrop
 // the safety scene reads as a full-width band with the cloud cropped to it,
 // rather than the whole square artwork inset on the page
-const SAFE_BACKDROP_H = Math.round(SCREEN_WIDTH * 0.5);
+const SAFE_BACKDROP_H = Math.round(SCREEN_WIDTH * 0.405);
 const SAFE_BACKDROP_TOP = 172;
 // drops the scene down the screen so the headline has clear sky above it
 const TOGETHER_BACKDROP_TOP = 128;
