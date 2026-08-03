@@ -22,6 +22,11 @@ const CHIP_SIZE = Math.floor((SCREEN_WIDTH - SHELL_H_PADDING * 2 - CHIP_GAP * 2)
 // still separates it from the gold dividers
 const SAFETY_ART = 89;
 const SAFETY_CELL_H = 128;
+// the art is scaled up inside its frame and the overspill is clipped by the
+// frame, so the glyph grows without the tile or the grid changing size
+const SAFETY_ART_ZOOM = 1.2;
+const SAFETY_ART_SIZE = Math.round(SAFETY_ART * SAFETY_ART_ZOOM);
+const SAFETY_ART_OFFSET = -Math.round((SAFETY_ART_SIZE - SAFETY_ART) / 2);
 // gold hairlines over a near-opaque navy fill: the panel overlaps the base of
 // the cloud art, so the cells have to stay legible over it
 const SAFETY_BORDER = 'rgba(232, 184, 75, 0.55)';
@@ -651,8 +656,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   safetyArt: {
-    width: '100%',
-    height: '100%',
+    width: SAFETY_ART_SIZE,
+    height: SAFETY_ART_SIZE,
+    marginLeft: SAFETY_ART_OFFSET,
+    marginTop: SAFETY_ART_OFFSET,
   },
   safetyLabel: {
     color: '#FFFFFF',
