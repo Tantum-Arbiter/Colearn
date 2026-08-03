@@ -208,9 +208,11 @@ export function TogetherPage() {
   );
 }
 
-const SAFETY_ITEMS: { key: string; art: ImageSourcePropType }[] = [
+/** `nudgeX` corrects art whose glyph does not sit optically centred in its
+ *  own frame; positive values move it right. */
+const SAFETY_ITEMS: { key: string; art: ImageSourcePropType; nudgeX?: number }[] = [
   { key: 'noAds', art: require('@/assets/images/onboarding/safe-no-ads.webp') },
-  { key: 'noTracking', art: require('@/assets/images/onboarding/safe-no-tracking.webp') },
+  { key: 'noTracking', art: require('@/assets/images/onboarding/safe-no-tracking.webp'), nudgeX: 5 },
   { key: 'noPressure', art: require('@/assets/images/onboarding/safe-no-streaks.webp') },
   { key: 'gentle', art: require('@/assets/images/onboarding/safe-gentle.webp') },
 ];
@@ -254,7 +256,10 @@ export function SafetyPage() {
             <Image
               testID={`safety-art-${item.key}`}
               source={item.art}
-              style={styles.safetyArt}
+              style={[
+                styles.safetyArt,
+                item.nudgeX ? { transform: [{ translateX: item.nudgeX }] } : null,
+              ]}
               resizeMode="cover"
             />
             <LinearGradient
