@@ -16,8 +16,8 @@ const CHIP_SIZE = Math.floor((SCREEN_WIDTH - SHELL_H_PADDING * 2 - CHIP_GAP * 2)
 // the safety promises read as one panel of four quadrants, so the art is a small
 // glyph inside each cell rather than a tile in its own right
 // the promise art is a full starfield tile, sized to fill its quadrant
-const SAFETY_ART = 116;
-const SAFETY_CELL_H = SAFETY_ART + 46;
+const SAFETY_ART = 92;
+const SAFETY_CELL_H = SAFETY_ART + 44;
 // gold hairlines over a near-opaque navy fill: the panel overlaps the base of
 // the cloud art, so the cells have to stay legible over it
 const SAFETY_BORDER = 'rgba(232, 184, 75, 0.55)';
@@ -31,7 +31,7 @@ const TOGETHER_BACKDROP_H = Math.round(SCREEN_WIDTH * TOGETHER_ART_RATIO);
 const SAFE_ART_RATIO = 774 / 900;
 // scaled back from full-bleed: the full-size promise tiles need the height, and
 // shrinking the scene keeps the whole cloud visible rather than hiding its base
-const SAFE_BACKDROP_SCALE = 0.72;
+const SAFE_BACKDROP_SCALE = 0.86;
 const SAFE_BACKDROP_H = Math.round(SCREEN_WIDTH * SAFE_ART_RATIO * SAFE_BACKDROP_SCALE);
 const SAFE_BACKDROP_TOP = 118;
 // drops the scene down the screen so the headline has clear sky above it
