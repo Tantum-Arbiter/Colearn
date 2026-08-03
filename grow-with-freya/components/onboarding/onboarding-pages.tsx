@@ -16,12 +16,12 @@ const CHIP_SIZE = Math.floor((SCREEN_WIDTH - SHELL_H_PADDING * 2 - CHIP_GAP * 2)
 // the safety promises read as one panel of four quadrants, so the art is a small
 // glyph inside each cell rather than a tile in its own right
 const SAFETY_ART = 44;
-const SAFETY_CELL_H = 112;
-// gold hairlines over a navy fill, so the panel reads as part of the night sky
-// rather than as a pale card sitting on top of it
+const SAFETY_CELL_H = 104;
+// gold hairlines over a near-opaque navy fill: the panel overlaps the base of
+// the cloud art, so the cells have to stay legible over it
 const SAFETY_BORDER = 'rgba(232, 184, 75, 0.38)';
 const SAFETY_DIVIDER = 'rgba(232, 184, 75, 0.26)';
-const SAFETY_PANEL_BG = 'rgba(10, 15, 44, 0.55)';
+const SAFETY_PANEL_BG = 'rgba(9, 13, 38, 0.9)';
 // the together art is 900x941; sizing the backdrop to that ratio means the full
 // scene shows edge-to-edge with no crop
 const TOGETHER_ART_RATIO = 941 / 900;
@@ -462,9 +462,9 @@ const styles = StyleSheet.create({
     marginTop: SAFE_BACKDROP_TOP,
   },
   safeBackdropSpacer: {
-    // the compact promise panel needs less room than the old tile grid, so the
-    // spacer grows to let more of the cloud scene show above it
-    height: SAFE_BACKDROP_H + SAFE_BACKDROP_TOP - 284,
+    // clears the base of the cloud so the panel starts below the constellation
+    // rather than cutting through its lower arc
+    height: SAFE_BACKDROP_H + SAFE_BACKDROP_TOP - 240,
   },
   togetherBackdrop: {
     width: SCREEN_WIDTH,
@@ -609,10 +609,10 @@ const styles = StyleSheet.create({
     width: '50%',
     minHeight: SAFETY_CELL_H,
     alignItems: 'center',
-    paddingTop: 16,
-    paddingBottom: 14,
+    paddingTop: 14,
+    paddingBottom: 12,
     paddingHorizontal: 10,
-    gap: 8,
+    gap: 6,
   },
   safetyCellDividerRight: {
     borderRightWidth: 1,
