@@ -667,9 +667,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-end',
     paddingBottom: 6,
-    // narrow enough that the longer promises wrap onto their second line
-    // rather than running the full width of the cell
-    paddingHorizontal: 18,
+    // no horizontal padding here: the art is absolutely positioned and a
+    // percentage width would resolve against the padded box, leaving a strip of
+    // bare cell down the side. The label carries the inset instead.
     overflow: 'hidden',
   },
   safetyCellDividerRight: {
@@ -680,12 +680,16 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: SAFETY_DIVIDER,
   },
+  // width/height are explicit rather than derived from left/right/bottom insets:
+  // with only insets, a remounted Image falls back to its intrinsic 420x420 and
+  // anchors top-left, which put the cell's window on the artwork's empty corner
+  // and made the glyph vanish when paging back to this screen.
   safetyArt: {
     position: 'absolute',
     left: 0,
-    right: 0,
-    bottom: 0,
     top: -SAFETY_ART_LIFT,
+    width: '100%',
+    height: SAFETY_CELL_H + SAFETY_ART_LIFT,
   },
   // darkens the base of each cell so the label stays readable over the art
   safetyLabelScrim: {
@@ -701,6 +705,8 @@ const styles = StyleSheet.create({
     lineHeight: SAFETY_LABEL_LINE,
     height: SAFETY_LABEL_H,
     textAlign: 'center',
+    // narrow enough that the longer promises wrap onto their second line
+    paddingHorizontal: 18,
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
