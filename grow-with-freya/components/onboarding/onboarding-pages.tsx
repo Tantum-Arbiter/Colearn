@@ -20,13 +20,8 @@ const CHIP_SIZE = Math.floor((SCREEN_WIDTH - SHELL_H_PADDING * 2 - CHIP_GAP * 2)
 // sized to keep that glyph at roughly 61pt
 // the tile claims nearly the whole cell: padding is trimmed to the minimum that
 // still separates it from the gold dividers
-const SAFETY_ART = 89;
+// the art fills its whole cell, with the label sitting over it
 const SAFETY_CELL_H = 128;
-// the art is scaled up inside its frame and the overspill is clipped by the
-// frame, so the glyph grows without the tile or the grid changing size
-const SAFETY_ART_ZOOM = 1.2;
-const SAFETY_ART_SIZE = Math.round(SAFETY_ART * SAFETY_ART_ZOOM);
-const SAFETY_ART_OFFSET = -Math.round((SAFETY_ART_SIZE - SAFETY_ART) / 2);
 // gold hairlines over a near-opaque navy fill: the panel overlaps the base of
 // the cloud art, so the cells have to stay legible over it
 const SAFETY_BORDER = 'rgba(232, 184, 75, 0.55)';
@@ -246,14 +241,18 @@ export function SafetyPage() {
               index < 2 && styles.safetyCellDividerBottom,
             ]}
           >
-            <View style={styles.safetyArtFrame}>
-              <Image
-                testID={`safety-art-${item.key}`}
-                source={item.art}
-                style={styles.safetyArt}
-                resizeMode="cover"
-              />
-            </View>
+            <Image
+              testID={`safety-art-${item.key}`}
+              source={item.art}
+              style={styles.safetyArt}
+              resizeMode="cover"
+            />
+            <LinearGradient
+              colors={['transparent', 'rgba(6, 9, 26, 0.55)', 'rgba(6, 9, 26, 0.92)']}
+              locations={[0, 0.55, 1]}
+              style={styles.safetyLabelScrim}
+              pointerEvents="none"
+            />
             <ThemedText
               numberOfLines={2}
               style={[styles.safetyLabel, { fontSize: scaledFontSize(12) }]}
@@ -634,12 +633,12 @@ const styles = StyleSheet.create({
   },
   safetyCell: {
     width: '50%',
-    minHeight: SAFETY_CELL_H,
+    height: SAFETY_CELL_H,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 2,
-    paddingHorizontal: 8,
-    gap: 2,
+    justifyContent: 'flex-end',
+    paddingBottom: 10,
+    paddingHorizontal: 6,
+    overflow: 'hidden',
   },
   safetyCellDividerRight: {
     borderRightWidth: 1,
@@ -649,23 +648,27 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: SAFETY_DIVIDER,
   },
-  safetyArtFrame: {
-    width: SAFETY_ART,
-    height: SAFETY_ART,
-    borderRadius: SAFETY_ART * 0.22,
-    overflow: 'hidden',
-  },
   safetyArt: {
-    width: SAFETY_ART_SIZE,
-    height: SAFETY_ART_SIZE,
-    marginLeft: SAFETY_ART_OFFSET,
-    marginTop: SAFETY_ART_OFFSET,
+    ...StyleSheet.absoluteFillObject,
+    width: undefined,
+    height: undefined,
+  },
+  // darkens the base of each cell so the label stays readable over the art
+  safetyLabelScrim: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: '62%',
   },
   safetyLabel: {
     color: '#FFFFFF',
-    fontWeight: '600',
+    fontWeight: '700',
     lineHeight: 16,
     textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   shieldCircle: {
     alignSelf: 'center',
