@@ -15,13 +15,14 @@ const CHIP_GAP = 10;
 const CHIP_SIZE = Math.floor((SCREEN_WIDTH - SHELL_H_PADDING * 2 - CHIP_GAP * 2) / 3);
 // the safety promises read as one panel of four quadrants, so the art is a small
 // glyph inside each cell rather than a tile in its own right
-// matches the together-page chips so the two steps read at the same scale
-const SAFETY_ART = CHIP_SIZE;
-const SAFETY_CELL_H = SAFETY_ART + 56;
+// the promise art is cropped to the bare glyph, so the frame is the glyph size
+// rather than a tile with its own background
+const SAFETY_ART = 48;
+const SAFETY_CELL_H = 100;
 // gold hairlines over a near-opaque navy fill: the panel overlaps the base of
 // the cloud art, so the cells have to stay legible over it
-const SAFETY_BORDER = 'rgba(232, 184, 75, 0.38)';
-const SAFETY_DIVIDER = 'rgba(232, 184, 75, 0.26)';
+const SAFETY_BORDER = 'rgba(232, 184, 75, 0.55)';
+const SAFETY_DIVIDER = 'rgba(232, 184, 75, 0.4)';
 const SAFETY_PANEL_BG = 'rgba(9, 13, 38, 0.9)';
 // the together art is 900x941; sizing the backdrop to that ratio means the full
 // scene shows edge-to-edge with no crop
@@ -463,9 +464,8 @@ const styles = StyleSheet.create({
     marginTop: SAFE_BACKDROP_TOP,
   },
   safeBackdropSpacer: {
-    // full-size promise art needs the height, so the panel rides up over the
-    // base of the cloud, leaving the shield and the bulk of the scene visible
-    height: SAFE_BACKDROP_H + SAFE_BACKDROP_TOP - 318,
+    // the compact panel gives the height back, so the cloud clears it again
+    height: SAFE_BACKDROP_H + SAFE_BACKDROP_TOP - 232,
   },
   togetherBackdrop: {
     width: SCREEN_WIDTH,
@@ -626,8 +626,6 @@ const styles = StyleSheet.create({
   safetyArtFrame: {
     width: SAFETY_ART,
     height: SAFETY_ART,
-    borderRadius: SAFETY_ART * 0.28,
-    overflow: 'hidden',
   },
   safetyArt: {
     width: '100%',
