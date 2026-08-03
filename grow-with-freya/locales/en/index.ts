@@ -2738,7 +2738,7 @@ export default {
       noTracking: 'No behavioural tracking',
       noPressure: 'No streaks or pressure',
       gentle: 'Gentle sounds and movement',
-      body: 'Quiet activities, forgiving interactions and no attention-grabbing rewards.',
+      body: 'Quiet activities, soft learning and forgiving interactions whilst being stimulant-safe.',
     },
     ready: {
       title: 'Stories ready\nwhen you need them.',
