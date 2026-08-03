@@ -17,6 +17,11 @@ const CHIP_SIZE = Math.floor((SCREEN_WIDTH - SHELL_H_PADDING * 2 - CHIP_GAP * 2)
 // glyph inside each cell rather than a tile in its own right
 const SAFETY_ART = 44;
 const SAFETY_CELL_H = 112;
+// gold hairlines over a navy fill, so the panel reads as part of the night sky
+// rather than as a pale card sitting on top of it
+const SAFETY_BORDER = 'rgba(232, 184, 75, 0.38)';
+const SAFETY_DIVIDER = 'rgba(232, 184, 75, 0.26)';
+const SAFETY_PANEL_BG = 'rgba(10, 15, 44, 0.55)';
 // the together art is 900x941; sizing the backdrop to that ratio means the full
 // scene shows edge-to-edge with no crop
 const TOGETHER_ART_RATIO = 941 / 900;
@@ -594,10 +599,10 @@ const styles = StyleSheet.create({
   safetyGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    borderRadius: 20,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: CARD_BORDER,
-    backgroundColor: CARD_BG,
+    borderColor: SAFETY_BORDER,
+    backgroundColor: SAFETY_PANEL_BG,
     overflow: 'hidden',
   },
   safetyCell: {
@@ -611,11 +616,11 @@ const styles = StyleSheet.create({
   },
   safetyCellDividerRight: {
     borderRightWidth: 1,
-    borderRightColor: CARD_BORDER,
+    borderRightColor: SAFETY_DIVIDER,
   },
   safetyCellDividerBottom: {
     borderBottomWidth: 1,
-    borderBottomColor: CARD_BORDER,
+    borderBottomColor: SAFETY_DIVIDER,
   },
   safetyArtFrame: {
     width: SAFETY_ART,
