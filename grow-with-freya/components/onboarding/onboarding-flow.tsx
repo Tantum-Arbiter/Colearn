@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Alert, View, Pressable, StyleSheet, Dimensions } from 'react-native';
+import { Alert, View, Pressable, StyleSheet, Dimensions, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -199,13 +199,20 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
         style={consentStyles.summaryHeader}
         onPress={() => setDataSummaryExpanded(!dataSummaryExpanded)}
       >
-        <View style={consentStyles.summaryHeaderRow}>
-          <Ionicons name="clipboard-outline" size={16} color="#FFFFFF" style={consentStyles.summaryHeaderIcon} />
-          <ThemedText style={consentStyles.summaryHeaderText}>
-            {t('onboarding.screens.consent.dataSummary.title')}
-          </ThemedText>
-        </View>
-        <Ionicons name={dataSummaryExpanded ? 'chevron-up' : 'chevron-down'} size={16} color="#FFFFFF" />
+        <Image
+          testID="consent-art-collect"
+          source={require('@/assets/images/onboarding/consent-collect.webp')}
+          style={consentStyles.rowIcon}
+          resizeMode="contain"
+        />
+        <ThemedText style={consentStyles.summaryHeaderText}>
+          {t('onboarding.screens.consent.dataSummary.title')}
+        </ThemedText>
+        <Ionicons
+          name={dataSummaryExpanded ? 'chevron-up' : 'chevron-forward'}
+          size={18}
+          color={GOLD}
+        />
       </Pressable>
       {dataSummaryExpanded && (
         <View style={consentStyles.summaryBody}>
@@ -224,9 +231,27 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
 
   const renderConsentContent = () => {
     const checkboxItems = [
-      { key: 'privacy' as const, checked: consentPrivacy, toggle: () => setConsentPrivacy(!consentPrivacy), link: () => openLegalView('privacy') },
-      { key: 'terms' as const, checked: consentTerms, toggle: () => setConsentTerms(!consentTerms), link: () => openLegalView('terms') },
-      { key: 'data' as const, checked: consentData, toggle: () => setConsentData(!consentData), link: undefined },
+      {
+        key: 'privacy' as const,
+        art: require('@/assets/images/onboarding/consent-privacy.webp'),
+        checked: consentPrivacy,
+        toggle: () => setConsentPrivacy(!consentPrivacy),
+        link: () => openLegalView('privacy'),
+      },
+      {
+        key: 'terms' as const,
+        art: require('@/assets/images/onboarding/consent-terms.webp'),
+        checked: consentTerms,
+        toggle: () => setConsentTerms(!consentTerms),
+        link: () => openLegalView('terms'),
+      },
+      {
+        key: 'data' as const,
+        art: require('@/assets/images/onboarding/consent-data.webp'),
+        checked: consentData,
+        toggle: () => setConsentData(!consentData),
+        link: undefined,
+      },
     ];
 
     return (
@@ -240,9 +265,12 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
             style={consentStyles.checkboxRow}
             onPress={item.toggle}
           >
-            <View style={[consentStyles.checkbox, item.checked && consentStyles.checkboxChecked]}>
-              {item.checked && <Ionicons name="checkmark" size={16} color={NIGHT_BASE} />}
-            </View>
+            <Image
+              testID={`consent-art-${item.key}`}
+              source={item.art}
+              style={consentStyles.rowIcon}
+              resizeMode="contain"
+            />
             <View style={consentStyles.checkboxTextContainer}>
               <ThemedText style={consentStyles.checkboxLabel}>
                 {t(`onboarding.screens.consent.checkboxes.${item.key}`)}
@@ -254,6 +282,9 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
                   </ThemedText>
                 </Pressable>
               )}
+            </View>
+            <View style={[consentStyles.checkbox, item.checked && consentStyles.checkboxChecked]}>
+              {item.checked && <Ionicons name="checkmark" size={16} color={NIGHT_BASE} />}
             </View>
           </Pressable>
         ))}
@@ -369,19 +400,17 @@ const consentStyles = StyleSheet.create({
   },
   summaryHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 14,
+    gap: 12,
+    padding: 10,
   },
-  summaryHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  summaryHeaderIcon: {
-    marginRight: 8,
+  // the discs carry their own field and rim, so no container styling here
+  rowIcon: {
+    width: 54,
+    height: 54,
   },
   summaryHeaderText: {
+    flex: 1,
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '600',
@@ -407,13 +436,13 @@ const consentStyles = StyleSheet.create({
   },
   checkboxRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: 12,
     backgroundColor: CARD_BG,
     borderWidth: 1,
     borderColor: CARD_BORDER,
     borderRadius: 14,
-    padding: 14,
+    padding: 10,
   },
   checkbox: {
     width: 26,
@@ -424,7 +453,6 @@ const consentStyles = StyleSheet.create({
     backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 1,
   },
   checkboxChecked: {
     backgroundColor: GOLD,
