@@ -33,7 +33,10 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const [legalViewVisible, setLegalViewVisible] = useState(false);
   const [dataSummaryExpanded, setDataSummaryExpanded] = useState(false);
   const [nickname, setNickname] = useState('');
-  const [avatarType, setAvatarType] = useState<'boy' | 'girl'>('girl');
+  // avatarType still feeds the store's gender-based story filtering; the picker
+  // on this screen now chooses the animal avatar, which is stored as avatarId
+  const [avatarType] = useState<'boy' | 'girl'>('girl');
+  const [avatarKey, setAvatarKey] = useState('bear');
   const [ageMonths, setAgeMonths] = useState(DEFAULT_AGE_MONTHS);
   const {
     setOnboardingComplete,
@@ -76,7 +79,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
 
   const finishOnboarding = (saveProfile: boolean) => {
     if (saveProfile && nickname.trim()) {
-      setUserProfile(nickname.trim(), avatarType, `${avatarType}_1`);
+      setUserProfile(nickname.trim(), avatarType, avatarKey);
     }
     if (saveProfile) {
       setChildAge(ageMonths);
@@ -320,8 +323,8 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
         <ProfilePage
           nickname={nickname}
           onNicknameChange={setNickname}
-          avatarType={avatarType}
-          onAvatarTypeChange={setAvatarType}
+          avatarKey={avatarKey}
+          onAvatarKeyChange={setAvatarKey}
           ageMonths={ageMonths}
           onAgeChange={setAgeMonths}
         />

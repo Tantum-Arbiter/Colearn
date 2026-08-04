@@ -392,11 +392,19 @@ export const AGE_RANGE_OPTIONS: { key: string; months: number; label: string }[]
   { key: '4-6', months: 60, label: '4 – 6' },
 ];
 
+export const AVATAR_OPTIONS: { key: string; art: ImageSourcePropType }[] = [
+  { key: 'bear', art: require('@/assets/images/onboarding/avatar-bear.webp') },
+  { key: 'rabbit', art: require('@/assets/images/onboarding/avatar-rabbit.webp') },
+  { key: 'fox', art: require('@/assets/images/onboarding/avatar-fox.webp') },
+  { key: 'dino', art: require('@/assets/images/onboarding/avatar-dino.webp') },
+  { key: 'elephant', art: require('@/assets/images/onboarding/avatar-elephant.webp') },
+];
+
 export interface ProfilePageProps {
   nickname: string;
   onNicknameChange: (value: string) => void;
-  avatarType: 'boy' | 'girl';
-  onAvatarTypeChange: (value: 'boy' | 'girl') => void;
+  avatarKey: string;
+  onAvatarKeyChange: (value: string) => void;
   ageMonths: number;
   onAgeChange: (months: number) => void;
 }
@@ -404,55 +412,96 @@ export interface ProfilePageProps {
 export function ProfilePage({
   nickname,
   onNicknameChange,
-  avatarType,
-  onAvatarTypeChange,
+  avatarKey,
+  onAvatarKeyChange,
   ageMonths,
   onAgeChange,
 }: ProfilePageProps) {
   const { t } = useTranslation();
   const { scaledFontSize } = useAccessibility();
 
-  const avatarOptions: { type: 'girl' | 'boy'; source: ImageSourcePropType }[] = [
-    { type: 'girl', source: require('@/assets/images/ui-elements/girl-avatar.webp') },
-    { type: 'boy', source: require('@/assets/images/ui-elements/boy-avatar.webp') },
-  ];
+  const index = Math.max(0, AVATAR_OPTIONS.findIndex((a) => a.key === avatarKey));
+  const selected = AVATAR_OPTIONS[index];
+
+  const step = (delta: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const next = (index + delta + AVATAR_OPTIONS.length) % AVATAR_OPTIONS.length;
+    onAvatarKeyChange(AVATAR_OPTIONS[next].key);
+  };
 
   return (
     <View style={styles.pageContainer}>
+      <View style={styles.avatarStage}>
+        <Pressable
+          testID="avatar-prev"
+          onPress={() => step(-1)}
+          hitSlop={14}
+          accessibilityLabel={t('common.back')}
+        >
+          <Ionicons name="chevron-back" size={scaledFontSize(30)} color="#FFFFFF" />
+        </Pressable>
+
+        <View style={styles.avatarHeroWrap}>
+          <Image
+            testID={`avatar-hero-${selected.key}`}
+            source={selected.art}
+            style={styles.avatarHero}
+            resizeMode="contain"
+          />
+          <Image
+            source={require('@/assets/images/onboarding/avatar-edit-badge.webp')}
+            style={styles.avatarEditBadge}
+            resizeMode="contain"
+          />
+        </View>
+
+        <Pressable testID="avatar-next" onPress={() => step(1)} hitSlop={14}>
+          <Ionicons name="chevron-forward" size={scaledFontSize(30)} color="#FFFFFF" />
+        </Pressable>
+      </View>
+
       <View style={styles.avatarRow}>
-        {avatarOptions.map((option) => {
-          const selected = avatarType === option.type;
-          return (
-            <Pressable
-              key={option.type}
-              testID={`avatar-option-${option.type}`}
-              style={[styles.avatarOption, selected && styles.avatarOptionSelected]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                onAvatarTypeChange(option.type);
-              }}
-              accessibilityState={{ selected }}
-            >
-              <Image source={option.source} style={styles.avatarImage} resizeMode="cover" />
-            </Pressable>
-          );
-        })}
+        {AVATAR_OPTIONS.map((option) => (
+          <Pressable
+            key={option.key}
+            testID={`avatar-option-${option.key}`}
+            style={[styles.avatarOption, option.key === selected.key && styles.avatarOptionSelected]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onAvatarKeyChange(option.key);
+            }}
+            accessibilityState={{ selected: option.key === selected.key }}
+          >
+            <Image source={option.art} style={styles.avatarImage} resizeMode="contain" />
+          </Pressable>
+        ))}
       </View>
 
       <View style={styles.field}>
         <ThemedText style={[styles.fieldLabel, { fontSize: scaledFontSize(13) }]}>
           {t('onboardingV2.profile.nicknameLabel')}
         </ThemedText>
-        <TextInput
-          testID="profile-nickname-input"
-          style={[styles.input, { fontSize: scaledFontSize(16) }]}
-          value={nickname}
-          onChangeText={onNicknameChange}
-          placeholder={t('onboardingV2.profile.nicknamePlaceholder')}
-          placeholderTextColor={TEXT_FAINT}
-          maxLength={20}
-          autoCorrect={false}
-        />
+        <View style={styles.inputWrap}>
+          <TextInput
+            testID="profile-nickname-input"
+            style={[styles.input, { fontSize: scaledFontSize(16) }]}
+            value={nickname}
+            onChangeText={onNicknameChange}
+            placeholder={t('onboardingV2.profile.nicknamePlaceholder')}
+            placeholderTextColor={TEXT_FAINT}
+            maxLength={20}
+            autoCorrect={false}
+          />
+          {nickname.trim().length > 0 && (
+            <Ionicons
+              testID="profile-nickname-valid"
+              name="checkmark"
+              size={scaledFontSize(20)}
+              color="#6FD08C"
+              style={styles.inputCheck}
+            />
+          )}
+        </View>
       </View>
 
       <View style={styles.field}>
@@ -842,19 +891,38 @@ const styles = StyleSheet.create({
     color: TEXT_MUTED,
     lineHeight: 18,
   },
+  avatarStage: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 14,
+  },
+  avatarHeroWrap: {
+    width: 148,
+    height: 148,
+  },
+  avatarHero: {
+    width: '100%',
+    height: '100%',
+  },
+  avatarEditBadge: {
+    position: 'absolute',
+    right: -2,
+    bottom: 2,
+    width: 42,
+    height: 42,
+  },
   avatarRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 20,
+    gap: 10,
   },
   avatarOption: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    overflow: 'hidden',
-    borderWidth: 3,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 2,
     borderColor: 'transparent',
-    backgroundColor: CARD_BG,
   },
   avatarOptionSelected: {
     borderColor: GOLD,
@@ -862,6 +930,13 @@ const styles = StyleSheet.create({
   avatarImage: {
     width: '100%',
     height: '100%',
+  },
+  inputWrap: {
+    justifyContent: 'center',
+  },
+  inputCheck: {
+    position: 'absolute',
+    right: 14,
   },
   field: {
     gap: 8,

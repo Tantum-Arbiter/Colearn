@@ -207,7 +207,7 @@ describe('OnboardingFlow', () => {
       fireEvent.changeText(findByTestId(tree, 'profile-nickname-input'), 'Freya');
       fireEvent.press(findByTestId(tree, 'next-btn'));
 
-      expect(mockSetUserProfile).toHaveBeenCalledWith('Freya', 'girl', 'girl_1');
+      expect(mockSetUserProfile).toHaveBeenCalledWith('Freya', 'girl', 'bear');
       expect(mockSetChildAge).toHaveBeenCalled();
       expect(mockSetOnboardingComplete).toHaveBeenCalledWith(true);
       expect(mockOnComplete).toHaveBeenCalled();
@@ -226,11 +226,11 @@ describe('OnboardingFlow', () => {
     it('stores the selected avatar', () => {
       const tree = renderAtProfileStep(mockOnComplete);
 
-      fireEvent.press(findByTestId(tree, 'avatar-option-boy'));
+      fireEvent.press(findByTestId(tree, 'avatar-option-dino'));
       fireEvent.changeText(findByTestId(tree, 'profile-nickname-input'), 'Sam');
       fireEvent.press(findByTestId(tree, 'next-btn'));
 
-      expect(mockSetUserProfile).toHaveBeenCalledWith('Sam', 'boy', 'boy_1');
+      expect(mockSetUserProfile).toHaveBeenCalledWith('Sam', 'girl', 'dino');
     });
 
     it('completes without saving a profile when set up later is chosen', () => {

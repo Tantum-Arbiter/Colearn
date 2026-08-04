@@ -18,6 +18,7 @@ import {
   ReadyPage,
   ProfilePage,
   AGE_RANGE_OPTIONS,
+  AVATAR_OPTIONS,
 } from '@/components/onboarding/onboarding-pages';
 
 function findByTestId(tree: ReturnType<typeof render>, testID: string) {
@@ -112,8 +113,8 @@ describe('ProfilePage', () => {
   const defaultProps = {
     nickname: '',
     onNicknameChange: jest.fn(),
-    avatarType: 'girl' as const,
-    onAvatarTypeChange: jest.fn(),
+    avatarKey: 'bear',
+    onAvatarKeyChange: jest.fn(),
     ageMonths: 36,
     onAgeChange: jest.fn(),
   };
@@ -122,11 +123,28 @@ describe('ProfilePage', () => {
     jest.clearAllMocks();
   });
 
-  it('renders both avatar options', () => {
+  it('renders every avatar option', () => {
     const tree = render(<ProfilePage {...defaultProps} />);
 
-    expect(findByTestId(tree, 'avatar-option-girl').length).toBeGreaterThan(0);
-    expect(findByTestId(tree, 'avatar-option-boy').length).toBeGreaterThan(0);
+    AVATAR_OPTIONS.forEach((option) => {
+      expect(findByTestId(tree, `avatar-option-${option.key}`).length).toBeGreaterThan(0);
+    });
+  });
+
+  it('shows the selected avatar as the hero', () => {
+    const tree = render(<ProfilePage {...defaultProps} avatarKey="fox" />);
+
+    expect(findByTestId(tree, 'avatar-hero-fox').length).toBeGreaterThan(0);
+  });
+
+  it('steps through avatars with the chevrons', () => {
+    const tree = render(<ProfilePage {...defaultProps} avatarKey="bear" />);
+
+    fireEvent.press(findByTestId(tree, 'avatar-next')[0]);
+    expect(defaultProps.onAvatarKeyChange).toHaveBeenCalledWith('rabbit');
+
+    fireEvent.press(findByTestId(tree, 'avatar-prev')[0]);
+    expect(defaultProps.onAvatarKeyChange).toHaveBeenCalledWith('elephant');
   });
 
   it('reports nickname changes', () => {
@@ -140,9 +158,9 @@ describe('ProfilePage', () => {
   it('reports avatar changes', () => {
     const tree = render(<ProfilePage {...defaultProps} />);
 
-    fireEvent.press(findByTestId(tree, 'avatar-option-boy')[0]);
+    fireEvent.press(findByTestId(tree, 'avatar-option-dino')[0]);
 
-    expect(defaultProps.onAvatarTypeChange).toHaveBeenCalledWith('boy');
+    expect(defaultProps.onAvatarKeyChange).toHaveBeenCalledWith('dino');
   });
 
   it.each(AGE_RANGE_OPTIONS.map((o) => [o.key, o.months] as const))(
@@ -165,9 +183,9 @@ describe('ProfilePage', () => {
   });
 
   it('marks the selected avatar', () => {
-    const tree = render(<ProfilePage {...defaultProps} avatarType="boy" />);
+    const tree = render(<ProfilePage {...defaultProps} avatarKey="dino" />);
 
-    const selected = findByTestId(tree, 'avatar-option-boy')[0];
+    const selected = findByTestId(tree, 'avatar-option-dino')[0];
 
     expect(selected.props.accessibilityState).toEqual({ selected: true });
   });
