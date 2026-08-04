@@ -323,12 +323,44 @@ export function ReadyPage() {
 
   return (
     <View style={styles.pageContainer}>
-      <Image
-        testID="ready-hero"
-        source={require('@/assets/images/onboarding/ready-hero.webp')}
-        style={styles.readyHero}
-        resizeMode="contain"
-      />
+      {/* same edge treatment as the together hero: the scene dissolves into the
+          night sky rather than ending on a hard card edge */}
+      <View style={styles.readyHeroWrap}>
+        <Image
+          testID="ready-hero"
+          source={require('@/assets/images/onboarding/ready-hero.webp')}
+          style={styles.readyHero}
+          resizeMode="cover"
+        />
+        <LinearGradient
+          colors={['#06081C', 'rgba(6, 8, 28, 0.55)', 'transparent']}
+          locations={[0, 0.4, 1]}
+          style={styles.backdropFadeTop}
+          pointerEvents="none"
+        />
+        <LinearGradient
+          colors={['transparent', 'rgba(13, 18, 51, 0.55)', '#0D1233']}
+          locations={[0, 0.6, 1]}
+          style={styles.backdropFadeBottom}
+          pointerEvents="none"
+        />
+        <LinearGradient
+          colors={['#090D27', 'rgba(9, 13, 39, 0.55)', 'transparent']}
+          locations={[0, 0.4, 1]}
+          start={{ x: 0, y: 0.5 }}
+          end={{ x: 1, y: 0.5 }}
+          style={styles.backdropFadeLeft}
+          pointerEvents="none"
+        />
+        <LinearGradient
+          colors={['transparent', 'rgba(9, 13, 39, 0.55)', '#090D27']}
+          locations={[0, 0.6, 1]}
+          start={{ x: 0, y: 0.5 }}
+          end={{ x: 1, y: 0.5 }}
+          style={styles.backdropFadeRight}
+          pointerEvents="none"
+        />
+      </View>
 
       <View style={styles.featureList}>
         {READY_ITEMS.map((item) => (
@@ -771,11 +803,14 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     flex: 1,
   },
-  readyHero: {
+  readyHeroWrap: {
     alignSelf: 'center',
     width: '100%',
     height: READY_HERO_H,
-    borderRadius: 20,
+  },
+  readyHero: {
+    width: '100%',
+    height: '100%',
   },
   featureList: {
     gap: 12,
