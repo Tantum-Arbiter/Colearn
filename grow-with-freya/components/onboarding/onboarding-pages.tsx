@@ -32,20 +32,19 @@ const SAFETY_LABEL_H = SAFETY_LABEL_LINE * 2;
 // the frame never grows taller than the cell is wide -- past that, cover would
 // scale to the height and enlarge the glyph instead of just moving it.
 const SAFETY_ART_LIFT = Math.max(0, Math.min(24, SAFETY_CELL_W - SAFETY_CELL_H));
-// gold hairlines over a near-opaque navy fill: the panel overlaps the base of
-// the cloud art, so the cells have to stay legible over it
-const SAFETY_BORDER = 'rgba(232, 184, 75, 0.55)';
-const SAFETY_DIVIDER = 'rgba(232, 184, 75, 0.4)';
+// pale moonlit hairlines rather than gold, with a highlight raked across the
+// panel's top edge so it catches the light from the scene above it
+const SAFETY_BORDER = 'rgba(198, 219, 250, 0.42)';
+const SAFETY_DIVIDER = 'rgba(198, 219, 250, 0.22)';
 const SAFETY_PANEL_BG = 'rgba(9, 13, 38, 0.9)';
 // the together art is 900x941; sizing the backdrop to that ratio means the full
 // scene shows edge-to-edge with no crop
 const TOGETHER_ART_RATIO = 941 / 900;
 const TOGETHER_BACKDROP_H = Math.round(SCREEN_WIDTH * TOGETHER_ART_RATIO);
 // safety art is 900x774; same full-bleed treatment as the together backdrop
-// the safety scene reads as a full-width band with the cloud cropped to it,
-// rather than the whole square artwork inset on the page
-const SAFE_BACKDROP_H = Math.round(SCREEN_WIDTH * 0.51);
-const SAFE_BACKDROP_TOP = 172;
+// the cut-out constellation is shown whole rather than cropped into a band
+const SAFE_BACKDROP_H = Math.round(SCREEN_WIDTH * 0.52);
+const SAFE_BACKDROP_TOP = 160;
 // drops the scene down the screen so the headline has clear sky above it
 const TOGETHER_BACKDROP_TOP = 128;
 
@@ -233,14 +232,14 @@ const SAFETY_ITEMS: {
 export function SafetyBackdrop() {
   return (
     <View style={styles.safeBackdrop}>
+      {/* the art is cut out to the constellation itself, so it sits on the
+          page's own sky -- no band, and nothing to fade at the edges */}
       <Image
         testID="safe-hero"
         source={require('@/assets/images/onboarding/safe-hero.webp')}
         style={styles.togetherBackdropImage}
-        resizeMode="cover"
+        resizeMode="contain"
       />
-      <LinearGradient colors={['rgba(7, 9, 30, 0.85)', 'transparent']} locations={[0, 1]} style={styles.safeFadeTop} pointerEvents="none" />
-      <LinearGradient colors={['transparent', 'rgba(12, 17, 48, 0.85)']} locations={[0, 1]} style={styles.safeFadeBottom} pointerEvents="none" />
     </View>
   );
 }
@@ -291,6 +290,13 @@ export function SafetyPage() {
             </ThemedText>
           </View>
         ))}
+
+        <LinearGradient
+          colors={['rgba(214, 231, 255, 0.22)', 'rgba(214, 231, 255, 0.06)', 'transparent']}
+          locations={[0, 0.35, 1]}
+          style={styles.safetyTopLight}
+          pointerEvents="none"
+        />
       </View>
 
       <ThemedText style={[styles.togetherBody, { fontSize: scaledFontSize(14) }]}>
@@ -690,6 +696,15 @@ const styles = StyleSheet.create({
     top: -SAFETY_ART_LIFT,
     width: '100%',
     height: SAFETY_CELL_H + SAFETY_ART_LIFT,
+  },
+  // catches the light from the scene above: a highlight raked down from the
+  // panel's top edge, over the cells
+  safetyTopLight: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 34,
   },
   // darkens the base of each cell so the label stays readable over the art
   safetyLabelScrim: {
