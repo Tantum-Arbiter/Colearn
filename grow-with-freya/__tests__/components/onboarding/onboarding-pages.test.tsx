@@ -20,6 +20,7 @@ import {
   AGE_RANGE_OPTIONS,
   AVATAR_OPTIONS,
 } from '@/components/onboarding/onboarding-pages';
+import { SUPPORTED_LANGUAGES } from '@/services/i18n';
 
 function findByTestId(tree: ReturnType<typeof render>, testID: string) {
   return tree.UNSAFE_root.findAll((n: any) => n.props.testID === testID);
@@ -168,6 +169,7 @@ describe('ProfilePage', () => {
     (key, months) => {
       const tree = render(<ProfilePage {...defaultProps} />);
 
+      fireEvent.press(findByTestId(tree, 'age-select')[0]);
       fireEvent.press(findByTestId(tree, `age-option-${key}`)[0]);
 
       expect(defaultProps.onAgeChange).toHaveBeenCalledWith(months);
@@ -177,9 +179,30 @@ describe('ProfilePage', () => {
   it('marks the selected age range', () => {
     const tree = render(<ProfilePage {...defaultProps} ageMonths={60} />);
 
+    fireEvent.press(findByTestId(tree, 'age-select')[0]);
     const selected = findByTestId(tree, 'age-option-4-6')[0];
 
     expect(selected.props.accessibilityState).toEqual({ selected: true });
+  });
+
+  it('keeps the option list closed until the field is tapped', () => {
+    const tree = render(<ProfilePage {...defaultProps} />);
+
+    expect(findByTestId(tree, 'age-options')).toHaveLength(0);
+
+    fireEvent.press(findByTestId(tree, 'age-select')[0]);
+
+    expect(findByTestId(tree, 'age-options').length).toBeGreaterThan(0);
+  });
+
+  it('offers every supported language', () => {
+    const tree = render(<ProfilePage {...defaultProps} />);
+
+    fireEvent.press(findByTestId(tree, 'language-select')[0]);
+
+    SUPPORTED_LANGUAGES.forEach((lang) => {
+      expect(findByTestId(tree, `language-option-${lang.code}`).length).toBeGreaterThan(0);
+    });
   });
 
   it('marks the selected avatar', () => {

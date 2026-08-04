@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, Pressable, TextInput, Image, ImageSourcePropType, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -7,6 +7,7 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ThemedText } from '../themed-text';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { SUPPORTED_LANGUAGES, setStoredLanguage, type SupportedLanguage } from '@/services/i18n';
 import { GOLD, PURPLE, CARD_BG, CARD_BORDER, TEXT_MUTED, TEXT_FAINT, NIGHT_BASE } from './onboarding-theme';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -395,6 +396,82 @@ export const AGE_RANGE_OPTIONS: { key: string; months: number; label: string }[]
 const AVATAR_HERO = 148;
 const AVATAR_CHIP = 62;
 
+interface SelectOption {
+  key: string;
+  label: string;
+  selected: boolean;
+  onSelect: () => void;
+}
+
+/** Label over a tappable value row that expands its options in place. Used for
+ *  the age range and language on the profile step. */
+function SelectField({
+  testID,
+  label,
+  value,
+  open,
+  onToggle,
+  options,
+  onChosen,
+  scaledFontSize,
+}: {
+  testID: string;
+  label: string;
+  value: string;
+  open: boolean;
+  onToggle: () => void;
+  options: SelectOption[];
+  onChosen: () => void;
+  scaledFontSize: (size: number) => number;
+}) {
+  return (
+    <View style={styles.field}>
+      <ThemedText style={[styles.fieldLabel, { fontSize: scaledFontSize(13) }]}>{label}</ThemedText>
+
+      <Pressable
+        testID={`${testID}-select`}
+        style={[styles.select, open && styles.selectOpen]}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onToggle();
+        }}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+      >
+        <ThemedText style={[styles.selectValue, { fontSize: scaledFontSize(16) }]}>
+          {value}
+        </ThemedText>
+        <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={scaledFontSize(18)} color={TEXT_MUTED} />
+      </Pressable>
+
+      {open && (
+        <View testID={`${testID}-options`} style={styles.selectList}>
+          {options.map((option) => (
+            <Pressable
+              key={option.key}
+              testID={`${testID}-option-${option.key}`}
+              style={styles.selectOption}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                option.onSelect();
+                onChosen();
+              }}
+              accessibilityState={{ selected: option.selected }}
+            >
+              <ThemedText style={[styles.selectOptionText, { fontSize: scaledFontSize(15) }]}>
+                {option.label}
+              </ThemedText>
+              {option.selected && (
+                <Ionicons name="checkmark" size={scaledFontSize(17)} color={GOLD} />
+              )}
+            </Pressable>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
 export const AVATAR_OPTIONS: { key: string; art: ImageSourcePropType }[] = [
   { key: 'bear', art: require('@/assets/images/onboarding/avatar-bear.webp') },
   { key: 'rabbit', art: require('@/assets/images/onboarding/avatar-rabbit.webp') },
@@ -420,8 +497,10 @@ export function ProfilePage({
   ageMonths,
   onAgeChange,
 }: ProfilePageProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { scaledFontSize } = useAccessibility();
+  const [openField, setOpenField] = useState<'age' | 'language' | null>(null);
+  const language = i18n.language as SupportedLanguage;
 
   const index = Math.max(0, AVATAR_OPTIONS.findIndex((a) => a.key === avatarKey));
   const selected = AVATAR_OPTIONS[index];
@@ -502,38 +581,37 @@ export function ProfilePage({
         </View>
       </View>
 
-      <View style={styles.field}>
-        <ThemedText style={[styles.fieldLabel, { fontSize: scaledFontSize(13) }]}>
-          {t('onboardingV2.profile.ageLabel')}
-        </ThemedText>
-        <View style={styles.ageRow}>
-          {AGE_RANGE_OPTIONS.map((option) => {
-            const selected = ageMonths === option.months;
-            return (
-              <Pressable
-                key={option.key}
-                testID={`age-option-${option.key}`}
-                style={[styles.ageChip, selected && styles.ageChipSelected]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  onAgeChange(option.months);
-                }}
-                accessibilityState={{ selected }}
-              >
-                <ThemedText
-                  style={[
-                    styles.ageChipText,
-                    selected && styles.ageChipTextSelected,
-                    { fontSize: scaledFontSize(15) },
-                  ]}
-                >
-                  {option.label}
-                </ThemedText>
-              </Pressable>
-            );
-          })}
-        </View>
-      </View>
+      <SelectField
+        testID="age"
+        label={t('onboardingV2.profile.ageLabel')}
+        value={(AGE_RANGE_OPTIONS.find((o) => o.months === ageMonths) ?? AGE_RANGE_OPTIONS[1]).label}
+        open={openField === 'age'}
+        onToggle={() => setOpenField(openField === 'age' ? null : 'age')}
+        options={AGE_RANGE_OPTIONS.map((o) => ({
+          key: o.key,
+          label: o.label,
+          selected: o.months === ageMonths,
+          onSelect: () => onAgeChange(o.months),
+        }))}
+        onChosen={() => setOpenField(null)}
+        scaledFontSize={scaledFontSize}
+      />
+
+      <SelectField
+        testID="language"
+        label={t('onboardingV2.profile.languageLabel')}
+        value={SUPPORTED_LANGUAGES.find((l) => l.code === language)?.nativeName ?? 'English'}
+        open={openField === 'language'}
+        onToggle={() => setOpenField(openField === 'language' ? null : 'language')}
+        options={SUPPORTED_LANGUAGES.map((l) => ({
+          key: l.code,
+          label: `${l.flag}  ${l.nativeName}`,
+          selected: l.code === language,
+          onSelect: () => setStoredLanguage(l.code),
+        }))}
+        onChosen={() => setOpenField(null)}
+        scaledFontSize={scaledFontSize}
+      />
 
       <ThemedText style={[styles.helperText, { fontSize: scaledFontSize(13) }]}>
         {t('onboardingV2.profile.helper')}
@@ -957,29 +1035,41 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: CARD_BORDER,
   },
-  ageRow: {
+  select: {
     flexDirection: 'row',
-    gap: 10,
-  },
-  ageChip: {
-    flex: 1,
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingVertical: 14,
+    paddingHorizontal: 16,
     borderRadius: 14,
     backgroundColor: CARD_BG,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: CARD_BORDER,
   },
-  ageChipSelected: {
-    backgroundColor: 'rgba(109, 93, 245, 0.22)',
-    borderColor: PURPLE,
+  selectOpen: {
+    borderColor: GOLD,
   },
-  ageChipText: {
+  selectValue: {
     color: '#FFFFFF',
     fontWeight: '600',
   },
-  ageChipTextSelected: {
-    color: '#CFC7FF',
+  selectList: {
+    marginTop: 6,
+    borderRadius: 14,
+    backgroundColor: 'rgba(9, 13, 38, 0.96)',
+    borderWidth: 1,
+    borderColor: CARD_BORDER,
+    overflow: 'hidden',
+  },
+  selectOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  selectOptionText: {
+    color: '#FFFFFF',
   },
   helperText: {
     color: TEXT_MUTED,

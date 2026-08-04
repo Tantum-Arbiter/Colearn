@@ -216,6 +216,7 @@ describe('OnboardingFlow', () => {
     it('stores the selected age range', () => {
       const tree = renderAtProfileStep(mockOnComplete);
 
+      fireEvent.press(findByTestId(tree, 'age-select'));
       fireEvent.press(findByTestId(tree, 'age-option-4-6'));
       fireEvent.changeText(findByTestId(tree, 'profile-nickname-input'), 'Sam');
       fireEvent.press(findByTestId(tree, 'next-btn'));
