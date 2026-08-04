@@ -42,6 +42,11 @@ const SAFETY_PANEL_BG = 'rgba(9, 13, 38, 0.9)';
 const TOGETHER_ART_RATIO = 941 / 900;
 const TOGETHER_BACKDROP_H = Math.round(SCREEN_WIDTH * TOGETHER_ART_RATIO);
 // safety art is 900x774; same full-bleed treatment as the together backdrop
+// the ready hero is a 3:2 scene; sized to the content width it keeps that ratio
+const READY_HERO_H = Math.round((SCREEN_WIDTH - SHELL_H_PADDING * 2) * (600 / 900));
+// gold hairline cards, matching the plates supplied with the ready artwork
+const READY_CARD_BG = 'rgba(18, 26, 62, 0.82)';
+const READY_CARD_BORDER = 'rgba(232, 184, 75, 0.5)';
 // the cut-out constellation is shown whole rather than cropped into a band
 const SAFE_BACKDROP_H = Math.round(SCREEN_WIDTH * 0.62);
 const SAFE_BACKDROP_TOP = 160;
@@ -306,10 +311,10 @@ export function SafetyPage() {
   );
 }
 
-const READY_ITEMS: { key: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { key: 'offline', icon: 'cloud-download-outline' },
-  { key: 'routines', icon: 'moon-outline' },
-  { key: 'parent', icon: 'lock-closed-outline' },
+const READY_ITEMS: { key: string; art: ImageSourcePropType }[] = [
+  { key: 'offline', art: require('@/assets/images/onboarding/ready-offline.webp') },
+  { key: 'routines', art: require('@/assets/images/onboarding/ready-routines.webp') },
+  { key: 'parent', art: require('@/assets/images/onboarding/ready-parent.webp') },
 ];
 
 export function ReadyPage() {
@@ -318,12 +323,22 @@ export function ReadyPage() {
 
   return (
     <View style={styles.pageContainer}>
+      <Image
+        testID="ready-hero"
+        source={require('@/assets/images/onboarding/ready-hero.webp')}
+        style={styles.readyHero}
+        resizeMode="contain"
+      />
+
       <View style={styles.featureList}>
         {READY_ITEMS.map((item) => (
           <View key={item.key} testID={`ready-item-${item.key}`} style={styles.featureCard}>
-            <View style={styles.featureIconCircle}>
-              <Ionicons name={item.icon} size={scaledFontSize(20)} color={GOLD} />
-            </View>
+            <Image
+              testID={`ready-art-${item.key}`}
+              source={item.art}
+              style={styles.featureIconTile}
+              resizeMode="contain"
+            />
             <View style={styles.featureTextBlock}>
               <ThemedText style={[styles.featureTitle, { fontSize: scaledFontSize(15) }]}>
                 {t(`onboardingV2.ready.${item.key}Title`)}
@@ -756,6 +771,12 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     flex: 1,
   },
+  readyHero: {
+    alignSelf: 'center',
+    width: '100%',
+    height: READY_HERO_H,
+    borderRadius: 20,
+  },
   featureList: {
     gap: 12,
   },
@@ -763,19 +784,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    padding: 16,
+    padding: 12,
     borderRadius: 18,
-    backgroundColor: CARD_BG,
+    backgroundColor: READY_CARD_BG,
     borderWidth: 1,
-    borderColor: CARD_BORDER,
+    borderColor: READY_CARD_BORDER,
   },
-  featureIconCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(232, 184, 75, 0.12)',
+  // the supplied tiles carry their own navy plate and rounded corner
+  featureIconTile: {
+    width: 52,
+    height: 52,
   },
   featureTextBlock: {
     flex: 1,
