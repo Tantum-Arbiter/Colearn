@@ -622,10 +622,10 @@ export default {
         closeLabel: 'Close',
         dataSummary: {
           title: 'What we collect & why',
-          profile: "Display name & avatar -to personalise your child's experience",
-          reading: 'Reading history, favourites & progress -to track stories and streaks',
-          screenTime: 'Screen time sessions -to help manage healthy usage',
-          device: 'Device type & app version -to keep the app working properly',
+          profile: "Display name & avatar - to personalise your child's experience",
+          reading: 'Reading history, favourites & progress - to track stories and streaks',
+          screenTime: 'Screen time sessions - to help manage healthy usage',
+          device: 'Device type & app version - to keep the app working properly',
           noSell: 'We never sell data or show ads. You can delete everything at any time.',
         },
         checkboxes: {
