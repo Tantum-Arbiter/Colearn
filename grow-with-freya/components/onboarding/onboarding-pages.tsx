@@ -392,6 +392,9 @@ export const AGE_RANGE_OPTIONS: { key: string; months: number; label: string }[]
   { key: '4-6', months: 60, label: '4 – 6' },
 ];
 
+const AVATAR_HERO = 148;
+const AVATAR_CHIP = 62;
+
 export const AVATAR_OPTIONS: { key: string; art: ImageSourcePropType }[] = [
   { key: 'bear', art: require('@/assets/images/onboarding/avatar-bear.webp') },
   { key: 'rabbit', art: require('@/assets/images/onboarding/avatar-rabbit.webp') },
@@ -446,11 +449,6 @@ export function ProfilePage({
             testID={`avatar-hero-${selected.key}`}
             source={selected.art}
             style={styles.avatarHero}
-            resizeMode="contain"
-          />
-          <Image
-            source={require('@/assets/images/onboarding/avatar-edit-badge.webp')}
-            style={styles.avatarEditBadge}
             resizeMode="contain"
           />
         </View>
@@ -897,20 +895,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 14,
   },
+  // the art is cut to the bare disc, so the ring is drawn here and is therefore
+  // identical on every avatar rather than varying with each render's own frame
   avatarHeroWrap: {
-    width: 148,
-    height: 148,
+    width: AVATAR_HERO,
+    height: AVATAR_HERO,
+    borderRadius: AVATAR_HERO / 2,
+    borderWidth: 4,
+    borderColor: GOLD,
+    overflow: 'hidden',
+    backgroundColor: NIGHT_BASE,
   },
   avatarHero: {
     width: '100%',
     height: '100%',
-  },
-  avatarEditBadge: {
-    position: 'absolute',
-    right: -2,
-    bottom: 2,
-    width: 42,
-    height: 42,
   },
   avatarRow: {
     flexDirection: 'row',
@@ -918,13 +916,16 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   avatarOption: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: AVATAR_CHIP,
+    height: AVATAR_CHIP,
+    borderRadius: AVATAR_CHIP / 2,
     borderWidth: 2,
-    borderColor: 'transparent',
+    borderColor: 'rgba(232, 184, 75, 0.35)',
+    overflow: 'hidden',
+    backgroundColor: NIGHT_BASE,
   },
   avatarOptionSelected: {
+    borderWidth: 3,
     borderColor: GOLD,
   },
   avatarImage: {
