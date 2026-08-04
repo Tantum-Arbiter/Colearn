@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Pressable, TextInput, Image, ImageSourcePropType, Dimensions } from 'react-native';
+import { View, StyleSheet, Pressable, TextInput, Image, ImageSourcePropType, Dimensions, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
@@ -444,29 +444,44 @@ function SelectField({
         <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={scaledFontSize(18)} color={TEXT_MUTED} />
       </Pressable>
 
+      {/* the options open as an overlay rather than inline: these fields sit low
+          on the screen, and a fourteen-item list expanded in place runs off the
+          bottom. Matches how the account screen presents language. */}
       {open && (
-        <View testID={`${testID}-options`} style={styles.selectList}>
-          {options.map((option) => (
-            <Pressable
-              key={option.key}
-              testID={`${testID}-option-${option.key}`}
-              style={styles.selectOption}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                option.onSelect();
-                onChosen();
-              }}
-              accessibilityState={{ selected: option.selected }}
+        <Pressable testID={`${testID}-dismiss`} style={styles.selectBackdrop} onPress={onChosen}>
+          <Pressable style={styles.selectSheet}>
+            <ThemedText style={[styles.selectSheetTitle, { fontSize: scaledFontSize(15) }]}>
+              {label}
+            </ThemedText>
+            <ScrollView
+              testID={`${testID}-options`}
+              style={styles.selectList}
+              contentContainerStyle={styles.selectListContent}
+              showsVerticalScrollIndicator
             >
-              <ThemedText style={[styles.selectOptionText, { fontSize: scaledFontSize(15) }]}>
-                {option.label}
-              </ThemedText>
-              {option.selected && (
-                <Ionicons name="checkmark" size={scaledFontSize(17)} color={GOLD} />
-              )}
-            </Pressable>
-          ))}
-        </View>
+              {options.map((option) => (
+                <Pressable
+                  key={option.key}
+                  testID={`${testID}-option-${option.key}`}
+                  style={styles.selectOption}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    option.onSelect();
+                    onChosen();
+                  }}
+                  accessibilityState={{ selected: option.selected }}
+                >
+                  <ThemedText style={[styles.selectOptionText, { fontSize: scaledFontSize(15) }]}>
+                    {option.label}
+                  </ThemedText>
+                  {option.selected && (
+                    <Ionicons name="checkmark" size={scaledFontSize(17)} color={GOLD} />
+                  )}
+                </Pressable>
+              ))}
+            </ScrollView>
+          </Pressable>
+        </Pressable>
       )}
     </View>
   );
@@ -1053,13 +1068,42 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
   },
-  selectList: {
-    marginTop: 6,
-    borderRadius: 14,
-    backgroundColor: 'rgba(9, 13, 38, 0.96)',
+  // reaches well beyond the field so the sheet is centred over the screen
+  // rather than opening downward into the footer
+  selectBackdrop: {
+    position: 'absolute',
+    top: -SCREEN_HEIGHT,
+    bottom: -SCREEN_HEIGHT,
+    left: -SHELL_H_PADDING,
+    right: -SHELL_H_PADDING,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 28,
+    backgroundColor: 'rgba(4, 6, 20, 0.82)',
+    zIndex: 50,
+  },
+  selectSheet: {
+    alignSelf: 'stretch',
+    borderRadius: 20,
+    paddingVertical: 14,
+    backgroundColor: '#111838',
     borderWidth: 1,
-    borderColor: CARD_BORDER,
-    overflow: 'hidden',
+    borderColor: GOLD,
+    maxHeight: SCREEN_HEIGHT * 0.42,
+  },
+  selectSheetTitle: {
+    color: TEXT_MUTED,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    paddingHorizontal: 18,
+    paddingBottom: 10,
+  },
+  selectList: {
+    flexGrow: 0,
+  },
+  selectListContent: {
+    paddingBottom: 4,
   },
   selectOption: {
     flexDirection: 'row',
