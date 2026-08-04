@@ -1068,18 +1068,19 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
   },
-  // reaches well beyond the field so the sheet is centred over the screen
-  // rather than opening downward into the footer
+  // positioned relative to its own field, so it reaches up over the page and
+  // stops just below it -- the shell paints its footer after the scroll area,
+  // and anything extending past that gets clipped by it
   selectBackdrop: {
     position: 'absolute',
-    top: -SCREEN_HEIGHT,
-    bottom: -SCREEN_HEIGHT,
+    top: -Math.round(SCREEN_HEIGHT * 0.62),
+    bottom: -Math.round(SCREEN_HEIGHT * 0.05),
     left: -SHELL_H_PADDING,
     right: -SHELL_H_PADDING,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 28,
-    backgroundColor: 'rgba(4, 6, 20, 0.82)',
+    backgroundColor: 'rgba(4, 6, 20, 0.86)',
     zIndex: 50,
   },
   selectSheet: {
@@ -1089,7 +1090,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#111838',
     borderWidth: 1,
     borderColor: GOLD,
-    maxHeight: SCREEN_HEIGHT * 0.42,
+    maxHeight: SCREEN_HEIGHT * 0.44,
   },
   selectSheetTitle: {
     color: TEXT_MUTED,
