@@ -43,7 +43,7 @@ const TOGETHER_ART_RATIO = 941 / 900;
 const TOGETHER_BACKDROP_H = Math.round(SCREEN_WIDTH * TOGETHER_ART_RATIO);
 // safety art is 900x774; same full-bleed treatment as the together backdrop
 // the cut-out constellation is shown whole rather than cropped into a band
-const SAFE_BACKDROP_H = Math.round(SCREEN_WIDTH * 0.52);
+const SAFE_BACKDROP_H = Math.round(SCREEN_WIDTH * 0.62);
 const SAFE_BACKDROP_TOP = 160;
 // drops the scene down the screen so the headline has clear sky above it
 const TOGETHER_BACKDROP_TOP = 128;
@@ -506,9 +506,9 @@ const styles = StyleSheet.create({
     marginTop: SAFE_BACKDROP_TOP,
   },
   safeBackdropSpacer: {
-    // clears the full height of the band plus a gap, so the panel starts below
-    // the artwork instead of cutting across its lower edge
-    height: SAFE_BACKDROP_H + SAFE_BACKDROP_TOP - 167,
+    // clears the artwork plus a gap. The cut-out has transparent margin around
+    // the constellation, so this reaches into it rather than clearing the box.
+    height: SAFE_BACKDROP_H + SAFE_BACKDROP_TOP - 197,
   },
   togetherBackdrop: {
     width: SCREEN_WIDTH,
