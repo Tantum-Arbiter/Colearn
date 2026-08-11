@@ -20,6 +20,7 @@ import { applyDefaultOrientation } from '@/hooks/use-story-orientation';
 import { AppSplashScreen } from '@/components/splash-screen';
 import { OnboardingFlow } from '@/components/onboarding/onboarding-flow';
 import { LoginScreen } from '@/components/auth/login-screen';
+import { AUTH_GRADIENT } from '@/components/auth/auth-theme';
 import { AccountScreen } from '@/components/account/account-screen';
 import { MainMenu, suppressNextContainerFadeIn } from '@/components/main-menu';
 import { suppressNextCarouselAnimation } from '@/components/main-menu/menu-carousel';
@@ -831,7 +832,9 @@ function AppContent() {
     }
     return (
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <View style={{ flex: 1 }}>
+        {/* the night base sits behind LoginScreen's fade-in -- an unstyled root
+            here flashes white while the screen's opacity ramps up */}
+        <View style={{ flex: 1, backgroundColor: AUTH_GRADIENT[0] }}>
           {/* Login screen -stays mounted during both 'login' and 'loading' views.
               During loading, it sits behind the overlay until the slide-in covers it,
               then gets unmounted once the overlay is fully opaque (onSlideInComplete). */}

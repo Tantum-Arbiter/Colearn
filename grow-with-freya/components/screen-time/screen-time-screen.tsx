@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet, Dimensions, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, Dimensions, Alert, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,7 +11,7 @@ import { MoonBottomImage } from '../main-menu/animated-components';
 import { mainMenuStyles } from '../main-menu/styles';
 import { MusicControl } from '../ui/music-control';
 import { StarBackground } from '../ui/star-background';
-import ScreenTimeService, { ScreenTimeStats, SCREEN_TIME_LIMITS } from '../../services/screen-time-service';
+import ScreenTimeService, { ScreenTimeStats, DailyTotal } from '../../services/screen-time-service';
 import NotificationService from '../../services/notification-service';
 import { Logger } from '@/utils/logger';
 
@@ -19,10 +19,11 @@ const log = Logger.create('ScreenTimeScreen');
 import { useScreenTime } from './screen-time-provider';
 import { CustomRemindersScreen, CreateReminderScreen } from '../reminders';
 import { styles } from './styles';
-import { formatDurationCompact } from '../../utils/time-formatting';
 import { ApiClient } from '@/services/api-client';
 import { reminderService } from '@/services/reminder-service';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { UsageOverview } from './usage-overview';
+import { AUTH_GRADIENT } from '@/components/auth/auth-theme';
 import { backgroundSaveService } from '@/services/background-save-service';
 import { ScreenTimeTipsOverlay } from '../tutorial';
 
@@ -70,6 +71,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
   const { todayUsage: contextTodayUsage } = useScreenTime();
 
   const [stats, setStats] = useState<ScreenTimeStats | null>(null);
+  const [dailyTotals, setDailyTotals] = useState<DailyTotal[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState<'main' | 'custom-reminders' | 'create-reminder'>('main');
 
@@ -131,6 +133,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
       const screenTimeService = ScreenTimeService.getInstance();
       const screenTimeStats = await screenTimeService.getScreenTimeStats(childAgeInMonths);
       setStats(screenTimeStats);
+      setDailyTotals(await screenTimeService.getDailyTotals(30));
     } catch (error) {
       log.error('Failed to load stats:', error);
     } finally {
@@ -292,16 +295,6 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
     }
   };
 
-  const getDailyLimit = () => {
-    const screenTimeService = ScreenTimeService.getInstance();
-    return screenTimeService.getDailyLimit(childAgeInMonths);
-  };
-
-  const formatTime = (seconds: number) => {
-    if (seconds === 0) return t('screenTime.noScreenTimeRecommended');
-    return formatDurationCompact(seconds);
-  };
-
   const dayNames = [
     t('screenTime.sun'),
     t('screenTime.mon'),
@@ -311,11 +304,6 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
     t('screenTime.fri'),
     t('screenTime.sat'),
   ];
-
-  const getUsagePercentage = (usage: number, limit: number) => {
-    if (limit === 0) return 0;
-    return Math.min((usage / limit) * 100, 100);
-  };
 
   const getAgeRangeText = (ageInMonths: number) => {
     if (ageInMonths < 24) return t('screenTime.age18to24months');
@@ -340,12 +328,11 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
   }, [localChildAge]);
 
   const todayUsage = contextTodayUsage; // Use real-time usage from context
-  const usagePercentage = getUsagePercentage(todayUsage, dailyLimit);
 
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#1E3A8A', '#1E3A8A', '#1E3A8A']}
+        colors={AUTH_GRADIENT}
         style={styles.gradient}
       >
         {/* Animated stars background */}
@@ -409,35 +396,13 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
         {currentPage === 'main' && (
           <ScrollView style={[styles.scrollView, { zIndex: 10 }]} contentContainerStyle={[styles.content, isTablet && { alignItems: 'center' }]}>
           <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
-          {/* Today's Usage */}
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>{t('screenTime.todaysUsage')}</Text>
-
-            <View style={[styles.usageCard, { padding: scaledPadding(16) }]}>
-              <View style={styles.usageHeader}>
-                <View style={styles.usageTimeContainer}>
-                  <Text style={[styles.usageTime, { fontSize: scaledFontSize(32) }]}>{formatTime(todayUsage)}</Text>
-                  <Text style={[styles.usageLimit, { fontSize: scaledFontSize(14) }]}>{t('screenTime.of')} {formatTime(dailyLimit)}</Text>
-                </View>
-              </View>
-
-              <View style={styles.progressBar}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    {
-                      width: `${usagePercentage}%`,
-                      backgroundColor: usagePercentage > 90 ? '#EF4444' : usagePercentage > 70 ? '#F59E0B' : '#10B981'
-                    }
-                  ]}
-                />
-              </View>
-
-              <Text style={[styles.usagePercentage, { fontSize: scaledFontSize(14) }]}>
-                {t('screenTime.ofDailyLimit', { percentage: usagePercentage.toFixed(0) })}
-              </Text>
-            </View>
-          </View>
+          <UsageOverview
+            todayUsageSeconds={todayUsage}
+            dailyLimitSeconds={dailyLimit}
+            dailyTotals={dailyTotals}
+            childAgeMonths={localChildAge}
+            dayNames={dayNames}
+          />
 
           {/* Age Settings */}
           <View style={styles.section}>
@@ -482,134 +447,6 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
               {getGuidelinesText(localChildAge)}
             </Text>
           </View>
-
-          {/* Weekly Activity Heatmap */}
-          {stats && stats.heatmapData && stats.heatmapData.length > 0 && (
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>{t('screenTime.weeklyActivityHeatmap')}</Text>
-
-              <View style={styles.chartContainer}>
-                <Text style={[styles.chartNote, { fontSize: scaledFontSize(14) }]}>
-                  {t('screenTime.screenTimePatterns')}
-                </Text>
-
-                {/* Heatmap */}
-                <View style={styles.heatmapContainer}>
-                  {/* Daily Bar Chart */}
-                  <View style={styles.dailyBarChart}>
-                    {dayNames.map((dayName, dayIndex) => {
-                      const dayData = stats.heatmapData.find(data => data.day === dayIndex);
-                      const usage = dayData?.usage || 0;
-
-                      // Get age-appropriate daily limit for proper scaling (use local age for immediate feedback)
-                      // 18-24 months: 15 min, 2-6 years: 60 min, 6+ years: 120 min
-                      const dailyLimit = localChildAge < 24 ? 15 * 60 :
-                                       localChildAge < 72 ? 60 * 60 :
-                                       120 * 60;
-
-                      // Calculate percentage of limit used (can exceed 100%)
-                      const usagePercentage = dailyLimit > 0 ? (usage / dailyLimit) * 100 : 0;
-
-                      // 5 color thresholds evenly distributed:
-                      // 0-25%: Teal light, 25-50%: Teal medium, 50-75%: Teal bright (recommended)
-                      // 75-100%: Amber (approaching limit), >100%: Red (over limit)
-                      let backgroundColor: string;
-                      if (usage === 0) {
-                        backgroundColor = 'rgba(255, 255, 255, 0.05)';
-                      } else if (usagePercentage > 100) {
-                        // Over limit - Red
-                        backgroundColor = 'rgba(239, 68, 68, 1.0)';
-                      } else if (usagePercentage > 75) {
-                        // 75-100% - Amber (approaching limit)
-                        backgroundColor = 'rgba(255, 159, 67, 0.85)';
-                      } else if (usagePercentage > 50) {
-                        // 50-75% - Teal bright (recommended zone)
-                        backgroundColor = 'rgba(78, 205, 196, 1.0)';
-                      } else if (usagePercentage > 25) {
-                        // 25-50% - Teal medium
-                        backgroundColor = 'rgba(78, 205, 196, 0.6)';
-                      } else {
-                        // 0-25% - Teal light
-                        backgroundColor = 'rgba(78, 205, 196, 0.3)';
-                      }
-
-                      // Calculate fill percentage for bar height (capped at 100% for display)
-                      const fillPercentage = Math.min(usagePercentage, 100);
-
-                      // All bars are the same height (100px), but fill based on usage
-                      const barFillHeight = Math.max(4, (fillPercentage / 100) * 100); // Minimum 4px for visibility
-
-                      return (
-                        <View key={dayIndex} style={styles.dailyBarContainer}>
-                          {/* Day label */}
-                          <Text style={[styles.dailyBarLabel, { fontSize: scaledFontSize(10) }]}>{dayName}</Text>
-
-                          {/* Usage bar - consistent container size */}
-                          <View style={styles.dailyBarWrapper}>
-                            <View style={styles.dailyBarBackground}>
-                              <View
-                                style={[
-                                  styles.dailyBarFill,
-                                  {
-                                    backgroundColor,
-                                    height: barFillHeight,
-                                  }
-                                ]}
-                              >
-                                {usage > 60 && ( // Only show time if more than 1 minute
-                                  <Text style={[styles.dailyBarText, { fontSize: scaledFontSize(8) }]}>
-                                    {formatDurationCompact(usage)}
-                                  </Text>
-                                )}
-                              </View>
-                            </View>
-                          </View>
-                        </View>
-                      );
-                    })}
-                  </View>
-
-                  {/* Legend */}
-                  <View style={styles.heatmapLegend}>
-                    <Text style={[styles.heatmapLegendTitle, { fontSize: scaledFontSize(12) }]}>{t('screenTime.screenTimeLevel')}</Text>
-
-                    {/* Color Bar - 5 cells: 0-25%, 25-50%, 50-75% (recommended), 75-100% (amber), >100% (red) */}
-                    <View style={styles.heatmapLegendColorBar}>
-                      <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 0.3)' }]} />
-                      <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 0.6)' }]} />
-                      <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 1.0)' }]} />
-                      <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(255, 159, 67, 0.85)' }]} />
-                      <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(239, 68, 68, 1.0)' }]} />
-                    </View>
-
-                    {/* Arrow pointing to middle (recommended) cell */}
-                    <View style={styles.heatmapArrowContainer}>
-                      <Text style={[styles.heatmapArrow, { fontSize: scaledFontSize(12) }]}>▲</Text>
-                    </View>
-
-                    {/* Labels Row */}
-                    <View style={styles.heatmapLabelsRow}>
-                      <View style={styles.heatmapLabelContainer}>
-                        <Text style={[styles.heatmapLegendLabel, { fontSize: scaledFontSize(10) }]} numberOfLines={1}>
-                          {t('screenTime.noScreenTime')}
-                        </Text>
-                      </View>
-                      <View style={styles.heatmapLabelContainer}>
-                        <Text style={[styles.heatmapLegendLabel, { fontSize: scaledFontSize(10) }]} numberOfLines={1}>
-                          {t('screenTime.recommended')}
-                        </Text>
-                      </View>
-                      <View style={styles.heatmapLabelContainer}>
-                        <Text style={[styles.heatmapLegendLabel, { fontSize: scaledFontSize(10) }]} numberOfLines={1}>
-                          {t('screenTime.overLimit')}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                </View>
-              </View>
-            </View>
-          )}
 
           {/* Create My Schedule */}
           <View style={styles.section}>
@@ -736,6 +573,7 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
   const { todayUsage: contextTodayUsage } = useScreenTime();
 
   const [stats, setStats] = useState<ScreenTimeStats | null>(null);
+  const [dailyTotals, setDailyTotals] = useState<DailyTotal[]>([]);
   const [localChildAge, setLocalChildAge] = useState(childAgeInMonths);
   const [localScreenTimeEnabled, setLocalScreenTimeEnabled] = useState(screenTimeEnabled);
   const [localNotificationsEnabled, setLocalNotificationsEnabled] = useState(notificationsEnabled);
@@ -756,6 +594,7 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
       const screenTimeService = ScreenTimeService.getInstance();
       const screenTimeStats = await screenTimeService.getScreenTimeStats(childAgeInMonths);
       setStats(screenTimeStats);
+      setDailyTotals(await screenTimeService.getDailyTotals(30));
     } catch (error) {
       log.error('Failed to load stats:', error);
     }
@@ -792,11 +631,6 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
 
   // Note: handleSaveSettings removed - auto-save happens on account screen exit
 
-  const formatTime = (seconds: number) => {
-    if (seconds === 0) return t('screenTime.noScreenTimeRecommended');
-    return formatDurationCompact(seconds);
-  };
-
   const dayNames = [
     t('screenTime.sun'),
     t('screenTime.mon'),
@@ -829,45 +663,24 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
   }, [localChildAge]);
 
   const todayUsage = contextTodayUsage;
-  const usagePercentage = dailyLimit > 0 ? Math.min((todayUsage / dailyLimit) * 100, 100) : 0;
 
   return (
     <View style={{ flex: 1 }}>
+      {/* night backing so the dashboard reads dark regardless of the host page */}
+      <LinearGradient colors={AUTH_GRADIENT} style={StyleSheet.absoluteFill} />
       <StarBackground />
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[styles.content, { paddingTop }, isTablet && { alignItems: 'center' }]}
       >
         <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
-          {/* Today's Usage */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>{t('screenTime.todaysUsage')}</Text>
-
-          <View style={[styles.usageCard, { padding: scaledPadding(16) }]}>
-            <View style={styles.usageHeader}>
-              <View style={styles.usageTimeContainer}>
-                <Text style={[styles.usageTime, { fontSize: scaledFontSize(32) }]}>{formatTime(todayUsage)}</Text>
-                <Text style={[styles.usageLimit, { fontSize: scaledFontSize(14) }]}>{t('screenTime.of')} {formatTime(dailyLimit)}</Text>
-              </View>
-            </View>
-
-            <View style={styles.progressBar}>
-              <View
-                style={[
-                  styles.progressFill,
-                  {
-                    width: `${usagePercentage}%`,
-                    backgroundColor: usagePercentage > 90 ? '#EF4444' : usagePercentage > 70 ? '#F59E0B' : '#10B981'
-                  }
-                ]}
-              />
-            </View>
-
-            <Text style={[styles.usagePercentage, { fontSize: scaledFontSize(14) }]}>
-              {t('screenTime.ofDailyLimit', { percentage: usagePercentage.toFixed(0) })}
-            </Text>
-          </View>
-        </View>
+        <UsageOverview
+          todayUsageSeconds={todayUsage}
+          dailyLimitSeconds={dailyLimit}
+          dailyTotals={dailyTotals}
+          childAgeMonths={localChildAge}
+          dayNames={dayNames}
+        />
 
         {/* Age Settings */}
         <View style={styles.section}>
@@ -912,115 +725,6 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
             {getGuidelinesText(localChildAge)}
           </Text>
         </View>
-
-        {/* Weekly Activity Heatmap */}
-        {stats && stats.heatmapData && stats.heatmapData.length > 0 && (
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>{t('screenTime.weeklyActivityHeatmap')}</Text>
-
-            <View style={styles.chartContainer}>
-              <Text style={[styles.chartNote, { fontSize: scaledFontSize(14) }]}>
-                {t('screenTime.screenTimePatterns')}
-              </Text>
-
-              {/* Heatmap */}
-              <View style={styles.heatmapContainer}>
-                {/* Daily Bar Chart */}
-                <View style={styles.dailyBarChart}>
-                  {dayNames.map((dayName, dayIndex) => {
-                    const dayData = stats.heatmapData.find(data => data.day === dayIndex);
-                    const usage = dayData?.usage || 0;
-
-                    // Get age-appropriate daily limit for proper scaling
-                    // 18-24 months: 15 min, 2-6 years: 60 min, 6+ years: 120 min
-                    const ageBasedLimit = localChildAge < 24 ? 15 * 60 :
-                                     localChildAge < 72 ? 60 * 60 :
-                                     120 * 60;
-
-                    // Calculate percentage of limit used (can exceed 100%)
-                    const usagePercentage = ageBasedLimit > 0 ? (usage / ageBasedLimit) * 100 : 0;
-
-                    // 5 color thresholds evenly distributed:
-                    // 0-25%: Teal light, 25-50%: Teal medium, 50-75%: Teal bright (recommended)
-                    // 75-100%: Amber (approaching limit), >100%: Red (over limit)
-                    let backgroundColor: string;
-                    if (usage === 0) {
-                      backgroundColor = 'rgba(255, 255, 255, 0.05)';
-                    } else if (usagePercentage > 100) {
-                      // Over limit - Red
-                      backgroundColor = 'rgba(239, 68, 68, 1.0)';
-                    } else if (usagePercentage > 75) {
-                      // 75-100% - Amber (approaching limit)
-                      backgroundColor = 'rgba(255, 159, 67, 0.85)';
-                    } else if (usagePercentage > 50) {
-                      // 50-75% - Teal bright (recommended zone)
-                      backgroundColor = 'rgba(78, 205, 196, 1.0)';
-                    } else if (usagePercentage > 25) {
-                      // 25-50% - Teal medium
-                      backgroundColor = 'rgba(78, 205, 196, 0.6)';
-                    } else {
-                      // 0-25% - Teal light
-                      backgroundColor = 'rgba(78, 205, 196, 0.3)';
-                    }
-
-                    // Calculate fill percentage for bar height (capped at 100% for display)
-                    const fillPercentage = Math.min(usagePercentage, 100);
-                    const barFillHeight = Math.max(4, (fillPercentage / 100) * 100);
-
-                    return (
-                      <View key={dayIndex} style={styles.dailyBarContainer}>
-                        <Text style={[styles.dailyBarLabel, { fontSize: scaledFontSize(10) }]}>{dayName}</Text>
-                        <View style={styles.dailyBarWrapper}>
-                          <View style={styles.dailyBarBackground}>
-                            <View
-                              style={[
-                                styles.dailyBarFill,
-                                { backgroundColor, height: barFillHeight }
-                              ]}
-                            >
-                              {usage > 60 && (
-                                <Text style={[styles.dailyBarText, { fontSize: scaledFontSize(8) }]}>
-                                  {formatDurationCompact(usage)}
-                                </Text>
-                              )}
-                            </View>
-                          </View>
-                        </View>
-                      </View>
-                    );
-                  })}
-                </View>
-
-                {/* Legend - 5 cells: 0-25%, 25-50%, 50-75% (recommended), 75-100% (amber), >100% (red) */}
-                <View style={styles.heatmapLegend}>
-                  <Text style={[styles.heatmapLegendTitle, { fontSize: scaledFontSize(12) }]}>{t('screenTime.screenTimeLevel')}</Text>
-                  <View style={styles.heatmapLegendColorBar}>
-                    <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 0.3)' }]} />
-                    <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 0.6)' }]} />
-                    <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 1.0)' }]} />
-                    <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(255, 159, 67, 0.85)' }]} />
-                    <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(239, 68, 68, 1.0)' }]} />
-                  </View>
-                  {/* Arrow pointing to middle (recommended) cell */}
-                  <View style={styles.heatmapArrowContainer}>
-                    <Text style={[styles.heatmapArrow, { fontSize: scaledFontSize(12) }]}>▲</Text>
-                  </View>
-                  <View style={styles.heatmapLabelsRow}>
-                    <View style={styles.heatmapLabelContainer}>
-                      <Text style={[styles.heatmapLegendLabel, { fontSize: scaledFontSize(10) }]} numberOfLines={1}>{t('screenTime.noScreenTime')}</Text>
-                    </View>
-                    <View style={styles.heatmapLabelContainer}>
-                      <Text style={[styles.heatmapLegendLabel, { fontSize: scaledFontSize(10) }]} numberOfLines={1}>{t('screenTime.recommended')}</Text>
-                    </View>
-                    <View style={styles.heatmapLabelContainer}>
-                      <Text style={[styles.heatmapLegendLabel, { fontSize: scaledFontSize(10) }]} numberOfLines={1}>{t('screenTime.overLimit')}</Text>
-                    </View>
-                  </View>
-                </View>
-              </View>
-            </View>
-          </View>
-        )}
 
         {/* Create My Schedule */}
         <View style={styles.section}>

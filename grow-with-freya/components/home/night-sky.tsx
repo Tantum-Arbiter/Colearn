@@ -3,7 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { HOME_THEMES, type TimeOfDay } from '@/constants/home-scene';
-import { CLOUD_LAYER, cloudBandTop, horizonSize } from '@/constants/night-sky';
+import { horizonSize } from '@/constants/night-sky';
 import { useShootingStar } from '@/hooks/use-shooting-star';
 import { StarField } from './star-field';
 import { ShootingStar } from './shooting-star';
@@ -13,10 +13,10 @@ const HORIZON_ART = {
   day: require('../../assets/images/ui-elements/home-earth-day.webp'),
 } as const;
 
-const CLOUD_ART = {
-  night: require('../../assets/images/ui-elements/home-clouds-night.webp'),
-  day: require('../../assets/images/ui-elements/home-clouds-day.webp'),
-} as const;
+// one dusk-purple pair for both times of day; the theme's cloudOpacity still
+// softens them further in daylight
+const CLOUD_LEFT = require('../../assets/images/ui-elements/night-cloud-left.webp');
+const CLOUD_RIGHT = require('../../assets/images/ui-elements/night-cloud-right.webp');
 
 export interface NightSkyProps {
   width: number;
@@ -35,7 +35,9 @@ export const NightSky = memo(function NightSky({
   const starIntensity = Number(theme.starOpacity);
   const horizon = horizonSize(width);
   const flight = useShootingStar({ enabled: timeOfDay === 'night' });
-  const cloudTop = cloudBandTop(height);
+  // sized explicitly -- aspectRatio on images proved unreliable (see AuthSky)
+  const cloudWidth = Math.round(width * 0.55);
+  const cloudHeight = Math.round(cloudWidth * (616 / 531));
 
   return (
     <View testID={testID} style={StyleSheet.absoluteFill} pointerEvents="none">
@@ -57,18 +59,24 @@ export const NightSky = memo(function NightSky({
         <ShootingStar flight={flight} width={width} height={height} colour={theme.star} />
       ) : null}
 
-      <View testID="home-cloud-band" style={[styles.cloudBand, { top: cloudTop }]}>
+      <View testID="home-clouds" style={StyleSheet.absoluteFill}>
+        {/* mist floor under the banks, matching the auth sky treatment */}
+        <LinearGradient
+          colors={['transparent', 'rgba(139, 129, 196, 0.35)', 'rgba(168, 158, 222, 0.62)']}
+          locations={[0, 0.55, 1]}
+          style={styles.mistFloor}
+        />
         <Image
-          testID="home-clouds"
-          source={CLOUD_ART[timeOfDay]}
-          style={[styles.clouds, { width, height, top: -cloudTop, opacity: Number(theme.cloudOpacity) }]}
-          contentFit="fill"
+          source={CLOUD_LEFT}
+          style={[styles.cloudLeft, { width: cloudWidth, height: cloudHeight, opacity: Number(theme.cloudOpacity) }]}
+          contentFit="contain"
           transition={0}
         />
-
-        <LinearGradient
-          colors={[theme.skyMid, 'transparent']}
-          style={[styles.cloudFeather, { height: CLOUD_LAYER.featherHeight }]}
+        <Image
+          source={CLOUD_RIGHT}
+          style={[styles.cloudRight, { width: cloudWidth, height: cloudHeight, opacity: Number(theme.cloudOpacity) }]}
+          contentFit="contain"
+          transition={0}
         />
       </View>
 
@@ -88,22 +96,24 @@ export const NightSky = memo(function NightSky({
 });
 
 const styles = StyleSheet.create({
-  cloudBand: {
+  mistFloor: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
-    overflow: 'hidden',
+    height: '24%',
   },
-  clouds: {
+  // the pair frames the bottom corners, tucked behind the horizon art; widths
+  // are relative with the assets' own aspect so nothing crops
+  cloudLeft: {
     position: 'absolute',
     left: 0,
+    bottom: 0,
   },
-  cloudFeather: {
+  cloudRight: {
     position: 'absolute',
-    left: 0,
     right: 0,
-    top: 0,
+    bottom: 0,
   },
   horizon: {
     position: 'absolute',

@@ -1,13 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, Dimensions, Pressable, Alert, Image, Platform } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, StyleSheet, Dimensions, Alert, Image, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import Animated, {
+  FadeInDown,
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withDelay,
   Easing,
   runOnJS,
 } from 'react-native-reanimated';
@@ -19,11 +18,29 @@ import { ThemedText } from '../themed-text';
 import { TermsConditionsScreen } from '../account/terms-conditions-screen';
 import { PrivacyPolicyScreen } from '../account/privacy-policy-screen';
 import { MainMenu } from '../main-menu';
+import { GoogleGlyph } from './google-glyph';
+import { AuthSky } from './auth-sky';
+import { AuthPillButton } from './auth-pill-button';
+import { GuestInfoScreen } from './guest-info-screen';
 import { AuthService } from '@/services/auth-service';
 import { SecureStorage } from '@/services/secure-storage';
 import { useAppStore } from '@/store/app-store';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { Logger } from '@/utils/logger';
+import { Fonts } from '@/constants/theme';
+import { GOLD, TEXT_MUTED } from '../onboarding/onboarding-theme';
+import {
+  IS_TABLET,
+  CARD_INSET,
+  CARD_PADDING,
+  CARD_V_PADDING,
+  CARD_RADIUS,
+  CONTENT_WIDTH,
+  CREAM,
+  PANEL_BG,
+  PANEL_BORDER,
+  generateStars,
+} from './auth-theme';
 
 const log = Logger.create('Login');
 
@@ -33,29 +50,28 @@ const DEBUG_LOGS = false;
 // NOTE: Profile/Story/Asset sync is now handled by BatchSyncService in StartupLoadingScreen
 // LoginScreen only handles authentication and token storage
 
-const { width, height } = Dimensions.get('window');
+const { height } = Dimensions.get('window');
 
-// Star configuration
-const STAR_COUNT = 15;
-const STAR_SIZE = 3;
+// the hero art is 900x596; it's sized to the content width but capped by a
+// height budget so that on short phones it yields space rather than pushing the
+// buttons and the privacy panel past the fold
+const HERO_ASPECT = 596 / 900;
+const HERO_HEIGHT_BUDGET = height < 700 ? 148 : height < 812 ? 186 : IS_TABLET ? 300 : 216;
+const HERO_WIDTH = Math.min(
+  CONTENT_WIDTH,
+  IS_TABLET ? 460 : 320,
+  Math.round(HERO_HEIGHT_BUDGET / HERO_ASPECT)
+);
+const HERO_HEIGHT = Math.round(HERO_WIDTH * HERO_ASPECT);
 
-const generateStars = (count: number) => {
-  const stars = [];
-  const starAreaHeight = height * 0.6;
-  const seededRandom = (seed: number) => {
-    const x = Math.sin(seed * 9999) * 10000;
-    return x - Math.floor(x);
-  };
-  for (let i = 0; i < count; i++) {
-    stars.push({
-      id: i,
-      left: seededRandom(i * 1.3) * (width - 20) + 10,
-      top: seededRandom(i * 2.7) * starAreaHeight + 20,
-      opacity: 0.3 + seededRandom(i * 3.5) * 0.4,
-    });
-  }
-  return stars;
-};
+// the onboarding entrance rhythm:every block fades down in over 450ms, 120ms apart
+const CASCADE_STEP_MS = 120;
+const CASCADE_DURATION_MS = 450;
+const cascade = (step: number) => FadeInDown.delay(CASCADE_STEP_MS * step).duration(CASCADE_DURATION_MS);
+// the art fades out into cloud and mist at its base, so the first button can sit
+// over that edge without hiding anything. Reserving less height than the image
+// draws lifts everything below it and frees space for the rest of the card.
+const HERO_OVERLAP = Math.round(HERO_HEIGHT * 0.16);
 
 interface LoginScreenProps {
   onSuccess: () => void;
@@ -76,7 +92,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
   const [processedResponseId, setProcessedResponseId] = useState<string | null>(null);
 
   const { setGuestMode, getEffectiveTier } = useAppStore();
-  const stars = useMemo(() => generateStars(STAR_COUNT), []);
+  const stars = useMemo(() => generateStars(), []);
 
   // Configure native Google Sign-In for Android on mount
   React.useEffect(() => {
@@ -158,31 +174,19 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [response, processedResponseId]);
 
-  // Animation values
-  const titleOpacity = useSharedValue(0);
-  const titleTranslateY = useSharedValue(-20);
-  const illustrationOpacity = useSharedValue(0);
+  // Animation values. The entrance itself is the FadeInDown cascade; these
+  // shared values exist for the fade-out paths. cardOpacity dims only the card,
+  // leaving the sky (stars, clouds, mist) in place while overlays come and go.
+  const cardOpacity = useSharedValue(1);
   const containerOpacity = useSharedValue(0); // Start at 0 for fade-in from splash
-  const containerScale = useSharedValue(1);
-  const illustrationScale = useSharedValue(0.8);
-  const buttonsOpacity = useSharedValue(0);
-  const buttonsTranslateY = useSharedValue(30);
 
   const guestInfoSlideY = useSharedValue(-height); // Start above screen
 
   React.useEffect(() => {
-    // Fade in the entire container first (smooth transition from splash)
+    // Fade in the entire container (smooth transition from splash/onboarding);
+    // the content cascade plays inside this fade
     containerOpacity.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) });
-
-    titleOpacity.value = withDelay(200, withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) }));
-    titleTranslateY.value = withDelay(200, withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) }));
-
-    illustrationOpacity.value = withDelay(400, withTiming(1, { duration: 800, easing: Easing.out(Easing.back(1.1)) }));
-    illustrationScale.value = withDelay(400, withTiming(1, { duration: 800, easing: Easing.out(Easing.back(1.1)) }));
-
-    buttonsOpacity.value = withDelay(800, withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) }));
-    buttonsTranslateY.value = withDelay(800, withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) }));
-  }, [buttonsOpacity, buttonsTranslateY, containerOpacity, illustrationOpacity, illustrationScale, titleOpacity, titleTranslateY]);
+  }, [containerOpacity]);
 
 
   const handleGoogleLogin = async () => {
@@ -324,10 +328,8 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
       DEBUG_LOGS && console.log('[LoginScreen] Returning subscriber -skipping guest info');
       setGuestMode(true);
 
-      // Fade out login UI elements (title, buttons, logo)
-      titleOpacity.value = withTiming(0, { duration: 400, easing: Easing.out(Easing.cubic) });
-      buttonsOpacity.value = withTiming(0, { duration: 400, easing: Easing.out(Easing.cubic) });
-      illustrationOpacity.value = withTiming(0, { duration: 400, easing: Easing.out(Easing.cubic) });
+      // Fade out the login card first, then the whole screen
+      cardOpacity.value = withTiming(0, { duration: 400, easing: Easing.out(Easing.cubic) });
       // Fade out the login background (gradient, stars, moon, bear)
       containerOpacity.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) });
 
@@ -342,12 +344,28 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
       return;
     }
 
-    // First-time / free user -show guest info overlay
+    // First-time / free user -show guest info overlay. The overlay carries no
+    // sky of its own: the login card fades away and the guest card slides in
+    // over the same stars and clouds.
+    cardOpacity.value = withTiming(0, { duration: 400, easing: Easing.out(Easing.cubic) });
     setShowGuestInfo(true);
-    // Slide the guest info overlay down into view
     guestInfoSlideY.value = withTiming(0, {
       duration: 900,
       easing: Easing.out(Easing.cubic),
+    });
+  };
+
+  const handleGuestBack = () => {
+    // Slide the overlay card back up and fade the login card in beneath it --
+    // the sky never moves
+    cardOpacity.value = withTiming(1, { duration: 350, easing: Easing.out(Easing.cubic) });
+    guestInfoSlideY.value = withTiming(-height, {
+      duration: 450,
+      easing: Easing.in(Easing.cubic),
+    }, (finished) => {
+      if (finished) {
+        runOnJS(setShowGuestInfo)(false);
+      }
     });
   };
 
@@ -377,24 +395,12 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
 
 
   // All hooks must be called before any early returns
-  const titleAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: titleOpacity.value,
-    transform: [{ translateY: titleTranslateY.value }],
-  }));
-
-  const illustrationAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: illustrationOpacity.value,
-    transform: [{ scale: illustrationScale.value }],
-  }));
-
-  const buttonsAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: buttonsOpacity.value,
-    transform: [{ translateY: buttonsTranslateY.value }],
+  const cardAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: cardOpacity.value,
   }));
 
   const containerAnimatedStyle = useAnimatedStyle(() => ({
     opacity: containerOpacity.value,
-    transform: [{ scale: containerScale.value }],
   }));
 
   const guestInfoAnimatedStyle = useAnimatedStyle(() => ({
@@ -414,198 +420,139 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
     <Animated.View style={[styles.container, containerAnimatedStyle]}>
       {/* Login Screen - slides out to the left */}
       <View style={styles.loginScreenWrapper}>
-        <LinearGradient
-          colors={['#050515', '#0A0F2C', '#1a1a3e']}
-          style={styles.gradient}
+        <AuthSky stars={stars}>
+        {/* Storybook panel -- fades as one while the sky behind stays put */}
+        <Animated.View
+          style={[
+            styles.card,
+            cardAnimatedStyle,
+            { marginTop: insets.top + 8, marginBottom: insets.bottom + 8 },
+          ]}
         >
-        {/* Stars */}
-        <View style={styles.starsContainer} pointerEvents="none">
-          {stars.map((star) => (
-            <View
-              key={`star-${star.id}`}
-              style={[
-                styles.star,
-                { left: star.left, top: star.top, opacity: star.opacity },
-              ]}
-            />
-          ))}
-        </View>
-
-        {/* Moon */}
-        <View style={styles.moonContainer} pointerEvents="none">
-          <Image
-            source={require('@/assets/images/ui-elements/moon-top-screen.webp')}
-            style={styles.moonImage}
-            resizeMode="contain"
-          />
-        </View>
-
-        {/* Bear */}
-        <View style={styles.bearContainer} pointerEvents="none">
-          <Image
-            source={require('@/assets/images/ui-elements/bear-bottom-screen.webp')}
-            style={styles.bearImage}
-            resizeMode="contain"
-          />
-        </View>
-
-        {/* Header */}
-        <View style={[styles.header, { paddingTop: insets.top + 80 }]}>
-          <Animated.View style={[styles.titleContainer, titleAnimatedStyle]}>
-            <ThemedText type="title" style={[styles.title, { fontSize: scaledFontSize(28) }]}>
+          <Animated.View entering={cascade(0)} style={styles.titleContainer}>
+            <ThemedText type="title" style={[styles.title, { fontSize: scaledFontSize(40) }]}>
               {t('login.welcomeTitle')}
             </ThemedText>
-            <ThemedText style={[styles.subtitle, { fontSize: scaledFontSize(16) }]}>
+            <ThemedText style={[styles.subtitle, { fontSize: scaledFontSize(17) }]}>
               {t('login.subtitle')}
             </ThemedText>
           </Animated.View>
-        </View>
 
-        {/* Logo */}
-        <View style={styles.logoContainer}>
-          <Animated.View style={[styles.logo, illustrationAnimatedStyle]}>
+          {/* Hero illustration */}
+          <Animated.View entering={cascade(1)} style={styles.heroContainer}>
             <Image
-              source={require('@/assets/images/ui-elements/earlyroots-logo.png')}
-              style={styles.logoImage}
+              testID="login-hero"
+              source={require('@/assets/images/login/hero-animals.webp')}
+              style={styles.heroImage}
               resizeMode="contain"
             />
           </Animated.View>
-        </View>
 
-        {/* Login Buttons - Apple first per design, both as white pills */}
-        <Animated.View style={[styles.buttonContainer, buttonsAnimatedStyle]}>
-          {Platform.OS === 'ios' && (
-            <Pressable
-              style={[
-                styles.loginButton,
-                styles.appleButton,
-              ]}
-              onPress={handleAppleLogin}
+          {/* Sign-in options */}
+          <Animated.View entering={cascade(2)} style={styles.buttonContainer}>
+            {Platform.OS === 'ios' && (
+              <AuthPillButton
+                label={isAppleLoading ? t('login.signingIn') : t('login.continueWithApple')}
+                variant="light"
+                onPress={handleAppleLogin}
+                disabled={isGoogleLoading || isAppleLoading}
+                testID="login-apple"
+                icon={<FontAwesome5 name="apple" size={scaledButtonSize(24)} color="#0B0B0B" />}
+              />
+            )}
+
+            <AuthPillButton
+              label={isGoogleLoading ? t('login.signingIn') : t('login.continueWithGoogle')}
+              variant="light"
+              onPress={handleGoogleLogin}
               disabled={isGoogleLoading || isAppleLoading}
-            >
-              <View style={styles.buttonContent}>
-                <FontAwesome5 name="apple" size={scaledButtonSize(18)} color="#111111" style={styles.iconSpacing} />
-                <ThemedText style={[styles.buttonText, styles.appleButtonText, { fontSize: scaledFontSize(16) }]}>
-                  {isAppleLoading ? t('login.signingIn') : t('login.continueWithApple')}
-                </ThemedText>
-              </View>
-            </Pressable>
-          )}
+              testID="login-google"
+              icon={<GoogleGlyph size={scaledButtonSize(24)} />}
+            />
 
-          <Pressable
-            style={[
-              styles.loginButton,
-              styles.googleButton,
-            ]}
-            onPress={handleGoogleLogin}
-            disabled={isGoogleLoading || isAppleLoading}
-          >
-            <View style={styles.buttonContent}>
-              <FontAwesome5 name="google" size={scaledButtonSize(18)} color="#4285F4" style={styles.iconSpacing} />
-              <ThemedText style={[styles.buttonText, styles.googleButtonText, { fontSize: scaledFontSize(16) }]}>
-                {isGoogleLoading ? t('login.signingIn') : t('login.continueWithGoogle')}
+            <AuthPillButton
+              label={t('login.continueAsGuest')}
+              variant="guest"
+              onPress={handleSkip}
+              testID="login-guest"
+              icon={
+                <Image
+                  testID="login-guest-avatar"
+                  source={require('@/assets/images/login/guest-avatar.webp')}
+                  style={styles.guestIcon}
+                  resizeMode="contain"
+                />
+              }
+            />
+          </Animated.View>
+
+          {/* What guest mode gives you */}
+          <Animated.View entering={cascade(3)} style={styles.guestNoteRow} testID="login-guest-note">
+            <Image
+              testID="login-cloud-badge"
+              source={require('@/assets/images/login/cloud-badge.webp')}
+              style={styles.badgeSmall}
+              resizeMode="contain"
+            />
+            <ThemedText style={[styles.guestNote, { fontSize: scaledFontSize(14) }]}>
+              {t('login.guestNote')}
+            </ThemedText>
+          </Animated.View>
+
+          {/* Privacy promise */}
+          <Animated.View entering={cascade(4)} style={styles.privacyPanel} testID="login-privacy-panel">
+            <Image
+              testID="login-shield-badge"
+              source={require('@/assets/images/login/shield-badge.webp')}
+              style={styles.badgeLarge}
+              resizeMode="contain"
+            />
+            <View style={styles.privacyPanelText}>
+              <ThemedText style={[styles.privacyTitle, { fontSize: scaledFontSize(17) }]}>
+                {t('login.safePrivateTitle')}
               </ThemedText>
+              {(['noAdverts', 'noTracking'] as const).map((key) => (
+                <View key={key} style={styles.privacyItem} testID={`login-promise-${key}`}>
+                  <Ionicons name="checkmark-circle-outline" size={scaledFontSize(17)} color={GOLD} />
+                  <ThemedText style={[styles.privacyItemText, { fontSize: scaledFontSize(15) }]}>
+                    {t(`login.${key}`)}
+                  </ThemedText>
+                </View>
+              ))}
             </View>
-          </Pressable>
+          </Animated.View>
 
-          {/* Guest Button - outline pill per design */}
-          <Pressable
-            style={styles.skipButton}
-            onPress={handleSkip}
-          >
-            <View style={styles.buttonContent}>
-              <Ionicons name="person" size={scaledButtonSize(16)} color="#FFFFFF" style={styles.iconSpacing} />
-              <ThemedText style={[styles.skipButtonText, { fontSize: scaledFontSize(15) }]}>
-                {t('login.continueWithoutSignIn')}
+          {/* Legal footer */}
+          <Animated.View entering={cascade(5)} style={styles.footer} testID="login-legal-footer">
+            <ThemedText style={[styles.footerText, { fontSize: scaledFontSize(12) }]}>
+              {t('login.footerPrefix')}{' '}
+              <ThemedText
+                style={[styles.legalLink, { fontSize: scaledFontSize(12) }]}
+                onPress={() => setCurrentView('terms')}
+              >
+                {t('login.termsAndConditions')}
               </ThemedText>
-            </View>
-          </Pressable>
-
-          <ThemedText style={[styles.guestNote, { fontSize: scaledFontSize(13) }]}>
-            {t('login.guestNote')}
-          </ThemedText>
+              {t('login.and')}{' '}
+              <ThemedText
+                style={[styles.legalLink, { fontSize: scaledFontSize(12) }]}
+                onPress={() => setCurrentView('privacy')}
+              >
+                {t('login.privacyPolicy')}
+              </ThemedText>
+              .
+            </ThemedText>
+          </Animated.View>
         </Animated.View>
-
-        {/* Privacy promise footer - shield per design */}
-        <View style={[styles.privacyFooter, { paddingBottom: insets.bottom + 20 }]}>
-          <Ionicons name="shield-checkmark" size={scaledFontSize(22)} color="#E8B84B" />
-          <ThemedText style={[styles.privacyFooterText, { fontSize: scaledFontSize(13) }]}>
-            {t('login.privacyPromise')}
-          </ThemedText>
-        </View>
-      </LinearGradient>
+      </AuthSky>
       </View>
 
       {/* Guest Info Overlay - slides down from top */}
       {showGuestInfo && (
-        <Animated.View style={[styles.guestInfoOverlay, guestInfoAnimatedStyle]}>
-          <LinearGradient
-            colors={['#1a1a3e', '#0d0d2b', '#050515']}
-            style={styles.gradient}
-          >
-            {/* Background art */}
-            <Image
-              source={require('@/assets/images/ui-elements/story-art-strip-subscribe.webp')}
-              style={styles.guestInfoBgImage}
-              resizeMode="cover"
-            />
-            <View style={styles.guestInfoBgOverlay} />
-
-            <View style={[styles.guestInfoContent, { paddingTop: insets.top + 10, paddingBottom: insets.bottom + 16 }]}>
-              {/* Logo */}
-              <Image
-                source={require('@/assets/images/ui-elements/earlyroots-logo.png')}
-                style={styles.guestInfoLogo}
-                resizeMode="contain"
-              />
-
-              {/* Title */}
-              <ThemedText style={styles.guestInfoTitle} numberOfLines={1} adjustsFontSizeToFit>
-                {t('guestInfo.title')}
-              </ThemedText>
-
-              {/* Description */}
-              <ThemedText style={styles.guestInfoDescription} numberOfLines={2} adjustsFontSizeToFit>
-                {t('guestInfo.description')}
-              </ThemedText>
-
-              {/* What you miss */}
-              <View style={styles.guestInfoSection}>
-                <ThemedText style={styles.guestInfoSectionTitle} numberOfLines={1} adjustsFontSizeToFit>
-                  {t('guestInfo.missingOutTitle')}
-                </ThemedText>
-
-                {['syncProgress', 'multiDevice', 'cloudBackup', 'personalised'].map((key) => (
-                  <View key={key} style={styles.guestInfoItem}>
-                    <Ionicons name="checkmark-circle-outline" size={14} color="#4ECDC4" style={{ marginRight: 4 }} />
-                    <ThemedText style={styles.guestInfoItemText} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.7}>
-                      {t(`guestInfo.missing.${key}`)}
-                    </ThemedText>
-                  </View>
-                ))}
-              </View>
-
-              {/* Subscription info */}
-              <View style={styles.guestInfoSection}>
-                <ThemedText style={styles.guestInfoSectionTitle} numberOfLines={1} adjustsFontSizeToFit>
-                  {t('guestInfo.subscriptionTitle')}
-                </ThemedText>
-                <ThemedText style={styles.guestInfoSubscriptionText} numberOfLines={4} adjustsFontSizeToFit minimumFontScale={0.7}>
-                  {t('guestInfo.subscriptionDescription')}
-                </ThemedText>
-              </View>
-
-              {/* Continue Button */}
-              <Pressable
-                style={styles.guestInfoContinueButton}
-                onPress={handleGuestContinue}
-              >
-                <ThemedText style={styles.guestInfoContinueText}>
-                  {t('guestInfo.continueButton')}
-                </ThemedText>
-              </Pressable>
-            </View>
-          </LinearGradient>
+        <Animated.View
+          style={[styles.guestInfoOverlay, guestInfoAnimatedStyle]}
+          testID="guest-info-overlay"
+        >
+          <GuestInfoScreen onContinue={handleGuestContinue} onBack={handleGuestBack} />
         </Animated.View>
       )}
 
@@ -636,11 +583,6 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     zIndex: 1,
   },
-  mainMenuContainer: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 999,
-    overflow: 'hidden',
-  },
   returningMenuContainer: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 1,
@@ -649,326 +591,139 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     zIndex: 2,
   },
-  gradient: {
+  card: {
     flex: 1,
-  },
-  starsContainer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    zIndex: 1,
-  },
-  star: {
-    position: 'absolute',
-    width: STAR_SIZE,
-    height: STAR_SIZE,
-    backgroundColor: '#FFFFFF',
-    borderRadius: STAR_SIZE / 2,
-  },
-  moonContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    width: '100%',
-    height: '15%',
+    marginHorizontal: CARD_INSET,
+    paddingHorizontal: CARD_PADDING,
+    paddingVertical: CARD_V_PADDING,
+    borderRadius: CARD_RADIUS,
+    borderWidth: 1,
+    borderColor: PANEL_BORDER,
+    backgroundColor: 'rgba(10, 15, 44, 0.35)',
     alignItems: 'center',
-    justifyContent: 'flex-start',
-    zIndex: 2,
-  },
-  moonImage: {
-    width: 286,
-    height: 286,
-    opacity: 0.8,
-  },
-  bearContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    width: '100%',
-    height: '15%',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    zIndex: 2,
-  },
-  bearImage: {
-    width: 286,
-    height: 286,
-    opacity: 0.8,
-  },
-  header: {
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 20,
+    justifyContent: 'space-between',
     zIndex: 5,
   },
   titleContainer: {
     alignItems: 'center',
-    marginBottom: 20,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontFamily: Fonts.serif,
+    fontWeight: '700',
     textAlign: 'center',
-    color: '#FFFFFF',
-    marginBottom: 12,
-    lineHeight: 34,
+    color: CREAM,
+    lineHeight: 48,
+    textShadowColor: 'rgba(232, 184, 75, 0.35)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 18,
   },
   subtitle: {
-    fontSize: 16,
+    fontFamily: Fonts.rounded,
     textAlign: 'center',
-    color: 'rgba(255, 255, 255, 0.8)',
-    lineHeight: 22,
-    maxWidth: width * 0.85,
+    color: TEXT_MUTED,
+    lineHeight: 24,
+    marginTop: 4,
+    maxWidth: CONTENT_WIDTH,
   },
-  logoContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  heroContainer: {
     alignItems: 'center',
-    paddingHorizontal: 20,
-    zIndex: 5,
-  },
-  logo: {
     justifyContent: 'center',
-    alignItems: 'center',
+    marginBottom: -HERO_OVERLAP,
   },
-  logoImage: {
-    width: width > 768 ? 520 : 420,
-    height: width > 768 ? 520 : 420,
-    marginBottom: width > 768 ? 32 : 24,
+  heroImage: {
+    width: HERO_WIDTH,
+    height: HERO_HEIGHT,
   },
   buttonContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    gap: 16,
+    width: '100%',
+    gap: 12,
     alignItems: 'center',
     zIndex: 5,
   },
-  loginButton: {
-    borderRadius: 25,
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-    width: width > 768 ? 280 : 260,
-    alignSelf: 'center',
+  guestIcon: {
+    width: 26,
+    height: 26,
   },
-  googleButton: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  appleButton: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  buttonPressed: {
-    opacity: 0.7,
-  },
-  buttonDisabled: {
-    // Don't change opacity to avoid layout shift
-    // The disabled prop on Pressable will prevent interaction
-  },
-  buttonContent: {
+  // icon and note read as one centred unit, like everything else on the card
+  guestNoteRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 12,
+    width: '100%',
   },
-  iconSpacing: {
-    marginRight: 10,
+  // sized close to the two-line note (40pt) so the pair reads level
+  badgeSmall: {
+    width: 46,
+    height: 46,
   },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  googleButtonText: {
-    color: '#333333',
-  },
-  appleButtonText: {
-    color: '#111111',
+  // the two promise lines and their heading set the panel's height, so the badge
+  // has room to grow to roughly that height before it starts driving the box
+  badgeLarge: {
+    width: 68,
+    height: 68,
   },
   guestNote: {
-    textAlign: 'center',
-    color: 'rgba(255, 255, 255, 0.65)',
-    lineHeight: 19,
-    marginTop: 12,
-    maxWidth: 280,
-    alignSelf: 'center',
+    flexShrink: 1,
+    fontFamily: Fonts.rounded,
+    color: TEXT_MUTED,
+    lineHeight: 20,
   },
-  privacyFooter: {
+  privacyPanel: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    paddingHorizontal: 32,
-    zIndex: 5,
-  },
-  privacyFooterText: {
-    color: 'rgba(255, 255, 255, 0.75)',
-    lineHeight: 19,
-  },
-  skipButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    marginTop: 8,
-    maxWidth: 280,
-    alignSelf: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
+    gap: 12,
+    width: '100%',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
     borderRadius: 20,
+    borderWidth: 1,
+    borderColor: PANEL_BORDER,
+    backgroundColor: PANEL_BG,
   },
-  skipButtonPressed: {
-    opacity: 0.7,
+  // one gap governs the heading and both promises so the three lines sit on an
+  // even rhythm; line heights are explicit so that rhythm doesn't shift with the
+  // platform's default leading
+  privacyPanelText: {
+    flex: 1,
+    gap: 4,
   },
-  skipButtonText: {
-    fontSize: 14,
+  privacyTitle: {
+    fontFamily: Fonts.rounded,
+    fontWeight: '700',
+    color: GOLD,
+    lineHeight: 21,
+  },
+  privacyItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  privacyItemText: {
+    flex: 1,
+    fontFamily: Fonts.rounded,
     color: '#FFFFFF',
-    fontWeight: '600',
+    lineHeight: 19,
   },
   footer: {
-    paddingHorizontal: 20,
-    alignItems: 'center',
-    zIndex: 5,
-  },
-  footerTextContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
+    width: '100%',
     alignItems: 'center',
   },
   footerText: {
-    fontSize: 12,
-    color: '#FFFFFF',
-    lineHeight: 16,
-    fontWeight: '600',
-  },
-  linkPressable: {
-    // No additional styling needed - just wraps the text
+    fontFamily: Fonts.rounded,
+    color: TEXT_MUTED,
+    textAlign: 'center',
+    lineHeight: 18,
   },
   legalLink: {
-    fontSize: 12,
-    color: '#FFFFFF',
-    textDecorationLine: 'underline',
+    fontFamily: Fonts.rounded,
+    color: GOLD,
     fontWeight: '700',
   },
-  // Guest Info Overlay
+  // the overlay is positioned here; its content styling lives in
+  // guest-info-screen.tsx
   guestInfoOverlay: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 500,
-  },
-  guestInfoBgImage: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: width,
-    height: height,
-    opacity: 0.35,
-  },
-  guestInfoBgOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(5, 5, 20, 0.45)',
-  },
-  guestInfoContent: {
-    flex: 1,
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    justifyContent: 'flex-start',
-    gap: 12,
-  },
-  guestInfoLogo: {
-    width: width > 768 ? 320 : 220,
-    height: width > 768 ? 320 : 220,
-    marginBottom: -4,
-  },
-  guestInfoTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.8)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 6,
-  },
-  guestInfoDescription: {
-    fontSize: 14,
-    color: '#FFFFFF',
-    textAlign: 'center',
-    lineHeight: 20,
-    maxWidth: width * 0.85,
-    textShadowColor: 'rgba(0, 0, 0, 0.6)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
-  },
-  guestInfoSection: {
-    width: '100%',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    borderRadius: 16,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  guestInfoSectionTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#FFD700',
-    marginBottom: 10,
-    textShadowColor: 'rgba(0, 0, 0, 0.6)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
-  },
-  guestInfoItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 6,
-    paddingRight: 8,
-  },
-  guestInfoBullet: {
-    color: '#FFD700',
-    fontSize: 14,
-    marginRight: 10,
-    lineHeight: 20,
-  },
-  guestInfoItemText: {
-    fontSize: 14,
-    color: '#FFFFFF',
-    lineHeight: 20,
-    flex: 1,
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
-  },
-  guestInfoSubscriptionText: {
-    fontSize: 14,
-    color: '#FFFFFF',
-    lineHeight: 20,
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
-  },
-  guestInfoContinueButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
-    borderRadius: 25,
-    paddingVertical: 16,
-    paddingHorizontal: 40,
-    alignItems: 'center',
-    marginTop: 8,
-    width: '100%',
-    maxWidth: 300,
-  },
-  guestInfoContinueText: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    fontWeight: '700',
   },
 });

@@ -31,6 +31,7 @@ import { TEXT_SIZE_OPTIONS, useAccessibility } from '../../hooks/use-accessibili
 import { SettingsTipsOverlay } from '../tutorial/settings-tips-overlay';
 import { ScreenTimeTipsOverlay } from '../tutorial/screen-time-tips-overlay';
 import { Logger } from '@/utils/logger';
+import { AUTH_GRADIENT } from '@/components/auth/auth-theme';
 
 const log = Logger.create('Account');
 import { useTutorial } from '../../contexts/tutorial-context';
@@ -535,7 +536,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#1E3A8A', '#1E3A8A', '#1E3A8A']} // Darkest color from main menu gradient
+        colors={AUTH_GRADIENT} // shared night palette, matching the redesigned app
         style={styles.gradient}
       >
         {/* Animated stars background - pointerEvents none to allow scrolling through */}
@@ -571,7 +572,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
           onBack={handleBack}
           rightActionIcon={currentView === 'custom-reminders' ? 'add' : undefined}
           onRightAction={currentView === 'custom-reminders' ? () => navigateToSlide('create-reminder') : undefined}
-          headerBackgroundColor="#1E3A8A"
+          headerBackgroundColor="#0A0F2C"
           useHomeIcon={currentView === 'main'}
           useBackArrow={currentView !== 'main'}
         />
@@ -961,7 +962,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#1E3A8A',
+    backgroundColor: '#0A0F2C',
     zIndex: 10,
   },
   content: {

@@ -2,7 +2,14 @@ import React, { useMemo } from 'react';
 import { View, ScrollView, StyleSheet, Dimensions, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import Animated, {
+  FadeIn,
+  FadeInDown,
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
@@ -70,6 +77,24 @@ export function OnboardingScreen({
   const { scaledFontSize, scaledPadding } = useAccessibility();
   const stars = useMemo(() => generateStars(STAR_COUNT), []);
 
+  // Stepping fades the outgoing page during the flow's isTransitioning window;
+  // the incoming page then remounts (keyed by step) and replays the FadeInDown
+  // cascade, so every page enters the way the first one does.
+  const pageOpacity = useSharedValue(1);
+  React.useEffect(() => {
+    if (isTransitioning) {
+      pageOpacity.value = withTiming(0, { duration: 220, easing: Easing.in(Easing.cubic) });
+    } else {
+      // snap back -- the freshly mounted content's entering cascade does the
+      // visible fade-in, so the wrapper must not double it
+      pageOpacity.value = 1;
+    }
+  }, [isTransitioning, pageOpacity]);
+
+  const pageAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: pageOpacity.value,
+  }));
+
   const handleNext = () => {
     if (isNextDisabled || isTransitioning) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -105,11 +130,20 @@ export function OnboardingScreen({
         ))}
       </View>
 
-      {backdrop && (
-        <View style={styles.backdropLayer} pointerEvents="none">
-          {backdrop}
-        </View>
-      )}
+      {/* the layer shares pageOpacity so the art fades out in step with the
+          content; the outgoing backdrop is then removed instantly (already
+          invisible) and the incoming one fades in with the cascade */}
+      <Animated.View style={[styles.backdropLayer, pageAnimatedStyle]} pointerEvents="none">
+        {backdrop && (
+          <Animated.View
+            key={`backdrop-${currentStep}`}
+            entering={FadeIn.duration(450)}
+            style={StyleSheet.absoluteFill}
+          >
+            {backdrop}
+          </Animated.View>
+        )}
+      </Animated.View>
 
       {onSkip && (
         <Animated.View
@@ -137,18 +171,28 @@ export function OnboardingScreen({
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Animated.View entering={FadeInDown.duration(450)} style={styles.header}>
-          <ThemedText style={[styles.title, { fontSize: scaledFontSize(28) }]}>{title}</ThemedText>
-          {body ? (
-            <ThemedText style={[styles.body, { fontSize: scaledFontSize(15) }]}>{body}</ThemedText>
+        <Animated.View style={pageAnimatedStyle}>
+          <Animated.View
+            key={`header-${currentStep}`}
+            entering={FadeInDown.duration(450)}
+            style={styles.header}
+          >
+            <ThemedText style={[styles.title, { fontSize: scaledFontSize(28) }]}>{title}</ThemedText>
+            {body ? (
+              <ThemedText style={[styles.body, { fontSize: scaledFontSize(15) }]}>{body}</ThemedText>
+            ) : null}
+          </Animated.View>
+
+          {customContent ? (
+            <Animated.View
+              key={`content-${currentStep}`}
+              entering={FadeInDown.delay(120).duration(450)}
+              style={styles.customContent}
+            >
+              {customContent}
+            </Animated.View>
           ) : null}
         </Animated.View>
-
-        {customContent ? (
-          <Animated.View entering={FadeInDown.delay(120).duration(450)} style={styles.customContent}>
-            {customContent}
-          </Animated.View>
-        ) : null}
       </ScrollView>
 
       {decoration && (

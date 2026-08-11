@@ -1,11 +1,11 @@
 import React, { memo } from 'react';
-import { View, Text, Modal, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { View, Modal, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenTimeContent } from '@/components/screen-time/screen-time-screen';
 import { Fonts } from '@/constants/theme';
-import { HOME_SCENE_TYPE, HOME_THEMES, type TimeOfDay } from '@/constants/home-scene';
+import { HOME_SCENE_TYPE, type TimeOfDay } from '@/constants/home-scene';
 
 export interface ScreenTimeGlanceProps {
   visible: boolean;
@@ -22,7 +22,6 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
 }: ScreenTimeGlanceProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const theme = HOME_THEMES[timeOfDay];
 
   return (
     <Modal
@@ -32,24 +31,22 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       transparent={false}
       onRequestClose={onClose}
     >
-      <View style={[styles.root, { backgroundColor: theme.skyTop }]}>
+      <View style={[styles.root, { backgroundColor: '#080A28' }]}>
         <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-          <Text style={[styles.title, { color: theme.title }]}>{t('account.screenTime')}</Text>
-
           <Pressable
             testID="screen-time-glance-close"
             accessibilityRole="button"
             accessibilityLabel={t('common.close')}
             onPress={onClose}
             hitSlop={12}
-            style={[styles.close, { borderColor: theme.chromeEdge, backgroundColor: theme.chromeFill }]}
+            style={[styles.close, { borderColor: 'rgba(255, 255, 255, 0.2)', backgroundColor: 'rgba(255, 255, 255, 0.08)' }]}
           >
-            <Ionicons name="close" size={22} color={theme.chromeInk} />
+            <Ionicons name="close" size={22} color="#FFFFFF" />
           </Pressable>
         </View>
 
         <ScrollView
-          contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
+          contentContainerStyle={{ paddingTop: insets.top + 10, paddingBottom: insets.bottom + 32 }}
           showsVerticalScrollIndicator={false}
         >
           <ScreenTimeContent />
@@ -63,10 +60,17 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
   },
+  // floats over the scroll content so the dashboard's earth art can rise up
+  // behind the title, as in the design
   header: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     paddingHorizontal: 18,
     paddingBottom: 12,
   },

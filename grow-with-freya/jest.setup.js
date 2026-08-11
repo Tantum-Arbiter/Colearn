@@ -251,6 +251,7 @@ jest.mock('@expo/vector-icons', () => {
     AntDesign: createIconComponent('AntDesign'),
     MaterialIcons: createIconComponent('MaterialIcons'),
     FontAwesome: createIconComponent('FontAwesome'),
+    FontAwesome5: createIconComponent('FontAwesome5'),
     Entypo: createIconComponent('Entypo'),
     Feather: createIconComponent('Feather'),
     MaterialCommunityIcons: createIconComponent('MaterialCommunityIcons'),

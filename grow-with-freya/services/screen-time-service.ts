@@ -32,6 +32,11 @@ export interface HeatmapData {
   isOverRecommended: boolean; // true if usage exceeds age-appropriate recommendations
 }
 
+export interface DailyTotal {
+  date: string; // YYYY-MM-DD
+  seconds: number;
+}
+
 export interface ScreenTimeStats {
   todayUsage: number; // seconds
   weeklyUsage: ScreenTimeSession[];
@@ -120,6 +125,30 @@ class ScreenTimeService {
     const currentDuration = this.getCurrentSessionDuration();
 
     return sessions.reduce((total, session) => total + session.duration, 0) + currentDuration;
+  }
+
+  /**
+   * Total usage per calendar day for the last `days` days (including today),
+   * oldest first, with zero entries for days without sessions -- ready for the
+   * dashboard's trend chart at any range.
+   */
+  async getDailyTotals(days: number = 30): Promise<DailyTotal[]> {
+    const allSessions = await this.getAllSessions();
+    const byDate: Record<string, number> = {};
+
+    allSessions.forEach(session => {
+      byDate[session.date] = (byDate[session.date] || 0) + session.duration;
+    });
+
+    const totals: DailyTotal[] = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().split('T')[0];
+      totals.push({ date: key, seconds: byDate[key] || 0 });
+    }
+
+    return totals;
   }
 
   async getScreenTimeStats(childAgeInMonths: number = 24): Promise<ScreenTimeStats> {
