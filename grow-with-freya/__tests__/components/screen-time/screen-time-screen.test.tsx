@@ -170,6 +170,7 @@ describe('ScreenTimeScreen', () => {
     requestPermissions: jest.fn().mockResolvedValue({ granted: true, canAskAgain: true, status: 'granted' }),
     scheduleRecommendedReminders: jest.fn().mockResolvedValue(undefined),
     getPermissionStatus: jest.fn().mockResolvedValue({ granted: true, canAskAgain: true, status: 'granted' }),
+    cancelAllScheduledNotifications: jest.fn().mockResolvedValue(undefined),
   };
 
   beforeEach(() => {
@@ -187,6 +188,20 @@ describe('ScreenTimeScreen', () => {
     } as any);
 
     jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+
+    // clearAllMocks wipes calls but not implementations, so restore the
+    // collaborator defaults or one test's override leaks into the next
+    (reminderService.hasUnsavedChanges as jest.Mock).mockReturnValue(false);
+    (ApiClient.isAuthenticated as jest.Mock).mockResolvedValue(false);
+    mockScreenTimeServiceInstance.getScreenTimeStats.mockResolvedValue({
+      todayUsage: 300,
+      weeklyUsage: [],
+      dailyAverages: {},
+      recommendedSchedule: [
+        { time: '09:00', duration: 30, activity: 'story' },
+      ],
+      heatmapData: [],
+    } as never);
 
     (mockScreenTimeService.getInstance as jest.Mock).mockReturnValue(mockScreenTimeServiceInstance as any);
     (mockNotificationService.getInstance as jest.Mock).mockReturnValue(mockNotificationServiceInstance as any);
@@ -371,6 +386,123 @@ describe('ScreenTimeScreen', () => {
     await waitFor(() =>
       expect(JSON.stringify(tree.toJSON())).toContain('screenTime.current (age:screenTime.age18to24months)')
     );
+  });
+
+  describe('notification scheduling on save', () => {
+    const saveAfter = async (tree: ReturnType<typeof renderScreen>, control: string) => {
+      press(tree, control);
+      await waitFor(() =>
+        expect(byTestId(tree, 'screen-time-save').length).toBeGreaterThan(0)
+      );
+      press(tree, 'screen-time-save');
+    };
+
+    it('schedules reminders when notifications are switched on', async () => {
+      mockUseAppStore.mockReturnValue({
+        childAgeInMonths: 24,
+        screenTimeEnabled: true,
+        notificationsEnabled: false,
+        hasRequestedNotificationPermission: true, // skip the permission prompt
+        setChildAge: mockSetChildAge,
+        setScreenTimeEnabled: mockSetScreenTimeEnabled,
+        setNotificationsEnabled: mockSetNotificationsEnabled,
+        setNotificationPermissionRequested: mockSetNotificationPermissionRequested,
+      } as never);
+
+      const tree = renderScreen();
+      await waitFor(() =>
+        expect(mockScreenTimeServiceInstance.getScreenTimeStats).toHaveBeenCalled()
+      );
+
+      await saveAfter(tree, 'screen-time-notifications-toggle');
+
+      await waitFor(() =>
+        expect(mockNotificationServiceInstance.scheduleRecommendedReminders).toHaveBeenCalled()
+      );
+    });
+
+    it('cancels reminders when notifications are switched off', async () => {
+      mockUseAppStore.mockReturnValue({
+        childAgeInMonths: 24,
+        screenTimeEnabled: true,
+        notificationsEnabled: true, // already on, so the toggle turns it off
+        hasRequestedNotificationPermission: true,
+        setChildAge: mockSetChildAge,
+        setScreenTimeEnabled: mockSetScreenTimeEnabled,
+        setNotificationsEnabled: mockSetNotificationsEnabled,
+        setNotificationPermissionRequested: mockSetNotificationPermissionRequested,
+      } as never);
+
+      const tree = renderScreen();
+      await waitFor(() =>
+        expect(mockScreenTimeServiceInstance.getScreenTimeStats).toHaveBeenCalled()
+      );
+
+      await saveAfter(tree, 'screen-time-notifications-toggle');
+
+      await waitFor(() =>
+        expect(mockNotificationServiceInstance.cancelAllScheduledNotifications).toHaveBeenCalled()
+      );
+      expect(mockNotificationServiceInstance.scheduleRecommendedReminders).not.toHaveBeenCalled();
+    });
+
+    it('syncs pending reminders to the backend when signed in', async () => {
+      (ApiClient.isAuthenticated as jest.Mock).mockResolvedValue(true);
+      (reminderService.hasUnsavedChanges as jest.Mock).mockReturnValue(true);
+      (useAppStore as unknown as jest.Mock & { getState: jest.Mock }).getState = jest
+        .fn()
+        .mockReturnValue({ userNickname: 'Liam', userAvatarType: 'boy', userAvatarId: 'boy-1' });
+
+      const tree = renderScreen();
+      await saveAfter(tree, 'screen-time-age-6plus');
+
+      await waitFor(() => expect(reminderService.syncToBackend).toHaveBeenCalled());
+    });
+
+    it('tells the parent when saving fails', async () => {
+      mockSetChildAge.mockImplementationOnce(() => {
+        throw new Error('store unavailable');
+      });
+
+      const tree = renderScreen();
+      await saveAfter(tree, 'screen-time-age-6plus');
+
+      await waitFor(() =>
+        expect(Alert.alert).toHaveBeenCalledWith(
+          expect.stringContaining('Save'),
+          expect.any(String)
+        )
+      );
+    });
+  });
+
+  describe('resilience and sub-pages', () => {
+    it('still renders when the stats fail to load', async () => {
+      mockScreenTimeServiceInstance.getScreenTimeStats.mockRejectedValue(
+        new Error('storage gone')
+      );
+
+      const tree = renderScreen();
+
+      await waitFor(() =>
+        expect(byTestId(tree, 'screen-time-back').length).toBeGreaterThan(0)
+      );
+    });
+
+    it('swaps the main page for the custom reminders sub-page', async () => {
+      const tree = renderScreen();
+      await waitFor(() =>
+        expect(mockScreenTimeServiceInstance.getScreenTimeStats).toHaveBeenCalled()
+      );
+
+      // the back button only renders on the main page, so its disappearance is
+      // the evidence the sub-page took over
+      expect(byTestId(tree, 'screen-time-back').length).toBeGreaterThan(0);
+
+      press(tree, 'screen-time-open-reminders');
+
+      await waitFor(() => expect(byTestId(tree, 'screen-time-back')).toHaveLength(0));
+    });
   });
 
   describe('discarding unsaved changes', () => {
@@ -625,6 +757,68 @@ describe('ScreenTimeContent', () => {
 
     await waitFor(() =>
       expect(JSON.stringify(tree.toJSON())).toContain('screenTime.current (age:screenTime.age6plus)')
+    );
+  });
+
+  it('toggles screen time locally in the glance', async () => {
+    const tree = render(<ScreenTimeContent />);
+    await waitFor(() => expect(contentService.getScreenTimeStats).toHaveBeenCalled());
+
+    const toggle = byTestId(tree, 'content-toggle')[0];
+    const before = JSON.stringify(toggle.props.style);
+
+    fireEvent.press(toggle);
+
+    await waitFor(() =>
+      expect(JSON.stringify(byTestId(tree, 'content-toggle')[0].props.style)).not.toBe(before)
+    );
+  });
+
+  it('warns and stays off when notification permission is refused', async () => {
+    (NotificationService.getInstance as jest.Mock).mockReturnValue({
+      requestPermissions: jest.fn().mockResolvedValue({
+        granted: false,
+        canAskAgain: false,
+        status: 'denied',
+      }),
+      scheduleRecommendedReminders: jest.fn().mockResolvedValue(undefined),
+      getPermissionStatus: jest.fn().mockResolvedValue({ granted: false }),
+      cancelAllScheduledNotifications: jest.fn().mockResolvedValue(undefined),
+    } as never);
+
+    const tree = render(<ScreenTimeContent />);
+
+    fireEvent.press(byTestId(tree, 'content-notifications-toggle')[0]);
+
+    await waitFor(() =>
+      expect(Alert.alert).toHaveBeenCalledWith(
+        'screenTime.permissionRequired',
+        'screenTime.enableNotificationsInSettings'
+      )
+    );
+  });
+
+  it('still renders when its stats fail to load', async () => {
+    contentService.getScreenTimeStats.mockRejectedValue(new Error('storage gone'));
+
+    const tree = render(<ScreenTimeContent />);
+
+    await waitFor(() =>
+      expect(byTestId(tree, 'content-age-2-6').length).toBeGreaterThan(0)
+    );
+  });
+
+  it.each([
+    ['content-age-18-24', 'screenTime.guidelines18to24'],
+    ['content-age-6plus', 'screenTime.guidelines6plus'],
+  ])('shows the guidelines for %s', async (button, guidelineKey) => {
+    const tree = render(<ScreenTimeContent />);
+    await waitFor(() => expect(contentService.getScreenTimeStats).toHaveBeenCalled());
+
+    fireEvent.press(byTestId(tree, button)[0]);
+
+    await waitFor(() =>
+      expect(JSON.stringify(tree.toJSON())).toContain(guidelineKey)
     );
   });
 

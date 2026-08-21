@@ -462,6 +462,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
             </View>
 
             <Pressable
+              testID="screen-time-open-reminders"
               style={[styles.createScheduleButton, { minHeight: scaledButtonSize(48), paddingVertical: scaledPadding(12), paddingHorizontal: scaledPadding(20) }]}
               onPress={() => setCurrentPage('custom-reminders')}
             >
