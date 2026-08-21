@@ -699,6 +699,7 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
 
             <View style={styles.ageButtons}>
               <Pressable
+                testID="content-age-18-24"
                 style={[styles.ageButton, { minHeight: scaledButtonSize(44), paddingVertical: scaledPadding(10), paddingHorizontal: scaledPadding(12) }, localChildAge < 24 && styles.ageButtonActive]}
                 onPress={() => handleAgeChange(20)}
               >
@@ -708,6 +709,7 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
               </Pressable>
 
               <Pressable
+                testID="content-age-2-6"
                 style={[styles.ageButton, { minHeight: scaledButtonSize(44), paddingVertical: scaledPadding(10), paddingHorizontal: scaledPadding(12) }, localChildAge >= 24 && localChildAge < 72 && styles.ageButtonActive]}
                 onPress={() => handleAgeChange(36)}
               >
@@ -717,6 +719,7 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
               </Pressable>
 
               <Pressable
+                testID="content-age-6plus"
                 style={[styles.ageButton, { minHeight: scaledButtonSize(44), paddingVertical: scaledPadding(10), paddingHorizontal: scaledPadding(12) }, localChildAge >= 72 && styles.ageButtonActive]}
                 onPress={() => handleAgeChange(84)}
               >
@@ -744,6 +747,7 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
 
           {onNavigateToReminders && (
             <Pressable
+              testID="content-reminders"
               style={[styles.createScheduleButton, { minHeight: scaledButtonSize(48), paddingVertical: scaledPadding(12), paddingHorizontal: scaledPadding(20) }]}
               onPress={onNavigateToReminders}
             >
@@ -793,6 +797,7 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
               </Text>
             </View>
             <Pressable
+              testID="content-toggle"
               style={[styles.toggle, localScreenTimeEnabled && styles.toggleActive]}
               onPress={handleToggleScreenTime}
             >
@@ -808,6 +813,7 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
               </Text>
             </View>
             <Pressable
+              testID="content-notifications-toggle"
               style={[styles.toggle, localNotificationsEnabled && styles.toggleActive]}
               onPress={handleToggleNotifications}
             >

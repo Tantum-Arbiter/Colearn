@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { Alert } from 'react-native';
-import { ScreenTimeScreen } from '../../../components/screen-time/screen-time-screen';
+import { ScreenTimeScreen, ScreenTimeContent } from '../../../components/screen-time/screen-time-screen';
 import { ScreenTimeProvider } from '../../../components/screen-time/screen-time-provider';
 import { screenToActivityType } from '../../../components/screen-time/screen-time-provider';
 import { ScreenTimeWarningModal } from '../../../components/screen-time/screen-time-warning-modal';
@@ -340,13 +340,14 @@ describe('ScreenTimeScreen', () => {
       expect(mockScreenTimeServiceInstance.getScreenTimeStats).toHaveBeenCalled()
     );
 
-    // default fixture age is 24 months -> the 2-6 band
-    expect(JSON.stringify(tree.toJSON())).toContain('screenTime.age2to6');
+    // the "current age" line, not the button labels -- the labels contain these
+    // keys as prefixes, so a bare substring check cannot fail
+    expect(JSON.stringify(tree.toJSON())).toContain('screenTime.current (age:screenTime.age2to6years)');
 
     press(tree, 'screen-time-age-18-24');
 
     await waitFor(() =>
-      expect(JSON.stringify(tree.toJSON())).toContain('screenTime.age18to24')
+      expect(JSON.stringify(tree.toJSON())).toContain('screenTime.current (age:screenTime.age18to24months)')
     );
   });
 
@@ -360,6 +361,118 @@ describe('ScreenTimeScreen', () => {
     // Should not show weekly overview while loading
     expect(queryByText('Weekly Overview')).toBeFalsy();
     expect(queryByText('Recommended Schedule')).toBeFalsy();
+  });
+});
+
+// ─── ScreenTimeContent (the home-screen glance body) ────────────────────────
+describe('ScreenTimeContent', () => {
+  const byTestId = (tree: ReturnType<typeof render>, testID: string) =>
+    tree.UNSAFE_root.findAll(
+      (n: { props: Record<string, unknown> }) => n.props.testID === testID
+    );
+
+  const contentService = {
+    getTodayUsage: jest.fn().mockResolvedValue(300),
+    getDailyLimit: jest.fn().mockReturnValue(3600),
+    getScreenTimeStats: jest.fn().mockResolvedValue({
+      todayUsage: 300,
+      weeklyUsage: [],
+      dailyAverages: {},
+      recommendedSchedule: [],
+      heatmapData: [],
+    }),
+    getDailyTotals: jest.fn().mockResolvedValue([]),
+    onWarning: jest.fn(),
+    removeWarningCallback: jest.fn(),
+    startSession: jest.fn().mockResolvedValue(undefined),
+    endSession: jest.fn().mockResolvedValue(undefined),
+  };
+
+  const setNotificationPermissionRequested = jest.fn();
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+
+    (ScreenTimeService.getInstance as jest.Mock).mockReturnValue(contentService as never);
+    (NotificationService.getInstance as jest.Mock).mockReturnValue({
+      requestPermissions: jest.fn().mockResolvedValue({
+        granted: true,
+        canAskAgain: true,
+        status: 'granted',
+      }),
+      scheduleRecommendedReminders: jest.fn().mockResolvedValue(undefined),
+      getPermissionStatus: jest.fn().mockResolvedValue({ granted: true }),
+    } as never);
+
+    (useAppStore as unknown as jest.Mock).mockReturnValue({
+      childAgeInMonths: 24,
+      screenTimeEnabled: true,
+      notificationsEnabled: false,
+      hasRequestedNotificationPermission: false,
+      setNotificationPermissionRequested,
+      userNickname: 'Liam',
+      userAvatarType: 'boy',
+      userAvatarId: 'boy-1',
+    } as never);
+  });
+
+  it('loads its stats on mount', async () => {
+    render(<ScreenTimeContent />);
+
+    await waitFor(() => expect(contentService.getScreenTimeStats).toHaveBeenCalledWith(24));
+    expect(contentService.getDailyTotals).toHaveBeenCalledWith(30);
+  });
+
+  it('renders its age and toggle controls', async () => {
+    const tree = render(<ScreenTimeContent />);
+
+    await waitFor(() => expect(contentService.getScreenTimeStats).toHaveBeenCalled());
+
+    for (const id of [
+      'content-age-18-24',
+      'content-age-2-6',
+      'content-age-6plus',
+      'content-toggle',
+      'content-notifications-toggle',
+    ]) {
+      expect(byTestId(tree, id).length).toBeGreaterThan(0);
+    }
+  });
+
+  it('shows the reminders button only when navigation is offered', async () => {
+    const withoutNav = render(<ScreenTimeContent />);
+    expect(byTestId(withoutNav, 'content-reminders')).toHaveLength(0);
+
+    const onNavigateToReminders = jest.fn();
+    const withNav = render(<ScreenTimeContent onNavigateToReminders={onNavigateToReminders} />);
+
+    fireEvent.press(byTestId(withNav, 'content-reminders')[0]);
+
+    expect(onNavigateToReminders).toHaveBeenCalled();
+  });
+
+  it('reflects the age band chosen in the glance', async () => {
+    const tree = render(<ScreenTimeContent />);
+
+    await waitFor(() => expect(contentService.getScreenTimeStats).toHaveBeenCalled());
+    // the "current age" line, not the button labels -- age6plus is a prefix of
+    // the age6plusYrs button label, so a bare substring check cannot fail
+    expect(JSON.stringify(tree.toJSON())).toContain('screenTime.current (age:screenTime.age2to6years)');
+
+    fireEvent.press(byTestId(tree, 'content-age-6plus')[0]);
+
+    await waitFor(() =>
+      expect(JSON.stringify(tree.toJSON())).toContain('screenTime.current (age:screenTime.age6plus)')
+    );
+  });
+
+  it('requests notification permission the first time reminders are switched on', async () => {
+    const tree = render(<ScreenTimeContent />);
+
+    fireEvent.press(byTestId(tree, 'content-notifications-toggle')[0]);
+
+    await waitFor(() => expect(setNotificationPermissionRequested).toHaveBeenCalledWith(true));
   });
 });
 
