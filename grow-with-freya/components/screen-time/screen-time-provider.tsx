@@ -139,8 +139,13 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
       setTodayUsage(usage);
     };
 
-    updateUsage();
-    const interval = setInterval(updateUsage, 50000); // Update every 50 seconds - reduces battery/CPU usage
+    const runUpdate = () => {
+      // the poll must never leave a rejection unhandled -- it fires every 50s
+      updateUsage().catch(error => log.error('Failed to update usage:', error));
+    };
+
+    runUpdate();
+    const interval = setInterval(runUpdate, 50000); // Update every 50 seconds - reduces battery/CPU usage
 
     return () => clearInterval(interval);
   }, [screenTimeEnabled]);
@@ -181,10 +186,14 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
   useEffect(() => {
     if (screenTimeEnabled && !isTracking && !isOnExemptScreen) {
       log.debug('Auto-starting session');
-      screenTimeService.startSession('story', childAgeInMonths).then(() => {
-        setIsTracking(true);
-        setCurrentActivity('story');
-      });
+      screenTimeService
+        .startSession('story', childAgeInMonths)
+        .then(() => {
+          setIsTracking(true);
+          setCurrentActivity('story');
+        })
+        // an unhandled rejection here surfaces as a red screen on app open
+        .catch(error => log.error('Failed to auto-start session:', error));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screenTimeEnabled]);
@@ -304,24 +313,6 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
       }
     }
   }, [screenTimeEnabled]);
-
-  const handleContinue = useCallback(() => {
-    setShowWarningModal(false);
-    setCurrentWarning(null);
-  }, []);
-
-  const handleCloseApp = useCallback(async () => {
-    setShowWarningModal(false);
-    setCurrentWarning(null);
-    
-    // End current activity
-    if (isTracking) {
-      await endActivity();
-    }
-    
-    // In a real app, you might want to minimize the app or show a "time to stop" screen
-    // For now, we'll just end the session
-  }, [isTracking, endActivity]);
 
   const handleDismiss = useCallback(() => {
     setShowWarningModal(false);

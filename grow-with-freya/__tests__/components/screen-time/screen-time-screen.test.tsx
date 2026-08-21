@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 import { ScreenTimeScreen, ScreenTimeContent } from '../../../components/screen-time/screen-time-screen';
 import { ScreenTimeProvider } from '../../../components/screen-time/screen-time-provider';
@@ -371,6 +371,63 @@ describe('ScreenTimeScreen', () => {
     await waitFor(() =>
       expect(JSON.stringify(tree.toJSON())).toContain('screenTime.current (age:screenTime.age18to24months)')
     );
+  });
+
+  describe('discarding unsaved changes', () => {
+    // the alert's buttons are data, so drive the Leave action the way the OS
+    // would rather than trying to press a rendered control
+    const pressAlertButton = async (label: string) => {
+      const [, , buttons] = (Alert.alert as jest.Mock).mock.calls.at(-1) ?? [];
+      const button = (buttons as { text: string; onPress?: () => void }[]).find(
+        b => b.text === label
+      );
+      await act(async () => {
+        await button?.onPress?.();
+      });
+    };
+
+    it('leaves and reverts pending reminders when Leave is chosen', async () => {
+      const tree = renderScreen();
+
+      press(tree, 'screen-time-age-6plus');
+      press(tree, 'screen-time-back');
+      await waitFor(() => expect(Alert.alert).toHaveBeenCalled());
+
+      await pressAlertButton('Leave');
+
+      expect(reminderService.revertChanges).toHaveBeenCalled();
+      expect(mockOnBack).toHaveBeenCalled();
+      // the edit is discarded rather than written to the store
+      expect(mockSetChildAge).not.toHaveBeenCalled();
+    });
+
+    it('stays put when Cancel is chosen', async () => {
+      const tree = renderScreen();
+
+      press(tree, 'screen-time-age-6plus');
+      press(tree, 'screen-time-back');
+      await waitFor(() => expect(Alert.alert).toHaveBeenCalled());
+
+      await pressAlertButton('Cancel');
+
+      expect(mockOnBack).not.toHaveBeenCalled();
+      expect(reminderService.revertChanges).not.toHaveBeenCalled();
+    });
+
+    it('drops the save button once the changes are discarded', async () => {
+      const tree = renderScreen();
+
+      press(tree, 'screen-time-age-6plus');
+      await waitFor(() =>
+        expect(byTestId(tree, 'screen-time-save').length).toBeGreaterThan(0)
+      );
+
+      press(tree, 'screen-time-back');
+      await waitFor(() => expect(Alert.alert).toHaveBeenCalled());
+      await pressAlertButton('Leave');
+
+      await waitFor(() => expect(byTestId(tree, 'screen-time-save')).toHaveLength(0));
+    });
   });
 
   describe('saving to the backend', () => {

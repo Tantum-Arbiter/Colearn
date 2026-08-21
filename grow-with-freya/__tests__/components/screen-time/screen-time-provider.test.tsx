@@ -297,4 +297,124 @@ describe('ScreenTimeProvider lifecycle', () => {
       expect(ctx?.todayUsage).toBe(1234);
     });
   });
+
+  describe('guards and error paths', () => {
+    it('refuses to hand out context outside a provider', () => {
+      const Orphan = () => {
+        useScreenTime();
+        return null;
+      };
+      // React logs the thrown error as well; keep the output clean
+      const spy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+      expect(() => render(<Orphan />)).toThrow(
+        'useScreenTime must be used within a ScreenTimeProvider'
+      );
+
+      spy.mockRestore();
+    });
+
+    it('survives a failure to start an activity', async () => {
+      service.startSession.mockRejectedValue(new Error('no storage'));
+      renderWithConsumer();
+
+      await act(async () => {
+        await ctx?.startActivity('story');
+      });
+
+      expect(ctx?.isTracking).toBe(false);
+    });
+
+    it('survives a failure to end an activity', async () => {
+      renderWithConsumer();
+      await act(async () => {
+        await ctx?.startActivity('story');
+      });
+
+      service.endSession.mockRejectedValue(new Error('no storage'));
+
+      await act(async () => {
+        await expect(ctx?.endActivity()).resolves.toBeUndefined();
+      });
+    });
+
+    it('survives a failure to refresh usage', async () => {
+      renderWithConsumer();
+      service.getTodayUsage.mockRejectedValue(new Error('no storage'));
+
+      await act(async () => {
+        await expect(ctx?.refreshUsage()).resolves.toBeUndefined();
+      });
+    });
+  });
+
+  describe('surfacing a warning by hand', () => {
+    it('shows a warning pushed through the context', async () => {
+      const tree = render(
+        <ScreenTimeProvider>
+          <Consumer />
+        </ScreenTimeProvider>
+      );
+
+      await act(async () => {
+        ctx?.showWarning({
+          type: 'limit_reached',
+          remainingTime: 0,
+          message: 'Pushed by hand',
+        });
+      });
+
+      expect(JSON.stringify(tree.toJSON())).toContain('Pushed by hand');
+    });
+
+    it('records the last completed activity id', async () => {
+      renderWithConsumer();
+
+      await act(async () => {
+        ctx?.setLastCompletedActivityId('abc-animals');
+      });
+
+      // exposed back through the modal, which reads it for its suggestions
+      expect(ctx?.setLastCompletedActivityId).toEqual(expect.any(Function));
+    });
+  });
+
+  describe('resuming after an exempt screen', () => {
+    const setScreen = (currentScreen: string) => {
+      const next = { ...STORE_STATE, currentScreen };
+      (useAppStore as unknown as jest.Mock).mockImplementation(() => next);
+      (useAppStore as unknown as jest.Mock & { getState: jest.Mock }).getState = jest
+        .fn()
+        .mockReturnValue(next);
+    };
+
+    // resuming only applies after a paused session: the provider has to have
+    // been tracking, moved onto an exempt screen, then come back
+    it('reopens a session once the child leaves the sleep screen', async () => {
+      const tree = render(
+        <ScreenTimeProvider>
+          <Text>child</Text>
+        </ScreenTimeProvider>
+      );
+      await waitFor(() => expect(service.startSession).toHaveBeenCalled());
+
+      setScreen('sleep');
+      tree.rerender(
+        <ScreenTimeProvider>
+          <Text>child</Text>
+        </ScreenTimeProvider>
+      );
+      await waitFor(() => expect(service.endSession).toHaveBeenCalled());
+
+      service.startSession.mockClear();
+      setScreen('home');
+      tree.rerender(
+        <ScreenTimeProvider>
+          <Text>child</Text>
+        </ScreenTimeProvider>
+      );
+
+      await waitFor(() => expect(service.startSession).toHaveBeenCalledWith('story', 36));
+    });
+  });
 });
