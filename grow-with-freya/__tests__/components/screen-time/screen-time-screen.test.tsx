@@ -61,7 +61,12 @@ jest.mock('react-native-reanimated', () => {
     useAnimatedStyle: jest.fn(() => ({})),
     useAnimatedProps: jest.fn(() => ({})),
     useDerivedValue: jest.fn((fn: any) => ({ value: fn() })),
-    withTiming: jest.fn((v: any) => v),
+    // the completion callback is how the dismiss animation reaches onDismiss;
+    // dropping it made the modal look like it never dismissed
+    withTiming: jest.fn((v: any, _config?: any, callback?: any) => {
+      if (typeof callback === 'function') callback(true);
+      return v;
+    }),
     withSpring: jest.fn((v: any) => v),
     withDelay: jest.fn((_: any, v: any) => v),
     withRepeat: jest.fn((a: any) => a),
@@ -566,6 +571,44 @@ describe('ScreenTimeWarningModal', () => {
     // Should render general emoji and suggestions
     expect(treeContainsText(json, '🌟')).toBe(true);
     expect(treeContainsText(json, 'screenTimeWarning.suggestions.general')).toBe(true);
+  });
+
+  it.each([
+    ['approaching_limit', 'screenTimeWarning.approaching'],
+    ['limit_reached', 'screenTimeWarning.limitReached'],
+    ['daily_complete', 'screenTimeWarning.dailyComplete'],
+  ])('titles a %s warning with its own copy', (type, expectedKey) => {
+    const { json } = renderModal({
+      warning: { type: type as never, remainingTime: 0, message: 'msg' },
+    });
+
+    expect(treeContainsText(json, expectedKey)).toBe(true);
+  });
+
+  it('falls back to a neutral title for an unrecognised warning type', () => {
+    const { json } = renderModal({
+      warning: { type: 'something-new' as never, remainingTime: 0, message: 'msg' },
+    });
+
+    expect(treeContainsText(json, 'screenTimeWarning.notice')).toBe(true);
+  });
+
+  it('calls onDismiss when the dismiss button is pressed', () => {
+    const onDismiss = jest.fn();
+    const tree = render(
+      <ScreenTimeWarningModal
+        visible
+        warning={{ type: 'limit_reached', remainingTime: 0, message: 'Time is up' }}
+        onDismiss={onDismiss}
+      />
+    );
+
+    const pressables = tree.UNSAFE_root.findAll(
+      (n: { props: Record<string, unknown> }) => typeof n.props.onPress === 'function'
+    );
+    fireEvent.press(pressables[pressables.length - 1]);
+
+    expect(onDismiss).toHaveBeenCalled();
   });
 
   it('does not render when warning is null', () => {
