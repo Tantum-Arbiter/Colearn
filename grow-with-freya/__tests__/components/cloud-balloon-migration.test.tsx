@@ -2,7 +2,7 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 import { MainMenu } from '../../components/main-menu';
 import { getSvgComponentFromSvg } from '../../components/main-menu/assets';
-import { useAppStore } from '../../store/app-store';
+import { useAppStore, type AppState } from '../../store/app-store';
 import { ScreenTimeProvider } from '../../components/screen-time/screen-time-provider';
 
 // Mock the store
@@ -17,9 +17,20 @@ const mockUseAppStore = useAppStore as jest.MockedFunction<typeof useAppStore>;
 describe('Cloud/Balloon Migration Tests', () => {
   const mockOnNavigate = jest.fn();
 
+  let state: Partial<AppState>;
+
+  // the store is read both bare and via selectors, so the mock has to honour a
+  // selector argument the way zustand does
+  const applyState = (next: Partial<AppState>) => {
+    state = next;
+    mockUseAppStore.mockImplementation(((selector?: (s: AppState) => unknown) =>
+      typeof selector === 'function' ? selector(state as AppState) : state
+    ) as unknown as typeof useAppStore);
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseAppStore.mockReturnValue({
+    applyState({
       backgroundAnimationState: {
         cloudFloat1: -200,
         cloudFloat2: -400,
@@ -38,12 +49,16 @@ describe('Cloud/Balloon Migration Tests', () => {
       getEffectiveTier: () => 'free',
       setAppReady: jest.fn(),
       setOnboardingComplete: jest.fn(),
-      setCurrentChildId: jest.fn(),
+      setCurrentChild: jest.fn(),
       setCurrentScreen: jest.fn(),
       setLoading: jest.fn(),
       setShowLoginAfterOnboarding: jest.fn(),
       requestReturnToMainMenu: jest.fn(),
       clearReturnToMainMenu: jest.fn(),
+      // these cloud animations belong to the legacy menu, not the home scene
+      useHomeScene: false,
+      storyProgress: {},
+      getContinueReadingStoryId: jest.fn(() => null),
     });
   });
 
@@ -96,10 +111,7 @@ describe('Cloud/Balloon Migration Tests', () => {
   describe('Animation State Management', () => {
     it('should call updateBackgroundAnimationState with cloud properties', () => {
       const mockUpdate = jest.fn();
-      mockUseAppStore.mockReturnValue({
-        ...mockUseAppStore(),
-        updateBackgroundAnimationState: mockUpdate,
-      });
+      applyState({ ...state, updateBackgroundAnimationState: mockUpdate });
 
       render(
         <ScreenTimeProvider>

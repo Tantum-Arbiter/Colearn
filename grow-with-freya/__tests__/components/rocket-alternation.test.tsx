@@ -1,7 +1,7 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
 import { MainMenu } from '../../components/main-menu';
-import { useAppStore } from '../../store/app-store';
+import { useAppStore, type AppState } from '../../store/app-store';
 import { ScreenTimeProvider } from '../../components/screen-time/screen-time-provider';
 
 // Mock the store
@@ -16,9 +16,20 @@ const mockUseAppStore = useAppStore as jest.MockedFunction<typeof useAppStore>;
 describe('Main Menu Performance Tests', () => {
   const mockOnNavigate = jest.fn();
 
+  let state: Partial<AppState>;
+
+  // the store is read both bare and via selectors, so the mock has to honour a
+  // selector argument the way zustand does
+  const applyState = (next: Partial<AppState>) => {
+    state = next;
+    mockUseAppStore.mockImplementation(((selector?: (s: AppState) => unknown) =>
+      typeof selector === 'function' ? selector(state as AppState) : state
+    ) as unknown as typeof useAppStore);
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseAppStore.mockReturnValue({
+    applyState({
       backgroundAnimationState: {
         cloudFloat1: -200,
         cloudFloat2: -400,
@@ -37,12 +48,16 @@ describe('Main Menu Performance Tests', () => {
       getEffectiveTier: () => 'free',
       setAppReady: jest.fn(),
       setOnboardingComplete: jest.fn(),
-      setCurrentChildId: jest.fn(),
+      setCurrentChild: jest.fn(),
       setCurrentScreen: jest.fn(),
       setLoading: jest.fn(),
       setShowLoginAfterOnboarding: jest.fn(),
       requestReturnToMainMenu: jest.fn(),
       clearReturnToMainMenu: jest.fn(),
+      // these cloud animations belong to the legacy menu, not the home scene
+      useHomeScene: false,
+      storyProgress: {},
+      getContinueReadingStoryId: jest.fn(() => null),
     });
   });
 
@@ -90,8 +105,8 @@ describe('Main Menu Performance Tests', () => {
 
     it('should handle animation resume for clouds only', () => {
       // Test with different cloud positions
-      mockUseAppStore.mockReturnValue({
-        ...mockUseAppStore(),
+      applyState({
+        ...state,
         backgroundAnimationState: {
           cloudFloat1: -100, // Mid-animation position
           cloudFloat2: -300, // Different position
@@ -131,8 +146,8 @@ describe('Main Menu Performance Tests', () => {
 
     it('should handle edge cases in cloud positioning', () => {
       // Test with clouds at boundary positions
-      mockUseAppStore.mockReturnValue({
-        ...mockUseAppStore(),
+      applyState({
+        ...state,
         backgroundAnimationState: {
           cloudFloat1: -1000, // Far off-screen
           cloudFloat2: 2000,  // Far off-screen opposite
