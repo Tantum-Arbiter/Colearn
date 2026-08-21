@@ -227,11 +227,6 @@ class ScreenTimeService {
     const todayUsage = await this.getTodayUsage();
     const remainingTime = dailyLimit - todayUsage;
 
-    // No limits for development/testing - return null
-    if (dailyLimit === 0) {
-      return null;
-    }
-
     // Check if we already showed a warning today
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
     if (this.lastWarningDate === today) {
@@ -500,9 +495,7 @@ class ScreenTimeService {
   }
 
   private startWarningMonitor(childAgeInMonths: number = 24): void {
-    if (this.checkInterval) {
-      clearInterval(this.checkInterval);
-    }
+    this.stopWarningMonitor();
 
     // Check every 30 seconds
     this.checkInterval = setInterval(async () => {

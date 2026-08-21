@@ -546,6 +546,26 @@ describe('ScreenTimeScreen', () => {
       expect(reminderService.revertChanges).not.toHaveBeenCalled();
     });
 
+    // when only a reminder changed, the local settings already match the store,
+    // so resetting them changes no effect dependency and the effect never
+    // re-runs -- the explicit setHasUnsavedChanges(false) is what clears it
+    it('clears the unsaved flag when only a reminder changed', async () => {
+      (reminderService.hasUnsavedChanges as jest.Mock).mockReturnValue(true);
+      const tree = renderScreen();
+
+      await waitFor(() =>
+        expect(byTestId(tree, 'screen-time-save').length).toBeGreaterThan(0)
+      );
+
+      press(tree, 'screen-time-back');
+      await waitFor(() => expect(Alert.alert).toHaveBeenCalled());
+
+      (reminderService.hasUnsavedChanges as jest.Mock).mockReturnValue(false);
+      await pressAlertButton('Leave');
+
+      await waitFor(() => expect(byTestId(tree, 'screen-time-save')).toHaveLength(0));
+    });
+
     it('drops the save button once the changes are discarded', async () => {
       const tree = renderScreen();
 
@@ -959,6 +979,14 @@ describe('ScreenTimeWarningModal', () => {
     fireEvent.press(pressables[pressables.length - 1]);
 
     expect(onDismiss).toHaveBeenCalled();
+  });
+
+  it('renders nothing when made visible without a warning', () => {
+    const tree = render(
+      <ScreenTimeWarningModal visible warning={null} onDismiss={jest.fn()} />
+    );
+
+    expect(tree.toJSON()).toBeNull();
   });
 
   it('does not render when warning is null', () => {

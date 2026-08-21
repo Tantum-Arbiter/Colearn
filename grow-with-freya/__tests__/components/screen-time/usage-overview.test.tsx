@@ -215,4 +215,36 @@ describe('UsageOverview', () => {
     // every fifth day over thirty days, plus the two ring circles
     expect(dots.length).toBe(6 + 2);
   });
+
+  describe('edge cases', () => {
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it.each([
+      ['2026-08-13T09:00:00.000Z', 'morning'],
+      ['2026-08-13T14:00:00.000Z', 'afternoon'],
+      ['2026-08-13T20:00:00.000Z', 'evening'],
+    ])('greets by the time of day at %s', (now, expected) => {
+      jest.useFakeTimers({ now: new Date(now) });
+
+      expect(toStr(renderOverview())).toContain(`storyGarden.greeting.${expected}`);
+    });
+
+    it('does not divide by zero when no daily limit is set', () => {
+      const body = toStr(renderOverview({ todayUsageSeconds: 600, dailyLimitSeconds: 0 }));
+
+      // the ring still renders and the remaining time floors at zero
+      expect(body).toContain('"10m"');
+      expect(body).not.toContain('NaN');
+      expect(body).not.toContain('Infinity');
+    });
+
+    it('falls back to the generic greeting when the child has no name', () => {
+      const body = toStr(renderOverview());
+
+      // the mocked store supplies "Liam", so the named variant is used
+      expect(body).toContain('screenTime.helpingStayBalanced (name:Liam)');
+    });
+  });
 });
