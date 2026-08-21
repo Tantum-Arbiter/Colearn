@@ -10,6 +10,13 @@ jest.mock('@/components/ui/png-illustration', () => ({
   },
 }));
 
+// testID lands as data-testid under react-native-web, so query the tree directly
+function byTestId(tree: ReturnType<typeof render>, testID: string) {
+  return tree.UNSAFE_root.findAll(
+    (n: { props: Record<string, unknown> }) => n.props.testID === testID
+  );
+}
+
 describe('OnboardingScreen', () => {
   const defaultProps = {
     title: 'Test Title',
@@ -64,33 +71,37 @@ describe('OnboardingScreen', () => {
         <OnboardingScreen {...defaultProps} onNext={mockOnNext} />
       );
 
-      // Test that the component renders without crashing
-      expect(component).toBeTruthy();
-      expect(mockOnNext).toBeDefined();
-      expect(typeof mockOnNext).toBe('function');
+      fireEvent.press(byTestId(component, 'onboarding-next')[0]);
+
+      expect(mockOnNext).toHaveBeenCalledTimes(1);
     });
 
     it('renders with previous button when onPrevious is provided', () => {
       const mockOnPrevious = jest.fn();
       const component = render(
-        <OnboardingScreen {...defaultProps} onPrevious={mockOnPrevious} />
+        <OnboardingScreen {...defaultProps} currentStep={2} onPrevious={mockOnPrevious} />
       );
 
-      // Test that the component renders without crashing
-      expect(component).toBeTruthy();
-      expect(mockOnPrevious).toBeDefined();
+      expect(byTestId(component, 'onboarding-back').length).toBeGreaterThan(0);
+    });
+
+    it('hides the previous button on the first step even with onPrevious', () => {
+      const component = render(
+        <OnboardingScreen {...defaultProps} currentStep={1} onPrevious={jest.fn()} />
+      );
+
+      expect(byTestId(component, 'onboarding-back')).toHaveLength(0);
     });
 
     it('handles previous button press', () => {
       const mockOnPrevious = jest.fn();
       const component = render(
-        <OnboardingScreen {...defaultProps} onPrevious={mockOnPrevious} />
+        <OnboardingScreen {...defaultProps} currentStep={2} onPrevious={mockOnPrevious} />
       );
 
-      // Test that the component renders without crashing and handles props
-      expect(component).toBeTruthy();
-      expect(mockOnPrevious).toBeDefined();
-      expect(typeof mockOnPrevious).toBe('function');
+      fireEvent.press(byTestId(component, 'onboarding-back')[0]);
+
+      expect(mockOnPrevious).toHaveBeenCalledTimes(1);
     });
 
     it('handles different props without crashing', () => {

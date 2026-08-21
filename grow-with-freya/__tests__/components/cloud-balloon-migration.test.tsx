@@ -63,20 +63,26 @@ describe('Cloud/Balloon Migration Tests', () => {
   });
 
   describe('Store Migration', () => {
+    // the real store, not the mock this suite installs: asserting on the mock
+    // only restates the fixture and passes whatever the store actually holds
+    const actualStore = (
+      jest.requireActual('../../store/app-store') as { useAppStore: typeof useAppStore }
+    ).useAppStore;
+
     it('should use cloudFloat1 and cloudFloat2 instead of balloonFloat1 and balloonFloat2', () => {
-      const store = mockUseAppStore();
-      
-      expect(store.backgroundAnimationState).toHaveProperty('cloudFloat1');
-      expect(store.backgroundAnimationState).toHaveProperty('cloudFloat2');
-      expect(store.backgroundAnimationState).not.toHaveProperty('balloonFloat1');
-      expect(store.backgroundAnimationState).not.toHaveProperty('balloonFloat2');
+      const { backgroundAnimationState } = actualStore.getState();
+
+      expect(backgroundAnimationState).toHaveProperty('cloudFloat1');
+      expect(backgroundAnimationState).toHaveProperty('cloudFloat2');
+      expect(backgroundAnimationState).not.toHaveProperty('balloonFloat1');
+      expect(backgroundAnimationState).not.toHaveProperty('balloonFloat2');
     });
 
     it('should have correct initial cloud positions', () => {
-      const store = mockUseAppStore();
-      
-      expect(store.backgroundAnimationState.cloudFloat1).toBe(-200);
-      expect(store.backgroundAnimationState.cloudFloat2).toBe(-400);
+      const { backgroundAnimationState } = actualStore.getState();
+
+      expect(backgroundAnimationState.cloudFloat1).toBe(-200);
+      expect(backgroundAnimationState.cloudFloat2).toBe(-400);
     });
   });
 
@@ -93,18 +99,17 @@ describe('Cloud/Balloon Migration Tests', () => {
 
   describe('Asset Backward Compatibility', () => {
     it('should map balloon to cloud component for backward compatibility', () => {
-      const cloudComponent = getSvgComponentFromSvg('cloud');
-
-      expect(cloudComponent).toBeDefined();
-      // Test that cloud component works (balloon is mapped to cloud internally)
-      expect(typeof cloudComponent === 'function' || typeof cloudComponent === 'object').toBe(true);
+      // the actual compatibility claim: the old name resolves to the same
+      // component as the new one, rather than merely being non-null
+      expect(getSvgComponentFromSvg('balloon')).toBe(getSvgComponentFromSvg('cloud'));
     });
 
     it('should handle cloud icon type', () => {
       const SvgComponent = getSvgComponentFromSvg('cloud');
-      // The component might be an object with default export or a function
-      expect(SvgComponent).toBeTruthy();
-      expect(typeof SvgComponent === 'function' || typeof SvgComponent === 'object').toBe(true);
+
+      const { toJSON } = render(<SvgComponent width={24} height={24} />);
+
+      expect(toJSON()).not.toBeNull();
     });
   });
 
@@ -113,15 +118,21 @@ describe('Cloud/Balloon Migration Tests', () => {
       const mockUpdate = jest.fn();
       applyState({ ...state, updateBackgroundAnimationState: mockUpdate });
 
-      render(
+      const { unmount } = render(
         <ScreenTimeProvider>
           <MainMenu onNavigate={mockOnNavigate} />
         </ScreenTimeProvider>
       );
 
-      // The component should be able to call updateBackgroundAnimationState
-      // with the new cloud properties structure
-      expect(mockUpdate).toBeDefined();
+      // the menu persists cloud positions in its unmount cleanup
+      unmount();
+
+      expect(mockUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          cloudFloat1: expect.any(Number),
+          cloudFloat2: expect.any(Number),
+        })
+      );
     });
   });
 });

@@ -177,9 +177,11 @@ describe('Stories Data', () => {
 
       const endTime = performance.now();
 
-      expect(mockStories).toBeDefined();
-      expect(allStories).toBeDefined();
-      expect(availableStories).toBeDefined();
+      // imported constants are always defined, so assert they actually hold
+      // data and that the filter really filters
+      expect(mockStories.length).toBeGreaterThan(0);
+      expect(allStories.length).toBeGreaterThanOrEqual(mockStories.length);
+      expect(availableStories.every((story) => story.isAvailable)).toBe(true);
       expect(randomStory).toBeDefined();
 
       // Should load very quickly (less than 10ms)
