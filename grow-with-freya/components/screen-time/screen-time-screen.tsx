@@ -364,7 +364,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
         {/* Header - Only show for main page */}
         {currentPage === 'main' && (
           <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50), zIndex: 50 }]}>
-            <Pressable style={[styles.backButton, { minHeight: scaledButtonSize(40) }]} onPress={handleBack}>
+            <Pressable testID="screen-time-back" style={[styles.backButton, { minHeight: scaledButtonSize(40) }]} onPress={handleBack}>
               <Ionicons name="arrow-back" size={scaledButtonSize(24)} color="rgba(255, 255, 255, 0.8)" />
             </Pressable>
             <View style={styles.titleContainer}>
@@ -415,6 +415,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
 
               <View style={styles.ageButtons}>
                 <Pressable
+                  testID="screen-time-age-18-24"
                   style={[styles.ageButton, { minHeight: scaledButtonSize(44), paddingVertical: scaledPadding(10), paddingHorizontal: scaledPadding(12) }, localChildAge < 24 && styles.ageButtonActive]}
                   onPress={() => handleAgeChange(20)}
                 >
@@ -424,6 +425,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
                 </Pressable>
 
                 <Pressable
+                  testID="screen-time-age-2-6"
                   style={[styles.ageButton, { minHeight: scaledButtonSize(44), paddingVertical: scaledPadding(10), paddingHorizontal: scaledPadding(12) }, localChildAge >= 24 && localChildAge < 72 && styles.ageButtonActive]}
                   onPress={() => handleAgeChange(36)}
                 >
@@ -433,6 +435,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
                 </Pressable>
 
                 <Pressable
+                  testID="screen-time-age-6plus"
                   style={[styles.ageButton, { minHeight: scaledButtonSize(44), paddingVertical: scaledPadding(10), paddingHorizontal: scaledPadding(12) }, localChildAge >= 72 && styles.ageButtonActive]}
                   onPress={() => handleAgeChange(84)}
                 >
@@ -507,6 +510,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
                 </Text>
               </View>
               <Pressable
+                testID="screen-time-toggle"
                 style={[styles.toggle, localScreenTimeEnabled && styles.toggleActive]}
                 onPress={handleToggleScreenTime}
               >
@@ -522,6 +526,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
                 </Text>
               </View>
               <Pressable
+                testID="screen-time-notifications-toggle"
                 style={[styles.toggle, localNotificationsEnabled && styles.toggleActive]}
                 onPress={handleToggleNotifications}
               >
@@ -534,6 +539,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
           {hasUnsavedChanges && (
             <View style={styles.section}>
               <Pressable
+                testID="screen-time-save"
                 style={[styles.saveButton, { minHeight: scaledButtonSize(48), paddingVertical: scaledPadding(14) }, isSaving && styles.saveButtonDisabled]}
                 onPress={handleSaveSettings}
                 disabled={isSaving}

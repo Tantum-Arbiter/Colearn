@@ -30,9 +30,9 @@ jest.mock('../../../components/screen-time/screen-time-provider', () => {
     }),
   };
 });
-jest.mock('react-native/Libraries/Alert/Alert', () => ({
-  alert: jest.fn(),
-}));
+// react-native maps to react-native-web here, so mocking
+// react-native/Libraries/Alert/Alert never applied -- Alert.alert stayed the
+// real function. It is spied per-test in beforeEach instead.
 jest.mock('expo-haptics', () => ({
   impactAsync: jest.fn(),
   ImpactFeedbackStyle: {
@@ -114,7 +114,7 @@ const mockUseAppStore = useAppStore as jest.MockedFunction<typeof useAppStore>;
 const mockScreenTimeService = ScreenTimeService as jest.MockedClass<typeof ScreenTimeService>;
 const mockNotificationService = NotificationService as jest.MockedClass<typeof NotificationService>;
 
-describe.skip('ScreenTimeScreen', () => {
+describe('ScreenTimeScreen', () => {
   const mockOnBack = jest.fn();
   const mockSetChildAge = jest.fn();
   const mockSetScreenTimeEnabled = jest.fn();
@@ -136,6 +136,7 @@ describe.skip('ScreenTimeScreen', () => {
         { time: '15:00', duration: 30, activity: 'Creative play' },
       ],
     }),
+    getDailyTotals: jest.fn().mockResolvedValue([]),
     scheduleRecommendedReminders: jest.fn().mockResolvedValue(undefined),
     onWarning: jest.fn(),
     removeWarningCallback: jest.fn(),
@@ -163,161 +164,190 @@ describe.skip('ScreenTimeScreen', () => {
       setNotificationPermissionRequested: mockSetNotificationPermissionRequested,
     } as any);
 
+    jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+
     (mockScreenTimeService.getInstance as jest.Mock).mockReturnValue(mockScreenTimeServiceInstance as any);
     (mockNotificationService.getInstance as jest.Mock).mockReturnValue(mockNotificationServiceInstance as any);
   });
 
-  it('renders correctly with default props', async () => {
-    const { root } = render(
+  // testID lands as data-testid under react-native-web, so query the tree directly
+  const byTestId = (tree: ReturnType<typeof render>, testID: string) =>
+    tree.UNSAFE_root.findAll(
+      (n: { props: Record<string, unknown> }) => n.props.testID === testID
+    );
+
+  const renderScreen = () =>
+    render(
       <ScreenTimeProvider>
         <ScreenTimeScreen onBack={mockOnBack} />
       </ScreenTimeProvider>
     );
 
-    // Just check that the component renders without crashing
-    expect(root).toBeTruthy();
+  const press = (tree: ReturnType<typeof render>, testID: string) =>
+    fireEvent.press(byTestId(tree, testID)[0]);
 
-    // Wait a bit for any async operations
-    await new Promise(resolve => setTimeout(resolve, 100));
+  it('renders every control on the settings page', async () => {
+    const tree = renderScreen();
 
-    // Verify the component is still mounted
-    expect(root).toBeTruthy();
+    await waitFor(() =>
+      expect(mockScreenTimeServiceInstance.getScreenTimeStats).toHaveBeenCalled()
+    );
+
+    for (const id of [
+      'screen-time-back',
+      'screen-time-age-18-24',
+      'screen-time-age-2-6',
+      'screen-time-age-6plus',
+      'screen-time-toggle',
+      'screen-time-notifications-toggle',
+    ]) {
+      expect(byTestId(tree, id).length).toBeGreaterThan(0);
+    }
   });
 
-  it('displays correct usage information', async () => {
-    const { root } = render(
-      <ScreenTimeProvider>
-        <ScreenTimeScreen onBack={mockOnBack} />
-      </ScreenTimeProvider>
+  it('loads usage data for the current child age', async () => {
+    renderScreen();
+
+    await waitFor(() =>
+      expect(mockScreenTimeServiceInstance.getScreenTimeStats).toHaveBeenCalledWith(24)
     );
-
-    // Just check that the component renders without crashing
-    expect(root).toBeTruthy();
-
-    // Verify the mock service was called
-    expect(mockScreenTimeServiceInstance.getScreenTimeStats).toHaveBeenCalled();
+    expect(mockScreenTimeServiceInstance.getDailyTotals).toHaveBeenCalledWith(30);
   });
 
-  it('handles back button press', async () => {
-    const { root } = render(
-      <ScreenTimeProvider>
-        <ScreenTimeScreen onBack={mockOnBack} />
-      </ScreenTimeProvider>
+  it('goes back immediately when nothing has changed', async () => {
+    const tree = renderScreen();
+
+    press(tree, 'screen-time-back');
+
+    await waitFor(() => expect(mockOnBack).toHaveBeenCalled());
+    expect(Alert.alert).not.toHaveBeenCalled();
+  });
+
+  it('warns instead of leaving when there are unsaved changes', async () => {
+    const tree = renderScreen();
+
+    press(tree, 'screen-time-age-6plus');
+    press(tree, 'screen-time-back');
+
+    await waitFor(() =>
+      expect(Alert.alert).toHaveBeenCalledWith(
+        'Unsaved Changes',
+        expect.stringContaining('unsaved changes'),
+        expect.any(Array)
+      )
     );
-
-    // Just check that the component renders without crashing
-    expect(root).toBeTruthy();
-
-    // Since we can't easily click the back button in this test environment,
-    // we'll just verify the callback is provided
     expect(mockOnBack).not.toHaveBeenCalled();
   });
 
-  it('handles age selection', async () => {
-    const { root } = render(
-      <ScreenTimeProvider>
-        <ScreenTimeScreen onBack={mockOnBack} />
-      </ScreenTimeProvider>
+  it('keeps an age choice local until it is saved', async () => {
+    const tree = renderScreen();
+
+    press(tree, 'screen-time-age-6plus');
+
+    // the screen edits a local copy; nothing reaches the store yet
+    expect(mockSetChildAge).not.toHaveBeenCalled();
+    // and the save button only exists once something is unsaved
+    await waitFor(() =>
+      expect(byTestId(tree, 'screen-time-save').length).toBeGreaterThan(0)
     );
-
-    // Just check that the component renders without crashing
-    expect(root).toBeTruthy();
-
-    // Age selection functionality is tested in integration tests
-    expect(mockSetChildAge).toHaveBeenCalledTimes(0); // Not called in this unit test
   });
 
-  it('handles screen time toggle', async () => {
-    const { getByTestId } = render(
-      <ScreenTimeProvider>
-        <ScreenTimeScreen onBack={mockOnBack} />
-      </ScreenTimeProvider>
+  it('writes the chosen age to the store when saved', async () => {
+    const tree = renderScreen();
+
+    press(tree, 'screen-time-age-6plus');
+    await waitFor(() =>
+      expect(byTestId(tree, 'screen-time-save').length).toBeGreaterThan(0)
     );
+    press(tree, 'screen-time-save');
 
-    // Note: You might need to add testID props to your toggle components
-    // This is a placeholder for the actual implementation
-    await waitFor(() => {
-      // Find and press the screen time toggle
-      // This would need to be implemented based on your actual component structure
-    });
-
-    // expect(mockSetScreenTimeEnabled).toHaveBeenCalled();
+    await waitFor(() => expect(mockSetChildAge).toHaveBeenCalledWith(84));
   });
 
-  it('handles notification permission request', async () => {
+  it('keeps the screen time toggle local until it is saved', async () => {
+    const tree = renderScreen();
+
+    press(tree, 'screen-time-toggle');
+
+    expect(mockSetScreenTimeEnabled).not.toHaveBeenCalled();
+
+    await waitFor(() =>
+      expect(byTestId(tree, 'screen-time-save').length).toBeGreaterThan(0)
+    );
+    press(tree, 'screen-time-save');
+
+    // the store started enabled, so saving persists the flipped value
+    await waitFor(() => expect(mockSetScreenTimeEnabled).toHaveBeenCalledWith(false));
+  });
+
+  it('requests notification permission the first time reminders are enabled', async () => {
     mockNotificationServiceInstance.requestPermissions.mockResolvedValue({
       granted: true,
+      canAskAgain: true,
       status: 'granted',
-    } as any);
+    } as never);
 
-    const { getByTestId } = render(
-      <ScreenTimeProvider>
-        <ScreenTimeScreen onBack={mockOnBack} />
-      </ScreenTimeProvider>
+    const tree = renderScreen();
+
+    press(tree, 'screen-time-notifications-toggle');
+
+    await waitFor(() =>
+      expect(mockNotificationServiceInstance.requestPermissions).toHaveBeenCalled()
     );
-
-    // This would need to be implemented based on your actual component structure
-    // fireEvent.press(notificationToggle);
-
-    await waitFor(() => {
-      // expect(mockNotificationServiceInstance.requestPermissions).toHaveBeenCalled();
-      // expect(mockSetNotificationsEnabled).toHaveBeenCalledWith(true);
-    });
+    expect(mockSetNotificationPermissionRequested).toHaveBeenCalledWith(true);
   });
 
-  it('shows alert when notifications are enabled', async () => {
+  it('confirms with an alert once permission is granted', async () => {
     mockNotificationServiceInstance.requestPermissions.mockResolvedValue({
       granted: true,
+      canAskAgain: true,
       status: 'granted',
-    } as any);
+    } as never);
 
-    const { getByTestId } = render(
-      <ScreenTimeProvider>
-        <ScreenTimeScreen onBack={mockOnBack} />
-      </ScreenTimeProvider>
+    const tree = renderScreen();
+
+    press(tree, 'screen-time-notifications-toggle');
+
+    await waitFor(() =>
+      expect(Alert.alert).toHaveBeenCalledWith(
+        'Notifications Enabled!',
+        expect.stringContaining('save your changes')
+      )
     );
-
-    // Simulate enabling notifications
-    // This would trigger the alert in your component
-
-    await waitFor(() => {
-      // expect(Alert.alert).toHaveBeenCalledWith(
-      //   'Notifications Enabled! 🔔',
-      //   expect.stringContaining('gentle reminders')
-      // );
-    });
   });
 
-  it('displays WHO/AAP guidelines correctly for different ages', async () => {
-    const { rerender, root } = render(
-      <ScreenTimeProvider>
-        <ScreenTimeScreen onBack={mockOnBack} />
-      </ScreenTimeProvider>
+  it('does not enable reminders when permission is refused', async () => {
+    mockNotificationServiceInstance.requestPermissions.mockResolvedValue({
+      granted: false,
+      canAskAgain: false,
+      status: 'denied',
+    } as never);
+
+    const tree = renderScreen();
+
+    press(tree, 'screen-time-notifications-toggle');
+
+    await waitFor(() =>
+      expect(mockNotificationServiceInstance.requestPermissions).toHaveBeenCalled()
+    );
+    expect(mockSetNotificationsEnabled).not.toHaveBeenCalledWith(true);
+  });
+
+  it('shows the WHO/AAP band matching the selected age', async () => {
+    const tree = renderScreen();
+
+    await waitFor(() =>
+      expect(mockScreenTimeServiceInstance.getScreenTimeStats).toHaveBeenCalled()
     );
 
-    // Just check that the component renders without crashing
-    expect(root).toBeTruthy();
+    // default fixture age is 24 months -> the 2-6 band
+    expect(JSON.stringify(tree.toJSON())).toContain('screenTime.age2to6');
 
-    // Change to 18-24 months
-    mockUseAppStore.mockReturnValue({
-      childAgeInMonths: 20,
-      screenTimeEnabled: true,
-      notificationsEnabled: false,
-      hasRequestedNotificationPermission: false,
-      setChildAge: mockSetChildAge,
-      setScreenTimeEnabled: mockSetScreenTimeEnabled,
-      setNotificationsEnabled: mockSetNotificationsEnabled,
-      setNotificationPermissionRequested: mockSetNotificationPermissionRequested,
-    } as any);
+    press(tree, 'screen-time-age-18-24');
 
-    rerender(
-      <ScreenTimeProvider>
-        <ScreenTimeScreen onBack={mockOnBack} />
-      </ScreenTimeProvider>
+    await waitFor(() =>
+      expect(JSON.stringify(tree.toJSON())).toContain('screenTime.age18to24')
     );
-
-    // Just check that the component still renders after rerender
-    expect(root).toBeTruthy();
   });
 
   it('handles loading states correctly', () => {
@@ -325,11 +355,7 @@ describe.skip('ScreenTimeScreen', () => {
       new Promise(() => {}) // Never resolves, simulating loading
     );
 
-    const { queryByText } = render(
-      <ScreenTimeProvider>
-        <ScreenTimeScreen onBack={mockOnBack} />
-      </ScreenTimeProvider>
-    );
+    const { queryByText } = renderScreen();
 
     // Should not show weekly overview while loading
     expect(queryByText('Weekly Overview')).toBeFalsy();
