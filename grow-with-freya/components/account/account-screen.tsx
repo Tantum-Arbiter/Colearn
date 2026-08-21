@@ -472,6 +472,22 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
     }
   };
 
+  const handleClearAllScreenTimeHistory = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    try {
+      const screenTimeService = ScreenTimeService.getInstance();
+      await screenTimeService.resetAllUsage();
+
+      // Refresh the usage in the context to update the UI immediately
+      await refreshUsage();
+
+      log.info('Screen time history cleared');
+    } catch (error) {
+      log.error('Failed to clear screen time history:', error);
+    }
+  };
+
   // Android hardware back button support
   useEffect(() => {
     if (Platform.OS !== 'android' || !isActive) return;
@@ -814,6 +830,15 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
             >
               <Text style={[styles.buttonText, { fontSize: scaledFontSize(13) }]}>
                 Reset Today&apos;s Screen Time ({formatDurationCompact(todayUsage)})
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={[styles.button, styles.resetButton, { paddingVertical: scaledPadding(10), minHeight: scaledButtonSize(40) }]}
+              onPress={handleClearAllScreenTimeHistory}
+            >
+              <Text style={[styles.buttonText, styles.resetButtonText, { fontSize: scaledFontSize(13) }]}>
+                Clear All Screen Time History
               </Text>
             </Pressable>
 

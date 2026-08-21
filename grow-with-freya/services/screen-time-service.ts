@@ -116,15 +116,37 @@ class ScreenTimeService {
 
   getCurrentSessionDuration(): number {
     if (!this.currentSession) return 0;
-    return Math.floor((Date.now() - this.currentSession.startTime) / 1000);
+    // Never negative: the device clock can move backwards (NTP correction,
+    // manual change, DST), and a negative duration would silently cancel out
+    // real usage and suppress limit warnings.
+    return Math.max(0, Math.floor((Date.now() - this.currentSession.startTime) / 1000));
   }
 
   async getTodayUsage(): Promise<number> {
     const today = new Date().toISOString().split('T')[0];
-    const sessions = await this.getSessionsForDate(today);
-    const currentDuration = this.getCurrentSessionDuration();
+    const allSessions = await this.getAllSessions();
 
-    return sessions.reduce((total, session) => total + session.duration, 0) + currentDuration;
+    // Derived from real start/end timestamps rather than the stored date+
+    // duration pair, so a record mis-attributed to today (legacy, or one that
+    // ran across midnight) contributes only the part that truly falls today.
+    const persisted = allSessions.reduce((total, session) => {
+      const todaySegment = this.splitSessionByDay(session).find(seg => seg.date === today);
+      return total + (todaySegment?.seconds ?? 0);
+    }, 0);
+
+    const elapsedToday = this.secondsSinceUtcMidnight();
+
+    // Belt and braces: the live session is checkpointed every 30s, but that is
+    // not a guarantee. Nothing about today can exceed the time that has
+    // actually passed since midnight, so clamp the whole total, not just the
+    // live part.
+    return Math.min(persisted + this.getCurrentSessionDuration(), elapsedToday);
+  }
+
+  private secondsSinceUtcMidnight(referenceMs: number = Date.now()): number {
+    const now = new Date(referenceMs);
+    const utcMidnight = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+    return Math.floor((referenceMs - utcMidnight) / 1000);
   }
 
   /**
@@ -137,7 +159,9 @@ class ScreenTimeService {
     const byDate: Record<string, number> = {};
 
     allSessions.forEach(session => {
-      byDate[session.date] = (byDate[session.date] || 0) + session.duration;
+      this.splitSessionByDay(session).forEach(({ date, seconds }) => {
+        byDate[date] = (byDate[date] || 0) + seconds;
+      });
     });
 
     const totals: DailyTotal[] = [];
@@ -149,6 +173,37 @@ class ScreenTimeService {
     }
 
     return totals;
+  }
+
+  // Derives per-day seconds from a session's actual startTime/endTime rather
+  // than trusting its stored date+duration, so a record whose whole span got
+  // written under one day (e.g. a legacy record from before checkpointing,
+  // or a session that crossed midnight) is redistributed to the days it
+  // actually happened on.
+  private splitSessionByDay(session: ScreenTimeSession): { date: string; seconds: number }[] {
+    const start = session.startTime;
+    const end = session.endTime ?? start + session.duration * 1000;
+    if (!(end > start)) {
+      return [{ date: session.date, seconds: session.duration }];
+    }
+
+    const segments: { date: string; seconds: number }[] = [];
+    let cursor = start;
+    while (cursor < end) {
+      const cursorDate = new Date(cursor);
+      const nextMidnight = Date.UTC(
+        cursorDate.getUTCFullYear(),
+        cursorDate.getUTCMonth(),
+        cursorDate.getUTCDate() + 1
+      );
+      const segmentEnd = Math.min(end, nextMidnight);
+      segments.push({
+        date: cursorDate.toISOString().split('T')[0],
+        seconds: Math.floor((segmentEnd - cursor) / 1000),
+      });
+      cursor = segmentEnd;
+    }
+    return segments;
   }
 
   async getScreenTimeStats(childAgeInMonths: number = 24): Promise<ScreenTimeStats> {
@@ -254,6 +309,33 @@ class ScreenTimeService {
     }
   }
 
+  async resetAllUsage(): Promise<void> {
+    try {
+      await AsyncStorage.removeItem('screen_time_sessions');
+
+      // Reset current session if active (restart it from now)
+      if (this.currentSession) {
+        const activity = this.currentSession.activity;
+        this.currentSession = null;
+        this.stopWarningMonitor();
+
+        const now = Date.now();
+        this.currentSession = {
+          id: `session_${now}`,
+          startTime: now,
+          duration: 0,
+          activity,
+          date: new Date(now).toISOString().split('T')[0],
+        };
+      }
+
+      this.resetWarningDate();
+    } catch (error) {
+      log.error('Failed to reset all screen time usage:', error);
+      throw error;
+    }
+  }
+
   async checkAndResetDailyData(): Promise<void> {
     try {
       const today = new Date().toISOString().split('T')[0];
@@ -287,11 +369,6 @@ class ScreenTimeService {
       log.error('Failed to load screen time sessions:', error);
       return [];
     }
-  }
-
-  private async getSessionsForDate(date: string): Promise<ScreenTimeSession[]> {
-    const allSessions = await this.getAllSessions();
-    return allSessions.filter(session => session.date === date);
   }
 
   private async getWeeklyUsage(): Promise<ScreenTimeSession[]> {
@@ -400,6 +477,28 @@ class ScreenTimeService {
     return heatmapArray;
   }
 
+  // Flushes the elapsed time of the currently open session to storage and
+  // rolls its anchor forward to now, so a session left running for hours
+  // (background transition missed, or genuinely long foreground use) never
+  // dumps its whole duration onto the single calendar day it started on.
+  private async checkpointSession(): Promise<void> {
+    if (!this.currentSession) return;
+
+    const now = Date.now();
+    const elapsed = Math.floor((now - this.currentSession.startTime) / 1000);
+    if (elapsed <= 0) return;
+
+    await this.saveSession({
+      ...this.currentSession,
+      id: `${this.currentSession.id}_cp${now}`,
+      endTime: now,
+      duration: elapsed,
+    });
+
+    this.currentSession.startTime = now;
+    this.currentSession.date = new Date(now).toISOString().split('T')[0];
+  }
+
   private startWarningMonitor(childAgeInMonths: number = 24): void {
     if (this.checkInterval) {
       clearInterval(this.checkInterval);
@@ -407,6 +506,8 @@ class ScreenTimeService {
 
     // Check every 30 seconds
     this.checkInterval = setInterval(async () => {
+      await this.checkpointSession();
+
       const warning = await this.checkForWarnings(childAgeInMonths);
       if (warning) {
         this.warningCallbacks.forEach(callback => callback(warning));

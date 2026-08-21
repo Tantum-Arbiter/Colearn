@@ -99,6 +99,38 @@ describe('UsageOverview', () => {
     expect(body).not.toContain('screenTime.withinLimitTitle');
   });
 
+  // the suite otherwise asserts only translation keys and testIDs, so a ring
+  // rendering an impossible "51h 35m" would still pass everything else
+  it('renders the actual usage figures rather than just the labels', () => {
+    const tree = renderOverview({ todayUsageSeconds: 4680, dailyLimitSeconds: 7200 });
+    const body = toStr(tree);
+
+    expect(body).toContain('"1h 18m"'); // used
+    expect(body).toContain('"42m"'); // remaining
+    expect(body).toContain('"2h"'); // daily limit
+  });
+
+  // pinned by testID: asserting the string merely appears somewhere passes even
+  // when the ring is showing the limit instead of the usage
+  it('shows today\'s usage in the ring centre, not some other figure', () => {
+    const tree = renderOverview({ todayUsageSeconds: 4680, dailyLimitSeconds: 7200 });
+
+    const ringValue = findByTestId(tree, 'usage-ring-value')[0];
+
+    expect(ringValue.props.children).toBe('1h 18m');
+  });
+
+  it('shows the remaining time bottoming out at zero once the limit is passed', () => {
+    const body = toStr(renderOverview({ todayUsageSeconds: 9000, dailyLimitSeconds: 7200 }));
+
+    expect(body).toContain('"2h 30m"');
+    expect(body).toContain('"0m"');
+    // remaining clamps at zero rather than rendering a negative duration.
+    // Anchored on the opening quote so this matches rendered text nodes only,
+    // not the hyphenated class names that fill the serialised tree.
+    expect(body).not.toMatch(/"-\d/);
+  });
+
   it('labels all seven days at the default range', () => {
     const body = toStr(renderOverview());
 

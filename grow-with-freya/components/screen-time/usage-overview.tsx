@@ -266,7 +266,10 @@ export function UsageOverview({
               />
             </Svg>
             <View style={styles.ringCentre} pointerEvents="none">
-              <Text style={[styles.ringValue, { fontSize: scaledFontSize(15) }]}>
+              <Text
+                testID="usage-ring-value"
+                style={[styles.ringValue, { fontSize: scaledFontSize(15) }]}
+              >
                 {formatDurationCompact(todayUsageSeconds)}
               </Text>
               <Text style={[styles.ringCaption, { fontSize: scaledFontSize(8) }]}>
