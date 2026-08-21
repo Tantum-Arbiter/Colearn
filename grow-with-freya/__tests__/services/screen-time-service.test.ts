@@ -402,4 +402,227 @@ describe('ScreenTimeService', () => {
       expect(Array.isArray(stats.recommendedSchedule)).toBe(true);
     });
   });
+
+  describe('warning callbacks', () => {
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('notifies registered listeners from the monitor tick', async () => {
+      const underTest = screenTimeService;
+      const listener = jest.fn();
+      underTest.onWarning(listener);
+      jest.useFakeTimers({ now: new Date('2026-08-13T10:00:00.000Z') });
+
+      // 15m limit for a 20-month-old, and 14m already banked today
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(
+        JSON.stringify([
+          {
+            id: 'banked',
+            startTime: new Date('2026-08-13T09:46:00.000Z').getTime(),
+            endTime: new Date('2026-08-13T10:00:00.000Z').getTime(),
+            duration: 14 * 60,
+            activity: 'story' as const,
+            date: '2026-08-13',
+          },
+        ])
+      );
+
+      await underTest.startSession('story', 20);
+      await jest.advanceTimersByTimeAsync(30_000);
+
+      expect(listener).toHaveBeenCalledWith(
+        expect.objectContaining({ type: expect.any(String) })
+      );
+
+      underTest.removeWarningCallback(listener);
+      const callsAfterRemoval = listener.mock.calls.length;
+      underTest.resetWarningDate();
+      await jest.advanceTimersByTimeAsync(30_000);
+
+      expect(listener).toHaveBeenCalledTimes(callsAfterRemoval);
+    });
+
+    it('only warns once per day', async () => {
+      const underTest = screenTimeService;
+      jest.useFakeTimers({ now: new Date('2026-08-13T10:00:00.000Z') });
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(
+        JSON.stringify([
+          {
+            id: 'over',
+            startTime: new Date('2026-08-13T09:00:00.000Z').getTime(),
+            endTime: new Date('2026-08-13T10:00:00.000Z').getTime(),
+            duration: 60 * 60,
+            activity: 'story' as const,
+            date: '2026-08-13',
+          },
+        ])
+      );
+
+      await expect(underTest.checkForWarnings(20)).resolves.toBeTruthy();
+      await expect(underTest.checkForWarnings(20)).resolves.toBeNull();
+    });
+  });
+
+  describe('session replacement', () => {
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('closes the previous session when a new one starts', async () => {
+      const underTest = screenTimeService;
+      let store: string | null = null;
+      (AsyncStorage.getItem as jest.Mock).mockImplementation(async () => store);
+      (AsyncStorage.setItem as jest.Mock).mockImplementation(async (_k: string, v: string) => {
+        store = v;
+      });
+      jest.useFakeTimers({ now: new Date('2026-08-13T09:00:00.000Z') });
+
+      await underTest.startSession('story');
+      jest.setSystemTime(new Date('2026-08-13T09:05:00.000Z'));
+      await underTest.startSession('music');
+
+      const persisted = JSON.parse(store ?? '[]');
+      expect(persisted).toHaveLength(1);
+      expect(persisted[0]).toMatchObject({ activity: 'story', duration: 5 * 60 });
+    });
+  });
+
+  describe('resetTodayUsage', () => {
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('removes only today, leaving earlier days intact', async () => {
+      const underTest = screenTimeService;
+      jest.useFakeTimers({ now: new Date('2026-08-13T10:00:00.000Z') });
+      let store: string | null = JSON.stringify([
+        { id: 'old', startTime: 1, endTime: 2, duration: 300, activity: 'story' as const, date: '2026-08-12' },
+        { id: 'today', startTime: 1, endTime: 2, duration: 300, activity: 'story' as const, date: '2026-08-13' },
+      ]);
+      (AsyncStorage.getItem as jest.Mock).mockImplementation(async () => store);
+      (AsyncStorage.setItem as jest.Mock).mockImplementation(async (_k: string, v: string) => {
+        store = v;
+      });
+
+      await underTest.resetTodayUsage();
+
+      expect(JSON.parse(store ?? '[]')).toEqual([
+        expect.objectContaining({ id: 'old' }),
+      ]);
+    });
+
+    it('restarts an open session from now, so today reads zero again', async () => {
+      const underTest = screenTimeService;
+      jest.useFakeTimers({ now: new Date('2026-08-13T09:00:00.000Z') });
+      let store: string | null = null;
+      (AsyncStorage.getItem as jest.Mock).mockImplementation(async () => store);
+      (AsyncStorage.setItem as jest.Mock).mockImplementation(async (_k: string, v: string) => {
+        store = v;
+      });
+
+      await underTest.startSession('story');
+      jest.setSystemTime(new Date('2026-08-13T09:20:00.000Z'));
+
+      await underTest.resetTodayUsage();
+
+      expect(underTest.getCurrentSessionDuration()).toBe(0);
+      await expect(underTest.getTodayUsage()).resolves.toBe(0);
+    });
+  });
+
+  describe('checkAndResetDailyData', () => {
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('stamps the new day the first time it runs', async () => {
+      const underTest = screenTimeService;
+      jest.useFakeTimers({ now: new Date('2026-08-13T10:00:00.000Z') });
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValue('2026-08-12');
+
+      await underTest.checkAndResetDailyData();
+
+      expect(AsyncStorage.setItem).toHaveBeenCalledWith('last_daily_reset_date', '2026-08-13');
+    });
+
+    it('does nothing when it has already run today', async () => {
+      const underTest = screenTimeService;
+      jest.useFakeTimers({ now: new Date('2026-08-13T10:00:00.000Z') });
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValue('2026-08-13');
+
+      await underTest.checkAndResetDailyData();
+
+      expect(AsyncStorage.setItem).not.toHaveBeenCalledWith(
+        'last_daily_reset_date',
+        expect.anything()
+      );
+    });
+
+    it('swallows storage failures rather than breaking the caller', async () => {
+      const underTest = screenTimeService;
+      (AsyncStorage.getItem as jest.Mock).mockRejectedValue(new Error('disk gone'));
+
+      await expect(underTest.checkAndResetDailyData()).resolves.toBeUndefined();
+    });
+  });
+
+  describe('storage failures', () => {
+    it('treats unreadable session data as no sessions', async () => {
+      const underTest = screenTimeService;
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValue('{ not json');
+
+      const totals = await underTest.getDailyTotals(3);
+
+      expect(totals.every(t => t.seconds === 0)).toBe(true);
+    });
+
+    it('does not throw when a session cannot be written', async () => {
+      const underTest = screenTimeService;
+      (AsyncStorage.setItem as jest.Mock).mockRejectedValue(new Error('disk full'));
+
+      await underTest.startSession('story');
+
+      await expect(underTest.endSession()).resolves.toBeUndefined();
+    });
+
+    it('rethrows when clearing all usage fails', async () => {
+      const underTest = screenTimeService;
+      (AsyncStorage.removeItem as jest.Mock).mockRejectedValue(new Error('disk gone'));
+
+      await expect(underTest.resetAllUsage()).rejects.toThrow('disk gone');
+    });
+
+    it('rethrows when clearing today fails', async () => {
+      const underTest = screenTimeService;
+      (AsyncStorage.setItem as jest.Mock).mockRejectedValue(new Error('disk gone'));
+
+      await expect(underTest.resetTodayUsage()).rejects.toThrow('disk gone');
+    });
+
+    it('restarts an open session after clearing all usage', async () => {
+      const underTest = screenTimeService;
+      jest.useFakeTimers({ now: new Date('2026-08-13T09:00:00.000Z') });
+      let store: string | null = null;
+      (AsyncStorage.getItem as jest.Mock).mockImplementation(async () => store);
+      (AsyncStorage.setItem as jest.Mock).mockImplementation(async (_k: string, v: string) => {
+        store = v;
+      });
+      (AsyncStorage.removeItem as jest.Mock).mockImplementation(async () => {
+        store = null;
+      });
+
+      await underTest.startSession('music');
+      jest.setSystemTime(new Date('2026-08-13T09:30:00.000Z'));
+
+      await underTest.resetAllUsage();
+
+      // the session keeps running, but its clock restarts from the reset
+      expect(underTest.getCurrentSessionDuration()).toBe(0);
+      jest.setSystemTime(new Date('2026-08-13T09:35:00.000Z'));
+      expect(underTest.getCurrentSessionDuration()).toBe(5 * 60);
+
+      jest.useRealTimers();
+    });
+  });
 });
