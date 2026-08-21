@@ -75,10 +75,24 @@ const IosAlertStyle = {
   ALERT: 2,
 };
 
+// Trigger kinds used by reminder scheduling. Without these,
+// SchedulableTriggerInputTypes.TIME_INTERVAL throws inside the service's own
+// try/catch and every reminder silently fails to schedule.
+const SchedulableTriggerInputTypes = {
+  CALENDAR: 'calendar',
+  DAILY: 'daily',
+  DATE: 'date',
+  MONTHLY: 'monthly',
+  TIME_INTERVAL: 'timeInterval',
+  WEEKLY: 'weekly',
+  YEARLY: 'yearly',
+};
+
 module.exports = {
   getPermissionsAsync,
   requestPermissionsAsync,
   scheduleNotificationAsync,
+  SchedulableTriggerInputTypes,
   cancelScheduledNotificationAsync,
   cancelAllScheduledNotificationsAsync,
   getAllScheduledNotificationsAsync,
