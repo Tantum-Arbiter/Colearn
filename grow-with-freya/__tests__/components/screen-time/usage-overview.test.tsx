@@ -9,7 +9,7 @@
  */
 
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { render, fireEvent, act } from '@testing-library/react-native';
 
 import { UsageOverview } from '@/components/screen-time/usage-overview';
 
@@ -164,5 +164,55 @@ describe('UsageOverview', () => {
     expect(findByTestId(tree, 'usage-range-menu')).toHaveLength(0);
     // 30-day labels are dates, not weekday names
     expect(body).not.toContain('"Tue"');
+  });
+
+  // the trend chart only renders once onLayout reports a width, which never
+  // happens on its own in a test renderer
+  function layOutChart(tree: ReturnType<typeof render>, width = 280) {
+    const area = findByTestId(tree, 'usage-chart-area')[0];
+    // react-native-web does not deliver a synthetic layout event, so invoke the
+    // handler the component registered
+    act(() => {
+      (area.props.onLayout as (e: unknown) => void)({
+        nativeEvent: { layout: { width, height: 88 } },
+      });
+    });
+  }
+
+  it('plots the trend chart once the chart area has a width', () => {
+    const tree = renderOverview();
+
+    expect(findByTestId(tree, 'usage-trend-chart')).toHaveLength(0);
+
+    layOutChart(tree);
+
+    expect(findByTestId(tree, 'usage-trend-chart').length).toBeGreaterThan(0);
+  });
+
+  it('draws one dot per day at the seven day range', () => {
+    const tree = renderOverview();
+    layOutChart(tree);
+
+    const dots = tree.UNSAFE_root.findAll(
+      (n: { props: Record<string, unknown> }) => n.props.testID === 'svg-Circle'
+    );
+
+    // seven trend points plus the two ring circles
+    expect(dots.length).toBe(7 + 2);
+  });
+
+  it('thins the dots out at the thirty day range', () => {
+    const tree = renderOverview();
+    layOutChart(tree);
+
+    fireEvent.press(findByTestId(tree, 'usage-range-pill')[0]);
+    fireEvent.press(findByTestId(tree, 'usage-range-30')[0]);
+
+    const dots = tree.UNSAFE_root.findAll(
+      (n: { props: Record<string, unknown> }) => n.props.testID === 'svg-Circle'
+    );
+
+    // every fifth day over thirty days, plus the two ring circles
+    expect(dots.length).toBe(6 + 2);
   });
 });

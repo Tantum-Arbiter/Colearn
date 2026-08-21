@@ -8,6 +8,9 @@ import { ScreenTimeWarningModal } from '../../../components/screen-time/screen-t
 import { useAppStore } from '../../../store/app-store';
 import ScreenTimeService from '../../../services/screen-time-service';
 import NotificationService from '../../../services/notification-service';
+import { ApiClient } from '../../../services/api-client';
+import { backgroundSaveService } from '@/services/background-save-service';
+import { reminderService } from '../../../services/reminder-service';
 
 // Mock dependencies
 jest.mock('../../../store/app-store');
@@ -33,6 +36,20 @@ jest.mock('../../../components/screen-time/screen-time-provider', () => {
 // react-native maps to react-native-web here, so mocking
 // react-native/Libraries/Alert/Alert never applied -- Alert.alert stayed the
 // real function. It is spied per-test in beforeEach instead.
+jest.mock('../../../services/api-client', () => ({
+  ApiClient: { isAuthenticated: jest.fn().mockResolvedValue(false) },
+}));
+jest.mock('@/services/background-save-service', () => ({
+  backgroundSaveService: { queueProfileSave: jest.fn() },
+}));
+jest.mock('../../../services/reminder-service', () => ({
+  reminderService: {
+    hasUnsavedChanges: jest.fn(() => false),
+    syncToBackend: jest.fn().mockResolvedValue(undefined),
+    commitChanges: jest.fn().mockResolvedValue(undefined),
+    revertChanges: jest.fn().mockResolvedValue(undefined),
+  },
+}));
 jest.mock('expo-haptics', () => ({
   impactAsync: jest.fn(),
   ImpactFeedbackStyle: {
@@ -354,6 +371,88 @@ describe('ScreenTimeScreen', () => {
     await waitFor(() =>
       expect(JSON.stringify(tree.toJSON())).toContain('screenTime.current (age:screenTime.age18to24months)')
     );
+  });
+
+  describe('saving to the backend', () => {
+    beforeEach(() => {
+      (useAppStore as unknown as jest.Mock & { getState: jest.Mock }).getState = jest
+        .fn()
+        .mockReturnValue({
+          userNickname: 'Liam',
+          userAvatarType: 'boy',
+          userAvatarId: 'boy-1',
+        });
+    });
+
+    it('queues a profile save with the chosen age band when signed in', async () => {
+      (ApiClient.isAuthenticated as jest.Mock).mockResolvedValue(true);
+      const tree = renderScreen();
+
+      press(tree, 'screen-time-age-6plus');
+      await waitFor(() =>
+        expect(byTestId(tree, 'screen-time-save').length).toBeGreaterThan(0)
+      );
+      press(tree, 'screen-time-save');
+
+      await waitFor(() =>
+        expect(backgroundSaveService.queueProfileSave).toHaveBeenCalledWith(
+          expect.objectContaining({
+            nickname: 'Liam',
+            schedule: { childAgeRange: '6+' },
+          })
+        )
+      );
+    });
+
+    it.each([
+      ['screen-time-age-18-24', '18-24m'],
+      ['screen-time-age-2-6', '2-6y'],
+      ['screen-time-age-6plus', '6+'],
+    ])('maps %s to the %s range', async (button, expectedRange) => {
+      (ApiClient.isAuthenticated as jest.Mock).mockResolvedValue(true);
+      const tree = renderScreen();
+
+      press(tree, button);
+      await waitFor(() =>
+        expect(byTestId(tree, 'screen-time-save').length).toBeGreaterThan(0)
+      );
+      press(tree, 'screen-time-save');
+
+      await waitFor(() =>
+        expect(backgroundSaveService.queueProfileSave).toHaveBeenCalledWith(
+          expect.objectContaining({ schedule: { childAgeRange: expectedRange } })
+        )
+      );
+    });
+
+    it('does not queue a backend save when signed out', async () => {
+      (ApiClient.isAuthenticated as jest.Mock).mockResolvedValue(false);
+      const tree = renderScreen();
+
+      press(tree, 'screen-time-age-6plus');
+      await waitFor(() =>
+        expect(byTestId(tree, 'screen-time-save').length).toBeGreaterThan(0)
+      );
+      press(tree, 'screen-time-save');
+
+      await waitFor(() => expect(mockSetChildAge).toHaveBeenCalled());
+      expect(backgroundSaveService.queueProfileSave).not.toHaveBeenCalled();
+    });
+
+    it('commits pending reminders locally when signed out', async () => {
+      (ApiClient.isAuthenticated as jest.Mock).mockResolvedValue(false);
+      (reminderService.hasUnsavedChanges as jest.Mock).mockReturnValue(true);
+      const tree = renderScreen();
+
+      press(tree, 'screen-time-age-6plus');
+      await waitFor(() =>
+        expect(byTestId(tree, 'screen-time-save').length).toBeGreaterThan(0)
+      );
+      press(tree, 'screen-time-save');
+
+      await waitFor(() => expect(reminderService.commitChanges).toHaveBeenCalled());
+      expect(reminderService.syncToBackend).not.toHaveBeenCalled();
+    });
   });
 
   it('handles loading states correctly', () => {

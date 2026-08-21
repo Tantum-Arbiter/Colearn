@@ -375,6 +375,7 @@ export function UsageOverview({
               ))}
             </View>
             <View
+              testID="usage-chart-area"
               style={styles.chartArea}
               onLayout={(e) => setChartWidth(e.nativeEvent.layout.width)}
             >
