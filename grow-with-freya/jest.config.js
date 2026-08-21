@@ -10,13 +10,7 @@ module.exports = {
     '**/__tests__/**/*.(test|spec).(ts|tsx|js)',
     '**/*.(test|spec).(ts|tsx|js)',
   ],
-  testPathIgnorePatterns: [
-    '/node_modules/',
-    // Snapshots whole screens, which AGENTS.md rules out ("never for whole
-    // screens"). Enabling it would commit ~280KB of generated output that
-    // breaks on any UI change; convert to targeted assertions or drop it.
-    '/__tests__/visual/snapshot-regression.test.tsx',
-  ],
+  testPathIgnorePatterns: ['/node_modules/'],
   collectCoverageFrom: [
     'components/**/*.{ts,tsx}',
     'store/**/*.{ts,tsx}',

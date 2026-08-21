@@ -205,9 +205,19 @@ jest.mock('expo-audio', () => {
 
   return {
     createAudioPlayer: jest.fn(() => mockPlayer),
-    setAudioModeAsync: jest.fn(),
+    // callers chain .catch() on this, so it has to return a promise
+    setAudioModeAsync: jest.fn(() => Promise.resolve()),
     AudioPlayer: jest.fn(),
     useAudioRecorder: jest.fn(() => mockRecorder),
+    // polled by use-breath-detector; without it any screen that reaches the
+    // breath detector throws "useAudioRecorderState is not a function"
+    useAudioRecorderState: jest.fn(() => ({
+      isRecording: false,
+      metering: undefined,
+      durationMillis: 0,
+      mediaServicesDidReset: false,
+      url: null,
+    })),
     RecordingPresets: {
       HIGH_QUALITY: {
         extension: '.m4a',
