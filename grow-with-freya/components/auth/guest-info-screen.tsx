@@ -75,7 +75,7 @@ export function GuestInfoScreen({ onContinue, onBack }: GuestInfoScreenProps) {
         >
           <Image
             testID="guest-info-badge"
-            source={require('@/assets/images/login/cloud-badge.webp')}
+            source={require('@/assets/images/login/guest-avatar.webp')}
             style={styles.badge}
             resizeMode="contain"
           />
