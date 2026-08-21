@@ -179,10 +179,4 @@ export const simulateUserDelay = async (ms = 100) => {
 export { act, fireEvent, waitFor } from '@testing-library/react-native';
 export { jest } from '@jest/globals';
 
-// This file is a utility module, not a test file
-// Adding a dummy test to satisfy Jest's requirement
-describe('Test Wrapper Utilities', () => {
-  it('should export renderWithProviders function', () => {
-    expect(typeof renderWithProviders).toBe('function');
-  });
-});
+// Utility module, not a suite: testMatch only picks up *.test.* / *.spec.*

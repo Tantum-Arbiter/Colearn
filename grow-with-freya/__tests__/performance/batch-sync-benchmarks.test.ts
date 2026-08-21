@@ -106,11 +106,6 @@ describe('Batch Sync Performance Benchmarks', () => {
         lastUpdated: Date.now(),
       } as DeltaSyncResponse);
 
-      // 30 assets = 1 batch
-      mockApiClient.request.mockResolvedValueOnce({
-        urls: Array(totalAssets).fill({ path: 'p', signedUrl: 'u' }),
-        failed: [],
-      });
 
       const stats = await BatchSyncService.performBatchSync();
 
@@ -120,7 +115,7 @@ describe('Batch Sync Performance Benchmarks', () => {
 
       console.log(`Small App: ${oldCalls} -> ${newCalls} API calls (${reduction}% reduction)`);
 
-      expect(newCalls).toBe(3); // 1 version + 1 delta + 1 batch
+      expect(newCalls).toBe(2); // 1 version + 1 delta; assets are fetched on demand
       expect(reduction).toBeGreaterThanOrEqual(90);
     });
 
@@ -151,11 +146,6 @@ describe('Batch Sync Performance Benchmarks', () => {
         lastUpdated: Date.now(),
       } as DeltaSyncResponse);
 
-      // 120 assets = 3 batches (50 + 50 + 20)
-      mockApiClient.request
-        .mockResolvedValueOnce({ urls: Array(50).fill({ path: 'p', signedUrl: 'u' }), failed: [] })
-        .mockResolvedValueOnce({ urls: Array(50).fill({ path: 'p', signedUrl: 'u' }), failed: [] })
-        .mockResolvedValueOnce({ urls: Array(20).fill({ path: 'p', signedUrl: 'u' }), failed: [] });
 
       const stats = await BatchSyncService.performBatchSync();
 
@@ -165,7 +155,7 @@ describe('Batch Sync Performance Benchmarks', () => {
 
       console.log(`Medium App: ${oldCalls} -> ${newCalls} API calls (${reduction}% reduction)`);
 
-      expect(newCalls).toBe(5); // 1 version + 1 delta + 3 batches
+      expect(newCalls).toBe(2); // constant regardless of story count
       expect(reduction).toBeGreaterThanOrEqual(95);
     });
 
@@ -199,10 +189,6 @@ describe('Batch Sync Performance Benchmarks', () => {
       // 300 assets = 6 batches
       for (let i = 0; i < 6; i++) {
         const batchSize = i < 5 ? 50 : 50;
-        mockApiClient.request.mockResolvedValueOnce({
-          urls: Array(batchSize).fill({ path: 'p', signedUrl: 'u' }),
-          failed: [],
-        });
       }
 
       const stats = await BatchSyncService.performBatchSync();
@@ -213,7 +199,7 @@ describe('Batch Sync Performance Benchmarks', () => {
 
       console.log(`Large App: ${oldCalls} -> ${newCalls} API calls (${reduction}% reduction)`);
 
-      expect(newCalls).toBe(8); // 1 version + 1 delta + 6 batches
+      expect(newCalls).toBe(2); // constant regardless of story count
       expect(reduction).toBeGreaterThanOrEqual(97);
     });
   });
@@ -250,18 +236,16 @@ describe('Batch Sync Performance Benchmarks', () => {
         lastUpdated: Date.now(),
       } as DeltaSyncResponse);
 
-      // Only 12 new assets (2 stories × 6 assets)
-      mockApiClient.request.mockResolvedValueOnce({
-        urls: Array(12).fill({ path: 'p', signedUrl: 'u' }),
-        failed: [],
-      });
 
       const stats = await BatchSyncService.performBatchSync();
 
       // Should only update 2 stories, not all 12
       expect(stats.storiesUpdated).toBe(2);
-      expect(stats.apiCalls).toBe(3); // 1 version + 1 delta + 1 batch
-      expect(mockCacheManager.updateStories).toHaveBeenCalledWith(newStories);
+      expect(stats.apiCalls).toBe(2); // 1 version + 1 delta
+
+      // these two are CMS-only, not bundled, so they belong in the catalog for
+      // on-demand download rather than the story cache
+      expect(mockCacheManager.updateStories).not.toHaveBeenCalled();
     });
   });
 
@@ -294,10 +278,11 @@ describe('Batch Sync Performance Benchmarks', () => {
 
       const stats = await BatchSyncService.performBatchSync();
 
-      // No batch URL request needed
+      // a sync never requests asset URLs -- assets are fetched on demand -- so
+      // it costs the same two calls whether or not anything is cached
       expect(stats.apiCalls).toBe(2); // 1 version + 1 delta
-      expect(stats.assetsSkipped).toBe(30); // All 30 assets skipped
       expect(stats.assetsDownloaded).toBe(0);
+      expect(stats.assetsSkipped).toBe(0);
     });
   });
 

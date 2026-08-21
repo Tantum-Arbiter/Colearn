@@ -278,10 +278,4 @@ export const resetAnimationMocks = () => {
   jest.clearAllTimers();
 };
 
-// This file is a utility module, not a test file
-// Adding a dummy test to satisfy Jest's requirement
-describe('Animation Test Utilities', () => {
-  it('should export createMockSharedValue function', () => {
-    expect(typeof createMockSharedValue).toBe('function');
-  });
-});
+// Utility module, not a suite: testMatch only picks up *.test.* / *.spec.*

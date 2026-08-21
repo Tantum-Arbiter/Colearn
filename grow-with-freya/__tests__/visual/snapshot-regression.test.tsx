@@ -22,11 +22,39 @@ jest.mock('@/contexts/story-transition-context', () => ({
   })),
 }));
 
-jest.mock('@/store/app-store', () => ({
-  useAppStore: jest.fn(() => ({
+jest.mock('@/store/app-store', () => {
+  const state = {
     requestReturnToMainMenu: jest.fn(),
-  })),
-}));
+    setShowLoginAfterOnboarding: jest.fn(),
+    getEffectiveTier: () => 'free',
+    subscriptionTier: 'free',
+    _devSubscriptionOverride: null,
+    storyViewMode: 'grid',
+    setStoryViewMode: jest.fn(),
+    favoriteStoryIds: [],
+    toggleFavoriteStory: jest.fn(),
+    readStoryIds: [],
+    userAvatarType: 'boy',
+    useHomeScene: false,
+    storyProgress: {},
+    getContinueReadingStoryId: jest.fn(() => null),
+    backgroundAnimationState: {
+      cloudFloat1: -200,
+      cloudFloat2: -400,
+      rocketFloat1: 1000,
+      rocketFloat2: -200,
+    },
+    updateBackgroundAnimationState: jest.fn(),
+    currentScreen: 'main',
+    isAppReady: true,
+  };
+  return {
+    // read both bare and via selectors, so honour a selector like zustand does
+    useAppStore: jest.fn((selector?: (s: typeof state) => unknown) =>
+      typeof selector === 'function' ? selector(state) : state
+    ),
+  };
+});
 
 // Test story for snapshots
 const SNAPSHOT_TEST_STORY: Story = {

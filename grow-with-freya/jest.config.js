@@ -3,41 +3,19 @@ module.exports = {
   setupFiles: ['<rootDir>/jest.setup.js'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup-after-env.js'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
+  // Only real suites: helper modules living under __tests__ (test-wrapper,
+  // animation-test-utils) are not test files and used to need dummy tests to
+  // satisfy Jest.
   testMatch: [
-    '**/__tests__/**/*.(ts|tsx|js)',
+    '**/__tests__/**/*.(test|spec).(ts|tsx|js)',
     '**/*.(test|spec).(ts|tsx|js)',
   ],
-  // Temporarily skip problematic tests for CI/CD pipeline
   testPathIgnorePatterns: [
     '/node_modules/',
-    '/__tests__/components/music/music-screen.test.tsx',
-    '/__tests__/components/music/music-selection-screen.test.tsx',
-    '/__tests__/components/music/music-player-screen.test.tsx',
-    '/__tests__/components/music/sleep-selection-screen.test.tsx',
-    '/__tests__/components/music/tantrum-selection-screen.test.tsx',
-    '/__tests__/components/music/tantrum-info-screen.test.tsx',
-    '/__tests__/components/music/music-main-menu.test.tsx',
-    // '/__tests__/services/music-player.test.ts', // Re-enabled after migrating to expo-audio
-    '/__tests__/hooks/use-music-player.test.tsx',
-    '/__tests__/components/emotions/emotions-unified-screen.test.tsx',
-    '/__tests__/components/star-background-consistency.test.tsx',
-    // Temporarily skip ALL timing-sensitive and problematic tests in CI
-    ...(process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true' || process.env.NODE_ENV === 'test' ? [
-      '/__tests__/utils/animation-test-utils.ts',
-      '/__tests__/performance/',
-      '/__tests__/services/sleep-sequence-player.test.ts',
-      '/__tests__/components/emotions/emotions-game-screen.test.tsx',
-      '/__tests__/visual/snapshot-regression.test.tsx',
-      '/__tests__/services/background-music.test.ts',
-      '/__tests__/hooks/use-background-music.test.tsx',
-      '/__tests__/components/main-menu.test.tsx',
-      '/__tests__/components/stories/book-card.test.tsx',
-      '/__tests__/components/emotions/',
-      '/__tests__/components/auth/loading-overlay.test.tsx', // Skip due to lottie-react-native module issues
-      '/__tests__/components/story-selection-stars.test.tsx', // Skip due to Reanimated Easing mock issues
-    ] : []),
-    '/__tests__/components/toddler-friendly-features.test.tsx',
-    '/__tests__/components/gradient-consistency.test.tsx',
+    // Snapshots whole screens, which AGENTS.md rules out ("never for whole
+    // screens"). Enabling it would commit ~280KB of generated output that
+    // breaks on any UI change; convert to targeted assertions or drop it.
+    '/__tests__/visual/snapshot-regression.test.tsx',
   ],
   collectCoverageFrom: [
     'components/**/*.{ts,tsx}',
