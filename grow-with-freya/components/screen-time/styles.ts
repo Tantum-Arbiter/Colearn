@@ -102,60 +102,6 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
   },
   
-  // Age Selector Styles
-  ageSelector: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 16,
-    padding: 24, // Increased padding
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    marginBottom: 20, // Increased margin
-  },
-  currentAge: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 20, // Increased spacing
-    textAlign: 'center',
-  },
-  ageButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  ageButton: {
-    flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    marginHorizontal: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  ageButtonActive: {
-    backgroundColor: 'rgba(76, 205, 196, 0.3)',
-    borderColor: '#4ECDC4',
-  },
-  ageButtonText: {
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  ageButtonTextActive: {
-    color: '#FFFFFF',
-  },
-  guidelines: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 14,
-    lineHeight: 20,
-    fontStyle: 'italic',
-  },
   
 
   dayBarFill: {

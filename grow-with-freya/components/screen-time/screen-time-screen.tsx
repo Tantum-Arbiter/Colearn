@@ -61,7 +61,6 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
     screenTimeEnabled,
     notificationsEnabled,
     hasRequestedNotificationPermission,
-    setChildAge,
     setScreenTimeEnabled,
     setNotificationsEnabled,
     setNotificationPermissionRequested,
@@ -75,8 +74,8 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState<'main' | 'custom-reminders' | 'create-reminder'>('main');
 
-  // Track local changes (not yet saved to backend)
-  const [localChildAge, setLocalChildAge] = useState(childAgeInMonths);
+  // Track local changes (not yet saved to backend). The child's age is not one
+  // of them -- it is set on the profile screen and only read here.
   const [localScreenTimeEnabled, setLocalScreenTimeEnabled] = useState(screenTimeEnabled);
   const [localNotificationsEnabled, setLocalNotificationsEnabled] = useState(notificationsEnabled);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -86,14 +85,13 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
   // Track changes to detect unsaved state (including reminders)
   useEffect(() => {
     const settingsChanged =
-      localChildAge !== childAgeInMonths ||
       localScreenTimeEnabled !== screenTimeEnabled ||
       localNotificationsEnabled !== notificationsEnabled;
 
     const remindersChanged = reminderService.hasUnsavedChanges();
 
     setHasUnsavedChanges(settingsChanged || remindersChanged);
-  }, [localChildAge, localScreenTimeEnabled, localNotificationsEnabled, childAgeInMonths, screenTimeEnabled, notificationsEnabled, currentPage, reminderChangeCounter]); // Re-check when reminders change
+  }, [localScreenTimeEnabled, localNotificationsEnabled, screenTimeEnabled, notificationsEnabled, currentPage, reminderChangeCounter]); // Re-check when reminders change
 
   // Star animation
   const starOpacity = useSharedValue(0.4);
@@ -156,7 +154,6 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
               await reminderService.revertChanges();
 
               // Reset local state to match app store
-              setLocalChildAge(childAgeInMonths);
               setLocalScreenTimeEnabled(screenTimeEnabled);
               setLocalNotificationsEnabled(notificationsEnabled);
               setHasUnsavedChanges(false);
@@ -208,18 +205,12 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
     }
   };
 
-  const handleAgeChange = (newAge: number) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setLocalChildAge(newAge);
-  };
-
   const handleSaveSettings = async () => {
     try {
       setIsSaving(true);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
       // Update local app store
-      setChildAge(localChildAge);
       setScreenTimeEnabled(localScreenTimeEnabled);
       setNotificationsEnabled(localNotificationsEnabled);
 
@@ -239,8 +230,8 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
       const isAuthenticated = await ApiClient.isAuthenticated();
       if (isAuthenticated) {
         // Convert age to age range string
-        const ageRange = localChildAge < 24 ? '18-24m' :
-                        localChildAge < 72 ? '2-6y' :
+        const ageRange = childAgeInMonths < 24 ? '18-24m' :
+                        childAgeInMonths < 72 ? '2-6y' :
                         '6+';
 
         // Get current profile info from app store for the background save
@@ -305,27 +296,11 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
     t('screenTime.sat'),
   ];
 
-  const getAgeRangeText = (ageInMonths: number) => {
-    if (ageInMonths < 24) return t('screenTime.age18to24months');
-    if (ageInMonths < 72) return t('screenTime.age2to6years');
-    return t('screenTime.age6plus');
-  };
-
-  const getGuidelinesText = (ageInMonths: number) => {
-    if (ageInMonths < 24) {
-      return t('screenTime.guidelines18to24');
-    }
-    if (ageInMonths < 72) {
-      return t('screenTime.guidelines2to6');
-    }
-    return t('screenTime.guidelines6plus');
-  };
-
   // Use local state for display (not yet saved)
   const dailyLimit = useMemo(() => {
     const screenTimeService = ScreenTimeService.getInstance();
-    return screenTimeService.getDailyLimit(localChildAge);
-  }, [localChildAge]);
+    return screenTimeService.getDailyLimit(childAgeInMonths);
+  }, [childAgeInMonths]);
 
   const todayUsage = contextTodayUsage; // Use real-time usage from context
 
@@ -400,56 +375,9 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
             todayUsageSeconds={todayUsage}
             dailyLimitSeconds={dailyLimit}
             dailyTotals={dailyTotals}
-            childAgeMonths={localChildAge}
+            childAgeMonths={childAgeInMonths}
             dayNames={dayNames}
           />
-
-          {/* Age Settings */}
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>{t('screenTime.childsAge')}</Text>
-
-            <View style={styles.ageSelector}>
-              <Text style={[styles.currentAge, { fontSize: scaledFontSize(16) }]}>
-                {t('screenTime.current', { age: getAgeRangeText(localChildAge) })}
-              </Text>
-
-              <View style={styles.ageButtons}>
-                <Pressable
-                  testID="screen-time-age-18-24"
-                  style={[styles.ageButton, { minHeight: scaledButtonSize(44), paddingVertical: scaledPadding(10), paddingHorizontal: scaledPadding(12) }, localChildAge < 24 && styles.ageButtonActive]}
-                  onPress={() => handleAgeChange(20)}
-                >
-                  <Text style={[styles.ageButtonText, { fontSize: scaledFontSize(14) }, localChildAge < 24 && styles.ageButtonTextActive]} numberOfLines={1} adjustsFontSizeToFit>
-                    {t('screenTime.age18to24m')}
-                  </Text>
-                </Pressable>
-
-                <Pressable
-                  testID="screen-time-age-2-6"
-                  style={[styles.ageButton, { minHeight: scaledButtonSize(44), paddingVertical: scaledPadding(10), paddingHorizontal: scaledPadding(12) }, localChildAge >= 24 && localChildAge < 72 && styles.ageButtonActive]}
-                  onPress={() => handleAgeChange(36)}
-                >
-                  <Text style={[styles.ageButtonText, { fontSize: scaledFontSize(14) }, localChildAge >= 24 && localChildAge < 72 && styles.ageButtonTextActive]} numberOfLines={1} adjustsFontSizeToFit>
-                    {t('screenTime.age2to6yrs')}
-                  </Text>
-                </Pressable>
-
-                <Pressable
-                  testID="screen-time-age-6plus"
-                  style={[styles.ageButton, { minHeight: scaledButtonSize(44), paddingVertical: scaledPadding(10), paddingHorizontal: scaledPadding(12) }, localChildAge >= 72 && styles.ageButtonActive]}
-                  onPress={() => handleAgeChange(84)}
-                >
-                  <Text style={[styles.ageButtonText, { fontSize: scaledFontSize(14) }, localChildAge >= 72 && styles.ageButtonTextActive]} numberOfLines={1} adjustsFontSizeToFit>
-                    {t('screenTime.age6plusYrs')}
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-
-            <Text style={[styles.guidelines, { fontSize: scaledFontSize(14) }]}>
-              {getGuidelinesText(localChildAge)}
-            </Text>
-          </View>
 
           {/* Create My Schedule */}
           <View style={styles.section}>
@@ -581,7 +509,6 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
 
   const [stats, setStats] = useState<ScreenTimeStats | null>(null);
   const [dailyTotals, setDailyTotals] = useState<DailyTotal[]>([]);
-  const [localChildAge, setLocalChildAge] = useState(childAgeInMonths);
   const [localScreenTimeEnabled, setLocalScreenTimeEnabled] = useState(screenTimeEnabled);
   const [localNotificationsEnabled, setLocalNotificationsEnabled] = useState(notificationsEnabled);
 
@@ -631,11 +558,6 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
     }
   };
 
-  const handleAgeChange = (newAge: number) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setLocalChildAge(newAge);
-  };
-
   // Note: handleSaveSettings removed - auto-save happens on account screen exit
 
   const dayNames = [
@@ -648,26 +570,10 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
     t('screenTime.sat'),
   ];
 
-  const getAgeRangeText = (ageInMonths: number) => {
-    if (ageInMonths < 24) return t('screenTime.age18to24months');
-    if (ageInMonths < 72) return t('screenTime.age2to6years');
-    return t('screenTime.age6plus');
-  };
-
-  const getGuidelinesText = (ageInMonths: number) => {
-    if (ageInMonths < 24) {
-      return t('screenTime.guidelines18to24');
-    }
-    if (ageInMonths < 72) {
-      return t('screenTime.guidelines2to6');
-    }
-    return t('screenTime.guidelines6plus');
-  };
-
   const dailyLimit = useMemo(() => {
     const screenTimeService = ScreenTimeService.getInstance();
-    return screenTimeService.getDailyLimit(localChildAge);
-  }, [localChildAge]);
+    return screenTimeService.getDailyLimit(childAgeInMonths);
+  }, [childAgeInMonths]);
 
   const todayUsage = contextTodayUsage;
 
@@ -685,56 +591,9 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
           todayUsageSeconds={todayUsage}
           dailyLimitSeconds={dailyLimit}
           dailyTotals={dailyTotals}
-          childAgeMonths={localChildAge}
+          childAgeMonths={childAgeInMonths}
           dayNames={dayNames}
         />
-
-        {/* Age Settings */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>{t('screenTime.childsAge')}</Text>
-
-          <View style={styles.ageSelector}>
-            <Text style={[styles.currentAge, { fontSize: scaledFontSize(16) }]}>
-              {t('screenTime.current', { age: getAgeRangeText(localChildAge) })}
-            </Text>
-
-            <View style={styles.ageButtons}>
-              <Pressable
-                testID="content-age-18-24"
-                style={[styles.ageButton, { minHeight: scaledButtonSize(44), paddingVertical: scaledPadding(10), paddingHorizontal: scaledPadding(12) }, localChildAge < 24 && styles.ageButtonActive]}
-                onPress={() => handleAgeChange(20)}
-              >
-                <Text style={[styles.ageButtonText, { fontSize: scaledFontSize(14) }, localChildAge < 24 && styles.ageButtonTextActive]} numberOfLines={1} adjustsFontSizeToFit>
-                  {t('screenTime.age18to24m')}
-                </Text>
-              </Pressable>
-
-              <Pressable
-                testID="content-age-2-6"
-                style={[styles.ageButton, { minHeight: scaledButtonSize(44), paddingVertical: scaledPadding(10), paddingHorizontal: scaledPadding(12) }, localChildAge >= 24 && localChildAge < 72 && styles.ageButtonActive]}
-                onPress={() => handleAgeChange(36)}
-              >
-                <Text style={[styles.ageButtonText, { fontSize: scaledFontSize(14) }, localChildAge >= 24 && localChildAge < 72 && styles.ageButtonTextActive]} numberOfLines={1} adjustsFontSizeToFit>
-                  {t('screenTime.age2to6yrs')}
-                </Text>
-              </Pressable>
-
-              <Pressable
-                testID="content-age-6plus"
-                style={[styles.ageButton, { minHeight: scaledButtonSize(44), paddingVertical: scaledPadding(10), paddingHorizontal: scaledPadding(12) }, localChildAge >= 72 && styles.ageButtonActive]}
-                onPress={() => handleAgeChange(84)}
-              >
-                <Text style={[styles.ageButtonText, { fontSize: scaledFontSize(14) }, localChildAge >= 72 && styles.ageButtonTextActive]} numberOfLines={1} adjustsFontSizeToFit>
-                  {t('screenTime.age6plusYrs')}
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-
-          <Text style={[styles.guidelines, { fontSize: scaledFontSize(14) }]}>
-            {getGuidelinesText(localChildAge)}
-          </Text>
-        </View>
 
         {/* Create My Schedule */}
         <View style={styles.section}>

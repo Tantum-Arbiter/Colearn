@@ -232,13 +232,23 @@ describe('ScreenTimeScreen', () => {
 
     for (const id of [
       'screen-time-back',
-      'screen-time-age-18-24',
-      'screen-time-age-2-6',
-      'screen-time-age-6plus',
       'screen-time-toggle',
       'screen-time-notifications-toggle',
     ]) {
       expect(byTestId(tree, id).length).toBeGreaterThan(0);
+    }
+  });
+
+  // the age band is set on the profile screen now, not here
+  it('offers no age controls', async () => {
+    const tree = renderScreen();
+
+    await waitFor(() =>
+      expect(mockScreenTimeServiceInstance.getScreenTimeStats).toHaveBeenCalled()
+    );
+
+    for (const id of ['screen-time-age-18-24', 'screen-time-age-2-6', 'screen-time-age-6plus']) {
+      expect(byTestId(tree, id)).toHaveLength(0);
     }
   });
 
@@ -263,7 +273,7 @@ describe('ScreenTimeScreen', () => {
   it('warns instead of leaving when there are unsaved changes', async () => {
     const tree = renderScreen();
 
-    press(tree, 'screen-time-age-6plus');
+    press(tree, 'screen-time-toggle');
     press(tree, 'screen-time-back');
 
     await waitFor(() =>
@@ -276,29 +286,17 @@ describe('ScreenTimeScreen', () => {
     expect(mockOnBack).not.toHaveBeenCalled();
   });
 
-  it('keeps an age choice local until it is saved', async () => {
+  it('never writes the age when saving', async () => {
     const tree = renderScreen();
 
-    press(tree, 'screen-time-age-6plus');
-
-    // the screen edits a local copy; nothing reaches the store yet
-    expect(mockSetChildAge).not.toHaveBeenCalled();
-    // and the save button only exists once something is unsaved
-    await waitFor(() =>
-      expect(byTestId(tree, 'screen-time-save').length).toBeGreaterThan(0)
-    );
-  });
-
-  it('writes the chosen age to the store when saved', async () => {
-    const tree = renderScreen();
-
-    press(tree, 'screen-time-age-6plus');
+    press(tree, 'screen-time-toggle');
     await waitFor(() =>
       expect(byTestId(tree, 'screen-time-save').length).toBeGreaterThan(0)
     );
     press(tree, 'screen-time-save');
 
-    await waitFor(() => expect(mockSetChildAge).toHaveBeenCalledWith(84));
+    await waitFor(() => expect(mockSetScreenTimeEnabled).toHaveBeenCalled());
+    expect(mockSetChildAge).not.toHaveBeenCalled();
   });
 
   it('keeps the screen time toggle local until it is saved', async () => {
@@ -370,22 +368,16 @@ describe('ScreenTimeScreen', () => {
     expect(mockSetNotificationsEnabled).not.toHaveBeenCalledWith(true);
   });
 
-  it('shows the WHO/AAP band matching the selected age', async () => {
+  it('drops the WHO/AAP guidance that hung off the age selector', async () => {
     const tree = renderScreen();
 
     await waitFor(() =>
       expect(mockScreenTimeServiceInstance.getScreenTimeStats).toHaveBeenCalled()
     );
 
-    // the "current age" line, not the button labels -- the labels contain these
-    // keys as prefixes, so a bare substring check cannot fail
-    expect(JSON.stringify(tree.toJSON())).toContain('screenTime.current (age:screenTime.age2to6years)');
-
-    press(tree, 'screen-time-age-18-24');
-
-    await waitFor(() =>
-      expect(JSON.stringify(tree.toJSON())).toContain('screenTime.current (age:screenTime.age18to24months)')
-    );
+    const body = JSON.stringify(tree.toJSON());
+    expect(body).not.toContain('screenTime.childsAge');
+    expect(body).not.toContain('screenTime.guidelines');
   });
 
   describe('notification scheduling on save', () => {
@@ -454,18 +446,18 @@ describe('ScreenTimeScreen', () => {
         .mockReturnValue({ userNickname: 'Liam', userAvatarType: 'boy', userAvatarId: 'boy-1' });
 
       const tree = renderScreen();
-      await saveAfter(tree, 'screen-time-age-6plus');
+      await saveAfter(tree, 'screen-time-toggle');
 
       await waitFor(() => expect(reminderService.syncToBackend).toHaveBeenCalled());
     });
 
     it('tells the parent when saving fails', async () => {
-      mockSetChildAge.mockImplementationOnce(() => {
+      mockSetScreenTimeEnabled.mockImplementationOnce(() => {
         throw new Error('store unavailable');
       });
 
       const tree = renderScreen();
-      await saveAfter(tree, 'screen-time-age-6plus');
+      await saveAfter(tree, 'screen-time-toggle');
 
       await waitFor(() =>
         expect(Alert.alert).toHaveBeenCalledWith(
@@ -521,7 +513,7 @@ describe('ScreenTimeScreen', () => {
     it('leaves and reverts pending reminders when Leave is chosen', async () => {
       const tree = renderScreen();
 
-      press(tree, 'screen-time-age-6plus');
+      press(tree, 'screen-time-toggle');
       press(tree, 'screen-time-back');
       await waitFor(() => expect(Alert.alert).toHaveBeenCalled());
 
@@ -530,13 +522,13 @@ describe('ScreenTimeScreen', () => {
       expect(reminderService.revertChanges).toHaveBeenCalled();
       expect(mockOnBack).toHaveBeenCalled();
       // the edit is discarded rather than written to the store
-      expect(mockSetChildAge).not.toHaveBeenCalled();
+      expect(mockSetScreenTimeEnabled).not.toHaveBeenCalled();
     });
 
     it('stays put when Cancel is chosen', async () => {
       const tree = renderScreen();
 
-      press(tree, 'screen-time-age-6plus');
+      press(tree, 'screen-time-toggle');
       press(tree, 'screen-time-back');
       await waitFor(() => expect(Alert.alert).toHaveBeenCalled());
 
@@ -569,7 +561,7 @@ describe('ScreenTimeScreen', () => {
     it('drops the save button once the changes are discarded', async () => {
       const tree = renderScreen();
 
-      press(tree, 'screen-time-age-6plus');
+      press(tree, 'screen-time-toggle');
       await waitFor(() =>
         expect(byTestId(tree, 'screen-time-save').length).toBeGreaterThan(0)
       );
@@ -593,15 +585,33 @@ describe('ScreenTimeScreen', () => {
         });
     });
 
-    it('queues a profile save with the chosen age band when signed in', async () => {
-      (ApiClient.isAuthenticated as jest.Mock).mockResolvedValue(true);
-      const tree = renderScreen();
+    // the band still reaches the backend -- it is read from the stored profile
+    // now rather than chosen on this screen
+    const saveWithStoredAge = async (ageInMonths: number) => {
+      mockUseAppStore.mockReturnValue({
+        childAgeInMonths: ageInMonths,
+        screenTimeEnabled: true,
+        notificationsEnabled: false,
+        hasRequestedNotificationPermission: false,
+        setChildAge: mockSetChildAge,
+        setScreenTimeEnabled: mockSetScreenTimeEnabled,
+        setNotificationsEnabled: mockSetNotificationsEnabled,
+        setNotificationPermissionRequested: mockSetNotificationPermissionRequested,
+      } as any);
 
-      press(tree, 'screen-time-age-6plus');
+      const tree = renderScreen();
+      press(tree, 'screen-time-toggle');
       await waitFor(() =>
         expect(byTestId(tree, 'screen-time-save').length).toBeGreaterThan(0)
       );
       press(tree, 'screen-time-save');
+      return tree;
+    };
+
+    it('queues a profile save with the stored age band when signed in', async () => {
+      (ApiClient.isAuthenticated as jest.Mock).mockResolvedValue(true);
+
+      await saveWithStoredAge(84);
 
       await waitFor(() =>
         expect(backgroundSaveService.queueProfileSave).toHaveBeenCalledWith(
@@ -614,18 +624,13 @@ describe('ScreenTimeScreen', () => {
     });
 
     it.each([
-      ['screen-time-age-18-24', '18-24m'],
-      ['screen-time-age-2-6', '2-6y'],
-      ['screen-time-age-6plus', '6+'],
-    ])('maps %s to the %s range', async (button, expectedRange) => {
+      [20, '18-24m'],
+      [36, '2-6y'],
+      [84, '6+'],
+    ])('maps a stored age of %i months to the %s range', async (ageInMonths, expectedRange) => {
       (ApiClient.isAuthenticated as jest.Mock).mockResolvedValue(true);
-      const tree = renderScreen();
 
-      press(tree, button);
-      await waitFor(() =>
-        expect(byTestId(tree, 'screen-time-save').length).toBeGreaterThan(0)
-      );
-      press(tree, 'screen-time-save');
+      await saveWithStoredAge(ageInMonths);
 
       await waitFor(() =>
         expect(backgroundSaveService.queueProfileSave).toHaveBeenCalledWith(
@@ -638,13 +643,13 @@ describe('ScreenTimeScreen', () => {
       (ApiClient.isAuthenticated as jest.Mock).mockResolvedValue(false);
       const tree = renderScreen();
 
-      press(tree, 'screen-time-age-6plus');
+      press(tree, 'screen-time-toggle');
       await waitFor(() =>
         expect(byTestId(tree, 'screen-time-save').length).toBeGreaterThan(0)
       );
       press(tree, 'screen-time-save');
 
-      await waitFor(() => expect(mockSetChildAge).toHaveBeenCalled());
+      await waitFor(() => expect(mockSetScreenTimeEnabled).toHaveBeenCalled());
       expect(backgroundSaveService.queueProfileSave).not.toHaveBeenCalled();
     });
 
@@ -653,7 +658,7 @@ describe('ScreenTimeScreen', () => {
       (reminderService.hasUnsavedChanges as jest.Mock).mockReturnValue(true);
       const tree = renderScreen();
 
-      press(tree, 'screen-time-age-6plus');
+      press(tree, 'screen-time-toggle');
       await waitFor(() =>
         expect(byTestId(tree, 'screen-time-save').length).toBeGreaterThan(0)
       );
@@ -737,19 +742,23 @@ describe('ScreenTimeContent', () => {
     expect(contentService.getDailyTotals).toHaveBeenCalledWith(30);
   });
 
-  it('renders its age and toggle controls', async () => {
+  it('renders its toggle controls', async () => {
     const tree = render(<ScreenTimeContent />);
 
     await waitFor(() => expect(contentService.getScreenTimeStats).toHaveBeenCalled());
 
-    for (const id of [
-      'content-age-18-24',
-      'content-age-2-6',
-      'content-age-6plus',
-      'content-toggle',
-      'content-notifications-toggle',
-    ]) {
+    for (const id of ['content-toggle', 'content-notifications-toggle']) {
       expect(byTestId(tree, id).length).toBeGreaterThan(0);
+    }
+  });
+
+  it('offers no age controls', async () => {
+    const tree = render(<ScreenTimeContent />);
+
+    await waitFor(() => expect(contentService.getScreenTimeStats).toHaveBeenCalled());
+
+    for (const id of ['content-age-18-24', 'content-age-2-6', 'content-age-6plus']) {
+      expect(byTestId(tree, id)).toHaveLength(0);
     }
   });
 
@@ -765,19 +774,13 @@ describe('ScreenTimeContent', () => {
     expect(onNavigateToReminders).toHaveBeenCalled();
   });
 
-  it('reflects the age band chosen in the glance', async () => {
+  it('shows the stored age band in the glance', async () => {
     const tree = render(<ScreenTimeContent />);
 
     await waitFor(() => expect(contentService.getScreenTimeStats).toHaveBeenCalled());
-    // the "current age" line, not the button labels -- age6plus is a prefix of
-    // the age6plusYrs button label, so a bare substring check cannot fail
-    expect(JSON.stringify(tree.toJSON())).toContain('screenTime.current (age:screenTime.age2to6years)');
 
-    fireEvent.press(byTestId(tree, 'content-age-6plus')[0]);
-
-    await waitFor(() =>
-      expect(JSON.stringify(tree.toJSON())).toContain('screenTime.current (age:screenTime.age6plus)')
-    );
+    // 24 months falls in the 2-6 band; the overview reads it from the profile
+    expect(JSON.stringify(tree.toJSON())).toContain('screenTime.age2to6years');
   });
 
   it('toggles screen time locally in the glance', async () => {
@@ -824,21 +827,7 @@ describe('ScreenTimeContent', () => {
     const tree = render(<ScreenTimeContent />);
 
     await waitFor(() =>
-      expect(byTestId(tree, 'content-age-2-6').length).toBeGreaterThan(0)
-    );
-  });
-
-  it.each([
-    ['content-age-18-24', 'screenTime.guidelines18to24'],
-    ['content-age-6plus', 'screenTime.guidelines6plus'],
-  ])('shows the guidelines for %s', async (button, guidelineKey) => {
-    const tree = render(<ScreenTimeContent />);
-    await waitFor(() => expect(contentService.getScreenTimeStats).toHaveBeenCalled());
-
-    fireEvent.press(byTestId(tree, button)[0]);
-
-    await waitFor(() =>
-      expect(JSON.stringify(tree.toJSON())).toContain(guidelineKey)
+      expect(byTestId(tree, 'content-toggle').length).toBeGreaterThan(0)
     );
   });
 

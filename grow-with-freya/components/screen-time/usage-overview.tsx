@@ -86,7 +86,7 @@ export function UsageOverview({
 
   const avatar =
     AVATAR_OPTIONS.find((a) => a.key === userAvatarId) ?? AVATAR_OPTIONS[0];
-  // mirror the Child's Age setting below rather than inventing an exact age
+  // the age band the profile records, rather than inventing an exact age
   const ageMonths = childAgeMonths ?? childAgeInMonths;
   const ageBucketKey =
     ageMonths < 24
