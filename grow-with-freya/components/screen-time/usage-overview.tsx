@@ -51,8 +51,6 @@ export interface UsageOverviewProps {
   dailyTotals: DailyTotalPoint[];
   /** Short day names indexed Sunday-first, already translated. */
   dayNames: string[];
-  /** Unsaved age selection from the settings below, so the chip never lags it. */
-  childAgeMonths?: number;
 }
 
 const RANGES = [
@@ -78,22 +76,13 @@ export function UsageOverview({
   dailyLimitSeconds,
   dailyTotals,
   dayNames,
-  childAgeMonths,
 }: UsageOverviewProps) {
   const { t, i18n } = useTranslation();
   const { scaledFontSize } = useAccessibility();
-  const { userNickname, userAvatarId, childAgeInMonths } = useAppStore();
+  const { userNickname, userAvatarId } = useAppStore();
 
   const avatar =
     AVATAR_OPTIONS.find((a) => a.key === userAvatarId) ?? AVATAR_OPTIONS[0];
-  // the age band the profile records, rather than inventing an exact age
-  const ageMonths = childAgeMonths ?? childAgeInMonths;
-  const ageBucketKey =
-    ageMonths < 24
-      ? 'screenTime.age18to24months'
-      : ageMonths < 72
-        ? 'screenTime.age2to6years'
-        : 'screenTime.age6plus';
   const childName = userNickname?.trim() || '';
 
   const remaining = Math.max(dailyLimitSeconds - todayUsageSeconds, 0);
@@ -203,9 +192,6 @@ export function UsageOverview({
         <View style={styles.childMeta}>
           <Text style={[styles.childName, { fontSize: scaledFontSize(16) }]} numberOfLines={1}>
             {childName || t('screenTime.yourChild')}
-          </Text>
-          <Text style={[styles.childAge, { fontSize: scaledFontSize(12) }]}>
-            {t(ageBucketKey)}
           </Text>
         </View>
         <View style={styles.activeRow}>
@@ -526,11 +512,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.rounded,
     fontWeight: '700',
     color: '#FFFFFF',
-  },
-  childAge: {
-    fontFamily: Fonts.rounded,
-    color: TEXT_DIM,
-    marginTop: 1,
   },
   activeRow: {
     flexDirection: 'row',

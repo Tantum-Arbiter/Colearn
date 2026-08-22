@@ -375,7 +375,6 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
             todayUsageSeconds={todayUsage}
             dailyLimitSeconds={dailyLimit}
             dailyTotals={dailyTotals}
-            childAgeMonths={childAgeInMonths}
             dayNames={dayNames}
           />
 
@@ -591,7 +590,6 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
           todayUsageSeconds={todayUsage}
           dailyLimitSeconds={dailyLimit}
           dailyTotals={dailyTotals}
-          childAgeMonths={childAgeInMonths}
           dayNames={dayNames}
         />
 

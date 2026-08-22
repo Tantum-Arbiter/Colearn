@@ -85,6 +85,18 @@ describe('UsageOverview', () => {
     expect(toStr(renderOverview())).toContain('Liam');
   });
 
+  // the chip carries identity only; the age band moved to the profile screen
+  it('shows the child in the chip without an age band', () => {
+    const tree = renderOverview();
+
+    expect(findByTestId(tree, 'usage-child-chip').length).toBeGreaterThan(0);
+
+    const body = toStr(tree);
+    expect(body).not.toContain('screenTime.age18to24months');
+    expect(body).not.toContain('screenTime.age2to6years');
+    expect(body).not.toContain('screenTime.age6plus');
+  });
+
   it('encourages when under the limit', () => {
     const body = toStr(renderOverview({ todayUsageSeconds: 1800 }));
 

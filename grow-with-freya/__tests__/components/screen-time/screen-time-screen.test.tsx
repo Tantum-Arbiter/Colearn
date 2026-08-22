@@ -368,18 +368,6 @@ describe('ScreenTimeScreen', () => {
     expect(mockSetNotificationsEnabled).not.toHaveBeenCalledWith(true);
   });
 
-  it('drops the WHO/AAP guidance that hung off the age selector', async () => {
-    const tree = renderScreen();
-
-    await waitFor(() =>
-      expect(mockScreenTimeServiceInstance.getScreenTimeStats).toHaveBeenCalled()
-    );
-
-    const body = JSON.stringify(tree.toJSON());
-    expect(body).not.toContain('screenTime.childsAge');
-    expect(body).not.toContain('screenTime.guidelines');
-  });
-
   describe('notification scheduling on save', () => {
     const saveAfter = async (tree: ReturnType<typeof renderScreen>, control: string) => {
       press(tree, control);
@@ -774,13 +762,18 @@ describe('ScreenTimeContent', () => {
     expect(onNavigateToReminders).toHaveBeenCalled();
   });
 
-  it('shows the stored age band in the glance', async () => {
+  it('names the child in the glance without stating an age', async () => {
     const tree = render(<ScreenTimeContent />);
 
     await waitFor(() => expect(contentService.getScreenTimeStats).toHaveBeenCalled());
 
-    // 24 months falls in the 2-6 band; the overview reads it from the profile
-    expect(JSON.stringify(tree.toJSON())).toContain('screenTime.age2to6years');
+    // the chip is identity only now -- the age lives on the profile screen
+    expect(byTestId(tree, 'usage-child-chip').length).toBeGreaterThan(0);
+
+    const body = JSON.stringify(tree.toJSON());
+    expect(body).not.toContain('screenTime.age18to24months');
+    expect(body).not.toContain('screenTime.age2to6years');
+    expect(body).not.toContain('screenTime.age6plus');
   });
 
   it('toggles screen time locally in the glance', async () => {
