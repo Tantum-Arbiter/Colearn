@@ -1,5 +1,13 @@
-import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, Dimensions, Alert, Image, Platform } from 'react-native';
+import React, { useState, useMemo, useCallback } from 'react';
+import {
+  View,
+  StyleSheet,
+  Dimensions,
+  Alert,
+  Image,
+  Platform,
+  type LayoutChangeEvent,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import Animated, {
@@ -41,6 +49,22 @@ import {
   PANEL_BORDER,
   generateStars,
 } from './auth-theme';
+
+// The greeting is the one place a parent-supplied name is set in display type,
+// so it needs a hard guarantee that the name never wraps.
+const TITLE_MAX_SIZE = 40;
+const TITLE_MIN_SIZE = 22;
+const TITLE_MAX_LINES = 2;
+const TITLE_LINE_HEIGHT_RATIO = 1.2;
+// somewhere for the off-screen copy to lay out without hitting a width limit
+const TITLE_MEASURE_WIDTH = 10000;
+
+/** The word that has to survive intact -- the name, in every language whether it
+ *  leads or trails the greeting. Exported so the selection itself is testable:
+ *  the rendered greeting alone cannot prove the longest token was picked. */
+export function longestWord(text: string) {
+  return text.split(/\s+/).reduce((longest, word) => (word.length > longest.length ? word : longest), '');
+}
 
 const log = Logger.create('Login');
 
@@ -91,7 +115,39 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
   const [currentView, setCurrentView] = useState<'main' | 'terms' | 'privacy'>('main');
   const [processedResponseId, setProcessedResponseId] = useState<string | null>(null);
 
-  const { setGuestMode, getEffectiveTier } = useAppStore();
+  const { setGuestMode, getEffectiveTier, userNickname } = useAppStore();
+  // Onboarding always asks for a nickname now, but installs that predate that
+  // -- and any cleared profile -- fall back to the plain greeting
+  const greetingName = userNickname?.trim() || null;
+  const greeting = greetingName
+    ? t('login.welcomeTitleNamed', { name: greetingName })
+    : t('login.welcomeTitle');
+
+  // The greeting must never split the child's name across lines, on any screen
+  // width or in any language. adjustsFontSizeToFit measures unreliably here, and
+  // onTextLayout reports only once -- it does not fire again after a size change
+  // -- so shrinking by trial and error stalls after a single step. Instead the
+  // name is measured once off-screen at full size and the type is scaled to the
+  // width actually available, in one pass.
+  const titleWord = useMemo(() => longestWord(greeting), [greeting]);
+  const [titleSlotWidth, setTitleSlotWidth] = useState(0);
+  const [titleWordWidth, setTitleWordWidth] = useState(0);
+
+  const handleTitleSlotLayout = useCallback((event: LayoutChangeEvent) => {
+    setTitleSlotWidth(event.nativeEvent.layout.width);
+  }, []);
+
+  const handleTitleWordLayout = useCallback((event: LayoutChangeEvent) => {
+    setTitleWordWidth(event.nativeEvent.layout.width);
+  }, []);
+
+  const titleSize = useMemo(() => {
+    if (!titleSlotWidth || !titleWordWidth || titleWordWidth <= titleSlotWidth) {
+      return TITLE_MAX_SIZE;
+    }
+    const fitted = Math.floor((TITLE_MAX_SIZE * titleSlotWidth) / titleWordWidth);
+    return Math.max(TITLE_MIN_SIZE, Math.min(TITLE_MAX_SIZE, fitted));
+  }, [titleSlotWidth, titleWordWidth]);
   const stars = useMemo(() => generateStars(), []);
 
   // Configure native Google Sign-In for Android on mount
@@ -429,9 +485,45 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
             { marginTop: insets.top + 8, marginBottom: insets.bottom + 8 },
           ]}
         >
-          <Animated.View entering={cascade(0)} style={styles.titleContainer}>
-            <ThemedText type="title" style={[styles.title, { fontSize: scaledFontSize(40) }]}>
-              {t('login.welcomeTitle')}
+          <Animated.View
+            testID="login-title-slot"
+            entering={cascade(0)}
+            style={styles.titleContainer}
+            onLayout={handleTitleSlotLayout}
+          >
+            {/* off-screen copy of the name at full size: its laid-out width is
+                what the visible type is scaled against */}
+            <View pointerEvents="none" style={styles.titleMeasure}>
+              <ThemedText
+                testID="login-title-measure"
+                type="title"
+                style={[
+                  styles.title,
+                  {
+                    fontSize: scaledFontSize(TITLE_MAX_SIZE),
+                    lineHeight: scaledFontSize(TITLE_MAX_SIZE) * TITLE_LINE_HEIGHT_RATIO,
+                  },
+                ]}
+                numberOfLines={1}
+                onLayout={handleTitleWordLayout}
+              >
+                {titleWord}
+              </ThemedText>
+            </View>
+
+            <ThemedText
+              testID="login-title"
+              type="title"
+              style={[
+                styles.title,
+                {
+                  fontSize: scaledFontSize(titleSize),
+                  lineHeight: scaledFontSize(titleSize) * TITLE_LINE_HEIGHT_RATIO,
+                },
+              ]}
+              numberOfLines={TITLE_MAX_LINES}
+            >
+              {greeting}
             </ThemedText>
             <ThemedText style={[styles.subtitle, { fontSize: scaledFontSize(17) }]}>
               {t('login.subtitle')}
@@ -607,12 +699,18 @@ const styles = StyleSheet.create({
   titleContainer: {
     alignItems: 'center',
   },
+  titleMeasure: {
+    position: 'absolute',
+    opacity: 0,
+    top: 0,
+    left: 0,
+    width: TITLE_MEASURE_WIDTH,
+  },
   title: {
     fontFamily: Fonts.serif,
     fontWeight: '700',
     textAlign: 'center',
     color: CREAM,
-    lineHeight: 48,
     textShadowColor: 'rgba(232, 184, 75, 0.35)',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 18,

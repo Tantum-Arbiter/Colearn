@@ -56,14 +56,18 @@ export function AuthPillButton({
       {/* the icon slot is reserved even when empty so labels stay optically
           centred across a stack of buttons */}
       <View style={[styles.iconSlot, { width: scaledButtonSize(26) }]}>{icon}</View>
+      {/* No adjustsFontSizeToFit here: beside a mark that reports its size late
+          (the Google SVG) it measures the label against a near-zero frame and
+          shrinks the text to nothing. Long translations wrap to a second line
+          instead, which costs a little pill height but always stays legible. */}
       <ThemedText
+        testID="auth-pill-label"
         style={[
           styles.label,
           isLight ? styles.lightLabel : styles.guestLabel,
           { fontSize: scaledFontSize(17) },
         ]}
-        numberOfLines={1}
-        adjustsFontSizeToFit
+        numberOfLines={2}
       >
         {label}
       </ThemedText>
