@@ -84,6 +84,7 @@ export default {
   // Login screen
   login: {
     welcomeTitle: 'Welcome!',
+    welcomeTitleNamed: 'Welcome, {{name}}!',
     subtitle: "Let's begin your story time",
     continueWithGoogle: 'Continue with Google',
     continueWithApple: 'Continue with Apple',
@@ -588,7 +589,7 @@ export default {
     editTitle: 'Edit Profile',
     nickname: 'Nickname',
     nicknamePlaceholder: 'Enter your nickname...',
-    nicknameCharacters: '{{count}}/20 characters',
+    nicknameCharacters: '{{count}}/{{max}} characters',
     avatarType: 'Avatar Type',
     boy: '👦 Boy',
     girl: '👧 Girl',
@@ -2775,7 +2776,7 @@ export default {
       ageLabel: 'Age range',
       languageLabel: 'Language',
       setUpLater: 'Set up later',
-      continueAs: 'Continue as {{name}}',
+      continue: 'Continue',
       helper: 'This helps us suggest suitable stories and activities.',
     },
   },
