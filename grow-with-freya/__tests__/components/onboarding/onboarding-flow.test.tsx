@@ -35,12 +35,13 @@ jest.mock('@/components/account/terms-conditions-screen', () => ({
 // Mock OnboardingScreen -passes through customContent, isNextDisabled, onSkip and
 // buttonLabel so we can drive the flow from the tests.
 jest.mock('@/components/onboarding/onboarding-screen', () => ({
-  OnboardingScreen: ({ title, buttonLabel, onNext, onSkip, currentStep, totalSteps, customContent, isNextDisabled }: any) => {
+  OnboardingScreen: ({ title, buttonLabel, onNext, onSkip, currentStep, totalSteps, customContent, isNextDisabled, backdrop }: any) => {
     const { View, Text, Pressable } = require('react-native');
     return (
       <View testID="mock-screen">
         <Text>{title}</Text>
         <Text testID="step-indicator">{`Step ${currentStep} of ${totalSteps}`}</Text>
+        {backdrop ? <View testID="mock-backdrop">{backdrop}</View> : null}
         {customContent}
         {onSkip && (
           <Pressable testID="skip-btn" onPress={onSkip}>
@@ -76,6 +77,43 @@ function findByTestId(tree: ReturnType<typeof render>, testID: string) {
 
 function advance() {
   act(() => { jest.advanceTimersByTime(400); });
+}
+
+/** testIDs of the hero art the shell was handed on its backdrop layer. */
+function backdropHeroIds(tree: ReturnType<typeof render>) {
+  const holder = tree.UNSAFE_root
+    .findAll((n: any) => n.props.testID === 'mock-backdrop')
+    .pop();
+  if (!holder) return [];
+  const ids = holder
+    .findAll((n: any) => typeof n.props.testID === 'string' && n.props.testID.endsWith('-hero'))
+    .map((n: any) => n.props.testID as string);
+  return Array.from(new Set(ids));
+}
+
+/** testIDs of any hero art the page rendered inline, outside the backdrop. */
+function contentHeroIds(tree: ReturnType<typeof render>) {
+  const inBackdrop = new Set<unknown>(
+    tree.UNSAFE_root
+      .findAll((n: any) => n.props.testID === 'mock-backdrop')
+      .flatMap((holder: any) => holder.findAll(() => true))
+  );
+  const ids = tree.UNSAFE_root
+    .findAll((n: any) => typeof n.props.testID === 'string' && n.props.testID.endsWith('-hero'))
+    .filter((n: any) => !inBackdrop.has(n))
+    .map((n: any) => n.props.testID as string);
+  return Array.from(new Set(ids));
+}
+
+/** Step forward `count` times from the first intro screen. */
+function renderAtIntroStep(onComplete: jest.Mock, count: number) {
+  jest.useFakeTimers();
+  const utils = render(<OnboardingFlow onComplete={onComplete} />);
+  for (let i = 0; i < count; i += 1) {
+    fireEvent.press(findByTestId(utils, 'next-btn'));
+    advance();
+  }
+  return utils;
 }
 
 /** Navigate to the consent step by pressing Skip on the intro. */
@@ -128,6 +166,36 @@ describe('OnboardingFlow', () => {
     it('skips the intro straight to the consent step', () => {
       const tree = renderAtConsentStep(mockOnComplete);
       expect(toStr(tree)).toContain(`Step ${CONSENT_STEP} of ${TOTAL_STEPS}`);
+    });
+  });
+
+  // Every illustrated step must hand its hero to the shell's backdrop layer, so
+  // the art fades in with the header instead of sliding up late with the
+  // content -- page 3 used to render its hero inline and entered differently.
+  describe('hero backdrops', () => {
+    it.each([
+      [0, 'together-hero'],
+      [1, 'safe-hero'],
+      [2, 'ready-hero'],
+    ])('hands the shell the hero for intro step %i', (steps, heroId) => {
+      const tree = renderAtIntroStep(mockOnComplete, steps as number);
+
+      expect(backdropHeroIds(tree)).toEqual([heroId]);
+    });
+
+    it.each([[0], [1], [2]])(
+      'renders no hero inline in the content of intro step %i',
+      (steps) => {
+        const tree = renderAtIntroStep(mockOnComplete, steps as number);
+
+        expect(contentHeroIds(tree)).toEqual([]);
+      }
+    );
+
+    it('gives the consent step no backdrop', () => {
+      const tree = renderAtConsentStep(mockOnComplete);
+
+      expect(backdropHeroIds(tree)).toEqual([]);
     });
   });
 

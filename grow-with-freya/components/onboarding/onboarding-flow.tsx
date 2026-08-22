@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS } from 'react-native-reanimated';
 import { OnboardingScreen } from './onboarding-screen';
-import { TogetherPage, TogetherBackdrop, SafetyPage, SafetyBackdrop, ReadyPage, ProfilePage } from './onboarding-pages';
+import { TogetherPage, TogetherBackdrop, SafetyPage, SafetyBackdrop, ReadyPage, ReadyBackdrop, ProfilePage } from './onboarding-pages';
 import { GOLD, CARD_BG, CARD_BORDER, TEXT_MUTED, NIGHT_BASE } from './onboarding-theme';
 import { useAppStore } from '@/store/app-store';
 import { preloadOnboardingImages } from '@/services/image-preloader';
@@ -20,6 +20,15 @@ interface OnboardingFlowProps {
 type StepId = 'together' | 'safe' | 'ready' | 'consent' | 'profile';
 
 const STEP_ORDER: StepId[] = ['together', 'safe', 'ready', 'consent', 'profile'];
+
+// Every illustrated step hangs its hero on the shell's full-bleed backdrop layer
+// so the art fades in with the header rather than sliding up late with the
+// content. The form steps have no hero.
+const STEP_BACKDROPS: Partial<Record<StepId, React.ReactNode>> = {
+  together: <TogetherBackdrop />,
+  safe: <SafetyBackdrop />,
+  ready: <ReadyBackdrop />,
+};
 const CONSENT_INDEX = STEP_ORDER.indexOf('consent');
 const DEFAULT_AGE_MONTHS = 36;
 
@@ -351,7 +360,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
         isTransitioning={isTransitioning}
         customContent={current.content}
         isNextDisabled={isConsentStep && !allConsentsChecked}
-        backdrop={stepId === 'together' ? <TogetherBackdrop /> : stepId === 'safe' ? <SafetyBackdrop /> : undefined}
+        backdrop={STEP_BACKDROPS[stepId]}
       />
 
       {legalViewVisible && (

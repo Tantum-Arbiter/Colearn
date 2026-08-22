@@ -43,8 +43,11 @@ const SAFETY_PANEL_BG = 'rgba(9, 13, 38, 0.9)';
 const TOGETHER_ART_RATIO = 941 / 900;
 const TOGETHER_BACKDROP_H = Math.round(SCREEN_WIDTH * TOGETHER_ART_RATIO);
 // safety art is 900x774; same full-bleed treatment as the together backdrop
-// the ready hero is a 3:2 scene; sized to the content width it keeps that ratio
-const READY_HERO_H = Math.round((SCREEN_WIDTH - SHELL_H_PADDING * 2) * (600 / 900));
+// the ready hero is a 3:2 scene. Like the together and safety heroes it is a
+// full-bleed backdrop rather than an inset card, so it is sized to the screen
+const READY_BACKDROP_H = Math.round(SCREEN_WIDTH * (600 / 900));
+// drops the scene clear of the headline, matching the together backdrop
+const READY_BACKDROP_TOP = 150;
 // gold hairline cards, matching the plates supplied with the ready artwork
 const READY_CARD_BG = 'rgba(18, 26, 62, 0.82)';
 const READY_CARD_BORDER = 'rgba(232, 184, 75, 0.5)';
@@ -318,50 +321,56 @@ const READY_ITEMS: { key: string; art: ImageSourcePropType }[] = [
   { key: 'parent', art: require('@/assets/images/onboarding/ready-parent.webp') },
 ];
 
+/** Full-bleed hero, same treatment as the together backdrop: the scene runs
+ *  edge to edge behind the title and dissolves into the night sky. */
+export function ReadyBackdrop() {
+  return (
+    <View style={styles.readyBackdrop}>
+      <Image
+        testID="ready-hero"
+        source={require('@/assets/images/onboarding/ready-hero.webp')}
+        style={styles.togetherBackdropImage}
+        resizeMode="cover"
+      />
+      <LinearGradient
+        colors={['#06081C', 'rgba(6, 8, 28, 0.55)', 'transparent']}
+        locations={[0, 0.4, 1]}
+        style={styles.backdropFadeTop}
+        pointerEvents="none"
+      />
+      <LinearGradient
+        colors={['transparent', 'rgba(13, 18, 51, 0.55)', '#0D1233']}
+        locations={[0, 0.6, 1]}
+        style={styles.backdropFadeBottom}
+        pointerEvents="none"
+      />
+      <LinearGradient
+        colors={['#090D27', 'rgba(9, 13, 39, 0.55)', 'transparent']}
+        locations={[0, 0.4, 1]}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        style={styles.backdropFadeLeft}
+        pointerEvents="none"
+      />
+      <LinearGradient
+        colors={['transparent', 'rgba(9, 13, 39, 0.55)', '#090D27']}
+        locations={[0, 0.6, 1]}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        style={styles.backdropFadeRight}
+        pointerEvents="none"
+      />
+    </View>
+  );
+}
+
 export function ReadyPage() {
   const { t } = useTranslation();
   const { scaledFontSize } = useAccessibility();
 
   return (
     <View style={styles.pageContainer}>
-      {/* same edge treatment as the together hero: the scene dissolves into the
-          night sky rather than ending on a hard card edge */}
-      <View style={styles.readyHeroWrap}>
-        <Image
-          testID="ready-hero"
-          source={require('@/assets/images/onboarding/ready-hero.webp')}
-          style={styles.readyHero}
-          resizeMode="cover"
-        />
-        <LinearGradient
-          colors={['#06081C', 'rgba(6, 8, 28, 0.55)', 'transparent']}
-          locations={[0, 0.4, 1]}
-          style={styles.backdropFadeTop}
-          pointerEvents="none"
-        />
-        <LinearGradient
-          colors={['transparent', 'rgba(13, 18, 51, 0.55)', '#0D1233']}
-          locations={[0, 0.6, 1]}
-          style={styles.backdropFadeBottom}
-          pointerEvents="none"
-        />
-        <LinearGradient
-          colors={['#090D27', 'rgba(9, 13, 39, 0.55)', 'transparent']}
-          locations={[0, 0.4, 1]}
-          start={{ x: 0, y: 0.5 }}
-          end={{ x: 1, y: 0.5 }}
-          style={styles.backdropFadeLeft}
-          pointerEvents="none"
-        />
-        <LinearGradient
-          colors={['transparent', 'rgba(9, 13, 39, 0.55)', '#090D27']}
-          locations={[0, 0.6, 1]}
-          start={{ x: 0, y: 0.5 }}
-          end={{ x: 1, y: 0.5 }}
-          style={styles.backdropFadeRight}
-          pointerEvents="none"
-        />
-      </View>
+      <View style={styles.readyBackdropSpacer} />
 
       <View style={styles.featureList}>
         {READY_ITEMS.map((item) => (
@@ -943,14 +952,15 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     flex: 1,
   },
-  readyHeroWrap: {
-    alignSelf: 'center',
-    width: '100%',
-    height: READY_HERO_H,
+  readyBackdrop: {
+    width: SCREEN_WIDTH,
+    height: READY_BACKDROP_H,
+    marginTop: READY_BACKDROP_TOP,
   },
-  readyHero: {
-    width: '100%',
-    height: '100%',
+  // reserves the space the backdrop occupies so the feature cards land over its
+  // base, the same overlap the together chips use
+  readyBackdropSpacer: {
+    height: READY_BACKDROP_H + READY_BACKDROP_TOP - 246,
   },
   featureList: {
     gap: 12,

@@ -16,6 +16,7 @@ import {
   SafetyPage,
   SafetyBackdrop,
   ReadyPage,
+  ReadyBackdrop,
   ProfilePage,
   AGE_RANGE_OPTIONS,
   AVATAR_OPTIONS,
@@ -107,6 +108,20 @@ describe('ReadyPage', () => {
     expect(s).toContain('onboardingV2.ready.offlineDesc');
     expect(s).toContain('onboardingV2.ready.routinesDesc');
     expect(s).toContain('onboardingV2.ready.parentDesc');
+  });
+
+  it('does not render the hero itself -the shell places it as a full-bleed backdrop', () => {
+    const tree = render(<ReadyPage />);
+
+    expect(findByTestId(tree, 'ready-hero')).toHaveLength(0);
+  });
+});
+
+describe('ReadyBackdrop', () => {
+  it('renders the full-bleed hero illustration', () => {
+    const tree = render(<ReadyBackdrop />);
+
+    expect(findByTestId(tree, 'ready-hero').length).toBeGreaterThan(0);
   });
 });
 
