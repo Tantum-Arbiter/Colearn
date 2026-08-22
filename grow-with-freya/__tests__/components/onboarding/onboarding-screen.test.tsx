@@ -76,6 +76,46 @@ describe('OnboardingScreen', () => {
       expect(mockOnNext).toHaveBeenCalledTimes(1);
     });
 
+    // The consent and profile steps rely on this: greying the button out is not
+    // enough, the shell has to refuse the press itself.
+    it('refuses the press while isNextDisabled', () => {
+      const mockOnNext = jest.fn();
+      const component = render(
+        <OnboardingScreen {...defaultProps} onNext={mockOnNext} isNextDisabled />
+      );
+
+      fireEvent.press(byTestId(component, 'onboarding-next')[0]);
+
+      expect(mockOnNext).not.toHaveBeenCalled();
+    });
+
+    it('refuses the press while a step transition is running', () => {
+      const mockOnNext = jest.fn();
+      const component = render(
+        <OnboardingScreen {...defaultProps} onNext={mockOnNext} isTransitioning />
+      );
+
+      fireEvent.press(byTestId(component, 'onboarding-next')[0]);
+
+      expect(mockOnNext).not.toHaveBeenCalled();
+    });
+
+    it('refuses the back press while a step transition is running', () => {
+      const mockOnPrevious = jest.fn();
+      const component = render(
+        <OnboardingScreen
+          {...defaultProps}
+          currentStep={2}
+          onPrevious={mockOnPrevious}
+          isTransitioning
+        />
+      );
+
+      fireEvent.press(byTestId(component, 'onboarding-back')[0]);
+
+      expect(mockOnPrevious).not.toHaveBeenCalled();
+    });
+
     it('renders with previous button when onPrevious is provided', () => {
       const mockOnPrevious = jest.fn();
       const component = render(

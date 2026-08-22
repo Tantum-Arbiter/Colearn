@@ -48,7 +48,11 @@ jest.mock('@/components/onboarding/onboarding-screen', () => ({
             <Text>skip</Text>
           </Pressable>
         )}
-        <Pressable testID="next-btn" onPress={onNext} disabled={isNextDisabled}>
+        <Pressable
+          testID="next-btn"
+          onPress={() => { if (!isNextDisabled) onNext(); }}
+          disabled={isNextDisabled}
+        >
           <Text>{buttonLabel}</Text>
         </Pressable>
       </View>
@@ -103,6 +107,13 @@ function contentHeroIds(tree: ReturnType<typeof render>) {
     .filter((n: any) => !inBackdrop.has(n))
     .map((n: any) => n.props.testID as string);
   return Array.from(new Set(ids));
+}
+
+/** The disabled flag lands on `disabled` or `aria-disabled` depending on which
+ *  node of the Pressable is queried. */
+function nextIsDisabled(tree: ReturnType<typeof render>) {
+  const btn = findByTestId(tree, 'next-btn');
+  return btn.props.disabled === true || btn.props['aria-disabled'] === true;
 }
 
 /** Step forward `count` times from the first intro screen. */
@@ -225,9 +236,8 @@ describe('OnboardingFlow', () => {
 
     it('consent button is disabled until all boxes are checked', () => {
       const tree = renderAtConsentStep(mockOnComplete);
-      const nextBtn = findByTestId(tree, 'next-btn');
-      const isDisabled = nextBtn.props.disabled === true || nextBtn.props['aria-disabled'] === true;
-      expect(isDisabled).toBe(true);
+
+      expect(nextIsDisabled(tree)).toBe(true);
     });
 
     it('consent button enables after all three boxes are checked', () => {
@@ -237,7 +247,7 @@ describe('OnboardingFlow', () => {
         fireEvent.press(findByTestId(tree, tid));
       });
 
-      expect(findByTestId(tree, 'next-btn').props.disabled).toBeFalsy();
+      expect(nextIsDisabled(tree)).toBe(false);
     });
 
     it('records parental consent when the consent step is completed', () => {
@@ -302,23 +312,55 @@ describe('OnboardingFlow', () => {
       expect(mockSetUserProfile).toHaveBeenCalledWith('Sam', 'girl', 'dino');
     });
 
-    it('completes without saving a profile when set up later is chosen', () => {
+    // interpolating the nickname grew the button past the edge of the screen
+    it('labels continue plainly rather than naming the child', () => {
       const tree = renderAtProfileStep(mockOnComplete);
 
-      fireEvent.press(findByTestId(tree, 'skip-btn'));
+      fireEvent.changeText(findByTestId(tree, 'profile-nickname-input'), 'Bartholomewwww');
 
-      expect(mockSetUserProfile).not.toHaveBeenCalled();
-      expect(mockSetOnboardingComplete).toHaveBeenCalledWith(true);
-      expect(mockOnComplete).toHaveBeenCalled();
+      const body = toStr(tree);
+      expect(body).toContain('onboardingV2.profile.continue');
+      // the interpolating key is what grew the button; it must be gone
+      expect(body).not.toContain('continueAs');
     });
 
-    it('does not save an empty nickname', () => {
+    it('cannot be skipped', () => {
+      const tree = renderAtProfileStep(mockOnComplete);
+
+      const skip = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'skip-btn');
+
+      expect(skip).toHaveLength(0);
+    });
+
+    it('keeps continue disabled until the nickname reaches the minimum length', () => {
+      const tree = renderAtProfileStep(mockOnComplete);
+      const input = findByTestId(tree, 'profile-nickname-input');
+
+      expect(nextIsDisabled(tree)).toBe(true);
+
+      fireEvent.changeText(input, 'A');
+      expect(nextIsDisabled(tree)).toBe(true);
+
+      fireEvent.changeText(input, 'Al');
+      expect(nextIsDisabled(tree)).toBe(false);
+    });
+
+    it('treats a whitespace-only nickname as missing', () => {
+      const tree = renderAtProfileStep(mockOnComplete);
+
+      fireEvent.changeText(findByTestId(tree, 'profile-nickname-input'), '   ');
+
+      expect(nextIsDisabled(tree)).toBe(true);
+    });
+
+    it('cannot be completed without a nickname', () => {
       const tree = renderAtProfileStep(mockOnComplete);
 
       fireEvent.press(findByTestId(tree, 'next-btn'));
 
       expect(mockSetUserProfile).not.toHaveBeenCalled();
-      expect(mockOnComplete).toHaveBeenCalled();
+      expect(mockSetOnboardingComplete).not.toHaveBeenCalled();
+      expect(mockOnComplete).not.toHaveBeenCalled();
     });
   });
 });

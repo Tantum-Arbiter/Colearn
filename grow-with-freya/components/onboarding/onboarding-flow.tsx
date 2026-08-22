@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS } from 'react-native-reanimated';
 import { OnboardingScreen } from './onboarding-screen';
 import { TogetherPage, TogetherBackdrop, SafetyPage, SafetyBackdrop, ReadyPage, ReadyBackdrop, ProfilePage } from './onboarding-pages';
+import { MIN_NICKNAME_LENGTH } from '@/constants/profile';
 import { GOLD, CARD_BG, CARD_BORDER, TEXT_MUTED, NIGHT_BASE } from './onboarding-theme';
 import { useAppStore } from '@/store/app-store';
 import { preloadOnboardingImages } from '@/services/image-preloader';
@@ -85,14 +86,13 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const isConsentStep = stepId === 'consent';
   const isProfileStep = stepId === 'profile';
   const allConsentsChecked = consentPrivacy && consentTerms && consentData;
+  // Profile setup can no longer be skipped, so the nickname is required before
+  // Continue will fire
+  const hasNickname = nickname.trim().length >= MIN_NICKNAME_LENGTH;
 
-  const finishOnboarding = (saveProfile: boolean) => {
-    if (saveProfile && nickname.trim()) {
-      setUserProfile(nickname.trim(), avatarType, avatarKey);
-    }
-    if (saveProfile) {
-      setChildAge(ageMonths);
-    }
+  const finishOnboarding = () => {
+    setUserProfile(nickname.trim(), avatarType, avatarKey);
+    setChildAge(ageMonths);
     setOnboardingComplete(true);
     onComplete();
   };
@@ -110,7 +110,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
 
   const proceedToNext = () => {
     if (isProfileStep) {
-      finishOnboarding(true);
+      finishOnboarding();
       return;
     }
     if (isConsentStep) {
@@ -164,12 +164,9 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
     }
   };
 
-  // Skipping the intro jumps to consent -consent itself can never be skipped
+  // Skipping the intro jumps to consent. Neither consent nor profile setup can
+  // be skipped -- the shell is handed no onSkip on those steps.
   const handleSkip = () => {
-    if (isProfileStep) {
-      finishOnboarding(false);
-      return;
-    }
     goToStep(CONSENT_INDEX);
   };
 
@@ -338,9 +335,9 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
           onAgeChange={setAgeMonths}
         />
       ),
-      buttonLabel: nickname.trim()
-        ? t('onboardingV2.profile.continueAs', { name: nickname.trim() })
-        : t('onboarding.screens.welcome.button'),
+      // a plain label: interpolating the nickname grew the button past the
+      // edge of the screen on longer names
+      buttonLabel: t('onboardingV2.profile.continue'),
     },
   };
 
@@ -354,12 +351,12 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
         buttonLabel={current.buttonLabel}
         onNext={handleNext}
         onPrevious={handlePrevious}
-        onSkip={isConsentStep ? undefined : handleSkip}
+        onSkip={isConsentStep || isProfileStep ? undefined : handleSkip}
         currentStep={currentStep + 1}
         totalSteps={STEP_ORDER.length}
         isTransitioning={isTransitioning}
         customContent={current.content}
-        isNextDisabled={isConsentStep && !allConsentsChecked}
+        isNextDisabled={(isConsentStep && !allConsentsChecked) || (isProfileStep && !hasNickname)}
         backdrop={STEP_BACKDROPS[stepId]}
       />
 

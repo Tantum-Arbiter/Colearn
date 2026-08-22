@@ -7,6 +7,7 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ThemedText } from '../themed-text';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { MIN_NICKNAME_LENGTH, MAX_NICKNAME_LENGTH } from '@/constants/profile';
 import { SUPPORTED_LANGUAGES, setStoredLanguage, type SupportedLanguage } from '@/services/i18n';
 import { GOLD, PURPLE, CARD_BG, CARD_BORDER, TEXT_MUTED, TEXT_FAINT, NIGHT_BASE } from './onboarding-theme';
 
@@ -590,10 +591,10 @@ export function ProfilePage({
             onChangeText={onNicknameChange}
             placeholder={t('onboardingV2.profile.nicknamePlaceholder')}
             placeholderTextColor={TEXT_FAINT}
-            maxLength={20}
+            maxLength={MAX_NICKNAME_LENGTH}
             autoCorrect={false}
           />
-          {nickname.trim().length > 0 && (
+          {nickname.trim().length >= MIN_NICKNAME_LENGTH && (
             <Ionicons
               testID="profile-nickname-valid"
               name="checkmark"

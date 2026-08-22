@@ -21,6 +21,7 @@ import {
   AGE_RANGE_OPTIONS,
   AVATAR_OPTIONS,
 } from '@/components/onboarding/onboarding-pages';
+import { MIN_NICKNAME_LENGTH, MAX_NICKNAME_LENGTH } from '@/constants/profile';
 import { SUPPORTED_LANGUAGES } from '@/services/i18n';
 
 function findByTestId(tree: ReturnType<typeof render>, testID: string) {
@@ -161,6 +162,29 @@ describe('ProfilePage', () => {
 
     fireEvent.press(findByTestId(tree, 'avatar-prev')[0]);
     expect(defaultProps.onAvatarKeyChange).toHaveBeenCalledWith('elephant');
+  });
+
+  it('only ticks the nickname once it reaches the minimum length', () => {
+    const short = 'a'.repeat(MIN_NICKNAME_LENGTH - 1);
+
+    expect(
+      findByTestId(render(<ProfilePage {...defaultProps} nickname={short} />), 'profile-nickname-valid')
+    ).toHaveLength(0);
+    expect(
+      findByTestId(
+        render(<ProfilePage {...defaultProps} nickname={short + 'a'} />),
+        'profile-nickname-valid'
+      ).length
+    ).toBeGreaterThan(0);
+  });
+
+  // the literal is deliberate: asserting against the constant the component
+  // reads would pass no matter what that constant became
+  it('caps the nickname field at 14 characters', () => {
+    const tree = render(<ProfilePage {...defaultProps} />);
+
+    expect(findByTestId(tree, 'profile-nickname-input')[0].props.maxLength).toBe(14);
+    expect(MAX_NICKNAME_LENGTH).toBe(14);
   });
 
   it('reports nickname changes', () => {
