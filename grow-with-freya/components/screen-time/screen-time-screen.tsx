@@ -17,12 +17,13 @@ import { Logger } from '@/utils/logger';
 
 const log = Logger.create('ScreenTimeScreen');
 import { useScreenTime } from './screen-time-provider';
-import { CustomRemindersScreen, CreateReminderScreen } from '../reminders';
 import { styles } from './styles';
 import { ApiClient } from '@/services/api-client';
-import { reminderService } from '@/services/reminder-service';
+import { reminderService, type ReminderStats } from '@/services/reminder-service';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { UsageOverview } from './usage-overview';
+import { ScheduleCallout } from './schedule-callout';
+import { ScheduleWindow } from './schedule-window';
 import { AUTH_GRADIENT } from '@/components/auth/auth-theme';
 import { backgroundSaveService } from '@/services/background-save-service';
 import { ScreenTimeTipsOverlay } from '../tutorial';
@@ -35,7 +36,9 @@ interface ScreenTimeScreenProps {
 
 interface ScreenTimeContentProps {
   paddingTop?: number;
-  onNavigateToReminders?: () => void;
+  /** Fires when a reminder is created, toggled or deleted inside the schedule
+   *  window, so the host can re-check its unsaved-changes state. */
+  onReminderChange?: () => void;
 }
 
 // Generate star positions for background
@@ -72,7 +75,8 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
   const [stats, setStats] = useState<ScreenTimeStats | null>(null);
   const [dailyTotals, setDailyTotals] = useState<DailyTotal[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState<'main' | 'custom-reminders' | 'create-reminder'>('main');
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [reminderStats, setReminderStats] = useState<ReminderStats | null>(null);
 
   // Track local changes (not yet saved to backend). The child's age is not one
   // of them -- it is set on the profile screen and only read here.
@@ -91,7 +95,23 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
     const remindersChanged = reminderService.hasUnsavedChanges();
 
     setHasUnsavedChanges(settingsChanged || remindersChanged);
-  }, [localScreenTimeEnabled, localNotificationsEnabled, screenTimeEnabled, notificationsEnabled, currentPage, reminderChangeCounter]); // Re-check when reminders change
+  }, [localScreenTimeEnabled, localNotificationsEnabled, screenTimeEnabled, notificationsEnabled, scheduleOpen, reminderChangeCounter]); // Re-check when reminders change
+
+  // The callout reports live state, so it reloads whenever a reminder changes
+  // or the window closes over one.
+  useEffect(() => {
+    if (scheduleOpen) return;
+    let cancelled = false;
+    reminderService
+      .getReminderStats()
+      .then((next) => {
+        if (!cancelled) setReminderStats(next);
+      })
+      .catch((error) => log.warn('Failed to load reminder stats:', error));
+    return () => {
+      cancelled = true;
+    };
+  }, [scheduleOpen, reminderChangeCounter]);
 
   // Star animation
   const starOpacity = useSharedValue(0.4);
@@ -336,155 +356,132 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
           <MoonBottomImage />
         </View>
 
-        {/* Header - Only show for main page */}
-        {currentPage === 'main' && (
-          <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50), zIndex: 50 }]}>
-            <Pressable testID="screen-time-back" style={[styles.backButton, { minHeight: scaledButtonSize(40) }]} onPress={handleBack}>
-              <Ionicons name="arrow-back" size={scaledButtonSize(24)} color="rgba(255, 255, 255, 0.8)" />
-            </Pressable>
-            <View style={styles.titleContainer}>
-              <Text style={[styles.title, { fontSize: scaledFontSize(20) }]}>{t('screenTime.title')}</Text>
-            </View>
-            <MusicControl size={24} color="#FFFFFF" />
+        {/* Header */}
+        <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50), zIndex: 50 }]}>
+          <Pressable testID="screen-time-back" style={[styles.backButton, { minHeight: scaledButtonSize(40) }]} onPress={handleBack}>
+            <Ionicons name="arrow-back" size={scaledButtonSize(24)} color="rgba(255, 255, 255, 0.8)" />
+          </Pressable>
+          <View style={styles.titleContainer}>
+            <Text style={[styles.title, { fontSize: scaledFontSize(20) }]}>{t('screenTime.title')}</Text>
           </View>
-        )}
+          <MusicControl size={24} color="#FFFFFF" />
+        </View>
 
         {/* Conditional Content */}
-        {currentPage === 'custom-reminders' && (
-          <CustomRemindersScreen
-            onBack={() => setCurrentPage('main')}
-            onCreateNew={() => setCurrentPage('create-reminder')}
-            onReminderChange={() => setReminderChangeCounter(prev => prev + 1)}
-          />
-        )}
+        <ScrollView style={[styles.scrollView, { zIndex: 10 }]} contentContainerStyle={[styles.content, isTablet && { alignItems: 'center' }]}>
+        <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
+        <UsageOverview
+          todayUsageSeconds={todayUsage}
+          dailyLimitSeconds={dailyLimit}
+          dailyTotals={dailyTotals}
+          dayNames={dayNames}
+        />
 
-        {currentPage === 'create-reminder' && (
-          <CreateReminderScreen
-            onBack={() => setCurrentPage('custom-reminders')}
-            onSuccess={() => {
-              setReminderChangeCounter(prev => prev + 1);
-              setCurrentPage('custom-reminders');
+        {/* Create My Schedule */}
+        <View style={styles.section}>
+          <ScheduleCallout
+            testID="screen-time-open-reminders"
+            stats={reminderStats}
+            onOpen={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setScheduleOpen(true);
             }}
           />
-        )}
 
-        {currentPage === 'main' && (
-          <ScrollView style={[styles.scrollView, { zIndex: 10 }]} contentContainerStyle={[styles.content, isTablet && { alignItems: 'center' }]}>
-          <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
-          <UsageOverview
-            todayUsageSeconds={todayUsage}
-            dailyLimitSeconds={dailyLimit}
-            dailyTotals={dailyTotals}
-            dayNames={dayNames}
-          />
+          <View style={styles.recommendedTimes}>
+            <Text style={[styles.recommendedTimesTitle, { fontSize: scaledFontSize(16) }]}>{t('screenTime.recommendedTimes')}</Text>
+            <Text style={[styles.recommendedTimesText, { fontSize: scaledFontSize(14) }]}>
+              {t('screenTime.recommendedTimesIntro')}
+            </Text>
 
-          {/* Create My Schedule */}
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>{t('screenTime.createMySchedule')}</Text>
-
-            <View style={styles.scheduleIntro}>
-              <Text style={[styles.scheduleIntroText, { fontSize: scaledFontSize(14) }]}>
-                {t('screenTime.scheduleIntro')}
-              </Text>
+            <View style={[styles.timeSlot, { paddingVertical: scaledPadding(8) }]}>
+              <Text style={[styles.timeSlotTime, { fontSize: scaledFontSize(14) }]}>9:00 AM - 10:00 AM</Text>
+              <Text style={[styles.timeSlotActivity, { fontSize: scaledFontSize(12) }]}>{t('screenTime.morningStoriesEmotions')}</Text>
             </View>
 
+            <View style={[styles.timeSlot, { paddingVertical: scaledPadding(8) }]}>
+              <Text style={[styles.timeSlotTime, { fontSize: scaledFontSize(14) }]}>2:00 PM - 3:00 PM</Text>
+              <Text style={[styles.timeSlotActivity, { fontSize: scaledFontSize(12) }]}>{t('screenTime.afternoonLearning')}</Text>
+            </View>
+
+            <View style={[styles.timeSlot, { paddingVertical: scaledPadding(8) }]}>
+              <Text style={[styles.timeSlotTime, { fontSize: scaledFontSize(14) }]}>5:00 PM - 6:00 PM</Text>
+              <Text style={[styles.timeSlotActivity, { fontSize: scaledFontSize(12) }]}>{t('screenTime.preDinnerMusic')}</Text>
+            </View>
+          </View>
+
+          <View style={[styles.bedtimeWarning, { padding: scaledPadding(12) }]}>
+            <Text style={[styles.bedtimeWarningTitle, { fontSize: scaledFontSize(14) }]}>{t('screenTime.bedtimeGuidelines')}</Text>
+            <Text style={[styles.bedtimeWarningText, { fontSize: scaledFontSize(12) }]}>
+              {t('screenTime.bedtimeWarning')}
+            </Text>
+          </View>
+        </View>
+
+        {/* Settings */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>{t('screenTime.settings')}</Text>
+
+          <View style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}>
+            <View style={styles.settingInfo}>
+              <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>{t('screenTime.screenTimeControls')}</Text>
+              <Text style={[styles.settingDescription, { fontSize: scaledFontSize(12) }]}>
+                {t('screenTime.screenTimeControlsDesc')}
+              </Text>
+            </View>
             <Pressable
-              testID="screen-time-open-reminders"
-              style={[styles.createScheduleButton, { minHeight: scaledButtonSize(48), paddingVertical: scaledPadding(12), paddingHorizontal: scaledPadding(20) }]}
-              onPress={() => setCurrentPage('custom-reminders')}
+              testID="screen-time-toggle"
+              style={[styles.toggle, localScreenTimeEnabled && styles.toggleActive]}
+              onPress={handleToggleScreenTime}
             >
-              <Text style={[styles.createScheduleButtonText, { fontSize: scaledFontSize(16) }]}>{t('screenTime.createCustomReminders')}</Text>
+              <View style={[styles.toggleThumb, localScreenTimeEnabled && styles.toggleThumbActive]} />
             </Pressable>
-
-            <View style={styles.recommendedTimes}>
-              <Text style={[styles.recommendedTimesTitle, { fontSize: scaledFontSize(16) }]}>{t('screenTime.recommendedTimes')}</Text>
-              <Text style={[styles.recommendedTimesText, { fontSize: scaledFontSize(14) }]}>
-                {t('screenTime.recommendedTimesIntro')}
-              </Text>
-
-              <View style={[styles.timeSlot, { paddingVertical: scaledPadding(8) }]}>
-                <Text style={[styles.timeSlotTime, { fontSize: scaledFontSize(14) }]}>9:00 AM - 10:00 AM</Text>
-                <Text style={[styles.timeSlotActivity, { fontSize: scaledFontSize(12) }]}>{t('screenTime.morningStoriesEmotions')}</Text>
-              </View>
-
-              <View style={[styles.timeSlot, { paddingVertical: scaledPadding(8) }]}>
-                <Text style={[styles.timeSlotTime, { fontSize: scaledFontSize(14) }]}>2:00 PM - 3:00 PM</Text>
-                <Text style={[styles.timeSlotActivity, { fontSize: scaledFontSize(12) }]}>{t('screenTime.afternoonLearning')}</Text>
-              </View>
-
-              <View style={[styles.timeSlot, { paddingVertical: scaledPadding(8) }]}>
-                <Text style={[styles.timeSlotTime, { fontSize: scaledFontSize(14) }]}>5:00 PM - 6:00 PM</Text>
-                <Text style={[styles.timeSlotActivity, { fontSize: scaledFontSize(12) }]}>{t('screenTime.preDinnerMusic')}</Text>
-              </View>
-            </View>
-
-            <View style={[styles.bedtimeWarning, { padding: scaledPadding(12) }]}>
-              <Text style={[styles.bedtimeWarningTitle, { fontSize: scaledFontSize(14) }]}>{t('screenTime.bedtimeGuidelines')}</Text>
-              <Text style={[styles.bedtimeWarningText, { fontSize: scaledFontSize(12) }]}>
-                {t('screenTime.bedtimeWarning')}
-              </Text>
-            </View>
           </View>
 
-          {/* Settings */}
+          <View style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}>
+            <View style={styles.settingInfo}>
+              <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>{t('screenTime.smartReminders')}</Text>
+              <Text style={[styles.settingDescription, { fontSize: scaledFontSize(12) }]}>
+                {t('screenTime.smartRemindersDesc')}
+              </Text>
+            </View>
+            <Pressable
+              testID="screen-time-notifications-toggle"
+              style={[styles.toggle, localNotificationsEnabled && styles.toggleActive]}
+              onPress={handleToggleNotifications}
+            >
+              <View style={[styles.toggleThumb, localNotificationsEnabled && styles.toggleThumbActive]} />
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Save Button - Only show when there are unsaved changes */}
+        {hasUnsavedChanges && (
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>{t('screenTime.settings')}</Text>
-
-            <View style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}>
-              <View style={styles.settingInfo}>
-                <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>{t('screenTime.screenTimeControls')}</Text>
-                <Text style={[styles.settingDescription, { fontSize: scaledFontSize(12) }]}>
-                  {t('screenTime.screenTimeControlsDesc')}
-                </Text>
-              </View>
-              <Pressable
-                testID="screen-time-toggle"
-                style={[styles.toggle, localScreenTimeEnabled && styles.toggleActive]}
-                onPress={handleToggleScreenTime}
-              >
-                <View style={[styles.toggleThumb, localScreenTimeEnabled && styles.toggleThumbActive]} />
-              </Pressable>
-            </View>
-
-            <View style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}>
-              <View style={styles.settingInfo}>
-                <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>{t('screenTime.smartReminders')}</Text>
-                <Text style={[styles.settingDescription, { fontSize: scaledFontSize(12) }]}>
-                  {t('screenTime.smartRemindersDesc')}
-                </Text>
-              </View>
-              <Pressable
-                testID="screen-time-notifications-toggle"
-                style={[styles.toggle, localNotificationsEnabled && styles.toggleActive]}
-                onPress={handleToggleNotifications}
-              >
-                <View style={[styles.toggleThumb, localNotificationsEnabled && styles.toggleThumbActive]} />
-              </Pressable>
-            </View>
-          </View>
-
-          {/* Save Button - Only show when there are unsaved changes */}
-          {hasUnsavedChanges && (
-            <View style={styles.section}>
-              <Pressable
-                testID="screen-time-save"
-                style={[styles.saveButton, { minHeight: scaledButtonSize(48), paddingVertical: scaledPadding(14) }, isSaving && styles.saveButtonDisabled]}
-                onPress={handleSaveSettings}
-                disabled={isSaving}
-              >
-                <Text style={[styles.saveButtonText, { fontSize: scaledFontSize(16) }]}>
-                  {isSaving ? t('screenTime.saving') : t('screenTime.saveSettings')}
-                </Text>
-              </Pressable>
-              <Text style={[styles.saveNote, { fontSize: scaledFontSize(12) }]}>
-                {t('screenTime.settingsSyncNote')}
+            <Pressable
+              testID="screen-time-save"
+              style={[styles.saveButton, { minHeight: scaledButtonSize(48), paddingVertical: scaledPadding(14) }, isSaving && styles.saveButtonDisabled]}
+              onPress={handleSaveSettings}
+              disabled={isSaving}
+            >
+              <Text style={[styles.saveButtonText, { fontSize: scaledFontSize(16) }]}>
+                {isSaving ? t('screenTime.saving') : t('screenTime.saveSettings')}
               </Text>
-            </View>
-          )}
+            </Pressable>
+            <Text style={[styles.saveNote, { fontSize: scaledFontSize(12) }]}>
+              {t('screenTime.settingsSyncNote')}
+            </Text>
           </View>
-          </ScrollView>
         )}
+        </View>
+        </ScrollView>
       </LinearGradient>
+
+      <ScheduleWindow
+        visible={scheduleOpen}
+        onClose={() => setScheduleOpen(false)}
+        onReminderChange={() => setReminderChangeCounter(prev => prev + 1)}
+      />
 
       {/* Tips overlay for first-time visitors */}
       <ScreenTimeTipsOverlay />
@@ -493,7 +490,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
 }
 
 // Content-only component for embedding in horizontal scroll
-export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: ScreenTimeContentProps) {
+export function ScreenTimeContent({ paddingTop = 0, onReminderChange }: ScreenTimeContentProps) {
   const { t } = useTranslation();
   const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
   const {
@@ -510,8 +507,26 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
   const [dailyTotals, setDailyTotals] = useState<DailyTotal[]>([]);
   const [localScreenTimeEnabled, setLocalScreenTimeEnabled] = useState(screenTimeEnabled);
   const [localNotificationsEnabled, setLocalNotificationsEnabled] = useState(notificationsEnabled);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [reminderStats, setReminderStats] = useState<ReminderStats | null>(null);
+  const [reminderChangeCounter, setReminderChangeCounter] = useState(0);
 
   // Note: Save button removed - auto-save happens on account screen exit
+
+  // Keep the callout honest about what is actually scheduled.
+  useEffect(() => {
+    if (scheduleOpen) return;
+    let cancelled = false;
+    reminderService
+      .getReminderStats()
+      .then((next) => {
+        if (!cancelled) setReminderStats(next);
+      })
+      .catch((error) => log.warn('Failed to load reminder stats:', error));
+    return () => {
+      cancelled = true;
+    };
+  }, [scheduleOpen, reminderChangeCounter]);
 
   useEffect(() => {
     loadStats();
@@ -595,23 +610,14 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
 
         {/* Create My Schedule */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>{t('screenTime.createMySchedule')}</Text>
-
-          <View style={styles.scheduleIntro}>
-            <Text style={[styles.scheduleIntroText, { fontSize: scaledFontSize(14) }]}>
-              {t('screenTime.scheduleIntro')}
-            </Text>
-          </View>
-
-          {onNavigateToReminders && (
-            <Pressable
-              testID="content-reminders"
-              style={[styles.createScheduleButton, { minHeight: scaledButtonSize(48), paddingVertical: scaledPadding(12), paddingHorizontal: scaledPadding(20) }]}
-              onPress={onNavigateToReminders}
-            >
-              <Text style={[styles.createScheduleButtonText, { fontSize: scaledFontSize(16) }]}>{t('screenTime.createCustomReminders')}</Text>
-            </Pressable>
-          )}
+          <ScheduleCallout
+            testID="content-reminders"
+            stats={reminderStats}
+            onOpen={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setScheduleOpen(true);
+            }}
+          />
 
           <View style={styles.recommendedTimes}>
             <Text style={[styles.recommendedTimesTitle, { fontSize: scaledFontSize(16) }]}>{t('screenTime.recommendedTimes')}</Text>
@@ -683,6 +689,15 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
           {/* Save button removed - auto-save on exit from account screen */}
         </View>
       </ScrollView>
+
+      <ScheduleWindow
+        visible={scheduleOpen}
+        onClose={() => setScheduleOpen(false)}
+        onReminderChange={() => {
+          setReminderChangeCounter(prev => prev + 1);
+          onReminderChange?.();
+        }}
+      />
     </View>
   );
 }

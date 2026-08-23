@@ -43,8 +43,14 @@ jest.mock('@/services/background-save-service', () => ({
   backgroundSaveService: { queueProfileSave: jest.fn() },
 }));
 jest.mock('../../../services/reminder-service', () => ({
+  ReminderService: { formatTime: (time: string) => time },
   reminderService: {
     hasUnsavedChanges: jest.fn(() => false),
+    getReminderStats: jest.fn().mockResolvedValue({
+      totalReminders: 0,
+      activeReminders: 0,
+      upcomingToday: [],
+    }),
     syncToBackend: jest.fn().mockResolvedValue(undefined),
     commitChanges: jest.fn().mockResolvedValue(undefined),
     revertChanges: jest.fn().mockResolvedValue(undefined),
@@ -115,10 +121,21 @@ jest.mock('../../../components/main-menu/animated-components', () => ({
 jest.mock('../../../components/ui/music-control', () => ({
   MusicControl: 'MusicControl',
 }));
-jest.mock('../../../components/reminders', () => ({
-  CustomRemindersScreen: 'CustomRemindersScreen',
-  CreateReminderScreen: 'CreateReminderScreen',
-}));
+jest.mock('../../../components/reminders', () => {
+  const { Pressable, Text, View } = require('react-native');
+  return {
+    CustomRemindersScreen: 'CustomRemindersScreen',
+    CreateReminderScreen: 'CreateReminderScreen',
+    CustomRemindersContent: ({ onReminderChange }: any) => (
+      <View testID="reminders-list">
+        <Pressable testID="list-change" onPress={onReminderChange}>
+          <Text>change</Text>
+        </Pressable>
+      </View>
+    ),
+    CreateReminderContent: () => <View testID="reminders-create" />,
+  };
+});
 jest.mock('../../../store/app-store', () => ({
   useAppStore: jest.fn(() => ({
     childAgeInMonths: 24,
@@ -469,19 +486,56 @@ describe('ScreenTimeScreen', () => {
       );
     });
 
-    it('swaps the main page for the custom reminders sub-page', async () => {
+    it('opens the schedule as a window over the dashboard', async () => {
       const tree = renderScreen();
       await waitFor(() =>
         expect(mockScreenTimeServiceInstance.getScreenTimeStats).toHaveBeenCalled()
       );
 
-      // the back button only renders on the main page, so its disappearance is
-      // the evidence the sub-page took over
+      expect(byTestId(tree, 'schedule-window')).toHaveLength(0);
+
+      press(tree, 'schedule-callout-cta');
+
+      await waitFor(() => expect(byTestId(tree, 'schedule-window').length).toBeGreaterThan(0));
+      // the dashboard is still mounted underneath -- the parent keeps their place
       expect(byTestId(tree, 'screen-time-back').length).toBeGreaterThan(0);
+      expect(byTestId(tree, 'usage-overview').length).toBeGreaterThan(0);
+    });
 
-      press(tree, 'screen-time-open-reminders');
+    it('raises the save bar when a reminder changes inside the window', async () => {
+      (reminderService.hasUnsavedChanges as jest.Mock).mockReturnValue(false);
+      const tree = renderScreen();
+      await waitFor(() =>
+        expect(mockScreenTimeServiceInstance.getScreenTimeStats).toHaveBeenCalled()
+      );
+      expect(byTestId(tree, 'screen-time-save')).toHaveLength(0);
 
-      await waitFor(() => expect(byTestId(tree, 'screen-time-back')).toHaveLength(0));
+      press(tree, 'schedule-callout-cta');
+      await waitFor(() => expect(byTestId(tree, 'schedule-window').length).toBeGreaterThan(0));
+
+      // the service now has pending work, but only the window telling the
+      // dashboard about it makes the dashboard look again
+      (reminderService.hasUnsavedChanges as jest.Mock).mockReturnValue(true);
+      expect(byTestId(tree, 'screen-time-save')).toHaveLength(0);
+
+      press(tree, 'list-change');
+
+      await waitFor(() => expect(byTestId(tree, 'screen-time-save').length).toBeGreaterThan(0));
+    });
+
+    it('closes the window and returns to the dashboard', async () => {
+      const tree = renderScreen();
+      await waitFor(() =>
+        expect(mockScreenTimeServiceInstance.getScreenTimeStats).toHaveBeenCalled()
+      );
+
+      press(tree, 'schedule-callout-cta');
+      await waitFor(() => expect(byTestId(tree, 'schedule-window').length).toBeGreaterThan(0));
+
+      press(tree, 'schedule-window-back');
+
+      await waitFor(() => expect(byTestId(tree, 'schedule-window')).toHaveLength(0));
+      expect(byTestId(tree, 'screen-time-back').length).toBeGreaterThan(0);
     });
   });
 
@@ -750,16 +804,52 @@ describe('ScreenTimeContent', () => {
     }
   });
 
-  it('shows the reminders button only when navigation is offered', async () => {
-    const withoutNav = render(<ScreenTimeContent />);
-    expect(byTestId(withoutNav, 'content-reminders')).toHaveLength(0);
+  it('offers the schedule callout without needing a route from its host', async () => {
+    const tree = render(<ScreenTimeContent />);
 
-    const onNavigateToReminders = jest.fn();
-    const withNav = render(<ScreenTimeContent onNavigateToReminders={onNavigateToReminders} />);
+    await waitFor(() => expect(contentService.getScreenTimeStats).toHaveBeenCalled());
 
-    fireEvent.press(byTestId(withNav, 'content-reminders')[0]);
+    expect(byTestId(tree, 'content-reminders').length).toBeGreaterThan(0);
+    expect(byTestId(tree, 'schedule-callout-cta').length).toBeGreaterThan(0);
+  });
 
-    expect(onNavigateToReminders).toHaveBeenCalled();
+  it('opens the schedule as a window over the glance', async () => {
+    const tree = render(<ScreenTimeContent />);
+    await waitFor(() => expect(contentService.getScreenTimeStats).toHaveBeenCalled());
+
+    expect(byTestId(tree, 'schedule-window')).toHaveLength(0);
+
+    fireEvent.press(byTestId(tree, 'schedule-callout-cta')[0]);
+
+    await waitFor(() => expect(byTestId(tree, 'schedule-window').length).toBeGreaterThan(0));
+    // the glance stays mounted behind it
+    expect(byTestId(tree, 'usage-overview').length).toBeGreaterThan(0);
+  });
+
+  it('closes the window back to the glance', async () => {
+    const tree = render(<ScreenTimeContent />);
+    await waitFor(() => expect(contentService.getScreenTimeStats).toHaveBeenCalled());
+
+    fireEvent.press(byTestId(tree, 'schedule-callout-cta')[0]);
+    await waitFor(() => expect(byTestId(tree, 'schedule-window').length).toBeGreaterThan(0));
+
+    fireEvent.press(byTestId(tree, 'schedule-window-back')[0]);
+
+    await waitFor(() => expect(byTestId(tree, 'schedule-window')).toHaveLength(0));
+    expect(byTestId(tree, 'usage-overview').length).toBeGreaterThan(0);
+  });
+
+  it('reports a reminder change to its host', async () => {
+    const onReminderChange = jest.fn();
+    const tree = render(<ScreenTimeContent onReminderChange={onReminderChange} />);
+    await waitFor(() => expect(contentService.getScreenTimeStats).toHaveBeenCalled());
+
+    fireEvent.press(byTestId(tree, 'schedule-callout-cta')[0]);
+    await waitFor(() => expect(byTestId(tree, 'schedule-window').length).toBeGreaterThan(0));
+
+    fireEvent.press(byTestId(tree, 'list-change')[0]);
+
+    expect(onReminderChange).toHaveBeenCalledTimes(1);
   });
 
   it('names the child in the glance without stating an age', async () => {

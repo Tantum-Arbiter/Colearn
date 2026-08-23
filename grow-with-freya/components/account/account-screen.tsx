@@ -14,7 +14,6 @@ import { PageHeader } from '../ui/page-header';
 import { TermsConditionsContent } from './terms-conditions-screen';
 import { PrivacyPolicyContent } from './privacy-policy-screen';
 import { ScreenTimeContent } from '../screen-time/screen-time-screen';
-import { CustomRemindersContent, CreateReminderContent } from '../reminders';
 import ScreenTimeService from '../../services/screen-time-service';
 import { useScreenTime } from '../screen-time/screen-time-provider';
 import { formatDurationCompact } from '../../utils/time-formatting';
@@ -40,7 +39,7 @@ import * as Notifications from 'expo-notifications';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-type SlideView = 'main' | 'screen-time' | 'custom-reminders' | 'create-reminder' | 'edit-profile' | 'terms' | 'privacy';
+type SlideView = 'main' | 'screen-time' | 'edit-profile' | 'terms' | 'privacy';
 
 // Animation duration for slide transitions
 const SLIDE_DURATION = 300;
@@ -96,8 +95,6 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
 
   // Slide animation values for each sub-page (0 = off-screen right, 1 = visible)
   const screenTimeSlide = useSharedValue(0);
-  const customRemindersSlide = useSharedValue(0);
-  const createReminderSlide = useSharedValue(0);
   const editProfileSlide = useSharedValue(0);
   const termsSlide = useSharedValue(0);
   const privacySlide = useSharedValue(0);
@@ -105,12 +102,6 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
   // Animated styles for each sub-page overlay
   const screenTimeStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: (1 - screenTimeSlide.value) * SCREEN_WIDTH }],
-  }));
-  const customRemindersStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: (1 - customRemindersSlide.value) * SCREEN_WIDTH }],
-  }));
-  const createReminderStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: (1 - createReminderSlide.value) * SCREEN_WIDTH }],
   }));
   const editProfileStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: (1 - editProfileSlide.value) * SCREEN_WIDTH }],
@@ -152,14 +143,12 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
   const getSlideValue = useCallback((view: SlideView) => {
     switch (view) {
       case 'screen-time': return screenTimeSlide;
-      case 'custom-reminders': return customRemindersSlide;
-      case 'create-reminder': return createReminderSlide;
       case 'edit-profile': return editProfileSlide;
       case 'terms': return termsSlide;
       case 'privacy': return privacySlide;
       default: return null;
     }
-  }, [screenTimeSlide, customRemindersSlide, createReminderSlide, editProfileSlide, termsSlide, privacySlide]);
+  }, [screenTimeSlide, editProfileSlide, termsSlide, privacySlide]);
 
   // Navigate to a sub-page (slides in from right)
   const navigateToSlide = useCallback((view: SlideView) => {
@@ -203,8 +192,6 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
       case 'edit-profile': return t('profile.editTitle');
       case 'terms': return t('account.termsAndConditions');
       case 'privacy': return t('account.privacyPolicy');
-      case 'custom-reminders': return t('account.customReminders');
-      case 'create-reminder': return t('reminders.createTitle');
       default: return t('account.title');
     }
   }, [t]);
@@ -534,12 +521,6 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
 
     if (currentView === 'main') {
       onBack();
-    } else if (currentView === 'create-reminder') {
-      // Create reminder goes back to custom reminders
-      navigateBack('create-reminder', 'custom-reminders');
-    } else if (currentView === 'custom-reminders') {
-      // Custom reminders goes back to screen time
-      navigateBack('custom-reminders', 'screen-time');
     } else if (currentView === 'screen-time') {
       // Screen time goes back to main
       navigateBack('screen-time', 'main');
@@ -586,8 +567,6 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
         <PageHeader
           title={getSlideTitle(currentView)}
           onBack={handleBack}
-          rightActionIcon={currentView === 'custom-reminders' ? 'add' : undefined}
-          onRightAction={currentView === 'custom-reminders' ? () => navigateToSlide('create-reminder') : undefined}
           headerBackgroundColor="#0A0F2C"
           useHomeIcon={currentView === 'main'}
           useBackArrow={currentView !== 'main'}
@@ -623,6 +602,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
             </Pressable>
 
             <Pressable
+              testID="account-screen-time"
               style={({ pressed }) => [styles.strip, pressed && styles.stripPressed]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -875,34 +855,9 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
         <Animated.View style={[styles.overlayPage, screenTimeStyle]}>
           <ScreenTimeContent
             paddingTop={insets.top + 90 + (textSizeScale - 1) * 40 + 10}
-            onNavigateToReminders={() => navigateToSlide('custom-reminders')}
+            onReminderChange={() => setReminderChangeCounter(prev => prev + 1)}
           />
           <ScreenTimeTipsOverlay isActive={currentView === 'screen-time'} />
-        </Animated.View>
-
-        {/* Custom Reminders Page */}
-        <Animated.View style={[styles.overlayPage, customRemindersStyle]}>
-          <CustomRemindersContent
-            paddingTop={insets.top + 90 + (textSizeScale - 1) * 40 + 10}
-            onCreateNew={() => navigateToSlide('create-reminder')}
-            onReminderChange={() => setReminderChangeCounter(prev => prev + 1)}
-            refreshTrigger={reminderChangeCounter}
-            isActive={currentView === 'custom-reminders'}
-          />
-        </Animated.View>
-
-        {/* Create Reminder Page */}
-        <Animated.View style={[styles.overlayPage, createReminderStyle]}>
-          <CreateReminderContent
-            paddingTop={insets.top + 90 + (textSizeScale - 1) * 40 + 10}
-            onBack={() => navigateBack('create-reminder', 'custom-reminders')}
-            onSuccess={() => {
-              setReminderChangeCounter(prev => prev + 1);
-              navigateBack('create-reminder', 'custom-reminders');
-            }}
-            refreshTrigger={reminderChangeCounter}
-            isActive={currentView === 'create-reminder'}
-          />
         </Animated.View>
 
         {/* Edit Profile Page */}
