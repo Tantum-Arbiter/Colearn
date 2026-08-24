@@ -8,6 +8,7 @@ import Animated, {
   withTiming,
   withSequence,
   runOnJS,
+  interpolateColor,
   Easing,
 } from 'react-native-reanimated';
 import Svg, { Circle, Path } from 'react-native-svg';
@@ -30,6 +31,7 @@ import {
 } from '@/constants/screen-time-ring';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 const SPINNER_BOX = (SCREEN_TIME_GLANCE.spinnerRadius + SCREEN_TIME_GLANCE.spinnerStroke) * 2 + 2;
 
@@ -136,6 +138,9 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   // the morph: the arc flattens into the vertical line the border grows from
   const spinnerSquashX = useSharedValue(1);
   const spinnerSquashY = useSharedValue(1);
+  // the turn: 0 is the ring's own colour, 1 is the water blue the box is
+  // drawn in -- the orb changes colour while it spins
+  const spinnerWater = useSharedValue(0);
   const drawProgress = useSharedValue(0);
   const drawOpacity = useSharedValue(1);
   const panelOpacity = useSharedValue(0);
@@ -165,6 +170,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       dropStretch.value = 1;
       spinnerSquashX.value = 1;
       spinnerSquashY.value = 1;
+      spinnerWater.value = 0;
       drawProgress.value = 0;
       drawOpacity.value = 1;
 
@@ -193,17 +199,31 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       const drawStartsAt = morphStartsAt + morphDuration * 0.5;
       const settleStartsAt = drawStartsAt + drawDuration;
 
-      // 1. the ring's echo spins up where it was pressed, over the live
-      //    home screen -- nothing dims yet...
-      spinnerOpacity.value = withTiming(1, { duration: 120 });
+      // 1. the ring's echo grows into a spinning circle where it was
+      //    pressed, over the live home screen -- nothing dims yet -- and
+      //    turns from the ring's colour to the water blue as it spins.
+      //    One sequenced animation, not two assignments: reassigning a
+      //    shared value cancels the animation already on it, which is how
+      //    the orb once spent its whole spin at opacity zero.
+      spinnerOpacity.value = withSequence(
+        withTiming(1, { duration: 120 }),
+        withDelay(
+          morphStartsAt + morphDuration * 0.6 - 120,
+          withTiming(0, { duration: 140 })
+        )
+      );
       spinnerScale.value = withSequence(
-        withTiming(1.18, { duration: spinDuration * 0.55, easing: Easing.out(Easing.cubic) }),
-        withTiming(1, { duration: spinDuration * 0.45 })
+        withTiming(1.4, { duration: spinDuration * 0.55, easing: Easing.out(Easing.cubic) }),
+        withTiming(1.1, { duration: spinDuration * 0.45 })
       );
       spinnerRotate.value = withTiming(720, {
         duration: morphStartsAt,
         easing: Easing.inOut(Easing.cubic),
       });
+      spinnerWater.value = withDelay(
+        spinDuration * 0.25,
+        withTiming(1, { duration: spinDuration * 0.65 })
+      );
 
       // 2. ...travels to the border's start...
       spinnerTravel.value = withDelay(
@@ -219,10 +239,6 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       spinnerSquashY.value = withDelay(
         morphStartsAt,
         withTiming(1.5, { duration: morphDuration, easing: Easing.out(Easing.cubic) })
-      );
-      spinnerOpacity.value = withDelay(
-        morphStartsAt + morphDuration * 0.6,
-        withTiming(0, { duration: 140 })
       );
 
       // 4. ...and the line draws the box
@@ -262,6 +278,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
     spinnerTravel.value = 0;
     spinnerSquashX.value = 1;
     spinnerSquashY.value = 1;
+    spinnerWater.value = 0;
     drawProgress.value = 0;
     panelOpacity.value = 0;
     contentOpacity.value = 0;
@@ -352,6 +369,14 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
     opacity: drawOpacity.value,
   }));
 
+  const spinnerColourProps = useAnimatedProps(() => ({
+    stroke: interpolateColor(
+      spinnerWater.value,
+      [0, 1],
+      [drawStroke, SCREEN_TIME_GLANCE.drawWater]
+    ),
+  }));
+
   const panelStyle = useAnimatedStyle(() => ({
     opacity: panelOpacity.value,
     borderRadius: dropRadius.value,
@@ -400,7 +425,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
           <AnimatedPath
             testID="screen-time-glance-border"
             d={geometry.border.d}
-            stroke={drawStroke}
+            stroke={SCREEN_TIME_GLANCE.drawWater}
             strokeWidth={SCREEN_TIME_GLANCE.panelBorderWidth}
             strokeLinecap="round"
             fill="none"
@@ -424,7 +449,10 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
           ]}
         >
           <Svg width={SPINNER_BOX} height={SPINNER_BOX}>
-            <Circle
+            {/* the gap is a third of the circle so the rotation actually
+                reads as spinning rather than as a static ring */}
+            <AnimatedCircle
+              testID="screen-time-glance-spinner-arc"
               cx={SPINNER_BOX / 2}
               cy={SPINNER_BOX / 2}
               r={SCREEN_TIME_GLANCE.spinnerRadius}
@@ -432,7 +460,8 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
               strokeWidth={SCREEN_TIME_GLANCE.spinnerStroke}
               strokeLinecap="round"
               fill="none"
-              strokeDasharray={`${spinnerArc * 0.72} ${spinnerArc * 0.28}`}
+              strokeDasharray={`${spinnerArc * 0.66} ${spinnerArc * 0.34}`}
+              animatedProps={spinnerColourProps}
             />
           </Svg>
         </Animated.View>

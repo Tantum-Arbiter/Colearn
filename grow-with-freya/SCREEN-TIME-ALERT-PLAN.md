@@ -183,7 +183,11 @@ panel settled, and the ask was the opposite — the alarm red contained inside
 the border it belongs to. The open is now choreography, and it plays out over
 the **live home screen**: an echo of the ring spins up where it was pressed,
 travels to the panel's nearest corner, **flattens into a line**, and that
-line **draws the border** (a dash-offset sweep along `panelBorderPath`).
+line **draws the border** (a dash-offset sweep along `panelBorderPath`). The
+orb is deliberately wider than the ring's solid dot -- at the same diameter
+its red arc vanished against the red dot beneath it -- and it **turns from
+the ring's colour to water blue as it spins**, so the box is drawn in blue
+and only takes the alarm red when the fill settles in.
 Nothing dims while it draws. Only once the border closes does the settle
 happen — the background blacks out and the fill arrives inside the frame at
 the same time. Closing runs in reverse register: the content dims, the panel

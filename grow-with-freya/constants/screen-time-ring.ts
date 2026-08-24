@@ -33,8 +33,11 @@ export const SCREEN_TIME_GLANCE = {
   scrim: 'rgba(4, 6, 18, 0.94)',
 
   // the open choreography, in order: spin, travel, morph into a line, draw
-  // the border, then settle -- the blackout and the fill arriving together
-  spinDuration: 360,
+  // the border, then settle -- the blackout and the fill arriving together.
+  // The spin is long enough to actually read as a spinning circle: at 360ms
+  // two turns were a blur, and the phase looked like a flicker before the
+  // draw rather than a moment of its own.
+  spinDuration: 620,
   travelDuration: 220,
   morphDuration: 140,
   drawDuration: 480,
@@ -44,11 +47,15 @@ export const SCREEN_TIME_GLANCE = {
   spinnerRadius: 15,
   spinnerStroke: 3,
 
-  /** Stroke the border is drawn with. The calm final border is a faint
-   *  hairline -- too faint to watch being drawn -- so the drawing stroke is
-   *  brighter, and settles into the panel's own border as the fill fades in. */
+  /** Stroke the choreography works in. The orb rises in the ring's own
+   *  colour, turns water-blue as it spins, and the border is drawn in that
+   *  blue -- the box only takes the alarm red when the fill settles in and
+   *  the panel's own border fades up underneath the drawn stroke. The calm
+   *  final border is a faint hairline -- too faint to watch being drawn --
+   *  which is the other reason the drawing stroke is a colour of its own. */
   exceededDraw: '#E4483F',
   calmDraw: 'rgba(198, 219, 250, 0.85)',
+  drawWater: '#4FA8E0',
 
   // the close: the panel gathers, becomes a true teardrop, and falls
   dropShrink: 300,

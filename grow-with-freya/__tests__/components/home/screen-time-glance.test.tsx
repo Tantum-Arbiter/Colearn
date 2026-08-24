@@ -91,6 +91,7 @@ jest.mock('react-native-reanimated', () => {
     withDelay: jest.fn((_: any, v: any) => v),
     withSequence: jest.fn((...values: any[]) => values[values.length - 1]),
     useAnimatedProps: jest.fn(() => ({})),
+    interpolateColor: jest.fn((_v: any, _r: any, colours: string[]) => colours[0]),
     Easing: {
       out: jest.fn((e: any) => e),
       in: jest.fn((e: any) => e),
@@ -176,12 +177,31 @@ describe('ScreenTimeGlance', () => {
       expect(style.top + box / 2).toBeCloseTo(ORIGIN.y);
     });
 
-    it('draws the border with a stroke that matches the state', () => {
+    it('draws the border in the water blue, whatever the state', () => {
       const red = findByTestId(renderGlance({ exceeded: true }), 'screen-time-glance-border')[0];
       const calm = findByTestId(renderGlance({ exceeded: false }), 'screen-time-glance-border')[0];
 
+      expect(red.props.stroke).toBe(SCREEN_TIME_GLANCE.drawWater);
+      expect(calm.props.stroke).toBe(SCREEN_TIME_GLANCE.drawWater);
+    });
+
+    it('starts the orb in the colour of the ring it echoes', () => {
+      // the turn to water blue happens mid-spin, animated -- what is pinned
+      // here is where the turn starts from
+      const red = findByTestId(renderGlance({ exceeded: true }), 'screen-time-glance-spinner-arc')[0];
+      const calm = findByTestId(renderGlance({ exceeded: false }), 'screen-time-glance-spinner-arc')[0];
+
       expect(red.props.stroke).toBe(SCREEN_TIME_GLANCE.exceededDraw);
       expect(calm.props.stroke).toBe(SCREEN_TIME_GLANCE.calmDraw);
+    });
+
+    it('leaves a third of the circle open so the spin can be seen', () => {
+      const arc = findByTestId(renderGlance(), 'screen-time-glance-spinner-arc')[0];
+      const [dash, gap] = String(arc.props.strokeDasharray).split(/[ ,]+/).map(Number);
+      const circumference = 2 * Math.PI * SCREEN_TIME_GLANCE.spinnerRadius;
+
+      expect(dash + gap).toBeCloseTo(circumference);
+      expect(gap / circumference).toBeGreaterThan(0.25);
     });
 
     it('arms the border for a dash-offset sweep along its whole length', () => {
