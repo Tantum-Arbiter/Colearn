@@ -120,10 +120,11 @@ jest.mock('react-native-reanimated', () => {
 jest.mock('@/components/reminders', () => {
   const { Pressable, Text, View } = require('react-native');
   return {
-    CustomRemindersContent: ({ onCreateNew, onReminderChange, refreshTrigger }: any) => (
+    CustomRemindersContent: ({ onCreateNew, onReminderChange, refreshTrigger, footer }: any) => (
       // refreshTrigger is surfaced as a prop on the host node purely so tests
       // can read it back -- CustomRemindersContent's real implementation
-      // reacts to it internally instead
+      // reacts to it internally instead. footer is rendered last, mirroring
+      // where the real component places it: after its own content.
       <View testID="reminders-list" refreshTrigger={refreshTrigger}>
         <Pressable testID="list-create-new" onPress={onCreateNew}>
           <Text>new</Text>
@@ -131,6 +132,7 @@ jest.mock('@/components/reminders', () => {
         <Pressable testID="list-change" onPress={onReminderChange}>
           <Text>change</Text>
         </Pressable>
+        {footer}
       </View>
     ),
     CreateReminderContent: ({ onBack, onSuccess }: any) => (
@@ -215,10 +217,18 @@ describe('ScheduleWindow', () => {
     expect(findByTestId(tree, 'schedule-window-new').length).toBeGreaterThan(0);
   });
 
-  it('offers the recommended times alongside the list', () => {
+  it('offers the recommended times as a footer below the list, not above it', () => {
     const tree = renderWindow();
 
-    expect(findByTestId(tree, 'recommended-times').length).toBeGreaterThan(0);
+    // findAll walks the tree in render order, so an index comparison is a
+    // real position check -- this catches a regression back to rendering it
+    // as a sibling above CustomRemindersContent, not just "present somewhere"
+    const order = tree.UNSAFE_root.findAll(
+      (n: any) => n.props.testID === 'list-create-new' || n.props.testID === 'recommended-times'
+    );
+    const testIDs = order.map((n: any) => n.props.testID);
+
+    expect(testIDs.indexOf('recommended-times')).toBeGreaterThan(testIDs.lastIndexOf('list-create-new'));
   });
 
   it('drops the recommended times on the create page -- the templates there already suggest content', () => {

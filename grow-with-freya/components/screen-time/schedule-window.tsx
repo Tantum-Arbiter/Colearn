@@ -188,17 +188,17 @@ export function ScheduleWindow({ visible, onClose, onReminderChange }: ScheduleW
 
           <View style={[styles.body, { paddingBottom: insets.bottom }]}>
             {onList ? (
-              <>
-                <View style={styles.recommendedWrap}>
-                  <RecommendedTimes />
-                </View>
-                <CustomRemindersContent
-                  onCreateNew={() => setPage('create')}
-                  onReminderChange={noteChange}
-                  refreshTrigger={refreshTrigger}
-                  isActive
-                />
-              </>
+              <CustomRemindersContent
+                onCreateNew={() => setPage('create')}
+                onReminderChange={noteChange}
+                refreshTrigger={refreshTrigger}
+                isActive
+                footer={
+                  <View style={styles.recommendedWrap}>
+                    <RecommendedTimes />
+                  </View>
+                }
+              />
             ) : (
               <CreateReminderContent
                 onBack={() => setPage('list')}
@@ -275,6 +275,7 @@ const styles = StyleSheet.create({
   },
   recommendedWrap: {
     paddingHorizontal: 20,
-    paddingTop: 4,
+    paddingTop: 8,
+    paddingBottom: 24,
   },
 });
