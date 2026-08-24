@@ -19,6 +19,7 @@ import {
   PANEL_BG,
   PANEL_BORDER,
   useAuthLayout,
+  CARD_BLOCK_GAP,
 } from './auth-theme';
 
 const MISSING_KEYS = ['syncProgress', 'multiDevice', 'cloudBackup', 'personalised'] as const;
@@ -45,7 +46,7 @@ export function GuestInfoScreen({ onContinue, onBack }: GuestInfoScreenProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { scaledFontSize } = useAccessibility();
-  const { cardWidth, cardMaxHeight } = useAuthLayout();
+  const { cardWidth, cardMaxHeight, isCapped } = useAuthLayout();
 
   const handleBack = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -66,6 +67,7 @@ export function GuestInfoScreen({ onContinue, onBack }: GuestInfoScreenProps) {
       <View
         style={[
           styles.card,
+          isCapped && styles.cardCompact,
           {
             width: cardWidth,
             maxHeight: cardMaxHeight,
@@ -169,6 +171,10 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: '#0d0d2b',
+    // the card hugs its content on a tablet, so the spare height goes above
+    // and below it rather than all at the bottom. On a phone the card fills
+    // the screen and there is no spare height for this to move.
+    justifyContent: 'center',
   },
   screenArt: {
     ...StyleSheet.absoluteFillObject,
@@ -195,6 +201,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     zIndex: 5,
+  },
+  // On a phone the card fills the screen and `space-between` is what spaces
+  // the four blocks -- none of them carries a margin of its own. On a tablet
+  // that same rule deals the spare height out as ~150pt gaps, so the card
+  // hugs its content instead and the blocks take a deliberate rhythm. The
+  // sky centres what is left.
+  cardCompact: {
+    flex: 0,
+    justifyContent: 'flex-start',
+    gap: CARD_BLOCK_GAP,
   },
   header: {
     alignItems: 'center',

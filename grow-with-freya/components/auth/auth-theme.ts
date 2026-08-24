@@ -51,11 +51,16 @@ export const CONTENT_MAX_WIDTH = TABLET_CONTENT_MAX_WIDTH;
  */
 const CARD_MAX_HEIGHT = 1000;
 
+/** Rhythm between a compact card's blocks, in place of stretched-out space. */
+export const CARD_BLOCK_GAP = 24;
+
 export interface AuthLayout {
   cardWidth: number;
   contentWidth: number;
   /** Undefined on a phone, where the card is meant to fill the screen. */
   cardMaxHeight: number | undefined;
+  /** True once the width cap has bitten -- i.e. this is a tablet. */
+  isCapped: boolean;
 }
 
 export function authLayoutFor(screenWidth: number): AuthLayout {
@@ -67,6 +72,7 @@ export function authLayoutFor(screenWidth: number): AuthLayout {
     contentWidth,
     cardWidth: contentWidth + CARD_PADDING * 2,
     cardMaxHeight: isCapped ? CARD_MAX_HEIGHT : undefined,
+    isCapped,
   };
 }
 

@@ -37,6 +37,20 @@ describe('authLayoutFor', () => {
     expect(contentWidth).toBeLessThan(674);
   });
 
+  it('reports the cap, which is what switches the card to its compact rhythm', () => {
+    // the guest card's blocks carry no margins of their own -- on a phone
+    // `space-between` spaces them, and on a tablet that same rule would deal
+    // the spare height out as ~150pt gaps, so the compact style keys off this
+    expect(authLayoutFor(TABLET_WIDTH).isCapped).toBe(true);
+    expect(authLayoutFor(LARGE_PHONE_WIDTH).isCapped).toBe(false);
+  });
+
+  it('only budgets a max height once the width cap has bitten', () => {
+    expect(authLayoutFor(TABLET_WIDTH).cardMaxHeight).toBeGreaterThan(0);
+    // a phone card is meant to fill its screen
+    expect(authLayoutFor(LARGE_PHONE_WIDTH).cardMaxHeight).toBeUndefined();
+  });
+
   it('keeps the card exactly its content plus its own padding', () => {
     for (const width of [PHONE_WIDTH, TABLET_WIDTH]) {
       const { cardWidth, contentWidth } = authLayoutFor(width);
