@@ -271,6 +271,8 @@ export default {
     remaining: 'Rimanente',
     dailyLimitLabel: 'Limite giornaliero',
     screenTimeTrend: 'Andamento del tempo di schermo',
+    today: 'Oggi',
+    trendDayUsage: '{{day}} · {{duration}}',
     sevenDay: '7 giorni',
     fourteenDay: '14 giorni',
     thirtyDay: '30 giorni',

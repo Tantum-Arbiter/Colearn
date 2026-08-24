@@ -271,6 +271,8 @@ export default {
     remaining: 'المتبقي',
     dailyLimitLabel: 'الحد اليومي',
     screenTimeTrend: 'اتجاه وقت الشاشة',
+    today: 'اليوم',
+    trendDayUsage: '{{day}} · {{duration}}',
     sevenDay: '7 أيام',
     fourteenDay: '14 يوماً',
     thirtyDay: '30 يوماً',

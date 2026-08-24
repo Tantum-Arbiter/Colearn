@@ -271,6 +271,8 @@ export default {
     remaining: '残り',
     dailyLimitLabel: '1日の上限',
     screenTimeTrend: 'スクリーンタイムの推移',
+    today: '今日',
+    trendDayUsage: '{{day}} · {{duration}}',
     sevenDay: '7日間',
     fourteenDay: '14日間',
     thirtyDay: '30日間',

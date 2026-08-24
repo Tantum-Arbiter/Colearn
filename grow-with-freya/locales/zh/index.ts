@@ -271,6 +271,8 @@ export default {
     remaining: '剩余',
     dailyLimitLabel: '每日上限',
     screenTimeTrend: '屏幕时间趋势',
+    today: '今天',
+    trendDayUsage: '{{day}} · {{duration}}',
     sevenDay: '7天',
     fourteenDay: '14天',
     thirtyDay: '30天',

@@ -1,12 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Image, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import Svg, {
   Circle,
-  Polyline,
-  Polygon,
   Line,
+  Rect,
   Defs,
   LinearGradient as SvgGradient,
   Stop,
@@ -100,10 +99,17 @@ export function UsageOverview({
   const [chartWidth, setChartWidth] = useState(0);
   const [rangeDays, setRangeDays] = useState<7 | 14 | 30>(7);
   const [rangeMenuOpen, setRangeMenuOpen] = useState(false);
+  // which bar is showing its own total below the range pill, Apple Screen
+  // Time-style; null defaults to today rather than pinning an index that
+  // would point at the wrong day once the range changes
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  useEffect(() => {
+    setSelectedIndex(null);
+  }, [rangeDays]);
+
   const trend = useMemo(() => {
     // label cadence widens with the range so "30 Jul"-style labels never crowd
     const labelEvery = rangeDays === 7 ? 1 : rangeDays === 14 ? 4 : 7;
-    const dotEvery = rangeDays === 7 ? 1 : rangeDays === 14 ? 2 : 5;
     let formatDate = (d: Date) => `${d.getDate()}`;
     try {
       const fmt = new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'short' });
@@ -116,15 +122,14 @@ export function UsageOverview({
       const d = new Date(`${p.date}T12:00:00`);
       const fromEnd = slice.length - 1 - i;
       const isToday = fromEnd === 0;
+      // the full day name/date, regardless of whether the axis tick below
+      // the bar is thinned out -- used when this specific day is selected
+      const dayLabel = rangeDays === 7 ? dayNames[d.getDay()] ?? '' : formatDate(d);
       return {
         date: p.date,
-        label:
-          fromEnd % labelEvery !== 0
-            ? ''
-            : rangeDays === 7
-              ? dayNames[d.getDay()] ?? ''
-              : formatDate(d),
-        dot: fromEnd % dotEvery === 0,
+        label: fromEnd % labelEvery !== 0 ? '' : dayLabel,
+        dayLabel,
+        isToday,
         // the stored sessions lag the live session, so today mirrors the ring
         usage: isToday ? Math.max(p.seconds, todayUsageSeconds) : p.seconds,
       };
@@ -135,22 +140,29 @@ export function UsageOverview({
   // round the axis top up to a whole hour so gridlines land on friendly ticks
   const axisTop = Math.max(Math.ceil(peak / 3600), 1) * 3600;
 
-  const points = useMemo(() => {
-    if (chartWidth <= 0 || trend.length < 2) return [];
-    const stepX = chartWidth / (trend.length - 1);
-    return trend.map((p, i) => ({
-      x: i * stepX,
-      y: CHART_HEIGHT - (p.usage / axisTop) * CHART_HEIGHT,
-    }));
+  // one bar per day, Apple Screen Time-style: every day in the range gets a
+  // bar, only the axis labels below thin out
+  const bars = useMemo(() => {
+    if (chartWidth <= 0 || trend.length === 0) return [];
+    const slot = chartWidth / trend.length;
+    const barWidth = Math.max(slot * 0.55, 3);
+    return trend.map((p, i) => {
+      const height = Math.max((p.usage / axisTop) * CHART_HEIGHT, p.usage > 0 ? 2 : 0);
+      return {
+        x: i * slot + (slot - barWidth) / 2,
+        y: CHART_HEIGHT - height,
+        width: barWidth,
+        height,
+        slotX: i * slot,
+        slotWidth: slot,
+      };
+    });
   }, [trend, chartWidth, axisTop]);
 
   const activeRange = RANGES.find((r) => r.days === rangeDays) ?? RANGES[0];
 
-  const polyline = points.map((p) => `${p.x},${p.y}`).join(' ');
-  const area =
-    points.length > 0
-      ? `0,${CHART_HEIGHT} ${polyline} ${chartWidth},${CHART_HEIGHT}`
-      : '';
+  const effectiveIndex = selectedIndex ?? trend.length - 1;
+  const selected = trend[effectiveIndex] ?? null;
 
   const hours = axisTop / 3600;
   const axisTicks = [hours, hours / 2, 0];
@@ -352,6 +364,21 @@ export function UsageOverview({
             </View>
           )}
 
+          {/* Selected day's own total, Apple Screen Time-style -- defaults to
+              today, updates when a bar below is pressed */}
+          {selected && (
+            <Text
+              testID="usage-trend-selected"
+              style={[styles.trendSelected, { fontSize: scaledFontSize(12) }]}
+              numberOfLines={1}
+            >
+              {t('screenTime.trendDayUsage', {
+                day: selected.isToday ? t('screenTime.today') : selected.dayLabel,
+                duration: formatDurationCompact(selected.usage),
+              })}
+            </Text>
+          )}
+
           <View style={styles.chartRow}>
             <View style={styles.axis}>
               {axisTicks.map((h) => (
@@ -367,12 +394,6 @@ export function UsageOverview({
             >
               {chartWidth > 0 && (
                 <Svg width={chartWidth} height={CHART_HEIGHT} testID="usage-trend-chart">
-                  <Defs>
-                    <SvgGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
-                      <Stop offset="0" stopColor={TEAL} stopOpacity="0.25" />
-                      <Stop offset="1" stopColor={TEAL} stopOpacity="0.02" />
-                    </SvgGradient>
-                  </Defs>
                   {[0.5, 1].map((f) => (
                     <Line
                       key={`grid-${f}`}
@@ -384,23 +405,37 @@ export function UsageOverview({
                       strokeWidth={1}
                     />
                   ))}
-                  {area ? <Polygon points={area} fill="url(#trendFill)" /> : null}
-                  {polyline ? (
-                    <Polyline
-                      points={polyline}
-                      fill="none"
-                      stroke={TEAL}
-                      strokeWidth={2}
-                      strokeLinejoin="round"
-                      strokeLinecap="round"
+                  {bars.map((b, i) => (
+                    <Rect
+                      key={`bar-${trend[i].date}`}
+                      x={b.x}
+                      y={b.y}
+                      width={b.width}
+                      height={b.height}
+                      rx={Math.min(b.width / 2, 3)}
+                      fill={i === effectiveIndex ? TEAL : 'rgba(78, 205, 196, 0.32)'}
                     />
-                  ) : null}
-                  {points.map((p, i) =>
-                    trend[i]?.dot ? (
-                      <Circle key={`pt-${i}`} cx={p.x} cy={p.y} r={rangeDays === 30 ? 2.5 : 3} fill={TEAL} />
-                    ) : null
-                  )}
+                  ))}
                 </Svg>
+              )}
+              {chartWidth > 0 && (
+                // one invisible touch column per day, Apple Screen Time-style:
+                // the whole day's slot is tappable, not just the thin bar
+                <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+                  {bars.map((b, i) => (
+                    <Pressable
+                      key={`col-${trend[i].date}`}
+                      testID={`usage-trend-day-${i}`}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('screenTime.trendDayUsage', {
+                        day: trend[i].isToday ? t('screenTime.today') : trend[i].dayLabel,
+                        duration: formatDurationCompact(trend[i].usage),
+                      })}
+                      onPress={() => setSelectedIndex(i)}
+                      style={[styles.chartCol, { left: b.slotX, width: b.slotWidth }]}
+                    />
+                  ))}
+                </View>
               )}
               <View style={styles.chartLabels}>
                 {trend.map((p) => (
@@ -652,9 +687,20 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
   },
+  trendSelected: {
+    fontFamily: Fonts.rounded,
+    fontWeight: '700',
+    color: TEAL,
+    marginBottom: 8,
+  },
   chartRow: {
     flexDirection: 'row',
     gap: 5,
+  },
+  chartCol: {
+    position: 'absolute',
+    top: 0,
+    height: CHART_HEIGHT,
   },
   axis: {
     height: CHART_HEIGHT,

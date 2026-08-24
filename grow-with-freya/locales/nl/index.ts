@@ -271,6 +271,8 @@ export default {
     remaining: 'Resterend',
     dailyLimitLabel: 'Daglimiet',
     screenTimeTrend: 'Schermtijdtrend',
+    today: 'Vandaag',
+    trendDayUsage: '{{day}} · {{duration}}',
     sevenDay: '7 dagen',
     fourteenDay: '14 dagen',
     thirtyDay: '30 dagen',

@@ -271,6 +271,8 @@ export default {
     remaining: 'Tilbage',
     dailyLimitLabel: 'Daglig grænse',
     screenTimeTrend: 'Skærmtidstendens',
+    today: 'I dag',
+    trendDayUsage: '{{day}} · {{duration}}',
     sevenDay: '7 dage',
     fourteenDay: '14 dage',
     thirtyDay: '30 dage',

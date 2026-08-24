@@ -201,31 +201,133 @@ describe('UsageOverview', () => {
     expect(findByTestId(tree, 'usage-trend-chart').length).toBeGreaterThan(0);
   });
 
-  it('draws one dot per day at the seven day range', () => {
+  // Apple Screen Time's weekly/monthly graph is bars, not a line -- every day
+  // in the range gets a bar (unlike the axis labels, which thin out so dates
+  // never crowd). These count svg-Rect globally: nothing else in this
+  // component renders a Rect, so the count is exactly the bar count.
+  function countBars(tree: ReturnType<typeof render>) {
+    return tree.UNSAFE_root.findAll(
+      (n: { props: Record<string, unknown> }) => n.props.testID === 'svg-Rect'
+    ).length;
+  }
+
+  it('draws one bar per day at the seven day range', () => {
     const tree = renderOverview();
     layOutChart(tree);
 
-    const dots = tree.UNSAFE_root.findAll(
-      (n: { props: Record<string, unknown> }) => n.props.testID === 'svg-Circle'
-    );
-
-    // seven trend points plus the two ring circles
-    expect(dots.length).toBe(7 + 2);
+    expect(countBars(tree)).toBe(7);
   });
 
-  it('thins the dots out at the thirty day range', () => {
+  it('still draws one bar per day at the thirty day range -- only the labels thin out', () => {
     const tree = renderOverview();
     layOutChart(tree);
 
     fireEvent.press(findByTestId(tree, 'usage-range-pill')[0]);
     fireEvent.press(findByTestId(tree, 'usage-range-30')[0]);
 
-    const dots = tree.UNSAFE_root.findAll(
-      (n: { props: Record<string, unknown> }) => n.props.testID === 'svg-Circle'
-    );
+    expect(countBars(tree)).toBe(30);
+  });
 
-    // every fifth day over thirty days, plus the two ring circles
-    expect(dots.length).toBe(6 + 2);
+  describe('selecting a day', () => {
+    // the i18n mock renders an interpolated call as "key (opt:value, ...)",
+    // and nested t() calls resolve to their own bare key first -- so this
+    // exact string can only appear from screenTime.trendDayUsage itself, not
+    // from an unrelated key like screenTime.todaysScreenTime coincidentally
+    // containing the substring "today"
+    // UNSAFE_root.findAll returns live fiber nodes, which are circular and
+    // cannot be JSON.stringify'd; toJSON()'s output is a plain serialisable
+    // tree, so search that instead and stringify just the matched subtree
+    function findInJSON(node: any, testID: string): any {
+      if (!node) return null;
+      if (Array.isArray(node)) {
+        for (const n of node) {
+          const found = findInJSON(n, testID);
+          if (found) return found;
+        }
+        return null;
+      }
+      if (typeof node !== 'object') return null;
+      // toJSON()'s output reflects react-native-web's rendered DOM props,
+      // where testID becomes data-testid -- unlike UNSAFE_root.findAll, which
+      // reads the pre-render React element props and keeps the name testID
+      if (node.props?.['data-testid'] === testID) return node;
+      const children = Array.isArray(node.children) ? node.children : [];
+      for (const child of children) {
+        const found = findInJSON(child, testID);
+        if (found) return found;
+      }
+      return null;
+    }
+
+    function selectedSummary(tree: ReturnType<typeof render>) {
+      return JSON.stringify(findInJSON(tree.toJSON(), 'usage-trend-selected'));
+    }
+
+    it("defaults to today's total, mirroring Apple Screen Time's default view", () => {
+      const tree = renderOverview({ todayUsageSeconds: 4680 });
+      layOutChart(tree);
+
+      // 4680s = 1h 18m
+      expect(selectedSummary(tree)).toContain(
+        'screenTime.trendDayUsage (day:screenTime.today, duration:1h 18m)'
+      );
+    });
+
+    it("shows that day's own total when a past bar is pressed, not the running total", () => {
+      const tree = renderOverview({ todayUsageSeconds: 4680 });
+      layOutChart(tree);
+
+      // makeDailyTotals: seconds = (daysAgo % 4) * 1800; one day ago = 1800s = 30m
+      fireEvent.press(findByTestId(tree, 'usage-trend-day-1')[0]);
+
+      expect(selectedSummary(tree)).toContain('duration:30m');
+      expect(selectedSummary(tree)).not.toContain('day:screenTime.today');
+    });
+
+    it("returns to reporting today when today's own bar is pressed again", () => {
+      const tree = renderOverview({ todayUsageSeconds: 4680 });
+      layOutChart(tree);
+
+      fireEvent.press(findByTestId(tree, 'usage-trend-day-1')[0]);
+      fireEvent.press(findByTestId(tree, 'usage-trend-day-6')[0]); // today, at the 7-day range
+
+      expect(selectedSummary(tree)).toContain('day:screenTime.today');
+    });
+
+    it('resets the selection back to today when the range changes', () => {
+      const tree = renderOverview({ todayUsageSeconds: 4680 });
+      layOutChart(tree);
+
+      fireEvent.press(findByTestId(tree, 'usage-trend-day-1')[0]);
+      expect(selectedSummary(tree)).not.toContain('day:screenTime.today');
+
+      fireEvent.press(findByTestId(tree, 'usage-range-pill')[0]);
+      fireEvent.press(findByTestId(tree, 'usage-range-30')[0]);
+
+      expect(selectedSummary(tree)).toContain('day:screenTime.today');
+    });
+
+    it("does not let the live usage poll silently override the parent's selection", () => {
+      const tree = renderOverview({ todayUsageSeconds: 4680 });
+      layOutChart(tree);
+
+      fireEvent.press(findByTestId(tree, 'usage-trend-day-1')[0]);
+      expect(selectedSummary(tree)).toContain('duration:30m');
+
+      // todayUsageSeconds changing (a live poll) must not touch the selection
+      tree.rerender(
+        <UsageOverview
+          todayUsageSeconds={5000}
+          dailyLimitSeconds={7200}
+          dailyTotals={makeDailyTotals()}
+          dayNames={DAY_NAMES}
+        />
+      );
+
+      expect(selectedSummary(tree)).toContain('duration:30m');
+      expect(selectedSummary(tree)).not.toContain('day:screenTime.today');
+    });
+
   });
 
   describe('edge cases', () => {

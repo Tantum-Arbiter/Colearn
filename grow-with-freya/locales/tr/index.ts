@@ -271,6 +271,8 @@ export default {
     remaining: 'Kalan',
     dailyLimitLabel: 'Günlük Limit',
     screenTimeTrend: 'Ekran Süresi Eğilimi',
+    today: 'Bugün',
+    trendDayUsage: '{{day}} · {{duration}}',
     sevenDay: '7 gün',
     fourteenDay: '14 gün',
     thirtyDay: '30 gün',

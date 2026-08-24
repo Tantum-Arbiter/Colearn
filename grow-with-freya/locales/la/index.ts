@@ -271,6 +271,8 @@ export default {
     remaining: 'Reliquum',
     dailyLimitLabel: 'Modus diurnus',
     screenTimeTrend: 'Cursus temporis quadri',
+    today: 'Hodie',
+    trendDayUsage: '{{day}} · {{duration}}',
     sevenDay: '7 dies',
     fourteenDay: '14 dies',
     thirtyDay: '30 dies',
