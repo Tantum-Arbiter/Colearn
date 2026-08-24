@@ -261,6 +261,30 @@ export default {
     backToMenu: 'Zurück zum Menü',
   },
   screenTime: {
+    alert: {
+      title: 'Bildschirmzeit-Hinweis!',
+      usage: 'Du hast {{used}} deines Tageslimits erreicht.',
+      break: 'Machen wir eine achtsame Pause.',
+      showTips: 'Tipps anzeigen',
+    },
+    tips: {
+      title: 'Lasst die Geschichte weiterleben',
+      intro: 'Die Geschichte muss nicht enden, wenn der Bildschirm ausgeht. Hier sind drei Wege, sie in den restlichen Tag mitzunehmen.',
+      closing: 'Eine Geschichte, die Ihr Kind nacherzählt, ist eine Geschichte, die bleibt.',
+      done: 'Fertig',
+      atHome: {
+        title: 'Mit Spielzeug nacherzählen',
+        body: 'Holt ein paar Kuscheltiere oder Figuren, und lasst Ihr Kind die Rollen verteilen. Fragen Sie „und was passierte dann?" und lassen Sie es auf seine Weise erzählen — was es verändert, hat ihm am meisten bedeutet.',
+      },
+      outdoors: {
+        title: 'Nehmt die Geschichte mit nach draußen',
+        body: 'Sucht beim nächsten Spaziergang etwas aus der Geschichte — den Mond, eine Pfütze, einen freundlichen Hund. Fragen Sie, was die Figur hier tun würde. So wird aus einem gewöhnlichen Spaziergang ein Ort, an dem die Geschichte lebt.',
+      },
+      creative: {
+        title: 'Malt die schönste Stelle',
+        body: 'Papier, Stifte und eine Frage: Welcher Teil hat dir am besten gefallen? Malt ihn gemeinsam und lasst Ihr Kind von seinem Bild erzählen. Was es wählt, sagt mehr als jedes Abfragen.',
+      },
+    },
     helpingStayBalanced: 'Du hilfst {{name}}, sicher und ausgeglichen zu bleiben.',
     helpingStayBalancedGeneric: 'Du hilfst deinem Kind, sicher und ausgeglichen zu bleiben.',
     yourChild: 'Dein Kind',

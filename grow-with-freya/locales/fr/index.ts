@@ -261,6 +261,30 @@ export default {
     backToMenu: 'Retour au menu',
   },
   screenTime: {
+    alert: {
+      title: "Alerte temps d'écran !",
+      usage: 'Vous avez atteint {{used}} de votre limite quotidienne.',
+      break: 'Prenons une pause en douceur.',
+      showTips: 'Voir les conseils',
+    },
+    tips: {
+      title: "Faites vivre l'histoire",
+      intro: "L'histoire n'a pas à s'arrêter avec l'écran. Voici trois façons de la prolonger dans le reste de la journée.",
+      closing: "Une histoire que votre enfant raconte à son tour est une histoire qu'il garde.",
+      done: 'Terminé',
+      atHome: {
+        title: 'Racontez-la avec des jouets',
+        body: "Rassemblez quelques jouets et laissez votre enfant leur distribuer les rôles. Demandez « et ensuite ? » et laissez-le raconter à sa manière : ce qu'il change est ce qui l'a le plus marqué.",
+      },
+      outdoors: {
+        title: "Emmenez l'histoire dehors",
+        body: "À la prochaine promenade, cherchez quelque chose de l'histoire : une lune, une flaque, un chien gentil. Demandez ce que le personnage ferait ici. Une promenade ordinaire devient alors un lieu où l'histoire habite.",
+      },
+      creative: {
+        title: 'Dessinez le meilleur moment',
+        body: "Du papier, des crayons et une seule question : quel passage as-tu préféré ? Dessinez-le ensemble, puis laissez votre enfant vous parler de son dessin. Ce qu'il choisit en dit plus que n'importe quelle question.",
+      },
+    },
     helpingStayBalanced: 'Vous aidez {{name}} à rester en sécurité et équilibré.',
     helpingStayBalancedGeneric: 'Vous aidez votre enfant à rester en sécurité et équilibré.',
     yourChild: 'Votre enfant',

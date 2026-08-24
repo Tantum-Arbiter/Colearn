@@ -9,6 +9,13 @@
  * It is also meant to read as the ring itself growing into a page, which is
  * why the reveal circle starts at the ring's own centre in the ring's own
  * colour, and why the surface behind it turns red only when the ring is red.
+ * The circle stays full-bleed; what it settles into is an inset, outlined
+ * panel, so the ring's colour is left showing as a frame.
+ *
+ * The alert header and the tips action belong to the over-limit state only.
+ * A full alert treatment for a child who has used fourteen of sixty minutes
+ * would contradict the encouragement banner on the same page, so the calm
+ * state keeps the dashboard greeting and offers no alert at all.
  */
 
 import React from 'react';
@@ -40,8 +47,11 @@ afterAll(() => {
 jest.mock('@/components/screen-time/screen-time-screen', () => {
   const { View } = require('react-native');
   return {
-    ScreenTimeContent: ({ showSchedule }: any) => (
-      <View testID="screen-time-content" {...{ showScheduleForTest: showSchedule }} />
+    ScreenTimeContent: ({ showSchedule, showGreeting }: any) => (
+      <View
+        testID="screen-time-content"
+        {...{ showScheduleForTest: showSchedule, showGreetingForTest: showGreeting }}
+      />
     ),
   };
 });
@@ -51,9 +61,17 @@ jest.mock('@expo/vector-icons', () => {
   return { Ionicons: (props: any) => <Text>{props.name}</Text> };
 });
 
+// jest only lets a module factory reach an out-of-scope variable whose name
+// starts with "mock", hence the prefix
+let mockInsets = { top: 0, bottom: 0, left: 0, right: 0 };
+
 jest.mock('react-native-safe-area-context', () => ({
-  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+  useSafeAreaInsets: () => mockInsets,
 }));
+
+afterEach(() => {
+  mockInsets = { top: 0, bottom: 0, left: 0, right: 0 };
+});
 
 jest.mock('react-native-reanimated', () => {
   const React = require('react');
@@ -186,6 +204,151 @@ describe('ScreenTimeGlance', () => {
 
       expect(revealStyle(tree).backgroundColor).toBe(SCREEN_TIME_GLANCE.calmReveal);
       expect(surfaceStyle(tree).backgroundColor).toBe(SCREEN_TIME_GLANCE.calmSurface);
+    });
+  });
+
+  describe('the framed panel', () => {
+    const panelStyle = (tree: ReturnType<typeof render>) =>
+      StyleSheet.flatten(findByTestId(tree, 'screen-time-glance-panel')[0].props.style);
+
+    it('insets the panel from every edge', () => {
+      const style = panelStyle(renderGlance());
+
+      expect(style.left).toBe(SCREEN_TIME_GLANCE.panelInset);
+      expect(style.right).toBe(SCREEN_TIME_GLANCE.panelInset);
+      expect(style.top).toBe(SCREEN_TIME_GLANCE.panelInset);
+      expect(style.bottom).toBe(SCREEN_TIME_GLANCE.panelInset);
+    });
+
+    it('clears the notch and the home indicator as well as the inset', () => {
+      mockInsets = { top: 59, bottom: 34, left: 0, right: 0 };
+
+      const style = panelStyle(renderGlance());
+
+      expect(style.top).toBe(59 + SCREEN_TIME_GLANCE.panelInset);
+      expect(style.bottom).toBe(34 + SCREEN_TIME_GLANCE.panelInset);
+      // the sides are already clear of both, so they take the inset alone
+      expect(style.left).toBe(SCREEN_TIME_GLANCE.panelInset);
+    });
+
+    it("outlines it with the design's rounded border", () => {
+      const style = panelStyle(renderGlance());
+
+      expect(style.borderRadius).toBe(SCREEN_TIME_GLANCE.panelRadius);
+      expect(style.borderWidth).toBe(SCREEN_TIME_GLANCE.panelBorderWidth);
+    });
+
+    it('takes the red border only when the ring is red', () => {
+      expect(panelStyle(renderGlance({ exceeded: true })).borderColor).toBe(
+        SCREEN_TIME_GLANCE.exceededBorder
+      );
+      expect(panelStyle(renderGlance({ exceeded: false })).borderColor).toBe(
+        SCREEN_TIME_GLANCE.calmBorder
+      );
+    });
+
+    it('lights the border with a glow that matches its state', () => {
+      expect(panelStyle(renderGlance({ exceeded: true })).shadowColor).toBe(
+        SCREEN_TIME_GLANCE.exceededGlow
+      );
+      expect(panelStyle(renderGlance({ exceeded: false })).shadowColor).toBe(
+        SCREEN_TIME_GLANCE.calmGlow
+      );
+    });
+
+    it('puts the close button inside the panel', () => {
+      const tree = renderGlance();
+      const panel = findByTestId(tree, 'screen-time-glance-panel')[0];
+
+      expect(
+        panel.findAll((n: any) => n.props.testID === 'screen-time-glance-close')
+      ).not.toHaveLength(0);
+    });
+
+    it('holds the alert and its action inside the frame too', () => {
+      const tree = renderGlance({ exceeded: true });
+      const panel = findByTestId(tree, 'screen-time-glance-panel')[0];
+
+      for (const id of ['screen-time-alert-header', 'screen-time-glance-tips']) {
+        expect(panel.findAll((n: any) => n.props.testID === id)).not.toHaveLength(0);
+      }
+    });
+  });
+
+  describe('the alert state', () => {
+    it('leads with the alert header once the limit is spent', () => {
+      const tree = renderGlance({ exceeded: true, usageSeconds: 3900, limitSeconds: 3600 });
+
+      expect(findByTestId(tree, 'screen-time-alert-header').length).toBeGreaterThan(0);
+    });
+
+    it('shows no alert while the child is still within the limit', () => {
+      const tree = renderGlance({ exceeded: false, usageSeconds: 840, limitSeconds: 3600 });
+
+      expect(findByTestId(tree, 'screen-time-alert-header')).toHaveLength(0);
+    });
+
+    it('drops the dashboard greeting only in the alert state', () => {
+      const alert = findByTestId(renderGlance({ exceeded: true }), 'screen-time-content')[0];
+      const calm = findByTestId(renderGlance({ exceeded: false }), 'screen-time-content')[0];
+
+      expect(alert.props.showGreetingForTest).toBe(false);
+      expect(calm.props.showGreetingForTest).toBe(true);
+    });
+
+    it('gives the alert the usage figures it is about', () => {
+      const tree = renderGlance({ exceeded: true, usageSeconds: 3900, limitSeconds: 3600 });
+      const json = JSON.stringify(tree.toJSON());
+
+      expect(json).toContain('screenTime.alert.usage (used:');
+      expect(json).toContain('["1h 5m"]');
+      expect(json).toContain(', limit:1h)');
+    });
+  });
+
+  describe('the tips action', () => {
+    it('offers tips alongside the alert', () => {
+      const tree = renderGlance({ exceeded: true });
+
+      expect(findByTestId(tree, 'screen-time-glance-tips').length).toBeGreaterThan(0);
+    });
+
+    it('offers nothing extra while the child is within the limit', () => {
+      const tree = renderGlance({ exceeded: false });
+
+      expect(findByTestId(tree, 'screen-time-glance-tips')).toHaveLength(0);
+    });
+
+    it('labels the action from a translation key', () => {
+      const tips = findByTestId(renderGlance({ exceeded: true }), 'screen-time-glance-tips')[0];
+      const labels = tips
+        .findAll((n: any) => typeof n.props.children === 'string')
+        .map((n: any) => n.props.children);
+
+      expect(tips.props.accessibilityLabel).toBe('screenTime.alert.showTips');
+      expect(labels).toContain('screenTime.alert.showTips');
+    });
+
+    it('opens the tips over the dashboard', () => {
+      const tree = renderGlance({ exceeded: true });
+
+      expect(findByTestId(tree, 'real-world-tips')).toHaveLength(0);
+
+      fireEvent.press(findByTestId(tree, 'screen-time-glance-tips')[0]);
+
+      expect(findByTestId(tree, 'real-world-tips').length).toBeGreaterThan(0);
+      expect(findByTestId(tree, 'screen-time-content')).toHaveLength(0);
+    });
+
+    it('comes back to the dashboard rather than closing the window', () => {
+      const onClose = jest.fn();
+      const tree = renderGlance({ exceeded: true, onClose });
+
+      fireEvent.press(findByTestId(tree, 'screen-time-glance-tips')[0]);
+      fireEvent.press(findByTestId(tree, 'real-world-tips-done')[0]);
+
+      expect(findByTestId(tree, 'screen-time-content').length).toBeGreaterThan(0);
+      expect(onClose).not.toHaveBeenCalled();
     });
   });
 });

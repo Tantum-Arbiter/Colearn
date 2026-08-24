@@ -261,6 +261,30 @@ export default {
     backToMenu: 'Menüye Dön',
   },
   screenTime: {
+    alert: {
+      title: 'Ekran süresi uyarısı!',
+      usage: 'Günlük sınırının {{used}} kadarına ulaştın.',
+      break: 'Sakin bir mola verelim.',
+      showTips: 'İpuçlarını göster',
+    },
+    tips: {
+      title: 'Hikâyeyi yaşat',
+      intro: 'Ekran bitince hikâye bitmek zorunda değil. İşte hikâyeyi günün geri kalanına taşımanın üç yolu.',
+      closing: 'Çocuğunuzun yeniden anlattığı hikâye, onda kalan hikâyedir.',
+      done: 'Tamam',
+      atHome: {
+        title: 'Oyuncaklarla yeniden anlatın',
+        body: 'Birkaç oyuncak toplayın ve rolleri çocuğunuz dağıtsın. “Sonra ne oldu?” diye sorun ve kendi anlattığı gibi anlatmasına izin verin — değiştirdiği yerler, ona en çok dokunan yerlerdir.',
+      },
+      outdoors: {
+        title: 'Hikâyeyi dışarı çıkarın',
+        body: 'Bir sonraki yürüyüşünüzde hikâyeden bir şey arayın: ay, bir su birikintisi, sevimli bir köpek. O karakter burada ne yapardı diye sorun. Sıradan bir yürüyüş, hikâyenin yaşadığı bir yere dönüşür.',
+      },
+      creative: {
+        title: 'En sevdiğiniz anı çizin',
+        body: 'Kâğıt, boya kalemleri ve tek bir soru: en çok neresini sevdin? Birlikte çizin, sonra çocuğunuz resmini anlatsın. Seçtiği şey, her sorudan daha çok şey söyler.',
+      },
+    },
     helpingStayBalanced: '{{name}} adlı çocuğunun güvende ve dengede kalmasına yardım ediyorsun.',
     helpingStayBalancedGeneric: 'Çocuğunun güvende ve dengede kalmasına yardım ediyorsun.',
     yourChild: 'Çocuğun',

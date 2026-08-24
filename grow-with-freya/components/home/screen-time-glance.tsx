@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useEffect, useState } from 'react';
-import { View, Modal, Pressable, ScrollView, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, Modal, Pressable, ScrollView, StyleSheet, Dimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -12,9 +12,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenTimeContent } from '@/components/screen-time/screen-time-screen';
+import { ScreenTimeAlertHeader } from '@/components/screen-time/screen-time-alert-header';
+import { RealWorldTips } from '@/components/screen-time/real-world-tips';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
+import { TABLET_CONTENT_MAX_WIDTH } from '@/hooks/use-accessibility';
 import { Fonts } from '@/constants/theme';
-import { HOME_SCENE_TYPE, type TimeOfDay } from '@/constants/home-scene';
+import { type TimeOfDay } from '@/constants/home-scene';
 import { SCREEN_TIME_GLANCE, revealDiameter } from '@/constants/screen-time-ring';
 
 export interface ScreenTimeGlanceProps {
@@ -27,6 +30,11 @@ export interface ScreenTimeGlanceProps {
   /** True when the ring is in its over-limit red state -- the window takes
    *  its colour from the control the parent actually pressed. */
   exceeded?: boolean;
+  /** Seconds used today and the day's allowance, for the alert header. Both
+   *  default to zero so a host that only knows the exceeded flag still
+   *  renders; the header is only shown when exceeded anyway. */
+  usageSeconds?: number;
+  limitSeconds?: number;
   testID?: string;
 }
 
@@ -40,7 +48,13 @@ export interface ScreenTimeGlanceProps {
  *
  * The open is a circular reveal from the ring's own centre in the ring's own
  * colour, so it reads as that control growing into a page rather than an
- * unrelated sheet arriving over the top of it.
+ * unrelated sheet arriving over the top of it. The circle stays full-bleed;
+ * what it settles into is an inset, outlined panel, so the ring's colour is
+ * left showing as a frame around the page.
+ *
+ * Once the day's limit is spent the panel leads with an alert header instead
+ * of the dashboard greeting, and offers the one action that is actually worth
+ * offering at that point: ways to carry the story off the screen.
  */
 export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   visible,
@@ -48,6 +62,8 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   onClose,
   origin,
   exceeded = false,
+  usageSeconds = 0,
+  limitSeconds = 0,
   testID = 'screen-time-glance',
 }: ScreenTimeGlanceProps) {
   const { t } = useTranslation();
@@ -55,6 +71,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   const reduceMotion = useReducedMotion();
 
   const [mounted, setMounted] = useState(visible);
+  const [tipsOpen, setTipsOpen] = useState(false);
 
   const reveal = useSharedValue(0);
   const contentOpacity = useSharedValue(0);
@@ -65,6 +82,8 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
 
   const surface = exceeded ? SCREEN_TIME_GLANCE.exceededSurface : SCREEN_TIME_GLANCE.calmSurface;
   const revealColour = exceeded ? SCREEN_TIME_GLANCE.exceededReveal : SCREEN_TIME_GLANCE.calmReveal;
+  const panelBorder = exceeded ? SCREEN_TIME_GLANCE.exceededBorder : SCREEN_TIME_GLANCE.calmBorder;
+  const panelGlow = exceeded ? SCREEN_TIME_GLANCE.exceededGlow : SCREEN_TIME_GLANCE.calmGlow;
 
   useEffect(() => {
     if (visible) {
@@ -89,12 +108,14 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
     }
 
     setMounted(false);
+    setTipsOpen(false);
     reveal.value = 0;
     contentOpacity.value = 0;
   }, [visible, reduceMotion]);
 
   const finishClose = useCallback(() => {
     setMounted(false);
+    setTipsOpen(false);
     onClose();
   }, [onClose]);
 
@@ -121,6 +142,8 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   const contentStyle = useAnimatedStyle(() => ({
     opacity: contentOpacity.value,
   }));
+
+  const inset = SCREEN_TIME_GLANCE.panelInset;
 
   return (
     <Modal
@@ -156,31 +179,83 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
           testID="screen-time-glance-surface"
           style={[styles.surface, { backgroundColor: surface }, contentStyle]}
         >
-          <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-            <Pressable
-              testID="screen-time-glance-close"
-              accessibilityRole="button"
-              accessibilityLabel={t('common.close')}
-              onPress={handleClose}
-              hitSlop={12}
-              style={[
-                styles.close,
-                {
-                  borderColor: 'rgba(255, 255, 255, 0.2)',
-                  backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                },
-              ]}
-            >
-              <Ionicons name="close" size={22} color="#FFFFFF" />
-            </Pressable>
-          </View>
-
-          <ScrollView
-            contentContainerStyle={{ paddingTop: insets.top + 10, paddingBottom: insets.bottom + 32 }}
-            showsVerticalScrollIndicator={false}
+          {/* the framed panel: inset from the edges so the ring's colour is
+              left showing as a border of its own around the page */}
+          <View
+            testID="screen-time-glance-panel"
+            style={[
+              styles.panel,
+              {
+                top: insets.top + inset,
+                bottom: insets.bottom + inset,
+                left: inset,
+                right: inset,
+                borderRadius: SCREEN_TIME_GLANCE.panelRadius,
+                borderWidth: SCREEN_TIME_GLANCE.panelBorderWidth,
+                borderColor: panelBorder,
+                backgroundColor: surface,
+                shadowColor: panelGlow,
+              },
+            ]}
           >
-            <ScreenTimeContent showSchedule={false} showBackdrop={false} />
-          </ScrollView>
+            <View style={styles.panelHeader}>
+              <Pressable
+                testID="screen-time-glance-close"
+                accessibilityRole="button"
+                accessibilityLabel={t('common.close')}
+                onPress={handleClose}
+                hitSlop={12}
+                style={styles.close}
+              >
+                <Ionicons name="close" size={22} color="#FFFFFF" />
+              </Pressable>
+            </View>
+
+            {tipsOpen ? (
+              <RealWorldTips onClose={() => setTipsOpen(false)} />
+            ) : (
+              <>
+                <ScrollView
+                  contentContainerStyle={styles.panelScroll}
+                  showsVerticalScrollIndicator={false}
+                >
+                  {/* the alert leads only when the limit is actually spent --
+                      below it the encouragement banner is still positive, and
+                      an alert over "you're within today's limit" would be the
+                      app contradicting itself */}
+                  {exceeded && (
+                    <ScreenTimeAlertHeader
+                      usageSeconds={usageSeconds}
+                      limitSeconds={limitSeconds}
+                    />
+                  )}
+                  <ScreenTimeContent
+                    showSchedule={false}
+                    showBackdrop={false}
+                    showGreeting={!exceeded}
+                  />
+                </ScrollView>
+
+                {exceeded && (
+                  // the inset lives on the row so the button can be a plain
+                  // full-width child, capped to the same column the dashboard
+                  // above it uses on a tablet
+                  <View style={styles.tipsRow}>
+                    <Pressable
+                      testID="screen-time-glance-tips"
+                      accessibilityRole="button"
+                      accessibilityLabel={t('screenTime.alert.showTips')}
+                      onPress={() => setTipsOpen(true)}
+                      style={styles.tipsButton}
+                    >
+                      <Ionicons name="sparkles-outline" size={18} color="#FFFFFF" />
+                      <Text style={styles.tipsLabel}>{t('screenTime.alert.showTips')}</Text>
+                    </Pressable>
+                  </View>
+                )}
+              </>
+            )}
+          </View>
         </Animated.View>
       </View>
     </Modal>
@@ -197,31 +272,60 @@ const styles = StyleSheet.create({
   surface: {
     ...StyleSheet.absoluteFillObject,
   },
-  // floats over the scroll content so the dashboard's earth art can rise up
-  // behind the title, as in the design
-  header: {
+  panel: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    paddingHorizontal: 18,
-    paddingBottom: 12,
+    overflow: 'hidden',
+    // the border's own glow, so the red frame reads as lit rather than drawn
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 18,
+    elevation: 12,
   },
-  title: {
-    fontFamily: Fonts.rounded,
-    fontSize: HOME_SCENE_TYPE.continueTitle,
-    fontWeight: '700',
+  // sits above the scroll content so the dashboard's earth art can rise up
+  // behind it, as in the design
+  panelHeader: {
+    position: 'absolute',
+    top: 10,
+    right: 12,
+    zIndex: 10,
+  },
+  panelScroll: {
+    paddingTop: 16,
+    paddingBottom: 20,
   },
   close: {
     width: 38,
     height: 38,
     borderRadius: 19,
     borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.28)',
+    // a dark scrim rather than a white wash: in the calm state this button
+    // sits directly over the dashboard's bright earth art, where a
+    // translucent white fill disappears entirely
+    backgroundColor: 'rgba(8, 10, 40, 0.62)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  tipsRow: {
+    paddingHorizontal: 18,
+    paddingBottom: 16,
+    alignItems: 'center',
+  },
+  tipsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    width: '100%',
+    maxWidth: TABLET_CONTENT_MAX_WIDTH,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: '#F2705F',
+  },
+  tipsLabel: {
+    fontFamily: Fonts.rounded,
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 });

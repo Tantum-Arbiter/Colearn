@@ -47,6 +47,10 @@ interface ScreenTimeContentProps {
   /** Set false when the host already paints a surface of its own -- the night
    *  gradient below is opaque and would cover it. */
   showBackdrop?: boolean;
+  /** Set false when the host leads with a header of its own. The glance does
+   *  this in its alert state; the settings dashboard, which is not an alert,
+   *  keeps the greeting. */
+  showGreeting?: boolean;
 }
 
 // Generate star positions for background
@@ -481,6 +485,7 @@ export function ScreenTimeContent({
   onReminderChange,
   showSchedule = true,
   showBackdrop = true,
+  showGreeting = true,
 }: ScreenTimeContentProps) {
   const { t } = useTranslation();
   const { scaledFontSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
@@ -569,6 +574,7 @@ export function ScreenTimeContent({
           dailyLimitSeconds={dailyLimit}
           dailyTotals={dailyTotals}
           dayNames={dayNames}
+          showGreeting={showGreeting}
         />
 
         {/* Create My Schedule */}

@@ -363,6 +363,30 @@ export default {
 
   // Screen time
   screenTime: {
+    alert: {
+      title: 'Screen time alert!',
+      usage: "You've reached {{used}} of your daily limit.",
+      break: "Let's take a mindful break.",
+      showTips: 'Show Tips',
+    },
+    tips: {
+      title: 'Bring the story to life',
+      intro: 'The story does not have to end when the screen does. Here are three ways to carry it into the rest of the day.',
+      closing: 'A story your child retells is a story they keep.',
+      done: 'Done',
+      atHome: {
+        title: 'Retell it with toys',
+        body: 'Gather a few toys and let your child cast them as the characters. Ask “what happened next?” and let them tell it their way — the bits they change are the bits that mattered most to them.',
+      },
+      outdoors: {
+        title: 'Take the story outside',
+        body: 'On your next walk, look for something from the story — a moon, a puddle, a friendly dog. Ask what that character would do here. It turns an ordinary walk into a place the story lives.',
+      },
+      creative: {
+        title: 'Draw the best bit',
+        body: 'Paper and crayons, and one question: which part did you like best? Draw it together, then let your child tell you about their picture. What they choose says more than any quiz would.',
+      },
+    },
     helpingStayBalanced: "You're helping {{name}} stay safe and balanced.",
     helpingStayBalancedGeneric: "You're helping your child stay safe and balanced.",
     yourChild: 'Your child',

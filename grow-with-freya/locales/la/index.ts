@@ -261,6 +261,30 @@ export default {
     backToMenu: 'Redire ad Menu',
   },
   screenTime: {
+    alert: {
+      title: 'Monitum de tempore ante scrinium!',
+      usage: 'Ad {{used}} termini cotidiani pervenisti.',
+      break: 'Quiescamus paulisper.',
+      showTips: 'Consilia monstrare',
+    },
+    tips: {
+      title: 'Fabulam ad vitam revoca',
+      intro: 'Fabula non finitur cum scrinium exstinguitur. Ecce tres viae eam in reliquum diem ferendi.',
+      closing: 'Fabula quam puer tuus renarrat fabula est quam servat.',
+      done: 'Confectum',
+      atHome: {
+        title: 'Cum ludicris renarra',
+        body: 'Pauca ludicra collige et sine puerum tuum partes iis distribuere. Roga «quid deinde factum est?» et sine eum suo modo narrare: quae mutat, ea maxime ei placuerunt.',
+      },
+      outdoors: {
+        title: 'Fabulam foras defer',
+        body: 'In proxima ambulatione aliquid ex fabula quaerite: lunam, lacunam, canem benignum. Roga quid persona hic factura sit. Ita ambulatio cotidiana fit locus ubi fabula habitat.',
+      },
+      creative: {
+        title: 'Partem optimam pinge',
+        body: 'Charta, creta, et una quaestio: quae pars tibi maxime placuit? Eam simul pingite, deinde sine puerum de pictura sua narrare. Quod eligit plus dicit quam ulla interrogatio.',
+      },
+    },
     helpingStayBalanced: '{{name}} tutum et aequabilem manere adiuvas.',
     helpingStayBalancedGeneric: 'Filium tuum tutum et aequabilem manere adiuvas.',
     yourChild: 'Filius tuus',

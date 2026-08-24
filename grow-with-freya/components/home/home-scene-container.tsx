@@ -104,6 +104,8 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
             ? isScreenTimeExceeded(screenTime.usageSeconds, screenTime.limitSeconds)
             : false
         }
+        usageSeconds={screenTime?.usageSeconds ?? 0}
+        limitSeconds={screenTime?.limitSeconds ?? 0}
       />
 
       <SubscriptionOverlay visible={showPlans} onClose={closePlans} />

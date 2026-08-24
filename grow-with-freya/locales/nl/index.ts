@@ -261,6 +261,30 @@ export default {
     backToMenu: 'Terug naar Menu',
   },
   screenTime: {
+    alert: {
+      title: 'Schermtijdmelding!',
+      usage: 'Je hebt {{used}} van je daglimiet bereikt.',
+      break: 'Laten we rustig even pauzeren.',
+      showTips: 'Tips tonen',
+    },
+    tips: {
+      title: 'Laat het verhaal doorleven',
+      intro: 'Het verhaal hoeft niet te stoppen als het scherm uitgaat. Hier zijn drie manieren om het mee te nemen in de rest van de dag.',
+      closing: 'Een verhaal dat je kind navertelt, is een verhaal dat blijft.',
+      done: 'Klaar',
+      atHome: {
+        title: 'Vertel het na met speelgoed',
+        body: 'Pak een paar knuffels of poppetjes en laat je kind de rollen verdelen. Vraag “en wat gebeurde er toen?” en laat het op zijn eigen manier vertellen — wat het verandert, is wat het meest is bijgebleven.',
+      },
+      outdoors: {
+        title: 'Neem het verhaal mee naar buiten',
+        body: 'Zoek tijdens de volgende wandeling iets uit het verhaal: de maan, een plas, een vriendelijke hond. Vraag wat dat figuur hier zou doen. Zo wordt een gewone wandeling een plek waar het verhaal woont.',
+      },
+      creative: {
+        title: 'Teken het mooiste stukje',
+        body: 'Papier, kleurpotloden en één vraag: welk stukje vond je het leukst? Teken het samen en laat je kind over de tekening vertellen. Wat het kiest, zegt meer dan welke vraag ook.',
+      },
+    },
     helpingStayBalanced: 'Je helpt {{name}} veilig en in balans te blijven.',
     helpingStayBalancedGeneric: 'Je helpt je kind veilig en in balans te blijven.',
     yourChild: 'Je kind',

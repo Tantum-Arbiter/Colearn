@@ -28,6 +28,23 @@ export const SCREEN_TIME_GLANCE = {
   exceededReveal: '#E4483F',
   calmSurface: '#080A28',
   calmReveal: '#141A3C',
+
+  /**
+   * The framed panel the reveal settles into.
+   *
+   * The circle still opens full-bleed in the ring's colour; the panel is the
+   * outlined card that lands inside it, so the surrounding colour reads as a
+   * frame rather than as the page. The border carries the alarm at full
+   * strength precisely because it is a hairline -- a whole screen of #E4483F
+   * is neither readable nor calm, but two pixels of it are unmistakable.
+   */
+  panelInset: 14,
+  panelRadius: 28,
+  panelBorderWidth: 2,
+  exceededBorder: '#E4483F',
+  calmBorder: 'rgba(255, 255, 255, 0.14)',
+  exceededGlow: 'rgba(228, 72, 63, 0.55)',
+  calmGlow: 'rgba(0, 0, 0, 0.45)',
 } as const;
 
 export function screenTimeProgress(usageSeconds: number, limitSeconds: number): number {

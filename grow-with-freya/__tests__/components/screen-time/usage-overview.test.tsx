@@ -54,6 +54,19 @@ function renderOverview(overrides: Partial<React.ComponentProps<typeof UsageOver
 }
 
 describe('UsageOverview', () => {
+  it('leads with the greeting by default', () => {
+    expect(findByTestId(renderOverview(), 'usage-greeting').length).toBeGreaterThan(0);
+  });
+
+  it('drops the greeting when the host leads with a header of its own', () => {
+    // the glance puts an alert header here once the limit is spent, and a
+    // cheerful "Good afternoon" underneath it reads as two voices at once
+    const tree = renderOverview({ showGreeting: false });
+
+    expect(findByTestId(tree, 'usage-greeting')).toHaveLength(0);
+    expect(findByTestId(tree, 'usage-child-chip').length).toBeGreaterThan(0);
+  });
+
   it('renders every block of the dashboard', () => {
     const tree = renderOverview();
 

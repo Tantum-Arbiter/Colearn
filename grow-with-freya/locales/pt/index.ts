@@ -261,6 +261,30 @@ export default {
     backToMenu: 'Voltar ao menu',
   },
   screenTime: {
+    alert: {
+      title: 'Alerta de tempo de ecrã!',
+      usage: 'Já atingiu {{used}} do limite diário.',
+      break: 'Vamos fazer uma pausa tranquila.',
+      showTips: 'Ver sugestões',
+    },
+    tips: {
+      title: 'Dê vida à história',
+      intro: 'A história não tem de acabar quando o ecrã acaba. Aqui ficam três formas de a levar para o resto do dia.',
+      closing: 'Uma história que o seu filho reconta é uma história que fica.',
+      done: 'Concluído',
+      atHome: {
+        title: 'Recontem-na com brinquedos',
+        body: 'Juntem alguns brinquedos e deixe o seu filho distribuir os papéis. Pergunte «e o que aconteceu a seguir?» e deixe-o contar à maneira dele — o que muda é o que mais lhe ficou.',
+      },
+      outdoors: {
+        title: 'Levem a história lá para fora',
+        body: 'No próximo passeio, procurem algo da história: uma lua, uma poça, um cão simpático. Pergunte o que faria ali aquela personagem. Um passeio comum passa a ser um sítio onde a história vive.',
+      },
+      creative: {
+        title: 'Desenhem a melhor parte',
+        body: 'Papel, lápis de cor e uma pergunta: de que parte gostaste mais? Desenhem-na juntos e deixe o seu filho falar-lhe do desenho. O que escolhe diz mais do que qualquer pergunta.',
+      },
+    },
     helpingStayBalanced: 'Está a ajudar {{name}} a manter-se seguro e equilibrado.',
     helpingStayBalancedGeneric: 'Está a ajudar o seu filho a manter-se seguro e equilibrado.',
     yourChild: 'O seu filho',

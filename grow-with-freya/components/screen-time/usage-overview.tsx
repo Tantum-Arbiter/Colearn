@@ -50,6 +50,10 @@ export interface UsageOverviewProps {
   dailyTotals: DailyTotalPoint[];
   /** Short day names indexed Sunday-first, already translated. */
   dayNames: string[];
+  /** Set false when the host leads with something of its own -- the glance
+   *  puts an alert header here once the limit is spent, and a cheerful
+   *  "Good afternoon" underneath it reads as two voices at once. */
+  showGreeting?: boolean;
 }
 
 const RANGES = [
@@ -75,6 +79,7 @@ export function UsageOverview({
   dailyLimitSeconds,
   dailyTotals,
   dayNames,
+  showGreeting = true,
 }: UsageOverviewProps) {
   const { t, i18n } = useTranslation();
   const { scaledFontSize } = useAccessibility();
@@ -170,7 +175,8 @@ export function UsageOverview({
   return (
     <View testID="usage-overview">
       {/* Greeting with the planet floating off the trailing edge */}
-      <View style={styles.headerBlock}>
+      {showGreeting && (
+      <View style={styles.headerBlock} testID="usage-greeting">
         <View style={styles.earthWrap} pointerEvents="none">
           <Image
             testID="usage-earth"
@@ -197,6 +203,7 @@ export function UsageOverview({
           </Text>
         </View>
       </View>
+      )}
 
       {/* Child chip */}
       <View style={styles.childCard} testID="usage-child-chip">

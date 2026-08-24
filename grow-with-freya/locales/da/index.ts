@@ -261,6 +261,30 @@ export default {
     backToMenu: 'Tilbage til menu',
   },
   screenTime: {
+    alert: {
+      title: 'Skærmtid-alarm!',
+      usage: 'Du har nået {{used}} af din daglige grænse.',
+      break: 'Lad os tage en rolig pause.',
+      showTips: 'Vis tips',
+    },
+    tips: {
+      title: 'Gør historien levende',
+      intro: 'Historien behøver ikke slutte, når skærmen gør. Her er tre måder at tage den med ind i resten af dagen.',
+      closing: 'En historie, dit barn genfortæller, er en historie, det beholder.',
+      done: 'Færdig',
+      atHome: {
+        title: 'Genfortæl den med legetøj',
+        body: 'Find et par stykker legetøj, og lad dit barn give dem rollerne. Spørg »hvad skete der så?«, og lad det fortælle på sin egen måde — det, barnet ændrer, er det, der betød mest.',
+      },
+      outdoors: {
+        title: 'Tag historien med udenfor',
+        body: 'På jeres næste tur kan I lede efter noget fra historien — en måne, en vandpyt, en venlig hund. Spørg, hvad figuren ville gøre her. Så bliver en almindelig tur et sted, hvor historien bor.',
+      },
+      creative: {
+        title: 'Tegn det bedste sted',
+        body: 'Papir og farver og ét spørgsmål: hvilken del kunne du bedst lide? Tegn den sammen, og lad dit barn fortælle om sin tegning. Det, barnet vælger, siger mere end nogen quiz.',
+      },
+    },
     helpingStayBalanced: 'Du hjælper {{name}} med at være tryg og i balance.',
     helpingStayBalancedGeneric: 'Du hjælper dit barn med at være tryg og i balance.',
     yourChild: 'Dit barn',

@@ -261,6 +261,30 @@ export default {
     backToMenu: 'Wróć do menu',
   },
   screenTime: {
+    alert: {
+      title: 'Uwaga na czas przed ekranem!',
+      usage: 'Osiągnięto {{used}} dziennego limitu.',
+      break: 'Zróbmy spokojną przerwę.',
+      showTips: 'Pokaż wskazówki',
+    },
+    tips: {
+      title: 'Ożyw opowieść',
+      intro: 'Opowieść nie musi kończyć się razem z ekranem. Oto trzy sposoby, by zabrać ją w resztę dnia.',
+      closing: 'Opowieść, którą dziecko opowie po swojemu, zostaje z nim na dłużej.',
+      done: 'Gotowe',
+      atHome: {
+        title: 'Opowiedzcie ją zabawkami',
+        body: 'Zbierzcie kilka zabawek i pozwól dziecku obsadzić je w rolach. Zapytaj „a co było dalej?" i pozwól opowiadać po swojemu — to, co zmieni, znaczyło dla niego najwięcej.',
+      },
+      outdoors: {
+        title: 'Zabierzcie opowieść na dwór',
+        body: 'Na następnym spacerze poszukajcie czegoś z opowieści: księżyca, kałuży, przyjaznego psa. Zapytaj, co zrobiłby tu bohater. Zwykły spacer staje się miejscem, w którym mieszka opowieść.',
+      },
+      creative: {
+        title: 'Narysujcie najlepszy fragment',
+        body: 'Kartka, kredki i jedno pytanie: co podobało ci się najbardziej? Narysujcie to razem, a potem pozwól dziecku opowiedzieć o rysunku. To, co wybierze, mówi więcej niż jakikolwiek test.',
+      },
+    },
     helpingStayBalanced: 'Pomagasz {{name}} zachować bezpieczeństwo i równowagę.',
     helpingStayBalancedGeneric: 'Pomagasz swojemu dziecku zachować bezpieczeństwo i równowagę.',
     yourChild: 'Twoje dziecko',

@@ -261,6 +261,30 @@ export default {
     backToMenu: 'Volver al menú',
   },
   screenTime: {
+    alert: {
+      title: '¡Aviso de tiempo de pantalla!',
+      usage: 'Has alcanzado {{used}} de tu límite diario.',
+      break: 'Tomemos una pausa tranquila.',
+      showTips: 'Ver consejos',
+    },
+    tips: {
+      title: 'Da vida al cuento',
+      intro: 'El cuento no tiene por qué terminar cuando se apaga la pantalla. Aquí tienes tres formas de llevarlo al resto del día.',
+      closing: 'Un cuento que tu hijo vuelve a contar es un cuento que se queda con él.',
+      done: 'Listo',
+      atHome: {
+        title: 'Vuelve a contarlo con juguetes',
+        body: 'Reúne unos juguetes y deja que tu hijo les reparta los papeles. Pregúntale «¿y qué pasó después?» y déjale contarlo a su manera: lo que cambia es lo que más le importó.',
+      },
+      outdoors: {
+        title: 'Saca el cuento a la calle',
+        body: 'En el próximo paseo, buscad algo del cuento: una luna, un charco, un perro simpático. Pregúntale qué haría ahí ese personaje. Así un paseo cualquiera se convierte en un lugar donde vive el cuento.',
+      },
+      creative: {
+        title: 'Dibuja la mejor parte',
+        body: 'Papel, lápices de colores y una pregunta: ¿qué parte te gustó más? Dibujadla juntos y deja que te hable de su dibujo. Lo que elige dice más que cualquier examen.',
+      },
+    },
     helpingStayBalanced: 'Estás ayudando a {{name}} a mantenerse seguro y equilibrado.',
     helpingStayBalancedGeneric: 'Estás ayudando a tu peque a mantenerse seguro y equilibrado.',
     yourChild: 'Tu peque',

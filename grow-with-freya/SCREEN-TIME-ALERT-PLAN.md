@@ -4,7 +4,60 @@ Overhauling the screen-time glance (the window that opens out of the home
 screen's ring) into the alert design, and adding a tips action that shows a
 parent how to carry the story they just read into the real world.
 
-Status: **plan only — nothing below is built yet.**
+Status: **phases 1–3 built.** Phase 4 (sharing with the warning modal) and
+phase 5 (per-story bridges) are still plans. The two open questions the plan
+parked have been answered — see *Decisions taken* below.
+
+---
+
+## Decisions taken
+
+Both open questions below were put to the operator before any of this was
+built. The answers are recorded here because they changed the shape of what
+shipped, not just its styling.
+
+**The alert header shows only when the limit is spent.** The calm state keeps
+the dashboard greeting and gets no alert treatment at all. The mockup's own
+screenshot is the argument: an alert header at 14m of a 1h limit sits directly
+above a banner reading "Great job! You're within today's limit". One of those
+two has to go, and it is not the encouragement.
+
+**"Start Break Now" is gone; "Show Tips" is the single action.** The plan
+flagged that nothing in the codebase implements a break, so the button as
+specified would have closed the window with more ceremony than the X does.
+Rather than ship a no-op, the footer carries one button, and it does the thing
+that is actually worth doing at the end of a session: it opens ways to carry
+the story off the screen.
+
+Because the alert header and the footer belong to the same alert, the tips
+action is only offered in the exceeded state. If tips turn out to be worth
+reaching at any time, the calm state needs its own entry point — that is a
+separate decision, not an oversight.
+
+---
+
+## What shipped
+
+| Phase | Where |
+|---|---|
+| 1 — framed panel | `panelInset` / `panelRadius` / `panelBorderWidth` / `exceededBorder` / `calmBorder` / `exceededGlow` / `calmGlow` in [`constants/screen-time-ring.ts`](constants/screen-time-ring.ts); `screen-time-glance-panel` in [`screen-time-glance.tsx`](components/home/screen-time-glance.tsx) |
+| 2 — alert header | [`components/screen-time/screen-time-alert-header.tsx`](components/screen-time/screen-time-alert-header.tsx); `showGreeting` prop threaded through `ScreenTimeContent` → `UsageOverview` |
+| 3 — tips | [`components/screen-time/real-world-tips.tsx`](components/screen-time/real-world-tips.tsx); `screenTime.alert.*` and `screenTime.tips.*` across all 14 locales |
+
+Two details worth knowing:
+
+- **The usage figure is emphasised without fragmenting the sentence.** The red
+  figure needs its own span, but `"You've reached "` + figure + `" of your
+  daily limit."` bakes English word order into three keys. Instead the whole
+  sentence stays one key, and the header splits the *finished* translation on
+  the value it just interpolated — so a locale can put the figure wherever it
+  belongs. A locale that loses the placeholder still renders the sentence,
+  just without the emphasis.
+- **The tips cards are shaped like `RealWorldAdventure`.** One card per
+  category — at-home, outdoors, creative — reusing the `bridge.*` category
+  labels the warning modal already uses. The copy is generic to stories, but
+  the layout is the one phase 5 needs, so authored per-story bridges can
+  replace the copy without touching the component.
 
 ---
 
@@ -29,7 +82,7 @@ actions, and one new content surface.
 |---|---|
 | Full-bleed red surface, content starts at the greeting | Red **outlined panel** inset from the screen edges, contents inside it |
 | Dashboard greeting ("Good afternoon…") leads | **Alert header** leads: glowing `!` badge, "Screen time alert!", usage line, "Let's take a mindful break." |
-| No actions | Two stacked footer buttons: **Start Break Now**, **Show Tips** |
+| No actions | One footer button: **Show Tips** (the design's second button, *Start Break Now*, was dropped — see *Decisions taken*) |
 | Close button floats over the earth art | Close sits in the panel's own top-right corner |
 
 ---
@@ -114,7 +167,7 @@ Phase 3 ships the first. Phase 5 sketches the second.
 
 Each phase is independently shippable and independently testable.
 
-### Phase 1 — The framed red window
+### Phase 1 — The framed red window ✅ built
 
 The panel, not the content.
 
@@ -131,7 +184,7 @@ exceeded; reveal geometry is untouched (the existing glance tests should keep
 passing without edits — if they need editing, that is a signal the reveal
 regressed).
 
-### Phase 2 — The alert header
+### Phase 2 — The alert header ✅ built
 
 - New `ScreenTimeAlertHeader`: glowing `!` badge with its halo and radiating
   arcs, title, usage line with the figure emphasised in red, and the "mindful
@@ -147,28 +200,25 @@ regressed).
 **Tests:** header renders above the child chip; usage figure matches the ring;
 the dashboard greeting is gone from the glance but still present by default.
 
-**Open question for you:** the mockup's header says "You've reached 14m of your
-daily limit" while the banner below still reads "Great job! You're within
-today's limit" — the screenshot is 14m of a 1h limit, so it is not actually an
-alert state. Should the alert header show only when over limit (calm state
-keeps the greeting), or always? I would show it only when over limit, and let
-the calm state stay as it is — a full alert treatment on a child who has used
-14 of 60 minutes contradicts the encouragement banner directly underneath it.
+**Answered:** the header shows only when over limit; the calm state keeps the
+greeting. See *Decisions taken*.
 
-### Phase 3 — Footer actions and the tips sheet
+### Phase 3 — Footer action and the tips sheet ✅ built
 
-- Two stacked buttons pinned to the panel's bottom: **Start Break Now** (solid
-  coral) and **Show Tips** (outlined).
-- Show Tips opens a tips surface listing the three generic story tips from
-  `screenTimeWarning.suggestions.stories`, styled as cards rather than bullets.
-- Start Break Now: closes the glance. **Open question:** should it do anything
-  else — a timer, a lock, a "back in 10 minutes" state? Right now nothing in
-  the codebase implements a break, so as specified this button closes the
-  window with more ceremony than the X does. Worth deciding before it ships.
+- One solid coral button pinned to the panel's bottom: **Show Tips**. The
+  design's *Start Break Now* was dropped rather than shipped as a no-op — see
+  *Decisions taken*.
+- Show Tips replaces the dashboard inside the panel with a tips surface: three
+  cards, one per real-world category, each with a headline and a body that
+  says how to actually do it. The copy is new (`screenTime.tips.*`) rather
+  than the one-line `screenTimeWarning.suggestions.stories` entries, because
+  the ask was for detail a parent can act on.
+- Done returns to the dashboard; it does not close the window.
 
-**Tests:** both buttons render; Show Tips reveals all three tips; tips come
-from the translation keys rather than hardcoded strings; Start Break Now
-closes.
+**Tests:** the button renders only in the alert state; Show Tips reveals all
+three cards over the dashboard; every card has a body as well as a headline;
+the categories reuse the `bridge.*` labels; Done comes back rather than
+closing.
 
 ### Phase 4 — Share with the warning modal *(depends on the decision above)*
 
@@ -196,17 +246,17 @@ Only worth starting once phases 1–3 are in and the shape is settled.
 ## Risks
 
 - **Two components, one message.** Covered above; phase 4 is the answer.
-- **A full-bleed alert for a child who is fine.** The mockup's state is
-  contradictory (see phase 2's open question). Getting this wrong makes the app
-  feel like it is telling parents off, against the calm-UX principle in
-  [`CLAUDE.md`](../CLAUDE.md).
+- **A full-bleed alert for a child who is fine.** Closed: the alert only ever
+  renders in the exceeded state, so the calm glance is unchanged from what it
+  was. This was the risk most likely to make the app feel like it is telling
+  parents off, against the calm-UX principle in [`CLAUDE.md`](../CLAUDE.md).
 - **Tips that do not know the story.** The generic three are good, honest
   advice and read fine — but "the story you just read" is doing work the app
   cannot currently back up. Acceptable as written; phase 5 is what makes it
   specific.
 - **Translation load.** Phases 2–3 add roughly 8–10 keys × 14 locales. Phase 5
   is far larger and should be costed separately.
-- **Start Break Now may be a no-op.** Flagged in phase 3.
+- **Start Break Now may be a no-op.** Closed by dropping the button.
 
 ---
 

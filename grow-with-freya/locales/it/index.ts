@@ -261,6 +261,30 @@ export default {
     backToMenu: 'Torna al menu',
   },
   screenTime: {
+    alert: {
+      title: 'Avviso tempo di schermo!',
+      usage: 'Hai raggiunto {{used}} del tuo limite giornaliero.',
+      break: 'Prendiamoci una pausa serena.',
+      showTips: 'Mostra i consigli',
+    },
+    tips: {
+      title: 'Fai vivere la storia',
+      intro: 'La storia non deve finire quando si spegne lo schermo. Ecco tre modi per portarla nel resto della giornata.',
+      closing: 'Una storia che vostro figlio racconta di nuovo è una storia che gli resta.',
+      done: 'Fatto',
+      atHome: {
+        title: 'Raccontatela con i giocattoli',
+        body: 'Prendete qualche giocattolo e lasciate che vostro figlio assegni le parti. Chiedetegli «e poi cosa è successo?» e lasciate che la racconti a modo suo: ciò che cambia è ciò che gli è rimasto di più.',
+      },
+      outdoors: {
+        title: 'Portate la storia fuori',
+        body: 'Alla prossima passeggiata cercate qualcosa della storia: una luna, una pozzanghera, un cane gentile. Chiedete cosa farebbe qui quel personaggio. Una passeggiata qualunque diventa un posto in cui la storia abita.',
+      },
+      creative: {
+        title: 'Disegnate il momento più bello',
+        body: 'Carta, pastelli e una domanda: quale parte ti è piaciuta di più? Disegnatela insieme, poi lasciate che vostro figlio vi racconti il suo disegno. Quello che sceglie dice più di qualsiasi domanda.',
+      },
+    },
     helpingStayBalanced: 'Stai aiutando {{name}} a restare al sicuro ed equilibrato.',
     helpingStayBalancedGeneric: 'Stai aiutando il tuo bambino a restare al sicuro ed equilibrato.',
     yourChild: 'Il tuo bambino',
