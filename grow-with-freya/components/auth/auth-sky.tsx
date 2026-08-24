@@ -70,6 +70,10 @@ export function AuthSky({ stars, children }: AuthSkyProps) {
 const styles = StyleSheet.create({
   gradient: {
     flex: 1,
+    // the card caps its height on a tablet; centring puts the spare space
+    // above and below it rather than all at the bottom. A phone's card fills
+    // the screen, so there is no spare space and this does nothing.
+    justifyContent: 'center',
   },
   starsContainer: {
     ...StyleSheet.absoluteFillObject,

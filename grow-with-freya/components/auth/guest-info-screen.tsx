@@ -12,13 +12,13 @@ import { useAccessibility } from '@/hooks/use-accessibility';
 import { Fonts } from '@/constants/theme';
 import { GOLD, TEXT_MUTED } from '../onboarding/onboarding-theme';
 import {
-  CARD_INSET,
   CARD_PADDING,
   CARD_V_PADDING,
   CARD_RADIUS,
   CREAM,
   PANEL_BG,
   PANEL_BORDER,
+  useAuthLayout,
 } from './auth-theme';
 
 const MISSING_KEYS = ['syncProgress', 'multiDevice', 'cloudBackup', 'personalised'] as const;
@@ -45,6 +45,7 @@ export function GuestInfoScreen({ onContinue, onBack }: GuestInfoScreenProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { scaledFontSize } = useAccessibility();
+  const { cardWidth, cardMaxHeight } = useAuthLayout();
 
   const handleBack = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -65,7 +66,12 @@ export function GuestInfoScreen({ onContinue, onBack }: GuestInfoScreenProps) {
       <View
         style={[
           styles.card,
-          { marginTop: insets.top + 8, marginBottom: insets.bottom + 8 },
+          {
+            width: cardWidth,
+            maxHeight: cardMaxHeight,
+            marginTop: insets.top + 8,
+            marginBottom: insets.bottom + 8,
+          },
         ]}
         testID="guest-info-card"
       >
@@ -177,7 +183,9 @@ const styles = StyleSheet.create({
   // translucent over the full-bleed art, matching the login card's weight
   card: {
     flex: 1,
-    marginHorizontal: CARD_INSET,
+    // same capped, centred panel as the login card behind it
+    alignSelf: 'center',
+    maxWidth: '100%',
     paddingHorizontal: CARD_PADDING,
     paddingVertical: CARD_V_PADDING,
     borderRadius: CARD_RADIUS,

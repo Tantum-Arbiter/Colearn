@@ -39,11 +39,11 @@ import { Fonts } from '@/constants/theme';
 import { GOLD, TEXT_MUTED } from '../onboarding/onboarding-theme';
 import {
   IS_TABLET,
-  CARD_INSET,
   CARD_PADDING,
   CARD_V_PADDING,
   CARD_RADIUS,
   CONTENT_WIDTH,
+  useAuthLayout,
   CREAM,
   PANEL_BG,
   PANEL_BORDER,
@@ -107,6 +107,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledButtonSize } = useAccessibility();
+  const { cardWidth, cardMaxHeight } = useAuthLayout();
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isAppleLoading, setIsAppleLoading] = useState(false);
   const [showReturningMenu, setShowReturningMenu] = useState(false);
@@ -482,7 +483,12 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
           style={[
             styles.card,
             cardAnimatedStyle,
-            { marginTop: insets.top + 8, marginBottom: insets.bottom + 8 },
+            {
+              width: cardWidth,
+              maxHeight: cardMaxHeight,
+              marginTop: insets.top + 8,
+              marginBottom: insets.bottom + 8,
+            },
           ]}
         >
           <Animated.View
@@ -685,7 +691,10 @@ const styles = StyleSheet.create({
   },
   card: {
     flex: 1,
-    marginHorizontal: CARD_INSET,
+    // the width comes from useAuthLayout, capped so the sign-in stack is not
+    // simply as wide as the tablet; centring is what keeps it a panel
+    alignSelf: 'center',
+    maxWidth: '100%',
     paddingHorizontal: CARD_PADDING,
     paddingVertical: CARD_V_PADDING,
     borderRadius: CARD_RADIUS,
