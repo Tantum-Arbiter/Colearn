@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, Dimensions, Platform, BackHandler } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Dimensions, Modal } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -114,17 +114,6 @@ export function ScheduleWindow({ visible, onClose, onReminderChange }: ScheduleW
     onReminderChange?.();
   }, [onReminderChange]);
 
-  // Android's back key steps through the sheet before it reaches the host, so
-  // the parent does not lose their place on the dashboard
-  useEffect(() => {
-    if (!mounted || Platform.OS !== 'android') return;
-    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
-      handleBack();
-      return true;
-    });
-    return () => subscription.remove();
-  }, [mounted, handleBack]);
-
   const sheetStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
   }));
@@ -133,12 +122,17 @@ export function ScheduleWindow({ visible, onClose, onReminderChange }: ScheduleW
     opacity: backdropOpacity.value,
   }));
 
-  if (!mounted) return null;
-
   const onList = page === 'list';
 
   return (
-    <View style={StyleSheet.absoluteFill} testID="schedule-window">
+    <Modal
+      testID="schedule-window"
+      visible={mounted}
+      transparent
+      animationType="none"
+      statusBarTranslucent
+      onRequestClose={handleBack}
+    >
       <Pressable
         testID="schedule-window-backdrop"
         accessibilityRole="button"
@@ -213,7 +207,7 @@ export function ScheduleWindow({ visible, onClose, onReminderChange }: ScheduleW
           </View>
         </LinearGradient>
       </Animated.View>
-    </View>
+    </Modal>
   );
 }
 

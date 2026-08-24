@@ -37,6 +37,29 @@ the bottom on `Easing.out(Easing.cubic)`, a fading backdrop, light haptics on
 open and close. The card language matches `usage-overview.tsx`: `CARD_BG`,
 `CARD_BORDER`, radius 20, `Fonts.rounded`.
 
+### Why it renders through `Modal`
+
+`ScheduleWindow`'s root is React Native's `Modal` (`transparent`, own reanimated
+slide inside it, `animationType="none"`), not a plain absolutely-positioned
+`View`. The first version used a plain `View` with a high `zIndex`, which
+worked in the standalone `ScreenTimeScreen` but rendered invisibly — the sheet's
+own header, grabber and close button all present in the tree, none of them
+visible — once opened from Account → Screen Time. `zIndex` in React Native only
+orders siblings within the same stacking context; nested inside
+`account-screen.tsx`'s `overlayPage` wrapper (`zIndex: 10`), no `zIndex` on the
+sheet itself could out-rank `PageHeader`'s absolutely-positioned parts
+(`zIndex: 20–30`), which live outside that wrapper entirely. `Modal` sidesteps
+the whole question — it is its own native layer, immune to any host's stacking
+context — and matches the precedent already in this codebase
+(`components/home/screen-time-glance.tsx` wraps `ScreenTimeContent` in one for
+exactly this reason). Caught by opening the window from Account → Screen Time
+in the simulator, not by a test — see the testing note below for why.
+
+Android's hardware back key is `Modal`'s own `onRequestClose`, not a manual
+`BackHandler` listener — steps the sheet back a page before it reaches the
+host, same as before, just via the platform-provided hook instead of a
+hand-rolled one.
+
 ## State that has to survive
 
 The reminders flow is not self-contained; it feeds the dashboard's save bar.
@@ -45,9 +68,9 @@ The reminders flow is not self-contained; it feeds the dashboard's save bar.
 |---|---|
 | Unsaved-change detection | `onReminderChange` bumps `reminderChangeCounter`, which re-runs the `hasUnsavedChanges` effect |
 | Discard on back | `reminderService.revertChanges()` from the dashboard's existing discard path |
-| Commit / backend sync | The dashboard's save button, unchanged |
+| Commit / backend sync | The dashboard's save button, unchanged. Account screen's own exit-commit re-reads `reminderService.hasUnsavedChanges()` live rather than trusting the cached component state, and only syncs to the backend when `ApiClient.isAuthenticated()` |
 | List refresh after create | `CreateReminderContent.onSuccess` returns to the list and bumps the counter |
-| Visibility gating | `isActive` on `CustomRemindersContent` — it only loads when shown, so it is passed `visible && page === 'list'` |
+| Visibility gating | `Modal`'s own `visible` prop — it does not mount `CustomRemindersContent` / `CreateReminderContent` at all while closed, so no separate `isActive` wiring is needed |
 
 ## Phases
 
@@ -67,6 +90,40 @@ All three are done.
 `ScreenTimeTipsOverlay` was left alone deliberately: its steps are centred cards
 rather than callouts anchored to a control, and the `custom_reminders` step's
 copy still describes what the window does.
+
+There is a third host: `components/home/screen-time-glance.tsx` renders
+`ScreenTimeContent` inside its own `Modal` for the home screen's quick-glance
+view. It never wired the old `onNavigateToReminders` prop, so before this
+change the schedule section was invisible there entirely. It is unconditional
+now, matching the other two hosts, and reaching it is no worse than the
+pre-existing behaviour of that screen's own settings toggles — neither has a
+save step of its own; both rely on whatever the parent does next (typically a
+visit to Account → Screen Time) to actually persist. Nested `Modal`s are a
+known-supported RN pattern and this one is exercised in the simulator without
+issue.
+
+## Testing note: `Modal` under this repo's Jest setup
+
+React Native's real `Modal`, when `visible`, throws inside this repo's test
+environment — deep in react-test-renderer's ref handling, unrelated to
+anything `ScheduleWindow` does. `jest.mock('react-native', factory)` does not
+fix it: registering it per-test-file silently loses to the suite-wide
+`react-native` mock already in `jest.setup.js` (confirmed with a
+`console.log` inside the factory that never fired). The fix that works is
+direct mutation of the already-resolved module object:
+
+```ts
+import * as RN from 'react-native';
+const RealModal = RN.Modal;
+beforeAll(() => { (RN as any).Modal = MockModal; });
+afterAll(() => { (RN as any).Modal = RealModal; });
+```
+
+Every test file that renders `ScheduleWindow` (`schedule-window.test.tsx`,
+`screen-time-screen.test.tsx`) does this. `MockModal`'s own element still
+carries whatever `testID` was passed to it even while `visible={false}` (the
+prop belongs to the element, not to what it renders), so a `testID` query has
+to exclude `MockModal`'s own fiber explicitly or "closed" will read as "found".
 
 ## What went with them
 

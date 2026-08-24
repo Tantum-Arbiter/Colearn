@@ -2,20 +2,57 @@
  * Tests for the schedule window -- the reminders flow as a sheet over the
  * Screen Time dashboard.
  *
- * What matters here is the navigation the sheet owns: which page is showing,
- * which control steps back where, and that every reminder change is reported
- * to the host so its unsaved-changes bar stays honest.
+ * It renders through React Native's Modal, which is its own native layer
+ * immune to any zIndex/stacking context a host might impose (this replaced an
+ * earlier plain-View implementation that rendered invisibly when nested
+ * inside a host with its own high-zIndex header -- see account-screen.tsx's
+ * PageHeader). Modal isn't safely renderable under this repo's jsdom test
+ * environment when visible (react-native-web's real Modal throws deep inside
+ * react-test-renderer's ref handling), so it is patched here to a plain
+ * conditional View that preserves the same visible/testID/onRequestClose
+ * contract -- the point of these tests is the navigation and animation logic
+ * ScheduleWindow owns, not Modal's own internals.
+ *
+ * The patch mutates the already-resolved `react-native` module object rather
+ * than using `jest.mock('react-native', ...)`: this file's own jest.mock for
+ * that module never took effect (verified by a console.log inside the
+ * factory that never fired) because jest.setup.js already registers a
+ * `react-native` mock for the whole suite, and a second per-file
+ * registration of the same module specifier was silently losing to it in
+ * this codebase's setup. Direct mutation sidesteps that registration
+ * entirely and is confirmed to work.
+ *
+ * What matters here is: which page is showing, which control steps back
+ * where, that every reminder change is reported to the host so its
+ * unsaved-changes bar stays honest, and that the actual animated values move
+ * where they should rather than just "some withTiming call happened".
  */
 
 import React from 'react';
 import { render, fireEvent, act } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
+import * as RN from 'react-native';
 
-import { Platform, BackHandler } from 'react-native';
-
-import { withTiming } from 'react-native-reanimated';
+import { useSharedValue, withTiming } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 
 import { ScheduleWindow } from '@/components/screen-time/schedule-window';
+
+const RealModal = RN.Modal;
+const MockModal = ({ visible, testID, onRequestClose, children }: any) =>
+  visible ? (
+    <RN.View testID={testID} {...{ onRequestCloseForTest: onRequestClose }}>
+      {children}
+    </RN.View>
+  ) : null;
+
+beforeAll(() => {
+  (RN as any).Modal = MockModal;
+});
+
+afterAll(() => {
+  (RN as any).Modal = RealModal;
+});
 
 const mockUseReducedMotion = jest.fn(() => false);
 jest.mock('@/hooks/use-reduced-motion', () => ({
@@ -83,8 +120,11 @@ jest.mock('react-native-reanimated', () => {
 jest.mock('@/components/reminders', () => {
   const { Pressable, Text, View } = require('react-native');
   return {
-    CustomRemindersContent: ({ onCreateNew, onReminderChange }: any) => (
-      <View testID="reminders-list">
+    CustomRemindersContent: ({ onCreateNew, onReminderChange, refreshTrigger }: any) => (
+      // refreshTrigger is surfaced as a prop on the host node purely so tests
+      // can read it back -- CustomRemindersContent's real implementation
+      // reacts to it internally instead
+      <View testID="reminders-list" refreshTrigger={refreshTrigger}>
         <Pressable testID="list-create-new" onPress={onCreateNew}>
           <Text>new</Text>
         </Pressable>
@@ -106,12 +146,14 @@ jest.mock('@/components/reminders', () => {
   };
 });
 
-function setPlatform(os: string) {
-  (Platform as unknown as { OS: string }).OS = os;
-}
-
+// excludes MockModal's own fiber: it carries a `testID` prop unrelated to
+// what it renders (Modal's element is always present in the tree; its
+// children are not), so a naive match would find "schedule-window" even
+// while closed
 function findByTestId(tree: ReturnType<typeof render>, testID: string) {
-  return tree.UNSAFE_root.findAll((n: any) => n.props.testID === testID);
+  return tree.UNSAFE_root.findAll(
+    (n: any) => n.props.testID === testID && n.type !== MockModal
+  );
 }
 
 function press(tree: ReturnType<typeof render>, testID: string) {
@@ -124,7 +166,33 @@ function renderWindow(props: Partial<React.ComponentProps<typeof ScheduleWindow>
   );
 }
 
+/** Android's back key -- routed through the mocked Modal's onRequestClose. */
+function pressHardwareBack(tree: ReturnType<typeof render>) {
+  const modal = findByTestId(tree, 'schedule-window')[0];
+  act(() => {
+    modal.props.onRequestCloseForTest();
+  });
+}
+
+/**
+ * useSharedValue is called in a fixed order (translateY, then backdropOpacity)
+ * on every render. Reading the values the LAST render's calls produced proves
+ * what the animation actually did, rather than just that withTiming ran.
+ */
+function lastSharedValues() {
+  const calls = (useSharedValue as jest.Mock).mock.results;
+  return {
+    translateY: calls[calls.length - 2].value,
+    backdropOpacity: calls[calls.length - 1].value,
+  };
+}
+
 describe('ScheduleWindow', () => {
+  beforeEach(() => {
+    (useSharedValue as jest.Mock).mockClear();
+    (withTiming as jest.Mock).mockClear();
+  });
+
   it('renders nothing while closed', () => {
     const tree = renderWindow({ visible: false });
 
@@ -163,6 +231,7 @@ describe('ScheduleWindow', () => {
       press(tree, 'list-create-new');
 
       expect(findByTestId(tree, 'reminders-create').length).toBeGreaterThan(0);
+      expect(findByTestId(tree, 'reminders-list')).toHaveLength(0);
     });
 
     it('retitles and hides the new-reminder action', () => {
@@ -188,7 +257,7 @@ describe('ScheduleWindow', () => {
       expect(onClose).not.toHaveBeenCalled();
     });
 
-    it('returns to the list from the create page\'s own back', () => {
+    it("returns to the list from the create page's own back", () => {
       const tree = renderWindow();
 
       press(tree, 'schedule-window-new');
@@ -214,6 +283,37 @@ describe('ScheduleWindow', () => {
 
       expect(onClose).toHaveBeenCalledTimes(1);
     });
+
+    it('gives a light haptic tap when closing', () => {
+      (Haptics.impactAsync as jest.Mock).mockClear();
+      const tree = renderWindow();
+
+      press(tree, 'schedule-window-back');
+
+      expect(Haptics.impactAsync).toHaveBeenCalledWith(Haptics.ImpactFeedbackStyle.Light);
+    });
+  });
+
+  describe("Android's hardware back key (Modal's onRequestClose)", () => {
+    it('closes the window from the list', () => {
+      const onClose = jest.fn();
+      const tree = renderWindow({ onClose });
+
+      pressHardwareBack(tree);
+
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it('steps from the create page back to the list without closing', () => {
+      const onClose = jest.fn();
+      const tree = renderWindow({ onClose });
+
+      press(tree, 'schedule-window-new');
+      pressHardwareBack(tree);
+
+      expect(findByTestId(tree, 'reminders-list').length).toBeGreaterThan(0);
+      expect(onClose).not.toHaveBeenCalled();
+    });
   });
 
   describe('reporting changes to the host', () => {
@@ -235,6 +335,18 @@ describe('ScheduleWindow', () => {
 
       expect(onReminderChange).toHaveBeenCalledTimes(1);
       expect(findByTestId(tree, 'reminders-list').length).toBeGreaterThan(0);
+    });
+
+    it('bumps the reminders list refresh trigger, not just the host callback', () => {
+      // CustomRemindersContent's own re-fetch is driven by refreshTrigger
+      // changing, independent of whatever the host does with onReminderChange
+      const tree = renderWindow({ onReminderChange: undefined });
+
+      const before = findByTestId(tree, 'reminders-list')[0].props.refreshTrigger;
+      press(tree, 'list-change');
+      const after = findByTestId(tree, 'reminders-list')[0].props.refreshTrigger;
+
+      expect(after).toBe(before + 1);
     });
 
     it('survives a host that passes no change handler', () => {
@@ -263,72 +375,6 @@ describe('ScheduleWindow', () => {
 
     expect(findByTestId(tree, 'reminders-list').length).toBeGreaterThan(0);
   });
-  describe('Android hardware back', () => {
-    let realOS: string;
-    let handlers: (() => boolean)[];
-    let removeSpy: jest.Mock;
-
-    beforeEach(() => {
-      realOS = Platform.OS;
-      // the hardware key only exists on android, and the property is writable
-      setPlatform('android');
-      handlers = [];
-      removeSpy = jest.fn();
-      jest.spyOn(BackHandler, 'addEventListener').mockImplementation(((_event: string, handler: any) => {
-        handlers.push(handler);
-        return { remove: removeSpy };
-      }) as any);
-    });
-
-    afterEach(() => {
-      setPlatform(realOS);
-      jest.restoreAllMocks();
-    });
-
-    // the key fires outside React's event system, so the state it sets has to
-    // be flushed by hand
-    const back = () => {
-      let handled = false;
-      act(() => {
-        handled = handlers[handlers.length - 1]();
-      });
-      return handled;
-    };
-
-    it('closes the window from the list', () => {
-      const onClose = jest.fn();
-      renderWindow({ onClose });
-
-      expect(back()).toBe(true);
-      expect(onClose).toHaveBeenCalledTimes(1);
-    });
-
-    it('steps from the create page back to the list without closing', () => {
-      const onClose = jest.fn();
-      const tree = renderWindow({ onClose });
-
-      press(tree, 'schedule-window-new');
-      expect(back()).toBe(true);
-
-      expect(findByTestId(tree, 'reminders-list').length).toBeGreaterThan(0);
-      expect(onClose).not.toHaveBeenCalled();
-    });
-
-    it('lets the key through to the host while the window is closed', () => {
-      renderWindow({ visible: false });
-
-      expect(handlers).toHaveLength(0);
-    });
-
-    it('releases the key when the window closes', () => {
-      const tree = renderWindow();
-      expect(handlers.length).toBeGreaterThan(0);
-
-      tree.rerender(<ScheduleWindow visible={false} onClose={jest.fn()} />);
-
-      expect(removeSpy).toHaveBeenCalled();
-    });
-  });
 
   describe('reduced motion', () => {
     afterEach(() => {
@@ -336,21 +382,24 @@ describe('ScheduleWindow', () => {
     });
 
     it('slides the sheet when motion is welcome', () => {
-      (withTiming as jest.Mock).mockClear();
-
       renderWindow();
 
       expect(withTiming).toHaveBeenCalled();
+      // both the sheet and the backdrop should have animated to their open values
+      const { translateY, backdropOpacity } = lastSharedValues();
+      expect(translateY.value).toBe(0);
+      expect(backdropOpacity.value).toBe(1);
     });
 
-    it('places the sheet without sliding it', () => {
+    it('places the sheet at its open values without animating', () => {
       mockUseReducedMotion.mockReturnValue(true);
-      (withTiming as jest.Mock).mockClear();
 
       const tree = renderWindow();
 
       expect(withTiming).not.toHaveBeenCalled();
-      expect(findByTestId(tree, 'schedule-window').length).toBeGreaterThan(0);
+      const { translateY, backdropOpacity } = lastSharedValues();
+      expect(translateY.value).toBe(0);
+      expect(backdropOpacity.value).toBe(1);
       expect(findByTestId(tree, 'reminders-list').length).toBeGreaterThan(0);
     });
 

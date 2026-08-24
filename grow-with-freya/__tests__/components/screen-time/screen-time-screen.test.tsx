@@ -1,6 +1,23 @@
 import React from 'react';
 import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 import { Alert } from 'react-native';
+import * as RN from 'react-native';
+
+// ScheduleWindow renders through React Native's real Modal, which throws in
+// this jsdom test environment when visible (see schedule-window.test.tsx for
+// the full explanation) -- patched to a plain conditional View for every test
+// in this file, the same way schedule-window.test.tsx patches it in isolation.
+const RealModal = RN.Modal;
+const MockScheduleModal = ({ visible, testID, children }: any) =>
+  visible ? <RN.View testID={testID}>{children}</RN.View> : null;
+
+beforeAll(() => {
+  (RN as any).Modal = MockScheduleModal;
+});
+
+afterAll(() => {
+  (RN as any).Modal = RealModal;
+});
 import { ScreenTimeScreen, ScreenTimeContent } from '../../../components/screen-time/screen-time-screen';
 import { ScreenTimeProvider } from '../../../components/screen-time/screen-time-provider';
 import { screenToActivityType } from '../../../components/screen-time/screen-time-provider';
@@ -225,9 +242,13 @@ describe('ScreenTimeScreen', () => {
   });
 
   // testID lands as data-testid under react-native-web, so query the tree directly
+  // MockScheduleModal's own fiber is excluded: it carries testID="schedule-window"
+  // regardless of visible, since that prop is passed to the element itself, not
+  // to what it renders -- a naive match would find the window even while closed.
   const byTestId = (tree: ReturnType<typeof render>, testID: string) =>
     tree.UNSAFE_root.findAll(
-      (n: { props: Record<string, unknown> }) => n.props.testID === testID
+      (n: { props: Record<string, unknown>; type: unknown }) =>
+        n.props.testID === testID && n.type !== MockScheduleModal
     );
 
   const renderScreen = () =>
@@ -486,6 +507,24 @@ describe('ScreenTimeScreen', () => {
       );
     });
 
+    it("reflects the parent's real reminders in the callout, not the empty pitch", async () => {
+      // proves the fetched stats actually reach the rendered card -- not just
+      // that a testID for it exists
+      (reminderService.getReminderStats as jest.Mock).mockResolvedValueOnce({
+        totalReminders: 2,
+        activeReminders: 2,
+        upcomingToday: [],
+      });
+
+      const tree = renderScreen();
+
+      await waitFor(() => {
+        const body = JSON.stringify(tree.toJSON());
+        expect(body).toContain('screenTime.scheduleActiveTitle');
+        expect(body).toContain('count:2');
+      });
+    });
+
     it('opens the schedule as a window over the dashboard', async () => {
       const tree = renderScreen();
       await waitFor(() =>
@@ -726,9 +765,13 @@ describe('ScreenTimeScreen', () => {
 
 // ─── ScreenTimeContent (the home-screen glance body) ────────────────────────
 describe('ScreenTimeContent', () => {
+  // MockScheduleModal's own fiber is excluded: it carries testID="schedule-window"
+  // regardless of visible, since that prop is passed to the element itself, not
+  // to what it renders -- a naive match would find the window even while closed.
   const byTestId = (tree: ReturnType<typeof render>, testID: string) =>
     tree.UNSAFE_root.findAll(
-      (n: { props: Record<string, unknown> }) => n.props.testID === testID
+      (n: { props: Record<string, unknown>; type: unknown }) =>
+        n.props.testID === testID && n.type !== MockScheduleModal
     );
 
   const contentService = {
@@ -811,6 +854,22 @@ describe('ScreenTimeContent', () => {
 
     expect(byTestId(tree, 'content-reminders').length).toBeGreaterThan(0);
     expect(byTestId(tree, 'schedule-callout-cta').length).toBeGreaterThan(0);
+  });
+
+  it("reflects the parent's real reminders in the callout, not the empty pitch", async () => {
+    (reminderService.getReminderStats as jest.Mock).mockResolvedValueOnce({
+      totalReminders: 1,
+      activeReminders: 1,
+      upcomingToday: [],
+    });
+
+    const tree = render(<ScreenTimeContent />);
+
+    await waitFor(() => {
+      const body = JSON.stringify(tree.toJSON());
+      expect(body).toContain('screenTime.scheduleActiveTitle');
+      expect(body).toContain('count:1');
+    });
   });
 
   it('opens the schedule as a window over the glance', async () => {

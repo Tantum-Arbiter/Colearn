@@ -53,6 +53,12 @@ function toStr(tree: ReturnType<typeof render>) {
 }
 
 describe('pickNextReminder', () => {
+  it('excludes a reminder firing at exactly this minute -- only what is still ahead counts', () => {
+    const next = pickNextReminder([reminder({ time: '09:00' })], '09:00');
+
+    expect(next).toBeNull();
+  });
+
   it('takes the earliest reminder still ahead', () => {
     const next = pickNextReminder(
       [reminder({ id: 'late', time: '17:00' }), reminder({ id: 'soon', time: '14:30' })],
@@ -117,6 +123,22 @@ describe('ScheduleCallout', () => {
       totalReminders: 3,
       activeReminders: 3,
       upcomingToday: [reminder({ time: '08:00' }), reminder({ id: 'r2', time: '18:45' })],
+    });
+
+    // a reminder can be created and then paused, rather than deleted -- it
+    // should stay visible and manageable, not silently drop the parent back
+    // into the "create a schedule" pitch as if nothing existed
+    it('counts every created reminder, not only the active ones', () => {
+      const paused = stats({
+        totalReminders: 2,
+        activeReminders: 0,
+        upcomingToday: [],
+      });
+
+      const body = toStr(render(<ScheduleCallout stats={paused} onOpen={jest.fn()} />));
+
+      expect(body).toContain('screenTime.scheduleActiveTitle');
+      expect(body).toContain('count:2');
     });
 
     beforeEach(() => {

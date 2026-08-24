@@ -492,7 +492,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
 // Content-only component for embedding in horizontal scroll
 export function ScreenTimeContent({ paddingTop = 0, onReminderChange }: ScreenTimeContentProps) {
   const { t } = useTranslation();
-  const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
+  const { scaledFontSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
   const {
     childAgeInMonths,
     screenTimeEnabled,

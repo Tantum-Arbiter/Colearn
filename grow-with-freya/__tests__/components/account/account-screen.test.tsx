@@ -8,7 +8,7 @@
  */
 
 import React from 'react';
-import { render, fireEvent, act } from '@testing-library/react-native';
+import { render, fireEvent, act, waitFor } from '@testing-library/react-native';
 
 import { AccountScreen } from '@/components/account/account-screen';
 import { reminderService } from '@/services/reminder-service';
@@ -235,6 +235,71 @@ describe('AccountScreen navigation', () => {
   });
 
   describe('unsaved reminder changes', () => {
+    it('re-checks the live service rather than trusting the cached state it captured', () => {
+      // the outer gate is a snapshot taken when the counter last bumped; the
+      // actual commit re-reads the service fresh -- if that live read has
+      // since gone back to false, nothing should be committed even though
+      // the cached snapshot still says there was a change
+      const { tree, onBack } = renderAccount();
+      press(tree, 'account-screen-time');
+
+      (reminderService.hasUnsavedChanges as jest.Mock).mockReturnValue(true);
+      press(tree, 'content-change'); // snapshot captured as true
+
+      (reminderService.hasUnsavedChanges as jest.Mock).mockReturnValue(false); // live state now false
+
+      press(tree, 'header-back');
+      settleSlide();
+      press(tree, 'header-back');
+
+      expect(reminderService.commitChanges).not.toHaveBeenCalled();
+      expect(onBack).toHaveBeenCalledTimes(1);
+    });
+
+    it('syncs to the backend when the parent is signed in', async () => {
+      (ApiClient.isAuthenticated as jest.Mock).mockResolvedValue(true);
+      const { tree, onBack } = renderAccount();
+      press(tree, 'account-screen-time');
+
+      (reminderService.hasUnsavedChanges as jest.Mock).mockReturnValue(true);
+      press(tree, 'content-change');
+
+      press(tree, 'header-back');
+      settleSlide();
+      press(tree, 'header-back');
+
+      // the sync is a fire-and-forget async IIFE -- fake timers don't advance
+      // its microtask chain on their own, so flush it by hand
+      await act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+
+      expect(reminderService.syncToBackend).toHaveBeenCalledTimes(1);
+      expect(onBack).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not sync to the backend when the parent is not signed in', async () => {
+      (ApiClient.isAuthenticated as jest.Mock).mockResolvedValue(false);
+      const { tree } = renderAccount();
+      press(tree, 'account-screen-time');
+
+      (reminderService.hasUnsavedChanges as jest.Mock).mockReturnValue(true);
+      press(tree, 'content-change');
+
+      press(tree, 'header-back');
+      settleSlide();
+      press(tree, 'header-back');
+
+      await act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+
+      expect(ApiClient.isAuthenticated).toHaveBeenCalled();
+      expect(reminderService.syncToBackend).not.toHaveBeenCalled();
+    });
+
     it('commits them when the parent leaves', () => {
       const { tree, onBack } = renderAccount();
       press(tree, 'account-screen-time');
