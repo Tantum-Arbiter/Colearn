@@ -1,13 +1,16 @@
-import React, { memo, useCallback, useEffect, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, Modal, Pressable, ScrollView, StyleSheet, Dimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
+  useAnimatedProps,
   withDelay,
   withTiming,
+  withSequence,
   runOnJS,
   Easing,
 } from 'react-native-reanimated';
+import Svg, { Circle, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,13 +21,17 @@ import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { TABLET_CONTENT_MAX_WIDTH } from '@/hooks/use-accessibility';
 import { Fonts } from '@/constants/theme';
 import { type TimeOfDay } from '@/constants/home-scene';
-import { SCREEN_TIME_GLANCE, revealDiameter } from '@/constants/screen-time-ring';
+import { SCREEN_TIME_GLANCE, panelBorderPath } from '@/constants/screen-time-ring';
+
+const AnimatedPath = Animated.createAnimatedComponent(Path);
+
+const SPINNER_BOX = (SCREEN_TIME_GLANCE.spinnerRadius + SCREEN_TIME_GLANCE.spinnerStroke) * 2 + 2;
 
 export interface ScreenTimeGlanceProps {
   visible: boolean;
   timeOfDay: TimeOfDay;
   onClose: () => void;
-  /** Centre of the ring this opened from, so the reveal starts there. Falls
+  /** Centre of the ring this opened from, so the spinner rises there. Falls
    *  back to the middle of the screen when the host cannot say. */
   origin?: { x: number; y: number };
   /** True when the ring is in its over-limit red state -- the window takes
@@ -46,11 +53,15 @@ export interface ScreenTimeGlanceProps {
  * callout and bedtime guidance out, since building a schedule belongs in
  * settings rather than in a glance.
  *
- * The open is a circular reveal from the ring's own centre in the ring's own
- * colour, so it reads as that control growing into a page rather than an
- * unrelated sheet arriving over the top of it. The circle stays full-bleed;
- * what it settles into is an inset, outlined panel, so the ring's colour is
- * left showing as a frame around the page.
+ * The open is a piece of choreography rather than a fade: an echo of the
+ * ring spins up where the parent pressed it, travels to the panel's nearest
+ * corner, draws the border, and only then does the fill fade in and the
+ * content follow. The ring's colour never floods the screen -- everything
+ * outside the border stays a dim night scrim, so the alarm red is contained
+ * inside the frame it drew.
+ *
+ * Closing runs it in reverse register: the content dims, the panel gathers
+ * itself into a water drop, and the drop falls off the bottom of the screen.
  *
  * Once the day's limit is spent the panel leads with an alert header instead
  * of the dashboard greeting, and offers the one action that is actually worth
@@ -73,43 +84,142 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   const [mounted, setMounted] = useState(visible);
   const [tipsOpen, setTipsOpen] = useState(false);
 
-  const reveal = useSharedValue(0);
-  const contentOpacity = useSharedValue(0);
-
   const { width, height } = Dimensions.get('window');
   const centre = origin ?? { x: width / 2, y: height / 2 };
-  const diameter = revealDiameter(centre, width, height);
 
   const surface = exceeded ? SCREEN_TIME_GLANCE.exceededSurface : SCREEN_TIME_GLANCE.calmSurface;
-  const revealColour = exceeded ? SCREEN_TIME_GLANCE.exceededReveal : SCREEN_TIME_GLANCE.calmReveal;
   const panelBorder = exceeded ? SCREEN_TIME_GLANCE.exceededBorder : SCREEN_TIME_GLANCE.calmBorder;
   const panelGlow = exceeded ? SCREEN_TIME_GLANCE.exceededGlow : SCREEN_TIME_GLANCE.calmGlow;
+  const drawStroke = exceeded ? SCREEN_TIME_GLANCE.exceededDraw : SCREEN_TIME_GLANCE.calmDraw;
+
+  const geometry = useMemo(() => {
+    const inset = SCREEN_TIME_GLANCE.panelInset;
+    const bounds = {
+      left: inset,
+      top: insets.top + inset,
+      right: width - inset,
+      bottom: height - insets.bottom - inset,
+      radius: SCREEN_TIME_GLANCE.panelRadius,
+    };
+    const border = panelBorderPath(bounds);
+    const panelW = bounds.right - bounds.left;
+    const panelH = bounds.bottom - bounds.top;
+
+    return {
+      bounds,
+      border,
+      panelW,
+      panelH,
+      // where the spinner hands over to the border: the path's own start
+      drawStart: { x: bounds.left, y: bounds.bottom - bounds.radius },
+      // how far the drop falls to clear the bottom of the screen
+      fallDistance: height - (bounds.top + bounds.bottom) / 2 + 80,
+      dropScaleX: SCREEN_TIME_GLANCE.dropWidth / panelW,
+      dropScaleY: SCREEN_TIME_GLANCE.dropHeight / panelH,
+    };
+  }, [insets.top, insets.bottom, width, height]);
+
+  // -- open choreography --
+  const scrimOpacity = useSharedValue(0);
+  const spinnerOpacity = useSharedValue(0);
+  const spinnerRotate = useSharedValue(0);
+  const spinnerScale = useSharedValue(1);
+  const spinnerTravel = useSharedValue(0); // 0 at the ring, 1 at the border's start
+  const drawProgress = useSharedValue(0);
+  const drawOpacity = useSharedValue(1);
+  const panelOpacity = useSharedValue(0);
+  const contentOpacity = useSharedValue(0);
+
+  // -- close choreography --
+  const dropScaleX = useSharedValue(1);
+  const dropScaleY = useSharedValue(1);
+  const dropRadius = useSharedValue<number>(SCREEN_TIME_GLANCE.panelRadius);
+  const dropFall = useSharedValue(0);
+  const dropTint = useSharedValue(0);
 
   useEffect(() => {
     if (visible) {
       setMounted(true);
+
+      // a re-open starts from the beginning, whatever the close left behind
+      dropScaleX.value = 1;
+      dropScaleY.value = 1;
+      dropRadius.value = SCREEN_TIME_GLANCE.panelRadius;
+      dropFall.value = 0;
+      dropTint.value = 0;
+      drawProgress.value = 0;
+      drawOpacity.value = 1;
+
       if (reduceMotion) {
         // no travel: the window is simply there
-        reveal.value = 1;
+        scrimOpacity.value = 1;
+        spinnerOpacity.value = 0;
+        drawProgress.value = 1;
+        drawOpacity.value = 0;
+        panelOpacity.value = 1;
         contentOpacity.value = 1;
         return;
       }
-      reveal.value = withTiming(1, {
-        duration: SCREEN_TIME_GLANCE.revealDuration,
-        easing: Easing.out(Easing.cubic),
+
+      const { spinDuration, travelDuration, drawDuration, fillFade, fadeDuration, scrimFade } =
+        SCREEN_TIME_GLANCE;
+      const drawStartsAt = spinDuration + travelDuration;
+
+      scrimOpacity.value = withTiming(1, { duration: scrimFade });
+
+      // 1. the ring's echo spins up where it was pressed...
+      spinnerOpacity.value = withTiming(1, { duration: 120 });
+      spinnerScale.value = withSequence(
+        withTiming(1.18, { duration: spinDuration * 0.55, easing: Easing.out(Easing.cubic) }),
+        withTiming(1, { duration: spinDuration * 0.45 })
+      );
+      spinnerRotate.value = withTiming(720, {
+        duration: drawStartsAt,
+        easing: Easing.inOut(Easing.cubic),
       });
-      // the dashboard fades in behind the circle once it has covered enough
-      // ground to read as a surface rather than a growing dot
+
+      // 2. ...travels to the border's start...
+      spinnerTravel.value = withDelay(
+        spinDuration,
+        withTiming(1, { duration: travelDuration, easing: Easing.in(Easing.cubic) })
+      );
+      spinnerOpacity.value = withDelay(
+        drawStartsAt - 60,
+        withTiming(0, { duration: 100 })
+      );
+
+      // 3. ...draws the border...
+      drawProgress.value = withDelay(
+        drawStartsAt,
+        withTiming(1, { duration: drawDuration, easing: Easing.inOut(Easing.cubic) })
+      );
+
+      // 4. ...and only then does the fill arrive, the drawn stroke settling
+      //    into the panel's own border underneath it
+      panelOpacity.value = withDelay(
+        drawStartsAt + drawDuration,
+        withTiming(1, { duration: fillFade })
+      );
+      drawOpacity.value = withDelay(
+        drawStartsAt + drawDuration + fillFade * 0.4,
+        withTiming(0, { duration: fillFade })
+      );
       contentOpacity.value = withDelay(
-        SCREEN_TIME_GLANCE.revealDuration * 0.45,
-        withTiming(1, { duration: SCREEN_TIME_GLANCE.fadeDuration })
+        drawStartsAt + drawDuration + fillFade * 0.6,
+        withTiming(1, { duration: fadeDuration })
       );
       return;
     }
 
     setMounted(false);
     setTipsOpen(false);
-    reveal.value = 0;
+    scrimOpacity.value = 0;
+    spinnerOpacity.value = 0;
+    spinnerRotate.value = 0;
+    spinnerScale.value = 1;
+    spinnerTravel.value = 0;
+    drawProgress.value = 0;
+    panelOpacity.value = 0;
     contentOpacity.value = 0;
   }, [visible, reduceMotion]);
 
@@ -125,25 +235,84 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       return;
     }
 
-    contentOpacity.value = withTiming(0, { duration: SCREEN_TIME_GLANCE.fadeDuration });
-    reveal.value = withTiming(
-      0,
-      { duration: SCREEN_TIME_GLANCE.revealDuration, easing: Easing.in(Easing.cubic) },
-      (finished) => {
-        if (finished) runOnJS(finishClose)();
-      }
+    const { dropShrink, dropFall: fallDuration, fadeDuration } = SCREEN_TIME_GLANCE;
+    const { fallDistance, dropScaleX: sx, dropScaleY: sy, panelW } = geometry;
+    const fallStartsAt = fadeDuration * 0.7 + dropShrink + 60;
+
+    // the content dims, the panel gathers into a drop...
+    contentOpacity.value = withTiming(0, { duration: fadeDuration * 0.7 });
+    dropTint.value = withDelay(
+      fadeDuration * 0.7 + dropShrink * 0.4,
+      withTiming(1, { duration: dropShrink * 0.6 })
     );
-  }, [finishClose, reduceMotion]);
+    dropScaleX.value = withDelay(
+      fadeDuration * 0.7,
+      withTiming(sx, { duration: dropShrink, easing: Easing.inOut(Easing.cubic) })
+    );
+    dropScaleY.value = withDelay(
+      fadeDuration * 0.7,
+      withSequence(
+        withTiming(sy, { duration: dropShrink, easing: Easing.inOut(Easing.cubic) }),
+        // ...hangs for a beat, stretches, and falls
+        withDelay(60, withTiming(sy * 1.18, { duration: fallDuration }))
+      )
+    );
+    dropRadius.value = withDelay(
+      fadeDuration * 0.7,
+      withTiming(panelW / 2, { duration: dropShrink, easing: Easing.inOut(Easing.cubic) })
+    );
+    dropFall.value = withDelay(
+      fallStartsAt,
+      withTiming(
+        fallDistance,
+        { duration: fallDuration, easing: Easing.in(Easing.cubic) },
+        (finished) => {
+          if (finished) runOnJS(finishClose)();
+        }
+      )
+    );
+    scrimOpacity.value = withDelay(
+      fallStartsAt + fallDuration * 0.4,
+      withTiming(0, { duration: fallDuration * 0.6 })
+    );
+  }, [finishClose, reduceMotion, geometry]);
 
-  const revealStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: reveal.value }],
+  const scrimStyle = useAnimatedStyle(() => ({ opacity: scrimOpacity.value }));
+
+  const spinnerStyle = useAnimatedStyle(() => {
+    const dx = (geometry.drawStart.x - centre.x) * spinnerTravel.value;
+    const dy = (geometry.drawStart.y - centre.y) * spinnerTravel.value;
+    return {
+      opacity: spinnerOpacity.value,
+      transform: [
+        { translateX: dx },
+        { translateY: dy },
+        { rotate: `${spinnerRotate.value}deg` },
+        { scale: spinnerScale.value },
+      ],
+    };
+  });
+
+  const drawProps = useAnimatedProps(() => ({
+    strokeDashoffset: geometry.border.length * (1 - drawProgress.value),
+    opacity: drawOpacity.value,
   }));
 
-  const contentStyle = useAnimatedStyle(() => ({
-    opacity: contentOpacity.value,
+  const panelStyle = useAnimatedStyle(() => ({
+    opacity: panelOpacity.value,
+    borderRadius: dropRadius.value,
+    transform: [
+      { translateY: dropFall.value },
+      { scaleX: dropScaleX.value },
+      { scaleY: dropScaleY.value },
+    ],
   }));
 
-  const inset = SCREEN_TIME_GLANCE.panelInset;
+  const contentStyle = useAnimatedStyle(() => ({ opacity: contentOpacity.value }));
+  const tintStyle = useAnimatedStyle(() => ({ opacity: dropTint.value }));
+
+  const { bounds } = geometry;
+  const spinnerArc = 2 * Math.PI * SCREEN_TIME_GLANCE.spinnerRadius;
 
   return (
     <Modal
@@ -155,49 +324,81 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       onRequestClose={handleClose}
     >
       <View style={styles.root} pointerEvents="box-none">
-        {/* the circle that grows out of the ring */}
+        {/* everything outside the panel: dim night, never the alarm colour */}
         <Animated.View
-          testID="screen-time-glance-reveal"
+          testID="screen-time-glance-scrim"
           pointerEvents="none"
-          style={[
-            styles.reveal,
-            {
-              left: centre.x - diameter / 2,
-              top: centre.y - diameter / 2,
-              width: diameter,
-              height: diameter,
-              borderRadius: diameter / 2,
-              backgroundColor: revealColour,
-            },
-            revealStyle,
-          ]}
+          style={[styles.scrim, scrimStyle]}
         />
 
-        {/* the surface the dashboard actually sits on, held just inside the
-            circle's colour so text stays readable once it has opened */}
-        <Animated.View
-          testID="screen-time-glance-surface"
-          style={[styles.surface, { backgroundColor: surface }, contentStyle]}
+        {/* the border being drawn, ahead of the panel existing */}
+        <Svg
+          pointerEvents="none"
+          style={StyleSheet.absoluteFill}
+          width={width}
+          height={height}
         >
-          {/* the framed panel: inset from the edges so the ring's colour is
-              left showing as a border of its own around the page */}
-          <View
-            testID="screen-time-glance-panel"
-            style={[
-              styles.panel,
-              {
-                top: insets.top + inset,
-                bottom: insets.bottom + inset,
-                left: inset,
-                right: inset,
-                borderRadius: SCREEN_TIME_GLANCE.panelRadius,
-                borderWidth: SCREEN_TIME_GLANCE.panelBorderWidth,
-                borderColor: panelBorder,
-                backgroundColor: surface,
-                shadowColor: panelGlow,
-              },
-            ]}
-          >
+          <AnimatedPath
+            testID="screen-time-glance-border"
+            d={geometry.border.d}
+            stroke={drawStroke}
+            strokeWidth={SCREEN_TIME_GLANCE.panelBorderWidth}
+            strokeLinecap="round"
+            fill="none"
+            strokeDasharray={`${geometry.border.length} ${geometry.border.length}`}
+            animatedProps={drawProps}
+          />
+        </Svg>
+
+        {/* the ring's echo: spins where it was pressed, then travels to the
+            border's start point and hands over to the drawing */}
+        <Animated.View
+          testID="screen-time-glance-spinner"
+          pointerEvents="none"
+          style={[
+            styles.spinner,
+            {
+              left: centre.x - SPINNER_BOX / 2,
+              top: centre.y - SPINNER_BOX / 2,
+            },
+            spinnerStyle,
+          ]}
+        >
+          <Svg width={SPINNER_BOX} height={SPINNER_BOX}>
+            <Circle
+              cx={SPINNER_BOX / 2}
+              cy={SPINNER_BOX / 2}
+              r={SCREEN_TIME_GLANCE.spinnerRadius}
+              stroke={drawStroke}
+              strokeWidth={SCREEN_TIME_GLANCE.spinnerStroke}
+              strokeLinecap="round"
+              fill="none"
+              strokeDasharray={`${spinnerArc * 0.72} ${spinnerArc * 0.28}`}
+            />
+          </Svg>
+        </Animated.View>
+
+        {/* the panel the border was drawn for -- the only place the fill
+            colour is allowed to be */}
+        <Animated.View
+          testID="screen-time-glance-panel"
+          style={[
+            styles.panel,
+            {
+              top: bounds.top,
+              bottom: height - bounds.bottom,
+              left: bounds.left,
+              right: width - bounds.right,
+              borderRadius: SCREEN_TIME_GLANCE.panelRadius,
+              borderWidth: SCREEN_TIME_GLANCE.panelBorderWidth,
+              borderColor: panelBorder,
+              backgroundColor: surface,
+              shadowColor: panelGlow,
+            },
+            panelStyle,
+          ]}
+        >
+          <Animated.View style={[styles.panelContent, contentStyle]}>
             <View style={styles.panelHeader}>
               <Pressable
                 testID="screen-time-glance-close"
@@ -255,7 +456,20 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
                 )}
               </>
             )}
-          </View>
+          </Animated.View>
+
+          {/* what the drop is made of: the bright ring colour washes over the
+              panel as it gathers, so the falling drop reads as the ring's
+              water rather than a shrinking page */}
+          <Animated.View
+            testID="screen-time-glance-drop-tint"
+            pointerEvents="none"
+            style={[
+              styles.dropTint,
+              { backgroundColor: drawStroke },
+              tintStyle,
+            ]}
+          />
         </Animated.View>
       </View>
     </Modal>
@@ -266,20 +480,26 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
   },
-  reveal: {
-    position: 'absolute',
-  },
-  surface: {
+  scrim: {
     ...StyleSheet.absoluteFillObject,
+    backgroundColor: SCREEN_TIME_GLANCE.scrim,
+  },
+  spinner: {
+    position: 'absolute',
+    width: SPINNER_BOX,
+    height: SPINNER_BOX,
   },
   panel: {
     position: 'absolute',
     overflow: 'hidden',
-    // the border's own glow, so the red frame reads as lit rather than drawn
+    // the border's own glow, so the frame reads as lit rather than drawn
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 1,
     shadowRadius: 18,
     elevation: 12,
+  },
+  panelContent: {
+    flex: 1,
   },
   // sits above the scroll content so the dashboard's earth art can rise up
   // behind it, as in the design
@@ -305,6 +525,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(8, 10, 40, 0.62)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  dropTint: {
+    ...StyleSheet.absoluteFillObject,
   },
   tipsRow: {
     paddingHorizontal: 18,

@@ -15,19 +15,45 @@ export const SCREEN_TIME_RING = {
 /**
  * The glance that opens out of the ring.
  *
- * It borrows the ring's own colour so the window reads as the thing the
- * parent just pressed growing into a page, rather than an unrelated sheet
- * arriving over the top of it. The surface settles a long way darker than
- * the ring itself: full-strength alarm red behind a whole screen of text is
- * neither readable nor the calm register the rest of the app keeps to.
+ * The choreography keeps the ring's identity without flooding the screen in
+ * its colour: a spinning echo of the ring rises where it was pressed, travels
+ * to the panel's corner and draws the border, and only then does the fill
+ * arrive -- so the alarm colour stays inside the frame it drew. The fill
+ * settles a long way darker than the ring itself: full-strength alarm red
+ * behind a whole screen of text is neither readable nor the calm register
+ * the rest of the app keeps to. Closing runs the argument in reverse: the
+ * panel gathers into a drop and falls away.
  */
 export const SCREEN_TIME_GLANCE = {
-  revealDuration: 340,
   fadeDuration: 200,
   exceededSurface: '#2A0A0C',
-  exceededReveal: '#E4483F',
   calmSurface: '#080A28',
-  calmReveal: '#141A3C',
+
+  /** Everything outside the panel: dim night, never the alarm colour. */
+  scrim: 'rgba(4, 6, 18, 0.94)',
+
+  // the open choreography, in order
+  scrimFade: 200,
+  spinDuration: 360,
+  travelDuration: 220,
+  drawDuration: 480,
+  fillFade: 220,
+
+  // the spinner that echoes the ring while it travels
+  spinnerRadius: 15,
+  spinnerStroke: 3,
+
+  /** Stroke the border is drawn with. The calm final border is a faint
+   *  hairline -- too faint to watch being drawn -- so the drawing stroke is
+   *  brighter, and settles into the panel's own border as the fill fades in. */
+  exceededDraw: '#E4483F',
+  calmDraw: 'rgba(198, 219, 250, 0.85)',
+
+  // the close: the panel gathers into a drop, then falls
+  dropShrink: 300,
+  dropFall: 430,
+  dropWidth: 34,
+  dropHeight: 46,
 
   /**
    * The framed panel the reveal settles into.
@@ -85,18 +111,36 @@ export function ringCentre(
 }
 
 /**
- * How wide the reveal circle has to grow to cover the screen from `origin`.
+ * The rounded-rect path the open animation draws the panel's border along,
+ * and its length -- the drawing is a dash-offset sweep, so the length is what
+ * the dash pattern is built from.
  *
- * Twice the distance to the furthest corner: anything less and the expanding
- * circle stops short, leaving a wedge of the page behind it uncovered.
+ * Starts at the left edge just above the bottom-left corner -- the nearest
+ * point to the ring the spinner travels from -- and runs clockwise.
  */
-export function revealDiameter(
-  origin: { x: number; y: number },
-  width: number,
-  height: number
-): number {
-  const dx = Math.max(origin.x, width - origin.x);
-  const dy = Math.max(origin.y, height - origin.y);
+export function panelBorderPath(bounds: {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+  radius: number;
+}): { d: string; length: number } {
+  const { left: l, top: t, right: r, bottom: b, radius: rad } = bounds;
 
-  return 2 * Math.hypot(dx, dy);
+  const d = [
+    `M ${l} ${b - rad}`,
+    `L ${l} ${t + rad}`,
+    `A ${rad} ${rad} 0 0 1 ${l + rad} ${t}`,
+    `L ${r - rad} ${t}`,
+    `A ${rad} ${rad} 0 0 1 ${r} ${t + rad}`,
+    `L ${r} ${b - rad}`,
+    `A ${rad} ${rad} 0 0 1 ${r - rad} ${b}`,
+    `L ${l + rad} ${b}`,
+    `A ${rad} ${rad} 0 0 1 ${l} ${b - rad}`,
+  ].join(' ');
+
+  const length =
+    2 * (r - l - 2 * rad) + 2 * (b - t - 2 * rad) + 2 * Math.PI * rad;
+
+  return { d, length };
 }

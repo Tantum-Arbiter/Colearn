@@ -8,7 +8,7 @@
 import {
   SCREEN_TIME_RING,
   isScreenTimeExceeded,
-  revealDiameter,
+  panelBorderPath,
   ringCentre,
   ringDashOffset,
   screenTimeProgress,
@@ -104,46 +104,36 @@ describe('ringCentre', () => {
   });
 });
 
-describe('revealDiameter', () => {
-  // a circle opening from the ring has to reach the furthest corner of the
-  // screen, or the reveal leaves an uncovered wedge behind it
-  it('reaches the opposite corner from a bottom-left origin', () => {
-    const origin = { x: 0, y: 800 };
+describe('panelBorderPath', () => {
+  // the open animation draws the border as a dash-offset sweep, so the
+  // reported length must match the geometry of the path it emits -- a
+  // mismatch leaves the border under- or over-drawn when the sweep finishes
+  const BOUNDS = { left: 14, top: 73, right: 388, bottom: 812, radius: 28 };
 
-    const underTest = revealDiameter(origin, 400, 800);
+  it('starts just above the bottom-left corner, nearest the ring', () => {
+    const { d } = panelBorderPath(BOUNDS);
 
-    // furthest corner is top-right: hypot(400, 800)
-    expect(underTest).toBeCloseTo(2 * Math.hypot(400, 800));
+    expect(d.startsWith(`M ${BOUNDS.left} ${BOUNDS.bottom - BOUNDS.radius}`)).toBe(true);
   });
 
-  it('reaches the furthest corner from the middle of the screen', () => {
-    const underTest = revealDiameter({ x: 200, y: 400 }, 400, 800);
+  it('closes back where it started', () => {
+    const { d } = panelBorderPath(BOUNDS);
 
-    expect(underTest).toBeCloseTo(2 * Math.hypot(200, 400));
+    expect(d.endsWith(`${BOUNDS.left} ${BOUNDS.bottom - BOUNDS.radius}`)).toBe(true);
   });
 
-  it('covers the screen from any origin inside it', () => {
-    const width = 400;
-    const height = 800;
+  it('reports the true perimeter of the rounded rect', () => {
+    const { length } = panelBorderPath(BOUNDS);
+    const w = BOUNDS.right - BOUNDS.left;
+    const h = BOUNDS.bottom - BOUNDS.top;
 
-    for (const origin of [
-      { x: 0, y: 0 },
-      { x: width, y: 0 },
-      { x: 0, y: height },
-      { x: width, y: height },
-      { x: 137, y: 613 },
-    ]) {
-      const radius = revealDiameter(origin, width, height) / 2;
-      const corners = [
-        { x: 0, y: 0 },
-        { x: width, y: 0 },
-        { x: 0, y: height },
-        { x: width, y: height },
-      ];
+    // four straight runs shortened by the corners, plus one full circle of arc
+    expect(length).toBeCloseTo(2 * (w - 2 * BOUNDS.radius) + 2 * (h - 2 * BOUNDS.radius) + 2 * Math.PI * BOUNDS.radius);
+  });
 
-      for (const corner of corners) {
-        expect(Math.hypot(corner.x - origin.x, corner.y - origin.y)).toBeLessThanOrEqual(radius + 1e-9);
-      }
-    }
+  it('rounds every corner with the radius it was given', () => {
+    const { d } = panelBorderPath(BOUNDS);
+
+    expect(d.match(/A 28 28/g)).toHaveLength(4);
   });
 });

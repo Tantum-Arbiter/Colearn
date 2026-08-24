@@ -167,22 +167,32 @@ Phase 3 ships the first. Phase 5 sketches the second.
 
 Each phase is independently shippable and independently testable.
 
-### Phase 1 — The framed red window ✅ built
+### Phase 1 — The framed red window ✅ built, then reworked
 
 The panel, not the content.
 
 - Inset the surface from the screen edges and give it the design's rounded
   red border. New tokens in `SCREEN_TIME_GLANCE`: `panelInset`, `panelRadius`,
   `panelBorder`, and the border's glow.
-- Keep the reveal circle behind it, unchanged — the circle still opens from the
-  ring, the panel is what it settles into.
 - Close button moves into the panel's top-right.
 - Border colour follows the same exceeded/calm split the surface already uses.
 
+**Reworked at the operator's request (2026-08-24):** the circular reveal is
+gone. It painted the whole screen in the ring's colour before the panel
+settled, and the ask was the opposite — the alarm red contained inside the
+border it belongs to. The open is now choreography: an echo of the ring spins
+up where it was pressed, travels to the panel's nearest corner, **draws the
+border** (a dash-offset sweep along `panelBorderPath`), and only then does
+the fill fade in and the content follow. Everything outside the border is a
+dim night scrim, never red. Closing runs in reverse register: the content
+dims, the panel gathers itself into a **water drop** in the ring's colour,
+and the drop falls off the bottom of the screen. Reduced motion skips all of
+it, both ways.
+
 **Tests:** panel is inset and outlined; border takes the red only when
-exceeded; reveal geometry is untouched (the existing glance tests should keep
-passing without edits — if they need editing, that is a signal the reveal
-regressed).
+exceeded; the alarm fill exists exactly once and it is the panel; the border
+path's dash pattern matches its own reported length; the spinner rises at the
+ring's centre.
 
 ### Phase 2 — The alert header ✅ built
 
@@ -264,6 +274,8 @@ Only worth starting once phases 1–3 are in and the shape is settled.
 
 - **Not** move the trend chart or the ring cards. They are working and the
   design keeps them.
+- **Not** keep the full-bleed reveal once the containment ask landed — a
+  screen of alarm red and "red only inside the border" cannot both be true.
 - **Not** restyle the encouragement banner to match the alert. It is the one
   element that stays positive, and it is the counterweight to the header.
 - **Not** build a tips system from scratch. The bridge model already exists,

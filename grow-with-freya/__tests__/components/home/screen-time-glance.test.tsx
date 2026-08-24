@@ -6,11 +6,11 @@
  * carries the usage dashboard and nothing else: no schedule callout, no
  * bedtime guidance, no route into building reminders. Those live in settings.
  *
- * It is also meant to read as the ring itself growing into a page, which is
- * why the reveal circle starts at the ring's own centre in the ring's own
- * colour, and why the surface behind it turns red only when the ring is red.
- * The circle stays full-bleed; what it settles into is an inset, outlined
- * panel, so the ring's colour is left showing as a frame.
+ * The open is a piece of choreography: an echo of the ring spins up at the
+ * ring's own centre, travels to the panel's nearest corner and draws the
+ * border, and only then does the fill fade in. The one invariant worth
+ * guarding here is containment -- the alarm colour lives inside the panel it
+ * drew, and everything outside it is a dim night scrim, never red.
  *
  * The alert header and the tips action belong to the over-limit state only.
  * A full alert treatment for a child who has used fourteen of sixty minutes
@@ -24,7 +24,7 @@ import { StyleSheet } from 'react-native';
 import * as RN from 'react-native';
 
 import { ScreenTimeGlance } from '@/components/home/screen-time-glance';
-import { SCREEN_TIME_GLANCE, revealDiameter } from '@/constants/screen-time-ring';
+import { SCREEN_TIME_GLANCE, panelBorderPath } from '@/constants/screen-time-ring';
 
 // the real Modal throws inside this jsdom test environment when visible; the
 // same patch the schedule-window tests use, for the same reason
@@ -89,7 +89,14 @@ jest.mock('react-native-reanimated', () => {
       return v;
     }),
     withDelay: jest.fn((_: any, v: any) => v),
-    Easing: { out: jest.fn((e: any) => e), in: jest.fn((e: any) => e), cubic: jest.fn() },
+    withSequence: jest.fn((...values: any[]) => values[values.length - 1]),
+    useAnimatedProps: jest.fn(() => ({})),
+    Easing: {
+      out: jest.fn((e: any) => e),
+      in: jest.fn((e: any) => e),
+      inOut: jest.fn((e: any) => e),
+      cubic: jest.fn(),
+    },
     runOnJS: jest.fn((fn: any) => fn),
   };
 });
@@ -149,61 +156,89 @@ describe('ScreenTimeGlance', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  describe('opening out of the ring', () => {
-    const revealStyle = (tree: ReturnType<typeof render>) =>
-      StyleSheet.flatten(findByTestId(tree, 'screen-time-glance-reveal')[0].props.style);
+  describe('the choreography surfaces', () => {
+    it('dims everything outside the panel with night, not red', () => {
+      const tree = renderGlance({ exceeded: true });
+      const scrim = findByTestId(tree, 'screen-time-glance-scrim')[0];
 
-    it('centres the reveal circle on the ring', () => {
-      const style = revealStyle(renderGlance());
-
-      // the circle is positioned by its top-left, so its centre lands on the
-      // origin only if the offset accounts for its own radius
-      expect(style.left + style.width / 2).toBeCloseTo(ORIGIN.x);
-      expect(style.top + style.height / 2).toBeCloseTo(ORIGIN.y);
+      expect(StyleSheet.flatten(scrim.props.style).backgroundColor).toBe(
+        SCREEN_TIME_GLANCE.scrim
+      );
     });
 
-    it('grows the circle wide enough to cover the screen', () => {
-      const style = revealStyle(renderGlance());
+    it('raises the spinner at the centre of the ring it echoes', () => {
+      const tree = renderGlance();
+      const spinner = findByTestId(tree, 'screen-time-glance-spinner')[0];
+      const style = StyleSheet.flatten(spinner.props.style);
+      const box = (SCREEN_TIME_GLANCE.spinnerRadius + SCREEN_TIME_GLANCE.spinnerStroke) * 2 + 2;
+
+      expect(style.left + box / 2).toBeCloseTo(ORIGIN.x);
+      expect(style.top + box / 2).toBeCloseTo(ORIGIN.y);
+    });
+
+    it('draws the border with a stroke that matches the state', () => {
+      const red = findByTestId(renderGlance({ exceeded: true }), 'screen-time-glance-border')[0];
+      const calm = findByTestId(renderGlance({ exceeded: false }), 'screen-time-glance-border')[0];
+
+      expect(red.props.stroke).toBe(SCREEN_TIME_GLANCE.exceededDraw);
+      expect(calm.props.stroke).toBe(SCREEN_TIME_GLANCE.calmDraw);
+    });
+
+    it('arms the border for a dash-offset sweep along its whole length', () => {
+      const border = findByTestId(renderGlance(), 'screen-time-glance-border')[0];
+      const dash = String(border.props.strokeDasharray);
+      const [visible, gap] = dash.split(/[ ,]+/).map(Number);
+
+      // one dash the length of the path, one gap the same: offsetting from
+      // length to zero is what draws it. The window has no real size under
+      // jest, so the invariant is agreement, not magnitude: dash, gap and the
+      // path the border was built from must all describe the same length.
       const { width, height } = RN.Dimensions.get('window');
+      const inset = SCREEN_TIME_GLANCE.panelInset;
+      const { length } = panelBorderPath({
+        left: inset,
+        top: inset,
+        right: width - inset,
+        bottom: height - inset,
+        radius: SCREEN_TIME_GLANCE.panelRadius,
+      });
 
-      expect(style.width).toBeCloseTo(revealDiameter(ORIGIN, width, height));
-      expect(style.width).toBe(style.height);
+      expect(visible).toBeCloseTo(gap);
+      expect(visible).toBeCloseTo(length);
     });
 
-    it('keeps the circle actually circular', () => {
-      const style = revealStyle(renderGlance());
-
-      expect(style.borderRadius).toBeCloseTo(style.width / 2);
-    });
-
-    it('falls back to the middle of the screen with no origin given', () => {
-      const style = revealStyle(renderGlance({ origin: undefined }));
-      const { width, height } = RN.Dimensions.get('window');
-
-      expect(style.left + style.width / 2).toBeCloseTo(width / 2);
-      expect(style.top + style.height / 2).toBeCloseTo(height / 2);
-    });
-  });
-
-  describe('taking its colour from the ring', () => {
-    const surfaceStyle = (tree: ReturnType<typeof render>) =>
-      StyleSheet.flatten(findByTestId(tree, 'screen-time-glance-surface')[0].props.style);
-
-    const revealStyle = (tree: ReturnType<typeof render>) =>
-      StyleSheet.flatten(findByTestId(tree, 'screen-time-glance-reveal')[0].props.style);
-
-    it('opens red out of a red ring', () => {
+    it('keeps the alarm colour contained inside the panel', () => {
       const tree = renderGlance({ exceeded: true });
 
-      expect(revealStyle(tree).backgroundColor).toBe(SCREEN_TIME_GLANCE.exceededReveal);
-      expect(surfaceStyle(tree).backgroundColor).toBe(SCREEN_TIME_GLANCE.exceededSurface);
+      const painted = tree.UNSAFE_root.findAll((n: any) => {
+        const style = StyleSheet.flatten(n.props?.style);
+        return style?.backgroundColor === SCREEN_TIME_GLANCE.exceededSurface;
+      });
+
+      // the fill exists exactly once, and it is the panel -- nothing
+      // full-bleed behind it carries the colour
+      expect(painted.length).toBeGreaterThan(0);
+      for (const node of painted) {
+        expect(node.props.testID).toBe('screen-time-glance-panel');
+      }
     });
 
-    it('stays with the night palette when the ring is calm', () => {
+    it('fills the panel with the night palette when the ring is calm', () => {
       const tree = renderGlance({ exceeded: false });
+      const panel = findByTestId(tree, 'screen-time-glance-panel')[0];
 
-      expect(revealStyle(tree).backgroundColor).toBe(SCREEN_TIME_GLANCE.calmReveal);
-      expect(surfaceStyle(tree).backgroundColor).toBe(SCREEN_TIME_GLANCE.calmSurface);
+      expect(StyleSheet.flatten(panel.props.style).backgroundColor).toBe(
+        SCREEN_TIME_GLANCE.calmSurface
+      );
+    });
+
+    it('carries a drop tint in the ring colour, ready for the close', () => {
+      const tree = renderGlance({ exceeded: true });
+      const tint = findByTestId(tree, 'screen-time-glance-drop-tint')[0];
+
+      expect(StyleSheet.flatten(tint.props.style).backgroundColor).toBe(
+        SCREEN_TIME_GLANCE.exceededDraw
+      );
     });
   });
 
