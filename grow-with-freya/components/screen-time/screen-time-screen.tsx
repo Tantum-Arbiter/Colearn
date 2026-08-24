@@ -388,28 +388,6 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
             }}
           />
 
-          <View style={styles.recommendedTimes}>
-            <Text style={[styles.recommendedTimesTitle, { fontSize: scaledFontSize(16) }]}>{t('screenTime.recommendedTimes')}</Text>
-            <Text style={[styles.recommendedTimesText, { fontSize: scaledFontSize(14) }]}>
-              {t('screenTime.recommendedTimesIntro')}
-            </Text>
-
-            <View style={[styles.timeSlot, { paddingVertical: scaledPadding(8) }]}>
-              <Text style={[styles.timeSlotTime, { fontSize: scaledFontSize(14) }]}>9:00 AM - 10:00 AM</Text>
-              <Text style={[styles.timeSlotActivity, { fontSize: scaledFontSize(12) }]}>{t('screenTime.morningStoriesEmotions')}</Text>
-            </View>
-
-            <View style={[styles.timeSlot, { paddingVertical: scaledPadding(8) }]}>
-              <Text style={[styles.timeSlotTime, { fontSize: scaledFontSize(14) }]}>2:00 PM - 3:00 PM</Text>
-              <Text style={[styles.timeSlotActivity, { fontSize: scaledFontSize(12) }]}>{t('screenTime.afternoonLearning')}</Text>
-            </View>
-
-            <View style={[styles.timeSlot, { paddingVertical: scaledPadding(8) }]}>
-              <Text style={[styles.timeSlotTime, { fontSize: scaledFontSize(14) }]}>5:00 PM - 6:00 PM</Text>
-              <Text style={[styles.timeSlotActivity, { fontSize: scaledFontSize(12) }]}>{t('screenTime.preDinnerMusic')}</Text>
-            </View>
-          </View>
-
           <View style={[styles.bedtimeWarning, { padding: scaledPadding(12) }]}>
             <Text style={[styles.bedtimeWarningTitle, { fontSize: scaledFontSize(14) }]}>{t('screenTime.bedtimeGuidelines')}</Text>
             <Text style={[styles.bedtimeWarningText, { fontSize: scaledFontSize(12) }]}>
@@ -618,28 +596,6 @@ export function ScreenTimeContent({ paddingTop = 0, onReminderChange }: ScreenTi
               setScheduleOpen(true);
             }}
           />
-
-          <View style={styles.recommendedTimes}>
-            <Text style={[styles.recommendedTimesTitle, { fontSize: scaledFontSize(16) }]}>{t('screenTime.recommendedTimes')}</Text>
-            <Text style={[styles.recommendedTimesText, { fontSize: scaledFontSize(14) }]}>
-              {t('screenTime.recommendedTimesIntro')}
-            </Text>
-
-            <View style={[styles.timeSlot, { paddingVertical: scaledPadding(8) }]}>
-              <Text style={[styles.timeSlotTime, { fontSize: scaledFontSize(14) }]}>9:00 AM - 10:00 AM</Text>
-              <Text style={[styles.timeSlotActivity, { fontSize: scaledFontSize(12) }]}>{t('screenTime.morningStoriesEmotions')}</Text>
-            </View>
-
-            <View style={[styles.timeSlot, { paddingVertical: scaledPadding(8) }]}>
-              <Text style={[styles.timeSlotTime, { fontSize: scaledFontSize(14) }]}>2:00 PM - 3:00 PM</Text>
-              <Text style={[styles.timeSlotActivity, { fontSize: scaledFontSize(12) }]}>{t('screenTime.afternoonLearning')}</Text>
-            </View>
-
-            <View style={[styles.timeSlot, { paddingVertical: scaledPadding(8) }]}>
-              <Text style={[styles.timeSlotTime, { fontSize: scaledFontSize(14) }]}>5:00 PM - 6:00 PM</Text>
-              <Text style={[styles.timeSlotActivity, { fontSize: scaledFontSize(12) }]}>{t('screenTime.preDinnerMusic')}</Text>
-            </View>
-          </View>
 
           <View style={[styles.bedtimeWarning, { padding: scaledPadding(12) }]}>
             <Text style={[styles.bedtimeWarningTitle, { fontSize: scaledFontSize(14) }]}>{t('screenTime.bedtimeGuidelines')}</Text>

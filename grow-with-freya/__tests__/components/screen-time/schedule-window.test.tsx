@@ -215,6 +215,20 @@ describe('ScheduleWindow', () => {
     expect(findByTestId(tree, 'schedule-window-new').length).toBeGreaterThan(0);
   });
 
+  it('offers the recommended times alongside the list', () => {
+    const tree = renderWindow();
+
+    expect(findByTestId(tree, 'recommended-times').length).toBeGreaterThan(0);
+  });
+
+  it('drops the recommended times on the create page -- the templates there already suggest content', () => {
+    const tree = renderWindow();
+
+    press(tree, 'schedule-window-new');
+
+    expect(findByTestId(tree, 'recommended-times')).toHaveLength(0);
+  });
+
   describe('moving to the create page', () => {
     it('goes there from the header action', () => {
       const tree = renderWindow();

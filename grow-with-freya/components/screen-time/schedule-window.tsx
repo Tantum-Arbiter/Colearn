@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CustomRemindersContent, CreateReminderContent } from '../reminders';
+import { RecommendedTimes } from './recommended-times';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { Fonts } from '@/constants/theme';
@@ -187,12 +188,17 @@ export function ScheduleWindow({ visible, onClose, onReminderChange }: ScheduleW
 
           <View style={[styles.body, { paddingBottom: insets.bottom }]}>
             {onList ? (
-              <CustomRemindersContent
-                onCreateNew={() => setPage('create')}
-                onReminderChange={noteChange}
-                refreshTrigger={refreshTrigger}
-                isActive
-              />
+              <>
+                <View style={styles.recommendedWrap}>
+                  <RecommendedTimes />
+                </View>
+                <CustomRemindersContent
+                  onCreateNew={() => setPage('create')}
+                  onReminderChange={noteChange}
+                  refreshTrigger={refreshTrigger}
+                  isActive
+                />
+              </>
             ) : (
               <CreateReminderContent
                 onBack={() => setPage('list')}
@@ -266,5 +272,9 @@ const styles = StyleSheet.create({
   },
   body: {
     flex: 1,
+  },
+  recommendedWrap: {
+    paddingHorizontal: 20,
+    paddingTop: 4,
   },
 });

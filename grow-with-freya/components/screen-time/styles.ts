@@ -462,48 +462,6 @@ export const styles = StyleSheet.create({
   },
 
   // Schedule Creation Styles
-  recommendedTimes: {
-    backgroundColor: 'rgba(76, 175, 80, 0.1)',
-    borderRadius: 12,
-    padding: 20,
-    marginTop: 20,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(76, 175, 80, 0.3)',
-  },
-  recommendedTimesTitle: {
-    color: '#81C784',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  recommendedTimesText: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 14,
-    marginBottom: 15,
-    lineHeight: 18,
-  },
-  timeSlot: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
-    marginBottom: 8,
-  },
-  timeSlotTime: {
-    color: '#4ECDC4',
-    fontSize: 14,
-    fontWeight: '600',
-    flex: 1,
-  },
-  timeSlotActivity: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 13,
-    flex: 2,
-    textAlign: 'right',
-  },
   bedtimeWarning: {
     backgroundColor: 'rgba(59, 130, 246, 0.1)',
     borderRadius: 12,

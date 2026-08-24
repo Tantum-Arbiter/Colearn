@@ -525,6 +525,16 @@ describe('ScreenTimeScreen', () => {
       });
     });
 
+    it('no longer shows recommended times directly -- that moved into the schedule window', async () => {
+      const tree = renderScreen();
+      await waitFor(() =>
+        expect(mockScreenTimeServiceInstance.getScreenTimeStats).toHaveBeenCalled()
+      );
+
+      expect(byTestId(tree, 'recommended-times')).toHaveLength(0);
+      expect(JSON.stringify(tree.toJSON())).not.toContain('screenTime.recommendedTimes');
+    });
+
     it('opens the schedule as a window over the dashboard', async () => {
       const tree = renderScreen();
       await waitFor(() =>
@@ -870,6 +880,14 @@ describe('ScreenTimeContent', () => {
       expect(body).toContain('screenTime.scheduleActiveTitle');
       expect(body).toContain('count:1');
     });
+  });
+
+  it('no longer shows recommended times directly -- that moved into the schedule window', async () => {
+    const tree = render(<ScreenTimeContent />);
+    await waitFor(() => expect(contentService.getScreenTimeStats).toHaveBeenCalled());
+
+    expect(byTestId(tree, 'recommended-times')).toHaveLength(0);
+    expect(JSON.stringify(tree.toJSON())).not.toContain('screenTime.recommendedTimes');
   });
 
   it('opens the schedule as a window over the glance', async () => {

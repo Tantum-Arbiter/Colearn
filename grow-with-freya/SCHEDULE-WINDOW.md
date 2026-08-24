@@ -24,9 +24,19 @@ Two changes:
 ScreenTimeScreen / ScreenTimeContent   (dashboard, unchanged behind the sheet)
   └── ScheduleCallout          value-forward card, opens the window
   └── ScheduleWindow           slide-up sheet, owns its own page state
+        ├── RecommendedTimes         list page only, above the reminders
         ├── CustomRemindersContent   list  ── onCreateNew ──▶ create
         └── CreateReminderContent    create ── onBack ──────▶ list
 ```
+
+`RecommendedTimes` (research-informed time-of-day suggestions — three fixed
+slots, not derived from the child's data) used to sit on the dashboard next to
+the old flat reminders button, describing a suggestion with nothing nearby to
+act on it with. It now sits inside the window, above the reminders list where
+a parent is actually building one, and only on the list page — the create
+page already has its own suggestions in "Quick Templates". Moving it here also
+deleted a second copy: the dashboard duplicated this block once per host
+(`ScreenTimeScreen` and `ScreenTimeContent`); the window needs it only once.
 
 `ScheduleWindow` uses the `*Content` variants — the header-less ones the account
 screen already renders — so the sheet supplies the single header for both pages.
