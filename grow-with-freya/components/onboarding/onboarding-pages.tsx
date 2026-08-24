@@ -7,14 +7,26 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ThemedText } from '../themed-text';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import {
+  useOnboardingMetrics,
+  ONBOARDING_MAX_WIDTH,
+  ONBOARDING_H_PADDING,
+  ONBOARDING_HERO_RADIUS,
+} from './onboarding-metrics';
 import { MIN_NICKNAME_LENGTH, MAX_NICKNAME_LENGTH } from '@/constants/profile';
 import { SUPPORTED_LANGUAGES, setStoredLanguage, type SupportedLanguage } from '@/services/i18n';
 import { GOLD, PURPLE, CARD_BG, CARD_BORDER, TEXT_MUTED, TEXT_FAINT, NIGHT_BASE } from './onboarding-theme';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const SHELL_H_PADDING = 24;
+// The width every hero and grid below is sized from. It is capped, so a
+// tablet does not scale the art up with the screen -- see onboarding-metrics
+// for why. The components override these with live values from
+// `useOnboardingMetrics`; these are the static fallbacks, and they are capped
+// too so a style that is never overridden still lays out sanely.
+const LAYOUT_WIDTH = Math.min(SCREEN_WIDTH, ONBOARDING_MAX_WIDTH);
+const SHELL_H_PADDING = ONBOARDING_H_PADDING;
 const CHIP_GAP = 10;
-const CHIP_SIZE = Math.floor((SCREEN_WIDTH - SHELL_H_PADDING * 2 - CHIP_GAP * 2) / 3);
+const CHIP_SIZE = Math.floor((LAYOUT_WIDTH - SHELL_H_PADDING * 2 - CHIP_GAP * 2) / 3);
 // the safety promises read as one panel of four quadrants, so the art is a small
 // glyph inside each cell rather than a tile in its own right
 // the promise art is a full starfield tile, sized to fill its quadrant
@@ -25,7 +37,7 @@ const CHIP_SIZE = Math.floor((SCREEN_WIDTH - SHELL_H_PADDING * 2 - CHIP_GAP * 2)
 // the art fills its whole cell, with the label sitting over it
 const SAFETY_CELL_H = 128;
 const SAFETY_GRID_RATIO = 0.86;
-const SAFETY_CELL_W = Math.floor(((SCREEN_WIDTH - SHELL_H_PADDING * 2) * SAFETY_GRID_RATIO) / 2);
+const SAFETY_CELL_W = Math.floor(((LAYOUT_WIDTH - SHELL_H_PADDING * 2) * SAFETY_GRID_RATIO) / 2);
 // every label reserves two lines, so a one-line label starts level with the
 // first line of a two-line one
 const SAFETY_LABEL_LINE = 16;
@@ -42,18 +54,18 @@ const SAFETY_PANEL_BG = 'rgba(9, 13, 38, 0.9)';
 // the together art is 900x941; sizing the backdrop to that ratio means the full
 // scene shows edge-to-edge with no crop
 const TOGETHER_ART_RATIO = 941 / 900;
-const TOGETHER_BACKDROP_H = Math.round(SCREEN_WIDTH * TOGETHER_ART_RATIO);
+const TOGETHER_BACKDROP_H = Math.round(LAYOUT_WIDTH * TOGETHER_ART_RATIO);
 // safety art is 900x774; same full-bleed treatment as the together backdrop
 // the ready hero is a 3:2 scene. Like the together and safety heroes it is a
 // full-bleed backdrop rather than an inset card, so it is sized to the screen
-const READY_BACKDROP_H = Math.round(SCREEN_WIDTH * (600 / 900));
+const READY_BACKDROP_H = Math.round(LAYOUT_WIDTH * (600 / 900));
 // drops the scene clear of the headline, matching the together backdrop
 const READY_BACKDROP_TOP = 150;
 // gold hairline cards, matching the plates supplied with the ready artwork
 const READY_CARD_BG = 'rgba(18, 26, 62, 0.82)';
 const READY_CARD_BORDER = 'rgba(232, 184, 75, 0.5)';
 // the cut-out constellation is shown whole rather than cropped into a band
-const SAFE_BACKDROP_H = Math.round(SCREEN_WIDTH * 0.62);
+const SAFE_BACKDROP_H = Math.round(LAYOUT_WIDTH * 0.62);
 const SAFE_BACKDROP_TOP = 160;
 // drops the scene down the screen so the headline has clear sky above it
 const TOGETHER_BACKDROP_TOP = 128;
@@ -144,8 +156,16 @@ const TOGETHER_CHIPS: { key: string; art: ImageSourcePropType }[] = [
 /** Full-bleed art for the together page: the title sits over it and the chips
  *  overlap its lower edge, so it reads as the scene rather than a card. */
 export function TogetherBackdrop() {
+  const { layoutWidth, togetherBackdropHeight, isCapped } = useOnboardingMetrics();
+
   return (
-    <View style={styles.togetherBackdrop}>
+    <View
+      style={[
+        styles.togetherBackdrop,
+        { width: layoutWidth, height: togetherBackdropHeight },
+        isCapped && styles.heroCapped,
+      ]}
+    >
       <Image
         testID="together-hero"
         source={require('@/assets/images/onboarding/together-hero.webp')}
@@ -187,19 +207,29 @@ export function TogetherBackdrop() {
 export function TogetherPage() {
   const { t } = useTranslation();
   const { scaledFontSize } = useAccessibility();
+  const { chipSize, togetherSpacerHeight } = useOnboardingMetrics();
 
   return (
     <View style={styles.pageContainer}>
-      <View style={styles.backdropSpacer} />
+      <View style={[styles.backdropSpacer, { height: togetherSpacerHeight }]} />
 
       <View style={styles.chipRow}>
         {TOGETHER_CHIPS.map((chip) => (
-          <View key={chip.key} testID={`together-chip-${chip.key}`} style={styles.chip}>
-            <View style={styles.chipArtFrame}>
+          <View
+            key={chip.key}
+            testID={`together-chip-${chip.key}`}
+            style={[styles.chip, { width: chipSize }]}
+          >
+            <View
+              style={[
+                styles.chipArtFrame,
+                { width: chipSize, height: chipSize, borderRadius: chipSize * 0.22 },
+              ]}
+            >
               <Image
                 testID={`together-art-${chip.key}`}
                 source={chip.art}
-                style={styles.chipArt}
+                style={[styles.chipArt, { width: chipSize + 10, height: chipSize + 10 }]}
                 resizeMode="cover"
               />
             </View>
@@ -240,8 +270,12 @@ const SAFETY_ITEMS: {
 /** Full-bleed cloud art: the title sits over it and the promise tiles overlap
  *  its base, matching the together page. */
 export function SafetyBackdrop() {
+  const { layoutWidth, safeBackdropHeight } = useOnboardingMetrics();
+
   return (
-    <View style={styles.safeBackdrop}>
+    <View
+      style={[styles.safeBackdrop, { width: layoutWidth, height: safeBackdropHeight }]}
+    >
       {/* the art is cut out to the constellation itself, so it sits on the
           page's own sky -- no band, and nothing to fade at the edges */}
       <Image
@@ -257,10 +291,11 @@ export function SafetyBackdrop() {
 export function SafetyPage() {
   const { t } = useTranslation();
   const { scaledFontSize } = useAccessibility();
+  const { safeSpacerHeight } = useOnboardingMetrics();
 
   return (
     <View style={styles.pageContainer}>
-      <View style={styles.safeBackdropSpacer} />
+      <View style={[styles.safeBackdropSpacer, { height: safeSpacerHeight }]} />
 
       <View style={styles.safetyGrid}>
         {SAFETY_ITEMS.map((item, index) => (
@@ -325,8 +360,16 @@ const READY_ITEMS: { key: string; art: ImageSourcePropType }[] = [
 /** Full-bleed hero, same treatment as the together backdrop: the scene runs
  *  edge to edge behind the title and dissolves into the night sky. */
 export function ReadyBackdrop() {
+  const { layoutWidth, readyBackdropHeight, isCapped } = useOnboardingMetrics();
+
   return (
-    <View style={styles.readyBackdrop}>
+    <View
+      style={[
+        styles.readyBackdrop,
+        { width: layoutWidth, height: readyBackdropHeight },
+        isCapped && styles.heroCapped,
+      ]}
+    >
       <Image
         testID="ready-hero"
         source={require('@/assets/images/onboarding/ready-hero.webp')}
@@ -368,10 +411,11 @@ export function ReadyBackdrop() {
 export function ReadyPage() {
   const { t } = useTranslation();
   const { scaledFontSize } = useAccessibility();
+  const { readySpacerHeight } = useOnboardingMetrics();
 
   return (
     <View style={styles.pageContainer}>
-      <View style={styles.readyBackdropSpacer} />
+      <View style={[styles.readyBackdropSpacer, { height: readySpacerHeight }]} />
 
       <View style={styles.featureList}>
         {READY_ITEMS.map((item) => (
@@ -698,7 +742,7 @@ const styles = StyleSheet.create({
     marginLeft: 186,
   },
   safeBackdrop: {
-    width: SCREEN_WIDTH,
+    alignSelf: 'center',
     height: SAFE_BACKDROP_H,
     marginTop: SAFE_BACKDROP_TOP,
   },
@@ -708,9 +752,17 @@ const styles = StyleSheet.create({
     height: SAFE_BACKDROP_H + SAFE_BACKDROP_TOP - 197,
   },
   togetherBackdrop: {
-    width: SCREEN_WIDTH,
+    alignSelf: 'center',
     height: TOGETHER_BACKDROP_H,
     marginTop: TOGETHER_BACKDROP_TOP,
+  },
+  // once a hero no longer bleeds off the screen its side edges are visible.
+  // The left and right fades were drawn to run off a phone's edge, so on a
+  // capped layout the scene takes a corner instead and reads as an inset
+  // illustration rather than a full-bleed one that has been cut short.
+  heroCapped: {
+    borderRadius: ONBOARDING_HERO_RADIUS,
+    overflow: 'hidden',
   },
   togetherBackdropImage: {
     width: '100%',
@@ -954,7 +1006,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   readyBackdrop: {
-    width: SCREEN_WIDTH,
+    alignSelf: 'center',
     height: READY_BACKDROP_H,
     marginTop: READY_BACKDROP_TOP,
   },

@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { ThemedText } from '../themed-text';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { ONBOARDING_MAX_WIDTH } from './onboarding-metrics';
 import { NIGHT_GRADIENT, GOLD, TEXT_MUTED } from './onboarding-theme';
 
 const { width, height } = Dimensions.get('window');
@@ -171,7 +172,7 @@ export function OnboardingScreen({
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Animated.View style={pageAnimatedStyle}>
+        <Animated.View style={[styles.pageColumn, pageAnimatedStyle]}>
           <Animated.View
             key={`header-${currentStep}`}
             entering={FadeInDown.duration(450)}
@@ -201,7 +202,12 @@ export function OnboardingScreen({
         </View>
       )}
 
-      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) + scaledPadding(8) }]}>
+      <View
+        style={[
+          styles.footer,
+          { paddingBottom: Math.max(insets.bottom, 12) + scaledPadding(8) },
+        ]}
+      >
         <View style={styles.buttonRow}>
           {onPrevious && currentStep > 1 ? (
             <Pressable
@@ -286,6 +292,14 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 24,
+  },
+  // onboarding lays out to a capped width so a tablet does not scale the art
+  // up with the screen; the column is centred so the page still reads as one
+  // composition rather than a phone layout pinned to the left
+  pageColumn: {
+    width: '100%',
+    maxWidth: ONBOARDING_MAX_WIDTH,
+    alignSelf: 'center',
   },
   header: {
     alignItems: 'center',
