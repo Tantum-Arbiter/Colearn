@@ -30,6 +30,7 @@ colearn/
 │   ├── SONGS_README.md       # Song library, categories, instrument compatibility
 │   ├── NEXT-PHASE-3.md       # Subscription model, download caps, RevenueCat
 │   ├── SCHEDULE-WINDOW.md    # Screen Time schedule callout + reminders sheet
+│   ├── SCREEN-TIME-ALERT-PLAN.md # ⭐ Planned: alert UI overhaul + real-world tips
 │   ├── story-requirements.md # Story content requirements
 │   └── scripts/TRANSLATIONS.md # i18n translation tooling
 ├── gateway-service/          # Spring Boot backend (Java 21, Gradle)   · see AGENTS.md
@@ -63,6 +64,7 @@ colearn/
 | Song library | [`grow-with-freya/SONGS_README.md`](grow-with-freya/SONGS_README.md) |
 | Subscriptions / paywall / downloads | [`grow-with-freya/NEXT-PHASE-3.md`](grow-with-freya/NEXT-PHASE-3.md) |
 | Schedule callout / reminders window | [`grow-with-freya/SCHEDULE-WINDOW.md`](grow-with-freya/SCHEDULE-WINDOW.md) |
+| Screen time alert UI / real-world tips | [`grow-with-freya/SCREEN-TIME-ALERT-PLAN.md`](grow-with-freya/SCREEN-TIME-ALERT-PLAN.md) |
 | Story content requirements | [`grow-with-freya/story-requirements.md`](grow-with-freya/story-requirements.md) |
 | Backend API / endpoints | [`gateway-service/README.md`](gateway-service/README.md) + [`gateway-service/AGENTS.md`](gateway-service/AGENTS.md) |
 | E2E / functional tests | [`func-tests/AGENTS.md`](func-tests/AGENTS.md) |
