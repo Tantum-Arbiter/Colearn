@@ -21,7 +21,13 @@ import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { TABLET_CONTENT_MAX_WIDTH } from '@/hooks/use-accessibility';
 import { Fonts } from '@/constants/theme';
 import { type TimeOfDay } from '@/constants/home-scene';
-import { SCREEN_TIME_GLANCE, panelBorderPath } from '@/constants/screen-time-ring';
+import {
+  SCREEN_TIME_GLANCE,
+  panelBorderPath,
+  DROP_PATH,
+  DROP_GLOSS,
+  DROP_VIEWBOX,
+} from '@/constants/screen-time-ring';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
@@ -55,13 +61,15 @@ export interface ScreenTimeGlanceProps {
  *
  * The open is a piece of choreography rather than a fade: an echo of the
  * ring spins up where the parent pressed it, travels to the panel's nearest
- * corner, draws the border, and only then does the fill fade in and the
- * content follow. The ring's colour never floods the screen -- everything
- * outside the border stays a dim night scrim, so the alarm red is contained
- * inside the frame it drew.
+ * corner, flattens into a line, and that line draws the border -- all of it
+ * over the live home screen. Only once the border closes does the settle
+ * happen: the background blacks out and the fill arrives inside the frame,
+ * together. The ring's colour never floods the screen, and nothing dims
+ * until the frame that will hold the colour exists.
  *
  * Closing runs it in reverse register: the content dims, the panel gathers
- * itself into a water drop, and the drop falls off the bottom of the screen.
+ * itself in, becomes a true teardrop, and the drop falls off the bottom of
+ * the screen.
  *
  * Once the day's limit is spent the panel leads with an alert header instead
  * of the dashboard greeting, and offers the one action that is actually worth
@@ -125,6 +133,9 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   const spinnerRotate = useSharedValue(0);
   const spinnerScale = useSharedValue(1);
   const spinnerTravel = useSharedValue(0); // 0 at the ring, 1 at the border's start
+  // the morph: the arc flattens into the vertical line the border grows from
+  const spinnerSquashX = useSharedValue(1);
+  const spinnerSquashY = useSharedValue(1);
   const drawProgress = useSharedValue(0);
   const drawOpacity = useSharedValue(1);
   const panelOpacity = useSharedValue(0);
@@ -136,6 +147,9 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   const dropRadius = useSharedValue<number>(SCREEN_TIME_GLANCE.panelRadius);
   const dropFall = useSharedValue(0);
   const dropTint = useSharedValue(0);
+  // the teardrop that takes over from the gathered panel and does the falling
+  const dropOpacity = useSharedValue(0);
+  const dropStretch = useSharedValue(1);
 
   useEffect(() => {
     if (visible) {
@@ -147,6 +161,10 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       dropRadius.value = SCREEN_TIME_GLANCE.panelRadius;
       dropFall.value = 0;
       dropTint.value = 0;
+      dropOpacity.value = 0;
+      dropStretch.value = 1;
+      spinnerSquashX.value = 1;
+      spinnerSquashY.value = 1;
       drawProgress.value = 0;
       drawOpacity.value = 1;
 
@@ -161,20 +179,29 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
         return;
       }
 
-      const { spinDuration, travelDuration, drawDuration, fillFade, fadeDuration, scrimFade } =
-        SCREEN_TIME_GLANCE;
-      const drawStartsAt = spinDuration + travelDuration;
+      const {
+        spinDuration,
+        travelDuration,
+        morphDuration,
+        drawDuration,
+        settleDuration,
+        fadeDuration,
+      } = SCREEN_TIME_GLANCE;
+      const morphStartsAt = spinDuration + travelDuration;
+      // the line starts growing while the morph is still finishing, so the
+      // flattened arc and the border's first segment read as one stroke
+      const drawStartsAt = morphStartsAt + morphDuration * 0.5;
+      const settleStartsAt = drawStartsAt + drawDuration;
 
-      scrimOpacity.value = withTiming(1, { duration: scrimFade });
-
-      // 1. the ring's echo spins up where it was pressed...
+      // 1. the ring's echo spins up where it was pressed, over the live
+      //    home screen -- nothing dims yet...
       spinnerOpacity.value = withTiming(1, { duration: 120 });
       spinnerScale.value = withSequence(
         withTiming(1.18, { duration: spinDuration * 0.55, easing: Easing.out(Easing.cubic) }),
         withTiming(1, { duration: spinDuration * 0.45 })
       );
       spinnerRotate.value = withTiming(720, {
-        duration: drawStartsAt,
+        duration: morphStartsAt,
         easing: Easing.inOut(Easing.cubic),
       });
 
@@ -183,29 +210,44 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
         spinDuration,
         withTiming(1, { duration: travelDuration, easing: Easing.in(Easing.cubic) })
       );
+
+      // 3. ...flattens into the vertical line the border grows from...
+      spinnerSquashX.value = withDelay(
+        morphStartsAt,
+        withTiming(0.14, { duration: morphDuration, easing: Easing.in(Easing.cubic) })
+      );
+      spinnerSquashY.value = withDelay(
+        morphStartsAt,
+        withTiming(1.5, { duration: morphDuration, easing: Easing.out(Easing.cubic) })
+      );
       spinnerOpacity.value = withDelay(
-        drawStartsAt - 60,
-        withTiming(0, { duration: 100 })
+        morphStartsAt + morphDuration * 0.6,
+        withTiming(0, { duration: 140 })
       );
 
-      // 3. ...draws the border...
+      // 4. ...and the line draws the box
       drawProgress.value = withDelay(
         drawStartsAt,
         withTiming(1, { duration: drawDuration, easing: Easing.inOut(Easing.cubic) })
       );
 
-      // 4. ...and only then does the fill arrive, the drawn stroke settling
-      //    into the panel's own border underneath it
+      // 5. the settle: the background blacks out and the fill arrives inside
+      //    the frame at the same time, the drawn stroke handing over to the
+      //    panel's own border
+      scrimOpacity.value = withDelay(
+        settleStartsAt,
+        withTiming(1, { duration: settleDuration })
+      );
       panelOpacity.value = withDelay(
-        drawStartsAt + drawDuration,
-        withTiming(1, { duration: fillFade })
+        settleStartsAt,
+        withTiming(1, { duration: settleDuration })
       );
       drawOpacity.value = withDelay(
-        drawStartsAt + drawDuration + fillFade * 0.4,
-        withTiming(0, { duration: fillFade })
+        settleStartsAt + settleDuration * 0.5,
+        withTiming(0, { duration: settleDuration })
       );
       contentOpacity.value = withDelay(
-        drawStartsAt + drawDuration + fillFade * 0.6,
+        settleStartsAt + settleDuration * 0.7,
         withTiming(1, { duration: fadeDuration })
       );
       return;
@@ -218,6 +260,8 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
     spinnerRotate.value = 0;
     spinnerScale.value = 1;
     spinnerTravel.value = 0;
+    spinnerSquashX.value = 1;
+    spinnerSquashY.value = 1;
     drawProgress.value = 0;
     panelOpacity.value = 0;
     contentOpacity.value = 0;
@@ -237,9 +281,10 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
 
     const { dropShrink, dropFall: fallDuration, fadeDuration } = SCREEN_TIME_GLANCE;
     const { fallDistance, dropScaleX: sx, dropScaleY: sy, panelW } = geometry;
-    const fallStartsAt = fadeDuration * 0.7 + dropShrink + 60;
+    const gatherEndsAt = fadeDuration * 0.7 + dropShrink;
+    const fallStartsAt = gatherEndsAt + 90;
 
-    // the content dims, the panel gathers into a drop...
+    // the content dims, the panel gathers in...
     contentOpacity.value = withTiming(0, { duration: fadeDuration * 0.7 });
     dropTint.value = withDelay(
       fadeDuration * 0.7 + dropShrink * 0.4,
@@ -251,15 +296,22 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
     );
     dropScaleY.value = withDelay(
       fadeDuration * 0.7,
-      withSequence(
-        withTiming(sy, { duration: dropShrink, easing: Easing.inOut(Easing.cubic) }),
-        // ...hangs for a beat, stretches, and falls
-        withDelay(60, withTiming(sy * 1.18, { duration: fallDuration }))
-      )
+      withTiming(sy, { duration: dropShrink, easing: Easing.inOut(Easing.cubic) })
     );
     dropRadius.value = withDelay(
       fadeDuration * 0.7,
       withTiming(panelW / 2, { duration: dropShrink, easing: Easing.inOut(Easing.cubic) })
+    );
+
+    // ...becomes a true teardrop -- the gathered blob hands over to the drop
+    // shape in a quick crossfade at its smallest...
+    panelOpacity.value = withDelay(gatherEndsAt, withTiming(0, { duration: 90 }));
+    dropOpacity.value = withDelay(gatherEndsAt - 30, withTiming(1, { duration: 90 }));
+
+    // ...hangs for a beat, stretches, and falls
+    dropStretch.value = withDelay(
+      fallStartsAt,
+      withTiming(1.15, { duration: fallDuration })
     );
     dropFall.value = withDelay(
       fallStartsAt,
@@ -289,6 +341,8 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
         { translateY: dy },
         { rotate: `${spinnerRotate.value}deg` },
         { scale: spinnerScale.value },
+        { scaleX: spinnerSquashX.value },
+        { scaleY: spinnerSquashY.value },
       ],
     };
   });
@@ -310,6 +364,11 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
 
   const contentStyle = useAnimatedStyle(() => ({ opacity: contentOpacity.value }));
   const tintStyle = useAnimatedStyle(() => ({ opacity: dropTint.value }));
+
+  const teardropStyle = useAnimatedStyle(() => ({
+    opacity: dropOpacity.value,
+    transform: [{ translateY: dropFall.value }, { scaleY: dropStretch.value }],
+  }));
 
   const { bounds } = geometry;
   const spinnerArc = 2 * Math.PI * SCREEN_TIME_GLANCE.spinnerRadius;
@@ -471,6 +530,32 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
             ]}
           />
         </Animated.View>
+
+        {/* the teardrop itself: takes over from the gathered panel at its
+            smallest, then stretches and falls -- a real drop silhouette, not
+            a shrunken rectangle */}
+        <Animated.View
+          testID="screen-time-glance-drop"
+          pointerEvents="none"
+          style={[
+            styles.teardrop,
+            {
+              left: (bounds.left + bounds.right) / 2 - SCREEN_TIME_GLANCE.dropWidth / 2,
+              top: (bounds.top + bounds.bottom) / 2 - SCREEN_TIME_GLANCE.dropHeight / 2,
+            },
+            teardropStyle,
+          ]}
+        >
+          <Svg
+            width={SCREEN_TIME_GLANCE.dropWidth}
+            height={SCREEN_TIME_GLANCE.dropHeight}
+            viewBox={DROP_VIEWBOX}
+          >
+            <Path testID="screen-time-glance-drop-shape" d={DROP_PATH} fill={drawStroke} />
+            {/* the highlight crescent that makes it read as water */}
+            <Path d={DROP_GLOSS} fill="rgba(255, 255, 255, 0.45)" />
+          </Svg>
+        </Animated.View>
       </View>
     </Modal>
   );
@@ -528,6 +613,11 @@ const styles = StyleSheet.create({
   },
   dropTint: {
     ...StyleSheet.absoluteFillObject,
+  },
+  teardrop: {
+    position: 'absolute',
+    width: SCREEN_TIME_GLANCE.dropWidth,
+    height: SCREEN_TIME_GLANCE.dropHeight,
   },
   tipsRow: {
     paddingHorizontal: 18,

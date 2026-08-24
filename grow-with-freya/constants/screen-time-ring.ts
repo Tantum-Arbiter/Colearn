@@ -32,12 +32,13 @@ export const SCREEN_TIME_GLANCE = {
   /** Everything outside the panel: dim night, never the alarm colour. */
   scrim: 'rgba(4, 6, 18, 0.94)',
 
-  // the open choreography, in order
-  scrimFade: 200,
+  // the open choreography, in order: spin, travel, morph into a line, draw
+  // the border, then settle -- the blackout and the fill arriving together
   spinDuration: 360,
   travelDuration: 220,
+  morphDuration: 140,
   drawDuration: 480,
-  fillFade: 220,
+  settleDuration: 260,
 
   // the spinner that echoes the ring while it travels
   spinnerRadius: 15,
@@ -49,11 +50,11 @@ export const SCREEN_TIME_GLANCE = {
   exceededDraw: '#E4483F',
   calmDraw: 'rgba(198, 219, 250, 0.85)',
 
-  // the close: the panel gathers into a drop, then falls
+  // the close: the panel gathers, becomes a true teardrop, and falls
   dropShrink: 300,
   dropFall: 430,
-  dropWidth: 34,
-  dropHeight: 46,
+  dropWidth: 38,
+  dropHeight: 52,
 
   /**
    * The framed panel the reveal settles into.
@@ -72,6 +73,19 @@ export const SCREEN_TIME_GLANCE = {
   exceededGlow: 'rgba(228, 72, 63, 0.55)',
   calmGlow: 'rgba(0, 0, 0, 0.45)',
 } as const;
+
+/**
+ * The falling drop, drawn as a real teardrop rather than a shrunken panel:
+ * a point at the top flaring into a circular base, the classic water-drop
+ * silhouette. In a 100x140 box: tip at (50,0), base a circle of radius 40
+ * centred at (50,95). The gloss is the small highlight crescent that makes
+ * it read as water.
+ */
+export const DROP_PATH =
+  'M 50 0 C 50 0 10 60 10 95 A 40 40 0 1 0 90 95 C 90 60 50 0 50 0 Z';
+export const DROP_GLOSS =
+  'M 30 92 C 27 110 38 122 50 125 C 36 128 22 114 25 94 Z';
+export const DROP_VIEWBOX = '0 0 100 140';
 
 export function screenTimeProgress(usageSeconds: number, limitSeconds: number): number {
   if (limitSeconds <= 0 || usageSeconds <= 0) {

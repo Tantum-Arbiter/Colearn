@@ -177,17 +177,19 @@ The panel, not the content.
 - Close button moves into the panel's top-right.
 - Border colour follows the same exceeded/calm split the surface already uses.
 
-**Reworked at the operator's request (2026-08-24):** the circular reveal is
-gone. It painted the whole screen in the ring's colour before the panel
-settled, and the ask was the opposite — the alarm red contained inside the
-border it belongs to. The open is now choreography: an echo of the ring spins
-up where it was pressed, travels to the panel's nearest corner, **draws the
-border** (a dash-offset sweep along `panelBorderPath`), and only then does
-the fill fade in and the content follow. Everything outside the border is a
-dim night scrim, never red. Closing runs in reverse register: the content
-dims, the panel gathers itself into a **water drop** in the ring's colour,
-and the drop falls off the bottom of the screen. Reduced motion skips all of
-it, both ways.
+**Reworked at the operator's request (2026-08-24, twice):** the circular
+reveal is gone. It painted the whole screen in the ring's colour before the
+panel settled, and the ask was the opposite — the alarm red contained inside
+the border it belongs to. The open is now choreography, and it plays out over
+the **live home screen**: an echo of the ring spins up where it was pressed,
+travels to the panel's nearest corner, **flattens into a line**, and that
+line **draws the border** (a dash-offset sweep along `panelBorderPath`).
+Nothing dims while it draws. Only once the border closes does the settle
+happen — the background blacks out and the fill arrives inside the frame at
+the same time. Closing runs in reverse register: the content dims, the panel
+gathers itself in, hands over to a **true teardrop** (`DROP_PATH`, pointed
+top, round base, gloss crescent) in the ring's colour, and the drop falls off
+the bottom of the screen. Reduced motion skips all of it, both ways.
 
 **Tests:** panel is inset and outlined; border takes the red only when
 exceeded; the alarm fill exists exactly once and it is the panel; the border

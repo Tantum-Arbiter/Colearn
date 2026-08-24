@@ -24,7 +24,7 @@ import { StyleSheet } from 'react-native';
 import * as RN from 'react-native';
 
 import { ScreenTimeGlance } from '@/components/home/screen-time-glance';
-import { SCREEN_TIME_GLANCE, panelBorderPath } from '@/constants/screen-time-ring';
+import { SCREEN_TIME_GLANCE, panelBorderPath, DROP_PATH } from '@/constants/screen-time-ring';
 
 // the real Modal throws inside this jsdom test environment when visible; the
 // same patch the schedule-window tests use, for the same reason
@@ -239,6 +239,26 @@ describe('ScreenTimeGlance', () => {
       expect(StyleSheet.flatten(tint.props.style).backgroundColor).toBe(
         SCREEN_TIME_GLANCE.exceededDraw
       );
+    });
+
+    it('keeps a true teardrop waiting for the close, in the ring colour', () => {
+      const tree = renderGlance({ exceeded: true });
+      const shape = findByTestId(tree, 'screen-time-glance-drop-shape')[0];
+
+      expect(shape.props.d).toBe(DROP_PATH);
+      expect(shape.props.fill).toBe(SCREEN_TIME_GLANCE.exceededDraw);
+    });
+
+    it('centres the teardrop on the panel it condenses from', () => {
+      const tree = renderGlance();
+      const drop = findByTestId(tree, 'screen-time-glance-drop')[0];
+      const style = StyleSheet.flatten(drop.props.style);
+      const { width, height } = RN.Dimensions.get('window');
+
+      // panel centre for zero safe-area insets, which is what this
+      // environment provides
+      expect(style.left + SCREEN_TIME_GLANCE.dropWidth / 2).toBeCloseTo(width / 2);
+      expect(style.top + SCREEN_TIME_GLANCE.dropHeight / 2).toBeCloseTo(height / 2);
     });
   });
 
