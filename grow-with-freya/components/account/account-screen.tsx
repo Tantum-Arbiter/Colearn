@@ -15,6 +15,7 @@ import { TermsConditionsContent } from './terms-conditions-screen';
 import { PrivacyPolicyContent } from './privacy-policy-screen';
 import { ScreenTimeContent } from '../screen-time/screen-time-screen';
 import ScreenTimeService from '../../services/screen-time-service';
+import NotificationService from '../../services/notification-service';
 import { useScreenTime } from '../screen-time/screen-time-provider';
 import { formatDurationCompact } from '../../utils/time-formatting';
 import { EditProfileContent } from './edit-profile-screen';
@@ -122,6 +123,12 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
     textSizeScale,
     isGuestMode,
     crashReportingEnabled,
+    screenTimeEnabled,
+    notificationsEnabled,
+    hasRequestedNotificationPermission,
+    setScreenTimeEnabled,
+    setNotificationsEnabled,
+    setNotificationPermissionRequested,
     setTextSizeScale,
     setCrashReportingEnabled,
     setOnboardingComplete,
@@ -222,6 +229,39 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
   const starAnimatedStyle = useAnimatedStyle(() => ({
     opacity: starOpacity.value,
   }));
+
+  // Screen time controls live here rather than on the Screen Time page: that
+  // page reports on usage, this one is where the parent changes things. They
+  // write straight to the store, like every other toggle on this page -- the
+  // old copies inside ScreenTimeContent only ever set component state, so the
+  // parent's choice was dropped the moment they navigated away.
+  const handleToggleScreenTime = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setScreenTimeEnabled(!screenTimeEnabled);
+  };
+
+  const handleToggleSmartReminders = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    // switching on for the first time needs the OS to agree first
+    if (!notificationsEnabled && !hasRequestedNotificationPermission) {
+      const permissionStatus = await NotificationService.getInstance().requestPermissions();
+      setNotificationPermissionRequested(true);
+
+      if (permissionStatus.granted) {
+        setNotificationsEnabled(true);
+        Alert.alert(t('screenTime.notificationsEnabled'));
+      } else {
+        Alert.alert(
+          t('screenTime.permissionRequired'),
+          t('screenTime.enableNotificationsInSettings')
+        );
+      }
+      return;
+    }
+
+    setNotificationsEnabled(!notificationsEnabled);
+  };
 
   const handleLogin = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -581,9 +621,23 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
               >
                 <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
 
+          {/* Sign in / out sits above everything: signing in is the first
+              thing a guest needs, not something to hunt for at the bottom */}
+          <Pressable
+            testID="account-login"
+            style={({ pressed }) => [styles.logoutButton, styles.logoutButtonTop, pressed && { opacity: 0.6 }]}
+            onPress={isGuestMode ? handleLogin : handleLogout}
+          >
+            <Ionicons name={isGuestMode ? 'log-in-outline' : 'log-out-outline'} size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+            <Text style={[styles.logoutButtonText, { fontSize: scaledFontSize(14) }]}>
+              {isGuestMode ? t('common.login') : t('common.logout')}
+            </Text>
+          </Pressable>
+
           {/* Button strips: Language, Screen Time, Edit Profile */}
           <View style={styles.stripContainer}>
             <Pressable
+              testID="account-language"
               style={({ pressed }) => [styles.strip, pressed && styles.stripPressed]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -641,7 +695,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
 
           {/* Accessibility: inline text size pills */}
           <Text style={[styles.textSizeLabel, { fontSize: scaledFontSize(13) }]}>{t('accessibility.title')}</Text>
-          <View style={styles.textSizeOptions}>
+          <View style={styles.textSizeOptions} testID="account-text-size">
             {TEXT_SIZE_OPTIONS.map((option) => (
               <Pressable
                 key={option.value}
@@ -668,6 +722,44 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
             ))}
           </View>
 
+          {/* Screen time controls -- the Screen Time page reports on usage,
+              this is where the parent changes it */}
+          <Pressable
+            style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}
+            onPress={handleToggleScreenTime}
+            testID="account-screen-time-toggle"
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.settingLabel, { fontSize: scaledFontSize(13) }]}>
+                {t('screenTime.screenTimeControls')}
+              </Text>
+              <Text style={[styles.settingHint, { fontSize: scaledFontSize(11) }]}>
+                {t('screenTime.monitorAndLimit')}
+              </Text>
+            </View>
+            <View style={[styles.toggle, screenTimeEnabled && styles.toggleEnabled]}>
+              <View style={[styles.toggleThumb, screenTimeEnabled && styles.toggleThumbEnabled]} />
+            </View>
+          </Pressable>
+
+          <Pressable
+            style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}
+            onPress={handleToggleSmartReminders}
+            testID="account-smart-reminders-toggle"
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.settingLabel, { fontSize: scaledFontSize(13) }]}>
+                {t('screenTime.smartReminders')}
+              </Text>
+              <Text style={[styles.settingHint, { fontSize: scaledFontSize(11) }]}>
+                {t('screenTime.receiveGentleNotifications')}
+              </Text>
+            </View>
+            <View style={[styles.toggle, notificationsEnabled && styles.toggleEnabled]}>
+              <View style={[styles.toggleThumb, notificationsEnabled && styles.toggleThumbEnabled]} />
+            </View>
+          </Pressable>
+
           {/* Crash Reporting Toggle */}
           <Pressable
             style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}
@@ -693,17 +785,6 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
                 crashReportingEnabled && styles.toggleThumbEnabled
               ]} />
             </View>
-          </Pressable>
-
-          {/* Logout -transparent pill button like home icon */}
-          <Pressable
-            style={({ pressed }) => [styles.logoutButton, pressed && { opacity: 0.6 }]}
-            onPress={isGuestMode ? handleLogin : handleLogout}
-          >
-            <Ionicons name={isGuestMode ? 'log-in-outline' : 'log-out-outline'} size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
-            <Text style={[styles.logoutButtonText, { fontSize: scaledFontSize(14) }]}>
-              {isGuestMode ? t('common.login') : t('common.logout')}
-            </Text>
           </Pressable>
 
           {/* Delete Account -only shown for logged-in users */}
@@ -1004,6 +1085,10 @@ const styles = StyleSheet.create({
   },
 
   // Logout -transparent pill like home icon
+  logoutButtonTop: {
+    marginTop: 0,
+    marginBottom: 16,
+  },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',

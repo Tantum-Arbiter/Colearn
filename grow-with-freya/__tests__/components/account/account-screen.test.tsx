@@ -9,6 +9,7 @@
 
 import React from 'react';
 import { render, fireEvent, act, waitFor } from '@testing-library/react-native';
+import { Alert } from 'react-native';
 
 import { AccountScreen } from '@/components/account/account-screen';
 import { reminderService } from '@/services/reminder-service';
@@ -117,17 +118,41 @@ jest.mock('@/services/story-loader', () => ({ StoryLoader: { getInstance: () => 
 jest.mock('@/contexts/tutorial-context', () => ({
   useTutorial: () => ({ resetAllTutorials: jest.fn(), lastResetTimestamp: 0 }),
 }));
+jest.mock('@/services/notification-service', () => ({
+  __esModule: true,
+  default: {
+    getInstance: () => mockNotificationService,
+  },
+}));
 jest.mock('@/services/i18n', () => ({
   SUPPORTED_LANGUAGES: [{ code: 'en', flag: '🇬🇧', name: 'English' }],
   setStoredLanguage: jest.fn().mockResolvedValue(undefined),
 }));
 
+const mockNotificationService = {
+  requestPermissions: jest.fn().mockResolvedValue({ granted: true }),
+};
+
+// reset in beforeEach: several tests need to drive the component from a
+// different starting state (permission already asked for, reminders already
+// on, guest mode) and the store mock is a plain object, not a hook -- without
+// the reset those mutations leak into whatever runs next
+const MUTABLE_STORE_DEFAULTS = {
+  isGuestMode: false,
+  screenTimeEnabled: true,
+  notificationsEnabled: false,
+  hasRequestedNotificationPermission: false,
+};
+
 const mockStore = {
   userNickname: 'Liam',
   userAvatarType: 'boy',
   textSizeScale: 1,
-  isGuestMode: false,
   crashReportingEnabled: false,
+  ...MUTABLE_STORE_DEFAULTS,
+  setScreenTimeEnabled: jest.fn(),
+  setNotificationsEnabled: jest.fn(),
+  setNotificationPermissionRequested: jest.fn(),
   setTextSizeScale: jest.fn(),
   setCrashReportingEnabled: jest.fn(),
   setOnboardingComplete: jest.fn(),
@@ -157,6 +182,18 @@ function press(tree: ReturnType<typeof render>, testID: string) {
   fireEvent.press(byTestId(tree, testID)[0]);
 }
 
+/**
+ * The smart-reminders handler awaits the permission request before it writes
+ * anything. Under fake timers waitFor never advances, so its microtask chain
+ * has to be flushed by hand.
+ */
+async function flushAsync() {
+  await act(async () => {
+    await Promise.resolve();
+    await Promise.resolve();
+  });
+}
+
 /** The slide-out sets the new view on a timer, so tests have to let it land. */
 function settleSlide() {
   act(() => {
@@ -172,6 +209,9 @@ describe('AccountScreen navigation', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
+    Object.assign(mockStore, MUTABLE_STORE_DEFAULTS);
+    mockNotificationService.requestPermissions.mockResolvedValue({ granted: true });
+    jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     (reminderService.hasUnsavedChanges as jest.Mock).mockReturnValue(false);
     (ApiClient.isAuthenticated as jest.Mock).mockResolvedValue(false);
   });
@@ -205,6 +245,129 @@ describe('AccountScreen navigation', () => {
     press(tree, 'header-back');
 
     expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  describe('screen time controls on the main settings page', () => {
+    /** Render order, so "below"/"above" are real position checks. */
+    function orderOf(tree: ReturnType<typeof render>, ids: string[]) {
+      const hits = tree.UNSAFE_root.findAll((n: any) => ids.includes(n.props.testID));
+      return hits.map((n: any) => n.props.testID);
+    }
+
+    it('shows both toggles', () => {
+      const { tree } = renderAccount();
+
+      expect(byTestId(tree, 'account-screen-time-toggle').length).toBeGreaterThan(0);
+      expect(byTestId(tree, 'account-smart-reminders-toggle').length).toBeGreaterThan(0);
+    });
+
+    it('places them below the accessibility options', () => {
+      const { tree } = renderAccount();
+
+      const order = orderOf(tree, [
+        'account-text-size',
+        'account-screen-time-toggle',
+        'account-smart-reminders-toggle',
+      ]);
+
+      expect(order.indexOf('account-screen-time-toggle')).toBeGreaterThan(
+        order.lastIndexOf('account-text-size')
+      );
+      expect(order.indexOf('account-smart-reminders-toggle')).toBeGreaterThan(
+        order.lastIndexOf('account-screen-time-toggle')
+      );
+    });
+
+    it('writes the screen time toggle straight to the store', () => {
+      // the old copy inside ScreenTimeContent only ever set component state,
+      // so the parent's choice was dropped on the way out -- here it persists
+      const { tree } = renderAccount();
+
+      press(tree, 'account-screen-time-toggle');
+
+      expect(mockStore.setScreenTimeEnabled).toHaveBeenCalledWith(false);
+    });
+
+    it('writes it back on again', () => {
+      mockStore.screenTimeEnabled = false;
+      const { tree } = renderAccount();
+
+      press(tree, 'account-screen-time-toggle');
+
+      expect(mockStore.setScreenTimeEnabled).toHaveBeenCalledWith(true);
+    });
+
+    describe('smart reminders', () => {
+      it('asks the OS the first time it is switched on, and enables on a grant', async () => {
+        const { tree } = renderAccount();
+
+        press(tree, 'account-smart-reminders-toggle');
+        await flushAsync();
+
+        expect(mockNotificationService.requestPermissions).toHaveBeenCalled();
+        expect(mockStore.setNotificationPermissionRequested).toHaveBeenCalledWith(true);
+        expect(mockStore.setNotificationsEnabled).toHaveBeenCalledWith(true);
+      });
+
+      it('stays off when the parent refuses permission', async () => {
+        mockNotificationService.requestPermissions.mockResolvedValue({ granted: false });
+        const { tree } = renderAccount();
+
+        press(tree, 'account-smart-reminders-toggle');
+        await flushAsync();
+
+        expect(mockStore.setNotificationPermissionRequested).toHaveBeenCalledWith(true);
+        expect(mockStore.setNotificationsEnabled).not.toHaveBeenCalled();
+      });
+
+      it('does not ask again once permission has been requested', async () => {
+        mockStore.hasRequestedNotificationPermission = true;
+        const { tree } = renderAccount();
+
+        press(tree, 'account-smart-reminders-toggle');
+        await flushAsync();
+
+        expect(mockStore.setNotificationsEnabled).toHaveBeenCalledWith(true);
+        expect(mockNotificationService.requestPermissions).not.toHaveBeenCalled();
+      });
+
+      it('switches off without asking for permission', async () => {
+        mockStore.notificationsEnabled = true;
+        const { tree } = renderAccount();
+
+        press(tree, 'account-smart-reminders-toggle');
+        await flushAsync();
+
+        expect(mockStore.setNotificationsEnabled).toHaveBeenCalledWith(false);
+        expect(mockNotificationService.requestPermissions).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('the login button', () => {
+    it('sits above the language strip', () => {
+      mockStore.isGuestMode = true;
+      const { tree } = renderAccount();
+
+      const hits = tree.UNSAFE_root.findAll((n: any) =>
+        ['account-login', 'account-language'].includes(n.props.testID)
+      );
+      const order = hits.map((n: any) => n.props.testID);
+
+      expect(order.indexOf('account-login')).toBeGreaterThanOrEqual(0);
+      expect(order.indexOf('account-language')).toBeGreaterThan(
+        order.lastIndexOf('account-login')
+      );
+    });
+
+    it('still reaches the login flow from its new home', () => {
+      mockStore.isGuestMode = true;
+      const { tree } = renderAccount();
+
+      press(tree, 'account-login');
+
+      expect(mockStore.setShowLoginAfterOnboarding).toHaveBeenCalledWith(true);
+    });
   });
 
   describe('reminders no longer have pages here', () => {

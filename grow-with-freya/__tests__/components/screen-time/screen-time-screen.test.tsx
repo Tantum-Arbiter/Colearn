@@ -837,14 +837,20 @@ describe('ScreenTimeContent', () => {
     expect(contentService.getDailyTotals).toHaveBeenCalledWith(30);
   });
 
-  it('renders its toggle controls', async () => {
+  it('no longer carries its own settings toggles -- those live on the account page', async () => {
+    // they only ever set component state here, so the parent's choice was
+    // dropped the moment they navigated away; the account page writes to the
+    // store instead
     const tree = render(<ScreenTimeContent />);
 
     await waitFor(() => expect(contentService.getScreenTimeStats).toHaveBeenCalled());
 
     for (const id of ['content-toggle', 'content-notifications-toggle']) {
-      expect(byTestId(tree, id).length).toBeGreaterThan(0);
+      expect(byTestId(tree, id)).toHaveLength(0);
     }
+    const body = JSON.stringify(tree.toJSON());
+    expect(body).not.toContain('screenTime.screenTimeControls');
+    expect(body).not.toContain('screenTime.smartReminders');
   });
 
   it('offers no age controls', async () => {
@@ -943,61 +949,16 @@ describe('ScreenTimeContent', () => {
     expect(body).not.toContain('screenTime.age6plus');
   });
 
-  it('toggles screen time locally in the glance', async () => {
-    const tree = render(<ScreenTimeContent />);
-    await waitFor(() => expect(contentService.getScreenTimeStats).toHaveBeenCalled());
-
-    const toggle = byTestId(tree, 'content-toggle')[0];
-    const before = JSON.stringify(toggle.props.style);
-
-    fireEvent.press(toggle);
-
-    await waitFor(() =>
-      expect(JSON.stringify(byTestId(tree, 'content-toggle')[0].props.style)).not.toBe(before)
-    );
-  });
-
-  it('warns and stays off when notification permission is refused', async () => {
-    (NotificationService.getInstance as jest.Mock).mockReturnValue({
-      requestPermissions: jest.fn().mockResolvedValue({
-        granted: false,
-        canAskAgain: false,
-        status: 'denied',
-      }),
-      scheduleRecommendedReminders: jest.fn().mockResolvedValue(undefined),
-      getPermissionStatus: jest.fn().mockResolvedValue({ granted: false }),
-      cancelAllScheduledNotifications: jest.fn().mockResolvedValue(undefined),
-    } as never);
-
-    const tree = render(<ScreenTimeContent />);
-
-    fireEvent.press(byTestId(tree, 'content-notifications-toggle')[0]);
-
-    await waitFor(() =>
-      expect(Alert.alert).toHaveBeenCalledWith(
-        'screenTime.permissionRequired',
-        'screenTime.enableNotificationsInSettings'
-      )
-    );
-  });
-
   it('still renders when its stats fail to load', async () => {
     contentService.getScreenTimeStats.mockRejectedValue(new Error('storage gone'));
 
     const tree = render(<ScreenTimeContent />);
 
     await waitFor(() =>
-      expect(byTestId(tree, 'content-toggle').length).toBeGreaterThan(0)
+      expect(byTestId(tree, 'usage-overview').length).toBeGreaterThan(0)
     );
   });
 
-  it('requests notification permission the first time reminders are switched on', async () => {
-    const tree = render(<ScreenTimeContent />);
-
-    fireEvent.press(byTestId(tree, 'content-notifications-toggle')[0]);
-
-    await waitFor(() => expect(setNotificationPermissionRequested).toHaveBeenCalledWith(true));
-  });
 });
 
 // ─── screenToActivityType unit tests ────────────────────────────────────────

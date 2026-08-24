@@ -471,25 +471,15 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
 export function ScreenTimeContent({ paddingTop = 0, onReminderChange }: ScreenTimeContentProps) {
   const { t } = useTranslation();
   const { scaledFontSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
-  const {
-    childAgeInMonths,
-    screenTimeEnabled,
-    notificationsEnabled,
-    hasRequestedNotificationPermission,
-    setNotificationPermissionRequested,
-  } = useAppStore();
+  const { childAgeInMonths } = useAppStore();
 
   const { todayUsage: contextTodayUsage } = useScreenTime();
 
   const [stats, setStats] = useState<ScreenTimeStats | null>(null);
   const [dailyTotals, setDailyTotals] = useState<DailyTotal[]>([]);
-  const [localScreenTimeEnabled, setLocalScreenTimeEnabled] = useState(screenTimeEnabled);
-  const [localNotificationsEnabled, setLocalNotificationsEnabled] = useState(notificationsEnabled);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [reminderStats, setReminderStats] = useState<ReminderStats | null>(null);
   const [reminderChangeCounter, setReminderChangeCounter] = useState(0);
-
-  // Note: Save button removed - auto-save happens on account screen exit
 
   // Keep the callout honest about what is actually scheduled.
   useEffect(() => {
@@ -523,30 +513,6 @@ export function ScreenTimeContent({ paddingTop = 0, onReminderChange }: ScreenTi
       setDailyTotals(await screenTimeService.getDailyTotals(30));
     } catch (error) {
       log.error('Failed to load stats:', error);
-    }
-  };
-
-  const handleToggleScreenTime = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setLocalScreenTimeEnabled(!localScreenTimeEnabled);
-  };
-
-  const handleToggleNotifications = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-    if (!localNotificationsEnabled && !hasRequestedNotificationPermission) {
-      const notificationService = NotificationService.getInstance();
-      const permissionStatus = await notificationService.requestPermissions();
-      setNotificationPermissionRequested(true);
-
-      if (permissionStatus.granted) {
-        setLocalNotificationsEnabled(true);
-        Alert.alert(t('screenTime.notificationsEnabled'));
-      } else {
-        Alert.alert(t('screenTime.permissionRequired'), t('screenTime.enableNotificationsInSettings'));
-      }
-    } else {
-      setLocalNotificationsEnabled(!localNotificationsEnabled);
     }
   };
 
@@ -605,44 +571,6 @@ export function ScreenTimeContent({ paddingTop = 0, onReminderChange }: ScreenTi
           </View>
         </View>
 
-        {/* Settings */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>{t('screenTime.settings')}</Text>
-
-          <View style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}>
-            <View style={styles.settingInfo}>
-              <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>{t('screenTime.screenTimeControls')}</Text>
-              <Text style={[styles.settingDescription, { fontSize: scaledFontSize(12) }]}>
-                {t('screenTime.monitorAndLimit')}
-              </Text>
-            </View>
-            <Pressable
-              testID="content-toggle"
-              style={[styles.toggle, localScreenTimeEnabled && styles.toggleActive]}
-              onPress={handleToggleScreenTime}
-            >
-              <View style={[styles.toggleThumb, localScreenTimeEnabled && styles.toggleThumbActive]} />
-            </Pressable>
-          </View>
-
-          <View style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}>
-            <View style={styles.settingInfo}>
-              <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>{t('screenTime.smartReminders')}</Text>
-              <Text style={[styles.settingDescription, { fontSize: scaledFontSize(12) }]}>
-                {t('screenTime.receiveGentleNotifications')}
-              </Text>
-            </View>
-            <Pressable
-              testID="content-notifications-toggle"
-              style={[styles.toggle, localNotificationsEnabled && styles.toggleActive]}
-              onPress={handleToggleNotifications}
-            >
-              <View style={[styles.toggleThumb, localNotificationsEnabled && styles.toggleThumbActive]} />
-            </Pressable>
-          </View>
-        </View>
-
-          {/* Save button removed - auto-save on exit from account screen */}
         </View>
       </ScrollView>
 
